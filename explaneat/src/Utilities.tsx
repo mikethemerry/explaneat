@@ -1,6 +1,5 @@
 
-type Node = {}
-
+import { Node, Edge } from 'reactflow';
 type Genome = {
   nodes: Array<Node>,
   edges: Array<Edge>
@@ -16,8 +15,8 @@ export function parseNode(nodeString: string): Node {
       const response = parseFloat(nodeString.match(/response=(\d+\.\d+),/)[1]);
       const activation = nodeString.match(/activation=(\w+),/)[1];
       const aggregation = nodeString.match(/aggregation=(\w+)\)/)[1];
-
-      return { key, data: { bias, response, activation, aggregation } };
+    const node: Node = { id: `node${key}`, type: 'default', data: { label: `Node ${key}` }, position: { x: Math.random() * 500, y: Math.random() * 500 } };
+    return node;
   }
 
 
@@ -31,14 +30,15 @@ export  function parseEdge(edgeString: string): Edge {
       const weight = parseFloat(edgeString.match(/weight=(-?\d+\.\d+),/)[1]);
       const enabled = edgeString.match(/enabled=(\w+)\)/)[1] === 'True';
 
-      return { id: `e${source}-${target}`, source: source, target: target, weight: weight, enabled: enabled };
+      const edge: Edge = { id: `edge${source}-${target}`, source: `node${source}`, target: `node${target}`, animated: enabled, label: `weight: ${weight}` };
+      return edge;
 };
   
 
 export function parseGenome(genome: string): Genome {
     const lines = genome.split('\n');
-    const nodes = [];
-    const edges = [];
+    const nodes: Node[] = [];
+    const edges: Edge[] = [];
 
     let isNodeSection = false;
     let isEdgeSection = false;
@@ -62,6 +62,16 @@ export function parseGenome(genome: string): Genome {
             edges.push(edge);
         }
     }
+
+    edges.forEach(edge => {
+        if (parseInt(edge.source.replace('node', '')) < 0) {
+            // Check if node with the same id already exists
+            if (!nodes.some(node => node.id === edge.source)) {
+                const node: Node = { id: edge.source, type: 'input', data: { label: `Node ${edge.source.replace('node', '')}` }, position: { x: Math.random() * 500, y: Math.random() * 500 }, bias: 0, response: 0 };
+                nodes.push(node);
+            }
+        }
+    });
 
     return { nodes, edges };
 }
