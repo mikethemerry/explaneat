@@ -1,3 +1,5 @@
+import Dagre from '@dagrejs/dagre';
+
 import React, { useCallback } from 'react';
 import ReactFlow, {
   MiniMap,
@@ -6,6 +8,9 @@ import ReactFlow, {
   useNodesState,
   useEdgesState,
   addEdge,
+  Panel,
+  ReactFlowProvider,
+  useReactFlow
 } from 'reactflow';
 
 import 'reactflow/dist/style.css';
@@ -24,28 +29,77 @@ const parsed = parseGenome(genome_1);
 const initialNodes = parsed.nodes;
 const initialEdges = parsed.edges;
 
-console.log("initialNodes", initialNodes);
-console.log("initialEdges", initialEdges);
+const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
 
-export default function App() {
+const getLayoutedElements = (nodes, edges, options) => {
+  g.setGraph({ rankdir: options.direction });
+
+  edges.forEach((edge) => g.setEdge(edge.source, edge.target));
+  nodes.forEach((node) => g.setNode(node.id, node));
+
+  Dagre.layout(g);
+
+  return {
+    nodes: nodes.map((node) => {
+      const { x, y } = g.node(node.id);
+
+      return { ...node, position: { x, y } };
+    }),
+    edges,
+  };
+};
+
+
+const LayoutFlow = () => {
+  const { fitView } = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
+
   const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
 
-  return (
-    <div style={{ width: '100vw', height: '100vh' }}>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-      >
-        <Controls />
-        <MiniMap />
-        <Background variant="dots" gap={12} size={1} />
-      </ReactFlow>
-    </div>
+
+  const onLayout = useCallback(
+    (direction) => {
+      const layouted = getLayoutedElements(nodes, edges, { direction });
+
+      setNodes([...layouted.nodes]);
+      setEdges([...layouted.edges]);
+
+      window.requestAnimationFrame(() => {
+        fitView();
+      });
+    },
+    [nodes, edges]
   );
+
+  return (
+
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onConnect={onConnect}
+    >
+      <Controls />
+      <MiniMap />
+
+      <Panel position="top-right">
+        <button onClick={() => onLayout('TB')}>vertical layout</button>
+        <button onClick={() => onLayout('LR')}>horizontal layout</button>
+      </Panel>
+      <Background variant="dots" gap={12} size={1} />
+    </ReactFlow>
+  )
+};
+
+
+export default function App() {
+  return (
+    <ReactFlowProvider>
+      <LayoutFlow />
+    </ReactFlowProvider>
+  );
+   
 }
