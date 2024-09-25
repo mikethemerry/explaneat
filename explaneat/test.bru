@@ -1,0 +1,63 @@
+meta {
+  name: NEAT Model API Test Suite
+  type: http
+  seq: 1
+}
+
+# List all models
+get {
+  name: List Models
+  url: {{baseUrl}}/models
+  body: none
+  auth: none
+}
+
+# Create a new model
+post {
+  name: Create Model
+  url: {{baseUrl}}/models
+  body: json
+  auth: none
+  body: {
+    "model_name": "Test Model",
+    "dataset": "Test Dataset",
+    "version": "1.0",
+    "raw_data": "Sample raw data",
+    "parsed_model": {
+      "key": "value"
+    }
+  }
+}
+
+# Get a specific model
+get {
+  name: Get Model
+  url: {{baseUrl}}/models/1
+  body: none
+  auth: none
+}
+
+# Update a model
+put {
+  name: Update Model
+  url: {{baseUrl}}/models/1
+  body: json
+  auth: none
+  body: {
+    "model_name": "Updated Test Model",
+    "dataset": "Updated Test Dataset",
+    "version": "1.1",
+    "raw_data": "Updated sample raw data",
+    "parsed_model": {
+      "updated_key": "updated_value"
+    }
+  }
+}
+
+# Delete a model
+delete {
+  name: Delete Model
+  url: {{baseUrl}}/models/1
+  body: none
+  auth: none
+}
