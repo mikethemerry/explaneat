@@ -31,5 +31,5 @@ class NEATModel(db.Model):
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
             "parsed_model": self.parsed_model,
-            "raw_data": self.raw_data,
+            "raw_data": str(self.raw_data),
         }

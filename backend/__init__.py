@@ -12,7 +12,15 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    CORS(app, resources={r"/*": {"origins": "*"}})  # Allow CORS from any origin
+    CORS(
+        app,
+        resources={
+            r"/api/*": {
+                "origins": "http://localhost:3000",  # Replace with your frontend URL if different
+                "supports_credentials": True,
+            }
+        },
+    )
     db.init_app(app)
     migrate.init_app(app, db)
 

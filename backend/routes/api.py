@@ -28,7 +28,9 @@ class ModelList(Resource):
     @api.doc("list_models")
     def get(self):
         models = NEATModel.query.all()
-        return [model.to_dict() for model in models]
+        ret = [model.to_dict() for model in models]
+
+        return ret
 
     @api.doc("create_model")
     @api.expect(model_fields)
@@ -36,6 +38,7 @@ class ModelList(Resource):
     def post(self):
         data = api.payload
         parsed_model = json.loads(data["parsed_model"])
+        print(parsed_model)
         new_model = NEATModel(
             model_name=data["model_name"],
             dataset=data["dataset"],
@@ -63,6 +66,7 @@ class Model(Resource):
         model = NEATModel.query.get_or_404(id)
         data = api.payload
         parsed_model = json.loads(data["parsed_model"])
+        print(parsed_model)
         model.model_name = data.get("model_name", model.model_name)
         model.dataset = data.get("dataset", model.dataset)
         model.version = data.get("version", model.version)

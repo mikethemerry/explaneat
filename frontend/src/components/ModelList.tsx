@@ -9,7 +9,12 @@ const ModelList: React.FC = () => {
   useEffect(() => {
     const fetchModels = async () => {
       try {
-        const response = await axios.get("http://127.0.0.1:5000/api/models");
+        const response = await axios.get("http://127.0.0.1:5000/api/models", {
+          withCredentials: true,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
         setModels(response.data);
       } catch (error) {
         console.error("Error fetching models:", error);

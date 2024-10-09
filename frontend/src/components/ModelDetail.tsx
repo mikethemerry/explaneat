@@ -17,15 +17,15 @@ const ModelDetail: React.FC = () => {
         );
         console.log(response.data);
         // Parse the JSON of the parsed_model
-        if (response.data.parsed_model) {
-          try {
-            response.data.parsed_model = JSON.parse(response.data.parsed_model);
-          } catch (parseError) {
-            console.error("Error parsing parsed_model JSON:", parseError);
-            // If parsing fails, set parsed_model to null or an empty object
-            response.data.parsed_model = null;
-          }
-        }
+        // if (response.data.parsed_model) {
+        // try {
+        // response.data.parsed_model = JSON.parse(response.data.parsed_model);
+        // } catch (parseError) {
+        // console.error("Error parsing parsed_model JSON:", parseError);
+        // If parsing fails, set parsed_model to null or an empty object
+        // response.data.parsed_model = null;
+        // }
+        // }
         setModel(response.data);
       } catch (error) {
         console.error("Error fetching model:", error);
