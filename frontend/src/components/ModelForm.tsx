@@ -67,6 +67,37 @@ const ModelForm: React.FC<ModelFormProps> = ({ mode }) => {
       )
     );
 
+    // Ensure all source nodes exist in nodesData, adding them if they don't
+    const existingNodeIds = new Set(nodesData.map(([, nodeId]) => nodeId));
+    const validConnectionsData = connectionsData.filter(
+      ([, source, target]) => {
+        if (!existingNodeIds.has(source)) {
+          console.warn(
+            `Source node ${source} not found in nodesData. Adding it.`
+          );
+          nodesData.push(["", source, "0"]); // Adding with default bias of 0
+          existingNodeIds.add(source);
+        }
+        if (!existingNodeIds.has(target)) {
+          console.warn(
+            `Target node ${target} not found in nodesData. Adding it.`
+          );
+          nodesData.push(["", target, "0"]); // Adding with default bias of 0
+          existingNodeIds.add(target);
+        }
+        return true;
+      }
+    );
+
+    // If any nodes were added, log a message
+    if (nodesData.length > existingNodeIds.size) {
+      console.warn(
+        `${
+          nodesData.length - existingNodeIds.size
+        } node(s) were added to ensure all connections are valid.`
+      );
+    }
+
     // Prepare nodes for ReactFlow
     const nodes = nodesData.map(([, nodeId, bias]) => {
       let nodeType = "default";

@@ -6,6 +6,7 @@ import NEATVisualizer from "./NEATVisualizer";
 
 const ModelDetail: React.FC = () => {
   const [model, setModel] = useState<NEATModel | null>(null);
+  const [isFullScreen, setIsFullScreen] = useState(false);
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
@@ -16,16 +17,6 @@ const ModelDetail: React.FC = () => {
           `http://127.0.0.1:5000/api/models/${id}`
         );
         console.log(response.data);
-        // Parse the JSON of the parsed_model
-        // if (response.data.parsed_model) {
-        // try {
-        // response.data.parsed_model = JSON.parse(response.data.parsed_model);
-        // } catch (parseError) {
-        // console.error("Error parsing parsed_model JSON:", parseError);
-        // If parsing fails, set parsed_model to null or an empty object
-        // response.data.parsed_model = null;
-        // }
-        // }
         setModel(response.data);
       } catch (error) {
         console.error("Error fetching model:", error);
@@ -46,7 +37,25 @@ const ModelDetail: React.FC = () => {
     }
   };
 
+  const toggleFullScreen = () => {
+    setIsFullScreen(!isFullScreen);
+  };
+
   if (!model) return <div className="text-center">Loading...</div>;
+
+  if (isFullScreen) {
+    return (
+      <div className="h-90vh w-90vw">
+        <NEATVisualizer model={model} height="85vh" />
+        <button
+          onClick={toggleFullScreen}
+          className="absolute top-4 right-4 z-10 py-2 px-4 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+        >
+          Exit Full Screen
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -90,10 +99,16 @@ const ModelDetail: React.FC = () => {
       </div>
 
       <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-        <div className="px-4 py-5 sm:px-6">
+        <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
           <h3 className="text-lg leading-6 font-medium text-neutral-900">
             Model Visualization
           </h3>
+          <button
+            onClick={toggleFullScreen}
+            className="py-2 px-4 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          >
+            Full Screen
+          </button>
         </div>
         <div className="border-t border-neutral-200 px-4 py-5 sm:p-0">
           <NEATVisualizer model={model} />

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import ReactFlow, {
   Background,
   Controls,
@@ -42,6 +42,7 @@ export interface NEATModel {
 
 interface NEATVisualizerProps {
   model: NEATModel;
+  height?: string;
 }
 
 const nodeWidth = 172;
@@ -52,6 +53,7 @@ const getLayoutedElements = (
   edges: Edge[],
   direction = "TB"
 ) => {
+  console.log("Laying out elements with direction:", direction);
   const dagreGraph = new dagre.graphlib.Graph();
   dagreGraph.setDefaultEdgeLabel(() => ({}));
 
@@ -68,7 +70,7 @@ const getLayoutedElements = (
 
   dagre.layout(dagreGraph);
 
-  nodes.forEach((node) => {
+  return nodes.map((node) => {
     const nodeWithPosition = dagreGraph.node(node.id);
     node.targetPosition = isHorizontal ? Position.Left : Position.Top;
     node.sourcePosition = isHorizontal ? Position.Right : Position.Bottom;
@@ -80,16 +82,24 @@ const getLayoutedElements = (
       y: nodeWithPosition.y - nodeHeight / 2,
     };
 
+    console.log(`Node ${node.id} positioned at:`, node.position);
     return node;
   });
-
-  return { nodes, edges };
 };
 
-const NEATVisualizer: React.FC<NEATVisualizerProps> = ({ model }) => {
-  console.log(model);
+const NEATVisualizer: React.FC<NEATVisualizerProps> = ({
+  model,
+  height = "500px",
+}) => {
+  console.log("Rendering NEATVisualizer with model:", model);
+  const [isInitialLayout, setIsInitialLayout] = useState(true);
+
   const initialNodes: Node[] = React.useMemo(() => {
-    if (!model.parsed_model?.nodes) return [];
+    if (!model.parsed_model?.nodes) {
+      console.log("No nodes found in parsed_model");
+      return [];
+    }
+    console.log("Initializing nodes:", model.parsed_model.nodes);
     return model.parsed_model.nodes.map((node) => ({
       ...node,
       position: node.position || {
@@ -101,7 +111,11 @@ const NEATVisualizer: React.FC<NEATVisualizerProps> = ({ model }) => {
   }, [model.parsed_model?.nodes]);
 
   const initialEdges: Edge[] = React.useMemo(() => {
-    if (!model.parsed_model?.edges) return [];
+    if (!model.parsed_model?.edges) {
+      console.log("No edges found in parsed_model");
+      return [];
+    }
+    console.log("Initializing edges:", model.parsed_model.edges);
     return model.parsed_model.edges.map((edge) => ({
       ...edge,
       animated: true,
@@ -112,17 +126,19 @@ const NEATVisualizer: React.FC<NEATVisualizerProps> = ({ model }) => {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   useEffect(() => {
-    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-      nodes,
-      edges
-    );
-
-    setNodes([...layoutedNodes]);
-    setEdges([...layoutedEdges]);
-  }, [nodes, edges, setNodes, setEdges]);
+    if (isInitialLayout) {
+      console.log("Applying initial layout to nodes and edges");
+      const layoutedNodes = getLayoutedElements(nodes, edges);
+      setNodes([...layoutedNodes]);
+      setIsInitialLayout(false);
+    }
+  }, [isInitialLayout, nodes, edges, setNodes]);
 
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+    (params: Connection) => {
+      console.log("New connection:", params);
+      setEdges((eds) => addEdge(params, eds));
+    },
     [setEdges]
   );
 
@@ -132,11 +148,12 @@ const NEATVisualizer: React.FC<NEATVisualizerProps> = ({ model }) => {
   }, []);
 
   if (!model.parsed_model) {
+    console.log("No parsed model data available");
     return <div>No parsed model data available.</div>;
   }
 
   return (
-    <div style={{ width: "100%", height: "500px" }}>
+    <div style={{ width: "100%", height }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
