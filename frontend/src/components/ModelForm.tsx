@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
-import { NEATModel } from "../types/NEATModel";
+import { NEATModel, Node, Edge, NodeType } from "../types/NEATModel";
 
 interface ModelFormProps {
   mode: "create" | "edit";
@@ -19,19 +19,8 @@ const ModelForm: React.FC<ModelFormProps> = ({ mode }) => {
     },
   });
   const [reactflowJson, setReactflowJson] = useState<{
-    nodes: Array<{
-      id: string;
-      type: string;
-      position: { x: number; y: number };
-      data: { label: string };
-    }>;
-    edges: Array<{
-      id: string;
-      source: string;
-      target: string;
-      label: string;
-      type: string;
-    }>;
+    nodes: Array<Node>;
+    edges: Array<Edge>;
   } | null>(null);
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -59,7 +48,9 @@ const ModelForm: React.FC<ModelFormProps> = ({ mode }) => {
 
     // Extract nodes and connections
     const nodesData = Array.from(
-      rawData.matchAll(/(\d+)\s+DefaultNodeGene.*bias=([-\d.]+)/g)
+      rawData.matchAll(
+        /(\d+)\s+DefaultNodeGene.*bias=([-\d.]+).*activation=([a-zA-Z]+)/g
+      )
     );
     const connectionsData = Array.from(
       rawData.matchAll(
@@ -99,16 +90,18 @@ const ModelForm: React.FC<ModelFormProps> = ({ mode }) => {
     }
 
     // Prepare nodes for ReactFlow
-    const nodes = nodesData.map(([, nodeId, bias]) => {
-      let nodeType = "default";
-      if (parseInt(nodeId) < 0) nodeType = "input";
-      else if (parseInt(nodeId) === 0) nodeType = "output";
+    const nodes = nodesData.map(([, nodeId, bias, activation]) => {
+      let nodeType = NodeType.HIDDEN;
+      if (parseInt(nodeId) < 0) nodeType = NodeType.INPUT;
+      else if (parseInt(nodeId) === 0) nodeType = NodeType.OUTPUT;
 
       return {
         id: nodeId,
         type: nodeType,
         position: { x: 0, y: 0 }, // You may want to implement a layout algorithm here
-        data: { label: `Node ${nodeId}\nBias: ${bias}` },
+        // data: { label: `Node ${nodeId}\nBias: ${parseFloat(bias).toFixed(3)}` },
+        bias: parseFloat(bias),
+        activation: activation,
       };
     });
 
@@ -119,8 +112,8 @@ const ModelForm: React.FC<ModelFormProps> = ({ mode }) => {
         id: `e${source}-${target}`,
         source,
         target,
-        label: `Weight: ${weight}`,
         type: "smoothstep",
+        weight: parseFloat(weight),
       }));
 
     // Combine nodes and edges into the final ReactFlow-compatible JSON

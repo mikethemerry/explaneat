@@ -1,3 +1,24 @@
+export enum NodeType {
+  INPUT = "input",
+  OUTPUT = "output",
+  HIDDEN = "default",
+}
+export interface Node {
+  id: string;
+  type: NodeType;
+  position: { x: number; y: number };
+  bias: number;
+  activation: string;
+}
+
+export interface Edge {
+  id: string;
+  source: string;
+  target: string;
+  weight: number;
+  type: string;
+}
+
 export interface NEATModel {
   id: number;
   model_name: string;
@@ -6,19 +27,8 @@ export interface NEATModel {
   created_at: string;
   updated_at: string;
   parsed_model: {
-    nodes: Array<{
-      id: string;
-      type: string;
-      position: { x: number; y: number };
-      data: { label: string };
-    }>;
-    edges: Array<{
-      id: string;
-      source: string;
-      target: string;
-      label: string;
-      type: string;
-    }>;
+    nodes: Array<Node>;
+    edges: Array<Edge>;
   };
   raw_data: string;
 }

@@ -15,30 +15,7 @@ import ReactFlow, {
 import dagre from "@dagrejs/dagre";
 import "reactflow/dist/style.css";
 
-export interface NEATModel {
-  id: number;
-  model_name: string;
-  dataset: string;
-  version: string;
-  created_at: string;
-  updated_at: string;
-  parsed_model?: {
-    nodes: Array<{
-      id: string;
-      type: string;
-      position: { x: number; y: number };
-      data: { label: string };
-    }>;
-    edges: Array<{
-      id: string;
-      source: string;
-      target: string;
-      label: string;
-      type: string;
-    }>;
-  };
-  raw_data: string;
-}
+import { NEATModel } from "../types/NEATModel";
 
 interface NEATVisualizerProps {
   model: NEATModel;
@@ -107,6 +84,9 @@ const NEATVisualizer: React.FC<NEATVisualizerProps> = ({
         y: Math.random() * 500,
       },
       draggable: true,
+      data: {
+        label: `Node ${node.id}`,
+      },
     }));
   }, [model.parsed_model?.nodes]);
 
@@ -119,6 +99,7 @@ const NEATVisualizer: React.FC<NEATVisualizerProps> = ({
     return model.parsed_model.edges.map((edge) => ({
       ...edge,
       animated: true,
+      label: `Weight: ${edge.weight.toFixed(3)}`,
     }));
   }, [model.parsed_model?.edges]);
 
