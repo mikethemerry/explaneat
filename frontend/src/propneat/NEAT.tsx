@@ -70,8 +70,7 @@ export class NEAT {
     return order;
     // return order.reverse();
   }
-
-  public forward(inputs: number[]): number[] {
+  public forward(inputs: number[], watchNode?: string): number[] {
     // Clear previous values
     this.nodeValues.clear();
 
@@ -120,6 +119,15 @@ export class NEAT {
       const activationFn = this.getActivationFunction(node);
       this.nodeValues.set(nodeId, activationFn(sum));
     });
+
+    // If watching a specific node, return just that node's value
+    if (watchNode) {
+      const value = this.nodeValues.get(watchNode);
+      if (value === undefined) {
+        throw new Error(`No value calculated for watched node ${watchNode}`);
+      }
+      return [value];
+    }
 
     // Return output values
     const outputNodes = Array.from(this.nodes.values())

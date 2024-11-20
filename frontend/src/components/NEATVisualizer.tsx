@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import ReactFlow, {
   Background,
   Controls,
@@ -18,6 +18,7 @@ import "reactflow/dist/style.css";
 import { NEATModel } from "../types/NEATModel";
 import { getEdgeStyle, getAnimatedBool } from "./VisualizerUtils";
 import NeatVisualizationPanel from "./NEATVisualizationPanel";
+import _ from "lodash";
 
 interface NEATVisualizerProps {
   model: NEATModel;
@@ -73,6 +74,8 @@ const NEATVisualizer: React.FC<NEATVisualizerProps> = ({
   console.log("Rendering NEATVisualizer with model:", model);
   const [isInitialLayout, setIsInitialLayout] = useState(true);
 
+  const staticModel = useMemo(() => _.cloneDeep(model), []);
+
   const initialNodes: Node[] = React.useMemo(() => {
     if (!model.parsed_model?.nodes) {
       console.log("No nodes found in parsed_model");
@@ -109,7 +112,6 @@ const NEATVisualizer: React.FC<NEATVisualizerProps> = ({
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-
   useEffect(() => {
     if (isInitialLayout) {
       console.log("Applying initial layout to nodes and edges");
@@ -132,6 +134,12 @@ const NEATVisualizer: React.FC<NEATVisualizerProps> = ({
     // You can add additional logic here if needed
   }, []);
 
+  // Memoize the panel component itself
+  const visualizationPanel = useMemo(
+    () => <NeatVisualizationPanel neatModel={_.cloneDeep(model)} />,
+    []
+  ); // Empty dependency array means this only creates once
+
   if (!model.parsed_model) {
     console.log("No parsed model data available");
     return <div>No parsed model data available.</div>;
@@ -151,7 +159,7 @@ const NEATVisualizer: React.FC<NEATVisualizerProps> = ({
         <Background />
         <MiniMap />
         <Controls />
-        <NeatVisualizationPanel neatModel={model} />
+        {visualizationPanel}
       </ReactFlow>
     </div>
   );
