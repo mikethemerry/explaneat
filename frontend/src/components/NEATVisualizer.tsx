@@ -16,6 +16,7 @@ import dagre from "@dagrejs/dagre";
 import "reactflow/dist/style.css";
 
 import { NEATModel } from "../types/NEATModel";
+import { getEdgeStyle, getAnimatedBool } from "./VisualizerUtils";
 
 interface NEATVisualizerProps {
   model: NEATModel;
@@ -98,8 +99,10 @@ const NEATVisualizer: React.FC<NEATVisualizerProps> = ({
     console.log("Initializing edges:", model.parsed_model.edges);
     return model.parsed_model.edges.map((edge) => ({
       ...edge,
-      animated: true,
+      animated: getAnimatedBool(edge.weight),
+      type: "bezier",
       label: `Weight: ${edge.weight.toFixed(3)}`,
+      style: getEdgeStyle(edge.weight),
     }));
   }, [model.parsed_model?.edges]);
 
