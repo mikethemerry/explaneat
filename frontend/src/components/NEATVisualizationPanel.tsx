@@ -16,25 +16,47 @@ const NeatVisualizationPanel = ({ neatModel }: { neatModel: NEATModel }) => {
   // Create NEAT instance
   const neat = useMemo(() => new NEAT(neatModel), [neatModel]);
 
+  // Get input nodes
+  const inputNodes = useMemo(
+    () =>
+      neatModel.parsed_model.nodes
+        .filter((node) => node.type === "input")
+        .map((node) => ({ id: node.id, label: node.id })),
+    [neatModel]
+  );
+
+  // State for selected input dimensions
+  const [selectedInputs, setSelectedInputs] = useState<[string, string]>([
+    inputNodes[0]?.id || "",
+    inputNodes[1]?.id || "",
+  ]);
+
   // Generate data points for visualization
   const generateDataPoints = () => {
     const points = [];
-    const n_inputs =
-      neatModel.parsed_model.nodes.filter((node) => node.type === "input")
-        .length - 2;
-    let default_input = new Array(n_inputs).fill(0);
+    const allInputs = new Array(inputNodes.length).fill(0);
 
-    for (let x = 0; x <= 1; x += 0.1) {
-      for (let y = 0; y <= 1; y += 0.1) {
-        const input = [x, y, ...default_input];
-        const output = neat.forward(input)[0];
+    // Find indices of selected inputs
+    const idx1 = inputNodes.findIndex((node) => node.id === selectedInputs[0]);
+    const idx2 = inputNodes.findIndex((node) => node.id === selectedInputs[1]);
+
+    // Increased resolution for smoother visualization
+    for (let x = 0; x <= 1; x += 0.025) {
+      for (let y = 0; y <= 1; y += 0.025) {
+        const inputs = [...allInputs];
+        inputs[idx1] = x;
+        inputs[idx2] = y;
+        const output = neat.forward(inputs)[0];
+
+        // Create a more contrasting color scheme
+        const hue = output * 240; // Maps 0-1 to blue(240) to red(0)
+        const saturation = 100;
+        const lightness = 50;
         points.push({
-          x: x.toFixed(2),
-          y: y.toFixed(2),
+          x: x.toFixed(3),
+          y: y.toFixed(3),
           z: output,
-          fill: `rgb(${Math.floor(output * 255)}, ${Math.floor(
-            output * 255
-          )}, 255)`,
+          fill: `hsl(${hue}, ${saturation}%, ${lightness}%)`,
         });
       }
     }
@@ -47,7 +69,7 @@ const NeatVisualizationPanel = ({ neatModel }: { neatModel: NEATModel }) => {
 
   useEffect(() => {
     setData(generateDataPoints());
-  }, [neatModel]);
+  }, [neatModel, selectedInputs]);
 
   return (
     <Panel
@@ -58,6 +80,44 @@ const NeatVisualizationPanel = ({ neatModel }: { neatModel: NEATModel }) => {
         <h3 className="text-lg font-semibold mb-4">
           NEAT Output Visualization
         </h3>
+        <div className="mb-4 flex gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              X-Axis Input:
+            </label>
+            <select
+              value={selectedInputs[0]}
+              onChange={(e) =>
+                setSelectedInputs([e.target.value, selectedInputs[1]])
+              }
+              className="border rounded p-1 text-sm"
+            >
+              {inputNodes.map((node) => (
+                <option key={node.id} value={node.id}>
+                  {node.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Y-Axis Input:
+            </label>
+            <select
+              value={selectedInputs[1]}
+              onChange={(e) =>
+                setSelectedInputs([selectedInputs[0], e.target.value])
+              }
+              className="border rounded p-1 text-sm"
+            >
+              {inputNodes.map((node) => (
+                <option key={node.id} value={node.id}>
+                  {node.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
         <ScatterChart
           width={400}
           height={400}
@@ -67,16 +127,23 @@ const NeatVisualizationPanel = ({ neatModel }: { neatModel: NEATModel }) => {
           <XAxis
             type="number"
             dataKey="x"
-            name="Input 1"
+            name={inputNodes.find((n) => n.id === selectedInputs[0])?.label}
             domain={[0, 1]}
-            label={{ value: "Input 1", position: "bottom" }}
+            label={{
+              value: inputNodes.find((n) => n.id === selectedInputs[0])?.label,
+              position: "bottom",
+            }}
           />
           <YAxis
             type="number"
             dataKey="y"
-            name="Input 2"
+            name={inputNodes.find((n) => n.id === selectedInputs[1])?.label}
             domain={[0, 1]}
-            label={{ value: "Input 2", angle: -90, position: "left" }}
+            label={{
+              value: inputNodes.find((n) => n.id === selectedInputs[1])?.label,
+              angle: -90,
+              position: "left",
+            }}
           />
           <ZAxis type="number" dataKey="z" range={[0, 400]} name="Output" />
           <Tooltip
@@ -86,8 +153,20 @@ const NeatVisualizationPanel = ({ neatModel }: { neatModel: NEATModel }) => {
                 const { x, y, z } = payload[0].payload;
                 return (
                   <div className="bg-white p-2 border rounded shadow">
-                    <p className="text-sm">Input 1: {x}</p>
-                    <p className="text-sm">Input 2: {y}</p>
+                    <p className="text-sm">
+                      {
+                        inputNodes.find((n) => n.id === selectedInputs[0])
+                          ?.label
+                      }
+                      : {x}
+                    </p>
+                    <p className="text-sm">
+                      {
+                        inputNodes.find((n) => n.id === selectedInputs[1])
+                          ?.label
+                      }
+                      : {y}
+                    </p>
                     <p className="text-sm">Output: {Number(z).toFixed(4)}</p>
                   </div>
                 );
@@ -99,7 +178,7 @@ const NeatVisualizationPanel = ({ neatModel }: { neatModel: NEATModel }) => {
             data={data}
             fill="#8884d8"
             shape={(props: any) => (
-              <circle {...props} fill={props.payload.fill} r={4} />
+              <circle {...props} fill={props.payload.fill} r={5} />
             )}
           />
         </ScatterChart>
