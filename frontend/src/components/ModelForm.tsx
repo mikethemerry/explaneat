@@ -17,6 +17,11 @@ const ModelForm: React.FC<ModelFormProps> = ({ mode }) => {
       nodes: [],
       edges: [],
     },
+    config: {
+      input_nodes: 0,
+      output_nodes: 0,
+      hidden_nodes: 0,
+    },
   });
   const [reactflowJson, setReactflowJson] = useState<{
     nodes: Array<Node>;

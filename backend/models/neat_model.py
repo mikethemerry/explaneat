@@ -14,6 +14,7 @@ class NEATModel(db.Model):
     )
     parsed_model = db.Column(JSON, nullable=False)
     raw_data = db.Column(db.Text, nullable=False)
+    # config = db.Column(JSON, nullable=False)
 
     def __init__(self, model_name, dataset, version, raw_data, parsed_model):
         self.model_name = model_name

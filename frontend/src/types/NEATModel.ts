@@ -30,5 +30,10 @@ export interface NEATModel {
     nodes: Array<Node>;
     edges: Array<Edge>;
   };
+  config: {
+    input_nodes: number;
+    output_nodes: number;
+    hidden_nodes: number;
+  };
   raw_data: string;
 }

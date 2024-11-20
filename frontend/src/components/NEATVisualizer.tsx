@@ -17,6 +17,7 @@ import "reactflow/dist/style.css";
 
 import { NEATModel } from "../types/NEATModel";
 import { getEdgeStyle, getAnimatedBool } from "./VisualizerUtils";
+import NeatVisualizationPanel from "./NEATVisualizationPanel";
 
 interface NEATVisualizerProps {
   model: NEATModel;
@@ -150,6 +151,7 @@ const NEATVisualizer: React.FC<NEATVisualizerProps> = ({
         <Background />
         <MiniMap />
         <Controls />
+        <NeatVisualizationPanel neatModel={model} />
       </ReactFlow>
     </div>
   );
