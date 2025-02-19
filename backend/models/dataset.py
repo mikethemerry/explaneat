@@ -29,7 +29,10 @@ class Dataset(db.Model):
     missing_values = db.Column(db.Boolean, default=False)
 
     # Data storage
-    data_blob = db.Column(db.LargeBinary, nullable=False)  # Compressed data array
+    features_blob = db.Column(
+        db.LargeBinary, nullable=False
+    )  # Compressed features array
+    targets_blob = db.Column(db.LargeBinary, nullable=False)  # Compressed targets array
     data_format = db.Column(
         db.String(50), nullable=False
     )  # Format of stored data (e.g. 'numpy', 'pandas')
@@ -48,7 +51,8 @@ class Dataset(db.Model):
         feature_types,
         task_type,
         data_url,
-        data_blob,
+        features_blob,
+        targets_blob,
         data_format,
         n_classes=None,
         description=None,
@@ -67,7 +71,8 @@ class Dataset(db.Model):
         self.paper_url = paper_url
         self.data_url = data_url
         self.missing_values = missing_values
-        self.data_blob = data_blob
+        self.features_blob = features_blob
+        self.targets_blob = targets_blob
         self.data_format = data_format
 
     def to_dict(self):
@@ -140,7 +145,10 @@ class DatasetSplit(db.Model):
     dataset_id = db.Column(db.Integer, db.ForeignKey("dataset.id"), nullable=False)
     split_type = db.Column(db.String(50), nullable=False)  # 'train' or 'test'
     seed = db.Column(db.Integer, nullable=False)
-    data_blob = db.Column(db.LargeBinary, nullable=False)  # Compressed data array
+    features_blob = db.Column(
+        db.LargeBinary, nullable=False
+    )  # Compressed features array
+    targets_blob = db.Column(db.LargeBinary, nullable=False)  # Compressed targets array
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
