@@ -37,6 +37,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 <div className="ml-10 flex items-baseline space-x-4">
                   <NavLink to="/">Dashboard</NavLink>
                   <NavLink to="/create">Create Model</NavLink>
+                  <NavLink to="/datasets">Datasets</NavLink>
                 </div>
               </div>
             </div>

@@ -25,8 +25,10 @@ def create_app():
     migrate.init_app(app, db)
 
     from .routes.api import api_bp
+    from .routes import dataset
 
     app.register_blueprint(api_bp, url_prefix="/api")
+    app.register_blueprint(dataset.bp)
 
     # Create database tables
     with app.app_context():
