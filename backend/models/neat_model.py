@@ -1,6 +1,23 @@
 from backend import db
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.types import TypeDecorator, TEXT
+import json
+
+
+# Add this for SQLite compatibility
+class SQLiteJSON(TypeDecorator):
+    impl = TEXT
+
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            return json.dumps(value)
+        return None
+
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            return json.loads(value)
+        return None
 
 
 class NEATModel(db.Model):
@@ -12,7 +29,8 @@ class NEATModel(db.Model):
     updated_at = db.Column(
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
-    parsed_model = db.Column(JSON, nullable=False)
+    # Use SQLiteJSON for testing compatibility
+    parsed_model = db.Column(SQLiteJSON, nullable=False)
     raw_data = db.Column(db.Text, nullable=False)
     # config = db.Column(JSON, nullable=False)
 
