@@ -24,6 +24,16 @@ const ModelList: React.FC = () => {
     fetchModels();
   }, []);
 
+  if (models.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-neutral-500">
+          No models found. Create a new model to get started.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white shadow overflow-hidden sm:rounded-md">
       <ul className="divide-y divide-neutral-200">

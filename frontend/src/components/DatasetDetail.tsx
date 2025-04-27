@@ -1,5 +1,5 @@
 import React from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 
 interface Dataset {
   id: number;
@@ -87,20 +87,27 @@ export const DatasetDetail: React.FC = () => {
         </div>
       </div>
 
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-4">Features</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {dataset.columns.map((column, index) => (
-            <div key={index} className="p-3 border rounded">
-              <p className="font-medium">{column.name}</p>
-              <p className="text-sm">Type: {column.data_type}</p>
-              {column.is_target && (
-                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                  Target
-                </span>
-              )}
-            </div>
-          ))}
+      <div className="mt-4">
+        <h2 className="text-xl font-semibold mb-2">View Data</h2>
+        <div className="flex gap-4">
+          <Link
+            to={`/datasets/${dataset.id}/view`}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            View Full Dataset
+          </Link>
+          <Link
+            to={`/datasets/${dataset.id}/view?split=train`}
+            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+          >
+            View Training Split
+          </Link>
+          <Link
+            to={`/datasets/${dataset.id}/view?split=test`}
+            className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
+          >
+            View Test Split
+          </Link>
         </div>
       </div>
     </div>

@@ -145,6 +145,7 @@ class DatasetSplit(db.Model):
     dataset_id = db.Column(db.Integer, db.ForeignKey("dataset.id"), nullable=False)
     split_type = db.Column(db.String(50), nullable=False)  # 'train' or 'test'
     seed = db.Column(db.Integer, nullable=False)
+    split_size = db.Column(db.Float)  # Size of split as fraction of total
     features_blob = db.Column(
         db.LargeBinary, nullable=False
     )  # Compressed features array
@@ -156,5 +157,6 @@ class DatasetSplit(db.Model):
             "id": self.id,
             "split_type": self.split_type,
             "seed": self.seed,
+            "split_size": self.split_size,
             "created_at": self.created_at.isoformat(),
         }
