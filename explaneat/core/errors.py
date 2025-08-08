@@ -1,0 +1,2 @@
+class GenomeNotValidError(Exception):
+    pass
