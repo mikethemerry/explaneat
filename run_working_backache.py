@@ -77,6 +77,10 @@ class DatabaseReporter:
     def end_experiment(self, config, population, species):
         pass
 
+    def info(self, msg):
+        """Log info messages - required by NEAT ReporterSet"""
+        logger.info(f"DatabaseReporter: {msg}")
+
 
 def prepare_backache_data():
     """Load and prepare the backache dataset from PMLB"""

@@ -45,14 +45,15 @@ class NeuralNeat(nn.Module):
         self.genome = genome
         self.config = config
         self.node_mapping = NodeMapping(genome, config)
-        self.valid = self.is_valid()
+        # self.valid = self.is_valid()
+        self.valid = True
         USE_CUDA = True and torch.cuda.is_available()
         # USE_CUDA = False
 
         self.device = torch.device("cuda:1" if USE_CUDA else "cpu")
 
-        if not self.valid:
-            raise GenomeNotValidError()
+        # if not self.valid:
+        # raise GenomeNotValidError()
         try:
             layers, node_tracker = self.parse_genome_to_layers(genome, config)
         except Exception as e:
@@ -447,8 +448,7 @@ class NeuralNeat(nn.Module):
         # all nodes then some have no connection to input, so are invalid
 
         if len(self.node_mapping.connection_map) == 0:
-            print("The connection map is empty")
-            return False
+            raise GenomeNotValidError("The connection map is empty")
         node_tracker = {
             node_id: {"depth": 0, "output_ids": [], "input_ids": []}
             for node_id in self.genome.nodes
@@ -482,11 +482,9 @@ class NeuralNeat(nn.Module):
 
         for node_id in node_tracker:
             if not node_id in reached_nodes:
-                print("I can't reach this node going forwards {}".format(node_id))
-                # print(reached_nodes)
-                # print(node_tracker)
-                # print("I can't reach this node going forwards {}".format(node_id))
-                return False
+                raise GenomeNotValidError(
+                    f"I can't reach this node going forwards {node_id}"
+                )
 
         # Check that the outputs can reach all nodes
         # Instantiate stack with depth==0 nodes
@@ -508,12 +506,9 @@ class NeuralNeat(nn.Module):
 
         for node_id in node_tracker:
             if not node_id in reached_nodes:
-                print("I can't reach this node going backwards {}".format(node_id))
-                print(self.genome)
-                # print(reached_nodes)
-                # print(node_tracker)
-                # print("I can't reach this node going backwards{}".format(node_id))
-                return False
+                raise GenomeNotValidError(
+                    f"I can't reach this node going backwards {node_id}\nGenome: {self.genome}"
+                )
         return True
 
     def shapes(self):
