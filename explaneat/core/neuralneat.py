@@ -2,6 +2,7 @@ from explaneat.core.errors import GenomeNotValidError
 import pandas as pd
 import numpy as np
 import random
+import sys
 
 import torch
 import torch.nn as nn
@@ -45,22 +46,29 @@ class NeuralNeat(nn.Module):
         self.genome = genome
         self.config = config
         self.node_mapping = NodeMapping(genome, config)
-        # self.valid = self.is_valid()
-        self.valid = True
+        
+        # Use the new validation approach - identify valid nodes instead of throwing exceptions
+        validation_result = self.is_valid()
+        self.valid_nodes = validation_result["valid_nodes"]
+        self.unreachable_nodes = validation_result["unreachable_nodes"]
+        
+        # Check if we have any valid nodes to work with
+        if not self.valid_nodes:
+            raise GenomeNotValidError("No valid nodes found in genome")
+        
         USE_CUDA = True and torch.cuda.is_available()
         # USE_CUDA = False
 
         self.device = torch.device("cuda:1" if USE_CUDA else "cpu")
 
-        # if not self.valid:
-        # raise GenomeNotValidError()
         try:
             layers, node_tracker = self.parse_genome_to_layers(genome, config)
         except Exception as e:
             print(e)
             print(self.genome)
-            print(self.valid)
-            exit()
+            print("Valid nodes:", self.valid_nodes)
+            print("Unreachable nodes:", self.unreachable_nodes)
+            sys.exit(1)
 
         self.layers = self.node_mapping.layers
         self.node_tracker = self.node_mapping.node_mapping
@@ -118,17 +126,24 @@ class NeuralNeat(nn.Module):
         pass
 
     def parse_genome_to_layers(self, genome, config):
+        # Only work with valid nodes - exclude unreachable nodes
+        valid_node_ids = set(self.valid_nodes)
+        
         node_tracker = {
             node_id: {"depth": 0, "output_ids": [], "input_ids": [], "depths": []}
-            for node_id in genome.nodes
+            for node_id in genome.nodes if node_id in valid_node_ids
         }
         for node_id in config.genome_config.input_keys:
-            node_tracker[node_id] = {"depth": 0, "output_ids": [], "input_ids": []}
-        trace_stack = [node_id for node_id in config.genome_config.input_keys]
+            if node_id in valid_node_ids:
+                node_tracker[node_id] = {"depth": 0, "output_ids": [], "input_ids": []}
+        
+        trace_stack = [node_id for node_id in config.genome_config.input_keys if node_id in valid_node_ids]
 
         for connection in genome.connections:
-            node_tracker[connection[0]]["output_ids"].append(connection[1])
-            node_tracker[connection[1]]["input_ids"].append(connection[0])
+            # Only include connections between valid nodes
+            if connection[0] in valid_node_ids and connection[1] in valid_node_ids:
+                node_tracker[connection[0]]["output_ids"].append(connection[1])
+                node_tracker[connection[1]]["input_ids"].append(connection[0])
 
         while len(trace_stack) > 0:
             trace = trace_stack[0]
@@ -203,8 +218,9 @@ class NeuralNeat(nn.Module):
                 layer["out_weights"] = []
                 try:
                     layer["bias"] = [
-                        genome.nodes[node_id].bias
+                        genome.nodes[node_id].bias if node_id in genome.nodes else 0.0
                         for node_id, node in layer["nodes"].items()
+                        if node_id in valid_node_ids
                     ]
                 except Exception as e:
                     print(e)
@@ -218,26 +234,40 @@ class NeuralNeat(nn.Module):
                 except Exception as e:
                     print(e)
                     print(self.genome)
-                    exit()
+                    sys.exit(1)
             # Handle input layer "edge" case
             elif layer["is_input_layer"]:
                 layer["in_weights"] = []
                 layer["bias"] = []
-                layer["out_weights"] = [
-                    [0 for __ in layers[layer_id + 1]["nodes"]] for _ in layer["nodes"]
-                ]
+                # Check if next layer exists
+                if layer_id + 1 in layers:
+                    layer["out_weights"] = [
+                        [0 for __ in layers[layer_id + 1]["nodes"]] for _ in layer["nodes"]
+                    ]
+                else:
+                    layer["out_weights"] = []
             # Handle generic case
             else:
-                layer["out_weights"] = [
-                    [0 for __ in layers[layer_id + 1]["nodes"]] for _ in layer["nodes"]
-                ]
-                layer["in_weights"] = [
-                    [0 for __ in layers[layer_id - 1]["nodes"]] for _ in layer["nodes"]
-                ]
+                # Check if next layer exists
+                if layer_id + 1 in layers:
+                    layer["out_weights"] = [
+                        [0 for __ in layers[layer_id + 1]["nodes"]] for _ in layer["nodes"]
+                    ]
+                else:
+                    layer["out_weights"] = []
+                
+                # Check if previous layer exists
+                if layer_id - 1 in layers:
+                    layer["in_weights"] = [
+                        [0 for __ in layers[layer_id - 1]["nodes"]] for _ in layer["nodes"]
+                    ]
+                else:
+                    layer["in_weights"] = []
 
                 layer["bias"] = [
-                    genome.nodes[node_id].bias
+                    genome.nodes[node_id].bias if node_id in genome.nodes else 0.0
                     for node_id, node in layer["nodes"].items()
+                    if node_id in valid_node_ids
                 ]
                 # else:
                 # layer['bias'] = [0 for _ in layer['nodes']]
@@ -256,7 +286,7 @@ class NeuralNeat(nn.Module):
                 input_layer = layers[input_layer_id]
                 for node_id, node in input_layer["nodes"].items():
                     for node_output_id in node["output_ids"]:
-                        if node_output_id in layer["nodes"]:
+                        if node_output_id in layer["nodes"] and node_output_id in valid_node_ids:
                             node_output = layer["nodes"][node_output_id]
                             # I HAVE THIS NODE!
                             # What is it's weight?
@@ -441,14 +471,14 @@ class NeuralNeat(nn.Module):
     optimize = optimise
 
     def is_valid(self, print_reached_nodes=False):
-        # Some nodes can't be reached in feed forward from inputs
-        # They need to be found and removed
-        # Will use breadth-first search to span network from feed forward
-        # and identify all reached nodes. If reached nodes don't match list of
-        # all nodes then some have no connection to input, so are invalid
-
+        """
+        Identifies which nodes are reachable from inputs and outputs.
+        Returns a dictionary of valid nodes instead of raising exceptions.
+        Unreachable nodes are excluded from the neural network but remain in the genome.
+        """
         if len(self.node_mapping.connection_map) == 0:
-            raise GenomeNotValidError("The connection map is empty")
+            return {"valid_nodes": [], "unreachable_nodes": []}
+        
         node_tracker = {
             node_id: {"depth": 0, "output_ids": [], "input_ids": []}
             for node_id in self.genome.nodes
@@ -461,8 +491,8 @@ class NeuralNeat(nn.Module):
             node_tracker[connection[0]]["output_ids"].append(connection[1])
             node_tracker[connection[1]]["input_ids"].append(connection[0])
 
-        reached_nodes = []
-
+        # Forward traversal: from inputs to outputs
+        forward_reached_nodes = []
         node_stack = []
 
         # Check that the inputs can reach all nodes
@@ -471,48 +501,56 @@ class NeuralNeat(nn.Module):
             node_stack.append(node_id)
 
         while len(node_stack) > 0:
-            reached_nodes.append(node_stack[0])
+            forward_reached_nodes.append(node_stack[0])
             for node_id in node_tracker[node_stack[0]]["output_ids"]:
                 node_stack.append(node_id)
             del node_stack[0]
 
         if print_reached_nodes:
-            print("the reached nodes are")
-            print(reached_nodes)
+            print("the forward reached nodes are")
+            print(forward_reached_nodes)
 
-        for node_id in node_tracker:
-            if not node_id in reached_nodes:
-                raise GenomeNotValidError(
-                    f"I can't reach this node going forwards {node_id}"
-                )
-
-        # Check that the outputs can reach all nodes
-        # Instantiate stack with depth==0 nodes
-        reached_nodes = []
-
+        # Backward traversal: from outputs to inputs
+        backward_reached_nodes = []
         node_stack = []
         for node_id in self.config.genome_config.output_keys:
             node_stack.append(node_id)
 
         while len(node_stack) > 0:
-            reached_nodes.append(node_stack[0])
+            backward_reached_nodes.append(node_stack[0])
             for node_id in node_tracker[node_stack[0]]["input_ids"]:
                 node_stack.append(node_id)
             del node_stack[0]
 
         if print_reached_nodes:
-            print("the reached nodes are")
-            print(reached_nodes)
+            print("the backward reached nodes are")
+            print(backward_reached_nodes)
 
-        for node_id in node_tracker:
-            if not node_id in reached_nodes:
-                raise GenomeNotValidError(
-                    f"I can't reach this node going backwards {node_id}\nGenome: {self.genome}"
-                )
-        return True
+        # Find nodes that are reachable from both directions
+        valid_nodes = set(forward_reached_nodes) & set(backward_reached_nodes)
+        all_nodes = set(node_tracker.keys())
+        unreachable_nodes = all_nodes - valid_nodes
+
+        if print_reached_nodes:
+            print("valid nodes:", valid_nodes)
+            print("unreachable nodes:", unreachable_nodes)
+
+        return {
+            "valid_nodes": list(valid_nodes),
+            "unreachable_nodes": list(unreachable_nodes)
+        }
 
     def shapes(self):
         return {ix: self.layers[ix]["weights_shape"] for ix in range(len(self.layers))}
+    
+    def get_unreachable_nodes(self):
+        """Returns information about unreachable nodes in the genome"""
+        return {
+            "unreachable_nodes": self.unreachable_nodes,
+            "valid_nodes": self.valid_nodes,
+            "total_nodes": len(self.genome.nodes) + len(self.config.genome_config.input_keys),
+            "has_unreachable": len(self.unreachable_nodes) > 0
+        }
 
     def help_me_debug(self):
         print("=============================")
@@ -526,12 +564,21 @@ class NeuralNeat(nn.Module):
         print("-----------------------------")
         print("")
         print("-----------------------------")
+        print("NODE VALIDATION INFO")
+        print("-----------------------------")
+        unreachable_info = self.get_unreachable_nodes()
+        print(f"Valid nodes: {unreachable_info['valid_nodes']}")
+        print(f"Unreachable nodes: {unreachable_info['unreachable_nodes']}")
+        print(f"Total nodes: {unreachable_info['total_nodes']}")
+        print(f"Has unreachable nodes: {unreachable_info['has_unreachable']}")
+        print("-----------------------------")
+        print("")
+        print("-----------------------------")
         print("output i")
         print("-----------------------------")
         print(self._outputs)
         print("======================")
         print(self.layers)
-        print(self.is_valid(True))
         print("---===---===---===")
         for ix, layer in self.node_mapping.layers.items():
             print("Layer {}".format(ix))
@@ -618,6 +665,8 @@ class NodeMapping(object):
         self.genome = genome
         self.config = config
         self.connection_map = {}
+        self.valid_nodes = None
+        self.unreachable_nodes = None
         self._create_node_mapping()
         self._create_layer_mapping()
 
@@ -651,12 +700,14 @@ class NodeMapping(object):
             }
             for node_id in node_keys
         }
+        
         # index all connections to the nodes
         for connection in genome.connections:
             # Check for activation
             if genome.connections[connection].enabled == True:
                 node_tracker[connection[0]]["output_ids"].append(connection[1])
                 node_tracker[connection[1]]["input_ids"].append(connection[0])
+        
         # Trace stack for breadth-first graph traversal
         trace_stack = [node_id for node_id in genome_config.input_keys]
         # Set default depth for input keys
@@ -726,6 +777,10 @@ class NodeMapping(object):
         self.valid_node_mapping = {
             node_id: node for node_id, node in node_tracker.items() if node["is_valid"]
         }
+        
+        # Store valid and unreachable nodes for reference
+        self.valid_nodes = [node_id for node_id, node in node_tracker.items() if node["is_valid"]]
+        self.unreachable_nodes = [node_id for node_id, node in node_tracker.items() if not node["is_valid"]]
 
     @property
     def width(self):

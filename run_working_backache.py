@@ -25,7 +25,7 @@ from explaneat.core.backproppop import BackpropPopulation
 from explaneat.core.neuralneat import NeuralNeat
 from explaneat.core.experiment import ExperimentReporterSet
 from explaneat.core.errors import GenomeNotValidError
-from explaneat.evaluators.evaluators import binary_cross_entropy
+from explaneat.evaluators.evaluators import binary_cross_entropy, auc_fitness
 from explaneat.core.explaneat import ExplaNEAT
 from explaneat.visualization import visualize
 import time
@@ -110,7 +110,7 @@ def create_backache_config(num_inputs):
 
 [NEAT]
 fitness_criterion     = max
-fitness_threshold     = 40.0
+fitness_threshold     = 0.95
 pop_size              = 50
 reset_on_extinction   = False
 
@@ -329,7 +329,7 @@ def run_working_backache_experiment(num_generations=10):
     logger.info(f"Input features: {X_train.shape[1]}")
     logger.info(f"Train set: {X_train.shape}, Test set: {X_test.shape}")
     logger.info(f"Population size: {getattr(config, 'pop_size', 50)}")
-    logger.info(f"Fitness threshold: {getattr(config, 'fitness_threshold', 40.0)}")
+    logger.info(f"Fitness threshold: {getattr(config, 'fitness_threshold', 0.95)}")
     logger.info(f"Epochs per generation: 5 (backprop epochs per generation)")
     logger.info(f"Number of generations: {num_generations}")
     logger.info("====================================")
@@ -360,10 +360,10 @@ def run_working_backache_experiment(num_generations=10):
     logger.info(f"🔄 Starting evolution for {num_generations} generations...")
 
     try:
-        # Run the evolution using BackpropPopulation's run method with binary_cross_entropy
+        # Run the evolution using BackpropPopulation's run method with AUC fitness
         best_genome = population.run(
-            fitness_function=binary_cross_entropy,
-            n=num_generations,
+            fitness_function=auc_fitness,
+            n=50,
             nEpochs=5,  # Number of backprop epochs per generation
         )
 
@@ -374,7 +374,7 @@ def run_working_backache_experiment(num_generations=10):
             experiment.end_time = datetime.now(timezone.utc)
 
         logger.info("✅ Evolution completed!")
-        logger.info(f"🏆 Best fitness: {best_genome.fitness:.4f}")
+        logger.info(f"🏆 Best fitness (Train AUC): {best_genome.fitness:.4f}")
 
         # Create ExplaNEAT explainer for analysis
         explainer = ExplaNEAT(best_genome, config)

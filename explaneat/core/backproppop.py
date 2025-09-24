@@ -125,10 +125,6 @@ class BackpropPopulation(Population):
         depth_per_genome = []
         width_per_genome = []
 
-        print(f"The population is {self.population}")
-
-        print(f"The population keys are {self.population.keys()}")
-
         for k, genome in self.population.items():
 
             ## Start neat load up
