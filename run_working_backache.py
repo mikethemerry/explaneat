@@ -81,6 +81,28 @@ class DatabaseReporter:
         """Log info messages - required by NEAT ReporterSet"""
         logger.info(f"DatabaseReporter: {msg}")
 
+    def species_stagnant(self, sid, species):
+        """Handle stagnant species - required by NEAT ReporterSet"""
+        logger.info(f"Species {sid} is stagnant with {len(species.members)} members")
+
+    def found_solution(self, config, generation, best):
+        """Handle when a solution is found - required by NEAT ReporterSet"""
+        logger.info(
+            f"Solution found at generation {generation} with fitness {best.fitness}"
+        )
+
+    def complete_extinction(self):
+        """Handle complete extinction - required by NEAT ReporterSet"""
+        logger.warning("All species have gone extinct!")
+
+    def start_experiment(self, config):
+        """Start of experiment - required by NEAT ReporterSet"""
+        logger.info("Starting NEAT experiment")
+
+    def end_experiment(self, config, population, species):
+        """End of experiment - required by NEAT ReporterSet"""
+        logger.info("NEAT experiment completed")
+
 
 def prepare_backache_data():
     """Load and prepare the backache dataset from PMLB"""
@@ -363,7 +385,7 @@ def run_working_backache_experiment(num_generations=10):
         # Run the evolution using BackpropPopulation's run method with AUC fitness
         best_genome = population.run(
             fitness_function=auc_fitness,
-            n=50,
+            n=100,
             nEpochs=5,  # Number of backprop epochs per generation
         )
 
@@ -495,14 +517,20 @@ def run_working_backache_experiment(num_generations=10):
         # Test visualization
         logger.info("\n🎨 Testing visualizations:")
         try:
-            # Test training metrics plot
-            logger.info("  - Training metrics plot...")
+            # Test training metrics plot (shows epochs within a single genome)
+            logger.info("  - Training metrics plot (epochs within genome)...")
             explorer.plot_training_metrics()
 
-            # Test ancestry fitness plot
+            # Test ancestry fitness plot (shows evolution across generations)
             if len(ancestry_df) > 1:
-                logger.info("  - Ancestry fitness plot...")
+                logger.info(
+                    "  - Ancestry fitness plot (evolution across generations)..."
+                )
                 explorer.plot_ancestry_fitness()
+
+            # Test full evolution progression (shows population-level evolution)
+            logger.info("  - Full evolution progression plot...")
+            explorer.plot_evolution_progression()
 
             # Test network visualization
             logger.info("  - Network structure plot...")
