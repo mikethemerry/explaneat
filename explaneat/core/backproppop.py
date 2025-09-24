@@ -124,22 +124,27 @@ class BackpropPopulation(Population):
         size_per_genome = []
         depth_per_genome = []
         width_per_genome = []
+
+        print(f"The population is {self.population}")
+
+        print(f"The population keys are {self.population.keys()}")
+
         for k, genome in self.population.items():
 
             ## Start neat load up
 
             # net = NeatNet(genome, self.config, criterion=self.criterion)
-            try:
-                net = nneat(genome, self.config, criterion=nn.BCEWithLogitsLoss())
-            except GenomeNotValidError:
-                ("This net - {} isn't valid".format(k))
-                preBPLoss = 0
-                postBPLoss = 99999
-                lossDiff = postBPLoss - preBPLoss
-                improvements.append(lossDiff)
-                losses.append((preBPLoss, postBPLoss, lossDiff))
-                postLosses.append(postBPLoss)
-                continue
+
+            net = nneat(genome, self.config, criterion=nn.BCEWithLogitsLoss())
+            # except GenomeNotValidError:
+            #     ("This net - {} isn't valid".format(k))
+            #     preBPLoss = 0
+            #     postBPLoss = 99999
+            #     lossDiff = postBPLoss - preBPLoss
+            #     improvements.append(lossDiff)
+            #     losses.append((preBPLoss, postBPLoss, lossDiff))
+            #     postLosses.append(postBPLoss)
+            #     continue
 
             optimizer = optim.Adadelta(net.parameters(), lr=1.5)
 

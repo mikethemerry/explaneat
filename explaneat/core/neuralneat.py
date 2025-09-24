@@ -447,6 +447,7 @@ class NeuralNeat(nn.Module):
         # all nodes then some have no connection to input, so are invalid
 
         if len(self.node_mapping.connection_map) == 0:
+            print("The connection map is empty")
             return False
         node_tracker = {
             node_id: {"depth": 0, "output_ids": [], "input_ids": []}
@@ -481,6 +482,7 @@ class NeuralNeat(nn.Module):
 
         for node_id in node_tracker:
             if not node_id in reached_nodes:
+                print("I can't reach this node going forwards {}".format(node_id))
                 # print(reached_nodes)
                 # print(node_tracker)
                 # print("I can't reach this node going forwards {}".format(node_id))
@@ -506,6 +508,8 @@ class NeuralNeat(nn.Module):
 
         for node_id in node_tracker:
             if not node_id in reached_nodes:
+                print("I can't reach this node going backwards {}".format(node_id))
+                print(self.genome)
                 # print(reached_nodes)
                 # print(node_tracker)
                 # print("I can't reach this node going backwards{}".format(node_id))

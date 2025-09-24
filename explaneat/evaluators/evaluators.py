@@ -23,6 +23,11 @@ def binary_cross_entropy(genomes, config, xs, ys, device):
             genome.fitness = 0
             continue
         preds = net.forward(xs)
+        # Ensure ys is of shape [size, 1] for BCELoss
+        if ys.dim() == 1:
+            ys_reshaped = ys.view(-1, 1)
+        else:
+            ys_reshaped = ys
         # preds = []
         # for xi in xs:
         #     preds.append(net.activate(xi))
@@ -31,5 +36,5 @@ def binary_cross_entropy(genomes, config, xs, ys, device):
         # logger.info("Ys dtype is {}".format(ys.dtype))
         # logger.info("device is {}".format(device))
         genome.fitness = float(
-            1.0 / loss(torch.tensor(preds).to(device), torch.tensor(ys))
+            1.0 / loss(torch.tensor(preds).to(device), torch.tensor(ys_reshaped))
         )
