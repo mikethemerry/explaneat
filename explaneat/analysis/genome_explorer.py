@@ -420,7 +420,7 @@ class GenomeExplorer:
         self, max_generations: int = 50, figsize: Tuple[int, int] = (15, 8)
     ) -> None:
         """Plot the full evolutionary progression across all generations in the experiment"""
-        from ..db import Population, Experiment
+        from ..db import Population, Experiment, Genome
 
         with db.session_scope() as session:
             # Get the experiment
@@ -449,9 +449,22 @@ class GenomeExplorer:
             std_fitness = [p.stdev_fitness for p in populations]
             pop_sizes = [p.population_size for p in populations]
 
+            # Get ancestor fitness data
+            ancestry_df = self.get_ancestry_tree(max_generations)
+            ancestor_fitness = []
+            ancestor_generations = []
+            
+            if not ancestry_df.empty:
+                # Create a mapping of generation to ancestor fitness
+                ancestry_by_gen = ancestry_df.groupby('generation')['fitness'].max()
+                for gen in generations:
+                    if gen in ancestry_by_gen.index:
+                        ancestor_fitness.append(ancestry_by_gen[gen])
+                        ancestor_generations.append(gen)
+
             _, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=figsize)
 
-            # Fitness evolution
+            # Fitness evolution with ancestor tracking
             ax1.plot(
                 generations,
                 best_fitness,
@@ -468,6 +481,19 @@ class GenomeExplorer:
                 linewidth=2,
                 markersize=4,
             )
+            
+            # Plot ancestor fitness if available
+            if ancestor_fitness and ancestor_generations:
+                ax1.plot(
+                    ancestor_generations,
+                    ancestor_fitness,
+                    "g-^",
+                    label="Best Ancestor Fitness",
+                    linewidth=2,
+                    markersize=6,
+                    alpha=0.8,
+                )
+            
             ax1.fill_between(
                 generations,
                 [m - s for m, s in zip(mean_fitness, std_fitness)],
@@ -534,6 +560,13 @@ class GenomeExplorer:
             print(
                 f"  Best generation: {generations[best_fitness.index(max(best_fitness))]} (fitness: {max(best_fitness):.3f})"
             )
+            
+            # Print ancestor analysis if available
+            if ancestor_fitness and ancestor_generations:
+                print(f"\n🌳 Ancestor Analysis:")
+                print(f"  Ancestor fitness range: {min(ancestor_fitness):.3f} → {max(ancestor_fitness):.3f}")
+                print(f"  Ancestor fitness improvement: {max(ancestor_fitness) - min(ancestor_fitness):.3f}")
+                print(f"  Ancestor generations tracked: {len(ancestor_generations)}")
 
     def show_network(self, **kwargs) -> None:
         """Display the network structure"""

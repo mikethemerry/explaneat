@@ -187,7 +187,7 @@ initial_connection      = full
 
 # node add/remove rates
 node_add_prob           = 0.6
-node_delete_prob        = 0.55
+node_delete_prob        = 0.30
 
 
 # node response options
@@ -303,6 +303,80 @@ def save_population_to_db(experiment_id, generation, population, config):
     return population_id
 
 
+def print_experiment_summary(experiment_id, best_genome):
+    """Print comprehensive experiment summary"""
+    from explaneat.analysis.genome_explorer import GenomeExplorer
+
+    print("\n" + "=" * 80)
+    print("🧬 EXPERIMENT SUMMARY")
+    print("=" * 80)
+
+    try:
+        # Load the genome explorer for detailed analysis
+        explorer = GenomeExplorer.load_best_genome(experiment_id)
+
+        # Basic experiment info
+        print(f"📊 Experiment ID: {experiment_id}")
+        print(f"🏆 Best Genome ID: {explorer.genome_info.neat_genome_id}")
+        print(f"🎯 Best Fitness: {explorer.genome_info.fitness:.4f}")
+        print(f"🧬 Generation: {explorer.genome_info.generation}")
+
+        # Network structure
+        stats = explorer.genome_info.network_stats
+        print(f"\n🕸️  Network Structure:")
+        print(f"   Nodes: {stats['num_nodes']}")
+        print(
+            f"   Connections: {stats['num_connections']} ({stats['num_enabled_connections']} enabled)"
+        )
+        print(f"   Depth: {stats['network_depth']}")
+        print(f"   Width: {stats['network_width']}")
+
+        # Ancestry analysis
+        ancestry_df = explorer.get_ancestry_tree()
+        if len(ancestry_df) > 1:
+            print(f"\n🌳 Ancestry Analysis ({len(ancestry_df)} generations):")
+            print(
+                f"   Fitness range: {ancestry_df['fitness'].min():.3f} → {ancestry_df['fitness'].max():.3f}"
+            )
+            print(
+                f"   Fitness improvement: {ancestry_df['fitness'].max() - ancestry_df['fitness'].min():.3f}"
+            )
+            print(
+                f"   Network growth: {ancestry_df['num_nodes'].iloc[0]} → {ancestry_df['num_nodes'].iloc[-1]} nodes"
+            )
+            print(
+                f"   Connection growth: {ancestry_df['num_connections'].iloc[0]} → {ancestry_df['num_connections'].iloc[-1]} connections"
+            )
+
+        # Performance context
+        context = explorer.get_performance_context()
+        print(f"\n📈 Performance Context:")
+        print(
+            f"   Rank in generation: {context['generation_rank']}/{context['generation_size']}"
+        )
+        print(f"   Generation best: {context['generation_best']:.3f}")
+        print(
+            f"   Generation mean: {context['generation_mean']:.3f} (±{context['generation_std']:.3f})"
+        )
+        print(f"   Is best in generation: {context['is_generation_best']}")
+        print(f"   Total experiment generations: {context['experiment_generations']}")
+
+        print(f"\n🔍 Next Steps:")
+        print(
+            f"   # Load explorer: explorer = GenomeExplorer.load_best_genome('{experiment_id}')"
+        )
+        print(f"   # Show network: explorer.show_network()")
+        print(f"   # Plot ancestry: explorer.plot_ancestry_fitness()")
+        print(f"   # Plot evolution: explorer.plot_evolution_progression()")
+        print(f"   # Export data: explorer.export_genome_data()")
+
+    except Exception as e:
+        logger.warning(f"Could not generate detailed summary: {e}")
+        print(f"📊 Basic Summary:")
+        print(f"   Experiment ID: {experiment_id}")
+        print(f"   Best Fitness: {best_genome.fitness:.4f}")
+
+
 def instantiate_population(config, xs, ys):
     """Instantiate BackpropPopulation following ExplaNEAT pattern"""
     # Create the population using BackpropPopulation
@@ -397,6 +471,9 @@ def run_working_backache_experiment(num_generations=10):
 
         logger.info("✅ Evolution completed!")
         logger.info(f"🏆 Best fitness (Train AUC): {best_genome.fitness:.4f}")
+
+        # Print comprehensive experiment summary
+        print_experiment_summary(experiment_id, best_genome)
 
         # Create ExplaNEAT explainer for analysis
         explainer = ExplaNEAT(best_genome, config)
