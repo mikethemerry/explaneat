@@ -26,21 +26,26 @@ class GenomeVisualizer:
         self.genome = neat_genome
         self.config = config
         
-    def plot_network(self, 
-                    figsize: Tuple[int, int] = (12, 8),
-                    node_size: int = 500,
+    def plot_network(self,
+                    figsize: Tuple[int, int] = (14, 10),
+                    node_size: int = 800,
                     show_weights: bool = True,
                     show_node_labels: bool = True,
-                    layout: str = 'spring') -> None:
+                    show_layers: bool = True,
+                    layout: str = 'layered') -> None:
         """
         Plot the network structure of the genome.
-        
+
         Args:
-            figsize: Figure size
+            figsize: Figure size (auto-adjusted based on network size)
             node_size: Size of nodes in the plot
             show_weights: Whether to show connection weights
             show_node_labels: Whether to show node IDs
-            layout: Layout algorithm ('spring', 'hierarchical', 'circular')
+            show_layers: Whether to show layer/depth annotations
+            layout: Layout algorithm ('layered', 'spring', 'circular')
+                   'layered' (default): Left-to-right with depth-based layers
+                   'spring': Force-directed layout
+                   'circular': Circular layout
         """
         # Create networkx graph
         G = nx.DiGraph()
@@ -59,116 +64,515 @@ class GenomeVisualizer:
         if not G.nodes():
             print("No nodes to visualize")
             return
-            
-        # Set up the plot
-        fig, ax = plt.subplots(1, 1, figsize=figsize)
-        
+
         # Choose layout
-        if layout == 'hierarchical':
-            pos = self._hierarchical_layout(G)
+        if layout in ['layered', 'hierarchical']:
+            pos = self._layered_layout(G)
         elif layout == 'circular':
             pos = nx.circular_layout(G)
         else:
             pos = nx.spring_layout(G, seed=42)
+
+        # Auto-adjust figure size for layered layout
+        if layout in ['layered', 'hierarchical'] and pos:
+            # Calculate network dimensions
+            x_coords = [p[0] for p in pos.values()]
+            y_coords = [p[1] for p in pos.values()]
+            width = max(x_coords) - min(x_coords) + 4
+            height = max(y_coords) - min(y_coords) + 4
+            # Adjust figure size to maintain aspect ratio
+            figsize = (max(12, width * 1.5), max(8, height * 1.2))
+
+        # Set up the plot
+        fig, ax = plt.subplots(1, 1, figsize=figsize)
         
-        # Color nodes by type
-        node_colors = []
-        for node_id in G.nodes():
-            if node_id < 0:  # Input nodes
-                node_colors.append('lightblue')
-            elif node_id == 0:  # Output node
-                node_colors.append('lightcoral')
-            else:  # Hidden nodes
-                node_colors.append('lightgreen')
+        # Identify node types
+        input_nodes = [n for n in G.nodes() if n < 0]
+        output_nodes = [n for n in G.nodes() if n == 0]
+        hidden_nodes = [n for n in G.nodes() if n > 0]
+
+        # Draw nodes by type with different shapes
+        if input_nodes:
+            nx.draw_networkx_nodes(G, pos,
+                                  nodelist=input_nodes,
+                                  node_color='#4A90E2',  # Blue
+                                  node_size=node_size,
+                                  node_shape='s',  # Square for inputs
+                                  edgecolors='black',
+                                  linewidths=2,
+                                  ax=ax,
+                                  label='Input Nodes')
+
+        if output_nodes:
+            nx.draw_networkx_nodes(G, pos,
+                                  nodelist=output_nodes,
+                                  node_color='#E24A4A',  # Red
+                                  node_size=node_size,
+                                  node_shape='h',  # Hexagon for outputs
+                                  edgecolors='black',
+                                  linewidths=2,
+                                  ax=ax,
+                                  label='Output Nodes')
+
+        if hidden_nodes:
+            nx.draw_networkx_nodes(G, pos,
+                                  nodelist=hidden_nodes,
+                                  node_color='#50C878',  # Green
+                                  node_size=node_size * 0.8,
+                                  node_shape='o',  # Circle for hidden
+                                  edgecolors='black',
+                                  linewidths=1.5,
+                                  ax=ax,
+                                  label='Hidden Nodes')
         
-        # Draw nodes
-        nx.draw_networkx_nodes(G, pos, 
-                              node_color=node_colors,
-                              node_size=node_size,
-                              ax=ax)
-        
-        # Draw edges with weights as thickness
+        # Draw edges with improved styling
         if edge_weights:
-            # Normalize weights for edge thickness
+            # Calculate node depths for edge styling
+            if layout in ['layered', 'hierarchical']:
+                input_node_list = [n for n in G.nodes() if n < 0] or [n for n in G.nodes() if G.in_degree(n) == 0]
+                node_depths = self._calculate_node_depths(G, input_node_list)
+            else:
+                node_depths = {n: 0 for n in G.nodes()}
+
+            # Separate regular connections from skip connections
+            regular_edges = []
+            skip_edges = []
+            regular_widths = []
+            skip_widths = []
+            regular_colors = []
+            skip_colors = []
+
             max_weight = max(edge_weights) if edge_weights else 1
-            edge_widths = [3 * abs(w) / max_weight for w in edge_weights]
-            
-            # Color edges by weight (red for negative, blue for positive)
-            edge_colors = []
+
             for conn_key, conn in self.genome.connections.items():
                 if conn.enabled:
+                    from_node, to_node = conn_key
+                    depth_diff = abs(node_depths.get(to_node, 0) - node_depths.get(from_node, 0))
+
+                    # Edge width based on weight magnitude
+                    width = 0.5 + 2.5 * abs(conn.weight) / max_weight
+
+                    # Edge color based on weight sign
                     if conn.weight >= 0:
-                        edge_colors.append('blue')
+                        color = '#2E86DE'  # Blue for positive
                     else:
-                        edge_colors.append('red')
-            
-            nx.draw_networkx_edges(G, pos,
-                                  width=edge_widths,
-                                  edge_color=edge_colors,
-                                  alpha=0.7,
-                                  ax=ax)
+                        color = '#EE5A6F'  # Red for negative
+
+                    # Skip connections (span more than 1 layer)
+                    if depth_diff > 1:
+                        skip_edges.append(conn_key)
+                        skip_widths.append(width)
+                        skip_colors.append(color)
+                    else:
+                        regular_edges.append(conn_key)
+                        regular_widths.append(width)
+                        regular_colors.append(color)
+
+            # Draw regular edges
+            if regular_edges:
+                nx.draw_networkx_edges(G, pos,
+                                      edgelist=regular_edges,
+                                      width=regular_widths,
+                                      edge_color=regular_colors,
+                                      alpha=0.6,
+                                      connectionstyle='arc3,rad=0.05',
+                                      ax=ax)
+
+            # Draw skip connections with curved edges
+            if skip_edges:
+                nx.draw_networkx_edges(G, pos,
+                                      edgelist=skip_edges,
+                                      width=skip_widths,
+                                      edge_color=skip_colors,
+                                      alpha=0.4,
+                                      connectionstyle='arc3,rad=0.2',
+                                      style='dashed',
+                                      ax=ax)
         else:
-            nx.draw_networkx_edges(G, pos, ax=ax)
+            nx.draw_networkx_edges(G, pos,
+                                  alpha=0.5,
+                                  connectionstyle='arc3,rad=0.05',
+                                  ax=ax)
         
         # Add node labels
         if show_node_labels:
-            nx.draw_networkx_labels(G, pos, ax=ax)
-        
-        # Add weight labels
-        if show_weights and self.genome.connections:
+            nx.draw_networkx_labels(G, pos, font_size=10, font_weight='bold', ax=ax)
+
+        # Add weight labels (only if not too many connections)
+        if show_weights and self.genome.connections and len(self.genome.connections) < 30:
             edge_labels = {}
             for conn_key, conn in self.genome.connections.items():
                 if conn.enabled:
                     edge_labels[conn_key] = f"{conn.weight:.2f}"
-            
-            nx.draw_networkx_edge_labels(G, pos, edge_labels, 
-                                        font_size=8, ax=ax)
-        
-        # Add legend
+
+            nx.draw_networkx_edge_labels(G, pos, edge_labels,
+                                        font_size=7, ax=ax)
+
+        # Add layer annotations for layered layout
+        if show_layers and layout in ['layered', 'hierarchical'] and pos:
+            input_node_list = [n for n in G.nodes() if n < 0] or [n for n in G.nodes() if G.in_degree(n) == 0]
+            node_depths = self._calculate_node_depths(G, input_node_list)
+
+            # Get unique depths and their x positions
+            depth_x_positions = {}
+            for node, depth in node_depths.items():
+                if depth not in depth_x_positions and node in pos:
+                    depth_x_positions[depth] = pos[node][0]
+
+            # Draw vertical lines for each layer
+            y_coords = [p[1] for p in pos.values()]
+            y_min, y_max = min(y_coords), max(y_coords)
+            y_range = y_max - y_min
+            y_min -= y_range * 0.1
+            y_max += y_range * 0.1
+
+            for depth, x in sorted(depth_x_positions.items()):
+                ax.axvline(x=x, color='gray', linestyle=':', alpha=0.3, linewidth=1)
+                ax.text(x, y_max + y_range * 0.05, f'Layer {depth}',
+                       ha='center', va='bottom', fontsize=9, color='gray')
+
+        # Add improved legend
         legend_elements = [
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='lightblue', 
-                      markersize=10, label='Input Nodes'),
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='lightcoral', 
-                      markersize=10, label='Output Node'),
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='lightgreen', 
-                      markersize=10, label='Hidden Nodes'),
-            plt.Line2D([0], [0], color='blue', linewidth=2, label='Positive Weights'),
-            plt.Line2D([0], [0], color='red', linewidth=2, label='Negative Weights')
+            plt.Line2D([0], [0], marker='s', color='w', markerfacecolor='#4A90E2',
+                      markersize=10, markeredgecolor='black', markeredgewidth=1.5,
+                      label='Input Nodes'),
+            plt.Line2D([0], [0], marker='h', color='w', markerfacecolor='#E24A4A',
+                      markersize=10, markeredgecolor='black', markeredgewidth=1.5,
+                      label='Output Nodes'),
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='#50C878',
+                      markersize=10, markeredgecolor='black', markeredgewidth=1.5,
+                      label='Hidden Nodes'),
+            plt.Line2D([0], [0], color='#2E86DE', linewidth=2, label='Positive Weights'),
+            plt.Line2D([0], [0], color='#EE5A6F', linewidth=2, label='Negative Weights'),
+            plt.Line2D([0], [0], color='gray', linewidth=2, linestyle='dashed',
+                      alpha=0.4, label='Skip Connections')
         ]
-        ax.legend(handles=legend_elements, loc='upper right')
+        ax.legend(handles=legend_elements, loc='upper right', fontsize=9, framealpha=0.9)
         
+        # Enhanced title with network statistics
+        enabled_connections = len([c for c in self.genome.connections.values() if c.enabled])
+        disabled_connections = len(self.genome.connections) - enabled_connections
+
+        if layout in ['layered', 'hierarchical'] and pos:
+            input_node_list = [n for n in G.nodes() if n < 0] or [n for n in G.nodes() if G.in_degree(n) == 0]
+            node_depths = self._calculate_node_depths(G, input_node_list)
+            max_depth = max(node_depths.values()) if node_depths else 0
+            title_suffix = f', Depth: {max_depth + 1} layers'
+        else:
+            title_suffix = ''
+
         ax.set_title(f'Network Structure - Genome {self.genome.key}\n'
-                    f'Fitness: {self.genome.fitness:.3f}, '
-                    f'Nodes: {len(self.genome.nodes)}, '
-                    f'Connections: {len([c for c in self.genome.connections.values() if c.enabled])}')
+                    f'Fitness: {self.genome.fitness:.3f} | '
+                    f'Nodes: {len(self.genome.nodes)} | '
+                    f'Connections: {enabled_connections}/{len(self.genome.connections)}{title_suffix}',
+                    fontsize=12, fontweight='bold', pad=20)
+
+        # Set axis properties with proper limits to show everything
+        if pos:
+            x_coords = [p[0] for p in pos.values()]
+            y_coords = [p[1] for p in pos.values()]
+            x_min, x_max = min(x_coords), max(x_coords)
+            y_min, y_max = min(y_coords), max(y_coords)
+
+            # Add padding around the network
+            x_padding = (x_max - x_min) * 0.15 if x_max > x_min else 1
+            y_padding = (y_max - y_min) * 0.15 if y_max > y_min else 1
+
+            ax.set_xlim(x_min - x_padding, x_max + x_padding)
+            ax.set_ylim(y_min - y_padding, y_max + y_padding)
+
         ax.axis('off')
-        
+        ax.set_aspect('equal')
+
+        # Enable interactive zoom and pan
+        # Store initial limits for reset functionality
+        if pos:
+            initial_xlim = ax.get_xlim()
+            initial_ylim = ax.get_ylim()
+
+            def on_key(event):
+                """Handle keyboard shortcuts for zoom and pan"""
+                if event.key == '+' or event.key == '=':
+                    # Zoom in
+                    xlim = ax.get_xlim()
+                    ylim = ax.get_ylim()
+                    x_center = (xlim[0] + xlim[1]) / 2
+                    y_center = (ylim[0] + ylim[1]) / 2
+                    x_range = (xlim[1] - xlim[0]) * 0.8 / 2
+                    y_range = (ylim[1] - ylim[0]) * 0.8 / 2
+                    ax.set_xlim(x_center - x_range, x_center + x_range)
+                    ax.set_ylim(y_center - y_range, y_center + y_range)
+                    fig.canvas.draw()
+                elif event.key == '-' or event.key == '_':
+                    # Zoom out
+                    xlim = ax.get_xlim()
+                    ylim = ax.get_ylim()
+                    x_center = (xlim[0] + xlim[1]) / 2
+                    y_center = (ylim[0] + ylim[1]) / 2
+                    x_range = (xlim[1] - xlim[0]) * 1.25 / 2
+                    y_range = (ylim[1] - ylim[0]) * 1.25 / 2
+                    ax.set_xlim(x_center - x_range, x_center + x_range)
+                    ax.set_ylim(y_center - y_range, y_center + y_range)
+                    fig.canvas.draw()
+                elif event.key == 'r' or event.key == 'home':
+                    # Reset to initial view
+                    ax.set_xlim(initial_xlim)
+                    ax.set_ylim(initial_ylim)
+                    fig.canvas.draw()
+                elif event.key == 'left':
+                    # Pan left
+                    xlim = ax.get_xlim()
+                    shift = (xlim[1] - xlim[0]) * 0.1
+                    ax.set_xlim(xlim[0] - shift, xlim[1] - shift)
+                    fig.canvas.draw()
+                elif event.key == 'right':
+                    # Pan right
+                    xlim = ax.get_xlim()
+                    shift = (xlim[1] - xlim[0]) * 0.1
+                    ax.set_xlim(xlim[0] + shift, xlim[1] + shift)
+                    fig.canvas.draw()
+                elif event.key == 'up':
+                    # Pan up
+                    ylim = ax.get_ylim()
+                    shift = (ylim[1] - ylim[0]) * 0.1
+                    ax.set_ylim(ylim[0] + shift, ylim[1] + shift)
+                    fig.canvas.draw()
+                elif event.key == 'down':
+                    # Pan down
+                    ylim = ax.get_ylim()
+                    shift = (ylim[1] - ylim[0]) * 0.1
+                    ax.set_ylim(ylim[0] - shift, ylim[1] - shift)
+                    fig.canvas.draw()
+                elif event.key == 'f':
+                    # Fit to window (reset view)
+                    ax.set_xlim(initial_xlim)
+                    ax.set_ylim(initial_ylim)
+                    fig.canvas.draw()
+
+            # Connect keyboard handler
+            fig.canvas.mpl_connect('key_press_event', on_key)
+
+            # Add scroll wheel zoom
+            def on_scroll(event):
+                """Handle mouse scroll for zooming"""
+                if event.inaxes != ax:
+                    return
+
+                xlim = ax.get_xlim()
+                ylim = ax.get_ylim()
+
+                # Get mouse position
+                x_data = event.xdata
+                y_data = event.ydata
+
+                if x_data is None or y_data is None:
+                    return
+
+                # Zoom factor
+                zoom_factor = 0.9 if event.button == 'up' else 1.1
+
+                # Calculate new limits centered on mouse position
+                x_range = (xlim[1] - xlim[0]) * zoom_factor
+                y_range = (ylim[1] - ylim[0]) * zoom_factor
+
+                # Zoom towards mouse position
+                x_ratio = (x_data - xlim[0]) / (xlim[1] - xlim[0])
+                y_ratio = (y_data - ylim[0]) / (ylim[1] - ylim[0])
+
+                ax.set_xlim(x_data - x_range * x_ratio, x_data + x_range * (1 - x_ratio))
+                ax.set_ylim(y_data - y_range * y_ratio, y_data + y_range * (1 - y_ratio))
+                fig.canvas.draw()
+
+            # Connect scroll handler
+            fig.canvas.mpl_connect('scroll_event', on_scroll)
+
+            # Add instructions to title
+            instructions = "\nControls: +/- zoom | Arrow keys pan | R reset | Scroll wheel zoom | Click+drag pan"
+            current_title = ax.get_title()
+            ax.set_title(current_title + f"\n{instructions}", fontsize=12, fontweight='bold', pad=20)
+
         plt.tight_layout()
         plt.show()
     
-    def _hierarchical_layout(self, G) -> Dict:
-        """Create a hierarchical layout for feedforward networks"""
+    def _calculate_node_depths(self, G: nx.DiGraph, input_nodes: List[int]) -> Dict[int, int]:
+        """
+        Calculate depth of each node as maximum path length from inputs.
+
+        Uses PropNEAT algorithm: depth = max(all path lengths from input nodes).
+        This matches the GPU layer mapping approach.
+
+        Args:
+            G: Directed graph of the network
+            input_nodes: List of input node IDs
+
+        Returns:
+            Dictionary mapping node_id to depth (layer number)
+        """
+        depths = {node: [] for node in G.nodes()}
+
+        # Initialize input nodes at depth 0
+        for input_node in input_nodes:
+            depths[input_node] = [0]
+
+        # Breadth-first search from all input nodes
+        queue = [(node, 0) for node in input_nodes]
+
+        while queue:
+            node, depth = queue.pop(0)
+
+            # Propagate to all successors
+            for successor in G.successors(node):
+                depths[successor].append(depth + 1)
+                queue.append((successor, depth + 1))
+
+        # Take maximum depth for each node (longest path from inputs)
+        return {node: max(d) if d else 0 for node, d in depths.items()}
+
+    def _minimize_crossings_barycenter(self,
+                                       G: nx.DiGraph,
+                                       layers: Dict[int, List[int]],
+                                       max_iterations: int = 4) -> Dict[int, List[int]]:
+        """
+        Minimize edge crossings using the barycenter heuristic.
+
+        This is a computationally efficient approximation that gives good results.
+        The algorithm iteratively reorders nodes within each layer based on the
+        average position of their neighbors in adjacent layers.
+
+        Args:
+            G: Directed graph of the network
+            layers: Dictionary mapping depth -> list of node IDs at that depth
+            max_iterations: Number of forward/backward passes
+
+        Returns:
+            Dictionary mapping depth -> ordered list of node IDs
+        """
+        # Create a copy to work with
+        ordered_layers = {depth: list(nodes) for depth, nodes in layers.items()}
+        layer_depths = sorted(ordered_layers.keys())
+
+        # Create position lookup for quick access
+        def get_positions(layer_depth):
+            return {node: idx for idx, node in enumerate(ordered_layers[layer_depth])}
+
+        # Barycenter calculation
+        def calculate_barycenter(node, neighbor_positions):
+            """Calculate weighted average position of neighbors"""
+            if not neighbor_positions:
+                return 0.0
+            return sum(neighbor_positions) / len(neighbor_positions)
+
+        # Iterate forward and backward passes
+        for iteration in range(max_iterations):
+            # Forward pass: order based on predecessors
+            if iteration % 2 == 0:
+                for i in range(1, len(layer_depths)):
+                    depth = layer_depths[i]
+                    prev_depth = layer_depths[i - 1]
+                    prev_positions = get_positions(prev_depth)
+
+                    barycenters = []
+                    for node in ordered_layers[depth]:
+                        predecessors = list(G.predecessors(node))
+                        pred_positions = [prev_positions[p] for p in predecessors if p in prev_positions]
+                        bc = calculate_barycenter(node, pred_positions)
+                        barycenters.append((bc, node))
+
+                    # Sort by barycenter
+                    barycenters.sort()
+                    ordered_layers[depth] = [node for _, node in barycenters]
+
+            # Backward pass: order based on successors
+            else:
+                for i in range(len(layer_depths) - 2, -1, -1):
+                    depth = layer_depths[i]
+                    next_depth = layer_depths[i + 1]
+                    next_positions = get_positions(next_depth)
+
+                    barycenters = []
+                    for node in ordered_layers[depth]:
+                        successors = list(G.successors(node))
+                        succ_positions = [next_positions[s] for s in successors if s in next_positions]
+                        bc = calculate_barycenter(node, succ_positions)
+                        barycenters.append((bc, node))
+
+                    # Sort by barycenter
+                    barycenters.sort()
+                    ordered_layers[depth] = [node for _, node in barycenters]
+
+        return ordered_layers
+
+    def _layered_layout(self, G: nx.DiGraph) -> Dict:
+        """
+        Create a left-to-right layered layout with crossing minimization.
+
+        Uses PropNEAT depth calculation and barycenter heuristic for ordering.
+
+        Args:
+            G: Directed graph of the network
+
+        Returns:
+            Dictionary mapping node_id to (x, y) position
+        """
+        if not G.nodes():
+            return {}
+
+        # Identify node types
+        input_nodes = sorted([n for n in G.nodes() if n < 0])
+        output_nodes = sorted([n for n in G.nodes() if n == 0])
+
+        if not input_nodes:
+            # If no input nodes, use nodes with no predecessors
+            input_nodes = [n for n in G.nodes() if G.in_degree(n) == 0]
+
+        # Calculate depths using PropNEAT algorithm
+        node_depths = self._calculate_node_depths(G, input_nodes)
+
+        # Group nodes by depth (layer)
+        layers = {}
+        for node, depth in node_depths.items():
+            if depth not in layers:
+                layers[depth] = []
+            layers[depth].append(node)
+
+        # Sort nodes within each layer initially
+        for depth in layers:
+            layers[depth].sort()
+
+        # Apply crossing minimization
+        if len(layers) > 1:
+            layers = self._minimize_crossings_barycenter(G, layers)
+
+        # Calculate positions
         pos = {}
-        
-        # Separate nodes by type
-        input_nodes = [n for n in G.nodes() if n < 0]
-        output_nodes = [n for n in G.nodes() if n == 0]
-        hidden_nodes = [n for n in G.nodes() if n > 0]
-        
-        # Position input nodes
-        for i, node in enumerate(sorted(input_nodes)):
-            pos[node] = (0, i)
-        
-        # Position hidden nodes (if any)
-        if hidden_nodes:
-            for i, node in enumerate(sorted(hidden_nodes)):
-                pos[node] = (1, i)
-        
-        # Position output nodes
-        for i, node in enumerate(output_nodes):
-            pos[node] = (2, i)
-        
+        max_depth = max(layers.keys()) if layers else 0
+
+        # Spacing parameters
+        horizontal_spacing = 3.0  # Space between layers
+        vertical_spacing = 1.5    # Space between nodes in a layer
+
+        for depth, nodes in layers.items():
+            x = depth * horizontal_spacing
+
+            # Center nodes vertically
+            num_nodes = len(nodes)
+            total_height = (num_nodes - 1) * vertical_spacing
+            start_y = -total_height / 2
+
+            for i, node in enumerate(nodes):
+                y = start_y + i * vertical_spacing
+                pos[node] = (x, y)
+
         return pos
+
+    def _hierarchical_layout(self, G) -> Dict:
+        """
+        Create a hierarchical layout for feedforward networks.
+
+        Note: This is now an alias for _layered_layout which provides
+        better depth calculation and crossing minimization.
+        """
+        return self._layered_layout(G)
     
     def plot_node_properties(self, figsize: Tuple[int, int] = (15, 5)) -> None:
         """Plot distribution of node properties"""
