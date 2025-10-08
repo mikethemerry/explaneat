@@ -251,3 +251,36 @@ class Result(Base, TimestampMixin):
     __table_args__ = (
         Index('idx_results_created', 'created_at'),
     )
+
+
+class GeneOrigin(Base, TimestampMixin):
+    """Tracks when each gene (innovation number) first appeared in evolution"""
+    __tablename__ = 'gene_origins'
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    experiment_id = Column(UUID(as_uuid=True), ForeignKey('experiments.id', ondelete='CASCADE'), nullable=False)
+    innovation_number = Column(Integer, nullable=False, index=True)
+    gene_type = Column(String(20), nullable=False)  # 'node' or 'connection'
+    origin_genome_id = Column(UUID(as_uuid=True), ForeignKey('genomes.id', ondelete='CASCADE'), nullable=False)
+    origin_generation = Column(Integer, nullable=False, index=True)
+
+    # For connections, store the connection details
+    connection_from = Column(Integer)  # input node ID
+    connection_to = Column(Integer)    # output node ID
+
+    # For nodes, store node details
+    node_id = Column(Integer)
+
+    # Initial gene parameters when first introduced
+    initial_params = Column(JSONB)  # Store initial weight/bias/activation etc.
+
+    # Relationships
+    experiment = relationship('Experiment', backref='gene_origins')
+    origin_genome = relationship('Genome', backref='originated_genes')
+
+    __table_args__ = (
+        UniqueConstraint('innovation_number', 'gene_type', 'experiment_id',
+                        name='uq_innovation_type_experiment'),
+        Index('idx_gene_origin_type', 'gene_type', 'innovation_number'),
+        Index('idx_gene_origin_generation', 'origin_generation'),
+    )

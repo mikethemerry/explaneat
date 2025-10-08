@@ -45,25 +45,28 @@ class AncestryAnalyzer:
         self._ancestry_cache = None
         self._gene_origins_cache = None
         
-    def get_ancestry_tree(self, max_generations: int = 10) -> pd.DataFrame:
+    def get_ancestry_tree(self, max_generations: Optional[int] = None) -> pd.DataFrame:
         """
         Build the ancestry tree for this genome.
-        
+
         Args:
-            max_generations: Maximum number of generations to trace back
-            
+            max_generations: Maximum number of generations to trace back.
+                           If None (default), traces full history back to generation 0.
+
         Returns:
             DataFrame with ancestor information sorted by generation (oldest first)
         """
         if self._ancestry_cache is not None:
+            if max_generations is None:
+                return self._ancestry_cache
             return self._ancestry_cache.head(max_generations)
-            
+
         ancestors = []
         visited = set()
         to_process = [(self.genome_id, 0)]  # (genome_id, generation_offset)
-        
+
         with db.session_scope() as session:
-            while to_process and len(ancestors) < max_generations:
+            while to_process and (max_generations is None or len(ancestors) < max_generations):
                 current_id, gen_offset = to_process.pop(0)
                 
                 if current_id in visited or current_id is None:

@@ -17,12 +17,12 @@ from ..core.backproppop import BackpropPopulation
 class DatabaseBackpropPopulation(BackpropPopulation):
     """BackpropPopulation with database integration for experiment tracking"""
     
-    def __init__(self, config, x_train, y_train, experiment_name: str = None, 
-                 dataset_name: str = None, description: str = None, 
-                 database_url: str = None):
+    def __init__(self, config, x_train, y_train, experiment_name: str = None,
+                 dataset_name: str = None, description: str = None,
+                 database_url: str = None, ancestry_reporter=None):
         """
         Initialize population with database tracking
-        
+
         Args:
             config: NEAT configuration
             x_train: Training data features
@@ -31,15 +31,16 @@ class DatabaseBackpropPopulation(BackpropPopulation):
             dataset_name: Name of the dataset being used
             description: Description of the experiment
             database_url: Database connection URL (optional)
+            ancestry_reporter: Optional AncestryReporter for parent tracking
         """
         super().__init__(config, x_train, y_train)
-        
+
         # Initialize database connection
         if database_url:
             db.init_db(database_url)
         else:
             db.init_db()
-        
+
         # Create experiment record and store ID
         self.experiment_id = self._create_experiment(
             experiment_name or f"NEAT_Experiment_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
@@ -47,10 +48,15 @@ class DatabaseBackpropPopulation(BackpropPopulation):
             description,
             config
         )
-        
+
         # Track current population and generation
         self.current_population_id = None
         self.current_generation = 0
+
+        # Store ancestry reporter for parent tracking
+        self.ancestry_reporter = ancestry_reporter
+        if self.ancestry_reporter:
+            self.ancestry_reporter.reproduction = self.reproduction
         
     def _create_experiment(self, name: str, dataset_name: str, description: str, 
                           config: neat.Config) -> str:
@@ -138,20 +144,38 @@ class DatabaseBackpropPopulation(BackpropPopulation):
             
         return population_id
     
-    def _save_genomes(self, population_id: str):
-        """Save all genomes in current population to database"""
-        
+    def _save_genomes(self, population_id: str, ancestry_reporter=None):
+        """Save all genomes in current population to database with ancestry tracking
+
+        Args:
+            population_id: Database ID of the population
+            ancestry_reporter: Optional AncestryReporter for parent tracking
+        """
+
         with db.session_scope() as session:
             for genome_id, neat_genome in self.population.items():
                 # Determine species assignment (simplified)
                 species_id = getattr(neat_genome, 'species_id', None)
-                
+
+                # Get parent database IDs if ancestry reporter is available
+                parent1_db_id = None
+                parent2_db_id = None
+                if ancestry_reporter is not None:
+                    parent1_db_id, parent2_db_id = ancestry_reporter.get_parent_ids(genome_id)
+
                 genome_record = Genome.from_neat_genome(
-                    neat_genome, 
+                    neat_genome,
                     population_id,
-                    species_id=species_id
+                    species_id=species_id,
+                    parent1_id=parent1_db_id,
+                    parent2_id=parent2_db_id
                 )
                 session.add(genome_record)
+                session.flush()  # Flush to get the genome ID assigned
+
+                # Register this genome in the ancestry tracker for next generation
+                if ancestry_reporter is not None:
+                    ancestry_reporter.register_genome(genome_id, genome_record.id)
     
     def _save_training_metrics(self, genome_id: int, population_id: str, 
                               epoch: int, loss: float, additional_metrics: Dict[str, Any] = None):
@@ -227,8 +251,8 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                     if genome.fitness is None or genome.fitness != genome.fitness:  # NaN check
                         genome.fitness = -1000.0  # Set a default poor fitness
                 
-                # Save genomes after evaluation
-                self._save_genomes(self.current_population_id)
+                # Save genomes after evaluation with ancestry tracking
+                self._save_genomes(self.current_population_id, self.ancestry_reporter)
                 
                 # Save generation results
                 valid_genomes = [g for g in self.population.values() if g.fitness is not None]

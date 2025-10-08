@@ -31,59 +31,124 @@ class GenomeExplorerCLI:
         self.current_explorer = None
         self.current_experiment_id = None
         
-    def list_experiments(self) -> pd.DataFrame:
-        """List all experiments in the database"""
+    def list_experiments(self, show_numbers: bool = True) -> pd.DataFrame:
+        """List all experiments in the database
+
+        Args:
+            show_numbers: If True, show row numbers for easy selection
+        """
         try:
             experiments_df = GenomeExplorer.list_experiments()
             if experiments_df.empty:
                 print("No experiments found in database")
                 return experiments_df
-                
+
+            # Sort by creation date (most recent first)
+            experiments_df = experiments_df.sort_values('created_at', ascending=False).reset_index(drop=True)
+
             print("\n📊 Available Experiments:")
-            print("=" * 80)
-            print(f"{'ID':<36} {'Name':<25} {'Status':<10} {'Generations':<12} {'Best Fitness':<12}")
-            print("-" * 80)
-            
-            for _, exp in experiments_df.iterrows():
+            print("=" * 90)
+            if show_numbers:
+                print(f"{'#':<4} {'Name':<30} {'Status':<10} {'Gens':<6} {'Best Fitness':<12} {'ID':<36}")
+            else:
+                print(f"{'ID':<36} {'Name':<25} {'Status':<10} {'Generations':<12} {'Best Fitness':<12}")
+            print("-" * 90)
+
+            for idx, exp in experiments_df.iterrows():
                 fitness_str = f"{exp['best_fitness']:.3f}" if exp['best_fitness'] else "N/A"
-                print(f"{exp['experiment_id']:<36} {exp['name'][:24]:<25} {exp['status']:<10} {exp['generations']:<12} {fitness_str:<12}")
-                
+                if show_numbers:
+                    print(f"{idx:<4} {exp['name'][:29]:<30} {exp['status']:<10} {exp['generations']:<6} {fitness_str:<12} {exp['experiment_id']:<36}")
+                else:
+                    print(f"{exp['experiment_id']:<36} {exp['name'][:24]:<25} {exp['status']:<10} {exp['generations']:<12} {fitness_str:<12}")
+
             return experiments_df
-            
+
         except Exception as e:
             logger.error(f"Failed to list experiments: {e}")
             return pd.DataFrame()
     
-    def select_experiment(self, experiment_id: str = None) -> bool:
-        """Select an experiment to explore"""
+    def select_experiment(self, selector: str = None) -> bool:
+        """Select an experiment to explore
+
+        Args:
+            selector: Can be:
+                - Full experiment UUID
+                - Number from the list (0, 1, 2, etc.)
+                - 'latest' or 'best' for most recent experiment
+                - Substring of experiment name (e.g., 'backache')
+        """
         try:
-            if experiment_id:
-                # Direct experiment ID provided
-                self.current_explorer = GenomeExplorer.load_best_genome(experiment_id)
-                self.current_experiment_id = experiment_id
-                print(f"✅ Loaded experiment: {experiment_id}")
-                return True
+            if selector:
+                # Get experiments list
+                experiments_df = GenomeExplorer.list_experiments()
+                if experiments_df.empty:
+                    print("❌ No experiments found")
+                    return False
+
+                # Sort by creation (most recent first) and reset index
+                experiments_df = experiments_df.sort_values('created_at', ascending=False).reset_index(drop=True)
+
+                selected_id = None
+
+                # Try as number first
+                if selector.isdigit():
+                    idx = int(selector)
+                    if 0 <= idx < len(experiments_df):
+                        selected_id = experiments_df.iloc[idx]['experiment_id']
+                        print(f"📍 Selected experiment #{idx}: {experiments_df.iloc[idx]['name']}")
+                    else:
+                        print(f"❌ Invalid experiment number: {idx} (valid range: 0-{len(experiments_df)-1})")
+                        return False
+
+                # Try special keywords
+                elif selector.lower() in ['latest', 'best', 'recent']:
+                    selected_id = experiments_df.iloc[0]['experiment_id']
+                    print(f"📍 Selected latest experiment: {experiments_df.iloc[0]['name']}")
+
+                # Try as full UUID
+                elif selector in experiments_df['experiment_id'].values:
+                    selected_id = selector
+                    exp_name = experiments_df[experiments_df['experiment_id'] == selector].iloc[0]['name']
+                    print(f"📍 Selected experiment: {exp_name}")
+
+                # Try as name substring
+                else:
+                    matches = experiments_df[experiments_df['name'].str.contains(selector, case=False, na=False)]
+                    if len(matches) == 1:
+                        selected_id = matches.iloc[0]['experiment_id']
+                        print(f"📍 Found matching experiment: {matches.iloc[0]['name']}")
+                    elif len(matches) > 1:
+                        print(f"❌ Multiple experiments match '{selector}':")
+                        for idx, exp in matches.iterrows():
+                            print(f"  {idx}: {exp['name']}")
+                        print("Please use the number to select.")
+                        return False
+                    else:
+                        print(f"❌ No experiment found matching: {selector}")
+                        return False
+
+                # Load the selected experiment
+                if selected_id:
+                    self.current_explorer = GenomeExplorer.load_best_genome(selected_id)
+                    self.current_experiment_id = selected_id
+                    print(f"✅ Loaded experiment: {selected_id}")
+                    return True
+
             else:
                 # Interactive selection
                 experiments_df = self.list_experiments()
                 if experiments_df.empty:
                     return False
-                    
-                print(f"\nEnter experiment ID (or 'q' to quit):")
+
+                print(f"\n💡 Enter: number (0-{len(experiments_df)-1}), 'latest', name substring, or full UUID")
+                print("   Or 'q' to quit")
                 choice = input("> ").strip()
-                
+
                 if choice.lower() == 'q':
                     return False
-                    
-                if choice in experiments_df['experiment_id'].values:
-                    self.current_explorer = GenomeExplorer.load_best_genome(choice)
-                    self.current_experiment_id = choice
-                    print(f"✅ Loaded experiment: {choice}")
-                    return True
-                else:
-                    print("❌ Invalid experiment ID")
-                    return False
-                    
+
+                return self.select_experiment(choice)
+
         except Exception as e:
             logger.error(f"Failed to select experiment: {e}")
             return False
@@ -116,12 +181,16 @@ class GenomeExplorerCLI:
         print("📈 Plotting training metrics...")
         self.current_explorer.plot_training_metrics()
     
-    def plot_ancestry_fitness(self, max_generations: int = 10):
-        """Plot ancestry fitness progression"""
+    def plot_ancestry_fitness(self, max_generations: Optional[int] = None):
+        """Plot ancestry fitness progression
+
+        Args:
+            max_generations: Maximum generations to trace. None = full history
+        """
         if not self.current_explorer:
             print("❌ No genome loaded. Use 'select' command first.")
             return
-            
+
         print("🌳 Plotting ancestry fitness progression...")
         self.current_explorer.plot_ancestry_fitness(max_generations)
     
@@ -194,7 +263,7 @@ class GenomeExplorerCLI:
                 elif cmd == 'training':
                     self.plot_training_metrics()
                 elif cmd == 'ancestry':
-                    max_gen = int(command[1]) if len(command) > 1 else 10
+                    max_gen = int(command[1]) if len(command) > 1 else None  # None = unlimited
                     self.plot_ancestry_fitness(max_gen)
                 elif cmd == 'evolution':
                     max_gen = int(command[1]) if len(command) > 1 else 50

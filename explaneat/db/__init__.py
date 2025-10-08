@@ -6,7 +6,8 @@ from .models import (
     Genome,
     TrainingMetric,
     Checkpoint,
-    Result
+    Result,
+    GeneOrigin
 )
 
 __all__ = [
@@ -18,5 +19,6 @@ __all__ = [
     'Genome',
     'TrainingMetric',
     'Checkpoint',
-    'Result'
+    'Result',
+    'GeneOrigin'
 ]

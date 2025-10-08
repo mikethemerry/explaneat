@@ -7,7 +7,7 @@ and exploring their evolutionary history, performance, and network structure.
 
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Tuple, Any, Optional
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
 
@@ -277,8 +277,12 @@ class GenomeExplorer:
                 )
             print(f"Training epochs: {len(metrics_df)}")
 
-    def get_ancestry_tree(self, max_generations: int = 10) -> pd.DataFrame:
-        """Get the ancestry tree as a DataFrame"""
+    def get_ancestry_tree(self, max_generations: Optional[int] = None) -> pd.DataFrame:
+        """Get the ancestry tree as a DataFrame
+
+        Args:
+            max_generations: Maximum generations to trace. None = unlimited (full history)
+        """
         return self.ancestry_analyzer.get_ancestry_tree(max_generations)
 
     def plot_training_metrics(self, figsize: Tuple[int, int] = (12, 4)) -> None:
@@ -314,9 +318,14 @@ class GenomeExplorer:
         plt.show()
 
     def plot_ancestry_fitness(
-        self, max_generations: int = 10, figsize: Tuple[int, int] = (12, 6)
+        self, max_generations: Optional[int] = None, figsize: Tuple[int, int] = (12, 6)
     ) -> None:
-        """Plot fitness progression through ancestry across generations"""
+        """Plot fitness progression through ancestry across generations
+
+        Args:
+            max_generations: Maximum generations to trace. None = unlimited (full history)
+            figsize: Figure size for plots
+        """
         ancestry_df = self.get_ancestry_tree(max_generations)
 
         if ancestry_df.empty:

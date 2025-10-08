@@ -25,6 +25,9 @@ from explaneat.core.backproppop import BackpropPopulation
 from explaneat.core.neuralneat import NeuralNeat
 from explaneat.core.experiment import ExperimentReporterSet
 from explaneat.core.errors import GenomeNotValidError
+from explaneat.core.ancestry_reporter import AncestryReporter
+from explaneat.core.live_reporter import LiveReporter, QuietLogger
+from explaneat.core.gene_origin_tracker import GeneOriginTracker
 from explaneat.evaluators.evaluators import binary_cross_entropy, auc_fitness
 from explaneat.core.explaneat import ExplaNEAT
 from explaneat.visualization import visualize
@@ -40,19 +43,25 @@ logger = logging.getLogger(__name__)
 class DatabaseReporter:
     """Custom reporter to save population data to database during evolution"""
 
-    def __init__(self, experiment_id, config):
+    def __init__(self, experiment_id, config, ancestry_reporter=None, gene_tracker=None):
         self.experiment_id = experiment_id
         self.config = config
         self.generation = 0
+        self.ancestry_reporter = ancestry_reporter
+        self.gene_tracker = gene_tracker
 
     def start_generation(self, generation):
         self.generation = generation
+        if self.ancestry_reporter:
+            self.ancestry_reporter.start_generation(generation)
 
     def post_evaluate(self, config, population, species, best_genome):
         """Save population data after fitness evaluation"""
         try:
             save_population_to_db(
-                self.experiment_id, self.generation, population, self.config
+                self.experiment_id, self.generation, population, self.config,
+                ancestry_reporter=self.ancestry_reporter,
+                gene_tracker=self.gene_tracker
             )
         except Exception as e:
             logger.warning(
@@ -249,8 +258,17 @@ def create_experiment_record(name, dataset_name, description, config):
     return experiment_id
 
 
-def save_population_to_db(experiment_id, generation, population, config):
-    """Save population and genomes to database"""
+def save_population_to_db(experiment_id, generation, population, config, ancestry_reporter=None, gene_tracker=None):
+    """Save population and genomes to database with ancestry and gene origin tracking
+
+    Args:
+        experiment_id: Database ID of the experiment
+        generation: Current generation number
+        population: Dictionary of NEAT genomes
+        config: NEAT configuration
+        ancestry_reporter: Optional AncestryReporter for parent tracking
+        gene_tracker: Optional GeneOriginTracker for gene origin tracking
+    """
 
     # Calculate population statistics
     fitnesses = [g.fitness for g in population.values() if g.fitness is not None]
@@ -274,32 +292,44 @@ def save_population_to_db(experiment_id, generation, population, config):
         session.flush()
         population_id = pop_record.id
 
-    # Save genomes
+    # Track genome ID mappings for gene origin tracker
+    genome_id_mapping = {}
+
+    # Save genomes with parent relationships
     with db.session_scope() as session:
         for genome_id, genome in population.items():
-            db_genome = Genome.from_neat_genome(genome, population_id)
+            # Get parent database IDs if ancestry reporter is available
+            parent1_db_id = None
+            parent2_db_id = None
+            if ancestry_reporter is not None:
+                parent1_db_id, parent2_db_id = ancestry_reporter.get_parent_ids(genome_id)
+
+            # Create genome record with parent IDs
+            db_genome = Genome.from_neat_genome(
+                genome,
+                population_id,
+                parent1_id=parent1_db_id,
+                parent2_id=parent2_db_id
+            )
             session.add(db_genome)
             session.flush()  # Flush to get the genome ID assigned
 
-            # Add some dummy training metrics
-            for epoch in range(3):
-                metric = TrainingMetric(
-                    genome_id=db_genome.id,
-                    population_id=population_id,
-                    epoch=epoch,
-                    loss=max(
-                        0.1, 2.0 - (genome.fitness or 0) + np.random.normal(0, 0.1)
-                    ),
-                    accuracy=min(
-                        0.9, (genome.fitness or 0) + np.random.normal(0, 0.05)
-                    ),
-                    additional_metrics={"generation": generation},
-                )
-                session.add(metric)
+            # Register this genome in the ancestry tracker for next generation
+            if ancestry_reporter is not None:
+                ancestry_reporter.register_genome(genome_id, db_genome.id)
 
-    logger.info(
-        f"Saved generation {generation}: {len(population)} genomes, best fitness: {best_fitness:.3f}"
-    )
+            # Track mapping for gene origin tracker
+            genome_id_mapping[genome_id] = db_genome.id
+
+    # Process gene origins after all genomes are saved
+    if gene_tracker is not None:
+        gene_tracker.process_population(population, generation, genome_id_mapping)
+
+    # Only log if not in quiet mode (check root logger level)
+    if logger.isEnabledFor(logging.INFO):
+        logger.info(
+            f"Saved generation {generation}: {len(population)} genomes, best fitness: {best_fitness:.3f}"
+        )
     return population_id
 
 
@@ -390,8 +420,13 @@ def instantiate_population(config, xs, ys):
     return p
 
 
-def run_working_backache_experiment(num_generations=10):
-    """Run working backache experiment using ExplaNEAT framework"""
+def run_working_backache_experiment(num_generations=10, compact=True):
+    """Run working backache experiment using ExplaNEAT framework
+
+    Args:
+        num_generations: Number of generations to evolve
+        compact: If True, use compact single-line status. If False, use multi-line dashboard.
+    """
 
     logger.info("🧬 Starting Working Backache Experiment")
     logger.info("=" * 50)
@@ -441,19 +476,37 @@ def run_working_backache_experiment(num_generations=10):
 
     logger.info(f"Created experiment ID: {experiment_id}")
 
-    # Create database reporter
-    db_reporter = DatabaseReporter(experiment_id, config)
+    # Create ancestry reporter for parent tracking
+    ancestry_reporter = AncestryReporter()
+    ancestry_reporter.reproduction = population.reproduction if hasattr(locals().get('population'), 'reproduction') else None
 
     # Instantiate population using ExplaNEAT pattern
     population = instantiate_population(config, X_train, y_train)
 
-    # Add database reporter
+    # Link ancestry reporter to reproduction object
+    ancestry_reporter.reproduction = population.reproduction
+
+    # Create gene origin tracker for innovation tracking
+    gene_tracker = GeneOriginTracker(experiment_id)
+
+    # Create database reporter with ancestry and gene tracking
+    db_reporter = DatabaseReporter(experiment_id, config,
+                                   ancestry_reporter=ancestry_reporter,
+                                   gene_tracker=gene_tracker)
+
+    # Create live reporter for real-time status display
+    live_reporter = LiveReporter(max_generations=num_generations, compact=compact)
+
+    # Add reporters
     population.reporters.reporters.append(db_reporter)
+    population.reporters.reporters.append(ancestry_reporter)
+    population.reporters.reporters.append(live_reporter)
 
     logger.info(f"Population size: {getattr(config, 'pop_size', 50)}")
 
     # Run evolution using BackpropPopulation
     logger.info(f"🔄 Starting evolution for {num_generations} generations...")
+    print()  # Add blank line before live status starts
 
     try:
         # Run the evolution using BackpropPopulation's run method with AUC fitness
@@ -652,10 +705,27 @@ def main():
         default=10,
         help="Number of generations (default: 10)",
     )
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Reduce logging verbosity during evolution (only show live status)",
+    )
+    parser.add_argument(
+        "--dashboard",
+        action="store_true",
+        help="Use multi-line dashboard instead of compact status line",
+    )
 
     args = parser.parse_args()
 
-    winner, experiment_id = run_working_backache_experiment(args.generations)
+    # Adjust logging level if quiet mode
+    if args.quiet:
+        logging.getLogger().setLevel(logging.WARNING)
+
+    winner, experiment_id = run_working_backache_experiment(
+        args.generations,
+        compact=not args.dashboard
+    )
 
     print("\n" + "=" * 50)
     print("🧬 WORKING BACKACHE EXPERIMENT COMPLETE")
