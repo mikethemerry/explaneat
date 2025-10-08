@@ -11,7 +11,7 @@ from typing import Dict, List, Tuple, Any, Optional
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
 
-from ..db import db, Experiment, Population, Genome, TrainingMetric
+from ..db import db, Experiment, Population, Genome, TrainingMetric, GeneOrigin
 from ..core.explaneat import ExplaNEAT
 from .ancestry_analyzer import AncestryAnalyzer
 from .visualization import GenomeVisualizer
@@ -658,3 +658,190 @@ class GenomeExplorer:
             "performance_context": self.get_performance_context(),
             "gene_origins": self.trace_gene_origins().to_dict("records"),
         }
+
+    def get_gene_origins(self, gene_type: Optional[str] = None) -> pd.DataFrame:
+        """
+        Get all gene origins for the current genome's experiment.
+
+        Args:
+            gene_type: Filter by 'node' or 'connection'. If None, returns all genes.
+
+        Returns:
+            DataFrame with gene origin information
+        """
+        with db.session_scope() as session:
+            query = session.query(GeneOrigin).filter_by(
+                experiment_id=self.genome_info.experiment_id
+            )
+
+            if gene_type:
+                query = query.filter_by(gene_type=gene_type)
+
+            gene_origins = query.order_by(
+                GeneOrigin.origin_generation, GeneOrigin.innovation_number
+            ).all()
+
+            if not gene_origins:
+                return pd.DataFrame()
+
+            data = []
+            for gene in gene_origins:
+                data.append({
+                    'innovation_number': gene.innovation_number,
+                    'gene_type': gene.gene_type,
+                    'origin_generation': gene.origin_generation,
+                    'origin_genome_id': str(gene.origin_genome_id),
+                    'connection_from': gene.connection_from,
+                    'connection_to': gene.connection_to,
+                    'node_id': gene.node_id,
+                    'initial_params': gene.initial_params
+                })
+
+            return pd.DataFrame(data)
+
+    def get_gene_origin_by_innovation(self, innovation_number: int) -> Optional[Dict[str, Any]]:
+        """
+        Get the origin information for a specific innovation number.
+
+        Args:
+            innovation_number: The innovation number to look up
+
+        Returns:
+            Dictionary with gene origin info, or None if not found
+        """
+        with db.session_scope() as session:
+            gene_origin = session.query(GeneOrigin).filter_by(
+                experiment_id=self.genome_info.experiment_id,
+                innovation_number=innovation_number
+            ).first()
+
+            if not gene_origin:
+                return None
+
+            return {
+                'innovation_number': gene_origin.innovation_number,
+                'gene_type': gene_origin.gene_type,
+                'origin_generation': gene_origin.origin_generation,
+                'origin_genome_id': str(gene_origin.origin_genome_id),
+                'connection_from': gene_origin.connection_from,
+                'connection_to': gene_origin.connection_to,
+                'node_id': gene_origin.node_id,
+                'initial_params': gene_origin.initial_params,
+                'created_at': gene_origin.created_at
+            }
+
+    def get_genes_by_generation(self, generation: int) -> pd.DataFrame:
+        """
+        Get all genes that first appeared in a specific generation.
+
+        Args:
+            generation: Generation number
+
+        Returns:
+            DataFrame with genes that originated in that generation
+        """
+        with db.session_scope() as session:
+            gene_origins = session.query(GeneOrigin).filter_by(
+                experiment_id=self.genome_info.experiment_id,
+                origin_generation=generation
+            ).order_by(GeneOrigin.gene_type, GeneOrigin.innovation_number).all()
+
+            if not gene_origins:
+                return pd.DataFrame()
+
+            data = []
+            for gene in gene_origins:
+                data.append({
+                    'innovation_number': gene.innovation_number,
+                    'gene_type': gene.gene_type,
+                    'origin_genome_id': str(gene.origin_genome_id),
+                    'connection_from': gene.connection_from,
+                    'connection_to': gene.connection_to,
+                    'node_id': gene.node_id,
+                    'initial_params': gene.initial_params
+                })
+
+            return pd.DataFrame(data)
+
+    def get_innovation_timeline(self) -> pd.DataFrame:
+        """
+        Get a timeline of innovation introductions across all generations.
+
+        Returns:
+            DataFrame with innovation counts per generation
+        """
+        with db.session_scope() as session:
+            gene_origins = session.query(GeneOrigin).filter_by(
+                experiment_id=self.genome_info.experiment_id
+            ).order_by(GeneOrigin.origin_generation).all()
+
+            if not gene_origins:
+                return pd.DataFrame()
+
+            # Group by generation and gene type
+            timeline_data = {}
+            for gene in gene_origins:
+                gen = gene.origin_generation
+                if gen not in timeline_data:
+                    timeline_data[gen] = {'generation': gen, 'nodes': 0, 'connections': 0, 'total': 0}
+
+                if gene.gene_type == 'node':
+                    timeline_data[gen]['nodes'] += 1
+                elif gene.gene_type == 'connection':
+                    timeline_data[gen]['connections'] += 1
+                timeline_data[gen]['total'] += 1
+
+            return pd.DataFrame(list(timeline_data.values())).sort_values('generation')
+
+    def plot_innovation_timeline(self, figsize: Tuple[int, int] = (12, 6)) -> None:
+        """
+        Plot the timeline of innovation introductions.
+
+        Shows how many new nodes and connections were introduced in each generation.
+        """
+        timeline_df = self.get_innovation_timeline()
+
+        if timeline_df.empty:
+            print("No innovation data available")
+            return
+
+        _, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize)
+
+        # Stacked bar chart
+        ax1.bar(timeline_df['generation'], timeline_df['nodes'], label='Nodes', alpha=0.7)
+        ax1.bar(timeline_df['generation'], timeline_df['connections'],
+                bottom=timeline_df['nodes'], label='Connections', alpha=0.7)
+        ax1.set_title('New Innovations per Generation')
+        ax1.set_xlabel('Generation')
+        ax1.set_ylabel('Number of New Innovations')
+        ax1.legend()
+        ax1.grid(True, alpha=0.3)
+
+        # Cumulative innovation count
+        timeline_df['cumulative_nodes'] = timeline_df['nodes'].cumsum()
+        timeline_df['cumulative_connections'] = timeline_df['connections'].cumsum()
+        timeline_df['cumulative_total'] = timeline_df['total'].cumsum()
+
+        ax2.plot(timeline_df['generation'], timeline_df['cumulative_nodes'],
+                 'o-', label='Cumulative Nodes', linewidth=2)
+        ax2.plot(timeline_df['generation'], timeline_df['cumulative_connections'],
+                 's-', label='Cumulative Connections', linewidth=2)
+        ax2.plot(timeline_df['generation'], timeline_df['cumulative_total'],
+                 '^-', label='Cumulative Total', linewidth=2, alpha=0.6)
+        ax2.set_title('Cumulative Innovation Growth')
+        ax2.set_xlabel('Generation')
+        ax2.set_ylabel('Total Innovations')
+        ax2.legend()
+        ax2.grid(True, alpha=0.3)
+
+        plt.suptitle(f'Innovation Timeline - Experiment {self.genome_info.experiment_name}')
+        plt.tight_layout()
+        plt.show()
+
+        # Print summary
+        print(f"\n🧬 Innovation Summary:")
+        print(f"  Total innovations: {timeline_df['total'].sum()}")
+        print(f"  Total nodes: {timeline_df['nodes'].sum()}")
+        print(f"  Total connections: {timeline_df['connections'].sum()}")
+        print(f"  Generations with innovations: {len(timeline_df)}")
+        print(f"  Average innovations per generation: {timeline_df['total'].mean():.2f}")

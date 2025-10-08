@@ -333,10 +333,54 @@ class AncestryAnalyzer:
             }
         }
     
+    def get_best_ancestors_per_generation(self, experiment_id: str) -> pd.DataFrame:
+        """
+        Get the best performing ancestor from each generation in the lineage.
+
+        This method examines the full ancestry tree and returns the ancestor with
+        the highest fitness in each generation that appears in the lineage.
+
+        Args:
+            experiment_id: Database UUID of the experiment
+
+        Returns:
+            DataFrame with one row per generation containing the best ancestor info
+        """
+        ancestry_df = self.get_ancestry_tree()
+        if ancestry_df.empty:
+            return pd.DataFrame()
+
+        # Get all generations in the ancestry
+        generations = ancestry_df['generation'].unique()
+
+        best_ancestors = []
+
+        with db.session_scope() as session:
+            for generation in sorted(generations):
+                # Get all ancestors from this generation
+                gen_ancestors = ancestry_df[ancestry_df['generation'] == generation]
+
+                # Find the one with highest fitness
+                best_in_gen = gen_ancestors.loc[gen_ancestors['fitness'].idxmax()]
+
+                best_ancestors.append({
+                    'generation': generation,
+                    'genome_id': best_in_gen['genome_id'],
+                    'neat_genome_id': best_in_gen['neat_genome_id'],
+                    'fitness': best_in_gen['fitness'],
+                    'num_nodes': best_in_gen['num_nodes'],
+                    'num_connections': best_in_gen['num_connections'],
+                    'num_enabled_connections': best_in_gen['num_enabled_connections'],
+                    'network_depth': best_in_gen['network_depth'],
+                    'network_width': best_in_gen['network_width']
+                })
+
+        return pd.DataFrame(best_ancestors)
+
     def get_lineage_statistics(self) -> Dict[str, Any]:
         """
         Get statistical analysis of the lineage.
-        
+
         Returns:
             Dictionary with lineage statistics
         """
