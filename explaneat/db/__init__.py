@@ -9,20 +9,22 @@ from .models import (
     TrainingMetric,
     Checkpoint,
     Result,
-    GeneOrigin
+    GeneOrigin,
+    Annotation,
 )
 
 __all__ = [
-    'db',
-    'Base',
-    'Dataset',
-    'DatasetSplit',
-    'Experiment',
-    'Population',
-    'Species',
-    'Genome',
-    'TrainingMetric',
-    'Checkpoint',
-    'Result',
-    'GeneOrigin'
+    "db",
+    "Base",
+    "Dataset",
+    "DatasetSplit",
+    "Experiment",
+    "Population",
+    "Species",
+    "Genome",
+    "TrainingMetric",
+    "Checkpoint",
+    "Result",
+    "GeneOrigin",
+    "Annotation",
 ]

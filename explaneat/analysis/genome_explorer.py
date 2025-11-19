@@ -10,11 +10,15 @@ import numpy as np
 from typing import Dict, List, Tuple, Any, Optional
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
+import re
+import os
+import tempfile
 
 from ..db import db, Experiment, Population, Genome, TrainingMetric, GeneOrigin
 from ..core.explaneat import ExplaNEAT
 from .ancestry_analyzer import AncestryAnalyzer
-from .visualization import GenomeVisualizer
+from .visualization import GenomeVisualizer, InteractiveNetworkViewer
+from .annotation_manager import AnnotationManager
 
 
 @dataclass
@@ -89,19 +93,214 @@ class GenomeExplorer:
                 .all()
             )
 
-            # Load NEAT config (simplified - you might want to store this properly)
+            # Load NEAT config from experiment's stored config text
             import neat
 
-            config = neat.Config(
-                neat.DefaultGenome,
-                neat.DefaultReproduction,
-                neat.DefaultSpeciesSet,
-                neat.DefaultStagnation,
-                "config-file.cfg",
-            )
+            # Get the config text from the experiment
+            neat_config_text = experiment.neat_config_text or ""
 
-            # Deserialize the NEAT genome
-            neat_genome = genome_record.to_neat_genome(config)
+            # If config text is empty, raise an error
+            if not neat_config_text or not neat_config_text.strip():
+                raise ValueError(
+                    f"Experiment {experiment.id} has no stored NEAT configuration. "
+                    "Cannot load genome without configuration."
+                )
+
+            # Get missing parameters from config_json as fallback
+            config_json = experiment.config_json or {}
+            genome_config = config_json.get("genome", {})
+            species_config = config_json.get("species", {})
+            stagnation_config = config_json.get("stagnation", {})
+            reproduction_config = config_json.get("reproduction", {})
+
+            # List of required NEAT section parameters
+            required_neat_params = {
+                "no_fitness_termination": config_json.get(
+                    "no_fitness_termination", False
+                ),
+                "pop_size": config_json.get("pop_size", 50),  # Default fallback
+                "fitness_criterion": config_json.get("fitness_criterion", "max"),
+                "fitness_threshold": config_json.get("fitness_threshold", 3.9),
+                "reset_on_extinction": config_json.get("reset_on_extinction", False),
+            }
+
+            # Check and add missing parameters to the config text
+            if "[NEAT]" in neat_config_text:
+                # First, collect all missing parameters
+                missing_params = []
+                for param_name, param_value in required_neat_params.items():
+                    # Check if parameter is explicitly set (not just in comments)
+                    param_pattern = re.compile(
+                        r"^\s*" + re.escape(param_name) + r"\s*=", re.MULTILINE
+                    )
+
+                    if not param_pattern.search(neat_config_text):
+                        missing_params.append((param_name, param_value))
+
+                # Add all missing parameters at once after [NEAT] section header
+                if missing_params:
+                    params_str = "\n".join(f"{k} = {v}" for k, v in missing_params)
+                    neat_config_text = re.sub(
+                        r"(\[NEAT\])", rf"\1\n{params_str}", neat_config_text, count=1
+                    )
+            else:
+                # If no [NEAT] section, create one with all required parameters
+                neat_params_str = "\n".join(
+                    f"{k} = {v}" for k, v in required_neat_params.items()
+                )
+                neat_config_text = f"[NEAT]\n{neat_params_str}\n\n" + neat_config_text
+
+            # Check for required sections and add if missing
+            # Generate section content from config_json with sensible defaults
+            def generate_default_genome_section(genome_cfg):
+                """Generate DefaultGenome section from config_json"""
+                return f"""activation_default      = {genome_cfg.get('activation_default', 'sigmoid')}
+activation_mutate_rate  = {genome_cfg.get('activation_mutate_rate', 0.1)}
+activation_options      = {genome_cfg.get('activation_options', 'sigmoid')}
+aggregation_default     = {genome_cfg.get('aggregation_default', 'sum')}
+aggregation_mutate_rate = {genome_cfg.get('aggregation_mutate_rate', 0.0)}
+aggregation_options     = {genome_cfg.get('aggregation_options', 'sum')}
+bias_init_mean          = {genome_cfg.get('bias_init_mean', 0.0)}
+bias_init_stdev         = {genome_cfg.get('bias_init_stdev', 1.0)}
+bias_max_value          = {genome_cfg.get('bias_max_value', 30.0)}
+bias_min_value          = {genome_cfg.get('bias_min_value', -30.0)}
+bias_mutate_power       = {genome_cfg.get('bias_mutate_power', 0.5)}
+bias_mutate_rate        = {genome_cfg.get('bias_mutate_rate', 0.7)}
+bias_replace_rate       = {genome_cfg.get('bias_replace_rate', 0.1)}
+compatibility_disjoint_coefficient = {genome_cfg.get('compatibility_disjoint_coefficient', 1.0)}
+compatibility_weight_coefficient   = {genome_cfg.get('compatibility_weight_coefficient', 0.5)}
+conn_add_prob           = {genome_cfg.get('conn_add_prob', 0.5)}
+conn_delete_prob        = {genome_cfg.get('conn_delete_prob', 0.5)}
+enabled_default         = {genome_cfg.get('enabled_default', True)}
+enabled_mutate_rate     = {genome_cfg.get('enabled_mutate_rate', 0.01)}
+feed_forward            = {genome_cfg.get('feed_forward', True)}
+initial_connection      = {genome_cfg.get('initial_connection', 'full_direct')}
+node_add_prob           = {genome_cfg.get('node_add_prob', 0.2)}
+node_delete_prob        = {genome_cfg.get('node_delete_prob', 0.2)}
+num_hidden              = {genome_cfg.get('num_hidden', 0)}
+num_inputs              = {genome_cfg.get('num_inputs', 10)}
+num_outputs             = {genome_cfg.get('num_outputs', 1)}
+response_init_mean      = {genome_cfg.get('response_init_mean', 1.0)}
+response_init_stdev     = {genome_cfg.get('response_init_stdev', 0.0)}
+response_max_value      = {genome_cfg.get('response_max_value', 30.0)}
+response_min_value      = {genome_cfg.get('response_min_value', -30.0)}
+response_mutate_power   = {genome_cfg.get('response_mutate_power', 0.0)}
+response_mutate_rate    = {genome_cfg.get('response_mutate_rate', 0.0)}
+response_replace_rate   = {genome_cfg.get('response_replace_rate', 0.0)}
+single_structural_mutation = {genome_cfg.get('single_structural_mutation', False)}
+structural_mutation_surer = {genome_cfg.get('structural_mutation_surer', 'default')}
+weight_init_mean        = {genome_cfg.get('weight_init_mean', 0.0)}
+weight_init_stdev       = {genome_cfg.get('weight_init_stdev', 1.0)}
+weight_max_value        = {genome_cfg.get('weight_max_value', 30)}
+weight_min_value        = {genome_cfg.get('weight_min_value', -30)}
+weight_mutate_power     = {genome_cfg.get('weight_mutate_power', 0.5)}
+weight_mutate_rate      = {genome_cfg.get('weight_mutate_rate', 0.8)}
+weight_replace_rate     = {genome_cfg.get('weight_replace_rate', 0.1)}"""
+
+            def generate_species_section(species_cfg):
+                """Generate DefaultSpeciesSet section from config_json"""
+                return f"compatibility_threshold = {species_cfg.get('compatibility_threshold', 3.0)}"
+
+            def generate_stagnation_section(stagnation_cfg):
+                """Generate DefaultStagnation section from config_json"""
+                return f"""species_fitness_func = {stagnation_cfg.get('species_fitness_func', 'max')}
+max_stagnation       = {stagnation_cfg.get('max_stagnation', 20)}
+species_elitism      = {stagnation_cfg.get('species_elitism', 2)}"""
+
+            def generate_reproduction_section(reproduction_cfg):
+                """Generate DefaultReproduction section from config_json"""
+                return f"""elitism            = {reproduction_cfg.get('elitism', 2)}
+survival_threshold = {reproduction_cfg.get('survival_threshold', 0.2)}"""
+
+            required_sections = {
+                "[DefaultGenome]": generate_default_genome_section(genome_config),
+                "[DefaultSpeciesSet]": generate_species_section(species_config),
+                "[DefaultStagnation]": generate_stagnation_section(stagnation_config),
+                "[DefaultReproduction]": generate_reproduction_section(
+                    reproduction_config
+                ),
+            }
+
+            # Check for required sections and add missing parameters
+            for section_name, section_content in required_sections.items():
+                if section_name not in neat_config_text:
+                    # Section doesn't exist, add it at the end
+                    neat_config_text += f"\n{section_name}\n{section_content}\n"
+                else:
+                    # Section exists, but check for missing required parameters
+                    # Extract parameters from the generated section
+                    section_lines = section_content.split("\n")
+                    for line in section_lines:
+                        if "=" in line and line.strip():
+                            param_name = line.split("=")[0].strip()
+                            param_value = line.split("=")[1].strip()
+
+                            # Check if this parameter exists in the section
+                            # Look for the parameter after the section header
+                            section_start = neat_config_text.find(section_name)
+                            if section_start != -1:
+                                # Find the next section or end of file
+                                next_section = len(neat_config_text)
+                                for other_section in [
+                                    "[NEAT]",
+                                    "[DefaultGenome]",
+                                    "[DefaultSpeciesSet]",
+                                    "[DefaultStagnation]",
+                                    "[DefaultReproduction]",
+                                ]:
+                                    if other_section != section_name:
+                                        pos = neat_config_text.find(
+                                            other_section,
+                                            section_start + len(section_name),
+                                        )
+                                        if pos != -1 and pos < next_section:
+                                            next_section = pos
+
+                                section_text = neat_config_text[
+                                    section_start:next_section
+                                ]
+
+                                # Check if parameter exists
+                                param_pattern = re.compile(
+                                    r"^\s*" + re.escape(param_name) + r"\s*=",
+                                    re.MULTILINE,
+                                )
+
+                                if not param_pattern.search(section_text):
+                                    # Add missing parameter to the section
+                                    # Insert after section header
+                                    insert_pos = section_start + len(section_name)
+                                    neat_config_text = (
+                                        neat_config_text[:insert_pos]
+                                        + f"\n{param_name} = {param_value}"
+                                        + neat_config_text[insert_pos:]
+                                    )
+
+            # Create a temporary config file
+            temp_config_file = tempfile.NamedTemporaryFile(
+                mode="w", suffix=".cfg", delete=False
+            )
+            temp_config_path = temp_config_file.name
+            try:
+                temp_config_file.write(neat_config_text)
+                temp_config_file.close()
+
+                config = neat.Config(
+                    neat.DefaultGenome,
+                    neat.DefaultReproduction,
+                    neat.DefaultSpeciesSet,
+                    neat.DefaultStagnation,
+                    temp_config_path,
+                )
+
+                # Deserialize the NEAT genome (Config reads file during init, so this is safe)
+                neat_genome = genome_record.to_neat_genome(config)
+            finally:
+                # Clean up the temporary file after config is loaded
+                try:
+                    os.unlink(temp_config_path)
+                except:
+                    pass
 
             # Create genome info
             genome_info = GenomeInfo(
@@ -462,10 +661,10 @@ class GenomeExplorer:
             ancestry_df = self.get_ancestry_tree(max_generations)
             ancestor_fitness = []
             ancestor_generations = []
-            
+
             if not ancestry_df.empty:
                 # Create a mapping of generation to ancestor fitness
-                ancestry_by_gen = ancestry_df.groupby('generation')['fitness'].max()
+                ancestry_by_gen = ancestry_df.groupby("generation")["fitness"].max()
                 for gen in generations:
                     if gen in ancestry_by_gen.index:
                         ancestor_fitness.append(ancestry_by_gen[gen])
@@ -490,7 +689,7 @@ class GenomeExplorer:
                 linewidth=2,
                 markersize=4,
             )
-            
+
             # Plot ancestor fitness if available
             if ancestor_fitness and ancestor_generations:
                 ax1.plot(
@@ -502,7 +701,7 @@ class GenomeExplorer:
                     markersize=6,
                     alpha=0.8,
                 )
-            
+
             ax1.fill_between(
                 generations,
                 [m - s for m, s in zip(mean_fitness, std_fitness)],
@@ -569,17 +768,59 @@ class GenomeExplorer:
             print(
                 f"  Best generation: {generations[best_fitness.index(max(best_fitness))]} (fitness: {max(best_fitness):.3f})"
             )
-            
+
             # Print ancestor analysis if available
             if ancestor_fitness and ancestor_generations:
                 print(f"\n🌳 Ancestor Analysis:")
-                print(f"  Ancestor fitness range: {min(ancestor_fitness):.3f} → {max(ancestor_fitness):.3f}")
-                print(f"  Ancestor fitness improvement: {max(ancestor_fitness) - min(ancestor_fitness):.3f}")
+                print(
+                    f"  Ancestor fitness range: {min(ancestor_fitness):.3f} → {max(ancestor_fitness):.3f}"
+                )
+                print(
+                    f"  Ancestor fitness improvement: {max(ancestor_fitness) - min(ancestor_fitness):.3f}"
+                )
                 print(f"  Ancestor generations tracked: {len(ancestor_generations)}")
 
-    def show_network(self, **kwargs) -> None:
-        """Display the network structure"""
-        self.visualizer.plot_network(**kwargs)
+    def show_network(self, interactive: bool = False, **kwargs) -> Optional[str]:
+        """
+        Display the network structure.
+
+        Args:
+            interactive: If True, use interactive web-based visualization (Pyvis)
+            **kwargs: Additional arguments passed to visualization method
+
+        Returns:
+            If interactive=True, returns path to HTML file. Otherwise None.
+        """
+        if interactive:
+            return self.show_interactive_network(**kwargs)
+        else:
+            self.visualizer.plot_network(**kwargs)
+            return None
+
+    def show_interactive_network(self, **kwargs) -> str:
+        """
+        Display interactive web-based network visualization with filtering controls.
+
+        Loads annotations from database and integrates them into the visualization.
+
+        Args:
+            **kwargs: Additional arguments passed to InteractiveNetworkViewer.show()
+
+        Returns:
+            Path to generated HTML file
+        """
+        # Load annotations for this genome
+        annotations = AnnotationManager.get_annotations(self.genome_info.genome_id)
+
+        # Create interactive viewer
+        viewer = InteractiveNetworkViewer(
+            self.neat_genome, self.config, annotations=annotations
+        )
+        # Store genome_info for annotation export
+        viewer.genome_info = self.genome_info
+
+        # Show the visualization
+        return viewer.show(**kwargs)
 
     def trace_gene_origins(self) -> pd.DataFrame:
         """Trace when each gene (node/connection) was first introduced"""
@@ -686,20 +927,24 @@ class GenomeExplorer:
 
             data = []
             for gene in gene_origins:
-                data.append({
-                    'innovation_number': gene.innovation_number,
-                    'gene_type': gene.gene_type,
-                    'origin_generation': gene.origin_generation,
-                    'origin_genome_id': str(gene.origin_genome_id),
-                    'connection_from': gene.connection_from,
-                    'connection_to': gene.connection_to,
-                    'node_id': gene.node_id,
-                    'initial_params': gene.initial_params
-                })
+                data.append(
+                    {
+                        "innovation_number": gene.innovation_number,
+                        "gene_type": gene.gene_type,
+                        "origin_generation": gene.origin_generation,
+                        "origin_genome_id": str(gene.origin_genome_id),
+                        "connection_from": gene.connection_from,
+                        "connection_to": gene.connection_to,
+                        "node_id": gene.node_id,
+                        "initial_params": gene.initial_params,
+                    }
+                )
 
             return pd.DataFrame(data)
 
-    def get_gene_origin_by_innovation(self, innovation_number: int) -> Optional[Dict[str, Any]]:
+    def get_gene_origin_by_innovation(
+        self, innovation_number: int
+    ) -> Optional[Dict[str, Any]]:
         """
         Get the origin information for a specific innovation number.
 
@@ -710,24 +955,28 @@ class GenomeExplorer:
             Dictionary with gene origin info, or None if not found
         """
         with db.session_scope() as session:
-            gene_origin = session.query(GeneOrigin).filter_by(
-                experiment_id=self.genome_info.experiment_id,
-                innovation_number=innovation_number
-            ).first()
+            gene_origin = (
+                session.query(GeneOrigin)
+                .filter_by(
+                    experiment_id=self.genome_info.experiment_id,
+                    innovation_number=innovation_number,
+                )
+                .first()
+            )
 
             if not gene_origin:
                 return None
 
             return {
-                'innovation_number': gene_origin.innovation_number,
-                'gene_type': gene_origin.gene_type,
-                'origin_generation': gene_origin.origin_generation,
-                'origin_genome_id': str(gene_origin.origin_genome_id),
-                'connection_from': gene_origin.connection_from,
-                'connection_to': gene_origin.connection_to,
-                'node_id': gene_origin.node_id,
-                'initial_params': gene_origin.initial_params,
-                'created_at': gene_origin.created_at
+                "innovation_number": gene_origin.innovation_number,
+                "gene_type": gene_origin.gene_type,
+                "origin_generation": gene_origin.origin_generation,
+                "origin_genome_id": str(gene_origin.origin_genome_id),
+                "connection_from": gene_origin.connection_from,
+                "connection_to": gene_origin.connection_to,
+                "node_id": gene_origin.node_id,
+                "initial_params": gene_origin.initial_params,
+                "created_at": gene_origin.created_at,
             }
 
     def get_genes_by_generation(self, generation: int) -> pd.DataFrame:
@@ -741,25 +990,32 @@ class GenomeExplorer:
             DataFrame with genes that originated in that generation
         """
         with db.session_scope() as session:
-            gene_origins = session.query(GeneOrigin).filter_by(
-                experiment_id=self.genome_info.experiment_id,
-                origin_generation=generation
-            ).order_by(GeneOrigin.gene_type, GeneOrigin.innovation_number).all()
+            gene_origins = (
+                session.query(GeneOrigin)
+                .filter_by(
+                    experiment_id=self.genome_info.experiment_id,
+                    origin_generation=generation,
+                )
+                .order_by(GeneOrigin.gene_type, GeneOrigin.innovation_number)
+                .all()
+            )
 
             if not gene_origins:
                 return pd.DataFrame()
 
             data = []
             for gene in gene_origins:
-                data.append({
-                    'innovation_number': gene.innovation_number,
-                    'gene_type': gene.gene_type,
-                    'origin_genome_id': str(gene.origin_genome_id),
-                    'connection_from': gene.connection_from,
-                    'connection_to': gene.connection_to,
-                    'node_id': gene.node_id,
-                    'initial_params': gene.initial_params
-                })
+                data.append(
+                    {
+                        "innovation_number": gene.innovation_number,
+                        "gene_type": gene.gene_type,
+                        "origin_genome_id": str(gene.origin_genome_id),
+                        "connection_from": gene.connection_from,
+                        "connection_to": gene.connection_to,
+                        "node_id": gene.node_id,
+                        "initial_params": gene.initial_params,
+                    }
+                )
 
             return pd.DataFrame(data)
 
@@ -771,9 +1027,12 @@ class GenomeExplorer:
             DataFrame with innovation counts per generation
         """
         with db.session_scope() as session:
-            gene_origins = session.query(GeneOrigin).filter_by(
-                experiment_id=self.genome_info.experiment_id
-            ).order_by(GeneOrigin.origin_generation).all()
+            gene_origins = (
+                session.query(GeneOrigin)
+                .filter_by(experiment_id=self.genome_info.experiment_id)
+                .order_by(GeneOrigin.origin_generation)
+                .all()
+            )
 
             if not gene_origins:
                 return pd.DataFrame()
@@ -783,15 +1042,20 @@ class GenomeExplorer:
             for gene in gene_origins:
                 gen = gene.origin_generation
                 if gen not in timeline_data:
-                    timeline_data[gen] = {'generation': gen, 'nodes': 0, 'connections': 0, 'total': 0}
+                    timeline_data[gen] = {
+                        "generation": gen,
+                        "nodes": 0,
+                        "connections": 0,
+                        "total": 0,
+                    }
 
-                if gene.gene_type == 'node':
-                    timeline_data[gen]['nodes'] += 1
-                elif gene.gene_type == 'connection':
-                    timeline_data[gen]['connections'] += 1
-                timeline_data[gen]['total'] += 1
+                if gene.gene_type == "node":
+                    timeline_data[gen]["nodes"] += 1
+                elif gene.gene_type == "connection":
+                    timeline_data[gen]["connections"] += 1
+                timeline_data[gen]["total"] += 1
 
-            return pd.DataFrame(list(timeline_data.values())).sort_values('generation')
+            return pd.DataFrame(list(timeline_data.values())).sort_values("generation")
 
     def plot_innovation_timeline(self, figsize: Tuple[int, int] = (12, 6)) -> None:
         """
@@ -808,33 +1072,58 @@ class GenomeExplorer:
         _, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize)
 
         # Stacked bar chart
-        ax1.bar(timeline_df['generation'], timeline_df['nodes'], label='Nodes', alpha=0.7)
-        ax1.bar(timeline_df['generation'], timeline_df['connections'],
-                bottom=timeline_df['nodes'], label='Connections', alpha=0.7)
-        ax1.set_title('New Innovations per Generation')
-        ax1.set_xlabel('Generation')
-        ax1.set_ylabel('Number of New Innovations')
+        ax1.bar(
+            timeline_df["generation"], timeline_df["nodes"], label="Nodes", alpha=0.7
+        )
+        ax1.bar(
+            timeline_df["generation"],
+            timeline_df["connections"],
+            bottom=timeline_df["nodes"],
+            label="Connections",
+            alpha=0.7,
+        )
+        ax1.set_title("New Innovations per Generation")
+        ax1.set_xlabel("Generation")
+        ax1.set_ylabel("Number of New Innovations")
         ax1.legend()
         ax1.grid(True, alpha=0.3)
 
         # Cumulative innovation count
-        timeline_df['cumulative_nodes'] = timeline_df['nodes'].cumsum()
-        timeline_df['cumulative_connections'] = timeline_df['connections'].cumsum()
-        timeline_df['cumulative_total'] = timeline_df['total'].cumsum()
+        timeline_df["cumulative_nodes"] = timeline_df["nodes"].cumsum()
+        timeline_df["cumulative_connections"] = timeline_df["connections"].cumsum()
+        timeline_df["cumulative_total"] = timeline_df["total"].cumsum()
 
-        ax2.plot(timeline_df['generation'], timeline_df['cumulative_nodes'],
-                 'o-', label='Cumulative Nodes', linewidth=2)
-        ax2.plot(timeline_df['generation'], timeline_df['cumulative_connections'],
-                 's-', label='Cumulative Connections', linewidth=2)
-        ax2.plot(timeline_df['generation'], timeline_df['cumulative_total'],
-                 '^-', label='Cumulative Total', linewidth=2, alpha=0.6)
-        ax2.set_title('Cumulative Innovation Growth')
-        ax2.set_xlabel('Generation')
-        ax2.set_ylabel('Total Innovations')
+        ax2.plot(
+            timeline_df["generation"],
+            timeline_df["cumulative_nodes"],
+            "o-",
+            label="Cumulative Nodes",
+            linewidth=2,
+        )
+        ax2.plot(
+            timeline_df["generation"],
+            timeline_df["cumulative_connections"],
+            "s-",
+            label="Cumulative Connections",
+            linewidth=2,
+        )
+        ax2.plot(
+            timeline_df["generation"],
+            timeline_df["cumulative_total"],
+            "^-",
+            label="Cumulative Total",
+            linewidth=2,
+            alpha=0.6,
+        )
+        ax2.set_title("Cumulative Innovation Growth")
+        ax2.set_xlabel("Generation")
+        ax2.set_ylabel("Total Innovations")
         ax2.legend()
         ax2.grid(True, alpha=0.3)
 
-        plt.suptitle(f'Innovation Timeline - Experiment {self.genome_info.experiment_name}')
+        plt.suptitle(
+            f"Innovation Timeline - Experiment {self.genome_info.experiment_name}"
+        )
         plt.tight_layout()
         plt.show()
 
@@ -844,4 +1133,6 @@ class GenomeExplorer:
         print(f"  Total nodes: {timeline_df['nodes'].sum()}")
         print(f"  Total connections: {timeline_df['connections'].sum()}")
         print(f"  Generations with innovations: {len(timeline_df)}")
-        print(f"  Average innovations per generation: {timeline_df['total'].mean():.2f}")
+        print(
+            f"  Average innovations per generation: {timeline_df['total'].mean():.2f}"
+        )
