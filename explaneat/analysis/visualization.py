@@ -23,6 +23,7 @@ import logging
 import json
 import shutil
 import re
+from collections import deque, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from importlib import resources as pkg_resources
@@ -1115,6 +1116,10 @@ class InteractiveNetworkViewer:
         # Build network graph
         self.G = nx.DiGraph()
         self._build_graph()
+        self._prune_inactive_graph()
+        self.output_nodes = set(self._get_output_nodes())
+        self.disabled_edge_records = self._collect_disabled_connections()
+        self.disabled_nodes = self._identify_disabled_nodes()
 
         # Calculate node properties
         self.node_depths = self._calculate_depths()
@@ -1141,11 +1146,12 @@ class InteractiveNetworkViewer:
             )
         return js_path
 
-    def _prepare_annotation_sets(self):
-        """Build lookup tables for annotation membership."""
+    def _collect_annotation_metadata(self):
+        """Collect annotation node/edge sets, colors, and ordering metadata."""
         annotation_colors = {}
         annotation_node_sets: Dict[str, set] = {}
         annotation_edge_sets: Dict[str, set] = {}
+        annotation_priority: Dict[str, int] = {}
         annotation_colors_list = [
             "#FF6B6B",
             "#4ECDC4",
@@ -1170,6 +1176,7 @@ class InteractiveNetworkViewer:
                 subgraph_nodes = annotation.subgraph_nodes or []
                 subgraph_connections = annotation.subgraph_connections or []
 
+            annotation_priority[ann_id] = idx
             nodes = set(subgraph_nodes)
             edges = set()
             for conn in subgraph_connections:
@@ -1184,6 +1191,21 @@ class InteractiveNetworkViewer:
             for node_id in nodes:
                 annotation_colors[node_id] = color
 
+        return (
+            annotation_node_sets,
+            annotation_edge_sets,
+            annotation_colors,
+            annotation_priority,
+        )
+
+    def _prepare_annotation_sets(self):
+        """Build lookup tables for annotation membership."""
+        (
+            annotation_node_sets,
+            annotation_edge_sets,
+            annotation_colors,
+            _,
+        ) = self._collect_annotation_metadata()
         return annotation_node_sets, annotation_edge_sets, annotation_colors
 
     def _build_graph(self):
@@ -1196,6 +1218,96 @@ class InteractiveNetworkViewer:
         for conn_key, conn in self.genome.connections.items():
             if conn.enabled:
                 self.G.add_edge(conn_key[0], conn_key[1], weight=conn.weight)
+
+    def _collect_disabled_connections(self) -> List[Tuple[int, int, float]]:
+        """Collect all disabled input→output edges from the genome."""
+        disabled = []
+        for conn_key, conn in self.genome.connections.items():
+            if not conn.enabled:
+                disabled.append((conn_key[0], conn_key[1], conn.weight))
+        return disabled
+
+    def _identify_disabled_nodes(self) -> set:
+        """
+        Identify nodes that have no enabled incident edges.
+
+        Output nodes are always considered active even if isolated.
+        """
+        disabled = set()
+        for node_id in self.genome.nodes:
+            if node_id in self.output_nodes:
+                continue
+            if self.G.in_degree(node_id) == 0 and self.G.out_degree(node_id) == 0:
+                disabled.add(node_id)
+        return disabled
+
+    def _get_input_nodes(self) -> List[int]:
+        """Return all configured input node ids that exist in the graph."""
+        if hasattr(self.config, "genome_config"):
+            return [
+                n for n in self.config.genome_config.input_keys if n in self.G.nodes()
+            ]
+        return [n for n in self.G.nodes() if n < 0]
+
+    def _get_output_nodes(self) -> List[int]:
+        """Return all configured output node ids that exist in the graph."""
+        if hasattr(self.config, "genome_config"):
+            return [
+                n for n in self.config.genome_config.output_keys if n in self.G.nodes()
+            ]
+        # Fallback: treat node 0 as the single output
+        return [n for n in self.G.nodes() if n == 0]
+
+    def _prune_inactive_graph(self):
+        """Remove nodes/edges that are not on any path from inputs to outputs."""
+        if not self.G.nodes():
+            return
+
+        input_nodes = [n for n in self._get_input_nodes() if n in self.G.nodes()]
+        output_nodes = [n for n in self._get_output_nodes() if n in self.G.nodes()]
+
+        if not input_nodes or not output_nodes:
+            logger.warning(
+                "Cannot prune inactive graph: inputs=%d outputs=%d",
+                len(input_nodes),
+                len(output_nodes),
+            )
+            return
+
+        forward_reachable = self._traverse_nodes(input_nodes, direction="out")
+        backward_reachable = self._traverse_nodes(output_nodes, direction="in")
+
+        active_nodes = forward_reachable & backward_reachable
+        if not active_nodes:
+            logger.warning("Pruning skipped: no active nodes found")
+            return
+
+        inactive_nodes = [n for n in list(self.G.nodes()) if n not in active_nodes]
+        if inactive_nodes:
+            self.G.remove_nodes_from(inactive_nodes)
+            logger.debug(
+                "Pruned %d inactive nodes (remaining: %d)",
+                len(inactive_nodes),
+                self.G.number_of_nodes(),
+            )
+
+    def _traverse_nodes(self, start_nodes: List[int], direction: str) -> set:
+        """Return nodes reachable from start_nodes following edges in given direction."""
+        reachable: set = set()
+        queue = deque(start_nodes)
+        while queue:
+            node = queue.popleft()
+            if node in reachable or node not in self.G:
+                continue
+            reachable.add(node)
+            if direction == "out":
+                neighbors = (nbr for _, nbr in self.G.out_edges(node))
+            else:
+                neighbors = (nbr for nbr, _ in self.G.in_edges(node))
+            for neighbor in neighbors:
+                if neighbor not in reachable:
+                    queue.append(neighbor)
+        return reachable
 
     def _calculate_depths(self) -> Dict[int, int]:
         """Calculate node depths using the same logic as GenomeVisualizer."""
@@ -1262,20 +1374,8 @@ class InteractiveNetworkViewer:
         Returns:
             List of input node IDs that are direct-connected
         """
-        # Get input nodes
-        if hasattr(self.config, "genome_config"):
-            input_nodes = [
-                n for n in self.config.genome_config.input_keys if n in self.G.nodes()
-            ]
-        else:
-            input_nodes = [n for n in self.G.nodes() if n < 0]
-
-        # Get output nodes
-        if hasattr(self.config, "genome_config"):
-            output_nodes = set(self.config.genome_config.output_keys)
-        else:
-            output_nodes = set([n for n in self.G.nodes() if n == 0])
-        output_nodes.update([n for n in self.G.nodes() if n == 0])
+        input_nodes = self._get_input_nodes()
+        output_nodes = set(self._get_output_nodes())
 
         direct_connected = []
 
@@ -1300,15 +1400,8 @@ class InteractiveNetworkViewer:
         direct_edges = set()
 
         # Get input and output nodes
-        if hasattr(self.config, "genome_config"):
-            input_nodes = [
-                n for n in self.config.genome_config.input_keys if n in self.G.nodes()
-            ]
-            output_nodes = set(self.config.genome_config.output_keys)
-        else:
-            input_nodes = [n for n in self.G.nodes() if n < 0]
-            output_nodes = set([n for n in self.G.nodes() if n == 0])
-        output_nodes.update([n for n in self.G.nodes() if n == 0])
+        input_nodes = self._get_input_nodes()
+        output_nodes = set(self._get_output_nodes())
 
         # Find all direct connections (input -> output, no hidden nodes in between)
         for input_node in input_nodes:
@@ -1348,6 +1441,8 @@ class InteractiveNetworkViewer:
 
     def _get_node_color(self, node_id: int, annotation_colors: Dict[int, str]) -> str:
         """Get color for a node based on type and annotations."""
+        if node_id in self.disabled_nodes:
+            return "#B8B8B8"
         # Check if node is in an annotation
         if node_id in annotation_colors:
             return annotation_colors[node_id]
@@ -1397,6 +1492,16 @@ class InteractiveNetworkViewer:
         if not input_nodes:
             input_nodes = [n for n in self.G.nodes() if self.G.in_degree(n) == 0]
 
+        (
+            annotation_node_sets,
+            _,
+            _,
+            annotation_priority,
+        ) = self._collect_annotation_metadata()
+        node_annotation_membership = self._build_annotation_membership(
+            annotation_node_sets, annotation_priority
+        )
+
         # Group nodes by depth (layer)
         layers = {}
         for node, depth in self.node_depths.items():
@@ -1411,6 +1516,11 @@ class InteractiveNetworkViewer:
         # Apply crossing minimization (simplified version)
         if len(layers) > 1:
             layers = self._minimize_crossings_barycenter(layers)
+
+        # Cluster nodes by annotation membership to keep annotations contiguous
+        layers = self._cluster_layers_by_annotation(
+            layers, node_annotation_membership, annotation_priority
+        )
 
         # Calculate positions
         pos = {}
@@ -1432,7 +1542,88 @@ class InteractiveNetworkViewer:
                 y = start_y + i * vertical_spacing
                 pos[node] = (x, y)
 
+        # Apply adjustments for direct input -> output connections
+        pos = self._apply_direct_connection_lane(pos)
+
         return pos
+
+    def _build_annotation_membership(
+        self,
+        annotation_node_sets: Dict[str, set],
+        annotation_priority: Dict[str, int],
+    ) -> Dict[int, List[str]]:
+        """Build mapping of node_id -> ordered annotation ids."""
+        node_membership: Dict[int, List[str]] = {}
+        for ann_id, nodes in annotation_node_sets.items():
+            for node_id in nodes:
+                node_membership.setdefault(node_id, []).append(ann_id)
+
+        def priority_key(ann_id: str) -> float:
+            return float(annotation_priority.get(ann_id, 10**6))
+
+        for node_id, ann_ids in node_membership.items():
+            ann_ids.sort(key=priority_key)
+
+        return node_membership
+
+    def _cluster_layers_by_annotation(
+        self,
+        layers: Dict[int, List[int]],
+        node_annotation_membership: Dict[int, List[str]],
+        annotation_priority: Dict[str, int],
+    ) -> Dict[int, List[int]]:
+        """Ensure nodes sharing annotations stay contiguous within each layer."""
+        if not node_annotation_membership:
+            return layers
+
+        clustered_layers: Dict[int, List[int]] = {}
+
+        def annotation_order_key(ann_id: str) -> Tuple[int, str]:
+            return (annotation_priority.get(ann_id, 10**6), ann_id)
+
+        for depth, nodes in layers.items():
+            annotation_groups: Dict[Optional[str], List[int]] = {}
+            for node in nodes:
+                memberships = node_annotation_membership.get(node)
+                primary_ann = memberships[0] if memberships else None
+                annotation_groups.setdefault(primary_ann, []).append(node)
+
+            ordered_nodes: List[int] = []
+            annotated_ids = sorted(
+                [aid for aid in annotation_groups.keys() if aid is not None],
+                key=annotation_order_key,
+            )
+            for ann_id in annotated_ids:
+                ordered_nodes.extend(annotation_groups.get(ann_id, []))
+
+            # Append nodes without annotations in their original order
+            ordered_nodes.extend(annotation_groups.get(None, []))
+            clustered_layers[depth] = ordered_nodes
+
+        return clustered_layers
+
+    def _apply_direct_connection_lane(
+        self, positions: Dict[int, Tuple[float, float]]
+    ) -> Dict[int, Tuple[float, float]]:
+        """Push direct input→output connections into a bottom lane."""
+        if not positions or not self.direct_connection_edges:
+            return positions
+
+        lane_nodes = set(self.direct_connection_nodes)
+        lane_nodes.update(to_node for (_, to_node) in self.direct_connection_edges)
+        lane_nodes = {node for node in lane_nodes if node in positions}
+        if not lane_nodes:
+            return positions
+
+        min_y = min(y for _, y in positions.values())
+        lane_padding = 150.0
+        lane_y = min_y - lane_padding
+
+        for node in lane_nodes:
+            x, _ = positions[node]
+            positions[node] = (x, lane_y)
+
+        return positions
 
     def _minimize_crossings_barycenter(
         self, layers: Dict[int, List[int]]
@@ -1578,6 +1769,8 @@ class InteractiveNetworkViewer:
             annotation_edge_sets,
             annotation_colors,
         ) = self._prepare_annotation_sets()
+        node_filter_metadata: Dict[str, Dict[str, Any]] = {}
+        edge_filter_metadata: Dict[str, Dict[str, Any]] = {}
 
         # Add nodes
         for node_id in self.G.nodes():
@@ -1585,6 +1778,8 @@ class InteractiveNetworkViewer:
             depth = self.node_depths.get(node_id, 0)
             color = self._get_node_color(node_id, annotation_colors)
             is_direct_connected = node_id in self.direct_connected_inputs
+            is_in_direct_connection = node_id in self.direct_connection_nodes
+            is_disabled_node = node_id in self.disabled_nodes
 
             # Node shape
             if node_type == "input":
@@ -1598,6 +1793,8 @@ class InteractiveNetworkViewer:
             title_parts = [f"Node: {node_id}", f"Type: {node_type}", f"Depth: {depth}"]
             if is_direct_connected:
                 title_parts.append("Direct-connected input")
+            if is_disabled_node:
+                title_parts.append("Disabled (no active connections)")
 
             # Add annotation info if applicable
             for ann_id, ann_nodes in annotation_node_sets.items():
@@ -1665,7 +1862,18 @@ class InteractiveNetworkViewer:
                 node_data["y"] = float(y_pos)
                 # Don't set 'fixed' - let JavaScript handle it for better control
 
+            if is_disabled_node:
+                node_data["hidden"] = True
+
             net.add_node(node_id, **node_data)
+            node_filter_metadata[str(node_id)] = {
+                "is_in_direct_connection": is_in_direct_connection,
+                "annotation_ids": [
+                    str(aid) for aid, nodes in annotation_node_sets.items() if node_id in nodes
+                ],
+                "is_disabled": is_disabled_node,
+                "is_output": node_type == "output",
+            }
 
         # Add edges
         for from_node, to_node, data in self.G.edges(data=True):
@@ -1711,10 +1919,11 @@ class InteractiveNetworkViewer:
             # Check if edge is in direct connection subgraph
             edge_tuple = (from_node, to_node)
             is_in_direct_connection = edge_tuple in self.direct_connection_edges
-
+            edge_id = f"edge_{len(edge_filter_metadata)}_{from_node}_{to_node}"
             net.add_edge(
                 from_node,
                 to_node,
+                id=edge_id,
                 title=title,
                 color=color,
                 width=width_val,
@@ -1731,37 +1940,38 @@ class InteractiveNetworkViewer:
                     ]
                 ),
             )
-
-        # Prepare filter metadata for JavaScript
-        node_filter_metadata = {}
-        edge_filter_metadata = {}
-
-        # Build node filter metadata
-        for node_id in self.G.nodes():
-            is_in_direct_connection = node_id in self.direct_connection_nodes
-            annotation_ids = [
-                str(aid)
-                for aid, nodes in annotation_node_sets.items()
-                if node_id in nodes
-            ]
-            node_filter_metadata[str(node_id)] = {
+            edge_filter_metadata[edge_id] = {
                 "is_in_direct_connection": is_in_direct_connection,
-                "annotation_ids": annotation_ids,
+                "annotation_ids": [
+                    str(aid)
+                    for aid, edges in annotation_edge_sets.items()
+                    if (from_node, to_node) in edges or (to_node, from_node) in edges
+                ],
+                "is_disabled": False,
             }
 
-        # Build edge filter metadata
-        for from_node, to_node in self.G.edges():
-            edge_tuple = (from_node, to_node)
-            is_in_direct_connection = edge_tuple in self.direct_connection_edges
-            annotation_ids = [
-                str(aid)
-                for aid, edges in annotation_edge_sets.items()
-                if edge_tuple in edges or tuple(reversed(edge_tuple)) in edges
-            ]
-            edge_key = f"{from_node},{to_node}"
-            edge_filter_metadata[edge_key] = {
-                "is_in_direct_connection": is_in_direct_connection,
-                "annotation_ids": annotation_ids,
+        # Add disabled edges (hidden & grey by default)
+        for idx, (from_node, to_node, weight) in enumerate(self.disabled_edge_records):
+            edge_id = f"disabled_edge_{idx}_{from_node}_{to_node}"
+            width_val = 1 + abs(weight)
+            net.add_edge(
+                from_node,
+                to_node,
+                id=edge_id,
+                title=f"Disabled connection\\nWeight: {weight:.3f}",
+                color="#B8B8B8",
+                width=width_val,
+                dashes=True,
+                hidden=True,
+                weight_sign="positive" if weight >= 0 else "negative",
+                is_skip="false",
+                is_in_direct_connection="false",
+                annotation_ids="",
+            )
+            edge_filter_metadata[edge_id] = {
+                "is_in_direct_connection": False,
+                "annotation_ids": [],
+                "is_disabled": True,
             }
 
         logger.debug(
