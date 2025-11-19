@@ -19,6 +19,7 @@ from matplotlib.colors import LinearSegmentedColormap
 import tempfile
 import webbrowser
 import os
+import json
 
 try:
     from pyvis.network import Network
@@ -1109,6 +1110,10 @@ class InteractiveNetworkViewer:
         # Calculate node properties
         self.node_depths = self._calculate_depths()
         self.direct_connected_inputs = self._identify_direct_connected_inputs()
+        # Identify all nodes and edges that are part of direct input-to-output connections
+        self.direct_connection_nodes, self.direct_connection_edges = (
+            self._identify_direct_connection_subgraph()
+        )
 
     def _build_graph(self):
         """Build NetworkX graph from genome."""
@@ -1212,6 +1217,48 @@ class InteractiveNetworkViewer:
                 direct_connected.append(input_node)
 
         return direct_connected
+
+    def _identify_direct_connection_subgraph(self) -> Tuple[set, set]:
+        """
+        Identify all nodes and edges that are part of direct input-to-output connections.
+
+        Returns:
+            Tuple of (set of node IDs, set of edge tuples (from, to))
+        """
+        direct_nodes = set()
+        direct_edges = set()
+
+        # Get input and output nodes
+        if hasattr(self.config, "genome_config"):
+            input_nodes = [
+                n for n in self.config.genome_config.input_keys if n in self.G.nodes()
+            ]
+            output_nodes = set(self.config.genome_config.output_keys)
+        else:
+            input_nodes = [n for n in self.G.nodes() if n < 0]
+            output_nodes = set([n for n in self.G.nodes() if n == 0])
+        output_nodes.update([n for n in self.G.nodes() if n == 0])
+
+        # Find all direct connections (input -> output, no hidden nodes in between)
+        for input_node in input_nodes:
+            for output_node in output_nodes:
+                # Check if there's a direct edge from input to output
+                if self.G.has_edge(input_node, output_node):
+                    # Check if this is truly direct (no path through hidden nodes)
+                    # A direct connection means: input -> output with no intermediate hidden nodes
+                    # Since we already have the edge, we just need to verify it's enabled
+                    for conn_key, conn in self.genome.connections.items():
+                        if (
+                            conn_key[0] == input_node
+                            and conn_key[1] == output_node
+                            and conn.enabled
+                        ):
+                            direct_nodes.add(input_node)
+                            direct_nodes.add(output_node)
+                            direct_edges.add((input_node, output_node))
+                            break
+
+        return direct_nodes, direct_edges
 
     def _get_node_type(self, node_id: int) -> str:
         """Get node type: 'input', 'output', or 'hidden'."""
@@ -1543,6 +1590,9 @@ class InteractiveNetworkViewer:
             if use_layered and node_positions and node_id in node_positions:
                 x_pos, y_pos = node_positions[node_id]
 
+            # Check if node is in direct connection subgraph
+            is_in_direct_connection = node_id in self.direct_connection_nodes
+
             # Add node with metadata
             node_data = {
                 "label": str(node_id),
@@ -1554,6 +1604,7 @@ class InteractiveNetworkViewer:
                 "node_type": node_type,
                 "depth": depth,
                 "is_direct_connected": str(is_direct_connected).lower(),
+                "is_in_direct_connection": str(is_in_direct_connection).lower(),
                 "annotation_ids": ",".join(
                     [
                         str(aid)
@@ -1614,6 +1665,10 @@ class InteractiveNetworkViewer:
             # Edge width based on weight magnitude
             width_val = 1 + abs(weight) * 2
 
+            # Check if edge is in direct connection subgraph
+            edge_tuple = (from_node, to_node)
+            is_in_direct_connection = edge_tuple in self.direct_connection_edges
+
             net.add_edge(
                 from_node,
                 to_node,
@@ -1623,6 +1678,7 @@ class InteractiveNetworkViewer:
                 # Store metadata for filtering
                 weight_sign="positive" if weight >= 0 else "negative",
                 is_skip=str(is_skip).lower(),
+                is_in_direct_connection=str(is_in_direct_connection).lower(),
                 annotation_ids=",".join(
                     [
                         str(aid)
@@ -1633,6 +1689,38 @@ class InteractiveNetworkViewer:
                 ),
             )
 
+        # Prepare filter metadata for JavaScript
+        node_filter_metadata = {}
+        edge_filter_metadata = {}
+
+        # Build node filter metadata
+        for node_id in self.G.nodes():
+            is_in_direct_connection = node_id in self.direct_connection_nodes
+            annotation_ids = [
+                str(aid)
+                for aid, nodes in annotation_node_sets.items()
+                if node_id in nodes
+            ]
+            node_filter_metadata[str(node_id)] = {
+                "is_in_direct_connection": is_in_direct_connection,
+                "annotation_ids": annotation_ids,
+            }
+
+        # Build edge filter metadata
+        for from_node, to_node in self.G.edges():
+            edge_tuple = (from_node, to_node)
+            is_in_direct_connection = edge_tuple in self.direct_connection_edges
+            annotation_ids = [
+                str(aid)
+                for aid, edges in annotation_edge_sets.items()
+                if edge_tuple in edges or tuple(reversed(edge_tuple)) in edges
+            ]
+            edge_key = f"{from_node},{to_node}"
+            edge_filter_metadata[edge_key] = {
+                "is_in_direct_connection": is_in_direct_connection,
+                "annotation_ids": annotation_ids,
+            }
+
         # Generate HTML with filtering controls and annotation CRUD UI
         html_content = self._generate_html_with_controls(
             net,
@@ -1640,6 +1728,8 @@ class InteractiveNetworkViewer:
             annotation_edge_sets,
             use_layered=True,
             node_positions=node_positions,
+            node_filter_metadata=node_filter_metadata,
+            edge_filter_metadata=edge_filter_metadata,
         )
 
         # Write to file
@@ -1659,6 +1749,8 @@ class InteractiveNetworkViewer:
         annotation_edge_sets: Dict,
         use_layered: bool = False,
         node_positions: Optional[Dict] = None,
+        node_filter_metadata: Optional[Dict] = None,
+        edge_filter_metadata: Optional[Dict] = None,
     ) -> str:
         """Generate HTML with interactive filtering controls."""
         # Generate base HTML from Pyvis
@@ -1668,9 +1760,54 @@ class InteractiveNetworkViewer:
         # Instead, we define global wrapper functions that can handle any inline handlers
         # and also use event listeners for better control
 
-        # Extract the network HTML and add annotation CRUD UI
+        # Extract the network HTML and add filtering controls and annotation CRUD UI
         # Find where to insert controls (before closing body tag)
         control_html = """
+        <!-- Filter Controls -->
+        <div id="filter-controls" style="position: fixed; top: 10px; right: 10px; background: white; padding: 15px; border: 2px solid #333; border-radius: 5px; z-index: 1000; max-width: 300px; max-height: 80vh; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h3 style="margin-top: 0;">Filter Controls</h3>
+            
+            <div style="margin-bottom: 15px;">
+                <strong>Direct Connections:</strong><br>
+                <label>
+                    <input type="checkbox" id="show_direct_connections" checked>
+                    Show Direct Input→Output Connections
+                </label>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <strong>Annotations:</strong><br>
+        """
+
+        # Add annotation filter checkboxes
+        if self.annotations:
+            for idx, annotation in enumerate(self.annotations):
+                # Handle both dict and object annotations
+                if isinstance(annotation, dict):
+                    ann_name = annotation.get("name") or f"Annotation {idx + 1}"
+                    ann_id = str(annotation.get("id", ""))
+                else:
+                    ann_name = annotation.name or f"Annotation {idx + 1}"
+                    ann_id = str(annotation.id)
+                # Escape the ID for use in HTML/JS
+                ann_id_escaped = ann_id.replace("'", "\\'").replace('"', '\\"')
+                control_html += f"""
+                <label>
+                    <input type="checkbox" id="show_annotation_{ann_id_escaped}" checked class="annotation-filter-checkbox">
+                    {ann_name}
+                </label><br>
+                """
+        else:
+            control_html += (
+                "<p style='color: #666; font-size: 12px;'>No annotations available</p>"
+            )
+
+        control_html += """
+            </div>
+            
+            <button id="reset-filters-btn" style="margin-top: 10px; padding: 5px 10px; cursor: pointer; width: 100%;">Reset All Filters</button>
+        </div>
+        
         <!-- Annotation CRUD UI -->
         <div id="annotation-panel" style="position: fixed; top: 10px; left: 10px; background: white; padding: 15px; border: 2px solid #333; border-radius: 5px; z-index: 1000; max-width: 350px; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none;">
             <h3 style="margin-top: 0;">Annotation Manager</h3>
@@ -1757,6 +1894,41 @@ class InteractiveNetworkViewer:
             "const initialPositions = {};", positions_js.rstrip()
         )
 
+        # Add filter metadata to JavaScript
+        node_filter_metadata = node_filter_metadata or {}
+        edge_filter_metadata = edge_filter_metadata or {}
+
+        # Convert to JavaScript objects
+        node_metadata_js = "const nodeFilterMetadata = {\n"
+        for node_id, metadata in node_filter_metadata.items():
+            # Format annotation_ids as JavaScript array
+            ann_ids = metadata["annotation_ids"]
+            if ann_ids:
+                ann_ids_str = "[" + ", ".join(f'"{aid}"' for aid in ann_ids) + "]"
+            else:
+                ann_ids_str = "[]"
+            is_direct = (
+                "true" if metadata["is_in_direct_connection"] else "false"
+            )  # JavaScript boolean
+            node_metadata_js += f"            {node_id}: {{is_in_direct_connection: {is_direct}, annotation_ids: {ann_ids_str}}},\n"
+        node_metadata_js += "        };\n"
+        
+        edge_metadata_js = "const edgeFilterMetadata = {\n"
+        for edge_key, metadata in edge_filter_metadata.items():
+            # Format annotation_ids as JavaScript array
+            ann_ids = metadata["annotation_ids"]
+            if ann_ids:
+                ann_ids_str = "[" + ", ".join(f'"{aid}"' for aid in ann_ids) + "]"
+            else:
+                ann_ids_str = "[]"
+            is_direct = (
+                "true" if metadata["is_in_direct_connection"] else "false"
+            )  # JavaScript boolean
+            edge_metadata_js += f"            '{edge_key}': {{is_in_direct_connection: {is_direct}, annotation_ids: {ann_ids_str}}},\n"
+        edge_metadata_js += "        };\n"
+
+        control_html += node_metadata_js
+        control_html += edge_metadata_js
         control_html += """
         
         // Annotation selection state
@@ -1842,6 +2014,162 @@ class InteractiveNetworkViewer:
             } catch (e) {}
             
             return null;
+        }
+        
+        // Apply filters based on current checkbox states
+        function applyFilters() {
+            const net = getNetwork();
+            if (!net || !net.body || !net.body.data) {
+                // Network not ready yet, try again
+                setTimeout(applyFilters, 100);
+                return;
+            }
+            
+            try {
+                const showDirectConnections = document.getElementById('show_direct_connections')?.checked ?? true;
+                const nodes = net.body.data.nodes;
+                const edges = net.body.data.edges;
+                
+                // Get annotation filter states
+                const annotationStates = {};
+                document.querySelectorAll('.annotation-filter-checkbox').forEach(checkbox => {
+                    const annId = checkbox.id.replace('show_annotation_', '');
+                    annotationStates[annId] = checkbox.checked;
+                });
+                
+                // Update node visibility
+                const nodeUpdates = [];
+                nodes.forEach(node => {
+                    let visible = true;
+                    const nodeId = node.id.toString();
+                    const nodeMeta = nodeFilterMetadata[nodeId];
+                    
+                    if (nodeMeta) {
+                        // Filter 1: Direct connections
+                        if (nodeMeta.is_in_direct_connection && !showDirectConnections) {
+                            visible = false;
+                        }
+                        
+                        // Filter 2: Annotation subgraphs
+                        const annotationIds = nodeMeta.annotation_ids || [];
+                        if (annotationIds.length > 0) {
+                            // Node is in at least one annotation
+                            // Hide if none of those annotations are visible (checked)
+                            let atLeastOneVisible = false;
+                            for (const annId of annotationIds) {
+                                if (annotationStates[annId] === true) {
+                                    atLeastOneVisible = true;
+                                    break;
+                                }
+                            }
+                            if (!atLeastOneVisible) {
+                                visible = false;
+                            }
+                        }
+                    }
+                    
+                    nodeUpdates.push({ id: node.id, hidden: !visible });
+                });
+                
+                if (nodeUpdates.length > 0) {
+                    nodes.update(nodeUpdates);
+                }
+                
+                // Update edge visibility
+                const edgeUpdates = [];
+                edges.forEach(edge => {
+                    let visible = true;
+                    const edgeKey = edge.from + ',' + edge.to;
+                    const edgeMeta = edgeFilterMetadata[edgeKey];
+                    
+                    if (edgeMeta) {
+                        // Filter 1: Direct connections
+                        if (edgeMeta.is_in_direct_connection && !showDirectConnections) {
+                            visible = false;
+                        }
+                        
+                        // Filter 2: Annotation subgraphs
+                        const annotationIds = edgeMeta.annotation_ids || [];
+                        if (annotationIds.length > 0) {
+                            // Edge is in at least one annotation
+                            // Hide if none of those annotations are visible (checked)
+                            let atLeastOneVisible = false;
+                            for (const annId of annotationIds) {
+                                if (annotationStates[annId] === true) {
+                                    atLeastOneVisible = true;
+                                    break;
+                                }
+                            }
+                            if (!atLeastOneVisible) {
+                                visible = false;
+                            }
+                        }
+                    }
+                    
+                    // Also hide edge if either connected node is hidden
+                    const fromNode = nodes.get(edge.from);
+                    const toNode = nodes.get(edge.to);
+                    if ((fromNode && fromNode.hidden) || (toNode && toNode.hidden)) {
+                        visible = false;
+                    }
+                    
+                    edgeUpdates.push({ id: edge.id, hidden: !visible });
+                });
+                
+                if (edgeUpdates.length > 0) {
+                    edges.update(edgeUpdates);
+                }
+            } catch (error) {
+                console.error('Error applying filters:', error);
+            }
+        }
+        
+        // Set up filter event listeners
+        function setupFilterListeners() {
+            // Direct connections checkbox
+            const directConnCheckbox = document.getElementById('show_direct_connections');
+            if (directConnCheckbox) {
+                directConnCheckbox.addEventListener('change', applyFilters);
+            }
+            
+            // Annotation checkboxes
+            document.querySelectorAll('.annotation-filter-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', applyFilters);
+            });
+            
+            // Reset button
+            const resetBtn = document.getElementById('reset-filters-btn');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function() {
+                    if (directConnCheckbox) directConnCheckbox.checked = true;
+                    document.querySelectorAll('.annotation-filter-checkbox').forEach(cb => cb.checked = true);
+                    applyFilters();
+                });
+            }
+        }
+        
+        // Initialize filters when DOM and network are ready
+        function initializeFilters() {
+            setupFilterListeners();
+            
+            // Wait for network to be ready, then apply initial filters
+            function waitForNetwork() {
+                const net = getNetwork();
+                if (net) {
+                    // Network found, apply filters
+                    setTimeout(applyFilters, 200);
+                } else {
+                    setTimeout(waitForNetwork, 100);
+                }
+            }
+            waitForNetwork();
+        }
+        
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeFilters);
+        } else {
+            initializeFilters();
         }
         
         // Annotation CRUD Functions

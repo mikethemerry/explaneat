@@ -28,7 +28,7 @@ class AnnotationManager:
         evidence: Optional[Dict[str, Any]] = None,
         name: Optional[str] = None,
         validate_against_genome: bool = True,
-    ) -> Annotation:
+    ) -> Dict[str, Any]:
         """
         Create a new annotation for a genome.
 
@@ -42,7 +42,7 @@ class AnnotationManager:
             validate_against_genome: If True, validate nodes/connections exist in genome
 
         Returns:
-            Created Annotation object
+            Dictionary representation of the created annotation (to avoid detached instance issues)
 
         Raises:
             ValueError: If validation fails
@@ -126,8 +126,12 @@ class AnnotationManager:
             annotation_id = annotation.id
 
         # Return a fresh query to avoid detached instance issues
+        # Convert to dict while still in session to avoid detached instance errors
         with db.session_scope() as session:
-            return session.get(Annotation, annotation_id)
+            annotation = session.get(Annotation, annotation_id)
+            if annotation:
+                return annotation.to_dict()
+            return None
 
     @staticmethod
     def get_annotations(genome_id: str) -> List[Dict[str, Any]]:

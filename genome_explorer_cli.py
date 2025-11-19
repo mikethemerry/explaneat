@@ -31,11 +31,12 @@ logger = logging.getLogger(__name__)
 class GenomeExplorerCLI:
     """Interactive CLI for exploring genome data"""
 
-    def __init__(self):
+    def __init__(self, debug: bool = False):
         self.current_explorer = None
         self.current_experiment_id = None
         self.current_page = 1
         self.page_size = 20
+        self.debug = debug
 
     def list_experiments(
         self,
@@ -396,7 +397,7 @@ class GenomeExplorerCLI:
             print(f"   Nodes: {nodes}")
 
             # Create annotation
-            annotation = AnnotationManager.create_annotation(
+            annotation_dict = AnnotationManager.create_annotation(
                 genome_id=self.current_explorer.genome_info.genome_id,
                 nodes=nodes,
                 connections=connections,
@@ -405,14 +406,15 @@ class GenomeExplorerCLI:
                 validate_against_genome=False,  # Already validated
             )
 
-            print(f"✅ Created annotation: {annotation.id}")
-            print(f"   Name: {annotation.name or '(unnamed)'}")
+            print(f"✅ Created annotation: {annotation_dict['id']}")
+            print(f"   Name: {annotation_dict.get('name') or '(unnamed)'}")
+            hypothesis_text = annotation_dict.get("hypothesis", "")
             print(
-                f"   Hypothesis: {annotation.hypothesis[:60]}..."
-                if len(annotation.hypothesis) > 60
-                else f"   Hypothesis: {annotation.hypothesis}"
+                f"   Hypothesis: {hypothesis_text[:60]}..."
+                if len(hypothesis_text) > 60
+                else f"   Hypothesis: {hypothesis_text}"
             )
-            return annotation
+            return annotation_dict
 
         except ValueError as e:
             print(f"❌ Error: {e}")
@@ -465,12 +467,13 @@ class GenomeExplorerCLI:
         print(
             f"\n🔍 Finding valid end nodes reachable from start nodes {start_nodes}..."
         )
-        print("📊 Debug information:")
+        if self.debug:
+            print("📊 Debug information:")
         valid_end_nodes = SubgraphValidator.find_valid_end_nodes(
             self.current_explorer.neat_genome,
             start_nodes,
             config=self.current_explorer.config,
-            debug=True,
+            debug=self.debug,
         )
 
         if not valid_end_nodes:
@@ -624,7 +627,7 @@ class GenomeExplorerCLI:
 
         # Create annotation
         try:
-            annotation = AnnotationManager.create_annotation(
+            annotation_dict = AnnotationManager.create_annotation(
                 genome_id=self.current_explorer.genome_info.genome_id,
                 nodes=nodes,
                 connections=connections,
@@ -633,10 +636,13 @@ class GenomeExplorerCLI:
                 validate_against_genome=False,  # Already validated
             )
 
+            annotation_id = annotation_dict["id"]
+            annotation_name = annotation_dict["name"] or "(unnamed)"
+
             print(f"\n✅ Annotation created successfully!")
-            print(f"   ID: {annotation.id}")
-            print(f"   Name: {annotation.name or '(unnamed)'}")
-            print(f"   View with: ann-show {annotation.id}")
+            print(f"   ID: {annotation_id}")
+            print(f"   Name: {annotation_name}")
+            print(f"   View with: ann-show {annotation_id}")
 
         except Exception as e:
             print(f"❌ Failed to create annotation: {e}")
@@ -668,16 +674,25 @@ class GenomeExplorerCLI:
         print("-" * 90)
 
         for ann in annotations:
-            name = ann.name or "(unnamed)"
+            name = ann.get("name") or "(unnamed)"
             if len(name) > 18:
                 name = name[:15] + "..."
-            nodes_str = f"{len(ann.subgraph_nodes)} nodes"
-            conn_str = f"{len(ann.subgraph_connections)}"
-            created = (
-                ann.created_at.strftime("%Y-%m-%d %H:%M") if ann.created_at else "N/A"
-            )
+            nodes_str = f"{len(ann.get('subgraph_nodes', []))} nodes"
+            conn_str = f"{len(ann.get('subgraph_connections', []))}"
+            created_at = ann.get("created_at")
+            if created_at:
+                # created_at is an ISO format string from to_dict()
+                try:
+                    from datetime import datetime
+
+                    dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                    created = dt.strftime("%Y-%m-%d %H:%M")
+                except (ValueError, AttributeError):
+                    created = created_at[:16] if len(created_at) > 16 else created_at
+            else:
+                created = "N/A"
             print(
-                f"{str(ann.id):<36} {name:<20} {nodes_str:<15} {conn_str:<12} {created:<20}"
+                f"{str(ann.get('id')):<36} {name:<20} {nodes_str:<15} {conn_str:<12} {created:<20}"
             )
 
         print("-" * 90)
@@ -974,10 +989,15 @@ def main():
     parser.add_argument(
         "--interactive", action="store_true", help="Start interactive mode"
     )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug output (shows detailed traversal information)",
+    )
 
     args = parser.parse_args()
 
-    cli = GenomeExplorerCLI()
+    cli = GenomeExplorerCLI(debug=args.debug)
 
     # Initialize database
     try:
