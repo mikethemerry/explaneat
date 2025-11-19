@@ -19,6 +19,7 @@ from matplotlib.colors import LinearSegmentedColormap
 import tempfile
 import webbrowser
 import os
+import logging
 import json
 
 try:
@@ -28,6 +29,9 @@ try:
 except ImportError:
     PYVIS_AVAILABLE = False
     Network = None
+
+
+logger = logging.getLogger(__name__)
 
 
 class GenomeVisualizer:
@@ -1450,6 +1454,12 @@ class InteractiveNetworkViewer:
         Returns:
             Path to generated HTML file
         """
+        logger.debug(
+            "InteractiveNetworkViewer.visualize start: nodes=%d edges=%d annotations=%d",
+            self.G.number_of_nodes(),
+            self.G.number_of_edges(),
+            len(self.annotations),
+        )
         # Always use layered layout (physics removed)
         use_layered = True
         node_positions = self._calculate_layered_positions()
@@ -1721,16 +1731,33 @@ class InteractiveNetworkViewer:
                 "annotation_ids": annotation_ids,
             }
 
-        # Generate HTML with filtering controls and annotation CRUD UI
-        html_content = self._generate_html_with_controls(
-            net,
-            annotation_node_sets,
-            annotation_edge_sets,
-            use_layered=True,
-            node_positions=node_positions,
-            node_filter_metadata=node_filter_metadata,
-            edge_filter_metadata=edge_filter_metadata,
+        logger.debug(
+            "Filter metadata prepared: node_meta=%d edge_meta=%d direct_nodes=%d direct_edges=%d",
+            len(node_filter_metadata),
+            len(edge_filter_metadata),
+            len(self.direct_connection_nodes),
+            len(self.direct_connection_edges),
         )
+
+        # Generate HTML with filtering controls and annotation CRUD UI
+        try:
+            html_content = self._generate_html_with_controls(
+                net,
+                annotation_node_sets,
+                annotation_edge_sets,
+                use_layered=True,
+                node_positions=node_positions,
+                node_filter_metadata=node_filter_metadata,
+                edge_filter_metadata=edge_filter_metadata,
+            )
+        except Exception:
+            logger.exception(
+                "Failed generating interactive HTML (nodes=%d edges=%d annotations=%d)",
+                self.G.number_of_nodes(),
+                self.G.number_of_edges(),
+                len(self.annotations),
+            )
+            raise
 
         # Write to file
         if output_file is None:
@@ -1753,6 +1780,12 @@ class InteractiveNetworkViewer:
         edge_filter_metadata: Optional[Dict] = None,
     ) -> str:
         """Generate HTML with interactive filtering controls."""
+        logger.debug(
+            "Generating HTML with controls: nodes=%d edges=%d annotations=%d",
+            len(net.nodes),
+            len(net.edges),
+            len(self.annotations),
+        )
         # Generate base HTML from Pyvis
         html = net.generate_html()
 
@@ -1884,7 +1917,7 @@ class InteractiveNetworkViewer:
             positions_js = "\n        const initialPositions = {\n"
             for node_id, (x, y) in node_positions.items():
                 positions_js += (
-                    f"            {node_id}: {{x: {float(x)}, y: {float(y)}}},\n"
+                    f"            '{node_id}': {{x: {float(x)}, y: {float(y)}}},\n"
                 )
             positions_js += "        };\n"
         else:
@@ -1910,9 +1943,12 @@ class InteractiveNetworkViewer:
             is_direct = (
                 "true" if metadata["is_in_direct_connection"] else "false"
             )  # JavaScript boolean
-            node_metadata_js += f"            {node_id}: {{is_in_direct_connection: {is_direct}, annotation_ids: {ann_ids_str}}},\n"
+            node_metadata_js += (
+                f"            '{node_id}': "
+                f"{{is_in_direct_connection: {is_direct}, annotation_ids: {ann_ids_str}}},\n"
+            )
         node_metadata_js += "        };\n"
-        
+
         edge_metadata_js = "const edgeFilterMetadata = {\n"
         for edge_key, metadata in edge_filter_metadata.items():
             # Format annotation_ids as JavaScript array
@@ -2436,8 +2472,6 @@ class InteractiveNetworkViewer:
 
         # Add existing annotations to JavaScript data structure
         # Use JSON encoding for proper JavaScript serialization
-        import json
-
         if self.annotations:
             annotation_data_js = "\n        const annotationData = {\n"
             for annotation in self.annotations:
@@ -2555,12 +2589,15 @@ class InteractiveNetworkViewer:
         Returns:
             Path to generated HTML file
         """
+        logger.debug("InteractiveNetworkViewer.show called auto_open=%s", auto_open)
         output_file = self.visualize(**kwargs)
 
         if auto_open:
             webbrowser.open(f"file://{os.path.abspath(output_file)}")
+            logger.info("Interactive network visualization opened: %s", output_file)
             print(f"Interactive network visualization opened in browser: {output_file}")
         else:
+            logger.info("Interactive network visualization saved: %s", output_file)
             print(f"Interactive network visualization saved to: {output_file}")
 
         return output_file
