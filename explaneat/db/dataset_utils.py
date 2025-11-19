@@ -91,7 +91,7 @@ def save_dataset_to_db(
             if class_names:
                 dataset.class_names = class_names
             if metadata:
-                dataset.metadata = metadata
+                dataset.additional_metadata = metadata
         else:
             dataset = Dataset(
                 name=name,
@@ -108,7 +108,7 @@ def save_dataset_to_db(
                 target_name=target_name,
                 target_description=target_description,
                 class_names=class_names,
-                metadata=metadata or {},
+                additional_metadata=metadata or {},
             )
             session.add(dataset)
             session.flush()

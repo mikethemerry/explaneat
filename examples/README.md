@@ -16,6 +16,11 @@ Demonstrates the fundamental ExplaNEAT workflow:
 
 **Run with:**
 ```bash
+# Using uv run (recommended)
+uv run python examples/basic_usage.py
+
+# Or with manual activation
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 python examples/basic_usage.py
 ```
 
@@ -36,6 +41,11 @@ Shows how to use the comprehensive experiment framework:
 
 **Run with:**
 ```bash
+# Using uv run (recommended)
+uv run python examples/experiment_management.py
+
+# Or with manual activation
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 python examples/experiment_management.py
 ```
 
@@ -53,8 +63,10 @@ Before running the examples, ensure you have installed ExplaNEAT and its depende
 ```bash
 # Using uv (recommended)
 uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 uv pip install -e .
+
+# Then run examples with uv run (no activation needed)
+uv run python examples/basic_usage.py
 ```
 
 ## Notes

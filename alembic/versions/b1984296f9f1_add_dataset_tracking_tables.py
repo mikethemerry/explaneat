@@ -37,7 +37,7 @@ def upgrade() -> None:
         sa.Column('target_name', sa.String(length=255), nullable=True),
         sa.Column('target_description', sa.Text(), nullable=True),
         sa.Column('class_names', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-        sa.Column('metadata', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+        sa.Column('additional_metadata', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
         sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
         sa.PrimaryKeyConstraint('id')

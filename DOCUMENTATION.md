@@ -109,8 +109,10 @@ This pattern forms the basis for most ExplaNEAT applications.
 git clone https://github.com/mikethemerry/explaneat.git
 cd explaneat
 uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 uv pip install -e .
+
+# Run scripts using uv run (recommended - no activation needed)
+uv run python run_working_backache.py --generations=50
 ```
 
 ### Basic Usage

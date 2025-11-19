@@ -52,7 +52,6 @@ git remote add upstream https://github.com/mikethemerry/explaneat.git
 ```bash
 # Create virtual environment with uv
 uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install package in development mode with dev dependencies
 uv pip install -e ".[dev]"
@@ -61,11 +60,11 @@ uv pip install -e ".[dev]"
 ### 3. Verify Setup
 
 ```bash
-# Run basic import test
-python -c "from explaneat.core.explaneat import ExplaNEAT; print('Setup successful!')"
+# Run basic import test (using uv run - recommended)
+uv run python -c "from explaneat.core.explaneat import ExplaNEAT; print('Setup successful!')"
 
 # Run existing tests (if available)
-python -m pytest tests/
+uv run pytest tests/
 ```
 
 ## Making Contributions
@@ -167,14 +166,14 @@ def analyze_network(genome: neat.DefaultGenome,
 ### Running Tests
 
 ```bash
-# Run all tests
-python -m pytest tests/
+# Run all tests (using uv run - recommended)
+uv run pytest tests/
 
 # Run with coverage
-python -m pytest tests/ --cov=explaneat
+uv run pytest tests/ --cov=explaneat
 
 # Run specific test file
-python -m pytest tests/test_core.py
+uv run pytest tests/test_core.py
 ```
 
 ### Writing Tests

@@ -31,10 +31,10 @@ cd explaneat
 
 # Create virtual environment and install with uv
 uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Install ExplaNEAT in development mode (includes all dependencies)
 uv pip install -e .
+
+# Run scripts using uv run (recommended)
+uv run python first_example.py
 ```
 
 ### Option 2: Install from PyPI (When Available)
@@ -168,6 +168,11 @@ print("Evolution completed successfully!")
 ### 3. Run Your Example
 
 ```bash
+# Using uv run (recommended - automatically uses virtual environment)
+uv run python first_example.py
+
+# Or if you prefer manual activation
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 python first_example.py
 ```
 

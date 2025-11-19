@@ -16,7 +16,6 @@ This guide will walk you through setting up PostgreSQL database support for Expl
 ```bash
 # Create virtual environment and install dependencies
 uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 uv pip install -e .
 ```
 
@@ -24,7 +23,7 @@ uv pip install -e .
 
 ```bash
 # Option A: Using the CLI (if you have psql installed)
-python -m explaneat db create-db
+uv run python -m explaneat db create-db
 
 # Option B: Manual creation with psql
 psql -U postgres -c "CREATE DATABASE explaneat_dev;"
@@ -47,7 +46,7 @@ psql -U postgres -d explaneat_dev -c "DROP TABLE IF EXISTS alembic_version;"
 
 ```bash
 # Initialize alembic
-alembic init alembic
+uv run alembic init alembic
 
 # Replace the generated env.py with our custom one
 cp alembic_env.py alembic/env.py
@@ -57,27 +56,27 @@ cp alembic_env.py alembic/env.py
 
 ```bash
 # Generate the initial migration from our models
-alembic revision --autogenerate -m "Initial database schema"
+uv run alembic revision --autogenerate -m "Initial database schema"
 ```
 
 ### 6. Apply the Migration
 
 ```bash
 # Apply migrations to create all tables
-alembic upgrade head
+uv run alembic upgrade head
 ```
 
 ### 7. Verify Setup
 
 ```bash
 # Check current revision
-alembic current
+uv run alembic current
 
 # List all tables (using psql)
 psql -U postgres -d explaneat_dev -c "\dt"
 
 # Or use Python to verify
-python -c "from explaneat.db import db; db.init_db(); print('Database connection successful!')"
+uv run python -c "from explaneat.db import db; db.init_db(); print('Database connection successful!')"
 ```
 
 ## Environment Variables
@@ -128,17 +127,17 @@ with db.session_scope() as session:
 ## CLI Commands Reference
 
 ```bash
-# Database management
-python -m explaneat db init              # Create all tables
-python -m explaneat db drop              # Drop all tables
-python -m explaneat db create-db         # Create PostgreSQL database
+# Database management (use uv run - automatically uses virtual environment)
+uv run python -m explaneat db init              # Create all tables
+uv run python -m explaneat db drop              # Drop all tables
+uv run python -m explaneat db create-db         # Create PostgreSQL database
 
 # Migration management  
-python -m explaneat db revision "message" # Create new migration
-python -m explaneat db upgrade           # Apply migrations
-python -m explaneat db downgrade         # Revert last migration
-python -m explaneat db current           # Show current revision
-python -m explaneat db history           # Show migration history
+uv run python -m explaneat db revision "message" # Create new migration
+uv run python -m explaneat db upgrade           # Apply migrations
+uv run python -m explaneat db downgrade         # Revert last migration
+uv run python -m explaneat db current           # Show current revision
+uv run python -m explaneat db history           # Show migration history
 ```
 
 ## Troubleshooting

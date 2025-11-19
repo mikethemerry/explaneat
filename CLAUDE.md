@@ -5,21 +5,26 @@ ExplaNEAT is a NEAT (NeuroEvolution of Augmenting Topologies) implementation wit
 
 ## Environment Setup Notes
 - **Python Package Management**: Project uses `uv` for package management (fast Python package installer)
+- **Running Scripts**: **ALWAYS use `uv run`** - this automatically uses the virtual environment without manual activation
 - **Database Commands**: User needs to run alembic and database setup commands directly
 - **PostgreSQL**: Project uses PostgreSQL for genome serialization and experiment tracking
 
 ## Key Commands to Suggest
 
-### Database Setup
+**IMPORTANT FOR AGENTS**: Always use `uv run` to execute Python commands. This ensures the correct virtual environment is used automatically.
+
+### Initial Setup
 ```bash
 # Install dependencies with uv (user should run)
 # First ensure uv is installed: curl -LsSf https://astral.sh/uv/install.sh | sh
 uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 uv pip install -e .
+```
 
+### Database Setup
+```bash
 # Create PostgreSQL database (user should run)
-python -m explaneat db create-db
+uv run python -m explaneat db create-db
 
 # Or if you need to start completely fresh:
 # 1. Drop existing database if it exists
@@ -27,47 +32,58 @@ psql -U postgres -c "DROP DATABASE IF EXISTS explaneat_dev;"
 # 2. Remove any existing alembic directory
 rm -rf alembic/
 # 3. Create new database
-python -m explaneat db create-db
+uv run python -m explaneat db create-db
 
 # Initialize Alembic (user should run)
-alembic init alembic
+uv run alembic init alembic
 
 # Move the generated env.py to use our custom one (user should run)
 mv alembic_env.py alembic/env.py
 
 # Create initial migration (user should run)
-alembic revision --autogenerate -m "Initial database schema"
+uv run alembic revision --autogenerate -m "Initial database schema"
 
 # Apply migrations (user should run)
-alembic upgrade head
+uv run alembic upgrade head
 
 # Alternative: Initialize database without migrations (user should run)
-python -m explaneat db init
+uv run python -m explaneat db init
 ```
 
 ### Using the CLI
 ```bash
 # View all commands
-python -m explaneat --help
+uv run python -m explaneat --help
 
 # Database commands
-python -m explaneat db --help
-python -m explaneat db init              # Create all tables
-python -m explaneat db drop              # Drop all tables
-python -m explaneat db revision "message" # Create new migration
-python -m explaneat db upgrade           # Apply migrations
-python -m explaneat db downgrade         # Revert last migration
-python -m explaneat db current           # Show current revision
-python -m explaneat db history           # Show migration history
+uv run python -m explaneat db --help
+uv run python -m explaneat db init              # Create all tables
+uv run python -m explaneat db drop              # Drop all tables
+uv run python -m explaneat db revision "message" # Create new migration
+uv run python -m explaneat db upgrade           # Apply migrations
+uv run python -m explaneat db downgrade         # Revert last migration
+uv run python -m explaneat db current           # Show current revision
+uv run python -m explaneat db history           # Show migration history
+```
+
+### Running Scripts
+```bash
+# Run experiment scripts
+uv run python run_working_backache.py --generations=50
+uv run python run_simple_experiment.py
+uv run python genome_explorer_cli.py --interactive
+
+# Run examples
+uv run python examples/basic_usage.py
 ```
 
 ### Running Tests
 ```bash
 # Run tests (if pytest is configured)
-pytest
+uv run pytest
 
 # Run specific test file
-pytest tests/test_db.py
+uv run pytest tests/test_db.py
 ```
 
 ### Database Connection

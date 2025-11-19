@@ -30,10 +30,14 @@ cd explaneat
 
 # Create virtual environment and install dependencies with uv
 uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Install the package in development mode (includes all dependencies)
 uv pip install -e .
+
+# Run scripts using uv run (recommended - no activation needed)
+uv run python run_working_backache.py --generations=50
+
+# Or manually activate for interactive use
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+python run_working_backache.py --generations=50
 ```
 
 ### Using uv (when available on PyPI)

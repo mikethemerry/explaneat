@@ -40,17 +40,17 @@ Suppress verbose logging and show only live status - perfect for watching long r
 ### Basic Usage
 
 ```bash
-# Default: compact status line with normal logging
-python run_working_backache.py --generations=50
+# Default: compact status line with normal logging (using uv run - recommended)
+uv run python run_working_backache.py --generations=50
 
 # Quiet mode: only show live status
-python run_working_backache.py --generations=50 --quiet
+uv run python run_working_backache.py --generations=50 --quiet
 
 # Dashboard mode: multi-line status display
-python run_working_backache.py --generations=50 --dashboard
+uv run python run_working_backache.py --generations=50 --dashboard
 
 # Best for monitoring: quiet + dashboard
-python run_working_backache.py --generations=100 --quiet --dashboard
+uv run python run_working_backache.py --generations=100 --quiet --dashboard
 ```
 
 ### Command-Line Arguments
@@ -63,19 +63,19 @@ python run_working_backache.py --generations=100 --quiet --dashboard
 
 **For short test runs:**
 ```bash
-python run_working_backache.py --generations=10
+uv run python run_working_backache.py --generations=10
 # Use default - see all logs for debugging
 ```
 
 **For production runs you want to monitor:**
 ```bash
-python run_working_backache.py --generations=100 --quiet --dashboard
+uv run python run_working_backache.py --generations=100 --quiet --dashboard
 # Clean dashboard view, easy to watch progress
 ```
 
 **For background runs:**
 ```bash
-nohup python run_working_backache.py --generations=100 --quiet > output.log 2>&1 &
+nohup uv run python run_working_backache.py --generations=100 --quiet > output.log 2>&1 &
 tail -f output.log
 # Compact mode works better in log files
 ```
@@ -262,7 +262,7 @@ if not running_in_jupyter():
 
 ### Watch a short run with full logs
 ```bash
-python run_working_backache.py --generations=10
+uv run python run_working_backache.py --generations=10
 ```
 Output:
 ```
@@ -274,7 +274,7 @@ Output:
 
 ### Monitor a long run quietly
 ```bash
-python run_working_backache.py --generations=100 --quiet --dashboard
+uv run python run_working_backache.py --generations=100 --quiet --dashboard
 ```
 Output:
 ```
@@ -292,7 +292,7 @@ Output:
 
 ### Background run with logging
 ```bash
-nohup python run_working_backache.py --generations=100 --quiet > evolution.log 2>&1 &
+nohup uv run python run_working_backache.py --generations=100 --quiet > evolution.log 2>&1 &
 
 # Monitor in another terminal
 tail -f evolution.log

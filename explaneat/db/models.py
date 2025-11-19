@@ -42,7 +42,7 @@ class Dataset(Base, TimestampMixin):
     class_names = Column(JSONB)  # For classification tasks
     
     # Dataset metadata
-    metadata = Column(JSONB)  # Additional metadata (e.g., license, citation, etc.)
+    additional_metadata = Column(JSONB)  # Additional metadata (e.g., license, citation, etc.)
     
     # Relationships
     splits = relationship('DatasetSplit', back_populates='dataset', cascade='all, delete-orphan')

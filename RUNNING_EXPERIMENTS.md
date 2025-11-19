@@ -1,32 +1,31 @@
 # Running ExplaNEAT Experiments
 
-## Virtual Environment Setup
+## Running Scripts
 
-**IMPORTANT:** This project uses `uv` for package management. The virtual environment is located at:
+**IMPORTANT:** This project uses `uv` for package management. **Always use `uv run`** to execute scripts - this automatically uses the virtual environment.
+
+### ✅ Recommended Method - Use `uv run` (for agents and automation)
+
 ```bash
-.venv
+# No activation needed - uv run handles it automatically
+uv run python run_working_backache.py --generations=50
 ```
 
-**Activate before running any experiments:**
+### Alternative Method - Manual Activation (for interactive use)
+
+If you prefer to manually activate the virtual environment:
+
 ```bash
+# Activate virtual environment
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Then run scripts normally
+python run_working_backache.py --generations=50
 ```
 
-You should see `(.venv)` in your prompt:
+You should see `(.venv)` in your prompt when activated:
 ```
 (.venv) ➜  explaneat git:(main) ✗
-```
-
-## Running Experiments
-
-### ✅ Correct Way - Use `python`
-
-```bash
-# Activate virtual environment first
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Run with python (NOT ipython)
-python run_working_backache.py --generations=50
 ```
 
 ### ❌ Incorrect Way - Don't use `ipython` with args
@@ -70,19 +69,19 @@ Main experiment script with ancestry tracking.
 **Examples:**
 ```bash
 # Short run (10 generations, default)
-python run_working_backache.py
+uv run python run_working_backache.py
 
 # Longer run with live status line
-python run_working_backache.py --generations=50
+uv run python run_working_backache.py --generations=50
 
 # Quiet mode - less logging, only live status
-python run_working_backache.py --generations=50 --quiet
+uv run python run_working_backache.py --generations=50 --quiet
 
 # Dashboard mode - multi-line status display
-python run_working_backache.py --generations=50 --dashboard
+uv run python run_working_backache.py --generations=50 --dashboard
 
 # Quiet + dashboard for clean monitoring
-python run_working_backache.py --generations=100 --quiet --dashboard
+uv run python run_working_backache.py --generations=100 --quiet --dashboard
 ```
 
 **Output Modes:**
@@ -116,16 +115,16 @@ python run_working_backache.py --generations=100 --quiet --dashboard
 
 ```bash
 # Initialize database
-python -m explaneat db init
+uv run python -m explaneat db init
 
 # Create new migration
-python -m explaneat db revision "description"
+uv run python -m explaneat db revision "description"
 
 # Apply migrations
-python -m explaneat db upgrade
+uv run python -m explaneat db upgrade
 
 # Check current version
-python -m explaneat db current
+uv run python -m explaneat db current
 ```
 
 ## Testing Ancestry Tracking
@@ -182,7 +181,6 @@ please install IPython inside the virtualenv.
 
 ```bash
 # Install IPython inside the virtual environment
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 uv pip install ipython
 ```
 
@@ -209,12 +207,12 @@ brew services start postgresql
 ModuleNotFoundError: No module named 'explaneat'
 ```
 
-**Solution:** Activate virtual environment first:
+**Solution:** Use `uv run` to ensure the virtual environment is used:
 ```bash
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uv run python run_working_backache.py --generations=50
 ```
 
-If still failing, install in editable mode:
+If still failing, ensure dependencies are installed:
 ```bash
 uv pip install -e .
 ```
@@ -223,20 +221,19 @@ uv pip install -e .
 
 ```bash
 # Setup (once)
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-python -m explaneat db init
+uv run python -m explaneat db init
 
 # Run experiment
-python run_working_backache.py --generations=50
+uv run python run_working_backache.py --generations=50
 
-# Check results in Python
-python
+# Check results in Python (interactive)
+uv run python
 >>> from explaneat.analysis import GenomeExplorer
 >>> experiments = GenomeExplorer.list_experiments()
 >>> print(experiments)
 
 # Or use IPython for interactive analysis
-ipython
+uv run ipython
 In [1]: from explaneat.analysis import GenomeExplorer
 In [2]: experiments = GenomeExplorer.list_experiments()
 In [3]: print(experiments)
@@ -247,22 +244,22 @@ In [3]: print(experiments)
 ### Short Test Runs
 ```bash
 # Quick test (10 generations, ~5 minutes)
-python run_working_backache.py --generations=10
+uv run python run_working_backache.py --generations=10
 ```
 
 ### Production Runs
 ```bash
 # Full run with ancestry tracking (100 generations, ~1-2 hours)
-python run_working_backache.py --generations=100
+uv run python run_working_backache.py --generations=100
 
 # Monitor with logging
-python run_working_backache.py --generations=100 2>&1 | tee experiment.log
+uv run python run_working_backache.py --generations=100 2>&1 | tee experiment.log
 ```
 
 ### Background Runs
 ```bash
 # Run in background with nohup
-nohup python run_working_backache.py --generations=100 > output.log 2>&1 &
+nohup uv run python run_working_backache.py --generations=100 > output.log 2>&1 &
 
 # Check progress
 tail -f output.log
@@ -280,12 +277,13 @@ Optional environment variables:
 export DATABASE_URL="postgresql://user:pass@localhost/explaneat_dev"
 
 # Run experiment
-python run_working_backache.py --generations=50
+uv run python run_working_backache.py --generations=50
 ```
 
 ## Notes for Developers
 
-- **Always activate venv**: `source .venv/bin/activate` (or `.venv\Scripts\activate` on Windows)
+- **Preferred method**: Use `uv run python script.py` - automatically uses the virtual environment
+- **Alternative**: Manually activate with `source .venv/bin/activate` (or `.venv\Scripts\activate` on Windows) for interactive use
 - **Use `python`, not `ipython`** for scripts with CLI arguments
 - **Database**: Ensure PostgreSQL is running before experiments
 - **Ancestry tracking**: Automatically enabled in `run_working_backache.py`
