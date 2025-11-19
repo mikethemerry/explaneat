@@ -18,8 +18,12 @@ import os
 import tempfile
 from copy import deepcopy
 
-from explaneat.db import db, Experiment, Population, Genome, TrainingMetric
+from explaneat.db import db, Experiment, Population, Genome, TrainingMetric, Dataset, DatasetSplit
 from explaneat.db.serialization import serialize_population_config
+from explaneat.db.dataset_utils import (
+    save_dataset_to_db,
+    save_dataset_split_with_indices,
+)
 from explaneat.analysis import GenomeExplorer
 from explaneat.core.backproppop import BackpropPopulation
 from explaneat.core.neuralneat import NeuralNeat
@@ -113,17 +117,40 @@ class DatabaseReporter:
         logger.info("NEAT experiment completed")
 
 
-def prepare_backache_data():
-    """Load and prepare the backache dataset from PMLB"""
+def prepare_backache_data(random_state=42):
+    """Load and prepare the backache dataset from PMLB
+    
+    Args:
+        random_state: Random seed for train/test split
+        
+    Returns:
+        Tuple of (X, y, X_train, X_test, y_train, y_test, train_indices, test_indices, scaler)
+        where X, y are the original full dataset
+    """
     logger.info("📊 Loading backache dataset from PMLB...")
 
     X, y = fetch_data("backache", return_X_y=True)
     logger.info(f"Dataset shape: X={X.shape}, y={y.shape}")
     logger.info(f"Class distribution: {np.bincount(y)}")
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
+    # Get indices before split for exact reproducibility
+    # Create array of indices
+    indices = np.arange(len(X))
+    
+    # Split with indices for reproducibility
+    train_indices, test_indices = train_test_split(
+        indices, test_size=0.2, random_state=random_state, stratify=y
     )
+    
+    # Convert to lists for JSON serialization
+    train_indices = train_indices.tolist()
+    test_indices = test_indices.tolist()
+    
+    # Now split the actual data using the indices
+    X_train = X[train_indices]
+    X_test = X[test_indices]
+    y_train = y[train_indices]
+    y_test = y[test_indices]
 
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train)
@@ -131,7 +158,7 @@ def prepare_backache_data():
 
     logger.info(f"Train: {X_train.shape}, Test: {X_test.shape}")
 
-    return X_train, X_test, y_train, y_test
+    return X, y, X_train, X_test, y_train, y_test, train_indices, test_indices, scaler
 
 
 def create_backache_config(num_inputs):
@@ -239,14 +266,28 @@ num_outputs             = 1
     return config
 
 
-def create_experiment_record(name, dataset_name, description, config):
-    """Create experiment record in database"""
+def create_experiment_record(name, dataset_name, description, config, dataset_id=None, random_seed=None):
+    """Create experiment record in database
+    
+    Args:
+        name: Experiment name
+        dataset_name: Dataset name (deprecated, use dataset_id)
+        description: Experiment description
+        config: NEAT config
+        dataset_id: UUID of the dataset (if already created)
+        random_seed: Random seed used for the experiment
+        
+    Returns:
+        Experiment ID
+    """
     with db.session_scope() as session:
         experiment = Experiment(
             experiment_sha=f"working_backache_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
             name=name,
             description=description,
             dataset_name=dataset_name,
+            dataset_id=dataset_id,
+            random_seed=random_seed,
             config_json=serialize_population_config(config),
             neat_config_text="# Working backache config",
             start_time=datetime.now(timezone.utc),
@@ -434,8 +475,26 @@ def run_working_backache_experiment(num_generations=10, compact=True):
     # Initialize database
     db.init_db()
 
-    # Prepare data
-    X_train, X_test, y_train, y_test = prepare_backache_data()
+    # Set random seed for reproducibility
+    random_seed = 42
+
+    # Prepare data (now returns full dataset and indices)
+    X, y, X_train, X_test, y_train, y_test, train_indices, test_indices, scaler = prepare_backache_data(random_state=random_seed)
+
+    # Save dataset to database
+    logger.info("💾 Saving dataset to database...")
+    dataset = save_dataset_to_db(
+        name="backache",
+        X=X,
+        y=y,
+        source="PMLB",
+        description="Backache dataset from PMLB - binary classification problem",
+        target_name="backache",
+        target_description="Binary classification target (0=no backache, 1=backache)",
+        class_names=["no_backache", "backache"],
+    )
+    dataset_id = str(dataset.id)
+    logger.info(f"Dataset saved with ID: {dataset_id}")
 
     # Create config
     config = create_backache_config(X_train.shape[1])
@@ -472,17 +531,34 @@ def run_working_backache_experiment(num_generations=10, compact=True):
         "PMLB Backache (Working)",
         f"Working backache experiment for {num_generations} generations",
         config,
+        dataset_id=dataset_id,
+        random_seed=random_seed,
     )
 
     logger.info(f"Created experiment ID: {experiment_id}")
 
-    # Create ancestry reporter for parent tracking
-    ancestry_reporter = AncestryReporter()
-    ancestry_reporter.reproduction = population.reproduction if hasattr(locals().get('population'), 'reproduction') else None
+    # Save dataset split to database for reproducibility
+    logger.info("💾 Saving dataset split to database...")
+    save_dataset_split_with_indices(
+        dataset_id=dataset_id,
+        experiment_id=str(experiment_id),
+        train_indices=train_indices,
+        test_indices=test_indices,
+        split_type="train_test",
+        test_size=0.2,
+        random_state=random_seed,
+        shuffle=True,
+        stratify=True,
+        scaler=scaler,
+        preprocessing_steps=[{"step": "StandardScaler", "fit_on": "train"}],
+    )
+    logger.info("Dataset split saved successfully")
 
     # Instantiate population using ExplaNEAT pattern
     population = instantiate_population(config, X_train, y_train)
 
+    # Create ancestry reporter for parent tracking
+    ancestry_reporter = AncestryReporter()
     # Link ancestry reporter to reproduction object
     ancestry_reporter.reproduction = population.reproduction
 
