@@ -182,6 +182,22 @@ network_graph = visualize.draw_net(config, genome)
 print(network_graph.source)  # GraphViz source code
 ```
 
+## Interactive React Explorer
+
+- Run `python genome_explorer_cli.py --interactive` and use `ni` (or `network-interactive`) to launch the new React-based explorer. It opens a static HTML file that works over `file://` and mirrors the Pyvis features with a modern UI.
+- Use `ni-py` (or `network-interactive-py`) whenever you want the legacy Pyvis rendering.
+- To rebuild the frontend bundle after making changes under `web/react-explorer/`:
+
+```bash
+cd web/react-explorer
+npm install         # first time
+npm run build
+cd ../..
+cp -R web/react-explorer/dist/* explaneat/static/react_explorer/
+```
+
+See `docs/react_explorer_requirements.md` for the detailed feature contract and `docs/arc42/react_explorer_schema.md` for the JSON payload specification.
+
 ### Results Management
 
 ```python

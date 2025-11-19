@@ -21,6 +21,11 @@ import webbrowser
 import os
 import logging
 import json
+import shutil
+import re
+from datetime import datetime, timezone
+from pathlib import Path
+from importlib import resources as pkg_resources
 
 try:
     from pyvis.network import Network
@@ -1119,6 +1124,68 @@ class InteractiveNetworkViewer:
             self._identify_direct_connection_subgraph()
         )
 
+    def _get_genome_viewer_js_path(self) -> Path:
+        """
+        Return the absolute path to the shared genome viewer JavaScript bundle.
+        """
+        js_path = (
+            Path(__file__).resolve().parent.parent
+            / "static"
+            / "js"
+            / "genome_viewer.js"
+        )
+        if not js_path.exists():
+            raise FileNotFoundError(
+                f"Genome viewer script not found at {js_path}. "
+                "Ensure explaneat/static/js/genome_viewer.js exists."
+            )
+        return js_path
+
+    def _prepare_annotation_sets(self):
+        """Build lookup tables for annotation membership."""
+        annotation_colors = {}
+        annotation_node_sets: Dict[str, set] = {}
+        annotation_edge_sets: Dict[str, set] = {}
+        annotation_colors_list = [
+            "#FF6B6B",
+            "#4ECDC4",
+            "#45B7D1",
+            "#FFA07A",
+            "#98D8C8",
+            "#F7DC6F",
+            "#BB8FCE",
+            "#85C1E2",
+            "#F8B739",
+            "#52BE80",
+        ]
+
+        for idx, annotation in enumerate(self.annotations):
+            color = annotation_colors_list[idx % len(annotation_colors_list)]
+            if isinstance(annotation, dict):
+                ann_id = str(annotation.get("id", ""))
+                subgraph_nodes = annotation.get("subgraph_nodes") or []
+                subgraph_connections = annotation.get("subgraph_connections") or []
+            else:
+                ann_id = str(annotation.id)
+                subgraph_nodes = annotation.subgraph_nodes or []
+                subgraph_connections = annotation.subgraph_connections or []
+
+            nodes = set(subgraph_nodes)
+            edges = set()
+            for conn in subgraph_connections:
+                if isinstance(conn, (list, tuple)):
+                    edges.add(tuple(conn))
+                else:
+                    edges.add(tuple(conn))
+
+            annotation_node_sets[ann_id] = nodes
+            annotation_edge_sets[ann_id] = edges
+
+            for node_id in nodes:
+                annotation_colors[node_id] = color
+
+        return annotation_node_sets, annotation_edge_sets, annotation_colors
+
     def _build_graph(self):
         """Build NetworkX graph from genome."""
         # Add nodes
@@ -1506,45 +1573,11 @@ class InteractiveNetworkViewer:
         """
         )
 
-        # Prepare annotation data
-        annotation_colors = {}
-        annotation_node_sets = {}
-        annotation_edge_sets = {}
-        annotation_colors_list = [
-            "#FF6B6B",
-            "#4ECDC4",
-            "#45B7D1",
-            "#FFA07A",
-            "#98D8C8",
-            "#F7DC6F",
-            "#BB8FCE",
-            "#85C1E2",
-            "#F8B739",
-            "#52BE80",
-        ]
-
-        for idx, annotation in enumerate(self.annotations):
-            color = annotation_colors_list[idx % len(annotation_colors_list)]
-            # Handle both dict and object annotations
-            if isinstance(annotation, dict):
-                ann_id = str(annotation.get("id", ""))
-                subgraph_nodes = annotation.get("subgraph_nodes") or []
-                subgraph_connections = annotation.get("subgraph_connections") or []
-            else:
-                ann_id = str(annotation.id)
-                subgraph_nodes = annotation.subgraph_nodes or []
-                subgraph_connections = annotation.subgraph_connections or []
-
-            nodes = set(subgraph_nodes)
-            edges = set(
-                tuple(e) if isinstance(e, list) else e for e in subgraph_connections
-            )
-
-            annotation_node_sets[ann_id] = nodes
-            annotation_edge_sets[ann_id] = edges
-
-            for node_id in nodes:
-                annotation_colors[node_id] = color
+        (
+            annotation_node_sets,
+            annotation_edge_sets,
+            annotation_colors,
+        ) = self._prepare_annotation_sets()
 
         # Add nodes
         for node_id in self.G.nodes():
@@ -1769,6 +1802,210 @@ class InteractiveNetworkViewer:
 
         return output_file
 
+    def _build_react_payload(self) -> Dict[str, Any]:
+        (
+            annotation_node_sets,
+            annotation_edge_sets,
+            annotation_colors,
+        ) = self._prepare_annotation_sets()
+        node_positions = self._calculate_layered_positions()
+
+        nodes_payload = []
+        for node_id in self.G.nodes():
+            annotation_ids = [
+                ann_id
+                for ann_id, nodes in annotation_node_sets.items()
+                if node_id in nodes
+            ]
+            node_type = self._get_node_type(node_id)
+            nodes_payload.append(
+                {
+                    "id": node_id,
+                    "label": str(node_id),
+                    "type": node_type,
+                    "depth": self.node_depths.get(node_id, 0),
+                    "color": self._get_node_color(node_id, annotation_colors),
+                    "annotationIds": annotation_ids,
+                    "isDirectConnection": node_id in self.direct_connection_nodes,
+                    "position": (
+                        {
+                            "x": node_positions[node_id][0],
+                            "y": node_positions[node_id][1],
+                        }
+                        if node_id in node_positions
+                        else None
+                    ),
+                }
+            )
+
+        edges_payload = []
+        for idx, (from_node, to_node, data) in enumerate(self.G.edges(data=True)):
+            annotation_ids = [
+                ann_id
+                for ann_id, edges in annotation_edge_sets.items()
+                if (from_node, to_node) in edges or (to_node, from_node) in edges
+            ]
+            weight = data.get("weight", 0.0)
+            edges_payload.append(
+                {
+                    "id": f"edge_{idx}_{from_node}_{to_node}",
+                    "from": from_node,
+                    "to": to_node,
+                    "weight": weight,
+                    "color": self._get_edge_color(weight),
+                    "annotationIds": annotation_ids,
+                    "isDirectConnection": (from_node, to_node)
+                    in self.direct_connection_edges,
+                    "isSkip": self._is_skip_connection(from_node, to_node),
+                }
+            )
+
+        annotations_payload = []
+        for annotation in self.annotations:
+            if isinstance(annotation, dict):
+                ann_id = str(annotation.get("id", ""))
+                name = annotation.get("name")
+                hypothesis = annotation.get("hypothesis")
+                nodes = annotation.get("subgraph_nodes") or []
+                edges = annotation.get("subgraph_connections") or []
+            else:
+                ann_id = str(annotation.id)
+                name = getattr(annotation, "name", None)
+                hypothesis = getattr(annotation, "hypothesis", None)
+                nodes = annotation.subgraph_nodes or []
+                edges = annotation.subgraph_connections or []
+
+            annotations_payload.append(
+                {
+                    "id": ann_id,
+                    "name": name,
+                    "hypothesis": hypothesis,
+                    "nodes": nodes,
+                    "edges": edges,
+                }
+            )
+
+        layout_dims = None
+        if node_positions:
+            xs = [pos[0] for pos in node_positions.values()]
+            ys = [pos[1] for pos in node_positions.values()]
+            layout_dims = {
+                "width": max(xs) - min(xs) if xs else 0,
+                "height": max(ys) - min(ys) if ys else 0,
+            }
+
+        genome_info = getattr(self, "genome_info", None)
+        genome_id = str(genome_info.genome_id) if genome_info else "UNKNOWN"
+
+        payload = {
+            "metadata": {
+                "genomeId": genome_id,
+                "generatedAt": datetime.now(timezone.utc).isoformat(),
+                "schemaVersion": 1,
+                "layout": {"type": "layered", "dimensions": layout_dims},
+            },
+            "nodes": nodes_payload,
+            "edges": edges_payload,
+            "annotations": annotations_payload,
+        }
+
+        logger.debug(
+            "React payload prepared: nodes=%d edges=%d annotations=%d",
+            len(nodes_payload),
+            len(edges_payload),
+            len(annotations_payload),
+        )
+        return payload
+
+    def visualize_react(self, output_dir: Optional[str] = None) -> str:
+        """Generate React-based visualization assets."""
+        payload = self._build_react_payload()
+        if output_dir is None:
+            output_path = Path(tempfile.mkdtemp(prefix="genome_network_react_"))
+        else:
+            output_path = Path(output_dir)
+            if output_path.exists():
+                shutil.rmtree(output_path)
+            output_path.mkdir(parents=True, exist_ok=True)
+
+        static_root = pkg_resources.files("explaneat.static.react_explorer")
+        with pkg_resources.as_file(static_root) as src_dir:
+            shutil.copytree(src_dir, output_path, dirs_exist_ok=True)
+
+        index_path = output_path / "index.html"
+        html = index_path.read_text(encoding="utf-8")
+
+        # Remove favicon reference (not available in packaged assets)
+        html = re.sub(r'\s*<link rel="icon"[^>]+>\s*', "\n", html)
+
+        payload_json = json.dumps(payload, separators=(",", ":")).replace("</", "<\\/")
+        payload_tag = f'<script id="explorer-data" type="application/json">{payload_json}</script>'
+
+        def inline_stylesheet(match):
+            href = match.group("href")
+            asset_path = output_path / href.lstrip("./")
+            if not asset_path.exists():
+                logger.warning("Stylesheet asset not found: %s", asset_path)
+                return ""
+            css_content = asset_path.read_text(encoding="utf-8")
+            return f"<style>\n{css_content}\n</style>"
+
+        html = re.sub(
+            r'<link\s+rel="stylesheet"[^>]*href="(?P<href>[^"]+)"[^>]*>',
+            inline_stylesheet,
+            html,
+        )
+
+        payload_injected = {"done": False}
+
+        def inline_module_script(match):
+            src = match.group("src")
+            asset_path = output_path / src.lstrip("./")
+            if not asset_path.exists():
+                logger.warning("Script asset not found: %s", asset_path)
+                return ""
+            script_content = asset_path.read_text(encoding="utf-8").replace(
+                "</script>", "<\\/script>"
+            )
+            prefix = ""
+            if not payload_injected["done"]:
+                prefix = payload_tag + "\n"
+                payload_injected["done"] = True
+            return f'{prefix}<script type="module">\n{script_content}\n</script>'
+
+        html = re.sub(
+            r'<script\s+type="module"[^>]*src="(?P<src>[^"]+)"[^>]*></script>',
+            inline_module_script,
+            html,
+        )
+
+        if not payload_injected["done"]:
+            if "</body>" in html:
+                html = html.replace("</body>", f"    {payload_tag}</body>")
+            else:
+                html = f"{html}\n{payload_tag}"
+        index_path.write_text(html, encoding="utf-8")
+
+        logger.info("React explorer generated at %s", index_path)
+        return str(index_path)
+
+    def show_react(
+        self, auto_open: bool = True, output_dir: Optional[str] = None
+    ) -> str:
+        """Display the React-based interactive visualization."""
+        logger.debug(
+            "InteractiveNetworkViewer.show_react called auto_open=%s", auto_open
+        )
+        output_file = self.visualize_react(output_dir=output_dir)
+
+        if auto_open:
+            webbrowser.open(f"file://{os.path.abspath(output_file)}")
+            print(f"React network visualization opened in browser: {output_file}")
+        else:
+            print(f"React network visualization saved to: {output_file}")
+
+        return output_file
+
     def _generate_html_with_controls(
         self,
         net: Network,
@@ -1793,6 +2030,49 @@ class InteractiveNetworkViewer:
         # Instead, we define global wrapper functions that can handle any inline handlers
         # and also use event listeners for better control
 
+        processed_annotations: List[Dict[str, Any]] = []
+        annotation_data_payload: Dict[str, Dict[str, Any]] = {}
+        genome_info = getattr(self, "genome_info", None)
+        genome_id = (
+            str(genome_info.genome_id) if genome_info else "GENOME_ID_PLACEHOLDER"
+        )
+
+        for idx, annotation in enumerate(self.annotations):
+            if isinstance(annotation, dict):
+                ann_id = str(annotation.get("id", ""))
+                ann_name = annotation.get("name") or f"Annotation {idx + 1}"
+                hypothesis = annotation.get("hypothesis", "")
+                nodes = annotation.get("subgraph_nodes") or []
+                raw_edges = annotation.get("subgraph_connections") or []
+            else:
+                ann_id = str(annotation.id)
+                ann_name = annotation.name or f"Annotation {idx + 1}"
+                hypothesis = annotation.hypothesis or ""
+                nodes = annotation.subgraph_nodes or []
+                raw_edges = annotation.subgraph_connections or []
+
+            edges = [
+                list(edge) if isinstance(edge, tuple) else edge for edge in raw_edges
+            ]
+
+            processed_annotations.append(
+                {
+                    "id": ann_id,
+                    "name": ann_name,
+                    "hypothesis": hypothesis,
+                    "nodes": nodes,
+                    "edges": edges,
+                }
+            )
+
+            annotation_data_payload[ann_id] = {
+                "genome_id": genome_id,
+                "nodes": nodes,
+                "edges": edges,
+                "name": ann_name if ann_name else None,
+                "hypothesis": hypothesis,
+            }
+
         # Extract the network HTML and add filtering controls and annotation CRUD UI
         # Find where to insert controls (before closing body tag)
         control_html = """
@@ -1813,15 +2093,10 @@ class InteractiveNetworkViewer:
         """
 
         # Add annotation filter checkboxes
-        if self.annotations:
-            for idx, annotation in enumerate(self.annotations):
-                # Handle both dict and object annotations
-                if isinstance(annotation, dict):
-                    ann_name = annotation.get("name") or f"Annotation {idx + 1}"
-                    ann_id = str(annotation.get("id", ""))
-                else:
-                    ann_name = annotation.name or f"Annotation {idx + 1}"
-                    ann_id = str(annotation.id)
+        if processed_annotations:
+            for ann in processed_annotations:
+                ann_name = ann["name"]
+                ann_id = ann["id"]
                 # Escape the ID for use in HTML/JS
                 ann_id_escaped = ann_id.replace("'", "\\'").replace('"', '\\"')
                 control_html += f"""
@@ -1856,17 +2131,11 @@ class InteractiveNetworkViewer:
         """
 
         # Add existing annotations to the list
-        if self.annotations:
-            for idx, annotation in enumerate(self.annotations):
-                # Handle both dict and object annotations
-                if isinstance(annotation, dict):
-                    ann_id = str(annotation.get("id", ""))
-                    ann_name = annotation.get("name") or f"Annotation {idx + 1}"
-                    hypothesis = annotation.get("hypothesis", "")
-                else:
-                    ann_id = str(annotation.id)
-                    ann_name = annotation.name or f"Annotation {idx + 1}"
-                    hypothesis = annotation.hypothesis or ""
+        if processed_annotations:
+            for ann in processed_annotations:
+                ann_id = ann["id"]
+                ann_name = ann["name"]
+                hypothesis = ann["hypothesis"]
                 # Escape for JavaScript
                 ann_id_escaped = ann_id.replace("'", "\\'").replace('"', '\\"')
                 control_html += f"""
@@ -1906,627 +2175,44 @@ class InteractiveNetworkViewer:
         </div>
         
         <button id="annotation-toggle-btn" onclick="toggleAnnotationPanel()" style="position: fixed; top: 10px; left: 10px; padding: 10px 15px; background: #2196F3; color: white; border: none; border-radius: 5px; z-index: 999; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">📝 Annotations</button>
-        
-        <script>
-        // Store initial positions for layered layout
-        const initialPositions = {};
         """
 
-        # Add initial positions to JavaScript if using layered layout
+        initial_positions_payload: Dict[str, Dict[str, float]] = {}
         if node_positions:
-            positions_js = "\n        const initialPositions = {\n"
             for node_id, (x, y) in node_positions.items():
-                positions_js += (
-                    f"            '{node_id}': {{x: {float(x)}, y: {float(y)}}},\n"
-                )
-            positions_js += "        };\n"
-        else:
-            positions_js = "\n        const initialPositions = {};\n"
+                initial_positions_payload[str(node_id)] = {
+                    "x": float(x),
+                    "y": float(y),
+                }
 
-        control_html = control_html.replace(
-            "const initialPositions = {};", positions_js.rstrip()
-        )
-
-        # Add filter metadata to JavaScript
         node_filter_metadata = node_filter_metadata or {}
         edge_filter_metadata = edge_filter_metadata or {}
 
-        # Convert to JavaScript objects
-        node_metadata_js = "const nodeFilterMetadata = {\n"
-        for node_id, metadata in node_filter_metadata.items():
-            # Format annotation_ids as JavaScript array
-            ann_ids = metadata["annotation_ids"]
-            if ann_ids:
-                ann_ids_str = "[" + ", ".join(f'"{aid}"' for aid in ann_ids) + "]"
-            else:
-                ann_ids_str = "[]"
-            is_direct = (
-                "true" if metadata["is_in_direct_connection"] else "false"
-            )  # JavaScript boolean
-            node_metadata_js += (
-                f"            '{node_id}': "
-                f"{{is_in_direct_connection: {is_direct}, annotation_ids: {ann_ids_str}}},\n"
-            )
-        node_metadata_js += "        };\n"
+        data_payload = {
+            "initialPositions": initial_positions_payload,
+            "nodeFilterMetadata": node_filter_metadata,
+            "edgeFilterMetadata": edge_filter_metadata,
+            "annotationData": annotation_data_payload,
+        }
 
-        edge_metadata_js = "const edgeFilterMetadata = {\n"
-        for edge_key, metadata in edge_filter_metadata.items():
-            # Format annotation_ids as JavaScript array
-            ann_ids = metadata["annotation_ids"]
-            if ann_ids:
-                ann_ids_str = "[" + ", ".join(f'"{aid}"' for aid in ann_ids) + "]"
-            else:
-                ann_ids_str = "[]"
-            is_direct = (
-                "true" if metadata["is_in_direct_connection"] else "false"
-            )  # JavaScript boolean
-            edge_metadata_js += f"            '{edge_key}': {{is_in_direct_connection: {is_direct}, annotation_ids: {ann_ids_str}}},\n"
-        edge_metadata_js += "        };\n"
+        js_bundle_uri = self._get_genome_viewer_js_path().resolve().as_uri()
 
-        control_html += node_metadata_js
-        control_html += edge_metadata_js
-        control_html += """
-        
-        // Annotation selection state
-        let selectedNodes = new Set();
-        let selectedEdges = new Set();
-        let editingAnnotationId = null;
-        
-        // Apply initial positions for layered layout
-        function applyLayeredLayout() {
-            if (Object.keys(initialPositions).length === 0) return;
-            
-            const network = getNetwork();
-            if (!network || !network.body || !network.body.data) {
-                return;
-            }
-            
-            const nodes = network.body.data.nodes;
-            const nodeIds = Object.keys(initialPositions);
-            
-            nodeIds.forEach(nodeId => {
-                const pos = initialPositions[nodeId];
-                const node = nodes.get(parseInt(nodeId));
-                if (node) {
-                    node.x = pos.x;
-                    node.y = pos.y;
-                    node.fixed = false; // Allow dragging
-                }
-            });
-            
-            // Force update the network
-            network.setData(network.body.data);
-            network.fit(); // Fit to view
-        }
-        
-        // Apply positions when network is ready
-        function setupNetworkReady() {
-            const network = getNetwork();
-            if (network) {
-                network.on("ready", function() {
-                    if (Object.keys(initialPositions).length > 0) {
-                        applyLayeredLayout();
-                    }
-                });
-            } else {
-                // Try again after a delay
-                setTimeout(setupNetworkReady, 100);
-            }
-        }
-        
-        // Start trying to set up network ready handler
-        setupNetworkReady();
-        
-        // Also try applying after a short delay as fallback
-        setTimeout(function() {
-            if (Object.keys(initialPositions).length > 0) {
-                applyLayeredLayout();
-            }
-        }, 500);
-        
-        // Get network object for annotation CRUD functions
-        function getNetwork() {
-            // Try to find the network object created by Pyvis
-            try {
-                if (typeof network !== 'undefined' && network && network.body && network.body.data) {
-                    return network;
-                }
-            } catch (e) {}
-            
-            try {
-                if (typeof window.network !== 'undefined' && window.network && window.network.body && window.network.body.data) {
-                    return window.network;
-                }
-            } catch (e) {}
-            
-            // Try to find it by searching window
-            try {
-                for (let key in window) {
-                    const obj = window[key];
-                    if (obj && typeof obj === 'object' && obj.body && obj.body.data && obj.body.data.nodes && obj.body.data.edges) {
-                        return obj;
-                    }
-                }
-            } catch (e) {}
-            
-            return null;
-        }
-        
-        // Apply filters based on current checkbox states
-        function applyFilters() {
-            const net = getNetwork();
-            if (!net || !net.body || !net.body.data) {
-                // Network not ready yet, try again
-                setTimeout(applyFilters, 100);
-                return;
-            }
-            
-            try {
-                const showDirectConnections = document.getElementById('show_direct_connections')?.checked ?? true;
-                const nodes = net.body.data.nodes;
-                const edges = net.body.data.edges;
-                
-                // Get annotation filter states
-                const annotationStates = {};
-                document.querySelectorAll('.annotation-filter-checkbox').forEach(checkbox => {
-                    const annId = checkbox.id.replace('show_annotation_', '');
-                    annotationStates[annId] = checkbox.checked;
-                });
-                
-                // Update node visibility
-                const nodeUpdates = [];
-                nodes.forEach(node => {
-                    let visible = true;
-                    const nodeId = node.id.toString();
-                    const nodeMeta = nodeFilterMetadata[nodeId];
-                    
-                    if (nodeMeta) {
-                        // Filter 1: Direct connections
-                        if (nodeMeta.is_in_direct_connection && !showDirectConnections) {
-                            visible = false;
-                        }
-                        
-                        // Filter 2: Annotation subgraphs
-                        const annotationIds = nodeMeta.annotation_ids || [];
-                        if (annotationIds.length > 0) {
-                            // Node is in at least one annotation
-                            // Hide if none of those annotations are visible (checked)
-                            let atLeastOneVisible = false;
-                            for (const annId of annotationIds) {
-                                if (annotationStates[annId] === true) {
-                                    atLeastOneVisible = true;
-                                    break;
-                                }
-                            }
-                            if (!atLeastOneVisible) {
-                                visible = false;
-                            }
-                        }
-                    }
-                    
-                    nodeUpdates.push({ id: node.id, hidden: !visible });
-                });
-                
-                if (nodeUpdates.length > 0) {
-                    nodes.update(nodeUpdates);
-                }
-                
-                // Update edge visibility
-                const edgeUpdates = [];
-                edges.forEach(edge => {
-                    let visible = true;
-                    const edgeKey = edge.from + ',' + edge.to;
-                    const edgeMeta = edgeFilterMetadata[edgeKey];
-                    
-                    if (edgeMeta) {
-                        // Filter 1: Direct connections
-                        if (edgeMeta.is_in_direct_connection && !showDirectConnections) {
-                            visible = false;
-                        }
-                        
-                        // Filter 2: Annotation subgraphs
-                        const annotationIds = edgeMeta.annotation_ids || [];
-                        if (annotationIds.length > 0) {
-                            // Edge is in at least one annotation
-                            // Hide if none of those annotations are visible (checked)
-                            let atLeastOneVisible = false;
-                            for (const annId of annotationIds) {
-                                if (annotationStates[annId] === true) {
-                                    atLeastOneVisible = true;
-                                    break;
-                                }
-                            }
-                            if (!atLeastOneVisible) {
-                                visible = false;
-                            }
-                        }
-                    }
-                    
-                    // Also hide edge if either connected node is hidden
-                    const fromNode = nodes.get(edge.from);
-                    const toNode = nodes.get(edge.to);
-                    if ((fromNode && fromNode.hidden) || (toNode && toNode.hidden)) {
-                        visible = false;
-                    }
-                    
-                    edgeUpdates.push({ id: edge.id, hidden: !visible });
-                });
-                
-                if (edgeUpdates.length > 0) {
-                    edges.update(edgeUpdates);
-                }
-            } catch (error) {
-                console.error('Error applying filters:', error);
-            }
-        }
-        
-        // Set up filter event listeners
-        function setupFilterListeners() {
-            // Direct connections checkbox
-            const directConnCheckbox = document.getElementById('show_direct_connections');
-            if (directConnCheckbox) {
-                directConnCheckbox.addEventListener('change', applyFilters);
-            }
-            
-            // Annotation checkboxes
-            document.querySelectorAll('.annotation-filter-checkbox').forEach(checkbox => {
-                checkbox.addEventListener('change', applyFilters);
-            });
-            
-            // Reset button
-            const resetBtn = document.getElementById('reset-filters-btn');
-            if (resetBtn) {
-                resetBtn.addEventListener('click', function() {
-                    if (directConnCheckbox) directConnCheckbox.checked = true;
-                    document.querySelectorAll('.annotation-filter-checkbox').forEach(cb => cb.checked = true);
-                    applyFilters();
-                });
-            }
-        }
-        
-        // Initialize filters when DOM and network are ready
-        function initializeFilters() {
-            setupFilterListeners();
-            
-            // Wait for network to be ready, then apply initial filters
-            function waitForNetwork() {
-                const net = getNetwork();
-                if (net) {
-                    // Network found, apply filters
-                    setTimeout(applyFilters, 200);
-                } else {
-                    setTimeout(waitForNetwork, 100);
-                }
-            }
-            waitForNetwork();
-        }
-        
-        // Initialize when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeFilters);
-        } else {
-            initializeFilters();
-        }
-        
-        // Annotation CRUD Functions
-        function toggleAnnotationPanel() {
-            const panel = document.getElementById('annotation-panel');
-            const btn = document.getElementById('annotation-toggle-btn');
-            if (panel.style.display === 'none' || panel.style.display === '') {
-                panel.style.display = 'block';
-                btn.style.display = 'none';
-            } else {
-                panel.style.display = 'none';
-                btn.style.display = 'block';
-            }
-        }
-        
-        function showCreateAnnotation() {
-            editingAnnotationId = null;
-            document.getElementById('annotation-id').value = '';
-            document.getElementById('annotation-name').value = '';
-            document.getElementById('annotation-hypothesis').value = '';
-            document.getElementById('form-title').textContent = 'Create Annotation';
-            document.getElementById('annotation-form').style.display = 'block';
-            selectedNodes.clear();
-            selectedEdges.clear();
-            updateSelectionDisplay();
-            setupNodeEdgeSelection();
-        }
-        
-        function editAnnotation(annotationId) {
-            // Find annotation data
-            const annotation = annotationData[annotationId];
-            if (!annotation) {
-                alert('Annotation not found');
-                return;
-            }
-            
-            editingAnnotationId = annotationId;
-            document.getElementById('annotation-id').value = annotationId;
-            document.getElementById('annotation-name').value = annotation.name || '';
-            document.getElementById('annotation-hypothesis').value = annotation.hypothesis || '';
-            document.getElementById('form-title').textContent = 'Edit Annotation';
-            document.getElementById('annotation-form').style.display = 'block';
-            
-            // Load selected nodes and edges
-            selectedNodes = new Set(annotation.nodes || []);
-            selectedEdges = new Set((annotation.edges || []).map(e => e.join(',')));
-            updateSelectionDisplay();
-            setupNodeEdgeSelection();
-        }
-        
-        function deleteAnnotation(annotationId) {
-            if (!confirm('Are you sure you want to delete this annotation?')) {
-                return;
-            }
-            
-            // Remove from UI
-            const item = document.getElementById('ann-item-' + annotationId);
-            if (item) item.remove();
-            
-            // Remove from data
-            delete annotationData[annotationId];
-            
-            // Generate Python code to delete
-            const code = `# Delete annotation\nfrom explaneat.analysis.annotation_manager import AnnotationManager\n\nAnnotationManager.delete_annotation('${annotationId}')`;
-            showCodeDialog('Delete Annotation', code);
-        }
-        
-        function exportAnnotation(annotationId) {
-            const annotation = annotationData[annotationId];
-            if (!annotation) {
-                alert('Annotation not found');
-                return;
-            }
-            
-            const nodesStr = JSON.stringify(annotation.nodes);
-            const edgesStr = JSON.stringify(annotation.edges);
-            const nameStr = annotation.name ? JSON.stringify(annotation.name) : 'None';
-            const hypothesisStr = JSON.stringify(annotation.hypothesis);
-            
-            const code = `from explaneat.analysis.annotation_manager import AnnotationManager\n\nAnnotationManager.create_annotation(\n    genome_id='${annotation.genome_id}',\n    nodes=${nodesStr},\n    connections=${edgesStr},\n    hypothesis=${hypothesisStr},\n    name=${nameStr}\n)`;
-            
-            showCodeDialog('Export Annotation', code);
-        }
-        
-        function exportAllAnnotations() {
-            let code = 'from explaneat.analysis.annotation_manager import AnnotationManager\n\n';
-            for (const annId in annotationData) {
-                const ann = annotationData[annId];
-                const nodesStr = JSON.stringify(ann.nodes);
-                const edgesStr = JSON.stringify(ann.edges);
-                const nameStr = ann.name ? JSON.stringify(ann.name) : 'None';
-                const hypothesisStr = JSON.stringify(ann.hypothesis);
-                
-                code += `# ${ann.name || 'Unnamed Annotation'}\n`;
-                code += `AnnotationManager.create_annotation(\n`;
-                code += `    genome_id='${ann.genome_id}',\n`;
-                code += `    nodes=${nodesStr},\n`;
-                code += `    connections=${edgesStr},\n`;
-                code += `    hypothesis=${hypothesisStr},\n`;
-                code += `    name=${nameStr}\n`;
-                code += `)\n\n`;
-            }
-            
-            showCodeDialog('Export All Annotations', code);
-        }
-        
-        function saveAnnotation(event) {
-            event.preventDefault();
-            
-            const name = document.getElementById('annotation-name').value.trim();
-            const hypothesis = document.getElementById('annotation-hypothesis').value.trim();
-            
-            if (!hypothesis) {
-                alert('Hypothesis is required');
-                return;
-            }
-            
-            if (selectedNodes.size === 0 && selectedEdges.size === 0) {
-                alert('Please select at least one node or edge');
-                return;
-            }
-            
-            // Convert selected edges from strings to tuples
-            const edges = Array.from(selectedEdges).map(e => {
-                const parts = e.split(',');
-                return [parseInt(parts[0]), parseInt(parts[1])];
-            });
-            
-            const annotation = {
-                genome_id: 'GENOME_ID_PLACEHOLDER',  // Will be replaced by user
-                nodes: Array.from(selectedNodes).map(n => parseInt(n)),
-                edges: edges,
-                hypothesis: hypothesis,
-                name: name || null
-            };
-            
-            if (editingAnnotationId) {
-                // Update existing
-                annotationData[editingAnnotationId] = annotation;
-                alert('Annotation updated! Use Export to get Python code.');
-            } else {
-                // Create new (generate temporary ID)
-                const tempId = 'temp_' + Date.now();
-                annotationData[tempId] = annotation;
-                alert('Annotation created! Use Export to get Python code.');
-            }
-            
-            cancelAnnotationForm();
-            location.reload(); // Reload to show new annotation
-        }
-        
-        function cancelAnnotationForm() {
-            document.getElementById('annotation-form').style.display = 'none';
-            selectedNodes.clear();
-            selectedEdges.clear();
-            editingAnnotationId = null;
-            teardownNodeEdgeSelection();
-        }
-        
-        function setupNodeEdgeSelection() {
-            const network = getNetwork();
-            if (!network) return;
-            
-            // Add click handlers to nodes and edges
-            network.on('click', function(params) {
-                if (params.nodes.length > 0) {
-                    const nodeId = params.nodes[0];
-                    if (selectedNodes.has(nodeId.toString())) {
-                        selectedNodes.delete(nodeId.toString());
-                    } else {
-                        selectedNodes.add(nodeId.toString());
-                    }
-                    updateSelectionDisplay();
-                    highlightSelected();
-                }
-                
-                if (params.edges.length > 0) {
-                    const edgeId = params.edges[0];
-                    const edge = network.body.data.edges.get(edgeId);
-                    const edgeKey = edge.from + ',' + edge.to;
-                    if (selectedEdges.has(edgeKey)) {
-                        selectedEdges.delete(edgeKey);
-                    } else {
-                        selectedEdges.add(edgeKey);
-                    }
-                    updateSelectionDisplay();
-                    highlightSelected();
-                }
-            });
-        }
-        
-        function teardownNodeEdgeSelection() {
-            // Remove click handlers (Pyvis doesn't have explicit remove, but we can ignore)
-            highlightSelected();
-        }
-        
-        function highlightSelected() {
-            const network = getNetwork();
-            if (!network || !network.body || !network.body.data) return;
-            
-            // Highlight selected nodes and edges
-            const nodes = network.body.data.nodes;
-            const edges = network.body.data.edges;
-            
-            const nodeUpdates = [];
-            nodes.forEach(node => {
-                if (selectedNodes.has(node.id.toString())) {
-                    nodeUpdates.push({
-                        id: node.id,
-                        color: {border: '#FF6B6B', background: '#FFE5E5', highlight: {border: '#FF6B6B', background: '#FFE5E5'}}
-                    });
-                }
-            });
-            if (nodeUpdates.length > 0) {
-                nodes.update(nodeUpdates);
-            }
-            
-            const edgeUpdates = [];
-            edges.forEach(edge => {
-                const edgeKey = edge.from + ',' + edge.to;
-                if (selectedEdges.has(edgeKey)) {
-                    edgeUpdates.push({
-                        id: edge.id,
-                        color: {color: '#FF6B6B', highlight: '#FF6B6B'}
-                    });
-                }
-            });
-            if (edgeUpdates.length > 0) {
-                edges.update(edgeUpdates);
-            }
-        }
-        
-        function updateSelectionDisplay() {
-            document.getElementById('selected-nodes-display').textContent = 
-                selectedNodes.size > 0 ? Array.from(selectedNodes).join(', ') : 'Click nodes to select';
-            document.getElementById('selected-edges-display').textContent = 
-                selectedEdges.size > 0 ? selectedEdges.size + ' edges selected' : 'Click edges to select';
-        }
-        
-        function showCodeDialog(title, code) {
-            const dialog = document.createElement('div');
-            dialog.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 2px solid #333; border-radius: 5px; z-index: 10000; max-width: 80%; max-height: 80%; overflow: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.3);';
-            dialog.innerHTML = `
-                <h3>${title}</h3>
-                <p>Copy this Python code to create the annotation:</p>
-                <textarea id="code-output" style="width: 100%; height: 300px; font-family: monospace; padding: 10px;" readonly>${code}</textarea>
-                <div style="margin-top: 10px;">
-                    <button onclick="copyCodeToClipboard()" style="padding: 8px 15px; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 3px; margin-right: 5px;">Copy to Clipboard</button>
-                    <button onclick="this.parentElement.parentElement.remove()" style="padding: 8px 15px; cursor: pointer; background: #f44336; color: white; border: none; border-radius: 3px;">Close</button>
-                </div>
-            `;
-            document.body.appendChild(dialog);
-            
-            window.copyCodeToClipboard = function() {
-                const textarea = document.getElementById('code-output');
-                textarea.select();
-                document.execCommand('copy');
-                alert('Code copied to clipboard!');
-            };
-        }
-        
-        // Initialize annotation data from existing annotations
-        """
-
-        # Add existing annotations to JavaScript data structure
-        # Use JSON encoding for proper JavaScript serialization
-        if self.annotations:
-            annotation_data_js = "\n        const annotationData = {\n"
-            for annotation in self.annotations:
-                # Handle both dict and object annotations
-                if isinstance(annotation, dict):
-                    ann_id = str(annotation.get("id", ""))
-                    nodes = annotation.get("subgraph_nodes") or []
-                    edges = [
-                        list(e) if isinstance(e, tuple) else e
-                        for e in (annotation.get("subgraph_connections") or [])
-                    ]
-                    name = annotation.get("name")
-                    hypothesis = annotation.get("hypothesis", "")
-                else:
-                    ann_id = str(annotation.id)
-                    nodes = annotation.subgraph_nodes or []
-                    edges = [
-                        list(e) if isinstance(e, tuple) else e
-                        for e in (annotation.subgraph_connections or [])
-                    ]
-                    name = annotation.name
-                    hypothesis = annotation.hypothesis or ""
-
-                genome_id = (
-                    str(self.genome_info.genome_id)
-                    if hasattr(self, "genome_info")
-                    else "GENOME_ID_PLACEHOLDER"
-                )
-
-                # Use JSON encoding for proper escaping
-                nodes_js = json.dumps(nodes)
-                edges_js = json.dumps(edges)
-                name_js = json.dumps(name) if name else "null"
-                hypothesis_js = json.dumps(hypothesis)
-                ann_id_escaped = json.dumps(ann_id)  # Properly escape the ID
-                genome_id_js = json.dumps(genome_id)
-
-                annotation_data_js += f"            {ann_id_escaped}: {{\n"
-                annotation_data_js += f"                genome_id: {genome_id_js},\n"
-                annotation_data_js += f"                nodes: {nodes_js},\n"
-                annotation_data_js += f"                edges: {edges_js},\n"
-                annotation_data_js += f"                name: {name_js},\n"
-                annotation_data_js += f"                hypothesis: {hypothesis_js}\n"
-                annotation_data_js += f"            }},\n"
-            annotation_data_js += "        };\n"
-        else:
-            annotation_data_js = "\n        const annotationData = {};\n"
-
-        # Insert annotation data into the script
-        control_html = control_html.replace(
-            "        // Annotation CRUD Functions",
-            annotation_data_js + "        // Annotation CRUD Functions",
-        )
-
-        control_html += """
+        control_html += f"""
+        <script>
+        window.GENOME_VIEWER_DATA = {json.dumps(data_payload)};
+        </script>
+        <script src="{js_bundle_uri}"></script>
+        <script>
+        (function initGenomeViewer() {{
+            function start() {{
+                if (window.GenomeViewer && typeof window.GenomeViewer.init === 'function') {{
+                    window.GenomeViewer.init();
+                }} else {{
+                    setTimeout(start, 50);
+                }}
+            }}
+            start();
+        }})();
         </script>
         """
 
@@ -2536,9 +2222,6 @@ class InteractiveNetworkViewer:
         # CRITICAL: Make sure the network variable is globally accessible
         # Pyvis creates 'var network = ...' which should be global, but let's ensure it
         # Also inject code to store it on window and trigger our initialization
-
-        import re
-
         # Find where Pyvis creates the network and make it globally accessible
         # Pattern 1: var network = new vis.Network(...)
         network_init_pattern = (
@@ -2546,10 +2229,10 @@ class InteractiveNetworkViewer:
         )
 
         def make_network_global(match):
-            # Add code to store network on window and initialize filters
+            # Add code to store network on window for external scripts
             return (
                 match.group(0)
-                + '\n        window.network = network; // Make globally accessible\n        if (typeof initializeEverything === "function") { setTimeout(initializeEverything, 50); }'
+                + "\n        window.network = network; // Make globally accessible"
             )
 
         if re.search(network_init_pattern, html):
@@ -2575,6 +2258,24 @@ class InteractiveNetworkViewer:
                     html = re.sub(
                         vis_network_pattern, inject_after_vis_network, html, count=1
                     )
+
+        utils_tag = '<script src="lib/bindings/utils.js"></script>'
+        if utils_tag in html:
+            try:
+                utils_res = (
+                    pkg_resources.files("pyvis")
+                    / "templates"
+                    / "lib"
+                    / "bindings"
+                    / "utils.js"
+                )
+                with pkg_resources.as_file(utils_res) as utils_path:
+                    utils_js = utils_path.read_text(encoding="utf-8")
+                html = html.replace(utils_tag, f"<script>\n{utils_js}\n</script>")
+            except FileNotFoundError:
+                logger.warning(
+                    "Could not inline pyvis utils.js asset; leaving original tag"
+                )
 
         return html
 

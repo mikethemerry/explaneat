@@ -780,7 +780,9 @@ survival_threshold = {reproduction_cfg.get('survival_threshold', 0.2)}"""
                 )
                 print(f"  Ancestor generations tracked: {len(ancestor_generations)}")
 
-    def show_network(self, interactive: bool = False, **kwargs) -> Optional[str]:
+    def show_network(
+        self, interactive: bool = False, renderer: str = "react", **kwargs
+    ) -> Optional[str]:
         """
         Display the network structure.
 
@@ -792,12 +794,12 @@ survival_threshold = {reproduction_cfg.get('survival_threshold', 0.2)}"""
             If interactive=True, returns path to HTML file. Otherwise None.
         """
         if interactive:
-            return self.show_interactive_network(**kwargs)
+            return self.show_interactive_network(renderer=renderer, **kwargs)
         else:
             self.visualizer.plot_network(**kwargs)
             return None
 
-    def show_interactive_network(self, **kwargs) -> str:
+    def show_interactive_network(self, renderer: str = "react", **kwargs) -> str:
         """
         Display interactive web-based network visualization with filtering controls.
 
@@ -820,7 +822,14 @@ survival_threshold = {reproduction_cfg.get('survival_threshold', 0.2)}"""
         viewer.genome_info = self.genome_info
 
         # Show the visualization
-        return viewer.show(**kwargs)
+        if renderer == "react":
+            return viewer.show_react(**kwargs)
+        elif renderer == "pyvis":
+            return viewer.show(**kwargs)
+        else:
+            raise ValueError(
+                f"Unknown renderer '{renderer}'. Expected 'react' or 'pyvis'."
+            )
 
     def trace_gene_origins(self) -> pd.DataFrame:
         """Trace when each gene (node/connection) was first introduced"""

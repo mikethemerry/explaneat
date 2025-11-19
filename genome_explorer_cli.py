@@ -762,7 +762,8 @@ class GenomeExplorerCLI:
         print("  select / s <experiment_id> - Select experiment")
         print("  summary                 - Show genome summary")
         print("  network                 - Show network structure")
-        print("  network-interactive / ni - Show interactive network visualization")
+        print("  network-interactive / ni - Show React interactive visualization")
+        print("  network-interactive-py / ni-py - Show legacy Pyvis visualization")
         print("  training                - Plot training metrics")
         print("  ancestry [max_gen]      - Plot ancestry fitness")
         print("  evolution [max_gen]      - Plot evolution progression")
@@ -846,7 +847,7 @@ class GenomeExplorerCLI:
                     break
                 elif cmd == "help":
                     print(
-                        "Available commands: list, select/s, summary, network, network-interactive/ni, training, ancestry, evolution, export, quit"
+                        "Available commands: list, select/s, summary, network, network-interactive/ni, network-interactive-py/ni-py, training, ancestry, evolution, export, quit"
                     )
                     print(
                         "Annotation commands: annotate (guided), annotations/ann-list, ann-show, ann-delete"
@@ -889,9 +890,12 @@ class GenomeExplorerCLI:
                 elif cmd == "network":
                     in_list_mode = False
                     self.show_network()
-                elif cmd == "network-interactive" or cmd == "ni":
+                elif cmd in ["network-interactive", "ni"]:
                     in_list_mode = False
-                    self.show_network(interactive=True)
+                    self.show_network(interactive=True, renderer="react")
+                elif cmd in ["network-interactive-py", "ni-py"]:
+                    in_list_mode = False
+                    self.show_network(interactive=True, renderer="pyvis")
                 elif cmd == "training":
                     in_list_mode = False
                     self.plot_training_metrics()
@@ -977,6 +981,11 @@ def main():
         help="Show interactive network visualization and exit",
     )
     parser.add_argument(
+        "--network-interactive-pyvis",
+        action="store_true",
+        help="Show legacy Pyvis interactive visualization and exit",
+    )
+    parser.add_argument(
         "--training", action="store_true", help="Plot training metrics and exit"
     )
     parser.add_argument(
@@ -1030,7 +1039,9 @@ def main():
     if args.network:
         cli.show_network()
     if args.network_interactive:
-        cli.show_network(interactive=True)
+        cli.show_network(interactive=True, renderer="react")
+    if args.network_interactive_pyvis:
+        cli.show_network(interactive=True, renderer="pyvis")
     if args.training:
         cli.plot_training_metrics()
     if args.ancestry:
