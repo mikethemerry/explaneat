@@ -51,7 +51,10 @@ python examples/experiment_management.py
 Before running the examples, ensure you have installed ExplaNEAT and its dependencies:
 
 ```bash
-pip install -r requirements.txt
+# Using uv (recommended)
+uv venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uv pip install -e .
 ```
 
 ## Notes

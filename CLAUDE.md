@@ -4,7 +4,7 @@
 ExplaNEAT is a NEAT (NeuroEvolution of Augmenting Topologies) implementation with backpropagation capabilities for explanatory AI research.
 
 ## Environment Setup Notes
-- **Python Package Management**: User needs to run pip/conda commands directly
+- **Python Package Management**: Project uses `uv` for package management (fast Python package installer)
 - **Database Commands**: User needs to run alembic and database setup commands directly
 - **PostgreSQL**: Project uses PostgreSQL for genome serialization and experiment tracking
 
@@ -12,8 +12,11 @@ ExplaNEAT is a NEAT (NeuroEvolution of Augmenting Topologies) implementation wit
 
 ### Database Setup
 ```bash
-# Install database dependencies (user should run)
-pip install -r requirements.txt
+# Install dependencies with uv (user should run)
+# First ensure uv is installed: curl -LsSf https://astral.sh/uv/install.sh | sh
+uv venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uv pip install -e .
 
 # Create PostgreSQL database (user should run)
 python -m explaneat db create-db

@@ -19,6 +19,7 @@ ExplaNEAT is a comprehensive suite of tools for creating explanations of neural 
 
 - Python 3.8 or higher
 - CUDA-capable GPU (recommended for large-scale experiments)
+- [uv](https://github.com/astral-sh/uv) - Fast Python package installer (install with `curl -LsSf https://astral.sh/uv/install.sh | sh` or `pip install uv`)
 
 ### Install from source
 
@@ -27,21 +28,18 @@ ExplaNEAT is a comprehensive suite of tools for creating explanations of neural 
 git clone https://github.com/mikethemerry/explaneat.git
 cd explaneat
 
-# Create a virtual environment (recommended)
-python -m venv explaneat-env
-source explaneat-env/bin/activate  # On Windows: explaneat-env\Scripts\activate
+# Create virtual environment and install dependencies with uv
+uv venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-# Install dependencies
-pip install -r requirements.txt
-
-# Install the package in development mode
-pip install -e .
+# Install the package in development mode (includes all dependencies)
+uv pip install -e .
 ```
 
-### Using pip (when available)
+### Using uv (when available on PyPI)
 
 ```bash
-pip install explaneat
+uv pip install explaneat
 ```
 
 ## Quick Start
@@ -260,7 +258,7 @@ The library requires the following key dependencies:
 - **Matplotlib** (>=3.3.0): Plotting and visualization
 - **GraphViz** (>=0.16): Network topology visualization
 
-See `requirements.txt` for the complete list of dependencies.
+See `pyproject.toml` for the complete list of dependencies.
 
 ## Behind ExplaNEAT
 

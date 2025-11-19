@@ -13,7 +13,7 @@ This CLI allows you to:
 import argparse
 import logging
 import sys
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple
 import pandas as pd
 
 from explaneat.analysis.genome_explorer import GenomeExplorer
@@ -30,21 +30,48 @@ class GenomeExplorerCLI:
     def __init__(self):
         self.current_explorer = None
         self.current_experiment_id = None
+        self.current_page = 1
+        self.page_size = 20
         
-    def list_experiments(self, show_numbers: bool = True) -> pd.DataFrame:
-        """List all experiments in the database
+    def list_experiments(self, show_numbers: bool = True, page: int = 1, page_size: Optional[int] = 20, interactive: bool = False) -> Tuple[pd.DataFrame, int]:
+        """List all experiments in the database with pagination
 
         Args:
             show_numbers: If True, show row numbers for easy selection
+            page: Page number to display (1-indexed)
+            page_size: Number of experiments per page. None or 0 means show all
+            interactive: If True, allow interactive navigation
         """
         try:
             experiments_df = GenomeExplorer.list_experiments()
             if experiments_df.empty:
                 print("No experiments found in database")
-                return experiments_df
+                return experiments_df, 1
 
             # Sort by creation date (most recent first)
             experiments_df = experiments_df.sort_values('created_at', ascending=False).reset_index(drop=True)
+
+            total_experiments = len(experiments_df)
+            
+            # Handle pagination: if page_size is None or 0, show all
+            if page_size is None or page_size <= 0:
+                page_df = experiments_df
+                total_pages = 1
+                start_idx = 0
+                end_idx = total_experiments
+            else:
+                total_pages = (total_experiments + page_size - 1) // page_size  # Ceiling division
+                
+                # Validate page number
+                if page < 1:
+                    page = 1
+                elif page > total_pages and total_pages > 0:
+                    page = total_pages
+
+                # Calculate slice indices
+                start_idx = (page - 1) * page_size
+                end_idx = min(start_idx + page_size, total_experiments)
+                page_df = experiments_df.iloc[start_idx:end_idx]
 
             print("\n📊 Available Experiments:")
             print("=" * 90)
@@ -54,18 +81,28 @@ class GenomeExplorerCLI:
                 print(f"{'ID':<36} {'Name':<25} {'Status':<10} {'Generations':<12} {'Best Fitness':<12}")
             print("-" * 90)
 
-            for idx, exp in experiments_df.iterrows():
+            for idx, exp in page_df.iterrows():
                 fitness_str = f"{exp['best_fitness']:.3f}" if exp['best_fitness'] else "N/A"
                 if show_numbers:
+                    # Use the original index from the full dataframe for selection
                     print(f"{idx:<4} {exp['name'][:29]:<30} {exp['status']:<10} {exp['generations']:<6} {fitness_str:<12} {exp['experiment_id']:<36}")
                 else:
                     print(f"{exp['experiment_id']:<36} {exp['name'][:24]:<25} {exp['status']:<10} {exp['generations']:<12} {fitness_str:<12}")
 
-            return experiments_df
+            # Show pagination info
+            print("-" * 90)
+            if total_pages > 1:
+                print(f"Page {page} of {total_pages} (Showing {start_idx + 1}-{end_idx} of {total_experiments} experiments)")
+                if interactive:
+                    print("💡 Navigation: 'n' (next), 'p' (prev), 'page N' (go to page), 'q' (quit)")
+            else:
+                print(f"Total: {total_experiments} experiment(s)")
+
+            return experiments_df, page
 
         except Exception as e:
             logger.error(f"Failed to list experiments: {e}")
-            return pd.DataFrame()
+            return pd.DataFrame(), 1
     
     def select_experiment(self, selector: str = None) -> bool:
         """Select an experiment to explore
@@ -135,8 +172,8 @@ class GenomeExplorerCLI:
                     return True
 
             else:
-                # Interactive selection
-                experiments_df = self.list_experiments()
+                # Interactive selection - show all experiments (no pagination)
+                experiments_df, _ = self.list_experiments(page_size=None, interactive=False)
                 if experiments_df.empty:
                     return False
 
@@ -226,7 +263,7 @@ class GenomeExplorerCLI:
         print("\n🧬 Genome Explorer CLI - Interactive Mode")
         print("=" * 50)
         print("Available commands:")
-        print("  list                    - List all experiments")
+        print("  list [page] [page_size]  - List experiments (with pagination)")
         print("  select <experiment_id>   - Select experiment")
         print("  summary                 - Show genome summary")
         print("  network                 - Show network structure")
@@ -237,6 +274,13 @@ class GenomeExplorerCLI:
         print("  help                    - Show this help")
         print("  quit                    - Exit")
         print()
+        print("📄 Pagination commands (when viewing list):")
+        print("  n, next                 - Next page")
+        print("  p, prev                 - Previous page")
+        print("  page <N>                - Go to page N")
+        print()
+        
+        in_list_mode = False
         
         while True:
             try:
@@ -246,39 +290,102 @@ class GenomeExplorerCLI:
                     
                 cmd = command[0].lower()
                 
+                # Handle pagination navigation when in list mode
+                if in_list_mode and cmd in ['n', 'next']:
+                    self.current_page += 1
+                    experiments_df, actual_page = self.list_experiments(page=self.current_page, page_size=self.page_size, interactive=True)
+                    self.current_page = actual_page  # Sync with actual displayed page
+                    if experiments_df.empty:
+                        in_list_mode = False
+                    continue
+                elif in_list_mode and cmd in ['p', 'prev', 'previous']:
+                    if self.current_page > 1:
+                        self.current_page -= 1
+                    experiments_df, actual_page = self.list_experiments(page=self.current_page, page_size=self.page_size, interactive=True)
+                    self.current_page = actual_page  # Sync with actual displayed page
+                    if experiments_df.empty:
+                        in_list_mode = False
+                    continue
+                elif in_list_mode and cmd == 'page' and len(command) > 1:
+                    try:
+                        page_num = int(command[1])
+                        self.current_page = page_num
+                        experiments_df, actual_page = self.list_experiments(page=self.current_page, page_size=self.page_size, interactive=True)
+                        self.current_page = actual_page  # Sync with actual displayed page
+                        if experiments_df.empty:
+                            in_list_mode = False
+                    except ValueError:
+                        print(f"❌ Invalid page number: {command[1]}")
+                    continue
+                elif in_list_mode and cmd == 'q':
+                    in_list_mode = False
+                    continue
+                
+                # Regular commands
                 if cmd == 'quit' or cmd == 'exit':
                     print("👋 Goodbye!")
                     break
                 elif cmd == 'help':
                     print("Available commands: list, select, summary, network, training, ancestry, evolution, export, quit")
+                    print("Pagination: n/next, p/prev, page N (when viewing list)")
                 elif cmd == 'list':
-                    self.list_experiments()
+                    # Reset to page 1 or use specified page
+                    if len(command) > 1:
+                        try:
+                            self.current_page = int(command[1])
+                        except ValueError:
+                            print(f"❌ Invalid page number: {command[1]}")
+                            continue
+                    else:
+                        self.current_page = 1
+                    
+                    # Optional page size
+                    if len(command) > 2:
+                        try:
+                            self.page_size = int(command[2])
+                        except ValueError:
+                            print(f"❌ Invalid page size: {command[2]}")
+                            continue
+                    
+                    experiments_df, actual_page = self.list_experiments(page=self.current_page, page_size=self.page_size, interactive=True)
+                    self.current_page = actual_page  # Sync with actual displayed page
+                    if not experiments_df.empty:
+                        in_list_mode = True
                 elif cmd == 'select':
+                    in_list_mode = False
                     exp_id = command[1] if len(command) > 1 else None
                     self.select_experiment(exp_id)
                 elif cmd == 'summary':
+                    in_list_mode = False
                     self.show_summary()
                 elif cmd == 'network':
+                    in_list_mode = False
                     self.show_network()
                 elif cmd == 'training':
+                    in_list_mode = False
                     self.plot_training_metrics()
                 elif cmd == 'ancestry':
+                    in_list_mode = False
                     max_gen = int(command[1]) if len(command) > 1 else None  # None = unlimited
                     self.plot_ancestry_fitness(max_gen)
                 elif cmd == 'evolution':
+                    in_list_mode = False
                     max_gen = int(command[1]) if len(command) > 1 else 50
                     self.plot_evolution_progression(max_gen)
                 elif cmd == 'export':
+                    in_list_mode = False
                     filename = command[1] if len(command) > 1 else None
                     self.export_data(filename)
                 else:
                     print(f"❌ Unknown command: {cmd}")
+                    in_list_mode = False
                     
             except KeyboardInterrupt:
                 print("\n👋 Goodbye!")
                 break
             except Exception as e:
                 print(f"❌ Error: {e}")
+                in_list_mode = False
 
 
 def main():
@@ -286,6 +393,8 @@ def main():
     parser = argparse.ArgumentParser(description="Genome Explorer CLI")
     parser.add_argument("--experiment-id", help="Experiment ID to load directly")
     parser.add_argument("--list", action="store_true", help="List all experiments and exit")
+    parser.add_argument("--page", type=int, default=1, help="Page number for listing experiments (default: 1)")
+    parser.add_argument("--page-size", type=int, default=20, help="Number of experiments per page (default: 20)")
     parser.add_argument("--summary", action="store_true", help="Show summary and exit")
     parser.add_argument("--network", action="store_true", help="Show network and exit")
     parser.add_argument("--training", action="store_true", help="Plot training metrics and exit")
@@ -307,7 +416,7 @@ def main():
     
     # Handle command line arguments
     if args.list:
-        cli.list_experiments()
+        cli.list_experiments(page=args.page, page_size=args.page_size, interactive=False)[0]  # Just get the dataframe
         return
     
     if args.experiment_id:

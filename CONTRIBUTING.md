@@ -50,16 +50,12 @@ git remote add upstream https://github.com/mikethemerry/explaneat.git
 ### 2. Set Up Development Environment
 
 ```bash
-# Create a virtual environment
-python -m venv explaneat-dev
-source explaneat-dev/bin/activate  # On Windows: explaneat-dev\Scripts\activate
+# Create virtual environment with uv
+uv venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-# Install dependencies including development tools
-pip install -r requirements.txt
-pip install -e .
-
-# Install development dependencies
-pip install pytest black flake8 mypy sphinx
+# Install package in development mode with dev dependencies
+uv pip install -e ".[dev]"
 ```
 
 ### 3. Verify Setup

@@ -2,19 +2,19 @@
 
 ## Virtual Environment Setup
 
-**IMPORTANT:** This project uses a virtual environment located at:
+**IMPORTANT:** This project uses `uv` for package management. The virtual environment is located at:
 ```bash
-/Users/mike/dev/explaneat/explaneat-env
+.venv
 ```
 
 **Activate before running any experiments:**
 ```bash
-source /Users/mike/dev/explaneat/explaneat-env/bin/activate
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```
 
-You should see `(explaneat-env)` in your prompt:
+You should see `(.venv)` in your prompt:
 ```
-(explaneat-env) ➜  explaneat git:(main) ✗
+(.venv) ➜  explaneat git:(main) ✗
 ```
 
 ## Running Experiments
@@ -23,7 +23,7 @@ You should see `(explaneat-env)` in your prompt:
 
 ```bash
 # Activate virtual environment first
-source /Users/mike/dev/explaneat/explaneat-env/bin/activate
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Run with python (NOT ipython)
 python run_working_backache.py --generations=50
@@ -182,8 +182,8 @@ please install IPython inside the virtualenv.
 
 ```bash
 # Install IPython inside the virtual environment
-source /Users/mike/dev/explaneat/explaneat-env/bin/activate
-pip install ipython
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uv pip install ipython
 ```
 
 ### Database Connection Errors
@@ -211,19 +211,19 @@ ModuleNotFoundError: No module named 'explaneat'
 
 **Solution:** Activate virtual environment first:
 ```bash
-source /Users/mike/dev/explaneat/explaneat-env/bin/activate
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```
 
 If still failing, install in editable mode:
 ```bash
-pip install -e .
+uv pip install -e .
 ```
 
 ## Quick Reference
 
 ```bash
 # Setup (once)
-source /Users/mike/dev/explaneat/explaneat-env/bin/activate
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 python -m explaneat db init
 
 # Run experiment
@@ -285,7 +285,7 @@ python run_working_backache.py --generations=50
 
 ## Notes for Developers
 
-- **Always activate venv**: `source explaneat-env/bin/activate`
+- **Always activate venv**: `source .venv/bin/activate` (or `.venv\Scripts\activate` on Windows)
 - **Use `python`, not `ipython`** for scripts with CLI arguments
 - **Database**: Ensure PostgreSQL is running before experiments
 - **Ancestry tracking**: Automatically enabled in `run_working_backache.py`

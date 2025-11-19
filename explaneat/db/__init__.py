@@ -1,5 +1,7 @@
 from .base import db, Base
 from .models import (
+    Dataset,
+    DatasetSplit,
     Experiment,
     Population,
     Species,
@@ -13,6 +15,8 @@ from .models import (
 __all__ = [
     'db',
     'Base',
+    'Dataset',
+    'DatasetSplit',
     'Experiment',
     'Population',
     'Species',

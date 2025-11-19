@@ -7,8 +7,8 @@ Welcome to the ExplaNEAT documentation! This page provides an overview of all av
 ### Getting Started
 - **[README.md](README.md)** - Main project overview, features, and quick start
 - **[GETTING_STARTED.md](GETTING_STARTED.md)** - Comprehensive tutorial for new users
-- **[requirements.txt](requirements.txt)** - Complete list of dependencies
-- **[setup.py](setup.py)** - Package installation and metadata
+- **[pyproject.toml](pyproject.toml)** - Package configuration and dependencies (PEP 621)
+- **[requirements.txt](requirements.txt)** - Legacy requirements file (deprecated, use pyproject.toml)
 
 ### API Documentation
 - **[API_REFERENCE.md](API_REFERENCE.md)** - Complete API reference with all classes and methods
@@ -108,8 +108,9 @@ This pattern forms the basis for most ExplaNEAT applications.
 ```bash
 git clone https://github.com/mikethemerry/explaneat.git
 cd explaneat
-pip install -r requirements.txt
-pip install -e .
+uv venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uv pip install -e .
 ```
 
 ### Basic Usage

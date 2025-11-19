@@ -5,15 +5,19 @@ This guide will walk you through setting up PostgreSQL database support for Expl
 ## Prerequisites
 
 - PostgreSQL installed and running
-- Python environment activated
+- Python environment activated (using `uv`)
 - Current working directory is the project root
+- [uv](https://github.com/astral-sh/uv) installed (install with `curl -LsSf https://astral.sh/uv/install.sh | sh` or `pip install uv`)
 
 ## Fresh Setup Instructions
 
 ### 1. Install Dependencies
 
 ```bash
-pip install -r requirements.txt
+# Create virtual environment and install dependencies
+uv venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uv pip install -e .
 ```
 
 ### 2. Create the Development Database

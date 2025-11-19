@@ -19,6 +19,91 @@ class TimestampMixin:
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
 
+class Dataset(Base, TimestampMixin):
+    """Stores dataset metadata and information"""
+    __tablename__ = 'datasets'
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String(255), nullable=False, index=True)
+    version = Column(String(50))
+    source = Column(String(255))  # e.g., 'PMLB', 'sklearn', 'custom'
+    source_url = Column(String(500))
+    description = Column(Text)
+    
+    # Dataset statistics
+    num_samples = Column(Integer)
+    num_features = Column(Integer)
+    num_classes = Column(Integer)
+    feature_names = Column(JSONB)  # List of feature names
+    feature_descriptions = Column(JSONB)  # Dict mapping feature names to descriptions
+    feature_types = Column(JSONB)  # Dict mapping feature names to types (e.g., 'numeric', 'categorical')
+    target_name = Column(String(255))
+    target_description = Column(Text)
+    class_names = Column(JSONB)  # For classification tasks
+    
+    # Dataset metadata
+    metadata = Column(JSONB)  # Additional metadata (e.g., license, citation, etc.)
+    
+    # Relationships
+    splits = relationship('DatasetSplit', back_populates='dataset', cascade='all, delete-orphan')
+    experiments = relationship('Experiment', back_populates='dataset')
+    
+    __table_args__ = (
+        Index('idx_datasets_name_version', 'name', 'version'),
+    )
+    
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'name': self.name,
+            'version': self.version,
+            'source': self.source,
+            'num_samples': self.num_samples,
+            'num_features': self.num_features,
+            'num_classes': self.num_classes,
+        }
+
+
+class DatasetSplit(Base, TimestampMixin):
+    """Stores train/test split information for reproducibility"""
+    __tablename__ = 'dataset_splits'
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    dataset_id = Column(UUID(as_uuid=True), ForeignKey('datasets.id', ondelete='CASCADE'), nullable=False)
+    experiment_id = Column(UUID(as_uuid=True), ForeignKey('experiments.id', ondelete='CASCADE'), nullable=False)
+    
+    # Split parameters for reproducibility
+    split_type = Column(String(50), nullable=False)  # e.g., 'train_test', 'k_fold', 'custom'
+    test_size = Column(Float)  # Proportion of test set (for train_test_split)
+    random_state = Column(Integer)  # Random seed for reproducibility
+    shuffle = Column(Boolean, default=True)
+    stratify = Column(Boolean, default=False)  # Whether stratification was used
+    
+    # Split indices stored as arrays for exact reproducibility
+    train_indices = Column(JSONB, nullable=False)  # List of indices for training set
+    test_indices = Column(JSONB, nullable=False)  # List of indices for test set
+    validation_indices = Column(JSONB)  # Optional validation set indices
+    
+    # Preprocessing information
+    scaler_type = Column(String(50))  # e.g., 'StandardScaler', 'MinMaxScaler', None
+    scaler_params = Column(JSONB)  # Scaler parameters (mean, std, etc.) for reproducibility
+    preprocessing_steps = Column(JSONB)  # List of preprocessing steps applied
+    
+    # Split statistics
+    train_size = Column(Integer)
+    test_size_actual = Column(Integer)
+    validation_size = Column(Integer)
+    
+    # Relationships
+    dataset = relationship('Dataset', back_populates='splits')
+    experiment = relationship('Experiment', back_populates='dataset_split')
+    
+    __table_args__ = (
+        Index('idx_splits_experiment', 'experiment_id'),
+        Index('idx_splits_dataset', 'dataset_id'),
+    )
+
+
 class Experiment(Base, TimestampMixin):
     """Stores metadata about each NEAT experiment run"""
     __tablename__ = 'experiments'
@@ -27,8 +112,9 @@ class Experiment(Base, TimestampMixin):
     experiment_sha = Column(String(40), nullable=False, index=True)
     name = Column(String(255), nullable=False, index=True)
     description = Column(Text)
-    dataset_name = Column(String(255), index=True)
-    dataset_version = Column(String(50))
+    dataset_name = Column(String(255), index=True)  # Deprecated: use dataset_id instead
+    dataset_version = Column(String(50))  # Deprecated: use dataset_id instead
+    dataset_id = Column(UUID(as_uuid=True), ForeignKey('datasets.id', ondelete='SET NULL'))
     config_json = Column(JSONB, nullable=False)
     neat_config_text = Column(Text, nullable=False)
     start_time = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
@@ -38,7 +124,12 @@ class Experiment(Base, TimestampMixin):
     git_branch = Column(String(255))
     hardware_info = Column(JSONB)
     
+    # Random seed for experiment reproducibility
+    random_seed = Column(Integer)
+    
     # Relationships
+    dataset = relationship('Dataset', back_populates='experiments')
+    dataset_split = relationship('DatasetSplit', back_populates='experiment', uselist=False)
     populations = relationship('Population', back_populates='experiment', cascade='all, delete-orphan')
     checkpoints = relationship('Checkpoint', back_populates='experiment', cascade='all, delete-orphan')
     results = relationship('Result', back_populates='experiment', cascade='all, delete-orphan')
@@ -55,9 +146,11 @@ class Experiment(Base, TimestampMixin):
             'description': self.description,
             'dataset_name': self.dataset_name,
             'dataset_version': self.dataset_version,
+            'dataset_id': str(self.dataset_id) if self.dataset_id else None,
             'status': self.status,
             'start_time': self.start_time.isoformat() if self.start_time else None,
             'end_time': self.end_time.isoformat() if self.end_time else None,
+            'random_seed': self.random_seed,
         }
 
 

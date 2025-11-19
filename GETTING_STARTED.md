@@ -18,6 +18,7 @@ Before installing ExplaNEAT, ensure you have:
 - Python 3.8 or higher
 - A CUDA-capable GPU (recommended for performance)
 - Git (for installation from source)
+- [uv](https://github.com/astral-sh/uv) - Fast Python package installer (install with `curl -LsSf https://astral.sh/uv/install.sh | sh` or `pip install uv`)
 
 ## Installation
 
@@ -28,21 +29,18 @@ Before installing ExplaNEAT, ensure you have:
 git clone https://github.com/mikethemerry/explaneat.git
 cd explaneat
 
-# Create and activate a virtual environment
-python -m venv explaneat-env
-source explaneat-env/bin/activate  # On Windows: explaneat-env\Scripts\activate
+# Create virtual environment and install with uv
+uv venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-# Install dependencies
-pip install -r requirements.txt
-
-# Install ExplaNEAT in development mode
-pip install -e .
+# Install ExplaNEAT in development mode (includes all dependencies)
+uv pip install -e .
 ```
 
 ### Option 2: Install from PyPI (When Available)
 
 ```bash
-pip install explaneat
+uv pip install explaneat
 ```
 
 ## Verify Installation
@@ -235,7 +233,7 @@ Explore advanced ExplaNEAT features:
 ### Installation Problems
 
 **Problem**: `ModuleNotFoundError` for dependencies
-**Solution**: Ensure all requirements are installed: `pip install -r requirements.txt`
+**Solution**: Ensure all dependencies are installed: `uv pip install -e .`
 
 **Problem**: CUDA not available warnings
 **Solution**: This is normal if no GPU is available. ExplaNEAT will use CPU automatically.
