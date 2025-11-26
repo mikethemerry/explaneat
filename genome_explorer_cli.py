@@ -258,6 +258,135 @@ class GenomeExplorerCLI:
         print("🕸️  Displaying network structure...")
         self.current_explorer.show_network(**kwargs)
 
+    def show_genotype(self):
+        """Print genotype network structure (all nodes and connections)"""
+        if not self.current_explorer:
+            print("❌ No genome loaded. Use 'select' command first.")
+            return
+
+        if not self.current_explorer.explainer:
+            print("❌ ExplaNEAT not initialized.")
+            return
+
+        print("\n🧬 Genotype Network Structure")
+        print("=" * 70)
+        genotype = self.current_explorer.explainer.get_genotype_network()
+        
+        print(f"\n📊 Summary:")
+        print(f"  Total Nodes: {len(genotype.nodes)}")
+        print(f"  Total Connections: {len(genotype.connections)}")
+        enabled_conns = len([c for c in genotype.connections if c.enabled])
+        disabled_conns = len([c for c in genotype.connections if not c.enabled])
+        print(f"  Enabled Connections: {enabled_conns}")
+        print(f"  Disabled Connections: {disabled_conns}")
+        print(f"  Input Nodes: {len(genotype.input_node_ids)}")
+        print(f"  Output Nodes: {len(genotype.output_node_ids)}")
+        
+        print(f"\n🔵 Input Nodes: {genotype.input_node_ids}")
+        print(f"🔴 Output Nodes: {genotype.output_node_ids}")
+        
+        # Group nodes by type
+        input_nodes = [n for n in genotype.nodes if n.id in genotype.input_node_ids]
+        output_nodes = [n for n in genotype.nodes if n.id in genotype.output_node_ids]
+        hidden_nodes = [n for n in genotype.nodes if n.id not in genotype.input_node_ids and n.id not in genotype.output_node_ids]
+        
+        if input_nodes:
+            print(f"\n📥 Input Nodes ({len(input_nodes)}):")
+            for node in sorted(input_nodes, key=lambda n: n.id):
+                bias_str = f"{node.bias:.4f}" if node.bias is not None else "N/A"
+                activation_str = node.activation or "N/A"
+                print(f"  Node {node.id:4d}: bias={bias_str:>8}, activation={activation_str}")
+        
+        if output_nodes:
+            print(f"\n📤 Output Nodes ({len(output_nodes)}):")
+            for node in sorted(output_nodes, key=lambda n: n.id):
+                bias_str = f"{node.bias:.4f}" if node.bias is not None else "N/A"
+                activation_str = node.activation or "N/A"
+                print(f"  Node {node.id:4d}: bias={bias_str:>8}, activation={activation_str}")
+        
+        if hidden_nodes:
+            print(f"\n⚪ Hidden Nodes ({len(hidden_nodes)}):")
+            for node in sorted(hidden_nodes, key=lambda n: n.id):
+                bias_str = f"{node.bias:.4f}" if node.bias is not None else "N/A"
+                activation_str = node.activation or "N/A"
+                print(f"  Node {node.id:4d}: bias={bias_str:>8}, activation={activation_str}")
+        
+        print(f"\n🔗 Connections ({len(genotype.connections)}):")
+        enabled_connections = [c for c in genotype.connections if c.enabled]
+        disabled_connections = [c for c in genotype.connections if not c.enabled]
+        
+        if enabled_connections:
+            print(f"  ✅ Enabled ({len(enabled_connections)}):")
+            for conn in sorted(enabled_connections, key=lambda c: (c.from_node, c.to_node)):
+                print(f"    {conn.from_node:4d} → {conn.to_node:4d}: weight={conn.weight:8.4f}")
+        
+        if disabled_connections:
+            print(f"  ❌ Disabled ({len(disabled_connections)}):")
+            for conn in sorted(disabled_connections, key=lambda c: (c.from_node, c.to_node)):
+                print(f"    {conn.from_node:4d} → {conn.to_node:4d}: weight={conn.weight:8.4f}")
+        
+        print()
+
+    def show_phenotype(self):
+        """Print phenotype network structure (active, reachable subgraph)"""
+        if not self.current_explorer:
+            print("❌ No genome loaded. Use 'select' command first.")
+            return
+
+        if not self.current_explorer.explainer:
+            print("❌ ExplaNEAT not initialized.")
+            return
+
+        print("\n🧬 Phenotype Network Structure")
+        print("=" * 70)
+        phenotype = self.current_explorer.explainer.get_phenotype_network()
+        
+        print(f"\n📊 Summary:")
+        print(f"  Active Nodes: {len(phenotype.nodes)}")
+        print(f"  Active Connections: {len(phenotype.connections)}")
+        print(f"  Input Nodes: {len(phenotype.input_node_ids)}")
+        print(f"  Output Nodes: {len(phenotype.output_node_ids)}")
+        
+        if "pruned_nodes" in phenotype.metadata:
+            print(f"  Pruned Nodes: {phenotype.metadata['pruned_nodes']}")
+        if "pruned_connections" in phenotype.metadata:
+            print(f"  Pruned Connections: {phenotype.metadata['pruned_connections']}")
+        
+        print(f"\n🔵 Input Nodes: {phenotype.input_node_ids}")
+        print(f"🔴 Output Nodes: {phenotype.output_node_ids}")
+        
+        # Group nodes by type
+        input_nodes = [n for n in phenotype.nodes if n.id in phenotype.input_node_ids]
+        output_nodes = [n for n in phenotype.nodes if n.id in phenotype.output_node_ids]
+        hidden_nodes = [n for n in phenotype.nodes if n.id not in phenotype.input_node_ids and n.id not in phenotype.output_node_ids]
+        
+        if input_nodes:
+            print(f"\n📥 Input Nodes ({len(input_nodes)}):")
+            for node in sorted(input_nodes, key=lambda n: n.id):
+                bias_str = f"{node.bias:.4f}" if node.bias is not None else "N/A"
+                activation_str = node.activation or "N/A"
+                print(f"  Node {node.id:4d}: bias={bias_str:>8}, activation={activation_str}")
+        
+        if output_nodes:
+            print(f"\n📤 Output Nodes ({len(output_nodes)}):")
+            for node in sorted(output_nodes, key=lambda n: n.id):
+                bias_str = f"{node.bias:.4f}" if node.bias is not None else "N/A"
+                activation_str = node.activation or "N/A"
+                print(f"  Node {node.id:4d}: bias={bias_str:>8}, activation={activation_str}")
+        
+        if hidden_nodes:
+            print(f"\n⚪ Hidden Nodes ({len(hidden_nodes)}):")
+            for node in sorted(hidden_nodes, key=lambda n: n.id):
+                bias_str = f"{node.bias:.4f}" if node.bias is not None else "N/A"
+                activation_str = node.activation or "N/A"
+                print(f"  Node {node.id:4d}: bias={bias_str:>8}, activation={activation_str}")
+        
+        print(f"\n🔗 Active Connections ({len(phenotype.connections)}):")
+        for conn in sorted(phenotype.connections, key=lambda c: (c.from_node, c.to_node)):
+            print(f"  {conn.from_node:4d} → {conn.to_node:4d}: weight={conn.weight:8.4f}")
+        
+        print()
+
     def plot_training_metrics(self):
         """Plot training metrics"""
         if not self.current_explorer:
@@ -762,8 +891,10 @@ class GenomeExplorerCLI:
         print("  select / s <experiment_id> - Select experiment")
         print("  summary                 - Show genome summary")
         print("  network                 - Show network structure")
-        print("  network-interactive / ni - Show React interactive visualization")
-        print("  network-interactive-py / ni-py - Show legacy Pyvis visualization")
+        print("  network-interactive / ni - Show Pyvis interactive visualization")
+        print("  network-interactive-react / ni-re - Show React interactive visualization")
+        print("  genotype / gt           - Print genotype network structure")
+        print("  phenotype / pt          - Print phenotype network structure")
         print("  training                - Plot training metrics")
         print("  ancestry [max_gen]      - Plot ancestry fitness")
         print("  evolution [max_gen]      - Plot evolution progression")
@@ -847,7 +978,7 @@ class GenomeExplorerCLI:
                     break
                 elif cmd == "help":
                     print(
-                        "Available commands: list, select/s, summary, network, network-interactive/ni, network-interactive-py/ni-py, training, ancestry, evolution, export, quit"
+                        "Available commands: list, select/s, summary, network, network-interactive/ni, network-interactive-react/ni-re, genotype/gt, phenotype/pt, training, ancestry, evolution, export, quit"
                     )
                     print(
                         "Annotation commands: annotate (guided), annotations/ann-list, ann-show, ann-delete"
@@ -892,10 +1023,16 @@ class GenomeExplorerCLI:
                     self.show_network()
                 elif cmd in ["network-interactive", "ni"]:
                     in_list_mode = False
-                    self.show_network(interactive=True, renderer="react")
-                elif cmd in ["network-interactive-py", "ni-py"]:
-                    in_list_mode = False
                     self.show_network(interactive=True, renderer="pyvis")
+                elif cmd in ["network-interactive-react", "ni-re"]:
+                    in_list_mode = False
+                    self.show_network(interactive=True, renderer="react")
+                elif cmd in ["genotype", "gt"]:
+                    in_list_mode = False
+                    self.show_genotype()
+                elif cmd in ["phenotype", "pt"]:
+                    in_list_mode = False
+                    self.show_phenotype()
                 elif cmd == "training":
                     in_list_mode = False
                     self.plot_training_metrics()

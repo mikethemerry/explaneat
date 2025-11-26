@@ -55,6 +55,38 @@ Generated JSON must include:
 
 Exact schema details live in `docs/arc42/react_explorer_schema.md`.
 
+## Pyvis Layout Expectations
+
+- Layered layout now respects annotation boundaries by keeping member nodes contiguous within each depth slice.
+- Deterministic ordering feeds both Pyvis and React so drags start from the same baseline layout.
+- Direct input→output connections render along a dedicated bottom lane to declutter the main hidden layers.
+- Layout metadata should keep broadcasting these hints so future renderers stay visually consistent.
+
+### Layout Sketch
+
+```mermaid
+flowchart LR
+    in1[/Input -2/] --> h3
+    in2[/Input -1/] --> h1
+    h1((Annotation A: n1))
+    h2((Annotation A: n2))
+    h3((Free Node))
+    h1 --> out1{\ Output 0 \}
+    h2 --> out1
+    subgraph "Hidden Layer (depth 1)"
+        direction TB
+        h1
+        h2
+        h3
+    end
+    subgraph "Direct IO Lane"
+        direction LR
+        di[/Input -5/]
+        do{\ Output 0 \}
+    end
+    di --> do
+```
+
 ## Open Questions / Future Enhancements
 
 - In-browser annotation editing & persistence back to the CLI/database.

@@ -806,6 +806,7 @@ survival_threshold = {reproduction_cfg.get('survival_threshold', 0.2)}"""
         Loads annotations from database and integrates them into the visualization.
 
         Args:
+            renderer: "react" (default) or "pyvis" for visualization backend
             **kwargs: Additional arguments passed to InteractiveNetworkViewer.show()
 
         Returns:
@@ -814,9 +815,15 @@ survival_threshold = {reproduction_cfg.get('survival_threshold', 0.2)}"""
         # Load annotations for this genome
         annotations = AnnotationManager.get_annotations(self.genome_info.genome_id)
 
-        # Create interactive viewer
+        # Get phenotype network structure from ExplaNEAT
+        from explaneat.core.explaneat import ExplaNEAT
+        
+        explainer = ExplaNEAT(self.neat_genome, self.config)
+        phenotype_network = explainer.get_phenotype_network()
+
+        # Create interactive viewer with phenotype network
         viewer = InteractiveNetworkViewer(
-            self.neat_genome, self.config, annotations=annotations
+            phenotype_network, self.config, annotations=annotations
         )
         # Store genome_info for annotation export
         viewer.genome_info = self.genome_info

@@ -23,10 +23,12 @@ import logging
 import json
 import shutil
 import re
-from collections import deque, defaultdict
+from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from importlib import resources as pkg_resources
+
+from explaneat.core.genome_network import NetworkStructure, NodeType
 
 try:
     from pyvis.network import Network
@@ -1094,13 +1096,18 @@ class InteractiveNetworkViewer:
     and flexible node/edge hiding controls.
     """
 
-    def __init__(self, neat_genome, config, annotations: Optional[List[Any]] = None):
+    def __init__(
+        self,
+        network_structure: NetworkStructure,
+        config,
+        annotations: Optional[List[Any]] = None,
+    ):
         """
         Initialize interactive network viewer.
 
         Args:
-            neat_genome: NEAT genome object
-            config: NEAT config object
+            network_structure: NetworkStructure (phenotype) to visualize
+            config: NEAT config object (for metadata/display purposes)
             annotations: Optional list of Annotation objects from database
         """
         if not PYVIS_AVAILABLE:
@@ -1109,15 +1116,15 @@ class InteractiveNetworkViewer:
                 "Install it with: pip install pyvis"
             )
 
-        self.genome = neat_genome
+        self.network_structure = network_structure
         self.config = config
         self.annotations = annotations or []
 
-        # Build network graph
-        self.G = nx.DiGraph()
-        self._build_graph()
-        self._prune_inactive_graph()
-        self.output_nodes = set(self._get_output_nodes())
+        # Convert NetworkStructure to NetworkX graph for internal use
+        self.G = self._network_structure_to_nx(network_structure)
+        self.output_nodes = set(network_structure.output_node_ids)
+
+        # Collect disabled connections from original genome (if available in metadata)
         self.disabled_edge_records = self._collect_disabled_connections()
         self.disabled_nodes = self._identify_disabled_nodes()
 
@@ -1147,7 +1154,10 @@ class InteractiveNetworkViewer:
         return js_path
 
     def _collect_annotation_metadata(self):
-        """Collect annotation node/edge sets, colors, and ordering metadata."""
+        """Collect annotation node/edge sets, colors, and ordering metadata.
+
+        Filters annotations to only include nodes/edges that exist in the phenotype network.
+        """
         annotation_colors = {}
         annotation_node_sets: Dict[str, set] = {}
         annotation_edge_sets: Dict[str, set] = {}
@@ -1165,6 +1175,13 @@ class InteractiveNetworkViewer:
             "#52BE80",
         ]
 
+        # Get valid node/edge sets from phenotype network
+        phenotype_node_ids = self.network_structure.get_node_ids()
+        phenotype_edges = {
+            (conn.from_node, conn.to_node)
+            for conn in self.network_structure.get_enabled_connections()
+        }
+
         for idx, annotation in enumerate(self.annotations):
             color = annotation_colors_list[idx % len(annotation_colors_list)]
             if isinstance(annotation, dict):
@@ -1177,19 +1194,37 @@ class InteractiveNetworkViewer:
                 subgraph_connections = annotation.subgraph_connections or []
 
             annotation_priority[ann_id] = idx
-            nodes = set(subgraph_nodes)
+
+            # Filter nodes to only those in phenotype
+            nodes = {nid for nid in subgraph_nodes if nid in phenotype_node_ids}
+
+            # Filter edges to only those in phenotype
             edges = set()
             for conn in subgraph_connections:
                 if isinstance(conn, (list, tuple)):
-                    edges.add(tuple(conn))
+                    edge_tuple = tuple(conn)
                 else:
-                    edges.add(tuple(conn))
+                    edge_tuple = tuple(conn)
+                # Only include if both nodes exist and edge exists in phenotype
+                if (
+                    len(edge_tuple) == 2
+                    and edge_tuple[0] in phenotype_node_ids
+                    and edge_tuple[1] in phenotype_node_ids
+                    and edge_tuple in phenotype_edges
+                ):
+                    edges.add(edge_tuple)
 
-            annotation_node_sets[ann_id] = nodes
-            annotation_edge_sets[ann_id] = edges
+            # Only add annotation if it has at least one valid node or edge
+            if nodes or edges:
+                annotation_node_sets[ann_id] = nodes
+                annotation_edge_sets[ann_id] = edges
 
-            for node_id in nodes:
-                annotation_colors[node_id] = color
+                for node_id in nodes:
+                    annotation_colors[node_id] = color
+            else:
+                logger.debug(
+                    "Annotation %s filtered out: no nodes/edges in phenotype", ann_id
+                )
 
         return (
             annotation_node_sets,
@@ -1208,23 +1243,26 @@ class InteractiveNetworkViewer:
         ) = self._collect_annotation_metadata()
         return annotation_node_sets, annotation_edge_sets, annotation_colors
 
-    def _build_graph(self):
-        """Build NetworkX graph from genome."""
-        # Add nodes
-        for node_id in self.genome.nodes:
-            self.G.add_node(node_id)
+    def _network_structure_to_nx(self, network: NetworkStructure) -> nx.DiGraph:
+        """Convert NetworkStructure to NetworkX DiGraph."""
+        G = nx.DiGraph()
 
-        # Add connections
-        for conn_key, conn in self.genome.connections.items():
-            if conn.enabled:
-                self.G.add_edge(conn_key[0], conn_key[1], weight=conn.weight)
+        # Add nodes
+        for node in network.nodes:
+            G.add_node(node.id)
+
+        # Add enabled connections with weights
+        for conn in network.get_enabled_connections():
+            G.add_edge(conn.from_node, conn.to_node, weight=conn.weight)
+
+        return G
 
     def _collect_disabled_connections(self) -> List[Tuple[int, int, float]]:
-        """Collect all disabled input→output edges from the genome."""
+        """Collect all disabled connections from the network structure."""
         disabled = []
-        for conn_key, conn in self.genome.connections.items():
+        for conn in self.network_structure.connections:
             if not conn.enabled:
-                disabled.append((conn_key[0], conn_key[1], conn.weight))
+                disabled.append((conn.from_node, conn.to_node, conn.weight))
         return disabled
 
     def _identify_disabled_nodes(self) -> set:
@@ -1234,7 +1272,8 @@ class InteractiveNetworkViewer:
         Output nodes are always considered active even if isolated.
         """
         disabled = set()
-        for node_id in self.genome.nodes:
+        for node in self.network_structure.nodes:
+            node_id = node.id
             if node_id in self.output_nodes:
                 continue
             if self.G.in_degree(node_id) == 0 and self.G.out_degree(node_id) == 0:
@@ -1242,72 +1281,12 @@ class InteractiveNetworkViewer:
         return disabled
 
     def _get_input_nodes(self) -> List[int]:
-        """Return all configured input node ids that exist in the graph."""
-        if hasattr(self.config, "genome_config"):
-            return [
-                n for n in self.config.genome_config.input_keys if n in self.G.nodes()
-            ]
-        return [n for n in self.G.nodes() if n < 0]
+        """Return all input node ids from the network structure."""
+        return self.network_structure.input_node_ids
 
     def _get_output_nodes(self) -> List[int]:
-        """Return all configured output node ids that exist in the graph."""
-        if hasattr(self.config, "genome_config"):
-            return [
-                n for n in self.config.genome_config.output_keys if n in self.G.nodes()
-            ]
-        # Fallback: treat node 0 as the single output
-        return [n for n in self.G.nodes() if n == 0]
-
-    def _prune_inactive_graph(self):
-        """Remove nodes/edges that are not on any path from inputs to outputs."""
-        if not self.G.nodes():
-            return
-
-        input_nodes = [n for n in self._get_input_nodes() if n in self.G.nodes()]
-        output_nodes = [n for n in self._get_output_nodes() if n in self.G.nodes()]
-
-        if not input_nodes or not output_nodes:
-            logger.warning(
-                "Cannot prune inactive graph: inputs=%d outputs=%d",
-                len(input_nodes),
-                len(output_nodes),
-            )
-            return
-
-        forward_reachable = self._traverse_nodes(input_nodes, direction="out")
-        backward_reachable = self._traverse_nodes(output_nodes, direction="in")
-
-        active_nodes = forward_reachable & backward_reachable
-        if not active_nodes:
-            logger.warning("Pruning skipped: no active nodes found")
-            return
-
-        inactive_nodes = [n for n in list(self.G.nodes()) if n not in active_nodes]
-        if inactive_nodes:
-            self.G.remove_nodes_from(inactive_nodes)
-            logger.debug(
-                "Pruned %d inactive nodes (remaining: %d)",
-                len(inactive_nodes),
-                self.G.number_of_nodes(),
-            )
-
-    def _traverse_nodes(self, start_nodes: List[int], direction: str) -> set:
-        """Return nodes reachable from start_nodes following edges in given direction."""
-        reachable: set = set()
-        queue = deque(start_nodes)
-        while queue:
-            node = queue.popleft()
-            if node in reachable or node not in self.G:
-                continue
-            reachable.add(node)
-            if direction == "out":
-                neighbors = (nbr for _, nbr in self.G.out_edges(node))
-            else:
-                neighbors = (nbr for nbr, _ in self.G.in_edges(node))
-            for neighbor in neighbors:
-                if neighbor not in reachable:
-                    queue.append(neighbor)
-        return reachable
+        """Return all output node ids from the network structure."""
+        return self.network_structure.output_node_ids
 
     def _calculate_depths(self) -> Dict[int, int]:
         """Calculate node depths using the same logic as GenomeVisualizer."""
@@ -1411,10 +1390,10 @@ class InteractiveNetworkViewer:
                     # Check if this is truly direct (no path through hidden nodes)
                     # A direct connection means: input -> output with no intermediate hidden nodes
                     # Since we already have the edge, we just need to verify it's enabled
-                    for conn_key, conn in self.genome.connections.items():
+                    for conn in self.network_structure.connections:
                         if (
-                            conn_key[0] == input_node
-                            and conn_key[1] == output_node
+                            conn.from_node == input_node
+                            and conn.to_node == output_node
                             and conn.enabled
                         ):
                             direct_nodes.add(input_node)
@@ -1426,17 +1405,14 @@ class InteractiveNetworkViewer:
 
     def _get_node_type(self, node_id: int) -> str:
         """Get node type: 'input', 'output', or 'hidden'."""
-        if hasattr(self.config, "genome_config"):
-            if node_id in self.config.genome_config.input_keys:
-                return "input"
-            if node_id in self.config.genome_config.output_keys:
-                return "output"
-        else:
-            if node_id < 0:
-                return "input"
-            if node_id == 0:
-                return "output"
-
+        node = self.network_structure.get_node_by_id(node_id)
+        if node:
+            return node.type.value  # Convert NodeType enum to string
+        # Fallback (shouldn't happen if network structure is valid)
+        if node_id in self.network_structure.input_node_ids:
+            return "input"
+        if node_id in self.network_structure.output_node_ids:
+            return "output"
         return "hidden"
 
     def _get_node_color(self, node_id: int, annotation_colors: Dict[int, str]) -> str:
@@ -1869,7 +1845,9 @@ class InteractiveNetworkViewer:
             node_filter_metadata[str(node_id)] = {
                 "is_in_direct_connection": is_in_direct_connection,
                 "annotation_ids": [
-                    str(aid) for aid, nodes in annotation_node_sets.items() if node_id in nodes
+                    str(aid)
+                    for aid, nodes in annotation_node_sets.items()
+                    if node_id in nodes
                 ],
                 "is_disabled": is_disabled_node,
                 "is_output": node_type == "output",
@@ -1951,7 +1929,18 @@ class InteractiveNetworkViewer:
             }
 
         # Add disabled edges (hidden & grey by default)
+        # Only add disabled edges where both nodes exist in the pruned graph
+        active_nodes = set(self.G.nodes())
         for idx, (from_node, to_node, weight) in enumerate(self.disabled_edge_records):
+            # Skip disabled edges where either node was pruned from the graph
+            if from_node not in active_nodes or to_node not in active_nodes:
+                logger.debug(
+                    "Skipping disabled edge %d->%d: one or both nodes not in pruned graph",
+                    from_node,
+                    to_node,
+                )
+                continue
+
             edge_id = f"disabled_edge_{idx}_{from_node}_{to_node}"
             width_val = 1 + abs(weight)
             net.add_edge(
@@ -2070,30 +2059,52 @@ class InteractiveNetworkViewer:
                 }
             )
 
+        # Filter annotations to only include nodes/edges in phenotype
+        phenotype_node_ids = self.network_structure.get_node_ids()
+        phenotype_edges = {
+            (conn.from_node, conn.to_node)
+            for conn in self.network_structure.get_enabled_connections()
+        }
+
         annotations_payload = []
         for annotation in self.annotations:
             if isinstance(annotation, dict):
                 ann_id = str(annotation.get("id", ""))
                 name = annotation.get("name")
                 hypothesis = annotation.get("hypothesis")
-                nodes = annotation.get("subgraph_nodes") or []
-                edges = annotation.get("subgraph_connections") or []
+                raw_nodes = annotation.get("subgraph_nodes") or []
+                raw_edges = annotation.get("subgraph_connections") or []
             else:
                 ann_id = str(annotation.id)
                 name = getattr(annotation, "name", None)
                 hypothesis = getattr(annotation, "hypothesis", None)
-                nodes = annotation.subgraph_nodes or []
-                edges = annotation.subgraph_connections or []
+                raw_nodes = annotation.subgraph_nodes or []
+                raw_edges = annotation.subgraph_connections or []
 
-            annotations_payload.append(
-                {
-                    "id": ann_id,
-                    "name": name,
-                    "hypothesis": hypothesis,
-                    "nodes": nodes,
-                    "edges": edges,
-                }
-            )
+            # Filter to only phenotype nodes/edges
+            filtered_nodes = [nid for nid in raw_nodes if nid in phenotype_node_ids]
+            filtered_edges = []
+            for edge in raw_edges:
+                if isinstance(edge, (list, tuple)) and len(edge) == 2:
+                    edge_tuple = tuple(edge)
+                    if (
+                        edge_tuple[0] in phenotype_node_ids
+                        and edge_tuple[1] in phenotype_node_ids
+                        and edge_tuple in phenotype_edges
+                    ):
+                        filtered_edges.append(list(edge_tuple))
+
+            # Only include annotation if it has at least one valid node or edge
+            if filtered_nodes or filtered_edges:
+                annotations_payload.append(
+                    {
+                        "id": ann_id,
+                        "name": name,
+                        "hypothesis": hypothesis,
+                        "nodes": filtered_nodes,
+                        "edges": filtered_edges,
+                    }
+                )
 
         layout_dims = None
         if node_positions:

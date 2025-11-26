@@ -55,6 +55,11 @@ The React explorer consumes a single JSON payload embedded inside the generated 
 - **annotationIds**: Strings only; even numeric UUIDs should be stringified to avoid JavaScript parsing issues.
 - **Edges.edges** arrays use `[from, to]` pairs to keep JSON simple.
 
+### Layout Semantics
+- `layout.type` remains `layered`, but `position.y` now reserves the most negative values for the “direct IO lane” so clients can dock straight input→output edges below the main graph.
+- Annotation members within the same depth are serialized with contiguous `position.y` offsets, allowing downstream renderers to group them without recomputing membership.
+- `isDirectConnection` flags must align with the lane so filtering logic can hide/show the band consistently across Pyvis and React.
+
 ### Embedding
 The payload is injected into the generated HTML as:
 

@@ -566,3 +566,6 @@ AnnotationManager.create_annotation(
   window.cancelAnnotationForm = cancelAnnotationForm;
 })(window, document);
 
+
+
+
