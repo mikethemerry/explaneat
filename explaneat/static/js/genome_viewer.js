@@ -107,29 +107,31 @@
 
   function getAnnotationFilterStates() {
     const states = {};
-    document.querySelectorAll(".annotation-filter-checkbox").forEach((checkbox) => {
-      const annId = checkbox.id.replace("show_annotation_", "");
-      states[annId] = checkbox.checked;
-    });
+    document
+      .querySelectorAll(".annotation-filter-checkbox")
+      .forEach((checkbox) => {
+        const annId = checkbox.id.replace("show_annotation_", "");
+        states[annId] = checkbox.checked;
+      });
     return states;
   }
 
   /**
    * Apply filters to show/hide nodes and edges based on annotation visibility.
-   * 
+   *
    * NOTE: This implementation uses a simplified visibility logic. For full
    * coverage-based visibility per the Beyond Intuition paper specification,
    * server-side computation is required. The exact paper definition is:
-   * 
+   *
    * visible(v) = ¬covered(hidden_annotations) ∨ (v ∈ V_O)
-   * 
+   *
    * where coverage uses: covered_A(v) = (v ∈ V_A) ∧ (E_out(v) ⊆ E_A)
-   * 
+   *
    * This requires:
    * 1. Full graph structure (all nodes and edges)
    * 2. Node splits for the explanation
    * 3. Coverage computation using CoverageComputer
-   * 
+   *
    * TODO: Implement server-side endpoint for coverage-based visibility
    * or compute coverage client-side if all data is available.
    */
@@ -153,7 +155,10 @@
 
         // Output nodes are always visible (per paper specification)
         // They should never be filtered, even if part of annotations
-        if (nodeMeta && (nodeMeta.is_output || nodeMeta.node_type === "output")) {
+        if (
+          nodeMeta &&
+          (nodeMeta.is_output || nodeMeta.node_type === "output")
+        ) {
           visible = true;
           nodeUpdates.push({ id: node.id, hidden: !visible });
           return;
@@ -224,16 +229,20 @@
   }
 
   function setupFilterListeners() {
-    document.querySelectorAll(".annotation-filter-checkbox").forEach((checkbox) => {
-      checkbox.addEventListener("change", applyFilters);
-    });
+    document
+      .querySelectorAll(".annotation-filter-checkbox")
+      .forEach((checkbox) => {
+        checkbox.addEventListener("change", applyFilters);
+      });
 
     const resetBtn = document.getElementById("reset-filters-btn");
     if (resetBtn) {
       resetBtn.addEventListener("click", () => {
-        document.querySelectorAll(".annotation-filter-checkbox").forEach((cb) => {
-          cb.checked = true;
-        });
+        document
+          .querySelectorAll(".annotation-filter-checkbox")
+          .forEach((cb) => {
+            cb.checked = true;
+          });
         applyFilters();
       });
     }
@@ -453,6 +462,273 @@ AnnotationManager.create_annotation(
     });
   }
 
+  function showInputSideSubgraph(targetNodeId) {
+    const net = getNetwork();
+    if (!net || !net.body || !net.body.data) return;
+
+    const nodes = net.body.data.nodes;
+    const allEdges = net.body.data.edges;
+
+    // Build reverse adjacency list (incoming edges)
+    const reverseAdj = {};
+    const forwardAdj = {};
+    const nodeSet = new Set();
+
+    allEdges.forEach((edge) => {
+      if (edge.hidden) return;
+      const from = edge.from;
+      const to = edge.to;
+
+      nodeSet.add(from);
+      nodeSet.add(to);
+
+      if (!reverseAdj[to]) reverseAdj[to] = [];
+      reverseAdj[to].push(from);
+
+      if (!forwardAdj[from]) forwardAdj[from] = [];
+      forwardAdj[from].push(to);
+    });
+
+    // Backward BFS from target node to find all input-side nodes
+    const inputSideNodes = new Set([targetNodeId]);
+    const queue = [targetNodeId];
+    const visited = new Set([targetNodeId]);
+
+    while (queue.length > 0) {
+      const node = queue.shift();
+      const predecessors = reverseAdj[node] || [];
+
+      for (const pred of predecessors) {
+        if (!visited.has(pred)) {
+          visited.add(pred);
+          inputSideNodes.add(pred);
+          queue.push(pred);
+        }
+      }
+    }
+
+    // Calculate layers (depths) for left-to-right layout
+    // Layer 0 = target node, layer 1 = direct inputs, layer 2 = inputs of inputs, etc.
+    const layers = {};
+    const depths = {};
+    depths[targetNodeId] = 0;
+    layers[0] = [targetNodeId];
+
+    // Forward BFS to assign depths (distance from inputs to target)
+    const depthQueue = [targetNodeId];
+    const depthVisited = new Set([targetNodeId]);
+
+    while (depthQueue.length > 0) {
+      const node = depthQueue.shift();
+      const predecessors = reverseAdj[node] || [];
+
+      for (const pred of predecessors) {
+        if (inputSideNodes.has(pred) && !depthVisited.has(pred)) {
+          depthVisited.add(pred);
+          const depth = depths[node] + 1;
+          depths[pred] = depth;
+          if (!layers[depth]) layers[depth] = [];
+          layers[depth].push(pred);
+          depthQueue.push(pred);
+        }
+      }
+    }
+
+    // Get target node position - this is the clicked node, it stays in place
+    const targetNode = nodes.get(targetNodeId);
+    if (!targetNode) return;
+
+    // Get current position of the clicked node (use current position, not initial)
+    const targetPos = net.getPositions([targetNodeId]);
+    const targetX = targetPos[targetNodeId]?.x || targetNode.x || 0;
+    const targetY = targetPos[targetNodeId]?.y || targetNode.y || 0;
+
+    // Calculate positions: align all input-side nodes to the left of the clicked node
+    const layerWidth = 200; // Horizontal spacing between layers
+    const nodeSpacing = 80; // Vertical spacing between nodes in same layer
+    const nodeUpdates = [];
+
+    // Process layers from right (target) to left (inputs)
+    // Depth 0 = target node (rightmost, stays in place), higher depths = inputs (left)
+    const maxDepth = Math.max(...Object.keys(layers).map(Number), 0);
+
+    // Calculate the total height needed for all layers to center around targetY
+    let totalNodesInAllLayers = 0;
+    for (let depth = 0; depth <= maxDepth; depth++) {
+      totalNodesInAllLayers += (layers[depth] || []).length;
+    }
+    const overallHeight = totalNodesInAllLayers * nodeSpacing;
+    const overallStartY = targetY - overallHeight / 2 + nodeSpacing / 2;
+
+    let currentY = overallStartY;
+
+    for (let depth = 0; depth <= maxDepth; depth++) {
+      const layerNodes = layers[depth] || [];
+
+      // Target node (depth 0) stays at its current position
+      if (depth === 0) {
+        // Keep target node in place, just update color
+        nodeUpdates.push({
+          id: targetNodeId,
+          x: targetX,
+          y: targetY,
+          fixed: { x: true, y: true },
+          color: {
+            border: "#FF6B6B",
+            background: "#FFE5E5",
+          },
+        });
+        currentY += nodeSpacing * layerNodes.length;
+      } else {
+        // Input nodes: position to the left of the target node
+        const layerX = targetX - depth * layerWidth;
+        const layerHeight = layerNodes.length * nodeSpacing;
+        const layerStartY = currentY;
+
+        layerNodes.forEach((nodeId, idx) => {
+          const nodeY = layerStartY + idx * nodeSpacing;
+          nodeUpdates.push({
+            id: nodeId,
+            x: layerX,
+            y: nodeY,
+            fixed: { x: true, y: true },
+            color: {
+              border: "#4ECDC4",
+              background: "#E5F9F7",
+            },
+          });
+        });
+
+        currentY += layerHeight;
+      }
+    }
+
+    if (nodeUpdates.length > 0) {
+      nodes.update(nodeUpdates);
+    }
+
+    // Highlight edges in the input-side subgraph
+    const edgeUpdates = [];
+    const inputSideNodeSet = new Set(Array.from(inputSideNodes).map(String));
+
+    allEdges.forEach((edge) => {
+      const fromStr = String(edge.from);
+      const toStr = String(edge.to);
+      if (inputSideNodeSet.has(fromStr) && inputSideNodeSet.has(toStr)) {
+        edgeUpdates.push({
+          id: edge.id,
+          color: { color: "#4ECDC4", highlight: "#4ECDC4" },
+        });
+      }
+    });
+
+    if (edgeUpdates.length > 0) {
+      edges.update(edgeUpdates);
+    }
+
+    // Fit view to show the subgraph
+    net.fit({ animation: false });
+
+    // Create info panel showing inputs to target node
+    showInputInfoPanel(targetNodeId, reverseAdj[targetNodeId] || []);
+  }
+
+  function showInputInfoPanel(nodeId, inputNodes) {
+    // Remove existing panel if any
+    const existingPanel = document.getElementById("input-info-panel");
+    if (existingPanel) {
+      existingPanel.remove();
+    }
+
+    // Create info panel
+    const panel = document.createElement("div");
+    panel.id = "input-info-panel";
+    panel.style.cssText =
+      "position: fixed; top: 20px; right: 20px; background: white; padding: 15px; border: 2px solid #333; border-radius: 5px; z-index: 10000; max-width: 300px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); font-family: Arial, sans-serif;";
+
+    const inputList =
+      inputNodes.length > 0
+        ? inputNodes
+            .map((id) => `<li style="margin: 5px 0;">Node ${id}</li>`)
+            .join("")
+        : "<li style='color: #666;'>No inputs</li>";
+
+    panel.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h3 style="margin: 0; font-size: 16px;">Inputs to Node ${nodeId}</h3>
+        <button onclick="this.parentElement.parentElement.remove()" style="background: #f44336; color: white; border: none; border-radius: 3px; padding: 2px 8px; cursor: pointer; font-size: 14px;">×</button>
+      </div>
+      <div style="margin-bottom: 10px;">
+        <strong>Direct inputs (${inputNodes.length}):</strong>
+      </div>
+      <ul style="list-style: none; padding: 0; margin: 0; max-height: 300px; overflow-y: auto;">
+        ${inputList}
+      </ul>
+      <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 12px; color: #666;">
+        <div style="margin-bottom: 5px;">
+          <strong>Tip:</strong> Double-click any node to see its input-side subgraph
+        </div>
+        <button onclick="window.GenomeViewer.resetLayout()" style="width: 100%; padding: 5px; background: #4CAF50; color: white; border: none; border-radius: 3px; cursor: pointer; margin-top: 5px;">
+          Reset Layout
+        </button>
+      </div>
+    `;
+
+    document.body.appendChild(panel);
+  }
+
+  function resetLayout() {
+    const net = getNetwork();
+    if (!net || !net.body || !net.body.data) return;
+
+    const nodes = net.body.data.nodes;
+    const edges = net.body.data.edges;
+    const nodeUpdates = [];
+    const edgeUpdates = [];
+
+    // Reset all nodes to their original positions and unfix them
+    nodes.forEach((node) => {
+      const originalPos = initialPositions[node.id?.toString()];
+      if (originalPos) {
+        nodeUpdates.push({
+          id: node.id,
+          x: originalPos.x,
+          y: originalPos.y,
+          fixed: false,
+        });
+      } else {
+        nodeUpdates.push({
+          id: node.id,
+          fixed: false,
+        });
+      }
+    });
+
+    // Reset edge colors
+    edges.forEach((edge) => {
+      edgeUpdates.push({
+        id: edge.id,
+        color: undefined, // Reset to default
+      });
+    });
+
+    if (nodeUpdates.length > 0) {
+      nodes.update(nodeUpdates);
+    }
+    if (edgeUpdates.length > 0) {
+      edges.update(edgeUpdates);
+    }
+
+    applyLayeredLayout();
+    net.fit({ animation: true });
+
+    // Remove info panel
+    const panel = document.getElementById("input-info-panel");
+    if (panel) {
+      panel.remove();
+    }
+  }
+
   function teardownNodeEdgeSelection() {
     highlightSelected();
   }
@@ -540,8 +816,24 @@ AnnotationManager.create_annotation(
     };
   }
 
+  function setupDoubleClickHandler() {
+    waitForNetwork((net) => {
+      // Set up double-click handler for input-side subgraph
+      console.log("Setting up double-click handler for input-side subgraph");
+      net.on("doubleClick", (params) => {
+        console.log("Double-click detected", params);
+        if (params.nodes && params.nodes.length > 0) {
+          const nodeId = parseInt(params.nodes[0], 10);
+          console.log("Showing input-side subgraph for node", nodeId);
+          showInputSideSubgraph(nodeId);
+        }
+      });
+    });
+  }
+
   function bootstrap() {
     setupFilterListeners();
+    setupDoubleClickHandler();
     waitForNetwork(() => {
       applyLayeredLayout();
       applyFilters();
@@ -565,6 +857,7 @@ AnnotationManager.create_annotation(
   window.GenomeViewer = {
     init,
     applyFilters,
+    resetLayout,
   };
 
   window.toggleAnnotationPanel = toggleAnnotationPanel;
@@ -576,7 +869,3 @@ AnnotationManager.create_annotation(
   window.saveAnnotation = saveAnnotation;
   window.cancelAnnotationForm = cancelAnnotationForm;
 })(window, document);
-
-
-
-
