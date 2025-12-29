@@ -72,3 +72,6 @@ def downgrade() -> None:
     op.drop_index("idx_annotations_genome", table_name="annotations")
     # Drop table
     op.drop_table("annotations")
+
+
+
