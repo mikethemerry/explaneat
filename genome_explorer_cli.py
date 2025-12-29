@@ -18,7 +18,10 @@ import pandas as pd
 
 from explaneat.analysis.genome_explorer import GenomeExplorer
 from explaneat.analysis.annotation_manager import AnnotationManager
+from explaneat.analysis.explanation_manager import ExplanationManager
+from explaneat.analysis.node_splitting import NodeSplitManager
 from explaneat.analysis.subgraph_validator import SubgraphValidator
+from explaneat.analysis.coverage import compute_structural_coverage, compute_compositional_coverage, CoverageComputer
 from explaneat.db import db
 
 # Set up logging
@@ -37,6 +40,7 @@ class GenomeExplorerCLI:
         self.current_page = 1
         self.page_size = 20
         self.debug = debug
+        self.current_explanation_id = None  # Track current explanation
 
     def list_experiments(
         self,
@@ -439,11 +443,16 @@ class GenomeExplorerCLI:
 
     @staticmethod
     def parse_node_list(node_str: str) -> List[int]:
-        """Parse comma-separated node list (e.g., '-2, -3, 6' -> [-2, -3, 6])"""
+        """Parse space or comma-separated node list (e.g., '-2 -3 6' or '-2, -3, 6' -> [-2, -3, 6])"""
         try:
             # Strip quotes if present
             node_str = node_str.strip("'\"")
-            nodes = [int(n.strip()) for n in node_str.split(",") if n.strip()]
+            # Split by comma first, then by whitespace, to handle both formats
+            # This allows: "1,2,3", "1 2 3", "1, 2, 3", etc.
+            parts = []
+            for part in node_str.split(","):
+                parts.extend(part.split())
+            nodes = [int(n.strip()) for n in parts if n.strip()]
             return nodes
         except ValueError as e:
             raise ValueError(f"Invalid node list format: {node_str}. Error: {e}")
@@ -525,12 +534,14 @@ class GenomeExplorerCLI:
             )
             print(f"   Nodes: {nodes}")
 
-            # Create annotation
+            # Create annotation with entry and exit nodes
             annotation_dict = AnnotationManager.create_annotation(
                 genome_id=self.current_explorer.genome_info.genome_id,
                 nodes=nodes,
                 connections=connections,
                 hypothesis=hypothesis,
+                entry_nodes=start_nodes,  # Start nodes are the entry nodes
+                exit_nodes=end_nodes,  # End nodes are the exit nodes
                 name=name,
                 validate_against_genome=False,  # Already validated
             )
@@ -623,7 +634,7 @@ class GenomeExplorerCLI:
         # Step 2: End nodes
         while True:
             end_input = input(
-                "Step 2/4: Enter end nodes (comma-separated, e.g., '0' or '1321,452'): "
+                "Step 2/4: Enter end nodes (space or comma-separated, e.g., '0' or '1321 452'): "
             ).strip()
             if not end_input:
                 print(
@@ -754,13 +765,15 @@ class GenomeExplorerCLI:
             print("❌ Annotation creation cancelled.")
             return
 
-        # Create annotation
+        # Create annotation with entry and exit nodes
         try:
             annotation_dict = AnnotationManager.create_annotation(
                 genome_id=self.current_explorer.genome_info.genome_id,
                 nodes=nodes,
                 connections=connections,
                 hypothesis=hypothesis,
+                entry_nodes=start_nodes,  # Start nodes are the entry nodes
+                exit_nodes=end_nodes,  # End nodes are the exit nodes
                 name=name,
                 validate_against_genome=False,  # Already validated
             )
@@ -882,6 +895,307 @@ class GenomeExplorerCLI:
         else:
             print(f"❌ Annotation {annotation_id} not found.")
 
+    # Explanation management methods
+    def create_explanation(self, name: Optional[str] = None, description: Optional[str] = None):
+        """Create a new explanation for the current genome"""
+        if not self.current_explorer:
+            print("❌ No genome loaded. Use 'select' command first.")
+            return
+        
+        genome_id = str(self.current_explorer.genome_info.genome_id)
+        explanation = ExplanationManager.create_explanation(genome_id, name, description)
+        if explanation:
+            print(f"✅ Created explanation: {explanation['id']}")
+            print(f"   Name: {explanation.get('name') or '(unnamed)'}")
+            self.current_explanation_id = explanation['id']
+        else:
+            print("❌ Failed to create explanation.")
+
+    def list_explanations(self):
+        """List all explanations for the current genome"""
+        if not self.current_explorer:
+            print("❌ No genome loaded. Use 'select' command first.")
+            return
+        
+        genome_id = str(self.current_explorer.genome_info.genome_id)
+        explanations = ExplanationManager.get_explanations(genome_id)
+        
+        if not explanations:
+            print("📝 No explanations found for this genome.")
+            return
+        
+        print(f"\n📝 Explanations for genome {genome_id}:")
+        print("=" * 90)
+        print(f"{'ID':<36} {'Name':<20} {'Well-formed':<12} {'Coverage':<20} {'Created':<20}")
+        print("-" * 90)
+        
+        for exp in explanations:
+            name = exp.get("name") or "(unnamed)"
+            if len(name) > 18:
+                name = name[:15] + "..."
+            well_formed = "✓" if exp.get("is_well_formed") else "✗"
+            struct_cov = exp.get("structural_coverage")
+            comp_cov = exp.get("compositional_coverage")
+            coverage_str = f"{struct_cov:.2f}/{comp_cov:.2f}" if struct_cov is not None and comp_cov is not None else "N/A"
+            created_at = exp.get("created_at")
+            if created_at:
+                try:
+                    from datetime import datetime
+                    dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                    created = dt.strftime("%Y-%m-%d %H:%M")
+                except (ValueError, AttributeError):
+                    created = created_at[:16] if len(created_at) > 16 else created_at
+            else:
+                created = "N/A"
+            print(f"{str(exp.get('id')):<36} {name:<20} {well_formed:<12} {coverage_str:<20} {created:<20}")
+        
+        print("-" * 90)
+        print(f"Total: {len(explanations)} explanation(s)")
+
+    def select_explanation(self, explanation_id: str):
+        """Select an explanation to work with"""
+        explanation = ExplanationManager.get_explanation(explanation_id)
+        if explanation:
+            self.current_explanation_id = explanation_id
+            print(f"✅ Selected explanation: {explanation.get('name') or explanation_id}")
+        else:
+            print(f"❌ Explanation {explanation_id} not found.")
+
+    def show_coverage_metrics(self):
+        """Show coverage metrics for the current explanation"""
+        if not self.current_explanation_id:
+            print("❌ No explanation selected. Use 'exp-select' command first.")
+            return
+        
+        if not self.current_explorer:
+            print("❌ No genome loaded. Use 'select' command first.")
+            return
+        
+        # Get explanation
+        explanation = ExplanationManager.get_explanation(self.current_explanation_id)
+        if not explanation:
+            print(f"❌ Explanation {self.current_explanation_id} not found.")
+            return
+        
+        print(f"\n📊 Coverage Metrics for Explanation: {explanation.get('name') or self.current_explanation_id}")
+        print("=" * 70)
+        
+        # Compute coverage if not cached
+        if explanation.get("structural_coverage") is None:
+            print("Computing coverage metrics...")
+            ExplanationManager.compute_and_cache_coverage(self.current_explanation_id)
+            explanation = ExplanationManager.get_explanation(self.current_explanation_id)
+        
+        struct_cov = explanation.get("structural_coverage", 0.0)
+        comp_cov = explanation.get("compositional_coverage", 0.0)
+        
+        print(f"Structural Coverage (C_V^struct): {struct_cov:.4f} ({struct_cov*100:.2f}%)")
+        print(f"Compositional Coverage (C_V^comp): {comp_cov:.4f} ({comp_cov*100:.2f}%)")
+        print(f"Well-formed: {'✓ Yes' if explanation.get('is_well_formed') else '✗ No'}")
+
+    def show_annotation_hierarchy(self):
+        """Show annotation hierarchy for the current explanation"""
+        if not self.current_explanation_id:
+            print("❌ No explanation selected. Use 'exp-select' command first.")
+            return
+        
+        annotations = ExplanationManager.get_explanation_annotations(self.current_explanation_id)
+        if not annotations:
+            print("📝 No annotations in this explanation.")
+            return
+        
+        # Build hierarchy mapping
+        annotations_by_id = {str(ann.get("id")): ann for ann in annotations}
+        children_by_parent: Dict[str, List[Dict[str, Any]]] = {}
+        
+        for ann in annotations:
+            parent_id = ann.get("parent_annotation_id")
+            if parent_id:
+                parent_id_str = str(parent_id)
+                if parent_id_str not in children_by_parent:
+                    children_by_parent[parent_id_str] = []
+                children_by_parent[parent_id_str].append(ann)
+        
+        # Find root annotations
+        root_annotations = [ann for ann in annotations if not ann.get("parent_annotation_id")]
+        
+        def print_annotation_tree(ann, indent=0):
+            prefix = "  " * indent + ("└─ " if indent > 0 else "")
+            name = ann.get("name") or f"Annotation {str(ann.get('id'))[:8]}"
+            ann_id_str = str(ann.get("id"))
+            has_children = ann_id_str in children_by_parent and len(children_by_parent[ann_id_str]) > 0
+            ann_type = "Composition" if has_children else "Leaf"
+            print(f"{prefix}{name} ({ann_type})")
+            if has_children:
+                for child in children_by_parent[ann_id_str]:
+                    print_annotation_tree(child, indent + 1)
+        
+        print(f"\n🌳 Annotation Hierarchy:")
+        print("=" * 70)
+        if root_annotations:
+            for root in root_annotations:
+                print_annotation_tree(root)
+        else:
+            print("No root annotations found (all annotations have parents).")
+
+    def create_node_split(self, original_node_id: int, split_node_id: int, outgoing_connections: List[Tuple[int, int]]):
+        """Create a node split"""
+        if not self.current_explanation_id:
+            print("❌ No explanation selected. Use 'exp-select' command first.")
+            return
+        
+        if not self.current_explorer:
+            print("❌ No genome loaded. Use 'select' command first.")
+            return
+        
+        genome_id = str(self.current_explorer.genome_info.genome_id)
+        try:
+            split = NodeSplitManager.create_split(
+                genome_id, original_node_id, split_node_id, outgoing_connections, self.current_explanation_id
+            )
+            if split:
+                print(f"✅ Created node split: {split['id']}")
+            else:
+                print("❌ Failed to create node split.")
+        except Exception as e:
+            print(f"❌ Error creating node split: {e}")
+
+    def list_node_splits(self):
+        """List node splits for the current explanation"""
+        if not self.current_explanation_id:
+            print("❌ No explanation selected. Use 'exp-select' command first.")
+            return
+        
+        splits = NodeSplitManager.get_splits_for_explanation(self.current_explanation_id)
+        
+        if not splits:
+            print("📝 No node splits found for this explanation.")
+            return
+        
+        print(f"\n🔀 Node Splits for Explanation:")
+        print("=" * 90)
+        print(f"{'Original Node':<15} {'Split Node':<15} {'Connections':<15} {'ID':<36}")
+        print("-" * 90)
+        
+        for split in splits:
+            orig_id = split.get("original_node_id")
+            split_id = split.get("split_node_id")
+            conn_count = len(split.get("outgoing_connections", []))
+            print(f"{orig_id:<15} {split_id:<15} {conn_count:<15} {str(split.get('id')):<36}")
+        
+        print("-" * 90)
+        print(f"Total: {len(splits)} split(s)")
+
+    def show_phenotype_with_splits(self):
+        """Show phenotype network with splits applied"""
+        if not self.current_explanation_id:
+            print("❌ No explanation selected. Use 'exp-select' command first.")
+            return
+        
+        try:
+            phenotype = ExplanationManager.get_phenotype_with_splits(self.current_explanation_id)
+            print("\n🧬 Phenotype Network Structure (with splits)")
+            print("=" * 70)
+            print(f"\n📊 Summary:")
+            print(f"  Nodes: {len(phenotype.nodes)}")
+            print(f"  Connections: {len(phenotype.connections)}")
+            print(f"  Input Nodes: {len(phenotype.input_node_ids)}")
+            print(f"  Output Nodes: {len(phenotype.output_node_ids)}")
+            if phenotype.metadata.get("has_splits"):
+                print(f"  ✓ Splits applied")
+        except Exception as e:
+            print(f"❌ Error getting phenotype with splits: {e}")
+
+    def create_direct_connections_annotation(self):
+        """Create an annotation for all direct input-output connections where inputs have no other connections"""
+        if not self.current_explorer:
+            print("❌ No genome loaded. Use 'select' command first.")
+            return
+        
+        genome_id = str(self.current_explorer.genome_info.genome_id)
+        
+        # Get phenotype network
+        from explaneat.core.explaneat import ExplaNEAT
+        explainer = ExplaNEAT(self.current_explorer.neat_genome, self.current_explorer.config)
+        phenotype = explainer.get_phenotype_network()
+        
+        # Get input and output nodes
+        input_nodes = set(phenotype.input_node_ids)
+        output_nodes = set(phenotype.output_node_ids)
+        
+        # Build mapping of outgoing edges per input node
+        input_outgoing_edges: Dict[int, List[Tuple[int, int]]] = {}
+        for conn in phenotype.connections:
+            if conn.enabled and conn.from_node in input_nodes:
+                if conn.from_node not in input_outgoing_edges:
+                    input_outgoing_edges[conn.from_node] = []
+                input_outgoing_edges[conn.from_node].append((conn.from_node, conn.to_node))
+        
+        # Find inputs that have ONLY direct connections to outputs (no other outgoing connections)
+        qualifying_inputs = []
+        direct_connection_edges = []
+        
+        for input_node in input_nodes:
+            outgoing = input_outgoing_edges.get(input_node, [])
+            
+            # Check if all outgoing connections are direct to outputs
+            if outgoing:
+                all_direct_to_outputs = all(
+                    to_node in output_nodes for _, to_node in outgoing
+                )
+                
+                if all_direct_to_outputs:
+                    qualifying_inputs.append(input_node)
+                    direct_connection_edges.extend(outgoing)
+        
+        if not qualifying_inputs:
+            print("📝 No direct input-output connections found (all inputs have other connections or no direct connections).")
+            return
+        
+        # Get unique output nodes that receive direct connections
+        receiving_outputs = set(to_node for _, to_node in direct_connection_edges)
+        
+        # Create annotation
+        entry_nodes = qualifying_inputs
+        exit_nodes = list(receiving_outputs)
+        subgraph_nodes = list(set(qualifying_inputs) | receiving_outputs)
+        subgraph_connections = direct_connection_edges
+        
+        name = "Direct Input-Output Connections"
+        hypothesis = "Trivial direct connections from inputs to outputs that require no intermediate processing. These connections represent inputs that feed directly to outputs without any hidden layer processing."
+        
+        # Use current explanation if selected, otherwise None
+        explanation_id = self.current_explanation_id
+        
+        try:
+            annotation = AnnotationManager.create_annotation(
+                genome_id=genome_id,
+                nodes=subgraph_nodes,
+                connections=subgraph_connections,
+                hypothesis=hypothesis,
+                entry_nodes=entry_nodes,
+                exit_nodes=exit_nodes,
+                name=name,
+                explanation_id=explanation_id,
+                validate_against_genome=False,  # Already validated against phenotype
+            )
+            
+            print(f"\n✅ Created direct connections annotation:")
+            print(f"   ID: {annotation['id']}")
+            print(f"   Name: {annotation.get('name', '(unnamed)')}")
+            print(f"   Input nodes: {len(qualifying_inputs)}")
+            print(f"   Output nodes: {len(receiving_outputs)}")
+            print(f"   Direct connections: {len(direct_connection_edges)}")
+            if explanation_id:
+                print(f"   Explanation: {explanation_id}")
+            else:
+                print(f"   Explanation: None (not assigned to any explanation)")
+            
+        except Exception as e:
+            print(f"❌ Failed to create direct connections annotation: {e}")
+            import traceback
+            traceback.print_exc()
+
     def interactive_mode(self):
         """Start interactive mode"""
         print("\n🧬 Genome Explorer CLI - Interactive Mode")
@@ -907,6 +1221,7 @@ class GenomeExplorerCLI:
         print("  annotations / ann-list   - List all annotations for current genome")
         print("  ann-show <id>           - Show annotation details")
         print("  ann-delete <id>         - Delete annotation")
+        print("  create-direct-connections / create-direct-ann - Create annotation for direct input-output connections")
         print()
         print("  help                    - Show this help")
         print("  quit                    - Exit")
@@ -981,7 +1296,13 @@ class GenomeExplorerCLI:
                         "Available commands: list, select/s, summary, network, network-interactive/ni, network-interactive-react/ni-re, genotype/gt, phenotype/pt, training, ancestry, evolution, export, quit"
                     )
                     print(
-                        "Annotation commands: annotate (guided), annotations/ann-list, ann-show, ann-delete"
+                        "Annotation commands: annotate (guided), annotations/ann-list, ann-show, ann-delete, create-direct-connections/create-direct-ann"
+                    )
+                    print(
+                        "Explanation commands: exp-create, exp-list, exp-select, exp-coverage, exp-hierarchy"
+                    )
+                    print(
+                        "Node splitting commands: split-create, split-list, phenotype-splits"
                     )
                     print("Pagination: n/next, p/prev, page N (when viewing list)")
                 elif cmd == "list":
@@ -1079,6 +1400,35 @@ class GenomeExplorerCLI:
                         self.delete_annotation(command[1])
                     else:
                         print("❌ Deletion cancelled.")
+                elif cmd in ["create-direct-connections", "create-direct-ann"]:
+                    in_list_mode = False
+                    self.create_direct_connections_annotation()
+                elif cmd == "exp-create":
+                    in_list_mode = False
+                    name = command[1] if len(command) > 1 else None
+                    description = " ".join(command[2:]) if len(command) > 2 else None
+                    self.create_explanation(name, description)
+                elif cmd == "exp-list":
+                    in_list_mode = False
+                    self.list_explanations()
+                elif cmd == "exp-select":
+                    in_list_mode = False
+                    if len(command) < 2:
+                        print("❌ Usage: exp-select <explanation_id>")
+                        continue
+                    self.select_explanation(command[1])
+                elif cmd == "exp-coverage":
+                    in_list_mode = False
+                    self.show_coverage_metrics()
+                elif cmd == "exp-hierarchy":
+                    in_list_mode = False
+                    self.show_annotation_hierarchy()
+                elif cmd == "split-list":
+                    in_list_mode = False
+                    self.list_node_splits()
+                elif cmd == "phenotype-splits":
+                    in_list_mode = False
+                    self.show_phenotype_with_splits()
                 else:
                     print(f"❌ Unknown command: {cmd}")
                     in_list_mode = False

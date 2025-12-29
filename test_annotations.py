@@ -216,6 +216,8 @@ def test_annotation_manager():
     # Test 1: Create annotation
     nodes = [1, 2, 0]  # Hidden nodes and output
     connections = [(1, 2), (2, 0)]
+    entry_nodes = [1]  # Entry node
+    exit_nodes = [0]  # Exit node
     hypothesis = "This subgraph performs feature transformation"
 
     annotation = AnnotationManager.create_annotation(
@@ -223,31 +225,35 @@ def test_annotation_manager():
         nodes=nodes,
         connections=connections,
         hypothesis=hypothesis,
+        entry_nodes=entry_nodes,
+        exit_nodes=exit_nodes,
         name="Test Annotation",
         validate_against_genome=False,  # Skip genome validation for simplicity
     )
 
     assert annotation is not None
-    assert annotation.hypothesis == hypothesis
-    assert annotation.is_connected
-    assert len(annotation.subgraph_nodes) == 3
+    assert annotation["hypothesis"] == hypothesis
+    assert annotation["is_connected"]
+    assert len(annotation["subgraph_nodes"]) == 3
+    assert annotation["entry_nodes"] == entry_nodes
+    assert annotation["exit_nodes"] == exit_nodes
     logger.info("✓ Create annotation test passed")
 
     # Test 2: Get annotations
     annotations = AnnotationManager.get_annotations(str(genome_id))
     assert len(annotations) == 1
-    assert annotations[0].id == annotation.id
+    assert annotations[0]["id"] == annotation["id"]
     logger.info("✓ Get annotations test passed")
 
     # Test 3: Get specific annotation
-    retrieved = AnnotationManager.get_annotation(str(annotation.id))
+    retrieved = AnnotationManager.get_annotation(str(annotation["id"]))
     assert retrieved is not None
     assert retrieved.hypothesis == hypothesis
     logger.info("✓ Get specific annotation test passed")
 
     # Test 4: Update annotation
     updated = AnnotationManager.update_annotation(
-        str(annotation.id), hypothesis="Updated hypothesis", name="Updated Name"
+        str(annotation["id"]), hypothesis="Updated hypothesis", name="Updated Name"
     )
     assert updated.hypothesis == "Updated hypothesis"
     assert updated.name == "Updated Name"
@@ -261,16 +267,16 @@ def test_annotation_manager():
         "metadata": {},
     }
     updated = AnnotationManager.add_evidence(
-        str(annotation.id), "analytical_method", evidence_data
+        str(annotation["id"]), "analytical_method", evidence_data
     )
     assert updated.evidence is not None
     assert len(updated.evidence["analytical_methods"]) == 1
     logger.info("✓ Add evidence test passed")
 
     # Test 6: Delete annotation
-    deleted = AnnotationManager.delete_annotation(str(annotation.id))
+    deleted = AnnotationManager.delete_annotation(str(annotation["id"]))
     assert deleted
-    retrieved = AnnotationManager.get_annotation(str(annotation.id))
+    retrieved = AnnotationManager.get_annotation(str(annotation["id"]))
     assert retrieved is None
     logger.info("✓ Delete annotation test passed")
 

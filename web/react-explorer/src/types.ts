@@ -2,6 +2,8 @@ export type Annotation = {
   id: string;
   name?: string | null;
   hypothesis?: string | null;
+  entryNodes: number[];
+  exitNodes: number[];
   nodes: number[];
   edges: [number, number][];
 };

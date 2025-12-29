@@ -5,7 +5,6 @@ import type { ExplorerData } from "../types";
 type GraphCanvasProps = {
   data: ExplorerData;
   filters: {
-    showDirectConnections: boolean;
     activeAnnotations: Set<string>;
   };
 };
@@ -95,12 +94,10 @@ export function GraphCanvas({ data, filters }: GraphCanvasProps) {
       const annotatedVisible =
         node.annotationIds.length === 0 ||
         node.annotationIds.some((annId) => activeAnnotations.has(annId));
-      const showNode =
-        annotatedVisible && (filters.showDirectConnections || !node.isDirectConnection);
 
       nodes.update({
         id: node.id,
-        hidden: !showNode,
+        hidden: !annotatedVisible,
       });
     });
 
@@ -108,12 +105,10 @@ export function GraphCanvas({ data, filters }: GraphCanvasProps) {
       const annotatedVisible =
         edge.annotationIds.length === 0 ||
         edge.annotationIds.some((annId) => activeAnnotations.has(annId));
-      const showEdge =
-        annotatedVisible && (filters.showDirectConnections || !edge.isDirectConnection);
 
       edges.update({
         id: edge.id,
-        hidden: !showEdge,
+        hidden: !annotatedVisible,
       });
     });
   }, [data.nodes, data.edges, filters]);

@@ -1,6 +1,7 @@
 import uuid
 import json
 from datetime import datetime
+from typing import List, Tuple
 from sqlalchemy import (
     Column,
     String,
@@ -508,6 +509,112 @@ class GeneOrigin(Base, TimestampMixin):
     )
 
 
+class Explanation(Base, TimestampMixin):
+    """Groups annotations and splits into a coherent explanation of a model"""
+
+    __tablename__ = "explanations"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    genome_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("genomes.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    name = Column(String(255))  # Optional name for this explanation
+    description = Column(Text)  # Optional description
+    is_well_formed = Column(
+        Boolean, nullable=False, default=False
+    )  # Whether this explanation meets well-formed criteria
+    structural_coverage = Column(Float)  # Cached C_V^struct value
+    compositional_coverage = Column(Float)  # Cached C_V^comp value
+
+    # Relationships
+    genome = relationship("Genome", backref="explanations")
+    annotations = relationship(
+        "Annotation", back_populates="explanation", cascade="all, delete-orphan"
+    )
+    node_splits = relationship(
+        "NodeSplit", back_populates="explanation", cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (Index("idx_explanations_genome", "genome_id"),)
+
+    def to_dict(self):
+        """Convert explanation to dictionary"""
+        return {
+            "id": str(self.id),
+            "genome_id": str(self.genome_id),
+            "name": self.name,
+            "description": self.description,
+            "is_well_formed": self.is_well_formed,
+            "structural_coverage": self.structural_coverage,
+            "compositional_coverage": self.compositional_coverage,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class NodeSplit(Base, TimestampMixin):
+    """Stores node splits for dual-function nodes"""
+
+    __tablename__ = "node_splits"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    genome_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("genomes.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    original_node_id = Column(Integer, nullable=False)  # The node being split
+    split_node_id = Column(
+        Integer, nullable=False
+    )  # Unique ID for this split node (must be unique per original node within explanation)
+    outgoing_connections = Column(
+        JSONB, nullable=False
+    )  # Array of [from_node, to_node] tuples - subset of original node's outgoing connections
+    annotation_id = Column(
+        UUID(as_uuid=True), ForeignKey("annotations.id", ondelete="SET NULL"), nullable=True
+    )  # Which annotation uses this split (for tracking)
+    explanation_id = Column(
+        UUID(as_uuid=True), ForeignKey("explanations.id", ondelete="SET NULL"), nullable=True
+    )  # Which explanation this split belongs to
+
+    # Relationships
+    genome = relationship("Genome", backref="node_splits")
+    annotation = relationship("Annotation", backref="node_splits")
+    explanation = relationship("Explanation", back_populates="node_splits")
+
+    __table_args__ = (
+        Index("idx_node_splits_genome_original", "genome_id", "original_node_id"),
+        Index("idx_node_splits_genome_split", "genome_id", "split_node_id"),
+        Index("idx_node_splits_explanation", "explanation_id"),
+    )
+
+    def to_dict(self):
+        """Convert node split to dictionary"""
+        return {
+            "id": str(self.id),
+            "genome_id": str(self.genome_id),
+            "original_node_id": self.original_node_id,
+            "split_node_id": self.split_node_id,
+            "outgoing_connections": self.outgoing_connections,
+            "annotation_id": str(self.annotation_id) if self.annotation_id else None,
+            "explanation_id": str(self.explanation_id) if self.explanation_id else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+    def get_outgoing_connections(self) -> List[Tuple[int, int]]:
+        """Get outgoing connections as list of tuples"""
+        if not self.outgoing_connections:
+            return []
+        return [
+            tuple(conn) if isinstance(conn, (list, tuple)) else conn
+            for conn in self.outgoing_connections
+        ]
+
+
 class Annotation(Base, TimestampMixin):
     """Stores annotations for connected subgraphs of genomes"""
 
@@ -525,18 +632,60 @@ class Annotation(Base, TimestampMixin):
     evidence = Column(
         JSONB
     )  # Structured evidence: analytical_methods, visualizations, counterfactuals, other_evidence
-    subgraph_nodes = Column(JSONB, nullable=False)  # Array of node IDs
+    entry_nodes = Column(JSONB, nullable=False)  # Array of entry node IDs
+    exit_nodes = Column(JSONB, nullable=False)  # Array of exit node IDs
+    subgraph_nodes = Column(JSONB, nullable=False)  # Array of all node IDs in the subgraph
     subgraph_connections = Column(
         JSONB, nullable=False
     )  # Array of connection tuples [from_node, to_node]
     is_connected = Column(
         Boolean, nullable=False, default=False
     )  # Validated connectivity flag
+    parent_annotation_id = Column(
+        UUID(as_uuid=True), ForeignKey("annotations.id", ondelete="SET NULL"), nullable=True
+    )  # Parent annotation in hierarchy (for composition annotations)
+    explanation_id = Column(
+        UUID(as_uuid=True), ForeignKey("explanations.id", ondelete="SET NULL"), nullable=True
+    )  # Which explanation this annotation belongs to
 
     # Relationships
     genome = relationship("Genome", backref="annotations")
+    parent = relationship("Annotation", remote_side=[id], backref="children")
+    explanation = relationship("Explanation", back_populates="annotations")
 
-    __table_args__ = (Index("idx_annotations_genome", "genome_id"),)
+    __table_args__ = (
+        Index("idx_annotations_genome", "genome_id"),
+        Index("idx_annotations_parent", "parent_annotation_id"),
+        Index("idx_annotations_explanation", "explanation_id"),
+    )
+
+    def is_leaf(self) -> bool:
+        """Check if this is a leaf annotation (no children)"""
+        return self.parent_annotation_id is None and len(self.children) == 0
+
+    def is_composition(self) -> bool:
+        """Check if this is a composition annotation (has children)"""
+        return len(self.children) > 0
+
+    def get_children(self):
+        """Get direct children annotations"""
+        return self.children
+
+    def get_descendants(self):
+        """Get all descendant annotations (children, grandchildren, etc.)"""
+        descendants = []
+        for child in self.children:
+            descendants.append(child)
+            descendants.extend(child.get_descendants())
+        return descendants
+
+    def get_parent(self):
+        """Get parent annotation"""
+        return self.parent
+
+    def get_explanation(self):
+        """Get the explanation this annotation belongs to"""
+        return self.explanation
 
     def to_dict(self):
         """Convert annotation to dictionary"""
@@ -546,9 +695,13 @@ class Annotation(Base, TimestampMixin):
             "name": self.name,
             "hypothesis": self.hypothesis,
             "evidence": self.evidence,
+            "entry_nodes": self.entry_nodes,
+            "exit_nodes": self.exit_nodes,
             "subgraph_nodes": self.subgraph_nodes,
             "subgraph_connections": self.subgraph_connections,
             "is_connected": self.is_connected,
+            "parent_annotation_id": str(self.parent_annotation_id) if self.parent_annotation_id else None,
+            "explanation_id": str(self.explanation_id) if self.explanation_id else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

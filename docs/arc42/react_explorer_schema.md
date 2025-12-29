@@ -42,6 +42,8 @@ The React explorer consumes a single JSON payload embedded inside the generated 
       "id": "a1",
       "name": "Direct sensor",
       "hypothesis": "Connects sensor to output",
+      "entryNodes": [-4],
+      "exitNodes": [1559],
       "nodes": [-4, 1559],
       "edges": [[-4, 1559]]
     }
@@ -52,8 +54,9 @@ The React explorer consumes a single JSON payload embedded inside the generated 
 ### Field Notes
 - **Node / Edge IDs**: Keep identical to NEAT identifiers so debugging is easier.
 - **Positions**: Optional but set when we run the layered layout. React viewer falls back to a force layout if missing.
-- **annotationIds**: Strings only; even numeric UUIDs should be stringified to avoid JavaScript parsing issues.
+- **annotationIds**: Strings only; even numeric UUIDs should be stringified to avoid JavaScript parsing issues. These represent annotations that **cover** the node/edge (see coverage model documentation).
 - **Edges.edges** arrays use `[from, to]` pairs to keep JSON simple.
+- **entryNodes/exitNodes**: Define the entry and exit boundaries of the annotation subgraph. Used for coverage computation (see `docs/annotation_coverage_model.md`).
 
 ### Layout Semantics
 - `layout.type` remains `layered`, but `position.y` now reserves the most negative values for the “direct IO lane” so clients can dock straight input→output edges below the main graph.

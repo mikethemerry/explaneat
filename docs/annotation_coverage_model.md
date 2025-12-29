@@ -1,0 +1,240 @@
+# Annotation Coverage Model: Mathematical Definitions
+
+## Overview
+
+This document formalizes the mathematical definitions for annotation coverage in genome network visualizations, aligned with the Beyond Intuition paper specification. An annotation describes a subgraph between entry and exit nodes, and the concept of "coverage" determines which nodes and connections are considered part of the annotation for filtering purposes.
+
+The definitions here match the exact mathematical specification from Beyond_Intuition.pdf.
+
+## Definitions
+
+### Graph Structure
+
+Let $G = (V, E)$ be a directed graph where:
+- $V$ is the set of nodes (vertices)
+- $E \subseteq V \times V$ is the set of directed edges (connections)
+- $V_I \subseteq V$ is the set of input nodes
+- $V_O \subseteq V$ is the set of output nodes
+
+For a node $v \in V$:
+- $\text{out}(v) = \{u \in V \mid (v, u) \in E\}$ denotes the set of nodes reachable via outgoing edges from $v$
+- $\text{in}(v) = \{u \in V \mid (u, v) \in E\}$ denotes the set of nodes with incoming edges to $v$
+- $E_{\text{out}}(v) = \{(v, u) \in E \mid u \in \text{out}(v)\}$ denotes the set of outgoing edges from $v$
+- $E_{\text{in}}(v) = \{(u, v) \in E \mid u \in \text{in}(v)\}$ denotes the set of incoming edges to $v$
+
+### Annotation
+
+An **annotation** $A$ is defined as a tuple (per Beyond Intuition paper):
+
+$$A = (V_{\text{entry}}, V_{\text{exit}}, V_A, E_A, H_A, \Xi_A)$$
+
+where:
+- $V_{\text{entry}} \subseteq V$ is the set of **entry nodes**
+- $V_{\text{exit}} \subseteq V$ is the set of **exit nodes**
+- $V_A \subseteq V$ is the set of nodes in the subgraph (including entry and exit nodes)
+- $E_A \subseteq E$ is the set of connections in the subgraph
+- $H_A$ is a human-comprehensible hypothesis describing what the subgraph does
+- $\Xi_A$ is verifiable evidence supporting the hypothesis
+
+**Constraints:**
+1. $V_{\text{entry}} \subseteq V_A$
+2. $V_{\text{exit}} \subseteq V_A$
+3. All paths from any entry node to any exit node that are contained within $V_A$ must use only edges in $E_A$
+4. The subgraph $(V_A, E_A)$ must be connected (in the undirected sense) between entry and exit nodes
+
+**Annotation Types:**
+- **Leaf Annotation**: Explains a primitive subgraph in isolation (no children)
+- **Composition Annotation**: Explains how multiple child annotations combine (has children via parent-child relationships)
+
+### Direct Input-Output Connections Annotation
+
+Direct input-output connections (where inputs connect directly to outputs with no intermediate nodes) can be automatically annotated using the CLI command `create-direct-connections` or `create-direct-ann`.
+
+**What it creates:**
+- An annotation covering all inputs that have **ONLY** direct connections to outputs (no other outgoing connections)
+- Entry nodes: all qualifying input nodes
+- Exit nodes: all output nodes receiving direct connections
+- Subgraph nodes: union of entry and exit nodes
+- Subgraph connections: all direct connection edges from qualifying inputs
+
+**Coverage rules:**
+- The **EDGE** $(v_i, v_o)$ is covered if both endpoints are covered
+- The **INPUT node** $v_i$ is covered ONLY if ALL its outgoing connections are in the annotation (i.e., all are direct to outputs)
+  - If an input has other outgoing connections, it is NOT included in the annotation and is NOT covered
+- The **OUTPUT node** $v_o$ is never covered (per paper specification: output nodes are never covered)
+
+**Usage:**
+- Use the CLI command `create-direct-connections` to automatically create this annotation
+- The annotation is treated like any other annotation by the coverage and filtering systems
+- If an input has both direct connections and other connections, it requires a proper annotation (not included in the direct connections annotation)
+
+### Node Coverage (Exact Paper Definition)
+
+A node $v \in V$ is **covered** by annotation $A$ if and only if (per Beyond Intuition paper):
+
+$$\text{covered}_A(v) = (v \in V_A) \land (E_{\text{out}}(v) \subseteq E_A)$$
+
+**In words:** A node is covered if:
+1. It is in the annotation's subgraph ($v \in V_A$), AND
+2. All outgoing connections from the node are contained within the annotation's edge set ($E_{\text{out}}(v) \subseteq E_A$)
+
+**Special cases:**
+- **Output nodes:** Output nodes are **never covered** by any annotation, even if they satisfy the coverage condition. This ensures output nodes remain visible.
+
+**Formally for output nodes:**
+$$\text{covered}_A(v_o) = \text{false} \quad \forall v_o \in V_O$$
+
+### Connection Coverage
+
+A connection (edge) $e = (u, v) \in E$ is **covered** by annotation $A$ if and only if:
+
+$$\text{covered}_A(e) = \text{covered}_A(u) \land \text{covered}_A(v)$$
+
+**In words:** A connection is covered if and only if both of its endpoint nodes are covered by the annotation.
+
+**Note:** This means that even if $e \in E_A$, it is not covered unless both endpoints are covered.
+
+### Aggregate Coverage (Compositional Coverage)
+
+When multiple annotations are considered together, we use **aggregate coverage** (per Beyond Intuition paper).
+
+Let $\mathcal{A} = \{A_1, A_2, \ldots, A_n\}$ be a set of annotations. Define:
+- $V_{\mathcal{A}} = \bigcup_{i=1}^{n} V_{A_i}$ (union of all annotation node sets)
+- $E_{\mathcal{A}} = \bigcup_{i=1}^{n} E_{A_i}$ (union of all annotation edge sets)
+
+Then a node $v$ is covered by the set $\mathcal{A}$ if:
+
+$$\text{covered}_{\mathcal{A}}(v) = (v \in V_{\mathcal{A}}) \land (E_{\text{out}}(v) \subseteq E_{\mathcal{A}})$$
+
+**In words:** A node is covered by a set of annotations if it's in the union of their subgraphs AND all its outgoing connections are in the union of their edge sets.
+
+A connection $e = (u, v)$ is covered by $\mathcal{A}$ if:
+
+$$\text{covered}_{\mathcal{A}}(e) = \text{covered}_{\mathcal{A}}(u) \land \text{covered}_{\mathcal{A}}(v)$$
+
+### Visibility (Exact Paper Definition)
+
+When filtering (hiding) annotations, visibility is computed using the exact paper definition.
+
+Let $\mathcal{A}_{\text{hidden}} \subseteq \mathcal{A}$ be the set of annotations that are currently hidden.
+
+A node $v$ is **visible** if (per Beyond Intuition paper):
+
+$$\text{visible}(v) = \neg \text{covered}_{\mathcal{A}_{\text{hidden}}}(v) \lor (v \in V_O)$$
+
+**In words:** A node is visible if it's NOT covered by hidden annotations OR it's an output node. Output nodes are always visible.
+
+A connection $e = (u, v)$ is **visible** if both endpoints are visible:
+
+$$\text{visible}(e) = \text{visible}(u) \land \text{visible}(v)$$
+
+## Examples
+
+### Example 1: Simple Linear Path
+
+Consider a graph with nodes $\{I, H, O\}$ and edges $\{(I, H), (H, O)\}$ where $I$ is an input, $H$ is a hidden node, and $O$ is an output.
+
+Annotation $A$ with:
+- $V_{\text{entry}} = \{I\}$
+- $V_{\text{exit}} = \{O\}$
+- $V_A = \{I, H, O\}$
+- $E_A = \{(I, H), (H, O)\}$
+
+**Coverage:**
+- $\text{covered}_A(I) = \text{true}$ (all outgoing edges are in $E_A$)
+- $\text{covered}_A(H) = \text{true}$ (all outgoing edges are in $E_A$)
+- $\text{covered}_A(O) = \text{false}$ (output nodes are never covered)
+- $\text{covered}_A((I, H)) = \text{true}$ (both endpoints covered)
+- $\text{covered}_A((H, O)) = \text{false}$ (output node not covered)
+
+### Example 2: Input with Multiple Paths
+
+Consider a graph with nodes $\{I, H_1, H_2, O\}$ and edges $\{(I, H_1), (I, H_2), (H_1, O), (H_2, O)\}$.
+
+Annotation $A$ with:
+- $V_{\text{entry}} = \{I\}$
+- $V_{\text{exit}} = \{O\}$
+- $V_A = \{I, H_1, O\}$
+- $E_A = \{(I, H_1), (H_1, O)\}$
+
+**Coverage:**
+- $\text{covered}_A(I) = \text{false}$ (has outgoing edge $(I, H_2)$ not in $E_A$)
+- $\text{covered}_A(H_1) = \text{true}$ (all outgoing edges in $E_A$)
+- $\text{covered}_A(O) = \text{false}$ (output nodes never covered)
+- $\text{covered}_A((I, H_1)) = \text{false}$ ($I$ not covered)
+- $\text{covered}_A((H_1, O)) = \text{false}$ ($O$ not covered)
+
+### Example 3: Multiple Annotations
+
+Consider annotations $A_1$ and $A_2$ where:
+- $A_1$ covers node $H_1$ but not $H_2$
+- $A_2$ covers node $H_2$ but not $H_1$
+
+If both annotations are hidden:
+- $H_1$ is covered by $\{A_1, A_2\}$ (via $A_1$)
+- $H_2$ is covered by $\{A_1, A_2\}$ (via $A_2$)
+- Both nodes are hidden when filtering
+
+## Coverage Metrics
+
+### Structural Coverage
+
+For an annotation hierarchy $H$ with leaf annotations $A_{\text{leaf}}$, structural coverage is:
+
+$$C_V^{\text{struct}}(H) = C_V(A_{\text{leaf}})$$
+
+where $C_V(A_{\text{leaf}})$ is the fraction of model nodes covered by the leaf annotations.
+
+### Compositional Coverage
+
+For an annotation hierarchy $H$, compositional coverage is:
+
+$$C_V^{\text{comp}}(H) = \frac{|\text{composition annotations in } H|}{|\text{internal nodes required for hierarchy}|}$$
+
+This measures the fraction of required composition steps that are explained.
+
+### Well-Formed Explanation
+
+An explanation is **well-formed** if:
+1. All leaf annotations are valid
+2. Full structural coverage: $C_V^{\text{struct}} = 1$
+3. All compositions explained: $C_V^{\text{comp}} = 1$
+4. Root annotation covers the global model
+
+## Node Splitting
+
+When a node serves multiple functions (sending outputs both within a subgraph and outside it), we can resolve this through **node splitting**.
+
+A single node $v$ is conceptually replaced by multiple split nodes $\{v_1, v_2, \ldots, v_k\}$ where:
+- Each split node $v_i$ carries a **subset** of the original node's outgoing connections
+- The union of all split nodes' outgoing connections equals the original node's outgoing connections: $\bigcup_{i=1}^{k} E_{\text{out}}(v_i) = E_{\text{out}}(v)$
+- All split nodes share the same incoming connections as the original node: $E_{\text{in}}(v_i) = E_{\text{in}}(v)$ for all $i$
+
+When computing coverage for a split node, use the split node ID with its specific outgoing connections subset.
+
+## Explanation Data Model
+
+An **explanation** groups annotations and node splits into a coherent explanation of a model. Multiple explanations can exist for the same model, allowing different explanatory approaches.
+
+An explanation contains:
+- A set of annotations (forming a hierarchy)
+- A set of node splits
+- Cached coverage metrics (structural and compositional)
+
+## Implementation Notes
+
+1. **Entry and Exit Nodes:** These must be explicitly stored in the database to properly define the annotation boundaries.
+
+2. **Subgraph Validation:** When creating an annotation, the system should validate that:
+   - All paths from entry nodes to exit nodes within $V_A$ use only edges in $E_A$
+   - The subgraph is connected
+
+3. **Coverage Computation:** Coverage must be computed dynamically based on the full graph structure, not just the annotation's subgraph, because coverage depends on whether nodes have connections outside the annotation.
+
+4. **Filtering Performance:** For efficiency, coverage can be precomputed when annotations are loaded, but must be recomputed if the graph structure changes.
+
+5. **Node Splitting:** Node splits are materialized in a separate database table, allowing multiple splits on a single original node. Each split carries a subset of outgoing connections, and the union must cover all outgoing connections of the original node.
+
+6. **Explanation Context:** Coverage calculations work within the context of a specific explanation, which includes its annotations and splits.
+
+

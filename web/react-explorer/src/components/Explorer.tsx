@@ -8,7 +8,6 @@ export type ExplorerProps = {
 };
 
 export function Explorer({ data }: ExplorerProps) {
-  const [showDirectConnections, setShowDirectConnections] = useState(true);
   const [annotationVisibility, setAnnotationVisibility] = useState<Record<string, boolean>>(
     () =>
       Object.fromEntries(
@@ -28,10 +27,9 @@ export function Explorer({ data }: ExplorerProps) {
 
   const filters = useMemo(
     () => ({
-      showDirectConnections,
       activeAnnotations,
     }),
-    [showDirectConnections, activeAnnotations],
+    [activeAnnotations],
   );
 
   const toggleAnnotation = useCallback((annId: string) => {
@@ -42,7 +40,6 @@ export function Explorer({ data }: ExplorerProps) {
   }, []);
 
   const resetFilters = useCallback(() => {
-    setShowDirectConnections(true);
     setAnnotationVisibility(
       Object.fromEntries(
         data.annotations.map((ann) => [ann.id, true]),
@@ -54,8 +51,6 @@ export function Explorer({ data }: ExplorerProps) {
     <div className="app-shell">
       <FiltersPanel
         annotations={data.annotations}
-        showDirectConnections={showDirectConnections}
-        onToggleDirectConnections={setShowDirectConnections}
         annotationVisibility={annotationVisibility}
         onToggleAnnotation={toggleAnnotation}
         onReset={resetFilters}

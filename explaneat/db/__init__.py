@@ -11,6 +11,8 @@ from .models import (
     Result,
     GeneOrigin,
     Annotation,
+    Explanation,
+    NodeSplit,
 )
 
 __all__ = [
@@ -27,4 +29,6 @@ __all__ = [
     "Result",
     "GeneOrigin",
     "Annotation",
+    "Explanation",
+    "NodeSplit",
 ]

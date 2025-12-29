@@ -418,49 +418,57 @@ class SubgraphValidator:
                 adjacency[from_node].add(to_node)
                 reverse_adjacency[to_node].add(from_node)
 
-        # Step 1: Single BFS from all start nodes, tracking which start nodes can reach each node
-        # Track which start nodes can reach each discovered node
-        reachable_from = {start: {start} for start in start_nodes}
+        # Step 1: Forward BFS from all start nodes to find all reachable nodes
+        # We need to include ALL nodes on paths from ANY start node to ANY end node
+        forward_reachable = set(start_nodes)
         queue = deque(start_nodes)
-        visited = set(start_nodes)
+        visited_forward = set(start_nodes)
 
         while queue:
             node = queue.popleft()
             for neighbor in adjacency.get(node, set()):
-                # Initialize tracking for neighbor if not seen
-                if neighbor not in reachable_from:
-                    reachable_from[neighbor] = set()
-                # Track which start nodes can reach this neighbor (before updating)
-                old_reachable = reachable_from[neighbor].copy()
-                # Add all start nodes that can reach this neighbor through current node
-                reachable_from[neighbor].update(reachable_from[node])
-                # If we discovered new reachability paths, need to revisit to propagate
-                if reachable_from[neighbor] != old_reachable:
-                    # Add to queue if not already there (to propagate new paths)
-                    if neighbor not in visited:
-                        visited.add(neighbor)
-                        queue.append(neighbor)
-                    # If already visited but reachability changed, add back to queue
-                    elif len(reachable_from[neighbor]) > len(old_reachable):
-                        queue.append(neighbor)
+                if neighbor not in visited_forward:
+                    visited_forward.add(neighbor)
+                    forward_reachable.add(neighbor)
+                    queue.append(neighbor)
 
-        # Filter to nodes reachable from ALL start nodes
-        nodes_reachable_from_all = {
-            n for n, starts in reachable_from.items() if len(starts) == len(start_nodes)
-        }
+        # Step 2: Backward BFS from all end nodes to find nodes that can reach end nodes
+        # This ensures we only include nodes that are on paths to end nodes
+        backward_reachable = set(end_nodes)
+        queue = deque(end_nodes)
+        visited_backward = set(end_nodes)
 
-        # All nodes reached during BFS (for input validation)
-        all_reachable_nodes = set(reachable_from.keys())
+        while queue:
+            node = queue.popleft()
+            for neighbor in reverse_adjacency.get(node, set()):
+                if neighbor not in visited_backward:
+                    visited_backward.add(neighbor)
+                    backward_reachable.add(neighbor)
+                    queue.append(neighbor)
 
-        # Step 2: For each reached node, check if all input connections are accounted for
-        # Inputs must be in the full reachable set (reachable from any start node),
-        # not just nodes_reachable_from_all
-        valid_nodes = set()
-        for node in nodes_reachable_from_all:
+        # Step 3: Intersection - nodes that are both forward reachable (from start) 
+        # and backward reachable (to end) are on paths from start to end
+        nodes_on_paths = forward_reachable & backward_reachable
+        
+        # Always include start and end nodes (they're explicitly specified)
+        nodes_on_paths.update(start_nodes)
+        nodes_on_paths.update(end_nodes)
+
+        # Step 4: For each node on a path, check if all input connections are accounted for
+        # A node is valid if all its inputs are also in the path (or it has no inputs)
+        valid_nodes = set(start_nodes)  # Start nodes are always valid (entry points)
+        
+        # Always include end nodes (they're explicitly specified as exit points)
+        valid_nodes.update(end_nodes)
+        
+        # For intermediate nodes, check if all inputs are in the path
+        for node in nodes_on_paths:
+            if node in start_nodes or node in end_nodes:
+                continue
             # Get all inputs to this node
             all_inputs = reverse_adjacency.get(node, set())
-            # Check if all inputs are in the full reachable set (or node has no inputs)
-            if all_inputs.issubset(all_reachable_nodes):
+            # Check if all inputs are in the path (or node has no inputs)
+            if not all_inputs or all_inputs.issubset(nodes_on_paths):
                 valid_nodes.add(node)
 
         # Check which end nodes are in the valid subgraph
@@ -472,17 +480,22 @@ class SubgraphValidator:
                 # Check why they're invalid
                 error_parts = []
                 for end_node in invalid_ends:
-                    if end_node not in nodes_reachable_from_all:
+                    if end_node not in forward_reachable:
                         error_parts.append(
-                            f"End node {end_node} is not reachable from all start nodes"
+                            f"End node {end_node} is not reachable from any start node"
                         )
                     else:
-                        # It's reachable but has external inputs
+                        # It's reachable but might have external inputs
                         all_inputs = reverse_adjacency.get(end_node, set())
-                        missing_inputs = all_inputs - nodes_reachable_from_all
-                        error_parts.append(
-                            f"End node {end_node} has external inputs: {sorted(missing_inputs)}"
-                        )
+                        missing_inputs = all_inputs - nodes_on_paths
+                        if missing_inputs:
+                            error_parts.append(
+                                f"End node {end_node} has external inputs not in path: {sorted(missing_inputs)}"
+                            )
+                        else:
+                            error_parts.append(
+                                f"End node {end_node} could not be included in subgraph"
+                            )
                 return {
                     "nodes": [],
                     "connections": [],

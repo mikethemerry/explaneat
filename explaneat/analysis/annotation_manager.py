@@ -4,9 +4,10 @@ Annotation Manager for creating and managing genome annotations
 Provides CRUD operations for annotations with validation.
 """
 
-from typing import List, Tuple, Dict, Any, Optional
+from typing import List, Tuple, Dict, Any, Optional, Set
+import uuid
 
-from ..db import db, Annotation, Genome
+from ..db import db, Annotation, Genome, Explanation
 from .subgraph_validator import SubgraphValidator
 from .evidence_schema import EvidenceBuilder, create_empty_evidence
 
@@ -25,8 +26,12 @@ class AnnotationManager:
         nodes: List[int],
         connections: List[Tuple[int, int]],
         hypothesis: str,
+        entry_nodes: Optional[List[int]] = None,
+        exit_nodes: Optional[List[int]] = None,
         evidence: Optional[Dict[str, Any]] = None,
         name: Optional[str] = None,
+        parent_annotation_id: Optional[str] = None,
+        explanation_id: Optional[str] = None,
         validate_against_genome: bool = True,
     ) -> Dict[str, Any]:
         """
@@ -37,8 +42,12 @@ class AnnotationManager:
             nodes: List of node IDs in the subgraph
             connections: List of connection tuples (from_node, to_node)
             hypothesis: Description of what the subgraph does
+            entry_nodes: List of entry node IDs (if None, will infer from nodes)
+            exit_nodes: List of exit node IDs (if None, will infer from nodes)
             evidence: Optional evidence dictionary (will use empty if None)
             name: Optional name/title for the annotation
+            parent_annotation_id: Optional UUID of parent annotation (for composition annotations)
+            explanation_id: Optional UUID of explanation this annotation belongs to
             validate_against_genome: If True, validate nodes/connections exist in genome
 
         Returns:
@@ -109,6 +118,40 @@ class AnnotationManager:
                         f"Could not validate against genome: {e}. Skipping genome validation."
                     )
 
+        # Infer entry/exit nodes if not provided
+        if entry_nodes is None or exit_nodes is None:
+            # For now, we'll set them to empty and require explicit specification
+            # In the future, we could infer from the graph structure
+            if entry_nodes is None:
+                entry_nodes = []
+            if exit_nodes is None:
+                exit_nodes = []
+        
+        # Validate that entry and exit nodes are in the subgraph
+        nodes_set = set(nodes)
+        if entry_nodes and not all(n in nodes_set for n in entry_nodes):
+            raise ValueError("All entry nodes must be in the subgraph nodes")
+        if exit_nodes and not all(n in nodes_set for n in exit_nodes):
+            raise ValueError("All exit nodes must be in the subgraph nodes")
+        
+        # Validate parent_annotation_id if provided
+        if parent_annotation_id:
+            with db.session_scope() as session:
+                parent = session.get(Annotation, parent_annotation_id)
+                if not parent:
+                    raise ValueError(f"Parent annotation {parent_annotation_id} not found")
+                if str(parent.genome_id) != genome_id:
+                    raise ValueError("Parent annotation must belong to the same genome")
+        
+        # Validate explanation_id if provided
+        if explanation_id:
+            with db.session_scope() as session:
+                explanation = session.get(Explanation, explanation_id)
+                if not explanation:
+                    raise ValueError(f"Explanation {explanation_id} not found")
+                if str(explanation.genome_id) != genome_id:
+                    raise ValueError("Explanation must belong to the same genome")
+        
         # Create annotation
         with db.session_scope() as session:
             annotation = Annotation(
@@ -116,9 +159,13 @@ class AnnotationManager:
                 name=name,
                 hypothesis=hypothesis,
                 evidence=evidence,
+                entry_nodes=entry_nodes,
+                exit_nodes=exit_nodes,
                 subgraph_nodes=nodes,
                 subgraph_connections=connections,
                 is_connected=connectivity_result["is_connected"],
+                parent_annotation_id=parent_annotation_id,
+                explanation_id=explanation_id,
             )
             session.add(annotation)
             session.commit()
@@ -176,6 +223,8 @@ class AnnotationManager:
         name: Optional[str] = None,
         nodes: Optional[List[int]] = None,
         connections: Optional[List[Tuple[int, int]]] = None,
+        entry_nodes: Optional[List[int]] = None,
+        exit_nodes: Optional[List[int]] = None,
     ) -> Annotation:
         """
         Update an existing annotation.
@@ -187,6 +236,8 @@ class AnnotationManager:
             name: Optional new name
             nodes: Optional new node list (requires connections if provided)
             connections: Optional new connection list (requires nodes if provided)
+            entry_nodes: Optional new entry nodes list
+            exit_nodes: Optional new exit nodes list
 
         Returns:
             Updated Annotation object
@@ -224,6 +275,18 @@ class AnnotationManager:
                 annotation.subgraph_nodes = nodes
                 annotation.subgraph_connections = connections
                 annotation.is_connected = connectivity_result["is_connected"]
+                
+                # Update entry/exit nodes if provided, otherwise keep existing
+                if entry_nodes is not None:
+                    nodes_set = set(nodes)
+                    if not all(n in nodes_set for n in entry_nodes):
+                        raise ValueError("All entry nodes must be in the subgraph nodes")
+                    annotation.entry_nodes = entry_nodes
+                if exit_nodes is not None:
+                    nodes_set = set(nodes)
+                    if not all(n in nodes_set for n in exit_nodes):
+                        raise ValueError("All exit nodes must be in the subgraph nodes")
+                    annotation.exit_nodes = exit_nodes
 
             # Update evidence
             if evidence is not None:
@@ -357,3 +420,149 @@ class AnnotationManager:
             "genome_validation": genome_result,
             "is_valid": connectivity_result["is_valid"] and genome_result["is_valid"],
         }
+
+    @staticmethod
+    def create_composition_annotation(
+        genome_id: str,
+        child_annotation_ids: List[str],
+        hypothesis: str,
+        entry_nodes: List[int],
+        exit_nodes: List[int],
+        nodes: List[int],
+        connections: List[Tuple[int, int]],
+        evidence: Optional[Dict[str, Any]] = None,
+        name: Optional[str] = None,
+        explanation_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Create a composition annotation that combines child annotations.
+        
+        Args:
+            genome_id: UUID of the genome
+            child_annotation_ids: List of child annotation UUIDs to compose
+            hypothesis: Description of how the children combine
+            entry_nodes: Entry nodes for the composition (typically exits of children)
+            exit_nodes: Exit nodes for the composition
+            nodes: Nodes in the junction subgraph
+            connections: Connections in the junction subgraph
+            evidence: Optional evidence for the composition
+            name: Optional name for the composition annotation
+            explanation_id: Optional UUID of explanation this belongs to
+            
+        Returns:
+            Dictionary representation of the created composition annotation
+        """
+        if not child_annotation_ids:
+            raise ValueError("At least one child annotation is required")
+        
+        # Validate all children exist and belong to same genome/explanation
+        with db.session_scope() as session:
+            children = []
+            for child_id in child_annotation_ids:
+                child = session.get(Annotation, child_id)
+                if not child:
+                    raise ValueError(f"Child annotation {child_id} not found")
+                if str(child.genome_id) != genome_id:
+                    raise ValueError(f"Child annotation {child_id} belongs to different genome")
+                if explanation_id and str(child.explanation_id) != explanation_id:
+                    raise ValueError(f"Child annotation {child_id} belongs to different explanation")
+                children.append(child)
+        
+        # Create the composition annotation
+        composition_ann = AnnotationManager.create_annotation(
+            genome_id=genome_id,
+            nodes=nodes,
+            connections=connections,
+            hypothesis=hypothesis,
+            entry_nodes=entry_nodes,
+            exit_nodes=exit_nodes,
+            evidence=evidence,
+            name=name,
+            explanation_id=explanation_id,
+            validate_against_genome=True,
+        )
+        
+        # Set parent_annotation_id on all children
+        composition_id = composition_ann["id"]
+        with db.session_scope() as session:
+            for child_id in child_annotation_ids:
+                child = session.get(Annotation, child_id)
+                if child:
+                    child.parent_annotation_id = composition_id
+            session.commit()
+        
+        return composition_ann
+    
+    @staticmethod
+    def get_annotation_children(annotation_id: str) -> List[Dict[str, Any]]:
+        """
+        Get direct children of an annotation.
+        
+        Args:
+            annotation_id: UUID of the annotation
+            
+        Returns:
+            List of child annotation dictionaries
+        """
+        with db.session_scope() as session:
+            annotation = session.get(Annotation, annotation_id)
+            if not annotation:
+                raise ValueError(f"Annotation {annotation_id} not found")
+            return [child.to_dict() for child in annotation.children]
+    
+    @staticmethod
+    def get_annotation_parent(annotation_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get parent annotation.
+        
+        Args:
+            annotation_id: UUID of the annotation
+            
+        Returns:
+            Parent annotation dictionary or None
+        """
+        with db.session_scope() as session:
+            annotation = session.get(Annotation, annotation_id)
+            if not annotation:
+                raise ValueError(f"Annotation {annotation_id} not found")
+            return annotation.parent.to_dict() if annotation.parent else None
+    
+    @staticmethod
+    def get_leaf_annotations(explanation_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Get all leaf annotations (annotations with no children).
+        
+        Args:
+            explanation_id: Optional UUID of explanation to filter by
+            
+        Returns:
+            List of leaf annotation dictionaries
+        """
+        with db.session_scope() as session:
+            query = session.query(Annotation).filter(Annotation.parent_annotation_id.is_(None))
+            if explanation_id:
+                query = query.filter(Annotation.explanation_id == explanation_id)
+            annotations = query.all()
+            # Filter to those with no children
+            leaf_annotations = [ann for ann in annotations if len(ann.children) == 0]
+            return [ann.to_dict() for ann in leaf_annotations]
+    
+    @staticmethod
+    def get_composition_annotations(explanation_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Get all composition annotations (annotations with children).
+        
+        Args:
+            explanation_id: Optional UUID of explanation to filter by
+            
+        Returns:
+            List of composition annotation dictionaries
+        """
+        with db.session_scope() as session:
+            query = session.query(Annotation)
+            if explanation_id:
+                query = query.filter(Annotation.explanation_id == explanation_id)
+            annotations = query.all()
+            # Filter to those with children
+            composition_annotations = [ann for ann in annotations if len(ann.children) > 0]
+            return [ann.to_dict() for ann in composition_annotations]

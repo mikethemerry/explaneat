@@ -114,6 +114,25 @@
     return states;
   }
 
+  /**
+   * Apply filters to show/hide nodes and edges based on annotation visibility.
+   * 
+   * NOTE: This implementation uses a simplified visibility logic. For full
+   * coverage-based visibility per the Beyond Intuition paper specification,
+   * server-side computation is required. The exact paper definition is:
+   * 
+   * visible(v) = ¬covered(hidden_annotations) ∨ (v ∈ V_O)
+   * 
+   * where coverage uses: covered_A(v) = (v ∈ V_A) ∧ (E_out(v) ⊆ E_A)
+   * 
+   * This requires:
+   * 1. Full graph structure (all nodes and edges)
+   * 2. Node splits for the explanation
+   * 3. Coverage computation using CoverageComputer
+   * 
+   * TODO: Implement server-side endpoint for coverage-based visibility
+   * or compute coverage client-side if all data is available.
+   */
   function applyFilters() {
     const net = getNetwork();
     if (!net || !net.body || !net.body.data) {
@@ -122,8 +141,6 @@
     }
 
     try {
-      const showDirectConnections =
-        document.getElementById("show_direct_connections")?.checked ?? true;
       const annotationStates = getAnnotationFilterStates();
 
       const nodes = net.body.data.nodes;
@@ -134,11 +151,17 @@
         const nodeMeta = nodeFilterMetadata[node.id?.toString()];
         let visible = true;
 
-        if (nodeMeta) {
-          if (nodeMeta.is_in_direct_connection && !showDirectConnections) {
-            visible = false;
-          }
+        // Output nodes are always visible (per paper specification)
+        // They should never be filtered, even if part of annotations
+        if (nodeMeta && (nodeMeta.is_output || nodeMeta.node_type === "output")) {
+          visible = true;
+          nodeUpdates.push({ id: node.id, hidden: !visible });
+          return;
+        }
 
+        if (nodeMeta) {
+          // Simplified visibility: node is visible if at least one containing annotation is visible
+          // This should be replaced with coverage-based visibility when server-side support is added
           const annotationIds = nodeMeta.annotation_ids || [];
           if (annotationIds.length > 0) {
             let atLeastOneVisible = false;
@@ -168,10 +191,6 @@
         const edgeMeta = edgeFilterMetadata[edgeKey];
 
         if (edgeMeta) {
-          if (edgeMeta.is_in_direct_connection && !showDirectConnections) {
-            visible = false;
-          }
-
           const annotationIds = edgeMeta.annotation_ids || [];
           if (annotationIds.length > 0) {
             let atLeastOneVisible = false;
@@ -205,11 +224,6 @@
   }
 
   function setupFilterListeners() {
-    const directConnCheckbox = document.getElementById("show_direct_connections");
-    if (directConnCheckbox) {
-      directConnCheckbox.addEventListener("change", applyFilters);
-    }
-
     document.querySelectorAll(".annotation-filter-checkbox").forEach((checkbox) => {
       checkbox.addEventListener("change", applyFilters);
     });
@@ -217,9 +231,6 @@
     const resetBtn = document.getElementById("reset-filters-btn");
     if (resetBtn) {
       resetBtn.addEventListener("click", () => {
-        if (directConnCheckbox) {
-          directConnCheckbox.checked = true;
-        }
         document.querySelectorAll(".annotation-filter-checkbox").forEach((cb) => {
           cb.checked = true;
         });

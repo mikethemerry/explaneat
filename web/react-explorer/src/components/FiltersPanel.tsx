@@ -2,8 +2,6 @@ import type { Annotation } from "../types";
 
 type FiltersPanelProps = {
   annotations: Annotation[];
-  showDirectConnections: boolean;
-  onToggleDirectConnections(value: boolean): void;
   annotationVisibility: Record<string, boolean>;
   onToggleAnnotation(id: string): void;
   onReset(): void;
@@ -11,8 +9,6 @@ type FiltersPanelProps = {
 
 export function FiltersPanel({
   annotations,
-  showDirectConnections,
-  onToggleDirectConnections,
   annotationVisibility,
   onToggleAnnotation,
   onReset,
@@ -20,17 +16,6 @@ export function FiltersPanel({
   return (
     <aside className="filters-panel">
       <h2>Filter Controls</h2>
-
-      <section>
-        <label className="checkbox">
-          <input
-            type="checkbox"
-            checked={showDirectConnections}
-            onChange={(event) => onToggleDirectConnections(event.target.checked)}
-          />
-          Show Direct Input→Output Connections
-        </label>
-      </section>
 
       <section>
         <strong>Annotations</strong>

@@ -29,6 +29,7 @@ from pathlib import Path
 from importlib import resources as pkg_resources
 
 from explaneat.core.genome_network import NetworkStructure, NodeType
+from explaneat.analysis.coverage import CoverageComputer
 
 try:
     from pyvis.network import Network
@@ -1371,9 +1372,17 @@ class InteractiveNetworkViewer:
     def _identify_direct_connection_subgraph(self) -> Tuple[set, set]:
         """
         Identify all nodes and edges that are part of direct input-to-output connections.
+        
+        Coverage rules for direct connections:
+        - An INPUT node is covered ONLY if ALL its outgoing connections are direct to outputs
+        - An OUTPUT node is never covered (per paper spec: output nodes are never covered)
+        - The EDGE (input, output) is always considered covered by the trivial annotation
+        
+        Note: Only INPUT nodes that are fully covered (all outgoing edges are direct) are added 
+        to direct_nodes for filtering purposes. OUTPUT nodes are never filtered/hidden.
 
         Returns:
-            Tuple of (set of node IDs, set of edge tuples (from, to))
+            Tuple of (set of INPUT node IDs that are fully covered, set of edge tuples (from, to))
         """
         direct_nodes = set()
         direct_edges = set()
@@ -1382,7 +1391,8 @@ class InteractiveNetworkViewer:
         input_nodes = self._get_input_nodes()
         output_nodes = set(self._get_output_nodes())
 
-        # Find all direct connections (input -> output, no hidden nodes in between)
+        # First, collect all direct connection edges (input -> output)
+        # Only INPUT -> OUTPUT connections are considered direct connections
         for input_node in input_nodes:
             for output_node in output_nodes:
                 # Check if there's a direct edge from input to output
@@ -1396,10 +1406,33 @@ class InteractiveNetworkViewer:
                             and conn.to_node == output_node
                             and conn.enabled
                         ):
-                            direct_nodes.add(input_node)
-                            direct_nodes.add(output_node)
                             direct_edges.add((input_node, output_node))
                             break
+
+        # Now, for each input node, check if ALL its outgoing connections are direct connections
+        # An input node is only covered if it has no other outgoing connections
+        for input_node in input_nodes:
+            # Get all outgoing edges from this input node
+            input_outgoing_edges = set(self.G.out_edges(input_node))
+            
+            # Filter to only enabled connections
+            enabled_outgoing = set()
+            for from_node, to_node in input_outgoing_edges:
+                for conn in self.network_structure.connections:
+                    if (
+                        conn.from_node == from_node
+                        and conn.to_node == to_node
+                        and conn.enabled
+                    ):
+                        enabled_outgoing.add((from_node, to_node))
+                        break
+            
+            # Check if ALL outgoing edges are direct connections to outputs
+            if enabled_outgoing:
+                # All outgoing edges must be direct connections (in direct_edges)
+                if enabled_outgoing.issubset(direct_edges):
+                    # This input node is fully covered - all its outgoing connections are direct
+                    direct_nodes.add(input_node)
 
         return direct_nodes, direct_edges
 
@@ -1754,7 +1787,6 @@ class InteractiveNetworkViewer:
             depth = self.node_depths.get(node_id, 0)
             color = self._get_node_color(node_id, annotation_colors)
             is_direct_connected = node_id in self.direct_connected_inputs
-            is_in_direct_connection = node_id in self.direct_connection_nodes
             is_disabled_node = node_id in self.disabled_nodes
 
             # Node shape
@@ -1806,9 +1838,6 @@ class InteractiveNetworkViewer:
             if use_layered and node_positions and node_id in node_positions:
                 x_pos, y_pos = node_positions[node_id]
 
-            # Check if node is in direct connection subgraph
-            is_in_direct_connection = node_id in self.direct_connection_nodes
-
             # Add node with metadata
             node_data = {
                 "label": str(node_id),
@@ -1820,7 +1849,6 @@ class InteractiveNetworkViewer:
                 "node_type": node_type,
                 "depth": depth,
                 "is_direct_connected": str(is_direct_connected).lower(),
-                "is_in_direct_connection": str(is_in_direct_connection).lower(),
                 "annotation_ids": ",".join(
                     [
                         str(aid)
@@ -1843,7 +1871,6 @@ class InteractiveNetworkViewer:
 
             net.add_node(node_id, **node_data)
             node_filter_metadata[str(node_id)] = {
-                "is_in_direct_connection": is_in_direct_connection,
                 "annotation_ids": [
                     str(aid)
                     for aid, nodes in annotation_node_sets.items()
@@ -1894,9 +1921,6 @@ class InteractiveNetworkViewer:
             # Edge width based on weight magnitude
             width_val = 1 + abs(weight) * 2
 
-            # Check if edge is in direct connection subgraph
-            edge_tuple = (from_node, to_node)
-            is_in_direct_connection = edge_tuple in self.direct_connection_edges
             edge_id = f"edge_{len(edge_filter_metadata)}_{from_node}_{to_node}"
             net.add_edge(
                 from_node,
@@ -1908,7 +1932,6 @@ class InteractiveNetworkViewer:
                 # Store metadata for filtering
                 weight_sign="positive" if weight >= 0 else "negative",
                 is_skip=str(is_skip).lower(),
-                is_in_direct_connection=str(is_in_direct_connection).lower(),
                 annotation_ids=",".join(
                     [
                         str(aid)
@@ -1919,7 +1942,6 @@ class InteractiveNetworkViewer:
                 ),
             )
             edge_filter_metadata[edge_id] = {
-                "is_in_direct_connection": is_in_direct_connection,
                 "annotation_ids": [
                     str(aid)
                     for aid, edges in annotation_edge_sets.items()
@@ -1954,11 +1976,9 @@ class InteractiveNetworkViewer:
                 hidden=True,
                 weight_sign="positive" if weight >= 0 else "negative",
                 is_skip="false",
-                is_in_direct_connection="false",
                 annotation_ids="",
             )
             edge_filter_metadata[edge_id] = {
-                "is_in_direct_connection": False,
                 "annotation_ids": [],
                 "is_disabled": True,
             }
@@ -2009,13 +2029,47 @@ class InteractiveNetworkViewer:
         ) = self._prepare_annotation_sets()
         node_positions = self._calculate_layered_positions()
 
+        # Compute coverage using the CoverageComputer
+        all_nodes = set(self.G.nodes())
+        all_edges = {(u, v) for u, v in self.G.edges()}
+        input_nodes = set(self._get_input_nodes())
+        output_nodes = set(self._get_output_nodes())
+        
+        # Prepare annotation data for coverage computation
+        annotations_for_coverage = []
+        for annotation in self.annotations:
+            if isinstance(annotation, dict):
+                ann_dict = {
+                    "id": str(annotation.get("id", "")),
+                    "entry_nodes": annotation.get("entry_nodes", []),
+                    "exit_nodes": annotation.get("exit_nodes", []),
+                    "subgraph_nodes": annotation.get("subgraph_nodes", []),
+                    "subgraph_connections": annotation.get("subgraph_connections", []),
+                }
+            else:
+                ann_dict = {
+                    "id": str(annotation.id),
+                    "entry_nodes": getattr(annotation, "entry_nodes", None) or [],
+                    "exit_nodes": getattr(annotation, "exit_nodes", None) or [],
+                    "subgraph_nodes": annotation.subgraph_nodes or [],
+                    "subgraph_connections": annotation.subgraph_connections or [],
+                }
+            annotations_for_coverage.append(ann_dict)
+        
+        coverage_computer = CoverageComputer(
+            all_nodes=all_nodes,
+            all_edges=all_edges,
+            input_nodes=input_nodes,
+            output_nodes=output_nodes,
+        )
+        node_coverage, edge_coverage = coverage_computer.compute_coverage(
+            annotations_for_coverage
+        )
+
         nodes_payload = []
         for node_id in self.G.nodes():
-            annotation_ids = [
-                ann_id
-                for ann_id, nodes in annotation_node_sets.items()
-                if node_id in nodes
-            ]
+            # Use coverage-based annotation IDs
+            annotation_ids = list(node_coverage.get(node_id, set()))
             node_type = self._get_node_type(node_id)
             nodes_payload.append(
                 {
@@ -2025,7 +2079,6 @@ class InteractiveNetworkViewer:
                     "depth": self.node_depths.get(node_id, 0),
                     "color": self._get_node_color(node_id, annotation_colors),
                     "annotationIds": annotation_ids,
-                    "isDirectConnection": node_id in self.direct_connection_nodes,
                     "position": (
                         {
                             "x": node_positions[node_id][0],
@@ -2039,11 +2092,9 @@ class InteractiveNetworkViewer:
 
         edges_payload = []
         for idx, (from_node, to_node, data) in enumerate(self.G.edges(data=True)):
-            annotation_ids = [
-                ann_id
-                for ann_id, edges in annotation_edge_sets.items()
-                if (from_node, to_node) in edges or (to_node, from_node) in edges
-            ]
+            edge_tuple = (from_node, to_node)
+            # Use coverage-based annotation IDs
+            annotation_ids = list(edge_coverage.get(edge_tuple, set()))
             weight = data.get("weight", 0.0)
             edges_payload.append(
                 {
@@ -2053,8 +2104,6 @@ class InteractiveNetworkViewer:
                     "weight": weight,
                     "color": self._get_edge_color(weight),
                     "annotationIds": annotation_ids,
-                    "isDirectConnection": (from_node, to_node)
-                    in self.direct_connection_edges,
                     "isSkip": self._is_skip_connection(from_node, to_node),
                 }
             )
@@ -2072,17 +2121,23 @@ class InteractiveNetworkViewer:
                 ann_id = str(annotation.get("id", ""))
                 name = annotation.get("name")
                 hypothesis = annotation.get("hypothesis")
+                entry_nodes = annotation.get("entry_nodes", [])
+                exit_nodes = annotation.get("exit_nodes", [])
                 raw_nodes = annotation.get("subgraph_nodes") or []
                 raw_edges = annotation.get("subgraph_connections") or []
             else:
                 ann_id = str(annotation.id)
                 name = getattr(annotation, "name", None)
                 hypothesis = getattr(annotation, "hypothesis", None)
+                entry_nodes = getattr(annotation, "entry_nodes", None) or []
+                exit_nodes = getattr(annotation, "exit_nodes", None) or []
                 raw_nodes = annotation.subgraph_nodes or []
                 raw_edges = annotation.subgraph_connections or []
 
             # Filter to only phenotype nodes/edges
             filtered_nodes = [nid for nid in raw_nodes if nid in phenotype_node_ids]
+            filtered_entry_nodes = [nid for nid in entry_nodes if nid in phenotype_node_ids]
+            filtered_exit_nodes = [nid for nid in exit_nodes if nid in phenotype_node_ids]
             filtered_edges = []
             for edge in raw_edges:
                 if isinstance(edge, (list, tuple)) and len(edge) == 2:
@@ -2101,6 +2156,8 @@ class InteractiveNetworkViewer:
                         "id": ann_id,
                         "name": name,
                         "hypothesis": hypothesis,
+                        "entryNodes": filtered_entry_nodes,
+                        "exitNodes": filtered_exit_nodes,
                         "nodes": filtered_nodes,
                         "edges": filtered_edges,
                     }
@@ -2300,14 +2357,6 @@ class InteractiveNetworkViewer:
         <!-- Filter Controls -->
         <div id="filter-controls" style="position: fixed; top: 10px; right: 10px; background: white; padding: 15px; border: 2px solid #333; border-radius: 5px; z-index: 1000; max-width: 300px; max-height: 80vh; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
             <h3 style="margin-top: 0;">Filter Controls</h3>
-            
-            <div style="margin-bottom: 15px;">
-                <strong>Direct Connections:</strong><br>
-                <label>
-                    <input type="checkbox" id="show_direct_connections" checked>
-                    Show Direct Input→Output Connections
-                </label>
-            </div>
             
             <div style="margin-bottom: 15px;">
                 <strong>Annotations:</strong><br>
