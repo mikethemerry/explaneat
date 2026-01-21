@@ -1121,9 +1121,21 @@ class InteractiveNetworkViewer:
         self.config = config
         self.annotations = annotations or []
 
+        # Initialize split mapping (will be populated later)
+        # All node IDs are now strings, so mappings are string -> string
+        self.split_node_to_original = {}  # split_node_id (str) -> original_node_id (str)
+        self.split_id_strings = {}  # Not needed anymore - all IDs are strings
+        self.split_string_to_original = {}  # split_node_id (str) -> original_node_id (str)
+
         # Convert NetworkStructure to NetworkX graph for internal use
         self.G = self._network_structure_to_nx(network_structure)
         self.output_nodes = set(network_structure.output_node_ids)
+        
+        # Load splits for formatting split node labels (after G is created)
+        self._load_splits_for_labeling()
+        
+        # Network structure now uses string IDs directly, so no conversion needed
+        # Split mappings are already loaded in _load_splits_for_labeling
 
         # Collect disabled connections from original genome (if available in metadata)
         self.disabled_edge_records = self._collect_disabled_connections()
@@ -1136,6 +1148,54 @@ class InteractiveNetworkViewer:
         self.direct_connection_nodes, self.direct_connection_edges = (
             self._identify_direct_connection_subgraph()
         )
+
+    def _load_splits_for_labeling(self):
+        """
+        Load splits to create mapping for formatting split node labels.
+        Tries to get splits from annotations or genome_info if available.
+        """
+        from ..analysis.node_splitting import NodeSplitManager
+        
+        # Try to get genome_id from annotations or genome_info
+        genome_id = None
+        if self.annotations:
+            # Get genome_id from first annotation
+            try:
+                ann = self.annotations[0]
+                genome_id = str(ann.genome_id if hasattr(ann, "genome_id") else ann.get("genome_id", ""))
+            except (AttributeError, KeyError, IndexError):
+                pass
+        
+        if not genome_id and hasattr(self, "genome_info"):
+            try:
+                genome_id = str(self.genome_info.genome_id if hasattr(self.genome_info, "genome_id") else "")
+            except (AttributeError, TypeError):
+                pass
+        
+        if genome_id:
+            try:
+                from ..analysis.explanation_manager import ExplanationManager
+                explanation = ExplanationManager.get_or_create_explanation(genome_id)
+                splits = ExplanationManager.get_explanation_splits(explanation_id=explanation["id"])
+                
+                # Build mapping: split_node_id (string) -> original_node_id (string)
+                # All node IDs are now strings, so no conversion needed
+                for split in splits:
+                    orig_id = str(split.get("original_node_id"))  # Ensure it's a string
+                    split_mappings = split.get("split_mappings", {})
+                    for split_id_str in split_mappings.keys():
+                        if split_id_str and orig_id:
+                            # Store mapping: split_node_id -> original_node_id (both strings)
+                            if not hasattr(self, 'split_string_to_original'):
+                                self.split_string_to_original = {}
+                            self.split_string_to_original[split_id_str] = orig_id
+                            # Also store in split_node_to_original for compatibility
+                            self.split_node_to_original[split_id_str] = orig_id
+            except Exception as e:
+                # If we can't load splits, continue without them
+                import traceback
+                print(f"⚠️  Warning: Could not load splits for labeling: {e}")
+                traceback.print_exc()
 
     def _get_genome_viewer_js_path(self) -> Path:
         """
@@ -1196,14 +1256,14 @@ class InteractiveNetworkViewer:
 
             annotation_priority[ann_id] = idx
 
-            # Filter nodes to only those in phenotype
-            nodes = {nid for nid in subgraph_nodes if nid in phenotype_node_ids}
+            # Filter nodes to only those in phenotype (convert to strings for comparison)
+            nodes = {str(nid) for nid in subgraph_nodes if str(nid) in phenotype_node_ids}
 
-            # Filter edges to only those in phenotype
+            # Filter edges to only those in phenotype (convert to strings for comparison)
             edges = set()
             for conn in subgraph_connections:
-                if isinstance(conn, (list, tuple)):
-                    edge_tuple = tuple(conn)
+                if isinstance(conn, (list, tuple)) and len(conn) == 2:
+                    edge_tuple = (str(conn[0]), str(conn[1]))
                 else:
                     edge_tuple = tuple(conn)
                 # Only include if both nodes exist and edge exists in phenotype
@@ -1258,7 +1318,7 @@ class InteractiveNetworkViewer:
 
         return G
 
-    def _collect_disabled_connections(self) -> List[Tuple[int, int, float]]:
+    def _collect_disabled_connections(self) -> List[Tuple[str, str, float]]:
         """Collect all disabled connections from the network structure."""
         disabled = []
         for conn in self.network_structure.connections:
@@ -1281,39 +1341,35 @@ class InteractiveNetworkViewer:
                 disabled.add(node_id)
         return disabled
 
-    def _get_input_nodes(self) -> List[int]:
-        """Return all input node ids from the network structure."""
+    def _get_input_nodes(self) -> List[str]:
+        """Return all input node ids from the network structure (strings)."""
         return self.network_structure.input_node_ids
 
-    def _get_output_nodes(self) -> List[int]:
-        """Return all output node ids from the network structure."""
+    def _get_output_nodes(self) -> List[str]:
+        """Return all output node ids from the network structure (strings)."""
         return self.network_structure.output_node_ids
 
-    def _calculate_depths(self) -> Dict[int, int]:
+    def _calculate_depths(self) -> Dict[str, int]:
         """Calculate node depths using the same logic as GenomeVisualizer."""
-        # Get input nodes from config
-        if hasattr(self.config, "genome_config"):
-            input_nodes = [
-                n for n in self.config.genome_config.input_keys if n in self.G.nodes()
-            ]
-        else:
-            input_nodes = [n for n in self.G.nodes() if n < 0]
-
-        if not input_nodes:
-            input_nodes = [n for n in self.G.nodes() if self.G.in_degree(n) == 0]
-
-        # Get output nodes
-        if hasattr(self.config, "genome_config"):
-            output_nodes = set(self.config.genome_config.output_keys)
-        else:
-            output_nodes = set([n for n in self.G.nodes() if n == 0])
-        output_nodes.update([n for n in self.G.nodes() if n == 0])
-
-        # Identify hidden nodes
+        # Get input nodes from network structure (already strings)
+        input_nodes = self.network_structure.input_node_ids
         input_node_set = set(input_nodes)
-        hidden_nodes = set(
-            [n for n in self.G.nodes() if n > 0 and n not in output_nodes]
-        )
+
+        # Get output nodes from network structure (already strings)
+        output_nodes = set(self.network_structure.output_node_ids)
+
+        # Identify hidden nodes (positive numeric strings, not input or output)
+        hidden_nodes = set()
+        for n in self.G.nodes():
+            try:
+                # Check if it's a positive number (not input/output)
+                n_int = int(n)
+                if n_int > 0 and n not in output_nodes:
+                    hidden_nodes.add(n)
+            except (ValueError, TypeError):
+                # If it's not a number (e.g., split node like "5_a"), it's hidden
+                if n not in input_node_set and n not in output_nodes:
+                    hidden_nodes.add(n)
 
         depths = {node: [] for node in self.G.nodes()}
 
@@ -1347,7 +1403,7 @@ class InteractiveNetworkViewer:
 
         return node_depths
 
-    def _identify_direct_connected_inputs(self) -> List[int]:
+    def _identify_direct_connected_inputs(self) -> List[str]:
         """
         Identify input nodes that only connect directly to output (no hidden nodes).
 
@@ -1436,7 +1492,7 @@ class InteractiveNetworkViewer:
 
         return direct_nodes, direct_edges
 
-    def _get_node_type(self, node_id: int) -> str:
+    def _get_node_type(self, node_id: str) -> str:
         """Get node type: 'input', 'output', or 'hidden'."""
         node = self.network_structure.get_node_by_id(node_id)
         if node:
@@ -1448,7 +1504,7 @@ class InteractiveNetworkViewer:
             return "output"
         return "hidden"
 
-    def _get_node_color(self, node_id: int, annotation_colors: Dict[int, str]) -> str:
+    def _get_node_color(self, node_id: str, annotation_colors: Dict[str, str]) -> str:
         """Get color for a node based on type and annotations."""
         if node_id in self.disabled_nodes:
             return "#B8B8B8"
@@ -1472,13 +1528,13 @@ class InteractiveNetworkViewer:
         else:
             return "#EE5A6F"  # Red for negative
 
-    def _is_skip_connection(self, from_node: int, to_node: int) -> bool:
+    def _is_skip_connection(self, from_node: str, to_node: str) -> bool:
         """Check if connection is a skip connection (spans more than 1 layer)."""
         from_depth = self.node_depths.get(from_node, 0)
         to_depth = self.node_depths.get(to_node, 0)
         return abs(to_depth - from_depth) > 1
 
-    def _calculate_layered_positions(self) -> Dict[int, Tuple[float, float]]:
+    def _calculate_layered_positions(self) -> Dict[str, Tuple[float, float]]:
         """
         Calculate left-to-right layered positions for nodes.
 
@@ -1490,14 +1546,12 @@ class InteractiveNetworkViewer:
         if not self.G.nodes():
             return {}
 
-        # Get input nodes
-        if hasattr(self.config, "genome_config"):
-            input_nodes = sorted(
-                [n for n in self.config.genome_config.input_keys if n in self.G.nodes()]
-            )
-        else:
-            input_nodes = sorted([n for n in self.G.nodes() if n < 0])
-
+        # Get input nodes from network structure (already strings)
+        input_nodes = sorted(self.network_structure.input_node_ids)
+        
+        # Filter to only nodes that exist in graph
+        input_nodes = [n for n in input_nodes if n in self.G.nodes()]
+        
         if not input_nodes:
             input_nodes = [n for n in self.G.nodes() if self.G.in_degree(n) == 0]
 
@@ -1560,9 +1614,9 @@ class InteractiveNetworkViewer:
         self,
         annotation_node_sets: Dict[str, set],
         annotation_priority: Dict[str, int],
-    ) -> Dict[int, List[str]]:
+    ) -> Dict[str, List[str]]:
         """Build mapping of node_id -> ordered annotation ids."""
-        node_membership: Dict[int, List[str]] = {}
+        node_membership: Dict[str, List[str]] = {}
         for ann_id, nodes in annotation_node_sets.items():
             for node_id in nodes:
                 node_membership.setdefault(node_id, []).append(ann_id)
@@ -1577,10 +1631,10 @@ class InteractiveNetworkViewer:
 
     def _cluster_layers_by_annotation(
         self,
-        layers: Dict[int, List[int]],
-        node_annotation_membership: Dict[int, List[str]],
+        layers: Dict[int, List[str]],
+        node_annotation_membership: Dict[str, List[str]],
         annotation_priority: Dict[str, int],
-    ) -> Dict[int, List[int]]:
+    ) -> Dict[int, List[str]]:
         """Ensure nodes sharing annotations stay contiguous within each layer."""
         if not node_annotation_membership:
             return layers
@@ -1612,8 +1666,8 @@ class InteractiveNetworkViewer:
         return clustered_layers
 
     def _apply_direct_connection_lane(
-        self, positions: Dict[int, Tuple[float, float]]
-    ) -> Dict[int, Tuple[float, float]]:
+        self, positions: Dict[str, Tuple[float, float]]
+    ) -> Dict[str, Tuple[float, float]]:
         """Push direct input→output connections into a bottom lane."""
         if not positions or not self.direct_connection_edges:
             return positions
@@ -1635,8 +1689,8 @@ class InteractiveNetworkViewer:
         return positions
 
     def _minimize_crossings_barycenter(
-        self, layers: Dict[int, List[int]]
-    ) -> Dict[int, List[int]]:
+        self, layers: Dict[int, List[str]]
+    ) -> Dict[int, List[str]]:
         """
         Minimize edge crossings using the barycenter heuristic.
 
@@ -1838,9 +1892,17 @@ class InteractiveNetworkViewer:
             if use_layered and node_positions and node_id in node_positions:
                 x_pos, y_pos = node_positions[node_id]
 
+            # Format node label - use letter format for split nodes
+            # node_id is already a string
+            node_label = str(node_id)
+            if node_id in self.split_node_to_original:
+                # node_id is already a string split_node_id (e.g., "5_a")
+                from ..analysis.node_splitting import NodeSplitManager
+                node_label = NodeSplitManager.format_split_node_display(node_id)
+            
             # Add node with metadata
             node_data = {
-                "label": str(node_id),
+                "label": node_label,
                 "color": color,
                 "shape": shape,
                 "title": title,
@@ -2071,10 +2133,19 @@ class InteractiveNetworkViewer:
             # Use coverage-based annotation IDs
             annotation_ids = list(node_coverage.get(node_id, set()))
             node_type = self._get_node_type(node_id)
+            
+            # Format node label - use letter format for split nodes
+            # node_id is already a string
+            node_label = str(node_id)
+            if node_id in self.split_node_to_original:
+                # node_id is already a string split_node_id (e.g., "5_a")
+                from ..analysis.node_splitting import NodeSplitManager
+                node_label = NodeSplitManager.format_split_node_display(node_id)
+            
             nodes_payload.append(
                 {
                     "id": node_id,
-                    "label": str(node_id),
+                    "label": node_label,
                     "type": node_type,
                     "depth": self.node_depths.get(node_id, 0),
                     "color": self._get_node_color(node_id, annotation_colors),
@@ -2343,10 +2414,20 @@ class InteractiveNetworkViewer:
                 }
             )
 
+            # Get entry and exit nodes
+            if isinstance(annotation, dict):
+                entry_nodes = annotation.get("entry_nodes") or []
+                exit_nodes = annotation.get("exit_nodes") or []
+            else:
+                entry_nodes = annotation.entry_nodes or []
+                exit_nodes = annotation.exit_nodes or []
+            
             annotation_data_payload[ann_id] = {
                 "genome_id": genome_id,
                 "nodes": nodes,
                 "edges": edges,
+                "entry_nodes": entry_nodes,
+                "exit_nodes": exit_nodes,
                 "name": ann_name if ann_name else None,
                 "hypothesis": hypothesis,
             }

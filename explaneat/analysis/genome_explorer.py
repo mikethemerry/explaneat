@@ -804,6 +804,7 @@ survival_threshold = {reproduction_cfg.get('survival_threshold', 0.2)}"""
         Display interactive web-based network visualization with filtering controls.
 
         Loads annotations from database and integrates them into the visualization.
+        Uses phenotype network with splits applied if splits exist.
 
         Args:
             renderer: "react" (default) or "pyvis" for visualization backend
@@ -812,21 +813,151 @@ survival_threshold = {reproduction_cfg.get('survival_threshold', 0.2)}"""
         Returns:
             Path to generated HTML file
         """
+        print("\n" + "=" * 70)
+        print("🕸️  Loading Network Visualization Data")
+        print("=" * 70)
+        
         # Load annotations for this genome
-        annotations = AnnotationManager.get_annotations(self.genome_info.genome_id)
+        genome_id = str(self.genome_info.genome_id)
+        annotations = AnnotationManager.get_annotations(genome_id)
+        print(f"\n📋 Annotations: {len(annotations)} found")
+        for ann in annotations:
+            ann_id = ann.id if hasattr(ann, "id") else ann.get("id", "unknown")
+            ann_name = ann.name if hasattr(ann, "name") else ann.get("name", "Unnamed")
+            ann_nodes = ann.subgraph_nodes if hasattr(ann, "subgraph_nodes") else ann.get("subgraph_nodes", [])
+            print(f"   - {ann_id}: {ann_name} ({len(ann_nodes)} nodes)")
 
-        # Get phenotype network structure from ExplaNEAT
+        # Get phenotype network structure with splits applied
         from explaneat.core.explaneat import ExplaNEAT
+        from explaneat.analysis.explanation_manager import ExplanationManager
+        from explaneat.analysis.node_splitting import NodeSplitManager
         
         explainer = ExplaNEAT(self.neat_genome, self.config)
-        phenotype_network = explainer.get_phenotype_network()
+        
+        # Try to get phenotype with splits, fall back to regular phenotype if no explanation/splits
+        has_splits = False
+        splits_data = []
+        try:
+            explanation = ExplanationManager.get_or_create_explanation(genome_id)
+            explanation_id = explanation["id"]
+            print(f"\n🔀 Explanation ID: {explanation_id}")
+            
+            # Get all splits
+            splits = ExplanationManager.get_explanation_splits(explanation_id=explanation_id)
+            print(f"📊 Node Splits: {len(splits)} found")
+            
+            if splits:
+                has_splits = True
+                # Group splits by original node
+                # Filter out splits for input nodes (negative IDs) - these shouldn't exist
+                splits_by_original = {}
+                valid_splits = []
+                for split in splits:
+                    orig_id = split.get("original_node_id")
+                    # Skip splits for input nodes (negative IDs)
+                    if orig_id < 0:
+                        print(f"   ⚠️  Warning: Found invalid split for input node {orig_id} (input nodes should not be split)")
+                        continue
+                    
+                    split_id = split.get("split_node_id")
+                    connections = split.get("outgoing_connections", [])
+                    display = NodeSplitManager.format_split_node_display(str(split_id))
+                    
+                    if orig_id not in splits_by_original:
+                        splits_by_original[orig_id] = []
+                    splits_by_original[orig_id].append({
+                        "split_id": split_id,
+                        "display": display,
+                        "connections": connections
+                    })
+                    valid_splits.append(split)
+                
+                splits_data = valid_splits
+                
+                # Print splits grouped by original node
+                for orig_id, split_list in splits_by_original.items():
+                    print(f"\n   Node {orig_id} → {len(split_list)} split(s):")
+                    for split_info in split_list:
+                        conn_str = ", ".join([f"({c[0]},{c[1]})" for c in split_info["connections"]])
+                        print(f"      - {split_info['display']} (ID: {split_info['split_id']}) → {conn_str}")
+            else:
+                print("   No splits found")
+            
+            from explaneat.core.genome_network import get_phenotype_with_splits
+            # Use the existing config instead of reloading it
+            phenotype_network = get_phenotype_with_splits(explanation_id, config=self.config)
+            print(f"\n✅ Loaded phenotype with splits applied")
+        except Exception as e:
+            # If splits can't be applied (e.g., no splits exist), use regular phenotype
+            import traceback
+            print(f"\n⚠️  Could not load phenotype with splits: {type(e).__name__}: {e}")
+            if len(splits) == 0:
+                print("   (No splits exist, using regular phenotype)")
+            else:
+                print("   Error details:")
+                traceback.print_exc()
+            print("   Using regular phenotype (no splits)")
+            phenotype_network = explainer.get_phenotype_network()
+            has_splits = False
 
-        # Create interactive viewer with phenotype network
+        # Report network structure
+        print(f"\n📈 Network Structure:")
+        print(f"   Total Nodes: {len(phenotype_network.nodes)}")
+        print(f"   Total Connections: {len(phenotype_network.connections)}")
+        print(f"   Input Nodes: {phenotype_network.input_node_ids}")
+        print(f"   Output Nodes: {phenotype_network.output_node_ids}")
+        
+        # Check for split nodes in the network
+        if has_splits:
+            split_node_ids = set()
+            for split in splits_data:
+                split_mappings = split.get("split_mappings", {})
+                for split_id in split_mappings.keys():
+                    split_node_ids.add(split_id)
+            
+            # All node IDs are now strings, so check directly
+            nodes_in_network = phenotype_network.get_node_ids()
+            found_split_nodes = nodes_in_network & split_node_ids
+            
+            print(f"\n🔍 Split Nodes in Network:")
+            print(f"   Expected: {len(split_node_ids)} split nodes")
+            print(f"   Found in network: {len(found_split_nodes)} split nodes")
+            if found_split_nodes:
+                print(f"   Split nodes:")
+                # Show formatted labels
+                for split_id in sorted(found_split_nodes):
+                    display = NodeSplitManager.format_split_node_display(split_id)
+                    print(f"      - {display} (ID: {split_id})")
+            else:
+                print("   ⚠️  WARNING: No split nodes found in network structure!")
+        
+        print("\n" + "=" * 70)
+
+        # Create interactive viewer with phenotype network (with splits if applicable)
         viewer = InteractiveNetworkViewer(
             phenotype_network, self.config, annotations=annotations
         )
-        # Store genome_info for annotation export
+        # Store genome_info for annotation export and split loading
         viewer.genome_info = self.genome_info
+        # Reload splits now that genome_info is available
+        viewer._load_splits_for_labeling()
+        
+        # Report what viewer loaded
+        print(f"\n🎨 Visualization Viewer:")
+        print(f"   Nodes in graph: {viewer.G.number_of_nodes()}")
+        print(f"   Edges in graph: {viewer.G.number_of_edges()}")
+        print(f"   Split mappings loaded: {len(viewer.split_node_to_original)}")
+        if viewer.split_node_to_original:
+            print(f"   Split node mappings:")
+            for split_id_int, orig_id in sorted(viewer.split_node_to_original.items()):
+                # Get the string split_node_id from the mapping
+                split_id_str = getattr(viewer, 'split_id_strings', {}).get(split_id_int, str(split_id_int))
+                display = NodeSplitManager.format_split_node_display(split_id_str)
+                print(f"      - {display} (ID: {split_id_int}) ← Node {orig_id}")
+
+        print("\n" + "=" * 70)
+        print("🚀 Launching visualization...")
+        print("=" * 70 + "\n")
 
         # Show the visualization
         if renderer == "react":

@@ -7,6 +7,9 @@
   let selectedEdges = new Set();
   let editingAnnotationId = null;
   let networkCache = null;
+  let collapsedAnnotations = new Set(); // Track which annotations are collapsed
+  let collapseNodes = {}; // Map annotation ID -> collapse node ID
+  let originalNodeStates = {}; // Store original node states before collapse
 
   function getNetwork() {
     if (networkCache && networkCache.body && networkCache.body.data) {
@@ -117,23 +120,9 @@
   }
 
   /**
-   * Apply filters to show/hide nodes and edges based on annotation visibility.
-   *
-   * NOTE: This implementation uses a simplified visibility logic. For full
-   * coverage-based visibility per the Beyond Intuition paper specification,
-   * server-side computation is required. The exact paper definition is:
-   *
-   * visible(v) = ¬covered(hidden_annotations) ∨ (v ∈ V_O)
-   *
-   * where coverage uses: covered_A(v) = (v ∈ V_A) ∧ (E_out(v) ⊆ E_A)
-   *
-   * This requires:
-   * 1. Full graph structure (all nodes and edges)
-   * 2. Node splits for the explanation
-   * 3. Coverage computation using CoverageComputer
-   *
-   * TODO: Implement server-side endpoint for coverage-based visibility
-   * or compute coverage client-side if all data is available.
+   * Apply filters to collapse/expand annotation subgraphs.
+   * When an annotation is unchecked, it collapses to a single pentagon node.
+   * When checked, it expands back to show the full subgraph.
    */
   function applyFilters() {
     const net = getNetwork();
@@ -144,17 +133,132 @@
 
     try {
       const annotationStates = getAnnotationFilterStates();
-
       const nodes = net.body.data.nodes;
       const edges = net.body.data.edges;
 
+      // Determine which annotations should be collapsed (unchecked)
+      const newlyCollapsed = new Set();
+      const newlyExpanded = new Set();
+
+      for (const annId in annotationStates) {
+        const isVisible = annotationStates[annId];
+        const wasCollapsed = collapsedAnnotations.has(annId);
+
+        if (!isVisible && !wasCollapsed) {
+          newlyCollapsed.add(annId);
+        } else if (isVisible && wasCollapsed) {
+          newlyExpanded.add(annId);
+        }
+      }
+
+      // Expand annotations first (remove collapse nodes)
+      for (const annId of newlyExpanded) {
+        collapseAnnotation(annId, false);
+        collapsedAnnotations.delete(annId);
+      }
+
+      // Collapse annotations (create collapse nodes)
+      for (const annId of newlyCollapsed) {
+        collapseAnnotation(annId, true);
+        collapsedAnnotations.add(annId);
+      }
+
+      // Update visibility for nodes/edges based on collapsed state
+      // Only nodes that are COVERED by the annotation are collapsed
+      // Coverage: node is in annotation AND all outgoing edges are in annotation
       const nodeUpdates = [];
+      const edgeUpdates = [];
+
+      // Build sets of nodes and edges for each collapsed annotation
+      const nodesByAnnotation = {};
+      const edgesByAnnotation = {}; // Set of edge tuples (from, to)
+      const entryNodesByAnnotation = {};
+      const exitNodesByAnnotation = {};
+      const coveredNodesByAnnotation = {}; // Nodes that are covered (will be collapsed)
+
+      // First pass: build annotation data structures
+      for (const annId of collapsedAnnotations) {
+        const annotation = annotationData[annId];
+        if (annotation) {
+          const annNodes = new Set(
+            (annotation.nodes || annotation.subgraph_nodes || []).map((n) =>
+              parseInt(n, 10)
+            )
+          );
+          const annEdges = new Set(
+            (annotation.edges || annotation.subgraph_connections || []).map(
+              (edge) => {
+                const from = parseInt(edge[0] || edge.from || edge, 10);
+                const to = parseInt(edge[1] || edge.to || edge, 10);
+                return `${from},${to}`;
+              }
+            )
+          );
+          const entryNodes = new Set(
+            (annotation.entry_nodes || []).map((n) => parseInt(n, 10))
+          );
+          const exitNodes = new Set(
+            (annotation.exit_nodes || []).map((n) => parseInt(n, 10))
+          );
+
+          nodesByAnnotation[annId] = annNodes;
+          edgesByAnnotation[annId] = annEdges;
+          entryNodesByAnnotation[annId] = entryNodes;
+          exitNodesByAnnotation[annId] = exitNodes;
+
+          // Compute covered nodes: nodes where all outgoing edges are in annotation
+          // Coverage definition: covered_A(v) = (v ∈ V_A) ∧ (E_out(v) ⊆ E_A)
+          // Exit nodes can be covered if all their outgoing edges are in the annotation
+          const coveredNodes = new Set();
+          annNodes.forEach((nodeId) => {
+            // Output nodes are never covered (per paper specification)
+            const nodeMeta = nodeFilterMetadata[nodeId.toString()];
+            if (
+              nodeMeta &&
+              (nodeMeta.is_output || nodeMeta.node_type === "output")
+            ) {
+              return; // Skip output nodes
+            }
+
+            // Check if all outgoing edges from this node are in the annotation
+            let allOutgoingInAnnotation = true;
+            edges.forEach((edge) => {
+              const fromNodeId = parseInt(edge.from, 10);
+              if (fromNodeId === nodeId) {
+                const toNodeId = parseInt(edge.to, 10);
+                const edgeKey = `${fromNodeId},${toNodeId}`;
+                if (!annEdges.has(edgeKey)) {
+                  allOutgoingInAnnotation = false;
+                }
+              }
+            });
+
+            // Node is covered if all outgoing edges are in annotation
+            // This applies to entry, intermediate, AND exit nodes
+            if (allOutgoingInAnnotation) {
+              coveredNodes.add(nodeId);
+            }
+          });
+
+          coveredNodesByAnnotation[annId] = coveredNodes;
+        }
+      }
+
+      // Second pass: determine node visibility
       nodes.forEach((node) => {
         const nodeMeta = nodeFilterMetadata[node.id?.toString()];
         let visible = true;
 
+        // Handle collapse nodes themselves
+        if (node.id && node.id.toString().startsWith("collapse_")) {
+          // Show collapse node only if its annotation is collapsed
+          const collapseAnnId = node.id.toString().replace("collapse_", "");
+          visible = collapsedAnnotations.has(collapseAnnId);
+          nodeUpdates.push({ id: node.id, hidden: !visible });
+          return;
+        }
+
         // Output nodes are always visible (per paper specification)
-        // They should never be filtered, even if part of annotations
         if (
           nodeMeta &&
           (nodeMeta.is_output || nodeMeta.node_type === "output")
@@ -164,21 +268,20 @@
           return;
         }
 
-        if (nodeMeta) {
-          // Simplified visibility: node is visible if at least one containing annotation is visible
-          // This should be replaced with coverage-based visibility when server-side support is added
-          const annotationIds = nodeMeta.annotation_ids || [];
-          if (annotationIds.length > 0) {
-            let atLeastOneVisible = false;
-            for (const annId of annotationIds) {
-              if (annotationStates[annId] === true) {
-                atLeastOneVisible = true;
-                break;
-              }
-            }
-            if (!atLeastOneVisible) {
-              visible = false;
-            }
+        const nodeId = parseInt(node.id, 10);
+
+        // Check if node should be collapsed (is covered by a collapsed annotation)
+        // Collapse logic:
+        // - Entry nodes: collapse if covered
+        // - Intermediate nodes: collapse if covered (should all be covered after splitting)
+        // - Exit nodes: collapse ONLY if covered (if they have outgoing connections outside, they're not covered and stay visible)
+        for (const annId of collapsedAnnotations) {
+          const coveredNodes = coveredNodesByAnnotation[annId] || new Set();
+
+          // Collapse if node is covered (applies to entry, intermediate, AND exit nodes)
+          if (coveredNodes.has(nodeId)) {
+            visible = false;
+            break;
           }
         }
 
@@ -189,28 +292,139 @@
         nodes.update(nodeUpdates);
       }
 
-      const edgeUpdates = [];
-      edges.forEach((edge) => {
-        let visible = true;
-        const edgeKey = `${edge.from},${edge.to}`;
-        const edgeMeta = edgeFilterMetadata[edgeKey];
+      // First, collect external connections BEFORE hiding edges
+      // This will be used to create redirect edges
+      const externalConnections = {};
+      for (const annId of collapsedAnnotations) {
+        externalConnections[annId] = {
+          incoming: [], // {from, to} where to is a COVERED entry node
+          outgoing: [], // {from, to} where from is an exit node
+        };
+      }
 
-        if (edgeMeta) {
-          const annotationIds = edgeMeta.annotation_ids || [];
-          if (annotationIds.length > 0) {
-            let atLeastOneVisible = false;
-            for (const annId of annotationIds) {
-              if (annotationStates[annId] === true) {
-                atLeastOneVisible = true;
-                break;
-              }
-            }
-            if (!atLeastOneVisible) {
-              visible = false;
-            }
-          }
+      // Collect external connections by checking all edges
+      edges.forEach((edge) => {
+        const fromNodeId = parseInt(edge.from, 10);
+        const toNodeId = parseInt(edge.to, 10);
+
+        // Skip redirect edges
+        if (edge.id && edge.id.toString().startsWith("collapse_redirect_")) {
+          return;
         }
 
+        // Check each collapsed annotation
+        for (const annId of collapsedAnnotations) {
+          const annNodes = nodesByAnnotation[annId] || new Set();
+          const entryNodes = entryNodesByAnnotation[annId] || new Set();
+          const exitNodes = exitNodesByAnnotation[annId] || new Set();
+          const coveredNodes = coveredNodesByAnnotation[annId] || new Set();
+
+          const fromInAnnotation = annNodes.has(fromNodeId);
+          const toInAnnotation = annNodes.has(toNodeId);
+          const fromIsCovered = coveredNodes.has(fromNodeId);
+          const toIsCovered = coveredNodes.has(toNodeId);
+          const fromIsExit = exitNodes.has(fromNodeId);
+          const toIsEntry = entryNodes.has(toNodeId);
+
+          // Edge from outside to covered entry node
+          // Only redirect if the entry node is COVERED (will be collapsed)
+          if (!fromInAnnotation && toIsEntry && toIsCovered) {
+            externalConnections[annId].incoming.push({
+              from: fromNodeId,
+              to: toNodeId,
+              entryNodeId: toNodeId, // Track which entry node for labeling
+            });
+          }
+
+          // Edge from exit node to outside
+          // Only redirect if exit node is COVERED (will be collapsed)
+          // If exit node is not covered, it stays visible and keeps its edges
+          if (fromIsExit && !toInAnnotation && fromIsCovered) {
+            externalConnections[annId].outgoing.push({
+              from: fromNodeId,
+              to: toNodeId,
+              exitNodeId: fromNodeId, // Track which exit node for labeling
+            });
+          }
+
+          // Edge from covered node to exit node
+          // Covered node is collapsed, exit node may or may not be covered
+          if (fromIsCovered && fromInAnnotation && toIsExit) {
+            externalConnections[annId].outgoing.push({
+              from: fromNodeId,
+              to: toNodeId,
+              exitNodeId: toNodeId, // Track which exit node for labeling
+            });
+          }
+        }
+      });
+
+      // Process edges: hide edges appropriately
+      edges.forEach((edge) => {
+        let visible = true;
+        const fromNodeId = parseInt(edge.from, 10);
+        const toNodeId = parseInt(edge.to, 10);
+
+        // Skip redirect edges - they're managed separately
+        if (edge.id && edge.id.toString().startsWith("collapse_redirect_")) {
+          edgeUpdates.push({ id: edge.id, hidden: false }); // Keep redirect edges visible
+          return;
+        }
+
+        // Check each collapsed annotation
+        for (const annId of collapsedAnnotations) {
+          const annNodes = nodesByAnnotation[annId] || new Set();
+          const entryNodes = entryNodesByAnnotation[annId] || new Set();
+          const exitNodes = exitNodesByAnnotation[annId] || new Set();
+          const coveredNodes = coveredNodesByAnnotation[annId] || new Set();
+
+          const fromInAnnotation = annNodes.has(fromNodeId);
+          const toInAnnotation = annNodes.has(toNodeId);
+          const fromIsCovered = coveredNodes.has(fromNodeId);
+          const toIsCovered = coveredNodes.has(toNodeId);
+          const fromIsExit = exitNodes.has(fromNodeId);
+          const toIsEntry = entryNodes.has(toNodeId);
+
+          // Case 1: Both endpoints are covered - hide (internal edge)
+          if (fromIsCovered && toIsCovered) {
+            visible = false;
+            break;
+          }
+          // Case 2: Edge from covered node to outside - hide (will be replaced by redirect)
+          else if (fromIsCovered && !toInAnnotation) {
+            visible = false;
+            break;
+          }
+          // Case 3: Edge from outside to covered entry node - hide (will be replaced by redirect)
+          else if (!fromInAnnotation && toIsCovered && toIsEntry) {
+            visible = false;
+            break;
+          }
+          // Case 4: Edge from covered exit node to outside - hide (will be replaced by redirect)
+          // If exit node is not covered, it stays visible and keeps its edges visible
+          else if (fromIsExit && !toInAnnotation && fromIsCovered) {
+            visible = false;
+            break;
+          }
+          // Case 5: Edge from covered node to exit node
+          // If exit node is covered, both are collapsed - hide edge
+          // If exit node is not covered, covered node is collapsed but exit stays visible - hide edge and redirect
+          else if (fromIsCovered && toIsExit) {
+            visible = false;
+            break;
+          }
+          // Case 6: Edge from covered node to non-covered entry node - hide (covered node is collapsed)
+          else if (fromIsCovered && toIsEntry && !toIsCovered) {
+            visible = false;
+            break;
+          }
+          // Case 7: Edge from non-covered exit node to outside - keep visible (exit node stays visible)
+          // This is handled by not hiding it above (only covered exit nodes are hidden in Case 4)
+          // Case 8: Edge from non-covered entry node - keep visible (entry node is still visible)
+          // This is handled by not hiding it above
+        }
+
+        // Hide if either endpoint is hidden
         const fromNode = nodes.get(edge.from);
         const toNode = nodes.get(edge.to);
         if ((fromNode && fromNode.hidden) || (toNode && toNode.hidden)) {
@@ -223,8 +437,171 @@
       if (edgeUpdates.length > 0) {
         edges.update(edgeUpdates);
       }
+
+      // Clean up old redirect edges for collapsed annotations before creating new ones
+      const redirectEdgesToRemove = [];
+      edges.forEach((edge) => {
+        if (edge.id && edge.id.toString().startsWith("collapse_redirect_")) {
+          redirectEdgesToRemove.push(edge.id);
+        }
+      });
+      redirectEdgesToRemove.forEach((edgeId) => {
+        edges.remove({ id: edgeId });
+      });
+
+      // Create redirect edges based on collected external connections
+      // Add visual labels to distinguish multiple entry/exit connection points
+      for (const annId of collapsedAnnotations) {
+        const collapseNodeId = collapseNodes[annId];
+        if (!collapseNodeId) continue;
+
+        const connections = externalConnections[annId];
+        if (!connections) continue;
+
+        const annotation = annotationData[annId];
+        const entryNodes = (annotation?.entry_nodes || []).map((n) =>
+          parseInt(n, 10)
+        );
+        const exitNodes = (annotation?.exit_nodes || []).map((n) =>
+          parseInt(n, 10)
+        );
+
+        // Create edges from outside to collapse node (for incoming connections)
+        // Label with entry point identifier (entry_0, entry_1, etc.)
+        connections.incoming.forEach((conn) => {
+          const entryNodeId = conn.entryNodeId || conn.to;
+          const entryIndex = entryNodes.indexOf(entryNodeId);
+          const entryLabel =
+            entryIndex >= 0
+              ? `entry_${String.fromCharCode(97 + entryIndex)}` // a, b, c, etc.
+              : `entry_${entryNodeId}`;
+          const redirectEdgeId = `collapse_redirect_${annId}_entry_${conn.from}_${conn.to}`;
+          edges.add({
+            id: redirectEdgeId,
+            from: conn.from,
+            to: collapseNodeId,
+            label: entryLabel,
+            color: { color: "#FF6B6B" },
+            dashes: true,
+            width: 2,
+            font: { size: 10, align: "middle" },
+          });
+        });
+
+        // Create edges from collapse node to outside (for outgoing connections)
+        // Label with exit point identifier (exit_0, exit_1, etc.)
+        connections.outgoing.forEach((conn) => {
+          const exitNodeId = conn.exitNodeId || conn.from;
+          const exitIndex = exitNodes.indexOf(exitNodeId);
+          const exitLabel =
+            exitIndex >= 0
+              ? `exit_${String.fromCharCode(97 + exitIndex)}` // a, b, c, etc.
+              : `exit_${exitNodeId}`;
+          const redirectEdgeId = `collapse_redirect_${annId}_exit_${conn.from}_${conn.to}`;
+          edges.add({
+            id: redirectEdgeId,
+            from: collapseNodeId,
+            to: conn.to,
+            label: exitLabel,
+            color: { color: "#FF6B6B" },
+            dashes: true,
+            width: 2,
+            font: { size: 10, align: "middle" },
+          });
+        });
+      }
     } catch (error) {
       console.error("GenomeViewer: error applying filters", error);
+    }
+  }
+
+  function collapseAnnotation(annId, collapse) {
+    const net = getNetwork();
+    if (!net || !net.body || !net.body.data) return;
+
+    const nodes = net.body.data.nodes;
+    const edges = net.body.data.edges;
+    const annotation = annotationData[annId];
+
+    if (!annotation) {
+      console.warn(`Annotation ${annId} not found in annotationData`);
+      return;
+    }
+
+    if (collapse) {
+      // Create collapse node
+      const collapseNodeId = `collapse_${annId}`;
+      collapseNodes[annId] = collapseNodeId;
+
+      // Find all nodes in this annotation
+      const annNodes = annotation.nodes || annotation.subgraph_nodes || [];
+      const annEdges =
+        annotation.edges || annotation.subgraph_connections || [];
+
+      // Calculate center position of annotation subgraph
+      let sumX = 0;
+      let sumY = 0;
+      let count = 0;
+
+      annNodes.forEach((nodeId) => {
+        const node = nodes.get(parseInt(nodeId, 10));
+        if (node && node.x !== undefined && node.y !== undefined) {
+          sumX += node.x;
+          sumY += node.y;
+          count++;
+        }
+      });
+
+      const centerX = count > 0 ? sumX / count : 0;
+      const centerY = count > 0 ? sumY / count : 0;
+
+      // Get annotation name
+      const annName = annotation.name || `Annotation ${annId.substring(0, 8)}`;
+
+      // Create pentagon collapse node
+      const collapseNode = {
+        id: collapseNodeId,
+        label: annName,
+        shape: "pentagon",
+        x: centerX,
+        y: centerY,
+        fixed: { x: false, y: false },
+        color: {
+          border: "#FF6B6B",
+          background: "#FFE5E5",
+          highlight: { border: "#FF6B6B", background: "#FFE5E5" },
+        },
+        size: 30,
+        font: { size: 12 },
+      };
+
+      nodes.add(collapseNode);
+      // Note: Redirect edges are created in applyFilters() based on external connections
+    } else {
+      // Remove collapse node and redirect edges
+      const collapseNodeId = collapseNodes[annId];
+      if (collapseNodeId) {
+        nodes.remove({ id: collapseNodeId });
+
+        // Remove redirect edges (created in applyFilters)
+        const edgesToRemove = [];
+        edges.forEach((edge) => {
+          if (
+            edge.id &&
+            (edge.id
+              .toString()
+              .startsWith(`collapse_redirect_${annId}_entry_`) ||
+              edge.id.toString().startsWith(`collapse_redirect_${annId}_exit_`))
+          ) {
+            edgesToRemove.push(edge.id);
+          }
+        });
+        edgesToRemove.forEach((edgeId) => {
+          edges.remove({ id: edgeId });
+        });
+
+        delete collapseNodes[annId];
+      }
     }
   }
 

@@ -169,3 +169,4 @@ class TestDirectConnectionsAnnotation:
         # Edge (-2, 1) should NOT be covered (endpoint -2 not covered)
         assert (-2, 1) not in edge_coverage
 
+

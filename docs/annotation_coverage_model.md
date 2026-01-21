@@ -206,11 +206,12 @@ An explanation is **well-formed** if:
 When a node serves multiple functions (sending outputs both within a subgraph and outside it), we can resolve this through **node splitting**.
 
 A single node $v$ is conceptually replaced by multiple split nodes $\{v_1, v_2, \ldots, v_k\}$ where:
-- Each split node $v_i$ carries a **subset** of the original node's outgoing connections
+- Each split node $v_i$ carries **exactly one** outgoing connection from the original node (full splitting)
 - The union of all split nodes' outgoing connections equals the original node's outgoing connections: $\bigcup_{i=1}^{k} E_{\text{out}}(v_i) = E_{\text{out}}(v)$
 - All split nodes share the same incoming connections as the original node: $E_{\text{in}}(v_i) = E_{\text{in}}(v)$ for all $i$
+- This ensures each split node has exactly one outgoing connection, preventing the need for multiple rounds of splitting
 
-When computing coverage for a split node, use the split node ID with its specific outgoing connections subset.
+When computing coverage for a split node, use the split node ID with its specific outgoing connection. Multiple split nodes can be included in an annotation to recombine them conceptually.
 
 ## Explanation Data Model
 
@@ -233,7 +234,7 @@ An explanation contains:
 
 4. **Filtering Performance:** For efficiency, coverage can be precomputed when annotations are loaded, but must be recomputed if the graph structure changes.
 
-5. **Node Splitting:** Node splits are materialized in a separate database table, allowing multiple splits on a single original node. Each split carries a subset of outgoing connections, and the union must cover all outgoing connections of the original node.
+5. **Node Splitting:** Node splits are materialized in a separate database table, allowing multiple splits on a single original node. Each split carries exactly one outgoing connection (full splitting), and the union must cover all outgoing connections of the original node. This prevents the need for multiple rounds of splitting.
 
 6. **Explanation Context:** Coverage calculations work within the context of a specific explanation, which includes its annotations and splits.
 

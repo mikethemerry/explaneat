@@ -9,7 +9,7 @@ Implements the exact mathematical definitions from Beyond_Intuition.pdf:
 - Visibility: visible(v) = ¬covered(hidden_annotations) ∨ (v ∈ V_O)
 """
 
-from typing import Dict, Set, List, Tuple, Any, Optional
+from typing import Dict, Set, List, Tuple, Any, Optional, Union
 from collections import defaultdict
 
 
@@ -24,19 +24,19 @@ class CoverageComputer:
 
     def __init__(
         self,
-        all_nodes: Set[int],
-        all_edges: Set[Tuple[int, int]],
-        input_nodes: Set[int],
-        output_nodes: Set[int],
+        all_nodes: Set[str],
+        all_edges: Set[Tuple[str, str]],
+        input_nodes: Set[str],
+        output_nodes: Set[str],
     ):
         """
         Initialize coverage computer.
         
         Args:
-            all_nodes: Set of all node IDs in the graph
-            all_edges: Set of all edge tuples (from_node, to_node)
-            input_nodes: Set of input node IDs
-            output_nodes: Set of output node IDs
+            all_nodes: Set of all node IDs in the graph (strings)
+            all_edges: Set of all edge tuples (from_node, to_node) (strings)
+            input_nodes: Set of input node IDs (strings)
+            output_nodes: Set of output node IDs (strings)
         """
         self.all_nodes = all_nodes
         self.all_edges = all_edges
@@ -44,8 +44,8 @@ class CoverageComputer:
         self.output_nodes = output_nodes
         
         # Build adjacency structures for efficient lookup
-        self.outgoing_edges: Dict[int, Set[Tuple[int, int]]] = defaultdict(set)
-        self.incoming_edges: Dict[int, Set[Tuple[int, int]]] = defaultdict(set)
+        self.outgoing_edges: Dict[str, Set[Tuple[str, str]]] = defaultdict(set)
+        self.incoming_edges: Dict[str, Set[Tuple[str, str]]] = defaultdict(set)
         
         for from_node, to_node in all_edges:
             self.outgoing_edges[from_node].add((from_node, to_node))
@@ -55,7 +55,7 @@ class CoverageComputer:
         self,
         annotations: List[Dict[str, Any]],
         node_splits: Optional[List[Dict[str, Any]]] = None,
-    ) -> Tuple[Dict[int, Set[str]], Dict[Tuple[int, int], Set[str]]]:
+    ) -> Tuple[Dict[str, Set[str]], Dict[Tuple[str, str], Set[str]]]:
         """
         Compute which nodes and edges are covered by which annotations.
         
@@ -75,34 +75,38 @@ class CoverageComputer:
             - node_coverage: dict mapping node_id -> set of annotation IDs that cover it
             - edge_coverage: dict mapping (from, to) -> set of annotation IDs that cover it
         """
-        # Build node splits lookup: original_node_id -> {split_node_id: outgoing_connections_set}
-        splits_lookup: Dict[int, Dict[int, Set[Tuple[int, int]]]] = {}
+        # Build node splits lookup: original_node_id (string) -> {split_node_id: outgoing_connections_set}
+        # All node IDs are now strings
+        splits_lookup: Dict[str, Dict[str, Set[Tuple[str, str]]]] = {}
         if node_splits:
             for split in node_splits:
-                orig_id = split.get("original_node_id")
-                split_id = split.get("split_node_id")
-                outgoing = {
-                    tuple(conn) if isinstance(conn, (list, tuple)) else conn
-                    for conn in split.get("outgoing_connections", [])
-                }
+                orig_id = str(split.get("original_node_id"))  # Ensure it's a string
+                split_mappings = split.get("split_mappings", {})
                 if orig_id not in splits_lookup:
                     splits_lookup[orig_id] = {}
-                splits_lookup[orig_id][split_id] = outgoing
+                for split_id, outgoing_conns in split_mappings.items():
+                    # Convert connections to string tuples
+                    outgoing = {
+                        (str(conn[0]), str(conn[1])) if isinstance(conn, (list, tuple)) and len(conn) == 2 else conn
+                        for conn in outgoing_conns
+                    }
+                    splits_lookup[orig_id][split_id] = outgoing
         
         # First, compute coverage for each annotation individually
         # Then combine to handle cases where multiple annotations together cover nodes
         
         # Store per-annotation coverage
-        per_ann_node_coverage: Dict[str, Set[int]] = {}
-        per_ann_edge_coverage: Dict[str, Set[Tuple[int, int]]] = {}
+        per_ann_node_coverage: Dict[str, Set[str]] = {}  # All node IDs are strings
+        per_ann_edge_coverage: Dict[str, Set[Tuple[str, str]]] = {}  # All node IDs are strings
         
         for ann in annotations:
             ann_id = str(ann.get("id", ""))
-            entry_nodes = set(ann.get("entry_nodes", []))
-            exit_nodes = set(ann.get("exit_nodes", []))
-            subgraph_nodes = set(ann.get("subgraph_nodes", []))
+            # Convert all node IDs to strings
+            entry_nodes = {str(nid) for nid in ann.get("entry_nodes", [])}
+            exit_nodes = {str(nid) for nid in ann.get("exit_nodes", [])}
+            subgraph_nodes = {str(nid) for nid in ann.get("subgraph_nodes", [])}
             subgraph_edges = {
-                tuple(edge) if isinstance(edge, (list, tuple)) else edge
+                (str(edge[0]), str(edge[1])) if isinstance(edge, (list, tuple)) and len(edge) == 2 else edge
                 for edge in ann.get("subgraph_connections", [])
             }
             
@@ -115,8 +119,8 @@ class CoverageComputer:
             per_ann_edge_coverage[ann_id] = covered_edges
         
         # Combine coverage: a node/edge is covered by an annotation if it's in that annotation's coverage
-        node_coverage: Dict[int, Set[str]] = defaultdict(set)
-        edge_coverage: Dict[Tuple[int, int], Set[str]] = defaultdict(set)
+        node_coverage: Dict[str, Set[str]] = defaultdict(set)  # All node IDs are strings
+        edge_coverage: Dict[Tuple[str, str], Set[str]] = defaultdict(set)  # All node IDs are strings
         
         for ann_id, nodes in per_ann_node_coverage.items():
             for node_id in nodes:
@@ -137,12 +141,12 @@ class CoverageComputer:
     def _compute_single_annotation_coverage(
         self,
         ann_id: str,
-        entry_nodes: Set[int],
-        exit_nodes: Set[int],
-        subgraph_nodes: Set[int],
-        subgraph_edges: Set[Tuple[int, int]],
-        node_splits: Optional[Dict[int, Dict[int, Set[Tuple[int, int]]]]] = None,
-    ) -> Tuple[Set[int], Set[Tuple[int, int]]]:
+        entry_nodes: Set[str],  # All node IDs are now strings
+        exit_nodes: Set[str],  # All node IDs are now strings
+        subgraph_nodes: Set[str],  # All node IDs are now strings
+        subgraph_edges: Set[Tuple[str, str]],  # All node IDs are now strings
+        node_splits: Optional[Dict[str, Dict[str, Set[Tuple[str, str]]]]] = None,  # All node IDs are strings
+    ) -> Tuple[Set[str], Set[Tuple[str, str]]]:
         """
         Compute coverage for a single annotation using exact paper definition.
         
@@ -151,8 +155,8 @@ class CoverageComputer:
         Returns:
             Tuple of (covered_nodes, covered_edges)
         """
-        covered_nodes: Set[int] = set()
-        covered_edges: Set[Tuple[int, int]] = set()
+        covered_nodes: Set[str] = set()  # All node IDs are strings
+        covered_edges: Set[Tuple[str, str]] = set()  # All node IDs are strings
         
         # Output nodes are never covered (per paper)
         candidate_nodes = subgraph_nodes - self.output_nodes
@@ -176,7 +180,7 @@ class CoverageComputer:
             # Also check split nodes if they exist for this original node
             if node_splits and node_id in node_splits:
                 for split_node_id in node_splits[node_id]:
-                    # Check if split node is in subgraph (as split_node_id)
+                    # Check if split node is in subgraph (as split_node_id string)
                     if split_node_id in subgraph_nodes:
                         is_split_covered = self._is_node_covered_by_annotation(
                             split_node_id,
@@ -211,20 +215,20 @@ class CoverageComputer:
     
     def _is_node_covered_by_annotation(
         self,
-        node_id: int,
-        entry_nodes: Set[int],
-        exit_nodes: Set[int],
-        subgraph_nodes: Set[int],
-        subgraph_edges: Set[Tuple[int, int]],
-        currently_covered_nodes: Set[int],
-        node_splits: Optional[Dict[int, Dict[int, Set[Tuple[int, int]]]]] = None,
+        node_id: str,  # All node IDs are strings
+        entry_nodes: Set[str],  # All node IDs are strings
+        exit_nodes: Set[str],  # All node IDs are strings
+        subgraph_nodes: Set[str],  # All node IDs are strings
+        subgraph_edges: Set[Tuple[str, str]],  # All node IDs are strings
+        currently_covered_nodes: Set[str],  # All node IDs are strings
+        node_splits: Optional[Dict[str, Dict[str, Set[Tuple[str, str]]]]] = None,  # All node IDs are strings
     ) -> bool:
         """
         Determine if a node is covered by an annotation using exact paper definition.
         
         Paper definition: covered_A(v) = (v ∈ V_A) ∧ (E_out(v) ⊆ E_A)
         
-        For split nodes: use split_node_id with its specific outgoing_connections subset.
+        For split nodes: use split_node_id with its specific outgoing_connections (single connection per split node).
         All split nodes share the original node's incoming connections.
         
         Args:
@@ -243,15 +247,16 @@ class CoverageComputer:
         if node_id in self.output_nodes:
             return False
         
-        # Check if this is a split node
+        # Check if this is a split node (string split_node_id like "5_a")
         original_node_id = node_id
         split_outgoing_edges = None
         if node_splits:
-            for orig_id, splits in node_splits.items():
-                if node_id in splits:
-                    original_node_id = orig_id
-                    split_outgoing_edges = splits[node_id]
-                    break
+            # Extract original node ID from split_node_id string
+            from ..analysis.node_splitting import NodeSplitManager
+            orig_id = NodeSplitManager.get_original_node_id_from_split(node_id)
+            if orig_id and orig_id in node_splits:
+                original_node_id = orig_id
+                split_outgoing_edges = node_splits[orig_id].get(node_id)
         
         # Get outgoing edges for this node
         if split_outgoing_edges is not None:
@@ -277,10 +282,10 @@ class CoverageComputer:
     def _compute_combined_coverage(
         self,
         annotations: List[Dict[str, Any]],
-        node_coverage: Dict[int, Set[str]],
-        edge_coverage: Dict[Tuple[int, int], Set[str]],
-        per_ann_node_coverage: Dict[str, Set[int]],
-        per_ann_edge_coverage: Dict[str, Set[Tuple[int, int]]],
+        node_coverage: Dict[str, Set[str]],
+        edge_coverage: Dict[Tuple[str, str], Set[str]],
+        per_ann_node_coverage: Dict[str, Set[str]],
+        per_ann_edge_coverage: Dict[str, Set[Tuple[str, str]]],
     ) -> None:
         """
         Compute coverage when multiple annotations are considered together.
@@ -653,4 +658,3 @@ def compute_visibility_for_explanation(
         
         # Compute visibility
         return computer.compute_visibility(ann_dicts, hidden_annotation_ids, splits_list)
-

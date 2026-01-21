@@ -556,7 +556,15 @@ class Explanation(Base, TimestampMixin):
 
 
 class NodeSplit(Base, TimestampMixin):
-    """Stores node splits for dual-function nodes"""
+    """Stores node splits for dual-function nodes.
+    
+    Each row represents a complete split of one original node.
+    The split_mappings JSONB contains all split nodes for this original node.
+    
+    split_mappings format: {"5_a": [[5, 10]], "5_b": [[5, 20]], "5_c": [[5, 30]]}
+    Maps split_node_id (string like "5_a") -> list of outgoing connections.
+    With full splitting, each split node has exactly one outgoing connection.
+    """
 
     __tablename__ = "node_splits"
 
@@ -566,13 +574,10 @@ class NodeSplit(Base, TimestampMixin):
         ForeignKey("genomes.id", ondelete="CASCADE"),
         nullable=False,
     )
-    original_node_id = Column(Integer, nullable=False)  # The node being split
-    split_node_id = Column(
-        Integer, nullable=False
-    )  # Unique ID for this split node (must be unique per original node within explanation)
-    outgoing_connections = Column(
+    original_node_id = Column(String(50), nullable=False)  # The node being split (string to support split nodes connecting to split nodes)
+    split_mappings = Column(
         JSONB, nullable=False
-    )  # Array of [from_node, to_node] tuples - subset of original node's outgoing connections
+    )  # Maps split_node_id (str) -> list of outgoing connections: {"5_a": [[5, 10]], "5_b": [[5, 20]]}
     annotation_id = Column(
         UUID(as_uuid=True), ForeignKey("annotations.id", ondelete="SET NULL"), nullable=True
     )  # Which annotation uses this split (for tracking)
@@ -587,8 +592,8 @@ class NodeSplit(Base, TimestampMixin):
 
     __table_args__ = (
         Index("idx_node_splits_genome_original", "genome_id", "original_node_id"),
-        Index("idx_node_splits_genome_split", "genome_id", "split_node_id"),
         Index("idx_node_splits_explanation", "explanation_id"),
+        Index("idx_node_splits_unique", "genome_id", "original_node_id", "explanation_id", unique=True),
     )
 
     def to_dict(self):
@@ -597,22 +602,40 @@ class NodeSplit(Base, TimestampMixin):
             "id": str(self.id),
             "genome_id": str(self.genome_id),
             "original_node_id": self.original_node_id,
-            "split_node_id": self.split_node_id,
-            "outgoing_connections": self.outgoing_connections,
+            "split_mappings": self.split_mappings,
             "annotation_id": str(self.annotation_id) if self.annotation_id else None,
             "explanation_id": str(self.explanation_id) if self.explanation_id else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
-    def get_outgoing_connections(self) -> List[Tuple[int, int]]:
-        """Get outgoing connections as list of tuples"""
-        if not self.outgoing_connections:
+    def get_split_node_ids(self) -> List[str]:
+        """Get list of all split_node_ids for this split"""
+        if not self.split_mappings:
             return []
+        return list(self.split_mappings.keys())
+
+    def get_outgoing_connections_for_split(self, split_node_id: str) -> List[Tuple[int, int]]:
+        """Get outgoing connections for a specific split node"""
+        if not self.split_mappings or split_node_id not in self.split_mappings:
+            return []
+        conns = self.split_mappings[split_node_id]
         return [
             tuple(conn) if isinstance(conn, (list, tuple)) else conn
-            for conn in self.outgoing_connections
+            for conn in conns
         ]
+
+    def get_all_outgoing_connections(self) -> List[Tuple[int, int]]:
+        """Get all outgoing connections across all split nodes"""
+        all_conns = []
+        if not self.split_mappings:
+            return all_conns
+        for split_node_id, conns in self.split_mappings.items():
+            all_conns.extend([
+                tuple(conn) if isinstance(conn, (list, tuple)) else conn
+                for conn in conns
+            ])
+        return all_conns
 
 
 class Annotation(Base, TimestampMixin):
@@ -632,12 +655,12 @@ class Annotation(Base, TimestampMixin):
     evidence = Column(
         JSONB
     )  # Structured evidence: analytical_methods, visualizations, counterfactuals, other_evidence
-    entry_nodes = Column(JSONB, nullable=False)  # Array of entry node IDs
-    exit_nodes = Column(JSONB, nullable=False)  # Array of exit node IDs
-    subgraph_nodes = Column(JSONB, nullable=False)  # Array of all node IDs in the subgraph
+    entry_nodes = Column(JSONB, nullable=False)  # Array of entry node IDs (integers or string split_node_ids like "5_a")
+    exit_nodes = Column(JSONB, nullable=False)  # Array of exit node IDs (integers or string split_node_ids like "5_a")
+    subgraph_nodes = Column(JSONB, nullable=False)  # Array of all node IDs in the subgraph (integers or string split_node_ids like "5_a")
     subgraph_connections = Column(
         JSONB, nullable=False
-    )  # Array of connection tuples [from_node, to_node]
+    )  # Array of connection tuples [from_node, to_node] (nodes can be integers or string split_node_ids)
     is_connected = Column(
         Boolean, nullable=False, default=False
     )  # Validated connectivity flag

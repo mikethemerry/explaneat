@@ -2,8 +2,12 @@
 Node Splitting Manager for creating and managing node splits.
 
 Node splits allow dual-function nodes (nodes with edges both inside and outside
-an annotation) to be conceptually split into multiple nodes, each carrying a
-subset of the original node's outgoing connections.
+an annotation) to be conceptually split into multiple nodes. When a node is
+split, it is fully split - meaning a dedicated split node is created for each
+outgoing connection. Each split node carries exactly one outgoing connection.
+
+The split is stored as a single row per original_node_id, with split_mappings
+containing all split nodes: {"5_a": [[5, 10]], "5_b": [[5, 20]], "5_c": [[5, 30]]}
 """
 
 from typing import List, Tuple, Dict, Any, Optional, Set
@@ -11,6 +15,7 @@ import uuid
 
 from ..db import db, NodeSplit, Genome, Annotation, Explanation
 from ..core.genome_network import NetworkStructure
+from .explanation_manager import ExplanationManager
 
 
 class NodeSplitManager:
@@ -18,34 +23,111 @@ class NodeSplitManager:
     Manager class for creating and managing node splits.
     
     Handles split creation, validation, and queries.
+    Each split is stored as a single row with all split mappings.
     """
+    
+    @staticmethod
+    def format_split_node_display(split_node_id: str) -> str:
+        """
+        Format a split node ID for display.
+        
+        Args:
+            split_node_id: The split node ID (string like "5_a", "5_b")
+            
+        Returns:
+            Display string like "5_a", "5_b", etc.
+        """
+        return split_node_id
+    
+    @staticmethod
+    def get_original_node_id_from_split(split_node_id: str) -> Optional[str]:
+        """
+        Extract original node ID from split node ID string.
+        
+        Args:
+            split_node_id: The split node ID (string like "5_a", "5_b")
+            
+        Returns:
+            Original node ID as string if format matches (e.g., "5_a" -> "5"), None otherwise
+        """
+        try:
+            # Format is "node_id_letter" (e.g., "5_a", "10_b")
+            parts = split_node_id.split("_", 1)
+            if len(parts) == 2:
+                return parts[0]  # Return as string
+        except (ValueError, AttributeError):
+            pass
+        return None
 
     @staticmethod
-    def create_split(
+    def create_complete_split(
         genome_id: str,
-        original_node_id: int,
-        split_node_id: int,
-        outgoing_connections: List[Tuple[int, int]],
-        explanation_id: str,
+        original_node_id: str,
+        split_mappings: Dict[str, List[Tuple[str, str]]],
+        explanation_id: Optional[str] = None,
         annotation_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
-        Create a node split.
+        Create a complete node split with all split mappings.
+        
+        This creates or updates a single row containing all splits for the original node.
+        split_mappings format: {"5_a": [("5", "10")], "5_b": [("5", "20")], "5_c": [("5", "30")]}
         
         Args:
             genome_id: UUID of the genome
-            original_node_id: ID of the node being split
-            split_node_id: Unique ID for this split node (must be unique per original_node_id within explanation)
-            outgoing_connections: List of [from_node, to_node] tuples - subset of original node's outgoing connections
-            explanation_id: UUID of explanation this split belongs to
+            original_node_id: ID of the node being split (string, e.g., "5")
+            split_mappings: Dict mapping split_node_id (str) -> list of outgoing connections (str tuples)
+                Each split node should have exactly one outgoing connection (full splitting)
+            explanation_id: Optional UUID of explanation this split belongs to (auto-created if not provided)
             annotation_id: Optional UUID of annotation using this split
             
         Returns:
-            Dictionary representation of the created split
+            Dictionary representation of the created/updated split
             
         Raises:
             ValueError: If validation fails
         """
+        # Validate: Don't allow splitting input nodes (negative string IDs like "-1")
+        try:
+            orig_id_int = int(original_node_id)
+            if orig_id_int < 0:
+                raise ValueError(
+                    f"Cannot split input node {original_node_id}. Input nodes (negative IDs) should not be split."
+                )
+        except ValueError:
+            # If original_node_id can't be converted to int, it's likely already a string split node
+            # Allow it (split nodes can connect to other split nodes)
+            pass
+        
+        if not split_mappings:
+            raise ValueError("split_mappings cannot be empty")
+        
+        # Validate each split has exactly one connection (full splitting)
+        for split_node_id, conns in split_mappings.items():
+            if not conns:
+                raise ValueError(f"Split node {split_node_id} must have at least one outgoing connection")
+            # With full splitting, each split should have exactly one connection
+            if len(conns) > 1:
+                raise ValueError(
+                    f"Split node {split_node_id} has {len(conns)} connections. "
+                    "Full splitting requires exactly one connection per split node."
+                )
+            # Validate connection format
+            for conn in conns:
+                if not isinstance(conn, (list, tuple)) or len(conn) != 2:
+                    raise ValueError(f"Invalid connection format: {conn}. Expected [from_node, to_node]")
+                # Convert to strings for comparison
+                from_node_str = str(conn[0])
+                if from_node_str != original_node_id:
+                    raise ValueError(
+                        f"Connection {conn} has incorrect from_node. Expected {original_node_id}"
+                    )
+        
+        # Get or create explanation for this genome (single explanation per genome)
+        if not explanation_id:
+            explanation = ExplanationManager.get_or_create_explanation(genome_id)
+            explanation_id = explanation["id"]
+        
         # Validate explanation exists
         with db.session_scope() as session:
             explanation = session.get(Explanation, explanation_id)
@@ -59,83 +141,51 @@ class NodeSplitManager:
             if not genome:
                 raise ValueError(f"Genome {genome_id} not found")
             
-            # Get existing splits for this node in this explanation
-            existing_splits = (
+            # Check if split already exists for this node
+            existing_split = (
                 session.query(NodeSplit)
                 .filter_by(
                     genome_id=genome_id,
                     original_node_id=original_node_id,
                     explanation_id=explanation_id,
                 )
-                .all()
+                .first()
             )
             
-            # Validate split_node_id is unique for this original_node_id within explanation
-            for existing_split in existing_splits:
-                if existing_split.split_node_id == split_node_id:
-                    raise ValueError(
-                        f"Split node ID {split_node_id} already exists for original node {original_node_id} in this explanation"
-                    )
-            
-            # Get original node's outgoing connections from genome
-            # TODO: Load genome and get actual outgoing connections
-            # For now, we'll validate in application layer
-            
-            # Validate no connection overlaps with existing splits
-            existing_connections: Set[Tuple[int, int]] = set()
-            for existing_split in existing_splits:
-                existing_connections.update(existing_split.get_outgoing_connections())
-            
-            new_connections = set(
-                tuple(conn) if isinstance(conn, (list, tuple)) else conn
-                for conn in outgoing_connections
-            )
-            
-            overlap = existing_connections & new_connections
-            if overlap:
-                raise ValueError(
-                    f"Connections {overlap} already belong to existing splits for this node"
+            if existing_split:
+                # Update existing split
+                existing_split.split_mappings = split_mappings
+                if annotation_id:
+                    existing_split.annotation_id = annotation_id
+                session.commit()
+                return existing_split.to_dict()
+            else:
+                # Create new split
+                node_split = NodeSplit(
+                    genome_id=genome_id,
+                    original_node_id=str(original_node_id),  # Ensure it's a string
+                    split_mappings=split_mappings,
+                    annotation_id=annotation_id,
+                    explanation_id=explanation_id,
                 )
-            
-            # Validate annotation_id if provided
-            if annotation_id:
-                annotation = session.get(Annotation, annotation_id)
-                if not annotation:
-                    raise ValueError(f"Annotation {annotation_id} not found")
-                if str(annotation.genome_id) != genome_id:
-                    raise ValueError("Annotation must belong to the same genome")
-                if str(annotation.explanation_id) != explanation_id:
-                    raise ValueError("Annotation must belong to the same explanation")
-        
-        # Create the split
-        with db.session_scope() as session:
-            node_split = NodeSplit(
-                genome_id=genome_id,
-                original_node_id=original_node_id,
-                split_node_id=split_node_id,
-                outgoing_connections=outgoing_connections,
-                annotation_id=annotation_id,
-                explanation_id=explanation_id,
-            )
-            session.add(node_split)
-            session.commit()
-            split_id = node_split.id
-        
-        # Return fresh query
-        with db.session_scope() as session:
-            node_split = session.get(NodeSplit, split_id)
-            if node_split:
-                return node_split.to_dict()
-            return None
+                session.add(node_split)
+                session.commit()
+                split_id = node_split.id
+                
+                # Return fresh query
+                node_split = session.get(NodeSplit, split_id)
+                if node_split:
+                    return node_split.to_dict()
+                return None
 
     @staticmethod
     def get_splits_for_node(
         genome_id: str,
-        original_node_id: int,
+        original_node_id: str,
         explanation_id: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+    ) -> Optional[Dict[str, Any]]:
         """
-        Get all splits for a node.
+        Get the split for a node (single row per node).
         
         Args:
             genome_id: UUID of the genome
@@ -143,35 +193,51 @@ class NodeSplitManager:
             explanation_id: Optional UUID of explanation to filter by
             
         Returns:
-            List of node split dictionaries
+            Node split dictionary or None if not found
         """
         with db.session_scope() as session:
             query = session.query(NodeSplit).filter_by(
-                genome_id=genome_id, original_node_id=original_node_id
+                genome_id=genome_id, original_node_id=str(original_node_id)
             )
             if explanation_id:
                 query = query.filter_by(explanation_id=explanation_id)
-            splits = query.all()
-            return [split.to_dict() for split in splits]
+            split = query.first()
+            if split:
+                return split.to_dict()
+            return None
 
     @staticmethod
-    def get_splits_for_explanation(explanation_id: str) -> List[Dict[str, Any]]:
+    def get_splits_for_explanation(explanation_id: str = None, genome_id: str = None) -> List[Dict[str, Any]]:
         """
         Get all splits for an explanation.
+        Can be called with either explanation_id or genome_id.
         
         Args:
-            explanation_id: UUID of the explanation
+            explanation_id: UUID of the explanation (optional)
+            genome_id: UUID of the genome (optional, used if explanation_id not provided)
             
         Returns:
             List of node split dictionaries
         """
         with db.session_scope() as session:
-            splits = (
-                session.query(NodeSplit)
-                .filter_by(explanation_id=explanation_id)
-                .all()
-            )
-            return [split.to_dict() for split in splits]
+            if explanation_id:
+                splits = (
+                    session.query(NodeSplit)
+                    .filter_by(explanation_id=explanation_id)
+                    .all()
+                )
+                return [split.to_dict() for split in splits]
+            elif genome_id:
+                explanation = (
+                    session.query(Explanation)
+                    .filter_by(genome_id=genome_id)
+                    .first()
+                )
+                if not explanation:
+                    return []  # No explanation yet, so no splits
+                return [split.to_dict() for split in explanation.node_splits]
+            else:
+                raise ValueError("Must provide either explanation_id or genome_id")
 
     @staticmethod
     def get_splits_for_genome(genome_id: str) -> List[Dict[str, Any]]:
@@ -193,137 +259,125 @@ class NodeSplitManager:
             return [split.to_dict() for split in splits]
 
     @staticmethod
-    def get_split_by_id(genome_id: str, split_node_id: int) -> Optional[Dict[str, Any]]:
+    def get_split_by_split_node_id(genome_id: str, split_node_id: str) -> Optional[Dict[str, Any]]:
         """
-        Get a specific split by split_node_id.
+        Get the split containing a specific split_node_id.
         
         Args:
             genome_id: UUID of the genome
-            split_node_id: ID of the split node
+            split_node_id: ID of the split node (e.g., "5_a")
             
         Returns:
             Node split dictionary or None
         """
-        with db.session_scope() as session:
-            split = (
-                session.query(NodeSplit)
-                .filter_by(genome_id=genome_id, split_node_id=split_node_id)
-                .first()
-            )
-            if split:
-                return split.to_dict()
+        original_node_id = NodeSplitManager.get_original_node_id_from_split(split_node_id)
+        if not original_node_id:
             return None
-
-    @staticmethod
-    def validate_splits_complete(
-        genome_id: str, original_node_id: int, explanation_id: str
-    ) -> Dict[str, Any]:
-        """
-        Validate that all splits for a node cover all outgoing connections.
         
-        Args:
-            genome_id: UUID of the genome
-            original_node_id: ID of the original node
-            explanation_id: UUID of the explanation
-            
-        Returns:
-            Dictionary with validation results
-        """
-        with db.session_scope() as session:
-            # Get all splits for this node in this explanation
-            splits = (
-                session.query(NodeSplit)
-                .filter_by(
-                    genome_id=genome_id,
-                    original_node_id=original_node_id,
-                    explanation_id=explanation_id,
-                )
-                .all()
-            )
-            
-            if not splits:
-                return {
-                    "is_complete": False,
-                    "message": "No splits found for this node",
-                }
-            
-            # Collect all outgoing connections from splits
-            split_connections: Set[Tuple[int, int]] = set()
-            for split in splits:
-                split_connections.update(split.get_outgoing_connections())
-            
-            # TODO: Get actual outgoing connections from genome
-            # For now, we can't fully validate without genome structure
-            # This should be implemented when we have access to genome network structure
-            
-            return {
-                "is_complete": True,  # Placeholder
-                "split_count": len(splits),
-                "total_connections_covered": len(split_connections),
-            }
-
-    @staticmethod
-    def get_incoming_connections(
-        genome_id: str, original_node_id: int
-    ) -> List[Tuple[int, int]]:
-        """
-        Get incoming connections for a node (shared by all splits).
-        
-        Args:
-            genome_id: UUID of the genome
-            original_node_id: ID of the original node
-            
-        Returns:
-            List of [from_node, to_node] tuples for incoming connections
-        """
-        # TODO: Load genome and get actual incoming connections
-        # This requires access to genome network structure
-        # Placeholder implementation
-        return []
+        split_dict = NodeSplitManager.get_splits_for_node(genome_id, original_node_id)
+        if split_dict and split_node_id in split_dict.get("split_mappings", {}):
+            return split_dict
+        return None
 
     @staticmethod
     def get_split_node_connections(
-        genome_id: str, split_node_id: int
-    ) -> List[Tuple[int, int]]:
+        genome_id: str, split_node_id: str
+    ) -> List[Tuple[str, str]]:
         """
         Get outgoing connections for a specific split node.
         
         Args:
             genome_id: UUID of the genome
-            split_node_id: ID of the split node
+            split_node_id: ID of the split node (e.g., "5_a")
             
         Returns:
-            List of [from_node, to_node] tuples for outgoing connections
+            List of (from_node, to_node) tuples for outgoing connections (both strings)
         """
-        with db.session_scope() as session:
-            split = (
-                session.query(NodeSplit)
-                .filter_by(genome_id=genome_id, split_node_id=split_node_id)
-                .first()
-            )
-            if not split:
-                raise ValueError(f"Split node {split_node_id} not found")
-            return split.get_outgoing_connections()
+        split_dict = NodeSplitManager.get_split_by_split_node_id(genome_id, split_node_id)
+        if not split_dict:
+            raise ValueError(f"Split node {split_node_id} not found")
+        
+        split_mappings = split_dict.get("split_mappings", {})
+        if split_node_id not in split_mappings:
+            raise ValueError(f"Split node {split_node_id} not found in split mappings")
+        
+        conns = split_mappings[split_node_id]
+        return [
+            (str(conn[0]), str(conn[1])) if isinstance(conn, (list, tuple)) and len(conn) == 2 else conn
+            for conn in conns
+        ]
 
     @staticmethod
-    def get_original_node_id(genome_id: str, split_node_id: int) -> int:
+    def get_original_node_id(genome_id: str, split_node_id: str) -> str:
         """
         Get original node ID from split node ID.
         
         Args:
             genome_id: UUID of the genome
-            split_node_id: ID of the split node
+            split_node_id: ID of the split node (e.g., "5_a")
             
         Returns:
-            Original node ID
+            Original node ID as string
         """
-        with db.session_scope() as session:
-            split = (
-                session.query(NodeSplit)
-                .filter_by(genome_id=genome_id, split_node_id=split_node_id)
-                .first()
-            )
-            if not split:
-                raise ValueError(f"Split node {split_node_id} not found")
-            return split.original_node_id
+        original_node_id = NodeSplitManager.get_original_node_id_from_split(split_node_id)
+        if original_node_id is None:
+            raise ValueError(f"Invalid split_node_id format: {split_node_id}")
+        
+        # Verify the split exists
+        split_dict = NodeSplitManager.get_split_by_split_node_id(genome_id, split_node_id)
+        if not split_dict:
+            raise ValueError(f"Split node {split_node_id} not found")
+        
+        return original_node_id
 
+    @staticmethod
+    def validate_splits_complete(
+        genome_id: str, original_node_id: str, explanation_id: str,
+        expected_outgoing_connections: Set[Tuple[str, str]]
+    ) -> Dict[str, Any]:
+        """
+        Validate that splits for a node cover all expected outgoing connections.
+        
+        Args:
+            genome_id: UUID of the genome
+            original_node_id: ID of the original node
+            explanation_id: UUID of the explanation
+            expected_outgoing_connections: Set of all outgoing connections the node should have
+            
+        Returns:
+            Dictionary with validation results
+        """
+        split_dict = NodeSplitManager.get_splits_for_node(
+            genome_id, original_node_id, explanation_id
+        )
+        
+        if not split_dict:
+            return {
+                "is_complete": False,
+                "message": "No splits found for this node",
+            }
+        
+        # Collect all outgoing connections from splits
+        split_connections: Set[Tuple[str, str]] = set()
+        split_mappings = split_dict.get("split_mappings", {})
+        for split_node_id, conns in split_mappings.items():
+            for conn in conns:
+                # Convert to tuple of strings
+                if isinstance(conn, (list, tuple)) and len(conn) == 2:
+                    split_connections.add((str(conn[0]), str(conn[1])))
+                else:
+                    split_connections.add(conn)
+        
+        missing = expected_outgoing_connections - split_connections
+        extra = split_connections - expected_outgoing_connections
+        
+        is_complete = len(missing) == 0 and len(extra) == 0
+        
+        return {
+            "is_complete": is_complete,
+            "split_count": len(split_mappings),
+            "total_connections_covered": len(split_connections),
+            "expected_connections": len(expected_outgoing_connections),
+            "missing_connections": list(missing) if missing else None,
+            "extra_connections": list(extra) if extra else None,
+        }

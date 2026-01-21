@@ -56,14 +56,14 @@ class ExplaNEAT:
             skippy_sum += skippy
         return skippy_sum / len(self.genome.connections)
 
-    def _get_input_nodes(self) -> List[int]:
+    def _get_input_nodes(self) -> List[str]:
         """Get input node IDs from config."""
         if hasattr(self.config, "genome_config"):
             return list(self.config.genome_config.input_keys)
         # Fallback: negative node IDs are inputs
         return [n for n in self.genome.nodes.keys() if n < 0]
 
-    def _get_output_nodes(self) -> List[int]:
+    def _get_output_nodes(self) -> List[str]:
         """Get output node IDs from config."""
         if hasattr(self.config, "genome_config"):
             return list(self.config.genome_config.output_keys)
@@ -100,13 +100,15 @@ class ExplaNEAT:
         
         nodes = []
         for node_id in sorted(all_node_ids):
+            # Convert int node ID to string
+            node_id_str = str(node_id)
             # If node exists in genome, use its properties
             if node_id in self.genome.nodes:
                 node = self.genome.nodes[node_id]
                 node_type = self._get_node_type(node_id)
                 nodes.append(
                     NetworkNode(
-                        id=node_id,
+                        id=node_id_str,
                         type=node_type,
                         bias=getattr(node, "bias", None),
                         activation=getattr(node, "activation", None),
@@ -120,7 +122,7 @@ class ExplaNEAT:
                 node_type = self._get_node_type(node_id)
                 nodes.append(
                     NetworkNode(
-                        id=node_id,
+                        id=node_id_str,
                         type=node_type,
                         bias=None,
                         activation=None,
@@ -132,39 +134,44 @@ class ExplaNEAT:
         connections = []
         for conn_key, conn in self.genome.connections.items():
             from_node, to_node = conn_key
+            # Convert int node IDs to strings
             connections.append(
                 NetworkConnection(
-                    from_node=from_node,
-                    to_node=to_node,
+                    from_node=str(from_node),
+                    to_node=str(to_node),
                     weight=conn.weight,
                     enabled=conn.enabled,
                     innovation=getattr(conn, "key", None),
                 )
             )
 
+        # Convert input/output node IDs to strings
+        input_node_ids_str = [str(nid) for nid in input_node_ids]
+        output_node_ids_str = [str(nid) for nid in output_node_ids]
+
         return NetworkStructure(
             nodes=nodes,
             connections=connections,
-            input_node_ids=input_node_ids,
-            output_node_ids=output_node_ids,
+            input_node_ids=input_node_ids_str,
+            output_node_ids=output_node_ids_str,
             metadata={"representation": "genotype"},
         )
 
     def _traverse_nodes(
-        self, network: NetworkStructure, start_nodes: List[int], direction: str
-    ) -> Set[int]:
+        self, network: NetworkStructure, start_nodes: List[str], direction: str
+    ) -> Set[str]:
         """
         Traverse network from start nodes in given direction.
         
         Args:
             network: NetworkStructure to traverse
-            start_nodes: Starting node IDs
+            start_nodes: Starting node IDs (strings)
             direction: "out" for forward, "in" for backward
         
         Returns:
-            Set of reachable node IDs
+            Set of reachable node IDs (strings)
         """
-        reachable: Set[int] = set()
+        reachable: Set[str] = set()
         queue = deque(start_nodes)
         node_ids = network.get_node_ids()
         enabled_conns = network.get_enabled_connections()

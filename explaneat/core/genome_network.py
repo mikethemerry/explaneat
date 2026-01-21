@@ -6,7 +6,7 @@ Provides a unified format for genotype (all nodes/connections) and phenotype
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional, Set
+from typing import List, Dict, Any, Optional, Set, Tuple
 from enum import Enum
 
 
@@ -19,8 +19,12 @@ class NodeType(str, Enum):
 
 @dataclass
 class NetworkNode:
-    """Represents a single node in the network."""
-    id: int
+    """Represents a single node in the network.
+    
+    All node IDs are strings to support both regular nodes (e.g., "5", "-1") 
+    and split nodes (e.g., "5_a", "5_b").
+    """
+    id: str  # Changed from int to str to support split nodes
     type: NodeType
     bias: Optional[float] = None
     activation: Optional[str] = None
@@ -30,9 +34,12 @@ class NetworkNode:
 
 @dataclass
 class NetworkConnection:
-    """Represents a single connection in the network."""
-    from_node: int
-    to_node: int
+    """Represents a single connection in the network.
+    
+    All node IDs are strings to support both regular nodes and split nodes.
+    """
+    from_node: str  # Changed from int to str
+    to_node: str  # Changed from int to str
     weight: float
     enabled: bool
     innovation: Optional[int] = None
@@ -45,29 +52,31 @@ class NetworkStructure:
     
     Can represent either genotype (all nodes/connections) or phenotype
     (pruned to active, reachable subgraph).
+    
+    All node IDs are strings to support both regular nodes and split nodes.
     """
     nodes: List[NetworkNode]
     connections: List[NetworkConnection]
-    input_node_ids: List[int] = field(default_factory=list)
-    output_node_ids: List[int] = field(default_factory=list)
+    input_node_ids: List[str] = field(default_factory=list)  # Changed from List[int]
+    output_node_ids: List[str] = field(default_factory=list)  # Changed from List[int]
     metadata: Dict[str, Any] = field(default_factory=dict)
     
-    def get_node_by_id(self, node_id: int) -> Optional[NetworkNode]:
+    def get_node_by_id(self, node_id: str) -> Optional[NetworkNode]:
         """Get a node by its ID."""
         for node in self.nodes:
             if node.id == node_id:
                 return node
         return None
     
-    def get_connections_from(self, node_id: int) -> List[NetworkConnection]:
+    def get_connections_from(self, node_id: str) -> List[NetworkConnection]:
         """Get all connections originating from a node."""
         return [conn for conn in self.connections if conn.from_node == node_id]
     
-    def get_connections_to(self, node_id: int) -> List[NetworkConnection]:
+    def get_connections_to(self, node_id: str) -> List[NetworkConnection]:
         """Get all connections terminating at a node."""
         return [conn for conn in self.connections if conn.to_node == node_id]
     
-    def get_node_ids(self) -> Set[int]:
+    def get_node_ids(self) -> Set[str]:
         """Get set of all node IDs."""
         return {node.id for node in self.nodes}
     
@@ -107,7 +116,7 @@ class NetworkStructure:
         }
 
 
-def get_phenotype_with_splits(explanation_id: str) -> NetworkStructure:
+def get_phenotype_with_splits(explanation_id: str, config=None) -> NetworkStructure:
     """
     Get phenotype graph with splits applied for an explanation.
     
@@ -138,38 +147,68 @@ def get_phenotype_with_splits(explanation_id: str) -> NetworkStructure:
         # Get all splits for this explanation
         splits = explanation.node_splits
         
-        # Build mapping: original_node_id -> list of (split_node_id, outgoing_connections)
-        splits_by_original: Dict[int, List[Tuple[int, List[Tuple[int, int]]]]] = {}
+        # Build mapping: original_node_id (string) -> list of (split_node_id_string, outgoing_connections)
+        # All node IDs are now strings, so no conversion needed
+        splits_by_original: Dict[str, List[Tuple[str, List[Tuple[str, str]]]]] = {}
+        
         for split in splits:
-            orig_id = split.original_node_id
-            split_id = split.split_node_id
-            outgoing = split.get_outgoing_connections()
+            orig_id = str(split.original_node_id)  # Ensure it's a string
+            
+            # Extract all split mappings from the single row
+            split_mappings = split.split_mappings or {}
+            
             if orig_id not in splits_by_original:
                 splits_by_original[orig_id] = []
-            splits_by_original[orig_id].append((split_id, outgoing))
+            
+            # Process each split node in the mappings
+            for split_id_str, outgoing_conns in split_mappings.items():
+                # Convert connections to list of tuples with string node IDs
+                outgoing = [
+                    (str(conn[0]), str(conn[1])) if isinstance(conn, (list, tuple)) and len(conn) == 2 else conn
+                    for conn in outgoing_conns
+                ]
+                
+                splits_by_original[orig_id].append((split_id_str, outgoing))
         
         # Load genome to get phenotype
-        # We need the config to deserialize
-        population = genome_record.population
-        experiment = population.experiment
-        
-        neat_config_text = experiment.neat_config_text or ""
-        if not neat_config_text or not neat_config_text.strip():
-            raise ValueError("Experiment has no stored NEAT configuration")
-        
-        # Create minimal config for deserialization
-        config_path = "config-file.cfg"  # Default, should ideally come from experiment
-        try:
-            config = neat.Config(
-                neat.DefaultGenome,
-                neat.DefaultReproduction,
-                neat.DefaultSpeciesSet,
-                neat.DefaultStagnation,
-                config_path,
-            )
-        except:
-            # If config file doesn't exist, we can't proceed
-            raise ValueError("Cannot load NEAT config. Cannot generate phenotype with splits.")
+        # Use provided config if available, otherwise load from database
+        if config is None:
+            # We need the config to deserialize
+            population = genome_record.population
+            experiment = population.experiment
+            
+            neat_config_text = experiment.neat_config_text or ""
+            if not neat_config_text or not neat_config_text.strip():
+                raise ValueError("Experiment has no stored NEAT configuration")
+            
+            # Create config from stored text
+            import tempfile
+            import os
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.cfg', delete=False) as tmp_config:
+                tmp_config.write(neat_config_text)
+                tmp_config_path = tmp_config.name
+            
+            try:
+                config = neat.Config(
+                    neat.DefaultGenome,
+                    neat.DefaultReproduction,
+                    neat.DefaultSpeciesSet,
+                    neat.DefaultStagnation,
+                    tmp_config_path,
+                )
+            except Exception as e:
+                # Clean up temp file
+                try:
+                    os.unlink(tmp_config_path)
+                except:
+                    pass
+                raise ValueError(f"Cannot load NEAT config: {e}")
+            
+            # Clean up temp file after config is loaded
+            try:
+                os.unlink(tmp_config_path)
+            except:
+                pass
         
         neat_genome = deserialize_genome(genome_record.genome_data, config)
         
@@ -180,7 +219,7 @@ def get_phenotype_with_splits(explanation_id: str) -> NetworkStructure:
         
         # Apply splits: replace original nodes with split nodes
         # Build mapping of original nodes to their incoming connections
-        incoming_by_node: Dict[int, List[NetworkConnection]] = {}
+        incoming_by_node: Dict[str, List[NetworkConnection]] = {}
         for conn in phenotype.connections:
             if conn.to_node not in incoming_by_node:
                 incoming_by_node[conn.to_node] = []
@@ -189,11 +228,11 @@ def get_phenotype_with_splits(explanation_id: str) -> NetworkStructure:
         # Create new nodes and connections with splits applied
         new_nodes: List[NetworkNode] = []
         new_connections: List[NetworkConnection] = []
-        original_nodes_to_remove: Set[int] = set()
+        original_nodes_to_remove: Set[str] = set()
         
         # Process each node
         for node in phenotype.nodes:
-            node_id = node.id
+            node_id = node.id  # Already a string
             
             # If this node has splits, replace it with split nodes
             if node_id in splits_by_original:
@@ -203,10 +242,10 @@ def get_phenotype_with_splits(explanation_id: str) -> NetworkStructure:
                 incoming_conns = incoming_by_node.get(node_id, [])
                 
                 # Create a split node for each split
-                for split_id, split_outgoing in splits_by_original[node_id]:
-                    # Create new node with split_node_id
+                for split_id_str, split_outgoing in splits_by_original[node_id]:
+                    # Create new node with string split_node_id
                     split_node = NetworkNode(
-                        id=split_id,
+                        id=split_id_str,
                         type=node.type,
                         bias=node.bias,
                         activation=node.activation,
@@ -219,7 +258,7 @@ def get_phenotype_with_splits(explanation_id: str) -> NetworkStructure:
                     for incoming_conn in incoming_conns:
                         new_conn = NetworkConnection(
                             from_node=incoming_conn.from_node,
-                            to_node=split_id,  # Point to split node
+                            to_node=split_id_str,  # Point to split node (string)
                             weight=incoming_conn.weight,
                             enabled=incoming_conn.enabled,
                             innovation=incoming_conn.innovation,
@@ -227,18 +266,19 @@ def get_phenotype_with_splits(explanation_id: str) -> NetworkStructure:
                         new_connections.append(new_conn)
                     
                     # Add outgoing connections (specific to this split)
-                    for from_node, to_node in split_outgoing:
+                    for from_node_str, to_node_str in split_outgoing:
                         # Find matching connection in phenotype to get weight/enabled
+                        # Note: from_node_str should equal node_id (the original node being split)
                         matching_conn = None
                         for conn in phenotype.connections:
-                            if conn.from_node == node_id and conn.to_node == to_node:
+                            if conn.from_node == node_id and conn.to_node == to_node_str:
                                 matching_conn = conn
                                 break
                         
                         if matching_conn:
                             new_conn = NetworkConnection(
-                                from_node=split_id,  # From split node
-                                to_node=to_node,
+                                from_node=split_id_str,  # From split node (string)
+                                to_node=to_node_str,  # To node (string, could be regular or split node)
                                 weight=matching_conn.weight,
                                 enabled=matching_conn.enabled,
                                 innovation=matching_conn.innovation,

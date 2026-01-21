@@ -1,8 +1,8 @@
 """
 Explanation Manager for creating and managing explanations.
 
-An explanation groups annotations and node splits into a coherent explanation
-of a model. Multiple explanations can exist for the same model.
+Each genome has a single explanation that groups annotations and node splits
+into a coherent explanation of the model.
 """
 
 from typing import List, Dict, Any, Optional
@@ -61,24 +61,58 @@ class ExplanationManager:
             return None
 
     @staticmethod
-    def get_explanations(genome_id: str) -> List[Dict[str, Any]]:
+    def get_or_create_explanation(genome_id: str) -> Dict[str, Any]:
         """
-        Get all explanations for a genome.
+        Get or create the single explanation for a genome.
+        Each genome has exactly one explanation.
         
         Args:
             genome_id: UUID of the genome
             
         Returns:
-            List of explanation dictionaries
+            Explanation dictionary
         """
         with db.session_scope() as session:
-            explanations = (
+            # Verify genome exists
+            genome = session.get(Genome, genome_id)
+            if not genome:
+                raise ValueError(f"Genome {genome_id} not found")
+            
+            # Get existing explanation if it exists
+            explanation = (
                 session.query(Explanation)
                 .filter_by(genome_id=genome_id)
-                .order_by(Explanation.created_at.desc())
-                .all()
+                .first()
             )
-            return [exp.to_dict() for exp in explanations]
+            
+            if not explanation:
+                # Create new explanation
+                explanation = Explanation(
+                    genome_id=genome_id,
+                    name=None,
+                    description=None,
+                    is_well_formed=False,
+                )
+                session.add(explanation)
+                session.commit()
+                session.refresh(explanation)
+            
+            return explanation.to_dict()
+
+    @staticmethod
+    def get_explanations(genome_id: str) -> List[Dict[str, Any]]:
+        """
+        Get all explanations for a genome (legacy method).
+        For single-explanation model, this returns a list with one item.
+        
+        Args:
+            genome_id: UUID of the genome
+            
+        Returns:
+            List containing the single explanation dictionary
+        """
+        explanation = ExplanationManager.get_or_create_explanation(genome_id)
+        return [explanation]
 
     @staticmethod
     def get_explanation(explanation_id: str) -> Optional[Dict[str, Any]]:
@@ -160,37 +194,65 @@ class ExplanationManager:
             return node_split.to_dict()
 
     @staticmethod
-    def get_explanation_annotations(explanation_id: str) -> List[Dict[str, Any]]:
+    def get_explanation_annotations(explanation_id: str = None, genome_id: str = None) -> List[Dict[str, Any]]:
         """
         Get all annotations in an explanation.
+        Can be called with either explanation_id or genome_id.
         
         Args:
-            explanation_id: UUID of the explanation
+            explanation_id: UUID of the explanation (optional)
+            genome_id: UUID of the genome (optional, used if explanation_id not provided)
             
         Returns:
             List of annotation dictionaries
         """
         with db.session_scope() as session:
-            explanation = session.get(Explanation, explanation_id)
-            if not explanation:
-                raise ValueError(f"Explanation {explanation_id} not found")
+            if explanation_id:
+                explanation = session.get(Explanation, explanation_id)
+                if not explanation:
+                    raise ValueError(f"Explanation {explanation_id} not found")
+            elif genome_id:
+                explanation = (
+                    session.query(Explanation)
+                    .filter_by(genome_id=genome_id)
+                    .first()
+                )
+                if not explanation:
+                    return []  # No explanation yet, so no annotations
+            else:
+                raise ValueError("Must provide either explanation_id or genome_id")
+            
             return [ann.to_dict() for ann in explanation.annotations]
 
     @staticmethod
-    def get_explanation_splits(explanation_id: str) -> List[Dict[str, Any]]:
+    def get_explanation_splits(explanation_id: str = None, genome_id: str = None) -> List[Dict[str, Any]]:
         """
         Get all node splits in an explanation.
+        Can be called with either explanation_id or genome_id.
         
         Args:
-            explanation_id: UUID of the explanation
+            explanation_id: UUID of the explanation (optional)
+            genome_id: UUID of the genome (optional, used if explanation_id not provided)
             
         Returns:
             List of node split dictionaries
         """
         with db.session_scope() as session:
-            explanation = session.get(Explanation, explanation_id)
-            if not explanation:
-                raise ValueError(f"Explanation {explanation_id} not found")
+            if explanation_id:
+                explanation = session.get(Explanation, explanation_id)
+                if not explanation:
+                    raise ValueError(f"Explanation {explanation_id} not found")
+            elif genome_id:
+                explanation = (
+                    session.query(Explanation)
+                    .filter_by(genome_id=genome_id)
+                    .first()
+                )
+                if not explanation:
+                    return []  # No explanation yet, so no splits
+            else:
+                raise ValueError("Must provide either explanation_id or genome_id")
+            
             return [split.to_dict() for split in explanation.node_splits]
 
     @staticmethod
@@ -287,17 +349,18 @@ class ExplanationManager:
             }
 
     @staticmethod
-    def get_phenotype_with_splits(explanation_id: str):
+    def get_phenotype_with_splits(explanation_id: str, config=None):
         """
         Get phenotype graph with splits applied for an explanation.
         
         Args:
             explanation_id: UUID of the explanation
+            config: Optional NEAT config object (if provided, will be used instead of loading from DB)
             
         Returns:
             NetworkStructure with splits applied
         """
         from ..core.genome_network import get_phenotype_with_splits as get_phenotype_with_splits_func
         
-        return get_phenotype_with_splits_func(explanation_id)
+        return get_phenotype_with_splits_func(explanation_id, config=config)
 

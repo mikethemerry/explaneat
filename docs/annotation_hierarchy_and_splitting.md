@@ -60,14 +60,19 @@ A well-formed annotation hierarchy must:
 
 Node splitting handles **dual-function nodes** - nodes that send outputs both within an annotation's subgraph and outside it. Without splitting, such nodes cannot be fully covered by an annotation because they have outgoing connections outside the annotation.
 
-### Multi-Split Model
+### Full-Split Model
 
-A node can be split into **multiple** split nodes (not just binary):
+When a node needs to be split, it is **fully split** - meaning a dedicated split node is created for **each** outgoing connection:
 
 - **Original Node**: The node being split
-- **Split Nodes**: Multiple nodes, each with a unique `split_node_id`
-- **Outgoing Connections**: Each split node carries a **subset** of the original node's outgoing connections
+- **Split Nodes**: One split node per outgoing connection, each with a unique `split_node_id`
+- **Outgoing Connections**: Each split node carries **exactly one** outgoing connection from the original node
 - **Incoming Connections**: All split nodes share the same incoming connections as the original node
+
+This approach ensures that:
+- Each split node has exactly one outgoing connection, preventing the need for multiple rounds of splitting
+- Multiple split nodes can be included in an annotation to recombine them as needed
+- The splitting is complete and unambiguous
 
 ### Constraints
 
@@ -75,20 +80,21 @@ A node can be split into **multiple** split nodes (not just binary):
 2. **Non-overlap**: Each outgoing connection belongs to exactly one split node
 3. **Uniqueness**: Each `split_node_id` must be unique per `original_node_id` within an explanation
 4. **Shared Inputs**: All split nodes share the original node's incoming connections (computed from graph, not stored)
+5. **One Connection Per Split**: Each split node has exactly one outgoing connection
 
 ### Database Representation
 
 Node splits are stored in a separate `node_splits` table with:
 - `original_node_id`: The node being split
 - `split_node_id`: Unique ID for this split node
-- `outgoing_connections`: JSONB array of `[from_node, to_node]` tuples - subset of original node's outgoing connections
+- `outgoing_connections`: JSONB array of `[from_node, to_node]` tuples - exactly one outgoing connection per split node
 - `explanation_id`: Which explanation this split belongs to
 - `annotation_id`: Optional - which annotation uses this split (for tracking)
 
 ### Coverage with Splits
 
 When computing coverage for a split node:
-- Use `split_node_id` with its specific `outgoing_connections` subset
+- Use `split_node_id` with its specific `outgoing_connections` (single connection)
 - Use `original_node_id`'s incoming connections (shared by all splits)
 - Apply the standard coverage definition: `covered_A(v) = (v ∈ V_A) ∧ (E_out(v) ⊆ E_A)`
 
@@ -96,15 +102,23 @@ When computing coverage for a split node:
 
 Original node `5` has outgoing connections: `[(5, 6), (5, 7), (5, 8)]`
 
+When fully split, node `5` becomes three split nodes:
+
 Split 1:
-- `split_node_id = 501`
-- `outgoing_connections = [(5, 6), (5, 7)]`
+- `split_node_id = 5001`
+- `outgoing_connections = [(5, 6)]`
 
 Split 2:
-- `split_node_id = 502`
+- `split_node_id = 5002`
+- `outgoing_connections = [(5, 7)]`
+
+Split 3:
+- `split_node_id = 5003`
 - `outgoing_connections = [(5, 8)]`
 
-Both splits share node `5`'s incoming connections (e.g., `[(3, 5), (4, 5)]`).
+All three splits share node `5`'s incoming connections (e.g., `[(3, 5), (4, 5)]`).
+
+When creating an annotation that includes connections `[(5, 6), (5, 7)]`, both split nodes `5001` and `5002` would be included in the annotation, allowing them to be recombined conceptually.
 
 ## Explanation Data Model
 

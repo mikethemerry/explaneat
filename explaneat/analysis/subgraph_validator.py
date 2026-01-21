@@ -19,14 +19,14 @@ class SubgraphValidator:
 
     @staticmethod
     def validate_connectivity(
-        nodes: List[int], connections: List[Tuple[int, int]], directed: bool = False
+        nodes: List[Any], connections: List[Tuple[Any, Any]], directed: bool = False
     ) -> Dict[str, Any]:
         """
         Validate that the subgraph forms a connected component.
 
         Args:
-            nodes: List of node IDs in the subgraph
-            connections: List of connection tuples (from_node, to_node)
+            nodes: List of node IDs in the subgraph (can be int or str)
+            connections: List of connection tuples (from_node, to_node) (can be int or str)
             directed: If True, validates as directed graph; if False, as undirected
 
         Returns:
@@ -34,7 +34,7 @@ class SubgraphValidator:
                 - is_connected: bool
                 - is_valid: bool (True if connected and all connections reference valid nodes)
                 - error_message: Optional[str]
-                - connected_components: List[List[int]] (list of connected components)
+                - connected_components: List[List[Any]] (list of connected components, preserving original types)
         """
         # Handle edge cases
         if not nodes:
@@ -135,25 +135,26 @@ class SubgraphValidator:
 
     @staticmethod
     def validate_against_genome(
-        genome, nodes: List[int], connections: List[Tuple[int, int]], config=None
+        genome, nodes: List[Any], connections: List[Tuple[Any, Any]], config=None
     ) -> Dict[str, Any]:
         """
         Validate that the subgraph nodes and connections exist in the genome.
 
         Args:
             genome: NEAT genome object
-            nodes: List of node IDs in the subgraph
-            connections: List of connection tuples (from_node, to_node)
+            nodes: List of node IDs in the subgraph (can be int or str - strings will be converted to ints for validation)
+            connections: List of connection tuples (from_node, to_node) (can be int or str)
             config: Optional NEAT config object (to access input/output keys)
 
         Returns:
             Dictionary with:
                 - is_valid: bool
                 - error_message: Optional[str]
-                - missing_nodes: List[int]
-                - missing_connections: List[Tuple[int, int]]
+                - missing_nodes: List[Any] (preserves original types)
+                - missing_connections: List[Tuple[Any, Any]] (preserves original types)
         """
         # Get all nodes in the genome (including input/output nodes from config)
+        # NEAT genome uses int node IDs
         genome_nodes = set(genome.nodes.keys())
 
         # Try to get config from various sources
@@ -176,15 +177,61 @@ class SubgraphValidator:
                 genome_nodes.update(genome_config.output_keys)
 
         # Check for missing nodes
-        missing_nodes = [node for node in nodes if node not in genome_nodes]
+        # Convert string node IDs to ints for comparison with genome
+        missing_nodes = []
+        for node in nodes:
+            # Try to convert to int if it's a string (for split nodes, extract original)
+            node_for_check = node
+            if isinstance(node, str):
+                # Try to extract original node ID from split node ID (e.g., "5_a" -> 5)
+                try:
+                    # Check if it's a split node format
+                    if "_" in node:
+                        parts = node.split("_", 1)
+                        node_for_check = int(parts[0])
+                    else:
+                        node_for_check = int(node)
+                except (ValueError, AttributeError):
+                    # If it can't be converted, it's not in the genome
+                    missing_nodes.append(node)
+                    continue
+            
+            if node_for_check not in genome_nodes:
+                missing_nodes.append(node)  # Preserve original type
 
         # Get all connections in the genome
         genome_connections = set(genome.connections.keys())
 
         # Check for missing connections
-        missing_connections = [
-            conn for conn in connections if conn not in genome_connections
-        ]
+        # Convert string node IDs to ints for comparison with genome
+        missing_connections = []
+        for conn in connections:
+            if isinstance(conn, (list, tuple)) and len(conn) == 2:
+                from_node, to_node = conn
+                # Convert to ints for comparison
+                from_node_int = from_node
+                to_node_int = to_node
+                if isinstance(from_node, str):
+                    # Extract original node ID from split node ID if needed
+                    if "_" in from_node:
+                        parts = from_node.split("_", 1)
+                        from_node_int = int(parts[0])
+                    else:
+                        from_node_int = int(from_node)
+                if isinstance(to_node, str):
+                    # Extract original node ID from split node ID if needed
+                    if "_" in to_node:
+                        parts = to_node.split("_", 1)
+                        to_node_int = int(parts[0])
+                    else:
+                        to_node_int = int(to_node)
+                
+                conn_for_check = (from_node_int, to_node_int)
+                if conn_for_check not in genome_connections:
+                    missing_connections.append(conn)  # Preserve original type
+            else:
+                # Invalid connection format
+                missing_connections.append(conn)
 
         if missing_nodes or missing_connections:
             error_parts = []
@@ -209,8 +256,8 @@ class SubgraphValidator:
 
     @staticmethod
     def find_valid_end_nodes(
-        genome, start_nodes: List[int], config=None, debug=False
-    ) -> List[int]:
+        genome, start_nodes: List[Any], config=None, debug=False
+    ) -> List[Any]:
         """
         Find all valid end nodes for a given set of start nodes.
 
@@ -340,7 +387,7 @@ class SubgraphValidator:
 
     @staticmethod
     def find_reachable_subgraph(
-        genome, start_nodes: List[int], end_nodes: List[int], config=None
+        genome, start_nodes: List[Any], end_nodes: List[Any], config=None
     ) -> Dict[str, Any]:
         """
         Find the reachable subgraph between start and end nodes.
@@ -361,10 +408,10 @@ class SubgraphValidator:
 
         Returns:
             Dictionary with:
-                - nodes: List[int] - All nodes in the subgraph
-                - connections: List[Tuple[int, int]] - All connections in the subgraph
+                - nodes: List[Any] - All nodes in the subgraph (can be int or str)
+                - connections: List[Tuple[Any, Any]] - All connections in the subgraph (can be int or str)
                 - is_valid: bool - True if all end nodes are valid
-                - unreachable_ends: List[int] - End nodes that couldn't be reached
+                - unreachable_ends: List[Any] - End nodes that couldn't be reached (can be int or str)
                 - error_message: Optional[str]
         """
         # Get all nodes in the genome (including input/output nodes from config)

@@ -4,12 +4,13 @@ Annotation Manager for creating and managing genome annotations
 Provides CRUD operations for annotations with validation.
 """
 
-from typing import List, Tuple, Dict, Any, Optional, Set
+from typing import List, Tuple, Dict, Any, Optional, Set, Union
 import uuid
 
 from ..db import db, Annotation, Genome, Explanation
 from .subgraph_validator import SubgraphValidator
 from .evidence_schema import EvidenceBuilder, create_empty_evidence
+from .explanation_manager import ExplanationManager
 
 
 class AnnotationManager:
@@ -23,11 +24,11 @@ class AnnotationManager:
     @staticmethod
     def create_annotation(
         genome_id: str,
-        nodes: List[int],
-        connections: List[Tuple[int, int]],
+        nodes: List[Any],  # Can contain int node IDs or str split_node_ids like "5_a"
+        connections: List[Tuple[Any, Any]],  # Can contain int node IDs or str split_node_ids like "5_a"
         hypothesis: str,
-        entry_nodes: Optional[List[int]] = None,
-        exit_nodes: Optional[List[int]] = None,
+        entry_nodes: Optional[List[Any]] = None,  # Can contain int node IDs or str split_node_ids like "5_a"
+        exit_nodes: Optional[List[Any]] = None,  # Can contain int node IDs or str split_node_ids like "5_a"
         evidence: Optional[Dict[str, Any]] = None,
         name: Optional[str] = None,
         parent_annotation_id: Optional[str] = None,
@@ -143,8 +144,12 @@ class AnnotationManager:
                 if str(parent.genome_id) != genome_id:
                     raise ValueError("Parent annotation must belong to the same genome")
         
-        # Validate explanation_id if provided
-        if explanation_id:
+        # Get or create explanation for this genome (single explanation per genome)
+        if not explanation_id:
+            explanation = ExplanationManager.get_or_create_explanation(genome_id)
+            explanation_id = explanation["id"]
+        else:
+            # Validate explanation_id if provided
             with db.session_scope() as session:
                 explanation = session.get(Explanation, explanation_id)
                 if not explanation:
@@ -221,10 +226,10 @@ class AnnotationManager:
         hypothesis: Optional[str] = None,
         evidence: Optional[Dict[str, Any]] = None,
         name: Optional[str] = None,
-        nodes: Optional[List[int]] = None,
-        connections: Optional[List[Tuple[int, int]]] = None,
-        entry_nodes: Optional[List[int]] = None,
-        exit_nodes: Optional[List[int]] = None,
+        nodes: Optional[List[Any]] = None,  # Can contain int node IDs or str split_node_ids
+        connections: Optional[List[Tuple[Any, Any]]] = None,  # Can contain int node IDs or str split_node_ids
+        entry_nodes: Optional[List[Any]] = None,  # Can contain int node IDs or str split_node_ids like "5_a"
+        exit_nodes: Optional[List[Any]] = None,  # Can contain int node IDs or str split_node_ids like "5_a"
     ) -> Annotation:
         """
         Update an existing annotation.
@@ -392,7 +397,7 @@ class AnnotationManager:
 
     @staticmethod
     def validate_subgraph(
-        genome, nodes: List[int], connections: List[Tuple[int, int]]
+        genome, nodes: List[Any], connections: List[Tuple[Any, Any]]
     ) -> Dict[str, Any]:
         """
         Validate a subgraph against a genome.
@@ -428,8 +433,8 @@ class AnnotationManager:
         hypothesis: str,
         entry_nodes: List[int],
         exit_nodes: List[int],
-        nodes: List[int],
-        connections: List[Tuple[int, int]],
+        nodes: List[Any],  # Can contain int node IDs or str split_node_ids like "5_a"
+        connections: List[Tuple[Any, Any]],  # Can contain int node IDs or str split_node_ids like "5_a"
         evidence: Optional[Dict[str, Any]] = None,
         name: Optional[str] = None,
         explanation_id: Optional[str] = None,
