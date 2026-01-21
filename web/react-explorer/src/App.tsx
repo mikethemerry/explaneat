@@ -1,36 +1,20 @@
-import { Explorer } from "./components/Explorer";
-import type { ExplorerData } from "./types";
-
-function readEmbeddedData(): ExplorerData | null {
-  const script = document.getElementById("explorer-data");
-  if (!script) {
-    console.warn("Explorer data script tag not found");
-    return null;
-  }
-
-  try {
-    return JSON.parse(script.textContent || "") as ExplorerData;
-  } catch (error) {
-    console.error("Failed to parse explorer data", error);
-    return null;
-  }
-}
+import { useState } from "react";
+import { GenomeList } from "./components/GenomeList";
+import { GenomeExplorer } from "./components/GenomeExplorer";
 
 export default function App() {
-  const data = readEmbeddedData();
+  const [selectedGenomeId, setSelectedGenomeId] = useState<string | null>(null);
 
-  if (!data) {
+  if (selectedGenomeId) {
     return (
-      <div className="app-shell">
-        <div className="app-panel">
-          <h1>ExplaNEAT React Explorer</h1>
-          <p>Unable to load embedded graph payload.</p>
-        </div>
-      </div>
+      <GenomeExplorer
+        genomeId={selectedGenomeId}
+        onBack={() => setSelectedGenomeId(null)}
+      />
     );
   }
 
-  return <Explorer data={data} />;
+  return <GenomeList onSelectGenome={setSelectedGenomeId} />;
 }
 
 
