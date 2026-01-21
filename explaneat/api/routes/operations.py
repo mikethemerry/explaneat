@@ -37,17 +37,12 @@ router = APIRouter()
 
 
 def _get_neat_config(experiment: Experiment) -> neat.Config:
-    """Load NEAT config from experiment's config text."""
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".cfg", delete=False) as f:
-        f.write(experiment.neat_config_text)
-        config_path = f.name
+    """Load NEAT config from experiment's config text and JSON."""
+    from ...core.config_utils import load_neat_config
 
-    return neat.Config(
-        neat.DefaultGenome,
-        neat.DefaultReproduction,
-        neat.DefaultSpeciesSet,
-        neat.DefaultStagnation,
-        config_path,
+    return load_neat_config(
+        experiment.neat_config_text or "",
+        experiment.config_json,
     )
 
 
