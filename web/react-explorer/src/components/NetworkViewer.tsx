@@ -70,10 +70,10 @@ type NetworkViewerProps = {
 
 // Layout configuration
 const LAYOUT_CONFIG = {
-  layerSpacing: 180,    // Horizontal spacing between layers (columns)
-  nodeSpacing: 60,      // Vertical spacing between nodes in the same layer
-  marginX: 50,          // Left margin
-  marginY: 50,          // Top margin
+  layerSpacing: 250,    // Horizontal spacing between layers (columns)
+  nodeSpacing: 80,      // Vertical spacing between nodes in the same layer
+  marginX: 80,          // Left margin
+  marginY: 80,          // Top margin
 };
 
 /**
@@ -347,7 +347,7 @@ function convertModelToFlow(model: ModelState): { nodes: Node[]; edges: Edge[] }
       id: `${conn.from}->${conn.to}`,
       source: conn.from,
       target: conn.to,
-      type: "smoothstep",
+      type: "default",  // Bezier curves
       animated: false,
       style: {
         stroke: isPositive ? "#4CAF50" : "#F44336",
@@ -557,7 +557,7 @@ export function NetworkViewer({
           minZoom={0.1}
           maxZoom={4}
           defaultEdgeOptions={{
-            type: "smoothstep",
+            type: "default",  // Bezier curves
           }}
           selectionOnDrag={true}
           selectNodesOnDrag={true}
