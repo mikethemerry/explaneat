@@ -38,6 +38,120 @@ When an `annotate` operation is applied, the nodes and connections within its co
 - Other operations outside the coverage remain valid
 - This allows interleaving of structural operations and annotations
 
+### Graph Assumptions
+
+**DAG Requirement**: The model is assumed to be a Directed Acyclic Graph (DAG). Cycles are not currently supported. This is consistent with standard NEAT feed-forward networks.
+
+**Phenotype Pruning**: Before any explanation operations, the model is the **phenotype** (not genotype), which has been pruned to remove:
+- Dead ends in the forward direction (nodes that don't reach any output)
+- Dead ends in the backward direction (nodes not reachable from any input)
+- Disabled connections
+
+This guarantees that every node in the model is on at least one valid input→output path. There are no disconnected or computationally dead nodes to consider.
+
+## Annotation Collapse Semantics
+
+A key feature of annotations is the ability to **collapse** an annotated subgraph into a single node for simplified visualization. This enables hierarchical explanation: users see the high-level collapsed view and can drill down into details.
+
+### Node Classification
+
+Within an annotation's coverage, nodes are classified as:
+
+| Type | External Inputs | External Outputs | Internal I/O |
+|------|-----------------|------------------|--------------|
+| **Entry** | ✓ At least one | ✗ None allowed | Outputs internal |
+| **Intermediate** | ✗ None | ✗ None | All I/O internal |
+| **Exit** | ✗ None | ✓ At least one | Inputs internal, may have internal outputs too |
+
+- **Entry nodes**: Where signals enter the subgraph from outside. Must not have any outputs to nodes outside coverage (no "side effects").
+- **Intermediate nodes**: Fully contained within the subgraph. All inputs and outputs connect only to other nodes in coverage.
+- **Exit nodes**: Where signals leave the subgraph. May also have outputs to other internal nodes (those paths are absorbed).
+
+### The No Side Effects Rule
+
+**Entry and intermediate nodes cannot have outputs outside the annotation coverage.**
+
+If a node would be both entry (has external input) AND have external output, it must be `split_node` first to separate the paths. This ensures clean collapse boundaries.
+
+```
+INVALID (entry node 13 has external output):
+  A(outside) → 13(entry) → B(inside)
+                    ↓
+               C(outside)   ← side effect!
+
+VALID (after split):
+  A(outside) → 13_a → B(inside)    ← 13_a is entry
+  A(outside) → 13_b → C(outside)   ← 13_b is outside coverage
+```
+
+### Collapse Operation
+
+When an annotation is collapsed for visualization:
+
+1. **All internal structure is absorbed** - entry, intermediate, and exit nodes become a single "annotation node"
+2. **Inputs preserved** - all connections from outside TO entry nodes become inputs to the annotation node
+3. **Outputs preserved** - all connections FROM exit nodes TO outside become outputs from the annotation node
+
+```
+Before collapse:
+  A ──→ [B(entry) → C → D(exit)] ──→ E
+                       ↓
+                  F → G(exit) ──→ H
+
+After collapse:
+  A ──→ [annotation] ──→ E
+                    ↘──→ H
+
+Annotation node: 1 input (from A), 2 outputs (to E, H)
+```
+
+### Multiple Exits Are Valid
+
+An annotation can have multiple exit nodes. Each exit's external outputs become outputs of the collapsed annotation node:
+
+```
+Coverage: [B, C, D, F, G]
+Entry: B (input from A)
+Exits: D (output to E), G (output to H)
+
+Collapsed: annotation node with input from A, outputs to E and H
+```
+
+### Internal Paths from Exit Nodes
+
+Exit nodes may have internal outputs in addition to external ones. These internal paths are simply absorbed:
+
+```
+A → B(entry) → C → D(exit) → E(outside)
+                   ↓
+                   F → G(exit) → H(outside)
+
+D is an exit (→E) but also outputs to F internally.
+This is valid - the D→F→G path is absorbed, G is another exit.
+```
+
+### Nested Annotations
+
+Collapsed annotation nodes behave like regular nodes, enabling hierarchical composition:
+
+```
+Level 0: Raw model nodes
+Level 1: [Annotation A] covers nodes [1,2,3] → collapses to node "A"
+Level 2: [Annotation X] covers [A, 4, 5] → collapses to node "X"
+```
+
+Users can drill down: X → shows A,4,5 → expand A → shows 1,2,3
+
+### Validation for Collapse
+
+An annotation is **valid for collapse** if:
+1. ✓ All entry nodes have no external outputs (no side effects)
+2. ✓ All intermediate nodes have no external inputs or outputs
+3. ✓ The subgraph is connected (guaranteed by phenotype pruning + annotation validation)
+4. ✓ No overlap with other annotations
+
+If validation fails due to side effects, the user must first apply `split_node` operations to separate the conflicting paths.
+
 ## Operation Types
 
 ### 1. split_node
@@ -171,7 +285,7 @@ After add_node([-2, 4], new_node_id=16):
 
 ### 5. annotate
 
-**Purpose**: Create a hypothesis about a subgraph's function. Establishes an immutable boundary.
+**Purpose**: Create a hypothesis about a subgraph's function. Establishes an immutable boundary that can be collapsed for hierarchical visualization.
 
 **Parameters**:
 ```
@@ -188,6 +302,7 @@ After add_node([-2, 4], new_node_id=16):
 
 **Operation**:
 - Validates the subgraph is connected
+- Validates entry/exit/intermediate node classification (see Collapse Semantics)
 - Records the annotation
 - Marks all nodes and connections in `subgraph_nodes` and `subgraph_connections` as immutable
 
@@ -195,6 +310,9 @@ After add_node([-2, 4], new_node_id=16):
 - Subgraph must be connected (validated)
 - All referenced nodes must exist in current model state
 - Subgraph nodes/connections cannot already be covered by another annotation (no overlap)
+- Entry nodes must have no external outputs (no side effects)
+- Intermediate nodes must have no external inputs or outputs
+- If constraints are violated, user must `split_node` first to separate paths
 
 **Effect on other operations**: Once applied, no structural operations (`split_node`, `consolidate_node`, `remove_node`, `add_node`) can modify nodes within this annotation's coverage.
 
@@ -279,6 +397,9 @@ class ExplanationEventStream:
 1. All referenced nodes must exist
 2. Subgraph must be connected
 3. No overlap with existing annotation coverage
+4. Entry nodes have no external outputs (no side effects)
+5. Intermediate nodes have no external I/O
+6. Entry/exit classification is consistent with declared lists
 
 ### State consistency:
 - The event stream can always be replayed from the original model
