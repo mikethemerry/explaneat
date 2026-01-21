@@ -14,10 +14,9 @@ import {
   type EdgeChange,
   type OnSelectionChangeParams,
 } from "@xyflow/react";
-import Dagre from "@dagrejs/dagre";
 import "@xyflow/react/dist/style.css";
 
-import type { ModelState } from "../api/client";
+import type { ModelState, ApiConnection } from "../api/client";
 
 // =============================================================================
 // Logging utilities
@@ -66,72 +65,202 @@ type NetworkViewerProps = {
 };
 
 // =============================================================================
-// Dagre layout helper
+// Layer-based layout (max depth from inputs)
 // =============================================================================
 
-function getLayoutedElements(
-  nodes: Node[],
-  edges: Edge[],
-  direction: "TB" | "LR" = "LR"
-): { nodes: Node[]; edges: Edge[] } {
-  logDebug("Starting dagre layout", { nodeCount: nodes.length, edgeCount: edges.length, direction });
+// Layout configuration
+const LAYOUT_CONFIG = {
+  layerSpacing: 180,    // Horizontal spacing between layers (columns)
+  nodeSpacing: 60,      // Vertical spacing between nodes in the same layer
+  marginX: 50,          // Left margin
+  marginY: 50,          // Top margin
+};
 
-  const dagreGraph = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
-  const isHorizontal = direction === "LR";
-
-  dagreGraph.setGraph({
-    rankdir: direction,
-    nodesep: 50,
-    ranksep: 100,
-    marginx: 20,
-    marginy: 20,
+/**
+ * Compute the maximum depth from any input node for each node in the graph.
+ *
+ * - Input nodes have depth 0
+ * - Each other node's depth = max(depth of predecessors) + 1
+ * - This ensures nodes are placed based on longest path from inputs
+ *
+ * Example: if a→b→c and a→c, then:
+ *   - a: depth 0 (input)
+ *   - b: depth 1
+ *   - c: depth 2 (max of path through b)
+ */
+function computeNodeDepths(
+  nodeIds: string[],
+  inputNodeIds: Set<string>,
+  connections: ApiConnection[]
+): Map<string, number> {
+  logDebug("Computing node depths from inputs", {
+    totalNodes: nodeIds.length,
+    inputNodes: inputNodeIds.size,
+    connections: connections.length,
   });
 
-  // Add nodes to dagre
-  nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: NODE_WIDTH, height: NODE_HEIGHT });
-  });
+  // Build adjacency list (forward edges: from → [to, to, ...])
+  const forwardEdges = new Map<string, string[]>();
+  const incomingEdges = new Map<string, string[]>();
 
-  // Add edges to dagre
-  edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target);
-  });
-
-  // Run the layout algorithm
-  try {
-    Dagre.layout(dagreGraph);
-    logDebug("Dagre layout completed successfully");
-  } catch (error) {
-    logError("Dagre layout failed", error);
-    throw error;
+  for (const nodeId of nodeIds) {
+    forwardEdges.set(nodeId, []);
+    incomingEdges.set(nodeId, []);
   }
 
-  // Map positions back to nodes
-  const layoutedNodes = nodes.map((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id);
-    if (!nodeWithPosition) {
-      logWarn(`Node position not found for ${node.id}, using default`);
-      return node;
+  for (const conn of connections) {
+    if (!conn.enabled) continue;
+    forwardEdges.get(conn.from)?.push(conn.to);
+    incomingEdges.get(conn.to)?.push(conn.from);
+  }
+
+  // Initialize depths: inputs are 0, others are -1 (unvisited)
+  const depths = new Map<string, number>();
+  for (const nodeId of nodeIds) {
+    depths.set(nodeId, inputNodeIds.has(nodeId) ? 0 : -1);
+  }
+
+  // Use BFS/dynamic programming to compute max depths
+  // We need to process nodes in topological order, but since we want MAX depth,
+  // we need to ensure all predecessors are processed before a node
+  // Use iterative relaxation until no changes
+  let changed = true;
+  let iterations = 0;
+  const maxIterations = nodeIds.length + 1; // Safety limit
+
+  while (changed && iterations < maxIterations) {
+    changed = false;
+    iterations++;
+
+    for (const nodeId of nodeIds) {
+      if (inputNodeIds.has(nodeId)) continue; // Inputs stay at 0
+
+      const predecessors = incomingEdges.get(nodeId) || [];
+      if (predecessors.length === 0) {
+        // No incoming edges - might be disconnected, place at depth 0
+        if (depths.get(nodeId) !== 0) {
+          depths.set(nodeId, 0);
+          changed = true;
+        }
+        continue;
+      }
+
+      // Find max depth among predecessors that have been visited
+      let maxPredDepth = -1;
+      let allPredecessorsVisited = true;
+
+      for (const pred of predecessors) {
+        const predDepth = depths.get(pred);
+        if (predDepth === undefined || predDepth === -1) {
+          allPredecessorsVisited = false;
+        } else {
+          maxPredDepth = Math.max(maxPredDepth, predDepth);
+        }
+      }
+
+      if (maxPredDepth >= 0) {
+        const newDepth = maxPredDepth + 1;
+        const currentDepth = depths.get(nodeId) || -1;
+        if (newDepth > currentDepth) {
+          depths.set(nodeId, newDepth);
+          changed = true;
+        }
+      }
     }
+  }
 
-    const position = {
-      x: nodeWithPosition.x - NODE_WIDTH / 2,
-      y: nodeWithPosition.y - NODE_HEIGHT / 2,
-    };
+  logDebug(`Depth computation completed in ${iterations} iterations`);
 
-    logDebug(`Node ${node.id} positioned at`, position);
+  // Handle any remaining unvisited nodes (disconnected from inputs)
+  for (const nodeId of nodeIds) {
+    if (depths.get(nodeId) === -1) {
+      logWarn(`Node ${nodeId} not reachable from inputs, placing at depth 0`);
+      depths.set(nodeId, 0);
+    }
+  }
+
+  // Log depth distribution
+  const depthCounts = new Map<number, number>();
+  for (const [nodeId, depth] of depths) {
+    depthCounts.set(depth, (depthCounts.get(depth) || 0) + 1);
+    logDebug(`Node ${nodeId} -> depth ${depth}`);
+  }
+
+  const maxDepth = Math.max(...depths.values());
+  logInfo("Depth distribution", {
+    maxDepth,
+    layerCounts: Object.fromEntries(depthCounts),
+  });
+
+  return depths;
+}
+
+/**
+ * Apply layer-based layout to nodes based on their computed depths.
+ * Nodes are arranged in columns (layers) with vertical centering within each layer.
+ */
+function applyLayerLayout(
+  nodes: Node[],
+  edges: Edge[],
+  depths: Map<string, number>
+): { nodes: Node[]; edges: Edge[] } {
+  logDebug("Applying layer-based layout");
+
+  // Group nodes by depth (layer)
+  const layers = new Map<number, Node[]>();
+  const maxDepth = Math.max(...depths.values());
+
+  for (const node of nodes) {
+    const depth = depths.get(node.id) ?? 0;
+    if (!layers.has(depth)) {
+      layers.set(depth, []);
+    }
+    layers.get(depth)!.push(node);
+  }
+
+  // Sort nodes within each layer for consistent ordering
+  // Sort by node type first (input, hidden, output), then by id
+  const typeOrder: Record<string, number> = { input: 0, hidden: 1, identity: 2, output: 3 };
+  for (const [depth, layerNodes] of layers) {
+    layerNodes.sort((a, b) => {
+      const typeA = typeOrder[a.data.nodeType as string] ?? 1;
+      const typeB = typeOrder[b.data.nodeType as string] ?? 1;
+      if (typeA !== typeB) return typeA - typeB;
+      return String(a.id).localeCompare(String(b.id), undefined, { numeric: true });
+    });
+  }
+
+  // Calculate positions
+  const layoutedNodes = nodes.map((node) => {
+    const depth = depths.get(node.id) ?? 0;
+    const layerNodes = layers.get(depth) || [];
+    const indexInLayer = layerNodes.findIndex((n) => n.id === node.id);
+    const layerSize = layerNodes.length;
+
+    // X position based on depth (layer column)
+    const x = LAYOUT_CONFIG.marginX + depth * LAYOUT_CONFIG.layerSpacing;
+
+    // Y position: center the layer vertically
+    const totalLayerHeight = (layerSize - 1) * LAYOUT_CONFIG.nodeSpacing;
+    const layerStartY = LAYOUT_CONFIG.marginY + (maxDepth > 0 ? 100 : 0); // Add some top padding
+    const y = layerStartY + indexInLayer * LAYOUT_CONFIG.nodeSpacing - totalLayerHeight / 2 + 200; // Center around y=200
+
+    const position = { x, y };
+
+    logDebug(`Node ${node.id}: layer=${depth}, index=${indexInLayer}/${layerSize}, pos=(${x}, ${y.toFixed(0)})`);
 
     return {
       ...node,
       position,
-      targetPosition: isHorizontal ? "left" : "top",
-      sourcePosition: isHorizontal ? "right" : "bottom",
+      sourcePosition: "right",
+      targetPosition: "left",
     } as Node;
   });
 
-  logInfo("Layout complete", {
-    nodes: layoutedNodes.length,
-    edges: edges.length,
+  logInfo("Layer layout complete", {
+    totalNodes: layoutedNodes.length,
+    totalLayers: layers.size,
+    maxDepth,
   });
 
   return { nodes: layoutedNodes, edges };
@@ -266,22 +395,40 @@ export function NetworkViewer({
   selectedNodes,
   onNodeSelect,
 }: NetworkViewerProps) {
-  // Convert model to ReactFlow format with layout
+  // Convert model to ReactFlow format with layer-based layout
   const { initialNodes, initialEdges } = useMemo(() => {
     logInfo("Building network from model");
     const startTime = performance.now();
 
+    // Convert model to ReactFlow nodes/edges
     const { nodes: flowNodes, edges: flowEdges } = convertModelToFlow(model);
-    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+
+    // Get input node IDs from metadata
+    const inputNodeIds = new Set(model.metadata.input_nodes);
+    logDebug("Input nodes for layout", Array.from(inputNodeIds));
+
+    // Get all node IDs
+    const nodeIds = model.nodes.map((n) => n.id);
+
+    // Compute depth from inputs for each node
+    const depths = computeNodeDepths(
+      nodeIds,
+      inputNodeIds,
+      model.connections.filter((c) => c.enabled)
+    );
+
+    // Apply layer-based layout
+    const { nodes: layoutedNodes, edges: layoutedEdges } = applyLayerLayout(
       flowNodes,
       flowEdges,
-      "LR"
+      depths
     );
 
     const elapsed = performance.now() - startTime;
     logInfo(`Network built in ${elapsed.toFixed(2)}ms`, {
       nodes: layoutedNodes.length,
       edges: layoutedEdges.length,
+      maxDepth: Math.max(...depths.values()),
     });
 
     return { initialNodes: layoutedNodes, initialEdges: layoutedEdges };
