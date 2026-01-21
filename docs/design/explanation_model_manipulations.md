@@ -152,7 +152,243 @@ An annotation is **valid for collapse** if:
 
 If validation fails due to side effects, the user must first apply `split_node` operations to separate the conflicting paths.
 
+## Pre-Annotation Split Detection
+
+Before creating an annotation, we must identify nodes that violate the entry/intermediate/exit constraints and require splitting.
+
+### The Violation Condition
+
+A node **requires splitting** if and only if it has:
+- **At least one external input** (from outside proposed coverage), AND
+- **At least one external output** (to outside proposed coverage)
+
+Such a node cannot be cleanly classified:
+- It has external input → would be an "entry"
+- But entries cannot have external output → violation
+
+Intermediate nodes (no external I/O) and exit nodes (external output only, no external input) are always valid.
+
+### Detection Algorithm
+
+```python
+def detect_required_splits(proposed_coverage: Set[str], model: NetworkStructure) -> List[str]:
+    """
+    Identify nodes that must be split before annotation can be created.
+
+    Args:
+        proposed_coverage: Set of node IDs the user wants to annotate
+        model: Current model state
+
+    Returns:
+        List of node IDs that require split_node before annotation
+    """
+    must_split = []
+
+    for node_id in proposed_coverage:
+        inputs = model.get_inputs_to_node(node_id)
+        outputs = model.get_outputs_from_node(node_id)
+
+        has_external_input = any(conn.from_node not in proposed_coverage for conn in inputs)
+        has_external_output = any(conn.to_node not in proposed_coverage for conn in outputs)
+
+        if has_external_input and has_external_output:
+            must_split.append(node_id)
+
+    return must_split
+```
+
+### Coverage Adjustment After Split
+
+After splitting a violating node, the coverage must be adjusted:
+
+1. **Remove** the original node from coverage
+2. **Include** only the split nodes whose outputs are ALL internal to coverage
+3. **Exclude** split nodes that have any external output
+
+```python
+def adjust_coverage_after_split(
+    original_node: str,
+    split_nodes: List[str],  # e.g., ["13_a", "13_b", "13_c"]
+    proposed_coverage: Set[str],
+    model: NetworkStructure
+) -> Set[str]:
+    """
+    Adjust coverage after splitting a node.
+
+    Only split nodes with purely internal outputs are included.
+    Split nodes with external outputs are excluded (they become
+    part of the "outside" that feeds into entries).
+    """
+    new_coverage = proposed_coverage - {original_node}
+
+    for split_node in split_nodes:
+        outputs = model.get_outputs_from_node(split_node)
+        # Check if ALL outputs go to nodes in the (adjusted) coverage
+        # Note: other split nodes from same original are considered "internal" for this check
+        internal_targets = proposed_coverage | set(split_nodes) - {original_node}
+
+        all_outputs_internal = all(
+            conn.to_node in internal_targets
+            for conn in outputs
+        )
+
+        if all_outputs_internal:
+            new_coverage.add(split_node)
+        # else: split_node stays outside coverage (becomes external source)
+
+    return new_coverage
+```
+
+### Example: Split and Adjust
+
+```
+Proposed coverage: {13, 14, 15}
+Node 13: inputs from [A(outside), B(outside)], outputs to [14(inside), C(outside)]
+
+Step 1: Detect violation
+  - 13 has external input (A, B) AND external output (C)
+  - 13 must be split
+
+Step 2: Split node 13 (outputs sorted: 14 < C, assuming C is e.g., node 20)
+  - 13_a: outputs to [14]  (14 is inside)
+  - 13_b: outputs to [C]   (C is outside)
+
+Step 3: Adjust coverage
+  - 13_a: all outputs internal → INCLUDE
+  - 13_b: has external output → EXCLUDE
+  - New coverage: {13_a, 14, 15}
+
+Result:
+  - 13_a is an entry node (external inputs from A, B; internal output to 14)
+  - 13_b is outside coverage (external path A,B → 13_b → C)
+  - No violations remain
+```
+
+### Iterative Resolution
+
+In complex cases, splitting one node may reveal new violations (if the split changes what's "internal" vs "external"). The resolution process is iterative:
+
+```python
+def resolve_all_splits(proposed_coverage: Set[str], model: NetworkStructure) -> Tuple[Set[str], List[Operation]]:
+    """
+    Iteratively split nodes until no violations remain.
+
+    Returns:
+        - Final adjusted coverage
+        - List of split_node operations to apply
+    """
+    coverage = set(proposed_coverage)
+    operations = []
+
+    while True:
+        violations = detect_required_splits(coverage, model)
+        if not violations:
+            break
+
+        # Split the first violation (could also split all, but sequential is clearer)
+        node_to_split = violations[0]
+        split_op = Operation(type='split_node', params={'node_id': node_to_split})
+        operations.append(split_op)
+
+        # Apply split to model (conceptually)
+        model = apply_operation(model, split_op)
+        split_nodes = get_split_results(node_to_split, model)  # e.g., ["13_a", "13_b"]
+
+        # Adjust coverage
+        coverage = adjust_coverage_after_split(node_to_split, split_nodes, coverage, model)
+
+    return coverage, operations
+```
+
+### User Workflow
+
+When a user attempts to create an annotation:
+
+1. **Validate** proposed coverage against current model
+2. **Detect** any nodes requiring splits
+3. If violations found:
+   - **Option A (automatic)**: System suggests/applies required splits, adjusts coverage
+   - **Option B (manual)**: System reports violations, user manually applies `split_node` operations
+4. Once clean, **create** the `annotate` operation
+
+The automatic option provides a smoother UX, while the manual option gives users full control over the event stream.
+
+## Edge Cases and Special Nodes
+
+### Input Nodes (Negative IDs)
+
+Input nodes represent external inputs to the network and have special constraints:
+
+- **Cannot be split**: Input nodes have no internal computation to split
+- **Can be entry nodes**: They naturally have "external input" (from the environment)
+- **Cannot be intermediate or exit**: They have no inputs from other nodes
+
+When annotating a subgraph that starts at an input node, the input node is always an entry node.
+
+### Output Nodes
+
+Output nodes represent the network's outputs and have special constraints:
+
+- **Cannot be split**: The output must remain a single node for the network to function
+- **Cannot typically be in coverage**: Output nodes usually need to remain as the "outside" that exits connect to
+- **Problem case**: Direct input→output paths cannot have the output as an exit
+
+**Solution**: Use `add_identity_node` to intercept connections going to the output node:
+
+```
+Before: [-1→0], [-2→0]  (inputs directly to output)
+
+Problem: Want to annotate the -1 path, but output 0 can't be split or included.
+
+Solution: add_identity_node(target_node=0, connections=[[-1, 0]], new_node_id=100)
+
+After: [-1→100], [100→0], [-2→0]
+
+Now annotate: coverage={-1, 100}, entry=[-1], exit=[100]
+```
+
+### Nodes with Single Output
+
+A node with only one output connection cannot be split (nothing to split into). This is fine - such nodes are naturally either:
+- **Entry**: If they have external input (the single output goes inside)
+- **Intermediate**: If all I/O is internal
+- **Exit**: If they have internal input and external output
+
+No splitting is ever required for single-output nodes.
+
+### Nodes That Are Both Entry AND Exit
+
+This is the primary violation case. A node with both external input AND external output must be split:
+
+```
+External → [Node] → External   ← VIOLATION: entry with side effect
+               ↓
+           Internal
+
+Solution: split_node to separate the external output path
+```
+
+### Already-Split Nodes
+
+Split nodes (e.g., `13_a`, `13_b`) follow the same rules as regular nodes:
+- They can be further split if they have multiple outputs
+- They can be consolidated back with siblings
+- They can be annotated following the same entry/exit rules
+
+The split naming (`13_a`) doesn't change their behavior, only their identity.
+
 ## Operation Types
+
+There are six operation types:
+
+| # | Operation | Purpose |
+|---|-----------|---------|
+| 1 | `split_node` | Separate multi-output node into one node per output |
+| 2 | `consolidate_node` | Recombine previously split nodes |
+| 3 | `remove_node` | Remove pass-through node, combining connections |
+| 4 | `add_node` | Insert node into a single connection |
+| 5 | `add_identity_node` | Intercept multiple connections to same target |
+| 6 | `annotate` | Create hypothesis about subgraph function |
 
 ### 1. split_node
 
@@ -283,7 +519,73 @@ After add_node([-2, 4], new_node_id=16):
 - New node ID must not already exist
 - Connection cannot be within annotation coverage
 
-### 5. annotate
+### 5. add_identity_node
+
+**Purpose**: Intercept a subset of connections sharing a common target node, funneling them through an identity node. This creates a clean exit point for annotating paths that converge on a node that cannot itself be an exit (e.g., an output node or a node with other external connections).
+
+**Parameters**: `{ target_node: string, connections: [string, string][], new_node_id: string }`
+
+**Operation**:
+- Input: A target node ID, a list of connections that all end at that target, and a new node ID
+- Output: The specified connections are redirected through a new identity node
+
+**Weight Assignment**:
+- Redirected connections [from → new_node]: preserve original weights
+- New connection [new_node → target]: weight = 1.0, bias = 0.0, activation = identity
+
+**Aggregation**: The identity node uses the same aggregation function as the target node (typically `sum`), so the mathematical result is preserved.
+
+**Example**:
+```
+Before:
+  Connections: [a→n] weight=0.5, [b→n] weight=0.8, [c→n] weight=1.2
+
+After add_identity_node(target_node=n, connections=[[a,n], [b,n]], new_node_id=i):
+  Node i: bias=0.0, activation=identity, aggregation=sum
+  Connections:
+    [a→i] weight=0.5  (redirected, weight preserved)
+    [b→i] weight=0.8  (redirected, weight preserved)
+    [i→n] weight=1.0  (new)
+    [c→n] weight=1.2  (unchanged)
+```
+
+**Use Case - Annotating Paths to Output Nodes**:
+
+When you want to annotate a subgraph that leads directly to an output node, the output node cannot be split (it must remain the single output). Use `add_identity_node` to create a proper exit:
+
+```
+Before:
+  Input -1 → node 5 → Output 0
+  Input -2 → node 5 → Output 0
+
+Problem: Want to annotate path from -1 through 5 to output.
+         But Output 0 can't be in coverage (it's the global output)
+         and node 5 can't be an exit if -2→5 is external input.
+
+Solution:
+  Op 1: add_identity_node(target_node=5, connections=[[-1, 5]], new_node_id=100)
+
+  Result:
+    [-1→100] → [100→5] → [5→0]
+    [-2→5] → [5→0]
+
+  Op 2: annotate(coverage={-1, 100}, entry=[-1], exit=[100])
+
+  Now -1 is entry, 100 is exit (clean boundary).
+  The annotation captures "the path from input -1 through identity to node 5"
+```
+
+**Constraints**:
+- Target node must exist
+- All connections in the list must exist and end at target_node
+- At least one connection must be specified
+- Cannot specify ALL connections to target (must leave at least one direct, or use a different approach)
+- New node ID must not already exist
+- None of the connections can be within annotation coverage
+
+**Inverse Operation**: The identity node can later be removed with `remove_node` if it has exactly one input and one output remaining (after potential annotation changes).
+
+### 6. annotate
 
 **Purpose**: Create a hypothesis about a subgraph's function. Establishes an immutable boundary that can be collapsed for hierarchical visualization.
 
@@ -326,7 +628,7 @@ class Operation:
     id: UUID
     explanation_id: UUID
     sequence_number: int      # Order in the event stream (0-indexed)
-    operation_type: str       # 'split_node', 'consolidate_node', 'remove_node', 'add_node', 'annotate'
+    operation_type: str       # 'split_node', 'consolidate_node', 'remove_node', 'add_node', 'add_identity_node', 'annotate'
     parameters: dict          # Type-specific parameters (see above)
     created_at: datetime
 
@@ -413,6 +715,7 @@ All operations are deterministic:
 - `consolidate_node`: Combined suffix is alphabetically sorted
 - `remove_node`: Weight product is deterministic
 - `add_node`: Fixed weight assignment (1.0, original)
+- `add_identity_node`: Weight preservation and fixed new connection weight (1.0)
 - `annotate`: No randomness
 
 Same operation sequence always produces identical final model.
@@ -458,6 +761,110 @@ Op 2: split_node(13_ac)           → 13_a, 13_c (restored)
 
 Re-splitting 13_ac returns it to 13_a and 13_c, not 13_ac_a, 13_ac_b.
 The split "remembers" the consolidation it's reversing.
+```
+
+### Example 4: Identity Node for Output Path Annotation
+
+```
+Original model:
+  Input -1 ──→ Node 5 ──→ Output 0
+  Input -2 ──→ Node 5 ──┘
+
+  Connections: [-1→5], [-2→5], [5→0]
+
+Goal: Annotate the path from input -1 through node 5.
+
+Problem:
+  - Output 0 cannot be in coverage (it's the global output)
+  - Node 5 has external input from -2, so it can't be a clean exit
+  - Node 5 would need to be split, but it has only one output
+
+Solution using add_identity_node:
+
+Op 0: add_identity_node(target_node=5, connections=[[-1, 5]], new_node_id=100)
+
+  Result:
+    Input -1 ──→ Node 100 ──→ Node 5 ──→ Output 0
+    Input -2 ────────────────→ Node 5 ──┘
+
+    Connections: [-1→100], [100→5], [-2→5], [5→0]
+
+Op 1: annotate({
+  name: "Input -1 processing",
+  entry_nodes: [-1],
+  exit_nodes: [100],
+  subgraph_nodes: [-1, 100],
+  subgraph_connections: [[-1, 100]]
+})
+
+  Result:
+    - Node -1 is entry (external input from environment)
+    - Node 100 is exit (output goes to node 5, which is outside coverage)
+    - Clean annotation boundary established
+
+Collapsed view:
+  [Input -1 processing] ──→ Node 5 ──→ Output 0
+  Input -2 ─────────────────→ Node 5 ──┘
+```
+
+### Example 5: Combining Split and Identity Node
+
+```
+Original model:
+  A ──→ Node 10 ──→ B
+  C ──→ Node 10 ──→ D
+  E ──→ Node 10 ──┘
+
+  Node 10 has inputs from [A, C, E] and outputs to [B, D]
+
+Goal: Annotate paths A→10→B and C→10, leaving E→10→D outside.
+
+Step 1: Split node 10 to separate outputs
+  Op 0: split_node(10)
+    → 10_a (→B), 10_b (→D)   [B < D alphabetically/numerically]
+
+    A ──→ 10_a ──→ B
+    C ──→ 10_a
+    E ──→ 10_a
+    A ──→ 10_b ──→ D
+    C ──→ 10_b
+    E ──→ 10_b
+
+Step 2: Use identity node to separate E's path to 10_a
+  Op 1: add_identity_node(target_node=10_a, connections=[[A, 10_a], [C, 10_a]], new_node_id=100)
+
+    A ──→ 100 ──→ 10_a ──→ B
+    C ──→ 100 ──┘
+    E ──→ 10_a
+    (10_b paths unchanged)
+
+Step 3: Annotate
+  Op 2: annotate({
+    entry_nodes: [A, C],
+    exit_nodes: [10_a],
+    subgraph_nodes: [A, C, 100, 10_a],
+    ...
+  })
+
+  Wait - 10_a still has external input from E! Need another identity node.
+
+Step 2 (revised): Also isolate E's input
+  Op 1: add_identity_node(target_node=10_a, connections=[[A, 10_a], [C, 10_a]], new_node_id=100)
+
+    A ──→ 100 ──→ 10_a ──→ B
+    C ──→ 100 ──┘
+    E ──────────→ 10_a
+
+  Now annotate {A, C, 100} with 100 as exit:
+
+  Op 2: annotate({
+    entry_nodes: [A, C],
+    exit_nodes: [100],
+    subgraph_nodes: [A, C, 100],
+    subgraph_connections: [[A, 100], [C, 100]]
+  })
+
+This cleanly captures "the A and C input processing" as a unit.
 ```
 
 ## Migration from Current System
