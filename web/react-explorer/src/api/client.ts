@@ -2,6 +2,28 @@
  * API client for ExplaNEAT REST API
  */
 
+// =============================================================================
+// Logging utilities
+// =============================================================================
+
+const LOG_PREFIX = "[API]";
+
+function logDebug(message: string, data?: unknown) {
+  console.log(`${LOG_PREFIX} ${message}`, data !== undefined ? data : "");
+}
+
+function logInfo(message: string, data?: unknown) {
+  console.info(`${LOG_PREFIX} ${message}`, data !== undefined ? data : "");
+}
+
+function logError(message: string, data?: unknown) {
+  console.error(`${LOG_PREFIX} ${message}`, data !== undefined ? data : "");
+}
+
+// =============================================================================
+// Configuration
+// =============================================================================
+
 // Use relative URL when proxying through Vite dev server
 // Falls back to localhost:8000 for direct access
 const API_BASE = "/api";
@@ -200,6 +222,10 @@ class ApiError extends Error {
 }
 
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
+  const method = options?.method || "GET";
+  logDebug(`${method} ${url}`, options?.body ? JSON.parse(options.body as string) : undefined);
+  const startTime = performance.now();
+
   const response = await fetch(url, {
     ...options,
     headers: {
@@ -208,12 +234,21 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
     },
   });
 
+  const elapsed = performance.now() - startTime;
+
   if (!response.ok) {
     const text = await response.text();
+    logError(`${method} ${url} failed (${response.status}) in ${elapsed.toFixed(2)}ms`, text);
     throw new ApiError(response.status, text);
   }
 
-  return response.json();
+  const data = await response.json();
+  logInfo(`${method} ${url} completed in ${elapsed.toFixed(2)}ms`, {
+    status: response.status,
+    dataKeys: Object.keys(data),
+  });
+
+  return data;
 }
 
 // ============================================================================
