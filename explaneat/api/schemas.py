@@ -53,6 +53,33 @@ class ModelStateResponse(BaseModel):
 
 
 # =============================================================================
+# Experiment schemas
+# =============================================================================
+
+
+class ExperimentListItem(BaseModel):
+    """Schema for experiment in list response."""
+
+    id: str
+    name: str
+    status: str
+    dataset_name: Optional[str] = None
+    generations: int
+    total_genomes: int
+    best_fitness: Optional[float] = None
+    created_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ExperimentListResponse(BaseModel):
+    """Response for list of experiments."""
+
+    experiments: List[ExperimentListItem]
+    total: int
+
+
+# =============================================================================
 # Genome schemas
 # =============================================================================
 

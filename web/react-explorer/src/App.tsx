@@ -1,20 +1,32 @@
 import { useState } from "react";
-import { GenomeList } from "./components/GenomeList";
+import { ExperimentList } from "./components/ExperimentList";
 import { GenomeExplorer } from "./components/GenomeExplorer";
 
-export default function App() {
-  const [selectedGenomeId, setSelectedGenomeId] = useState<string | null>(null);
+type Selection = {
+  genomeId: string;
+  experimentName: string;
+};
 
-  if (selectedGenomeId) {
+export default function App() {
+  const [selection, setSelection] = useState<Selection | null>(null);
+
+  if (selection) {
     return (
       <GenomeExplorer
-        genomeId={selectedGenomeId}
-        onBack={() => setSelectedGenomeId(null)}
+        genomeId={selection.genomeId}
+        experimentName={selection.experimentName}
+        onBack={() => setSelection(null)}
       />
     );
   }
 
-  return <GenomeList onSelectGenome={setSelectedGenomeId} />;
+  return (
+    <ExperimentList
+      onSelectGenome={(genomeId, experimentName) =>
+        setSelection({ genomeId, experimentName })
+      }
+    />
+  );
 }
 
 

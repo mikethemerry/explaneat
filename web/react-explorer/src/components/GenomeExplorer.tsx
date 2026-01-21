@@ -11,10 +11,11 @@ import { OperationsPanel } from "./OperationsPanel";
 
 type GenomeExplorerProps = {
   genomeId: string;
+  experimentName: string;
   onBack: () => void;
 };
 
-export function GenomeExplorer({ genomeId, onBack }: GenomeExplorerProps) {
+export function GenomeExplorer({ genomeId, experimentName, onBack }: GenomeExplorerProps) {
   const [model, setModel] = useState<ModelState | null>(null);
   const [operations, setOperations] = useState<Operation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,8 +82,8 @@ export function GenomeExplorer({ genomeId, onBack }: GenomeExplorerProps) {
         <button className="back-btn" onClick={onBack}>
           &larr; Back
         </button>
-        <h2>Genome Explorer</h2>
-        <span className="genome-id">ID: {genomeId.slice(0, 8)}...</span>
+        <h2>{experimentName}</h2>
+        <span className="genome-id">Best Genome: {genomeId.slice(0, 8)}...</span>
       </header>
 
       <div className="explorer-content">

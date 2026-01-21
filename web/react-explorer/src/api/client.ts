@@ -55,6 +55,32 @@ export type GenomeListResponse = {
   total: number;
 };
 
+export type ExperimentListItem = {
+  id: string;
+  name: string;
+  status: string;
+  dataset_name: string | null;
+  generations: number;
+  total_genomes: number;
+  best_fitness: number | null;
+  created_at: string;
+};
+
+export type ExperimentListResponse = {
+  experiments: ExperimentListItem[];
+  total: number;
+};
+
+export type BestGenomeResponse = {
+  genome_id: string;
+  neat_genome_id: number;
+  fitness: number;
+  num_nodes: number;
+  num_connections: number;
+  experiment_id: string;
+  experiment_name: string;
+};
+
 export type OperationResult = {
   created_nodes?: string[];
   removed_nodes?: string[];
@@ -188,6 +214,27 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   }
 
   return response.json();
+}
+
+// ============================================================================
+// Experiment endpoints
+// ============================================================================
+
+export async function listExperiments(
+  limit = 50,
+  offset = 0,
+): Promise<ExperimentListResponse> {
+  return fetchJson<ExperimentListResponse>(
+    `${API_BASE}/experiments?limit=${limit}&offset=${offset}`,
+  );
+}
+
+export async function getBestGenome(
+  experimentId: string,
+): Promise<BestGenomeResponse> {
+  return fetchJson<BestGenomeResponse>(
+    `${API_BASE}/experiments/${experimentId}/best-genome`,
+  );
 }
 
 // ============================================================================
