@@ -157,11 +157,11 @@ class AnnotateParams(BaseModel):
     """Parameters for annotate operation."""
 
     name: str
-    hypothesis: str
+    hypothesis: Optional[str] = None
     entry_nodes: List[str]
     exit_nodes: List[str]
     subgraph_nodes: List[str]
-    subgraph_connections: List[tuple[str, str]]
+    subgraph_connections: List[tuple[str, str]] = []
     evidence: Optional[Dict[str, Any]] = None
 
 

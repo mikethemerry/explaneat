@@ -134,6 +134,7 @@ export function GenomeExplorer({ genomeId, experimentName, onBack }: GenomeExplo
           genomeId={genomeId}
           operations={operations}
           selectedNodes={selectedNodes}
+          model={model}
           onOperationChange={handleOperationChange}
         />
         <NetworkViewer

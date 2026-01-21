@@ -185,10 +185,16 @@ export type CoverageResponse = {
 export type SplitNodeParams = { node_id: string };
 export type ConsolidateNodeParams = { node_ids: string[] };
 export type RemoveNodeParams = { node_id: string };
-export type AddNodeParams = { connection: [string, string] };
+export type AddNodeParams = {
+  connection: [string, string];
+  new_node_id: string;
+  bias?: number;
+  activation?: string;
+};
 export type AddIdentityNodeParams = {
   target_node: string;
-  intercepted_connections: [string, string][];
+  connections: [string, string][];
+  new_node_id: string;
 };
 export type AnnotateParams = {
   name: string;
@@ -196,7 +202,7 @@ export type AnnotateParams = {
   entry_nodes: string[];
   exit_nodes: string[];
   subgraph_nodes: string[];
-  subgraph_connections: [string, string][];
+  subgraph_connections?: [string, string][];
 };
 
 export type OperationRequest =
