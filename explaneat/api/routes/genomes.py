@@ -192,6 +192,28 @@ async def get_genome_phenotype(
     return _network_to_response(phenotype)
 
 
+def _operations_to_response(operations_data: list) -> list:
+    """Convert operations JSON to response format."""
+    from datetime import datetime
+
+    result = []
+    for op in operations_data or []:
+        created_at = op.get("created_at")
+        if isinstance(created_at, str):
+            created_at = datetime.fromisoformat(created_at)
+        elif not created_at:
+            created_at = datetime.utcnow()
+
+        result.append(OperationResponse(
+            seq=op["seq"],
+            type=op["type"],
+            params=op["params"],
+            result=op.get("result"),
+            created_at=created_at,
+        ))
+    return result
+
+
 @router.get("/{genome_id}/explanation", response_model=ExplanationResponse)
 async def get_genome_explanation(
     genome_id: UUID,
@@ -217,13 +239,14 @@ async def get_genome_explanation(
         explanation = Explanation(
             genome_id=genome_id,
             is_well_formed=False,
+            operations=[],
         )
         db.add(explanation)
         db.commit()
         db.refresh(explanation)
 
-    # TODO: Load operations from the operations JSON column once we add it
-    operations = []
+    # Load operations from the operations JSON column
+    operations = _operations_to_response(explanation.operations)
 
     return ExplanationResponse(
         id=str(explanation.id),
@@ -270,12 +293,14 @@ async def update_genome_explanation(
     db.commit()
     db.refresh(explanation)
 
+    operations = _operations_to_response(explanation.operations)
+
     return ExplanationResponse(
         id=str(explanation.id),
         genome_id=str(explanation.genome_id),
         name=explanation.name,
         description=explanation.description,
-        operations=[],  # TODO: Load from operations column
+        operations=operations,
         is_well_formed=explanation.is_well_formed,
         structural_coverage=explanation.structural_coverage,
         compositional_coverage=explanation.compositional_coverage,

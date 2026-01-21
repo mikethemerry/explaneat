@@ -529,6 +529,10 @@ class Explanation(Base, TimestampMixin):
     structural_coverage = Column(Float)  # Cached C_V^struct value
     compositional_coverage = Column(Float)  # Cached C_V^comp value
 
+    # Operations event stream stored as JSON array
+    # Format: [{"seq": 0, "type": "split_node", "params": {...}, "result": {...}, "created_at": "..."}]
+    operations = Column(JSONB, nullable=False, default=list)
+
     # Relationships
     genome = relationship("Genome", backref="explanations")
     annotations = relationship(
@@ -550,6 +554,7 @@ class Explanation(Base, TimestampMixin):
             "is_well_formed": self.is_well_formed,
             "structural_coverage": self.structural_coverage,
             "compositional_coverage": self.compositional_coverage,
+            "operations": self.operations or [],
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

@@ -5,12 +5,14 @@ These routes handle adding, removing, and validating operations
 on the explanation event stream.
 """
 
+import tempfile
 from typing import List
 from uuid import UUID
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
+import neat
 
 from ..dependencies import get_db
 from ..schemas import (
@@ -20,11 +22,138 @@ from ..schemas import (
     OperationValidationResponse,
     OperationResult,
     ModelStateResponse,
+    NodeSchema,
+    ConnectionSchema,
+    ModelMetadata,
 )
-from ...db import Genome, Explanation
+from ...db import Genome, Population, Experiment, Explanation
+from ...db.serialization import deserialize_genome
+from ...core.explaneat import ExplaNEAT
+from ...core.model_state import ModelStateEngine, Operation
+from ...core.operations import OperationError
 
 
 router = APIRouter()
+
+
+def _get_neat_config(experiment: Experiment) -> neat.Config:
+    """Load NEAT config from experiment's config text."""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".cfg", delete=False) as f:
+        f.write(experiment.neat_config_text)
+        config_path = f.name
+
+    return neat.Config(
+        neat.DefaultGenome,
+        neat.DefaultReproduction,
+        neat.DefaultSpeciesSet,
+        neat.DefaultStagnation,
+        config_path,
+    )
+
+
+def _get_phenotype_and_engine(
+    genome_id: UUID,
+    db: Session,
+) -> tuple[Genome, Explanation, ModelStateEngine]:
+    """
+    Get genome, explanation, and initialized ModelStateEngine.
+
+    Returns:
+        Tuple of (genome, explanation, engine)
+    """
+    genome = db.get(Genome, genome_id)
+    if not genome:
+        raise HTTPException(status_code=404, detail=f"Genome {genome_id} not found")
+
+    # Get population and experiment for config
+    population = db.get(Population, genome.population_id)
+    if not population:
+        raise HTTPException(status_code=404, detail="Population not found")
+
+    experiment = db.get(Experiment, population.experiment_id)
+    if not experiment:
+        raise HTTPException(status_code=404, detail="Experiment not found")
+
+    # Load NEAT config and get phenotype
+    config = _get_neat_config(experiment)
+    neat_genome = deserialize_genome(genome.genome_data, config)
+    explaneat = ExplaNEAT(neat_genome, config)
+    phenotype = explaneat.get_phenotype_network()
+
+    # Get or create explanation
+    explanation = (
+        db.query(Explanation)
+        .filter(Explanation.genome_id == genome_id)
+        .first()
+    )
+
+    if not explanation:
+        explanation = Explanation(
+            genome_id=genome_id,
+            is_well_formed=False,
+            operations=[],
+        )
+        db.add(explanation)
+        db.commit()
+        db.refresh(explanation)
+
+    # Create engine and load existing operations
+    engine = ModelStateEngine.from_phenotype_and_operations(
+        phenotype,
+        {"operations": explanation.operations or []},
+    )
+
+    return genome, explanation, engine
+
+
+def _network_to_response(network, is_original: bool = False) -> ModelStateResponse:
+    """Convert NetworkStructure to API response."""
+    nodes = [
+        NodeSchema(
+            id=node.id,
+            type=node.type.value if hasattr(node.type, "value") else node.type,
+            bias=node.bias,
+            activation=node.activation,
+            response=node.response,
+            aggregation=node.aggregation,
+        )
+        for node in network.nodes
+    ]
+
+    connections = [
+        ConnectionSchema(
+            **{
+                "from": conn.from_node,
+                "to": conn.to_node,
+                "weight": conn.weight,
+                "enabled": conn.enabled,
+            }
+        )
+        for conn in network.connections
+    ]
+
+    metadata = ModelMetadata(
+        input_nodes=network.input_node_ids,
+        output_nodes=network.output_node_ids,
+        is_original=is_original or network.metadata.get("is_original", True),
+    )
+
+    return ModelStateResponse(
+        nodes=nodes,
+        connections=connections,
+        metadata=metadata,
+    )
+
+
+def _operation_to_response(op: Operation) -> OperationResponse:
+    """Convert Operation to API response."""
+    return OperationResponse(
+        seq=op.seq,
+        type=op.type,
+        params=op.params,
+        result=OperationResult(**op.result) if op.result else None,
+        created_at=op.created_at,
+    )
 
 
 # =============================================================================
@@ -43,24 +172,12 @@ async def get_current_model(
     Returns the phenotype with all operations (splits, identity nodes, etc.)
     applied in order.
     """
-    genome = db.get(Genome, genome_id)
-    if not genome:
-        raise HTTPException(status_code=404, detail=f"Genome {genome_id} not found")
+    genome, explanation, engine = _get_phenotype_and_engine(genome_id, db)
 
-    explanation = (
-        db.query(Explanation)
-        .filter(Explanation.genome_id == genome_id)
-        .first()
-    )
+    current_state = engine.current_state
+    is_original = len(engine.operations) == 0
 
-    # TODO: Implement model state engine to apply operations
-    # For now, return the phenotype without operations applied
-    # This will be implemented in Phase 2
-
-    raise HTTPException(
-        status_code=501,
-        detail="Model state engine not yet implemented. Use /phenotype for now.",
-    )
+    return _network_to_response(current_state, is_original=is_original)
 
 
 # =============================================================================
@@ -91,9 +208,22 @@ async def list_operations(
     if not explanation:
         return OperationListResponse(operations=[], total=0)
 
-    # TODO: Load operations from the operations JSON column
-    # For now, return empty list
+    # Convert stored operations to response format
     operations = []
+    for op_data in explanation.operations or []:
+        created_at = op_data.get("created_at")
+        if isinstance(created_at, str):
+            created_at = datetime.fromisoformat(created_at)
+        elif not created_at:
+            created_at = datetime.utcnow()
+
+        operations.append(OperationResponse(
+            seq=op_data["seq"],
+            type=op_data["type"],
+            params=op_data["params"],
+            result=op_data.get("result"),
+            created_at=created_at,
+        ))
 
     return OperationListResponse(
         operations=operations,
@@ -121,41 +251,23 @@ async def add_operation(
     - **add_identity_node**: Intercept connections through an identity node
     - **annotate**: Create an annotation on a subgraph
     """
-    genome = db.get(Genome, genome_id)
-    if not genome:
-        raise HTTPException(status_code=404, detail=f"Genome {genome_id} not found")
+    genome, explanation, engine = _get_phenotype_and_engine(genome_id, db)
 
-    # Get or create explanation
-    explanation = (
-        db.query(Explanation)
-        .filter(Explanation.genome_id == genome_id)
-        .first()
-    )
+    # Convert params to dict
+    params = operation.params.model_dump()
 
-    if not explanation:
-        explanation = Explanation(
-            genome_id=genome_id,
-            is_well_formed=False,
-        )
-        db.add(explanation)
+    try:
+        # Add operation to engine (validates and applies)
+        new_op = engine.add_operation(operation.type, params, validate=True)
+
+        # Save updated operations to database
+        explanation.operations = engine.to_dict()["operations"]
         db.commit()
-        db.refresh(explanation)
 
-    # TODO: Implement operation validation and application
-    # For now, return a stub response
-    # This will be implemented in Phase 2
+        return _operation_to_response(new_op)
 
-    # Placeholder for next sequence number
-    # In real implementation, we'd read from operations JSON and get len()
-    next_seq = 0
-
-    return OperationResponse(
-        seq=next_seq,
-        type=operation.type,
-        params=operation.params.model_dump(),
-        result=OperationResult(),
-        created_at=datetime.utcnow(),
-    )
+    except OperationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.delete("/operations/{seq}")
@@ -171,27 +283,27 @@ async def remove_operation(
     operations that came after it. The model state is recomputed by
     replaying the remaining operations.
     """
-    genome = db.get(Genome, genome_id)
-    if not genome:
-        raise HTTPException(status_code=404, detail=f"Genome {genome_id} not found")
+    genome, explanation, engine = _get_phenotype_and_engine(genome_id, db)
 
-    explanation = (
-        db.query(Explanation)
-        .filter(Explanation.genome_id == genome_id)
-        .first()
-    )
+    if not explanation.operations:
+        raise HTTPException(status_code=404, detail="No operations to remove")
 
-    if not explanation:
-        raise HTTPException(status_code=404, detail="No explanation found")
+    try:
+        # Remove operations from seq onwards
+        removed = engine.remove_operation(seq)
 
-    # TODO: Implement operation removal
-    # This will be implemented in Phase 2
+        # Save updated operations to database
+        explanation.operations = engine.to_dict()["operations"]
+        db.commit()
 
-    return {
-        "status": "removed",
-        "removed_seq": seq,
-        "remaining_operations": 0,
-    }
+        return {
+            "status": "removed",
+            "removed_count": len(removed),
+            "remaining_operations": len(engine.operations),
+        }
+
+    except OperationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.post("/operations/validate", response_model=OperationValidationResponse)
@@ -207,16 +319,16 @@ async def validate_operation(
     This is useful for checking if an operation would succeed before
     actually adding it to the event stream.
     """
-    genome = db.get(Genome, genome_id)
-    if not genome:
-        raise HTTPException(status_code=404, detail=f"Genome {genome_id} not found")
+    genome, explanation, engine = _get_phenotype_and_engine(genome_id, db)
 
-    # TODO: Implement operation validation
-    # For now, return a stub response indicating validation not implemented
-    # This will be implemented in Phase 3
+    # Convert params to dict
+    params = operation.params.model_dump()
+
+    # Validate operation
+    errors = engine.validate_operation(operation.type, params)
 
     return OperationValidationResponse(
-        valid=True,
-        errors=[],
-        warnings=["Validation not yet fully implemented"],
+        valid=len(errors) == 0,
+        errors=errors,
+        warnings=[],
     )
