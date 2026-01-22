@@ -314,6 +314,33 @@ class CoverageResponse(BaseModel):
 
 
 # =============================================================================
+# Annotation schemas
+# =============================================================================
+
+
+class AnnotationSummary(BaseModel):
+    """Summary of an annotation for collapsing/hierarchy."""
+
+    id: str
+    name: Optional[str] = None
+    entry_nodes: List[str]
+    exit_nodes: List[str]
+    subgraph_nodes: List[str]
+    parent_annotation_id: Optional[str] = None
+    children_ids: List[str] = []
+    is_leaf: bool = True
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AnnotationListResponse(BaseModel):
+    """Response for list of annotations."""
+
+    annotations: List[AnnotationSummary]
+    total: int
+
+
+# =============================================================================
 # Error schemas
 # =============================================================================
 

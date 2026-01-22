@@ -49,6 +49,7 @@ const NODE_COLORS: Record<string, { background: string; border: string }> = {
   output: { background: "#2196F3", border: "#1976D2" },
   hidden: { background: "#9E9E9E", border: "#757575" },
   identity: { background: "#FF9800", border: "#F57C00" },
+  annotation: { background: "#7C3AED", border: "#5B21B6" }, // Purple for annotation nodes
 };
 
 const NODE_WIDTH = 120;
@@ -62,6 +63,7 @@ type NetworkViewerProps = {
   model: ModelState;
   selectedNodes: Set<string>;
   onNodeSelect: (nodeIds: string[]) => void;
+  annotationNodeIds?: string[]; // IDs of synthetic annotation nodes
 };
 
 // =============================================================================
@@ -287,45 +289,68 @@ function buildNodeTooltip(node: ModelState["nodes"][number]): string {
   return lines.join("\n");
 }
 
-function convertModelToFlow(model: ModelState): { nodes: Node[]; edges: Edge[] } {
+function convertModelToFlow(model: ModelState, annotationNodeIds: Set<string>): { nodes: Node[]; edges: Edge[] } {
   logInfo("Converting model to ReactFlow format", {
     nodeCount: model.nodes.length,
     connectionCount: model.connections.length,
     inputNodes: model.metadata.input_nodes,
     outputNodes: model.metadata.output_nodes,
+    annotationNodes: annotationNodeIds.size,
   });
 
   // Build nodes
   const nodes: Node[] = model.nodes.map((node, index) => {
-    const colors = NODE_COLORS[node.type] || NODE_COLORS.hidden;
-    const tooltip = buildNodeTooltip(node);
+    const isAnnotationNode = annotationNodeIds.has(node.id);
+    const effectiveType = isAnnotationNode ? "annotation" : node.type;
+    const colors = NODE_COLORS[effectiveType] || NODE_COLORS.hidden;
+    const tooltip = isAnnotationNode
+      ? `Annotation: ${node.id.replace(/^A_/, "")}`
+      : buildNodeTooltip(node);
 
     logDebug(`Creating node ${node.id}`, {
       type: node.type,
+      isAnnotationNode,
       bias: node.bias,
       activation: node.activation,
     });
 
+    // Special styling for annotation nodes
+    const style = isAnnotationNode
+      ? {
+          background: `linear-gradient(135deg, ${colors.background}, #6D28D9)`,
+          border: `2px dashed ${colors.border}`,
+          borderRadius: "12px",
+          color: "#fff",
+          fontSize: "12px",
+          fontWeight: "bold",
+          padding: "10px 16px",
+          minWidth: `${NODE_WIDTH + 20}px`,
+          textAlign: "center" as const,
+          boxShadow: "0 2px 8px rgba(124, 58, 237, 0.3)",
+        }
+      : {
+          background: colors.background,
+          border: `2px solid ${colors.border}`,
+          borderRadius: "8px",
+          color: "#fff",
+          fontSize: "12px",
+          fontWeight: "bold",
+          padding: "8px 12px",
+          minWidth: `${NODE_WIDTH}px`,
+          textAlign: "center" as const,
+        };
+
     return {
       id: node.id,
       type: "default",
-      position: { x: index * 150, y: 0 }, // Will be overwritten by dagre
+      position: { x: index * 150, y: 0 }, // Will be overwritten by layout
       data: {
-        label: node.id,
+        label: isAnnotationNode ? node.id.replace(/^A_/, "") : node.id,
         tooltip,
-        nodeType: node.type,
+        nodeType: effectiveType,
+        isAnnotationNode,
       },
-      style: {
-        background: colors.background,
-        border: `2px solid ${colors.border}`,
-        borderRadius: "8px",
-        color: "#fff",
-        fontSize: "12px",
-        fontWeight: "bold",
-        padding: "8px 12px",
-        minWidth: `${NODE_WIDTH}px`,
-        textAlign: "center" as const,
-      },
+      style,
     };
   });
 
@@ -394,6 +419,7 @@ export function NetworkViewer({
   model,
   selectedNodes,
   onNodeSelect,
+  annotationNodeIds = [],
 }: NetworkViewerProps) {
   // Convert model to ReactFlow format with layer-based layout
   const { initialNodes, initialEdges } = useMemo(() => {
@@ -401,7 +427,8 @@ export function NetworkViewer({
     const startTime = performance.now();
 
     // Convert model to ReactFlow nodes/edges
-    const { nodes: flowNodes, edges: flowEdges } = convertModelToFlow(model);
+    const annotationNodeSet = new Set(annotationNodeIds);
+    const { nodes: flowNodes, edges: flowEdges } = convertModelToFlow(model, annotationNodeSet);
 
     // Get input node IDs from metadata
     const inputNodeIds = new Set(model.metadata.input_nodes);
@@ -432,7 +459,7 @@ export function NetworkViewer({
     });
 
     return { initialNodes: layoutedNodes, initialEdges: layoutedEdges };
-  }, [model]);
+  }, [model, annotationNodeIds]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -562,7 +589,6 @@ export function NetworkViewer({
           selectionOnDrag={true}
           selectNodesOnDrag={true}
           panOnDrag={[1, 2]} // Middle and right mouse button for panning
-          selectionMode="partial"
           colorMode="light"
         >
           <Controls showZoom showFitView showInteractive />
@@ -603,6 +629,13 @@ export function NetworkViewer({
             style={{ backgroundColor: NODE_COLORS.identity.background }}
           />
           Identity
+        </span>
+        <span className="legend-item">
+          <span
+            className="legend-color"
+            style={{ backgroundColor: NODE_COLORS.annotation.background }}
+          />
+          Annotation
         </span>
         <span className="legend-item">
           <span

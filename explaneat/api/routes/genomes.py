@@ -22,6 +22,8 @@ from ..schemas import (
     ExplanationResponse,
     ExplanationUpdateRequest,
     OperationResponse,
+    AnnotationSummary,
+    AnnotationListResponse,
 )
 from ...db import Genome, Population, Experiment, Explanation
 from ...db.serialization import deserialize_genome
@@ -328,3 +330,60 @@ async def delete_genome_explanation(
         db.commit()
 
     return {"status": "deleted"}
+
+
+@router.get("/{genome_id}/annotations", response_model=AnnotationListResponse)
+async def list_genome_annotations(
+    genome_id: UUID,
+    db: Session = Depends(get_db),
+):
+    """
+    List all annotations for a genome with hierarchy information.
+
+    Annotations are derived from "annotate" operations in the explanation's
+    operations array. Returns annotations with hierarchy info useful for
+    collapsing/expanding in the UI.
+    """
+    genome = db.get(Genome, genome_id)
+    if not genome:
+        raise HTTPException(status_code=404, detail=f"Genome {genome_id} not found")
+
+    # Get explanation for this genome
+    explanation = (
+        db.query(Explanation)
+        .filter(Explanation.genome_id == genome_id)
+        .first()
+    )
+
+    if not explanation or not explanation.operations:
+        return AnnotationListResponse(annotations=[], total=0)
+
+    # Extract annotations from "annotate" operations
+    annotation_summaries = []
+    for op in explanation.operations:
+        if op.get("type") != "annotate":
+            continue
+
+        params = op.get("params", {})
+        result = op.get("result", {})
+
+        # Use annotation_id from result, or generate one from seq
+        ann_id = result.get("annotation_id") or f"ann_{op.get('seq', 0)}"
+
+        annotation_summaries.append(
+            AnnotationSummary(
+                id=ann_id,
+                name=params.get("name"),
+                entry_nodes=[str(n) for n in (params.get("entry_nodes") or [])],
+                exit_nodes=[str(n) for n in (params.get("exit_nodes") or [])],
+                subgraph_nodes=[str(n) for n in (params.get("subgraph_nodes") or [])],
+                parent_annotation_id=None,  # TODO: Support hierarchy via params if needed
+                children_ids=[],  # TODO: Compute from subgraph containment if needed
+                is_leaf=True,  # All annotations are leaf for now
+            )
+        )
+
+    return AnnotationListResponse(
+        annotations=annotation_summaries,
+        total=len(annotation_summaries),
+    )

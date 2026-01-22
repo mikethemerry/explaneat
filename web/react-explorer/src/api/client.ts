@@ -181,6 +181,23 @@ export type CoverageResponse = {
   annotations_count: number;
 };
 
+// Annotation types for collapsing
+export type AnnotationSummary = {
+  id: string;
+  name: string | null;
+  entry_nodes: string[];
+  exit_nodes: string[];
+  subgraph_nodes: string[];
+  parent_annotation_id: string | null;
+  children_ids: string[];
+  is_leaf: boolean;
+};
+
+export type AnnotationListResponse = {
+  annotations: AnnotationSummary[];
+  total: number;
+};
+
 // Operation request types
 export type SplitNodeParams = { node_id: string };
 export type ConsolidateNodeParams = { node_ids: string[] };
@@ -404,5 +421,17 @@ export async function getCoverageAnalysis(
 ): Promise<CoverageResponse> {
   return fetchJson<CoverageResponse>(
     `${API_BASE}/genomes/${genomeId}/analyze/coverage`,
+  );
+}
+
+// ============================================================================
+// Annotation endpoints
+// ============================================================================
+
+export async function listAnnotations(
+  genomeId: string,
+): Promise<AnnotationListResponse> {
+  return fetchJson<AnnotationListResponse>(
+    `${API_BASE}/genomes/${genomeId}/annotations`,
   );
 }

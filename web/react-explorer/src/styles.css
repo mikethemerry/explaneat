@@ -329,6 +329,15 @@ body {
   font-size: 0.9rem;
 }
 
+.wizard-summary .discovered-nodes {
+  background: #ecfdf5;
+  border: 1px solid #6ee7b7;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  margin: 0.5rem 0;
+  color: #059669;
+}
+
 .wizard-fixes {
   background: #fffbeb;
   border: 1px solid #fcd34d;
@@ -475,6 +484,8 @@ body {
   list-style: none;
   padding: 0;
   margin: 0;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 .operation-item {
@@ -520,6 +531,175 @@ body {
 
 .op-undo:hover {
   color: #ef4444;
+}
+
+/* Subgraph Summary */
+.subgraph-summary {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.25rem;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.subgraph-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.subgraph-row:last-child {
+  margin-bottom: 0;
+}
+
+.subgraph-label {
+  font-weight: 600;
+  color: #6b7280;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.subgraph-nodes {
+  font-family: monospace;
+  font-size: 0.8rem;
+  word-break: break-all;
+}
+
+.subgraph-nodes.entry {
+  color: #059669;
+}
+
+.subgraph-nodes.intermediate {
+  color: #6b7280;
+}
+
+.subgraph-nodes.exit {
+  color: #dc2626;
+}
+
+.subgraph-row.discovered {
+  background: #ecfdf5;
+  margin: 0.35rem -0.5rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.2rem;
+}
+
+.subgraph-row.discovered .subgraph-nodes {
+  color: #059669;
+}
+
+.subgraph-fixes {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 0.25rem;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.subgraph-fixes h5 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.85rem;
+  color: #92400e;
+}
+
+.subgraph-fixes ul {
+  margin: 0 0 0.5rem 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.annotation-create {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.warning-text {
+  color: #d97706;
+}
+
+/* Strategy Section */
+.strategy-section {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.25rem;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.strategy-section h5 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.85rem;
+  color: #374151;
+}
+
+.strategy-steps {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.85rem;
+}
+
+.strategy-step {
+  margin-bottom: 0.5rem;
+  padding: 0.35rem 0;
+}
+
+.strategy-step:last-child {
+  margin-bottom: 0;
+}
+
+.strategy-step .step-label {
+  font-weight: 500;
+}
+
+.strategy-step .step-detail {
+  color: #6b7280;
+  font-family: monospace;
+  font-size: 0.8rem;
+  margin-left: 0.25rem;
+}
+
+.strategy-step .step-nodes {
+  margin: 0.25rem 0 0 0;
+  padding-left: 1rem;
+  list-style: disc;
+  font-size: 0.8rem;
+}
+
+.strategy-step.blocking {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 0.2rem;
+  padding: 0.5rem;
+  margin-left: -0.5rem;
+  color: #dc2626;
+}
+
+.strategy-step.blocking .step-label {
+  color: #dc2626;
+}
+
+.strategy-step.auto {
+  color: #059669;
+}
+
+.strategy-step.auto .step-label {
+  color: #059669;
+}
+
+.strategy-step.final {
+  color: #2563eb;
+  font-weight: 500;
+}
+
+.strategy-step .step-note {
+  display: block;
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-style: italic;
+  margin-top: 0.2rem;
 }
 
 .split-analysis {
@@ -694,5 +874,141 @@ body {
   border-radius: 0.25rem;
   margin-bottom: 1rem;
   font-size: 0.9rem;
+}
+
+/* Left panels container */
+.left-panels {
+  display: flex;
+  flex-direction: column;
+  width: 320px;
+  background: white;
+  border-right: 1px solid #e5e7eb;
+  overflow-y: auto;
+}
+
+.left-panels .operations-panel {
+  width: 100%;
+  border-right: none;
+}
+
+/* Annotation List Panel */
+.annotation-list-panel {
+  padding: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.annotation-tree {
+  margin-top: 0.5rem;
+}
+
+.annotation-tree-item {
+  margin-bottom: 0.25rem;
+}
+
+.annotation-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.annotation-item:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.annotation-item.selected {
+  background: #eff6ff;
+  border-color: #3b82f6;
+}
+
+.annotation-item.collapsed {
+  background: #faf5ff;
+  border-color: #c084fc;
+}
+
+.annotation-item.collapsed.selected {
+  background: #e9d5ff;
+  border-color: #7c3aed;
+}
+
+.collapse-toggle {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: #e5e7eb;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.collapse-toggle:hover {
+  background: #d1d5db;
+}
+
+.annotation-item.collapsed .collapse-toggle {
+  background: #c084fc;
+  color: white;
+}
+
+.annotation-item.collapsed .collapse-toggle:hover {
+  background: #a855f7;
+}
+
+.annotation-name {
+  flex: 1;
+  font-weight: 500;
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.annotation-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-family: monospace;
+}
+
+.annotation-meta .node-count {
+  background: #e5e7eb;
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.2rem;
+}
+
+.annotation-meta .arrow {
+  color: #9ca3af;
+}
+
+.annotation-item .badge {
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.2rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.annotation-item .badge.leaf {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.annotation-item .badge.composition {
+  background: #fae8ff;
+  color: #a21caf;
 }
 
