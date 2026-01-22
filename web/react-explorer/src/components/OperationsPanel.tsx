@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   addOperation,
   removeOperation,
@@ -8,6 +8,7 @@ import {
   type OperationRequest,
   type SplitDetectionResponse,
   type ModelState,
+  type ViolationDetail,
 } from "../api/client";
 
 // =============================================================================
@@ -44,57 +45,264 @@ type OperationsPanelProps = {
   onOperationChange: () => void;
 };
 
-type ExternalConnectionInfo = {
-  hasExternalOutputs: boolean;
-  externalOutputConnections: [string, string][]; // [from, to] where from is in selection, to is outside
-  targetNodes: string[]; // unique target nodes outside selection
+/**
+ * Analysis of a node selection for annotation creation.
+ */
+type SelectionAnalysis = {
+  // Original selection
+  selectedNodes: string[];
+
+  // Computed subgraph
+  entryNodes: string[];
+  exitNodes: string[];
+  intermediateNodes: string[];
+  subgraphConnections: [string, string][];
+
+  // External connections (issues to fix)
+  externalOutputs: {
+    connections: [string, string][];
+    targetNodes: string[];
+  };
+
+  // Nodes that need splitting (have both external in and out)
+  splitsNeeded: ViolationDetail[];
+
+  // Is the selection valid for annotation as-is?
+  isValid: boolean;
+
+  // Proposed fixes
+  fixes: AnnotationFix[];
 };
 
+type AnnotationFix = {
+  type: "split_node" | "add_identity_node";
+  description: string;
+  params: Record<string, unknown>;
+  // After this fix, these nodes will be added to the subgraph
+  newNodes?: string[];
+};
+
+type WizardState =
+  | { step: "idle" }
+  | { step: "analyzing" }
+  | { step: "review"; analysis: SelectionAnalysis; annotationName: string }
+  | { step: "applying"; currentFix: number; totalFixes: number }
+  | { step: "creating" }
+  | { step: "error"; message: string };
+
 // =============================================================================
-// Helper functions
+// Subgraph Analysis Functions
 // =============================================================================
 
 /**
- * Analyze the selected nodes to find external output connections.
- * These are connections from selected nodes to nodes outside the selection.
+ * Analyze a node selection to determine the subgraph structure and any issues.
  */
-function analyzeExternalConnections(
+function analyzeSelection(
   selectedNodes: Set<string>,
   model: ModelState
-): ExternalConnectionInfo {
+): SelectionAnalysis {
+  logInfo("Analyzing selection for annotation", {
+    selectedCount: selectedNodes.size,
+    selected: Array.from(selectedNodes),
+  });
+
+  const selected = Array.from(selectedNodes);
+
+  // Build connection maps
+  const incomingConnections = new Map<string, [string, string][]>();
+  const outgoingConnections = new Map<string, [string, string][]>();
+
+  for (const nodeId of selected) {
+    incomingConnections.set(nodeId, []);
+    outgoingConnections.set(nodeId, []);
+  }
+
+  // Categorize all connections
+  const subgraphConnections: [string, string][] = [];
+  const externalInputConnections: [string, string][] = [];
   const externalOutputConnections: [string, string][] = [];
-  const targetNodes = new Set<string>();
 
   for (const conn of model.connections) {
     if (!conn.enabled) continue;
 
-    // Connection from inside selection to outside selection
-    if (selectedNodes.has(conn.from) && !selectedNodes.has(conn.to)) {
+    const fromInSelection = selectedNodes.has(conn.from);
+    const toInSelection = selectedNodes.has(conn.to);
+
+    if (fromInSelection && toInSelection) {
+      // Internal connection
+      subgraphConnections.push([conn.from, conn.to]);
+      outgoingConnections.get(conn.from)?.push([conn.from, conn.to]);
+      incomingConnections.get(conn.to)?.push([conn.from, conn.to]);
+    } else if (!fromInSelection && toInSelection) {
+      // External input
+      externalInputConnections.push([conn.from, conn.to]);
+    } else if (fromInSelection && !toInSelection) {
+      // External output
       externalOutputConnections.push([conn.from, conn.to]);
-      targetNodes.add(conn.to);
     }
   }
 
-  const result: ExternalConnectionInfo = {
-    hasExternalOutputs: externalOutputConnections.length > 0,
-    externalOutputConnections,
-    targetNodes: Array.from(targetNodes),
+  logDebug("Connection analysis", {
+    internal: subgraphConnections.length,
+    externalInputs: externalInputConnections.length,
+    externalOutputs: externalOutputConnections.length,
+  });
+
+  // Classify nodes
+  const entryNodes: string[] = [];
+  const exitNodes: string[] = [];
+  const intermediateNodes: string[] = [];
+
+  // Track which nodes have external connections
+  const nodesWithExternalInput = new Set(externalInputConnections.map(([, to]) => to));
+  const nodesWithExternalOutput = new Set(externalOutputConnections.map(([from]) => from));
+
+  // Also consider input/output node types
+  const inputNodeIds = new Set(model.metadata.input_nodes);
+  const outputNodeIds = new Set(model.metadata.output_nodes);
+
+  for (const nodeId of selected) {
+    const hasExternalInput = nodesWithExternalInput.has(nodeId) || inputNodeIds.has(nodeId);
+    const hasExternalOutput = nodesWithExternalOutput.has(nodeId) || outputNodeIds.has(nodeId);
+
+    if (hasExternalInput && !hasExternalOutput) {
+      entryNodes.push(nodeId);
+    } else if (hasExternalOutput && !hasExternalInput) {
+      exitNodes.push(nodeId);
+    } else if (hasExternalInput && hasExternalOutput) {
+      // This node has both - it needs splitting or special handling
+      // For now, classify as entry (the split will create an exit version)
+      entryNodes.push(nodeId);
+    } else {
+      intermediateNodes.push(nodeId);
+    }
+  }
+
+  logDebug("Node classification", {
+    entry: entryNodes,
+    exit: exitNodes,
+    intermediate: intermediateNodes,
+  });
+
+  // Detect violations (nodes needing splits)
+  const splitsNeeded: ViolationDetail[] = [];
+  for (const nodeId of selected) {
+    const hasExternalInput = nodesWithExternalInput.has(nodeId);
+    const hasExternalOutput = nodesWithExternalOutput.has(nodeId);
+
+    if (hasExternalInput && hasExternalOutput) {
+      splitsNeeded.push({
+        node_id: nodeId,
+        reason: "has_external_input_and_output",
+        external_inputs: externalInputConnections.filter(([, to]) => to === nodeId),
+        external_outputs: externalOutputConnections.filter(([from]) => from === nodeId),
+      });
+    }
+  }
+
+  // Determine external output targets
+  const externalOutputTargets = new Set(externalOutputConnections.map(([, to]) => to));
+
+  // Build fixes list
+  const fixes: AnnotationFix[] = [];
+
+  // First, add splits for nodes that need them
+  for (const violation of splitsNeeded) {
+    fixes.push({
+      type: "split_node",
+      description: `Split node ${violation.node_id} (has both external inputs and outputs)`,
+      params: { node_id: violation.node_id },
+      newNodes: [`${violation.node_id}_split`], // The new exit version
+    });
+  }
+
+  // Then, if there are external outputs (and no exit nodes), add identity node
+  if (externalOutputConnections.length > 0 && exitNodes.length === 0) {
+    // Group by target node
+    for (const targetNode of externalOutputTargets) {
+      const connectionsToTarget = externalOutputConnections.filter(
+        ([, to]) => to === targetNode
+      );
+      const newNodeId = generateIdentityNodeId(model.nodes.map((n) => n.id), fixes);
+
+      fixes.push({
+        type: "add_identity_node",
+        description: `Add identity node to intercept ${connectionsToTarget.length} connection(s) to ${targetNode}`,
+        params: {
+          target_node: targetNode,
+          connections: connectionsToTarget,
+          new_node_id: newNodeId,
+        },
+        newNodes: [newNodeId],
+      });
+    }
+  }
+
+  const isValid = splitsNeeded.length === 0 &&
+    (exitNodes.length > 0 || externalOutputConnections.length === 0);
+
+  const analysis: SelectionAnalysis = {
+    selectedNodes: selected,
+    entryNodes,
+    exitNodes,
+    intermediateNodes,
+    subgraphConnections,
+    externalOutputs: {
+      connections: externalOutputConnections,
+      targetNodes: Array.from(externalOutputTargets),
+    },
+    splitsNeeded,
+    isValid,
+    fixes,
   };
 
-  logDebug("Analyzed external connections", result);
-  return result;
+  logInfo("Selection analysis complete", {
+    isValid,
+    fixesNeeded: fixes.length,
+    fixes: fixes.map((f) => f.description),
+  });
+
+  return analysis;
 }
 
 /**
- * Generate a unique node ID for a new identity node.
+ * Generate a unique identity node ID.
  */
-function generateIdentityNodeId(existingNodes: string[]): string {
+function generateIdentityNodeId(existingNodes: string[], pendingFixes: AnnotationFix[]): string {
   const existingIds = new Set(existingNodes);
+
+  // Also account for nodes that will be created by pending fixes
+  for (const fix of pendingFixes) {
+    if (fix.newNodes) {
+      for (const newNode of fix.newNodes) {
+        existingIds.add(newNode);
+      }
+    }
+  }
+
   let counter = 1;
   while (existingIds.has(`identity_${counter}`)) {
     counter++;
   }
   return `identity_${counter}`;
+}
+
+/**
+ * Compute the final subgraph nodes after all fixes are applied.
+ */
+function computeFinalSubgraph(analysis: SelectionAnalysis): string[] {
+  const finalNodes = new Set(analysis.selectedNodes);
+
+  // Add all new nodes that will be created by fixes
+  for (const fix of analysis.fixes) {
+    if (fix.newNodes) {
+      for (const newNode of fix.newNodes) {
+        finalNodes.add(newNode);
+      }
+    }
+  }
+
+  return Array.from(finalNodes);
 }
 
 // =============================================================================
@@ -112,37 +320,41 @@ export function OperationsPanel({
   const [error, setError] = useState<string | null>(null);
   const [splitAnalysis, setSplitAnalysis] = useState<SplitDetectionResponse | null>(null);
   const [annotationName, setAnnotationName] = useState("");
-  const [showIdentityHelper, setShowIdentityHelper] = useState(false);
 
-  const selectedArray = Array.from(selectedNodes);
+  // Wizard state
+  const [wizard, setWizard] = useState<WizardState>({ step: "idle" });
 
-  // Analyze external connections for the current selection
-  const externalInfo = analyzeExternalConnections(selectedNodes, model);
+  const selectedArray = useMemo(() => Array.from(selectedNodes), [selectedNodes]);
 
   logDebug("Render", {
     selectedCount: selectedNodes.size,
     operationsCount: operations.length,
-    hasExternalOutputs: externalInfo.hasExternalOutputs,
+    wizardStep: wizard.step,
   });
 
+  // ==========================================================================
+  // Basic Operations
+  // ==========================================================================
+
   const handleAddOperation = useCallback(
-    async (operation: OperationRequest) => {
+    async (operation: OperationRequest): Promise<boolean> => {
       logInfo("Adding operation", operation);
       try {
         setLoading(true);
         setError(null);
         const result = await addOperation(genomeId, operation);
         logInfo("Operation added successfully", result);
-        onOperationChange();
+        return true;
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Failed to add operation";
         logError("Failed to add operation", { error: err, operation });
         setError(errorMsg);
+        return false;
       } finally {
         setLoading(false);
       }
     },
-    [genomeId, onOperationChange]
+    [genomeId]
   );
 
   const handleRemoveOperation = useCallback(
@@ -170,19 +382,19 @@ export function OperationsPanel({
       setError("Select exactly one node to split");
       return;
     }
-    logInfo("Splitting node", { nodeId: selectedArray[0] });
     handleAddOperation({
       type: "split_node",
       params: { node_id: selectedArray[0] },
+    }).then((success) => {
+      if (success) onOperationChange();
     });
-  }, [selectedArray, handleAddOperation]);
+  }, [selectedArray, handleAddOperation, onOperationChange]);
 
   const handleAnalyzeSplits = useCallback(async () => {
     if (selectedArray.length === 0) {
       setError("Select nodes to analyze");
       return;
     }
-    logInfo("Analyzing splits for nodes", selectedArray);
     try {
       setLoading(true);
       setError(null);
@@ -201,7 +413,6 @@ export function OperationsPanel({
   const handleApplySuggestedSplits = useCallback(async () => {
     if (!splitAnalysis?.suggested_operations.length) return;
 
-    logInfo("Applying suggested splits", splitAnalysis.suggested_operations);
     try {
       setLoading(true);
       setError(null);
@@ -222,56 +433,14 @@ export function OperationsPanel({
     }
   }, [genomeId, splitAnalysis, onOperationChange]);
 
+  // ==========================================================================
+  // Smart Annotation Wizard
+  // ==========================================================================
+
   /**
-   * Add an identity node to intercept external output connections.
-   * This allows annotating a partial coverage (e.g., some inputs to an output).
+   * Start the smart annotation wizard.
    */
-  const handleAddIdentityForAnnotation = useCallback(async () => {
-    if (!externalInfo.hasExternalOutputs) {
-      setError("No external outputs to intercept");
-      return;
-    }
-
-    // Pick the first target node (usually there's only one output being targeted)
-    const targetNode = externalInfo.targetNodes[0];
-    const connectionsToIntercept = externalInfo.externalOutputConnections.filter(
-      ([, to]) => to === targetNode
-    );
-
-    const newNodeId = generateIdentityNodeId(model.nodes.map((n) => n.id));
-
-    logInfo("Adding identity node to intercept connections", {
-      targetNode,
-      connections: connectionsToIntercept,
-      newNodeId,
-    });
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      await addOperation(genomeId, {
-        type: "add_identity_node",
-        params: {
-          target_node: targetNode,
-          connections: connectionsToIntercept,
-          new_node_id: newNodeId,
-        },
-      });
-
-      logInfo("Identity node added successfully", { newNodeId });
-      setShowIdentityHelper(false);
-      onOperationChange();
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Failed to add identity node";
-      logError("Failed to add identity node", err);
-      setError(errorMsg);
-    } finally {
-      setLoading(false);
-    }
-  }, [genomeId, model, externalInfo, onOperationChange]);
-
-  const handleCreateAnnotation = useCallback(async () => {
+  const handleStartAnnotationWizard = useCallback(() => {
     if (selectedArray.length === 0) {
       setError("Select nodes for annotation");
       return;
@@ -281,55 +450,307 @@ export function OperationsPanel({
       return;
     }
 
-    logInfo("Creating annotation", {
+    logInfo("Starting annotation wizard", {
       name: annotationName,
       selectedNodes: selectedArray,
     });
 
+    setWizard({ step: "analyzing" });
+
+    // Analyze the selection
+    const analysis = analyzeSelection(selectedNodes, model);
+
+    if (analysis.isValid && analysis.fixes.length === 0) {
+      // No fixes needed, create annotation directly
+      logInfo("Selection is valid, creating annotation directly");
+      createAnnotationDirect(analysis, annotationName);
+    } else {
+      // Show review step with proposed fixes
+      logInfo("Fixes needed, showing review step", { fixes: analysis.fixes });
+      setWizard({ step: "review", analysis, annotationName });
+    }
+  }, [selectedArray, annotationName, selectedNodes, model]);
+
+  /**
+   * Create annotation directly (when no fixes needed).
+   */
+  const createAnnotationDirect = useCallback(
+    async (analysis: SelectionAnalysis, name: string) => {
+      setWizard({ step: "creating" });
+
+      try {
+        const success = await handleAddOperation({
+          type: "annotate",
+          params: {
+            name,
+            entry_nodes: analysis.entryNodes,
+            exit_nodes: analysis.exitNodes,
+            subgraph_nodes: analysis.selectedNodes,
+            subgraph_connections: analysis.subgraphConnections,
+          },
+        });
+
+        if (success) {
+          logInfo("Annotation created successfully");
+          setAnnotationName("");
+          setWizard({ step: "idle" });
+          onOperationChange();
+        } else {
+          setWizard({ step: "error", message: "Failed to create annotation" });
+        }
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : "Failed to create annotation";
+        logError("Failed to create annotation", err);
+        setWizard({ step: "error", message: errorMsg });
+      }
+    },
+    [handleAddOperation, onOperationChange]
+  );
+
+  /**
+   * Apply fixes and create annotation.
+   */
+  const handleApplyFixesAndCreate = useCallback(async () => {
+    if (wizard.step !== "review") return;
+
+    const { analysis, annotationName: name } = wizard;
+    const fixes = analysis.fixes;
+
+    logInfo("Applying fixes and creating annotation", {
+      fixCount: fixes.length,
+      annotationName: name,
+    });
+
+    setWizard({ step: "applying", currentFix: 0, totalFixes: fixes.length });
+
     try {
-      setLoading(true);
-      setError(null);
+      // Apply each fix
+      for (let i = 0; i < fixes.length; i++) {
+        const fix = fixes[i];
+        logInfo(`Applying fix ${i + 1}/${fixes.length}`, fix);
 
-      // Auto-classify to get entry/exit nodes
-      const classification = await autoClassify(genomeId, selectedArray);
-      logDebug("Auto-classification result", classification);
+        setWizard({ step: "applying", currentFix: i + 1, totalFixes: fixes.length });
 
-      if (!classification.valid) {
-        logWarn("Invalid coverage", classification.violations);
-        setError(
-          `Invalid coverage: ${classification.violations.map((v) => v.reason).join(", ")}`
-        );
-        return;
+        let operation: OperationRequest;
+        if (fix.type === "split_node") {
+          operation = {
+            type: "split_node",
+            params: { node_id: fix.params.node_id as string },
+          };
+        } else if (fix.type === "add_identity_node") {
+          operation = {
+            type: "add_identity_node",
+            params: {
+              target_node: fix.params.target_node as string,
+              connections: fix.params.connections as [string, string][],
+              new_node_id: fix.params.new_node_id as string,
+            },
+          };
+        } else {
+          throw new Error(`Unknown fix type: ${fix.type}`);
+        }
+
+        const success = await handleAddOperation(operation);
+        if (!success) {
+          throw new Error(`Failed to apply fix: ${fix.description}`);
+        }
       }
 
-      // Create the annotation
-      await handleAddOperation({
+      // Now create the annotation with the adjusted subgraph
+      setWizard({ step: "creating" });
+
+      // Compute final subgraph including new nodes
+      const finalSubgraph = computeFinalSubgraph(analysis);
+
+      // Re-classify nodes for the final annotation
+      // For simplicity, entry nodes are original entries, exit nodes are new identity nodes
+      const finalEntryNodes = analysis.entryNodes;
+      const finalExitNodes = [...analysis.exitNodes];
+
+      // Add new identity nodes as exit nodes
+      for (const fix of fixes) {
+        if (fix.type === "add_identity_node" && fix.newNodes) {
+          finalExitNodes.push(...fix.newNodes);
+        }
+      }
+
+      // Add split nodes to appropriate categories
+      for (const fix of fixes) {
+        if (fix.type === "split_node" && fix.newNodes) {
+          // Split creates an exit version - add to exit nodes
+          finalExitNodes.push(...fix.newNodes);
+        }
+      }
+
+      logInfo("Creating annotation with adjusted subgraph", {
+        name,
+        entryNodes: finalEntryNodes,
+        exitNodes: finalExitNodes,
+        subgraphNodes: finalSubgraph,
+      });
+
+      const success = await handleAddOperation({
         type: "annotate",
         params: {
-          name: annotationName,
-          entry_nodes: classification.suggested_entry_nodes,
-          exit_nodes: classification.suggested_exit_nodes,
-          subgraph_nodes: selectedArray,
-          subgraph_connections: [],
+          name,
+          entry_nodes: finalEntryNodes,
+          exit_nodes: finalExitNodes,
+          subgraph_nodes: finalSubgraph,
+          subgraph_connections: [], // Let backend compute
         },
       });
 
-      logInfo("Annotation created successfully", { name: annotationName });
-      setAnnotationName("");
+      if (success) {
+        logInfo("Annotation created successfully with fixes applied");
+        setAnnotationName("");
+        setWizard({ step: "idle" });
+        onOperationChange();
+      } else {
+        setWizard({ step: "error", message: "Failed to create annotation after applying fixes" });
+      }
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Failed to create annotation";
-      logError("Failed to create annotation", err);
-      setError(errorMsg);
-    } finally {
-      setLoading(false);
+      const errorMsg = err instanceof Error ? err.message : "Failed to apply fixes";
+      logError("Failed in annotation wizard", err);
+      setWizard({ step: "error", message: errorMsg });
     }
-  }, [genomeId, selectedArray, annotationName, handleAddOperation]);
+  }, [wizard, handleAddOperation, onOperationChange]);
+
+  /**
+   * Cancel the wizard.
+   */
+  const handleCancelWizard = useCallback(() => {
+    logDebug("Cancelling annotation wizard");
+    setWizard({ step: "idle" });
+  }, []);
+
+  // ==========================================================================
+  // Render
+  // ==========================================================================
 
   return (
     <aside className="operations-panel">
       <h3>Operations</h3>
 
       {error && <div className="error-message">{error}</div>}
+
+      {/* Wizard Modal/Overlay */}
+      {wizard.step !== "idle" && (
+        <div className="wizard-overlay">
+          <div className="wizard-content">
+            {wizard.step === "analyzing" && (
+              <div className="wizard-step">
+                <h4>Analyzing Selection...</h4>
+                <p className="hint">Checking subgraph structure and requirements</p>
+              </div>
+            )}
+
+            {wizard.step === "review" && (
+              <div className="wizard-step">
+                <h4>Annotation: "{wizard.annotationName}"</h4>
+
+                <div className="wizard-summary">
+                  <p>
+                    <strong>Selected nodes:</strong> {wizard.analysis.selectedNodes.length}
+                  </p>
+                  <p>
+                    <strong>Entry nodes:</strong> {wizard.analysis.entryNodes.join(", ") || "none"}
+                  </p>
+                  <p>
+                    <strong>Exit nodes:</strong> {wizard.analysis.exitNodes.join(", ") || "none"}
+                  </p>
+                  <p>
+                    <strong>Intermediate:</strong> {wizard.analysis.intermediateNodes.length}
+                  </p>
+                </div>
+
+                {wizard.analysis.fixes.length > 0 ? (
+                  <>
+                    <div className="wizard-fixes">
+                      <h5>Required Changes ({wizard.analysis.fixes.length})</h5>
+                      <ul>
+                        {wizard.analysis.fixes.map((fix, i) => (
+                          <li key={i} className="fix-item">
+                            <span className="fix-type">{fix.type}</span>
+                            <span className="fix-desc">{fix.description}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="wizard-final">
+                      <p className="hint">
+                        After these changes, the annotation will include:{" "}
+                        <strong>{computeFinalSubgraph(wizard.analysis).length} nodes</strong>
+                      </p>
+                    </div>
+
+                    <div className="wizard-actions">
+                      <button
+                        className="op-btn primary"
+                        onClick={handleApplyFixesAndCreate}
+                      >
+                        Apply Changes & Create
+                      </button>
+                      <button className="op-btn secondary" onClick={handleCancelWizard}>
+                        Cancel
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="success">Selection is valid for annotation!</p>
+                    <div className="wizard-actions">
+                      <button
+                        className="op-btn primary"
+                        onClick={() => createAnnotationDirect(wizard.analysis, wizard.annotationName)}
+                      >
+                        Create Annotation
+                      </button>
+                      <button className="op-btn secondary" onClick={handleCancelWizard}>
+                        Cancel
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {wizard.step === "applying" && (
+              <div className="wizard-step">
+                <h4>Applying Changes...</h4>
+                <p className="hint">
+                  Step {wizard.currentFix} of {wizard.totalFixes}
+                </p>
+                <div className="progress-bar">
+                  <div
+                    className="progress-fill"
+                    style={{ width: `${(wizard.currentFix / wizard.totalFixes) * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {wizard.step === "creating" && (
+              <div className="wizard-step">
+                <h4>Creating Annotation...</h4>
+                <p className="hint">Finalizing the annotation</p>
+              </div>
+            )}
+
+            {wizard.step === "error" && (
+              <div className="wizard-step">
+                <h4>Error</h4>
+                <p className="error-message">{wizard.message}</p>
+                <div className="wizard-actions">
+                  <button className="op-btn secondary" onClick={handleCancelWizard}>
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <section className="panel-section">
         <h4>Selected Nodes ({selectedNodes.size})</h4>
@@ -340,52 +761,6 @@ export function OperationsPanel({
           </div>
         ) : (
           <p className="hint">Click nodes in the graph to select</p>
-        )}
-
-        {/* Show external output warning/helper */}
-        {selectedArray.length > 0 && externalInfo.hasExternalOutputs && (
-          <div className="external-outputs-info">
-            <p className="hint">
-              <strong>External outputs:</strong>{" "}
-              {externalInfo.externalOutputConnections.length} connection(s) to{" "}
-              {externalInfo.targetNodes.join(", ")}
-            </p>
-            {!showIdentityHelper ? (
-              <button
-                className="op-btn secondary"
-                onClick={() => setShowIdentityHelper(true)}
-              >
-                Add Identity Node
-              </button>
-            ) : (
-              <div className="identity-helper">
-                <p className="hint">
-                  Add an identity node to intercept{" "}
-                  {externalInfo.externalOutputConnections.length} connection(s) going to{" "}
-                  <strong>{externalInfo.targetNodes[0]}</strong>?
-                </p>
-                <p className="hint">
-                  This will let you annotate the selected nodes as a concept feeding
-                  into the output.
-                </p>
-                <div className="button-group">
-                  <button
-                    className="op-btn primary"
-                    onClick={handleAddIdentityForAnnotation}
-                    disabled={loading}
-                  >
-                    Add Identity Node
-                  </button>
-                  <button
-                    className="op-btn secondary"
-                    onClick={() => setShowIdentityHelper(false)}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
         )}
       </section>
 
@@ -454,14 +829,18 @@ export function OperationsPanel({
           placeholder="Annotation name"
           value={annotationName}
           onChange={(e) => setAnnotationName(e.target.value)}
+          disabled={wizard.step !== "idle"}
         />
         <button
           className="op-btn primary"
-          onClick={handleCreateAnnotation}
-          disabled={loading || selectedArray.length === 0 || !annotationName.trim()}
+          onClick={handleStartAnnotationWizard}
+          disabled={loading || selectedArray.length === 0 || !annotationName.trim() || wizard.step !== "idle"}
         >
           Create Annotation
         </button>
+        <p className="hint">
+          Smart wizard: automatically detects and fixes issues (splits, identity nodes)
+        </p>
       </section>
 
       <section className="panel-section">
