@@ -2,12 +2,18 @@
  * Hook for computing collapsed view of the model when annotations are collapsed.
  *
  * When an annotation is collapsed:
- * 1. ALL subgraph nodes (entry, exit, intermediate) are hidden
+ * 1. INTERNAL nodes (intermediate + exit) are hidden; entry nodes stay visible
  * 2. A new annotation node is created with ID `A_{name}` or `A_{id[:8]}`
- * 3. Connections INTO subgraph route to the annotation node
- * 4. Connections FROM subgraph route from the annotation node
- * 5. Internal connections are hidden
- * 6. Duplicate connections are deduplicated
+ * 3. Entry nodes that connected to internal nodes get edges to the annotation node
+ * 4. The annotation node gets edges to where exit nodes connected externally
+ * 5. Entry-to-external edges are preserved as-is (the key bug fix)
+ * 6. Internal connections are hidden
+ * 7. Duplicate connections are deduplicated
+ *
+ * When a PARENT annotation is collapsed, all descendant nodes (including child
+ * entry nodes) are hidden — only the parent's own entry nodes stay visible.
+ *
+ * See docs/annotation_collapsing_model.md for the mathematical formalization.
  */
 
 import { useMemo } from "react";
@@ -53,31 +59,25 @@ function getEffectivelyCollapsed(
   collapsedState: CollapsedState
 ): Set<string> {
   const effectivelyCollapsed = new Set<string>();
-  const annotationMap = new Map(annotations.map(a => [a.id, a]));
 
-  // Build children lookup
-  const childrenOf = new Map<string, string[]>();
+  // Build parent lookup by inverting children_ids (the source of truth).
+  // Do NOT use parent_annotation_id — it's a computed back-pointer that can
+  // be incorrect when multiple annotations share the same name.
+  const parentOf = new Map<string, string>();
   for (const ann of annotations) {
-    if (!childrenOf.has(ann.id)) {
-      childrenOf.set(ann.id, []);
-    }
-    if (ann.parent_annotation_id) {
-      const siblings = childrenOf.get(ann.parent_annotation_id) || [];
-      siblings.push(ann.id);
-      childrenOf.set(ann.parent_annotation_id, siblings);
+    for (const childId of ann.children_ids) {
+      parentOf.set(childId, ann.id);
     }
   }
 
-  // Process in order: parents first
   // An annotation is effectively collapsed if:
   // 1. It is explicitly collapsed, OR
   // 2. Any of its ancestors is collapsed
   function isAncestorCollapsed(annId: string): boolean {
-    const ann = annotationMap.get(annId);
-    if (!ann) return false;
-    if (!ann.parent_annotation_id) return false;
-    if (collapsedState.get(ann.parent_annotation_id)) return true;
-    return isAncestorCollapsed(ann.parent_annotation_id);
+    const parentId = parentOf.get(annId);
+    if (!parentId) return false;
+    if (collapsedState.get(parentId)) return true;
+    return isAncestorCollapsed(parentId);
   }
 
   for (const ann of annotations) {
@@ -90,37 +90,146 @@ function getEffectivelyCollapsed(
 }
 
 /**
- * Reroute connections for collapsed annotations.
+ * Get all descendant annotation IDs for a given annotation.
+ */
+function getDescendantAnnotationIds(
+  annotationId: string,
+  annotations: AnnotationSummary[]
+): Set<string> {
+  const descendants = new Set<string>();
+
+  // Build children lookup from children_ids (source of truth)
+  const annotationMap = new Map(annotations.map(a => [a.id, a]));
+
+  function collectDescendants(id: string) {
+    const ann = annotationMap.get(id);
+    if (!ann) return;
+    for (const childId of ann.children_ids) {
+      descendants.add(childId);
+      collectDescendants(childId);
+    }
+  }
+
+  collectDescendants(annotationId);
+  return descendants;
+}
+
+/**
+ * Get all subgraph nodes for an annotation including all descendant annotations.
+ * For compositional annotations, this includes nodes from child annotations.
+ */
+function getFullSubgraphNodes(
+  annotation: AnnotationSummary,
+  annotations: AnnotationSummary[]
+): Set<string> {
+  const allNodes = new Set(annotation.subgraph_nodes);
+
+  // Get all descendant annotations
+  const descendantIds = getDescendantAnnotationIds(annotation.id, annotations);
+  const annotationMap = new Map(annotations.map(a => [a.id, a]));
+
+  // Add nodes from all descendants
+  for (const descId of descendantIds) {
+    const descAnn = annotationMap.get(descId);
+    if (descAnn) {
+      for (const nodeId of descAnn.subgraph_nodes) {
+        allNodes.add(nodeId);
+      }
+    }
+  }
+
+  return allNodes;
+}
+
+/**
+ * Get the internal nodes for an annotation (V_internal = V_A \ V_entry).
+ * These are the nodes that get hidden during collapse.
+ * For compositional annotations, includes internal nodes from all descendants.
+ */
+function getInternalNodes(
+  annotation: AnnotationSummary,
+  annotations: AnnotationSummary[]
+): Set<string> {
+  const allSubgraphNodes = getFullSubgraphNodes(annotation, annotations);
+  const entryNodes = new Set(annotation.entry_nodes);
+
+  // Internal = all subgraph nodes minus this annotation's entry nodes
+  const internalNodes = new Set<string>();
+  for (const nodeId of allSubgraphNodes) {
+    if (!entryNodes.has(nodeId)) {
+      internalNodes.add(nodeId);
+    }
+  }
+  return internalNodes;
+}
+
+/**
+ * Reroute connections for a collapsed annotation.
+ *
+ * The collapse operation:
+ * - Entry nodes stay visible (they are the annotation's interface)
+ * - Internal nodes (intermediate + exit) are replaced by annotation node a_A
+ * - entry -> internal becomes entry -> a_A
+ * - internal -> external becomes a_A -> external (from exit nodes)
+ * - entry -> external is PRESERVED as-is
+ * - internal -> internal is REMOVED
  */
 function rerouteConnections(
   connections: ApiConnection[],
-  subgraphSet: Set<string>,
+  internalNodes: Set<string>,
+  entryNodes: Set<string>,
   annotationNodeId: string
 ): ApiConnection[] {
   const result: ApiConnection[] = [];
   const seen = new Set<string>();
 
   for (const conn of connections) {
-    const fromIn = subgraphSet.has(conn.from);
-    const toIn = subgraphSet.has(conn.to);
+    const fromInternal = internalNodes.has(conn.from);
+    const toInternal = internalNodes.has(conn.to);
+    const fromEntry = entryNodes.has(conn.from);
 
-    // Internal connection - skip
-    if (fromIn && toIn) continue;
+    // Both endpoints are internal — skip (hidden internal edge)
+    if (fromInternal && toInternal) continue;
 
-    let newConn = conn;
-    if (!fromIn && toIn) {
-      // External -> Subgraph: route to annotation node
-      newConn = { ...conn, to: annotationNodeId };
-    } else if (fromIn && !toIn) {
-      // Subgraph -> External: route from annotation node
-      newConn = { ...conn, from: annotationNodeId };
+    // Entry -> internal: reroute to entry -> a_A
+    if (fromEntry && toInternal) {
+      const newConn = { ...conn, to: annotationNodeId };
+      const key = `${newConn.from}->${newConn.to}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(newConn);
+      }
+      continue;
     }
 
-    // Deduplicate
-    const key = `${newConn.from}->${newConn.to}`;
+    // Internal -> external (exit node outputs): reroute to a_A -> external
+    if (fromInternal && !toInternal) {
+      const newConn = { ...conn, from: annotationNodeId };
+      const key = `${newConn.from}->${newConn.to}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(newConn);
+      }
+      continue;
+    }
+
+    // External -> internal: reroute to external -> a_A
+    // (This shouldn't happen if preconditions hold, but handle gracefully)
+    if (!fromInternal && !fromEntry && toInternal) {
+      const newConn = { ...conn, to: annotationNodeId };
+      const key = `${newConn.from}->${newConn.to}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(newConn);
+      }
+      continue;
+    }
+
+    // All other edges: preserve as-is (includes entry -> external)
+    const key = `${conn.from}->${conn.to}`;
     if (!seen.has(key)) {
       seen.add(key);
-      result.push(newConn);
+      result.push(conn);
     }
   }
 
@@ -165,12 +274,21 @@ export function useCollapsedView(
     // Get effectively collapsed annotations (including children of collapsed parents)
     const effectivelyCollapsed = getEffectivelyCollapsed(annotations, collapsedState);
 
+    // Build canonical parent lookup from children_ids (source of truth)
+    const parentOf = new Map<string, string>();
+    for (const ann of annotations) {
+      for (const childId of ann.children_ids) {
+        parentOf.set(childId, ann.id);
+      }
+    }
+
     // Get annotations to display (only top-level collapsed ones)
     // When a parent is collapsed, we show the parent node, not the children
     const displayedCollapsedAnnotations = annotations.filter(ann => {
       if (!effectivelyCollapsed.has(ann.id)) return false;
       // Only display if parent is not also collapsed
-      if (ann.parent_annotation_id && effectivelyCollapsed.has(ann.parent_annotation_id)) {
+      const canonicalParent = parentOf.get(ann.id);
+      if (canonicalParent && effectivelyCollapsed.has(canonicalParent)) {
         return false;
       }
       return true;
@@ -178,12 +296,37 @@ export function useCollapsedView(
 
     logDebug("Displayed collapsed annotations", displayedCollapsedAnnotations.map(a => a.name || a.id));
 
-    // Collect all hidden nodes (from all effectively collapsed annotations)
+    // Collect hidden nodes: only INTERNAL nodes (V_A \ V_entry) are hidden
+    // For displayed collapsed annotations, use their own entry nodes
+    // For child annotations of a collapsed parent, ALL nodes are hidden
+    // (child entries are intermediate nodes of the parent)
     const hiddenNodes = new Set<string>();
+    const preservedEntryNodes = new Set<string>();
+
+    for (const ann of displayedCollapsedAnnotations) {
+      // Get internal nodes for this top-level collapsed annotation
+      const internal = getInternalNodes(ann, annotations);
+      for (const nodeId of internal) {
+        hiddenNodes.add(nodeId);
+      }
+      // Mark this annotation's entry nodes as preserved
+      for (const nodeId of ann.entry_nodes) {
+        preservedEntryNodes.add(nodeId);
+      }
+    }
+
+    // For effectively collapsed annotations that are NOT displayed
+    // (i.e., children of a collapsed parent), hide ALL their nodes
+    // unless they are entry nodes of a displayed parent
     for (const ann of annotations) {
       if (effectivelyCollapsed.has(ann.id)) {
-        for (const nodeId of ann.subgraph_nodes) {
-          hiddenNodes.add(nodeId);
+        const isDisplayed = displayedCollapsedAnnotations.some(d => d.id === ann.id);
+        if (!isDisplayed) {
+          for (const nodeId of ann.subgraph_nodes) {
+            if (!preservedEntryNodes.has(nodeId)) {
+              hiddenNodes.add(nodeId);
+            }
+          }
         }
       }
     }
@@ -202,11 +345,13 @@ export function useCollapsedView(
     const filteredNodes = model.nodes.filter(n => !hiddenNodes.has(n.id));
 
     // Reroute connections for each displayed collapsed annotation
+    // Uses internal nodes (hidden) and entry nodes (preserved) separately
     let connections = model.connections;
     for (const ann of displayedCollapsedAnnotations) {
-      const subgraphSet = new Set(ann.subgraph_nodes);
+      const internal = getInternalNodes(ann, annotations);
+      const entrySet = new Set(ann.entry_nodes);
       const annotationNodeId = getAnnotationNodeId(ann);
-      connections = rerouteConnections(connections, subgraphSet, annotationNodeId);
+      connections = rerouteConnections(connections, internal, entrySet, annotationNodeId);
     }
 
     // Filter connections that reference hidden nodes (except annotation node connections)
@@ -225,10 +370,19 @@ export function useCollapsedView(
       resultConnections: connections.length,
     });
 
+    // Compute visible input/output nodes for correct depth assignment
+    const visibleNodeIds = new Set([...filteredNodes, ...annotationNodes].map(n => n.id));
+    const visibleInputNodes = model.metadata.input_nodes.filter(id => visibleNodeIds.has(id));
+    const visibleOutputNodes = model.metadata.output_nodes.filter(id => visibleNodeIds.has(id));
+
     return {
       nodes: [...filteredNodes, ...annotationNodes],
       connections,
-      metadata: model.metadata,
+      metadata: {
+        ...model.metadata,
+        input_nodes: visibleInputNodes,
+        output_nodes: visibleOutputNodes,
+      },
       collapsedAnnotations: displayedCollapsedAnnotations,
       annotationNodes: annotationNodes.map(n => n.id),
     };

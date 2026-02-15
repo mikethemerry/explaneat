@@ -101,7 +101,9 @@ function computeNodeDepths(
     connections: connections.length,
   });
 
-  // Build adjacency list (forward edges: from → [to, to, ...])
+  const nodeSet = new Set(nodeIds);
+
+  // Build adjacency lists (only for edges between nodes in our set)
   const forwardEdges = new Map<string, string[]>();
   const incomingEdges = new Map<string, string[]>();
 
@@ -112,34 +114,77 @@ function computeNodeDepths(
 
   for (const conn of connections) {
     if (!conn.enabled) continue;
-    forwardEdges.get(conn.from)?.push(conn.to);
-    incomingEdges.get(conn.to)?.push(conn.from);
+    if (!nodeSet.has(conn.from) || !nodeSet.has(conn.to)) continue;
+    forwardEdges.get(conn.from)!.push(conn.to);
+    incomingEdges.get(conn.to)!.push(conn.from);
   }
 
-  // Initialize depths: inputs are 0, others are -1 (unvisited)
+  // Step 1: Detect back-edges (cycles) using DFS.
+  // Starting from input nodes ensures forward-direction edges are preferred,
+  // so cycle-causing "return" edges are identified as back-edges.
+  const backEdges = new Set<string>();
+  const dfsState = new Map<string, number>(); // 0=unvisited, 1=in-progress, 2=done
+  for (const nodeId of nodeIds) {
+    dfsState.set(nodeId, 0);
+  }
+
+  function dfs(nodeId: string): void {
+    dfsState.set(nodeId, 1);
+    for (const succ of forwardEdges.get(nodeId) || []) {
+      if (dfsState.get(succ) === 1) {
+        backEdges.add(`${nodeId}->${succ}`);
+        logWarn(`Cycle detected: back-edge ${nodeId} -> ${succ}`);
+      } else if (dfsState.get(succ) === 0) {
+        dfs(succ);
+      }
+    }
+    dfsState.set(nodeId, 2);
+  }
+
+  // DFS from input nodes first, then any remaining unvisited
+  for (const nodeId of nodeIds) {
+    if (inputNodeIds.has(nodeId) && dfsState.get(nodeId) === 0) {
+      dfs(nodeId);
+    }
+  }
+  for (const nodeId of nodeIds) {
+    if (dfsState.get(nodeId) === 0) {
+      dfs(nodeId);
+    }
+  }
+
+  // Step 2: Build DAG incoming edges (excluding back-edges)
+  const dagIncoming = new Map<string, string[]>();
+  for (const nodeId of nodeIds) {
+    dagIncoming.set(nodeId, []);
+  }
+  for (const conn of connections) {
+    if (!conn.enabled) continue;
+    if (!nodeSet.has(conn.from) || !nodeSet.has(conn.to)) continue;
+    if (backEdges.has(`${conn.from}->${conn.to}`)) continue;
+    dagIncoming.get(conn.to)!.push(conn.from);
+  }
+
+  // Step 3: Compute max depth from inputs via iterative relaxation on the DAG
+  // (converges since back-edges have been removed)
   const depths = new Map<string, number>();
   for (const nodeId of nodeIds) {
     depths.set(nodeId, inputNodeIds.has(nodeId) ? 0 : -1);
   }
 
-  // Use BFS/dynamic programming to compute max depths
-  // We need to process nodes in topological order, but since we want MAX depth,
-  // we need to ensure all predecessors are processed before a node
-  // Use iterative relaxation until no changes
   let changed = true;
   let iterations = 0;
-  const maxIterations = nodeIds.length + 1; // Safety limit
+  const maxIterations = nodeIds.length + 1;
 
   while (changed && iterations < maxIterations) {
     changed = false;
     iterations++;
 
     for (const nodeId of nodeIds) {
-      if (inputNodeIds.has(nodeId)) continue; // Inputs stay at 0
+      if (inputNodeIds.has(nodeId)) continue;
 
-      const predecessors = incomingEdges.get(nodeId) || [];
+      const predecessors = dagIncoming.get(nodeId) || [];
       if (predecessors.length === 0) {
-        // No incoming edges - might be disconnected, place at depth 0
         if (depths.get(nodeId) !== 0) {
           depths.set(nodeId, 0);
           changed = true;
@@ -147,22 +192,17 @@ function computeNodeDepths(
         continue;
       }
 
-      // Find max depth among predecessors that have been visited
       let maxPredDepth = -1;
-      let allPredecessorsVisited = true;
-
       for (const pred of predecessors) {
         const predDepth = depths.get(pred);
-        if (predDepth === undefined || predDepth === -1) {
-          allPredecessorsVisited = false;
-        } else {
+        if (predDepth !== undefined && predDepth !== -1) {
           maxPredDepth = Math.max(maxPredDepth, predDepth);
         }
       }
 
       if (maxPredDepth >= 0) {
         const newDepth = maxPredDepth + 1;
-        const currentDepth = depths.get(nodeId) || -1;
+        const currentDepth = depths.get(nodeId)!;
         if (newDepth > currentDepth) {
           depths.set(nodeId, newDepth);
           changed = true;
@@ -192,9 +232,109 @@ function computeNodeDepths(
   logInfo("Depth distribution", {
     maxDepth,
     layerCounts: Object.fromEntries(depthCounts),
+    backEdges: backEdges.size,
   });
 
   return depths;
+}
+
+/**
+ * Reorder nodes within layers using barycenter heuristic to minimize edge crossings.
+ * Forward pass: order each layer based on average position of predecessors.
+ * Backward pass: refine based on average position of successors.
+ */
+function reorderByBarycenter(
+  layers: Map<number, Node[]>,
+  connections: ApiConnection[]
+): void {
+  const maxDepth = Math.max(...layers.keys());
+
+  // Build adjacency lookups
+  const predecessors = new Map<string, string[]>(); // node -> nodes that feed into it
+  const successors = new Map<string, string[]>(); // node -> nodes it feeds into
+  for (const conn of connections) {
+    if (!conn.enabled) continue;
+    if (!predecessors.has(conn.to)) predecessors.set(conn.to, []);
+    predecessors.get(conn.to)!.push(conn.from);
+    if (!successors.has(conn.from)) successors.set(conn.from, []);
+    successors.get(conn.from)!.push(conn.to);
+  }
+
+  // Helper: get index of a node in its layer
+  function getIndex(layerNodes: Node[], nodeId: string): number {
+    return layerNodes.findIndex((n) => n.id === nodeId);
+  }
+
+  const typeOrder: Record<string, number> = {
+    input: 0,
+    hidden: 1,
+    identity: 2,
+    annotation: 3,
+    output: 4,
+  };
+
+  // Forward pass: for layers 1..maxDepth, sort by average predecessor index
+  for (let d = 1; d <= maxDepth; d++) {
+    const layerNodes = layers.get(d);
+    if (!layerNodes || layerNodes.length <= 1) continue;
+    const prevLayer = layers.get(d - 1) || [];
+
+    layerNodes.sort((a, b) => {
+      const predsA = (predecessors.get(a.id) || [])
+        .map((p) => getIndex(prevLayer, p))
+        .filter((i) => i >= 0);
+      const predsB = (predecessors.get(b.id) || [])
+        .map((p) => getIndex(prevLayer, p))
+        .filter((i) => i >= 0);
+      const bcA =
+        predsA.length > 0
+          ? predsA.reduce((s, v) => s + v, 0) / predsA.length
+          : Infinity;
+      const bcB =
+        predsB.length > 0
+          ? predsB.reduce((s, v) => s + v, 0) / predsB.length
+          : Infinity;
+      if (bcA !== bcB) return bcA - bcB;
+      // Tiebreak: type then ID
+      const tA = typeOrder[a.data.nodeType as string] ?? 1;
+      const tB = typeOrder[b.data.nodeType as string] ?? 1;
+      if (tA !== tB) return tA - tB;
+      return String(a.id).localeCompare(String(b.id), undefined, {
+        numeric: true,
+      });
+    });
+  }
+
+  // Backward pass: for layers maxDepth-1..0, refine by average successor index
+  for (let d = maxDepth - 1; d >= 0; d--) {
+    const layerNodes = layers.get(d);
+    if (!layerNodes || layerNodes.length <= 1) continue;
+    const nextLayer = layers.get(d + 1) || [];
+
+    layerNodes.sort((a, b) => {
+      const succsA = (successors.get(a.id) || [])
+        .map((s) => getIndex(nextLayer, s))
+        .filter((i) => i >= 0);
+      const succsB = (successors.get(b.id) || [])
+        .map((s) => getIndex(nextLayer, s))
+        .filter((i) => i >= 0);
+      const bcA =
+        succsA.length > 0
+          ? succsA.reduce((s, v) => s + v, 0) / succsA.length
+          : Infinity;
+      const bcB =
+        succsB.length > 0
+          ? succsB.reduce((s, v) => s + v, 0) / succsB.length
+          : Infinity;
+      if (bcA !== bcB) return bcA - bcB;
+      const tA = typeOrder[a.data.nodeType as string] ?? 1;
+      const tB = typeOrder[b.data.nodeType as string] ?? 1;
+      if (tA !== tB) return tA - tB;
+      return String(a.id).localeCompare(String(b.id), undefined, {
+        numeric: true,
+      });
+    });
+  }
 }
 
 /**
@@ -204,7 +344,8 @@ function computeNodeDepths(
 function applyLayerLayout(
   nodes: Node[],
   edges: Edge[],
-  depths: Map<string, number>
+  depths: Map<string, number>,
+  connections: ApiConnection[]
 ): { nodes: Node[]; edges: Edge[] } {
   logDebug("Applying layer-based layout");
 
@@ -220,17 +361,8 @@ function applyLayerLayout(
     layers.get(depth)!.push(node);
   }
 
-  // Sort nodes within each layer for consistent ordering
-  // Sort by node type first (input, hidden, output), then by id
-  const typeOrder: Record<string, number> = { input: 0, hidden: 1, identity: 2, output: 3 };
-  for (const [depth, layerNodes] of layers) {
-    layerNodes.sort((a, b) => {
-      const typeA = typeOrder[a.data.nodeType as string] ?? 1;
-      const typeB = typeOrder[b.data.nodeType as string] ?? 1;
-      if (typeA !== typeB) return typeA - typeB;
-      return String(a.id).localeCompare(String(b.id), undefined, { numeric: true });
-    });
-  }
+  // Reorder nodes within layers using barycenter heuristic to minimize edge crossings
+  reorderByBarycenter(layers, connections);
 
   // Calculate positions
   const layoutedNodes = nodes.map((node) => {
@@ -358,6 +490,20 @@ function convertModelToFlow(model: ModelState, annotationNodeIds: Set<string>): 
   const enabledConnections = model.connections.filter((conn) => conn.enabled);
   logDebug(`Building edges from ${enabledConnections.length} enabled connections`);
 
+  // Check for split nodes with multiple outputs (diagnostic)
+  const outputCounts = new Map<string, string[]>();
+  for (const conn of enabledConnections) {
+    if (!outputCounts.has(conn.from)) {
+      outputCounts.set(conn.from, []);
+    }
+    outputCounts.get(conn.from)!.push(conn.to);
+  }
+  for (const [nodeId, targets] of outputCounts) {
+    if (nodeId.includes("_") && !nodeId.startsWith("identity") && targets.length > 1) {
+      logWarn(`Split node ${nodeId} has ${targets.length} outputs: ${targets.join(", ")}`);
+    }
+  }
+
   const edges: Edge[] = enabledConnections.map((conn) => {
     const isPositive = conn.weight >= 0;
     const strokeWidth = Math.min(1 + Math.abs(conn.weight) * 2, 6);
@@ -438,17 +584,19 @@ export function NetworkViewer({
     const nodeIds = model.nodes.map((n) => n.id);
 
     // Compute depth from inputs for each node
+    const enabledConnections = model.connections.filter((c) => c.enabled);
     const depths = computeNodeDepths(
       nodeIds,
       inputNodeIds,
-      model.connections.filter((c) => c.enabled)
+      enabledConnections
     );
 
     // Apply layer-based layout
     const { nodes: layoutedNodes, edges: layoutedEdges } = applyLayerLayout(
       flowNodes,
       flowEdges,
-      depths
+      depths,
+      enabledConnections
     );
 
     const elapsed = performance.now() - startTime;
