@@ -359,7 +359,8 @@ async def list_genome_annotations(
         return AnnotationListResponse(annotations=[], total=0)
 
     # Extract annotations from "annotate" operations
-    annotation_summaries = []
+    # First pass: collect all annotations with their child_annotation_ids
+    raw_annotations = []
     for op in explanation.operations:
         if op.get("type") != "annotate":
             continue
@@ -370,16 +371,57 @@ async def list_genome_annotations(
         # Use annotation_id from result, or generate one from seq
         ann_id = result.get("annotation_id") or f"ann_{op.get('seq', 0)}"
 
+        raw_annotations.append({
+            "id": ann_id,
+            "name": params.get("name"),
+            "entry_nodes": [str(n) for n in (params.get("entry_nodes") or [])],
+            "exit_nodes": [str(n) for n in (params.get("exit_nodes") or [])],
+            "subgraph_nodes": [str(n) for n in (params.get("subgraph_nodes") or [])],
+            "child_annotation_ids": params.get("child_annotation_ids") or [],
+        })
+
+    # Build name -> [ids] mapping (handles duplicate names correctly)
+    name_to_ids: dict[str, list[str]] = {}
+    for ann in raw_annotations:
+        if ann["name"]:
+            name_to_ids.setdefault(ann["name"], []).append(ann["id"])
+
+    # Resolve children_ids for each annotation (all matching names)
+    for ann in raw_annotations:
+        children_ids = []
+        for child_name in ann["child_annotation_ids"]:
+            children_ids.extend(name_to_ids.get(child_name, []))
+        ann["_children_ids"] = children_ids
+
+    # Derive parent_annotation_id by inverting children (single source of truth)
+    child_to_parent_id: dict[str, str] = {}
+    for ann in raw_annotations:
+        for child_id in ann["_children_ids"]:
+            if child_id in child_to_parent_id:
+                import logging
+                logging.getLogger(__name__).warning(
+                    f"Annotation '{child_id}' claimed by both "
+                    f"'{child_to_parent_id[child_id]}' and '{ann['id']}'"
+                )
+            else:
+                child_to_parent_id[child_id] = ann["id"]
+
+    # Build final annotation summaries
+    annotation_summaries = []
+    for ann in raw_annotations:
+        parent_id = child_to_parent_id.get(ann["id"])
+        children_ids = ann["_children_ids"]
+
         annotation_summaries.append(
             AnnotationSummary(
-                id=ann_id,
-                name=params.get("name"),
-                entry_nodes=[str(n) for n in (params.get("entry_nodes") or [])],
-                exit_nodes=[str(n) for n in (params.get("exit_nodes") or [])],
-                subgraph_nodes=[str(n) for n in (params.get("subgraph_nodes") or [])],
-                parent_annotation_id=None,  # TODO: Support hierarchy via params if needed
-                children_ids=[],  # TODO: Compute from subgraph containment if needed
-                is_leaf=True,  # All annotations are leaf for now
+                id=ann["id"],
+                name=ann["name"],
+                entry_nodes=ann["entry_nodes"],
+                exit_nodes=ann["exit_nodes"],
+                subgraph_nodes=ann["subgraph_nodes"],
+                parent_annotation_id=parent_id,
+                children_ids=children_ids,
+                is_leaf=len(children_ids) == 0,
             )
         )
 
