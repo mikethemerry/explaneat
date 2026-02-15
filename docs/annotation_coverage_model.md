@@ -222,6 +222,93 @@ An explanation contains:
 - A set of node splits
 - Cached coverage metrics (structural and compositional)
 
+## Annotation Strategy (UI-Driven Creation)
+
+When creating annotations through the React Explorer UI, the system automatically analyzes the selected nodes and computes a strategy to create a valid annotation. This section describes the logic.
+
+### Node Classification
+
+Given a selection of nodes, classify them as:
+
+- **Entry Nodes**: Nodes where ALL inputs come from outside the subgraph, OR they are network input nodes
+- **Exit Nodes**: Nodes where ALL outputs go outside the subgraph, OR they are network output nodes
+- **Intermediate Nodes**: Nodes between entry and exit (have both internal inputs and internal outputs)
+
+### Discovering Intermediate Nodes
+
+The UI performs graph traversal to discover intermediate nodes that weren't explicitly selected but lie on paths between entries and exits:
+
+1. BFS forward from all entry nodes to find reachable nodes
+2. BFS backward from all exit nodes to find nodes that can reach exits
+3. Intersection = nodes on valid paths
+4. Any nodes on paths not in original selection are "discovered intermediates"
+
+### Strategy Detection
+
+The annotation strategy addresses three types of issues:
+
+#### 1. Blocking Issues (User Must Expand Selection)
+
+**Problem:** Intermediate or exit nodes have external inputs (inputs from outside the subgraph).
+
+**Why Blocking:** This indicates the subgraph boundary is incomplete. The external input sources should be included in the annotation.
+
+**Resolution:** User must expand selection to include the nodes providing external inputs.
+
+**UI Display:** Shows list of nodes with external inputs and what nodes are providing those inputs.
+
+#### 2. Identity Nodes (Partial Exit Coverage)
+
+**Problem:** The exit node has inputs from BOTH inside and outside the subgraph. The subgraph only captures a subset of the exit's inputs.
+
+**Condition:** Exactly one exit node with external inputs.
+
+**Strategy:**
+1. Add an identity node that intercepts all connections FROM the subgraph TO the exit node
+2. The identity node outputs to the original exit node
+3. The identity node becomes the NEW exit of the annotation
+4. The original exit node is REMOVED from the annotation
+
+**Example:**
+- Selection: inputs -3, -4 connected to output 0
+- Output 0 also receives input from -5 (not in selection)
+- Strategy: Add identity_1 intercepting connections from -3,-4 to 0
+- Final annotation: entry={-3,-4}, exit={identity_1}, nodes={-3,-4,identity_1}
+- Node 0 is NOT in the annotation
+
+#### 3. Split Nodes (External Outputs from Entry/Intermediate)
+
+**Problem:** Entry or intermediate nodes have external outputs (outputs going outside the subgraph). This violates the boundary definition since these nodes should only output internally or be exits.
+
+**Strategy:**
+1. Split the node into two versions
+2. Original node stays in the annotation
+3. Split version (with suffix `_split`) handles external outputs and becomes an exit
+
+**Example:**
+- Node -2 is classified as entry
+- Node -2 outputs to both 2291 (internal) and 101 (external)
+- Strategy: Split -2 into -2 and -2_split
+- -2 stays as entry (internal outputs)
+- -2_split becomes exit (external outputs)
+
+### Strategy Execution Order
+
+When the user clicks "Execute Strategy", operations are applied in this order:
+
+1. **Add identity nodes** (if needed for partial exit coverage)
+2. **Split nodes** (if needed for external outputs from entry/intermediate)
+3. **Create annotation** with computed final entry, exit, and subgraph nodes
+
+This order ensures each operation can reference the correct node IDs.
+
+### Final Subgraph Computation
+
+After strategy execution:
+- **finalSubgraphNodes** = selected + discovered - replaced_exit + new_identity + split_nodes
+- **finalEntryNodes** = original entry nodes
+- **finalExitNodes** = (original exits - replaced) + identity nodes + split nodes
+
 ## Implementation Notes
 
 1. **Entry and Exit Nodes:** These must be explicitly stored in the database to properly define the annotation boundaries.
@@ -238,4 +325,17 @@ An explanation contains:
 
 6. **Explanation Context:** Coverage calculations work within the context of a specific explanation, which includes its annotations and splits.
 
+## Collapsibility and Collapse Operations
 
+Coverage and collapsibility are **distinct concepts**:
+
+- **Coverage** determines whether a node's behavior is fully explained (all outgoing edges accounted for by annotations)
+- **Collapsibility** determines whether an annotation can be validly replaced by a single node in the visualization (requires clean interface preconditions)
+
+A node can be covered but its annotation not collapsible (if boundary preconditions are violated). An annotation can be collapsible even when some nodes aren't covered (e.g., entry nodes with external outputs after splitting).
+
+For the full formalization of the collapse operation, its three preconditions, and the composition property, see **`docs/annotation_collapsing_model.md`**.
+
+### Note on Output Node Coverage
+
+The paper's coverage definition ($\text{covered}_A(v) = v \in V_A \land E_{\text{out}}(v) \subseteq E_A$) allows output nodes to be covered when $E_{\text{out}}(v) = \emptyset$ (trivially satisfied). The "output nodes are never covered" rule in the implementation is a **practical visualization choice**: output nodes should always remain visible. This does not affect collapsibility.
