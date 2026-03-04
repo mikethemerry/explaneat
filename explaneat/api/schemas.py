@@ -12,15 +12,33 @@ from pydantic import BaseModel, Field, ConfigDict
 # =============================================================================
 
 
+class FunctionNodeMetadataSchema(BaseModel):
+    """Schema for collapsed annotation function node metadata."""
+
+    annotation_name: str
+    annotation_id: str
+    hypothesis: Optional[str] = None
+    n_inputs: int
+    n_outputs: int
+    input_names: List[str]
+    output_names: List[str]
+    formula_latex: Optional[str] = None
+    subgraph_nodes: List[str]
+    subgraph_connections: List[tuple[str, str]]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class NodeSchema(BaseModel):
     """Schema for a node in the network."""
 
     id: str
-    type: Literal["input", "hidden", "output", "identity"]
+    type: Literal["input", "hidden", "output", "identity", "function"]
     bias: Optional[float] = None
     activation: Optional[str] = None
     response: Optional[float] = None
     aggregation: Optional[str] = None
+    function_metadata: Optional[FunctionNodeMetadataSchema] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -32,6 +50,7 @@ class ConnectionSchema(BaseModel):
     to_node: str = Field(alias="to")
     weight: float
     enabled: bool = True
+    output_index: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
@@ -42,6 +61,7 @@ class ModelMetadata(BaseModel):
     input_nodes: List[str]
     output_nodes: List[str]
     is_original: bool = True  # True if no operations applied
+    collapsed_annotations: List[str] = []
 
 
 class ModelStateResponse(BaseModel):
@@ -64,6 +84,8 @@ class ExperimentListItem(BaseModel):
     name: str
     status: str
     dataset_name: Optional[str] = None
+    dataset_id: Optional[str] = None
+    has_split: bool = False
     generations: int
     total_genomes: int
     best_fitness: Optional[float] = None
@@ -163,6 +185,7 @@ class AnnotateParams(BaseModel):
     subgraph_nodes: List[str]
     subgraph_connections: List[tuple[str, str]] = []
     evidence: Optional[Dict[str, Any]] = None
+    child_annotation_ids: List[str] = []  # IDs of child annotations for compositional annotations
 
 
 class OperationRequest(BaseModel):
@@ -337,6 +360,175 @@ class AnnotationListResponse(BaseModel):
     """Response for list of annotations."""
 
     annotations: List[AnnotationSummary]
+    total: int
+
+
+# =============================================================================
+# Dataset schemas
+# =============================================================================
+
+
+class DatasetResponse(BaseModel):
+    """Response for dataset metadata."""
+
+    id: str
+    name: str
+    version: Optional[str] = None
+    source: Optional[str] = None
+    source_url: Optional[str] = None
+    description: Optional[str] = None
+    num_samples: Optional[int] = None
+    num_features: Optional[int] = None
+    num_classes: Optional[int] = None
+    feature_names: Optional[List[str]] = None
+    target_name: Optional[str] = None
+    class_names: Optional[List[str]] = None
+    has_data: bool = False
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DatasetListResponse(BaseModel):
+    """Response for list of datasets."""
+
+    datasets: List[DatasetResponse]
+    total: int
+
+
+class PMLBDownloadRequest(BaseModel):
+    """Request to download and store a PMLB dataset."""
+
+    name: str
+    version: Optional[str] = None
+
+
+class LinkDatasetRequest(BaseModel):
+    """Request to link a dataset to an experiment and create a split."""
+
+    dataset_id: str
+    test_proportion: float = 0.2
+    random_seed: int = 42
+    stratify: bool = False
+
+
+class ExperimentSplitResponse(BaseModel):
+    """Response for an experiment's linked split + dataset metadata."""
+
+    split_id: str
+    dataset_id: str
+    dataset_name: str
+    num_samples: Optional[int] = None
+    num_features: Optional[int] = None
+    num_classes: Optional[int] = None
+    split_type: str
+    test_size: Optional[float] = None
+    random_state: Optional[int] = None
+    train_size: Optional[int] = None
+    test_size_actual: Optional[int] = None
+
+
+class SplitCreateRequest(BaseModel):
+    """Request to create a dataset split."""
+
+    experiment_id: str
+    test_proportion: float = 0.2
+    random_seed: int = 42
+    stratify: bool = False
+
+
+class SplitResponse(BaseModel):
+    """Response for a dataset split."""
+
+    id: str
+    dataset_id: str
+    experiment_id: str
+    split_type: str
+    test_size: Optional[float] = None
+    random_state: Optional[int] = None
+    train_size: Optional[int] = None
+    test_size_actual: Optional[int] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SplitListResponse(BaseModel):
+    """Response for list of splits."""
+
+    splits: List[SplitResponse]
+    total: int
+
+
+# =============================================================================
+# Evidence & Visualization schemas
+# =============================================================================
+
+
+class VizDataRequest(BaseModel):
+    """Request for computing visualization data."""
+
+    annotation_id: str
+    dataset_split_id: str
+    viz_type: Literal[
+        "line", "heatmap", "partial_dependence", "pca_scatter", "sensitivity"
+    ]
+    params: Optional[Dict[str, Any]] = None
+    split: Literal["train", "test", "both"] = "both"
+    sample_fraction: float = 0.1
+    max_samples: int = 1000
+
+
+class VizDataResponse(BaseModel):
+    """Response for visualization data."""
+
+    viz_type: str
+    data: Dict[str, Any]
+    dimensionality: List[int]
+    suggested_viz_types: List[str]
+
+
+class FormulaResponse(BaseModel):
+    """Response for closed-form formula."""
+
+    latex: Optional[str] = None
+    tractable: bool = False
+    dimensionality: List[int]
+
+
+class SnapshotRequest(BaseModel):
+    """Request to save a visualization snapshot as evidence."""
+
+    annotation_id: str
+    viz_config: Dict[str, Any]
+    svg_data: str  # base64-encoded SVG
+    narrative: str = ""
+    category: Literal[
+        "analytical_methods", "visualizations", "counterfactuals", "other_evidence"
+    ] = "visualizations"
+
+
+class NarrativeUpdateRequest(BaseModel):
+    """Request to update narrative text on evidence entry."""
+
+    annotation_id: str
+    evidence_index: int
+    narrative: str
+
+
+class EvidenceEntry(BaseModel):
+    """A single evidence entry."""
+
+    viz_config: Optional[Dict[str, Any]] = None
+    svg_data: Optional[str] = None
+    narrative: str = ""
+    category: str = "other_evidence"
+    timestamp: Optional[str] = None
+
+
+class EvidenceListResponse(BaseModel):
+    """Response for list of evidence entries."""
+
+    annotation_id: str
+    entries: List[EvidenceEntry]
     total: int
 
 

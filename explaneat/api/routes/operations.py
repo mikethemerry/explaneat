@@ -6,11 +6,11 @@ on the explanation event stream.
 """
 
 import tempfile
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Path
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 import neat
 
@@ -25,12 +25,14 @@ from ..schemas import (
     NodeSchema,
     ConnectionSchema,
     ModelMetadata,
+    FunctionNodeMetadataSchema,
 )
 from ...db import Genome, Population, Experiment, Explanation
 from ...db.serialization import deserialize_genome
 from ...core.explaneat import ExplaNEAT
 from ...core.model_state import ModelStateEngine, Operation
 from ...core.operations import OperationError
+from ...core.collapse_transform import collapse_structure
 
 
 router = APIRouter()
@@ -101,19 +103,43 @@ def _get_phenotype_and_engine(
     return genome, explanation, engine
 
 
-def _network_to_response(network, is_original: bool = False) -> ModelStateResponse:
+def _network_to_response(
+    network,
+    is_original: bool = False,
+    collapsed_annotations: Optional[List[str]] = None,
+) -> ModelStateResponse:
     """Convert NetworkStructure to API response."""
-    nodes = [
-        NodeSchema(
-            id=node.id,
-            type=node.type.value if hasattr(node.type, "value") else node.type,
-            bias=node.bias,
-            activation=node.activation,
-            response=node.response,
-            aggregation=node.aggregation,
+    nodes = []
+    for node in network.nodes:
+        node_type = node.type.value if hasattr(node.type, "value") else node.type
+
+        # Build function_metadata schema if present
+        fn_meta = None
+        if node.function_metadata is not None:
+            fn_meta = FunctionNodeMetadataSchema(
+                annotation_name=node.function_metadata.annotation_name,
+                annotation_id=node.function_metadata.annotation_id,
+                hypothesis=node.function_metadata.hypothesis,
+                n_inputs=node.function_metadata.n_inputs,
+                n_outputs=node.function_metadata.n_outputs,
+                input_names=node.function_metadata.input_names,
+                output_names=node.function_metadata.output_names,
+                formula_latex=node.function_metadata.formula_latex,
+                subgraph_nodes=node.function_metadata.subgraph_nodes,
+                subgraph_connections=node.function_metadata.subgraph_connections,
+            )
+
+        nodes.append(
+            NodeSchema(
+                id=node.id,
+                type=node_type,
+                bias=node.bias,
+                activation=node.activation,
+                response=node.response,
+                aggregation=node.aggregation,
+                function_metadata=fn_meta,
+            )
         )
-        for node in network.nodes
-    ]
 
     connections = [
         ConnectionSchema(
@@ -122,6 +148,7 @@ def _network_to_response(network, is_original: bool = False) -> ModelStateRespon
                 "to": conn.to_node,
                 "weight": conn.weight,
                 "enabled": conn.enabled,
+                "output_index": conn.output_index,
             }
         )
         for conn in network.connections
@@ -131,6 +158,7 @@ def _network_to_response(network, is_original: bool = False) -> ModelStateRespon
         input_nodes=network.input_node_ids,
         output_nodes=network.output_node_ids,
         is_original=is_original or network.metadata.get("is_original", True),
+        collapsed_annotations=collapsed_annotations or [],
     )
 
     return ModelStateResponse(
@@ -159,20 +187,42 @@ def _operation_to_response(op: Operation) -> OperationResponse:
 @router.get("/model", response_model=ModelStateResponse)
 async def get_current_model(
     genome_id: UUID = Path(..., description="The genome ID"),
+    collapsed: Optional[str] = Query(
+        None,
+        description="Comma-separated annotation names to collapse into function nodes",
+    ),
     db: Session = Depends(get_db),
 ):
     """
     Get the current model state after applying all operations.
 
     Returns the phenotype with all operations (splits, identity nodes, etc.)
-    applied in order.
+    applied in order. Optionally collapse specified annotations into function nodes.
+
+    Query params:
+        collapsed: Comma-separated list of annotation names to collapse
+                   (e.g. "ann1,ann2").
     """
     genome, explanation, engine = _get_phenotype_and_engine(genome_id, db)
 
     current_state = engine.current_state
     is_original = len(engine.operations) == 0
 
-    return _network_to_response(current_state, is_original=is_original)
+    collapsed_names: List[str] = []
+    if collapsed:
+        collapsed_names = [name.strip() for name in collapsed.split(",") if name.strip()]
+
+    if collapsed_names:
+        collapsed_ids = set(collapsed_names)
+        current_state = collapse_structure(
+            current_state, engine.annotations, collapsed_ids
+        )
+
+    return _network_to_response(
+        current_state,
+        is_original=is_original,
+        collapsed_annotations=collapsed_names,
+    )
 
 
 # =============================================================================
