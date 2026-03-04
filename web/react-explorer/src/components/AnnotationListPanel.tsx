@@ -10,7 +10,6 @@
 
 import { useCallback } from "react";
 import type { AnnotationSummary } from "../api/client";
-import type { CollapsedState } from "../hooks/useCollapsedView";
 
 // =============================================================================
 // Logging utilities
@@ -28,7 +27,7 @@ function logDebug(message: string, data?: unknown) {
 
 type AnnotationListPanelProps = {
   annotations: AnnotationSummary[];
-  collapsedState: CollapsedState;
+  collapsedAnnotations: Set<string>;
   onToggleCollapse: (annotationId: string) => void;
   selectedAnnotationId: string | null;
   onSelectAnnotation: (annotationId: string | null) => void;
@@ -41,7 +40,7 @@ type AnnotationListPanelProps = {
 type AnnotationTreeItemProps = {
   annotation: AnnotationSummary;
   annotations: AnnotationSummary[];
-  collapsedState: CollapsedState;
+  collapsedAnnotations: Set<string>;
   onToggleCollapse: (annotationId: string) => void;
   selectedAnnotationId: string | null;
   onSelectAnnotation: (annotationId: string | null) => void;
@@ -51,13 +50,13 @@ type AnnotationTreeItemProps = {
 function AnnotationTreeItem({
   annotation,
   annotations,
-  collapsedState,
+  collapsedAnnotations,
   onToggleCollapse,
   selectedAnnotationId,
   onSelectAnnotation,
   depth,
 }: AnnotationTreeItemProps) {
-  const isCollapsed = collapsedState.get(annotation.id) ?? false;
+  const isCollapsed = annotation.name ? collapsedAnnotations.has(annotation.name) : false;
   const isSelected = selectedAnnotationId === annotation.id;
   const children = annotations.filter(a => a.parent_annotation_id === annotation.id);
   const hasChildren = children.length > 0;
@@ -110,7 +109,7 @@ function AnnotationTreeItem({
           key={child.id}
           annotation={child}
           annotations={annotations}
-          collapsedState={collapsedState}
+          collapsedAnnotations={collapsedAnnotations}
           onToggleCollapse={onToggleCollapse}
           selectedAnnotationId={selectedAnnotationId}
           onSelectAnnotation={onSelectAnnotation}
@@ -127,7 +126,7 @@ function AnnotationTreeItem({
 
 export function AnnotationListPanel({
   annotations,
-  collapsedState,
+  collapsedAnnotations,
   onToggleCollapse,
   selectedAnnotationId,
   onSelectAnnotation,
@@ -144,7 +143,7 @@ export function AnnotationListPanel({
     );
   }
 
-  const collapsedCount = Array.from(collapsedState.values()).filter(v => v).length;
+  const collapsedCount = collapsedAnnotations.size;
 
   return (
     <section className="panel-section annotation-list-panel">
@@ -158,7 +157,7 @@ export function AnnotationListPanel({
             key={annotation.id}
             annotation={annotation}
             annotations={annotations}
-            collapsedState={collapsedState}
+            collapsedAnnotations={collapsedAnnotations}
             onToggleCollapse={onToggleCollapse}
             selectedAnnotationId={selectedAnnotationId}
             onSelectAnnotation={onSelectAnnotation}

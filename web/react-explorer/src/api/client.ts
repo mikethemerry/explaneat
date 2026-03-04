@@ -32,7 +32,20 @@ const API_BASE = "/api";
 // Types matching API schemas
 // ============================================================================
 
-export type NodeType = "input" | "hidden" | "output" | "identity";
+export type NodeType = "input" | "hidden" | "output" | "identity" | "function";
+
+export type FunctionNodeMetadata = {
+  annotation_name: string;
+  annotation_id: string;
+  hypothesis: string;
+  n_inputs: number;
+  n_outputs: number;
+  input_names: string[];
+  output_names: string[];
+  formula_latex: string | null;
+  subgraph_nodes: string[];
+  subgraph_connections: [string, string][];
+};
 
 export type ApiNode = {
   id: string;
@@ -41,6 +54,7 @@ export type ApiNode = {
   activation: string | null;
   response: number | null;
   aggregation: string | null;
+  function_metadata?: FunctionNodeMetadata | null;
 };
 
 export type ApiConnection = {
@@ -48,12 +62,14 @@ export type ApiConnection = {
   to: string;
   weight: number;
   enabled: boolean;
+  output_index?: number | null;
 };
 
 export type ModelMetadata = {
   input_nodes: string[];
   output_nodes: string[];
   is_original: boolean;
+  collapsed_annotations?: string[];
 };
 
 export type ModelState = {
@@ -82,6 +98,8 @@ export type ExperimentListItem = {
   name: string;
   status: string;
   dataset_name: string | null;
+  dataset_id: string | null;
+  has_split: boolean;
   generations: number;
   total_genomes: number;
   best_fitness: number | null;
@@ -295,6 +313,48 @@ export async function getBestGenome(
   );
 }
 
+export type LinkDatasetRequest = {
+  dataset_id: string;
+  test_proportion: number;
+  random_seed: number;
+  stratify: boolean;
+};
+
+export type ExperimentSplitResponse = {
+  split_id: string;
+  dataset_id: string;
+  dataset_name: string;
+  num_samples: number | null;
+  num_features: number | null;
+  num_classes: number | null;
+  split_type: string;
+  test_size: number | null;
+  random_state: number | null;
+  train_size: number | null;
+  test_size_actual: number | null;
+};
+
+export async function getExperimentSplit(
+  experimentId: string,
+): Promise<ExperimentSplitResponse> {
+  return fetchJson<ExperimentSplitResponse>(
+    `${API_BASE}/experiments/${experimentId}/split`,
+  );
+}
+
+export async function linkDatasetToExperiment(
+  experimentId: string,
+  request: LinkDatasetRequest,
+): Promise<ExperimentSplitResponse> {
+  return fetchJson<ExperimentSplitResponse>(
+    `${API_BASE}/experiments/${experimentId}/dataset`,
+    {
+      method: "PUT",
+      body: JSON.stringify(request),
+    },
+  );
+}
+
 // ============================================================================
 // Genome endpoints
 // ============================================================================
@@ -324,8 +384,15 @@ export async function getGenomeExplanation(
 // Model state endpoints
 // ============================================================================
 
-export async function getCurrentModel(genomeId: string): Promise<ModelState> {
-  return fetchJson<ModelState>(`${API_BASE}/genomes/${genomeId}/model`);
+export async function getCurrentModel(
+  genomeId: string,
+  collapsed?: string[],
+): Promise<ModelState> {
+  let url = `${API_BASE}/genomes/${genomeId}/model`;
+  if (collapsed && collapsed.length > 0) {
+    url += `?collapsed=${collapsed.join(",")}`;
+  }
+  return fetchJson<ModelState>(url);
 }
 
 // ============================================================================
@@ -433,5 +500,197 @@ export async function listAnnotations(
 ): Promise<AnnotationListResponse> {
   return fetchJson<AnnotationListResponse>(
     `${API_BASE}/genomes/${genomeId}/annotations`,
+  );
+}
+
+// ============================================================================
+// Dataset types and endpoints
+// ============================================================================
+
+export type DatasetResponse = {
+  id: string;
+  name: string;
+  version: string | null;
+  source: string | null;
+  source_url: string | null;
+  description: string | null;
+  num_samples: number | null;
+  num_features: number | null;
+  num_classes: number | null;
+  feature_names: string[] | null;
+  target_name: string | null;
+  class_names: string[] | null;
+  has_data: boolean;
+};
+
+export type DatasetListResponse = {
+  datasets: DatasetResponse[];
+  total: number;
+};
+
+export type SplitResponse = {
+  id: string;
+  dataset_id: string;
+  experiment_id: string;
+  split_type: string;
+  test_size: number | null;
+  random_state: number | null;
+  train_size: number | null;
+  test_size_actual: number | null;
+};
+
+export type SplitListResponse = {
+  splits: SplitResponse[];
+  total: number;
+};
+
+export async function listDatasets(): Promise<DatasetListResponse> {
+  return fetchJson<DatasetListResponse>(`${API_BASE}/datasets`);
+}
+
+export async function downloadPMLBDataset(
+  name: string,
+  version?: string,
+): Promise<DatasetResponse> {
+  return fetchJson<DatasetResponse>(`${API_BASE}/datasets/pmlb`, {
+    method: "POST",
+    body: JSON.stringify({ name, version }),
+  });
+}
+
+export async function listSplits(
+  datasetId: string,
+): Promise<SplitListResponse> {
+  return fetchJson<SplitListResponse>(
+    `${API_BASE}/datasets/${datasetId}/splits`,
+  );
+}
+
+export async function createSplit(
+  datasetId: string,
+  experimentId: string,
+  testProportion = 0.2,
+  randomSeed = 42,
+  stratify = false,
+): Promise<SplitResponse> {
+  return fetchJson<SplitResponse>(
+    `${API_BASE}/datasets/${datasetId}/splits`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        experiment_id: experimentId,
+        test_proportion: testProportion,
+        random_seed: randomSeed,
+        stratify,
+      }),
+    },
+  );
+}
+
+// ============================================================================
+// Evidence & Visualization types and endpoints
+// ============================================================================
+
+export type VizDataRequest = {
+  annotation_id: string;
+  dataset_split_id: string;
+  viz_type: "line" | "heatmap" | "partial_dependence" | "pca_scatter" | "sensitivity";
+  params?: Record<string, unknown>;
+  split?: "train" | "test" | "both";
+  sample_fraction?: number;
+  max_samples?: number;
+};
+
+export type VizDataResponse = {
+  viz_type: string;
+  data: Record<string, unknown>;
+  dimensionality: [number, number];
+  suggested_viz_types: string[];
+};
+
+export type FormulaResponse = {
+  latex: string | null;
+  tractable: boolean;
+  dimensionality: [number, number];
+};
+
+export type EvidenceEntry = {
+  viz_config: Record<string, unknown> | null;
+  svg_data: string | null;
+  narrative: string;
+  category: string;
+  timestamp: string | null;
+};
+
+export type EvidenceListResponse = {
+  annotation_id: string;
+  entries: EvidenceEntry[];
+  total: number;
+};
+
+export async function computeVizData(
+  genomeId: string,
+  request: VizDataRequest,
+): Promise<VizDataResponse> {
+  return fetchJson<VizDataResponse>(
+    `${API_BASE}/genomes/${genomeId}/evidence/viz-data`,
+    {
+      method: "POST",
+      body: JSON.stringify(request),
+    },
+  );
+}
+
+export async function getFormula(
+  genomeId: string,
+  annotationId: string,
+): Promise<FormulaResponse> {
+  return fetchJson<FormulaResponse>(
+    `${API_BASE}/genomes/${genomeId}/evidence/formula?annotation_id=${annotationId}`,
+  );
+}
+
+export async function saveSnapshot(
+  genomeId: string,
+  annotationId: string,
+  vizConfig: Record<string, unknown>,
+  svgData: string,
+  narrative: string,
+  category = "visualizations",
+): Promise<{ status: string }> {
+  return fetchJson(`${API_BASE}/genomes/${genomeId}/evidence/snapshot`, {
+    method: "POST",
+    body: JSON.stringify({
+      annotation_id: annotationId,
+      viz_config: vizConfig,
+      svg_data: svgData,
+      narrative,
+      category,
+    }),
+  });
+}
+
+export async function updateNarrative(
+  genomeId: string,
+  annotationId: string,
+  evidenceIndex: number,
+  narrative: string,
+): Promise<{ status: string }> {
+  return fetchJson(`${API_BASE}/genomes/${genomeId}/evidence/narrative`, {
+    method: "PUT",
+    body: JSON.stringify({
+      annotation_id: annotationId,
+      evidence_index: evidenceIndex,
+      narrative,
+    }),
+  });
+}
+
+export async function listEvidence(
+  genomeId: string,
+  annotationId: string,
+): Promise<EvidenceListResponse> {
+  return fetchJson<EvidenceListResponse>(
+    `${API_BASE}/genomes/${genomeId}/evidence?annotation_id=${annotationId}`,
   );
 }

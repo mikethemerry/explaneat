@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getCurrentModel,
   listOperations,
@@ -10,7 +10,7 @@ import {
 import { NetworkViewer } from "./NetworkViewer";
 import { OperationsPanel } from "./OperationsPanel";
 import { AnnotationListPanel } from "./AnnotationListPanel";
-import { useCollapsedView, type CollapsedState } from "../hooks/useCollapsedView";
+import { EvidencePanel } from "./EvidencePanel";
 
 // =============================================================================
 // Logging utilities
@@ -36,11 +36,12 @@ function logError(message: string, data?: unknown) {
 
 type GenomeExplorerProps = {
   genomeId: string;
+  experimentId: string;
   experimentName: string;
   onBack: () => void;
 };
 
-export function GenomeExplorer({ genomeId, experimentName, onBack }: GenomeExplorerProps) {
+export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack }: GenomeExplorerProps) {
   const [model, setModel] = useState<ModelState | null>(null);
   const [operations, setOperations] = useState<Operation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,13 +50,54 @@ export function GenomeExplorer({ genomeId, experimentName, onBack }: GenomeExplo
 
   // Annotation state
   const [annotations, setAnnotations] = useState<AnnotationSummary[]>([]);
-  const [collapsedState, setCollapsedState] = useState<CollapsedState>(new Map());
+  const [collapsedAnnotations, setCollapsedAnnotations] = useState<Set<string>>(new Set());
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
 
-  // Compute collapsed view of the model
-  const collapsedModel = useCollapsedView(model, annotations, collapsedState);
+  // Derive annotation node IDs from model (FUNCTION nodes returned by server)
+  const annotationNodeIds = useMemo(
+    () => model?.nodes.filter(n => n.type === "function").map(n => n.id) || [],
+    [model]
+  );
 
   logDebug("Render", { genomeId, experimentName, loading, hasModel: !!model, operationsCount: operations.length, annotationsCount: annotations.length });
+
+  // Fetch model with current collapsed annotations
+  const fetchModel = useCallback(async (collapsed: Set<string>) => {
+    const collapsedArray = collapsed.size > 0 ? Array.from(collapsed) : undefined;
+    logDebug("Fetching model", { collapsed: collapsedArray });
+    const modelData = await getCurrentModel(genomeId, collapsedArray);
+    setModel(modelData);
+
+    // Reconcile selection: map old node IDs to new ones after operations
+    const newNodeIds = new Set(modelData.nodes.map(n => n.id));
+    setSelectedNodes(prev => {
+      const reconciled = new Set<string>();
+      for (const nodeId of prev) {
+        if (newNodeIds.has(nodeId)) {
+          reconciled.add(nodeId);
+        } else {
+          const variants = Array.from(newNodeIds).filter(id =>
+            id.startsWith(`${nodeId}_`)
+          );
+          if (variants.length > 0) {
+            logDebug(`Reconciling selection: ${nodeId} -> ${variants.join(", ")}`);
+            variants.forEach(v => reconciled.add(v));
+          } else {
+            logDebug(`Reconciling selection: ${nodeId} no longer exists, removing from selection`);
+          }
+        }
+      }
+      if (reconciled.size !== prev.size || ![...prev].every(id => reconciled.has(id))) {
+        logInfo("Selection reconciled after model reload", {
+          before: Array.from(prev),
+          after: Array.from(reconciled),
+        });
+      }
+      return reconciled;
+    });
+
+    return modelData;
+  }, [genomeId]);
 
   const loadData = useCallback(async () => {
     logInfo("Loading data for genome", { genomeId });
@@ -90,16 +132,25 @@ export function GenomeExplorer({ genomeId, experimentName, onBack }: GenomeExplo
       setOperations(opsData.operations);
       setAnnotations(annotationsData.annotations);
 
+      // Default all annotations to collapsed (by name, for server-side collapse)
+      setCollapsedAnnotations(prev => {
+        const next = new Set(prev);
+        for (const ann of annotationsData.annotations) {
+          if (ann.name && !next.has(ann.name)) {
+            next.add(ann.name); // collapsed by default
+          }
+        }
+        return next;
+      });
+
       // Reconcile selection: map old node IDs to new ones after operations
       const newNodeIds = new Set(modelData.nodes.map(n => n.id));
       setSelectedNodes(prev => {
         const reconciled = new Set<string>();
         for (const nodeId of prev) {
           if (newNodeIds.has(nodeId)) {
-            // Node still exists, keep it selected
             reconciled.add(nodeId);
           } else {
-            // Node was renamed/split - look for split variants
             const variants = Array.from(newNodeIds).filter(id =>
               id.startsWith(`${nodeId}_`)
             );
@@ -133,6 +184,15 @@ export function GenomeExplorer({ genomeId, experimentName, onBack }: GenomeExplo
     loadData();
   }, [loadData]);
 
+  // Re-fetch model when collapsed annotations change (after initial load)
+  useEffect(() => {
+    if (!loading && model) {
+      logDebug("Collapsed annotations changed, re-fetching model", { collapsed: Array.from(collapsedAnnotations) });
+      fetchModel(collapsedAnnotations);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [collapsedAnnotations, fetchModel]);
+
   const handleOperationChange = useCallback(() => {
     logInfo("Operation changed, reloading data and clearing selection");
     setSelectedNodes(new Set());
@@ -145,14 +205,24 @@ export function GenomeExplorer({ genomeId, experimentName, onBack }: GenomeExplo
   }, []);
 
   const handleToggleCollapse = useCallback((annotationId: string) => {
-    logDebug("Toggle annotation collapse", { annotationId });
-    setCollapsedState(prev => {
-      const newState = new Map(prev);
-      const current = newState.get(annotationId) ?? false;
-      newState.set(annotationId, !current);
-      return newState;
+    // Find annotation name from ID (server uses names for collapse)
+    const annotation = annotations.find(a => a.id === annotationId);
+    if (!annotation?.name) {
+      logDebug("Cannot toggle collapse: annotation has no name", { annotationId });
+      return;
+    }
+
+    logDebug("Toggle annotation collapse", { annotationId, name: annotation.name });
+    setCollapsedAnnotations(prev => {
+      const next = new Set(prev);
+      if (next.has(annotation.name!)) {
+        next.delete(annotation.name!);
+      } else {
+        next.add(annotation.name!);
+      }
+      return next;
     });
-  }, []);
+  }, [annotations]);
 
   const handleSelectAnnotation = useCallback((annotationId: string | null) => {
     logDebug("Select annotation", { annotationId });
@@ -203,18 +273,29 @@ export function GenomeExplorer({ genomeId, experimentName, onBack }: GenomeExplo
           />
           <AnnotationListPanel
             annotations={annotations}
-            collapsedState={collapsedState}
+            collapsedAnnotations={collapsedAnnotations}
             onToggleCollapse={handleToggleCollapse}
             selectedAnnotationId={selectedAnnotationId}
             onSelectAnnotation={handleSelectAnnotation}
           />
         </div>
         <NetworkViewer
-          model={collapsedModel || model}
+          model={model}
           selectedNodes={selectedNodes}
           onNodeSelect={handleNodeSelect}
-          annotationNodeIds={collapsedModel?.annotationNodes || []}
+          annotationNodeIds={annotationNodeIds}
         />
+        {selectedAnnotationId && (
+          <div className="right-panel">
+            <EvidencePanel
+              genomeId={genomeId}
+              experimentId={experimentId}
+              annotation={
+                annotations.find((a) => a.id === selectedAnnotationId)!
+              }
+            />
+          </div>
+        )}
       </div>
     </div>
   );

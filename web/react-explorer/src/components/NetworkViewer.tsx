@@ -49,7 +49,7 @@ const NODE_COLORS: Record<string, { background: string; border: string }> = {
   output: { background: "#2196F3", border: "#1976D2" },
   hidden: { background: "#9E9E9E", border: "#757575" },
   identity: { background: "#FF9800", border: "#F57C00" },
-  annotation: { background: "#7C3AED", border: "#5B21B6" }, // Purple for annotation nodes
+  function: { background: "#7C3AED", border: "#5B21B6" }, // Purple for function/annotation nodes
 };
 
 const NODE_WIDTH = 120;
@@ -269,7 +269,7 @@ function reorderByBarycenter(
     input: 0,
     hidden: 1,
     identity: 2,
-    annotation: 3,
+    function: 3,
     output: 4,
   };
 
@@ -432,22 +432,47 @@ function convertModelToFlow(model: ModelState, annotationNodeIds: Set<string>): 
 
   // Build nodes
   const nodes: Node[] = model.nodes.map((node, index) => {
-    const isAnnotationNode = annotationNodeIds.has(node.id);
-    const effectiveType = isAnnotationNode ? "annotation" : node.type;
+    // A node is a function/annotation node if it has type "function" or is in annotationNodeIds
+    const isFunctionNode = node.type === "function" || annotationNodeIds.has(node.id);
+    const effectiveType = isFunctionNode ? "function" : node.type;
     const colors = NODE_COLORS[effectiveType] || NODE_COLORS.hidden;
-    const tooltip = isAnnotationNode
-      ? `Annotation: ${node.id.replace(/^A_/, "")}`
-      : buildNodeTooltip(node);
+
+    // Build tooltip: for function nodes, show annotation metadata
+    let tooltip: string;
+    if (isFunctionNode && node.function_metadata) {
+      const meta = node.function_metadata;
+      tooltip = [
+        `Annotation: ${meta.annotation_name}`,
+        meta.hypothesis ? `Hypothesis: ${meta.hypothesis}` : null,
+        `Inputs: ${meta.n_inputs} (${meta.input_names.join(", ")})`,
+        `Outputs: ${meta.n_outputs} (${meta.output_names.join(", ")})`,
+        meta.formula_latex ? `Formula: ${meta.formula_latex}` : null,
+      ].filter(Boolean).join("\n");
+    } else if (isFunctionNode) {
+      tooltip = `Annotation: ${node.id.replace(/^A_/, "")}`;
+    } else {
+      tooltip = buildNodeTooltip(node);
+    }
 
     logDebug(`Creating node ${node.id}`, {
       type: node.type,
-      isAnnotationNode,
+      isFunctionNode,
       bias: node.bias,
       activation: node.activation,
     });
 
-    // Special styling for annotation nodes
-    const style = isAnnotationNode
+    // Build label for function nodes
+    let label: string;
+    if (isFunctionNode && node.function_metadata) {
+      label = node.function_metadata.annotation_name;
+    } else if (isFunctionNode) {
+      label = node.id.replace(/^A_/, "");
+    } else {
+      label = node.id;
+    }
+
+    // Special styling for function/annotation nodes
+    const style = isFunctionNode
       ? {
           background: `linear-gradient(135deg, ${colors.background}, #6D28D9)`,
           border: `2px dashed ${colors.border}`,
@@ -477,10 +502,10 @@ function convertModelToFlow(model: ModelState, annotationNodeIds: Set<string>): 
       type: "default",
       position: { x: index * 150, y: 0 }, // Will be overwritten by layout
       data: {
-        label: isAnnotationNode ? node.id.replace(/^A_/, "") : node.id,
+        label,
         tooltip,
         nodeType: effectiveType,
-        isAnnotationNode,
+        isFunctionNode,
       },
       style,
     };
@@ -781,7 +806,7 @@ export function NetworkViewer({
         <span className="legend-item">
           <span
             className="legend-color"
-            style={{ backgroundColor: NODE_COLORS.annotation.background }}
+            style={{ backgroundColor: NODE_COLORS.function.background }}
           />
           Annotation
         </span>
