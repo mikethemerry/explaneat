@@ -95,6 +95,30 @@ def _collapse_one(
     # --- Compute formula (best-effort) ---
     formula_latex = _try_compute_formula(structure, annotation)
 
+    # --- Capture node properties and connection weights ---
+    # Preserve bias/activation for all subgraph nodes so the function
+    # can be reconstructed for forward passes after collapse.
+    nodes_by_id = {n.id: n for n in structure.nodes}
+    node_properties: Dict[str, dict] = {}
+    for nid in annotation.subgraph_nodes:
+        node_obj = nodes_by_id.get(nid)
+        if node_obj is not None:
+            node_properties[nid] = {
+                "bias": node_obj.bias if node_obj.bias is not None else 0.0,
+                "activation": node_obj.activation or "relu",
+            }
+
+    # Preserve connection weights for the subgraph connections.
+    enabled_conns = {
+        (c.from_node, c.to_node): c.weight
+        for c in structure.connections
+        if c.enabled
+    }
+    connection_weights: Dict[Tuple[str, str], float] = {}
+    for from_n, to_n in annotation.subgraph_connections:
+        w = enabled_conns.get((from_n, to_n), 0.0)
+        connection_weights[(from_n, to_n)] = w
+
     # --- Create function node metadata ---
     metadata = FunctionNodeMetadata(
         annotation_name=annotation.name,
@@ -107,6 +131,8 @@ def _collapse_one(
         formula_latex=formula_latex,
         subgraph_nodes=list(annotation.subgraph_nodes),
         subgraph_connections=list(annotation.subgraph_connections),
+        node_properties=node_properties,
+        connection_weights=connection_weights,
     )
 
     fn_node = NetworkNode(

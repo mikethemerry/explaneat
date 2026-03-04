@@ -31,6 +31,12 @@ class FunctionNodeMetadata:
     formula_latex: Optional[str]
     subgraph_nodes: List[str]
     subgraph_connections: List[Tuple[str, str]]
+    # Node properties for internal nodes removed during collapse.
+    # Maps node_id -> {"bias": float, "activation": str}
+    node_properties: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    # Connection weights for subgraph connections.
+    # Maps (from_node, to_node) -> weight
+    connection_weights: Dict[Tuple[str, str], float] = field(default_factory=dict)
 
 
 @dataclass

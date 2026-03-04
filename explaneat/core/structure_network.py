@@ -3,15 +3,19 @@
 Unlike NeuralNeat which works with NEAT genome objects (integer node IDs),
 this works with NetworkStructure objects that may contain identity nodes,
 split nodes, etc. with string node IDs.
+
+Supports FUNCTION nodes (collapsed annotations) by reconstructing an
+AnnotationFunction from the FunctionNodeMetadata and evaluating it during
+the forward pass.
 """
 
-from typing import Dict, List, Set
+from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
 import torch
 
 from .activations import get_numpy_activation
-from .genome_network import NetworkStructure, NodeType
+from .genome_network import FunctionNodeMetadata, NetworkStructure, NodeType
 
 
 class StructureNetwork:
@@ -25,6 +29,9 @@ class StructureNetwork:
         self.node_info: Dict[str, dict] = {}  # node_id -> {depth, layer_index, activation}
         self._layers: Dict[int, dict] = {}
         self._layer_order: List[int] = []
+        # FUNCTION node support
+        self._function_nodes: Dict[str, dict] = {}
+        self._function_output_columns: Dict[Tuple[str, int], int] = {}
         self._build()
 
     # ------------------------------------------------------------------
@@ -44,7 +51,7 @@ class StructureNetwork:
 
         # Detect split input nodes: nodes with type INPUT that aren't in
         # input_node_ids.  This happens when apply_split_node splits an input
-        # node (e.g. -20 -> -20_a, -20_b) — the split nodes inherit
+        # node (e.g. -20 -> -20_a, -20_b) -- the split nodes inherit
         # NodeType.INPUT but input_node_ids still lists the original.
         # Map each split input to the same tensor column as its base node.
         for node in self.structure.nodes:
@@ -53,6 +60,12 @@ class StructureNetwork:
                 if base_id and base_id in self._input_col_map:
                     self._input_col_map[node.id] = self._input_col_map[base_id]
                     input_ids.add(node.id)
+
+        # Identify FUNCTION nodes
+        function_node_ids: Set[str] = set()
+        for node in self.structure.nodes:
+            if node.type == NodeType.FUNCTION and node.function_metadata is not None:
+                function_node_ids.add(node.id)
 
         all_node_ids = {n.id for n in self.structure.nodes}
 
@@ -124,12 +137,31 @@ class StructureNetwork:
             else:
                 layers_by_depth[d].sort()
 
-        # Assign node info --------------------------------------------------
+        # Build AnnotationFunctions for FUNCTION nodes ----------------------
+        self._build_function_nodes(nodes_by_id, valid_nodes)
+
+        # Compute expanded column counts.  A FUNCTION node with n_outputs > 1
+        # occupies n_outputs columns in the layer output tensor.
+        expanded_node_list: Dict[int, List[Tuple[str, int]]] = {}
         for d, node_list in layers_by_depth.items():
-            for i, nid in enumerate(node_list):
+            expanded = []
+            for nid in node_list:
+                if nid in self._function_nodes:
+                    n_out = self._function_nodes[nid]["n_outputs"]
+                    expanded.append((nid, n_out))
+                else:
+                    expanded.append((nid, 1))
+            expanded_node_list[d] = expanded
+
+        # Assign node info with expanded column positions -------------------
+        for d, expanded in expanded_node_list.items():
+            col = 0
+            for nid, span in expanded:
                 node_obj = nodes_by_id.get(nid)
                 if nid in input_ids:
                     act = "input"
+                elif nid in function_node_ids:
+                    act = "function"
                 elif node_obj and node_obj.activation:
                     act = node_obj.activation
                 elif nid in output_ids:
@@ -139,9 +171,15 @@ class StructureNetwork:
 
                 self.node_info[nid] = {
                     "depth": d,
-                    "layer_index": i,
+                    "layer_index": col,
                     "activation": act,
                 }
+
+                if nid in self._function_nodes:
+                    for out_idx in range(span):
+                        self._function_output_columns[(nid, out_idx)] = col + out_idx
+
+                col += span
 
         # Build per-layer data -----------------------------------------------
         sorted_depths = sorted(layers_by_depth.keys())
@@ -149,7 +187,8 @@ class StructureNetwork:
 
         for d in sorted_depths:
             node_list = layers_by_depth[d]
-            n_nodes = len(node_list)
+            expanded = expanded_node_list[d]
+            n_cols = sum(span for _, span in expanded)
 
             is_input = all(nid in input_ids for nid in node_list)
             is_output = any(nid in output_ids for nid in node_list)
@@ -162,35 +201,67 @@ class StructureNetwork:
                         input_depths_set.add(depth[p])
             input_depths = sorted(input_depths_set)
 
-            input_size = sum(len(layers_by_depth[dd]) for dd in input_depths)
+            # Input size accounting for expanded function nodes in source layers
+            input_size = 0
+            for dd in input_depths:
+                input_size += sum(span for _, span in expanded_node_list[dd])
 
             # Weight matrix and bias vector
-            weights = np.zeros((max(input_size, 1), n_nodes), dtype=np.float64)
-            bias = np.zeros(n_nodes, dtype=np.float64)
+            weights = np.zeros((max(input_size, 1), n_cols), dtype=np.float64)
+            bias = np.zeros(n_cols, dtype=np.float64)
             activations = []
 
-            for j, nid in enumerate(node_list):
+            for nid, span in expanded:
                 node_obj = nodes_by_id.get(nid)
-                if node_obj and node_obj.bias is not None:
-                    bias[j] = node_obj.bias
-                activations.append(self.node_info[nid]["activation"])
+                if nid in function_node_ids:
+                    # FUNCTION nodes use placeholder activation; computed separately.
+                    for _ in range(span):
+                        activations.append("function")
+                else:
+                    if node_obj and node_obj.bias is not None:
+                        col_idx = self.node_info[nid]["layer_index"]
+                        bias[col_idx] = node_obj.bias
+                    activations.append(self.node_info[nid]["activation"])
 
-            # Fill weights from connections
+            # Fill weights from connections (skip connections TO function nodes)
             for conn in enabled_conns:
                 if conn.from_node not in valid_nodes or conn.to_node not in valid_nodes:
                     continue
                 if depth.get(conn.to_node) != d:
                     continue
+                if conn.to_node in function_node_ids:
+                    continue
                 from_d = depth.get(conn.from_node)
                 if from_d not in input_depths:
                     continue
 
+                # Compute source column in the concatenated input
                 offset = sum(
-                    len(layers_by_depth[dd]) for dd in input_depths if dd < from_d
+                    sum(span for _, span in expanded_node_list[dd])
+                    for dd in input_depths if dd < from_d
                 )
-                from_idx = offset + self.node_info[conn.from_node]["layer_index"]
+                from_col = self.node_info[conn.from_node]["layer_index"]
+                # If source is a function node, use output_index to find column
+                if conn.from_node in function_node_ids and conn.output_index is not None:
+                    from_col = self._function_output_columns.get(
+                        (conn.from_node, conn.output_index),
+                        from_col,
+                    )
+                from_idx = offset + from_col
                 to_idx = self.node_info[conn.to_node]["layer_index"]
                 weights[from_idx, to_idx] = conn.weight
+
+            # Collect function node info for this layer
+            layer_function_nodes = []
+            for nid, span in expanded:
+                if nid in function_node_ids:
+                    layer_function_nodes.append({
+                        "node_id": nid,
+                        "col_start": self.node_info[nid]["layer_index"],
+                        "n_outputs": span,
+                        "entry_nodes": self._function_nodes[nid]["entry_nodes"],
+                        "ann_func": self._function_nodes[nid]["ann_func"],
+                    })
 
             self._layers[d] = {
                 "node_ids": node_list,
@@ -200,8 +271,123 @@ class StructureNetwork:
                 "weights": torch.tensor(weights, dtype=torch.float64),
                 "bias": torch.tensor(bias, dtype=torch.float64),
                 "activations": activations,
-                "n_nodes": n_nodes,
+                "n_nodes": n_cols,
+                "function_nodes": layer_function_nodes,
             }
+
+    # ------------------------------------------------------------------
+    # FUNCTION node support
+    # ------------------------------------------------------------------
+
+    def _build_function_nodes(
+        self,
+        nodes_by_id: Dict[str, "NetworkNode"],
+        valid_nodes: Set[str],
+    ) -> None:
+        """Build AnnotationFunction evaluators for FUNCTION nodes.
+
+        Reconstructs a mini NetworkStructure from the metadata (which
+        stores node properties and connection weights) and creates an
+        AnnotationFunction for each valid FUNCTION node.
+        """
+        for node in self.structure.nodes:
+            if node.type != NodeType.FUNCTION or node.function_metadata is None:
+                continue
+            if node.id not in valid_nodes:
+                continue
+
+            meta = node.function_metadata
+            ann_func = self._build_annotation_function_from_metadata(
+                meta, nodes_by_id
+            )
+
+            self._function_nodes[node.id] = {
+                "ann_func": ann_func,
+                "entry_nodes": list(meta.input_names),
+                "n_outputs": meta.n_outputs,
+                "output_names": list(meta.output_names),
+            }
+
+    def _build_annotation_function_from_metadata(
+        self,
+        meta: FunctionNodeMetadata,
+        nodes_by_id: Dict[str, "NetworkNode"],
+    ) -> "AnnotationFunction":
+        """Build an AnnotationFunction from FunctionNodeMetadata.
+
+        Reconstructs a mini NetworkStructure from stored node properties
+        and connection weights, then creates an AnnotationFunction.
+        Entry nodes that still exist in the collapsed structure are used
+        directly; removed internal nodes use properties from the metadata.
+        """
+        from ..analysis.annotation_function import AnnotationFunction
+        from .genome_network import (
+            NetworkConnection as NC,
+            NetworkNode as NN,
+            NetworkStructure as NS,
+        )
+        from .model_state import AnnotationData
+
+        node_props = meta.node_properties or {}
+        conn_weights = meta.connection_weights or {}
+
+        # Reconstruct subgraph nodes
+        sub_nodes = []
+        for nid in meta.subgraph_nodes:
+            if nid in nodes_by_id:
+                orig = nodes_by_id[nid]
+                sub_nodes.append(NN(
+                    id=orig.id,
+                    type=orig.type,
+                    bias=orig.bias,
+                    activation=orig.activation,
+                    response=orig.response,
+                    aggregation=orig.aggregation,
+                ))
+            elif nid in node_props:
+                props = node_props[nid]
+                sub_nodes.append(NN(
+                    id=nid,
+                    type=NodeType.HIDDEN,
+                    bias=props.get("bias", 0.0),
+                    activation=props.get("activation", "relu"),
+                ))
+            else:
+                sub_nodes.append(NN(
+                    id=nid,
+                    type=NodeType.HIDDEN,
+                    bias=0.0,
+                    activation="relu",
+                ))
+
+        # Reconstruct subgraph connections with stored weights
+        sub_conns = []
+        for from_n, to_n in meta.subgraph_connections:
+            w = conn_weights.get((from_n, to_n), 0.0)
+            sub_conns.append(NC(
+                from_node=from_n,
+                to_node=to_n,
+                weight=w,
+                enabled=True,
+            ))
+
+        mini_structure = NS(
+            nodes=sub_nodes,
+            connections=sub_conns,
+            input_node_ids=list(meta.input_names),
+            output_node_ids=list(meta.output_names),
+        )
+
+        ann_data = AnnotationData(
+            name=meta.annotation_name,
+            hypothesis=meta.hypothesis,
+            entry_nodes=list(meta.input_names),
+            exit_nodes=list(meta.output_names),
+            subgraph_nodes=list(meta.subgraph_nodes),
+            subgraph_connections=list(meta.subgraph_connections),
+        )
+
+        return AnnotationFunction.from_structure(ann_data, mini_structure)
 
     # ------------------------------------------------------------------
     # Helpers
@@ -231,6 +417,9 @@ class StructureNetwork:
             Output tensor of shape (batch_size, n_outputs)
         """
         self._outputs = {}
+        # Per-node activation storage (used by function nodes to look up
+        # entry node activations from earlier layers)
+        self._node_activations: Dict[str, torch.Tensor] = {}
 
         for d in self._layer_order:
             layer = self._layers[d]
@@ -242,6 +431,8 @@ class StructureNetwork:
                     self._input_col_map[nid] for nid in layer["node_ids"]
                 ]
                 self._outputs[d] = x[:, col_indices]
+                for j, nid in enumerate(layer["node_ids"]):
+                    self._node_activations[nid] = self._outputs[d][:, j]
                 continue
 
             layer_input = torch.cat(
@@ -251,21 +442,65 @@ class StructureNetwork:
             z = torch.matmul(layer_input, layer["weights"]) + layer["bias"]
 
             # Per-node activation
-            output = torch.zeros_like(z)
+            n_cols = layer["n_nodes"]
+            output = torch.zeros((x.shape[0], n_cols), dtype=x.dtype)
             for j, act in enumerate(layer["activations"]):
                 if act == "input":
                     output[:, j] = z[:, j]
+                elif act == "function":
+                    # Handled below by function node processing
+                    pass
                 else:
                     np_fn = get_numpy_activation(act)
                     z_np = z[:, j].detach().numpy()
                     output[:, j] = torch.from_numpy(np_fn(z_np).copy()).to(z.dtype)
 
+            # Process FUNCTION nodes in this layer
+            for fn_info in layer.get("function_nodes", []):
+                fn_node_id = fn_info["node_id"]
+                entry_nodes = fn_info["entry_nodes"]
+                ann_func = fn_info["ann_func"]
+                n_outputs = fn_info["n_outputs"]
+                col_start = fn_info["col_start"]
+
+                # Gather entry node activations from earlier layers
+                entry_acts = []
+                for en_id in entry_nodes:
+                    if en_id in self._node_activations:
+                        entry_acts.append(
+                            self._node_activations[en_id].detach().numpy()
+                        )
+                    else:
+                        entry_acts.append(np.zeros(x.shape[0]))
+
+                fn_input = np.column_stack(entry_acts) if entry_acts else np.zeros((x.shape[0], 0))
+
+                # Evaluate the annotation function
+                fn_output = ann_func(fn_input)  # (batch, n_outputs)
+                if fn_output.ndim == 1:
+                    fn_output = fn_output.reshape(-1, 1)
+
+                # Place outputs into the layer tensor
+                for out_idx in range(n_outputs):
+                    if out_idx < fn_output.shape[1]:
+                        output[:, col_start + out_idx] = torch.from_numpy(
+                            fn_output[:, out_idx].copy()
+                        ).to(x.dtype)
+
             self._outputs[d] = output
+
+            # Store per-node activations for all nodes in this layer
+            for nid in layer["node_ids"]:
+                info = self.node_info[nid]
+                col = info["layer_index"]
+                self._node_activations[nid] = output[:, col]
 
             if layer["is_output"]:
                 out_ids = set(self.structure.output_node_ids)
                 indices = [
-                    j for j, nid in enumerate(layer["node_ids"]) if nid in out_ids
+                    self.node_info[nid]["layer_index"]
+                    for nid in layer["node_ids"]
+                    if nid in out_ids
                 ]
                 return output[:, indices] if indices else output
 
