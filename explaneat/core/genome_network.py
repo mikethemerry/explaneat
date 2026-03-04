@@ -15,6 +15,22 @@ class NodeType(str, Enum):
     INPUT = "input"
     OUTPUT = "output"
     HIDDEN = "hidden"
+    FUNCTION = "function"
+
+
+@dataclass
+class FunctionNodeMetadata:
+    """Metadata for a collapsed annotation function node."""
+    annotation_name: str
+    annotation_id: str
+    hypothesis: str
+    n_inputs: int
+    n_outputs: int
+    input_names: List[str]
+    output_names: List[str]
+    formula_latex: Optional[str]
+    subgraph_nodes: List[str]
+    subgraph_connections: List[Tuple[str, str]]
 
 
 @dataclass
@@ -30,6 +46,7 @@ class NetworkNode:
     activation: Optional[str] = None
     response: Optional[float] = None
     aggregation: Optional[str] = None
+    function_metadata: Optional[FunctionNodeMetadata] = None
 
 
 @dataclass
@@ -43,6 +60,7 @@ class NetworkConnection:
     weight: float
     enabled: bool
     innovation: Optional[int] = None
+    output_index: Optional[int] = None
 
 
 @dataclass
@@ -302,9 +320,15 @@ def get_phenotype_with_splits(explanation_id: str, config=None) -> NetworkStruct
         # Update input/output node IDs if they were split
         new_input_node_ids = phenotype.input_node_ids.copy()
         new_output_node_ids = phenotype.output_node_ids.copy()
-        
-        # If input/output nodes were split, we need to handle that
-        # For now, keep original IDs (splits typically don't apply to input/output nodes)
+
+        # If input nodes were split, update input_node_ids to include split nodes
+        for node_id, split_nodes in splits_by_original.items():
+            if node_id in new_input_node_ids:
+                # Remove original input node ID
+                new_input_node_ids.remove(node_id)
+                # Add all split node IDs as inputs
+                for split_id, _ in split_nodes:
+                    new_input_node_ids.append(split_id)
         
         return NetworkStructure(
             nodes=new_nodes,
