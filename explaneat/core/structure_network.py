@@ -10,6 +10,7 @@ from typing import Dict, List, Set
 import numpy as np
 import torch
 
+from .activations import get_numpy_activation
 from .genome_network import NetworkStructure, NodeType
 
 
@@ -129,10 +130,10 @@ class StructureNetwork:
                 node_obj = nodes_by_id.get(nid)
                 if nid in input_ids:
                     act = "input"
+                elif node_obj and node_obj.activation:
+                    act = node_obj.activation
                 elif nid in output_ids:
                     act = "sigmoid"
-                elif node_obj and node_obj.activation == "identity":
-                    act = "identity"
                 else:
                     act = "relu"
 
@@ -252,12 +253,12 @@ class StructureNetwork:
             # Per-node activation
             output = torch.zeros_like(z)
             for j, act in enumerate(layer["activations"]):
-                if act == "relu":
-                    output[:, j] = torch.relu(z[:, j])
-                elif act == "sigmoid":
-                    output[:, j] = torch.sigmoid(z[:, j])
-                else:  # identity / input / unknown
+                if act == "input":
                     output[:, j] = z[:, j]
+                else:
+                    np_fn = get_numpy_activation(act)
+                    z_np = z[:, j].detach().numpy()
+                    output[:, j] = torch.from_numpy(np_fn(z_np).copy()).to(z.dtype)
 
             self._outputs[d] = output
 
