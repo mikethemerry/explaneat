@@ -5,6 +5,7 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import torch
 
+from ..core.activations import get_numpy_activation, get_sympy_activation
 from ..core.genome_network import NetworkStructure
 from ..core.neuralneat import NeuralNeat, LAYER_TYPE_OUTPUT
 
@@ -126,8 +127,8 @@ class AnnotationFunction:
 
             # Determine activation
             is_output_node = self._exit_is_output.get(node_str, False) and node_str in output_ids
-            if node_obj and node_obj.activation == "identity":
-                activation = "identity"
+            if node_obj and node_obj.activation:
+                activation = node_obj.activation
             elif is_output_node:
                 activation = "sigmoid"
             else:
@@ -292,12 +293,8 @@ class AnnotationFunction:
                 z = np.full(len(x), step["bias"])
 
             # Apply activation
-            if step["activation"] == "relu":
-                activations[step["node"]] = np.maximum(0, z)
-            elif step["activation"] == "identity":
-                activations[step["node"]] = z
-            else:  # sigmoid
-                activations[step["node"]] = 1.0 / (1.0 + np.exp(-z))
+            act_fn = get_numpy_activation(step["activation"])
+            activations[step["node"]] = act_fn(z)
 
         # Gather outputs
         outputs = np.column_stack(
@@ -346,12 +343,8 @@ class AnnotationFunction:
                     expr += sympy.Float(w) * node_exprs[in_node]
 
             # Apply activation
-            if step["activation"] == "relu":
-                expr = sympy.Piecewise((expr, expr > 0), (0, True))
-            elif step["activation"] == "identity":
-                pass  # no transformation
-            else:  # sigmoid
-                expr = 1 / (1 + sympy.exp(-expr))
+            act_sym_fn = get_sympy_activation(step["activation"])
+            expr = act_sym_fn(expr)
 
             node_exprs[step["node"]] = sympy.simplify(expr)
 
