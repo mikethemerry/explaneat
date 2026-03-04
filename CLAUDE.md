@@ -6,6 +6,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ExplaNEAT is a NEAT (NeuroEvolution of Augmenting Topologies) implementation with backpropagation capabilities for explainable AI research. It combines evolutionary neural networks with gradient-based training and provides tools for analyzing, visualizing, and annotating evolved network structures.
 
+### Theoretical Framework: Functional Decomposition and Recomposition
+
+ExplaNEAT treats neural network explanation as a two-phase process operating on the network's computational graph:
+
+**Phase 1 — Functional Decomposition**: A NEAT network is a composition of primitive functions (sigmoid, relu, etc.) connected in a DAG. Every node computes `f(weighted_sum(inputs))`. The network as a whole computes some function `N(x₁,...,xₙ)` that is the composition of all these primitives. This composition is already implicit in the graph structure — ExplaNEAT makes it explicit by extracting the closed-form mathematical expression via `AnnotationFunction`. Any subgraph can be read as a function from its entry nodes to its exit nodes.
+
+**Phase 2 — Recomposition through Annotation**: The researcher rewrites the fully-decomposed graph into a human-readable form using two operations:
+
+1. **Identity operations** (node splitting, identity node insertion): Restructure the graph without changing its function. Analogous to algebraic identities — they make the structure amenable to annotation without altering the computed function. For example, splitting a dual-purpose node into two copies separates its roles.
+
+2. **Function composition** (annotation/collapse): Replace a subgraph with a named function node. An annotation over entries {a,b,c} with exits {x,y} declares that the subgraph computes `(x,y) = F(a,b,c)`. Collapsing replaces the individual nodes with a single multi-input, multi-output function node carrying the closed-form expression.
+
+The explanation process thus moves between levels of abstraction:
+
+- **Fully decomposed**: all primitive NEAT nodes — the raw evolved network
+- **Partially recomposed**: some subgraphs named as functions, e.g., `F(a,b,c) = G(a,b) + H(b,c)`
+- **Fully recomposed**: the network expressed as a composition of named, interpretable functions
+
+This is **term rewriting on a DAG** — substituting subexpressions with named functions — which is provably cycle-free. Hierarchical annotations compose naturally: if G and H are child annotations of F, then F's formula expresses how G and H combine. This supports both parallel composition (`F(a,b,c) = Combine(G(a,b), H(b,c))`) and serial composition (`F(a,b,c) = H(G(a,b), c)`).
+
+The key insight is that the network *already is* a functional composition — the researcher's job is to find meaningful named groupings within it, not to impose structure that isn't there.
+
+See `docs/theoretical_framework.md` for the full mathematical treatment.
+
 ## Commands
 
 ### Environment
@@ -170,6 +194,7 @@ uv run pytest -m "not slow"   # Skip slow tests
 
 **Keep documentation up to date** when making changes to annotation logic, coverage calculations, or UI behavior:
 
+- **`docs/theoretical_framework.md`**: Core theoretical framework — functional decomposition and recomposition of neural networks, term rewriting, cycle freedom proofs, hierarchical composition
 - **`docs/annotation_coverage_model.md`**: Mathematical definitions for coverage, annotation strategy (identity nodes, splits, blocking issues), node classification (entry/exit/intermediate)
 - **`docs/annotation_collapsing_model.md`**: Mathematical formalization of the collapse operation, three preconditions, composition property, fix mechanisms
 - **`docs/annotation_hierarchy_and_splitting.md`**: Node splitting mechanics, hierarchy structure
