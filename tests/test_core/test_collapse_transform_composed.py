@@ -1,6 +1,13 @@
 """Tests for composed annotation entry/exit auto-derivation."""
 
+import numpy as np
 import pytest
+import torch
+from explaneat.core.collapse_transform import (
+    _compute_effective_entries_exits,
+    _compute_effective_subgraph_nodes,
+    collapse_structure,
+)
 from explaneat.core.genome_network import (
     NetworkConnection,
     NetworkNode,
@@ -8,11 +15,7 @@ from explaneat.core.genome_network import (
     NodeType,
 )
 from explaneat.core.model_state import AnnotationData
-from explaneat.core.collapse_transform import (
-    _compute_effective_entries_exits,
-    _compute_effective_subgraph_nodes,
-    collapse_structure,
-)
+from explaneat.core.structure_network import StructureNetwork
 
 
 def _make_node(id, type=NodeType.HIDDEN, **kwargs):
@@ -250,3 +253,44 @@ class TestComposedAnnotationCollapseConnectivity:
             return False
         has_cycle = any(dfs(n.id) for n in collapsed.nodes if color[n.id] == WHITE)
         assert not has_cycle
+
+
+class TestComposedCollapseForwardPass:
+    """Verify that collapsing a composed annotation preserves forward-pass output."""
+
+    def test_megaann_forward_pass_equivalence(self):
+        structure, annotations = _megaann_structure()
+
+        expanded_net = StructureNetwork(structure)
+        x = torch.tensor([[0.5, 0.3, -0.2, 0.8]], dtype=torch.float64)
+        expanded_out = expanded_net.forward(x).detach().numpy()
+
+        collapsed = collapse_structure(
+            structure, annotations,
+            {"A1678", "A20608_b", "A20608_a", "MegaAnn1"},
+        )
+        collapsed_net = StructureNetwork(collapsed)
+        collapsed_out = collapsed_net.forward(x).detach().numpy()
+
+        np.testing.assert_allclose(expanded_out, collapsed_out, atol=1e-10)
+
+    def test_megaann_batch_forward_pass(self):
+        structure, annotations = _megaann_structure()
+
+        x = torch.tensor([
+            [0.5, 0.3, -0.2, 0.8],
+            [1.0, -1.0, 0.5, 0.0],
+            [0.0, 0.0, 0.0, 0.0],
+        ], dtype=torch.float64)
+
+        expanded_net = StructureNetwork(structure)
+        expanded_out = expanded_net.forward(x).detach().numpy()
+
+        collapsed = collapse_structure(
+            structure, annotations,
+            {"A1678", "A20608_b", "A20608_a", "MegaAnn1"},
+        )
+        collapsed_net = StructureNetwork(collapsed)
+        collapsed_out = collapsed_net.forward(x).detach().numpy()
+
+        np.testing.assert_allclose(expanded_out, collapsed_out, atol=1e-10)

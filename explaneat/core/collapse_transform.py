@@ -270,6 +270,19 @@ def _collapse_one(
     for from_n, to_n in effective_connections:
         connection_weights[(from_n, to_n)] = enabled_conns.get((from_n, to_n), 0.0)
 
+    # --- Collect child function metadata for fn_* nodes in this subgraph ---
+    # Needed so StructureNetwork can recursively evaluate nested function nodes
+    # when reconstructing the forward pass from this metadata.
+    child_function_metadata = {}
+    for nid in subgraph_set:
+        node_obj = nodes_by_id.get(nid)
+        if (
+            node_obj is not None
+            and node_obj.type == NodeType.FUNCTION
+            and node_obj.function_metadata is not None
+        ):
+            child_function_metadata[nid] = node_obj.function_metadata
+
     # --- Create function node metadata ---
     metadata = FunctionNodeMetadata(
         annotation_name=annotation.name,
@@ -284,6 +297,7 @@ def _collapse_one(
         subgraph_connections=effective_connections,
         node_properties=node_properties,
         connection_weights=connection_weights,
+        child_function_metadata=child_function_metadata,
     )
 
     fn_node = NetworkNode(

@@ -37,6 +37,11 @@ class FunctionNodeMetadata:
     # Connection weights for subgraph connections.
     # Maps (from_node, to_node) -> weight
     connection_weights: Dict[Tuple[str, str], float] = field(default_factory=dict)
+    # Metadata for nested child function nodes (fn_* nodes) within this
+    # subgraph.  Required for correct recursive forward-pass evaluation of
+    # hierarchically collapsed annotations.
+    # Maps fn_node_id -> FunctionNodeMetadata
+    child_function_metadata: Dict[str, "FunctionNodeMetadata"] = field(default_factory=dict)
 
 
 @dataclass

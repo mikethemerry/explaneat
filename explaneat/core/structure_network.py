@@ -319,6 +319,8 @@ class StructureNetwork:
         and connection weights, then creates an AnnotationFunction.
         Entry nodes that still exist in the collapsed structure are used
         directly; removed internal nodes use properties from the metadata.
+        Nested fn_* nodes are reconstructed as FUNCTION nodes using the
+        stored child_function_metadata so recursive evaluation is correct.
         """
         from ..analysis.annotation_function import AnnotationFunction
         from .genome_network import (
@@ -330,11 +332,21 @@ class StructureNetwork:
 
         node_props = meta.node_properties or {}
         conn_weights = meta.connection_weights or {}
+        child_meta = meta.child_function_metadata or {}
 
-        # Reconstruct subgraph nodes
+        # Reconstruct subgraph nodes.  fn_* nodes that have stored child
+        # metadata are reconstructed as FUNCTION nodes so AnnotationFunction
+        # can dispatch to StructureNetwork for their evaluation.
         sub_nodes = []
         for nid in meta.subgraph_nodes:
-            if nid in nodes_by_id:
+            if nid in child_meta:
+                # Nested function node — restore its FUNCTION type and metadata
+                sub_nodes.append(NN(
+                    id=nid,
+                    type=NodeType.FUNCTION,
+                    function_metadata=child_meta[nid],
+                ))
+            elif nid in nodes_by_id:
                 orig = nodes_by_id[nid]
                 sub_nodes.append(NN(
                     id=orig.id,
@@ -360,15 +372,31 @@ class StructureNetwork:
                     activation="relu",
                 ))
 
-        # Reconstruct subgraph connections with stored weights
+        # Reconstruct subgraph connections with stored weights.
+        # Connections to/from fn_* nodes carry output_index information
+        # that must be preserved for correct column routing in StructureNetwork.
         sub_conns = []
         for from_n, to_n in meta.subgraph_connections:
             w = conn_weights.get((from_n, to_n), 0.0)
+            # Determine output_index: connections from a fn_* child node
+            # need the index to select the right output column.
+            output_index = None
+            if from_n in child_meta:
+                child = child_meta[from_n]
+                if len(child.output_names) > 1:
+                    # Find which output of the child feeds this target
+                    try:
+                        output_index = list(child.output_names).index(to_n)
+                    except ValueError:
+                        output_index = 0
+                else:
+                    output_index = 0
             sub_conns.append(NC(
                 from_node=from_n,
                 to_node=to_n,
                 weight=w,
                 enabled=True,
+                output_index=output_index,
             ))
 
         mini_structure = NS(
@@ -388,6 +416,86 @@ class StructureNetwork:
         )
 
         return AnnotationFunction.from_structure(ann_data, mini_structure)
+
+    @classmethod
+    def _build_from_child_meta(
+        cls,
+        meta: "FunctionNodeMetadata",
+        parent_nodes_by_id: Dict[str, "NetworkNode"],
+    ) -> "StructureNetwork":
+        """Build a StructureNetwork from a child FunctionNodeMetadata.
+
+        Reconstructs the mini NetworkStructure the child function node
+        represents (including any further nested fn_* nodes) and returns
+        a fully built StructureNetwork ready to call forward() on.
+        """
+        from .genome_network import (
+            NetworkConnection as NC,
+            NetworkNode as NN,
+            NetworkStructure as NS,
+        )
+
+        node_props = meta.node_properties or {}
+        conn_weights = meta.connection_weights or {}
+        child_meta_map = meta.child_function_metadata or {}
+
+        sub_nodes = []
+        for nid in meta.subgraph_nodes:
+            if nid in child_meta_map:
+                sub_nodes.append(NN(
+                    id=nid,
+                    type=NodeType.FUNCTION,
+                    function_metadata=child_meta_map[nid],
+                ))
+            elif nid in parent_nodes_by_id:
+                orig = parent_nodes_by_id[nid]
+                sub_nodes.append(NN(
+                    id=orig.id,
+                    type=orig.type,
+                    bias=orig.bias,
+                    activation=orig.activation,
+                    response=orig.response,
+                    aggregation=orig.aggregation,
+                ))
+            elif nid in node_props:
+                props = node_props[nid]
+                sub_nodes.append(NN(
+                    id=nid,
+                    type=NodeType.HIDDEN,
+                    bias=props.get("bias", 0.0),
+                    activation=props.get("activation", "relu"),
+                ))
+            else:
+                sub_nodes.append(NN(id=nid, type=NodeType.HIDDEN, bias=0.0, activation="relu"))
+
+        sub_conns = []
+        for from_n, to_n in meta.subgraph_connections:
+            w = conn_weights.get((from_n, to_n), 0.0)
+            output_index = None
+            if from_n in child_meta_map:
+                child = child_meta_map[from_n]
+                if len(child.output_names) > 1:
+                    try:
+                        output_index = list(child.output_names).index(to_n)
+                    except ValueError:
+                        output_index = 0
+                else:
+                    output_index = 0
+            sub_conns.append(NC(
+                from_node=from_n,
+                to_node=to_n,
+                weight=w,
+                enabled=True,
+                output_index=output_index,
+            ))
+
+        mini_structure = NS(
+            nodes=sub_nodes,
+            connections=sub_conns,
+            input_node_ids=list(meta.input_names),
+            output_node_ids=list(meta.output_names),
+        )
+        return cls(mini_structure)
 
     # ------------------------------------------------------------------
     # Helpers

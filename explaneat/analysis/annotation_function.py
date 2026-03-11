@@ -6,7 +6,7 @@ import numpy as np
 import torch
 
 from ..core.activations import get_numpy_activation, get_sympy_activation
-from ..core.genome_network import NetworkStructure
+from ..core.genome_network import NetworkStructure, NodeType
 from ..core.neuralneat import NeuralNeat, LAYER_TYPE_OUTPUT
 
 
@@ -81,16 +81,34 @@ class AnnotationFunction:
             self._build_from_neat()
 
     def _build_from_structure(self):
-        """Build computation graph directly from NetworkStructure."""
+        """Build computation graph directly from NetworkStructure.
+
+        FUNCTION nodes within the subgraph are handled by building nested
+        StructureNetwork evaluators rather than treating them as scalar nodes.
+        """
         nodes_by_id = {n.id: n for n in self._structure.nodes}
         enabled_conns = {
             (c.from_node, c.to_node): c.weight
             for c in self._structure.connections
             if c.enabled
         }
+        # Track output_index on connections from function nodes
+        conn_output_index = {
+            (c.from_node, c.to_node): c.output_index
+            for c in self._structure.connections
+            if c.enabled
+        }
 
         output_ids = set(self._structure.output_node_ids)
         subgraph_set = set(self.subgraph_nodes)
+
+        # Identify FUNCTION nodes within this subgraph
+        function_node_ids = {
+            n.id
+            for n in self._structure.nodes
+            if n.type == NodeType.FUNCTION and n.function_metadata is not None
+            and n.id in subgraph_set
+        }
 
         # Build predecessors within the subgraph
         predecessors = {n: [] for n in self.subgraph_nodes}
@@ -121,8 +139,40 @@ class AnnotationFunction:
         internal_nodes.sort(key=lambda n: depth.get(n, 0))
 
         self._steps = []
+        # Maps fn_node_id -> StructureNetwork for recursive evaluation
+        self._nested_networks: Dict[str, object] = {}
+
         for node_str in internal_nodes:
             node_obj = nodes_by_id.get(node_str)
+
+            if node_str in function_node_ids:
+                # Build a nested StructureNetwork from the child's metadata
+                # so we can evaluate it during __call__.
+                from ..core.structure_network import StructureNetwork as SN
+                child_meta = node_obj.function_metadata
+                child_net = SN.__new__(SN)
+                child_net.structure = self._structure  # placeholder (unused by _build_function_nodes)
+                child_net.node_info = {}
+                child_net._layers = {}
+                child_net._layer_order = []
+                child_net._function_nodes = {}
+                child_net._function_output_columns = {}
+                child_net._outputs = None
+                # Delegate to the full constructor using a reconstructed structure
+                child_net2 = SN._build_from_child_meta(child_meta, nodes_by_id)
+                self._nested_networks[node_str] = child_net2
+
+                n_outputs = child_meta.n_outputs
+                input_node_strs = list(child_meta.input_names)
+                self._steps.append({
+                    "node": node_str,
+                    "type": "function",
+                    "input_nodes": input_node_strs,
+                    "n_outputs": n_outputs,
+                    "output_names": list(child_meta.output_names),
+                })
+                continue
+
             bias_val = node_obj.bias if node_obj and node_obj.bias is not None else 0.0
 
             # Determine activation
@@ -134,25 +184,31 @@ class AnnotationFunction:
             else:
                 activation = "relu"
 
-            # Get input connections within subgraph
+            # Get input connections within subgraph, including output_index
+            # for connections from function nodes
             input_node_strs = []
             weights = []
+            output_indices = []
             for conn in self.subgraph_connections:
                 if conn[1] == node_str:
                     input_node_strs.append(conn[0])
                     w = enabled_conns.get(conn, 0.0)
                     weights.append(w)
+                    output_indices.append(conn_output_index.get(conn))
 
             self._steps.append({
                 "node": node_str,
+                "type": "scalar",
                 "input_nodes": input_node_strs,
                 "weights": np.array(weights, dtype=np.float64),
                 "bias": float(bias_val),
                 "activation": activation,
+                "output_indices": output_indices,
             })
 
     def _build_from_neat(self):
         """Build computation graph from NeuralNeat (legacy path)."""
+        self._nested_networks = {}
         # Map annotation nodes to (layer_depth, layer_index) in NeuralNeat
         self._node_locations = {}  # node_str -> (depth, layer_index)
         for node_str in self.subgraph_nodes:
@@ -281,25 +337,67 @@ class AnnotationFunction:
 
         # Evaluate each step in topological order
         for step in self._steps:
-            # Gather inputs
-            inputs = np.column_stack(
-                [activations.get(n, np.zeros(len(x))) for n in step["input_nodes"]]
-            ) if step["input_nodes"] else np.zeros((len(x), 0))
+            node_str = step["node"]
 
-            # Compute: weights @ inputs + bias
+            if step.get("type") == "function":
+                # Delegate to the nested StructureNetwork
+                nested_net = self._nested_networks[node_str]
+                fn_input_cols = [
+                    activations.get(n, np.zeros(len(x)))
+                    for n in step["input_nodes"]
+                ]
+                fn_input = np.column_stack(fn_input_cols) if fn_input_cols else np.zeros((len(x), 0))
+                fn_tensor = torch.tensor(fn_input, dtype=torch.float64)
+                fn_out = nested_net.forward(fn_tensor).detach().numpy()
+                if fn_out.ndim == 1:
+                    fn_out = fn_out.reshape(-1, 1)
+                # Store each output column under the corresponding output name
+                for out_idx, out_name in enumerate(step["output_names"]):
+                    if out_idx < fn_out.shape[1]:
+                        activations[out_name] = fn_out[:, out_idx]
+                # Also store the whole output keyed by node_id for connections
+                # that reference the node directly (output_index selects column)
+                activations[node_str] = fn_out
+                continue
+
+            # Scalar node: gather inputs, respecting output_index for fn sources
+            input_vals = []
+            for conn_idx, in_node in enumerate(step["input_nodes"]):
+                out_idx = step["output_indices"][conn_idx] if "output_indices" in step else None
+                val = activations.get(in_node)
+                if val is None:
+                    input_vals.append(np.zeros(len(x)))
+                elif isinstance(val, np.ndarray) and val.ndim == 2:
+                    # Source is a function node result — select the right column
+                    col = out_idx if out_idx is not None else 0
+                    input_vals.append(val[:, col])
+                else:
+                    input_vals.append(val)
+
+            inputs = np.column_stack(input_vals) if input_vals else np.zeros((len(x), 0))
+
+            # Compute: inputs @ weights + bias
             if len(step["weights"]) > 0 and inputs.shape[1] > 0:
                 z = inputs @ step["weights"] + step["bias"]
             else:
                 z = np.full(len(x), step["bias"])
 
-            # Apply activation
             act_fn = get_numpy_activation(step["activation"])
-            activations[step["node"]] = act_fn(z)
+            activations[node_str] = act_fn(z)
 
-        # Gather outputs
-        outputs = np.column_stack(
-            [activations.get(n, np.zeros(len(x))) for n in self.exit_nodes]
-        )
+        # Gather outputs — exit nodes may be direct scalar activations or
+        # named outputs of a nested function node
+        output_cols = []
+        for n in self.exit_nodes:
+            val = activations.get(n)
+            if val is None:
+                output_cols.append(np.zeros(len(x)))
+            elif isinstance(val, np.ndarray) and val.ndim == 2:
+                output_cols.append(val[:, 0])
+            else:
+                output_cols.append(val)
+
+        outputs = np.column_stack(output_cols)
 
         if single:
             return outputs[0]
