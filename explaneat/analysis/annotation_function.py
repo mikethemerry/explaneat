@@ -170,6 +170,7 @@ class AnnotationFunction:
                     "input_nodes": input_node_strs,
                     "n_outputs": n_outputs,
                     "output_names": list(child_meta.output_names),
+                    "function_metadata": child_meta,
                 })
                 continue
 
@@ -403,8 +404,14 @@ class AnnotationFunction:
             return outputs[0]
         return outputs
 
-    def to_sympy(self) -> Optional[Dict[str, "sympy.Expr"]]:
+    def to_sympy(self, expand: bool = True) -> Optional[Dict[str, "sympy.Expr"]]:
         """Extract symbolic expressions for each output.
+
+        Args:
+            expand: If True (default), recursively inline child FUNCTION node
+                expressions down to primitive activations.  If False, represent
+                child FUNCTION nodes as named ``sympy.Function`` applications
+                (e.g. ``child1(x_0)``).
 
         Returns None if the subgraph is too complex (>5 inputs or >3 internal layers).
         """
@@ -433,12 +440,23 @@ class AnnotationFunction:
         node_exprs = dict(input_syms)
 
         for step in self._steps:
+            if step.get("type") == "function":
+                self._sympy_handle_function_step(
+                    step, node_exprs, input_syms, expand, sympy
+                )
+                continue
+
             # Build expression: sum(w_i * input_i) + bias
             expr = sympy.Float(step["bias"])
             for j, in_node in enumerate(step["input_nodes"]):
                 w = step["weights"][j]
-                if in_node in node_exprs and abs(w) > 1e-12:
-                    expr += sympy.Float(w) * node_exprs[in_node]
+                # Resolve input: if it's a function node output, look up by
+                # output_index using the __out_N key pattern
+                in_expr = self._resolve_sympy_input(
+                    in_node, step, j, node_exprs
+                )
+                if in_expr is not None and abs(w) > 1e-12:
+                    expr += sympy.Float(w) * in_expr
 
             # Apply activation
             act_sym_fn = get_sympy_activation(step["activation"])
@@ -454,12 +472,206 @@ class AnnotationFunction:
 
         return result if result else None
 
-    def to_latex(self) -> Optional[str]:
+    def _resolve_sympy_input(
+        self, in_node: str, step: dict, conn_idx: int, node_exprs: dict
+    ):
+        """Resolve an input expression for a scalar step, handling function node outputs.
+
+        If the input comes from a function node, the expression is stored
+        under ``(fn_node_id, "__out_N")`` where N is the output_index from
+        the connection.  Regular nodes are looked up directly.
+        """
+        # Check if there is an output_index pointing to a function node output
+        output_indices = step.get("output_indices", [])
+        out_idx = output_indices[conn_idx] if conn_idx < len(output_indices) else None
+
+        if out_idx is not None:
+            key = (in_node, f"__out_{out_idx}")
+            if key in node_exprs:
+                return node_exprs[key]
+
+        return node_exprs.get(in_node)
+
+    def _sympy_handle_function_step(
+        self,
+        step: dict,
+        node_exprs: dict,
+        input_syms: dict,
+        expand: bool,
+        sympy,
+    ) -> None:
+        """Handle a FUNCTION step in to_sympy.
+
+        Populates ``node_exprs`` with the function node's output expressions
+        keyed both by output name and by ``(fn_node_id, "__out_N")``.
+        """
+        meta = step.get("function_metadata")
+        if meta is None:
+            return
+
+        # Gather the sympy expressions for the function node's inputs
+        fn_input_exprs = []
+        for in_node in step["input_nodes"]:
+            fn_input_exprs.append(node_exprs.get(in_node, sympy.Symbol(in_node)))
+
+        if expand:
+            # Build a child AnnotationFunction and get its sympy expressions
+            child_af = self._build_child_annotation_function(meta)
+            if child_af is not None:
+                child_exprs = child_af.to_sympy(expand=True)
+                if child_exprs is not None:
+                    # child_exprs uses x_0, x_1, ... as input symbols.
+                    # Substitute them with the parent's input expressions.
+                    child_input_syms = [
+                        sympy.Symbol(f"x_{i}")
+                        for i in range(len(step["input_nodes"]))
+                    ]
+                    for out_key, child_expr in child_exprs.items():
+                        # Substitute child x_i -> parent input expressions
+                        subs = {
+                            child_input_syms[i]: fn_input_exprs[i]
+                            for i in range(min(len(child_input_syms), len(fn_input_exprs)))
+                        }
+                        substituted = child_expr.subs(subs)
+                        # Extract output index from y_N key
+                        out_idx_str = out_key.replace("y_", "")
+                        out_idx = int(out_idx_str)
+                        # Store under output name and positional key
+                        if out_idx < len(step["output_names"]):
+                            out_name = step["output_names"][out_idx]
+                            node_exprs[out_name] = sympy.simplify(substituted)
+                        node_exprs[(step["node"], f"__out_{out_idx}")] = sympy.simplify(substituted)
+                    return
+
+            # Fallback: if child AnnotationFunction couldn't be built, treat as opaque
+            self._sympy_function_opaque(step, fn_input_exprs, node_exprs, sympy)
+        else:
+            # expand=False: represent as a named sympy Function
+            self._sympy_function_opaque(step, fn_input_exprs, node_exprs, sympy)
+
+    def _sympy_function_opaque(
+        self, step: dict, fn_input_exprs: list, node_exprs: dict, sympy
+    ) -> None:
+        """Create opaque sympy Function symbols for a FUNCTION step."""
+        meta = step.get("function_metadata")
+        fn_name = meta.annotation_name if meta else step["node"]
+        fn_sym = sympy.Function(fn_name)
+
+        n_outputs = step["n_outputs"]
+        if n_outputs == 1:
+            expr = fn_sym(*fn_input_exprs)
+            if step["output_names"]:
+                node_exprs[step["output_names"][0]] = expr
+            node_exprs[(step["node"], "__out_0")] = expr
+        else:
+            for out_idx in range(n_outputs):
+                # Create indexed function: fn_name_{out_idx}(inputs)
+                indexed_fn = sympy.Function(f"{fn_name}_{out_idx}")
+                expr = indexed_fn(*fn_input_exprs)
+                if out_idx < len(step["output_names"]):
+                    node_exprs[step["output_names"][out_idx]] = expr
+                node_exprs[(step["node"], f"__out_{out_idx}")] = expr
+
+    def _build_child_annotation_function(self, meta) -> Optional["AnnotationFunction"]:
+        """Build an AnnotationFunction from FunctionNodeMetadata for sympy extraction."""
+        try:
+            from ..core.genome_network import (
+                NetworkConnection as NC,
+                NetworkNode as NN,
+                NetworkStructure as NS,
+            )
+            from ..core.model_state import AnnotationData
+
+            node_props = meta.node_properties or {}
+            conn_weights = meta.connection_weights or {}
+            child_meta_map = meta.child_function_metadata or {}
+            nodes_by_id = {n.id: n for n in self._structure.nodes}
+
+            sub_nodes = []
+            for nid in meta.subgraph_nodes:
+                if nid in child_meta_map:
+                    sub_nodes.append(NN(
+                        id=nid,
+                        type=NodeType.FUNCTION,
+                        function_metadata=child_meta_map[nid],
+                    ))
+                elif nid in nodes_by_id:
+                    orig = nodes_by_id[nid]
+                    sub_nodes.append(NN(
+                        id=orig.id,
+                        type=orig.type,
+                        bias=orig.bias,
+                        activation=orig.activation,
+                        response=orig.response,
+                        aggregation=orig.aggregation,
+                    ))
+                elif nid in node_props:
+                    props = node_props[nid]
+                    sub_nodes.append(NN(
+                        id=nid,
+                        type=NodeType.HIDDEN,
+                        bias=props.get("bias", 0.0),
+                        activation=props.get("activation", "relu"),
+                    ))
+                else:
+                    sub_nodes.append(NN(
+                        id=nid,
+                        type=NodeType.HIDDEN,
+                        bias=0.0,
+                        activation="relu",
+                    ))
+
+            sub_conns = []
+            for from_n, to_n in meta.subgraph_connections:
+                w = conn_weights.get((from_n, to_n), 0.0)
+                output_index = None
+                if from_n in child_meta_map:
+                    child = child_meta_map[from_n]
+                    if len(child.output_names) > 1:
+                        try:
+                            output_index = list(child.output_names).index(to_n)
+                        except ValueError:
+                            output_index = 0
+                    else:
+                        output_index = 0
+                sub_conns.append(NC(
+                    from_node=from_n,
+                    to_node=to_n,
+                    weight=w,
+                    enabled=True,
+                    output_index=output_index,
+                ))
+
+            mini_structure = NS(
+                nodes=sub_nodes,
+                connections=sub_conns,
+                input_node_ids=list(meta.input_names),
+                output_node_ids=list(meta.output_names),
+            )
+
+            ann_data = AnnotationData(
+                name=meta.annotation_name,
+                hypothesis=meta.hypothesis,
+                entry_nodes=list(meta.input_names),
+                exit_nodes=list(meta.output_names),
+                subgraph_nodes=list(meta.subgraph_nodes),
+                subgraph_connections=list(meta.subgraph_connections),
+            )
+
+            return AnnotationFunction.from_structure(ann_data, mini_structure)
+        except Exception:
+            return None
+
+    def to_latex(self, expand: bool = True) -> Optional[str]:
         """Get LaTeX representation of the function.
+
+        Args:
+            expand: If True (default), inline child FUNCTION node expressions
+                to primitives.  If False, represent them as named functions.
 
         Returns None if sympy extraction fails or is intractable.
         """
-        exprs = self.to_sympy()
+        exprs = self.to_sympy(expand=expand)
         if exprs is None:
             return None
 
