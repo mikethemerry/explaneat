@@ -568,18 +568,21 @@ function convertModelToFlow(model: ModelState, annotationNodeIds: Set<string>): 
     };
   });
 
-  // Validate edges - check for missing source/target nodes
+  // Filter out edges referencing nodes that don't exist in the current view
   const nodeIds = new Set(nodes.map((n) => n.id));
-  edges.forEach((edge) => {
+  const validEdges = edges.filter((edge) => {
     if (!nodeIds.has(edge.source)) {
-      logWarn(`Edge source node not found: ${edge.source}`);
+      logWarn(`Edge source node not found, removing: ${edge.source}`);
+      return false;
     }
     if (!nodeIds.has(edge.target)) {
-      logWarn(`Edge target node not found: ${edge.target}`);
+      logWarn(`Edge target node not found, removing: ${edge.target}`);
+      return false;
     }
+    return true;
   });
 
-  return { nodes, edges };
+  return { nodes, edges: validEdges };
 }
 
 // =============================================================================

@@ -382,10 +382,17 @@ def _collapse_one(
             #   - entry -> entry (within subgraph, both survive)
             new_connections.append(conn)
 
+    # --- Filter out any dangling connections ---
+    valid_node_ids = {n.id for n in new_nodes}
+    clean_connections = [
+        c for c in new_connections
+        if c.from_node in valid_node_ids and c.to_node in valid_node_ids
+    ]
+
     # --- Build new structure ---
     return NetworkStructure(
         nodes=new_nodes,
-        connections=new_connections,
+        connections=clean_connections,
         input_node_ids=list(structure.input_node_ids),
         output_node_ids=list(structure.output_node_ids),
         metadata=dict(structure.metadata),
