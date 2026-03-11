@@ -608,10 +608,20 @@ export type VizDataResponse = {
   suggested_viz_types: string[];
 };
 
+export type ChildFormulaInfo = {
+  name: string;
+  latex: string | null;
+  dimensionality: [number, number];
+};
+
 export type FormulaResponse = {
   latex: string | null;
+  latex_collapsed: string | null;
+  latex_expanded: string | null;
   tractable: boolean;
   dimensionality: [number, number];
+  is_composed: boolean;
+  children: ChildFormulaInfo[];
 };
 
 export type EvidenceEntry = {
