@@ -19,6 +19,7 @@ export function FormulaDisplay({ genomeId, annotationId }: FormulaDisplayProps) 
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setExpanded(false);
 
     getFormula(genomeId, annotationId)
       .then((data) => {
