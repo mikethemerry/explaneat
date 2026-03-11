@@ -150,17 +150,8 @@ class AnnotationFunction:
                 # so we can evaluate it during __call__.
                 from ..core.structure_network import StructureNetwork as SN
                 child_meta = node_obj.function_metadata
-                child_net = SN.__new__(SN)
-                child_net.structure = self._structure  # placeholder (unused by _build_function_nodes)
-                child_net.node_info = {}
-                child_net._layers = {}
-                child_net._layer_order = []
-                child_net._function_nodes = {}
-                child_net._function_output_columns = {}
-                child_net._outputs = None
-                # Delegate to the full constructor using a reconstructed structure
-                child_net2 = SN._build_from_child_meta(child_meta, nodes_by_id)
-                self._nested_networks[node_str] = child_net2
+                child_net = SN._build_from_child_meta(child_meta, nodes_by_id)
+                self._nested_networks[node_str] = child_net
 
                 n_outputs = child_meta.n_outputs
                 input_node_strs = list(child_meta.input_names)
@@ -442,7 +433,7 @@ class AnnotationFunction:
         for step in self._steps:
             if step.get("type") == "function":
                 self._sympy_handle_function_step(
-                    step, node_exprs, input_syms, expand, sympy
+                    step, node_exprs, expand, sympy
                 )
                 continue
 
@@ -496,7 +487,6 @@ class AnnotationFunction:
         self,
         step: dict,
         node_exprs: dict,
-        input_syms: dict,
         expand: bool,
         sympy,
     ) -> None:
@@ -534,8 +524,9 @@ class AnnotationFunction:
                         }
                         substituted = child_expr.subs(subs)
                         # Extract output index from y_N key
-                        out_idx_str = out_key.replace("y_", "")
-                        out_idx = int(out_idx_str)
+                        if not isinstance(out_key, str) or not out_key.startswith("y_"):
+                            continue
+                        out_idx = int(out_key[2:])
                         # Store under output name and positional key
                         if out_idx < len(step["output_names"]):
                             out_name = step["output_names"][out_idx]
