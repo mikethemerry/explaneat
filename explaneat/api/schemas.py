@@ -486,12 +486,24 @@ class VizDataResponse(BaseModel):
     suggested_viz_types: List[str]
 
 
+class ChildFormulaInfo(BaseModel):
+    """Formula info for a child annotation within a composed annotation."""
+
+    name: str
+    latex: Optional[str] = None
+    dimensionality: List[int]
+
+
 class FormulaResponse(BaseModel):
     """Response for closed-form formula."""
 
-    latex: Optional[str] = None
+    latex: Optional[str] = None                    # backwards-compat: expanded form
+    latex_collapsed: Optional[str] = None          # collapsed form (references child names)
+    latex_expanded: Optional[str] = None           # fully expanded form
     tractable: bool = False
-    dimensionality: List[int]
+    dimensionality: List[int]                      # [n_inputs, n_outputs]
+    is_composed: bool = False                      # True if annotation has children
+    children: List[ChildFormulaInfo] = []           # child annotation formulas
 
 
 class SnapshotRequest(BaseModel):

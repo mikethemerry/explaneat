@@ -21,6 +21,7 @@ from ..schemas import (
     VizDataRequest,
     VizDataResponse,
     FormulaResponse,
+    ChildFormulaInfo,
     SnapshotRequest,
     NarrativeUpdateRequest,
     EvidenceEntry,
@@ -47,34 +48,32 @@ def _load_genome_and_config(session, genome_id: str):
     return genome_db, neat_genome, config
 
 
-def _build_model_state(session, genome_id: str) -> NetworkStructure:
-    """Build the current annotated model by replaying operations on the phenotype.
+def _build_engine(session, genome_id: str) -> ModelStateEngine:
+    """Build a ModelStateEngine for a genome with all operations replayed.
 
-    Returns the NetworkStructure with all operations (identity nodes, splits,
-    annotations, etc.) applied.  This is the "real" model that annotations
-    reference.
+    Returns the engine (with .current_state and .annotations available).
     """
     from ...core.explaneat import ExplaNEAT
 
     genome_db, neat_genome, config = _load_genome_and_config(session, genome_id)
-
-    # Build base phenotype
     explainer = ExplaNEAT(neat_genome, config)
     phenotype = explainer.get_phenotype_network()
 
-    # Load explanation operations
     explanation = (
         session.query(Explanation)
         .filter(Explanation.genome_id == uuid.UUID(genome_id))
         .first()
     )
-    if not explanation or not explanation.operations:
-        return phenotype  # No operations — base phenotype is the model
 
-    # Replay operations to produce the current model state
     engine = ModelStateEngine(phenotype)
-    engine.load_operations({"operations": explanation.operations})
-    return engine.current_state
+    if explanation and explanation.operations:
+        engine.load_operations({"operations": explanation.operations})
+    return engine
+
+
+def _build_model_state(session, genome_id: str) -> NetworkStructure:
+    """Build the current annotated model by replaying operations on the phenotype."""
+    return _build_engine(session, genome_id).current_state
 
 
 def _find_annotation_in_operations(session, genome_id: str, annotation_id: str) -> Dict[str, Any]:
@@ -112,6 +111,8 @@ def _find_annotation_in_operations(session, genome_id: str, annotation_id: str) 
                 "name": params.get("name"),
                 "hypothesis": params.get("hypothesis"),
                 "evidence": params.get("evidence") or {},
+                "child_annotation_ids": params.get("child_annotation_ids", []),
+                "parent_annotation_id": params.get("parent_annotation_id"),
             }
 
     raise HTTPException(status_code=404, detail=f"Annotation '{annotation_id}' not found")
@@ -258,21 +259,107 @@ async def get_formula(
     annotation_id: str,
     genome_id: str = Path(...),
 ):
-    """Get closed-form formula for an annotation subgraph."""
+    """Get closed-form formula for an annotation subgraph.
+
+    For composed annotations (with children), returns both collapsed and
+    expanded LaTeX representations.
+    """
     with db.session_scope() as session:
-        model_state = _build_model_state(session, genome_id)
+        engine = _build_engine(session, genome_id)
+        model_state = engine.current_state
         annotation = _find_annotation_in_operations(session, genome_id, annotation_id)
 
         ann_fn = AnnotationFunction.from_structure(annotation, model_state)
         n_in, n_out = ann_fn.dimensionality
 
-        latex = ann_fn.to_latex()
+        # child_annotation_ids stores child annotation NAMES (e.g. "A1678"),
+        # not synthetic IDs (e.g. "ann_37").
+        child_ann_names = annotation.get("child_annotation_ids", [])
+        is_composed = len(child_ann_names) > 0
 
-        return FormulaResponse(
-            latex=latex,
-            tractable=latex is not None,
-            dimensionality=[n_in, n_out],
-        )
+        if is_composed:
+            children_info = []
+
+            # Look up child formulas by matching annotation NAME
+            explanation = (
+                session.query(Explanation)
+                .filter(Explanation.genome_id == uuid.UUID(genome_id))
+                .first()
+            )
+            for op in (explanation.operations or []):
+                if op.get("type") != "annotate":
+                    continue
+                params = op.get("params", {})
+                op_name = params.get("name")
+                if op_name not in child_ann_names:
+                    continue
+                result_data = op.get("result", {})
+                child_ann_id = result_data.get("annotation_id") or f"ann_{op.get('seq', 0)}"
+                child_ann = _find_annotation_in_operations(session, genome_id, child_ann_id)
+                child_af = AnnotationFunction.from_structure(child_ann, model_state)
+                child_latex = child_af.to_latex()
+                cn_in, cn_out = child_af.dimensionality
+                children_info.append(ChildFormulaInfo(
+                    name=op_name,
+                    latex=child_latex,
+                    dimensionality=[cn_in, cn_out],
+                ))
+
+            # Build partially-collapsed structure (children collapsed, parent not)
+            from ...core.collapse_transform import collapse_structure, _compute_effective_entries_exits
+            child_names_set = set(child_ann_names)
+            partially_collapsed = collapse_structure(
+                model_state, engine.annotations, child_names_set
+            )
+
+            # Build parent annotation dict for the partially-collapsed structure
+            fn_node_ids = [f"fn_{name}" for name in child_ann_names]
+            parent_ann = dict(annotation)
+            parent_subgraph = (
+                set(parent_ann.get("subgraph_nodes", []))
+                | set(parent_ann.get("entry_nodes", []))
+                | set(parent_ann.get("exit_nodes", []))
+                | set(fn_node_ids)
+            )
+            existing_ids = {n.id for n in partially_collapsed.nodes}
+            parent_subgraph = parent_subgraph & existing_ids
+            parent_ann["subgraph_nodes"] = list(parent_subgraph)
+
+            # Derive effective entries/exits from the partially-collapsed structure
+            effective_entries, effective_exits = _compute_effective_entries_exits(
+                parent_subgraph, partially_collapsed
+            )
+            parent_ann["entry_nodes"] = sorted(effective_entries)
+            parent_ann["exit_nodes"] = sorted(effective_exits)
+
+            composed_af = AnnotationFunction.from_structure(parent_ann, partially_collapsed)
+            latex_collapsed = composed_af.to_latex(expand=False)
+            latex_expanded = composed_af.to_latex(expand=True)
+
+            # Fall back to direct computation if composed path fails
+            if latex_expanded is None:
+                latex_expanded = ann_fn.to_latex()
+
+            return FormulaResponse(
+                latex=latex_expanded,
+                latex_collapsed=latex_collapsed,
+                latex_expanded=latex_expanded,
+                tractable=latex_expanded is not None or latex_collapsed is not None,
+                dimensionality=[n_in, n_out],
+                is_composed=True,
+                children=children_info,
+            )
+        else:
+            latex = ann_fn.to_latex()
+            return FormulaResponse(
+                latex=latex,
+                latex_collapsed=None,
+                latex_expanded=latex,
+                tractable=latex is not None,
+                dimensionality=[n_in, n_out],
+                is_composed=False,
+                children=[],
+            )
 
 
 @router.post("/snapshot")
