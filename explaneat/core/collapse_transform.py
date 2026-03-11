@@ -56,7 +56,7 @@ def _compute_effective_subgraph_nodes(
     return effective
 
 
-def _compute_effective_entries_exits(
+def compute_effective_entries_exits(
     effective_subgraph: Set[str],
     structure: NetworkStructure,
 ) -> Tuple[Set[str], Set[str]]:
@@ -187,7 +187,7 @@ def collapse_structure(
             # (after children have been collapsed). Must use current_subgraph,
             # not original_effective, because original node IDs may no longer
             # exist in the structure (replaced by fn_ nodes).
-            effective_entries, effective_exits = _compute_effective_entries_exits(
+            effective_entries, effective_exits = compute_effective_entries_exits(
                 current_subgraph, result
             )
 

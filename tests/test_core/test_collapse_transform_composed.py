@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import torch
 from explaneat.core.collapse_transform import (
-    _compute_effective_entries_exits,
+    compute_effective_entries_exits,
     _compute_effective_subgraph_nodes,
     collapse_structure,
 )
@@ -130,7 +130,7 @@ def _megaann_structure():
 class TestComputeEffectiveEntriesExits:
     """Test auto-derivation of entry/exit nodes for compositional annotations.
 
-    NOTE: These tests call _compute_effective_entries_exits on the ORIGINAL
+    NOTE: These tests call compute_effective_entries_exits on the ORIGINAL
     (uncollapsed) structure to validate the boundary detection algorithm.
     In collapse_structure(), it is called on the CURRENT structure (after
     children are collapsed), so the exits will be fn_ nodes instead.
@@ -147,7 +147,7 @@ class TestComputeEffectiveEntriesExits:
         effective_subgraph = _compute_effective_subgraph_nodes(
             ann_by_name["MegaAnn1"], ann_by_name, children_map
         )
-        entries, exits = _compute_effective_entries_exits(
+        entries, exits = compute_effective_entries_exits(
             effective_subgraph, structure
         )
         assert "-24" in entries
@@ -168,7 +168,7 @@ class TestComputeEffectiveEntriesExits:
         effective_subgraph = _compute_effective_subgraph_nodes(
             ann_by_name["MegaAnn1"], ann_by_name, children_map
         )
-        entries, exits = _compute_effective_entries_exits(
+        entries, exits = compute_effective_entries_exits(
             effective_subgraph, structure
         )
         assert "608_a" in exits

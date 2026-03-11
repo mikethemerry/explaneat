@@ -47,17 +47,18 @@ export function FormulaDisplay({ genomeId, annotationId }: FormulaDisplayProps) 
     : null;
 
   useEffect(() => {
-    if (currentLatex && mathRef.current) {
+    if (!mathRef.current) return;
+    if (currentLatex) {
       try {
         katex.render(currentLatex, mathRef.current, {
           displayMode: true,
           throwOnError: false,
         });
       } catch {
-        if (mathRef.current) {
-          mathRef.current.textContent = currentLatex;
-        }
+        mathRef.current.textContent = currentLatex;
       }
+    } else {
+      mathRef.current.textContent = "";
     }
   }, [currentLatex]);
 

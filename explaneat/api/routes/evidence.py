@@ -306,7 +306,7 @@ async def get_formula(
                 ))
 
             # Build partially-collapsed structure (children collapsed, parent not)
-            from ...core.collapse_transform import collapse_structure, _compute_effective_entries_exits
+            from ...core.collapse_transform import collapse_structure, compute_effective_entries_exits
             child_names_set = set(child_ann_names)
             partially_collapsed = collapse_structure(
                 model_state, engine.annotations, child_names_set
@@ -326,7 +326,7 @@ async def get_formula(
             parent_ann["subgraph_nodes"] = list(parent_subgraph)
 
             # Derive effective entries/exits from the partially-collapsed structure
-            effective_entries, effective_exits = _compute_effective_entries_exits(
+            effective_entries, effective_exits = compute_effective_entries_exits(
                 parent_subgraph, partially_collapsed
             )
             parent_ann["entry_nodes"] = sorted(effective_entries)
