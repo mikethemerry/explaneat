@@ -681,10 +681,57 @@ class AnnotationFunction:
             import sympy
             parts = []
             for name, expr in exprs.items():
-                parts.append(f"{name} = {sympy.latex(expr)}")
+                parts.append(self._format_latex_expr(name, expr, sympy))
             return " \\\\ ".join(parts)
         except Exception:
             return None
+
+    @staticmethod
+    def _unwrap_activation(expr):
+        """If expr is activation(inner), return (inner, name). Else (None, None)."""
+        if hasattr(expr, 'func') and hasattr(expr, 'args') and len(expr.args) == 1:
+            name = getattr(expr.func, 'name', None) or getattr(expr.func, '__name__', None)
+            if name in ('relu', 'sigmoid', 'tanh'):
+                return expr.args[0], name
+        return None, None
+
+    @staticmethod
+    def _format_latex_expr(name, expr, sympy):
+        """Format an expression, using multi-line aligned for long formulas."""
+        simple = f"{name} = {sympy.latex(expr)}"
+        if len(simple) <= 80:
+            return simple
+
+        inner, act_name = AnnotationFunction._unwrap_activation(expr)
+        if inner is not None and isinstance(inner, sympy.Add):
+            return AnnotationFunction._format_aligned(name, act_name, inner, sympy)
+        if isinstance(expr, sympy.Add):
+            return AnnotationFunction._format_aligned(name, None, expr, sympy)
+
+        return simple
+
+    @staticmethod
+    def _format_aligned(name, act_name, add_expr, sympy):
+        """Format an Add expression across multiple aligned lines."""
+        terms = add_expr.as_ordered_terms()
+        lines = []
+        for i, term in enumerate(terms):
+            term_latex = sympy.latex(term)
+            if i == 0:
+                if act_name:
+                    lines.append(
+                        f"{name} &= \\operatorname{{{act_name}}}\\bigl( {term_latex}"
+                    )
+                else:
+                    lines.append(f"{name} &= {term_latex}")
+            else:
+                if term_latex.startswith('-'):
+                    lines.append(f"&\\quad {term_latex}")
+                else:
+                    lines.append(f"&\\quad + {term_latex}")
+        if act_name:
+            lines[-1] += " \\bigr)"
+        return "\\begin{aligned}\n" + " \\\\\n".join(lines) + "\n\\end{aligned}"
 
     @property
     def dimensionality(self) -> Tuple[int, int]:
