@@ -274,8 +274,8 @@ class TestAnnotationFunctionWithFunctionNodes:
         # Should not contain child function names
         assert "child1" not in expr_str
         assert "child2" not in expr_str
-        # Should contain primitive elements (x_0, x_1 are the input symbols)
-        assert "x_0" in expr_str or "x_1" in expr_str
+        # Should contain primitive elements (entry node IDs used as symbols)
+        assert "x_{in1}" in expr_str or "x_{in2}" in expr_str
 
     def test_single_child_function_node(self):
         """Test with a single FUNCTION node in the annotation subgraph."""

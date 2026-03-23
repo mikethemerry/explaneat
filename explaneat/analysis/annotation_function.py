@@ -434,10 +434,10 @@ class AnnotationFunction:
         except ImportError:
             return None
 
-        # Create input symbols
+        # Create input symbols using node IDs for readability
         input_syms = {}
         for i, node_str in enumerate(self.entry_nodes):
-            input_syms[node_str] = sympy.Symbol(f"x_{i}")
+            input_syms[node_str] = sympy.Symbol(f"x_{{{node_str}}}")
 
         node_exprs = dict(input_syms)
 
@@ -449,7 +449,7 @@ class AnnotationFunction:
                 continue
 
             # Build expression: sum(w_i * input_i) + bias
-            expr = sympy.Float(step["bias"])
+            expr = sympy.Float(step["bias"], 3)
             for j, in_node in enumerate(step["input_nodes"]):
                 w = step["weights"][j]
                 # Resolve input: if it's a function node output, look up by
@@ -458,7 +458,7 @@ class AnnotationFunction:
                     in_node, step, j, node_exprs
                 )
                 if in_expr is not None and abs(w) > 1e-12:
-                    expr += sympy.Float(w) * in_expr
+                    expr += sympy.Float(w, 3) * in_expr
 
             # Apply activation
             act_sym_fn = get_sympy_activation(step["activation"])
