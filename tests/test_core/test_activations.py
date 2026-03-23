@@ -308,9 +308,9 @@ class TestSympyActivations:
         fn = get_sympy_activation("relu")
         x = sympy.Symbol("x")
         result = fn(x)
-        # relu(-1) = 0, relu(2) = 2
-        assert float(result.subs(x, -1)) == 0.0
-        assert float(result.subs(x, 2)) == 2.0
+        # relu is a named Function for readable formulas
+        assert "relu" in str(result)
+        assert result.args == (x,)
 
     def test_sympy_identity(self):
         import sympy
@@ -404,7 +404,7 @@ class TestNumpySympyAgreement:
         "sigmoid",
         "tanh",
         "sin",
-        "relu",
+        # relu excluded: intentionally a named Function (not numerically evaluable)
         "identity",
         "abs",
         "square",
