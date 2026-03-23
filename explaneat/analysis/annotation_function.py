@@ -57,6 +57,17 @@ class AnnotationFunction:
                 (str(c[0]), str(c[1])) for c in (annotation.subgraph_connections or [])
             ]
 
+        # If subgraph_connections is empty but we have a structure, derive
+        # connections from the full NetworkStructure by finding all enabled
+        # connections where both endpoints are in the subgraph.
+        if not self.subgraph_connections and structure is not None:
+            subgraph_set = set(self.subgraph_nodes)
+            self.subgraph_connections = [
+                (c.from_node, c.to_node)
+                for c in structure.connections
+                if c.enabled and c.from_node in subgraph_set and c.to_node in subgraph_set
+            ]
+
         self.n_inputs = len(self.entry_nodes)
         self.n_outputs = len(self.exit_nodes)
 
