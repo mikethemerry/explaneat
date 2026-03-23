@@ -1474,6 +1474,8 @@ export function OperationsPanel({
   const [annotationName, setAnnotationName] = useState("");
   const [renameInput, setRenameInput] = useState("");
   const [featureNames, setFeatureNames] = useState<string[] | null>(null);
+  const [featureTypes, setFeatureTypes] = useState<Record<string, string> | null>(null);
+  const [featureDescriptions, setFeatureDescriptions] = useState<Record<string, string> | null>(null);
 
   // Wizard state (for applying fixes)
   const [wizard, setWizard] = useState<WizardState>({ step: "idle" });
@@ -1482,8 +1484,16 @@ export function OperationsPanel({
   useEffect(() => {
     if (!experimentId) return;
     getExperimentSplit(experimentId)
-      .then((split) => setFeatureNames(split.feature_names ?? null))
-      .catch(() => setFeatureNames(null));
+      .then((split) => {
+        setFeatureNames(split.feature_names ?? null);
+        setFeatureTypes(split.feature_types ?? null);
+        setFeatureDescriptions(split.feature_descriptions ?? null);
+      })
+      .catch(() => {
+        setFeatureNames(null);
+        setFeatureTypes(null);
+        setFeatureDescriptions(null);
+      });
   }, [experimentId]);
 
   const selectedArray = useMemo(() => Array.from(selectedNodes), [selectedNodes]);
@@ -2071,8 +2081,25 @@ export function OperationsPanel({
         }
         const renameValid = renameInput.length > 0 && !renameInput.includes(" ");
 
+        // Look up feature metadata for input nodes
+        const featureName = baseSuggestion ?? suggestion;
+        const featureType = featureName && featureTypes ? featureTypes[featureName] ?? null : null;
+        const featureDesc = featureName && featureDescriptions ? featureDescriptions[featureName] ?? null : null;
+        const isInputNode = inputIndex >= 0 || (suggestion && nodeId.includes("_"));
+
         return (
           <section className="panel-section">
+            {/* Feature info for input nodes */}
+            {isInputNode && featureName && (
+              <div className="feature-info-block">
+                <h4>Feature Info</h4>
+                <div style={{ fontSize: "12px", marginBottom: "8px" }}>
+                  <div><strong>{featureName}</strong></div>
+                  {featureType && <div style={{ color: "#9ca3af", fontStyle: "italic" }}>{featureType}</div>}
+                  {featureDesc && <div style={{ color: "#9ca3af", marginTop: "2px" }}>{featureDesc}</div>}
+                </div>
+              </div>
+            )}
             <h4>Node Operations</h4>
             <div className="button-group">
               <button

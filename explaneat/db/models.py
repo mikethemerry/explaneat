@@ -112,7 +112,10 @@ class Dataset(Base, TimestampMixin):
             "num_features": self.num_features,
             "num_classes": self.num_classes,
             "feature_names": self.feature_names,
+            "feature_types": self.feature_types,
+            "feature_descriptions": self.feature_descriptions,
             "target_name": self.target_name,
+            "target_description": self.target_description,
             "class_names": self.class_names,
             "has_data": self.x_data is not None,
         }

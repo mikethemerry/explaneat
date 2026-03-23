@@ -339,7 +339,10 @@ export type ExperimentSplitResponse = {
   train_size: number | null;
   test_size_actual: number | null;
   feature_names: string[] | null;
+  feature_types: Record<string, string> | null;
+  feature_descriptions: Record<string, string> | null;
   target_name: string | null;
+  target_description: string | null;
 };
 
 export async function getExperimentSplit(
@@ -526,7 +529,10 @@ export type DatasetResponse = {
   num_features: number | null;
   num_classes: number | null;
   feature_names: string[] | null;
+  feature_types: Record<string, string> | null;
+  feature_descriptions: Record<string, string> | null;
   target_name: string | null;
+  target_description: string | null;
   class_names: string[] | null;
   has_data: boolean;
 };

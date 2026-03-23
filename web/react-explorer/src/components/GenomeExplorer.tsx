@@ -9,6 +9,7 @@ import {
 } from "../api/client";
 import { NetworkViewer } from "./NetworkViewer";
 import { OperationsPanel } from "./OperationsPanel";
+import { DatasetInfoPanel } from "./DatasetInfoPanel";
 import { AnnotationListPanel } from "./AnnotationListPanel";
 import { EvidencePanel } from "./EvidencePanel";
 
@@ -263,6 +264,12 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
 
       <div className="explorer-content">
         <div className="left-panels">
+          <DatasetInfoPanel
+            experimentId={experimentId}
+            genomeId={genomeId}
+            model={model}
+            onOperationChange={handleOperationChange}
+          />
           <OperationsPanel
             genomeId={genomeId}
             experimentId={experimentId}

@@ -391,7 +391,10 @@ class DatasetResponse(BaseModel):
     num_features: Optional[int] = None
     num_classes: Optional[int] = None
     feature_names: Optional[List[str]] = None
+    feature_types: Optional[Dict[str, str]] = None
+    feature_descriptions: Optional[Dict[str, str]] = None
     target_name: Optional[str] = None
+    target_description: Optional[str] = None
     class_names: Optional[List[str]] = None
     has_data: bool = False
 
@@ -436,7 +439,10 @@ class ExperimentSplitResponse(BaseModel):
     train_size: Optional[int] = None
     test_size_actual: Optional[int] = None
     feature_names: Optional[List[str]] = None
+    feature_types: Optional[Dict[str, str]] = None
+    feature_descriptions: Optional[Dict[str, str]] = None
     target_name: Optional[str] = None
+    target_description: Optional[str] = None
 
 
 class SplitCreateRequest(BaseModel):

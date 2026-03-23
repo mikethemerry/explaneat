@@ -292,7 +292,10 @@ async def get_experiment_split(
         train_size=split.train_size,
         test_size_actual=split.test_size_actual,
         feature_names=dataset.feature_names,
+        feature_types=dataset.feature_types,
+        feature_descriptions=dataset.feature_descriptions,
         target_name=dataset.target_name,
+        target_description=dataset.target_description,
     )
 
 
@@ -352,5 +355,8 @@ async def link_dataset_to_experiment(
         train_size=split.train_size,
         test_size_actual=split.test_size_actual,
         feature_names=dataset.feature_names,
+        feature_types=dataset.feature_types,
+        feature_descriptions=dataset.feature_descriptions,
         target_name=dataset.target_name,
+        target_description=dataset.target_description,
     )
