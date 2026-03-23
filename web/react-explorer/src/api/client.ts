@@ -55,6 +55,7 @@ export type ApiNode = {
   response: number | null;
   aggregation: string | null;
   function_metadata?: FunctionNodeMetadata | null;
+  display_name?: string | null;
 };
 
 export type ApiConnection = {
@@ -239,6 +240,10 @@ export type AnnotateParams = {
   subgraph_nodes: string[];
   subgraph_connections?: [string, string][];
 };
+export type RenameNodeParams = {
+  node_id: string;
+  display_name: string | null;
+};
 
 export type OperationRequest =
   | { type: "split_node"; params: SplitNodeParams }
@@ -246,7 +251,8 @@ export type OperationRequest =
   | { type: "remove_node"; params: RemoveNodeParams }
   | { type: "add_node"; params: AddNodeParams }
   | { type: "add_identity_node"; params: AddIdentityNodeParams }
-  | { type: "annotate"; params: AnnotateParams };
+  | { type: "annotate"; params: AnnotateParams }
+  | { type: "rename_node"; params: RenameNodeParams };
 
 // ============================================================================
 // API Client
@@ -332,6 +338,8 @@ export type ExperimentSplitResponse = {
   random_state: number | null;
   train_size: number | null;
   test_size_actual: number | null;
+  feature_names: string[] | null;
+  target_name: string | null;
 };
 
 export async function getExperimentSplit(

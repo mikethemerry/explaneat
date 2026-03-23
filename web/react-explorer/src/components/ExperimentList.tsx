@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   listExperiments,
   getBestGenome,
   type ExperimentListItem,
 } from "../api/client";
+import { DatasetSetupModal } from "./DatasetSetupModal";
 
 type ExperimentListProps = {
-  onSelectGenome: (genomeId: string, experimentName: string) => void;
+  onSelectGenome: (genomeId: string, experimentId: string, experimentName: string) => void;
 };
 
 export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
@@ -15,36 +16,43 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [loadingExperiment, setLoadingExperiment] = useState<string | null>(null);
+  const [setupExperiment, setSetupExperiment] = useState<ExperimentListItem | null>(null);
+
+  const loadExperiments = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await listExperiments(50, 0);
+      setExperiments(response.experiments);
+      setTotal(response.total);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load experiments");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    async function load() {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await listExperiments(50, 0);
-        setExperiments(response.experiments);
-        setTotal(response.total);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load experiments");
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
+    loadExperiments();
+  }, [loadExperiments]);
 
   const handleSelectExperiment = async (experiment: ExperimentListItem) => {
     try {
       setLoadingExperiment(experiment.id);
       setError(null);
       const bestGenome = await getBestGenome(experiment.id);
-      onSelectGenome(bestGenome.genome_id, experiment.name);
+      onSelectGenome(bestGenome.genome_id, experiment.id, experiment.name);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load best genome");
     } finally {
       setLoadingExperiment(null);
     }
   };
+
+  const handleSetupComplete = useCallback(() => {
+    setSetupExperiment(null);
+    loadExperiments();
+  }, [loadExperiments]);
 
   if (loading) {
     return (
@@ -85,6 +93,7 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
                 <th>#</th>
                 <th>Name</th>
                 <th>Status</th>
+                <th>Dataset</th>
                 <th>Gens</th>
                 <th>Best Fitness</th>
                 <th>Created</th>
@@ -97,13 +106,27 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
                   <td className="index-col">{index}</td>
                   <td className="name-col" title={experiment.name}>
                     {experiment.name.length > 30
-                      ? experiment.name.slice(0, 29) + "…"
+                      ? experiment.name.slice(0, 29) + "\u2026"
                       : experiment.name}
                   </td>
                   <td>
                     <span className={`status-badge status-${experiment.status}`}>
                       {experiment.status}
                     </span>
+                  </td>
+                  <td>
+                    {experiment.has_split ? (
+                      <span className="dataset-badge linked">
+                        {experiment.dataset_name || "linked"}
+                      </span>
+                    ) : (
+                      <button
+                        className="dataset-setup-btn"
+                        onClick={() => setSetupExperiment(experiment)}
+                      >
+                        Setup
+                      </button>
+                    )}
                   </td>
                   <td>{experiment.generations}</td>
                   <td>
@@ -133,6 +156,16 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
           Select an experiment to explore its best genome (highest fitness)
         </p>
       </div>
+
+      {setupExperiment && (
+        <DatasetSetupModal
+          experimentId={setupExperiment.id}
+          experimentName={setupExperiment.name}
+          datasetNameHint={setupExperiment.dataset_name}
+          onComplete={handleSetupComplete}
+          onClose={() => setSetupExperiment(null)}
+        />
+      )}
     </div>
   );
 }

@@ -405,7 +405,10 @@ function applyLayerLayout(
 // =============================================================================
 
 function buildNodeTooltip(node: ModelState["nodes"][number]): string {
-  const lines = [`Node ${node.id}`, `Type: ${node.type}`];
+  const header = node.display_name
+    ? `${node.display_name} (${node.id})`
+    : `Node ${node.id}`;
+  const lines = [header, `Type: ${node.type}`];
   if (node.bias !== null && node.bias !== undefined) {
     lines.push(`Bias: ${node.bias.toFixed(3)}`);
   }
@@ -461,14 +464,14 @@ function convertModelToFlow(model: ModelState, annotationNodeIds: Set<string>): 
       activation: node.activation,
     });
 
-    // Build label for function nodes
+    // Build label: function nodes use annotation name, others prefer display_name
     let label: string;
     if (isFunctionNode && node.function_metadata) {
       label = node.function_metadata.annotation_name;
     } else if (isFunctionNode) {
       label = node.id.replace(/^A_/, "");
     } else {
-      label = node.id;
+      label = node.display_name || node.id;
     }
 
     // Special styling for function/annotation nodes

@@ -265,6 +265,7 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
         <div className="left-panels">
           <OperationsPanel
             genomeId={genomeId}
+            experimentId={experimentId}
             operations={operations}
             selectedNodes={selectedNodes}
             model={model}

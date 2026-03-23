@@ -4,6 +4,7 @@ import { GenomeExplorer } from "./components/GenomeExplorer";
 
 type Selection = {
   genomeId: string;
+  experimentId: string;
   experimentName: string;
 };
 
@@ -14,6 +15,7 @@ export default function App() {
     return (
       <GenomeExplorer
         genomeId={selection.genomeId}
+        experimentId={selection.experimentId}
         experimentName={selection.experimentName}
         onBack={() => setSelection(null)}
       />
@@ -22,8 +24,8 @@ export default function App() {
 
   return (
     <ExperimentList
-      onSelectGenome={(genomeId, experimentName) =>
-        setSelection({ genomeId, experimentName })
+      onSelectGenome={(genomeId, experimentId, experimentName) =>
+        setSelection({ genomeId, experimentId, experimentName })
       }
     />
   );

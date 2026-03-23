@@ -1,7 +1,8 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import {
   addOperation,
   removeOperation,
+  getExperimentSplit,
   type Operation,
   type OperationRequest,
   type ModelState,
@@ -37,6 +38,7 @@ function logError(message: string, data?: unknown) {
 
 type OperationsPanelProps = {
   genomeId: string;
+  experimentId: string;
   operations: Operation[];
   selectedNodes: Set<string>;
   model: ModelState;
@@ -161,9 +163,47 @@ type WizardState =
 type SelectionContext =
   | { type: "empty" }
   | { type: "single"; nodeId: string; canSplit: boolean }
+  | { type: "connectedPair"; fromNode: string; toNode: string; weight: number; actualConnections?: { from: string; to: string; weight: number }[] }
   | { type: "joinable"; nodeIds: string[]; baseNodeId: string }
   | { type: "subgraph"; analysis: SelectionAnalysis }
   | { type: "invalid"; reason: string };
+
+// =============================================================================
+// Node Type Detection (including split nodes)
+// =============================================================================
+
+/**
+ * Get the base node ID for a potentially split node.
+ * E.g., "-28_b" -> "-28", "5_split" -> "5", "5_a" -> "5"
+ */
+function getBaseNodeId(nodeId: string): string {
+  // Match patterns like "nodeId_a", "nodeId_b", "nodeId_split"
+  const splitMatch = nodeId.match(/^(.+)_([a-z]|split)$/);
+  if (splitMatch) {
+    return splitMatch[1];
+  }
+  return nodeId;
+}
+
+/**
+ * Check if a node is an input-type node (including splits of input nodes).
+ */
+function isInputTypeNode(nodeId: string, inputNodeIds: Set<string>): boolean {
+  if (inputNodeIds.has(nodeId)) return true;
+  // Check if this is a split of an input node
+  const baseId = getBaseNodeId(nodeId);
+  return baseId !== nodeId && inputNodeIds.has(baseId);
+}
+
+/**
+ * Check if a node is an output-type node (including splits of output nodes).
+ */
+function isOutputTypeNode(nodeId: string, outputNodeIds: Set<string>): boolean {
+  if (outputNodeIds.has(nodeId)) return true;
+  // Check if this is a split of an output node
+  const baseId = getBaseNodeId(nodeId);
+  return baseId !== nodeId && outputNodeIds.has(baseId);
+}
 
 // =============================================================================
 // Annotation Node Detection
@@ -240,6 +280,119 @@ function buildAdjacencyLists(model: ModelState): {
   }
 
   return { forward, backward };
+}
+
+/**
+ * Build annotation-aware adjacency lists.
+ *
+ * For annotation nodes (like A_A1678), we create virtual connections:
+ * - Annotation node's outputs = connections FROM the annotation's exit nodes
+ * - Annotation node's inputs = connections TO the annotation's entry nodes
+ *
+ * This allows selection analysis to work with annotation nodes as first-class nodes.
+ */
+function buildAnnotationAwareAdjacencyLists(
+  model: ModelState,
+  annotations: AnnotationSummary[],
+  selectedNodes: Set<string>
+): {
+  forward: Map<string, string[]>;
+  backward: Map<string, string[]>;
+  annotationNodeIds: Set<string>;
+} {
+  const forward = new Map<string, string[]>();
+  const backward = new Map<string, string[]>();
+  const annotationNodeIds = new Set<string>();
+
+  // Initialize all regular nodes
+  for (const node of model.nodes) {
+    forward.set(node.id, []);
+    backward.set(node.id, []);
+  }
+
+  // Find which annotation nodes are in the selection
+  const selectedAnnotationMap = new Map<string, AnnotationSummary>();
+  for (const nodeId of selectedNodes) {
+    if (isAnnotationNode(nodeId)) {
+      const ann = findAnnotationForNode(nodeId, annotations);
+      if (ann) {
+        selectedAnnotationMap.set(nodeId, ann);
+        annotationNodeIds.add(nodeId);
+        // Initialize annotation node in adjacency lists
+        forward.set(nodeId, []);
+        backward.set(nodeId, []);
+      }
+    }
+  }
+
+  // Build set of all nodes that are "inside" an annotation (for exclusion)
+  const nodesInsideAnnotations = new Set<string>();
+  for (const ann of selectedAnnotationMap.values()) {
+    for (const nodeId of ann.subgraph_nodes) {
+      nodesInsideAnnotations.add(nodeId);
+    }
+  }
+
+  // Process regular connections, but remap connections involving annotation internals
+  for (const conn of model.connections) {
+    if (!conn.enabled) continue;
+
+    const fromInsideAnn = nodesInsideAnnotations.has(conn.from);
+    const toInsideAnn = nodesInsideAnnotations.has(conn.to);
+
+    // Find if from/to are exit/entry nodes of selected annotations
+    let remappedFrom = conn.from;
+    let remappedTo = conn.to;
+
+    for (const [annNodeId, ann] of selectedAnnotationMap) {
+      // If 'from' is an exit node of this annotation, remap to annotation node
+      if (ann.exit_nodes.includes(conn.from)) {
+        remappedFrom = annNodeId;
+      }
+      // If 'to' is an entry node of this annotation, remap to annotation node
+      if (ann.entry_nodes.includes(conn.to)) {
+        remappedTo = annNodeId;
+      }
+    }
+
+    // Skip purely internal connections (both inside same annotation)
+    if (fromInsideAnn && toInsideAnn) {
+      // Check if they're in the same annotation
+      let sameAnnotation = false;
+      for (const ann of selectedAnnotationMap.values()) {
+        if (ann.subgraph_nodes.includes(conn.from) && ann.subgraph_nodes.includes(conn.to)) {
+          sameAnnotation = true;
+          break;
+        }
+      }
+      if (sameAnnotation) continue;
+    }
+
+    // Skip if from is inside annotation but not an exit (internal node)
+    if (fromInsideAnn && remappedFrom === conn.from) continue;
+    // Skip if to is inside annotation but not an entry (internal node)
+    if (toInsideAnn && remappedTo === conn.to) continue;
+
+    // Add the (possibly remapped) connection
+    if (!forward.has(remappedFrom)) forward.set(remappedFrom, []);
+    if (!backward.has(remappedTo)) backward.set(remappedTo, []);
+
+    const fwdList = forward.get(remappedFrom)!;
+    if (!fwdList.includes(remappedTo)) {
+      fwdList.push(remappedTo);
+    }
+    const bwdList = backward.get(remappedTo)!;
+    if (!bwdList.includes(remappedFrom)) {
+      bwdList.push(remappedFrom);
+    }
+  }
+
+  logDebug("Built annotation-aware adjacency lists", {
+    annotationNodes: Array.from(annotationNodeIds),
+    nodesInsideAnnotations: nodesInsideAnnotations.size,
+  });
+
+  return { forward, backward, annotationNodeIds };
 }
 
 /**
@@ -335,7 +488,8 @@ function hasValidPaths(
  */
 function analyzeSelectionContext(
   selectedNodes: Set<string>,
-  model: ModelState
+  model: ModelState,
+  annotations: AnnotationSummary[]
 ): SelectionContext {
   const selectedArray = Array.from(selectedNodes);
 
@@ -345,10 +499,98 @@ function analyzeSelectionContext(
 
   if (selectedArray.length === 1) {
     const nodeId = selectedArray[0];
+
+    // Check if it's an annotation node
+    if (isAnnotationNode(nodeId)) {
+      // For single annotation node, analyze as subgraph (it might connect to other things)
+      const analysis = analyzeSelection(selectedNodes, model, annotations);
+      return { type: "subgraph", analysis };
+    }
+
     // Can split if it's a hidden or input node (not output)
     const node = model.nodes.find((n) => n.id === nodeId);
     const canSplit = node?.type === "hidden" || node?.type === "input";
     return { type: "single", nodeId, canSplit };
+  }
+
+  // Check if exactly 2 nodes with a direct connection between them
+  // Also handles annotation nodes by checking their entry/exit nodes
+  if (selectedArray.length === 2) {
+    const [nodeA, nodeB] = selectedArray;
+
+    // Helper to get the actual source nodes for a node (handles annotation nodes)
+    const getSourceNodes = (nodeId: string): string[] => {
+      if (isAnnotationNode(nodeId)) {
+        const ann = findAnnotationForNode(nodeId, annotations);
+        return ann ? ann.exit_nodes : [];
+      }
+      return [nodeId];
+    };
+
+    // Helper to get the actual target nodes for a node (handles annotation nodes)
+    const getTargetNodes = (nodeId: string): string[] => {
+      if (isAnnotationNode(nodeId)) {
+        const ann = findAnnotationForNode(nodeId, annotations);
+        return ann ? ann.entry_nodes : [];
+      }
+      return [nodeId];
+    };
+
+    // Get actual nodes to check for connections
+    const sourcesA = getSourceNodes(nodeA);
+    const targetsA = getTargetNodes(nodeA);
+    const sourcesB = getSourceNodes(nodeB);
+    const targetsB = getTargetNodes(nodeB);
+
+    // Check for connection A -> B (A's exits to B's entries)
+    const connsAB: { from: string; to: string; weight: number }[] = [];
+    for (const srcA of sourcesA) {
+      for (const tgtB of targetsB) {
+        const conn = model.connections.find(
+          c => c.enabled && c.from === srcA && c.to === tgtB
+        );
+        if (conn) {
+          connsAB.push({ from: srcA, to: tgtB, weight: conn.weight });
+        }
+      }
+    }
+
+    // Check for connection B -> A (B's exits to A's entries)
+    const connsBA: { from: string; to: string; weight: number }[] = [];
+    for (const srcB of sourcesB) {
+      for (const tgtA of targetsA) {
+        const conn = model.connections.find(
+          c => c.enabled && c.from === srcB && c.to === tgtA
+        );
+        if (conn) {
+          connsBA.push({ from: srcB, to: tgtA, weight: conn.weight });
+        }
+      }
+    }
+
+    // If there's exactly one direction of connection, offer identity node insertion
+    // For annotation nodes, we use the display ID but store the actual connection
+    if (connsAB.length > 0 && connsBA.length === 0) {
+      // Use first connection for weight display, but we'll show all in UI
+      return {
+        type: "connectedPair",
+        fromNode: nodeA,
+        toNode: nodeB,
+        weight: connsAB[0].weight,
+        // Store actual connections for the operation
+        actualConnections: connsAB,
+      };
+    }
+    if (connsBA.length > 0 && connsAB.length === 0) {
+      return {
+        type: "connectedPair",
+        fromNode: nodeB,
+        toNode: nodeA,
+        weight: connsBA[0].weight,
+        actualConnections: connsBA,
+      };
+    }
+    // If both directions exist, fall through to subgraph analysis
   }
 
   // Check if nodes are joinable (split variants)
@@ -357,9 +599,9 @@ function analyzeSelectionContext(
     return { type: "joinable", nodeIds: selectedArray, baseNodeId };
   }
 
-  // Check if nodes form a valid subgraph
-  const analysis = analyzeSelection(selectedNodes, model);
-  const { forward } = buildAdjacencyLists(model);
+  // Check if nodes form a valid subgraph (annotation-aware)
+  const analysis = analyzeSelection(selectedNodes, model, annotations);
+  const { forward } = buildAnnotationAwareAdjacencyLists(model, annotations, selectedNodes);
   const allSubgraphNodes = new Set([
     ...analysis.selectedNodes,
     ...analysis.discoveredNodes,
@@ -395,10 +637,14 @@ function analyzeSelectionContext(
  * 2. Identifies exit nodes (nodes with external outputs)
  * 3. Finds intermediate nodes on paths between entries and exits
  * 4. Returns the complete subgraph structure
+ *
+ * Supports annotation nodes - when an annotation node (A_xxx) is selected,
+ * it's treated as a unit with virtual connections based on its entry/exit nodes.
  */
 function computeContainingSubgraph(
   selectedNodes: Set<string>,
-  model: ModelState
+  model: ModelState,
+  annotations: AnnotationSummary[]
 ): {
   entryNodes: string[];
   exitNodes: string[];
@@ -412,7 +658,12 @@ function computeContainingSubgraph(
     selected: Array.from(selectedNodes),
   });
 
-  const { forward, backward } = buildAdjacencyLists(model);
+  // Use annotation-aware adjacency lists
+  const { forward, backward, annotationNodeIds } = buildAnnotationAwareAdjacencyLists(
+    model,
+    annotations,
+    selectedNodes
+  );
   const inputNodeIds = new Set(model.metadata.input_nodes);
   const outputNodeIds = new Set(model.metadata.output_nodes);
 
@@ -425,18 +676,24 @@ function computeContainingSubgraph(
   for (const nodeId of selectedNodes) {
     const incoming = backward.get(nodeId) || [];
     const outgoing = forward.get(nodeId) || [];
-    const isInputType = inputNodeIds.has(nodeId);
+
+    // Check if this is an input-type node (including splits of inputs)
+    // Annotation nodes are never input-type, they have their own entry semantics
+    const isInputType = !annotationNodeIds.has(nodeId) && isInputTypeNode(nodeId, inputNodeIds);
+    const isOutputType = !annotationNodeIds.has(nodeId) && isOutputTypeNode(nodeId, outputNodeIds);
 
     const incomingFromInside = incoming.filter((from) => selectedNodes.has(from));
     const incomingFromOutside = incoming.filter((from) => !selectedNodes.has(from));
     const outgoingToInside = outgoing.filter((to) => selectedNodes.has(to));
     const outgoingToOutside = outgoing.filter((to) => !selectedNodes.has(to));
 
-    // Entry: input node (no inputs) OR ALL incoming edges are from outside the subgraph
-    const isEntry = isInputType || (incoming.length > 0 && incomingFromInside.length === 0);
+    // Entry: input node OR has no internal inputs (all inputs from outside or none)
+    // For annotation nodes: entry if no selected nodes connect to it
+    const isEntry = isInputType || (incomingFromInside.length === 0);
 
-    // Exit: ALL outgoing edges go to outside the subgraph (no internal outputs)
-    const isExit = outgoing.length > 0 && outgoingToInside.length === 0;
+    // Exit: has outputs going outside (no internal outputs) OR is an output node with no internal outputs
+    // For annotation nodes: exit if it connects to nodes outside selection
+    const isExit = (outgoingToOutside.length > 0 || isOutputType) && outgoingToInside.length === 0;
 
     if (isEntry) {
       entryNodes.push(nodeId);
@@ -460,6 +717,79 @@ function computeContainingSubgraph(
     entries: entryNodes,
     exits: exitNodes,
   });
+
+  // Step 1.5: Check for direct connections between entries and exits
+  // If direct connections exist, don't auto-discover intermediate nodes on longer paths
+  const entrySet = new Set(entryNodes);
+  const exitSet = new Set(exitNodes);
+  let hasDirectConnection = false;
+
+  for (const conn of model.connections) {
+    if (!conn.enabled) continue;
+    // Check if this connection goes directly from an entry to an exit
+    // (or to the same node if it's both entry and exit)
+    if (entrySet.has(conn.from) && exitSet.has(conn.to)) {
+      hasDirectConnection = true;
+      logDebug("Found direct connection from entry to exit", {
+        from: conn.from,
+        to: conn.to,
+      });
+      break;
+    }
+  }
+
+  // Also check annotation-aware adjacency for direct connections
+  if (!hasDirectConnection) {
+    for (const entry of entryNodes) {
+      const outgoing = forward.get(entry) || [];
+      for (const target of outgoing) {
+        if (exitSet.has(target)) {
+          hasDirectConnection = true;
+          logDebug("Found direct connection (annotation-aware) from entry to exit", {
+            from: entry,
+            to: target,
+          });
+          break;
+        }
+      }
+      if (hasDirectConnection) break;
+    }
+  }
+
+  // If direct connections exist, skip path discovery - only use selected nodes
+  if (hasDirectConnection) {
+    logInfo("Direct connection exists - skipping intermediate node discovery", {
+      entryNodes,
+      exitNodes,
+      selectedCount: selectedNodes.size,
+    });
+
+    // No intermediate nodes discovered, just use the selection
+    const allSubgraphNodes = Array.from(selectedNodes);
+    const subgraphNodeSet = new Set(allSubgraphNodes);
+    const subgraphConnections: [string, string][] = [];
+
+    for (const conn of model.connections) {
+      if (!conn.enabled) continue;
+      if (subgraphNodeSet.has(conn.from) && subgraphNodeSet.has(conn.to)) {
+        subgraphConnections.push([conn.from, conn.to]);
+      }
+    }
+
+    // Compute intermediate nodes (selected nodes that are neither entry nor exit)
+    const intermediateNodes = allSubgraphNodes.filter(
+      n => !entryNodes.includes(n) && !exitNodes.includes(n)
+    );
+
+    return {
+      entryNodes,
+      exitNodes,
+      intermediateNodes,
+      discoveredNodes: [], // No discovery when direct connection exists
+      allSubgraphNodes,
+      subgraphConnections,
+    };
+  }
 
   // Step 2: Find all nodes reachable from entries (forward BFS)
   const reachableFromEntries = new Set<string>();
@@ -555,7 +885,8 @@ function computeContainingSubgraph(
  */
 function analyzeSelection(
   selectedNodes: Set<string>,
-  model: ModelState
+  model: ModelState,
+  annotations: AnnotationSummary[]
 ): SelectionAnalysis {
   logInfo("Analyzing selection for annotation", {
     selectedCount: selectedNodes.size,
@@ -563,28 +894,70 @@ function analyzeSelection(
   });
 
   // First, compute the containing subgraph (finds intermediate nodes)
-  const containingSubgraph = computeContainingSubgraph(selectedNodes, model);
+  const containingSubgraph = computeContainingSubgraph(selectedNodes, model, annotations);
 
   // Use the complete subgraph for analysis
   const allSubgraphNodes = new Set(containingSubgraph.allSubgraphNodes);
 
+  // Build annotation-aware adjacency for connection analysis
+  const { forward, backward, annotationNodeIds } = buildAnnotationAwareAdjacencyLists(
+    model,
+    annotations,
+    allSubgraphNodes
+  );
+
+  // Build set of nodes that are "inside" the subgraph (including annotation internals)
+  // A node is inside if:
+  // 1. It's directly in allSubgraphNodes, OR
+  // 2. It's inside a selected annotation's subgraph (entry, exit, or intermediate)
+  const nodesInsideSubgraph = new Set(allSubgraphNodes);
+  for (const nodeId of allSubgraphNodes) {
+    if (isAnnotationNode(nodeId)) {
+      const ann = findAnnotationForNode(nodeId, annotations);
+      if (ann) {
+        for (const subNode of ann.subgraph_nodes) {
+          nodesInsideSubgraph.add(subNode);
+        }
+      }
+    }
+  }
+
+  logDebug("Expanded subgraph for connection analysis", {
+    originalSize: allSubgraphNodes.size,
+    expandedSize: nodesInsideSubgraph.size,
+    annotationNodes: Array.from(annotationNodeIds),
+  });
+
   // Categorize connections relative to the complete subgraph
+  // Use annotation-aware adjacency lists
   const subgraphConnections: [string, string][] = [];
   const externalInputConnections: [string, string][] = [];
   const externalOutputConnections: [string, string][] = [];
 
-  for (const conn of model.connections) {
-    if (!conn.enabled) continue;
+  for (const nodeId of allSubgraphNodes) {
+    const outgoing = forward.get(nodeId) || [];
+    const incoming = backward.get(nodeId) || [];
 
-    const fromInSubgraph = allSubgraphNodes.has(conn.from);
-    const toInSubgraph = allSubgraphNodes.has(conn.to);
+    for (const to of outgoing) {
+      // Check if target is internal (in subgraph OR inside a selected annotation)
+      if (nodesInsideSubgraph.has(to)) {
+        // Internal connection
+        const connKey = `${nodeId}->${to}`;
+        if (!subgraphConnections.some(([f, t]) => `${f}->${t}` === connKey)) {
+          subgraphConnections.push([nodeId, to]);
+        }
+      } else {
+        // External output
+        externalOutputConnections.push([nodeId, to]);
+      }
+    }
 
-    if (fromInSubgraph && toInSubgraph) {
-      subgraphConnections.push([conn.from, conn.to]);
-    } else if (!fromInSubgraph && toInSubgraph) {
-      externalInputConnections.push([conn.from, conn.to]);
-    } else if (fromInSubgraph && !toInSubgraph) {
-      externalOutputConnections.push([conn.from, conn.to]);
+    for (const from of incoming) {
+      // Check if source is external (not in subgraph AND not inside a selected annotation)
+      if (!nodesInsideSubgraph.has(from)) {
+        // External input
+        externalInputConnections.push([from, nodeId]);
+      }
     }
   }
 
@@ -592,6 +965,7 @@ function analyzeSelection(
     internal: subgraphConnections.length,
     externalInputs: externalInputConnections.length,
     externalOutputs: externalOutputConnections.length,
+    annotationNodes: Array.from(annotationNodeIds),
   });
 
   // Classify nodes based on the complete subgraph
@@ -609,21 +983,29 @@ function analyzeSelection(
   const intermediateNodes: string[] = [];
 
   for (const nodeId of allSubgraphNodes) {
-    const isInputType = inputNodeIds.has(nodeId);
-    const isOutputType = outputNodeIds.has(nodeId);
+    const isAnnNode = annotationNodeIds.has(nodeId);
+
+    // Use helper functions to handle split nodes (e.g., -28_b is input type if -28 is input)
+    // Annotation nodes don't have input/output type - they have their own entry/exit semantics
+    const isInputType = !isAnnNode && isInputTypeNode(nodeId, inputNodeIds);
+    const isOutputType = !isAnnNode && isOutputTypeNode(nodeId, outputNodeIds);
     const hasInternalInput = nodesWithInternalInput.has(nodeId);
     const hasInternalOutput = nodesWithInternalOutput.has(nodeId);
     const hasExternalInput = nodesWithExternalInput.has(nodeId);
     const hasExternalOutput = nodesWithExternalOutput.has(nodeId);
 
-    // Entry: input node OR has no internal inputs (all inputs come from outside)
-    const isEntry = isInputType || (hasExternalInput && !hasInternalInput);
+    // Entry conditions:
+    // - Regular node: input type OR has no internal inputs
+    // - Annotation node: has no internal inputs (nothing in selection connects to it)
+    const isEntry = isInputType || !hasInternalInput;
 
-    // Exit: has no internal outputs (all outputs go outside)
-    // Network output nodes are also exits if they don't have internal outputs
+    // Exit conditions:
+    // - Regular node: has external outputs OR is output type, AND has no internal outputs
+    // - Annotation node: has external outputs AND has no internal outputs
     const isExit = (hasExternalOutput || isOutputType) && !hasInternalOutput;
 
     logDebug(`Classifying node ${nodeId} in subgraph`, {
+      isAnnotationNode: isAnnNode,
       isInputType,
       isOutputType,
       hasInternalInput,
@@ -662,6 +1044,7 @@ function analyzeSelection(
     externalOutputConnections,
     allSubgraphNodes,
     model,
+    annotations,
     containingSubgraph.discoveredNodes
   );
 
@@ -708,6 +1091,7 @@ function buildAnnotationStrategy(
   externalOutputs: [string, string][],
   allSubgraphNodes: Set<string>,
   model: ModelState,
+  annotations: AnnotationSummary[],
   discoveredNodes: string[]
 ): AnnotationStrategy {
   const entrySet = new Set(entryNodes);
@@ -800,31 +1184,109 @@ function buildAnnotationStrategy(
   }
 
   // =========================================================================
-  // 3. AUTO: Split nodes (entry/intermediate with external outputs)
+  // 3. AUTO: Handle entry/intermediate nodes with external outputs
+  //    - Regular nodes: split them
+  //    - Annotation nodes: add identity nodes on internal connections
   // =========================================================================
   const nodesToSplitMap = new Map<string, [string, string][]>();
+  const annotationNodesToIntercept = new Map<string, [string, string][]>();
 
   for (const [from, to] of externalOutputs) {
     // External output is OK for exit nodes (that's their role)
     // But entry or intermediate nodes should NOT have external outputs
     if ((entrySet.has(from) || intermediateSet.has(from)) && !exitSet.has(from)) {
-      if (!nodesToSplitMap.has(from)) {
-        nodesToSplitMap.set(from, []);
+      if (isAnnotationNode(from)) {
+        // Annotation nodes can't be split - track for identity node interception
+        if (!annotationNodesToIntercept.has(from)) {
+          annotationNodesToIntercept.set(from, []);
+        }
+        annotationNodesToIntercept.get(from)!.push([from, to]);
+      } else {
+        // Regular nodes can be split
+        if (!nodesToSplitMap.has(from)) {
+          nodesToSplitMap.set(from, []);
+        }
+        nodesToSplitMap.get(from)!.push([from, to]);
       }
-      nodesToSplitMap.get(from)!.push([from, to]);
     }
   }
 
+  // For annotation nodes with external outputs, add identity nodes on INTERNAL connections
+  // This intercepts the annotation's output going INTO the subgraph
+  for (const [annNodeId, extOutputs] of annotationNodesToIntercept) {
+    // Find internal connections from this annotation node to subgraph nodes
+    const internalConnections: [string, string][] = [];
+    for (const conn of model.connections) {
+      if (!conn.enabled) continue;
+      // We need to find connections from annotation's exits to subgraph nodes
+      // Since annNodeId is synthetic, look for connections from real exit nodes
+      const ann = annotations.find(a => `A_${a.name || a.id.slice(0, 8)}` === annNodeId);
+      if (ann) {
+        for (const exitNode of ann.exit_nodes) {
+          if (conn.from === exitNode && allSubgraphNodes.has(conn.to) && conn.to !== annNodeId) {
+            internalConnections.push([conn.from, conn.to]);
+          }
+        }
+      }
+    }
+
+    if (internalConnections.length > 0) {
+      // Group by target node and add identity nodes
+      const targetNodes = [...new Set(internalConnections.map(([, to]) => to))];
+      for (const targetNode of targetNodes) {
+        const connectionsToTarget = internalConnections.filter(([, to]) => to === targetNode);
+
+        let identityCounter = 1;
+        const existingNodeIds = new Set(model.nodes.map((n) => n.id));
+        while (existingNodeIds.has(`identity_${identityCounter}`)) {
+          identityCounter++;
+        }
+        // Also check already planned identity nodes
+        for (const planned of identityNodes) {
+          if (planned.newNodeId === `identity_${identityCounter}`) {
+            identityCounter++;
+          }
+        }
+        const newNodeId = `identity_${identityCounter}`;
+
+        identityNodes.push({ targetNode, newNodeId, connections: connectionsToTarget });
+
+        const step: StrategyStep = {
+          type: "add_identity_node",
+          params: {
+            target_node: targetNode,
+            connections: connectionsToTarget,
+            new_node_id: newNodeId,
+          },
+          description: `Add ${newNodeId} intercepting connection(s) from ${annNodeId} to ${targetNode}`,
+        };
+        steps.push(step);
+        executableSteps.push(step);
+      }
+    }
+  }
+
+  // Regular nodes with external outputs: need to be split
+  // For ENTRY nodes, this is BLOCKING - user must split first to choose which variant goes in the annotation
+  // For INTERMEDIATE nodes, this is also BLOCKING - same reason
   for (const [nodeId, extOutputs] of nodesToSplitMap) {
-    splitNodes.push(nodeId);
+    const isEntryNode = entrySet.has(nodeId);
+    const targets = extOutputs.map(([, to]) => to).join(", ");
 
     const step: StrategyStep = {
       type: "split_node",
       params: { node_id: nodeId },
-      description: `Split ${nodeId} (has ${extOutputs.length} external output(s))`,
+      description: `Split ${nodeId} (has external output to ${targets})`,
+      reason: `${nodeId} outputs to ${targets} outside the annotation`,
     };
     steps.push(step);
-    executableSteps.push(step);
+
+    // Entry/intermediate nodes with external outputs are BLOCKING
+    // User must split first, then select the appropriate variant
+    blockingSteps.push(step);
+
+    // Note: we don't add to splitNodes[] here because the split hasn't happened yet
+    // The user needs to manually split and re-select
   }
 
   // =========================================================================
@@ -837,6 +1299,11 @@ function buildAnnotationStrategy(
     finalSubgraphNodes = finalSubgraphNodes.filter((n) => n !== exitNodeToReplace);
   }
 
+  // Remove annotation nodes that are being replaced by identity node interceptions
+  // (annotation nodes with external outputs whose internal connections are being intercepted)
+  const annotationNodesToRemove = new Set(annotationNodesToIntercept.keys());
+  finalSubgraphNodes = finalSubgraphNodes.filter((n) => !annotationNodesToRemove.has(n));
+
   // Add new nodes from operations
   finalSubgraphNodes = [
     ...finalSubgraphNodes,
@@ -844,8 +1311,45 @@ function buildAnnotationStrategy(
     ...splitNodes.map((n) => `${n}_split`),
   ];
 
-  // Compute final entry nodes (unchanged)
-  const finalEntryNodes = [...entryNodes];
+  // Compute final entry nodes
+  // Remove annotation nodes being replaced, add identity nodes that intercept their connections
+  let finalEntryNodes: string[] = [];
+
+  // Track which identity nodes were created for annotation interception
+  const identityNodesForAnnotations = new Set<string>();
+  for (const [annNodeId] of annotationNodesToIntercept) {
+    // Find identity nodes created for this annotation's internal connections
+    const ann = annotations.find(a => `A_${a.name || a.id.slice(0, 8)}` === annNodeId);
+    if (ann) {
+      for (const identity of identityNodes) {
+        // Check if any of the intercepted connections come from this annotation's exit nodes
+        const fromAnnExits = identity.connections.some(([from]) => ann.exit_nodes.includes(from));
+        if (fromAnnExits) {
+          identityNodesForAnnotations.add(identity.newNodeId);
+        }
+      }
+    }
+  }
+
+  for (const entryNode of entryNodes) {
+    if (annotationNodesToRemove.has(entryNode)) {
+      // This annotation entry is being replaced - identity nodes become entries
+      // Add all identity nodes that intercept connections from this annotation
+      const ann = annotations.find(a => `A_${a.name || a.id.slice(0, 8)}` === entryNode);
+      if (ann) {
+        for (const identity of identityNodes) {
+          const fromAnnExits = identity.connections.some(([from]) => ann.exit_nodes.includes(from));
+          if (fromAnnExits) {
+            finalEntryNodes.push(identity.newNodeId);
+          }
+        }
+      }
+    } else {
+      finalEntryNodes.push(entryNode);
+    }
+  }
+  // Deduplicate entries
+  finalEntryNodes = [...new Set(finalEntryNodes)];
 
   // Compute final exit nodes
   let finalExitNodes: string[] = [];
@@ -866,22 +1370,66 @@ function buildAnnotationStrategy(
     finalExitNodes = [...exitNodes];
   }
 
-  // Add split nodes as exits
-  for (const nodeId of splitNodes) {
-    finalExitNodes.push(`${nodeId}_split`);
+  // Note: Split nodes will be handled after the split operation runs
+  // The actual split variant names (_a, _b) are determined by the backend
+  // We don't add them here since they don't exist yet
+
+  // =========================================================================
+  // 5. Filter out nodes that shouldn't be in the backend annotation request
+  // =========================================================================
+  // Two types of nodes to filter:
+  // a) Synthetic annotation nodes (A_xxx) - frontend-only, don't exist in backend
+  // b) Nodes already covered by existing annotations - would cause "already covered" error
+
+  // Build set of all nodes covered by existing annotations
+  const coveredByExistingAnnotations = new Set<string>();
+  for (const ann of annotations) {
+    for (const nodeId of ann.subgraph_nodes) {
+      coveredByExistingAnnotations.add(nodeId);
+    }
+  }
+
+  logDebug("Filtering nodes for backend", {
+    syntheticAnnotationNodes: finalSubgraphNodes.filter(n => isAnnotationNode(n)),
+    coveredByExisting: finalSubgraphNodes.filter(n => coveredByExistingAnnotations.has(n)),
+  });
+
+  // Subgraph nodes must exclude both synthetic annotation nodes AND covered nodes
+  // (backend rejects covered nodes in subgraph_nodes)
+  const filterSubgraphForBackend = (nodes: string[]) =>
+    nodes.filter(n => !isAnnotationNode(n) && !coveredByExistingAnnotations.has(n));
+
+  // Entry/exit nodes only need to exclude synthetic annotation nodes.
+  // They CAN reference covered nodes (e.g., nodes inside child annotations)
+  // because the backend checks entry/exit as subsets of internal_nodes
+  // (which includes child annotation nodes).
+  const filterBoundaryForBackend = (nodes: string[]) =>
+    nodes.filter(n => !isAnnotationNode(n));
+
+  const backendSubgraphNodes = filterSubgraphForBackend(finalSubgraphNodes);
+  const backendEntryNodes = filterBoundaryForBackend(finalEntryNodes);
+  const backendExitNodes = filterBoundaryForBackend(finalExitNodes);
+
+  // Warn if filtering removed all nodes (no valid glue nodes)
+  if (backendSubgraphNodes.length === 0) {
+    logWarn("All subgraph nodes filtered out - no uncovered glue nodes available", {
+      originalCount: finalSubgraphNodes.length,
+      filteredAsSynthetic: finalSubgraphNodes.filter(n => isAnnotationNode(n)).length,
+      filteredAsCovered: finalSubgraphNodes.filter(n => coveredByExistingAnnotations.has(n)).length,
+    });
   }
 
   // =========================================================================
-  // 5. Add final annotate step
+  // 6. Add final annotate step
   // =========================================================================
   const annotateStep: StrategyStep = {
     type: "annotate",
     params: {
-      entry_nodes: finalEntryNodes,
-      exit_nodes: finalExitNodes,
-      subgraph_nodes: finalSubgraphNodes,
+      entry_nodes: backendEntryNodes,
+      exit_nodes: backendExitNodes,
+      subgraph_nodes: backendSubgraphNodes,
     },
-    description: `Create annotation with ${finalSubgraphNodes.length} nodes`,
+    description: `Create annotation with ${backendSubgraphNodes.length} nodes`,
   };
   steps.push(annotateStep);
   executableSteps.push(annotateStep);
@@ -914,6 +1462,7 @@ function buildAnnotationStrategy(
 
 export function OperationsPanel({
   genomeId,
+  experimentId,
   operations,
   selectedNodes,
   model,
@@ -923,9 +1472,19 @@ export function OperationsPanel({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [annotationName, setAnnotationName] = useState("");
+  const [renameInput, setRenameInput] = useState("");
+  const [featureNames, setFeatureNames] = useState<string[] | null>(null);
 
   // Wizard state (for applying fixes)
   const [wizard, setWizard] = useState<WizardState>({ step: "idle" });
+
+  // Fetch feature names from experiment split (for rename suggestions)
+  useEffect(() => {
+    if (!experimentId) return;
+    getExperimentSplit(experimentId)
+      .then((split) => setFeatureNames(split.feature_names ?? null))
+      .catch(() => setFeatureNames(null));
+  }, [experimentId]);
 
   const selectedArray = useMemo(() => Array.from(selectedNodes), [selectedNodes]);
 
@@ -936,14 +1495,14 @@ export function OperationsPanel({
 
   // Compute selection context dynamically
   const selectionContext = useMemo(() => {
-    const context = analyzeSelectionContext(selectedNodes, model);
+    const context = analyzeSelectionContext(selectedNodes, model, annotations);
     logDebug("Selection context computed", {
       type: context.type,
       selectedCount: selectedNodes.size,
       selectedAnnotationNodes: selectedAnnotationNodes.length,
     });
     return context;
-  }, [selectedNodes, model, selectedAnnotationNodes]);
+  }, [selectedNodes, model, annotations, selectedAnnotationNodes]);
 
   logDebug("Render", {
     selectedCount: selectedNodes.size,
@@ -1036,6 +1595,52 @@ export function OperationsPanel({
     [handleAddOperation, onOperationChange]
   );
 
+  const handleAddIdentityOnConnection = useCallback(
+    async (
+      fromNode: string,
+      toNode: string,
+      actualConnections?: { from: string; to: string; weight: number }[]
+    ) => {
+      // Use actual connections if provided (for annotation nodes), otherwise use the simple pair
+      const connections: [string, string][] = actualConnections
+        ? actualConnections.map(c => [c.from, c.to])
+        : [[fromNode, toNode]];
+
+      // Determine the target node (the "to" side of the connections)
+      const targetNode = actualConnections ? actualConnections[0].to : toNode;
+
+      logInfo("Adding identity node on connection", {
+        fromNode,
+        toNode,
+        actualConnections,
+        targetNode,
+        connections,
+      });
+
+      // Generate a new identity node ID
+      let identityCounter = 1;
+      const existingNodeIds = new Set(model.nodes.map((n) => n.id));
+      while (existingNodeIds.has(`identity_${identityCounter}`)) {
+        identityCounter++;
+      }
+      const newNodeId = `identity_${identityCounter}`;
+
+      const success = await handleAddOperation({
+        type: "add_identity_node",
+        params: {
+          target_node: targetNode,
+          connections,
+          new_node_id: newNodeId,
+        },
+      });
+
+      if (success) {
+        onOperationChange();
+      }
+    },
+    [model, handleAddOperation, onOperationChange]
+  );
+
   /**
    * Execute the annotation strategy by processing each step in order.
    * Steps are: expand_selection (blocking), add_identity_node, split_node, annotate
@@ -1082,10 +1687,12 @@ export function OperationsPanel({
           } else if (step.type === "annotate") {
             setWizard({ step: "creating" });
 
-            // Expand subgraph to include all nodes from child annotations
-            let expandedSubgraphNodes = [...step.params.subgraph_nodes];
-            let expandedEntryNodes = [...step.params.entry_nodes];
-            let expandedExitNodes = [...step.params.exit_nodes];
+            // For compositional annotations, do NOT include child annotation nodes
+            // The parent annotation only contains "glue" nodes connecting child annotations
+            // Child annotation nodes stay in their own annotations (no overlap allowed by backend)
+            let finalSubgraphNodes = [...step.params.subgraph_nodes];
+            let finalEntryNodes = [...step.params.entry_nodes];
+            let finalExitNodes = [...step.params.exit_nodes];
 
             if (childAnnotations.length > 0) {
               logInfo("Creating compositional annotation with children", {
@@ -1093,33 +1700,40 @@ export function OperationsPanel({
                 childIds: childAnnotations.map(a => a.id),
               });
 
-              // Include all nodes from child annotations in the subgraph
+              // Collect all nodes that belong to child annotations
+              const childAnnotationNodes = new Set<string>();
               for (const child of childAnnotations) {
                 for (const nodeId of child.subgraph_nodes) {
-                  if (!expandedSubgraphNodes.includes(nodeId)) {
-                    expandedSubgraphNodes.push(nodeId);
-                  }
-                }
-                // Child entry nodes become part of parent entry (if not already internal)
-                for (const nodeId of child.entry_nodes) {
-                  if (!expandedEntryNodes.includes(nodeId)) {
-                    expandedEntryNodes.push(nodeId);
-                  }
-                }
-                // Child exit nodes become part of parent exit (if not already internal)
-                for (const nodeId of child.exit_nodes) {
-                  if (!expandedExitNodes.includes(nodeId)) {
-                    expandedExitNodes.push(nodeId);
-                  }
+                  childAnnotationNodes.add(nodeId);
                 }
               }
+
+              // Filter child annotation nodes from subgraph_nodes only.
+              // Entry/exit nodes CAN reference nodes inside child annotations —
+              // they define the composition's interface to the outside world.
+              finalSubgraphNodes = finalSubgraphNodes.filter(n => !childAnnotationNodes.has(n));
+
+              // If all nodes were from child annotations, we have a problem
+              // The parent needs at least its own entry/exit nodes
+              if (finalSubgraphNodes.length === 0) {
+                logWarn("Compositional annotation has no glue nodes - all nodes belong to children");
+                // Use identity nodes as the glue if they were created
+                // These are the connections between annotations
+              }
+
+              logInfo("Filtered child annotation nodes from parent", {
+                childAnnotationNodes: childAnnotationNodes.size,
+                remainingSubgraph: finalSubgraphNodes.length,
+                remainingEntry: finalEntryNodes.length,
+                remainingExit: finalExitNodes.length,
+              });
             }
 
             logInfo("Creating annotation", {
               name,
-              entryNodes: expandedEntryNodes,
-              exitNodes: expandedExitNodes,
-              subgraphNodes: expandedSubgraphNodes,
+              entryNodes: finalEntryNodes,
+              exitNodes: finalExitNodes,
+              subgraphNodes: finalSubgraphNodes,
               isCompositional: childAnnotations.length > 0,
             });
 
@@ -1127,10 +1741,13 @@ export function OperationsPanel({
               type: "annotate",
               params: {
                 name,
-                entry_nodes: expandedEntryNodes,
-                exit_nodes: expandedExitNodes,
-                subgraph_nodes: expandedSubgraphNodes,
+                entry_nodes: finalEntryNodes,
+                exit_nodes: finalExitNodes,
+                subgraph_nodes: finalSubgraphNodes,
                 subgraph_connections: [], // Let backend compute
+                // For compositional annotations, pass child annotation IDs
+                // Backend uses this to consider child nodes as "internal" during validation
+                child_annotation_ids: childAnnotations.map(a => a.name),
               },
             });
 
@@ -1206,6 +1823,54 @@ export function OperationsPanel({
   }, [wizard, selectedAnnotationNodes, executeAnnotationStrategy]);
 
   /**
+   * Execute a single step from the strategy (e.g., just add identity node).
+   */
+  const handleExecuteSingleStep = useCallback(
+    async (step: StrategyStep) => {
+      logInfo("Executing single step", { type: step.type, step });
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        if (step.type === "add_identity_node") {
+          const success = await handleAddOperation({
+            type: "add_identity_node",
+            params: {
+              target_node: step.params.target_node,
+              connections: step.params.connections,
+              new_node_id: step.params.new_node_id,
+            },
+          });
+          if (!success) {
+            throw new Error(`Failed to add identity node ${step.params.new_node_id}`);
+          }
+        } else if (step.type === "split_node") {
+          const success = await handleAddOperation({
+            type: "split_node",
+            params: { node_id: step.params.node_id },
+          });
+          if (!success) {
+            throw new Error(`Failed to split node ${step.params.node_id}`);
+          }
+        } else {
+          throw new Error(`Cannot execute step type: ${step.type}`);
+        }
+
+        logInfo("Single step executed successfully");
+        onOperationChange();
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : "Failed to execute step";
+        logError("Failed to execute single step", err);
+        setError(errorMsg);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [handleAddOperation, onOperationChange]
+  );
+
+  /**
    * Cancel the wizard.
    */
   const handleCancelWizard = useCallback(() => {
@@ -1268,18 +1933,45 @@ export function OperationsPanel({
                           </>
                         )}
                         {step.type === "add_identity_node" && (
-                          <>
-                            <span className="step-label">Add identity node:</span>
-                            <span className="step-detail">
-                              {step.params.new_node_id} intercepts {step.params.connections.length} connection(s) to {step.params.target_node}
-                            </span>
-                          </>
+                          <div className="step-with-action">
+                            <div className="step-content">
+                              <span className="step-label">Add identity node:</span>
+                              <span className="step-detail">
+                                {step.params.new_node_id} intercepts:
+                              </span>
+                              <ul className="connection-list">
+                                {step.params.connections.map(([from, to], idx) => (
+                                  <li key={idx} className="connection-item">
+                                    {from} → {to}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                            <button
+                              className="step-action-btn"
+                              onClick={() => handleExecuteSingleStep(step)}
+                              disabled={loading}
+                              title="Execute just this step"
+                            >
+                              Do it
+                            </button>
+                          </div>
                         )}
                         {step.type === "split_node" && (
-                          <>
-                            <span className="step-label">Split node:</span>
-                            <span className="step-detail">{step.params.node_id}</span>
-                          </>
+                          <div className="step-with-action">
+                            <div className="step-content">
+                              <span className="step-label">Split node:</span>
+                              <span className="step-detail">{step.params.node_id}</span>
+                            </div>
+                            <button
+                              className="step-action-btn"
+                              onClick={() => handleExecuteSingleStep(step)}
+                              disabled={loading}
+                              title="Execute just this step"
+                            >
+                              Do it
+                            </button>
+                          </div>
                         )}
                         {step.type === "annotate" && (
                           <>
@@ -1358,22 +2050,164 @@ export function OperationsPanel({
       </section>
 
       {/* Context-aware operations based on selection */}
-      {selectionContext.type === "single" && (
+      {selectionContext.type === "single" && (() => {
+        const nodeId = selectionContext.nodeId;
+        const nodeObj = model.nodes.find((n) => n.id === nodeId);
+        const currentDisplayName = nodeObj?.display_name ?? null;
+        // Suggest feature name for input nodes based on position
+        const inputIndex = model.metadata.input_nodes.indexOf(nodeId);
+        const baseSuggestion =
+          inputIndex >= 0 && featureNames && inputIndex < featureNames.length
+            ? featureNames[inputIndex]
+            : null;
+        // For split input nodes (e.g. "-17_a"), look up the base node
+        let suggestion = baseSuggestion;
+        if (!suggestion && nodeId.includes("_")) {
+          const baseId = nodeId.replace(/_[a-z]+$/, "");
+          const baseIndex = model.metadata.input_nodes.indexOf(baseId);
+          if (baseIndex >= 0 && featureNames && baseIndex < featureNames.length) {
+            suggestion = featureNames[baseIndex];
+          }
+        }
+        const renameValid = renameInput.length > 0 && !renameInput.includes(" ");
+
+        return (
+          <section className="panel-section">
+            <h4>Node Operations</h4>
+            <div className="button-group">
+              <button
+                className="op-btn"
+                onClick={() => handleSplitNode(nodeId)}
+                disabled={loading || !selectionContext.canSplit}
+                title={selectionContext.canSplit ? "Split this node" : "Output nodes cannot be split"}
+              >
+                Split Node
+              </button>
+            </div>
+            {!selectionContext.canSplit && (
+              <p className="hint">Output nodes cannot be split</p>
+            )}
+
+            {/* Rename Node */}
+            <h4 style={{ marginTop: "12px" }}>Rename Node</h4>
+            <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+              <input
+                type="text"
+                value={renameInput}
+                onChange={(e) => setRenameInput(e.target.value)}
+                placeholder={currentDisplayName || suggestion || "camelCase"}
+                style={{
+                  flex: 1,
+                  padding: "4px 8px",
+                  borderRadius: "4px",
+                  border: "1px solid #555",
+                  background: "#2a2a2a",
+                  color: "#fff",
+                  fontSize: "12px",
+                }}
+                onKeyDown={async (e) => {
+                  if (e.key === "Enter" && renameValid) {
+                    const ok = await handleAddOperation({
+                      type: "rename_node",
+                      params: { node_id: nodeId, display_name: renameInput },
+                    });
+                    if (ok) { setRenameInput(""); onOperationChange(); }
+                  }
+                }}
+              />
+              <button
+                className="op-btn primary"
+                disabled={loading || !renameValid}
+                onClick={async () => {
+                  const ok = await handleAddOperation({
+                    type: "rename_node",
+                    params: { node_id: nodeId, display_name: renameInput },
+                  });
+                  if (ok) { setRenameInput(""); onOperationChange(); }
+                }}
+                style={{ whiteSpace: "nowrap" }}
+              >
+                Rename
+              </button>
+            </div>
+            {suggestion && !currentDisplayName && (
+              <button
+                className="op-btn"
+                style={{ marginTop: "4px", fontSize: "11px" }}
+                disabled={loading}
+                onClick={async () => {
+                  const ok = await handleAddOperation({
+                    type: "rename_node",
+                    params: { node_id: nodeId, display_name: suggestion },
+                  });
+                  if (ok) { setRenameInput(""); onOperationChange(); }
+                }}
+              >
+                Use: {suggestion}
+              </button>
+            )}
+            {currentDisplayName && (
+              <button
+                className="op-btn"
+                style={{ marginTop: "4px", fontSize: "11px" }}
+                disabled={loading}
+                onClick={async () => {
+                  const ok = await handleAddOperation({
+                    type: "rename_node",
+                    params: { node_id: nodeId, display_name: null },
+                  });
+                  if (ok) { setRenameInput(""); onOperationChange(); }
+                }}
+              >
+                Clear name ({currentDisplayName})
+              </button>
+            )}
+            {renameInput.includes(" ") && (
+              <p className="hint" style={{ color: "#f87171" }}>Name cannot contain spaces</p>
+            )}
+          </section>
+        );
+      })()}
+
+      {selectionContext.type === "connectedPair" && (
         <section className="panel-section">
-          <h4>Node Operations</h4>
+          <h4>Connection Operations</h4>
+          <div className="connection-info">
+            <span className="connection-display">
+              {selectionContext.fromNode} → {selectionContext.toNode}
+            </span>
+            {selectionContext.actualConnections && selectionContext.actualConnections.length > 0 && (
+              <ul className="actual-connections">
+                {selectionContext.actualConnections.map((conn, idx) => (
+                  <li key={idx}>
+                    {conn.from} → {conn.to} <span className="conn-weight">({conn.weight.toFixed(3)})</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {!selectionContext.actualConnections && (
+              <span className="connection-weight">
+                weight: {selectionContext.weight.toFixed(3)}
+              </span>
+            )}
+          </div>
           <div className="button-group">
             <button
-              className="op-btn"
-              onClick={() => handleSplitNode(selectionContext.nodeId)}
-              disabled={loading || !selectionContext.canSplit}
-              title={selectionContext.canSplit ? "Split this node" : "Output nodes cannot be split"}
+              className="op-btn primary"
+              onClick={() => handleAddIdentityOnConnection(
+                selectionContext.fromNode,
+                selectionContext.toNode,
+                selectionContext.actualConnections
+              )}
+              disabled={loading}
+              title="Insert an identity node on this connection"
             >
-              Split Node
+              Add Identity Node
             </button>
           </div>
-          {!selectionContext.canSplit && (
-            <p className="hint">Output nodes cannot be split</p>
-          )}
+          <p className="hint">
+            Inserts an identity node between {selectionContext.fromNode} and {selectionContext.toNode}
+          </p>
         </section>
       )}
 
@@ -1434,11 +2268,13 @@ export function OperationsPanel({
             <div className="strategy-section">
               <h5>Annotation Strategy ({selectionContext.analysis.strategy.steps.length} steps)</h5>
               <ol className="strategy-steps">
-                {selectionContext.analysis.strategy.steps.map((step, i) => (
+                {selectionContext.analysis.strategy.steps.map((step, i) => {
+                  const isBlocking = selectionContext.analysis.strategy.blockingSteps.includes(step);
+                  return (
                   <li
                     key={i}
                     className={`strategy-step ${
-                      step.type === "expand_selection" ? "blocking" :
+                      isBlocking ? "blocking" :
                       step.type === "annotate" ? "final" : "auto"
                     }`}
                   >
@@ -1449,21 +2285,51 @@ export function OperationsPanel({
                       </>
                     )}
                     {step.type === "add_identity_node" && (
-                      <>
-                        <span className="step-label">Add identity node:</span>
-                        <span className="step-detail">
-                          {step.params.new_node_id} intercepts {step.params.connections.length} connection(s) to {step.params.target_node}
-                        </span>
-                        <span className="step-note">
-                          ({step.params.target_node} removed from annotation)
-                        </span>
-                      </>
+                      <div className="step-with-action">
+                        <div className="step-content">
+                          <span className="step-label">Add identity node:</span>
+                          <span className="step-detail">
+                            {step.params.new_node_id} intercepts:
+                          </span>
+                          <ul className="connection-list">
+                            {step.params.connections.map(([from, to], idx) => (
+                              <li key={idx} className="connection-item">
+                                {from} → {to}
+                              </li>
+                            ))}
+                          </ul>
+                          <span className="step-note">
+                            ({step.params.target_node} removed from annotation)
+                          </span>
+                        </div>
+                        <button
+                          className="step-action-btn"
+                          onClick={() => handleExecuteSingleStep(step)}
+                          disabled={loading}
+                          title="Execute just this step"
+                        >
+                          Do it
+                        </button>
+                      </div>
                     )}
                     {step.type === "split_node" && (
-                      <>
-                        <span className="step-label">Split node:</span>
-                        <span className="step-detail">{step.params.node_id}</span>
-                      </>
+                      <div className="step-with-action">
+                        <div className="step-content">
+                          <span className="step-label">Split node:</span>
+                          <span className="step-detail">{step.params.node_id}</span>
+                          {step.reason && (
+                            <span className="step-reason">{step.reason}</span>
+                          )}
+                        </div>
+                        <button
+                          className="step-action-btn"
+                          onClick={() => handleExecuteSingleStep(step)}
+                          disabled={loading}
+                          title="Execute just this step"
+                        >
+                          Do it
+                        </button>
+                      </div>
                     )}
                     {step.type === "annotate" && (
                       <>
@@ -1474,7 +2340,8 @@ export function OperationsPanel({
                       </>
                     )}
                   </li>
-                ))}
+                  );
+                })}
               </ol>
             </div>
           )}
