@@ -15,6 +15,8 @@ from ..dependencies import get_db
 from ..schemas import (
     ExperimentListItem,
     ExperimentListResponse,
+    ExperimentSplitResponse,
+    LinkDatasetRequest,
     GenomeDetail,
     ModelStateResponse,
     NodeSchema,
@@ -22,6 +24,8 @@ from ..schemas import (
     ModelMetadata,
 )
 from ...db import Experiment, Population, Genome
+from ...db.models import Dataset, DatasetSplit
+from ...db.dataset_utils import create_or_get_split
 from ...db.serialization import deserialize_genome
 from ...core.explaneat import ExplaNEAT
 from ...core.genome_network import NetworkStructure
@@ -50,6 +54,7 @@ def _network_to_response(network: NetworkStructure) -> ModelStateResponse:
             activation=node.activation,
             response=node.response,
             aggregation=node.aggregation,
+            display_name=getattr(node, "display_name", None),
         )
         for node in network.nodes
     ]
@@ -131,12 +136,22 @@ async def list_experiments(
             .first()
         )
 
+        # Check if a split exists for this experiment
+        has_split = (
+            db.query(DatasetSplit)
+            .filter(DatasetSplit.experiment_id == exp.id)
+            .first()
+            is not None
+        )
+
         result.append(
             ExperimentListItem(
                 id=str(exp.id),
                 name=exp.name,
                 status=exp.status,
                 dataset_name=exp.dataset_name,
+                dataset_id=str(exp.dataset_id) if exp.dataset_id else None,
+                has_split=has_split,
                 generations=generations,
                 total_genomes=total_genomes,
                 best_fitness=best_genome.fitness if best_genome else None,
@@ -234,3 +249,108 @@ async def get_best_genome_phenotype(
     phenotype.metadata["is_original"] = True
 
     return _network_to_response(phenotype)
+
+
+@router.get("/{experiment_id}/split", response_model=ExperimentSplitResponse)
+async def get_experiment_split(
+    experiment_id: UUID,
+    db: Session = Depends(get_db),
+):
+    """
+    Get the dataset split linked to an experiment.
+
+    Returns split info + dataset metadata, or 404 if no split exists.
+    """
+    split = (
+        db.query(DatasetSplit)
+        .filter(DatasetSplit.experiment_id == experiment_id)
+        .first()
+    )
+    if not split:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No dataset split found for experiment {experiment_id}",
+        )
+
+    dataset = db.get(Dataset, split.dataset_id)
+    if not dataset:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Dataset {split.dataset_id} not found",
+        )
+
+    return ExperimentSplitResponse(
+        split_id=str(split.id),
+        dataset_id=str(split.dataset_id),
+        dataset_name=dataset.name,
+        num_samples=dataset.num_samples,
+        num_features=dataset.num_features,
+        num_classes=dataset.num_classes,
+        split_type=split.split_type,
+        test_size=split.test_size,
+        random_state=split.random_state,
+        train_size=split.train_size,
+        test_size_actual=split.test_size_actual,
+        feature_names=dataset.feature_names,
+        target_name=dataset.target_name,
+    )
+
+
+@router.put("/{experiment_id}/dataset", response_model=ExperimentSplitResponse)
+async def link_dataset_to_experiment(
+    experiment_id: UUID,
+    request: LinkDatasetRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Link a dataset to an experiment and create a train/test split.
+
+    Sets experiment.dataset_id and creates a DatasetSplit in one call.
+    """
+    experiment = db.get(Experiment, experiment_id)
+    if not experiment:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Experiment {experiment_id} not found",
+        )
+
+    dataset = db.get(Dataset, UUID(request.dataset_id))
+    if not dataset:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Dataset {request.dataset_id} not found",
+        )
+
+    # Link dataset to experiment
+    experiment.dataset_id = dataset.id
+    db.flush()
+
+    # Create or get split
+    try:
+        split = create_or_get_split(
+            dataset_id=str(dataset.id),
+            experiment_id=str(experiment_id),
+            test_proportion=request.test_proportion,
+            random_seed=request.random_seed,
+            stratify=request.stratify,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    db.commit()
+
+    return ExperimentSplitResponse(
+        split_id=str(split.id),
+        dataset_id=str(split.dataset_id),
+        dataset_name=dataset.name,
+        num_samples=dataset.num_samples,
+        num_features=dataset.num_features,
+        num_classes=dataset.num_classes,
+        split_type=split.split_type,
+        test_size=split.test_size,
+        random_state=split.random_state,
+        train_size=split.train_size,
+        test_size_actual=split.test_size_actual,
+        feature_names=dataset.feature_names,
+        target_name=dataset.target_name,
+    )

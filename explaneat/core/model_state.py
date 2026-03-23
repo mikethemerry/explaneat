@@ -24,6 +24,7 @@ from .operations import (
     apply_remove_node,
     apply_add_node,
     apply_add_identity_node,
+    apply_rename_node,
     validate_operation,
     OperationError,
 )
@@ -76,6 +77,7 @@ class AnnotationData:
     subgraph_nodes: List[str]
     subgraph_connections: List[Tuple[str, str]]
     evidence: Optional[Dict[str, Any]] = None
+    parent_annotation_id: Optional[str] = None  # Set when this is a child of a compositional annotation
 
 
 class ModelStateEngine:
@@ -202,17 +204,44 @@ class ModelStateEngine:
             # Annotations mark nodes as covered (immutable)
             annotation = AnnotationData(
                 name=op.params["name"],
-                hypothesis=op.params["hypothesis"],
+                hypothesis=op.params.get("hypothesis", ""),
                 entry_nodes=op.params["entry_nodes"],
                 exit_nodes=op.params["exit_nodes"],
                 subgraph_nodes=op.params["subgraph_nodes"],
-                subgraph_connections=[tuple(c) for c in op.params["subgraph_connections"]],
+                subgraph_connections=[tuple(c) for c in op.params.get("subgraph_connections", [])],
                 evidence=op.params.get("evidence"),
             )
             self._annotations.append(annotation)
             self._covered_nodes.update(annotation.subgraph_nodes)
             self._covered_connections.update(annotation.subgraph_connections)
+
+            # For compositional annotations, update child annotations' parent_annotation_id
+            child_annotation_ids = op.params.get("child_annotation_ids", [])
+            if child_annotation_ids:
+                for child_name in child_annotation_ids:
+                    # Find child annotation by name and set its parent
+                    for ann in self._annotations:
+                        if ann.name == child_name:
+                            if ann.parent_annotation_id is not None:
+                                import logging
+                                logger = logging.getLogger(__name__)
+                                logger.warning(
+                                    f"Child '{child_name}' already has parent '{ann.parent_annotation_id}', "
+                                    f"overwriting with '{annotation.name}'"
+                                )
+                            ann.parent_annotation_id = annotation.name
+                            break
+
             op.result = {"annotation_index": len(self._annotations) - 1}
+
+        elif op.type == "rename_node":
+            result = apply_rename_node(
+                self._current_state,
+                op.params["node_id"],
+                op.params.get("display_name"),
+                self._covered_nodes,
+            )
+            op.result = result
 
         else:
             raise OperationError(f"Unknown operation type: {op.type}")
@@ -249,6 +278,7 @@ class ModelStateEngine:
                 params,
                 self._covered_nodes,
                 self._covered_connections,
+                self._annotations,
             )
             if errors:
                 raise OperationError(f"Validation failed: {'; '.join(errors)}")
@@ -320,6 +350,7 @@ class ModelStateEngine:
             params,
             self._covered_nodes,
             self._covered_connections,
+            self._annotations,
         )
 
     def can_modify_node(self, node_id: str) -> bool:

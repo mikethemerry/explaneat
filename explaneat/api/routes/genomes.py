@@ -54,6 +54,7 @@ def _network_to_response(network: NetworkStructure) -> ModelStateResponse:
             activation=node.activation,
             response=node.response,
             aggregation=node.aggregation,
+            display_name=getattr(node, "display_name", None),
         )
         for node in network.nodes
     ]

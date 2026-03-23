@@ -39,6 +39,7 @@ class NodeSchema(BaseModel):
     response: Optional[float] = None
     aggregation: Optional[str] = None
     function_metadata: Optional[FunctionNodeMetadataSchema] = None
+    display_name: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -188,6 +189,13 @@ class AnnotateParams(BaseModel):
     child_annotation_ids: List[str] = []  # IDs of child annotations for compositional annotations
 
 
+class RenameNodeParams(BaseModel):
+    """Parameters for rename_node operation."""
+
+    node_id: str
+    display_name: Optional[str] = None  # None to clear
+
+
 class OperationRequest(BaseModel):
     """Request to add a new operation."""
 
@@ -198,6 +206,7 @@ class OperationRequest(BaseModel):
         "add_node",
         "add_identity_node",
         "annotate",
+        "rename_node",
     ]
     params: Union[
         SplitNodeParams,
@@ -206,6 +215,7 @@ class OperationRequest(BaseModel):
         AddNodeParams,
         AddIdentityNodeParams,
         AnnotateParams,
+        RenameNodeParams,
     ]
 
 
@@ -425,6 +435,8 @@ class ExperimentSplitResponse(BaseModel):
     random_state: Optional[int] = None
     train_size: Optional[int] = None
     test_size_actual: Optional[int] = None
+    feature_names: Optional[List[str]] = None
+    target_name: Optional[str] = None
 
 
 class SplitCreateRequest(BaseModel):

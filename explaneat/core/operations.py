@@ -5,8 +5,11 @@ Each operation modifies the NetworkStructure in place and returns
 a result dictionary with information about what was changed.
 """
 
-from typing import List, Dict, Any, Optional, Set, Tuple
+from typing import List, Dict, Any, Optional, Set, Tuple, Union, TYPE_CHECKING
 from copy import deepcopy
+
+if TYPE_CHECKING:
+    from .model_state import AnnotationData
 
 from .genome_network import (
     NetworkStructure,
@@ -33,6 +36,7 @@ def validate_operation(
     params: Dict[str, Any],
     covered_nodes: Set[str],
     covered_connections: Set[Tuple[str, str]],
+    existing_annotations: Optional[List["AnnotationData"]] = None,
 ) -> List[str]:
     """
     Validate an operation against the current model state.
@@ -65,10 +69,10 @@ def validate_operation(
             if len(enabled_outputs) < 2:
                 errors.append(f"Node {node_id} has fewer than 2 outputs, cannot split")
 
-            # Check not an input node
+            # Check not an output node (inputs and hidden nodes can be split)
             node = model.get_node_by_id(node_id)
-            if node and node.type == NodeType.INPUT:
-                errors.append(f"Cannot split input node {node_id}")
+            if node and node.type == NodeType.OUTPUT:
+                errors.append(f"Cannot split output node {node_id}")
 
     elif op_type == "consolidate_node":
         node_ids_to_consolidate = params.get("node_ids", [])
@@ -195,12 +199,6 @@ def validate_operation(
                 if nid in covered_nodes:
                     errors.append(f"Node {nid} is already covered by another annotation")
 
-            # Check entry/exit are subsets
-            if not entry_nodes.issubset(subgraph_nodes):
-                errors.append("entry_nodes must be subset of subgraph_nodes")
-            if not exit_nodes.issubset(subgraph_nodes):
-                errors.append("exit_nodes must be subset of subgraph_nodes")
-
             # Check connections exist
             for conn in params["subgraph_connections"]:
                 if len(conn) != 2:
@@ -214,14 +212,114 @@ def validate_operation(
                 if not conn_exists:
                     errors.append(f"Connection {conn} does not exist")
 
-            # Validate entry nodes have no external outputs
-            for entry_id in entry_nodes:
-                outputs = model.get_connections_from(entry_id)
-                for conn in outputs:
-                    if conn.enabled and conn.to_node not in subgraph_nodes:
+            # --- Composition-specific checks ---
+            child_annotation_ids = set(params.get("child_annotation_ids", []))
+            existing = existing_annotations or []
+
+            # Exit nodes must not be empty
+            if not exit_nodes:
+                errors.append("Annotation must have at least one exit node")
+
+            if child_annotation_ids:
+                # Children must exist
+                for child_name in child_annotation_ids:
+                    found = any(ann.name == child_name for ann in existing)
+                    if not found:
+                        errors.append(f"Child annotation '{child_name}' not found")
+
+                # No dual parents — child must not already have a parent
+                for child_name in child_annotation_ids:
+                    for ann in existing:
+                        if ann.name == child_name and ann.parent_annotation_id is not None:
+                            errors.append(
+                                f"Child '{child_name}' already has parent '{ann.parent_annotation_id}'"
+                            )
+
+                # Children must be leaf annotations (no grandchildren skipping)
+                for child_name in child_annotation_ids:
+                    for ann in existing:
+                        if ann.name == child_name:
+                            child_has_children = any(
+                                a.parent_annotation_id == ann.name for a in existing
+                            )
+                            if child_has_children:
+                                errors.append(
+                                    f"Child '{child_name}' already has children — cannot be claimed as leaf"
+                                )
+
+            # Build set of nodes inside child annotations (for compositional annotations)
+            # Connections to these nodes are considered "internal" even though they're
+            # not in this annotation's subgraph (they belong to child annotations)
+            nodes_inside_children = set()
+            if child_annotation_ids:
+                for ann in existing:
+                    if ann.name in child_annotation_ids:
+                        nodes_inside_children.update(ann.subgraph_nodes)
+
+            # Combined set of "internal" nodes for validation
+            internal_nodes = subgraph_nodes | nodes_inside_children
+
+            # Check entry/exit are subsets of internal nodes
+            # (entry/exit can be in this annotation's subgraph or in child subgraphs)
+            if not entry_nodes.issubset(internal_nodes):
+                errors.append("entry_nodes must be subset of subgraph_nodes (including children)")
+            if not exit_nodes.issubset(internal_nodes):
+                errors.append("exit_nodes must be subset of subgraph_nodes (including children)")
+
+            # --- Three-precondition boundary validation ---
+            # Check the annotation's own subgraph_nodes against the model.
+            # For compositions, child annotation internals are NOT re-checked here
+            # (they were validated when created). We use internal_nodes only to
+            # determine what counts as "inside" the annotation boundary.
+
+            # Precondition 1: Entry-only ingress
+            # All edges entering the subgraph from outside must target entry nodes
+            for nid in subgraph_nodes:
+                if nid in entry_nodes:
+                    continue
+                inputs = model.get_connections_to(nid)
+                for conn in inputs:
+                    if conn.enabled and conn.from_node not in internal_nodes:
                         errors.append(
-                            f"Entry node {entry_id} has external output to {conn.to_node} (side effect)"
+                            f"P1 violation: non-entry node {nid} has external input from {conn.from_node}"
                         )
+
+            # Precondition 2: Exit-only egress
+            # All edges leaving the subgraph must originate from exit nodes
+            for nid in subgraph_nodes:
+                if nid in exit_nodes:
+                    continue
+                outputs = model.get_connections_from(nid)
+                for conn in outputs:
+                    if conn.enabled and conn.to_node not in internal_nodes:
+                        errors.append(
+                            f"P2 violation: non-exit node {nid} has external output to {conn.to_node}"
+                        )
+
+            # Precondition 3: Pure exits
+            # Exit nodes must only receive inputs from within the annotation
+            for exit_id in exit_nodes:
+                inputs = model.get_connections_to(exit_id)
+                for conn in inputs:
+                    if conn.enabled and conn.from_node not in internal_nodes:
+                        errors.append(
+                            f"P3 violation: exit node {exit_id} has external input from {conn.from_node}"
+                        )
+
+    elif op_type == "rename_node":
+        node_id = params.get("node_id")
+        display_name = params.get("display_name")
+        if not node_id:
+            errors.append("node_id is required")
+        elif node_id not in node_ids:
+            errors.append(f"Node '{node_id}' not found")
+        elif node_id in covered_nodes:
+            errors.append(f"Node '{node_id}' is covered by an annotation")
+        if display_name is not None:
+            if not display_name:
+                errors.append("display_name cannot be empty")
+            if isinstance(display_name, str) and " " in display_name:
+                errors.append("display_name cannot contain spaces (use camelCase)")
 
     else:
         errors.append(f"Unknown operation type: {op_type}")
@@ -347,6 +445,13 @@ def apply_split_node(
     # Create split nodes
     created_nodes = []
     for i, (split_id, out_conn) in enumerate(zip(split_ids, outgoing)):
+        # Derive display_name suffix from split_id
+        suffix = split_id.rsplit("_", 1)[-1] if "_" in split_id else None
+        split_display_name = (
+            f"{original_node.display_name}_{suffix}"
+            if original_node.display_name and suffix
+            else None
+        )
         # Create new node with same properties
         new_node = NetworkNode(
             id=split_id,
@@ -355,6 +460,7 @@ def apply_split_node(
             activation=original_node.activation,
             response=original_node.response,
             aggregation=original_node.aggregation,
+            display_name=split_display_name,
         )
         model.nodes.append(new_node)
         created_nodes.append(split_id)
@@ -386,6 +492,16 @@ def apply_split_node(
         c for c in model.connections
         if c.from_node != node_id and c.to_node != node_id
     ]
+
+    # Verify each split node has exactly 1 output (invariant check)
+    for split_id in created_nodes:
+        outputs = [c for c in model.connections if c.from_node == split_id and c.enabled]
+        if len(outputs) != 1:
+            import logging
+            logging.warning(
+                f"Split node {split_id} has {len(outputs)} outputs (expected 1). "
+                f"Outputs: {[(c.from_node, c.to_node) for c in outputs]}"
+            )
 
     return {
         "created_nodes": created_nodes,
@@ -774,3 +890,39 @@ def apply_add_identity_node(
         "created_connections": created_connections,
         "removed_connections": removed_connections,
     }
+
+
+def apply_rename_node(
+    model: NetworkStructure,
+    node_id: str,
+    display_name: Union[str, None],
+    covered_nodes: Set[str],
+) -> Dict[str, Any]:
+    """Set or clear the display_name on a node.
+
+    Args:
+        model: The network structure (mutated in place).
+        node_id: ID of the node to rename.
+        display_name: New display name, or None to clear.
+        covered_nodes: Nodes covered by annotations (cannot be renamed).
+
+    Returns:
+        Dict with node_id and display_name.
+    """
+    if node_id in covered_nodes:
+        raise OperationError(
+            f"Node '{node_id}' is covered by an annotation and cannot be renamed"
+        )
+
+    node = model.get_node_by_id(node_id)
+    if node is None:
+        raise OperationError(f"Node '{node_id}' not found in structure")
+
+    if display_name is not None:
+        if not display_name:
+            raise OperationError("display_name cannot be empty")
+        if " " in display_name:
+            raise OperationError("display_name cannot contain spaces (use camelCase)")
+
+    node.display_name = display_name
+    return {"node_id": node_id, "display_name": display_name}

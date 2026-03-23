@@ -138,6 +138,7 @@ def _network_to_response(
                 response=node.response,
                 aggregation=node.aggregation,
                 function_metadata=fn_meta,
+                display_name=getattr(node, "display_name", None),
             )
         )
 
@@ -295,6 +296,7 @@ async def add_operation(
     - **add_node**: Insert a node into a connection
     - **add_identity_node**: Intercept connections through an identity node
     - **annotate**: Create an annotation on a subgraph
+    - **rename_node**: Set or clear a display name on a node
     """
     genome, explanation, engine = _get_phenotype_and_engine(genome_id, db)
 

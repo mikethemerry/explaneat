@@ -47,8 +47,8 @@ class FunctionNodeMetadata:
 @dataclass
 class NetworkNode:
     """Represents a single node in the network.
-    
-    All node IDs are strings to support both regular nodes (e.g., "5", "-1") 
+
+    All node IDs are strings to support both regular nodes (e.g., "5", "-1")
     and split nodes (e.g., "5_a", "5_b").
     """
     id: str  # Changed from int to str to support split nodes
@@ -58,6 +58,12 @@ class NetworkNode:
     response: Optional[float] = None
     aggregation: Optional[str] = None
     function_metadata: Optional[FunctionNodeMetadata] = None
+    display_name: Optional[str] = None
+
+    @property
+    def display_label(self) -> str:
+        """Return display_name if set, otherwise the node ID."""
+        return self.display_name or self.id
 
 
 @dataclass
@@ -109,6 +115,10 @@ class NetworkStructure:
         """Get set of all node IDs."""
         return {node.id for node in self.nodes}
     
+    def get_display_map(self) -> Dict[str, str]:
+        """Map node IDs to their display labels (display_name or id)."""
+        return {node.id: node.display_label for node in self.nodes}
+
     def get_enabled_connections(self) -> List[NetworkConnection]:
         """Get only enabled connections."""
         return [conn for conn in self.connections if conn.enabled]
