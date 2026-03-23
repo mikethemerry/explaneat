@@ -426,7 +426,7 @@ class NeuralNeat(nn.Module):
 
             try:
                 if layer_type == LAYER_TYPE_CONNECTED:
-                    self._outputs[layer_id] = torch.sigmoid(
+                    self._outputs[layer_id] = torch.relu(
                         torch.matmul(layer_input, self.weights[layer_id])
                         + self.biases[layer_id]
                     )

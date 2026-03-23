@@ -848,17 +848,11 @@ survival_threshold = {reproduction_cfg.get('survival_threshold', 0.2)}"""
             
             if splits:
                 has_splits = True
-                # Group splits by original node
-                # Filter out splits for input nodes (negative IDs) - these shouldn't exist
+                # Group splits by original node (input nodes CAN be split)
                 splits_by_original = {}
                 valid_splits = []
                 for split in splits:
                     orig_id = split.get("original_node_id")
-                    # Skip splits for input nodes (negative IDs)
-                    if orig_id < 0:
-                        print(f"   ⚠️  Warning: Found invalid split for input node {orig_id} (input nodes should not be split)")
-                        continue
-                    
                     split_id = split.get("split_node_id")
                     connections = split.get("outgoing_connections", [])
                     display = NodeSplitManager.format_split_node_display(str(split_id))

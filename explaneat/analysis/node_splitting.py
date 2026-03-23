@@ -87,17 +87,8 @@ class NodeSplitManager:
         Raises:
             ValueError: If validation fails
         """
-        # Validate: Don't allow splitting input nodes (negative string IDs like "-1")
-        try:
-            orig_id_int = int(original_node_id)
-            if orig_id_int < 0:
-                raise ValueError(
-                    f"Cannot split input node {original_node_id}. Input nodes (negative IDs) should not be split."
-                )
-        except ValueError:
-            # If original_node_id can't be converted to int, it's likely already a string split node
-            # Allow it (split nodes can connect to other split nodes)
-            pass
+        # Note: Input nodes (negative IDs) CAN be split - they often have multiple outputs
+        # Only output nodes should not be split (they have no outgoing connections)
         
         if not split_mappings:
             raise ValueError("split_mappings cannot be empty")
