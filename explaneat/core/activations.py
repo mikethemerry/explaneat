@@ -161,7 +161,8 @@ def _load_sympy_registry() -> None:
     _SYMPY_REGISTRY["tanh"] = lambda x: sympy.tanh(x)
     _SYMPY_REGISTRY["sin"] = lambda x: sympy.sin(x)
     _SYMPY_REGISTRY["gauss"] = lambda x: sympy.exp(-(x ** 2))
-    _SYMPY_REGISTRY["relu"] = lambda x: sympy.Max(0, x)
+    _relu = sympy.Function("relu")
+    _SYMPY_REGISTRY["relu"] = lambda x: _relu(x)
     _SYMPY_REGISTRY["softplus"] = lambda x: sympy.log(1 + sympy.exp(x))
     _SYMPY_REGISTRY["identity"] = lambda x: x
     _SYMPY_REGISTRY["clamped"] = lambda x: sympy.Max(-1, sympy.Min(1, x))
