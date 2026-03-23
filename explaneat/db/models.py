@@ -1,7 +1,8 @@
+import io
 import uuid
 import json
 from datetime import datetime
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 from sqlalchemy import (
     Column,
     String,
@@ -16,6 +17,7 @@ from sqlalchemy import (
     LargeBinary,
     CheckConstraint,
 )
+import numpy as np
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import func
@@ -68,6 +70,10 @@ class Dataset(Base, TimestampMixin):
         JSONB
     )  # Additional metadata (e.g., license, citation, etc.)
 
+    # Binary data storage
+    x_data = Column(LargeBinary)  # Numpy array stored as bytes via np.save
+    y_data = Column(LargeBinary)  # Numpy array stored as bytes via np.save
+
     # Relationships
     splits = relationship(
         "DatasetSplit", back_populates="dataset", cascade="all, delete-orphan"
@@ -76,15 +82,39 @@ class Dataset(Base, TimestampMixin):
 
     __table_args__ = (Index("idx_datasets_name_version", "name", "version"),)
 
+    def set_data(self, X: np.ndarray, y: np.ndarray) -> None:
+        """Store numpy arrays as binary data."""
+        buf_x = io.BytesIO()
+        np.save(buf_x, X)
+        self.x_data = buf_x.getvalue()
+
+        buf_y = io.BytesIO()
+        np.save(buf_y, y)
+        self.y_data = buf_y.getvalue()
+
+    def get_data(self) -> Optional[Tuple[np.ndarray, np.ndarray]]:
+        """Load numpy arrays from binary data. Returns None if no data stored."""
+        if self.x_data is None or self.y_data is None:
+            return None
+        X = np.load(io.BytesIO(self.x_data))
+        y = np.load(io.BytesIO(self.y_data))
+        return X, y
+
     def to_dict(self):
         return {
             "id": str(self.id),
             "name": self.name,
             "version": self.version,
             "source": self.source,
+            "source_url": self.source_url,
+            "description": self.description,
             "num_samples": self.num_samples,
             "num_features": self.num_features,
             "num_classes": self.num_classes,
+            "feature_names": self.feature_names,
+            "target_name": self.target_name,
+            "class_names": self.class_names,
+            "has_data": self.x_data is not None,
         }
 
 

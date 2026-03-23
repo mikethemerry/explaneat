@@ -54,12 +54,12 @@ def save_dataset_to_db(
     # Infer feature types if not provided
     if feature_types is None:
         feature_types = {}
-        for i, name in enumerate(feature_names):
+        for i, feat_name in enumerate(feature_names):
             # Simple heuristic: check if values are integers
             if np.all(X[:, i] == X[:, i].astype(int)):
-                feature_types[name] = "integer"
+                feature_types[feat_name] = "integer"
             else:
-                feature_types[name] = "numeric"
+                feature_types[feat_name] = "numeric"
     
     # Determine number of classes
     num_classes = None
@@ -92,6 +92,12 @@ def save_dataset_to_db(
                 dataset.class_names = class_names
             if metadata:
                 dataset.additional_metadata = metadata
+            # Update stored data
+            dataset.set_data(X, y)
+            dataset.num_samples = X.shape[0]
+            dataset.num_features = X.shape[1]
+            if num_classes is not None:
+                dataset.num_classes = num_classes
         else:
             dataset = Dataset(
                 name=name,
@@ -110,9 +116,12 @@ def save_dataset_to_db(
                 class_names=class_names,
                 additional_metadata=metadata or {},
             )
+            dataset.set_data(X, y)
             session.add(dataset)
             session.flush()
-        
+
+        # Expunge so the object remains usable after session closes
+        session.expunge(dataset)
         return dataset
 
 
@@ -395,4 +404,127 @@ def recreate_split_from_db(
             X_test = scaler.transform(X_test)
     
     return X_train, X_test, y_train, y_test
+
+
+def load_dataset_data(
+    dataset_id: Union[str, uuid.UUID],
+) -> Optional[Tuple[np.ndarray, np.ndarray]]:
+    """Load dataset arrays (X, y) from database.
+
+    Args:
+        dataset_id: UUID of the dataset
+
+    Returns:
+        Tuple of (X, y) numpy arrays, or None if not found or no data stored
+    """
+    if isinstance(dataset_id, str):
+        dataset_id = uuid.UUID(dataset_id)
+
+    with db.session_scope() as session:
+        dataset = session.query(Dataset).filter_by(id=dataset_id).first()
+        if dataset is None:
+            return None
+        return dataset.get_data()
+
+
+def create_or_get_split(
+    dataset_id: Union[str, uuid.UUID],
+    experiment_id: Union[str, uuid.UUID],
+    test_proportion: float = 0.2,
+    random_seed: int = 42,
+    stratify: bool = False,
+) -> DatasetSplit:
+    """Get existing split for (dataset, experiment) pair, or create a new one.
+
+    Ensures one split per (dataset, experiment) pair. If a split already exists,
+    it is returned regardless of the other parameters.
+
+    Args:
+        dataset_id: UUID of the dataset
+        experiment_id: UUID of the experiment
+        test_proportion: Fraction of data for test set
+        random_seed: Random seed for reproducibility
+        stratify: Whether to stratify on target
+
+    Returns:
+        DatasetSplit model instance
+    """
+    if isinstance(dataset_id, str):
+        dataset_id = uuid.UUID(dataset_id)
+    if isinstance(experiment_id, str):
+        experiment_id = uuid.UUID(experiment_id)
+
+    with db.session_scope() as session:
+        existing = (
+            session.query(DatasetSplit)
+            .filter_by(dataset_id=dataset_id, experiment_id=experiment_id)
+            .first()
+        )
+        if existing:
+            session.expunge(existing)
+            return existing
+
+        # Load dataset data to create split
+        dataset = session.query(Dataset).filter_by(id=dataset_id).first()
+        if dataset is None:
+            raise ValueError(f"Dataset {dataset_id} not found")
+        data = dataset.get_data()
+        if data is None:
+            raise ValueError(f"Dataset {dataset_id} has no stored data")
+        X, y = data
+
+        stratify_col = y if stratify else None
+        train_idx, test_idx = train_test_split(
+            np.arange(len(X)),
+            test_size=test_proportion,
+            random_state=random_seed,
+            stratify=stratify_col,
+        )
+
+        split = DatasetSplit(
+            dataset_id=dataset_id,
+            experiment_id=experiment_id,
+            split_type="train_test",
+            test_size=test_proportion,
+            random_state=random_seed,
+            shuffle=True,
+            stratify=stratify,
+            train_indices=train_idx.tolist(),
+            test_indices=test_idx.tolist(),
+            train_size=len(train_idx),
+            test_size_actual=len(test_idx),
+        )
+        session.add(split)
+        session.flush()
+        session.expunge(split)
+        return split
+
+
+def sample_dataset(
+    X: np.ndarray,
+    y: np.ndarray,
+    fraction: float = 0.1,
+    max_samples: int = 1000,
+    seed: int = 42,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Sample a subset of a dataset for visualization (in-memory only).
+
+    Args:
+        X: Feature matrix
+        y: Target vector
+        fraction: Fraction of data to sample
+        max_samples: Maximum number of samples
+        seed: Random seed
+
+    Returns:
+        Tuple of (X_sample, y_sample)
+    """
+    n = len(X)
+    n_sample = min(int(n * fraction), max_samples)
+    n_sample = max(n_sample, 1)  # at least 1
+    if n_sample >= n:
+        return X, y
+    rng = np.random.RandomState(seed)
+    indices = rng.choice(n, size=n_sample, replace=False)
+    return X[indices], y[indices]
 
