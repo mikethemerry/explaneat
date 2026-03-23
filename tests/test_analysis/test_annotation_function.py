@@ -157,3 +157,37 @@ class TestAnnotationFunctionStructureMode:
         # Should produce some LaTeX (depends on sympy availability)
         if latex is not None:
             assert "y_0" in latex
+
+    def test_latex_uses_display_names(self):
+        """Sympy symbols should use display_name when set on entry nodes."""
+        nodes = [
+            NetworkNode(id="-1", type=NodeType.INPUT, display_name="sepalLen"),
+            NetworkNode(id="-2", type=NodeType.INPUT, display_name="petalWid"),
+            NetworkNode(id="5", type=NodeType.HIDDEN, bias=0.5, activation="relu"),
+            NetworkNode(id="0", type=NodeType.OUTPUT, bias=0.0, activation="sigmoid"),
+        ]
+        conns = [
+            NetworkConnection(from_node="-1", to_node="5", weight=1.0, enabled=True),
+            NetworkConnection(from_node="-2", to_node="5", weight=0.5, enabled=True),
+            NetworkConnection(from_node="5", to_node="0", weight=1.0, enabled=True),
+        ]
+        structure = NetworkStructure(
+            nodes=nodes, connections=conns,
+            input_node_ids=["-1", "-2"], output_node_ids=["0"],
+        )
+        annotation = {
+            "name": "test",
+            "hypothesis": "test",
+            "entry_nodes": ["-1", "-2"],
+            "exit_nodes": ["5"],
+            "subgraph_nodes": ["-1", "-2", "5"],
+            "subgraph_connections": [("-1", "5"), ("-2", "5")],
+        }
+        af = AnnotationFunction.from_structure(annotation, structure)
+        latex = af.to_latex()
+        assert latex is not None
+        assert "sepalLen" in latex
+        assert "petalWid" in latex
+        # Should NOT contain the raw node IDs as symbols
+        assert "x_{-1}" not in latex
+        assert "x_{-2}" not in latex

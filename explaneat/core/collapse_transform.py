@@ -284,14 +284,15 @@ def _collapse_one(
             child_function_metadata[nid] = node_obj.function_metadata
 
     # --- Create function node metadata ---
+    display_map = {n.id: n.display_label for n in structure.nodes}
     metadata = FunctionNodeMetadata(
         annotation_name=annotation.name,
         annotation_id=annotation.name,
         hypothesis=annotation.hypothesis,
         n_inputs=len(annotation.entry_nodes),
         n_outputs=len(annotation.exit_nodes),
-        input_names=list(annotation.entry_nodes),
-        output_names=list(annotation.exit_nodes),
+        input_names=[display_map.get(n, n) for n in annotation.entry_nodes],
+        output_names=[display_map.get(n, n) for n in annotation.exit_nodes],
         formula_latex=formula_latex,
         subgraph_nodes=list(subgraph_set),
         subgraph_connections=effective_connections,

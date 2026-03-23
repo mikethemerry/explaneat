@@ -434,10 +434,12 @@ class AnnotationFunction:
         except ImportError:
             return None
 
-        # Create input symbols using node IDs for readability
+        # Create input symbols using display names for readability
         input_syms = {}
+        display_map = self._structure.get_display_map() if self._mode == "structure" and self._structure else {}
         for i, node_str in enumerate(self.entry_nodes):
-            input_syms[node_str] = sympy.Symbol(f"x_{{{node_str}}}")
+            display = display_map.get(node_str, node_str)
+            input_syms[node_str] = sympy.Symbol(f"x_{{{display}}}")
 
         node_exprs = dict(input_syms)
 

@@ -217,6 +217,78 @@ def _structure_with_external_bypass() -> NetworkStructure:
     )
 
 
+def _compositional_structure() -> NetworkStructure:
+    """
+    Structure for compositional (parent with children) annotations:
+
+        in1 -> A -> C -> E -> out1
+        in2 -> B -> D -/
+
+    Child1 covers {A, C} with entry={A}, exit={C}.
+    Child2 covers {B, D} with entry={B}, exit={D}.
+    Parent covers the whole thing with entry={A, B}, exit={E},
+    but has subgraph_nodes=[] (relies on children).
+    """
+    nodes = [
+        _make_node("-1", NodeType.INPUT),
+        _make_node("-2", NodeType.INPUT),
+        _make_node("A", NodeType.HIDDEN, bias=0.1, activation="sigmoid"),
+        _make_node("B", NodeType.HIDDEN, bias=0.2, activation="relu"),
+        _make_node("C", NodeType.HIDDEN, bias=0.3, activation="sigmoid"),
+        _make_node("D", NodeType.HIDDEN, bias=0.4, activation="relu"),
+        _make_node("E", NodeType.HIDDEN, bias=0.5, activation="sigmoid"),
+        _make_node("0", NodeType.OUTPUT),
+    ]
+    connections = [
+        _make_conn("-1", "A", weight=1.0),
+        _make_conn("-2", "B", weight=1.0),
+        _make_conn("A", "C", weight=0.5),
+        _make_conn("B", "D", weight=0.6),
+        _make_conn("C", "E", weight=0.7),
+        _make_conn("D", "E", weight=0.8),
+        _make_conn("E", "0", weight=0.9),
+    ]
+    return NetworkStructure(
+        nodes=nodes,
+        connections=connections,
+        input_node_ids=["-1", "-2"],
+        output_node_ids=["0"],
+    )
+
+
+def _compositional_annotations():
+    """Create child1, child2, parent annotations for _compositional_structure."""
+    child1 = _make_annotation(
+        "child1",
+        entry_nodes=["A"],
+        exit_nodes=["C"],
+        subgraph_nodes=["A", "C"],
+        subgraph_connections=[("A", "C")],
+        hypothesis="First pathway",
+    )
+    child1.parent_annotation_id = "parent"
+
+    child2 = _make_annotation(
+        "child2",
+        entry_nodes=["B"],
+        exit_nodes=["D"],
+        subgraph_nodes=["B", "D"],
+        subgraph_connections=[("B", "D")],
+        hypothesis="Second pathway",
+    )
+    child2.parent_annotation_id = "parent"
+
+    parent = _make_annotation(
+        "parent",
+        entry_nodes=["A", "B"],
+        exit_nodes=["E"],
+        subgraph_nodes=[],  # Empty! Compositional annotation.
+        subgraph_connections=[],
+        hypothesis="Combined pathways",
+    )
+    return child1, child2, parent
+
+
 def _nested_annotation_structure() -> NetworkStructure:
     """
     Structure for nested annotations:
@@ -701,3 +773,159 @@ class TestCollapseStructureConnections:
         # Structure still validates
         validation = result.validate()
         assert validation["is_valid"] is True
+
+
+class TestCompositionalAnnotationCollapse:
+    """Test collapse of compositional annotations (parent with children).
+
+    Compositional annotations have empty subgraph_nodes and rely on their
+    children's subgraphs. The effective subgraph is the union of all
+    descendants' subgraphs plus the parent's entry/exit nodes.
+    """
+
+    def test_collapse_all_three_produces_single_fn_parent(self):
+        """Collapsing children + parent produces a single fn_parent node."""
+        structure = _compositional_structure()
+        child1, child2, parent = _compositional_annotations()
+        annotations = [child1, child2, parent]
+
+        result = collapse_structure(
+            structure, annotations, {"child1", "child2", "parent"}
+        )
+
+        node_ids = _node_ids(result)
+        # fn_parent should exist
+        assert "fn_parent" in node_ids
+        # Entry nodes A, B should be preserved
+        assert "A" in node_ids
+        assert "B" in node_ids
+        # Internal nodes should be removed
+        assert "C" not in node_ids
+        assert "D" not in node_ids
+        assert "E" not in node_ids
+        # Child fn nodes should also be removed (internal to parent)
+        assert "fn_child1" not in node_ids
+        assert "fn_child2" not in node_ids
+
+    def test_collapse_all_three_fn_parent_is_connected(self):
+        """fn_parent should have incoming connections from entries and
+        outgoing connections to external nodes."""
+        structure = _compositional_structure()
+        child1, child2, parent = _compositional_annotations()
+        annotations = [child1, child2, parent]
+
+        result = collapse_structure(
+            structure, annotations, {"child1", "child2", "parent"}
+        )
+
+        conn_set = _conn_tuples(result)
+        # Entry -> fn_parent connections
+        assert ("A", "fn_parent") in conn_set
+        assert ("B", "fn_parent") in conn_set
+        # fn_parent -> output connection (rerouted from E -> out1)
+        assert ("fn_parent", "0") in conn_set
+
+    def test_collapse_all_three_no_cycle(self):
+        """Collapsing children + parent should not introduce cycles."""
+        structure = _compositional_structure()
+        child1, child2, parent = _compositional_annotations()
+        annotations = [child1, child2, parent]
+
+        result = collapse_structure(
+            structure, annotations, {"child1", "child2", "parent"}
+        )
+        assert not _has_cycle(result)
+
+    def test_collapse_only_parent_subsumes_children(self):
+        """Collapsing only the parent (not children) should collapse
+        the entire effective subgraph at once."""
+        structure = _compositional_structure()
+        child1, child2, parent = _compositional_annotations()
+        annotations = [child1, child2, parent]
+
+        result = collapse_structure(structure, annotations, {"parent"})
+
+        node_ids = _node_ids(result)
+        assert "fn_parent" in node_ids
+        # Entry nodes preserved
+        assert "A" in node_ids
+        assert "B" in node_ids
+        # All internal nodes removed
+        assert "C" not in node_ids
+        assert "D" not in node_ids
+        assert "E" not in node_ids
+        # No child fn nodes (children weren't collapsed separately)
+        assert "fn_child1" not in node_ids
+        assert "fn_child2" not in node_ids
+
+    def test_collapse_only_parent_is_connected(self):
+        """When only the parent is collapsed, fn_parent should be connected."""
+        structure = _compositional_structure()
+        child1, child2, parent = _compositional_annotations()
+        annotations = [child1, child2, parent]
+
+        result = collapse_structure(structure, annotations, {"parent"})
+
+        conn_set = _conn_tuples(result)
+        assert ("A", "fn_parent") in conn_set
+        assert ("B", "fn_parent") in conn_set
+        assert ("fn_parent", "0") in conn_set
+
+    def test_collapse_only_children_leaves_parent_intact(self):
+        """Collapsing only children without the parent should not touch
+        the parent's exit nodes or create fn_parent."""
+        structure = _compositional_structure()
+        child1, child2, parent = _compositional_annotations()
+        annotations = [child1, child2, parent]
+
+        result = collapse_structure(
+            structure, annotations, {"child1", "child2"}
+        )
+
+        node_ids = _node_ids(result)
+        # Child fn nodes exist
+        assert "fn_child1" in node_ids
+        assert "fn_child2" in node_ids
+        # No parent fn node
+        assert "fn_parent" not in node_ids
+        # E is still there (not part of any collapsed annotation)
+        assert "E" in node_ids
+        # Entry nodes preserved
+        assert "A" in node_ids
+        assert "B" in node_ids
+
+    def test_compositional_metadata_has_effective_subgraph(self):
+        """The function node metadata should contain the effective subgraph
+        (not the empty one from the annotation)."""
+        structure = _compositional_structure()
+        child1, child2, parent = _compositional_annotations()
+        annotations = [child1, child2, parent]
+
+        result = collapse_structure(
+            structure, annotations, {"child1", "child2", "parent"}
+        )
+
+        fn_node = result.get_node_by_id("fn_parent")
+        meta = fn_node.function_metadata
+        # Should have non-empty subgraph
+        assert len(meta.subgraph_nodes) > 0
+        assert meta.n_inputs == 2
+        assert meta.n_outputs == 1
+        assert set(meta.input_names) == {"A", "B"}
+        assert meta.output_names == ["E"]
+
+    def test_compositional_output_index(self):
+        """fn_parent -> out1 should carry the correct output_index."""
+        structure = _compositional_structure()
+        child1, child2, parent = _compositional_annotations()
+        annotations = [child1, child2, parent]
+
+        result = collapse_structure(
+            structure, annotations, {"child1", "child2", "parent"}
+        )
+
+        fn_out = [c for c in result.connections if c.from_node == "fn_parent"]
+        assert len(fn_out) == 1
+        # E is exit_nodes[0], so output_index=0
+        assert fn_out[0].output_index == 0
+        assert fn_out[0].to_node == "0"
