@@ -36,6 +36,12 @@ export function VizCanvas({ vizType, data, onSvgRef }: VizCanvasProps) {
         plot = renderPCAScatter(data);
       } else if (vizType === "sensitivity") {
         plot = renderSensitivity(data);
+      } else if (vizType === "histogram") {
+        plot = renderHistogram(data);
+      } else if (vizType === "scatter2d") {
+        plot = renderScatter2D(data);
+      } else if (vizType === "shap") {
+        plot = renderShapBar(data);
       }
     } catch (err) {
       console.error("Viz rendering error:", err);
@@ -208,6 +214,88 @@ function renderSensitivity(data: Record<string, unknown>): SVGSVGElement | HTMLE
         tip: true,
       }),
       Plot.ruleY([0]),
+    ],
+  });
+}
+
+function renderHistogram(data: Record<string, unknown>): SVGSVGElement | HTMLElement {
+  const binEdges = data.bin_edges as number[];
+  const counts = data.counts as number[];
+  const xLabel = (data.x_label as string) || "value";
+
+  const bars = counts.map((count, i) => ({
+    x0: binEdges[i],
+    x1: binEdges[i + 1],
+    count,
+  }));
+
+  return Plot.plot({
+    width: 500,
+    height: 350,
+    x: { label: xLabel },
+    y: { label: "Count" },
+    marks: [
+      Plot.rectY(bars, {
+        x1: "x0",
+        x2: "x1",
+        y: "count",
+        fill: "#2563eb",
+        fillOpacity: 0.8,
+        tip: true,
+      }),
+      Plot.ruleY([0]),
+    ],
+  });
+}
+
+function renderScatter2D(data: Record<string, unknown>): SVGSVGElement | HTMLElement {
+  const xValues = data.x_values as number[];
+  const yValues = data.y_values as number[];
+  const xLabel = (data.x_label as string) || "x";
+  const yLabel = (data.y_label as string) || "y";
+
+  const points = xValues.map((x, i) => ({ x, y: yValues[i] }));
+
+  return Plot.plot({
+    width: 500,
+    height: 400,
+    x: { label: xLabel },
+    y: { label: yLabel },
+    marks: [
+      Plot.dot(points, {
+        x: "x",
+        y: "y",
+        fill: "#2563eb",
+        fillOpacity: 0.5,
+        r: 3,
+      }),
+    ],
+  });
+}
+
+function renderShapBar(data: Record<string, unknown>): SVGSVGElement | HTMLElement {
+  const featureNames = data.feature_names as string[];
+  const meanAbsShap = data.mean_abs_shap as number[];
+
+  // Build data sorted by importance (descending)
+  const barData = featureNames
+    .map((name, i) => ({ feature: name, importance: meanAbsShap[i] }))
+    .sort((a, b) => b.importance - a.importance);
+
+  return Plot.plot({
+    width: 500,
+    height: Math.max(200, barData.length * 30 + 60),
+    marginLeft: 120,
+    x: { label: "Mean |SHAP value|" },
+    y: { label: null, domain: barData.map((d) => d.feature) },
+    marks: [
+      Plot.barX(barData, {
+        x: "importance",
+        y: "feature",
+        fill: "#7C3AED",
+        tip: true,
+      }),
+      Plot.ruleX([0]),
     ],
   });
 }

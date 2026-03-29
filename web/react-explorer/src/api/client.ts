@@ -738,6 +738,30 @@ export async function listEvidence(
   );
 }
 
+export type ShapResponse = {
+  feature_names: string[];
+  mean_abs_shap: number[];
+  base_value: number;
+};
+
+export async function computeShap(
+  genomeId: string,
+  params: {
+    dataset_split_id: string;
+    annotation_id?: string;
+    split?: "train" | "test" | "both";
+    max_samples?: number;
+  },
+): Promise<ShapResponse> {
+  return fetchJson<ShapResponse>(
+    `${API_BASE}/genomes/${genomeId}/evidence/shap`,
+    {
+      method: "POST",
+      body: JSON.stringify(params),
+    },
+  );
+}
+
 // ============================================================================
 // Input Distribution types and endpoints
 // ============================================================================

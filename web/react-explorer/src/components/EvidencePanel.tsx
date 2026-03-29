@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useMemo } from "react";
 import {
   computeVizData,
+  computeShap,
   saveSnapshot,
   type VizDataResponse,
   type AnnotationSummary,
@@ -22,6 +23,7 @@ const VIZ_TYPE_LABELS: Record<string, string> = {
   partial_dependence: "Partial Dep.",
   pca_scatter: "PCA Scatter",
   sensitivity: "Sensitivity",
+  shap: "SHAP Values",
 };
 
 // Which viz types need which dimension selectors
@@ -31,6 +33,7 @@ const NEEDS_INPUT_DIM: Record<string, "single" | "pair" | false> = {
   partial_dependence: "single",
   pca_scatter: false,
   sensitivity: false,
+  shap: false,
 };
 
 const NEEDS_OUTPUT_DIM: Record<string, boolean> = {
@@ -39,6 +42,7 @@ const NEEDS_OUTPUT_DIM: Record<string, boolean> = {
   partial_dependence: true,
   pca_scatter: true,
   sensitivity: false, // shows all outputs
+  shap: false,
 };
 
 export function EvidencePanel({ genomeId, experimentId, annotation }: EvidencePanelProps) {
@@ -103,16 +107,35 @@ export function EvidencePanel({ genomeId, experimentId, annotation }: EvidencePa
     setError(null);
 
     try {
-      const result = await computeVizData(genomeId, {
-        annotation_id: annotation.id,
-        dataset_split_id: splitId,
-        viz_type: vizType as VizDataResponse["viz_type"],
-        params: buildVizParams(),
-        split: splitChoice,
-        sample_fraction: sampleFraction,
-        max_samples: 1000,
-      });
-      setVizData(result);
+      if (vizType === "shap") {
+        const result = await computeShap(genomeId, {
+          dataset_split_id: splitId,
+          annotation_id: annotation.id,
+          split: splitChoice,
+          max_samples: 100,
+        });
+        setVizData({
+          viz_type: "shap",
+          data: {
+            feature_names: result.feature_names,
+            mean_abs_shap: result.mean_abs_shap,
+            base_value: result.base_value,
+          },
+          dimensionality: [result.feature_names.length, 1],
+          suggested_viz_types: [],
+        });
+      } else {
+        const result = await computeVizData(genomeId, {
+          annotation_id: annotation.id,
+          dataset_split_id: splitId,
+          viz_type: vizType as VizDataResponse["viz_type"],
+          params: buildVizParams(),
+          split: splitChoice,
+          sample_fraction: sampleFraction,
+          max_samples: 1000,
+        });
+        setVizData(result);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to compute visualization");
     } finally {
@@ -184,7 +207,7 @@ export function EvidencePanel({ genomeId, experimentId, annotation }: EvidencePa
             <div className="viz-type-buttons">
               {(suggestedTypes.length > 0
                 ? suggestedTypes
-                : ["line", "heatmap", "partial_dependence", "pca_scatter", "sensitivity"]
+                : ["line", "heatmap", "partial_dependence", "pca_scatter", "sensitivity", "shap"]
               ).map((vt) => (
                 <button
                   key={vt}
