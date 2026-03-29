@@ -78,6 +78,7 @@ class AnnotationData:
     subgraph_connections: List[Tuple[str, str]]
     evidence: Optional[Dict[str, Any]] = None
     parent_annotation_id: Optional[str] = None  # Set when this is a child of a compositional annotation
+    display_name: Optional[str] = None  # Cosmetic label; canonical name stays stable for collapse ops
 
 
 class ModelStateEngine:
@@ -234,6 +235,22 @@ class ModelStateEngine:
 
             op.result = {"annotation_index": len(self._annotations) - 1}
 
+        elif op.type == "disable_connection":
+            from .operations import apply_disable_connection
+            result = apply_disable_connection(
+                self._current_state, op.params["from_node"], op.params["to_node"],
+                self._covered_connections,
+            )
+            op.result = result
+
+        elif op.type == "enable_connection":
+            from .operations import apply_enable_connection
+            result = apply_enable_connection(
+                self._current_state, op.params["from_node"], op.params["to_node"],
+                self._covered_connections,
+            )
+            op.result = result
+
         elif op.type == "rename_node":
             result = apply_rename_node(
                 self._current_state,
@@ -242,6 +259,17 @@ class ModelStateEngine:
                 self._covered_nodes,
             )
             op.result = result
+
+        elif op.type == "rename_annotation":
+            annotation_id = op.params["annotation_id"]
+            display_name = op.params.get("display_name")
+            for ann in self._annotations:
+                if ann.name == annotation_id:
+                    ann.display_name = display_name
+                    break
+            else:
+                raise OperationError(f"Annotation '{annotation_id}' not found")
+            op.result = {"annotation_id": annotation_id, "display_name": display_name}
 
         else:
             raise OperationError(f"Unknown operation type: {op.type}")

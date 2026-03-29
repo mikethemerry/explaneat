@@ -260,3 +260,51 @@ class TestValidateEnableConnection:
             set(), {("-1", "5")},
         )
         assert len(errors) > 0
+
+
+# =============================================================================
+# Tests for ModelStateEngine integration
+# =============================================================================
+
+from explaneat.core.model_state import ModelStateEngine
+
+
+class TestConnectionOpsInEngine:
+    def test_disable_via_engine(self):
+        net = _simple_network()
+        engine = ModelStateEngine(net)
+        op = engine.add_operation("disable_connection", {"from_node": "-1", "to_node": "5"})
+        assert op.type == "disable_connection"
+        conn = [c for c in engine.current_state.connections
+                if c.from_node == "-1" and c.to_node == "5"][0]
+        assert conn.enabled is False
+
+    def test_undo_disable_re_enables(self):
+        net = _simple_network()
+        engine = ModelStateEngine(net)
+        op = engine.add_operation("disable_connection", {"from_node": "-1", "to_node": "5"})
+        engine.remove_operation(op.seq)
+        conn = [c for c in engine.current_state.connections
+                if c.from_node == "-1" and c.to_node == "5"][0]
+        assert conn.enabled is True
+
+    def test_enable_via_engine(self):
+        net = _simple_network()
+        engine = ModelStateEngine(net)
+        engine.add_operation("disable_connection", {"from_node": "-1", "to_node": "5"})
+        engine.add_operation("enable_connection", {"from_node": "-1", "to_node": "5"})
+        conn = [c for c in engine.current_state.connections
+                if c.from_node == "-1" and c.to_node == "5"][0]
+        assert conn.enabled is True
+
+    def test_disable_serialization_round_trip(self):
+        net = _simple_network()
+        engine = ModelStateEngine(net)
+        engine.add_operation("disable_connection", {"from_node": "-1", "to_node": "5"})
+        data = engine.to_dict()
+
+        engine2 = ModelStateEngine(_simple_network())
+        engine2.load_operations(data)
+        conn = [c for c in engine2.current_state.connections
+                if c.from_node == "-1" and c.to_node == "5"][0]
+        assert conn.enabled is False
