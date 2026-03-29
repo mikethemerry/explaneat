@@ -306,6 +306,46 @@ def validate_operation(
                             f"P3 violation: exit node {exit_id} has external input from {conn.from_node}"
                         )
 
+    elif op_type == "disable_connection":
+        from_node = params.get("from_node")
+        to_node = params.get("to_node")
+        if not from_node:
+            errors.append("from_node is required")
+        if not to_node:
+            errors.append("to_node is required")
+        if from_node and to_node:
+            if (from_node, to_node) in covered_connections:
+                errors.append(f"Connection [{from_node}, {to_node}] is covered by an annotation")
+            else:
+                conn = next(
+                    (c for c in model.connections if c.from_node == from_node and c.to_node == to_node),
+                    None,
+                )
+                if conn is None:
+                    errors.append(f"Connection [{from_node}, {to_node}] not found")
+                elif not conn.enabled:
+                    errors.append(f"Connection [{from_node}, {to_node}] is already disabled")
+
+    elif op_type == "enable_connection":
+        from_node = params.get("from_node")
+        to_node = params.get("to_node")
+        if not from_node:
+            errors.append("from_node is required")
+        if not to_node:
+            errors.append("to_node is required")
+        if from_node and to_node:
+            if (from_node, to_node) in covered_connections:
+                errors.append(f"Connection [{from_node}, {to_node}] is covered by an annotation")
+            else:
+                conn = next(
+                    (c for c in model.connections if c.from_node == from_node and c.to_node == to_node),
+                    None,
+                )
+                if conn is None:
+                    errors.append(f"Connection [{from_node}, {to_node}] not found")
+                elif conn.enabled:
+                    errors.append(f"Connection [{from_node}, {to_node}] is already enabled")
+
     elif op_type == "rename_node":
         node_id = params.get("node_id")
         display_name = params.get("display_name")
@@ -313,8 +353,21 @@ def validate_operation(
             errors.append("node_id is required")
         elif node_id not in node_ids:
             errors.append(f"Node '{node_id}' not found")
-        elif node_id in covered_nodes:
-            errors.append(f"Node '{node_id}' is covered by an annotation")
+        if display_name is not None:
+            if not display_name:
+                errors.append("display_name cannot be empty")
+            if isinstance(display_name, str) and " " in display_name:
+                errors.append("display_name cannot contain spaces (use camelCase)")
+
+    elif op_type == "rename_annotation":
+        annotation_id = params.get("annotation_id")
+        display_name = params.get("display_name")
+        if not annotation_id:
+            errors.append("annotation_id is required")
+        else:
+            known_ids = {a.name for a in annotations} if annotations else set()
+            if annotation_id not in known_ids:
+                errors.append(f"Annotation '{annotation_id}' not found")
         if display_name is not None:
             if not display_name:
                 errors.append("display_name cannot be empty")
@@ -892,6 +945,94 @@ def apply_add_identity_node(
     }
 
 
+def apply_disable_connection(
+    model: NetworkStructure,
+    from_node: str,
+    to_node: str,
+    covered_connections: Set[Tuple[str, str]],
+) -> Dict[str, Any]:
+    """Disable a connection (set enabled=False).
+
+    Args:
+        model: Network structure (modified in place)
+        from_node: Source node ID
+        to_node: Target node ID
+        covered_connections: Connections protected by annotations (cannot be modified)
+
+    Returns:
+        Result dict with from_node, to_node, previous_weight
+
+    Raises:
+        OperationError: If connection not found, already disabled, or covered
+    """
+    if (from_node, to_node) in covered_connections:
+        raise OperationError(
+            f"Connection [{from_node}, {to_node}] is covered by an annotation and cannot be modified"
+        )
+
+    conn = next(
+        (c for c in model.connections if c.from_node == from_node and c.to_node == to_node),
+        None,
+    )
+    if conn is None:
+        raise OperationError(f"Connection [{from_node}, {to_node}] not found")
+
+    if not conn.enabled:
+        raise OperationError(f"Connection [{from_node}, {to_node}] is already disabled")
+
+    previous_weight = conn.weight
+    conn.enabled = False
+
+    return {
+        "from_node": from_node,
+        "to_node": to_node,
+        "previous_weight": previous_weight,
+    }
+
+
+def apply_enable_connection(
+    model: NetworkStructure,
+    from_node: str,
+    to_node: str,
+    covered_connections: Set[Tuple[str, str]],
+) -> Dict[str, Any]:
+    """Re-enable a previously disabled connection.
+
+    Args:
+        model: Network structure (modified in place)
+        from_node: Source node ID
+        to_node: Target node ID
+        covered_connections: Connections protected by annotations (cannot be modified)
+
+    Returns:
+        Result dict with from_node, to_node
+
+    Raises:
+        OperationError: If connection not found, already enabled, or covered
+    """
+    if (from_node, to_node) in covered_connections:
+        raise OperationError(
+            f"Connection [{from_node}, {to_node}] is covered by an annotation and cannot be modified"
+        )
+
+    conn = next(
+        (c for c in model.connections if c.from_node == from_node and c.to_node == to_node),
+        None,
+    )
+    if conn is None:
+        raise OperationError(f"Connection [{from_node}, {to_node}] not found")
+
+    if conn.enabled:
+        raise OperationError(f"Connection [{from_node}, {to_node}] is already enabled")
+
+    conn.enabled = True
+
+    return {
+        "from_node": from_node,
+        "to_node": to_node,
+    }
+
+
 def apply_rename_node(
     model: NetworkStructure,
     node_id: str,
@@ -909,11 +1050,6 @@ def apply_rename_node(
     Returns:
         Dict with node_id and display_name.
     """
-    if node_id in covered_nodes:
-        raise OperationError(
-            f"Node '{node_id}' is covered by an annotation and cannot be renamed"
-        )
-
     node = model.get_node_by_id(node_id)
     if node is None:
         raise OperationError(f"Node '{node_id}' not found in structure")
