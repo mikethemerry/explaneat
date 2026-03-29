@@ -64,6 +64,7 @@ type NetworkViewerProps = {
   selectedNodes: Set<string>;
   onNodeSelect: (nodeIds: string[]) => void;
   annotationNodeIds?: string[]; // IDs of synthetic annotation nodes
+  onConnectionToggle?: (fromNode: string, toNode: string, currentlyEnabled: boolean) => void;
 };
 
 // =============================================================================
@@ -514,13 +515,13 @@ function convertModelToFlow(model: ModelState, annotationNodeIds: Set<string>): 
     };
   });
 
-  // Build edges (only enabled connections)
-  const enabledConnections = model.connections.filter((conn) => conn.enabled);
-  logDebug(`Building edges from ${enabledConnections.length} enabled connections`);
+  // Build edges (all connections: enabled rendered normally, disabled rendered with dashed style)
+  logDebug(`Building edges from ${model.connections.length} connections (${model.connections.filter(c => c.enabled).length} enabled, ${model.connections.filter(c => !c.enabled).length} disabled)`);
 
-  // Check for split nodes with multiple outputs (diagnostic)
+  // Check for split nodes with multiple outputs (diagnostic) — use only enabled connections
+  const enabledConnectionsForDiag = model.connections.filter((conn) => conn.enabled);
   const outputCounts = new Map<string, string[]>();
-  for (const conn of enabledConnections) {
+  for (const conn of enabledConnectionsForDiag) {
     if (!outputCounts.has(conn.from)) {
       outputCounts.set(conn.from, []);
     }
@@ -532,7 +533,7 @@ function convertModelToFlow(model: ModelState, annotationNodeIds: Set<string>): 
     }
   }
 
-  const edges: Edge[] = enabledConnections.map((conn) => {
+  const edges: Edge[] = model.connections.map((conn) => {
     const isPositive = conn.weight >= 0;
     const strokeWidth = Math.min(1 + Math.abs(conn.weight) * 2, 6);
 
@@ -540,7 +541,42 @@ function convertModelToFlow(model: ModelState, annotationNodeIds: Set<string>): 
       weight: conn.weight,
       isPositive,
       strokeWidth,
+      enabled: conn.enabled,
     });
+
+    if (!conn.enabled) {
+      // Disabled connection: muted gray, dashed, reduced opacity
+      return {
+        id: `${conn.from}->${conn.to}`,
+        source: conn.from,
+        target: conn.to,
+        type: "default",
+        animated: false,
+        style: {
+          stroke: "#9E9E9E",
+          strokeWidth: Math.max(strokeWidth - 1, 1),
+          strokeDasharray: "6 3",
+          opacity: 0.4,
+        },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          color: "#9E9E9E",
+          width: 12,
+          height: 12,
+        },
+        label: conn.weight.toFixed(2),
+        labelStyle: {
+          fontSize: "10px",
+          fontWeight: "normal",
+          fill: "#9E9E9E",
+        },
+        labelBgStyle: {
+          fill: "#fff",
+          fillOpacity: 0.6,
+        },
+        data: { enabled: false },
+      };
+    }
 
     return {
       id: `${conn.from}->${conn.to}`,
@@ -568,6 +604,7 @@ function convertModelToFlow(model: ModelState, annotationNodeIds: Set<string>): 
         fill: "#fff",
         fillOpacity: 0.8,
       },
+      data: { enabled: true },
     };
   });
 
@@ -597,6 +634,7 @@ export function NetworkViewer({
   selectedNodes,
   onNodeSelect,
   annotationNodeIds = [],
+  onConnectionToggle,
 }: NetworkViewerProps) {
   // Convert model to ReactFlow format with layer-based layout
   const { initialNodes, initialEdges } = useMemo(() => {
@@ -710,12 +748,22 @@ export function NetworkViewer({
     []
   );
 
-  // Handle edge click
+  // Handle edge click — toggle connection enabled/disabled
   const onEdgeClick = useCallback(
     (_event: React.MouseEvent, edge: Edge) => {
       logInfo("Edge clicked", { edgeId: edge.id, source: edge.source, target: edge.target });
+      if (!onConnectionToggle) return;
+      const conn = model.connections.find(
+        (c) => c.from === edge.source && c.to === edge.target
+      );
+      if (conn) {
+        logInfo("Toggling connection", { from: conn.from, to: conn.to, currentlyEnabled: conn.enabled });
+        onConnectionToggle(conn.from, conn.to, conn.enabled);
+      } else {
+        logWarn("Edge clicked but connection not found in model", { edgeId: edge.id });
+      }
     },
-    []
+    [onConnectionToggle, model.connections]
   );
 
   // MiniMap node color function
@@ -739,6 +787,11 @@ export function NetworkViewer({
         <span>
           <strong>Connections:</strong>{" "}
           {model.connections.filter((c) => c.enabled).length}
+          {model.connections.some((c) => !c.enabled) && (
+            <span style={{ color: "#9E9E9E", marginLeft: "4px" }}>
+              ({model.connections.filter((c) => !c.enabled).length} disabled)
+            </span>
+          )}
         </span>
         <span>
           <strong>Selected:</strong> {selectedNodes.size}
@@ -829,6 +882,13 @@ export function NetworkViewer({
             style={{ backgroundColor: "#F44336" }}
           />
           - Weight
+        </span>
+        <span className="legend-item">
+          <span
+            className="legend-color"
+            style={{ backgroundColor: "#9E9E9E", opacity: 0.4 }}
+          />
+          Disabled
         </span>
       </div>
     </div>

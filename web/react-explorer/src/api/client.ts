@@ -204,6 +204,7 @@ export type CoverageResponse = {
 export type AnnotationSummary = {
   id: string;
   name: string | null;
+  display_name: string | null;
   entry_nodes: string[];
   exit_nodes: string[];
   subgraph_nodes: string[];
@@ -244,6 +245,18 @@ export type RenameNodeParams = {
   node_id: string;
   display_name: string | null;
 };
+export type RenameAnnotationParams = {
+  annotation_id: string;
+  display_name: string | null;
+};
+export type DisableConnectionParams = {
+  from_node: string;
+  to_node: string;
+};
+export type EnableConnectionParams = {
+  from_node: string;
+  to_node: string;
+};
 
 export type OperationRequest =
   | { type: "split_node"; params: SplitNodeParams }
@@ -252,7 +265,10 @@ export type OperationRequest =
   | { type: "add_node"; params: AddNodeParams }
   | { type: "add_identity_node"; params: AddIdentityNodeParams }
   | { type: "annotate"; params: AnnotateParams }
-  | { type: "rename_node"; params: RenameNodeParams };
+  | { type: "rename_node"; params: RenameNodeParams }
+  | { type: "rename_annotation"; params: RenameAnnotationParams }
+  | { type: "disable_connection"; params: DisableConnectionParams }
+  | { type: "enable_connection"; params: EnableConnectionParams };
 
 // ============================================================================
 // API Client
@@ -716,5 +732,35 @@ export async function listEvidence(
 ): Promise<EvidenceListResponse> {
   return fetchJson<EvidenceListResponse>(
     `${API_BASE}/genomes/${genomeId}/evidence?annotation_id=${annotationId}`,
+  );
+}
+
+// ============================================================================
+// Input Distribution types and endpoints
+// ============================================================================
+
+export type InputDistributionRequest = {
+  dataset_split_id: string;
+  feature_indices: number[];
+  split?: "train" | "test" | "both";
+  num_bins?: number;
+};
+
+export type InputDistributionResponse = {
+  viz_type: "histogram" | "scatter2d";
+  data: Record<string, unknown>;
+  feature_names: string[];
+};
+
+export async function computeInputDistribution(
+  genomeId: string,
+  request: InputDistributionRequest,
+): Promise<InputDistributionResponse> {
+  return fetchJson<InputDistributionResponse>(
+    `${API_BASE}/genomes/${genomeId}/evidence/input-distribution`,
+    {
+      method: "POST",
+      body: JSON.stringify(request),
+    },
   );
 }

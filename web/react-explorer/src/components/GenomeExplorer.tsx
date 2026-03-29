@@ -3,6 +3,7 @@ import {
   getCurrentModel,
   listOperations,
   listAnnotations,
+  addOperation,
   type ModelState,
   type Operation,
   type AnnotationSummary,
@@ -12,6 +13,7 @@ import { OperationsPanel } from "./OperationsPanel";
 import { DatasetInfoPanel } from "./DatasetInfoPanel";
 import { AnnotationListPanel } from "./AnnotationListPanel";
 import { EvidencePanel } from "./EvidencePanel";
+import { InputDistributionPanel } from "./InputDistributionPanel";
 
 // =============================================================================
 // Logging utilities
@@ -59,6 +61,18 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
     () => model?.nodes.filter(n => n.type === "function").map(n => n.id) || [],
     [model]
   );
+
+  // Derive selected input nodes for distribution panel
+  const selectedInputNodes = useMemo(() => {
+    if (!model) return [];
+    const inputIds = new Set(model.metadata.input_nodes);
+    return Array.from(selectedNodes).filter((nodeId) => {
+      if (inputIds.has(nodeId)) return true;
+      // Check split variants: "-20_a" -> base "-20"
+      const baseId = nodeId.replace(/_[a-z]$/, "");
+      return inputIds.has(baseId);
+    });
+  }, [model, selectedNodes]);
 
   logDebug("Render", { genomeId, experimentName, loading, hasModel: !!model, operationsCount: operations.length, annotationsCount: annotations.length });
 
@@ -205,6 +219,20 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
     setSelectedNodes(new Set(nodeIds));
   }, []);
 
+  const handleConnectionToggle = useCallback(async (fromNode: string, toNode: string, currentlyEnabled: boolean) => {
+    try {
+      const opType = currentlyEnabled ? "disable_connection" : "enable_connection";
+      logInfo("Toggling connection", { fromNode, toNode, currentlyEnabled, opType });
+      await addOperation(genomeId, {
+        type: opType,
+        params: { from_node: fromNode, to_node: toNode },
+      });
+      handleOperationChange();
+    } catch (err) {
+      logError("Failed to toggle connection", err);
+    }
+  }, [genomeId, handleOperationChange]);
+
   const handleToggleCollapse = useCallback((annotationId: string) => {
     // Find annotation name from ID (server uses names for collapse)
     const annotation = annotations.find(a => a.id === annotationId);
@@ -285,6 +313,8 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
             onToggleCollapse={handleToggleCollapse}
             selectedAnnotationId={selectedAnnotationId}
             onSelectAnnotation={handleSelectAnnotation}
+            genomeId={genomeId}
+            onOperationChange={handleOperationChange}
           />
         </div>
         <NetworkViewer
@@ -292,8 +322,9 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
           selectedNodes={selectedNodes}
           onNodeSelect={handleNodeSelect}
           annotationNodeIds={annotationNodeIds}
+          onConnectionToggle={handleConnectionToggle}
         />
-        {selectedAnnotationId && (
+        {selectedAnnotationId ? (
           <div className="right-panel">
             <EvidencePanel
               genomeId={genomeId}
@@ -303,7 +334,16 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
               }
             />
           </div>
-        )}
+        ) : selectedInputNodes.length >= 1 && selectedInputNodes.length <= 2 ? (
+          <div className="right-panel">
+            <InputDistributionPanel
+              genomeId={genomeId}
+              experimentId={experimentId}
+              selectedInputNodes={selectedInputNodes}
+              model={model}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   );
