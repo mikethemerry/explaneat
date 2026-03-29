@@ -615,6 +615,28 @@ class InputDistributionResponse(BaseModel):
 
 
 # =============================================================================
+# SHAP schemas
+# =============================================================================
+
+
+class ShapRequest(BaseModel):
+    """Request for SHAP value computation."""
+
+    dataset_split_id: str
+    annotation_id: Optional[str] = None  # None = whole model
+    split: Literal["train", "test", "both"] = "both"
+    max_samples: int = 100
+
+
+class ShapResponse(BaseModel):
+    """Response with SHAP values."""
+
+    feature_names: List[str]
+    mean_abs_shap: List[float]
+    base_value: float
+
+
+# =============================================================================
 # Error schemas
 # =============================================================================
 

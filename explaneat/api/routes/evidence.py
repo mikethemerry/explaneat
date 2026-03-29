@@ -28,6 +28,8 @@ from ..schemas import (
     EvidenceListResponse,
     InputDistributionRequest,
     InputDistributionResponse,
+    ShapRequest,
+    ShapResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -516,4 +518,62 @@ async def compute_input_distribution(
             viz_type=viz_type,
             data=data,
             feature_names=names,
+        )
+
+
+@router.post("/shap", response_model=ShapResponse)
+async def compute_shap(
+    request: ShapRequest,
+    genome_id: str = Path(...),
+):
+    """Compute SHAP values for the model or a specific annotation subgraph."""
+    with db.session_scope() as session:
+        engine = _build_engine(session, genome_id)
+        model_state = engine.current_state
+        X, y = _load_split_data(
+            session, request.dataset_split_id, request.split,
+            1.0, request.max_samples,
+        )
+
+        display_map = model_state.get_display_map()
+
+        if request.annotation_id:
+            # Annotation-level SHAP: measure importance of annotation entry nodes
+            annotation = _find_annotation_in_operations(
+                session, genome_id, request.annotation_id
+            )
+            ann_fn = AnnotationFunction.from_structure(annotation, model_state)
+            extractor = ActivationExtractor.from_structure(model_state)
+            entry_acts, _ = extractor.extract(X, annotation)
+            feature_names = [
+                display_map.get(n, n) for n in annotation["entry_nodes"]
+            ]
+
+            from ...analysis.shap_analysis import compute_shap_values
+            result = compute_shap_values(
+                ann_fn, entry_acts, feature_names, request.max_samples
+            )
+        else:
+            # Whole model SHAP: measure importance of input features
+            from ...core.structure_network import StructureNetwork
+            struct_net = StructureNetwork(model_state)
+            feature_names = [
+                display_map.get(n, n) for n in model_state.input_node_ids
+            ]
+
+            def model_predict(x):
+                import torch
+                if not isinstance(x, torch.Tensor):
+                    x = torch.tensor(x, dtype=torch.float32)
+                return struct_net.forward(x).detach().numpy()
+
+            from ...analysis.shap_analysis import compute_shap_values
+            result = compute_shap_values(
+                model_predict, X, feature_names, request.max_samples
+            )
+
+        return ShapResponse(
+            feature_names=result["feature_names"],
+            mean_abs_shap=result["mean_abs_shap"],
+            base_value=result["base_value"],
         )
