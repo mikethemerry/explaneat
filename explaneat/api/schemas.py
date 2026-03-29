@@ -244,6 +244,7 @@ class OperationRequest(BaseModel):
         DisableConnectionParams,
         EnableConnectionParams,
     ]
+    notes: Optional[str] = None  # Human-readable justification
 
 
 class OperationResult(BaseModel):
@@ -264,6 +265,7 @@ class OperationResponse(BaseModel):
     params: Dict[str, Any]
     result: Optional[OperationResult] = None
     created_at: datetime
+    notes: Optional[str] = None
 
 
 class OperationListResponse(BaseModel):

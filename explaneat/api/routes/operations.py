@@ -177,6 +177,7 @@ def _operation_to_response(op: Operation) -> OperationResponse:
         params=op.params,
         result=OperationResult(**op.result) if op.result else None,
         created_at=op.created_at,
+        notes=op.notes,
     )
 
 
@@ -269,6 +270,7 @@ async def list_operations(
             params=op_data["params"],
             result=op_data.get("result"),
             created_at=created_at,
+            notes=op_data.get("notes"),
         ))
 
     return OperationListResponse(
@@ -308,7 +310,7 @@ async def add_operation(
 
     try:
         # Add operation to engine (validates and applies)
-        new_op = engine.add_operation(operation.type, params, validate=True)
+        new_op = engine.add_operation(operation.type, params, validate=True, notes=operation.notes)
 
         # Save updated operations to database
         explanation.operations = engine.to_dict()["operations"]
