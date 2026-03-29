@@ -1473,6 +1473,7 @@ export function OperationsPanel({
   const [error, setError] = useState<string | null>(null);
   const [annotationName, setAnnotationName] = useState("");
   const [renameInput, setRenameInput] = useState("");
+  const [operationNotes, setOperationNotes] = useState("");
   const [featureNames, setFeatureNames] = useState<string[] | null>(null);
   const [featureTypes, setFeatureTypes] = useState<Record<string, string> | null>(null);
   const [featureDescriptions, setFeatureDescriptions] = useState<Record<string, string> | null>(null);
@@ -1531,8 +1532,11 @@ export function OperationsPanel({
       try {
         setLoading(true);
         setError(null);
-        const result = await addOperation(genomeId, operation);
+        const notes = operationNotes.trim() || undefined;
+        const result = await addOperation(genomeId, operation, notes);
         logInfo("Operation added successfully", result);
+        setOperationNotes(""); // Clear after successful operation
+        onOperationChange();
         return true;
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Failed to add operation";
@@ -1543,7 +1547,7 @@ export function OperationsPanel({
         setLoading(false);
       }
     },
-    [genomeId]
+    [genomeId, operationNotes, onOperationChange]
   );
 
   const handleRemoveOperation = useCallback(
@@ -1585,11 +1589,9 @@ export function OperationsPanel({
       handleAddOperation({
         type: "split_node",
         params: { node_id: nodeId },
-      }).then((success) => {
-        if (success) onOperationChange();
       });
     },
-    [handleAddOperation, onOperationChange]
+    [handleAddOperation]
   );
 
   const handleConsolidateNodes = useCallback(
@@ -1598,11 +1600,9 @@ export function OperationsPanel({
       handleAddOperation({
         type: "consolidate_node",
         params: { node_ids: nodeIds },
-      }).then((success) => {
-        if (success) onOperationChange();
       });
     },
-    [handleAddOperation, onOperationChange]
+    [handleAddOperation]
   );
 
   const handleAddIdentityOnConnection = useCallback(
@@ -1644,11 +1644,8 @@ export function OperationsPanel({
         },
       });
 
-      if (success) {
-        onOperationChange();
-      }
     },
-    [model, handleAddOperation, onOperationChange]
+    [model, handleAddOperation]
   );
 
   /**
@@ -1770,14 +1767,13 @@ export function OperationsPanel({
         logInfo("Annotation strategy executed successfully");
         setAnnotationName("");
         setWizard({ step: "idle" });
-        onOperationChange();
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Failed to execute strategy";
         logError("Failed to execute annotation strategy", err);
         setWizard({ step: "error", message: errorMsg });
       }
     },
-    [handleAddOperation, onOperationChange]
+    [handleAddOperation]
   );
 
   // ==========================================================================
@@ -1868,7 +1864,6 @@ export function OperationsPanel({
         }
 
         logInfo("Single step executed successfully");
-        onOperationChange();
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Failed to execute step";
         logError("Failed to execute single step", err);
@@ -1877,7 +1872,7 @@ export function OperationsPanel({
         setLoading(false);
       }
     },
-    [handleAddOperation, onOperationChange]
+    [handleAddOperation]
   );
 
   /**
@@ -2138,7 +2133,7 @@ export function OperationsPanel({
                       type: "rename_node",
                       params: { node_id: nodeId, display_name: renameInput },
                     });
-                    if (ok) { setRenameInput(""); onOperationChange(); }
+                    if (ok) { setRenameInput(""); }
                   }
                 }}
               />
@@ -2150,7 +2145,7 @@ export function OperationsPanel({
                     type: "rename_node",
                     params: { node_id: nodeId, display_name: renameInput },
                   });
-                  if (ok) { setRenameInput(""); onOperationChange(); }
+                  if (ok) { setRenameInput(""); }
                 }}
                 style={{ whiteSpace: "nowrap" }}
               >
@@ -2167,7 +2162,7 @@ export function OperationsPanel({
                     type: "rename_node",
                     params: { node_id: nodeId, display_name: suggestion },
                   });
-                  if (ok) { setRenameInput(""); onOperationChange(); }
+                  if (ok) { setRenameInput(""); }
                 }}
               >
                 Use: {suggestion}
@@ -2183,7 +2178,7 @@ export function OperationsPanel({
                     type: "rename_node",
                     params: { node_id: nodeId, display_name: null },
                   });
-                  if (ok) { setRenameInput(""); onOperationChange(); }
+                  if (ok) { setRenameInput(""); }
                 }}
               >
                 Clear name ({currentDisplayName})
@@ -2431,6 +2426,28 @@ export function OperationsPanel({
       )}
 
       <section className="panel-section">
+        <h4>Operation Notes</h4>
+        <textarea
+          value={operationNotes}
+          onChange={(e) => setOperationNotes(e.target.value)}
+          placeholder="Optional: Why are you making this change?"
+          rows={2}
+          style={{
+            width: "100%",
+            fontSize: "12px",
+            padding: "6px",
+            borderRadius: "4px",
+            border: "1px solid #ccc",
+            resize: "vertical",
+            boxSizing: "border-box",
+          }}
+        />
+        <p className="hint" style={{ fontSize: "11px", marginTop: "4px" }}>
+          This note will be attached to the next operation you perform.
+        </p>
+      </section>
+
+      <section className="panel-section">
         <h4>Operation History ({operations.length})</h4>
         {operations.length === 0 ? (
           <p className="hint">No operations yet</p>
@@ -2449,6 +2466,11 @@ export function OperationsPanel({
                 >
                   &times;
                 </button>
+                {op.notes && (
+                  <div className="op-notes" style={{ fontSize: "11px", color: "#666", fontStyle: "italic", marginLeft: "24px" }}>
+                    {op.notes}
+                  </div>
+                )}
               </li>
             ))}
           </ul>
@@ -2473,6 +2495,14 @@ function formatOperationParams(op: Operation): string {
       return `target: ${params.target_node}, id: ${params.new_node_id}`;
     case "annotate":
       return `"${params.name}"`;
+    case "disable_connection":
+      return `${params.from_node} -> ${params.to_node}`;
+    case "enable_connection":
+      return `${params.from_node} -> ${params.to_node}`;
+    case "rename_node":
+      return `${params.node_id} → ${params.display_name || "(clear)"}`;
+    case "rename_annotation":
+      return `${params.annotation_id} → ${params.display_name || "(clear)"}`;
     default:
       return JSON.stringify(params).slice(0, 30);
   }

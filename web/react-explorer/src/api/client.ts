@@ -135,6 +135,7 @@ export type Operation = {
   type: string;
   params: Record<string, unknown>;
   result?: OperationResult;
+  notes?: string | null;
   created_at: string;
 };
 
@@ -437,10 +438,12 @@ export async function listOperations(
 export async function addOperation(
   genomeId: string,
   operation: OperationRequest,
+  notes?: string,
 ): Promise<Operation> {
+  const body = notes ? { ...operation, notes } : operation;
   return fetchJson<Operation>(`${API_BASE}/genomes/${genomeId}/operations`, {
     method: "POST",
-    body: JSON.stringify(operation),
+    body: JSON.stringify(body),
   });
 }
 
