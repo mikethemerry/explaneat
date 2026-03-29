@@ -26,6 +26,8 @@ from ..schemas import (
     NarrativeUpdateRequest,
     EvidenceEntry,
     EvidenceListResponse,
+    InputDistributionRequest,
+    InputDistributionResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -212,6 +214,11 @@ async def compute_viz_data(
         n_in, n_out = ann_fn.dimensionality
         suggested = vd.suggest_viz_types(n_in, n_out)
 
+        # Resolve entry/exit display names for chart labels
+        display_map = model_state.get_display_map()
+        entry_names = [display_map.get(n, n) for n in annotation["entry_nodes"]]
+        exit_names = [display_map.get(n, n) for n in annotation["exit_nodes"]]
+
         params = request.params or {}
         viz_type = request.viz_type
 
@@ -220,28 +227,33 @@ async def compute_viz_data(
                 ann_fn, entry_acts, exit_acts,
                 input_dim=params.get("input_dim", 0),
                 output_dim=params.get("output_dim", 0),
+                entry_names=entry_names, exit_names=exit_names,
             )
         elif viz_type == "heatmap":
             data = vd.compute_heatmap(
                 ann_fn, entry_acts, exit_acts,
                 input_dims=tuple(params.get("input_dims", [0, 1])),
                 output_dim=params.get("output_dim", 0),
+                entry_names=entry_names, exit_names=exit_names,
             )
         elif viz_type == "partial_dependence":
             data = vd.compute_partial_dependence(
                 ann_fn, entry_acts,
                 vary_dims=params.get("vary_dims", [0]),
                 output_dim=params.get("output_dim", 0),
+                entry_names=entry_names, exit_names=exit_names,
             )
         elif viz_type == "pca_scatter":
             data = vd.compute_pca_scatter(
                 entry_acts, exit_acts,
                 output_dim=params.get("output_dim", 0),
+                entry_names=entry_names, exit_names=exit_names,
             )
         elif viz_type == "sensitivity":
             data = vd.compute_sensitivity(
                 ann_fn, entry_acts,
                 perturbation=params.get("perturbation", 0.01),
+                entry_names=entry_names,
             )
         else:
             raise HTTPException(status_code=400, detail=f"Unknown viz_type: {viz_type}")
@@ -441,4 +453,67 @@ async def list_evidence(
             annotation_id=annotation_id,
             entries=entries,
             total=len(entries),
+        )
+
+
+@router.post("/input-distribution", response_model=InputDistributionResponse)
+async def compute_input_distribution(
+    request: InputDistributionRequest,
+    genome_id: str = Path(...),
+):
+    """Compute input feature distribution (histogram or scatter)."""
+    if len(request.feature_indices) < 1 or len(request.feature_indices) > 2:
+        raise HTTPException(
+            status_code=400,
+            detail="feature_indices must contain 1 or 2 indices",
+        )
+
+    with db.session_scope() as session:
+        # Load data without sampling (distributions need all points)
+        X, y = _load_split_data(
+            session, request.dataset_split_id, request.split,
+            sample_frac=1.0, max_samples=10000,
+        )
+
+        # Get feature names from dataset
+        split = session.query(DatasetSplit).filter_by(
+            id=uuid.UUID(request.dataset_split_id)
+        ).first()
+        if not split:
+            raise HTTPException(status_code=404, detail="Split not found")
+
+        dataset = session.query(Dataset).filter_by(id=split.dataset_id).first()
+        db_feature_names = dataset.feature_names if dataset else None
+
+        # Build feature name list for requested indices
+        names = []
+        for idx in request.feature_indices:
+            if idx < 0 or idx >= X.shape[1]:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Feature index {idx} out of range (0-{X.shape[1]-1})",
+                )
+            if db_feature_names and idx < len(db_feature_names):
+                names.append(db_feature_names[idx])
+            else:
+                names.append(f"feature_{idx}")
+
+        if len(request.feature_indices) == 1:
+            idx = request.feature_indices[0]
+            data = vd.compute_histogram(
+                X[:, idx], num_bins=request.num_bins, label=names[0],
+            )
+            viz_type = "histogram"
+        else:
+            idx0, idx1 = request.feature_indices
+            data = vd.compute_scatter_2d(
+                X[:, idx0], X[:, idx1],
+                x_label=names[0], y_label=names[1],
+            )
+            viz_type = "scatter2d"
+
+        return InputDistributionResponse(
+            viz_type=viz_type,
+            data=data,
+            feature_names=names,
         )
