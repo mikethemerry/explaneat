@@ -39,16 +39,20 @@ class Operation:
     params: Dict[str, Any]
     result: Optional[Dict[str, Any]] = None
     created_at: datetime = field(default_factory=datetime.utcnow)
+    notes: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
-        return {
+        d = {
             "seq": self.seq,
             "type": self.type,
             "params": self.params,
             "result": self.result,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+        if self.notes is not None:
+            d["notes"] = self.notes
+        return d
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Operation":
@@ -63,6 +67,7 @@ class Operation:
             params=data["params"],
             result=data.get("result"),
             created_at=created_at or datetime.utcnow(),
+            notes=data.get("notes"),
         )
 
 
@@ -279,6 +284,7 @@ class ModelStateEngine:
         op_type: str,
         params: Dict[str, Any],
         validate: bool = True,
+        notes: Optional[str] = None,
     ) -> Operation:
         """
         Add a new operation to the event stream.
@@ -316,6 +322,7 @@ class ModelStateEngine:
             seq=len(self._operations),
             type=op_type,
             params=params,
+            notes=notes,
         )
 
         # Apply operation
