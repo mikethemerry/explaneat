@@ -41,6 +41,8 @@ def compute_line_plot(
     input_dim: int = 0,
     output_dim: int = 0,
     grid_points: int = 200,
+    entry_names: Optional[List[str]] = None,
+    exit_names: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """Compute line plot data: function curve + actual data scatter.
 
@@ -51,6 +53,8 @@ def compute_line_plot(
         input_dim: Which input dimension to use for x-axis
         output_dim: Which output dimension to use for y-axis
         grid_points: Number of grid points for the function curve
+        entry_names: Optional list of names for entry (input) dimensions
+        exit_names: Optional list of names for exit (output) dimensions
 
     Returns:
         JSON-serializable dict with grid_x, grid_y, scatter_x, scatter_y
@@ -72,13 +76,16 @@ def compute_line_plot(
     else:
         grid_y = grid_output[:, output_dim]
 
+    x_label = entry_names[input_dim] if entry_names and input_dim < len(entry_names) else f"x_{input_dim}"
+    y_label = exit_names[output_dim] if exit_names and output_dim < len(exit_names) else f"y_{output_dim}"
+
     return {
         "grid_x": grid_x.tolist(),
         "grid_y": grid_y.tolist(),
         "scatter_x": entry_acts[:, input_dim].tolist(),
         "scatter_y": exit_acts[:, output_dim].tolist(),
-        "x_label": f"x_{input_dim}",
-        "y_label": f"y_{output_dim}",
+        "x_label": x_label,
+        "y_label": y_label,
     }
 
 
@@ -89,8 +96,20 @@ def compute_heatmap(
     input_dims: Tuple[int, int] = (0, 1),
     output_dim: int = 0,
     grid_size: int = 50,
+    entry_names: Optional[List[str]] = None,
+    exit_names: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """Compute heatmap data for 2-input functions.
+
+    Args:
+        fn: Callable function
+        entry_acts: Entry activations (n_samples, n_in)
+        exit_acts: Exit activations (n_samples, n_out)
+        input_dims: Which two input dimensions to vary (x, y)
+        output_dim: Which output dimension for the color (z) axis
+        grid_size: Grid resolution
+        entry_names: Optional list of names for entry (input) dimensions
+        exit_names: Optional list of names for exit (output) dimensions
 
     Returns:
         Dict with x_range, y_range, z_grid (grid_size x grid_size),
@@ -119,6 +138,10 @@ def compute_heatmap(
         z = z[:, output_dim]
     z_grid = z.reshape(grid_size, grid_size)
 
+    x_label = entry_names[dim_x] if entry_names and dim_x < len(entry_names) else f"x_{dim_x}"
+    y_label = entry_names[dim_y] if entry_names and dim_y < len(entry_names) else f"x_{dim_y}"
+    z_label = exit_names[output_dim] if exit_names and output_dim < len(exit_names) else f"y_{output_dim}"
+
     return {
         "x_range": x_range.tolist(),
         "y_range": y_range.tolist(),
@@ -126,9 +149,9 @@ def compute_heatmap(
         "scatter_x": entry_acts[:, dim_x].tolist(),
         "scatter_y": entry_acts[:, dim_y].tolist(),
         "scatter_z": exit_acts[:, output_dim].tolist(),
-        "x_label": f"x_{dim_x}",
-        "y_label": f"x_{dim_y}",
-        "z_label": f"y_{output_dim}",
+        "x_label": x_label,
+        "y_label": y_label,
+        "z_label": z_label,
     }
 
 
@@ -139,6 +162,8 @@ def compute_partial_dependence(
     output_dim: int = 0,
     fix_values: str = "median",
     grid_points: int = 100,
+    entry_names: Optional[List[str]] = None,
+    exit_names: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """Compute partial dependence plot data.
 
@@ -149,6 +174,8 @@ def compute_partial_dependence(
         output_dim: Which output dimension
         fix_values: 'median' or 'mean' for fixed dimensions
         grid_points: Grid resolution
+        entry_names: Optional list of names for entry (input) dimensions
+        exit_names: Optional list of names for exit (output) dimensions
 
     Returns:
         Dict with grid data for 1D or 2D partial dependence
@@ -167,12 +194,14 @@ def compute_partial_dependence(
         y = fn(grid_input)
         if y.ndim > 1:
             y = y[:, output_dim]
+        x_label = entry_names[dim] if entry_names and dim < len(entry_names) else f"x_{dim}"
+        y_label = exit_names[output_dim] if exit_names and output_dim < len(exit_names) else f"y_{output_dim}"
         return {
             "type": "1d",
             "grid_x": grid_x.tolist(),
             "grid_y": y.tolist(),
-            "x_label": f"x_{dim}",
-            "y_label": f"y_{output_dim}",
+            "x_label": x_label,
+            "y_label": y_label,
         }
     elif len(vary_dims) == 2:
         return compute_heatmap(
@@ -180,6 +209,8 @@ def compute_partial_dependence(
             input_dims=(vary_dims[0], vary_dims[1]),
             output_dim=output_dim,
             grid_size=min(grid_points, 50),
+            entry_names=entry_names,
+            exit_names=exit_names,
         )
     else:
         raise ValueError("vary_dims must have 1 or 2 elements")
@@ -189,8 +220,17 @@ def compute_pca_scatter(
     entry_acts: np.ndarray,
     exit_acts: np.ndarray,
     output_dim: int = 0,
+    entry_names: Optional[List[str]] = None,
+    exit_names: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """Compute 2D PCA projection of entry activations colored by exit value.
+
+    Args:
+        entry_acts: Entry activations (n_samples, n_in)
+        exit_acts: Exit activations (n_samples, n_out)
+        output_dim: Which output dimension to use for color encoding
+        entry_names: Optional list of names for entry (input) dimensions
+        exit_names: Optional list of names for exit (output) dimensions
 
     Returns:
         Dict with pca_x, pca_y, color_values, explained_variance
@@ -203,11 +243,13 @@ def compute_pca_scatter(
 
     color_values = exit_acts[:, output_dim] if exit_acts.ndim > 1 else exit_acts
 
+    color_label = exit_names[output_dim] if exit_names and output_dim < len(exit_names) else f"y_{output_dim}"
+
     result: Dict[str, Any] = {
         "pca_x": projected[:, 0].tolist(),
         "explained_variance": pca.explained_variance_ratio_.tolist(),
         "color_values": color_values.tolist(),
-        "color_label": f"y_{output_dim}",
+        "color_label": color_label,
     }
     if n_components >= 2:
         result["pca_y"] = projected[:, 1].tolist()
@@ -217,15 +259,84 @@ def compute_pca_scatter(
     return result
 
 
+def compute_histogram(
+    values: np.ndarray,
+    num_bins: int = 30,
+    label: str = "x",
+) -> Dict[str, Any]:
+    """Compute histogram data for a single feature.
+
+    Returns:
+        Dict with bin_edges, counts, x_label, and summary stats.
+    """
+    counts, bin_edges = np.histogram(values, bins=num_bins)
+
+    return {
+        "bin_edges": bin_edges.tolist(),
+        "counts": counts.tolist(),
+        "x_label": label,
+        "stats": {
+            "mean": float(np.mean(values)),
+            "std": float(np.std(values)),
+            "min": float(np.min(values)),
+            "max": float(np.max(values)),
+            "median": float(np.median(values)),
+            "count": int(len(values)),
+        },
+    }
+
+
+def compute_scatter_2d(
+    x_values: np.ndarray,
+    y_values: np.ndarray,
+    x_label: str = "x",
+    y_label: str = "y",
+) -> Dict[str, Any]:
+    """Compute scatter plot data for two features.
+
+    Returns:
+        Dict with x_values, y_values, labels, and per-feature stats.
+    """
+    return {
+        "x_values": x_values.tolist(),
+        "y_values": y_values.tolist(),
+        "x_label": x_label,
+        "y_label": y_label,
+        "x_stats": {
+            "mean": float(np.mean(x_values)),
+            "std": float(np.std(x_values)),
+            "min": float(np.min(x_values)),
+            "max": float(np.max(x_values)),
+            "median": float(np.median(x_values)),
+        },
+        "y_stats": {
+            "mean": float(np.mean(y_values)),
+            "std": float(np.std(y_values)),
+            "min": float(np.min(y_values)),
+            "max": float(np.max(y_values)),
+            "median": float(np.median(y_values)),
+        },
+    }
+
+
 def compute_sensitivity(
     fn: Callable,
     entry_acts: np.ndarray,
     perturbation: float = 0.01,
+    entry_names: Optional[List[str]] = None,
+    exit_names: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """Compute per-input sensitivity scores.
 
     Measures how much each input affects the output by perturbing
     each dimension independently.
+
+    Args:
+        fn: Callable function
+        entry_acts: Entry activations (n_samples, n_in)
+        perturbation: Perturbation magnitude for finite differences
+        entry_names: Optional list of names for entry (input) dimensions
+        exit_names: Optional list of names for exit (output) dimensions
 
     Returns:
         Dict with input_labels and sensitivity_scores per output
@@ -238,6 +349,7 @@ def compute_sensitivity(
 
     sensitivities = {}
     for out_dim in range(n_out):
+        out_label = exit_names[out_dim] if exit_names and out_dim < len(exit_names) else f"y_{out_dim}"
         scores = []
         for in_dim in range(n_in):
             perturbed = entry_acts.copy()
@@ -247,9 +359,9 @@ def compute_sensitivity(
                 perturbed_output = perturbed_output.reshape(-1, 1)
             diff = np.abs(perturbed_output[:, out_dim] - base_output[:, out_dim])
             scores.append(float(np.mean(diff) / perturbation))
-        sensitivities[f"y_{out_dim}"] = scores
+        sensitivities[out_label] = scores
 
     return {
-        "input_labels": [f"x_{i}" for i in range(n_in)],
+        "input_labels": [entry_names[i] if entry_names and i < len(entry_names) else f"x_{i}" for i in range(n_in)],
         "sensitivities": sensitivities,
     }
