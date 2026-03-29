@@ -297,6 +297,9 @@ async def add_operation(
     - **add_identity_node**: Intercept connections through an identity node
     - **annotate**: Create an annotation on a subgraph
     - **rename_node**: Set or clear a display name on a node
+    - **rename_annotation**: Set or clear a display name on an annotation
+    - **disable_connection**: Disable (turn off) a connection
+    - **enable_connection**: Re-enable a previously disabled connection
     """
     genome, explanation, engine = _get_phenotype_and_engine(genome_id, db)
 

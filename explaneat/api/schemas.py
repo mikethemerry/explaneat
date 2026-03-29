@@ -196,6 +196,27 @@ class RenameNodeParams(BaseModel):
     display_name: Optional[str] = None  # None to clear
 
 
+class RenameAnnotationParams(BaseModel):
+    """Parameters for rename_annotation operation."""
+
+    annotation_id: str
+    display_name: Optional[str] = None  # None to clear
+
+
+class DisableConnectionParams(BaseModel):
+    """Parameters for disable_connection operation."""
+
+    from_node: str
+    to_node: str
+
+
+class EnableConnectionParams(BaseModel):
+    """Parameters for enable_connection operation."""
+
+    from_node: str
+    to_node: str
+
+
 class OperationRequest(BaseModel):
     """Request to add a new operation."""
 
@@ -207,6 +228,9 @@ class OperationRequest(BaseModel):
         "add_identity_node",
         "annotate",
         "rename_node",
+        "rename_annotation",
+        "disable_connection",
+        "enable_connection",
     ]
     params: Union[
         SplitNodeParams,
@@ -216,6 +240,9 @@ class OperationRequest(BaseModel):
         AddIdentityNodeParams,
         AnnotateParams,
         RenameNodeParams,
+        RenameAnnotationParams,
+        DisableConnectionParams,
+        EnableConnectionParams,
     ]
 
 
@@ -356,6 +383,7 @@ class AnnotationSummary(BaseModel):
 
     id: str
     name: Optional[str] = None
+    display_name: Optional[str] = None
     entry_nodes: List[str]
     exit_nodes: List[str]
     subgraph_nodes: List[str]
@@ -560,6 +588,28 @@ class EvidenceListResponse(BaseModel):
     annotation_id: str
     entries: List[EvidenceEntry]
     total: int
+
+
+# =============================================================================
+# Input Distribution schemas
+# =============================================================================
+
+
+class InputDistributionRequest(BaseModel):
+    """Request for input feature distribution data."""
+
+    dataset_split_id: str
+    feature_indices: List[int]  # 1 or 2 indices
+    split: Literal["train", "test", "both"] = "both"
+    num_bins: int = 30
+
+
+class InputDistributionResponse(BaseModel):
+    """Response for input feature distribution data."""
+
+    viz_type: str  # "histogram" or "scatter2d"
+    data: Dict[str, Any]
+    feature_names: List[str]
 
 
 # =============================================================================
