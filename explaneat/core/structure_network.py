@@ -44,21 +44,28 @@ class StructureNetwork:
 
         input_ids = set(self.structure.input_node_ids)
         output_ids = set(self.structure.output_node_ids)
-        # Map each input_node_id to its column index in the input tensor
-        self._input_col_map = {
-            nid: i for i, nid in enumerate(self.structure.input_node_ids)
-        }
 
-        # Detect split input nodes: nodes with type INPUT that aren't in
-        # input_node_ids.  This happens when apply_split_node splits an input
-        # node (e.g. -20 -> -20_a, -20_b) -- the split nodes inherit
-        # NodeType.INPUT but input_node_ids still lists the original.
-        # Map each split input to the same tensor column as its base node.
+        # Map each input_node_id to its column index in the input tensor.
+        # Split input nodes (e.g. -20_a, -20_b from splitting -20) share
+        # the same dataset column as their base node.  We assign one column
+        # per unique base node and map all variants to it.
+        self._input_col_map: Dict[str, int] = {}
+        base_col: Dict[str, int] = {}  # base_node_id -> column index
+        col_idx = 0
+        for nid in self.structure.input_node_ids:
+            base_id = self._get_base_node_id(nid) or nid
+            if base_id not in base_col:
+                base_col[base_id] = col_idx
+                col_idx += 1
+            self._input_col_map[nid] = base_col[base_id]
+
+        # Also handle split input nodes that appear in the node list but
+        # aren't in input_node_ids (e.g. added via later operations).
         for node in self.structure.nodes:
             if node.type == NodeType.INPUT and node.id not in input_ids:
                 base_id = self._get_base_node_id(node.id)
-                if base_id and base_id in self._input_col_map:
-                    self._input_col_map[node.id] = self._input_col_map[base_id]
+                if base_id and base_id in base_col:
+                    self._input_col_map[node.id] = base_col[base_id]
                     input_ids.add(node.id)
 
         # Identify FUNCTION nodes

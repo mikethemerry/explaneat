@@ -554,12 +554,30 @@ async def compute_shap(
                 ann_fn, entry_acts, feature_names, request.max_samples
             )
         else:
-            # Whole model SHAP: measure importance of input features
+            # Whole model SHAP: measure importance of input features.
+            # Use logits (pre-activation at output) so SHAP sees variation
+            # even when the output activation saturates.
             from ...core.structure_network import StructureNetwork
             struct_net = StructureNetwork(model_state)
-            feature_names = [
-                display_map.get(n, n) for n in model_state.input_node_ids
-            ]
+            # Override output layer activation to identity (logits)
+            for d in struct_net._layer_order:
+                layer = struct_net._layers[d]
+                if layer.get("is_output"):
+                    layer["activations"] = [
+                        "input" if nid in set(model_state.output_node_ids)
+                        else act
+                        for nid, act in zip(layer["node_ids"], layer["activations"])
+                    ]
+
+            # Build feature names from unique base input nodes (one per
+            # dataset column — split variants share a column).
+            seen_bases: set = set()
+            feature_names: list = []
+            for nid in model_state.input_node_ids:
+                base = StructureNetwork._get_base_node_id(nid) or nid
+                if base not in seen_bases:
+                    seen_bases.add(base)
+                    feature_names.append(display_map.get(base, base))
 
             def model_predict(x):
                 import torch
