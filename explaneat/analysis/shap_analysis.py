@@ -43,7 +43,12 @@ def compute_shap_values(
     if isinstance(shap_values, list):
         shap_values = shap_values[0]
 
-    mean_abs = np.mean(np.abs(shap_values), axis=0).tolist()
+    # Ensure 2D (n_samples, n_features) — squeeze trailing output dims
+    shap_values = np.asarray(shap_values)
+    if shap_values.ndim > 2:
+        shap_values = shap_values.squeeze(axis=-1)
+
+    mean_abs = np.mean(np.abs(shap_values), axis=0).flatten().tolist()
 
     return {
         "shap_values": shap_values.tolist(),

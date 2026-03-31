@@ -74,6 +74,29 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
     });
   }, [model, selectedNodes]);
 
+  // Detect if an output node is selected (for whole-model evidence)
+  const selectedOutputNode = useMemo(() => {
+    if (!model || selectedNodes.size !== 1) return false;
+    const nodeId = Array.from(selectedNodes)[0];
+    return model.metadata.output_nodes.includes(nodeId);
+  }, [model, selectedNodes]);
+
+  // Synthetic "whole model" annotation for evidence panel
+  const wholeModelAnnotation = useMemo((): AnnotationSummary | null => {
+    if (!model || !selectedOutputNode) return null;
+    return {
+      id: "__whole_model__",
+      name: "Whole Model",
+      display_name: "Whole Model",
+      entry_nodes: model.metadata.input_nodes,
+      exit_nodes: model.metadata.output_nodes,
+      subgraph_nodes: model.nodes.map(n => n.id),
+      parent_annotation_id: null,
+      children_ids: [],
+      is_leaf: true,
+    };
+  }, [model, selectedOutputNode]);
+
   logDebug("Render", { genomeId, experimentName, loading, hasModel: !!model, operationsCount: operations.length, annotationsCount: annotations.length });
 
   // Fetch model with current collapsed annotations
@@ -217,7 +240,20 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
   const handleNodeSelect = useCallback((nodeIds: string[]) => {
     logDebug("Node selection changed", { nodeIds, count: nodeIds.length });
     setSelectedNodes(new Set(nodeIds));
-  }, []);
+
+    // Auto-select annotation when a single function node is clicked
+    if (nodeIds.length === 1 && model) {
+      const node = model.nodes.find(n => n.id === nodeIds[0]);
+      if (node?.type === "function" && node.function_metadata?.annotation_id) {
+        logInfo("Auto-selecting annotation from function node", {
+          nodeId: node.id,
+          annotationId: node.function_metadata.annotation_id,
+        });
+        setSelectedAnnotationId(node.function_metadata.annotation_id);
+        return;
+      }
+    }
+  }, [model]);
 
   const handleConnectionToggle = useCallback(async (fromNode: string, toNode: string, currentlyEnabled: boolean) => {
     try {
@@ -332,6 +368,15 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
               annotation={
                 annotations.find((a) => a.id === selectedAnnotationId)!
               }
+            />
+          </div>
+        ) : wholeModelAnnotation ? (
+          <div className="right-panel">
+            <EvidencePanel
+              genomeId={genomeId}
+              experimentId={experimentId}
+              annotation={wholeModelAnnotation}
+              isWholeModel
             />
           </div>
         ) : selectedInputNodes.length >= 1 && selectedInputNodes.length <= 2 ? (

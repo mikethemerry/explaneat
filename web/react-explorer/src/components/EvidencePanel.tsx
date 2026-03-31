@@ -15,6 +15,7 @@ type EvidencePanelProps = {
   genomeId: string;
   experimentId: string;
   annotation: AnnotationSummary;
+  isWholeModel?: boolean;
 };
 
 const VIZ_TYPE_LABELS: Record<string, string> = {
@@ -45,9 +46,9 @@ const NEEDS_OUTPUT_DIM: Record<string, boolean> = {
   shap: false,
 };
 
-export function EvidencePanel({ genomeId, experimentId, annotation }: EvidencePanelProps) {
+export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel = false }: EvidencePanelProps) {
   const [vizData, setVizData] = useState<VizDataResponse | null>(null);
-  const [vizType, setVizType] = useState<string>("line");
+  const [vizType, setVizType] = useState<string>(isWholeModel ? "shap" : "line");
   const [splitId, setSplitId] = useState<string | null>(null);
   const [splitChoice, setSplitChoice] = useState<"train" | "test" | "both">("both");
   const [sampleFraction, setSampleFraction] = useState(0.1);
@@ -110,7 +111,7 @@ export function EvidencePanel({ genomeId, experimentId, annotation }: EvidencePa
       if (vizType === "shap") {
         const result = await computeShap(genomeId, {
           dataset_split_id: splitId,
-          annotation_id: annotation.id,
+          annotation_id: isWholeModel ? undefined : annotation.id,
           split: splitChoice,
           max_samples: 100,
         });
@@ -141,7 +142,7 @@ export function EvidencePanel({ genomeId, experimentId, annotation }: EvidencePa
     } finally {
       setLoading(false);
     }
-  }, [genomeId, annotation.id, splitId, vizType, splitChoice, sampleFraction, buildVizParams]);
+  }, [genomeId, annotation.id, splitId, vizType, splitChoice, sampleFraction, buildVizParams, isWholeModel]);
 
   const handleSnapshot = useCallback(async () => {
     if (!svgRef.current) return;
@@ -189,7 +190,9 @@ export function EvidencePanel({ genomeId, experimentId, annotation }: EvidencePa
         </span>
       </div>
 
-      <FormulaDisplay genomeId={genomeId} annotationId={annotation.id} />
+      {!isWholeModel && (
+        <FormulaDisplay genomeId={genomeId} annotationId={annotation.id} />
+      )}
 
       <div className="evidence-section">
         <DatasetSelector
@@ -205,9 +208,11 @@ export function EvidencePanel({ genomeId, experimentId, annotation }: EvidencePa
           <div className="viz-type-selector">
             <label className="selector-label">Visualization</label>
             <div className="viz-type-buttons">
-              {(suggestedTypes.length > 0
-                ? suggestedTypes
-                : ["line", "heatmap", "partial_dependence", "pca_scatter", "sensitivity", "shap"]
+              {(isWholeModel
+                ? ["shap"]
+                : suggestedTypes.length > 0
+                  ? suggestedTypes
+                  : ["line", "heatmap", "partial_dependence", "pca_scatter", "sensitivity", "shap"]
               ).map((vt) => (
                 <button
                   key={vt}
@@ -316,26 +321,30 @@ export function EvidencePanel({ genomeId, experimentId, annotation }: EvidencePa
             onSvgRef={handleSvgRef}
           />
 
-          <div className="snapshot-controls">
-            <input
-              type="text"
-              className="text-input"
-              placeholder="Add narrative for snapshot..."
-              value={snapshotNarrative}
-              onChange={(e) => setSnapshotNarrative(e.target.value)}
-            />
-            <button className="op-btn" onClick={handleSnapshot}>
-              Save Snapshot
-            </button>
-          </div>
+          {!isWholeModel && (
+            <div className="snapshot-controls">
+              <input
+                type="text"
+                className="text-input"
+                placeholder="Add narrative for snapshot..."
+                value={snapshotNarrative}
+                onChange={(e) => setSnapshotNarrative(e.target.value)}
+              />
+              <button className="op-btn" onClick={handleSnapshot}>
+                Save Snapshot
+              </button>
+            </div>
+          )}
         </div>
       )}
 
-      <EvidenceGallery
-        key={galleryKey}
-        genomeId={genomeId}
-        annotationId={annotation.id}
-      />
+      {!isWholeModel && (
+        <EvidenceGallery
+          key={galleryKey}
+          genomeId={genomeId}
+          annotationId={annotation.id}
+        />
+      )}
     </div>
   );
 }

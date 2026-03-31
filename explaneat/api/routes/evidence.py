@@ -565,7 +565,11 @@ async def compute_shap(
                 import torch
                 if not isinstance(x, torch.Tensor):
                     x = torch.tensor(x, dtype=torch.float32)
-                return struct_net.forward(x).detach().numpy()
+                out = struct_net.forward(x).detach().numpy()
+                # Flatten single-output to 1D for SHAP
+                if out.ndim == 2 and out.shape[1] == 1:
+                    out = out.ravel()
+                return out
 
             from ...analysis.shap_analysis import compute_shap_values
             result = compute_shap_values(
