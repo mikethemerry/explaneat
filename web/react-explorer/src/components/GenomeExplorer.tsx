@@ -253,6 +253,9 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
         return;
       }
     }
+
+    // Clear annotation selection so right panel updates to match node type
+    setSelectedAnnotationId(null);
   }, [model]);
 
   const handleConnectionToggle = useCallback(async (fromNode: string, toNode: string, currentlyEnabled: boolean) => {
