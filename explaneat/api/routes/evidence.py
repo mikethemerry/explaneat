@@ -563,8 +563,7 @@ async def compute_shap(
 
             def model_predict(x):
                 import torch
-                if not isinstance(x, torch.Tensor):
-                    x = torch.tensor(x, dtype=torch.float32)
+                x = torch.as_tensor(x, dtype=torch.float32)
                 out = struct_net.forward(x).detach().numpy()
                 # Flatten single-output to 1D for SHAP
                 if out.ndim == 2 and out.shape[1] == 1:
