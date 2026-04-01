@@ -116,8 +116,29 @@ class NetworkStructure:
         return {node.id for node in self.nodes}
     
     def get_display_map(self) -> Dict[str, str]:
-        """Map node IDs to their display labels (display_name or id)."""
-        return {node.id: node.display_label for node in self.nodes}
+        """Map node IDs to their display labels (display_name or id).
+
+        Split variants (e.g. ``-2_a``) inherit the parent's display name
+        with the suffix appended (e.g. ``weight_a``).
+        """
+        # First pass: explicit display names
+        result: Dict[str, str] = {}
+        for node in self.nodes:
+            result[node.id] = node.display_label
+
+        # Second pass: derive display names for split variants from parent
+        for node in self.nodes:
+            if node.display_name:
+                continue  # already has an explicit name
+            if "_" not in node.id:
+                continue
+            parts = node.id.rsplit("_", 1)
+            if len(parts) == 2 and parts[1].isalpha():
+                base_id, suffix = parts
+                if base_id in result and result[base_id] != base_id:
+                    result[node.id] = f"{result[base_id]}_{suffix}"
+
+        return result
 
     def get_enabled_connections(self) -> List[NetworkConnection]:
         """Get only enabled connections."""
