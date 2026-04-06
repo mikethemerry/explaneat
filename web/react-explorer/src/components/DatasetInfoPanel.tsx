@@ -30,6 +30,43 @@ function logError(message: string, data?: unknown) {
 }
 
 // =============================================================================
+// Column mapping utilities
+// =============================================================================
+
+/**
+ * Map input node IDs to dataset column indices using base-node deduplication.
+ * Split variants (e.g., -2_a, -2_b from splitting -2) share the same
+ * dataset column as their base node.
+ *
+ * Returns both directions:
+ *  - nodeToCol: node_id -> dataset column index
+ *  - colToNodes: dataset column index -> list of node_ids
+ */
+function buildColumnMapping(inputNodes: string[]): {
+  nodeToCol: Map<string, number>;
+  colToNodes: Map<number, string[]>;
+} {
+  const nodeToCol = new Map<string, number>();
+  const colToNodes = new Map<number, string[]>();
+  const seenBases = new Map<string, number>();
+  let col = 0;
+
+  for (const nid of inputNodes) {
+    const base = nid.replace(/_[a-z]$/, "");
+    if (!seenBases.has(base)) {
+      seenBases.set(base, col);
+      colToNodes.set(col, []);
+      col++;
+    }
+    const c = seenBases.get(base)!;
+    nodeToCol.set(nid, c);
+    colToNodes.get(c)!.push(nid);
+  }
+
+  return { nodeToCol, colToNodes };
+}
+
+// =============================================================================
 // Types
 // =============================================================================
 
@@ -75,40 +112,36 @@ export function DatasetInfoPanel({
     setError(null);
     const inputNodes = model.metadata.input_nodes;
     const featureNames = split.feature_names;
+    const { colToNodes } = buildColumnMapping(inputNodes);
     let renamed = 0;
 
     try {
-      for (let i = 0; i < inputNodes.length && i < featureNames.length; i++) {
-        const nodeId = inputNodes[i];
-        const featureName = featureNames[i];
-        const nodeObj = model.nodes.find((n) => n.id === nodeId);
+      for (let col = 0; col < featureNames.length; col++) {
+        const nodes = colToNodes.get(col);
+        if (!nodes || nodes.length === 0) continue;
+        const featureName = featureNames[col];
 
-        // Skip if already has a display_name
-        if (nodeObj?.display_name) {
-          logDebug(`Skipping ${nodeId}: already named ${nodeObj.display_name}`);
-          continue;
-        }
+        for (const nodeId of nodes) {
+          const nodeObj = model.nodes.find((n) => n.id === nodeId);
+          if (!nodeObj) continue;
+          if (nodeObj.display_name) {
+            logDebug(`Skipping ${nodeId}: already named ${nodeObj.display_name}`);
+            continue;
+          }
 
-        // Rename the base node
-        logDebug(`Renaming ${nodeId} -> ${featureName}`);
-        await addOperation(genomeId, {
-          type: "rename_node",
-          params: { node_id: nodeId, display_name: featureName },
-        });
-        renamed++;
+          // Use feature name directly for unsplit nodes, add suffix for variants
+          let displayName: string;
+          if (nodes.length === 1) {
+            displayName = featureName;
+          } else {
+            const match = nodeId.match(/_([a-z])$/);
+            displayName = match ? `${featureName}_${match[1]}` : featureName;
+          }
 
-        // Also rename any split variants (e.g. "-1_a", "-1_b")
-        const splitVariants = model.nodes.filter(
-          (n) => n.id !== nodeId && n.id.startsWith(`${nodeId}_`)
-        );
-        for (const variant of splitVariants) {
-          if (variant.display_name) continue;
-          const suffix = variant.id.slice(nodeId.length + 1); // e.g. "a", "b"
-          const variantName = `${featureName}_${suffix}`;
-          logDebug(`Renaming split variant ${variant.id} -> ${variantName}`);
+          logDebug(`Renaming ${nodeId} -> ${displayName}`);
           await addOperation(genomeId, {
             type: "rename_node",
-            params: { node_id: variant.id, display_name: variantName },
+            params: { node_id: nodeId, display_name: displayName },
           });
           renamed++;
         }
@@ -133,12 +166,18 @@ export function DatasetInfoPanel({
   const featureNames = split.feature_names;
   const featureTypes = split.feature_types;
   const featureDescriptions = split.feature_descriptions;
+  const { colToNodes } = buildColumnMapping(inputNodes);
 
   // Check if any input nodes lack a display_name
-  const hasUnnamedInputs = inputNodes.some((nodeId, i) => {
-    const nodeObj = model.nodes.find((n) => n.id === nodeId);
-    return !nodeObj?.display_name && featureNames && i < featureNames.length;
-  });
+  const hasUnnamedInputs = featureNames
+    ? Array.from({ length: featureNames.length }).some((_, col) => {
+        const nodes = colToNodes.get(col) ?? [];
+        return nodes.some((nid) => {
+          const nodeObj = model.nodes.find((n) => n.id === nid);
+          return nodeObj && !nodeObj.display_name;
+        });
+      })
+    : false;
 
   return (
     <div className="dataset-info-panel">
@@ -179,20 +218,24 @@ export function DatasetInfoPanel({
                 </thead>
                 <tbody>
                   {featureNames.map((name, i) => {
-                    const nodeId = i < inputNodes.length ? inputNodes[i] : null;
-                    const nodeObj = nodeId
-                      ? model.nodes.find((n) => n.id === nodeId)
-                      : null;
+                    const nodes = colToNodes.get(i) ?? [];
                     const type = featureTypes?.[name] ?? null;
+                    const displayNames = nodes
+                      .map((nid) => model.nodes.find((n) => n.id === nid)?.display_name)
+                      .filter(Boolean);
                     return (
                       <tr key={name}>
                         <td title={featureDescriptions?.[name] ?? undefined}>
                           {name}
                         </td>
                         <td className="type-cell">{type ?? "-"}</td>
-                        <td className="node-cell">{nodeId ?? "-"}</td>
+                        <td className="node-cell">
+                          {nodes.length > 0 ? nodes.join(", ") : "-"}
+                        </td>
                         <td className="name-cell">
-                          {nodeObj?.display_name ?? (
+                          {displayNames.length > 0 ? (
+                            displayNames.join(", ")
+                          ) : (
                             <span style={{ color: "#9ca3af" }}>-</span>
                           )}
                         </td>

@@ -775,6 +775,131 @@ class TestCollapseStructureConnections:
         assert validation["is_valid"] is True
 
 
+class TestCollapseWithMissingEntryInSubgraph:
+    """Regression tests for entry nodes omitted from subgraph_nodes.
+
+    When entry_nodes lists nodes not present in subgraph_nodes, collapse
+    must still create entry -> fn connections for ALL entry nodes.
+    """
+
+    def test_entry_not_in_subgraph_still_connects_to_fn(self):
+        """If entry nodes are not in subgraph_nodes, they should still get
+        connections to the function node.
+
+        Reproduces: annotation M covers a->c and b->c, but subgraph_nodes
+        only contains [c]. Both a->fn_M and b->fn_M must exist.
+        """
+        nodes = [
+            _make_node("-1", NodeType.INPUT),
+            _make_node("-2", NodeType.INPUT),
+            _make_node("c", NodeType.HIDDEN, bias=0.1, activation="relu"),
+            _make_node("0", NodeType.OUTPUT),
+        ]
+        connections = [
+            _make_conn("-1", "c", weight=0.5),
+            _make_conn("-2", "c", weight=0.7),
+            _make_conn("c", "0", weight=0.9),
+        ]
+        structure = NetworkStructure(
+            nodes=nodes,
+            connections=connections,
+            input_node_ids=["-1", "-2"],
+            output_node_ids=["0"],
+        )
+        # Entry nodes [-1, -2] are NOT in subgraph_nodes (only [c])
+        annotation = _make_annotation(
+            "M",
+            entry_nodes=["-1", "-2"],
+            exit_nodes=["c"],
+            subgraph_nodes=["c"],  # Missing entry nodes!
+            subgraph_connections=[],
+        )
+        result = collapse_structure(structure, [annotation], {"M"})
+
+        conn_set = _conn_tuples(result)
+        # Both entry nodes must connect to fn_M
+        assert ("-1", "fn_M") in conn_set, "Missing connection -1 -> fn_M"
+        assert ("-2", "fn_M") in conn_set, "Missing connection -2 -> fn_M"
+        # fn_M must connect to output
+        assert ("fn_M", "0") in conn_set
+        assert not _has_cycle(result)
+
+    def test_partial_entry_in_subgraph(self):
+        """If only some entry nodes are in subgraph_nodes, ALL entries must
+        still get connections to the function node.
+
+        Reproduces: annotation M has entry_nodes=[a, b], but subgraph_nodes
+        only contains [b, c]. Connection a->fn_M must still exist.
+        """
+        nodes = [
+            _make_node("-1", NodeType.INPUT),
+            _make_node("-2", NodeType.INPUT),
+            _make_node("c", NodeType.HIDDEN, bias=0.1, activation="relu"),
+            _make_node("0", NodeType.OUTPUT),
+        ]
+        connections = [
+            _make_conn("-1", "c", weight=0.5),
+            _make_conn("-2", "c", weight=0.7),
+            _make_conn("c", "0", weight=0.9),
+        ]
+        structure = NetworkStructure(
+            nodes=nodes,
+            connections=connections,
+            input_node_ids=["-1", "-2"],
+            output_node_ids=["0"],
+        )
+        # Only -2 is in subgraph_nodes, -1 is missing
+        annotation = _make_annotation(
+            "M",
+            entry_nodes=["-1", "-2"],
+            exit_nodes=["c"],
+            subgraph_nodes=["-2", "c"],  # -1 missing from subgraph!
+            subgraph_connections=[("-2", "c")],
+        )
+        result = collapse_structure(structure, [annotation], {"M"})
+
+        conn_set = _conn_tuples(result)
+        assert ("-1", "fn_M") in conn_set, "Missing connection -1 -> fn_M"
+        assert ("-2", "fn_M") in conn_set, "Missing connection -2 -> fn_M"
+        assert ("fn_M", "0") in conn_set
+        assert not _has_cycle(result)
+
+    def test_exit_not_in_subgraph_still_reroutes(self):
+        """If exit nodes are not in subgraph_nodes, their outgoing connections
+        should still be rerouted through the function node."""
+        nodes = [
+            _make_node("-1", NodeType.INPUT),
+            _make_node("h1", NodeType.HIDDEN),
+            _make_node("h2", NodeType.HIDDEN),
+            _make_node("0", NodeType.OUTPUT),
+        ]
+        connections = [
+            _make_conn("-1", "h1", weight=1.0),
+            _make_conn("h1", "h2", weight=0.5),
+            _make_conn("h2", "0", weight=0.7),
+        ]
+        structure = NetworkStructure(
+            nodes=nodes,
+            connections=connections,
+            input_node_ids=["-1"],
+            output_node_ids=["0"],
+        )
+        # exit node h2 missing from subgraph_nodes
+        annotation = _make_annotation(
+            "M",
+            entry_nodes=["h1"],
+            exit_nodes=["h2"],
+            subgraph_nodes=["h1"],  # h2 missing!
+            subgraph_connections=[],
+        )
+        result = collapse_structure(structure, [annotation], {"M"})
+
+        conn_set = _conn_tuples(result)
+        assert ("h1", "fn_M") in conn_set
+        assert ("fn_M", "0") in conn_set
+        assert not _has_cycle(result)
+
+
 class TestCompositionalAnnotationCollapse:
     """Test collapse of compositional annotations (parent with children).
 

@@ -46,10 +46,13 @@ class TestApplyRenameNode:
         assert result["node_id"] == "-2"
         assert result["display_name"] == "petalWidth"
 
-    def test_rename_covered_node_raises(self):
+    def test_rename_covered_node_succeeds(self):
         structure = _simple_structure()
-        with pytest.raises(Exception, match="covered"):
-            apply_rename_node(structure, "-1", "sepalLength", {"-1"})
+        result = apply_rename_node(structure, "-1", "sepalLength", {"-1"})
+        assert result["node_id"] == "-1"
+        assert result["display_name"] == "sepalLength"
+        node = structure.get_node_by_id("-1")
+        assert node.display_name == "sepalLength"
 
     def test_rename_nonexistent_node_raises(self):
         structure = _simple_structure()
@@ -107,14 +110,14 @@ class TestRenameNodeValidation:
         )
         assert len(errors) > 0
 
-    def test_validate_fails_for_covered_node(self):
+    def test_validate_passes_for_covered_node(self):
         structure = _simple_structure()
         errors = validate_operation(
             structure, "rename_node",
             {"node_id": "-1", "display_name": "foo"},
             {"-1"}, set(),
         )
-        assert len(errors) > 0
+        assert errors == []
 
     def test_validate_fails_for_empty_name(self):
         structure = _simple_structure()

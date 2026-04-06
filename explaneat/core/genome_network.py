@@ -119,24 +119,41 @@ class NetworkStructure:
         """Map node IDs to their display labels (display_name or id).
 
         Split variants (e.g. ``-2_a``) inherit the parent's display name
-        with the suffix appended (e.g. ``weight_a``).
+        with the suffix appended (e.g. ``weight_a``).  When the parent
+        node has been removed (as happens after a split operation), the
+        base name is derived from a sibling variant's display name.
         """
         # First pass: explicit display names
         result: Dict[str, str] = {}
         for node in self.nodes:
             result[node.id] = node.display_label
 
-        # Second pass: derive display names for split variants from parent
+        # Second pass: derive display names for split variants
         for node in self.nodes:
             if node.display_name:
                 continue  # already has an explicit name
             if "_" not in node.id:
                 continue
             parts = node.id.rsplit("_", 1)
-            if len(parts) == 2 and parts[1].isalpha():
-                base_id, suffix = parts
-                if base_id in result and result[base_id] != base_id:
-                    result[node.id] = f"{result[base_id]}_{suffix}"
+            if len(parts) != 2 or not parts[1].isalpha():
+                continue
+            base_id, suffix = parts
+
+            # Try parent node first
+            if base_id in result and result[base_id] != base_id:
+                result[node.id] = f"{result[base_id]}_{suffix}"
+                continue
+
+            # Parent gone (split removed it) — derive from a named sibling
+            for other in self.nodes:
+                if other.id == node.id or not other.display_name:
+                    continue
+                other_parts = other.id.rsplit("_", 1)
+                if len(other_parts) == 2 and other_parts[0] == base_id and other_parts[1].isalpha():
+                    # Sibling found: strip its suffix to get the base concept
+                    sibling_base = other.display_name.rsplit("_", 1)[0]
+                    result[node.id] = f"{sibling_base}_{suffix}"
+                    break
 
         return result
 

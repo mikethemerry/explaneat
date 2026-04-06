@@ -676,6 +676,45 @@ class NodeSplit(Base, TimestampMixin):
         return all_conns
 
 
+class ShapCache(Base, TimestampMixin):
+    """Caches SHAP computation results to avoid expensive recomputation.
+
+    SHAP (KernelExplainer) is deterministic for a given model + dataset,
+    so results can be computed once and reused. Cache is invalidated when
+    operations change (tracked via operations_count).
+    """
+
+    __tablename__ = "shap_cache"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    genome_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("genomes.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    split_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("dataset_splits.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    annotation_id = Column(String(255), nullable=True)  # None = whole model
+    split_choice = Column(String(10), nullable=False)  # "train", "test", "both"
+    max_samples = Column(Integer, nullable=False)
+    operations_count = Column(Integer, nullable=False)  # len(explanation.operations) for staleness check
+
+    # SHAP results (matches ShapResponse exactly)
+    feature_names = Column(JSONB, nullable=False)
+    mean_abs_shap = Column(JSONB, nullable=False)
+    base_value = Column(Float, nullable=False)
+
+    __table_args__ = (
+        Index(
+            "idx_shap_cache_lookup",
+            "genome_id", "split_id", "annotation_id", "split_choice", "max_samples",
+        ),
+    )
+
+
 class Annotation(Base, TimestampMixin):
     """Stores annotations for connected subgraphs of genomes"""
 

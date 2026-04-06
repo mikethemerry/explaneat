@@ -6,10 +6,11 @@
  * - Collapse/expand toggle per annotation
  * - Shows name, entry/exit count, leaf/composition badge
  * - Click to select annotation
+ * - Double-click annotation name to rename (sets display_name)
  */
 
-import { useCallback } from "react";
-import type { AnnotationSummary } from "../api/client";
+import { useCallback, useState } from "react";
+import { addOperation, type AnnotationSummary } from "../api/client";
 
 // =============================================================================
 // Logging utilities
@@ -31,6 +32,8 @@ type AnnotationListPanelProps = {
   onToggleCollapse: (annotationId: string) => void;
   selectedAnnotationId: string | null;
   onSelectAnnotation: (annotationId: string | null) => void;
+  genomeId: string;
+  onOperationChange: () => void;
 };
 
 // =============================================================================
@@ -44,6 +47,8 @@ type AnnotationTreeItemProps = {
   onToggleCollapse: (annotationId: string) => void;
   selectedAnnotationId: string | null;
   onSelectAnnotation: (annotationId: string | null) => void;
+  genomeId: string;
+  onOperationChange: () => void;
   depth: number;
 };
 
@@ -54,12 +59,17 @@ function AnnotationTreeItem({
   onToggleCollapse,
   selectedAnnotationId,
   onSelectAnnotation,
+  genomeId,
+  onOperationChange,
   depth,
 }: AnnotationTreeItemProps) {
   const isCollapsed = annotation.name ? collapsedAnnotations.has(annotation.name) : false;
   const isSelected = selectedAnnotationId === annotation.id;
   const children = annotations.filter(a => a.parent_annotation_id === annotation.id);
   const hasChildren = children.length > 0;
+
+  const [editing, setEditing] = useState(false);
+  const [editValue, setEditValue] = useState("");
 
   const handleToggle = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -72,7 +82,46 @@ function AnnotationTreeItem({
     onSelectAnnotation(isSelected ? null : annotation.id);
   }, [annotation.id, isSelected, onSelectAnnotation]);
 
-  const displayName = annotation.name || `Annotation ${annotation.id.slice(0, 8)}`;
+  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditValue(annotation.display_name || annotation.name || "");
+    setEditing(true);
+  }, [annotation.display_name, annotation.name]);
+
+  const submitRename = useCallback(async (value: string) => {
+    setEditing(false);
+    const trimmed = value.trim();
+    const currentDisplay = annotation.display_name || annotation.name || "";
+    if (trimmed === currentDisplay) return;
+
+    // If user cleared the field back to the canonical name (or empty), set null to clear display_name
+    const newDisplayName = (!trimmed || trimmed === annotation.name) ? null : trimmed;
+
+    if (!annotation.name) return;
+    try {
+      await addOperation(genomeId, {
+        type: "rename_annotation",
+        params: { annotation_id: annotation.name, display_name: newDisplayName },
+      });
+      onOperationChange();
+    } catch (err) {
+      logDebug("Rename annotation failed", err);
+    }
+  }, [annotation.display_name, annotation.name, genomeId, onOperationChange]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      submitRename(editValue);
+    } else if (e.key === "Escape") {
+      setEditing(false);
+    }
+  }, [editValue, submitRename]);
+
+  const handleBlur = useCallback(() => {
+    submitRename(editValue);
+  }, [editValue, submitRename]);
+
+  const displayName = annotation.display_name || annotation.name || `Annotation ${annotation.id.slice(0, 8)}`;
 
   return (
     <div className="annotation-tree-item" style={{ marginLeft: depth * 16 }}>
@@ -87,7 +136,25 @@ function AnnotationTreeItem({
         >
           {isCollapsed ? "+" : "-"}
         </button>
-        <span className="annotation-name">{displayName}</span>
+        {editing ? (
+          <input
+            className="annotation-rename-input"
+            value={editValue}
+            onChange={e => setEditValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={handleBlur}
+            autoFocus
+            onClick={e => e.stopPropagation()}
+          />
+        ) : (
+          <span
+            className="annotation-name"
+            onDoubleClick={handleDoubleClick}
+            title="Double-click to rename"
+          >
+            {displayName}
+          </span>
+        )}
         <span className="annotation-meta">
           <span className="node-count" title="Entry nodes">
             {annotation.entry_nodes.length}
@@ -113,6 +180,8 @@ function AnnotationTreeItem({
           onToggleCollapse={onToggleCollapse}
           selectedAnnotationId={selectedAnnotationId}
           onSelectAnnotation={onSelectAnnotation}
+          genomeId={genomeId}
+          onOperationChange={onOperationChange}
           depth={depth + 1}
         />
       ))}
@@ -130,41 +199,54 @@ export function AnnotationListPanel({
   onToggleCollapse,
   selectedAnnotationId,
   onSelectAnnotation,
+  genomeId,
+  onOperationChange,
 }: AnnotationListPanelProps) {
+  const [panelCollapsed, setPanelCollapsed] = useState(false);
+
   // Get root-level annotations (no parent)
   const rootAnnotations = annotations.filter(a => !a.parent_annotation_id);
-
-  if (annotations.length === 0) {
-    return (
-      <section className="panel-section annotation-list-panel">
-        <h4>Annotations (0)</h4>
-        <p className="hint">No annotations yet. Select nodes and create an annotation.</p>
-      </section>
-    );
-  }
-
   const collapsedCount = collapsedAnnotations.size;
 
   return (
     <section className="panel-section annotation-list-panel">
-      <h4>Annotations ({annotations.length})</h4>
-      {collapsedCount > 0 && (
-        <p className="hint">{collapsedCount} annotation(s) collapsed</p>
-      )}
-      <div className="annotation-tree">
-        {rootAnnotations.map(annotation => (
-          <AnnotationTreeItem
-            key={annotation.id}
-            annotation={annotation}
-            annotations={annotations}
-            collapsedAnnotations={collapsedAnnotations}
-            onToggleCollapse={onToggleCollapse}
-            selectedAnnotationId={selectedAnnotationId}
-            onSelectAnnotation={onSelectAnnotation}
-            depth={0}
-          />
-        ))}
+      <div
+        className="panel-header"
+        onClick={() => setPanelCollapsed(!panelCollapsed)}
+        style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}
+      >
+        <span className="collapse-toggle">{panelCollapsed ? "\u25b6" : "\u25bc"}</span>
+        <h4 style={{ margin: 0 }}>Annotations ({annotations.length})</h4>
       </div>
+      {!panelCollapsed && (
+        <>
+          {annotations.length === 0 ? (
+            <p className="hint">No annotations yet. Select nodes and create an annotation.</p>
+          ) : (
+            <>
+              {collapsedCount > 0 && (
+                <p className="hint">{collapsedCount} annotation(s) collapsed</p>
+              )}
+              <div className="annotation-tree">
+                {rootAnnotations.map(annotation => (
+                  <AnnotationTreeItem
+                    key={annotation.id}
+                    annotation={annotation}
+                    annotations={annotations}
+                    collapsedAnnotations={collapsedAnnotations}
+                    onToggleCollapse={onToggleCollapse}
+                    selectedAnnotationId={selectedAnnotationId}
+                    onSelectAnnotation={onSelectAnnotation}
+                    genomeId={genomeId}
+                    onOperationChange={onOperationChange}
+                    depth={0}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </>
+      )}
     </section>
   );
 }

@@ -1469,6 +1469,7 @@ export function OperationsPanel({
   annotations,
   onOperationChange,
 }: OperationsPanelProps) {
+  const [collapsed, setCollapsed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [annotationName, setAnnotationName] = useState("");
@@ -1889,8 +1890,16 @@ export function OperationsPanel({
 
   return (
     <aside className="operations-panel">
-      <h3>Operations</h3>
+      <div
+        className="panel-header"
+        onClick={() => setCollapsed(!collapsed)}
+        style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}
+      >
+        <span className="collapse-toggle">{collapsed ? "\u25b6" : "\u25bc"}</span>
+        <h3 style={{ margin: 0 }}>Operations</h3>
+      </div>
 
+      {collapsed ? null : <>
       {error && <div className="error-message">{error}</div>}
 
       {/* Wizard Modal/Overlay */}
@@ -2476,6 +2485,7 @@ export function OperationsPanel({
           </ul>
         )}
       </section>
+      </>}
     </aside>
   );
 }

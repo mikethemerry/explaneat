@@ -4,6 +4,7 @@ import {
   listOperations,
   listAnnotations,
   addOperation,
+  getNodeEvidenceInfo,
   type ModelState,
   type Operation,
   type AnnotationSummary,
@@ -55,6 +56,9 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
   const [annotations, setAnnotations] = useState<AnnotationSummary[]>([]);
   const [collapsedAnnotations, setCollapsedAnnotations] = useState<Set<string>>(new Set());
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
+
+  // Node-level evidence state
+  const [nodeEvidence, setNodeEvidence] = useState<{ annotation: AnnotationSummary; nodeId: string } | null>(null);
 
   // Derive annotation node IDs from model (FUNCTION nodes returned by server)
   const annotationNodeIds = useMemo(
@@ -250,13 +254,43 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
           annotationId: node.function_metadata.annotation_id,
         });
         setSelectedAnnotationId(node.function_metadata.annotation_id);
+        setNodeEvidence(null);
+        return;
+      }
+
+      // Show node-level evidence for hidden/identity nodes
+      if (node && (node.type === "hidden" || node.type === "identity")) {
+        logInfo("Fetching node evidence info", { nodeId: node.id });
+        setSelectedAnnotationId(null);
+        getNodeEvidenceInfo(genomeId, node.id)
+          .then((info) => {
+            setNodeEvidence({
+              annotation: {
+                id: `__node_${node.id}__`,
+                name: `Node ${info.display_name}`,
+                display_name: info.display_name,
+                entry_nodes: info.entry_nodes,
+                exit_nodes: info.exit_nodes,
+                subgraph_nodes: info.subgraph_nodes,
+                parent_annotation_id: null,
+                children_ids: [],
+                is_leaf: true,
+              },
+              nodeId: node.id,
+            });
+          })
+          .catch((err) => {
+            logError("Failed to fetch node evidence info", err);
+            setNodeEvidence(null);
+          });
         return;
       }
     }
 
-    // Clear annotation selection so right panel updates to match node type
+    // Clear annotation and node evidence selection
     setSelectedAnnotationId(null);
-  }, [model]);
+    setNodeEvidence(null);
+  }, [model, genomeId]);
 
   const handleConnectionToggle = useCallback(async (fromNode: string, toNode: string, currentlyEnabled: boolean) => {
     try {
@@ -363,7 +397,7 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
           annotationNodeIds={annotationNodeIds}
           onConnectionToggle={handleConnectionToggle}
         />
-        {selectedAnnotationId ? (
+        {selectedAnnotationId && annotations.find((a) => a.id === selectedAnnotationId) ? (
           <div className="right-panel">
             <EvidencePanel
               genomeId={genomeId}
@@ -371,6 +405,16 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
               annotation={
                 annotations.find((a) => a.id === selectedAnnotationId)!
               }
+            />
+          </div>
+        ) : nodeEvidence ? (
+          <div className="right-panel">
+            <EvidencePanel
+              genomeId={genomeId}
+              experimentId={experimentId}
+              annotation={nodeEvidence.annotation}
+              isNodeLevel
+              nodeId={nodeEvidence.nodeId}
             />
           </div>
         ) : wholeModelAnnotation ? (

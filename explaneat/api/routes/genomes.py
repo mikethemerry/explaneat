@@ -407,6 +407,15 @@ async def list_genome_annotations(
             else:
                 child_to_parent_id[child_id] = ann["id"]
 
+    # Scan for rename_annotation operations to get display names
+    annotation_display_names: dict[str, str | None] = {}
+    for op in explanation.operations:
+        if op.get("type") == "rename_annotation":
+            params = op.get("params", {})
+            ann_id = params.get("annotation_id")
+            if ann_id:
+                annotation_display_names[ann_id] = params.get("display_name")
+
     # Build final annotation summaries
     annotation_summaries = []
     for ann in raw_annotations:
@@ -417,6 +426,7 @@ async def list_genome_annotations(
             AnnotationSummary(
                 id=ann["id"],
                 name=ann["name"],
+                display_name=annotation_display_names.get(ann["name"]),
                 entry_nodes=ann["entry_nodes"],
                 exit_nodes=ann["exit_nodes"],
                 subgraph_nodes=ann["subgraph_nodes"],

@@ -421,6 +421,29 @@ def _get_split_suffix(node_id: str) -> Optional[str]:
     return None
 
 
+def _replace_node_ids_in_list(
+    id_list: List[str], old_ids: Set[str], new_id: str
+) -> None:
+    """
+    Replace occurrences of old_ids in id_list with new_id (in place).
+
+    The first occurrence of any old ID is replaced with new_id;
+    all other occurrences are removed.
+    """
+    replaced = False
+    i = 0
+    while i < len(id_list):
+        if id_list[i] in old_ids:
+            if not replaced:
+                id_list[i] = new_id
+                replaced = True
+                i += 1
+            else:
+                id_list.pop(i)
+        else:
+            i += 1
+
+
 def apply_split_node(
     model: NetworkStructure,
     node_id: str,
@@ -546,6 +569,16 @@ def apply_split_node(
         if c.from_node != node_id and c.to_node != node_id
     ]
 
+    # Update input_node_ids if we split an input node
+    if node_id in model.input_node_ids:
+        idx = model.input_node_ids.index(node_id)
+        model.input_node_ids[idx:idx+1] = created_nodes
+
+    # Update output_node_ids if we split an output node
+    if node_id in model.output_node_ids:
+        idx = model.output_node_ids.index(node_id)
+        model.output_node_ids[idx:idx+1] = created_nodes
+
     # Verify each split node has exactly 1 output (invariant check)
     for split_id in created_nodes:
         outputs = [c for c in model.connections if c.from_node == split_id and c.enabled]
@@ -668,11 +701,17 @@ def apply_consolidate_node(
         model.connections.append(new_conn)
 
     # Remove original split nodes and their connections
-    model.nodes = [n for n in model.nodes if n.id not in node_ids]
+    node_ids_set = set(node_ids)
+    model.nodes = [n for n in model.nodes if n.id not in node_ids_set]
     model.connections = [
         c for c in model.connections
-        if c.from_node not in node_ids and c.to_node not in node_ids
+        if c.from_node not in node_ids_set and c.to_node not in node_ids_set
     ]
+
+    # Update input_node_ids: replace first occurrence of any consolidated node
+    # with the consolidated ID, remove the rest
+    _replace_node_ids_in_list(model.input_node_ids, node_ids_set, consolidated_id)
+    _replace_node_ids_in_list(model.output_node_ids, node_ids_set, consolidated_id)
 
     return {
         "created_nodes": [consolidated_id],

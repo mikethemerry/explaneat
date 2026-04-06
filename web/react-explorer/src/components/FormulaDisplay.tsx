@@ -5,10 +5,11 @@ import "katex/dist/katex.min.css";
 
 type FormulaDisplayProps = {
   genomeId: string;
-  annotationId: string;
+  annotationId?: string;
+  nodeId?: string;
 };
 
-export function FormulaDisplay({ genomeId, annotationId }: FormulaDisplayProps) {
+export function FormulaDisplay({ genomeId, annotationId, nodeId }: FormulaDisplayProps) {
   const [formula, setFormula] = useState<FormulaResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +22,7 @@ export function FormulaDisplay({ genomeId, annotationId }: FormulaDisplayProps) 
     setError(null);
     setExpanded(false);
 
-    getFormula(genomeId, annotationId)
+    getFormula(genomeId, annotationId, nodeId)
       .then((data) => {
         if (!cancelled) {
           setFormula(data);
@@ -38,7 +39,7 @@ export function FormulaDisplay({ genomeId, annotationId }: FormulaDisplayProps) 
     return () => {
       cancelled = true;
     };
-  }, [genomeId, annotationId]);
+  }, [genomeId, annotationId, nodeId]);
 
   // Determine which LaTeX to render
   const currentLatex = formula

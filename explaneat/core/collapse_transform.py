@@ -234,6 +234,10 @@ def _collapse_one(
         if effective_nodes_override is not None
         else set(annotation.subgraph_nodes)
     )
+    # Ensure entry and exit nodes are always in the subgraph set.
+    # Without this, entry nodes omitted from subgraph_nodes have their
+    # connections classified as "external -> internal" and dropped.
+    subgraph_set = subgraph_set | entry_set | exit_set
     internal_nodes = subgraph_set - entry_set  # intermediate + exit nodes
 
     fn_node_id = f"fn_{annotation.name}"

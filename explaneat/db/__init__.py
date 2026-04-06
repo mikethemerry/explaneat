@@ -13,6 +13,7 @@ from .models import (
     Annotation,
     Explanation,
     NodeSplit,
+    ShapCache,
 )
 
 __all__ = [
@@ -31,4 +32,5 @@ __all__ = [
     "Annotation",
     "Explanation",
     "NodeSplit",
+    "ShapCache",
 ]
