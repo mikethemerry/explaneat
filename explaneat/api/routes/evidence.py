@@ -22,6 +22,7 @@ from ..schemas import (
     VizDataResponse,
     FormulaResponse,
     ChildFormulaInfo,
+    NodeEvidenceInfoResponse,
     SnapshotRequest,
     NarrativeUpdateRequest,
     EvidenceEntry,
@@ -35,6 +36,43 @@ from ..schemas import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+def _resolve_node_label(
+    node_id: str,
+    display_map: Dict[str, str],
+    model_state: "NetworkStructure",
+    fallback: Optional[str] = None,
+) -> str:
+    """Resolve a node ID to a human-readable label.
+
+    Handles the case where a node was split away (e.g. "-7" was split into
+    "-7_a", "-7_b") and no longer exists in the model.  In that case, finds
+    the split variants' display names and joins them.
+    """
+    label = display_map.get(node_id)
+    if label and label != node_id:
+        return label
+
+    # Node not in display map (probably split away) — look for variants
+    prefix = f"{node_id}_"
+    variant_names = []
+    for node in model_state.nodes:
+        if node.id.startswith(prefix):
+            suffix = node.id[len(prefix):]
+            if suffix.isalpha() and len(suffix) == 1:
+                variant_names.append(display_map.get(node.id, node.id))
+
+    if variant_names:
+        # Derive the base concept from a named variant (strip the _a/_b suffix)
+        for vn in variant_names:
+            if vn != node_id and "_" in vn:
+                base_name = vn.rsplit("_", 1)[0]
+                return base_name
+        # All variants are still numeric — join them
+        return "/".join(variant_names)
+
+    return fallback or node_id
 
 
 def _load_genome_and_config(session, genome_id: str):
@@ -186,61 +224,235 @@ def _update_annotation_evidence(session, genome_id: str, annotation_id: str, evi
     raise HTTPException(status_code=404, detail=f"Annotation '{annotation_id}' not found")
 
 
+def _compute_node_subgraph(model_state: NetworkStructure, node_id: str) -> Dict[str, Any]:
+    """Compute a virtual annotation dict for a single node.
+
+    BFS backward from node_id to find all ancestor input nodes, then
+    forward from those inputs to find all nodes on paths to node_id.
+    """
+    # Build adjacency maps from enabled connections
+    predecessors: Dict[str, List[str]] = {}
+    successors: Dict[str, List[str]] = {}
+    for conn in model_state.connections:
+        if not conn.enabled:
+            continue
+        predecessors.setdefault(conn.to_node, []).append(conn.from_node)
+        successors.setdefault(conn.from_node, []).append(conn.to_node)
+
+    # BFS backward from node_id
+    backward_reachable: set = set()
+    queue = [node_id]
+    while queue:
+        current = queue.pop(0)
+        if current in backward_reachable:
+            continue
+        backward_reachable.add(current)
+        for pred in predecessors.get(current, []):
+            if pred not in backward_reachable:
+                queue.append(pred)
+
+    # Entry nodes = network inputs that are backward-reachable
+    input_ids = set(model_state.input_node_ids)
+    entry_nodes = sorted(n for n in backward_reachable if n in input_ids)
+
+    if not entry_nodes:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Node '{node_id}' has no reachable input nodes",
+        )
+
+    # BFS forward from entry_nodes
+    forward_reachable: set = set()
+    queue = list(entry_nodes)
+    while queue:
+        current = queue.pop(0)
+        if current in forward_reachable:
+            continue
+        forward_reachable.add(current)
+        for succ in successors.get(current, []):
+            if succ not in forward_reachable:
+                queue.append(succ)
+
+    # Subgraph = nodes on paths from inputs to node_id
+    subgraph_nodes = sorted(backward_reachable & forward_reachable)
+
+    # Display name
+    display_map = model_state.get_display_map()
+    display_name = display_map.get(node_id, node_id)
+
+    return {
+        "id": f"__node_{node_id}__",
+        "entry_nodes": entry_nodes,
+        "exit_nodes": [node_id],
+        "subgraph_nodes": subgraph_nodes,
+        "subgraph_connections": [],
+        "name": f"Node {display_name}",
+        "display_name": display_name,
+    }
+
+
+def _resolve_annotation(
+    session, genome_id: str, model_state: NetworkStructure,
+    annotation_id: Optional[str], node_id: Optional[str],
+) -> Dict[str, Any]:
+    """Resolve an annotation dict from either annotation_id or node_id."""
+    if node_id:
+        return _compute_node_subgraph(model_state, node_id)
+    elif annotation_id:
+        return _find_annotation_in_operations(session, genome_id, annotation_id)
+    else:
+        raise HTTPException(status_code=400, detail="Provide annotation_id or node_id")
+
+
+@router.get("/node-info", response_model=NodeEvidenceInfoResponse)
+async def get_node_evidence_info(
+    node_id: str,
+    genome_id: str = Path(...),
+):
+    """Get entry/exit/subgraph info for a single node (virtual annotation)."""
+    with db.session_scope() as session:
+        model_state = _build_model_state(session, genome_id)
+        info = _compute_node_subgraph(model_state, node_id)
+        return NodeEvidenceInfoResponse(
+            node_id=node_id,
+            entry_nodes=info["entry_nodes"],
+            exit_nodes=info["exit_nodes"],
+            subgraph_nodes=info["subgraph_nodes"],
+            display_name=info["display_name"],
+        )
+
+
+def _build_whole_model_context(session, genome_id: str, X: np.ndarray):
+    """Build visualization context for the whole model (no annotation).
+
+    Returns (fn, entry_acts, exit_acts, entry_names, exit_names, n_in, n_out).
+    """
+    from ...core.structure_network import StructureNetwork
+    import torch
+
+    model_state = _build_model_state(session, genome_id)
+    struct_net = StructureNetwork(model_state)
+
+    # Override output activation to identity (logits)
+    for d in struct_net._layer_order:
+        layer = struct_net._layers[d]
+        if layer.get("is_output"):
+            layer["activations"] = [
+                "input" if nid in set(model_state.output_node_ids)
+                else act
+                for nid, act in zip(layer["node_ids"], layer["activations"])
+            ]
+
+    display_map = model_state.get_display_map()
+
+    # Build deduplicated feature names (handle split input nodes)
+    seen_bases: set = set()
+    entry_names: list = []
+    for nid in model_state.input_node_ids:
+        base = StructureNetwork._get_base_node_id(nid) or nid
+        if base not in seen_bases:
+            seen_bases.add(base)
+            entry_names.append(
+                _resolve_node_label(base, display_map, model_state)
+            )
+
+    exit_names = [
+        _resolve_node_label(n, display_map, model_state, fallback="output")
+        for n in model_state.output_node_ids
+    ]
+
+    def model_predict(x):
+        x = torch.as_tensor(x, dtype=torch.float64)
+        out = struct_net.forward(x).detach().numpy()
+        if out.ndim == 2 and out.shape[1] == 1:
+            out = out.ravel()
+        return out
+
+    exit_acts = model_predict(X)
+    if exit_acts.ndim == 1:
+        exit_acts = exit_acts.reshape(-1, 1)
+
+    n_in = X.shape[1]
+    n_out = exit_acts.shape[1]
+
+    return model_predict, X, exit_acts, entry_names, exit_names, n_in, n_out
+
+
 @router.post("/viz-data", response_model=VizDataResponse)
 async def compute_viz_data(
     request: VizDataRequest,
     genome_id: str = Path(...),
 ):
-    """Compute visualization data for an annotation."""
+    """Compute visualization data for an annotation, single node, or whole model."""
     with db.session_scope() as session:
-        model_state = _build_model_state(session, genome_id)
-        annotation = _find_annotation_in_operations(session, genome_id, request.annotation_id)
         X, y = _load_split_data(
             session, request.dataset_split_id, request.split,
             request.sample_fraction, request.max_samples,
         )
 
-        # Check cache
-        cached = activation_cache.get(genome_id, request.dataset_split_id, request.annotation_id)
-        if cached is not None:
-            entry_acts, exit_acts = cached
+        is_whole_model = not request.annotation_id and not request.node_id
+
+        if is_whole_model:
+            fn, entry_acts, exit_acts, entry_names, exit_names, n_in, n_out = \
+                _build_whole_model_context(session, genome_id, X)
         else:
-            extractor = ActivationExtractor.from_structure(model_state)
-            entry_acts, exit_acts = extractor.extract(X, annotation)
-            activation_cache.put(
-                genome_id, request.dataset_split_id, request.annotation_id,
-                entry_acts, exit_acts,
+            model_state = _build_model_state(session, genome_id)
+            annotation = _resolve_annotation(
+                session, genome_id, model_state,
+                request.annotation_id, request.node_id,
             )
 
-        ann_fn = AnnotationFunction.from_structure(annotation, model_state)
-        n_in, n_out = ann_fn.dimensionality
+            cache_key = f"node:{request.node_id}" if request.node_id else request.annotation_id
+            cached = activation_cache.get(genome_id, request.dataset_split_id, cache_key)
+            if cached is not None:
+                entry_acts, exit_acts = cached
+            else:
+                extractor = ActivationExtractor.from_structure(model_state)
+                entry_acts, exit_acts = extractor.extract(X, annotation)
+                activation_cache.put(
+                    genome_id, request.dataset_split_id, cache_key,
+                    entry_acts, exit_acts,
+                )
+
+            ann_fn = AnnotationFunction.from_structure(annotation, model_state)
+            fn = ann_fn
+            n_in, n_out = ann_fn.dimensionality
+
+            display_map = model_state.get_display_map()
+            entry_names = [
+                _resolve_node_label(n, display_map, model_state)
+                for n in annotation["entry_nodes"]
+            ]
+            ann_name = annotation.get("name", "output")
+            exit_nodes = annotation["exit_nodes"]
+            exit_names = [
+                _resolve_node_label(n, display_map, model_state,
+                                    fallback=ann_name if len(exit_nodes) == 1
+                                    else f"{ann_name}_{i}")
+                for i, n in enumerate(exit_nodes)
+            ]
+
         suggested = vd.suggest_viz_types(n_in, n_out)
-
-        # Resolve entry/exit display names for chart labels
-        display_map = model_state.get_display_map()
-        entry_names = [display_map.get(n, n) for n in annotation["entry_nodes"]]
-        exit_names = [display_map.get(n, n) for n in annotation["exit_nodes"]]
-
         params = request.params or {}
         viz_type = request.viz_type
 
         if viz_type == "line":
             data = vd.compute_line_plot(
-                ann_fn, entry_acts, exit_acts,
+                fn, entry_acts, exit_acts,
                 input_dim=params.get("input_dim", 0),
                 output_dim=params.get("output_dim", 0),
                 entry_names=entry_names, exit_names=exit_names,
             )
         elif viz_type == "heatmap":
             data = vd.compute_heatmap(
-                ann_fn, entry_acts, exit_acts,
+                fn, entry_acts, exit_acts,
                 input_dims=tuple(params.get("input_dims", [0, 1])),
                 output_dim=params.get("output_dim", 0),
                 entry_names=entry_names, exit_names=exit_names,
             )
         elif viz_type == "partial_dependence":
             data = vd.compute_partial_dependence(
-                ann_fn, entry_acts,
+                fn, entry_acts,
                 vary_dims=params.get("vary_dims", [0]),
                 output_dim=params.get("output_dim", 0),
                 entry_names=entry_names, exit_names=exit_names,
@@ -253,9 +465,29 @@ async def compute_viz_data(
             )
         elif viz_type == "sensitivity":
             data = vd.compute_sensitivity(
-                ann_fn, entry_acts,
+                fn, entry_acts,
                 perturbation=params.get("perturbation", 0.01),
                 entry_names=entry_names,
+            )
+        elif viz_type == "ice":
+            data = vd.compute_ice_plot(
+                fn, entry_acts, exit_acts,
+                input_dim=params.get("input_dim", 0),
+                output_dim=params.get("output_dim", 0),
+                entry_names=entry_names, exit_names=exit_names,
+            )
+        elif viz_type == "feature_output_scatter":
+            data = vd.compute_feature_output_scatter(
+                fn, entry_acts, exit_acts,
+                input_dim=params.get("input_dim", 0),
+                output_dim=params.get("output_dim", 0),
+                entry_names=entry_names, exit_names=exit_names,
+            )
+        elif viz_type == "output_distribution":
+            data = vd.compute_output_distribution(
+                exit_acts,
+                output_dim=params.get("output_dim", 0),
+                exit_names=exit_names,
             )
         else:
             raise HTTPException(status_code=400, detail=f"Unknown viz_type: {viz_type}")
@@ -270,18 +502,26 @@ async def compute_viz_data(
 
 @router.get("/formula", response_model=FormulaResponse)
 async def get_formula(
-    annotation_id: str,
     genome_id: str = Path(...),
+    annotation_id: Optional[str] = None,
+    node_id: Optional[str] = None,
 ):
-    """Get closed-form formula for an annotation subgraph.
+    """Get closed-form formula for an annotation subgraph or single node.
 
     For composed annotations (with children), returns both collapsed and
     expanded LaTeX representations.
     """
+    if not annotation_id and not node_id:
+        raise HTTPException(status_code=400, detail="Provide annotation_id or node_id")
+    if annotation_id and node_id:
+        raise HTTPException(status_code=400, detail="Provide only one of annotation_id or node_id")
+
     with db.session_scope() as session:
         engine = _build_engine(session, genome_id)
         model_state = engine.current_state
-        annotation = _find_annotation_in_operations(session, genome_id, annotation_id)
+        annotation = _resolve_annotation(
+            session, genome_id, model_state, annotation_id, node_id,
+        )
 
         ann_fn = AnnotationFunction.from_structure(annotation, model_state)
         n_in, n_out = ann_fn.dimensionality
@@ -526,8 +766,42 @@ async def compute_shap(
     request: ShapRequest,
     genome_id: str = Path(...),
 ):
-    """Compute SHAP values for the model or a specific annotation subgraph."""
+    """Compute SHAP values for the model or a specific annotation subgraph.
+
+    The heavy SHAP computation runs in a thread pool so it doesn't block
+    the async event loop (other requests can be served while SHAP runs).
+    """
+    import asyncio
+    from ...analysis.shap_cache import get_cached_shap, save_shap_cache
+    from ...analysis.shap_analysis import compute_shap_values
+
+    # --- Phase 1: DB reads and setup (fast, inside session) ---------------
     with db.session_scope() as session:
+        explanation = (
+            session.query(Explanation)
+            .filter(Explanation.genome_id == uuid.UUID(genome_id))
+            .first()
+        )
+        ops_count = len(explanation.operations or []) if explanation else 0
+
+        # Cache key: use node:X for node-level, annotation_id for annotations
+        cache_key = f"node:{request.node_id}" if request.node_id else request.annotation_id
+
+        # Try cache (skip on force_recompute)
+        if not request.force_recompute:
+            cached = get_cached_shap(
+                session, genome_id, request.dataset_split_id,
+                cache_key, request.split,
+                request.max_samples, ops_count,
+            )
+            if cached is not None:
+                logger.info("SHAP cache hit for genome=%s target=%s", genome_id, cache_key)
+                return ShapResponse(**cached)
+
+        logger.info("SHAP %s for genome=%s target=%s — computing",
+                     "force recompute" if request.force_recompute else "cache miss",
+                     genome_id, cache_key)
+
         engine = _build_engine(session, genome_id)
         model_state = engine.current_state
         X, y = _load_split_data(
@@ -537,29 +811,32 @@ async def compute_shap(
 
         display_map = model_state.get_display_map()
 
-        if request.annotation_id:
-            # Annotation-level SHAP: measure importance of annotation entry nodes
-            annotation = _find_annotation_in_operations(
-                session, genome_id, request.annotation_id
+        if request.annotation_id or request.node_id:
+            annotation = _resolve_annotation(
+                session, genome_id, model_state,
+                request.annotation_id, request.node_id,
             )
             ann_fn = AnnotationFunction.from_structure(annotation, model_state)
             extractor = ActivationExtractor.from_structure(model_state)
             entry_acts, _ = extractor.extract(X, annotation)
             feature_names = [
-                display_map.get(n, n) for n in annotation["entry_nodes"]
+                _resolve_node_label(n, display_map, model_state)
+                for n in annotation["entry_nodes"]
             ]
-
-            from ...analysis.shap_analysis import compute_shap_values
-            result = compute_shap_values(
-                ann_fn, entry_acts, feature_names, request.max_samples
-            )
+            ann_name = annotation.get("name", "output")
+            exit_nodes = annotation["exit_nodes"]
+            output_names = [
+                _resolve_node_label(n, display_map, model_state,
+                                    fallback=ann_name if len(exit_nodes) == 1
+                                    else f"{ann_name}_{i}")
+                for i, n in enumerate(exit_nodes)
+            ]
+            predict_fn = ann_fn
+            shap_input = entry_acts
+            shap_output_names: Optional[List[str]] = output_names
         else:
-            # Whole model SHAP: measure importance of input features.
-            # Use logits (pre-activation at output) so SHAP sees variation
-            # even when the output activation saturates.
             from ...core.structure_network import StructureNetwork
             struct_net = StructureNetwork(model_state)
-            # Override output layer activation to identity (logits)
             for d in struct_net._layer_order:
                 layer = struct_net._layers[d]
                 if layer.get("is_output"):
@@ -569,32 +846,46 @@ async def compute_shap(
                         for nid, act in zip(layer["node_ids"], layer["activations"])
                     ]
 
-            # Build feature names from unique base input nodes (one per
-            # dataset column — split variants share a column).
             seen_bases: set = set()
             feature_names: list = []
             for nid in model_state.input_node_ids:
                 base = StructureNetwork._get_base_node_id(nid) or nid
                 if base not in seen_bases:
                     seen_bases.add(base)
-                    feature_names.append(display_map.get(base, base))
+                    feature_names.append(
+                        _resolve_node_label(base, display_map, model_state)
+                    )
 
             def model_predict(x):
                 import torch
                 x = torch.as_tensor(x, dtype=torch.float64)
                 out = struct_net.forward(x).detach().numpy()
-                # Flatten single-output to 1D for SHAP
                 if out.ndim == 2 and out.shape[1] == 1:
                     out = out.ravel()
                 return out
 
-            from ...analysis.shap_analysis import compute_shap_values
-            result = compute_shap_values(
-                model_predict, X, feature_names, request.max_samples
-            )
+            predict_fn = model_predict
+            shap_input = X
+            shap_output_names = None
 
-        return ShapResponse(
-            feature_names=result["feature_names"],
-            mean_abs_shap=result["mean_abs_shap"],
-            base_value=result["base_value"],
+    # --- Phase 2: Heavy SHAP computation (in thread pool) -----------------
+    result = await asyncio.to_thread(
+        compute_shap_values,
+        predict_fn, shap_input, feature_names, request.max_samples,
+        shap_output_names,
+    )
+
+    # --- Phase 3: Cache the result ----------------------------------------
+    with db.session_scope() as session:
+        save_shap_cache(
+            session, genome_id, request.dataset_split_id,
+            cache_key, request.split,
+            request.max_samples, ops_count, result,
         )
+
+    return ShapResponse(
+        feature_names=result["feature_names"],
+        mean_abs_shap=result["mean_abs_shap"],
+        base_value=result["base_value"],
+        outputs=result.get("outputs"),
+    )

@@ -31,6 +31,15 @@ def suggest_viz_types(n_in: int, n_out: int) -> List[str]:
     # Sensitivity: always available
     suggestions.append("sensitivity")
 
+    # ICE plot: always available (per-sample curves for one feature)
+    suggestions.append("ice")
+
+    # Feature vs output scatter: always available
+    suggestions.append("feature_output_scatter")
+
+    # Output distribution: always available
+    suggestions.append("output_distribution")
+
     return suggestions
 
 
@@ -365,3 +374,160 @@ def compute_sensitivity(
         "input_labels": [entry_names[i] if entry_names and i < len(entry_names) else f"x_{i}" for i in range(n_in)],
         "sensitivities": sensitivities,
     }
+
+
+def compute_ice_plot(
+    fn: Callable,
+    entry_acts: np.ndarray,
+    exit_acts: np.ndarray,
+    input_dim: int = 0,
+    output_dim: int = 0,
+    grid_points: int = 100,
+    max_ice_samples: int = 50,
+    entry_names: Optional[List[str]] = None,
+    exit_names: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """Compute Individual Conditional Expectation (ICE) plot data.
+
+    Each ICE curve shows how the prediction changes for one sample as
+    a single feature varies across its range, with all other features
+    held at that sample's actual values.
+
+    Args:
+        fn: Callable (n_samples, n_in) -> (n_samples, n_out)
+        entry_acts: Entry activations (n_samples, n_in)
+        exit_acts: Exit activations (n_samples, n_out)
+        input_dim: Which input dimension to vary
+        output_dim: Which output dimension for y-axis
+        grid_points: Number of grid points per curve
+        max_ice_samples: Maximum number of individual curves
+        entry_names: Optional list of names for entry (input) dimensions
+        exit_names: Optional list of names for exit (output) dimensions
+
+    Returns:
+        Dict with grid_x, ice_curves (list of lists), pd_curve (average)
+    """
+    n_samples = entry_acts.shape[0]
+    x_min = float(entry_acts[:, input_dim].min())
+    x_max = float(entry_acts[:, input_dim].max())
+    margin = (x_max - x_min) * 0.05
+    grid_x = np.linspace(x_min - margin, x_max + margin, grid_points)
+
+    # Subsample if needed
+    if n_samples > max_ice_samples:
+        indices = np.random.choice(n_samples, max_ice_samples, replace=False)
+    else:
+        indices = np.arange(n_samples)
+
+    ice_curves = []
+    for idx in indices:
+        sample = np.tile(entry_acts[idx], (grid_points, 1))
+        sample[:, input_dim] = grid_x
+        out = fn(sample)
+        if out.ndim == 1:
+            curve = out
+        else:
+            curve = out[:, output_dim]
+        ice_curves.append(curve.tolist())
+
+    # Partial dependence = average of ICE curves
+    pd_curve = np.mean(ice_curves, axis=0).tolist()
+
+    x_label = entry_names[input_dim] if entry_names and input_dim < len(entry_names) else f"x_{input_dim}"
+    y_label = exit_names[output_dim] if exit_names and output_dim < len(exit_names) else f"y_{output_dim}"
+
+    return {
+        "grid_x": grid_x.tolist(),
+        "ice_curves": ice_curves,
+        "pd_curve": pd_curve,
+        "x_label": x_label,
+        "y_label": y_label,
+    }
+
+
+def compute_feature_output_scatter(
+    fn: Callable,
+    entry_acts: np.ndarray,
+    exit_acts: np.ndarray,
+    input_dim: int = 0,
+    output_dim: int = 0,
+    grid_points: int = 100,
+    entry_names: Optional[List[str]] = None,
+    exit_names: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """Compute scatter of one input feature vs model output, with PD overlay.
+
+    Args:
+        fn: Callable (n_samples, n_in) -> (n_samples, n_out)
+        entry_acts: Entry activations (n_samples, n_in)
+        exit_acts: Exit activations (n_samples, n_out)
+        input_dim: Which input dimension for x-axis
+        output_dim: Which output dimension for y-axis
+        grid_points: Number of grid points for PD curve
+        entry_names: Optional list of names for entry (input) dimensions
+        exit_names: Optional list of names for exit (output) dimensions
+
+    Returns:
+        Dict with scatter_x, scatter_y, pd_x, pd_y
+    """
+    scatter_x = entry_acts[:, input_dim]
+    if exit_acts.ndim == 1:
+        scatter_y = exit_acts
+    else:
+        scatter_y = exit_acts[:, output_dim]
+
+    # PD curve: fix others at median, vary input_dim
+    x_min = float(scatter_x.min())
+    x_max = float(scatter_x.max())
+    margin = (x_max - x_min) * 0.05
+    pd_x = np.linspace(x_min - margin, x_max + margin, grid_points)
+
+    medians = np.median(entry_acts, axis=0)
+    grid_input = np.tile(medians, (grid_points, 1))
+    grid_input[:, input_dim] = pd_x
+
+    pd_out = fn(grid_input)
+    if pd_out.ndim == 1:
+        pd_y = pd_out
+    else:
+        pd_y = pd_out[:, output_dim]
+
+    x_label = entry_names[input_dim] if entry_names and input_dim < len(entry_names) else f"x_{input_dim}"
+    y_label = exit_names[output_dim] if exit_names and output_dim < len(exit_names) else f"y_{output_dim}"
+
+    return {
+        "scatter_x": scatter_x.tolist(),
+        "scatter_y": scatter_y.tolist(),
+        "pd_x": pd_x.tolist(),
+        "pd_y": pd_y.tolist(),
+        "x_label": x_label,
+        "y_label": y_label,
+    }
+
+
+def compute_output_distribution(
+    exit_acts: np.ndarray,
+    output_dim: int = 0,
+    num_bins: int = 30,
+    exit_names: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """Compute histogram of model output values.
+
+    Thin wrapper around compute_histogram for the exit_acts column.
+
+    Args:
+        exit_acts: Exit activations (n_samples, n_out)
+        output_dim: Which output dimension to histogram
+        num_bins: Number of histogram bins
+        exit_names: Optional list of names for exit (output) dimensions
+
+    Returns:
+        Dict with bin_edges, counts, x_label, stats
+    """
+    if exit_acts.ndim == 1:
+        values = exit_acts
+    else:
+        values = exit_acts[:, output_dim]
+
+    label = exit_names[output_dim] if exit_names and output_dim < len(exit_names) else f"y_{output_dim}"
+    return compute_histogram(values, num_bins=num_bins, label=label)

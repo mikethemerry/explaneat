@@ -624,10 +624,19 @@ export async function createSplit(
 // Evidence & Visualization types and endpoints
 // ============================================================================
 
+export type NodeEvidenceInfoResponse = {
+  node_id: string;
+  entry_nodes: string[];
+  exit_nodes: string[];
+  subgraph_nodes: string[];
+  display_name: string;
+};
+
 export type VizDataRequest = {
-  annotation_id: string;
+  annotation_id?: string;
+  node_id?: string;
   dataset_split_id: string;
-  viz_type: "line" | "heatmap" | "partial_dependence" | "pca_scatter" | "sensitivity";
+  viz_type: "line" | "heatmap" | "partial_dependence" | "pca_scatter" | "sensitivity" | "ice" | "feature_output_scatter" | "output_distribution";
   params?: Record<string, unknown>;
   split?: "train" | "test" | "both";
   sample_fraction?: number;
@@ -671,6 +680,15 @@ export type EvidenceListResponse = {
   total: number;
 };
 
+export async function getNodeEvidenceInfo(
+  genomeId: string,
+  nodeId: string,
+): Promise<NodeEvidenceInfoResponse> {
+  return fetchJson<NodeEvidenceInfoResponse>(
+    `${API_BASE}/genomes/${genomeId}/evidence/node-info?node_id=${encodeURIComponent(nodeId)}`,
+  );
+}
+
 export async function computeVizData(
   genomeId: string,
   request: VizDataRequest,
@@ -686,10 +704,14 @@ export async function computeVizData(
 
 export async function getFormula(
   genomeId: string,
-  annotationId: string,
+  annotationId?: string,
+  nodeId?: string,
 ): Promise<FormulaResponse> {
+  const params = new URLSearchParams();
+  if (annotationId) params.set("annotation_id", annotationId);
+  if (nodeId) params.set("node_id", nodeId);
   return fetchJson<FormulaResponse>(
-    `${API_BASE}/genomes/${genomeId}/evidence/formula?annotation_id=${annotationId}`,
+    `${API_BASE}/genomes/${genomeId}/evidence/formula?${params.toString()}`,
   );
 }
 
@@ -738,10 +760,17 @@ export async function listEvidence(
   );
 }
 
+export type ShapOutputResult = {
+  output_name: string;
+  mean_abs_shap: number[];
+  base_value: number;
+};
+
 export type ShapResponse = {
   feature_names: string[];
   mean_abs_shap: number[];
   base_value: number;
+  outputs?: ShapOutputResult[];
 };
 
 export async function computeShap(
@@ -749,8 +778,10 @@ export async function computeShap(
   params: {
     dataset_split_id: string;
     annotation_id?: string;
+    node_id?: string;
     split?: "train" | "test" | "both";
     max_samples?: number;
+    force_recompute?: boolean;
   },
 ): Promise<ShapResponse> {
   return fetchJson<ShapResponse>(

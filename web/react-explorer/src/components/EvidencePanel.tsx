@@ -3,6 +3,7 @@ import {
   computeVizData,
   computeShap,
   saveSnapshot,
+  type VizDataRequest,
   type VizDataResponse,
   type AnnotationSummary,
 } from "../api/client";
@@ -16,6 +17,8 @@ type EvidencePanelProps = {
   experimentId: string;
   annotation: AnnotationSummary;
   isWholeModel?: boolean;
+  isNodeLevel?: boolean;
+  nodeId?: string;
 };
 
 const VIZ_TYPE_LABELS: Record<string, string> = {
@@ -24,6 +27,9 @@ const VIZ_TYPE_LABELS: Record<string, string> = {
   partial_dependence: "Partial Dep.",
   pca_scatter: "PCA Scatter",
   sensitivity: "Sensitivity",
+  ice: "ICE Plot",
+  feature_output_scatter: "Feature vs Output",
+  output_distribution: "Output Dist.",
   shap: "SHAP Values",
 };
 
@@ -34,6 +40,9 @@ const NEEDS_INPUT_DIM: Record<string, "single" | "pair" | false> = {
   partial_dependence: "single",
   pca_scatter: false,
   sensitivity: false,
+  ice: "single",
+  feature_output_scatter: "single",
+  output_distribution: false,
   shap: false,
 };
 
@@ -43,12 +52,15 @@ const NEEDS_OUTPUT_DIM: Record<string, boolean> = {
   partial_dependence: true,
   pca_scatter: true,
   sensitivity: false, // shows all outputs
+  ice: true,
+  feature_output_scatter: true,
+  output_distribution: true,
   shap: false,
 };
 
-export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel = false }: EvidencePanelProps) {
+export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel = false, isNodeLevel = false, nodeId }: EvidencePanelProps) {
   const [vizData, setVizData] = useState<VizDataResponse | null>(null);
-  const [vizType, setVizType] = useState<string>(isWholeModel ? "shap" : "line");
+  const [vizType, setVizType] = useState<string>("line");
   const [splitId, setSplitId] = useState<string | null>(null);
   const [splitChoice, setSplitChoice] = useState<"train" | "test" | "both">("both");
   const [sampleFraction, setSampleFraction] = useState(0.1);
@@ -102,7 +114,7 @@ export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel
     return params;
   }, [vizType, inputDim, inputDims, outputDim]);
 
-  const handleComputeViz = useCallback(async () => {
+  const doComputeViz = useCallback(async (forceRecompute = false) => {
     if (!splitId) return;
     setLoading(true);
     setError(null);
@@ -111,9 +123,11 @@ export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel
       if (vizType === "shap") {
         const result = await computeShap(genomeId, {
           dataset_split_id: splitId,
-          annotation_id: isWholeModel ? undefined : annotation.id,
+          annotation_id: isWholeModel || isNodeLevel ? undefined : annotation.id,
+          node_id: isNodeLevel ? nodeId : undefined,
           split: splitChoice,
           max_samples: 100,
+          force_recompute: forceRecompute || undefined,
         });
         setVizData({
           viz_type: "shap",
@@ -121,15 +135,17 @@ export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel
             feature_names: result.feature_names,
             mean_abs_shap: result.mean_abs_shap,
             base_value: result.base_value,
+            outputs: result.outputs,
           },
           dimensionality: [result.feature_names.length, 1],
           suggested_viz_types: [],
         });
       } else {
         const result = await computeVizData(genomeId, {
-          annotation_id: annotation.id,
+          annotation_id: isWholeModel ? undefined : (isNodeLevel ? undefined : annotation.id),
+          node_id: isNodeLevel ? nodeId : undefined,
           dataset_split_id: splitId,
-          viz_type: vizType as VizDataResponse["viz_type"],
+          viz_type: vizType as VizDataRequest["viz_type"],
           params: buildVizParams(),
           split: splitChoice,
           sample_fraction: sampleFraction,
@@ -142,7 +158,10 @@ export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel
     } finally {
       setLoading(false);
     }
-  }, [genomeId, annotation.id, splitId, vizType, splitChoice, sampleFraction, buildVizParams, isWholeModel]);
+  }, [genomeId, annotation.id, splitId, vizType, splitChoice, sampleFraction, buildVizParams, isWholeModel, isNodeLevel, nodeId]);
+
+  const handleComputeViz = useCallback(() => doComputeViz(false), [doComputeViz]);
+  const handleRecomputeViz = useCallback(() => doComputeViz(true), [doComputeViz]);
 
   const handleSnapshot = useCallback(async () => {
     if (!svgRef.current) return;
@@ -191,7 +210,11 @@ export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel
       </div>
 
       {!isWholeModel && (
-        <FormulaDisplay genomeId={genomeId} annotationId={annotation.id} />
+        <FormulaDisplay
+          genomeId={genomeId}
+          annotationId={isNodeLevel ? undefined : annotation.id}
+          nodeId={isNodeLevel ? nodeId : undefined}
+        />
       )}
 
       <div className="evidence-section">
@@ -208,11 +231,9 @@ export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel
           <div className="viz-type-selector">
             <label className="selector-label">Visualization</label>
             <div className="viz-type-buttons">
-              {(isWholeModel
-                ? ["shap"]
-                : suggestedTypes.length > 0
-                  ? suggestedTypes
-                  : ["line", "heatmap", "partial_dependence", "pca_scatter", "sensitivity", "shap"]
+              {(suggestedTypes.length > 0
+                ? [...suggestedTypes, "shap"]
+                : ["line", "heatmap", "partial_dependence", "pca_scatter", "sensitivity", "ice", "feature_output_scatter", "output_distribution", "shap"]
               ).map((vt) => (
                 <button
                   key={vt}
@@ -301,13 +322,24 @@ export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel
             )}
           </div>
 
-          <button
-            className="op-btn primary"
-            onClick={handleComputeViz}
-            disabled={loading}
-          >
-            {loading ? "Computing..." : "Compute"}
-          </button>
+          <div className="compute-actions">
+            <button
+              className="op-btn primary"
+              onClick={handleComputeViz}
+              disabled={loading}
+            >
+              {loading ? "Computing..." : "Compute"}
+            </button>
+            {vizType === "shap" && vizData?.viz_type === "shap" && (
+              <button
+                className="op-btn primary"
+                onClick={handleRecomputeViz}
+                disabled={loading}
+              >
+                Recompute
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -321,7 +353,7 @@ export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel
             onSvgRef={handleSvgRef}
           />
 
-          {!isWholeModel && (
+          {!isWholeModel && !isNodeLevel && (
             <div className="snapshot-controls">
               <input
                 type="text"
@@ -338,7 +370,7 @@ export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel
         </div>
       )}
 
-      {!isWholeModel && (
+      {!isWholeModel && !isNodeLevel && (
         <EvidenceGallery
           key={galleryKey}
           genomeId={genomeId}

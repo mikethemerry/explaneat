@@ -4,7 +4,7 @@ Pydantic schemas for API request/response validation.
 
 from datetime import datetime
 from typing import List, Optional, Dict, Any, Literal, Union
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, model_validator
 
 
 # =============================================================================
@@ -511,18 +511,36 @@ class SplitListResponse(BaseModel):
 # =============================================================================
 
 
+class NodeEvidenceInfoResponse(BaseModel):
+    """Response for node evidence info (virtual annotation for a single node)."""
+
+    node_id: str
+    entry_nodes: List[str]
+    exit_nodes: List[str]
+    subgraph_nodes: List[str]
+    display_name: str
+
+
 class VizDataRequest(BaseModel):
     """Request for computing visualization data."""
 
-    annotation_id: str
+    annotation_id: Optional[str] = None
+    node_id: Optional[str] = None
     dataset_split_id: str
     viz_type: Literal[
-        "line", "heatmap", "partial_dependence", "pca_scatter", "sensitivity"
+        "line", "heatmap", "partial_dependence", "pca_scatter", "sensitivity",
+        "ice", "feature_output_scatter", "output_distribution",
     ]
     params: Optional[Dict[str, Any]] = None
     split: Literal["train", "test", "both"] = "both"
     sample_fraction: float = 0.1
     max_samples: int = 1000
+
+    @model_validator(mode="after")
+    def check_at_most_one_target(self):
+        if self.annotation_id and self.node_id:
+            raise ValueError("Provide at most one of annotation_id or node_id, not both")
+        return self
 
 
 class VizDataResponse(BaseModel):
@@ -624,8 +642,18 @@ class ShapRequest(BaseModel):
 
     dataset_split_id: str
     annotation_id: Optional[str] = None  # None = whole model
+    node_id: Optional[str] = None  # Single-node evidence
     split: Literal["train", "test", "both"] = "both"
     max_samples: int = 100
+    force_recompute: bool = False
+
+
+class ShapOutputResult(BaseModel):
+    """SHAP results for a single output dimension."""
+
+    output_name: str
+    mean_abs_shap: List[float]
+    base_value: float
 
 
 class ShapResponse(BaseModel):
@@ -634,6 +662,7 @@ class ShapResponse(BaseModel):
     feature_names: List[str]
     mean_abs_shap: List[float]
     base_value: float
+    outputs: Optional[List[ShapOutputResult]] = None
 
 
 # =============================================================================
