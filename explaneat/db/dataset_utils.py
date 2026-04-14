@@ -65,6 +65,9 @@ def save_dataset_to_db(
     num_classes = None
     if y.dtype in [np.int32, np.int64, int]:
         num_classes = len(np.unique(y))
+    elif np.all(y == y.astype(int)):
+        # Float-typed targets that are actually integer-valued (e.g. 0.0, 1.0)
+        num_classes = len(np.unique(y.astype(int)))
     
     with db.session_scope() as session:
         # Check if dataset already exists
@@ -127,7 +130,6 @@ def save_dataset_to_db(
 
 def save_dataset_split_to_db(
     dataset_id: str,
-    experiment_id: str,
     X: np.ndarray,
     y: np.ndarray,
     X_train: np.ndarray,
@@ -143,10 +145,9 @@ def save_dataset_split_to_db(
     preprocessing_steps: Optional[List[Dict[str, Any]]] = None,
 ) -> DatasetSplit:
     """Save dataset split information to database for reproducibility
-    
+
     Args:
         dataset_id: UUID of the dataset
-        experiment_id: UUID of the experiment
         X: Full feature matrix (before split)
         y: Full target vector (before split)
         X_train: Training feature matrix
@@ -219,7 +220,6 @@ def save_dataset_split_to_db(
     with db.session_scope() as session:
         split = DatasetSplit(
             dataset_id=dataset_id,
-            experiment_id=experiment_id,
             split_type=split_type,
             test_size=test_size,
             random_state=random_state,
@@ -235,13 +235,12 @@ def save_dataset_split_to_db(
         )
         session.add(split)
         session.flush()
-        
+
         return split
 
 
 def save_dataset_split_with_indices(
     dataset_id: Union[str, uuid.UUID],
-    experiment_id: Union[str, uuid.UUID],
     train_indices: List[int],
     test_indices: List[int],
     split_type: str = "train_test",
@@ -254,12 +253,11 @@ def save_dataset_split_with_indices(
     validation_indices: Optional[List[int]] = None,
 ) -> DatasetSplit:
     """Save dataset split with explicit indices (recommended approach)
-    
+
     This is the preferred method as it ensures exact reproducibility.
-    
+
     Args:
         dataset_id: UUID of the dataset
-        experiment_id: UUID of the experiment
         train_indices: List of indices for training set
         test_indices: List of indices for test set
         split_type: Type of split
@@ -277,9 +275,7 @@ def save_dataset_split_with_indices(
     # Convert string UUIDs to UUID objects if needed
     if isinstance(dataset_id, str):
         dataset_id = uuid.UUID(dataset_id)
-    if isinstance(experiment_id, str):
-        experiment_id = uuid.UUID(experiment_id)
-    
+
     # Extract scaler information
     scaler_type = None
     scaler_params = None
@@ -302,7 +298,6 @@ def save_dataset_split_with_indices(
     with db.session_scope() as session:
         split = DatasetSplit(
             dataset_id=dataset_id,
-            experiment_id=experiment_id,
             split_type=split_type,
             test_size=test_size,
             random_state=random_state,
@@ -341,44 +336,43 @@ def load_dataset_from_db(dataset_id: Union[str, uuid.UUID]) -> Optional[Dataset]
         return session.query(Dataset).filter_by(id=dataset_id).first()
 
 
-def load_dataset_split_from_db(experiment_id: Union[str, uuid.UUID]) -> Optional[DatasetSplit]:
-    """Load dataset split for an experiment
-    
+def load_dataset_split_from_db(split_id: Union[str, uuid.UUID]) -> Optional[DatasetSplit]:
+    """Load a dataset split by its ID.
+
     Args:
-        experiment_id: UUID of the experiment (string or UUID object)
-        
+        split_id: UUID of the split (string or UUID object)
+
     Returns:
         DatasetSplit model instance or None if not found
     """
-    # Convert string UUID to UUID object if needed
-    if isinstance(experiment_id, str):
-        experiment_id = uuid.UUID(experiment_id)
-    
+    if isinstance(split_id, str):
+        split_id = uuid.UUID(split_id)
+
     with db.session_scope() as session:
-        return session.query(DatasetSplit).filter_by(experiment_id=experiment_id).first()
+        return session.query(DatasetSplit).filter_by(id=split_id).first()
 
 
 def recreate_split_from_db(
     X: np.ndarray,
     y: np.ndarray,
-    experiment_id: Union[str, uuid.UUID],
+    split_id: Union[str, uuid.UUID],
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Recreate train/test split from database for reproducibility
-    
+
     Args:
         X: Full feature matrix
         y: Full target vector
-        experiment_id: UUID of the experiment (string or UUID object)
-        
+        split_id: UUID of the dataset split
+
     Returns:
         Tuple of (X_train, X_test, y_train, y_test)
     """
-    split = load_dataset_split_from_db(experiment_id)
+    split = load_dataset_split_from_db(split_id)
     if split is None:
-        raise ValueError(f"No dataset split found for experiment {experiment_id}")
-    
+        raise ValueError(f"No dataset split found: {split_id}")
+
     if split.train_indices is None or split.test_indices is None:
-        raise ValueError(f"Split indices not stored for experiment {experiment_id}")
+        raise ValueError(f"Split indices not stored for split {split_id}")
     
     # Recreate splits using stored indices
     X_train = X[split.train_indices]
@@ -429,19 +423,17 @@ def load_dataset_data(
 
 def create_or_get_split(
     dataset_id: Union[str, uuid.UUID],
-    experiment_id: Union[str, uuid.UUID],
     test_proportion: float = 0.2,
     random_seed: int = 42,
     stratify: bool = False,
 ) -> DatasetSplit:
-    """Get existing split for (dataset, experiment) pair, or create a new one.
+    """Get existing split with matching parameters, or create a new one.
 
-    Ensures one split per (dataset, experiment) pair. If a split already exists,
-    it is returned regardless of the other parameters.
+    Deduplicates by (dataset_id, test_size, random_state, stratify). If a
+    matching split already exists it is returned.
 
     Args:
         dataset_id: UUID of the dataset
-        experiment_id: UUID of the experiment
         test_proportion: Fraction of data for test set
         random_seed: Random seed for reproducibility
         stratify: Whether to stratify on target
@@ -451,13 +443,16 @@ def create_or_get_split(
     """
     if isinstance(dataset_id, str):
         dataset_id = uuid.UUID(dataset_id)
-    if isinstance(experiment_id, str):
-        experiment_id = uuid.UUID(experiment_id)
 
     with db.session_scope() as session:
         existing = (
             session.query(DatasetSplit)
-            .filter_by(dataset_id=dataset_id, experiment_id=experiment_id)
+            .filter_by(
+                dataset_id=dataset_id,
+                test_size=test_proportion,
+                random_state=random_seed,
+                stratify=stratify,
+            )
             .first()
         )
         if existing:
@@ -483,7 +478,6 @@ def create_or_get_split(
 
         split = DatasetSplit(
             dataset_id=dataset_id,
-            experiment_id=experiment_id,
             split_type="train_test",
             test_size=test_proportion,
             random_state=random_seed,

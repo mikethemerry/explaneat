@@ -518,6 +518,40 @@ class StructureNetwork:
             return parts[0]
         return None
 
+    def override_output_activation(self, activation: str) -> None:
+        """Override the activation function on all output nodes.
+
+        Use this to enforce sigmoid on binary classification tasks,
+        regardless of what the NEAT config stored on the node.  This
+        reconciles the mismatch between NeuralNeat (which hardcodes
+        sigmoid on the output layer) and StructureNetwork (which reads
+        the genome's stored activation).
+        """
+        out_ids = set(self.structure.output_node_ids)
+        for d in self._layer_order:
+            layer = self._layers[d]
+            if layer.get("is_output"):
+                layer["activations"] = [
+                    activation if nid in out_ids else act
+                    for nid, act in zip(layer["node_ids"], layer["activations"])
+                ]
+
+    def override_hidden_activation(self, activation: str) -> None:
+        """Override the activation function on all hidden (non-input, non-output) nodes.
+
+        NeuralNeat hardcodes relu on hidden layers regardless of the genome's
+        per-node activation.  Call this to match that training behaviour.
+        """
+        out_ids = set(self.structure.output_node_ids)
+        for d in self._layer_order:
+            layer = self._layers[d]
+            if layer.get("is_input") or layer.get("is_output"):
+                continue
+            layer["activations"] = [
+                activation if act != "function" else act
+                for act in layer["activations"]
+            ]
+
     # ------------------------------------------------------------------
     # Forward
     # ------------------------------------------------------------------

@@ -15,9 +15,9 @@ import neat
 def generate_default_genome_section(genome_cfg: Dict[str, Any]) -> str:
     """Generate DefaultGenome section from config_json."""
     defaults = {
-        "activation_default": genome_cfg.get("activation_default", "sigmoid"),
+        "activation_default": genome_cfg.get("activation_default", "relu"),
         "activation_mutate_rate": genome_cfg.get("activation_mutate_rate", 0.0),
-        "activation_options": genome_cfg.get("activation_options", "sigmoid"),
+        "activation_options": genome_cfg.get("activation_options", "relu"),
         "aggregation_default": genome_cfg.get("aggregation_default", "sum"),
         "aggregation_mutate_rate": genome_cfg.get("aggregation_mutate_rate", 0.0),
         "aggregation_options": genome_cfg.get("aggregation_options", "sum"),

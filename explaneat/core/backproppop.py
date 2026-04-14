@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 
+import copy
 import sys
 import time
 
@@ -47,6 +48,8 @@ class BackpropPopulation(Population):
         config,
         xs,
         ys,
+        xs_val=None,
+        ys_val=None,
         initial_state=None,
         criterion=nn.BCELoss(),
         optimizer=optim.Adadelta,
@@ -71,6 +74,22 @@ class BackpropPopulation(Population):
             self.ys = torch.tensor(ys, dtype=torch.float64).to(self.device)
         else:
             self.ys = ys
+
+        # Ensure ys is 2D (N,1) to match NeuralNeat.forward() output shape
+        if self.ys.ndim == 1:
+            self.ys = self.ys.unsqueeze(1)
+
+        # Validation data (optional)
+        if xs_val is not None:
+            self.xs_val = torch.as_tensor(xs_val, dtype=torch.float64).to(self.device)
+        else:
+            self.xs_val = None
+        if ys_val is not None:
+            self.ys_val = torch.as_tensor(ys_val, dtype=torch.float64).to(self.device)
+            if self.ys_val.ndim == 1:
+                self.ys_val = self.ys_val.unsqueeze(1)
+        else:
+            self.ys_val = None
 
         self.optimizer = optimizer
         self.criterion = criterion
@@ -131,38 +150,20 @@ class BackpropPopulation(Population):
 
             # net = NeatNet(genome, self.config, criterion=self.criterion)
 
-            net = nneat(genome, self.config, criterion=nn.BCEWithLogitsLoss())
-            # except GenomeNotValidError:
-            #     ("This net - {} isn't valid".format(k))
-            #     preBPLoss = 0
-            #     postBPLoss = 99999
-            #     lossDiff = postBPLoss - preBPLoss
-            #     improvements.append(lossDiff)
-            #     losses.append((preBPLoss, postBPLoss, lossDiff))
-            #     postLosses.append(postBPLoss)
-            #     continue
+            net = nneat(genome, self.config, criterion=nn.BCELoss())
 
             optimizer = optim.Adadelta(net.parameters(), lr=1.5)
-
             optimizer.zero_grad()
             losses = []
 
-            # try:
-            # self.logger.info(f"xs dtype is {xs.dtype}")
-            # self.logger.info(f"xs is {xs}")
+            bce = nn.BCELoss()
             loss_preds = net.forward(xs)
-            # self.logger.info(f"loss_preds is {loss_preds}")
-            # self.logger.info(f"loss_preds dtype is {loss_preds.dtype}")
-            # self.logger.info(f"ys dtype is {ys.dtype}")
-            preBPLoss = F.mse_loss(loss_preds, ys).sqrt()
-            # except:
-            # net.help_me_debug()
-            # sys.exit("Error in loss for backprop")
+            preBPLoss = bce(loss_preds, ys)
+
             start_time = time.time()
             for i in range(nEpochs):
-                # TODO: Refactor this to use net.retrain
                 preds = net.forward(xs)
-                loss = F.mse_loss(preds, ys).sqrt()
+                loss = bce(preds, ys)
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
@@ -176,26 +177,15 @@ class BackpropPopulation(Population):
             width_per_genome.append(net.node_mapping.width)
 
             self.backprop_times.append(avg_time_per_epoch)
-            # self.logger.info(
-            #     f"Average time per epoch: {avg_time_per_epoch:.4f} seconds"
-            # )
-            # losses[-10:]
-            postBPLoss = F.mse_loss(net.forward(xs), ys).sqrt()
+
+            postBPLoss = bce(net.forward(xs), ys)
             lossDiff = postBPLoss - preBPLoss
 
             losses.append((preBPLoss, postBPLoss, lossDiff))
             improvements.append(lossDiff.item())
-            # self.logger.info(net.weights)
-            # self.logger.info("PRE")
-            # for ix in genome.connections:
-            #     self.logger.info(genome.connections[ix])
-            # self.logger.info(net.weights)
-            net.update_genome_weights()  # Not updating?
+
+            net.update_genome_weights()
             self.population[k] = net.genome
-            # for ix in genome.connections:
-            # self.logger.info(genome.connections[ix])
-            # for ix in net.genome.connections:
-            # self.logger.info(net.genome.connections[ix])
             postLosses.append(postBPLoss.item())
 
         generation_detail = {
@@ -220,13 +210,35 @@ class BackpropPopulation(Population):
             f"Total time per backprop: {sum(avg_times_per_epoch)*nEpochs} seconds"
         )
 
-    def run(self, fitness_function, n=None, nEpochs=100):
+    def _evaluate_validation(self, fitness_function):
+        """Evaluate all genomes on validation set, storing as validation_fitness.
+
+        Temporarily overwrites genome.fitness with validation scores, then
+        restores the original training fitness so reproduction uses train fitness.
+        """
+        # Save training fitness
+        train_fitnesses = {gid: g.fitness for gid, g in self.population.items()}
+
+        # Evaluate on validation data
+        fitness_function(
+            self.population, self.config, self.xs_val, self.ys_val, self.device
+        )
+
+        # Stash validation fitness and restore training fitness
+        for gid, g in self.population.items():
+            g.validation_fitness = g.fitness
+            g.fitness = train_fitnesses[gid]
+
+    def run(self, fitness_function, n=None, nEpochs=100, patience=None):
         """ """
 
         if self.config.no_fitness_termination and (n is None):
             raise RuntimeError(
                 "Cannot have no generational limit with no fitness termination"
             )
+
+        best_val_fitness = -float('inf')
+        patience_counter = 0
 
         k = 0
         while n is None or k < n:
@@ -255,6 +267,11 @@ class BackpropPopulation(Population):
                     self.population, self.config, self.xs, self.ys, self.device
                 )
 
+            # Evaluate validation fitness if validation data is available
+            if self.xs_val is not None:
+                with MethodTimer("evaluate validation"):
+                    self._evaluate_validation(fitness_function)
+
             # Gather and report statistics.
             best = None
             for genome_id, g in self.population.items():
@@ -266,8 +283,31 @@ class BackpropPopulation(Population):
                 )
 
             # Track the best genome ever seen.
-            if self.best_genome is None or best.fitness > self.best_genome.fitness:
-                self.best_genome = best
+            if self.xs_val is not None:
+                # Select best by validation fitness across all generations
+                gen_best_val = max(
+                    self.population.values(),
+                    key=lambda g: getattr(g, 'validation_fitness', -float('inf')),
+                )
+                gen_val_fitness = getattr(gen_best_val, 'validation_fitness', -float('inf'))
+                if gen_val_fitness > best_val_fitness:
+                    best_val_fitness = gen_val_fitness
+                    self.best_genome = copy.deepcopy(gen_best_val)
+                    patience_counter = 0
+                else:
+                    patience_counter += 1
+
+                # Early stopping
+                if patience is not None and patience_counter >= patience:
+                    self.logger.info(
+                        "Early stopping at generation %d (patience=%d, best_val=%.4f)",
+                        self.generation, patience, best_val_fitness,
+                    )
+                    break
+            else:
+                # Original behavior: select by training fitness
+                if self.best_genome is None or best.fitness > self.best_genome.fitness:
+                    self.best_genome = best
 
             if not self.config.no_fitness_termination:
                 # End if the fitness threshold is reached.

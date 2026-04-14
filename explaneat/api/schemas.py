@@ -63,6 +63,7 @@ class ModelMetadata(BaseModel):
     output_nodes: List[str]
     is_original: bool = True  # True if no operations applied
     collapsed_annotations: List[str] = []
+    has_non_identity_ops: bool = False  # True if model function has been changed
 
 
 class ModelStateResponse(BaseModel):
@@ -217,6 +218,27 @@ class EnableConnectionParams(BaseModel):
     to_node: str
 
 
+class PruneNodeParams(BaseModel):
+    """Parameters for prune_node operation (non-identity: removes node and all connections)."""
+
+    node_id: str
+
+
+class PruneConnectionParams(BaseModel):
+    """Parameters for prune_connection operation (non-identity: permanently removes connection)."""
+
+    from_node: str
+    to_node: str
+
+
+class RetrainParams(BaseModel):
+    """Parameters for retrain operation (non-identity: updates weights/biases from training)."""
+
+    weight_updates: Dict[str, float] = {}  # JSON keys are "from_node,to_node"
+    bias_updates: Dict[str, float] = {}
+    metadata: Optional[Dict[str, Any]] = None  # training config, loss, etc.
+
+
 class OperationRequest(BaseModel):
     """Request to add a new operation."""
 
@@ -231,6 +253,9 @@ class OperationRequest(BaseModel):
         "rename_annotation",
         "disable_connection",
         "enable_connection",
+        "prune_node",
+        "prune_connection",
+        "retrain",
     ]
     params: Union[
         SplitNodeParams,
@@ -243,6 +268,9 @@ class OperationRequest(BaseModel):
         RenameAnnotationParams,
         DisableConnectionParams,
         EnableConnectionParams,
+        PruneNodeParams,
+        PruneConnectionParams,
+        RetrainParams,
     ]
     notes: Optional[str] = None  # Human-readable justification
 
@@ -427,6 +455,9 @@ class DatasetResponse(BaseModel):
     target_description: Optional[str] = None
     class_names: Optional[List[str]] = None
     has_data: bool = False
+    task_type: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -436,6 +467,19 @@ class DatasetListResponse(BaseModel):
 
     datasets: List[DatasetResponse]
     total: int
+
+
+class DatasetUpdateRequest(BaseModel):
+    """Request to partially update dataset metadata."""
+
+    description: Optional[str] = None
+    num_classes: Optional[int] = None
+    class_names: Optional[List[str]] = None
+    feature_descriptions: Optional[Dict[str, str]] = None
+    feature_types: Optional[Dict[str, str]] = None
+    target_name: Optional[str] = None
+    target_description: Optional[str] = None
+    task_type: Optional[str] = None
 
 
 class PMLBDownloadRequest(BaseModel):
@@ -468,17 +512,18 @@ class ExperimentSplitResponse(BaseModel):
     random_state: Optional[int] = None
     train_size: Optional[int] = None
     test_size_actual: Optional[int] = None
+    validation_size: Optional[int] = None
     feature_names: Optional[List[str]] = None
     feature_types: Optional[Dict[str, str]] = None
     feature_descriptions: Optional[Dict[str, str]] = None
     target_name: Optional[str] = None
     target_description: Optional[str] = None
+    class_names: Optional[List[str]] = None
 
 
 class SplitCreateRequest(BaseModel):
     """Request to create a dataset split."""
 
-    experiment_id: str
     test_proportion: float = 0.2
     random_seed: int = 42
     stratify: bool = False
@@ -489,12 +534,13 @@ class SplitResponse(BaseModel):
 
     id: str
     dataset_id: str
-    experiment_id: str
+    name: Optional[str] = None
     split_type: str
     test_size: Optional[float] = None
     random_state: Optional[int] = None
     train_size: Optional[int] = None
     test_size_actual: Optional[int] = None
+    validation_size: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -532,7 +578,7 @@ class VizDataRequest(BaseModel):
         "ice", "feature_output_scatter", "output_distribution",
     ]
     params: Optional[Dict[str, Any]] = None
-    split: Literal["train", "test", "both"] = "both"
+    split: Literal["train", "test", "val", "both"] = "both"
     sample_fraction: float = 0.1
     max_samples: int = 1000
 
@@ -550,6 +596,13 @@ class VizDataResponse(BaseModel):
     data: Dict[str, Any]
     dimensionality: List[int]
     suggested_viz_types: List[str]
+    entry_names: Optional[List[str]] = None
+    exit_names: Optional[List[str]] = None
+    correctness: Optional[List[bool]] = None
+    predicted_class: Optional[List[int]] = None
+    true_class: Optional[List[int]] = None
+    class_names: Optional[List[str]] = None
+    num_classes: Optional[int] = None
 
 
 class ChildFormulaInfo(BaseModel):
@@ -620,7 +673,7 @@ class InputDistributionRequest(BaseModel):
 
     dataset_split_id: str
     feature_indices: List[int]  # 1 or 2 indices
-    split: Literal["train", "test", "both"] = "both"
+    split: Literal["train", "test", "val", "both"] = "both"
     num_bins: int = 30
 
 
@@ -643,7 +696,7 @@ class ShapRequest(BaseModel):
     dataset_split_id: str
     annotation_id: Optional[str] = None  # None = whole model
     node_id: Optional[str] = None  # Single-node evidence
-    split: Literal["train", "test", "both"] = "both"
+    split: Literal["train", "test", "val", "both"] = "both"
     max_samples: int = 100
     force_recompute: bool = False
 
@@ -663,6 +716,119 @@ class ShapResponse(BaseModel):
     mean_abs_shap: List[float]
     base_value: float
     outputs: Optional[List[ShapOutputResult]] = None
+
+
+# =============================================================================
+# Performance schemas
+# =============================================================================
+
+
+class RetrainStartRequest(BaseModel):
+    """Request to start a retraining job."""
+
+    dataset_split_id: str
+    split: Literal["train", "test", "val", "both"] = "both"
+    n_epochs: int = 50
+    learning_rate: float = 0.01
+    freeze_annotations: bool = False
+    max_samples: int = 10000
+
+
+class RetrainStartResponse(BaseModel):
+    """Response for starting a retraining job."""
+
+    job_id: str
+
+
+class RetrainStatusResponse(BaseModel):
+    """Response for retraining job status."""
+
+    job_id: str
+    status: str
+    current_epoch: int
+    total_epochs: int
+    metrics: Dict[str, List[float]] = {}
+    error: Optional[str] = None
+
+
+class RetrainApplyResponse(BaseModel):
+    """Response for applying retrain results."""
+
+    operation_seq: int
+    final_loss: Optional[float] = None
+    final_val_loss: Optional[float] = None
+    epochs_completed: int
+
+
+class PerformanceRequest(BaseModel):
+    """Request for model performance computation."""
+
+    dataset_split_id: str
+    split: Literal["train", "test", "val", "both"] = "both"
+    sample_fraction: float = 1.0
+    max_samples: int = 10000
+    at_seq: Optional[int] = None  # Compute at specific operation seq (for before/after)
+
+
+class PerformanceResponse(BaseModel):
+    """Response for model performance metrics."""
+
+    mse: float
+    rmse: float
+    mae: float
+    accuracy: Optional[float] = None  # Classification only
+    auc_roc: Optional[float] = None
+    precision: Optional[float] = None
+    recall: Optional[float] = None
+    f1: Optional[float] = None
+    log_loss: Optional[float] = None
+    brier_score: Optional[float] = None
+    balanced_accuracy: Optional[float] = None
+    calibration: Optional[Dict[str, List[float]]] = None  # {bin_means, fraction_positives}
+    n_samples: int
+    at_seq: Optional[int] = None
+    has_non_identity_ops: bool = False
+
+
+# =============================================================================
+# Experiment pipeline schemas
+# =============================================================================
+
+
+class ExperimentCreateRequest(BaseModel):
+    """Request to create and run a new experiment."""
+
+    name: str
+    description: str = ""
+    dataset_id: str
+    dataset_split_id: str
+    n_generations: int = 10
+    n_epochs_backprop: int = 5
+    fitness_function: Literal["bce", "auc"] = "bce"
+    population_size: int = 150
+    mutation_rate: float = 0.3
+    crossover_rate: float = 0.5
+
+
+class ExperimentCreateResponse(BaseModel):
+    """Response for starting an experiment."""
+
+    job_id: str
+
+
+class ExperimentProgressResponse(BaseModel):
+    """Response for experiment progress polling."""
+
+    job_id: str
+    experiment_id: Optional[str] = None
+    status: str
+    current_generation: int
+    total_generations: int
+    best_fitness: Optional[float] = None
+    mean_fitness: Optional[float] = None
+    pop_size: int = 0
+    num_species: int = 0
+    error: Optional[str] = None
 
 
 # =============================================================================

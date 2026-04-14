@@ -31,6 +31,8 @@ from ..schemas import (
     InputDistributionResponse,
     ShapRequest,
     ShapResponse,
+    PerformanceRequest,
+    PerformanceResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -161,7 +163,13 @@ def _find_annotation_in_operations(session, genome_id: str, annotation_id: str) 
 
 
 def _load_split_data(session, split_id: str, split_choice: str, sample_frac: float, max_samples: int):
-    """Load X, y data from a dataset split."""
+    """Load X, y data and dataset metadata from a dataset split.
+
+    Applies the scaler stored on the split (if any) so that evaluation
+    uses the same preprocessing as training.
+
+    Returns (X, y, feature_names, class_names, num_classes).
+    """
     split = session.query(DatasetSplit).filter_by(id=uuid.UUID(split_id)).first()
     if not split:
         raise HTTPException(status_code=404, detail="Dataset split not found")
@@ -180,8 +188,14 @@ def _load_split_data(session, split_id: str, split_choice: str, sample_frac: flo
         indices = split.train_indices
     elif split_choice == "test":
         indices = split.test_indices
+    elif split_choice == "val":
+        indices = split.validation_indices
+        if not indices:
+            raise HTTPException(status_code=400, detail="No validation split available")
     else:  # both
         indices = (split.train_indices or []) + (split.test_indices or [])
+        if split.validation_indices:
+            indices += split.validation_indices
 
     if not indices:
         raise HTTPException(status_code=400, detail="No indices for requested split")
@@ -189,10 +203,21 @@ def _load_split_data(session, split_id: str, split_choice: str, sample_frac: flo
     X = X_full[indices]
     y = y_full[indices]
 
+    # Apply scaler if the split was trained with one
+    if split.scaler_type and split.scaler_params:
+        if split.scaler_type == "StandardScaler":
+            mean = np.array(split.scaler_params["mean"])
+            scale = np.array(split.scaler_params["scale"])
+            X = (X - mean) / scale
+        elif split.scaler_type == "MinMaxScaler":
+            data_min = np.array(split.scaler_params["data_min_"])
+            scale = np.array(split.scaler_params["scale_"])
+            X = X * scale + np.array(split.scaler_params["min_"])
+
     # Sample for visualization
     X, y = sample_dataset(X, y, fraction=sample_frac, max_samples=max_samples)
 
-    return X, y
+    return X, y, dataset.feature_names, dataset.class_names, dataset.num_classes
 
 
 def _update_annotation_evidence(session, genome_id: str, annotation_id: str, evidence: Dict[str, Any]):
@@ -322,7 +347,11 @@ async def get_node_evidence_info(
         )
 
 
-def _build_whole_model_context(session, genome_id: str, X: np.ndarray):
+def _build_whole_model_context(
+    session, genome_id: str, X: np.ndarray,
+    feature_names: Optional[List[str]] = None,
+    num_classes: Optional[int] = None,
+):
     """Build visualization context for the whole model (no annotation).
 
     Returns (fn, entry_acts, exit_acts, entry_names, exit_names, n_in, n_out).
@@ -333,28 +362,29 @@ def _build_whole_model_context(session, genome_id: str, X: np.ndarray):
     model_state = _build_model_state(session, genome_id)
     struct_net = StructureNetwork(model_state)
 
-    # Override output activation to identity (logits)
-    for d in struct_net._layer_order:
-        layer = struct_net._layers[d]
-        if layer.get("is_output"):
-            layer["activations"] = [
-                "input" if nid in set(model_state.output_node_ids)
-                else act
-                for nid, act in zip(layer["node_ids"], layer["activations"])
-            ]
+    # Binary classification: force sigmoid on output to match NeuralNeat
+    # training behaviour (NeuralNeat hardcodes sigmoid on output layer).
+    is_binary = (num_classes is not None and num_classes == 2
+                 and len(model_state.output_node_ids) == 1)
+    if is_binary:
+        struct_net.override_output_activation("sigmoid")
 
     display_map = model_state.get_display_map()
 
     # Build deduplicated feature names (handle split input nodes)
     seen_bases: set = set()
     entry_names: list = []
+    feat_idx = 0
     for nid in model_state.input_node_ids:
         base = StructureNetwork._get_base_node_id(nid) or nid
         if base not in seen_bases:
             seen_bases.add(base)
-            entry_names.append(
-                _resolve_node_label(base, display_map, model_state)
-            )
+            label = _resolve_node_label(base, display_map, model_state)
+            # If _resolve_node_label returned the raw node ID, try dataset feature name
+            if label == base and feature_names and feat_idx < len(feature_names):
+                label = feature_names[feat_idx]
+            entry_names.append(label)
+            feat_idx += 1
 
     exit_names = [
         _resolve_node_label(n, display_map, model_state, fallback="output")
@@ -378,6 +408,35 @@ def _build_whole_model_context(session, genome_id: str, X: np.ndarray):
     return model_predict, X, exit_acts, entry_names, exit_names, n_in, n_out
 
 
+def _compute_correctness(
+    exit_acts: np.ndarray, y: np.ndarray, num_classes: Optional[int],
+) -> Optional[Dict[str, Any]]:
+    """Compute classification correctness for whole-model predictions.
+
+    Returns dict with correctness/predicted_class/true_class lists,
+    or None for regression tasks.
+    """
+    if num_classes is None or num_classes < 2:
+        return None
+
+    n_out = exit_acts.shape[1]
+    if n_out == 1:
+        # Binary: class 1 if probability > 0.5
+        predicted = (exit_acts[:, 0] > 0.5).astype(int)
+    else:
+        # Multi-class: argmax
+        predicted = np.argmax(exit_acts, axis=1).astype(int)
+
+    true_class = y.astype(int).ravel()
+    correctness = (predicted == true_class).tolist()
+
+    return {
+        "correctness": correctness,
+        "predicted_class": predicted.tolist(),
+        "true_class": true_class.tolist(),
+    }
+
+
 @router.post("/viz-data", response_model=VizDataResponse)
 async def compute_viz_data(
     request: VizDataRequest,
@@ -385,16 +444,30 @@ async def compute_viz_data(
 ):
     """Compute visualization data for an annotation, single node, or whole model."""
     with db.session_scope() as session:
-        X, y = _load_split_data(
+        X, y, ds_feature_names, ds_class_names, ds_num_classes = _load_split_data(
             session, request.dataset_split_id, request.split,
             request.sample_fraction, request.max_samples,
         )
 
+        # Infer num_classes from data if not set in DB
+        if ds_num_classes is None:
+            y_check = y.ravel()
+            if np.all(y_check == y_check.astype(int)):
+                n_unique = len(np.unique(y_check.astype(int)))
+                if n_unique <= 20:
+                    ds_num_classes = n_unique
+
         is_whole_model = not request.annotation_id and not request.node_id
+        correctness_info: Optional[Dict[str, Any]] = None
 
         if is_whole_model:
             fn, entry_acts, exit_acts, entry_names, exit_names, n_in, n_out = \
-                _build_whole_model_context(session, genome_id, X)
+                _build_whole_model_context(
+                    session, genome_id, X,
+                    feature_names=ds_feature_names,
+                    num_classes=ds_num_classes,
+                )
+            correctness_info = _compute_correctness(exit_acts, y, ds_num_classes)
         else:
             model_state = _build_model_state(session, genome_id)
             annotation = _resolve_annotation(
@@ -423,6 +496,29 @@ async def compute_viz_data(
                 _resolve_node_label(n, display_map, model_state)
                 for n in annotation["entry_nodes"]
             ]
+
+            # Fall back to dataset feature names for input entry nodes
+            if ds_feature_names:
+                from ...core.structure_network import StructureNetwork
+                input_node_ids = model_state.input_node_ids
+                # Map base input node ID -> feature column index
+                seen_bases: set = set()
+                base_to_feat_idx: dict = {}
+                feat_idx = 0
+                for nid in input_node_ids:
+                    base = StructureNetwork._get_base_node_id(nid) or nid
+                    if base not in seen_bases:
+                        seen_bases.add(base)
+                        base_to_feat_idx[base] = feat_idx
+                        feat_idx += 1
+
+                for i, entry_node in enumerate(annotation["entry_nodes"]):
+                    if entry_names[i] == entry_node:
+                        # Label is still raw node ID — try dataset feature name
+                        base = StructureNetwork._get_base_node_id(entry_node) or entry_node
+                        fidx = base_to_feat_idx.get(base)
+                        if fidx is not None and fidx < len(ds_feature_names):
+                            entry_names[i] = ds_feature_names[fidx]
             ann_name = annotation.get("name", "output")
             exit_nodes = annotation["exit_nodes"]
             exit_names = [
@@ -492,12 +588,26 @@ async def compute_viz_data(
         else:
             raise HTTPException(status_code=400, detail=f"Unknown viz_type: {viz_type}")
 
-        return VizDataResponse(
-            viz_type=viz_type,
-            data=data,
-            dimensionality=[n_in, n_out],
-            suggested_viz_types=suggested,
-        )
+        response_kwargs: Dict[str, Any] = {
+            "viz_type": viz_type,
+            "data": data,
+            "dimensionality": [n_in, n_out],
+            "suggested_viz_types": suggested,
+            "entry_names": entry_names,
+            "exit_names": exit_names,
+        }
+        if correctness_info:
+            response_kwargs.update(
+                correctness=correctness_info["correctness"],
+                predicted_class=correctness_info["predicted_class"],
+                true_class=correctness_info["true_class"],
+            )
+        if ds_class_names:
+            response_kwargs["class_names"] = ds_class_names
+        if ds_num_classes is not None:
+            response_kwargs["num_classes"] = ds_num_classes
+
+        return VizDataResponse(**response_kwargs)
 
 
 @router.get("/formula", response_model=FormulaResponse)
@@ -712,20 +822,10 @@ async def compute_input_distribution(
 
     with db.session_scope() as session:
         # Load data without sampling (distributions need all points)
-        X, y = _load_split_data(
+        X, y, db_feature_names, _, _ = _load_split_data(
             session, request.dataset_split_id, request.split,
             sample_frac=1.0, max_samples=10000,
         )
-
-        # Get feature names from dataset
-        split = session.query(DatasetSplit).filter_by(
-            id=uuid.UUID(request.dataset_split_id)
-        ).first()
-        if not split:
-            raise HTTPException(status_code=404, detail="Split not found")
-
-        dataset = session.query(Dataset).filter_by(id=split.dataset_id).first()
-        db_feature_names = dataset.feature_names if dataset else None
 
         # Build feature name list for requested indices
         names = []
@@ -758,6 +858,170 @@ async def compute_input_distribution(
             viz_type=viz_type,
             data=data,
             feature_names=names,
+        )
+
+
+@router.post("/performance", response_model=PerformanceResponse)
+async def compute_performance(
+    request: PerformanceRequest,
+    genome_id: str = Path(...),
+):
+    """Compute model performance metrics (MSE, RMSE, MAE, accuracy).
+
+    Optionally compute at a specific operation sequence number for
+    before/after comparison.
+    """
+    from ...core.structure_network import StructureNetwork
+    import torch
+
+    with db.session_scope() as session:
+        engine = _build_engine(session, genome_id)
+
+        if request.at_seq is not None:
+            model_state = engine.get_state_at_seq(request.at_seq)
+        else:
+            model_state = engine.current_state
+
+        X, y, _, ds_class_names, ds_num_classes = _load_split_data(
+            session, request.dataset_split_id, request.split,
+            request.sample_fraction, request.max_samples,
+        )
+
+        # Infer num_classes from data if not set in DB
+        if ds_num_classes is None:
+            y_flat_check = y.ravel()
+            if np.all(y_flat_check == y_flat_check.astype(int)):
+                n_unique = len(np.unique(y_flat_check.astype(int)))
+                if n_unique <= 20:  # reasonable upper bound for classification
+                    ds_num_classes = n_unique
+
+        struct_net = StructureNetwork(model_state)
+
+        # Binary classification: force sigmoid on output to match NeuralNeat
+        # training behaviour (NeuralNeat hardcodes sigmoid on output layer).
+        is_binary = (ds_num_classes is not None and ds_num_classes == 2
+                     and len(model_state.output_node_ids) == 1)
+        if is_binary:
+            struct_net.override_output_activation("sigmoid")
+
+        x_tensor = torch.as_tensor(X, dtype=torch.float64)
+        predictions = struct_net.forward(x_tensor).detach().numpy()
+
+        if predictions.ndim == 2 and predictions.shape[1] == 1:
+            predictions = predictions.ravel()
+
+        y_flat = y.ravel()
+        pred_flat = predictions.ravel() if predictions.ndim > 1 else predictions
+
+        # For multi-output, compute MSE on flattened arrays
+        if predictions.ndim == 2 and predictions.shape[1] > 1:
+            pred_flat = predictions.ravel()
+            y_repeated = np.repeat(y_flat, predictions.shape[1])
+            mse = float(np.mean((pred_flat - y_repeated) ** 2))
+        else:
+            mse = float(np.mean((pred_flat - y_flat) ** 2))
+
+        rmse = float(np.sqrt(mse))
+        mae = float(np.mean(np.abs(pred_flat - y_flat))) if predictions.ndim == 1 else float(np.mean(np.abs(predictions.ravel() - np.repeat(y_flat, predictions.shape[1] if predictions.ndim > 1 else 1))))
+
+        accuracy = None
+        auc_roc = None
+        precision = None
+        recall = None
+        f1 = None
+        log_loss_val = None
+        brier_score = None
+        balanced_acc = None
+        calibration = None
+
+        if ds_num_classes is not None and ds_num_classes >= 2:
+            y_int = y_flat.astype(int)
+
+            if predictions.ndim == 1 or (predictions.ndim == 2 and predictions.shape[1] == 1):
+                # Binary classification: StructureNetwork outputs sigmoid probabilities
+                predicted_classes = (pred_flat > 0.5).astype(int)
+                pred_proba = np.clip(pred_flat, 1e-15, 1 - 1e-15)
+            else:
+                predicted_classes = np.argmax(predictions, axis=1).astype(int)
+                pred_proba = predictions  # multi-class probabilities
+
+            accuracy = float(np.mean(predicted_classes == y_int))
+
+            from sklearn.metrics import (
+                roc_auc_score, precision_recall_fscore_support,
+                log_loss as sk_log_loss, brier_score_loss,
+                balanced_accuracy_score,
+            )
+            from sklearn.calibration import calibration_curve
+
+            try:
+                balanced_acc = float(balanced_accuracy_score(y_int, predicted_classes))
+            except Exception:
+                pass
+
+            try:
+                prec, rec, f1_val, _ = precision_recall_fscore_support(
+                    y_int, predicted_classes, average="weighted", zero_division=0,
+                )
+                precision = float(prec)
+                recall = float(rec)
+                f1 = float(f1_val)
+            except Exception:
+                pass
+
+            is_binary = (predictions.ndim == 1 or
+                         (predictions.ndim == 2 and predictions.shape[1] == 1))
+
+            try:
+                if is_binary:
+                    auc_roc = float(roc_auc_score(y_int, pred_proba))
+                else:
+                    auc_roc = float(roc_auc_score(
+                        y_int, pred_proba, multi_class="ovr", average="weighted",
+                    ))
+            except Exception:
+                pass
+
+            try:
+                if is_binary:
+                    log_loss_val = float(sk_log_loss(y_int, pred_proba))
+                else:
+                    log_loss_val = float(sk_log_loss(y_int, pred_proba))
+            except Exception:
+                pass
+
+            try:
+                if is_binary:
+                    brier_score = float(brier_score_loss(y_int, pred_proba))
+                    try:
+                        fraction_pos, mean_pred = calibration_curve(
+                            y_int, pred_proba, n_bins=10,
+                        )
+                        calibration = {
+                            "bin_means": mean_pred.tolist(),
+                            "fraction_positives": fraction_pos.tolist(),
+                        }
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+
+        return PerformanceResponse(
+            mse=mse,
+            rmse=rmse,
+            mae=mae,
+            accuracy=accuracy,
+            auc_roc=auc_roc,
+            precision=precision,
+            recall=recall,
+            f1=f1,
+            log_loss=log_loss_val,
+            brier_score=brier_score,
+            balanced_accuracy=balanced_acc,
+            calibration=calibration,
+            n_samples=len(y_flat),
+            at_seq=request.at_seq,
+            has_non_identity_ops=engine.has_non_identity_ops,
         )
 
 
@@ -804,7 +1068,7 @@ async def compute_shap(
 
         engine = _build_engine(session, genome_id)
         model_state = engine.current_state
-        X, y = _load_split_data(
+        X, y, _, _, ds_num_classes = _load_split_data(
             session, request.dataset_split_id, request.split,
             1.0, request.max_samples,
         )
@@ -837,14 +1101,13 @@ async def compute_shap(
         else:
             from ...core.structure_network import StructureNetwork
             struct_net = StructureNetwork(model_state)
-            for d in struct_net._layer_order:
-                layer = struct_net._layers[d]
-                if layer.get("is_output"):
-                    layer["activations"] = [
-                        "input" if nid in set(model_state.output_node_ids)
-                        else act
-                        for nid, act in zip(layer["node_ids"], layer["activations"])
-                    ]
+
+            # Binary classification: force sigmoid on output to match
+            # NeuralNeat training behaviour.
+            is_binary = (ds_num_classes is not None and ds_num_classes == 2
+                         and len(model_state.output_node_ids) == 1)
+            if is_binary:
+                struct_net.override_output_activation("sigmoid")
 
             seen_bases: set = set()
             feature_names: list = []

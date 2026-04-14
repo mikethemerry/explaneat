@@ -154,9 +154,9 @@ class GenomeExplorer:
             # Generate section content from config_json with sensible defaults
             def generate_default_genome_section(genome_cfg):
                 """Generate DefaultGenome section from config_json"""
-                return f"""activation_default      = {genome_cfg.get('activation_default', 'sigmoid')}
-activation_mutate_rate  = {genome_cfg.get('activation_mutate_rate', 0.1)}
-activation_options      = {genome_cfg.get('activation_options', 'sigmoid')}
+                return f"""activation_default      = {genome_cfg.get('activation_default', 'relu')}
+activation_mutate_rate  = {genome_cfg.get('activation_mutate_rate', 0.0)}
+activation_options      = {genome_cfg.get('activation_options', 'relu')}
 aggregation_default     = {genome_cfg.get('aggregation_default', 'sum')}
 aggregation_mutate_rate = {genome_cfg.get('aggregation_mutate_rate', 0.0)}
 aggregation_options     = {genome_cfg.get('aggregation_options', 'sum')}

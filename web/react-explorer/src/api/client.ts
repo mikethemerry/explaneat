@@ -71,6 +71,7 @@ export type ModelMetadata = {
   output_nodes: string[];
   is_original: boolean;
   collapsed_annotations?: string[];
+  has_non_identity_ops?: boolean;
 };
 
 export type ModelState = {
@@ -241,6 +242,7 @@ export type AnnotateParams = {
   exit_nodes: string[];
   subgraph_nodes: string[];
   subgraph_connections?: [string, string][];
+  child_annotation_ids?: string[];
 };
 export type RenameNodeParams = {
   node_id: string;
@@ -258,6 +260,13 @@ export type EnableConnectionParams = {
   from_node: string;
   to_node: string;
 };
+export type PruneNodeParams = {
+  node_id: string;
+};
+export type PruneConnectionParams = {
+  from_node: string;
+  to_node: string;
+};
 
 export type OperationRequest =
   | { type: "split_node"; params: SplitNodeParams }
@@ -269,7 +278,9 @@ export type OperationRequest =
   | { type: "rename_node"; params: RenameNodeParams }
   | { type: "rename_annotation"; params: RenameAnnotationParams }
   | { type: "disable_connection"; params: DisableConnectionParams }
-  | { type: "enable_connection"; params: EnableConnectionParams };
+  | { type: "enable_connection"; params: EnableConnectionParams }
+  | { type: "prune_node"; params: PruneNodeParams }
+  | { type: "prune_connection"; params: PruneConnectionParams };
 
 // ============================================================================
 // API Client
@@ -355,11 +366,13 @@ export type ExperimentSplitResponse = {
   random_state: number | null;
   train_size: number | null;
   test_size_actual: number | null;
+  validation_size: number | null;
   feature_names: string[] | null;
   feature_types: Record<string, string> | null;
   feature_descriptions: Record<string, string> | null;
   target_name: string | null;
   target_description: string | null;
+  class_names: string[] | null;
 };
 
 export async function getExperimentSplit(
@@ -554,6 +567,20 @@ export type DatasetResponse = {
   target_description: string | null;
   class_names: string[] | null;
   has_data: boolean;
+  task_type: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+};
+
+export type DatasetUpdateRequest = {
+  description?: string;
+  num_classes?: number | null;
+  class_names?: string[] | null;
+  feature_descriptions?: Record<string, string>;
+  feature_types?: Record<string, string>;
+  target_name?: string;
+  target_description?: string;
+  task_type?: string;
 };
 
 export type DatasetListResponse = {
@@ -564,12 +591,13 @@ export type DatasetListResponse = {
 export type SplitResponse = {
   id: string;
   dataset_id: string;
-  experiment_id: string;
+  name: string | null;
   split_type: string;
   test_size: number | null;
   random_state: number | null;
   train_size: number | null;
   test_size_actual: number | null;
+  validation_size: number | null;
 };
 
 export type SplitListResponse = {
@@ -579,6 +607,22 @@ export type SplitListResponse = {
 
 export async function listDatasets(): Promise<DatasetListResponse> {
   return fetchJson<DatasetListResponse>(`${API_BASE}/datasets`);
+}
+
+export async function getDataset(
+  datasetId: string,
+): Promise<DatasetResponse> {
+  return fetchJson<DatasetResponse>(`${API_BASE}/datasets/${datasetId}`);
+}
+
+export async function updateDataset(
+  datasetId: string,
+  request: DatasetUpdateRequest,
+): Promise<DatasetResponse> {
+  return fetchJson<DatasetResponse>(`${API_BASE}/datasets/${datasetId}`, {
+    method: "PATCH",
+    body: JSON.stringify(request),
+  });
 }
 
 export async function downloadPMLBDataset(
@@ -601,7 +645,6 @@ export async function listSplits(
 
 export async function createSplit(
   datasetId: string,
-  experimentId: string,
   testProportion = 0.2,
   randomSeed = 42,
   stratify = false,
@@ -611,7 +654,6 @@ export async function createSplit(
     {
       method: "POST",
       body: JSON.stringify({
-        experiment_id: experimentId,
         test_proportion: testProportion,
         random_seed: randomSeed,
         stratify,
@@ -638,7 +680,7 @@ export type VizDataRequest = {
   dataset_split_id: string;
   viz_type: "line" | "heatmap" | "partial_dependence" | "pca_scatter" | "sensitivity" | "ice" | "feature_output_scatter" | "output_distribution";
   params?: Record<string, unknown>;
-  split?: "train" | "test" | "both";
+  split?: "train" | "test" | "val" | "both";
   sample_fraction?: number;
   max_samples?: number;
 };
@@ -648,6 +690,13 @@ export type VizDataResponse = {
   data: Record<string, unknown>;
   dimensionality: [number, number];
   suggested_viz_types: string[];
+  entry_names?: string[] | null;
+  exit_names?: string[] | null;
+  correctness?: boolean[] | null;
+  predicted_class?: number[] | null;
+  true_class?: number[] | null;
+  class_names?: string[] | null;
+  num_classes?: number | null;
 };
 
 export type ChildFormulaInfo = {
@@ -779,7 +828,7 @@ export async function computeShap(
     dataset_split_id: string;
     annotation_id?: string;
     node_id?: string;
-    split?: "train" | "test" | "both";
+    split?: "train" | "test" | "val" | "both";
     max_samples?: number;
     force_recompute?: boolean;
   },
@@ -800,7 +849,7 @@ export async function computeShap(
 export type InputDistributionRequest = {
   dataset_split_id: string;
   feature_indices: number[];
-  split?: "train" | "test" | "both";
+  split?: "train" | "test" | "val" | "both";
   num_bins?: number;
 };
 
@@ -809,6 +858,187 @@ export type InputDistributionResponse = {
   data: Record<string, unknown>;
   feature_names: string[];
 };
+
+// ============================================================================
+// Performance types and endpoints
+// ============================================================================
+
+export type PerformanceRequest = {
+  dataset_split_id: string;
+  split?: "train" | "test" | "val" | "both";
+  sample_fraction?: number;
+  max_samples?: number;
+  at_seq?: number;
+};
+
+export type PerformanceResponse = {
+  mse: number;
+  rmse: number;
+  mae: number;
+  accuracy: number | null;
+  auc_roc: number | null;
+  precision: number | null;
+  recall: number | null;
+  f1: number | null;
+  log_loss: number | null;
+  brier_score: number | null;
+  balanced_accuracy: number | null;
+  calibration: { bin_means: number[]; fraction_positives: number[] } | null;
+  n_samples: number;
+  at_seq: number | null;
+  has_non_identity_ops: boolean;
+};
+
+export async function computePerformance(
+  genomeId: string,
+  request: PerformanceRequest,
+): Promise<PerformanceResponse> {
+  return fetchJson<PerformanceResponse>(
+    `${API_BASE}/genomes/${genomeId}/evidence/performance`,
+    {
+      method: "POST",
+      body: JSON.stringify(request),
+    },
+  );
+}
+
+// ============================================================================
+// Retraining types and endpoints
+// ============================================================================
+
+export type RetrainStartRequest = {
+  dataset_split_id: string;
+  split?: "train" | "test" | "val" | "both";
+  n_epochs?: number;
+  learning_rate?: number;
+  freeze_annotations?: boolean;
+  max_samples?: number;
+};
+
+export type RetrainStartResponse = {
+  job_id: string;
+};
+
+export type RetrainStatusResponse = {
+  job_id: string;
+  status: "pending" | "running" | "completed" | "failed" | "cancelled";
+  current_epoch: number;
+  total_epochs: number;
+  metrics: { loss: number[]; val_loss: number[] };
+  error: string | null;
+};
+
+export type RetrainApplyResponse = {
+  operation_seq: number;
+  final_loss: number | null;
+  final_val_loss: number | null;
+  epochs_completed: number;
+};
+
+export async function startRetrain(
+  genomeId: string,
+  request: RetrainStartRequest,
+): Promise<RetrainStartResponse> {
+  return fetchJson<RetrainStartResponse>(
+    `${API_BASE}/genomes/${genomeId}/retrain`,
+    {
+      method: "POST",
+      body: JSON.stringify(request),
+    },
+  );
+}
+
+export async function getRetrainStatus(
+  genomeId: string,
+  jobId: string,
+): Promise<RetrainStatusResponse> {
+  return fetchJson<RetrainStatusResponse>(
+    `${API_BASE}/genomes/${genomeId}/retrain/${jobId}`,
+  );
+}
+
+export async function applyRetrain(
+  genomeId: string,
+  jobId: string,
+): Promise<RetrainApplyResponse> {
+  return fetchJson<RetrainApplyResponse>(
+    `${API_BASE}/genomes/${genomeId}/retrain/${jobId}/apply`,
+    { method: "POST" },
+  );
+}
+
+export async function cancelRetrain(
+  genomeId: string,
+  jobId: string,
+): Promise<{ status: string }> {
+  return fetchJson<{ status: string }>(
+    `${API_BASE}/genomes/${genomeId}/retrain/${jobId}/cancel`,
+    { method: "POST" },
+  );
+}
+
+// ============================================================================
+// Experiment pipeline types and endpoints
+// ============================================================================
+
+export type ExperimentCreateRequest = {
+  name: string;
+  description?: string;
+  dataset_id: string;
+  dataset_split_id: string;
+  n_generations?: number;
+  n_epochs_backprop?: number;
+  fitness_function?: "bce" | "auc";
+  population_size?: number;
+  mutation_rate?: number;
+  crossover_rate?: number;
+};
+
+export type ExperimentCreateResponse = {
+  job_id: string;
+};
+
+export type ExperimentProgressResponse = {
+  job_id: string;
+  experiment_id: string | null;
+  status: "pending" | "running" | "completed" | "failed" | "paused" | "cancelled";
+  current_generation: number;
+  total_generations: number;
+  best_fitness: number | null;
+  mean_fitness: number | null;
+  pop_size: number;
+  num_species: number;
+  error: string | null;
+};
+
+export async function createAndRunExperiment(
+  request: ExperimentCreateRequest,
+): Promise<ExperimentCreateResponse> {
+  return fetchJson<ExperimentCreateResponse>(
+    `${API_BASE}/experiments/run`,
+    {
+      method: "POST",
+      body: JSON.stringify(request),
+    },
+  );
+}
+
+export async function getExperimentProgress(
+  jobId: string,
+): Promise<ExperimentProgressResponse> {
+  return fetchJson<ExperimentProgressResponse>(
+    `${API_BASE}/experiments/jobs/${jobId}`,
+  );
+}
+
+export async function cancelExperiment(
+  jobId: string,
+): Promise<{ status: string }> {
+  return fetchJson<{ status: string }>(
+    `${API_BASE}/experiments/jobs/${jobId}/cancel`,
+    { method: "POST" },
+  );
+}
 
 export async function computeInputDistribution(
   genomeId: string,

@@ -332,36 +332,17 @@ class NeuralNeat(nn.Module):
 
     def update_genome_weights(self):
         for layer_id, layer in self.layers.items():
+            # Write connection weights back to the genome
             for genome_location, weight_location in layer["input_map"].items():
-                # print(genome_location, weight_location)
-                # print(self.genome.connections[genome_location])
-                # print(self.weights[layer_id][weight_location[0]][weight_location[1]].item())
-                # self.genome.connections[genome_location].new_weight = self.weights[layer_id][weight_location[0]][weight_location[1]].item()
                 self.genome.connections[genome_location].weight = self.weights[
                     layer_id
                 ][weight_location[0]][weight_location[1]].item()
-            # layer_offset = 0
-            # # Check every layer and every node for connections
-            # for input_layer_id in layer['input_layers']:
-            #     input_layer = self.layers[input_layer_id]
-            #     for node_id, node in input_layer['nodes'].items():
-            #         for node_output_id in node['output_ids']:
-            #             if node_output_id in layer['nodes']:
-            #                 node_output = layer['nodes'][node_output_id]
-            #                 # I HAVE THIS NODE!
-            #                 print(node_id, node_output_id)
-            #                 # What is it's weight?
-            #                 connection = self.genome.connections[(node_id, node_output_id)]
-            #                 if not connection.enabled:
-            #                     continue
-            #                 # connection_weight = connection.weight
 
-            #                 in_weight_location = layer_offset + node['layer_index']
-            #                 out_weight_location = node_output['layer_index']
-
-            #                 # layer['input_weights'][in_weight_location][out_weight_location] = connection_weight
-            #                 self.genome.connections[(node_id, node_output_id)].weight = self.weights[layer_id][in_weight_location][out_weight_location]
-            # layer_offset += len(input_layer['nodes'])
+            # Write biases back to the genome
+            for node_id, node in layer["nodes"].items():
+                if node_id in self.genome.nodes:
+                    col = node["layer_index"]
+                    self.genome.nodes[node_id].bias = self.biases[layer_id][col].item()
 
     def parameters_to_object(self):
         return {"weights": self.weights, "biases": self.biases}
@@ -913,6 +894,10 @@ class NodeMapping(object):
                             output_index = output_node["layer_index"]
                             self.connection_map[connection_index] = (
                                 layer_id,
+                                input_index,
+                                output_index,
+                            )
+                            layer["input_map"][connection_index] = (
                                 input_index,
                                 output_index,
                             )

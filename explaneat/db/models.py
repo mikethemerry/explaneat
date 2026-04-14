@@ -118,6 +118,9 @@ class Dataset(Base, TimestampMixin):
             "target_description": self.target_description,
             "class_names": self.class_names,
             "has_data": self.x_data is not None,
+            "additional_metadata": self.additional_metadata,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
 
@@ -132,11 +135,7 @@ class DatasetSplit(Base, TimestampMixin):
         ForeignKey("datasets.id", ondelete="CASCADE"),
         nullable=False,
     )
-    experiment_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("experiments.id", ondelete="CASCADE"),
-        nullable=False,
-    )
+    name = Column(String(255))  # Optional display name, e.g. "80/20 seed 42"
 
     # Split parameters for reproducibility
     split_type = Column(
@@ -166,10 +165,9 @@ class DatasetSplit(Base, TimestampMixin):
 
     # Relationships
     dataset = relationship("Dataset", back_populates="splits")
-    experiment = relationship("Experiment", back_populates="dataset_split")
+    experiments = relationship("Experiment", back_populates="dataset_split")
 
     __table_args__ = (
-        Index("idx_splits_experiment", "experiment_id"),
         Index("idx_splits_dataset", "dataset_id"),
     )
 
@@ -188,6 +186,9 @@ class Experiment(Base, TimestampMixin):
     dataset_id = Column(
         UUID(as_uuid=True), ForeignKey("datasets.id", ondelete="SET NULL")
     )
+    split_id = Column(
+        UUID(as_uuid=True), ForeignKey("dataset_splits.id", ondelete="SET NULL")
+    )
     config_json = Column(JSONB, nullable=False)
     neat_config_text = Column(Text, nullable=False)
     start_time = Column(
@@ -205,7 +206,7 @@ class Experiment(Base, TimestampMixin):
     # Relationships
     dataset = relationship("Dataset", back_populates="experiments")
     dataset_split = relationship(
-        "DatasetSplit", back_populates="experiment", uselist=False
+        "DatasetSplit", back_populates="experiments"
     )
     populations = relationship(
         "Population", back_populates="experiment", cascade="all, delete-orphan"
