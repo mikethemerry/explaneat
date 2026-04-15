@@ -4,6 +4,7 @@ import {
   updateDataset,
   listSplits,
   createSplit,
+  prepareDataset,
   type DatasetResponse,
   type DatasetUpdateRequest,
   type SplitResponse,
@@ -454,6 +455,16 @@ export function DatasetDetail({ datasetId, onBack }: DatasetDetailProps) {
         </Section>
       )}
 
+      {/* Prepare Dataset */}
+      <Section title="Prepare Dataset">
+        <PrepareDatasetForm
+          dataset={dataset}
+          datasetId={datasetId}
+          featureTypes={featureTypes}
+          onPrepared={loadDataset}
+        />
+      </Section>
+
       {/* Linked Splits */}
       <Section title="Linked Splits">
         {splits.length === 0 ? (
@@ -490,6 +501,233 @@ export function DatasetDetail({ datasetId, onBack }: DatasetDetailProps) {
         )}
         <CreateSplitForm datasetId={datasetId} onCreated={loadDataset} />
       </Section>
+    </div>
+  );
+}
+
+function PrepareDatasetForm({
+  dataset,
+  datasetId,
+  featureTypes,
+  onPrepared,
+}: {
+  dataset: DatasetResponse;
+  datasetId: string;
+  featureTypes: Record<string, string>;
+  onPrepared: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [ordinalOnehot, setOrdinalOnehot] = useState<Set<string>>(new Set());
+  const [preparing, setPreparing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  // If this is already a prepared dataset, show info instead of form
+  if (dataset.source_dataset_id) {
+    return (
+      <p className="hint" style={{ margin: 0 }}>
+        This is a prepared dataset (source: {dataset.source_dataset_id}).
+      </p>
+    );
+  }
+
+  const categoricalFeatures = Object.entries(featureTypes).filter(
+    ([, t]) => t === "categorical"
+  );
+  const ordinalFeatures = Object.entries(featureTypes).filter(
+    ([, t]) => t === "ordinal"
+  );
+  const hasEncodableFeatures =
+    categoricalFeatures.length > 0 || ordinalFeatures.length > 0;
+
+  const toggleOrdinalOnehot = (featureName: string) => {
+    setOrdinalOnehot((prev) => {
+      const next = new Set(prev);
+      if (next.has(featureName)) {
+        next.delete(featureName);
+      } else {
+        next.add(featureName);
+      }
+      return next;
+    });
+  };
+
+  const handlePrepare = async () => {
+    try {
+      setPreparing(true);
+      setError(null);
+      setSuccess(null);
+      const prepared = await prepareDataset(
+        datasetId,
+        name || undefined,
+        undefined,
+        ordinalOnehot.size > 0 ? Array.from(ordinalOnehot) : undefined
+      );
+      setSuccess(`Created prepared dataset: ${prepared.name} (${prepared.id})`);
+      onPrepared();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to prepare dataset");
+    } finally {
+      setPreparing(false);
+    }
+  };
+
+  if (!hasEncodableFeatures) {
+    return (
+      <div>
+        <p className="hint" style={{ margin: "0 0 0.5rem 0" }}>
+          No categorical or ordinal features to encode.
+        </p>
+        <button className="op-btn" disabled>
+          Prepare Dataset
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {error && (
+        <div className="error-message" style={{ marginBottom: "0.5rem" }}>
+          {error}
+        </div>
+      )}
+      {success && (
+        <div
+          style={{
+            color: "#059669",
+            fontSize: "0.85rem",
+            fontWeight: 500,
+            marginBottom: "0.5rem",
+            padding: "0.5rem",
+            background: "#ecfdf5",
+            borderRadius: "0.25rem",
+          }}
+        >
+          {success}
+        </div>
+      )}
+
+      {/* Encoding summary */}
+      <div style={{ marginBottom: "0.75rem" }}>
+        <div
+          style={{
+            fontWeight: 500,
+            fontSize: "0.85rem",
+            color: "#374151",
+            marginBottom: "0.35rem",
+          }}
+        >
+          Features to encode:
+        </div>
+        <ul
+          style={{
+            margin: "0 0 0.5rem 0",
+            padding: "0 0 0 1.25rem",
+            fontSize: "0.85rem",
+            color: "#4b5563",
+            lineHeight: 1.6,
+          }}
+        >
+          {categoricalFeatures.map(([feat]) => (
+            <li key={feat}>
+              <span style={{ fontFamily: "monospace", fontWeight: 500 }}>
+                {feat}
+              </span>{" "}
+              — categorical (will be one-hot encoded)
+            </li>
+          ))}
+          {ordinalFeatures.map(([feat]) => (
+            <li key={feat}>
+              <span style={{ fontFamily: "monospace", fontWeight: 500 }}>
+                {feat}
+              </span>{" "}
+              — ordinal (
+              {ordinalOnehot.has(feat)
+                ? "will be one-hot encoded"
+                : "will be rank-mapped"}
+              )
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Ordinal options */}
+      {ordinalFeatures.length > 0 && (
+        <div style={{ marginBottom: "0.75rem" }}>
+          <div
+            style={{
+              fontWeight: 500,
+              fontSize: "0.85rem",
+              color: "#374151",
+              marginBottom: "0.35rem",
+            }}
+          >
+            Ordinal encoding options:
+          </div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.25rem",
+              marginLeft: "0.25rem",
+            }}
+          >
+            {ordinalFeatures.map(([feat]) => (
+              <label
+                key={feat}
+                className="radio-label"
+                style={{ fontSize: "0.85rem" }}
+              >
+                <input
+                  type="checkbox"
+                  checked={ordinalOnehot.has(feat)}
+                  onChange={() => toggleOrdinalOnehot(feat)}
+                />
+                <span style={{ fontFamily: "monospace" }}>{feat}</span> — one-hot
+                encode instead of rank
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Name override */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "0.75rem",
+          marginBottom: "0.75rem",
+        }}
+      >
+        <label
+          style={{
+            fontWeight: 500,
+            fontSize: "0.85rem",
+            color: "#374151",
+            minWidth: "50px",
+          }}
+        >
+          Name:
+        </label>
+        <input
+          type="text"
+          className="text-input"
+          placeholder={`${dataset.name} (prepared)`}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          style={{ marginBottom: 0, flex: 1 }}
+        />
+      </div>
+
+      <button
+        className="op-btn primary"
+        onClick={handlePrepare}
+        disabled={preparing}
+      >
+        {preparing ? "Preparing..." : "Prepare Dataset"}
+      </button>
     </div>
   );
 }
