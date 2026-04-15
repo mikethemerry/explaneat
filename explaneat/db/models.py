@@ -74,7 +74,16 @@ class Dataset(Base, TimestampMixin):
     x_data = Column(LargeBinary)  # Numpy array stored as bytes via np.save
     y_data = Column(LargeBinary)  # Numpy array stored as bytes via np.save
 
+    # Prepared dataset lineage
+    source_dataset_id = Column(
+        UUID(as_uuid=True), ForeignKey("datasets.id", ondelete="CASCADE")
+    )
+    encoding_config = Column(JSONB)  # Records how this prepared dataset was created
+
     # Relationships
+    source_dataset = relationship(
+        "Dataset", remote_side="Dataset.id", foreign_keys=[source_dataset_id]
+    )
     splits = relationship(
         "DatasetSplit", back_populates="dataset", cascade="all, delete-orphan"
     )
