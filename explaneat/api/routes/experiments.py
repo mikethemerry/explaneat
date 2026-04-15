@@ -394,6 +394,60 @@ async def create_and_run_experiment(
         raise HTTPException(status_code=400, detail="Dataset has no stored data")
 
     X_full, y_full = data
+
+    # Auto-prepare dataset if it has categorical/ordinal features
+    feature_names = dataset.feature_names or []
+    ft_dict = dataset.feature_types or {}
+    if (
+        not dataset.source_dataset_id
+        and any(ft in ("categorical", "ordinal") for ft in ft_dict.values())
+    ):
+        from ...db.encoding import build_encoding_config, prepare_dataset_arrays
+
+        feature_types_list = [ft_dict.get(name, "numeric") for name in feature_names]
+        enc_config = build_encoding_config(X_full, feature_names, feature_types_list)
+
+        # Check for existing prepared version with same config
+        prepared = (
+            db_session.query(Dataset)
+            .filter(
+                Dataset.source_dataset_id == dataset.id,
+                Dataset.encoding_config == enc_config,
+            )
+            .first()
+        )
+
+        if prepared is None:
+            X_enc, new_names, new_types_dict = prepare_dataset_arrays(
+                X_full, feature_names, feature_types_list, enc_config,
+            )
+            prepared = Dataset(
+                name=f"{dataset.name} (prepared)",
+                version=dataset.version,
+                source=dataset.source,
+                description=f"Auto-prepared from {dataset.name}",
+                num_samples=X_enc.shape[0],
+                num_features=X_enc.shape[1],
+                num_classes=dataset.num_classes,
+                feature_names=new_names,
+                feature_types=new_types_dict,
+                target_name=dataset.target_name,
+                class_names=dataset.class_names,
+                source_dataset_id=dataset.id,
+                encoding_config=enc_config,
+            )
+            prepared.set_data(X_enc, y_full)
+            db_session.add(prepared)
+            db_session.commit()
+
+        # Switch to prepared dataset
+        dataset = prepared
+        data = dataset.get_data()
+        if data is None:
+            raise HTTPException(status_code=500, detail="Failed to load prepared dataset")
+        X_full, y_full = data
+        feature_names = dataset.feature_names or []
+
     train_indices = split.train_indices or []
     if not train_indices:
         raise HTTPException(status_code=400, detail="Split has no training indices")
