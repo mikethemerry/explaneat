@@ -77,12 +77,13 @@ type VizSlotProps = {
   nOut: number;
   defaultVizType: string;
   onGalleryRefresh: () => void;
+  viewMode: "network" | "source";
 };
 
 function VizSlot({
   genomeId, annotation, splitId, splitChoice, sampleFraction,
   isWholeModel, isNodeLevel, nodeId,
-  nIn, nOut, defaultVizType, onGalleryRefresh,
+  nIn, nOut, defaultVizType, onGalleryRefresh, viewMode,
 }: VizSlotProps) {
   const [vizData, setVizData] = useState<VizDataResponse | null>(null);
   const [vizType, setVizType] = useState<string>(defaultVizType);
@@ -151,6 +152,7 @@ function VizSlot({
           split: splitChoice,
           sample_fraction: sampleFraction,
           max_samples: 1000,
+          view: viewMode,
         });
         setVizData(result);
       }
@@ -159,7 +161,7 @@ function VizSlot({
     } finally {
       setLoading(false);
     }
-  }, [genomeId, annotation.id, splitId, vizType, splitChoice, sampleFraction, buildVizParams, isWholeModel, isNodeLevel, nodeId]);
+  }, [genomeId, annotation.id, splitId, vizType, splitChoice, sampleFraction, buildVizParams, isWholeModel, isNodeLevel, nodeId, viewMode]);
 
   const handleComputeViz = useCallback(() => doComputeViz(false), [doComputeViz]);
   const handleRecomputeViz = useCallback(() => doComputeViz(true), [doComputeViz]);
@@ -175,7 +177,7 @@ function VizSlot({
     }
     doComputeViz(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [splitId, vizType, inputDim, inputDims[0], inputDims[1], outputDim, splitChoice]);
+  }, [splitId, vizType, inputDim, inputDims[0], inputDims[1], outputDim, splitChoice, viewMode]);
 
   const handleSnapshot = useCallback(async () => {
     if (!svgRef.current) return;
@@ -315,6 +317,7 @@ export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel
   const [splitChoice, setSplitChoice] = useState<"train" | "test" | "val" | "both">("both");
   const [sampleFraction, setSampleFraction] = useState(0.1);
   const [galleryKey, setGalleryKey] = useState(0);
+  const [viewMode, setViewMode] = useState<"network" | "source">("network");
 
   // Whole-model performance
   const [perfData, setPerfData] = useState<PerformanceResponse | null>(null);
@@ -372,6 +375,16 @@ export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel
           onSampleFractionChange={setSampleFraction}
           sampleFraction={sampleFraction}
         />
+        <div className="radio-group" style={{ marginTop: "8px" }}>
+          <label className="radio-label">
+            <input type="radio" checked={viewMode === "network"} onChange={() => setViewMode("network")} />
+            Network
+          </label>
+          <label className="radio-label">
+            <input type="radio" checked={viewMode === "source"} onChange={() => setViewMode("source")} />
+            Source
+          </label>
+        </div>
       </div>
 
       {isWholeModel && splitId && (
@@ -474,6 +487,7 @@ export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel
             nOut={nOut}
             defaultVizType="line"
             onGalleryRefresh={handleGalleryRefresh}
+            viewMode={viewMode}
           />
           <div className="viz-slot-divider" />
           <VizSlot
@@ -489,6 +503,7 @@ export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel
             nOut={nOut}
             defaultVizType="shap"
             onGalleryRefresh={handleGalleryRefresh}
+            viewMode={viewMode}
           />
         </>
       )}

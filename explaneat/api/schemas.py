@@ -591,6 +591,7 @@ class VizDataRequest(BaseModel):
     split: Literal["train", "test", "val", "both"] = "both"
     sample_fraction: float = 0.1
     max_samples: int = 1000
+    view: Literal["network", "source"] = "network"
 
     @model_validator(mode="after")
     def check_at_most_one_target(self):

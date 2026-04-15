@@ -162,6 +162,68 @@ def _find_annotation_in_operations(session, genome_id: str, annotation_id: str) 
     raise HTTPException(status_code=404, detail=f"Annotation '{annotation_id}' not found")
 
 
+def _unscale_values(values, feature_idx: int, scaler_params: dict):
+    """Reverse StandardScaler: original = scaled * scale + mean."""
+    if not scaler_params:
+        return values
+    mean = scaler_params["mean"][feature_idx]
+    scale = scaler_params["scale"][feature_idx]
+    if isinstance(values, (list, np.ndarray)):
+        return [v * scale + mean for v in values]
+    return values * scale + mean
+
+
+def _group_onehot_features(feature_names: List[str]) -> Dict[str, List[int]]:
+    """Map base feature name -> list of column indices for one-hot groups."""
+    groups: Dict[str, List[int]] = {}
+    for i, name in enumerate(feature_names):
+        base = name.split(":")[0] if ":" in name else name
+        groups.setdefault(base, []).append(i)
+    return groups
+
+
+def _get_source_feature_names(feature_names: List[str]) -> List[str]:
+    """Collapse one-hot feature names back to original names."""
+    seen = []
+    for name in feature_names:
+        base = name.split(":")[0] if ":" in name else name
+        if base not in seen:
+            seen.append(base)
+    return seen
+
+
+def _apply_source_view(viz_result: dict, session, split_id: str, entry_names: List[str]) -> dict:
+    """Post-process viz data to show source (unscaled, ungrouped) values."""
+    import copy
+    result = copy.deepcopy(viz_result)
+
+    # Get scaler params from split
+    split = session.query(DatasetSplit).filter_by(id=uuid.UUID(split_id)).first()
+    scaler_params = split.scaler_params if split else None
+
+    # Get encoding config from dataset
+    dataset = session.query(Dataset).filter_by(id=split.dataset_id).first() if split else None
+    has_encoding = dataset and dataset.encoding_config is not None
+
+    # Replace entry_names with source names
+    if has_encoding:
+        source_names = _get_source_feature_names(entry_names)
+        result["entry_names"] = source_names
+
+    # Unscale axis values in the data if scaler was used
+    if scaler_params and "data" in result:
+        data = result["data"]
+        # Line plots, PD plots, ICE plots, feature_output_scatter have x values
+        # that correspond to a specific input dimension
+        if isinstance(data, dict) and "x" in data and isinstance(data["x"], list):
+            params = result.get("params", {})
+            dim_idx = params.get("input_dim", 0)
+            if dim_idx < len(scaler_params.get("mean", [])):
+                data["x"] = _unscale_values(data["x"], dim_idx, scaler_params)
+
+    return result
+
+
 def _load_split_data(session, split_id: str, split_choice: str, sample_frac: float, max_samples: int):
     """Load X, y data and dataset metadata from a dataset split.
 
@@ -606,6 +668,12 @@ async def compute_viz_data(
             response_kwargs["class_names"] = ds_class_names
         if ds_num_classes is not None:
             response_kwargs["num_classes"] = ds_num_classes
+
+        # Source view: reverse scaling on axis values, group one-hot features
+        if request.view == "source":
+            response_kwargs = _apply_source_view(
+                response_kwargs, session, request.dataset_split_id, entry_names,
+            )
 
         return VizDataResponse(**response_kwargs)
 

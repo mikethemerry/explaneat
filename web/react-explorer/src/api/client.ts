@@ -706,6 +706,7 @@ export type VizDataRequest = {
   split?: "train" | "test" | "val" | "both";
   sample_fraction?: number;
   max_samples?: number;
+  view?: "network" | "source";
 };
 
 export type VizDataResponse = {
