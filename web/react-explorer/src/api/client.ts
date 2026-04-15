@@ -570,6 +570,8 @@ export type DatasetResponse = {
   task_type: string | null;
   created_at: string | null;
   updated_at: string | null;
+  source_dataset_id: string | null;
+  encoding_config: Record<string, any> | null;
 };
 
 export type DatasetUpdateRequest = {
@@ -657,6 +659,27 @@ export async function createSplit(
         test_proportion: testProportion,
         random_seed: randomSeed,
         stratify,
+      }),
+    },
+  );
+}
+
+export async function prepareDataset(
+  datasetId: string,
+  name?: string,
+  encodingConfig?: Record<string, any>,
+  ordinalOnehot?: string[],
+  ordinalOrders?: Record<string, string[]>,
+): Promise<DatasetResponse> {
+  return fetchJson<DatasetResponse>(
+    `${API_BASE}/datasets/${datasetId}/prepare`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        name: name || undefined,
+        encoding_config: encodingConfig || undefined,
+        ordinal_onehot: ordinalOnehot || undefined,
+        ordinal_orders: ordinalOrders || undefined,
       }),
     },
   );

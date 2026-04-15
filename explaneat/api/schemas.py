@@ -458,6 +458,8 @@ class DatasetResponse(BaseModel):
     task_type: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    source_dataset_id: Optional[str] = None
+    encoding_config: Optional[Dict[str, Any]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -480,6 +482,14 @@ class DatasetUpdateRequest(BaseModel):
     target_name: Optional[str] = None
     target_description: Optional[str] = None
     task_type: Optional[str] = None
+
+
+class PrepareDatasetRequest(BaseModel):
+    """Request to create a prepared (one-hot encoded) dataset."""
+    name: Optional[str] = None
+    encoding_config: Optional[Dict[str, Any]] = None
+    ordinal_onehot: Optional[List[str]] = None
+    ordinal_orders: Optional[Dict[str, List[str]]] = None
 
 
 class PMLBDownloadRequest(BaseModel):

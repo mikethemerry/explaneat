@@ -11,11 +11,13 @@ from ..schemas import (
     DatasetResponse,
     DatasetListResponse,
     DatasetUpdateRequest,
+    PrepareDatasetRequest,
     PMLBDownloadRequest,
     SplitCreateRequest,
     SplitResponse,
     SplitListResponse,
 )
+from ...db.encoding import build_encoding_config, prepare_dataset_arrays
 
 router = APIRouter()
 
@@ -141,3 +143,77 @@ async def list_splits(dataset_id: str):
             ],
             total=len(splits),
         )
+
+
+@router.post("/{dataset_id}/prepare", response_model=DatasetResponse)
+async def prepare_dataset(dataset_id: str, request: PrepareDatasetRequest):
+    """Create a prepared dataset with one-hot encoded categorical features."""
+    with db.session_scope() as session:
+        source = session.query(Dataset).filter_by(id=uuid.UUID(dataset_id)).first()
+        if not source:
+            raise HTTPException(status_code=404, detail="Dataset not found")
+        if source.x_data is None:
+            raise HTTPException(status_code=400, detail="Dataset has no data")
+
+        X, y = source.get_data()
+        feature_names = source.feature_names or []
+        feature_types_dict = source.feature_types or {}
+
+        # Convert feature_types dict to list parallel to feature_names
+        feature_types_list = [feature_types_dict.get(name, "numeric") for name in feature_names]
+
+        # Build encoding config if not provided
+        encoding_config = request.encoding_config
+        if encoding_config is None:
+            ordinal_onehot = set(request.ordinal_onehot) if request.ordinal_onehot else None
+            encoding_config = build_encoding_config(
+                X, feature_names, feature_types_list,
+                ordinal_onehot=ordinal_onehot,
+                ordinal_orders=request.ordinal_orders,
+            )
+
+        # Check if a matching prepared dataset already exists
+        source_uuid = uuid.UUID(dataset_id)
+        existing = (
+            session.query(Dataset)
+            .filter_by(source_dataset_id=source_uuid)
+            .all()
+        )
+        for ds in existing:
+            if ds.encoding_config == encoding_config:
+                return _dataset_to_response(ds)
+
+        # Prepare the encoded arrays
+        X_prepared, new_feature_names = prepare_dataset_arrays(
+            X, feature_names, feature_types_list, encoding_config,
+        )
+
+        # Build new feature_types dict (all encoded features are numeric)
+        new_feature_types = {name: "numeric" for name in new_feature_names}
+
+        # Create the prepared dataset
+        prep_name = request.name or f"{source.name} (prepared)"
+        prepared = Dataset(
+            id=uuid.uuid4(),
+            name=prep_name,
+            version=source.version,
+            source=source.source,
+            source_url=source.source_url,
+            description=f"One-hot encoded version of {source.name}",
+            num_samples=X_prepared.shape[0],
+            num_features=X_prepared.shape[1],
+            num_classes=source.num_classes,
+            feature_names=new_feature_names,
+            feature_types=new_feature_types,
+            feature_descriptions=None,
+            target_name=source.target_name,
+            target_description=source.target_description,
+            class_names=source.class_names,
+            additional_metadata=source.additional_metadata,
+            source_dataset_id=source_uuid,
+            encoding_config=encoding_config,
+        )
+        prepared.set_data(X_prepared, y)
+        session.add(prepared)
+        session.flush()
+        return _dataset_to_response(prepared)

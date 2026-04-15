@@ -130,6 +130,8 @@ class Dataset(Base, TimestampMixin):
             "additional_metadata": self.additional_metadata,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "source_dataset_id": str(self.source_dataset_id) if self.source_dataset_id else None,
+            "encoding_config": self.encoding_config,
         }
 
 
