@@ -5,6 +5,7 @@ import {
   type ExperimentListItem,
 } from "../api/client";
 import { DatasetSetupModal } from "./DatasetSetupModal";
+import { ExperimentCreateModal } from "./ExperimentCreateModal";
 
 type ExperimentListProps = {
   onSelectGenome: (genomeId: string, experimentId: string, experimentName: string) => void;
@@ -17,6 +18,7 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
   const [total, setTotal] = useState(0);
   const [loadingExperiment, setLoadingExperiment] = useState<string | null>(null);
   const [setupExperiment, setSetupExperiment] = useState<ExperimentListItem | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
 
   const loadExperiments = useCallback(async () => {
     try {
@@ -77,7 +79,24 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
   return (
     <div className="experiment-list-container">
       <header className="experiment-list-header">
-        <h1>ExplaNEAT Explorer</h1>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h1>Experiments</h1>
+          <button
+            onClick={() => setShowCreate(true)}
+            style={{
+              padding: "8px 16px",
+              background: "#2563eb",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontWeight: 600,
+              fontSize: "13px",
+            }}
+          >
+            + New Experiment
+          </button>
+        </div>
         <p className="hint">
           {total} experiment{total !== 1 ? "s" : ""} available
         </p>
@@ -164,6 +183,16 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
           datasetNameHint={setupExperiment.dataset_name}
           onComplete={handleSetupComplete}
           onClose={() => setSetupExperiment(null)}
+        />
+      )}
+
+      {showCreate && (
+        <ExperimentCreateModal
+          onComplete={() => {
+            setShowCreate(false);
+            loadExperiments();
+          }}
+          onClose={() => setShowCreate(false)}
         />
       )}
     </div>

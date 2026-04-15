@@ -6,9 +6,11 @@ type VizCanvasProps = {
   vizType: string;
   data: Record<string, unknown>;
   onSvgRef?: (svg: SVGSVGElement | null) => void;
+  correctness?: boolean[];
+  classNames?: string[];
 };
 
-export function VizCanvas({ vizType, data, onSvgRef }: VizCanvasProps) {
+export function VizCanvas({ vizType, data, onSvgRef, correctness, classNames }: VizCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
 
@@ -22,18 +24,18 @@ export function VizCanvas({ vizType, data, onSvgRef }: VizCanvasProps) {
 
     try {
       if (vizType === "line") {
-        plot = renderLinePlot(data);
+        plot = renderLinePlot(data, correctness);
       } else if (vizType === "heatmap") {
-        plot = renderHeatmap(data);
+        plot = renderHeatmap(data, correctness);
       } else if (vizType === "partial_dependence") {
         const pdType = (data as Record<string, unknown>).type;
         if (pdType === "1d") {
-          plot = renderLinePlot(data);
+          plot = renderLinePlot(data, correctness);
         } else {
-          plot = renderHeatmap(data);
+          plot = renderHeatmap(data, correctness);
         }
       } else if (vizType === "pca_scatter") {
-        plot = renderPCAScatter(data);
+        plot = renderPCAScatter(data, correctness);
       } else if (vizType === "sensitivity") {
         plot = renderSensitivity(data);
       } else if (vizType === "histogram") {
@@ -45,7 +47,7 @@ export function VizCanvas({ vizType, data, onSvgRef }: VizCanvasProps) {
       } else if (vizType === "ice") {
         plot = renderICEPlot(data);
       } else if (vizType === "feature_output_scatter") {
-        plot = renderFeatureOutputScatter(data);
+        plot = renderFeatureOutputScatter(data, correctness);
       } else if (vizType === "output_distribution") {
         plot = renderHistogram(data);
       }
@@ -65,12 +67,12 @@ export function VizCanvas({ vizType, data, onSvgRef }: VizCanvasProps) {
       svgRef.current = svg as SVGSVGElement | null;
       if (onSvgRef) onSvgRef(svgRef.current);
     }
-  }, [vizType, data, onSvgRef]);
+  }, [vizType, data, onSvgRef, correctness, classNames]);
 
   return <div className="viz-canvas" ref={containerRef} />;
 }
 
-function renderLinePlot(data: Record<string, unknown>): SVGSVGElement | HTMLElement {
+function renderLinePlot(data: Record<string, unknown>, correctness?: boolean[]): SVGSVGElement | HTMLElement {
   const gridX = data.grid_x as number[];
   const gridY = data.grid_y as number[];
   const scatterX = data.scatter_x as number[] | undefined;
@@ -79,8 +81,13 @@ function renderLinePlot(data: Record<string, unknown>): SVGSVGElement | HTMLElem
   const yLabel = (data.y_label as string) || "y";
 
   const lineData = gridX.map((x, i) => ({ x, y: gridY[i] }));
+  const hasCorrectness = correctness && scatterX && correctness.length === scatterX.length;
   const scatterData = scatterX
-    ? scatterX.map((x, i) => ({ x, y: scatterY![i] }))
+    ? scatterX.map((x, i) => ({
+        x,
+        y: scatterY![i],
+        ...(hasCorrectness ? { result: correctness![i] ? "Correct" : "Incorrect" } : {}),
+      }))
     : [];
 
   return Plot.plot({
@@ -88,6 +95,9 @@ function renderLinePlot(data: Record<string, unknown>): SVGSVGElement | HTMLElem
     height: 350,
     x: { label: xLabel },
     y: { label: yLabel },
+    ...(hasCorrectness
+      ? { color: { domain: ["Correct", "Incorrect"], range: ["#22c55e", "#ef4444"], legend: true } }
+      : {}),
     marks: [
       Plot.line(lineData, { x: "x", y: "y", stroke: "#2563eb", strokeWidth: 2 }),
       ...(scatterData.length > 0
@@ -95,7 +105,7 @@ function renderLinePlot(data: Record<string, unknown>): SVGSVGElement | HTMLElem
             Plot.dot(scatterData, {
               x: "x",
               y: "y",
-              fill: "#f97316",
+              fill: hasCorrectness ? "result" : "#f97316",
               fillOpacity: 0.5,
               r: 3,
             }),
@@ -105,7 +115,7 @@ function renderLinePlot(data: Record<string, unknown>): SVGSVGElement | HTMLElem
   });
 }
 
-function renderHeatmap(data: Record<string, unknown>): SVGSVGElement | HTMLElement {
+function renderHeatmap(data: Record<string, unknown>, correctness?: boolean[]): SVGSVGElement | HTMLElement {
   const xRange = data.x_range as number[];
   const yRange = data.y_range as number[];
   const zGrid = data.z_grid as number[][];
@@ -123,12 +133,14 @@ function renderHeatmap(data: Record<string, unknown>): SVGSVGElement | HTMLEleme
   // Scatter overlay
   const scatterX = data.scatter_x as number[] | undefined;
   const scatterY = data.scatter_y as number[] | undefined;
+  const hasCorrectness = correctness && scatterX && correctness.length === scatterX.length;
   const scatterData = scatterX
-    ? scatterX.map((x, i) => ({ x, y: scatterY![i] }))
+    ? scatterX.map((x, i) => ({
+        x,
+        y: scatterY![i],
+        ...(hasCorrectness ? { result: correctness![i] ? "Correct" : "Incorrect" } : {}),
+      }))
     : [];
-
-  const dx = xRange.length > 1 ? xRange[1] - xRange[0] : 1;
-  const dy = yRange.length > 1 ? yRange[1] - yRange[0] : 1;
 
   return Plot.plot({
     width: 500,
@@ -148,9 +160,11 @@ function renderHeatmap(data: Record<string, unknown>): SVGSVGElement | HTMLEleme
             Plot.dot(scatterData, {
               x: "x",
               y: "y",
-              stroke: "white",
-              strokeWidth: 1,
-              fill: "black",
+              stroke: hasCorrectness ? undefined : "white",
+              strokeWidth: hasCorrectness ? undefined : 1,
+              fill: hasCorrectness
+                ? (d: { result: string }) => d.result === "Correct" ? "#22c55e" : "#ef4444"
+                : "black",
               r: 2,
             }),
           ]
@@ -159,30 +173,35 @@ function renderHeatmap(data: Record<string, unknown>): SVGSVGElement | HTMLEleme
   });
 }
 
-function renderPCAScatter(data: Record<string, unknown>): SVGSVGElement | HTMLElement {
+function renderPCAScatter(data: Record<string, unknown>, correctness?: boolean[]): SVGSVGElement | HTMLElement {
   const pcaX = data.pca_x as number[];
   const pcaY = data.pca_y as number[];
   const colorValues = data.color_values as number[];
   const colorLabel = (data.color_label as string) || "output";
   const explained = data.explained_variance as number[];
 
+  const hasCorrectness = correctness && correctness.length === pcaX.length;
+
   const points = pcaX.map((x, i) => ({
     x,
     y: pcaY[i],
     color: colorValues[i],
+    ...(hasCorrectness ? { result: correctness![i] ? "Correct" : "Incorrect" } : {}),
   }));
 
   return Plot.plot({
     width: 500,
     height: 400,
-    color: { scheme: "Viridis", legend: true, label: colorLabel },
+    color: hasCorrectness
+      ? { domain: ["Correct", "Incorrect"], range: ["#22c55e", "#ef4444"], legend: true }
+      : { scheme: "Viridis", legend: true, label: colorLabel },
     x: { label: `PC1 (${(explained[0] * 100).toFixed(1)}%)` },
     y: { label: `PC2 (${((explained[1] || 0) * 100).toFixed(1)}%)` },
     marks: [
       Plot.dot(points, {
         x: "x",
         y: "y",
-        fill: "color",
+        fill: hasCorrectness ? "result" : "color",
         r: 3,
         fillOpacity: 0.7,
       }),
@@ -321,7 +340,7 @@ function renderICEPlot(data: Record<string, unknown>): SVGSVGElement | HTMLEleme
   });
 }
 
-function renderFeatureOutputScatter(data: Record<string, unknown>): SVGSVGElement | HTMLElement {
+function renderFeatureOutputScatter(data: Record<string, unknown>, correctness?: boolean[]): SVGSVGElement | HTMLElement {
   const scatterX = data.scatter_x as number[];
   const scatterY = data.scatter_y as number[];
   const pdX = data.pd_x as number[];
@@ -329,7 +348,12 @@ function renderFeatureOutputScatter(data: Record<string, unknown>): SVGSVGElemen
   const xLabel = (data.x_label as string) || "x";
   const yLabel = (data.y_label as string) || "y";
 
-  const scatterData = scatterX.map((x, i) => ({ x, y: scatterY[i] }));
+  const hasCorrectness = correctness && correctness.length === scatterX.length;
+  const scatterData = scatterX.map((x, i) => ({
+    x,
+    y: scatterY[i],
+    ...(hasCorrectness ? { result: correctness![i] ? "Correct" : "Incorrect" } : {}),
+  }));
   const pdData = pdX.map((x, i) => ({ x, y: pdY[i] }));
 
   return Plot.plot({
@@ -337,11 +361,14 @@ function renderFeatureOutputScatter(data: Record<string, unknown>): SVGSVGElemen
     height: 350,
     x: { label: xLabel },
     y: { label: yLabel },
+    ...(hasCorrectness
+      ? { color: { domain: ["Correct", "Incorrect"], range: ["#22c55e", "#ef4444"], legend: true } }
+      : {}),
     marks: [
       Plot.dot(scatterData, {
         x: "x",
         y: "y",
-        fill: "#f97316",
+        fill: hasCorrectness ? "result" : "#f97316",
         fillOpacity: 0.5,
         r: 3,
       }),

@@ -117,15 +117,17 @@ class DatabaseReporter:
         logger.info("NEAT experiment completed")
 
 
-def prepare_backache_data(random_state=42):
-    """Load and prepare the backache dataset from PMLB
-    
+def prepare_backache_data(random_state=42, val_size=0.15):
+    """Load and prepare the backache dataset from PMLB with train/val/test split.
+
     Args:
-        random_state: Random seed for train/test split
-        
+        random_state: Random seed for splits
+        val_size: Fraction of total data for validation (0 to skip validation split)
+
     Returns:
-        Tuple of (X, y, X_train, X_test, y_train, y_test, train_indices, test_indices, scaler)
-        where X, y are the original full dataset
+        Tuple of (X, y, X_train, X_val, X_test, y_train, y_val, y_test,
+                  train_indices, val_indices, test_indices, scaler)
+        where X, y are the original full dataset. val arrays are None if val_size=0.
     """
     logger.info("📊 Loading backache dataset from PMLB...")
 
@@ -133,32 +135,46 @@ def prepare_backache_data(random_state=42):
     logger.info(f"Dataset shape: X={X.shape}, y={y.shape}")
     logger.info(f"Class distribution: {np.bincount(y)}")
 
-    # Get indices before split for exact reproducibility
-    # Create array of indices
     indices = np.arange(len(X))
-    
-    # Split with indices for reproducibility
-    train_indices, test_indices = train_test_split(
+
+    # First split: 80% trainval, 20% test
+    trainval_indices, test_indices = train_test_split(
         indices, test_size=0.2, random_state=random_state, stratify=y
     )
-    
+
+    # Second split: from trainval, split off validation
+    val_indices = None
+    if val_size > 0:
+        relative_val = val_size / (1 - 0.2)  # fraction of trainval
+        train_indices, val_indices = train_test_split(
+            trainval_indices, test_size=relative_val,
+            random_state=random_state, stratify=y[trainval_indices]
+        )
+        val_indices = val_indices.tolist()
+    else:
+        train_indices = trainval_indices
+
     # Convert to lists for JSON serialization
     train_indices = train_indices.tolist()
     test_indices = test_indices.tolist()
-    
-    # Now split the actual data using the indices
-    X_train = X[train_indices]
-    X_test = X[test_indices]
+
+    # Fit scaler on train only
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X[train_indices])
+    X_test = scaler.transform(X[test_indices])
     y_train = y[train_indices]
     y_test = y[test_indices]
 
-    scaler = StandardScaler()
-    X_train = scaler.fit_transform(X_train)
-    X_test = scaler.transform(X_test)
+    if val_indices is not None:
+        X_val = scaler.transform(X[val_indices])
+        y_val = y[val_indices]
+        logger.info(f"Train: {X_train.shape}, Val: {X_val.shape}, Test: {X_test.shape}")
+    else:
+        X_val = None
+        y_val = None
+        logger.info(f"Train: {X_train.shape}, Test: {X_test.shape}")
 
-    logger.info(f"Train: {X_train.shape}, Test: {X_test.shape}")
-
-    return X, y, X_train, X_test, y_train, y_test, train_indices, test_indices, scaler
+    return X, y, X_train, X_val, X_test, y_train, y_val, y_test, train_indices, val_indices, test_indices, scaler
 
 
 def create_backache_config(num_inputs):
@@ -448,10 +464,10 @@ def print_experiment_summary(experiment_id, best_genome):
         print(f"   Best Fitness: {best_genome.fitness:.4f}")
 
 
-def instantiate_population(config, xs, ys):
+def instantiate_population(config, xs, ys, xs_val=None, ys_val=None):
     """Instantiate BackpropPopulation following ExplaNEAT pattern"""
     # Create the population using BackpropPopulation
-    p = BackpropPopulation(config, xs, ys, criterion=torch.nn.BCELoss())
+    p = BackpropPopulation(config, xs, ys, xs_val=xs_val, ys_val=ys_val, criterion=torch.nn.BCELoss())
 
     # Add reporters
     p.add_reporter(neat.StdOutReporter(True))
@@ -478,8 +494,8 @@ def run_working_backache_experiment(num_generations=10, compact=True):
     # Set random seed for reproducibility
     random_seed = 42
 
-    # Prepare data (now returns full dataset and indices)
-    X, y, X_train, X_test, y_train, y_test, train_indices, test_indices, scaler = prepare_backache_data(random_state=random_seed)
+    # Prepare data with train/val/test split
+    X, y, X_train, X_val, X_test, y_train, y_val, y_test, train_indices, val_indices, test_indices, scaler = prepare_backache_data(random_state=random_seed)
 
     # Save dataset to database
     logger.info("💾 Saving dataset to database...")
@@ -544,18 +560,19 @@ def run_working_backache_experiment(num_generations=10, compact=True):
         experiment_id=str(experiment_id),
         train_indices=train_indices,
         test_indices=test_indices,
-        split_type="train_test",
+        split_type="train_val_test" if val_indices else "train_test",
         test_size=0.2,
         random_state=random_seed,
         shuffle=True,
         stratify=True,
         scaler=scaler,
         preprocessing_steps=[{"step": "StandardScaler", "fit_on": "train"}],
+        validation_indices=val_indices,
     )
     logger.info("Dataset split saved successfully")
 
-    # Instantiate population using ExplaNEAT pattern
-    population = instantiate_population(config, X_train, y_train)
+    # Instantiate population using ExplaNEAT pattern (with validation data for early stopping)
+    population = instantiate_population(config, X_train, y_train, xs_val=X_val, ys_val=y_val)
 
     # Create ancestry reporter for parent tracking
     ancestry_reporter = AncestryReporter()
@@ -586,10 +603,12 @@ def run_working_backache_experiment(num_generations=10, compact=True):
 
     try:
         # Run the evolution using BackpropPopulation's run method with AUC fitness
+        # patience=10: stop if validation fitness doesn't improve for 10 generations
         best_genome = population.run(
             fitness_function=auc_fitness,
             n=100,
             nEpochs=5,  # Number of backprop epochs per generation
+            patience=10 if X_val is not None else None,
         )
 
         # Mark experiment as completed
@@ -600,6 +619,9 @@ def run_working_backache_experiment(num_generations=10, compact=True):
 
         logger.info("✅ Evolution completed!")
         logger.info(f"🏆 Best fitness (Train AUC): {best_genome.fitness:.4f}")
+        val_fitness = getattr(best_genome, 'validation_fitness', None)
+        if val_fitness is not None:
+            logger.info(f"🎯 Best validation AUC: {val_fitness:.4f}")
 
         # Print comprehensive experiment summary
         print_experiment_summary(experiment_id, best_genome)

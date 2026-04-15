@@ -8,9 +8,11 @@ import {
   type ExperimentSplitResponse,
 } from "../api/client";
 
+type SplitChoice = "train" | "test" | "val" | "both";
+
 type DatasetSelectorProps = {
   experimentId: string;
-  onSplitSelected: (splitId: string, splitChoice: "train" | "test" | "both") => void;
+  onSplitSelected: (splitId: string, splitChoice: SplitChoice) => void;
   onSampleFractionChange: (fraction: number) => void;
   sampleFraction: number;
 };
@@ -25,7 +27,7 @@ export function DatasetSelector({
   const [splits, setSplits] = useState<SplitResponse[]>([]);
   const [selectedDatasetId, setSelectedDatasetId] = useState<string | null>(null);
   const [selectedSplitId, setSelectedSplitId] = useState<string | null>(null);
-  const [splitChoice, setSplitChoice] = useState<"train" | "test" | "both">("both");
+  const [splitChoice, setSplitChoice] = useState<SplitChoice>("both");
   const [loading, setLoading] = useState(false);
 
   // Auto-selection state
@@ -95,7 +97,7 @@ export function DatasetSelector({
   );
 
   const handleSplitChoiceChange = useCallback(
-    (choice: "train" | "test" | "both") => {
+    (choice: SplitChoice) => {
       setSplitChoice(choice);
       if (selectedSplitId) onSplitSelected(selectedSplitId, choice);
     },
@@ -106,6 +108,11 @@ export function DatasetSelector({
     return <div className="dataset-selector"><span className="hint">Loading dataset...</span></div>;
   }
 
+  // Build split options based on whether validation data exists
+  const splitOptions: SplitChoice[] = autoSplit?.validation_size
+    ? ["train", "val", "test", "both"]
+    : ["train", "test", "both"];
+
   // Auto-selected: show compact summary with option to switch
   if (autoSplit && !showManual) {
     return (
@@ -113,14 +120,16 @@ export function DatasetSelector({
         <div className="selector-row">
           <label className="selector-label">Dataset</label>
           <span className="dataset-auto-badge">
-            {autoSplit.dataset_name} ({autoSplit.train_size}+{autoSplit.test_size_actual} samples)
+            {autoSplit.dataset_name} ({autoSplit.train_size}
+            {autoSplit.validation_size ? `+${autoSplit.validation_size}` : ""}
+            +{autoSplit.test_size_actual} samples)
           </span>
         </div>
 
         <div className="selector-row">
           <label className="selector-label">Data</label>
           <div className="radio-group">
-            {(["train", "test", "both"] as const).map((choice) => (
+            {splitOptions.map((choice) => (
               <label key={choice} className="radio-label">
                 <input
                   type="radio"
@@ -210,7 +219,7 @@ export function DatasetSelector({
           <div className="selector-row">
             <label className="selector-label">Data</label>
             <div className="radio-group">
-              {(["train", "test", "both"] as const).map((choice) => (
+              {splitOptions.map((choice) => (
                 <label key={choice} className="radio-label">
                   <input
                     type="radio"

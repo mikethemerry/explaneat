@@ -25,9 +25,30 @@ from .operations import (
     apply_add_node,
     apply_add_identity_node,
     apply_rename_node,
+    apply_prune_node,
+    apply_prune_connection,
+    apply_retrain,
     validate_operation,
+    is_identity_op,
     OperationError,
 )
+
+
+def _parse_weight_updates(raw: dict) -> Dict[Tuple[str, str], float]:
+    """Convert weight_updates from JSON-friendly format to tuple-keyed dict.
+
+    JSON keys may be "from_node,to_node" strings or [from, to] lists.
+    """
+    result = {}
+    for k, v in raw.items():
+        if isinstance(k, str) and "," in k:
+            parts = k.split(",", 1)
+            result[(parts[0], parts[1])] = v
+        elif isinstance(k, (list, tuple)) and len(k) == 2:
+            result[(k[0], k[1])] = v
+        else:
+            result[k] = v
+    return result
 
 
 @dataclass
@@ -144,6 +165,139 @@ class ModelStateEngine:
         if not self._state_valid:
             self._replay_operations()
         return list(self._annotations)
+
+    @property
+    def has_non_identity_ops(self) -> bool:
+        """Check if any operation in the stream is non-identity (changes function)."""
+        return any(not is_identity_op(op.type) for op in self._operations)
+
+    @property
+    def last_identity_seq(self) -> Optional[int]:
+        """Get the seq of the last identity op before the first non-identity op.
+
+        Returns None if there are no non-identity ops, or if the first op
+        is non-identity (no preceding identity ops).
+        """
+        first_non_identity_seq = None
+        for op in self._operations:
+            if not is_identity_op(op.type):
+                first_non_identity_seq = op.seq
+                break
+
+        if first_non_identity_seq is None:
+            return None  # No non-identity ops
+
+        if first_non_identity_seq == 0:
+            return None  # First op is non-identity, no preceding identity ops
+
+        return first_non_identity_seq - 1
+
+    def get_state_at_seq(self, seq: int) -> NetworkStructure:
+        """Replay operations only up to seq and return the intermediate state.
+
+        Args:
+            seq: Sequence number (inclusive) — operations 0..seq are applied.
+
+        Returns:
+            NetworkStructure at that point in the operation history.
+        """
+        state = deepcopy(self._original_phenotype)
+
+        # Temporarily build state by replaying up to seq
+        temp_annotations: List[AnnotationData] = []
+        temp_covered_nodes: Set[str] = set()
+        temp_covered_connections: Set[Tuple[str, str]] = set()
+
+        for op in self._operations:
+            if op.seq > seq:
+                break
+            # We need a temporary engine-like context to apply ops
+            # Use the internal method with temp state
+            self._apply_op_to_state(
+                op, state, temp_annotations,
+                temp_covered_nodes, temp_covered_connections,
+            )
+
+        return state
+
+    def _apply_op_to_state(
+        self,
+        op: "Operation",
+        state: NetworkStructure,
+        annotations: List[AnnotationData],
+        covered_nodes: Set[str],
+        covered_connections: Set[Tuple[str, str]],
+    ) -> None:
+        """Apply a single operation to an arbitrary state (for get_state_at_seq)."""
+        if op.type == "split_node":
+            apply_split_node(state, op.params["node_id"], covered_nodes)
+        elif op.type == "consolidate_node":
+            apply_consolidate_node(state, op.params["node_ids"], covered_nodes)
+        elif op.type == "remove_node":
+            apply_remove_node(state, op.params["node_id"], covered_nodes)
+        elif op.type == "add_node":
+            from .operations import apply_add_node as _apply_add_node
+            _apply_add_node(
+                state, tuple(op.params["connection"]), op.params["new_node_id"],
+                covered_connections,
+                bias=op.params.get("bias", 0.0),
+                activation=op.params.get("activation", "identity"),
+            )
+        elif op.type == "add_identity_node":
+            from .operations import apply_add_identity_node as _apply_identity
+            connections = [tuple(c) for c in op.params["connections"]]
+            _apply_identity(
+                state, op.params["target_node"], connections,
+                op.params["new_node_id"], covered_connections,
+            )
+        elif op.type == "annotate":
+            ann = AnnotationData(
+                name=op.params["name"],
+                hypothesis=op.params.get("hypothesis", ""),
+                entry_nodes=op.params["entry_nodes"],
+                exit_nodes=op.params["exit_nodes"],
+                subgraph_nodes=op.params["subgraph_nodes"],
+                subgraph_connections=[tuple(c) for c in op.params.get("subgraph_connections", [])],
+                evidence=op.params.get("evidence"),
+            )
+            annotations.append(ann)
+            covered_nodes.update(ann.subgraph_nodes)
+            covered_connections.update(ann.subgraph_connections)
+        elif op.type == "disable_connection":
+            from .operations import apply_disable_connection
+            apply_disable_connection(
+                state, op.params["from_node"], op.params["to_node"],
+                covered_connections,
+            )
+        elif op.type == "enable_connection":
+            from .operations import apply_enable_connection
+            apply_enable_connection(
+                state, op.params["from_node"], op.params["to_node"],
+                covered_connections,
+            )
+        elif op.type == "rename_node":
+            apply_rename_node(
+                state, op.params["node_id"],
+                op.params.get("display_name"), covered_nodes,
+            )
+        elif op.type == "rename_annotation":
+            ann_id = op.params["annotation_id"]
+            display_name = op.params.get("display_name")
+            for ann in annotations:
+                if ann.name == ann_id:
+                    ann.display_name = display_name
+                    break
+        elif op.type == "prune_node":
+            apply_prune_node(state, op.params["node_id"], covered_nodes)
+        elif op.type == "prune_connection":
+            apply_prune_connection(
+                state, op.params["from_node"], op.params["to_node"],
+                covered_connections,
+            )
+        elif op.type == "retrain":
+            weight_updates = _parse_weight_updates(op.params.get("weight_updates", {}))
+            bias_updates = op.params.get("bias_updates", {})
+            apply_retrain(state, weight_updates, bias_updates)
 
     def _replay_operations(self) -> None:
         """Replay all operations from the original phenotype."""
@@ -275,6 +429,33 @@ class ModelStateEngine:
             else:
                 raise OperationError(f"Annotation '{annotation_id}' not found")
             op.result = {"annotation_id": annotation_id, "display_name": display_name}
+
+        elif op.type == "prune_node":
+            result = apply_prune_node(
+                self._current_state,
+                op.params["node_id"],
+                self._covered_nodes,
+            )
+            op.result = result
+
+        elif op.type == "prune_connection":
+            result = apply_prune_connection(
+                self._current_state,
+                op.params["from_node"],
+                op.params["to_node"],
+                self._covered_connections,
+            )
+            op.result = result
+
+        elif op.type == "retrain":
+            weight_updates = _parse_weight_updates(op.params.get("weight_updates", {}))
+            bias_updates = op.params.get("bias_updates", {})
+            result = apply_retrain(
+                self._current_state,
+                weight_updates,
+                bias_updates,
+            )
+            op.result = result
 
         else:
             raise OperationError(f"Unknown operation type: {op.type}")

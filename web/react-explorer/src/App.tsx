@@ -1,36 +1,43 @@
 import { useState } from "react";
 import { ExperimentList } from "./components/ExperimentList";
 import { GenomeExplorer } from "./components/GenomeExplorer";
+import { NavBar } from "./components/NavBar";
+import { DatasetList } from "./components/DatasetList";
 
-type Selection = {
-  genomeId: string;
-  experimentId: string;
-  experimentName: string;
-};
+type View =
+  | { type: "experiments" }
+  | { type: "datasets" }
+  | { type: "genome"; genomeId: string; experimentId: string; experimentName: string };
 
 export default function App() {
-  const [selection, setSelection] = useState<Selection | null>(null);
+  const [view, setView] = useState<View>({ type: "experiments" });
 
-  if (selection) {
+  if (view.type === "genome") {
     return (
       <GenomeExplorer
-        genomeId={selection.genomeId}
-        experimentId={selection.experimentId}
-        experimentName={selection.experimentName}
-        onBack={() => setSelection(null)}
+        genomeId={view.genomeId}
+        experimentId={view.experimentId}
+        experimentName={view.experimentName}
+        onBack={() => setView({ type: "experiments" })}
       />
     );
   }
 
   return (
-    <ExperimentList
-      onSelectGenome={(genomeId, experimentId, experimentName) =>
-        setSelection({ genomeId, experimentId, experimentName })
-      }
-    />
+    <>
+      <NavBar
+        activeTab={view.type}
+        onTabChange={(tab) => setView({ type: tab })}
+      />
+      {view.type === "experiments" ? (
+        <ExperimentList
+          onSelectGenome={(genomeId, experimentId, experimentName) =>
+            setView({ type: "genome", genomeId, experimentId, experimentName })
+          }
+        />
+      ) : (
+        <DatasetList />
+      )}
+    </>
   );
 }
-
-
-
-

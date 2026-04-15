@@ -43,6 +43,7 @@ type OperationsPanelProps = {
   selectedNodes: Set<string>;
   model: ModelState;
   annotations: AnnotationSummary[];
+  selectedAnnotationId?: string | null;
   onOperationChange: () => void;
 };
 
@@ -162,8 +163,8 @@ type WizardState =
  */
 type SelectionContext =
   | { type: "empty" }
-  | { type: "single"; nodeId: string; canSplit: boolean }
-  | { type: "connectedPair"; fromNode: string; toNode: string; weight: number; actualConnections?: { from: string; to: string; weight: number }[] }
+  | { type: "single"; nodeId: string; canSplit: boolean; canPrune: boolean; enabledInputs: number; enabledOutputs: number }
+  | { type: "connectedPair"; fromNode: string; toNode: string; weight: number; actualConnections?: { from: string; to: string; weight: number; enabled: boolean }[] }
   | { type: "joinable"; nodeIds: string[]; baseNodeId: string }
   | { type: "subgraph"; analysis: SelectionAnalysis }
   | { type: "invalid"; reason: string };
@@ -510,7 +511,11 @@ function analyzeSelectionContext(
     // Can split if it's a hidden or input node (not output)
     const node = model.nodes.find((n) => n.id === nodeId);
     const canSplit = node?.type === "hidden" || node?.type === "input";
-    return { type: "single", nodeId, canSplit };
+    // Can prune if it's a hidden node with exactly 1 enabled input and 1 enabled output
+    const enabledInputs = model.connections.filter(c => c.enabled && c.to === nodeId).length;
+    const enabledOutputs = model.connections.filter(c => c.enabled && c.from === nodeId).length;
+    const canPrune = node?.type === "hidden" && enabledInputs === 1 && enabledOutputs === 1;
+    return { type: "single", nodeId, canSplit, canPrune, enabledInputs, enabledOutputs };
   }
 
   // Check if exactly 2 nodes with a direct connection between them
@@ -542,28 +547,28 @@ function analyzeSelectionContext(
     const sourcesB = getSourceNodes(nodeB);
     const targetsB = getTargetNodes(nodeB);
 
-    // Check for connection A -> B (A's exits to B's entries)
-    const connsAB: { from: string; to: string; weight: number }[] = [];
+    // Check for connection A -> B (A's exits to B's entries) — include disabled
+    const connsAB: { from: string; to: string; weight: number; enabled: boolean }[] = [];
     for (const srcA of sourcesA) {
       for (const tgtB of targetsB) {
         const conn = model.connections.find(
-          c => c.enabled && c.from === srcA && c.to === tgtB
+          c => c.from === srcA && c.to === tgtB
         );
         if (conn) {
-          connsAB.push({ from: srcA, to: tgtB, weight: conn.weight });
+          connsAB.push({ from: srcA, to: tgtB, weight: conn.weight, enabled: conn.enabled });
         }
       }
     }
 
-    // Check for connection B -> A (B's exits to A's entries)
-    const connsBA: { from: string; to: string; weight: number }[] = [];
+    // Check for connection B -> A (B's exits to A's entries) — include disabled
+    const connsBA: { from: string; to: string; weight: number; enabled: boolean }[] = [];
     for (const srcB of sourcesB) {
       for (const tgtA of targetsA) {
         const conn = model.connections.find(
-          c => c.enabled && c.from === srcB && c.to === tgtA
+          c => c.from === srcB && c.to === tgtA
         );
         if (conn) {
-          connsBA.push({ from: srcB, to: tgtA, weight: conn.weight });
+          connsBA.push({ from: srcB, to: tgtA, weight: conn.weight, enabled: conn.enabled });
         }
       }
     }
@@ -1467,6 +1472,7 @@ export function OperationsPanel({
   selectedNodes,
   model,
   annotations,
+  selectedAnnotationId,
   onOperationChange,
 }: OperationsPanelProps) {
   const [collapsed, setCollapsed] = useState(false);
@@ -1474,6 +1480,7 @@ export function OperationsPanel({
   const [error, setError] = useState<string | null>(null);
   const [annotationName, setAnnotationName] = useState("");
   const [renameInput, setRenameInput] = useState("");
+  const [annotationRenameInput, setAnnotationRenameInput] = useState("");
   const [operationNotes, setOperationNotes] = useState("");
   const [featureNames, setFeatureNames] = useState<string[] | null>(null);
   const [featureTypes, setFeatureTypes] = useState<Record<string, string> | null>(null);
@@ -1902,6 +1909,78 @@ export function OperationsPanel({
       {collapsed ? null : <>
       {error && <div className="error-message">{error}</div>}
 
+      {/* Annotation Rename Section */}
+      {selectedAnnotationId && (() => {
+        const ann = annotations.find(a => a.id === selectedAnnotationId);
+        if (!ann) return null;
+        const currentDisplayName = ann.display_name;
+        const annRenameValid = annotationRenameInput.length > 0 && !annotationRenameInput.includes(" ");
+        return (
+          <section className="panel-section">
+            <h4>Rename Annotation: {ann.display_name || ann.name || ann.id.slice(0, 8)}</h4>
+            <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+              <input
+                type="text"
+                value={annotationRenameInput}
+                onChange={(e) => setAnnotationRenameInput(e.target.value)}
+                placeholder={currentDisplayName || ann.name || "Display name"}
+                style={{
+                  flex: 1,
+                  padding: "4px 8px",
+                  borderRadius: "4px",
+                  border: "1px solid #555",
+                  background: "#2a2a2a",
+                  color: "#fff",
+                  fontSize: "12px",
+                }}
+                onKeyDown={async (e) => {
+                  if (e.key === "Enter" && annRenameValid) {
+                    const ok = await handleAddOperation({
+                      type: "rename_annotation",
+                      params: { annotation_id: ann.name || ann.id, display_name: annotationRenameInput },
+                    });
+                    if (ok) { setAnnotationRenameInput(""); }
+                  }
+                }}
+              />
+              <button
+                className="op-btn primary"
+                disabled={loading || !annRenameValid}
+                onClick={async () => {
+                  const ok = await handleAddOperation({
+                    type: "rename_annotation",
+                    params: { annotation_id: ann.name || ann.id, display_name: annotationRenameInput },
+                  });
+                  if (ok) { setAnnotationRenameInput(""); }
+                }}
+                style={{ whiteSpace: "nowrap" }}
+              >
+                Rename
+              </button>
+            </div>
+            {currentDisplayName && (
+              <button
+                className="op-btn"
+                style={{ marginTop: "4px", fontSize: "11px" }}
+                disabled={loading}
+                onClick={async () => {
+                  const ok = await handleAddOperation({
+                    type: "rename_annotation",
+                    params: { annotation_id: ann.name || ann.id, display_name: null },
+                  });
+                  if (ok) { setAnnotationRenameInput(""); }
+                }}
+              >
+                Clear name ({currentDisplayName})
+              </button>
+            )}
+            {annotationRenameInput.includes(" ") && (
+              <p className="hint" style={{ color: "#f87171" }}>Name cannot contain spaces</p>
+            )}
+          </section>
+        );
+      })()}
+
       {/* Wizard Modal/Overlay */}
       {wizard.step !== "idle" && (
         <div className="wizard-overlay">
@@ -2114,6 +2193,22 @@ export function OperationsPanel({
               >
                 Split Node
               </button>
+              <button
+                className="op-btn"
+                style={{ background: "#7f1d1d" }}
+                onClick={async () => {
+                  await handleAddOperation({
+                    type: "prune_node",
+                    params: { node_id: nodeId },
+                  });
+                }}
+                disabled={loading || !selectionContext.canPrune}
+                title={selectionContext.canPrune
+                  ? "Bypass this node: connect its input directly to its output (non-identity)"
+                  : `Requires exactly 1 input and 1 output (has ${selectionContext.enabledInputs} in, ${selectionContext.enabledOutputs} out)`}
+              >
+                Prune Node
+              </button>
             </div>
             {!selectionContext.canSplit && (
               <p className="hint">Output nodes cannot be split</p>
@@ -2200,47 +2295,101 @@ export function OperationsPanel({
         );
       })()}
 
-      {selectionContext.type === "connectedPair" && (
-        <section className="panel-section">
-          <h4>Connection Operations</h4>
-          <div className="connection-info">
-            <span className="connection-display">
-              {selectionContext.fromNode} → {selectionContext.toNode}
-            </span>
-            {selectionContext.actualConnections && selectionContext.actualConnections.length > 0 && (
+      {selectionContext.type === "connectedPair" && (() => {
+        const conns = selectionContext.actualConnections ?? [
+          { from: selectionContext.fromNode, to: selectionContext.toNode, weight: selectionContext.weight, enabled: true }
+        ];
+        const allEnabled = conns.every(c => c.enabled);
+        const allDisabled = conns.every(c => !c.enabled);
+
+        return (
+          <section className="panel-section">
+            <h4>Connection Operations</h4>
+            <div className="connection-info">
+              <span className="connection-display">
+                {selectionContext.fromNode} → {selectionContext.toNode}
+              </span>
               <ul className="actual-connections">
-                {selectionContext.actualConnections.map((conn, idx) => (
+                {conns.map((conn, idx) => (
                   <li key={idx}>
-                    {conn.from} → {conn.to} <span className="conn-weight">({conn.weight.toFixed(3)})</span>
+                    {conn.from} → {conn.to}{" "}
+                    <span className="conn-weight">({conn.weight.toFixed(3)})</span>
+                    {!conn.enabled && <span style={{ color: "#f87171", marginLeft: "4px" }}>(disabled)</span>}
                   </li>
                 ))}
               </ul>
-            )}
-            {!selectionContext.actualConnections && (
-              <span className="connection-weight">
-                weight: {selectionContext.weight.toFixed(3)}
-              </span>
-            )}
-          </div>
-          <div className="button-group">
-            <button
-              className="op-btn primary"
-              onClick={() => handleAddIdentityOnConnection(
-                selectionContext.fromNode,
-                selectionContext.toNode,
-                selectionContext.actualConnections
+            </div>
+            <div className="button-group">
+              <button
+                className="op-btn primary"
+                onClick={() => handleAddIdentityOnConnection(
+                  selectionContext.fromNode,
+                  selectionContext.toNode,
+                  selectionContext.actualConnections
+                )}
+                disabled={loading || allDisabled}
+                title={allDisabled ? "Cannot add identity on disabled connection" : "Insert an identity node on this connection"}
+              >
+                Add Identity Node
+              </button>
+              {allEnabled && (
+                <button
+                  className="op-btn"
+                  style={{ background: "#92400e" }}
+                  onClick={async () => {
+                    for (const conn of conns) {
+                      await handleAddOperation({
+                        type: "disable_connection",
+                        params: { from_node: conn.from, to_node: conn.to },
+                      });
+                    }
+                  }}
+                  disabled={loading}
+                  title="Disable this connection (non-identity, reversible)"
+                >
+                  Disable Connection
+                </button>
               )}
-              disabled={loading}
-              title="Insert an identity node on this connection"
-            >
-              Add Identity Node
-            </button>
-          </div>
-          <p className="hint">
-            Inserts an identity node between {selectionContext.fromNode} and {selectionContext.toNode}
-          </p>
-        </section>
-      )}
+              {allDisabled && (
+                <button
+                  className="op-btn"
+                  style={{ background: "#065f46" }}
+                  onClick={async () => {
+                    for (const conn of conns) {
+                      await handleAddOperation({
+                        type: "enable_connection",
+                        params: { from_node: conn.from, to_node: conn.to },
+                      });
+                    }
+                  }}
+                  disabled={loading}
+                  title="Re-enable this connection"
+                >
+                  Enable Connection
+                </button>
+              )}
+              <button
+                className="op-btn"
+                style={{ background: "#7f1d1d" }}
+                onClick={async () => {
+                  for (const conn of conns) {
+                    if (confirm(`Prune connection ${conn.from} → ${conn.to}? This permanently removes it.`)) {
+                      await handleAddOperation({
+                        type: "prune_connection",
+                        params: { from_node: conn.from, to_node: conn.to },
+                      });
+                    }
+                  }
+                }}
+                disabled={loading}
+                title="Permanently remove this connection (non-identity)"
+              >
+                Prune Connection
+              </button>
+            </div>
+          </section>
+        );
+      })()}
 
       {selectionContext.type === "joinable" && (
         <section className="panel-section">
@@ -2456,16 +2605,26 @@ export function OperationsPanel({
         </p>
       </section>
 
+      {model.metadata.has_non_identity_ops && (
+        <section className="panel-section" style={{ background: "#451a03", borderLeft: "3px solid #f59e0b", padding: "8px 12px" }}>
+          <div style={{ fontSize: "12px", color: "#fbbf24" }}>
+            Model has been modified (non-identity operations applied). The computed function has changed.
+          </div>
+        </section>
+      )}
+
       <section className="panel-section">
         <h4>Operation History ({operations.length})</h4>
         {operations.length === 0 ? (
           <p className="hint">No operations yet</p>
         ) : (
           <ul className="operation-list">
-            {operations.map((op) => (
-              <li key={op.seq} className="operation-item">
+            {operations.map((op) => {
+              const isNonIdentity = ["prune_node", "prune_connection", "disable_connection", "enable_connection", "retrain"].includes(op.type);
+              return (
+              <li key={op.seq} className="operation-item" style={isNonIdentity ? { borderLeft: "2px solid #f59e0b" } : undefined}>
                 <span className="op-seq">#{op.seq}</span>
-                <span className="op-type">{op.type}</span>
+                <span className="op-type" style={isNonIdentity ? { color: "#fbbf24" } : undefined}>{op.type}</span>
                 <span className="op-params">{formatOperationParams(op)}</span>
                 <button
                   className="op-undo"
@@ -2481,7 +2640,8 @@ export function OperationsPanel({
                   </div>
                 )}
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </section>
@@ -2513,6 +2673,12 @@ function formatOperationParams(op: Operation): string {
       return `${params.node_id} → ${params.display_name || "(clear)"}`;
     case "rename_annotation":
       return `${params.annotation_id} → ${params.display_name || "(clear)"}`;
+    case "prune_node":
+      return `node: ${params.node_id}`;
+    case "prune_connection":
+      return `${params.from_node} -> ${params.to_node}`;
+    case "retrain":
+      return `weights: ${Object.keys(params.weight_updates ?? {}).length}, biases: ${Object.keys(params.bias_updates ?? {}).length}`;
     default:
       return JSON.stringify(params).slice(0, 30);
   }

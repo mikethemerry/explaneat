@@ -1,0 +1,710 @@
+%%%% ijcai26.tex
+
+\typeout{IJCAI--ECAI 26 Instructions for Authors}
+
+% These are the instructions for authors for IJCAI--ECAI 26.
+
+\documentclass{article}
+\pdfpagewidth=8.5in
+\pdfpageheight=11in
+
+% The file ijcai26.sty is a copy from ijcai22.sty
+% The file ijcai22.sty is NOT the same as previous years'
+\usepackage{ijcai26}
+
+% Use the postscript times font!
+\usepackage{times}
+\usepackage{soul}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage[small]{caption}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{booktabs}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage[switch]{lineno}
+
+% Comment out this line in the camera-ready submission
+\linenumbers
+
+\urlstyle{same}
+
+% the following package is optional:
+%\usepackage{latexsym}
+
+% See https://www.overleaf.com/learn/latex/theorems_and_proofs
+% for a nice explanation of how to define new theorems, but keep
+% in mind that the amsthm package is already included in this
+% template and that you must *not* alter the styling.
+\newtheorem{example}{Example}
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+\newtheorem{criterion}{Criterion}
+\newtheorem{property}{Property}
+
+
+% Following comment is from ijcai97-submit.tex:
+% The preparation of these files was supported by Schlumberger Palo Alto
+% Research, AT\&T Bell Laboratories, and Morgan Kaufmann Publishers.
+% Shirley Jowell, of Morgan Kaufmann Publishers, and Peter F.
+% Patel-Schneider, of AT\&T Bell Laboratories collaborated on their
+% preparation.
+
+% These instructions can be modified and used in other conferences as long
+% as credit to the authors and supporting agencies is retained, this notice
+% is not changed, and further modification or reuse is not restricted.
+% Neither Shirley Jowell nor Peter F. Patel-Schneider can be listed as
+% contacts for providing assistance without their prior permission.
+
+% To use for other conferences, change references to files and the
+% conference appropriate and use other authors, contacts, publishers, and
+% organizations.
+% Also change the deadline and address for returning papers and the length and
+% page charge instructions.
+% Put where the files are available in the appropriate places.
+
+
+% PDF Info Is REQUIRED.
+
+% Please leave this \pdfinfo block untouched both for the submission and
+% Camera Ready Copy. Do not include Title and Author information in the pdfinfo section
+\pdfinfo{
+/TemplateVersion (IJCAI.2026.0)
+}
+
+\title{Explanation Beyond Intuition: A Testable Criterion for Inherent Explainability - Supplementary Material}
+
+
+% \author{
+% Mike Merry
+% \and
+% Pat Riddle\And
+% Jim Warren
+% \affiliations
+% School of Computer Science, University of Auckland
+% \emails
+% \textit{m.merry@auckland.ac.nz},
+% \{pat,jim\}@cs.auckland.ac.nz
+% }
+
+
+\author{
+The authors
+\affiliations
+The affiliations
+\emails
+\textit{The emails}
+}
+
+
+\begin{document}
+
+\maketitle
+
+\appendix
+
+\section{Case Study: PREDICT Cardiovascular Risk Assessment}
+\label{sec:predict-case-study}
+
+To demonstrate this approach, we present an explanation of an existing risk prediction model for cardivascular disease that is currently in use in New Zealand. We utilised LLM-based tools to accelerate the initial creation of annotations. We have manually refined the explanation, ensuring accuracy to the original papers and correct formation in the framework. We manually reviewed all claims and the validity of the explanation to the underlying model, ensuring that it meets the requirements of the criterion.
+
+\subsection{Model Description}
+
+The PREDICT cardiovascular disease risk assessment model calculates 5-year absolute risk of CVD events (fatal or non-fatal hospitalisations from ischemic heart disease, cerebrovascular events, peripheral vascular disease, or congestive heart failure) for New Zealanders aged 30--74 years without prior CVD, renal disease, or heart failure \cite{pylypchuk2018cvd}. The model was derived from 401,752 primary care patients with 15,386 CVD events during 1,685,521 person-years of follow-up. It is deployed in approximately one-third of New Zealand primary care practices and has been used to assess over 500,000 individuals \cite{kerr2019}.
+
+The model uses sex-specific Cox proportional hazards regression with 12 predictor variables plus 3 interaction terms, making it tractable yet realistic in complexity for clinical decision support.
+
+\subsection{Model Structure}
+
+\paragraph{Predictor variables:}
+\begin{enumerate}
+    \item Age (continuous, centered at mean: 56.1y women, 51.8y men)
+    \item Ethnicity (categorical: European [ref], M\=aori, Pacific, Indian, Chinese/Asian)
+    \item NZ Deprivation Index quintile (continuous, 1--5)
+    \item Smoking status (categorical: never [ref], ex-smoker, current smoker)
+    \item Family history of premature CVD (binary)
+    \item Atrial fibrillation diagnosis (binary)
+    \item Diabetes status (binary)
+    \item Systolic blood pressure (continuous, centered at $\sim$129 mmHg)
+    \item Total cholesterol/HDL ratio (continuous, centered at $\sim$3.7 women, $\sim$4.4 men)
+    \item On blood pressure-lowering medication (binary)
+    \item On lipid-lowering medication (binary)
+    \item On antithrombotic medication (binary)
+\end{enumerate}
+
+\paragraph{Interaction terms:} 
+\begin{enumerate}
+    \item Age $\times$ Diabetes
+    \item Age $\times$ Systolic BP
+    \item BP-lowering medication $\times$ Systolic BP
+\end{enumerate}
+
+\paragraph{Full model}
+
+
+For each sex (women/men), the 5-year absolute cardiovascular risk is given by
+\begin{equation}
+\text{Risk}_5(x)
+=
+1 - \bigl(S_0^{\text{sex}}(5)\bigr)^{\exp\bigl(\eta(x)\bigr)}
+\end{equation}
+where \(S_0^{\text{sex}}(5)\) is the sex-specific baseline 5-year survival
+probability, and \(\eta(x)\) is the linear predictor (prognostic index).
+
+
+The linear predictor is
+\begin{align}
+\eta(x) ={}&
+\beta_0
++ \beta_{\text{age}} \,\tilde{\text{age}}
++ \beta_{\text{eth,M\={a}ori}} \, I_{\text{M\={a}ori}}
++ \beta_{\text{eth,Pacific}} \, I_{\text{Pacific}}
+\nonumber\\
+&{}
++ \beta_{\text{eth,Indian}} \, I_{\text{Indian}}
++ \beta_{\text{eth,Asian}} \, I_{\text{Asian}}
++ \beta_{\text{NZDep}} \,\text{NZDep}
+\nonumber\\
+&{}
++ \beta_{\text{smk,ex}} \, I_{\text{ex-smoker}}
++ \beta_{\text{smk,current}} \, I_{\text{current-smoker}}
+\nonumber\\
+&{}
++ \beta_{\text{FamHx}} \, I_{\text{FamHx}}
++ \beta_{\text{AF}} \, I_{\text{AF}}
++ \beta_{\text{DM}} \, I_{\text{diabetes}}
+\nonumber\\
+&{}
++ \beta_{\text{SBP}} \,\widetilde{\text{SBP}}
++ \beta_{\text{TC/HDL}} \,\widetilde{\text{TC/HDL}}
++ \beta_{\text{BPmed}} \, I_{\text{BP-meds}}
+\nonumber\\
+&{}
++ \beta_{\text{LIPmed}} \, I_{\text{lipid-meds}}
++ \beta_{\text{ATmed}} \, I_{\text{antithrombotic-meds}}
+\nonumber\\
+&{}
++ \beta_{\text{age}\times\text{DM}} \,\tilde{\text{age}} \cdot I_{\text{diabetes}}
++ \beta_{\text{age}\times\text{SBP}} \,\tilde{\text{age}} \cdot \widetilde{\text{SBP}}
+\nonumber\\
+&{}
++ \beta_{\text{BPmed}\times\text{SBP}} \, I_{\text{BP-meds}} \cdot \widetilde{\text{SBP}}.
+\end{align}
+
+\paragraph{Predictor definitions.}
+The full set of predictors \(X\) is:
+\begin{itemize}
+  \item Continuous (centred):
+    \begin{itemize}
+      \item \(\tilde{\text{age}} = \text{age} - \mu_{\text{age}}^{\text{sex}}\)
+      \item \(\widetilde{\text{SBP}} = \text{SBP} - \mu_{\text{SBP}}^{\text{sex}}\)
+      \item \(\widetilde{\text{TC/HDL}} = \text{TC/HDL} - \mu_{\text{TC/HDL}}^{\text{sex}}\)
+    \end{itemize}
+  \item Ethnicity indicators (reference: European/Other):
+    \begin{itemize}
+      \item \(I_{\text{M\={a}ori}} = 1\) if M\={a}ori, 0 otherwise
+      \item \(I_{\text{Pacific}} = 1\) if Pacific, 0 otherwise
+      \item \(I_{\text{Indian}} = 1\) if Indian, 0 otherwise
+      \item \(I_{\text{Asian}} = 1\) if Chinese/other Asian, 0 otherwise
+    \end{itemize}
+  \item Socioeconomic status:
+    \begin{itemize}
+      \item \(\text{NZDep} \in \{1,\dots,5\}\): NZ Deprivation Index quintile
+    \end{itemize}
+  \item Smoking status (reference: never-smoker):
+    \begin{itemize}
+      \item \(I_{\text{ex-smoker}} = 1\) if ex-smoker, 0 otherwise
+      \item \(I_{\text{current-smoker}} = 1\) if current smoker, 0 otherwise
+    \end{itemize}
+  \item Clinical history:
+    \begin{itemize}
+      \item \(I_{\text{FamHx}} = 1\) if family history of premature CVD, 0 otherwise
+      \item \(I_{\text{AF}} = 1\) if atrial fibrillation, 0 otherwise
+      \item \(I_{\text{diabetes}} = 1\) if diabetes, 0 otherwise
+    \end{itemize}
+  \item Medication indicators:
+    \begin{itemize}
+      \item \(I_{\text{BP-meds}} = 1\) if on BP-lowering medication, 0 otherwise
+      \item \(I_{\text{lipid-meds}} = 1\) if on lipid-lowering medication, 0 otherwise
+      \item \(I_{\text{antithrombotic-meds}} = 1\) if on antithrombotic medication, 0 otherwise
+    \end{itemize}
+  \item Interaction terms:
+    \begin{itemize}
+      \item \(\tilde{\text{age}} \cdot I_{\text{diabetes}}\) (age \(\times\) diabetes)
+      \item \(\tilde{\text{age}} \cdot \widetilde{\text{SBP}}\) (age \(\times\) SBP)
+      \item \(I_{\text{BP-meds}} \cdot \widetilde{\text{SBP}}\) (BP meds \(\times\) SBP)
+    \end{itemize}
+\end{itemize}
+
+\subsection{Applying the Explainability Criterion}
+
+We demonstrate that PREDICT meets the criterion for inherent explainability by constructing a well-formed global explanation with full structural and compositional coverage.
+
+As a reminder, the criterion is as follows:
+
+\explainability*
+\subsubsection{General Mechanics}
+
+Two aspects of this model's structure warrant explanation before presenting the annotations: the relationship between coefficients and hazard ratios, and the role of mean-centering.
+
+\paragraph{Coefficients and Hazard Ratios.}
+The Cox proportional hazards model expresses the hazard (instantaneous event rate) as:
+\[
+h(t|\mathbf{x}) = h_0(t) \times \exp(\eta)
+\]
+where $\eta = \sum \beta_i X_i$ is the linear predictor. Each coefficient $\beta_i$ corresponds to a hazard ratio $\text{HR}_i = \exp(\beta_i)$ for a one-unit change in $X_i$, holding other variables constant. The hazard ratio represents the multiplicative change in the instantaneous event rate:
+\begin{itemize}
+    \item HR $= 1.10$: the hazard is 10\% higher
+    \item HR $= 0.90$: the hazard is 10\% lower
+\end{itemize}
+For rare events, the hazard ratio approximates the risk ratio, so HR $= 1.10$ corresponds to approximately 10\% higher absolute risk. This approximation holds well for the typical CVD risk ranges in this model (1--20\%). The model is parameterised in $\beta_i$ coefficients, but we present interpretations in terms of hazard ratios as these are more clinically intuitive.
+
+\paragraph{Mean-Centering.}
+Continuous variables (age, SBP, TC/HDL) are centered at their sex-specific population means: $\tilde{X}_i = X_i - \mu_i^{\text{sex}}$. This transformation does not change the model's predictions but aids interpretability. For an individual at the population mean on all continuous variables, $\tilde{X}_i = 0$, so their contribution to the linear predictor from these variables is zero. Consequently, $\exp(\eta) = 1$ and the survival simplifies to $S(5) = S_0(5)^1 = S_0(5)$. This makes $S_0(5)$ directly interpretable as the survival probability for a person of average age, blood pressure, and cholesterol (at reference categories for all other variables). Without centering, $S_0(5)$ would correspond to someone with age $= 0$ and blood pressure $= 0$---a meaningless reference point.
+\subsubsection{Structural Coverage: Leaf Annotations}
+
+We create 12 leaf annotations, one for each predictor variable. Each annotation follows the hypothesis-evidence structure (Definition~\ref{def:hypothesis-evidence}).
+
+\paragraph{Annotation $A_1$: Age.}
+\begin{itemize}
+    \item \textbf{Subgraph:} Input node ``age'' $\rightarrow$ centering transformation $\rightarrow$ coefficient $\beta_{\text{age}}$ $\rightarrow$ linear predictor
+    \item \textbf{Hypothesis:} ``Each additional year of age increases 5-year CVD risk by approximately 7--8\% in relative terms (hazard ratio $\sim$1.07--1.08 per year). This effect is modified by diabetes status and blood pressure.''
+    \item \textbf{Evidence (Analytical):} The contribution to the linear predictor is:
+    \[
+    \eta_{\text{age}} = \beta_{\text{age}} \cdot (\text{age} - \mu_{\text{age}}^{\text{sex}})
+    \]
+    \begin{itemize}
+        \item Women: $\beta_{\text{age}} = 0.0756$, HR $= \exp(0.0756) = 1.078$ per year
+        \item Men: $\beta_{\text{age}} = 0.0676$, HR $= \exp(0.0676) = 1.070$ per year
+    \end{itemize}
+    \item \textbf{Notes:} Age alone achieves C-statistic $= 0.69$. Removing age reduces model $R^2$ from 0.30 to 0.08.
+\end{itemize}
+
+\paragraph{Annotation $A_2$: Ethnicity.}
+\begin{itemize}
+    \item \textbf{Subgraph:} One-hot encoded ethnicity indicators $\rightarrow$ coefficients ($\beta_{\text{eth},k}$) $\rightarrow$ linear predictor
+    \item \textbf{Hypothesis:} ``Compared to Europeans, M\=aori and Indian patients have 13--48\% higher 5-year CVD risk, Pacific peoples have 19--22\% higher risk, while Chinese and other Asian populations have 25--33\% lower risk, after adjusting for all other risk factors.''
+    \item \textbf{Evidence (Analytical):} The contribution to the linear predictor is:
+    \[
+    \eta_{\text{eth}} = \beta_{\text{M\={a}ori}} I_{\text{M\={a}ori}} + \beta_{\text{Pacific}} I_{\text{Pacific}} + \beta_{\text{Indian}} I_{\text{Indian}} + \beta_{\text{Asian}} I_{\text{Asian}}
+    \]
+    Hazard ratios vs.\ European reference (women / men):
+    \begin{itemize}
+        \item M\=aori: HR $= 1.48$ / $1.34$
+        \item Pacific: HR $= 1.22$ / $1.19$
+        \item Indian: HR $= 1.13$ / $1.34$
+        \item Chinese/Asian: HR $= 0.75$ / $0.67$
+    \end{itemize}
+    \item \textbf{Notes:} Ethnicity effects remain significant after adjustment for deprivation, indicating pathways beyond socioeconomic factors.
+\end{itemize}
+
+\paragraph{Annotation $A_3$: Socioeconomic Deprivation (NZDep).}
+\begin{itemize}
+    \item \textbf{Subgraph:} Input node ``NZDep quintile'' $\rightarrow$ coefficient $\beta_{\text{NZDep}}$ $\rightarrow$ linear predictor
+    \item \textbf{Hypothesis:} ``Each quintile increase in socioeconomic deprivation (from least to most deprived) increases 5-year CVD risk by approximately 9--10\% in relative terms. This gradient operates independently of clinical risk factors.''
+    \item \textbf{Evidence (Analytical):} The contribution to the linear predictor is:
+    \[
+    \eta_{\text{dep}} = \beta_{\text{NZDep}} \cdot (\text{NZDep} - 3)
+    \]
+    where NZDep is centered at quintile 3.
+    \begin{itemize}
+        \item Women: $\beta_{\text{NZDep}} = 0.108$, HR $= 1.11$ per quintile (95\% CI 1.09--1.14)
+        \item Men: $\beta_{\text{NZDep}} = 0.079$, HR $= 1.08$ per quintile (95\% CI 1.07--1.10)
+    \end{itemize}
+    \item \textbf{Notes:} NZDep is an area-based measure incorporating income, employment, education, housing, and access to services. The gradient implies that moving from quintile 1 (least deprived) to quintile 5 (most deprived) increases risk by approximately 40\%.
+\end{itemize}
+
+\paragraph{Annotation $A_4$: Smoking Status.}
+\begin{itemize}
+    \item \textbf{Subgraph:} Categorical input ``smoking status'' (never/ex/current) $\rightarrow$ indicator coefficients $\rightarrow$ linear predictor
+    \item \textbf{Hypothesis:} ``Current smoking increases 5-year CVD risk by 66--86\% compared to never smokers. Ex-smokers retain 15--25\% elevated risk, reflecting partial but incomplete reversal of smoking-related damage.''
+    \item \textbf{Evidence (Analytical):} The contribution to the linear predictor is:
+    \[
+    \eta_{\text{smk}} = \beta_{\text{ex}} \cdot I_{\text{ex-smoker}} + \beta_{\text{current}} \cdot I_{\text{current}}
+    \]
+    Hazard ratios vs.\ never-smoker reference (women / men):
+    \begin{itemize}
+        \item Ex-smoker: HR $= 1.09$ / $1.08$   
+        \item Current smoker: HR $= 1.86$ / $1.66$
+    \end{itemize}
+    \item \textbf{Notes:} Smoking effects are not modified by age or other variables in this model. The ex-smoker category does not distinguish by duration of cessation.
+\end{itemize}
+
+\paragraph{Annotation $A_5$: Systolic Blood Pressure (SBP).}
+\begin{itemize}
+    \item \textbf{Subgraph:} Input node ``SBP'' $\rightarrow$ centering transformation $\rightarrow$ main effect coefficient + interaction terms $\rightarrow$ linear predictor
+    \item \textbf{Hypothesis:} ``Each 10 mmHg increase in systolic blood pressure increases 5-year CVD risk by 15--18\% in relative terms. This effect is attenuated by increasing age and by use of BP-lowering medications.''
+    \item \textbf{Evidence (Analytical):} The contribution to the linear predictor is:
+    \[
+    \eta_{\text{SBP}} = \beta_{\text{SBP}} \cdot \widetilde{\text{SBP}} + \beta_{\text{age} \times \text{SBP}} \cdot \tilde{\text{age}} \cdot \widetilde{\text{SBP}} + \beta_{\text{BPmed} \times \text{SBP}} \cdot I_{\text{BP-meds}} \cdot \widetilde{\text{SBP}}
+    \]
+    where $\widetilde{\text{SBP}} = \text{SBP} - \mu_{\text{SBP}}^{\text{sex}}$ (mean $\approx 129$ mmHg).
+    
+    Main effect (women / men):
+    \begin{itemize}
+        \item $\beta_{\text{SBP}} = 0.0137$ / $0.0164$
+        \item HR per 10 mmHg $= 1.15$ / $1.18$
+    \end{itemize}
+    
+    Interaction effects (women / men):
+    \begin{itemize}
+        \item Age $\times$ SBP: $\beta = -0.00044$ / $-0.00042$ (attenuates SBP effect at older ages)
+        \item BP meds $\times$ SBP: $\beta = -0.0043$ / $-0.0053$ (attenuates SBP effect in treated patients)
+    \end{itemize}
+    \item \textbf{Notes:} The age interaction reflects declining relative (but not absolute) risk from hypertension with age. The medication interaction captures effect modification: BP medications reduce marginal risk per mmHg.
+\end{itemize}
+
+\paragraph{Annotation $A_6$: Total Cholesterol/HDL Ratio.}
+\begin{itemize}
+    \item \textbf{Subgraph:} Input node ``TC/HDL ratio'' $\rightarrow$ centering transformation $\rightarrow$ coefficient $\beta_{\text{TC/HDL}}$ $\rightarrow$ linear predictor
+    \item \textbf{Hypothesis:} ``Each 1-unit increase in the TC/HDL ratio increases 5-year CVD risk by approximately 13--14\% in relative terms. This effect operates independently without interaction terms.''
+    \item \textbf{Evidence (Analytical):} The contribution to the linear predictor is:
+    \[
+    \eta_{\text{TC/HDL}} = \beta_{\text{TC/HDL}} \cdot (\text{TC/HDL} - \mu_{\text{TC/HDL}}^{\text{sex}})
+    \]
+    where mean TC/HDL $\approx 3.7$ (women) / $4.4$ (men).
+    \begin{itemize}
+        \item Women: $\beta_{\text{TC/HDL}} = 0.122$, HR $= \exp(0.122) = 1.13$ per unit
+        \item Men: $\beta_{\text{TC/HDL}} = 0.131$, HR $= \exp(0.131) = 1.14$ per unit
+    \end{itemize}
+    \item \textbf{Notes:} Fractional polynomials confirmed linear relationship with log-hazard. No significant interaction with lipid-lowering medication in this model.
+\end{itemize}
+
+\paragraph{Annotation $A_7$: Diabetes Status.}
+\begin{itemize}
+    \item \textbf{Subgraph:} Input node ``diabetes'' $\rightarrow$ main effect coefficient + age interaction $\rightarrow$ linear predictor
+    \item \textbf{Hypothesis:} ``Diabetes increases CVD risk by 72--75\% at mean age, but this relative effect diminishes with increasing age. At age 40, diabetes confers HR $\sim$2.0; at age 70, diabetes confers HR $\sim$1.4.''
+    \item \textbf{Evidence (Analytical):} The contribution to the linear predictor is:
+    \[
+    \eta_{\text{DM}} = \beta_{\text{DM}} \cdot I_{\text{diabetes}} + \beta_{\text{age} \times \text{DM}} \cdot \tilde{\text{age}} \cdot I_{\text{diabetes}}
+    \]
+    Coefficients (women / men):
+    \begin{itemize}
+        \item Main effect $\beta_{\text{DM}}$: $0.544$ / $0.560$, HR at mean age $= 1.72$ / $1.75$
+        \item Age interaction $\beta_{\text{age} \times \text{DM}}$: $-0.0223$ / $-0.0202$
+    \end{itemize}
+    Combined HR by age (evaluated at mean of other covariates):
+    \begin{itemize}
+        \item Age 40: HR$_{\text{diabetes}} \approx 2.04$ (women) / $1.98$ (men)
+        \item Age 55 (mean): HR$_{\text{diabetes}} \approx 1.72$ / $1.75$
+        \item Age 70: HR$_{\text{diabetes}} \approx 1.43$ / $1.48$
+    \end{itemize}
+    \item \textbf{Notes:} The declining relative risk with age reflects that baseline CVD risk increases with age, so the proportional contribution of diabetes decreases even as absolute risk contribution may remain constant.
+\end{itemize}
+
+\paragraph{Annotation $A_8$: Atrial Fibrillation.}
+\begin{itemize}
+    \item \textbf{Subgraph:} Input node ``atrial fibrillation diagnosis'' $\rightarrow$ coefficient $\beta_{\text{AF}}$ $\rightarrow$ linear predictor
+    \item \textbf{Hypothesis:} ``A history of atrial fibrillation increases 5-year CVD risk by 80--144\% in relative terms. This is a strong independent risk factor, particularly for stroke, with no age interaction in the published model.''
+    \item \textbf{Evidence (Analytical):} The contribution to the linear predictor is:
+    \[
+    \eta_{\text{AF}} = \beta_{\text{AF}} \cdot I_{\text{AF}}
+    \]
+    Coefficients (women / men):
+    \begin{itemize}
+        \item Women: $\beta_{\text{AF}} = 0.893$, HR $= \exp(0.893) = 2.44$
+        \item Men: $\beta_{\text{AF}} = 0.588$, HR $= \exp(0.588) = 1.80$
+    \end{itemize}
+    \item \textbf{Notes:} AF is a particularly strong risk factor for stroke. The prevalence is low ($\sim$1--2\% of cohort) but the hazard ratio is substantial. Unlike diabetes, there is no age interaction term for AF in the published PREDICT model.
+\end{itemize}
+
+\paragraph{Annotation $A_9$: Family History of Premature CVD.}
+\begin{itemize}
+    \item \textbf{Subgraph:} Input node ``family history'' (binary) $\rightarrow$ coefficient $\beta_{\text{FamHx}}$ $\rightarrow$ linear predictor
+    \item \textbf{Hypothesis:} ``A family history of premature CVD (first-degree relative with CVD before age 55 in men or 65 in women) increases 5-year CVD risk by approximately 5--14\%, with the effect being statistically significant only in men.''
+    \item \textbf{Evidence (Analytical):} The contribution to the linear predictor is:
+    \[
+    \eta_{\text{FamHx}} = \beta_{\text{FamHx}} \cdot I_{\text{FamHx}}
+    \]
+    \begin{itemize}
+        \item Women: $\beta_{\text{FamHx}} = 0.045$, HR $= \exp(0.045) = 1.05$ (not statistically significant)
+        \item Men: $\beta_{\text{FamHx}} = 0.133$, HR $= \exp(0.133) = 1.14$
+    \end{itemize}
+    \item \textbf{Notes:} Family history captures genetic predisposition and shared environmental/behavioral factors not otherwise measured. No interaction terms in model.
+\end{itemize}
+
+\paragraph{Annotation $A_{10}$: Blood Pressure-Lowering Medications.}
+\begin{itemize}
+    \item \textbf{Subgraph:} Input node ``BP medication use'' $\rightarrow$ main effect coefficient + interaction terms $\rightarrow$ linear predictor
+    \item \textbf{Hypothesis:} ``Use of BP-lowering medications is associated with 30--40\% higher CVD risk, reflecting \textbf{confounding by indication}---patients are prescribed these medications because they already have elevated risk. The interaction with SBP shows that medication \textbf{modifies the SBP-risk relationship}, reducing the marginal risk per mmHg.''
+    \item \textbf{Evidence (Analytical):} The contribution to the linear predictor is:
+    \[  
+    \eta_{\text{BPmed}} = \beta_{\text{BPmed}} \cdot I_{\text{BP-meds}} + \beta_{\text{BPmed} \times \text{SBP}} \cdot I_{\text{BP-meds}} \cdot \widetilde{\text{SBP}}
+    \]
+    
+    Coefficients (women / men):
+    \begin{itemize}
+        \item Main effect $\beta_{\text{BPmed}}$: $0.340$ / $0.295$, HR $= 1.40$ / $1.34$
+        \item SBP interaction: $\beta = -0.0043$ / $-0.0053$ (treatment modifies SBP slope)
+    \end{itemize}
+    \item \textbf{Notes:} The positive main effect does not mean medications increase risk---it reflects that treated patients have higher underlying risk. The negative SBP interaction is the clinically relevant finding: at any given SBP, treated patients have lower marginal risk per mmHg than untreated patients.
+\end{itemize}
+
+\paragraph{Annotation $A_{11}$: Lipid-Lowering Medications.}
+\begin{itemize}
+    \item \textbf{Subgraph:} Input node ``lipid medication use'' $\rightarrow$ coefficient $\beta_{\text{LIPmed}}$ $\rightarrow$ linear predictor
+    \item \textbf{Hypothesis:} ``Use of lipid-lowering medications is not significantly associated with CVD risk in this model (HR $\approx$ 0.94--0.95, confidence intervals crossing 1.0). This null finding may reflect effective treatment offsetting the confounding by indication seen with other medication classes, or insufficient statistical power.''
+    \item \textbf{Evidence (Analytical):} The contribution to the linear predictor is:
+    \[
+    \eta_{\text{LIPmed}} = \beta_{\text{LIPmed}} \cdot I_{\text{lipid-meds}}
+    \]
+    \begin{itemize}
+        \item Women: $\beta_{\text{LIPmed}} = -0.059$, HR $= \exp(-0.059) = 0.94$ (95\% CI 0.88--1.01)
+        \item Men: $\beta_{\text{LIPmed}} = -0.054$, HR $= \exp(-0.054) = 0.95$ (95\% CI 0.90--1.00)
+    \end{itemize}
+    \item \textbf{Notes:} Unlike BP and antithrombotic medications, lipid-lowering medication use shows no significant positive association with CVD risk. There is no significant lipid-medication $\times$ TC/HDL interaction in the PREDICT model.
+\end{itemize}
+\paragraph{Annotation $A_{12}$: Antithrombotic Medications.}
+\begin{itemize}
+    \item \textbf{Subgraph:} Input node ``antithrombotic use'' $\rightarrow$ coefficient $\beta_{\text{ATmed}}$ $\rightarrow$ linear predictor
+    \item \textbf{Hypothesis:} ``Use of antiplatelet or anticoagulant medications is associated with 10--12\% higher CVD risk, reflecting confounding by indication. Patients prescribed these agents typically have prior indicators of vascular risk (e.g., transient ischemic symptoms, peripheral vascular disease not meeting exclusion criteria).''
+
+    \item \textbf{Evidence (Analytical):} The contribution to the linear predictor is:
+    \[
+    \eta_{\text{ATmed}} = \beta_{\text{ATmed}} \cdot I_{\text{antithrombotic}}
+    \]
+    \begin{itemize}
+        \item Women: $\beta_{\text{ATmed}} = 0.117$, HR $= \exp(0.117) = 1.12$
+        \item Men: $\beta_{\text{ATmed}} = 0.093$, HR $= \exp(0.093) = 1.10$
+    \end{itemize}
+    \item \textbf{Notes:} This category includes both antiplatelet agents (aspirin, clopidogrel) and anticoagulants (warfarin). The elevated HR reflects selection of high-risk patients for prophylactic therapy.
+\end{itemize}
+
+\paragraph{Structural Coverage Assessment:} All 12 predictor variables have been annotated with hypothesis-evidence structures. Every input node in the computational graph is covered by exactly one leaf annotation: $C_V^{\text{struct}} = 1.0$.
+
+\subsubsection{Compositional Coverage}
+
+We construct composition annotations explaining how the 12 leaf annotations combine into a global explanation through clinically meaningful groupings.
+
+\paragraph{Level 1: Clinical Groupings.}
+
+\textbf{Composition $C_1$: Demographics Cluster.}
+\begin{itemize}
+    \item \textbf{Components:} $A_1$ (Age), $A_2$ (Ethnicity), $A_3$ (Deprivation), $A_9$ (Family History)
+    \item \textbf{Hypothesis:} ``Demographic factors---age, ethnicity, socioeconomic status, and family history---combine \textbf{additively on the log-hazard scale}. These factors establish baseline risk levels before considering modifiable clinical factors. Age contributes the largest effect; ethnicity and deprivation capture social determinants of health; family history captures unmeasured genetic and shared environmental factors.''
+    \item \textbf{Evidence (Analytical):}
+    \[
+    \eta_{\text{demographics}} = \eta_{\text{age}} + \eta_{\text{ethnicity}} + \eta_{\text{deprivation}} + \eta_{\text{FamHx}}
+    \]
+    The Cox model structure specifies additive combination on the log-hazard scale. All coefficients remain significant ($p<0.001$) in the multivariable model, confirming independent contributions. No interaction terms exist among demographic variables.
+\end{itemize}
+
+\textbf{Composition $C_2$: Clinical Biomarkers Cluster.}
+\begin{itemize}
+    \item \textbf{Components:} $A_5$ (SBP), $A_6$ (TC/HDL)
+    \item \textbf{Hypothesis:} ``Systolic blood pressure and lipid ratio combine \textbf{additively on the log-hazard scale} to represent cardiovascular physiological burden. These two biomarkers capture distinct pathophysiological pathways---hemodynamic stress (SBP) and atherogenic lipid profile (TC/HDL)---that contribute independently to CVD risk.''
+    \item \textbf{Evidence (Analytical):}
+    \[
+    \eta_{\text{biomarkers}} = \eta_{\text{SBP}} + \eta_{\text{TC/HDL}}
+    \]
+    Expanding:
+    \begin{align*}
+    \eta_{\text{biomarkers}} &= \beta_{\text{SBP}} \cdot \widetilde{\text{SBP}} + \beta_{\text{TC/HDL}} \cdot \widetilde{\text{TC/HDL}} \\
+    &\quad + \beta_{\text{age} \times \text{SBP}} \cdot \tilde{\text{age}} \cdot \widetilde{\text{SBP}} \\
+    &\quad + \beta_{\text{BPmed} \times \text{SBP}} \cdot I_{\text{BP-meds}} \cdot \widetilde{\text{SBP}}
+    \end{align*}
+    Verification:
+    \begin{itemize}
+        \item Additive structure confirmed by model specification
+        \item Fractional polynomials analysis found no significant non-linear interaction between SBP and TC/HDL
+        \item No SBP $\times$ TC/HDL interaction term in the model (tested, $p > 0.05$)
+        \item SBP interactions with age and medication are \emph{within} the SBP component, not cross-biomarker
+    \end{itemize}
+\end{itemize}
+
+\textbf{Composition $C_3$: Behavioral and Comorbidity Cluster.}
+\begin{itemize}
+    \item \textbf{Components:} $A_4$ (Smoking), $A_7$ (Diabetes), $A_8$ (Atrial Fibrillation)
+    \item \textbf{Hypothesis:} ``Smoking, diabetes, and atrial fibrillation combine \textbf{additively on the log-hazard scale}, representing distinct but cumulative pathways to CVD. Smoking acts through endothelial dysfunction and thrombosis; diabetes through metabolic and microvascular damage; AF through cardioembolism and hemodynamic effects. The diabetes effects are \textbf{modified by age} (interaction terms within each component).''
+    \item \textbf{Evidence (Analytical):}
+    \[
+    \eta_{\text{behavioral}} = \eta_{\text{smoking}} + \eta_{\text{diabetes}} + \eta_{\text{AF}}
+    \]
+    Composition structure:
+    \begin{itemize}
+        \item Smoking: purely additive main effect (no interactions)
+        \item Diabetes: additive with age-modification via $\beta_{\text{age} \times \text{DM}}$
+        \item AF: purely additive main effect (no interactions)
+        \item No cross-component interactions (e.g., no smoking $\times$ diabetes term)
+    \end{itemize}
+\end{itemize}
+
+\textbf{Composition $C_4$: Treatment Modification Cluster.}
+\begin{itemize}
+    \item \textbf{Components:} $A_{10}$ (BP Medications), $A_{11}$ (Lipid Medications), $A_{12}$ (Antithrombotic Medications)
+    \item \textbf{Hypothesis:} ``Medication use modifies risk through two mechanisms: (1) \textbf{confounding by indication}---patients on treatment have higher baseline risk because they were prescribed medications for elevated risk factors; (2) \textbf{effect modification}---BP medications reduce the marginal risk per mmHg of SBP. Medications combine additively, with the BP medication $\times$ SBP interaction representing the effect modification mechanism.''
+    \item \textbf{Evidence (Analytical):}
+    \[
+    \eta_{\text{treatment}} = \eta_{\text{BPmed}} + \eta_{\text{LIPmed}} + \eta_{\text{ATmed}}
+    \]
+    Key interaction:
+    \begin{itemize}
+        \item For untreated patients: SBP effect $= \beta_{\text{SBP}}$
+        \item For BP-treated patients: SBP effect $= \beta_{\text{SBP}} + \beta_{\text{BPmed} \times \text{SBP}}$
+        \item The negative $\beta_{\text{BPmed} \times \text{SBP}}$ reduces marginal risk per mmHg in treated patients
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Level 2: Global Composition.}
+
+\textbf{Composition $C_{\text{global}}$: Complete Model.}
+\begin{itemize}
+    \item \textbf{Components:} $C_1$ (Demographics), $C_2$ (Biomarkers), $C_3$ (Behavioral/Comorbidities), $C_4$ (Treatment)
+    \item \textbf{Hypothesis:} ``All four clinical clusters combine \textbf{additively on the log-hazard scale} to form the complete prognostic index. Absolute 5-year risk is then calculated via the Cox survival function transformation.''
+    \item \textbf{Evidence (Analytical):}
+    \begin{equation}
+    \begin{split}
+        \log h(t|\mathbf{x}) = \log h_0(t) &+ \underbrace{\eta_{\text{demographics}}}_{C_1} + \underbrace{\eta_{\text{biomarkers}}}_{C_2} \\
+        &+ \underbrace{\eta_{\text{behavioral}}}_{C_3} + \underbrace{\eta_{\text{treatment}}}_{C_4}
+    \end{split}
+    \end{equation}
+    Absolute risk transformation:
+    \[
+    \text{Risk}_{5\text{yr}} = 1 - S_0(5)^{\exp(\eta)}
+    \]
+    where baseline survival $S_0(5) = 0.9832$ (women) / $0.9748$ (men).
+    
+    Model performance:
+    \begin{itemize}
+        \item Calibration: predicted vs.\ observed slope $= 0.98$
+        \item Discrimination: C-statistic $= 0.73$ for both sexes
+        \item Internal validation: bootstrap-corrected optimism $< 0.01$
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Note on Cross-Cluster Interactions.}
+
+The PREDICT model includes three interaction terms, two of which span cluster boundaries:
+
+\begin{enumerate}
+    \item \textbf{Age $\times$ Diabetes} ($C_1 \times C_3$): The demographic factor ``age'' modifies the comorbidity factor ``diabetes.'' This interaction is captured \emph{within} the diabetes annotation ($A_7$) rather than as a separate cross-cluster term.
+    \item \textbf{Age $\times$ SBP} ($C_1 \times C_2$): Age modifies the biomarker SBP. This is captured \emph{within} the SBP annotation ($A_5$).
+    \item \textbf{BP Medication $\times$ SBP} ($C_4 \times C_2$): Treatment modifies biomarker effect. This is captured in \emph{both} $A_5$ (as part of the SBP contribution) and $A_{10}$ (as the mechanism of effect modification).
+\end{enumerate}
+
+These cross-cluster interactions do not violate the additive composition structure because they are \textbf{modeled as part of the individual predictor contributions}. Mathematically, the interaction $\beta_{\text{age} \times \text{DM}} \cdot \tilde{\text{age}} \cdot I_{\text{diabetes}}$ is assigned entirely to $\eta_{\text{diabetes}}$ rather than split between clusters. This assignment is both mathematically valid (the total linear predictor is unchanged) and semantically appropriate (the interaction describes how diabetes risk varies with age, so it belongs with the diabetes explanation).
+
+\paragraph{Compositional Coverage Assessment:} We have constructed a 3-level annotation hierarchy: 12 leaf annotations (individual predictors), 4 composition annotations (clinical clusters), and 1 global composition annotation (complete model). $C_V^{\text{comp}} = 1.0$.
+\subsubsection{Well-Formed Global Explanation}
+
+We have demonstrated:
+\begin{enumerate}
+    \item All leaf annotations are valid (each has hypothesis, evidence, and verification)
+    \item Full structural coverage achieved ($C_V^{\text{struct}} = 1.0$)
+    \item Full compositional coverage achieved ($C_V^{\text{comp}} = 1.0$)
+    \item Root annotation covers global model (entry = 12 inputs, exit = 5-year risk)
+\end{enumerate}
+
+\textbf{Conclusion:} The PREDICT CVD risk model meets the explainability criterion (Criterion 1) and is \textbf{inherently explainable}.
+
+\subsection{Insights from the Case Study}
+
+\paragraph{Time and Expertise Requirements.} The base of this explanation was produced by Perplexity with about 2 minutes of prompting and 15 minutes of thinking time. Approximately two hours were spent refining the initial explanation into the form as presented. Approximately 4 hours were spent doing a close review of the explanations, checking all claims for accuracy, and verifying each annotation against the original papers of the PREDICT team. The authors have prior familiarity with the PREDICT model which has allowed this to be done relatively efficiently.
+
+\paragraph{Tractability.} The use of tools such as GenAI we consider to be entirely valid in the production of explanations. The criterion has no requirements on the methods to produce an explanation, only a standard by which an explanation can be validated. We consider it to be a strength that these new AI tools can verifiably create explanations that can help improve transparency in a way that can support regulatory governance. The basis for trust here is in the verification process, and in the same way that GenAI is not considered an epistemically rigorous form of peer review, similarly we do not suggest that GenAI be used as the basis for verification of explanations, even if they are used in the creation of them. GenAI is not the audience that matters - we are.
+
+\paragraph{Regulatory Implications.}
+
+The PREDICT model is officially endorsed by the New Zealand Ministry of Health and implemented in the national CVD risk assessment standard (HISO 10071:2019). This case study demonstrates how the explainability criterion could be used in regulatory frameworks:
+\begin{enumerate}
+    \item \textbf{Requirement:} Model creators must provide well-formed explanation
+    \item \textbf{Submission:} Annotation hierarchy with hypothesis-evidence structures
+    \item \textbf{Review:} Regulators verify that evidence meets epistemic standards
+    \item \textbf{Outcome:} If criterion met, model approved; if not, rejected or limited to research
+\end{enumerate}
+
+\subsection{Case Study Conclusion}
+
+The PREDICT cardiovascular disease risk model \textbf{demonstrably meets the explainability criterion} through full structural coverage (12 leaf annotations), tractable compositional coverage (3-level hierarchy with clinically meaningful groupings), verified hypothesis-evidence structures for all annotations, and multi-audience explanations. This validates the framework on a real-world clinical decision support system serving hundreds of thousands of patients, demonstrating practical applicability beyond toy examples.
+
+\section{Worked Examples}
+
+\subsection{Linear Regression}
+
+\textbf{Model}: $y = 2x_1 + 3x_2 + 1$
+
+\textbf{Graph}: 
+\begin{itemize}
+    \item $V = \{x_1, x_2, y\}$
+    \item $E = \{(x_1, y), (x_2, y)\}$
+\end{itemize}
+
+\textbf{Annotations}:
+\begin{itemize}
+    \item $A_1$: Entry $\{x_1\}$, Exit $\{y\}$, $E_{A_1} = \{(x_1, y)\}$
+    \item $A_2$: Entry $\{x_2\}$, Exit $\{y\}$, $E_{A_2} = \{(x_2, y)\}$
+\end{itemize}
+
+\textbf{Coverage}: All nodes covered. $C_V^{\text{struct}} = 1.0$ \checkmark
+
+\textbf{Composition}: ``Features combine additively.'' $C_V^{\text{comp}} = 1.0$ \checkmark
+
+\subsection{Branching Structure (Partial Coverage)}
+
+\textbf{Graph}:
+\begin{itemize}
+    \item $V = \{I, H_1, H_2, O\}$
+    \item $E = \{(I, H_1), (I, H_2), (H_1, O), (H_2, O)\}$
+\end{itemize}
+
+\textbf{Annotation} (covering only the $H_1$ path):
+\begin{itemize}
+    \item $A_1$: $V_{A_1} = \{I, H_1, O\}$, $E_{A_1} = \{(I, H_1), (H_1, O)\}$
+\end{itemize}
+
+\textbf{Coverage}:
+\begin{itemize}
+    \item $I$: $E_{\text{out}}(I) = \{(I, H_1), (I, H_2)\}$, only $(I, H_1) \in E_{A_1}$ $\rightarrow$ \textbf{not covered}
+    \item $H_1$: covered \checkmark
+    \item $H_2$: not in $V_{A_1}$ $\rightarrow$ \textbf{not covered}
+    \item $O$: covered \checkmark
+\end{itemize}
+
+$C_V^{\text{struct}} = 2/4 = 0.50$
+
+\textbf{To achieve full coverage}: Add annotation $A_2$ covering the $H_2$ path.
+
+\subsection{Node Splitting Example}
+
+\textbf{Graph with dual-function node:}
+\begin{verbatim}
+    I1 ---> H ---> O1
+            \
+             -> O2
+\end{verbatim}
+
+
+Node $H$ sends output to both $O_1$ and $O_2$. An annotation covering only $\{I_1, H, O_1\}$ would be invalid because $E_{\text{out}}(H) = \{(H, O_1), (H, O_2)\} \not\subseteq E_A$.
+
+\textbf{After splitting $H$ into $H_a$ and $H_b$:}
+\begin{verbatim}
+    I1 ---> Ha ---> O1
+      \
+       -> Hb ---> O2
+\end{verbatim}
+
+Now annotation $A_1 = \{I_1, H_a, O_1\}$ with $E_{A_1} = \{(I_1, H_a), (H_a, O_1)\}$ is valid.
+
+\subsubsection{Node Splitting for Dual-Function Nodes}
+
+When a node serves multiple functions - sending outputs both within a subgraph and outside it - we can resolve this through \textbf{node splitting}. The single node is conceptually replaced by two nodes that share the same incoming computation but have distinct outgoing connections.
+
+\paragraph{Example:} If node $H_1$ sends output both to $O$ (within the subgraph) and to $X$ (outside), we split it:
+\begin{itemize}
+    \item $H_{1a}$: receives same inputs, sends output to $O$
+    \item $H_{1b}$: receives same inputs, sends output to $X$
+\end{itemize}
+
+Now an annotation can validly cover $\{I_1, H_{1a}, O\}$ with $H_{1a}$ as an interior node whose only outgoing edge is to $O$. The node $H_{1b}$ remains outside this annotation and must be covered by a different annotation.
+
+This splitting is conceptual - it represents how we reason about the model for explanation purposes. The underlying model computation is unchanged; we are decomposing our \emph{explanation} of that computation.
+
+\paragraph{Note on entry/exit terminology:} We use ``entry'' and ``exit'' rather than ``input'' and ``output'' because subgraphs may begin and end at intermediate nodes, not just model inputs and outputs.
+
+
+
+
+\end{document}

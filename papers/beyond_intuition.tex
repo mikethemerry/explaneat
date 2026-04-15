@@ -1,0 +1,551 @@
+%%%% ijcai26.tex
+
+\typeout{IJCAI--ECAI 26 Instructions for Authors}
+
+% These are the instructions for authors for IJCAI--ECAI 26.
+
+\documentclass{article}
+\pdfpagewidth=8.5in
+\pdfpageheight=11in
+
+% The file ijcai26.sty is a copy from ijcai22.sty
+% The file ijcai22.sty is NOT the same as previous years'
+\usepackage{ijcai26}
+
+% Use the postscript times font!
+\usepackage{times}
+\usepackage{soul}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage[small]{caption}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{booktabs}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage[switch]{lineno}
+
+% Comment out this line in the camera-ready submission
+\linenumbers
+
+\urlstyle{same}
+
+% the following package is optional:
+%\usepackage{latexsym}
+
+% See https://www.overleaf.com/learn/latex/theorems_and_proofs
+% for a nice explanation of how to define new theorems, but keep
+% in mind that the amsthm package is already included in this
+% template and that you must *not* alter the styling.
+\newtheorem{example}{Example}
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+\newtheorem{criterion}{Criterion}
+\newtheorem{property}{Property}
+
+
+% Following comment is from ijcai97-submit.tex:
+% The preparation of these files was supported by Schlumberger Palo Alto
+% Research, AT\&T Bell Laboratories, and Morgan Kaufmann Publishers.
+% Shirley Jowell, of Morgan Kaufmann Publishers, and Peter F.
+% Patel-Schneider, of AT\&T Bell Laboratories collaborated on their
+% preparation.
+
+% These instructions can be modified and used in other conferences as long
+% as credit to the authors and supporting agencies is retained, this notice
+% is not changed, and further modification or reuse is not restricted.
+% Neither Shirley Jowell nor Peter F. Patel-Schneider can be listed as
+% contacts for providing assistance without their prior permission.
+
+% To use for other conferences, change references to files and the
+% conference appropriate and use other authors, contacts, publishers, and
+% organizations.
+% Also change the deadline and address for returning papers and the length and
+% page charge instructions.
+% Put where the files are available in the appropriate places.
+
+
+% PDF Info Is REQUIRED.
+
+% Please leave this \pdfinfo block untouched both for the submission and
+% Camera Ready Copy. Do not include Title and Author information in the pdfinfo section
+\pdfinfo{
+/TemplateVersion (IJCAI.2026.0)
+}
+
+\title{Explanation Beyond Intuition: A Testable Criterion for Inherent Explainability}
+
+
+% \author{
+% Mike Merry
+% \and
+% Pat Riddle\And
+% Jim Warren
+% \affiliations
+% School of Computer Science, University of Auckland
+% \emails
+% \textit{m.merry@auckland.ac.nz},
+% \{pat,jim\}@cs.auckland.ac.nz
+% }
+
+
+\author{
+The authors
+\affiliations
+The affiliations
+\emails
+\textit{The emails}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+
+Inherent explainability is the gold standard in Explainable Artificial Intelligence (XAI). However, there is not a consistent definition or test to demonstrate inherent explainability. Work to date either characterises explainability through metrics, or appeals to intuition - "we know it when we see it".
+
+We propose a globally applicable criterion for inherent explainability. The criterion uses graph theory for representing and decomposing models for \textit{structure-local explanation}, and recomposing them into global explanations. We form the structure-local explanations as \textit{annotations}, a verifiable hypothesis-evidence structure that allows for a range of explanatory methods to be used.
+
+This criterion matches existing intuitions on inherent explainability, and provides justifications why a large regression model may not be explainable but a sparse neural network could be. We differentiate \textit{explainable} - a model that allows for explanation - and \textit{explained} - one that has a verified explanation. Finally, we provide a full explanation of PREDICT - a Cox proportional hazards model of cardiovascular disease risk, which is in active clinical use in New Zealand. It follows that PREDICT is inherently explainable.
+
+This work provides structure to formalise other work on explainability, and allows regulators a flexible but rigorous test that can be used in compliance frameworks.
+
+\end{abstract}
+
+\section{Introduction}
+
+The value of Explainable AI (XAI) in sensitive fields remains high, but there are still evident challenges defining explanation, and formal tests for explainability. For inherent explainability, where whole models—not just localised predictions—are fully explainable, the test remains predominantly intuitive - "we know it when we see it" \cite{doshi2017towards}.
+
+This creates challenges for regulators and practitioners seeking safety and transparency in health, law, and insurance. Without an objective standard, any framework or regulation requiring explainability has a weak foundation. "We know it when we see it" is not auditable.
+
+Here, we describe the mechanics of formalised explainability - functional graph decomposition of models, hypothesis-evidence structures called annotations, and composition of subgraphs with annotations. These mechanics are then used to formalise the test for inherent explainability. We demonstrate that this test aligns with existing claims and intuitions, and we demonstrate its application on a cardiovascular disease risk prediction model in use in clinical care.
+
+\section{Background}
+
+There is little consensus on what explainability in machine learning is and how to evaluate it for benchmarking \cite{doshi2017towards}. It is referred to ambiguously as interpretability, comprehensibility, understandability and explainability \cite{guidotti2018survey}. Although there is substantial work characterising and describing ways in which we approach it, even formalising them in taxonomies and similar, there is no definitive standard for inherent explainability \cite{doshi2017towards,adadi2018peeking,guidotti2018local,guidotti2018survey,ribeiro2018anchors,holzinger2017medical,samek2017explainable,lacave2002review}. 
+
+The foundation of many techniques rely on a claim of inherent explainability, where some model classes, especially regression models and decision trees, are considered explainable axiomatically \cite{doshi2017towards}. Proxy techniques including LIME \cite{ribeiro2016why} and LORE \cite{guidotti2018local} create explanations of local predictions by reducing the complex model to a proxy model using inherently-explainable models. This class of approach naturally relies on the acceptance of the inherent explainability of the proxy models.
+
+Other approaches include attention \cite{vaswani2017attention} or attribution based methods \cite{sundararajan2017axiomatic}. These methods provide the relative importance or criticality of differing features - the what of predictions - but they do not address specifically how the methods use these features to produce the result. This can help address some risks, such as identifying models that have been inadvertantly trained on incorrect features \cite{degrave2021ai}, so help reject classes of poor models, but they do not demonstrate how a model is behaving.
+
+Much of the motivation for XAI is related to practical uses in sensitive contexts in real-world applications such as healthcare. Human-centric metrics like comprehension and trust have become increasingly important \cite{rago2018argumentation,merry2021mental}, as have user studies.
+
+The importance of structures within (especially neural-network type) models, is increasing in prominence in XAI. Rago et al identify substructures within neural networks to explain through argumentation \cite{rago2018argumentation}. Olca et al. have explained transformer behaviour regarding substructures called "circuits" with methods such as ablation or manipulation of the model to determine the importance of the structure \cite{olah2020zoom}. GNNExplainer \cite{ying2019gnnexplainer} and similar work uses explanatory subgraphs to create instance-local explanations. These approaches share an intuition that model structure is explanatorily relevant, but lack a unifying framework for when structural decomposition constitutes a complete explanation
+
+The work of miller \cite{miller2023evaluative} and Le et al \cite{le2024evaluative} have advocated for hypothesis-driven approaches to XAI, where systems provide evidence for and against hypotheses rather than direct recommendations. 
+
+Despite this work, no formal criterion exists for testing inherent explainability claims—no standard that creators can demonstrate and regulators verify.
+
+\section{A Formal Framework for Explanation}
+
+Here, we build a formalisation of the mechanics needed for testing explainability. We start from a formal definition of explainable that addresses what needs to be demonstrated. We then build the mechanics of explanation in our framework: the atomic syntax of explanations - a hypothesis-evidence structure called annotation; the form in which they are applied to computational models - a computational graph formalisation from automatic differentiation; the construction method to create global explanations from structure-local explanations - composition of subgraphs; and finally the semantics of explanation - the methods by which evidence can be verified.
+
+\subsection{Explainable}
+
+
+\begin{definition}[Explanation]
+\label{def:explanation}
+An explanation of a model $M$ is a representation of $M$ in a language $L$, for an audience $A$, and for a purpose $P$. The triple $(A, L, P)$ constitutes the \emph{context} of the explanation.
+\end{definition}
+
+\begin{definition}[Explainable]
+\label{def:explainable}
+A model is explainable if there exists an explanation where the representation is accurate to the underlying model, the language is understandable by the audience, and the purpose of the explanation is met
+\end{definition}
+
+Merry et al. established that explanation must be understood relative to context (purpose, audience, language), arguing that existing definitions failed by treating explanation as context-independent \cite{merry2021mental}.
+
+
+\subsection{Verifiable Hypotheses}
+
+
+\begin{definition}[Verifiability]
+\label{def:verifiability}
+A claim about a model is verifiable if there exists a method, accepted by the intended audience as epistemically adequate, to determine whether the claim accurately characterises the model's behaviour.
+\end{definition}
+
+A central requirement of our framework is that explanatory claims be \emph{verifiable} - that there exist methods by which claims can be assessed for accuracy. We deliberately adopt a pluralistic stance on verification. Different  communities accept different forms of evidence and different standards of proof, for example, mathematical derivation, empirical testing, logical inference, and computational verification. The key constraint is that verification methods must be epistemically acceptable to the intended audience. This mirrors scientific peer review: different communities apply different standards, yet the process remains sound because standards are established and consistently applied within the community.
+
+\begin{definition}[Hypothesis-Evidence Structure]
+\label{def:hypothesis-evidence}
+An explanation consists of:
+\begin{itemize}
+    \item A \textbf{hypothesis}: A claim about what a model component does
+    \item \textbf{Evidence}: Verification that the hypothesis accurately characterises the component's behaviour
+\end{itemize}
+\end{definition}
+
+
+Explanations in our framework have a two-level structure that separates \textit{what} is claimed from \textit{how} it is verified. The hypothesis and evidence may be at different levels of technical sophistication. This separation serves a crucial function: it allows the same underlying explanation to serve different audiences. The hypothesis can be stated in accessible terms while the evidence provides rigorous grounding for those who require it. Consider an analogy from medicine:
+
+\begin{itemize}
+    \item \textbf{Hypothesis}: ``Beta-blockers reduce performance anxiety by suppressing elevated heart rate.''
+    \item \textbf{Evidence}: Pharmacokinetic studies, clinical trials, physiological measurements demonstrating the mechanism.
+\end{itemize}
+
+A patient can understand the hypothesis without understanding the evidence. A pharmacologist can verify the evidence without simplifying it. The explanation functions across audiences because hypothesis and evidence are separable.
+
+Similarly, in model explanation:
+
+\begin{itemize}
+    \item \textbf{Hypothesis}: ``This subgraph creates a U-shaped risk curve over the age variable.''
+    \item \textbf{Evidence}: Closed-form derivation showing the subgraph implements $f(x) = ax^2 + bx + c$; ablation study showing removal eliminates the non-linearity.
+\end{itemize}
+
+This creates the form of an explanation (hypothesis + explanation), and a test (verifiability), which aligns with the definition of explainability. We can now say that a model, or part of a model, is explainable if we can provide a verifiable hypothesis for its behaviour. We now present the structures to formalise "a model, or part of a model".
+
+\subsection{Functions as Graphs: A Unified Representation}
+
+We want a method to break larger models down into something smaller that we can explain, and combine together to make each explanatory step possible. We will use graph theory as the basis for this method, using subgraphs as the smaller structure to apply our annotations to.
+
+Following the computational graph formalism standard in automatic differentiation \cite{griewank2008evaluating}, we represent models as directed acyclic graphs where nodes are operations and edges represent data flow. This representation applies uniformly to regression models, decision trees, and neural networks.
+
+\begin{definition}[Computational Graph]
+\label{def:computational-graph}
+A computational graph $G = (V, E, W, \Phi)$ is a directed acyclic graph where:
+\begin{itemize}
+    \item $V = V_I \cup V_C \cup V_O$ partitions nodes into inputs (sources), computations (internal), and outputs (sinks)
+    \item $E \subseteq V \times V$ represents directed data flow
+    \item $W: E \rightarrow \mathbb{R}$ assigns edge weights (where applicable)
+    \item $\Phi: V_C \cup V_O \rightarrow \mathcal{F}$ assigns an arbitrary function to each non-input node
+\end{itemize}
+\end{definition}
+
+\noindent Given input values, the graph is evaluated by topological traversal:
+\begin{equation}
+a_v = \phi_v\left(\{(a_u, w_{uv}) : (u, v) \in E\}\right)
+\end{equation}
+
+\paragraph{Generality of $\Phi$.} Unlike standard neural network formalisms that restrict activation functions to a fixed set (ReLU, sigmoid, etc.), we permit \emph{any} function as a node operation. This generality enables unified treatment: in linear regression, $\Phi$ computes weighted sums; in decision trees, $\Phi$ evaluates threshold predicates; in neural networks, $\Phi$ applies activation functions to weighted sums. The framework thus captures all standard ML model classes within a single representation.
+
+\paragraph{Examples.} A linear regression $y = \beta_0 + \sum_i \beta_i x_i$ is a graph with direct edges from each input $x_i$ to output $y$, edge weights $\beta_i$, and $\Phi(y)$ computing the weighted sum. A decision tree maps directly: internal nodes apply threshold predicates, edges represent branches, and leaves are outputs. A neural network has neurons as computation nodes, connection weights on edges, and $\Phi$ applying activation functions to weighted inputs.
+
+\subsection{Formalised Explanations}
+
+\begin{definition}[Annotation]
+\label{def:annotation}
+An \textbf{annotation} $A$ is a pair:
+\[
+A = (S, H_A, \Xi_A)
+\]
+where:
+\begin{itemize}
+    \item $S = (V_{\text{entry}}, V_{\text{exit}}, V_S, E_S)$ is a valid subgraph
+    \item $H_A$ is the \textbf{hypothesis}: a human-comprehensible claim about the subgraph's function
+    \item $\Xi_A$ is the \textbf{evidence}: verification supporting $H_A$
+\end{itemize}
+\end{definition}
+
+An \emph{annotation} extends a subgraph with meaning. The subgraph identifies \emph{the part of the model} that is being explained; the hypothesis states \emph{what it does}; the evidence demonstrates \emph{that this is true}.
+
+
+The hypothesis-evidence structure is not an organisational layer on top of existing explanatory methods. Many artefacts currently termed explanations (e.g., feature attribution and attention) would fail to constitute explanations as they do not, by themselves, form a hypothesis about model behaviour. They may act as points of evidence to support a hypothesis, but are not complete by themselves, requiring additional work to meet this standard.
+
+The evidence required here is only related to whether or not the hypothesis is a true claim about the model's behaviour, and is not about the validity of the model to the world. A model can be  explainable and wrong.
+
+\subsubsection{Compositional Explanation Structure}
+
+Structural coverage alone is insufficient for a complete explanation. Knowing what each subgraph does individually does not tell us how they combine. \textbf{Composition itself requires explanation.}
+
+
+Consider a model where:
+\begin{itemize}
+    \item Annotation $A_1$ explains: ``Subgraph $S_1$ computes age risk factor $f(\text{age})$''
+    \item Annotation $A_2$ explains: ``Subgraph $S_2$ computes BP (blood pressure) risk factor $g(\text{BP})$''
+\end{itemize}
+
+Even with full structural coverage, we don't know:
+\begin{itemize}
+    \item Is the output $f(\text{age}) + g(\text{BP})$? (additive)
+    \item Is it $f(\text{age}) \times g(\text{BP})$? (multiplicative)
+    \item Is there an interaction term?
+\end{itemize}
+
+The combination requires its own explanation.
+
+\subsubsection{Leaf and Composition Annotations}
+
+We distinguish two types of annotations:
+
+\begin{definition}[Leaf Annotation]
+A \textbf{leaf annotation} is an annotation as previously defined (Definition~\ref{def:annotation}) - it explains a primitive subgraph of the model in isolation.
+\end{definition}
+
+
+\begin{definition}[Composition Annotation]
+Given annotations $A_1, A_2, \ldots, A_k$ (leaf or composition), a \textbf{composition annotation} $C(A_1, \ldots, A_k)$ is a tuple:
+\[
+C = (S_C, H_C, \Xi_C, \{A_1, \ldots, A_k\})
+\]
+where:
+\begin{itemize}
+    \item $S_C = (V_{\text{entry}}^C, V_{\text{exit}}^C, V_C, E_C)$ is the \textbf{junction subgraph} where component outputs meet
+    \item $H_C$ is the \textbf{composition hypothesis}: how component behaviours combine
+    \item $\Xi_C$ is the evidence supporting $H_C$
+    \item $\{A_1, \ldots, A_k\}$ are the \textbf{child annotations} being composed
+\end{itemize}
+\end{definition}
+
+
+Composition annotations follow the same hypothesis-evidence structure and verification methods as leaf annotations.
+
+\subsubsection{Annotation Hierarchy}
+
+\begin{definition}[Annotation Hierarchy]
+An \textbf{annotation hierarchy} $\mathcal{H}$ for a model $G$ is a rooted tree where:
+\begin{itemize}
+    \item Leaves are leaf annotations (explain primitive subgraphs)
+    \item Internal nodes are composition annotations (explain how children combine)
+    \item The root covers the global model (entry = inputs, exit = outputs)
+\end{itemize}
+\end{definition}
+
+The hierarchy represents a \textbf{composition path} - the order in which local explanations combine into a global explanation. The order in which annotations are composed is important. If you have already explained that the combination of two effects creates a U-shaped response function, then a later explanation can use the U-shaped response without considering the component parts.
+
+
+\subsection{Two Modes of Verification}
+
+While our framework accepts any epistemically adequate verification method, two forms are particularly well-established for machine learning models.
+
+\subsubsection{Analytical Verification}
+
+Analytical verification establishes claims through mathematical derivation. Given a subgraph, we derive a closed-form expression for its input-output behaviour and verify that this expression has the properties claimed in the hypothesis.
+
+\paragraph{Form:} ``The behaviour of subgraph $S$ is characterised by mathematical function $f$.''
+
+\paragraph{Method:}
+\begin{enumerate}
+    \item Derive the closed-form expression for the subgraph by symbolic computation through the graph
+    \item Analyse the mathematical properties of the resulting expression (linearity, monotonicity, inflection points, domain-range relationships)
+    \item Verify that these properties match the hypothesis
+\end{enumerate}
+
+When tractable, analytical verification provides the strongest form of evidence. A mathematical derivation does not merely show that a claim \emph{happens to be true} for observed cases - it shows \emph{why} the claim must be true given the structure of the subgraph. Save that, in practice, mathematicians make mistakes, it provides the deepest explanation of models. This explanatory depth is particularly valuable when the audience includes those who can follow mathematical reasoning, but it may not be appropriate for most audiences.
+
+\paragraph{Limitations:} Analytical verification is tractable only for sufficiently simple or small subgraphs. As subgraph complexity grows (more nodes, non-linear activation functions, complex compositions), closed-form expressions become unwieldy or impossible to derive. In such cases, we turn to empirical methods.
+
+\paragraph{Example:} For a subgraph implementing $f(\text{age}) = \beta_1(\text{age} - 50)^2 + \beta_0$:
+\begin{itemize}
+    \item \emph{Hypothesis}: ``This subgraph creates a U-shaped risk curve with minimum at age 50''
+    \item \emph{Evidence}: The derivative $f'(\text{age}) = 2\beta_1(\text{age} - 50)$ equals zero at age 50; $f''(\text{age}) = 2\beta_1 > 0$ confirms a minimum
+\end{itemize}
+
+\subsubsection{Empirical Verification}
+
+Empirical verification establishes claims through experimental observation. We intervene on the model - removing, modifying, or isolating the subgraph - and observe how behaviour changes.
+
+\paragraph{Form:} ``Subgraph $S$ contributes function $F$ to the model's behaviour.''
+
+\paragraph{Method:} Design and execute experiments that test the hypothesis about subgraph behaviour. Common approaches include ablation, perturbation, input-output sampling, and substitution.
+
+Empirical methods extend the reach of verification beyond what analytical methods can handle. For complex subgraphs where closed-form derivation is intractable, experimental observation can still provide evidence for or against hypotheses about subgraph behaviour. Empirical verification also connects directly to observable model behaviour, grounding abstract claims in measurable outcomes.
+
+\paragraph{Limitations:} Empirical verification is inherently statistical and observational. It shows that a claim is \emph{consistent with} observed behaviour, not that it \emph{must} hold. Edge cases or unusual inputs might reveal behaviours not captured by the hypothesis. However, for practical purposes, empirical evidence that covers the relevant input domain often provides sufficient grounds for accepting a hypothesis.
+
+% \paragraph{Relationship to instance-local methods:} The empirical techniques listed above - particularly input-output sampling and surrogate model fitting - are related to methods used in instance-local explanation (LIME, SHAP). The difference is the level of analysis: instance-local methods apply these techniques to explain individual predictions; we apply them to explain subgraph behaviour across all inputs. The same underlying methodology serves different explanatory purposes.
+
+\subsection{Combined Coverage and Explainability}
+
+\subsubsection{Structural and Compositional Coverage}
+
+We distinguish two types of coverage required for a complete explanation:
+
+\begin{definition}[Structural Coverage]
+A set of leaf annotations $\mathcal{A}_{\text{leaf}}$ achieves \textbf{full structural coverage} of graph $G$ if every node in $G$ is covered:
+\[
+\forall v \in V: \text{covered}_{\mathcal{A}_{\text{leaf}}}(v)
+\]
+\end{definition}
+
+\begin{definition}[Compositional Coverage]
+An annotation hierarchy $\mathcal{H}$ achieves \textbf{full compositional coverage} if every required composition has a valid composition annotation explaining how its children combine.
+\end{definition}
+
+\noindent Structural coverage ensures all parts are explained. Compositional coverage ensures all combinations are explained. Neither alone is sufficient: structural coverage without compositional coverage means we have explained the parts but not how they interact; compositional coverage without structural coverage means we have explained combinations of things we haven't individually explained.
+
+\subsubsection{Well-Formed Explanation}
+
+\begin{definition}[Well-Formed Global Explanation]
+\label{def:well-formed-global-explanation}
+A global explanation $\mathcal{E} = (\mathcal{H}, \mathcal{A})$ is \textbf{well-formed} if:
+\begin{enumerate}
+    \item Every leaf annotation in $\mathcal{H}$ is valid
+    \item Full structural coverage is achieved
+    \item Full compositional coverage is achieved
+    \item The root annotation covers the global model (entry = model inputs, exit = model outputs)
+\end{enumerate}
+\end{definition}
+
+\noindent Well-formed explanations provide a complete account of the model: every component is explained, every composition is explained, and the hierarchy terminates in a global explanation.
+
+A model is fully explained only when \textbf{both} structural and compositional coverage are complete.
+
+\subsubsection{Explainability vs.\ Explainedness}
+
+We distinguish two related but distinct concepts:
+
+\begin{definition}[Inherent Explainability]
+A model $G$ is \textbf{inherently explainable} iff there exists a well-formed global explanation $\mathcal{E}$ for $G$.
+\end{definition}
+
+\begin{definition}[Explainedness]
+The \textbf{explainedness} of a model $G$ with respect to hierarchy $\mathcal{H}$ is the pair $(C_V^{\text{struct}}(\mathcal{H}), C_V^{\text{comp}}(\mathcal{H}))$.
+\end{definition}
+
+A model may be inherently explainable but not yet explained (work remains). We can use coverage to describe what work has been done, and what work remains.
+
+\section{Inherent Explainability}
+
+\subsection{The Test for Explainability}
+
+We propose a sufficient condition for inherent explainability based on graph decomposition with compositional annotation. This is explicitly \textit{not a necessary condition} - we do not claim that models failing this criterion are unexplainable, only that models meeting it demonstrably are.
+
+\begin{restatable}{criterion}{explainability}
+A model $G$ is \textbf{inherently explainable} if there exists a well-formed global explanation $\mathcal{E} = (\mathcal{H}, \mathcal{A})$ such that:
+\begin{enumerate}
+    \item Every leaf annotation in $\mathcal{H}$ is valid
+    \item Full structural coverage is achieved: every node in $G$ is covered by a leaf annotation
+    \item Full compositional coverage is achieved: every required composition has a valid composition annotation
+    \item The root annotation covers the global model (entry = model inputs, exit = model outputs)
+    \item For every annotation $A_i = (S_i, H_{A_i}, \Xi_{A_i})$ in $H$:
+    \begin{enumerate}
+        \item The hypothesis $H_{A_i}$ is comprehensible to audience $A$ in language $L$ for purpose $P$
+        \item The evidence $\Xi_{A_i}$ is verifiable by methods accepted by $A$ as epistemically adequate
+    \end{enumerate}
+
+\end{enumerate}
+\end{restatable}
+
+Both coverage types are required. Structural coverage without compositional coverage means we have explained all the parts but not how they combine. Compositional coverage without structural coverage means we have explained combinations of things we haven't individually explained.
+
+\subsection{Validation: Linear Regression}
+
+Consider linear regression: $y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \ldots + \beta_n x_n$
+
+\paragraph{Graph structure:} Each input $x_i$ connects directly to output $y$. Each edge carries weight $\beta_i$.
+
+\paragraph{Leaf annotations:} For each feature, create annotation $A_i$ with:
+\begin{itemize}
+    \item Entry: $\{x_i\}$, Exit: $\{y\}$
+    \item Hypothesis: ``Feature $x_i$ contributes $\beta_i$ per unit change''
+    \item Evidence: Coefficient value from model
+\end{itemize}
+
+\paragraph{Structural coverage:} Each input node has exactly one outgoing edge, contained in its annotation. All nodes covered. $C_V^{\text{struct}} = 1$.
+
+\paragraph{Composition:} How do the $n$ feature contributions combine? The composition annotation states: ``All features combine additively: $y = \sum_i \beta_i x_i + \beta_0$'', and we see that these features are important due to these coefficients.
+
+For small $n$, this composition is comprehensible. A 5-variable regression can be understood as ``these five factors add up.'' The framework validates what intuition suggests: simple linear regression is explainable.
+
+\subsection{The Large Regression Problem: When Compositional Coverage Fails}
+
+Consider a regression with 10,000 inputs. Regression is commonly claimed to be inherently explainable, yet it seems unreasonable to expect that a regression model of this size is explainable. What would such an explanation look like?
+
+\paragraph{Option 1: Single 10,000-ary composition.} We could create one composition annotation: ``All 10,000 features combine additively.'' This is structurally valid - it correctly describes how the model computes its output. It doesn't provide any additional information or structure - there are colinearities or other confounding properties of the inputs, it doesn't necessarily provide any additional insight or purpose. It is correct, but vacuous.
+
+\paragraph{Option 2: Hierarchical composition through meaningful groupings.} A more promising approach would group features into interpretable clusters - demographics, lab values, medications, lifestyle factors - then compose within groups before composing across groups. For example:
+\begin{itemize}
+    \item First level: ``Age, sex, and ethnicity combine to form demographic risk''
+    \item Second level: ``BP, cholesterol, and glucose combine to form cardiovascular indicators''
+    \item Third level: ``Demographic risk and cardiovascular indicators combine additively with interaction''
+\end{itemize}
+
+This hierarchical structure could yield a comprehensible global explanation. But it requires that meaningful groupings \emph{exist}, for which there is no guarantee. When meaningful groupings exist, the model may be explainable despite having many features. When they do not, compositional coverage fails even though structural coverage is trivial.
+
+\paragraph{Resolution:} The framework resolves this tension. Regression is commonly claimed to be ``inherently explainable,'' yet a 10,000-coefficient regression clearly is most likely not explainable in any useful sense (there may be exceptions). Our framework shows why: structural coverage (explaining each coefficient) is easy, but compositional coverage (forming a comprehensible global picture) is likely impossible. Each of the two challenges must be overcome, and it the onus is upon the author to demonstrate that it can be, not relying on claims that it is theoretically possible.
+
+Decision trees have very similar characteristics. Individual predictions have clear leaf-node explanations but the composition of these is non-trivial for large trees. 
+
+\subsection{Why Dense Networks Fail}
+
+Our framework provides formal grounding for dense networks being considered ``black boxes.'' Consider a modest dense network: 4 inputs, 2 hidden layers of 16 neurons each, and 1 output. This network has:
+\begin{itemize}
+    \item 37 nodes (4 input + 16 + 16 + 1 output)
+    \item 336 edges (4$\times$16 + 16$\times$16 + 16$\times$1)
+\end{itemize}
+
+To decompose this network into meaningful subgraphs, we would need to identify substructures where behaviour can be characterised independently. But in a dense network, every neuron in layer $l$ connects to every neuron in layer $l+1$. There are no natural boundaries.
+
+\textbf{The identification problem:} To construct a well-formed 
+explanation, we must identify subgraphs that have meaningful, 
+independent functions---subgraphs for which a coherent hypothesis 
+can be formed. Not every subgraph is meaningful; most arbitrary 
+subsets of a network's edges do not compute anything interpretable 
+in isolation.
+
+The space of candidate subgraphs is $2^{|E|}$---all possible subsets 
+of edges. For our 4-16-16-1 network with 336 edges, this is 
+$2^{336} \approx 1.4 \times 10^{101}$, more than a googol. Even if 
+meaningful subgraphs exist, finding them is intractable.
+
+\textbf{Sparse networks:} In a sparse network, 
+selective connectivity creates natural boundaries that suggest where 
+meaningful subgraphs reside. A neuron connecting to only 3 of 16 
+neurons in the next layer architecturally delineates a substructure. In a dense network, 
+every neuron connects to every other neuron. 
+There are no architectural hints about where meaning might reside. 
+One must search for needles in a $10^{101}$-sized haystack---assuming 
+the needles exist at all.
+
+\section{Case Study Summary: PREDICT Cardiovascular Risk Model}
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=\textwidth]{Intuition-predict.png}
+    \caption{Overview of the PREDICT cardiovascular risk model explanation structure, showing the hierarchical organization of leaf annotations, composition annotations, and global composition.}
+    \label{fig:predict-overview}
+\end{figure*}
+To demonstrate the framework's applicability, we present in Appendix A a complete explanation of the PREDICT cardiovascular disease (CVD) risk model - a Cox proportional hazards model currently deployed in approximately one-third of New Zealand primary care practices \cite{pylypchuk2018cvd,kerr2019}. The model predicts 5-year CVD risk using 12 predictor variables and 3 interaction terms.
+
+We constructed a well-formed global explanation consisting of 12 leaf annotations, 4 composition annotations and 1 global composition. Each annotation follows the hypothesis-evidence structure. We intend the annotations to be for academics in computational areas with experience with predictive models. The complete explanation achieves full structural and compositional coverage, satisfying the explainability criterion.
+
+The explanation was initially drafted using generative AI tools and subsequently verified manually by the authors against the original publications. We consider this workflow valid - the framework places no constraints on how explanations are produced, only on their verifiability. It also serves as an example of how we might construct tools to support this framework.
+
+\paragraph{Readers as verifiers.} Readers of this paper are themselves acting to verify the explanation as the framework describes. In assessing whether the PREDICT explanation is accurate, comprehensible, and complete, readers perform audience-relative verification using methods they accept as epistemically adequate (mathematical derivation, consistency with published sources). This is not circular; rather, it demonstrates that the framework is compatible with established scientific practice. Accepting the case study as valid is evidence that the framework can produce verifiable explanations for non-trivial models.
+
+\section{Discussion}
+
+We have shown that the distinction between structural and compositional coverage is particularly important. It provides the language to describe why the boundaries of inherent explainability exist where they do. Extremely large regression models are not inherently explainable because creating composition paths of leaf explanations is challenging. Dense neural networks are not inherently explainable because there is no tractable decomposition for explanation.
+
+The corollary of our work is that proxy based methods which depend on the inherent explainability of their surrogate models are on a stronger footing. Rather than an appeal to the axiomatic inherent explainability of other models, it is possible to test that foundation. This framework also values attention- and attribution-based methods, as well as other post-hoc methods, as being the evidence base for hypotheses. For structural approaches, such as transformer circuits and GNNExplainer, we have provided a formalised framework that helps justify their methods, and can help to create consistency. It provides the additional steps of determining what is required for full versus partial explanation. 
+
+We have used the term tractable loosely. This is because it is unclear what the upper bound on what is tractable. Although we have presented this method starting from the decomposition of models to leaf annotations, the explanatory method is by construction through composition. One needn't start from a large model, but could start from a single explainable leaf and progressively add complexity while retaining explainability. The effort lies not in decomposition but in constructing evidence for annotations. We do not claim to extend explainability bounds, but where claims are made—such as transformer circuits—this provides formal reference.
+
+The case study shows the boundary reaches at least Cox proportional hazards; we expect it is substantially higher. As the onus of proof is on the person creating the model, rather than artificially constrain any idea of what is tractable, we allow it to simply be what an author can demonstrate that is accepted by the audience. Ultimately, the boundary of what is tractable is empircal - either you can present an epistemically valid explanation, or not.
+
+This framework provides a scalable level of rigour for explainability - which is that standards for verifiability are context dependent but can be set in a similar way as it is in scientific communities. It can accept our informal intuitions and it can support regulatory frameworks - we can demand high levels of verifiable evidence for critical claims. It also supports multiple explanations for multiple audiences so that a statistician, a clinician and a patient can all have their appropriate explanations in the same way they can regarding the explanation of a drugs behaviour.
+
+% The framework also provides a higher order structure for considering other explainability metrics such as complexity, graph depth, and similar. Rather than being a test of explainability, other explainability metrics provide heuristics for when a model might be fully explained. As depth increases, compositional paths become harder to construct. This may also provide guidance for tractability. It may be that we learn that explanations for specific audiences have an upper bound on given metrics which can help us in creating tools for building explanations that are accepted and valid.
+
+% However, this framework does not specifically address how to evaluate the quality of an explanation and if it is useful. This is similarly context-dependent on both the audience and purpose. Programmatically-generated explanations may well be valid, but if a patient wants an explanation to guide clinical decision making, then the model creator must verify that the explanation is good in that context.
+
+This framework does not address methods to assess the quality of an explanation. We leave this as context-dependent for the audiences of explanations to address directly.
+
+The use of computational graphs leaves open future research directions to explain neural networks. Convolutional, recurrent and transformer models are all representable in this fashion. The work on circuits in transformers \cite{olah2020zoom} uses similar structural elements of their models to drive explanation. Our own work on NEAT networks also demonstrates that evolution of sparse networks can produce performant models, and these are, by design, tractable for subgraph analysis. We believe that this could be an effective pathway for creating explainable neural networks.
+
+However, this framework does not address the costs in developing explanations. Generating annotations, verifying them, and demonstrating that these are acceptable has a high time cost and there are no current tools to support or ease this. Although this creates a rigorous method, we expect that practical applications may simplify or allow for approximate implementations of the test, rather than a fully rigorous approach. That a fully rigorous approach is available is still valuable, even if used rarely, as any gap in rigour can then be evaluated by the audience.
+
+Further, it may be the case that only a proportion of a model is explained. It would be reasonable to create metrics describing the amount of a model that is explained, for example by the proportion of the structure, or by the amount of variance in the resulting model that substructure is responsible for within a dataset. These may allow for descriptors of partial explainability where 90\% of the structure, or 100\% of the variance caused by a specific variable is explained. We would caution the use of such metrics; knowing which x\% is the most important to explain is difficult to know a-priori.
+
+
+\section{Conclusion}
+
+We have proposed a formal framework for compositional explanation of models. Using this framework, we have been able to define a sufficient criterion for inherent explainability that matches existing intuitions. The framework:
+
+\begin{enumerate}
+    \item \textbf{Operationalises contextual explanation} through a methodology of decomposition, local explanation, and composition
+    \item \textbf{Distinguishes structure-local explanation} from instance-local explanation
+    \item \textbf{Formalises coverage} at two levels: structural and compositional
+    \item \textbf{Introduces annotation hierarchies} distinguishing leaf annotations from composition annotations
+\end{enumerate}
+
+The key insights are that ''inherent explainability'' can be expressed as structural explanation, that claims of inherent explainability typically describe the explanation of atomic parts of the structure, and that composition of these parts requires explanation. When combined, we can express why simple regression is explainable while very large regression models are not, and why sparse neural networks may well be, but most dense neural networks aren't.
+
+We believe that this work provides a better framework for testing explainability for use in both academia and in practice than has been previously used, and that the insights will lead to new avenues of developing explainable models.
+
+\bibliographystyle{named}
+\bibliography{ijcai19}
+
+\end{document}

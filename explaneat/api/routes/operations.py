@@ -160,6 +160,7 @@ def _network_to_response(
         output_nodes=network.output_node_ids,
         is_original=is_original or network.metadata.get("is_original", True),
         collapsed_annotations=collapsed_annotations or [],
+        has_non_identity_ops=network.metadata.get("has_non_identity_ops", False),
     )
 
     return ModelStateResponse(
@@ -209,6 +210,9 @@ async def get_current_model(
 
     current_state = engine.current_state
     is_original = len(engine.operations) == 0
+
+    # Pass non-identity status through metadata
+    current_state.metadata["has_non_identity_ops"] = engine.has_non_identity_ops
 
     collapsed_names: List[str] = []
     if collapsed:

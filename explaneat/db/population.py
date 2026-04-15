@@ -1,7 +1,9 @@
 """Database-integrated population management for ExplaNEAT"""
 import hashlib
 import json
+import logging
 import os
+import time as _time
 import uuid
 from datetime import datetime
 from typing import Optional, Dict, Any, List
@@ -13,13 +15,17 @@ from .models import Experiment, Population, Species, Genome, TrainingMetric, Res
 from .serialization import serialize_population_config
 from ..core.backproppop import BackpropPopulation
 
+logger = logging.getLogger(__name__)
+
 
 class DatabaseBackpropPopulation(BackpropPopulation):
     """BackpropPopulation with database integration for experiment tracking"""
     
-    def __init__(self, config, x_train, y_train, experiment_name: str = None,
+    def __init__(self, config, x_train, y_train, xs_val=None, ys_val=None,
+                 experiment_name: str = None,
                  dataset_name: str = None, description: str = None,
-                 database_url: str = None, ancestry_reporter=None):
+                 database_url: str = None, ancestry_reporter=None,
+                 dataset_id: str = None):
         """
         Initialize population with database tracking
 
@@ -27,13 +33,15 @@ class DatabaseBackpropPopulation(BackpropPopulation):
             config: NEAT configuration
             x_train: Training data features
             y_train: Training data labels
+            xs_val: Optional validation data features
+            ys_val: Optional validation data labels
             experiment_name: Name for this experiment
             dataset_name: Name of the dataset being used
             description: Description of the experiment
             database_url: Database connection URL (optional)
             ancestry_reporter: Optional AncestryReporter for parent tracking
         """
-        super().__init__(config, x_train, y_train)
+        super().__init__(config, x_train, y_train, xs_val=xs_val, ys_val=ys_val)
 
         # Initialize database connection
         if database_url:
@@ -46,7 +54,8 @@ class DatabaseBackpropPopulation(BackpropPopulation):
             experiment_name or f"NEAT_Experiment_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
             dataset_name,
             description,
-            config
+            config,
+            dataset_id=dataset_id,
         )
 
         # Track current population and generation
@@ -58,8 +67,8 @@ class DatabaseBackpropPopulation(BackpropPopulation):
         if self.ancestry_reporter:
             self.ancestry_reporter.reproduction = self.reproduction
         
-    def _create_experiment(self, name: str, dataset_name: str, description: str, 
-                          config: neat.Config) -> str:
+    def _create_experiment(self, name: str, dataset_name: str, description: str,
+                          config: neat.Config, dataset_id: str = None) -> str:
         """Create and save experiment record to database"""
         
         # Generate experiment SHA from config and parameters
@@ -105,10 +114,12 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                 git_branch=git_branch,
                 hardware_info=hardware_info
             )
+            if dataset_id:
+                experiment.dataset_id = uuid.UUID(dataset_id) if isinstance(dataset_id, str) else dataset_id
             session.add(experiment)
             session.flush()  # Get the ID
             experiment_id = experiment.id
-            
+
         return experiment_id
     
     def _save_population_state(self, generation: int) -> str:
@@ -223,61 +234,115 @@ class DatabaseBackpropPopulation(BackpropPopulation):
             )
             session.add(result)
     
-    def run(self, fitness_function, n=None, nEpochs=5):
-        """Run evolution with database tracking"""
-        
+    def run(self, fitness_function, n=None, nEpochs=5, patience=None):
+        """Run evolution with database tracking.
+
+        Args:
+            fitness_function: Fitness evaluation function
+            n: Number of generations to run
+            nEpochs: Backpropagation epochs per generation
+            patience: Early stopping patience (generations without improvement).
+                      None disables early stopping.
+        """
         # Mark experiment as running
         with db.session_scope() as session:
             experiment = session.get(Experiment, self.experiment_id)
             experiment.status = 'running'
-        
+
+        generations_without_improvement = 0
+        best_fitness_seen = None
+
+        logger.info("Starting evolution: %d generations, %d epochs BP, pop_size=%d",
+                     n or 0, nEpochs, len(self.population))
+
         generation = 0
         while n is None or generation < n:
             try:
+                gen_start = _time.time()
+                logger.info("=== Generation %d/%d ===", generation, n or 0)
+                self.reporters.start_generation(generation)
+
                 # Save population state before evaluation
                 self.current_population_id = self._save_population_state(generation)
                 self.current_generation = generation
-                
+
                 # Run one generation of evolution
                 if generation == 0:
                     # Create initial population
                     self._create_initial_population()
-                
+
                 # Evaluate population
+                logger.info("  Evaluating population (%d genomes, %d BP epochs)...",
+                            len(self.population), nEpochs)
+                eval_start = _time.time()
                 self._evaluate_population(fitness_function, nEpochs)
-                
+                logger.info("  Evaluation done in %.1fs", _time.time() - eval_start)
+
                 # Ensure all genomes have valid fitness values for NEAT
                 for genome_id, genome in self.population.items():
                     if genome.fitness is None or genome.fitness != genome.fitness:  # NaN check
                         genome.fitness = -1000.0  # Set a default poor fitness
-                
+
+                # Find best genome and report
+                valid_genomes = [g for g in self.population.values() if g.fitness is not None]
+                best_genome = max(valid_genomes, key=lambda g: g.fitness) if valid_genomes else None
+
+                fitnesses = [g.fitness for g in valid_genomes] if valid_genomes else []
+                logger.info("  Best fitness: %.4f | Mean: %.4f | Species: %d",
+                            best_genome.fitness if best_genome else 0,
+                            float(np.mean(fitnesses)) if fitnesses else 0,
+                            len(self.species.species) if self.species else 0)
+
+                # Track the best genome ever seen
+                if best_genome and (self.best_genome is None or best_genome.fitness > self.best_genome.fitness):
+                    self.best_genome = best_genome
+
+                # Early stopping via patience
+                if patience is not None and best_genome:
+                    if best_fitness_seen is None or best_genome.fitness > best_fitness_seen:
+                        best_fitness_seen = best_genome.fitness
+                        generations_without_improvement = 0
+                    else:
+                        generations_without_improvement += 1
+                    if generations_without_improvement >= patience:
+                        logger.info("  Early stopping: no improvement for %d generations", patience)
+                        self.reporters.post_evaluate(self.config, self.population, self.species, best_genome)
+                        break
+
+                self.reporters.post_evaluate(self.config, self.population, self.species, best_genome)
+
                 # Save genomes after evaluation with ancestry tracking
                 self._save_genomes(self.current_population_id, self.ancestry_reporter)
-                
+
                 # Save generation results
-                valid_genomes = [g for g in self.population.values() if g.fitness is not None]
-                if valid_genomes:
-                    best_genome = max(valid_genomes, key=lambda g: g.fitness)
+                if best_genome:
                     self._save_result('best_fitness', best_genome.fitness, generation)
-                    
+
                     # Check for completion
                     if self.config.fitness_threshold is not None:
                         if best_genome.fitness >= self.config.fitness_threshold:
+                            logger.info("  Fitness threshold reached!")
                             break
                 else:
                     # No valid fitness values, save 0 as best fitness
                     self._save_result('best_fitness', 0.0, generation)
-                
+
                 self._save_result('population_size', len(self.population), generation)
-                
+
                 # Create next generation
                 self.population = self.reproduction.reproduce(self.config, self.species,
                                                             self.config.pop_size, generation)
-                
+
                 # Check for extinction
                 if not self.species.species:
+                    logger.warning("  Complete extinction at generation %d", generation)
                     break
-                
+
+                # Re-speciate the new population
+                self.species.speciate(self.config, self.population, generation)
+
+                logger.info("  Generation %d complete in %.1fs", generation, _time.time() - gen_start)
+
                 generation += 1
                 
             except Exception as e:
@@ -289,11 +354,14 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                 raise e
         
         # Mark experiment as completed
+        logger.info("Evolution complete: %d generations, best fitness %.4f",
+                     generation + 1,
+                     self.best_genome.fitness if self.best_genome else 0)
         with db.session_scope() as session:
             experiment = session.get(Experiment, self.experiment_id)
             experiment.status = 'completed'
             experiment.end_time = datetime.utcnow()
-        
+
         # Return best genome
         return max(self.population.values(), key=lambda g: g.fitness or float('-inf'))
     
@@ -304,27 +372,33 @@ class DatabaseBackpropPopulation(BackpropPopulation):
     
     def _evaluate_population(self, fitness_function, nEpochs):
         """Evaluate population using backpropagation and fitness function"""
-        
+
         try:
             # First run backpropagation on the population
+            bp_start = _time.time()
+            logger.info("    Backpropagating %d genomes × %d epochs...",
+                        len(self.population), nEpochs)
             self.backpropagate(self.xs, self.ys, nEpochs=nEpochs)
-            
+            logger.info("    Backprop done in %.1fs", _time.time() - bp_start)
+
             # Then run the fitness function
+            fit_start = _time.time()
             fitness_function(self.population, self.config, self.xs, self.ys, self.device)
-            
+            logger.info("    Fitness eval done in %.1fs", _time.time() - fit_start)
+
             # Save training metrics for each genome (simplified)
             for genome_id, genome in self.population.items():
                 for epoch in range(nEpochs):
                     self._save_training_metrics(
-                        genome_id, 
+                        genome_id,
                         self.current_population_id,
                         epoch,
                         genome.fitness or 0,  # Use actual fitness after evaluation
                         {'epoch_fitness': genome.fitness or 0}
                     )
-                    
+
         except Exception as e:
-            print(f"Error evaluating population: {e}")
+            logger.exception("Error evaluating population")
             # Set all genome fitness to a small negative value on failure (not infinity)
             for genome_id, genome in self.population.items():
                 genome.fitness = -1000.0

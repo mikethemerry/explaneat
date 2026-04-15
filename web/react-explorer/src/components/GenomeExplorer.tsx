@@ -3,7 +3,6 @@ import {
   getCurrentModel,
   listOperations,
   listAnnotations,
-  addOperation,
   getNodeEvidenceInfo,
   type ModelState,
   type Operation,
@@ -15,6 +14,8 @@ import { DatasetInfoPanel } from "./DatasetInfoPanel";
 import { AnnotationListPanel } from "./AnnotationListPanel";
 import { EvidencePanel } from "./EvidencePanel";
 import { InputDistributionPanel } from "./InputDistributionPanel";
+import { RetrainPanel } from "./RetrainPanel";
+import { ConnectionInfoPanel } from "./ConnectionInfoPanel";
 
 // =============================================================================
 // Logging utilities
@@ -83,6 +84,34 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
     if (!model || selectedNodes.size !== 1) return false;
     const nodeId = Array.from(selectedNodes)[0];
     return model.metadata.output_nodes.includes(nodeId);
+  }, [model, selectedNodes]);
+
+  // Detect connected pair for connection info panel (includes disabled connections)
+  const connectionPair = useMemo(() => {
+    if (!model || selectedNodes.size !== 2) return null;
+    const [nodeA, nodeB] = Array.from(selectedNodes);
+
+    // Check A -> B
+    const connsAB = model.connections.filter(
+      c => c.from === nodeA && c.to === nodeB
+    );
+    if (connsAB.length > 0) {
+      const fromNode = model.nodes.find(n => n.id === nodeA);
+      const toNode = model.nodes.find(n => n.id === nodeB);
+      if (fromNode && toNode) return { fromNode, toNode, connections: connsAB };
+    }
+
+    // Check B -> A
+    const connsBA = model.connections.filter(
+      c => c.from === nodeB && c.to === nodeA
+    );
+    if (connsBA.length > 0) {
+      const fromNode = model.nodes.find(n => n.id === nodeB);
+      const toNode = model.nodes.find(n => n.id === nodeA);
+      if (fromNode && toNode) return { fromNode, toNode, connections: connsBA };
+    }
+
+    return null;
   }, [model, selectedNodes]);
 
   // Synthetic "whole model" annotation for evidence panel
@@ -249,11 +278,18 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
     if (nodeIds.length === 1 && model) {
       const node = model.nodes.find(n => n.id === nodeIds[0]);
       if (node?.type === "function" && node.function_metadata?.annotation_id) {
+        // function_metadata.annotation_id is the annotation NAME (e.g. "A1678"),
+        // but annotations[].id is the canonical ID (e.g. "ann_37").
+        // Resolve to canonical ID so the lookup in the render works.
+        const annNameOrId = node.function_metadata.annotation_id;
+        const matchedAnn = annotations.find(a => a.id === annNameOrId || a.name === annNameOrId);
+        const resolvedId = matchedAnn?.id ?? annNameOrId;
         logInfo("Auto-selecting annotation from function node", {
           nodeId: node.id,
-          annotationId: node.function_metadata.annotation_id,
+          annotationName: annNameOrId,
+          resolvedId,
         });
-        setSelectedAnnotationId(node.function_metadata.annotation_id);
+        setSelectedAnnotationId(resolvedId);
         setNodeEvidence(null);
         return;
       }
@@ -290,21 +326,7 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
     // Clear annotation and node evidence selection
     setSelectedAnnotationId(null);
     setNodeEvidence(null);
-  }, [model, genomeId]);
-
-  const handleConnectionToggle = useCallback(async (fromNode: string, toNode: string, currentlyEnabled: boolean) => {
-    try {
-      const opType = currentlyEnabled ? "disable_connection" : "enable_connection";
-      logInfo("Toggling connection", { fromNode, toNode, currentlyEnabled, opType });
-      await addOperation(genomeId, {
-        type: opType,
-        params: { from_node: fromNode, to_node: toNode },
-      });
-      handleOperationChange();
-    } catch (err) {
-      logError("Failed to toggle connection", err);
-    }
-  }, [genomeId, handleOperationChange]);
+  }, [model, genomeId, annotations]);
 
   const handleToggleCollapse = useCallback((annotationId: string) => {
     // Find annotation name from ID (server uses names for collapse)
@@ -378,6 +400,7 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
             selectedNodes={selectedNodes}
             model={model}
             annotations={annotations}
+            selectedAnnotationId={selectedAnnotationId}
             onOperationChange={handleOperationChange}
           />
           <AnnotationListPanel
@@ -389,21 +412,27 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
             genomeId={genomeId}
             onOperationChange={handleOperationChange}
           />
+          {model.metadata.has_non_identity_ops && (
+            <RetrainPanel
+              genomeId={genomeId}
+              experimentId={experimentId}
+              onOperationChange={handleOperationChange}
+            />
+          )}
         </div>
         <NetworkViewer
           model={model}
           selectedNodes={selectedNodes}
           onNodeSelect={handleNodeSelect}
           annotationNodeIds={annotationNodeIds}
-          onConnectionToggle={handleConnectionToggle}
         />
-        {selectedAnnotationId && annotations.find((a) => a.id === selectedAnnotationId) ? (
+        {selectedAnnotationId && annotations.find((a) => a.id === selectedAnnotationId || a.name === selectedAnnotationId) ? (
           <div className="right-panel">
             <EvidencePanel
               genomeId={genomeId}
               experimentId={experimentId}
               annotation={
-                annotations.find((a) => a.id === selectedAnnotationId)!
+                annotations.find((a) => a.id === selectedAnnotationId || a.name === selectedAnnotationId)!
               }
             />
           </div>
@@ -424,6 +453,14 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
               experimentId={experimentId}
               annotation={wholeModelAnnotation}
               isWholeModel
+            />
+          </div>
+        ) : connectionPair ? (
+          <div className="right-panel">
+            <ConnectionInfoPanel
+              fromNode={connectionPair.fromNode}
+              toNode={connectionPair.toNode}
+              connections={connectionPair.connections}
             />
           </div>
         ) : selectedInputNodes.length >= 1 && selectedInputNodes.length <= 2 ? (

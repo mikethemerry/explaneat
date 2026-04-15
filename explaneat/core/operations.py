@@ -26,6 +26,37 @@ class OperationError(Exception):
 
 
 # =============================================================================
+# Operation classification
+# =============================================================================
+
+IDENTITY_OPS = frozenset({
+    "split_node",
+    "consolidate_node",
+    "remove_node",
+    "add_node",
+    "add_identity_node",
+    "annotate",
+    "rename_node",
+    "rename_annotation",
+})
+"""Operations that restructure the network without changing its computed function."""
+
+NON_IDENTITY_OPS = frozenset({
+    "disable_connection",
+    "enable_connection",
+    "prune_node",
+    "prune_connection",
+    "retrain",
+})
+"""Operations that change the network's computed function."""
+
+
+def is_identity_op(op_type: str) -> bool:
+    """Return True if the operation preserves the network's function."""
+    return op_type in IDENTITY_OPS
+
+
+# =============================================================================
 # Validation
 # =============================================================================
 
@@ -373,6 +404,65 @@ def validate_operation(
                 errors.append("display_name cannot be empty")
             if isinstance(display_name, str) and " " in display_name:
                 errors.append("display_name cannot contain spaces (use camelCase)")
+
+    elif op_type == "prune_node":
+        node_id = params.get("node_id")
+        if not node_id:
+            errors.append("node_id is required")
+        elif node_id not in node_ids:
+            errors.append(f"Node {node_id} does not exist")
+        elif node_id in covered_nodes:
+            errors.append(f"Node {node_id} is covered by an annotation and cannot be pruned")
+        else:
+            node = model.get_node_by_id(node_id)
+            if node and node.type in (NodeType.INPUT, NodeType.OUTPUT):
+                errors.append(f"Cannot prune {node.type.value} node {node_id}")
+
+            # Check connectivity: must have exactly 1 enabled in, 1 enabled out
+            inputs = [c for c in model.get_connections_to(node_id) if c.enabled]
+            outputs = [c for c in model.get_connections_from(node_id) if c.enabled]
+            if len(inputs) != 1 or len(outputs) != 1:
+                errors.append(
+                    f"Prune requires exactly 1 input and 1 output "
+                    f"(node {node_id} has {len(inputs)} inputs, {len(outputs)} outputs)"
+                )
+
+            # Warn if node is entry/exit of any annotation
+            if existing_annotations:
+                for ann in existing_annotations:
+                    if node_id in ann.entry_nodes:
+                        errors.append(
+                            f"Node {node_id} is an entry node of annotation '{ann.name}'"
+                        )
+                    if node_id in ann.exit_nodes:
+                        errors.append(
+                            f"Node {node_id} is an exit node of annotation '{ann.name}'"
+                        )
+
+    elif op_type == "prune_connection":
+        from_node = params.get("from_node")
+        to_node = params.get("to_node")
+        if not from_node:
+            errors.append("from_node is required")
+        if not to_node:
+            errors.append("to_node is required")
+        if from_node and to_node:
+            if (from_node, to_node) in covered_connections:
+                errors.append(
+                    f"Connection [{from_node}, {to_node}] is covered by an annotation and cannot be pruned"
+                )
+            else:
+                conn = next(
+                    (c for c in model.connections
+                     if c.from_node == from_node and c.to_node == to_node),
+                    None,
+                )
+                if conn is None:
+                    errors.append(f"Connection [{from_node}, {to_node}] not found")
+
+    elif op_type == "retrain":
+        # Retrain operation — validated at a higher level (training pipeline)
+        pass
 
     else:
         errors.append(f"Unknown operation type: {op_type}")
@@ -1101,3 +1191,160 @@ def apply_rename_node(
 
     node.display_name = display_name
     return {"node_id": node_id, "display_name": display_name}
+
+
+def apply_prune_node(
+    model: NetworkStructure,
+    node_id: str,
+    covered_nodes: Set[str],
+) -> Dict[str, Any]:
+    """
+    Bypass a node by connecting its single input directly to its single output.
+
+    The node must have exactly one enabled input and one enabled output
+    connection. The bypass connection weight is the product of the two
+    original weights. This is a non-identity operation that changes the
+    network's computed function (the node's activation/bias are removed).
+
+    Args:
+        model: Network structure (modified in place)
+        node_id: ID of node to prune
+        covered_nodes: Nodes that cannot be modified
+
+    Returns:
+        Result dict with removed_nodes, created_connections, removed_connections
+    """
+    if node_id in covered_nodes:
+        raise OperationError(f"Node {node_id} is covered by annotation")
+
+    node = model.get_node_by_id(node_id)
+    if not node:
+        raise OperationError(f"Node {node_id} not found")
+
+    if node.type in (NodeType.INPUT, NodeType.OUTPUT):
+        raise OperationError(f"Cannot prune {node.type.value} node {node_id}")
+
+    # Get enabled connections
+    inputs = [c for c in model.get_connections_to(node_id) if c.enabled]
+    outputs = [c for c in model.get_connections_from(node_id) if c.enabled]
+
+    if len(inputs) != 1 or len(outputs) != 1:
+        raise OperationError(
+            f"Prune requires exactly 1 input and 1 output "
+            f"(node {node_id} has {len(inputs)} inputs, {len(outputs)} outputs)"
+        )
+
+    in_conn = inputs[0]
+    out_conn = outputs[0]
+
+    # Create bypass connection: weight = product of the two
+    new_weight = in_conn.weight * out_conn.weight
+    new_conn = NetworkConnection(
+        from_node=in_conn.from_node,
+        to_node=out_conn.to_node,
+        weight=new_weight,
+        enabled=True,
+        innovation=None,
+    )
+    model.connections.append(new_conn)
+
+    # Remove node and its connections
+    model.nodes = [n for n in model.nodes if n.id != node_id]
+    model.connections = [
+        c for c in model.connections
+        if c.from_node != node_id and c.to_node != node_id
+    ]
+
+    return {
+        "removed_nodes": [node_id],
+        "created_connections": [(in_conn.from_node, out_conn.to_node)],
+        "removed_connections": [
+            (in_conn.from_node, node_id),
+            (node_id, out_conn.to_node),
+        ],
+    }
+
+
+def apply_prune_connection(
+    model: NetworkStructure,
+    from_node: str,
+    to_node: str,
+    covered_connections: Set[Tuple[str, str]],
+) -> Dict[str, Any]:
+    """
+    Permanently remove a connection from the network.
+
+    Unlike disable_connection (which toggles the enabled flag and can be
+    reversed with enable_connection), prune_connection permanently removes
+    the connection from the structure. This is a non-identity operation.
+
+    Args:
+        model: Network structure (modified in place)
+        from_node: Source node ID
+        to_node: Target node ID
+        covered_connections: Connections protected by annotations
+
+    Returns:
+        Result dict with removed_connections
+
+    Raises:
+        OperationError: If connection not found or covered
+    """
+    if (from_node, to_node) in covered_connections:
+        raise OperationError(
+            f"Connection [{from_node}, {to_node}] is covered by an annotation and cannot be pruned"
+        )
+
+    conn = next(
+        (c for c in model.connections if c.from_node == from_node and c.to_node == to_node),
+        None,
+    )
+    if conn is None:
+        raise OperationError(f"Connection [{from_node}, {to_node}] not found")
+
+    # Remove the connection
+    model.connections = [
+        c for c in model.connections
+        if not (c.from_node == from_node and c.to_node == to_node)
+    ]
+
+    return {
+        "removed_connections": [(from_node, to_node)],
+    }
+
+
+def apply_retrain(
+    model: NetworkStructure,
+    weight_updates: Dict[Tuple[str, str], float],
+    bias_updates: Dict[str, float],
+) -> Dict[str, Any]:
+    """
+    Apply weight and bias updates from retraining to the network.
+
+    Args:
+        model: Network structure (modified in place)
+        weight_updates: Map of (from_node, to_node) -> new_weight
+        bias_updates: Map of node_id -> new_bias
+
+    Returns:
+        Result dict with counts of updated weights and biases
+    """
+    weights_updated = 0
+    for (from_node, to_node), new_weight in weight_updates.items():
+        for conn in model.connections:
+            if conn.from_node == from_node and conn.to_node == to_node:
+                conn.weight = new_weight
+                weights_updated += 1
+                break
+
+    biases_updated = 0
+    for node_id, new_bias in bias_updates.items():
+        node = model.get_node_by_id(node_id)
+        if node is not None:
+            node.bias = new_bias
+            biases_updated += 1
+
+    return {
+        "weights_updated": weights_updated,
+        "biases_updated": biases_updated,
+    }

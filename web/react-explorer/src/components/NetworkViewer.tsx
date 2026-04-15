@@ -64,7 +64,6 @@ type NetworkViewerProps = {
   selectedNodes: Set<string>;
   onNodeSelect: (nodeIds: string[]) => void;
   annotationNodeIds?: string[]; // IDs of synthetic annotation nodes
-  onConnectionToggle?: (fromNode: string, toNode: string, currentlyEnabled: boolean) => void;
 };
 
 // =============================================================================
@@ -634,7 +633,6 @@ export function NetworkViewer({
   selectedNodes,
   onNodeSelect,
   annotationNodeIds = [],
-  onConnectionToggle,
 }: NetworkViewerProps) {
   // Convert model to ReactFlow format with layer-based layout
   const { initialNodes, initialEdges } = useMemo(() => {
@@ -748,22 +746,15 @@ export function NetworkViewer({
     []
   );
 
-  // Handle edge click — toggle connection enabled/disabled
+  // Handle edge click — select the two endpoint nodes (shows connection info + operations)
   const onEdgeClick = useCallback(
     (_event: React.MouseEvent, edge: Edge) => {
-      logInfo("Edge clicked", { edgeId: edge.id, source: edge.source, target: edge.target });
-      if (!onConnectionToggle) return;
-      const conn = model.connections.find(
-        (c) => c.from === edge.source && c.to === edge.target
-      );
-      if (conn) {
-        logInfo("Toggling connection", { from: conn.from, to: conn.to, currentlyEnabled: conn.enabled });
-        onConnectionToggle(conn.from, conn.to, conn.enabled);
-      } else {
-        logWarn("Edge clicked but connection not found in model", { edgeId: edge.id });
+      logInfo("Edge clicked, selecting endpoint nodes", { edgeId: edge.id, source: edge.source, target: edge.target });
+      if (edge.source && edge.target) {
+        onNodeSelect([edge.source, edge.target]);
       }
     },
-    [onConnectionToggle, model.connections]
+    [onNodeSelect]
   );
 
   // MiniMap node color function

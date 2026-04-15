@@ -142,6 +142,63 @@ def get_numpy_activation(name: str) -> Callable:
 
 
 # =============================================================================
+# Torch activation functions (for TrainableStructureNetwork)
+# =============================================================================
+
+_TORCH_REGISTRY: Dict[str, Callable] = {}
+_torch_loaded = False
+
+
+def _load_torch_registry() -> None:
+    """Populate the torch registry. Called once on first access."""
+    global _torch_loaded
+    if _torch_loaded:
+        return
+
+    import torch
+
+    _TORCH_REGISTRY["sigmoid"] = torch.sigmoid
+    _TORCH_REGISTRY["tanh"] = torch.tanh
+    _TORCH_REGISTRY["sin"] = torch.sin
+    _TORCH_REGISTRY["gauss"] = lambda x: torch.exp(-(x ** 2))
+    _TORCH_REGISTRY["relu"] = torch.relu
+    _TORCH_REGISTRY["softplus"] = lambda x: torch.log1p(torch.exp(x))
+    _TORCH_REGISTRY["identity"] = lambda x: x
+    _TORCH_REGISTRY["clamped"] = lambda x: torch.clamp(x, -1.0, 1.0)
+    _TORCH_REGISTRY["inv"] = lambda x: torch.where(
+        torch.abs(x) < 1e-7, torch.zeros_like(x), 1.0 / torch.where(torch.abs(x) < 1e-7, torch.ones_like(x), x)
+    )
+    _TORCH_REGISTRY["log"] = lambda x: torch.where(x > 0, torch.log(torch.where(x > 0, x, torch.ones_like(x))), torch.zeros_like(x))
+    _TORCH_REGISTRY["exp"] = torch.exp
+    _TORCH_REGISTRY["abs"] = torch.abs
+    _TORCH_REGISTRY["hat"] = lambda x: torch.where(
+        (x >= 0) & (x <= 1), x,
+        torch.where((x > 1) & (x <= 2), 2.0 - x, torch.zeros_like(x))
+    )
+    _TORCH_REGISTRY["square"] = lambda x: x ** 2
+    _TORCH_REGISTRY["cube"] = lambda x: x ** 3
+
+    _torch_loaded = True
+
+
+def get_torch_activation(name: str) -> Callable:
+    """Return the torch activation function for *name*.
+
+    Torch is lazy-imported on first call to avoid import overhead when only
+    numpy activations are needed.
+
+    Raises KeyError if the activation name is not registered.
+    """
+    if name not in ACTIVATIONS:
+        raise KeyError(
+            f"Unknown activation {name!r}. "
+            f"Available: {sorted(ACTIVATIONS)}"
+        )
+    _load_torch_registry()
+    return _TORCH_REGISTRY[name]
+
+
+# =============================================================================
 # Sympy activation functions (lazy-loaded)
 # =============================================================================
 
