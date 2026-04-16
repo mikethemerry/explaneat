@@ -289,6 +289,103 @@ class ExperimentRunner:
             return True
         return False
 
+    async def resume(self, experiment_id: str, X_train, y_train,
+                     fitness_function: str, config_text: str,
+                     remaining_generations: int, n_epochs_backprop: int,
+                     split_id: str = None) -> str:
+        """Resume an interrupted experiment from its last saved generation.
+
+        Returns a job_id for polling progress.
+        """
+        job_id = str(uuid.uuid4())[:8]
+        progress = ExperimentProgress(
+            job_id=job_id,
+            total_generations=remaining_generations,
+        )
+        self._jobs[job_id] = progress
+
+        asyncio.create_task(
+            self._run_resume(
+                progress, experiment_id, config_text,
+                X_train, y_train, fitness_function,
+                remaining_generations, n_epochs_backprop, split_id,
+            )
+        )
+        return job_id
+
+    async def _run_resume(
+        self,
+        progress: ExperimentProgress,
+        experiment_id: str,
+        config_text: str,
+        X_train, y_train,
+        fitness_function: str,
+        remaining_generations: int,
+        n_epochs_backprop: int,
+        split_id: str,
+    ):
+        try:
+            progress.status = ExperimentStatus.RUNNING
+            await asyncio.to_thread(
+                self._resume_evolution_loop,
+                progress, experiment_id, config_text,
+                X_train, y_train, fitness_function,
+                remaining_generations, n_epochs_backprop, split_id,
+            )
+            progress.status = ExperimentStatus.COMPLETED
+            progress.experiment_id = experiment_id
+        except Exception as e:
+            logger.exception("Resume job %s failed", progress.job_id)
+            progress.status = ExperimentStatus.FAILED
+            progress.error = str(e)
+
+    @staticmethod
+    def _resume_evolution_loop(
+        progress: ExperimentProgress,
+        experiment_id: str,
+        config_text: str,
+        X_train, y_train,
+        fitness_function: str,
+        remaining_generations: int,
+        n_epochs_backprop: int,
+        split_id: str,
+    ):
+        """Run the resume loop in a thread pool."""
+        from ..core.config_utils import load_neat_config
+        from ..db.population import DatabaseBackpropPopulation
+        from ..db.base import db
+        from ..db.models import Experiment
+        from ..evaluators.evaluators import binary_cross_entropy, auc_fitness
+        from uuid import UUID as _UUID
+
+        fitness_fn_map = {
+            "bce": binary_cross_entropy,
+            "auc": auc_fitness,
+        }
+        fitness_fn = fitness_fn_map.get(fitness_function, binary_cross_entropy)
+
+        config = load_neat_config(config_text, None)
+
+        population = DatabaseBackpropPopulation.resume_from_db(
+            experiment_id, config, X_train, y_train,
+        )
+
+        # Set status back to running
+        with db.session_scope() as session:
+            exp = session.get(Experiment, _UUID(experiment_id))
+            if exp:
+                exp.status = "running"
+                exp.end_time = None
+
+        reporter = ProgressReporter(progress)
+        population.reporters.add(reporter)
+
+        population.run(
+            fitness_fn,
+            n=remaining_generations,
+            nEpochs=n_epochs_backprop,
+        )
+
 
 # Singleton instance
 experiment_runner = ExperimentRunner()

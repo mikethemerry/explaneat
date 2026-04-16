@@ -594,6 +594,79 @@ async def cancel_experiment(job_id: str):
     return {"status": status, "message": "Cannot cancel job in current state"}
 
 
+@router.post("/{experiment_id}/resume", response_model=ExperimentCreateResponse)
+async def resume_experiment(
+    experiment_id: UUID,
+    db_session: Session = Depends(get_db),
+):
+    """Resume an interrupted experiment from the last saved generation."""
+    from ..experiment_runner import experiment_runner
+    from ...db.population import compute_remaining_generations, DatabaseBackpropPopulation
+
+    experiment = db_session.get(Experiment, experiment_id)
+    if not experiment:
+        raise HTTPException(status_code=404, detail="Experiment not found")
+    if experiment.status != "interrupted":
+        raise HTTPException(
+            status_code=400,
+            detail=f"Experiment is '{experiment.status}', only 'interrupted' can be resumed",
+        )
+
+    resolved = (experiment.config_json or {}).get("resolved_config") or {}
+    training = resolved.get("training", {})
+    target_generations = training.get("n_generations", 10)
+    n_epochs_backprop = training.get("n_epochs_backprop", 5)
+    fitness_function = training.get("fitness_function", "bce")
+
+    last_gen = DatabaseBackpropPopulation._get_latest_generation(str(experiment_id))
+    if last_gen is None:
+        raise HTTPException(
+            status_code=400,
+            detail="No saved generations found; cannot resume",
+        )
+
+    remaining = compute_remaining_generations(last_gen, target_generations)
+    if remaining == 0:
+        experiment.status = "completed"
+        db_session.commit()
+        return ExperimentCreateResponse(job_id="")
+
+    if not experiment.dataset_id or not experiment.split_id:
+        raise HTTPException(status_code=400, detail="Experiment missing dataset or split")
+
+    dataset = db_session.get(Dataset, experiment.dataset_id)
+    split = db_session.get(DatasetSplit, experiment.split_id)
+    if not dataset or not split:
+        raise HTTPException(status_code=400, detail="Dataset or split not found")
+
+    data = dataset.get_data()
+    if data is None:
+        raise HTTPException(status_code=400, detail="Dataset has no stored data")
+    X_full, y_full = data
+    import numpy as np
+    X_train = X_full[split.train_indices or []]
+    y_train = y_full[split.train_indices or []]
+
+    # Apply stored scaler if present
+    if split.scaler_type == "StandardScaler" and split.scaler_params:
+        mean = np.array(split.scaler_params["mean"])
+        scale = np.array(split.scaler_params["scale"])
+        X_train = (X_train - mean) / scale
+
+    job_id = await experiment_runner.resume(
+        experiment_id=str(experiment_id),
+        X_train=X_train,
+        y_train=y_train,
+        fitness_function=fitness_function,
+        config_text=experiment.neat_config_text,
+        remaining_generations=remaining,
+        n_epochs_backprop=n_epochs_backprop,
+        split_id=str(experiment.split_id),
+    )
+
+    return ExperimentCreateResponse(job_id=job_id)
+
+
 def _default_neat_config_text(num_inputs: int, num_outputs: int, pop_size: int) -> str:
     """Generate a minimal NEAT config text for experiment creation."""
     return f"""[NEAT]
