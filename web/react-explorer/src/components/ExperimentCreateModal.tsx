@@ -2,11 +2,16 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import {
   listDatasets,
   listSplits,
+  listConfigTemplates,
+  createConfigTemplate,
   createAndRunExperiment,
   getExperimentProgress,
   type DatasetResponse,
   type SplitResponse,
   type ExperimentProgressResponse,
+  type ConfigTemplateResponse,
+  type ResolvedConfig,
+  type ExperimentCreateRequest,
 } from "../api/client";
 
 type ExperimentCreateModalProps = {
@@ -23,11 +28,11 @@ export function ExperimentCreateModal({ onComplete, onClose }: ExperimentCreateM
   const [splits, setSplits] = useState<SplitResponse[]>([]);
   const [selectedSplitId, setSelectedSplitId] = useState<string | null>(null);
 
-  // Config
-  const [nGenerations, setNGenerations] = useState(10);
-  const [nEpochs, setNEpochs] = useState(5);
-  const [popSize, setPopSize] = useState(150);
-  const [fitnessFunction, setFitnessFunction] = useState<"bce" | "auc">("bce");
+  // Config templates + resolved config
+  const [templates, setTemplates] = useState<ConfigTemplateResponse[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [config, setConfig] = useState<ResolvedConfig | null>(null);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   // Progress
   const [jobId, setJobId] = useState<string | null>(null);
@@ -43,6 +48,20 @@ export function ExperimentCreateModal({ onComplete, onClose }: ExperimentCreateM
         setDatasets(resp.datasets.filter(d => d.has_data));
       })
       .catch(() => setError("Failed to load datasets"));
+  }, []);
+
+  // Load config templates on mount
+  useEffect(() => {
+    listConfigTemplates()
+      .then((res) => {
+        setTemplates(res.templates);
+        const defaultT = res.templates.find(t => t.name === "Default") || res.templates[0];
+        if (defaultT) {
+          setSelectedTemplateId(defaultT.id);
+          setConfig(JSON.parse(JSON.stringify(defaultT.config)));
+        }
+      })
+      .catch(() => setError("Failed to load templates"));
   }, []);
 
   // Load splits when dataset changes
@@ -69,22 +88,79 @@ export function ExperimentCreateModal({ onComplete, onClose }: ExperimentCreateM
     };
   }, []);
 
+  const onTemplateChange = (id: string) => {
+    const t = templates.find(t => t.id === id);
+    if (!t) return;
+    setSelectedTemplateId(id);
+    setConfig(JSON.parse(JSON.stringify(t.config))); // deep copy
+  };
+
+  const handleSaveAsTemplate = async () => {
+    if (!config) return;
+    const templateName = prompt("Template name?");
+    if (!templateName) return;
+    try {
+      const newTemplate = await createConfigTemplate(templateName, config);
+      setTemplates([...templates, newTemplate]);
+      setSelectedTemplateId(newTemplate.id);
+    } catch {
+      setError("Failed to save template");
+    }
+  };
+
+  const renderNumberField = (
+    label: string,
+    group: "training" | "neat" | "backprop",
+    key: string,
+    min: number,
+    step: number,
+  ) => {
+    if (!config) return null;
+    const value = (config[group] as Record<string, unknown>)[key] as number;
+    return (
+      <div
+        key={`${group}.${key}`}
+        style={{ display: "grid", gridTemplateColumns: "1fr 110px", alignItems: "center", gap: "8px", marginBottom: "6px" }}
+      >
+        <label style={{ fontSize: "12px", color: "#374151" }}>{label}</label>
+        <input
+          type="number"
+          min={min}
+          step={step}
+          value={value}
+          onChange={(e) => {
+            const newValue = step >= 1 ? parseInt(e.target.value) : parseFloat(e.target.value);
+            setConfig({
+              ...config,
+              [group]: { ...config[group], [key]: isNaN(newValue) ? 0 : newValue },
+            });
+          }}
+          style={{ width: "100%", padding: "4px", fontSize: "12px", boxSizing: "border-box" }}
+        />
+      </div>
+    );
+  };
+
   const handleStart = useCallback(async () => {
     if (!name.trim() || !selectedDatasetId || !selectedSplitId) return;
     setError(null);
     setLoading(true);
 
     try {
-      const resp = await createAndRunExperiment({
+      const request: ExperimentCreateRequest = {
         name: name.trim(),
         description,
         dataset_id: selectedDatasetId,
         dataset_split_id: selectedSplitId,
-        n_generations: nGenerations,
-        n_epochs_backprop: nEpochs,
-        population_size: popSize,
-        fitness_function: fitnessFunction,
-      });
+        config_template_id: selectedTemplateId || undefined,
+        config_overrides: config || undefined,
+        // Keep the legacy fields for backwards compat (they'll be ignored by backend)
+        n_generations: config?.training.n_generations ?? 10,
+        n_epochs_backprop: config?.training.n_epochs_backprop ?? 5,
+        population_size: config?.training.population_size ?? 150,
+        fitness_function: config?.training.fitness_function ?? "bce",
+      };
+      const resp = await createAndRunExperiment(request);
       setJobId(resp.job_id);
 
       // Start polling
@@ -110,7 +186,7 @@ export function ExperimentCreateModal({ onComplete, onClose }: ExperimentCreateM
     } finally {
       setLoading(false);
     }
-  }, [name, description, selectedDatasetId, selectedSplitId, nGenerations, nEpochs, popSize, fitnessFunction, onComplete]);
+  }, [name, description, selectedDatasetId, selectedSplitId, selectedTemplateId, config, onComplete]);
 
   const isRunning = progress?.status === "running" || progress?.status === "pending";
   const isCompleted = progress?.status === "completed";
@@ -175,6 +251,23 @@ export function ExperimentCreateModal({ onComplete, onClose }: ExperimentCreateM
               />
             </div>
 
+            {/* Template */}
+            <div style={{ marginBottom: "12px" }}>
+              <label style={{ display: "block", marginBottom: "4px", fontWeight: 500, fontSize: "13px" }}>
+                Template
+              </label>
+              <select
+                value={selectedTemplateId || ""}
+                onChange={(e) => onTemplateChange(e.target.value)}
+                style={{ width: "100%", padding: "6px", fontSize: "13px" }}
+              >
+                {templates.length === 0 && <option value="">Loading...</option>}
+                {templates.map((t) => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+            </div>
+
             {/* Dataset */}
             <div style={{ marginBottom: "12px" }}>
               <label style={{ display: "block", marginBottom: "4px", fontWeight: 500, fontSize: "13px" }}>
@@ -220,52 +313,90 @@ export function ExperimentCreateModal({ onComplete, onClose }: ExperimentCreateM
               </div>
             )}
 
-            {/* Config */}
+            {/* Advanced Config */}
             <div style={{ marginBottom: "12px" }}>
-              <div style={{ fontWeight: 500, fontSize: "13px", marginBottom: "8px" }}>Configuration</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "11px", color: "#64748b" }}>Generations</label>
-                  <input
-                    type="number"
-                    value={nGenerations}
-                    onChange={(e) => setNGenerations(Math.max(1, parseInt(e.target.value) || 1))}
-                    min={1}
-                    style={{ width: "100%", padding: "4px", fontSize: "12px", boxSizing: "border-box" }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "11px", color: "#64748b" }}>Backprop Epochs</label>
-                  <input
-                    type="number"
-                    value={nEpochs}
-                    onChange={(e) => setNEpochs(Math.max(0, parseInt(e.target.value) || 0))}
-                    min={0}
-                    style={{ width: "100%", padding: "4px", fontSize: "12px", boxSizing: "border-box" }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "11px", color: "#64748b" }}>Population Size</label>
-                  <input
-                    type="number"
-                    value={popSize}
-                    onChange={(e) => setPopSize(Math.max(2, parseInt(e.target.value) || 2))}
-                    min={2}
-                    style={{ width: "100%", padding: "4px", fontSize: "12px", boxSizing: "border-box" }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "11px", color: "#64748b" }}>Fitness Function</label>
-                  <select
-                    value={fitnessFunction}
-                    onChange={(e) => setFitnessFunction(e.target.value as "bce" | "auc")}
-                    style={{ width: "100%", padding: "4px", fontSize: "12px" }}
+              <button
+                type="button"
+                className="op-btn"
+                onClick={() => setAdvancedOpen(!advancedOpen)}
+                style={{ marginBottom: "0.5rem" }}
+              >
+                {advancedOpen ? "▼" : "▶"} Advanced Config
+              </button>
+
+              {advancedOpen && config && (
+                <div style={{ marginTop: "0.5rem", padding: "0.75rem", border: "1px solid #e5e7eb", borderRadius: "0.375rem" }}>
+                  <h4 style={{ marginTop: 0, fontSize: "13px" }}>Training</h4>
+                  {renderNumberField("Population size", "training", "population_size", 1, 1)}
+                  {renderNumberField("Generations", "training", "n_generations", 1, 1)}
+                  {renderNumberField("Backprop epochs per generation", "training", "n_epochs_backprop", 0, 1)}
+                  <div
+                    style={{ display: "grid", gridTemplateColumns: "1fr 110px", alignItems: "center", gap: "8px", marginBottom: "6px" }}
                   >
-                    <option value="bce">MSE-based (1/loss)</option>
-                    <option value="auc">AUC</option>
-                  </select>
+                    <label style={{ fontSize: "12px", color: "#374151" }}>Fitness function</label>
+                    <select
+                      value={config.training.fitness_function}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        training: { ...config.training, fitness_function: e.target.value as "bce" | "auc" },
+                      })}
+                      style={{ width: "100%", padding: "4px", fontSize: "12px" }}
+                    >
+                      <option value="bce">BCE (1/loss)</option>
+                      <option value="auc">AUC</option>
+                    </select>
+                  </div>
+
+                  <h4 style={{ fontSize: "13px" }}>NEAT Mutation & Topology</h4>
+                  {renderNumberField("Bias mutate rate", "neat", "bias_mutate_rate", 0, 0.01)}
+                  {renderNumberField("Bias mutate power", "neat", "bias_mutate_power", 0, 0.01)}
+                  {renderNumberField("Bias replace rate", "neat", "bias_replace_rate", 0, 0.01)}
+                  {renderNumberField("Weight mutate rate", "neat", "weight_mutate_rate", 0, 0.01)}
+                  {renderNumberField("Weight mutate power", "neat", "weight_mutate_power", 0, 0.01)}
+                  {renderNumberField("Weight replace rate", "neat", "weight_replace_rate", 0, 0.01)}
+                  {renderNumberField("Enabled mutate rate", "neat", "enabled_mutate_rate", 0, 0.001)}
+                  {renderNumberField("Node add prob", "neat", "node_add_prob", 0, 0.01)}
+                  {renderNumberField("Node delete prob", "neat", "node_delete_prob", 0, 0.01)}
+                  {renderNumberField("Conn add prob", "neat", "conn_add_prob", 0, 0.01)}
+                  {renderNumberField("Conn delete prob", "neat", "conn_delete_prob", 0, 0.01)}
+                  {renderNumberField("Compatibility threshold", "neat", "compatibility_threshold", 0, 0.1)}
+                  {renderNumberField("Compatibility disjoint coef", "neat", "compatibility_disjoint_coefficient", 0, 0.1)}
+                  {renderNumberField("Compatibility weight coef", "neat", "compatibility_weight_coefficient", 0, 0.1)}
+                  {renderNumberField("Max stagnation", "neat", "max_stagnation", 1, 1)}
+                  {renderNumberField("Species elitism", "neat", "species_elitism", 0, 1)}
+                  {renderNumberField("Elitism", "neat", "elitism", 0, 1)}
+                  {renderNumberField("Survival threshold", "neat", "survival_threshold", 0, 0.05)}
+
+                  <h4 style={{ fontSize: "13px" }}>Backprop</h4>
+                  {renderNumberField("Learning rate", "backprop", "learning_rate", 0, 0.01)}
+                  <div
+                    style={{ display: "grid", gridTemplateColumns: "1fr 110px", alignItems: "center", gap: "8px", marginBottom: "6px" }}
+                  >
+                    <label style={{ fontSize: "12px", color: "#374151" }}>Optimizer</label>
+                    <select
+                      value={config.backprop.optimizer}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        backprop: { ...config.backprop, optimizer: e.target.value },
+                      })}
+                      style={{ width: "100%", padding: "4px", fontSize: "12px" }}
+                    >
+                      <option value="adadelta">Adadelta</option>
+                      <option value="adam">Adam</option>
+                      <option value="sgd">SGD</option>
+                    </select>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="op-btn"
+                    onClick={handleSaveAsTemplate}
+                    style={{ marginTop: "0.75rem" }}
+                  >
+                    Save as new template
+                  </button>
                 </div>
-              </div>
+              )}
             </div>
 
             {selectedDataset && (
@@ -312,7 +443,7 @@ export function ExperimentCreateModal({ onComplete, onClose }: ExperimentCreateM
                 {isRunning ? "Running..." : isCompleted ? "Experiment Complete!" : isFailed ? "Failed" : progress?.status || "Starting..."}
               </span>
               <span style={{ fontSize: "11px", color: "#64748b" }}>
-                Gen {progress?.current_generation || 0}/{progress?.total_generations || nGenerations}
+                Gen {progress?.current_generation || 0}/{progress?.total_generations || (config?.training.n_generations ?? 10)}
               </span>
             </div>
 
