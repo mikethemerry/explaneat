@@ -11,11 +11,11 @@ import copy
 
 import logging
 
+from .device import get_device
+
 
 def tt(num):
-    USE_CUDA = True and torch.cuda.is_available()
-    # USE_CUDA = False
-    device = torch.device("cuda:1" if USE_CUDA else "cpu")
+    device = get_device()
 
     # if torch.cuda.is_available():
     # return nn.Parameter(torch.tensor([float(num)], requires_grad=True).cuda())
@@ -32,9 +32,7 @@ class NeatNetSparseDense:
         self.input_keys = self.config.genome_config.input_keys
         self.output_keys = self.config.genome_config.output_keys
 
-        USE_CUDA = True and torch.cuda.is_available()
-        # USE_CUDA = False
-        device = torch.device("cuda:1" if USE_CUDA else "cpu")
+        device = get_device()
 
     def forward(self, inputs):
         pass
@@ -109,9 +107,7 @@ class NeatNet:
             self.connections_by_output[k[1]][k] = c
         self.order_of_nodes = self.get_order_of_nodes()
 
-        USE_CUDA = True and torch.cuda.is_available()
-        # USE_CUDA = False
-        device = torch.device("cuda:1" if USE_CUDA else "cpu")
+        device = get_device()
 
         self.optimizer = optim.Adadelta(self.params, lr=1.5)
         self.criterion = criterion.to(device)
@@ -148,9 +144,7 @@ class NeatNet:
 
     def activateNode(self, node):
 
-        USE_CUDA = True and torch.cuda.is_available()
-        # USE_CUDA = False
-        device = torch.device("cuda:1" if USE_CUDA else "cpu")
+        device = get_device()
 
         vals = []
         # handler for if the output is not connected
@@ -204,9 +198,7 @@ class NeatNet:
 
     def optimise(self, xs, ys, nEpochs=100):
 
-        USE_CUDA = True and torch.cuda.is_available()
-        # USE_CUDA = False
-        device = torch.device("cuda:1" if USE_CUDA else "cpu")
+        device = get_device()
         if not type(xs) is torch.Tensor:
             xs = torch.tensor(xs).to(device)
         if not type(ys) is torch.Tensor:

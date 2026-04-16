@@ -18,6 +18,7 @@ import torch.optim as optim
 
 
 from explaneat.core.backprop import NeatNet as nneat
+from explaneat.core.device import get_device
 
 from explaneat.core.errors import GenomeNotValidError
 
@@ -58,9 +59,7 @@ class BackpropPopulation(Population):
         self.reporters = ReporterSet()
         self.config = config
 
-        USE_CUDA = True and torch.cuda.is_available()
-        # USE_CUDA = False
-        self.device = torch.device("cuda:1" if USE_CUDA else "cpu")
+        self.device = get_device()
         print(f"Using device: {self.device}")
 
         if not type(xs) is torch.Tensor:

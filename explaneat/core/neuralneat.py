@@ -1,4 +1,5 @@
 from explaneat.core.errors import GenomeNotValidError
+from explaneat.core.device import get_device
 import pandas as pd
 import numpy as np
 import random
@@ -56,10 +57,7 @@ class NeuralNeat(nn.Module):
         if not self.valid_nodes:
             raise GenomeNotValidError("No valid nodes found in genome")
 
-        USE_CUDA = True and torch.cuda.is_available()
-        # USE_CUDA = False
-
-        self.device = torch.device("cuda:1" if USE_CUDA else "cpu")
+        self.device = get_device()
 
         try:
             layers, node_tracker = self.parse_genome_to_layers(genome, config)
@@ -440,9 +438,7 @@ class NeuralNeat(nn.Module):
                     # return self._outputs[layer_id]
 
     def optimise(self, xs, ys, nEpochs=100):
-        USE_CUDA = True and torch.cuda.is_available()
-        # USE_CUDA = False
-        device = torch.device("cuda:1" if USE_CUDA else "cpu")
+        device = get_device()
         if not type(xs) is torch.Tensor:
             xs = torch.tensor(xs).to(device)
         if not type(ys) is torch.Tensor:
