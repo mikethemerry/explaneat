@@ -25,7 +25,9 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                  experiment_name: str = None,
                  dataset_name: str = None, description: str = None,
                  database_url: str = None, ancestry_reporter=None,
-                 dataset_id: str = None, config_template_id: str = None):
+                 dataset_id: str = None, config_template_id: str = None,
+                 initial_state=None,
+                 _existing_experiment_id: Optional[str] = None):
         """
         Initialize population with database tracking
 
@@ -42,8 +44,14 @@ class DatabaseBackpropPopulation(BackpropPopulation):
             ancestry_reporter: Optional AncestryReporter for parent tracking
             dataset_id: Optional database ID of the dataset
             config_template_id: Optional database ID of the ConfigTemplate used
+            initial_state: Optional (population_dict, species, generation) tuple
+                for resuming from a prior state. Passed through to the parent
+                BackpropPopulation constructor.
+            _existing_experiment_id: Optional experiment UUID to reuse instead
+                of creating a new Experiment row. Used by ``resume_from_db``.
         """
-        super().__init__(config, x_train, y_train, xs_val=xs_val, ys_val=ys_val)
+        super().__init__(config, x_train, y_train, xs_val=xs_val, ys_val=ys_val,
+                         initial_state=initial_state)
 
         # Initialize database connection
         if database_url:
@@ -51,19 +59,22 @@ class DatabaseBackpropPopulation(BackpropPopulation):
         else:
             db.init_db()
 
-        # Create experiment record and store ID
-        self.experiment_id = self._create_experiment(
-            experiment_name or f"NEAT_Experiment_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-            dataset_name,
-            description,
-            config,
-            dataset_id=dataset_id,
-            config_template_id=config_template_id,
-        )
+        # Create or reuse experiment record
+        if _existing_experiment_id:
+            self.experiment_id = _existing_experiment_id
+        else:
+            self.experiment_id = self._create_experiment(
+                experiment_name or f"NEAT_Experiment_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                dataset_name,
+                description,
+                config,
+                dataset_id=dataset_id,
+                config_template_id=config_template_id,
+            )
 
         # Track current population and generation
         self.current_population_id = None
-        self.current_generation = 0
+        self.current_generation = initial_state[2] if initial_state else 0
 
         # Store ancestry reporter for parent tracking
         self.ancestry_reporter = ancestry_reporter
@@ -132,6 +143,55 @@ class DatabaseBackpropPopulation(BackpropPopulation):
 
         return experiment_id
     
+    @classmethod
+    def resume_from_db(cls, experiment_id: str, config, x_train, y_train,
+                       xs_val=None, ys_val=None, **kwargs) -> "DatabaseBackpropPopulation":
+        """Reconstruct a population from the latest saved generation.
+
+        Loads all genomes from the highest-generation Population row for the
+        experiment, deserializes them into a NEAT population dict, re-speciates,
+        and returns an instance ready to continue evolving.
+
+        The existing experiment_id is reused — no new Experiment row is created.
+        """
+        from .serialization import deserialize_genome
+        from .models import Population, Genome
+
+        last_gen = cls._get_latest_generation(experiment_id)
+        if last_gen is None:
+            raise ValueError(
+                f"No saved populations found for experiment {experiment_id}"
+            )
+
+        with db.session_scope() as session:
+            pop_row = (
+                session.query(Population)
+                .filter_by(experiment_id=uuid.UUID(experiment_id), generation=last_gen)
+                .first()
+            )
+            if not pop_row:
+                raise ValueError(
+                    f"Population row not found for experiment {experiment_id} gen {last_gen}"
+                )
+
+            genome_rows = session.query(Genome).filter_by(population_id=pop_row.id).all()
+            population_dict = {}
+            for g in genome_rows:
+                neat_genome = deserialize_genome(g.genome_data, config)
+                population_dict[neat_genome.key] = neat_genome
+
+        # Build species set fresh — accepts loss of species continuity per design
+        species = config.species_set_type(config.species_set_config, None)
+        species.speciate(config, population_dict, last_gen + 1)
+
+        initial_state = (population_dict, species, last_gen + 1)
+        return cls(
+            config, x_train, y_train, xs_val=xs_val, ys_val=ys_val,
+            initial_state=initial_state,
+            _existing_experiment_id=experiment_id,
+            **kwargs,
+        )
+
     @staticmethod
     def _get_latest_generation(experiment_id: str) -> Optional[int]:
         """Return the highest generation number saved for an experiment.
