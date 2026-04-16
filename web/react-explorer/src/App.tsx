@@ -3,10 +3,12 @@ import { ExperimentList } from "./components/ExperimentList";
 import { GenomeExplorer } from "./components/GenomeExplorer";
 import { NavBar } from "./components/NavBar";
 import { DatasetList } from "./components/DatasetList";
+import { TemplatesPage } from "./components/TemplatesPage";
 
 type View =
   | { type: "experiments" }
   | { type: "datasets" }
+  | { type: "templates" }
   | { type: "genome"; genomeId: string; experimentId: string; experimentName: string };
 
 export default function App() {
@@ -35,8 +37,10 @@ export default function App() {
             setView({ type: "genome", genomeId, experimentId, experimentName })
           }
         />
-      ) : (
+      ) : view.type === "datasets" ? (
         <DatasetList />
+      ) : (
+        <TemplatesPage />
       )}
     </>
   );

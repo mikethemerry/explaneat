@@ -13,6 +13,7 @@ import {
   type ResolvedConfig,
   type ExperimentCreateRequest,
 } from "../api/client";
+import { ConfigEditor } from "./ConfigEditor";
 
 type ExperimentCreateModalProps = {
   onComplete: () => void;
@@ -106,39 +107,6 @@ export function ExperimentCreateModal({ onComplete, onClose }: ExperimentCreateM
     } catch {
       setError("Failed to save template");
     }
-  };
-
-  const renderNumberField = (
-    label: string,
-    group: "training" | "neat" | "backprop",
-    key: string,
-    min: number,
-    step: number,
-  ) => {
-    if (!config) return null;
-    const value = (config[group] as Record<string, unknown>)[key] as number;
-    return (
-      <div
-        key={`${group}.${key}`}
-        style={{ display: "grid", gridTemplateColumns: "1fr 110px", alignItems: "center", gap: "8px", marginBottom: "6px" }}
-      >
-        <label style={{ fontSize: "12px", color: "#374151" }}>{label}</label>
-        <input
-          type="number"
-          min={min}
-          step={step}
-          value={value}
-          onChange={(e) => {
-            const newValue = step >= 1 ? parseInt(e.target.value) : parseFloat(e.target.value);
-            setConfig({
-              ...config,
-              [group]: { ...config[group], [key]: isNaN(newValue) ? 0 : newValue },
-            });
-          }}
-          style={{ width: "100%", padding: "4px", fontSize: "12px", boxSizing: "border-box" }}
-        />
-      </div>
-    );
   };
 
   const handleStart = useCallback(async () => {
@@ -326,67 +294,7 @@ export function ExperimentCreateModal({ onComplete, onClose }: ExperimentCreateM
 
               {advancedOpen && config && (
                 <div style={{ marginTop: "0.5rem", padding: "0.75rem", border: "1px solid #e5e7eb", borderRadius: "0.375rem" }}>
-                  <h4 style={{ marginTop: 0, fontSize: "13px" }}>Training</h4>
-                  {renderNumberField("Population size", "training", "population_size", 1, 1)}
-                  {renderNumberField("Generations", "training", "n_generations", 1, 1)}
-                  {renderNumberField("Backprop epochs per generation", "training", "n_epochs_backprop", 0, 1)}
-                  <div
-                    style={{ display: "grid", gridTemplateColumns: "1fr 110px", alignItems: "center", gap: "8px", marginBottom: "6px" }}
-                  >
-                    <label style={{ fontSize: "12px", color: "#374151" }}>Fitness function</label>
-                    <select
-                      value={config.training.fitness_function}
-                      onChange={(e) => setConfig({
-                        ...config,
-                        training: { ...config.training, fitness_function: e.target.value as "bce" | "auc" },
-                      })}
-                      style={{ width: "100%", padding: "4px", fontSize: "12px" }}
-                    >
-                      <option value="bce">BCE (1/loss)</option>
-                      <option value="auc">AUC</option>
-                    </select>
-                  </div>
-
-                  <h4 style={{ fontSize: "13px" }}>NEAT Mutation & Topology</h4>
-                  {renderNumberField("Bias mutate rate", "neat", "bias_mutate_rate", 0, 0.01)}
-                  {renderNumberField("Bias mutate power", "neat", "bias_mutate_power", 0, 0.01)}
-                  {renderNumberField("Bias replace rate", "neat", "bias_replace_rate", 0, 0.01)}
-                  {renderNumberField("Weight mutate rate", "neat", "weight_mutate_rate", 0, 0.01)}
-                  {renderNumberField("Weight mutate power", "neat", "weight_mutate_power", 0, 0.01)}
-                  {renderNumberField("Weight replace rate", "neat", "weight_replace_rate", 0, 0.01)}
-                  {renderNumberField("Enabled mutate rate", "neat", "enabled_mutate_rate", 0, 0.001)}
-                  {renderNumberField("Node add prob", "neat", "node_add_prob", 0, 0.01)}
-                  {renderNumberField("Node delete prob", "neat", "node_delete_prob", 0, 0.01)}
-                  {renderNumberField("Conn add prob", "neat", "conn_add_prob", 0, 0.01)}
-                  {renderNumberField("Conn delete prob", "neat", "conn_delete_prob", 0, 0.01)}
-                  {renderNumberField("Compatibility threshold", "neat", "compatibility_threshold", 0, 0.1)}
-                  {renderNumberField("Compatibility disjoint coef", "neat", "compatibility_disjoint_coefficient", 0, 0.1)}
-                  {renderNumberField("Compatibility weight coef", "neat", "compatibility_weight_coefficient", 0, 0.1)}
-                  {renderNumberField("Max stagnation", "neat", "max_stagnation", 1, 1)}
-                  {renderNumberField("Species elitism", "neat", "species_elitism", 0, 1)}
-                  {renderNumberField("Elitism", "neat", "elitism", 0, 1)}
-                  {renderNumberField("Survival threshold", "neat", "survival_threshold", 0, 0.05)}
-
-                  <h4 style={{ fontSize: "13px" }}>Backprop</h4>
-                  {renderNumberField("Learning rate", "backprop", "learning_rate", 0, 0.01)}
-                  <div
-                    style={{ display: "grid", gridTemplateColumns: "1fr 110px", alignItems: "center", gap: "8px", marginBottom: "6px" }}
-                  >
-                    <label style={{ fontSize: "12px", color: "#374151" }}>Optimizer</label>
-                    <select
-                      value={config.backprop.optimizer}
-                      onChange={(e) => setConfig({
-                        ...config,
-                        backprop: { ...config.backprop, optimizer: e.target.value },
-                      })}
-                      style={{ width: "100%", padding: "4px", fontSize: "12px" }}
-                    >
-                      <option value="adadelta">Adadelta</option>
-                      <option value="adam">Adam</option>
-                      <option value="sgd">SGD</option>
-                    </select>
-                  </div>
-
+                  <ConfigEditor config={config} onChange={setConfig} />
                   <button
                     type="button"
                     className="op-btn"
