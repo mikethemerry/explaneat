@@ -852,3 +852,34 @@ class ErrorResponse(BaseModel):
 
     detail: str
     error_code: Optional[str] = None
+
+
+# =============================================================================
+# Config template schemas
+# =============================================================================
+
+
+class ConfigTemplateResponse(BaseModel):
+    id: str
+    name: str
+    description: Optional[str] = None
+    config: Dict[str, Any]
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class ConfigTemplateListResponse(BaseModel):
+    templates: List[ConfigTemplateResponse]
+    total: int
+
+
+class ConfigTemplateCreateRequest(BaseModel):
+    name: str
+    description: Optional[str] = None
+    config: Dict[str, Any]
+
+
+class ConfigTemplateUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    config: Optional[Dict[str, Any]] = None

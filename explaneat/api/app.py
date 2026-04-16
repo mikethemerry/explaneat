@@ -5,7 +5,7 @@ FastAPI application for ExplaNEAT.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routes import experiments, genomes, operations, analysis, datasets, evidence, training
+from .routes import experiments, genomes, operations, analysis, datasets, evidence, training, config_templates
 
 
 def create_app() -> FastAPI:
@@ -64,6 +64,11 @@ def create_app() -> FastAPI:
         training.router,
         prefix="/api/genomes/{genome_id}",
         tags=["training"],
+    )
+    app.include_router(
+        config_templates.router,
+        prefix="/api/config-templates",
+        tags=["config-templates"],
     )
 
     @app.get("/api/health")
