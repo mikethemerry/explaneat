@@ -27,11 +27,12 @@ from ..schemas import (
     ExperimentProgressResponse,
 )
 from ...db import Experiment, Population, Genome
-from ...db.models import Dataset, DatasetSplit
+from ...db.models import Dataset, DatasetSplit, ConfigTemplate
 from ...db.dataset_utils import create_or_get_split
 from ...db.serialization import deserialize_genome
 from ...core.explaneat import ExplaNEAT
 from ...core.genome_network import NetworkStructure
+from ...core.config_resolution import resolve_config, config_to_neat_text
 
 
 router = APIRouter()
@@ -469,21 +470,33 @@ async def create_and_run_experiment(
     }
     db_session.commit()
 
-    # Build a minimal NEAT config
+    # Resolve config from template + overrides
+    template_config = None
+    if request.config_template_id:
+        template_obj = db_session.get(ConfigTemplate, UUID(request.config_template_id))
+        if not template_obj:
+            raise HTTPException(status_code=404, detail="Config template not found")
+        template_config = template_obj.config
+
+    resolved_config = resolve_config(
+        template=template_config,
+        overrides=request.config_overrides,
+    )
+
     num_inputs = X_train.shape[1]
     num_outputs = 1
     if dataset.num_classes and dataset.num_classes > 2:
         num_outputs = dataset.num_classes
 
-    config_text = _default_neat_config_text(
-        num_inputs, num_outputs, request.population_size,
-    )
+    config_text = config_to_neat_text(resolved_config, num_inputs, num_outputs)
     config_json = {
-        "pop_size": request.population_size,
+        "pop_size": resolved_config["training"]["population_size"],
         "num_inputs": num_inputs,
         "num_outputs": num_outputs,
         "fitness_criterion": "max",
         "fitness_threshold": 999.0,
+        "resolved_config": resolved_config,
+        "config_template_id": request.config_template_id,
     }
 
     job_id = await experiment_runner.start(
@@ -493,12 +506,13 @@ async def create_and_run_experiment(
         y_train=y_train,
         experiment_name=request.name,
         dataset_name=dataset.name,
-        n_generations=request.n_generations,
-        n_epochs_backprop=request.n_epochs_backprop,
-        fitness_function=request.fitness_function,
+        n_generations=resolved_config["training"]["n_generations"],
+        n_epochs_backprop=resolved_config["training"]["n_epochs_backprop"],
+        fitness_function=resolved_config["training"]["fitness_function"],
         description=request.description,
         dataset_id=str(dataset.id),
         split_id=str(split.id),
+        config_template_id=request.config_template_id,
     )
 
     return ExperimentCreateResponse(job_id=job_id)

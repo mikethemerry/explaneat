@@ -819,6 +819,8 @@ class ExperimentCreateRequest(BaseModel):
     population_size: int = 150
     mutation_rate: float = 0.3
     crossover_rate: float = 0.5
+    config_template_id: Optional[str] = None
+    config_overrides: Optional[Dict[str, Any]] = None
 
 
 class ExperimentCreateResponse(BaseModel):

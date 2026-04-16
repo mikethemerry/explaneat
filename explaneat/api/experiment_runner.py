@@ -130,6 +130,7 @@ class ExperimentRunner:
         X_val: np.ndarray = None,
         y_val: np.ndarray = None,
         patience: int = None,
+        config_template_id: str = None,
     ) -> str:
         """Launch a NEAT experiment in a background thread.
 
@@ -151,6 +152,7 @@ class ExperimentRunner:
                 fitness_function,
                 dataset_id, split_id,
                 X_val, y_val, patience,
+                config_template_id,
             )
         )
 
@@ -174,6 +176,7 @@ class ExperimentRunner:
         X_val: np.ndarray = None,
         y_val: np.ndarray = None,
         patience: int = None,
+        config_template_id: str = None,
     ):
         """Run NEAT evolution in a thread."""
         try:
@@ -187,6 +190,7 @@ class ExperimentRunner:
                 fitness_function,
                 dataset_id, split_id,
                 X_val, y_val, patience,
+                config_template_id,
             )
             if progress.cancelled:
                 progress.status = ExperimentStatus.CANCELLED
@@ -218,6 +222,7 @@ class ExperimentRunner:
         X_val: np.ndarray = None,
         y_val: np.ndarray = None,
         patience: int = None,
+        config_template_id: str = None,
     ) -> dict:
         """Synchronous evolution loop (runs in thread pool)."""
         from uuid import UUID as _UUID
@@ -248,6 +253,7 @@ class ExperimentRunner:
             dataset_name=dataset_name,
             description=description,
             dataset_id=dataset_id,
+            config_template_id=config_template_id,
         )
 
         progress.experiment_id = str(population.experiment_id)

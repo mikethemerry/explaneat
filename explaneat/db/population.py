@@ -25,7 +25,7 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                  experiment_name: str = None,
                  dataset_name: str = None, description: str = None,
                  database_url: str = None, ancestry_reporter=None,
-                 dataset_id: str = None):
+                 dataset_id: str = None, config_template_id: str = None):
         """
         Initialize population with database tracking
 
@@ -40,6 +40,8 @@ class DatabaseBackpropPopulation(BackpropPopulation):
             description: Description of the experiment
             database_url: Database connection URL (optional)
             ancestry_reporter: Optional AncestryReporter for parent tracking
+            dataset_id: Optional database ID of the dataset
+            config_template_id: Optional database ID of the ConfigTemplate used
         """
         super().__init__(config, x_train, y_train, xs_val=xs_val, ys_val=ys_val)
 
@@ -56,6 +58,7 @@ class DatabaseBackpropPopulation(BackpropPopulation):
             description,
             config,
             dataset_id=dataset_id,
+            config_template_id=config_template_id,
         )
 
         # Track current population and generation
@@ -68,7 +71,8 @@ class DatabaseBackpropPopulation(BackpropPopulation):
             self.ancestry_reporter.reproduction = self.reproduction
         
     def _create_experiment(self, name: str, dataset_name: str, description: str,
-                          config: neat.Config, dataset_id: str = None) -> str:
+                          config: neat.Config, dataset_id: str = None,
+                          config_template_id: str = None) -> str:
         """Create and save experiment record to database"""
         
         # Generate experiment SHA from config and parameters
@@ -116,6 +120,12 @@ class DatabaseBackpropPopulation(BackpropPopulation):
             )
             if dataset_id:
                 experiment.dataset_id = uuid.UUID(dataset_id) if isinstance(dataset_id, str) else dataset_id
+            if config_template_id:
+                experiment.config_template_id = (
+                    uuid.UUID(config_template_id)
+                    if isinstance(config_template_id, str)
+                    else config_template_id
+                )
             session.add(experiment)
             session.flush()  # Get the ID
             experiment_id = experiment.id
