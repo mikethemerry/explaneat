@@ -1016,6 +1016,8 @@ export type ExperimentCreateRequest = {
   population_size?: number;
   mutation_rate?: number;
   crossover_rate?: number;
+  config_template_id?: string;
+  config_overrides?: ResolvedConfig;
 };
 
 export type ExperimentCreateResponse = {
@@ -1075,4 +1077,95 @@ export async function computeInputDistribution(
       body: JSON.stringify(request),
     },
   );
+}
+
+// ============================================================================
+// Config templates
+// ============================================================================
+
+// Config templates
+export type TrainingConfig = {
+  population_size: number;
+  n_generations: number;
+  n_epochs_backprop: number;
+  fitness_function: "bce" | "auc";
+};
+
+export type NeatConfig = {
+  bias_mutate_rate: number;
+  bias_mutate_power: number;
+  bias_replace_rate: number;
+  weight_mutate_rate: number;
+  weight_mutate_power: number;
+  weight_replace_rate: number;
+  enabled_mutate_rate: number;
+  node_add_prob: number;
+  node_delete_prob: number;
+  conn_add_prob: number;
+  conn_delete_prob: number;
+  compatibility_threshold: number;
+  compatibility_disjoint_coefficient: number;
+  compatibility_weight_coefficient: number;
+  max_stagnation: number;
+  species_elitism: number;
+  elitism: number;
+  survival_threshold: number;
+};
+
+export type BackpropConfig = {
+  learning_rate: number;
+  optimizer: string;
+};
+
+export type ResolvedConfig = {
+  training: TrainingConfig;
+  neat: NeatConfig;
+  backprop: BackpropConfig;
+};
+
+export type ConfigTemplateResponse = {
+  id: string;
+  name: string;
+  description: string | null;
+  config: ResolvedConfig;
+  created_at: string | null;
+  updated_at: string | null;
+};
+
+export type ConfigTemplateListResponse = {
+  templates: ConfigTemplateResponse[];
+  total: number;
+};
+
+export async function listConfigTemplates(): Promise<ConfigTemplateListResponse> {
+  return fetchJson(`${API_BASE}/config-templates`);
+}
+
+export async function getConfigTemplate(id: string): Promise<ConfigTemplateResponse> {
+  return fetchJson(`${API_BASE}/config-templates/${id}`);
+}
+
+export async function createConfigTemplate(
+  name: string,
+  config: ResolvedConfig,
+  description?: string,
+): Promise<ConfigTemplateResponse> {
+  return fetchJson(`${API_BASE}/config-templates`, {
+    method: "POST",
+    body: JSON.stringify({ name, description, config }),
+  });
+}
+
+export async function updateConfigTemplate(
+  id: string,
+  updates: { name?: string; description?: string; config?: ResolvedConfig },
+): Promise<ConfigTemplateResponse> {
+  return fetchJson(`${API_BASE}/config-templates/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(updates),
+  });
+}
+
+export async function deleteConfigTemplate(id: string): Promise<void> {
+  await fetchJson(`${API_BASE}/config-templates/${id}`, { method: "DELETE" });
 }
