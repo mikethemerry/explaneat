@@ -2,10 +2,33 @@
 FastAPI application for ExplaNEAT.
 """
 
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .routes import experiments, genomes, operations, analysis, datasets, evidence, training, config_templates
+
+
+logger = logging.getLogger(__name__)
+
+
+def mark_orphaned_experiments_interrupted() -> int:
+    """Mark any experiments stuck in 'running' state as 'interrupted'.
+
+    Called on app startup to recover from server crashes. Returns the
+    number of experiments updated.
+    """
+    from datetime import datetime
+    from ..db.base import db
+    from ..db.models import Experiment
+
+    with db.session_scope() as session:
+        orphans = session.query(Experiment).filter_by(status="running").all()
+        for exp in orphans:
+            exp.status = "interrupted"
+            exp.end_time = datetime.utcnow()
+        return len(orphans)
 
 
 def create_app() -> FastAPI:
@@ -70,6 +93,12 @@ def create_app() -> FastAPI:
         prefix="/api/config-templates",
         tags=["config-templates"],
     )
+
+    @app.on_event("startup")
+    async def on_startup():
+        count = mark_orphaned_experiments_interrupted()
+        if count:
+            logger.info("Marked %d orphaned experiments as interrupted", count)
 
     @app.get("/api/health")
     async def health_check():
