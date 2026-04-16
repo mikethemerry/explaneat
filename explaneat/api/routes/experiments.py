@@ -15,6 +15,7 @@ from ..dependencies import get_db
 from ..schemas import (
     ExperimentListItem,
     ExperimentListResponse,
+    ExperimentDetailResponse,
     ExperimentSplitResponse,
     LinkDatasetRequest,
     GenomeDetail,
@@ -247,6 +248,46 @@ async def get_best_genome_phenotype(
     phenotype.metadata["is_original"] = True
 
     return _network_to_response(phenotype)
+
+
+@router.get("/{experiment_id}", response_model=ExperimentDetailResponse)
+async def get_experiment_detail(
+    experiment_id: UUID,
+    db: Session = Depends(get_db),
+):
+    """Get full details of an experiment including resolved config."""
+    experiment = db.get(Experiment, experiment_id)
+    if not experiment:
+        raise HTTPException(status_code=404, detail="Experiment not found")
+
+    resolved_config = None
+    if experiment.config_json:
+        resolved_config = experiment.config_json.get("resolved_config")
+
+    template_name = None
+    if experiment.config_template_id:
+        template = db.get(ConfigTemplate, experiment.config_template_id)
+        if template:
+            template_name = template.name
+
+    dataset_name = None
+    if experiment.dataset_id:
+        dataset = db.get(Dataset, experiment.dataset_id)
+        if dataset:
+            dataset_name = dataset.name
+
+    return ExperimentDetailResponse(
+        id=str(experiment.id),
+        name=experiment.name,
+        description=experiment.description,
+        status=experiment.status,
+        dataset_id=str(experiment.dataset_id) if experiment.dataset_id else None,
+        dataset_name=dataset_name,
+        config_template_id=str(experiment.config_template_id) if experiment.config_template_id else None,
+        config_template_name=template_name,
+        resolved_config=resolved_config,
+        created_at=experiment.created_at,
+    )
 
 
 @router.get("/{experiment_id}/split", response_model=ExperimentSplitResponse)

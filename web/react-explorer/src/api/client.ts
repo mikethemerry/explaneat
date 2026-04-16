@@ -347,6 +347,23 @@ export async function getBestGenome(
   );
 }
 
+export type ExperimentDetailResponse = {
+  id: string;
+  name: string;
+  description: string | null;
+  status: string;
+  dataset_id: string | null;
+  dataset_name: string | null;
+  config_template_id: string | null;
+  config_template_name: string | null;
+  resolved_config: ResolvedConfig | null;
+  created_at: string | null;
+};
+
+export async function getExperimentDetail(experimentId: string): Promise<ExperimentDetailResponse> {
+  return fetchJson(`${API_BASE}/experiments/${experimentId}`);
+}
+
 export type LinkDatasetRequest = {
   dataset_id: string;
   test_proportion: number;

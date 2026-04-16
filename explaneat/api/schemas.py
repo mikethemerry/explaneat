@@ -103,6 +103,19 @@ class ExperimentListResponse(BaseModel):
     total: int
 
 
+class ExperimentDetailResponse(BaseModel):
+    id: str
+    name: str
+    description: Optional[str] = None
+    status: str
+    dataset_id: Optional[str] = None
+    dataset_name: Optional[str] = None
+    config_template_id: Optional[str] = None
+    config_template_name: Optional[str] = None
+    resolved_config: Optional[Dict[str, Any]] = None
+    created_at: Optional[datetime] = None
+
+
 # =============================================================================
 # Genome schemas
 # =============================================================================

@@ -4,9 +4,11 @@ import {
   listOperations,
   listAnnotations,
   getNodeEvidenceInfo,
+  getExperimentDetail,
   type ModelState,
   type Operation,
   type AnnotationSummary,
+  type ExperimentDetailResponse,
 } from "../api/client";
 import { NetworkViewer } from "./NetworkViewer";
 import { OperationsPanel } from "./OperationsPanel";
@@ -16,6 +18,7 @@ import { EvidencePanel } from "./EvidencePanel";
 import { InputDistributionPanel } from "./InputDistributionPanel";
 import { RetrainPanel } from "./RetrainPanel";
 import { ConnectionInfoPanel } from "./ConnectionInfoPanel";
+import { ConfigEditor } from "./ConfigEditor";
 
 // =============================================================================
 // Logging utilities
@@ -60,6 +63,10 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
 
   // Node-level evidence state
   const [nodeEvidence, setNodeEvidence] = useState<{ annotation: AnnotationSummary; nodeId: string } | null>(null);
+
+  // Experiment detail (for training config display)
+  const [experimentDetail, setExperimentDetail] = useState<ExperimentDetailResponse | null>(null);
+  const [configOpen, setConfigOpen] = useState(false);
 
   // Derive annotation node IDs from model (FUNCTION nodes returned by server)
   const annotationNodeIds = useMemo(
@@ -255,6 +262,10 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
     loadData();
   }, [loadData]);
 
+  useEffect(() => {
+    getExperimentDetail(experimentId).then(setExperimentDetail).catch(() => {});
+  }, [experimentId]);
+
   // Re-fetch model when collapsed annotations change (after initial load)
   useEffect(() => {
     if (!loading && model) {
@@ -384,6 +395,32 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
         <h2>{experimentName}</h2>
         <span className="genome-id">Best Genome: {genomeId.slice(0, 8)}...</span>
       </header>
+
+      {experimentDetail?.resolved_config && (
+        <div style={{ padding: "0.75rem 1rem", borderBottom: "1px solid #e5e7eb", background: "#f9fafb" }}>
+          <button
+            type="button"
+            onClick={() => setConfigOpen(!configOpen)}
+            style={{
+              background: "none", border: "none", padding: 0,
+              fontWeight: 600, color: "#374151", cursor: "pointer",
+              fontSize: "0.9rem",
+            }}
+          >
+            {configOpen ? "▼" : "▶"} Training Config
+            {experimentDetail.config_template_name && (
+              <span style={{ marginLeft: "0.75rem", fontWeight: 400, color: "#6b7280", fontSize: "0.85rem" }}>
+                (based on template: {experimentDetail.config_template_name})
+              </span>
+            )}
+          </button>
+          {configOpen && (
+            <div style={{ marginTop: "0.75rem", padding: "0.75rem", background: "white", border: "1px solid #e5e7eb", borderRadius: "0.375rem", maxHeight: "500px", overflowY: "auto" }}>
+              <ConfigEditor config={experimentDetail.resolved_config} readOnly />
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="explorer-content">
         <div className="left-panels">
