@@ -255,7 +255,7 @@ class Experiment(Base, TimestampMixin):
 
     __table_args__ = (
         CheckConstraint(
-            "status IN ('running', 'completed', 'failed', 'paused')",
+            "status IN ('running', 'completed', 'failed', 'paused', 'interrupted')",
             name="check_status",
         ),
     )
