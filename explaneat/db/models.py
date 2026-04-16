@@ -183,6 +183,27 @@ class DatasetSplit(Base, TimestampMixin):
     )
 
 
+class ConfigTemplate(Base, TimestampMixin):
+    """Reusable training configuration templates."""
+
+    __tablename__ = "config_templates"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String(255), nullable=False)
+    description = Column(Text)
+    config = Column(JSONB, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": str(self.id),
+            "name": self.name,
+            "description": self.description,
+            "config": self.config,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
 class Experiment(Base, TimestampMixin):
     """Stores metadata about each NEAT experiment run"""
 
@@ -199,6 +220,9 @@ class Experiment(Base, TimestampMixin):
     )
     split_id = Column(
         UUID(as_uuid=True), ForeignKey("dataset_splits.id", ondelete="SET NULL")
+    )
+    config_template_id = Column(
+        UUID(as_uuid=True), ForeignKey("config_templates.id", ondelete="SET NULL")
     )
     config_json = Column(JSONB, nullable=False)
     neat_config_text = Column(Text, nullable=False)
