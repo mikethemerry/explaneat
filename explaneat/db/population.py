@@ -132,6 +132,22 @@ class DatabaseBackpropPopulation(BackpropPopulation):
 
         return experiment_id
     
+    @staticmethod
+    def _get_latest_generation(experiment_id: str) -> Optional[int]:
+        """Return the highest generation number saved for an experiment.
+
+        Returns None if no Population rows exist for this experiment.
+        """
+        from .models import Population
+        with db.session_scope() as session:
+            result = (
+                session.query(Population.generation)
+                .filter_by(experiment_id=uuid.UUID(experiment_id))
+                .order_by(Population.generation.desc())
+                .first()
+            )
+            return result[0] if result else None
+
     def _save_population_state(self, generation: int) -> str:
         """Save current population state to database"""
         
@@ -430,3 +446,12 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                 'dataset_name': experiment.dataset_name,
                 'best_fitness': max([p.best_fitness for p in populations if p.best_fitness]) if populations else None
             }
+
+
+def compute_remaining_generations(last_gen: int, target: int) -> int:
+    """How many more generations to run after the last completed one.
+
+    Returns 0 if we've already reached or exceeded the target.
+    """
+    remaining = target - (last_gen + 1)
+    return max(0, remaining)
