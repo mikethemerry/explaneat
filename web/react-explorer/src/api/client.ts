@@ -1083,6 +1083,17 @@ export async function cancelExperiment(
   );
 }
 
+export async function resumeExperiment(
+  experimentId: string,
+): Promise<ExperimentCreateResponse> {
+  return fetchJson<ExperimentCreateResponse>(
+    `${API_BASE}/experiments/${experimentId}/resume`,
+    {
+      method: "POST",
+    },
+  );
+}
+
 export async function computeInputDistribution(
   genomeId: string,
   request: InputDistributionRequest,

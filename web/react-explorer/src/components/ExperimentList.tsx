@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import {
   listExperiments,
   getBestGenome,
+  resumeExperiment,
   type ExperimentListItem,
 } from "../api/client";
 import { DatasetSetupModal } from "./DatasetSetupModal";
@@ -19,6 +20,7 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
   const [loadingExperiment, setLoadingExperiment] = useState<string | null>(null);
   const [setupExperiment, setSetupExperiment] = useState<ExperimentListItem | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [resumingExperiment, setResumingExperiment] = useState<string | null>(null);
 
   const loadExperiments = useCallback(async () => {
     try {
@@ -55,6 +57,32 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
     setSetupExperiment(null);
     loadExperiments();
   }, [loadExperiments]);
+
+  const handleResumeExperiment = useCallback(
+    async (experiment: ExperimentListItem) => {
+      try {
+        setResumingExperiment(experiment.id);
+        setError(null);
+        await resumeExperiment(experiment.id);
+        // Optimistically update the row's status to "running"
+        setExperiments((prev) =>
+          prev.map((exp) =>
+            exp.id === experiment.id ? { ...exp, status: "running" } : exp,
+          ),
+        );
+        // Refresh to pick up canonical state
+        loadExperiments();
+      } catch (err) {
+        console.error("Failed to resume experiment", err);
+        setError(
+          err instanceof Error ? err.message : "Failed to resume experiment",
+        );
+      } finally {
+        setResumingExperiment(null);
+      }
+    },
+    [loadExperiments],
+  );
 
   if (loading) {
     return (
@@ -155,13 +183,26 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
                   </td>
                   <td>{new Date(experiment.created_at).toLocaleDateString()}</td>
                   <td>
-                    <button
-                      className="explore-btn"
-                      onClick={() => handleSelectExperiment(experiment)}
-                      disabled={loadingExperiment !== null}
-                    >
-                      {loadingExperiment === experiment.id ? "Loading..." : "Explore"}
-                    </button>
+                    <div style={{ display: "flex", gap: "0.4rem" }}>
+                      {experiment.status === "interrupted" && (
+                        <button
+                          className="op-btn"
+                          onClick={() => handleResumeExperiment(experiment)}
+                          disabled={resumingExperiment !== null}
+                        >
+                          {resumingExperiment === experiment.id
+                            ? "Resuming..."
+                            : "Resume"}
+                        </button>
+                      )}
+                      <button
+                        className="explore-btn"
+                        onClick={() => handleSelectExperiment(experiment)}
+                        disabled={loadingExperiment !== null}
+                      >
+                        {loadingExperiment === experiment.id ? "Loading..." : "Explore"}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

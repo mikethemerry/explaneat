@@ -5,6 +5,7 @@ import {
   listAnnotations,
   getNodeEvidenceInfo,
   getExperimentDetail,
+  resumeExperiment,
   type ModelState,
   type Operation,
   type AnnotationSummary,
@@ -67,6 +68,7 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
   // Experiment detail (for training config display)
   const [experimentDetail, setExperimentDetail] = useState<ExperimentDetailResponse | null>(null);
   const [configOpen, setConfigOpen] = useState(false);
+  const [resuming, setResuming] = useState(false);
 
   // Derive annotation node IDs from model (FUNCTION nodes returned by server)
   const annotationNodeIds = useMemo(
@@ -266,6 +268,23 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
     getExperimentDetail(experimentId).then(setExperimentDetail).catch(() => {});
   }, [experimentId]);
 
+  const handleResumeExperiment = useCallback(async () => {
+    try {
+      setResuming(true);
+      await resumeExperiment(experimentId);
+      // Optimistic update
+      setExperimentDetail((prev) =>
+        prev ? { ...prev, status: "running" } : prev,
+      );
+      // Re-fetch canonical state
+      getExperimentDetail(experimentId).then(setExperimentDetail).catch(() => {});
+    } catch (err) {
+      logError("Failed to resume experiment", err);
+    } finally {
+      setResuming(false);
+    }
+  }, [experimentId]);
+
   // Re-fetch model when collapsed annotations change (after initial load)
   useEffect(() => {
     if (!loading && model) {
@@ -394,6 +413,21 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
         </button>
         <h2>{experimentName}</h2>
         <span className="genome-id">Best Genome: {genomeId.slice(0, 8)}...</span>
+        {experimentDetail?.status === "interrupted" && (
+          <>
+            <span className="status-badge status-interrupted" style={{ marginLeft: "0.75rem" }}>
+              interrupted
+            </span>
+            <button
+              className="op-btn"
+              onClick={handleResumeExperiment}
+              disabled={resuming}
+              style={{ marginLeft: "0.5rem" }}
+            >
+              {resuming ? "Resuming..." : "Resume experiment"}
+            </button>
+          </>
+        )}
       </header>
 
       {experimentDetail?.resolved_config && (
