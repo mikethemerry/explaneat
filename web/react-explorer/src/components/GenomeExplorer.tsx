@@ -6,6 +6,7 @@ import {
   getNodeEvidenceInfo,
   getExperimentDetail,
   resumeExperiment,
+  restartExperiment,
   type ModelState,
   type Operation,
   type AnnotationSummary,
@@ -272,14 +273,30 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
     try {
       setResuming(true);
       await resumeExperiment(experimentId);
-      // Optimistic update
       setExperimentDetail((prev) =>
         prev ? { ...prev, status: "running" } : prev,
       );
-      // Re-fetch canonical state
       getExperimentDetail(experimentId).then(setExperimentDetail).catch(() => {});
     } catch (err) {
       logError("Failed to resume experiment", err);
+    } finally {
+      setResuming(false);
+    }
+  }, [experimentId]);
+
+  const handleRestartExperiment = useCallback(async () => {
+    if (!confirm("Restart this experiment from scratch? Existing populations will be deleted.")) {
+      return;
+    }
+    try {
+      setResuming(true);
+      await restartExperiment(experimentId);
+      setExperimentDetail((prev) =>
+        prev ? { ...prev, status: "running" } : prev,
+      );
+      getExperimentDetail(experimentId).then(setExperimentDetail).catch(() => {});
+    } catch (err) {
+      logError("Failed to restart experiment", err);
     } finally {
       setResuming(false);
     }
@@ -424,9 +441,19 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
               disabled={resuming}
               style={{ marginLeft: "0.5rem" }}
             >
-              {resuming ? "Resuming..." : "Resume experiment"}
+              {resuming ? "Resuming..." : "Resume"}
             </button>
           </>
+        )}
+        {(experimentDetail?.status === "interrupted" || experimentDetail?.status === "failed") && (
+          <button
+            className="op-btn"
+            onClick={handleRestartExperiment}
+            disabled={resuming}
+            style={{ marginLeft: "0.5rem" }}
+          >
+            Restart
+          </button>
         )}
       </header>
 

@@ -1094,6 +1094,17 @@ export async function resumeExperiment(
   );
 }
 
+export async function restartExperiment(
+  experimentId: string,
+): Promise<ExperimentCreateResponse> {
+  return fetchJson<ExperimentCreateResponse>(
+    `${API_BASE}/experiments/${experimentId}/restart`,
+    {
+      method: "POST",
+    },
+  );
+}
+
 export async function computeInputDistribution(
   genomeId: string,
   request: InputDistributionRequest,

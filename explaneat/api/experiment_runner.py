@@ -386,6 +386,89 @@ class ExperimentRunner:
             nEpochs=n_epochs_backprop,
         )
 
+    async def restart(self, experiment_id: str, X_train, y_train,
+                      fitness_function: str, config_text: str,
+                      n_generations: int, n_epochs_backprop: int,
+                      split_id: str = None) -> str:
+        """Restart an experiment from scratch, reusing the experiment_id."""
+        job_id = str(uuid.uuid4())[:8]
+        progress = ExperimentProgress(
+            job_id=job_id,
+            total_generations=n_generations,
+            experiment_id=experiment_id,
+        )
+        self._jobs[job_id] = progress
+
+        asyncio.create_task(
+            self._run_restart(
+                progress, experiment_id, config_text,
+                X_train, y_train, fitness_function,
+                n_generations, n_epochs_backprop, split_id,
+            )
+        )
+        return job_id
+
+    async def _run_restart(
+        self,
+        progress: ExperimentProgress,
+        experiment_id: str,
+        config_text: str,
+        X_train, y_train,
+        fitness_function: str,
+        n_generations: int,
+        n_epochs_backprop: int,
+        split_id: str,
+    ):
+        try:
+            progress.status = ExperimentStatus.RUNNING
+            await asyncio.to_thread(
+                self._restart_evolution_loop,
+                progress, experiment_id, config_text,
+                X_train, y_train, fitness_function,
+                n_generations, n_epochs_backprop, split_id,
+            )
+            progress.status = ExperimentStatus.COMPLETED
+        except Exception as e:
+            logger.exception("Restart job %s failed", progress.job_id)
+            progress.status = ExperimentStatus.FAILED
+            progress.error = str(e)
+
+    @staticmethod
+    def _restart_evolution_loop(
+        progress: ExperimentProgress,
+        experiment_id: str,
+        config_text: str,
+        X_train, y_train,
+        fitness_function: str,
+        n_generations: int,
+        n_epochs_backprop: int,
+        split_id: str,
+    ):
+        """Fresh run from generation 0, reusing the existing experiment_id."""
+        from ..core.config_utils import load_neat_config
+        from ..db.population import DatabaseBackpropPopulation
+        from ..evaluators.evaluators import binary_cross_entropy, auc_fitness
+
+        fitness_fn_map = {
+            "bce": binary_cross_entropy,
+            "auc": auc_fitness,
+        }
+        fitness_fn = fitness_fn_map.get(fitness_function, binary_cross_entropy)
+
+        config = load_neat_config(config_text, None)
+
+        population = DatabaseBackpropPopulation(
+            config, X_train, y_train,
+            _existing_experiment_id=experiment_id,
+        )
+
+        progress.pop_size = config.pop_size
+
+        reporter = ProgressReporter(progress)
+        population.reporters.add(reporter)
+
+        population.run(fitness_fn, n=n_generations, nEpochs=n_epochs_backprop)
+
 
 # Singleton instance
 experiment_runner = ExperimentRunner()

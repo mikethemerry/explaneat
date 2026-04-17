@@ -194,15 +194,22 @@ class DatabaseBackpropPopulation(BackpropPopulation):
 
     @staticmethod
     def _get_latest_generation(experiment_id: str) -> Optional[int]:
-        """Return the highest generation number saved for an experiment.
+        """Return the highest generation number with saved genomes.
 
-        Returns None if no Population rows exist for this experiment.
+        Populations are saved at the start of a generation, but genomes
+        are only saved after evaluation finishes. A crash mid-generation
+        leaves an empty Population row. This returns the highest
+        generation that actually has genomes attached — the latest
+        resumable point.
+
+        Returns None if no resumable generation exists.
         """
-        from .models import Population
+        from .models import Population, Genome
         with db.session_scope() as session:
             result = (
                 session.query(Population.generation)
-                .filter_by(experiment_id=uuid.UUID(experiment_id))
+                .join(Genome, Genome.population_id == Population.id)
+                .filter(Population.experiment_id == uuid.UUID(experiment_id))
                 .order_by(Population.generation.desc())
                 .first()
             )

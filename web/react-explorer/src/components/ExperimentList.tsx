@@ -3,6 +3,7 @@ import {
   listExperiments,
   getBestGenome,
   resumeExperiment,
+  restartExperiment,
   type ExperimentListItem,
 } from "../api/client";
 import { DatasetSetupModal } from "./DatasetSetupModal";
@@ -64,18 +65,43 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
         setResumingExperiment(experiment.id);
         setError(null);
         await resumeExperiment(experiment.id);
-        // Optimistically update the row's status to "running"
         setExperiments((prev) =>
           prev.map((exp) =>
             exp.id === experiment.id ? { ...exp, status: "running" } : exp,
           ),
         );
-        // Refresh to pick up canonical state
         loadExperiments();
       } catch (err) {
         console.error("Failed to resume experiment", err);
         setError(
           err instanceof Error ? err.message : "Failed to resume experiment",
+        );
+      } finally {
+        setResumingExperiment(null);
+      }
+    },
+    [loadExperiments],
+  );
+
+  const handleRestartExperiment = useCallback(
+    async (experiment: ExperimentListItem) => {
+      if (!confirm(`Restart "${experiment.name}" from scratch? Existing populations will be deleted.`)) {
+        return;
+      }
+      try {
+        setResumingExperiment(experiment.id);
+        setError(null);
+        await restartExperiment(experiment.id);
+        setExperiments((prev) =>
+          prev.map((exp) =>
+            exp.id === experiment.id ? { ...exp, status: "running" } : exp,
+          ),
+        );
+        loadExperiments();
+      } catch (err) {
+        console.error("Failed to restart experiment", err);
+        setError(
+          err instanceof Error ? err.message : "Failed to restart experiment",
         );
       } finally {
         setResumingExperiment(null);
@@ -193,6 +219,15 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
                           {resumingExperiment === experiment.id
                             ? "Resuming..."
                             : "Resume"}
+                        </button>
+                      )}
+                      {(experiment.status === "interrupted" || experiment.status === "failed") && (
+                        <button
+                          className="op-btn"
+                          onClick={() => handleRestartExperiment(experiment)}
+                          disabled={resumingExperiment !== null}
+                        >
+                          Restart
                         </button>
                       )}
                       <button

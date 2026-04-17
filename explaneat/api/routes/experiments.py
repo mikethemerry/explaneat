@@ -622,7 +622,7 @@ async def resume_experiment(
     if last_gen is None:
         raise HTTPException(
             status_code=400,
-            detail="No saved generations found; cannot resume",
+            detail="No completed generations to resume from. Use restart to run from scratch.",
         )
 
     remaining = compute_remaining_generations(last_gen, target_generations)
@@ -660,6 +660,75 @@ async def resume_experiment(
         fitness_function=fitness_function,
         config_text=experiment.neat_config_text,
         remaining_generations=remaining,
+        n_epochs_backprop=n_epochs_backprop,
+        split_id=str(experiment.split_id),
+    )
+
+    return ExperimentCreateResponse(job_id=job_id)
+
+
+@router.post("/{experiment_id}/restart", response_model=ExperimentCreateResponse)
+async def restart_experiment(
+    experiment_id: UUID,
+    db_session: Session = Depends(get_db),
+):
+    """Restart an experiment from scratch with the same config.
+
+    Deletes all saved populations/genomes and runs fresh from generation 0.
+    Only allowed for interrupted or failed experiments.
+    """
+    from ..experiment_runner import experiment_runner
+    from ...db.models import Population
+
+    experiment = db_session.get(Experiment, experiment_id)
+    if not experiment:
+        raise HTTPException(status_code=404, detail="Experiment not found")
+    if experiment.status not in ("interrupted", "failed"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Experiment is '{experiment.status}', only 'interrupted' or 'failed' can be restarted",
+        )
+
+    resolved = (experiment.config_json or {}).get("resolved_config") or {}
+    training = resolved.get("training", {})
+    n_generations = training.get("n_generations", 10)
+    n_epochs_backprop = training.get("n_epochs_backprop", 5)
+    fitness_function = training.get("fitness_function", "bce")
+
+    if not experiment.dataset_id or not experiment.split_id:
+        raise HTTPException(status_code=400, detail="Experiment missing dataset or split")
+
+    dataset = db_session.get(Dataset, experiment.dataset_id)
+    split = db_session.get(DatasetSplit, experiment.split_id)
+    if not dataset or not split:
+        raise HTTPException(status_code=400, detail="Dataset or split not found")
+
+    data = dataset.get_data()
+    if data is None:
+        raise HTTPException(status_code=400, detail="Dataset has no stored data")
+    X_full, y_full = data
+    import numpy as np
+    X_train = X_full[split.train_indices or []]
+    y_train = y_full[split.train_indices or []]
+
+    if split.scaler_type == "StandardScaler" and split.scaler_params:
+        mean = np.array(split.scaler_params["mean"])
+        scale = np.array(split.scaler_params["scale"])
+        X_train = (X_train - mean) / scale
+
+    # Wipe previous populations/genomes for this experiment — cascade deletes genomes.
+    db_session.query(Population).filter_by(experiment_id=experiment_id).delete()
+    experiment.status = "running"
+    experiment.end_time = None
+    db_session.commit()
+
+    job_id = await experiment_runner.restart(
+        experiment_id=str(experiment_id),
+        X_train=X_train,
+        y_train=y_train,
+        fitness_function=fitness_function,
+        config_text=experiment.neat_config_text,
+        n_generations=n_generations,
         n_epochs_backprop=n_epochs_backprop,
         split_id=str(experiment.split_id),
     )
