@@ -462,6 +462,7 @@ export function DatasetDetail({ datasetId, onBack }: DatasetDetailProps) {
           datasetId={datasetId}
           featureTypes={featureTypes}
           onPrepared={loadDataset}
+          onSave={handleSave}
         />
       </Section>
 
@@ -510,11 +511,13 @@ function PrepareDatasetForm({
   datasetId,
   featureTypes,
   onPrepared,
+  onSave,
 }: {
   dataset: DatasetResponse;
   datasetId: string;
   featureTypes: Record<string, string>;
   onPrepared: () => void;
+  onSave: () => Promise<void>;
 }) {
   const [name, setName] = useState("");
   const [ordinalOnehot, setOrdinalOnehot] = useState<Set<string>>(new Set());
@@ -557,6 +560,9 @@ function PrepareDatasetForm({
       setPreparing(true);
       setError(null);
       setSuccess(null);
+      // Save any pending feature-type changes first, so the prepare
+      // endpoint sees the user's latest edits.
+      await onSave();
       const prepared = await prepareDataset(
         datasetId,
         name || undefined,

@@ -184,12 +184,9 @@ async def prepare_dataset(dataset_id: str, request: PrepareDatasetRequest):
                 return _dataset_to_response(ds)
 
         # Prepare the encoded arrays
-        X_prepared, new_feature_names = prepare_dataset_arrays(
+        X_prepared, new_feature_names, new_feature_types = prepare_dataset_arrays(
             X, feature_names, feature_types_list, encoding_config,
         )
-
-        # Build new feature_types dict (all encoded features are numeric)
-        new_feature_types = {name: "numeric" for name in new_feature_names}
 
         # Create the prepared dataset
         prep_name = request.name or f"{source.name} (prepared)"

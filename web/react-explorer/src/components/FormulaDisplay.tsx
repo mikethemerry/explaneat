@@ -68,6 +68,15 @@ export function FormulaDisplay({ genomeId, annotationId, nodeId }: FormulaDispla
     setExpanded((prev) => !prev);
   }, []);
 
+  const [copied, setCopied] = useState(false);
+  const handleCopy = useCallback(() => {
+    if (!currentLatex) return;
+    navigator.clipboard.writeText(currentLatex).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [currentLatex]);
+
   if (loading) {
     return <div className="formula-display loading">Loading formula...</div>;
   }
@@ -111,6 +120,13 @@ export function FormulaDisplay({ genomeId, annotationId, nodeId }: FormulaDispla
             {expanded ? "Collapse" : "Expand"}
           </button>
         )}
+        <button
+          className="formula-toggle"
+          onClick={handleCopy}
+          title="Copy LaTeX to clipboard"
+        >
+          {copied ? "Copied!" : "Copy"}
+        </button>
       </div>
       <div className="formula-math" ref={mathRef} />
       {formula.is_composed && formula.children.length > 0 && !expanded && (
