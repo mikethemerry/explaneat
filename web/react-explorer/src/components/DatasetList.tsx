@@ -1,8 +1,11 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   listDatasets,
   downloadPMLBDataset,
+  downloadUCIDataset,
+  searchDatasetCatalogs,
   type DatasetResponse,
+  type DatasetSearchResult,
 } from "../api/client";
 import { DatasetDetail } from "./DatasetDetail";
 
@@ -37,17 +40,46 @@ function TaskTypeBadge({ dataset }: { dataset: DatasetResponse }) {
   );
 }
 
+function SourceBadge({ source }: { source: string }) {
+  const colors: Record<string, { bg: string; fg: string }> = {
+    pmlb: { bg: "#e0e7ff", fg: "#4338ca" },
+    uci: { bg: "#dcfce7", fg: "#166534" },
+  };
+  const c = colors[source.toLowerCase()] || { bg: "#f3f4f6", fg: "#374151" };
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        padding: "0.15rem 0.4rem",
+        borderRadius: "0.25rem",
+        fontSize: "0.7rem",
+        fontWeight: 600,
+        textTransform: "uppercase",
+        background: c.bg,
+        color: c.fg,
+        marginLeft: "0.25rem",
+      }}
+    >
+      {source}
+    </span>
+  );
+}
+
 export function DatasetList({}: DatasetListProps) {
   const [datasets, setDatasets] = useState<DatasetResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
 
-  // PMLB import
+  // Import
   const [showImport, setShowImport] = useState(false);
-  const [pmlbName, setPmlbName] = useState("");
-  const [importing, setImporting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<DatasetSearchResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [sourceFilter, setSourceFilter] = useState<"all" | "pmlb" | "uci">("all");
+  const [importing, setImporting] = useState<string | null>(null); // name of dataset being imported
   const [importError, setImportError] = useState<string | null>(null);
+  const searchTimeout = useRef<ReturnType<typeof setTimeout>>();
 
   // Detail view
   const [editingDatasetId, setEditingDatasetId] = useState<string | null>(null);
@@ -70,21 +102,49 @@ export function DatasetList({}: DatasetListProps) {
     loadDatasets();
   }, [loadDatasets]);
 
-  const handleImport = async () => {
-    if (!pmlbName.trim()) return;
+  // Debounced search
+  useEffect(() => {
+    if (!showImport) return;
+
+    clearTimeout(searchTimeout.current);
+
+    if (!searchQuery.trim() && sourceFilter === "all") {
+      setSearchResults([]);
+      return;
+    }
+
+    searchTimeout.current = setTimeout(async () => {
+      try {
+        setSearching(true);
+        const response = await searchDatasetCatalogs(searchQuery, sourceFilter);
+        setSearchResults(response.results);
+      } catch {
+        // Silently fail search
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(searchTimeout.current);
+  }, [searchQuery, sourceFilter, showImport]);
+
+  const handleDownload = async (result: DatasetSearchResult) => {
+    const key = `${result.source}:${result.name}`;
     try {
-      setImporting(true);
+      setImporting(key);
       setImportError(null);
-      await downloadPMLBDataset(pmlbName.trim());
-      setPmlbName("");
-      setShowImport(false);
+      if (result.source === "uci" && result.id != null) {
+        await downloadUCIDataset(result.id, result.name);
+      } else {
+        await downloadPMLBDataset(result.name);
+      }
       loadDatasets();
     } catch (err) {
       setImportError(
         err instanceof Error ? err.message : "Failed to import dataset"
       );
     } finally {
-      setImporting(false);
+      setImporting(null);
     }
   };
 
@@ -146,7 +206,7 @@ export function DatasetList({}: DatasetListProps) {
               fontSize: "13px",
             }}
           >
-            + Import from PMLB
+            + Import Dataset
           </button>
         </div>
         <p className="hint">
@@ -165,38 +225,117 @@ export function DatasetList({}: DatasetListProps) {
             boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
           }}
         >
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.75rem" }}>
             <input
               type="text"
               className="text-input"
-              placeholder="PMLB dataset name (e.g. backache)"
-              value={pmlbName}
-              onChange={(e) => setPmlbName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleImport()}
+              placeholder="Search datasets (e.g. heart, iris, adult)..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              autoFocus
               style={{ marginBottom: 0, flex: 1 }}
             />
-            <button
-              className="op-btn primary"
-              onClick={handleImport}
-              disabled={importing || !pmlbName.trim()}
-              style={{ whiteSpace: "nowrap" }}
+            <select
+              value={sourceFilter}
+              onChange={(e) => setSourceFilter(e.target.value as "all" | "pmlb" | "uci")}
+              style={{
+                padding: "0.5rem",
+                border: "1px solid #d1d5db",
+                borderRadius: "0.25rem",
+                fontSize: "0.85rem",
+                background: "white",
+              }}
             >
-              {importing ? "Downloading..." : "Download"}
-            </button>
+              <option value="all">All sources</option>
+              <option value="pmlb">PMLB only</option>
+              <option value="uci">UCI only</option>
+            </select>
             <button
               className="op-btn secondary"
               onClick={() => {
                 setShowImport(false);
                 setImportError(null);
+                setSearchQuery("");
+                setSearchResults([]);
               }}
             >
-              Cancel
+              Close
             </button>
           </div>
+
           {importError && (
-            <div className="error-message" style={{ marginTop: "0.5rem" }}>
+            <div className="error-message" style={{ marginBottom: "0.5rem" }}>
               {importError}
             </div>
+          )}
+
+          {searching && (
+            <p className="hint" style={{ margin: "0.5rem 0" }}>Searching...</p>
+          )}
+
+          {!searching && searchQuery.trim() && searchResults.length === 0 && (
+            <p className="hint" style={{ margin: "0.5rem 0" }}>
+              No datasets found matching "{searchQuery}"
+            </p>
+          )}
+
+          {searchResults.length > 0 && (
+            <div style={{ maxHeight: "300px", overflowY: "auto", border: "1px solid #e5e7eb", borderRadius: "0.25rem" }}>
+              <table className="experiment-table" style={{ fontSize: "0.85rem" }}>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Source</th>
+                    <th>Task</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {searchResults.slice(0, 50).map((result) => {
+                    const key = `${result.source}:${result.name}`;
+                    const isImporting = importing === key;
+                    return (
+                      <tr key={key}>
+                        <td style={{ fontWeight: 500 }}>{result.name}</td>
+                        <td><SourceBadge source={result.source} /></td>
+                        <td>
+                          {result.task_type && (
+                            <span style={{
+                              fontSize: "0.75rem",
+                              color: result.task_type === "classification" ? "#1d4ed8" : "#d97706",
+                            }}>
+                              {result.task_type}
+                            </span>
+                          )}
+                        </td>
+                        <td>
+                          <button
+                            className="op-btn primary"
+                            onClick={() => handleDownload(result)}
+                            disabled={isImporting}
+                            style={{ fontSize: "0.8rem", padding: "0.25rem 0.5rem" }}
+                          >
+                            {isImporting ? "Importing..." : "Import"}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {searchResults.length > 50 && (
+                <p className="hint" style={{ padding: "0.5rem", margin: 0 }}>
+                  Showing first 50 of {searchResults.length} results. Refine your search.
+                </p>
+              )}
+            </div>
+          )}
+
+          {!searchQuery.trim() && (
+            <p className="hint" style={{ margin: "0.5rem 0 0 0" }}>
+              Search PMLB ({"\u2248"}284 datasets) and UCI ML Repository ({"\u2248"}200 datasets) by name.
+              UCI datasets include feature type metadata (categorical, integer, etc).
+            </p>
           )}
         </div>
       )}
@@ -204,7 +343,7 @@ export function DatasetList({}: DatasetListProps) {
       <div className="experiment-list">
         {datasets.length === 0 ? (
           <p className="hint">
-            No datasets found. Import one from PMLB to get started.
+            No datasets found. Import one to get started.
           </p>
         ) : (
           <table className="experiment-table">

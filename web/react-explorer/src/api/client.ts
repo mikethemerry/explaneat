@@ -654,6 +654,42 @@ export async function downloadPMLBDataset(
   });
 }
 
+export type DatasetSearchResult = {
+  name: string;
+  source: "pmlb" | "uci";
+  id?: number;
+  num_samples?: number;
+  num_features?: number;
+  task_type?: string;
+};
+
+export type DatasetSearchResponse = {
+  results: DatasetSearchResult[];
+  total: number;
+};
+
+export async function searchDatasetCatalogs(
+  query: string,
+  source: string = "all",
+): Promise<DatasetSearchResponse> {
+  const params = new URLSearchParams();
+  if (query) params.set("q", query);
+  if (source !== "all") params.set("source", source);
+  return fetchJson<DatasetSearchResponse>(
+    `${API_BASE}/datasets/search?${params.toString()}`,
+  );
+}
+
+export async function downloadUCIDataset(
+  id: number,
+  name?: string,
+): Promise<DatasetResponse> {
+  return fetchJson<DatasetResponse>(`${API_BASE}/datasets/uci`, {
+    method: "POST",
+    body: JSON.stringify({ id, name }),
+  });
+}
+
 export async function listSplits(
   datasetId: string,
 ): Promise<SplitListResponse> {

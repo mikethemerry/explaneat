@@ -512,6 +512,31 @@ class PMLBDownloadRequest(BaseModel):
     version: Optional[str] = None
 
 
+class UCIDownloadRequest(BaseModel):
+    """Request to download and store a UCI ML Repository dataset."""
+
+    id: int
+    name: Optional[str] = None
+
+
+class DatasetSearchResult(BaseModel):
+    """A single result from a dataset catalog search."""
+
+    name: str
+    source: str  # "pmlb" or "uci"
+    id: Optional[int] = None  # UCI dataset ID
+    num_samples: Optional[int] = None
+    num_features: Optional[int] = None
+    task_type: Optional[str] = None
+
+
+class DatasetSearchResponse(BaseModel):
+    """Response from dataset catalog search."""
+
+    results: List[DatasetSearchResult]
+    total: int
+
+
 class LinkDatasetRequest(BaseModel):
     """Request to link a dataset to an experiment and create a split."""
 

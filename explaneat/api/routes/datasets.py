@@ -13,6 +13,9 @@ from ..schemas import (
     DatasetUpdateRequest,
     PrepareDatasetRequest,
     PMLBDownloadRequest,
+    UCIDownloadRequest,
+    DatasetSearchResult,
+    DatasetSearchResponse,
     SplitCreateRequest,
     SplitResponse,
     SplitListResponse,
@@ -41,6 +44,64 @@ async def list_datasets(limit: int = 50, offset: int = 0):
             datasets=[_dataset_to_response(d) for d in datasets],
             total=total,
         )
+
+
+@router.get("/search", response_model=DatasetSearchResponse)
+async def search_dataset_catalogs(q: str = "", source: str = "all"):
+    """Search PMLB and UCI dataset catalogs by name.
+
+    Args:
+        q: Search query (case-insensitive substring match)
+        source: Filter by source: "pmlb", "uci", or "all"
+    """
+    results: list[DatasetSearchResult] = []
+    query = q.lower().strip()
+
+    if source in ("all", "pmlb"):
+        import pmlb
+        classification = set(pmlb.classification_dataset_names)
+        regression = set(pmlb.regression_dataset_names)
+        all_names = sorted(set(pmlb.dataset_names))
+        for name in all_names:
+            if query and query not in name.lower():
+                continue
+            task = "classification" if name in classification else (
+                "regression" if name in regression else None
+            )
+            results.append(DatasetSearchResult(
+                name=name, source="pmlb", task_type=task,
+            ))
+
+    if source in ("all", "uci"):
+        try:
+            from ucimlrepo import list_available_datasets
+            import io, sys
+            old_stdout = sys.stdout
+            sys.stdout = io.StringIO()
+            list_available_datasets()
+            output = sys.stdout.getvalue()
+            sys.stdout = old_stdout
+
+            for line in output.strip().split("\n"):
+                line = line.strip()
+                if not line or line.startswith("-") or line.startswith("Dataset"):
+                    continue
+                parts = line.rsplit(None, 1)
+                if len(parts) == 2:
+                    name = parts[0].strip()
+                    try:
+                        ds_id = int(parts[1].strip())
+                    except ValueError:
+                        continue
+                    if query and query not in name.lower():
+                        continue
+                    results.append(DatasetSearchResult(
+                        name=name, source="uci", id=ds_id,
+                    ))
+        except Exception:
+            pass
+
+    return DatasetSearchResponse(results=results, total=len(results))
 
 
 @router.get("/{dataset_id}", response_model=DatasetResponse)
@@ -92,6 +153,76 @@ async def download_pmlb_dataset(request: PMLBDownloadRequest):
     except Exception as e:
         logger.exception("Failed to download PMLB dataset %s", request.name)
         raise HTTPException(status_code=400, detail=f"Failed to download '{request.name}': {type(e).__name__}: {e}")
+
+
+@router.post("/uci", response_model=DatasetResponse)
+async def download_uci_dataset(request: UCIDownloadRequest):
+    """Download and store a UCI ML Repository dataset."""
+    import logging
+    logger = logging.getLogger(__name__)
+    try:
+        from ucimlrepo import fetch_ucirepo
+        import numpy as np
+
+        ds = fetch_ucirepo(id=request.id)
+        X = ds.data.features.values.astype(np.float64)
+        y_raw = ds.data.targets.values
+        if y_raw.ndim == 2 and y_raw.shape[1] == 1:
+            y_raw = y_raw.ravel()
+
+        # Encode string targets to integers
+        unique_targets = sorted(set(str(v) for v in y_raw))
+        target_map = {v: i for i, v in enumerate(unique_targets)}
+        y = np.array([target_map[str(v)] for v in y_raw], dtype=np.float64)
+
+        # Handle NaN in features
+        nan_mask = np.isnan(X)
+        if nan_mask.any():
+            col_means = np.nanmean(X, axis=0)
+            for col in range(X.shape[1]):
+                X[nan_mask[:, col], col] = col_means[col]
+
+        name = request.name or ds.metadata.name
+        feature_names = list(ds.data.features.columns)
+
+        # Extract feature types from UCI metadata
+        feature_types = {}
+        if ds.variables is not None:
+            for _, row in ds.variables.iterrows():
+                if row.get("role") == "Feature" and row.get("name") in feature_names:
+                    uci_type = str(row.get("type", "")).lower()
+                    if uci_type == "categorical":
+                        feature_types[row["name"]] = "categorical"
+                    elif uci_type == "binary":
+                        feature_types[row["name"]] = "binary"
+                    elif uci_type in ("integer", "continuous"):
+                        feature_types[row["name"]] = uci_type
+                    else:
+                        feature_types[row["name"]] = "numeric"
+
+        # Determine task type
+        num_classes = len(unique_targets)
+        is_classification = num_classes <= 20
+        class_names = unique_targets if is_classification else None
+
+        from ...db.dataset_utils import save_dataset_to_db
+        dataset = save_dataset_to_db(
+            name=name,
+            X=X,
+            y=y,
+            feature_names=feature_names,
+            source="UCI",
+            source_url=f"https://archive.ics.uci.edu/dataset/{request.id}",
+            class_names=class_names if is_classification else None,
+            feature_types=feature_types,
+        )
+        return _dataset_to_response(dataset)
+    except Exception as e:
+        logger.exception("Failed to download UCI dataset %s", request.id)
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to download UCI dataset {request.id}: {type(e).__name__}: {e}",
+        )
 
 
 @router.post("/{dataset_id}/splits", response_model=SplitResponse)
