@@ -756,9 +756,17 @@ async def compute_viz_data(
             all_node_ids = list(subgraph_nodes_set)
             node_acts, struct_net = _extract_all_node_activations(ms, X, all_node_ids)
 
+            # Only include hidden nodes — exclude inputs (no activation)
+            # and outputs (sigmoid, always >0, so always "on" under ReLU check).
+            # All hidden nodes use ReLU (enforced by override_hidden_activation
+            # in _extract_all_node_activations), so we don't need to filter by
+            # activation function name.
+            input_ids = set(ms.input_node_ids)
+            output_ids_set = set(ms.output_node_ids)
             relu_node_ids = [
                 nid for nid in all_node_ids
-                if struct_net.node_info.get(nid, {}).get("activation") == "relu"
+                if nid not in input_ids
+                and nid not in output_ids_set
                 and nid in node_acts
             ]
 
