@@ -57,6 +57,7 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedNodes, setSelectedNodes] = useState<Set<string>>(new Set());
+  const [evidencePanelWidth, setEvidencePanelWidth] = useState(400);
 
   // Annotation state
   const [annotations, setAnnotations] = useState<AnnotationSummary[]>([]);
@@ -65,6 +66,9 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
 
   // Node-level evidence state
   const [nodeEvidence, setNodeEvidence] = useState<{ annotation: AnnotationSummary; nodeId: string } | null>(null);
+
+  // Edge influence overlay state
+  const [edgeInfluence, setEdgeInfluence] = useState<Record<string, any> | null>(null);
 
   // Experiment detail (for training config display)
   const [experimentDetail, setExperimentDetail] = useState<ExperimentDetailResponse | null>(null);
@@ -523,34 +527,44 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
           selectedNodes={selectedNodes}
           onNodeSelect={handleNodeSelect}
           annotationNodeIds={annotationNodeIds}
+          edgeInfluence={edgeInfluence}
         />
         {selectedAnnotationId && annotations.find((a) => a.id === selectedAnnotationId || a.name === selectedAnnotationId) ? (
-          <div className="right-panel">
+          <div className="right-panel" style={{ width: evidencePanelWidth }}>
             <EvidencePanel
               genomeId={genomeId}
               experimentId={experimentId}
               annotation={
                 annotations.find((a) => a.id === selectedAnnotationId || a.name === selectedAnnotationId)!
               }
+              width={evidencePanelWidth}
+              onResize={setEvidencePanelWidth}
+              onEdgeInfluence={setEdgeInfluence}
             />
           </div>
         ) : nodeEvidence ? (
-          <div className="right-panel">
+          <div className="right-panel" style={{ width: evidencePanelWidth }}>
             <EvidencePanel
               genomeId={genomeId}
               experimentId={experimentId}
               annotation={nodeEvidence.annotation}
               isNodeLevel
               nodeId={nodeEvidence.nodeId}
+              width={evidencePanelWidth}
+              onResize={setEvidencePanelWidth}
+              onEdgeInfluence={setEdgeInfluence}
             />
           </div>
         ) : wholeModelAnnotation ? (
-          <div className="right-panel">
+          <div className="right-panel" style={{ width: evidencePanelWidth }}>
             <EvidencePanel
               genomeId={genomeId}
               experimentId={experimentId}
               annotation={wholeModelAnnotation}
               isWholeModel
+              width={evidencePanelWidth}
+              onResize={setEvidencePanelWidth}
+              onEdgeInfluence={setEdgeInfluence}
             />
           </div>
         ) : connectionPair ? (

@@ -50,6 +50,10 @@ export function VizCanvas({ vizType, data, onSvgRef, correctness, classNames }: 
         plot = renderFeatureOutputScatter(data, correctness);
       } else if (vizType === "output_distribution") {
         plot = renderHistogram(data);
+      } else if (vizType === "regime_map") {
+        plot = renderRegimeMap(data);
+      } else if (vizType === "edge_influence") {
+        plot = renderEdgeInfluence(data);
       }
     } catch (err) {
       console.error("Viz rendering error:", err);
@@ -403,6 +407,152 @@ function renderShapBarSingle(
         y: "feature",
         fill: "#7C3AED",
         tip: true,
+      }),
+      Plot.ruleX([0]),
+    ],
+  });
+}
+
+function renderRegimeMap(data: Record<string, unknown>): HTMLElement {
+  const regimes = data.regimes as Array<{
+    pattern: Record<string, boolean>;
+    count: number;
+    fraction: number;
+    mean_prediction: number;
+    accuracy: number;
+    class_distribution: Record<string, number>;
+  }>;
+  const reluNodes = data.relu_nodes as string[];
+
+  const container = document.createElement("div");
+  container.style.overflowX = "auto";
+
+  const table = document.createElement("table");
+  table.className = "experiment-table";
+  table.style.fontSize = "12px";
+  table.style.width = "100%";
+
+  // Header
+  const thead = document.createElement("thead");
+  const headerRow = document.createElement("tr");
+  for (const nodeId of reluNodes) {
+    const th = document.createElement("th");
+    th.textContent = nodeId;
+    th.style.padding = "4px 6px";
+    th.style.textAlign = "center";
+    headerRow.appendChild(th);
+  }
+  for (const label of ["Count", "Fraction", "Accuracy", "Mean Pred"]) {
+    const th = document.createElement("th");
+    th.textContent = label;
+    th.style.padding = "4px 6px";
+    th.style.textAlign = "right";
+    headerRow.appendChild(th);
+  }
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  // Body
+  const tbody = document.createElement("tbody");
+  for (const regime of regimes) {
+    const row = document.createElement("tr");
+
+    for (const nodeId of reluNodes) {
+      const td = document.createElement("td");
+      td.style.padding = "4px 6px";
+      td.style.textAlign = "center";
+      const on = regime.pattern[nodeId];
+      const dot = document.createElement("span");
+      dot.style.color = on ? "#22c55e" : "#d1d5db";
+      dot.style.fontSize = "1.2rem";
+      dot.textContent = "\u25CF"; // filled circle
+      td.appendChild(dot);
+      row.appendChild(td);
+    }
+
+    // Count
+    const countTd = document.createElement("td");
+    countTd.style.padding = "4px 6px";
+    countTd.style.textAlign = "right";
+    countTd.textContent = String(regime.count);
+    row.appendChild(countTd);
+
+    // Fraction
+    const fracTd = document.createElement("td");
+    fracTd.style.padding = "4px 6px";
+    fracTd.style.textAlign = "right";
+    fracTd.textContent = `${(regime.fraction * 100).toFixed(1)}%`;
+    row.appendChild(fracTd);
+
+    // Accuracy
+    const accTd = document.createElement("td");
+    accTd.style.padding = "4px 6px";
+    accTd.style.textAlign = "right";
+    const accPct = (regime.accuracy * 100).toFixed(1) + "%";
+    accTd.textContent = accPct;
+    if (regime.accuracy > 0.8) {
+      accTd.style.color = "#22c55e";
+    } else if (regime.accuracy > 0.6) {
+      accTd.style.color = "#eab308";
+    } else {
+      accTd.style.color = "#ef4444";
+    }
+    accTd.style.fontWeight = "600";
+    row.appendChild(accTd);
+
+    // Mean Pred
+    const predTd = document.createElement("td");
+    predTd.style.padding = "4px 6px";
+    predTd.style.textAlign = "right";
+    predTd.textContent = regime.mean_prediction.toFixed(3);
+    row.appendChild(predTd);
+
+    tbody.appendChild(row);
+  }
+  table.appendChild(tbody);
+  container.appendChild(table);
+  return container;
+}
+
+function renderEdgeInfluence(data: Record<string, unknown>): SVGSVGElement | HTMLElement {
+  const edges = (data.edges as Array<{
+    from: string;
+    to: string;
+    weight: number;
+    influence: number;
+    mean_contribution: number;
+    normalized_influence: number;
+  }>).slice(0, 20);
+
+  const barData = edges.map((e) => ({
+    edge: `${e.from} \u2192 ${e.to}`,
+    influence: e.influence,
+    sign: e.mean_contribution >= 0 ? "positive" : "negative",
+    weight: e.weight,
+  }));
+
+  return Plot.plot({
+    width: 500,
+    height: Math.max(200, barData.length * 28 + 60),
+    marginLeft: 100,
+    x: { label: "Influence" },
+    y: { label: null, domain: barData.map((d) => d.edge) },
+    color: { domain: ["positive", "negative"], range: ["#3b82f6", "#ef4444"] },
+    marks: [
+      Plot.barX(barData, {
+        x: "influence",
+        y: "edge",
+        fill: "sign",
+        tip: true,
+      }),
+      Plot.text(barData, {
+        x: "influence",
+        y: "edge",
+        text: (d: { weight: number }) => `w=${d.weight.toFixed(2)}`,
+        dx: 4,
+        textAnchor: "start",
+        fontSize: 10,
+        fill: "#555",
       }),
       Plot.ruleX([0]),
     ],

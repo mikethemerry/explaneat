@@ -1,5 +1,5 @@
 """Compute visualization-ready data for D3/Observable Plot rendering."""
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -39,6 +39,15 @@ def suggest_viz_types(n_in: int, n_out: int) -> List[str]:
 
     # Output distribution: always available
     suggestions.append("output_distribution")
+
+    # Activation profile: always available (single node)
+    suggestions.append("activation_profile")
+
+    # Edge influence: always available
+    suggestions.append("edge_influence")
+
+    # Regime map: always available (uses ReLU nodes)
+    suggestions.append("regime_map")
 
     return suggestions
 
@@ -531,3 +540,186 @@ def compute_output_distribution(
 
     label = exit_names[output_dim] if exit_names and output_dim < len(exit_names) else f"y_{output_dim}"
     return compute_histogram(values, num_bins=num_bins, label=label)
+
+
+def compute_activation_profile(
+    activations: np.ndarray,
+    activation_fn: str = "relu",
+    n_bins: int = 50,
+) -> Dict[str, Any]:
+    """Compute activation distribution profile for a single node.
+
+    Args:
+        activations: shape (n_samples,) — one node's activation values.
+        activation_fn: the node's activation function name (e.g. "relu", "sigmoid").
+        n_bins: number of histogram bins.
+
+    Returns:
+        Dict with bin_edges, counts, stats including activation_rate and zero_fraction.
+    """
+    counts, bin_edges = np.histogram(activations, bins=n_bins)
+
+    zero_count = int(np.sum(activations == 0.0))
+    total = len(activations)
+
+    return {
+        "bin_edges": bin_edges.tolist(),
+        "counts": counts.tolist(),
+        "x_label": "Activation value",
+        "stats": {
+            "mean": float(np.mean(activations)),
+            "std": float(np.std(activations)),
+            "min": float(np.min(activations)),
+            "max": float(np.max(activations)),
+            "median": float(np.median(activations)),
+            "count": total,
+            "activation_rate": float(np.mean(activations > 0)),
+            "zero_fraction": float(zero_count / total) if total > 0 else 0.0,
+        },
+    }
+
+
+def compute_edge_influence(
+    connections: Sequence,
+    node_activations: Dict[str, np.ndarray],
+) -> Dict[str, Any]:
+    """Compute per-edge influence scores based on weight * source activations.
+
+    Args:
+        connections: list of NetworkConnection objects (or dicts with
+            from_node, to_node, weight attributes/keys).
+        node_activations: {node_id: activation_array} mapping.
+
+    Returns:
+        Dict with sorted list of edge info dicts including influence and
+        normalized_influence scores.
+    """
+    edges = []
+    max_influence = 0.0
+
+    for conn in connections:
+        # Support both object attributes and dict keys
+        if isinstance(conn, dict):
+            from_node = conn["from_node"]
+            to_node = conn["to_node"]
+            weight = conn["weight"]
+        else:
+            from_node = conn.from_node
+            to_node = conn.to_node
+            weight = conn.weight
+
+        if from_node not in node_activations:
+            continue
+
+        source_acts = node_activations[from_node]
+        weighted = weight * source_acts
+        influence = float(np.var(weighted))
+        mean_contribution = float(np.mean(weighted))
+
+        if influence > max_influence:
+            max_influence = influence
+
+        edges.append({
+            "from": from_node,
+            "to": to_node,
+            "weight": float(weight),
+            "influence": influence,
+            "mean_contribution": mean_contribution,
+        })
+
+    # Normalize influence to [0, 1]
+    for edge in edges:
+        edge["normalized_influence"] = (
+            edge["influence"] / max_influence if max_influence > 0 else 0.0
+        )
+
+    # Sort by influence descending
+    edges.sort(key=lambda e: e["influence"], reverse=True)
+
+    return {"edges": edges}
+
+
+def compute_regime_map(
+    node_activations: Dict[str, np.ndarray],
+    relu_node_ids: List[str],
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+) -> Dict[str, Any]:
+    """Compute ReLU activation regime map.
+
+    Groups samples by their binary ReLU on/off pattern and computes
+    per-regime statistics.
+
+    Args:
+        node_activations: {node_id: activation_array} for all nodes.
+        relu_node_ids: which nodes to use for regime detection.
+        y_true: true labels, shape (n_samples,).
+        y_pred: model predictions, shape (n_samples,) or (n_samples, 1).
+
+    Returns:
+        Dict with regime list sorted by count, plus summary info.
+    """
+    y_pred_flat = y_pred.ravel()
+    y_true_flat = y_true.ravel()
+    n_samples = len(y_true_flat)
+
+    # Filter to relu nodes that exist in activations
+    valid_relu_ids = [nid for nid in relu_node_ids if nid in node_activations]
+
+    if not valid_relu_ids:
+        return {
+            "regimes": [],
+            "relu_nodes": [],
+            "total_samples": n_samples,
+            "num_regimes": 0,
+        }
+
+    # Build binary pattern per sample
+    # Pattern key: tuple of booleans for each relu node
+    from collections import defaultdict
+    regime_groups: Dict[tuple, List[int]] = defaultdict(list)
+
+    for i in range(n_samples):
+        pattern = tuple(
+            bool(node_activations[nid][i] > 0) for nid in valid_relu_ids
+        )
+        regime_groups[pattern].append(i)
+
+    regimes = []
+    for pattern, indices in regime_groups.items():
+        indices_arr = np.array(indices)
+        count = len(indices)
+        preds = y_pred_flat[indices_arr]
+        trues = y_true_flat[indices_arr]
+
+        # Classification accuracy: pred > 0.5 matches y_true
+        predicted_classes = (preds > 0.5).astype(int)
+        true_classes = trues.astype(int)
+        accuracy = float(np.mean(predicted_classes == true_classes))
+
+        # Class distribution
+        unique, counts = np.unique(true_classes, return_counts=True)
+        class_dist = {str(int(u)): int(c) for u, c in zip(unique, counts)}
+
+        pattern_dict = {
+            nid: bool(v) for nid, v in zip(valid_relu_ids, pattern)
+        }
+
+        regimes.append({
+            "pattern": pattern_dict,
+            "count": count,
+            "fraction": float(count / n_samples) if n_samples > 0 else 0.0,
+            "mean_prediction": float(np.mean(preds)),
+            "accuracy": accuracy,
+            "class_distribution": class_dist,
+        })
+
+    # Sort by count descending
+    regimes.sort(key=lambda r: r["count"], reverse=True)
+
+    return {
+        "regimes": regimes,
+        "relu_nodes": valid_relu_ids,
+        "total_samples": n_samples,
+        "num_regimes": len(regimes),
+    }

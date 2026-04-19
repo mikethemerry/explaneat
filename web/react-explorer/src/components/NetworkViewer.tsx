@@ -59,11 +59,18 @@ const NODE_HEIGHT = 40;
 // Types
 // =============================================================================
 
+type EdgeInfluenceData = {
+  influence: number;
+  mean_contribution: number;
+  normalized_influence: number;
+};
+
 type NetworkViewerProps = {
   model: ModelState;
   selectedNodes: Set<string>;
   onNodeSelect: (nodeIds: string[]) => void;
   annotationNodeIds?: string[]; // IDs of synthetic annotation nodes
+  edgeInfluence?: Record<string, EdgeInfluenceData> | null;
 };
 
 // =============================================================================
@@ -424,7 +431,11 @@ function buildNodeTooltip(node: ModelState["nodes"][number]): string {
   return lines.join("\n");
 }
 
-function convertModelToFlow(model: ModelState, annotationNodeIds: Set<string>): { nodes: Node[]; edges: Edge[] } {
+function convertModelToFlow(
+  model: ModelState,
+  annotationNodeIds: Set<string>,
+  edgeInfluence?: Record<string, EdgeInfluenceData> | null,
+): { nodes: Node[]; edges: Edge[] } {
   logInfo("Converting model to ReactFlow format", {
     nodeCount: model.nodes.length,
     connectionCount: model.connections.length,
@@ -577,6 +588,25 @@ function convertModelToFlow(model: ModelState, annotationNodeIds: Set<string>): 
       };
     }
 
+    // Check for influence overlay
+    const influenceKey = `${conn.from}->${conn.to}`;
+    const inf = edgeInfluence?.[influenceKey];
+
+    let edgeStroke: string;
+    let edgeStrokeWidth: number;
+    let edgeMarkerColor: string;
+
+    if (inf) {
+      edgeStrokeWidth = 1 + inf.normalized_influence * 5;
+      const baseColor = inf.mean_contribution >= 0 ? "#3b82f6" : "#ef4444";
+      edgeStroke = baseColor;
+      edgeMarkerColor = baseColor;
+    } else {
+      edgeStroke = isPositive ? "#4CAF50" : "#F44336";
+      edgeStrokeWidth = strokeWidth;
+      edgeMarkerColor = edgeStroke;
+    }
+
     return {
       id: `${conn.from}->${conn.to}`,
       source: conn.from,
@@ -584,12 +614,13 @@ function convertModelToFlow(model: ModelState, annotationNodeIds: Set<string>): 
       type: "default",  // Bezier curves
       animated: false,
       style: {
-        stroke: isPositive ? "#4CAF50" : "#F44336",
-        strokeWidth,
+        stroke: edgeStroke,
+        strokeWidth: edgeStrokeWidth,
+        ...(inf ? { opacity: 0.3 + inf.normalized_influence * 0.7 } : {}),
       },
       markerEnd: {
         type: MarkerType.ArrowClosed,
-        color: isPositive ? "#4CAF50" : "#F44336",
+        color: edgeMarkerColor,
         width: 15,
         height: 15,
       },
@@ -633,6 +664,7 @@ export function NetworkViewer({
   selectedNodes,
   onNodeSelect,
   annotationNodeIds = [],
+  edgeInfluence,
 }: NetworkViewerProps) {
   // Convert model to ReactFlow format with layer-based layout
   const { initialNodes, initialEdges } = useMemo(() => {
@@ -641,7 +673,7 @@ export function NetworkViewer({
 
     // Convert model to ReactFlow nodes/edges
     const annotationNodeSet = new Set(annotationNodeIds);
-    const { nodes: flowNodes, edges: flowEdges } = convertModelToFlow(model, annotationNodeSet);
+    const { nodes: flowNodes, edges: flowEdges } = convertModelToFlow(model, annotationNodeSet, edgeInfluence);
 
     // Get input node IDs from metadata
     const inputNodeIds = new Set(model.metadata.input_nodes);
@@ -674,7 +706,7 @@ export function NetworkViewer({
     });
 
     return { initialNodes: layoutedNodes, initialEdges: layoutedEdges };
-  }, [model, annotationNodeIds]);
+  }, [model, annotationNodeIds, edgeInfluence]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -881,6 +913,18 @@ export function NetworkViewer({
           />
           Disabled
         </span>
+        {edgeInfluence && (
+          <>
+            <span className="legend-item" style={{ marginLeft: "8px", borderLeft: "1px solid #ccc", paddingLeft: "8px" }}>
+              <span className="legend-color" style={{ backgroundColor: "#3b82f6" }} />
+              + Influence
+            </span>
+            <span className="legend-item">
+              <span className="legend-color" style={{ backgroundColor: "#ef4444" }} />
+              - Influence
+            </span>
+          </>
+        )}
       </div>
     </div>
   );

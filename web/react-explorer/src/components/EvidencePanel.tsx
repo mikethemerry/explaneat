@@ -21,6 +21,9 @@ type EvidencePanelProps = {
   isWholeModel?: boolean;
   isNodeLevel?: boolean;
   nodeId?: string;
+  width?: number;
+  onResize?: (width: number) => void;
+  onEdgeInfluence?: (data: Record<string, any> | null) => void;
 };
 
 const VIZ_TYPE_LABELS: Record<string, string> = {
@@ -33,9 +36,12 @@ const VIZ_TYPE_LABELS: Record<string, string> = {
   feature_output_scatter: "Feature vs Output",
   output_distribution: "Output Dist.",
   shap: "SHAP Values",
+  activation_profile: "Activation Profile",
+  regime_map: "Regime Map",
+  edge_influence: "Edge Influence",
 };
 
-const ALL_VIZ_TYPES = ["line", "heatmap", "partial_dependence", "pca_scatter", "sensitivity", "ice", "feature_output_scatter", "output_distribution", "shap"];
+const ALL_VIZ_TYPES = ["line", "heatmap", "partial_dependence", "pca_scatter", "sensitivity", "ice", "feature_output_scatter", "output_distribution", "shap", "activation_profile", "regime_map", "edge_influence"];
 
 // Which viz types need which dimension selectors
 const NEEDS_INPUT_DIM: Record<string, "single" | "pair" | false> = {
@@ -78,12 +84,13 @@ type VizSlotProps = {
   defaultVizType: string;
   onGalleryRefresh: () => void;
   viewMode: "network" | "source";
+  onEdgeInfluence?: (data: Record<string, any> | null) => void;
 };
 
 function VizSlot({
   genomeId, annotation, splitId, splitChoice, sampleFraction,
   isWholeModel, isNodeLevel, nodeId,
-  nIn, nOut, defaultVizType, onGalleryRefresh, viewMode,
+  nIn, nOut, defaultVizType, onGalleryRefresh, viewMode, onEdgeInfluence,
 }: VizSlotProps) {
   const [vizData, setVizData] = useState<VizDataResponse | null>(null);
   const [vizType, setVizType] = useState<string>(defaultVizType);
@@ -95,6 +102,7 @@ function VizSlot({
   const [inputDim, setInputDim] = useState(0);
   const [inputDims, setInputDims] = useState<[number, number]>([0, 1]);
   const [outputDim, setOutputDim] = useState(0);
+  const [showOnGraph, setShowOnGraph] = useState(false);
 
   const inputOptions = useMemo(() => Array.from({ length: nIn }, (_, i) => i), [nIn]);
   const outputOptions = useMemo(() => Array.from({ length: nOut }, (_, i) => i), [nOut]);
@@ -275,6 +283,38 @@ function VizSlot({
               Recompute
             </button>
           )}
+          {vizType === "edge_influence" && onEdgeInfluence && vizData && (
+            <button
+              className={`op-btn ${showOnGraph ? "primary" : ""}`}
+              onClick={() => {
+                const next = !showOnGraph;
+                setShowOnGraph(next);
+                if (next && vizData?.data) {
+                  // Transform edge data into the Record<string, ...> format
+                  const edges = (vizData.data as any).edges as Array<{
+                    from: string; to: string; influence: number;
+                    mean_contribution: number; normalized_influence: number;
+                  }>;
+                  if (edges) {
+                    const record: Record<string, any> = {};
+                    for (const e of edges) {
+                      record[`${e.from}->${e.to}`] = {
+                        influence: e.influence,
+                        mean_contribution: e.mean_contribution,
+                        normalized_influence: e.normalized_influence,
+                      };
+                    }
+                    onEdgeInfluence(record);
+                  }
+                } else {
+                  onEdgeInfluence(null);
+                }
+              }}
+              style={{ fontSize: "11px" }}
+            >
+              {showOnGraph ? "Hide on graph" : "Show on graph"}
+            </button>
+          )}
         </div>
       </div>
 
@@ -312,7 +352,7 @@ function VizSlot({
 
 /* ── EvidencePanel: shared header/dataset/perf + two VizSlots ── */
 
-export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel = false, isNodeLevel = false, nodeId }: EvidencePanelProps) {
+export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel = false, isNodeLevel = false, nodeId, width, onResize, onEdgeInfluence }: EvidencePanelProps) {
   const [splitId, setSplitId] = useState<string | null>(null);
   const [splitChoice, setSplitChoice] = useState<"train" | "test" | "val" | "both">("both");
   const [sampleFraction, setSampleFraction] = useState(0.1);
@@ -336,6 +376,36 @@ export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel
 
   const handleGalleryRefresh = useCallback(() => setGalleryKey((k) => k + 1), []);
 
+  // Resize drag handling
+  const handleResizeMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (!onResize) return;
+      e.preventDefault();
+      const startX = e.clientX;
+      const startWidth = width ?? 400;
+
+      document.body.style.userSelect = "none";
+      document.body.style.cursor = "col-resize";
+
+      function handleMouseMove(moveEvent: MouseEvent) {
+        const delta = startX - moveEvent.clientX;
+        const newWidth = Math.min(900, Math.max(300, startWidth + delta));
+        onResize!(newWidth);
+      }
+
+      function handleMouseUp() {
+        document.body.style.userSelect = "";
+        document.body.style.cursor = "";
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+      }
+
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    },
+    [onResize, width],
+  );
+
   // Fetch performance data for whole-model mode
   useEffect(() => {
     if (!isWholeModel || !splitId) return;
@@ -353,6 +423,12 @@ export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel
 
   return (
     <div className="evidence-panel">
+      {onResize && (
+        <div
+          className="evidence-panel-resize-handle"
+          onMouseDown={handleResizeMouseDown}
+        />
+      )}
       <div className="evidence-panel-header">
         <h3>Evidence: {annotation.name || annotation.id.slice(0, 8)}</h3>
         <span className="evidence-dim">
@@ -488,6 +564,7 @@ export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel
             defaultVizType="line"
             onGalleryRefresh={handleGalleryRefresh}
             viewMode={viewMode}
+            onEdgeInfluence={onEdgeInfluence}
           />
           <div className="viz-slot-divider" />
           <VizSlot
@@ -504,6 +581,7 @@ export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel
             defaultVizType="shap"
             onGalleryRefresh={handleGalleryRefresh}
             viewMode={viewMode}
+            onEdgeInfluence={onEdgeInfluence}
           />
         </>
       )}

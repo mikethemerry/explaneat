@@ -378,6 +378,41 @@ def _compute_node_subgraph(model_state: NetworkStructure, node_id: str) -> Dict[
     }
 
 
+def _extract_all_node_activations(
+    model_state: NetworkStructure,
+    X: np.ndarray,
+    node_ids: List[str],
+):
+    """Run forward pass and extract activations for specified nodes.
+
+    Builds a StructureNetwork from the model state, runs the forward pass,
+    and collects per-node activations.  Nodes not found in the network are
+    silently skipped.
+
+    Returns:
+        Tuple of (activations_dict, struct_net) where activations_dict maps
+        node_id -> numpy array and struct_net is the StructureNetwork used.
+    """
+    from ...core.structure_network import StructureNetwork
+    import torch
+
+    struct_net = StructureNetwork(model_state)
+    # Match NeuralNeat training behaviour
+    struct_net.override_output_activation("sigmoid")
+    struct_net.override_hidden_activation("relu")
+
+    X_tensor = torch.as_tensor(X, dtype=torch.float64)
+    struct_net.forward(X_tensor)
+
+    activations: Dict[str, np.ndarray] = {}
+    for nid in node_ids:
+        try:
+            activations[nid] = struct_net.get_node_activation(nid)
+        except (ValueError, RuntimeError):
+            continue
+    return activations, struct_net
+
+
 def _resolve_annotation(
     session, genome_id: str, model_state: NetworkStructure,
     annotation_id: Optional[str], node_id: Optional[str],
@@ -647,6 +682,103 @@ async def compute_viz_data(
                 output_dim=params.get("output_dim", 0),
                 exit_names=exit_names,
             )
+        elif viz_type == "activation_profile":
+            # Requires node_id to identify which node to profile
+            target_node = request.node_id
+            if not target_node:
+                raise HTTPException(
+                    status_code=400,
+                    detail="activation_profile requires node_id",
+                )
+            if not is_whole_model:
+                # model_state already built above for non-whole-model path
+                ms = model_state
+            else:
+                ms = _build_model_state(session, genome_id)
+
+            all_node_ids = [n.id for n in ms.nodes]
+            node_acts, struct_net = _extract_all_node_activations(ms, X, all_node_ids)
+
+            if target_node not in node_acts:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Node '{target_node}' not found or has no activations",
+                )
+
+            # Get the node's activation function
+            act_fn = struct_net.node_info.get(target_node, {}).get("activation", "relu")
+
+            data = vd.compute_activation_profile(
+                node_acts[target_node],
+                activation_fn=act_fn,
+                n_bins=params.get("n_bins", 50),
+            )
+        elif viz_type == "edge_influence":
+            # Works with annotation or node subgraph
+            if is_whole_model:
+                ms = _build_model_state(session, genome_id)
+                # Use all connections for whole model
+                connections = [c for c in ms.connections if c.enabled]
+                all_node_ids = [n.id for n in ms.nodes]
+            else:
+                ms = model_state
+                # annotation is already resolved in the non-whole-model branch above
+                subgraph_nodes = set(annotation.get("subgraph_nodes", []))
+                # Get connections within the subgraph
+                connections = [
+                    c for c in ms.connections
+                    if c.enabled and c.from_node in subgraph_nodes and c.to_node in subgraph_nodes
+                ]
+                all_node_ids = list(subgraph_nodes)
+
+            source_ids = list({
+                c.from_node if hasattr(c, "from_node") else c["from_node"]
+                for c in connections
+            })
+            node_acts, _ = _extract_all_node_activations(ms, X, source_ids)
+            data = vd.compute_edge_influence(connections, node_acts)
+        elif viz_type == "regime_map":
+            # Works with annotation or node subgraph, or whole model
+            if is_whole_model:
+                ms = _build_model_state(session, genome_id)
+                subgraph_nodes_set = {n.id for n in ms.nodes}
+            else:
+                ms = model_state
+                # annotation is already resolved in the non-whole-model branch above
+                subgraph_nodes_set = set(annotation.get("subgraph_nodes", []))
+
+            # Find relu nodes in the subgraph
+            all_node_ids = list(subgraph_nodes_set)
+            node_acts, struct_net = _extract_all_node_activations(ms, X, all_node_ids)
+
+            relu_node_ids = [
+                nid for nid in all_node_ids
+                if struct_net.node_info.get(nid, {}).get("activation") == "relu"
+                and nid in node_acts
+            ]
+
+            # Get model predictions (y_pred) from output nodes
+            output_ids = ms.output_node_ids
+            output_acts = {}
+            for oid in output_ids:
+                if oid in node_acts:
+                    output_acts[oid] = node_acts[oid]
+
+            if output_acts:
+                # Use first output node's activations as y_pred
+                first_out = output_ids[0]
+                y_pred = output_acts[first_out]
+            else:
+                # Fallback: run full forward pass
+                import torch
+                from ...core.structure_network import StructureNetwork
+                sn = StructureNetwork(ms)
+                sn.override_output_activation("sigmoid")
+                sn.override_hidden_activation("relu")
+                X_tensor = torch.as_tensor(X, dtype=torch.float64)
+                y_pred = sn.forward(X_tensor).detach().numpy().ravel()
+
+            data = vd.compute_regime_map(node_acts, relu_node_ids, y, y_pred)
         else:
             raise HTTPException(status_code=400, detail=f"Unknown viz_type: {viz_type}")
 

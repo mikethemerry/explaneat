@@ -624,6 +624,7 @@ class VizDataRequest(BaseModel):
     viz_type: Literal[
         "line", "heatmap", "partial_dependence", "pca_scatter", "sensitivity",
         "ice", "feature_output_scatter", "output_distribution",
+        "activation_profile", "edge_influence", "regime_map",
     ]
     params: Optional[Dict[str, Any]] = None
     split: Literal["train", "test", "val", "both"] = "both"
