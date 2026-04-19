@@ -838,6 +838,7 @@ async def get_formula(
     genome_id: str = Path(...),
     annotation_id: Optional[str] = None,
     node_id: Optional[str] = None,
+    force: bool = False,
 ):
     """Get closed-form formula for an annotation subgraph or single node.
 
@@ -920,12 +921,12 @@ async def get_formula(
             parent_ann["exit_nodes"] = sorted(effective_exits)
 
             composed_af = AnnotationFunction.from_structure(parent_ann, partially_collapsed)
-            latex_collapsed = composed_af.to_latex(expand=False)
-            latex_expanded = composed_af.to_latex(expand=True)
+            latex_collapsed = composed_af.to_latex(expand=False, force=force)
+            latex_expanded = composed_af.to_latex(expand=True, force=force)
 
             # Fall back to direct computation if composed path fails
             if latex_expanded is None:
-                latex_expanded = ann_fn.to_latex()
+                latex_expanded = ann_fn.to_latex(force=force)
 
             return FormulaResponse(
                 latex=latex_expanded,
@@ -937,7 +938,7 @@ async def get_formula(
                 children=children_info,
             )
         else:
-            latex = ann_fn.to_latex()
+            latex = ann_fn.to_latex(force=force)
             return FormulaResponse(
                 latex=latex,
                 latex_collapsed=None,

@@ -14,13 +14,29 @@ export function FormulaDisplay({ genomeId, annotationId, nodeId }: FormulaDispla
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [forcing, setForcing] = useState(false);
   const mathRef = useRef<HTMLDivElement>(null);
+
+  const fetchFormula = useCallback((force = false) => {
+    setLoading(true);
+    setError(null);
+    if (!force) setExpanded(false);
+
+    getFormula(genomeId, annotationId, nodeId, force)
+      .then((data) => {
+        setFormula(data);
+        setLoading(false);
+        if (force) setForcing(true);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [genomeId, annotationId, nodeId]);
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setError(null);
-    setExpanded(false);
+    setForcing(false);
 
     getFormula(genomeId, annotationId, nodeId)
       .then((data) => {
@@ -85,7 +101,7 @@ export function FormulaDisplay({ genomeId, annotationId, nodeId }: FormulaDispla
     return <div className="formula-display error-message">Formula error: {error}</div>;
   }
 
-  if (!formula || !formula.tractable) {
+  if (!formula || (!formula.tractable && !forcing)) {
     const [nIn, nOut] = formula?.dimensionality || [0, 0];
     return (
       <div className="formula-display">
@@ -97,6 +113,16 @@ export function FormulaDisplay({ genomeId, annotationId, nodeId }: FormulaDispla
         </div>
         <div className="formula-intractable">
           Closed-form not tractable for this subgraph
+          {formula && (
+            <button
+              className="formula-toggle"
+              onClick={() => fetchFormula(true)}
+              disabled={loading}
+              style={{ marginLeft: "0.5rem" }}
+            >
+              {loading ? "Computing..." : "Show anyway"}
+            </button>
+          )}
         </div>
       </div>
     );

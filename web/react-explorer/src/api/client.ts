@@ -723,6 +723,7 @@ export async function prepareDataset(
   encodingConfig?: Record<string, any>,
   ordinalOnehot?: string[],
   ordinalOrders?: Record<string, string[]>,
+  binarizeTarget?: boolean,
 ): Promise<DatasetResponse> {
   return fetchJson<DatasetResponse>(
     `${API_BASE}/datasets/${datasetId}/prepare`,
@@ -733,6 +734,7 @@ export async function prepareDataset(
         encoding_config: encodingConfig || undefined,
         ordinal_onehot: ordinalOnehot || undefined,
         ordinal_orders: ordinalOrders || undefined,
+        binarize_target: binarizeTarget || undefined,
       }),
     },
   );
@@ -832,10 +834,12 @@ export async function getFormula(
   genomeId: string,
   annotationId?: string,
   nodeId?: string,
+  force?: boolean,
 ): Promise<FormulaResponse> {
   const params = new URLSearchParams();
   if (annotationId) params.set("annotation_id", annotationId);
   if (nodeId) params.set("node_id", nodeId);
+  if (force) params.set("force", "true");
   return fetchJson<FormulaResponse>(
     `${API_BASE}/genomes/${genomeId}/evidence/formula?${params.toString()}`,
   );

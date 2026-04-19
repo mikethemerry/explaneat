@@ -406,7 +406,7 @@ class AnnotationFunction:
             return outputs[0]
         return outputs
 
-    def to_sympy(self, expand: bool = True) -> Optional[Dict[str, "sympy.Expr"]]:
+    def to_sympy(self, expand: bool = True, force: bool = False) -> Optional[Dict[str, "sympy.Expr"]]:
         """Extract symbolic expressions for each output.
 
         Args:
@@ -414,20 +414,24 @@ class AnnotationFunction:
                 expressions down to primitive activations.  If False, represent
                 child FUNCTION nodes as named ``sympy.Function`` applications
                 (e.g. ``child1(x_0)``).
+            force: If True, skip tractability checks and attempt extraction
+                regardless of input count or depth.
 
-        Returns None if the subgraph is too complex (>5 inputs or >3 internal layers).
+        Returns None if the subgraph is too complex (>5 inputs or >3 internal
+        layers) and force is False, or if sympy extraction fails.
         """
-        if self.n_inputs > 5:
-            return None
+        if not force:
+            if self.n_inputs > 5:
+                return None
 
-        # Count distinct depths in internal nodes
-        depths = set()
-        for step in self._steps:
-            loc = self._node_locations.get(step["node"])
-            if loc:
-                depths.add(loc[0])
-        if len(depths) > 3:
-            return None
+            # Count distinct depths in internal nodes
+            depths = set()
+            for step in self._steps:
+                loc = self._node_locations.get(step["node"])
+                if loc:
+                    depths.add(loc[0])
+            if len(depths) > 3:
+                return None
 
         try:
             import sympy
@@ -666,16 +670,17 @@ class AnnotationFunction:
         except Exception:
             return None
 
-    def to_latex(self, expand: bool = True) -> Optional[str]:
+    def to_latex(self, expand: bool = True, force: bool = False) -> Optional[str]:
         """Get LaTeX representation of the function.
 
         Args:
             expand: If True (default), inline child FUNCTION node expressions
                 to primitives.  If False, represent them as named functions.
+            force: If True, skip tractability checks.
 
         Returns None if sympy extraction fails or is intractable.
         """
-        exprs = self.to_sympy(expand=expand)
+        exprs = self.to_sympy(expand=expand, force=force)
         if exprs is None:
             return None
 
