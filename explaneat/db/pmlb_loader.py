@@ -21,7 +21,30 @@ def download_and_store_pmlb_dataset(
     Returns:
         Dataset model instance
     """
-    df = pmlb.fetch_data(name)
+    # Try the exact name first, then alternate separators (- vs _)
+    # The PMLB catalog lists names that sometimes don't match the GitHub repo
+    attempts = [name]
+    if "_" in name:
+        attempts.append(name.replace("_", "-"))
+    elif "-" in name:
+        attempts.append(name.replace("-", "_"))
+
+    df = None
+    last_error = None
+    for attempt in attempts:
+        try:
+            df = pmlb.fetch_data(attempt)
+            name = attempt  # use the name that worked
+            break
+        except ValueError as e:
+            last_error = e
+
+    if df is None:
+        raise ValueError(
+            f"Dataset '{name}' not found in PMLB (tried: {', '.join(attempts)}). "
+            f"This dataset may have been removed from the PMLB repository. "
+            f"Try searching UCI instead."
+        ) from last_error
 
     # PMLB convention: last column is 'target'
     target_col = "target"

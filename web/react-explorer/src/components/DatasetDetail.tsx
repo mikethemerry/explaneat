@@ -521,6 +521,7 @@ function PrepareDatasetForm({
 }) {
   const [name, setName] = useState("");
   const [ordinalOnehot, setOrdinalOnehot] = useState<Set<string>>(new Set());
+  const [binarizeTarget, setBinarizeTarget] = useState(false);
   const [preparing, setPreparing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -567,7 +568,9 @@ function PrepareDatasetForm({
         datasetId,
         name || undefined,
         undefined,
-        ordinalOnehot.size > 0 ? Array.from(ordinalOnehot) : undefined
+        ordinalOnehot.size > 0 ? Array.from(ordinalOnehot) : undefined,
+        undefined,
+        binarizeTarget || undefined,
       );
       setSuccess(`Created prepared dataset: ${prepared.name} (${prepared.id})`);
       onPrepared();
@@ -578,11 +581,14 @@ function PrepareDatasetForm({
     }
   };
 
-  if (!hasEncodableFeatures) {
+  const isMultiClass = (dataset.num_classes ?? 0) > 2;
+  const canPrepare = hasEncodableFeatures || isMultiClass;
+
+  if (!canPrepare) {
     return (
       <div>
         <p className="hint" style={{ margin: "0 0 0.5rem 0" }}>
-          No categorical or ordinal features to encode.
+          No categorical or ordinal features to encode, and target is already binary.
         </p>
         <button className="op-btn" disabled>
           Prepare Dataset
@@ -614,49 +620,74 @@ function PrepareDatasetForm({
         </div>
       )}
 
-      {/* Encoding summary */}
-      <div style={{ marginBottom: "0.75rem" }}>
-        <div
-          style={{
-            fontWeight: 500,
-            fontSize: "0.85rem",
-            color: "#374151",
-            marginBottom: "0.35rem",
-          }}
-        >
-          Features to encode:
+      {/* Binarize target */}
+      {isMultiClass && (
+        <div style={{ marginBottom: "0.75rem" }}>
+          <label
+            className="radio-label"
+            style={{ fontSize: "0.85rem" }}
+          >
+            <input
+              type="checkbox"
+              checked={binarizeTarget}
+              onChange={(e) => setBinarizeTarget(e.target.checked)}
+            />
+            Binarize target — collapse classes 1-{(dataset.num_classes ?? 2) - 1} into
+            a single positive class (0 vs rest)
+          </label>
+          {dataset.class_names && dataset.class_names.length > 0 && (
+            <div style={{ marginLeft: "1.5rem", marginTop: "0.25rem", fontSize: "0.8rem", color: "#6b7280" }}>
+              Current classes: {dataset.class_names.join(", ")}
+            </div>
+          )}
         </div>
-        <ul
-          style={{
-            margin: "0 0 0.5rem 0",
-            padding: "0 0 0 1.25rem",
-            fontSize: "0.85rem",
-            color: "#4b5563",
-            lineHeight: 1.6,
-          }}
-        >
-          {categoricalFeatures.map(([feat]) => (
-            <li key={feat}>
-              <span style={{ fontFamily: "monospace", fontWeight: 500 }}>
-                {feat}
-              </span>{" "}
-              — categorical (will be one-hot encoded)
-            </li>
-          ))}
-          {ordinalFeatures.map(([feat]) => (
-            <li key={feat}>
-              <span style={{ fontFamily: "monospace", fontWeight: 500 }}>
-                {feat}
-              </span>{" "}
-              — ordinal (
-              {ordinalOnehot.has(feat)
-                ? "will be one-hot encoded"
-                : "will be rank-mapped"}
-              )
-            </li>
-          ))}
-        </ul>
-      </div>
+      )}
+
+      {/* Encoding summary */}
+      {hasEncodableFeatures && (
+        <div style={{ marginBottom: "0.75rem" }}>
+          <div
+            style={{
+              fontWeight: 500,
+              fontSize: "0.85rem",
+              color: "#374151",
+              marginBottom: "0.35rem",
+            }}
+          >
+            Features to encode:
+          </div>
+          <ul
+            style={{
+              margin: "0 0 0.5rem 0",
+              padding: "0 0 0 1.25rem",
+              fontSize: "0.85rem",
+              color: "#4b5563",
+              lineHeight: 1.6,
+            }}
+          >
+            {categoricalFeatures.map(([feat]) => (
+              <li key={feat}>
+                <span style={{ fontFamily: "monospace", fontWeight: 500 }}>
+                  {feat}
+                </span>{" "}
+                — categorical (will be one-hot encoded)
+              </li>
+            ))}
+            {ordinalFeatures.map(([feat]) => (
+              <li key={feat}>
+                <span style={{ fontFamily: "monospace", fontWeight: 500 }}>
+                  {feat}
+                </span>{" "}
+                — ordinal (
+                {ordinalOnehot.has(feat)
+                  ? "will be one-hot encoded"
+                  : "will be rank-mapped"}
+                )
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Ordinal options */}
       {ordinalFeatures.length > 0 && (
@@ -720,7 +751,7 @@ function PrepareDatasetForm({
         <input
           type="text"
           className="text-input"
-          placeholder={`${dataset.name} (prepared)`}
+          placeholder={`${dataset.name} (${binarizeTarget ? "binary, " : ""}prepared)`}
           value={name}
           onChange={(e) => setName(e.target.value)}
           style={{ marginBottom: 0, flex: 1 }}

@@ -56,20 +56,32 @@ async def search_dataset_catalogs(q: str = "", source: str = "all"):
     """
     results: list[DatasetSearchResult] = []
     query = q.lower().strip()
+    # Normalize so hyphens, underscores, and spaces all match each other
+    query_normalized = query.replace("-", "_").replace(" ", "_")
 
     if source in ("all", "pmlb"):
         import pmlb
+        from pmlb.dataset_lists import df_summary
         classification = set(pmlb.classification_dataset_names)
         regression = set(pmlb.regression_dataset_names)
         all_names = sorted(set(pmlb.dataset_names))
+        # Build lookup from summary metadata
+        summary_lookup = {}
+        for _, row in df_summary.iterrows():
+            summary_lookup[row["dataset"]] = row
         for name in all_names:
-            if query and query not in name.lower():
+            if query_normalized and query_normalized not in name.lower().replace("-", "_"):
                 continue
             task = "classification" if name in classification else (
                 "regression" if name in regression else None
             )
+            meta = summary_lookup.get(name)
             results.append(DatasetSearchResult(
-                name=name, source="pmlb", task_type=task,
+                name=name,
+                source="pmlb",
+                task_type=task,
+                num_samples=int(meta["n_instances"]) if meta is not None else None,
+                num_features=int(meta["n_features"]) if meta is not None else None,
             ))
 
     if source in ("all", "uci"):
@@ -93,7 +105,7 @@ async def search_dataset_catalogs(q: str = "", source: str = "all"):
                         ds_id = int(parts[1].strip())
                     except ValueError:
                         continue
-                    if query and query not in name.lower():
+                    if query_normalized and query_normalized not in name.lower().replace("-", "_").replace(" ", "_"):
                         continue
                     results.append(DatasetSearchResult(
                         name=name, source="uci", id=ds_id,
@@ -286,7 +298,14 @@ async def prepare_dataset(dataset_id: str, request: PrepareDatasetRequest):
         if source.x_data is None:
             raise HTTPException(status_code=400, detail="Dataset has no data")
 
+        import numpy as np
+
         X, y = source.get_data()
+
+        # Binarize target: collapse all non-zero classes into 1
+        if request.binarize_target:
+            y = (y > 0).astype(np.float64)
+
         feature_names = source.feature_names or []
         feature_types_dict = source.feature_types or {}
 
@@ -312,7 +331,10 @@ async def prepare_dataset(dataset_id: str, request: PrepareDatasetRequest):
         )
         for ds in existing:
             if ds.encoding_config == encoding_config:
-                return _dataset_to_response(ds)
+                # Check binarization matches too
+                ds_binarized = (ds.additional_metadata or {}).get("binarized", False)
+                if ds_binarized == request.binarize_target:
+                    return _dataset_to_response(ds)
 
         # Prepare the encoded arrays
         X_prepared, new_feature_names, new_feature_types = prepare_dataset_arrays(
@@ -320,24 +342,39 @@ async def prepare_dataset(dataset_id: str, request: PrepareDatasetRequest):
         )
 
         # Create the prepared dataset
-        prep_name = request.name or f"{source.name} (prepared)"
+        if request.binarize_target:
+            prep_name = request.name or f"{source.name} (binary, prepared)"
+            num_classes = 2
+            class_names = ["0", "1"]
+            description = f"Binarized and encoded version of {source.name}"
+        else:
+            prep_name = request.name or f"{source.name} (prepared)"
+            num_classes = source.num_classes
+            class_names = source.class_names
+            description = f"One-hot encoded version of {source.name}"
+
+        prep_metadata = dict(source.additional_metadata or {})
+        if request.binarize_target:
+            prep_metadata["task_type"] = "classification"
+            prep_metadata["binarized"] = True
+
         prepared = Dataset(
             id=uuid.uuid4(),
             name=prep_name,
             version=source.version,
             source=source.source,
             source_url=source.source_url,
-            description=f"One-hot encoded version of {source.name}",
+            description=description,
             num_samples=X_prepared.shape[0],
             num_features=X_prepared.shape[1],
-            num_classes=source.num_classes,
+            num_classes=num_classes,
             feature_names=new_feature_names,
             feature_types=new_feature_types,
             feature_descriptions=None,
             target_name=source.target_name,
             target_description=source.target_description,
-            class_names=source.class_names,
-            additional_metadata=source.additional_metadata,
+            class_names=class_names,
+            additional_metadata=prep_metadata,
             source_dataset_id=source_uuid,
             encoding_config=encoding_config,
         )

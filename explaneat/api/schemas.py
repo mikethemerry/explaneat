@@ -503,6 +503,7 @@ class PrepareDatasetRequest(BaseModel):
     encoding_config: Optional[Dict[str, Any]] = None
     ordinal_onehot: Optional[List[str]] = None
     ordinal_orders: Optional[Dict[str, List[str]]] = None
+    binarize_target: bool = False
 
 
 class PMLBDownloadRequest(BaseModel):
