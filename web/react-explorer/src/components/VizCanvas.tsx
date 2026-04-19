@@ -2,6 +2,24 @@ import { useEffect, useRef, useCallback } from "react";
 import * as Plot from "@observablehq/plot";
 import * as d3 from "d3";
 
+/** Compact tick format: avoids long decimals, uses SI suffixes for large values. */
+const compactTick = (v: number) => {
+  if (v === 0) return "0";
+  const abs = Math.abs(v);
+  if (abs >= 1e6) return d3.format(".2s")(v);
+  if (abs >= 1000) return d3.format(".3s")(v);
+  if (abs >= 1) return d3.format(".3g")(v);
+  if (abs >= 0.01) return d3.format(".2g")(v);
+  return d3.format(".2e")(v);
+};
+
+/** Standard axis config: limited ticks with compact formatting. */
+const niceAxis = (label: string, ticks = 6) => ({
+  label,
+  ticks,
+  tickFormat: compactTick,
+});
+
 type VizCanvasProps = {
   vizType: string;
   data: Record<string, unknown>;
@@ -99,8 +117,8 @@ function renderLinePlot(data: Record<string, unknown>, correctness?: boolean[]):
   return Plot.plot({
     width: 500,
     height: 350,
-    x: { label: xLabel },
-    y: { label: yLabel },
+    x: niceAxis(xLabel),
+    y: niceAxis(yLabel),
     ...(hasCorrectness
       ? { color: { domain: ["Correct", "Incorrect"], range: ["#22c55e", "#ef4444"], legend: true } }
       : {}),
@@ -152,8 +170,8 @@ function renderHeatmap(data: Record<string, unknown>, correctness?: boolean[]): 
     width: 500,
     height: 400,
     color: { scheme: "YlOrRd", legend: true },
-    x: { label: xLabel },
-    y: { label: yLabel },
+    x: niceAxis(xLabel, 8),
+    y: niceAxis(yLabel, 8),
     marks: [
       Plot.cell(heatData, {
         x: "x",
@@ -201,8 +219,8 @@ function renderPCAScatter(data: Record<string, unknown>, correctness?: boolean[]
     color: hasCorrectness
       ? { domain: ["Correct", "Incorrect"], range: ["#22c55e", "#ef4444"], legend: true }
       : { scheme: "Viridis", legend: true, label: colorLabel },
-    x: { label: `PC1 (${(explained[0] * 100).toFixed(1)}%)` },
-    y: { label: `PC2 (${((explained[1] || 0) * 100).toFixed(1)}%)` },
+    x: niceAxis(`PC1 (${(explained[0] * 100).toFixed(1)}%)`),
+    y: niceAxis(`PC2 (${((explained[1] || 0) * 100).toFixed(1)}%)`),
     marks: [
       Plot.dot(points, {
         x: "x",
@@ -234,8 +252,8 @@ function renderSensitivity(data: Record<string, unknown>): SVGSVGElement | HTMLE
   return Plot.plot({
     width: 500,
     height: 300,
-    x: { label: "Input" },
-    y: { label: "Sensitivity" },
+    x: niceAxis("Input"),
+    y: niceAxis("Sensitivity"),
     color: { legend: Object.keys(sensitivities).length > 1 },
     marks: [
       Plot.barY(barData, {
@@ -263,8 +281,8 @@ function renderHistogram(data: Record<string, unknown>): SVGSVGElement | HTMLEle
   return Plot.plot({
     width: 500,
     height: 350,
-    x: { label: xLabel },
-    y: { label: "Count" },
+    x: niceAxis(xLabel),
+    y: niceAxis("Count"),
     marks: [
       Plot.rectY(bars, {
         x1: "x0",
@@ -313,8 +331,8 @@ function renderActivationProfile(data: Record<string, unknown>): SVGSVGElement |
   const svg = Plot.plot({
     width: 500,
     height: 300,
-    x: { label: "Activation value" },
-    y: { label: "Count" },
+    x: niceAxis("Activation value"),
+    y: niceAxis("Count"),
     color: { domain: ["dead", "active"], range: ["#9ca3af", "#2563eb"] },
     marks: [
       Plot.rectY(bars, {
@@ -346,8 +364,8 @@ function renderScatter2D(data: Record<string, unknown>): SVGSVGElement | HTMLEle
   return Plot.plot({
     width: 500,
     height: 400,
-    x: { label: xLabel },
-    y: { label: yLabel },
+    x: niceAxis(xLabel),
+    y: niceAxis(yLabel),
     marks: [
       Plot.dot(points, {
         x: "x",
@@ -381,8 +399,8 @@ function renderICEPlot(data: Record<string, unknown>): SVGSVGElement | HTMLEleme
   return Plot.plot({
     width: 500,
     height: 350,
-    x: { label: xLabel },
-    y: { label: yLabel },
+    x: niceAxis(xLabel),
+    y: niceAxis(yLabel),
     marks: [
       Plot.line(iceData, {
         x: "x",
@@ -421,8 +439,8 @@ function renderFeatureOutputScatter(data: Record<string, unknown>, correctness?:
   return Plot.plot({
     width: 500,
     height: 350,
-    x: { label: xLabel },
-    y: { label: yLabel },
+    x: niceAxis(xLabel),
+    y: niceAxis(yLabel),
     ...(hasCorrectness
       ? { color: { domain: ["Correct", "Incorrect"], range: ["#22c55e", "#ef4444"], legend: true } }
       : {}),
@@ -457,7 +475,7 @@ function renderShapBarSingle(
     width: 500,
     height: Math.max(200, barData.length * 30 + 60),
     marginLeft: 120,
-    x: { label: title ? `Mean |SHAP| → ${title}` : "Mean |SHAP value|" },
+    x: niceAxis(title ? `Mean |SHAP| \u2192 ${title}` : "Mean |SHAP value|"),
     y: { label: null, domain: barData.map((d) => d.feature) },
     marks: [
       Plot.barX(barData, {
@@ -594,7 +612,7 @@ function renderEdgeInfluence(data: Record<string, unknown>): SVGSVGElement | HTM
     width: 500,
     height: Math.max(200, barData.length * 28 + 60),
     marginLeft: 100,
-    x: { label: "Influence" },
+    x: niceAxis("Influence"),
     y: { label: null, domain: barData.map((d) => d.edge) },
     color: { domain: ["positive", "negative"], range: ["#3b82f6", "#ef4444"] },
     marks: [
