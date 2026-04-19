@@ -284,10 +284,12 @@ function renderActivationProfile(data: Record<string, unknown>): SVGSVGElement |
   const counts = data.counts as number[];
   const stats = data.stats as Record<string, number>;
 
+  // Color the zero/dead bin differently from active bins
   const bars = counts.map((count, i) => ({
     x0: binEdges[i],
     x1: binEdges[i + 1],
     count,
+    zone: binEdges[i + 1] <= 0 ? "dead" : "active",
   }));
 
   const container = document.createElement("div");
@@ -307,23 +309,24 @@ function renderActivationProfile(data: Record<string, unknown>): SVGSVGElement |
   statsDiv.innerHTML = statItems.map(s => `<span style="background:#f3f4f6;padding:0.2rem 0.5rem;border-radius:0.25rem">${s}</span>`).join("");
   container.appendChild(statsDiv);
 
-  // Histogram
+  // Histogram with dead zone highlighted
   const svg = Plot.plot({
     width: 500,
     height: 300,
     x: { label: "Activation value" },
     y: { label: "Count" },
+    color: { domain: ["dead", "active"], range: ["#9ca3af", "#2563eb"] },
     marks: [
       Plot.rectY(bars, {
         x1: "x0",
         x2: "x1",
         y: "count",
-        fill: "#2563eb",
+        fill: "zone",
         fillOpacity: 0.8,
         tip: true,
       }),
-      // Mark zero line for ReLU boundary
-      Plot.ruleX([0], { stroke: "#ef4444", strokeDasharray: "4,3", strokeWidth: 1.5 }),
+      // Zero boundary line
+      Plot.ruleX([0], { stroke: "#ef4444", strokeWidth: 1.5 }),
       Plot.ruleY([0]),
     ],
   });

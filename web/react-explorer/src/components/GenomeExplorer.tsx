@@ -68,7 +68,19 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
   const [nodeEvidence, setNodeEvidence] = useState<{ annotation: AnnotationSummary; nodeId: string } | null>(null);
 
   // Edge influence overlay state
-  const [edgeInfluence, setEdgeInfluence] = useState<Record<string, any> | null>(null);
+  const [edgeInfluenceData, setEdgeInfluenceData] = useState<Record<string, any> | null>(null);
+  const [edgeDisplayMode, setEdgeDisplayMode] = useState<"weights" | "influence">("weights");
+
+  // Derived: only pass influence to NetworkViewer when in influence mode
+  const edgeInfluence = edgeDisplayMode === "influence" ? edgeInfluenceData : null;
+
+  // When new influence data arrives, auto-switch to influence mode
+  const handleEdgeInfluence = useCallback((data: Record<string, any> | null) => {
+    setEdgeInfluenceData(data);
+    if (data) {
+      setEdgeDisplayMode("influence");
+    }
+  }, []);
 
   // Experiment detail (for training config display)
   const [experimentDetail, setExperimentDetail] = useState<ExperimentDetailResponse | null>(null);
@@ -434,6 +446,25 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
         </button>
         <h2>{experimentName}</h2>
         <span className="genome-id">Best Genome: {genomeId.slice(0, 8)}...</span>
+        {edgeInfluenceData && (
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "0.25rem" }}>
+            <span style={{ fontSize: "0.8rem", color: "#6b7280" }}>Edge display:</span>
+            <button
+              className={`viz-type-btn ${edgeDisplayMode === "weights" ? "active" : ""}`}
+              onClick={() => setEdgeDisplayMode("weights")}
+              style={{ fontSize: "0.75rem", padding: "0.2rem 0.5rem" }}
+            >
+              Weights
+            </button>
+            <button
+              className={`viz-type-btn ${edgeDisplayMode === "influence" ? "active" : ""}`}
+              onClick={() => setEdgeDisplayMode("influence")}
+              style={{ fontSize: "0.75rem", padding: "0.2rem 0.5rem" }}
+            >
+              Influence
+            </button>
+          </div>
+        )}
         {experimentDetail?.status === "interrupted" && (
           <>
             <span className="status-badge status-interrupted" style={{ marginLeft: "0.75rem" }}>
@@ -539,7 +570,7 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
               }
               width={evidencePanelWidth}
               onResize={setEvidencePanelWidth}
-              onEdgeInfluence={setEdgeInfluence}
+              onEdgeInfluence={handleEdgeInfluence}
             />
           </div>
         ) : nodeEvidence ? (
@@ -552,7 +583,7 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
               nodeId={nodeEvidence.nodeId}
               width={evidencePanelWidth}
               onResize={setEvidencePanelWidth}
-              onEdgeInfluence={setEdgeInfluence}
+              onEdgeInfluence={handleEdgeInfluence}
             />
           </div>
         ) : wholeModelAnnotation ? (
@@ -564,7 +595,7 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
               isWholeModel
               width={evidencePanelWidth}
               onResize={setEvidencePanelWidth}
-              onEdgeInfluence={setEdgeInfluence}
+              onEdgeInfluence={handleEdgeInfluence}
             />
           </div>
         ) : connectionPair ? (

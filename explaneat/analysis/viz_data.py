@@ -557,10 +557,21 @@ def compute_activation_profile(
     Returns:
         Dict with bin_edges, counts, stats including activation_rate and zero_fraction.
     """
-    counts, bin_edges = np.histogram(activations, bins=n_bins)
-
     zero_count = int(np.sum(activations == 0.0))
     total = len(activations)
+    positive_mask = activations > 0
+
+    # For ReLU-like activations, separate the zero-clamped spike from the
+    # positive distribution so the dead zone is clearly visible.
+    if activation_fn in ("relu", "clamped") and zero_count > 0 and positive_mask.any():
+        pos_vals = activations[positive_mask]
+        pos_counts, pos_edges = np.histogram(pos_vals, bins=n_bins)
+        # Prepend a zero bin: [small_negative, 0] containing the zero count
+        epsilon = pos_edges[1] - pos_edges[0]  # match bin width
+        bin_edges = np.concatenate([[-epsilon], pos_edges])
+        counts = np.concatenate([[zero_count], pos_counts])
+    else:
+        counts, bin_edges = np.histogram(activations, bins=n_bins)
 
     return {
         "bin_edges": bin_edges.tolist(),
@@ -573,7 +584,7 @@ def compute_activation_profile(
             "max": float(np.max(activations)),
             "median": float(np.median(activations)),
             "count": total,
-            "activation_rate": float(np.mean(activations > 0)),
+            "activation_rate": float(np.mean(positive_mask)),
             "zero_fraction": float(zero_count / total) if total > 0 else 0.0,
         },
     }
