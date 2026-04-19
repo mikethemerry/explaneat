@@ -41,6 +41,81 @@ const VIZ_TYPE_LABELS: Record<string, string> = {
   edge_influence: "Edge Influence",
 };
 
+const VIZ_TYPE_EXPLANATIONS: Record<string, { title: string; what: string; how: string; look_for: string }> = {
+  line: {
+    title: "Line Plot (Sweep)",
+    what: "Sweeps one input dimension across its range while holding all others at their median values. Shows the annotation/node's output as a function of that single input. Scatter dots show actual data points.",
+    how: "The smooth line is the model's response curve. Scatter dots show real data. If correctness coloring is on, green = correct prediction, red = incorrect.",
+    look_for: "Monotonic trends (the node simply passes through the input), sharp kinks (ReLU boundaries switching on/off), flat regions (the node is saturated or clamped). Wide vertical spread in scatter dots at any x-value means other features matter more than this one.",
+  },
+  heatmap: {
+    title: "Heatmap (2D Sweep)",
+    what: "Sweeps two input dimensions simultaneously across a grid, holding all others at median. Color shows the annotation/node's output value.",
+    how: "Bright regions = high output, dark regions = low output. Contour-like boundaries show where the function changes behavior.",
+    look_for: "Axis-aligned boundaries (the function depends mainly on one input), diagonal boundaries (interaction between the two inputs), or flat regions (neither input matters much in that area).",
+  },
+  partial_dependence: {
+    title: "Partial Dependence",
+    what: "Shows the average effect of one (or two) features on the output, marginalizing over all other features. Unlike a sweep (which fixes others at median), this averages over the actual distribution of other features.",
+    how: "The curve shows the expected output as a function of the selected feature. Steeper slopes = stronger feature effect.",
+    look_for: "Compare with the line plot for the same feature. If they differ significantly, interactions with other features matter. Flat partial dependence means the feature has little average effect.",
+  },
+  pca_scatter: {
+    title: "PCA Scatter",
+    what: "Projects the annotation's entry activations into 2D using PCA and colors points by exit activation. Reduces high-dimensional input space to its two most important directions.",
+    how: "Each dot is a data point. Position = PCA projection of inputs to this annotation. Color = the annotation's output value. Explained variance tells you how much information the 2D view captures.",
+    look_for: "Clear color gradients (the annotation's output is well-explained by the principal components), clusters (distinct operating regimes), or random-looking color (the output depends on dimensions PCA didn't capture).",
+  },
+  sensitivity: {
+    title: "Sensitivity Analysis",
+    what: "Measures how much each input affects the output by computing the variance of the output when each input is perturbed independently.",
+    how: "Bar height = sensitivity score. Higher bars = the output is more sensitive to that input. Inputs are ranked by importance.",
+    look_for: "Which inputs dominate. If one bar is much taller than the rest, that input drives the node's behavior. Near-zero bars indicate inputs that barely affect this node.",
+  },
+  ice: {
+    title: "ICE (Individual Conditional Expectation)",
+    what: "Like a line plot, but shows one sweep curve per data point instead of a single sweep at median. The bold line is the partial dependence (average of all ICE curves).",
+    how: "Each thin line shows how one individual's prediction changes as you vary the selected feature. The bold line averages across all individuals.",
+    look_for: "Parallel lines mean the feature effect is consistent across individuals. Crossing lines reveal interactions: the feature's effect depends on other feature values. Clusters of lines suggest distinct subgroups.",
+  },
+  feature_output_scatter: {
+    title: "Feature vs Output Scatter",
+    what: "Plots one input feature (x-axis) against the annotation/node's output (y-axis) for all data points, with a partial dependence curve overlay.",
+    how: "Each dot is a data point. The smooth curve shows the average trend. Vertical spread at any x-value shows how much other features contribute.",
+    look_for: "Tight clustering around the curve (this feature largely determines the output) vs wide spread (other features matter more). The curve shape reveals the relationship type: linear, step-like (ReLU boundary), or nonlinear.",
+  },
+  output_distribution: {
+    title: "Output Distribution",
+    what: "Histogram of the annotation/node's output values across the dataset.",
+    how: "Shows how the output values are distributed. X-axis = output value, Y-axis = count of data points.",
+    look_for: "Bimodal distributions (the node acts as a binary switch), spike at zero (ReLU clamping, the node is mostly dead), or wide uniform spread (the node uses its full range).",
+  },
+  shap: {
+    title: "SHAP Values",
+    what: "Shapley Additive Explanations — decomposes each prediction into per-feature contributions. Shows how much each input feature pushes the output up or down from the average.",
+    how: "Bar height = mean absolute SHAP value (average importance). Positive SHAP = pushes output higher, negative = pushes lower.",
+    look_for: "The ranking tells you which features the model relies on most. Compare with sensitivity analysis — they measure importance differently (SHAP accounts for interactions, sensitivity doesn't).",
+  },
+  activation_profile: {
+    title: "Activation Profile",
+    what: "Histogram of a single node's activation values across the entire dataset. Shows how the node behaves in practice — is it mostly active, mostly dead, or somewhere in between?",
+    how: "X-axis = activation value, Y-axis = count. The red dashed line marks zero (the ReLU boundary). Stats show: Active (fraction > 0), Dead (fraction exactly 0), mean, std, range.",
+    look_for: "Spike at zero = the node is frequently clamped (ReLU dead zone). High 'Dead' percentage (>90%) suggests a near-dead node that barely contributes. Bimodal distribution = the node acts as a switch. Activation rate tells you what fraction of the dataset this node is 'on' for.",
+  },
+  regime_map: {
+    title: "Regime Map",
+    what: "For a subgraph (annotation or node ancestors), identifies distinct operating regimes by tracking which ReLU nodes are on vs off across the dataset. Each unique on/off pattern = a regime.",
+    how: "Table rows = regimes, sorted by frequency. Green dots = ReLU on, grey dots = ReLU off. Count = how many data points fall in this regime. Accuracy = classification accuracy within the regime.",
+    look_for: "Few dominant regimes (2-3 covering >90% of data) means the subgraph has simple, interpretable modes. Many regimes with small counts suggest complex, data-dependent behavior. Low accuracy in a regime = the model struggles with that subpopulation. Within each regime, all ReLUs are fixed, so the subgraph is purely linear — you can reason about its behavior algebraically.",
+  },
+  edge_influence: {
+    title: "Edge Influence",
+    what: "Measures how much each connection actually contributes in practice by computing the variance of (weight x source activation) across the dataset. High influence = the edge differentiates predictions. Low influence = the edge is vestigial.",
+    how: "Bar length = influence (variance). Blue = positive mean contribution (pushes output up), red = negative (pushes output down). 'Show on graph' overlays this as edge thickness and color on the network diagram.",
+    look_for: "Edges with near-zero influence are effectively dead — the weight exists but the source node doesn't vary enough (or the weight is too small) to matter. A few high-influence edges dominating tells you where the real computation happens. Compare with edge weights: a large weight with low influence means the source node is constant; a small weight with high influence means the source node varies wildly.",
+  },
+};
+
 const ALL_VIZ_TYPES = ["line", "heatmap", "partial_dependence", "pca_scatter", "sensitivity", "ice", "feature_output_scatter", "output_distribution", "shap", "activation_profile", "regime_map", "edge_influence"];
 
 // Which viz types need which dimension selectors
@@ -103,6 +178,7 @@ function VizSlot({
   const [inputDims, setInputDims] = useState<[number, number]>([0, 1]);
   const [outputDim, setOutputDim] = useState(0);
   const [showOnGraph, setShowOnGraph] = useState(false);
+  const [showExplain, setShowExplain] = useState(false);
 
   const inputOptions = useMemo(() => Array.from({ length: nIn }, (_, i) => i), [nIn]);
   const outputOptions = useMemo(() => Array.from({ length: nOut }, (_, i) => i), [nOut]);
@@ -315,8 +391,53 @@ function VizSlot({
               {showOnGraph ? "Hide on graph" : "Show on graph"}
             </button>
           )}
+          {VIZ_TYPE_EXPLANATIONS[vizType] && (
+            <button
+              className="op-btn"
+              onClick={() => setShowExplain(true)}
+              style={{ fontSize: "11px" }}
+              title="Explain this visualization"
+            >
+              ? Explain
+            </button>
+          )}
         </div>
       </div>
+
+      {showExplain && VIZ_TYPE_EXPLANATIONS[vizType] && (
+        <div
+          style={{
+            position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+            background: "rgba(0,0,0,0.4)", zIndex: 1000,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}
+          onClick={() => setShowExplain(false)}
+        >
+          <div
+            style={{
+              background: "white", borderRadius: "0.5rem", padding: "1.5rem",
+              maxWidth: "550px", width: "90%", maxHeight: "80vh", overflowY: "auto",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+              <h3 style={{ margin: 0, fontSize: "1.1rem" }}>{VIZ_TYPE_EXPLANATIONS[vizType].title}</h3>
+              <button
+                onClick={() => setShowExplain(false)}
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: "1.2rem", color: "#6b7280" }}
+              >
+                x
+              </button>
+            </div>
+            <div style={{ fontSize: "0.9rem", lineHeight: 1.6, color: "#374151" }}>
+              <p style={{ marginTop: 0 }}><strong>What it shows:</strong> {VIZ_TYPE_EXPLANATIONS[vizType].what}</p>
+              <p><strong>How to read it:</strong> {VIZ_TYPE_EXPLANATIONS[vizType].how}</p>
+              <p style={{ marginBottom: 0 }}><strong>What to look for:</strong> {VIZ_TYPE_EXPLANATIONS[vizType].look_for}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {error && <div className="error-message">{error}</div>}
 

@@ -737,6 +737,11 @@ async def compute_viz_data(
             })
             node_acts, _ = _extract_all_node_activations(ms, X, source_ids)
             data = vd.compute_edge_influence(connections, node_acts)
+            # Add display names so the frontend shows renamed nodes
+            display_map = ms.get_display_map()
+            for edge in data["edges"]:
+                edge["from_label"] = display_map.get(edge["from"], edge["from"])
+                edge["to_label"] = display_map.get(edge["to"], edge["to"])
         elif viz_type == "regime_map":
             # Works with annotation or node subgraph, or whole model
             if is_whole_model:
@@ -779,6 +784,16 @@ async def compute_viz_data(
                 y_pred = sn.forward(X_tensor).detach().numpy().ravel()
 
             data = vd.compute_regime_map(node_acts, relu_node_ids, y, y_pred)
+            # Add display names for regime pattern nodes
+            display_map = ms.get_display_map()
+            data["relu_node_labels"] = {
+                nid: display_map.get(nid, nid) for nid in data["relu_nodes"]
+            }
+            for regime in data["regimes"]:
+                regime["pattern_labeled"] = {
+                    display_map.get(nid, nid): v
+                    for nid, v in regime["pattern"].items()
+                }
         else:
             raise HTTPException(status_code=400, detail=f"Unknown viz_type: {viz_type}")
 

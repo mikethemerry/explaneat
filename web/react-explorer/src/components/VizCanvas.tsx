@@ -50,6 +50,8 @@ export function VizCanvas({ vizType, data, onSvgRef, correctness, classNames }: 
         plot = renderFeatureOutputScatter(data, correctness);
       } else if (vizType === "output_distribution") {
         plot = renderHistogram(data);
+      } else if (vizType === "activation_profile") {
+        plot = renderActivationProfile(data);
       } else if (vizType === "regime_map") {
         plot = renderRegimeMap(data);
       } else if (vizType === "edge_influence") {
@@ -277,6 +279,59 @@ function renderHistogram(data: Record<string, unknown>): SVGSVGElement | HTMLEle
   });
 }
 
+function renderActivationProfile(data: Record<string, unknown>): SVGSVGElement | HTMLElement {
+  const binEdges = data.bin_edges as number[];
+  const counts = data.counts as number[];
+  const stats = data.stats as Record<string, number>;
+
+  const bars = counts.map((count, i) => ({
+    x0: binEdges[i],
+    x1: binEdges[i + 1],
+    count,
+  }));
+
+  const container = document.createElement("div");
+
+  // Stats summary
+  const statsDiv = document.createElement("div");
+  statsDiv.style.cssText = "display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:0.75rem;font-size:0.8rem;color:#374151;";
+  const pct = (v: number) => `${(v * 100).toFixed(1)}%`;
+  const statItems = [
+    `Active: ${pct(stats.activation_rate)}`,
+    `Dead: ${pct(stats.zero_fraction)}`,
+    `Mean: ${stats.mean.toFixed(4)}`,
+    `Std: ${stats.std.toFixed(4)}`,
+    `Range: [${stats.min.toFixed(3)}, ${stats.max.toFixed(3)}]`,
+    `N: ${stats.count}`,
+  ];
+  statsDiv.innerHTML = statItems.map(s => `<span style="background:#f3f4f6;padding:0.2rem 0.5rem;border-radius:0.25rem">${s}</span>`).join("");
+  container.appendChild(statsDiv);
+
+  // Histogram
+  const svg = Plot.plot({
+    width: 500,
+    height: 300,
+    x: { label: "Activation value" },
+    y: { label: "Count" },
+    marks: [
+      Plot.rectY(bars, {
+        x1: "x0",
+        x2: "x1",
+        y: "count",
+        fill: "#2563eb",
+        fillOpacity: 0.8,
+        tip: true,
+      }),
+      // Mark zero line for ReLU boundary
+      Plot.ruleX([0], { stroke: "#ef4444", strokeDasharray: "4,3", strokeWidth: 1.5 }),
+      Plot.ruleY([0]),
+    ],
+  });
+  container.appendChild(svg);
+
+  return container;
+}
+
 function renderScatter2D(data: Record<string, unknown>): SVGSVGElement | HTMLElement {
   const xValues = data.x_values as number[];
   const yValues = data.y_values as number[];
@@ -423,6 +478,7 @@ function renderRegimeMap(data: Record<string, unknown>): HTMLElement {
     class_distribution: Record<string, number>;
   }>;
   const reluNodes = data.relu_nodes as string[];
+  const reluNodeLabels = (data.relu_node_labels || {}) as Record<string, string>;
 
   const container = document.createElement("div");
   container.style.overflowX = "auto";
@@ -437,7 +493,7 @@ function renderRegimeMap(data: Record<string, unknown>): HTMLElement {
   const headerRow = document.createElement("tr");
   for (const nodeId of reluNodes) {
     const th = document.createElement("th");
-    th.textContent = nodeId;
+    th.textContent = reluNodeLabels[nodeId] || nodeId;
     th.style.padding = "4px 6px";
     th.style.textAlign = "center";
     headerRow.appendChild(th);
@@ -524,8 +580,8 @@ function renderEdgeInfluence(data: Record<string, unknown>): SVGSVGElement | HTM
     normalized_influence: number;
   }>).slice(0, 20);
 
-  const barData = edges.map((e) => ({
-    edge: `${e.from} \u2192 ${e.to}`,
+  const barData = edges.map((e: any) => ({
+    edge: `${e.from_label || e.from} \u2192 ${e.to_label || e.to}`,
     influence: e.influence,
     sign: e.mean_contribution >= 0 ? "positive" : "negative",
     weight: e.weight,
