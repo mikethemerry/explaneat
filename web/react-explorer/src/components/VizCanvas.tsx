@@ -13,11 +13,17 @@ const compactTick = (v: number) => {
   return d3.format(".2e")(v);
 };
 
-/** Standard axis config: limited ticks with compact formatting. */
+/** Standard axis config: limited ticks with compact formatting on a linear scale. */
 const niceAxis = (label: string, ticks = 6) => ({
   label,
+  type: "linear" as const,
   ticks,
   tickFormat: compactTick,
+});
+
+/** Axis config for categorical (band/point) scales — no tick limiting needed. */
+const catAxis = (label: string) => ({
+  label,
 });
 
 type VizCanvasProps = {
@@ -146,11 +152,19 @@ function renderHeatmap(data: Record<string, unknown>, correctness?: boolean[]): 
   const xLabel = (data.x_label as string) || "x";
   const yLabel = (data.y_label as string) || "y";
 
-  // Flatten grid to data points
-  const heatData: { x: number; y: number; z: number }[] = [];
+  // Compute bin half-widths for rect rendering on a linear scale
+  const dx = xRange.length > 1 ? (xRange[1] - xRange[0]) / 2 : 0.5;
+  const dy = yRange.length > 1 ? (yRange[1] - yRange[0]) / 2 : 0.5;
+
+  // Flatten grid to rect data with explicit boundaries
+  const heatData: { x1: number; x2: number; y1: number; y2: number; z: number }[] = [];
   for (let j = 0; j < yRange.length; j++) {
     for (let i = 0; i < xRange.length; i++) {
-      heatData.push({ x: xRange[i], y: yRange[j], z: zGrid[j][i] });
+      heatData.push({
+        x1: xRange[i] - dx, x2: xRange[i] + dx,
+        y1: yRange[j] - dy, y2: yRange[j] + dy,
+        z: zGrid[j][i],
+      });
     }
   }
 
@@ -173,9 +187,9 @@ function renderHeatmap(data: Record<string, unknown>, correctness?: boolean[]): 
     x: niceAxis(xLabel, 8),
     y: niceAxis(yLabel, 8),
     marks: [
-      Plot.cell(heatData, {
-        x: "x",
-        y: "y",
+      Plot.rect(heatData, {
+        x1: "x1", x2: "x2",
+        y1: "y1", y2: "y2",
         fill: "z",
         inset: 0,
       }),
@@ -252,7 +266,7 @@ function renderSensitivity(data: Record<string, unknown>): SVGSVGElement | HTMLE
   return Plot.plot({
     width: 500,
     height: 300,
-    x: niceAxis("Input"),
+    x: catAxis("Input"),
     y: niceAxis("Sensitivity"),
     color: { legend: Object.keys(sensitivities).length > 1 },
     marks: [
