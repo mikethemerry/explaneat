@@ -63,6 +63,7 @@ dependencies = [
     "fastapi>=0.109.0",
     "uvicorn[standard]>=0.27.0",
     "pydantic>=2.0.0",
+    "mcp[cli]>=1.27.0",
 ]
 
 [project.optional-dependencies]
@@ -81,14 +82,15 @@ Homepage = "https://github.com/mikethemerry/explaneat"
 Repository = "https://github.com/mikethemerry/explaneat"
 Issues = "https://github.com/mikethemerry/explaneat/issues"
 
-[tool.setuptools]
-packages = ["explaneat"]
+[tool.setuptools.packages.find]
+include = ["explaneat*", "mcp_server*"]
 
 [tool.setuptools.package-data]
 "*" = ["*.md", "*.txt", "*.cfg", "*.ini"]
 explaneat = ["static/react_explorer/**/*"]
 
 [tool.pytest.ini_options]
+pythonpath = ["."]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
@@ -129,4 +131,9 @@ exclude_lines = [
     "if __name__ == .__main__.:",
     "if TYPE_CHECKING:",
     "@abstractmethod",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.1",
 ]
