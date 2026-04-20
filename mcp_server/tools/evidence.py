@@ -356,30 +356,33 @@ def get_formula(
         return json.dumps({"error": "Provide annotation_id or node_id"})
 
     db = get_db()
-    with db.session_scope() as session:
-        model_state = build_model_state(session, genome_id)
-        annotation = _resolve_annotation(session, genome_id, model_state, annotation_id, node_id)
+    try:
+        with db.session_scope() as session:
+            model_state = build_model_state(session, genome_id)
+            annotation = _resolve_annotation(session, genome_id, model_state, annotation_id, node_id)
 
-        ann_fn = AnnotationFunction.from_structure(annotation, model_state)
-        n_in, n_out = ann_fn.dimensionality
+            ann_fn = AnnotationFunction.from_structure(annotation, model_state)
+            n_in, n_out = ann_fn.dimensionality
 
-        child_ann_ids = annotation.get("child_annotation_ids", [])
-        is_composed = len(child_ann_ids) > 0
+            child_ann_ids = annotation.get("child_annotation_ids", [])
+            is_composed = len(child_ann_ids) > 0
 
-        latex = ann_fn.to_latex(force=force)
-        latex_collapsed = None
-        if is_composed:
-            latex_collapsed = ann_fn.to_latex(expand=False, force=force)
+            latex = ann_fn.to_latex(force=force)
+            latex_collapsed = None
+            if is_composed:
+                latex_collapsed = ann_fn.to_latex(expand=False, force=force)
 
-        result = {
-            "latex": latex,
-            "latex_collapsed": latex_collapsed,
-            "tractable": latex is not None,
-            "is_composed": is_composed,
-            "child_annotation_ids": child_ann_ids,
-            "dimensionality": [n_in, n_out],
-        }
-        return json.dumps(result, indent=2, default=_json_default)
+            result = {
+                "latex": latex,
+                "latex_collapsed": latex_collapsed,
+                "tractable": latex is not None,
+                "is_composed": is_composed,
+                "child_annotation_ids": child_ann_ids,
+                "dimensionality": [n_in, n_out],
+            }
+            return json.dumps(result, indent=2, default=_json_default)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
 
 
 def compute_viz_data(
@@ -414,18 +417,21 @@ def compute_viz_data(
         params: JSON string of extra params (e.g. {"input_dim": 1, "input_dims": [0,2]}).
     """
     extra_params = json.loads(params) if params else {}
-    result = _do_compute_viz_data(
-        genome_id=genome_id,
-        viz_type=viz_type,
-        dataset_split_id=dataset_split_id,
-        annotation_id=annotation_id,
-        node_id=node_id,
-        split=split,
-        output_index=output_index,
-        sample_fraction=sample_fraction,
-        max_samples=max_samples,
-        params=extra_params,
-    )
+    try:
+        result = _do_compute_viz_data(
+            genome_id=genome_id,
+            viz_type=viz_type,
+            dataset_split_id=dataset_split_id,
+            annotation_id=annotation_id,
+            node_id=node_id,
+            split=split,
+            output_index=output_index,
+            sample_fraction=sample_fraction,
+            max_samples=max_samples,
+            params=extra_params,
+        )
+    except Exception as e:
+        return json.dumps({"error": str(e)})
     return json.dumps(result, indent=2, default=_json_default)
 
 

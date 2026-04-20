@@ -12,20 +12,16 @@ from ..helpers import _to_uuid, build_model_state
 def classify_nodes(
     genome_id: str,
     node_ids: str,
-    entry_node_ids: str,
-    exit_node_ids: str,
 ) -> str:
     """Classify nodes within a proposed coverage as entry, intermediate, or exit.
 
-    Entry nodes have external inputs but no external outputs.
-    Intermediate nodes have no external inputs or outputs.
-    Exit nodes have external outputs.
+    Entry nodes receive inputs from outside the coverage.
+    Exit nodes send outputs to outside the coverage.
+    Intermediate nodes only connect within the coverage.
 
     Args:
         genome_id: UUID of the genome.
         node_ids: JSON array of node IDs forming the proposed coverage.
-        entry_node_ids: JSON array of proposed entry node IDs.
-        exit_node_ids: JSON array of proposed exit node IDs.
     """
     from explaneat.analysis.node_classification import classify_coverage
 
@@ -61,19 +57,16 @@ def classify_nodes(
 def detect_splits(
     genome_id: str,
     node_ids: str,
-    entry_node_ids: str,
-    exit_node_ids: str,
 ) -> str:
     """Detect nodes that must be split before creating an annotation.
 
     Given a proposed coverage, identifies nodes that violate entry/exit
-    constraints and would need to be split first.
+    constraints and would need to be split first. Returns violations with
+    suggested split_node operations to fix them.
 
     Args:
         genome_id: UUID of the genome.
         node_ids: JSON array of node IDs forming the proposed coverage.
-        entry_node_ids: JSON array of proposed entry node IDs.
-        exit_node_ids: JSON array of proposed exit node IDs.
     """
     from explaneat.analysis.split_detection import analyze_coverage_for_splits
 
