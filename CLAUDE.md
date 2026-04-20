@@ -70,6 +70,36 @@ cd web/react-explorer && npm run build                # Production build
 cp -R web/react-explorer/dist/* explaneat/static/react_explorer/  # Deploy to static
 ```
 
+### MCP Server
+```bash
+uv run python -m mcp_server   # Run MCP server (stdio transport)
+```
+
+To configure in Claude Code settings:
+```json
+{
+  "mcpServers": {
+    "explaneat": {
+      "command": "uv",
+      "args": ["run", "python", "-m", "mcp_server"],
+      "cwd": "/path/to/explaneat",
+      "env": {
+        "DATABASE_URL": "postgresql://localhost/explaneat_dev"
+      }
+    }
+  }
+}
+```
+
+The MCP server exposes 29 tools for model analysis:
+- **Discovery**: list_experiments, get_experiment, get_best_genome, list_genomes, get_genome
+- **Structure**: get_phenotype, get_model_state, get_node_info
+- **Operations**: list_operations, apply_operation, validate_operation, undo_operation, get_annotations
+- **Evidence**: get_formula, compute_viz_data, render_visualization, get_viz_summary, compute_shap, compute_performance, get_input_distribution
+- **Coverage**: classify_nodes, detect_splits, get_coverage
+- **Datasets**: list_datasets, get_dataset, get_dataset_splits
+- **Snapshots**: save_snapshot, update_narrative, list_evidence
+
 ## Architecture
 
 ### Core Layer (`explaneat/core/`)
