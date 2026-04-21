@@ -2,7 +2,7 @@
 Pydantic schemas for API request/response validation.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any, Literal, Union
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 
@@ -712,6 +712,15 @@ class EvidenceListResponse(BaseModel):
     annotation_id: str
     entries: List[EvidenceEntry]
     total: int
+
+
+class EvidenceRecord(BaseModel):
+    """A structured evidence record for an annotation."""
+
+    type: str  # analytical_formula, shap_importance, ablation_study, input_output_sampling, sign_analysis, performance_metrics, visualization
+    payload: Dict[str, Any]
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    narrative: Optional[str] = None
 
 
 # =============================================================================
