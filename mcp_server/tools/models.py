@@ -70,6 +70,7 @@ def get_model_state(genome_id: str, collapsed: Optional[str] = None) -> str:
                 "subgraph_connections": [list(c) for c in ann.subgraph_connections],
                 "parent_annotation_id": ann.parent_annotation_id,
                 "display_name": ann.display_name,
+                "evidence": ann.evidence or {},
             })
 
         result = serialize_network(model_state)
