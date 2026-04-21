@@ -141,7 +141,7 @@ def _do_compute_viz_data(
     split: str = "test",
     output_index: int = 0,
     sample_fraction: float = 1.0,
-    max_samples: int = 500,
+    max_samples: int = 200,
     params: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Core implementation for computing viz data (shared by multiple tools)."""
@@ -394,7 +394,7 @@ def compute_viz_data(
     split: str = "test",
     output_index: int = 0,
     sample_fraction: float = 1.0,
-    max_samples: int = 500,
+    max_samples: int = 200,
     params: Optional[str] = None,
 ) -> str:
     """Compute visualization data for an annotation, node, or whole model.
@@ -444,7 +444,7 @@ def render_visualization(
     split: str = "test",
     output_index: int = 0,
     sample_fraction: float = 1.0,
-    max_samples: int = 500,
+    max_samples: int = 200,
     params: Optional[str] = None,
     title: str = "",
 ) -> list:
@@ -508,7 +508,7 @@ def get_viz_summary(
     split: str = "test",
     output_index: int = 0,
     sample_fraction: float = 1.0,
-    max_samples: int = 500,
+    max_samples: int = 200,
     params: Optional[str] = None,
 ) -> str:
     """Compute visualization data and return summary statistics (no image).
