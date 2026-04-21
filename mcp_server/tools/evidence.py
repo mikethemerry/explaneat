@@ -364,6 +364,10 @@ def get_formula(
             ann_fn = AnnotationFunction.from_structure(annotation, model_state)
             n_in, n_out = ann_fn.dimensionality
 
+            # Smart default: auto-force for small tractable networks
+            if not force and n_in <= 8:
+                force = True
+
             child_ann_ids = annotation.get("child_annotation_ids", [])
             is_composed = len(child_ann_ids) > 0
 

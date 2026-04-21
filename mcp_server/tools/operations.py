@@ -218,6 +218,7 @@ def get_annotations(genome_id: str) -> str:
                 "subgraph_nodes": [str(n) for n in (params.get("subgraph_nodes") or [])],
                 "child_annotation_ids": params.get("child_annotation_ids") or [],
                 "hypothesis": params.get("hypothesis"),
+                "evidence": params.get("evidence"),
             })
 
         # Build name -> [ids] mapping
@@ -255,6 +256,21 @@ def get_annotations(genome_id: str) -> str:
             parent_id = child_to_parent_id.get(ann["id"])
             children_ids = ann["_children_ids"]
 
+            # Compute evidence metadata
+            evidence = ann.get("evidence") or {}
+            evidence_count = 0
+            evidence_types = []
+            if "records" in evidence:
+                records = evidence["records"]
+                evidence_count = len(records)
+                evidence_types = sorted({r.get("type", "") for r in records if r.get("type")})
+            else:
+                # Legacy category-based evidence entries
+                evidence_count = sum(
+                    1 for k, v in evidence.items()
+                    if isinstance(v, dict) or isinstance(v, list)
+                )
+
             annotations.append({
                 "id": ann["id"],
                 "name": ann["name"],
@@ -266,6 +282,9 @@ def get_annotations(genome_id: str) -> str:
                 "parent_annotation_id": parent_id,
                 "children_ids": children_ids,
                 "is_leaf": len(children_ids) == 0,
+                "is_composition": len(children_ids) > 0,
+                "evidence_count": evidence_count,
+                "evidence_types": evidence_types,
             })
 
         return json.dumps({"annotations": annotations, "total": len(annotations)}, indent=2)
