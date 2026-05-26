@@ -266,17 +266,30 @@ def validate_operation(
                                 f"Child '{child_name}' already has parent '{ann.parent_annotation_id}'"
                             )
 
-                # Children must be leaf annotations (no grandchildren skipping)
+                # Cycle check — a child must not be an ancestor of this
+                # annotation (which would create a cycle in the hierarchy).
+                # Build ancestor lookup: name -> set of descendant names.
+                ann_by_name = {ann.name: ann for ann in existing}
+                def _descendants(name: str, seen: set) -> set:
+                    """Collect all descendant annotation names."""
+                    result: set = set()
+                    for a in existing:
+                        if a.parent_annotation_id == name and a.name not in seen:
+                            result.add(a.name)
+                            seen.add(a.name)
+                            result.update(_descendants(a.name, seen))
+                    return result
+
                 for child_name in child_annotation_ids:
-                    for ann in existing:
-                        if ann.name == child_name:
-                            child_has_children = any(
-                                a.parent_annotation_id == ann.name for a in existing
+                    if child_name in ann_by_name:
+                        descs = _descendants(child_name, set())
+                        # The new annotation's name (if given) must not appear
+                        # as a descendant of any proposed child.
+                        ann_name = params.get("name", "")
+                        if ann_name and ann_name in descs:
+                            errors.append(
+                                f"Child '{child_name}' is an ancestor of '{ann_name}' — would create a cycle"
                             )
-                            if child_has_children:
-                                errors.append(
-                                    f"Child '{child_name}' already has children — cannot be claimed as leaf"
-                                )
 
             # Build set of nodes inside child annotations (for compositional annotations)
             # Connections to these nodes are considered "internal" even though they're

@@ -1,0 +1,662 @@
+\documentclass[11pt]{article}
+
+% Page layout
+\pdfpagewidth=8.5in
+\pdfpageheight=11in
+\usepackage[margin=1in]{geometry}
+
+% Standard packages
+\usepackage{times}
+\usepackage{soul}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage[small]{caption}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{booktabs}
+%\usepackage{algorithm}
+%\usepackage{algorithmic}
+\usepackage{multirow}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage[switch]{lineno}
+
+% Comment out for camera-ready
+\linenumbers
+
+\urlstyle{same}
+
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{property}{Property}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  language=Python,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+}
+
+\title{ExplaNEAT: Explaining Evolved Neural Networks\\through Annotation and Composition}
+
+\author{
+Mike Merry \and Pat Riddle \and Jim Warren \\
+School of Computer Science, University of Auckland \\
+\texttt{m.merry@auckland.ac.nz}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Neural networks evolved by NEAT (NeuroEvolution of Augmenting Topologies) are sparse directed acyclic graphs where every connection exists because evolution found it useful. We present ExplaNEAT, a system that exploits this sparsity to construct complete, verifiable explanations of evolved networks. The key idea is that a NEAT network is already a composition of primitive functions---the researcher's task is to identify meaningful subgraphs within it, attach verifiable hypothesis-evidence structures (which we call \emph{annotations}), and compose these into a hierarchical global explanation. In practice, the evolved graph is rarely in a form where subgraphs can be cleanly separated, so we introduce \emph{graph refactoring} operations---node splitting and identity node insertion---that restructure the graph without changing its computed function, analogous to algebraic manipulations like completing the square that rearrange an expression into a form amenable to analysis. Where refactoring alone is insufficient, we allow structural modifications (node removal, addition) that change the network's function, provided the modified network remains performant---the goal is an \emph{explained network}, not necessarily the original network unchanged. Building on PropNEAT~\cite{merry2025propneat}, which demonstrated that NEAT networks with GPU-accelerated backpropagation achieve competitive classification performance with an average of just 176 parameters, we provide an interactive toolchain---including a React-based explorer and AI-assisted analysis via the Model Context Protocol---for constructing and verifying explanations of these parsimonious models. We demonstrate the approach on benchmark classification tasks, showing that sparse evolved networks admit complete structural and compositional explanations where equivalent dense networks do not.
+
+% TODO: Update abstract with final experimental results
+\end{abstract}
+
+%------------------------------------------------------------------
+\section{Introduction}
+\label{sec:introduction}
+
+Explainable Artificial Intelligence (XAI) remains a critical challenge, particularly in domains requiring model transparency for regulatory or ethical reasons~\cite{doshi2017towards,guidotti2018survey}. Post-hoc methods such as LIME~\cite{ribeiro2016why} and SHAP~\cite{lundberg2017unified} explain individual predictions but do not address the model itself---they answer ``why this prediction?'' but not ``how does this model work?''
+
+What would it mean to \emph{fully explain} a neural network? Not just to characterise individual predictions, but to provide a complete, verifiable account of how it transforms inputs into outputs. For a simple linear regression $y = \beta_1 x_1 + \beta_2 x_2$, this is straightforward: each coefficient has a clear meaning, and the combination is additive. But for a neural network---even a small one---the composition of nonlinear functions across multiple paths makes the same kind of account much harder to construct.
+
+We observe that the difficulty is not uniform across all neural networks. In a dense network with $n$ neurons per layer, every neuron connects to every other, producing $O(n^2)$ connections per layer. The space of candidate subgraphs is $2^{|E|}$---there are no architectural hints about where meaningful groupings might be. But in a \emph{sparse} network, selective connectivity creates natural boundaries. A node that connects to only 3 of 16 possible targets architecturally delineates a substructure.
+
+NEAT (NeuroEvolution of Augmenting Topologies)~\cite{stanley2002evolving} was developed to answer a different question---whether evolving neural network topology alongside weights could improve efficiency in reinforcement learning tasks---but produces exactly this kind of sparse structure as a byproduct of its design. NEAT starts from minimal networks and adds complexity only when it improves fitness. The resulting topologies are small, non-uniform DAGs where every connection exists because evolution found it useful---precisely the kind of structure where meaningful subgraph identification is tractable.
+
+In this paper we present ExplaNEAT, a system for evolving and explaining neural networks. Our contributions are:
+
+\begin{enumerate}
+    \item A method for explaining neural networks through \textbf{annotation and composition}: identifying meaningful subgraphs, attaching verifiable hypothesis-evidence structures, and composing these into hierarchical explanations with formal coverage criteria (Section~\ref{sec:framework}).
+
+    \item \textbf{Graph refactoring operations}---node splitting and identity node insertion---that restructure a network without changing its function, enabling clean subgraph boundaries where the evolved topology does not naturally provide them (Section~\ref{sec:refactoring}).
+
+    \item An \textbf{interactive toolchain} for explanation construction, including closed-form formula extraction, empirical visualisation, and AI-assisted analysis via the Model Context Protocol (Section~\ref{sec:system}).
+\end{enumerate}
+
+
+%------------------------------------------------------------------
+\section{Background}
+\label{sec:background}
+
+\subsection{NEAT}
+
+NEAT~\cite{stanley2002evolving} evolves neural network topologies and connection weights through: (1) \emph{structural mutation}, which adds nodes and connections; (2) \emph{historical markings} (innovation numbers) for meaningful crossover between different topologies; and (3) \emph{speciation}, which protects topological innovations through fitness sharing.
+
+NEAT begins with minimal structure (typically direct input-output connections) and complexifies over generations. Structure is added only when it improves fitness, so evolved networks are as simple as the task requires. PropNEAT~\cite{merry2025propneat} addresses the inefficiency of NEAT's genetic weight optimisation by adding GPU-accelerated backpropagation, achieving competitive classification performance with parsimonious sparse networks.
+
+\subsection{Explainability}
+
+A foundational problem in XAI is that definitions of ``explainable'' typically leave ``understandable'' undefined, creating chains of synonyms (interpretable, comprehensible, understandable) without grounding~\cite{guidotti2018survey,doshi2017towards}. Merry et al.~\cite{merry2021mental} argued that this arises from treating explanation as context-independent. Drawing on the mental models literature from healthcare teamwork, they proposed that explanation is inherently contextual: a \emph{good explanation} is an accurate expression of the model, in a language understandable by a specific \emph{audience}, that helps achieve a specific \emph{purpose}. The triple of (audience, language, purpose) forms the \emph{context} of explanation, and a model is explainable only relative to a context.
+
+This framing resolves apparent contradictions in the literature. A simple regression is explainable to a statistician in the language of coefficients for the purpose of understanding linear relationships---but not to a patient for the purpose of lifestyle decisions. The model has not changed; the context has. Claims of ``inherent explainability'' for model classes like regression or decision trees are better understood as claims about broad but bounded contexts.
+
+Miller~\cite{miller2023evaluative} and Le et al.~\cite{le2024evaluative} further advocate \emph{hypothesis-driven} approaches where systems provide evidence for and against claims, rather than direct recommendations. This aligns with scientific methodology and provides a concrete mechanism for context-sensitive explanation: the hypothesis can be stated in the audience's language, while the evidence is verifiable by methods the audience accepts as epistemically adequate. The same underlying model behaviour can support different hypothesis-evidence pairs for different contexts.
+
+The XAI landscape also includes instance-local methods (LIME~\cite{ribeiro2016why}, SHAP~\cite{lundberg2017unified}, Anchors~\cite{ribeiro2018anchors}), attention and attribution methods~\cite{vaswani2017attention,sundararajan2017axiomatic}, and structural approaches~\cite{rago2018argumentation,olah2020zoom,ying2019gnnexplainer}. Structural approaches share the intuition that model architecture is explanatorily relevant. Olah et al.\ identify ``circuits''---subgraphs implementing recognisable functions---in neural networks~\cite{olah2020zoom}. GNNExplainer~\cite{ying2019gnnexplainer} identifies explanatory subgraphs for graph neural networks. Rago et al.\ use argumentation to explain neural network substructures~\cite{rago2018argumentation}. These approaches establish that structural decomposition is explanatorily useful, but lack criteria for when decomposition constitutes a \emph{complete} explanation, and do not address the context-dependence of what counts as ``explained.''
+
+ExplaNEAT brings these threads together: the context-dependent definition of explanation~\cite{merry2021mental}, the hypothesis-evidence structure~\cite{miller2023evaluative,le2024evaluative}, and structural decomposition, integrated into a system where annotations carry all three---structural identification, verifiable evidence, and audience-appropriate hypotheses---and compositional coverage defines when explanation is complete.
+
+
+%------------------------------------------------------------------
+\section{PropNEAT}
+\label{sec:algorithm}
+
+ExplaNEAT builds on PropNEAT~\cite{merry2025propneat}, which augments NEAT with GPU-accelerated backpropagation. PropNEAT maps NEAT's graph topology to a layer-based tensor representation via a nearly-bijective mapping that handles skip connections and unreachable nodes, enabling standard PyTorch backpropagation on the evolved structure. Within each generation, genomes undergo structural mutation and crossover (topology search), then gradient descent refines their weights. The mapping is invertible: optimised weights are extracted back into NEAT's genome representation.
+
+PropNEAT was evaluated on 58 binary classification datasets from PMLB~\cite{olson2017pmlb}. There was no statistically significant difference in AUC between PropNEAT (mean 0.890), random forests (0.904), or dense neural networks (0.865); all significantly outperformed logistic regression (0.784). Critically for explainability, PropNEAT achieved this with an average of \textbf{176 parameters} (range 68--273), compared to approximately 525,000 in the dense baseline. The evolved networks had an average depth of 12 layers with a ``skippiness'' (average layers skipped per connection) of 2.6, and training time scaled linearly with network depth, $O(d)$.
+
+These properties make PropNEAT networks well-suited for explanation:
+\begin{itemize}
+    \item \textbf{Sparse}: Complexified from minimal structure, with $O(10^2)$ parameters rather than $O(10^5)$.
+    \item \textbf{Purposeful}: Every connection was both evolved (topology) and refined (gradient descent), so each serves a functional role.
+    \item \textbf{Competitive}: Performance comparable to dense networks and random forests, so explanation does not come at the cost of accuracy.
+    \item \textbf{Non-uniform}: Skip connections and variable-width layers create architecturally distinct substructures---natural candidates for annotation.
+\end{itemize}
+
+
+%------------------------------------------------------------------
+\section{Explaining Networks through Annotation}
+\label{sec:framework}
+
+\subsection{Networks as Compositions}
+
+A NEAT network is a directed acyclic graph where each node computes:
+\begin{equation}
+\label{eq:node}
+h_i = \sigma_i\!\left(\sum_j w_{ji} \cdot x_j + b_i\right)
+\end{equation}
+Because the graph is a DAG, the full network function $N: \mathbb{R}^n \to \mathbb{R}^m$ is a composition of these primitives. For example:
+\begin{equation}
+N(x_1, x_2) = f_{\text{out}}(f_3(f_1(x_1), f_2(x_2)),\; f_4(f_1(x_1)))
+\end{equation}
+This composition is already implicit in the topology. ExplaNEAT makes it explicit.
+
+\subsection{Annotations: Hypothesis-Evidence Structures on Subgraphs}
+
+The central construct is an \emph{annotation}: a meaningful subgraph paired with a verifiable claim about what it does.
+
+\begin{definition}[Annotation]
+\label{def:annotation}
+An annotation $A = (S, H_A, \Xi_A)$ consists of:
+\begin{itemize}
+    \item A subgraph $S = (V_{\text{entry}}, V_{\text{exit}}, V_S, E_S)$, where $V_{\text{entry}}$ are the subgraph's inputs and $V_{\text{exit}}$ its outputs
+    \item A hypothesis $H_A$: a human-comprehensible claim about the subgraph's function
+    \item Evidence $\Xi_A$: verification that $H_A$ accurately characterises the subgraph's behaviour
+\end{itemize}
+\end{definition}
+
+An annotation carries three layers of meaning. The \emph{structural} layer identifies which part of the model is being explained: these entry nodes, these exit nodes, these internal nodes and connections. The \emph{functional} layer is the closed-form expression that the subgraph computes, derivable by symbolic evaluation through the DAG---for instance, $F(a,b) = \sigma(w_1 a + w_2 b + \beta)$. The \emph{interpretive} layer is the researcher's claim: ``this subgraph computes the nonlinear interaction between features $a$ and $b$.''
+
+The first two layers are objective properties of the graph. The third is a scientific hypothesis that requires evidence. This separation is deliberate and reflects the context-dependence of explanation~\cite{merry2021mental}: the structural and functional layers are fixed by the model, but the interpretive layer---the hypothesis and the form of its evidence---adapts to the audience, language, and purpose. A researcher might state the hypothesis mathematically; a clinician might receive the same subgraph's behaviour described as ``a U-shaped risk curve over age.'' Both refer to the same structural and functional reality; the interpretive framing differs with context.
+
+\subsection{Evidence and Verification}
+
+We adopt a pluralistic stance on verification. Different audiences accept different forms of evidence:
+
+\paragraph{Analytical verification.} Derive the closed-form expression for the subgraph by symbolic computation through the graph, then verify that the expression has the properties claimed in the hypothesis (e.g., monotonicity, inflection points, domain-range relationships). This is the strongest form of evidence when tractable.
+
+\paragraph{Empirical verification.} When closed-form analysis is intractable or insufficient, use experimental methods: input-output sampling, sensitivity analysis, partial dependence, ablation, or feature attribution (SHAP). These show that the hypothesis is \emph{consistent with} observed behaviour across the relevant input domain.
+
+The key requirement is that evidence be verifiable---that the audience can assess whether the claim accurately characterises the model's behaviour.
+
+\subsection{Composition: Explaining How Parts Combine}
+
+Knowing what each subgraph does individually does not tell us how they combine. If annotation $A_1$ explains ``subgraph $S_1$ computes age risk'' and $A_2$ explains ``subgraph $S_2$ computes blood pressure risk,'' we still don't know whether the output is $A_1 + A_2$, $A_1 \times A_2$, or something else. The combination requires its own explanation.
+
+\begin{definition}[Composition Annotation]
+\label{def:composition}
+Given annotations $A_1, \ldots, A_k$, a composition annotation $C = (S_C, H_C, \Xi_C, \{A_1, \ldots, A_k\})$ explains how the children combine. $S_C$ is the junction subgraph where component outputs meet, $H_C$ is the composition hypothesis, and $\Xi_C$ is the supporting evidence.
+\end{definition}
+
+Annotations form hierarchies: leaf annotations explain primitive subgraphs; composition annotations explain how children combine; the root covers the entire model.
+
+\subsection{Coverage: When Is an Explanation Complete?}
+
+We define two forms of coverage that together determine when a network is fully explained.
+
+\begin{definition}[Node Coverage]
+\label{def:coverage}
+A node $v$ is \textbf{covered} by a set of annotations $\mathcal{A}$ if $v$ belongs to some annotation's subgraph and all of $v$'s outgoing edges are contained within annotation edge sets:
+\[
+\text{covered}_\mathcal{A}(v) = (v \in \bigcup_i V_{A_i}) \;\land\; (E_{\text{out}}(v) \subseteq \bigcup_i E_{A_i})
+\]
+\end{definition}
+
+\begin{definition}[Structural Coverage]
+\label{def:structural-coverage}
+A set of leaf annotations achieves \textbf{full structural coverage} if every node in the network is covered.
+\end{definition}
+
+\begin{definition}[Compositional Coverage]
+\label{def:compositional-coverage}
+An annotation hierarchy achieves \textbf{full compositional coverage} if every required composition step has a valid composition annotation explaining how its children combine.
+\end{definition}
+
+A network is \textbf{fully explained} when both structural and compositional coverage are complete. Structural coverage ensures all parts are explained; compositional coverage ensures all combinations are explained. Neither alone is sufficient.
+
+\subsection{What Sparsity Buys}
+
+The coverage definitions apply to any neural network, but achieving coverage is far easier in sparse networks. Consider a dense 4-16-16-1 network with 336 edges. The search space for candidate subgraphs is $2^{336} \approx 10^{101}$. There are no architectural hints about where meaningful groupings might be---every neuron connects to every other.
+
+In a NEAT-evolved network with 15 connections, the search space is $2^{15} = 32{,}768$, and the topology itself suggests boundaries: a node connecting to only 2 of 5 possible targets delineates a substructure. The researcher examines a small number of architecturally motivated candidates rather than searching a combinatorial space.
+
+
+%------------------------------------------------------------------
+\section{Preconditions and Graph Refactoring}
+\label{sec:refactoring}
+
+For an annotation to cleanly describe a subgraph's function, the subgraph must have a well-defined interface: all interaction with the rest of the network must pass through the entry and exit nodes. Three preconditions formalise this requirement.
+
+\subsection{Preconditions for Clean Annotation}
+
+\begin{enumerate}
+    \item \textbf{Entry-only ingress}: All edges entering the subgraph from outside must target entry nodes. No external node may connect directly to an intermediate or exit node.
+    \item \textbf{Exit-only egress}: All edges leaving the subgraph must originate from exit nodes. No entry or intermediate node may connect directly to an external node.
+    \item \textbf{Pure exits}: Exit nodes receive inputs only from within the subgraph. No external node may connect to an exit node.
+\end{enumerate}
+
+In practice, NEAT-evolved graphs rarely satisfy all three preconditions for a candidate subgraph. This does not mean the subgraph lacks a meaningful function---it means the graph's form obscures the function's boundaries. Consider three concrete situations:
+
+\paragraph{Situation 1: An exit receives external input (violates Precondition 3).} Suppose nodes $A$ and $B$ feed into output node $O$, and we want to annotate the subgraph $\{A, O\}$ with $A$ as entry and $O$ as exit. But $O$ also receives input from $C$, which is outside the annotation. The annotation cannot cleanly describe $A$'s contribution to $O$ because $O$'s value depends on $C$ as well.
+
+\paragraph{Situation 2: An entry sends output externally (violates Precondition 2).} Node $H$ receives input from $I$ and sends output both to $J$ (inside the annotation) and to $W$ (outside it). If we annotate $\{I, H, J\}$, node $H$ has an outgoing edge escaping the subgraph boundary.
+
+\paragraph{Situation 3: An intermediate receives external input (violates Precondition 1).} An intermediate node $Y$ inside the annotation receives an edge from external node $W$, bypassing the entry boundary. The subgraph's function is not self-contained---it depends on information arriving through a side channel.
+
+\subsection{Resolution through Graph Refactoring}
+
+These situations call for \emph{graph refactoring}: restructuring the graph without changing its computed function, analogous to algebraic manipulations like completing the square. The value of the expression does not change, but its form changes in a way that makes functional boundaries explicit.
+
+\paragraph{Identity node insertion (resolves Precondition 3).} When an exit node receives inputs from both inside and outside the annotation, insert a node computing $\text{id}(x) = x$ to intercept the annotation's connections to the exit. The identity node becomes the annotation's new exit, and the original exit node---now receiving input from both the identity node and external sources---is excluded from the annotation. The annotation cleanly captures the subgraph's contribution; the original exit node combines it with other signals.
+
+This is analogous to introducing an intermediate variable: if we want to reason about $f(a, b)$ within the expression $f(a,b) + g(c)$, we write $t = f(a, b)$, then the expression becomes $t + g(c)$. The identity node $t$ makes the contribution explicit.
+
+\paragraph{Node splitting (resolves Precondition 2).} When a node fans out to connections serving different subcomputations, replace it with copies $h_a, h_b, \ldots$, each receiving all inputs but serving only a subset of outputs. If $h = f(\text{inputs})$, then $h_a = f(\text{inputs})$ and $h_b = f(\text{inputs})$---the same function computed independently. Each copy can then be assigned to a different annotation.
+
+Splitting is \emph{full}: one copy per outgoing connection, named $h_a, h_b, h_c, \ldots$, each carrying exactly one outgoing edge. This is the graph analogue of the algebraic identity $x = x$---trivially true, but it separates the uses of a shared value. Split nodes can later be \emph{consolidated} (merged back) if the separation proves unnecessary.
+
+\paragraph{Selection expansion (resolves Precondition 1).} When an intermediate or exit node receives external input, the annotation boundary is incomplete. The researcher must expand the selection to include the source nodes, bringing the side channel inside the annotation. This is not an automated operation but a decision: the researcher determines that the external source is part of the subgraph's meaningful function.
+
+\subsection{Refactoring Preserves Function}
+
+\begin{property}[Function Preservation]
+Node splitting and identity node insertion do not change the network's input-output function. For any input $\mathbf{x}$:
+\[
+N_{\text{original}}(\mathbf{x}) = N_{\text{refactored}}(\mathbf{x})
+\]
+\end{property}
+
+This follows directly from the definitions: split nodes compute the same function as the original (same inputs, same activation), and identity nodes compute $\text{id}(x) = x$. Refactoring changes the graph's structure but not its semantics.
+
+
+%------------------------------------------------------------------
+\section{Collapse: From Subgraph to Function Node}
+\label{sec:collapse}
+
+Once a subgraph has been annotated (and refactored if necessary), it can be \emph{collapsed}---replaced by a single function node that represents its computation. This is the rewriting step: a subexpression in the network's functional composition is replaced by a named function.
+
+\begin{definition}[Collapse]
+\label{def:collapse}
+Given graph $G = (V, E)$ and annotation $A$ with subgraph $(V_{\text{entry}}, V_{\text{exit}}, V_A, E_A)$, let $V_{\text{internal}} = V_A \setminus V_{\text{entry}}$. The collapse produces $G' = (V', E')$:
+\begin{align}
+V' &= (V \setminus V_{\text{internal}}) \cup \{a_A\} \\
+E' &= \{(u, v) \in E \mid u \notin V_{\text{internal}} \land v \notin V_{\text{internal}}\} \nonumber \\
+   &\cup\; \{(v, a_A) \mid v \in V_{\text{entry}},\; \exists w \in V_{\text{internal}}\!: (v, w) \in E\} \nonumber \\
+   &\cup\; \{(a_A, w) \mid \exists u \in V_{\text{exit}}\!: (u, w) \in E,\; w \notin V_A\} \nonumber
+\end{align}
+The function node $a_A$ carries the annotation's closed-form expression, hypothesis, and evidence.
+\end{definition}
+
+Entry nodes are preserved---they are the annotation's interface, shared with the rest of the network. Only intermediate and exit nodes are absorbed into the function node.
+
+\subsection{Cycle Freedom}
+
+\begin{theorem}
+If $G$ is a DAG and annotation $A$ satisfies all three preconditions, then $\text{Collapse}(G, A)$ is a DAG.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+The function node $a_A$ receives inputs only from entry-node predecessors (which precede entries in topological order) and sends outputs only to exit-node successors (which follow exits in topological order). For a cycle to exist in $G'$, there would need to be a path from a successor of some exit back to a predecessor of some entry. But such a path would also be a cycle in the original graph $G$, contradicting the assumption that $G$ is a DAG.
+\end{proof}
+
+Without the three preconditions, collapse \emph{can} introduce cycles. For example, if an exit node receives external input from node $W$, and an entry node sends output to $W$, collapsing creates $a_A \to W \to a_A$. The preconditions prevent exactly these situations; the refactoring operations resolve them when they arise.
+
+\subsection{Hierarchical Composition}
+
+Collapse composes naturally. If annotations $G$ and $H$ are children of a parent annotation $F$, then $F$'s function is expressed in terms of $G$ and $H$:
+
+\begin{itemize}
+    \item \textbf{Parallel}: $F(a,b,c) = \text{Combine}(G(a,b), H(b,c))$
+    \item \textbf{Serial}: $F(a,b,c) = H(G(a,b), c)$
+    \item \textbf{Mixed}: any DAG arrangement of child functions
+\end{itemize}
+
+\begin{property}[Composition]
+For parent annotation $P$ with children $C_1, \ldots, C_k$ on disjoint internal nodes:
+\[
+\text{Collapse}(G, P) = \text{Collapse}(\text{Collapse}(\cdots\text{Collapse}(G, C_1)\cdots, C_k), P')
+\]
+The order of child collapses does not matter (they operate on disjoint subgraphs).
+\end{property}
+
+This means the researcher can view the network at any level of abstraction: fully expanded (all primitive nodes), partially collapsed (some named functions), or fully collapsed (a single root function). Each level is a valid DAG computing the same function.
+
+
+%------------------------------------------------------------------
+\section{System Design}
+\label{sec:system}
+
+ExplaNEAT is implemented as a full-stack system supporting the workflow from evolution through explanation. Models are trained using PropNEAT~\cite{merry2025propneat}; the system described here begins where training ends, taking the evolved phenotype as its starting point.
+
+% TODO: Add architecture diagram
+\begin{figure}[t]
+    \centering
+    \fbox{\parbox{0.9\columnwidth}{\centering\vspace{2em}[Architecture diagram placeholder]\vspace{2em}}}
+    \caption{ExplaNEAT system architecture. PropNEAT produces the trained phenotype. The operations engine records all modifications (refactoring, annotation, structural edits) as a replayable event stream. The analysis layer extracts formulas and computes evidence. The React Explorer and MCP server provide interactive and AI-assisted interfaces.}
+    \label{fig:architecture}
+\end{figure}
+
+\subsection{Operations-Based Model State}
+
+Constructing an explanation involves a sequence of modifications to the network: splitting nodes, inserting identity nodes, creating annotations, and---as we discuss below---sometimes modifying the network's structure itself. These operations must be recorded, auditable, and reversible.
+
+The \textsc{ModelStateEngine} maintains an ordered event stream of operations applied to the base phenotype. The current model state is computed by replaying this stream from scratch. Each operation is stored with its parameters and results:
+
+\begin{itemize}
+    \item \textbf{Refactoring}: \texttt{split\_node}, \texttt{consolidate\_node}, \texttt{add\_identity\_node}
+    \item \textbf{Annotation}: \texttt{annotate} (with precondition validation)
+    \item \textbf{Structural modification}: \texttt{add\_node}, \texttt{remove\_node}
+\end{itemize}
+
+Undo removes an operation and replays from the base phenotype, omitting the removed operation and all subsequent ones. This provides full reversibility---the researcher can explore different refactoring strategies, back out of dead ends, and try alternative annotation boundaries without losing work.
+
+The full event stream is stored as JSONB, providing a complete audit trail of how the explanation was constructed. This is important both for reproducibility (another researcher can replay the exact sequence of decisions) and for regulatory contexts where the explanation process itself may be subject to review.
+
+\subsection{Non-Identity Operations: Model Modification for Explainability}
+
+The refactoring operations described in Section~\ref{sec:refactoring} preserve the network's function exactly. But there is a more fundamental point: the goal of the explanation process is an \emph{explained network}---not necessarily the exact network that evolution produced. If a structurally modified model achieves equivalent performance and admits a clearer explanation, that is a legitimate outcome.
+
+This is an important distinction. The claim is not that all models are explainable, or that every evolved network can be explained as-is. The claim is that given a performant evolved network, we may be able to produce a closely related network---one that maintains performance on the task---that \emph{is} explainable. The operations event stream records all modifications, so the relationship between the original evolved model and the explained model is always transparent and auditable.
+
+This parallels common practice in model deployment: production models are routinely pruned, quantised, or distilled before serving. ExplaNEAT adds ``simplified for explanation'' to this repertoire, with the constraint that performance must be verified after modification.
+
+With this principle in mind, ExplaNEAT supports \emph{non-identity operations} that change the network's computed function:
+
+\paragraph{Node removal.} Consider an intermediate node $B$ in a chain $A \to B \to C$, where $B$ applies an activation function that complicates the subgraph's formula without materially affecting predictions. Removing $B$ and reconnecting $A \to C$ (with retrained weights) produces a simpler network that may be easier to explain.
+
+\paragraph{Node addition.} Conversely, inserting a node can break a complex multi-input computation into stages that are individually more interpretable.
+
+In both cases, the modified network is retrained and its performance verified against the original. The operations event stream distinguishes identity operations (refactoring) from non-identity operations (structural modification), making explicit which parts of the explanation process preserved the original function and which did not.
+
+\subsection{Formula Extraction}
+
+ExplaNEAT extracts closed-form mathematical expressions for any annotation's subgraph by symbolic computation through the DAG. Internal nodes are topologically sorted, and each node's activation function is symbolically composed with its weighted inputs, producing both a callable function $f: \mathbb{R}^k \to \mathbb{R}^l$ and a \LaTeX{} formula via SymPy. For collapsed function nodes (child annotations), the extraction recurses into the child's subgraph.
+
+\subsection{Evidence Pipeline}
+
+The evidence pipeline provides multiple forms of empirical evidence for annotation verification:
+
+\begin{itemize}
+    \item \textbf{Line plots}: 1D function curves for single-input annotations
+    \item \textbf{Heatmaps}: 2D function surfaces for two-input annotations
+    \item \textbf{Partial dependence}: Vary one input while fixing others at median values
+    \item \textbf{Sensitivity}: Per-input perturbation-based importance scores
+    \item \textbf{SHAP}: Shapley value attribution per annotation input~\cite{lundberg2017unified}
+\end{itemize}
+
+A full forward pass through the (potentially modified) network captures activations at annotation entry and exit nodes. Combined with the extracted formula, these activations produce the visualisation data.
+
+\subsection{Interactive Explorer}
+
+% TODO: Add screenshot
+\begin{figure}[t]
+    \centering
+    \fbox{\parbox{0.9\columnwidth}{\centering\vspace{2em}[Explorer screenshot placeholder]\vspace{2em}}}
+    \caption{The React Explorer showing a NEAT network with annotations (coloured subgraphs), the operations panel with undo history, and the evidence panel displaying a closed-form formula and line plot.}
+    \label{fig:explorer}
+\end{figure}
+
+The React Explorer is a single-page application providing the primary interface for explanation construction:
+
+\paragraph{Network Viewer.} Graph visualisation with custom layered layout. Nodes colour-coded by type and annotation membership. Collapsed view replaces annotated subgraphs with single function nodes.
+
+\paragraph{Annotation Strategy Wizard.} When the researcher selects nodes for annotation, the system classifies them (entry/exit/intermediate), discovers intermediate nodes on paths between them, checks the three preconditions, and proposes refactoring operations. Execution order: identity nodes $\to$ splits $\to$ create annotation.
+
+\paragraph{Evidence Panel.} Displays the annotation's formula, dataset selection, and the visualisation types above. Researchers save visualisations as evidence snapshots attached to annotations with narrative descriptions.
+
+\subsection{AI-Assisted Analysis via MCP}
+
+ExplaNEAT exposes its capabilities through the Model Context Protocol~\cite{anthropic2024mcp}, enabling AI assistants to participate in explanation construction. The MCP server provides tools for inspecting model structure, applying and validating operations, computing formulas and visualisations, and tracking coverage.
+
+This enables a collaborative workflow: the AI handles mechanical tasks---computing formulas, generating visualisations, checking preconditions, suggesting candidate subgraphs---while the researcher focuses on forming hypotheses and evaluating evidence. The AI does not explain the network; it supports the human in doing so.
+
+\subsection{Persistence and Reproducibility}
+
+All experiments, genomes, operations, annotations, and evidence are stored in a PostgreSQL database. The operations event stream enables exact reconstruction of any explanation state. Dataset splits are stored for reproducibility of empirical evidence.
+
+
+%------------------------------------------------------------------
+\section{Experiments and Results}
+\label{sec:results}
+
+PropNEAT's classification performance has been established elsewhere~\cite{merry2025propneat}: no significant difference from random forests or dense neural networks across 58 PMLB datasets, with $\sim$3000$\times$ fewer parameters. Here we evaluate ExplaNEAT's contribution: whether the resulting sparse networks can be \emph{explained} under the annotation and composition framework.
+
+\subsection{Setup}
+
+We select PropNEAT models from [TODO: which datasets] for explanation construction. For each model, we:
+\begin{enumerate}
+    \item Analyse the evolved topology (nodes, connections, depth, skip structure)
+    \item Identify candidate subgraphs motivated by the topology
+    \item Apply refactoring operations where needed (splits, identity nodes)
+    \item Construct leaf annotations with extracted formulas and hypotheses
+    \item Build composition annotations explaining how parts combine
+    \item Assess structural and compositional coverage
+\end{enumerate}
+
+For comparison, we construct the equivalent dense network for each PropNEAT model (the ``minimal covering network'' from~\cite{merry2025propneat}) and assess the tractability of explanation.
+
+\subsection{Explanation Construction}
+
+% TODO: Walk through explanation of a specific PropNEAT genome:
+% - Show the evolved topology (figure)
+% - Show which subgraphs are naturally suggested by the topology
+% - Show the refactoring operations needed
+% - Show extracted formulas for leaf annotations
+% - Show the composition hierarchy
+% - Demonstrate full coverage
+
+\subsection{Explainability Comparison}
+
+The key contrast is between the sparse PropNEAT model and the equivalent dense architecture.
+
+% TODO: Fill with actual numbers from specific models
+\begin{center}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Model} & $|V|$ & $|E|$ & \textbf{Parameters} & \textbf{Search space} & \textbf{Explained?} \\
+\midrule
+PropNEAT & [TODO] & [TODO] & $\sim$176 & $2^{|E|}$ & Yes \\
+Dense equiv. & [TODO] & [TODO] & $\sim$525k & $2^{|E|}$ & No \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% TODO: Discussion of:
+% - How many refactoring operations were needed
+% - Complexity of the resulting formulas
+% - Time taken to construct the explanation
+% - Whether the explanations revealed anything interpretable about the learned function
+
+
+%------------------------------------------------------------------
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Sparsity Enables Explanation}
+
+The core observation is that network sparsity makes explanation tractable. This is not merely a matter of fewer parameters. A sparse network's topology provides \emph{structural hints}---selective connectivity delineates substructures that serve as natural annotation candidates. The researcher examines a small number of architecturally motivated groupings rather than searching a combinatorial space.
+
+NEAT's complexification principle is well-suited to this: structure is added only when useful, so evolved topologies carry minimal unnecessary complexity. Every connection exists because evolution found it beneficial, making the topology itself informative for explanation.
+
+\subsection{Refactoring as Algebraic Manipulation}
+
+The graph refactoring operations---node splitting and identity insertion---are not decomposition in the sense of breaking something apart. They are manipulations that make the graph amenable to analysis, analogous to algebraic techniques like completing the square, partial fraction decomposition, or change of variables. The expression's value does not change, but its \emph{form} changes in a way that reveals structure.
+
+This distinction matters because it clarifies the nature of the explanation process. The researcher is not imposing artificial structure on the network. The functional composition is already there, implicit in the DAG. Refactoring makes it explicit; annotation names it; composition builds it into a hierarchy.
+
+\subsection{Explained Networks vs.\ Original Networks}
+
+A pragmatic insight from working with ExplaNEAT is that the goal should be an \emph{explained network}---not necessarily the exact network that evolution produced. If removing a node that contributes negligibly to predictions but substantially complicates the formula makes the network explainable, that is a worthwhile trade. The modified network can be retrained and its performance verified.
+
+This parallels established practice: production models are routinely pruned, quantised, or distilled before deployment. ExplaNEAT adds ``simplified for explanation'' to this repertoire. The operations event stream makes the relationship between the evolved and explained models fully transparent, so the modification itself is auditable.
+
+\subsection{Structural vs.\ Compositional Coverage}
+
+The distinction between structural and compositional coverage captures something important. A model where every individual component is explained but the combinations are not is only partially explained---we know what the parts do but not how they interact. Conversely, explaining combinations of unexplained parts is vacuous.
+
+This distinction provides language for why certain models resist explanation. A 10,000-coefficient regression has trivial structural coverage (each coefficient is self-explanatory) but intractable compositional coverage (composing 10,000 additive terms into a comprehensible narrative is likely impossible without meaningful groupings). Dense neural networks fail at structural coverage (no tractable decomposition). Sparse NEAT networks, by contrast, can achieve both.
+
+\subsection{AI-Assisted Explanation}
+
+The MCP integration raises an interesting question about the role of AI in explanation. The framework is clear that hypotheses are human claims requiring human judgment, and evidence must be verifiable by the intended audience. The AI assistant computes formulas, generates visualisations, and checks preconditions---mechanical tasks. The interpretive work remains with the researcher.
+
+This division maps naturally onto the annotation structure: the structural and functional layers are objective and computable; the interpretive layer is subjective and requires domain expertise. AI tools support the former; human researchers provide the latter.
+
+\subsection{Limitations}
+
+\paragraph{Scale.} ExplaNEAT targets networks with tens to low hundreds of nodes. The tooling assumes interactive exploration, which limits applicability to larger architectures.
+
+\paragraph{Effort.} Constructing complete explanations remains labour-intensive. The framework structures the work but does not automate the creative act of forming hypotheses.
+
+\paragraph{Dataset dependence.} Empirical evidence depends on the data distribution used. An explanation verified on one distribution may not generalise.
+
+\paragraph{NEAT.} PropNEAT inherits NEAT's limitations: hyperparameter sensitivity, potential for bloat, and stochastic convergence.
+
+
+%------------------------------------------------------------------
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Neuroevolution.} NEAT~\cite{stanley2002evolving} and variants (HyperNEAT~\cite{stanley2009hypercube}, ES-HyperNEAT~\cite{risi2012enhanced}) have been studied for performance but not explainability. Gaier and Ha~\cite{gaier2019weight} showed topology search with fixed weights produces interpretable structures but did not formalise explanation. Combining evolution with gradient descent has been explored~\cite{morse2016simple,lyu2021efficient}; our PropNEAT~\cite{merry2025propneat} demonstrated that GPU-accelerated backpropagation enables NEAT to match dense networks on tabular classification with $\sim$3000$\times$ fewer parameters. ExplaNEAT builds on these parsimonious models.
+
+\paragraph{Mechanistic Interpretability.} Olah et al.~\cite{olah2020zoom} and Elhage et al.~\cite{elhage2021mathematical} study circuits in large pretrained networks. This work shares the intuition that structure matters but focuses on large models without formal completeness criteria. ExplaNEAT provides such criteria for small evolved networks.
+
+\paragraph{Graph-Based Explanation.} GNNExplainer~\cite{ying2019gnnexplainer} provides instance-local explanations via subgraph identification. ExplaNEAT provides structure-global explanations applicable to all inputs.
+
+\paragraph{Context-Dependent and Hypothesis-Driven XAI.} Merry et al.~\cite{merry2021mental} established that explanation is context-dependent, requiring specification of audience, language, and purpose. Miller~\cite{miller2023evaluative} and Le et al.~\cite{le2024evaluative} advocate hypothesis-evidence structures as the mechanism for delivering such explanations. ExplaNEAT implements both: annotations are hypothesis-evidence structures grounded in specific subgraphs, and the interpretive layer adapts to context while the structural and functional layers remain fixed.
+
+
+%------------------------------------------------------------------
+\section{Conclusion}
+\label{sec:conclusion}
+
+We have presented ExplaNEAT, a system for evolving and explaining neural networks. The key observations are:
+
+\begin{enumerate}
+    \item Sparse evolved networks are amenable to explanation because their topology delineates meaningful substructures. Dense networks of equivalent performance are not.
+
+    \item Explanation is annotation and composition: identify subgraphs, attach verifiable hypothesis-evidence structures, and compose them hierarchically. Structural and compositional coverage together define when an explanation is complete.
+
+    \item Graph refactoring---node splitting and identity insertion---restructures the network without changing its function, making clean subgraph boundaries available where the evolved topology does not naturally provide them. These are algebraic manipulations, not decomposition. Where refactoring is insufficient, structural modifications (with retrained weights) trade minimal performance for substantially improved explainability.
+
+    \item Collapse replaces annotated subgraphs with function nodes, enabling hierarchical views. This is term rewriting on a DAG, provably cycle-free when the annotation preconditions are met.
+\end{enumerate}
+
+Building on the parsimonious models produced by PropNEAT~\cite{merry2025propneat}, ExplaNEAT demonstrates that sparse neuroevolution offers a concrete pathway to explainable neural networks: evolve purposeful topologies, refactor for clean boundaries, annotate with verifiable claims, and compose into complete explanations.
+
+\paragraph{Future Work.} We plan to investigate automated annotation suggestion, user studies with domain experts, and extension to other architectures expressible as computational graphs.
+
+
+%------------------------------------------------------------------
+\bibliographystyle{plain}
+\begin{thebibliography}{99}
+
+\bibitem{anthropic2024mcp}
+Anthropic.
+\newblock Model Context Protocol.
+\newblock \url{https://modelcontextprotocol.io}, 2024.
+
+\bibitem{doshi2017towards}
+F.~Doshi-Velez and B.~Kim.
+\newblock Towards a rigorous science of interpretable machine learning.
+\newblock \emph{arXiv preprint arXiv:1702.08608}, 2017.
+
+\bibitem{elhage2021mathematical}
+N.~Elhage, N.~Nanda, C.~Olsson, et al.
+\newblock A mathematical framework for transformer circuits.
+\newblock \emph{Transformer Circuits Thread}, 2021.
+
+\bibitem{gaier2019weight}
+A.~Gaier and D.~Ha.
+\newblock Weight agnostic neural networks.
+\newblock In \emph{NeurIPS}, 2019.
+
+\bibitem{guidotti2018survey}
+R.~Guidotti, A.~Monreale, S.~Ruggieri, F.~Turini, F.~Giannotti, and D.~Pedreschi.
+\newblock A survey of methods for explaining black box models.
+\newblock \emph{ACM Computing Surveys}, 51(5):1--42, 2018.
+
+\bibitem{le2024evaluative}
+T.~Le, T.~Miller, and R.~Singh.
+\newblock Evaluative AI: A framework for hypothesis-driven explainability.
+\newblock \emph{arXiv preprint}, 2024.
+
+\bibitem{lundberg2017unified}
+S.~M. Lundberg and S.-I. Lee.
+\newblock A unified approach to interpreting model predictions.
+\newblock In \emph{NeurIPS}, pages 4765--4774, 2017.
+
+\bibitem{lyu2021efficient}
+C.~Lyu, P.~Abbott, and C.~Gathered.
+\newblock SDNEAT: Efficient neuroevolution with scalable differential evolution.
+\newblock In \emph{GECCO Companion}, 2021.
+
+\bibitem{merry2021mental}
+M.~Merry, P.~Riddle, and J.~Warren.
+\newblock A mental models approach for defining explainable artificial intelligence.
+\newblock \emph{BMC Medical Informatics and Decision Making}, 21(1):344, 2021.
+
+\bibitem{merry2025propneat}
+M.~Merry, P.~Riddle, and J.~Warren.
+\newblock {PropNEAT} -- Efficient {GPU}-compatible backpropagation over neuroevolutionary augmenting topology networks.
+\newblock In \emph{Genetic and Evolutionary Computation Conference (GECCO '25)}, pages 425--432, Malaga, Spain, 2025. ACM.
+\newblock \url{https://doi.org/10.1145/3712256.3726319}.
+
+\bibitem{miller2023evaluative}
+T.~Miller.
+\newblock Evaluative AI: An alternative framework for understanding AI explanations.
+\newblock In \emph{AAAI Workshop on XAI}, 2023.
+
+\bibitem{morse2016simple}
+G.~Morse and K.~O. Stanley.
+\newblock Simple evolutionary optimization can rival stochastic gradient descent in neural networks.
+\newblock In \emph{GECCO}, pages 477--484, 2016.
+
+\bibitem{olah2020zoom}
+C.~Olah, N.~Cammarata, L.~Schubert, G.~Goh, M.~Petrov, and S.~Carter.
+\newblock Zoom in: An introduction to circuits.
+\newblock \emph{Distill}, 2020.
+
+\bibitem{olson2017pmlb}
+R.~S. Olson, W.~La~Cava, P.~Orzechowski, R.~J. Urbanowicz, and J.~H. Moore.
+\newblock {PMLB}: a large benchmark suite for machine learning evaluation and comparison.
+\newblock \emph{BioData Mining}, 10(1):36, 2017.
+
+\bibitem{rago2018argumentation}
+A.~Rago, F.~Toni, M.~Aurisicchio, and P.~Baroni.
+\newblock Discontinuity-free explanations with argumentation.
+\newblock In \emph{ECAI}, 2018.
+
+\bibitem{ribeiro2016why}
+M.~T. Ribeiro, S.~Singh, and C.~Guestrin.
+\newblock ``{Why} should {I} trust you?'': Explaining the predictions of any classifier.
+\newblock In \emph{KDD}, pages 1135--1144, 2016.
+
+\bibitem{ribeiro2018anchors}
+M.~T. Ribeiro, S.~Singh, and C.~Guestrin.
+\newblock Anchors: High-precision model-agnostic explanations.
+\newblock In \emph{AAAI}, 2018.
+
+\bibitem{risi2012enhanced}
+S.~Risi and K.~O. Stanley.
+\newblock An enhanced hypercube-based encoding for evolving the placement, density, and connectivity of neurons.
+\newblock \emph{Artificial Life}, 18(4):331--363, 2012.
+
+\bibitem{stanley2002evolving}
+K.~O. Stanley and R.~Miikkulainen.
+\newblock Evolving neural networks through augmenting topologies.
+\newblock \emph{Evolutionary Computation}, 10(2):99--127, 2002.
+
+\bibitem{stanley2009hypercube}
+K.~O. Stanley, D.~B. D'Ambrosio, and J.~Gauci.
+\newblock A hypercube-based encoding for evolving large-scale neural networks.
+\newblock \emph{Artificial Life}, 15(2):185--212, 2009.
+
+\bibitem{sundararajan2017axiomatic}
+M.~Sundararajan, A.~Tuli, and Q.~Yan.
+\newblock Axiomatic attribution for deep networks.
+\newblock In \emph{ICML}, pages 3319--3328, 2017.
+
+\bibitem{vaswani2017attention}
+A.~Vaswani, N.~Shazeer, N.~Parmar, et al.
+\newblock Attention is all you need.
+\newblock In \emph{NeurIPS}, 2017.
+
+\bibitem{ying2019gnnexplainer}
+R.~Ying, D.~Bourgeois, J.~You, M.~Zitnik, and J.~Leskovec.
+\newblock {GNNExplainer}: Generating explanations for graph neural networks.
+\newblock In \emph{NeurIPS}, 2019.
+
+\end{thebibliography}
+
+\end{document}

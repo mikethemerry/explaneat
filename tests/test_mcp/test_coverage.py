@@ -187,15 +187,88 @@ def test_get_coverage_composition_annotations(mock_build_engine, mock_get_db):
 
     assert result["annotations_count"] == 3
     assert result["composition_count"] == 1  # parent has children
-    # Leaf annotations are those with no parent AND no children
-    # child1 and child2 have parent_annotation_id set, so they're not "root leaves"
-    # parent has children, so it's a composition
-    # The leaf_anns logic: no parent_annotation_id AND no other annotation has this as parent
-    # child1: parent_annotation_id="parent" -> excluded
-    # child2: parent_annotation_id="parent" -> excluded
-    # parent: parent_annotation_id=None, but child1/child2 have parent="parent" -> composition, not leaf
-    # So leaf_count = 0, and we fall back to using all ann_dicts
-    assert result["leaf_count"] == 0
+    # Leaf annotations are those with no children (regardless of parent).
+    # child1: no other annotation has parent_annotation_id="child1" -> leaf
+    # child2: no other annotation has parent_annotation_id="child2" -> leaf
+    # parent: child1 and child2 have parent_annotation_id="parent" -> composition, not leaf
+    assert result["leaf_count"] == 2
+    # The parent composition's expanded subgraph (own + descendants) covers
+    # all 4 candidate nodes: -1, -2, 3, 5.  Each node's outgoing edges are
+    # inside the expanded set.
+    assert sorted(result["node_coverage"]["covered"]) == sorted(["-1", "-2", "3", "5"])
+    assert result["structural_coverage"] == 1.0
+
+
+@patch("mcp_server.tools.coverage.get_db")
+@patch("mcp_server.tools.coverage.build_engine")
+def test_get_coverage_composition_expands_descendants(mock_build_engine, mock_get_db):
+    """Exit nodes of leaf annotations become covered when a parent composition
+    absorbs both the child and the downstream target, making the exit node's
+    outgoing edge internal to the expanded composition.
+
+    Topology: -1 -> 3 -> 0, -2 -> 5 -> 0, -1 -> 5
+    Leaf child1 covers {-1, 3} with edges {(-1,3), (3,0)}.
+    Without a parent, node -1 is NOT covered (outgoing -1->5 is external).
+    With a parent composition owning {-1, -2, 3, 5} and all edges, -1 IS
+    covered because -1->5 is now internal.
+    """
+    from mcp_server.tools.coverage import get_coverage
+
+    network = _make_network()
+    # Leaf that only covers part of the graph
+    leaf_only = AnnotationData(
+        name="leaf_only",
+        hypothesis="just node 3 path",
+        entry_nodes=["-1"],
+        exit_nodes=["3"],
+        subgraph_nodes=["-1", "3"],
+        subgraph_connections=[("-1", "3"), ("3", "0")],
+    )
+    mock_build_engine.return_value = _mock_engine(network, [leaf_only])
+    mock_get_db.return_value = MagicMock()
+
+    result_leaf = json.loads(get_coverage("00000000-0000-0000-0000-000000000001"))
+    # -1 not covered (outgoing -1->5 is outside leaf's subgraph)
+    assert "-1" not in result_leaf["node_coverage"]["covered"]
+    assert "3" in result_leaf["node_coverage"]["covered"]
+
+    # Now add a parent composition that absorbs the leaf + the rest.
+    # Include output node 0 in the root's subgraph so edges to 0 are
+    # coverable (output nodes are excluded from *node* coverage but
+    # should count as valid edge endpoints within an annotation).
+    child1 = AnnotationData(
+        name="child1",
+        hypothesis="part 1",
+        entry_nodes=["-1"],
+        exit_nodes=["3"],
+        subgraph_nodes=["-1", "3"],
+        subgraph_connections=[("-1", "3"), ("3", "0")],
+        parent_annotation_id="root",
+    )
+    root = AnnotationData(
+        name="root",
+        hypothesis="whole model",
+        entry_nodes=["-1", "-2"],
+        exit_nodes=["0"],
+        subgraph_nodes=["-1", "-2", "3", "5", "0"],
+        subgraph_connections=[
+            ("-1", "3"), ("-2", "5"), ("-1", "5"), ("3", "0"), ("5", "0"),
+        ],
+    )
+    mock_build_engine.return_value = _mock_engine(network, [child1, root])
+    result_comp = json.loads(get_coverage("00000000-0000-0000-0000-000000000001"))
+    # root's expanded subgraph includes child1's subgraph.
+    # -1's outgoing edges are (-1,3) and (-1,5), both in root's expanded set.
+    assert "-1" in result_comp["node_coverage"]["covered"]
+    assert sorted(result_comp["node_coverage"]["covered"]) == sorted(
+        ["-1", "-2", "3", "5"]
+    )
+    assert result_comp["structural_coverage"] == 1.0
+    # Edge coverage: all 5 edges should be covered because the root's
+    # expanded subgraph contains all nodes (including output 0) and all edges.
+    assert result_comp["edge_coverage"]["total"] == 5
+    assert len(result_comp["edge_coverage"]["covered"]) == 5
+    assert len(result_comp["edge_coverage"]["uncovered"]) == 0
 
 
 @patch("mcp_server.tools.coverage.get_db")

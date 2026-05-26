@@ -29,6 +29,7 @@ class AnnotationFunction:
         config=None,
         *,
         structure: Optional[NetworkStructure] = None,
+        child_annotations: Optional[List[dict]] = None,
     ):
         if structure is not None:
             self._mode = "structure"
@@ -40,6 +41,8 @@ class AnnotationFunction:
             self.layers = self.net.layers
         else:
             raise ValueError("Must provide either (genome, config) or structure=")
+
+        self._child_annotations = child_annotations or []
 
         # Extract annotation info (support both dict and model)
         if isinstance(annotation, dict):
@@ -76,10 +79,21 @@ class AnnotationFunction:
 
     @classmethod
     def from_structure(
-        cls, annotation, structure: NetworkStructure
+        cls,
+        annotation,
+        structure: NetworkStructure,
+        child_annotations: Optional[List[dict]] = None,
     ) -> "AnnotationFunction":
-        """Create from a NetworkStructure (with operations applied)."""
-        return cls(annotation, structure=structure)
+        """Create from a NetworkStructure (with operations applied).
+
+        Args:
+            annotation: Annotation dict or AnnotationData.
+            structure: The full NetworkStructure with all operations applied.
+            child_annotations: Optional list of child annotation dicts for
+                composition annotations. When provided, child subgraphs are
+                treated as opaque function nodes in the formula.
+        """
+        return cls(annotation, structure=structure, child_annotations=child_annotations)
 
     # ------------------------------------------------------------------
     # Build computation graph
@@ -96,6 +110,10 @@ class AnnotationFunction:
 
         FUNCTION nodes within the subgraph are handled by building nested
         StructureNetwork evaluators rather than treating them as scalar nodes.
+
+        When ``child_annotations`` were provided, their subgraph regions are
+        synthesised as virtual FUNCTION steps so the formula shows named
+        child functions instead of tracing through every scalar node.
         """
         nodes_by_id = {n.id: n for n in self._structure.nodes}
         enabled_conns = {
@@ -145,13 +163,23 @@ class AnnotationFunction:
         self._node_locations = {n: (depth.get(n, 0), 0) for n in self.subgraph_nodes}
         self._exit_is_output = {n: n in output_ids for n in self.exit_nodes}
 
-        # Order internal nodes by depth
-        internal_nodes = [n for n in self.subgraph_nodes if n not in self.entry_nodes]
-        internal_nodes.sort(key=lambda n: depth.get(n, 0))
-
         self._steps = []
         # Maps fn_node_id -> StructureNetwork for recursive evaluation
         self._nested_networks: Dict[str, object] = {}
+
+        # ----- Synthesise virtual FUNCTION steps for child annotations -----
+        child_internal_nodes: set = set()
+        if self._child_annotations:
+            child_internal_nodes = self._build_child_function_steps(
+                nodes_by_id, depth
+            )
+
+        # Order internal nodes by depth, skipping child-internal nodes
+        internal_nodes = [
+            n for n in self.subgraph_nodes
+            if n not in self.entry_nodes and n not in child_internal_nodes
+        ]
+        internal_nodes.sort(key=lambda n: depth.get(n, 0))
 
         for node_str in internal_nodes:
             node_obj = nodes_by_id.get(node_str)
@@ -208,6 +236,119 @@ class AnnotationFunction:
                 "activation": activation,
                 "output_indices": output_indices,
             })
+
+        # When child function steps were added, re-sort all steps by depth
+        # to ensure correct topological execution order.
+        if self._child_annotations:
+            self._steps.sort(
+                key=lambda s: s.get("_depth", depth.get(s["node"], 0))
+            )
+
+    def _build_child_function_steps(
+        self,
+        nodes_by_id: Dict[str, "NetworkNode"],
+        depth: Dict[str, int],
+    ) -> set:
+        """Synthesise virtual FUNCTION steps for child annotations.
+
+        For each child annotation, builds a nested StructureNetwork and
+        creates a function step that replaces the child's internal scalar
+        nodes. Returns the set of child-internal node IDs that should be
+        skipped by the main scalar-step loop.
+
+        The function step stores its outputs under the child's exit node
+        IDs, so downstream scalar nodes find them via normal activation
+        lookup.
+        """
+        from ..core.genome_network import (
+            FunctionNodeMetadata,
+            NetworkStructure as NS,
+        )
+        from ..core.structure_network import StructureNetwork as SN
+
+        child_internal_nodes: set = set()
+
+        for child_ann in self._child_annotations:
+            child_entry_ids = [str(n) for n in child_ann["entry_nodes"]]
+            child_exit_ids = [str(n) for n in child_ann["exit_nodes"]]
+            child_subgraph_ids = {str(n) for n in child_ann["subgraph_nodes"]}
+
+            # Internal nodes = everything except entry nodes.
+            # Exit nodes are *produced* by the child, so they're internal.
+            internals = child_subgraph_ids - set(child_entry_ids)
+            child_internal_nodes.update(internals)
+
+            # Build a mini NetworkStructure for the child subgraph
+            child_nodes_list = [
+                n for n in self._structure.nodes if n.id in child_subgraph_ids
+            ]
+            child_conns_list = [
+                c for c in self._structure.connections
+                if c.enabled
+                and c.from_node in child_subgraph_ids
+                and c.to_node in child_subgraph_ids
+            ]
+            child_structure = NS(
+                nodes=child_nodes_list,
+                connections=child_conns_list,
+                input_node_ids=child_entry_ids,
+                output_node_ids=child_exit_ids,
+            )
+            child_net = SN(child_structure)
+
+            child_name = child_ann.get("name") or child_ann.get("id", "child")
+            fn_node_id = f"__fn_{child_name}"
+            self._nested_networks[fn_node_id] = child_net
+
+            # Build FunctionNodeMetadata (for sympy formula extraction)
+            child_node_props: Dict[str, Dict] = {}
+            child_conn_weights: Dict[tuple, float] = {}
+            for n in child_nodes_list:
+                if n.id not in set(child_entry_ids):
+                    child_node_props[n.id] = {
+                        "bias": n.bias if n.bias is not None else 0.0,
+                        "activation": n.activation or "relu",
+                    }
+            for c in child_conns_list:
+                child_conn_weights[(c.from_node, c.to_node)] = c.weight
+
+            meta = FunctionNodeMetadata(
+                annotation_name=child_name,
+                annotation_id=child_ann.get("id", ""),
+                hypothesis=child_ann.get("hypothesis", ""),
+                n_inputs=len(child_entry_ids),
+                n_outputs=len(child_exit_ids),
+                input_names=child_entry_ids,
+                output_names=child_exit_ids,
+                formula_latex=None,
+                subgraph_nodes=sorted(child_subgraph_ids),
+                subgraph_connections=[
+                    (c.from_node, c.to_node) for c in child_conns_list
+                ],
+                node_properties=child_node_props,
+                connection_weights=child_conn_weights,
+            )
+
+            # Depth = max of child exit depths (so this runs before
+            # downstream nodes that consume the child's outputs)
+            exit_depths = [depth.get(n, 0) for n in child_exit_ids if n in depth]
+            fn_depth = max(exit_depths) if exit_depths else 1
+
+            self._steps.append({
+                "node": fn_node_id,
+                "type": "function",
+                "input_nodes": child_entry_ids,
+                "n_outputs": len(child_exit_ids),
+                "output_names": child_exit_ids,
+                "function_metadata": meta,
+                "_depth": fn_depth,
+            })
+            self._node_locations[fn_node_id] = (fn_depth, 0)
+
+        # Sort the function steps (and later, all steps together) by depth
+        self._steps.sort(key=lambda s: s.get("_depth", 0))
+
+        return child_internal_nodes
 
     def _build_from_neat(self):
         """Build computation graph from NeuralNeat (legacy path)."""

@@ -174,20 +174,20 @@ def get_coverage(genome_id: str) -> str:
             })
 
         # Classify leaf vs composition annotations
+        # A leaf is any annotation with no children (regardless of whether it has a parent).
+        # A composition is any annotation that has children.
+        parent_names = {
+            other.parent_annotation_id
+            for other in annotations_data
+            if other.parent_annotation_id is not None
+        }
         leaf_anns = [
             a for a, ad in zip(ann_dicts, annotations_data)
-            if ad.parent_annotation_id is None
-            and not any(
-                other.parent_annotation_id == ad.name
-                for other in annotations_data
-            )
+            if ad.name not in parent_names
         ]
         composition_anns = [
             a for a, ad in zip(ann_dicts, annotations_data)
-            if any(
-                other.parent_annotation_id == ad.name
-                for other in annotations_data
-            )
+            if ad.name in parent_names
         ]
         leaf_count = len(leaf_anns)
         composition_count = len(composition_anns)
@@ -200,15 +200,59 @@ def get_coverage(genome_id: str) -> str:
             output_nodes=output_ids,
         )
 
-        # Compute coverage using leaf annotations (structural coverage = C_V(A_leaf))
-        # Use all annotations for the full picture, leaf for structural
-        leaf_node_cov, leaf_edge_cov = computer.compute_coverage(
-            leaf_anns if leaf_anns else ann_dicts
-        )
+        # Expand composition annotations to include all descendant subgraphs.
+        # For covered_A(v) = (v ∈ V_A) ∧ (E_out(v) ⊆ E_A), a composition's
+        # effective V_A/E_A is the union of its own subgraph and all
+        # descendants' subgraphs recursively.
+        ann_by_name: Dict[str, Dict] = {
+            ad.name: a for a, ad in zip(ann_dicts, annotations_data)
+        }
+
+        def _descendant_names(name: str) -> set:
+            children = [
+                ad.name for ad in annotations_data
+                if ad.parent_annotation_id == name
+            ]
+            result = set(children)
+            for c in children:
+                result.update(_descendant_names(c))
+            return result
+
+        expanded_ann_dicts = []
+        for a, ad in zip(ann_dicts, annotations_data):
+            if ad.name in parent_names:
+                # Composition — merge descendant subgraphs
+                desc_names = _descendant_names(ad.name)
+                expanded_nodes = set(a["subgraph_nodes"])
+                expanded_conns = {
+                    tuple(e) for e in a["subgraph_connections"]
+                }
+                for dn in desc_names:
+                    if dn in ann_by_name:
+                        da = ann_by_name[dn]
+                        expanded_nodes.update(da["subgraph_nodes"])
+                        expanded_conns.update(
+                            tuple(e) for e in da["subgraph_connections"]
+                        )
+                expanded_a = dict(a)
+                expanded_a["subgraph_nodes"] = list(expanded_nodes)
+                expanded_a["subgraph_connections"] = [
+                    list(e) for e in expanded_conns
+                ]
+                expanded_ann_dicts.append(expanded_a)
+            else:
+                expanded_ann_dicts.append(a)
+
+        # Compute coverage using ALL annotations (with expanded compositions).
+        # Structural coverage considers every annotation, not just leaves —
+        # compositions own nodes (e.g. direct inputs) and edges that leaves
+        # don't, and child exit nodes become covered only when a parent
+        # composition absorbs both the child and the downstream target.
+        node_cov, edge_cov = computer.compute_coverage(expanded_ann_dicts)
 
         # Candidate nodes: all non-output nodes (per paper)
         candidate_nodes = all_node_ids - output_ids
-        covered_nodes = {n for n in candidate_nodes if n in leaf_node_cov}
+        covered_nodes = {n for n in candidate_nodes if n in node_cov}
         uncovered_nodes = candidate_nodes - covered_nodes
 
         structural_coverage = (
@@ -228,7 +272,7 @@ def get_coverage(genome_id: str) -> str:
 
         # Build per-annotation node mapping
         by_annotation: Dict[str, List[str]] = {}
-        for node_id, ann_ids in leaf_node_cov.items():
+        for node_id, ann_ids in node_cov.items():
             if node_id in candidate_nodes:
                 for aid in ann_ids:
                     by_annotation.setdefault(aid, []).append(node_id)
@@ -236,10 +280,10 @@ def get_coverage(genome_id: str) -> str:
             by_annotation[aid].sort()
 
         # Edge coverage
-        covered_edges = sorted([list(e) for e in leaf_edge_cov.keys()])
+        covered_edges = sorted([list(e) for e in edge_cov.keys()])
         all_edges_set = all_edges
         uncovered_edges = sorted(
-            [list(e) for e in all_edges_set if e not in leaf_edge_cov]
+            [list(e) for e in all_edges_set if e not in edge_cov]
         )
 
         result = {

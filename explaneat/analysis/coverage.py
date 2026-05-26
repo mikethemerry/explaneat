@@ -194,21 +194,31 @@ class CoverageComputer:
                         if is_split_covered:
                             covered_nodes.add(split_node_id)
         
-        # Compute covered edges: an edge e = (u, v) is covered if both u and v are covered
-        # Paper definition: covered_A(e) = covered_A(u) ∧ covered_A(v)
+        # Compute covered edges: an edge e = (u, v) is covered if both
+        # endpoints are accounted for within the annotation.  A node counts
+        # as "accounted for" if it is either:
+        #   - a covered node (per Def 10), OR
+        #   - an output node that is in the annotation's subgraph (output
+        #     nodes are excluded from *node* coverage by convention, but
+        #     they are valid edge endpoints within an annotation).
         for edge in subgraph_edges:
             from_node, to_node = edge
-            # Check if both endpoints are covered (accounting for splits)
-            from_covered = (
+            from_ok = (
                 from_node in covered_nodes
-                or (node_splits and from_node in node_splits and any(split_id in covered_nodes for split_id in node_splits[from_node]))
+                or from_node in (subgraph_nodes & self.output_nodes)
+                or (node_splits and from_node in node_splits and any(
+                    split_id in covered_nodes for split_id in node_splits[from_node]
+                ))
             )
-            to_covered = (
+            to_ok = (
                 to_node in covered_nodes
-                or (node_splits and to_node in node_splits and any(split_id in covered_nodes for split_id in node_splits[to_node]))
+                or to_node in (subgraph_nodes & self.output_nodes)
+                or (node_splits and to_node in node_splits and any(
+                    split_id in covered_nodes for split_id in node_splits[to_node]
+                ))
             )
-            
-            if from_covered and to_covered:
+
+            if from_ok and to_ok:
                 covered_edges.add(edge)
         
         return covered_nodes, covered_edges

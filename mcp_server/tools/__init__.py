@@ -4,6 +4,7 @@ from mcp.server.fastmcp import FastMCP
 
 def register_all(mcp: FastMCP) -> None:
     """Register all tool modules with the server."""
+    from mcp_server.tools import workflow
     from mcp_server.tools import experiments
     from mcp_server.tools import models
     from mcp_server.tools import operations
@@ -12,5 +13,6 @@ def register_all(mcp: FastMCP) -> None:
     from mcp_server.tools import datasets
     from mcp_server.tools import snapshots
 
-    for module in [experiments, models, operations, evidence, coverage, datasets, snapshots]:
+    for module in [workflow, experiments, models, operations, evidence, coverage,
+                   datasets, snapshots]:
         module.register(mcp)

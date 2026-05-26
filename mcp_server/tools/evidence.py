@@ -361,25 +361,56 @@ def get_formula(
             model_state = build_model_state(session, genome_id)
             annotation = _resolve_annotation(session, genome_id, model_state, annotation_id, node_id)
 
-            ann_fn = AnnotationFunction.from_structure(annotation, model_state)
-            n_in, n_out = ann_fn.dimensionality
+            child_ann_ids = annotation.get("child_annotation_ids", [])
+            is_composed = len(child_ann_ids) > 0
+
+            # Resolve child annotations for compositions so the formula
+            # shows named child functions instead of raw scalar nodes.
+            child_annotations = None
+            if is_composed:
+                child_annotations = []
+                for cid in child_ann_ids:
+                    try:
+                        child_annotations.append(
+                            find_annotation_in_operations(session, genome_id, cid)
+                        )
+                    except ValueError:
+                        pass  # skip unresolvable children
+
+            # Build two AnnotationFunctions:
+            # - With children collapsed (for composition formula)
+            # - Without children (for fully expanded formula)
+            if child_annotations:
+                ann_fn_composed = AnnotationFunction.from_structure(
+                    annotation, model_state, child_annotations=child_annotations
+                )
+                n_in, n_out = ann_fn_composed.dimensionality
+            else:
+                ann_fn_composed = None
+
+            ann_fn_expanded = AnnotationFunction.from_structure(annotation, model_state)
+            if ann_fn_composed is None:
+                n_in, n_out = ann_fn_expanded.dimensionality
 
             # Smart default: auto-force for small tractable networks
             if not force and n_in <= 8:
                 force = True
 
-            child_ann_ids = annotation.get("child_annotation_ids", [])
-            is_composed = len(child_ann_ids) > 0
+            # latex: fully expanded (all scalar nodes)
+            latex = ann_fn_expanded.to_latex(force=force)
 
-            latex = ann_fn.to_latex(force=force)
+            # latex_collapsed: children shown as named functions
             latex_collapsed = None
-            if is_composed:
-                latex_collapsed = ann_fn.to_latex(expand=False, force=force)
+            if ann_fn_composed is not None:
+                latex_collapsed = ann_fn_composed.to_latex(expand=False, force=force)
+                # Also try expanded form through children
+                if latex_collapsed is None:
+                    latex_collapsed = ann_fn_composed.to_latex(expand=True, force=force)
 
             result = {
                 "latex": latex,
                 "latex_collapsed": latex_collapsed,
-                "tractable": latex is not None,
+                "tractable": latex is not None or latex_collapsed is not None,
                 "is_composed": is_composed,
                 "child_annotation_ids": child_ann_ids,
                 "dimensionality": [n_in, n_out],
