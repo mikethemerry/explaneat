@@ -267,6 +267,19 @@ def _load_split_data(session, split_id: str, split_choice: str, sample_frac: flo
 
     # Apply scaler if the split was trained with one
     if split.scaler_type and split.scaler_params:
+        scaler_dim = len(split.scaler_params.get("mean")
+                         or split.scaler_params.get("scale_") or [])
+        if scaler_dim and scaler_dim != X.shape[1]:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Split scaler expects {scaler_dim} features but dataset "
+                    f"'{dataset.name}' has {X.shape[1]}. The split "
+                    f"({split_id}) is linked to the wrong dataset "
+                    f"(dataset_id={split.dataset_id}); it should reference the "
+                    f"prepared/encoded dataset the scaler was fit on."
+                ),
+            )
         if split.scaler_type == "StandardScaler":
             mean = np.array(split.scaler_params["mean"])
             scale = np.array(split.scaler_params["scale"])

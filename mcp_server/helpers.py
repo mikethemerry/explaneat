@@ -175,6 +175,16 @@ def load_split_data(
 
     # Apply scaler if the split was trained with one
     if split.scaler_type and split.scaler_params:
+        scaler_dim = len(split.scaler_params.get("mean")
+                         or split.scaler_params.get("scale_") or [])
+        if scaler_dim and scaler_dim != X.shape[1]:
+            raise ValueError(
+                f"Split scaler expects {scaler_dim} features but dataset "
+                f"'{dataset.name}' has {X.shape[1]}. The split ({split_id}) is "
+                f"linked to the wrong dataset (dataset_id={split.dataset_id}); "
+                f"it should reference the prepared/encoded dataset the scaler "
+                f"was fit on."
+            )
         if split.scaler_type == "StandardScaler":
             mean = np.array(split.scaler_params["mean"])
             scale = np.array(split.scaler_params["scale"])

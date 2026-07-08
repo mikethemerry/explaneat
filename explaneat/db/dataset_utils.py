@@ -494,6 +494,69 @@ def create_or_get_split(
         return split
 
 
+def get_or_create_prepared_split(
+    session,
+    original_split: DatasetSplit,
+    prepared_dataset_id: Union[str, uuid.UUID],
+) -> DatasetSplit:
+    """Return a split on ``prepared_dataset_id`` mirroring ``original_split``.
+
+    When an experiment auto-prepares (one-hot encodes) a dataset, the split and
+    its scaler must belong to the *prepared* dataset, not the raw source
+    dataset. Otherwise the evidence pipeline (which loads data via
+    ``split.dataset_id``) sees the raw N-feature data while the stored scaler
+    and trained genome expect the encoded M-feature data — a broadcast crash.
+
+    One-hot encoding preserves row order and count, so the original split's row
+    indices are valid for the prepared dataset. This copies those indices onto
+    a split owned by the prepared dataset. If such a split already exists (same
+    indices) it is reused; if the original split already belongs to the target
+    dataset it is returned unchanged.
+
+    The caller is responsible for setting the scaler on the returned split. The
+    provided ``session`` is used directly (no independent transaction).
+    """
+    if isinstance(prepared_dataset_id, str):
+        prepared_dataset_id = uuid.UUID(prepared_dataset_id)
+
+    if original_split.dataset_id == prepared_dataset_id:
+        return original_split
+
+    # Reuse an existing prepared split with identical indices (idempotency).
+    candidates = (
+        session.query(DatasetSplit)
+        .filter_by(dataset_id=prepared_dataset_id)
+        .all()
+    )
+    for cand in candidates:
+        if (
+            cand.train_indices == original_split.train_indices
+            and cand.test_indices == original_split.test_indices
+            and cand.validation_indices == original_split.validation_indices
+        ):
+            return cand
+
+    prepared_split = DatasetSplit(
+        dataset_id=prepared_dataset_id,
+        name=original_split.name,
+        split_type=original_split.split_type,
+        test_size=original_split.test_size,
+        random_state=original_split.random_state,
+        shuffle=original_split.shuffle,
+        stratify=original_split.stratify,
+        train_indices=original_split.train_indices,
+        test_indices=original_split.test_indices,
+        validation_indices=original_split.validation_indices,
+        preprocessing_steps=original_split.preprocessing_steps,
+        train_size=original_split.train_size,
+        test_size_actual=original_split.test_size_actual,
+        validation_size=original_split.validation_size,
+    )
+    session.add(prepared_split)
+    session.flush()
+    return prepared_split
+
+
 def sample_dataset(
     X: np.ndarray,
     y: np.ndarray,

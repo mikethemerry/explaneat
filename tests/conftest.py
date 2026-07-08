@@ -15,6 +15,22 @@ from datetime import datetime
 from explaneat.db import db, Base, Experiment, Population, Genome, Dataset, Annotation, Explanation, NodeSplit
 from explaneat.db.serialization import serialize_population_config
 
+# The models use PostgreSQL-specific JSONB/UUID column types. Tests run against
+# in-memory SQLite for speed, which cannot render those types natively. Register
+# SQLite-only compilation fallbacks so the schema can be created for tests.
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
+from sqlalchemy.ext.compiler import compiles
+
+
+@compiles(JSONB, "sqlite")
+def _compile_jsonb_sqlite(type_, compiler, **kw):
+    return "JSON"
+
+
+@compiles(PG_UUID, "sqlite")
+def _compile_uuid_sqlite(type_, compiler, **kw):
+    return "CHAR(32)"
+
 
 @pytest.fixture(scope="function")
 def test_db() -> Generator:

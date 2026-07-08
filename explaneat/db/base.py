@@ -23,12 +23,22 @@ class Database:
         if database_url:
             self.database_url = database_url
             
-        # Create engine with connection pooling
-        self.engine = create_engine(
-            self.database_url,
+        # Create engine with connection pooling.
+        engine_kwargs = dict(
             poolclass=NullPool,  # Good for scientific computing where connections might be held for long periods
-            echo=os.getenv('SQLALCHEMY_ECHO', 'false').lower() == 'true'
+            echo=os.getenv('SQLALCHEMY_ECHO', 'false').lower() == 'true',
         )
+        # In-memory SQLite (used by the test suite) lives inside a single
+        # connection. NullPool discards connections, giving each session a
+        # fresh, empty database. StaticPool keeps one shared connection alive
+        # so the schema persists across sessions.
+        if self.database_url and self.database_url.startswith("sqlite") and ":memory:" in self.database_url:
+            from sqlalchemy.pool import StaticPool
+
+            engine_kwargs["poolclass"] = StaticPool
+            engine_kwargs["connect_args"] = {"check_same_thread": False}
+
+        self.engine = create_engine(self.database_url, **engine_kwargs)
         
         # Create session factory
         self.session_factory = sessionmaker(bind=self.engine)

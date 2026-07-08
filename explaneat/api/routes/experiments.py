@@ -490,6 +490,15 @@ async def create_and_run_experiment(
         X_full, y_full = data
         feature_names = dataset.feature_names or []
 
+        # The split (and the scaler we fit below) must belong to the prepared
+        # dataset, not the raw source dataset. Otherwise the evidence pipeline
+        # loads raw N-feature data via split.dataset_id but the stored scaler
+        # and trained genome expect the encoded M-feature data -> broadcast
+        # crash. One-hot encoding preserves rows, so the indices carry over.
+        from ...db.dataset_utils import get_or_create_prepared_split
+
+        split = get_or_create_prepared_split(db_session, split, prepared.id)
+
     train_indices = split.train_indices or []
     if not train_indices:
         raise HTTPException(status_code=400, detail="Split has no training indices")

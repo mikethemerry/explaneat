@@ -346,7 +346,11 @@ class Species(Base, TimestampMixin):
     age = Column(Integer, nullable=False)
     last_improved = Column(Integer, nullable=False)
     representative_genome_id = Column(
-        UUID(as_uuid=True), ForeignKey("genomes.id", ondelete="SET NULL")
+        UUID(as_uuid=True),
+        # genomes <-> species is a known cycle (a genome belongs to a species,
+        # a species points at its representative genome). use_alter marks this
+        # FK as the cycle-breaker so CREATE/DROP table ordering can be resolved.
+        ForeignKey("genomes.id", ondelete="SET NULL", use_alter=True),
     )
 
     # Relationships
