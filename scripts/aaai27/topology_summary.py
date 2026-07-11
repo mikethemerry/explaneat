@@ -57,6 +57,8 @@ def summarize(experiment_id, out_path=None):
         feat_names = dataset.feature_names
         meta = dataset.additional_metadata or {}
         exp_name = exp.name
+        dataset_name = dataset.name
+        split_id = str(split.id)
         tr, te = split.train_indices, split.test_indices
 
     # metrics
@@ -81,15 +83,15 @@ def summarize(experiment_id, out_path=None):
             fanin[c.to_node] += 1
     fanin_vals = sorted(fanin.values())
     try:
-        depth = ExplaNEAT(genome, config).depth
-    except Exception:
-        depth = "n/a"
+        depth = ExplaNEAT(genome, config).depth()
+    except Exception as e:
+        depth = f"n/a ({type(e).__name__})"
 
     lines.append(f"# Topology summary: {exp_name}")
     lines.append("")
     lines.append(f"- experiment_id: `{experiment_id}`")
     lines.append(f"- best genome: `{gid}`  (stored fitness = train AUC = {stored_fitness:.4f})")
-    lines.append(f"- dataset: {dataset.name}  (split {split.id})")
+    lines.append(f"- dataset: {dataset_name}  (split {split_id})")
     lines.append("")
     lines.append(f"- nodes (genome): {len(genome.nodes)}")
     lines.append(f"- connection genes: {len(genome.connections)}  "
@@ -106,7 +108,8 @@ def summarize(experiment_id, out_path=None):
     # monk2 rule-relevant coverage
     rule_cols = meta.get("rule_relevant_columns")
     if rule_cols:
-        name_to_key = {nm: -(i + 1) for i, nm in enumerate(feat_names)}
+        # phenotype node IDs are strings; input feature column i -> key '-(i+1)'
+        name_to_key = {nm: str(-(i + 1)) for i, nm in enumerate(feat_names)}
         covered, missing = [], []
         for col in rule_cols:
             k = name_to_key.get(col)
