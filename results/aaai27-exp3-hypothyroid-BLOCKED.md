@@ -5,6 +5,10 @@ are truncated and several structural facts contradict the stated expectations.
 Per the task's "STOP and report — do not substitute silently" discipline, I did
 not invent the missing decisions. monk2 (the other candidate) is complete.
 
+**Decision 2026-07-13: Mike chose to HOLD hypothyroid** — monk2 alone suffices
+for Exp3 for now. This document captures the findings and open decisions so the
+work can be picked up later without re-deriving them.
+
 ## 1. The instructions are truncated
 
 The task says hypothyroid has **"Four explicit decisions"** but the text ends
