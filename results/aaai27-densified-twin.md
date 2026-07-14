@@ -6,11 +6,19 @@ paper genome not modified.
 
 ## Paper sentence (filled)
 
-> we densified the evolved network itself (same 14 hidden units, same depth;
-> **884** connections against the evolved 92), retrained it to matched
-> performance (test AUC **0.905**), and **every hidden unit became broadly
-> mixed — effective fan-in 38–60 inputs (first-layer mean 45 of 54), not one
-> unit at or below the evolved network's maximum of 6.**
+> we densified the evolved network itself **over its 54 connected inputs**
+> (same 14 hidden units, same depth; **884** connections against the evolved
+> 92), retrained it to matched performance (test AUC **0.905**), and **every
+> hidden unit became broadly mixed — effective fan-in 38–60 inputs (first-layer
+> mean 45 of 54), not one unit at or below the evolved network's maximum of 6.**
+
+Wording note: say "over its 54 connected inputs" explicitly. "Every possible
+connection" alone reads as including the 53 pruned inputs; the densification is
+architecture-, input-, and performance-matched to the evolved network and
+differs *only* in connectivity — densifying over all 107 would add a second
+difference (access to features the evolved net discarded) and invite a
+confound. Densification here = every feed-forward/skip edge among the 54
+connected inputs + 14 hidden + output.
 
 ## STOP conditions — all checked, none triggered
 
@@ -35,16 +43,48 @@ Node depths from `NeuralNeat.node_mapping` (longest-path layering):
   unit). Edge count = Σ_{i<j} |L_i|·|L_j| = **884** (vs evolved enabled 92).
 - Fresh weights; the paper genome and its 54-input set are otherwise unchanged.
 
-### ⚠ Depth wording discrepancy (flag for the paper, not a blocker)
+### ⚠ Path-length wording — needs a single metric across all three models
 
-The task/paper describe the mapping as "max active path length 4". The actual
-PropNEAT mapping has **7 layers (depths 0–6)**; `ExplaNEAT.depth()` returns 7,
-and the longest input→output path is **6 hops** (the capital-gain cascade
-`input → 3446 → 4739 → 2129 → 655 → readout → output`). The 14-hidden-unit
-count reconciles exactly; the "4" does not — it appears to count hidden units
-on the capital-gain cascade (a depth-3 cascade + hub = 4) rather than the full
-input→output hop count. **Recommend reconciling the Section 5.2/5.5 wording**
-(the densification here uses the true 7-layer/depth-6 mapping).
+Verified with `scripts/aaai27/verify_path_lengths.py`. Metric stated once:
+**max edges (hops) on a directed input→output path in the evolved phenotype**.
+The three models' claims were **not** computed consistently:
+
+| Model | Paper/draft claim | Actual (hops) | Note |
+|---|---|---|---|
+| Adult | 4 | **6** | claim matches neither hops (6) nor layers (7) |
+| Heart | 3 | **3** | matches hops |
+| MONK  | 3 | **2** | claim = `ExplaNEAT.depth()` layer count (= hops + 1) |
+
+- Adult longest chain: `-63 → 3446 → 4739 → 2129 → 655 → 313 → 0` (6 hops).
+- Heart: `-2 → 155 → 534 → 0` (3 hops). MONK: `-1 → 21 → 0` (2 hops).
+
+**Recommendation:** adopt one metric — "hops on the longest active input→output
+path" — and set Adult = 6, Heart = 3 (unchanged), MONK = 2. (Or, if the draft
+prefers the layer-count convention MONK's "3" uses, then Adult = 7, Heart = 4,
+MONK = 3 — but *don't* leave 4/3/3, which is three different conventions.)
+Do not simply change Adult's "4" to "6" in isolation.
+
+### ⚠ Adult capital-gain cascade (§5.2) — two concrete corrections
+
+The same paragraph's structural description needs two fixes (verified against
+the genome):
+
+1. **"seven neurons" ✓** — 3446, 4739, 2129, 655, 313, 5102, 6421 all present.
+2. **An extra neuron sits on the path the prose omits.** §5.2 says the cascade
+   "converges on a single hub neuron, read out to the output" — implying
+   hub → output. In fact `313`, `5102`, `6421` are **readout neurons fed by the
+   hub 655**, each with its own edge to the output (655 also has a direct
+   edge). So the longest path is hub → 313 → output, i.e. 6 hops / 5 hidden
+   units (3446, 4739, 2129, 655, 313), not the cascade(3)+hub(1)=4 the "4"
+   counts. This is why "max active path length 4" undercounts.
+3. **Sign grouping is wrong.** The four edges into the output are
+   313 **+0.63**, 655 **−0.95**, 5102 **−1.38**, 6421 **−0.98** — i.e. **one
+   positive (313) vs three negative (655, 5102, 6421)**. The draft's
+   "(655/313 vs 5102/6421)" groups the negative hub 655 with the positive 313;
+   correct it to "313 (+) against 655, 5102, 6421 (−)".
+
+These are the same structure the densification is built on, so the depth used
+here (7-layer / 6-hop mapping) is the correct one regardless of the wording fix.
 
 ## Training (matched performance)
 
