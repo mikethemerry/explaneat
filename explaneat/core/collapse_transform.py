@@ -229,6 +229,7 @@ def _collapse_one(
     """
     entry_set = set(annotation.entry_nodes)
     exit_set = set(annotation.exit_nodes)
+    output_ids = set(structure.output_node_ids)
     subgraph_set = (
         effective_nodes_override
         if effective_nodes_override is not None
@@ -238,9 +239,60 @@ def _collapse_one(
     # Without this, entry nodes omitted from subgraph_nodes have their
     # connections classified as "external -> internal" and dropped.
     subgraph_set = subgraph_set | entry_set | exit_set
+    # Terminal output nodes are never absorbed into a function node -- they
+    # stay in the graph as external anchors that the function node feeds.
+    # Absorbing a terminal output (an exit node with no outgoing edge) would
+    # delete the model's output from the collapsed view and leave the function
+    # node as a dangling sink. Keeping outputs external also makes the forward
+    # pass identical to the uncollapsed network (the output node's bias and
+    # activation are applied exactly once, at the output node).
+    subgraph_set = subgraph_set - output_ids
+
+    # Pure-passthrough boundary nodes -- declared as BOTH entry and exit with no
+    # external inputs and no outgoing edges into the rest of the subgraph -- carry
+    # no computation and serve no boundary role. Left as entries they would sit
+    # orphaned beside a floating, edgeless function node (e.g. a "pruned inputs"
+    # grouping). Fold them into the function node so it cleanly replaces them.
+    non_subgraph_feeds = {
+        conn.to_node
+        for conn in structure.connections
+        if conn.enabled and conn.from_node not in subgraph_set
+    }
+    intra_subgraph_sources = {
+        conn.from_node
+        for conn in structure.connections
+        if conn.enabled and conn.to_node in subgraph_set
+    }
+    passthrough = {
+        nid
+        for nid in (entry_set & exit_set)
+        if nid in subgraph_set
+        and nid not in non_subgraph_feeds
+        and nid not in intra_subgraph_sources
+    }
+    entry_set = entry_set - passthrough
+
     internal_nodes = subgraph_set - entry_set  # intermediate + exit nodes
 
     fn_node_id = f"fn_{annotation.name}"
+
+    # Derive the function node's true outputs from the graph: internal nodes
+    # that feed any node OUTSIDE the internal set (external nodes or preserved
+    # output nodes). This generalizes annotation.exit_nodes and correctly
+    # handles regions that terminate at an output node (declared exit == output,
+    # or a compositional exit derived as empty because the output feeds nothing).
+    feeds_outside: Set[str] = set()
+    for conn in structure.connections:
+        if not conn.enabled:
+            continue
+        if conn.from_node in internal_nodes and conn.to_node not in internal_nodes:
+            feeds_outside.add(conn.from_node)
+    # Deterministic ordering: honour declared exit order first (backwards
+    # compatible with leaf annotations), then any remaining derived feeders.
+    ordered_exits: List[str] = [e for e in annotation.exit_nodes if e in feeds_outside]
+    for nid in sorted(feeds_outside):
+        if nid not in ordered_exits:
+            ordered_exits.append(nid)
 
     # --- Compute formula (best-effort) ---
     formula_latex = _try_compute_formula(structure, annotation)
@@ -294,9 +346,9 @@ def _collapse_one(
         annotation_id=annotation.name,
         hypothesis=annotation.hypothesis,
         n_inputs=len(annotation.entry_nodes),
-        n_outputs=len(annotation.exit_nodes),
+        n_outputs=len(ordered_exits),
         input_names=[display_map.get(n, n) for n in annotation.entry_nodes],
-        output_names=[display_map.get(n, n) for n in annotation.exit_nodes],
+        output_names=[display_map.get(n, n) for n in ordered_exits],
         formula_latex=formula_latex,
         subgraph_nodes=list(subgraph_set),
         subgraph_connections=effective_connections,
@@ -315,9 +367,11 @@ def _collapse_one(
     new_nodes = [n for n in structure.nodes if n.id not in internal_nodes]
     new_nodes.append(fn_node)
 
-    # --- Build exit_node -> output_index mapping ---
+    # --- Build fn-output -> output_index mapping ---
+    # Indexed over the derived function outputs (internal nodes feeding outside),
+    # so preserved output nodes and multi-exit targets get the correct column.
     exit_index: Dict[str, int] = {
-        node_id: idx for idx, node_id in enumerate(annotation.exit_nodes)
+        node_id: idx for idx, node_id in enumerate(ordered_exits)
     }
 
     # --- Rewire connections ---
@@ -325,66 +379,56 @@ def _collapse_one(
 
     # Track seen connections for deduplication
     seen_entry_to_fn: Set[str] = set()  # entry node ids that already have entry->fn
-    seen_exit_to_ext: Set[Tuple[str, str, Optional[int]]] = set()  # (fn_node, target, output_index)
+    seen_fn_to_target: Set[Tuple[str, Optional[int]]] = set()  # (target, output_index)
 
     for conn in structure.connections:
-        from_in_subgraph = conn.from_node in subgraph_set
-        to_in_subgraph = conn.to_node in subgraph_set
         from_is_internal = conn.from_node in internal_nodes
         to_is_internal = conn.to_node in internal_nodes
 
         if from_is_internal:
             if to_is_internal:
-                # Internal -> internal: DROP
+                # Internal -> internal: DROP (folded into the function node)
                 continue
-            elif not to_in_subgraph:
-                # Internal -> external (exit -> outside): Reroute fn_node -> external
-                # Only exit nodes should have external outputs if preconditions hold
-                if conn.from_node in exit_set:
-                    out_idx = exit_index.get(conn.from_node)
-                    dedup_key = (fn_node_id, conn.to_node, out_idx)
-                    if dedup_key not in seen_exit_to_ext:
-                        seen_exit_to_ext.add(dedup_key)
-                        new_connections.append(
-                            NetworkConnection(
-                                from_node=fn_node_id,
-                                to_node=conn.to_node,
-                                weight=conn.weight,
-                                enabled=conn.enabled,
-                                output_index=out_idx,
-                            )
-                        )
-                # else: skip/drop (shouldn't happen if preconditions hold)
-            else:
-                # Internal -> entry (within subgraph): DROP
-                # Arises in compositional annotations where fn_child -> parent_entry
-                continue
-
-        elif not from_in_subgraph and to_is_internal:
-            # External -> internal: Should not happen if preconditions hold.
-            # Skip/drop.
-            continue
-
-        elif from_in_subgraph and not from_is_internal and to_is_internal:
-            # Entry -> internal: Reroute entry -> fn_node
-            if conn.from_node not in seen_entry_to_fn:
-                seen_entry_to_fn.add(conn.from_node)
+            # Internal -> (external or preserved output node): reroute fn -> target.
+            # A terminal output node is "outside" the internal set now, so edges
+            # into it are rerouted here -- this is what keeps the output visible
+            # and correctly fed after collapse.
+            out_idx = exit_index.get(conn.from_node)
+            dedup_key = (conn.to_node, out_idx)
+            if dedup_key not in seen_fn_to_target:
+                seen_fn_to_target.add(dedup_key)
                 new_connections.append(
                     NetworkConnection(
-                        from_node=conn.from_node,
-                        to_node=fn_node_id,
+                        from_node=fn_node_id,
+                        to_node=conn.to_node,
                         weight=conn.weight,
                         enabled=conn.enabled,
+                        output_index=out_idx,
                     )
                 )
 
+        elif to_is_internal:
+            # (entry or external) -> internal
+            if conn.from_node in entry_set:
+                # Entry -> internal: reroute entry -> fn_node
+                if conn.from_node not in seen_entry_to_fn:
+                    seen_entry_to_fn.add(conn.from_node)
+                    new_connections.append(
+                        NetworkConnection(
+                            from_node=conn.from_node,
+                            to_node=fn_node_id,
+                            weight=conn.weight,
+                            enabled=conn.enabled,
+                        )
+                    )
+            # else external -> internal: precondition violation, DROP
+
         else:
-            # Everything else: preserve as-is
-            # This includes:
+            # Neither endpoint is internal: preserve as-is. This includes:
             #   - external -> external
-            #   - external -> entry (entry is not internal)
-            #   - entry -> external (entry has external outputs)
+            #   - external -> entry / entry -> external (entry has external I/O)
             #   - entry -> entry (within subgraph, both survive)
+            #   - entry -> preserved output (bypass straight to the output)
             new_connections.append(conn)
 
     # --- Filter out any dangling connections ---

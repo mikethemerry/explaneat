@@ -1054,3 +1054,102 @@ class TestCompositionalAnnotationCollapse:
         # E is exit_nodes[0], so output_index=0
         assert fn_out[0].output_index == 0
         assert fn_out[0].to_node == "0"
+
+
+# ---------------------------------------------------------------------------
+# Regression: collapsing must never delete a terminal output node
+# ---------------------------------------------------------------------------
+
+
+def _output_as_exit_structure() -> NetworkStructure:
+    """
+    Chain whose exit node IS the terminal output:
+
+        -1 -> h1 -> 0(output)
+
+    Annotation covers {h1, 0} with entry={h1}, exit={0}.
+    The output node 0 has no outgoing edge, so collapse must not delete it.
+    """
+    nodes = [
+        _make_node("-1", NodeType.INPUT),
+        _make_node("h1", NodeType.HIDDEN, bias=0.1, activation="relu"),
+        _make_node("0", NodeType.OUTPUT),
+    ]
+    connections = [
+        _make_conn("-1", "h1", weight=0.5),
+        _make_conn("h1", "0", weight=0.9),
+    ]
+    return NetworkStructure(
+        nodes=nodes,
+        connections=connections,
+        input_node_ids=["-1"],
+        output_node_ids=["0"],
+    )
+
+
+class TestOutputNodePreserved:
+    """Collapsing an annotation whose exit is a terminal output must keep it."""
+
+    def test_output_node_survives_collapse(self):
+        structure = _output_as_exit_structure()
+        ann = _make_annotation(
+            "grp",
+            entry_nodes=["-1"],
+            exit_nodes=["0"],
+            subgraph_nodes=["-1", "h1", "0"],
+            subgraph_connections=[("-1", "h1"), ("h1", "0")],
+        )
+        result = collapse_structure(structure, [ann], {"grp"})
+        ids = _node_ids(result)
+
+        assert "0" in ids, "terminal output node was deleted by collapse"
+        assert "fn_grp" in ids
+        # fn node must feed the output so the value is still produced/visible
+        assert ("fn_grp", "0") in _conn_tuples(result), "no fn -> output edge"
+        assert not _has_cycle(result)
+
+    def test_passthrough_annotation_folds_orphans(self):
+        """entry==exit with no external I/O folds into the fn (no orphans)."""
+        structure = NetworkStructure(
+            nodes=[
+                _make_node("-1", NodeType.INPUT),
+                _make_node("-2", NodeType.INPUT),
+                _make_node("h1", NodeType.HIDDEN),
+                _make_node("0", NodeType.OUTPUT),
+            ],
+            connections=[
+                _make_conn("-1", "h1", weight=1.0),
+                _make_conn("h1", "0", weight=1.0),
+            ],
+            input_node_ids=["-1", "-2"],  # -2 is a pruned/disconnected input
+            output_node_ids=["0"],
+        )
+        ann = _make_annotation(
+            "pruned",
+            entry_nodes=["-2"],
+            exit_nodes=["-2"],
+            subgraph_nodes=["-2"],
+            subgraph_connections=[],
+        )
+        result = collapse_structure(structure, [ann], {"pruned"})
+        ids = _node_ids(result)
+        assert "fn_pruned" in ids
+        assert "-2" not in ids, "orphan passthrough node left beside the fn node"
+        assert not _has_cycle(result)
+
+    def test_compositional_parent_keeps_output(self):
+        """Parent whose region reaches the output (exit derived) must keep 0."""
+        structure = _compositional_structure()
+        child1, child2, parent = _compositional_annotations()
+        # Make the parent's region terminate AT the output: exit is the output.
+        parent.entry_nodes = ["A", "B"]
+        parent.exit_nodes = ["0"]
+        result = collapse_structure(
+            structure, [child1, child2, parent], {"child1", "child2", "parent"}
+        )
+        ids = _node_ids(result)
+        assert "0" in ids, "output node absorbed/deleted by compositional collapse"
+        # The output must have an incoming edge from the collapsed function node.
+        incoming_to_out = [c for c in result.connections if c.to_node == "0"]
+        assert incoming_to_out, "output node left with no incoming connection"
+        assert not _has_cycle(result)
