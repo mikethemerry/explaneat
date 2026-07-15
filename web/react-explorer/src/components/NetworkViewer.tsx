@@ -543,9 +543,27 @@ function convertModelToFlow(
     }
   }
 
+  // A collapsed multi-output function node can feed the SAME target with more
+  // than one connection (one per output column, distinguished by output_index),
+  // e.g. fn_parent -> output for each child. Keying edges purely on
+  // `${from}->${to}` collides for these, which breaks ReactFlow reconciliation
+  // (duplicate React keys) and leaves stale edges in the DOM. Fold output_index
+  // into the id, and defensively disambiguate any remaining exact duplicates.
+  const edgeIdCounts = new Map<string, number>();
+  const makeEdgeId = (conn: ApiConnection): string => {
+    let base = `${conn.from}->${conn.to}`;
+    if (conn.output_index !== null && conn.output_index !== undefined) {
+      base += `#${conn.output_index}`;
+    }
+    const seen = edgeIdCounts.get(base) ?? 0;
+    edgeIdCounts.set(base, seen + 1);
+    return seen === 0 ? base : `${base}~${seen}`;
+  };
+
   const edges: Edge[] = model.connections.map((conn) => {
     const isPositive = conn.weight >= 0;
     const strokeWidth = Math.min(1 + Math.abs(conn.weight) * 2, 6);
+    const edgeId = makeEdgeId(conn);
 
     logDebug(`Creating edge ${conn.from} -> ${conn.to}`, {
       weight: conn.weight,
@@ -557,7 +575,7 @@ function convertModelToFlow(
     if (!conn.enabled) {
       // Disabled connection: muted gray, dashed, reduced opacity
       return {
-        id: `${conn.from}->${conn.to}`,
+        id: edgeId,
         source: conn.from,
         target: conn.to,
         type: "default",
@@ -608,7 +626,7 @@ function convertModelToFlow(
     }
 
     return {
-      id: `${conn.from}->${conn.to}`,
+      id: edgeId,
       source: conn.from,
       target: conn.to,
       type: "default",  // Bezier curves
