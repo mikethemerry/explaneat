@@ -1,0 +1,265 @@
+[
+  {
+    "annotation": "benign_profile_gate",
+    "records": [
+      {
+        "type": "analytical_formula",
+        "payload": {
+          "latex": "155_a = relu(0.824 x_sex:0 + 1.109 x_exang:0 - 0.509 x_fbs:0 + 0.088)",
+          "readout": "155_a -> 0, weight -0.960",
+          "interpretation": "benign-profile gate: activates for female patients with no exercise-induced angina; normal fasting glucose slightly attenuates. Lowers predicted risk."
+        },
+        "narrative": "Closed-form gate. A shallow, single-step gate encoding a recognised protective factor (female + no exertional angina).",
+        "timestamp": "2026-07-08T13:31:25.879814+00:00"
+      },
+      {
+        "type": "activation_profile",
+        "payload": {
+          "node": "155_a",
+          "verified": true,
+          "active_fraction": 0.7,
+          "hard_zero_fraction": 0.3
+        },
+        "narrative": "Activation profile verified on the test split: active for ~70% of patients, hard-zero for ~30%. A genuinely used gate, not a dead or saturated unit.",
+        "timestamp": "2026-07-08T13:31:28.279247+00:00"
+      },
+      {
+        "type": "ablation_study",
+        "payload": {
+          "delta": -0.028,
+          "split_id": "165cebbd-6609-46ca-867e-c09e17b2d6ec",
+          "verified": true,
+          "description": "Disable the 155_a->0 readout (undo annotation layer, disable_connection, recompute)",
+          "ablated_test_auc": 0.869,
+          "baseline_test_auc": 0.897
+        },
+        "narrative": "The single largest nonlinear contribution to generalisation: removing this gate costs 0.028 test AUC. A shallow protective-factor gate that genuinely generalises. Re-verified on the full test split.",
+        "timestamp": "2026-07-08T13:31:32.305253+00:00"
+      }
+    ],
+    "legacy_entries": []
+  },
+  {
+    "annotation": "benign_profile_gate_534path",
+    "records": [
+      {
+        "type": "analytical_formula",
+        "payload": {
+          "latex": "155_b = relu(0.824 x_sex:0 + 1.109 x_exang:0 - 0.509 x_fbs:0 + 0.088)",
+          "readout": "155_b -> 534, weight +0.818; net path effect through 534 = +0.818 * -0.884 = -0.72 per unit",
+          "identical_to": "155_a (benign_profile_gate)",
+          "interpretation": "second, bit-identical copy of the benign gate, routed into the 534 aggregation gate instead of the output - the benign signal is encoded twice",
+          "weights_bit_identical": true
+        },
+        "narrative": "155_b shares incoming weights and bias 0.088 with 155_a exactly (bit-identical). The benign protective signal is therefore redundantly encoded twice - once direct to output, once inside the 534 gate. Redundant double-encoding is a symptom of the same overfitting the 534 gate exhibits.",
+        "timestamp": "2026-07-08T13:31:43.703427+00:00"
+      }
+    ],
+    "legacy_entries": []
+  },
+  {
+    "annotation": "chol_threshold",
+    "records": [
+      {
+        "type": "analytical_formula",
+        "payload": {
+          "latex": "3040 = relu(1.052 x_chol - 0.864)",
+          "readout": "3040 -> 534, weight -0.677; net path effect +0.60 per unit (high cholesterol raises risk)",
+          "interpretation": "one-sided cholesterol threshold; since chol is z-normalised, turns on only above ~0.82 SD above the mean"
+        },
+        "narrative": "A sparse one-sided cholesterol threshold - the sub-unit that lets cholesterol act as a risk factor only above a level rather than linearly. But it sits inside the 534 gate, which ablation shows contributes nothing on test.",
+        "timestamp": "2026-07-08T13:31:47.105424+00:00"
+      },
+      {
+        "type": "activation_profile",
+        "payload": {
+          "node": "3040",
+          "verified": true,
+          "interpretation": "sparse threshold detector - fires only for the ~17.5% of patients well above average cholesterol",
+          "active_fraction": 0.175,
+          "hard_zero_fraction": 0.825
+        },
+        "narrative": "Activation profile verified: fires for only ~17.5% of patients, confirming a sparse one-sided threshold detector rather than a linear response.",
+        "timestamp": "2026-07-08T13:31:50.012462+00:00"
+      }
+    ],
+    "legacy_entries": []
+  },
+  {
+    "annotation": "restbp_chol_interaction",
+    "records": [
+      {
+        "type": "analytical_formula",
+        "payload": {
+          "latex": "3240 = relu(0.978 x_trestbps + 3.40); 2379 = relu(0.931*3240 - 0.529 x_chol - 0.754) = relu(0.911 x_trestbps - 0.529 x_chol + 2.41)",
+          "readout": "2379 -> 0, weight +0.364",
+          "interpretation": "near-linear resting-blood-pressure signal - 3240 is a linear pass-through (always-on), 2379 near-always-on; higher resting BP raises risk"
+        },
+        "narrative": "Despite the two-node structure this collapses to a near-linear resting-BP term: 3240 is always-on (a pass-through, not a gate) and 2379 is near-always-on. A shallow, generalising risk term.",
+        "timestamp": "2026-07-08T13:31:54.183929+00:00"
+      },
+      {
+        "type": "activation_profile",
+        "payload": {
+          "nodes": {
+            "2379": {
+              "active_fraction": "near-1.0"
+            },
+            "3240": {
+              "active_fraction": 1.0
+            }
+          },
+          "verified": true,
+          "interpretation": "3240 100% active confirms it is a linear pass-through, not a gate"
+        },
+        "narrative": "Activation profile verified: 3240 is 100% active - confirming it is a linear pass-through rather than a gate, which is why the whole pathway reduces to a near-linear resting-BP term.",
+        "timestamp": "2026-07-08T13:31:57.095442+00:00"
+      },
+      {
+        "type": "ablation_study",
+        "payload": {
+          "delta": -0.012,
+          "split_id": "165cebbd-6609-46ca-867e-c09e17b2d6ec",
+          "verified": true,
+          "description": "Disable the 2379->0 readout, recompute on test split",
+          "ablated_test_auc": 0.885,
+          "baseline_test_auc": 0.897
+        },
+        "narrative": "A modest but real generalising contribution: removing the resting-BP term costs 0.012 test AUC. Re-verified on the test split.",
+        "timestamp": "2026-07-08T13:31:59.454625+00:00"
+      }
+    ],
+    "legacy_entries": []
+  },
+  {
+    "annotation": "risk_aggregation_gate",
+    "records": [
+      {
+        "type": "analytical_formula",
+        "payload": {
+          "readout": "534 -> 0, weight -0.884",
+          "interpretation": "the model's most elaborate unit - a genuine ReLU gate composing vessel count, a cholesterol copy, the cholesterol threshold, and the redundant benign copy; when the benign signal is strong the whole block clips off together",
+          "latex_collapsed": "534 = relu(0.818 benign_profile_gate_534path(-2_d,-10_d,-16_b) - 0.677 chol_threshold(-9_d) - 1.155 x_ca - 0.592 x_chol - 0.761)",
+          "net_per_unit_output": {
+            "ca": 1.02,
+            "chol": 0.52,
+            "benign": -0.72,
+            "chol_threshold": 0.6
+          }
+        },
+        "narrative": "Composed closed form (the composition annotation resolves into its two children plus two direct inputs). On paper the model's most sophisticated structure - a rectified gate folding four risk signals together. Signs match cardiology.",
+        "timestamp": "2026-07-08T13:32:10.435126+00:00"
+      },
+      {
+        "type": "activation_profile",
+        "payload": {
+          "node": "534",
+          "verified": true,
+          "interpretation": "a genuine gate - silent for just over half of patients",
+          "active_fraction": 0.465,
+          "hard_zero_fraction": 0.535
+        },
+        "narrative": "Activation profile verified: hard-zero for 53.5% of patients, confirming 534 is a genuine gate rather than a pass-through.",
+        "timestamp": "2026-07-08T13:32:13.330828+00:00"
+      },
+      {
+        "type": "ablation_study",
+        "payload": {
+          "delta": {
+            "test_auc": 0.002,
+            "train_auc": -0.004
+          },
+          "ablated": {
+            "test_auc": 0.899,
+            "train_auc": 0.942
+          },
+          "baseline": {
+            "test_auc": 0.897,
+            "train_auc": 0.946
+          },
+          "split_id": "165cebbd-6609-46ca-867e-c09e17b2d6ec",
+          "verified": true,
+          "diagnosis": "train-only / overfit - the showpiece unit slightly HELPS test when removed while costing on train; fit to the 242 training cases alone",
+          "description": "Disable the 534->0 readout, recompute on both splits (undo annotation layer, disable_connection, recompute, restore)"
+        },
+        "narrative": "KEY RESULT. The model's most elaborate structure does no real work on held-out data: removing it changes test AUC by +0.002 (slightly helps) while costing on train. Structural elaboration is where the overfitting concentrates. Only holding structure against ablation reveals it - the gate looks like the centrepiece, yet measurement shows it is decorative while the plainest gates do the work. Re-verified on both splits.",
+        "timestamp": "2026-07-08T13:32:18.321536+00:00"
+      }
+    ],
+    "legacy_entries": []
+  },
+  {
+    "annotation": "heart_disease_risk_score",
+    "records": [
+      {
+        "type": "performance_metrics",
+        "payload": {
+          "test_n": 61,
+          "train_n": 242,
+          "coverage": {
+            "edges": 34,
+            "structural": 1.0,
+            "compositional": 1.0,
+            "candidate_nodes": 41
+          },
+          "split_id": "165cebbd-6609-46ca-867e-c09e17b2d6ec",
+          "test_acc": 0.803,
+          "test_auc": 0.897,
+          "train_acc": 0.864,
+          "train_auc": 0.946,
+          "operations": {
+            "node_splits": 8,
+            "function_changing": 0,
+            "identity_node_insertions": 0
+          },
+          "annotations": {
+            "leaf": 4,
+            "total": 6,
+            "composition": 2
+          },
+          "generalisation_gap_auc": 0.049
+        },
+        "narrative": "Whole-model performance and coverage. Complete structural and compositional coverage reached with 8 node splits and ZERO function-changing operations - the explained network is computationally identical to the trained one. Wider generalisation gap (0.049 AUC) on the small 61-row test split.",
+        "timestamp": "2026-07-08T13:32:23.139113+00:00"
+      },
+      {
+        "type": "ablation_study",
+        "payload": {
+          "ladder": [
+            {
+              "config": "full model",
+              "test_auc": 0.897
+            },
+            {
+              "note": "nonlinearity buys +0.037; train 0.928",
+              "config": "linear-core only (all 3 nonlinear readouts off)",
+              "test_auc": 0.86
+            },
+            {
+              "delta": -0.028,
+              "config": "remove benign gate (155_a)",
+              "test_auc": 0.869
+            },
+            {
+              "delta": -0.012,
+              "config": "remove restbp (2379)",
+              "test_auc": 0.885
+            },
+            {
+              "delta": 0.002,
+              "config": "remove 534 aggregation gate",
+              "test_auc": 0.899,
+              "train_delta": -0.004
+            }
+          ],
+          "split_id": "165cebbd-6609-46ca-867e-c09e17b2d6ec",
+          "conclusion": "the two simple gates (benign, restbp) carry all the generalising benefit; the elaborate 534 aggregation gate is train-only",
+          "description": "Full ablation ladder, test AUC, baseline 0.897 (re-verified on test split today)"
+        },
+        "narrative": "Full ablation ladder, re-verified end-to-end on the test split. Nonlinearity as a whole buys +0.037 test AUC, but the benefit comes almost entirely from the two shallow gates encoding recognised protective/risk factors. The elaborate composed gate contributes nothing on held-out data. A complete explanation doubles as a diagnosis of how much nonlinear structure earns its place.",
+        "timestamp": "2026-07-08T13:32:28.853071+00:00"
+      }
+    ],
+    "legacy_entries": []
+  }
+]

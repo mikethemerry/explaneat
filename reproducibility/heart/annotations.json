@@ -1,0 +1,163 @@
+[
+  {
+    "id": "ann_34",
+    "name": "benign_profile_gate",
+    "entry_nodes": [
+      "-2_c",
+      "-10_c",
+      "-16_a"
+    ],
+    "exit_nodes": [
+      "155_a"
+    ],
+    "subgraph_nodes": [
+      "-2_c",
+      "-10_c",
+      "-16_a",
+      "155_a"
+    ],
+    "hypothesis": "Node 155_a computes a 'benign profile' gate: 155_a = ReLU(0.824*sex:0 + 1.109*exang:0 - 0.509*fbs:0 + 0.088). Activates for female patients (sex:0=1) with no exertional angina (exang:0=1); normal fasting glucose slightly attenuates. Output-facing copy of hidden node 155. Activation profile: active 70% / hard-zero 30% (verified). Reads out to output with weight -0.960, lowering predicted risk. Ablation: removing this readout drops test AUC 0.897->0.869 (-0.028) - the single largest nonlinear contribution to generalisation.",
+    "parent": null,
+    "children": []
+  },
+  {
+    "id": "ann_35",
+    "name": "benign_profile_gate_534path",
+    "entry_nodes": [
+      "-2_d",
+      "-10_d",
+      "-16_b"
+    ],
+    "exit_nodes": [
+      "155_b"
+    ],
+    "subgraph_nodes": [
+      "-2_d",
+      "-10_d",
+      "-16_b",
+      "155_b"
+    ],
+    "hypothesis": "Node 155_b computes the SAME benign-profile gate as 155_a (identical incoming weights and bias 0.088); it is the second copy of hidden node 155, routed into node 534 instead of the output. The benign signal is therefore encoded twice - once directly to the output (155_a) and once inside the 534 gate (155_b). 155_b enters 534 with weight +0.818; net path effect (+0.818)*(-0.884) = -0.72 per unit, same risk-lowering direction as the direct copy.",
+    "parent": null,
+    "children": []
+  },
+  {
+    "id": "ann_36",
+    "name": "chol_threshold",
+    "entry_nodes": [
+      "-9_d"
+    ],
+    "exit_nodes": [
+      "3040"
+    ],
+    "subgraph_nodes": [
+      "-9_d",
+      "3040"
+    ],
+    "hypothesis": "Node 3040 = ReLU(1.052*chol - 0.864): a one-sided cholesterol threshold. Since cholesterol is z-normalised, this turns on only above ~0.82 SD above the mean. Activation profile: hard-zero 82.5% / active 17.5% (verified) - a sparse threshold detector. Feeds node 534 with -0.677; net path effect +0.60 per unit (high cholesterol raises predicted risk). This is the sub-unit that lets cholesterol act as a risk factor only above a level rather than linearly - but it sits inside the 534 gate, which the ablation shows contributes nothing on test.",
+    "parent": null,
+    "children": []
+  },
+  {
+    "id": "ann_37",
+    "name": "restbp_chol_interaction",
+    "entry_nodes": [
+      "-8",
+      "-9_c"
+    ],
+    "exit_nodes": [
+      "2379"
+    ],
+    "subgraph_nodes": [
+      "-8",
+      "-9_c",
+      "3240",
+      "2379"
+    ],
+    "hypothesis": "Subgraph {trestbps, chol_c, 3240, 2379}: a near-linear resting-blood-pressure signal. 3240 = ReLU(0.978*trestbps + 3.4) is always-on (100% active, verified) - a linear pass-through, not a gate. 2379 = ReLU(0.931*3240 - 0.529*chol_c - 0.754) simplifies to ReLU(0.911*trestbps - 0.529*chol_c + 2.41), near-always-on. Reads out to output with +0.364 (higher resting BP raises risk). Ablation: removing this readout drops test AUC 0.897->0.885 (-0.012) - a modest but real generalising contribution.",
+    "parent": null,
+    "children": []
+  },
+  {
+    "id": "ann_38",
+    "name": "risk_aggregation_gate",
+    "entry_nodes": [
+      "-22_b",
+      "-9_b"
+    ],
+    "exit_nodes": [
+      "534"
+    ],
+    "subgraph_nodes": [
+      "-22_b",
+      "-9_b",
+      "534"
+    ],
+    "hypothesis": "Node 534 = ReLU(0.818*[benign_profile_gate_534path] - 0.677*[chol_threshold] - 1.155*ca - 0.592*chol - 0.761): the model's most elaborate unit, a genuine ReLU gate (hard-zero 53.5% verified) composing four risk signals - vessel count (ca), a cholesterol copy, the cholesterol threshold (3040), and the redundant benign-profile copy (155_b). Net per-unit output effects: ca +1.02, chol +0.52, chol_threshold +0.60, benign -0.72; when the benign signal is strong the whole block is clipped off together. KEY ABLATION RESULT: disabling 534's readout changes test AUC only 0.897->0.899 (+0.002) while train drops 0.946->0.942 - i.e. this showpiece unit is essentially train-only and does not generalise. Signs match cardiology but the structure is fit to the 242 training cases.",
+    "parent": null,
+    "children": []
+  },
+  {
+    "id": "ann_39",
+    "name": "heart_disease_risk_score",
+    "entry_nodes": [
+      "-1",
+      "-4",
+      "-5",
+      "-7",
+      "-11",
+      "-13",
+      "-15",
+      "-18",
+      "-19",
+      "-20",
+      "-24",
+      "-25",
+      "-26",
+      "-22_a",
+      "-9_a",
+      "-2_a",
+      "-10_a",
+      "-3",
+      "-6",
+      "-12",
+      "-14",
+      "-17",
+      "-21",
+      "-23"
+    ],
+    "exit_nodes": [
+      "0"
+    ],
+    "subgraph_nodes": [
+      "-1",
+      "-4",
+      "-5",
+      "-7",
+      "-11",
+      "-13",
+      "-15",
+      "-18",
+      "-19",
+      "-20",
+      "-24",
+      "-25",
+      "-26",
+      "-22_a",
+      "-9_a",
+      "-2_a",
+      "-10_a",
+      "-3",
+      "-6",
+      "-12",
+      "-14",
+      "-17",
+      "-21",
+      "-23",
+      "0"
+    ],
+    "hypothesis": "Root: y0 = ReLU(bias 0.318 + linear core + 3 nonlinear pathways). (1) DIRECT LINEAR CORE of 17 inputs to the output - ca (largest, +2.03), cp:4 (+1.21), slope:2, chol, cp:2, oldpeak push risk up; sex:0 (-0.71), slope:1, thalach push down. By SHAP the top drivers are ca, cp:4, sex:0, slope:2, chol. (2) benign_profile_gate (155_a, -0.96) lowers risk for females without exertional angina. (3) restbp_chol_interaction (2379, +0.364). (4) risk_aggregation_gate (534, -0.884), the elaborate composed unit. 7 features unused. PERFORMANCE: train AUC 0.946 / test 0.897. ABLATION LADDER (test AUC, baseline 0.897): linear-core only 0.860 (nonlinearity buys +0.037); remove benign gate -0.028; remove restbp -0.012; remove 534 gate +0.002. So the two simple gates (benign, restbp) carry all the generalising benefit; the elaborate 534 aggregation gate is train-only. The benign signal is redundantly encoded twice (155_a direct + 155_b inside 534).",
+    "parent": null,
+    "children": []
+  }
+]

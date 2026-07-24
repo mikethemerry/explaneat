@@ -1,0 +1,126 @@
+[
+  {
+    "id": "ann_1",
+    "name": "inert_unit_a23",
+    "entry_nodes": [
+      "-6"
+    ],
+    "exit_nodes": [
+      "673"
+    ],
+    "subgraph_nodes": [
+      "-6",
+      "673"
+    ],
+    "hypothesis": "An inert unit. The node computes ReLU(0.443 * z(a2:3) - 1.118), and z(a2:3) takes only two values (approximately -0.72 and +1.39), giving maximum pre-activation approximately -0.50 < 0. The unit therefore outputs exactly zero on every input in the domain, and its -2.87 readout to the output contributes nothing. Structurally present, functionally absent: unearned structure that survived selection because nothing priced it.",
+    "parent": null,
+    "children": []
+  },
+  {
+    "id": "ann_8",
+    "name": "count_gate_atleast3",
+    "entry_nodes": [
+      "-1",
+      "-4_a",
+      "-7_a",
+      "-8_a",
+      "-9_a",
+      "-12",
+      "-16_a",
+      "-17_a"
+    ],
+    "exit_nodes": [
+      "21"
+    ],
+    "subgraph_nodes": [
+      "-1",
+      "-4_a",
+      "-7_a",
+      "-8_a",
+      "-9_a",
+      "-12",
+      "-16_a",
+      "-17_a",
+      "21"
+    ],
+    "hypothesis": "An at-least-three-of-six detector. The unit aggregates the six MONK-2 rule indicators (attribute takes its first value): a1:1, a2:1, a4:1, a5:1 enter directly with positive weights; the binary attributes a3 and a6 enter via their complements a3:2, a6:2 with strongly negative weights, which is the same signal inverted. In indicator terms the pre-activation is a near-uniform weighted count (per-indicator coefficients 4.49 to 7.07) minus 14.86: the largest possible two-indicator sum leaves it at -1.82 (off), the smallest possible three-indicator sum reaches +1.26 (on). The unit therefore fires if and only if at least three of the six rule indicators are active, over all 64 indicator patterns.",
+    "parent": null,
+    "children": []
+  },
+  {
+    "id": "ann_9",
+    "name": "linear_count_ramp",
+    "entry_nodes": [
+      "-2",
+      "-3",
+      "-4_b",
+      "-7_b",
+      "-8_b",
+      "-9_b",
+      "-10",
+      "-13",
+      "-14",
+      "-15",
+      "-16_b",
+      "-17_b"
+    ],
+    "exit_nodes": [
+      "id_linear"
+    ],
+    "subgraph_nodes": [
+      "-2",
+      "-3",
+      "-4_b",
+      "-7_b",
+      "-8_b",
+      "-9_b",
+      "-10",
+      "-13",
+      "-14",
+      "-15",
+      "-16_b",
+      "-17_b",
+      "id_linear"
+    ],
+    "hypothesis": "A linear count ramp. Evaluated per attribute, the direct connections contribute a positive amount when the attribute takes its first value (a1 +2.56, a2 +2.73, a3 +1.93, a4 +1.69, a5 +2.63, a6 +1.91) and a negative amount otherwise (between -0.02 and -2.03, with small within-attribute variation, e.g. a1=2 vs a1=3 differ by 0.18). The sum therefore rises approximately linearly with the number of active rule indicators; together with the output bias, it crosses zero between one and two active indicators, forming the lower edge of the model's response peak.",
+    "parent": null,
+    "children": []
+  },
+  {
+    "id": "ann_10",
+    "name": "exactly_two_of_six",
+    "entry_nodes": [
+      "21",
+      "id_linear",
+      "673"
+    ],
+    "exit_nodes": [
+      "0"
+    ],
+    "subgraph_nodes": [
+      "0"
+    ],
+    "hypothesis": "The output composes the three children additively under a final ReLU: score = ReLU(2.716 + Ramp - 7.339*Gate - 2.874*Inert), with Inert identically zero. The ramp crosses the decision boundary between one and two active rule indicators, forming the lower edge of a response peak; when a third indicator activates, the gate fires and its -7.34-weighted readout overwhelms the ramp's rise, forming the upper edge. The model therefore scores positive exactly when two of the six indicators are active: a peak at count two realised by one linear ramp plus a single at-least-three gate under the output threshold - more parsimonious than the textbook two-gate bump construction. Extensionally equal to the MONK-2 rule (exactly two of {a1=1..a6=1}) on all 432 possible inputs.",
+    "parent": null,
+    "children": []
+  },
+  {
+    "id": "ann_11",
+    "name": "pruned_inputs",
+    "entry_nodes": [
+      "-5",
+      "-11"
+    ],
+    "exit_nodes": [
+      "-5",
+      "-11"
+    ],
+    "subgraph_nodes": [
+      "-5",
+      "-11"
+    ],
+    "hypothesis": "Feature exclusion by elimination. Inputs a2:2 and a4:3 carry no enabled connections: deletion mutations severed them and selection never restored them. The model provably does not consult these features - their values cannot influence any node. For the MONK-2 rule both are redundant given their siblings: a2:2 is implied by a2:1 and a2:3 under one-hot encoding, and a4:3 by a4:1 and a4:2.",
+    "parent": null,
+    "children": []
+  }
+]

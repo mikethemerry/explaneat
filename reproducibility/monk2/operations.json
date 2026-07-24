@@ -1,0 +1,953 @@
+[
+  {
+    "seq": 0,
+    "type": "add_identity_node",
+    "notes": "Intercept the 12 direct input->output connections so the linear count-ramp has a pure exit; node 0 remains the composition junction (receives ramp identity + gate 21 + inert 673). AAAI-27 Experiment 3.",
+    "params": {
+      "connections": [
+        [
+          "-2",
+          "0"
+        ],
+        [
+          "-3",
+          "0"
+        ],
+        [
+          "-4",
+          "0"
+        ],
+        [
+          "-7",
+          "0"
+        ],
+        [
+          "-8",
+          "0"
+        ],
+        [
+          "-9",
+          "0"
+        ],
+        [
+          "-10",
+          "0"
+        ],
+        [
+          "-13",
+          "0"
+        ],
+        [
+          "-14",
+          "0"
+        ],
+        [
+          "-15",
+          "0"
+        ],
+        [
+          "-16",
+          "0"
+        ],
+        [
+          "-17",
+          "0"
+        ]
+      ],
+      "new_node_id": "id_linear",
+      "target_node": "0"
+    },
+    "result": {
+      "created_nodes": [
+        "id_linear"
+      ],
+      "created_connections": [
+        [
+          "-2",
+          "id_linear"
+        ],
+        [
+          "-3",
+          "id_linear"
+        ],
+        [
+          "-4",
+          "id_linear"
+        ],
+        [
+          "-7",
+          "id_linear"
+        ],
+        [
+          "-8",
+          "id_linear"
+        ],
+        [
+          "-9",
+          "id_linear"
+        ],
+        [
+          "-10",
+          "id_linear"
+        ],
+        [
+          "-13",
+          "id_linear"
+        ],
+        [
+          "-14",
+          "id_linear"
+        ],
+        [
+          "-15",
+          "id_linear"
+        ],
+        [
+          "-16",
+          "id_linear"
+        ],
+        [
+          "-17",
+          "id_linear"
+        ],
+        [
+          "id_linear",
+          "0"
+        ]
+      ],
+      "removed_connections": [
+        [
+          "-2",
+          "0"
+        ],
+        [
+          "-3",
+          "0"
+        ],
+        [
+          "-4",
+          "0"
+        ],
+        [
+          "-7",
+          "0"
+        ],
+        [
+          "-8",
+          "0"
+        ],
+        [
+          "-9",
+          "0"
+        ],
+        [
+          "-10",
+          "0"
+        ],
+        [
+          "-13",
+          "0"
+        ],
+        [
+          "-14",
+          "0"
+        ],
+        [
+          "-15",
+          "0"
+        ],
+        [
+          "-16",
+          "0"
+        ],
+        [
+          "-17",
+          "0"
+        ]
+      ]
+    },
+    "created_at": "2026-07-11T10:17:42.474146"
+  },
+  {
+    "seq": 1,
+    "type": "annotate",
+    "notes": "Leaf C: the dead unit. AAAI-27 Experiment 3.",
+    "params": {
+      "name": "inert_unit_a23",
+      "evidence": {
+        "records": [
+          {
+            "type": "analytical_formula",
+            "payload": {
+              "domain": {
+                "z(a2:3=0)": -0.721,
+                "z(a2:3=1)": 1.387
+              },
+              "output": 0.0,
+              "function": "ReLU(0.4432 * z(a2:3) - 1.1176)",
+              "domain_size": 2,
+              "verification": "exhaustive",
+              "preactivation": {
+                "at_z0": -1.4372,
+                "at_z1": -0.5029
+              },
+              "readout_weight": -2.8735,
+              "contribution_to_output": 0.0
+            },
+            "narrative": "Exhaustive analytical verification over the unit's entire (binary) domain: pre-activation is negative at both attainable input values, so the unit outputs exactly zero everywhere and its readout contributes nothing. Unearned structure that survived selection in a noiseless task because nothing priced it - the clean null instance of the unearned-structure diagnosis pattern.",
+            "timestamp": "2026-07-13T08:18:13.127773+00:00"
+          }
+        ]
+      },
+      "exit_nodes": [
+        "673"
+      ],
+      "hypothesis": "An inert unit. The node computes ReLU(0.443 * z(a2:3) - 1.118), and z(a2:3) takes only two values (approximately -0.72 and +1.39), giving maximum pre-activation approximately -0.50 < 0. The unit therefore outputs exactly zero on every input in the domain, and its -2.87 readout to the output contributes nothing. Structurally present, functionally absent: unearned structure that survived selection because nothing priced it.",
+      "entry_nodes": [
+        "-6"
+      ],
+      "subgraph_nodes": [
+        "-6",
+        "673"
+      ],
+      "subgraph_connections": [
+        [
+          "-6",
+          "673"
+        ]
+      ]
+    },
+    "result": {
+      "annotation_index": 0
+    },
+    "created_at": "2026-07-13T08:14:47.159742"
+  },
+  {
+    "seq": 2,
+    "type": "split_node",
+    "notes": "Split shared input a2:1 into per-consumer copies (gate / ramp). AAAI-27 Exp 3.",
+    "params": {
+      "node_id": "-4",
+      "suffixes": [
+        "a",
+        "b"
+      ]
+    },
+    "result": {
+      "created_nodes": [
+        "-4_a",
+        "-4_b"
+      ],
+      "removed_nodes": [
+        "-4"
+      ]
+    },
+    "created_at": "2026-07-13T08:15:02.005446"
+  },
+  {
+    "seq": 3,
+    "type": "split_node",
+    "notes": "Split shared input a3:1 (gate / ramp). AAAI-27 Exp 3.",
+    "params": {
+      "node_id": "-7",
+      "suffixes": [
+        "a",
+        "b"
+      ]
+    },
+    "result": {
+      "created_nodes": [
+        "-7_a",
+        "-7_b"
+      ],
+      "removed_nodes": [
+        "-7"
+      ]
+    },
+    "created_at": "2026-07-13T08:15:11.174572"
+  },
+  {
+    "seq": 4,
+    "type": "split_node",
+    "notes": "Split shared input a3:2 (gate / ramp). AAAI-27 Exp 3.",
+    "params": {
+      "node_id": "-8",
+      "suffixes": [
+        "a",
+        "b"
+      ]
+    },
+    "result": {
+      "created_nodes": [
+        "-8_a",
+        "-8_b"
+      ],
+      "removed_nodes": [
+        "-8"
+      ]
+    },
+    "created_at": "2026-07-13T08:15:13.168383"
+  },
+  {
+    "seq": 5,
+    "type": "split_node",
+    "notes": "Split shared input a4:1 (gate / ramp). AAAI-27 Exp 3.",
+    "params": {
+      "node_id": "-9",
+      "suffixes": [
+        "a",
+        "b"
+      ]
+    },
+    "result": {
+      "created_nodes": [
+        "-9_a",
+        "-9_b"
+      ],
+      "removed_nodes": [
+        "-9"
+      ]
+    },
+    "created_at": "2026-07-13T08:15:14.475282"
+  },
+  {
+    "seq": 6,
+    "type": "split_node",
+    "notes": "Split shared input a6:1 (gate / ramp). AAAI-27 Exp 3.",
+    "params": {
+      "node_id": "-16",
+      "suffixes": [
+        "a",
+        "b"
+      ]
+    },
+    "result": {
+      "created_nodes": [
+        "-16_a",
+        "-16_b"
+      ],
+      "removed_nodes": [
+        "-16"
+      ]
+    },
+    "created_at": "2026-07-13T08:15:16.153872"
+  },
+  {
+    "seq": 7,
+    "type": "split_node",
+    "notes": "Split shared input a6:2 (gate / ramp). AAAI-27 Exp 3.",
+    "params": {
+      "node_id": "-17",
+      "suffixes": [
+        "a",
+        "b"
+      ]
+    },
+    "result": {
+      "created_nodes": [
+        "-17_a",
+        "-17_b"
+      ],
+      "removed_nodes": [
+        "-17"
+      ]
+    },
+    "created_at": "2026-07-13T08:15:16.959925"
+  },
+  {
+    "seq": 8,
+    "type": "annotate",
+    "notes": "Leaf A: the gate. AAAI-27 Experiment 3.",
+    "params": {
+      "name": "count_gate_atleast3",
+      "evidence": {
+        "records": [
+          {
+            "type": "analytical_formula",
+            "payload": {
+              "note": "Pre-activation = sum(alpha_j * I_j) + C over the six rule indicators; unit inputs depend on no other variables, so the 64 indicator patterns are the entire domain. Largest two-indicator sum (a3+a5) reaches -1.82 (ReLU off); smallest three-indicator sum (a1+a4+a6) reaches +1.26 (on). Fires iff count >= 3, with margin >= 1.26 on and >= 1.82 off.",
+              "constant": -14.8613,
+              "domain_size": 64,
+              "verification": "exhaustive",
+              "max_preactivation_k2": -1.8156,
+              "min_preactivation_k3": 1.2568,
+              "indicator_coefficients": {
+                "a1=1": 4.4934,
+                "a2=1": 5.9403,
+                "a3=1": 7.0728,
+                "a4=1": 5.7485,
+                "a5=1": 5.9729,
+                "a6=1": 5.8762
+              }
+            },
+            "narrative": "Exhaustive analytical verification: the gate is exactly an at-least-three-of-six detector over the MONK-2 rule indicators. Binary attributes a3, a6 enter via complements (negative weight on the complement = positive weight on the indicator). Coefficients derived from connection weights times the z-scaling deltas of the one-hot inputs; verified over all 64 attainable indicator patterns.",
+            "timestamp": "2026-07-13T08:18:01.122732+00:00"
+          }
+        ]
+      },
+      "exit_nodes": [
+        "21"
+      ],
+      "hypothesis": "An at-least-three-of-six detector. The unit aggregates the six MONK-2 rule indicators (attribute takes its first value): a1:1, a2:1, a4:1, a5:1 enter directly with positive weights; the binary attributes a3 and a6 enter via their complements a3:2, a6:2 with strongly negative weights, which is the same signal inverted. In indicator terms the pre-activation is a near-uniform weighted count (per-indicator coefficients 4.49 to 7.07) minus 14.86: the largest possible two-indicator sum leaves it at -1.82 (off), the smallest possible three-indicator sum reaches +1.26 (on). The unit therefore fires if and only if at least three of the six rule indicators are active, over all 64 indicator patterns.",
+      "entry_nodes": [
+        "-1",
+        "-4_a",
+        "-7_a",
+        "-8_a",
+        "-9_a",
+        "-12",
+        "-16_a",
+        "-17_a"
+      ],
+      "subgraph_nodes": [
+        "-1",
+        "-4_a",
+        "-7_a",
+        "-8_a",
+        "-9_a",
+        "-12",
+        "-16_a",
+        "-17_a",
+        "21"
+      ],
+      "subgraph_connections": [
+        [
+          "-1",
+          "21"
+        ],
+        [
+          "-4_a",
+          "21"
+        ],
+        [
+          "-7_a",
+          "21"
+        ],
+        [
+          "-8_a",
+          "21"
+        ],
+        [
+          "-9_a",
+          "21"
+        ],
+        [
+          "-12",
+          "21"
+        ],
+        [
+          "-16_a",
+          "21"
+        ],
+        [
+          "-17_a",
+          "21"
+        ]
+      ]
+    },
+    "result": {
+      "annotation_index": 1
+    },
+    "created_at": "2026-07-13T08:15:46.758104"
+  },
+  {
+    "seq": 9,
+    "type": "annotate",
+    "notes": "Leaf B: the ramp. AAAI-27 Experiment 3.",
+    "params": {
+      "name": "linear_count_ramp",
+      "evidence": {
+        "records": [
+          {
+            "type": "analytical_formula",
+            "payload": {
+              "note": "Sum of direct-connection contributions evaluated per attribute value over z-scaled one-hots. Rises with the number of active rule indicators; with the output bias, the minimum over all count-2 configurations is positive (+0.42) and the maximum over all count-0/1 configurations is negative (-0.65), before the gate is considered. Values computed from full-dataset scaler statistics; exact per-configuration values verified in the extensional check on the root annotation.",
+              "domain_size": 432,
+              "verification": "exhaustive",
+              "per_attribute_contribution": {
+                "a1": {
+                  "1": 2.5565,
+                  "2": -1.3141,
+                  "3": -1.4904
+                },
+                "a2": {
+                  "1": 2.7311,
+                  "2_or_3": -1.3834
+                },
+                "a3": {
+                  "1": 1.9301,
+                  "2": -2.0335
+                },
+                "a4": {
+                  "1": 1.6858,
+                  "2": -1.3739,
+                  "3": -0.0165
+                },
+                "a5": {
+                  "1": 2.629,
+                  "2": -0.7207,
+                  "3": -0.9645,
+                  "4": -0.9772
+                },
+                "a6": {
+                  "1": 1.9058,
+                  "2": -2.0079
+                },
+                "output_bias": 2.7159
+              },
+              "best_case_k1_output_preactivation": -0.65,
+              "worst_case_k2_output_preactivation": 0.42
+            },
+            "narrative": "Analytical verification: the direct connections form a count ramp. Every attribute contributes positively at its first value and negatively otherwise; the ramp plus output bias crosses zero between one and two active indicators, supplying the lower edge of the response peak. Within-attribute variation (e.g. a4=3 near zero) never reorders the count bands.",
+            "timestamp": "2026-07-13T08:18:12.009410+00:00"
+          }
+        ]
+      },
+      "exit_nodes": [
+        "id_linear"
+      ],
+      "hypothesis": "A linear count ramp. Evaluated per attribute, the direct connections contribute a positive amount when the attribute takes its first value (a1 +2.56, a2 +2.73, a3 +1.93, a4 +1.69, a5 +2.63, a6 +1.91) and a negative amount otherwise (between -0.02 and -2.03, with small within-attribute variation, e.g. a1=2 vs a1=3 differ by 0.18). The sum therefore rises approximately linearly with the number of active rule indicators; together with the output bias, it crosses zero between one and two active indicators, forming the lower edge of the model's response peak.",
+      "entry_nodes": [
+        "-2",
+        "-3",
+        "-4_b",
+        "-7_b",
+        "-8_b",
+        "-9_b",
+        "-10",
+        "-13",
+        "-14",
+        "-15",
+        "-16_b",
+        "-17_b"
+      ],
+      "subgraph_nodes": [
+        "-2",
+        "-3",
+        "-4_b",
+        "-7_b",
+        "-8_b",
+        "-9_b",
+        "-10",
+        "-13",
+        "-14",
+        "-15",
+        "-16_b",
+        "-17_b",
+        "id_linear"
+      ],
+      "subgraph_connections": [
+        [
+          "-2",
+          "id_linear"
+        ],
+        [
+          "-3",
+          "id_linear"
+        ],
+        [
+          "-4_b",
+          "id_linear"
+        ],
+        [
+          "-7_b",
+          "id_linear"
+        ],
+        [
+          "-8_b",
+          "id_linear"
+        ],
+        [
+          "-9_b",
+          "id_linear"
+        ],
+        [
+          "-10",
+          "id_linear"
+        ],
+        [
+          "-13",
+          "id_linear"
+        ],
+        [
+          "-14",
+          "id_linear"
+        ],
+        [
+          "-15",
+          "id_linear"
+        ],
+        [
+          "-16_b",
+          "id_linear"
+        ],
+        [
+          "-17_b",
+          "id_linear"
+        ]
+      ]
+    },
+    "result": {
+      "annotation_index": 2
+    },
+    "created_at": "2026-07-13T08:15:52.379273"
+  },
+  {
+    "seq": 10,
+    "type": "annotate",
+    "notes": "Root composition: the bump. Junction node 0; children are the gate, the ramp, and the inert unit. AAAI-27 Experiment 3.",
+    "params": {
+      "name": "exactly_two_of_six",
+      "evidence": {
+        "records": [
+          {
+            "type": "performance_metrics",
+            "payload": {
+              "note": "Evaluated on the complete input space (all 432 attribute configurations; train and test partitions both perfect). Predictions match the MONK-2 generating rule (exactly two of six attributes at first value) on every input: the composed network is extensionally equal to the rule. Computed on the post-refactoring model state (1 identity insertion, 6 node splits), confirming function preservation. Mechanism: ramp forms the lower edge of the peak at count 2 (min positive-class pre-activation +0.42), the -7.34-weighted at-least-three gate forms the upper edge (max count-3 output pre-activation -2.03), and the inert unit contributes zero.",
+              "auc_roc": 1.0,
+              "accuracy": 1.0,
+              "n_samples": 432,
+              "verification": "exhaustive_extensional"
+            },
+            "narrative": "Extensional equality with the generating rule, verified over the entire input space. The composition realises a response peak at exactly two active indicators using one linear ramp and a single gate under the output threshold.",
+            "timestamp": "2026-07-13T08:18:29.084677+00:00"
+          }
+        ]
+      },
+      "exit_nodes": [
+        "0"
+      ],
+      "hypothesis": "The output composes the three children additively under a final ReLU: score = ReLU(2.716 + Ramp - 7.339*Gate - 2.874*Inert), with Inert identically zero. The ramp crosses the decision boundary between one and two active rule indicators, forming the lower edge of a response peak; when a third indicator activates, the gate fires and its -7.34-weighted readout overwhelms the ramp's rise, forming the upper edge. The model therefore scores positive exactly when two of the six indicators are active: a peak at count two realised by one linear ramp plus a single at-least-three gate under the output threshold - more parsimonious than the textbook two-gate bump construction. Extensionally equal to the MONK-2 rule (exactly two of {a1=1..a6=1}) on all 432 possible inputs.",
+      "entry_nodes": [
+        "21",
+        "id_linear",
+        "673"
+      ],
+      "subgraph_nodes": [
+        "0"
+      ],
+      "child_annotation_ids": [
+        "count_gate_atleast3",
+        "linear_count_ramp",
+        "inert_unit_a23"
+      ],
+      "subgraph_connections": [
+        [
+          "21",
+          "0"
+        ],
+        [
+          "id_linear",
+          "0"
+        ],
+        [
+          "673",
+          "0"
+        ]
+      ]
+    },
+    "result": {
+      "annotation_index": 3
+    },
+    "created_at": "2026-07-13T08:16:51.500826"
+  },
+  {
+    "seq": 11,
+    "type": "annotate",
+    "notes": "Leaf D: pruned inputs (coverage completeness, mirrors the Adult accounting). AAAI-27 Experiment 3.",
+    "params": {
+      "name": "pruned_inputs",
+      "exit_nodes": [
+        "-5",
+        "-11"
+      ],
+      "hypothesis": "Feature exclusion by elimination. Inputs a2:2 and a4:3 carry no enabled connections: deletion mutations severed them and selection never restored them. The model provably does not consult these features - their values cannot influence any node. For the MONK-2 rule both are redundant given their siblings: a2:2 is implied by a2:1 and a2:3 under one-hot encoding, and a4:3 by a4:1 and a4:2.",
+      "entry_nodes": [
+        "-5",
+        "-11"
+      ],
+      "subgraph_nodes": [
+        "-5",
+        "-11"
+      ],
+      "subgraph_connections": []
+    },
+    "result": {
+      "annotation_index": 4
+    },
+    "created_at": "2026-07-13T08:17:33.349497"
+  },
+  {
+    "seq": 12,
+    "type": "rename_node",
+    "params": {
+      "node_id": "-1",
+      "display_name": "a1:1"
+    },
+    "result": {
+      "node_id": "-1",
+      "display_name": "a1:1"
+    },
+    "created_at": "2026-07-20T12:25:42.532157"
+  },
+  {
+    "seq": 13,
+    "type": "rename_node",
+    "params": {
+      "node_id": "-2",
+      "display_name": "a1:2"
+    },
+    "result": {
+      "node_id": "-2",
+      "display_name": "a1:2"
+    },
+    "created_at": "2026-07-20T12:25:42.596505"
+  },
+  {
+    "seq": 14,
+    "type": "rename_node",
+    "params": {
+      "node_id": "-3",
+      "display_name": "a1:3"
+    },
+    "result": {
+      "node_id": "-3",
+      "display_name": "a1:3"
+    },
+    "created_at": "2026-07-20T12:25:42.640107"
+  },
+  {
+    "seq": 15,
+    "type": "rename_node",
+    "params": {
+      "node_id": "-4_a",
+      "display_name": "a2:1_a"
+    },
+    "result": {
+      "node_id": "-4_a",
+      "display_name": "a2:1_a"
+    },
+    "created_at": "2026-07-20T12:25:42.680362"
+  },
+  {
+    "seq": 16,
+    "type": "rename_node",
+    "params": {
+      "node_id": "-4_b",
+      "display_name": "a2:1_b"
+    },
+    "result": {
+      "node_id": "-4_b",
+      "display_name": "a2:1_b"
+    },
+    "created_at": "2026-07-20T12:25:42.713873"
+  },
+  {
+    "seq": 17,
+    "type": "rename_node",
+    "params": {
+      "node_id": "-6",
+      "display_name": "a2:3"
+    },
+    "result": {
+      "node_id": "-6",
+      "display_name": "a2:3"
+    },
+    "created_at": "2026-07-20T12:25:42.754792"
+  },
+  {
+    "seq": 18,
+    "type": "rename_node",
+    "params": {
+      "node_id": "-7_a",
+      "display_name": "a3:1_a"
+    },
+    "result": {
+      "node_id": "-7_a",
+      "display_name": "a3:1_a"
+    },
+    "created_at": "2026-07-20T12:25:42.801456"
+  },
+  {
+    "seq": 19,
+    "type": "rename_node",
+    "params": {
+      "node_id": "-7_b",
+      "display_name": "a3:1_b"
+    },
+    "result": {
+      "node_id": "-7_b",
+      "display_name": "a3:1_b"
+    },
+    "created_at": "2026-07-20T12:25:42.853461"
+  },
+  {
+    "seq": 20,
+    "type": "rename_node",
+    "params": {
+      "node_id": "-8_a",
+      "display_name": "a3:2_a"
+    },
+    "result": {
+      "node_id": "-8_a",
+      "display_name": "a3:2_a"
+    },
+    "created_at": "2026-07-20T12:25:42.913449"
+  },
+  {
+    "seq": 21,
+    "type": "rename_node",
+    "params": {
+      "node_id": "-8_b",
+      "display_name": "a3:2_b"
+    },
+    "result": {
+      "node_id": "-8_b",
+      "display_name": "a3:2_b"
+    },
+    "created_at": "2026-07-20T12:25:42.974019"
+  },
+  {
+    "seq": 22,
+    "type": "rename_node",
+    "params": {
+      "node_id": "-9_a",
+      "display_name": "a4:1_a"
+    },
+    "result": {
+      "node_id": "-9_a",
+      "display_name": "a4:1_a"
+    },
+    "created_at": "2026-07-20T12:25:43.013807"
+  },
+  {
+    "seq": 23,
+    "type": "rename_node",
+    "params": {
+      "node_id": "-9_b",
+      "display_name": "a4:1_b"
+    },
+    "result": {
+      "node_id": "-9_b",
+      "display_name": "a4:1_b"
+    },
+    "created_at": "2026-07-20T12:25:43.053352"
+  },
+  {
+    "seq": 24,
+    "type": "rename_node",
+    "params": {
+      "node_id": "-10",
+      "display_name": "a4:2"
+    },
+    "result": {
+      "node_id": "-10",
+      "display_name": "a4:2"
+    },
+    "created_at": "2026-07-20T12:25:43.087629"
+  },
+  {
+    "seq": 25,
+    "type": "rename_node",
+    "params": {
+      "node_id": "-12",
+      "display_name": "a5:1"
+    },
+    "result": {
+      "node_id": "-12",
+      "display_name": "a5:1"
+    },
+    "created_at": "2026-07-20T12:25:43.118142"
+  },
+  {
+    "seq": 26,
+    "type": "rename_node",
+    "params": {
+      "node_id": "-13",
+      "display_name": "a5:2"
+    },
+    "result": {
+      "node_id": "-13",
+      "display_name": "a5:2"
+    },
+    "created_at": "2026-07-20T12:25:43.148079"
+  },
+  {
+    "seq": 27,
+    "type": "rename_node",
+    "params": {
+      "node_id": "-14",
+      "display_name": "a5:3"
+    },
+    "result": {
+      "node_id": "-14",
+      "display_name": "a5:3"
+    },
+    "created_at": "2026-07-20T12:25:43.185685"
+  },
+  {
+    "seq": 28,
+    "type": "rename_node",
+    "params": {
+      "node_id": "-15",
+      "display_name": "a5:4"
+    },
+    "result": {
+      "node_id": "-15",
+      "display_name": "a5:4"
+    },
+    "created_at": "2026-07-20T12:25:43.226215"
+  },
+  {
+    "seq": 29,
+    "type": "rename_node",
+    "params": {
+      "node_id": "-16_a",
+      "display_name": "a6:1_a"
+    },
+    "result": {
+      "node_id": "-16_a",
+      "display_name": "a6:1_a"
+    },
+    "created_at": "2026-07-20T12:25:43.264620"
+  },
+  {
+    "seq": 30,
+    "type": "rename_node",
+    "params": {
+      "node_id": "-16_b",
+      "display_name": "a6:1_b"
+    },
+    "result": {
+      "node_id": "-16_b",
+      "display_name": "a6:1_b"
+    },
+    "created_at": "2026-07-20T12:25:43.303823"
+  },
+  {
+    "seq": 31,
+    "type": "rename_node",
+    "params": {
+      "node_id": "-17_a",
+      "display_name": "a6:2_a"
+    },
+    "result": {
+      "node_id": "-17_a",
+      "display_name": "a6:2_a"
+    },
+    "created_at": "2026-07-20T12:25:43.337528"
+  },
+  {
+    "seq": 32,
+    "type": "rename_node",
+    "params": {
+      "node_id": "-17_b",
+      "display_name": "a6:2_b"
+    },
+    "result": {
+      "node_id": "-17_b",
+      "display_name": "a6:2_b"
+    },
+    "created_at": "2026-07-20T12:25:43.371757"
+  }
+]

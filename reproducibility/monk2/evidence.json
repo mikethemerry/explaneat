@@ -1,0 +1,123 @@
+[
+  {
+    "annotation": "inert_unit_a23",
+    "records": [
+      {
+        "type": "analytical_formula",
+        "payload": {
+          "domain": {
+            "z(a2:3=0)": -0.721,
+            "z(a2:3=1)": 1.387
+          },
+          "output": 0.0,
+          "function": "ReLU(0.4432 * z(a2:3) - 1.1176)",
+          "domain_size": 2,
+          "verification": "exhaustive",
+          "preactivation": {
+            "at_z0": -1.4372,
+            "at_z1": -0.5029
+          },
+          "readout_weight": -2.8735,
+          "contribution_to_output": 0.0
+        },
+        "narrative": "Exhaustive analytical verification over the unit's entire (binary) domain: pre-activation is negative at both attainable input values, so the unit outputs exactly zero everywhere and its readout contributes nothing. Unearned structure that survived selection in a noiseless task because nothing priced it - the clean null instance of the unearned-structure diagnosis pattern.",
+        "timestamp": "2026-07-13T08:18:13.127773+00:00"
+      }
+    ],
+    "legacy_entries": []
+  },
+  {
+    "annotation": "count_gate_atleast3",
+    "records": [
+      {
+        "type": "analytical_formula",
+        "payload": {
+          "note": "Pre-activation = sum(alpha_j * I_j) + C over the six rule indicators; unit inputs depend on no other variables, so the 64 indicator patterns are the entire domain. Largest two-indicator sum (a3+a5) reaches -1.82 (ReLU off); smallest three-indicator sum (a1+a4+a6) reaches +1.26 (on). Fires iff count >= 3, with margin >= 1.26 on and >= 1.82 off.",
+          "constant": -14.8613,
+          "domain_size": 64,
+          "verification": "exhaustive",
+          "max_preactivation_k2": -1.8156,
+          "min_preactivation_k3": 1.2568,
+          "indicator_coefficients": {
+            "a1=1": 4.4934,
+            "a2=1": 5.9403,
+            "a3=1": 7.0728,
+            "a4=1": 5.7485,
+            "a5=1": 5.9729,
+            "a6=1": 5.8762
+          }
+        },
+        "narrative": "Exhaustive analytical verification: the gate is exactly an at-least-three-of-six detector over the MONK-2 rule indicators. Binary attributes a3, a6 enter via complements (negative weight on the complement = positive weight on the indicator). Coefficients derived from connection weights times the z-scaling deltas of the one-hot inputs; verified over all 64 attainable indicator patterns.",
+        "timestamp": "2026-07-13T08:18:01.122732+00:00"
+      }
+    ],
+    "legacy_entries": []
+  },
+  {
+    "annotation": "linear_count_ramp",
+    "records": [
+      {
+        "type": "analytical_formula",
+        "payload": {
+          "note": "Sum of direct-connection contributions evaluated per attribute value over z-scaled one-hots. Rises with the number of active rule indicators; with the output bias, the minimum over all count-2 configurations is positive (+0.42) and the maximum over all count-0/1 configurations is negative (-0.65), before the gate is considered. Values computed from full-dataset scaler statistics; exact per-configuration values verified in the extensional check on the root annotation.",
+          "domain_size": 432,
+          "verification": "exhaustive",
+          "per_attribute_contribution": {
+            "a1": {
+              "1": 2.5565,
+              "2": -1.3141,
+              "3": -1.4904
+            },
+            "a2": {
+              "1": 2.7311,
+              "2_or_3": -1.3834
+            },
+            "a3": {
+              "1": 1.9301,
+              "2": -2.0335
+            },
+            "a4": {
+              "1": 1.6858,
+              "2": -1.3739,
+              "3": -0.0165
+            },
+            "a5": {
+              "1": 2.629,
+              "2": -0.7207,
+              "3": -0.9645,
+              "4": -0.9772
+            },
+            "a6": {
+              "1": 1.9058,
+              "2": -2.0079
+            },
+            "output_bias": 2.7159
+          },
+          "best_case_k1_output_preactivation": -0.65,
+          "worst_case_k2_output_preactivation": 0.42
+        },
+        "narrative": "Analytical verification: the direct connections form a count ramp. Every attribute contributes positively at its first value and negatively otherwise; the ramp plus output bias crosses zero between one and two active indicators, supplying the lower edge of the response peak. Within-attribute variation (e.g. a4=3 near zero) never reorders the count bands.",
+        "timestamp": "2026-07-13T08:18:12.009410+00:00"
+      }
+    ],
+    "legacy_entries": []
+  },
+  {
+    "annotation": "exactly_two_of_six",
+    "records": [
+      {
+        "type": "performance_metrics",
+        "payload": {
+          "note": "Evaluated on the complete input space (all 432 attribute configurations; train and test partitions both perfect). Predictions match the MONK-2 generating rule (exactly two of six attributes at first value) on every input: the composed network is extensionally equal to the rule. Computed on the post-refactoring model state (1 identity insertion, 6 node splits), confirming function preservation. Mechanism: ramp forms the lower edge of the peak at count 2 (min positive-class pre-activation +0.42), the -7.34-weighted at-least-three gate forms the upper edge (max count-3 output pre-activation -2.03), and the inert unit contributes zero.",
+          "auc_roc": 1.0,
+          "accuracy": 1.0,
+          "n_samples": 432,
+          "verification": "exhaustive_extensional"
+        },
+        "narrative": "Extensional equality with the generating rule, verified over the entire input space. The composition realises a response peak at exactly two active indicators using one linear ramp and a single gate under the output threshold.",
+        "timestamp": "2026-07-13T08:18:29.084677+00:00"
+      }
+    ],
+    "legacy_entries": []
+  }
+]
