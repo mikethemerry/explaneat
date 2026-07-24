@@ -297,19 +297,6 @@ We welcome contributions! Please see our contributing guidelines for details on 
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Citation
-
-If you use ExplaNEAT in your research, please cite:
-
-```bibtex
-@software{explaneat2024,
-  title={ExplaNEAT: Explainable Neural Evolution with Augmenting Topologies},
-  author={Mike the Merry},
-  year={2024},
-  url={https://github.com/mikethemerry/explaneat}
-}
-```
-
 ## Support
 
 For questions, bug reports, and feature requests, please open an issue on GitHub or contact the maintainers.
