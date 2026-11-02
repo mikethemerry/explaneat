@@ -51,6 +51,14 @@ DATASETS = {
         reference_experiment="c8f3805e-",
         n_generations=40,
     ),
+    # Additional analysis (2026-11-03): Heart with 100 generations, same config and seeds.
+    "heart100": dict(
+        dataset_id="eea247c2-bdb7-41af-8ec1-9e26dcb5050d",
+        split_id="165cebbd-6609-46ca-867e-c09e17b2d6ec",
+        neat_config=HERE / "configs/heart.ini",
+        reference_experiment="c8f3805e-",
+        n_generations=100,
+    ),
     "adult": dict(
         dataset_id="46c63b17-42c5-4142-9fcf-3b5f369319c5",
         split_id="1df50169-8095-40d1-b61a-30bb541cd313",
