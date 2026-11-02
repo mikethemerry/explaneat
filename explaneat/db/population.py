@@ -302,6 +302,32 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                 )
                 session.add(metric)
     
+    def _save_training_metrics_batch(self, population_id: str, nEpochs: int):
+        """Save per-epoch training metrics for every genome in the population.
+
+        Same rows as calling _save_training_metrics per genome and epoch, but
+        resolves all genome records with one query instead of one unindexed
+        lookup per (genome, epoch).
+        """
+        with db.session_scope() as session:
+            record_ids = dict(
+                session.query(Genome.genome_id, Genome.id)
+                .filter(Genome.population_id == population_id)
+                .all()
+            )
+            for genome_id, genome in self.population.items():
+                record_id = record_ids.get(genome_id)
+                if record_id is None:
+                    continue
+                for epoch in range(nEpochs):
+                    session.add(TrainingMetric(
+                        genome_id=record_id,
+                        population_id=population_id,
+                        epoch=epoch,
+                        loss=genome.fitness or 0,  # Use actual fitness after evaluation
+                        additional_metrics={'epoch_fitness': genome.fitness or 0},
+                    ))
+
     def _save_result(self, measurement_type: str, value: float, iteration: int = None,
                     params: Dict[str, Any] = None, genome_id: int = None):
         """Save a general result measurement"""
@@ -480,15 +506,7 @@ class DatabaseBackpropPopulation(BackpropPopulation):
             logger.info("    Fitness eval done in %.1fs", _time.time() - fit_start)
 
             # Save training metrics for each genome (simplified)
-            for genome_id, genome in self.population.items():
-                for epoch in range(nEpochs):
-                    self._save_training_metrics(
-                        genome_id,
-                        self.current_population_id,
-                        epoch,
-                        genome.fitness or 0,  # Use actual fitness after evaluation
-                        {'epoch_fitness': genome.fitness or 0}
-                    )
+            self._save_training_metrics_batch(self.current_population_id, nEpochs)
 
         except Exception as e:
             logger.exception("Error evaluating population")

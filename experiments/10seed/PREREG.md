@@ -109,6 +109,18 @@ generations by design (decided 2 Nov 2026).
   protocol was updated with the pilot's tooling lessons before the remaining genomes
   were explained.
 
+- **2026-11-03 — DB-write speed-up (after all 10 Heart runs finished; before any Adult or
+  MONK-2 run).** In `db/population.py`, `_evaluate_population` resolved genome records
+  with one unindexed lookup per (genome, epoch). That was 1,250 full scans of `genomes`
+  per generation (~50 ms each, ~62 s/gen), and they matched nothing: metrics are written
+  before that generation's genomes are saved, so 0 `training_metrics` rows were ever
+  written. This is replaced with `_save_training_metrics_batch` (one query per
+  generation, the same rows). It only touches logging, not training. Verified: Heart
+  seed 1000 for 3 generations gives bit-identical genomes and fitnesses to the
+  pre-change dry run (750/750), with 0 metric rows in both. Generation time fell from
+  ~73 s to 0.7 s. Heart runs used the old code; Adult/MONK-2 and any later runs use the
+  new code. Both commits are recorded per run.
+
 ## Metrics (per run, `runs.csv`, all 30 best genomes)
 
 - `dataset, seed, experiment_id, genome_id, code_commit, hardware`, plus a `rerun` note
