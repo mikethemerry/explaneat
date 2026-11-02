@@ -1,0 +1,47 @@
+{
+  "label": "heart-s1",
+  "genome_id": "d3b1f42b-8347-408c-951e-db9111eaaf72",
+  "start": "2026-11-03T09:23:57+13:00",
+  "end": "2026-11-03T09:33:20+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 4,
+  "n_composition_annotations": 1,
+  "n_splits": 4,
+  "n_identity_nodes": 0,
+  "hidden_nodes": 5,
+  "hidden_nodes_single_leaf_no_split": 5,
+  "hidden_nodes_in_any_annotation": 5,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 3.552713678800501e-15,
+  "closed_form_max_abs_err": 0.012276001540682646,
+  "resisted": "Nothing resisted coverage. Only input fan-out needed splitting (slope:2, ca x3, restecg:0, oldpeak). Four of five hidden ReLUs are affine or near-affine on the train domain (1173, 2245 always active; 664 clips <=0.07; 2009 clips 15/242), so their annotations describe relays rather than distinct concepts. 9 unconnected inputs (age, sex:1, fbs:0, restecg:2, exang:1, slope:1, slope:3, thal:4, thal:7) listed as root entries.",
+  "tool_bugs": "Root composition plain latex drops child terms (used latex_collapsed). Forward output equals relu(z) to 3.6e-15 (output node is ReLU). Tool compositional_coverage always 1.0.",
+  "summary": "Essentially logistic regression: 15 direct edges carry logit SD 5.3 of 7.0. ca enters by three parallel affine routes; cp:3 only via affine relay 1173; 2009 adds a small negative max-heart-rate term. The one consequential nonlinearity is gate 1801 = ReLU(1.48 restecg:0 + 0.805 oldpeak - 1.43): ST depression adds risk mainly when resting ECG is normal. Replacing all ReLUs by identity drops train AUC 0.939 -> 0.916, almost all from 1801.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 5,
+      "roots": [
+        "heart_disease_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 3.552713678800501e-15,
+    "closed_form_max_abs_err": 0.012276001540682646,
+    "numeric_max_abs_err": 8.881784197001252e-16,
+    "op_counts": {
+      "rename_node": 31,
+      "split_node": 4,
+      "annotate": 5
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "label": "heart-s8",
+  "genome_id": "4809878b-8b08-4508-91f1-6f5c7207e787",
+  "start": "2026-11-03T09:23:57+13:00",
+  "end": "2026-11-03T09:37:00+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 2,
+  "n_composition_annotations": 1,
+  "n_splits": 6,
+  "n_identity_nodes": 0,
+  "hidden_nodes": 5,
+  "hidden_nodes_single_leaf_no_split": 5,
+  "hidden_nodes_in_any_annotation": 5,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 1.7763568394002505e-15,
+  "closed_form_max_abs_err": 0.01895701394925453,
+  "resisted": "Nothing resisted coverage. Six inputs (age, exang:0, exang:1, oldpeak, slope:1, cp:4) split by hand (not flagged by tools). The age/no-angina/cp:4 chain is real but small (AUC -0.002, logit SD 0.34); its 'damping correction' hypothesis rests on weight signs and subgroup means. First root (structural 0.784) undone and re-annotated with 8 unconnected inputs as entries.",
+  "tool_bugs": "get_viz_summary rejects 'line_plot' (valid 'line'). activation_profile needs node_id. get_formula shows output ReLU; compute_performance applies sigmoid. compute_shap >2 min. Tool compositional_coverage always 1.0.",
+  "summary": "Mostly logistic regression: 16 direct edges (logit SD 3.9) plus two additive nonlinear readouts. Main: an exertional-ischaemia hinge 855 = ReLU(trestbps, oldpeak, exang:1 up; cp:1, slope:1 down) with clipped complement 1501 - flat below threshold, steep above (train AUC 0.947 -> 0.926 without it). Minor serial chain age -> 1669 (no exertional angina) -> 3353 (+cp:4), read out -0.515, tempering cp:4 and making age protective for older patients without exertional angina (AUC -0.002). Linear-only 0.924/0.851 vs full 0.947/0.897.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 3,
+      "roots": [
+        "heart_disease_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 1.7763568394002505e-15,
+    "closed_form_max_abs_err": 0.01895701394925453,
+    "numeric_max_abs_err": 9.992007221626409e-16,
+    "op_counts": {
+      "rename_node": 26,
+      "split_node": 6,
+      "annotate": 3
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}

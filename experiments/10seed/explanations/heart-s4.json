@@ -1,0 +1,48 @@
+{
+  "label": "heart-s4",
+  "genome_id": "15783a91-457e-49a9-9209-cc3aa77df0cb",
+  "start": "2026-11-03T09:23:57+13:00",
+  "end": "2026-11-03T09:36:48+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 3,
+  "n_composition_annotations": 1,
+  "n_splits": 2,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 4,
+  "hidden_nodes_single_leaf_no_split": 4,
+  "hidden_nodes_in_any_annotation": 4,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 3.552713678800501e-15,
+  "closed_form_max_abs_err": 0.003711194278508856,
+  "resisted": "Nothing resisted coverage. 2065 reads out to both output and gate 707; handled with identity node identity_707 on 2065->707 rather than a split, root composes the two leaves serially. 6 unconnected inputs (restecg:0, restecg:2, exang:0, slope:3, thal:4, thal:7) listed as root entries only to reach structural coverage 1.0. thal:6 correction rests on 10 training patients; may be partly noise-fitted.",
+  "tool_bugs": "compute_shap mean |SHAP| = 0 for cp:2 despite logit effect -0.113 via 3497. compute_shap >2 min. get_formula shows output as ReLU.",
+  "summary": "Essentially logistic regression: 17 direct edges (logit SD 4.44; ca +2.16, slope:2 +1.08, sex:1 +0.85). One meaningful nonlinearity: discrete gate 2065 = ReLU(0.795 thal:6 - 0.885 fbs:1 - 0.719), firing only for fixed-defect patients with normal fasting sugar and lowering their logit by ~3.6, cancelling the linear core's over-calling in that group. cp:2 indicator (3497) and floored thalach relay (707->3677) near-inert. Train AUC 0.942 vs 0.934 linear core.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 4,
+      "roots": [
+        "heart_disease_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 3.552713678800501e-15,
+    "closed_form_max_abs_err": 0.003711194278508856,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 26,
+      "split_node": 2,
+      "add_identity_node": 1,
+      "annotate": 4
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "label": "heart-s7",
+  "genome_id": "7c355ee7-77ad-426c-8a6d-9df81d1c65b3",
+  "start": "2026-11-03T09:23:57+13:00",
+  "end": "2026-11-03T09:34:04+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 3,
+  "n_composition_annotations": 1,
+  "n_splits": 6,
+  "n_identity_nodes": 0,
+  "hidden_nodes": 4,
+  "hidden_nodes_single_leaf_no_split": 4,
+  "hidden_nodes_in_any_annotation": 4,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 1.7763568394002505e-15,
+  "closed_form_max_abs_err": 0.02693294224879228,
+  "resisted": "Nothing resisted coverage. 4 hidden nodes form 3 independent one-sided ReLU gates feeding the output. 6 input splits (fbs:0, thal:7, sex:0, exang:1, cp:3, thalach). Weak spots: thal:3->3818 branch nearly inert; in gate 557 slope:3 suppresses risk (clinically counter-intuitive; rare 7%, no direct edge) - reported as what the network computes. Unconnected inputs (cp:2, fbs:1, restecg:1, restecg:2) added to root entries.",
+  "tool_bugs": "get_formula renders output as ReLU. compute_shap at max_samples=100000 >2 min. SHAP gives exactly 0 for restecg:0 and exang:0 despite small nonzero direct weights. child_annotation_ids must be names.",
+  "summary": "Essentially logistic regression: 19 direct edges (logit SD 4.90; ca +2.61, female -1.57) plus three one-sided ReLU corrections: an ischaemia gate on oldpeak and thal:7 (SD 0.78); a Boolean AND of female sex and exercise angina adding +2.07 logit, cancelling most of the female protective term (SD 0.56); a protective gate on high thalach mostly with non-anginal pain (SD 0.49). Linear core train AUC 0.930 vs 0.947 full; mean-ablating each gate gives 0.938, 0.940, 0.945.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 4,
+      "roots": [
+        "heart_disease_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 1.7763568394002505e-15,
+    "closed_form_max_abs_err": 0.02693294224879228,
+    "numeric_max_abs_err": 8.881784197001252e-16,
+    "op_counts": {
+      "rename_node": 26,
+      "split_node": 6,
+      "annotate": 4
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}
