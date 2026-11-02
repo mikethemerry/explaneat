@@ -19,6 +19,36 @@ from ..helpers import (
 )
 
 
+VALID_VIZ_TYPES = (
+    "line", "heatmap", "partial_dependence", "pca_scatter", "sensitivity",
+    "ice", "feature_output_scatter", "output_distribution",
+    "activation_profile", "edge_influence", "regime_map",
+)
+
+_VIZ_TYPE_ALIASES = {
+    "line_plot": "line",
+    "lineplot": "line",
+    "pdp": "partial_dependence",
+    "pca": "pca_scatter",
+}
+
+
+def _normalize_viz_type(viz_type: str) -> str:
+    """Map aliases (e.g. 'line_plot') to canonical viz type names.
+
+    Raises ValueError listing the valid names for unknown types.
+    """
+    key = (viz_type or "").strip().lower()
+    key = _VIZ_TYPE_ALIASES.get(key, key)
+    if key not in VALID_VIZ_TYPES:
+        raise ValueError(
+            f"Unknown viz_type: {viz_type!r}. Valid viz types: "
+            f"{', '.join(VALID_VIZ_TYPES)} (aliases: "
+            f"{', '.join(f'{a}->{c}' for a, c in _VIZ_TYPE_ALIASES.items())})"
+        )
+    return key
+
+
 def _json_default(obj):
     """JSON serializer for numpy types."""
     if isinstance(obj, (np.integer,)):
@@ -159,6 +189,7 @@ def _do_compute_viz_data(
     from explaneat.core.structure_network import StructureNetwork
     import torch
 
+    viz_type = _normalize_viz_type(viz_type)
     db = get_db()
     params = params or {}
 
@@ -444,7 +475,9 @@ def compute_viz_data(
     Produces JSON data suitable for rendering as a chart. Supports many viz
     types: line, heatmap, partial_dependence, pca_scatter, sensitivity, ice,
     feature_output_scatter, output_distribution, activation_profile,
-    edge_influence, regime_map.
+    edge_influence, regime_map (aliases: line_plot/lineplot -> line,
+    pdp -> partial_dependence, pca -> pca_scatter). Unknown types return an
+    error listing the valid names.
 
     Args:
         genome_id: UUID of the genome.
@@ -525,6 +558,7 @@ def render_visualization(
         params=extra_params,
     )
 
+    viz_type = result["viz_type"]  # canonical name (aliases resolved)
     png_b64 = render_to_png(viz_type, result["data"], title=title)
 
     metadata = {
@@ -586,7 +620,7 @@ def get_viz_summary(
 
     data = result["data"]
     summary: Dict[str, Any] = {
-        "viz_type": viz_type,
+        "viz_type": result["viz_type"],
         "dimensionality": result["dimensionality"],
         "entry_names": result["entry_names"],
         "exit_names": result["exit_names"],
