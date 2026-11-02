@@ -79,6 +79,24 @@ saved, at the same instant as a concurrent run, so the 40-generation budget is w
 that run was cut rather than a planned budget. The 10-seed Heart runs use 40
 generations by design (decided 2 Nov 2026).
 
+## Amendments
+
+- **2026-11-03 — tie-break for best genome.** Heart seeds 2 and 3 each have two distinct
+  genomes that tie exactly on best training fitness in the same generation, and
+  `get_best_genome` orders ties arbitrarily. Rule: highest training fitness; ties are
+  broken by earliest generation, then lowest NEAT genome key (born first). This gives
+  heart-s2 = `0057df7a` (key 9083, not 9578) and heart-s3 = `c426b094` (key 9854, not
+  9877). The rule was fixed before any genome structure was inspected or explained.
+  Only genome-level node and connection counts had been seen. The same rule applies to
+  all datasets.
+- **2026-11-03 — explanation protocol.** Explanations follow `EXPLAIN_PROTOCOL.md`.
+  Claude subagents call the MCP tool functions through `xn.py`, with
+  function-preserving operations only. All evidence uses the training split. Each agent
+  has a 3-hour wall-clock box. Heart is explained first, at Mike's request (2 Nov),
+  starting with heart-s5 as a pilot, then the remaining Heart seeds in their
+  pre-registered order. 100-generation Heart runs will follow later as a separate,
+  additional analysis.
+
 ## Metrics (per run, `runs.csv`, all 30 best genomes)
 
 - `dataset, seed, experiment_id, genome_id, code_commit, hardware`, plus a `rerun` note
