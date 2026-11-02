@@ -28,6 +28,16 @@ LAYER_ACTIVATION_LEAKYRELU = "Leaky ReLU"
 LAYER_ACTIVATION_INPUT = "Input"
 
 
+# Activations NeuralNeat actually applies, independent of the activation
+# stored on each node gene: hidden ("CONNECTED") layers use ReLU and the
+# output layer uses a sigmoid (see NeuralNeat.forward).  NetworkStructure
+# representations of a genome (ExplaNEAT.get_genotype_network) use
+# OUTPUT_ACTIVATION for output nodes so every other engine computes the
+# same function as the trained model.
+HIDDEN_ACTIVATION = "relu"
+OUTPUT_ACTIVATION = "sigmoid"
+
+
 LAYER_ACTIVATION_FUNCTIONS = {
     "ReLU": torch.relu,
     "Sigmoid": torch.sigmoid,
