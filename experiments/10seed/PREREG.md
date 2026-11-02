@@ -97,6 +97,18 @@ generations by design (decided 2 Nov 2026).
   pre-registered order. 100-generation Heart runs will follow later as a separate,
   additional analysis.
 
+- **2026-11-03 — completeness criterion (after the heart-s5 pilot).** The pilot showed
+  that the tool's `compositional_coverage` is computed as compositions / (annotations −
+  leaves), so it is 1.0 whenever any composition exists. It does not test whether the
+  hierarchy reaches the output. "Full structural and compositional coverage" in the
+  threshold therefore means: tool structural coverage = 1.0 AND tool compositional
+  coverage = 1.0 AND `check_explanation.py` `hierarchy.complete` (a single root annotation
+  whose subgraph contains the output node, with every annotation a descendant of it).
+  Explanations must also preserve function: max |Δ output| < 1e-9 on train. heart-s5
+  (pilot) meets this. It is reported with the others and flagged as the pilot. The
+  protocol was updated with the pilot's tooling lessons before the remaining genomes
+  were explained.
+
 ## Metrics (per run, `runs.csv`, all 30 best genomes)
 
 - `dataset, seed, experiment_id, genome_id, code_commit, hardware`, plus a `rerun` note
