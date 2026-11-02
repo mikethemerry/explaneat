@@ -22,8 +22,9 @@ Annotations are built **bottom-up** using a construction-based approach:
 2. **Composition Annotations**: Created by combining child annotations, explaining how they work together
 
 A composition annotation:
-- References its children via `child_annotation_ids` (annotation names) in the annotate operation
+- References its children via `child_annotation_ids` in the annotate operation. Children may be given either as annotation names or as the synthetic ids the tools report (`ann_<seq>`); `ModelStateEngine.add_operation` rewrites ids to names before storing, so stored operations always reference names (`rename_annotation`'s `annotation_id` is handled the same way)
 - The `ModelStateEngine` sets `parent_annotation_id` on children during replay
+- Its own `subgraph_nodes` contain only the uncovered junction nodes; for validation, the nodes of **all descendants** (children, grandchildren, ...) count as inside the composition. A composition may therefore read out a grandchild's exit and list a grandchild's entry nodes in its `entry_nodes`
 - Describes how the children combine (via hypothesis)
 - Has its own subgraph (nodes and connections) that may include junction nodes/edges connecting the children
 - Can itself be a child of another composition annotation
