@@ -1,0 +1,1 @@
+adult-s1,adult-s3,adult-s8: crashed at startup 2026-11-03 (~10:05 NZDT) during data load, before any Experiment row was written: psycopg2.OperationalError "server closed the connection unexpectedly" while 30 runs started concurrently. Re-run with the same seeds. Logs in logs/crashed/.
