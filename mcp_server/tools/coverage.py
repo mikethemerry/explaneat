@@ -122,14 +122,21 @@ def get_coverage(genome_id: str) -> str:
       subgraph AND all of v's outgoing edges are contained within A's subgraph
       (covered_A(v) = (v in V_A) and (E_out(v) subset E_A)). Candidate nodes
       are all non-output nodes.
-    - **Compositional coverage** (Def 11): fraction of required composition
-      annotations that exist. For a hierarchy with leaf and composition
-      annotations, measures how completely the hierarchy is specified.
+    - **Compositional coverage** (Def 11): fraction of the composition links
+      required for a single global root that exist. Every annotation except
+      the global root must have a parent; if no root's subgraph (including
+      descendants) contains every output node, the global composition is
+      missing too. 1.0 iff there is exactly one root, it contains every
+      output, and every annotation descends from it. The "hierarchy" field
+      reports roots / global_root / composed / required.
 
     Args:
         genome_id: UUID of the genome.
     """
-    from explaneat.analysis.coverage import CoverageComputer
+    from explaneat.analysis.coverage import (
+        CoverageComputer,
+        compute_compositional_coverage_from_hierarchy,
+    )
 
     db = get_db()
     with db.session_scope() as session:
@@ -151,7 +158,7 @@ def get_coverage(genome_id: str) -> str:
             candidate_nodes = all_node_ids - output_ids
             result = {
                 "structural_coverage": 0.0,
-                "compositional_coverage": 1.0,
+                "compositional_coverage": 0.0,
                 "node_coverage": {
                     "covered": [],
                     "uncovered": sorted(candidate_nodes),
@@ -270,14 +277,22 @@ def get_coverage(genome_id: str) -> str:
             else 1.0
         )
 
-        # Compositional coverage: composition_count / required_compositions
-        # required = total_annotations - leaf_count (number of internal hierarchy nodes)
+        # Compositional coverage (Def 11): fraction of the composition links
+        # needed for a single global root (containing every output) that exist.
         total_annotations = len(ann_dicts)
-        required_compositions = max(0, total_annotations - leaf_count)
-        if required_compositions == 0:
-            compositional_coverage = 1.0 if composition_count == 0 else 0.0
-        else:
-            compositional_coverage = min(1.0, composition_count / required_compositions)
+        hierarchy = compute_compositional_coverage_from_hierarchy(
+            [
+                {
+                    "name": ad.name,
+                    "subgraph_nodes": [str(n) for n in ad.subgraph_nodes],
+                    "exit_nodes": [str(n) for n in ad.exit_nodes],
+                    "parent_annotation_id": ad.parent_annotation_id,
+                }
+                for ad in annotations_data
+            ],
+            output_ids,
+        )
+        compositional_coverage = hierarchy["compositional_coverage"]
 
         # Build per-annotation node mapping
         by_annotation: Dict[str, List[str]] = {}
@@ -312,6 +327,14 @@ def get_coverage(genome_id: str) -> str:
             "annotations_count": total_annotations,
             "leaf_count": leaf_count,
             "composition_count": composition_count,
+            "hierarchy": {
+                "roots": hierarchy["roots"],
+                "global_root": hierarchy["global_root"],
+                "root_contains_outputs": hierarchy["root_contains_outputs"],
+                "complete": hierarchy["complete"],
+                "composed": hierarchy["composed"],
+                "required": hierarchy["required"],
+            },
         }
         return json.dumps(result, indent=2, default=str)
 

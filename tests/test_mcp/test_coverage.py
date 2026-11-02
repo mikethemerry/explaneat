@@ -75,7 +75,8 @@ def test_get_coverage_no_annotations(mock_build_engine, mock_get_db):
     result = json.loads(get_coverage("00000000-0000-0000-0000-000000000001"))
 
     assert result["structural_coverage"] == 0.0
-    assert result["compositional_coverage"] == 1.0
+    # No hierarchy, so no global root: nothing is composed (Def 11)
+    assert result["compositional_coverage"] == 0.0
     assert result["annotations_count"] == 0
     assert result["leaf_count"] == 0
     assert result["composition_count"] == 0

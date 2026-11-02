@@ -5,7 +5,9 @@ Implements the exact mathematical definitions from Beyond_Intuition.pdf:
 - covered_A(v) = (v ∈ V_A) ∧ (E_out(v) ⊆ E_A)
 - covered_𝒜(v) = (v ∈ V_𝒜) ∧ (E_out(v) ⊆ E_𝒜) where V_𝒜 = ∪V_A, E_𝒜 = ∪E_A
 - Structural coverage: C_V^struct = C_V(leaf_annotations)
-- Compositional coverage: C_V^comp = |composition_annotations| / |required_compositions|
+- Compositional coverage: C_V^comp = |annotations composed into a parent| /
+  |composition links required for a single global root| (see
+  compute_compositional_coverage_from_hierarchy)
 - Visibility: visible(v) = ¬covered(hidden_annotations) ∨ (v ∈ V_O)
 """
 
@@ -539,6 +541,122 @@ def compute_structural_coverage(explanation_id: str) -> float:
         return covered_count / total_count
 
 
+def compute_compositional_coverage_from_hierarchy(
+    annotations: List[Dict[str, Any]],
+    output_nodes: Set[str],
+) -> Dict[str, Any]:
+    """Compositional coverage C_V^comp of an annotation hierarchy (paper Def 11).
+
+    Full compositional coverage means every required composition exists and
+    the hierarchy terminates in a global explanation (well-formedness
+    criterion 4): a single root annotation whose subgraph -- its own nodes
+    plus those of all its descendants -- contains every output node, with
+    every annotation descending from it.
+
+    Each annotation other than that global root must be composed into a
+    parent; if no root reaches all outputs, the global composition itself is
+    also missing.  Hence::
+
+        required = |A| - [some root's expanded subgraph contains all outputs]
+        composed = |{a in A : a has a parent}|
+        C_comp   = composed / required        (1.0 if required == 0 and a
+                                               global root exists; 0.0 if
+                                               there are no annotations)
+
+    C_comp == 1.0 iff there is exactly one root, it contains every output,
+    and every annotation descends from it.
+
+    Args:
+        annotations: dicts with ``name`` (and optionally ``id``),
+            ``subgraph_nodes``, ``exit_nodes`` and either
+            ``child_annotation_ids`` (names or ann_<seq> ids) or
+            ``parent_annotation_id`` (parent name).
+        output_nodes: the model's output node ids.
+
+    Returns:
+        dict with compositional_coverage, complete, roots, global_root,
+        root_contains_outputs, composed, required.
+    """
+    anns = list(annotations or [])
+    outputs = {str(n) for n in output_nodes}
+    result: Dict[str, Any] = {
+        "compositional_coverage": 0.0,
+        "complete": False,
+        "roots": [],
+        "global_root": None,
+        "root_contains_outputs": False,
+        "composed": 0,
+        "required": 0,
+    }
+    if not anns:
+        return result
+
+    names = [str(a.get("name") or a.get("id")) for a in anns]
+
+    def _resolve(ref) -> Optional[str]:
+        ref = str(ref)
+        if ref in names:
+            return ref
+        for a, n in zip(anns, names):
+            if str(a.get("id")) == ref:
+                return n
+        return None
+
+    parent: Dict[str, str] = {}
+    for a, n in zip(anns, names):
+        for ref in a.get("child_annotation_ids") or []:
+            child = _resolve(ref)
+            if child is not None and child != n:
+                parent.setdefault(child, n)
+    for a, n in zip(anns, names):
+        p = a.get("parent_annotation_id")
+        if p is not None and n not in parent:
+            pn = _resolve(p)
+            if pn is not None and pn != n:
+                parent[n] = pn
+
+    children: Dict[str, List[str]] = {}
+    for c, p in parent.items():
+        children.setdefault(p, []).append(c)
+    nodes_of = {
+        n: {str(x) for x in (a.get("subgraph_nodes") or [])}
+        | {str(x) for x in (a.get("exit_nodes") or [])}
+        for a, n in zip(anns, names)
+    }
+
+    def _expanded(root: str) -> Set[str]:
+        seen, stack, out = set(), [root], set()
+        while stack:
+            n = stack.pop()
+            if n in seen:
+                continue
+            seen.add(n)
+            out |= nodes_of.get(n, set())
+            stack.extend(children.get(n, []))
+        return out
+
+    roots = [n for n in names if n not in parent]
+    global_roots = [r for r in roots if outputs <= _expanded(r)]
+    has_global = bool(global_roots)
+    composed = sum(1 for n in names if n in parent)
+    required = len(names) - (1 if has_global else 0)
+    if required == 0:
+        value = 1.0 if has_global else 0.0
+    else:
+        value = min(1.0, composed / required)
+
+    result.update({
+        "compositional_coverage": value,
+        "complete": value == 1.0,
+        "roots": roots,
+        "global_root": global_roots[0] if global_roots else None,
+        "root_contains_outputs": has_global,
+        "composed": composed,
+        "required": required,
+    })
+    return result
+
+
 def compute_compositional_coverage(explanation_id: str) -> float:
     """
     Compute compositional coverage C_V^comp for an explanation.
@@ -568,31 +686,32 @@ def compute_compositional_coverage(explanation_id: str) -> float:
         if not all_annotations:
             return 0.0
         
-        # Count composition annotations (annotations with children)
-        composition_count = len([
-            ann for ann in all_annotations 
-            if len(ann.children) > 0
-        ])
-        
-        # Count leaf nodes
-        leaf_count = len([
-            ann for ann in all_annotations 
-            if ann.parent_annotation_id is None and len(ann.children) == 0
-        ])
-        
-        # For a tree structure, if we have n leaf nodes, we need at least n-1 compositions
-        # But we might have more if there are multiple levels
-        # Actually, the number of required compositions is the number of internal nodes
-        # which is total_nodes - leaf_nodes
-        
-        total_nodes = len(all_annotations)
-        required_compositions = max(0, total_nodes - leaf_count)
-        
-        if required_compositions == 0:
-            # No compositions needed (only leaf nodes or empty)
-            return 1.0 if composition_count == 0 else 0.0
-        
-        return min(1.0, composition_count / required_compositions)
+        output_nodes = {"0"}
+        try:
+            from ..core.config_utils import load_neat_config
+
+            experiment = explanation.genome.population.experiment
+            config = load_neat_config(
+                experiment.neat_config_text or "", experiment.config_json
+            )
+            output_nodes = {str(k) for k in config.genome_config.output_keys}
+        except Exception:
+            pass  # NEAT default: single output node 0
+
+        ann_dicts = []
+        for ann in all_annotations:
+            d = ann.to_dict()
+            ann_dicts.append({
+                "name": str(ann.id),
+                "subgraph_nodes": d.get("subgraph_nodes") or [],
+                "exit_nodes": d.get("exit_nodes") or [],
+                "parent_annotation_id": (
+                    str(ann.parent_annotation_id) if ann.parent_annotation_id else None
+                ),
+            })
+        return compute_compositional_coverage_from_hierarchy(
+            ann_dicts, output_nodes
+        )["compositional_coverage"]
 
 
 def compute_visibility_for_explanation(

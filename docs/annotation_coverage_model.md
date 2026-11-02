@@ -189,9 +189,21 @@ where $C_V(A_{\text{leaf}})$ is the fraction of model nodes covered by the leaf 
 
 For an annotation hierarchy $H$, compositional coverage is:
 
-$$C_V^{\text{comp}}(H) = \frac{|\text{composition annotations in } H|}{|\text{internal nodes required for hierarchy}|}$$
+$$C_V^{\text{comp}}(H) = \frac{|\text{composition steps present}|}{|\text{composition steps required}|}$$
 
-This measures the fraction of required composition steps that are explained.
+This measures the fraction of required composition steps that are explained (paper Def 11: "every required composition has a valid composition annotation"), where a hierarchy is only finished when it terminates in a global explanation (well-formedness criterion 4). Concretely, for annotations $\mathcal{A}$ and output nodes $V_O$:
+
+- the **expanded subgraph** of an annotation is its own nodes and exits plus those of all its descendants;
+- a **global root** is a root annotation (no parent) whose expanded subgraph contains every output node in $V_O$;
+- every annotation other than the global root must be composed into a parent, and if no root contains all outputs the global composition is itself still missing:
+
+$$\text{required} = |\mathcal{A}| - [\exists \text{ global root}], \qquad \text{present} = |\{A \in \mathcal{A} : A \text{ has a parent}\}|$$
+
+$$C_V^{\text{comp}} = \frac{\text{present}}{\text{required}}$$
+
+with $C_V^{\text{comp}} = 1$ when $\text{required} = 0$ and a global root exists (a single annotation explaining the whole model), and $C_V^{\text{comp}} = 0$ when there are no annotations. Hence $C_V^{\text{comp}} = 1$ **iff there is exactly one root, its expanded subgraph contains every output node, and every annotation descends from it.** Examples: two leaf roots, one of them containing the output: $0/1 = 0$; leaves $A, B$ under a composition $C$ that does not reach the output, plus a separate root $D$ containing it: $2/3$.
+
+Implementation: `compute_compositional_coverage_from_hierarchy` in `explaneat/analysis/coverage.py` (used by the MCP `get_coverage` tool, which also reports `hierarchy.roots`, `global_root`, `composed` and `required`). The earlier implementation, $|\text{compositions}| / (|\mathcal{A}| - |\text{leaves}|)$, was identically 1 whenever any composition existed and is no longer used.
 
 ### Well-Formed Explanation
 
