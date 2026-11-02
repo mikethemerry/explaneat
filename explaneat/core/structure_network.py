@@ -541,16 +541,25 @@ class StructureNetwork:
 
         NeuralNeat hardcodes relu on hidden layers regardless of the genome's
         per-node activation.  Call this to match that training behaviour.
+
+        Identity nodes (inserted by identity-preserving operations such as
+        add_identity_node / add_node) and FUNCTION nodes are not genome
+        hidden nodes and keep their own activation: clipping an identity
+        node would change the function the network computes.
         """
-        out_ids = set(self.structure.output_node_ids)
+        keep = {"function", "identity"}
         for d in self._layer_order:
             layer = self._layers[d]
             if layer.get("is_input") or layer.get("is_output"):
                 continue
-            layer["activations"] = [
-                activation if act != "function" else act
-                for act in layer["activations"]
-            ]
+            new_acts = []
+            for act in layer["activations"]:
+                new_acts.append(act if act in keep else activation)
+            layer["activations"] = new_acts
+            for nid in layer["node_ids"]:
+                info = self.node_info.get(nid)
+                if info is not None and info["activation"] not in keep:
+                    info["activation"] = activation
 
     # ------------------------------------------------------------------
     # Forward

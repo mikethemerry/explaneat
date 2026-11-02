@@ -514,3 +514,19 @@ class TestSplitInputNodes:
         np.testing.assert_almost_equal(net.get_node_activation("-1_a")[0], 3.0)
         # 5: relu(2.0 + 3.0) = 5.0
         np.testing.assert_almost_equal(net.get_node_activation("5")[0], 5.0)
+
+
+class TestOverrideHiddenActivation:
+    def test_identity_nodes_keep_identity_activation(self):
+        """override_hidden_activation('relu') mirrors NeuralNeat for genome
+        hidden nodes, but identity nodes (added by identity-preserving
+        operations) must not be clipped."""
+        net = StructureNetwork(make_identity_node_network())
+        net.override_hidden_activation("relu")
+        # -2 = -3.0 -> identity_5 = 0.8 * -3.0 = -2.4 (would be 0 under relu)
+        X = torch.tensor([[-3.0, 1.0]], dtype=torch.float64)
+        net.forward(X)
+        np.testing.assert_almost_equal(net.get_node_activation("identity_5")[0], -2.4)
+        # Genome hidden node still clipped by relu: relu(-3 + 0.5 + 0.1) = 0
+        np.testing.assert_almost_equal(net.get_node_activation("5")[0], 0.0)
+        assert net.node_info["identity_5"]["activation"] == "identity"
