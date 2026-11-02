@@ -45,6 +45,8 @@ class ClassificationResult:
     details: List[NodeClassificationDetail]
     valid: bool
     violations: List[dict] = field(default_factory=list)
+    # Coverage nodes already owned by an existing annotation
+    already_covered: List[dict] = field(default_factory=list)
 
 
 def classify_node(
@@ -128,6 +130,7 @@ def classify_node(
 def classify_coverage(
     model: NetworkStructure,
     coverage: List[str],
+    annotations=None,
 ) -> ClassificationResult:
     """
     Classify all nodes in a proposed coverage.
@@ -139,10 +142,19 @@ def classify_coverage(
     Args:
         model: Network structure
         coverage: List of node IDs in the proposed coverage
+        annotations: Optional existing annotations.  Coverage nodes they
+            already own are reported in ``already_covered`` and make the
+            coverage invalid (annotate would reject them).
 
     Returns:
         ClassificationResult with classifications and validation
     """
+    from .split_detection import covered_node_owners
+
+    owners = covered_node_owners(annotations)
+    already_covered = [
+        {"node_id": nid, "annotation": owners[nid]} for nid in coverage if nid in owners
+    ]
     coverage_set = set(coverage)
     details = []
     entry_nodes = []
@@ -177,8 +189,9 @@ def classify_coverage(
         intermediate_nodes=intermediate_nodes,
         exit_nodes=exit_nodes,
         details=details,
-        valid=len(violations) == 0,
+        valid=len(violations) == 0 and not already_covered,
         violations=violations,
+        already_covered=already_covered,
     )
 
 

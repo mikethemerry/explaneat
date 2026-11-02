@@ -292,6 +292,8 @@ The annotation strategy addresses three types of issues:
 - -2 stays as entry (internal outputs)
 - -2_split becomes exit (external outputs)
 
+**Input nodes:** a network input always has an external input (the environment), so an input node in the selection that also feeds a node outside it is an entry with an external output and must be split, even though it has no incoming connections. This is the typical case of an input feeding two different annotations (e.g. the output's direct-edge group and a hidden gate): whichever annotation claims the unsplit input first leaves the other unable to cover it ("already covered"). The MCP `detect_splits` tool flags these with reason `input_feeds_outside_coverage`, and both `detect_splits` and `classify_nodes` list selected nodes already owned by an existing annotation under `already_covered` (covered nodes are immutable, so they cannot be split; the selection must exclude them).
+
 ### Strategy Execution Order
 
 When the user clicks "Execute Strategy", operations are applied in this order:

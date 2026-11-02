@@ -29,8 +29,9 @@ def classify_nodes(
 
     db = get_db()
     with db.session_scope() as session:
-        model_state = build_model_state(session, genome_id)
-        result = classify_coverage(model_state, coverage)
+        engine = build_engine(session, genome_id)
+        model_state = engine.current_state
+        result = classify_coverage(model_state, coverage, annotations=engine.annotations)
 
         violations = []
         for v in result.violations:
@@ -50,6 +51,7 @@ def classify_nodes(
             },
             "valid": result.valid,
             "violations": violations,
+            "already_covered": result.already_covered,
         }
         return json.dumps(output, indent=2, default=str)
 
@@ -62,7 +64,10 @@ def detect_splits(
 
     Given a proposed coverage, identifies nodes that violate entry/exit
     constraints and would need to be split first. Returns violations with
-    suggested split_node operations to fix them.
+    suggested split_node operations to fix them. Input nodes that also feed
+    nodes outside the coverage (fan-out across annotations) are flagged with
+    reason "input_feeds_outside_coverage". Nodes already owned by an existing
+    annotation are listed in "already_covered" (annotate would reject them).
 
     Args:
         genome_id: UUID of the genome.
@@ -74,8 +79,11 @@ def detect_splits(
 
     db = get_db()
     with db.session_scope() as session:
-        model_state = build_model_state(session, genome_id)
-        result = analyze_coverage_for_splits(model_state, coverage)
+        engine = build_engine(session, genome_id)
+        model_state = engine.current_state
+        result = analyze_coverage_for_splits(
+            model_state, coverage, annotations=engine.annotations,
+        )
 
         violations = []
         for v in result.violations:
@@ -99,6 +107,7 @@ def detect_splits(
             "violations": violations,
             "suggested_operations": suggested_operations,
             "adjusted_coverage": result.adjusted_coverage,
+            "already_covered": result.already_covered,
         }
         return json.dumps(output, indent=2, default=str)
 

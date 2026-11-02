@@ -6,9 +6,9 @@ based on the entry/intermediate/exit constraints defined in the design spec.
 """
 
 from typing import List, Dict, Any, Set, Tuple, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
-from ..core.genome_network import NetworkStructure
+from ..core.genome_network import NetworkStructure, NodeType
 
 
 @dataclass
@@ -30,6 +30,28 @@ class SplitDetectionResult:
     violations: List[ViolationDetail]
     suggested_operations: List[Dict[str, Any]]
     adjusted_coverage: Optional[List[str]]
+    # Nodes of the proposed coverage already owned by an existing annotation
+    # ({"node_id", "annotation"}).  annotate would reject them as "already
+    # covered"; they cannot be split (covered nodes are immutable).
+    already_covered: List[Dict[str, str]] = field(default_factory=list)
+
+
+def covered_node_owners(annotations) -> Dict[str, str]:
+    """Map node id -> name of the existing annotation whose subgraph owns it."""
+    owners: Dict[str, str] = {}
+    for ann in annotations or []:
+        name = ann.get("name") if isinstance(ann, dict) else ann.name
+        nodes = ann.get("subgraph_nodes", []) if isinstance(ann, dict) else ann.subgraph_nodes
+        for nid in nodes:
+            owners.setdefault(str(nid), name)
+    return owners
+
+
+def _is_input_node(model: NetworkStructure, node_id: str) -> bool:
+    node = model.get_node_by_id(node_id)
+    if node is not None and node.type == NodeType.INPUT:
+        return True
+    return node_id in set(model.input_node_ids)
 
 
 def detect_required_splits(
@@ -42,6 +64,13 @@ def detect_required_splits(
     A node requires splitting if and only if it has:
     - At least one external input (from outside proposed coverage), AND
     - At least one external output (to outside proposed coverage)
+
+    Network input nodes receive their value from the environment, i.e. they
+    always have an external input (as in ``classify_node``).  An input node
+    in the coverage that also feeds a node outside it therefore fans out
+    across the annotation boundary (e.g. into the output's direct-edge group
+    and into a hidden gate) and must be split: otherwise whichever
+    annotation claims it first leaves the other unable to cover it.
 
     Such a node cannot be cleanly classified as entry, intermediate, or exit:
     - It has external input → would be an "entry"
@@ -78,12 +107,18 @@ def detect_required_splits(
             if conn.enabled and conn.to_node in proposed_coverage
         ]
 
+        is_input = _is_input_node(model, node_id)
+
         # Violation: has BOTH external input AND external output
-        if external_inputs and external_outputs:
+        if (external_inputs or is_input) and external_outputs:
             violations.append(
                 ViolationDetail(
                     node_id=node_id,
-                    reason="has_external_input_and_output",
+                    reason=(
+                        "input_feeds_outside_coverage"
+                        if is_input and not external_inputs
+                        else "has_external_input_and_output"
+                    ),
                     external_inputs=external_inputs,
                     external_outputs=external_outputs,
                     internal_outputs=internal_outputs,
@@ -164,6 +199,7 @@ def compute_adjusted_coverage(
 def analyze_coverage_for_splits(
     model: NetworkStructure,
     proposed_coverage: List[str],
+    annotations=None,
 ) -> SplitDetectionResult:
     """
     Complete analysis of proposed coverage for required splits.
@@ -179,17 +215,30 @@ def analyze_coverage_for_splits(
     Args:
         model: Current network structure
         proposed_coverage: List of node IDs to annotate
+        annotations: Optional existing annotations (AnnotationData or dicts).
+            Nodes of the coverage they already own are reported in
+            ``already_covered`` and get no split suggestion.
 
     Returns:
         SplitDetectionResult with violations, suggestions, and adjusted coverage
     """
     coverage_set = set(proposed_coverage)
 
+    owners = covered_node_owners(annotations)
+    already_covered = [
+        {"node_id": nid, "annotation": owners[nid]}
+        for nid in proposed_coverage
+        if nid in owners
+    ]
+    covered_ids = {c["node_id"] for c in already_covered}
+
     # Detect violations
     violations = detect_required_splits(model, coverage_set)
 
-    # Generate suggestions
-    suggested_ops = suggest_split_operations(violations)
+    # Generate suggestions (covered nodes are immutable: cannot be split)
+    suggested_ops = suggest_split_operations(
+        [v for v in violations if v.node_id not in covered_ids]
+    )
 
     # For now, we don't compute adjusted_coverage since splits aren't applied
     # The frontend can compute this after applying the suggested operations
@@ -200,6 +249,7 @@ def analyze_coverage_for_splits(
         violations=violations,
         suggested_operations=suggested_ops,
         adjusted_coverage=adjusted_coverage,
+        already_covered=already_covered,
     )
 
 
