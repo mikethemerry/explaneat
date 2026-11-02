@@ -29,6 +29,16 @@ A composition annotation:
 - Has its own subgraph (nodes and connections) that may include junction nodes/edges connecting the children
 - Can itself be a child of another composition annotation
 
+### Evaluating a Composition
+
+Because a composition's own `subgraph_nodes` hold only its junction nodes, its function (formula, viz, sensitivity, SHAP) must be computed over the whole subtree. `explaneat.analysis.composition.expand_annotation` builds that view, and the MCP/API evidence tools apply it automatically when given a composition's `annotation_id`:
+
+- **Subgraph**: backward closure from the composition's exits over the union of its own and all descendants' nodes, stopping at the declared entry nodes. A composition declared over its children's raw entries therefore includes the children's internals; one declared over its children's exits stays a function of those exits.
+- **Entries**: the declared entries, followed by any source node of the closure the composition did not declare (typically grandchild entries that older explanations could not list). These are reported as `added_entry_nodes`.
+- **Connections**: the enabled model connections inside the closure, i.e. exactly what the forward pass computes, so the expanded function equals the model's activations at the exits.
+
+`get_formula` returns `latex` for the expanded function (every child term inlined) and `latex_collapsed` with each direct child (itself expanded) shown as a named function.
+
 **Important:** The API computes `parent_annotation_id` by inverting `child_annotation_ids` via a name-based lookup. When multiple annotations share the same name, this back-pointer can be incorrect. The client-side collapsed view (`useCollapsedView.ts`) uses `children_ids` — the forward reference declared on the parent annotation — as the authoritative source for hierarchy traversal. See `docs/annotation_collapsing_model.md` Implementation section for details.
 
 ### Example Hierarchy

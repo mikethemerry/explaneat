@@ -122,6 +122,37 @@ def find_annotation_in_operations(
     raise ValueError(f"Annotation '{annotation_id}' not found")
 
 
+def load_annotations(session, genome_id: str) -> List[Dict[str, Any]]:
+    """All annotation dicts for a genome (one per annotate op, in order)."""
+    from explaneat.analysis.composition import annotation_dicts_from_operations
+
+    explanation = (
+        session.query(Explanation)
+        .filter(Explanation.genome_id == _to_uuid(genome_id))
+        .first()
+    )
+    if not explanation or not explanation.operations:
+        return []
+    return annotation_dicts_from_operations(explanation.operations)
+
+
+def resolve_annotation_for_evaluation(
+    session, genome_id: str, annotation_id: str, model_state: NetworkStructure
+) -> Dict[str, Any]:
+    """Find an annotation and, for compositions, expand it over its descendants.
+
+    A composition's own subgraph only holds its junction nodes; evaluating it
+    as-is treats the children as zero.  The expanded annotation covers the
+    whole subtree (see ``explaneat.analysis.composition.expand_annotation``).
+    """
+    from explaneat.analysis.composition import expand_annotation
+
+    annotation = find_annotation_in_operations(session, genome_id, annotation_id)
+    if not annotation.get("child_annotation_ids"):
+        return annotation
+    return expand_annotation(annotation, load_annotations(session, genome_id), model_state)
+
+
 def load_split_data(
     session,
     split_id: str,
