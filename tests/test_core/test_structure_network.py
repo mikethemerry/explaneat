@@ -368,6 +368,11 @@ class TestPartialInputs:
         # Node 5: relu(3.0*1.0 + 4.0*1.0) = 7.0  (columns 2 and 3 = inputs -2 and -1)
         np.testing.assert_almost_equal(net.get_node_activation("5")[0], 7.0)
 
+        # Pruned inputs still have a well-defined activation: their input
+        # column (needed e.g. for an "unused inputs" annotation's evidence).
+        np.testing.assert_almost_equal(net.get_node_activation("-4")[0], 10.0)
+        np.testing.assert_almost_equal(net.get_node_activation("-3")[0], 20.0)
+
     def test_many_inputs_few_connected(self):
         """Simulates a 32-feature dataset where only some inputs are used."""
         n_inputs = 32

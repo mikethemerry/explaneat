@@ -575,6 +575,9 @@ class StructureNetwork:
             Output tensor of shape (batch_size, n_outputs)
         """
         self._outputs = {}
+        # Input columns, so pruned input nodes (no path to an output) still
+        # report their activation (= their input value).
+        self._input_x = x
         # Per-node activation storage (used by function nodes to look up
         # entry node activations from earlier layers)
         self._node_activations: Dict[str, torch.Tensor] = {}
@@ -679,6 +682,11 @@ class StructureNetwork:
 
         info = self.node_info.get(node_id)
         if info is None:
+            # Input nodes pruned from the layered network (not connected to
+            # any output) still have a well-defined activation: their column.
+            col = self._input_col_map.get(node_id)
+            if col is not None and getattr(self, "_input_x", None) is not None:
+                return self._input_x[:, col].detach().cpu().numpy()
             raise ValueError(f"Node '{node_id}' not found in network")
 
         d = info["depth"]
