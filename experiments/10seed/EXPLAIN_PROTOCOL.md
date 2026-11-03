@@ -57,30 +57,28 @@ Scratch files go in your own directory:
 8. Don't edit repository code. If a tool is broken, work around it with other tools and
    record the bug in your notes. If that is impossible, stop and report.
 
-## Known tool behaviour (from the pilot, heart-s5)
+## Known tool behaviour (protocol v3, after the tool fixes merged in 88c1b00)
 
-- **A node can sit in only one annotation's subgraph, and the annotate validator only
-  sees direct children's nodes as internal to a composition.** A composition can't read
-  out a grandchild's exit. So plan the whole hierarchy before annotating. Any node
-  (hidden or input) that feeds two different branches of the hierarchy must be split
-  first. `detect_splits`/`classify_nodes` do **not** flag an input that fans out to
-  several annotations: annotate then fails with "already covered", so find these splits
-  by hand from the topology.
-- Hidden nodes that take inputs from several annotations can only live in a composition,
-  not in a leaf. That is fine.
-- `undo_operation(seq)` removes that operation **and every later one**. `rename_node` and
-  `add_evidence` don't create new annotation seqs, but they are lost if you undo the
-  annotation they belong to.
-- `update_narrative` **overwrites** the annotation's hypothesis. Always write the full
-  hypothesis plus the evidence summary.
-- For composition formulas, use `get_formula` with `force: true` and read
-  `latex_collapsed`, because the plain `latex` drops the child terms. For composition
-  evidence (`get_viz_summary`/`compute_viz_data`), use `node_id=<exit node>` rather than
-  `annotation_id`, because annotation-level evaluation treats children as zero.
-- `get_formula` shows the output node as ReLU, but for binary tasks the model applies a
-  sigmoid at the output. Say so in the root evidence.
-- The tool's `compositional_coverage` is always 1.0 (it doesn't test whether a root
-  covers the output). Completeness is judged by `check_explanation.py` → `hierarchy.complete`.
+Heart was explained with v2 tooling. The following were fixed afterwards and no longer
+need workarounds: the output node is now sigmoid in every engine; composition formulas
+and composition evidence include the children; compositions may use descendants at any
+depth; `child_annotation_ids` accepts names or `ann_N`; `detect_splits`/`classify_nodes`
+flag input fan-out and report `already_covered`; SHAP no longer zeroes small effects;
+`line_plot` is accepted; `get_coverage` returns a real `compositional_coverage` and a
+`hierarchy` block.
+
+Still true:
+- **A node can sit in only one annotation's subgraph.** Plan the whole hierarchy before
+  annotating. Split any node (hidden or input) that feeds two different branches.
+- `undo_operation(seq)` removes that operation **and every later one**.
+- `update_narrative` **overwrites** the hypothesis, so write the full hypothesis plus the
+  evidence summary.
+- **Unconnected inputs** (inputs with no enabled phenotype edges) count towards
+  structural coverage. List them as zero-effect entry nodes **of the root annotation**,
+  not as a separate annotation. A separate root-level annotation breaks the single-root
+  requirement.
+- compute_shap at full sample is slow (minutes). Run it in the background or with a
+  smaller `max_samples` on large datasets, and record the sample size used.
 
 ## Workflow
 
@@ -104,7 +102,8 @@ Scratch files go in your own directory:
 5. **Composition annotations:** annotate with `child_annotation_ids`, explaining how the
    children combine (additive, gated, serial), up to a root annotation that covers the
    output.
-6. **Coverage:** `get_coverage` and `check_explanation.py`. Iterate until structural and
+6. **Coverage:** `get_coverage` (structural, compositional and hierarchy) and
+   `check_explanation.py` (the split is looked up from the genome). Iterate until structural and
    compositional coverage are 1.0 **and** `hierarchy.complete` is true, or the time box
    ends. Also confirm that `function_preservation_max_abs_err` is below 1e-9.
 

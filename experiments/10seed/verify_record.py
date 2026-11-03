@@ -8,11 +8,11 @@ import json, sys
 from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE)); sys.path.insert(0, str(HERE.parents[1]))
-from check_explanation import check, HEART_SPLIT  # noqa: E402
+from check_explanation import check, split_for_genome  # noqa: E402
 from mcp_server.tools.coverage import get_coverage  # noqa: E402
 
 rep = json.load(open(sys.argv[1]))
-c = check(rep["genome_id"], HEART_SPLIT)
+c = check(rep["genome_id"], split_for_genome(rep["genome_id"]))
 cov = json.loads(get_coverage(rep["genome_id"]))
 v = {"structural_coverage": cov["structural_coverage"],
      "compositional_coverage": cov["compositional_coverage"],

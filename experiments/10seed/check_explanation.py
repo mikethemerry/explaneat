@@ -30,6 +30,15 @@ from explaneat.db.models import Explanation  # noqa: E402
 HEART_SPLIT = "165cebbd-6609-46ca-867e-c09e17b2d6ec"
 
 
+def split_for_genome(genome_id):
+    """The split the genome's experiment was trained on."""
+    from explaneat.db.models import Experiment, Genome, Population
+    with get_db().session_scope() as s:
+        g = s.get(Genome, genome_id if not isinstance(genome_id, str) else __import__("uuid").UUID(genome_id))
+        exp = s.get(Experiment, s.get(Population, g.population_id).experiment_id)
+        return str(exp.split_id) if exp.split_id else HEART_SPLIT
+
+
 def leaf_annotations(operations):
     out = []
     for op in operations:
@@ -147,6 +156,7 @@ def check(genome_id, split_id):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("genome_id")
-    ap.add_argument("--split-id", default=HEART_SPLIT)
+    ap.add_argument("--split-id", default=None, help="default: the genome's experiment split")
     args = ap.parse_args()
-    print(json.dumps(check(args.genome_id, args.split_id), indent=2, default=str))
+    split = args.split_id or split_for_genome(args.genome_id)
+    print(json.dumps(check(args.genome_id, split), indent=2, default=str))
