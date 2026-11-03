@@ -429,12 +429,32 @@ def _extract_all_node_activations(
 def _resolve_annotation(
     session, genome_id: str, model_state: NetworkStructure,
     annotation_id: Optional[str], node_id: Optional[str],
+    expand: bool = True,
 ) -> Dict[str, Any]:
-    """Resolve an annotation dict from either annotation_id or node_id."""
+    """Resolve an annotation dict from either annotation_id or node_id.
+
+    With ``expand`` (default), composition annotations are expanded over all
+    their descendants (``explaneat.analysis.composition.expand_annotation``)
+    so their function includes the children's subgraphs instead of treating
+    them as zero.
+    """
     if node_id:
         return _compute_node_subgraph(model_state, node_id)
     elif annotation_id:
-        return _find_annotation_in_operations(session, genome_id, annotation_id)
+        annotation = _find_annotation_in_operations(session, genome_id, annotation_id)
+        if expand and annotation.get("child_annotation_ids"):
+            from ...analysis.composition import (
+                annotation_dicts_from_operations,
+                expand_annotation,
+            )
+            explanation = (
+                session.query(Explanation)
+                .filter(Explanation.genome_id == uuid.UUID(genome_id))
+                .first()
+            )
+            all_anns = annotation_dicts_from_operations(explanation.operations or [])
+            annotation = expand_annotation(annotation, all_anns, model_state)
+        return annotation
     else:
         raise HTTPException(status_code=400, detail="Provide annotation_id or node_id")
 
@@ -866,11 +886,16 @@ async def get_formula(
     with db.session_scope() as session:
         engine = _build_engine(session, genome_id)
         model_state = engine.current_state
-        annotation = _resolve_annotation(
+        # Expanded over descendants: the function of the whole subtree.
+        expanded_annotation = _resolve_annotation(
             session, genome_id, model_state, annotation_id, node_id,
         )
+        # Declared form, used to build the partially-collapsed view below.
+        annotation = _resolve_annotation(
+            session, genome_id, model_state, annotation_id, node_id, expand=False,
+        )
 
-        ann_fn = AnnotationFunction.from_structure(annotation, model_state)
+        ann_fn = AnnotationFunction.from_structure(expanded_annotation, model_state)
         n_in, n_out = ann_fn.dimensionality
 
         # child_annotation_ids stores child annotation NAMES (e.g. "A1678"),
@@ -935,11 +960,12 @@ async def get_formula(
 
             composed_af = AnnotationFunction.from_structure(parent_ann, partially_collapsed)
             latex_collapsed = composed_af.to_latex(expand=False, force=force)
-            latex_expanded = composed_af.to_latex(expand=True, force=force)
 
-            # Fall back to direct computation if composed path fails
+            # Fully expanded formula of the whole subtree (ann_fn is built
+            # from the composition expanded over all descendants).
+            latex_expanded = ann_fn.to_latex(force=force)
             if latex_expanded is None:
-                latex_expanded = ann_fn.to_latex(force=force)
+                latex_expanded = composed_af.to_latex(expand=True, force=force)
 
             return FormulaResponse(
                 latex=latex_expanded,

@@ -86,9 +86,17 @@ class ExplaNEAT:
         """
         Get the full genotype network structure (all nodes and connections).
         
+        Output nodes carry ``activation="sigmoid"`` regardless of the
+        activation stored on the genome's node gene, because the training
+        engine (NeuralNeat) always applies a sigmoid to the output layer.
+        The structure therefore describes the function the trained model
+        computes, so StructureNetwork, AnnotationFunction, formulas and
+        collapsed function nodes all agree with NeuralNeat.
+
         Returns:
             NetworkStructure containing all nodes and connections from the genome
         """
+        from explaneat.core.neuralneat import OUTPUT_ACTIVATION
         # Get input/output node IDs from config
         input_node_ids = self._get_input_nodes()
         output_node_ids = self._get_output_nodes()
@@ -106,12 +114,15 @@ class ExplaNEAT:
             if node_id in self.genome.nodes:
                 node = self.genome.nodes[node_id]
                 node_type = self._get_node_type(node_id)
+                activation = getattr(node, "activation", None)
+                if node_type == NodeType.OUTPUT:
+                    activation = OUTPUT_ACTIVATION
                 nodes.append(
                     NetworkNode(
                         id=node_id_str,
                         type=node_type,
                         bias=getattr(node, "bias", None),
-                        activation=getattr(node, "activation", None),
+                        activation=activation,
                         response=getattr(node, "response", None),
                         aggregation=getattr(node, "aggregation", None),
                     )

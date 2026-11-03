@@ -13,8 +13,40 @@ from ..helpers import (
     build_engine,
     build_model_state,
     find_annotation_in_operations,
+    load_annotations,
     load_split_data,
+    resolve_annotation_for_evaluation,
 )
+
+
+VALID_VIZ_TYPES = (
+    "line", "heatmap", "partial_dependence", "pca_scatter", "sensitivity",
+    "ice", "feature_output_scatter", "output_distribution",
+    "activation_profile", "edge_influence", "regime_map",
+)
+
+_VIZ_TYPE_ALIASES = {
+    "line_plot": "line",
+    "lineplot": "line",
+    "pdp": "partial_dependence",
+    "pca": "pca_scatter",
+}
+
+
+def _normalize_viz_type(viz_type: str) -> str:
+    """Map aliases (e.g. 'line_plot') to canonical viz type names.
+
+    Raises ValueError listing the valid names for unknown types.
+    """
+    key = (viz_type or "").strip().lower()
+    key = _VIZ_TYPE_ALIASES.get(key, key)
+    if key not in VALID_VIZ_TYPES:
+        raise ValueError(
+            f"Unknown viz_type: {viz_type!r}. Valid viz types: "
+            f"{', '.join(VALID_VIZ_TYPES)} (aliases: "
+            f"{', '.join(f'{a}->{c}' for a, c in _VIZ_TYPE_ALIASES.items())})"
+        )
+    return key
 
 
 def _json_default(obj):
@@ -87,11 +119,17 @@ def _compute_node_subgraph(model_state, node_id: str) -> Dict[str, Any]:
 
 
 def _resolve_annotation(session, genome_id, model_state, annotation_id, node_id):
-    """Resolve an annotation dict from annotation_id or node_id."""
+    """Resolve an annotation dict from annotation_id or node_id.
+
+    Composition annotations are expanded over all their descendants so that
+    their function includes the children's subgraphs.
+    """
     if node_id:
         return _compute_node_subgraph(model_state, node_id)
     elif annotation_id:
-        return find_annotation_in_operations(session, genome_id, annotation_id)
+        return resolve_annotation_for_evaluation(
+            session, genome_id, annotation_id, model_state,
+        )
     else:
         raise ValueError("Provide annotation_id or node_id")
 
@@ -151,6 +189,7 @@ def _do_compute_viz_data(
     from explaneat.core.structure_network import StructureNetwork
     import torch
 
+    viz_type = _normalize_viz_type(viz_type)
     db = get_db()
     params = params or {}
 
@@ -364,33 +403,28 @@ def get_formula(
             child_ann_ids = annotation.get("child_annotation_ids", [])
             is_composed = len(child_ann_ids) > 0
 
-            # Resolve child annotations for compositions so the formula
-            # shows named child functions instead of raw scalar nodes.
-            child_annotations = None
-            if is_composed:
-                child_annotations = []
-                for cid in child_ann_ids:
-                    try:
-                        child_annotations.append(
-                            find_annotation_in_operations(session, genome_id, cid)
-                        )
-                    except ValueError:
-                        pass  # skip unresolvable children
-
-            # Build two AnnotationFunctions:
-            # - With children collapsed (for composition formula)
-            # - Without children (for fully expanded formula)
-            if child_annotations:
-                ann_fn_composed = AnnotationFunction.from_structure(
-                    annotation, model_state, child_annotations=child_annotations
-                )
-                n_in, n_out = ann_fn_composed.dimensionality
-            else:
-                ann_fn_composed = None
-
+            # ``annotation`` is already expanded over all descendants, so the
+            # plain (fully expanded) formula includes every child's terms.
             ann_fn_expanded = AnnotationFunction.from_structure(annotation, model_state)
-            if ann_fn_composed is None:
-                n_in, n_out = ann_fn_expanded.dimensionality
+            n_in, n_out = ann_fn_expanded.dimensionality
+
+            # Composition view: direct children (each expanded over its own
+            # descendants) shown as named functions.
+            ann_fn_composed = None
+            if is_composed:
+                from explaneat.analysis.composition import (
+                    child_annotations as _children,
+                    expand_annotation,
+                )
+                all_anns = load_annotations(session, genome_id)
+                children = [
+                    expand_annotation(c, all_anns, model_state)
+                    for c in _children(annotation, all_anns)
+                ]
+                if children:
+                    ann_fn_composed = AnnotationFunction.from_structure(
+                        annotation, model_state, child_annotations=children
+                    )
 
             # Smart default: auto-force for small tractable networks
             if not force and n_in <= 8:
@@ -414,7 +448,11 @@ def get_formula(
                 "is_composed": is_composed,
                 "child_annotation_ids": child_ann_ids,
                 "dimensionality": [n_in, n_out],
+                "entry_nodes": [str(n) for n in annotation.get("entry_nodes", [])],
+                "exit_nodes": [str(n) for n in annotation.get("exit_nodes", [])],
             }
+            if annotation.get("added_entry_nodes"):
+                result["added_entry_nodes"] = annotation["added_entry_nodes"]
             return json.dumps(result, indent=2, default=_json_default)
     except Exception as e:
         return json.dumps({"error": str(e)})
@@ -437,7 +475,9 @@ def compute_viz_data(
     Produces JSON data suitable for rendering as a chart. Supports many viz
     types: line, heatmap, partial_dependence, pca_scatter, sensitivity, ice,
     feature_output_scatter, output_distribution, activation_profile,
-    edge_influence, regime_map.
+    edge_influence, regime_map (aliases: line_plot/lineplot -> line,
+    pdp -> partial_dependence, pca -> pca_scatter). Unknown types return an
+    error listing the valid names.
 
     Args:
         genome_id: UUID of the genome.
@@ -518,6 +558,7 @@ def render_visualization(
         params=extra_params,
     )
 
+    viz_type = result["viz_type"]  # canonical name (aliases resolved)
     png_b64 = render_to_png(viz_type, result["data"], title=title)
 
     metadata = {
@@ -579,7 +620,7 @@ def get_viz_summary(
 
     data = result["data"]
     summary: Dict[str, Any] = {
-        "viz_type": viz_type,
+        "viz_type": result["viz_type"],
         "dimensionality": result["dimensionality"],
         "entry_names": result["entry_names"],
         "exit_names": result["exit_names"],
@@ -823,7 +864,9 @@ def get_input_distribution(
 
         if annotation_id:
             model_state = build_model_state(session, genome_id)
-            annotation = find_annotation_in_operations(session, genome_id, annotation_id)
+            annotation = resolve_annotation_for_evaluation(
+                session, genome_id, annotation_id, model_state,
+            )
             extractor = ActivationExtractor.from_structure(model_state)
             entry_acts, _ = extractor.extract(X, annotation)
             data = entry_acts

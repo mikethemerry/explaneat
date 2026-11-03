@@ -30,6 +30,8 @@ from .operations import (
     apply_retrain,
     validate_operation,
     is_identity_op,
+    resolve_annotation_ref,
+    canonicalize_annotation_refs,
     OperationError,
 )
 
@@ -105,6 +107,12 @@ class AnnotationData:
     evidence: Optional[Dict[str, Any]] = None
     parent_annotation_id: Optional[str] = None  # Set when this is a child of a compositional annotation
     display_name: Optional[str] = None  # Cosmetic label; canonical name stays stable for collapse ops
+    annotation_id: Optional[str] = None  # Synthetic id reported by tools ("ann_<seq>")
+
+
+def _annotation_id_for_op(op: "Operation") -> str:
+    """Synthetic annotation id for an annotate op (mirrors the MCP/API helpers)."""
+    return (op.result or {}).get("annotation_id") or f"ann_{op.seq}"
 
 
 class ModelStateEngine:
@@ -259,7 +267,14 @@ class ModelStateEngine:
                 subgraph_nodes=op.params["subgraph_nodes"],
                 subgraph_connections=[tuple(c) for c in op.params.get("subgraph_connections", [])],
                 evidence=op.params.get("evidence"),
+                annotation_id=_annotation_id_for_op(op),
             )
+            for child_ref in op.params.get("child_annotation_ids", []) or []:
+                child_name = resolve_annotation_ref(child_ref, annotations)
+                for other in annotations:
+                    if other.name == child_name:
+                        other.parent_annotation_id = ann.name
+                        break
             annotations.append(ann)
             covered_nodes.update(ann.subgraph_nodes)
             covered_connections.update(ann.subgraph_connections)
@@ -281,10 +296,10 @@ class ModelStateEngine:
                 op.params.get("display_name"), covered_nodes,
             )
         elif op.type == "rename_annotation":
-            ann_id = op.params["annotation_id"]
+            ann_name = resolve_annotation_ref(op.params["annotation_id"], annotations)
             display_name = op.params.get("display_name")
             for ann in annotations:
-                if ann.name == ann_id:
+                if ann.name == ann_name:
                     ann.display_name = display_name
                     break
         elif op.type == "prune_node":
@@ -370,15 +385,18 @@ class ModelStateEngine:
                 subgraph_nodes=op.params["subgraph_nodes"],
                 subgraph_connections=[tuple(c) for c in op.params.get("subgraph_connections", [])],
                 evidence=op.params.get("evidence"),
+                annotation_id=_annotation_id_for_op(op),
             )
-            self._annotations.append(annotation)
             self._covered_nodes.update(annotation.subgraph_nodes)
             self._covered_connections.update(annotation.subgraph_connections)
 
-            # For compositional annotations, update child annotations' parent_annotation_id
+            # For compositional annotations, update child annotations' parent_annotation_id.
+            # Children may be referenced by name or by synthetic id ("ann_<seq>").
             child_annotation_ids = op.params.get("child_annotation_ids", [])
+            self._annotations.append(annotation)
             if child_annotation_ids:
-                for child_name in child_annotation_ids:
+                for child_ref in child_annotation_ids:
+                    child_name = resolve_annotation_ref(child_ref, self._annotations[:-1])
                     # Find child annotation by name and set its parent
                     for ann in self._annotations:
                         if ann.name == child_name:
@@ -422,8 +440,9 @@ class ModelStateEngine:
         elif op.type == "rename_annotation":
             annotation_id = op.params["annotation_id"]
             display_name = op.params.get("display_name")
+            ann_name = resolve_annotation_ref(annotation_id, self._annotations)
             for ann in self._annotations:
-                if ann.name == annotation_id:
+                if ann.name == ann_name:
                     ann.display_name = display_name
                     break
             else:
@@ -484,6 +503,10 @@ class ModelStateEngine:
         # Ensure state is current
         if not self._state_valid:
             self._replay_operations()
+
+        # Annotation references (child_annotation_ids, rename_annotation's
+        # annotation_id) may be names or ann_<seq> ids; store names.
+        params = canonicalize_annotation_refs(op_type, params, self._annotations)
 
         # Validate if requested
         if validate:

@@ -56,6 +56,78 @@ def is_identity_op(op_type: str) -> bool:
     return op_type in IDENTITY_OPS
 
 
+def resolve_annotation_ref(
+    ref: Any, annotations: Optional[List["AnnotationData"]]
+) -> Optional[str]:
+    """Resolve an annotation reference to the annotation's canonical name.
+
+    Tools report annotations both by ``name`` and by a synthetic id
+    (``ann_<seq>``, see ``find_annotation_in_operations``).  An exact name
+    match wins; otherwise the reference is matched against each
+    annotation's ``annotation_id``.  Returns None if nothing matches.
+    """
+    if ref is None:
+        return None
+    ref = str(ref)
+    anns = annotations or []
+    for ann in anns:
+        if ann.name == ref:
+            return ann.name
+    for ann in anns:
+        if getattr(ann, "annotation_id", None) == ref:
+            return ann.name
+    return None
+
+
+def annotation_descendants(
+    name: str, annotations: Optional[List["AnnotationData"]]
+) -> List["AnnotationData"]:
+    """All descendants (children, grandchildren, ...) of annotation ``name``."""
+    anns = annotations or []
+    out: List["AnnotationData"] = []
+    seen: Set[str] = {name}
+    frontier = [name]
+    while frontier:
+        parent = frontier.pop()
+        for ann in anns:
+            if ann.parent_annotation_id == parent and ann.name not in seen:
+                seen.add(ann.name)
+                out.append(ann)
+                frontier.append(ann.name)
+    return out
+
+
+def canonicalize_annotation_refs(
+    op_type: str,
+    params: Dict[str, Any],
+    annotations: Optional[List["AnnotationData"]],
+) -> Dict[str, Any]:
+    """Return params with annotation references rewritten to names.
+
+    ``child_annotation_ids`` (annotate) and ``annotation_id``
+    (rename_annotation) may be given as names or ``ann_<seq>`` ids; stored
+    operations use names, which is what every consumer of the event stream
+    (hierarchy, coverage, get_annotations) expects.  Unresolvable references
+    are left unchanged so validation can report them.  The input dict is not
+    mutated.
+    """
+    if op_type == "annotate" and params.get("child_annotation_ids"):
+        new = dict(params)
+        new["child_annotation_ids"] = [
+            resolve_annotation_ref(ref, annotations) or ref
+            for ref in params["child_annotation_ids"]
+        ]
+        return new
+    if op_type == "rename_annotation" and params.get("annotation_id") is not None:
+        new = dict(params)
+        new["annotation_id"] = (
+            resolve_annotation_ref(params["annotation_id"], annotations)
+            or params["annotation_id"]
+        )
+        return new
+    return params
+
+
 # =============================================================================
 # Validation
 # =============================================================================
@@ -244,19 +316,22 @@ def validate_operation(
                     errors.append(f"Connection {conn} does not exist")
 
             # --- Composition-specific checks ---
-            child_annotation_ids = set(params.get("child_annotation_ids", []))
             existing = existing_annotations or []
+            # Children may be referenced by name or by synthetic id (ann_<seq>)
+            child_refs = list(params.get("child_annotation_ids", []) or [])
+            child_annotation_ids = set()
+            for ref in child_refs:
+                child_name = resolve_annotation_ref(ref, existing)
+                if child_name is None:
+                    errors.append(f"Child annotation '{ref}' not found")
+                else:
+                    child_annotation_ids.add(child_name)
 
             # Exit nodes must not be empty
             if not exit_nodes:
                 errors.append("Annotation must have at least one exit node")
 
             if child_annotation_ids:
-                # Children must exist
-                for child_name in child_annotation_ids:
-                    found = any(ann.name == child_name for ann in existing)
-                    if not found:
-                        errors.append(f"Child annotation '{child_name}' not found")
 
                 # No dual parents — child must not already have a parent
                 for child_name in child_annotation_ids:
@@ -293,12 +368,16 @@ def validate_operation(
 
             # Build set of nodes inside child annotations (for compositional annotations)
             # Connections to these nodes are considered "internal" even though they're
-            # not in this annotation's subgraph (they belong to child annotations)
+            # not in this annotation's subgraph (they belong to child annotations).
+            # Descendants at any depth count: a composition may read out a
+            # grandchild's exit and list a grandchild's entries.
             nodes_inside_children = set()
             if child_annotation_ids:
                 for ann in existing:
                     if ann.name in child_annotation_ids:
                         nodes_inside_children.update(ann.subgraph_nodes)
+                        for desc in annotation_descendants(ann.name, existing):
+                            nodes_inside_children.update(desc.subgraph_nodes)
 
             # Combined set of "internal" nodes for validation
             internal_nodes = subgraph_nodes | nodes_inside_children
@@ -409,8 +488,7 @@ def validate_operation(
         if not annotation_id:
             errors.append("annotation_id is required")
         else:
-            known_ids = {a.name for a in annotations} if annotations else set()
-            if annotation_id not in known_ids:
+            if resolve_annotation_ref(annotation_id, existing_annotations) is None:
                 errors.append(f"Annotation '{annotation_id}' not found")
         if display_name is not None:
             if not display_name:

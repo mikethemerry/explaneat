@@ -195,6 +195,7 @@ Interactive shell for exploring genomes:
 ### Two Forward-Pass Engines
 - **`NeuralNeat`**: PyTorch `nn.Module` from raw NEAT genome. Integer node IDs only. Used for training
 - **`StructureNetwork`**: NumPy/Torch forward-pass from `NetworkStructure`. String node IDs, handles identity nodes (`identity_5`), split nodes (`5_a`, `5_b`), and split input nodes (`-20_a`). Used for evidence visualization on annotated models
+- **Parity**: `NeuralNeat` always applies sigmoid at the output layer (ReLU on hidden layers), whatever the output gene says. `ExplaNEAT.get_genotype_network()`/`get_phenotype_network()` therefore set `activation="sigmoid"` on output nodes, so StructureNetwork, ActivationExtractor, AnnotationFunction and formulas compute the trained model's function (`tests/test_core/test_engine_parity.py`)
 
 ### Operations-Based Model State
 The model state is computed by replaying an ordered list of operations on the base phenotype. Operations are stored as JSONB on the `Explanation` model. Operation types: `split_node`, `consolidate_node`, `add_identity_node`, `add_node`, `remove_node`, `annotate`. The `ModelStateEngine` handles replay, undo, and validation.

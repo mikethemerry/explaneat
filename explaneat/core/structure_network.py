@@ -541,16 +541,25 @@ class StructureNetwork:
 
         NeuralNeat hardcodes relu on hidden layers regardless of the genome's
         per-node activation.  Call this to match that training behaviour.
+
+        Identity nodes (inserted by identity-preserving operations such as
+        add_identity_node / add_node) and FUNCTION nodes are not genome
+        hidden nodes and keep their own activation: clipping an identity
+        node would change the function the network computes.
         """
-        out_ids = set(self.structure.output_node_ids)
+        keep = {"function", "identity"}
         for d in self._layer_order:
             layer = self._layers[d]
             if layer.get("is_input") or layer.get("is_output"):
                 continue
-            layer["activations"] = [
-                activation if act != "function" else act
-                for act in layer["activations"]
-            ]
+            new_acts = []
+            for act in layer["activations"]:
+                new_acts.append(act if act in keep else activation)
+            layer["activations"] = new_acts
+            for nid in layer["node_ids"]:
+                info = self.node_info.get(nid)
+                if info is not None and info["activation"] not in keep:
+                    info["activation"] = activation
 
     # ------------------------------------------------------------------
     # Forward
@@ -566,6 +575,9 @@ class StructureNetwork:
             Output tensor of shape (batch_size, n_outputs)
         """
         self._outputs = {}
+        # Input columns, so pruned input nodes (no path to an output) still
+        # report their activation (= their input value).
+        self._input_x = x
         # Per-node activation storage (used by function nodes to look up
         # entry node activations from earlier layers)
         self._node_activations: Dict[str, torch.Tensor] = {}
@@ -670,6 +682,11 @@ class StructureNetwork:
 
         info = self.node_info.get(node_id)
         if info is None:
+            # Input nodes pruned from the layered network (not connected to
+            # any output) still have a well-defined activation: their column.
+            col = self._input_col_map.get(node_id)
+            if col is not None and getattr(self, "_input_x", None) is not None:
+                return self._input_x[:, col].detach().cpu().numpy()
             raise ValueError(f"Node '{node_id}' not found in network")
 
         d = info["depth"]

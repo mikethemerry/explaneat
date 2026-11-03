@@ -129,3 +129,17 @@ def test_json_default_numpy():
     assert json.dumps(np.bool_(True), default=_json_default) == "true"
     arr = np.array([1, 2, 3])
     assert json.loads(json.dumps(arr, default=_json_default)) == [1, 2, 3]
+
+
+def test_viz_type_names_and_error():
+    import pytest
+    from mcp_server.tools.evidence import VALID_VIZ_TYPES, _normalize_viz_type
+
+    assert _normalize_viz_type("line") == "line"
+    assert _normalize_viz_type("line_plot") == "line"
+    assert _normalize_viz_type("LINE_PLOT") == "line"
+    assert "line" in VALID_VIZ_TYPES and "activation_profile" in VALID_VIZ_TYPES
+    with pytest.raises(ValueError) as exc:
+        _normalize_viz_type("bogus")
+    msg = str(exc.value)
+    assert "bogus" in msg and "line" in msg and "sensitivity" in msg

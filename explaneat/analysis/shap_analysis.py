@@ -40,7 +40,14 @@ def compute_shap_values(
     bg = X if len(X) <= max_samples else shap.sample(X, max_samples)
 
     explainer = shap.KernelExplainer(predict_fn, bg)
-    shap_values = explainer.shap_values(X)
+    # l1_reg=False: shap's default (``num_features(10)`` in shap>=0.45,
+    # ``auto``/AIC before) runs a LARS/Lasso feature selection per explained
+    # row and assigns every unselected feature an exact 0.  With more than
+    # ~10 inputs this zeroes real but smaller effects (e.g. mean |SHAP| == 0
+    # for a feature that reaches the output through a hidden node).  We want
+    # the full weighted least-squares Kernel SHAP estimate for all features.
+    # silent=True suppresses the tqdm progress bar on stderr.
+    shap_values = explainer.shap_values(X, l1_reg=False, silent=True)
 
     # Normalise to list-of-arrays (one per output)
     if isinstance(shap_values, list):
