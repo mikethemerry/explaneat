@@ -1,0 +1,50 @@
+{
+  "label": "monk2-s7",
+  "genome_id": "4cacc8f5-e09f-44eb-83e3-afd74922e268",
+  "start": "2026-11-03T13:12:36+13:00",
+  "end": "2026-11-03T13:53:38+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 2,
+  "n_composition_annotations": 2,
+  "n_splits": 5,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 3,
+  "hidden_nodes_single_leaf_no_split": 2,
+  "hidden_nodes_in_any_annotation": 3,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 3.33e-16,
+  "closed_form_max_abs_err": 0.0162,
+  "protocol_version": "v3",
+  "resisted": "Nothing unexplained. Veto gate 288 takes the a4/a5 pool node as input so sits in a serial composition rather than a leaf. Small veto leak: when the two active indicators are a2=1 and a5=1 the veto outputs 0.62 (x4.009 = 2.49 > ramp margin 1.56), giving 4/432 configurations (3 train rows) as false negatives.",
+  "tool_bugs": "None. Limitation: a leaf cannot take another leaf's exit as an entry, so serial chains are compositions.",
+  "rule_agreement": "428/432 configurations agree with the MONK-2 rule; all 4 disagreements are a2=1 & a5=1 veto-leak cases. Implements the window in reverse to the paper's model: descending ramp sets the upper edge, low-count veto sets the lower edge.",
+  "summary": "Output = sigmoid(1.383 + Ramp - 4.009 Veto - 0.888 Pool). Ramp is a descending linear count of first-value indicators (positive only when <=2 active); Pool is a rectified count of I4 and I5; Veto fires when <=1 indicator is active and overrides the ramp. Net: a window on exactly two active indicators. Train accuracy 0.991, AUC 1.0.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 4,
+      "roots": [
+        "exactly_two_window"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 3.3306690738754696e-16,
+    "closed_form_max_abs_err": 0.01621401201626016,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 17,
+      "split_node": 5,
+      "add_identity_node": 1,
+      "annotate": 4
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}
