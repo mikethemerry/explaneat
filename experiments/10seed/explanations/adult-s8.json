@@ -1,0 +1,50 @@
+{
+  "label": "adult-s8",
+  "genome_id": "2c47861c-efda-467a-b0b6-9dbd11dfac15",
+  "start": "2026-11-05T12:22:16+13:00",
+  "end": "2026-11-05T12:39:49+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 11,
+  "n_composition_annotations": 1,
+  "n_splits": 1,
+  "n_identity_nodes": 7,
+  "hidden_nodes": 15,
+  "hidden_nodes_single_leaf_no_split": 15,
+  "hidden_nodes_in_any_annotation": 15,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 7.216449660063518e-16,
+  "closed_form_max_abs_err": 0.09154544228394457,
+  "protocol_version": "v3",
+  "resisted": "Nothing structural. Single-category overrides fitted to tens of rows (Armed-Forces -80 logit/12 rows, Honduras +183/14, Guatemala +4.6, Nicaragua +3.1); Own-child x Nicaragua interaction rests on a handful of rows. Marital status split across backbone and gate (net effect only readable across both). Cambodia chain and Japan unit effectively zero. Category names inferred.",
+  "tool_bugs": "get_viz_summary for a leaf whose exit is a hidden unit reports pre-weight activation, not logit contribution (narratives give both).",
+  "summary": "P(income<=50K) = sigmoid(-1.468 + 11 additive logit terms). Sparse linear backbone dominates (ablation AUC 0.911 -> 0.611). Capital gain acts twice: a convex hinge and a gate cancelling a +4.25 (never-married +2.34) offset towards <=50K once gains pass ~0.5 SD. An OR gate (youth outside Other-service, or Other-service) pushes towards <=50K; exactly linear Widowed term; rare-category overrides. Train acc 0.854, AUC 0.911; 44 of 107 inputs unconnected.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 12,
+      "roots": [
+        "full_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 7.216449660063518e-16,
+    "closed_form_max_abs_err": 0.09154544228394457,
+    "numeric_max_abs_err": 2.842170943040401e-14,
+    "op_counts": {
+      "rename_node": 107,
+      "split_node": 1,
+      "consolidate_node": 1,
+      "add_identity_node": 7,
+      "annotate": 12
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}
