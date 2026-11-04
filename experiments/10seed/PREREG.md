@@ -121,6 +121,15 @@ generations by design (decided 2 Nov 2026).
   ~73 s to 0.7 s. Heart runs used the old code; Adult/MONK-2 and any later runs use the
   new code. Both commits are recorded per run.
 
+- **2026-11-05: Heart 100-generation explanations (additional analysis, Mike).** The 10
+  `10seed-heart100-s<seed>` best genomes (same tie-break rule) are also explained, with
+  protocol v3, in the Heart order s5, s0, s1, s6, s9, s4, s2, s8, s7, s3. They are reported
+  separately from the pre-registered 30 and are not counted towards the threshold.
+- **2026-11-05: explanation concurrency.** At Mike's request (CPU load), at most 5
+  explanation agents run at once. Adult goes first in its pre-registered order (s0, s1,
+  s2, s7, s4, s3, s9, s5, s8, s6), then Heart100. Each agent's 3-hour box is measured
+  from its own first tool call.
+
 ## Metrics (per run, `runs.csv`, all 30 best genomes)
 
 - `dataset, seed, experiment_id, genome_id, code_commit, hardware`, plus a `rerun` note
