@@ -1,0 +1,51 @@
+{
+  "label": "heart100-s5",
+  "genome_id": "ea5ce707-5f8b-4a05-8818-1e4e26df2da3",
+  "start": "2026-11-05T11:08:23+13:00",
+  "end": "2026-11-05T11:30:01+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 4,
+  "n_composition_annotations": 2,
+  "n_splits": 5,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 7,
+  "hidden_nodes_single_leaf_no_split": 3,
+  "hidden_nodes_in_any_annotation": 7,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 2.7755575615628914e-16,
+  "closed_form_max_abs_err": 0.010577258607534112,
+  "protocol_version": "v3",
+  "analysis": "heart100 (additional)",
+  "resisted": "Nothing resisted coverage. Four amplifier nodes take inputs from two leaves so live in a composition. Small positive cp:2/restecg:0 weights in the ischaemia score: no clinical claim made.",
+  "tool_bugs": "None. Kernel SHAP gives ~0.001 to unconnected inputs (estimator noise). compute_shap full sample 5.5 min.",
+  "vs_40gen": "Nonlinear pathway much stronger (logit SD 0.78 -> 2.77; +0.010 -> +0.027 train AUC); BP became an inhibitor of the ischaemia gate; single amplifier became a 3-node chain (gain ~2.4); thalach and cp:2 joined the ischaemia score; fbs entered as a step and amplifier threshold; age term gone.",
+  "summary": "sigmoid(-0.935 + 20-input linear logit (SD 3.15) + fbs step (+0.19 if normal) + one nonlinear pathway (SD 2.77)): an ischaemia score ReLU(oldpeak, thal:7, cp:2, restecg:0, -thalach) inhibited by high resting BP at gate 290 and amplified by a 3-node chain into one steep hinge (~+2.1 logit per unit, active on 71/242). Pathway at mean: train AUC 0.953 -> 0.926.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 6,
+      "roots": [
+        "heart_disease_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 2.7755575615628914e-16,
+    "closed_form_max_abs_err": 0.010577258607534112,
+    "numeric_max_abs_err": 3.552713678800501e-15,
+    "op_counts": {
+      "rename_node": 26,
+      "split_node": 5,
+      "add_identity_node": 1,
+      "annotate": 6
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "label": "adult-s1",
+  "genome_id": "f2932f2e-0de5-42e9-b03a-4ee6395549b3",
+  "start": "2026-11-05T11:08:23+13:00",
+  "end": "2026-11-05T11:53:18+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 6,
+  "n_composition_annotations": 2,
+  "n_splits": 6,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 16,
+  "hidden_nodes_single_leaf_no_split": 14,
+  "hidden_nodes_in_any_annotation": 16,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 4.440892098500626e-16,
+  "closed_form_max_abs_err": 0.10386995869067306,
+  "protocol_version": "v3",
+  "resisted": "Nothing resisted coverage. A 7-node workclass/occupation subtree (3996) is fully masked by a native-country:22 switch (exactly zero effect on all train rows), described as inert residue. relationship0 indicator practically inert. Unexplained: education:3/4 lower P(<=50K) by ~2 logits. Category names inferred from PMLB alphabetical coding.",
+  "tool_bugs": "Compositions accept only their own nodes plus child exits as entries. get_formula on root ~10 min; compute_shap (500 vs 500 background) ~36 min under contention. One transient empty get_model_state.",
+  "summary": "P(income<=50K) = sigmoid(z): essentially logistic regression over 44 direct inputs (married-civ-spouse -3.4 logit, education-num -1.15/SD, male -1.2, wife -1.5) plus one real nonlinearity, a concave piecewise-linear capital-gain penalty (kinks ~3.8k and 4.8k USD); removing it: train acc 0.852 -> 0.824, AUC 0.907 -> 0.888. Other hidden nodes are one-hot indicators; rare categories with standardized values 20-66 act as saturating switches.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 8,
+      "roots": [
+        "income_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.440892098500626e-16,
+    "closed_form_max_abs_err": 0.10386995869067306,
+    "numeric_max_abs_err": 7.105427357601002e-15,
+    "op_counts": {
+      "rename_node": 107,
+      "add_identity_node": 1,
+      "split_node": 6,
+      "consolidate_node": 2,
+      "annotate": 8
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "label": "adult-s0",
+  "genome_id": "6e0e4be0-96c4-45f7-8ac1-74af3c960799",
+  "start": "2026-11-05T11:08:23+13:00",
+  "end": "2026-11-05T11:56:32+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 10,
+  "n_composition_annotations": 1,
+  "n_splits": 2,
+  "n_identity_nodes": 6,
+  "hidden_nodes": 11,
+  "hidden_nodes_single_leaf_no_split": 10,
+  "hidden_nodes_in_any_annotation": 11,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 5.551115123125783e-16,
+  "closed_form_max_abs_err": 0.023278895246072295,
+  "protocol_version": "v3",
+  "resisted": "Nothing structural. Capital-gain hinge 816 also feeds sex gate 369 (weight -0.0053): split 816 and capital-gain, consolidated two copies. Japan's net +0.14 is two near-cancelling large terms. Without-pay (17 rows) gets a +61 logit override, fitted to very few rows.",
+  "tool_bugs": "Root rejected if child exits listed in subgraph_nodes (paper style: entries only). A child exit with other outputs cannot be a sibling leaf entry. SHAP ~5e-4 on unconnected inputs (noise).",
+  "summary": "P(income<=50K) = sigmoid(0.808 + sparse linear backbone over 41 inputs + capital-gain term + female/Priv-house-serv gate + 7 single-category offsets), additive in logit. Hidden units with one one-hot input are exact category offsets (unknown workclass, Without-pay override, Exec-managerial, Wife, Separated, Japan, a dead Private unit). Only real nonlinearities: a convex capital-gain hinge and an OR-like gate (+0.58 women, +2 to +3.6 Priv-house-serv). Train acc 0.852, AUC 0.906; backbone dominates (AUC 0.753 without it).",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 11,
+      "roots": [
+        "full_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 5.551115123125783e-16,
+    "closed_form_max_abs_err": 0.023278895246072295,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 107,
+      "add_identity_node": 6,
+      "split_node": 2,
+      "consolidate_node": 1,
+      "annotate": 11
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}
