@@ -295,7 +295,20 @@ def _load_split_data(session, split_id: str, split_choice: str, sample_frac: flo
     return X, y, dataset.feature_names, dataset.class_names, dataset.num_classes
 
 
+def _lock_explanation_or_404(session, genome_id: str):
+    """Lock the genome's explanation row before a read-modify-write of its
+    operations stream (see ``explaneat.db.explanation_lock``)."""
+    from ...db.explanation_lock import lock_explanation
+
+    try:
+        return lock_explanation(session, uuid.UUID(genome_id))
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Genome not found")
+
+
 def _update_annotation_evidence(session, genome_id: str, annotation_id: str, evidence: Dict[str, Any]):
+    """Callers must hold the lock from ``_lock_explanation_or_404`` (taken
+    before they read the annotation) so concurrent updates are not lost."""
     """Update evidence on an annotation operation in the explanation's operations array."""
     explanation = (
         session.query(Explanation)
@@ -996,6 +1009,7 @@ async def save_snapshot(
 ):
     """Save a visualization snapshot as evidence on an annotation."""
     with db.session_scope() as session:
+        _lock_explanation_or_404(session, genome_id)
         annotation = _find_annotation_in_operations(session, genome_id, request.annotation_id)
 
         evidence = dict(annotation.get("evidence") or {})
@@ -1022,6 +1036,7 @@ async def update_narrative(
 ):
     """Update narrative text on a specific evidence entry."""
     with db.session_scope() as session:
+        _lock_explanation_or_404(session, genome_id)
         annotation = _find_annotation_in_operations(session, genome_id, request.annotation_id)
 
         evidence = dict(annotation.get("evidence") or {})

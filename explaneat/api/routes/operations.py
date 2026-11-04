@@ -28,6 +28,7 @@ from ..schemas import (
     FunctionNodeMetadataSchema,
 )
 from ...db import Genome, Population, Experiment, Explanation
+from ...db.explanation_lock import lock_explanation
 from ...db.serialization import deserialize_genome
 from ...core.explaneat import ExplaNEAT
 from ...core.model_state import ModelStateEngine, Operation
@@ -51,13 +52,26 @@ def _get_neat_config(experiment: Experiment) -> neat.Config:
 def _get_phenotype_and_engine(
     genome_id: UUID,
     db: Session,
+    for_update: bool = False,
 ) -> tuple[Genome, Explanation, ModelStateEngine]:
     """
     Get genome, explanation, and initialized ModelStateEngine.
 
+    Args:
+        for_update: Lock the explanation row (via ``lock_explanation``) for a
+            read-modify-write of the operations stream. The lock is held until
+            the caller commits, so concurrent writers serialize.
+
     Returns:
         Tuple of (genome, explanation, engine)
     """
+    if for_update:
+        # Take the lock before anything reads the explanation.
+        try:
+            lock_explanation(db, genome_id, create=True)
+        except ValueError:
+            raise HTTPException(status_code=404, detail=f"Genome {genome_id} not found")
+
     genome = db.get(Genome, genome_id)
     if not genome:
         raise HTTPException(status_code=404, detail=f"Genome {genome_id} not found")
@@ -85,12 +99,8 @@ def _get_phenotype_and_engine(
     )
 
     if not explanation:
-        explanation = Explanation(
-            genome_id=genome_id,
-            is_well_formed=False,
-            operations=[],
-        )
-        db.add(explanation)
+        # Read-only callers: create race-safely (genome row lock), then commit.
+        explanation = lock_explanation(db, genome_id, create=True)
         db.commit()
         db.refresh(explanation)
 
@@ -307,7 +317,7 @@ async def add_operation(
     - **disable_connection**: Disable (turn off) a connection
     - **enable_connection**: Re-enable a previously disabled connection
     """
-    genome, explanation, engine = _get_phenotype_and_engine(genome_id, db)
+    genome, explanation, engine = _get_phenotype_and_engine(genome_id, db, for_update=True)
 
     # Convert params to dict
     params = operation.params.model_dump()
@@ -339,7 +349,7 @@ async def remove_operation(
     operations that came after it. The model state is recomputed by
     replaying the remaining operations.
     """
-    genome, explanation, engine = _get_phenotype_and_engine(genome_id, db)
+    genome, explanation, engine = _get_phenotype_and_engine(genome_id, db, for_update=True)
 
     if not explanation.operations:
         raise HTTPException(status_code=404, detail="No operations to remove")

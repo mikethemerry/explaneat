@@ -12,6 +12,7 @@ from ..helpers import (
     build_engine,
     serialize_network,
 )
+from explaneat.db.explanation_lock import lock_explanation
 from explaneat.db.models import Explanation, Genome
 
 
@@ -45,17 +46,38 @@ def apply_operation(genome_id: str, operation_type: str, params: str, notes: Opt
     Validates and applies the operation, persisting the updated event stream.
     Returns the new operation details and updated model state summary.
 
-    Operation types and example params:
-    - split_node: {"node_id": "5", "suffixes": ["a", "b"]}
-    - consolidate_node: {"node_id": "5_a", "target_suffix": "a"}
-    - add_identity_node: {"target_node_id": "5", "connection_sources": ["-1", "-2"]}
-    - add_node: {"connection_from": "-1", "connection_to": "5"}
-    - remove_node: {"node_id": "identity_5"}
-    - annotate: {"name": "my_ann", "entry_nodes": ["-1", "-2"], "exit_nodes": ["5"], "subgraph_nodes": ["-1", "-2", "5"], "hypothesis": "Computes sum"}
-    - rename_node: {"node_id": "5", "display_name": "Sum Node"}
-    - rename_annotation: {"annotation_id": "ann_1", "display_name": "Better Name"}
-    - disable_connection: {"from_node": "-1", "to_node": "5"}
-    - enable_connection: {"from_node": "-1", "to_node": "5"}
+    Operation types and example params. Node ids are strings; connections are
+    [from, to] pairs. The examples apply, in this order, to a network with
+    inputs -1,-2,-3, hidden 5,6, output 0 and edges -1->5, -2->5, 5->0, 5->6,
+    -3->6, 6->0, -3->0 (checked by tests/test_mcp/test_apply_operation_docstring.py):
+    - split_node: {"node_id": "-3"}
+    - consolidate_node: {"node_ids": ["-3_a", "-3_b"]}
+    - add_identity_node: {"target_node": "0", "connections": [["6", "0"]], "new_node_id": "identity_0"}
+    - add_node: {"connection": ["-1", "5"], "new_node_id": "n1"}
+    - remove_node: {"node_id": "n1"}
+    - disable_connection: {"from_node": "-2", "to_node": "5"}
+    - enable_connection: {"from_node": "-2", "to_node": "5"}
+    - rename_node: {"node_id": "5", "display_name": "sumNode"}
+    - annotate: {"name": "A", "hypothesis": "Computes sum", "entry_nodes": ["-1", "-2"], "exit_nodes": ["5"], "subgraph_nodes": ["-1", "-2", "5"], "subgraph_connections": [["-1", "5"], ["-2", "5"]]}
+    - rename_annotation: {"annotation_id": "A", "display_name": "sumOfInputs"}
+    - prune_connection: {"from_node": "-3_ab", "to_node": "6"}
+    - prune_node: {"node_id": "6"}
+
+    Notes:
+    - split_node: node needs >= 2 enabled outputs (not an output node); it is
+      replaced by one copy per output, named {id}_a, {id}_b, ... in ascending
+      target-id order (-3 -> -3_a feeding 0, -3_b feeding 6). consolidate_node
+      takes >= 2 split ids of one original and merges them into a NEW node
+      named by concatenating suffixes (-3_a + -3_b -> -3_ab), not the original id.
+    - add_identity_node: every connection must end at target_node, and at
+      least one of target_node's inputs must stay un-redirected.
+    - add_node inserts new_node_id into an existing connection (optional
+      "bias", default 0.0, and "activation", default "identity").
+      remove_node / prune_node require exactly 1 enabled input and 1 output.
+    - annotate: all six keys are required; optional "child_annotation_ids"
+      (names or ann_<seq> ids) makes a composition annotation.
+    - rename_node / rename_annotation: display_name must have no spaces
+      (camelCase), or be null to clear; annotation_id may be the name or ann_<seq>.
 
     Args:
         genome_id: UUID of the genome.
@@ -71,25 +93,13 @@ def apply_operation(genome_id: str, operation_type: str, params: str, notes: Opt
             return json.dumps({"error": f"Invalid JSON params: {e}"}, indent=2)
 
         try:
-            # Get or create explanation
+            # Lock (or race-safely create) the explanation row before reading
+            # the operations stream; held until the session commits.
             genome_uuid = _to_uuid(genome_id)
-            genome_db = session.query(Genome).filter_by(id=genome_uuid).first()
-            if not genome_db:
+            try:
+                explanation = lock_explanation(session, genome_uuid, create=True)
+            except ValueError:
                 return json.dumps({"error": f"Genome not found: {genome_id}"}, indent=2)
-
-            explanation = (
-                session.query(Explanation)
-                .filter(Explanation.genome_id == genome_uuid)
-                .first()
-            )
-            if not explanation:
-                explanation = Explanation(
-                    genome_id=genome_uuid,
-                    is_well_formed=False,
-                    operations=[],
-                )
-                session.add(explanation)
-                session.flush()
 
             # Build engine and apply operation
             engine = build_engine(session, genome_id)
@@ -151,11 +161,7 @@ def undo_operation(genome_id: str, seq: int) -> str:
     with db.session_scope() as session:
         try:
             genome_uuid = _to_uuid(genome_id)
-            explanation = (
-                session.query(Explanation)
-                .filter(Explanation.genome_id == genome_uuid)
-                .first()
-            )
+            explanation = lock_explanation(session, genome_uuid)
             if not explanation or not explanation.operations:
                 return json.dumps({"error": "No operations to remove"}, indent=2)
 

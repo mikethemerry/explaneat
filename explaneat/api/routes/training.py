@@ -173,15 +173,13 @@ async def apply_retrain(
         raise HTTPException(status_code=400, detail="Job has no results")
 
     with db.session_scope() as session:
-        genome_db = session.query(Genome).filter_by(id=uuid.UUID(genome_id)).first()
-        if not genome_db:
-            raise HTTPException(status_code=404, detail="Genome not found")
+        from ...db.explanation_lock import lock_explanation
 
-        explanation = (
-            session.query(Explanation)
-            .filter(Explanation.genome_id == uuid.UUID(genome_id))
-            .first()
-        )
+        try:
+            # Locked read-modify-write of the operations stream.
+            explanation = lock_explanation(session, uuid.UUID(genome_id))
+        except ValueError:
+            raise HTTPException(status_code=404, detail="Genome not found")
         if not explanation:
             raise HTTPException(status_code=404, detail="No explanation found")
 
