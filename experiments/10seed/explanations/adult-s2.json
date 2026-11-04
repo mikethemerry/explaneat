@@ -1,0 +1,48 @@
+{
+  "label": "adult-s2",
+  "genome_id": "b6600773-0fcc-4667-b053-776782913641",
+  "start": "2026-11-05T11:08:23+13:00",
+  "end": "2026-11-05T12:19:41+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 14,
+  "n_composition_annotations": 5,
+  "n_splits": 0,
+  "n_identity_nodes": 17,
+  "hidden_nodes": 16,
+  "hidden_nodes_single_leaf_no_split": 16,
+  "hidden_nodes_in_any_annotation": 16,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 4.440892098500626e-16,
+  "closed_form_max_abs_err": 0.04662727072461337,
+  "protocol_version": "v3",
+  "resisted": "Nothing resisted coverage. Every hidden ReLU takes inputs from one feature group (no splits). Most hidden nodes do nothing nonlinear on train (two always off, six always on, two indicators); only the capital-gain hinge matters: all-affine fit AUC 0.9008 vs 0.9064 full. z-scoring side effects: rare one-hots give large swings (native-country:28, n=20, +17 logit); native-country:15 constant on train acts as bias.",
+  "tool_bugs": "Annotate validator accepted compositions with empty subgraph_connections (coverage then 0.907; undone and redone with child-exit->identity edges). compute_shap (500) ~28 min at ~440% CPU.",
+  "summary": "Generalised additive logistic model of P(income<=50K): logit = 2.407 + capital + household + education + work + background, no cross-group interactions. Convex piecewise-linear capital-gain penalty (kink ~$4-4.7k); married-civ-spouse -3.52 partly offset by a Husband ReLU (+0.74); education years as a hinge steepening from HS-grad up. Train acc 0.850, AUC 0.906.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 19,
+      "roots": [
+        "income_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.440892098500626e-16,
+    "closed_form_max_abs_err": 0.04662727072461337,
+    "numeric_max_abs_err": 3.552713678800501e-15,
+    "op_counts": {
+      "rename_node": 107,
+      "add_identity_node": 17,
+      "annotate": 19
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}
