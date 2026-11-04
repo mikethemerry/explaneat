@@ -1,0 +1,51 @@
+{
+  "label": "heart100-s8",
+  "genome_id": "b4c5f225-ec5f-4e11-996d-27d32b7d1290",
+  "start": "2026-11-05T12:39:54+13:00",
+  "end": "2026-11-05T12:49:03+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 5,
+  "n_composition_annotations": 3,
+  "n_splits": 6,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 9,
+  "hidden_nodes_single_leaf_no_split": 4,
+  "hidden_nodes_in_any_annotation": 9,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 2.220446049250313e-16,
+  "closed_form_max_abs_err": 0.010792403340674994,
+  "protocol_version": "v3",
+  "analysis": "heart100 (additional)",
+  "resisted": "Nothing resisted coverage. Five hidden nodes sit in compositions; 9183 never fires on the data; thal4_flag rests on 2 patients; in the hub higher resting BP opens the protective path (clinically odd; not interpreted). 7 unconnected inputs as root entries.",
+  "tool_bugs": "None.",
+  "vs_40gen": "Hinge 855 kept, gained fbs:1 and thal:7 inputs, readout up to 2.09; the small age chain (AUC -0.002) became a 7-node protective young/fit block (-0.016 AUC); new thal:4 flag.",
+  "summary": "sigmoid(-0.775 + 12-input linear logit (SD 2.43) + 2.09 x ischaemia hinge 855 + protective young/fit block + thal:4 bump). The hinge is the largest term (logit SD 3.40; AUC 0.964 -> 0.894 without it); the block gives -1.56 logit on average to young patients without exercise angina (AUC -> 0.948 without it). Linear part alone: train AUC 0.860.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 8,
+      "roots": [
+        "heart_disease_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 2.220446049250313e-16,
+    "closed_form_max_abs_err": 0.010792403340674994,
+    "numeric_max_abs_err": 1.1102230246251565e-15,
+    "op_counts": {
+      "rename_node": 26,
+      "split_node": 6,
+      "add_identity_node": 1,
+      "annotate": 8
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}

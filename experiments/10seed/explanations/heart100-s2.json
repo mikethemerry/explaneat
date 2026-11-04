@@ -1,0 +1,52 @@
+{
+  "label": "heart100-s2",
+  "genome_id": "fdbf1673-026e-4b10-991a-223dbad5bfb1",
+  "start": "2026-11-05T12:38:29+13:00",
+  "end": "2026-11-05T12:49:02+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 4,
+  "n_composition_annotations": 4,
+  "n_splits": 9,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 13,
+  "hidden_nodes_single_leaf_no_split": 8,
+  "hidden_nodes_in_any_annotation": 13,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 2.220446049250313e-16,
+  "closed_form_max_abs_err": 0.0150013649279781,
+  "protocol_version": "v3",
+  "analysis": "heart100 (additional)",
+  "resisted": "Nothing resisted coverage. Two hidden nodes provably never fire (4256, 3956), labelled dead. thalach ramps negligible. Counter-clinical signs reported, not interpreted (thal:7 -0.64 and thal:6 -0.48 linear terms, outweighed nonlinearly; negative chol in the flat-slope gate; age_chol_brake). Weak young_reserve -> flat_slope_gate link forces deeper nesting than the semantics.",
+  "tool_bugs": "None. Root sensitivity shows nonzero values for dead nodes (readout weight only).",
+  "vs_40gen": "Reserve gate and flat-slope gate kept; added a thal-defect score opening a convex oldpeak hinge, an older-age/cholesterol brake, two dead nodes and tiny thalach ramps. Nonlinear share logit SD 0.91 -> 3.21, now larger than the linear part.",
+  "summary": "sigmoid(-0.35 + 12-input linear logit (SD 2.31; AUC 0.850 alone) + nonlinear block (SD 3.21)); train AUC 0.959. Largest nonlinear term: a two-kink oldpeak hinge opened by a thallium defect (+3.1 logit average for thal:7, up to +7). Next: a protective heart-rate-reserve gate for young normal-thal patients; an age/cholesterol brake makes age an inverted U; a flat-ST-slope indicator.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 8,
+      "roots": [
+        "heart_disease_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 2.220446049250313e-16,
+    "closed_form_max_abs_err": 0.0150013649279781,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 26,
+      "split_node": 9,
+      "consolidate_node": 1,
+      "add_identity_node": 1,
+      "annotate": 8
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}

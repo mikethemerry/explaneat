@@ -1,0 +1,52 @@
+{
+  "label": "heart100-s4",
+  "genome_id": "46728358-be0d-403e-abc1-a22bfbc19355",
+  "start": "2026-11-05T12:33:28+13:00",
+  "end": "2026-11-05T12:42:57+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 5,
+  "n_composition_annotations": 2,
+  "n_splits": 6,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 8,
+  "hidden_nodes_single_leaf_no_split": 7,
+  "hidden_nodes_in_any_annotation": 8,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 3.3306690738754696e-16,
+  "closed_form_max_abs_err": 0.02378040495665701,
+  "protocol_version": "v3",
+  "analysis": "heart100 (additional)",
+  "resisted": "Nothing resisted coverage. Gate's slope:3 and thal:6 terms rest on 17 and 15 train patients (possibly noise). BP hinge near-inert (SD 0.10 logit, ablation <0.001 AUC). 7659 a constant flag. Six unconnected inputs as root entries.",
+  "tool_bugs": "None. One consolidate_node to keep an exang:1 copy in a single leaf. KernelSHAP noise ~0.001.",
+  "vs_40gen": "Kept gate 2065 and the linear core; grew the gate from a thal:6/fbs:1 correction into a male x angina sub-additivity gate with sex:1, exang:1, slope:3, thal:7 inputs and two feeder subnetworks; added an oldpeak hinge and a BP hinge (4 -> 8 hidden nodes; train AUC 0.942 -> 0.954).",
+  "summary": "sigmoid(0.228 + 15-input linear logit (SD 3.88) - 1.63 gate + 0.48 oldpeak hinge + 0.14 BP hinge). Gate 2065 opens for men, angina patients, cp:2 men and thal:6/7; fbs:1 shuts it; high BP/HR narrows it. Makes male sex and exercise angina sub-additive (male effect +3.06 without angina vs +1.36 with). Train AUC 0.954; gate at mean 0.920; linear core alone ~0.910.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 7,
+      "roots": [
+        "heart_disease_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 3.3306690738754696e-16,
+    "closed_form_max_abs_err": 0.02378040495665701,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 26,
+      "split_node": 6,
+      "consolidate_node": 1,
+      "add_identity_node": 1,
+      "annotate": 7
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}
