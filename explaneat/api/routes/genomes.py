@@ -233,12 +233,10 @@ async def get_genome_explanation(
     )
 
     if not explanation:
-        explanation = Explanation(
-            genome_id=genome_id,
-            is_well_formed=False,
-            operations=[],
-        )
-        db.add(explanation)
+        # Race-safe creation (serialized on the genome row lock).
+        from ...db.explanation_lock import lock_explanation
+
+        explanation = lock_explanation(db, genome_id, create=True)
         db.commit()
         db.refresh(explanation)
 

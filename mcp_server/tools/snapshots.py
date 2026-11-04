@@ -9,6 +9,7 @@ from mcp.server.fastmcp import FastMCP
 
 from ..server import get_db
 from ..helpers import _to_uuid, find_annotation_in_operations
+from explaneat.db.explanation_lock import lock_explanation
 
 
 def save_snapshot(
@@ -39,14 +40,13 @@ def save_snapshot(
 
     db = get_db()
     with db.session_scope() as session:
+        # Lock the explanation row FIRST so the read-modify-write below is
+        # serialized against concurrent writers on the same genome.
+        explanation = lock_explanation(session, _to_uuid(genome_id))
+
         # Verify annotation exists
         find_annotation_in_operations(session, genome_id, annotation_id)
 
-        explanation = (
-            session.query(Explanation)
-            .filter(Explanation.genome_id == _to_uuid(genome_id))
-            .first()
-        )
         if not explanation or not explanation.operations:
             return json.dumps({"error": "No explanation found"})
 
@@ -105,14 +105,13 @@ def update_narrative(
 
     db = get_db()
     with db.session_scope() as session:
+        # Lock the explanation row FIRST so the read-modify-write below is
+        # serialized against concurrent writers on the same genome.
+        explanation = lock_explanation(session, _to_uuid(genome_id))
+
         # Verify annotation exists
         find_annotation_in_operations(session, genome_id, annotation_id)
 
-        explanation = (
-            session.query(Explanation)
-            .filter(Explanation.genome_id == _to_uuid(genome_id))
-            .first()
-        )
         if not explanation or not explanation.operations:
             return json.dumps({"error": "No explanation found"})
 
@@ -168,14 +167,13 @@ def add_evidence(
 
     db = get_db()
     with db.session_scope() as session:
+        # Lock the explanation row FIRST so the read-modify-write below is
+        # serialized against concurrent writers on the same genome.
+        explanation = lock_explanation(session, _to_uuid(genome_id))
+
         # Verify annotation exists
         find_annotation_in_operations(session, genome_id, annotation_id)
 
-        explanation = (
-            session.query(Explanation)
-            .filter(Explanation.genome_id == _to_uuid(genome_id))
-            .first()
-        )
         if not explanation or not explanation.operations:
             return json.dumps({"error": "No explanation found"})
 

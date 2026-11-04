@@ -12,6 +12,7 @@ from ..helpers import (
     build_engine,
     serialize_network,
 )
+from explaneat.db.explanation_lock import lock_explanation
 from explaneat.db.models import Explanation, Genome
 
 
@@ -72,24 +73,13 @@ def apply_operation(genome_id: str, operation_type: str, params: str, notes: Opt
 
         try:
             # Get or create explanation
+            # Lock (or race-safely create) the explanation row before reading
+            # the operations stream; held until the session commits.
             genome_uuid = _to_uuid(genome_id)
-            genome_db = session.query(Genome).filter_by(id=genome_uuid).first()
-            if not genome_db:
+            try:
+                explanation = lock_explanation(session, genome_uuid, create=True)
+            except ValueError:
                 return json.dumps({"error": f"Genome not found: {genome_id}"}, indent=2)
-
-            explanation = (
-                session.query(Explanation)
-                .filter(Explanation.genome_id == genome_uuid)
-                .first()
-            )
-            if not explanation:
-                explanation = Explanation(
-                    genome_id=genome_uuid,
-                    is_well_formed=False,
-                    operations=[],
-                )
-                session.add(explanation)
-                session.flush()
 
             # Build engine and apply operation
             engine = build_engine(session, genome_id)
@@ -151,11 +141,7 @@ def undo_operation(genome_id: str, seq: int) -> str:
     with db.session_scope() as session:
         try:
             genome_uuid = _to_uuid(genome_id)
-            explanation = (
-                session.query(Explanation)
-                .filter(Explanation.genome_id == genome_uuid)
-                .first()
-            )
+            explanation = lock_explanation(session, genome_uuid)
             if not explanation or not explanation.operations:
                 return json.dumps({"error": "No operations to remove"}, indent=2)
 
