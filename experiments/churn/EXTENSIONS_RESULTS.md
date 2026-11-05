@@ -7,8 +7,9 @@ Each study's design is in its plan file:
 - D+, D2 and E: `RESCUE2_REINIT_PLAN.md`
 - early-stopping reruns: `EARLY_STOPPING_PLAN.md`
 
-Every plan and amendment was committed before the runs it covers. Each section names its CSV. Fine-tuning used masked backprop
-(genome weights only). Results for E = 500 epochs are primary; E = 50 is secondary and is in the
+Every plan and amendment was committed before the runs it covers. Each section names its CSV.
+
+All fine-tuning used masked backprop (genome weights only). For A–C, results for E = 500 epochs are primary; E = 50 is secondary and is in the
 CSVs. Test AUC CIs are paired bootstrap intervals (10,000 resamples, seed 42) on the 1,000-row
 churn test split. Deltas are paired differences.
 
