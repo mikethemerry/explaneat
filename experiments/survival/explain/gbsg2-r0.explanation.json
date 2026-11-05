@@ -1,0 +1,532 @@
+{
+ "tag": "gbsg2-r0",
+ "genome_id": "840fb4e4-161c-4bed-a938-ead243a8d1de",
+ "split_id": "6be4ddb3-890f-47f0-8de5-913790b3ba6d",
+ "wall_clock_s": 0.5,
+ "n_tool_calls": 23,
+ "features": [
+  "age",
+  "estrec",
+  "horTh=yes",
+  "menostat=Post",
+  "pnodes",
+  "progrec",
+  "tgrade=II",
+  "tgrade=III",
+  "tsize"
+ ],
+ "unconnected_inputs": [
+  "age",
+  "estrec",
+  "menostat=Post",
+  "tsize"
+ ],
+ "output_bias": -0.7323442782435965,
+ "hazard_ratio_readings": {
+  "horTh=yes": {
+   "node": "-3",
+   "log_hr_per_sd": -0.2202253055103186,
+   "hr_per_sd": 0.8023380064225931,
+   "feature": "horTh=yes",
+   "log_hr_per_unit": -0.45810524390512486,
+   "hr_per_unit": 0.6324809079438038,
+   "spread": {
+    "log_hr_sd": 0.22022530551031844,
+    "fraction_nonzero": 1.0,
+    "hr_p5_vs_median": 0.6324809079438038,
+    "hr_p25_vs_median": 0.6324809079438038,
+    "hr_p75_vs_median": 1.0,
+    "hr_p95_vs_median": 1.0,
+    "hr_p95_vs_p5": 1.5810753928541512
+   }
+  },
+  "pnodes": {
+   "node": "-5",
+   "log_hr_per_sd": 0.3116490862615959,
+   "hr_per_sd": 1.3656753746835255,
+   "feature": "pnodes",
+   "log_hr_per_unit": 0.05851365821205822,
+   "hr_per_unit": 1.0602594668443386,
+   "spread": {
+    "log_hr_sd": 0.3116490862615956,
+    "fraction_nonzero": 1.0,
+    "hr_p5_vs_median": 0.8895608932088827,
+    "hr_p25_vs_median": 0.8895608932088827,
+    "hr_p75_vs_median": 1.2637135305914056,
+    "hr_p95_vs_median": 2.139725514932002,
+    "hr_p95_vs_p5": 2.405372730823905
+   }
+  },
+  "progrec": {
+   "node": "-6",
+   "log_hr_per_sd": -0.5583950003865965,
+   "hr_per_sd": 0.572126590293295,
+   "feature": "progrec",
+   "log_hr_per_unit": -0.002486342742011633,
+   "hr_per_unit": 0.9975167456479748,
+   "spread": {
+    "log_hr_sd": 0.5583950003865963,
+    "fraction_nonzero": 1.0,
+    "hr_p5_vs_median": 0.3787356386036759,
+    "hr_p25_vs_median": 0.7788962344046407,
+    "hr_p75_vs_median": 1.064131069071435,
+    "hr_p95_vs_median": 1.0828137397216056,
+    "hr_p95_vs_p5": 2.859022572350803
+   }
+  },
+  "tgrade=II": {
+   "node": "-7",
+   "log_hr_per_sd": 0.30676883479565376,
+   "hr_per_sd": 1.3590267720563123,
+   "feature": "tgrade=II",
+   "log_hr_per_unit": 0.6519544552839552,
+   "hr_per_unit": 1.9192883288763267,
+   "spread": {
+    "log_hr_sd": 0.3067688347956528,
+    "fraction_nonzero": 1.0,
+    "hr_p5_vs_median": 0.5210264580650389,
+    "hr_p25_vs_median": 0.5210264580650389,
+    "hr_p75_vs_median": 1.0,
+    "hr_p95_vs_median": 1.0,
+    "hr_p95_vs_p5": 1.9192883288763267
+   }
+  },
+  "tgrade=III": {
+   "node": "-8",
+   "log_hr_per_sd": 0.2832516077582142,
+   "hr_per_sd": 1.3274391137825274,
+   "feature": "tgrade=III",
+   "log_hr_per_unit": 0.6795555289637071,
+   "hr_per_unit": 1.9730005956946204,
+   "spread": {
+    "log_hr_sd": 0.2832516077582136,
+    "fraction_nonzero": 1.0,
+    "hr_p5_vs_median": 1.0,
+    "hr_p25_vs_median": 1.0,
+    "hr_p75_vs_median": 1.0,
+    "hr_p95_vs_median": 1.9730005956946202,
+    "hr_p95_vs_p5": 1.9730005956946202
+   }
+  }
+ },
+ "leaves": [
+  {
+   "name": "tumour_biology",
+   "entry_nodes": [
+    "-6",
+    "-7",
+    "-8"
+   ],
+   "exit": "identity_tumour_biology",
+   "hypothesis": "tumour_biology: additive log-hazard-ratio term, linear in its inputs (a Cox term): progrec: log-HR -0.0025 per unit (HR 0.998/unit, 0.57/SD; p95 vs p5 patient HR 2.86); tgrade=II: log-HR +0.6520 per unit (HR 1.919/unit, 1.36/SD; p95 vs p5 patient HR 1.92); tgrade=III: log-HR +0.6796 per unit (HR 1.973/unit, 1.33/SD; p95 vs p5 patient HR 1.97). Proportional hazards is inherited, not chosen: g(x) has no time input, so hazard ratios between subjects are constant over follow-up and survival curves cannot cross. Check PH on the comparator Cox model (Schoenfeld residuals) before reading these as time-varying effects.",
+   "formula_latex": "y_0 = - 0.558 x_{progrec} + 0.283 x_{tgrade=III} + 0.307 x_{tgrade=II}",
+   "sensitivity_summary": {
+    "viz_type": "sensitivity",
+    "dimensionality": [
+     3,
+     1
+    ],
+    "entry_names": [
+     "-6",
+     "-7",
+     "-8"
+    ],
+    "exit_names": [
+     "identity_tumour_biology"
+    ],
+    "sensitivities": {
+     "identity_tumour_biology": [
+      0.5583950003865958,
+      0.3067688347956542,
+      0.2832516077582142
+     ]
+    },
+    "input_labels": [
+     "-6",
+     "-7",
+     "-8"
+    ]
+   }
+  },
+  {
+   "name": "nodal_burden",
+   "entry_nodes": [
+    "-5"
+   ],
+   "exit": "identity_nodal_burden",
+   "hypothesis": "nodal_burden: additive log-hazard-ratio term, linear in its inputs (a Cox term): pnodes: log-HR +0.0585 per unit (HR 1.060/unit, 1.37/SD; p95 vs p5 patient HR 2.41). Proportional hazards is inherited, not chosen: g(x) has no time input, so hazard ratios between subjects are constant over follow-up and survival curves cannot cross. Check PH on the comparator Cox model (Schoenfeld residuals) before reading these as time-varying effects.",
+   "formula_latex": "y_0 = 0.312 x_{pnodes}",
+   "sensitivity_summary": {
+    "viz_type": "sensitivity",
+    "dimensionality": [
+     1,
+     1
+    ],
+    "entry_names": [
+     "-5"
+    ],
+    "exit_names": [
+     "identity_nodal_burden"
+    ],
+    "sensitivities": {
+     "identity_nodal_burden": [
+      0.31164908626159504
+     ]
+    },
+    "input_labels": [
+     "-5"
+    ]
+   }
+  }
+ ],
+ "root_hypothesis": "Log-risk g(x) of a Cox proportional-hazards model: h(t|x) = h0(t) exp(g(x)), with g the sum of tumour_biology, nodal_burden and the direct term(s) horTh=yes: log-HR -0.4581 per unit (HR 0.632/unit, 0.80/SD; p95 vs p5 patient HR 1.58). Inputs with no effect (pruned by evolution): age, estrec, menostat=Post, tsize. The output bias is the unidentifiable Cox constant, absorbed into the Breslow baseline. Proportional hazards is inherited, not chosen: g(x) has no time input, so hazard ratios between subjects are constant over follow-up and survival curves cannot cross. Check PH on the comparator Cox model (Schoenfeld residuals) before reading these as time-varying effects.",
+ "root_formula": "\\begin{aligned}\ny_0 &= - 0.22 x_{horTh=yes} \\\\\n&\\quad + 0.312 x_{pnodes} \\\\\n&\\quad - 0.558 x_{progrec} \\\\\n&\\quad + 0.283 x_{tgrade=III} \\\\\n&\\quad + 0.307 x_{tgrade=II} \\\\\n&\\quad -0.732\n\\end{aligned}",
+ "coverage": {
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "node_coverage": {
+   "covered": [
+    "-1",
+    "-2",
+    "-3",
+    "-4",
+    "-5",
+    "-6",
+    "-7",
+    "-8",
+    "-9",
+    "identity_nodal_burden",
+    "identity_tumour_biology"
+   ],
+   "uncovered": [],
+   "total_candidate": 11,
+   "by_annotation": {
+    "log_risk": [
+     "-1",
+     "-2",
+     "-3",
+     "-4",
+     "-5",
+     "-6",
+     "-7",
+     "-8",
+     "-9",
+     "identity_nodal_burden",
+     "identity_tumour_biology"
+    ],
+    "tumour_biology": [
+     "-6",
+     "-7",
+     "-8"
+    ],
+    "nodal_burden": [
+     "-5"
+    ]
+   }
+  },
+  "edge_coverage": {
+   "covered": [
+    [
+     "-3",
+     "0"
+    ],
+    [
+     "-5",
+     "identity_nodal_burden"
+    ],
+    [
+     "-6",
+     "identity_tumour_biology"
+    ],
+    [
+     "-7",
+     "identity_tumour_biology"
+    ],
+    [
+     "-8",
+     "identity_tumour_biology"
+    ],
+    [
+     "identity_nodal_burden",
+     "0"
+    ],
+    [
+     "identity_tumour_biology",
+     "0"
+    ]
+   ],
+   "uncovered": [],
+   "total": 7
+  },
+  "annotations_count": 3,
+  "leaf_count": 2,
+  "composition_count": 1,
+  "hierarchy": {
+   "roots": [
+    "log_risk"
+   ],
+   "global_root": "log_risk",
+   "root_contains_outputs": true,
+   "complete": true,
+   "composed": 2,
+   "required": 2
+  }
+ },
+ "checks": {
+  "genome_id": "840fb4e4-161c-4bed-a938-ead243a8d1de",
+  "n_train": 411,
+  "function_preservation_max_abs_err": 4.440892098500626e-16,
+  "hierarchy": {
+   "n_annotations": 3,
+   "roots": [
+    "log_risk"
+   ],
+   "single_root": true,
+   "root_contains_outputs": true,
+   "all_under_root": true,
+   "complete": true
+  },
+  "op_counts": {
+   "rename_node": 9,
+   "add_identity_node": 2,
+   "annotate": 3
+  },
+  "leaves": [
+   {
+    "id": "ann_11",
+    "name": "tumour_biology",
+    "numeric_max_abs_err": 5.551115123125783e-17,
+    "closed_form_max_abs_err": 0.004280743247383256
+   },
+   {
+    "id": "ann_12",
+    "name": "nodal_burden",
+    "numeric_max_abs_err": 0.0,
+    "closed_form_max_abs_err": 0.002173429571438623
+   }
+  ],
+  "closed_form_max_abs_err": 0.004280743247383256
+ },
+ "train_performance": {
+  "n_test": 411,
+  "n_test_beyond_train_followup": 1,
+  "events_test": 179,
+  "harrell_c": 0.6959840620740275,
+  "uno_c": 0.6642413864995143,
+  "td_auc": {
+   "times": [
+    365.0,
+    1095.0,
+    1825.0
+   ],
+   "auc": [
+    0.7838609234192082,
+    0.7528544516085063,
+    0.7337963237286307
+   ],
+   "mean_auc": 0.7526835797800842
+  },
+  "ibs": 0.12593162473200217,
+  "brier": {
+   "times": [
+    365.0,
+    1095.0,
+    1825.0
+   ],
+   "brier": [
+    0.0757029033623711,
+    0.19082515914751771,
+    0.2088300108234955
+   ]
+  },
+  "calibration": {
+   "horizon": 1825.0,
+   "n_groups": 10,
+   "groups": [
+    {
+     "group": 1,
+     "n": 42,
+     "events_by_horizon": 6,
+     "mean_predicted": 0.17148469714088974,
+     "observed_km": 0.2174718320728507
+    },
+    {
+     "group": 2,
+     "n": 41,
+     "events_by_horizon": 7,
+     "mean_predicted": 0.2937639958202256,
+     "observed_km": 0.19975017033840559
+    },
+    {
+     "group": 3,
+     "n": 41,
+     "events_by_horizon": 12,
+     "mean_predicted": 0.37431510748168506,
+     "observed_km": 0.3915049152600877
+    },
+    {
+     "group": 4,
+     "n": 41,
+     "events_by_horizon": 11,
+     "mean_predicted": 0.42698961666390356,
+     "observed_km": 0.31490627020038797
+    },
+    {
+     "group": 5,
+     "n": 41,
+     "events_by_horizon": 21,
+     "mean_predicted": 0.4893150836023334,
+     "observed_km": 0.5840485470883416
+    },
+    {
+     "group": 6,
+     "n": 41,
+     "events_by_horizon": 19,
+     "mean_predicted": 0.5492398709134357,
+     "observed_km": 0.5464964766040501
+    },
+    {
+     "group": 7,
+     "n": 41,
+     "events_by_horizon": 17,
+     "mean_predicted": 0.5794177642568505,
+     "observed_km": 0.5603288139212126
+    },
+    {
+     "group": 8,
+     "n": 41,
+     "events_by_horizon": 23,
+     "mean_predicted": 0.6162689410932031,
+     "observed_km": 0.6354600839661035
+    },
+    {
+     "group": 9,
+     "n": 41,
+     "events_by_horizon": 24,
+     "mean_predicted": 0.6858560380716568,
+     "observed_km": 0.6754684095860567
+    },
+    {
+     "group": 10,
+     "n": 41,
+     "events_by_horizon": 29,
+     "mean_predicted": 0.8299454383550368,
+     "observed_km": 0.8366378719319895
+    }
+   ],
+   "mean_predicted": 0.5008563099428441,
+   "observed_km": 0.4969872188554124,
+   "expected_over_observed": 1.0077850917300095,
+   "max_abs_group_diff": 0.11208334646351559
+  },
+  "cox_loss": 5.277731907539228,
+  "null_cox_loss": 5.463386601278811,
+  "censored_fraction": 0.5644768856447688,
+  "log_risk": {
+   "mean": -0.7323442782435964,
+   "sd": 0.7559875829845145,
+   "p5": -1.8064116502509817,
+   "p95": 0.19695124893020055,
+   "hr_p95_vs_p5": 7.413946578264351
+  },
+  "task_type": "survival",
+  "risk_score": "log-risk g(x) (model output, identity activation); C computed on g",
+  "horizons": [
+   365.0,
+   1095.0,
+   1825.0
+  ],
+  "time_unit": "days",
+  "ph_caveat": "Proportional hazards is inherited, not chosen: g(x) has no time input, so hazard ratios between subjects are constant over follow-up and survival curves cannot cross. Check PH on the comparator Cox model (Schoenfeld residuals) before reading these as time-varying effects.",
+  "split": "train"
+ },
+ "explain_output_check": [
+  {
+   "node": "identity_tumour_biology",
+   "bias": 0.0,
+   "inputs": [
+    {
+     "from": "-6",
+     "weight": -0.5583950003865965
+    },
+    {
+     "from": "-7",
+     "weight": 0.30676883479565376
+    },
+    {
+     "from": "-8",
+     "weight": 0.2832516077582142
+    }
+   ],
+   "output_weight": 1.0,
+   "reading": "adds log-HR +1 * (-0.558*[-6] + 0.307*[-7] + 0.283*[-8] +0) where that sum is positive, 0 elsewhere",
+   "spread": {
+    "log_hr_sd": 0.614008211118755,
+    "fraction_nonzero": 1.0,
+    "hr_p5_vs_median": 0.30392990694420674,
+    "hr_p25_vs_median": 0.6929928797010233,
+    "hr_p75_vs_median": 1.0857821620972885,
+    "hr_p95_vs_median": 1.121450649110544,
+    "hr_p95_vs_p5": 3.68983316050043
+   }
+  },
+  {
+   "node": "identity_nodal_burden",
+   "bias": 0.0,
+   "inputs": [
+    {
+     "from": "-5",
+     "weight": 0.3116490862615959
+    }
+   ],
+   "output_weight": 1.0,
+   "reading": "adds log-HR +0.05851 per unit of pnodes above 5.012, nothing below",
+   "single_input": "-5",
+   "threshold_sd": -0.0,
+   "active_side": "above",
+   "log_hr_per_sd_active": 0.3116490862615959,
+   "hr_per_sd_active": 1.3656753746835255,
+   "feature": "pnodes",
+   "threshold_raw": 5.012165450121654,
+   "log_hr_per_unit_active": 0.05851365821205822,
+   "spread": {
+    "log_hr_sd": 0.3116490862615956,
+    "fraction_nonzero": 1.0,
+    "hr_p5_vs_median": 0.8895608932088827,
+    "hr_p25_vs_median": 0.8895608932088827,
+    "hr_p75_vs_median": 1.2637135305914056,
+    "hr_p95_vs_median": 2.139725514932002,
+    "hr_p95_vs_p5": 2.405372730823905
+   }
+  },
+  {
+   "node": "-3",
+   "log_hr_per_sd": -0.2202253055103186,
+   "hr_per_sd": 0.8023380064225931,
+   "feature": "horTh=yes",
+   "log_hr_per_unit": -0.45810524390512486,
+   "hr_per_unit": 0.6324809079438038,
+   "spread": {
+    "log_hr_sd": 0.22022530551031844,
+    "fraction_nonzero": 1.0,
+    "hr_p5_vs_median": 0.6324809079438038,
+    "hr_p25_vs_median": 0.6324809079438038,
+    "hr_p75_vs_median": 1.0,
+    "hr_p95_vs_median": 1.0,
+    "hr_p95_vs_p5": 1.5810753928541512
+   }
+  }
+ ],
+ "ph_test": {
+  "method": "lifelines proportional_hazard_test, rank transform, training rows",
+  "p_values": {
+   "horTh=yes": 0.7998845288347936,
+   "pnodes": 0.5369134338207036,
+   "progrec": 0.05821385513873919,
+   "tgrade=II": 0.37285778008378456,
+   "tgrade=III": 0.39455899362710667
+  },
+  "min_p": 0.05821385513873919,
+  "violations_at_0.05": []
+ }
+}
