@@ -47,6 +47,19 @@ are cut and suffixed with a sha1 hash).
     uv run python experiments/churn/run_rescue2.py --stage select
     uv run python experiments/churn/run_rescue2.py --stage evaluate
     uv run python experiments/churn/run_rescue2.py --dry-run   # selection + one case, E = 2, no CSV/DB
+
+--early-stopping (EARLY_STOPPING_PLAN.md), with --stage evaluate: the selection is
+re-derived and checked against the committed rescue2_selection.csv as before (no
+reselection); then the readout refits of conditions 4-9 are redone on the fit
+rows of val_split.json only, and conditions 3, 5, 6, 7 are fine-tuned (masked) on
+the fit rows with early stopping on the validation rows (patience 50, min_delta
+1e-5, max 5000 epochs, best weights restored). Conditions 1 and 2 are evaluated
+again as untrained references (KO is not re-saved: it is the fixed-epoch run's
+genome). Rows -> rescue2_es.csv; derived genomes
+churn-rescue2-<cond>-es-r<seed>-...; rescue2.csv and its DB rows are not touched.
+
+    uv run python experiments/churn/run_rescue2.py --stage evaluate --early-stopping
+    uv run python experiments/churn/run_rescue2.py --dry-run --early-stopping  # one case, full ES, no CSV/DB
 """
 
 import argparse
@@ -69,6 +82,8 @@ from ext_common import gs
 
 SEL_OUT = ec.HERE / "rescue2_selection.csv"
 OUT = ec.HERE / "rescue2.csv"
+OUT_ES = ec.HERE / "rescue2_es.csv"
+ES = "es"
 PREFIX = "churn-rescue2"
 NAME_MAX = 255  # experiments.name is String(255)
 MIN_GAIN = 0.02
@@ -146,14 +161,20 @@ COLUMNS = [
     "level", "statistic", "n_cases", "cases", "n_units", "units", "n_positive",
     "n_negative", "n_zero", "median", "sign_test_p_two_sided", "status",
 ]
+ES_COLUMNS = COLUMNS + [
+    "early_stopping", "es_stop_epoch", "es_best_epoch", "es_best_val_bce", "es_stopped_by",
+    "es_val_bce_before", "es_val_bce_after_written_back", "es_patience", "es_min_delta",
+    "es_max_epochs", "n_fit", "n_val", "refit_n_rows", "fit_auc", "val_auc",
+]
 
 
 def slug(name):
     return re.sub(r"[^a-z0-9]+", "-", str(name).lower()).strip("-")
 
 
-def name_for(cond, rs, fname, ds, gname):
-    n = f"{PREFIX}-{cond}-r{rs}-{slug(fname)}-d{ds}-{slug(gname)}"
+def name_for(cond, rs, fname, ds, gname, es=False):
+    tag = "-es" if es else ""
+    n = f"{PREFIX}-{cond}{tag}-r{rs}-{slug(fname)}-d{ds}-{slug(gname)}"
     if len(n) <= NAME_MAX:
         return n
     h = hashlib.sha1(n.encode()).hexdigest()[:10]
@@ -261,7 +282,8 @@ def prepare_grafts(R, K, A, W, data):
         refit, rinf = rr.refit_graft(gg, rec, cfg, Xtr, ytr)
         refit_auc[role] = float(roc_auc_score(
             ytr, gs.output_preactivation_terms(refit, cfg, Xtr)["z"]))
-        grafts[role] = {"rec": rec, "refit": refit, "refit_info": rinf, "donor": donor}
+        grafts[role] = {"rec": rec, "refit": refit, "refit_info": rinf, "donor": donor,
+                        "graft": gg}
     return grafts, status, errs, refit_auc, flags
 
 
@@ -375,7 +397,23 @@ def check_against_committed(pair_rows, committed):
                                  f"{old!r}")
 
 
-def train_case(case, P, E, ko_ft_cache, timer):
+def refit_on_fit_rows(P, es):
+    """Early-stopping amendment: redo each graft's readout refit on the fit rows
+    only (the validation rows stay unseen until early stopping uses them)."""
+    cfg = P["R"]["config"]
+    for role, gr in P["grafts"].items():
+        gr["refit"], gr["refit_info"] = rr.refit_graft(gr["graft"], gr["rec"], cfg,
+                                                       es["X_fit"], es["y_fit"])
+
+
+def _ft(start, cfg, Xtr, ytr, E, rs, es):
+    if E == ES:
+        return gs.finetune(start, cfg, es["X_fit"], es["y_fit"], seed=rs,
+                           **ec.es_kwargs(es["X_val"], es["y_val"]))
+    return gs.finetune(start, cfg, Xtr, ytr, E, rs, mask_phantom=True, return_info=True)
+
+
+def train_case(case, P, E, ko_ft_cache, timer, es=None):
     """All genomes for one case (train only). KO + ft is computed once per
     recipient feature."""
     R, K, G = P["R"], P["K"], P["grafts"]
@@ -396,8 +434,7 @@ def train_case(case, P, E, ko_ft_cache, timer):
             key = (rs, R["name"])
             if key not in ko_ft_cache:
                 t = time.time()
-                ko_ft_cache[key] = gs.finetune(K["ko"], cfg, Xtr, ytr, E, rs,
-                                               mask_phantom=True, return_info=True)
+                ko_ft_cache[key] = _ft(K["ko"], cfg, Xtr, ytr, E, rs, es)
                 timer.append(time.time() - t)
             genomes[cond], ft_info[cond] = ko_ft_cache[key]
             continue
@@ -405,15 +442,14 @@ def train_case(case, P, E, ko_ft_cache, timer):
         refit_info[cond] = G[role]["refit_info"]
         if cond.endswith("-ft"):
             t = time.time()
-            genomes[cond], ft_info[cond] = gs.finetune(start, cfg, Xtr, ytr, E, rs,
-                                                       mask_phantom=True, return_info=True)
+            genomes[cond], ft_info[cond] = _ft(start, cfg, Xtr, ytr, E, rs, es)
             timer.append(time.time() - t)
         else:
             genomes[cond] = start
     P.update(genomes=genomes, ft_info=ft_info, refit_info=refit_info)
 
 
-def evaluate_case(case, P, E, boot, dry_run, commit, phantom):
+def evaluate_case(case, P, E, boot, dry_run, commit, phantom, es=None):
     R, A, W, K, G = P["R"], P["A"], P["W"], P["K"], P["grafts"]
     cfg, rs, data = R["config"], R["seed"], P["data"]
     genomes, ft_info, refit_info = P["genomes"], P["ft_info"], P["refit_info"]
@@ -436,7 +472,8 @@ def evaluate_case(case, P, E, boot, dry_run, commit, phantom):
         row = dict(common, kind="condition", condition=cond, condition_number=COND_NUM[cond],
                    donor_role=role or "", donor_seed=donor["seed"] if donor else "",
                    donor_feature=donor["name"] if donor else "",
-                   epochs=E if is_ft else 0, ft_seed=rs if is_ft else "",
+                   epochs=(ft_info[cond]["stop_epoch"] if E == ES else E) if is_ft else 0,
+                   ft_seed=rs if is_ft else "",
                    ft_phantom=phantom if is_ft else "", sham_seed=rs if role == "sham" else "",
                    n_grafted_nodes=len(rec["id_map"]) if rec else 0,
                    n_grafted_connections=len(rec["added_connections"]) if rec else 0,
@@ -451,13 +488,26 @@ def evaluate_case(case, P, E, boot, dry_run, commit, phantom):
                        refit_output_bias_after=ri["output_bias_after"],
                        refit_readout_weights_before=ri["readout_weights_before"],
                        refit_readout_weights_after=ri["readout_weights_after"],
-                       refit_group_scales_after=ri["group_scales_after"])
+                       refit_group_scales_after=ri["group_scales_after"],
+                       refit_n_rows=ri["n_rows"])
         fi = ft_info.get(cond)
         if fi:
             row.update(ft_loss_before=fi["loss_before"],
                        ft_loss_after=fi["loss_after_written_back"],
                        ft_max_abs_pred_diff_trained_vs_written_back=fi[
                            "max_abs_pred_diff_trained_vs_written_back"])
+        if es is not None:
+            g = genomes[cond]
+            row.update(early_stopping=bool(fi), n_fit=len(es["y_fit"]), n_val=len(es["y_val"]),
+                       fit_auc=roc_auc_score(es["y_fit"], gs.predict_proba(g, cfg, es["X_fit"])),
+                       val_auc=roc_auc_score(es["y_val"], gs.predict_proba(g, cfg, es["X_val"])))
+            if fi:
+                row.update(es_stop_epoch=fi["stop_epoch"], es_best_epoch=fi["best_epoch"],
+                           es_best_val_bce=fi["best_val_bce"], es_stopped_by=fi["stopped_by"],
+                           es_val_bce_before=fi["val_bce_before"],
+                           es_val_bce_after_written_back=fi["val_bce_after_written_back"],
+                           es_patience=fi["patience"], es_min_delta=fi["min_delta"],
+                           es_max_epochs=fi["max_epochs"])
         rows.append(row)
 
     by = {r["condition"]: r for r in rows if r.get("status") == "ok"}
@@ -485,7 +535,10 @@ def evaluate_case(case, P, E, boot, dry_run, commit, phantom):
         cond = row["condition"]
         if cond == "base" or row.get("status") != "ok":
             continue
-        row["derived_experiment_name"] = name_for(cond, rs, R["name"], A["seed"], A["name"])
+        if es is not None and cond == "ko":
+            continue  # untrained reference: the fixed-epoch run's KO genome, not re-saved
+        row["derived_experiment_name"] = name_for(cond, rs, R["name"], A["seed"], A["name"],
+                                                  es=es is not None)
         if dry_run:
             continue
         g = copy.copy(genomes[cond])  # KO / KO + ft are shared between cases
@@ -493,8 +546,13 @@ def evaluate_case(case, P, E, boot, dry_run, commit, phantom):
         role = GRAFT_OF.get(cond)
         fi = ft_info.get(cond)
         provenance = {
-            "study": "churn study D2 knockout-and-rescue (algorithmic aliases)",
-            "plan": "experiments/churn/RESCUE2_REINIT_PLAN.md (D2)", "case": case,
+            "study": "churn study D2 knockout-and-rescue (algorithmic aliases)"
+            + (" early stopping" if es is not None else ""),
+            "plan": "experiments/churn/RESCUE2_REINIT_PLAN.md (D2)"
+            + (" + experiments/churn/EARLY_STOPPING_PLAN.md" if es is not None else ""),
+            "case": case,
+            "val_split": "experiments/churn/val_split.json (readout refit on fit rows only)"
+            if es is not None else None,
             "condition": cond, "condition_number": COND_NUM[cond],
             "source_genome_id": R["info"]["genome_id"],
             "source_experiment_id": R["info"]["experiment_id"],
@@ -514,7 +572,11 @@ def evaluate_case(case, P, E, boot, dry_run, commit, phantom):
             {k: fi[k] for k in ("epochs", "seed", "optimizer", "lr", "loss", "full_batch",
                                 "mask_phantom", "loss_before", "loss_trained_net",
                                 "loss_after_written_back",
-                                "max_abs_pred_diff_trained_vs_written_back")},
+                                "max_abs_pred_diff_trained_vs_written_back",
+                                *(("early_stopping", "patience", "min_delta", "max_epochs",
+                                   "restore_best", "stop_epoch", "best_epoch", "best_val_bce",
+                                   "stopped_by", "val_bce_before", "val_bce_after_written_back",
+                                   "n_fit", "n_val") if es is not None else ()))},
             "selection": {k: P["row"][k] for k in ("r", "ko_train_auc_drop", "include",
                                                    "wrong_feature", "wrong_r")},
             **commit}
@@ -608,15 +670,24 @@ def main():
                     help="selection (printed) + one case with E = 2; no CSV/DB writes; test "
                          "metrics computed but not printed")
     ap.add_argument("--case", default=None, help="dry run: which case (default: the first)")
+    ap.add_argument("--early-stopping", action="store_true",
+                    help="EARLY_STOPPING_PLAN.md: refits on the fit rows, masked fine-tunes "
+                         "with early stopping on val_split.json -> rescue2_es.csv "
+                         "(with --stage evaluate or --dry-run; same committed selection)")
     ec.add_ft_args(ap)
     args = ap.parse_args()
+    if args.early_stopping and args.stage == "select":
+        raise SystemExit("--early-stopping reuses the committed selection: use --stage evaluate")
     if not args.dry_run and args.stage is None:
         raise SystemExit("--stage select|evaluate (or --dry-run) is required")
     if len(args.epochs) != 1 or (not args.dry_run and args.epochs[0] != E_PLAN):
         raise SystemExit(f"study D2 uses a single E = {E_PLAN} (RESCUE2_REINIT_PLAN.md)")
     if args.phantom != "masked":
         raise SystemExit("study D2 uses masked fine-tuning")
-    E = 2 if args.dry_run else args.epochs[0]
+    E = ES if args.early_stopping else (2 if args.dry_run else args.epochs[0])
+    out = OUT_ES if args.early_stopping else OUT
+    if args.stage == "evaluate" and not args.dry_run and out.exists():
+        raise SystemExit(f"{out} exists; refusing to overwrite")
     torch.set_num_threads(1)
 
     from explaneat.db.base import db
@@ -648,8 +719,10 @@ def main():
         check_against_committed(pair_rows, committed_selection_rows())
         print("selection matches the committed rescue2_selection.csv")
         names = [name_for(c, prepared[k]["R"]["seed"], prepared[k]["R"]["name"],
-                          prepared[k]["A"]["seed"], prepared[k]["A"]["name"])
-                 for k in cases for c in CONDS if c != "base"]
+                          prepared[k]["A"]["seed"], prepared[k]["A"]["name"],
+                          es=args.early_stopping)
+                 for k in cases for c in CONDS
+                 if c != "base" and not (args.early_stopping and c == "ko")]
         if len(set(names)) != len(names):
             raise SystemExit("derived experiment names are not unique")
         ec.check_names_free(names)
@@ -660,12 +733,21 @@ def main():
                                         "ko-wrong-refit-ft")
                             if GRAFT_OF[c] in prepared[k]["grafts"]) for k in cases)
     print(f"{len(cases)} cases over {n_feat} recipient features: {n_ft} fine-tunes at E = {E}")
+    es = None
+    if args.early_stopping:
+        Xf, yf, Xv, yv, _ = ec.load_val_split(data)
+        es = {"X_fit": Xf, "y_fit": yf, "X_val": Xv, "y_val": yv}
+        print(f"early stopping: fit {len(yf)} / val {len(yv)} rows, patience "
+              f"{ec.ES_PATIENCE}, min_delta {ec.ES_MIN_DELTA}, max {ec.ES_MAX_EPOCHS}; "
+              "readout refits redone on the fit rows")
+        for k in cases:
+            refit_on_fit_rows(prepared[k], es)
     ko_ft_cache, timer = {}, []
     t_train = time.time()
     for i, case in enumerate(cases):
         P = prepared[case]
         P["data"] = data
-        train_case(case, P, E, ko_ft_cache, timer)
+        train_case(case, P, E, ko_ft_cache, timer, es=es)
         if i == 0:
             per = float(np.mean(timer)) if timer else 0.0
             est_h = per * n_ft / 3600
@@ -683,7 +765,7 @@ def main():
     all_rows, all_d, all_rf = [], [], []
     for case in cases:
         rows, drows, rf = evaluate_case(case, prepared[case], E, boot, args.dry_run, commit,
-                                        args.phantom)
+                                        args.phantom, es=es)
         all_rows += rows
         all_d += drows
         all_rf.append(rf)
@@ -692,10 +774,16 @@ def main():
             if r.get("status") != "ok":
                 print(f"   {r['condition']:18s} NOT RUN: {r.get('status')}")
             elif args.dry_run:
-                print(f"   {r['condition']:18s} E {r['epochs']:3d} train {r['train_auc']:.4f} "
+                print(f"   {r['condition']:18s} E {r['epochs']:4d} "
+                      + (f"(best {r['es_best_epoch']}) " if r.get("es_best_epoch", "") != ""
+                         else "")
+                      + f"train {r['train_auc']:.4f} "
                       f"(test computed, not shown) -> {r.get('derived_experiment_name', '')}")
             else:
-                print(f"   {r['condition']:18s} E {r['epochs']:3d} train {r['train_auc']:.4f} "
+                print(f"   {r['condition']:18s} E {r['epochs']:4d} "
+                      + (f"(best {r['es_best_epoch']}) " if r.get("es_best_epoch", "") != ""
+                         else "")
+                      + f"train {r['train_auc']:.4f} "
                       f"test {r['test_auc']:.4f} [{r['test_auc_ci_lo']:.4f},"
                       f"{r['test_auc_ci_hi']:.4f}]")
         if not args.dry_run:
@@ -715,7 +803,8 @@ def main():
             print(f"   pooled [{p['level']}] {p['statistic']}: n {p.get('n_units', 0)} median "
                   f"{p.get('median', '')} +{p.get('n_positive', '')}/-"
                   f"{p.get('n_negative', '')} sign p {p.get('sign_test_p_two_sided', '')}")
-    rr._write(OUT, all_rows + all_d + all_rf + pooled, COLUMNS)
+    rr._write(out, all_rows + all_d + all_rf + pooled,
+              ES_COLUMNS if args.early_stopping else COLUMNS)
 
 
 if __name__ == "__main__":
