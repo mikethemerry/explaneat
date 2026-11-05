@@ -291,7 +291,10 @@ part of the method, not advice.
   name of `--csv`, never its path. Check `git status` before every commit.
 - [ ] Use a **local** database if the DB mode is used: SQLite inside the
   environment (`DATABASE_URL=sqlite:///...`), or the environment's own
-  Postgres. Never use a shared or remote database.
+  Postgres. Never use a shared or remote database. For SQLite, import
+  `explaneat.db.sqlite_compat` before `db.create_all()`; it renders the
+  JSONB/UUID columns. `experiments/survival/explain_setup.py` and `xn.py`
+  show the pattern.
 - [ ] Never send cohort data, or anything derived from patients, to external
   services. That includes LLM-assisted annotation: annotation tools see model
   structure and fitted parameters only, never rows. Use a local model or
