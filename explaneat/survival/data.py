@@ -241,17 +241,38 @@ def save_survival_dataset_to_db(name: str, X: np.ndarray, y: np.ndarray,
 
 def save_survival_split_to_db(dataset_id, splits: Dict[str, List[int]], seed: int,
                               test_size: float, X: Optional[np.ndarray] = None):
-    """Store event-stratified index splits; fits a StandardScaler on train rows if X given."""
-    from explaneat.db.dataset_utils import save_dataset_split_with_indices
+    """Store event-stratified index splits; StandardScaler params from train rows if X given.
 
-    scaler = None
+    Returns the (expunged, usable) ``DatasetSplit`` row.
+    """
+    import uuid as _uuid
+
+    from explaneat.db.base import db
+    from explaneat.db.models import DatasetSplit
+
+    scaler_type = scaler_params = None
     if X is not None:
-        from sklearn.preprocessing import StandardScaler
-        scaler = StandardScaler().fit(np.asarray(X)[splits["train"]])
-    return save_dataset_split_with_indices(
-        dataset_id, splits["train"], splits["test"],
-        split_type="train_val_test" if splits.get("val") else "train_test",
-        test_size=test_size, random_state=seed, shuffle=True, stratify=True,
-        scaler=scaler, validation_indices=splits.get("val"),
-        preprocessing_steps=[{"step": "stratify", "by": "event"}],
-    )
+        Xtr = np.asarray(X, dtype=np.float64)[splits["train"]]
+        sd = Xtr.std(0)
+        sd[sd == 0] = 1.0
+        scaler_type = "StandardScaler"
+        scaler_params = {"mean": Xtr.mean(0).tolist(), "scale": sd.tolist()}
+    if isinstance(dataset_id, str):
+        dataset_id = _uuid.UUID(dataset_id)
+    val = splits.get("val") or None
+    with db.session_scope() as session:
+        split = DatasetSplit(
+            dataset_id=dataset_id,
+            split_type="train_val_test" if val else "train_test",
+            test_size=test_size, random_state=seed, shuffle=True, stratify=True,
+            train_indices=list(splits["train"]), test_indices=list(splits["test"]),
+            validation_indices=list(val) if val else None,
+            scaler_type=scaler_type, scaler_params=scaler_params,
+            preprocessing_steps=[{"step": "stratify", "by": "event"}],
+            train_size=len(splits["train"]), test_size_actual=len(splits["test"]),
+            validation_size=len(val) if val else None,
+        )
+        session.add(split)
+        session.flush()
+        session.expunge(split)
+        return split

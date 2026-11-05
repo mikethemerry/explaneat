@@ -28,7 +28,8 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                  dataset_id: str = None, config_template_id: str = None,
                  initial_state=None,
                  _existing_experiment_id: Optional[str] = None,
-                 mask_phantom: bool = True):
+                 mask_phantom: bool = True,
+                 criterion=None):
         """
         Initialize population with database tracking
 
@@ -54,9 +55,19 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                 ``BackpropPopulation``). When True it is recorded on the new
                 Experiment as ``config_json["training"]["mask_phantom"]``;
                 when False ``config_json`` is unchanged.
+            criterion: Backprop loss (default None = BackpropPopulation's
+                ``nn.BCELoss()``).  A criterion with a ``describe()`` method
+                (e.g. ``explaneat.survival.CoxCriterion``) is recorded as
+                ``config_json["training"]["criterion"]``.  A non-default
+                ``config.output_activation`` (``neuralneat.set_output_activation``)
+                is recorded as ``config_json["training"]["output_activation"]``,
+                which ``load_neat_config`` reads back so genomes loaded from the
+                DB are rebuilt with the activation they were trained with.
         """
+        extra = {} if criterion is None else {"criterion": criterion}
         super().__init__(config, x_train, y_train, xs_val=xs_val, ys_val=ys_val,
-                         initial_state=initial_state, mask_phantom=mask_phantom)
+                         initial_state=initial_state, mask_phantom=mask_phantom,
+                         **extra)
 
         # Initialize database connection
         if database_url:
@@ -122,9 +133,19 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                 neat_config_text = "Config file not found"
         
         config_json = serialize_population_config(config)
+        training = {}
         if self.mask_phantom:
             # Only recorded when on, so rows of unmasked runs keep their format.
-            config_json["training"] = {"mask_phantom": True}
+            training["mask_phantom"] = True
+        from ..core.neuralneat import OUTPUT_ACTIVATION, get_output_activation
+        out_act = get_output_activation(config)
+        if out_act != OUTPUT_ACTIVATION:
+            # Only recorded when non-default (classification rows unchanged).
+            training["output_activation"] = out_act
+        if hasattr(self.criterion, "describe"):
+            training["criterion"] = self.criterion.describe()
+        if training:
+            config_json["training"] = training
 
         with db.session_scope() as session:
             experiment = Experiment(
@@ -203,6 +224,16 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                 exp = session.get(Experiment, uuid.UUID(experiment_id))
                 training = (exp.config_json or {}).get("training") or {}
                 kwargs["mask_phantom"] = bool(training.get("mask_phantom", False))
+        with db.session_scope() as session:
+            exp = session.get(Experiment, uuid.UUID(experiment_id))
+            training = dict((exp.config_json or {}).get("training") or {})
+        # Rebuild with the output activation / criterion the run was trained with.
+        from ..core.config_utils import apply_training_settings
+        apply_training_settings(config, {"training": training})
+        crit = training.get("criterion") or {}
+        if "criterion" not in kwargs and crit.get("name") == "cox_ph":
+            from ..survival.criterion import CoxCriterion
+            kwargs["criterion"] = CoxCriterion(ties=crit.get("ties", "efron"))
         return cls(
             config, x_train, y_train, xs_val=xs_val, ys_val=ys_val,
             initial_state=initial_state,

@@ -63,7 +63,17 @@ class BackpropPopulation(Population):
         genome's own connection weights (and biases) train, and the
         written-back genome is exactly the trained network. False reproduces
         the original behaviour (phantom dense entries train and are discarded
-        at write-back), which every run before 2026-11-05 used."""
+        at write-back), which every run before 2026-11-05 used.
+
+        ``criterion`` is the loss ``backpropagate`` minimises, full-batch, as
+        ``criterion(net.forward(xs), ys)`` (default ``nn.BCELoss()``; before
+        2026-11-06 the argument was stored but ignored and BCE was always
+        used).  ``ys`` may be ``[N]`` (unsqueezed to ``[N, 1]``) or any
+        ``[N, k]`` target the criterion understands; a survival target is
+        ``[N, 2]`` = (time, event) with ``CoxCriterion`` and an identity output
+        activation (``neuralneat.set_output_activation(config, "identity")``).
+        See ``docs/survival.md`` for the matching fitness convention
+        (fitness = -Cox loss, not 1/loss)."""
         self.mask_phantom = bool(mask_phantom)
         self.logger = logging.getLogger("experimenter.backproppop")
         self.reporters = ReporterSet()
@@ -160,7 +170,7 @@ class BackpropPopulation(Population):
             net = nneat(
                 genome,
                 self.config,
-                criterion=nn.BCELoss(),
+                criterion=self.criterion,
                 mask_phantom=self.mask_phantom,
             )
 
@@ -168,7 +178,11 @@ class BackpropPopulation(Population):
             optimizer.zero_grad()
             losses = []
 
-            bce = nn.BCELoss()
+            # self.criterion: nn.BCELoss() by default (the original hardcoded
+            # loss, so the default path is unchanged); any criterion(pred,
+            # target) works, e.g. explaneat.survival.CoxCriterion on an
+            # [N, 2] (time, event) target.
+            bce = self.criterion
             loss_preds = net.forward(xs)
             preBPLoss = bce(loss_preds, ys)
 
