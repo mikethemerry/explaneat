@@ -580,9 +580,12 @@ def graft(recipient, recipient_config, donor_genome, donor_subgraph: DonorSubgra
 def code_commit() -> dict:
     try:
         sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip()
-        dirty = bool(subprocess.check_output(["git", "status", "--porcelain", "--",
-                                              "explaneat", "experiments/churn"],
-                                             cwd=REPO, text=True).strip())
+        # modified tracked sources only (tracked .pyc files change on every run)
+        status = subprocess.check_output(
+            ["git", "status", "--porcelain", "--untracked-files=no", "--",
+             "explaneat", "experiments/churn", "experiments/10seed", "mcp_server"],
+            cwd=REPO, text=True)
+        dirty = any(line.strip().endswith(".py") for line in status.splitlines())
     except Exception:  # pragma: no cover
         sha, dirty = None, None
     return {"code_commit": sha, "dirty": dirty}

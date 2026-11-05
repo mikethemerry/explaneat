@@ -17,6 +17,9 @@ from pathlib import Path
 
 import numpy as np
 from sklearn.metrics import accuracy_score, roc_auc_score
+from threadpoolctl import threadpool_limits
+
+threadpool_limits(1)  # modest CPU: other training runs share this machine
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
