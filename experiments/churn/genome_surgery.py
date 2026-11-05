@@ -1037,3 +1037,121 @@ def select_novel_donor(pairs: Sequence[dict], recipient_seed: int, min_nov: floa
         return None, max_nov
     best = sorted(ok, key=lambda p: (-p["inc"], p["donor_seed"], p["donor_annotation"]))[0]
     return best, max_nov
+
+
+# ====================================================================== knockout and rescue
+# (study D, RESCUE_PLAN.md)
+
+def feature_knockout(genome, config, sub: DonorSubgraph, output_key: int = 0):
+    """Knock a leaf feature out of a deep copy of ``genome``: disable every
+    connection of its resolved subgraph ``sub`` (entry -> feature and internal
+    connections, the readout edges to the output, and any input -> output
+    edges of an identity exit). Every one must be an enabled genome
+    connection.
+
+    Nothing else is touched. Enabled edges between a feature node and a node
+    outside the feature that are not part of ``sub`` are reported, not
+    disabled: ``other_outgoing`` (feature node -> non-output node outside the
+    feature), ``other_to_output`` (feature node -> output not in ``sub``) and
+    ``external_incoming`` (node outside the feature -> feature node).
+
+    Returns (knocked-out genome, record).
+    """
+    keys = [tuple(k) for k in sub.all_connections]
+    bad = [k for k in keys if k not in genome.connections or not genome.connections[k].enabled]
+    if bad:
+        raise ValueError(f"knockout of {sub.annotation_name!r}: connection(s) {bad} are not "
+                         "enabled genome connections")
+    outputs = set(config.genome_config.output_keys)
+    feat = set(sub.hidden_nodes)
+    kset = set(keys)
+    enabled = [k for k, c in genome.connections.items() if c.enabled and k not in kset]
+    other_out = sorted(k for k in enabled if k[0] in feat and k[1] not in feat
+                       and k[1] not in outputs)
+    other_to_output = sorted(k for k in enabled if k[0] in feat and k[1] in outputs)
+    external_in = sorted(k for k in enabled if k[1] in feat and k[0] not in feat)
+    ko = disable_connections(genome, keys)
+    record = {"annotation_name": sub.annotation_name, "genome_key": genome.key,
+              "disabled_connections": sorted(keys), "n_disabled": len(keys),
+              "feature_hidden_nodes": sorted(feat),
+              "readout_connections": sorted(tuple(k) for k in sub.readout_connections),
+              "input_output_connections": sorted(tuple(k) for k in
+                                                 sub.input_output_connections),
+              "other_outgoing": other_out, "other_to_output": other_to_output,
+              "external_incoming": external_in}
+    return ko, record
+
+
+def enabled_feature_readout(genome, sub: DonorSubgraph):
+    """(readout keys, input -> output keys) of ``sub`` that are enabled in
+    ``genome`` (after a knockout: none)."""
+    def on(k):
+        k = tuple(k)
+        return k in genome.connections and genome.connections[k].enabled
+    return ([tuple(k) for k in sub.readout_connections if on(k)],
+            [tuple(k) for k in sub.input_output_connections if on(k)])
+
+
+def feature_contribution(genome, config, X, sub: DonorSubgraph, output_key: int = 0):
+    """The feature's logit contribution in ``genome`` on ``X``, over the
+    readout (and input -> output) edges of ``sub`` that are enabled in
+    ``genome``; identically zero when none is enabled (a knocked-out feature)."""
+    ro, io = enabled_feature_readout(genome, sub)
+    if not ro and not io:
+        return np.zeros(len(np.asarray(X)))
+    s, _, _ = readout_contribution(genome, config, X, ro, io, output_key)
+    return s
+
+
+def graft_collisions(recipient, recipient_config, donor_subgraph: DonorSubgraph):
+    """Connection keys a ``graft`` of ``donor_subgraph`` into ``recipient``
+    would add that already exist in ``recipient`` (enabled or disabled), with
+    the same id mapping as ``graft``. Only input -> output keys can collide
+    (grafted hidden nodes get fresh ids). Returns
+    [{"key": (a, b), "recipient_enabled": bool}] sorted by key."""
+    start = max(max(recipient.nodes), 0) + 1
+    id_map = {d: start + i for i, d in enumerate(sorted(donor_subgraph.hidden_nodes))}
+    special = (set(recipient_config.genome_config.input_keys)
+               | set(recipient_config.genome_config.output_keys))
+
+    def m(n):
+        return n if n in special else id_map[n]
+
+    out = []
+    for k in donor_subgraph.all_connections:
+        nk = (m(k[0]), m(k[1]))
+        if nk in recipient.connections:
+            out.append({"key": nk, "recipient_enabled": bool(recipient.connections[nk].enabled)})
+    return sorted(out, key=lambda d: d["key"])
+
+
+def graft_into_knockout(ko_genome, config, donor_genome, donor_subgraph: DonorSubgraph,
+                        knocked_out_keys: Iterable[ConnKey] = (),
+                        sham_seed: Optional[int] = None):
+    """``graft`` of a donor feature into a knocked-out recipient, with a clear
+    failure when a key the donor needs already exists in the recipient.
+
+    The recipient's own gene is never re-enabled or overwritten: any collision
+    (e.g. the donor needs input -> output edge (-3, 0) and the recipient holds
+    that key, enabled, disabled by the knockout, or disabled originally)
+    raises ``GraftCollisionError`` naming each key and its state, before
+    ``graft`` runs. Returns ``graft``'s (new genome, record).
+    """
+    ko_keys = {tuple(k) for k in knocked_out_keys}
+    col = graft_collisions(ko_genome, config, donor_subgraph)
+    if col:
+        desc = []
+        for c in col:
+            if c["recipient_enabled"]:
+                state = "enabled in the recipient"
+            elif c["key"] in ko_keys:
+                state = "disabled by the knockout"
+            else:
+                state = "disabled in the original recipient"
+            desc.append(f"{c['key']} ({state})")
+        raise GraftCollisionError(
+            f"graft of {donor_subgraph.annotation_name!r} into knocked-out recipient "
+            f"{ko_genome.key} needs connection key(s) the recipient already holds: "
+            f"{', '.join(desc)}. Re-enabling or overwriting the recipient's own gene is "
+            "not allowed; the case fails.")
+    return graft(ko_genome, config, donor_genome, donor_subgraph, sham_seed=sham_seed)
