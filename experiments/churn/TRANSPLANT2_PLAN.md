@@ -65,3 +65,24 @@ nonlinear leaves. That is the qualitative check that the explanations name diffe
 - Study C's two recipients (s9, s4) are included again. Their earlier test numbers are known,
   but C2's selection rule uses train quantities only.
 - Selection, grafts and refits are all built before any test evaluation, as in C.
+
+## Judged arm (added 2026-11-05 at Mike's request, before any C2 output was seen)
+
+**What it is.** Alongside the algorithmic selection, Claude (the orchestrating session) picked
+donors by reading the churn100 explanation records: summaries, leaf names and entry
+features. It used no novelty or incremental-value scores and no test data.
+
+**How the picks were made.**
+- The nonlinear mechanisms each network's explanation names were tabulated: service calls ×
+  low usage, a heavy day/eve usage hinge, and voicemail gating of heavy usage.
+- Each recipient was given a clean all-input leaf, from another seed, implementing a mechanism
+  its own explanation lacks.
+- s0, s1, s6 and s7 already contain all three mechanisms, so they get no donor.
+
+**Picks.** `transplant2_judged_selection.csv`, 6 recipients:
+- s4, s9 ← s5 `csc_threshold_low_day`
+- s2, s8 ← s6 `heavy_day_eve_usage`
+- s3, s5 ← s6 `day_charge_no_voicemail`
+
+**Evaluation.** The same conditions and outcomes as the algorithmic arm. Both arms are reported
+side by side.
