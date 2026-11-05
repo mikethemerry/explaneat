@@ -94,9 +94,9 @@ def explained_state(genome, config, ops, X_check=None):
     return state, anns, ev, err
 
 
-def evaluate(genome, config, data, boot_idx, p_ref=None):
-    """Per-condition metrics (plan 'Metrics per condition'). ``p_ref``: test
-    predictions of a reference condition for a paired bootstrap delta."""
+def evaluate(genome, config, data, boot_idx):
+    """Per-condition metrics (plan 'Metrics per condition'); also returns the
+    test predictions, for paired deltas between conditions."""
     p_tr = gs.predict_proba(genome, config, data["X_train"])
     p_te = gs.predict_proba(genome, config, data["X_test"])
     ytr, yte = data["y_train"], data["y_test"]
@@ -133,6 +133,19 @@ def state_input_ids(feature_names):
     """{feature name: input node id} for the state:* one-hot inputs
     (input key -(i+1) <-> data column i)."""
     return {n: -(i + 1) for i, n in enumerate(feature_names) if n.startswith("state:")}
+
+
+PHANTOM_HELP = (
+    "how fine-tuning treats NeuralNeat's phantom weights (the dense zero entries "
+    "with no connection gene). 'primitive' = literal PropNEAT backprop: they "
+    "train and are dropped at write-back, so the stored genome is not the "
+    "trained network. 'masked' = only genome weights/biases train. Required: "
+    "the plan does not decide this (see genome_surgery.finetune).")
+
+
+def add_phantom_arg(ap):
+    ap.add_argument("--phantom", choices=["primitive", "masked"], required=True,
+                    help=PHANTOM_HELP)
 
 
 def check_names_free(names):

@@ -78,7 +78,8 @@ def predict_proba(genome, config, X) -> np.ndarray:
 
 # ====================================================================== finetune
 
-def _param_masks(net: NeuralNeat, genome, frozen_conn_keys, frozen_node_keys):
+def _param_masks(net: NeuralNeat, genome, frozen_conn_keys, frozen_node_keys,
+                 mask_phantom: bool = False):
     """Gradient masks (1 = trainable, 0 = frozen) per layer weight/bias tensor.
 
     Genome location -> tensor index comes from the same maps that
@@ -92,6 +93,10 @@ def _param_masks(net: NeuralNeat, genome, frozen_conn_keys, frozen_node_keys):
     (they are dropped again at write-back). Masking them keeps the frozen
     unit's function fixed throughout training. Real connections into a frozen
     node are frozen only if listed in ``frozen_conn_keys``.
+
+    ``mask_phantom`` masks every phantom entry of every layer, so only genome
+    weights and biases train and the written-back genome is exactly the
+    trained network.
     """
     frozen_conn_keys = {tuple(k) for k in frozen_conn_keys}
     frozen_node_keys = set(frozen_node_keys)
@@ -100,6 +105,10 @@ def _param_masks(net: NeuralNeat, genome, frozen_conn_keys, frozen_node_keys):
     located_conns, located_nodes = set(), set()
     for L, layer in net.layers.items():
         real_entries = {loc: key for key, loc in layer["input_map"].items()}
+        if mask_phantom and w_masks[L].ndim == 2 and layer["layer_type"] != "INPUT":
+            w_masks[L].zero_()
+            for (r, c) in real_entries:
+                w_masks[L][r, c] = 1.0
         for key, (r, c) in layer["input_map"].items():
             if key in frozen_conn_keys:
                 w_masks[L][r, c] = 0.0
@@ -131,6 +140,7 @@ def _param_masks(net: NeuralNeat, genome, frozen_conn_keys, frozen_node_keys):
 def finetune(genome, config, X, y, epochs: int, seed: int,
              frozen_conn_keys: Iterable[ConnKey] = (),
              frozen_node_keys: Iterable[int] = (),
+             mask_phantom: bool = False,
              return_info: bool = False):
     """Fine-tune a deep copy of ``genome`` with the PropNEAT backprop primitive.
 
@@ -140,14 +150,21 @@ def finetune(genome, config, X, y, epochs: int, seed: int,
     first. Frozen connection weights and frozen node biases get zero gradient
     (Adadelta then leaves them bit-identical); see ``_param_masks``.
 
+    ``mask_phantom=False`` (the literal primitive) also trains NeuralNeat's
+    phantom zero entries, which ``update_genome_weights`` then drops, so the
+    stored genome differs from the trained network (``info`` reports by how
+    much). ``mask_phantom=True`` trains only the genome's own weights and
+    biases.
+
     Returns the new genome, or (genome, info) with ``return_info``.
     """
     g = copy.deepcopy(genome)
+    frozen_conn_keys = [tuple(k) for k in frozen_conn_keys]
+    frozen_nodes = set(frozen_node_keys)
     torch.manual_seed(seed)
     xs, ys = _as_tensors(X, y)
     net = build_net(g, config)
-    w_masks, b_masks = _param_masks(net, g, frozen_conn_keys, frozen_node_keys)
-    frozen_nodes = set(frozen_node_keys)
+    w_masks, b_masks = _param_masks(net, g, frozen_conn_keys, frozen_nodes, mask_phantom)
 
     optimizer = optim.Adadelta(net.parameters(), lr=FT_LR)
     optimizer.zero_grad()
@@ -192,8 +209,8 @@ def finetune(genome, config, X, y, epochs: int, seed: int,
     pc = np.clip(p_back, eps, 1 - eps)
     info = {
         "epochs": epochs, "seed": seed, "optimizer": FT_OPTIMIZER, "lr": FT_LR,
-        "loss": FT_LOSS, "full_batch": True,
-        "n_frozen_connections": len(set(map(tuple, frozen_conn_keys))),
+        "loss": FT_LOSS, "full_batch": True, "mask_phantom": mask_phantom,
+        "n_frozen_connections": len(set(frozen_conn_keys)),
         "n_frozen_nodes": len(frozen_nodes),
         "loss_before": loss_before, "losses": losses,
         "loss_trained_net": loss_trained,

@@ -84,6 +84,23 @@ class TestFinetune:
                            return_info=True)[1]
         assert info["max_abs_phantom_into_frozen"] == 0.0
 
+    def test_literal_primitive_trains_phantom_entries(self, small_config, recipient_genome):
+        """The primitive trains NeuralNeat's dense zero entries (e.g. -3 -> 1, no
+        gene) and drops them at write-back: the stored genome != trained net."""
+        X, y = _toy_data()
+        _, info = gs.finetune(recipient_genome, small_config, X, y, epochs=30, seed=0,
+                              return_info=True)
+        assert info["max_abs_pred_diff_trained_vs_written_back"] > 1e-6
+
+    def test_mask_phantom_written_back_genome_is_trained_net(self, small_config,
+                                                             recipient_genome):
+        X, y = _toy_data()
+        g, info = gs.finetune(recipient_genome, small_config, X, y, epochs=30, seed=0,
+                              mask_phantom=True, return_info=True)
+        assert info["max_abs_pred_diff_trained_vs_written_back"] < 1e-12
+        assert info["loss_after_written_back"] < info["loss_before"] - 1e-3
+        assert info["mask_phantom"] is True
+
     def test_frozen_unknown_enabled_key_raises(self, small_config, recipient_genome):
         X, y = _toy_data()
         with pytest.raises(KeyError):
