@@ -1,0 +1,92 @@
+{
+  "label": "churn200-s8",
+  "genome_id": "a3049380-84c9-45be-9995-e76525ba1742",
+  "start": "2026-11-05T16:34:14+13:00",
+  "end": "2026-11-05T16:44:49+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 4,
+  "n_composition_annotations": 1,
+  "n_splits": 10,
+  "n_identity_nodes": 0,
+  "hidden_nodes": 23,
+  "hidden_nodes_single_leaf_no_split": 23,
+  "hidden_nodes_in_any_annotation": 23,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 5.551115123125783e-16,
+  "closed_form_max_abs_err": 0.04890547754267338,
+  "protocol_version": "v3",
+  "analysis": "churn200",
+  "resisted": "Nothing structural. The 9-node usage/CSC cascade has relay chains constant unless the CSC unit fires (closed form deeply nested though it is two pieces); cscLowDayGate mixes a low-day hinge with the CSC interaction. Nine of 11 state/area units affine, near-inert.",
+  "tool_bugs": "None.",
+  "summary": "Logit = -3.08 + direct linear term (dayCharge +2.83/z, intl plan +2.87, voiceMailPlan -2.8, 28 state offsets) + a usage hinge (churn rises steeply only for heavy users: 33-72% at day z>1) + two partly redundant CSC x low-day paths firing at 3+ calls (89-100% churn at 4+ calls, day z<-0.5) + a tiny low-day hinge and memorised state/area offsets. Train AUC 0.917 vs 0.836 all-linearised.",
+  "performance_sources": {
+    "full_train_auc": 0.9174,
+    "L2_logreg_train_auc": 0.8433,
+    "all_nonlinear_parts_jointly_linearised_auc": 0.8362,
+    "each_child_restored_alone_onto_linearised_auc": {
+      "cscLowDayGate": 0.883,
+      "usageHingeCscCascade": 0.9109,
+      "lowDayHinge": 0.8296,
+      "stateAreaUnits": 0.8362
+    },
+    "conclusion": "~0.081 from the usage hinge (+0.053 alone) and CSC x low-day interactions (+0.060 together, partly redundant)."
+  },
+  "rare_category_switches": [
+    {
+      "category": "state:11",
+      "n_rows": 73,
+      "logit_effect": -2.33,
+      "empirical_logodds_offset": -1.36,
+      "calibrating_offset": -3.11
+    },
+    {
+      "category": "state:46",
+      "n_rows": 80,
+      "logit_effect": -1.79,
+      "empirical_logodds_offset": -0.92
+    },
+    {
+      "category": "state:5",
+      "n_rows": 78,
+      "logit_effect": -1.41,
+      "empirical_logodds_offset": -0.52
+    },
+    {
+      "category": "state:22",
+      "n_rows": 80,
+      "logit_effect": "-1.73 on 11 gated rows (CSC unit off), 4 of 11 churn: wrong direction"
+    },
+    {
+      "note": "New at 200 gen: state indicators gating the CSC unit (state:29, 22, 31), each moving 2-11 rows."
+    }
+  ],
+  "vs_100gen": "16 -> 23 hidden nodes; train AUC 0.905 -> 0.917; a strong day+eve usage hinge appeared (+0.053 alone); CSC interaction partly moved into a new cascade; state offsets similar; state gates added on the CSC unit.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 5,
+      "roots": [
+        "churnModelRoot"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 5.551115123125783e-16,
+    "closed_form_max_abs_err": 0.04890547754267338,
+    "numeric_max_abs_err": 3.552713678800501e-15,
+    "op_counts": {
+      "rename_node": 71,
+      "split_node": 10,
+      "consolidate_node": 1,
+      "annotate": 5
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}
