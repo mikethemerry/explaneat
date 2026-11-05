@@ -8,3 +8,5 @@ adult-s9 resumed (SIGCONT) at 2026-11-05 10:04:42 NZDT.
 adult-s4 resumed (SIGCONT) at 2026-11-05 10:05:12 NZDT.
 adult-s5 resumed (SIGCONT) at 2026-11-05 10:07:12 NZDT.
 adult-s8 resumed (SIGCONT) at 2026-11-05 10:09:13 NZDT.
+
+churn100mask-s0..s9 crashed 2026-11-05 ~16:46 NZDT: Postgres.app refused connections ("Postgres.app failed to verify \"trust\" authentication; configure app permissions in Postgres.app settings"). s0-s3 died mid-run after the training loop caught the DB error and set the population fitness to -1000 (a silent fallback in DatabaseBackpropPopulation._evaluate_population); s4-s9 died at startup. Those 4 experiment rows were renamed churn100mask-crashed-s* and marked failed, and all 10 were re-run with the same seeds. No reported run hit this fallback (checked all logs and the DB for fitness = -1000).
