@@ -186,3 +186,77 @@ class TestReinitAndTraining:
                 assert out[E][0].connections[k].weight == ref.connections[k].weight
             for n in ref.nodes:
                 assert out[E][0].nodes[n].bias == ref.nodes[n].bias
+
+
+class TestEarlyStoppingReusesDraw:
+    """--early-stopping (EARLY_STOPPING_PLAN.md) must start from the same init
+    draw as the fixed-epoch mode: E2 ``reinit_all(seed)``, E1
+    ``graft_into_knockout(sham_seed=seed)``."""
+
+    @staticmethod
+    def _es(X, y):
+        return {"X_fit": X[:200], "y_fit": y[:200], "X_val": X[200:], "y_val": y[200:]}
+
+    @staticmethod
+    def _kw(es):
+        return dict(epochs=None, val_X=es["X_val"], val_y=es["y_val"], patience=3,
+                    min_delta=1e-5, max_epochs=20, restore_best=True, mask_phantom=True,
+                    return_info=True)
+
+    def test_e2_es_starts_from_fixed_mode_draw(self, small_config, deep_genome, monkeypatch):
+        X = _X(300, 2)
+        y = (X[:, 0] - X[:, 2] > 0).astype(float)
+        es = self._es(X, y)
+        seen = []
+        real = gs.finetune
+
+        def spy(genome, config, X_, y_, *a, **kw):
+            seen.append((copy.deepcopy(genome), kw["seed"], X_, kw.get("val_X")))
+            return real(genome, config, X_, y_, *a, **kw)
+
+        monkeypatch.setattr(ri.gs, "finetune", spy)
+        for s in ri.INIT_SEEDS[:3]:
+            gi, gE, info = ri.e2_init_es(deep_genome, small_config, s, es, self._kw(es))
+            fixed = ri.reinit_all(deep_genome, s)  # what run_network draws for seed s
+            started, seed, Xf, Xv = seen[-1]
+            for g in (gi, started):
+                assert {n: g.nodes[n].bias for n in g.nodes} == {
+                    n: fixed.nodes[n].bias for n in fixed.nodes}
+                assert {k: c.weight for k, c in g.connections.items()} == {
+                    k: c.weight for k, c in fixed.connections.items()}
+            assert seed == s  # torch seed = init seed, as train_masked
+            assert Xf is es["X_fit"] and Xv is es["X_val"]
+            assert info["early_stopping"] and info["n_fit"] == 200
+        assert seen[0][0].nodes[1].bias != seen[1][0].nodes[1].bias
+
+    def test_e1_es_graft_draw_equals_fixed_mode(self, small_config, recipient_genome,
+                                               donor_genome):
+        from test_genome_surgery import _donor_ops
+        from test_rescue import _recipient_ops
+        rsub = gs.annotation_to_genome_subgraph(_recipient_ops(), "rfeat", recipient_genome,
+                                                small_config)
+        dsub = gs.annotation_to_genome_subgraph(_donor_ops(), "feat", donor_genome,
+                                                small_config)
+        ko, krec = gs.feature_knockout(recipient_genome, small_config, rsub)
+        ko_keys = krec["disabled_connections"]
+        X = _X(300, 3)
+        y = (X[:, 0] + X[:, 1] > 0).astype(float)
+        es = self._es(X, y)
+        kw = self._kw(es)
+
+        def train(g, rs):
+            return ri.train_es(g, small_config, es, rs, kw)
+
+        for s in (None, 1000, 1001):
+            _, rec, _, finf, gg = ri.e1_pipeline(ko, small_config, donor_genome, dsub,
+                                                 ko_keys, s, 4, es["X_fit"], es["y_fit"],
+                                                 train)
+            # run_feature's pipeline(sham_seed) draws exactly this graft
+            fixed, frec = gs.graft_into_knockout(ko, small_config, donor_genome, dsub,
+                                                 knocked_out_keys=ko_keys, sham_seed=s)
+            assert rec["id_map"] == frec["id_map"]
+            assert {k: (c.weight, c.enabled) for k, c in gg.connections.items()} == {
+                k: (c.weight, c.enabled) for k, c in fixed.connections.items()}
+            assert {n: g.bias for n, g in gg.nodes.items()} == {
+                n: g.bias for n, g in fixed.nodes.items()}
+            assert finf["early_stopping"] and finf["seed"] == 4
