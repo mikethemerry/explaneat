@@ -1,0 +1,138 @@
+{
+  "label": "churn100-s0",
+  "genome_id": "3b4b0fe5-9c34-4202-96c4-1179d581786a",
+  "start": "2026-11-05T13:35:24+13:00",
+  "end": "2026-11-05T13:55:38+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 12,
+  "n_composition_annotations": 3,
+  "n_splits": 13,
+  "n_identity_nodes": 3,
+  "hidden_nodes": 23,
+  "hidden_nodes_single_leaf_no_split": 23,
+  "hidden_nodes_in_any_annotation": 23,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 5.551115123125783e-16,
+  "closed_form_max_abs_err": 0.012068702049955915,
+  "protocol_version": "v3",
+  "analysis": "churn100",
+  "resisted": "Nothing structural (13 input splits, 5 consolidations, no hidden splits). state:8 net +0.04 is two cancelling large terms; unit 104 is gated by state:22 (state-specific exception on 80 rows). Usage/service leaves are synergistic: single-leaf linearisations cost 0.024 AUC summed, 0.072 jointly (Shapley shares reported).",
+  "tool_bugs": "rename_inputs.py failed on feature names containing spaces (fixed afterwards in 92d1f11; agent used a camelCase workaround). consolidate_node dropped a display name (renamed).",
+  "summary": "P(churn) = sigmoid(-1.729 + sparse linear backbone + per-state offset table + ReLU hinges on usage and service calls), additive. Backbone: international plan +0.77, voicemail plan -0.74, intl charge +0.32, night minutes +0.24. State units are exactly affine in their one-hots (offsets that only look nonlinear). Real nonlinearities encode the classic churn rules: churn rises steeply with combined day+evening usage (more so without voicemail), and with 4+ customer-service calls, most of all with low day usage (88% churn on train for 4+ calls and <160 day minutes). Train AUC 0.908, acc 0.909.",
+  "performance_sources": {
+    "baseline_train_auc": 0.908,
+    "lr_l2_train_auc_all_71_inputs": 0.843,
+    "all_hidden_replaced_by_linear_fit_auc": 0.836,
+    "mean_ablation_auc_top_level": {
+      "linear_backbone": 0.826,
+      "state_offsets": 0.902,
+      "usage_service_nonlinear": 0.709,
+      "minor_hinges": 0.908
+    },
+    "linear_replacement_auc_top_level": {
+      "state_offsets": 0.908,
+      "usage_service_nonlinear": 0.836,
+      "minor_hinges": 0.908
+    },
+    "all_nonlinear_together": {
+      "mean_ablation_auc": 0.71,
+      "joint_linear_replacement_auc": 0.835
+    },
+    "shapley_auc_gain_over_linearised_0.072": {
+      "heavy_usage_and_service_tradeoff": 0.029,
+      "service_calls_low_day_usage": 0.018,
+      "day_charge_no_voicemail": 0.016,
+      "service_calls_hinge": 0.007,
+      "day_minutes_hinge_off_in_state37": 0.002,
+      "minor_hinges": 0.0
+    },
+    "note": "State block fits its one-hots exactly (R2=1.0): none of the gain over linear comes from states; all from usage_service_nonlinear."
+  },
+  "rare_category_switches": [
+    {
+      "category": "state:11",
+      "rows": 73,
+      "churners": 3,
+      "logit_effect": -2.14,
+      "empirical_logodds_offset": -1.2,
+      "path": "direct"
+    },
+    {
+      "category": "state:4",
+      "rows": 41,
+      "churners": 11,
+      "logit_effect": 2.02,
+      "empirical_logodds_offset": 0.83,
+      "path": "units 791->11938 and 3979"
+    },
+    {
+      "category": "state:47",
+      "rows": 72,
+      "churners": 21,
+      "logit_effect": 1.17,
+      "empirical_logodds_offset": 0.93,
+      "path": "direct"
+    },
+    {
+      "category": "state:26",
+      "rows": 75,
+      "churners": 16,
+      "logit_effect": 0.92,
+      "empirical_logodds_offset": 0.52,
+      "path": "direct"
+    },
+    {
+      "category": "state:0",
+      "rows": 56,
+      "churners": 4,
+      "logit_effect": -0.76,
+      "empirical_logodds_offset": -0.65,
+      "path": "+0.48 direct, -1.25 via 10511/14444"
+    },
+    {
+      "category": "state:22",
+      "rows": 80,
+      "churners": 16,
+      "logit_effect": "+0.98 offset; net -1.97..+0.98 (mean +0.57)",
+      "empirical_logodds_offset": 0.44,
+      "path": "offset plus switches off low-usage service-call unit 104"
+    },
+    {
+      "category": "state:8",
+      "rows": 81,
+      "churners": 12,
+      "logit_effect": 0.04,
+      "empirical_logodds_offset": 0.09,
+      "path": "+2.35 direct cancelled by -2.31 via 3831"
+    }
+  ],
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 15,
+      "roots": [
+        "full_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 5.551115123125783e-16,
+    "closed_form_max_abs_err": 0.012068702049955915,
+    "numeric_max_abs_err": 1.3322676295501878e-15,
+    "op_counts": {
+      "rename_node": 72,
+      "add_identity_node": 3,
+      "split_node": 13,
+      "consolidate_node": 5,
+      "annotate": 15
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}

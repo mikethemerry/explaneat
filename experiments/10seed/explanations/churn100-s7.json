@@ -1,0 +1,131 @@
+{
+  "label": "churn100-s7",
+  "genome_id": "12fe3281-8731-4f06-8c74-3c734384a5be",
+  "start": "2026-11-05T14:12:40+13:00",
+  "end": "2026-11-05T14:28:18+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 5,
+  "n_composition_annotations": 2,
+  "n_splits": 4,
+  "n_identity_nodes": 3,
+  "hidden_nodes": 14,
+  "hidden_nodes_single_leaf_no_split": 11,
+  "hidden_nodes_in_any_annotation": 14,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 9.992e-16,
+  "closed_form_max_abs_err": 0.00428,
+  "protocol_version": "v3",
+  "analysis": "churn100",
+  "resisted": "Nothing. Three hidden nodes (service-calls gate, second usage hinge) take the usagePathway exit as their only hidden input, so they sit as own nodes of a composition.",
+  "tool_bugs": "None (limit: a leaf cannot take another annotation's exit as an entry).",
+  "summary": "Logit = -1.96 + usageResponse + intlPlan offset (+2.88) + always-on voicemail/state-41 affine unit + per-state offsets + small linear terms. All nonlinearity is in usageResponse: a day/evening/night usage hinge (never active for voicemail-plan customers), a convex second hinge for the heaviest users (+3.94 logit in the top day decile), and a service-calls gate (shut for 0-2 calls, +0.81 at 3 calls which the data do not support, +2.1 at 4, +3.6 at 5) that only works while usage is near zero. No intl-plan x intl-usage interaction. Train AUC 0.919.",
+  "performance_sources": {
+    "full_auc": 0.9193,
+    "lr_refit_train_auc_reference": 0.8433,
+    "auc_all_linearised_jointly": 0.8341,
+    "auc_gain_restoring_each_child_alone_onto_all_linear": {
+      "usageResponse": 0.0852,
+      "others": 0.0
+    },
+    "within_usageResponse_gain_restored_alone": {
+      "usage_slope_on_879": 0.0482,
+      "serviceCalls_gate_4344": 0.038,
+      "second_hinge_10552": 0.0529
+    },
+    "interpretation": "All 0.085 above linear from usageResponse; its three parts overlap."
+  },
+  "rare_category_switches": [
+    {
+      "category": "state:46",
+      "rows": 80,
+      "logit_effect": -1.88,
+      "warranted_offset": -0.81
+    },
+    {
+      "category": "state:39",
+      "rows": 82,
+      "logit_effect": -1.23,
+      "warranted_offset": -0.6
+    },
+    {
+      "category": "state:47",
+      "rows": 72,
+      "logit_effect": 1.09,
+      "warranted_offset": 0.44
+    },
+    {
+      "category": "state:5",
+      "rows": 78,
+      "logit_effect": -1.09,
+      "warranted_offset": -0.43
+    },
+    {
+      "category": "state:45",
+      "rows": 91,
+      "logit_effect": -0.97,
+      "warranted_offset": -0.42
+    },
+    {
+      "category": "state:26",
+      "rows": 75,
+      "logit_effect": 0.81,
+      "warranted_offset": 0.43
+    },
+    {
+      "category": "state:49",
+      "rows": 122,
+      "logit_effect": -0.69,
+      "warranted_offset": -0.15
+    },
+    {
+      "category": "state:0",
+      "rows": 56,
+      "logit_effect": -0.68,
+      "warranted_offset": -0.25
+    },
+    {
+      "category": "state:10",
+      "rows": 60,
+      "logit_effect": -0.63,
+      "warranted_offset": -0.18
+    },
+    {
+      "category": "state:41",
+      "rows": 66,
+      "logit_effect": "+0.28 mean, sd 0.60 (forces the day-charge feed off)",
+      "warranted_offset": 0.27
+    },
+    {
+      "summary": "Large state offsets are ~1.5-4.5x their warranted size (warranted = logit(observed churn) - logit(mean prediction with offset removed))."
+    }
+  ],
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 7,
+      "roots": [
+        "churnModel"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 9.992007221626409e-16,
+    "closed_form_max_abs_err": 0.004280004753423494,
+    "numeric_max_abs_err": 8.881784197001252e-16,
+    "op_counts": {
+      "rename_node": 71,
+      "add_identity_node": 3,
+      "split_node": 4,
+      "consolidate_node": 1,
+      "annotate": 7
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}

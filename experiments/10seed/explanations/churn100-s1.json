@@ -1,0 +1,120 @@
+{
+  "label": "churn100-s1",
+  "genome_id": "4b0eb5a6-5859-4ee8-80fe-18ab72f22959",
+  "start": "2026-11-05T13:35:22+13:00",
+  "end": "2026-11-05T13:56:48+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 4,
+  "n_composition_annotations": 1,
+  "n_splits": 8,
+  "n_identity_nodes": 0,
+  "hidden_nodes": 27,
+  "hidden_nodes_single_leaf_no_split": 23,
+  "hidden_nodes_in_any_annotation": 27,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 4.44e-16,
+  "closed_form_max_abs_err": 0.0224,
+  "protocol_version": "v3",
+  "analysis": "churn100",
+  "resisted": "Always-on relay (2377, 12977->5868->7162) takes exits from three sibling leaves so is root-owned (4 hidden nodes); affine on train. rareStateUnits leaf (14 nodes) is an honest near-dead annotation with zero measurable logit effect.",
+  "tool_bugs": "rename_inputs.py failed on names with spaces (fixed afterwards in 92d1f11; underscore workaround). compute_shap reports original space-containing names.",
+  "summary": "Logit = linear term + three hinge groups: (1) service-call hinges (>=3-4 calls raise churn, much more for low day usage: +3.8 logit, 95% empirical churn at 4 calls with day z<-1); (2) day-usage hinges + total-charge chain gated by voice-mail plan (no plan with high day and eve: +5.2 logit, 94% churn); (3) linear terms (international plan +2.67, voice-mail plan -2.37, per-state offsets). Rare-state hidden units and relay essentially inert. No international plan x intl minutes interaction learned.",
+  "performance_sources": {
+    "full_train_auc": 0.9095,
+    "all_hidden_mean_ablated_auc": 0.7166,
+    "all_nonlinear_parts_jointly_linearised_auc": 0.8354,
+    "L2_logreg_train_auc": 0.8433,
+    "auc_above_linear_version": 0.0742,
+    "per_child": {
+      "serviceCallsHinges": {
+        "mean_ablation_drop": 0.1126,
+        "linearise_drop": 0.0207
+      },
+      "dayUsageHinges": {
+        "mean_ablation_drop": 0.0176,
+        "linearise_drop": 0.0076
+      },
+      "totalChargeChain": {
+        "mean_ablation_drop": 0.0152,
+        "linearise_drop": 0.0083
+      },
+      "dayUsage+totalCharge_jointly": {
+        "linearise_drop": 0.0253
+      },
+      "rareStateUnits": {
+        "mean_ablation_drop": 0.0002,
+        "linearise_drop": 0.0
+      },
+      "alwaysOnRelay_root_owned": {
+        "mean_ablation_drop": 0.0,
+        "linearise_drop": 0.0
+      }
+    },
+    "interpretation": "~0.074 train AUC above linear: service-call hinges with low-usage interaction (0.021 alone), day/total-charge hinges gated by voice-mail plan (0.025 jointly), rest from synergy; nothing from states."
+  },
+  "rare_category_switches": {
+    "hidden_unit_switches_max_abs_logit": 0.35,
+    "direct_linear_state_offsets_largest": [
+      {
+        "category": "state:46",
+        "rows": 80,
+        "logit_effect": -1.89,
+        "empirical_logodds_offset": -0.91
+      },
+      {
+        "category": "state:4",
+        "rows": 41,
+        "logit_effect": 1.48,
+        "empirical_logodds_offset": 0.8
+      },
+      {
+        "category": "state:47",
+        "rows": 72,
+        "logit_effect": 1.22
+      },
+      {
+        "category": "state:31",
+        "rows": 90,
+        "logit_effect": 0.86
+      },
+      {
+        "category": "state:0",
+        "rows": 56,
+        "logit_effect": -0.82
+      },
+      {
+        "category": "state:50",
+        "rows": 89,
+        "logit_effect": -0.76
+      }
+    ],
+    "note": "No large hidden rare-category switch; large state effects are constant offsets on direct edges, several exceeding the marginal log-odds deviation."
+  },
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 5,
+      "roots": [
+        "churnModelRoot"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.440892098500626e-16,
+    "closed_form_max_abs_err": 0.022438454537383024,
+    "numeric_max_abs_err": 3.552713678800501e-15,
+    "op_counts": {
+      "rename_node": 71,
+      "split_node": 8,
+      "annotate": 5
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}
