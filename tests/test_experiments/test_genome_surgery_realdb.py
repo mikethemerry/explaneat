@@ -117,3 +117,32 @@ def test_graft_s8_feature_into_s9_builds(ro_session):
     p_old = gs.predict_proba(genome9, config, X)
     p_new = gs.predict_proba(new, config, X)
     assert np.all(np.isfinite(p_new)) and not np.allclose(p_old, p_new)
+
+
+# ------------------------------------------------- explained_eval on real records
+
+@pytest.mark.db
+@pytest.mark.parametrize("seed,unit,expected_all_linear,expected_gain", [
+    (3, "day_eve_usage", 0.8400, 0.0493),          # record: restore_gain
+    (5, "csc_low_day_gate", 0.8352, 0.0497),       # record: restore_gain_alone_onto_all_linear
+    (7, "usageResponse", 0.8341, 0.0852),          # composition, linearised over raw entries
+    (8, "csc_lowusage_hinge", 0.8390, 0.0555),
+])
+def test_train_restore_gains_reproduce_records(ro_session, seed, unit, expected_all_linear,
+                                               expected_gain):
+    import explained_eval as ee
+    from mcp_server.helpers import load_split_data
+
+    genome, config, ops = _load(ro_session, seed)
+    X, y, *_ = load_split_data(ro_session, "45962ea6-3c78-49f9-a01e-3665f6809b1e", "train",
+                               sample_fraction=1.0, max_samples=10**9)
+    engine, replayed = gs.replay_model_state(ops, genome, config)
+    state = engine.current_state
+    anns = ee.annotations_from_ops(replayed)
+    ev = ee.StateEvaluator(state)
+    np.testing.assert_allclose(ev.proba(X), gs.predict_proba(genome, config, X), atol=1e-12)
+    _, children = ee.root_and_children(anns)
+    lin = ee.Linearisation(ev, {c["name"]: ee.as_unit(c, anns, state) for c in children}, X)
+    res = ee.performance_sources(lin, X, y)
+    assert res["all_linear_auc"] == pytest.approx(expected_all_linear, abs=6e-4)
+    assert res["units"][unit]["restore_gain"] == pytest.approx(expected_gain, abs=2e-4)
