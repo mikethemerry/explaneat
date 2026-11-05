@@ -59,6 +59,15 @@ DATASETS = {
         reference_experiment="c8f3805e-",
         n_generations=100,
     ),
+    # Churn pilot (experiments/churn/PLAN.md): Adult NEAT settings, 71 inputs.
+    "churn": dict(
+        dataset_id="802129c2-b11b-43a5-b6af-8bcf80e4c252",
+        split_id="45962ea6-3c78-49f9-a01e-3665f6809b1e",
+        neat_config=REPO / "experiments/churn/configs/churn.ini",
+        reference_experiment=None,
+        n_generations=100,
+        description="Churn pilot: does PropNEAT close the LR-GBM gap? (experiments/churn/PLAN.md)",
+    ),
     "adult": dict(
         dataset_id="46c63b17-42c5-4142-9fcf-3b5f369319c5",
         split_id="1df50169-8095-40d1-b61a-30bb541cd313",
@@ -121,7 +130,9 @@ def main():
 
     spec = DATASETS[args.dataset]
     n_gen = args.generations or spec["n_generations"]
-    name = args.name or f"10seed-{args.dataset}-s{args.seed}"
+    default_name = (f"churn-pilot-s{args.seed}" if args.dataset == "churn"
+                    else f"10seed-{args.dataset}-s{args.seed}")
+    name = args.name or default_name
 
     logging.basicConfig(level=logging.INFO,
                         format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -139,7 +150,7 @@ def main():
         config, X_train, y_train,
         experiment_name=name,
         dataset_name=dataset_name,
-        description=DESCRIPTION,
+        description=spec.get("description", DESCRIPTION),
         dataset_id=spec["dataset_id"],
     )
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip()
