@@ -44,6 +44,18 @@ Derived genomes: churn-rescue-<cond>-<case>.
     uv run python experiments/churn/run_rescue.py --stage confirm    # train only -> rescue_confirm.csv
     uv run python experiments/churn/run_rescue.py --stage evaluate   # needs rescue_confirm.csv committed
     uv run python experiments/churn/run_rescue.py --dry-run          # one case, E = 2, no CSV/DB
+
+Study D+ (RESCUE2_REINIT_PLAN.md "D+", added after D's results and labelled as
+such): ``--stage plus`` adds, for D's six cases, condition 8 (KO + sham + refit,
+no fine-tune; the same sham draw as condition 6, seed = recipient seed) and
+condition 9 (KO + wrong-family N + refit, no fine-tune; D's N). Condition 4 is
+recomputed so Delta(4 - 8) and Delta(4 - 9) are paired on the same bootstrap
+index matrix, and its test AUC is checked against rescue.csv. Writes
+rescue_plus.csv; derived genomes churn-rescue-ko-sham-refit-<case> and
+churn-rescue-ko-wrong-refit-<case> (condition 4 is not saved again).
+
+    uv run python experiments/churn/run_rescue.py --stage plus
+    uv run python experiments/churn/run_rescue.py --stage plus --dry-run   # one case, no CSV/DB
 """
 
 import argparse
@@ -496,11 +508,203 @@ def pooled_rows(drows, rfs, included):
     return out
 
 
+# ---------------------------------------------------------------- study D+ (RESCUE2_REINIT_PLAN.md)
+
+PLUS_OUT = ec.HERE / "rescue_plus.csv"
+PLUS_NOTE = ("D+ (RESCUE2_REINIT_PLAN.md): no-fine-tune controls added after study D's "
+             "results were seen")
+PLUS_CONDS = {"ko-alias-refit": 4, "ko-sham-refit": 8, "ko-wrong-refit": 9}
+PLUS_GRAFT_OF = {"ko-alias-refit": "alias", "ko-sham-refit": "sham",
+                 "ko-wrong-refit": "wrong"}
+PLUS_SAVED = ("ko-sham-refit", "ko-wrong-refit")  # condition 4 already stored by study D
+PLUS_DELTAS = [("4-8", "ko-alias-refit", "ko-sham-refit", "primary"),
+               ("4-9", "ko-alias-refit", "ko-wrong-refit", "primary")]
+COND4_TOL = 1e-12
+PLUS_COLUMNS = COLUMNS + ["rescue_csv_test_auc", "rescue_csv_abs_diff", "rescue_csv_match",
+                          "note"]
+
+
+def rescue_csv_cond4():
+    """{case: condition-4 test AUC} from study D's rescue.csv."""
+    with open(OUT) as f:
+        return {r["case"]: float(r["test_auc"]) for r in csv.DictReader(f)
+                if r["kind"] == "condition" and r["condition"] == "ko-alias-refit"
+                and r["status"] == "ok"}
+
+
+def run_plus(case, P, F, data, boot, dry_run, commit, d_cond4):
+    """Conditions 4 (recomputed), 8 and 9 for one D case; deltas 4-8 and 4-9."""
+    fam, rs, as_, ws = CASES[case]
+    R = F[rs]
+    cfg = R["config"]
+    G = P["grafts"]
+    rows, p_test = [], {}
+    for cond, num in PLUS_CONDS.items():
+        role = PLUS_GRAFT_OF[cond]
+        base = {"kind": "condition", "case": case, "family": fam, "condition": cond,
+                "condition_number": num, "recipient_seed": rs, "note": PLUS_NOTE}
+        if role not in G:
+            rows.append(dict(base, status=P["row"][f"{role}_graft_status"]))
+            continue
+        g = G[role]["refit"]
+        m, p_test[cond] = ec.evaluate(g, cfg, data, boot)
+        rec, ri, donor = G[role]["rec"], G[role]["refit_info"], G[role]["donor"]
+        row = dict(base, recipient_genome_id=R["info"]["genome_id"],
+                   recipient_feature=R["name"], donor_role=role,
+                   donor_seed=as_ if role in ("alias", "sham") else ws,
+                   donor_feature=donor["name"],
+                   include_primary=P["row"]["include_primary"], epochs=0,
+                   sham_seed=rs if role == "sham" else "",
+                   n_grafted_nodes=len(rec["id_map"]),
+                   n_grafted_connections=len(rec["added_connections"]),
+                   n_knocked_out_connections=P["korec"]["n_disabled"],
+                   refit_converged=ri["converged"],
+                   refit_train_logloss_before=ri["train_logloss_before"],
+                   refit_train_logloss_after=ri["train_logloss_after"],
+                   refit_output_bias_before=ri["output_bias_before"],
+                   refit_output_bias_after=ri["output_bias_after"],
+                   refit_readout_weights_before=ri["readout_weights_before"],
+                   refit_readout_weights_after=ri["readout_weights_after"],
+                   refit_group_scales_after=ri["group_scales_after"], status="ok", **m)
+        if cond == "ko-alias-refit":
+            ref = d_cond4.get(case)
+            diff = None if ref is None else abs(m["test_auc"] - ref)
+            ok = diff is not None and diff <= COND4_TOL
+            row.update(rescue_csv_test_auc=ref if ref is not None else "",
+                       rescue_csv_abs_diff=diff if diff is not None else "",
+                       rescue_csv_match=ok,
+                       derived_experiment_name=name_for(cond, case))
+            if not ok:
+                raise SystemExit(f"{case}: recomputed condition 4 test AUC {m['test_auc']!r} "
+                                 f"!= rescue.csv {ref!r}")
+        rows.append(row)
+
+    drows = []
+    for label, a, b, role in PLUS_DELTAS:
+        base = {"kind": "delta", "case": case, "family": fam, "recipient_seed": rs,
+                "delta": label, "delta_role": role, "condition_a": a, "condition_b": b,
+                "include_primary": P["row"]["include_primary"], "note": PLUS_NOTE}
+        if a not in p_test or b not in p_test:
+            drows.append(dict(base, status="not computed (condition not run)"))
+            continue
+        d, lo, hi = ec.paired_delta(data, p_test[a], p_test[b], boot)
+        drows.append(dict(base, delta_test_auc=d, delta_ci_lo=lo, delta_ci_hi=hi, status="ok"))
+
+    for row in rows:
+        cond = row["condition"]
+        if cond not in PLUS_SAVED or row.get("status") != "ok":
+            continue
+        row["derived_experiment_name"] = name_for(cond, case)
+        if dry_run:
+            continue
+        role = PLUS_GRAFT_OF[cond]
+        g = G[role]["refit"]
+        g.fitness = row["train_auc"]
+        provenance = {
+            "study": "churn study D+ (no-fine-tune controls for study D, added after D's "
+                     "results)",
+            "plan": "experiments/churn/RESCUE2_REINIT_PLAN.md (D+); RESCUE_PLAN.md",
+            "case": case, "family": fam, "condition": cond,
+            "condition_number": PLUS_CONDS[cond],
+            "source_genome_id": R["info"]["genome_id"],
+            "source_experiment_id": R["info"]["experiment_id"],
+            "source_experiment_name": R["info"]["experiment_name"],
+            "knockout": {**P["korec"], "feature_subgraph": R["sub"].to_json()},
+            "graft": {"role": role, "record": G[role]["rec"],
+                      "readout_refit": G[role]["refit_info"],
+                      "donor": {"seed": as_ if role in ("alias", "sham") else ws,
+                                "genome_id": G[role]["donor"]["info"]["genome_id"],
+                                "experiment_name": G[role]["donor"]["info"]["experiment_name"],
+                                "annotation": G[role]["donor"]["name"],
+                                "subgraph": G[role]["donor"]["sub"].to_json()}},
+            "finetune": None,
+            "confirmation": {k: P["row"][k] for k in ("alias_r", "ko_train_auc_drop",
+                                                      "include_primary")},
+            **commit}
+        ids = gs.save_derived_genome(g, cfg, row["derived_experiment_name"], provenance,
+                                     split_id=ec.SPLIT, dataset_id=R["info"]["dataset_id"],
+                                     source_config_json=R["info"]["config_json"],
+                                     neat_config_text=R["info"]["neat_config_text"])
+        row["derived_genome_id"] = str(ids["genome_id"])
+    return rows, drows
+
+
+def pooled_plus(drows, included):
+    out = []
+    for label, a, b, role in PLUS_DELTAS:
+        rr = [r for r in drows if r["delta"] == label and r["case"] in included
+              and r.get("status") == "ok"]
+        base = {"kind": "pooled", "delta": label, "delta_role": role, "condition_a": a,
+                "condition_b": b, "note": PLUS_NOTE,
+                "statistic": f"median delta test AUC {label} ({a} - {b}), included cases",
+                "n_cases": len(rr), "cases": [r["case"] for r in rr]}
+        if not rr:
+            out.append(dict(base, status="no included case"))
+            continue
+        d = np.array([r["delta_test_auc"] for r in rr], dtype=float)
+        npos, nneg = int((d > 0).sum()), int((d < 0).sum())
+        p = binomtest(npos, npos + nneg, 0.5).pvalue if npos + nneg else float("nan")
+        out.append(dict(base, n_positive=npos, n_negative=nneg, n_zero=len(d) - npos - nneg,
+                        median=float(np.median(d)), sign_test_p_two_sided=p, status="ok"))
+    return out
+
+
+def main_plus(args, data, F, commit):
+    cases = [args.case or "A1"] if args.dry_run else list(CASES)
+    committed = committed_confirm_rows()
+    prepared, conf_rows = {}, []
+    for case in cases:
+        row, P = prepare_case(case, F, data)
+        check_against_committed(row, committed)
+        prepared[case] = P
+        conf_rows.append(row)
+    print("confirmation matches the committed rescue_confirm.csv")
+    if not args.dry_run:
+        ec.check_names_free([name_for(c, k) for k in cases for c in PLUS_SAVED])
+    d_cond4 = rescue_csv_cond4()
+    boot = ec.bootstrap_indices(len(data["y_test"]))
+    included = [r["case"] for r in conf_rows if r["include_primary"]]
+    all_rows, all_d = [], []
+    for case in cases:
+        rows, drows = run_plus(case, prepared[case], F, data, boot, args.dry_run, commit,
+                               d_cond4)
+        all_rows += rows
+        all_d += drows
+        for r in rows:
+            if r.get("status") != "ok":
+                print(f"   {case} {r['condition']:16s} NOT RUN: {r.get('status')}")
+            elif args.dry_run:
+                print(f"   {case} {r['condition']:16s} train {r['train_auc']:.4f} (test "
+                      f"computed, not shown) -> {r.get('derived_experiment_name', '')}")
+            else:
+                extra = (f" (rescue.csv diff {r['rescue_csv_abs_diff']:.1e})"
+                         if r["condition"] == "ko-alias-refit" else "")
+                print(f"   {case} {r['condition']:16s} train {r['train_auc']:.4f} test "
+                      f"{r['test_auc']:.4f} [{r['test_auc_ci_lo']:.4f},"
+                      f"{r['test_auc_ci_hi']:.4f}]{extra}")
+        if not args.dry_run:
+            for d in drows:
+                if d.get("status") == "ok":
+                    print(f"   {case} delta {d['delta']} {d['delta_test_auc']:+.4f} "
+                          f"[{d['delta_ci_lo']:+.4f},{d['delta_ci_hi']:+.4f}]")
+    pooled = pooled_plus(all_d, included)
+    if args.dry_run:
+        print(f"DRY RUN (D+): {len(all_rows)} condition rows, {len(all_d)} deltas; "
+              "nothing written to CSV or DB")
+        return
+    for p in pooled:
+        print(f"   pooled {p['statistic']}: n {p['n_cases']} median {p.get('median', '')} "
+              f"+{p.get('n_positive', '')}/-{p.get('n_negative', '')} sign p "
+              f"{p.get('sign_test_p_two_sided', '')}")
+    _write(PLUS_OUT, all_rows + all_d + pooled, PLUS_COLUMNS)
+
+
 def main():
     ap = argparse.ArgumentParser(description="Study D: knockout-and-rescue with feature aliases")
-    ap.add_argument("--stage", choices=["confirm", "evaluate"],
+    ap.add_argument("--stage", choices=["confirm", "evaluate", "plus"],
                     help="confirm: train-only checks -> rescue_confirm.csv; evaluate: the 7 "
-                         "conditions on test (needs the committed confirmation)")
+                         "conditions on test (needs the committed confirmation); plus: study "
+                         "D+ conditions 8 and 9 (no fine-tune) -> rescue_plus.csv")
     ap.add_argument("--dry-run", action="store_true",
                     help="one case, E = 2, no CSV/DB writes; test metrics computed but not "
                          "printed")
@@ -527,6 +731,9 @@ def main():
     runs = ec.read_runs()
     t0 = time.time()
     F = load_features(runs, data["X_train"], data["feature_names"])
+    if args.stage == "plus":
+        main_plus(args, data, F, commit)
+        return
     cases = list(CASES)
     if args.dry_run:
         cases = [args.case or "A1"]

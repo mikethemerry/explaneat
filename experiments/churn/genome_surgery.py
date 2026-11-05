@@ -1155,3 +1155,84 @@ def graft_into_knockout(ko_genome, config, donor_genome, donor_subgraph: DonorSu
             f"{', '.join(desc)}. Re-enabling or overwriting the recipient's own gene is "
             "not allowed; the case fails.")
     return graft(ko_genome, config, donor_genome, donor_subgraph, sham_seed=sham_seed)
+
+
+# ====================================================================== algorithmic aliases
+# (study D2, RESCUE2_REINIT_PLAN.md)
+
+def pearson_r(a, b) -> float:
+    """Pearson correlation of two signals; nan when either is constant."""
+    a, b = np.asarray(a, dtype=np.float64), np.asarray(b, dtype=np.float64)
+    if a.shape != b.shape:
+        raise ValueError(f"signal shapes differ: {a.shape} vs {b.shape}")
+    if np.std(a) == 0.0 or np.std(b) == 0.0:
+        return float("nan")
+    return float(np.corrcoef(a, b)[0, 1])
+
+
+def representation_differs(n_hidden_a: int, base_features_a, n_hidden_b: int,
+                           base_features_b) -> bool:
+    """D's check 2: the features differ in hidden-node count or in their entry
+    base-feature set."""
+    return n_hidden_a != n_hidden_b or frozenset(base_features_a) != frozenset(base_features_b)
+
+
+def alias_pairs(leaves: Sequence[dict], min_r: float = 0.9, min_ko_drop: float = 0.005):
+    """Every ordered pair (recipient F, donor G) of candidate leaves from
+    different seeds, with the D2 alias rule (train quantities):
+
+    1. Pearson r between F's and G's logit contributions (``s``, each computed
+       with its own genome on the same inputs) >= ``min_r``;
+    2. F and G differ in hidden-node count or entry base-feature set;
+    3. knocking out F costs >= ``min_ko_drop`` train AUC (``ko_train_auc_drop``
+       of F; nan / None = knockout not possible -> fails).
+
+    ``leaves``: dicts with seed, name, s, n_hidden, base_features,
+    ko_train_auc_drop. Returns one dict per ordered pair, sorted by
+    (F seed, F name, G seed, G name), with the three checks and ``alias``
+    (all three hold).
+    """
+    out = []
+    key = lambda L: (L["seed"], L["name"])  # noqa: E731
+    for F in sorted(leaves, key=key):
+        drop = F.get("ko_train_auc_drop")
+        drop = float("nan") if drop is None else float(drop)
+        for G in sorted(leaves, key=key):
+            if G["seed"] == F["seed"]:
+                continue
+            r = pearson_r(F["s"], G["s"])
+            diff = representation_differs(F["n_hidden"], F["base_features"], G["n_hidden"],
+                                          G["base_features"])
+            r_ok = bool(np.isfinite(r) and r >= min_r)
+            ko_ok = bool(np.isfinite(drop) and drop >= min_ko_drop)
+            out.append({"recipient_seed": F["seed"], "recipient_feature": F["name"],
+                        "donor_seed": G["seed"], "donor_feature": G["name"],
+                        "r": r, "r_ok": r_ok, "different_representation": diff,
+                        "ko_train_auc_drop": drop, "knockout_cost_ok": ko_ok,
+                        "alias": r_ok and diff and ko_ok})
+    return out
+
+
+def wrong_family_donor(leaves: Sequence[dict], recipient: dict, exclude_seeds,
+                       max_abs_r: float = 0.3):
+    """D2's wrong-family donor for recipient feature ``recipient``: among the
+    candidate ``leaves`` from seeds not in ``exclude_seeds`` (the recipient's
+    and the alias donor's), those with |Pearson r| < ``max_abs_r`` between
+    their contribution and the recipient feature's; the one with the highest
+    ``train_restore_gain`` (ties: lowest seed, then name).
+
+    Returns (leaf or None, its r, number of eligible leaves).
+    """
+    excl = set(exclude_seeds)
+    elig = []
+    for L in leaves:
+        if L["seed"] in excl:
+            continue
+        r = pearson_r(recipient["s"], L["s"])
+        if np.isfinite(r) and abs(r) < max_abs_r:
+            elig.append((L, r))
+    if not elig:
+        return None, float("nan"), 0
+    L, r = sorted(elig, key=lambda t: (-t[0]["train_restore_gain"], t[0]["seed"],
+                                       t[0]["name"]))[0]
+    return L, r, len(elig)
