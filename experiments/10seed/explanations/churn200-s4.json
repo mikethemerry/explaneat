@@ -1,0 +1,120 @@
+{
+  "label": "churn200-s4",
+  "genome_id": "96351f52-f8fb-45c6-8a21-df5b420cac01",
+  "start": "2026-11-05T15:16:28+13:00",
+  "end": "2026-11-05T15:29:22+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 6,
+  "n_composition_annotations": 1,
+  "n_splits": 7,
+  "n_identity_nodes": 2,
+  "hidden_nodes": 15,
+  "hidden_nodes_single_leaf_no_split": 15,
+  "hidden_nodes_in_any_annotation": 15,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 4.440892098500626e-16,
+  "closed_form_max_abs_err": 0.012000904476571872,
+  "protocol_version": "v3",
+  "analysis": "churn200",
+  "resisted": "Nothing structural. 2698 (state:49) dead; three always-on affine units; state:7 chain negligible; intl_lowday_interaction is mostly a low-day-usage hinge whose kink adds nothing (the name overstates the intl interaction; narrative says so).",
+  "tool_bugs": "Split copy suffixes follow numeric target order (state:7 -> -49_a feeds 5324): first annotate failed, retry worked. KernelSHAP noise ~5e-4.",
+  "summary": "P(churn) = sigmoid(-2.449 + linear backbone over 28 inputs + CSC threshold (+1.24 logit per call from 4) + high day/eve usage hinge (+2.47 in the top day decile, damped by voicemail plan) + low-day-usage hinge (+2.1 in the bottom decile: U-shaped day response) + small day-charge hinges + state offsets + affine accountLength), additive. Train AUC 0.911 vs 0.843 LR, 0.833 all-linearised.",
+  "performance_sources": {
+    "full_auc": 0.9113,
+    "refit_L2_logreg_train_auc": 0.8433,
+    "all_children_linearised_auc": 0.8327,
+    "restore_gain": {
+      "day_eve_hinge": 0.0604,
+      "csc_threshold": 0.0393,
+      "intl_lowday_interaction": 0.0169,
+      "day_charge_cluster": 0.0069
+    },
+    "nonlinear_gain_total": 0.0786,
+    "all_state_onehots_off_auc": 0.9069
+  },
+  "rare_category_switches": [
+    {
+      "category": "state:37",
+      "n_rows": 84,
+      "logit_effect": "-1.18 mean (-1.56 on 62 rows with 0-2 calls); forces the CSC unit off",
+      "raw_logodds_offset": 0.137,
+      "calibrating_offset": 0.21,
+      "note": "wrong-sign switch"
+    },
+    {
+      "category": "state:11",
+      "n_rows": 73,
+      "logit_effect": -2.016,
+      "raw_logodds_offset": -1.216,
+      "calibrating_offset": -2.093
+    },
+    {
+      "category": "state:46",
+      "n_rows": 80,
+      "logit_effect": -1.834,
+      "raw_logodds_offset": -0.83,
+      "calibrating_offset": -1.958
+    },
+    {
+      "category": "state:5",
+      "n_rows": 78,
+      "logit_effect": -1.222,
+      "raw_logodds_offset": -0.461,
+      "calibrating_offset": -1.509
+    },
+    {
+      "category": "state:7",
+      "n_rows": 73,
+      "logit_effect": -1.097,
+      "raw_logodds_offset": -0.547,
+      "calibrating_offset": -0.412
+    },
+    {
+      "category": "state:18",
+      "n_rows": 65,
+      "logit_effect": 0.498,
+      "raw_logodds_offset": -0.419,
+      "note": "sign opposite to raw"
+    },
+    {
+      "category": "state:36",
+      "n_rows": 79,
+      "logit_effect": -0.34,
+      "raw_logodds_offset": 0.3,
+      "note": "sign opposite to raw"
+    },
+    {
+      "note": "All state one-hots off: train AUC 0.9113 -> 0.9069."
+    }
+  ],
+  "vs_100gen": "Same skeleton; state-only hidden units became direct edges or always-on units; a new low-day x low-intl hinge; usage hinge weight 3.02 -> 4.25 and CSC threshold sharpened to 3-4 calls. Train AUC 0.898 -> 0.911, nonlinear gain 0.061 -> 0.079. The state:37 wrong-sign switch got worse.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 7,
+      "roots": [
+        "full_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.440892098500626e-16,
+    "closed_form_max_abs_err": 0.012000904476571872,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 71,
+      "split_node": 7,
+      "consolidate_node": 1,
+      "add_identity_node": 2,
+      "annotate": 7
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}
