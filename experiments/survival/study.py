@@ -114,7 +114,7 @@ def cmd_aggregate(a):
     for d, stem in (("sim", "simulation"), ("sim_v1", "simulation_v1")):
         if (HERE / d).is_dir():
             aggregate_sim(HERE / d, stem)
-    for d, stem in (("bench", "benchmark"), ("bench_v1", "benchmark_v1")):
+    for d, stem in (("bench", "benchmark"), ("bench_v1", "benchmark_v1"), ("bench_v2", "benchmark_v2")):
         if (HERE / d).is_dir():
             aggregate_bench(HERE / d, stem)
 

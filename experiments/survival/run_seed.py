@@ -7,10 +7,16 @@ is built, pins torch to 1 thread, deterministic algorithms on.
 Model: identity output (log-risk g(x)), backprop on the full-batch Efron Cox
 partial likelihood (``CoxCriterion``), phantom-weight mask on, fitness =
 -(Efron Cox loss) - lambda * k / n_events (lambda = 1: per-event AIC; k =
-enabled connections + hidden nodes) on the training fold. The best genome is
-the one with the best VALIDATION fitness over all generations, where the
-validation fitness is the plain held-out Cox loss (``--val-penalty none``). Then S(t|x) = S0(t)^exp(g(x)) with a
-Breslow baseline on the training rows.
+enabled connections + hidden nodes) on the training fold. Protocol v3
+(``--selection champion``, default): each generation's training-fitness
+champion is scored on the validation fold by the plain Cox loss, and the final
+model is the champion with the best validation loss (early stopping over
+champions). Then S(t|x) = S0(t)^exp(g(x)) with a Breslow baseline on the
+training rows.
+
+Earlier protocols (kept for the record, see RESULTS.md):
+    v1: --selection population --val-penalty same --set weight_init_stdev=1.0
+    v2: --selection population --val-penalty none --set weight_init_stdev=1.0
 
 Comparator: scikit-survival CoxPHSurvivalAnalysis (Efron ties, same
 standardised features, same folds), ridge alpha tuned on the same validation
@@ -145,15 +151,18 @@ def load_data(args):
     return X, y, names, extra, source
 
 
-def make_config(path: Path, n_inputs: int, pop_size=None) -> neat.Config:
+def make_config(path: Path, n_inputs: int, pop_size=None, overrides=None) -> neat.Config:
     text = path.read_text()
+    overrides = dict(overrides or {})
+    if pop_size:
+        overrides["pop_size"] = pop_size
     lines = []
     for line in text.splitlines():
         key = line.split("=")[0].strip()
         if key == "num_inputs":
             line = f"num_inputs = {n_inputs}"
-        elif key == "pop_size" and pop_size:
-            line = f"pop_size = {pop_size}"
+        elif key in overrides:
+            line = f"{key} = {overrides[key]}"
         lines.append(line)
     with tempfile.NamedTemporaryFile("w", suffix=".ini", delete=False) as f:
         f.write("\n".join(lines) + "\n")
@@ -166,6 +175,33 @@ def make_config(path: Path, n_inputs: int, pop_size=None) -> neat.Config:
     set_output_activation(config, "identity")
     config.explaneat_config_text = "\n".join(lines) + "\n"
     return config
+
+
+class ChampionTracker:
+    """Reporter: score each generation's training-fitness champion on validation."""
+
+    def __init__(self, config, X_val, y_val):
+        self.config = config
+        self.X = torch.as_tensor(X_val, dtype=torch.float64)
+        self.rs = CoxRiskSets(y_val[:, 0], y_val[:, 1])
+        self.best, self.best_val_loss, self.trace = None, float("inf"), []
+
+    def post_evaluate(self, config, population, species, best_genome):
+        g = max(population.values(), key=lambda x: x.fitness if x.fitness is not None else -1e9)
+        try:
+            with torch.no_grad():
+                loss = float(cox_ph_loss(NeuralNeat(g, config).forward(self.X), self.rs, ties=TIES))
+        except Exception:
+            loss = float("inf")
+        self.trace.append({"train_fitness": g.fitness, "val_loss": loss,
+                           "k": genome_complexity(g, config)})
+        if loss < self.best_val_loss:
+            self.best_val_loss, self.best = loss, copy.deepcopy(g)
+
+    def __getattr__(self, name):  # every other reporter hook is a no-op
+        if name.startswith("__"):
+            raise AttributeError(name)
+        return lambda *a, **k: None
 
 
 def fit_cox(Xtr, ytr, Xva, yva):
@@ -217,6 +253,11 @@ def main():
     ap.add_argument("--complexity-penalty", type=float, default=1.0,
                     help="lambda in fitness = -loss - lambda*k/n_events (1 = per-event AIC; 0 = off)")
     ap.add_argument("--patience", type=int, default=None, help="early stop after N gens w/o val improvement")
+    ap.add_argument("--selection", choices=["champion", "population"], default="champion",
+                    help="champion (v3): best validation Cox loss among per-generation training "
+                         "champions; population (v1/v2): best validation fitness over every genome")
+    ap.add_argument("--set", action="append", default=[], metavar="KEY=VALUE",
+                    help="override a NEAT config key, e.g. --set weight_init_stdev=0.1")
     ap.add_argument("--val-penalty", choices=["none", "same"], default="none",
                     help="validation (selection) fitness: plain held-out Cox loss (none, default) or "
                          "the penalised training fitness evaluated on the validation fold (same; "
@@ -271,7 +312,9 @@ def main():
     ytr, yte, yva = y[tr], y[te], (y[va] if va else None)
     n_ev_tr = int(ytr[:, 1].sum())
 
-    config = make_config(args.config, X.shape[1], args.pop_size)
+    config = make_config(args.config, X.shape[1], args.pop_size,
+                         dict(kv.split("=", 1) for kv in args.set))
+    champion_trace = None
     fitness = make_cox_fitness(TIES, args.complexity_penalty)
     null_tr = null_cox_loss(CoxRiskSets(ytr[:, 0], ytr[:, 1]), TIES)
 
@@ -287,13 +330,28 @@ def main():
         pop.skip_invalid_genomes = True
         pop.run(fitness, n=args.generations, nEpochs=args.epochs)
         best = pop.best_genome
+    elif args.selection == "champion" and Xva is not None:
+        # Protocol v3: early stopping over generation champions. Each
+        # generation's best genome by (penalised) TRAINING fitness is copied
+        # and scored on the validation fold by the plain Cox loss; the final
+        # model is the champion with the best validation loss. One candidate
+        # per generation, so the validation fold is not mined over the whole
+        # population (the winner's curse of protocols v1/v2).
+        pop = BackpropPopulation(config, Xtr, ytr, criterion=CoxCriterion(TIES),
+                                 mask_phantom=True, skip_invalid_genomes=True)
+        tracker = ChampionTracker(config, Xva, yva)
+        pop.reporters.add(tracker)
+        pop.run(fitness, n=args.generations, nEpochs=args.epochs)
+        best = tracker.best
+        best.validation_fitness = -tracker.best_val_loss
+        champion_trace = tracker.trace
     else:
         pop = BackpropPopulation(config, Xtr, ytr, xs_val=Xva, ys_val=yva,
                                  criterion=CoxCriterion(TIES), mask_phantom=True,
                                  skip_invalid_genomes=True)
-        # Selection on the held-out validation fold uses the plain Cox loss:
-        # the AIC term is an in-sample optimism correction and belongs to the
-        # training fitness only (see RESULTS.md, protocol revision 1).
+        # Protocols v1/v2: the best genome over the whole population by
+        # validation fitness. v2 scores validation with the plain Cox loss
+        # (the AIC term is an in-sample correction, see RESULTS.md).
         pop.run(fitness, n=args.generations, nEpochs=args.epochs, patience=args.patience,
                 validation_fitness_function=(make_cox_fitness(TIES, 0.0)
                                              if args.val_penalty == "none" else None))
@@ -316,22 +374,28 @@ def main():
                 else [float(q) for q in np.quantile(ytr[ytr[:, 1] == 1, 0], [0.25, 0.5, 0.75])])
     cal_h = args.calibration_horizon or horizons[len(horizons) // 2]
 
-    def evaluate(g_tr, g_te):
+    def closs(g, yy):
+        return float(cox_ph_loss(torch.as_tensor(g), CoxRiskSets(yy[:, 0], yy[:, 1]), ties=TIES))
+
+    def evaluate(g_tr, g_te, g_va=None):
         bl = BreslowBaseline().fit(g_tr, ytr[:, 0], ytr[:, 1])
         m = survival_metrics(g_tr, g_te, ytr[:, 0], ytr[:, 1], yte[:, 0], yte[:, 1], baseline=bl,
                              horizons=horizons, calibration_horizon=cal_h)
-        m["test_cox_loss"] = float(cox_ph_loss(torch.as_tensor(g_te), CoxRiskSets(yte[:, 0], yte[:, 1]), ties=TIES))
+        m["test_cox_loss"] = closs(g_te, yte)
+        m["train_cox_loss"] = closs(g_tr, ytr)
+        if g_va is not None:
+            m["val_cox_loss"] = closs(g_va, yva)
         return m
 
-    res = {"neat": evaluate(g_tr_n, g_te_n)}
-    res["neat"]["train_cox_loss"] = float(cox_ph_loss(torch.as_tensor(g_tr_n), CoxRiskSets(ytr[:, 0], ytr[:, 1]), ties=TIES))
+    res = {"neat": evaluate(g_tr_n, g_te_n, g_neat(Xva) if Xva is not None else None)}
     res["neat"]["genome"] = genome_summary(best, config, n_ev_tr)
     res["neat"]["fitness"] = best.fitness
     res["neat"]["validation_fitness"] = getattr(best, "validation_fitness", None)
 
     if not args.no_comparator:
         cox, alpha, scores = fit_cox(Xtr, ytr, Xva, yva)
-        res["cox"] = evaluate(cox.predict(Xtr), cox.predict(Xte))
+        res["cox"] = evaluate(cox.predict(Xtr), cox.predict(Xte),
+                              cox.predict(Xva) if Xva is not None else None)
         res["cox"]["alpha"] = alpha
         res["cox"]["alpha_val_loss"] = {str(k): v for k, v in scores.items()}
         res["cox"]["n_params"] = int(X.shape[1])
@@ -363,9 +427,12 @@ def main():
             "generations": args.generations, "epochs_per_generation": args.epochs,
             "pop_size": config.pop_size, "ties": TIES, "fitness": "-(Efron Cox loss) - lambda*k/n_events",
             "complexity_penalty": args.complexity_penalty, "val_penalty": args.val_penalty,
+            "selection_mode": args.selection, "config_overrides": args.set,
             "output_activation": "identity",
             "mask_phantom": True, "criterion": "CoxCriterion(efron), full batch",
-            "selection": "best validation fitness" if (Xva is not None and not args.db) else "best training fitness",
+            "selection": ("best training fitness" if (Xva is None or args.db) else
+                          "best validation Cox loss among generation champions"
+                          if args.selection == "champion" else "best validation fitness, whole population"),
             "split_seed": split_seed, "test_size": args.test_size, "val_size": args.val_size,
             "standardise": "train-fold mean/sd", "db": args.db,
             "config_file": str(args.config.relative_to(REPO)) if args.config.is_relative_to(REPO) else args.config.name,
@@ -378,6 +445,8 @@ def main():
     }
     if args.db:
         record["experiment_id"] = str(pop.experiment_id)
+    if champion_trace is not None:
+        record["champion_trace"] = champion_trace
     (args.out / f"{tag}.json").write_text(json.dumps(record, indent=1, default=float))
     with open(args.out / f"{tag}.genome.pkl", "wb") as f:
         pickle.dump({"genome": best, "config_text": config.explaneat_config_text,
