@@ -80,3 +80,22 @@ Explanation orders were fixed before any structure was inspected, with
 Genomes are explained in that order as their runs finish.
 - churn100: s4 s1 s0 s7 s8 s2 s9 s3 s6 s5
 - churn200: s1 s2 s4 s7 s9 s5 s3 s8 s0 s6
+
+## churn100-masked (2026-11-05, Mike approved)
+
+**Background.** PropNEAT's NeuralNeat trained "phantom" dense-matrix entries (entries with no
+connection gene) and then discarded them at write-back. Commit `b86f121` adds an opt-in
+connectivity mask (`--mask-phantom`). Unmasked runs still reproduce bit-for-bit (500/500
+genomes).
+
+**Run.** `churn100mask-s<seed>`: seeds 0–9, 100 generations, the same config, split and seeds as
+churn100, with only `--mask-phantom` added. At most 4 run concurrently.
+
+**Question.** Does correct backprop (genome weights only) change PropNEAT's churn performance
+and network structure?
+
+**Context.** On churn100-s0, masked 5-epoch backprop barely moves the train loss
+(0.2325 → 0.2316), whereas unmasked backprop moves the dense net to 0.2101 and the genome to
+0.2320. The direction of the effect on evolution is therefore an open question.
+
+**Explanations.** churn100mask networks are explained only if Mike asks.
