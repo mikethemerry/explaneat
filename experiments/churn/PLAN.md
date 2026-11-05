@@ -57,3 +57,26 @@ Questions:
 - **Not clearly above:** report it. Then try a longer run (more generations) before abandoning
   churn, as on Adult, where 100 generations left about 0.024 of headroom against gradient
   boosting.
+
+## Pilot result and next steps (2026-11-05)
+
+The pilot (`runs_churn-pilot.csv`) scored test AUC 0.895 / 0.904 / 0.876 (seeds 0–2), against
+logistic regression's 0.813 and gradient boosting's 0.932. That is clearly above logistic
+regression, so the rule above applies.
+
+At Mike's request, both of these run:
+- **churn100:** 10 seeds × 100 generations. The pilot experiments were renamed
+  `churn-pilot-s*` → `churn100-s*` (seeds 0–2). They are reused as-is, because seeded runs are
+  deterministic. Seeds 3–9 are new, run as `run_seed.py churn <s> --name churn100-s<s>`.
+- **churn200:** 10 seeds × 200 generations, run as
+  `run_seed.py churn <s> --generations 200 --name churn200-s<s>`. Their first 100 generations
+  should exactly reproduce churn100, which is checked.
+
+At most 4 training runs go at once (CPU load). The churn100 networks are explained first,
+then churn200, all with protocol v3.
+
+Explanation orders were fixed before any structure was inspected, with
+`numpy.random.default_rng(20261105)`: the first permutation is churn100, the second churn200.
+Genomes are explained in that order as their runs finish.
+- churn100: s4 s1 s0 s7 s8 s2 s9 s3 s6 s5
+- churn200: s1 s2 s4 s7 s9 s5 s3 s8 s0 s6
