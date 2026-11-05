@@ -57,6 +57,7 @@ class BackpropPopulation(Population):
         nEpochs=100,
         device=None,
         mask_phantom=True,
+        skip_invalid_genomes=False,
     ):
         """``mask_phantom`` (default True since 2026-11-05): build each genome's
         NeuralNeat with ``mask_phantom=True`` in ``backpropagate`` so only the
@@ -73,8 +74,15 @@ class BackpropPopulation(Population):
         ``[N, 2]`` = (time, event) with ``CoxCriterion`` and an identity output
         activation (``neuralneat.set_output_activation(config, "identity")``).
         See ``docs/survival.md`` for the matching fitness convention
-        (fitness = -Cox loss, not 1/loss)."""
+        (fitness = -Cox loss, not 1/loss).
+
+        ``skip_invalid_genomes`` (default False = original behaviour: a genome
+        NeuralNeat rejects, e.g. one whose output lost every path to an
+        input, raises ``GenomeNotValidError`` out of ``backpropagate``): when
+        True such genomes are left untrained and the fitness function scores
+        them (the survival fitness gives them ``INVALID_FITNESS``)."""
         self.mask_phantom = bool(mask_phantom)
+        self.skip_invalid_genomes = bool(skip_invalid_genomes)
         self.logger = logging.getLogger("experimenter.backproppop")
         self.reporters = ReporterSet()
         self.config = config
@@ -167,12 +175,17 @@ class BackpropPopulation(Population):
 
             # net = NeatNet(genome, self.config, criterion=self.criterion)
 
-            net = nneat(
-                genome,
-                self.config,
-                criterion=self.criterion,
-                mask_phantom=self.mask_phantom,
-            )
+            try:
+                net = nneat(
+                    genome,
+                    self.config,
+                    criterion=self.criterion,
+                    mask_phantom=self.mask_phantom,
+                )
+            except GenomeNotValidError:
+                if not self.skip_invalid_genomes:
+                    raise
+                continue
 
             optimizer = optim.Adadelta(net.parameters(), lr=1.5)
             optimizer.zero_grad()

@@ -107,3 +107,27 @@ def test_survival_target_with_cox_criterion(config):
         improved += l1 < l0
         assert np.isfinite(l1)
     assert improved >= len(before) // 2
+
+
+def test_skip_invalid_genomes_is_opt_in(config):
+    import pytest
+
+    from explaneat.core.errors import GenomeNotValidError
+
+    random.seed(4)
+    xs, ys = _data()
+    for skip in (False, True):
+        pop = BackpropPopulation(config, xs, ys, skip_invalid_genomes=skip)
+        k0 = next(iter(pop.population))
+        for c in pop.population[k0].connections.values():
+            c.enabled = False  # output unreachable: NeuralNeat rejects it
+        before = copy.deepcopy(pop.population[k0])
+        if not skip:
+            assert pop.skip_invalid_genomes is False
+            with pytest.raises(GenomeNotValidError):
+                pop.backpropagate(pop.xs, pop.ys, nEpochs=1)
+        else:
+            pop.backpropagate(pop.xs, pop.ys, nEpochs=1)
+            after = pop.population[k0]
+            assert {k: c.weight for k, c in after.connections.items()} == \
+                {k: c.weight for k, c in before.connections.items()}
