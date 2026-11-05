@@ -212,9 +212,10 @@ The tools:
 tool compositional = 1.0, `hierarchy.complete`, and function preserved to < 1e-9.
 
 **Mike's verification** is not done yet: `verified_by_mike` is `no` for every network.
-`build_explanations_csv.py` currently writes `verified_by_mike='no'` for every row. When
-verification is recorded, add the fields to the JSON records and teach the script to read
-them, so that a rebuild does not erase them.
+To record a verification, add this to that network's `explanations/<label>.json`:
+`"mike_verification": {"verified": true, "minutes": 25, "changes": "..."}`.
+Then rerun `build_explanations_csv.py`. The script reads verification from the JSON records
+and nowhere else, so a rebuild never erases it.
 
 ## 7. Figures, table and summary
 

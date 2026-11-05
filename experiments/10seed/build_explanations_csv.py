@@ -23,7 +23,12 @@ def row(i, l):
                 hidden_in_any_annotation=r.get('hidden_nodes_in_any_annotation'),
                 function_preservation_max_abs_err=v['function_preservation_max_abs_err'],
                 closed_form_max_abs_err=v['closed_form_max_abs_err'], numeric_max_abs_err=v['numeric_max_abs_err'],
-                claude_minutes=round(mins, 1), verified_by_mike='no', mike_minutes='', mike_changes='',
+                claude_minutes=round(mins, 1),
+                # Mike's verification lives in the JSON record (key "mike_verification":
+                # {"verified": bool, "minutes": float, "changes": str}) so rebuilds keep it.
+                verified_by_mike='yes' if r.get('mike_verification', {}).get('verified') else 'no',
+                mike_minutes=r.get('mike_verification', {}).get('minutes', ''),
+                mike_changes=r.get('mike_verification', {}).get('changes', ''),
                 pilot=r.get('pilot', False), rule_agreement=r.get('rule_agreement', ''), vs_40gen=r.get('vs_40gen', ''),
                 resisted=r['resisted'])
 
