@@ -123,6 +123,10 @@ def main():
     ap.add_argument("--generations", type=int, default=None,
                     help="override (dry runs only)")
     ap.add_argument("--name", default=None, help="override experiment name")
+    ap.add_argument("--mask-phantom", action="store_true",
+                    help="opt-in connectivity mask: backprop trains only the "
+                         "genome's own weights, so the stored genome is the "
+                         "trained network (default off = original runs)")
     args = ap.parse_args()
 
     if os.environ.get("PYTHONHASHSEED") != "0":
@@ -132,6 +136,8 @@ def main():
     n_gen = args.generations or spec["n_generations"]
     default_name = (f"churn-pilot-s{args.seed}" if args.dataset == "churn"
                     else f"10seed-{args.dataset}-s{args.seed}")
+    if args.mask_phantom:
+        default_name += "-mask"
     name = args.name or default_name
 
     logging.basicConfig(level=logging.INFO,
@@ -152,6 +158,7 @@ def main():
         dataset_name=dataset_name,
         description=spec.get("description", DESCRIPTION),
         dataset_id=spec["dataset_id"],
+        mask_phantom=args.mask_phantom,
     )
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip()
     with db.session_scope() as session:
@@ -176,6 +183,7 @@ def main():
                 "neat_config": str(spec["neat_config"].relative_to(REPO)),
                 "reference_experiment": spec["reference_experiment"],
                 "code_commit": commit,
+                "mask_phantom": args.mask_phantom,
             },
         }
     print(f"EXPERIMENT_ID {population.experiment_id}", flush=True)

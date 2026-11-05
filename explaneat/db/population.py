@@ -27,7 +27,8 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                  database_url: str = None, ancestry_reporter=None,
                  dataset_id: str = None, config_template_id: str = None,
                  initial_state=None,
-                 _existing_experiment_id: Optional[str] = None):
+                 _existing_experiment_id: Optional[str] = None,
+                 mask_phantom: bool = False):
         """
         Initialize population with database tracking
 
@@ -49,9 +50,13 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                 BackpropPopulation constructor.
             _existing_experiment_id: Optional experiment UUID to reuse instead
                 of creating a new Experiment row. Used by ``resume_from_db``.
+            mask_phantom: Opt-in connectivity mask for backprop (see
+                ``BackpropPopulation``). When True it is recorded on the new
+                Experiment as ``config_json["training"]["mask_phantom"]``;
+                when False ``config_json`` is unchanged.
         """
         super().__init__(config, x_train, y_train, xs_val=xs_val, ys_val=ys_val,
-                         initial_state=initial_state)
+                         initial_state=initial_state, mask_phantom=mask_phantom)
 
         # Initialize database connection
         if database_url:
@@ -116,13 +121,18 @@ class DatabaseBackpropPopulation(BackpropPopulation):
             except:
                 neat_config_text = "Config file not found"
         
+        config_json = serialize_population_config(config)
+        if self.mask_phantom:
+            # Only recorded when on, so rows of unmasked runs keep their format.
+            config_json["training"] = {"mask_phantom": True}
+
         with db.session_scope() as session:
             experiment = Experiment(
                 experiment_sha=experiment_sha,
                 name=name,
                 description=description,
                 dataset_name=dataset_name,
-                config_json=serialize_population_config(config),
+                config_json=config_json,
                 neat_config_text=neat_config_text,
                 start_time=datetime.utcnow(),
                 git_commit_sha=git_commit_sha,

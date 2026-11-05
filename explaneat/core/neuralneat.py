@@ -48,10 +48,33 @@ LAYER_ACTIVATION_FUNCTIONS = {
 class NeuralNeat(nn.Module):
     # Creates a PyTorch Neural Network from an ExplaNEAT genome
     def __init__(
-        self, genome, config, criterion=nn.BCELoss(), optimiser=optim.Adadelta
+        self,
+        genome,
+        config,
+        criterion=nn.BCELoss(),
+        optimiser=optim.Adadelta,
+        mask_phantom: bool = False,
     ):
+        """Build the dense layered network for ``genome``.
+
+        Each non-input layer has a dense weight matrix with an entry for every
+        (earlier-layer node, this-layer node) pair. Entries without an enabled
+        connection gene ("phantom" weights) start at 0 but are ordinary
+        parameters, so backprop trains them, and ``update_genome_weights``
+        then drops them: the stored genome is not the trained network.
+
+        ``mask_phantom=True`` registers a constant 0/1 buffer
+        ``weight_mask_<layer>`` per non-input layer (1 exactly at the
+        ``input_map`` locations of enabled genes) and ``forward`` uses
+        ``W * M``. Phantom entries then get exactly zero gradient and stay at
+        0, so the written-back genome computes the trained function. Biases
+        are not masked: every bias entry of a non-input layer belongs to a
+        real genome node (input-layer biases exist but ``forward`` never uses
+        them). The default ``False`` is the original behaviour, bit for bit.
+        """
         # just run the init of parent class (nn.Module)
         super(NeuralNeat, self).__init__()
+        self.mask_phantom = bool(mask_phantom)
         # print("_----------------------_")
         # print("I'm a new net")
         self.genome = genome
@@ -123,6 +146,19 @@ class NeuralNeat(nn.Module):
 
         for b_id, b in self.biases.items():
             self.register_parameter(name="bias_%s" % b_id, param=b)
+
+        # Connectivity masks (opt-in). Registered as buffers so they are not
+        # parameters and the optimiser state is unchanged.
+        self.weight_masks = {}
+        if self.mask_phantom:
+            for layer_id, layer in self.layers.items():
+                if layer["layer_type"] == LAYER_TYPE_INPUT:
+                    continue  # input layer has no matmul in forward
+                mask = torch.zeros_like(self.weights[layer_id], requires_grad=False)
+                for row, col in layer["input_map"].values():
+                    mask[row, col] = 1.0
+                self.register_buffer("weight_mask_%s" % layer_id, mask)
+                self.weight_masks[layer_id] = mask
 
         self.criterion = criterion
         self.optimiser = optimiser
@@ -413,15 +449,19 @@ class NeuralNeat(nn.Module):
             # print(self.weights[layer_id])
             # print(self.biases[layer_id])
 
+            layer_weights = self.weights[layer_id]
+            if self.mask_phantom:
+                layer_weights = layer_weights * self.weight_masks[layer_id]
+
             try:
                 if layer_type == LAYER_TYPE_CONNECTED:
                     self._outputs[layer_id] = torch.relu(
-                        torch.matmul(layer_input, self.weights[layer_id])
+                        torch.matmul(layer_input, layer_weights)
                         + self.biases[layer_id]
                     )
                 else:
                     self._outputs[layer_id] = torch.sigmoid(
-                        torch.matmul(layer_input, self.weights[layer_id])
+                        torch.matmul(layer_input, layer_weights)
                         + self.biases[layer_id]
                     )
             except Exception as e:
