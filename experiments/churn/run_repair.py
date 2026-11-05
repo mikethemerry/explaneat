@@ -10,15 +10,21 @@ names only (no test data):
              through). Categories are parsed with validate_test_split.flagged_states
              (leading "state:N" token; non-state entries are skipped and logged).
 
-Conditions: base, ft-only, R-prune + ft, R-flagged + ft, R-prune no-ft.
-Fine-tuning: genome_surgery.finetune, E = 50 epochs, seed = run seed, with
---phantom primitive|masked (required; see ext_common.PHANTOM_HELP).
+Conditions: base, R-prune no-ft, and for each fine-tune setting E:
+ft-only, R-prune + ft, R-flagged + ft.
+Fine-tuning: genome_surgery.finetune, seed = run seed, --phantom masked by
+default (amendment 1; `primitive` kept for comparison, ext_common.PHANTOM_HELP).
+--epochs takes one or more E (first = primary): amendment 1 makes E = 500 the
+primary setting and E = 50 a secondary row, i.e. `--epochs 500,50`. Every ft
+condition appears once per E, with its `epochs` and `epochs_role`; every row
+records the run's `run_ft_phantom` and `run_epochs`. Deltas are against ft-only
+at the same E (no-ft rows: against ft-only at the primary E).
 Every derived genome (all conditions but base) is saved as its own experiment
-`churn-repair-<cond>-s<seed>` with a provenance block. Test data is used only
-for the final per-condition metrics.
+`churn-repair-<cond>-e<E>-s<seed>` (no-ft: `churn-repair-<cond>-s<seed>`) with a
+provenance block. Test data is used only for the final per-condition metrics.
 
-    uv run python experiments/churn/run_repair.py --phantom masked            # all seeds -> repair.csv + DB
-    uv run python experiments/churn/run_repair.py --phantom masked --dry-run  # one seed, 2 epochs, no CSV/DB
+    uv run python experiments/churn/run_repair.py --epochs 500,50            # all seeds -> repair.csv + DB
+    uv run python experiments/churn/run_repair.py --epochs 500,50 --dry-run  # one seed, E -> 2,1, no CSV/DB
 """
 
 import argparse
@@ -31,25 +37,40 @@ from ext_common import gs
 from validate_test_split import flagged_states
 
 OUT = ec.HERE / "repair.csv"
-CONDITIONS = ["base", "ftonly", "prune-ft", "flagged-ft", "prune-noft"]
+NOFT_CONDITIONS = ["base", "prune-noft"]
+FT_CONDITIONS = ["ftonly", "prune-ft", "flagged-ft"]
+RULES = {"prune-ft": "all state:* outgoing", "prune-noft": "all state:* outgoing",
+         "flagged-ft": "outgoing of rare_category_switches states", "ftonly": "none"}
 
 COLUMNS = [
     "seed", "condition", "source_genome_id", "derived_experiment_name", "derived_genome_id",
-    "n_connections_disabled", "flagged_states", "epochs", "ft_seed", "ft_phantom",
+    "n_connections_disabled", "flagged_states", "epochs", "epochs_role", "ft_seed", "ft_phantom",
+    "run_ft_phantom", "run_epochs",
     "train_auc", "test_auc", "test_auc_ci_lo", "test_auc_ci_hi", "n_boot_used",
     "train_acc_0.5", "test_acc_0.5",
     "phenotype_connections_enabled", "phenotype_connections_removed_vs_base",
     "hidden_nodes", "genome_conn_genes_enabled", "inputs_connected",
-    "delta_test_auc_vs_ftonly", "delta_vs_ftonly_ci_lo", "delta_vs_ftonly_ci_hi",
+    "delta_reference", "delta_test_auc_vs_ftonly", "delta_vs_ftonly_ci_lo",
+    "delta_vs_ftonly_ci_hi",
     "ft_loss_before", "ft_loss_after", "ft_max_abs_pred_diff_trained_vs_written_back",
 ]
 
 
-def name_for(cond, seed):
-    return f"churn-repair-{cond}-s{seed}"
+def name_for(cond, seed, epochs=None):
+    """Derived-experiment name; fine-tuned conditions carry their E."""
+    if epochs is None:
+        return f"churn-repair-{cond}-s{seed}"
+    return f"churn-repair-{cond}-e{epochs}-s{seed}"
 
 
-def run_seed(seed, runs, data, boot, epochs, dry_run, commit, mask_phantom):
+def planned(epochs_list):
+    """[(condition, E or None)] in evaluation order: no-ft conditions once,
+    each ft condition once per E."""
+    return [(c, None) for c in NOFT_CONDITIONS] + [(c, e) for e in epochs_list
+                                                   for c in FT_CONDITIONS]
+
+
+def run_seed(seed, runs, data, boot, epochs_list, dry_run, commit, mask_phantom):
     gid = runs[seed]["genome_id"]
     record = ec.read_record(seed)
     assert record["genome_id"] == gid, f"s{seed}: record/runs genome mismatch"
@@ -63,65 +84,72 @@ def run_seed(seed, runs, data, boot, epochs, dry_run, commit, mask_phantom):
     flagged_keys = gs.enabled_connections_from(g0, [state_ids[s] for s in flagged])
 
     Xtr, ytr = data["X_train"], data["y_train"]
-    genomes, ft_info, edits = {}, {}, {}
-    genomes["base"] = g0
-    edits["base"] = []
-    ft = dict(mask_phantom=mask_phantom, return_info=True)
-    genomes["ftonly"], ft_info["ftonly"] = gs.finetune(g0, config, Xtr, ytr, epochs, seed, **ft)
-    edits["ftonly"] = []
     pruned = gs.disable_connections(g0, prune_keys)
     flagged_g = gs.disable_connections(g0, flagged_keys)
-    genomes["prune-ft"], ft_info["prune-ft"] = gs.finetune(pruned, config, Xtr, ytr, epochs,
-                                                           seed, **ft)
-    edits["prune-ft"] = prune_keys
-    genomes["flagged-ft"], ft_info["flagged-ft"] = gs.finetune(flagged_g, config, Xtr, ytr,
-                                                               epochs, seed, **ft)
-    edits["flagged-ft"] = flagged_keys
-    genomes["prune-noft"] = pruned
-    edits["prune-noft"] = prune_keys
+    start = {"base": g0, "prune-noft": pruned, "ftonly": g0, "prune-ft": pruned,
+             "flagged-ft": flagged_g}
+    edits = {"base": [], "prune-noft": prune_keys, "ftonly": [], "prune-ft": prune_keys,
+             "flagged-ft": flagged_keys}
+    phantom = "masked" if mask_phantom else "primitive"
+    plan = planned(epochs_list)
+    genomes, ft_info = {}, {}
+    for cond, e in plan:
+        if e is None:
+            genomes[(cond, e)] = start[cond]
+        else:
+            genomes[(cond, e)], ft_info[(cond, e)] = gs.finetune(
+                start[cond], config, Xtr, ytr, e, seed, mask_phantom=mask_phantom,
+                return_info=True)
 
     # test split read at the end of each condition, for reporting only
     rows, p_test = [], {}
-    for cond in CONDITIONS:
-        m, p_test[cond] = ec.evaluate(genomes[cond], config, data, boot)
+    for key in plan:
+        cond, e = key
+        m, p_test[key] = ec.evaluate(genomes[key], config, data, boot)
         rows.append({"seed": seed, "condition": cond, "source_genome_id": gid,
                      "n_connections_disabled": len(edits[cond]),
                      "flagged_states": ";".join(flagged) if cond.startswith("flagged") else "",
-                     "epochs": epochs if cond.endswith("-ft") or cond == "ftonly" else 0,
-                     "ft_seed": seed if cond in ft_info else "",
-                     "ft_phantom": ("masked" if mask_phantom else "primitive")
-                     if cond in ft_info else "", **m})
+                     "epochs": e or 0,
+                     "epochs_role": "" if e is None else
+                     ("primary" if e == epochs_list[0] else "secondary"),
+                     "ft_seed": seed if e is not None else "",
+                     "ft_phantom": phantom if e is not None else "",
+                     "run_ft_phantom": phantom,
+                     "run_epochs": ";".join(str(v) for v in epochs_list),
+                     "_key": key, **m})
     base_conns = rows[0]["phenotype_connections_enabled"]
     for r in rows:
-        cond = r["condition"]
+        key = r["_key"]
+        cond, e = key
         r["phenotype_connections_removed_vs_base"] = base_conns - r["phenotype_connections_enabled"]
-        d, lo, hi = ec.paired_delta(data, p_test[cond], p_test["ftonly"], boot)
-        r.update(delta_test_auc_vs_ftonly=d, delta_vs_ftonly_ci_lo=lo, delta_vs_ftonly_ci_hi=hi)
-        if cond in ft_info:
-            fi = ft_info[cond]
+        ref = ("ftonly", e if e is not None else epochs_list[0])
+        d, lo, hi = ec.paired_delta(data, p_test[key], p_test[ref], boot)
+        r.update(delta_reference=f"ftonly e{ref[1]}", delta_test_auc_vs_ftonly=d,
+                 delta_vs_ftonly_ci_lo=lo, delta_vs_ftonly_ci_hi=hi)
+        if key in ft_info:
+            fi = ft_info[key]
             r.update(ft_loss_before=fi["loss_before"], ft_loss_after=fi["loss_after_written_back"],
                      ft_max_abs_pred_diff_trained_vs_written_back=fi[
                          "max_abs_pred_diff_trained_vs_written_back"])
 
     for r in rows:
-        cond = r["condition"]
+        key = r["_key"]
+        cond, e = key
         if cond == "base":
             continue
-        r["derived_experiment_name"] = name_for(cond, seed)
+        r["derived_experiment_name"] = name_for(cond, seed, e)
         if dry_run:
             continue
-        g = genomes[cond]
+        g = genomes[key]
         g.fitness = r["train_auc"]
-        fi = ft_info.get(cond)
+        fi = ft_info.get(key)
         provenance = {
             "study": "churn extensions B (repair)", "plan": "experiments/churn/EXTENSIONS_PLAN.md",
-            "condition": cond, "source_genome_id": gid,
+            "condition": cond, "epochs_role": r["epochs_role"], "source_genome_id": gid,
             "source_experiment_id": info["experiment_id"],
             "source_experiment_name": info["experiment_name"],
             "edits": {"disable_connections": [list(k) for k in edits[cond]],
-                      "rule": {"prune-ft": "all state:* outgoing", "prune-noft": "all state:* outgoing",
-                               "flagged-ft": "outgoing of rare_category_switches states",
-                               "ftonly": "none"}[cond],
+                      "rule": RULES[cond],
                       "flagged_states": flagged if cond == "flagged-ft" else []},
             "finetune": None if fi is None else {
                 k: fi[k] for k in ("epochs", "seed", "optimizer", "lr", "loss", "full_batch",
@@ -129,7 +157,7 @@ def run_seed(seed, runs, data, boot, epochs, dry_run, commit, mask_phantom):
                                    "loss_before", "loss_trained_net", "loss_after_written_back",
                                    "max_abs_pred_diff_trained_vs_written_back")},
             **commit}
-        ids = gs.save_derived_genome(g, config, name_for(cond, seed), provenance,
+        ids = gs.save_derived_genome(g, config, name_for(cond, seed, e), provenance,
                                      split_id=ec.SPLIT, dataset_id=info["dataset_id"],
                                      source_config_json=info["config_json"],
                                      neat_config_text=info["neat_config_text"])
@@ -139,39 +167,45 @@ def run_seed(seed, runs, data, boot, epochs, dry_run, commit, mask_phantom):
 
 def main():
     ap = argparse.ArgumentParser(description="Study B: explanation-guided repair")
-    ap.add_argument("--dry-run", action="store_true", help="one seed, 2 epochs, no CSV/DB")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="one seed, epochs replaced by 2 (primary), 1 (secondary); no CSV/DB")
     ap.add_argument("--seed", type=int, default=None, help="dry-run seed (default 0)")
-    ec.add_phantom_arg(ap)
+    ec.add_ft_args(ap)
     args = ap.parse_args()
     mask_phantom = args.phantom == "masked"
     torch.set_num_threads(1)
 
     from explaneat.db.base import db
     db.init_db()
-    epochs = 2 if args.dry_run else ec.EPOCHS
+    epochs_list = ec.dry_run_epochs(args.epochs) if args.dry_run else args.epochs
     seeds = [args.seed if args.seed is not None else 0] if args.dry_run else ec.SEEDS
     commit = gs.code_commit()
+    print(f"phantom={args.phantom} epochs={epochs_list} (primary {epochs_list[0]})")
     if not args.dry_run:
         if commit["dirty"]:
             raise SystemExit("working tree has uncommitted changes in explaneat/ or "
                              "experiments/churn/; commit first so provenance is exact")
-        ec.check_names_free([name_for(c, s) for s in seeds for c in CONDITIONS if c != "base"])
+        ec.check_names_free([name_for(c, s, e) for s in seeds for c, e in planned(epochs_list)
+                             if c != "base"])
     data = ec.load_data()
     boot = ec.bootstrap_indices(len(data["y_test"]))
     runs = ec.read_runs()
     rows = []
     for seed in seeds:
         t0 = time.time()
-        srows = run_seed(seed, runs, data, boot, epochs, args.dry_run, commit, mask_phantom)
+        srows = run_seed(seed, runs, data, boot, epochs_list, args.dry_run, commit, mask_phantom)
         rows += srows
         print(f"s{seed} ({time.time() - t0:.0f}s)")
         for r in srows:
-            print(f"   {r['condition']:11s} disabled {r['n_connections_disabled']:3d} conns "
+            print(f"   {r['condition']:11s} E {r['epochs']:3d} "
+                  f"disabled {r['n_connections_disabled']:3d} conns "
                   f"{r['phenotype_connections_enabled']:3d} hidden {r['hidden_nodes']:2d} "
                   f"train {r['train_auc']:.4f} test {r['test_auc']:.4f} "
                   f"[{r['test_auc_ci_lo']:.4f},{r['test_auc_ci_hi']:.4f}] "
-                  f"d_vs_ft {r['delta_test_auc_vs_ftonly']:+.4f} "
-                  f"[{r['delta_vs_ftonly_ci_lo']:+.4f},{r['delta_vs_ftonly_ci_hi']:+.4f}]")
+                  f"d_vs_{r['delta_reference'].replace(' ', '_')} "
+                  f"{r['delta_test_auc_vs_ftonly']:+.4f} "
+                  f"[{r['delta_vs_ftonly_ci_lo']:+.4f},{r['delta_vs_ftonly_ci_hi']:+.4f}] "
+                  f"{r.get('derived_experiment_name', '')}")
     if args.dry_run:
         print(f"DRY RUN: {len(rows)} rows computed; nothing written to CSV or DB")
     else:

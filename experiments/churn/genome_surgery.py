@@ -22,6 +22,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import re
 import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -655,3 +656,226 @@ def save_derived_genome(genome, config, name, provenance, split_id, dataset_id,
         s.add(row)
         s.flush()
         return {"experiment_id": exp.id, "population_id": pop.id, "genome_id": row.id}
+
+
+# ====================================================================== base features
+# (study C amendment 2a: complementary donor selection)
+
+_USAGE_FEATURE = re.compile(r"^total (day|eve|night|intl) (minutes|charge)$")
+
+
+def base_feature_name(feature_name: str) -> str:
+    """Base feature of a churn input column: ``total <period> minutes`` and
+    ``total <period> charge`` collapse to ``<period> usage`` (charge is an exact
+    linear function of minutes); every other feature is its own base feature."""
+    m = _USAGE_FEATURE.match(feature_name)
+    return f"{m.group(1)} usage" if m else feature_name
+
+
+def entry_base_features(entry_nodes: Iterable, resolver: "ModelStateIdResolver",
+                        feature_names: Sequence[str], input_keys: Iterable[int]) -> frozenset:
+    """Base-feature set of an annotation's entry nodes.
+
+    Split copies (``-61_a``) collapse to their input through ``resolver``;
+    input id ``-(i+1)`` is data column ``i``, mapped with ``base_feature_name``.
+    A non-input entry is kept as its own token (``node:<genome id>`` or
+    ``identity:<id>``), so it never matches an input feature.
+    """
+    inputs = set(input_keys)
+    out = set()
+    for n in entry_nodes:
+        n = str(n)
+        if resolver.is_identity(n):
+            out.add(f"identity:{resolver.base(n)}")
+            continue
+        g = resolver.genome_node(n)
+        if g in inputs:
+            out.add(base_feature_name(feature_names[-g - 1]))
+        else:
+            out.add(f"node:{g}")
+    return frozenset(out)
+
+
+def jaccard(a: Iterable, b: Iterable) -> float:
+    a, b = set(a), set(b)
+    if not a and not b:
+        return 1.0
+    return len(a & b) / len(a | b)
+
+
+def complementary_donor(candidates: Sequence[dict], recipient_seed: int,
+                        max_jaccard: float = 0.5, min_gain: float = 0.01):
+    """Amendment 2a: the complementary donor for ``recipient_seed``.
+
+    ``candidates``: one dict per leaf annotation of every explanation, with
+    ``seed``, ``name``, ``train_restore_gain``, ``nonlinear``,
+    ``entries_all_inputs``, ``qualifies`` (graftable: entries all inputs,
+    collapse preconditions, a readout edge) and ``entry_base_features``.
+
+    Among leaves of *other* seeds that qualify, have all-input entries and
+    train restore gain > ``min_gain``, keep those whose base-feature entry set
+    has Jaccard < ``max_jaccard`` with the base-feature entry set of every
+    nonlinear leaf of the recipient; return the one with the highest gain
+    (ties: lowest seed, then name), or None. Also returns, per eligible
+    candidate, its maximum Jaccard against the recipient's nonlinear leaves.
+    """
+    rec_nl = [c for c in candidates if c["seed"] == recipient_seed and c["nonlinear"]]
+    scored = []
+    for c in candidates:
+        if c["seed"] == recipient_seed or not c.get("qualifies") \
+                or not c.get("entries_all_inputs") or not c["train_restore_gain"] > min_gain:
+            continue
+        mj = max((jaccard(c["entry_base_features"], r["entry_base_features"])
+                  for r in rec_nl), default=0.0)
+        scored.append((c, mj))
+    ok = [(c, mj) for c, mj in scored if mj < max_jaccard]
+    if not ok:
+        return None, scored
+    best = sorted(ok, key=lambda t: (-t[0]["train_restore_gain"], t[0]["seed"], t[0]["name"]))[0]
+    return best, scored
+
+
+# ====================================================================== readout refit
+# (study C amendment 2b)
+
+def _output_layer(net: NeuralNeat, output_key: int):
+    for L, layer in net.layers.items():
+        if output_key in layer["nodes"] and layer["layer_type"] == "OUTPUT":
+            return L
+    raise KeyError(f"output node {output_key} not in the network")
+
+
+def output_preactivation_terms(genome, config, X, output_key: int = 0):
+    """NeuralNeat's output-layer input matrix, the output's weight column and
+    bias, and its pre-activation z (P = sigmoid(z)), all float64 numpy."""
+    net = build_net(genome, config)
+    with torch.no_grad():
+        net.forward(_as_tensors(X))
+        L = _output_layer(net, output_key)
+        inp = torch.cat([net._outputs[ii] for ii in net.layer_inputs[L]], dim=1).numpy()
+        col = net.layers[L]["nodes"][output_key]["layer_index"]
+        w = net.weights[L].detach().numpy()[:, col].copy()
+        b = float(net.biases[L].detach().numpy()[col])
+    return {"net": net, "layer": L, "col": col, "inputs": inp, "w": w, "b": b,
+            "z": inp @ w + b}
+
+
+def _logistic_newton(offset, F, y, theta0, l2, penalise, max_iter=100, tol=1e-12):
+    """argmin mean BCE(sigmoid(offset + F theta), y) + l2/2 * sum(theta[penalise]^2),
+    damped Newton with backtracking from theta0. Returns (theta, n_iter, converged)."""
+    pen = np.asarray(penalise, dtype=np.float64)
+    n = len(y)
+
+    def obj(t):
+        z = offset + F @ t
+        return float(np.mean(np.logaddexp(0.0, z) - y * z) + 0.5 * l2 * np.sum(pen * t * t))
+
+    t = np.asarray(theta0, dtype=np.float64).copy()
+    f = obj(t)
+    for it in range(1, max_iter + 1):
+        z = offset + F @ t
+        p = 1.0 / (1.0 + np.exp(-z))
+        g = F.T @ (p - y) / n + l2 * pen * t
+        H = (F * (p * (1 - p))[:, None]).T @ F / n + np.diag(l2 * pen)
+        H += 1e-12 * np.eye(len(t))
+        step = np.linalg.solve(H, g)
+        a = 1.0
+        while True:
+            t_new = t - a * step
+            f_new = obj(t_new)
+            if f_new <= f or a < 1e-10:
+                break
+            a *= 0.5
+        if f_new > f:  # no descent possible: at the optimum to precision
+            return t, it, True
+        done = f - f_new < tol and np.max(np.abs(g)) < 1e-8
+        t, f = t_new, f_new
+        if done:
+            return t, it, True
+    return t, max_iter, False
+
+
+REFIT_L2 = 1e-6
+
+
+def refit_readout(genome, config, X, y, readout_keys: Iterable[ConnKey],
+                  scaled_groups: Sequence[Sequence[ConnKey]] = (), output_key: int = 0,
+                  l2: float = REFIT_L2, max_iter: int = 100):
+    """Refit only the given readout weight(s) and the output bias by logistic
+    regression on (X, y), every other weight fixed (study C amendment 2b).
+
+    The network's output pre-activation is z = offset + b + sum_k w_k a_k, with
+    a_k the activation of readout source k (from NeuralNeat's output-layer
+    input matrix) and ``offset`` the rest of z, which the refit holds fixed.
+    ``scaled_groups``: groups of input->output keys that together form one
+    identity exit's readout; each group gets one scale factor (its exit's
+    readout weight) applied to all its weights.
+
+    L2 of ``l2`` (default 1e-6, for stability when an exit is dead on X) on the
+    readout parameters only; the output bias is unpenalised. Damped Newton from
+    the current values, so the penalised train log-loss never increases.
+
+    Returns (new genome, info).
+    """
+    readout_keys = [tuple(k) for k in readout_keys]
+    groups = [[tuple(k) for k in g] for g in scaled_groups if len(g)]
+    terms = output_preactivation_terms(genome, config, X, output_key)
+    net, L = terms["net"], terms["layer"]
+    imap = net.layers[L]["input_map"]
+
+    def row(k):
+        if k not in imap:
+            raise KeyError(f"readout connection {k} not in the network's output layer")
+        r, c = imap[k]
+        assert c == terms["col"], k
+        return r
+
+    inp, w = terms["inputs"], terms["w"]
+    feats, theta0 = [np.ones(len(inp))], [terms["b"]]
+    explained = terms["b"] * np.ones(len(inp))
+    for k in readout_keys:
+        r = row(k)
+        feats.append(inp[:, r])
+        theta0.append(w[r])
+        explained = explained + w[r] * inp[:, r]
+    for g in groups:
+        f = sum(w[row(k)] * inp[:, row(k)] for k in g)
+        feats.append(f)
+        theta0.append(1.0)
+        explained = explained + f
+    F = np.column_stack(feats)
+    offset = terms["z"] - explained
+    yv = np.asarray(y, dtype=np.float64).ravel()
+    penalise = [0.0] + [1.0] * (F.shape[1] - 1)
+    theta0 = np.asarray(theta0)
+
+    def bce(t):
+        z = offset + F @ t
+        return float(np.mean(np.logaddexp(0.0, z) - yv * z))
+
+    theta, n_iter, converged = _logistic_newton(offset, F, yv, theta0, l2, penalise, max_iter)
+
+    g = copy.deepcopy(genome)
+    g.nodes[output_key].bias = float(theta[0])
+    for i, k in enumerate(readout_keys):
+        g.connections[k].weight = float(theta[1 + i])
+    scale = theta[1 + len(readout_keys):]
+    for s, grp in zip(scale, groups):
+        for k in grp:
+            g.connections[k].weight = float(genome.connections[k].weight * s)
+    p_back = predict_proba(g, config, X)
+    p_fit = 1.0 / (1.0 + np.exp(-(offset + F @ theta)))
+    info = {
+        "method": "logistic regression with fixed offset (damped Newton)",
+        "l2": l2, "l2_on": "readout parameters only (output bias unpenalised)",
+        "n_iter": n_iter, "converged": converged, "n_rows": len(yv),
+        "readout_connections": [list(k) for k in readout_keys],
+        "scaled_groups": [[list(k) for k in grp] for grp in groups],
+        "output_bias_before": float(theta0[0]), "output_bias_after": float(theta[0]),
+        "readout_weights_before": [float(v) for v in theta0[1:1 + len(readout_keys)]],
+        "readout_weights_after": [float(v) for v in theta[1:1 + len(readout_keys)]],
+        "group_scales_after": [float(v) for v in scale],
+        "train_logloss_before": bce(theta0), "train_logloss_after": bce(theta),
+        "max_abs_pred_diff_fit_vs_genome": float(np.max(np.abs(p_fit - p_back))),
+    }
+    return g, info

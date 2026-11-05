@@ -157,3 +157,35 @@ def check_names_free(names):
         taken = [n for n in names if s.query(Experiment).filter(Experiment.name == n).count()]
     if taken:
         raise SystemExit(f"experiment name(s) already exist, refusing to run: {taken}")
+
+
+# ---- amendment 1 (EXTENSIONS_PLAN.md): masked fine-tuning, E = 500 primary, E = 50 secondary
+
+EPOCHS_PRIMARY = 500
+EPOCHS_SECONDARY = 50
+
+
+def parse_epochs(text):
+    """'500' -> [500]; '500,50' -> [500, 50]. The first value is the primary setting."""
+    vals = [int(v) for v in str(text).split(",") if v.strip()]
+    if not vals or any(v < 1 for v in vals) or len(set(vals)) != len(vals):
+        raise ValueError(f"--epochs needs distinct positive integers, got {text!r}")
+    return vals
+
+
+def dry_run_epochs(epochs):
+    """Stand-in epoch counts for --dry-run (2 for the primary, then 1, ...), so a
+    dry run exercises every per-E condition quickly; names and rows carry these."""
+    return [max(2 - i, 1) if i < 2 else i + 1 for i in range(len(epochs))]
+
+
+def add_ft_args(ap):
+    """--phantom (default masked, amendment 1) and --epochs (default 500)."""
+    ap.add_argument("--phantom", choices=["primitive", "masked"], default="masked",
+                    help=PHANTOM_HELP.replace(
+                        "Required: the plan does not decide this",
+                        "Default masked (EXTENSIONS_PLAN.md amendment 1)"))
+    ap.add_argument("--epochs", default=str(EPOCHS_PRIMARY), type=parse_epochs,
+                    help="comma-separated fine-tune epoch counts; the first is primary, "
+                         f"e.g. '{EPOCHS_PRIMARY},{EPOCHS_SECONDARY}' runs the amendment's "
+                         f"primary and secondary settings (default {EPOCHS_PRIMARY})")
