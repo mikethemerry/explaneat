@@ -18,13 +18,21 @@ from mcp_server.tools.operations import apply_operation  # noqa: E402
 from explaneat.db.models import Dataset  # noqa: E402
 
 
+def display_name(feature):
+    """rename_node rejects spaces: 'total day charge' -> 'totalDayCharge', 'area code:415' -> 'areaCode:415'."""
+    base, sep, value = feature.partition(":")
+    words = base.split()
+    base = words[0] + "".join(w[:1].upper() + w[1:] for w in words[1:]) if words else base
+    return base + sep + value.replace(" ", "_")
+
+
 def main(genome_id, dataset_id):
     db = get_db()
     with db.session_scope() as session:
         names = list(session.get(Dataset, UUID(dataset_id)).feature_names)
         inputs = [str(n) for n in build_model_state(session, genome_id).input_node_ids]
     for nid in sorted(inputs, key=lambda s: -int(s)):
-        name = names[-int(nid) - 1]
+        name = display_name(names[-int(nid) - 1])
         r = json.loads(apply_operation(genome_id, "rename_node",
                                        json.dumps({"node_id": nid, "display_name": name})))
         print(nid, "->", name, "" if "error" not in r else f"ERROR {r['error']}")
