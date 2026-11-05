@@ -122,3 +122,39 @@ features.
 
 `experiments/churn/EXTENSIONS_RESULTS.md` will hold one table per study, every condition with
 CIs, and plain statements of what held and what did not.
+
+## Amendments (2026-11-05, after tooling dry runs and before any real run; approved by Mike)
+
+1. **Fine-tuning mode: masked, 500 epochs.**
+   - **The problem:** NeuralNeat trains dense layer matrices, and the entries with no
+     connection gene ("phantom" weights) are trainable too. `update_genome_weights` then
+     discards them, so the stored genome is not the network that was trained.
+   - **Measured on churn100-s0:** 1,983 trainable parameters against about 114 genome
+     weights. At 5 epochs the trained net's loss is 0.2325 → 0.2101, but the genome after
+     write-back is 0.2320. At 50 epochs the genome ends at 0.2397, worse than it started.
+   - **What studies B and C use instead:** `finetune(..., mask_phantom=True)`, so only genome
+     weights and biases train and the stored genome equals the trained network.
+   - **Epochs:** masked training moves slowly at Adadelta lr 1.5, so the primary setting is
+     **E = 500**. E = 50 is reported as a secondary row.
+   - **Unchanged:** training of every reported run (the paper's and the 10-seed runs). How to
+     treat the phantom-weight behaviour in PropNEAT itself is a separate question for Mike.
+2. **Transplant (C): extra donor rule and extra condition.** The original conditions all stay.
+   - **Disclosure first:** the dry run printed 2-epoch test numbers for recipient s9. The
+     amendment is justified by **train** numbers alone. The planned donor (s2
+     `csc_usage_gate`) duplicates a mechanism the recipients already have. Grafting it with
+     the donor readout double-counts that mechanism, and s9's train AUC fell from 0.892 to
+     0.818.
+   - **Complementary donor, per recipient:** the leaf with the highest train restore gain
+     (> 0.01) among other seeds' leaves, subject to two conditions:
+     - its entry *base features* (split copies collapsed; `charge`/`minutes` of the same
+       period treated as one feature) have Jaccard similarity < 0.5 with the base-feature
+       entry set of **every** nonlinear leaf in the recipient's explanation;
+     - all its entries are input nodes.
+
+     If no leaf qualifies, record "none" for that recipient.
+   - **graft + readout refit:** after grafting, refit only the readout weights of the
+     grafted exit(s) and the output bias, by logistic regression on train with every other
+     weight fixed. It is run with no fine-tuning, and with masked fine-tuning at E = 500.
+     It applies to both the original donor and the complementary donor.
+   - **Sham control:** every graft condition gets a matching sham (same topology, random
+     weights).
