@@ -667,9 +667,15 @@ _USAGE_FEATURE = re.compile(r"^total (day|eve|night|intl) (minutes|charge)$")
 def base_feature_name(feature_name: str) -> str:
     """Base feature of a churn input column: ``total <period> minutes`` and
     ``total <period> charge`` collapse to ``<period> usage`` (charge is an exact
-    linear function of minutes); every other feature is its own base feature."""
+    linear function of minutes), and every one-hot column ``<feature>:<level>``
+    (e.g. ``state:16``, ``area code:415``) collapses to its source ``<feature>``
+    (amendment 3: per-level tokens inflated the Jaccard union and let a donor
+    duplicating the recipient's mechanism pass). Other features are their own
+    base feature."""
     m = _USAGE_FEATURE.match(feature_name)
-    return f"{m.group(1)} usage" if m else feature_name
+    if m:
+        return f"{m.group(1)} usage"
+    return feature_name.split(":", 1)[0] if ":" in feature_name else feature_name
 
 
 def entry_base_features(entry_nodes: Iterable, resolver: "ModelStateIdResolver",

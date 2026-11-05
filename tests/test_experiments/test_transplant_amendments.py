@@ -32,7 +32,7 @@ class TestBaseFeatures:
         assert gs.base_feature_name("total night minutes") == "night usage"
         # calls and other features stay distinct
         assert gs.base_feature_name("total day calls") == "total day calls"
-        assert gs.base_feature_name("state:AK") == "state:AK"
+        assert gs.base_feature_name("state:AK") == "state"  # amendment 3: one-hot levels collapse
 
     def test_split_copies_collapse_to_input(self):
         d = str(col("total day minutes"))
@@ -202,3 +202,15 @@ class TestPerEpochNaming:
         assert ec.parse_epochs("500,50") == [500, 50]
         with pytest.raises(ValueError):
             ec.parse_epochs("500,500")
+
+
+def test_onehot_levels_collapse_to_source_feature():
+    from experiments.churn.genome_surgery import base_feature_name, jaccard
+    assert base_feature_name("state:16") == "state"
+    assert base_feature_name("area code:415") == "area code"
+    assert base_feature_name("total day charge") == base_feature_name("total day minutes")
+    donor = {base_feature_name(f) for f in ["total day charge", "total eve charge", "total intl charge",
+                                            "number customer service calls", "state:2", "state:4", "state:32"]}
+    recipient = {base_feature_name(f) for f in ["total day minutes", "total eve minutes",
+                                                "number customer service calls", "state:9", "state:11"]}
+    assert jaccard(donor, recipient) >= 0.5

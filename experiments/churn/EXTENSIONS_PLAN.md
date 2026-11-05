@@ -158,3 +158,13 @@ CIs, and plain statements of what held and what did not.
      It applies to both the original donor and the complementary donor.
    - **Sham control:** every graft condition gets a matching sham (same topology, random
      weights).
+
+3. **Amendment 3 (2026-11-05, before any real transplant run): one-hot levels collapse in the
+   Jaccard rule.**
+   - **What the dry run of rule 2a showed:** it picked the original duplicate donor (s2
+     `csc_usage_gate`) for both recipients. Every `state:<k>` level counted as its own
+     base feature, which inflated the union, so the Jaccard against s9 was 0.25 even though
+     both use day usage, eve usage and service calls.
+   - **Correction:** for base features, every one-hot column `<feature>:<level>` (`state:*`,
+     `area code:*`) collapses to `<feature>`. This is a structural correction that keeps to
+     the amendment's intent. It does not use test data.
