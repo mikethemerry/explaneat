@@ -1,0 +1,111 @@
+{
+  "label": "churn100-s5",
+  "genome_id": "594b7fac-c5ac-4c0e-bcc4-1aca258584c7",
+  "start": "2026-11-05T14:35:25+13:00",
+  "end": "2026-11-05T14:51:05+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 8,
+  "n_composition_annotations": 1,
+  "n_splits": 10,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 16,
+  "hidden_nodes_single_leaf_no_split": 16,
+  "hidden_nodes_in_any_annotation": 16,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 4.440892098500626e-16,
+  "closed_form_max_abs_err": 0.018274493822282967,
+  "protocol_version": "v3",
+  "analysis": "churn100",
+  "resisted": "Nothing structural. Dead units (states 5 and 15 chain); three always-on affine units; state:9 gate active on 3 rows; account-length hinge nearly inert; state:20 a near-cancelling pair; the two service-call gates overlap heavily.",
+  "tool_bugs": "compute_performance at full sample >110 s (rerun in background). KernelSHAP noise floor ~3e-4.",
+  "summary": "P(churn) = sigmoid(-2.455 + linear backbone + two service-calls x low-day-charge gates + high-day-minutes hinge + small account-length hinge + single-state offsets), additive. Service calls enter only through the gates: about +1 to +1.4 logit per call when day charge is below its median, nothing in the top quartile. Day-minutes hinge +1.46 logit above p90. Reproduces the empirical pattern (4+ calls, low day charge: 0.90-1.00 churn; high day charge: 0.19-0.20).",
+  "performance_sources": {
+    "full_auc": 0.9006,
+    "refit_L2_logreg_train_auc": 0.8433,
+    "all_children_linearised_auc": 0.8352,
+    "nonlinear_gain_total": 0.0654,
+    "restore_gain_alone_onto_all_linear": {
+      "csc_low_day_gate": 0.0497,
+      "csc_threshold_low_day": 0.0373,
+      "day_minutes_hinge": 0.0229,
+      "account_length_hinge": -0.0001,
+      "state_units": 0.0
+    },
+    "restore_gain_both_csc_gates": 0.0634,
+    "conclusion": "Almost all of +0.065 from the service-calls x low-day-usage interaction (two overlapping gates, 0.063 together)."
+  },
+  "rare_category_switches": [
+    {
+      "category": "state:46",
+      "n_rows": 80,
+      "logit_effect": -1.568,
+      "raw_empirical_logodds_offset": -0.918,
+      "calibrating_offset": -1.611
+    },
+    {
+      "category": "state:4",
+      "n_rows": 41,
+      "logit_effect": 1.565,
+      "raw_empirical_logodds_offset": 0.81,
+      "calibrating_offset": 1.485
+    },
+    {
+      "category": "state:47",
+      "n_rows": 72,
+      "logit_effect": 1.378,
+      "raw_empirical_logodds_offset": 0.938,
+      "calibrating_offset": 1.376
+    },
+    {
+      "category": "state:26",
+      "n_rows": 75,
+      "logit_effect": 0.942,
+      "raw_empirical_logodds_offset": 0.509,
+      "calibrating_offset": 1.034
+    },
+    {
+      "category": "state:31",
+      "n_rows": 90,
+      "logit_effect": 0.909,
+      "raw_empirical_logodds_offset": 0.694,
+      "calibrating_offset": 0.867
+    },
+    {
+      "category": "state:30",
+      "n_rows": 74,
+      "logit_effect": "-0.15 mean (range -0.85 to +1.13); also enters the service-call gate"
+    },
+    {
+      "note": "Logit effects track the in-sample calibrating offsets closely and exceed the raw log-odds offsets: fitted to train state means. All states off costs 0.0073 train AUC."
+    }
+  ],
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 9,
+      "roots": [
+        "full_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.440892098500626e-16,
+    "closed_form_max_abs_err": 0.018274493822282967,
+    "numeric_max_abs_err": 2.220446049250313e-15,
+    "op_counts": {
+      "rename_node": 71,
+      "split_node": 10,
+      "consolidate_node": 2,
+      "add_identity_node": 1,
+      "annotate": 9
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}

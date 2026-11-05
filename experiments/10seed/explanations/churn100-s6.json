@@ -1,0 +1,127 @@
+{
+  "label": "churn100-s6",
+  "genome_id": "634ac065-ced0-4b14-a1d2-82a8ee591e42",
+  "start": "2026-11-05T14:29:34+13:00",
+  "end": "2026-11-05T14:46:02+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 7,
+  "n_composition_annotations": 1,
+  "n_splits": 10,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 18,
+  "hidden_nodes_single_leaf_no_split": 18,
+  "hidden_nodes_in_any_annotation": 18,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 5.551115123125783e-16,
+  "closed_form_max_abs_err": 0.02840430812247341,
+  "protocol_version": "v3",
+  "analysis": "churn100",
+  "resisted": "Nothing structural. Some units affine or negligible; state:31 a near-cancelling pair; the two day-usage hinges largely redundant; eve charge/minutes net +0.03 in the backbone.",
+  "tool_bugs": "None.",
+  "summary": "P(churn) = sigmoid(-1.258 + sparse linear backbone (35 inputs; internationalPlan +2.94, ~+0.64 per service call, 24 state offsets) + 6 additive children): a service-calls x low-day-usage gate (+1.9/+3.5/+5 logit at 4/5/6+ calls with <160 day minutes); a high-day-charge hinge only for customers with no voicemail messages (+3.4 logit at 250-300 day minutes); a combined day+evening heavy-usage hinge; small day-charge step with a state:0 offset; zero-calls bump; single-state offset units.",
+  "performance_sources": {
+    "full_auc": 0.9102,
+    "refit_L2_logreg_train_auc": 0.8433,
+    "all_nonlinear_linearised_jointly_auc": 0.8334,
+    "restore_gain": {
+      "service_calls_low_day_usage": 0.038,
+      "day_charge_no_voicemail": 0.054,
+      "heavy_day_eve_usage": 0.038,
+      "day_charge_step_state0": 0.005,
+      "csc_zero_calls_bump": 0.002,
+      "state_offsets": 0.0
+    },
+    "shapley_auc_gain_of_0.077": {
+      "day_charge_no_voicemail": 0.031,
+      "service_calls_low_day_usage": 0.022,
+      "heavy_day_eve_usage": 0.021
+    },
+    "state_effects_removed_auc": 0.9037,
+    "conclusion": "~0.077 above linear from three hinges; state offsets add 0.007 train AUC, likely overfitting."
+  },
+  "rare_category_switches": [
+    {
+      "category": "state:46",
+      "n_rows": 80,
+      "logit_effect": -2.43,
+      "warranted_offset": -0.89
+    },
+    {
+      "category": "state:11",
+      "n_rows": 73,
+      "logit_effect": -2.35,
+      "warranted_offset": -1.12
+    },
+    {
+      "category": "state:43",
+      "n_rows": 95,
+      "logit_effect": "mean -0.11; -2.37 on 11 high-service-call rows (switches the service-call gate off)",
+      "warranted_offset": 0.39
+    },
+    {
+      "category": "state:35",
+      "n_rows": 87,
+      "logit_effect": "mean +0.08; up to +1.99 on 8 rows",
+      "warranted_offset": 0.09
+    },
+    {
+      "category": "state:4",
+      "n_rows": 41,
+      "logit_effect": 1.42,
+      "warranted_offset": 0.66
+    },
+    {
+      "category": "state:0",
+      "n_rows": 56,
+      "logit_effect": -1.34,
+      "warranted_offset": -0.44
+    },
+    {
+      "category": "state:47",
+      "n_rows": 72,
+      "logit_effect": 1.15,
+      "warranted_offset": 0.47
+    },
+    {
+      "category": "state:14",
+      "n_rows": 68,
+      "logit_effect": -1.02,
+      "warranted_offset": -0.46
+    },
+    {
+      "category": "state:26",
+      "n_rows": 75,
+      "logit_effect": 0.9,
+      "warranted_offset": 0.44
+    }
+  ],
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 8,
+      "roots": [
+        "churn_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 5.551115123125783e-16,
+    "closed_form_max_abs_err": 0.02840430812247341,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 71,
+      "add_identity_node": 1,
+      "split_node": 10,
+      "consolidate_node": 3,
+      "annotate": 8
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}
