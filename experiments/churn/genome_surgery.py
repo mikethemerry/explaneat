@@ -885,3 +885,155 @@ def refit_readout(genome, config, X, y, readout_keys: Iterable[ConnKey],
         "max_abs_pred_diff_fit_vs_genome": float(np.max(np.abs(p_fit - p_back))),
     }
     return g, info
+
+
+# ====================================================================== signal novelty
+# (transplant study C2, TRANSPLANT2_PLAN.md)
+
+def signal_basis(genome, config, X):
+    """Recipient signal basis B_r(x): the network inputs plus the activation of
+    every hidden node NeuralNeat computes for ``genome``, on ``X``.
+
+    Returns (B, labels): B is (n, n_inputs + n_hidden) float64, labels are
+    ``in:<id>`` (columns in input-key order, i.e. data columns) then
+    ``h:<node id>`` (ascending id). Hidden activations are read from
+    NeuralNeat's per-layer outputs (the same forward pass as ``predict_proba``).
+    """
+    net = build_net(genome, config)
+    Xa = np.asarray(X, dtype=np.float64)
+    with torch.no_grad():
+        net.forward(_as_tensors(Xa))
+        hidden = {}
+        for L, layer in net.layers.items():
+            if layer["layer_type"] in ("INPUT", "OUTPUT") or L not in net._outputs:
+                continue
+            out = net._outputs[L].detach().numpy()
+            for nid, node in layer["nodes"].items():
+                hidden[nid] = out[:, node["layer_index"]].copy()
+    in_keys = list(config.genome_config.input_keys)
+    special = set(in_keys) | set(config.genome_config.output_keys)
+    every = {nid for layer in net.layers.values() for nid in layer["nodes"]} - special
+    if every != set(hidden):
+        raise ValueError(f"hidden nodes outside CONNECTED layers: {sorted(every - set(hidden))}")
+    cols = [Xa[:, -k - 1] for k in in_keys]
+    labels = [f"in:{k}" for k in in_keys]
+    for nid in sorted(hidden):
+        cols.append(hidden[nid])
+        labels.append(f"h:{nid}")
+    return np.column_stack(cols), labels
+
+
+def readout_contribution(genome, config, X, readout_keys: Iterable[ConnKey],
+                         io_keys: Iterable[ConnKey] = (), output_key: int = 0):
+    """A leaf's logit contribution s_d(x) on ``X`` computed with ``genome``:
+    sum over its readout edges of readout weight x exit activation, plus, for an
+    identity exit, its input->output edges (weight x input).
+
+    Returns (s, columns, theta0): ``columns`` are the refit features in
+    ``refit_readout`` order (one activation column per readout key, then the
+    summed input->output group if any) and ``theta0`` their current weights
+    (the group's scale starts at 1), so ``s == columns @ theta0``.
+    """
+    terms = output_preactivation_terms(genome, config, X, output_key)
+    imap = terms["net"].layers[terms["layer"]]["input_map"]
+    inp, w = terms["inputs"], terms["w"]
+    cols, theta0 = [], []
+    for k in [tuple(k) for k in readout_keys]:
+        r, c = imap[k]
+        assert c == terms["col"], k
+        cols.append(inp[:, r])
+        theta0.append(w[r])
+    io_keys = [tuple(k) for k in io_keys]
+    if io_keys:
+        g = np.zeros(len(inp))
+        for k in io_keys:
+            r, c = imap[k]
+            assert c == terms["col"], k
+            g = g + w[r] * inp[:, r]
+        cols.append(g)
+        theta0.append(1.0)
+    F = np.column_stack(cols) if cols else np.zeros((len(inp), 0))
+    theta0 = np.asarray(theta0, dtype=np.float64)
+    return F @ theta0, F, theta0
+
+
+def linear_novelty(s, B, rel_tol: float = 1e-12) -> dict:
+    """nov = 1 - R^2 of the OLS regression of ``s`` on ``B`` with an intercept.
+
+    Equivalent formulation used for conditioning: centre ``s`` and every
+    column of ``B`` (that is the intercept), drop columns with zero variance,
+    scale the rest to unit norm, then ``numpy.linalg.lstsq`` (SVD, minimum norm,
+    so rank-deficient bases such as one-hot groups or duplicated activations
+    are handled; the fitted values are the orthogonal projection either way).
+
+    A (numerically) constant ``s`` has no variance to explain: nov = NaN with
+    ``reason`` set. Returns {"nov", "r2", "rank", "n_cols", "n_cols_used", "reason"}.
+    """
+    s = np.asarray(s, dtype=np.float64).ravel()
+    B = np.asarray(B, dtype=np.float64)
+    sc = s - s.mean()
+    sst = float(sc @ sc)
+    out = {"n_cols": int(B.shape[1]), "rank": 0, "n_cols_used": 0, "reason": ""}
+    if not np.isfinite(sst) or sst <= rel_tol * max(1.0, float(s @ s)):
+        return dict(out, nov=float("nan"), r2=float("nan"),
+                    reason="donor signal constant on the data")
+    Bc = B - B.mean(axis=0)
+    norms = np.sqrt(np.sum(Bc * Bc, axis=0))
+    keep = norms > rel_tol * max(1.0, float(np.max(norms)) if norms.size else 1.0)
+    Bk = Bc[:, keep] / norms[keep]
+    out["n_cols_used"] = int(keep.sum())
+    if Bk.shape[1] == 0:
+        return dict(out, nov=1.0, r2=0.0)
+    coef, _, rank, _ = np.linalg.lstsq(Bk, sc, rcond=None)
+    resid = sc - Bk @ coef
+    r2 = 1.0 - float(resid @ resid) / sst
+    out["rank"] = int(rank)
+    return dict(out, nov=1.0 - r2, r2=r2)
+
+
+def refit_added_signal(z_recipient, output_bias, F, theta0, y, l2: float = REFIT_L2,
+                       max_iter: int = 100):
+    """Train incremental-value refit (C2 ``inc``): the logit of the recipient
+    with the donor contribution added, z = z_recipient + F theta0, refit exactly
+    as ``refit_readout`` would refit the grafted genome: the readout
+    parameters (columns of ``F``) and the output bias by logistic regression,
+    the rest of the recipient logit a fixed offset, L2 ``l2`` on the readout
+    parameters only, damped Newton from the current values.
+
+    Returns (z_refit, info).
+    """
+    z_r = np.asarray(z_recipient, dtype=np.float64).ravel()
+    F = np.asarray(F, dtype=np.float64).reshape(len(z_r), -1)
+    yv = np.asarray(y, dtype=np.float64).ravel()
+    Fa = np.column_stack([np.ones(len(z_r)), F])
+    t0 = np.concatenate([[float(output_bias)], np.asarray(theta0, dtype=np.float64)])
+    offset = z_r - float(output_bias)
+    pen = [0.0] + [1.0] * F.shape[1]
+    theta, n_iter, converged = _logistic_newton(offset, Fa, yv, t0, l2, pen, max_iter)
+    z = offset + Fa @ theta
+    return z, {"l2": l2, "n_iter": n_iter, "converged": converged,
+               "output_bias_before": float(t0[0]), "output_bias_after": float(theta[0]),
+               "readout_params_before": [float(v) for v in t0[1:]],
+               "readout_params_after": [float(v) for v in theta[1:]]}
+
+
+def select_novel_donor(pairs: Sequence[dict], recipient_seed: int, min_nov: float = 0.5):
+    """C2 selection for one recipient. ``pairs``: one dict per (donor
+    candidate, recipient) with ``donor_seed``, ``donor_annotation``,
+    ``recipient_seed``, ``nov`` and ``inc``.
+
+    Donors from other seeds with ``nov >= min_nov`` (NaN never qualifies); the
+    largest ``inc`` wins, ties -> lowest donor seed, then annotation name.
+    Returns (best pair or None, max novelty over the recipient's other-seed
+    pairs (NaN if none is finite)).
+    """
+    mine = [p for p in pairs if p["recipient_seed"] == recipient_seed
+            and p["donor_seed"] != recipient_seed]
+    finite = [p["nov"] for p in mine if np.isfinite(p["nov"])]
+    max_nov = max(finite) if finite else float("nan")
+    ok = [p for p in mine if np.isfinite(p["nov"]) and p["nov"] >= min_nov
+          and np.isfinite(p["inc"])]
+    if not ok:
+        return None, max_nov
+    best = sorted(ok, key=lambda p: (-p["inc"], p["donor_seed"], p["donor_annotation"]))[0]
+    return best, max_nov
