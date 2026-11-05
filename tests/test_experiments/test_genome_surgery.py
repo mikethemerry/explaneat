@@ -312,6 +312,32 @@ class TestSaveDerivedGenome:
                 assert back.connections[k].weight == c.weight
 
     @pytest.mark.db
+    def test_graft_provenance_roundtrip_sqlite(self, test_db, small_config, recipient_genome,
+                                               donor_genome):
+        """The provenance the transplant script stores (tuples, int-keyed id
+        maps, numpy floats) survives JSON storage."""
+        import json
+        from explaneat.db.models import Experiment
+        from explaneat.db.serialization import serialize_population_config
+
+        sub = gs.annotation_to_genome_subgraph(_donor_ops(), "feat", donor_genome, small_config)
+        new, rec = gs.graft(recipient_genome, small_config, donor_genome, sub, sham_seed=1)
+        new.fitness = np.float64(0.81)
+        prov = {"edits": {"graft": rec, "subgraph": sub.to_json()},
+                "gain": np.float64(0.05), **gs.code_commit()}
+        ids = gs.save_derived_genome(
+            new, small_config, "churn-graft-test", prov, split_id=None, dataset_id=None,
+            source_config_json=serialize_population_config(small_config),
+            neat_config_text="", database=test_db)
+        with test_db.session_scope() as s:
+            stored = s.get(Experiment, ids["experiment_id"]).config_json["provenance"]
+        assert stored["edits"]["graft"]["added_connections"] == [list(k) for k in
+                                                                 rec["added_connections"]]
+        assert stored["edits"]["graft"]["id_map"] == {str(k): v for k, v in rec["id_map"].items()}
+        assert stored["gain"] == 0.05
+        json.dumps(stored)
+
+    @pytest.mark.db
     def test_refuses_duplicate_name(self, test_db, small_config, recipient_genome):
         from explaneat.db.serialization import serialize_population_config
         kw = dict(split_id=None, dataset_id=None,

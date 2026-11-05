@@ -633,6 +633,8 @@ def save_derived_genome(genome, config, name, provenance, split_id, dataset_id,
     from explaneat.db.models import Experiment, Genome, Population
 
     database = database or default_db
+    genome = copy.copy(genome)  # plain-float fitness for the DB adapters
+    genome.fitness = None if genome.fitness is None else float(genome.fitness)
     payload = derived_experiment_payload(genome, config, name, provenance, split_id,
                                          dataset_id, source_config_json, neat_config_text)
     e = payload["experiment"]
