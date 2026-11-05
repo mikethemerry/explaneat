@@ -148,7 +148,7 @@ def _build_whole_model_context(session, genome_id: str, X: np.ndarray, num_class
     is_binary = (num_classes is not None and num_classes == 2
                  and len(model_state.output_node_ids) == 1)
     if is_binary:
-        struct_net.override_output_activation("sigmoid")
+        struct_net.override_output_activation(struct_net.model_output_activation)
 
     entry_names = [str(nid) for nid in model_state.input_node_ids]
     exit_names = [str(nid) for nid in model_state.output_node_ids]
@@ -280,7 +280,7 @@ def _do_compute_viz_data(
             ms = build_model_state(session, genome_id) if is_whole_model else model_state
             all_node_ids = [n.id for n in ms.nodes]
             struct_net = StructureNetwork(ms)
-            struct_net.override_output_activation("sigmoid")
+            struct_net.override_output_activation(struct_net.model_output_activation)
             struct_net.override_hidden_activation("relu")
             x_tensor = torch.as_tensor(X, dtype=torch.float64)
             struct_net.forward(x_tensor)
@@ -312,7 +312,7 @@ def _do_compute_viz_data(
                 all_node_ids = list(subgraph_nodes)
             source_ids = list({c.from_node for c in connections})
             struct_net = StructureNetwork(ms)
-            struct_net.override_output_activation("sigmoid")
+            struct_net.override_output_activation(struct_net.model_output_activation)
             struct_net.override_hidden_activation("relu")
             x_tensor = torch.as_tensor(X, dtype=torch.float64)
             struct_net.forward(x_tensor)
@@ -331,7 +331,7 @@ def _do_compute_viz_data(
                 subgraph_nodes_set = set(annotation.get("subgraph_nodes", []))
             all_node_ids = list(subgraph_nodes_set)
             struct_net = StructureNetwork(ms)
-            struct_net.override_output_activation("sigmoid")
+            struct_net.override_output_activation(struct_net.model_output_activation)
             struct_net.override_hidden_activation("relu")
             x_tensor = torch.as_tensor(X, dtype=torch.float64)
             struct_net.forward(x_tensor)
@@ -715,7 +715,7 @@ def compute_shap(
             is_binary = (num_classes is not None and num_classes == 2
                          and len(model_state.output_node_ids) == 1)
             if is_binary:
-                struct_net.override_output_activation("sigmoid")
+                struct_net.override_output_activation(struct_net.model_output_activation)
 
             feat_names = feature_names_ds or [str(nid) for nid in model_state.input_node_ids]
 
@@ -785,7 +785,7 @@ def compute_performance(
         is_binary = (num_classes is not None and num_classes == 2
                      and len(model_state.output_node_ids) == 1)
         if is_binary:
-            struct_net.override_output_activation("sigmoid")
+            struct_net.override_output_activation(struct_net.model_output_activation)
 
         x_tensor = torch.as_tensor(X, dtype=torch.float64)
         predictions = struct_net.forward(x_tensor).detach().numpy()

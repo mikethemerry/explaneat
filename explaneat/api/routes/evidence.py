@@ -424,7 +424,7 @@ def _extract_all_node_activations(
 
     struct_net = StructureNetwork(model_state)
     # Match NeuralNeat training behaviour
-    struct_net.override_output_activation("sigmoid")
+    struct_net.override_output_activation(struct_net.model_output_activation)
     struct_net.override_hidden_activation("relu")
 
     X_tensor = torch.as_tensor(X, dtype=torch.float64)
@@ -510,7 +510,7 @@ def _build_whole_model_context(
     is_binary = (num_classes is not None and num_classes == 2
                  and len(model_state.output_node_ids) == 1)
     if is_binary:
-        struct_net.override_output_activation("sigmoid")
+        struct_net.override_output_activation(struct_net.model_output_activation)
 
     display_map = model_state.get_display_map()
 
@@ -832,7 +832,7 @@ async def compute_viz_data(
                 import torch
                 from ...core.structure_network import StructureNetwork
                 sn = StructureNetwork(ms)
-                sn.override_output_activation("sigmoid")
+                sn.override_output_activation(sn.model_output_activation)
                 sn.override_hidden_activation("relu")
                 X_tensor = torch.as_tensor(X, dtype=torch.float64)
                 y_pred = sn.forward(X_tensor).detach().numpy().ravel()
@@ -1180,7 +1180,7 @@ async def compute_performance(
         is_binary = (ds_num_classes is not None and ds_num_classes == 2
                      and len(model_state.output_node_ids) == 1)
         if is_binary:
-            struct_net.override_output_activation("sigmoid")
+            struct_net.override_output_activation(struct_net.model_output_activation)
 
         x_tensor = torch.as_tensor(X, dtype=torch.float64)
         predictions = struct_net.forward(x_tensor).detach().numpy()
@@ -1385,7 +1385,7 @@ async def compute_shap(
             is_binary = (ds_num_classes is not None and ds_num_classes == 2
                          and len(model_state.output_node_ids) == 1)
             if is_binary:
-                struct_net.override_output_activation("sigmoid")
+                struct_net.override_output_activation(struct_net.model_output_activation)
 
             seen_bases: set = set()
             feature_names: list = []
