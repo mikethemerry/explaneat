@@ -28,7 +28,7 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                  dataset_id: str = None, config_template_id: str = None,
                  initial_state=None,
                  _existing_experiment_id: Optional[str] = None,
-                 mask_phantom: bool = False):
+                 mask_phantom: bool = True):
         """
         Initialize population with database tracking
 
@@ -50,7 +50,7 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                 BackpropPopulation constructor.
             _existing_experiment_id: Optional experiment UUID to reuse instead
                 of creating a new Experiment row. Used by ``resume_from_db``.
-            mask_phantom: Opt-in connectivity mask for backprop (see
+            mask_phantom: Connectivity mask for backprop, default True (see
                 ``BackpropPopulation``). When True it is recorded on the new
                 Experiment as ``config_json["training"]["mask_phantom"]``;
                 when False ``config_json`` is unchanged.
@@ -191,10 +191,18 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                 population_dict[neat_genome.key] = neat_genome
 
         # Build species set fresh — accepts loss of species continuity per design
-        species = config.species_set_type(config.species_set_config, None)
+        from neat.reporting import ReporterSet
+        species = config.species_set_type(config.species_set_config, ReporterSet())
         species.speciate(config, population_dict, last_gen + 1)
 
         initial_state = (population_dict, species, last_gen + 1)
+        if "mask_phantom" not in kwargs:
+            # Resume with the setting the experiment was created with; rows that
+            # predate the mask (no training.mask_phantom key) were unmasked.
+            with db.session_scope() as session:
+                exp = session.get(Experiment, uuid.UUID(experiment_id))
+                training = (exp.config_json or {}).get("training") or {}
+                kwargs["mask_phantom"] = bool(training.get("mask_phantom", False))
         return cls(
             config, x_train, y_train, xs_val=xs_val, ys_val=ys_val,
             initial_state=initial_state,

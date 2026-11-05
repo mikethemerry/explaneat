@@ -56,14 +56,14 @@ class BackpropPopulation(Population):
         optimizer=optim.Adadelta,
         nEpochs=100,
         device=None,
-        mask_phantom=False,
+        mask_phantom=True,
     ):
-        """``mask_phantom`` (opt-in, default False): build each genome's
+        """``mask_phantom`` (default True since 2026-11-05): build each genome's
         NeuralNeat with ``mask_phantom=True`` in ``backpropagate`` so only the
         genome's own connection weights (and biases) train, and the
-        written-back genome is exactly the trained network. False keeps the
-        original behaviour (phantom dense entries train and are discarded at
-        write-back)."""
+        written-back genome is exactly the trained network. False reproduces
+        the original behaviour (phantom dense entries train and are discarded
+        at write-back), which every run before 2026-11-05 used."""
         self.mask_phantom = bool(mask_phantom)
         self.logger = logging.getLogger("experimenter.backproppop")
         self.reporters = ReporterSet()

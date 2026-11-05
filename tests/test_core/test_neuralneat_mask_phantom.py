@@ -231,7 +231,7 @@ class TestDefaultUnchanged:
         xs, ys = _data()
         import random
         random.seed(3)
-        pop = BackpropPopulation(config, xs, ys)
+        pop = BackpropPopulation(config, xs, ys, mask_phantom=False)
         assert pop.mask_phantom is False
         before = copy.deepcopy(pop.population)
         pop.backpropagate(pop.xs, pop.ys, nEpochs=5)
