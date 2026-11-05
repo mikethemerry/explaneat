@@ -138,11 +138,14 @@ def _param_masks(net: NeuralNeat, genome, frozen_conn_keys, frozen_node_keys,
     return w_masks, b_masks
 
 
-def finetune(genome, config, X, y, epochs: int, seed: int,
+def finetune(genome, config, X, y, epochs: Optional[int], seed: int,
              frozen_conn_keys: Iterable[ConnKey] = (),
              frozen_node_keys: Iterable[int] = (),
              mask_phantom: bool = False,
-             return_info: bool = False):
+             return_info: bool = False,
+             val_X=None, val_y=None,
+             patience: int = 50, min_delta: float = 1e-5, max_epochs: int = 5000,
+             restore_best: bool = True):
     """Fine-tune a deep copy of ``genome`` with the PropNEAT backprop primitive.
 
     Exactly ``BackpropPopulation.backpropagate`` for one genome: NeuralNeat with
@@ -158,7 +161,33 @@ def finetune(genome, config, X, y, epochs: int, seed: int,
     biases.
 
     Returns the new genome, or (genome, info) with ``return_info``.
+
+    Early stopping (EARLY_STOPPING_PLAN.md) is on only when ``val_X`` is given
+    (with ``val_y``); then ``epochs`` must be None and ``mask_phantom`` True,
+    and ``X, y`` should be the fit rows only. After every epoch (optimizer
+    step) the validation BCE of the trained net is computed; epoch 0 (the
+    starting weights) is the first candidate. Training stops once the
+    validation BCE has not dropped below (best - ``min_delta``) for
+    ``patience`` epochs, or after ``max_epochs`` epochs; with ``restore_best``
+    the weights of the best validation epoch are written back. ``info`` then
+    also has ``stop_epoch``, ``best_epoch``, ``best_val_bce``, ``stopped_by``,
+    ``val_losses`` (one per epoch), and ``epochs`` = epochs run. With
+    ``val_X=None`` (default) the function, its result and its ``info`` are
+    exactly as before (the early-stopping kwargs are ignored).
     """
+    early_stop = val_X is not None
+    if early_stop:
+        if val_y is None:
+            raise ValueError("early stopping needs val_y with val_X")
+        if epochs is not None:
+            raise ValueError("early stopping: pass epochs=None (max_epochs bounds training)")
+        if not mask_phantom:
+            raise ValueError("early stopping is implemented for masked fine-tuning only "
+                             "(mask_phantom=True)")
+        if patience < 1 or max_epochs < 1:
+            raise ValueError("patience and max_epochs must be >= 1")
+    elif epochs is None:
+        raise ValueError("epochs is required without early stopping")
     g = copy.deepcopy(genome)
     frozen_conn_keys = [tuple(k) for k in frozen_conn_keys]
     frozen_nodes = set(frozen_node_keys)
@@ -173,7 +202,18 @@ def finetune(genome, config, X, y, epochs: int, seed: int,
     with torch.no_grad():
         loss_before = float(bce(net.forward(xs), ys))
     losses = []
-    for _ in range(epochs):
+    if early_stop:
+        xv, yv_t = _as_tensors(val_X, val_y)
+
+        def _snapshot():
+            return ({L: w.detach().clone() for L, w in net.weights.items()},
+                    {L: b.detach().clone() for L, b in net.biases.items()})
+
+        with torch.no_grad():
+            val_before = float(bce(net.forward(xv), yv_t))
+        best_val, best_epoch, best_state = val_before, 0, _snapshot()
+        val_losses, stopped_by, stop_epoch = [], "max_epochs", max_epochs
+    for epoch in range(1, (max_epochs if early_stop else epochs) + 1):
         preds = net.forward(xs)
         loss = bce(preds, ys)
         loss.backward()
@@ -186,6 +226,21 @@ def finetune(genome, config, X, y, epochs: int, seed: int,
         optimizer.step()
         optimizer.zero_grad()
         losses.append(float(loss))
+        if early_stop:
+            with torch.no_grad():
+                v = float(bce(net.forward(xv), yv_t))
+            val_losses.append(v)
+            if v < best_val - min_delta:
+                best_val, best_epoch, best_state = v, epoch, _snapshot()
+            elif epoch - best_epoch >= patience:
+                stopped_by, stop_epoch = "patience", epoch
+                break
+    if early_stop and restore_best:
+        with torch.no_grad():
+            for L, w in net.weights.items():
+                w.copy_(best_state[0][L])
+            for L, b in net.biases.items():
+                b.copy_(best_state[1][L])
     with torch.no_grad():
         preds_trained = net.forward(xs).detach().numpy().ravel()
         loss_trained = float(bce(net.forward(xs), ys))
@@ -221,6 +276,18 @@ def finetune(genome, config, X, y, epochs: int, seed: int,
         "max_abs_pred_diff_trained_vs_written_back": float(np.max(np.abs(preds_trained - p_back))),
         "max_abs_phantom_into_frozen": phantom_into_frozen,
     }
+    if early_stop:
+        yval = np.asarray(val_y, dtype=np.float64).ravel()
+        pv = np.clip(predict_proba(g, config, val_X), eps, 1 - eps)
+        info.update({
+            "epochs": stop_epoch, "early_stopping": True, "patience": patience,
+            "min_delta": min_delta, "max_epochs": max_epochs, "restore_best": restore_best,
+            "stop_epoch": stop_epoch, "best_epoch": best_epoch, "best_val_bce": best_val,
+            "stopped_by": stopped_by, "val_bce_before": val_before, "val_losses": val_losses,
+            "n_fit": int(len(yv)), "n_val": int(len(yval)),
+            "val_bce_after_written_back": float(
+                -np.mean(yval * np.log(pv) + (1 - yval) * np.log(1 - pv))),
+        })
     return g, info
 
 
