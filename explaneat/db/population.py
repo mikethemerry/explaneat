@@ -415,10 +415,17 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                 self._evaluate_population(fitness_function, nEpochs)
                 logger.info("  Evaluation done in %.1fs", _time.time() - eval_start)
 
-                # Ensure all genomes have valid fitness values for NEAT
+                # Ensure all genomes have valid fitness values for NEAT. A genome
+                # whose fitness is None or NaN (e.g. a degenerate network) gets a
+                # poor default; this is per genome and logged, never silent.
+                n_invalid = 0
                 for genome_id, genome in self.population.items():
                     if genome.fitness is None or genome.fitness != genome.fitness:  # NaN check
                         genome.fitness = -1000.0  # Set a default poor fitness
+                        n_invalid += 1
+                if n_invalid:
+                    logger.warning("  %d/%d genomes had None/NaN fitness at generation %d; "
+                                   "set to -1000", n_invalid, len(self.population), generation)
 
                 # Find best genome and report
                 valid_genomes = [g for g in self.population.values() if g.fitness is not None]
@@ -526,11 +533,14 @@ class DatabaseBackpropPopulation(BackpropPopulation):
             # Save training metrics for each genome (simplified)
             self._save_training_metrics_batch(self.current_population_id, nEpochs)
 
-        except Exception as e:
-            logger.exception("Error evaluating population")
-            # Set all genome fitness to a small negative value on failure (not infinity)
-            for genome_id, genome in self.population.items():
-                genome.fitness = -1000.0
+        except Exception:
+            # Fail loudly. This used to set every genome's fitness to -1000 and carry
+            # on, so a database outage (e.g. Postgres refusing connections while
+            # saving metrics) silently corrupted the run: evolution continued on a
+            # flat fitness landscape. Re-raising lets run() mark the experiment
+            # failed; it can then be continued with resume_from_db.
+            logger.exception("Error evaluating population; aborting the run")
+            raise
     
     def get_experiment_summary(self) -> Dict[str, Any]:
         """Get a summary of the current experiment"""
