@@ -189,3 +189,64 @@ def add_ft_args(ap):
                     help="comma-separated fine-tune epoch counts; the first is primary, "
                          f"e.g. '{EPOCHS_PRIMARY},{EPOCHS_SECONDARY}' runs the amendment's "
                          f"primary and secondary settings (default {EPOCHS_PRIMARY})")
+
+
+# ---- early-stopping amendment (EARLY_STOPPING_PLAN.md): fixed validation split
+
+VAL_SPLIT_JSON = HERE / "val_split.json"
+VAL_FRACTION = 0.2
+VAL_RANDOM_STATE = 42
+ES_PATIENCE = 50
+ES_MIN_DELTA = 1e-5
+ES_MAX_EPOCHS = 5000
+
+
+def make_val_split(y_train, train_indices=None):
+    """The amendment's validation split: stratified 20% of the churn train split,
+    ``train_test_split(positions, test_size=0.2, stratify=y_train,
+    random_state=42)`` over the train positions 0..n_train-1 (the row order of
+    ``load_data()['X_train']``). Returns the JSON-ready dict."""
+    from sklearn.model_selection import train_test_split
+    y_train = np.asarray(y_train).ravel()
+    pos = np.arange(len(y_train))
+    fit_pos, val_pos = train_test_split(pos, test_size=VAL_FRACTION, stratify=y_train,
+                                        random_state=VAL_RANDOM_STATE)
+    fit_pos, val_pos = sorted(int(i) for i in fit_pos), sorted(int(i) for i in val_pos)
+    out = {
+        "plan": "experiments/churn/EARLY_STOPPING_PLAN.md",
+        "split_id": SPLIT,
+        "rule": ("sklearn.model_selection.train_test_split(np.arange(n_train), test_size=0.2, "
+                 "stratify=y_train, random_state=42); positions index the rows of the churn "
+                 "train split in its stored order (DatasetSplit.train_indices order, i.e. "
+                 "ext_common.load_data()['X_train']); both lists sorted"),
+        "n_train": len(y_train), "n_fit": len(fit_pos), "n_val": len(val_pos),
+        "fit_positive": int(y_train[fit_pos].sum()), "val_positive": int(y_train[val_pos].sum()),
+        "fit_train_positions": fit_pos, "val_train_positions": val_pos,
+    }
+    if train_indices is not None:
+        ti = [int(i) for i in train_indices]
+        out["fit_dataset_indices"] = [ti[i] for i in fit_pos]
+        out["val_dataset_indices"] = [ti[i] for i in val_pos]
+    return out
+
+
+def load_val_split(data):
+    """(X_fit, y_fit, X_val, y_val, split dict) from the committed val_split.json;
+    checks it matches the rule and the loaded train split."""
+    vs = json.loads(VAL_SPLIT_JSON.read_text())
+    assert vs["split_id"] == SPLIT
+    ytr = np.asarray(data["y_train"]).ravel()
+    again = make_val_split(ytr)
+    if (again["fit_train_positions"] != vs["fit_train_positions"]
+            or again["val_train_positions"] != vs["val_train_positions"]):
+        raise SystemExit("val_split.json does not match the amendment's rule on this train split")
+    f, v = vs["fit_train_positions"], vs["val_train_positions"]
+    assert sorted(f + v) == list(range(len(ytr)))
+    return data["X_train"][f], ytr[f], data["X_train"][v], ytr[v], vs
+
+
+def es_kwargs(X_val, y_val):
+    """finetune kwargs for the amendment's early stopping."""
+    return dict(epochs=None, val_X=X_val, val_y=y_val, patience=ES_PATIENCE,
+                min_delta=ES_MIN_DELTA, max_epochs=ES_MAX_EPOCHS, restore_best=True,
+                mask_phantom=True, return_info=True)
