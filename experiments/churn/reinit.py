@@ -531,13 +531,16 @@ def main():
     ap.add_argument("--stage", choices=["network", "feature"], required=True)
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--seed", type=int, default=None, help="network: one topology only (debug)")
+    ap.add_argument("--case", default=None, help="feature --dry-run: one E1 case id")
     args = ap.parse_args()
     if args.stage == "network":
         if args.seed is not None and not args.dry_run:
             raise SystemExit("--seed is for debugging with --dry-run only")
         run_network(dry_run=args.dry_run, only_seed=args.seed)
     else:
-        run_feature(dry_run=args.dry_run)
+        if args.case is not None and not args.dry_run:
+            raise SystemExit("--case is for --dry-run only")
+        run_feature(dry_run=args.dry_run, only_case=args.case)
 
 
 # ====================================================================== E1 runner
@@ -554,7 +557,7 @@ D_CASES = {
 FEAT_COLUMNS = [
     "kind", "case", "case_source", "recipient_seed", "recipient_genome_id",
     "recipient_feature", "donor_seed", "donor_genome_id", "donor_feature", "init_seed",
-    "epochs", "ft_seed", "n_grafted_units", "n_grafted_connections", "graft_status",
+    "epochs", "ft_seed", "n_grafted_units", "excluded_units", "n_grafted_connections", "graft_status",
     "refit_converged", "train_auc", "test_auc", "test_auc_ci_lo", "test_auc_ci_hi",
     "ref_test_auc", "test_auc_minus_ref", "delta_vs_ref_ci_lo", "delta_vs_ref_ci_hi",
     "base_test_auc", "ft_loss_before", "ft_loss_after",
@@ -644,7 +647,7 @@ def grafted_contribution(genome, cfg, X, rec):
     return s
 
 
-def run_feature(dry_run=False):
+def run_feature(dry_run=False, only_case=None):
     import time
 
     import ext_common as ec
@@ -658,7 +661,8 @@ def run_feature(dry_run=False):
     boot = ec.bootstrap_indices(len(data["y_test"]))
     Xtr, ytr = data["X_train"], data["y_train"]
     if dry_run:
-        cases = [("B1", "D dry run", *D_CASES["B1"])]
+        cases = ([c for c in e1_cases() if c[0] == only_case] if only_case
+                 else [("B1", "D dry run", *D_CASES["B1"])])
         seeds, E = INIT_SEEDS[:2], 3
     else:
         cases = e1_cases()
@@ -697,14 +701,30 @@ def run_feature(dry_run=False):
             rows.append(dict(common, kind="reference", graft_status=f"FAILED: {e}"))
             print(f"{cid}: graft failed: {e}")
             continue
-        dc, db_ = donor_params(A["genome"], A["sub"])
-        rc, rb = graft_params(g_ref, A["sub"], rec_ref)
+        # Grafted units outside the network NeuralNeat builds for the graft (no
+        # path to the output inside the graft, e.g. a unit whose only outgoing
+        # edge was egress outside the annotation) compute nothing and get no
+        # gradient: excluded from the unit analysis and reported.
+        idm_ref = {int(k): int(v) for k, v in rec_ref["id_map"].items()}
+        acts_ref = hidden_activations(g_ref, cfg, Xtr)
+        excluded = sorted(d for d in units if idm_ref[d] not in acts_ref)
+        units = [d for d in units if d not in excluded]
+        keep = set(units) | set(cfg.genome_config.input_keys) | set(
+            cfg.genome_config.output_keys)
+
+        def restrict(cb):
+            c_, b_ = cb
+            return ({k: w for k, w in c_.items() if k[0] in keep and k[1] in keep},
+                    {n: v for n, v in b_.items() if n in keep})
+
+        common["excluded_units"] = excluded
+        common["n_grafted_units"] = len(units)
+        dc, db_ = restrict(donor_params(A["genome"], A["sub"]))
+        rc, rb = restrict(graft_params(g_ref, A["sub"], rec_ref))
         m_ref, p_ref = ec.evaluate(g_ref, cfg, data, boot)
         s_ref = grafted_contribution(g_ref, cfg, Xtr, rec_ref)
         z_ref = logits(g_ref, cfg, Xtr)
         mt_ref = match_units(units, dc, db_, rc, rb)
-        idm_ref = {int(k): int(v) for k, v in rec_ref["id_map"].items()}
-        acts_ref = hidden_activations(g_ref, cfg, Xtr)
         dead_ref = sorted(d for d in units if not np.any(acts_ref[idm_ref[d]] > 0))
         acts_donor = hidden_activations(A["genome"], cfg, Xtr)
         dead_donor = dead_units(acts_donor, units)
@@ -738,7 +758,7 @@ def run_feature(dry_run=False):
         items = []
         for s in seeds:
             gk, rec, rinf, finf = pipeline(s)
-            kc, kb = graft_params(gk, A["sub"], rec)
+            kc, kb = restrict(graft_params(gk, A["sub"], rec))
             m, p_te = ec.evaluate(gk, cfg, data, boot)
             d, lo, hi = ec.paired_delta(data, p_te, p_ref, boot)
             sk = grafted_contribution(gk, cfg, Xtr, rec)
