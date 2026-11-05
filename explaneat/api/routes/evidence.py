@@ -1160,6 +1160,26 @@ async def compute_performance(
         else:
             model_state = engine.current_state
 
+        split_row = session.query(DatasetSplit).filter_by(
+            id=uuid.UUID(request.dataset_split_id)).first()
+        ds_row = session.query(Dataset).filter_by(id=split_row.dataset_id).first() if split_row else None
+        ds_meta = dict((ds_row.additional_metadata if ds_row else None) or {})
+        if ds_meta.get("task_type") == "survival":
+            # Survival: whole split (subsampling changes the risk sets),
+            # Breslow baseline on the training rows.
+            from ...survival.evidence import structure_log_risk_fn, survival_performance
+            X_tr, y_tr, *_ = _load_split_data(session, request.dataset_split_id, "train", 1.0, 10**9)
+            X_ev, y_ev, *_ = _load_split_data(session, request.dataset_split_id, request.split, 1.0, 10**9)
+            surv = survival_performance(
+                structure_log_risk_fn(model_state), X_tr, y_tr, X_ev, y_ev, meta=ds_meta,
+                horizons=request.horizons, calibration_horizon=request.calibration_horizon,
+            )
+            return PerformanceResponse(
+                n_samples=int(len(y_ev)), at_seq=request.at_seq,
+                has_non_identity_ops=engine.has_non_identity_ops,
+                survival=surv,
+            )
+
         X, y, _, ds_class_names, ds_num_classes = _load_split_data(
             session, request.dataset_split_id, request.split,
             request.sample_fraction, request.max_samples,
