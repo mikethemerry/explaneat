@@ -95,7 +95,7 @@ The MCP server exposes 29 tools for model analysis:
 - **Discovery**: list_experiments, get_experiment, get_best_genome, list_genomes, get_genome
 - **Structure**: get_phenotype, get_model_state, get_node_info
 - **Operations**: list_operations, apply_operation, validate_operation, undo_operation, get_annotations
-- **Evidence**: get_formula, compute_viz_data, render_visualization, get_viz_summary, compute_shap, compute_performance, get_input_distribution
+- **Evidence**: get_formula, compute_viz_data, render_visualization, get_viz_summary, compute_shap, compute_performance, get_input_distribution (on a `task_type: "survival"` dataset, `compute_performance` returns Harrell/Uno C, td-AUC, Brier/IBS and calibration at a horizon instead of AUC/accuracy)
 - **Coverage**: classify_nodes, detect_splits, get_coverage
 - **Datasets**: list_datasets, get_dataset, get_dataset_splits
 - **Snapshots**: save_snapshot, update_narrative, list_evidence
@@ -126,6 +126,21 @@ The MCP server exposes 29 tools for model analysis:
 - **`collapse_validator.py`**: `CollapseValidator` - validates collapse preconditions and performs collapse/expand operations (pure graph logic, no DB)
 - **`subgraph_validator.py`**: `SubgraphValidator` - validates connectivity of annotation subgraphs
 - **`visualization.py`**: `GenomeVisualizer`, `InteractiveNetworkViewer` - Pyvis and React-based network visualization
+
+### Survival Layer (`explaneat/survival/`)
+
+Cox proportional-hazards models. The network outputs a log-risk `g(x)` through an identity output, is trained full-batch on the Efron Cox partial likelihood, and gets a Breslow baseline: `S(t|x) = S0(t)^exp(g(x))`. User guide: `docs/survival.md`. Validation results: `experiments/survival/RESULTS.md`. The optional extra `uv sync --extra survival` installs scikit-survival and lifelines.
+
+- **`cox.py`**: `CoxRiskSets` (build once per fold, from that fold's training rows), `cox_ph_loss` (Breslow/Efron, vectorised), `null_cox_loss`
+- **`criterion.py`**: `CoxCriterion` for `BackpropPopulation(criterion=...)`; target `[N, 2]` = (time, event)
+- **`fitness.py`**: `make_cox_fitness` (fitness = −loss − λ·k/D, never 1/loss), `cox_concordance_fitness` (ablation)
+- **`breslow.py`**: `BreslowBaseline`, `fit_survival_predictor`
+- **`metrics.py`**: Harrell/Uno C, time-dependent AUC, IPCW Brier, IBS, `calibration_at_horizon` (decile predicted vs KM observed risk), `survival_metrics` bundle
+- **`data.py`**: targets, sksurv builtin loaders, `load_survival_csv` (cohort hook), event-stratified splits, DB storage (`task_type: "survival"`, `y_data` `[N, 2]`, no schema change)
+- **`evidence.py`**: `survival_performance`, called by `compute_performance` (MCP + API) on survival datasets
+- **`explain.py`**: hazard-ratio readings of output terms (direct edges, ReLU hinges)
+- **`simulate.py`**: known-truth linear / non-linear simulations (run first)
+- Runner and benchmark: `experiments/survival/run_seed.py`, `study.py`. A local SQLite DB for restricted data uses `explaneat/db/sqlite_compat.py`
 
 ### API Layer (`explaneat/api/`)
 

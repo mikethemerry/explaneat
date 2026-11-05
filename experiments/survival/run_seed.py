@@ -117,8 +117,10 @@ def seed_everything(seed: int) -> None:
 def git_state():
     try:
         commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip()
-        dirty = bool(subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"],
-                                             cwd=REPO, text=True).strip())
+        status = subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"],
+                                         cwd=REPO, text=True).splitlines()
+        # the repo tracks some __pycache__/*.pyc files, which any run rewrites
+        dirty = any(not line.rstrip().endswith(".pyc") for line in status if line.strip())
     except Exception:
         commit, dirty = None, None
     return commit, dirty
