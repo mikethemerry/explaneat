@@ -540,8 +540,335 @@ def main():
         run_feature(dry_run=args.dry_run)
 
 
-def run_feature(dry_run=False):  # filled in below (E1)
-    raise SystemExit("E1 not implemented yet")
+# ====================================================================== E1 runner
+
+# D's confirmed cases (RESCUE_PLAN.md, rescue_confirm.csv include_primary):
+# case: (recipient seed, recipient feature, donor seed, donor feature)
+D_CASES = {
+    "B1": (4, "day_eve_minutes_hinge", 6, "heavy_day_eve_usage"),
+    "B2": (6, "heavy_day_eve_usage", 4, "day_eve_minutes_hinge"),
+    "C1": (1, "dayUsageHinges", 0, "day_charge_no_voicemail"),
+    "C2": (0, "day_charge_no_voicemail", 1, "dayUsageHinges"),
+}
+
+FEAT_COLUMNS = [
+    "kind", "case", "case_source", "recipient_seed", "recipient_genome_id",
+    "recipient_feature", "donor_seed", "donor_genome_id", "donor_feature", "init_seed",
+    "epochs", "ft_seed", "n_grafted_units", "n_grafted_connections", "graft_status",
+    "refit_converged", "train_auc", "test_auc", "test_auc_ci_lo", "test_auc_ci_hi",
+    "ref_test_auc", "test_auc_minus_ref", "delta_vs_ref_ci_lo", "delta_vs_ref_ci_hi",
+    "base_test_auc", "ft_loss_before", "ft_loss_after",
+    "contrib_r_vs_donor_orig", "contrib_r_vs_recipient_orig", "contrib_r_vs_ref_ft",
+    "contrib_r_pairwise_median", "contrib_r_pairwise_min", "logit_r_vs_ref_ft",
+    "cos_median_vs_donor_orig", "cos_share_ge_0.9_vs_donor_orig", "cos_min_vs_donor_orig",
+    "cos_median_vs_ref_ft", "cos_share_ge_0.9_vs_ref_ft", "cos_median_pairwise_median",
+    "equivalent_vs_donor_orig", "n_dead", "dead_share", "dead_units", "n_groups",
+    "max_group_size", "n_nontrivial_groups", "weights_file",
+    # summary / pooled
+    "n_inits", "init_test_auc_median", "init_test_auc_min", "init_test_auc_max",
+    "n_init_test_auc_ge_ref", "median_contrib_r_vs_donor_orig",
+    "median_contrib_r_vs_recipient_orig", "median_contrib_r_vs_ref_ft",
+    "median_contrib_r_pairwise", "min_contrib_r_pairwise", "median_cos_vs_donor_orig",
+    "median_cos_share_ge_0.9_vs_donor_orig", "median_cos_vs_ref_ft", "median_cos_pairwise",
+    "n_equivalent_vs_donor_orig", "init_dead_share_pooled", "ref_dead_share",
+    "donor_orig_dead_share", "ref_contrib_r_vs_donor_orig", "ref_contrib_r_vs_recipient_orig",
+    "ref_cos_median_vs_donor_orig", "n_cases", "note",
+]
+
+
+def e1_cases():
+    """[(case id, source, rs, rfeat, ds, dfeat)]: D2's included cases from the
+    committed rescue2_selection.csv, then D's B1, B2, C1, C2 not among them."""
+    import csv
+    import subprocess
+    rel = SELECTION.relative_to(HERE.parents[1])
+    tracked = subprocess.run(["git", "ls-files", "--error-unmatch", str(rel)],
+                             cwd=HERE.parents[1], capture_output=True).returncode == 0
+    dirty = subprocess.run(["git", "status", "--porcelain", "--", str(rel)],
+                           cwd=HERE.parents[1], capture_output=True, text=True).stdout.strip()
+    if not tracked or dirty:
+        raise SystemExit(f"{rel} must exist and be committed (D2's selection)")
+    out, seen = [], set()
+    with open(SELECTION) as f:
+        for r in csv.DictReader(f):
+            if r["kind"] != "pair" or r["include"] != "True":
+                continue
+            key = (int(r["recipient_seed"]), r["recipient_feature"], int(r["donor_seed"]),
+                   r["donor_feature"])
+            seen.add(key)
+            out.append((r["case"], "D2", *key))
+    for cid, key in D_CASES.items():
+        if key not in seen:
+            out.append((cid, "D (not in D2)", *key))
+    return out
+
+
+def load_leaf(ec, runs, seed, name, Xtr, cache):
+    if seed not in cache:
+        g, cfg, info = ec.load_genome(runs[seed]["genome_id"])
+        ec.explained_state(g, cfg, info["operations"], Xtr)  # function preservation
+        cache[seed] = (g, cfg, info)
+    g, cfg, info = cache[seed]
+    sub = gs.annotation_to_genome_subgraph(info["operations"], name, g, cfg)
+    s, _, _ = gs.readout_contribution(g, cfg, Xtr, sub.readout_connections,
+                                      sub.input_output_connections)
+    return {"seed": seed, "name": name, "genome": g, "config": cfg, "info": info,
+            "sub": sub, "s": s}
+
+
+def graft_params(genome, sub, rec):
+    """(conns, bias) of a grafted subgraph in the donor's ids: every connection
+    of ``sub`` read from ``genome`` through the graft's connection map, and the
+    bias of every grafted unit."""
+    cmap = {tuple(json.loads(k)): tuple(v) for k, v in rec["connection_map"].items()}
+    idm = {int(k): int(v) for k, v in rec["id_map"].items()}
+    conns = {tuple(dk): float(genome.connections[cmap[tuple(dk)]].weight)
+             for dk in sub.all_connections}
+    bias = {d: float(genome.nodes[idm[d]].bias) for d in sub.hidden_nodes}
+    return conns, bias
+
+
+def donor_params(donor_genome, sub):
+    conns = {tuple(k): float(donor_genome.connections[tuple(k)].weight)
+             for k in sub.all_connections}
+    bias = {d: float(donor_genome.nodes[d].bias) for d in sub.hidden_nodes}
+    return conns, bias
+
+
+def grafted_contribution(genome, cfg, X, rec):
+    outputs = set(cfg.genome_config.output_keys)
+    inputs = set(cfg.genome_config.input_keys)
+    ro = [tuple(k) for k in rec["readout_connections"]]
+    io = [tuple(k) for k in rec["added_connections"] if k[0] in inputs and k[1] in outputs]
+    s, _, _ = gs.readout_contribution(genome, cfg, X, ro, io)
+    return s
+
+
+def run_feature(dry_run=False):
+    import time
+
+    import ext_common as ec
+    from run_rescue import refit_graft
+
+    torch.set_num_threads(1)
+    from explaneat.db.base import db
+    db.init_db()
+    data = ec.load_data()
+    runs = ec.read_runs()
+    boot = ec.bootstrap_indices(len(data["y_test"]))
+    Xtr, ytr = data["X_train"], data["y_train"]
+    if dry_run:
+        cases = [("B1", "D dry run", *D_CASES["B1"])]
+        seeds, E = INIT_SEEDS[:2], 3
+    else:
+        cases = e1_cases()
+        seeds, E = INIT_SEEDS, E_PRIMARY
+    print(f"E1: {len(cases)} cases, {len(seeds)} inits each, E = {E}", flush=True)
+    for c in cases:
+        print(f"   {c[0]} ({c[1]})")
+    WEIGHTS_DIR.mkdir(exist_ok=True)
+    cache, rows, summaries, wjson = {}, [], [], {}
+    for cid, source, rs, rfeat, ds, dfeat in cases:
+        t0 = time.time()
+        R = load_leaf(ec, runs, rs, rfeat, Xtr, cache)
+        A = load_leaf(ec, runs, ds, dfeat, Xtr, cache)
+        cfg = R["config"]
+        units = list(A["sub"].hidden_nodes)
+        common = {"case": cid, "case_source": source, "recipient_seed": rs,
+                  "recipient_genome_id": R["info"]["genome_id"], "recipient_feature": rfeat,
+                  "donor_seed": ds, "donor_genome_id": A["info"]["genome_id"],
+                  "donor_feature": dfeat, "n_grafted_units": len(units),
+                  "n_grafted_connections": len(A["sub"].all_connections)}
+        ko, korec = gs.feature_knockout(R["genome"], cfg, R["sub"])
+        ko_keys = korec["disabled_connections"]
+        m_base, _ = ec.evaluate(R["genome"], cfg, data, boot)
+
+        def pipeline(sham_seed):
+            gg, rec = gs.graft_into_knockout(ko, cfg, A["genome"], A["sub"],
+                                             knocked_out_keys=ko_keys, sham_seed=sham_seed)
+            refit, rinf = refit_graft(gg, rec, cfg, Xtr, ytr)
+            gft, finf = gs.finetune(refit, cfg, Xtr, ytr, E, rs, mask_phantom=True,
+                                    return_info=True)
+            return gft, rec, rinf, finf
+
+        try:
+            g_ref, rec_ref, rinf_ref, finf_ref = pipeline(None)
+        except gs.GraftCollisionError as e:
+            rows.append(dict(common, kind="reference", graft_status=f"FAILED: {e}"))
+            print(f"{cid}: graft failed: {e}")
+            continue
+        dc, db_ = donor_params(A["genome"], A["sub"])
+        rc, rb = graft_params(g_ref, A["sub"], rec_ref)
+        m_ref, p_ref = ec.evaluate(g_ref, cfg, data, boot)
+        s_ref = grafted_contribution(g_ref, cfg, Xtr, rec_ref)
+        z_ref = logits(g_ref, cfg, Xtr)
+        mt_ref = match_units(units, dc, db_, rc, rb)
+        idm_ref = {int(k): int(v) for k, v in rec_ref["id_map"].items()}
+        acts_ref = hidden_activations(g_ref, cfg, Xtr)
+        dead_ref = sorted(d for d in units if not np.any(acts_ref[idm_ref[d]] > 0))
+        acts_donor = hidden_activations(A["genome"], cfg, Xtr)
+        dead_donor = dead_units(acts_donor, units)
+        ref_row = dict(common, kind="reference", init_seed="donor weights", epochs=E,
+                       ft_seed=rs, graft_status="ok", refit_converged=rinf_ref["converged"],
+                       **m_ref, ref_test_auc=m_ref["test_auc"], test_auc_minus_ref=0.0,
+                       base_test_auc=m_base["test_auc"],
+                       ft_loss_before=finf_ref["loss_before"],
+                       ft_loss_after=finf_ref["loss_after_written_back"],
+                       contrib_r_vs_donor_orig=pearson(s_ref, A["s"]),
+                       contrib_r_vs_recipient_orig=pearson(s_ref, R["s"]),
+                       contrib_r_vs_ref_ft=1.0, logit_r_vs_ref_ft=1.0,
+                       cos_median_vs_donor_orig=mt_ref["median"],
+                       cos_share_ge_0_9_vs_donor_orig=mt_ref["share_ge"],
+                       cos_min_vs_donor_orig=mt_ref["min"],
+                       n_dead=len(dead_ref), dead_share=len(dead_ref) / max(len(units), 1),
+                       dead_units=dead_ref, n_groups=mt_ref["n_groups"],
+                       max_group_size=mt_ref["max_group_size"],
+                       n_nontrivial_groups=mt_ref["n_nontrivial_groups"],
+                       weights_file="reinit_weights/feature.json",
+                       note="D condition 5 (alias with donor weights, refit + ft); "
+                            f"donor-original dead units {dead_donor}")
+        ref_row["cos_share_ge_0.9_vs_donor_orig"] = ref_row.pop("cos_share_ge_0_9_vs_donor_orig")
+        rows.append(ref_row)
+        wjson[cid] = {"donor_orig": {"conn": [[*k, w] for k, w in sorted(dc.items())],
+                                     "bias": {str(k): v for k, v in db_.items()}},
+                      "reference_ft": {"conn": [[*k, w] for k, w in sorted(rc.items())],
+                                       "bias": {str(k): v for k, v in rb.items()}},
+                      "inits": {}, "ids": "donor genome ids (graft id_map in reference)",
+                      "id_map": {str(k): v for k, v in idm_ref.items()}}
+        items = []
+        for s in seeds:
+            gk, rec, rinf, finf = pipeline(s)
+            kc, kb = graft_params(gk, A["sub"], rec)
+            m, p_te = ec.evaluate(gk, cfg, data, boot)
+            d, lo, hi = ec.paired_delta(data, p_te, p_ref, boot)
+            sk = grafted_contribution(gk, cfg, Xtr, rec)
+            mt_d = match_units(units, dc, db_, kc, kb)
+            mt_r = match_units(units, rc, rb, kc, kb)
+            idm = {int(k): int(v) for k, v in rec["id_map"].items()}
+            acts = hidden_activations(gk, cfg, Xtr)
+            dead = sorted(dd for dd in units if not np.any(acts[idm[dd]] > 0))
+            r_d = pearson(sk, A["s"])
+            row = dict(common, kind="init", init_seed=s, epochs=E, ft_seed=rs,
+                       graft_status="ok", refit_converged=rinf["converged"], **m,
+                       ref_test_auc=m_ref["test_auc"], test_auc_minus_ref=d,
+                       delta_vs_ref_ci_lo=lo, delta_vs_ref_ci_hi=hi,
+                       base_test_auc=m_base["test_auc"], ft_loss_before=finf["loss_before"],
+                       ft_loss_after=finf["loss_after_written_back"],
+                       contrib_r_vs_donor_orig=r_d,
+                       contrib_r_vs_recipient_orig=pearson(sk, R["s"]),
+                       contrib_r_vs_ref_ft=pearson(sk, s_ref),
+                       logit_r_vs_ref_ft=pearson(logits(gk, cfg, Xtr), z_ref),
+                       cos_median_vs_donor_orig=mt_d["median"],
+                       cos_min_vs_donor_orig=mt_d["min"],
+                       cos_median_vs_ref_ft=mt_r["median"],
+                       equivalent_vs_donor_orig=bool(r_d >= EQUIV_R
+                                                     and mt_d["median"] >= EQUIV_COS),
+                       n_dead=len(dead), dead_share=len(dead) / max(len(units), 1),
+                       dead_units=dead, n_groups=mt_d["n_groups"],
+                       max_group_size=mt_d["max_group_size"],
+                       n_nontrivial_groups=mt_d["n_nontrivial_groups"],
+                       weights_file="reinit_weights/feature.json")
+            row["cos_share_ge_0.9_vs_donor_orig"] = mt_d["share_ge"]
+            row["cos_share_ge_0.9_vs_ref_ft"] = mt_r["share_ge"]
+            wjson[cid]["inits"][str(s)] = {"conn": [[*k, w] for k, w in sorted(kc.items())],
+                                           "bias": {str(k): v for k, v in kb.items()}}
+            items.append((row, sk, kc, kb))
+            rows.append(row)
+            print(f"{cid} init {s}: test {m['test_auc']:.4f} (ref {m_ref['test_auc']:.4f}) "
+                  f"r_donor {r_d:.3f} r_rec {row['contrib_r_vs_recipient_orig']:.3f} "
+                  f"cos {mt_d['median']:.3f} dead {len(dead)}/{len(units)}", flush=True)
+        pr, pc = [], []
+        per_r = {i: [] for i in range(len(items))}
+        per_c = {i: [] for i in range(len(items))}
+        for i, j in combinations(range(len(items)), 2):
+            r = pearson(items[i][1], items[j][1])
+            c = match_units(units, items[i][2], items[i][3], items[j][2], items[j][3])["median"]
+            pr.append(r)
+            pc.append(c)
+            for k in (i, j):
+                per_r[k].append(r)
+                per_c[k].append(c)
+        for k, it in enumerate(items):
+            it[0]["contrib_r_pairwise_median"] = _nanmed(per_r[k])
+            it[0]["contrib_r_pairwise_min"] = float(np.nanmin(per_r[k])) if per_r[k] else ""
+            it[0]["cos_median_pairwise_median"] = _nanmed(per_c[k])
+        ir = [it[0] for it in items]
+        ta = np.array([r["test_auc"] for r in ir])
+        summaries.append(dict(
+            common, kind="summary", epochs=E, n_inits=len(ir), ref_test_auc=m_ref["test_auc"],
+            base_test_auc=m_base["test_auc"],
+            init_test_auc_median=float(np.median(ta)), init_test_auc_min=float(ta.min()),
+            init_test_auc_max=float(ta.max()),
+            n_init_test_auc_ge_ref=int((ta >= m_ref["test_auc"]).sum()),
+            median_contrib_r_vs_donor_orig=_nanmed([r["contrib_r_vs_donor_orig"] for r in ir]),
+            median_contrib_r_vs_recipient_orig=_nanmed(
+                [r["contrib_r_vs_recipient_orig"] for r in ir]),
+            median_contrib_r_vs_ref_ft=_nanmed([r["contrib_r_vs_ref_ft"] for r in ir]),
+            median_contrib_r_pairwise=_nanmed(pr),
+            min_contrib_r_pairwise=float(np.nanmin(pr)) if pr else "",
+            median_cos_vs_donor_orig=_nanmed([r["cos_median_vs_donor_orig"] for r in ir]),
+            **{"median_cos_share_ge_0.9_vs_donor_orig": _nanmed(
+                [r["cos_share_ge_0.9_vs_donor_orig"] for r in ir])},
+            median_cos_vs_ref_ft=_nanmed([r["cos_median_vs_ref_ft"] for r in ir]),
+            median_cos_pairwise=_nanmed(pc),
+            n_equivalent_vs_donor_orig=int(sum(r["equivalent_vs_donor_orig"] for r in ir)),
+            init_dead_share_pooled=sum(r["n_dead"] for r in ir) / max(len(units) * len(ir), 1),
+            ref_dead_share=len(dead_ref) / max(len(units), 1),
+            donor_orig_dead_share=len(dead_donor) / max(len(units), 1),
+            ref_contrib_r_vs_donor_orig=ref_row["contrib_r_vs_donor_orig"],
+            ref_contrib_r_vs_recipient_orig=ref_row["contrib_r_vs_recipient_orig"],
+            ref_cos_median_vs_donor_orig=ref_row["cos_median_vs_donor_orig"],
+            _pr=pr, _pc=pc))
+        sm = summaries[-1]
+        print(f"{cid}: base {m_base['test_auc']:.4f} ref {m_ref['test_auc']:.4f} init median "
+              f"{sm['init_test_auc_median']:.4f} [{sm['init_test_auc_min']:.4f},"
+              f"{sm['init_test_auc_max']:.4f}] r_donor {sm['median_contrib_r_vs_donor_orig']:.3f} "
+              f"r_rec {sm['median_contrib_r_vs_recipient_orig']:.3f} r_pair "
+              f"{sm['median_contrib_r_pairwise']:.3f} cos {sm['median_cos_vs_donor_orig']:.3f} "
+              f"equiv {sm['n_equivalent_vs_donor_orig']}/{len(ir)} dead "
+              f"{sm['init_dead_share_pooled']:.3f} [{time.time() - t0:.0f}s]", flush=True)
+    ir = [r for r in rows if r["kind"] == "init"]
+    pooled = []
+    for label, sel in (("all cases", lambda r: True),
+                       ("D2 cases", lambda r: r["case_source"] == "D2")):
+        rr_ = [r for r in ir if sel(r)]
+        ss = [s for s in summaries if sel(s)]
+        if not rr_:
+            continue
+        pooled.append({
+            "kind": "pooled", "case": label, "epochs": E, "n_cases": len(ss), "n_inits": len(rr_),
+            "init_test_auc_median": float(np.median([r["test_auc"] for r in rr_])),
+            "test_auc_minus_ref": float(np.median([r["test_auc_minus_ref"] for r in rr_])),
+            "n_init_test_auc_ge_ref": int(sum(s["n_init_test_auc_ge_ref"] for s in ss)),
+            "median_contrib_r_vs_donor_orig": _nanmed([r["contrib_r_vs_donor_orig"] for r in rr_]),
+            "median_contrib_r_vs_recipient_orig": _nanmed(
+                [r["contrib_r_vs_recipient_orig"] for r in rr_]),
+            "median_contrib_r_vs_ref_ft": _nanmed([r["contrib_r_vs_ref_ft"] for r in rr_]),
+            "median_contrib_r_pairwise": _nanmed([x for s in ss for x in s["_pr"]]),
+            "median_cos_vs_donor_orig": _nanmed([r["cos_median_vs_donor_orig"] for r in rr_]),
+            "median_cos_share_ge_0.9_vs_donor_orig": _nanmed(
+                [r["cos_share_ge_0.9_vs_donor_orig"] for r in rr_]),
+            "median_cos_vs_ref_ft": _nanmed([r["cos_median_vs_ref_ft"] for r in rr_]),
+            "median_cos_pairwise": _nanmed([x for s in ss for x in s["_pc"]]),
+            "n_equivalent_vs_donor_orig": int(sum(r["equivalent_vs_donor_orig"] for r in rr_)),
+            "init_dead_share_pooled": sum(r["n_dead"] for r in rr_) / max(
+                sum(r["n_grafted_units"] for r in rr_), 1),
+            "note": "medians over all inits / all within-case pairs; cases are not independent "
+                    "(a recipient or donor feature can appear in several cases); "
+                    "test_auc_minus_ref = median per-init delta"})
+    for p in pooled:
+        print(f"POOLED {p['case']}: n {p['n_cases']} init test median "
+              f"{p['init_test_auc_median']:.4f} d_ref {p['test_auc_minus_ref']:+.4f} r_donor "
+              f"{p['median_contrib_r_vs_donor_orig']:.3f} r_rec "
+              f"{p['median_contrib_r_vs_recipient_orig']:.3f} r_pair "
+              f"{p['median_contrib_r_pairwise']:.3f} cos {p['median_cos_vs_donor_orig']:.3f} "
+              f"equiv {p['n_equivalent_vs_donor_orig']}/{p['n_inits']} dead "
+              f"{p['init_dead_share_pooled']:.3f}")
+    if dry_run:
+        print("DRY RUN: nothing written")
+        return
+    (WEIGHTS_DIR / "feature.json").write_text(json.dumps(wjson, separators=(",", ":")))
+    _write(FEAT_OUT, rows + summaries + pooled, FEAT_COLUMNS)
 
 
 if __name__ == "__main__":
