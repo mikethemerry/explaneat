@@ -1,7 +1,7 @@
 # 10-seed consistency experiment: results (thesis Ch 7)
 
-Status as of 2026-11-05. Claude-explained results are complete for all 30 pre-registered
-networks and the 10 additional Heart-100 networks. **None has been verified by Mike yet.**
+Status as of 2026-11-06. Claude-explained results are complete for all 30 pre-registered
+networks, the 10 additional Heart-100 networks and the 20 churn networks (§8). **None has been verified by Mike yet.**
 Mike-verified counts are reported separately below and are currently 0.
 
 - Pre-registration and its dated amendments: [`experiments/10seed/PREREG.md`](../experiments/10seed/PREREG.md)
@@ -28,11 +28,15 @@ and the function is preserved (max |Δ output| < 1e-9 on train). See the PREREG 
 | Heart (40 gen) | **10 / 10** | 0 / 10 (not yet verified) | Yes (Claude-explained) |
 | MONK-2 | **10 / 10** | 0 / 10 (not yet verified) | Yes (Claude-explained) |
 | Adult | **10 / 10** | 0 / 10 (not yet verified) | Yes (Claude-explained) |
-| *Heart (100 gen, additional)* | *10 / 10* | — | *not part of the threshold* |
+| *Heart (100 gen, additional)* | *10 / 10* | *0 / 10* | *not part of the threshold* |
+| *churn100 (additional, §8)* | *10 / 10* | *0 / 10* | *not part of the threshold* |
+| *churn200 (additional, §8)* | *10 / 10* | *0 / 10* | *not part of the threshold* |
 
 Every explanation finished well inside the 3-hour box. I re-ran every coverage and function
 check myself, independently of the agent that wrote the explanation, and all 40 agreed with the
-agents' own reports. The fallback wording is not needed.
+agents' own reports (as did the 20 churn explanations: `agrees_with_agent` is true in all 60
+records). The fallback wording is not needed. The full statement, with median, IQR and min–max
+for every metric, is in `experiments/10seed/summary.md`.
 
 ## 2. Training results
 
@@ -45,10 +49,10 @@ Medians, with the range across seeds in brackets. Paper-network values are in th
 | Test accuracy | 0.803 (0.787–0.836) | 0.803 (0.787–0.836) | 0.822 (0.425–0.989) | 0.853 (0.851–0.857) |
 | Hidden nodes | 5 (3–6) | 8.5 (5–13) | 3 (1–7) | 15 (11–17) |
 | Enabled connections | 30 (25–36) | 40 (33–50) | 23 (19–35) | 87 (70–95) |
-| Connected inputs | 20 / 26 | 20 / 26 | 13 / 17 | 60 / 107 |
+| Connected inputs | 19.5 / 26 | 20 / 26 | 13 / 17 | 60.5 / 107 |
 | Depth | 3 (2–6) | 5 (3–7) | 3 (2–5) | 4 (3–7) |
-| Skip connections | 4 (0–8) | 12 (6–24) | 4 (0–9) | 14 (9–18) |
-| Direct input→output edges | 16 (14–19) | 15 (12–20) | 10 (6–14) | 54 (43–57) |
+| Skip connections | 4 (0–8) | 12 (6–24) | 3.5 (0–9) | 14 (9–18) |
+| Direct input→output edges | 16.5 (14–19) | 15 (12–20) | 10 (6–14) | 54 (43–57) |
 | Structural proxy: share of hidden nodes with ≤2 upstream features | 0.50 | 0.55 | 0.58 | 0.93 |
 | Generation of best genome | 39 (31–39) | 99 (93–99) | 99 (55–99) | 99 (87–99) |
 
@@ -57,6 +61,11 @@ Medians, with the range across seeds in brackets. Paper-network values are in th
 | Heart `9022a9eb` | 0.9455 | 0.8966 | 5 | 31 |
 | MONK-2 `23dde0fa` | 1.000 | 1.000 | 2 | 23 |
 | Adult `4bc8fa07` | 0.9085 | 0.9055 | 14 | 83 |
+
+*Corrected 2026-11-06 against `runs.csv`:* four medians in this table were rounded to whole
+numbers in the first version. They are Heart connected inputs 19.5 (was 20) and direct edges
+16.5 (was 16), MONK-2 skip connections 3.5 (was 4) and Adult connected inputs 60.5 (was 60).
+§4 also had the Heart median train AUC as 0.943; it is 0.944 (0.9436). Nothing else changed.
 
 Context: the paper's L2 logistic-regression test AUCs are Adult 0.905, Heart 0.919 and
 MONK-2 0.423. Test CIs are 95% paired bootstrap intervals (10,000 resamples, seed 42) and are
@@ -80,13 +89,18 @@ in `runs.csv`. Heart's test set has n = 61, so its CIs are about 0.18 wide.
   run time; this was fixed in `9259bf1`, with bit-identical results.
 - Heart-100 and MONK-2 took 0.2–0.5 h per run on the new code.
 - Adult's raw times (about 47 h) include a 42.5 h pause, and for s4, s5, s7, s8 and s9 about
-  1.3 h more of throttling (see `RUN_INCIDENTS.md`). Net training was roughly 4–6 h per run,
-  with 5–10 runs in parallel on one core each.
+  1.1–1.3 h more of throttling (see `RUN_INCIDENTS.md`). Net of those intervals, training took
+  4.1–4.6 h per run (median 4.4; computed in `make_figures.py`), with 5–10 runs in parallel on
+  one core each. *(Corrected 2026-11-06: this previously said "roughly 4–6 h".)*
 
 **Reproducibility:** seeded runs are bit-identical.
 - Two concurrent runs with the same seed matched genome for genome (750/750).
 - All 10 Heart-100 runs reproduce the first 40 generations of the Heart runs exactly
   (100,000/100,000 genomes), across a code change in the database layer.
+- All 10 churn200 runs reproduce the first 100 generations of churn100 exactly
+  (250,000/250,000 genomes). Both checks were re-run on 2026-11-06 with
+  `experiments/10seed/verify_prefix_reproduction.py`, comparing NEAT key, fitness and a hash
+  of the serialised genome.
 
 ## 3. Explanation results
 
@@ -135,7 +149,7 @@ Cross-seed comparison: `experiments/10seed/compare_heart.py` and `compare_heart.
 
 ### Heart-100: longer training grows the nonlinear part
 
-Train AUC rises from 0.943 to 0.956 and test AUC from 0.878 to 0.892 (medians). The price is
+Train AUC rises from 0.944 to 0.956 and test AUC from 0.878 to 0.892 (medians). The price is
 about double the hidden nodes and three times the skip connections.
 
 In every seed the 40-generation motifs survive and are **strengthened and connected**, not
@@ -224,7 +238,14 @@ These are all on `exp/10seed-consistency`.
     had lost writes.
   - All `apply_operation` docstring examples were corrected and are now tested.
 - **Experiment tooling:** `xn.py` (MCP tools from the shell), `rename_inputs.py`,
-  `check_explanation.py`, `verify_record.py`, `compute_runs.py`, `build_explanations_csv.py`.
+  `check_explanation.py`, `verify_record.py`, `compute_runs.py`, `build_explanations_csv.py`,
+  `make_figures.py` (figures, `ch7_table.tex`, `summary.md`) and `verify_prefix_reproduction.py`.
+- **No silent fitness fallback (`4e1e51e`):** `DatabaseBackpropPopulation._evaluate_population`
+  used to catch any exception and set every genome's fitness to −1000. During a Postgres
+  outage, that let the crashed churn100mask runs keep evolving on a flat landscape. It now logs
+  and re-raises: the experiment is marked failed and can be continued with `resume_from_db`.
+  The per-genome None/NaN → −1000 guard stays and now logs a count. No reported run hit either
+  fallback (`RUN_INCIDENTS.md`).
 
 **Known open issues:**
 - The annotate validator accepts compositions with empty `subgraph_connections`.
@@ -233,6 +254,9 @@ These are all on `exp/10seed-consistency`.
 - `activation_profile` requires `node_id`.
 - KernelSHAP on Adult is slow (3–36 min), and it gives unconnected inputs small non-zero values
   (estimator noise).
+- `build_explanations_csv.py` writes `verified_by_mike = no` for every row. Before Mike's
+  verifications are recorded, it must read them from the JSON records, or a rebuild will
+  erase them.
 
 ## 6. Open decisions for Mike
 
@@ -264,9 +288,103 @@ interaction effects (customer-service calls, international plan × international
 it has a 51-category `state` feature. That feature is a natural test of
 "see the rare-category overfit, explain it, repair it".
 
-## 8. Still to produce (brief §7)
+## 8. Churn (additional analysis, not pre-registered)
 
-- figures (strip plots per dataset, training and explanation time);
-- `ch7_table.tex`;
-- a reproduction README;
-- the permutation-test design paragraph (deferred to future work).
+Plan: `experiments/churn/PLAN.md`. Data: `experiments/churn/runs_churn{100,200}.csv` and
+`explanations_churn{100,200}.csv`. Same harness, the Adult paper config with 71 inputs
+(`experiments/churn/configs/churn.ini`), seeds 0–9, 100 or 200 generations, unmasked backprop.
+Baselines on the same one-hot split (`experiments/churn/baselines.json`): L2 logistic
+regression 0.813, gradient boosting 0.932 test AUC. (§7's 0.862 is the PMLB screen on a
+different encoding.)
+
+| | churn100 | churn200 |
+|---|---|---|
+| Train AUC | 0.903 (0.892–0.919) | 0.918 (0.908–0.930) |
+| Test AUC | 0.886 (0.873–0.904) | 0.900 (0.876–0.911) |
+| Hidden nodes | 17 (13–27) | 22.5 (15–33) |
+| Enabled connections | 81.5 (59–94) | 88.5 (68–107) |
+| Depth | 6 (3–9) | 5.5 (4–10) |
+| Skip connections / direct input→output | 20 (12–31) / 36 (25–42) | 25 (13–34) / 34.5 (29–41) |
+| Training wall clock, h | 0.27 (0.18–0.41) | 0.84 (0.56–1.01) |
+| Full coverage (Claude / Mike-verified) | 10/10 / 0/10 | 10/10 / 0/10 |
+| Claude time, minutes | 16.1 (11.9–21.4) | 13.0 (10.4–19.8) |
+| Leaf / composition annotations | 7 (4–12) / 1 (1–3) | 7 (4–8) / 1 (1–4) |
+| Node splits / identity nodes | 8.5 (4–16) / 1 (0–3) | 11 (7–15) / 1 (0–2) |
+| Annotation monosemanticity | 1.00 (0.79–1.00) | 1.00 (0.75–1.00) |
+| Function preservation, worst | 1.0e-15 | 1.3e-15 |
+
+- **Real headroom over logistic regression:** every one of the 20 networks beats L2 logistic
+  regression, with each seed's 95% CI lower bound above 0.813. They still trail gradient
+  boosting: the CI upper bound is below 0.932 for 8 of 10 churn100 and 5 of 10 churn200 seeds.
+- **Longer training helps:** churn200 beats its own churn100 prefix on train AUC for 10/10
+  seeds, and on test AUC for 8/10 (median +0.016, range −0.005 to +0.027). The networks are
+  larger, too.
+- **Explainable in minutes:** all 20 were explained to full coverage within the box, in
+  10–21 minutes each, despite being the largest networks in the study.
+- **What they compute:** the nonlinear features the explanations name hold up on unseen data.
+  They are the service-calls × usage gates, the heavy-usage hinges and the voicemail-gated
+  hinges. The rare-category `state` offsets do not hold up: they are overfit.
+- **Repair works:** removing the state structure the explanations flagged improves test AUC
+  on 10/10 churn100 seeds while about halving the network.
+
+The extension studies built on these networks have their own results file,
+`experiments/churn/EXTENSIONS_RESULTS.md`. They cover: held-out validation of named features,
+explanation-guided repair, feature transplant, rescue, re-initialisation, the phantom-weight
+mask and the early-stopping reruns.
+
+## 9. Future work: label-permutation test (design only; not run)
+
+Brief §8 cut this test to future work.
+
+**The null hypothesis.** The concern is that the explanations recover structure that any
+network of the same size would show. On that view, the annotated mechanisms would be artefacts
+of the explanation procedure, the sparse NEAT topology or the input encoding, rather than of
+what the network learned from the labels. Examples are the linear core plus a few hinges, the
+count ramp on MONK-2 and the capital-gain penalty on Adult.
+
+**How it would run.** For each dataset:
+1. Permute the training labels with a recorded seed, keeping the split and preprocessing.
+2. Train PropNEAT with the same config, seeds and generations, giving the shuffled-label arm.
+3. Draw size-matched random networks: random weights on the evolved topologies, and random
+   topologies matched on hidden nodes, connections and depth. This gives the random arm.
+4. Explain each network with the same protocol and time box. Order the networks with a
+   pre-registered permutation, and blind the explaining agent to the arm where possible.
+
+**What to compare.** Per network, record:
+- coverage reached and time to explain;
+- annotation count and annotation monosemanticity;
+- whether the named leaf features predict the *true* labels on the test split (each leaf's
+  restore gain, as in churn study A);
+- whether they recur across seeds (cross-seed functional correlation, as in
+  `compare_heart.py`).
+
+**What would count as support.** Shuffled and random networks can be fully covered too,
+because coverage is a property of the graph. So support cannot come from coverage alone. The
+claim is supported if:
+- the real-label networks' named features carry test-split signal and recur across seeds,
+  well above the null arms' distribution, judged by a pre-registered one-sided rank test over
+  seeds;
+- the null arms yield features that neither transfer nor recur.
+
+If the null arms match on those measures, the explanations describe the architecture, not the
+learned function.
+
+## 10. Brief §7 outputs
+
+All in `experiments/10seed/`, regenerated from the CSVs by
+`uv run python experiments/10seed/make_figures.py`:
+- `summary.md`: per-dataset median, IQR and min–max for every metric, and the threshold
+  outcome with Claude-explained and Mike-verified counts in separate columns.
+- `figures/`: PDF and PNG of each figure:
+  - `structure_*`: hidden nodes, connections, depth, skip and direct edges, structural proxy;
+  - `cost_*`: training and explanation time;
+  - `test_auc_*`: test AUC with LR/GBM reference lines;
+  - `coverage_time`: coverage against explanation time.
+
+  `_prereg` is Heart, MONK-2 and Adult; `_supp` is Heart-100, churn100 and churn200 (not
+  pre-registered). Draft captions are in `figures/README.md`.
+- `ch7_table.tex`: booktabs, one row per dataset, pre-registered rows first, then the
+  supplementary block.
+- `README.md`: the reproduction guide, covering configs, seeds, commands, code commits,
+  metric and explanation pipelines and the bit-identity checks.
+- The permutation-test design is §9 above.
