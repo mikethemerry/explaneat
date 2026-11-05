@@ -7,8 +7,9 @@ is built, pins torch to 1 thread, deterministic algorithms on.
 Model: identity output (log-risk g(x)), backprop on the full-batch Efron Cox
 partial likelihood (``CoxCriterion``), phantom-weight mask on, fitness =
 -(Efron Cox loss) - lambda * k / n_events (lambda = 1: per-event AIC; k =
-enabled connections + hidden nodes). The best genome is the one with the best
-VALIDATION fitness over all generations. Then S(t|x) = S0(t)^exp(g(x)) with a
+enabled connections + hidden nodes) on the training fold. The best genome is
+the one with the best VALIDATION fitness over all generations, where the
+validation fitness is the plain held-out Cox loss (``--val-penalty none``). Then S(t|x) = S0(t)^exp(g(x)) with a
 Breslow baseline on the training rows.
 
 Comparator: scikit-survival CoxPHSurvivalAnalysis (Efron ties, same
@@ -216,6 +217,10 @@ def main():
     ap.add_argument("--complexity-penalty", type=float, default=1.0,
                     help="lambda in fitness = -loss - lambda*k/n_events (1 = per-event AIC; 0 = off)")
     ap.add_argument("--patience", type=int, default=None, help="early stop after N gens w/o val improvement")
+    ap.add_argument("--val-penalty", choices=["none", "same"], default="none",
+                    help="validation (selection) fitness: plain held-out Cox loss (none, default) or "
+                         "the penalised training fitness evaluated on the validation fold (same; "
+                         "protocol v1)")
     # data
     ap.add_argument("--csv", default=None)
     ap.add_argument("--time-col", default=None)
@@ -286,7 +291,12 @@ def main():
         pop = BackpropPopulation(config, Xtr, ytr, xs_val=Xva, ys_val=yva,
                                  criterion=CoxCriterion(TIES), mask_phantom=True,
                                  skip_invalid_genomes=True)
-        pop.run(fitness, n=args.generations, nEpochs=args.epochs, patience=args.patience)
+        # Selection on the held-out validation fold uses the plain Cox loss:
+        # the AIC term is an in-sample optimism correction and belongs to the
+        # training fitness only (see RESULTS.md, protocol revision 1).
+        pop.run(fitness, n=args.generations, nEpochs=args.epochs, patience=args.patience,
+                validation_fitness_function=(make_cox_fitness(TIES, 0.0)
+                                             if args.val_penalty == "none" else None))
         best = pop.best_genome
     wall = time.time() - t0
     best = copy.deepcopy(best)
@@ -352,7 +362,8 @@ def main():
         "run_params": {
             "generations": args.generations, "epochs_per_generation": args.epochs,
             "pop_size": config.pop_size, "ties": TIES, "fitness": "-(Efron Cox loss) - lambda*k/n_events",
-            "complexity_penalty": args.complexity_penalty, "output_activation": "identity",
+            "complexity_penalty": args.complexity_penalty, "val_penalty": args.val_penalty,
+            "output_activation": "identity",
             "mask_phantom": True, "criterion": "CoxCriterion(efron), full batch",
             "selection": "best validation fitness" if (Xva is not None and not args.db) else "best training fitness",
             "split_seed": split_seed, "test_size": args.test_size, "val_size": args.val_size,

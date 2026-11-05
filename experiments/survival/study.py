@@ -12,7 +12,9 @@ Repeat r of a benchmark uses split seed r and run seed r, so NEAT and the Cox
 comparator see identical index arrays (written next to each run JSON).
 
 Outputs (committed): ``sim/*.json``, ``bench/*.json``, ``simulation.csv``,
-``benchmark.csv``, ``benchmark_summary.csv``.
+``benchmark.csv``, ``benchmark_summary.csv``; ``bench_v1/`` and
+``benchmark_v1*.csv`` are protocol v1 (validation fitness penalised, see
+RESULTS.md).
 """
 
 from __future__ import annotations
@@ -78,13 +80,13 @@ def cmd_sim(a):
 
 
 def cmd_bench(a):
-    out = HERE / "bench"
+    out = HERE / a.dir
     out.mkdir(exist_ok=True)
     jobs = []
     for ds in a.datasets.split(","):
         for r in range(a.repeats):
             tag = f"{ds}-r{r}" + (f"-{a.suffix}" if a.suffix else "")
-            extra = ["--complexity-penalty", str(a.complexity_penalty)]
+            extra = ["--complexity-penalty", str(a.complexity_penalty), "--val-penalty", a.val_penalty]
             jobs.append(([sys.executable, str(RUN), ds, str(r), "--generations", str(a.generations),
                           "--split-seed", str(r), "--out", str(out), "--tag", tag] + extra,
                          out / f"{tag}.json"))
@@ -109,9 +111,17 @@ def mean_ci(v):
 
 
 def cmd_aggregate(a):
-    # ---- simulation
+    for d, stem in (("sim", "simulation"), ("sim_v1", "simulation_v1")):
+        if (HERE / d).is_dir():
+            aggregate_sim(HERE / d, stem)
+    for d, stem in (("bench", "benchmark"), ("bench_v1", "benchmark_v1")):
+        if (HERE / d).is_dir():
+            aggregate_bench(HERE / d, stem)
+
+
+def aggregate_sim(sim_dir: Path, stem: str):
     rows = []
-    for f in sorted((HERE / "sim").glob("*.json")):
+    for f in sorted(sim_dir.glob("*.json")):
         if f.name.endswith(".splits.json"):
             continue
         r = json.loads(f.read_text())
@@ -127,15 +137,16 @@ def cmd_aggregate(a):
             "wall_s": r["wall_clock_s"],
         })
     if rows:
-        with open(HERE / "simulation.csv", "w", newline="") as fh:
+        with open(HERE / f"{stem}.csv", "w", newline="") as fh:
             w = csv.DictWriter(fh, fieldnames=list(rows[0]))
             w.writeheader()
             w.writerows(rows)
-        print(f"simulation.csv: {len(rows)} rows")
+        print(f"{stem}.csv: {len(rows)} rows")
 
-    # ---- benchmark
+
+def aggregate_bench(bench_dir: Path, stem: str):
     rows = []
-    for f in sorted((HERE / "bench").glob("*.json")):
+    for f in sorted(bench_dir.glob("*.json")):
         if f.name.endswith(".splits.json"):
             continue
         r = json.loads(f.read_text())
@@ -158,7 +169,7 @@ def cmd_aggregate(a):
         rows.append(row)
     if not rows:
         return
-    with open(HERE / "benchmark.csv", "w", newline="") as fh:
+    with open(HERE / f"{stem}.csv", "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(rows[0]))
         w.writeheader()
         w.writerows(rows)
@@ -178,11 +189,11 @@ def cmd_aggregate(a):
         for k in ("neat_hidden", "neat_k", "neat_inputs", "neat_epp"):
             out[f"{k}_mean"] = mean_ci([r[k] for r in sub])[0]
         summ.append(out)
-    with open(HERE / "benchmark_summary.csv", "w", newline="") as fh:
+    with open(HERE / f"{stem}_summary.csv", "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(summ[0]))
         w.writeheader()
         w.writerows(summ)
-    print(f"benchmark.csv: {len(rows)} rows; benchmark_summary.csv: {len(summ)} datasets")
+    print(f"{stem}.csv: {len(rows)} rows; {stem}_summary.csv: {len(summ)} datasets")
 
 
 def main():
@@ -197,7 +208,9 @@ def main():
     b.add_argument("--repeats", type=int, default=10)
     b.add_argument("--generations", type=int, default=60)
     b.add_argument("--complexity-penalty", type=float, default=1.0)
+    b.add_argument("--val-penalty", choices=["none", "same"], default="none")
     b.add_argument("--suffix", default="")
+    b.add_argument("--dir", default="bench", help="output directory under experiments/survival")
     b.add_argument("--jobs", type=int, default=1)
     sub.add_parser("aggregate")
     a = ap.parse_args()

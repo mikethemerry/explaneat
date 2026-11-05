@@ -45,8 +45,9 @@ def test_metrics_match_sksurv(linear_fold):
                                r, tau=tau)[0], abs=1e-12)
     hz = np.quantile(t[e], [0.25, 0.5, 0.75])
     td = M.time_dependent_auc(r, t[tr], e[tr], t[te], e[te], hz)
+    m = M.ipcw_mask(t[tr], t[te])  # test rows past the last training time are excluded
     ref, ref_mean = cumulative_dynamic_auc(Surv.from_arrays(e[tr], t[tr]),
-                                           Surv.from_arrays(e[te], t[te]), r, hz)
+                                           Surv.from_arrays(e[te][m], t[te][m]), r[m], hz)
     np.testing.assert_allclose(td["auc"], ref)
     assert td["mean_auc"] == pytest.approx(ref_mean)
 
@@ -63,6 +64,23 @@ def test_well_specified_model_is_calibrated(linear_fold):
     assert preds == sorted(preds)
     obs = [r["observed_km"] for r in cal["groups"]]
     assert obs[-1] > obs[0] + 0.3  # deciles separate risk
+
+
+def test_ipcw_metrics_drop_test_rows_beyond_train_followup():
+    """sksurv raises for test times past the training maximum; we exclude them."""
+    rng = np.random.default_rng(3)
+    t_tr = rng.exponential(size=300) + 0.01
+    e_tr = rng.uniform(size=300) < 0.6
+    t_te = np.r_[rng.uniform(0.01, 0.9 * t_tr.max(), size=99), t_tr.max() + 1.0]
+    e_te = np.r_[rng.uniform(size=99) < 0.6, False]
+    r = rng.normal(size=100)
+    grid = np.quantile(t_te[:99], [0.2, 0.4, 0.6])
+    S = np.exp(-np.outer(np.exp(r), grid))
+    assert M.ipcw_mask(t_tr, t_te).sum() == 99
+    assert np.isfinite(M.integrated_brier(lambda g: np.exp(-np.outer(np.exp(r), g)),
+                                          t_tr, e_tr, t_te, e_te, grid=grid))
+    assert len(M.brier_at(S, t_tr, e_tr, t_te, e_te, grid)["brier"]) == 3
+    assert np.isfinite(M.time_dependent_auc(r, t_tr, e_tr, t_te, e_te, grid)["mean_auc"])
 
 
 def test_kaplan_meier_matches_sksurv():

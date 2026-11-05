@@ -30,6 +30,7 @@ sys.path.insert(0, str(HERE.parents[1]))
 DB_PATH = HERE / "explain" / "survival_explain.db"
 os.environ.setdefault("DATABASE_URL", f"sqlite:///{DB_PATH}")
 
+import explaneat.db.sqlite_compat  # noqa: E402,F401  (local SQLite DB)
 from explaneat.core.neuralneat import set_output_activation  # noqa: E402
 from explaneat.db import db  # noqa: E402
 from explaneat.db.models import Experiment, Genome  # noqa: E402

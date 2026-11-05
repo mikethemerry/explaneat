@@ -268,8 +268,17 @@ class BackpropPopulation(Population):
             g.validation_fitness = g.fitness
             g.fitness = train_fitnesses[gid]
 
-    def run(self, fitness_function, n=None, nEpochs=100, patience=None):
-        """ """
+    def run(self, fitness_function, n=None, nEpochs=100, patience=None,
+            validation_fitness_function=None):
+        """Evolve for ``n`` generations (backprop, fitness, reproduction).
+
+        With validation data, every genome is also scored on it and the best
+        genome is the one with the best validation fitness.
+        ``validation_fitness_function`` (default None = ``fitness_function``,
+        the original behaviour) scores the validation fold separately, e.g.
+        the plain held-out Cox loss when the training fitness carries an
+        in-sample parsimony penalty (``explaneat.survival.make_cox_fitness``).
+        """
 
         if self.config.no_fitness_termination and (n is None):
             raise RuntimeError(
@@ -309,7 +318,7 @@ class BackpropPopulation(Population):
             # Evaluate validation fitness if validation data is available
             if self.xs_val is not None:
                 with MethodTimer("evaluate validation"):
-                    self._evaluate_validation(fitness_function)
+                    self._evaluate_validation(validation_fitness_function or fitness_function)
 
             # Gather and report statistics.
             best = None

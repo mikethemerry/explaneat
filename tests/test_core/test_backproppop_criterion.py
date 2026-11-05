@@ -109,6 +109,32 @@ def test_survival_target_with_cox_criterion(config):
     assert improved >= len(before) // 2
 
 
+def test_validation_fitness_function_is_opt_in(config):
+    """run(validation_fitness_function=f) scores the validation fold with f; default reuses fitness."""
+    from explaneat.evaluators.evaluators import auc_fitness
+
+    xs, ys = _data()
+    xv, yv = _data(seed=1)
+    calls = []
+
+    def val_fit(genomes, cfg, x, y, device):
+        calls.append(x.shape[0])
+        for g in genomes.values():
+            g.fitness = 0.123
+
+    for vf in (None, val_fit):
+        random.seed(5)
+        pop = BackpropPopulation(config, xs, ys, xs_val=xv, ys_val=yv)
+        pop.run(auc_fitness, n=1, nEpochs=1, validation_fitness_function=vf)
+        best = pop.best_genome
+        if vf is None:
+            assert best.validation_fitness != 0.123 and not calls
+        else:
+            assert calls == [xv.shape[0]]
+            assert best.validation_fitness == 0.123
+            assert best.fitness != 0.123  # training fitness restored
+
+
 def test_skip_invalid_genomes_is_opt_in(config):
     import pytest
 

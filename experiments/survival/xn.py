@@ -21,6 +21,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[1]))
 os.environ.setdefault("DATABASE_URL", f"sqlite:///{HERE / 'explain' / 'survival_explain.db'}")
 
+import explaneat.db.sqlite_compat  # noqa: E402,F401  (local SQLite DB)
 from mcp_server.server import get_db  # noqa: E402
 
 MODULES = ["experiments", "models", "operations", "evidence", "coverage",

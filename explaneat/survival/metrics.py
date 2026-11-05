@@ -68,6 +68,17 @@ def harrell_c(risk, time, event) -> float:
     return float(concordance_index_censored(_arr(event).astype(bool), _arr(time), _arr(risk))[0])
 
 
+def ipcw_mask(time_train, time_test) -> np.ndarray:
+    """Test rows the IPCW metrics can use: observed time below the training maximum.
+
+    The censoring distribution is estimated by Kaplan-Meier on the training
+    fold, so it is undefined beyond the last training time; scikit-survival
+    raises for test times past it.  The (usually 0-3) later test rows are left
+    out of the Brier / td-AUC computations; Harrell's C uses every row.
+    """
+    return _arr(time_test) < _arr(time_train).max()
+
+
 def default_tau(time_train, event_train, time_test, event_test) -> float:
     """A truncation time inside both folds' event support."""
     tt, et, ts, es = _arr(time_train), _arr(event_train), _arr(time_test), _arr(event_test)
@@ -100,9 +111,10 @@ def time_dependent_auc(risk_test, time_train, event_train, time_test, event_test
     h = valid_horizons(times, time_train, event_train, time_test)
     if len(h) == 0:
         return {"times": [], "auc": [], "mean_auc": float("nan")}
+    m = ipcw_mask(time_train, time_test)
     auc, mean_auc = cumulative_dynamic_auc(_surv(time_train, event_train),
-                                           _surv(time_test, event_test),
-                                           _arr(risk_test), h)
+                                           _surv(_arr(time_test)[m], _arr(event_test)[m]),
+                                           _arr(risk_test)[m], h)
     return {"times": h.tolist(), "auc": [float(a) for a in auc], "mean_auc": float(mean_auc)}
 
 
@@ -110,8 +122,10 @@ def brier_at(surv_test, time_train, event_train, time_test, event_test,
              times: Sequence[float]) -> Dict[str, object]:
     """IPCW Brier score at each horizon.  ``surv_test`` is [n_test, len(times)]."""
     from sksurv.metrics import brier_score
-    t_out, scores = brier_score(_surv(time_train, event_train), _surv(time_test, event_test),
-                                np.asarray(surv_test, dtype=np.float64),
+    m = ipcw_mask(time_train, time_test)
+    t_out, scores = brier_score(_surv(time_train, event_train),
+                                _surv(_arr(time_test)[m], _arr(event_test)[m]),
+                                np.asarray(surv_test, dtype=np.float64)[m],
                                 np.asarray(times, dtype=np.float64))
     return {"times": [float(x) for x in t_out], "brier": [float(s) for s in scores]}
 
@@ -135,9 +149,10 @@ def integrated_brier(surv_fn, time_train, event_train, time_test, event_test,
         grid = default_time_grid(time_train, event_train, time_test, event_test)
     if len(grid) < 2:
         return float("nan")
+    m = ipcw_mask(time_train, time_test)
     return float(integrated_brier_score(_surv(time_train, event_train),
-                                        _surv(time_test, event_test),
-                                        surv_fn(grid), grid))
+                                        _surv(_arr(time_test)[m], _arr(event_test)[m]),
+                                        np.asarray(surv_fn(grid))[m], grid))
 
 
 def kaplan_meier(time, event, at: float) -> float:
@@ -209,6 +224,7 @@ def survival_metrics(risk_train, risk_test, time_train, event_train, time_test, 
     """
     out: Dict[str, object] = {
         "n_test": int(len(_arr(time_test))),
+        "n_test_beyond_train_followup": int((~ipcw_mask(time_train, time_test)).sum()),
         "events_test": int(_arr(event_test).sum()),
         "harrell_c": harrell_c(risk_test, time_test, event_test),
     }
