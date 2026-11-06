@@ -246,10 +246,62 @@ Generation 0 genomes have no parents:
 
 ### Elitism and Cloning
 
-Elites carried forward:
-- May have same NEAT genome ID across generations (implementation-dependent)
-- AncestryReporter handles this by tracking generation-specific mappings
-- Parents will be the elite's parents from previous generation
+NEAT's `DefaultReproduction` carries each species' elites into the next generation as the
+same object under the **same key**. They get no new `reproduction.ancestors` entry, and
+`ancestors` is cumulative, so it still holds the parents from when the genome was first
+created. Since 2026-11-07:
+- **Elite copy:** an elite copy's parent is its own row one generation earlier:
+  `parent1_id` is that row and `parent2_id` is NULL. It is detected as a key that was in
+  the previously saved generation. Backprop trains the copy again, so its weights and
+  fitness can still differ from the parent row.
+- **Resolution order:** all parents of a generation are resolved before any of its rows
+  is registered, so a parent key always resolves to the previous generation's row.
+- **Self-crossover:** a child whose two parents are the same genome has
+  `parent1_id == parent2_id`. It is a clone under a new key, not an elite copy.
+
+The rule lives in `explaneat/core/lineage_capture.py`.
+
+## Default-on tracking (2026-11-07)
+
+`DatabaseBackpropPopulation` now creates an `AncestryReporter` when none is passed, so
+`parent1_id`/`parent2_id` are filled by default. Pass `track_ancestry=False` to opt out.
+
+Tracking only reads `reproduction.ancestors` and consumes no randomness. A seeded run is
+bit-identical with or without it (`tests/test_db/test_population_ancestry.py`).
+
+In-memory runs record parents as well:
+- `BackpropPopulation.parent_log[generation]` = `{key: (parent1_key, parent2_key, is_elite_copy)}`;
+- `ancestry_rows()` returns the same as flat rows.
+
+`DatabaseBackpropPopulation` fills `parent_log` too.
+
+## Runs recorded before 2026-11-07: replay sidecars
+
+Earlier runs stored no parents. They are bit-identical from their seeds, so
+`experiments/lineage/replay_lineage.py` replays each one in memory, capturing
+`parent_log`.
+
+`verify_replay.py` then compares every genome of every generation with the stored DB
+rows: key, fitness, and md5 of the serialised genome. Only on a full match does it
+write `experiments/lineage/parents/<experiment>.csv.gz`, with columns
+`generation, genome_key, parent1_key, parent2_key, is_elite_copy`.
+
+`backfill_parents.py` then fills the NULL parent columns from the sidecar:
+- it runs as a dry run by default;
+- it refuses to touch any experiment that has a non-NULL parent column.
+
+## Lineage API
+
+`explaneat/analysis/lineage.py` provides:
+- `get_lineage(genome_id, mode="fitter_parent" | "parent1")`
+- `detect_jumps(lineage, ...)`
+- `diff_genomes(a, b)`
+- `ancestor_at_generation(genome_id, generation)`
+- `map_genes_to_annotations(gene_keys, genome_id, explanation=None)`
+
+It reads DB parent ids when present and falls back to the sidecar. MCP wrappers are in
+`mcp_server/tools/lineage.py`: `get_lineage`, `get_ancestor`, `diff_genomes`,
+`detect_jumps`.
 
 ## Example Queries
 

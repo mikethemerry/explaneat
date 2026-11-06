@@ -32,6 +32,12 @@ class AncestryReporter:
         # Reference to reproduction object (set externally)
         self.reproduction = None
 
+        # NEAT keys of the last generation saved. A key that reappears in the
+        # next generation is an elite copy: its parent is its own row one
+        # generation earlier (``reproduction.ancestors`` still holds the
+        # parents from when it was first created). See core/lineage_capture.py.
+        self.previous_keys = set()
+
     def register_genome(self, neat_genome_id: int, db_genome_id: uuid.UUID):
         """
         Register a genome's NEAT ID to database UUID mapping.
@@ -79,6 +85,12 @@ class AncestryReporter:
             - This is a generation 0 genome (no parents)
             - Parent was not found in the mapping (shouldn't happen)
         """
+        if neat_genome_id in self.previous_keys:
+            # Elite copy: parent is the same key in the previous generation,
+            # whose row is still the registered one (rows of the current
+            # generation are registered only after all parents are resolved).
+            return self.get_db_id(neat_genome_id), None
+
         if self.reproduction is None:
             return None, None
 
@@ -102,6 +114,10 @@ class AncestryReporter:
             parent1_db_id = self.get_db_id(parent1_neat_id)
             parent2_db_id = self.get_db_id(parent2_neat_id)
             return parent1_db_id, parent2_db_id
+
+    def finish_generation_save(self, neat_genome_ids):
+        """Mark the keys just saved as the previous generation."""
+        self.previous_keys = set(neat_genome_ids)
 
     def start_generation(self, generation: int):
         """Called at the start of a new generation."""
@@ -159,4 +175,5 @@ class AncestryReporter:
         """Clear all mappings. Useful when starting a new experiment."""
         self.neat_to_db_id.clear()
         self.db_to_neat_id.clear()
+        self.previous_keys = set()
         self.current_generation = 0

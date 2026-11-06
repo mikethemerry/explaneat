@@ -91,7 +91,7 @@ To configure in Claude Code settings:
 }
 ```
 
-The MCP server exposes 29 tools for model analysis:
+The MCP server exposes 33 tools for model analysis:
 - **Discovery**: list_experiments, get_experiment, get_best_genome, list_genomes, get_genome
 - **Structure**: get_phenotype, get_model_state, get_node_info
 - **Operations**: list_operations, apply_operation, validate_operation, undo_operation, get_annotations
@@ -99,6 +99,7 @@ The MCP server exposes 29 tools for model analysis:
 - **Coverage**: classify_nodes, detect_splits, get_coverage
 - **Datasets**: list_datasets, get_dataset, get_dataset_splits
 - **Snapshots**: save_snapshot, update_narrative, list_evidence
+- **Lineage**: get_lineage, get_ancestor, diff_genomes, detect_jumps (see `ANCESTRY_TRACKING.md`)
 
 ## Architecture
 
@@ -122,6 +123,7 @@ The MCP server exposes 29 tools for model analysis:
 - **`annotation_manager.py`**: `AnnotationManager` - CRUD operations for annotations (subgraph hypotheses with entry/exit nodes)
 - **`explanation_manager.py`**: `ExplanationManager` - manages explanations (groups of annotations with coverage metrics)
 - **`node_splitting.py`**: `NodeSplitManager` - handles node splits for dual-function nodes (e.g., node 5 splits into "5_a", "5_b")
+- **`lineage.py`**: ancestor chains (`get_lineage`, fitter-parent or parent1 mode), `detect_jumps`, `diff_genomes`, `ancestor_at_generation`, `map_genes_to_annotations`. Reads DB `parent1_id`/`parent2_id`, else the replay sidecar `experiments/lineage/parents/<experiment>.csv.gz`
 - **`coverage.py`**: `CoverageComputer` - computes structural and compositional coverage of explanations
 - **`collapse_validator.py`**: `CollapseValidator` - validates collapse preconditions and performs collapse/expand operations (pure graph logic, no DB)
 - **`subgraph_validator.py`**: `SubgraphValidator` - validates connectivity of annotation subgraphs
