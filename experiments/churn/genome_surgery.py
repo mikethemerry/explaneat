@@ -145,7 +145,10 @@ def finetune(genome, config, X, y, epochs: Optional[int], seed: int,
              return_info: bool = False,
              val_X=None, val_y=None,
              patience: int = 50, min_delta: float = 1e-5, max_epochs: int = 5000,
-             restore_best: bool = True):
+             restore_best: bool = True,
+             protect_conn_keys: Iterable[ConnKey] = (),
+             protect_node_keys: Iterable[int] = (),
+             protect_epochs: int = 0):
     """Fine-tune a deep copy of ``genome`` with the PropNEAT backprop primitive.
 
     Exactly ``BackpropPopulation.backpropagate`` for one genome: NeuralNeat with
@@ -174,6 +177,22 @@ def finetune(genome, config, X, y, epochs: Optional[int], seed: int,
     ``val_losses`` (one per epoch), and ``epochs`` = epochs run. With
     ``val_X=None`` (default) the function, its result and its ``info`` are
     exactly as before (the early-stopping kwargs are ignored).
+
+    Protection phase (GRAFT_F_G_PLAN.md, study G): ``protect_conn_keys`` /
+    ``protect_node_keys`` (connection weights / node biases, typically a
+    graft's entry -> graft and internal connections and its node biases) get
+    zero gradient for the first ``protect_epochs`` optimizer steps (epochs
+    1..P), exactly as ``frozen_*`` do, and train normally afterwards. With
+    Adadelta a zero gradient leaves the parameter and its accumulators at
+    their starting values, so after the phase they train from their initial
+    state. The phase counts toward ``epochs`` / ``max_epochs``. With early
+    stopping, the validation BCE is tracked from epoch 0 throughout (the best
+    epoch may fall inside the phase) but the patience counter cannot stop
+    training before epoch P + ``patience``: training stops at the first epoch
+    with epoch - max(best_epoch, P) >= patience. With the defaults
+    (``protect_epochs=0`` or no protected keys) everything is bit-identical
+    to the version without this option. ``info`` then also has
+    ``protect_epochs``, ``n_protected_connections``, ``n_protected_nodes``.
     """
     early_stop = val_X is not None
     if early_stop:
@@ -195,6 +214,14 @@ def finetune(genome, config, X, y, epochs: Optional[int], seed: int,
     xs, ys = _as_tensors(X, y)
     net = build_net(g, config)
     w_masks, b_masks = _param_masks(net, g, frozen_conn_keys, frozen_nodes, mask_phantom)
+    protect_conn_keys = [tuple(k) for k in protect_conn_keys]
+    protect_nodes = set(protect_node_keys)
+    if protect_epochs < 0:
+        raise ValueError("protect_epochs must be >= 0")
+    protecting = protect_epochs > 0 and bool(protect_conn_keys or protect_nodes)
+    if protecting:
+        pw_masks, pb_masks = _param_masks(net, g, list(frozen_conn_keys) + protect_conn_keys,
+                                          frozen_nodes | protect_nodes, mask_phantom)
 
     optimizer = optim.Adadelta(net.parameters(), lr=FT_LR)
     optimizer.zero_grad()
@@ -217,12 +244,14 @@ def finetune(genome, config, X, y, epochs: Optional[int], seed: int,
         preds = net.forward(xs)
         loss = bce(preds, ys)
         loss.backward()
+        wm, bm = ((pw_masks, pb_masks) if protecting and epoch <= protect_epochs
+                  else (w_masks, b_masks))
         for L, w in net.weights.items():
             if w.grad is not None:
-                w.grad.mul_(w_masks[L])
+                w.grad.mul_(wm[L])
         for L, b in net.biases.items():
             if b.grad is not None:
-                b.grad.mul_(b_masks[L])
+                b.grad.mul_(bm[L])
         optimizer.step()
         optimizer.zero_grad()
         losses.append(float(loss))
@@ -232,7 +261,8 @@ def finetune(genome, config, X, y, epochs: Optional[int], seed: int,
             val_losses.append(v)
             if v < best_val - min_delta:
                 best_val, best_epoch, best_state = v, epoch, _snapshot()
-            elif epoch - best_epoch >= patience:
+            elif epoch - (max(best_epoch, protect_epochs) if protecting
+                          else best_epoch) >= patience:
                 stopped_by, stop_epoch = "patience", epoch
                 break
     if early_stop and restore_best:
@@ -276,6 +306,10 @@ def finetune(genome, config, X, y, epochs: Optional[int], seed: int,
         "max_abs_pred_diff_trained_vs_written_back": float(np.max(np.abs(preds_trained - p_back))),
         "max_abs_phantom_into_frozen": phantom_into_frozen,
     }
+    if protecting:
+        info.update({"protect_epochs": int(protect_epochs),
+                     "n_protected_connections": len(set(protect_conn_keys)),
+                     "n_protected_nodes": len(protect_nodes)})
     if early_stop:
         yval = np.asarray(val_y, dtype=np.float64).ravel()
         pv = np.clip(predict_proba(g, config, val_X), eps, 1 - eps)
@@ -641,6 +675,19 @@ def graft(recipient, recipient_config, donor_genome, donor_subgraph: DonorSubgra
         "acyclic": acyclic,
     }
     return new, record
+
+
+def graft_protect_keys(graft_record: dict):
+    """Study G (GRAFT_F_G_PLAN.md): the parameters a protection phase freezes for
+    a graft made by ``graft``: every added connection that ends at a grafted
+    hidden node (entry -> graft and graft-internal edges) and the grafted
+    nodes' biases. The readout (grafted exit -> output) and any added
+    input -> output edges stay trainable. Returns (sorted conn keys, sorted
+    node ids)."""
+    nodes = sorted(int(v) for v in graft_record["id_map"].values())
+    ns = set(nodes)
+    conns = sorted(tuple(k) for k in graft_record["added_connections"] if k[1] in ns)
+    return conns, nodes
 
 
 # ====================================================================== storage
