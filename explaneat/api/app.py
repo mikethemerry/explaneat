@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .routes import experiments, genomes, operations, analysis, datasets, evidence, training, config_templates
-from .routes import explain_tools, records
+from .routes import explain_tools, records, lineage
 
 
 logger = logging.getLogger(__name__)
@@ -116,6 +116,7 @@ def create_app() -> FastAPI:
         tags=["explanation-tools"],
     )
     app.include_router(records.router, prefix="/api/records", tags=["records"])
+    app.include_router(lineage.router, prefix="/api/genomes", tags=["lineage"])
 
     @app.get("/api/health")
     async def health_check():
