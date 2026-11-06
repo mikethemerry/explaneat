@@ -24,7 +24,7 @@ cd explaneat
 uv sync --extra survival
 cd web/react-explorer && npm ci && npm run build && cd ../..
 uv run python -m explaneat setup     # local SQLite DB + deploys the built UI
-uv run python -m explaneat demo      # hello world, about a minute on a laptop CPU
+uv run python -m explaneat demo      # hello world, under a minute on a laptop CPU
 uv run python -m explaneat api       # then open http://127.0.0.1:8000
 ```
 
@@ -40,22 +40,20 @@ uv run python -m explaneat api       # then open http://127.0.0.1:8000
   `--no-db` keeps everything in memory.
 - `uv run explaneat ...` works too (the package installs an `explaneat` command).
 
-The demo's stages: (1) database; (2) synthetic data, a classification task with
-a known hinge feature `|x0|` and, with the survival extension, survival data with
-a known non-linear hazard; (3) two short seeded training runs per task (recorded
-with ancestry when a database is available); (4) a scripted explanation (node
-splits, then leaf and composition annotations through `ModelStateEngine`),
-checking that coverage is 1.0 and that the explained model computes exactly the
-trained network's function; (5) evidence and metrics (test AUC against logistic
-regression and the true logit, per-feature sensitivity; C-index, td-AUC and
-calibration for survival); (6) lineage; (7) the report.
-
-> **Branch status (exp/install).** Two pieces arrive with the `exp/cox-survival`
-> merge, which is waiting for approval: `explaneat/db/sqlite_compat.py` (the
-> SQLite renderings of the JSONB / UUID columns) and `explaneat.survival`. Until
-> then `setup` reports the SQLite database as PENDING, the demo trains in memory
-> and skips its survival parts, and the API needs Postgres via `DATABASE_URL` to
-> show experiments. Nothing in the commands above changes when the merge lands.
+The demo's stages: (1) the SQLite database; (2) synthetic data, a classification
+task with a known hinge feature `|x0|` and a survival task with a known
+non-linear hazard (a Gaussian bump in x0, x1 that linear Cox cannot see), both
+saved with their splits; (3) two short seeded runs per task, recorded in the DB
+with ancestry (Cox partial-likelihood training for survival); (4) a scripted
+explanation of each best genome (node splits, then leaf and composition
+annotations through `ModelStateEngine`), checking that coverage is 1.0 and that
+the explained model computes exactly the trained network's function, then
+storing it on the genome and replaying it; (5) evidence and metrics (test AUC
+against logistic regression and the true logit, per-feature sensitivity;
+Harrell/Uno C, td-AUC, IBS and calibration against linear Cox and the true
+log-risk); (6) the lineage of each best genome (`explaneat.analysis.lineage`);
+(7) the report. After the demo, `explaneat api` shows the four demo experiments
+in the UI.
 
 ### Database
 
@@ -75,7 +73,7 @@ upgrade` refuses to run against a SQLite URL. The other `db` commands (`init`,
 
 `pyproject.toml` is the source of truth and `uv.lock` pins every package
 (Python 3.11-3.12; torch 2.2.x with numpy 1.26). Extras: `survival`
-(scikit-survival, lifelines) and `dev` (pytest, httpx; also installed by a plain
+(scikit-survival, lifelines; the demo and `doctor` expect it) and `dev` (pytest, httpx; also installed by a plain
 `uv sync` as uv's default group). On Linux and Windows uv installs the CPU-only
 torch build; for CUDA, change the `pytorch-cpu` index in `pyproject.toml` to
 e.g. `https://download.pytorch.org/whl/cu121` and run `uv lock`.
@@ -99,13 +97,20 @@ HDEC approval:
   Swagger pages, which do load from a CDN, are off unless `EXPLANEAT_API_DOCS=1`.
   The only outbound feature is the explicit "download from PMLB" dataset action.
   The bundle check is recorded in [docs/clean_install_check.md](docs/clean_install_check.md).
+- **Restricted mode.** `EXPLANEAT_RESTRICTED=1` makes the API refuse every
+  route that would make an outbound call (PMLB / UCI search and download) and
+  the MCP server refuse genome and dataset access; datasets flagged
+  `restricted` are refused on the Claude-assisted (MCP) path unless
+  `EXPLANEAT_ALLOW_ASSISTED_RESTRICTED=1` (`explaneat/governance.py`,
+  `GET /api/governance`).
 - **Localhost only.** `explaneat api` binds to `127.0.0.1` by default and warns
   if given another `--host`.
 - **Data outside the repository.** The database and config live in
   `EXPLANEAT_HOME` (default `~/.explaneat`); `doctor` warns if it is inside the
   checkout. Demo outputs go to `--out` (default `./demo_output`, git-ignored),
   and the demo uses synthetic data only.
-- See `docs/survival.md` (with the Cox branch) for the cohort checklist.
+- See `docs/survival.md` for the cohort checklist (local DB, no rows to external
+  services).
 
 ### Continuous integration
 

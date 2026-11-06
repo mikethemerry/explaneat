@@ -47,7 +47,7 @@ def deploy_ui(log: Callable[[str], None] = print) -> str:
 
 
 def setup_database(database_url: Optional[str], log: Callable[[str], None] = print) -> str:
-    """Create the SQLite schema. Returns 'created', 'postgres', or 'pending'."""
+    """Create the SQLite schema. Returns 'created', 'postgres' or 'failed'."""
     url = database_url or (settings.default_sqlite_url()
                            if settings.database_url_source() != "env"
                            else settings.resolve_database_url())
@@ -59,8 +59,8 @@ def setup_database(database_url: Optional[str], log: Callable[[str], None] = pri
 
     ok, how = sqlite_schema_supported()
     if not ok:
-        log(f"  DB: PENDING - {how}")
-        return "pending"
+        log(f"  DB: FAILED - {how}")
+        return "failed"
     path = Path(url.split("sqlite:///", 1)[1]) if url.startswith("sqlite:///") else None
     if path is not None:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -85,9 +85,10 @@ def run_setup(database_url: Optional[str] = None, skip_ui: bool = False, skip_db
     log(f"ExplaNEAT setup\n  Data directory: {home}  (set EXPLANEAT_HOME to move it)")
     db_state = "skipped" if skip_db else setup_database(database_url, log)
     ui_state = "skipped" if skip_ui else deploy_ui(log)
-    if db_state == "pending":
-        log("Done, with the database PENDING (see above). The demo still runs in memory.")
-    elif ui_state == "missing":
+    if db_state == "failed":
+        log("Setup FAILED: the database could not be created (see above).")
+        return 1
+    if ui_state == "missing":
         log("Done, but the UI is not built (see above); the API still runs.")
     else:
         log("Done.")
@@ -167,11 +168,10 @@ def run_checks() -> List[Check]:
         sk = True
     except Exception:
         sk = False
-    checks.append(Check("survival extension", "OK" if surv and sk else "WARN",
-                        f"explaneat.survival {'present' if surv else 'not on this branch'}; "
+    checks.append(Check("survival extension", "OK" if surv and sk else "FAIL",
+                        f"explaneat.survival {'present' if surv else 'missing'}; "
                         f"scikit-survival {'installed' if sk else 'not installed'}",
-                        "" if surv and sk else ("uv sync --extra survival" if surv else
-                                                "arrives with the exp/cox-survival merge")))
+                        "" if surv and sk else "uv sync --extra survival"))
 
     home = settings.data_dir()
     in_repo = _inside(home, REPO_ROOT)
@@ -188,8 +188,8 @@ def run_checks() -> List[Check]:
         from .db.sqlite_support import sqlite_schema_supported
 
         ok, how = sqlite_schema_supported()
-        checks.append(Check("SQLite schema support", "OK" if ok else "WARN", how,
-                            "" if ok else "Use Postgres via DATABASE_URL until the merge"))
+        checks.append(Check("SQLite schema support", "OK" if ok else "FAIL", how,
+                            "" if ok else "uv sync (reinstall the package)"))
 
     index = UI_STATIC / "index.html"
     if not index.is_file():

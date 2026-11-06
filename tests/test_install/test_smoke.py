@@ -2,9 +2,7 @@
 serving the UI. Seconds each; CI runs them with ``pytest -m smoke``.
 
 Every test points EXPLANEAT_HOME and the database at tmp_path, so nothing
-touches ~/.explaneat or a real database. tests/conftest.py registers the
-SQLite renderings of JSONB / UUID, so the SQLite path is exercised here even
-before explaneat/db/sqlite_compat.py is on the branch.
+touches ~/.explaneat or a real database. The SQLite path runs explaneat/db/sqlite_compat.py as in a real install.
 """
 
 import json
@@ -34,6 +32,7 @@ def test_demo_tiny_in_memory(tmp_path, home):
     status = {s.key: s.status for s in result.stages}
     assert result.ok, [(s.key, s.status, s.notes) for s in result.stages]
     assert status["train"] == status["explain"] == status["metrics"] == "PASS"
+    assert status["lineage"] == "SKIP"  # no database
     assert (tmp_path / "out" / "report.md").read_text(encoding="utf-8").startswith(
         "# ExplaNEAT demo report: PASS")
     assert (tmp_path / "out" / "report.html").is_file()
@@ -53,13 +52,16 @@ def test_demo_tiny_sqlite_records_runs(tmp_path, home):
     result = run_demo(tmp_path / "out", tiny=True, database_url=url, log=lambda m: None)
     status = {s.key: s.status for s in result.stages}
     assert result.ok, [(s.key, s.status, s.notes) for s in result.stages]
-    assert status["database"] == "PASS"
+    assert status["database"] == status["lineage"] == "PASS"
     db.init_db(url)
     with db.session_scope() as session:
-        assert session.query(Experiment).count() == 2
-        assert session.query(Explanation).count() == 2
+        assert session.query(Experiment).count() == 4      # 2 seeds x (classification, survival)
+        assert session.query(Explanation).count() == 4
     lineage = next(s for s in result.stages if s.key == "lineage")
-    assert all(v["genomes_recorded"] > 0 for v in lineage.metrics.values())
+    assert len(lineage.metrics) == 4
+    assert all(v["lineage_length"] >= 1 for v in lineage.metrics.values())
+    metrics = next(s for s in result.stages if s.key == "metrics").metrics
+    assert {"harrell_c", "uno_c", "td_auc_mean"} <= set(metrics["survival_s0"])
 
 
 def test_cli_setup_then_doctor(home):

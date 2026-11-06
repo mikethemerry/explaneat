@@ -41,11 +41,14 @@ class DemoSettings:
     epochs: int = 10
     survival_samples: int = 1000
     survival_generations: int = 25
+    # Require better-than-chance test AUC / Harrell C. Off for --tiny, whose
+    # two generations only prove the pipeline runs (metrics must be finite).
+    quality_checks: bool = True
 
     @classmethod
     def tiny(cls) -> "DemoSettings":
         return cls(seeds=(0, 1), n_samples=200, generations=2, pop_size=12, epochs=3,
-                   survival_samples=300, survival_generations=2)
+                   survival_samples=300, survival_generations=2, quality_checks=False)
 
 
 @dataclass
@@ -118,11 +121,7 @@ class _Demo:
         if settings.is_sqlite(url):
             ok, how = sqlite_schema_supported()
             if not ok:
-                st.status = SKIP
-                st.notes.append(how)
-                st.notes.append("training runs in memory; ancestry is not recorded")
-                return
-            st.notes.append(f"SQLite schema support: {how}")
+                raise RuntimeError(how)
         from ..db.base import db
         from ..db.models import Experiment
 
@@ -156,21 +155,33 @@ class _Demo:
             split = save_dataset_split_with_indices(ds_id, tr.tolist(), te.tolist(),
                                                     test_size=0.3, random_state=0)
             split_id = sa_inspect(split).identity[0]
-            self.ctx["dataset_id"], self.ctx["split_id"] = str(ds_id), str(split_id)
-            st.notes.append("classification dataset and split saved to the database")
+            self.ctx["clf"]["dataset_id"], self.ctx["clf"]["split_id"] = str(ds_id), str(split_id)
 
-        if _module_available("explaneat.survival.simulate"):
-            from ..survival.simulate import simulate
+        from ..survival.simulate import simulate
 
-            Xs, t, e, g = simulate(n=self.s.survival_samples, d=4, mode="nonlinear", seed=0)
-            str_, ste = train_test_split_indices(len(Xs), 0.3, seed=1)
-            self.ctx["surv"] = dict(X=Xs, time=t, event=e, g=g, tr=str_, te=ste)
-            st.metrics["survival"] = {"n": len(Xs), "features": Xs.shape[1],
-                                      "event_rate": round(float(e.mean()), 3),
-                                      "truth": "log(5) * exp(-(x0^2 + x1^2) / 0.5), zero linear effect"}
-        else:
-            st.notes.append("survival data skipped: explaneat.survival is not on this branch "
-                            "(arrives with the exp/cox-survival merge)")
+        Xs, t, e, g = simulate(n=self.s.survival_samples, d=4, mode="nonlinear", seed=0)
+        str_, ste = train_test_split_indices(len(Xs), 0.3, seed=1)
+        self.ctx["surv"] = dict(X=Xs, time=t, event=e, g=g, tr=str_, te=ste)
+        st.metrics["survival"] = {"n": len(Xs), "features": Xs.shape[1], "train": len(str_),
+                                  "test": len(ste), "event_rate": round(float(e.mean()), 3),
+                                  "truth": "log-risk log(5) * exp(-(x0^2 + x1^2) / 0.5), "
+                                           "zero linear effect"}
+        if self.db_url:
+            from sqlalchemy import inspect as sa_inspect
+
+            from ..survival.data import save_survival_dataset_to_db, save_survival_split_to_db
+
+            ys = np.column_stack([t, e.astype(float)])
+            sds = save_survival_dataset_to_db(
+                "demo-survival (synthetic)", Xs, ys, source="synthetic",
+                description="explaneat demo: Gaussian-bump log-risk in x0, x1 (no linear effect)",
+                metadata={"generator": "explaneat.survival.simulate"})
+            sds_id = sa_inspect(sds).identity[0]
+            ssplit = save_survival_split_to_db(sds_id, {"train": str_.tolist(), "test": ste.tolist()},
+                                               seed=1, test_size=0.3)  # demo trains on raw X
+            self.ctx["surv"]["dataset_id"] = str(sds_id)
+            self.ctx["surv"]["split_id"] = str(sa_inspect(ssplit).identity[0])
+            st.notes.append("both datasets and their splits saved to the database")
 
     # -- 3. training ------------------------------------------------------------
     def stage_train(self, st: Stage) -> None:
@@ -186,15 +197,13 @@ class _Demo:
                 database_url=self.db_url, experiment_name=f"demo-hinge-s{seed}")
             info["seconds"] = round(time.time() - t0, 1)
             if self.db_url:
-                self._link_split(info["experiment_id"], seed)
+                self._link_split(info["experiment_id"], seed, c)
             runs.append(dict(genome=genome, config=config, info=info))
             st.metrics[f"classification_s{seed}"] = info
         self.ctx["clf_runs"] = runs
+        self.ctx["surv_runs"] = self._train_survival(st)
 
-        if "surv" in self.ctx:
-            self.ctx["surv_runs"] = self._train_survival(st)
-
-    def _link_split(self, experiment_id: str, seed: int) -> None:
+    def _link_split(self, experiment_id: str, seed: int, task: dict) -> None:
         from uuid import UUID
 
         from ..db.base import db
@@ -203,8 +212,8 @@ class _Demo:
         with db.session_scope() as session:
             exp = session.get(Experiment, UUID(experiment_id))
             if exp is not None:
-                exp.dataset_id = UUID(self.ctx["dataset_id"])
-                exp.split_id = UUID(self.ctx["split_id"])
+                exp.dataset_id = UUID(task["dataset_id"])
+                exp.split_id = UUID(task["split_id"])
                 exp.random_seed = seed
 
     def _train_survival(self, st: Stage) -> List[dict]:
@@ -222,19 +231,36 @@ class _Demo:
         for seed in self.s.seeds:
             t0 = time.time()
             text = CLASSIFICATION_CONFIG.format(pop_size=self.s.pop_size, num_inputs=Xtr.shape[1])
-            text = text.replace("num_hidden = 2", "num_hidden = 1").replace(
-                "weight_init_stdev = 1.0", "weight_init_stdev = 0.1")
+            # Small initial weights, as experiments/survival (protocol v3).
+            text = text.replace("weight_init_stdev = 1.0", "weight_init_stdev = 0.1")
             config = load_config(text, self.out_dir)
             set_output_activation(config, "identity")
             seed_everything(seed)
-            pop = BackpropPopulation(config, Xtr, ytr, criterion=CoxCriterion("efron"),
-                                     mask_phantom=True, skip_invalid_genomes=True)
-            pop.run(make_cox_fitness("efron", 1.0), n=self.s.survival_generations,
-                    nEpochs=self.s.epochs)
             info = {"seed": seed, "generations": self.s.survival_generations,
-                    "pop_size": self.s.pop_size, "mode": "in-memory",
-                    "train_fitness": float(pop.best_genome.fitness),
-                    "seconds": round(time.time() - t0, 1)}
+                    "pop_size": self.s.pop_size, "mode": "in-memory"}
+            if self.db_url:
+                from ..core.ancestry_reporter import AncestryReporter
+                from ..db.population import DatabaseBackpropPopulation
+
+                pop = DatabaseBackpropPopulation(
+                    config, Xtr, ytr, experiment_name=f"demo-survival-s{seed}",
+                    dataset_name="demo-survival (synthetic)",
+                    description="explaneat demo: synthetic Cox survival (Gaussian-bump log-risk)",
+                    database_url=self.db_url, ancestry_reporter=AncestryReporter(),
+                    mask_phantom=True, criterion=CoxCriterion("efron"))
+                pop.skip_invalid_genomes = True
+                info.update(mode="database", experiment_id=str(pop.experiment_id))
+            else:
+                pop = BackpropPopulation(config, Xtr, ytr, criterion=CoxCriterion("efron"),
+                                         mask_phantom=True, skip_invalid_genomes=True)
+            # lambda = 0: fitness is the plain Efron Cox loss. With the per-event AIC
+            # penalty (lambda = 1) runs this short collapse to a near-empty network.
+            pop.run(make_cox_fitness("efron", 0.0), n=self.s.survival_generations,
+                    nEpochs=self.s.epochs)
+            if self.db_url:
+                self._link_split(info["experiment_id"], seed, sv)
+            info.update(train_fitness=float(pop.best_genome.fitness),
+                        seconds=round(time.time() - t0, 1))
             runs.append(dict(genome=copy.deepcopy(pop.best_genome), config=config, info=info))
             st.metrics[f"survival_s{seed}"] = info
         return runs
@@ -245,8 +271,6 @@ class _Demo:
 
         problems = []
         for task, key in (("classification", "clf"), ("survival", "surv")):
-            if f"{key}_runs" not in self.ctx:
-                continue
             X = self.ctx[key]["X"][self.ctx[key]["te"]]
             for run in self.ctx[f"{key}_runs"]:
                 r = explain_genome(run["genome"], run["config"], X)
@@ -259,8 +283,8 @@ class _Demo:
                 worst = max(r.max_abs_diff.values())
                 if not worst < 1e-9:
                     problems.append(f"{task} s{seed}: function not preserved (max diff {worst:.2e})")
-                if self.db_url and task == "classification":
-                    st.notes.append(self._store_explanation(run))
+                if self.db_url:
+                    st.notes.append(f"{task} " + self._store_explanation(run))
         if problems:
             raise AssertionError("; ".join(problems))
         st.notes.append("every operation validated; coverage 1.0/1.0; trained network = "
@@ -270,7 +294,6 @@ class _Demo:
         """Save the operations on the best genome's DB row and replay them."""
         from uuid import UUID
 
-        from ..core.model_state import ModelStateEngine
         from ..db.base import db
         from ..db.models import Explanation, Genome, Population
 
@@ -281,7 +304,7 @@ class _Demo:
                            Genome.genome_id == run["genome"].key)
                    .order_by(Population.generation.desc()).first())
             if row is None:
-                return "best genome row not found; explanation not stored"
+                raise LookupError("best genome's DB row not found")
             session.add(Explanation(genome_id=row.id, name="demo scripted explanation",
                                     description="explaneat demo: splits + leaf/composition annotations",
                                     is_well_formed=True,
@@ -328,12 +351,9 @@ class _Demo:
                 sens = self._root_sensitivity(r, Xte, compute_sensitivity)
                 m["root_sensitivity"] = sens
             st.metrics[f"classification_s{seed}"] = m
-            if not (_finite(auc_te) and auc_te > 0.5):
+            if not _finite(auc_te) or (self.s.quality_checks and auc_te <= 0.5):
                 bad.append(f"classification s{seed}: test AUC {auc_te:.3f} is not above chance")
-        if "surv_runs" in self.ctx:
-            self._survival_metrics(st, bad)
-        else:
-            st.notes.append("survival metrics skipped (explaneat.survival not on this branch)")
+        self._survival_metrics(st, bad)
         if bad:
             raise AssertionError("; ".join(bad))
 
@@ -359,6 +379,9 @@ class _Demo:
         return dict(sorted(per_feature.items()))
 
     def _survival_metrics(self, st: Stage, bad: List[str]) -> None:
+        if not _module_available("sksurv"):
+            raise RuntimeError("scikit-survival is not installed (Uno's C, td-AUC): "
+                               "uv sync --extra survival")
         from ..survival import BreslowBaseline
         from ..survival.metrics import harrell_c, survival_metrics
         from .training import predict
@@ -367,7 +390,14 @@ class _Demo:
         tr, te = sv["tr"], sv["te"]
         t_tr, e_tr, t_te, e_te = sv["time"][tr], sv["event"][tr], sv["time"][te], sv["event"][te]
         horizons = [float(q) for q in np.quantile(t_tr[e_tr], [0.25, 0.5, 0.75])]
-        st.metrics["survival_reference"] = {"oracle_harrell_c": round(harrell_c(sv["g"][te], t_te, e_te), 4)}
+        from sksurv.linear_model import CoxPHSurvivalAnalysis
+        from sksurv.util import Surv
+
+        cox = CoxPHSurvivalAnalysis(alpha=1e-2, ties="efron").fit(
+            sv["X"][tr], Surv.from_arrays(event=e_tr.astype(bool), time=t_tr))
+        st.metrics["survival_reference"] = {
+            "oracle_harrell_c": round(harrell_c(sv["g"][te], t_te, e_te), 4),
+            "linear_cox_harrell_c": round(harrell_c(cox.predict(sv["X"][te]), t_te, e_te), 4)}
         for run in self.ctx["surv_runs"]:
             seed = run["info"]["seed"]
             g_tr = predict(run["genome"], run["config"], sv["X"][tr])
@@ -383,33 +413,39 @@ class _Demo:
                 keep["calibration"] = {k: v for k, v in cal.items()
                                        if isinstance(v, (int, float, str)) and k != "bins"}
             st.metrics[f"survival_s{seed}"] = json.loads(json.dumps(keep, default=float))
-            if not (_finite(keep["harrell_c"]) and keep["harrell_c"] > 0.5):
+            if not _finite(keep["harrell_c"]) or (self.s.quality_checks and keep["harrell_c"] <= 0.5):
                 bad.append(f"survival s{seed}: Harrell C {keep['harrell_c']} is not above chance")
 
     # -- 6. lineage -------------------------------------------------------------
     def stage_lineage(self, st: Stage) -> None:
-        if self.db_url:
-            from uuid import UUID
-
-            from ..db.base import db
-            from ..db.models import Genome, Population
-
-            with db.session_scope() as session:
-                for run in self.ctx.get("clf_runs", []):
-                    exp_id = UUID(run["info"]["experiment_id"])
-                    q = (session.query(Genome).join(Population, Genome.population_id == Population.id)
-                         .filter(Population.experiment_id == exp_id))
-                    st.metrics[f"classification_s{run['info']['seed']}"] = {
-                        "genomes_recorded": q.count(),
-                        "with_parents": q.filter(Genome.parent1_id.isnot(None)).count()}
-        if not _module_available("explaneat.analysis.lineage"):
+        """Ancestor chain of each best genome (explaneat.analysis.lineage)."""
+        if not self.db_url:
             st.status = SKIP
-            st.notes.append("explaneat/analysis/lineage.py is not on this branch; "
-                            "lineage computation skipped" +
-                            ("" if self.db_url else " (and no database, so no ancestry rows)"))
+            st.notes.append("no database (--no-db): ancestry is only recorded in the DB")
             return
-        st.status = SKIP
-        st.notes.append("explaneat.analysis.lineage is present but the demo has no hook for it yet")
+        from ..analysis.lineage import clear_cache, detect_jumps, get_lineage
+
+        clear_cache()
+        problems = []
+        for task, key in (("classification", "clf"), ("survival", "surv")):
+            for run in self.ctx[f"{key}_runs"]:
+                seed = run["info"]["seed"]
+                lin = get_lineage(run["info"]["genome_row_id"])
+                jumps = detect_jumps(lin, metric="fitness")
+                st.metrics[f"{task}_s{seed}"] = {
+                    "lineage_length": len(lin),
+                    "generations": f"{lin[0]['generation']}..{lin[-1]['generation']}" if lin else "",
+                    "parent_source": lin[-1].get("parent_source") if lin else None,
+                    "fitness_first_last": [round(float(lin[0]["fitness"] or 0), 4),
+                                           round(float(lin[-1]["fitness"] or 0), 4)] if lin else [],
+                    "jumps": len(jumps),
+                    "structural_jumps": sum(1 for j in jumps if j.get("structural_change")),
+                }
+                if not lin or str(lin[-1]["genome_id"]) != str(run["info"]["genome_row_id"]):
+                    problems.append(f"{task} s{seed}: lineage does not end at the best genome")
+        if problems:
+            raise AssertionError("; ".join(problems))
+        st.notes.append("ancestor chain from generation 0 to each best genome, with fitness jumps")
 
     # -- 7. report ----------------------------------------------------------------
     def stage_report(self, st: Stage) -> None:
@@ -449,7 +485,7 @@ def run_demo(out_dir: os.PathLike = "demo_output", *, tiny: bool = False,
     demo.run_stage("database", "Database (SQLite)", demo.stage_database)
     data = demo.run_stage("data", "Synthetic data", demo.stage_data)
     deps_ok = data.status == PASS
-    for key, title, fn in (("train", "Training (2 seeds per task)", demo.stage_train),
+    for key, title, fn in (("train", "Training (2 seeds x 2 tasks)", demo.stage_train),
                            ("explain", "Scripted explanation", demo.stage_explain),
                            ("metrics", "Evidence and metrics", demo.stage_metrics)):
         if deps_ok:

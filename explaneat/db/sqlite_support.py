@@ -1,29 +1,21 @@
-"""Detect whether the schema can be created on SQLite.
+"""SQLite support for the PostgreSQL-typed schema.
 
-The models use PostgreSQL JSONB / UUID column types. SQLite renderings for
-them come from ``explaneat.db.sqlite_compat`` (added on the Cox survival
-branch, ``exp/cox-survival``). Until that module is on this branch, a SQLite
-file cannot hold the schema, and ``explaneat setup`` / ``demo`` say so
-instead of failing halfway. The test suite registers the same renderings in
-``tests/conftest.py``, so tests see SQLite as supported.
+The models use PostgreSQL JSONB / UUID column types; ``explaneat.db.sqlite_compat``
+registers SQLite renderings for them (JSON, CHAR(32)). ``Database.init_db``
+loads it for every SQLite URL, and ``explaneat setup`` / ``doctor`` / ``demo``
+use the probe below to confirm the schema compiles before touching a file.
 """
 
 from __future__ import annotations
 
 from typing import Tuple
 
-PENDING_NOTE = (
-    "SQLite schema support (explaneat/db/sqlite_compat.py) is not on this "
-    "branch yet; it arrives with the exp/cox-survival merge. Until then use "
-    "Postgres via DATABASE_URL, or run the demo without a database."
-)
-
 
 def load_sqlite_compat() -> bool:
-    """Import the SQLite type shim if this branch has it."""
+    """Import the SQLite type renderings (idempotent)."""
     try:
         import explaneat.db.sqlite_compat  # noqa: F401
-    except ImportError:
+    except ImportError:  # pragma: no cover - the module ships with the package
         return False
     return True
 
@@ -39,6 +31,7 @@ def sqlite_schema_supported() -> Tuple[bool, str]:
     table = Table("_probe", MetaData(), Column("j", JSONB), Column("u", UUID(as_uuid=True)))
     try:
         CreateTable(table).compile(dialect=sqlite.dialect())
-    except Exception:  # sqlalchemy raises CompileError / UnsupportedCompilationError
-        return False, PENDING_NOTE
-    return True, ("explaneat.db.sqlite_compat" if has_module else "type renderings registered elsewhere")
+    except Exception as e:  # CompileError / UnsupportedCompilationError
+        return False, f"JSONB/UUID do not compile for SQLite ({type(e).__name__}); " \
+                      "explaneat/db/sqlite_compat.py is missing or broken"
+    return True, ("explaneat.db.sqlite_compat" if has_module else "renderings registered elsewhere")
