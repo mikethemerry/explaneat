@@ -414,6 +414,11 @@ class CoverageResponse(BaseModel):
     covered_nodes: List[str]
     uncovered_nodes: List[str]
     annotations_count: int
+    leaf_count: int = 0
+    composition_count: int = 0
+    uncovered_edges: List[List[str]] = []
+    by_annotation: Dict[str, List[str]] = {}
+    hierarchy: Optional[Dict[str, Any]] = None
 
 
 # =============================================================================
