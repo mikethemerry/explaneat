@@ -229,3 +229,20 @@ allows (decided before any test result of G is seen, from the timing of the P = 
   generation 99 as pre-registered. F2: the qualifying donors are s1 and s5
   `few_indicators_gate`; s7 has no qualifying leaf (its gate is not a graftable all-input
   leaf with gain ≥ 0.02), so F2 has 14 pairs (7 recipients × 2 donors), all graftable.
+
+## Amendment 2 (2026-11-06, before any F3 run): F3 details
+
+F3 is run, since the budget allows (`run_evolve_graft.py`, one process per seed, seeds 0–2,
+outputs `evolve_graft_s<seed>.csv`). Details fixed now:
+- the stored generation-10 genomes (already trained and evaluated in the original run) are
+  the initial population; the continuation backpropagates and evaluates them again as its
+  first generation (labelled 10) and runs 41 generations (labels 10–50);
+- the grafted elite's nodes are renumbered above the population's largest node id; the
+  genome config's node indexer starts 50 above that, and the reproduction genome indexer
+  above the largest key, identically in every arm; the inserted genome takes the worst
+  genome's key;
+- species are rebuilt by speciating the generation-10 population (stagnation history is not
+  restored);
+- outcome reference: the original run's best stored fitness in generation 50;
+- the final genome is the best (by train fitness) of the generation-50 population; its test
+  AUC is read once.
