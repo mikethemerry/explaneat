@@ -27,6 +27,14 @@ from registry import pearson  # noqa: E402
 from tasks import load_task  # noqa: E402
 
 
+def _count(items):
+    out = {}
+    for op, src in items:
+        k = f"{op} from island {src}"
+        out[k] = out.get(k, 0) + 1
+    return out
+
+
 def describe(task_name, arm, seed, run_set="main"):
     d = HERE / "results" / run_set
     stem = f"{task_name}-{arm}-s{seed}"
@@ -64,8 +72,12 @@ def describe(task_name, arm, seed, run_set="main"):
             "n_variants_added": len(fam),
             "variants": [(h["island"], h["generation"], h["n_hidden"], round(h["gain"], 3),
                           h.get("n_nodes_already_tagged_same")) for h in fam],
-            "ops_into_final_island": [(r["generation"], r["op"], r.get("source_island"))
-                                      for r in moves],
+            "ops_on_final_island": _count([(r["op"], r.get("source_island")) for r in moves]),
+            "node_ids_in_library_variants": {
+                str(n): sorted({(v["island"], v["generation"]) for v in
+                                det["library"].get(str(mid), [])
+                                if n in v["chunk"]["hidden_nodes"]})
+                for n in nodes},
             "n_crossovers_inheriting_it_on_final_island": len(xo),
             "contribution_sd_on_probe": float(np.std(sm)),
             "truth": truth})
@@ -74,4 +86,10 @@ def describe(task_name, arm, seed, run_set="main"):
 
 if __name__ == "__main__":
     t, a, sd = sys.argv[1], sys.argv[2], int(sys.argv[3])
-    print(json.dumps(describe(t, a, sd), indent=1, default=str))
+    d = describe(t, a, sd)
+    if "--compact" in sys.argv:
+        print({k: v for k, v in d.items() if k != "modules"})
+        for m in d["modules"]:
+            print(json.dumps(m, default=str))
+    else:
+        print(json.dumps(d, indent=1, default=str))
