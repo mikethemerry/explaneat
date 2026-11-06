@@ -108,3 +108,13 @@ XOR is the base case of the signals / realisations framing:
 - **Evolution mostly finds non-minimal realisations:** duplicate hinges and mixed
   decompositions. Reducing them to a minimal form is itself a recomposition step, the kind of
   simplification ExplaNEAT's annotation operations make explicit.
+
+## Related work
+
+- **Méloux et al. (ICLR 2025)** show that mechanistic explanations of small XOR MLPs are not
+  identifiable: they find 85 circuits for one small XOR MLP. Cite them here. What this study adds:
+  - an exact count of realisation classes under the symmetry group;
+  - the comparison with what evolution actually finds;
+  - the split between behaviour on the data and off it.
+- **The background for the threshold case** is the classical identifiability result for minimal
+  tanh networks: Sussmann (1992), unique up to permutation and sign flips.
