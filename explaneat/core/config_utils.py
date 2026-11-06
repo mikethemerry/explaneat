@@ -229,7 +229,6 @@ def load_neat_config(
             neat.DefaultStagnation,
             temp_config_path,
         )
-        return config
     except Exception as e:
         raise ValueError(f"Cannot load NEAT config: {e}")
     finally:
@@ -238,3 +237,22 @@ def load_neat_config(
             os.unlink(temp_config_path)
         except:
             pass
+    apply_training_settings(config, config_json)
+    return config
+
+
+def apply_training_settings(config: neat.Config, config_json: Optional[Dict[str, Any]]) -> neat.Config:
+    """Carry ExplaNEAT training settings from ``config_json["training"]`` onto ``config``.
+
+    Currently ``output_activation``: an experiment trained with a non-default
+    output activation (e.g. "identity" for a Cox survival model) records it as
+    ``config_json["training"]["output_activation"]``; setting it on the loaded
+    config makes every NeuralNeat / ExplaNEAT built from that config (phenotype,
+    formulas, evidence) reproduce the trained function.  Experiments without the
+    key (every classification run) are untouched and default to sigmoid.
+    """
+    training = (config_json or {}).get("training") or {}
+    if training.get("output_activation"):
+        from explaneat.core.neuralneat import set_output_activation
+        set_output_activation(config, training["output_activation"])
+    return config

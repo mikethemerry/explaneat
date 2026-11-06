@@ -424,7 +424,7 @@ def _extract_all_node_activations(
 
     struct_net = StructureNetwork(model_state)
     # Match NeuralNeat training behaviour
-    struct_net.override_output_activation("sigmoid")
+    struct_net.override_output_activation(struct_net.model_output_activation)
     struct_net.override_hidden_activation("relu")
 
     X_tensor = torch.as_tensor(X, dtype=torch.float64)
@@ -510,7 +510,7 @@ def _build_whole_model_context(
     is_binary = (num_classes is not None and num_classes == 2
                  and len(model_state.output_node_ids) == 1)
     if is_binary:
-        struct_net.override_output_activation("sigmoid")
+        struct_net.override_output_activation(struct_net.model_output_activation)
 
     display_map = model_state.get_display_map()
 
@@ -832,7 +832,7 @@ async def compute_viz_data(
                 import torch
                 from ...core.structure_network import StructureNetwork
                 sn = StructureNetwork(ms)
-                sn.override_output_activation("sigmoid")
+                sn.override_output_activation(sn.model_output_activation)
                 sn.override_hidden_activation("relu")
                 X_tensor = torch.as_tensor(X, dtype=torch.float64)
                 y_pred = sn.forward(X_tensor).detach().numpy().ravel()
@@ -1160,6 +1160,26 @@ async def compute_performance(
         else:
             model_state = engine.current_state
 
+        split_row = session.query(DatasetSplit).filter_by(
+            id=uuid.UUID(request.dataset_split_id)).first()
+        ds_row = session.query(Dataset).filter_by(id=split_row.dataset_id).first() if split_row else None
+        ds_meta = dict((ds_row.additional_metadata if ds_row else None) or {})
+        if ds_meta.get("task_type") == "survival":
+            # Survival: whole split (subsampling changes the risk sets),
+            # Breslow baseline on the training rows.
+            from ...survival.evidence import structure_log_risk_fn, survival_performance
+            X_tr, y_tr, *_ = _load_split_data(session, request.dataset_split_id, "train", 1.0, 10**9)
+            X_ev, y_ev, *_ = _load_split_data(session, request.dataset_split_id, request.split, 1.0, 10**9)
+            surv = survival_performance(
+                structure_log_risk_fn(model_state), X_tr, y_tr, X_ev, y_ev, meta=ds_meta,
+                horizons=request.horizons, calibration_horizon=request.calibration_horizon,
+            )
+            return PerformanceResponse(
+                n_samples=int(len(y_ev)), at_seq=request.at_seq,
+                has_non_identity_ops=engine.has_non_identity_ops,
+                survival=surv,
+            )
+
         X, y, _, ds_class_names, ds_num_classes = _load_split_data(
             session, request.dataset_split_id, request.split,
             request.sample_fraction, request.max_samples,
@@ -1180,7 +1200,7 @@ async def compute_performance(
         is_binary = (ds_num_classes is not None and ds_num_classes == 2
                      and len(model_state.output_node_ids) == 1)
         if is_binary:
-            struct_net.override_output_activation("sigmoid")
+            struct_net.override_output_activation(struct_net.model_output_activation)
 
         x_tensor = torch.as_tensor(X, dtype=torch.float64)
         predictions = struct_net.forward(x_tensor).detach().numpy()
@@ -1385,7 +1405,7 @@ async def compute_shap(
             is_binary = (ds_num_classes is not None and ds_num_classes == 2
                          and len(model_state.output_node_ids) == 1)
             if is_binary:
-                struct_net.override_output_activation("sigmoid")
+                struct_net.override_output_activation(struct_net.model_output_activation)
 
             seen_bases: set = set()
             feature_names: list = []

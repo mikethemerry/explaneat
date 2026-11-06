@@ -400,8 +400,13 @@ class AnnotationFunction:
             # Determine activation
             is_output = node_str in self._exit_is_output and self._exit_is_output[node_str]
             layer_is_output = layer.get("is_output_layer", False)
-            use_sigmoid = is_output and layer_is_output
-            activation = "sigmoid" if use_sigmoid else "relu"
+            use_output_act = is_output and layer_is_output
+            # NeuralNeat's configured output activation (sigmoid by default,
+            # identity for a Cox log-risk); hidden layers are ReLU.
+            activation = (
+                getattr(self.net, "output_activation", "sigmoid")
+                if use_output_act else "relu"
+            )
 
             # Extract bias
             bias_val = float(self.net.biases[depth][layer_idx].detach().cpu())

@@ -833,14 +833,22 @@ class PerformanceRequest(BaseModel):
     sample_fraction: float = 1.0
     max_samples: int = 10000
     at_seq: Optional[int] = None  # Compute at specific operation seq (for before/after)
+    # Survival datasets only (task_type "survival"): evaluation horizons and
+    # the calibration horizon, in the dataset's time units.
+    horizons: Optional[List[float]] = None
+    calibration_horizon: Optional[float] = None
 
 
 class PerformanceResponse(BaseModel):
-    """Response for model performance metrics."""
+    """Response for model performance metrics.
 
-    mse: float
-    rmse: float
-    mae: float
+    For survival datasets mse/rmse/mae are None and ``survival`` carries the
+    survival metric bundle (explaneat.survival.evidence.survival_performance).
+    """
+
+    mse: Optional[float] = None
+    rmse: Optional[float] = None
+    mae: Optional[float] = None
     accuracy: Optional[float] = None  # Classification only
     auc_roc: Optional[float] = None
     precision: Optional[float] = None
@@ -853,6 +861,7 @@ class PerformanceResponse(BaseModel):
     n_samples: int
     at_seq: Optional[int] = None
     has_non_identity_ops: bool = False
+    survival: Optional[Dict[str, Any]] = None  # Survival datasets only
 
 
 # =============================================================================

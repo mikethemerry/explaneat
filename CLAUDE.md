@@ -96,7 +96,7 @@ The MCP server exposes 33 tools for model analysis:
 - **Discovery**: list_experiments, get_experiment, get_best_genome, list_genomes, get_genome
 - **Structure**: get_phenotype, get_model_state, get_node_info
 - **Operations**: list_operations, apply_operation, validate_operation, undo_operation, get_annotations
-- **Evidence**: get_formula, compute_viz_data, render_visualization, get_viz_summary, compute_shap, compute_performance, get_input_distribution
+- **Evidence**: get_formula, compute_viz_data, render_visualization, get_viz_summary, compute_shap, compute_performance, get_input_distribution (on a `task_type: "survival"` dataset, `compute_performance` returns Harrell/Uno C, td-AUC, Brier/IBS and calibration at a horizon instead of AUC/accuracy)
 - **Coverage**: classify_nodes, detect_splits, get_coverage
 - **Datasets**: list_datasets, get_dataset, get_dataset_splits
 - **Snapshots**: save_snapshot, update_narrative, list_evidence
@@ -111,7 +111,7 @@ The MCP server exposes 33 tools for model analysis:
 - **`structure_network.py`**: `StructureNetwork` class - builds a layered feedforward network from a `NetworkStructure` and runs forward passes with per-node activation storage. Unlike `NeuralNeat`, works with string node IDs (identity nodes, split nodes, etc.). Handles: identity activation, split input nodes (maps to base node's tensor column), partial input connectivity (pruned phenotypes), skip connections
 - **`model_state.py`**: `ModelStateEngine` - replays operations (split_node, add_identity_node, annotate, etc.) on the original phenotype to produce the current annotated model state. Stores operations as an ordered list; supports undo via `remove_operation(seq)`
 - **`operations.py`**: Operation handlers (`apply_split_node`, `apply_add_identity_node`, `apply_add_node`, `apply_remove_node`, `apply_consolidate_node`) that modify `NetworkStructure` in place. Also contains `validate_operation()` which enforces the three preconditions for annotations
-- **`backproppop.py`**: `BackpropPopulation` - extends NEAT's population with backpropagation training loop
+- **`backproppop.py`**: `BackpropPopulation` - extends NEAT's population with backpropagation training loop. Full-batch; minimises `self.criterion` (default `nn.BCELoss()`; any `criterion(pred, target)`, e.g. `CoxCriterion` on an `[N, 2]` survival target)
 - **`genome_network.py`**: Data classes for network representation (`NetworkStructure`, `NetworkNode`, `NetworkConnection`, `NodeType`)
 
 ### Analysis Layer (`explaneat/analysis/`)
@@ -129,6 +129,21 @@ The MCP server exposes 33 tools for model analysis:
 - **`collapse_validator.py`**: `CollapseValidator` - validates collapse preconditions and performs collapse/expand operations (pure graph logic, no DB)
 - **`subgraph_validator.py`**: `SubgraphValidator` - validates connectivity of annotation subgraphs
 - **`visualization.py`**: `GenomeVisualizer`, `InteractiveNetworkViewer` - Pyvis and React-based network visualization
+
+### Survival Layer (`explaneat/survival/`)
+
+Cox proportional-hazards models. The network outputs a log-risk `g(x)` through an identity output, is trained full-batch on the Efron Cox partial likelihood, and gets a Breslow baseline: `S(t|x) = S0(t)^exp(g(x))`. User guide: `docs/survival.md`. Validation results: `experiments/survival/RESULTS.md`. The optional extra `uv sync --extra survival` installs scikit-survival and lifelines.
+
+- **`cox.py`**: `CoxRiskSets` (build once per fold, from that fold's training rows), `cox_ph_loss` (Breslow/Efron, vectorised), `null_cox_loss`
+- **`criterion.py`**: `CoxCriterion` for `BackpropPopulation(criterion=...)`; target `[N, 2]` = (time, event)
+- **`fitness.py`**: `make_cox_fitness` (fitness = −loss − λ·k/D, never 1/loss), `cox_concordance_fitness` (ablation)
+- **`breslow.py`**: `BreslowBaseline`, `fit_survival_predictor`
+- **`metrics.py`**: Harrell/Uno C, time-dependent AUC, IPCW Brier, IBS, `calibration_at_horizon` (decile predicted vs KM observed risk), `survival_metrics` bundle
+- **`data.py`**: targets, sksurv builtin loaders, `load_survival_csv` (cohort hook), event-stratified splits, DB storage (`task_type: "survival"`, `y_data` `[N, 2]`, no schema change)
+- **`evidence.py`**: `survival_performance`, called by `compute_performance` (MCP + API) on survival datasets
+- **`explain.py`**: hazard-ratio readings of output terms (direct edges, ReLU hinges)
+- **`simulate.py`**: known-truth linear / non-linear simulations (run first)
+- Runner and benchmark: `experiments/survival/run_seed.py`, `study.py`. A local SQLite DB for restricted data uses `explaneat/db/sqlite_compat.py`
 
 ### API Layer (`explaneat/api/`)
 
@@ -202,7 +217,7 @@ Interactive shell for exploring genomes:
 ### Two Forward-Pass Engines
 - **`NeuralNeat`**: PyTorch `nn.Module` from raw NEAT genome. Integer node IDs only. Used for training
 - **`StructureNetwork`**: NumPy/Torch forward-pass from `NetworkStructure`. String node IDs, handles identity nodes (`identity_5`), split nodes (`5_a`, `5_b`), and split input nodes (`-20_a`). Used for evidence visualization on annotated models
-- **Parity**: `NeuralNeat` always applies sigmoid at the output layer (ReLU on hidden layers), whatever the output gene says. `ExplaNEAT.get_genotype_network()`/`get_phenotype_network()` therefore set `activation="sigmoid"` on output nodes, so StructureNetwork, ActivationExtractor, AnnotationFunction and formulas compute the trained model's function (`tests/test_core/test_engine_parity.py`)
+- **Parity**: `NeuralNeat` applies its configured output activation at the output layer (ReLU on hidden layers), whatever the output gene says: sigmoid by default, `identity` for Cox survival models. The setting lives on the NEAT config as `config.output_activation` (`neuralneat.set_output_activation` / `get_output_activation`; absent = sigmoid), is recorded on experiments as `config_json["training"]["output_activation"]` and restored by `load_neat_config`. `ExplaNEAT.get_genotype_network()`/`get_phenotype_network()` set that activation on output nodes (and `metadata["output_activation"]` when non-default), so StructureNetwork, ActivationExtractor, AnnotationFunction and formulas compute the trained model's function. Evidence code must call `sn.override_output_activation(sn.model_output_activation)`, never a literal `"sigmoid"` (`tests/test_core/test_engine_parity.py`)
 
 ### Operations-Based Model State
 The model state is computed by replaying an ordered list of operations on the base phenotype. Operations are stored as JSONB on the `Explanation` model. Operation types: `split_node`, `consolidate_node`, `add_identity_node`, `add_node`, `remove_node`, `annotate`. The `ModelStateEngine` handles replay, undo, and validation.

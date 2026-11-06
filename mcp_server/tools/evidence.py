@@ -15,6 +15,7 @@ from ..helpers import (
     find_annotation_in_operations,
     load_annotations,
     load_split_data,
+    load_split_metadata,
     resolve_annotation_for_evaluation,
 )
 
@@ -148,7 +149,7 @@ def _build_whole_model_context(session, genome_id: str, X: np.ndarray, num_class
     is_binary = (num_classes is not None and num_classes == 2
                  and len(model_state.output_node_ids) == 1)
     if is_binary:
-        struct_net.override_output_activation("sigmoid")
+        struct_net.override_output_activation(struct_net.model_output_activation)
 
     entry_names = [str(nid) for nid in model_state.input_node_ids]
     exit_names = [str(nid) for nid in model_state.output_node_ids]
@@ -280,7 +281,7 @@ def _do_compute_viz_data(
             ms = build_model_state(session, genome_id) if is_whole_model else model_state
             all_node_ids = [n.id for n in ms.nodes]
             struct_net = StructureNetwork(ms)
-            struct_net.override_output_activation("sigmoid")
+            struct_net.override_output_activation(struct_net.model_output_activation)
             struct_net.override_hidden_activation("relu")
             x_tensor = torch.as_tensor(X, dtype=torch.float64)
             struct_net.forward(x_tensor)
@@ -312,7 +313,7 @@ def _do_compute_viz_data(
                 all_node_ids = list(subgraph_nodes)
             source_ids = list({c.from_node for c in connections})
             struct_net = StructureNetwork(ms)
-            struct_net.override_output_activation("sigmoid")
+            struct_net.override_output_activation(struct_net.model_output_activation)
             struct_net.override_hidden_activation("relu")
             x_tensor = torch.as_tensor(X, dtype=torch.float64)
             struct_net.forward(x_tensor)
@@ -331,7 +332,7 @@ def _do_compute_viz_data(
                 subgraph_nodes_set = set(annotation.get("subgraph_nodes", []))
             all_node_ids = list(subgraph_nodes_set)
             struct_net = StructureNetwork(ms)
-            struct_net.override_output_activation("sigmoid")
+            struct_net.override_output_activation(struct_net.model_output_activation)
             struct_net.override_hidden_activation("relu")
             x_tensor = torch.as_tensor(X, dtype=torch.float64)
             struct_net.forward(x_tensor)
@@ -715,7 +716,7 @@ def compute_shap(
             is_binary = (num_classes is not None and num_classes == 2
                          and len(model_state.output_node_ids) == 1)
             if is_binary:
-                struct_net.override_output_activation("sigmoid")
+                struct_net.override_output_activation(struct_net.model_output_activation)
 
             feat_names = feature_names_ds or [str(nid) for nid in model_state.input_node_ids]
 
@@ -749,11 +750,21 @@ def compute_performance(
     annotation_id: Optional[str] = None,
     split: str = "test",
     max_samples: int = 1000,
+    horizons: Optional[List[float]] = None,
+    calibration_horizon: Optional[float] = None,
 ) -> str:
     """Compute model performance metrics (MSE, RMSE, MAE, accuracy, etc.).
 
     For classification tasks, also computes accuracy, AUC-ROC, precision,
     recall, and F1.
+
+    For survival datasets (``task_type: "survival"``, y = [N, 2] time/event)
+    reports survival metrics instead: Harrell's and Uno's C on the log-risk,
+    time-dependent AUC and IPCW Brier at ``horizons``, integrated Brier score,
+    Cox loss vs its null, and calibration at ``calibration_horizon``
+    (predicted vs observed risk by decile). The Breslow baseline is fitted on
+    the split's training rows and the whole requested split is evaluated
+    (``max_samples`` is ignored, since subsampling changes the risk sets).
 
     Args:
         genome_id: UUID of the genome.
@@ -761,12 +772,29 @@ def compute_performance(
         annotation_id: Annotation ID (optional, for annotation-level perf).
         split: Which split: "train", "test", "val", or "both".
         max_samples: Maximum number of samples.
+        horizons: Survival only: evaluation times (dataset time units).
+        calibration_horizon: Survival only: horizon for the calibration table.
     """
     from explaneat.core.structure_network import StructureNetwork
     import torch
 
     db = get_db()
     with db.session_scope() as session:
+        meta = load_split_metadata(session, dataset_split_id)
+        if meta.get("task_type") == "survival":
+            from explaneat.survival.evidence import (
+                structure_log_risk_fn, survival_performance,
+            )
+            X_tr, y_tr, *_ = load_split_data(session, dataset_split_id, "train", 1.0, 10**9)
+            X_ev, y_ev, *_ = load_split_data(session, dataset_split_id, split, 1.0, 10**9)
+            model_state = build_model_state(session, genome_id)
+            result = survival_performance(
+                structure_log_risk_fn(model_state), X_tr, y_tr, X_ev, y_ev,
+                meta=meta, horizons=horizons, calibration_horizon=calibration_horizon,
+            )
+            result["split"] = split
+            return json.dumps(result, indent=2, default=_json_default)
+
         X, y, feature_names, class_names, num_classes = load_split_data(
             session, dataset_split_id, split, 1.0, max_samples,
         )
@@ -785,7 +813,7 @@ def compute_performance(
         is_binary = (num_classes is not None and num_classes == 2
                      and len(model_state.output_node_ids) == 1)
         if is_binary:
-            struct_net.override_output_activation("sigmoid")
+            struct_net.override_output_activation(struct_net.model_output_activation)
 
         x_tensor = torch.as_tensor(X, dtype=torch.float64)
         predictions = struct_net.forward(x_tensor).detach().numpy()

@@ -241,6 +241,15 @@ def load_split_data(
     return X, y, dataset.feature_names, dataset.class_names, dataset.num_classes
 
 
+def load_split_metadata(session, split_id: str) -> Dict[str, Any]:
+    """The split's dataset ``additional_metadata`` (e.g. ``task_type``), or {}."""
+    split = session.query(DatasetSplit).filter_by(id=_to_uuid(split_id)).first()
+    if not split:
+        raise ValueError(f"Dataset split not found: {split_id}")
+    dataset = session.query(Dataset).filter_by(id=split.dataset_id).first()
+    return dict((dataset.additional_metadata if dataset else None) or {})
+
+
 def serialize_network(ns: NetworkStructure) -> Dict[str, Any]:
     """Convert a NetworkStructure to a JSON-serializable dict.
 

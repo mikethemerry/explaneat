@@ -91,6 +91,11 @@ class StateEvaluator:
             if c.enabled and c.from_node in self.nodes and c.to_node in self.nodes:
                 self.preds[c.to_node].append((c.from_node, c.weight))
         self.output_ids = [str(o) for o in structure.output_node_ids]
+        from ..core.structure_network import structure_output_activation
+
+        # The trained model's output activation (sigmoid, or identity for a
+        # Cox log-risk), not the stored gene: same rule as StructureNetwork.
+        self.output_activation = structure_output_activation(structure).lower()
 
     def _order(self, extra_deps: Dict[str, Sequence[str]]):
         deps = {n: {p for p, _ in self.preds[n]} | set(extra_deps.get(n, ())) for n in self.nodes}
@@ -140,7 +145,7 @@ class StateEvaluator:
             for p, w in self.preds[n]:
                 z = z + w * vals[p]
             if node.type == NodeType.OUTPUT:
-                act = (node.activation or "sigmoid").lower()
+                act = self.output_activation
                 if pre_activation or act == "identity":
                     vals[n] = z
                 elif act == "relu":
