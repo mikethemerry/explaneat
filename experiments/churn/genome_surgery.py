@@ -219,9 +219,18 @@ def finetune(genome, config, X, y, epochs: Optional[int], seed: int,
     if protect_epochs < 0:
         raise ValueError("protect_epochs must be >= 0")
     protecting = protect_epochs > 0 and bool(protect_conn_keys or protect_nodes)
+    n_protect_unlocated = 0
     if protecting:
-        pw_masks, pb_masks = _param_masks(net, g, list(frozen_conn_keys) + protect_conn_keys,
-                                          frozen_nodes | protect_nodes, mask_phantom)
+        # protected parameters NeuralNeat does not build (e.g. edges into a grafted node
+        # that is not on an input -> output path) cannot train anyway: skip them
+        in_net = {k for layer in net.layers.values() for k in layer["input_map"]}
+        nodes_in_net = {n for layer in net.layers.values() for n in layer["nodes"]}
+        located_c = [k for k in protect_conn_keys if k in in_net]
+        located_n = {n for n in protect_nodes if n in nodes_in_net}
+        n_protect_unlocated = (len(set(protect_conn_keys)) - len(set(located_c))
+                               + len(protect_nodes) - len(located_n))
+        pw_masks, pb_masks = _param_masks(net, g, list(frozen_conn_keys) + located_c,
+                                          frozen_nodes | located_n, mask_phantom)
 
     optimizer = optim.Adadelta(net.parameters(), lr=FT_LR)
     optimizer.zero_grad()
@@ -309,7 +318,8 @@ def finetune(genome, config, X, y, epochs: Optional[int], seed: int,
     if protecting:
         info.update({"protect_epochs": int(protect_epochs),
                      "n_protected_connections": len(set(protect_conn_keys)),
-                     "n_protected_nodes": len(protect_nodes)})
+                     "n_protected_nodes": len(protect_nodes),
+                     "n_protected_not_in_network": int(n_protect_unlocated)})
     if early_stop:
         yval = np.asarray(val_y, dtype=np.float64).ravel()
         pv = np.clip(predict_proba(g, config, val_X), eps, 1 - eps)

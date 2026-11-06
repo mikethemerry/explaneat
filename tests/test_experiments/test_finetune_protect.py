@@ -179,3 +179,23 @@ class TestProtection:
         with pytest.raises(ValueError, match="protect_epochs"):
             gs.finetune(g, small_config, X, y, 5, 0, protect_epochs=-1,
                         protect_node_keys=[1])
+
+
+def test_protected_keys_outside_network_are_skipped(small_config, recipient_genome):
+    """A protected edge into a node NeuralNeat does not build (no path to the output)."""
+    from neat.genes import DefaultConnectionGene, DefaultNodeGene
+    import copy
+    g = copy.deepcopy(recipient_genome)
+    n = DefaultNodeGene(9)
+    n.bias, n.response, n.activation, n.aggregation = 0.1, 1.0, "relu", "sum"
+    g.nodes[9] = n
+    c = DefaultConnectionGene((-1, 9))
+    c.weight, c.enabled = 0.5, True
+    g.connections[(-1, 9)] = c
+    X, y, _, _ = _toy(100, seed=1)
+    out, info = gs.finetune(g, small_config, X, y, 10, 0, mask_phantom=True, return_info=True,
+                            protect_conn_keys=[(-1, 9), (-1, 1)], protect_node_keys=[9, 1],
+                            protect_epochs=10)
+    assert info["n_protected_not_in_network"] == 2
+    assert out.connections[(-1, 1)].weight == g.connections[(-1, 1)].weight
+    assert out.nodes[1].bias == g.nodes[1].bias
