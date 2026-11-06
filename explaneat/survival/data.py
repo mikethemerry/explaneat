@@ -184,11 +184,11 @@ def survival_split_indices(event, test_size: float = 0.25, val_size: float = 0.0
 
 
 def save_split_indices(path, splits: Dict[str, List[int]], **meta) -> None:
-    Path(path).write_text(json.dumps({**meta, "splits": splits}, indent=1))
+    Path(path).write_text(json.dumps({**meta, "splits": splits}, indent=1), encoding="utf-8")
 
 
 def load_split_indices(path) -> Dict[str, List[int]]:
-    return json.loads(Path(path).read_text())["splits"]
+    return json.loads(Path(path).read_text(encoding="utf-8"))["splits"]
 
 
 def standardise(X_train, *others):
