@@ -237,6 +237,12 @@ def test_api_tools(api):
     bad = {"operations": [{"seq": 0, "type": "split_node", "params": {"node_id": "999"}}]}
     assert client.post(f"/api/genomes/{gid}/tools/operations/import-preview", json=bad).status_code == 422
 
+    r = client.put(f"/api/genomes/{gid}/tools/annotations/lin/hypothesis", json={"hypothesis": "H"})
+    assert r.status_code == 200, r.text
+    assert client.get(f"/api/genomes/{gid}/tools/annotations/ann_0/hypothesis").json()["hypothesis"] == "H"
+    assert client.put(f"/api/genomes/{gid}/tools/annotations/zz/hypothesis",
+                      json={"hypothesis": "H"}).status_code == 404
+
     recs = client.get("/api/records").json()
     assert recs["records"][0]["in_db"] and recs["n_verified"] == 0
     r = client.put("/api/records/t-s0/verification", json={"verified": True, "minutes": 12, "changes": ""})

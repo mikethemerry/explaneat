@@ -267,3 +267,52 @@ async def import_operations(req: ImportRequest, genome_id: str = Path(...)):
         ex.operations = [op.to_dict() for op in engine.operations]
         n = len(ex.operations)
     return {"status": "imported", "n_operations": n}
+
+
+# ---------------------------------------------------------------- hypothesis
+
+
+def _match(op, annotation_id):
+    p = op.get("params", {}) or {}
+    aid = (op.get("result") or {}).get("annotation_id") or f"ann_{op.get('seq', 0)}"
+    return op.get("type") == "annotate" and annotation_id in (aid, p.get("name")), aid, p
+
+
+@router.get("/annotations/{annotation_id}/hypothesis")
+async def get_hypothesis(annotation_id: str, genome_id: str = Path(...)):
+    """The annotation's hypothesis text and its evidence categories."""
+    with db.session_scope() as session:
+        for op in _operations(session, genome_id):
+            ok, aid, p = _match(op, annotation_id)
+            if ok:
+                ev = p.get("evidence") or {}
+                return {"annotation_id": aid, "name": p.get("name"),
+                        "hypothesis": p.get("hypothesis") or "",
+                        "evidence_counts": {k: len(v) for k, v in ev.items() if isinstance(v, list)}}
+    raise HTTPException(status_code=404, detail=f"Annotation {annotation_id!r} not found")
+
+
+class HypothesisRequest(BaseModel):
+    hypothesis: str
+
+
+@router.put("/annotations/{annotation_id}/hypothesis")
+async def put_hypothesis(annotation_id: str, req: HypothesisRequest, genome_id: str = Path(...)):
+    """Overwrite the annotation's hypothesis (as MCP ``update_narrative``)."""
+    from sqlalchemy.orm.attributes import flag_modified
+
+    from ...db.explanation_lock import lock_explanation
+
+    with db.session_scope() as session:
+        ex = lock_explanation(session, genome_id)
+        ops = list(ex.operations or []) if ex else []
+        for op in ops:
+            ok, aid, p = _match(op, annotation_id)
+            if ok:
+                p["hypothesis"] = req.hypothesis
+                op["params"] = p
+                ex.operations = ops
+                flag_modified(ex, "operations")
+                session.flush()
+                return {"status": "ok", "annotation_id": aid}
+    raise HTTPException(status_code=404, detail=f"Annotation {annotation_id!r} not found")

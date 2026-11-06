@@ -65,13 +65,46 @@ type EdgeInfluenceData = {
   normalized_influence: number;
 };
 
+/**
+ * Highlight classes for nodes/edges (lineage diffs, coverage checklist, candidates):
+ * - added: present only in the newer genome (green glow)
+ * - removed: present only in the older genome (ghosted, dashed)
+ * - changed: weight/bias changed (amber)
+ * - uncovered: not covered by any annotation (orange dashed ring)
+ * - focus: nodes of a suggested candidate (cyan ring)
+ */
+export type HighlightKind = "added" | "removed" | "changed" | "uncovered" | "focus";
+
+export const HIGHLIGHT_STYLE: Record<HighlightKind, { color: string; label: string }> = {
+  added: { color: "#16a34a", label: "Added" },
+  removed: { color: "#9ca3af", label: "Removed (ghost)" },
+  changed: { color: "#d97706", label: "Weight/bias changed" },
+  uncovered: { color: "#ea580c", label: "Uncovered" },
+  focus: { color: "#0891b2", label: "Candidate" },
+};
+
 type NetworkViewerProps = {
   model: ModelState;
   selectedNodes: Set<string>;
   onNodeSelect: (nodeIds: string[]) => void;
   annotationNodeIds?: string[]; // IDs of synthetic annotation nodes
   edgeInfluence?: Record<string, EdgeInfluenceData> | null;
+  nodeHighlight?: Record<string, HighlightKind> | null;
+  edgeHighlight?: Record<string, HighlightKind> | null; // keyed "from->to"
 };
+
+function highlightNodeStyle(kind: HighlightKind | undefined): Record<string, string | number> {
+  if (!kind) return {};
+  const c = HIGHLIGHT_STYLE[kind].color;
+  switch (kind) {
+    case "removed":
+      return { opacity: 0.35, border: `2px dashed ${c}` };
+    case "uncovered":
+      return { border: `3px dashed ${c}`, boxShadow: `0 0 0 3px ${c}33` };
+    default:
+      return { border: `3px solid ${c}`, boxShadow: `0 0 10px ${c}aa` };
+  }
+}
 
 // =============================================================================
 // Layer-based layout (max depth from inputs)
@@ -435,6 +468,8 @@ function convertModelToFlow(
   model: ModelState,
   annotationNodeIds: Set<string>,
   edgeInfluence?: Record<string, EdgeInfluenceData> | null,
+  nodeHighlight?: Record<string, HighlightKind> | null,
+  edgeHighlight?: Record<string, HighlightKind> | null,
 ): { nodes: Node[]; edges: Edge[] } {
   logInfo("Converting model to ReactFlow format", {
     nodeCount: model.nodes.length,
@@ -511,17 +546,19 @@ function convertModelToFlow(
           textAlign: "center" as const,
         };
 
+    const hl = nodeHighlight?.[node.id];
     return {
       id: node.id,
       type: "default",
       position: { x: index * 150, y: 0 }, // Will be overwritten by layout
       data: {
         label,
-        tooltip,
+        tooltip: hl ? `${tooltip}\n[${HIGHLIGHT_STYLE[hl].label}]` : tooltip,
         nodeType: effectiveType,
         isFunctionNode,
+        highlight: hl,
       },
-      style,
+      style: { ...style, ...highlightNodeStyle(hl) },
     };
   });
 
@@ -614,6 +651,28 @@ function convertModelToFlow(
     let edgeStrokeWidth: number;
     let edgeMarkerColor: string;
 
+    const ehl = edgeHighlight?.[influenceKey];
+    if (ehl) {
+      const c = HIGHLIGHT_STYLE[ehl].color;
+      return {
+        id: edgeId,
+        source: conn.from,
+        target: conn.to,
+        type: "default",
+        animated: ehl === "added",
+        style: {
+          stroke: c,
+          strokeWidth: ehl === "removed" ? 1.5 : Math.max(strokeWidth, 2.5),
+          ...(ehl === "removed" ? { strokeDasharray: "5 4", opacity: 0.45 } : {}),
+        },
+        markerEnd: { type: MarkerType.ArrowClosed, color: c, width: 15, height: 15 },
+        label: conn.weight.toFixed(2),
+        labelStyle: { fontSize: "10px", fontWeight: "bold", fill: c },
+        labelBgStyle: { fill: "#fff", fillOpacity: 0.8 },
+        data: { enabled: true, highlight: ehl },
+      };
+    }
+
     if (inf) {
       edgeStrokeWidth = 1 + inf.normalized_influence * 5;
       const baseColor = inf.mean_contribution >= 0 ? "#3b82f6" : "#ef4444";
@@ -683,6 +742,8 @@ export function NetworkViewer({
   onNodeSelect,
   annotationNodeIds = [],
   edgeInfluence,
+  nodeHighlight,
+  edgeHighlight,
 }: NetworkViewerProps) {
   // Convert model to ReactFlow format with layer-based layout
   const { initialNodes, initialEdges } = useMemo(() => {
@@ -691,7 +752,7 @@ export function NetworkViewer({
 
     // Convert model to ReactFlow nodes/edges
     const annotationNodeSet = new Set(annotationNodeIds);
-    const { nodes: flowNodes, edges: flowEdges } = convertModelToFlow(model, annotationNodeSet, edgeInfluence);
+    const { nodes: flowNodes, edges: flowEdges } = convertModelToFlow(model, annotationNodeSet, edgeInfluence, nodeHighlight, edgeHighlight);
 
     // Get input node IDs from metadata
     const inputNodeIds = new Set(model.metadata.input_nodes);
@@ -724,7 +785,7 @@ export function NetworkViewer({
     });
 
     return { initialNodes: layoutedNodes, initialEdges: layoutedEdges };
-  }, [model, annotationNodeIds, edgeInfluence]);
+  }, [model, annotationNodeIds, edgeInfluence, nodeHighlight, edgeHighlight]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -744,6 +805,7 @@ export function NetworkViewer({
       nds.map((node) => {
         const isSelected = selectedNodes.has(node.id);
         const colors = NODE_COLORS[node.data.nodeType as string] || NODE_COLORS.hidden;
+        const hl = highlightNodeStyle(node.data.highlight as HighlightKind | undefined);
 
         return {
           ...node,
@@ -752,8 +814,8 @@ export function NetworkViewer({
             ...node.style,
             border: isSelected
               ? `3px solid #FFD700`
-              : `2px solid ${colors.border}`,
-            boxShadow: isSelected ? "0 0 10px rgba(255, 215, 0, 0.5)" : "none",
+              : (hl.border as string) || `2px solid ${colors.border}`,
+            boxShadow: isSelected ? "0 0 10px rgba(255, 215, 0, 0.5)" : (hl.boxShadow as string) || "none",
           },
         };
       })
