@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException, Path, Query
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
 
+from ...db import sqlite_compat  # noqa: F401  (a local SQLite DB for restricted cohorts)
 from ...batch import common
 from ...batch.common import StorageError
 from ...db import db

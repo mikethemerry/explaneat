@@ -365,3 +365,117 @@ part of the method, not advice.
 - [ ] Run `uv run pytest tests/test_survival` and the simulation check
   (`study.py sim`) inside the environment. Unvalidated code is not run
   against patient data (HDEC 2.6).
+
+## 7. The portal workflow (no scripts)
+
+The React Explorer's **Run experiments** tab (`/portal`) runs the steps of
+§2.3 and §6 from the browser. The API serves it at
+`http://127.0.0.1:8000/portal` after `uv run python -m explaneat api`. Library
+code is in `explaneat/batch/`; the API is under `/api/portal`.
+
+1. **Load a local CSV.** Enter the path of a CSV or Parquet file on this
+   machine. The file is read in place and never uploaded or copied.
+   - **Preview** lists each column's type, missing count, number of distinct
+     values, and range or levels. It shows no raw rows, and suggests the time,
+     event and categorical columns.
+   - Choose a role for each column: numeric feature, one-hot feature (encoded
+     as `feature:level`), time, event, or ignore. Set the event value, the time
+     unit, explicit median imputation (otherwise missing values are refused),
+     the test fraction, the validation fraction (of the rest) and the split
+     seed.
+   - The import stores the dataset with `task_type: "survival"` and
+     `restricted`, recording the file's base name only. It also stores an
+     event-stratified train/val/test split, with the scaler fitted on train.
+   - Binary classification works the same way, with a target column.
+2. **Launch a batch.** Choose the dataset, the split and the template.
+   - **survival-cox-v3** is protocol v3 of `experiments/survival/RESULTS.md`
+     §2:
+     - identity output;
+     - Efron Cox loss, 5 epochs per generation, phantom mask;
+     - population 150, 60 generations, `weight_init_stdev = 0.1`;
+     - fitness −loss − λ·k/D with λ = 1;
+     - selection: the generation champion with the lowest validation Cox loss.
+   - The batch settings are the seeds (e.g. `0-9`), the generations, the
+     population, the epochs, λ and a concurrency limit.
+   - Each seed runs as its own process (`python -m explaneat.batch.worker`).
+     Every seed keeps its own RNG state, so runs are reproducible per seed.
+     Ancestry is recorded for the lineage view.
+   - The batch table shows each run's progress and its best training and
+     validation scores. **Cancel** stops a run at the next generation
+     boundary, leaving it `interrupted`. **Resume** continues from the last
+     saved generation; a resumed run is not bit-identical to an uninterrupted
+     one.
+   - Batch state lives in `$EXPLANEAT_HOME/jobs/<batch>/`, which defaults to
+     `~/.explaneat/jobs`, and survives an API restart.
+3. **Results table.** For each seed, on the test fold:
+   - Harrell's C with a bootstrap 95% CI (500 resamples), Uno's C, mean
+     td-AUC, IBS, test Cox loss and calibration E/O;
+   - the ridge-Cox comparator, fitted by the portal on the same split, with
+     alpha tuned on the validation Cox loss as in `run_seed.py`;
+   - the paired bootstrap Δ C;
+   - structure: hidden nodes, connections, k, and events per parameter;
+   - the across-seed mean with a t-interval;
+   - **Export CSV**.
+
+   **Explain** opens the selected network in the explorer. There:
+   - the evidence panel of the output node shows the survival metrics, the
+     calibration plot at the horizon, and hazard-ratio readings of every
+     output term and of each annotation's exit;
+   - the tools drawer works on survival models too. Restore gain uses
+     Harrell's C. Category offsets are classification-only.
+
+Not supported yet:
+- the published PREDICT/VAREANZ equation as a comparator (splines,
+  interactions, strata): the portal fits a plain ridge Cox on the network's
+  inputs;
+- repeated-split benchmarks (`study.py bench`): one split per batch;
+- competing risks;
+- Schoenfeld PH diagnostics;
+- choosing horizons in the UI: horizons default to the training event-time
+  quartiles, and the calibration horizon to the median, unless the dataset
+  metadata sets `horizons` / `calibration_horizon`.
+
+## 8. Data governance (DAP / HDEC)
+
+The defaults are chosen for restricted cohorts. They do not replace the
+checklist in §6.
+
+- **Everything runs locally.**
+  - The API binds to `127.0.0.1` by default.
+  - The UI bundle loads no external scripts, fonts or CDNs: KaTeX fonts are
+    bundled, and the UI only calls `/api` on the same host.
+  - There is no telemetry.
+  - The only routes that call out are the PMLB/UCI dataset search and
+    download routes. Server restricted mode disables them.
+- **Server restricted mode:** `EXPLANEAT_RESTRICTED=1`.
+  - The PMLB/UCI routes return 403.
+  - The MCP (Claude-assisted) path refuses every genome and dataset, unless
+    `EXPLANEAT_ALLOW_ASSISTED_RESTRICTED=1` is set.
+  - Every CSV import is treated as restricted.
+  - `GET /api/governance` reports the settings.
+- **Restricted datasets.** Tick *restricted data* at import, or set
+  `additional_metadata.restricted = true`. The flag has these effects:
+  - **Off-machine paths.** The MCP tools (`mcp_server`) refuse every genome
+    trained on the dataset and every split of it, because they send model
+    details and evidence to a remote model. Setting
+    `EXPLANEAT_ALLOW_ASSISTED_RESTRICTED=1` is an explicit opt-in. Use it
+    only if the data agreement allows it. Explain these networks manually in
+    the local UI.
+  - **Storage.** A restricted import refuses a source file inside the
+    repository tree. It also refuses when the database is a SQLite file
+    inside the repository, or when `$EXPLANEAT_HOME` (the job files) is
+    inside it. Keep the cohort, the database and `$EXPLANEAT_HOME` outside
+    the repository, inside the approved environment. Batch launches on a
+    restricted dataset repeat the database check.
+  - **Records.** Only the file's base name is stored, never its path.
+    Previews return column summaries, not rows.
+- **What the UI writes.** Rows stay in the configured database. Job files
+  (`progress.json`, `config.ini`, `worker.log`) hold no rows, only fitness
+  values and settings. Results and exports (CSV, explanation JSON) contain
+  aggregate metrics and model parameters. They are downloaded to this
+  machine and fall under the release rules of the data agreement (§6:
+  outputs go to VIEW).
+- **Tested** in `tests/test_api/test_portal.py`, on synthetic data only:
+  - the MCP refusal for a restricted dataset;
+  - the repository-path checks;
+  - the PMLB block in restricted mode (`tests/test_api/test_explain_tools.py`).

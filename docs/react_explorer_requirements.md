@@ -77,6 +77,21 @@ A tabbed drawer under the network graph. Everything runs on the training split o
 
 All explanation records with full coverage, agreement, closed-form error and verification status, filterable. **Review** opens the genome.
 
+### 7b. Run experiments (`PortalPage.tsx`, `/portal`)
+
+This is the portal workflow for survival and binary classification; the user guide is `docs/survival.md` §7.
+
+1. **Load a local CSV.** The file is read by path and never uploaded. A column preview shows no raw rows. Pick a role for each column (numeric or one-hot feature, time/event or target, ignore), plus imputation, the time unit, the restricted flag, and stratified train/val/test fractions.
+2. **Launch a batch.**
+   - Templates: `survival-cox-v3` (protocol v3) and `classification-propneat`.
+   - Settings: seeds, generations, population, epochs, parsimony λ, and the maximum number of concurrent processes.
+   - Each run shows progress, cancel and resume.
+3. **Results table.** For each seed, test metrics with bootstrap CIs, the comparator fitted on the same split, the paired Δ, and structure. The table ends with the across-seed mean and t-interval, and exports to CSV. **Explain** opens the selected network.
+
+**Survival evidence** (`SurvivalEvidence.tsx`) is shown in the output node's evidence panel when the dataset is survival:
+- Harrell's and Uno's C, td-AUC per horizon, IBS, Cox loss vs null, and the calibration plot at the horizon (E/O);
+- hazard-ratio readings of the output terms and of each annotation exit (`GET /api/portal/genomes/{id}/hazard-ratios`).
+
 ### 8. Data governance
 
 - The API binds to 127.0.0.1 by default. The UI bundle loads no external scripts or fonts (KaTeX fonts are bundled), and the UI calls only `/api`.
@@ -111,6 +126,12 @@ All explanation records with full coverage, agreement, closed-form error and ver
 - `GET /record`, `GET /operations/export`, `POST /operations/import-preview`, `POST /operations/import`
 - `GET|PUT /annotations/{annotation_id}/hypothesis`
 - `GET /api/genomes/{id}/analyze/coverage`: paper coverage (same as MCP `get_coverage`)
+
+### Portal (`/api/portal`)
+- `POST /csv/preview`, `POST /datasets/csv`, `GET /datasets`, `GET /templates`
+- `POST /batches`, `GET /batches`, `GET /batches/{id}`, `POST /batches/{id}/cancel[?run_id=]`, `POST /batches/{id}/resume[?run_id=]`
+- `GET /batches/{id}/results`, `GET /batches/{id}/results.csv`, `GET /results?experiment_ids=`
+- `GET /genomes/{id}/hazard-ratios`
 
 ### Records
 - `GET /api/records`, `GET /api/records/{label}`, `PUT /api/records/{label}/verification`

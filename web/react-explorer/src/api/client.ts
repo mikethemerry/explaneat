@@ -955,6 +955,7 @@ export type PerformanceRequest = {
 };
 
 export type PerformanceResponse = {
+  // null for survival datasets (see `survival`)
   mse: number;
   rmse: number;
   mae: number;
@@ -970,6 +971,7 @@ export type PerformanceResponse = {
   n_samples: number;
   at_seq: number | null;
   has_non_identity_ops: boolean;
+  survival?: import("./portal").SurvivalPerf | null;
 };
 
 export async function computePerformance(

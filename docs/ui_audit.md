@@ -80,11 +80,10 @@ From `EXPLAIN_PROTOCOL.md`, `check_explanation.py`, `verify_record.py`,
 
 ## 4. Survival (Cox) extension: what the UI would need
 
-The Cox extension (`origin/exp/cox-survival`: `explaneat/survival/`, survival metrics in
-`compute_performance`, `docs/survival.md`) is **not merged** into this branch.
-The merge was requested in a later scope addendum but was blocked by the session's
-permission policy (the original task said not to merge); see the final report.
-What the portal needs once it is merged:
+The Cox extension (`origin/exp/cox-survival`) is now merged into this branch (merge
+commit `2657f48`, approved by Mike). Items 1–5 below are implemented in the portal
+(`docs/survival.md` §7); item 6 is a plain ridge Cox on the network's inputs, not the
+published equation. The original list of what the UI needed:
 
 1. **Task-type flag on the experiment/dataset** (`classification` vs `survival`), set from
    the dataset's time/event columns, used to switch every metric panel.
@@ -129,7 +128,9 @@ Effort: S < 2 h, M = half a day, L = days.
 | 15 | M8 near-cancelling pairs detector | L | M | not done |
 | 16 | M12 `get_viz_summary` logit contribution | L | S | not done |
 | 17 | W6 read routes create `Explanation` rows | L | S | new routes only |
-| 18 | Survival task-type display | H for VAREANZ | M | not started: the Cox merge was blocked |
+| 18 | Survival task-type display and portal workflow | H for VAREANZ | M | done (`/portal`, survival evidence panel, hazard ratios) |
+| 19 | Whole-model evidence panel crashed on survival datasets (`mse` is null) | H | S | fixed: survival bundle rendered instead |
+| 20 | `DatabaseBackpropPopulation.resume_from_db` re-saved generation 0 (unique-constraint crash on resume) | H | S | fixed: `run()` continues at the saved generation |
 
 ## 6. Where the features are in the UI
 
