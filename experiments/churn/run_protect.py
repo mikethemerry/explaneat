@@ -123,7 +123,7 @@ def run_c2(data, rd, Ps, boot):
 
 # ====================================================================== context 2 (D2)
 
-def run_d2(data, rd, Ps, boot, shard):
+def run_d2(data, rd, Ps, boot, shard, out=None):
     Xtr = data["X_train"]
     leaves = r2.load_pool(ec.read_runs(), data)
     leaf_rows, pair_rows, summary, prepared = r2.select(leaves, data)
@@ -194,6 +194,9 @@ def run_d2(data, rd, Ps, boot, shard):
                                                 p_test[pname(f"ko-{role}-refit-ft", 0)], boot)
                     cr.update({lab: d, f"{lab}_ci_lo": lo, f"{lab}_ci_hi": hi})
             a = pname("ko-alias-refit-ft", P)
+            if a not in p_test:  # alias graft not runnable (collision), as in D2
+                cr["status"] = P_["row"].get("alias_graft_status", "alias not run")
+                continue
             for other, b in (("sham", pname("ko-sham-refit-ft", P)),
                              ("wrong", pname("ko-wrong-refit-ft", P)), ("koft", "ko-ft")):
                 if b in p_test:
@@ -201,6 +204,8 @@ def run_d2(data, rd, Ps, boot, shard):
                     d, lo, hi = ec.paired_delta(data, p_test[a], p_test[b], boot)
                     cr.update({lab: d, f"{lab}_ci_lo": lo, f"{lab}_ci_hi": hi})
         rows.append(cr)
+        if out is not None:
+            fg.write_rows(out, rows)  # rewritten after every case
         el = time.time() - t_start
         print(f"[{i + 1}/{len(cases)}] {case} ({len(timer)}/{n_ft} fine-tunes, est. remaining "
               f"{el / max(len(timer), 1) * (n_ft - len(timer)) / 3600:.2f} h): " + " ".join(
@@ -238,7 +243,7 @@ def main():
     if args.context == "c2":
         rows = run_c2(data, rd, Ps, boot)
     else:
-        rows = run_d2(data, rd, Ps, boot, (k, n))
+        rows = run_d2(data, rd, Ps, boot, (k, n), out)
     fg.write_rows(out, rows)
     print(f"done ({(time.time() - t0) / 3600:.2f} h)")
 
