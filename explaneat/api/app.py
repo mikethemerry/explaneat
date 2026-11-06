@@ -140,8 +140,8 @@ STATIC_DIR = Path(__file__).resolve().parent.parent / "static" / "react_explorer
 def _mount_frontend(app: FastAPI) -> None:
     """Serve the built React Explorer at / (SPA: unknown paths get index.html).
 
-    Build and deploy it with ``npm run build`` in web/react-explorer followed by
-    ``python scripts/deploy_frontend.py``.
+    Build it with ``npm run build`` in web/react-explorer and copy
+    ``web/react-explorer/dist/*`` into ``explaneat/static/react_explorer/``.
     """
     from fastapi import HTTPException
     from fastapi.responses import FileResponse, HTMLResponse
@@ -159,8 +159,9 @@ def _mount_frontend(app: FastAPI) -> None:
             return FileResponse(index)
         return HTMLResponse(
             "<h1>ExplaNEAT API</h1><p>The React Explorer is not built. Run "
-            "<code>npm install && npm run build</code> in <code>web/react-explorer</code>, then "
-            "<code>uv run python scripts/deploy_frontend.py</code>. API docs: "
+            "<code>npm install && npm run build</code> in <code>web/react-explorer</code>, then copy "
+            "<code>web/react-explorer/dist/*</code> into <code>explaneat/static/react_explorer/</code>. "
+            "API docs: "
             "<a href='/api/docs'>/api/docs</a>.</p>",
             status_code=200,
         )
