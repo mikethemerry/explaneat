@@ -353,3 +353,19 @@ The first two churn100-masked attempts crashed:
 - **The third attempt** completed under a watchdog.
 - **Reported runs:** none is affected, checked by logs and by confirming no stored fitness of −1000.
 - **Open:** the silent fallback should become a hard failure (pending decision).
+
+## F and G: grafting onto unconverged or wrong recipients, and a graft protection phase
+
+Full results: `GRAFT_F_G_RESULTS.md`. Plan: `GRAFT_F_G_PLAN.md`.
+- **F1 (churn, 60 recipients from generations 0–99, 120 graft cases):**
+  - Graft gain rises with the signal's novelty to the recipient: graft + refit − base has
+    Spearman ρ = +0.74 [0.62, 0.82], and the partial ρ given generation is +0.42.
+  - Gain is ≈0 (within ±0.005) for nov < 0.1.
+  - The graft-specific part, over a same-topology random graft after fine-tuning, is small:
+    +0.003, 84/36.
+- **F2 (MONK-2):** the correct seeds' low-count gate, grafted, refit and fine-tuned, fixes all 7
+  wrong networks (test AUC ≥ 0.996, ES). Fine-tuning alone fixes one.
+- **F3 (3 seeds, descriptive):** a grafted elite inserted at generation 10 reaches the original
+  run's generation-50 fitness first on every seed.
+- **G:** freezing the graft for the first 25 or 100 fine-tuning epochs changes test AUC by ≈0
+  in every context and regime. The C2, D2 and F1 P = 0 runs reproduce the earlier CSVs exactly.
