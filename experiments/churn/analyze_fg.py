@@ -220,7 +220,11 @@ def f2(regime):
 # ====================================================================== G contexts 1, 2
 
 def g12(context, regime):
-    rows, files = load(f"protect_{context}_{regime}.csv", f"protect_{context}_{regime}_part-*.csv")
+    rows, files = load(f"protect_{context}_{regime}_P0-25-100.csv",
+                       f"protect_{context}_{regime}_P0-25-100_part-*.csv")
+    if not rows:
+        rows, files = load(f"protect_{context}_{regime}.csv",
+                           f"protect_{context}_{regime}_part-*.csv")
     if not rows:
         print(f"G {context} {regime}: no output")
         return
@@ -235,12 +239,13 @@ def g12(context, regime):
         if any(r.get(f"{role}_p100_minus_p0", "") != "" for r in cases):
             pr(summ(st, regime, f"{role} P100 - P0", "cases",
                     [r.get(f"{role}_p100_minus_p0") for r in cases], unit))
-        for P in (0, 25):
+        for P in (0, 25, 100):
             pr(summ(st, regime, f"survival r {role} P{P}", "cases",
                     [r.get(f"surv_{role}_p{P}") for r in cases]))
-        pr(summ(st, regime, f"survival r {role} P25 - P0", "cases",
-                [num(r.get(f"surv_{role}_p25")) - num(r.get(f"surv_{role}_p0"))
-                 for r in cases], unit))
+        for P in (25, 100):
+            pr(summ(st, regime, f"survival r {role} P{P} - P0", "cases",
+                    [num(r.get(f"surv_{role}_p{P}")) - num(r.get(f"surv_{role}_p0"))
+                     for r in cases], unit))
         bip = [r.get(f"{role}_p25_ft_best_in_phase") for r in cases]
         if any(b not in ("", None) for b in bip):
             n_in = sum(b == "True" for b in bip)
@@ -257,11 +262,12 @@ def g12(context, regime):
         comps = [("alias_minus_sham", "alias - sham"), ("alias_minus_wrong", "alias - wrong"),
                  ("alias_minus_koft", "alias - relearn (KO + ft)")]
     for key, lab in comps:
-        for P in (0, 25):
+        for P in (0, 25, 100):
             pr(summ(st, regime, f"{lab} at P{P}", "cases", [r.get(f"{key}_p{P}") for r in cases],
                     unit))
-        dd = [num(r.get(f"{key}_p25")) - num(r.get(f"{key}_p0")) for r in cases]
-        pr(summ(st, regime, f"{lab}: P25 minus P0", "cases", dd, unit))
+        for P in (25, 100):
+            dd = [num(r.get(f"{key}_p{P}")) - num(r.get(f"{key}_p0")) for r in cases]
+            pr(summ(st, regime, f"{lab}: P{P} minus P0", "cases", dd, unit))
 
 
 def main():
