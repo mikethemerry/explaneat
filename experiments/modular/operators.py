@@ -109,7 +109,13 @@ def graft_chunk(recipient, config, chunk: Chunk, module_id: int, weight_mode: st
 
 
 def refit(genome, config, X, y, readout_keys) -> Tuple[object, dict]:
-    keys = [k for k in readout_keys if k in genome.connections and genome.connections[k].enabled]
+    # NeuralNeat's layer parsing does not terminate on a cyclic genome (a
+    # module crossover can create a cycle through edges the child already
+    # had): reject before building it; the operator result is then treated
+    # as invalid (PLAN.md deviation 1, RESULTS.md).
+    if not gs.is_acyclic(genome):
+        raise ValueError("operator result has a cycle")
+    keys =[k for k in readout_keys if k in genome.connections and genome.connections[k].enabled]
     # only readouts NeuralNeat computes (a grafted exit can be dead when an
     # inherited open-chunk node lost its non-module inputs)
     t = gs.output_preactivation_terms(genome, config, X)

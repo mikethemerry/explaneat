@@ -257,3 +257,12 @@ def test_seeded_runs_bit_identical(tmp_path):
     assert d1 == d2
     det = json.loads(d1)
     assert any(r.get("applied") for r in det["operators"])  # operators exercised
+
+
+def test_refit_rejects_cyclic_genome(config, mux):
+    # NeuralNeat does not terminate on a cycle, so refit must refuse first
+    g = mgenome(5, {0: 0.0, 104: 0.0, 105: 0.0},
+                {(-1, 104): 1.0, (104, 105): 1.0, (105, 104): 1.0, (105, 0): 1.0})
+    with pytest.raises(ValueError, match="cycle"):
+        ops.refit(g, config, mux.final.X_train, mux.final.y_train, [(105, 0)])
+    assert not ops.valid_feedforward(g, config)
