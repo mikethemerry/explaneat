@@ -30,12 +30,51 @@ LAYER_ACTIVATION_INPUT = "Input"
 
 # Activations NeuralNeat actually applies, independent of the activation
 # stored on each node gene: hidden ("CONNECTED") layers use ReLU and the
-# output layer uses a sigmoid (see NeuralNeat.forward).  NetworkStructure
-# representations of a genome (ExplaNEAT.get_genotype_network) use
-# OUTPUT_ACTIVATION for output nodes so every other engine computes the
-# same function as the trained model.
+# output layer uses the configured output activation, a sigmoid by default
+# (see NeuralNeat.forward).  NetworkStructure representations of a genome
+# (ExplaNEAT.get_genotype_network) give output nodes that same activation so
+# every other engine computes the same function as the trained model.
 HIDDEN_ACTIVATION = "relu"
 OUTPUT_ACTIVATION = "sigmoid"
+
+# Output activations NeuralNeat can apply.  "sigmoid" is the default and the
+# original behaviour (binary classification); "identity" leaves the output
+# layer linear, which a Cox log-risk g(x) needs (explaneat.survival).  The
+# names match explaneat.core.activations so StructureNetwork, the formula
+# extractor and the evidence tools reproduce the same function.
+OUTPUT_ACTIVATION_CHOICES = ("sigmoid", "identity")
+_OUTPUT_ACTIVATION_ALIASES = {"linear": "identity", "none": "identity"}
+
+
+def normalise_output_activation(name) -> str:
+    """Canonical output-activation name, or ValueError."""
+    if name is None:
+        return OUTPUT_ACTIVATION
+    key = _OUTPUT_ACTIVATION_ALIASES.get(str(name).strip().lower(), str(name).strip().lower())
+    if key not in OUTPUT_ACTIVATION_CHOICES:
+        raise ValueError(
+            f"output_activation must be one of {OUTPUT_ACTIVATION_CHOICES}, got {name!r}"
+        )
+    return key
+
+
+def get_output_activation(config) -> str:
+    """The output activation configured on a NEAT ``config`` (default sigmoid).
+
+    The setting lives on the config object as ``config.output_activation`` so
+    every engine built from that config (NeuralNeat in BackpropPopulation and
+    in fitness functions, ExplaNEAT's NetworkStructure, ...) agrees.  Configs
+    loaded from the DB get it from ``config_json["training"]["output_activation"]``
+    (``explaneat.core.config_utils.load_neat_config``).  Absent means sigmoid.
+    """
+    return normalise_output_activation(getattr(config, "output_activation", None))
+
+
+def set_output_activation(config, name) -> str:
+    """Set ``config.output_activation`` (validated) and return the canonical name."""
+    canon = normalise_output_activation(name)
+    config.output_activation = canon
+    return canon
 
 
 LAYER_ACTIVATION_FUNCTIONS = {
@@ -54,6 +93,7 @@ class NeuralNeat(nn.Module):
         criterion=nn.BCELoss(),
         optimiser=optim.Adadelta,
         mask_phantom: bool = False,
+        output_activation=None,
     ):
         """Build the dense layered network for ``genome``.
 
@@ -71,10 +111,20 @@ class NeuralNeat(nn.Module):
         are not masked: every bias entry of a non-input layer belongs to a
         real genome node (input-layer biases exist but ``forward`` never uses
         them). The default ``False`` is the original behaviour, bit for bit.
+
+        ``output_activation`` ("sigmoid" or "identity"): the activation of the
+        output layer.  ``None`` (default) uses ``get_output_activation(config)``,
+        which is "sigmoid" unless the config sets ``output_activation``; the
+        sigmoid path is the original code, bit for bit.  "identity" gives a
+        linear output, e.g. a Cox log-risk.
         """
         # just run the init of parent class (nn.Module)
         super(NeuralNeat, self).__init__()
         self.mask_phantom = bool(mask_phantom)
+        if output_activation is None:
+            self.output_activation = get_output_activation(config)
+        else:
+            self.output_activation = normalise_output_activation(output_activation)
         # print("_----------------------_")
         # print("I'm a new net")
         self.genome = genome
@@ -456,6 +506,11 @@ class NeuralNeat(nn.Module):
             try:
                 if layer_type == LAYER_TYPE_CONNECTED:
                     self._outputs[layer_id] = torch.relu(
+                        torch.matmul(layer_input, layer_weights)
+                        + self.biases[layer_id]
+                    )
+                elif self.output_activation == "identity":
+                    self._outputs[layer_id] = (
                         torch.matmul(layer_input, layer_weights)
                         + self.biases[layer_id]
                     )

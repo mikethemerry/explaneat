@@ -10,6 +10,7 @@ import {
   type PerformanceResponse,
 } from "../api/client";
 import { FormulaDisplay } from "./FormulaDisplay";
+import { HypothesisEditor } from "./HypothesisEditor";
 import { DatasetSelector } from "./DatasetSelector";
 import { VizCanvas } from "./VizCanvas";
 import { EvidenceGallery } from "./EvidenceGallery";
@@ -563,6 +564,10 @@ export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel
           annotationId={isNodeLevel ? undefined : annotation.id}
           nodeId={isNodeLevel ? nodeId : undefined}
         />
+      )}
+
+      {!isWholeModel && !isNodeLevel && (
+        <HypothesisEditor genomeId={genomeId} annotationId={annotation.id} />
       )}
 
       <div className="evidence-section">

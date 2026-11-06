@@ -22,12 +22,14 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
   const [setupExperiment, setSetupExperiment] = useState<ExperimentListItem | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [resumingExperiment, setResumingExperiment] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [appliedQuery, setAppliedQuery] = useState("");
 
   const loadExperiments = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await listExperiments(50, 0);
+      const response = await listExperiments(200, 0, appliedQuery || undefined);
       setExperiments(response.experiments);
       setTotal(response.total);
     } catch (err) {
@@ -35,7 +37,13 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [appliedQuery]);
+
+  // Debounce the name filter
+  useEffect(() => {
+    const t = setTimeout(() => setAppliedQuery(query.trim()), 300);
+    return () => clearTimeout(t);
+  }, [query]);
 
   useEffect(() => {
     loadExperiments();
@@ -151,9 +159,19 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
             + New Experiment
           </button>
         </div>
-        <p className="hint">
-          {total} experiment{total !== 1 ? "s" : ""} available
-        </p>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+          <input
+            type="search"
+            placeholder="Filter by name (e.g. 10seed-heart)"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            style={{ padding: "6px 10px", border: "1px solid #d1d5db", borderRadius: 4, minWidth: 280 }}
+          />
+          <p className="hint" style={{ margin: 0 }}>
+            {total} experiment{total !== 1 ? "s" : ""}{appliedQuery ? ` matching "${appliedQuery}"` : " available"}
+            {total > experiments.length ? ` (showing ${experiments.length})` : ""}
+          </p>
+        </div>
       </header>
 
       <div className="experiment-list">

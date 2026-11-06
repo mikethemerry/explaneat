@@ -15,6 +15,17 @@ import numpy as np
 import torch
 
 from .activations import get_numpy_activation
+
+
+def structure_output_activation(structure) -> str:
+    """Output activation recorded on a NetworkStructure (default "sigmoid").
+
+    ``ExplaNEAT.get_genotype_network`` / ``get_phenotype_network`` record a
+    non-default output activation in ``metadata["output_activation"]``; it
+    survives ModelStateEngine replay (deepcopy) and collapse.
+    """
+    meta = getattr(structure, "metadata", None) or {}
+    return meta.get("output_activation", "sigmoid")
 from .genome_network import FunctionNodeMetadata, NetworkStructure, NodeType
 
 
@@ -518,14 +529,24 @@ class StructureNetwork:
             return parts[0]
         return None
 
+    @property
+    def model_output_activation(self) -> str:
+        """The output activation of the trained model this structure describes.
+
+        ``structure_output_activation(self.structure)``: "sigmoid" unless the
+        structure records otherwise (e.g. "identity" for a Cox log-risk).  Pass
+        this, not a literal "sigmoid", to ``override_output_activation``.
+        """
+        return structure_output_activation(self.structure)
+
     def override_output_activation(self, activation: str) -> None:
         """Override the activation function on all output nodes.
 
-        Use this to enforce sigmoid on binary classification tasks,
-        regardless of what the NEAT config stored on the node.  This
-        reconciles the mismatch between NeuralNeat (which hardcodes
-        sigmoid on the output layer) and StructureNetwork (which reads
-        the genome's stored activation).
+        Use this to enforce the trained model's output activation regardless
+        of what the NEAT config stored on the node gene: NeuralNeat applies
+        its configured output activation (sigmoid by default) whatever the
+        gene says.  Callers should pass ``self.model_output_activation`` so
+        identity-output (survival) models are not squashed through a sigmoid.
         """
         out_ids = set(self.structure.output_node_ids)
         for d in self._layer_order:

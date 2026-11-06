@@ -33,6 +33,15 @@ def _dataset_to_response(dataset: Dataset) -> DatasetResponse:
     return DatasetResponse(**d)
 
 
+def _require_network():
+    from ... import governance
+
+    try:
+        governance.require_external_network("Downloading or searching public dataset catalogues")
+    except governance.GovernanceError as e:
+        raise HTTPException(status_code=403, detail=str(e))
+
+
 @router.get("", response_model=DatasetListResponse)
 async def list_datasets(limit: int = 50, offset: int = 0):
     """List all datasets."""
@@ -54,6 +63,7 @@ async def search_dataset_catalogs(q: str = "", source: str = "all"):
         q: Search query (case-insensitive substring match)
         source: Filter by source: "pmlb", "uci", or "all"
     """
+    _require_network()
     results: list[DatasetSearchResult] = []
     query = q.lower().strip()
     # Normalize so hyphens, underscores, and spaces all match each other
@@ -154,6 +164,7 @@ async def update_dataset(dataset_id: str, request: DatasetUpdateRequest):
 @router.post("/pmlb", response_model=DatasetResponse)
 async def download_pmlb_dataset(request: PMLBDownloadRequest):
     """Download and store a PMLB dataset."""
+    _require_network()
     import logging
     logger = logging.getLogger(__name__)
     try:
@@ -170,6 +181,7 @@ async def download_pmlb_dataset(request: PMLBDownloadRequest):
 @router.post("/uci", response_model=DatasetResponse)
 async def download_uci_dataset(request: UCIDownloadRequest):
     """Download and store a UCI ML Repository dataset."""
+    _require_network()
     import logging
     logger = logging.getLogger(__name__)
     try:

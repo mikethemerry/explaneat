@@ -1,0 +1,641 @@
+{
+ "tag": "veterans-r0",
+ "dataset": "veterans",
+ "seed": 0,
+ "source": {
+  "kind": "sksurv",
+  "name": "veterans"
+ },
+ "n": 137,
+ "n_features": 8,
+ "feature_names": [
+  "Age_in_years",
+  "Celltype=large",
+  "Celltype=smallcell",
+  "Celltype=squamous",
+  "Karnofsky_score",
+  "Months_from_Diagnosis",
+  "Prior_therapy=yes",
+  "Treatment=test"
+ ],
+ "n_train": 81,
+ "n_val": 21,
+ "n_test": 35,
+ "events_train": 75,
+ "censored_fraction": 0.06569343065693434,
+ "null_cox_loss_train": 3.4349649609817834,
+ "horizons": [
+  29.5,
+  80.0,
+  143.5
+ ],
+ "calibration_horizon": 80.0,
+ "results": {
+  "neat": {
+   "n_test": 35,
+   "n_test_beyond_train_followup": 1,
+   "events_test": 33,
+   "harrell_c": 0.6978984238178634,
+   "uno_c": 0.6944135183518424,
+   "td_auc": {
+    "times": [
+     29.5,
+     80.0,
+     143.5
+    ],
+    "auc": [
+     0.8060975609756098,
+     0.8520773638968481,
+     0.7921072237754568
+    ],
+    "mean_auc": 0.8191060744272922
+   },
+   "ibs": 0.17732083482026254,
+   "brier": {
+    "times": [
+     29.5,
+     80.0,
+     143.5
+    ],
+    "brier": [
+     0.19401538229364537,
+     0.1789859171343049,
+     0.14881851200591092
+    ]
+   },
+   "calibration": {
+    "horizon": 80.0,
+    "n_groups": 10,
+    "groups": [
+     {
+      "group": 1,
+      "n": 4,
+      "events_by_horizon": 1,
+      "mean_predicted": 0.12162978503336702,
+      "observed_km": 0.25
+     },
+     {
+      "group": 2,
+      "n": 4,
+      "events_by_horizon": 1,
+      "mean_predicted": 0.1811491760981794,
+      "observed_km": 0.25
+     },
+     {
+      "group": 3,
+      "n": 4,
+      "events_by_horizon": 1,
+      "mean_predicted": 0.2707939290104646,
+      "observed_km": 0.25
+     },
+     {
+      "group": 4,
+      "n": 4,
+      "events_by_horizon": 2,
+      "mean_predicted": 0.31626400332635995,
+      "observed_km": 0.5
+     },
+     {
+      "group": 5,
+      "n": 4,
+      "events_by_horizon": 3,
+      "mean_predicted": 0.408668472851637,
+      "observed_km": 0.75
+     },
+     {
+      "group": 6,
+      "n": 3,
+      "events_by_horizon": 3,
+      "mean_predicted": 0.6099033432952665,
+      "observed_km": 1.0
+     },
+     {
+      "group": 7,
+      "n": 3,
+      "events_by_horizon": 3,
+      "mean_predicted": 0.7011138440205781,
+      "observed_km": 1.0
+     },
+     {
+      "group": 8,
+      "n": 3,
+      "events_by_horizon": 2,
+      "mean_predicted": 0.7876913807861365,
+      "observed_km": 0.6666666666666666
+     },
+     {
+      "group": 9,
+      "n": 3,
+      "events_by_horizon": 3,
+      "mean_predicted": 0.8652832649584399,
+      "observed_km": 1.0
+     },
+     {
+      "group": 10,
+      "n": 3,
+      "events_by_horizon": 3,
+      "mean_predicted": 0.9576124659089894,
+      "observed_km": 1.0
+     }
+    ],
+    "mean_predicted": 0.48453812463395035,
+    "observed_km": 0.6285714285714286,
+    "expected_over_observed": 0.7708561073721938,
+    "max_abs_group_diff": 0.3900966567047335
+   },
+   "test_cox_loss": 2.5093429096460973,
+   "train_cox_loss": 3.1832320417672673,
+   "val_cox_loss": 1.873336269262986,
+   "genome": {
+    "hidden_nodes": 0,
+    "enabled_connections": 4,
+    "complexity_k": 4,
+    "events_per_parameter": 18.75,
+    "phenotype_nodes": 9,
+    "phenotype_connections": 4,
+    "inputs_used": 4
+   },
+   "fitness": -3.2365653751006005,
+   "validation_fitness": -1.873336269262986
+  },
+  "cox": {
+   "n_test": 35,
+   "n_test_beyond_train_followup": 1,
+   "events_test": 33,
+   "harrell_c": 0.681260945709282,
+   "uno_c": 0.6786929251539124,
+   "td_auc": {
+    "times": [
+     29.5,
+     80.0,
+     143.5
+    ],
+    "auc": [
+     0.7767711962833914,
+     0.8216929321872015,
+     0.7659127747053923
+    ],
+    "mean_auc": 0.7899773661215589
+   },
+   "ibs": 0.1889401177914785,
+   "brier": {
+    "times": [
+     29.5,
+     80.0,
+     143.5
+    ],
+    "brier": [
+     0.21303420247487956,
+     0.19535343370117197,
+     0.15483362085955646
+    ]
+   },
+   "calibration": {
+    "horizon": 80.0,
+    "n_groups": 10,
+    "groups": [
+     {
+      "group": 1,
+      "n": 4,
+      "events_by_horizon": 1,
+      "mean_predicted": 0.1182528618049245,
+      "observed_km": 0.25
+     },
+     {
+      "group": 2,
+      "n": 4,
+      "events_by_horizon": 1,
+      "mean_predicted": 0.179660399617469,
+      "observed_km": 0.25
+     },
+     {
+      "group": 3,
+      "n": 4,
+      "events_by_horizon": 1,
+      "mean_predicted": 0.2558671256969298,
+      "observed_km": 0.25
+     },
+     {
+      "group": 4,
+      "n": 4,
+      "events_by_horizon": 3,
+      "mean_predicted": 0.3257186711017436,
+      "observed_km": 0.75
+     },
+     {
+      "group": 5,
+      "n": 4,
+      "events_by_horizon": 2,
+      "mean_predicted": 0.39412028048335734,
+      "observed_km": 0.5
+     },
+     {
+      "group": 6,
+      "n": 3,
+      "events_by_horizon": 3,
+      "mean_predicted": 0.5719395404911715,
+      "observed_km": 1.0
+     },
+     {
+      "group": 7,
+      "n": 3,
+      "events_by_horizon": 2,
+      "mean_predicted": 0.6572030556171261,
+      "observed_km": 0.6666666666666666
+     },
+     {
+      "group": 8,
+      "n": 3,
+      "events_by_horizon": 3,
+      "mean_predicted": 0.742449203130532,
+      "observed_km": 1.0
+     },
+     {
+      "group": 9,
+      "n": 3,
+      "events_by_horizon": 3,
+      "mean_predicted": 0.8639104431346368,
+      "observed_km": 1.0
+     },
+     {
+      "group": 10,
+      "n": 3,
+      "events_by_horizon": 3,
+      "mean_predicted": 0.9351479884271842,
+      "observed_km": 1.0
+     }
+    ],
+    "mean_predicted": 0.4687550870634185,
+    "observed_km": 0.6285714285714286,
+    "expected_over_observed": 0.7457467294190749,
+    "max_abs_group_diff": 0.42806045950882854
+   },
+   "test_cox_loss": 2.529637859439041,
+   "train_cox_loss": 3.167192095460342,
+   "val_cox_loss": 1.9287461716557814,
+   "alpha": 0.0001,
+   "alpha_val_loss": {
+    "0.0001": 1.9287461716557814,
+    "0.001": 1.9287495522267044,
+    "0.01": 1.9287833453866507,
+    "0.1": 1.9291200271059605,
+    "1.0": 1.9323667939340374,
+    "10.0": 1.9565768660774014,
+    "100.0": 2.0487181639498244
+   },
+   "n_params": 8,
+   "coef": {
+    "Age_in_years": -0.01607966880822984,
+    "Celltype=large": -0.30610375865178974,
+    "Celltype=smallcell": -0.18008876098803114,
+    "Celltype=squamous": -0.520518449884901,
+    "Karnofsky_score": -0.6976000169441176,
+    "Months_from_Diagnosis": 0.09157985496138969,
+    "Prior_therapy=yes": -0.16220117595412592,
+    "Treatment=test": 0.18185723168927512
+   }
+  },
+  "delta_neat_minus_cox": {
+   "harrell_c": 0.016637478108581405,
+   "uno_c": 0.015720593197929955,
+   "ibs": -0.011619282971215977,
+   "test_cox_loss": -0.020294949792943662
+  }
+ },
+ "parity_max_abs_neuralneat_vs_structurenetwork": 1.1102230246251565e-16,
+ "wall_clock_s": 11.2,
+ "run_params": {
+  "generations": 60,
+  "epochs_per_generation": 5,
+  "pop_size": 150,
+  "ties": "efron",
+  "fitness": "-(Efron Cox loss) - lambda*k/n_events",
+  "complexity_penalty": 1.0,
+  "val_penalty": "none",
+  "selection_mode": "champion",
+  "config_overrides": [],
+  "output_activation": "identity",
+  "mask_phantom": true,
+  "criterion": "CoxCriterion(efron), full batch",
+  "selection": "best validation Cox loss among generation champions",
+  "split_seed": 0,
+  "test_size": 0.25,
+  "val_size": 0.2,
+  "standardise": "train-fold mean/sd",
+  "db": false,
+  "config_file": "experiments/survival/configs/survival.ini"
+ },
+ "neat_config_text": "# Cox survival runs (experiments/survival/run_seed.py). Derived from\n# experiments/10seed/configs/heart.ini: weights and biases are learned by\n# backprop (weight/bias mutation off), topology by NEAT. num_inputs is\n# overwritten by the runner with the number of model columns.\n# fitness = -(Efron Cox loss) - AIC parsimony penalty, always negative (the\n# null model scores about -5 to -7), so fitness_threshold = 999 never\n# triggers: runs stop on generations. The output activation is identity (set\n# by the runner, recorded in config_json[\"training\"] in DB mode).\n# weight_init_stdev = 0.1 (protocol v3; heart.ini has 1.0): new connections start\n# at Cox-coefficient scale (|log-HR per SD| is typically < 1) instead of a large\n# random perturbation that 5 backprop epochs per generation cannot undo.\n[NEAT]\npop_size = 150\nfitness_criterion = max\nfitness_threshold = 999.0\nreset_on_extinction = False\n\n\n[DefaultGenome]\nactivation_default = relu\nactivation_mutate_rate = 0.0\nactivation_options = relu\naggregation_default = sum\naggregation_mutate_rate = 0.0\naggregation_options = sum\nbias_init_mean = 0.0\nbias_init_stdev = 1.0\nbias_max_value = 30.0\nbias_min_value = -30.0\nbias_mutate_power = 0.0\nbias_mutate_rate = 0.0\nbias_replace_rate = 0.0\ncompatibility_disjoint_coefficient = 1.0\ncompatibility_weight_coefficient = 0.5\nconn_add_prob = 0.5\nconn_delete_prob = 0.3\nenabled_default = True\nenabled_mutate_rate = 0.1\nfeed_forward = True\ninitial_connection = full_direct\nnode_add_prob = 0.4\nnode_delete_prob = 0.2\nnum_hidden = 0\nnum_inputs = 8\nnum_outputs = 1\nresponse_init_mean = 1.0\nresponse_init_stdev = 0.0\nresponse_max_value = 30.0\nresponse_min_value = -30.0\nresponse_mutate_power = 0.0\nresponse_mutate_rate = 0.0\nresponse_replace_rate = 0.0\nweight_init_mean = 0.0\nweight_init_stdev = 0.1\nweight_max_value = 30.0\nweight_min_value = -30.0\nweight_mutate_power = 0.0\nweight_mutate_rate = 0.0\nweight_replace_rate = 0.0\n\n[DefaultSpeciesSet]\ncompatibility_threshold = 3.0\n\n[DefaultStagnation]\nspecies_fitness_func = max\nmax_stagnation = 15\nspecies_elitism = 2\n\n[DefaultReproduction]\nelitism = 2\nsurvival_threshold = 0.2\n",
+ "code_commit": "a16d0eefc30bf5ae711a6d120a3267acd47bb16f",
+ "code_dirty": true,
+ "env": {
+  "python": "3.12.12",
+  "torch": "2.2.2",
+  "numpy": "1.26.4",
+  "neat": "0.92",
+  "torch_threads": 1,
+  "machine": "arm64"
+ },
+ "champion_trace": [
+  {
+   "train_fitness": -3.391604273210874,
+   "val_loss": 2.0457556056276327,
+   "k": 8
+  },
+  {
+   "train_fitness": -3.3521970853632124,
+   "val_loss": 1.9685138272993412,
+   "k": 6
+  },
+  {
+   "train_fitness": -3.323889320955464,
+   "val_loss": 1.9544720695766657,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.303619730846032,
+   "val_loss": 2.0371664407467263,
+   "k": 5
+  },
+  {
+   "train_fitness": -3.293135377556104,
+   "val_loss": 1.9761405370008678,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2824051787911013,
+   "val_loss": 1.9284550710699566,
+   "k": 3
+  },
+  {
+   "train_fitness": -3.274358949309603,
+   "val_loss": 1.913647042378917,
+   "k": 3
+  },
+  {
+   "train_fitness": -3.267891398134704,
+   "val_loss": 1.9013162099608691,
+   "k": 3
+  },
+  {
+   "train_fitness": -3.262448006691298,
+   "val_loss": 1.890913467663875,
+   "k": 3
+  },
+  {
+   "train_fitness": -3.257497360772406,
+   "val_loss": 1.911602932202506,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.253036672724373,
+   "val_loss": 1.9024061256825875,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.249312143074369,
+   "val_loss": 1.89417973179856,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2462611336119145,
+   "val_loss": 1.8871642790972616,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2437604356771716,
+   "val_loss": 1.8833029961346266,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2416592950418304,
+   "val_loss": 1.8810554610358836,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.239932199898266,
+   "val_loss": 1.8790753947034076,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.238575796892701,
+   "val_loss": 1.8773609114677619,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2375838371406664,
+   "val_loss": 1.8759036148431867,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2369447292759665,
+   "val_loss": 1.8747134206548286,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2366321938471634,
+   "val_loss": 1.8738201138338824,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.236565802681301,
+   "val_loss": 1.8733581552781107,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653753212205,
+   "val_loss": 1.8733374561198872,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653751006005,
+   "val_loss": 1.873336269262986,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653749914642,
+   "val_loss": 1.873337237539587,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.236565374937382,
+   "val_loss": 1.8733365552614103,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653749105796,
+   "val_loss": 1.8733370355231855,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748972956,
+   "val_loss": 1.8733366973826115,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748907115,
+   "val_loss": 1.8733369354246119,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.236565374887448,
+   "val_loss": 1.8733367678302089,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748858305,
+   "val_loss": 1.8733368858183184,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748850285,
+   "val_loss": 1.8733368027486512,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748846315,
+   "val_loss": 1.8733368612326011,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748844343,
+   "val_loss": 1.8733368200561085,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748843366,
+   "val_loss": 1.873336849045169,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.236565374884288,
+   "val_loss": 1.8733368286352128,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748842638,
+   "val_loss": 1.873336843004811,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.236565374884252,
+   "val_loss": 1.8733368328885007,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748842464,
+   "val_loss": 1.8733368400105679,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748842433,
+   "val_loss": 1.873336834996461,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.236565374884242,
+   "val_loss": 1.873336838526566,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.236565374884241,
+   "val_loss": 1.8733368360412974,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.236565374884241,
+   "val_loss": 1.8733368377909652,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.236565374884241,
+   "val_loss": 1.8733368365591478,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748842407,
+   "val_loss": 1.8733368374263855,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748842407,
+   "val_loss": 1.8733368368158274,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748842402,
+   "val_loss": 1.873336837245676,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748842407,
+   "val_loss": 1.8733368369430514,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748842407,
+   "val_loss": 1.8733368371561057,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.236565374884241,
+   "val_loss": 1.8733368370061112,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748842407,
+   "val_loss": 1.8733368371117116,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748842407,
+   "val_loss": 1.8733368370373658,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748842407,
+   "val_loss": 1.8733368370897072,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748842407,
+   "val_loss": 1.8733368370528574,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.236565374884241,
+   "val_loss": 1.8733368370788006,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748842402,
+   "val_loss": 1.873336837060536,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748842407,
+   "val_loss": 1.873336837073395,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748842407,
+   "val_loss": 1.8733368370643422,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748842407,
+   "val_loss": 1.8733368370707155,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748842407,
+   "val_loss": 1.8733368370662284,
+   "k": 4
+  },
+  {
+   "train_fitness": -3.2365653748842407,
+   "val_loss": 1.8733368370693875,
+   "k": 4
+  }
+ ]
+}

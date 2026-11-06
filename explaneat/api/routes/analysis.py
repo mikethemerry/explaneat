@@ -50,6 +50,13 @@ def _get_neat_config(experiment: Experiment) -> neat.Config:
     )
 
 
+def _phenotype_for(genome, db: Session):
+    population = db.get(Population, genome.population_id)
+    experiment = db.get(Experiment, population.experiment_id)
+    config = _get_neat_config(experiment)
+    return ExplaNEAT(deserialize_genome(genome.genome_data, config), config).get_phenotype_network()
+
+
 def _get_current_model(genome_id: UUID, db: Session):
     """
     Get the current model state (phenotype with operations applied).
@@ -210,50 +217,29 @@ async def get_coverage_analysis(
 
     Also returns lists of covered and uncovered nodes.
     """
+    from ...analysis.coverage_report import coverage_report
+    from ...core.model_state import ModelStateEngine
+
     genome, explanation, model_state = _get_current_model(genome_id, db)
-
-    if not explanation:
-        # No explanation = no coverage
-        all_nodes = list(model_state.get_node_ids())
-        return CoverageResponse(
-            structural_coverage=0.0,
-            compositional_coverage=0.0,
-            covered_nodes=[],
-            uncovered_nodes=all_nodes,
-            annotations_count=0,
-        )
-
-    # Get covered nodes from annotations in operations
-    covered_nodes = set()
-    annotations_count = 0
-
-    for op in explanation.operations or []:
-        if op.get("type") == "annotate":
-            params = op.get("params", {})
-            subgraph_nodes = params.get("subgraph_nodes", [])
-            covered_nodes.update(subgraph_nodes)
-            annotations_count += 1
-
-    # Compute coverage metrics
-    all_nodes = model_state.get_node_ids()
-    uncovered_nodes = all_nodes - covered_nodes
-
-    # Structural coverage = covered / total
-    if len(all_nodes) > 0:
-        structural_coverage = len(covered_nodes) / len(all_nodes)
+    if explanation and explanation.operations:
+        # Rebuild the engine to get the AnnotationData list (same as MCP get_coverage).
+        engine = ModelStateEngine(_phenotype_for(genome, db))
+        engine.load_operations({"operations": explanation.operations})
+        model_state, annotations = engine.current_state, engine.annotations
     else:
-        structural_coverage = 0.0
-
-    # Compositional coverage - for now, use stored value or compute simple version
-    # Full implementation would check composition explanations
-    compositional_coverage = explanation.compositional_coverage or 0.0
-
+        annotations = []
+    rep = coverage_report(model_state, annotations)
     return CoverageResponse(
-        structural_coverage=structural_coverage,
-        compositional_coverage=compositional_coverage,
-        covered_nodes=list(covered_nodes),
-        uncovered_nodes=list(uncovered_nodes),
-        annotations_count=annotations_count,
+        structural_coverage=rep["structural_coverage"],
+        compositional_coverage=rep["compositional_coverage"],
+        covered_nodes=rep["node_coverage"]["covered"],
+        uncovered_nodes=rep["node_coverage"]["uncovered"],
+        annotations_count=rep["annotations_count"],
+        leaf_count=rep["leaf_count"],
+        composition_count=rep["composition_count"],
+        uncovered_edges=rep["edge_coverage"]["uncovered"],
+        by_annotation=rep["node_coverage"]["by_annotation"],
+        hierarchy=rep.get("hierarchy"),
     )
 
 

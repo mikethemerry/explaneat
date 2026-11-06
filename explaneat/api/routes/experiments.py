@@ -94,55 +94,50 @@ async def list_experiments(
     db: Session = Depends(get_db),
     limit: int = Query(default=50, le=200),
     offset: int = Query(default=0, ge=0),
+    q: Optional[str] = Query(default=None, description="Case-insensitive name filter"),
 ):
     """
     List experiments sorted by creation date (most recent first).
 
-    This matches the CLI's experiment listing order.
+    This matches the CLI's experiment listing order. ``q`` filters by a
+    case-insensitive substring of the name.
     """
-    # Get total count
-    total = db.query(Experiment).count()
+    from sqlalchemy import func
 
-    # Get experiments sorted by created_at descending (most recent first)
+    base = db.query(Experiment)
+    if q:
+        base = base.filter(Experiment.name.ilike(f"%{q}%"))
+    total = base.count()
+
     experiments = (
-        db.query(Experiment)
-        .order_by(Experiment.created_at.desc())
+        base.order_by(Experiment.created_at.desc())
         .offset(offset)
         .limit(limit)
         .all()
     )
+    ids = [e.id for e in experiments]
+
+    # Aggregate per experiment in two queries instead of three per row.
+    gens = dict(
+        db.query(Population.experiment_id, func.count(Population.id))
+        .filter(Population.experiment_id.in_(ids))
+        .group_by(Population.experiment_id)
+        .all()
+    ) if ids else {}
+    genome_stats = {
+        row[0]: (row[1], row[2])
+        for row in (
+            db.query(Population.experiment_id, func.count(Genome.id), func.max(Genome.fitness))
+            .join(Genome, Genome.population_id == Population.id)
+            .filter(Population.experiment_id.in_(ids))
+            .group_by(Population.experiment_id)
+            .all()
+        )
+    } if ids else {}
 
     result = []
     for exp in experiments:
-        # Count generations (populations)
-        generations = (
-            db.query(Population)
-            .filter(Population.experiment_id == exp.id)
-            .count()
-        )
-
-        # Count total genomes
-        total_genomes = (
-            db.query(Genome)
-            .join(Population)
-            .filter(Population.experiment_id == exp.id)
-            .count()
-        )
-
-        # Get best fitness
-        best_genome = (
-            db.query(Genome)
-            .join(Population)
-            .filter(
-                Population.experiment_id == exp.id,
-                Genome.fitness.isnot(None),
-            )
-            .order_by(Genome.fitness.desc())
-            .first()
-        )
-
-        has_split = exp.split_id is not None
-
+        n_genomes, best = genome_stats.get(exp.id, (0, None))
         result.append(
             ExperimentListItem(
                 id=str(exp.id),
@@ -150,10 +145,10 @@ async def list_experiments(
                 status=exp.status,
                 dataset_name=exp.dataset_name,
                 dataset_id=str(exp.dataset_id) if exp.dataset_id else None,
-                has_split=has_split,
-                generations=generations,
-                total_genomes=total_genomes,
-                best_fitness=best_genome.fitness if best_genome else None,
+                has_split=exp.split_id is not None,
+                generations=gens.get(exp.id, 0),
+                total_genomes=n_genomes,
+                best_fitness=best,
                 created_at=exp.created_at,
             )
         )

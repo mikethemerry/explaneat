@@ -333,9 +333,11 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
 export async function listExperiments(
   limit = 50,
   offset = 0,
+  q?: string,
 ): Promise<ExperimentListResponse> {
+  const query = q ? `&q=${encodeURIComponent(q)}` : "";
   return fetchJson<ExperimentListResponse>(
-    `${API_BASE}/experiments?limit=${limit}&offset=${offset}`,
+    `${API_BASE}/experiments?limit=${limit}&offset=${offset}${query}`,
   );
 }
 
