@@ -28,7 +28,8 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                  dataset_id: str = None, config_template_id: str = None,
                  initial_state=None,
                  _existing_experiment_id: Optional[str] = None,
-                 mask_phantom: bool = True):
+                 mask_phantom: bool = True,
+                 track_ancestry: bool = True):
         """
         Initialize population with database tracking
 
@@ -42,7 +43,9 @@ class DatabaseBackpropPopulation(BackpropPopulation):
             dataset_name: Name of the dataset being used
             description: Description of the experiment
             database_url: Database connection URL (optional)
-            ancestry_reporter: Optional AncestryReporter for parent tracking
+            ancestry_reporter: Optional AncestryReporter for parent tracking.
+                When None and ``track_ancestry`` is True (the default), one is
+                created, so ``parent1_id``/``parent2_id`` are filled.
             dataset_id: Optional database ID of the dataset
             config_template_id: Optional database ID of the ConfigTemplate used
             initial_state: Optional (population_dict, species, generation) tuple
@@ -54,6 +57,14 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                 ``BackpropPopulation``). When True it is recorded on the new
                 Experiment as ``config_json["training"]["mask_phantom"]``;
                 when False ``config_json`` is unchanged.
+            track_ancestry: Default True: record each genome's parents in
+                ``Genome.parent1_id``/``parent2_id``. An elite copy (same NEAT
+                key as in the previous generation) gets ``parent1_id`` = its own
+                row one generation earlier and ``parent2_id`` NULL. Generation 0
+                genomes have no parents. Pass False to opt out. Tracking only
+                reads ``reproduction.ancestors``; it consumes no randomness, so
+                runs are bit-identical either way
+                (tests/test_db/test_population_ancestry.py).
         """
         super().__init__(config, x_train, y_train, xs_val=xs_val, ys_val=ys_val,
                          initial_state=initial_state, mask_phantom=mask_phantom)
@@ -82,6 +93,9 @@ class DatabaseBackpropPopulation(BackpropPopulation):
         self.current_generation = initial_state[2] if initial_state else 0
 
         # Store ancestry reporter for parent tracking
+        if ancestry_reporter is None and track_ancestry:
+            from ..core.ancestry_reporter import AncestryReporter
+            ancestry_reporter = AncestryReporter()
         self.ancestry_reporter = ancestry_reporter
         if self.ancestry_reporter:
             self.ancestry_reporter.reproduction = self.reproduction
@@ -274,16 +288,21 @@ class DatabaseBackpropPopulation(BackpropPopulation):
             ancestry_reporter: Optional AncestryReporter for parent tracking
         """
 
+        # Resolve every parent before registering any row of this generation:
+        # parent keys name rows of the previous generation, and an elite's key
+        # is also in this one.
+        parents = {}
+        if ancestry_reporter is not None:
+            parents = {gid: ancestry_reporter.get_parent_ids(gid)
+                       for gid in self.population}
+
         with db.session_scope() as session:
+            new_ids = {}
             for genome_id, neat_genome in self.population.items():
                 # Determine species assignment (simplified)
                 species_id = getattr(neat_genome, 'species_id', None)
 
-                # Get parent database IDs if ancestry reporter is available
-                parent1_db_id = None
-                parent2_db_id = None
-                if ancestry_reporter is not None:
-                    parent1_db_id, parent2_db_id = ancestry_reporter.get_parent_ids(genome_id)
+                parent1_db_id, parent2_db_id = parents.get(genome_id, (None, None))
 
                 genome_record = Genome.from_neat_genome(
                     neat_genome,
@@ -294,10 +313,13 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                 )
                 session.add(genome_record)
                 session.flush()  # Flush to get the genome ID assigned
+                new_ids[genome_id] = genome_record.id
 
-                # Register this genome in the ancestry tracker for next generation
-                if ancestry_reporter is not None:
-                    ancestry_reporter.register_genome(genome_id, genome_record.id)
+        # Register this generation's rows for the next generation's lookups.
+        if ancestry_reporter is not None:
+            for genome_id, record_id in new_ids.items():
+                ancestry_reporter.register_genome(genome_id, record_id)
+            ancestry_reporter.finish_generation_save(new_ids.keys())
     
     def _save_training_metrics(self, genome_id: int, population_id: str, 
                               epoch: int, loss: float, additional_metrics: Dict[str, Any] = None):
@@ -474,8 +496,10 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                 self._save_result('population_size', len(self.population), generation)
 
                 # Create next generation
+                previous_keys = list(self.population.keys())
                 self.population = self.reproduction.reproduce(self.config, self.species,
                                                             self.config.pop_size, generation)
+                self._record_parents(generation + 1, previous_keys)
 
                 # Check for extinction
                 if not self.species.species:

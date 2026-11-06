@@ -30,6 +30,7 @@ from explaneat.core.errors import GenomeNotValidError
 # from neat.reporting import BaseReporter
 from explaneat.core.experiment import ExperimentReporterSet as ReporterSet
 from explaneat.core.utility import MethodTimer
+from explaneat.core.lineage_capture import generation_parents, parent_rows
 
 
 # from explaneat.core.experiment import
@@ -136,6 +137,24 @@ class BackpropPopulation(Population):
             self.population, self.species, self.generation = initial_state
 
         self.best_genome = None
+
+        # Ancestry capture (read-only, RNG-neutral; see core/lineage_capture.py):
+        # parent_log[generation] = {key: (parent1_key, parent2_key, is_elite_copy)}.
+        # A resumed population's first generation has unknown predecessors.
+        self.parent_log = {}
+        self._record_parents(self.generation, previous_keys=())
+
+    def _record_parents(self, generation, previous_keys):
+        self.parent_log[generation] = generation_parents(
+            self.population.keys(), previous_keys, self.reproduction.ancestors)
+
+    def ancestry_rows(self):
+        """All captured parents as rows
+        ``(generation, genome_key, parent1_key, parent2_key, is_elite_copy)``."""
+        rows = []
+        for gen in sorted(self.parent_log):
+            rows.extend(parent_rows(gen, self.parent_log[gen]))
+        return rows
 
     def backpropagate(self, xs, ys, nEpochs=5):
         self.logger.info("about to start backprop with {} epochs".format(nEpochs))
@@ -337,6 +356,7 @@ class BackpropPopulation(Population):
                     self.config, self.population, self.species
                 )
 
+            previous_keys = list(self.population.keys())
             with MethodTimer("reproduction"):
                 self.population = self.reproduction.reproduce(
                     self.config, self.species, self.config.pop_size, self.generation
@@ -361,6 +381,8 @@ class BackpropPopulation(Population):
                     )
                 else:
                     raise CompleteExtinctionException()
+
+            self._record_parents(self.generation + 1, previous_keys)
 
             # Divide the new population into species.
 
