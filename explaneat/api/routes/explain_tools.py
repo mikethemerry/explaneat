@@ -55,6 +55,20 @@ def _data(session, genome_id, split_id, split, max_samples=MAX_ROWS):
     return sid, X, y, feature_names or []
 
 
+def _is_survival(session, split_id) -> bool:
+    from ...db.models import Dataset, DatasetSplit
+
+    sp = session.get(DatasetSplit, uuid.UUID(split_id))
+    ds = session.get(Dataset, sp.dataset_id) if sp else None
+    return bool(ds and (ds.additional_metadata or {}).get("task_type") == "survival")
+
+
+def _harrell(y, g):
+    from ...survival.metrics import harrell_c
+
+    return harrell_c(g, y[:, 0], y[:, 1])
+
+
 # ---------------------------------------------------------------- checks
 
 
@@ -101,13 +115,17 @@ async def linearise(req: LineariseRequest, genome_id: str = Path(...)):
         engine = _build_engine(session, genome_id)
         ops = _operations(session, genome_id)
         sid, X, y, _ = _data(session, genome_id, req.dataset_split_id, req.split)
+        survival = _is_survival(session, sid)
     if not any(op.get("type") == "annotate" for op in ops):
         raise HTTPException(status_code=400, detail="The genome has no annotations")
+    # Survival: the output is the log-risk; the metric is Harrell's C on it.
+    metric = _harrell if survival else et.default_auc
     try:
-        res = et.linearise_annotations(engine.current_state, ops, X, y, req.annotation_names or None)
+        res = et.linearise_annotations(engine.current_state, ops, X, y, req.annotation_names or None,
+                                       metric=metric)
     except KeyError as e:
         raise HTTPException(status_code=404, detail=str(e))
-    res["metric"] = "auc"
+    res["metric"] = "harrell_c" if survival else "auc"
     res["split"] = req.split
     res["dataset_split_id"] = sid
     return res
@@ -153,6 +171,10 @@ async def category_offsets(
     with db.session_scope() as session:
         engine = _build_engine(session, genome_id)
         sid, X, y, names = _data(session, genome_id, dataset_split_id, split)
+        if _is_survival(session, sid):
+            raise HTTPException(status_code=400, detail=(
+                "Category offsets compare logits with observed rates (binary outcomes); for a survival "
+                "model use the hazard-ratio readings (Survival evidence)."))
     if not names:
         raise HTTPException(status_code=400, detail="The dataset has no feature names")
     res = et.category_offsets(engine.current_state, X, y, names, large_effect=large_effect)

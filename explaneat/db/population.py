@@ -88,7 +88,10 @@ class DatabaseBackpropPopulation(BackpropPopulation):
 
         # Create or reuse experiment record
         if _existing_experiment_id:
-            self.experiment_id = _existing_experiment_id
+            # A UUID (not its string), like a freshly created experiment's id:
+            # session.get() needs it on SQLite.
+            self.experiment_id = (_existing_experiment_id if isinstance(_existing_experiment_id, uuid.UUID)
+                                  else uuid.UUID(str(_existing_experiment_id)))
         else:
             self.experiment_id = self._create_experiment(
                 experiment_name or f"NEAT_Experiment_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
@@ -445,8 +448,13 @@ class DatabaseBackpropPopulation(BackpropPopulation):
         logger.info("Starting evolution: %d generations, %d epochs BP, pop_size=%d",
                      n or 0, nEpochs, len(self.population))
 
-        generation = 0
-        while n is None or generation < n:
+        # A population resumed from the DB (initial_state) continues at its
+        # saved generation number, so its Population rows do not collide with
+        # the generations already stored; n counts the generations to run.
+        # Fresh runs start at 0 exactly as before.
+        start_generation = int(getattr(self, "generation", 0) or 0)
+        generation = start_generation
+        while n is None or generation < start_generation + n:
             try:
                 gen_start = _time.time()
                 logger.info("=== Generation %d/%d ===", generation, n or 0)
