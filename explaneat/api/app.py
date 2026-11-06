@@ -96,6 +96,14 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     async def on_startup():
+        # Experiments launched by other processes (e.g. experiments/10seed/
+        # run_seed.py) are also status "running"; marking them interrupted
+        # would corrupt a live run. `explaneat api` turns this off by default
+        # (EXPLANEAT_MARK_ORPHANS=0); pass --mark-orphans to opt in.
+        import os
+        if os.environ.get("EXPLANEAT_MARK_ORPHANS", "1") == "0":
+            logger.info("Skipping orphaned-experiment check (EXPLANEAT_MARK_ORPHANS=0)")
+            return
         count = mark_orphaned_experiments_interrupted()
         if count:
             logger.info("Marked %d orphaned experiments as interrupted", count)
