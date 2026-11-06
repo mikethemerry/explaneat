@@ -2348,7 +2348,7 @@ class InteractiveNetworkViewer:
         output_file = self.visualize_react(output_dir=output_dir)
 
         if auto_open:
-            webbrowser.open(f"file://{os.path.abspath(output_file)}")
+            webbrowser.open(Path(output_file).resolve().as_uri())
             print(f"React network visualization opened in browser: {output_file}")
         else:
             print(f"React network visualization saved to: {output_file}")
@@ -2645,7 +2645,7 @@ class InteractiveNetworkViewer:
         output_file = self.visualize(**kwargs)
 
         if auto_open:
-            webbrowser.open(f"file://{os.path.abspath(output_file)}")
+            webbrowser.open(Path(output_file).resolve().as_uri())
             logger.info("Interactive network visualization opened: %s", output_file)
             print(f"Interactive network visualization opened in browser: {output_file}")
         else:
