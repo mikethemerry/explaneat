@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from explaneat import governance
 from explaneat.core.config_utils import load_neat_config
 from explaneat.core.explaneat import ExplaNEAT
 from explaneat.core.genome_network import (
@@ -20,6 +21,13 @@ from explaneat.core.genome_network import (
 from explaneat.core.model_state import ModelStateEngine
 from explaneat.db.dataset_utils import sample_dataset
 from explaneat.db.models import Dataset, DatasetSplit, Explanation, Genome
+
+
+def _require_assisted(session, dataset_id) -> None:
+    """Data governance: refuse restricted datasets on the MCP (Claude-assisted)
+    path unless explicitly allowed (see ``explaneat.governance``)."""
+    dataset = session.get(Dataset, dataset_id) if dataset_id else None
+    governance.require_assisted_access(dataset)
 
 
 def _to_uuid(value: str) -> uuid.UUID:
@@ -41,6 +49,7 @@ def load_genome_and_config(session, genome_id: str):
         raise ValueError(f"Genome not found: {genome_id}")
 
     experiment = genome_db.population.experiment
+    _require_assisted(session, getattr(experiment, "dataset_id", None))
     config = load_neat_config(
         experiment.neat_config_text or "",
         experiment.config_json,
@@ -178,6 +187,7 @@ def load_split_data(
     dataset = session.query(Dataset).filter_by(id=split.dataset_id).first()
     if not dataset:
         raise ValueError("Dataset not found")
+    governance.require_assisted_access(dataset)
 
     data = dataset.get_data()
     if data is None:
