@@ -218,3 +218,14 @@ allows (decided before any test result of G is seen, from the timing of the P = 
   ≈ 30 per regime; G context 2 ≈ 229 per regime. Each runner prints a runtime estimate after its
   first recipient / case. Order of priority if time runs short: F1 ES, G contexts 1–3 (both
   regimes), F2, F1 E500, P = 100, F3. Anything not run is reported as not run.
+
+## Amendment 1 (2026-11-06, after the F1 dry run, before any test evaluation of F or G)
+
+- **Timing:** an ES fine-tune of an F1 recipient takes about 2 s, so the budget is not binding.
+  P = 100 is therefore run for G contexts 1 and 2 (`--P 0,25,100`, outputs
+  `protect_<context>_<regime>_P0-25-100.csv`). P = 0 and 25 remain primary.
+- **Selection facts (train only):** the generation-99 best genome differs from the
+  `runs_churn100.csv` genome for s2 and s7, whose overall best is at generation 98; F1 uses
+  generation 99 as pre-registered. F2: the qualifying donors are s1 and s5
+  `few_indicators_gate`; s7 has no qualifying leaf (its gate is not a graftable all-input
+  leaf with gain ≥ 0.02), so F2 has 14 pairs (7 recipients × 2 donors), all graftable.
