@@ -1,0 +1,100 @@
+# Clean install on Windows, Linux and macOS: the README commands, the demo
+# smoke test and a fast test subset.
+#
+# Manual only (Actions minutes): never runs on push or pull request.
+#   gh workflow run clean-install.yml --ref exp/install
+#   gh run watch        # or: gh run list --workflow clean-install.yml
+name: clean-install
+
+on:
+  workflow_dispatch:
+    inputs:
+      full_demo:
+        description: "Also run the full-size demo (a few minutes per OS)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    env:
+      # Keep the data directory inside the runner's temp space.
+      EXPLANEAT_HOME: ${{ github.workspace }}/../explaneat-home
+      OMP_NUM_THREADS: "1"
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: web/react-explorer/package-lock.json
+
+      - name: uv sync --extra survival
+        run: uv sync --extra survival
+
+      - name: Build the UI (npm ci, npm run build)
+        working-directory: web/react-explorer
+        run: |
+          npm ci
+          npm run build
+
+      - name: explaneat setup
+        run: uv run python -m explaneat setup
+
+      - name: explaneat doctor
+        run: uv run python -m explaneat doctor
+
+      - name: Demo (tiny)
+        run: uv run python -m explaneat demo --tiny --out demo_output
+
+      - name: Demo (full size)
+        if: ${{ inputs.full_demo }}
+        run: uv run python -m explaneat demo --out demo_output_full
+
+      - name: pytest -m smoke
+        run: uv run pytest -m smoke -q -p no:cacheprovider
+
+      - name: Fast test subset
+        run: >
+          uv run pytest -q -p no:cacheprovider -m "not slow"
+          tests/test_core tests/test_api tests/test_mcp tests/test_install
+
+      - name: API serves the UI and answers
+        run: |
+          uv run python -m explaneat api --port 8765 > api.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:8765/api/health && break
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:8765/api/health
+          curl -fsS http://127.0.0.1:8765/ | grep -q '<div id="root">'
+          curl -fsS "http://127.0.0.1:8765/api/experiments?limit=5"
+          cat api.log
+
+      - name: Upload demo report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-report-${{ matrix.os }}
+          path: |
+            demo_output/report.md
+            demo_output/report.html
+            api.log
+          if-no-files-found: ignore
