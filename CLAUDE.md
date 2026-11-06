@@ -57,17 +57,18 @@ uv run python -m explaneat db upgrade     # Apply migrations
 uv run python -m explaneat db revision "message"  # Create migration
 ```
 
-### API Server
+### API Server (also serves the built UI at http://127.0.0.1:8000/)
 ```bash
-uv run python -m explaneat api              # Start on port 8000
+uv run python -m explaneat api              # 127.0.0.1:8000
 uv run python -m explaneat api --port 8080  # Custom port
+uv run python -m explaneat api --mark-orphans  # also mark 'running' experiments interrupted (off by default: scripts' runs are 'running' too)
 ```
 
 ### React Explorer Frontend
 ```bash
-cd web/react-explorer && npm install && npm run dev   # Dev server (port 5173)
-cd web/react-explorer && npm run build                # Production build
-cp -R web/react-explorer/dist/* explaneat/static/react_explorer/  # Deploy to static
+cd web/react-explorer && npm install && npm run dev   # Dev server (port 3001, proxies /api to :8000)
+cd web/react-explorer && npx tsc --noEmit -p . && npm run build   # Type check + production build
+# Deploy: replace explaneat/static/react_explorer/ with web/react-explorer/dist/ (remove old assets/ first)
 ```
 
 ### MCP Server
@@ -175,6 +176,10 @@ Single-page app built with React + TypeScript + Vite, served as static files:
 - **`DatasetSelector.tsx`**: Dataset/split selection with auto-detection from experiment
 - **`DatasetSetupModal.tsx`**: Modal for downloading PMLB datasets and creating splits
 - **`EvidenceGallery.tsx`**: Display saved evidence snapshots
+- **`ToolsDrawer.tsx`**: Tabbed drawer under the graph. Tabs: Review & verify (`RecordPanel.tsx`: Claude record vs live checks, `mike_verification`, export/import), Checks & coverage, Unit activity, Candidates, Restore gain, Categories (one-hot offsets), Lineage (`LineagePanel.tsx`)
+- **`HypothesisEditor.tsx`**: Hypothesis write-up with the protocol's leaf template (evidence panel)
+- **`RecordsPage.tsx`**: `/review`, the queue of explanation records and their verification status
+- **`api/tools.ts`**: Client for `/api/genomes/{id}/tools/*`, `/api/records`, lineage routes. Library side: `explaneat/analysis/explanation_tools.py`, `explanation_records.py`, `coverage_report.py`; routes `explain_tools.py`, `records.py`, `lineage.py`; governance `explaneat/governance.py`. See `docs/ui_audit.md`
 
 ### CLI (`genome_explorer_cli.py`)
 
