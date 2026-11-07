@@ -13,27 +13,30 @@ ExplaNEAT is a comprehensive suite of tools for creating explanations of neural 
 
 ## Install and run
 
-Prerequisites: [Git](https://git-scm.com), [uv](https://docs.astral.sh/uv/getting-started/installation/)
-(it fetches a suitable Python, 3.11 or 3.12, if you have none) and
-[Node.js LTS](https://nodejs.org) (only to build the web UI). No GPU and no
-database server are needed. Windows: see [docs/install_windows.md](docs/install_windows.md).
+Prerequisites: [Git](https://git-scm.com) and [uv](https://docs.astral.sh/uv/getting-started/installation/).
+Python is **3.12**, installed by uv (`uv python install 3.12`; the repository's
+`.python-version` asks for it, and every reported run used 3.12.12). No Node, no
+GPU and no database server are needed: the built web UI is committed in the
+package. Windows: see [docs/install_windows.md](docs/install_windows.md); for the
+VARIANZ server, [docs/varianz_runbook.md](docs/varianz_runbook.md).
 
 ```bash
 git clone https://github.com/mikethemerry/explaneat.git
 cd explaneat
+uv python install 3.12               # once per machine; uv sync would also fetch it
 uv sync --extra survival
-cd web/react-explorer && npm ci && npm run build && cd ../..
-uv run python -m explaneat setup     # local SQLite DB + deploys the built UI
+uv run python -m explaneat setup     # local SQLite DB; checks the bundled UI
 uv run python -m explaneat demo      # hello world, under a minute on a laptop CPU
 uv run python -m explaneat api       # then open http://127.0.0.1:8000
 ```
 
-- `explaneat setup` creates the data directory (`~/.explaneat`, or `EXPLANEAT_HOME`),
-  a SQLite database with every table, and copies `web/react-explorer/dist` into
-  `explaneat/static/react_explorer` (pure Python, so it works on Windows too). It
-  never migrates or writes to a Postgres database.
-- `explaneat doctor` checks Python, uv, Node, torch, the database and the UI build,
-  and prints a fix for anything missing.
+- `explaneat setup` creates the data directory (`~/.explaneat`, or `EXPLANEAT_HOME`)
+  and a SQLite database with every table. It never migrates or writes to a
+  Postgres database. The UI is already in `explaneat/static/react_explorer`
+  (package data), so `setup` does not build anything.
+- `explaneat doctor` checks Python, uv, torch, the database and the bundled UI
+  (including whether it was built from the current UI source), and prints a fix
+  for anything missing. Node is reported for information only.
 - `explaneat demo` runs the whole pipeline on synthetic data and writes
   `demo_output/report.md` and `report.html`, with PASS/FAIL per stage; it exits
   non-zero if any stage fails. `--tiny` runs it in seconds, `--out DIR` moves it,
@@ -72,7 +75,8 @@ upgrade` refuses to run against a SQLite URL. The other `db` commands (`init`,
 ### Dependencies
 
 `pyproject.toml` is the source of truth and `uv.lock` pins every package
-(Python 3.11-3.12; torch 2.2.x with numpy 1.26). Extras: `survival`
+(Python 3.11-3.12, 3.12 recommended and pinned by `.python-version`; torch 2.2.x
+with numpy 1.26). Extras: `survival`
 (scikit-survival, lifelines; the demo and `doctor` expect it) and `dev` (pytest, httpx; also installed by a plain
 `uv sync` as uv's default group). On Linux and Windows uv installs the CPU-only
 torch build; for CUDA, change the `pytorch-cpu` index in `pyproject.toml` to
@@ -90,8 +94,8 @@ pip install -r requirements.txt --extra-index-url https://download.pytorch.org/w
 For use with restricted data, e.g. the VAREANZ / PREDICT cohort under a DAP and
 HDEC approval:
 
-- **No phoning home.** Installing pulls packages from PyPI, the PyTorch index
-  and npm; after that, `setup`, `demo`, `doctor` and `api` make no network
+- **No phoning home.** Installing pulls packages from PyPI and the PyTorch
+  index (no npm: the UI is prebuilt); after that, `setup`, `demo`, `doctor` and `api` make no network
   requests and there is no telemetry. The built UI bundles every script, style
   and font (KaTeX fonts included) and loads nothing from a CDN; FastAPI's
   Swagger pages, which do load from a CDN, are off unless `EXPLANEAT_API_DOCS=1`.
@@ -114,13 +118,14 @@ HDEC approval:
 
 ### Continuous integration
 
-`.github/workflows/clean-install.yml` runs the commands above, `explaneat doctor`,
-the tiny demo, `pytest -m smoke`, a fast test subset and an API check on
-Windows, Linux and macOS. It is **manual only** (no push or PR trigger):
+`.github/workflows/clean-install.yml` runs the commands above without Node,
+`explaneat doctor`, the tiny demo, `pytest -m smoke`, a fast test subset and an
+API check on Windows Server 2022 (`windows-2022`), Linux and macOS. It is
+**manual only** (no push or PR trigger):
 
 ```bash
-gh workflow run clean-install.yml --ref exp/install
-gh workflow run clean-install.yml --ref exp/install -f full_demo=true   # also the full demo
+gh workflow run clean-install.yml --ref varianz/ready
+gh workflow run clean-install.yml --ref varianz/ready -f full_demo=true   # also the full demo
 gh run watch
 ```
 
@@ -128,9 +133,22 @@ Locally: `uv run pytest -m smoke` (seconds).
 
 ### Developing the UI
 
-`cd web/react-explorer && npm run dev` serves the UI on port 3001 with `/api`
-proxied to `explaneat api` on 8000. After `npm run build`, rerun `explaneat
-setup` (or `explaneat setup --skip-db`) to deploy it.
+Only UI developers need [Node.js LTS](https://nodejs.org). `cd web/react-explorer
+&& npm ci && npm run dev` serves the UI on port 3001 with `/api` proxied to
+`explaneat api` on 8000. The built bundle is committed, so after changing
+anything under `web/react-explorer`:
+
+```bash
+cd web/react-explorer && npm ci && npx tsc --noEmit -p . && npm run build && cd ../..
+uv run python -m explaneat setup --skip-db   # replaces explaneat/static/react_explorer with dist/
+git add explaneat/static/react_explorer      # commit it with the source change
+```
+
+The build writes `build-info.json` with a SHA-256 of the UI source
+(`vite.config.ts`; `explaneat.install.ui_source_hash` computes the same hash).
+`setup` only deploys a `dist/` built from the current source, `doctor` warns if
+the committed bundle is stale, and `tests/test_install/test_ui_bundle.py` fails
+until the bundle is rebuilt.
 
 ## Quick Start (Python API)
 
@@ -272,12 +290,8 @@ print(network_graph.source)  # GraphViz source code
 
 - Run `python genome_explorer_cli.py --interactive` and use `ni` (or `network-interactive`) to launch the new React-based explorer. It opens a static HTML file that works over `file://` and mirrors the Pyvis features with a modern UI.
 - Use `ni-py` (or `network-interactive-py`) whenever you want the legacy Pyvis rendering.
-- To rebuild the frontend bundle after making changes under `web/react-explorer/`:
-
-```bash
-cd web/react-explorer && npm ci && npm run build && cd ../..
-uv run python -m explaneat setup --skip-db     # copies dist/ into explaneat/static/react_explorer
-```
+- To rebuild the frontend bundle after making changes under `web/react-explorer/`, see
+  [Developing the UI](#developing-the-ui) (rebuild, `setup --skip-db`, commit the bundle).
 
 See `docs/react_explorer_requirements.md` for the detailed feature contract and `docs/arc42/react_explorer_schema.md` for the JSON payload specification.
 
