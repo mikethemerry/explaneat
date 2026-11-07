@@ -5,6 +5,7 @@ import { NavBar } from "./components/NavBar";
 import { DatasetList } from "./components/DatasetList";
 import { TemplatesPage } from "./components/TemplatesPage";
 import { RecordsPage } from "./components/RecordsPage";
+import { PortalPage } from "./components/PortalPage";
 import { parseUrl, pushView, replaceView, type UrlView } from "./hooks/useUrlState";
 
 export default function App() {
@@ -58,6 +59,12 @@ export default function App() {
         />
       ) : view.type === "datasets" ? (
         <DatasetList />
+      ) : view.type === "portal" ? (
+        <PortalPage
+          onOpenGenome={(genomeId, experimentId, experimentName) =>
+            setView({ type: "genome", genomeId, experimentId, experimentName })
+          }
+        />
       ) : view.type === "review" ? (
         <RecordsPage
           onOpen={(genomeId, experimentId, experimentName) =>

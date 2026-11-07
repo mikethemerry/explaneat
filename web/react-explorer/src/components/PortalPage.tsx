@@ -16,6 +16,7 @@ import {
   listTemplates,
   previewCsv,
   resultsCsvUrl,
+  reportMdUrl,
   resumeBatch,
   type Batch,
   type ColumnInfo,
@@ -395,6 +396,7 @@ function BatchView({ batchId, onExplain }: { batchId: string; onExplain: (genome
       <div className="form-row">
         <button className="op-btn primary" onClick={() => loadResults(false)} disabled={loadingRes}>{loadingRes ? "Computing…" : "Compute results table"}</button>
         {res && <a className="op-btn secondary" href={resultsCsvUrl(b.batch_id)} download>Export CSV</a>}
+        {res && <a className="op-btn secondary" href={reportMdUrl(b.batch_id)} download>Export report</a>}
         {res && res.pending && res.pending.length > 0 && <span className="hint">Not yet included: {res.pending.join(", ")}</span>}
       </div>
       {resErr && <p className="error-text">{resErr}</p>}

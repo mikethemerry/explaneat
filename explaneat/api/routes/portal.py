@@ -211,6 +211,39 @@ async def batch_results_csv(batch_id: str):
                              headers={"Content-Disposition": f'attachment; filename="results-{batch_id}.csv"'})
 
 
+def _dataset_summary(split_id: Optional[str]) -> Optional[Dict[str, Any]]:
+    from ...db.models import Dataset, DatasetSplit
+
+    if not split_id:
+        return None
+    with db.session_scope() as s:
+        sp = s.get(DatasetSplit, uuid.UUID(split_id))
+        if sp is None:
+            return None
+        ds = s.get(Dataset, sp.dataset_id)
+        meta = ds.additional_metadata or {}
+        return {"name": ds.name, "source_file": meta.get("source_file"), "restricted": bool(meta.get("restricted")),
+                "n_rows": ds.num_samples, "n_features": ds.num_features, "n_events": meta.get("n_events"),
+                "time_unit": meta.get("time_unit"),
+                "split": {"id": str(sp.id), "train": sp.train_size, "val": sp.validation_size,
+                          "test": sp.test_size_actual, "seed": sp.random_state}}
+
+
+@router.get("/batches/{batch_id}/report.md", response_class=PlainTextResponse)
+async def batch_report_md(batch_id: str):
+    """One-file Markdown report: setup, per-seed test metrics vs the comparator,
+    per-horizon td-AUC / Brier, calibration tables, across-seed summary."""
+    from ... import governance
+    from ...batch.results import batch_results as compute, results_report_md
+
+    b = _get(batch_id)
+    ids = [r["experiment_id"] for r in b["runs"] if r.get("experiment_id") and r["status"] == "completed"]
+    text = results_report_md(compute(ids), batch=b, dataset=_dataset_summary(b.get("dataset_split_id")),
+                             governance=governance.status())
+    return PlainTextResponse(text, media_type="text/markdown",
+                             headers={"Content-Disposition": f'attachment; filename="report-{batch_id}.md"'})
+
+
 @router.get("/results")
 async def results_for_experiments(experiment_ids: str = Query(..., description="comma-separated experiment ids")):
     """Results table for any set of experiments (e.g. runs launched elsewhere)."""

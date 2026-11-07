@@ -1,11 +1,14 @@
+export type NavTab = "experiments" | "datasets" | "templates" | "review" | "portal";
+
 type NavBarProps = {
-  activeTab: "experiments" | "datasets" | "templates" | "review";
-  onTabChange: (tab: "experiments" | "datasets" | "templates" | "review") => void;
+  activeTab: NavTab;
+  onTabChange: (tab: NavTab) => void;
 };
 
 export function NavBar({ activeTab, onTabChange }: NavBarProps) {
   const tabs = [
     { key: "experiments" as const, label: "Experiments" },
+    { key: "portal" as const, label: "Run experiments" },
     { key: "datasets" as const, label: "Datasets" },
     { key: "templates" as const, label: "Templates" },
     { key: "review" as const, label: "Review explanations" },

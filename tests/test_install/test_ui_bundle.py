@@ -115,3 +115,10 @@ def test_doctor_warns_on_stale_bundle(tmp_path):
 
 def test_ui_source_dir_is_the_checkout():
     assert UI_SRC.name == "react-explorer"
+
+
+def test_bundle_has_the_portal_workflow():
+    """The 'Run experiments' tab (/portal) is the clinical path: it must be reachable in the bundle."""
+    js = "".join(p.read_text(encoding="utf-8") for p in (UI_STATIC / "assets").glob("*.js"))
+    for s in ("Run experiments", "/api/portal", "/report.md", "/results.csv"):
+        assert s in js, s

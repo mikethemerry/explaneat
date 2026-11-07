@@ -104,6 +104,12 @@ def test_survival_workflow(env):
     assert "harrell_c" in res["summary"]
     csv_text = client.get(f"/api/portal/batches/{b['batch_id']}/results.csv").text
     assert csv_text.splitlines()[0].startswith("experiment_name")
+    rep = client.get(f"/api/portal/batches/{b['batch_id']}/report.md")
+    assert rep.status_code == 200 and rep.headers["content-type"].startswith("text/markdown")
+    for heading in ("## Test-fold metrics per seed", "## Per-horizon metrics", "## Calibration at the horizon",
+                    "ridge Cox", "cohort.csv"):
+        assert heading in rep.text, heading
+    assert str(tmp) not in rep.text  # the file's base name only, never its path
 
     gid = row["selected"]["genome_id"]
     hr = client.get(f"/api/portal/genomes/{gid}/hazard-ratios")
