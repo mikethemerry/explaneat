@@ -2,7 +2,7 @@
 
 Working argument for the reproducibility section of thesis Chapter 7 (November 2026). The companion figure sheet is `index.html` in this folder: open it in a browser. Its 3D plots load plotly.js from a CDN; everything else works offline.
 
-Status: argument settled in discussion with Mike, 7 Nov 2026. Numbers marked *(verify)* were checked in a working session against hand-chosen example weights and should be confirmed by a script in this repo before the thesis cites them. Citations marked *(check)* were written from memory and must be checked in Mendeley.
+Status: argument settled in discussion with Mike, 7 Nov 2026. The XOR claims in §4 were first checked in a working session against hand-chosen example weights. On 7 Nov they were verified by script: `experiments/xor/verify_xor.py` (report: `experiments/xor/verify_xor_report.md`). The *(verify)* marks have been removed for the claims that passed; §4 notes the one that passed only with a condition. Citations marked *(check)* were written from memory and must be checked in Mendeley. Lines marked **[scope: Mike]** cite studies that `THESIS_FINAL_WORK.md` lists as out of thesis scope; they are kept for Mike to decide.
 
 ## 0. Context
 
@@ -59,8 +59,8 @@ Levels of equivalence, weakest to strongest:
 - The models PropNEAT reaches across seeds are a **sample** from (or near) the Rashomon set of its hypothesis class. Signals, families and realisations partition that sample **by mechanism**, not by loss: which signals a model carries, and which realisation of each it uses, decides how it can be explained and how it behaves between and beyond the training points. Structuring and navigating this is the contribution, not recovering the whole set.
 
 **Expectation (with supporting evidence, not proof):** to be inside the Rashomon set, a model will probably need realisations of the **major** signals, without carrying overfit ones. How many signals it needs depends on ε: relaxing ε lets a model drop the smaller signals, which also makes it simpler to explain. Heart is an example of the trade-off: its seed-specific nonlinear corrections are each worth only 0.005 to 0.022 train AUC, so a slightly larger ε admits models without them.
-- Churn: all 23 named nonlinear features add test AUC, while the overfit state offsets do not (`experiments/churn/EXTENSIONS_RESULTS.md` §A, §B).
-- MONK-2: the 7 seeds that miss the window's lower edge sit far outside the set (test AUC down to 0.64). Their explanations say exactly what is missing, and grafting that one piece from a correct seed brings all 7 to test AUC 0.996-1.0 (`GRAFT_F_G_RESULTS.md` §F2). That is navigating *into* the set using explanations.
+- Churn: all 23 named nonlinear features add test AUC, while the overfit state offsets do not (`experiments/churn/EXTENSIONS_RESULTS.md`, the held-out check of the named features and the explanation-guided repair study).
+- MONK-2: the 7 seeds that miss the window's lower edge sit far outside the set (test AUC down to 0.64). Their explanations say exactly what is missing, and grafting that one piece from a correct seed brings all 7 to test AUC 0.996-1.0 (`GRAFT_F_G_RESULTS.md`, MONK-2 grafting). That is navigating *into* the set using explanations. **[scope: Mike]** MONK-2 grafting is out of thesis scope (`THESIS_FINAL_WORK.md`, "Already out of scope"). Keep this line as future work, or drop it.
 
 **Measured vs not yet measured.**
 - Best genome per seed, test AUC spread: Adult 0.903-0.909 (all inside for ε of about 0.006); Heart 0.865-0.912; MONK-2 0.639-1.000 (not all inside for any small ε). Source: `experiments/10seed/summary.md`. The thesis needs to state ε and the reference "best" (best observed model, or a strong baseline such as gradient boosting).
@@ -75,11 +75,14 @@ Levels of equivalence, weakest to strongest:
   - **Difference:** skips alone compute x₁ ∧ ¬x₂; the hidden unit flips exactly x₂ ∧ ¬x₁; XOR = (x₁ ∧ ¬x₂) ∨ (x₂ ∧ ¬x₁). This is a **valley** along x₁ − x₂, with 00 and 11 in the trough.
 - **Four realisation shapes:** each family with a ReLU or a sigmoid hidden unit. All four are identical on the four points and differ between them (for example at (0.5, 0.5)) and beyond.
 - **Three cells per family:** as the fold slides past data points the hidden unit's name changes (AND, single input, OR), but the gates it composes do not, provided the weights stay in proportion.
-- **What decides the family** *(verify)*: XOR is solvable with one hidden unit plus skips exactly when I = h(00) + h(11) − h(10) − h(01) ≠ 0. The output weight u must have the opposite sign to I and a size of at least about 4 / |I|.
-  - For ReLU, sign(I) = sign(w₁ · w₂). Same-sign hidden weights give the count family; opposite signs give the difference family.
-  - For sigmoid, each family appears twice (u > 0 and u < 0), but the two are exact twins under h → 1 − h, so they are one realisation counted twice.
-- **What PropNEAT found** (`experiments/xor/RESULTS.md`): 30/30 seeds solved XOR. 6 reached the minimal form, in **both** families (4 count, 2 difference). The other 24 kept redundant units (duplicate hinges, mixed decompositions) above the minimum.
-- **Moving between realisations:** within a family, straight paths between cells keep XOR throughout *(verify for all solutions, not just the examples)*. Between families no path exists, because u would have to pass through 0. Swapping the hidden unit's and the skips' weights (the h/z transposition) works for the narrowest difference cell, with u in proportion, and never for the count family.
+- **What decides the family:** XOR is solvable with one hidden unit plus skips exactly when I = h(00) + h(11) − h(10) − h(01) ≠ 0. The output weight u must have the opposite sign to I and a size of at least 4m / |I|, where m is the margin every row must clear (t·z ≥ m); for unit margin, |u| ≥ 4 / |I|. The bound is exact, not approximate: summing the four margins gives −u·I, and equality is reached. Verified by LP and random sampling for ReLU, sigmoid and step units: 0 mismatches in about 13,000 LP optima and 16,000 random-u checks.
+  - For ReLU, sign(I) = sign(w₁ · w₂) whenever the unit is non-degenerate on the four points, i.e. some row active and some inactive. Same-sign hidden weights give the count family; opposite signs give the difference family. 0 exceptions in 208,906 non-degenerate units.
+  - For sigmoid, each family appears twice (u > 0 and u < 0), but the two are exact twins under h → 1 − h, so they are one realisation counted twice. The twin map (w, b) → (−w, −b), u → −u, c → c + u gives the same z everywhere, not just on the four points: the largest difference over 6,000 solutions and points up to 10³ away is at float rounding (2 × 10⁻¹³ relative).
+  - Class counts depend on the unit. Under input swap, input complement and (where it exists) the twin: step units have 2 classes, sigmoid units 6 and ReLU units 6, always in the same 2 families. The earlier "threshold / sigmoid: 2 classes" holds for step units only; `experiments/xor/RESULTS.md` is corrected.
+  - The gate reading above (skips compute one gate; the hidden unit flips exactly one row) holds for every sampled ReLU solution. For sigmoid units it often does not: a sigmoid is never exactly 0, so the skips alone are wrong on two rows in about 63% of sampled sigmoid solutions.
+- **What PropNEAT found** (`experiments/xor/RESULTS.md`): 30/30 seeds solved XOR. 6 reached the minimal form, in **both** families: 4 count, in the 1-row (AND) cell; 2 difference, in the graded single-input cell. The other 24 kept redundant units (duplicate hinges, mixed decompositions) above the minimum. All six minimal solutions put the hinge's fold within 0.01 of a data point, so they sit at cell boundaries. The two difference-family seeds are single-input by a margin of h = 0.018 and 0.002.
+- **Moving between realisations:** within a family, straight paths between cells keep XOR throughout, **with one condition**. Both solutions must be aligned: put in the family's orientation by input swap or complement, and rescaled so that |u| = 1 (ReLU rescaling). That is then proved, and confirmed on about 40,000 sampled pairs of ReLU solutions, 2,000 per cell. With a different rescaling (hidden weights of unit length) about a third of straight paths break XOR. For sigmoid units, which have no rescaling symmetry, about half do. A piecewise path that re-fits the readout as the hidden weights move works for every pair, ReLU and sigmoid. Between families no path exists: along any path of solutions u·I stays negative, so u would have to pass through 0. 0 of 12,000 sampled between-family straight paths work.
+- **The h/z transposition:** swapping the hidden unit's weights with the skips' weights works only for the narrowest (1-row) difference cell, and then for every solution in it. It never works in the count family or in the wider difference cells (0 of 10,000 sampled solutions). The new u must exceed −a(r⁺)/s(r⁺), where r⁺ is the positive row on which the hidden unit is silent. This threshold depends on the solution's weights. It is 6 for the figure sheet's example (so 6.25, its first slider step above 6), and ranges from 0.24 to 16.6 over sampled solutions. It is a ratio for each solution, not a constant of the cell.
 
 ## 5. Evidence on real data (this repo)
 
@@ -87,9 +90,9 @@ Levels of equivalence, weakest to strongest:
 |---|---|---|
 | E0 decisions | Heart, 10 seeds: decisions agree on 94.6% of patients; training logits correlate at a median of 0.983 | `experiments/10seed/compare_heart.json` |
 | Shape | Heart: 3–6 hidden nodes per seed | `experiments/10seed/summary.md` |
-| Signals recur | Churn: every useful feature in one seed is about 90% reproducible from any other seed's own units | `experiments/churn/EXTENSIONS_RESULTS.md` §C2 |
-| Realisations are interchangeable | Knock out a feature, graft another seed's alias, refit the readout: about 94% of the lost function is recovered; beats a same-topology random graft in 35/35 cases and a wrong-family feature in 32/35 | same, §D2 |
-| Topology does not fix the realisation | Re-initialising the evolved churn topologies: 0/100 networks come back equivalent to the evolved weights | same, §E |
+| Signals recur | Churn: every useful feature in one seed is about 90% reproducible from any other seed's own units | `experiments/churn/EXTENSIONS_RESULTS.md`, cross-seed signal reproducibility. **[scope: Mike]** This number comes from the novelty screen of the transplant study, which `THESIS_FINAL_WORK.md` lists as out of scope; cite it on its own, or drop it |
+| Realisations are interchangeable | Knock out a feature, graft another seed's alias, refit the readout: about 94% of the lost function is recovered; beats a same-topology random graft in 35/35 cases and a wrong-family feature in 32/35 | same file, knockout-and-rescue with algorithmic aliases |
+| Topology does not fix the realisation | Re-initialising the evolved churn topologies: 0/100 networks come back equivalent to the evolved weights | same file, re-initialisation |
 
 The 10-seed explanations were drafted by Claude and have not yet been verified by Mike (0/30 as of 6 Nov).
 
@@ -104,10 +107,9 @@ The 10-seed explanations were drafted by Claude and have not yet been verified b
 
 ## 7. Open items before the thesis cites this
 
-- Confirm the XOR claims in section 4 with a script in `experiments/xor/`: the interaction criterion, connectivity within each family, and the sigmoid twins.
-- Correct `experiments/xor/RESULTS.md`:
-  - "threshold / sigmoid: 2 classes" is a step-unit result;
-  - seeds 12 and 21 are the graded single-input cell of the difference family, not the "class-B analogue".
+- ~~Confirm the XOR claims in section 4 with a script in `experiments/xor/`.~~ Done 7 Nov: `experiments/xor/verify_xor.py`, report `verify_xor_report.md`. All passed except straight-line connectivity, which holds only with the alignment stated in §4 (a piecewise path always works). The transposition threshold is a ratio for each solution, not the constant 6.25.
+- ~~Correct `experiments/xor/RESULTS.md`.~~ Done 7 Nov. "Threshold / sigmoid: 2 classes" is now a step-unit result (sigmoid units have 6), and seeds 12 and 21 are the graded single-input cell of the difference family. Two flags for Mike are in that file: the six minimal seeds sit at cell boundaries, and seeds 12 and 21 are counted in its "different classes" row although they share a cell.
+- Decide on the two **[scope: Mike]** lines (§3 MONK-2 grafting, §5 the transplant study's novelty screen).
 - PropNEAT uses ReLU hidden units, so the sigmoid realisations are a theoretical illustration only.
 - Check every citation in section 3 in Mendeley.
 - Measure the population-level Rashomon claim (final-generation fitness spread) before making it.
