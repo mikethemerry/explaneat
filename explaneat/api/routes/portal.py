@@ -57,6 +57,8 @@ class ImportRequest(BaseModel):
     test_size: float = Field(default=0.25, gt=0, lt=1)
     val_size: float = Field(default=0.20, ge=0, lt=1)
     split_seed: int = 0
+    horizons: Optional[List[float]] = Field(default=None, max_length=20)
+    calibration_horizon: Optional[float] = Field(default=None, gt=0)
 
 
 @router.post("/datasets/csv")

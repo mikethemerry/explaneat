@@ -85,8 +85,17 @@ def import_csv(
     test_size: float = 0.25,
     val_size: float = 0.20,
     split_seed: int = 0,
+    horizons: Optional[Sequence[float]] = None,
+    calibration_horizon: Optional[float] = None,
 ) -> Dict[str, Any]:
-    """Load a local CSV/Parquet file into a dataset and a stratified split."""
+    """Load a local CSV/Parquet file into a dataset and a stratified split.
+
+    Survival only: ``horizons`` (td-AUC / Brier times) and
+    ``calibration_horizon`` are stored in the dataset metadata, where the
+    results table and evidence read them (pre-register them, e.g. 1, 3, 5 and
+    5 years). Without them the training event-time quartiles and their median
+    are used.
+    """
     from .. import governance
 
     restricted = bool(restricted or governance.restricted_server())
@@ -130,6 +139,15 @@ def import_csv(
 
         y = make_survival_targets(df[time_col].to_numpy(float), _match(df[event_col], event_value))
         meta.update(time_col=time_col, event_col=event_col, event_value=str(event_value))
+        if horizons:
+            hs = [float(h) for h in horizons]
+            if any(not np.isfinite(h) or h <= 0 for h in hs):
+                raise ValueError("horizons must be positive times")
+            meta["horizons"] = sorted(hs)
+        if calibration_horizon is not None:
+            if not np.isfinite(float(calibration_horizon)) or float(calibration_horizon) <= 0:
+                raise ValueError("calibration_horizon must be a positive time")
+            meta["calibration_horizon"] = float(calibration_horizon)
         ds = save_survival_dataset_to_db(name, X, y, names, time_unit=time_unit, source="csv",
                                          description=f"Imported from {Path(path).name}",
                                          metadata=meta)

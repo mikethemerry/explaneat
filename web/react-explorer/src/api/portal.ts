@@ -54,6 +54,8 @@ export type ImportCsvRequest = {
   test_size: number;
   val_size: number;
   split_seed: number;
+  horizons?: number[] | null;
+  calibration_horizon?: number | null;
 };
 
 export type ImportCsvResult = {

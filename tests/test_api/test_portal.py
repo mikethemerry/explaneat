@@ -79,7 +79,8 @@ def test_survival_workflow(env):
 
     r = client.post("/api/portal/datasets/csv", json={
         "path": str(csv), "name": "synthetic cohort", "task": "survival", "time_col": "fu_years",
-        "event_col": "cvd_event", "categorical": ["smoker"], "time_unit": "years", "restricted": True})
+        "event_col": "cvd_event", "categorical": ["smoker"], "time_unit": "years", "restricted": True,
+        "horizons": [1, 2, 3], "calibration_horizon": 2})
     assert r.status_code == 200, r.text
     ds = r.json()
     assert ds["restricted"] and ds["val"] > 0 and "smoker:yes" in ds["feature_names"]
@@ -100,6 +101,8 @@ def test_survival_workflow(env):
     for k in ("harrell_c", "uno_c", "td_auc_mean", "ibs", "calibration_eo"):
         assert k in row["metrics"]
     assert row["primary_ci"][0] is not None and row["comparator_primary"] is not None
+    assert row["metrics"]["calibration_horizon"] == 2  # the pre-registered horizon from the import
+    assert row["detail"]["td_auc"]["times"] == [1.0, 2.0, 3.0]
     assert next(iter(res["comparators"].values()))["info"]["model"].startswith("ridge Cox")
     assert "harrell_c" in res["summary"]
     csv_text = client.get(f"/api/portal/batches/{b['batch_id']}/results.csv").text
