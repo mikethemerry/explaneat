@@ -26,14 +26,9 @@ _EVENT_HINTS = ("event", "status", "death", "dead", "died", "outcome", "cvd", "f
 
 
 def _read(path):
-    import pandas as pd
+    from ..survival.data import read_table
 
-    path = Path(path).expanduser()
-    if not path.is_file():
-        raise FileNotFoundError(f"no such file: {path}")
-    if path.suffix.lower() in (".parquet", ".pq"):
-        return pd.read_parquet(path)
-    return pd.read_csv(path)
+    return read_table(path)
 
 
 def preview_csv(path) -> Dict[str, Any]:
@@ -68,20 +63,9 @@ def preview_csv(path) -> Dict[str, Any]:
 
 
 def _encode(df, features: Sequence[str], categorical: Sequence[str], impute: Optional[str]):
-    import pandas as pd
+    from ..survival.data import encode_features
 
-    X = df[list(features)].copy()
-    cat = [c for c in features if c in set(categorical) or not pd.api.types.is_numeric_dtype(X[c])]
-    if cat:
-        # One column per level ("feature:level"), matching the one-hot naming the
-        # explanation tools group by (base feature before ":").
-        X = pd.get_dummies(X, columns=cat, prefix=cat, prefix_sep=":", drop_first=False, dtype=float)
-    if X.isna().any().any():
-        if impute != "median":
-            bad = [c for c in X.columns if X[c].isna().any()]
-            raise ValueError(f"missing values in {bad}; choose impute = median explicitly or impute upstream")
-        X = X.fillna(X.median(numeric_only=True))
-    return X.to_numpy(np.float64), [str(c) for c in X.columns]
+    return encode_features(df, features, categorical, impute)
 
 
 def import_csv(
@@ -101,8 +85,17 @@ def import_csv(
     test_size: float = 0.25,
     val_size: float = 0.20,
     split_seed: int = 0,
+    horizons: Optional[Sequence[float]] = None,
+    calibration_horizon: Optional[float] = None,
 ) -> Dict[str, Any]:
-    """Load a local CSV/Parquet file into a dataset and a stratified split."""
+    """Load a local CSV/Parquet file into a dataset and a stratified split.
+
+    Survival only: ``horizons`` (td-AUC / Brier times) and
+    ``calibration_horizon`` are stored in the dataset metadata, where the
+    results table and evidence read them (pre-register them, e.g. 1, 3, 5 and
+    5 years). Without them the training event-time quartiles and their median
+    are used.
+    """
     from .. import governance
 
     restricted = bool(restricted or governance.restricted_server())
@@ -133,11 +126,7 @@ def import_csv(
         raise ValueError(f"outcome columns cannot be features: {leaked}")
     X, names = _encode(df, feats, categorical or [], impute)
 
-    def _match(series, value):
-        try:
-            return (series.astype(float) == float(value)).to_numpy()
-        except (TypeError, ValueError):
-            return (series.astype(str) == str(value)).to_numpy()
+    from ..survival.data import match_value as _match
 
     meta = {"restricted": restricted, "source_file": Path(path).name, "features": feats,
             "categorical": list(categorical or []), "impute": impute}
@@ -150,6 +139,15 @@ def import_csv(
 
         y = make_survival_targets(df[time_col].to_numpy(float), _match(df[event_col], event_value))
         meta.update(time_col=time_col, event_col=event_col, event_value=str(event_value))
+        if horizons:
+            hs = [float(h) for h in horizons]
+            if any(not np.isfinite(h) or h <= 0 for h in hs):
+                raise ValueError("horizons must be positive times")
+            meta["horizons"] = sorted(hs)
+        if calibration_horizon is not None:
+            if not np.isfinite(float(calibration_horizon)) or float(calibration_horizon) <= 0:
+                raise ValueError("calibration_horizon must be a positive time")
+            meta["calibration_horizon"] = float(calibration_horizon)
         ds = save_survival_dataset_to_db(name, X, y, names, time_unit=time_unit, source="csv",
                                          description=f"Imported from {Path(path).name}",
                                          metadata=meta)

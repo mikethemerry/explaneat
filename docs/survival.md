@@ -373,13 +373,25 @@ The React Explorer's **Run experiments** tab (`/portal`) runs the steps of
 `http://127.0.0.1:8000/portal` after `uv run python -m explaneat api`. Library
 code is in `explaneat/batch/`; the API is under `/api/portal`.
 
+**This is the clinical (VARIANZ) path**; the step-by-step runbook is
+`docs/varianz_runbook.md`. `experiments/survival/run_seed.py --csv` is the
+scripted equivalent: it reads the file and builds the design matrix with the
+same functions as the portal import (`read_table`, `encode_features`,
+`match_value` in `explaneat.survival.data`), makes the same split for the same
+split seed, and fits the same ridge Cox comparator. The rehearsal record in
+`docs/clean_install_check.md` compares the two on one seed.
+
 1. **Load a local CSV.** Enter the path of a CSV or Parquet file on this
    machine. The file is read in place and never uploaded or copied.
    - **Preview** lists each column's type, missing count, number of distinct
      values, and range or levels. It shows no raw rows, and suggests the time,
      event and categorical columns.
    - Choose a role for each column: numeric feature, one-hot feature (encoded
-     as `feature:level`), time, event, or ignore. Set the event value, the time
+     as `feature:level`), time, event, or ignore. For survival, enter the
+     pre-registered **horizons** (e.g. `1, 3, 5`) and the **calibration
+     horizon** (e.g. `5`) in the time unit; they are stored in the dataset
+     metadata and used by the results table and the evidence panel. Left
+     blank, the training event-time quartiles and their median are used. Set the event value, the time
      unit, explicit median imputation (otherwise missing values are refused),
      the test fraction, the validation fraction (of the rest) and the split
      seed.
@@ -415,7 +427,12 @@ code is in `explaneat/batch/`; the API is under `/api/portal`.
    - the paired bootstrap Δ C;
    - structure: hidden nodes, connections, k, and events per parameter;
    - the across-seed mean with a t-interval;
-   - **Export CSV**.
+   - **Export CSV** (one row per seed), and **Export report**
+     (`GET /api/portal/batches/{id}/report.md`): the setup, the per-seed
+     table against the comparator, td-AUC and IPCW Brier per horizon, the
+     decile calibration table at the horizon for every seed and the
+     comparator, the across-seed summary and the PH caveat. Both hold
+     aggregates only, no rows.
 
    **Explain** opens the selected network in the explorer. There:
    - the evidence panel of the output node shows the survival metrics, the
@@ -431,9 +448,6 @@ Not supported yet:
 - repeated-split benchmarks (`study.py bench`): one split per batch;
 - competing risks;
 - Schoenfeld PH diagnostics;
-- choosing horizons in the UI: horizons default to the training event-time
-  quartiles, and the calibration horizon to the median, unless the dataset
-  metadata sets `horizons` / `calibration_horizon`.
 
 ## 8. Data governance (DAP / HDEC)
 

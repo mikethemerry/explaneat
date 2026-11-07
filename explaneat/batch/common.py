@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 import os
+import time
 import uuid
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
@@ -65,6 +67,28 @@ def check_restricted_storage(csv_path=None, database_url: Optional[str] = None) 
         )
     if inside_repo(data_home()):
         raise StorageError("EXPLANEAT_HOME is inside the repository; set it outside the repo.")
+
+
+def write_json_atomic(path: Path, obj, attempts: int = 50) -> None:
+    """Write JSON via a temp file and ``os.replace``, safe on Windows.
+
+    The temp name is unique per process (the API and a worker may write the
+    same progress file). On Windows ``os.replace`` raises PermissionError while
+    another process has the target open (the API polling ``progress.json``),
+    so it is retried for up to ~2.5 s instead of failing the run.
+    """
+    path = Path(path)
+    tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
+    tmp.write_text(json.dumps(obj, indent=1, default=str), encoding="utf-8")
+    for i in range(attempts):
+        try:
+            os.replace(tmp, path)
+            return
+        except PermissionError:
+            if i == attempts - 1:
+                tmp.unlink(missing_ok=True)
+                raise
+            time.sleep(0.05)
 
 
 def current_database_url() -> str:

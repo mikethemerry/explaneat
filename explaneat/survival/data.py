@@ -13,7 +13,10 @@ Loaders
 * ``load_survival_csv(path, time_col, event_col, features)``: the hook for a
   real cohort file.  It never imputes silently: missing values raise unless
   ``impute`` is given explicitly, because the imputation rule has to be the
-  pre-registered one, identical for the comparator Cox model.
+  pre-registered one, identical for the comparator Cox model.  It builds the
+  same design matrix as the portal's CSV import (``explaneat.batch.datasets``):
+  ``read_table``, ``encode_features`` and ``match_value`` are shared, so the
+  scripted runner and the portal see identical inputs from the same file.
 
 Splits
 ------
@@ -113,6 +116,49 @@ def load_builtin(name: str) -> Tuple[np.ndarray, np.ndarray, List[str]]:
     return X.to_numpy(float), make_survival_targets(time, event), list(X.columns)
 
 
+def read_table(path):
+    """Read a local CSV (UTF-8, with or without the BOM Excel writes on Windows) or Parquet file."""
+    import pandas as pd
+
+    path = Path(path).expanduser()
+    if not path.is_file():
+        raise FileNotFoundError(f"no such file: {path}")
+    if path.suffix.lower() in (".parquet", ".pq"):
+        return pd.read_parquet(path)
+    return pd.read_csv(path, encoding="utf-8-sig")
+
+
+def encode_features(df, features: Sequence[str], categorical: Sequence[str] = (),
+                    impute: Optional[str] = None) -> Tuple[np.ndarray, List[str]]:
+    """Design matrix from the predictor columns.
+
+    Columns in ``categorical``, and every non-numeric column, are one-hot
+    encoded with one column per level, named ``feature:level`` (the naming the
+    explanation tools group by). Missing values raise unless ``impute`` is
+    "median".
+    """
+    import pandas as pd
+
+    X = df[list(features)].copy()
+    cat = [c for c in features if c in set(categorical) or not pd.api.types.is_numeric_dtype(X[c])]
+    if cat:
+        X = pd.get_dummies(X, columns=cat, prefix=cat, prefix_sep=":", drop_first=False, dtype=float)
+    if X.isna().any().any():
+        if impute != "median":
+            bad = [c for c in X.columns if X[c].isna().any()]
+            raise ValueError(f"missing values in {bad}; choose impute = median explicitly or impute upstream")
+        X = X.fillna(X.median(numeric_only=True))
+    return X.to_numpy(np.float64), [str(c) for c in X.columns]
+
+
+def match_value(series, value) -> np.ndarray:
+    """Boolean mask of ``series == value``: numerically if both parse as numbers, else as text."""
+    try:
+        return (series.astype(float) == float(value)).to_numpy()
+    except (TypeError, ValueError):
+        return (series.astype(str) == str(value)).to_numpy()
+
+
 def load_survival_csv(path, time_col: str, event_col: str,
                       features: Optional[Sequence[str]] = None,
                       categorical: Optional[Sequence[str]] = None,
@@ -128,35 +174,30 @@ def load_survival_csv(path, time_col: str, event_col: str,
         anything else is treated as censored.  For CVD outcomes with competing
         non-CVD death this is a cause-specific hazard: say so in the analysis.
     features : predictor columns (default: every other column).
-    categorical : columns to one-hot encode (drop-first).  Non-numeric columns
+    categorical : columns to one-hot encode (one column per level,
+        ``feature:level``, as the portal import does).  Non-numeric columns
         are always one-hot encoded.
-    impute : None (default: missing values raise) or "median".
+    impute : None (default: missing values raise) or "median".  Missing
+        outcome values always raise.
     """
-    import pandas as pd
-
-    path = Path(path)
-    df = pd.read_parquet(path) if path.suffix in (".parquet", ".pq") else pd.read_csv(path)
+    df = read_table(path)
+    name = Path(path).name
     for c in (time_col, event_col):
         if c not in df.columns:
-            raise ValueError(f"column {c!r} not in {path.name}")
+            raise ValueError(f"column {c!r} not in {name}")
+    if df[[time_col, event_col]].isna().any().any():
+        raise ValueError(f"missing values in the outcome columns {[time_col, event_col]}")
     feats = list(features) if features else [c for c in df.columns if c not in (time_col, event_col)]
     missing = [c for c in feats if c not in df.columns]
     if missing:
         raise ValueError(f"feature columns not found: {missing}")
-
-    X = df[feats].copy()
-    cat = set(categorical or []) | {c for c in feats if not pd.api.types.is_numeric_dtype(X[c])}
-    if cat:
-        X = pd.get_dummies(X, columns=[c for c in feats if c in cat], drop_first=True, dtype=float)
-    if X.isna().any().any() or df[[time_col, event_col]].isna().any().any():
-        if impute != "median":
-            bad = [c for c in X.columns if X[c].isna().any()]
-            raise ValueError(f"missing values in {bad or [time_col, event_col]}; "
-                             "pass impute='median' explicitly or impute upstream")
-        X = X.fillna(X.median(numeric_only=True))
+    leaked = [c for c in feats if c in (time_col, event_col)]
+    if leaked:
+        raise ValueError(f"outcome columns cannot be features: {leaked}")
+    X, names = encode_features(df, feats, categorical or [], impute)
     time = df[time_col].to_numpy(float)
-    event = (df[event_col] == event_value).to_numpy()
-    return X.to_numpy(float), make_survival_targets(time, event), list(X.columns)
+    event = match_value(df[event_col], event_value)
+    return X, make_survival_targets(time, event), names
 
 
 # --------------------------------------------------------------------------

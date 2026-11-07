@@ -16,6 +16,7 @@ import {
   listTemplates,
   previewCsv,
   resultsCsvUrl,
+  reportMdUrl,
   resumeBatch,
   type Batch,
   type ColumnInfo,
@@ -57,8 +58,12 @@ function CsvImport({ onImported }: { onImported: (r: ImportCsvResult) => void })
   const [testSize, setTestSize] = useState(0.25);
   const [valSize, setValSize] = useState(0.2);
   const [seed, setSeed] = useState(0);
+  const [horizons, setHorizons] = useState("");
+  const [calHorizon, setCalHorizon] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const horizonList = horizons.split(/[,\s]+/).filter(Boolean).map(Number);
+  const badHorizons = horizonList.some((h) => !(h > 0)) || (calHorizon !== "" && !(Number(calHorizon) > 0));
 
   const preview = async () => {
     setMsg(null);
@@ -88,7 +93,11 @@ function CsvImport({ onImported }: { onImported: (r: ImportCsvResult) => void })
       features: [...of("feature"), ...of("categorical")], categorical: of("categorical"),
       impute: impute ? ("median" as const) : null,
       ...(task === "survival"
-        ? { time_col: of("time")[0], event_col: of("event")[0], event_value: eventValue, time_unit: timeUnit }
+        ? {
+            time_col: of("time")[0], event_col: of("event")[0], event_value: eventValue, time_unit: timeUnit,
+            horizons: horizonList.length ? horizonList : null,
+            calibration_horizon: calHorizon !== "" ? Number(calHorizon) : null,
+          }
         : { target_col: of("target")[0], positive_value: eventValue }),
     };
     setBusy(true);
@@ -167,8 +176,19 @@ function CsvImport({ onImported }: { onImported: (r: ImportCsvResult) => void })
               <input type="checkbox" checked={restricted} onChange={(e) => setRestricted(e.target.checked)} /> restricted data
             </label>
           </div>
+          {task === "survival" && (
+            <div className="form-row">
+              <label title="Pre-registered evaluation times for td-AUC and Brier, in the time unit. Blank: the training event-time quartiles.">
+                Horizons <input value={horizons} onChange={(e) => setHorizons(e.target.value)} placeholder="e.g. 1, 3, 5" style={{ width: 110 }} />
+              </label>
+              <label title="Calibration horizon (e.g. 5 for a 5-year risk). Blank: the middle horizon.">
+                Calibration horizon <input value={calHorizon} onChange={(e) => setCalHorizon(e.target.value)} placeholder="e.g. 5" style={{ width: 60 }} />
+              </label>
+              <span className="hint">in {timeUnit || "the time unit"}; blank uses the training event-time quartiles</span>
+            </div>
+          )}
           <p className="hint">Splits are stratified by the {task === "survival" ? "event indicator" : "class"}; the scaler is fitted on the training rows.</p>
-          <button className="op-btn primary" onClick={doImport} disabled={busy || missingRole.length > 0 || !name}>
+          <button className="op-btn primary" onClick={doImport} disabled={busy || missingRole.length > 0 || !name || (task === "survival" && badHorizons)}>
             {missingRole.length ? `Choose exactly one ${missingRole.join(" and one ")} column` : "Import dataset"}
           </button>
         </>
@@ -395,6 +415,7 @@ function BatchView({ batchId, onExplain }: { batchId: string; onExplain: (genome
       <div className="form-row">
         <button className="op-btn primary" onClick={() => loadResults(false)} disabled={loadingRes}>{loadingRes ? "Computing…" : "Compute results table"}</button>
         {res && <a className="op-btn secondary" href={resultsCsvUrl(b.batch_id)} download>Export CSV</a>}
+        {res && <a className="op-btn secondary" href={reportMdUrl(b.batch_id)} download>Export report</a>}
         {res && res.pending && res.pending.length > 0 && <span className="hint">Not yet included: {res.pending.join(", ")}</span>}
       </div>
       {resErr && <p className="error-text">{resErr}</p>}

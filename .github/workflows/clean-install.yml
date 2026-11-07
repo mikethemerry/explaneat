@@ -1,8 +1,9 @@
-# Clean install on Windows, Linux and macOS: the README commands, the demo
-# smoke test and a fast test subset.
+# Clean install on Windows Server 2022, Linux and macOS: the README's four
+# commands with no Node (the UI is committed in the package), the demo smoke
+# test and a fast test subset.
 #
 # Manual only (Actions minutes): never runs on push or pull request.
-#   gh workflow run clean-install.yml --ref exp/install
+#   gh workflow run clean-install.yml --ref varianz/ready
 #   gh run watch        # or: gh run list --workflow clean-install.yml
 name: clean-install
 
@@ -25,7 +26,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        # windows-2022 = Windows Server 2022, the VARIANZ server's OS (pinned, not -latest)
+        os: [windows-2022, ubuntu-latest, macos-latest]
     env:
       # Keep the data directory inside the runner's temp space.
       EXPLANEAT_HOME: ${{ github.workspace }}/../explaneat-home
@@ -40,26 +42,25 @@ jobs:
         with:
           enable-cache: true
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-          cache: npm
-          cache-dependency-path: web/react-explorer/package-lock.json
+      - name: Python 3.12 via uv
+        run: uv python install 3.12
 
-      - name: uv sync --extra survival
-        run: uv sync --extra survival
-
-      - name: Build the UI (npm ci, npm run build)
-        working-directory: web/react-explorer
+      # The four commands' install part, with no setup-node and Node hidden:
+      # the runner images ship a Node, so every directory holding a node
+      # executable is dropped from PATH inside this step (step-local, so the
+      # Windows PATH of later steps is untouched).
+      - name: uv sync, setup, doctor (no Node on PATH)
         run: |
-          npm ci
-          npm run build
-
-      - name: explaneat setup
-        run: uv run python -m explaneat setup
-
-      - name: explaneat doctor
-        run: uv run python -m explaneat doctor
+          UV="$(command -v uv)"   # resolved before PATH is filtered
+          while NODE="$(command -v node)"; do
+            echo "hiding $NODE"
+            export PATH="$(echo "$PATH" | tr ':' '\n' | grep -vxF "$(dirname "$NODE")" | paste -sd: -)"
+          done
+          if command -v npm; then echo "npm still on PATH"; exit 1; fi
+          "$UV" sync --extra survival
+          "$UV" run python -m explaneat setup
+          "$UV" run python -m explaneat doctor | tee doctor.log
+          grep -q "React Explorer build .*matches web/react-explorer source" doctor.log
 
       - name: Demo (tiny)
         run: uv run python -m explaneat demo --tiny --out demo_output
@@ -75,6 +76,9 @@ jobs:
         run: >
           uv run pytest -q -p no:cacheprovider -m "not slow"
           tests/test_core tests/test_survival tests/test_api tests/test_mcp tests/test_install
+
+      - name: Portal batch (CSV import, 2 seeds in worker processes, report)
+        run: uv run pytest -q -p no:cacheprovider tests/test_api/test_portal.py
 
       - name: API serves the UI and answers
         run: |
@@ -97,4 +101,5 @@ jobs:
             demo_output/report.md
             demo_output/report.html
             api.log
+            doctor.log
           if-no-files-found: ignore

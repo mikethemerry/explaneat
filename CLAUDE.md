@@ -36,10 +36,10 @@ See `docs/theoretical_framework.md` for the full mathematical treatment.
 **Always use `uv run` for Python commands** - this automatically uses the virtual environment.
 
 ```bash
-# Install (see README.md; Windows: docs/install_windows.md)
+# Install (see README.md; Windows: docs/install_windows.md; VARIANZ: docs/varianz_runbook.md)
+# Python 3.12 via uv (.python-version); no Node: the built UI is committed in explaneat/static/react_explorer
 uv sync --extra survival --extra dev
-cd web/react-explorer && npm ci && npm run build && cd ../..
-uv run python -m explaneat setup    # SQLite DB in ~/.explaneat (EXPLANEAT_HOME), deploys the built UI
+uv run python -m explaneat setup    # SQLite DB in ~/.explaneat (EXPLANEAT_HOME); uses the bundled UI
 uv run python -m explaneat doctor   # environment check with fixes
 uv run python -m explaneat demo     # hello world on synthetic data -> demo_output/report.md (PASS/FAIL per stage)
 uv run pytest -m smoke              # ~3 s install smoke test
@@ -72,8 +72,10 @@ uv run python -m explaneat api --mark-orphans  # also mark 'running' experiments
 ### React Explorer Frontend
 ```bash
 cd web/react-explorer && npm install && npm run dev   # Dev server (port 3001, proxies /api to :8000)
-cd web/react-explorer && npx tsc --noEmit -p . && npm run build   # Type check + production build
-# Deploy: replace explaneat/static/react_explorer/ with web/react-explorer/dist/ (remove old assets/ first)
+cd web/react-explorer && npm ci && npx tsc --noEmit -p . && npm run build   # Type check + production build
+uv run python -m explaneat setup --skip-db   # replaces explaneat/static/react_explorer with dist/ (only if built from current source)
+# Then COMMIT explaneat/static/react_explorer: the clinical install has no Node. build-info.json records the
+# source hash; doctor warns and tests/test_install/test_ui_bundle.py fails if the bundle is stale
 ```
 
 ### MCP Server

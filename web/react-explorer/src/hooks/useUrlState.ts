@@ -8,6 +8,7 @@ export type UrlView =
   | { type: "datasets" }
   | { type: "templates" }
   | { type: "review" }
+  | { type: "portal" }
   | { type: "genome"; genomeId: string; experimentId: string; experimentName: string };
 
 /** Parse the current URL into a View. */
@@ -29,6 +30,7 @@ export function parseUrl(): UrlView {
   if (path.startsWith("/datasets")) return { type: "datasets" };
   if (path.startsWith("/templates")) return { type: "templates" };
   if (path.startsWith("/review")) return { type: "review" };
+  if (path.startsWith("/portal")) return { type: "portal" };
   return { type: "experiments" };
 }
 
@@ -43,6 +45,8 @@ export function viewToUrl(view: UrlView): string {
       return "/templates";
     case "review":
       return "/review";
+    case "portal":
+      return "/portal";
     case "genome": {
       const params = new URLSearchParams();
       if (view.experimentId) params.set("experiment", view.experimentId);

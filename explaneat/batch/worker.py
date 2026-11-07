@@ -48,9 +48,9 @@ class Cancelled(Exception):
 
 
 def _write_json(path: Path, obj) -> None:
-    tmp = path.with_suffix(".tmp")
-    tmp.write_text(json.dumps(obj, indent=1, default=str), encoding="utf-8")
-    os.replace(tmp, path)
+    from .common import write_json_atomic
+
+    write_json_atomic(path, obj)
 
 
 class RunReporter:

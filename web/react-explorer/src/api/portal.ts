@@ -54,6 +54,8 @@ export type ImportCsvRequest = {
   test_size: number;
   val_size: number;
   split_seed: number;
+  horizons?: number[] | null;
+  calibration_horizon?: number | null;
 };
 
 export type ImportCsvResult = {
@@ -184,6 +186,7 @@ export type Results = {
 export const getResults = (id: string, refresh = false) =>
   req<Results>(`${B}/batches/${id}/results${refresh ? "?refresh=true" : ""}`);
 export const resultsCsvUrl = (id: string) => `${B}/batches/${id}/results.csv`;
+export const reportMdUrl = (id: string) => `${B}/batches/${id}/report.md`;
 
 // ------------------------------------------------------------- survival evidence
 

@@ -1,16 +1,21 @@
 """`explaneat setup` and `explaneat doctor`: local install, cross-platform.
 
-``setup`` creates the data directory, a SQLite database with every table
+``setup`` creates the data directory and a SQLite database with every table
 (``create_all`` on a new or existing *SQLite file only*; it never migrates or
-writes to a Postgres database), and copies the built React Explorer from
-``web/react-explorer/dist`` into ``explaneat/static/react_explorer`` (pure
-Python, no ``cp``). ``doctor`` checks the toolchain and the install and says
-how to fix what is missing. Neither makes a network connection, except
-``doctor`` connecting to the configured database to run ``SELECT 1``.
+writes to a Postgres database). The built React Explorer is committed in
+``explaneat/static/react_explorer`` (package data), so no Node is needed to
+install or run; ``setup`` only redeploys a developer's fresh build from
+``web/react-explorer/dist`` (pure Python, no ``cp``). ``doctor`` checks the
+toolchain and the install, including whether the bundled UI was built from
+the current UI source (``build-info.json``, ``ui_source_hash``), and says how
+to fix what is missing. Neither makes a network connection, except ``doctor``
+connecting to the configured database to run ``SELECT 1``.
 """
 
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 import shutil
 import subprocess
@@ -23,26 +28,78 @@ from . import settings
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 REPO_ROOT = PACKAGE_DIR.parent
-UI_DIST = REPO_ROOT / "web" / "react-explorer" / "dist"
+UI_SRC = REPO_ROOT / "web" / "react-explorer"
+UI_DIST = UI_SRC / "dist"
 UI_STATIC = PACKAGE_DIR / "static" / "react_explorer"
+BUILD_INFO = "build-info.json"
 PY_MIN, PY_MAX = (3, 11), (3, 12)
 NODE_MIN = 18
 
+# Must match ROOT_FILES / SOURCE_DIRS / uiSourceHash in web/react-explorer/vite.config.ts,
+# which writes the hash into dist/build-info.json at build time.
+UI_ROOT_FILES = ("index.html", "package.json", "package-lock.json", "tsconfig.json",
+                 "tsconfig.node.json", "vite.config.ts")
+UI_SOURCE_DIRS = ("src", "public")
+REBUILD_UI = ("cd web/react-explorer && npm ci && npm run build && cd ../.. && "
+              "uv run python -m explaneat setup --skip-db, then commit explaneat/static/react_explorer")
+
+
+def ui_source_hash(src: Path = UI_SRC) -> Optional[str]:
+    """SHA-256 of the UI source, as vite.config.ts computes it (None without a source tree)."""
+    if not (src / "package.json").is_file():
+        return None
+    files = [src / f for f in UI_ROOT_FILES if (src / f).is_file()]
+    for d in UI_SOURCE_DIRS:
+        if (src / d).is_dir():
+            files += [p for p in (src / d).rglob("*") if p.is_file()
+                      and not any(part.startswith(".") for part in p.relative_to(src).parts)]
+    h = hashlib.sha256()
+    for rel in sorted(p.relative_to(src).as_posix() for p in files):
+        h.update(rel.encode("utf-8") + b"\0")
+        h.update((src / rel).read_bytes().replace(b"\r\n", b"\n") + b"\0")
+    return h.hexdigest()
+
+
+def bundle_source_hash(bundle: Path = UI_STATIC) -> Optional[str]:
+    """The source hash recorded in a built bundle's build-info.json, if any."""
+    try:
+        return json.loads((bundle / BUILD_INFO).read_text(encoding="utf-8")).get("source_sha256")
+    except (OSError, ValueError, AttributeError):
+        return None
+
 
 # ---------------------------------------------------------------- setup
-def deploy_ui(log: Callable[[str], None] = print) -> str:
-    """Copy the Vite build into the package. Returns 'deployed', 'bundled' or 'missing'."""
-    index = UI_DIST / "index.html"
-    if index.is_file():
-        UI_STATIC.mkdir(parents=True, exist_ok=True)
-        shutil.copytree(UI_DIST, UI_STATIC, dirs_exist_ok=True)
-        log(f"  UI: copied {UI_DIST} -> {UI_STATIC}")
-        return "deployed"
-    if (UI_STATIC / "index.html").is_file():
-        log(f"  UI: no build at {UI_DIST}; keeping the bundled copy in {UI_STATIC}.")
+def deploy_ui(log: Callable[[str], None] = print, dist: Path = UI_DIST, static: Path = UI_STATIC,
+              src: Path = UI_SRC) -> str:
+    """Make sure the package has a UI. Returns 'deployed', 'bundled', 'stale-build' or 'missing'.
+
+    The committed bundle in ``static`` is used as is (no Node needed). Only a
+    developer build in ``dist`` whose ``build-info.json`` matches the current
+    source replaces it, and it replaces it wholesale, so no stale hashed
+    assets are left behind.
+    """
+    if (dist / "index.html").is_file():
+        built, current = bundle_source_hash(dist), ui_source_hash(src)
+        if built is not None and built == current:
+            if (static / BUILD_INFO).is_file() and bundle_source_hash(static) == built:
+                log(f"  UI: bundled copy in {static} is already this build.")
+                return "bundled"
+            if static.exists():
+                shutil.rmtree(static)
+            shutil.copytree(dist, static)
+            log(f"  UI: copied {dist} -> {static} (source {built[:12]})")
+            log("      Commit explaneat/static/react_explorer so installs without Node get this build.")
+            return "deployed"
+        log(f"  UI: {dist} is not a build of the current source "
+            f"({'no build-info.json' if built is None else 'source changed since it was built'}); "
+            "not deploying it.")
         log("      To rebuild: cd web/react-explorer && npm ci && npm run build, then rerun setup.")
+        if (static / "index.html").is_file():
+            return "stale-build"
+    if (static / "index.html").is_file():
+        log(f"  UI: using the bundled build in {static} (no Node needed).")
         return "bundled"
-    log("  UI: WARNING no build found. Run: cd web/react-explorer && npm ci && npm run build")
+    log(f"  UI: WARNING no bundled UI in {static}. Run: {REBUILD_UI}")
     return "missing"
 
 
@@ -138,8 +195,8 @@ def run_checks() -> List[Check]:
     node = _version_of(["node", "--version"])
     major = int(re.findall(r"\d+", node)[0]) if node and re.findall(r"\d+", node) else 0
     if not node:
-        checks.append(Check("Node.js", "WARN", "not on PATH (only needed to build the UI)",
-                            "Install Node LTS (https://nodejs.org) to rebuild web/react-explorer"))
+        checks.append(Check("Node.js", "OK", "not installed (not needed: the UI is bundled; "
+                            "only UI developers need Node)"))
     else:
         checks.append(Check("Node.js", "OK" if major >= NODE_MIN else "WARN", node,
                             "" if major >= NODE_MIN else f"Node >= {NODE_MIN} is needed for Vite 5"))
@@ -191,20 +248,35 @@ def run_checks() -> List[Check]:
         checks.append(Check("SQLite schema support", "OK" if ok else "FAIL", how,
                             "" if ok else "uv sync (reinstall the package)"))
 
-    index = UI_STATIC / "index.html"
-    if not index.is_file():
-        checks.append(Check("React Explorer build", "FAIL", f"{index} missing",
-                            "cd web/react-explorer && npm ci && npm run build && cd ../.. && explaneat setup"))
-    else:
-        stale = (UI_DIST / "index.html").is_file() and \
-            (UI_DIST / "index.html").stat().st_mtime > index.stat().st_mtime + 1
-        external = re.findall(r"""(?:src|href)\s*=\s*["'](?:https?:)?//""", index.read_text(encoding="utf-8"))
-        status = "WARN" if stale or external else "OK"
-        detail = "deployed" + (" but older than web/react-explorer/dist" if stale else "")
-        if external:
-            detail += f"; index.html loads {len(external)} external resource(s)"
-        checks.append(Check("React Explorer build", status, detail, "explaneat setup" if stale else ""))
+    checks.append(ui_check())
     return checks
+
+
+def ui_check(static: Path = UI_STATIC, src: Path = UI_SRC) -> Check:
+    """The bundled UI exists, loads nothing external, and matches the UI source."""
+    index = static / "index.html"
+    if not index.is_file():
+        return Check("React Explorer build", "FAIL", f"{index} missing",
+                     "reinstall from a clean checkout (the UI is committed), or: " + REBUILD_UI)
+    problems = []
+    external = re.findall(r"""(?:src|href)\s*=\s*["'](?:https?:)?//""", index.read_text(encoding="utf-8"))
+    if external:
+        problems.append(f"index.html loads {len(external)} external resource(s)")
+    missing = [ref for ref in re.findall(r"""(?:src|href)\s*=\s*["']/(assets/[^"']+)""",
+                                          index.read_text(encoding="utf-8"))
+               if not (static / ref).is_file()]
+    if missing:
+        problems.append(f"index.html references missing files {missing}")
+    built, current = bundle_source_hash(static), ui_source_hash(src)
+    if built is None:
+        problems.append("no build-info.json, so its source is unknown")
+    elif current is not None and built != current:
+        problems.append("built from older UI source than web/react-explorer (stale bundle)")
+    if problems:
+        return Check("React Explorer build", "WARN", "bundled; " + "; ".join(problems),
+                     REBUILD_UI if built is None or (current and built != current) else "")
+    where = "matches web/react-explorer source" if current else "no UI source here to compare"
+    return Check("React Explorer build", "OK", f"bundled, source {built[:12]} ({where})")
 
 
 def _db_check(url: str, source: str) -> Check:
