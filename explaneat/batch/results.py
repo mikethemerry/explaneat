@@ -425,6 +425,8 @@ def results_report_md(res: Dict[str, Any], batch: Optional[Dict[str, Any]] = Non
         w("| Quantity | n | mean | 95% interval | sd |")
         w("|---|---|---|---|---|")
         for k, v in summ.items():
+            if k in ("calibration_horizon", "n_test", "events_test"):
+                continue  # constants of the split, already in Setup
             if isinstance(v, dict) and v.get("n"):
                 iv = f"[{_f(v.get('lo'))}, {_f(v.get('hi'))}]" if v.get("lo") is not None else "-"
                 w(f"| {k} | {v['n']} | {_f(v.get('mean'))} | {iv} | {_f(v.get('sd'))} |")
