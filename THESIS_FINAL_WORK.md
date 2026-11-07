@@ -33,8 +33,10 @@ for Mike's go-ahead.
 | — | Leftover agent worktrees | **Keep.** Mike: no more disk tidy-up (supersedes "remove all"). |
 | — | Go-ahead for tasks 2–11 | **Go ahead.** |
 
-**Still open; these come back with numbers:** D4 (coverage option, after task 5), D5 (paper
-number changes, after task 3), D6 (Rashomon reference and ε, after task 6).
+**Decided 7 Nov, after the numbers:**
+- **D4: (a).** Annotations of disconnected inputs are exempt from the single-root rule. This is implemented with tests and documented in `docs/annotation_coverage_model.md`. The paper's Adult and MONK-2 explanations now score 1.0.
+- **D5:** corrected wording goes into the thesis, and a corrections list is prepared for the paper (`results/thesis/paper_corrections.md`). No paper number changes.
+- **D6:** the reference is the best observed seed within the PropNEAT class, at ε = 0.01. Logistic regression and gradient boosting are shown as context. Recorded in `docs/signals-and-realisations/README.md` §3.
 
 The original options are kept below for the record.
 
@@ -152,3 +154,5 @@ The coordinator merges each branch to `main` after review.
 - **The XOR §3 table is restated:** 8 between-family pairs (0.50 / −0.84), plus the same-cell pair
   of seeds 12 and 21 as its own row.
 - **Study H and the lineage replays are complete** (`0d0aaea`). Only Adult was not replayed.
+
+**Done:** tasks 3–6 (thesis numbers, `788f42b`). D4–D6 are applied.

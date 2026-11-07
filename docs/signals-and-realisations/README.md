@@ -64,9 +64,24 @@ Levels of equivalence, weakest to strongest:
   - **Caveats:** a random-weight graft of the same shape gets close (the real graft leads by only +0.007 after fine-tuning: 7 better, 1 worse, 6 tied); the test set has only 87 rows.
   - **Scope:** in the thesis as a light example (Mike, 7 Nov).
 
-**Measured vs not yet measured.**
-- Best genome per seed, test AUC spread: Adult 0.903-0.909 (all inside for ε of about 0.006); Heart 0.865-0.912; MONK-2 0.639-1.000 (not all inside for any small ε). Source: `experiments/10seed/summary.md`. The thesis needs to state ε and the reference "best" (best observed model, or a strong baseline such as gradient boosting).
-- Whether whole **populations** at convergence sit inside the set has not been measured. It can be checked from the final-generation fitness distribution; do not claim it until it is.
+**Measured (7 Nov 2026; `results/thesis/rashomon.md`).** The thesis convention (Mike, 7 Nov):
+the ε-Rashomon set is taken **within the PropNEAT class**, relative to the **best observed seed**,
+with **ε = 0.01** in test AUC. Logistic regression and gradient boosting, fitted on the same
+split, are shown as external context.
+
+| Dataset | Best seed (test AUC) | Seeds inside at ε = 0.01 | Gradient boosting, same split | Seeds within 0.01 of gradient boosting |
+|---|---|---|---|---|
+| Heart | 0.912 | 1 / 10 | 0.945 (n_test = 61, noisy) | 0 / 10 |
+| MONK-2 | 1.000 | 3 / 10 | 0.948 | 3 / 10 |
+| Adult | 0.909 | 10 / 10 | 0.928 | 0 / 10 |
+| churn100 (supplementary) | 0.904 | 4 / 10 | 0.934 | 0 / 10 |
+
+- **Say it plainly:** against gradient boosting, few or no PropNEAT seeds are inside the set. The
+  existence claim needs *a* model inside the set *for the stated ε and reference*, not every
+  model.
+- **Population level, final generation, labelled as population-level:** whole final populations
+  are not inside the set at small ε. Within 0.01 of the best seed: Adult 32%, Heart 13%, MONK-2
+  about 1%.
 
 ## 4. Worked example: XOR (`index.html`)
 
@@ -113,5 +128,4 @@ The 10-seed explanations were drafted by Claude and have not yet been verified b
 - ~~Correct `experiments/xor/RESULTS.md`.~~ Done 7 Nov. "Threshold / sigmoid: 2 classes" is now a step-unit result (sigmoid units have 6), and seeds 12 and 21 are the graded single-input cell of the difference family. Two flags for Mike are in that file: the six minimal seeds sit at cell boundaries, and seeds 12 and 21 are counted in its "different classes" row although they share a cell.
 - PropNEAT uses ReLU hidden units, so the sigmoid realisations are a theoretical illustration only.
 - Check every citation in section 3 in Mendeley.
-- Measure the population-level Rashomon claim (final-generation fitness spread) before making it.
-- State ε and the reference best model for each dataset.
+- ~~Measure the population-level Rashomon claim; state ε and the reference.~~ Done 7 Nov (§3).

@@ -260,7 +260,7 @@ These are all on `exp/10seed-consistency`.
 
 ## 6. Open decisions for Mike
 
-1. **The paper's disconnected-input annotations.** Under the corrected compositional coverage,
+1. **Resolved 7 Nov 2026 (option a).** Annotations of disconnected inputs are exempt from the single-root rule (`docs/annotation_coverage_model.md`); the paper's Adult and MONK-2 explanations now score 1.0. Original note: under the corrected compositional coverage,
    the paper's Adult explanation scores 0.9 and MONK-2 scores 0.75: `unused_inputs` and
    `pruned_inputs` are separate roots. Either exempt annotations of disconnected inputs from the
    single-root rule, or edit the two stored explanations to put them under the root. The 10-seed

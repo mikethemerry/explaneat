@@ -203,6 +203,19 @@ $$C_V^{\text{comp}} = \frac{\text{present}}{\text{required}}$$
 
 with $C_V^{\text{comp}} = 1$ when $\text{required} = 0$ and a global root exists (a single annotation explaining the whole model), and $C_V^{\text{comp}} = 0$ when there are no annotations. Hence $C_V^{\text{comp}} = 1$ **iff there is exactly one root, its expanded subgraph contains every output node, and every annotation descends from it.** Examples: two leaf roots, one of them containing the output: $0/1 = 0$; leaves $A, B$ under a composition $C$ that does not reach the output, plus a separate root $D$ containing it: $2/3$.
 
+**Disconnected-input exemption** (decided 7 Nov 2026). Let $V_\varnothing$ be the nodes with no
+directed path to any output: unused or pruned inputs. Take an annotation $A$ that has no parent
+and no children, and whose nodes all lie in $V_\varnothing$. Such an annotation computes nothing the
+model uses. It is therefore exempt from the single-root rule, and is left out of $\mathcal{A}$ in
+the formula above.
+
+Structural coverage is unaffected: the annotation still covers its nodes. `get_coverage` lists
+these annotations under `hierarchy.exempt_disconnected`.
+
+Effect on the paper explanations: Adult (`unused_inputs`, 53 unconnected one-hots) and MONK-2
+(`pruned_inputs`) go from 0.9 and 0.75 to 1.0. Heart, and all 60 10-seed explanations, were
+already at 1.0. They list unconnected inputs as entries of the root.
+
 Implementation: `compute_compositional_coverage_from_hierarchy` in `explaneat/analysis/coverage.py` (used by the MCP `get_coverage` tool, which also reports `hierarchy.roots`, `global_root`, `composed` and `required`). The earlier implementation, $|\text{compositions}| / (|\mathcal{A}| - |\text{leaves}|)$, was identically 1 whenever any composition existed and is no longer used.
 
 ### Well-Formed Explanation

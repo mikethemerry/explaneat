@@ -7,7 +7,11 @@ numbers.
 
 from typing import Any, Dict, List
 
-from .coverage import CoverageComputer, compute_compositional_coverage_from_hierarchy
+from .coverage import (
+    CoverageComputer,
+    compute_compositional_coverage_from_hierarchy,
+    nodes_without_path_to_outputs,
+)
 
 
 def coverage_report(model_state, annotations_data) -> Dict[str, Any]:
@@ -164,6 +168,7 @@ def coverage_report(model_state, annotations_data) -> Dict[str, Any]:
             for ad in annotations_data
         ],
         output_ids,
+        disconnected_nodes=nodes_without_path_to_outputs(all_node_ids, all_edges, output_ids),
     )
     compositional_coverage = hierarchy["compositional_coverage"]
 
@@ -207,6 +212,7 @@ def coverage_report(model_state, annotations_data) -> Dict[str, Any]:
             "complete": hierarchy["complete"],
             "composed": hierarchy["composed"],
             "required": hierarchy["required"],
+            "exempt_disconnected": hierarchy.get("exempt", []),
         },
     }
     return result

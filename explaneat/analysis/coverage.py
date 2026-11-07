@@ -541,9 +541,27 @@ def compute_structural_coverage(explanation_id: str) -> float:
         return covered_count / total_count
 
 
+def nodes_without_path_to_outputs(
+    all_nodes: Set[str], edges: Set[tuple], output_nodes: Set[str]
+) -> Set[str]:
+    """Nodes with no directed path (over ``edges``) to any output node."""
+    rev: Dict[str, List[str]] = {}
+    for u, v in edges:
+        rev.setdefault(str(v), []).append(str(u))
+    reach, stack = set(), [str(o) for o in output_nodes]
+    while stack:
+        n = stack.pop()
+        if n in reach:
+            continue
+        reach.add(n)
+        stack.extend(rev.get(n, []))
+    return {str(n) for n in all_nodes} - reach
+
+
 def compute_compositional_coverage_from_hierarchy(
     annotations: List[Dict[str, Any]],
     output_nodes: Set[str],
+    disconnected_nodes: Optional[Set[str]] = None,
 ) -> Dict[str, Any]:
     """Compositional coverage C_V^comp of an annotation hierarchy (paper Def 11).
 
@@ -566,6 +584,13 @@ def compute_compositional_coverage_from_hierarchy(
     C_comp == 1.0 iff there is exactly one root, it contains every output,
     and every annotation descends from it.
 
+    Disconnected-input exemption (decided 7 Nov 2026): an annotation that has
+    no parent and no children, and whose nodes all lie in
+    ``disconnected_nodes`` (nodes with no path to any output, e.g. unused or
+    pruned inputs), computes nothing the model uses. It is exempt from the
+    single-root rule and left out of ``composed``/``required``; it is listed
+    under ``exempt``. With ``disconnected_nodes=None`` nothing is exempt.
+
     Args:
         annotations: dicts with ``name`` (and optionally ``id``),
             ``subgraph_nodes``, ``exit_nodes`` and either
@@ -587,6 +612,7 @@ def compute_compositional_coverage_from_hierarchy(
         "root_contains_outputs": False,
         "composed": 0,
         "required": 0,
+        "exempt": [],
     }
     if not anns:
         return result
@@ -635,6 +661,16 @@ def compute_compositional_coverage_from_hierarchy(
             stack.extend(children.get(n, []))
         return out
 
+    if disconnected_nodes:
+        dis = {str(x) for x in disconnected_nodes}
+        exempt = [n for n in names
+                  if n not in parent and not children.get(n)
+                  and nodes_of.get(n) and nodes_of[n] <= dis]
+        if exempt:
+            result["exempt"] = exempt
+            names = [n for n in names if n not in exempt]
+            if not names:
+                return result
     roots = [n for n in names if n not in parent]
     global_roots = [r for r in roots if outputs <= _expanded(r)]
     has_global = bool(global_roots)
