@@ -1,0 +1,183 @@
+{
+  "protocol": "Task 6 references (ii) and (iii): logistic regression and gradient boosting\nfitted on the SAME train/test split each PropNEAT run used.\n\n- LR: the paper's protocol (scripts/aaai27/run_a_logistic.py): L2\n  LogisticRegression, C chosen by 5-fold CV on the train split only\n  (roc_auc), lbfgs, max_iter 5000, random_state 42.\n- GB: sklearn HistGradientBoostingClassifier, random_state 0, no early\n  stopping; hyperparameters chosen by 5-fold stratified CV (shuffle, seed 42)\n  on the train split only (roc_auc) over GRID below; refit on all of train.\n- Test AUC with a 95% percentile bootstrap CI (10,000 resamples, seed 42).\n- Same z-normalised features as the networks (the split's stored scaler).\n  n_jobs=1 throughout (CPU budget).\n\nRun: PYTHONHASHSEED=0 uv run python scripts/thesis/baselines.py\nWrites results/thesis/baselines.json\n",
+  "grid_gb": {
+    "learning_rate": [
+      0.03,
+      0.1
+    ],
+    "max_iter": [
+      100,
+      300
+    ],
+    "max_leaf_nodes": [
+      7,
+      15,
+      31
+    ],
+    "min_samples_leaf": [
+      5,
+      20
+    ],
+    "l2_regularization": [
+      0.0,
+      1.0
+    ]
+  },
+  "grid_lr_C": [
+    0.001,
+    0.003,
+    0.01,
+    0.03,
+    0.1,
+    0.3,
+    1.0,
+    3.0,
+    10.0,
+    30.0,
+    100.0
+  ],
+  "heart": {
+    "split_id": "165cebbd-6609-46ca-867e-c09e17b2d6ec",
+    "n_train": 242,
+    "n_test": 61,
+    "n_features": 26,
+    "logistic": {
+      "C": 0.1,
+      "cv_auc": 0.9050740006499634,
+      "test_auc": 0.9191810344827586,
+      "test_auc_ci95": [
+        0.8408551931939029,
+        0.9777838827838826
+      ],
+      "seconds": 3.3802599906921387
+    },
+    "gradient_boosting": {
+      "params": {
+        "l2_regularization": 1.0,
+        "learning_rate": 0.03,
+        "max_iter": 100,
+        "max_leaf_nodes": 7,
+        "min_samples_leaf": 20
+      },
+      "cv_auc": 0.888071188071188,
+      "train_auc": 0.972724125995154,
+      "test_auc": 0.9450431034482758,
+      "test_auc_ci95": [
+        0.884698275862069,
+        0.9877811355311354
+      ],
+      "seconds": 14.76059603691101
+    },
+    "gradient_boosting_default": {
+      "test_auc": 0.9181034482758621
+    }
+  },
+  "monk2": {
+    "split_id": "63257a45-49c9-42a6-8b28-8e346eab2bee",
+    "n_train": 345,
+    "n_test": 87,
+    "n_features": 17,
+    "logistic": {
+      "C": 0.1,
+      "cv_auc": 0.5297924272278399,
+      "test_auc": 0.4227110582639715,
+      "test_auc_ci95": [
+        0.30584765786520174,
+        0.5417745019810697
+      ],
+      "seconds": 3.2469351291656494
+    },
+    "gradient_boosting": {
+      "params": {
+        "l2_regularization": 0.0,
+        "learning_rate": 0.1,
+        "max_iter": 300,
+        "max_leaf_nodes": 15,
+        "min_samples_leaf": 20
+      },
+      "cv_auc": 0.9743792345690749,
+      "train_auc": 0.9999618553555081,
+      "test_auc": 0.9476813317479191,
+      "test_auc_ci95": [
+        0.8777777777777778,
+        0.9970285652696942
+      ],
+      "seconds": 15.348574876785278
+    },
+    "gradient_boosting_default": {
+      "test_auc": 0.8888228299643282
+    }
+  },
+  "churn": {
+    "split_id": "45962ea6-3c78-49f9-a01e-3665f6809b1e",
+    "n_train": 4000,
+    "n_test": 1000,
+    "n_features": 71,
+    "logistic": {
+      "C": 0.01,
+      "cv_auc": 0.8148729541099913,
+      "test_auc": 0.8189053740536169,
+      "test_auc_ci95": [
+        0.7818020450927419,
+        0.8540102582096297
+      ],
+      "seconds": 4.234781980514526
+    },
+    "gradient_boosting": {
+      "params": {
+        "l2_regularization": 0.0,
+        "learning_rate": 0.1,
+        "max_iter": 300,
+        "max_leaf_nodes": 15,
+        "min_samples_leaf": 20
+      },
+      "cv_auc": 0.9251486773453765,
+      "train_auc": 1.0,
+      "test_auc": 0.9343538173201562,
+      "test_auc_ci95": [
+        0.9022738738518589,
+        0.9621784498479069
+      ],
+      "seconds": 94.80988478660583
+    },
+    "gradient_boosting_default": {
+      "test_auc": 0.9319512215259373
+    }
+  },
+  "adult": {
+    "split_id": "1df50169-8095-40d1-b61a-30bb541cd313",
+    "n_train": 39073,
+    "n_test": 9769,
+    "n_features": 107,
+    "logistic": {
+      "C": 0.1,
+      "cv_auc": 0.9065705328063048,
+      "test_auc": 0.9052057363214255,
+      "test_auc_ci95": [
+        0.8988516405659771,
+        0.9115563967591291
+      ],
+      "seconds": 18.590649127960205
+    },
+    "gradient_boosting": {
+      "params": {
+        "l2_regularization": 1.0,
+        "learning_rate": 0.1,
+        "max_iter": 300,
+        "max_leaf_nodes": 15,
+        "min_samples_leaf": 5
+      },
+      "cv_auc": 0.9304656053668637,
+      "train_auc": 0.947208771734451,
+      "test_auc": 0.9275630198677317,
+      "test_auc_ci95": [
+        0.9220119165431838,
+        0.9330195235256148
+      ],
+      "seconds": 933.9141900539398
+    },
+    "gradient_boosting_default": {
+      "test_auc": 0.9263672274350988
+    }
+  }
+}
