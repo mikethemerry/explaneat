@@ -190,6 +190,21 @@ class BatchManager:
         b = self.get(batch_id)
         todo = [r for r in b["runs"] if (run_id is None or r["run_id"] == run_id)
                 and r["status"] in ("interrupted", "cancelled", "failed")]
+        # A worker writes its final status and then exits; interpreter shutdown can
+        # take a moment (longer on slow machines). A run whose status is already
+        # final is not "still running": wait for its process to exit, outside the
+        # lock, instead of skipping the resume.
+        for r in todo:
+            with self._lock:
+                p = self._procs.get(f"{batch_id}/{r['run_id']}")
+            if p is not None and p.poll() is None:
+                st0 = _read_json(self.root / batch_id / r["run_id"] / "progress.json", {}) or {}
+                if st0.get("status") in TERMINAL:
+                    try:
+                        p.wait(timeout=60)
+                    except subprocess.TimeoutExpired:
+                        p.terminate()
+                        p.wait(timeout=10)
         with self._lock:
             for r in todo:
                 key = f"{batch_id}/{r['run_id']}"

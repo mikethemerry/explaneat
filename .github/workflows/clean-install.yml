@@ -41,6 +41,10 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
+          # The post-job `uv cache prune` failed on windows-2022 (exit 2, a file
+          # still locked) after every real step had passed. Pruning only trims the
+          # Actions cache, so skip it.
+          prune-cache: false
 
       - name: Python 3.12 via uv
         run: uv python install 3.12
