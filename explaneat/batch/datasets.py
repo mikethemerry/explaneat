@@ -26,14 +26,9 @@ _EVENT_HINTS = ("event", "status", "death", "dead", "died", "outcome", "cvd", "f
 
 
 def _read(path):
-    import pandas as pd
+    from ..survival.data import read_table
 
-    path = Path(path).expanduser()
-    if not path.is_file():
-        raise FileNotFoundError(f"no such file: {path}")
-    if path.suffix.lower() in (".parquet", ".pq"):
-        return pd.read_parquet(path)
-    return pd.read_csv(path)
+    return read_table(path)
 
 
 def preview_csv(path) -> Dict[str, Any]:
@@ -68,20 +63,9 @@ def preview_csv(path) -> Dict[str, Any]:
 
 
 def _encode(df, features: Sequence[str], categorical: Sequence[str], impute: Optional[str]):
-    import pandas as pd
+    from ..survival.data import encode_features
 
-    X = df[list(features)].copy()
-    cat = [c for c in features if c in set(categorical) or not pd.api.types.is_numeric_dtype(X[c])]
-    if cat:
-        # One column per level ("feature:level"), matching the one-hot naming the
-        # explanation tools group by (base feature before ":").
-        X = pd.get_dummies(X, columns=cat, prefix=cat, prefix_sep=":", drop_first=False, dtype=float)
-    if X.isna().any().any():
-        if impute != "median":
-            bad = [c for c in X.columns if X[c].isna().any()]
-            raise ValueError(f"missing values in {bad}; choose impute = median explicitly or impute upstream")
-        X = X.fillna(X.median(numeric_only=True))
-    return X.to_numpy(np.float64), [str(c) for c in X.columns]
+    return encode_features(df, features, categorical, impute)
 
 
 def import_csv(
@@ -133,11 +117,7 @@ def import_csv(
         raise ValueError(f"outcome columns cannot be features: {leaked}")
     X, names = _encode(df, feats, categorical or [], impute)
 
-    def _match(series, value):
-        try:
-            return (series.astype(float) == float(value)).to_numpy()
-        except (TypeError, ValueError):
-            return (series.astype(str) == str(value)).to_numpy()
+    from ..survival.data import match_value as _match
 
     meta = {"restricted": restricted, "source_file": Path(path).name, "features": feats,
             "categorical": list(categorical or []), "impute": impute}

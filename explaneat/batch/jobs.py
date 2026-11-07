@@ -26,7 +26,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .common import TEMPLATES, current_database_url, jobs_dir
+from .common import TEMPLATES, current_database_url, jobs_dir, write_json_atomic
 
 TERMINAL = {"completed", "failed", "interrupted", "cancelled"}
 
@@ -39,9 +39,7 @@ def _read_json(p: Path, default=None):
 
 
 def _write_json(p: Path, obj) -> None:
-    tmp = p.with_suffix(".tmp")
-    tmp.write_text(json.dumps(obj, indent=1, default=str), encoding="utf-8")
-    os.replace(tmp, p)
+    write_json_atomic(p, obj)
 
 
 class BatchManager:
@@ -122,7 +120,10 @@ class BatchManager:
 
     def _launch(self, batch_id: str, run_id: str):
         rdir = self.root / batch_id / run_id
-        env = {**os.environ, "PYTHONHASHSEED": "0", "OMP_NUM_THREADS": "1", "MKL_NUM_THREADS": "1"}
+        # PYTHONUTF8: worker.log is a file, which on Windows would otherwise get the
+        # ANSI code page and fail on any non-ASCII output.
+        env = {**os.environ, "PYTHONHASHSEED": "0", "OMP_NUM_THREADS": "1", "MKL_NUM_THREADS": "1",
+               "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}
         repo = Path(__file__).resolve().parents[2]
         env["PYTHONPATH"] = str(repo) + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
         log = open(rdir / "worker.log", "ab")

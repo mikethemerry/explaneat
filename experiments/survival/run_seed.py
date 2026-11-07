@@ -126,6 +126,28 @@ def git_state():
     return commit, dirty
 
 
+def check_cohort_paths(args) -> None:
+    """Restricted mode (EXPLANEAT_RESTRICTED=1): the same storage rules as the portal.
+
+    The cohort file, --out, --split-file, the job/data directory and (with
+    --db) a SQLite database must all be outside the repository.
+    """
+    from explaneat import governance
+    from explaneat.batch.common import StorageError, check_restricted_storage, inside_repo
+
+    if not governance.restricted_server():
+        return
+    try:
+        check_restricted_storage(csv_path=args.csv,
+                                 database_url=os.environ.get("DATABASE_URL") if args.db else None)
+        for flag, path in (("--out", args.out), ("--split-file", args.split_file)):
+            if path is not None and inside_repo(path):
+                raise StorageError(f"{flag} {path} is inside the repository; restricted outputs "
+                                   "must be written outside it")
+    except StorageError as e:
+        sys.exit(f"restricted mode: {e}")
+
+
 def load_data(args):
     """Return X, y [N,2], feature_names, extra (g_true for simulations)."""
     extra = {}
@@ -154,7 +176,7 @@ def load_data(args):
 
 
 def make_config(path: Path, n_inputs: int, pop_size=None, overrides=None) -> neat.Config:
-    text = path.read_text()
+    text = path.read_text(encoding="utf-8")
     overrides = dict(overrides or {})
     if pop_size:
         overrides["pop_size"] = pop_size
@@ -166,7 +188,7 @@ def make_config(path: Path, n_inputs: int, pop_size=None, overrides=None) -> nea
         elif key in overrides:
             line = f"{key} = {overrides[key]}"
         lines.append(line)
-    with tempfile.NamedTemporaryFile("w", suffix=".ini", delete=False) as f:
+    with tempfile.NamedTemporaryFile("w", suffix=".ini", delete=False, encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
         tmp = f.name
     try:
@@ -268,7 +290,8 @@ def main():
     ap.add_argument("--csv", default=None)
     ap.add_argument("--time-col", default=None)
     ap.add_argument("--event-col", default=None)
-    ap.add_argument("--event-value", default=1, type=float)
+    ap.add_argument("--event-value", default="1",
+                    help="value of --event-col that marks an event (number or text; default 1)")
     ap.add_argument("--features", default=None, help="comma-separated predictor columns")
     ap.add_argument("--categorical", default=None, help="comma-separated columns to one-hot encode")
     ap.add_argument("--impute", default=None, choices=[None, "median"])
@@ -294,6 +317,8 @@ def main():
         sys.exit("Set PYTHONHASHSEED=0 for reproducibility")
     if args.csv and not (args.time_col and args.event_col):
         sys.exit("--csv needs --time-col and --event-col")
+    if args.csv:
+        check_cohort_paths(args)
     if args.sim_seed is None:
         args.sim_seed = args.seed
     split_seed = args.seed if args.split_seed is None else args.split_seed
@@ -449,7 +474,7 @@ def main():
         record["experiment_id"] = str(pop.experiment_id)
     if champion_trace is not None:
         record["champion_trace"] = champion_trace
-    (args.out / f"{tag}.json").write_text(json.dumps(record, indent=1, default=float))
+    (args.out / f"{tag}.json").write_text(json.dumps(record, indent=1, default=float), encoding="utf-8")
     with open(args.out / f"{tag}.genome.pkl", "wb") as f:
         pickle.dump({"genome": best, "config_text": config.explaneat_config_text,
                      "feature_names": names, "scaler": {"mean": mu.tolist(), "scale": sd.tolist()},
