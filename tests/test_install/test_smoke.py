@@ -2,7 +2,8 @@
 serving the UI. Seconds each; CI runs them with ``pytest -m smoke``.
 
 Every test points EXPLANEAT_HOME and the database at tmp_path, so nothing
-touches ~/.explaneat or a real database. The SQLite path runs explaneat/db/sqlite_compat.py as in a real install.
+touches ~/.explaneat or a real database. The SQLite path goes through
+explaneat/db/sqlite_compat.py, as in a real install.
 """
 
 import json
@@ -62,6 +63,20 @@ def test_demo_tiny_sqlite_records_runs(tmp_path, home):
     assert all(v["lineage_length"] >= 1 for v in lineage.metrics.values())
     metrics = next(s for s in result.stages if s.key == "metrics").metrics
     assert {"harrell_c", "uno_c", "td_auc_mean"} <= set(metrics["survival_s0"])
+
+    # The UI opens each experiment's best genome: it must carry the explanation.
+    from fastapi.testclient import TestClient
+
+    from explaneat.api.app import create_app
+
+    client = TestClient(create_app())
+    exps = client.get("/api/experiments?limit=10").json()["experiments"]
+    assert len(exps) == 4
+    for e in exps:
+        best = client.get(f"/api/experiments/{e['id']}/best-genome").json()
+        gid = best.get("id") or best.get("genome_id")
+        ops = client.get(f"/api/genomes/{gid}/operations").json()["operations"]
+        assert any(op["type"] == "annotate" for op in ops), e["name"]
 
 
 def test_cli_setup_then_doctor(home):

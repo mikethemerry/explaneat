@@ -161,13 +161,35 @@ def train_classifier(X, y, seed: int, generations: int, pop_size: int, epochs: i
                                database_url=database_url, ancestry_reporter=AncestryReporter(),
                                mask_phantom=True)
         pop.run(safe_auc_fitness, n=generations, nEpochs=epochs)
-        info.update(mode="database", experiment_id=str(pop.experiment_id))
-    else:
-        pop = DemoPopulation(config, X, y, mask_phantom=True)
-        pop.run(safe_auc_fitness, n=generations, nEpochs=epochs)
+        best, row_id, fitness = best_db_genome(pop.experiment_id, config)
+        info.update(mode="database", experiment_id=str(pop.experiment_id), genome_row_id=row_id,
+                    train_fitness_auc=fitness)
+        return best, config, info
+    pop = DemoPopulation(config, X, y, mask_phantom=True)
+    pop.run(safe_auc_fitness, n=generations, nEpochs=epochs)
     best = copy.deepcopy(pop.best_genome)
     info["train_fitness_auc"] = float(best.fitness) if best.fitness is not None else None
     return best, config, info
+
+
+def best_db_genome(experiment_id: str, config):
+    """The genome the API and UI show for an experiment: its highest-fitness row
+    (``/api/experiments/{id}/best-genome``), rebuilt as a NEAT genome. The demo
+    explains this stored genome, not the in-memory object, whose weights keep
+    training while it survives as an elite."""
+    from uuid import UUID
+
+    from ..db.base import db
+    from ..db.models import Genome, Population
+
+    with db.session_scope() as session:
+        row = (session.query(Genome).join(Population, Genome.population_id == Population.id)
+               .filter(Population.experiment_id == UUID(str(experiment_id)),
+                       Genome.fitness.isnot(None))
+               .order_by(Genome.fitness.desc()).first())
+        if row is None:
+            raise LookupError(f"experiment {experiment_id} has no scored genomes")
+        return row.to_neat_genome(config), str(row.id), float(row.fitness)
 
 
 def predict(genome, config, X) -> np.ndarray:

@@ -258,10 +258,16 @@ class _Demo:
             pop.run(make_cox_fitness("efron", 0.0), n=self.s.survival_generations,
                     nEpochs=self.s.epochs)
             if self.db_url:
+                from .training import best_db_genome
+
                 self._link_split(info["experiment_id"], seed, sv)
-            info.update(train_fitness=float(pop.best_genome.fitness),
-                        seconds=round(time.time() - t0, 1))
-            runs.append(dict(genome=copy.deepcopy(pop.best_genome), config=config, info=info))
+                best, row_id, fitness = best_db_genome(info["experiment_id"], config)
+                info.update(genome_row_id=row_id, train_fitness=fitness)
+            else:
+                best = copy.deepcopy(pop.best_genome)
+                info["train_fitness"] = float(best.fitness)
+            info["seconds"] = round(time.time() - t0, 1)
+            runs.append(dict(genome=best, config=config, info=info))
             st.metrics[f"survival_s{seed}"] = info
         return runs
 
@@ -295,23 +301,19 @@ class _Demo:
         from uuid import UUID
 
         from ..db.base import db
-        from ..db.models import Explanation, Genome, Population
+        from ..db.models import Explanation, Genome
 
         r = run["explanation"]
+        genome_row_id = run["info"]["genome_row_id"]
         with db.session_scope() as session:
-            row = (session.query(Genome).join(Population, Genome.population_id == Population.id)
-                   .filter(Population.experiment_id == UUID(run["info"]["experiment_id"]),
-                           Genome.genome_id == run["genome"].key)
-                   .order_by(Population.generation.desc()).first())
-            if row is None:
-                raise LookupError("best genome's DB row not found")
-            session.add(Explanation(genome_id=row.id, name="demo scripted explanation",
+            if session.get(Genome, UUID(genome_row_id)) is None:
+                raise LookupError(f"genome row {genome_row_id} not found")
+            session.add(Explanation(genome_id=UUID(genome_row_id), name="demo scripted explanation",
                                     description="explaneat demo: splits + leaf/composition annotations",
                                     is_well_formed=True,
                                     structural_coverage=r.structural_coverage,
                                     compositional_coverage=r.compositional_coverage,
                                     operations=r.operations))
-            genome_row_id = str(row.id)
         # Round trip: rebuild the phenotype from the stored genome, replay.
         from mcp_server.helpers import build_engine
 
@@ -321,7 +323,6 @@ class _Demo:
         if n != len(r.leaves) + len(r.compositions):
             raise AssertionError(f"stored explanation replays {n} annotations, expected "
                                  f"{len(r.leaves) + len(r.compositions)}")
-        run["info"]["genome_row_id"] = genome_row_id
         return f"seed {run['info']['seed']}: explanation stored on genome {genome_row_id} and replayed"
 
     # -- 5. evidence and metrics --------------------------------------------------
