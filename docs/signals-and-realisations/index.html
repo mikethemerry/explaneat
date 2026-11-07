@@ -1,0 +1,532 @@
+<title>XOR Signal and Realisations</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: a thesis figure sheet. Setup strip, six class panels in a 2-column grid grouped by family, then the equivalence ladder and the minimality floor. */
+:root{
+  --bg:#f5f7f9; --panel:#ffffff; --ink:#18212b; --muted:#5a6573; --rule:#d9dfe6;
+  --pos:#1d5aa6; --neg:#a3366b; --active:#dcebe6; --active-ink:#1f6b55; --chip:#eef2f6;
+  --s-mid:#eef2f6; --plane:#5a6573; --grid:#c9d1da;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12171d; --panel:#1a2129; --ink:#e3e8ee; --muted:#9aa5b3; --rule:#2c3640;
+  --pos:#7fb0ef; --neg:#e48ab8; --active:#1d3a33; --active-ink:#8fd6bd; --chip:#232c36;
+  --s-mid:#c3ccd6; --plane:#f2f5f8; --grid:#56626f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171d; --panel:#1a2129; --ink:#e3e8ee; --muted:#9aa5b3; --rule:#2c3640;
+  --pos:#7fb0ef; --neg:#e48ab8; --active:#1d3a33; --active-ink:#8fd6bd; --chip:#232c36;
+  --s-mid:#c3ccd6; --plane:#f2f5f8; --grid:#56626f; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+.wrap{max-width:1080px;margin:0 auto;padding-block:32px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:36px}
+h1,h2,h3{font-family:var(--f-display);font-weight:600;text-wrap:balance;margin:0;line-height:1.2}
+h1{font-size:2rem}
+h2{font-size:1.35rem}
+h3{font-size:1.05rem}
+p{margin:0;max-width:68ch}
+.eyebrow{font-family:var(--f-mono);font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.lede{display:flex;flex-direction:column;gap:10px}
+.mono{font-family:var(--f-mono);font-size:.88em}
+.setup{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px;align-items:start}
+.box{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.eq{font-family:var(--f-mono);font-size:.95rem;background:var(--chip);border-radius:4px;padding:10px 12px;overflow-x:auto;white-space:nowrap}
+table{border-collapse:collapse;font-variant-numeric:tabular-nums}
+.tt th,.tt td{font-family:var(--f-mono);font-size:.85rem;padding:3px 10px;text-align:center;border-bottom:1px solid var(--rule)}
+.tt th{font-weight:500;color:var(--muted)}
+.family{display:flex;flex-direction:column;gap:14px}
+.family-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.family-head p{color:var(--muted);font-size:.92rem}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.why{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border:1px solid var(--rule);border-radius:6px;overflow:hidden;font-size:.88rem}
+.why div{padding:10px 12px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);background:var(--panel);min-width:0}
+.why div:nth-child(3n){border-right:0}
+.why .h{font-family:var(--f-mono);font-size:.75rem;color:var(--muted);background:var(--chip)}
+@media (max-width:1000px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.fams{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.fam{border-width:1.5px}
+.slider{display:flex;flex-direction:column;gap:4px}
+.slider input{width:100%;accent-color:var(--pos)}
+.ticks{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
+.ticks button{font:inherit;color:inherit;background:none;border:0;padding:2px 0;cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
+.ticks button:focus-visible{outline:2px solid var(--pos);outline-offset:2px}
+.status{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:.85rem}
+.badge{font-family:var(--f-mono);font-size:.8rem;padding:3px 8px;border-radius:3px;background:var(--active);color:var(--active-ink);font-weight:500}
+.margin{font-family:var(--f-mono);font-size:.8rem;color:var(--muted)}
+.p3{width:100%;aspect-ratio:1/1;min-height:280px}
+.decomp{display:flex;flex-direction:column;gap:6px;border-top:1px dashed var(--rule);padding-top:10px}
+.minis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.minis figure{margin:0;display:flex;flex-direction:column;gap:3px;min-width:0}
+canvas.mini{width:100%;aspect-ratio:1/1;display:block;border-radius:3px}
+.logic{font-size:.88rem;margin:0}
+details.cells{border-top:1px solid var(--rule);padding-top:16px}
+details.cells summary{cursor:pointer;font-family:var(--f-display);font-weight:600;font-size:1.15rem;display:flex;gap:10px;align-items:baseline}
+details.cells[open] summary{margin-bottom:20px}
+@media (max-width:820px){.fams{grid-template-columns:minmax(0,1fr)}}
+.mirror-controls{display:flex;flex-wrap:wrap;gap:12px 24px}
+.seg{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.seg button{font-family:var(--f-mono);font-size:.8rem;padding:5px 10px;border-radius:4px;border:1px solid var(--rule);background:var(--panel);color:var(--ink);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--pos);border-color:var(--pos);color:var(--panel)}
+.seg button:focus-visible{outline:2px solid var(--pos);outline-offset:2px}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.cls{font-family:var(--f-mono);font-size:.75rem;color:var(--muted)}
+.members{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--f-mono);font-size:.78rem;background:var(--chip);border-radius:3px;padding:2px 7px}
+.evolved{font-size:.85rem;padding:6px 10px;border-radius:4px;background:var(--chip)}
+.evolved.found{background:var(--active);color:var(--active-ink);font-weight:500}
+.card-body{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:12px;align-items:center}
+svg.net{width:100%;height:auto;display:block}
+.plotwrap{display:flex;flex-direction:column;gap:4px;min-width:0}
+canvas.plot{width:100%;aspect-ratio:1/1;max-width:100%;display:block;border-radius:3px}
+.plotcap{font-family:var(--f-mono);font-size:.7rem;color:var(--muted);text-align:center}
+.rows{width:100%}
+.rows th:first-child{text-align:left}
+.hinge{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:20px;align-items:center}
+.hinge svg{width:100%;height:auto;display:block;max-width:360px}
+.rows th,.rows td{font-family:var(--f-mono);font-size:.8rem;padding:3px 6px;text-align:right;border-bottom:1px solid var(--rule)}
+.rows th{font-weight:500;color:var(--muted)}
+.rows td.on{background:var(--active);color:var(--active-ink);font-weight:500}
+.rows td.p{color:var(--pos)} .rows td.n{color:var(--neg)}
+.note{font-size:.88rem;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.82rem;color:var(--muted);align-items:center}
+.legend svg{vertical-align:middle}
+.ladder{display:flex;flex-direction:column;gap:0;border:1px solid var(--rule);border-radius:6px;background:var(--panel);overflow:hidden}
+.rung{display:grid;grid-template-columns:150px minmax(0,1fr) minmax(0,1fr);gap:16px;padding:14px 18px;border-bottom:1px solid var(--rule)}
+.rung:last-child{border-bottom:0}
+.rung .lvl{font-family:var(--f-display);font-weight:600}
+.rung .lvl span{display:block;font-family:var(--f-mono);font-weight:400;font-size:.75rem;color:var(--muted)}
+.rung .def{font-size:.9rem;min-width:0}
+.rung .ev{font-size:.88rem;color:var(--muted);min-width:0}
+.rung .ev b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+.floor{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.bars{display:flex;flex-direction:column;gap:6px}
+.bar{display:grid;grid-template-columns:96px minmax(0,1fr) 28px;gap:8px;align-items:center;font-size:.85rem}
+.bar .track{height:14px;background:var(--chip);border-radius:2px;position:relative}
+.bar .fill{position:absolute;inset:0 auto 0 0;background:var(--pos);border-radius:2px}
+.bar .fill.min{background:var(--active-ink)}
+.bar .n{font-family:var(--f-mono);text-align:right;font-variant-numeric:tabular-nums}
+.bar.floorline .track{background:repeating-linear-gradient(45deg,var(--chip) 0 6px,transparent 6px 12px)}
+.src{font-size:.82rem;color:var(--muted);border-top:1px solid var(--rule);padding-top:14px;display:flex;flex-direction:column;gap:4px}
+@media (max-width:820px){.grid,.setup,.floor,.hinge{grid-template-columns:minmax(0,1fr)}.rung{grid-template-columns:minmax(0,1fr);gap:4px}}
+@media (max-width:460px){.card-body{grid-template-columns:minmax(0,1fr)}}
+</style>
+
+<div class="wrap">
+  <header class="lede">
+    <div class="eyebrow">Thesis Ch 7 · worked example · ExplaNEAT experiments/xor</div>
+    <h1>XOR: one signal, six minimal ReLU realisations</h1>
+    <p>On the four data points, XOR is a single signal. A PropNEAT network with one ReLU hidden unit and skip connections realises it in <b>two families</b>. Within a family you can move continuously from any solution to any other without ever breaking XOR. Between families you can't. The two families are genuinely different mechanisms: a linear count with a corner correction, and two symmetric halves of XOR. They stay <b>two realisations, each with three cells</b>. The LP enumeration's six "classes" are <b>cells</b> inside these families: they record where the hinge's fold sits relative to the four data points, which is what gives the hinge its Boolean name. All weights shown are hand-chosen representatives, checked on all four rows. They are not the solver's or the evolved weights.</p>
+  </header>
+
+  <section class="box">
+    <div class="eyebrow">Why this page exists</div>
+    <h2>Reproducibility needs a better word than "same"</h2>
+    <p>The thesis works with World →A→ Model →B→ Explanation. We want to trust A, the model's fit to the world, and we get there through B, an explanation we can verify against the model. Reproducibility asks whether running A ten times gives ten equivalent models. Cox regression converges to the same model every time. PropNEAT does not: different seeds give different networks that can still make the same predictions.</p>
+    <p>So equivalence needs a definition between "same predictions" and "same weights". A <b>signal</b> is what a model uses, identified on the training data. A <b>realisation</b> is a subgraph with its weights and activation that computes it. Realisations of one signal agree on the data and can disagree everywhere else, between training points as well as beyond them. XOR is the smallest case: one signal, two families (a ridge and a valley), each with a ReLU or a sigmoid hidden unit. That gives four shapes, all identical on the four data points. Which one is preferable depends on the use, and choosing deliberately needs both an explanation that says two parts carry the same signal and a way to test it by changing the model.</p>
+    <p class="note">The full argument, its relation to the Rashomon set and the evidence from the 10-seed and churn experiments are in README.md, which sits beside this page in the ExplaNEAT repository (docs/signals-and-realisations/).</p>
+  </section>
+
+  <section class="setup">
+    <div class="box">
+      <div class="eyebrow">Architecture (minimal: one hidden unit, skips allowed)</div>
+      <div class="eq">h = ReLU(w₁x₁ + w₂x₂ + b)<br>z = v₁x₁ + v₂x₂ + u·h + c,&nbsp;&nbsp;ŷ = σ(z)</div>
+      <p class="note"><b>Every panel on this page has a ReLU hidden unit and a sigmoid output</b>, as PropNEAT builds them. The sigmoid only turns the score z into a probability, so the decision is the sign of z. A <b>threshold unit</b> means a hidden unit with a step activation (or a sigmoid steep enough to act as one). It appears here only as the comparison case, with 2 classes. None of the six panels uses one.</p>
+      <p class="note">Two discrete things describe a solution: the sign of the hinge's output weight u, and the hinge's <b>active set</b> P (the rows where its pre-activation is positive). The sign of u decides the <b>family</b>. To change it, u must pass through 0, where the hinge is cut off, the network is linear, and XOR fails. The active set decides the <b>cell</b>. It changes whenever the fold slides past a data point, which can happen continuously while XOR holds throughout. Counted under input swap x₁↔x₂ and complement x→1−x, there are 2 families and 6 cells.</p>
+    </div>
+    <div class="box">
+      <div class="eyebrow">The signal, on the support of the data</div>
+      <table class="tt">
+        <thead><tr><th>row</th><th>x₁</th><th>x₂</th><th>XOR</th><th>z must be</th></tr></thead>
+        <tbody>
+          <tr><td>00</td><td>0</td><td>0</td><td>0</td><td>&lt; 0</td></tr>
+          <tr><td>10</td><td>1</td><td>0</td><td>1</td><td>&gt; 0</td></tr>
+          <tr><td>01</td><td>0</td><td>1</td><td>1</td><td>&gt; 0</td></tr>
+          <tr><td>11</td><td>1</td><td>1</td><td>0</td><td>&lt; 0</td></tr>
+        </tbody>
+      </table>
+      <div class="legend">
+        <span><svg width="34" height="10"><line x1="0" y1="5" x2="34" y2="5" stroke="var(--pos)" stroke-width="2.2"/></svg> positive weight</span>
+        <span><svg width="34" height="10"><line x1="0" y1="5" x2="34" y2="5" stroke="var(--neg)" stroke-width="2.2" stroke-dasharray="5 3"/></svg> negative weight</span>
+        <span><svg width="14" height="14"><rect width="14" height="14" rx="2" fill="var(--active)"/></svg> hidden unit active</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="box hinge">
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div class="eyebrow">Definition</div>
+      <h2>Hinge</h2>
+      <p>A <b>hinge</b> is a ReLU unit, h = ReLU(w₁x₁ + w₂x₂ + b). It is exactly zero on one side of the line w₁x₁ + w₂x₂ + b = 0 and rises linearly on the other. That line is the hinge's <b>fold</b>. The data points on the rising side are its <b>active set</b>.</p>
+      <p class="note">With one input, a hinge is a line with a single kink, like the capital-gain penalty in Adult or the service-calls threshold in churn. With two inputs, it folds the plane along a line. A <b>single-input hinge</b> here is one whose active set is the rows where one input is 1, while its slope still depends on both inputs. That's how it passes different values on its two active rows.</p>
+      <p class="note">Each card's plot shows σ(z) over the input plane: blue where the network predicts 1, magenta where it predicts 0, pale where it is unsure. The dashed line is the hinge's fold, with h &gt; 0 marking the active side. The outlined square is [0,1]², and the four dots are the data: filled for XOR = 1, open for XOR = 0.</p>
+    </div>
+    <svg viewBox="0 0 360 170" role="img" aria-label="A one-input hinge: zero, then rising linearly after the fold">
+      <line x1="30" y1="140" x2="340" y2="140" stroke="var(--muted)" stroke-width="1"/>
+      <line x1="30" y1="140" x2="30" y2="14" stroke="var(--muted)" stroke-width="1"/>
+      <path d="M30 140 L170 140 L330 30" fill="none" stroke="var(--pos)" stroke-width="3"/>
+      <line x1="170" y1="20" x2="170" y2="150" stroke="var(--ink)" stroke-width="1.2" stroke-dasharray="5 4"/>
+      <text x="170" y="164" text-anchor="middle" font-family="var(--f-mono)" font-size="11" fill="var(--ink)">fold: w·x + b = 0</text>
+      <text x="95" y="130" text-anchor="middle" font-family="var(--f-mono)" font-size="11" fill="var(--muted)">h = 0</text>
+      <text x="268" y="96" text-anchor="middle" font-family="var(--f-mono)" font-size="11" fill="var(--pos)">h = w·x + b</text>
+      <text x="22" y="20" text-anchor="end" font-family="var(--f-mono)" font-size="11" fill="var(--muted)">h</text>
+      <text x="340" y="156" text-anchor="end" font-family="var(--f-mono)" font-size="11" fill="var(--muted)">w·x</text>
+    </svg>
+  </section>
+
+  <section class="family">
+    <div class="family-head"><div class="eyebrow">The realisations</div><h2>Two families, each sliding through three cells</h2></div>
+    <p>The skips alone give a linear score. XOR isn't linear, so that score always gets one row wrong, and the hinge exists to fix it. <b>Family 1</b>: the skips compute OR, so 11 is wrong, and the hinge pulls it down (u &lt; 0). <b>Family 2</b>: the skips compute x₁ ∧ ¬x₂, so 01 is wrong, and the hinge pushes it up (u &gt; 0). Each family keeps one sign pattern throughout. Drag the slider to move the network along a path of XOR-solving networks: the fold slides past data points, the hinge's name changes, and the prediction on the four rows never does.</p>
+    <p>Under each network, the two small plots split the output into its parts: what the hinge outputs on its own, and what the skips score on their own. Read on the four data points, each part is a logic gate. In Family 1 the skips are OR and the hinge flips exactly AND, so XOR = OR ∧ ¬AND. In Family 2 the skips are x₁ ∧ ¬x₂ and the hinge flips exactly x₂ ∧ ¬x₁, so XOR = (x₁ ∧ ¬x₂) ∨ (x₂ ∧ ¬x₁). This holds at every point along each slider path (checked at 1,000 points). Moving between cells changes which rows the hinge fires on, but not which rows it flips: as long as the weights stay in proportion, the extra activation never changes a sign. The network is a composition of two logic gates. The cell only changes how the correcting gate is drawn.</p>
+    <div class="fams" id="fams"></div>
+    <div class="why">
+      <div class="h">fold leaves 1 row active</div><div class="h">2 rows (needs grading)</div><div class="h">3 rows</div>
+      <div><b>Family 1</b> · cell 1·1, AND<br><span class="note">found 4×</span></div><div>cell 1·2, single input<br><span class="note">ReLU only</span></div><div>cell 1·3, OR</div>
+      <div><b>Family 2</b> · cell 2·1, other side of XOR</div><div>cell 2·2, single input<br><span class="note">found 2× · ReLU only</span></div><div>cell 2·3, implication</div>
+    </div>
+    <p class="note">Why the threshold case has 2 and ReLU 6: a step unit can't pass different values on two active rows, so the middle column is missing, and σ(−z) = 1 − σ(z) merges the outer two. ReLU keeps all three cells, but they stay inside the same 2 families. The families are the realisations; the cells are how a hinge happens to be named. Path check: straight-line paths between the cells of a family keep XOR with margin ≥ 0.67 (2,000 steps per segment). Every straight path between families breaks it, as the u = 0 argument predicts.</p>
+  </section>
+
+  <section class="family">
+    <div class="family-head"><div class="eyebrow">In three dimensions</div><h2>A ridge across one diagonal, a valley across the other</h2></div>
+    <p>Two ways to see the same thing in 3D. <b>Score surface</b>: the height is the output score z over the input plane. The hinge folds the sheet, the flat grey plane is z = 0, and the decision boundary is where the sheet crosses it. Points above the plane are predicted 1, points below are predicted 0. <b>Lifted space</b>: the third axis is the hinge's output h. The hinge lifts some points off the floor, and in (x₁, x₂, h) the four points can be split by one flat plane, which is the output unit's decision boundary. Switch the hidden unit between ReLU and sigmoid to compare. Drag to rotate.</p>
+    <div class="mirror-controls">
+      <div class="seg" role="group" aria-label="Hidden activation"><span class="eyebrow">hidden unit</span><button type="button" data-a3="relu" aria-pressed="true">ReLU</button><button type="button" data-a3="sigmoid" aria-pressed="false">sigmoid</button></div>
+      <div class="seg" role="group" aria-label="3D view"><span class="eyebrow">view</span><button type="button" data-v3="surface" aria-pressed="true">score surface</button><button type="button" data-v3="lifted" aria-pressed="false">lifted space</button></div>
+      <div class="seg" role="group" aria-label="Cell width for 3D"><span class="eyebrow">cell</span><button type="button" data-w3="0" aria-pressed="true">fires on 1 row</button><button type="button" data-w3="1" aria-pressed="false">2 rows</button><button type="button" data-w3="2" aria-pressed="false">3 rows</button></div>
+    </div>
+    <div class="fams">
+      <article class="card fam"><div class="card-top"><h3>Family 1: OR ∧ ¬AND</h3><span class="cls">ridge across the main diagonal</span></div><div class="p3" id="p3a"></div><p class="note" id="n3a"></p></article>
+      <article class="card fam"><div class="card-top"><h3>Family 2: (x₁ ∧ ¬x₂) ∨ (x₂ ∧ ¬x₁)</h3><span class="cls">valley across the anti-diagonal</span></div><div class="p3" id="p3b"></div><p class="note" id="n3b"></p></article>
+    </div>
+    <p class="note">Which diagonal the fold runs along is the ground truth of how each family composes XOR. Family 1 thresholds the count of 1s, x₁ + x₂, which varies along the main diagonal: XOR is the band 1 ≤ x₁ + x₂ &lt; 2, so the surface is a ridge whose crest holds 10 and 01. Family 2 thresholds the difference x₁ − x₂, which varies along the anti-diagonal: XOR is |x₁ − x₂| = 1, so the surface is a valley with 00 and 11 in the trough and 10 and 01 up the two walls. In the single-input cells the weights are not symmetric, so the fold tilts away from the exact diagonal, but the ridge or valley shape stays.</p>
+  </section>
+
+  <section class="family">
+    <div class="family-head"><div class="eyebrow">What decides the family</div><h2>One number on the hidden unit, and what changes for sigmoid units</h2></div>
+    <p>The skips can produce any additive pattern on the four rows: a constant plus something in x₁ plus something in x₂. The one pattern they can't produce is the XOR interaction, so the hidden unit has to supply it. Measure what it supplies as</p>
+    <div class="eq">I = h(00) + h(11) − h(10) − h(01)</div>
+    <p>One hidden unit with skips can realise XOR <b>exactly when I ≠ 0</b>. The output weight must then have the opposite sign to I, and a size of at least about 4 / |I| for a unit margin. That is the proportionality condition: a hinge that barely bends needs a very large u. Everything else is absorbed by the skips.</p>
+    <div class="why" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+      <div class="h">hidden unit</div><div class="h">what decides the family</div><div class="h">checked</div>
+      <div><b>ReLU</b></div><div>The sign of I always equals the sign of w₁·w₂. Same-sign weights count (Family 1, u &lt; 0). Opposite-sign weights take a difference (Family 2, u &gt; 0). ReLU is convex, so the extreme pair of rows always dominates.</div><div class="note">100,000 random hinges, 0 exceptions</div>
+      <div><b>Sigmoid</b></div><div>The same two families, split by the weight signs. Each appears twice, once with u &gt; 0 and once with u &lt; 0, because a sigmoid is convex below its midpoint and concave above it. The twins are exact: replace h by 1 − h (negate w and b, flip u, add u to c) and the function is identical everywhere. Same realisation, counted twice.</div><div class="note">20,000 random units: u sign about 50/50 within each family; twin difference 2·10⁻¹⁵</div>
+      <div><b>Step (threshold)</b></div><div>The limiting case. The unit outputs only 0 or 1, so the graded single-input cell disappears, and the 1 − h twin merges the 1-row and 3-row cells. That is where the enumeration's count of 2 comes from.</div><div class="note">LP enumeration (results file)</div>
+    </div>
+    <p class="note">Sigmoid units also realise the graded single-input cell. For example, w = (1, 3), b = −2.5 has a positive pre-activation only on 01 and 11 and gives I = 0.089, so it solves XOR, but only with u ≈ −45. The earlier "threshold / sigmoid: 2 classes" label in the results file applies to step units only. Because a sigmoid is never exactly zero, its cells are defined by where the pre-activation is positive, not by where the unit is silent.</p>
+  </section>
+
+  <section class="family">
+    <div class="family-head"><div class="eyebrow">The h/z transposition</div><h2>Swap what the hinge and the skips compute</h2></div>
+    <p>Take a network and give the hidden unit the weights the skips had (x₁→h = v₁, x₂→h = v₂, b = c), and give the skips the weights the hidden unit had (x₁→z = w₁, x₂→z = w₂, c = b). The hinge-to-output weight u is kept, and can be adjusted with the slider on the right. Pick a starting cell to see whether its transposition still computes XOR.</p>
+    <div class="eq">(w₁, w₂, b ; v₁, v₂, c ; u) → (v₁, v₂, c ; w₁, w₂, b ; u)</div>
+    <div class="mirror-controls">
+      <div class="seg" role="group" aria-label="Starting cell"><span class="eyebrow">start from</span>
+        <button type="button" data-c="1·1" aria-pressed="false">1·1</button><button type="button" data-c="1·2" aria-pressed="false">1·2</button><button type="button" data-c="1·3" aria-pressed="false">1·3</button>
+        <button type="button" data-c="2·1" aria-pressed="true">2·1</button><button type="button" data-c="2·2" aria-pressed="false">2·2</button><button type="button" data-c="2·3" aria-pressed="false">2·3</button></div>
+    </div>
+    <div class="fams" id="mirror"></div>
+    <p class="note" id="tnote"></p>
+  </section>
+
+  <details class="cells">
+    <summary><span class="eyebrow">Reference</span> The six cells at fixed points</summary>
+    <div id="families"></div>
+  </details>
+
+  <section class="family">
+    <div class="family-head"><div class="eyebrow">Formalising the equivalences</div><h2>Four levels, from weaker to stronger</h2></div>
+    <p>The six classes separate two kinds of symmetry. <b>Reparametrisations</b> (permuting hidden units, rescaling a ReLU unit by k&gt;0 and its output weight by 1/k) leave the function identical everywhere. <b>Task symmetries</b> (swapping inputs, complementing them) preserve the XOR signal on the data but change the function off it. Classes are counted under both, so a class is a family of realisations, and not every member of a class computes the same function off-support.</p>
+    <div class="ladder">
+      <div class="rung"><div class="lvl">E0 Decision<span>signal on support</span></div><div class="def">sign z<sub>A</sub>(x) = sign z<sub>B</sub>(x) for every x in the data. Same classifications.</div><div class="ev">All six classes, and all <b>30/30</b> evolved runs, are E0-equivalent: they all realise XOR.</div></div>
+      <div class="rung"><div class="lvl">E1 Logit on support<span>same scores on the data</span></div><div class="def">z<sub>A</sub>(x) = z<sub>B</sub>(x) on the data. Stronger than E0, and still says nothing off the data.</div><div class="ev">Not required for the signal. The panels below already differ in logit size row by row.</div></div>
+      <div class="rung"><div class="lvl">E2 Realisation family<span>same mechanism</span></div><div class="def">θ<sub>A</sub> and g·θ<sub>B</sub> lie in the same connected component of the XOR-solving set, for some g in reparametrisations × task symmetries. Finer: same <b>cell</b> means the same active set as well, so the hinge gets the same name.</div><div class="ev">Four seeds in cell 1·1 agree to weight cosine <b>0.9996</b> (logit r over [0,1]² <b>0.995</b>). The two evolved types (cells 1·1 and 2·2) are in different families and point in opposite directions: cosine <b>−0.83</b>.</div></div>
+      <div class="rung"><div class="lvl">E3 Global function<span>same everywhere</span></div><div class="def">z<sub>A</sub>(x) = z<sub>B</sub>(x) for all x in [0,1]². Implied by a reparametrisation alone, not by a task symmetry.</div><div class="ev">Different classes agree on the 4 data points but correlate only <b>0.51</b> over [0,1]². The signal is identified on the support. Realisations extrapolate differently.</div></div>
+    </div>
+  </section>
+
+  <section class="family">
+    <div class="family-head"><div class="eyebrow">Minimality and redundancy</div><h2>A floor you can't go below, and room above it</h2></div>
+    <div class="floor">
+      <div class="box">
+        <h3>The floor</h3>
+        <p class="note">With no hidden unit, z is linear in (x₁, x₂), and XOR is not linearly separable. So no realisation has fewer than one hidden unit with skips. Without skip connections the floor is two hidden units: a single unit feeding the output alone gives a function that is monotone in one projection, and that can't produce XOR. Every minimal realisation is one of the six classes above.</p>
+        <h3>Above the floor</h3>
+        <p class="note">Extra hidden units add nothing to the signal. Some can be removed exactly: a unit active on all four rows is linear there and folds into the skips (relay collapse), and two units with proportional incoming weights merge into one, because ReLU(k·a) = k·ReLU(a). Others go only by pruning and retraining. That is not function-preserving: it moves the network to a different realisation of the same signal.</p>
+      </div>
+      <div class="box">
+        <h3>What 30 PropNEAT runs evolved</h3>
+        <p class="note">Hidden units per solution. Raw: 2 to 8 (median 6.5). After exact relay collapse plus greedy pruning:</p>
+        <div class="bars" id="bars"></div>
+        <p class="note">6 runs reached the floor: 4 in the AND / NOR gate class and 2 in the single-input hinge, added class. The other 24 kept 2 to 4 nonlinear units: duplicate hinges (the same active set twice in one network, seeds 1, 19, 23, 26: aliases within one network) or mixed decompositions such as OR plus x₁∧¬x₂ (seed 4). Greedy pruning finds a local minimum, so some of the 24 may still reduce further.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="src">
+    <div>Sources: ExplaNEAT repo, <span class="mono">experiments/xor/RESULTS.md</span> and <span class="mono">xor_results.json</span> (LP enumeration with margin 1; 30 PropNEAT seeds, ReLU hidden, sigmoid output, pop 150). Class membership and the 6-class count come from the LP enumeration. Panel weights are hand-chosen representatives, checked on all four rows on this page.</div>
+    <div>Caveat from the results file: the x₁ (seed 21) and ¬x₂ (seed 12) solutions share a class under the full group, but the cross-seed weight comparison counts them as different because it does not apply the input-complement map.</div>
+    <div>Related: Méloux et al. (ICLR 2025) on non-identifiable circuits in small XOR MLPs; Sussmann (1992) on identifiability of minimal tanh networks up to permutation and sign flip.</div>
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
+<script>
+const ROWS=[[0,0,0],[1,0,1],[0,1,1],[1,1,0]];
+const FAMILIES=[
+ {name:"Family 1 at its three cells",blurb:"On their own, the skips score all three rows that contain a 1 as positive. That is OR, so 11 is wrong. The hinge must be large on 11 and small enough elsewhere. The three classes differ only in how many rows the hinge fires on.",
+  items:[
+   {id:"1·1",width:"fires on 1 row",title:"AND gate, subtracted",members:["AND","NOR"],w:[2,2,-3],v:[1,1,-0.5],u:-2,active:"AND",evolved:"Found: seeds 2, 6, 25, 27 (4 of the 6 minimal solutions)",found:true,note:"Skips alone: 00 −0.5, 10 +0.5, 01 +0.5, 11 +1.5 (wrong). The hinge fires only on 11 and subtracts 2. XOR = OR − AND."},
+   {id:"1·2",width:"fires on 2 rows",title:"Single-input hinge, subtracted",members:["x₁","x₂","¬x₁","¬x₂"],w:[8,10,-9],v:[2,3,-1],u:-1,active:"x₂",evolved:"Not found as a minimal solution",found:false,note:"Skips alone give 11 +4 (wrong). The hinge fires on both x₂ = 1 rows but passes 1 on 01 and 9 on 11, so 01 stays positive and 11 drops to −5. Needs a graded unit."},
+   {id:"1·3",width:"fires on 3 rows",title:"OR gate, subtracted",members:["OR","NAND"],w:[6,6,-5],v:[3,3,-1],u:-1,active:"OR",evolved:"Not found as a minimal solution",found:false,note:"Skips alone give 11 +5 (wrong). The hinge fires on every row with a 1, passing 1, 1 and 7, so it costs 10 and 01 a little and 11 a lot."}
+  ]},
+ {name:"Family 2 at its three cells",blurb:"XOR is \"x₁ and not x₂\" or \"x₂ and not x₁\". The skips do the first side on their own, so 01 is wrong. The hinge supplies the second side: it must be large on 01 and small enough elsewhere.",
+  items:[
+   {id:"2·1",width:"fires on 1 row",title:"Other side of XOR, added",members:["x₂ ∧ ¬x₁","x₁ ∧ ¬x₂"],w:[-2,2,-1],v:[1,-1,-0.5],u:2,active:"x₂ ∧ ¬x₁",evolved:"Not found as a minimal solution",found:false,note:"Skips alone: 00 −0.5, 10 +0.5, 01 −1.5 (wrong), 11 −0.5. The hinge fires only on 01 and adds 2."},
+   {id:"2·2",width:"fires on 2 rows",title:"Single-input hinge, added",members:["x₁","x₂","¬x₁","¬x₂"],w:[-6,10,-2],v:[4,-5,-2],u:1,active:"x₂",evolved:"Found: seeds 12 (as ¬x₂) and 21 (as x₁)",found:true,note:"Skips alone give 01 −7 (wrong). The hinge fires on both x₂ = 1 rows, passing 8 on 01 and 2 on 11, so 01 rises to +1 and 11 stays negative at −1. Needs a graded unit."},
+   {id:"2·3",width:"fires on 3 rows",title:"Implication, added",members:["x₂ ∨ ¬x₁","x₁ ∨ ¬x₂"],w:[-6,6,1],v:[3,-3,-2],u:1,active:"x₂ ∨ ¬x₁",evolved:"Not found as a minimal solution",found:false,note:"Skips alone give 01 −5 (wrong). The hinge is silent only on 10. It adds 7 to 01 and leaks 1 onto 00 and 11, which the skips' margins absorb."}
+  ]}
+];
+const relu=a=>Math.max(0,a);
+const fmt=n=>(Number.isInteger(n)?String(n):(Math.abs(n*4-Math.round(n*4))<1e-9?String(+n.toFixed(2)):n.toFixed(1))).replace("-","−");
+function edge(x1,y1,x2,y2,w,label,lx,ly,curve){
+  const col=w>=0?"var(--pos)":"var(--neg)",dash=w>=0?"":' stroke-dasharray="6 4"';
+  const sw=Math.min(1.2+Math.abs(w)*0.28,4.2);
+  const d=curve?`M${x1} ${y1} Q${curve[0]} ${curve[1]} ${x2} ${y2}`:`M${x1} ${y1} L${x2} ${y2}`;
+  return `<path d="${d}" fill="none" stroke="${col}" stroke-width="${sw.toFixed(2)}"${dash}/>`+
+   `<text x="${lx}" y="${ly}" font-family="var(--f-mono)" font-size="11" fill="${col}" text-anchor="middle">${label} ${fmt(w)}</text>`;
+}
+function node(x,y,r,label,sub,fill){
+  return `<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" stroke="var(--ink)" stroke-width="1.3"/>`+
+   `<text x="${x}" y="${y+4}" font-family="var(--f-body)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">${label}</text>`+
+   (sub?`<text x="${x}" y="${y+r+14}" font-family="var(--f-mono)" font-size="10.5" fill="var(--muted)" text-anchor="middle">${sub}</text>`:"");
+}
+function netSVG(p){
+  const X1=[34,58],X2=[34,152],H=[160,105],Y=[282,105];
+  let s=`<svg class="net" viewBox="0 0 320 200" role="img" aria-label="Network for ${p.title}">`;
+  s+=edge(X1[0]+16,X1[1]-6,Y[0]-18,Y[1]-6,p.v[0],"v₁",160,22,[160,8]);
+  s+=edge(X2[0]+16,X2[1]+6,Y[0]-18,Y[1]+6,p.v[1],"v₂",160,196,[160,206]);
+  s+=edge(X1[0]+17,X1[1]+5,H[0]-19,H[1]-6,p.w[0],"w₁",92,74,null);
+  s+=edge(X2[0]+17,X2[1]-5,H[0]-19,H[1]+6,p.w[1],"w₂",92,146,null);
+  s+=edge(H[0]+19,H[1],Y[0]-18,Y[1],p.u,"u",222,98,null);
+  s+=node(X1[0],X1[1],16,"x₁","",`var(--panel)`);
+  s+=node(X2[0],X2[1],16,"x₂","",`var(--panel)`);
+  s+=node(H[0],H[1],19,"h",`b ${fmt(p.w[2])} · ${p.active}`,"var(--active)");
+  s+=node(Y[0],Y[1],18,"z",`c ${fmt(p.v[2])}`,"var(--panel)");
+  return s+"</svg>";
+}
+function rowsTable(p){
+  let ok=true,hd="<th>row</th>",hr="<th>h</th>",zr="<th>z</th>",yr="<th>ŷ</th>";
+  for(const [x1,x2,y] of ROWS){
+    const a=p.w[0]*x1+p.w[1]*x2+p.w[2],h=relu(a),z=p.v[0]*x1+p.v[1]*x2+p.u*h+p.v[2];
+    if(!((z>0)===(y===1))||z===0)ok=false;
+    hd+=`<th>${x1}${x2}</th>`;hr+=`<td class="${a>0?"on":""}">${fmt(h)}</td>`;zr+=`<td class="${z>0?"p":"n"}">${fmt(z)}</td>`;yr+=`<td>${z>0?1:0}</td>`;
+  }
+  return {html:`<table class="rows"><thead><tr>${hd}</tr></thead><tbody><tr>${hr}</tr><tr>${zr}</tr><tr>${yr}</tr></tbody></table>`,ok};
+}
+const LO=-0.25,HI=1.25;
+function hexRGB(s){s=s.trim();if(s.startsWith("#")){if(s.length===4)s="#"+[...s.slice(1)].map(c=>c+c).join("");return [1,3,5].map(i=>parseInt(s.slice(i,i+2),16));}
+  const m=s.match(/\d+(\.\d+)?/g);return m?m.slice(0,3).map(Number):[128,128,128];}
+function drawPlot(cv,p){
+  const css=getComputedStyle(document.documentElement);
+  const pos=hexRGB(css.getPropertyValue("--pos")),neg=hexRGB(css.getPropertyValue("--neg")),bg=hexRGB(css.getPropertyValue("--panel"));
+  const ink=css.getPropertyValue("--ink").trim(),muted=css.getPropertyValue("--muted").trim();
+  const dpr=Math.min(window.devicePixelRatio||1,2),W=Math.max(140,Math.round(cv.clientWidth||200)),S=Math.round(W*dpr);
+  cv.width=S;cv.height=S;const ctx=cv.getContext("2d");
+  const N=150,img=ctx.createImageData(N,N);
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){
+    const x1=LO+(i+.5)/N*(HI-LO),x2=HI-(j+.5)/N*(HI-LO);
+    const z=p.v[0]*x1+p.v[1]*x2+p.u*relu(p.w[0]*x1+p.w[1]*x2+p.w[2])+p.v[2];
+    const t=Math.tanh(z/2),k=Math.pow(Math.abs(t),0.6),c=t>=0?pos:neg,o=(j*N+i)*4;
+    for(let q=0;q<3;q++)img.data[o+q]=Math.round(bg[q]+(c[q]-bg[q])*k*0.85);img.data[o+3]=255;
+  }
+  const off=document.createElement("canvas");off.width=N;off.height=N;off.getContext("2d").putImageData(img,0,0);
+  ctx.imageSmoothingEnabled=true;ctx.drawImage(off,0,0,S,S);
+  const X=x=>(x-LO)/(HI-LO)*S,Y=y=>(HI-y)/(HI-LO)*S;
+  ctx.strokeStyle=muted;ctx.lineWidth=1*dpr;ctx.setLineDash([]);ctx.strokeRect(X(0),Y(1),X(1)-X(0),Y(0)-Y(1));
+  const [w1,w2,b]=p.w;let pts=[];
+  for(const xx of [LO,HI]){if(w2!==0){const yy=-(w1*xx+b)/w2;if(yy>=LO&&yy<=HI)pts.push([xx,yy]);}}
+  for(const yy of [LO,HI]){if(w1!==0){const xx=-(w2*yy+b)/w1;if(xx>=LO&&xx<=HI)pts.push([xx,yy]);}}
+  if(pts.length>=2){
+    ctx.strokeStyle=ink;ctx.lineWidth=1.4*dpr;ctx.setLineDash([5*dpr,4*dpr]);ctx.beginPath();ctx.moveTo(X(pts[0][0]),Y(pts[0][1]));ctx.lineTo(X(pts[1][0]),Y(pts[1][1]));ctx.stroke();ctx.setLineDash([]);
+    const mx=(pts[0][0]+pts[1][0])/2,my=(pts[0][1]+pts[1][1])/2,nn=Math.hypot(w1,w2);
+    let lx=mx+w1/nn*0.16,ly=my+w2/nn*0.16;lx=Math.min(Math.max(lx,LO+0.12),HI-0.12);ly=Math.min(Math.max(ly,LO+0.06),HI-0.06);
+    ctx.font=`${10.5*dpr}px "IBM Plex Mono", ui-monospace, monospace`;ctx.fillStyle=ink;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("h > 0",X(lx),Y(ly));
+  }
+  for(const [x1,x2,y] of ROWS){
+    ctx.beginPath();ctx.arc(X(x1),Y(x2),5.5*dpr,0,Math.PI*2);ctx.lineWidth=2*dpr;ctx.strokeStyle=ink;
+    if(y===1){ctx.fillStyle=ink;ctx.fill();}else{ctx.fillStyle=css.getPropertyValue("--panel").trim();ctx.fill();}ctx.stroke();
+  }
+  ctx.font=`${10*dpr}px "IBM Plex Mono", ui-monospace, monospace`;ctx.fillStyle=muted;ctx.textBaseline="alphabetic";
+  ctx.textAlign="right";ctx.fillText("x₁ →",S-4*dpr,S-5*dpr);ctx.textAlign="left";ctx.fillText("↑ x₂",4*dpr,12*dpr);
+}
+const PLOTS=[],EXTRA=[];
+function redrawAll(){for(const [cv,p] of PLOTS)drawPlot(cv,p);for(const f of EXTRA)f();}
+const root=document.getElementById("families");root.style.display="flex";root.style.flexDirection="column";root.style.gap="36px";
+for(const f of FAMILIES){
+  const sec=document.createElement("section");sec.className="family";
+  let cards="";
+  for(const p of f.items){
+    const t=rowsTable(p);
+    cards+=`<article class="card"><div class="card-top"><h3>${p.title}</h3><span class="cls">${p.id} · ReLU hidden · ${p.width} · u ${p.u>0?"&gt; 0":"&lt; 0"}</span></div>
+      <div class="members">${p.members.map(m=>`<span class="chip">${m}</span>`).join("")}</div>
+      <div class="card-body">${netSVG(p)}<div class="plotwrap"><canvas class="plot" data-id="${p.id}" role="img" aria-label="Prediction over the input plane for ${p.title}"></canvas><div class="plotcap">sigmoid output σ(z) over [−0.25, 1.25]²</div></div></div>
+      ${t.html}
+      <p class="note">${p.note}${t.ok?"":" <b>Check failed.</b>"}</p>
+      <div class="evolved ${p.found?"found":""}">${p.evolved}</div></article>`;
+  }
+  sec.innerHTML=`<div class="family-head"><h2>${f.name}</h2></div><p class="note">${f.blurb}</p><div class="grid">${cards}</div>`;
+  root.appendChild(sec);
+  for(const p of f.items)PLOTS.push([sec.querySelector(`canvas[data-id="${p.id}"]`),p]);
+}
+redrawAll();
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(redrawAll);
+let rt;window.addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(redrawAll,120);});
+try{window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",redrawAll);}catch(e){}
+new MutationObserver(redrawAll).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+const NAMES={"0001":"AND","0111":"OR","1000":"NOR","1110":"NAND","0101":"x₁","1010":"¬x₁","0011":"x₂","1100":"¬x₂","0100":"x₁ ∧ ¬x₂","0010":"x₂ ∧ ¬x₁","1101":"x₁ ∨ ¬x₂","1011":"x₂ ∨ ¬x₁","0000":"never active","1111":"always active","0110":"XOR","1001":"XNOR"};
+const FAMPATH=[
+ {name:"Family 1",rule:"skips compute OR · hinge pulls 11 down · u < 0",cells:["1·1 AND","1·2 single input","1·3 OR"],
+  pts:[[4,4,-6,2,2,-1,-4],[8,10,-9,2,3,-1,-1],[6,6,-5,3,3,-1,-1]],found:"Evolution found this family 4 times, all in cell 1·1."},
+ {name:"Family 2",rule:"skips compute x₁ ∧ ¬x₂ · hinge pushes 01 up · u > 0",cells:["2·1 other side","2·2 single input","2·3 implication"],
+  pts:[[-4,4,-2,2,-2,-1,4],[-6,10,-2,4,-5,-2,1],[-6,6,1,3,-3,-2,1]],found:"Evolution found this family twice, both in cell 2·2."}
+];
+function famParams(f,t){const i=Math.min(Math.floor(t),1),s=t-i,a=f.pts[i],b=f.pts[i+1],q=a.map((x,k)=>x+(b[k]-x)*s);
+  return {w:[q[0],q[1],q[2]],v:[q[3],q[4],q[5]],u:q[6]};}
+function famState(p){let pat="",m=Infinity;for(const [x1,x2,y] of ROWS){const a=p.w[0]*x1+p.w[1]*x2+p.w[2];pat+=a>0?"1":"0";
+  const z=p.v[0]*x1+p.v[1]*x2+p.u*relu(a)+p.v[2];m=Math.min(m,(y?1:-1)*z);}return {pat,m};}
+
+function foldPts(a,b,c){const pts=[];
+  for(const xx of [LO,HI]){if(b!==0){const yy=-(a*xx+c)/b;if(yy>=LO&&yy<=HI)pts.push([xx,yy]);}}
+  for(const yy of [LO,HI]){if(a!==0){const xx=-(b*yy+c)/a;if(xx>=LO&&xx<=HI)pts.push([xx,yy]);}}return pts;}
+function drawMini(cv,p,mode){
+  const css=getComputedStyle(document.documentElement);
+  const pos=hexRGB(css.getPropertyValue("--pos")),neg=hexRGB(css.getPropertyValue("--neg")),bg=hexRGB(css.getPropertyValue("--panel")),act=hexRGB(css.getPropertyValue("--active-ink"));
+  const ink=css.getPropertyValue("--ink").trim(),muted=css.getPropertyValue("--muted").trim(),panel=css.getPropertyValue("--panel").trim();
+  const dpr=Math.min(window.devicePixelRatio||1,2),W=Math.max(110,Math.round(cv.clientWidth||150)),S=Math.round(W*dpr);
+  cv.width=S;cv.height=S;const ctx=cv.getContext("2d");const N=110,img=ctx.createImageData(N,N);
+  const val=(x1,x2)=>mode==="h"?relu(p.w[0]*x1+p.w[1]*x2+p.w[2]):p.v[0]*x1+p.v[1]*x2+p.v[2];
+  let mx=1e-9;if(mode==="h")for(let j=0;j<N;j++)for(let i=0;i<N;i++)mx=Math.max(mx,val(LO+(i+.5)/N*(HI-LO),HI-(j+.5)/N*(HI-LO)));
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){const x1=LO+(i+.5)/N*(HI-LO),x2=HI-(j+.5)/N*(HI-LO),z=val(x1,x2),o=(j*N+i)*4;
+    let c,k;if(mode==="h"){c=act;k=Math.pow(z/mx,0.7)*0.9;}else{const t=Math.tanh(z/2);c=t>=0?pos:neg;k=Math.pow(Math.abs(t),0.6)*0.85;}
+    for(let q=0;q<3;q++)img.data[o+q]=Math.round(bg[q]+(c[q]-bg[q])*k);img.data[o+3]=255;}
+  const off=document.createElement("canvas");off.width=N;off.height=N;off.getContext("2d").putImageData(img,0,0);ctx.drawImage(off,0,0,S,S);
+  const X=x=>(x-LO)/(HI-LO)*S,Y=y=>(HI-y)/(HI-LO)*S;
+  ctx.strokeStyle=muted;ctx.lineWidth=1*dpr;ctx.strokeRect(X(0),Y(1),X(1)-X(0),Y(0)-Y(1));
+  const L=mode==="h"?foldPts(p.w[0],p.w[1],p.w[2]):foldPts(p.v[0],p.v[1],p.v[2]);
+  if(L.length>=2){ctx.strokeStyle=ink;ctx.lineWidth=1.3*dpr;ctx.setLineDash(mode==="h"?[4*dpr,3*dpr]:[]);ctx.beginPath();ctx.moveTo(X(L[0][0]),Y(L[0][1]));ctx.lineTo(X(L[1][0]),Y(L[1][1]));ctx.stroke();ctx.setLineDash([]);}
+  for(const [x1,x2] of ROWS){const v=val(x1,x2),on=mode==="h"?v>0:v>0;ctx.beginPath();ctx.arc(X(x1),Y(x2),4.5*dpr,0,Math.PI*2);ctx.lineWidth=1.8*dpr;ctx.strokeStyle=ink;ctx.fillStyle=on?ink:panel;ctx.fill();ctx.stroke();}
+}
+function decompHTML(){return `<div class="decomp"><div class="minis"><figure><canvas class="mini mh" role="img" aria-label="Hidden unit output alone"></canvas><figcaption class="plotcap">h alone: ReLU(w₁x₁ + w₂x₂ + b)</figcaption></figure><figure><canvas class="mini ms" role="img" aria-label="Skip connections alone"></canvas><figcaption class="plotcap">z without h: v₁x₁ + v₂x₂ + c</figcaption></figure></div><p class="logic"></p></div>`;}
+const rowsWhere=pat=>"{"+["00","10","01","11"].filter((r,i)=>pat[i]==="1").join(", ")+"}";
+const paren=g=>g.includes(" ")?`(${g})`:g;
+function makeDecomp(el){const st={p:null};EXTRA.push(()=>{if(st.p){drawMini(el.querySelector(".mh"),st.p,"h");drawMini(el.querySelector(".ms"),st.p,"s");}});
+  return p=>{st.p=p;
+    const skip=ROWS.map(([x1,x2])=>p.v[0]*x1+p.v[1]*x2+p.v[2]>0?"1":"0").join("");
+    const out=ROWS.map(([x1,x2])=>p.v[0]*x1+p.v[1]*x2+p.u*relu(p.w[0]*x1+p.w[1]*x2+p.w[2])+p.v[2]>0?"1":"0").join("");
+    const flip=[...skip].map((c,i)=>c===out[i]?"0":"1").join(""),act=famState(p).pat;
+    const sg=NAMES[skip]||rowsWhere(skip),fg=NAMES[flip]||rowsWhere(flip),og=NAMES[out]||rowsWhere(out),ag=NAMES[act]||rowsWhere(act);
+    const inside=[...flip].every((c,i)=>c==="0"||skip[i]==="1"),outside=[...flip].every((c,i)=>c==="0"||skip[i]==="0");
+    let comp;if(flip==="0000")comp=`the hinge changes no row, so the output is ${sg}`;
+    else if(inside)comp=`output = ${paren(sg)} ∧ ¬${paren(fg)}`+(out==="0110"?" = XOR":"");
+    else if(outside)comp=`output = ${paren(sg)} ∨ ${paren(fg)}`+(out==="0110"?" = XOR":"");
+    else comp=`output = ${paren(sg)} ⊕ ${paren(fg)}`+(out==="0110"?" = XOR":"");
+    el.querySelector(".logic").innerHTML=`<b>Skips alone:</b> ${sg}. <b>The hinge flips</b> ${rowsWhere(flip)} = ${fg}. <b>So</b> ${comp}. <span class="note">The hinge fires on ${ag} here, but it only changes the sign where it flips.</span>`;
+    drawMini(el.querySelector(".mh"),p,"h");drawMini(el.querySelector(".ms"),p,"s");};}
+const famRoot=document.getElementById("fams");
+FAMPATH.forEach((f,fi)=>{
+  const el=document.createElement("article");el.className="card fam";
+  el.innerHTML=`<div class="card-top"><h3>${f.name}</h3><span class="cls">ReLU hidden · ${f.rule}</span></div>
+   <div class="slider"><label class="eyebrow" for="slide${fi}">Move along a path of XOR-solving networks</label>
+   <input type="range" id="slide${fi}" min="0" max="2" step="0.01" value="0">
+   <div class="ticks">${f.cells.map((c,k)=>`<button type="button" data-t="${k}">${c}</button>`).join("")}</div></div>
+   <div class="status"><span class="badge"></span><span class="margin"></span></div>
+   <div class="card-body"><div class="netslot"></div><div class="plotwrap"><canvas class="plot" role="img" aria-label="Prediction over the input plane for ${f.name}"></canvas><div class="plotcap">sigmoid output σ(z) over [−0.25, 1.25]²</div></div></div>
+   ${decompHTML()}<div class="tableslot"></div><p class="note">${f.found}</p>`;
+  famRoot.appendChild(el);
+  const inp=el.querySelector("input"),cv=el.querySelector("canvas"),badge=el.querySelector(".badge"),mg=el.querySelector(".margin"),net=el.querySelector(".netslot"),tab=el.querySelector(".tableslot");
+  const entry=[cv,null];PLOTS.push(entry);const dec=makeDecomp(el);
+  function update(){const t=parseFloat(inp.value),p=famParams(f,t),st=famState(p);
+    p.title=f.name;p.active=NAMES[st.pat]||st.pat;entry[1]=p;
+    badge.textContent=`hinge active on {${["00","10","01","11"].filter((r,k)=>st.pat[k]==="1").join(", ")}} = ${p.active}`;
+    mg.textContent=`XOR margin ${st.m.toFixed(2)} ${st.m>0?"(correct on all 4 rows)":"(fails)"}`;
+    net.innerHTML=netSVG(p);tab.innerHTML=rowsTable(p).html;drawPlot(cv,p);dec(p);}
+  inp.addEventListener("input",update);
+  el.querySelectorAll(".ticks button").forEach(b=>b.addEventListener("click",()=>{inp.value=b.dataset.t;update();}));
+  update();
+});
+document.querySelector("details.cells").addEventListener("toggle",redrawAll);
+
+let w3=0,v3="surface",a3="relu";
+const SIG3=[[[4,4,-6],[4,8,-7],[6,6,-5]],[[-4,4,-2],[-2,6,-3.5],[-6,6,1]]];
+const sigm=a=>1/(1+Math.exp(-a));
+function params3(fi){
+  if(a3==="relu"){const q=FAMPATH[fi].pts[w3];return {w:[q[0],q[1],q[2]],v:[q[3],q[4],q[5]],u:q[6]};}
+  const [w1,w2,b]=SIG3[fi][w3],h=ROWS.map(([x1,x2])=>sigm(w1*x1+w2*x2+b)),I=h[0]+h[3]-h[1]-h[2],u=-4/I;
+  const r=[-1,1,1,-1].map((t,i)=>t-u*h[i]),c=r[0];return {w:[w1,w2,b],v:[r[1]-c,r[2]-c,c],u,I};}
+const N3={surface:["Family 1: the sheet rises with x₁ + x₂, then the hinge folds it back down past 11. 10 and 01 sit on the crest above the plane; 00 and 11 sit on the slopes below it.","Family 2: the skips tilt the sheet up towards 10, and the hinge folds it up again towards 01. 00 and 11 sit in the trough below the plane; 10 and 01 sit up the two walls."],
+ lifted:["Family 1 (u < 0): points under the plane are predicted 1. The hinge lifts 11 off the floor and over the plane, so it joins 00 on the 0 side, while 10 and 01 stay under it. In the wider cells the hinge lifts 10 and 01 a little too, but not past the plane.","Family 2 (u > 0): points over the plane are predicted 1. The hinge lifts 01 off the floor and over the plane, so it joins 10 on the 1 side, while 00 and 11 stay under it. In the wider cells the hinge lifts other rows a little too, but not past the plane."]};
+function plot3(div,note,fi){
+  if(!window.Plotly){div.innerHTML='<p class="note">The 3D plotting library did not load, so this view is unavailable.</p>';return;}
+  const css=getComputedStyle(document.documentElement),g=n=>css.getPropertyValue(n).trim();
+  const pos=g("--pos"),neg=g("--neg"),mid=g("--s-mid"),ink=g("--ink"),muted=g("--muted"),rule=g("--grid"),act=g("--active-ink"),plane=g("--plane");
+  const light={ambient:0.85,diffuse:0.45,specular:0.05,roughness:0.9,fresnel:0.1};
+  const p=params3(fi),act3=a3==="relu"?relu:sigm;
+  const hf=(a,b)=>act3(p.w[0]*a+p.w[1]*b+p.w[2]),zf=(a,b)=>p.v[0]*a+p.v[1]*b+p.u*hf(a,b)+p.v[2];
+  const n=41,xs=[...Array(n)].map((_,i)=>LO+i*(HI-LO)/(n-1));
+  const pts=ROWS.map(([a,b,y])=>({a,b,y}));
+  const mk=(zs)=>({type:"scatter3d",mode:"markers+text",x:pts.map(o=>o.a),y:pts.map(o=>o.b),z:zs,text:pts.map(o=>`${o.a}${o.b}`),textposition:"top center",textfont:{color:ink,size:12,family:"IBM Plex Mono, monospace"},
+    marker:{size:8,color:pts.map(o=>o.y?pos:neg),line:{color:ink,width:2.5}},hoverinfo:"text",showlegend:false});
+  let traces,ztitle;
+  if(v3==="surface"){
+    let Z=xs.map(b=>xs.map(a=>zf(a,b)));const sc=Math.max(...Z.flat().map(Math.abs));Z=Z.map(r=>r.map(v=>v/sc));
+    traces=[{type:"surface",x:xs,y:xs,z:Z,colorscale:[[0,neg],[0.5,mid],[1,pos]],cmin:-1,cmax:1,showscale:false,opacity:0.97,lighting:light,
+      contours:{z:{show:true,start:0,end:0,size:1,color:ink,width:4,project:{z:false}}},hoverinfo:"skip"},
+     {type:"surface",x:[LO,HI],y:[LO,HI],z:[[0,0],[0,0]],colorscale:[[0,plane],[1,plane]],showscale:false,opacity:0.32,lighting:light,hoverinfo:"skip"},
+     mk(pts.map(o=>zf(o.a,o.b)/sc))];ztitle="z (scaled)";
+  }else{
+    const H=xs.map(b=>xs.map(a=>hf(a,b))),hm=Math.max(1e-9,...H.flat()),top=hm*1.15;
+    const P=xs.map(b=>xs.map(a=>{const h=-(p.v[0]*a+p.v[1]*b+p.v[2])/p.u;return h<-0.15*hm||h>top?null:h;}));
+    traces=[{type:"surface",x:xs,y:xs,z:H,colorscale:[[0,mid],[1,act]],showscale:false,opacity:0.92,lighting:light,hoverinfo:"skip"},
+     {type:"surface",x:xs,y:xs,z:P,colorscale:[[0,plane],[1,plane]],showscale:false,opacity:0.4,lighting:light,hoverinfo:"skip"},
+     mk(pts.map(o=>hf(o.a,o.b)))];ztitle="h";
+  }
+  const ax=t=>({title:{text:t,font:{color:ink,size:13}},color:muted,gridcolor:rule,zerolinecolor:rule,showbackground:false,tickfont:{size:10,color:muted}});
+  Plotly.react(div,traces,{margin:{l:0,r:0,t:0,b:0},paper_bgcolor:"rgba(0,0,0,0)",font:{family:"IBM Plex Sans, system-ui, sans-serif",color:ink},
+    scene:{xaxis:ax("x₁"),yaxis:ax("x₂"),zaxis:ax(ztitle),aspectmode:"cube",camera:{eye:{x:1.55,y:-1.55,z:0.9}}},showlegend:false},{displayModeBar:false,responsive:true});
+  const fold=["00","10","01","11"].filter((r,i)=>p.w[0]*ROWS[i][0]+p.w[1]*ROWS[i][1]+p.w[2]>0).join(", ");
+  if(a3==="relu")note.textContent=N3[v3][fi];
+  else note.textContent=`Sigmoid hidden unit, w = (${fmt(p.w[0])}, ${fmt(p.w[1])}), b = ${fmt(p.w[2])}, positive pre-activation on {${fold}}. It supplies an interaction of I = ${p.I.toFixed(3)}, so the output weight is u = ${p.u.toFixed(2)} (scores are exactly ±1 on the data). `+
+    (Math.sign(p.u)===(fi===0?-1:1)?"The ridge or valley has the same shape as with ReLU, but the sheet is an S-curve rather than a hinge, so no row sits exactly on the floor in the lifted view.":"Here u has the opposite sign from the ReLU family, because these pre-activations sit in the sigmoid's concave half. This is the 1 − h twin: the same function as a network with the hidden unit flipped, so the score surface keeps the family's shape while the lifted view shows the sheet upside down.");
+}
+function plotAll3(){plot3(document.getElementById("p3a"),document.getElementById("n3a"),0);plot3(document.getElementById("p3b"),document.getElementById("n3b"),1);}
+document.querySelectorAll(".seg button[data-v3],.seg button[data-w3],.seg button[data-a3]").forEach(b=>b.addEventListener("click",()=>{
+  if(b.dataset.v3)v3=b.dataset.v3;else if(b.dataset.a3)a3=b.dataset.a3;else w3=+b.dataset.w3;
+  b.parentElement.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));plotAll3();}));
+EXTRA.push(plotAll3);plotAll3();
+const CELLPTS={"1·1":[4,4,-6,2,2,-1,-4],"1·2":[8,10,-9,2,3,-1,-1],"1·3":[6,6,-5,3,3,-1,-1],"2·1":[-4,4,-2,2,-2,-1,4],"2·2":[-6,10,-2,4,-5,-2,1],"2·3":[-6,6,1,3,-3,-2,1]};
+const toP=(q,title)=>{const p={w:[q[0],q[1],q[2]],v:[q[3],q[4],q[5]],u:q[6],title};p.active=NAMES[famState(p).pat]||famState(p).pat;return p;};
+const transpose=q=>[q[3],q[4],q[5],q[0],q[1],q[2],q[6]];
+function xorURange(q){let lo=null,hi=null;for(let u=-60;u<=60.0001;u+=0.25){const p=toP([...q.slice(0,6),u],"");if(famState(p).m>0){if(lo===null)lo=u;hi=u;}}return lo===null?null:[lo,hi];}
+const mirrorRoot=document.getElementById("mirror");let mC="2·1",mU=null;const mEntries=[];
+for(let k=0;k<2;k++){const el=document.createElement("article");el.className="card fam";
+  el.innerHTML=`<div class="card-top"><h3 class="mt"></h3><span class="cls mc"></span></div>`+(k===1?`<div class="slider"><label class="eyebrow" for="tu">hinge → output weight u</label><input type="range" id="tu" min="-10" max="10" step="0.25"><div class="ticks"><span>−10</span><span>0</span><span>10</span></div></div>`:"")+`<div class="status"><span class="badge"></span><span class="margin"></span></div><div class="card-body"><div class="netslot"></div><div class="plotwrap"><canvas class="plot" role="img" aria-label="Prediction over the input plane"></canvas><div class="plotcap">sigmoid output σ(z) over [−0.25, 1.25]²</div></div></div>${decompHTML()}<div class="tableslot"></div>`;
+  mirrorRoot.appendChild(el);const e=[el.querySelector("canvas"),null];PLOTS.push(e);mEntries.push([el,e,makeDecomp(el)]);}
+const tu=document.getElementById("tu");
+function updMirror(){const src=CELLPTS[mC],t=transpose(src);if(mU===null)mU=src[6];tu.value=mU;const dst=[...t.slice(0,6),mU];
+  [[src,`Before: cell ${mC}`],[dst,`After transposition`]].forEach(([q,lab],k)=>{const [el,e,dec]=mEntries[k],p=toP(q,lab),st=famState(p);e[1]=p;dec(p);
+    el.querySelector(".mt").textContent=lab;el.querySelector(".mc").textContent=`ReLU hidden · u = ${fmt(p.u)}`;
+    el.querySelector(".badge").textContent=`hinge active on {${["00","10","01","11"].filter((r,i)=>st.pat[i]==="1").join(", ")}} = ${p.active}`;
+    const mg=el.querySelector(".margin");mg.textContent=st.m>0?`XOR margin ${st.m.toFixed(2)} (correct on all 4 rows)`:`not XOR (worst row off by ${(-st.m).toFixed(2)})`;mg.style.color=st.m>0?"":"var(--neg)";
+    el.querySelector(".netslot").innerHTML=netSVG(p);el.querySelector(".tableslot").innerHTML=rowsTable(p).html;drawPlot(e[0],p);});
+  const r=xorURange(t);document.getElementById("tnote").textContent=r?`For cell ${mC}, the transposed network computes XOR for u from ${fmt(r[0])} to ${r[1]>=60?"60 and beyond":fmt(r[1])} (searched −60 to 60 in steps of 0.25).`:`For cell ${mC}, no value of u from −60 to 60 makes the transposed network compute XOR.`;}
+tu.addEventListener("input",()=>{mU=parseFloat(tu.value);updMirror();});
+document.querySelectorAll(".seg button[data-c]").forEach(b=>b.addEventListener("click",()=>{mC=b.dataset.c;mU=null;
+  b.parentElement.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));updMirror();}));
+updMirror();
+const BARS=[["0 hidden",0,"floor"],["1 (minimal)",6,"min"],["2",14,""],["3",9,""],["4",1,""]];
+document.getElementById("bars").innerHTML=BARS.map(([l,n,k])=>`<div class="bar ${k==="floor"?"floorline":""}"><span>${l}</span><span class="track">${n?`<span class="fill ${k==="min"?"min":""}" style="width:${(n/14*100).toFixed(1)}%"></span>`:""}</span><span class="n">${k==="floor"?"—":n}</span></div>`).join("")+`<p class="note" style="font-size:.8rem">0 hidden units: impossible (XOR is not linearly separable).</p>`;
+</script>
