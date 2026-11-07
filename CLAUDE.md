@@ -36,8 +36,13 @@ See `docs/theoretical_framework.md` for the full mathematical treatment.
 **Always use `uv run` for Python commands** - this automatically uses the virtual environment.
 
 ```bash
-# Install dependencies
-uv venv && uv pip install -e .
+# Install (see README.md; Windows: docs/install_windows.md)
+uv sync --extra survival --extra dev
+cd web/react-explorer && npm ci && npm run build && cd ../..
+uv run python -m explaneat setup    # SQLite DB in ~/.explaneat (EXPLANEAT_HOME), deploys the built UI
+uv run python -m explaneat doctor   # environment check with fixes
+uv run python -m explaneat demo     # hello world on synthetic data -> demo_output/report.md (PASS/FAIL per stage)
+uv run pytest -m smoke              # ~3 s install smoke test
 
 # Run tests
 uv run pytest                           # All tests
@@ -269,5 +274,8 @@ Execution order: identity nodes → splits → create annotation
 ## Important Notes
 
 - Do NOT run database migration commands directly - suggest them to the user
-- Default database: `postgresql://localhost/explaneat_dev` (override with `DATABASE_URL`)
+- Database resolution: `DATABASE_URL` → `~/.explaneat/config.json` (written by `explaneat setup`, SQLite) → `postgresql://localhost/explaneat_dev`. Mike's research runs live in Postgres `explaneat_dev`; never run `setup` or migrations against it
+- Lineage: runs record parents by default (`track_ancestry`); the pre-Nov-2026 runs were backfilled by exact replay (`experiments/lineage/`). API: `explaneat/analysis/lineage.py`
+- Survival (Cox): `explaneat/survival/`, `docs/survival.md`. Restricted data (DAP/HDEC): `EXPLANEAT_RESTRICTED=1`; keep data outside the repo; the Claude/MCP path refuses restricted datasets unless explicitly allowed
+- The API binds to 127.0.0.1; Swagger docs are off unless `EXPLANEAT_API_DOCS=1`
 - Tests use in-memory SQLite for speed
