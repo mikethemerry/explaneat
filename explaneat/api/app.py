@@ -36,12 +36,19 @@ def mark_orphaned_experiments_interrupted() -> int:
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
 
+    # FastAPI's Swagger / ReDoc pages load their JavaScript and CSS from a
+    # public CDN, so they are off unless EXPLANEAT_API_DOCS=1. Restricted
+    # environments get a portal that makes no external requests; the schema
+    # itself stays available at /api/openapi.json.
+    import os
+
+    docs_on = os.environ.get("EXPLANEAT_API_DOCS", "0") == "1"
     app = FastAPI(
         title="ExplaNEAT API",
         description="REST API for managing explanations of NEAT neural networks",
         version="0.1.0",
-        docs_url="/api/docs",
-        redoc_url="/api/redoc",
+        docs_url="/api/docs" if docs_on else None,
+        redoc_url="/api/redoc" if docs_on else None,
         openapi_url="/api/openapi.json",
     )
 
@@ -141,8 +148,8 @@ STATIC_DIR = Path(__file__).resolve().parent.parent / "static" / "react_explorer
 def _mount_frontend(app: FastAPI) -> None:
     """Serve the built React Explorer at / (SPA: unknown paths get index.html).
 
-    Build it with ``npm run build`` in web/react-explorer and copy
-    ``web/react-explorer/dist/*`` into ``explaneat/static/react_explorer/``.
+    Build it with ``npm ci && npm run build`` in web/react-explorer, then run
+    ``explaneat setup`` to copy ``dist/`` into ``explaneat/static/react_explorer/``.
     """
     from fastapi import HTTPException
     from fastapi.responses import FileResponse, HTMLResponse
@@ -160,10 +167,9 @@ def _mount_frontend(app: FastAPI) -> None:
             return FileResponse(index)
         return HTMLResponse(
             "<h1>ExplaNEAT API</h1><p>The React Explorer is not built. Run "
-            "<code>npm install && npm run build</code> in <code>web/react-explorer</code>, then copy "
-            "<code>web/react-explorer/dist/*</code> into <code>explaneat/static/react_explorer/</code>. "
-            "API docs: "
-            "<a href='/api/docs'>/api/docs</a>.</p>",
+            "<code>npm ci && npm run build</code> in <code>web/react-explorer</code>, then "
+            "<code>explaneat setup</code>. The API schema is at "
+            "<a href='/api/openapi.json'>/api/openapi.json</a>.</p>",
             status_code=200,
         )
 

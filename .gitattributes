@@ -1,0 +1,26 @@
+# Line endings: text files are stored with LF and checked out with LF on
+# every platform (Python, TypeScript, uv.lock and package-lock.json do not
+# care, and shell scripts break with CRLF). Windows-only scripts keep CRLF.
+* text=auto eol=lf
+*.sh text eol=lf
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Result tables written by Python's csv module carry CRLF; keep them
+# byte-for-byte as committed.
+*.csv -text
+
+# Binary files: never convert, never diff as text.
+*.png binary
+*.jpg binary
+*.pdf binary
+*.npy binary
+*.npz binary
+*.pkl binary
+*.pyc binary
+*.db binary
+*.sqlite binary
+*.woff binary
+*.woff2 binary
+*.ttf binary

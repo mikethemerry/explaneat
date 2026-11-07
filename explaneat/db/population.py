@@ -144,7 +144,7 @@ class DatabaseBackpropPopulation(BackpropPopulation):
         neat_config_text = ""
         if hasattr(config, 'filename') and config.filename:
             try:
-                with open(config.filename, 'r') as f:
+                with open(config.filename, 'r', encoding='utf-8') as f:
                     neat_config_text = f.read()
             except:
                 neat_config_text = "Config file not found"

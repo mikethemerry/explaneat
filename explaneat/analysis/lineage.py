@@ -75,7 +75,7 @@ def load_sidecar(experiment_name: str, directory: Optional[Path] = None
         if path.exists():
             opener = gzip.open if path.suffix == ".gz" else open
             out = {}
-            with opener(path, "rt") as f:
+            with opener(path, "rt", encoding="utf-8", newline="") as f:
                 for r in csv.DictReader(f):
                     p1 = int(r["parent1_key"]) if r["parent1_key"] not in ("", None) else None
                     p2 = int(r["parent2_key"]) if r["parent2_key"] not in ("", None) else None
@@ -492,7 +492,7 @@ def _load_operations(session, genome_id, explanation):
             raise LookupError(f"genome {genome_id} has {len(rows)} explanations; pass one")
         return list(rows[0].operations or []), str(rows[0].id)
     if isinstance(explanation, (str, Path)) and Path(str(explanation)).exists():
-        explanation = json.loads(Path(str(explanation)).read_text())
+        explanation = json.loads(Path(str(explanation)).read_text(encoding="utf-8"))
     if isinstance(explanation, (str, uuid.UUID)):
         row = session.get(Explanation, _uuid(explanation))
         if row is None:

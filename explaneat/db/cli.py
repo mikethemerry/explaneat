@@ -41,45 +41,61 @@ def drop(url):
     click.echo("All tables dropped!")
 
 
+def _alembic(args, *, writes: bool):
+    """Run Alembic for the configured database (``explaneat.settings``).
+
+    ``sys.executable -m alembic`` works on every platform without relying on
+    PATH. The resolved URL is passed as DATABASE_URL, which alembic/env.py
+    reads first. Migrations are PostgreSQL-only: a SQLite file is created
+    with ``explaneat setup`` / ``db init`` (create_all), so commands that
+    would change a SQLite schema are refused.
+    """
+    from ..settings import is_sqlite, redact, resolve_database_url
+
+    url = resolve_database_url()
+    if writes and is_sqlite(url):
+        click.echo(f"{redact(url)} is SQLite: migrations are PostgreSQL-only. "
+                   "Use 'explaneat setup' or 'explaneat db init' for SQLite.", err=True)
+        sys.exit(2)
+    cmd = [sys.executable, '-m', 'alembic', *args]
+    click.echo(f"Running: alembic {' '.join(args)}  (database: {redact(url)})")
+    repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    result = subprocess.run(cmd, cwd=repo_root, env={**os.environ, 'DATABASE_URL': url})
+    if result.returncode:
+        sys.exit(result.returncode)
+
+
 @database.command()
 @click.argument('message')
 def revision(message):
     """Create a new database migration"""
-    cmd = ['alembic', 'revision', '--autogenerate', '-m', message]
-    click.echo(f"Running: {' '.join(cmd)}")
-    subprocess.run(cmd)
+    _alembic(['revision', '--autogenerate', '-m', message], writes=True)
 
 
 @database.command()
 @click.option('--revision', default='head', help='Revision to upgrade to')
 def upgrade(revision):
     """Apply database migrations"""
-    cmd = ['alembic', 'upgrade', revision]
-    click.echo(f"Running: {' '.join(cmd)}")
-    subprocess.run(cmd)
+    _alembic(['upgrade', revision], writes=True)
 
 
 @database.command()
 @click.option('--revision', default='-1', help='Revision to downgrade to')
 def downgrade(revision):
     """Revert database migrations"""
-    cmd = ['alembic', 'downgrade', revision]
-    click.echo(f"Running: {' '.join(cmd)}")
-    subprocess.run(cmd)
+    _alembic(['downgrade', revision], writes=True)
 
 
 @database.command()
 def current():
     """Show current database revision"""
-    cmd = ['alembic', 'current']
-    subprocess.run(cmd)
+    _alembic(['current'], writes=False)
 
 
 @database.command()
 def history():
     """Show migration history"""
-    cmd = ['alembic', 'history']
-    subprocess.run(cmd)
+    _alembic(['history'], writes=False)
 
 
 @database.command()

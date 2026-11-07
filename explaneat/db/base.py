@@ -5,6 +5,8 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.pool import NullPool
 from contextlib import contextmanager
 
+from ..settings import resolve_database_url
+
 
 Base = declarative_base()
 
@@ -13,7 +15,9 @@ class Database:
     """Database connection manager similar to Flask-SQLAlchemy"""
     
     def __init__(self, database_url=None):
-        self.database_url = database_url or os.getenv('DATABASE_URL', 'postgresql://localhost/explaneat_dev')
+        # DATABASE_URL > <data dir>/config.json (explaneat setup) > legacy
+        # Postgres default; see explaneat/settings.py.
+        self.database_url = resolve_database_url(database_url)
         self.engine = None
         self.session_factory = None
         self.Session = None
@@ -32,6 +36,15 @@ class Database:
         # connection. NullPool discards connections, giving each session a
         # fresh, empty database. StaticPool keeps one shared connection alive
         # so the schema persists across sessions.
+        if self.database_url and self.database_url.startswith("sqlite"):
+            # JSONB / UUID renderings for SQLite, when this branch has them.
+            from .sqlite_support import load_sqlite_compat
+
+            load_sqlite_compat()
+            # A file DB is shared by the API's request threads and the
+            # training job thread: wait for a writer instead of failing
+            # with "database is locked".
+            engine_kwargs["connect_args"] = {"timeout": 30}
         if self.database_url and self.database_url.startswith("sqlite") and ":memory:" in self.database_url:
             from sqlalchemy.pool import StaticPool
 
