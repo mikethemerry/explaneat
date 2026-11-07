@@ -1,5 +1,7 @@
 # Studies F and G: results
 
+> **Future work, not in the thesis** (scope decision, 7 Nov 2026). Results kept as recorded; not cited in Ch 7.
+
 Design: `GRAFT_F_G_PLAN.md` (committed `1d3a403` before any run; amendments 1 and 2 before the
 runs they cover). Selections (`earlygen_selection.csv`, `monk2graft_selection.csv`,
 `monk2_val_split.json`) were committed in `3c6cea7` before any test evaluation.

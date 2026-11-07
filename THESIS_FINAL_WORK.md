@@ -111,3 +111,33 @@ branch.
 **18–19 Nov:** final checks, then the freeze. Merge to `main` (D10).
 
 **20 Nov:** VARIANZ install from `main`, following the runbook.
+
+## Progress
+
+**Task 10, done 7 Nov:**
+- `docs/signals-and-realisations/` committed (`546261f`).
+- `earlygen_selection.csv` slimmed from 68 MB to 0.33 MB by dropping only the debug `_donor`
+  column. Every other cell was verified identical, with the original CRLF endings. No script
+  reads `_donor`.
+- Future-work banners added to:
+  - `GRAFT_F_G_RESULTS.md`, `lineage/RESULTS_H.md` and `modular/RESULTS.md`;
+  - the out-of-scope sections of `EXTENSIONS_RESULTS.md`: C, C2 judged arm, D, D+, F/G, H.
+  
+  That file also gained a scope map at the top. No content was changed.
+- **`get_viz_summary`'s pre-weight activation bug does not affect any number.** It is mentioned
+  in 5 records (adult-s8, heart-s3, heart-s8, churn100-s3, churn100-s8), but only in their
+  `tool_bugs` field: each explaining agent reported the bug and worked around it ("narratives
+  give both", "computed locally"). No number in `summary.md`, `ch7_table.tex` or the
+  explanations comes from its faulty output.
+- `main` fast-forwarded to `exp/10seed-consistency` (D10).
+
+**Running:** four agents.
+
+| Agent | Tasks | Branch |
+|---|---|---|
+| Thesis numbers | 4, 5, 6, 3 | `thesis/numbers` |
+| XOR and exports | 2, 8, 11 | `thesis/xor-exports` |
+| VARIANZ | 9 | `varianz/ready` |
+| Verification packets | 7 | `thesis/verification-packets` |
+
+The coordinator merges each branch to `main` after review.

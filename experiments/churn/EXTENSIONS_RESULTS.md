@@ -1,5 +1,19 @@
 # Churn extensions: results
 
+> **Thesis scope** (decision of 7 Nov 2026). **In Ch 7:**
+> - A: explained features generalise;
+> - B: explanation-guided repair of state edges;
+> - C2, algorithmic arm only: cross-seed signal reproducibility;
+> - D2: knockout-and-rescue with algorithmic aliases;
+> - E: re-initialisation;
+> - training details.
+> **Future work, not in the thesis:**
+> - C: transplant;
+> - C2, judged arm;
+> - D and D+: aliases chosen by Claude;
+> - F/G, H.
+> Results are kept as recorded.
+
 Each study's design is in its plan file:
 - A–C: `EXTENSIONS_PLAN.md`
 - C2: `TRANSPLANT2_PLAN.md`
@@ -62,6 +76,8 @@ churn test split. Deltas are paired differences.
 
 ## C. Feature transplant (recipients s9, s4; selection fixed on train before evaluation)
 
+> **Future work, not in the thesis** (scope decision, 7 Nov 2026). Results kept as recorded; not cited in Ch 7.
+
 **Donors:**
 - **Original donor:** the largest-gain leaf is s2's `csc_usage_gate` (service calls × low usage).
   The recipients already have a similar mechanism.
@@ -110,6 +126,8 @@ Ten independent runs found the same signals, built differently.
 
 ### Judged arm (`transplant2_judged.csv`)
 
+> **Future work, not in the thesis** (scope decision, 7 Nov 2026). Results kept as recorded; not cited in Ch 7.
+
 Claude picked donors from the explanation records alone.
 
 | Recipient ← donor | Δ (graft + refit + ft) vs ft-only [95% CI] | Δ vs sham [95% CI] |
@@ -131,6 +149,8 @@ Claude picked donors from the explanation records alone.
     so a graft adds little that the recipient couldn't already express.
 
 ## D. Knockout and rescue with feature aliases chosen by Claude (`rescue_confirm.csv`, `rescue.csv`)
+
+> **Future work, not in the thesis** (scope decision, 7 Nov 2026). Results kept as recorded; not cited in Ch 7.
 
 Six cases from three alias families. On train:
 - families B (r = 0.96) and C (r = 0.99) confirmed as aliases;
@@ -155,6 +175,8 @@ Test AUC, E = 500 masked fine-tuning:
 That raised the question D+ answers: is the alias better *before* fine-tuning?
 
 ## D+. No-fine-tune controls for D (`rescue_plus.csv`; added after D's results, labelled as such)
+
+> **Future work, not in the thesis** (scope decision, 7 Nov 2026). Results kept as recorded; not cited in Ch 7.
 
 | Case | KO + alias + refit | KO + sham + refit | KO + wrong + refit | Δ alias − sham [95% CI] | Δ alias − wrong [95% CI] |
 |---|---|---|---|---|---|
@@ -356,6 +378,8 @@ The first two churn100-masked attempts crashed:
 
 ## F and G: grafting onto unconverged or wrong recipients, and a graft protection phase
 
+> **Future work, not in the thesis** (scope decision, 7 Nov 2026). Results kept as recorded; not cited in Ch 7.
+
 Full results: `GRAFT_F_G_RESULTS.md`. Plan: `GRAFT_F_G_PLAN.md`.
 - **F1 (churn, 60 recipients from generations 0–99, 120 graft cases):**
   - Graft gain rises with the signal's novelty to the recipient: graft + refit − base has
@@ -371,6 +395,8 @@ Full results: `GRAFT_F_G_RESULTS.md`. Plan: `GRAFT_F_G_PLAN.md`.
   in every context and regime. The C2, D2 and F1 P = 0 runs reproduce the earlier CSVs exactly.
 
 ## H: capacity thresholds along lineages (lineage replay)
+
+> **Future work, not in the thesis** (scope decision, 7 Nov 2026). Results kept as recorded; not cited in Ch 7.
 
 Full results: `../lineage/RESULTS_H.md`. Plan: `../lineage/PLAN_H.md`.
 

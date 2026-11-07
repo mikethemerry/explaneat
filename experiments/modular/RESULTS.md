@@ -1,5 +1,7 @@
 # Modular crossover: results
 
+> **Future work, not in the thesis** (scope decision, 7 Nov 2026). Results kept as recorded; not cited in Ch 7.
+
 Design: `PLAN.md` (committed in 0518e38 before any outcome run). All 80
 pre-registered runs completed: 2 tasks × 4 arms × seeds 0–9, 4 islands of
 150, 400 generations. Two runs had to be restarted after a bug fix; see

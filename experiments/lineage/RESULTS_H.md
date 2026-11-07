@@ -1,5 +1,7 @@
 # Study H: capacity thresholds along lineages: results
 
+> **Future work, not in the thesis** (scope decision, 7 Nov 2026). Results kept as recorded; not cited in Ch 7.
+
 The design is in `PLAN_H.md`, committed `b8682a2` before any lineage analysis. No amendments.
 
 Scripts:
