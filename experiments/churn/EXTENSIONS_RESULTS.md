@@ -369,3 +369,27 @@ Full results: `GRAFT_F_G_RESULTS.md`. Plan: `GRAFT_F_G_PLAN.md`.
   run's generation-50 fitness first on every seed.
 - **G:** freezing the graft for the first 25 or 100 fine-tuning epochs changes test AUC by ≈0
   in every context and regime. The C2, D2 and F1 P = 0 runs reproduce the earlier CSVs exactly.
+
+## H: capacity thresholds along lineages (lineage replay)
+
+Full results: `../lineage/RESULTS_H.md`. Plan: `../lineage/PLAN_H.md`.
+
+**Parents:** reconstructed by replaying every run in memory. 50 experiments were verified
+bit-identical against the DB, then backfilled into `parent1_id`/`parent2_id`.
+
+- **Improvement is discrete:**
+  - jump steps (top 5% of lineage Δ) carry 62–84% of each winner-lineage's train-AUC gain;
+  - backprop-only (elite) steps carry 3–5%;
+  - every non-elite lineage step is structural.
+- **The jumps are the initial climb:** after generation 10, structural steps no longer
+  predict jumps in churn100 or heart100. churn200's second climb does show it.
+- **Leaf signals:**
+  - About half emerge step-like.
+  - They become decodable from small *partial* realisations (median 1 hidden node), long
+    before the final realisation is complete.
+  - They rarely coincide with a fitness jump (0–29%).
+- **XOR:** a feasible-class nonlinear unit first appears 15 generations (median) before the
+  solve, 0/30 coincident.
+- **MONK-2:** in 2 of 3 correct seeds, the largest jump is a single input connection added
+  into the final `few_indicators_gate` leaf. This is the hypothesis's clean case, but it is
+  rare.
