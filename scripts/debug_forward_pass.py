@@ -248,7 +248,7 @@ def main():
         )
         if is_binary:
             print("Binary classification: overriding output activation to sigmoid")
-            struct_net.override_output_activation("sigmoid")
+            struct_net.override_output_activation(struct_net.model_output_activation)
         else:
             print(f"NOT overriding output activation (num_classes={num_classes}, "
                   f"n_outputs={len(phenotype.output_node_ids)})")

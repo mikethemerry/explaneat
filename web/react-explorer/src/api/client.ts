@@ -333,9 +333,11 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
 export async function listExperiments(
   limit = 50,
   offset = 0,
+  q?: string,
 ): Promise<ExperimentListResponse> {
+  const query = q ? `&q=${encodeURIComponent(q)}` : "";
   return fetchJson<ExperimentListResponse>(
-    `${API_BASE}/experiments?limit=${limit}&offset=${offset}`,
+    `${API_BASE}/experiments?limit=${limit}&offset=${offset}${query}`,
   );
 }
 
@@ -953,6 +955,7 @@ export type PerformanceRequest = {
 };
 
 export type PerformanceResponse = {
+  // null for survival datasets (see `survival`)
   mse: number;
   rmse: number;
   mae: number;
@@ -968,6 +971,7 @@ export type PerformanceResponse = {
   n_samples: number;
   at_seq: number | null;
   has_non_identity_ops: boolean;
+  survival?: import("./portal").SurvivalPerf | null;
 };
 
 export async function computePerformance(

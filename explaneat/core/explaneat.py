@@ -86,17 +86,22 @@ class ExplaNEAT:
         """
         Get the full genotype network structure (all nodes and connections).
         
-        Output nodes carry ``activation="sigmoid"`` regardless of the
-        activation stored on the genome's node gene, because the training
-        engine (NeuralNeat) always applies a sigmoid to the output layer.
+        Output nodes carry the training engine's output activation
+        (``self.net.output_activation``: "sigmoid" by default, "identity" for a
+        Cox log-risk, see ``neuralneat.get_output_activation``) regardless of
+        the activation stored on the genome's node gene, because NeuralNeat
+        applies that activation to the output layer whatever the gene says.
         The structure therefore describes the function the trained model
         computes, so StructureNetwork, AnnotationFunction, formulas and
-        collapsed function nodes all agree with NeuralNeat.
+        collapsed function nodes all agree with NeuralNeat.  A non-default
+        output activation is also recorded as
+        ``metadata["output_activation"]`` (absent means sigmoid).
 
         Returns:
             NetworkStructure containing all nodes and connections from the genome
         """
         from explaneat.core.neuralneat import OUTPUT_ACTIVATION
+        output_activation = getattr(self.net, "output_activation", OUTPUT_ACTIVATION)
         # Get input/output node IDs from config
         input_node_ids = self._get_input_nodes()
         output_node_ids = self._get_output_nodes()
@@ -116,7 +121,7 @@ class ExplaNEAT:
                 node_type = self._get_node_type(node_id)
                 activation = getattr(node, "activation", None)
                 if node_type == NodeType.OUTPUT:
-                    activation = OUTPUT_ACTIVATION
+                    activation = output_activation
                 nodes.append(
                     NetworkNode(
                         id=node_id_str,
@@ -160,12 +165,15 @@ class ExplaNEAT:
         input_node_ids_str = [str(nid) for nid in input_node_ids]
         output_node_ids_str = [str(nid) for nid in output_node_ids]
 
+        metadata = {"representation": "genotype"}
+        if output_activation != OUTPUT_ACTIVATION:
+            metadata["output_activation"] = output_activation
         return NetworkStructure(
             nodes=nodes,
             connections=connections,
             input_node_ids=input_node_ids_str,
             output_node_ids=output_node_ids_str,
-            metadata={"representation": "genotype"},
+            metadata=metadata,
         )
 
     def _traverse_nodes(
@@ -290,5 +298,7 @@ class ExplaNEAT:
                 "representation": "phenotype",
                 "pruned_nodes": len(genotype.nodes) - len(active_nodes),
                 "pruned_connections": len(genotype.connections) - len(active_connections),
+                **({"output_activation": genotype.metadata["output_activation"]}
+                   if "output_activation" in genotype.metadata else {}),
             },
         )

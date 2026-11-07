@@ -99,6 +99,7 @@ type StrategyStep =
         node_id: string;
       };
       description: string;
+      reason?: string;
     }
   | {
       type: "annotate";
@@ -1762,7 +1763,7 @@ export function OperationsPanel({
                 subgraph_connections: [], // Let backend compute
                 // For compositional annotations, pass child annotation IDs
                 // Backend uses this to consider child nodes as "internal" during validation
-                child_annotation_ids: childAnnotations.map(a => a.name),
+                child_annotation_ids: childAnnotations.map(a => a.name).filter((n): n is string => !!n),
               },
             });
 

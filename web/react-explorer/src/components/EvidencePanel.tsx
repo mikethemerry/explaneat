@@ -10,6 +10,8 @@ import {
   type PerformanceResponse,
 } from "../api/client";
 import { FormulaDisplay } from "./FormulaDisplay";
+import { HypothesisEditor } from "./HypothesisEditor";
+import { SurvivalEvidence } from "./SurvivalEvidence";
 import { DatasetSelector } from "./DatasetSelector";
 import { VizCanvas } from "./VizCanvas";
 import { EvidenceGallery } from "./EvidenceGallery";
@@ -565,6 +567,10 @@ export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel
         />
       )}
 
+      {!isWholeModel && !isNodeLevel && (
+        <HypothesisEditor genomeId={genomeId} annotationId={annotation.id} />
+      )}
+
       <div className="evidence-section">
         <DatasetSelector
           experimentId={experimentId}
@@ -590,6 +596,8 @@ export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel
             <div style={{ fontWeight: 600, marginBottom: "6px" }}>Performance</div>
             {perfLoading ? (
               <div style={{ color: "#64748b", fontStyle: "italic" }}>Computing metrics...</div>
+            ) : perfData?.survival ? (
+              <SurvivalEvidence genomeId={genomeId} perf={perfData.survival} />
             ) : perfData ? (
               <table style={{ width: "100%", fontSize: "12px", borderCollapse: "collapse" }}>
                 <tbody>

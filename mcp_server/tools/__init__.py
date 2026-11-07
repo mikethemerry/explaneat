@@ -13,7 +13,8 @@ def register_all(mcp: FastMCP) -> None:
     from mcp_server.tools import datasets
     from mcp_server.tools import snapshots
     from mcp_server.tools import lineage
+    from mcp_server.tools import analysis_tools
 
     for module in [workflow, experiments, models, operations, evidence, coverage,
-                   datasets, snapshots, lineage]:
+                   datasets, snapshots, lineage, analysis_tools]:
         module.register(mcp)

@@ -21,6 +21,9 @@ import { InputDistributionPanel } from "./InputDistributionPanel";
 import { RetrainPanel } from "./RetrainPanel";
 import { ConnectionInfoPanel } from "./ConnectionInfoPanel";
 import { ConfigEditor } from "./ConfigEditor";
+import { ToolsDrawer } from "./ToolsDrawer";
+import type { LineageView } from "./LineagePanel";
+import type { HighlightKind } from "./NetworkViewer";
 
 // =============================================================================
 // Logging utilities
@@ -49,15 +52,29 @@ type GenomeExplorerProps = {
   experimentId: string;
   experimentName: string;
   onBack: () => void;
+  onOpenGenome?: (genomeId: string) => void;
 };
 
-export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack }: GenomeExplorerProps) {
+export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack, onOpenGenome }: GenomeExplorerProps) {
   const [model, setModel] = useState<ModelState | null>(null);
   const [operations, setOperations] = useState<Operation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedNodes, setSelectedNodes] = useState<Set<string>>(new Set());
   const [evidencePanelWidth, setEvidencePanelWidth] = useState(400);
+
+  // Tools drawer: graph highlights, lineage diff view, refresh after operations
+  const [nodeHighlight, setNodeHighlight] = useState<Record<string, HighlightKind> | null>(null);
+  const [edgeHighlight, setEdgeHighlight] = useState<Record<string, HighlightKind> | null>(null);
+  const [lineageView, setLineageView] = useState<LineageView | null>(null);
+  const [toolsRefresh, setToolsRefresh] = useState(0);
+  const handleHighlight = useCallback(
+    (nodes: Record<string, HighlightKind> | null, edges?: Record<string, HighlightKind> | null) => {
+      setNodeHighlight(nodes);
+      setEdgeHighlight(edges ?? null);
+    },
+    [],
+  );
 
   // Annotation state
   const [annotations, setAnnotations] = useState<AnnotationSummary[]>([]);
@@ -330,6 +347,7 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
   const handleOperationChange = useCallback(() => {
     logInfo("Operation changed, reloading data and clearing selection");
     setSelectedNodes(new Set());
+    setToolsRefresh((n) => n + 1);
     loadData();
   }, [loadData]);
 
@@ -445,7 +463,7 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
           &larr; Back
         </button>
         <h2>{experimentName}</h2>
-        <span className="genome-id">Best Genome: {genomeId.slice(0, 8)}...</span>
+        <span className="genome-id" title={genomeId}>Genome: {genomeId.slice(0, 8)}...</span>
         {edgeInfluenceData && (
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "0.25rem" }}>
             <span style={{ fontSize: "0.8rem", color: "#6b7280" }}>Edge display:</span>
@@ -553,13 +571,38 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack 
             />
           )}
         </div>
-        <NetworkViewer
-          model={model}
-          selectedNodes={selectedNodes}
-          onNodeSelect={handleNodeSelect}
-          annotationNodeIds={annotationNodeIds}
-          edgeInfluence={edgeInfluence}
-        />
+        <div className="center-column">
+          {lineageView && (
+            <div className="lineage-banner">
+              <span>
+                <strong>Lineage diff:</strong> {lineageView.title}.{" "}
+                <span className="legend-swatch added" /> added <span className="legend-swatch removed" /> removed (ghost){" "}
+                <span className="legend-swatch changed" /> weight/bias changed
+              </span>
+              <button className="op-btn secondary" onClick={() => setLineageView(null)}>Back to the explained model</button>
+            </div>
+          )}
+          <NetworkViewer
+            model={lineageView ? lineageView.model : model}
+            selectedNodes={lineageView ? new Set<string>() : selectedNodes}
+            onNodeSelect={lineageView ? () => {} : handleNodeSelect}
+            annotationNodeIds={lineageView ? [] : annotationNodeIds}
+            edgeInfluence={lineageView ? null : edgeInfluence}
+            nodeHighlight={lineageView ? lineageView.nodeHighlight : nodeHighlight}
+            edgeHighlight={lineageView ? lineageView.edgeHighlight : edgeHighlight}
+          />
+          <ToolsDrawer
+            genomeId={genomeId}
+            model={model}
+            annotations={annotations}
+            refreshKey={toolsRefresh}
+            onSelectNodes={(ids) => handleNodeSelect(ids)}
+            onHighlight={handleHighlight}
+            onLineageView={setLineageView}
+            onOpenGenome={(gid) => onOpenGenome?.(gid)}
+            onOperationChange={handleOperationChange}
+          />
+        </div>
         {selectedAnnotationId && annotations.find((a) => a.id === selectedAnnotationId || a.name === selectedAnnotationId) ? (
           <div className="right-panel" style={{ width: evidencePanelWidth }}>
             <EvidencePanel

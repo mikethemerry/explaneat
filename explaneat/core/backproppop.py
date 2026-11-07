@@ -58,14 +58,32 @@ class BackpropPopulation(Population):
         nEpochs=100,
         device=None,
         mask_phantom=True,
+        skip_invalid_genomes=False,
     ):
         """``mask_phantom`` (default True since 2026-11-05): build each genome's
         NeuralNeat with ``mask_phantom=True`` in ``backpropagate`` so only the
         genome's own connection weights (and biases) train, and the
         written-back genome is exactly the trained network. False reproduces
         the original behaviour (phantom dense entries train and are discarded
-        at write-back), which every run before 2026-11-05 used."""
+        at write-back), which every run before 2026-11-05 used.
+
+        ``criterion`` is the loss ``backpropagate`` minimises, full-batch, as
+        ``criterion(net.forward(xs), ys)`` (default ``nn.BCELoss()``; before
+        2026-11-06 the argument was stored but ignored and BCE was always
+        used).  ``ys`` may be ``[N]`` (unsqueezed to ``[N, 1]``) or any
+        ``[N, k]`` target the criterion understands; a survival target is
+        ``[N, 2]`` = (time, event) with ``CoxCriterion`` and an identity output
+        activation (``neuralneat.set_output_activation(config, "identity")``).
+        See ``docs/survival.md`` for the matching fitness convention
+        (fitness = -Cox loss, not 1/loss).
+
+        ``skip_invalid_genomes`` (default False = original behaviour: a genome
+        NeuralNeat rejects, e.g. one whose output lost every path to an
+        input, raises ``GenomeNotValidError`` out of ``backpropagate``): when
+        True such genomes are left untrained and the fitness function scores
+        them (the survival fitness gives them ``INVALID_FITNESS``)."""
         self.mask_phantom = bool(mask_phantom)
+        self.skip_invalid_genomes = bool(skip_invalid_genomes)
         self.logger = logging.getLogger("experimenter.backproppop")
         self.reporters = ReporterSet()
         self.config = config
@@ -176,18 +194,27 @@ class BackpropPopulation(Population):
 
             # net = NeatNet(genome, self.config, criterion=self.criterion)
 
-            net = nneat(
-                genome,
-                self.config,
-                criterion=nn.BCELoss(),
-                mask_phantom=self.mask_phantom,
-            )
+            try:
+                net = nneat(
+                    genome,
+                    self.config,
+                    criterion=self.criterion,
+                    mask_phantom=self.mask_phantom,
+                )
+            except GenomeNotValidError:
+                if not self.skip_invalid_genomes:
+                    raise
+                continue
 
             optimizer = optim.Adadelta(net.parameters(), lr=1.5)
             optimizer.zero_grad()
             losses = []
 
-            bce = nn.BCELoss()
+            # self.criterion: nn.BCELoss() by default (the original hardcoded
+            # loss, so the default path is unchanged); any criterion(pred,
+            # target) works, e.g. explaneat.survival.CoxCriterion on an
+            # [N, 2] (time, event) target.
+            bce = self.criterion
             loss_preds = net.forward(xs)
             preBPLoss = bce(loss_preds, ys)
 
@@ -260,8 +287,17 @@ class BackpropPopulation(Population):
             g.validation_fitness = g.fitness
             g.fitness = train_fitnesses[gid]
 
-    def run(self, fitness_function, n=None, nEpochs=100, patience=None):
-        """ """
+    def run(self, fitness_function, n=None, nEpochs=100, patience=None,
+            validation_fitness_function=None):
+        """Evolve for ``n`` generations (backprop, fitness, reproduction).
+
+        With validation data, every genome is also scored on it and the best
+        genome is the one with the best validation fitness.
+        ``validation_fitness_function`` (default None = ``fitness_function``,
+        the original behaviour) scores the validation fold separately, e.g.
+        the plain held-out Cox loss when the training fitness carries an
+        in-sample parsimony penalty (``explaneat.survival.make_cox_fitness``).
+        """
 
         if self.config.no_fitness_termination and (n is None):
             raise RuntimeError(
@@ -301,7 +337,7 @@ class BackpropPopulation(Population):
             # Evaluate validation fitness if validation data is available
             if self.xs_val is not None:
                 with MethodTimer("evaluate validation"):
-                    self._evaluate_validation(fitness_function)
+                    self._evaluate_validation(validation_fitness_function or fitness_function)
 
             # Gather and report statistics.
             best = None

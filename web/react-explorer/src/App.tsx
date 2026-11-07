@@ -4,6 +4,7 @@ import { GenomeExplorer } from "./components/GenomeExplorer";
 import { NavBar } from "./components/NavBar";
 import { DatasetList } from "./components/DatasetList";
 import { TemplatesPage } from "./components/TemplatesPage";
+import { RecordsPage } from "./components/RecordsPage";
 import { parseUrl, pushView, replaceView, type UrlView } from "./hooks/useUrlState";
 
 export default function App() {
@@ -36,6 +37,9 @@ export default function App() {
         experimentId={view.experimentId}
         experimentName={view.experimentName}
         onBack={() => setView({ type: "experiments" })}
+        onOpenGenome={(gid) =>
+          setView({ type: "genome", genomeId: gid, experimentId: view.experimentId, experimentName: view.experimentName })
+        }
       />
     );
   }
@@ -54,6 +58,12 @@ export default function App() {
         />
       ) : view.type === "datasets" ? (
         <DatasetList />
+      ) : view.type === "review" ? (
+        <RecordsPage
+          onOpen={(genomeId, experimentId, experimentName) =>
+            setView({ type: "genome", genomeId, experimentId, experimentName })
+          }
+        />
       ) : (
         <TemplatesPage />
       )}
