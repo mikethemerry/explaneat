@@ -6,12 +6,13 @@
 > - C2, algorithmic arm only: cross-seed signal reproducibility;
 > - D2: knockout-and-rescue with algorithmic aliases;
 > - E: re-initialisation;
-> - training details.
+> - training details;
+> - MONK-2 grafting (F2, light; `GRAFT_F_G_RESULTS.md`).
 > **Future work, not in the thesis:**
 > - C: transplant;
 > - C2, judged arm;
 > - D and D+: aliases chosen by Claude;
-> - F/G, H.
+> - F1, F3, G, H.
 > Results are kept as recorded.
 
 Each study's design is in its plan file:

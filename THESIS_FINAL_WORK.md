@@ -143,3 +143,12 @@ branch.
 The coordinator merges each branch to `main` after review.
 
 **Done:** task 7 (packets, `db3e867`); tasks 2, 8 and 11 (XOR, exports and naming, `8e09cf5`); task 9 (VARIANZ readiness, `4f0e580`). Mike triggers the CI: `gh workflow run clean-install.yml --ref main`.
+
+**Decided 7 Nov (later):**
+- **MONK-2 grafting is in scope (light).** It is cited as a worked example of navigating into the
+  Rashomon set using explanations, with its two caveats. No new runs.
+- **The ~90% cross-seed reproducibility number is cited,** described as "measured on train before
+  any transplant".
+- **The XOR §3 table is restated:** 8 between-family pairs (0.50 / −0.84), plus the same-cell pair
+  of seeds 12 and 21 as its own row.
+- **Study H and the lineage replays are complete** (`0d0aaea`). Only Adult was not replayed.

@@ -2,7 +2,7 @@
 
 Working argument for the reproducibility section of thesis Chapter 7 (November 2026). The companion figure sheet is `index.html` in this folder: open it in a browser. Its 3D plots load plotly.js from a CDN; everything else works offline.
 
-Status: argument settled in discussion with Mike, 7 Nov 2026. The XOR claims in §4 were first checked in a working session against hand-chosen example weights. On 7 Nov they were verified by script: `experiments/xor/verify_xor.py` (report: `experiments/xor/verify_xor_report.md`). The *(verify)* marks have been removed for the claims that passed; §4 notes the one that passed only with a condition. Citations marked *(check)* were written from memory and must be checked in Mendeley. Lines marked **[scope: Mike]** cite studies that `THESIS_FINAL_WORK.md` lists as out of thesis scope; they are kept for Mike to decide.
+Status: argument settled in discussion with Mike, 7 Nov 2026. The XOR claims in §4 were first checked in a working session against hand-chosen example weights. On 7 Nov they were verified by script: `experiments/xor/verify_xor.py` (report: `experiments/xor/verify_xor_report.md`). The *(verify)* marks have been removed for the claims that passed; §4 notes the one that passed only with a condition. Citations marked *(check)* were written from memory and must be checked in Mendeley.
 
 ## 0. Context
 
@@ -60,7 +60,9 @@ Levels of equivalence, weakest to strongest:
 
 **Expectation (with supporting evidence, not proof):** to be inside the Rashomon set, a model will probably need realisations of the **major** signals, without carrying overfit ones. How many signals it needs depends on ε: relaxing ε lets a model drop the smaller signals, which also makes it simpler to explain. Heart is an example of the trade-off: its seed-specific nonlinear corrections are each worth only 0.005 to 0.022 train AUC, so a slightly larger ε admits models without them.
 - Churn: all 23 named nonlinear features add test AUC, while the overfit state offsets do not (`experiments/churn/EXTENSIONS_RESULTS.md`, the held-out check of the named features and the explanation-guided repair study).
-- MONK-2: the 7 seeds that miss the window's lower edge sit far outside the set (test AUC down to 0.64). Their explanations say exactly what is missing, and grafting that one piece from a correct seed brings all 7 to test AUC 0.996-1.0 (`GRAFT_F_G_RESULTS.md`, MONK-2 grafting). That is navigating *into* the set using explanations. **[scope: Mike]** MONK-2 grafting is out of thesis scope (`THESIS_FINAL_WORK.md`, "Already out of scope"). Keep this line as future work, or drop it.
+- MONK-2: the 7 seeds that miss the window's lower edge sit far outside the set (test AUC down to 0.64). Their explanations say exactly what is missing, and grafting that one piece from a correct seed brings all 7 to test AUC 0.996-1.0 (`GRAFT_F_G_RESULTS.md`, MONK-2 grafting). That is navigating *into* the set using explanations.
+  - **Caveats:** a random-weight graft of the same shape gets close (the real graft leads by only +0.007 after fine-tuning: 7 better, 1 worse, 6 tied); the test set has only 87 rows.
+  - **Scope:** in the thesis as a light example (Mike, 7 Nov).
 
 **Measured vs not yet measured.**
 - Best genome per seed, test AUC spread: Adult 0.903-0.909 (all inside for ε of about 0.006); Heart 0.865-0.912; MONK-2 0.639-1.000 (not all inside for any small ε). Source: `experiments/10seed/summary.md`. The thesis needs to state ε and the reference "best" (best observed model, or a strong baseline such as gradient boosting).
@@ -90,7 +92,7 @@ Levels of equivalence, weakest to strongest:
 |---|---|---|
 | E0 decisions | Heart, 10 seeds: decisions agree on 94.6% of patients; training logits correlate at a median of 0.983 | `experiments/10seed/compare_heart.json` |
 | Shape | Heart: 3–6 hidden nodes per seed | `experiments/10seed/summary.md` |
-| Signals recur | Churn: every useful feature in one seed is about 90% reproducible from any other seed's own units | `experiments/churn/EXTENSIONS_RESULTS.md`, cross-seed signal reproducibility. **[scope: Mike]** This number comes from the novelty screen of the transplant study, which `THESIS_FINAL_WORK.md` lists as out of scope; cite it on its own, or drop it |
+| Signals recur | Churn: every useful feature in one seed is about 90% reproducible from any other seed's own units | `experiments/churn/EXTENSIONS_RESULTS.md`, cross-seed signal reproducibility: the novelty screen, measured on train before any transplant |
 | Realisations are interchangeable | Knock out a feature, graft another seed's alias, refit the readout: about 94% of the lost function is recovered; beats a same-topology random graft in 35/35 cases and a wrong-family feature in 32/35 | same file, knockout-and-rescue with algorithmic aliases |
 | Topology does not fix the realisation | Re-initialising the evolved churn topologies: 0/100 networks come back equivalent to the evolved weights | same file, re-initialisation |
 
@@ -109,7 +111,6 @@ The 10-seed explanations were drafted by Claude and have not yet been verified b
 
 - ~~Confirm the XOR claims in section 4 with a script in `experiments/xor/`.~~ Done 7 Nov: `experiments/xor/verify_xor.py`, report `verify_xor_report.md`. All passed except straight-line connectivity, which holds only with the alignment stated in §4 (a piecewise path always works). The transposition threshold is a ratio for each solution, not the constant 6.25.
 - ~~Correct `experiments/xor/RESULTS.md`.~~ Done 7 Nov. "Threshold / sigmoid: 2 classes" is now a step-unit result (sigmoid units have 6), and seeds 12 and 21 are the graded single-input cell of the difference family. Two flags for Mike are in that file: the six minimal seeds sit at cell boundaries, and seeds 12 and 21 are counted in its "different classes" row although they share a cell.
-- Decide on the two **[scope: Mike]** lines (§3 MONK-2 grafting, §5 the transplant study's novelty screen).
 - PropNEAT uses ReLU hidden units, so the sigmoid realisations are a theoretical illustration only.
 - Check every citation in section 3 in Mendeley.
 - Measure the population-level Rashomon claim (final-generation fitness spread) before making it.

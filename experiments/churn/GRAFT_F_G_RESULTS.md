@@ -1,6 +1,6 @@
 # Studies F and G: results
 
-> **Future work, not in the thesis** (scope decision, 7 Nov 2026). Results kept as recorded; not cited in Ch 7.
+> **Scope (7 Nov 2026):** the MONK-2 grafting section (F2) is **in the thesis as a light example**. The rest (F1, F3, G) is **future work, not in the thesis**. Results are kept as recorded.
 
 Design: `GRAFT_F_G_PLAN.md` (committed `1d3a403` before any run; amendments 1 and 2 before the
 runs they cover). Selections (`earlygen_selection.csv`, `monk2graft_selection.csv`,

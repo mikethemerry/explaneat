@@ -118,26 +118,27 @@ Logit r is computed over a 21 × 21 grid on [0, 1]².
 | Pairs | n | Logit r over [0, 1]² | Weight cosine |
 |---|---|---|---|
 | Same cell (count family, 1-row AND cell, 4 seeds) | 6 | **0.995** | **0.9996** |
-| Different classes (as labelled by `run_xor.py`; see the flag below) | 9 | 0.51 | −0.83 |
+| Same cell (difference family, graded single-input cell: seeds 12 and 21) | 1 | 0.956 | 0.996 |
+| Between families (count vs difference) | 8 | 0.50 | −0.84 |
 | All 30 solutions (any size) | 435 | 0.51 (median) | — |
 
 - **Within a cell, the weights are identifiable.** Four independent seeds found the same weights
   up to symmetry, with cosine 0.9996.
 - **Across families they aren't.** Two solutions compute identical outputs on all four data
   points, with weights pointing in nearly opposite directions.
-- **They also disagree *off* the data:** their logits correlate only 0.51 over [0, 1]². The
+- **They also disagree *off* the data:** their logits correlate only 0.50 over [0, 1]². The
   signal XOR is pinned down on the data's support. Realisations are free to differ everywhere
   else. So a signal is identifiable *on the support of the data*, and two realisations can be
   equivalent there while extrapolating differently.
-- **Flag from `verify_xor.py`, for Mike (the table's numbers are unchanged).** The 9 "different
-  classes" pairs are the 8 pairs between families plus the pair of seeds 12 and 21. Seeds 12 and
-  21 are in the same family and the same cell. The earlier caveat said they were counted as
-  different because the comparison doesn't apply the input-complement map. That is not the
-  reason: without any map their weights already have cosine 0.9955 and their logits correlate at
-  0.956 (`xor_results.json`, `minimal_pairs`). `run_xor.py` gave them different labels (¬x2, x1)
-  only because each has one row within 0.02 of the fold (see §2). Over the 8 between-family pairs
-  alone the medians are logit r 0.50 and weight cosine −0.84, so the reading "across families
-  the weights aren't identifiable" is unchanged.
+- **Restated 7 Nov, with Mike's agreement.** Before, this table had a row "Different classes (as labelled by
+  `run_xor.py`)", with n = 9, logit r 0.51 and weight cosine −0.83. That row mixed the 8 between-family pairs
+  with the pair of seeds 12 and 21.
+  - Seeds 12 and 21 are in the same family and the same cell: cosine 0.996, logit r 0.956.
+  - `run_xor.py` labelled them differently (¬x2, x1) only because each has one row within 0.02 of
+    the fold (see §2).
+  - The earlier caveat's reason, that the comparison doesn't apply the input-complement map, was
+    wrong.
+  - The conclusion is unchanged.
 
 ## 4. What this shows
 
