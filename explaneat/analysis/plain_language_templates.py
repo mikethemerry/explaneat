@@ -197,9 +197,10 @@ def rule_sentence(layer, c) -> Dict[str, Any]:
     which = " or ".join(words.get(k, str(k)) for k in ks)
     tab = c["estimate"].get("table") or []
     lo = min((min(t["share_predicted_positive"], 1 - t["share_predicted_positive"]) for t in tab), default=0)
-    text = (f"the model predicts {st.get('positive_label') or 'yes'} when {which} of the "
+    same = "all" if lo <= 0 else f"at least {100 * (1 - lo):.0f}%"
+    text = (f"the model {_adv(c)}predicts {st.get('positive_label') or 'yes'} when {which} of the "
             f"{st.get('count_phrase') or 'listed conditions hold'}, and otherwise not "
-            f"(at every count, at least {pct(1 - lo)} of the training {_pop(layer)} get the same prediction)")
+            f"(at every count, {same} of the training {_pop(layer)} get the same prediction)")
     return _s(text + _tail(c) + ".", [c["id"]])
 
 

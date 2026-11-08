@@ -1493,11 +1493,12 @@ def rule_claims(m: PlainModel, part: Part) -> List[Dict[str, Any]]:
         c["small_n_groups"] = [f"count {t['count']}" for t in table if t["n"] < SMALL_N]
         c["small_n"] = False   # every count is reported; purity is checked per count
         pos_rows = np.isin(k, positive)
-        raw_pos, raw_neg = typical_raw(m, pos_rows) if pos_rows.any() else None, typical_raw(m, ~pos_rows) if (~pos_rows).any() else None
-        pp = float(m.risk(m.logit(_z(m, raw_pos)))[0]) if raw_pos is not None else None
-        pn = float(m.risk(m.logit(_z(m, raw_neg)))[0]) if raw_neg is not None else None
-        c["risk"] = risk_block(pn if pn is not None else 0.0, pp if pp is not None else 0.0,
-                               "typical case with a count predicted negative, then positive")
+        # a modal "typical case" would not keep the count, so the rule's risk is the average
+        # predicted probability over the cases with a count predicted negative, then positive
+        p_all = m.risk(m.base_logit)
+        pp = float(p_all[pos_rows].mean()) if pos_rows.any() else 0.0
+        pn = float(p_all[~pos_rows].mean()) if (~pos_rows).any() else 0.0
+        c["risk"] = risk_block(pn, pp, "average training case with a count predicted negative, then positive")
         status = "not available"
         if m.Xt is not None:
             kt = counts(True)
