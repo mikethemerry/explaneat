@@ -878,6 +878,36 @@
               },
               "split": {
                 "const": "train"
+              },
+              "shape": {
+                "description": "Schema 1.3: the shape of a numeric or ordinal effect on the model's score scale (class, named points in real units, consistency across patients, robustness, status verified/mixed/fallback, risk saturation), or a categorical level table",
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "class": {
+                    "enum": [
+                      "flat",
+                      "steady",
+                      "hinge",
+                      "step",
+                      "levelling_off",
+                      "accelerating",
+                      "peak",
+                      "dip",
+                      "multi_segment",
+                      "categorical"
+                    ]
+                  },
+                  "status": {
+                    "enum": [
+                      "verified",
+                      "mixed",
+                      "fallback"
+                    ]
+                  }
+                }
               }
             }
           }
