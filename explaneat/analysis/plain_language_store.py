@@ -183,7 +183,7 @@ SLIGHTLY = re.compile(r"\bslightly\b|\ba little\b|\bbarely\b", re.I)
 TRAINING_ONLY = re.compile(r"training data only", re.I)
 LITTLE_DATA = re.compile(r"little data", re.I)
 EFFECT = re.compile(r"\b(?:rais|lower|higher|add|increas|decreas|predict|risk|chance|probabilit|more so|"
-                    r"less likely|more likely)\w*", re.I)
+                    r"less likely|more likely|chang|move|push|pull|shift)\w*", re.I)
 
 
 def lint_confidence(text: str, claims: List[Dict[str, Any]]) -> List[str]:
