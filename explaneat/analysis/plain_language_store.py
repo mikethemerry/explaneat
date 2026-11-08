@@ -36,7 +36,7 @@ FORBIDDEN = [
     (re.compile(r"\b[a-z]+:\d\b"), "one-hot column name"),
     (re.compile(r"\bcaus(?:es|ed|ing)\b|\bleads? to\b", re.I), "causal wording (describe the model, not the world)"),
 ]
-ODDS_MARK = re.compile(r"×\s*\d|\bodds ratio\b|\btimes the odds\b", re.I)
+ODDS_MARK = re.compile(r"×\s*\d|\bodds\b", re.I)
 
 
 def layer_path(label: str, directory: Optional[Path] = None) -> Path:
@@ -152,13 +152,62 @@ def lint_text(text: str) -> List[str]:
         m = rx.search(text or "")
         if m:
             out.append(f"{why}: {m.group(0)!r}")
-    if ODDS_MARK.search(text or "") and "model's odds scale" not in (text or ""):
-        out.append("an odds number without \"on the model's odds scale\"")
+    if ODDS_MARK.search(text or ""):
+        out.append("odds or odds ratios in prose (state the change in predicted risk for a typical "
+                   "patient; odds ratios stay in the evidence table)")
     return out
 
 
+CLEARLY = re.compile(r"\bclearly\b", re.I)
+SLIGHTLY = re.compile(r"\bslightly\b|\ba little\b|\bbarely\b", re.I)
+TRAINING_ONLY = re.compile(r"training data only", re.I)
+LITTLE_DATA = re.compile(r"little data", re.I)
+EFFECT = re.compile(r"\b(?:rais|lower|higher|add|increas|decreas|predict|risk|chance|probabilit|more so|"
+                    r"less likely|more likely)\w*", re.I)
+
+
+def lint_confidence(text: str, claims: List[Dict[str, Any]]) -> List[str]:
+    """The confidence words of a statement must match its claims (``CONFIDENCE_RULES``):
+
+    * "clearly" only if every cited claim (other than null claims) has the word "clearly";
+    * a claim whose risk change is slight needs "slightly" (or "a little", "barely");
+      "slightly" needs at least one slight claim;
+    * a claim the test split does not support needs "on the training data only";
+    * a claim with a small group needs "the model has little data on this".
+    """
+    errs = []
+    cs = [c for c in claims if c.get("type") not in ("null",) and c.get("confidence")]
+    if not cs:
+        return errs
+    if CLEARLY.search(text) and not all(c["confidence"].get("word") == "clearly" for c in cs):
+        bad = [c["id"] for c in cs if c["confidence"].get("word") != "clearly"]
+        errs.append(f"says 'clearly' but {', '.join(bad)} may not be called clear")
+    if not EFFECT.search(text):   # a count or a data fact ("acts on 8 of 242 patients"): no effect stated
+        return errs
+    slight = [c["id"] for c in cs if c["confidence"].get("size") == "slight"]
+    if slight and not SLIGHTLY.search(text):
+        errs.append(f"{', '.join(slight)} {'is' if len(slight) == 1 else 'are'} small: say 'slightly'")
+    if SLIGHTLY.search(text) and not slight and not re.search(r"\bbarely changes\b", text):
+        errs.append("says 'slightly' but no cited claim is small")
+    train_only = [c["id"] for c in cs if c["confidence"].get("test") != "agrees"]
+    if train_only and not TRAINING_ONLY.search(text):
+        errs.append(f"{', '.join(train_only)}: the test split does not support "
+                    f"{'it' if len(train_only) == 1 else 'them'}: say 'on the training data only'")
+    small = [c["id"] for c in cs if not c["confidence"].get("n_ok", True)]
+    if small and not LITTLE_DATA.search(text):
+        errs.append(f"{', '.join(small)}: small groups: say 'the model has little data on this'")
+    return errs
+
+
 def lint_draft(layer: Dict[str, Any], draft: Dict[str, Any]) -> List[str]:
-    """Problems that stop a draft being stored (empty list: the draft follows the protocol)."""
+    """Problems that stop a draft being stored (empty list: the draft follows the protocol).
+
+    Every sentence: cites verified claims only, no jargon, ids, causal words or odds. In the
+    summary and the per-annotation paragraphs the confidence words must also match the cited
+    claims (:func:`lint_confidence`). "Worth checking" items need a ``flag`` (a short neutral
+    label used for the cross-genome table) and may not say "clearly" unless every cited claim is
+    clear.
+    """
     claims = {c["id"]: c for c in layer["claims"]}
     parts = {p["id"] for p in layer["parts"]}
     errs: List[str] = []
@@ -168,20 +217,32 @@ def lint_draft(layer: Dict[str, Any], draft: Dict[str, Any]) -> List[str]:
     for pid in list((draft.get("annotations") or {})) + list((draft.get("hypothesis_revisions") or {})):
         if pid not in parts:
             errs.append(f"unknown annotation id {pid!r}")
+    for i, w in enumerate(draft.get("worth_checking") or []):
+        if not str(w.get("flag") or "").strip():
+            errs.append(f"worth_checking[{i}]: needs a 'flag' (short neutral label)")
     for where, s in _sentences(draft):
         text, cites = s.get("text", ""), s.get("claims") or []
         if not text.strip():
             errs.append(f"{where}: empty text")
         if not cites:
             errs.append(f"{where}: cites no claim")
+        cited = []
         for cid in cites:
             c = claims.get(cid)
             if c is None:
                 errs.append(f"{where}: unknown claim {cid}")
             elif not c.get("verified"):
                 errs.append(f"{where}: cites {cid}, which is not verified")
+            else:
+                cited.append(c)
         for p in lint_text(text):
             errs.append(f"{where}: {p}")
+        if where.startswith(("summary", "annotations")):
+            for p in lint_confidence(text, cited):
+                errs.append(f"{where}: {p}")
+        elif CLEARLY.search(text) and not all((c.get("confidence") or {}).get("word") == "clearly"
+                                              for c in cited if c.get("type") != "null"):
+            errs.append(f"{where}: says 'clearly' but not every cited claim may be called clear")
     return errs
 
 

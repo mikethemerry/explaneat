@@ -2,40 +2,38 @@
 
 Every plain-language statement about an explained genome rests on one or more **claims**.
 A claim is derived from an annotation (a "part" of the explained network), computed on the
-model state and the split's data, and verified automatically. Only verified claims may be
+model state and the split's data, and checked automatically. Only verified claims may be
 turned into sentences; the others are listed as "not supported by the model".
 
-Claim types (``CLAIM_TYPES``):
+Two separate questions are answered for every claim (layer schema 2):
 
-* ``direction``: the model treats a higher value of X (or category L rather than the
-  reference category) as raising or lowering the risk. Checked: the sign of X's effect on the
-  model's log-odds for every patient, its mean with a bootstrap 95% interval, the share of
-  patients with the opposite sign, and whether the average curve is monotone.
-* ``threshold``: through a part, X only matters once it rises above (or while it stays below)
-  about T. Checked: the fold of each patient's curve (where the part's effect starts or
-  stops), the median fold and its spread, and the size of the effect past the fold.
-* ``interaction``: X's effect differs with Y. Checked: X's effect within each Y group (or high
-  vs low Y), the difference with a stratified bootstrap interval, and the sign of the
-  counterfactual difference-in-differences through the part itself.
-* ``magnitude``: the odds ratio of a change in X for a stated reference patient (median of
-  each number, most common category), with a bootstrap interval over the reference patient.
-* ``subgroup``: the share of patients a gated part acts on, who they are, and its effect on
-  them.
-* ``null``: the model ignores Z (exact Null rule: no path to the output over enabled,
-  non-zero-weight edges, confirmed numerically), or a part barely changes the predictions
-  (ablation).
+* **Is it true of the model?** (``verified``). Checked on the training patients: the effect is
+  non-zero and goes the same way for (nearly) every patient ("consistently across patients");
+  thresholds have one fold; interactions have a large enough group difference whose sign the
+  part's own counterfactual confirms. The spread of per-patient effects is reported as a
+  **range across patients** (10th to 90th percentile), not as a confidence interval.
+* **How strongly may it be said?** (``confidence``), from (a) the size of the change in
+  **predicted risk for a typical patient** (probability scale), (b) the **test-split check**
+  (bootstrap over test patients, seed 42) and (c) n. The words are defined in
+  ``CONFIDENCE_RULES`` and used by the template renderer, the writing protocol and the lint.
 
-Effects are on the model's log-odds (the output's pre-activation); odds ratios are
-``exp`` of it, "on the model's odds scale". They describe what the model does, not the world.
+Claim types (``CLAIM_TYPES``): ``direction``, ``threshold``, ``interaction``, ``magnitude``,
+``subgroup``, ``null``, and ``rule`` (a count rule from the codebook, e.g. MONK-2: "how many
+attributes take their first value").
+
+Magnitudes are led by the change in predicted risk for a typical patient (median of every
+number, most common category; for a part that does not act on that patient, the typical
+patient it acts on). Log-odds and odds ratios stay in the evidence. The risk scale is pluggable
+(:class:`BinaryRisk`; :class:`SurvivalRisk` gives the predicted risk at a stated horizon from a
+Breslow baseline, for ``explaneat.survival`` models).
+
+Units: data columns are z-scored by the split's ``StandardScaler`` (``scaler_params``);
+``raw = z * scale + mean``, round trip recorded. One-hot columns ``base:code`` (and documented
+binary columns) are decoded with a codebook (:mod:`.plain_language_codebooks`); codes it does not
+document are reported as gaps, never guessed.
 
 Everything is deterministic: bootstraps use ``numpy.random.default_rng(SEED)`` afresh for every
-claim, so a claim does not depend on which claims were computed before it.
-
-Units: data columns are z-scored by the split's ``StandardScaler`` (``scaler_params`` mean and
-scale, fitted on the training rows). Values are converted back with ``raw = z * scale + mean``
-and the round trip against the stored raw data is checked and recorded. One-hot columns
-``base:code`` are decoded with a codebook (:mod:`.plain_language_codebooks`); codes the codebook
-does not document are reported as gaps, never guessed.
+claim.
 """
 
 from __future__ import annotations
@@ -53,32 +51,50 @@ import numpy as np
 from ..core.genome_network import NetworkStructure, NodeType
 from .composition import annotation_dicts_from_operations
 from .explanation_tools import StateEvaluator, as_unit, default_auc, input_column
-from .plain_language_codebooks import (base_of, codebook_gaps, find_codebook, generic_codebook,
-                                       level_info)
+from .plain_language_codebooks import (base_of, codebook_checks, codebook_gaps, find_codebook,
+                                       generic_codebook, level_info)
 
-LAYER_SCHEMA_VERSION = "1.0.0"
-CLAIM_TYPES = ("direction", "threshold", "interaction", "magnitude", "subgroup", "null")
+LAYER_SCHEMA_VERSION = "2.0.0"
+CLAIM_TYPES = ("direction", "threshold", "interaction", "magnitude", "subgroup", "null", "rule")
 
 SEED = 42
 BOOTSTRAP_B = 1000
 SMALL_N = 20                 # groups smaller than this are flagged small_n
-NEGLIGIBLE = 0.05            # |log-odds| below this: negligible
-SLIGHT = 0.25                # |log-odds| below this: slight
-STRONG = 1.0                 # |log-odds| at least this: strong
+NEGLIGIBLE = 0.05            # |log-odds| below this: no effect worth a claim
 MIN_INTERACTION = 0.1        # |difference in log-odds| an interaction must reach
 MIN_THRESHOLD_EFFECT = 0.1   # |log-odds| the effect past a fold must reach
-MAX_CONTRADICTING = 0.10     # share of patients allowed the opposite sign (direction)
+MAX_CONTRADICTING = 0.10     # share of patients allowed the opposite sign
 MAX_THRESHOLD_SPREAD = 0.20  # IQR of the folds, as a share of the observed range
 MIN_THRESHOLD_PATIENTS = 5
 MAX_INTERACTIONS_PER_PART = 4
 TOP_MAGNITUDES = 5
-INERT_CANDIDATE = 0.25       # parts whose |contribution| never exceeds this are null candidates
-INERT_MAX_DP = 0.02          # ... verified if predictions move by at most this
+INERT_CANDIDATE = 0.25
+INERT_MAX_DP = 0.02
 INERT_MAX_DAUC = 0.002
+RULE_PURITY = 0.95
 GRID_POINTS = 101
 FLAT_TOL = 1e-9
+SCREEN_ROWS = 4000           # interaction candidates are ranked on at most this many rows
+CHUNK_ROWS = 200_000         # forward passes are chunked to this many rows
 SIG = 6
 
+# Confidence words (probability scale at the typical patient; test split; n).
+PROB_SLIGHT = 0.05           # |change in predicted risk| below 5 points: "slightly"
+PROB_LARGE = 0.20            # at least 20 points: a large change
+CONFIDENCE_RULES = {
+    "clearly": ("a meaningful change in predicted risk for a typical patient (at least "
+                f"{PROB_SLIGHT:.0%} points), the test split agrees (same sign, and its bootstrap "
+                "interval over test patients excludes no benefit), and every group has at least "
+                f"{SMALL_N} training patients"),
+    "slightly": f"the change in predicted risk for a typical patient is below {PROB_SLIGHT:.0%} points",
+    "the model has little data on this": f"a compared group has fewer than {SMALL_N} training patients",
+    "on the training data only": ("the test split disagrees (opposite sign, or no benefit on "
+                                  "test patients) or is unclear (its interval includes no benefit), "
+                                  "or no test check is available"),
+    "consistently across patients": ("the claim holds for at least "
+                                     f"{1 - MAX_CONTRADICTING:.0%} of training patients (range "
+                                     "across patients); this is not a significance statement"),
+}
 
 
 # ============================================================================ small helpers
@@ -108,16 +124,8 @@ def boot_mean(e: np.ndarray, B: int = BOOTSTRAP_B) -> Tuple[float, List[float]]:
     if n == 0:
         return float("nan"), [float("nan"), float("nan")]
     idx = _rng().integers(0, n, size=(B, n))
-    m = e[idx].mean(axis=1)
-    return float(e.mean()), [float(np.percentile(m, 2.5)), float(np.percentile(m, 97.5))]
-
-
-def boot_stat(e: np.ndarray, stat, B: int = BOOTSTRAP_B) -> Tuple[float, List[float]]:
-    e = np.asarray(e, dtype=float)
-    n = len(e)
-    idx = _rng().integers(0, n, size=(B, n))
-    vals = np.array([stat(e[i]) for i in idx])
-    return float(stat(e)), [float(np.percentile(vals, 2.5)), float(np.percentile(vals, 97.5))]
+    mm = e[idx].mean(axis=1)
+    return float(e.mean()), [float(np.percentile(mm, 2.5)), float(np.percentile(mm, 97.5))]
 
 
 def boot_diff(e1: np.ndarray, e0: np.ndarray, B: int = BOOTSTRAP_B) -> Tuple[float, List[float]]:
@@ -139,32 +147,100 @@ def excludes_zero(ci) -> bool:
 
 
 def strength(x: float) -> str:
+    """Size class of a log-odds change (kept for the evidence; words use the risk scale)."""
     a = abs(x)
     if a < NEGLIGIBLE:
         return "negligible"
-    if a < SLIGHT:
+    if a < 0.25:
         return "slight"
-    if a < STRONG:
+    if a < 1.0:
         return "moderate"
     return "strong"
 
 
-def _sig_ci(ci):
-    return [sig(ci[0]), sig(ci[1])]
+def _sig_list(xs):
+    return [sig(x) for x in xs]
 
 
 def _or(x):
     return sig(math.exp(x)) if x is not None and math.isfinite(x) else None
 
 
-def estimate_block(value, ci, method: str, unit: str = "log-odds (model)", B: int = BOOTSTRAP_B,
-                   resample: str = "patients", odds: bool = True) -> Dict[str, Any]:
-    out = {"value": sig(value), "ci95": _sig_ci(ci), "unit": unit, "method": method,
-           "bootstrap": {"B": B, "seed": SEED, "resample": resample, "interval": "percentile"}}
-    if odds:
-        out["odds_ratio"] = _or(value)
-        out["odds_ratio_ci95"] = [_or(ci[0]), _or(ci[1])]
+def spread(e: np.ndarray) -> Dict[str, Any]:
+    """Mean and range across patients (10th-90th percentile) of per-patient effects."""
+    e = np.asarray(e, dtype=float)
+    if len(e) == 0:
+        return {"mean": None, "range_across_patients": [None, None], "share_opposite_sign": None}
+    mean = float(e.mean())
+    s = np.sign(mean)
+    return {"mean": sig(mean),
+            "range_across_patients": _sig_list(np.percentile(e, [10, 90])),
+            "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+            "share_opposite_sign": sig(float(np.mean(np.sign(e) == -s))) if s != 0 else 1.0,
+            "share_unaffected": sig(float(np.mean(np.abs(e) < 1e-12)))}
+
+
+def estimate_block(value: float, e: Optional[np.ndarray], method: str,
+                   unit: str = "log-odds (model)") -> Dict[str, Any]:
+    out = {"value": sig(value), "unit": unit, "method": method, "odds_ratio": _or(value)}
+    if e is not None:
+        sp = spread(e)
+        out["range_across_patients"] = sp["range_across_patients"]
+        out["range_basis"] = sp.get("range_basis")
+        out["odds_ratio_range"] = [_or(x) if x is not None else None for x in sp["range_across_patients"]]
     return out
+
+
+# ============================================================================ risk scales
+
+class BinaryRisk:
+    """Predicted probability of the positive class from the model's log-odds."""
+    kind = "binary"
+    horizon = None
+
+    def risk(self, eta):
+        return _sigmoid(eta)
+
+    def loss_p(self, p, y):
+        """Per-row log-loss of predicted probabilities (the test check's yardstick)."""
+        p = np.clip(np.asarray(p, dtype=float), 1e-12, 1 - 1e-12)
+        y = np.asarray(y, dtype=float)
+        return -(y * np.log(p) + (1 - y) * np.log(1 - p))
+
+    def describe(self) -> Dict[str, Any]:
+        return {"kind": "binary", "label": "predicted risk", "horizon": None,
+                "formula": "risk = 1 / (1 + exp(-log-odds))"}
+
+
+class SurvivalRisk:
+    """Predicted risk by a horizon for a Cox model: ``1 - S0(t)^exp(g)`` (Breslow baseline).
+
+    Use with ``explaneat.survival`` models (identity output = log-risk ``g``). The test check
+    needs a survival loss, which is not implemented yet: survival claims get the test status
+    "not available" (so never "clearly").
+    """
+    kind = "survival"
+
+    def __init__(self, baseline_survival_at_horizon: float, horizon: float, horizon_label: str):
+        self.s0 = float(baseline_survival_at_horizon)
+        self.horizon = float(horizon)
+        self.horizon_label = horizon_label
+
+    @classmethod
+    def from_breslow(cls, baseline, horizon: float, horizon_label: str) -> "SurvivalRisk":
+        """From a fitted ``explaneat.survival.breslow.BreslowBaseline``."""
+        s0 = float(np.asarray(baseline.baseline_survival(np.array([horizon]))).ravel()[0])
+        return cls(s0, horizon, horizon_label)
+
+    def risk(self, eta):
+        return 1.0 - np.power(self.s0, np.exp(np.asarray(eta, dtype=float)))
+
+    loss_p = None
+
+    def describe(self) -> Dict[str, Any]:
+        return {"kind": "survival", "label": f"predicted {self.horizon_label} risk",
+                "horizon": self.horizon, "baseline_survival_at_horizon": sig(self.s0),
+                "formula": "risk = 1 - S0(horizon) ** exp(log-risk)"}
 
 
 # ============================================================================ variables
@@ -182,6 +258,7 @@ class Variable:
     raw_test: np.ndarray
     reference: Any = None
     decoded: bool = True
+    implicit_off: Optional[str] = None   # binary column: the code when the column is 0
 
     @property
     def label(self) -> str:
@@ -199,6 +276,10 @@ class Variable:
     def decimals(self) -> int:
         d = self.cb.get("decimals")
         return 2 if d is None else int(d)
+
+    @property
+    def all_codes(self) -> List[str]:
+        return list(self.codes) + ([self.implicit_off] if self.implicit_off is not None else [])
 
     def is_category(self) -> bool:
         return self.kind == "category"
@@ -225,7 +306,7 @@ class Variable:
         if special:
             return special
         d = self.decimals
-        s = f"{float(value):.{d}f}"
+        s = f"{float(value):,.{d}f}" if abs(float(value)) >= 10000 else f"{float(value):.{d}f}"
         if self.unit:
             s += f" {self.unit}"
         alt = self.cb.get("alt_unit")
@@ -233,16 +314,16 @@ class Variable:
             s += f" ({float(value) * alt['factor']:.{alt['decimals']}f} {alt['unit']})"
         return s
 
-    def fmt_number(self, value) -> str:
-        return f"{float(value):.{self.decimals}f}"
+    def counts(self) -> Dict[str, int]:
+        return {c: int(np.sum(self.raw_train == c)) for c in self.all_codes}
 
 
-def _category_codes(raw_cols: np.ndarray, codes: List[str]) -> np.ndarray:
+def _category_codes(raw_cols: np.ndarray, codes: List[str], implicit_off: Optional[str] = None) -> np.ndarray:
     """Per row, the code whose one-hot column is on (None if none or several are on)."""
     out = np.empty(raw_cols.shape[0], dtype=object)
     for i, row in enumerate(raw_cols):
         on = [codes[j] for j in range(len(codes)) if row[j] > 0.5]
-        out[i] = on[0] if len(on) == 1 else None
+        out[i] = on[0] if len(on) == 1 else (implicit_off if not on else None)
     return out
 
 
@@ -261,17 +342,23 @@ def build_variables(feature_names: Sequence[str], raw_train: np.ndarray, raw_tes
         cols = groups[b]
         cb = (codebook.get("variables") or {}).get(b) or {"label": b}
         is_cat = any(":" in feature_names[c] for c in cols)
-        if is_cat:
-            codes = [feature_names[c].split(":", 1)[1] for c in cols]
+        is_binary = (not is_cat and len(cols) == 1 and cb.get("kind") == "binary")
+        if is_cat or is_binary:
+            if is_cat:
+                codes = [feature_names[c].split(":", 1)[1] for c in cols]
+                off = None
+            else:
+                codes, off = ["1"], "0"
             v = Variable(b, "category", cols, codes, cb, mean[cols], scale[cols],
-                         _category_codes(raw_train[:, cols], codes),
-                         _category_codes(raw_test[:, cols], codes) if raw_test is not None else None)
-            counts = {c: int(np.sum(v.raw_train == c)) for c in codes}
-            # reference: the most common category (ties: codebook order)
-            v.reference = max(codes, key=lambda c: (counts[c], -codes.index(c)))
-            v.decoded = all(level_info(cb, c)["decoded"] for c in codes)
+                         _category_codes(raw_train[:, cols], codes, off),
+                         _category_codes(raw_test[:, cols], codes, off) if raw_test is not None else None,
+                         implicit_off=off)
+            counts = v.counts()
+            allc = v.all_codes
+            v.reference = max(allc, key=lambda c: (counts[c], -allc.index(c)))
+            v.decoded = all(level_info(cb, c)["decoded"] for c in allc)
         else:
-            kind = cb.get("kind") or "continuous"
+            kind = cb.get("kind") if cb.get("kind") in ("continuous", "count") else "continuous"
             v = Variable(b, kind, cols, [None], cb, mean[cols], scale[cols],
                          raw_train[:, cols[0]].astype(float),
                          raw_test[:, cols[0]].astype(float) if raw_test is not None else None)
@@ -285,9 +372,45 @@ def _lo_hi(v: Variable) -> Tuple[float, float]:
     """10th and 90th percentile of the training values, rounded to the variable's decimals."""
     lo = round(float(np.percentile(v.raw_train, 10)), v.decimals)
     hi = round(float(np.percentile(v.raw_train, 90)), v.decimals)
-    if hi <= lo:
-        lo, hi = float(np.min(v.raw_train)), float(np.max(v.raw_train))
+    if hi <= lo:   # mostly one value (e.g. capital gains of 0): to the median of the larger values
+        above = v.raw_train[v.raw_train > lo]
+        hi = round(float(np.median(above)), v.decimals) if len(above) else float(np.max(v.raw_train))
     return lo, hi
+
+
+# ============================================================================ level classes
+
+def level_classes(v: Variable, read_codes: Sequence[str]) -> List[Dict[str, Any]]:
+    """Categories a scope can tell apart: every level it reads, plus one class for the rest.
+
+    A scope that reads only some one-hot columns cannot distinguish the levels it does not
+    read, so they form a single class ("any other ...") instead of many identical claims.
+    """
+    counts = v.counts()
+    read = [c for c in v.all_codes if c in set(read_codes)]
+    others = [c for c in v.all_codes if c not in set(read)]
+    classes = [[c] for c in read] + ([others] if others else [])
+    out = []
+    for codes in classes:
+        rep = max(codes, key=lambda c: (counts[c], -v.all_codes.index(c)))
+        if len(codes) == 1:
+            li = v.level(codes[0])
+            d = {"label": li["label"], "group": li["group"], "cond": li["cond"], "decoded": li["decoded"]}
+        else:
+            names = ", ".join(v.level(c)["label"] for c in read) or "the listed values"
+            d = {"label": f"{v.label} other than {names}",
+                 "group": f"{v.cb.get('patients', 'patients')} with {v.label} other than {names}",
+                 "cond": f"{v.label} is something other than {names}",
+                 "decoded": all(v.level(c)["decoded"] for c in read)}
+        out.append({**d, "codes": list(codes), "rep": rep, "key": "+".join(codes) if len(codes) <= 3
+                    else f"other{len(codes)}", "n_train": int(sum(counts[c] for c in codes)),
+                    "is_reference": v.reference in codes})
+    return out
+
+
+def class_rows(v: Variable, cls: Dict[str, Any], test: bool = False) -> np.ndarray:
+    raw = v.raw_test if test else v.raw_train
+    return np.isin(raw.astype(object), np.array(cls["codes"], dtype=object))
 
 
 # ============================================================================ the model view
@@ -320,7 +443,8 @@ class PlainModel:
 
     def __init__(self, structure: NetworkStructure, operations: Sequence[Dict[str, Any]],
                  X_train, y_train, X_test, y_test, feature_names: Sequence[str],
-                 mean, scale, codebook: Dict[str, Any], raw_train=None, raw_test=None):
+                 mean, scale, codebook: Dict[str, Any], raw_train=None, raw_test=None,
+                 risk_scale=None):
         self.structure = structure
         self.ops = [dict(o) for o in operations]
         self.X = np.asarray(X_train, dtype=float)
@@ -331,6 +455,7 @@ class PlainModel:
         self.mean = np.asarray(mean, dtype=float)
         self.scale = np.asarray(scale, dtype=float)
         self.codebook = codebook
+        self.risk_scale = risk_scale or BinaryRisk()
         dec_tr = self.X * self.scale + self.mean
         dec_te = None if self.Xt is None else self.Xt * self.scale + self.mean
         self.raw_train = dec_tr if raw_train is None else np.asarray(raw_train, dtype=float)
@@ -346,25 +471,39 @@ class PlainModel:
         self.variables = build_variables(self.feature_names, self.raw_train, self.raw_test,
                                          self.mean, self.scale, codebook)
         self.var_by_base = {v.base: v for v in self.variables}
-        self.col_var = {c: v.base for v in self.variables for c in v.columns}
         self.input_nodes_by_col: Dict[int, List[str]] = {}
         for n in structure.nodes:
             if n.type == NodeType.INPUT:
                 self.input_nodes_by_col.setdefault(input_column(n.id), []).append(n.id)
-        self.base_logit = self.ev.logit(self.X)
-        self.base_logit_test = None if self.Xt is None else self.ev.logit(self.Xt)
+        self.base_logit = self.logit(self.X)
+        self.base_logit_test = None if self.Xt is None else self.logit(self.Xt)
+        n = self.X.shape[0]
+        step = max(1, int(math.ceil(n / SCREEN_ROWS)))
+        self.screen_idx = np.arange(0, n, step)
+        reach = self.reaching_output()
+        self.read_columns = {c for c, nodes in self.input_nodes_by_col.items()
+                             if any(nd in reach for nd in nodes)}
 
     # ------------------------------------------------------------------ forward passes
     def logit(self, X, assign: Optional[Dict[int, Any]] = None, scope: Optional[Sequence[str]] = None,
               ablate: Optional[Dict[str, float]] = None) -> np.ndarray:
-        """Log-odds with data columns set by ``assign`` ({column: value or per-row array}).
+        """Log-odds (log-risk for survival) with data columns set by ``assign``.
 
-        ``scope=None`` sets the column everywhere (the whole model sees the new value); a list
-        of input node ids sets it only on those copies (the change reaches the output only
-        through the part those copies feed). ``ablate`` fixes nodes at constants.
+        ``assign`` maps a column to a value or a per-row array. ``scope=None`` sets the column
+        everywhere; a list of input node ids sets it only on those copies (the change reaches
+        the output only through the part those copies feed). ``ablate`` fixes nodes at
+        constants. Large inputs are processed in chunks.
         """
         X = np.asarray(X, dtype=float)
         n = X.shape[0]
+        if n > CHUNK_ROWS:
+            outs = []
+            for s in range(0, n, CHUNK_ROWS):
+                sl = slice(s, min(n, s + CHUNK_ROWS))
+                a = None if assign is None else {
+                    c: (np.asarray(v)[sl] if np.ndim(v) else v) for c, v in assign.items()}
+                outs.append(self.logit(X[sl], a, scope, ablate))
+            return np.concatenate(outs)
         overrides = {}
         if assign:
             if scope is None:
@@ -381,6 +520,9 @@ class PlainModel:
         for node, const in (ablate or {}).items():
             overrides[node] = ((), (lambda vals, k=float(const), m=n: np.full(m, k)))
         return self.ev.logit(X, overrides or None)
+
+    def risk(self, eta):
+        return self.risk_scale.risk(eta)
 
     def set_logit(self, X, var: Variable, value, scope=None, extra=None) -> np.ndarray:
         assign = var.encode(value)
@@ -418,8 +560,12 @@ class PlainModel:
 
     def scope_columns(self, var: Variable, scope) -> List[int]:
         if scope is None:
-            return list(var.columns)
+            return [c for c in var.columns if c in self.read_columns]
         return [c for c in var.columns if any(nd in scope for nd in self.input_nodes_by_col.get(c, []))]
+
+    def read_codes(self, var: Variable, scope) -> List[str]:
+        cols = self.scope_columns(var, scope)
+        return [var.codes[var.columns.index(c)] for c in cols]
 
 
 # ============================================================================ parts
@@ -467,7 +613,6 @@ def build_parts(m: PlainModel) -> List[Part]:
                 p.contribution_test = m.base_logit_test - m.logit(m.Xt, ablate=p.baselines)
             p.nonlinear = _is_nonlinear(m, p, vals)
         parts.append(p)
-    # duplicates: a leaf whose exits equal an earlier leaf's exits on every training row
     leaves = [p for p in parts if p.kind == "leaf" and not p.is_root]
     for i, p in enumerate(leaves):
         for q in leaves[:i]:
@@ -478,7 +623,6 @@ def build_parts(m: PlainModel) -> List[Part]:
                                          for a, b in zip(p.exits, q.exits)):
                     p.duplicate_of = q.id
                     break
-    # order: root first, then by the spread of the part's contribution, then by sequence
     seq = {a["name"]: i for i, a in enumerate(anns)}
     parts.sort(key=lambda p: (not p.is_root, p.duplicate_of is not None,
                               -float(np.std(p.contribution)) if p.contribution is not None else 0.0,
@@ -503,7 +647,7 @@ def _is_nonlinear(m: PlainModel, p: Part, vals) -> bool:
     return False
 
 
-# ============================================================================ group descriptions
+# ============================================================================ groups and the typical patient
 
 def describe_group(m: PlainModel, rows: np.ndarray, var_names: Sequence[str]) -> Dict[str, Any]:
     """Who is in a group of training patients: category shares and number ranges."""
@@ -513,9 +657,11 @@ def describe_group(m: PlainModel, rows: np.ndarray, var_names: Sequence[str]) ->
     for b in var_names:
         v = m.var_by_base[b]
         if v.is_category():
-            for code in v.codes:
+            for code in v.all_codes:
                 ins = float(np.mean(v.raw_train[rows] == code)) if rows.any() else 0.0
                 oth = float(np.mean(v.raw_train[~rows] == code)) if (~rows).any() else 0.0
+                if ins == 0 and oth < 0.05:
+                    continue
                 rec = {"variable": b, "code": code, "label": v.level(code)["label"],
                        "group": v.level(code)["group"], "share_in": sig(ins),
                        "share_out": sig(oth), "decoded": v.level(code)["decoded"]}
@@ -543,6 +689,186 @@ def _wilson(k, n, z=1.959963984540054):
     return [sig(max(0.0, c - h)), sig(min(1.0, c + h))]
 
 
+def typical_raw(m: PlainModel, rows: Optional[np.ndarray] = None) -> np.ndarray:
+    """The typical patient (raw values): median of every number and the most common category,
+    over all training patients or the given rows."""
+    mask = np.ones(m.X.shape[0], dtype=bool) if rows is None else np.asarray(rows, dtype=bool)
+    ref = np.zeros(m.raw_train.shape[1])
+    for v in m.variables:
+        if v.is_category():
+            codes = v.raw_train[mask]
+            allc = v.all_codes
+            counts = {c: int(np.sum(codes == c)) for c in allc}
+            best = max(allc, key=lambda c: (counts[c], -allc.index(c)))
+            for c, code in zip(v.columns, v.codes):
+                ref[c] = 1.0 if code == best else 0.0
+        else:
+            ref[v.columns[0]] = float(np.median(m.raw_train[mask, v.columns[0]]))
+    return ref
+
+
+def typical_values(m: PlainModel, raw: np.ndarray) -> Dict[str, str]:
+    out = {}
+    for v in m.variables:
+        if v.is_category():
+            code = next((cd for c, cd in zip(v.columns, v.codes) if raw[c] > 0.5), v.implicit_off)
+            out[v.base] = v.level(code)["label"] if code is not None else "none"
+        else:
+            out[v.base] = v.fmt(raw[v.columns[0]])
+    return out
+
+
+def _z(m: PlainModel, raw: np.ndarray) -> np.ndarray:
+    return ((raw - m.mean) / m.scale)[None, :]
+
+
+def reference_patient(m: PlainModel) -> Dict[str, Any]:
+    raw = typical_raw(m)
+    p = float(m.risk(m.logit(_z(m, raw)))[0])
+    return {"definition": "the typical patient: the median training patient for every number and "
+                          "the most common training category for every category (not a real patient)",
+            "values": typical_values(m, raw), "predicted_risk": sig(p),
+            "risk_scale": m.risk_scale.describe(), "raw": _sig_list(raw)}
+
+
+def risk_pair(m: PlainModel, raw: np.ndarray, var: Variable, a, b, scope=None,
+              extra_raw: Optional[Dict[int, float]] = None) -> Tuple[float, float]:
+    """Predicted risk of the patient ``raw`` with ``var`` at ``a`` and at ``b`` (on ``scope``)."""
+    z = _z(m, raw)
+    extra = None
+    if extra_raw:
+        extra = {c: float((val - m.mean[c]) / m.scale[c]) for c, val in extra_raw.items()}
+        for c, val in extra.items():
+            z[0, c] = val
+    pa = float(m.risk(m.set_logit(z, var, a, scope))[0])
+    pb = float(m.risk(m.set_logit(z, var, b, scope))[0])
+    return pa, pb
+
+
+def risk_block(pa: float, pb: float, reference: str, values: Optional[Dict[str, str]] = None,
+               **kw) -> Dict[str, Any]:
+    out = {"reference": reference, "from": sig(pa), "to": sig(pb), "delta": sig(pb - pa)}
+    if values is not None:
+        out["reference_values"] = values
+    out.update(kw)
+    return out
+
+
+# ============================================================================ test checks and confidence
+
+def support(v: Variable) -> List[Tuple[Any, float]]:
+    """The variable's training distribution as (value, weight) pairs: every category (or every
+    distinct value when there are at most 25), else 20 equally weighted quantiles."""
+    if v.is_category():
+        counts = v.counts()
+        tot = sum(counts.values()) or 1
+        return [(c, counts[c] / tot) for c in v.all_codes if counts[c] > 0]
+    vals, cnt = np.unique(v.raw_train, return_counts=True)
+    if len(vals) <= 25:
+        return [(float(x), float(k) / cnt.sum()) for x, k in zip(vals, cnt)]
+    qs = np.percentile(v.raw_train, np.arange(2.5, 100, 5))
+    return [(float(q), 1.0 / len(qs)) for q in qs]
+
+
+def _removed_risk(m: PlainModel, X, var: Optional[Variable], scope, part: Optional[Part]) -> np.ndarray:
+    """Predicted risk with the mechanism's information removed, keeping its average effect:
+    the prediction averaged over the variable's training distribution (on the scope), or over
+    the training distribution of the part's outputs."""
+    if var is not None:
+        acc = np.zeros(X.shape[0])
+        for val, w in support(var):
+            acc += w * m.risk(m.set_logit(X, var, val, scope))
+        return acc
+    vals = m.ev.forward(m.X[m.screen_idx])
+    rows = np.linspace(0, len(m.screen_idx) - 1, 20).round().astype(int)
+    acc = np.zeros(X.shape[0])
+    for r in rows:
+        acc += m.risk(m.logit(X, ablate={x: float(vals[x][r]) for x in part.exits})) / len(rows)
+    return acc
+
+
+def fast_auc(y: np.ndarray, s: np.ndarray) -> float:
+    """AUC by the rank-sum formula (ties get average ranks)."""
+    from scipy.stats import rankdata
+    y = np.asarray(y) > 0.5
+    n1 = int(y.sum())
+    n0 = len(y) - n1
+    if n1 == 0 or n0 == 0:
+        return float("nan")
+    r = rankdata(s)
+    return float((r[y].sum() - n1 * (n1 + 1) / 2) / (n1 * n0))
+
+
+def test_benefit(m: PlainModel, var: Optional[Variable] = None, scope=None,
+                 part: Optional[Part] = None) -> Dict[str, Any]:
+    """Does the model's use of this mechanism help it rank test patients?
+
+    benefit = test AUC of the full model minus test AUC with the mechanism's information removed
+    (positive: it helps). Removing averages the prediction over the variable's training
+    distribution on the claim's scope (or over the part's training outputs), so only the
+    information is lost. The interval is a paired bootstrap over test patients (seed 42;
+    ``BOOTSTRAP_B`` resamples, 200 when there are more than 2,000 test patients). Discrimination
+    is used rather than log-loss, which would also penalise an over-confident model for its
+    confidence. The training value is reported for comparison.
+    """
+    if getattr(m.risk_scale, "loss_p", None) is None or m.Xt is None or m.yt is None or len(m.yt) == 0:
+        return {"split": "test", "status": "not available",
+                "note": "no test split, or no test measure for this risk scale (survival)"}
+    yt = m.yt
+    full = m.risk(m.base_logit_test)
+    rem = _removed_risk(m, m.Xt, var, scope, part)
+    b = fast_auc(yt, full) - fast_auc(yt, rem)
+    B = BOOTSTRAP_B if len(yt) <= 2000 else 200
+    idx = _rng().integers(0, len(yt), size=(B, len(yt)))
+    diffs = np.array([fast_auc(yt[i], full[i]) - fast_auc(yt[i], rem[i]) for i in idx])
+    diffs = diffs[np.isfinite(diffs)]
+    ci = [float(np.percentile(diffs, 2.5)), float(np.percentile(diffs, 97.5))] if len(diffs) else [float("nan")] * 2
+    Xs, ys = m.X[m.screen_idx], m.y[m.screen_idx]
+    tr = fast_auc(ys, m.risk(m.base_logit[m.screen_idx])) - fast_auc(ys, _removed_risk(m, Xs, var, scope, part))
+    return {"split": "test", "n": int(len(yt)), "benefit_mean": sig(b), "benefit_ci95": _sig_list(ci),
+            "bootstrap_B": int(B), "train_benefit_mean": sig(tr),
+            "measure": "test AUC of the full model minus test AUC with the mechanism's information removed "
+                       "(prediction averaged over its training distribution); positive = it helps; paired "
+                       "bootstrap over test patients, seed 42"}
+
+
+def _status(benefit: Dict[str, Any], same_sign: Optional[bool] = True,
+            diff_ci: Optional[List[float]] = None) -> str:
+    if benefit.get("status") == "not available" and diff_ci is None:
+        return "not available"
+    if same_sign is False:
+        return "disagrees"
+    if diff_ci is not None:
+        if diff_ci[0] is None:
+            return "unclear"
+        return "agrees" if (diff_ci[0] > 0 or diff_ci[1] < 0) else "unclear"
+    b, ci = benefit.get("benefit_mean"), benefit.get("benefit_ci95") or [None, None]
+    if b is None:
+        return "not available"
+    if b < 0:
+        return "disagrees"
+    return "agrees" if (b > 0 and ci[0] is not None and ci[0] > 0) else "unclear"
+
+
+def confidence(c: Dict[str, Any]) -> Dict[str, Any]:
+    """The confidence words a statement of this claim may use (``CONFIDENCE_RULES``)."""
+    r = c.get("risk") or {}
+    delta = abs(r.get("delta") or 0.0)
+    size = "slight" if delta < PROB_SLIGHT else ("large" if delta >= PROB_LARGE else "meaningful")
+    test = (c.get("test_check") or {}).get("status", "not available")
+    n_ok = not c.get("small_n")
+    quals = []
+    if size == "slight":
+        quals.append("slightly")
+    if not n_ok:
+        quals.append("the model has little data on this")
+    if test != "agrees":
+        quals.append("on the training data only")
+    word = "clearly" if (size != "slight" and test == "agrees" and n_ok) else None
+    return {"word": word, "size": size, "delta_risk": sig(delta), "test": test, "n_ok": n_ok,
+            "qualifiers": quals}
+
+
 # ============================================================================ claim builders
 
 def _claim(part: Part, ctype: str, key: str, **kw) -> Dict[str, Any]:
@@ -550,7 +876,7 @@ def _claim(part: Part, ctype: str, key: str, **kw) -> Dict[str, Any]:
          "annotation": {"id": part.id, "name": part.name},
          "scope": "model" if part.is_root else "part", "split": "train", "test_check": None,
          "small_n": False, "small_n_groups": [], "verified": False, "reasons": [],
-         "checks": {}}
+         "checks": {}, "risk": None}
     c.update(kw)
     return c
 
@@ -561,38 +887,9 @@ def _finish(c: Dict[str, Any], checks: Dict[str, Tuple[bool, str]]):
     c["verified"] = all(ok for ok, _ in checks.values())
     if c["verified"]:
         c["reasons"] = ["all checks passed"]
+    if c["type"] != "null":
+        c["confidence"] = confidence(c)
     return c
-
-
-def _settings(m: PlainModel, v: Variable, scope) -> List[Tuple[Any, Any]]:
-    """(from, to) settings that describe a change in ``v`` the scope can see."""
-    if not v.is_category():
-        return [_lo_hi(v)]
-    cols = m.scope_columns(v, scope)
-    read = [v.codes[v.columns.index(c)] for c in cols]
-    counts = {c: int(np.sum(v.raw_train == c)) for c in v.codes}
-    if not read:
-        return []
-    if len(read) == 1 and read[0] == v.reference:
-        others = [c for c in v.codes if c != v.reference]
-        if not others:
-            return []
-        alt = max(others, key=lambda c: (counts[c], -v.codes.index(c)))
-        return [(v.reference, alt)]   # always phrased from the reference category
-    return [(v.reference, code) for code in read if code != v.reference]
-
-
-def _setting_desc(v: Variable, a, b) -> Dict[str, Any]:
-    if v.is_category():
-        return {"from": {"code": a, **_lvl(v, a)}, "to": {"code": b, **_lvl(v, b)}}
-    return {"from": {"value": a, "text": v.fmt(a)}, "to": {"value": b, "text": v.fmt(b)},
-            "basis": "10th and 90th percentile of the training patients"}
-
-
-def _lvl(v: Variable, code) -> Dict[str, Any]:
-    li = v.level(code)
-    return {"label": li["label"], "group": li["group"], "cond": li["cond"], "decoded": li["decoded"],
-            "n_train": int(np.sum(v.raw_train == code))}
 
 
 def _var_desc(v: Variable) -> Dict[str, Any]:
@@ -600,58 +897,98 @@ def _var_desc(v: Variable) -> Dict[str, Any]:
             "decoded": v.decoded}
 
 
+def _settings(m: PlainModel, v: Variable, scope) -> List[Tuple[Any, Any, Optional[Dict], Optional[Dict]]]:
+    """(from, to, from_class, to_class): changes in ``v`` the scope can see."""
+    if not v.is_category():
+        lo, hi = _lo_hi(v)
+        return [(lo, hi, None, None)]
+    read = m.read_codes(v, scope)
+    if not read:
+        return []
+    classes = level_classes(v, read)
+    ref = next(c for c in classes if c["is_reference"])
+    return [(ref["rep"], c["rep"], ref, c) for c in classes if c is not ref]
+
+
+def _change_desc(v: Variable, a, b, ca=None, cb=None) -> Dict[str, Any]:
+    if v.is_category():
+        def d(code, cls):
+            cls = cls or {}
+            return {"code": code, "codes": cls.get("codes", [code]), "label": cls.get("label"),
+                    "group": cls.get("group"), "cond": cls.get("cond"),
+                    "decoded": cls.get("decoded", True), "n_train": cls.get("n_train")}
+        return {"from": d(a, ca), "to": d(b, cb)}
+    return {"from": {"value": a, "text": v.fmt(a)}, "to": {"value": b, "text": v.fmt(b)},
+            "basis": "10th and 90th percentile of the training patients"}
+
+
+def _part_typical(m: PlainModel, part: Part, var: Variable, a, b, scope):
+    """Typical patient for a statement about a part: the overall typical patient, or (if the
+    part does not move that patient's risk) the typical patient the part acts on."""
+    raw = typical_raw(m)
+    pa, pb = risk_pair(m, raw, var, a, b, scope)
+    if abs(pb - pa) > 1e-9 or part.is_root or part.contribution is None:
+        return pa, pb, "typical patient", None
+    active = np.abs(part.contribution) > 1e-12
+    if active.any() and not active.all():
+        raw2 = typical_raw(m, active)
+        pa2, pb2 = risk_pair(m, raw2, var, a, b, scope)
+        return pa2, pb2, "typical patient this part acts on", typical_values(m, raw2)
+    return pa, pb, "typical patient", None
+
+
 def direction_claims(m: PlainModel, part: Part, scope) -> List[Dict[str, Any]]:
     out = []
-    for b in part.variables:
-        v = m.var_by_base[b]
-        for (a, z) in _settings(m, v, scope):
+    for bname in part.variables:
+        v = m.var_by_base[bname]
+        for (a, z, ca, cz) in _settings(m, v, scope):
             e = m.effect(m.X, v, a, z, scope)
             if np.max(np.abs(e)) < 1e-12:
                 continue
-            mean, ci = boot_mean(e)
-            sgn = np.sign(mean)
-            contra = float(np.mean(np.sign(e) == -sgn) if sgn != 0 else 1.0)
-            zero = float(np.mean(np.abs(e) < 1e-12))
-            affected = np.abs(e) >= 1e-12
-            key = b if not v.is_category() else f"{b}:{z if z != v.reference else a}"
+            mean = float(e.mean())
+            sp = spread(e)
+            key = bname if not v.is_category() else f"{bname}:{cz['key']}"
+            pa, pb, ref_name, ref_vals = _part_typical(m, part, v, a, z, scope)
             c = _claim(part, "direction", key, variables=[_var_desc(v)],
-                       statement={"variable": b, "change": _setting_desc(v, a, z),
+                       statement={"variable": bname, "change": _change_desc(v, a, z, ca, cz),
                                   "direction": "raises" if mean > 0 else "lowers",
                                   "strength": strength(mean)})
-            c["estimate"] = estimate_block(mean, ci, "mean over training patients of the change "
-                                           "in the model's log-odds when the variable is changed "
+            c["estimate"] = estimate_block(mean, e, "mean over training patients of the change in "
+                                           "the model's log-odds when the variable is changed "
                                            + ("everywhere in the model" if scope is None else
                                               "only where this part reads it"))
-            c["evidence"] = {"share_opposite_sign": sig(contra), "share_unaffected": sig(zero),
-                             "mean_among_affected": sig(float(np.mean(e[affected]))) if affected.any() else None,
-                             "n_affected": int(affected.sum())}
-            # monotone average curve (continuous only)
+            c["risk"] = risk_block(pa, pb, ref_name, ref_vals)
+            c["evidence"] = {"share_opposite_sign": sp["share_opposite_sign"],
+                             "share_unaffected": sp["share_unaffected"]}
             mono = None
             if not v.is_category():
                 grid = np.unique(np.round(np.percentile(v.raw_train, np.arange(5, 96, 5)), v.decimals))
-                pd = np.array([np.mean(m.set_logit(m.X, v, g, scope)) for g in grid])
+                Xs = m.X[m.screen_idx]
+                pd = np.array([np.mean(m.set_logit(Xs, v, g, scope)) for g in grid])
                 d = np.diff(pd)
                 mono = bool(np.all(d >= -1e-9) or np.all(d <= 1e-9))
-                c["evidence"]["average_curve"] = {"values": [sig(g) for g in grid],
-                                                  "mean_log_odds": [sig(x) for x in pd]}
+                c["evidence"]["average_curve"] = {"values": _sig_list(grid), "mean_log_odds": _sig_list(pd),
+                                                  "rows": int(len(Xs))}
             c["statement"]["monotone"] = mono
-            n = len(e)
-            c["n"] = n
+            c["n"] = int(len(e))
             groups = []
             if v.is_category():
-                for code in (a, z):
-                    k = int(np.sum(v.raw_train == code))
-                    groups.append({"label": v.level(code)["label"], "n": k})
-                    if k < SMALL_N:
-                        c["small_n_groups"].append(v.level(code)["label"])
+                for cls in (ca, cz):
+                    groups.append({"label": cls["label"], "n": cls["n_train"]})
+                    if cls["n_train"] < SMALL_N:
+                        c["small_n_groups"].append(cls["label"])
             c["groups"] = groups
             c["small_n"] = bool(c["small_n_groups"])
-            c["test_check"] = _test_direction(m, v, a, z, scope, mean)
+            et = m.effect(m.Xt, v, a, z, scope) if m.Xt is not None else None
+            same = None if et is None or np.max(np.abs(et)) < 1e-12 else bool(np.sign(et.mean()) == np.sign(mean))
+            ben = test_benefit(m, v, scope)
+            c["test_check"] = {**ben, "model_effect_mean": sig(float(et.mean())) if et is not None else None,
+                               "same_sign": same, "status": _status(ben, same)}
             checks = {
-                "ci_excludes_zero": (excludes_zero(ci), "the 95% interval of the mean effect includes zero"),
-                "consistent_sign": (contra <= MAX_CONTRADICTING,
-                                    f"{contra:.0%} of patients have the opposite sign (allowed: "
-                                    f"{MAX_CONTRADICTING:.0%})"),
+                "non_zero": (abs(mean) >= 1e-9, "the mean effect is zero"),
+                "consistent_across_patients": (sp["share_opposite_sign"] <= MAX_CONTRADICTING,
+                                               f"{sp['share_opposite_sign']:.0%} of patients have the "
+                                               f"opposite sign (allowed: {MAX_CONTRADICTING:.0%})"),
             }
             if v.is_category():
                 checks["level_observed"] = (all(g["n"] > 0 for g in groups),
@@ -660,124 +997,66 @@ def direction_claims(m: PlainModel, part: Part, scope) -> List[Dict[str, Any]]:
     return out
 
 
-def _test_direction(m: PlainModel, v, a, z, scope, train_mean) -> Optional[Dict[str, Any]]:
-    if m.Xt is None:
-        return None
-    e = m.effect(m.Xt, v, a, z, scope)
-    mean, ci = boot_mean(e)
-    if np.max(np.abs(e)) < 1e-12:
-        return {"split": "test", "n": len(e), "value": 0.0, "ci95": [0.0, 0.0],
-                "consistent": None, "note": "no test patient is affected"}
-    cons = bool(np.sign(mean) == np.sign(train_mean) or
-                (abs(mean) < NEGLIGIBLE and abs(train_mean) < NEGLIGIBLE))
-    return {"split": "test", "n": len(e), "value": sig(mean), "ci95": _sig_ci(ci), "consistent": cons}
-
-
-def _reference_rows(m: PlainModel, rows_idx: Optional[np.ndarray] = None) -> np.ndarray:
-    """Raw reference patient(s): median of every number, most common category."""
-    raw = m.raw_train if rows_idx is None else m.raw_train[rows_idx]
-    ref = np.zeros(m.raw_train.shape[1])
-    for v in m.variables:
-        if v.is_category():
-            codes = v.raw_train if rows_idx is None else v.raw_train[rows_idx]
-            counts = {c: int(np.sum(codes == c)) for c in v.codes}
-            best = max(v.codes, key=lambda c: (counts[c], -v.codes.index(c)))
-            for c, code in zip(v.columns, v.codes):
-                ref[c] = 1.0 if code == best else 0.0
-        else:
-            ref[v.columns[0]] = float(np.median(raw[:, v.columns[0]]))
-    return ref
-
-
-def reference_patient(m: PlainModel) -> Dict[str, Any]:
-    raw = _reference_rows(m)
-    z = (raw - m.mean) / m.scale
-    p = float(_sigmoid(m.logit(z[None, :]))[0])
-    vals = {}
-    for v in m.variables:
-        if v.is_category():
-            vals[v.base] = v.level(v.reference)["label"]
-        else:
-            vals[v.base] = v.fmt(raw[v.columns[0]])
-    return {"definition": "the median training patient for every number and the most common "
-                          "training category for every category (not a real patient)",
-            "values": vals, "predicted_risk": sig(p), "raw": [sig(x) for x in raw]}
-
-
 def magnitude_claims(m: PlainModel, part: Part, directions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """The biggest verified effects as changes for the typical patient (headline numbers)."""
     def decoded(d):
         ch = d["statement"]["change"]
         return all((ch.get(k) or {}).get("decoded", True) for k in ("from", "to"))
-    # magnitudes for the biggest verified effects with adequate data and decoded categories
     cands = [d for d in directions if d["verified"] and not d["small_n"] and decoded(d)]
-    cands.sort(key=lambda d: (-abs(d["estimate"]["value"]), d["key"]))
-    seen, chosen = set(), []
+    cands.sort(key=lambda d: (-abs(d["risk"]["delta"] or 0), d["key"]))
+    seen, out = set(), []
+    raw = typical_raw(m)
     for d in cands:
         b = d["statement"]["variable"]
         if b in seen:
             continue
         seen.add(b)
-        chosen.append(d)
-        if len(chosen) >= TOP_MAGNITUDES:
-            break
-    if not chosen:
-        return []
-    n = m.X.shape[0]
-    rng = _rng()
-    boot_idx = rng.integers(0, n, size=(BOOTSTRAP_B, n))
-    ref_raw = _reference_rows(m)
-    boot_raw = np.array([_reference_rows(m, idx) for idx in boot_idx])
-    out = []
-    for d in chosen:
-        v = m.var_by_base[d["statement"]["variable"]]
+        v = m.var_by_base[b]
         ch = d["statement"]["change"]
         a = ch["from"].get("code", ch["from"].get("value"))
         z_ = ch["to"].get("code", ch["to"].get("value"))
-        Z = (np.vstack([ref_raw[None, :], boot_raw]) - m.mean) / m.scale
-        e = m.effect(Z, v, a, z_, None)
-        val = float(e[0])
-        ci = [float(np.percentile(e[1:], 2.5)), float(np.percentile(e[1:], 97.5))]
-        c = _claim(part, "magnitude", d["statement"]["variable"]
-                   if not v.is_category() else d["key"].split(":", 2)[2],
-                   variables=[_var_desc(v)],
-                   statement={"variable": v.base, "change": ch,
-                              "direction": "raises" if val > 0 else "lowers",
-                              "strength": strength(val), "reference_patient": "typical",
-                              "related_direction": d["key"]})
-        c["estimate"] = estimate_block(val, ci, "change in the model's log-odds for the reference "
-                                       "patient; interval from recomputing the reference patient "
-                                       "on bootstrap resamples of the training patients",
-                                       resample="patients (reference patient recomputed)")
-        c["n"] = n
+        e0 = float(m.effect(_z(m, raw), v, a, z_, None)[0])
+        pa, pb = risk_pair(m, raw, v, a, z_, None)
+        c = _claim(part, "magnitude", d["key"].split(":", 2)[2], variables=[_var_desc(v)],
+                   statement={"variable": b, "change": ch, "direction": "raises" if e0 > 0 else "lowers",
+                              "strength": strength(e0), "related_direction": d["key"]})
+        c["estimate"] = estimate_block(e0, None, "change in the model's log-odds for the typical patient")
+        c["risk"] = risk_block(pa, pb, "typical patient")
+        c["n"] = d["n"]
         c["groups"] = d.get("groups", [])
         c["small_n_groups"] = list(d.get("small_n_groups", []))
         c["small_n"] = d.get("small_n", False)
-        c["test_check"] = None
-        checks = {"ci_excludes_zero": (excludes_zero(ci), "the 95% interval includes no change"),
-                  "agrees_with_direction": (np.sign(val) == np.sign(d["estimate"]["value"]),
-                                            "the sign at the reference patient differs from the "
+        c["test_check"] = dict(d["test_check"])
+        checks = {"non_zero": (abs(e0) >= 1e-9, "no change for the typical patient"),
+                  "agrees_with_direction": (np.sign(e0) == np.sign(d["estimate"]["value"]),
+                                            "the sign for the typical patient differs from the "
                                             "average direction")}
         out.append(_finish(c, checks))
+        if len(out) >= TOP_MAGNITUDES:
+            break
     return out
 
 
-def _ice(m: PlainModel, v: Variable, grid: np.ndarray, scope) -> np.ndarray:
-    """(n_patients, len(grid)) log-odds with ``v`` set to each grid value on the scope."""
-    n, G = m.X.shape[0], len(grid)
-    Xr = np.repeat(m.X, G, axis=0)
-    vals = np.tile(grid, n)
+def _ice(m: PlainModel, v: Variable, grid: np.ndarray, scope, rows: np.ndarray) -> np.ndarray:
+    """(len(rows), len(grid)) log-odds with ``v`` set to each grid value on the scope."""
+    X = m.X[rows]
+    G = len(grid)
+    out = np.empty((X.shape[0], G))
+    per = max(1, CHUNK_ROWS // G)
     col = v.columns[0]
-    z = (vals - v.mean[0]) / v.scale[0]
-    return m.logit(Xr, {col: z}, scope).reshape(n, G)
+    for s in range(0, X.shape[0], per):
+        Xc = X[s:s + per]
+        Xr = np.repeat(Xc, G, axis=0)
+        z = (np.tile(grid, Xc.shape[0]) - v.mean[0]) / v.scale[0]
+        out[s:s + per] = m.logit(Xr, {col: z}, scope).reshape(Xc.shape[0], G)
+    return out
 
 
 def _folds(L: np.ndarray, grid: np.ndarray):
     """Per patient: the fold of a piecewise-linear curve that is flat on one side.
 
-    Returns (onset, offset, depth_on, depth_off): onset where a curve that is flat from the
-    lowest value starts to move; offset where a moving curve goes flat up to the highest value;
-    depth = how far the curve is from the straight-line continuation of its moving part at the
-    flat end (in log-odds), i.e. how much the fold matters.
+    Returns (onset, offset, depth_on, depth_off). depth = how far the curve is from the
+    straight-line continuation of its moving part at the flat end (log-odds).
     """
     h = grid[1] - grid[0]
     D = np.diff(L, axis=1)
@@ -804,35 +1083,18 @@ def _folds(L: np.ndarray, grid: np.ndarray):
     return onset, offset, d_on, d_off
 
 
-def _threshold_groups(m: PlainModel, part: Part, b: str, rows: np.ndarray, ts_all: np.ndarray,
-                      span: float) -> List[Tuple[Optional[Dict[str, Any]], np.ndarray]]:
-    """Candidate patient groups for one threshold: everyone with a fold, then each category
-    level of the part's other variables (largest group whose folds agree first)."""
-    out: List[Tuple[Optional[Dict[str, Any]], np.ndarray]] = [(None, rows)]
-    for w in part.variables:
-        if w == b:
-            continue
-        W = m.var_by_base[w]
-        if not W.is_category():
-            continue
-        for code in W.codes:
-            g = rows & (W.raw_train == code)
-            if g.sum() >= MIN_THRESHOLD_PATIENTS:
-                out.append(({"variable": w, "code": code, **_lvl(W, code)}, g))
-    return out
-
-
 def threshold_claims(m: PlainModel, part: Part) -> List[Dict[str, Any]]:
     out = []
-    for b in part.variables:
-        v = m.var_by_base[b]
+    for bname in part.variables:
+        v = m.var_by_base[bname]
         if v.is_category():
             continue
         lo, hi = float(np.min(v.raw_train)), float(np.max(v.raw_train))
         if hi <= lo:
             continue
         grid = np.linspace(lo, hi, GRID_POINTS)
-        L = _ice(m, v, grid, part.input_nodes)
+        rows_all = np.arange(m.X.shape[0])
+        L = _ice(m, v, grid, part.input_nodes, rows_all)
         onset, offset, d_on, d_off = _folds(L, grid)
         n_on, n_off = int(np.sum(~np.isnan(onset))), int(np.sum(~np.isnan(offset)))
         if max(n_on, n_off) < MIN_THRESHOLD_PATIENTS:
@@ -840,186 +1102,218 @@ def threshold_claims(m: PlainModel, part: Part) -> List[Dict[str, Any]]:
         kind = "above" if n_on >= n_off else "below"
         t_all, depth = (onset, d_on) if kind == "above" else (offset, d_off)
         with_fold = ~np.isnan(t_all)
-        # the group: everyone with a fold if their folds agree, else the largest category
-        # group (of the part's other variables) whose folds agree
         best = None
-        for cond, g in _threshold_groups(m, part, b, with_fold, t_all, hi - lo):
+        cands: List[Tuple[Optional[Dict[str, Any]], np.ndarray]] = [(None, with_fold)]
+        for w in part.variables:
+            W = m.var_by_base[w]
+            if w == bname or not W.is_category():
+                continue
+            for code in W.all_codes:
+                g = with_fold & (W.raw_train == code)
+                if g.sum() >= MIN_THRESHOLD_PATIENTS:
+                    li = W.level(code)
+                    cands.append(({"variable": w, "code": code, "label": li["label"], "group": li["group"],
+                                   "cond": li["cond"], "decoded": li["decoded"]}, g))
+        for cond, g in cands:
             q1, q3 = np.percentile(t_all[g], [25, 75])
-            spread = float((q3 - q1) / (hi - lo))
-            cand = (spread <= MAX_THRESHOLD_SPREAD, int(g.sum()), cond, g, spread)
+            sp_ = float((q3 - q1) / (hi - lo))
+            cand = (sp_ <= MAX_THRESHOLD_SPREAD, int(g.sum()), cond, g, sp_)
             if best is None or (cand[0], cand[1]) > (best[0], best[1]):
                 best = cand
             if cond is None and cand[0]:
                 break
-        agrees, _, cond, rows, spread = best
+        _, _, cond, rows, spread_share = best
         ts = t_all[rows]
-        med, ci = boot_stat(ts, np.median)
+        med = float(np.median(ts))
         q1, q3 = np.percentile(ts, [25, 75])
         hinge = float(np.median(depth[rows]))
         p5, p95 = np.percentile(v.raw_train, [5, 95])
-        if kind == "above":
-            eff = (m.set_logit(m.X[rows], v, p95, part.input_nodes) -
-                   m.set_logit(m.X[rows], v, lo, part.input_nodes))
-        else:
-            eff = (m.set_logit(m.X[rows], v, hi, part.input_nodes) -
-                   m.set_logit(m.X[rows], v, p5, part.input_nodes))
-        emean, eci = boot_mean(eff)
+        va, vb = (lo, p95) if kind == "above" else (p5, hi)
+        eff = (m.set_logit(m.X[rows], v, vb, part.input_nodes) - m.set_logit(m.X[rows], v, va, part.input_nodes))
+        emean = float(eff.mean())
+        sp = spread(eff)
         actual = v.raw_train[rows]
         past = int(np.sum(actual > ts)) if kind == "above" else int(np.sum(actual < ts))
-        who = describe_group(m, rows, [x for x in part.variables if x != b])
+        who = describe_group(m, rows, [x for x in part.variables if x != bname])
         conds = [x["group"] for x in who["conditions"]]
         if cond is not None and cond["group"] not in conds:
             conds = [cond["group"]] + conds
         th = {"value": sig(med), "text": v.fmt(round(med, v.decimals))}
-        if v.kind == "count":   # a fold between two whole numbers: name the step
+        if v.kind == "count":
             step = int(math.floor(med)) + 1
             th.update({"count_step": step, "text": v.fmt(step)})
-        c = _claim(part, "threshold", b, variables=[_var_desc(v)],
-                   statement={"variable": b, "kind": kind,
-                              "threshold": th,
+        raw_t = typical_raw(m, rows)
+        pa, pb = risk_pair(m, raw_t, v, va, vb, part.input_nodes)
+        c = _claim(part, "threshold", bname, variables=[_var_desc(v)],
+                   statement={"variable": bname, "kind": kind, "threshold": th,
                               "direction": "raises" if emean > 0 else "lowers",
-                              "strength": strength(emean), "group": cond,
-                              "conditions": conds})
+                              "strength": strength(emean), "group": cond, "conditions": conds,
+                              "change": {"from": {"value": sig(va), "text": v.fmt(round(va, v.decimals))},
+                                         "to": {"value": sig(vb), "text": v.fmt(round(vb, v.decimals))}}})
         c["estimate"] = {
-            "threshold": {"value": sig(med), "ci95": _sig_ci(ci), "unit": v.unit or "raw units",
-                          "iqr": [sig(q1), sig(q3)], "spread_share_of_range": sig(spread),
+            "threshold": {"value": sig(med), "unit": v.unit or "raw units",
+                          "iqr_across_patients": _sig_list([q1, q3]), "spread_share_of_range": sig(spread_share),
                           "method": "median over patients of the fold of each patient's curve "
-                                    "(log-odds against the variable, changed only where this part "
-                                    "reads it); bootstrap of the median",
-                          "bootstrap": {"B": BOOTSTRAP_B, "seed": SEED, "resample": "patients in the group"}},
+                                    "(log-odds against the variable, changed only where this part reads it)"},
             "fold_depth": {"value": sig(hinge), "unit": "log-odds",
                            "method": "median distance at the flat end between the curve and the "
                                      "straight-line continuation of its moving part"},
-            **estimate_block(emean, eci, "mean change in log-odds from "
-                             + (f"the lowest value to the 95th percentile ({v.fmt(p95)})" if kind == "above"
-                                else f"the 5th percentile ({v.fmt(p5)}) to the highest value")
-                             + " for the patients in the group")}
+            **estimate_block(emean, eff, f"mean change in log-odds from {v.fmt(round(va, v.decimals))} to "
+                             f"{v.fmt(round(vb, v.decimals))} for the patients in the group")}
+        c["risk"] = risk_block(pa, pb, "typical patient with a fold" + (f" ({cond['group']})" if cond else ""),
+                               typical_values(m, raw_t))
         c["n"] = int(rows.sum())
         c["groups"] = [{"label": ("patients whose curve has a fold" if cond is None else
                                   f"{cond['group']} whose curve has a fold"), "n": int(rows.sum())},
                        {"label": "of them, patients already past their fold", "n": past}]
-        c["evidence"] = {"who": who, "n_onset": n_on, "n_offset": n_off,
-                         "n_with_fold": int(with_fold.sum()),
-                         "observed_range": [sig(lo), sig(hi)], "grid_points": GRID_POINTS}
+        c["evidence"] = {"who": who, "n_onset": n_on, "n_offset": n_off, "n_with_fold": int(with_fold.sum()),
+                         "observed_range": _sig_list([lo, hi]), "grid_points": GRID_POINTS}
         if past < SMALL_N:
             c["small_n_groups"].append("patients past the fold")
         c["small_n"] = bool(c["small_n_groups"])
+        ben = test_benefit(m, v, part.input_nodes)
+        c["test_check"] = {**ben, "status": _status(ben)}
         checks = {
             "enough_patients": (rows.sum() >= MIN_THRESHOLD_PATIENTS,
                                 f"fewer than {MIN_THRESHOLD_PATIENTS} patients have a fold"),
-            "single_threshold": (spread <= MAX_THRESHOLD_SPREAD,
-                                 f"the folds are spread over {spread:.0%} of the observed range "
+            "single_threshold": (spread_share <= MAX_THRESHOLD_SPREAD,
+                                 f"the folds are spread over {spread_share:.0%} of the observed range "
                                  f"(allowed {MAX_THRESHOLD_SPREAD:.0%}), also within each category "
                                  f"group: no single threshold"),
             "fold_matters": (hinge >= MIN_THRESHOLD_EFFECT,
                              f"the fold changes the curve by only {hinge:.3f} log-odds compared with "
                              f"a straight line (needed {MIN_THRESHOLD_EFFECT})"),
-            "effect_past_threshold": (excludes_zero(eci) and abs(emean) >= MIN_THRESHOLD_EFFECT,
-                                      "the effect past the fold is too small or its interval includes zero"),
+            "effect_past_threshold": (abs(emean) >= MIN_THRESHOLD_EFFECT and sp["share_opposite_sign"] <= MAX_CONTRADICTING,
+                                      "the effect past the fold is too small or not consistent across patients"),
             "patients_past_threshold": (past >= 1, "no training patient is past the fold"),
         }
         out.append(_finish(c, checks))
     return out
 
 
-def _groups_for(m: PlainModel, w: Variable, w0, w1, X_raw_codes=None):
-    """Boolean rows of the two observed groups for a modifier."""
-    if w.is_category():
-        g1 = w.raw_train == w1
-        g0 = (w.raw_train == w0) if (w0 is not None) else ~g1
-        return g0, g1
-    med = float(np.median(w.raw_train))
-    return w.raw_train <= med, w.raw_train > med
+def _modifier_settings(m: PlainModel, W: Variable, scope):
+    """(w0, w1, class0, class1) for a modifier: category classes, or the 25th/75th percentile."""
+    if W.is_category():
+        return [(s[0], s[1], s[2], s[3]) for s in _settings(m, W, scope)]
+    q = tuple(np.round(np.percentile(W.raw_train, [25, 75]), W.decimals))
+    return [(q[0], q[1], None, None)]
+
+
+def _modifier_groups(W: Variable, s, test: bool = False):
+    """Observed groups (rows0, rows1) and their descriptions for a modifier setting."""
+    w0, w1, c0, c1 = s
+    raw = W.raw_test if test else W.raw_train
+    if W.is_category():
+        r1, r0 = class_rows(W, c1, test), class_rows(W, c0, test)
+        d1 = {"label": c1["label"], "cond": c1["cond"], "group": c1["group"]}
+        d0 = {"label": c0["label"], "cond": c0["cond"], "group": c0["group"]}
+        return r0, r1, d0, d1, w0, w1
+    med = float(np.median(W.raw_train))
+    lo_vals, hi_vals = W.raw_train[W.raw_train <= med], W.raw_train[W.raw_train > med]
+    d1 = {"label": f"{W.short} above {W.fmt(med)}", "cond": f"{W.short} is above {W.fmt(med)}",
+          "group": f"patients with {W.short} above {W.fmt(med)}"}
+    d0 = {"label": f"{W.short} at or below {W.fmt(med)}", "cond": f"{W.short} is at or below {W.fmt(med)}",
+          "group": f"patients with {W.short} at or below {W.fmt(med)}"}
+    w0r = float(np.median(lo_vals)) if len(lo_vals) else med
+    w1r = float(np.median(hi_vals)) if len(hi_vals) else med
+    return raw <= med, raw > med, d0, d1, w0r, w1r
+
+
+def _roles(A: Variable, B: Variable, total_effect: Dict[str, float]) -> Tuple[Variable, Variable]:
+    """(main, modifier): a category is the modifier when exactly one is a category; otherwise
+    the variable with the larger whole-model effect is the main one."""
+    if A.is_category() != B.is_category():
+        return (B, A) if A.is_category() else (A, B)
+    if abs(total_effect.get(B.base, 0.0)) > abs(total_effect.get(A.base, 0.0)):
+        return B, A
+    return A, B
+
+
+def _did(m: PlainModel, X, A: Variable, sa, Bv: Variable, sb, scope) -> np.ndarray:
+    return (m.effect(X, A, sa[0], sa[1], scope, extra=Bv.encode(sb[1])) -
+            m.effect(X, A, sa[0], sa[1], scope, extra=Bv.encode(sb[0])))
 
 
 def interaction_claims(m: PlainModel, part: Part, total_effect: Dict[str, float]) -> List[Dict[str, Any]]:
     vs = list(part.variables)
     if len(vs) < 2:
         return []
-    cands = []
     scope = part.input_nodes
+    Xs = m.X[m.screen_idx]
+    cands = []
     for va, vb in itertools.combinations(vs, 2):
-        A, Bv = m.var_by_base[va], m.var_by_base[vb]
+        A, Bv = _roles(m.var_by_base[va], m.var_by_base[vb], total_effect)
         best = None
         for sa in _settings(m, A, scope):
-            for sb in (_settings(m, Bv, scope) if Bv.is_category() else
-                       [tuple(np.round(np.percentile(Bv.raw_train, [25, 75]), Bv.decimals))]):
-                e1 = m.effect(m.X, A, sa[0], sa[1], scope, extra=Bv.encode(sb[1]))
-                e0 = m.effect(m.X, A, sa[0], sa[1], scope, extra=Bv.encode(sb[0]))
-                did = e1 - e0
+            for sb in _modifier_settings(m, Bv, scope):
+                did = _did(m, Xs, A, sa, Bv, sb, scope)
                 if np.max(np.abs(did)) < 1e-9:
                     continue
                 score = abs(float(np.mean(did)))
                 if best is None or score > best[0]:
-                    best = (score, sa, sb, float(np.mean(did)))
+                    best = (score, sa, sb)
         if best is not None:
-            cands.append((va, vb, best))
+            cands.append((A.base, Bv.base, best))
     cands.sort(key=lambda t: (-t[2][0], t[0], t[1]))
     out = []
-    for va, vb, (score, sa, sb, did_mean) in cands[:MAX_INTERACTIONS_PER_PART]:
-        # main variable: the one with the larger total effect in the model; prefer a
-        # category as the modifier when exactly one of them is a category
-        A, Bv = m.var_by_base[va], m.var_by_base[vb]
-        swap = False
-        if A.is_category() != Bv.is_category():
-            swap = A.is_category()
-        elif abs(total_effect.get(vb, 0.0)) > abs(total_effect.get(va, 0.0)):
-            swap = True
-        if swap:
-            A, Bv, sa, sb = Bv, A, sb, sa
-            if not Bv.is_category():
-                sb = tuple(np.round(np.percentile(Bv.raw_train, [25, 75]), Bv.decimals))
-            if not A.is_category():
-                sa = _lo_hi(A)
-            did = (m.effect(m.X, A, sa[0], sa[1], scope, extra=Bv.encode(sb[1])) -
-                   m.effect(m.X, A, sa[0], sa[1], scope, extra=Bv.encode(sb[0])))
-            did_mean = float(np.mean(did))
-        g0, g1 = _groups_for(m, Bv, sb[0], sb[1])
+    raw = typical_raw(m)
+    for ab, bb, (score, sa, sb) in cands[:MAX_INTERACTIONS_PER_PART]:
+        A, Bv = m.var_by_base[ab], m.var_by_base[bb]
+        did = _did(m, m.X, A, sa, Bv, sb, scope)
+        did_mean = float(did.mean())
+        nz = np.abs(did) > 1e-9
+        did_consistent = float(np.mean(np.sign(did[nz]) == np.sign(did_mean))) if nz.any() else 0.0
+        g0, g1, d0, d1, w0v, w1v = _modifier_groups(Bv, sb)
         e_total = m.effect(m.X, A, sa[0], sa[1], None)
-        e_part = m.effect(m.X, A, sa[0], sa[1], scope)
         e1, e0 = e_total[g1], e_total[g0]
-        m1, ci1 = boot_mean(e1)
-        m0, ci0 = boot_mean(e0)
-        d, dci = boot_diff(e1, e0)
-        if Bv.is_category():
-            lab1, lab0 = Bv.level(sb[1]), Bv.level(sb[0]) if sb[0] is not None else None
-            gl1 = {"label": lab1["label"], "cond": lab1["cond"], "group": lab1["group"]}
-            gl0 = ({"label": lab0["label"], "cond": lab0["cond"], "group": lab0["group"]} if lab0 else
-                   {"label": "other", "cond": "otherwise", "group": "other patients"})
-        else:
-            med = float(np.median(Bv.raw_train))
-            gl1 = {"label": f"{Bv.short} above {Bv.fmt(med)}", "cond": f"{Bv.short} is above {Bv.fmt(med)}",
-                   "group": f"patients with {Bv.short} above {Bv.fmt(med)}"}
-            gl0 = {"label": f"{Bv.short} at or below {Bv.fmt(med)}",
-                   "cond": f"{Bv.short} is at or below {Bv.fmt(med)}",
-                   "group": f"patients with {Bv.short} at or below {Bv.fmt(med)}"}
-        groups = [{**gl1, "n": int(g1.sum()), "estimate": sig(m1), "ci95": _sig_ci(ci1),
-                   "odds_ratio": _or(m1), "part_effect": sig(float(np.mean(e_part[g1]))) if g1.any() else None},
-                  {**gl0, "n": int(g0.sum()), "estimate": sig(m0), "ci95": _sig_ci(ci0),
-                   "odds_ratio": _or(m0), "part_effect": sig(float(np.mean(e_part[g0]))) if g0.any() else None}]
+        m1 = float(e1.mean()) if len(e1) else float("nan")
+        m0 = float(e0.mean()) if len(e0) else float("nan")
+        d = m1 - m0
+        # the typical patient of each group: the typical patient with the modifier set to the group
+        risks = []
+        for wv, cls in ((w1v, sb[3]), (w0v, sb[2])):
+            if Bv.is_category():
+                extra_raw = {c: (1.0 if code == cls["rep"] else 0.0) for c, code in zip(Bv.columns, Bv.codes)}
+            else:
+                extra_raw = {Bv.columns[0]: wv}
+            risks.append(risk_pair(m, raw, A, sa[0], sa[1], None, extra_raw))
+        groups = []
+        for dd, rows, e, (pa, pb), mm in ((d1, g1, e1, risks[0], m1), (d0, g0, e0, risks[1], m0)):
+            groups.append({**dd, "n": int(rows.sum()), "estimate": sig(mm), "odds_ratio": _or(mm),
+                           "range_across_patients": spread(e)["range_across_patients"],
+                           "risk_from": sig(pa), "risk_to": sig(pb),
+                           "part_effect": sig(float(np.mean(m.effect(m.X[rows], A, sa[0], sa[1], scope))))
+                           if rows.any() else None})
         strong, weak = (0, 1) if abs(m1) >= abs(m0) else (1, 0)
-        ms, mw = (m1, m0) if strong == 0 else (m0, m1)
-        ciw = ci0 if strong == 0 else ci1
-        if np.sign(ms) != np.sign(mw) and excludes_zero(ci0) and excludes_zero(ci1):
+        ms, mw = groups[strong]["estimate"] or 0.0, groups[weak]["estimate"] or 0.0
+        ew = e1 if weak == 0 else e0
+        weak_consistent = bool(len(ew)) and spread(ew)["share_opposite_sign"] <= MAX_CONTRADICTING
+        if np.sign(ms) != np.sign(mw) and abs(mw) >= NEGLIGIBLE and weak_consistent:
             pattern = "reversed"
-        elif not excludes_zero(ciw) or abs(mw) < NEGLIGIBLE:
+        elif abs(mw) < NEGLIGIBLE:
             pattern = "only_if"
         else:
             pattern = "amplified"
-        key = f"{A.base}x{Bv.base}"
-        c = _claim(part, "interaction", key, variables=[_var_desc(A), _var_desc(Bv)],
+        dps = [abs((g["risk_to"] or 0) - (g["risk_from"] or 0)) for g in groups]
+        c = _claim(part, "interaction", f"{A.base}x{Bv.base}", variables=[_var_desc(A), _var_desc(Bv)],
                    statement={"variable": A.base, "modifier": Bv.base,
-                              "change": _setting_desc(A, sa[0], sa[1]),
+                              "change": _change_desc(A, sa[0], sa[1], sa[2], sa[3]),
                               "direction": "raises" if ms > 0 else "lowers",
                               "pattern": pattern, "stronger_group": groups[strong],
                               "weaker_group": groups[weak], "strength": strength(ms)})
-        c["estimate"] = estimate_block(d, dci, "difference between the two groups (first minus "
-                                       "second) of the mean change in the model's log-odds when the "
-                                       "main variable changes everywhere; stratified bootstrap",
-                                       resample="patients within each group")
+        c["estimate"] = estimate_block(d, None, "difference between the two groups (first minus second) "
+                                       "of the mean change in the model's log-odds when the main "
+                                       "variable changes everywhere")
+        c["risk"] = {"reference": "typical patient of each group (the typical patient with the "
+                                  "modifier set to the group's value)",
+                     "groups": [{"label": g["label"], "from": g["risk_from"], "to": g["risk_to"]} for g in groups],
+                     "from": None, "to": None,
+                     "delta": sig(dps[strong] - dps[weak]),
+                     "delta_basis": "change in predicted risk in the stronger group minus in the weaker group"}
         c["groups"] = groups
         c["n"] = int(g1.sum() + g0.sum())
         c["evidence"] = {"counterfactual_did_through_part": sig(did_mean),
+                         "did_share_same_sign": sig(did_consistent),
                          "counterfactual_modifier_settings": [str(sb[0]), str(sb[1])],
                          "method_note": "groups are the patients' actual values; the "
                                         "difference-in-differences sets the modifier for every "
@@ -1028,35 +1322,36 @@ def interaction_claims(m: PlainModel, part: Part, total_effect: Dict[str, float]
             if g["n"] < SMALL_N:
                 c["small_n_groups"].append(g["label"])
         c["small_n"] = bool(c["small_n_groups"])
-        c["test_check"] = _test_interaction(m, A, Bv, sa, sb, d)
+        c["test_check"] = _test_interaction(m, A, Bv, sa, sb, d, part)
         checks = {
-            "ci_excludes_zero": (excludes_zero(dci), "the 95% interval of the group difference includes zero"),
-            "large_enough": (abs(d) >= MIN_INTERACTION,
-                             f"the group difference is below {MIN_INTERACTION} log-odds"),
+            "large_enough": (abs(d) >= MIN_INTERACTION, f"the group difference is below {MIN_INTERACTION} log-odds"),
             "mechanism_agrees": (np.sign(d) == np.sign(did_mean),
                                  "the part's own counterfactual difference has the opposite sign"),
+            "consistent_across_patients": (did_consistent >= 1 - MAX_CONTRADICTING,
+                                           f"the part's counterfactual difference has the same sign for only "
+                                           f"{did_consistent:.0%} of affected patients"),
             "both_groups_observed": (g1.sum() > 0 and g0.sum() > 0, "a group has no training patients"),
         }
         out.append(_finish(c, checks))
     return out
 
 
-def _test_interaction(m, A, Bv, sa, sb, d_train):
+def _test_interaction(m, A, Bv, sa, sb, d_train, part):
     if m.Xt is None or Bv.raw_test is None:
-        return None
-    if Bv.is_category():
-        g1 = Bv.raw_test == sb[1]
-        g0 = (Bv.raw_test == sb[0]) if sb[0] is not None else ~g1
-    else:
-        med = float(np.median(Bv.raw_train))
-        g1, g0 = Bv.raw_test > med, Bv.raw_test <= med
+        return {"split": "test", "status": "not available"}
+    g0, g1, *_ = _modifier_groups(Bv, sb, test=True)
     e = m.effect(m.Xt, A, sa[0], sa[1], None)
+    ben = test_benefit(m, Bv, part.input_nodes)
     if g1.sum() == 0 or g0.sum() == 0:
-        return {"split": "test", "n": int(g1.sum() + g0.sum()), "value": None, "consistent": None,
-                "note": "a group has no test patients", "groups_n": [int(g1.sum()), int(g0.sum())]}
-    d, dci = boot_diff(e[g1], e[g0])
-    return {"split": "test", "n": int(g1.sum() + g0.sum()), "groups_n": [int(g1.sum()), int(g0.sum())],
-            "value": sig(d), "ci95": _sig_ci(dci), "consistent": bool(np.sign(d) == np.sign(d_train))}
+        return {**ben, "split": "test", "groups_n": [int(g1.sum()), int(g0.sum())], "difference": None,
+                "same_sign": None, "status": "unclear", "note": "a group has no test patients"}
+    dt, ci = boot_diff(e[g1], e[g0])
+    same = bool(np.sign(dt) == np.sign(d_train))
+    return {**ben, "split": "test", "groups_n": [int(g1.sum()), int(g0.sum())], "difference": sig(dt),
+            "difference_ci95": _sig_list(ci), "same_sign": same,
+            "status": _status(ben, same, ci if same else None),
+            "measure_difference": "group difference of the main variable's effect on test patients, "
+                                  "stratified bootstrap over test patients (seed 42)"}
 
 
 def subgroup_claims(m: PlainModel, part: Part) -> List[Dict[str, Any]]:
@@ -1065,59 +1360,66 @@ def subgroup_claims(m: PlainModel, part: Part) -> List[Dict[str, Any]]:
     c_ = part.contribution
     active = np.abs(c_) > 1e-12
     k, n = int(active.sum()), len(c_)
-    if k == n:
+    if k == n or k == 0:
         return []
-    share, sci = boot_mean(active.astype(float))
     who = describe_group(m, active, part.variables)
-    eff, eci = boot_mean(c_[active]) if k else (float("nan"), [float("nan")] * 2)
-    pos = int(np.sum(m.y[active] == 1)) if k else 0
-    c = _claim(part, "subgroup", "active",
-               variables=[_var_desc(m.var_by_base[b]) for b in part.variables],
+    eff = c_[active]
+    emean = float(eff.mean())
+    sp = spread(eff)
+    pos = int(np.sum(m.y[active] == 1))
+    raw = typical_raw(m, active)
+    z = _z(m, raw)
+    p_on = float(m.risk(m.logit(z))[0])
+    p_off = float(m.risk(m.logit(z, ablate=part.baselines))[0])
+    c = _claim(part, "subgroup", "active", variables=[_var_desc(m.var_by_base[b]) for b in part.variables],
                statement={"n_active": k, "n": n, "share": sig(k / n),
-                          "direction": "raises" if eff > 0 else "lowers",
-                          "strength": strength(eff) if k else None,
+                          "direction": "raises" if emean > 0 else "lowers", "strength": strength(emean),
                           "conditions": [x["group"] for x in who["conditions"]],
                           "outcome_in_group": {"positives": pos, "n": k}})
-    c["estimate"] = {"share": {"value": sig(k / n), "ci95": _sig_ci(sci), "unit": "share of patients",
-                               "bootstrap": {"B": BOOTSTRAP_B, "seed": SEED, "resample": "patients"}},
-                     **estimate_block(eff, eci, "mean contribution of the part to the log-odds among "
+    c["estimate"] = {"share": {"value": sig(k / n), "unit": "share of training patients"},
+                     **estimate_block(emean, eff, "mean contribution of the part to the log-odds among "
                                       "the patients it acts on (the part switched off: exits at 0)")}
+    c["risk"] = risk_block(p_off, p_on, "typical patient this part acts on (risk without the part, then with it)",
+                           typical_values(m, raw))
     c["n"] = n
     c["groups"] = [{"label": "patients the part acts on", "n": k},
                    {"label": "patients it does not act on", "n": n - k}]
-    c["evidence"] = {"who": who, "outcome_rate_in_group": sig(pos / k) if k else None,
+    c["evidence"] = {"who": who, "outcome_rate_in_group": sig(pos / k),
                      "outcome_rate_ci95": _wilson(pos, k), "outcome_rate_overall": sig(float(np.mean(m.y)))}
     if k < SMALL_N:
         c["small_n_groups"].append("patients the part acts on")
     c["small_n"] = bool(c["small_n_groups"])
+    ben = test_benefit(m, None, None, part=part)
+    tc = {**ben, "status": _status(ben)}
     if part.contribution_test is not None:
-        kt = int(np.sum(np.abs(part.contribution_test) > 1e-12))
-        c["test_check"] = {"split": "test", "n": len(part.contribution_test), "n_active": kt,
-                           "share": sig(kt / len(part.contribution_test)),
-                           "consistent": None if kt == 0 else bool(
-                               np.sign(np.mean(part.contribution_test[np.abs(part.contribution_test) > 1e-12]))
-                               == np.sign(eff))}
+        act_t = np.abs(part.contribution_test) > 1e-12
+        tc.update({"n_active": int(act_t.sum()), "share_active": sig(float(act_t.mean()))})
+        if act_t.sum() == 0:
+            tc["status"] = "unclear"
+        elif np.sign(np.mean(part.contribution_test[act_t])) != np.sign(emean):
+            tc["status"] = "disagrees"
+    c["test_check"] = tc
     checks = {"acts_on_someone": (k >= 1, "the part acts on no training patient"),
-              "effect_ci_excludes_zero": (k >= 1 and excludes_zero(eci),
-                                          "the interval of its effect includes zero"),
-              "not_negligible": (k >= 1 and abs(eff) >= NEGLIGIBLE, "its effect is negligible")}
+              "not_negligible": (abs(emean) >= NEGLIGIBLE, "its effect is negligible"),
+              "consistent_across_patients": (sp["share_opposite_sign"] <= MAX_CONTRADICTING,
+                                             "its effect goes both ways across the patients it acts on")}
     return [_finish(c, checks)]
 
 
 def null_claims_model(m: PlainModel, part: Part) -> List[Dict[str, Any]]:
     reach = m.reaching_output()
     out = []
+    Xs = m.X[m.screen_idx]
+    base = m.base_logit[m.screen_idx]
     for v in m.variables:
         nodes = [nd for c in v.columns for nd in m.input_nodes_by_col.get(c, [])]
         if any(nd in reach for nd in nodes):
             continue
-        # numeric confirmation: every column moved to its min and max
         dmax = 0.0
         for c in v.columns:
             for val in (np.min(m.X[:, c]), np.max(m.X[:, c])):
-                dmax = max(dmax, float(np.max(np.abs(m.logit(m.X, {c: val}) - m.base_logit))))
-        c = _claim(part, "null", v.base, variables=[_var_desc(v)],
-                   statement={"variable": v.base, "method": "exact"})
+                dmax = max(dmax, float(np.max(np.abs(m.logit(Xs, {c: val}) - base))))
+        c = _claim(part, "null", v.base, variables=[_var_desc(v)], statement={"variable": v.base, "method": "exact"})
         c["estimate"] = {"value": sig(dmax), "unit": "max |change in log-odds|",
                          "method": "exact Null rule (no path to the output over enabled, non-zero-weight "
                                    "edges), confirmed by moving every column to its minimum and maximum"}
@@ -1132,10 +1434,10 @@ def null_claim_part(m: PlainModel, part: Part) -> List[Dict[str, Any]]:
     c_ = part.contribution
     if c_ is None or float(np.max(np.abs(c_))) >= INERT_CANDIDATE:
         return []
-    p_full = _sigmoid(m.base_logit)
-    p_abl = _sigmoid(m.base_logit - c_)
+    p_full = m.risk(m.base_logit)
+    p_abl = m.risk(m.base_logit - c_)
     dp = float(np.max(np.abs(p_full - p_abl)))
-    dauc = float(default_auc(m.y, p_full) - default_auc(m.y, p_abl))
+    dauc = float(default_auc(m.y, p_full) - default_auc(m.y, p_abl)) if m.risk_scale.kind == "binary" else 0.0
     c = _claim(part, "null", "inert", variables=[_var_desc(m.var_by_base[b]) for b in part.variables],
                statement={"method": "ablation", "max_change_in_risk": sig(dp)})
     c["estimate"] = {"value": sig(dp), "unit": "max |change in predicted risk|",
@@ -1148,23 +1450,87 @@ def null_claim_part(m: PlainModel, part: Part) -> List[Dict[str, Any]]:
     return [_finish(c, checks)]
 
 
+def rule_claims(m: PlainModel, part: Part) -> List[Dict[str, Any]]:
+    """Count rules from the codebook (e.g. MONK-2: how many attributes take their first value).
+
+    For each count k, the share of patients the model predicts positive; the claim is that the
+    model's prediction is a function of the count: every k (with patients) has at least
+    ``RULE_PURITY`` of one prediction. The set of counts predicted positive is reported.
+    """
+    out = []
+    for rule in (m.codebook.get("count_rules") or []):
+        terms = [(m.var_by_base.get(b), str(code)) for b, code in rule["terms"]]
+        if any(v is None for v, _ in terms):
+            continue
+
+        def counts(test=False):
+            k = np.zeros(len(m.yt) if test else len(m.y), dtype=int)
+            for v, code in terms:
+                k += ((v.raw_test if test else v.raw_train) == code).astype(int)
+            return k
+        k = counts()
+        pred = (m.risk(m.base_logit) >= 0.5).astype(int)
+        table, positive, pure = [], [], True
+        for kv in sorted(set(k.tolist())):
+            rows = k == kv
+            share = float(pred[rows].mean())
+            purity = max(share, 1 - share)
+            pure &= purity >= RULE_PURITY
+            if share >= 0.5:
+                positive.append(int(kv))
+            table.append({"count": int(kv), "n": int(rows.sum()), "share_predicted_positive": sig(share),
+                          "share_actually_positive": sig(float(m.y[rows].mean()))})
+        c = _claim(part, "rule", rule["id"], variables=[_var_desc(v) for v, _ in terms],
+                   statement={"rule": rule["name"], "description": rule.get("description"),
+                              "counts_predicted_positive": positive, "positive_label": rule.get("positive_label"),
+                              "count_phrase": rule.get("count_phrase")})
+        c["estimate"] = {"value": sig(min(max(t["share_predicted_positive"], 1 - t["share_predicted_positive"])
+                                          for t in table)), "unit": "lowest purity over counts",
+                         "table": table, "method": "share of training patients predicted positive "
+                                                   "(predicted risk at least 0.5) at each count"}
+        c["n"] = len(k)
+        c["groups"] = [{"label": f"count {t['count']}", "n": t["n"]} for t in table]
+        c["small_n_groups"] = [f"count {t['count']}" for t in table if t["n"] < SMALL_N]
+        c["small_n"] = False   # every count is reported; purity is checked per count
+        pos_rows = np.isin(k, positive)
+        raw_pos, raw_neg = typical_raw(m, pos_rows) if pos_rows.any() else None, typical_raw(m, ~pos_rows) if (~pos_rows).any() else None
+        pp = float(m.risk(m.logit(_z(m, raw_pos)))[0]) if raw_pos is not None else None
+        pn = float(m.risk(m.logit(_z(m, raw_neg)))[0]) if raw_neg is not None else None
+        c["risk"] = risk_block(pn if pn is not None else 0.0, pp if pp is not None else 0.0,
+                               "typical case with a count predicted negative, then positive")
+        status = "not available"
+        if m.Xt is not None:
+            kt = counts(True)
+            pt = (m.risk(m.base_logit_test) >= 0.5).astype(int)
+            agree = float(np.mean(pt == np.isin(kt, positive).astype(int)))
+            status = "agrees" if agree >= RULE_PURITY else "disagrees"
+            c["test_check"] = {"split": "test", "n": int(len(kt)), "share_following_rule": sig(agree), "status": status}
+        else:
+            c["test_check"] = {"split": "test", "status": status}
+        checks = {"pure": (pure, f"at some count fewer than {RULE_PURITY:.0%} of cases get the same prediction"),
+                  "has_positive": (bool(positive) and len(positive) < len(table),
+                                   "the model predicts the same class at every count")}
+        out.append(_finish(c, checks))
+    return out
+
+
 # ============================================================================ the layer
 
-TYPE_ORDER = {t: i for i, t in enumerate(("direction", "magnitude", "interaction", "threshold",
+TYPE_ORDER = {t: i for i, t in enumerate(("rule", "direction", "magnitude", "interaction", "threshold",
                                           "subgroup", "null"))}
 
 
 def _claim_sort_key(c):
-    est = c.get("estimate") or {}
-    v = est.get("value")
-    return (TYPE_ORDER[c["type"]], -abs(v) if isinstance(v, (int, float)) and v is not None else 0.0, c["key"])
+    r = (c.get("risk") or {}).get("delta")
+    est = (c.get("estimate") or {}).get("value")
+    v = r if isinstance(r, (int, float)) else (est if isinstance(est, (int, float)) else 0.0)
+    return (TYPE_ORDER[c["type"]], -abs(v or 0.0), c["key"])
 
 
 def _dedupe_interactions(parts: List[Part], by_part: Dict[str, List[Dict[str, Any]]]) -> None:
-    """An interaction's estimate is measured on the whole model, so a composition and the
-    child that realises it (or two copies of one calculation) report the same claim. Keep it
-    once, in the most specific part (fewest variables, then the more important part), and
-    record the other parts in ``evidence.also_in``."""
+    """An interaction's estimate is measured on the whole model, so a composition and the child
+    that realises it (or two copies of one calculation) report the same claim. Keep it once, in
+    the most specific part, and record the others in ``evidence.also_in``."""
     rank = {p.id: (len(p.variables), p.order) for p in parts}
     seen: Dict[Tuple, Dict[str, Any]] = {}
     for p in sorted(parts, key=lambda p: rank[p.id]):
@@ -1173,8 +1539,7 @@ def _dedupe_interactions(parts: List[Part], by_part: Dict[str, List[Dict[str, An
             if c["type"] != "interaction":
                 keep.append(c)
                 continue
-            sig_key = (c["key"].split(":", 2)[2], c["estimate"]["value"],
-                       tuple(g["n"] for g in c["groups"]))
+            sig_key = (c["key"].split(":", 2)[2], c["estimate"]["value"], tuple(g["n"] for g in c["groups"]))
             if sig_key in seen:
                 seen[sig_key]["evidence"].setdefault("also_in", []).append(p.id)
                 continue
@@ -1190,13 +1555,14 @@ def extract_claims(m: PlainModel) -> Dict[str, Any]:
     total_effect: Dict[str, float] = {}
     by_part: Dict[str, List[Dict[str, Any]]] = {}
     if root is not None:
-        root.variables = [v.base for v in m.variables]   # the whole model reads every variable
+        root.variables = [v.base for v in m.variables]
         dirs = direction_claims(m, root, None)
         for d in dirs:
             b = d["statement"]["variable"]
             if abs(d["estimate"]["value"]) > abs(total_effect.get(b, 0.0)):
                 total_effect[b] = d["estimate"]["value"]
-        by_part[root.id] = dirs + magnitude_claims(m, root, dirs) + null_claims_model(m, root)
+        by_part[root.id] = (rule_claims(m, root) + dirs + magnitude_claims(m, root, dirs)
+                            + null_claims_model(m, root))
     for p in parts:
         if p.is_root:
             continue
@@ -1235,8 +1601,9 @@ def units_record(m: PlainModel) -> Dict[str, Any]:
         rec = {"base": v.base, "label": v.label, "kind": v.kind, "unit": v.unit,
                "columns": [m.feature_names[c] for c in v.columns], "decoded": v.decoded}
         if v.is_category():
-            rec["levels"] = [{"code": code, "column": m.feature_names[c], **_lvl(v, code)}
-                             for c, code in zip(v.columns, v.codes)]
+            counts = v.counts()
+            rec["levels"] = [{"code": code, "label": v.level(code)["label"], "decoded": v.level(code)["decoded"],
+                              "n_train": counts[code]} for code in v.all_codes]
             rec["reference"] = {"code": v.reference, "label": v.level(v.reference)["label"]}
         else:
             x = v.raw_train
@@ -1290,23 +1657,30 @@ def build_layer(m: PlainModel, meta: Dict[str, Any]) -> Dict[str, Any]:
         "split": {**(meta.get("split") or {}), "primary": "train", "check": "test",
                   "train_n": int(m.X.shape[0]), "test_n": int(m.Xt.shape[0]) if m.Xt is not None else 0},
         "outcome": m.codebook.get("outcome"),
+        "population": {"plural": m.codebook.get("patient", "patients"),
+                       "singular": m.codebook.get("patient_one", "patient")},
+        "risk_scale": m.risk_scale.describe(),
         "codebook": {"id": m.codebook.get("id"), "source": m.codebook.get("source"),
-                     "gaps": codebook_gaps(m.codebook, m.feature_names)},
+                     "gaps": codebook_gaps(m.codebook, m.feature_names),
+                     "checks": codebook_checks(m.codebook, m.feature_names, m.raw_train, m.y)},
         "units": units_record(m),
         "reference_patient": reference_patient(m),
         "settings": {"seed": SEED, "bootstrap_B": BOOTSTRAP_B, "small_n": SMALL_N,
-                     "negligible": NEGLIGIBLE, "slight": SLIGHT, "strong": STRONG,
+                     "prob_slight": PROB_SLIGHT, "prob_large": PROB_LARGE,
+                     "confidence_rules": CONFIDENCE_RULES,
                      "min_interaction": MIN_INTERACTION, "min_threshold_effect": MIN_THRESHOLD_EFFECT,
                      "max_opposite_sign_share": MAX_CONTRADICTING,
                      "max_threshold_spread": MAX_THRESHOLD_SPREAD,
                      "max_interactions_per_part": MAX_INTERACTIONS_PER_PART,
-                     "top_magnitudes": TOP_MAGNITUDES, "effect_scale": "the model's log-odds "
-                     "(output pre-activation); odds ratios are exp of it"},
+                     "top_magnitudes": TOP_MAGNITUDES, "screen_rows": SCREEN_ROWS,
+                     "effect_scale": "log-odds (output pre-activation) for verification; predicted "
+                                     "risk for the typical patient for wording"},
         "parts": [_clean(part_record(m, p)) for p in parts],
         "claims": claims,
         "claims_hash": claims_hash(claims),
         "counts": {"claims": len(claims), "verified": sum(1 for c in claims if c["verified"]),
                    "not_supported": sum(1 for c in claims if not c["verified"]),
+                   "clearly": sum(1 for c in claims if c["verified"] and (c.get("confidence") or {}).get("word") == "clearly"),
                    "by_type": {t: [sum(1 for c in claims if c["type"] == t and c["verified"]),
                                    sum(1 for c in claims if c["type"] == t)] for t in CLAIM_TYPES}},
         "drafted": None,
@@ -1355,6 +1729,12 @@ def load_model(genome_id: str, db=None) -> Tuple[PlainModel, Dict[str, Any]]:
         names = list(names or ds.feature_names)
         dsname = ds.name
     cb = find_codebook(dsname, names) or generic_codebook(names)
+    failed = [c for c in codebook_checks(cb, names, raw_tr, y_tr) if not c["passed"]]
+    if failed:   # never decode on a mapping the data contradicts
+        note = ("codebook " + str(cb.get("id")) + " not used: its checks failed ("
+                + "; ".join(c["check"] for c in failed) + ")")
+        cb = generic_codebook(names)
+        cb["gaps"] = cb["gaps"] + [note]
     m = PlainModel(engine.current_state, ops, X_tr, y_tr, X_te, y_te, names, mean, scale, cb,
                    raw_train=raw_tr, raw_test=raw_te)
     return m, meta
