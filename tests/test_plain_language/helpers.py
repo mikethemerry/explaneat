@@ -52,8 +52,8 @@ def structure(kind: str) -> NetworkStructure:
     nodes = [_node("-1_a", NodeType.INPUT, "identity"), _node("-1_b", NodeType.INPUT, "identity"),
              _node("-2", NodeType.INPUT, "identity"), _node("-3", NodeType.INPUT, "identity"),
              _node("-4", NodeType.INPUT, "identity"),
-             _node("5", NodeType.HIDDEN, "relu", -1.0), _node("0", NodeType.OUTPUT, "sigmoid", -0.5)]
-    w_g = {"interaction": 2.0, "tiny": 0.01, "additive": 0.0}[kind]
+             _node("5", NodeType.HIDDEN, "relu", {"mixed": 1.5}.get(kind, -1.0)), _node("0", NodeType.OUTPUT, "sigmoid", -0.5)]
+    w_g = {"interaction": 2.0, "tiny": 0.01, "additive": 0.0, "mixed": 3.0}[kind]
     conns = [NetworkConnection(from_node="-1_a", to_node="5", weight=1.5, enabled=True),
              NetworkConnection(from_node="5", to_node="0", weight=1.0, enabled=True),
              NetworkConnection(from_node="-1_b", to_node="0", weight=0.5, enabled=True)]

@@ -314,7 +314,7 @@ def test_no_claude_in_rendered_output(layer, tmp_path):
     assert not CLAUDE.search(tex)
     assert not CLAUDE.search("\n".join(appendix_section(export_section(lay["label"], tmp_path), "app:x:")))
     assert not CLAUDE.search(json.dumps(lay["template"]))
-    assert "AI-assisted draft" in tex and "What changed since v1" in tex
+    assert "AI-assisted draft" in tex and "What changed in v3" in tex
 
 
 # ------------------------------------------------------------------ drafts and storage
@@ -410,7 +410,7 @@ def test_export_section_validates_in_export_schema(layer, tmp_path):
     lay["label"] = "toy-s0"
     save_layer(lay, tmp_path)
     doc = toy_doc()
-    assert doc["schema_version"] == "1.2.0" and doc["plain_language"] is None
+    assert doc["schema_version"] == "1.3.0" and doc["plain_language"] is None
     doc["plain_language"] = export_section("toy-s0", tmp_path)
     validate(doc)
     tex = render_appendix(doc)
