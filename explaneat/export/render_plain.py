@@ -108,7 +108,7 @@ def risk_text(c: Dict[str, Any]) -> str:
     if r.get("from") is None and r.get("to") is None:
         return ""
     ref = r.get("reference", "typical patient")
-    return f"{_pc(r.get('from'))} to {_pc(r.get('to'))} ({ref})"
+    return f"{_pc(r.get('from'))} to {_pc(r.get('to'))}" + ("" if ref == "typical patient" else f" ({ref})")
 
 
 def n_text(c: Dict[str, Any]) -> str:
@@ -153,7 +153,7 @@ def sentences_tex(sents: List[Dict[str, Any]]) -> str:
     return " ".join(out)
 
 
-TABLE_CHUNK = 22   # tabularx cannot break across pages (and the thesis preamble has no longtable)
+TABLE_CHUNK = 12   # tabularx cannot break across pages (and the thesis preamble has no longtable)
 
 
 def claims_table(claims: List[Dict[str, Any]]) -> List[str]:
@@ -165,8 +165,8 @@ def claims_table(claims: List[Dict[str, Any]]) -> List[str]:
             out += claims_table(claims[i:i + TABLE_CHUNK])
         return out
     L = [r"\par{\tiny\noindent", r"\begin{tabularx}{\linewidth}{@{}l>{\raggedright\arraybackslash}X"
-         r">{\raggedright\arraybackslash}p{0.13\linewidth}>{\raggedright\arraybackslash}p{0.2\linewidth}"
-         r">{\raggedright\arraybackslash}p{0.06\linewidth}>{\raggedright\arraybackslash}p{0.17\linewidth}"
+         r">{\raggedright\arraybackslash}p{0.11\linewidth}>{\raggedright\arraybackslash}p{0.16\linewidth}"
+         r">{\raggedright\arraybackslash}p{0.05\linewidth}>{\raggedright\arraybackslash}p{0.15\linewidth}"
          r"l>{\raggedright\arraybackslash}p{0.08\linewidth}@{}}",
          r"\toprule", r"Claim & What is checked & Risk, typical patient & Estimate (log-odds; OR); range across "
          r"patients & n & Test check & Verified & Words \\", r"\midrule"]
