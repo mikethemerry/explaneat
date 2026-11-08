@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
+from ..analysis.plain_language import CONFIDENCE_RULES
 from .text import printed, tex
 
 VERIFIED_MARK = r"\textcolor{OliveGreen}{yes}"
@@ -58,6 +59,8 @@ def claim_brief(c: Dict[str, Any]) -> str:
         return f"{name}: fold at about {th} ({'starts' if st.get('kind') == 'above' else 'stops'}){grp}"
     if t == "subgroup":
         return f"who this part acts on: {st.get('n_active')} of {st.get('n')} patients"
+    if t == "rule":
+        return f"prediction as a function of the {st.get('rule')}"
     if t == "null":
         if st.get("method") == "exact":
             return f"model ignores {name} (exact rule)"
@@ -65,28 +68,47 @@ def claim_brief(c: Dict[str, Any]) -> str:
     return t
 
 
+def _pc(p) -> str:
+    if p is None:
+        return "?"
+    if p < 0.005:
+        return "<1%"
+    if p > 0.995:
+        return ">99%"
+    return f"{100 * p:.0f}%"
+
+
 def estimate_text(c: Dict[str, Any]) -> str:
+    """Log-odds estimate, odds ratio (evidence only) and the range across patients."""
     e = c.get("estimate") or {}
     t = c["type"]
+    rng = e.get("range_across_patients") or [None, None]
+    rtxt = f"; range across patients {_f(rng[0])} to {_f(rng[1])}" if rng[0] is not None else ""
     if t == "threshold":
         th = e.get("threshold") or {}
-        ci = th.get("ci95") or [None, None]
-        return (f"fold {_f(th.get('value'))} [{_f(ci[0])}, {_f(ci[1])}] {th.get('unit') or ''}; "
-                f"OR past it {_f(e.get('odds_ratio'))} [{_f((e.get('odds_ratio_ci95') or [None])[0])}, "
-                f"{_f((e.get('odds_ratio_ci95') or [None, None])[1])}]")
+        iq = th.get("iqr_across_patients") or [None, None]
+        return (f"fold {_f(th.get('value'))} {th.get('unit') or ''} (IQR {_f(iq[0])} to {_f(iq[1])}); "
+                f"past it log-odds {_f(e.get('value'))}, OR {_f(e.get('odds_ratio'))}{rtxt}")
     if t == "subgroup":
         sh = e.get("share") or {}
-        ci = sh.get("ci95") or [None, None]
-        return (f"share {_f(sh.get('value'))} [{_f(ci[0])}, {_f(ci[1])}]; OR "
-                f"{_f(e.get('odds_ratio'))} [{_f((e.get('odds_ratio_ci95') or [None])[0])}, "
-                f"{_f((e.get('odds_ratio_ci95') or [None, None])[1])}]")
+        return f"share {_f(sh.get('value'))}; log-odds {_f(e.get('value'))}, OR {_f(e.get('odds_ratio'))}{rtxt}"
     if t == "null":
         return f"max change {_f(e.get('value'), 3)} ({e.get('unit', '')})"
-    ci = e.get("ci95") or [None, None]
-    orci = e.get("odds_ratio_ci95") or [None, None]
+    if t == "rule":
+        return "lowest purity " + _f(e.get("value")) + "; " + ", ".join(
+            f"k={r['count']}: {_pc(r['share_predicted_positive'])} yes (n={r['n']})" for r in (e.get("table") or []))
     lab = "log-odds difference" if t == "interaction" else "log-odds"
-    return (f"{lab} {_f(e.get('value'))} [{_f(ci[0])}, {_f(ci[1])}]; OR {_f(e.get('odds_ratio'))} "
-            f"[{_f(orci[0])}, {_f(orci[1])}]")
+    return f"{lab} {_f(e.get('value'))}, OR {_f(e.get('odds_ratio'))}{rtxt}"
+
+
+def risk_text(c: Dict[str, Any]) -> str:
+    r = c.get("risk") or {}
+    if r.get("groups"):
+        return "; ".join(f"{g['label']}: {_pc(g.get('from'))} to {_pc(g.get('to'))}" for g in r["groups"])
+    if r.get("from") is None and r.get("to") is None:
+        return ""
+    ref = r.get("reference", "typical patient")
+    return f"{_pc(r.get('from'))} to {_pc(r.get('to'))} ({ref})"
 
 
 def n_text(c: Dict[str, Any]) -> str:
@@ -98,12 +120,28 @@ def n_text(c: Dict[str, Any]) -> str:
 
 
 def split_text(c: Dict[str, Any]) -> str:
-    tc = c.get("test_check") or None
-    s = "train"
-    if tc:
-        cons = tc.get("consistent")
-        s += "; test " + ("agrees" if cons else ("differs" if cons is False else "n/a")) + f" (n={tc.get('n')})"
+    """Train primary; the test check (status and its bootstrap interval)."""
+    tc = c.get("test_check") or {}
+    if not tc:
+        return "train"
+    st = tc.get("status", "n/a")
+    s = f"train; test {st}"
+    if tc.get("benefit_mean") is not None:
+        ci = tc.get("benefit_ci95") or [None, None]
+        s += f" (AUC gain {_f(tc['benefit_mean'], 3)} [{_f(ci[0], 3)}, {_f(ci[1], 3)}], n={tc.get('n')})"
+    if tc.get("difference") is not None:
+        ci = tc.get("difference_ci95") or [None, None]
+        s += f"; group difference on test {_f(tc['difference'])} [{_f(ci[0])}, {_f(ci[1])}]"
+    if tc.get("share_following_rule") is not None:
+        s += f" ({_pc(tc['share_following_rule'])} of test cases follow the rule)"
     return s
+
+
+def confidence_text(c: Dict[str, Any]) -> str:
+    cf = c.get("confidence") or {}
+    if not cf:
+        return ""
+    return cf.get("word") or ("; ".join(cf.get("qualifiers") or []) or "plain")
 
 
 # ----------------------------------------------------------------------------- sentences
@@ -115,17 +153,28 @@ def sentences_tex(sents: List[Dict[str, Any]]) -> str:
     return " ".join(out)
 
 
+TABLE_CHUNK = 22   # tabularx cannot break across pages (and the thesis preamble has no longtable)
+
+
 def claims_table(claims: List[Dict[str, Any]]) -> List[str]:
     if not claims:
         return [r"\noindent{\small No claims for this part.}"]
-    L = [r"\par{\scriptsize\noindent", r"\begin{tabularx}{\linewidth}{@{}l>{\raggedright\arraybackslash}X"
-         r">{\raggedright\arraybackslash}p{0.28\linewidth}>{\raggedright\arraybackslash}p{0.08\linewidth}"
-         r">{\raggedright\arraybackslash}p{0.11\linewidth}l@{}}",
-         r"\toprule", r"Claim & What is checked & Estimate [95\% CI] & n & Split & Verified \\", r"\midrule"]
+    if len(claims) > TABLE_CHUNK:
+        out: List[str] = []
+        for i in range(0, len(claims), TABLE_CHUNK):
+            out += claims_table(claims[i:i + TABLE_CHUNK])
+        return out
+    L = [r"\par{\tiny\noindent", r"\begin{tabularx}{\linewidth}{@{}l>{\raggedright\arraybackslash}X"
+         r">{\raggedright\arraybackslash}p{0.13\linewidth}>{\raggedright\arraybackslash}p{0.2\linewidth}"
+         r">{\raggedright\arraybackslash}p{0.06\linewidth}>{\raggedright\arraybackslash}p{0.17\linewidth}"
+         r"l>{\raggedright\arraybackslash}p{0.08\linewidth}@{}}",
+         r"\toprule", r"Claim & What is checked & Risk, typical patient & Estimate (log-odds; OR); range across "
+         r"patients & n & Test check & Verified & Words \\", r"\midrule"]
     for c in claims:
         ver = VERIFIED_MARK if c.get("verified") else FAILED_MARK
-        L.append(f"{tex(c['id'])} & {tex(c['type'])}: {tex(claim_brief(c))} & {tex(estimate_text(c))} & "
-                 f"{tex(n_text(c))} & {tex(split_text(c))} & {ver} \\\\")
+        L.append(f"{tex(c['id'])} & {tex(c['type'])}: {tex(claim_brief(c))} & {tex(risk_text(c))} & "
+                 f"{tex(estimate_text(c))} & {tex(n_text(c))} & {tex(split_text(c))} & {ver} & "
+                 f"{tex(confidence_text(c))} \\\\")
     L += [r"\bottomrule", r"\end{tabularx}}"]
     return L
 
@@ -164,8 +213,9 @@ def appendix_section(sec: Dict[str, Any], P: str) -> List[str]:
     L = [r"\subsection{Plain-language summary}\label{" + P + "plain}"]
     L.append(r"\noindent{\small\textit{" + tex(_status(sec)) + ". Each sentence cites the claims "
              r"(C01, C02, \ldots) that back it; every cited claim was computed on the model and the "
-             r"training split and passed its automatic checks. Effects are on the model's odds scale "
-             r"and describe what the model does, not the world.}}\par\smallskip")
+             r"training split and passed its automatic checks. Magnitudes are changes in predicted risk for "
+             r"a typical patient; confidence words follow the test-split check and n. The text describes "
+             r"what the model does, not the world.}}\par\smallskip")
     d = sec.get("drafted") or None
     tmpl = sec.get("template") or {}
     if d:
@@ -179,6 +229,8 @@ def appendix_section(sec: Dict[str, Any], P: str) -> List[str]:
         if not txt:
             continue
         L.append(r"\paragraph{" + tex(p["id"]) + " (" + tex(p["name"]) + ").} " + sentences_tex(txt))
+    if d and d.get("worth_checking"):
+        L.append(r"\paragraph{Worth checking against what is known.} " + sentences_tex(d["worth_checking"]))
     L.append(r"\paragraph{Claims.}")
     L += claims_table(sec.get("claims") or [])
     L.append(r"\paragraph{Not supported by the model.}")
@@ -254,7 +306,22 @@ def genome_block(layer: Dict[str, Any]) -> List[str]:
         L.append(r"\begin{itemize}\setlength\itemsep{0pt}\small")
         L += [r"\item " + tex(g) for g in gaps]
         L.append(r"\end{itemize}")
+    checks = (layer.get("codebook") or {}).get("checks") or []
+    if checks:
+        L.append(r"\noindent{\small Decoding checks against the data: " + tex("; ".join(
+            f"{c['check']}: {'passed' if c['passed'] else 'FAILED'}" for c in checks)) + r".\par}")
     return L
+
+
+CHANGES_V2 = (
+    "Confidence words no longer come from intervals over training patients (a linear term had a zero-width "
+    "interval and was always 'clearly'). They now depend on the change in predicted risk for a typical "
+    "patient, on a test-split check with a bootstrap over test patients, and on n; claims the test split "
+    "does not support are said 'on the training data only'. The spread across patients is reported as a "
+    "range (10th to 90th percentile), and 'verified' means 'holds consistently across patients'. "
+    "Magnitudes lead with the change in predicted risk for a typical patient (per group for interactions); "
+    "odds ratios moved to the evidence table. Categories a part cannot tell apart are grouped ('any other "
+    "...'). The claim numbers changed, so every draft was rewritten.")
 
 
 def render_review(layers: List[Dict[str, Any]], title: str) -> str:
@@ -274,16 +341,80 @@ def render_review(layers: List[Dict[str, Any]], title: str) -> str:
          r"protocol (left) and as produced by the offline template renderer with no language model (right); "
          r"then each part of the explanation with both paragraphs, its claims and their evidence, and the "
          r"original hypothesis next to the proposed revision. Every sentence ends with the claims it rests on. "
-         r"A claim is \emph{verified} when it passed its automatic checks against the model on the training "
-         r"split; claims that failed are never written as statements and are listed under ``Not supported by "
-         r"the model''. Estimates are changes in the model's log-odds (OR = odds ratio, on the model's odds "
-         r"scale); intervals are bootstrap 95\% intervals over training patients (seed 42), so they show how the "
-         r"model's effect varies across the sampled patients, not uncertainty about the model's weights or about "
-         r"the world. Whether each statement is plausible in the real world is for the reviewer to judge.",
+         r"A claim is \emph{verified} when it holds for the model consistently across the training patients; "
+         r"claims that failed are never written as statements and are listed under ``Not supported by the "
+         r"model''. Magnitudes are changes in \emph{predicted risk for a typical patient} (the median of every "
+         r"number and the most common category; for a part that does not act on that patient, the typical "
+         r"patient it acts on). The evidence table also gives the change in the model's log-odds, the odds "
+         r"ratio (OR, evidence only) and the \emph{range across patients} (10th to 90th percentile of "
+         r"per-patient effects; a spread, not a confidence interval). The \emph{test check} asks whether the "
+         r"mechanism helps the model rank test patients (test AUC with minus without its information; paired "
+         r"bootstrap over test patients, seed 42). Confidence words: " + "; ".join(
+             f"``{tex(k)}'' = {tex(v)}" for k, v in CONFIDENCE_RULES.items()) + r". "
+         r"Whether each statement is plausible in the real world is for the reviewer to judge.",
+         r"\par\medskip\noindent\textbf{What changed since v1 (pilot).} " + tex(CHANGES_V2),
          r"\tableofcontents", r"\clearpage"]
     for lay in layers:
         L += [r"\begin{drafted}[plain-language layer: " + tex(lay["label"]) + "]"]
         L += genome_block(lay)
         L += [r"\end{drafted}", r"\clearpage"]
     L.append(r"\end{document}")
+    return printed("\n".join(L)) + "\n"
+
+
+# ----------------------------------------------------------------------------- cross-genome flags
+DATASET_SHORT = {"uci-heart-cleveland": "Heart", "pmlb-adult": "Adult", "pmlb-churn": "Churn", "monk2": "MONK-2"}
+
+
+def worth_checking_rows(directory=None):
+    """(rows, table): every drafted 'worth checking' item, and one row per (dataset, flag) with
+    the genomes that raise it, most frequent first."""
+    import glob
+    import json
+    import os
+    from ..analysis.plain_language_store import PLAIN_DIR
+    rows = []
+    for path in sorted(glob.glob(os.path.join(str(directory or PLAIN_DIR), "*.json"))):
+        with open(path, encoding="utf-8") as f:
+            lay = json.load(f)
+        if not isinstance(lay, dict) or "claims" not in lay:
+            continue
+        ds = DATASET_SHORT.get((lay.get("codebook") or {}).get("id"), (lay.get("dataset") or {}).get("name") or "?")
+        for w in ((lay.get("drafted") or {}).get("worth_checking") or []):
+            rows.append({"dataset": ds, "label": lay["label"], "flag": (w.get("flag") or "").strip(),
+                         "text": w.get("text", ""), "claims": w.get("claims") or []})
+    groups = {}
+    for r in rows:
+        g = groups.setdefault((r["dataset"], r["flag"].lower()), {"dataset": r["dataset"], "flag": r["flag"],
+                                                                   "genomes": [], "example": r["text"], "claims": ""})
+        if r["label"] not in g["genomes"]:
+            g["genomes"].append(r["label"])
+        if not g["claims"]:
+            g["claims"] = f"{r['label']}: {', '.join(r['claims'])}"
+    table = sorted(groups.values(), key=lambda g: (g["dataset"], -len(g["genomes"]), g["flag"].lower()))
+    for g in table:
+        g["n"] = len(g["genomes"])
+    return rows, table
+
+
+def render_worth_checking(table) -> str:
+    from .render_tex import DRAFTED_DEFS, PREAMBLE_PACKAGES
+    L = [r"\documentclass[a4paper,10pt]{article}", r"\usepackage[margin=1.6cm]{geometry}",
+         PREAMBLE_PACKAGES.rstrip(), r"\usepackage{array}", r"\usepackage{longtable}", DRAFTED_DEFS.rstrip(),
+         r"\begin{document}",
+         r"\begin{center}{\Large\bfseries Worth checking: cross-genome flags\par}\vspace{1mm}"
+         r"{\small AI-assisted drafts for review; nothing here has been verified by a person.\par}\end{center}",
+         r"\noindent Each row is a neutral flag raised in the drafted plain-language layers: a verified claim "
+         r"about what the model does that may be surprising in real-world terms. The flags say nothing about the "
+         r"world; whether each is plausible is for the reviewer to judge. Rows are grouped by dataset, most "
+         r"frequent first; an example sentence and its claims come from the first genome listed.",
+         r"\begin{drafted}[cross-genome worth-checking table]",
+         r"{\footnotesize",
+         r"\begin{longtable}{@{}l>{\raggedright\arraybackslash}p{0.2\linewidth}r>{\raggedright\arraybackslash}p{0.2\linewidth}"
+         r">{\raggedright\arraybackslash}p{0.38\linewidth}@{}}",
+         r"\toprule Dataset & Flag & n & Genomes & Example \\ \midrule \endhead"]
+    for g in table:
+        L.append(f"{tex(g['dataset'])} & {tex(g['flag'])} & {g['n']} & {tex(', '.join(g['genomes']))} & "
+                 f"{tex(g['example'])} {{\\scriptsize\\textcolor{{NavyBlue}}{{[{tex(g['claims'])}]}}}} \\\\")
+    L += [r"\bottomrule", r"\end{longtable}}", r"\end{drafted}", r"\end{document}"]
     return printed("\n".join(L)) + "\n"

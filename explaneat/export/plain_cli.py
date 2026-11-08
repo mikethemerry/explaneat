@@ -33,6 +33,13 @@ def genome_for_label(label: str) -> str:
     return explanation_records.load_record(label)["genome_id"]
 
 
+def all_labels():
+    """Every explanation record (sorted) plus the three paper genomes."""
+    from ..analysis import explanation_records
+    recs = sorted(r["label"] for r in explanation_records.list_records())
+    return list(PAPER) + recs
+
+
 @click.group("plain-language")
 def plain_language():
     """Plain-language explanations backed by verified claims."""
@@ -42,12 +49,15 @@ def plain_language():
 @click.option("--genome", "genome_id", default=None)
 @click.option("--label", default=None)
 @click.option("--labels", default=None, help="Comma-separated record labels (or heart-paper etc.).")
+@click.option("--all", "all_", is_flag=True, help="Every explanation record plus the three paper genomes.")
 @click.option("--dir", "directory", default=None, type=click.Path(file_okay=False))
-def extract(genome_id, label, labels, directory):
+def extract(genome_id, label, labels, all_, directory):
     """Compute and verify the claims and render the template text (database read-only)."""
     from ..analysis.plain_language import build_layer, load_model
     from ..analysis.plain_language_store import load_layer, merge_existing, save_layer
     targets = []
+    if all_:
+        labels = ",".join(all_labels())
     if labels:
         targets = [(lab.strip(), genome_for_label(lab.strip())) for lab in labels.split(",") if lab.strip()]
     elif genome_id and label:
@@ -57,15 +67,24 @@ def extract(genome_id, label, labels, directory):
     else:
         raise click.UsageError("give --labels, or --label (with --genome if it has no record)")
     d = Path(directory) if directory else None
+    failures = []
     for lab, gid in targets:
-        m, meta = load_model(gid)
-        meta["label"] = lab
-        layer = merge_existing(build_layer(m, meta), load_layer(lab, d))
+        try:
+            m, meta = load_model(gid)
+            meta["label"] = lab
+            layer = merge_existing(build_layer(m, meta), load_layer(lab, d))
+        except Exception as e:   # keep going in a batch; report at the end
+            failures.append((lab, f"{type(e).__name__}: {e}"))
+            click.echo(f"FAILED {lab}: {type(e).__name__}: {e}", err=True)
+            continue
         p = save_layer(layer, d)
         c = layer["counts"]
         stale = " (draft now STALE)" if (layer.get("drafted") or {}).get("stale") else ""
         click.echo(f"{lab}: {c['claims']} claims, {c['verified']} verified, "
                    f"{c['not_supported']} not supported -> {p}{stale}")
+    for lab, err in failures:
+        click.echo(f"FAILED: {lab}: {err}", err=True)
+    sys.exit(1 if failures else 0)
 
 
 @plain_language.command("show")
@@ -176,3 +195,29 @@ def record_plain_verdict_command(export_group):
             raise click.ClickException(str(e))
         click.echo(f"{label}: plain-language verification = {layer['verification']}")
     return record_plain_verdict
+
+
+@plain_language.command("worth-checking")
+@click.option("--out", "out_dir", required=True, type=click.Path(file_okay=False))
+@click.option("--dir", "directory", default=None, type=click.Path(file_okay=False))
+@click.option("--csv", "csv_path", default=None, type=click.Path(dir_okay=False),
+              help="Also write the table as CSV here (e.g. experiments/10seed/plain_language/worth_checking.csv).")
+def worth_checking(out_dir, directory, csv_path):
+    """Cross-genome table of the drafts' 'worth checking' flags, per dataset (and a PDF)."""
+    from .pack import _latexmk
+    from .render_plain import render_worth_checking, worth_checking_rows
+    rows, table = worth_checking_rows(Path(directory) if directory else None)
+    out = Path(out_dir).expanduser()
+    out.mkdir(parents=True, exist_ok=True)
+    import csv
+    for path in [out / "worth_checking.csv"] + ([Path(csv_path)] if csv_path else []):
+        with open(path, "w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            w.writerow(["dataset", "flag", "n_genomes", "genomes", "example", "claims"])
+            for r in table:
+                w.writerow([r["dataset"], r["flag"], r["n"], " ".join(r["genomes"]), r["example"], r["claims"]])
+    tex_path = out / "worth_checking.tex"
+    tex_path.write_text(render_worth_checking(table), encoding="utf-8")
+    res = _latexmk(tex_path, out / "build", click.echo)
+    click.echo(f"{len(rows)} flags, {len(table)} distinct; table: {out / 'worth_checking.csv'}"
+               + (f", {out / 'worth_checking.pdf'}" if res["ok"] else " (PDF failed)"))
