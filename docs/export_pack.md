@@ -136,6 +136,91 @@ timeout).
 - Times: each annotation's `created_at` (from its operation) is the drafting time; the
   record's `start`/`end` bracket the agent session.
 
-## 2. Schema
+## 2. Schema (v1)
 
-See §4 (written after the data model above).
+JSON Schema: `explaneat/export/schema/explanation-v1.schema.json` (draft 2020-12).
+`schema_version` is `1.0.0`. Top level:
+
+| Key | Contents |
+|---|---|
+| `label` | e.g. `heart-paper`, `adult-s3`; LaTeX labels use `app:<label>:` |
+| `provenance` | experiment (id, name, seed, training commit), dataset, split, genome (id, NEAT key, generation, fitness), explanation (id, timestamps, n operations), study (`10seed` set/position or `aaai-paper`), record file, tool (version, git commit, dirty), export timestamp, content hash |
+| `conventions` | float format, coverage conventions (incl. output nodes excluded), evidence-kind mapping, closed-form error flag |
+| `model` | task, output activation (`StructureNetwork.model_output_activation`), train/test AUC and accuracy at 0.5 |
+| `phenotype`, `model_state` | nodes (type, activation, bias, display name), edges (weight, enabled, innovation), counts |
+| `operations` | counts by type, and every refactoring operation (params, result, notes, time, function-preserving flag) |
+| `function_preservation` | max abs output change over every training row (check_explanation.py), tolerance 1e-9, non-preserving op types |
+| `annotations[]` | id, name, kind (leaf/composition), parent, children, depth; subgraph (entry, exit, internal nodes, edges with weights, composition's union with descendants, function entries); covered nodes; hypothesis; closed form (LaTeX, collapsed LaTeX, SymPy strings and exact `srepr`, closed-form and numeric error on train); evidence items (type, kind analytical/empirical, method, result = narrative + scrubbed payload, data split + how it was found, thresholds, time); authorship (drafted by/at, verified by/at) |
+| `hierarchy` | roots, global root, max depth, tree |
+| `coverage` | `report` = `coverage_report()` verbatim (what `get_coverage` returns); `summary`; `null` (nodes with category `disconnected_input`/`dead_end` and reason, edges `zero_weight`/`touches_null_node`, exempt annotations); uncovered nodes, uncovered edges, missing compositions; `matches_get_coverage` |
+| `authorship` | drafter (`ai_agent` / `human` / `unknown`), protocol version, session, human verification (`mike_verification`), automated verification (`verified_by_orchestrator`) |
+| `record` | the explanation record file verbatim, or null |
+| `issues[]` | audit against Ch 5 (code, severity, annotation, message) |
+
+## 3. Conventions
+
+- **Canonical JSON:** sorted keys, indent 1, UTF-8, trailing newline. Floats use Python's
+  shortest round-trip `repr`. Values read from the DB are stored unchanged; values the export
+  computes (errors, performance) are rounded to 6 significant figures first. NaN/inf become
+  null.
+- **Content hash:** SHA-256 of the canonical JSON without `provenance.export_timestamp`,
+  `provenance.content_hash` and `provenance.tool`. Exporting twice gives byte-identical JSON
+  apart from the timestamp, and the same hash (tested).
+- **Coverage:** the current `coverage_report` (output nodes excluded from the candidate set;
+  exact Null parts covered and listed). The collector checks its numbers against `get_coverage`
+  for every export (`coverage.matches_get_coverage`).
+- **Evidence kind:** `analytical_formula`, `sign_analysis`, `exhaustive_enumeration` are
+  analytical; the other known record types are empirical. The data split is taken from
+  `payload.split` (`explicit`), else inferred from payload key names (`train_auc`, ...) or the
+  narrative ("on the test split"), and the inference is recorded.
+- **No data rows:** evidence payload lists longer than 50 items (or tables longer than 20
+  rows) are replaced by their length and SHA-256; raw-data keys are dropped.
+- **Authorship in print:** the JSON keeps the true drafter (`"claude"`). Printed outputs
+  (LaTeX, PDF, DOCX) never print that name: the drafter is "AI-assisted draft", the verifier
+  "M. Merry" or "unverified" (tested).
+
+## 4. Formats
+
+All non-JSON formats are rendered from the JSON alone (`explaneat export render --from`);
+text formats are byte-identical on re-render (tested).
+
+- **LaTeX** (`<label>.tex`): a `\section` appendix for the thesis (`uathesis`), using only
+  packages its preamble loads (amsmath, amssymb, booktabs, tabularx, graphicx, xcolor with
+  dvipsnames, hyperref via the class, cleveref, TikZ with arrows.meta, fit, backgrounds,
+  positioning, calc). Summary table, coverage, hierarchy, figures, operations, one block per
+  annotation, audit. `--review-marks` (default) wraps it in the thesis's `drafted`
+  environment. Closed forms are printed from the exact `srepr` (`explaneat/export/mathfmt.py`):
+  child annotations as named functions, sigmoid outputs as `\sigma(z)` with the logit `z`
+  broken across `align*` lines.
+- **TikZ** (`<label>-fig-full.tex`, `-fig-level-<k>.tex`): plain TikZ; deterministic layered
+  layout; full view and one collapsed view per hierarchy level; scaled to at most `\linewidth`
+  and `0.75\textheight`. Pre-registered threshold: more than 60 non-Null nodes, the appendix
+  shows the collapsed views (the full view file is still written).
+- **PDF:** `latexmk -pdf` of standalone wrappers (`<label>-standalone.tex`, one per figure);
+  build files under `build/`.
+- **DOCX:** python-docx (optional extra `export`), figures as PNG from the TikZ PDFs
+  (`pdftoppm`). Formats a machine cannot produce are reported as `unavailable: install ...`
+  per format; JSON and TeX/TikZ always work. `explaneat doctor` reports export capability.
+
+## 5. Commands
+
+```bash
+uv run python -m explaneat export --genome <id> --formats json,tex,tikz,pdf,docx --out <dir>
+uv run python -m explaneat export --experiment <id> --genome <id> --out <dir>
+uv run python -m explaneat export --explanation <id> --out <dir>
+uv run python -m explaneat export --experiment <id> --out <dir>        # all explained genomes
+uv run python -m explaneat export --study 10seed|paper|thesis --out <dir>
+uv run python -m explaneat export render --from <dir>/<label>/<label>.json   # no database
+uv run python -m explaneat export verification-pack --first 10 --out <dir>   # PRE order + review.pdf
+uv run python -m explaneat export record-verdict <label> --verified --minutes N --changes "..."
+```
+
+Batches write `index.json` and `index.tex` (`\input`s every appendix; it sets
+`\explaneatcertdir` so the TikZ modules resolve from the subdirectories).
+
+API: `POST /api/genomes/{id}/export`, `POST /api/experiments/{id}/export` (background jobs),
+`GET /api/exports/jobs/{job}`, `GET /api/exports/capabilities`,
+`GET /api/exports/{export_id}/{file}`. Output under `$EXPLANEAT_HOME/exports/<genome>/<hash>/`.
+The UI has an Export tab in the Tools drawer, an Export button on Review rows and on
+experiments. The API and CLI use the MCP helpers, so a restricted dataset is refused unless
+`EXPLANEAT_ALLOW_ASSISTED_RESTRICTED=1`.
