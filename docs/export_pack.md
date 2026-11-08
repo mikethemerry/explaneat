@@ -139,7 +139,8 @@ timeout).
 ## 2. Schema (v1)
 
 JSON Schema: `explaneat/export/schema/explanation-v1.schema.json` (draft 2020-12).
-`schema_version` is `1.0.0`. Top level:
+`schema_version` is `1.1.0` (1.1 added the optional `plain_language` section, §6; 1.0
+documents still validate). Top level:
 
 | Key | Contents |
 |---|---|
@@ -156,6 +157,7 @@ JSON Schema: `explaneat/export/schema/explanation-v1.schema.json` (draft 2020-12
 | `authorship` | drafter (`ai_agent` / `human` / `unknown`), protocol version, session, human verification (`mike_verification`), automated verification (`verified_by_orchestrator`) |
 | `record` | the explanation record file verbatim, or null |
 | `issues[]` | audit against Ch 5 (code, severity, annotation, message) |
+| `plain_language` | (1.1, optional) the plain-language layer from `experiments/10seed/plain_language/<label>.json`, or null: claims with evidence and verification, template text, drafted prose and its verification, proposed hypothesis revisions (§6) |
 
 ## 3. Conventions
 
@@ -224,3 +226,39 @@ API: `POST /api/genomes/{id}/export`, `POST /api/experiments/{id}/export` (backg
 The UI has an Export tab in the Tools drawer, an Export button on Review rows and on
 experiments. The API and CLI use the MCP helpers, so a restricted dataset is refused unless
 `EXPLANEAT_ALLOW_ASSISTED_RESTRICTED=1`.
+
+## 6. Plain-language layer (schema 1.1)
+
+Plain, real-world sentences about an explained genome ("the model treats higher cholesterol as
+raising the risk, and even more so if ..."), each backed by claims computed and checked on the
+model. Code: `explaneat/analysis/plain_language.py` (claims), `plain_language_codebooks.py`
+(real-world names, units, category codes), `plain_language_templates.py` (offline sentences, no
+language model), `plain_language_store.py` (files, draft lint, verdicts); printed forms in
+`explaneat/export/render_plain.py`. Writing protocol: `.claude/skills/plain-language-explanations/SKILL.md`.
+
+- **Claims** (derived from each annotation, "part"): `direction`, `threshold`, `interaction`,
+  `magnitude` (at a stated reference patient), `subgroup`, `null` (exact Null rule, or
+  ablation). Each has an estimate on the model's log-odds with a bootstrap 95% interval over
+  training patients (seed 42, fresh per claim), n per group with small-n flags (n < 20), the
+  split (train primary; test as a sign check), the annotation id, `verified` and the reasons.
+- **Units:** z-scores are converted back with the split's StandardScaler `scaler_params`; the
+  round trip against the stored raw data is recorded. One-hot codes are decoded with a
+  documented codebook (UCI Heart: `heart-disease.names`); undocumented codes are listed as gaps
+  (Heart: `thal:4`, the mean-filled `ca` value), never guessed.
+- **Rendering rule:** claims with `verified: false` never become sentences; they are listed as
+  "not supported by the model".
+- **Files:** `experiments/10seed/plain_language/<label>.json` holds the claims, the template
+  text, the draft (`drafted_by: "ai-assisted"`, `verified_by: null`) and proposed hypothesis
+  revisions. The database and the original hypotheses are never written. Re-extracting with
+  changed claims marks a draft `stale`.
+- **Export:** `collect` copies the layer into `plain_language`; the LaTeX/PDF and DOCX appendix
+  print a "Plain-language summary" subsection with claim references and the claim table.
+
+```bash
+uv run python -m explaneat plain-language extract --labels heart-paper,heart-s5   # DB read-only
+uv run python -m explaneat plain-language show heart-s5
+uv run python -m explaneat plain-language lint heart-s5 --from draft.json
+uv run python -m explaneat plain-language draft heart-s5 --from draft.json
+uv run python -m explaneat plain-language review --labels heart-paper,heart-s5 --out <dir>
+uv run python -m explaneat export record-plain-verdict heart-s5 --verified --minutes N --notes "..."
+```

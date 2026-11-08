@@ -489,6 +489,10 @@ def render_appendix(doc, review_marks: bool = True) -> str:
     if rec.get("resisted"):
         L.append(r"\paragraph{What resisted explanation.} " + tex(rec["resisted"]))
         L.append("")
+    if doc.get("plain_language"):   # schema 1.1
+        from .render_plain import appendix_section
+        L.extend(appendix_section(doc["plain_language"], P))
+        L.append("")
     L.extend(_coverage_section(doc, P))
     L.append("")
     L.append(r"\subsection{Annotation hierarchy}\label{" + P + "hierarchy}")

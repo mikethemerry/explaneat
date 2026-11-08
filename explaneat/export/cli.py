@@ -255,3 +255,8 @@ def record_verdict(label, verified, minutes, changes, notes, records_dir):
     rec = write_verification(label, verified, minutes=minutes, changes=changes, notes=notes,
                              directory=Path(records_dir) if records_dir else None)
     click.echo(f"{label}: mike_verification = {rec['mike_verification']}")
+
+
+# Sibling command for the plain-language layer: export record-plain-verdict
+from .plain_cli import record_plain_verdict_command  # noqa: E402
+record_plain_verdict_command(export)

@@ -512,6 +512,14 @@ def collect(genome_id: str, *, label: Optional[str] = None, study: Optional[Dict
     return seal(doc)
 
 
+def _plain_language_section(label: str, directory: Optional[Path]) -> Optional[Dict[str, Any]]:
+    from ..analysis.plain_language_store import export_section
+    try:
+        return export_section(label, directory)
+    except ValueError:  # a label that cannot name a file
+        return None
+
+
 def default_label(meta) -> str:
     import re
     name = (meta["dataset"] or {}).get("name") or meta["experiment"]["name"] or "genome"
@@ -523,7 +531,8 @@ def build_document(engine, ops: List[Dict[str, Any]], meta: Dict[str, Any], *,
                    record: Optional[Dict[str, Any]], label: str,
                    study: Optional[Dict[str, Any]] = None,
                    X_train=None, y_train=None, X_test=None, y_test=None,
-                   num_classes: Optional[int] = None, now: Optional[str] = None) -> Dict[str, Any]:
+                   num_classes: Optional[int] = None, now: Optional[str] = None,
+                   plain_language_dir: Optional[Path] = None) -> Dict[str, Any]:
     """The export document from an engine and its operations (no DB access).
 
     Split out of :func:`collect` so tests can build documents from synthetic engines.
@@ -779,6 +788,8 @@ def build_document(engine, ops: List[Dict[str, Any]], meta: Dict[str, Any], *,
         "coverage": cov,
         "authorship": authorship,
         "record": record,
+        # schema 1.1: the plain-language layer, if one has been extracted for this label
+        "plain_language": _plain_language_section(label, plain_language_dir),
     }
     doc["issues"] = audit(doc)
     return doc

@@ -19,6 +19,10 @@ cli.add_command(database, name='db')
 from .export.cli import export as _export  # noqa: E402
 cli.add_command(_export, name='export')
 
+# Plain-language layer (explaneat/export/plain_cli.py)
+from .export.plain_cli import plain_language as _plain_language  # noqa: E402
+cli.add_command(_plain_language, name='plain-language')
+
 
 @cli.command()
 @click.option("--host", default="127.0.0.1", show_default=True)
