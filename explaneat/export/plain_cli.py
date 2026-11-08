@@ -221,3 +221,23 @@ def worth_checking(out_dir, directory, csv_path):
     res = _latexmk(tex_path, out / "build", click.echo)
     click.echo(f"{len(rows)} flags, {len(table)} distinct; table: {out / 'worth_checking.csv'}"
                + (f", {out / 'worth_checking.pdf'}" if res["ok"] else " (PDF failed)"))
+
+
+@plain_language.command("rerender")
+@click.option("--labels", default=None)
+@click.option("--all", "all_", is_flag=True)
+@click.option("--dir", "directory", default=None, type=click.Path(file_okay=False))
+def rerender(labels, all_, directory):
+    """Re-render the template text of stored layers (claims and drafts untouched; no database)."""
+    from ..analysis.plain_language_store import load_layer, save_layer
+    from ..analysis.plain_language_templates import render_template
+    labs = all_labels() if all_ else [x.strip() for x in (labels or "").split(",") if x.strip()]
+    d = Path(directory) if directory else None
+    for lab in labs:
+        lay = load_layer(lab, d)
+        if lay is None:
+            click.echo(f"{lab}: no layer", err=True)
+            continue
+        lay["template"] = render_template(lay)
+        save_layer(lay, d)
+        click.echo(f"{lab}: template re-rendered")

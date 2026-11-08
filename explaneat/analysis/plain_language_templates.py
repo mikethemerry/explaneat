@@ -129,26 +129,42 @@ def direction_sentence(layer, c, part_scope: bool) -> Dict[str, Any]:
 
 
 def interaction_sentence(layer, c) -> Dict[str, Any]:
+    """'X raises the predicted risk, and even more so if Y: for a typical patient …'.
+
+    The direction and the stronger group are read from the typical patient's risk changes,
+    which lead the sentence. When those disagree with the claim's average log-odds statement
+    (risk saturates near 0% or 100%), the sentence only gives the before-and-after risk in
+    each group, without a direction word or "even more so"."""
     st, v = c["statement"], c["variables"][0]
     ch = st["change"]
     sg, wg = st["stronger_group"], st["weaker_group"]
     one = _pop(layer, True)
+    dsg = (sg.get("risk_to") or 0) - (sg.get("risk_from") or 0)
+    dwg = (wg.get("risk_to") or 0) - (wg.get("risk_from") or 0)
+    stated = 1 if st["direction"] == "raises" else -1
+    consistent = abs(dsg) >= abs(dwg) and dsg * stated > 0
     if v["kind"] == "category":
-        subj = f"the model gives a {_adv(c)}{'higher' if st['direction'] == 'raises' else 'lower'} {_pred_noun(layer)} if {ch['to']['cond']} than if {ch['from']['cond']}"
         tail_v = f"going from {ch['from']['label']} to {ch['to']['label']}"
     else:
-        subj = f"a higher {_name(v)} {_adv(c)}{st['direction']} {_pred(layer)}"
         tail_v = f"{_name(v)} going from {ch['from']['text']} to {ch['to']['text']}"
+    numbers = (f"for a typical {one}, {tail_v} moves {_pred(layer)} from {_about(sg.get('risk_from'))} to "
+               f"{_about(sg.get('risk_to'))} if {sg['cond']}, and from {_about(wg.get('risk_from'))} to "
+               f"{_about(wg.get('risk_to'))} if {wg['cond']}")
+    if not consistent:
+        text = ("this changes the prediction only slightly: " if _conf(c).get("size") == "slight" else "") + numbers
+        return _s(text + _tail(c) + "." + _little(layer, c), [c["id"]])
+    if v["kind"] == "category":
+        subj = (f"the model gives a {_adv(c)}{'higher' if stated > 0 else 'lower'} {_pred_noun(layer)} "
+                f"if {ch['to']['cond']} than if {ch['from']['cond']}")
+    else:
+        subj = f"a higher {_name(v)} {_adv(c)}{st['direction']} {_pred(layer)}"
     if st["pattern"] == "only_if":
         head = f"{subj}, but only if {sg['cond']}"
-    elif st["pattern"] == "reversed":
+    elif st["pattern"] == "reversed" and dwg * stated < 0:
         head = f"{subj} if {sg['cond']}, but the other way if {wg['cond']}"
     else:
         head = f"{subj}, and even more so if {sg['cond']}"
-    text = (f"{head}: for a typical {one}, {tail_v} moves it from {_about(sg.get('risk_from'))} to "
-            f"{_about(sg.get('risk_to'))} if {sg['cond']}, and from {_about(wg.get('risk_from'))} to "
-            f"{_about(wg.get('risk_to'))} if {wg['cond']}")
-    return _s(text + _tail(c) + "." + _little(layer, c), [c["id"]])
+    return _s(f"{head}: {numbers}" + _tail(c) + "." + _little(layer, c), [c["id"]])
 
 
 def threshold_sentence(layer, c) -> Dict[str, Any]:
@@ -196,7 +212,7 @@ def rule_sentence(layer, c) -> Dict[str, Any]:
              5: "exactly five", 6: "all six"}
     which = " or ".join(words.get(k, str(k)) for k in ks)
     tab = c["estimate"].get("table") or []
-    lo = min((min(t["share_predicted_positive"], 1 - t["share_predicted_positive"]) for t in tab), default=0)
+    lo = max((min(t["share_predicted_positive"], 1 - t["share_predicted_positive"]) for t in tab), default=0)  # worst count
     same = "all" if lo <= 0 else f"at least {100 * (1 - lo):.0f}%"
     text = (f"the model {_adv(c)}predicts {st.get('positive_label') or 'yes'} when {which} of the "
             f"{st.get('count_phrase') or 'listed conditions hold'}, and otherwise not "
