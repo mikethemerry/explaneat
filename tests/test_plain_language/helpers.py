@@ -22,8 +22,9 @@ FEATURES = ["dose", "grp:0", "grp:1", "noise"]
 CODEBOOK = {
     "id": "test-codebook",
     "source": "synthetic test data",
-    "outcome": {"positive": "the event", "short": "the event", "risk": "the risk of the event"},
-    "patient": "patients",
+    "outcome": {"positive": "the event", "short": "the event", "risk": "the risk of the event",
+                "predicted": "the predicted risk of the event"},
+    "patient": "patients", "patient_one": "patient",
     "gaps": [],
     "variables": {
         "dose": {"label": "dose", "unit": "mg", "decimals": 1, "kind": "continuous"},
@@ -102,3 +103,76 @@ def model(kind: str = "interaction", n=300):
 META = {"label": "synthetic", "genome_id": "00000000-0000-0000-0000-00000000000a",
         "explanation_id": "x", "dataset": {"id": "d", "name": "synthetic"},
         "split": {"id": "s", "scaler_type": "StandardScaler"}}
+
+
+# ---------------------------------------------------------------- a known logistic model
+LIN_W, LIN_B = 1.2, 0.3          # logit = LIN_B + LIN_W * z(dose) - 0.8 * z(grp:1)
+
+
+def linear_model(n=400):
+    """A plain logistic model (no hidden node): its effects are known in closed form."""
+    from explaneat.analysis.plain_language import PlainModel
+    from explaneat.analysis.explanation_tools import StateEvaluator
+    nodes = [_node("-1", NodeType.INPUT, "identity"), _node("-2", NodeType.INPUT, "identity"),
+             _node("-3", NodeType.INPUT, "identity"), _node("-4", NodeType.INPUT, "identity"),
+             _node("0", NodeType.OUTPUT, "sigmoid", LIN_B)]
+    conns = [NetworkConnection(from_node="-1", to_node="0", weight=LIN_W, enabled=True),
+             NetworkConnection(from_node="-3", to_node="0", weight=-0.8, enabled=True)]
+    s = NetworkStructure(nodes=nodes, connections=conns, input_node_ids=["-1", "-2", "-3", "-4"],
+                         output_node_ids=["0"])
+    ops = [{"seq": 1, "type": "annotate", "result": None, "created_at": "2026-11-08T10:00:00",
+            "params": {"name": "root", "hypothesis": "Logistic.", "entry_nodes": ["-1", "-2", "-3", "-4"],
+                       "exit_nodes": ["0"], "subgraph_nodes": ["-1", "-2", "-3", "-4", "0"],
+                       "subgraph_connections": [["-1", "0"], ["-3", "0"]]}}]
+    raw, raw_t = raw_data(n, 0), raw_data(150, 1)
+    mean, scale = raw.mean(axis=0), raw.std(axis=0)
+    X, Xt = (raw - mean) / scale, (raw_t - mean) / scale
+    ev = StateEvaluator(s)
+    rng = np.random.RandomState(7)
+    y = (rng.uniform(size=n) < 1 / (1 + np.exp(-ev.logit(X)))).astype(float)
+    yt = (rng.uniform(size=len(Xt)) < 1 / (1 + np.exp(-ev.logit(Xt)))).astype(float)
+    return PlainModel(s, ops, X, y, Xt, yt, FEATURES, mean, scale, CODEBOOK, raw_train=raw, raw_test=raw_t)
+
+
+# ---------------------------------------------------------------- a count rule (MONK-like)
+def rule_model(threshold_logit=8.0):
+    """Two binary attributes; the model predicts positive iff exactly one is at its first value."""
+    import itertools as it
+    from explaneat.analysis.plain_language import PlainModel
+    feats = ["a1:1", "a1:2", "a2:1", "a2:2"]
+    rows = []
+    for _ in range(30):
+        for a1, a2 in it.product((1, 2), (1, 2)):
+            rows.append([a1 == 1, a1 == 2, a2 == 1, a2 == 2])
+    raw = np.array(rows, dtype=float)
+    mean, scale = raw.mean(axis=0), raw.std(axis=0)
+    X = (raw - mean) / scale
+    # h = relu(z(a1:1) + z(a2:1) - 1.5) fires when both are 1 (h = 0.5); logit = k/2 + k*(z1 + z2) - 6k*h:
+    # one at its first value: k/2 > 0; none: -1.5k; both: -0.5k
+    nodes = [_node("-1", NodeType.INPUT, "identity"), _node("-2", NodeType.INPUT, "identity"),
+             _node("-3", NodeType.INPUT, "identity"), _node("-4", NodeType.INPUT, "identity"),
+             _node("5", NodeType.HIDDEN, "relu", -1.5), _node("0", NodeType.OUTPUT, "sigmoid", threshold_logit / 2)]
+    k = threshold_logit
+    conns = [NetworkConnection(from_node="-1", to_node="5", weight=1.0, enabled=True),
+             NetworkConnection(from_node="-3", to_node="5", weight=1.0, enabled=True),
+             NetworkConnection(from_node="5", to_node="0", weight=-6 * k, enabled=True),
+             NetworkConnection(from_node="-1", to_node="0", weight=k, enabled=True),
+             NetworkConnection(from_node="-3", to_node="0", weight=k, enabled=True)]
+    s = NetworkStructure(nodes=nodes, connections=conns, input_node_ids=["-1", "-2", "-3", "-4"],
+                         output_node_ids=["0"])
+    ops = [{"seq": 1, "type": "annotate", "result": None, "created_at": "2026-11-08T10:00:00",
+            "params": {"name": "root", "hypothesis": "Rule.", "entry_nodes": ["-1", "-2", "-3", "-4"],
+                       "exit_nodes": ["0"], "subgraph_nodes": ["-1", "-2", "-3", "-4", "5", "0"],
+                       "subgraph_connections": [["-1", "5"], ["-3", "5"], ["5", "0"], ["-1", "0"], ["-3", "0"]]}}]
+    cb = {"id": "rule-test", "source": "synthetic", "gaps": [],
+          "outcome": {"short": "'yes'", "risk": "the chance of 'yes'", "predicted": "the predicted probability of 'yes'"},
+          "patient": "cases", "patient_one": "case",
+          "count_rules": [{"id": "first", "name": "number of attributes at their first value",
+                           "terms": [["a1", "1"], ["a2", "1"]], "positive_label": "'yes'",
+                           "count_phrase": "attributes take their first value"}],
+          "variables": {a: {"label": f"attribute {a}", "kind": "category",
+                             "levels": {str(v): {"label": f"{a} = {v}", "group": f"cases with {a} = {v}",
+                                                  "cond": f"{a} = {v}"} for v in (1, 2)}} for a in ("a1", "a2")}}
+    from explaneat.analysis.explanation_tools import StateEvaluator
+    y = (StateEvaluator(s).logit(X) > 0).astype(float)
+    return PlainModel(s, ops, X, y, X, y, feats, mean, scale, cb, raw_train=raw, raw_test=raw)
