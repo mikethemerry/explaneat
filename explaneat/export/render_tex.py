@@ -291,22 +291,20 @@ def _annotation_block(doc, a, tags, P) -> List[str]:
 
 
 def _hierarchy_list(doc, tags, P) -> List[str]:
+    """The tree as indented lines (no nested lists: hierarchies can be deeper than LaTeX's
+    four list levels)."""
     by = {a["name"]: a for a in doc["annotations"]}
-    L = []
+    L = [r"\begingroup\parindent=0pt\parskip=1pt"]
 
     def walk(t, depth):
         a = by[t["name"]]
-        L.append("  " * depth + f"\\item {tags[a['name']]}: {tex(a['display_name'] or a['name'])} "
-                 f"({a['kind']}, \\cref{{{P}ann-{label_key(a['name'])}}})")
-        if t["children"]:
-            L.append("  " * depth + r"\begin{itemize}")
-            for c in t["children"]:
-                walk(c, depth + 1)
-            L.append("  " * depth + r"\end{itemize}")
-    L.append(r"\begin{itemize}")
+        L.append(f"\\hspace*{{{1.5 * depth:.1f}em}}$\\triangleright$~{tags[a['name']]}: "
+                 f"{tex(a['display_name'] or a['name'])} ({a['kind']}, \\cref{{{P}ann-{label_key(a['name'])}}})\\par")
+        for c in t["children"]:
+            walk(c, depth + 1)
     for t in doc["hierarchy"]["tree"]:
-        walk(t, 1)
-    L.append(r"\end{itemize}")
+        walk(t, 0)
+    L.append(r"\endgroup")
     return L
 
 
@@ -541,7 +539,7 @@ def render_standalone(doc, review_marks: bool = True) -> str:
         r"\documentclass[a4paper,11pt]{article}",
         r"\usepackage[margin=2.2cm]{geometry}",
         PREAMBLE_PACKAGES.rstrip(),
-        r"\usepackage[unicode=true]{hyperref}",
+        r"\usepackage[unicode=true,hidelinks]{hyperref}",
         r"\usepackage{cleveref}",
         DRAFTED_DEFS.rstrip(),
         ("" if review_marks else r"\reviewmarksfalse"),

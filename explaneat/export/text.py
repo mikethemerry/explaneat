@@ -79,7 +79,18 @@ def tex(s: Any) -> str:
     """Escape arbitrary printed text for LaTeX text mode (after :func:`printed`)."""
     s = printed("" if s is None else str(s))
     out = []
-    for ch in s:
+    long_token = False
+    for i, ch in enumerate(s):
+        if ch.isspace():
+            long_token = False
+        elif i == 0 or s[i - 1].isspace():
+            j = i
+            while j < len(s) and not s[j].isspace():
+                j += 1
+            long_token = j - i > 20   # inline formulas in prose: allow breaks inside them
+        if long_token and ch in ",;=+*/)]":
+            out.append((_TEX_SPECIAL.get(ch, ch)) + r"\allowbreak{}")
+            continue
         if ch in _TEX_SPECIAL:
             out.append(_TEX_SPECIAL[ch])
         elif ord(ch) < 128:

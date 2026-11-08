@@ -306,7 +306,7 @@ def render_review(docs: List[Dict[str, Any]], title: str, review_marks: bool = T
          r"\documentclass[a4paper,11pt]{article}",
          r"\usepackage[margin=2.2cm]{geometry}",
          render_tex.PREAMBLE_PACKAGES.rstrip(),
-         r"\usepackage[unicode=true]{hyperref}",
+         r"\usepackage[unicode=true,hidelinks]{hyperref}", r"\setcounter{tocdepth}{1}",
          r"\usepackage{cleveref}",
          render_tex.DRAFTED_DEFS.rstrip(),
          "" if review_marks else r"\reviewmarksfalse",
