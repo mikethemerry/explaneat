@@ -29,23 +29,49 @@ def coverage_report(model_state, annotations_data) -> Dict[str, Any]:
         for c in model_state.connections
         if c.enabled
     }
+    # Null (exact, structural; decided 7 Nov 2026): anything that provably has
+    # zero effect on every output, for every input, has the trivial explanation
+    # "Null". That is every node with no path to an output over enabled,
+    # non-zero-weight edges (disconnected inputs, dead ends), and every edge
+    # that is zero-weight or touches such a node. Null parts count as covered
+    # and are exempt from the single-root rule; they are reported separately.
+    # Support-level nulls (e.g. a unit never active on the training data) are
+    # NOT included here: they need an explicit, evidenced Null annotation.
+    live_edges = {
+        (str(c.from_node), str(c.to_node))
+        for c in model_state.connections
+        if c.enabled and c.weight != 0
+    }
+    null_nodes = nodes_without_path_to_outputs(all_node_ids, live_edges, output_ids)
+    null_edges = {
+        e for e in all_edges
+        if e not in live_edges or e[0] in null_nodes or e[1] in null_nodes
+    }
 
     # No annotations case
     if not annotations_data:
         candidate_nodes = all_node_ids - output_ids
+        null_cand = null_nodes & candidate_nodes
         result = {
-            "structural_coverage": 0.0,
+            "structural_coverage": (
+                round(len(null_cand) / len(candidate_nodes), 4) if candidate_nodes else 0.0
+            ),
             "compositional_coverage": 0.0,
             "node_coverage": {
-                "covered": [],
-                "uncovered": sorted(candidate_nodes),
+                "covered": sorted(null_cand),
+                "uncovered": sorted(candidate_nodes - null_cand),
                 "total_candidate": len(candidate_nodes),
                 "by_annotation": {},
             },
             "edge_coverage": {
-                "covered": [],
-                "uncovered": sorted([list(e) for e in all_edges]),
+                "covered": sorted([list(e) for e in null_edges]),
+                "uncovered": sorted([list(e) for e in all_edges - null_edges]),
                 "total": len(all_edges),
+            },
+            "null": {
+                "basis": "exact: no path to an output over enabled, non-zero-weight edges",
+                "nodes": sorted(null_cand),
+                "edges": sorted([list(e) for e in null_edges]),
             },
             "annotations_count": 0,
             "leaf_count": 0,
@@ -145,7 +171,7 @@ def coverage_report(model_state, annotations_data) -> Dict[str, Any]:
 
     # Candidate nodes: all non-output nodes (per paper)
     candidate_nodes = all_node_ids - output_ids
-    covered_nodes = {n for n in candidate_nodes if n in node_cov}
+    covered_nodes = {n for n in candidate_nodes if n in node_cov or n in null_nodes}
     uncovered_nodes = candidate_nodes - covered_nodes
 
     structural_coverage = (
@@ -168,7 +194,7 @@ def coverage_report(model_state, annotations_data) -> Dict[str, Any]:
             for ad in annotations_data
         ],
         output_ids,
-        disconnected_nodes=nodes_without_path_to_outputs(all_node_ids, all_edges, output_ids),
+        disconnected_nodes=null_nodes,
     )
     compositional_coverage = hierarchy["compositional_coverage"]
 
@@ -182,10 +208,10 @@ def coverage_report(model_state, annotations_data) -> Dict[str, Any]:
         by_annotation[aid].sort()
 
     # Edge coverage
-    covered_edges = sorted([list(e) for e in edge_cov.keys()])
+    covered_edges = sorted([list(e) for e in set(edge_cov.keys()) | (null_edges & all_edges)])
     all_edges_set = all_edges
     uncovered_edges = sorted(
-        [list(e) for e in all_edges_set if e not in edge_cov]
+        [list(e) for e in all_edges_set if e not in edge_cov and e not in null_edges]
     )
 
     result = {
@@ -201,6 +227,11 @@ def coverage_report(model_state, annotations_data) -> Dict[str, Any]:
             "covered": covered_edges,
             "uncovered": uncovered_edges,
             "total": len(all_edges_set),
+        },
+        "null": {
+            "basis": "exact: no path to an output over enabled, non-zero-weight edges",
+            "nodes": sorted(null_nodes & candidate_nodes),
+            "edges": sorted([list(e) for e in null_edges]),
         },
         "annotations_count": total_annotations,
         "leaf_count": leaf_count,

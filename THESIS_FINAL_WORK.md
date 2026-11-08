@@ -156,3 +156,12 @@ The coordinator merges each branch to `main` after review.
 - **Study H and the lineage replays are complete** (`0d0aaea`). Only Adult was not replayed.
 
 **Done:** tasks 3–6 (thesis numbers, `788f42b`). D4–D6 are applied.
+
+**Generalised 8 Nov (Mike): Null explanations.** D4 is now one case of a broader rule: anything
+shown to have zero effect on the result has the trivial explanation "Null".
+- **Exact Null** is automatic. It covers nodes with no path to an output over enabled, non-zero
+  edges (disconnected inputs and dead ends), and zero-weight edges. These count as covered, and
+  are exempt from the single-root rule.
+- **Support-level Null** (e.g. units never active on the data) needs an evidenced Null
+  annotation.
+- Documented in `docs/annotation_coverage_model.md`. Re-checked on all 60 records: **0 changes**.
