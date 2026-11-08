@@ -249,6 +249,11 @@ def threshold_sentence(layer, c) -> Dict[str, Any]:
     ch = st.get("change") or {}
     text = (f"{head}: for a typical such {_pop(layer, True)}, going from {ch.get('from', {}).get('text')} to "
             f"{ch.get('to', {}).get('text')} moves it from {_about(r.get('from'))} to {_about(r.get('to'))}")
+    sh = c.get("shape") or {}
+    if sh.get("status") == "fallback":
+        text += "; across patients the change happens in an uneven way"
+    elif sh.get("status") == "mixed" and sh.get("exceptions"):
+        text += f"; this holds for most {_pop(layer)}, but for {' and '.join(sh['exceptions'][0]['who'])} it differs"
     return _s(text + _tail(c) + "." + _little(layer, c), [c["id"]])
 
 

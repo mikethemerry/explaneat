@@ -78,7 +78,7 @@ SHAPE_PHRASES = {
     "steady": r"steadily|the same amount (for|with) each|each extra .{0,40}adds? about the same",
     "hinge": (r"nothing until|no change until|only once|only above|only below|only up to|only from|"
               r"until about|then no further|no further|stops? (adding|changing|mattering)|from about .{0,40}"
-              r"(on|onwards|upwards)|then steadily"),
+              r"(on|onwards|upwards)|then steadily|stays below about|rises above about|once it (rises|passes)"),
     "step": r"jump|in a step|mostly (between|around|from)|sharply around",
     "levelling_off": r"levels? off|levelling off|quickly at first|then more slowly|flattens? out|flattening",
     "accelerating": r"slowly at first|then faster|speeds? up|more and more|increasingly",
@@ -254,11 +254,13 @@ def grid_for(v) -> Tuple[np.ndarray, bool]:
     from the 1st to the 99th percentile."""
     vals, cnt = np.unique(v.raw_train, return_counts=True)
     n = len(v.raw_train)
-    common = vals[cnt >= max(5, 0.01 * n)]
-    integer = np.all(np.abs(common - np.round(common)) < 1e-9)
-    if v.kind == "count" or (integer and len(common) <= ORDINAL_MAX_LEVELS):
-        if len(common) <= ORDINAL_MAX_LEVELS and integer and len(common) >= 2:
-            return common.astype(float), True
+    keep = cnt >= max(5, 0.01 * n)
+    common = vals[keep]
+    integer = bool(np.all(np.abs(common - np.round(common)) < 1e-9))
+    coverage = float(cnt[keep].sum()) / n if n else 0.0
+    # an ordinal: at most ORDINAL_MAX_LEVELS whole-number levels that hold at least 95% of patients
+    if integer and 2 <= len(common) <= ORDINAL_MAX_LEVELS and coverage >= 0.95:
+        return common.astype(float), True
     lo, hi = np.percentile(v.raw_train, [1, 99])
     if hi <= lo:
         lo, hi = float(np.min(v.raw_train)), float(np.max(v.raw_train))
@@ -281,6 +283,15 @@ def _sample(rows_mask: np.ndarray) -> np.ndarray:
     if len(idx) > PATIENT_SAMPLE:
         idx = idx[np.linspace(0, len(idx) - 1, PATIENT_SAMPLE).round().astype(int)]
     return idx
+
+
+def _points_text(v, typ: Dict[str, Any], ordinal: bool) -> Dict[str, str]:
+    pts = typ.get("points", {}) or {}
+    out = {k: v.fmt(round(val, v.decimals)) for k, val in pts.items()}
+    if ordinal and typ.get("class") == "step" and "from" in pts and "to" in pts:
+        a, b = v.fmt(pts["from"]), v.fmt(pts["to"])
+        out["at"] = f"between {a.split(' ')[0]} and {b}"
+    return out
 
 
 def numeric_shape(m, v, scope, typical_raw_row: np.ndarray, rows_mask: np.ndarray,
@@ -306,7 +317,29 @@ def numeric_shape(m, v, scope, typical_raw_row: np.ndarray, rows_mask: np.ndarra
     if extra_raw:
         extra = {c: (val - m.mean[c]) / m.scale[c] for c, val in extra_raw.items()}
     C = _curves(m, v, grid, scope, idx, extra)
-    classes_all = [classify_curve(grid, C[i], ordinal=ordinal)["class"] for i in range(len(idx))]
+    per = [classify_curve(grid, C[i], ordinal=ordinal) for i in range(len(idx))]
+    classes_all = [r["class"] for r in per]
+    rebased = False
+    if typ["class"] == "flat":
+        moving = [r for r in per if r["class"] != "flat"]
+        if len(moving) >= max(3, 0.1 * len(per)):
+            # the typical patient is not affected (e.g. a part that is off for them): describe the
+            # shape among the patients whose curve moves, with the median named point
+            mc: Dict[str, int] = {}
+            for r in moving:
+                mc[r["class"]] = mc.get(r["class"], 0) + 1
+            major = max(mc, key=lambda k: mc[k])
+            pts = [r.get("points", {}) for r in moving if r["class"] == major]
+            med = {}
+            for k in {k for p in pts for k in p}:
+                vals = [p[k] for p in pts if k in p]
+                med[k] = float(np.median(vals))
+            ex = next(r for r in moving if r["class"] == major)
+            typ = {**typ, "class": major, "points": med, "hinge_kind": ex.get("hinge_kind"),
+                   "ordinal_pattern": ex.get("ordinal_pattern"), "pieces": ex.get("pieces", [])}
+            typ["stable"] = all(classify_curve(grid, C[i], scale=sc, ordinal=ordinal)["class"] == major
+                                for i, r in enumerate(per) if r is ex for sc in SENSITIVITY)
+            rebased = True
     # patients whose curve does not move at all are not affected by this scope; consistency is
     # judged among the affected patients (the unaffected share is recorded)
     affected = np.array([c != "flat" for c in classes_all]) if typ["class"] != "flat" else np.ones(len(idx), bool)
@@ -322,8 +355,8 @@ def numeric_shape(m, v, scope, typical_raw_row: np.ndarray, rows_mask: np.ndarra
                                                           "41 points from the 1st to the 99th percentile"),
            "typical_curve": [sig(l) for l in Lt], "typical_risk": [sig(r) for r in risk],
            "points": {k: sig(val) for k, val in typ.get("points", {}).items()},
-           "points_text": {k: v.fmt(round(val, v.decimals) if v.kind != "count" else val)
-                           for k, val in typ.get("points", {}).items()},
+           "points_text": _points_text(v, typ, ordinal),
+           "typical_patient_unaffected": rebased,
            "pieces": [{"from": sig(p["from"]), "to": sig(p["to"]), "slope": sig(p["slope"]), "flat": p["flat"]}
                       for p in typ.get("pieces", [])],
            "hinge_kind": typ.get("hinge_kind"), "ordinal_pattern": typ.get("ordinal_pattern"),
@@ -424,7 +457,8 @@ def attach_shapes(m, parts, claims: List[Dict[str, Any]]) -> None:
             strong = c["statement"]["stronger_group"]["label"]
             main = next((g for g in groups if g["group"] == strong), groups[0])
             c["shape"] = {**{k: main[k] for k in ("class", "status", "verified", "points", "points_text",
-                                                  "ordinal_pattern", "risk_saturation", "hinge_kind")},
+                                                  "ordinal_pattern", "risk_saturation", "hinge_kind", "exceptions",
+                                                  "share_same_shape", "consistent", "stable")},
                           "scale": main["scale"], "basis": "the stronger group's typical patient",
                           "groups": groups}
             continue
