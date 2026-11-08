@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/mikethemerry/explaneat/explaneat/export/schema/explanation-v1.schema.json",
   "title": "ExplaNEAT explanation export, schema v1",
-  "description": "Canonical record of one explained genome: provenance, phenotype and explained model state, refactoring operations, function-preservation check, annotation hierarchy (hypothesis, closed form, evidence, authorship), coverage (current code, get_coverage), and an audit against the Ch 5 definitions. See docs/export_pack.md.",
+  "description": "Canonical record of one explained genome: provenance, phenotype and explained model state, refactoring operations, function-preservation check, annotation hierarchy (hypothesis, closed form, evidence, authorship), coverage (current code, get_coverage), and an audit against the Ch 5 definitions. See docs/export_pack.md; schema 1.1 adds the optional plain-language layer (plain_language). See docs/export_pack.md.",
   "type": "object",
   "required": [
     "schema_version",
@@ -801,6 +801,120 @@
           "message": {
             "type": "string"
           }
+        }
+      }
+    },
+    "plain_language": {
+      "description": "Schema 1.1: the plain-language layer (experiments/10seed/plain_language/<label>.json): claims with their evidence and verification, the offline template text, the drafted prose (AI-assisted, with its verification) and proposed hypothesis revisions; null when no layer exists. Absent in 1.0 documents.",
+      "type": [
+        "object",
+        "null"
+      ],
+      "required": [
+        "source_file",
+        "layer_schema_version",
+        "claims_hash",
+        "counts",
+        "parts",
+        "claims",
+        "template",
+        "drafted",
+        "verification",
+        "reference_patient"
+      ],
+      "properties": {
+        "source_file": {
+          "type": "string"
+        },
+        "layer_schema_version": {
+          "type": "string"
+        },
+        "claims_hash": {
+          "type": "string"
+        },
+        "counts": {
+          "type": "object"
+        },
+        "parts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "role",
+              "order"
+            ]
+          }
+        },
+        "claims": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "key",
+              "type",
+              "annotation",
+              "verified",
+              "reasons",
+              "estimate",
+              "split"
+            ],
+            "properties": {
+              "type": {
+                "enum": [
+                  "direction",
+                  "threshold",
+                  "interaction",
+                  "magnitude",
+                  "subgroup",
+                  "null"
+                ]
+              },
+              "verified": {
+                "type": "boolean"
+              },
+              "split": {
+                "const": "train"
+              }
+            }
+          }
+        },
+        "template": {
+          "type": "object",
+          "required": [
+            "summary",
+            "annotations",
+            "not_supported"
+          ]
+        },
+        "drafted": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "verification": {
+          "type": "object"
+        },
+        "reference_patient": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "codebook": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "outcome": {
+          "type": [
+            "object",
+            "null"
+          ]
         }
       }
     }

@@ -114,6 +114,44 @@ def render_docx(doc, path: Path, figures: Optional[Dict[str, Path]] = None,
     if rec.get("resisted"):
         para(rec["resisted"], "What resisted explanation. ")
 
+    # plain-language layer (schema 1.1)
+    pl = doc.get("plain_language")
+    if pl:
+        from .render_plain import _status, claim_brief, estimate_text, n_text, split_text
+        D.add_heading("Plain-language summary", level=2)
+        para(_status(pl) + ". Each sentence cites the claims that back it; every cited claim was computed "
+             "on the model and the training split and passed its automatic checks. Effects are on the "
+             "model's odds scale and describe what the model does, not the world.", italic=True)
+
+        def sents(ss):
+            return " ".join(s["text"] + (f" [{', '.join(s['claims'])}]" if s.get("claims") else "")
+                            for s in ss or [])
+        d = pl.get("drafted") or {}
+        if d:
+            para(sents(d.get("summary")), "Summary (drafted). ")
+        para(sents((pl.get("template") or {}).get("summary")), "Summary (offline template). ")
+        for p_ in sorted(pl.get("parts") or [], key=lambda x: x["order"]):
+            if p_["role"] == "duplicate":
+                continue
+            txt = (d.get("annotations") or {}).get(p_["id"]) or ((pl.get("template") or {}).get("annotations") or {}).get(p_["id"])
+            if txt:
+                para(sents(txt), f"{p_['id']} ({p_['name']}). ")
+        tc = D.add_table(rows=1, cols=6)
+        tc.style = "Light Grid Accent 1"
+        for i, h in enumerate(("Claim", "What is checked", "Estimate [95% CI]", "n", "Split", "Verified")):
+            tc.rows[0].cells[i].text = h
+        for c_ in pl.get("claims") or []:
+            cells = tc.add_row().cells
+            vals = (c_["id"], f"{c_['type']}: {claim_brief(c_)}", estimate_text(c_), n_text(c_),
+                    split_text(c_), "yes" if c_.get("verified") else "no")
+            for i, v in enumerate(vals):
+                cells[i].text = printed(str(v))
+        ns = (pl.get("template") or {}).get("not_supported") or []
+        if ns:
+            D.add_heading("Not supported by the model", level=3)
+            for x in ns:
+                D.add_paragraph(printed(f"{x['claim']}: {x['text']}"), style="List Bullet")
+
     # coverage
     cov = doc["coverage"]
     D.add_heading("Coverage", level=2)
