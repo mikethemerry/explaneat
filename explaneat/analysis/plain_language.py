@@ -54,7 +54,7 @@ from .explanation_tools import StateEvaluator, as_unit, default_auc, input_colum
 from .plain_language_codebooks import (base_of, codebook_checks, codebook_gaps, find_codebook,
                                        generic_codebook, level_info)
 
-LAYER_SCHEMA_VERSION = "2.0.0"
+LAYER_SCHEMA_VERSION = "3.0.0"   # 3: shape of every numeric effect
 CLAIM_TYPES = ("direction", "threshold", "interaction", "magnitude", "subgroup", "null", "rule")
 
 SEED = 42
@@ -928,13 +928,13 @@ def _part_typical(m: PlainModel, part: Part, var: Variable, a, b, scope):
     raw = typical_raw(m)
     pa, pb = risk_pair(m, raw, var, a, b, scope)
     if abs(pb - pa) > 1e-9 or part.is_root or part.contribution is None:
-        return pa, pb, "typical patient", None
+        return pa, pb, "typical patient", None, raw
     active = np.abs(part.contribution) > 1e-12
     if active.any() and not active.all():
         raw2 = typical_raw(m, active)
         pa2, pb2 = risk_pair(m, raw2, var, a, b, scope)
-        return pa2, pb2, "typical patient this part acts on", typical_values(m, raw2)
-    return pa, pb, "typical patient", None
+        return pa2, pb2, "typical patient this part acts on", typical_values(m, raw2), raw2
+    return pa, pb, "typical patient", None, raw
 
 
 def direction_claims(m: PlainModel, part: Part, scope) -> List[Dict[str, Any]]:
@@ -948,7 +948,7 @@ def direction_claims(m: PlainModel, part: Part, scope) -> List[Dict[str, Any]]:
             mean = float(e.mean())
             sp = spread(e)
             key = bname if not v.is_category() else f"{bname}:{cz['key']}"
-            pa, pb, ref_name, ref_vals = _part_typical(m, part, v, a, z, scope)
+            pa, pb, ref_name, ref_vals, ref_raw = _part_typical(m, part, v, a, z, scope)
             c = _claim(part, "direction", key, variables=[_var_desc(v)],
                        statement={"variable": bname, "change": _change_desc(v, a, z, ca, cz),
                                   "direction": "raises" if mean > 0 else "lowers",
@@ -958,6 +958,7 @@ def direction_claims(m: PlainModel, part: Part, scope) -> List[Dict[str, Any]]:
                                            + ("everywhere in the model" if scope is None else
                                               "only where this part reads it"))
             c["risk"] = risk_block(pa, pb, ref_name, ref_vals)
+            c["_ctx"] = {"var": bname, "typical": ref_raw, "rows": None}
             c["evidence"] = {"share_opposite_sign": sp["share_opposite_sign"],
                              "share_unaffected": sp["share_unaffected"]}
             mono = None
@@ -1022,6 +1023,7 @@ def magnitude_claims(m: PlainModel, part: Part, directions: List[Dict[str, Any]]
                               "strength": strength(e0), "related_direction": d["key"]})
         c["estimate"] = estimate_block(e0, None, "change in the model's log-odds for the typical patient")
         c["risk"] = risk_block(pa, pb, "typical patient")
+        c["_ctx"] = {"var": b, "typical": raw, "rows": None}
         c["n"] = d["n"]
         c["groups"] = d.get("groups", [])
         c["small_n_groups"] = list(d.get("small_n_groups", []))
@@ -1143,6 +1145,7 @@ def threshold_claims(m: PlainModel, part: Part) -> List[Dict[str, Any]]:
             step = int(math.floor(med)) + 1
             th.update({"count_step": step, "text": v.fmt(step)})
         raw_t = typical_raw(m, rows)
+        ctx_threshold = {"var": bname, "typical": raw_t, "rows": rows}
         pa, pb = risk_pair(m, raw_t, v, va, vb, part.input_nodes)
         c = _claim(part, "threshold", bname, variables=[_var_desc(v)],
                    statement={"variable": bname, "kind": kind, "threshold": th,
@@ -1160,6 +1163,7 @@ def threshold_claims(m: PlainModel, part: Part) -> List[Dict[str, Any]]:
                                      "straight-line continuation of its moving part"},
             **estimate_block(emean, eff, f"mean change in log-odds from {v.fmt(round(va, v.decimals))} to "
                              f"{v.fmt(round(vb, v.decimals))} for the patients in the group")}
+        c["_ctx"] = ctx_threshold
         c["risk"] = risk_block(pa, pb, "typical patient with a fold" + (f" ({cond['group']})" if cond else ""),
                                typical_values(m, raw_t))
         c["n"] = int(rows.sum())
@@ -1271,12 +1275,14 @@ def interaction_claims(m: PlainModel, part: Part, total_effect: Dict[str, float]
         d = m1 - m0
         # the typical patient of each group: the typical patient with the modifier set to the group
         risks = []
-        for wv, cls in ((w1v, sb[3]), (w0v, sb[2])):
+        ctx_groups = []
+        for wv, cls, rows_g, dlab in ((w1v, sb[3], g1, d1["label"]), (w0v, sb[2], g0, d0["label"])):
             if Bv.is_category():
                 extra_raw = {c: (1.0 if code == cls["rep"] else 0.0) for c, code in zip(Bv.columns, Bv.codes)}
             else:
                 extra_raw = {Bv.columns[0]: wv}
             risks.append(risk_pair(m, raw, A, sa[0], sa[1], None, extra_raw))
+            ctx_groups.append({"label": dlab, "rows": rows_g, "extra_raw": extra_raw})
         groups = []
         for dd, rows, e, (pa, pb), mm in ((d1, g1, e1, risks[0], m1), (d0, g0, e0, risks[1], m0)):
             groups.append({**dd, "n": int(rows.sum()), "estimate": sig(mm), "odds_ratio": _or(mm),
@@ -1304,6 +1310,7 @@ def interaction_claims(m: PlainModel, part: Part, total_effect: Dict[str, float]
         c["estimate"] = estimate_block(d, None, "difference between the two groups (first minus second) "
                                        "of the mean change in the model's log-odds when the main "
                                        "variable changes everywhere")
+        c["_ctx"] = {"var": A.base, "typical": raw, "groups": ctx_groups}
         c["risk"] = {"reference": "typical patient of each group (the typical patient with the "
                                   "modifier set to the group's value)",
                      "groups": [{"label": g["label"], "from": g["risk_from"], "to": g["risk_to"]} for g in groups],
@@ -1585,6 +1592,8 @@ def extract_claims(m: PlainModel) -> Dict[str, Any]:
     claims = []
     for p in parts:
         claims.extend(sorted(by_part.get(p.id, []), key=_claim_sort_key))
+    from .plain_language_shapes import attach_shapes
+    attach_shapes(m, parts, claims)
     width = max(2, len(str(len(claims))))
     for i, c in enumerate(claims):
         c["id"] = f"C{i + 1:0{width}d}"
@@ -1649,6 +1658,14 @@ def _clean(o):
     return o
 
 
+def _shape_settings() -> Dict[str, Any]:
+    from .plain_language_shapes import (CONSISTENT_SHARE, GRID, MIXED_MAJORITY, ORDINAL_MAX_LEVELS,
+                                        PATIENT_SAMPLE, SATURATION, SENSITIVITY, TOL)
+    return {"tolerances": dict(TOL), "consistent_share": CONSISTENT_SHARE, "mixed_majority": MIXED_MAJORITY,
+            "sensitivity_scales": list(SENSITIVITY), "grid_points": GRID, "patient_sample": PATIENT_SAMPLE,
+            "ordinal_max_levels": ORDINAL_MAX_LEVELS, "risk_saturation": SATURATION}
+
+
 def build_layer(m: PlainModel, meta: Dict[str, Any]) -> Dict[str, Any]:
     """The plain-language layer document (claims, template text; no draft)."""
     from .plain_language_templates import render_template
@@ -1680,6 +1697,7 @@ def build_layer(m: PlainModel, meta: Dict[str, Any]) -> Dict[str, Any]:
                      "max_threshold_spread": MAX_THRESHOLD_SPREAD,
                      "max_interactions_per_part": MAX_INTERACTIONS_PER_PART,
                      "top_magnitudes": TOP_MAGNITUDES, "screen_rows": SCREEN_ROWS,
+                     "shape_tolerances": _shape_settings(),
                      "effect_scale": "log-odds (output pre-activation) for verification; predicted "
                                      "risk for the typical patient for wording"},
         "parts": [_clean(part_record(m, p)) for p in parts],

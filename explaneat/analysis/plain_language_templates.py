@@ -110,6 +110,65 @@ def _who(layer, c, part_scope: bool) -> str:
     return f"for a typical {one}"
 
 
+def _unit1(v) -> str:
+    """Singular of a count unit ('vessels' -> 'vessel'), else 'step'."""
+    u = (v.get("unit") or "").strip()
+    if not u or " " in u:
+        return "step"
+    return u[:-1] if u.endswith("s") else u
+
+
+def shape_phrase(layer, c, v, shape=None) -> str:
+    """Plain words for the claim's shape (the mechanism), matching the lint's phrases."""
+    sh = shape if shape is not None else (c.get("shape") or {})
+    if not sh or sh.get("class") == "categorical":
+        return ""
+    if sh.get("status") == "fallback":
+        return "in an uneven way"
+    pts = sh.get("points_text") or {}
+    cls = sh["class"]
+    u1 = _unit1(v)
+    if cls == "flat":
+        main = "only barely"
+    elif cls == "steady":
+        main = (f"steadily, each extra {u1} adding about the same" if sh.get("ordinal_pattern") == "equal_steps"
+                else "steadily")
+    elif cls == "hinge":
+        main = (f"with nothing until about {pts.get('at')}, then steadily"
+                if sh.get("hinge_kind") == "flat_then_moving" else f"steadily up to about {pts.get('at')}, then no further")
+    elif cls == "step":
+        main = (f"in a step, mainly the first {u1}" if sh.get("ordinal_pattern") == "first_step"
+                else f"mostly in a jump around {pts.get('at')}")
+    elif cls == "levelling_off":
+        main = "quickly at first, then levelling off"
+    elif cls == "accelerating":
+        main = "slowly at first, then faster"
+    elif cls == "peak":
+        main = f"in a curve that is highest at about {pts.get('turning')}, lower either side"
+    elif cls == "dip":
+        main = f"in a curve that is lowest at about {pts.get('turning')}, higher either side"
+    else:
+        main = "in stages"
+    if sh.get("status") == "mixed" and sh.get("exceptions"):
+        e = sh["exceptions"][0]
+        alt = {"flat": "it barely moves", "steady": "it moves steadily", "hinge": "it has a threshold",
+               "step": "it moves mostly in a jump", "levelling_off": "it levels off",
+               "accelerating": "it speeds up", "peak": "it peaks inside the range", "dip": "it dips inside the range",
+               "multi_segment": "it moves in stages"}.get(e["class"], "it moves differently")
+        main += f" for most {_pop(layer)}, but for {' and '.join(e['who'])} {alt}"
+    return main
+
+
+def saturation_phrase(c, shape=None) -> str:
+    sh = shape if shape is not None else (c.get("shape") or {})
+    sat = sh.get("risk_saturation") if sh else None
+    if sat == "near 100%":
+        return ", flattening out near the top because the predicted risk cannot go much higher"
+    if sat == "near 0%":
+        return ", flattening out near the bottom because the predicted risk cannot go much lower"
+    return ""
+
+
 def direction_sentence(layer, c, part_scope: bool) -> Dict[str, Any]:
     st, v, r = c["statement"], c["variables"][0], c.get("risk") or {}
     ch = st["change"]
@@ -121,10 +180,10 @@ def direction_sentence(layer, c, part_scope: bool) -> Dict[str, Any]:
         text = (f"{via}{who}, the model gives a {_adv(c)}{hl} {_pred_noun(layer)} "
                 f"if {ch['to']['cond']} ({_about(b)}) than if {ch['from']['cond']} ({_about(a)})")
     else:
-        verb = "raises" if (b or 0) >= (a or 0) else "lowers"
-        mono = "" if st.get("monotone") in (True, None) else ", though not steadily"
-        text = (f"{via}{who}, {_name(v)} going from {ch['from']['text']} to {ch['to']['text']} "
-                f"{_adv(c)}{verb} {_pred(layer)} from {_about(a)} to {_about(b)}{mono}")
+        verb = "raising" if (b or 0) >= (a or 0) else "lowering"
+        text = (f"{via}the model treats a higher {_name(v)} as {_adv(c)}{verb} {_pred(layer)} "
+                f"{shape_phrase(layer, c, v)}: {who}, it goes from {_about(a)} at {ch['from']['text']} "
+                f"to {_about(b)} at {ch['to']['text']}{saturation_phrase(c)}")
     return _s(text + _tail(c) + "." + _little(layer, c), [c["id"]])
 
 
@@ -151,7 +210,9 @@ def interaction_sentence(layer, c) -> Dict[str, Any]:
                f"{_about(sg.get('risk_to'))} if {sg['cond']}, and from {_about(wg.get('risk_from'))} to "
                f"{_about(wg.get('risk_to'))} if {wg['cond']}")
     if not consistent:
-        text = ("this changes the prediction only slightly: " if _conf(c).get("size") == "slight" else "") + numbers
+        shp = "" if v["kind"] == "category" else shape_phrase(layer, c, v)
+        text = (("this changes the prediction only slightly: " if _conf(c).get("size") == "slight" else "")
+                + numbers + (f" (it moves {shp} for {sg['group']})" if shp else ""))
         return _s(text + _tail(c) + "." + _little(layer, c), [c["id"]])
     if v["kind"] == "category":
         subj = (f"the model gives a {_adv(c)}{'higher' if stated > 0 else 'lower'} {_pred_noun(layer)} "
@@ -164,6 +225,9 @@ def interaction_sentence(layer, c) -> Dict[str, Any]:
         head = f"{subj} if {sg['cond']}, but the other way if {wg['cond']}"
     else:
         head = f"{subj}, and even more so if {sg['cond']}"
+    shp = "" if v["kind"] == "category" else shape_phrase(layer, c, v)
+    if shp:
+        head += f" ({shp} for {sg['group']})"
     return _s(f"{head}: {numbers}" + _tail(c) + "." + _little(layer, c), [c["id"]])
 
 
