@@ -1,0 +1,5212 @@
+{
+ "claims": [
+  {
+   "annotation": {
+    "id": "ann_30",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.610991,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 33.9317,
+    "odds_ratio_range": [
+     33.9317,
+     33.9317
+    ],
+    "range_across_patients": [
+     3.52435,
+     3.52435
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 3.52435
+   },
+   "evidence": {
+    "average_curve": {
+     "mean_log_odds": [
+      -1.58826,
+      0.173912,
+      1.93609
+     ],
+     "rows": 242,
+     "values": [
+      0.0,
+      1.0,
+      2.0
+     ]
+    },
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [],
+   "id": "C01",
+   "key": "ann_30:direction:ca",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.610991,
+    "from": 0.333353,
+    "reference": "typical patient",
+    "to": 0.944344
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "basis": "10th and 90th percentile of the training patients",
+     "from": {
+      "text": "0 vessels",
+      "value": 0.0
+     },
+     "to": {
+      "text": "2 vessels",
+      "value": 2.0
+     }
+    },
+    "direction": "raises",
+    "monotone": true,
+    "strength": "strong",
+    "variable": "ca"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0215323,
+     0.129679
+    ],
+    "benefit_mean": 0.0506466,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 3.52435,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.0362063
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "ca",
+     "decoded": true,
+     "kind": "count",
+     "label": "number of major vessels coloured by fluoroscopy",
+     "short": "number of vessels coloured by fluoroscopy",
+     "unit": "vessels"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_30",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.607351,
+    "n_ok": false,
+    "qualifiers": [
+     "the model has little data on this",
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 31.7262,
+    "odds_ratio_range": [
+     31.7261,
+     31.7261
+    ],
+    "range_across_patients": [
+     3.45714,
+     3.45714
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 3.45714
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "a normal thallium scan",
+     "n": 135
+    },
+    {
+     "label": "thallium stress test result coded 4 (meaning not recorded)",
+     "n": 2
+    }
+   ],
+   "id": "C02",
+   "key": "ann_30:direction:thal:4",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.607351,
+    "from": 0.333353,
+    "reference": "typical patient",
+    "to": 0.940704
+   },
+   "scope": "model",
+   "small_n": true,
+   "small_n_groups": [
+    "thallium stress test result coded 4 (meaning not recorded)"
+   ],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "3",
+      "codes": [
+       "3"
+      ],
+      "cond": "the thallium scan is normal",
+      "decoded": true,
+      "group": "patients with a normal thallium scan",
+      "label": "a normal thallium scan",
+      "n_train": 135
+     },
+     "to": {
+      "code": "4",
+      "codes": [
+       "4"
+      ],
+      "cond": "thallium stress test result coded 4 (meaning not recorded) applies",
+      "decoded": false,
+      "group": "patients with thallium stress test result coded 4 (meaning not recorded)",
+      "label": "thallium stress test result coded 4 (meaning not recorded)",
+      "n_train": 2
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "thal"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.00217865,
+     0.0258106
+    ],
+    "benefit_mean": 0.0107759,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 3.45714,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.0103842
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "thal",
+     "decoded": false,
+     "kind": "category",
+     "label": "thallium stress test result",
+     "short": "thallium stress test result",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_30",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.47815,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 8.60948,
+    "odds_ratio_range": [
+     8.60945,
+     8.60945
+    ],
+    "range_across_patients": [
+     2.15286,
+     2.15286
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 2.15286
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "an upsloping ST segment",
+     "n": 115
+    },
+    {
+     "label": "a flat ST segment",
+     "n": 110
+    }
+   ],
+   "id": "C03",
+   "key": "ann_30:direction:slope:2",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.47815,
+    "from": 0.333353,
+    "reference": "typical patient",
+    "to": 0.811503
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "the ST segment slopes up at peak exercise",
+      "decoded": true,
+      "group": "patients with an upsloping ST segment",
+      "label": "an upsloping ST segment",
+      "n_train": 115
+     },
+     "to": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "the ST segment is flat at peak exercise",
+      "decoded": true,
+      "group": "patients with a flat ST segment",
+      "label": "a flat ST segment",
+      "n_train": 110
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "slope"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0566565,
+     0.0322598
+    ],
+    "benefit_mean": -0.0107759,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 2.15286,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.0289373
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "slope",
+     "decoded": true,
+     "kind": "category",
+     "label": "slope of the ST segment at peak exercise",
+     "short": "slope of the ST segment at peak exercise",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_30",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.365071,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 4.80904,
+    "odds_ratio_range": [
+     4.80905,
+     4.80905
+    ],
+    "range_across_patients": [
+     1.5705,
+     1.5705
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 1.5705
+   },
+   "evidence": {
+    "average_curve": {
+     "mean_log_odds": [
+      -1.02574,
+      -0.969647,
+      -0.913558,
+      -0.74529,
+      -0.577023,
+      -0.520934,
+      -0.464845,
+      -0.352666,
+      -0.240488,
+      -0.128309,
+      0.0399581,
+      0.208226,
+      0.544761,
+      0.937385
+     ],
+     "rows": 242,
+     "values": [
+      0.0,
+      0.1,
+      0.2,
+      0.5,
+      0.8,
+      0.9,
+      1.0,
+      1.2,
+      1.4,
+      1.6,
+      1.9,
+      2.2,
+      2.8,
+      3.5
+     ]
+    },
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [],
+   "id": "C04",
+   "key": "ann_30:direction:oldpeak",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.365071,
+    "from": 0.247177,
+    "reference": "typical patient",
+    "to": 0.612248
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "basis": "10th and 90th percentile of the training patients",
+     "from": {
+      "text": "0.0 mm",
+      "value": 0.0
+     },
+     "to": {
+      "text": "2.8 mm",
+      "value": 2.8
+     }
+    },
+    "direction": "raises",
+    "monotone": true,
+    "strength": "strong",
+    "variable": "oldpeak"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0129324,
+     0.0398707
+    ],
+    "benefit_mean": 0.0118534,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 1.5705,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.00692281
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "oldpeak",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "ST depression during exercise (compared with rest)",
+     "short": "ST depression on exercise",
+     "unit": "mm"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_30",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.346472,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 4.72406,
+    "odds_ratio_range": [
+     4.72407,
+     4.72407
+    ],
+    "range_across_patients": [
+     1.55267,
+     1.55267
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 1.55267
+   },
+   "evidence": {
+    "average_curve": {
+     "mean_log_odds": [
+      -1.37138,
+      -1.15536,
+      -1.07435,
+      -1.00684,
+      -0.898829,
+      -0.817821,
+      -0.72331,
+      -0.669304,
+      -0.601797,
+      -0.520788,
+      -0.426278,
+      -0.331767,
+      -0.237257,
+      -0.156248,
+      -0.0887409,
+      0.0597753,
+      0.221793,
+      0.397312,
+      0.640339
+     ],
+     "rows": 242,
+     "values": [
+      177.0,
+      193.0,
+      199.0,
+      204.0,
+      212.0,
+      218.0,
+      225.0,
+      229.0,
+      234.0,
+      240.0,
+      247.0,
+      254.0,
+      261.0,
+      267.0,
+      272.0,
+      283.0,
+      295.0,
+      308.0,
+      326.0
+     ]
+    },
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [],
+   "id": "C05",
+   "key": "ann_30:direction:chol",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.346472,
+    "from": 0.209552,
+    "reference": "typical patient",
+    "to": 0.556024
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "basis": "10th and 90th percentile of the training patients",
+     "from": {
+      "text": "193 mg/dL (5.0 mmol/L)",
+      "value": 193.0
+     },
+     "to": {
+      "text": "308 mg/dL (8.0 mmol/L)",
+      "value": 308.0
+     }
+    },
+    "direction": "raises",
+    "monotone": true,
+    "strength": "strong",
+    "variable": "chol"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0613206,
+     0.010777
+    ],
+    "benefit_mean": -0.0204741,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 1.55267,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.00972655
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "chol",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "serum cholesterol",
+     "short": "serum cholesterol",
+     "unit": "mg/dL"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_30",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.317328,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 0.0863962,
+    "odds_ratio_range": [
+     0.0325701,
+     0.447414
+    ],
+    "range_across_patients": [
+     -3.42436,
+     -0.804272
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": -2.44881
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "male",
+     "n": 159
+    },
+    {
+     "label": "female",
+     "n": 83
+    }
+   ],
+   "id": "C06",
+   "key": "ann_30:direction:sex:0",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -0.317328,
+    "from": 0.333353,
+    "reference": "typical patient",
+    "to": 0.0160255
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "the patient is a man",
+      "decoded": true,
+      "group": "men",
+      "label": "male",
+      "n_train": 159
+     },
+     "to": {
+      "code": "0",
+      "codes": [
+       "0"
+      ],
+      "cond": "the patient is a woman",
+      "decoded": true,
+      "group": "women",
+      "label": "female",
+      "n_train": 83
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "sex"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0279732,
+     0.0682014
+    ],
+    "benefit_mean": 0.0204741,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -2.63207,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.0297681
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "sex",
+     "decoded": true,
+     "kind": "category",
+     "label": "sex",
+     "short": "sex",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_30",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.298157,
+    "n_ok": true,
+    "qualifiers": [],
+    "size": "large",
+    "test": "agrees",
+    "word": "clearly"
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 0.0729542,
+    "odds_ratio_range": [
+     0.0729545,
+     0.0729545
+    ],
+    "range_across_patients": [
+     -2.61792,
+     -2.61792
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": -2.61792
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "no chest pain (asymptomatic)",
+     "n": 108
+    },
+    {
+     "label": "typical angina",
+     "n": 22
+    }
+   ],
+   "id": "C07",
+   "key": "ann_30:direction:cp:1",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -0.298157,
+    "from": 0.333353,
+    "reference": "typical patient",
+    "to": 0.0351964
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "4",
+      "codes": [
+       "4"
+      ],
+      "cond": "the patient has no chest pain symptoms",
+      "decoded": true,
+      "group": "patients with no chest pain symptoms (asymptomatic)",
+      "label": "no chest pain (asymptomatic)",
+      "n_train": 108
+     },
+     "to": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "the patient has typical angina",
+      "decoded": true,
+      "group": "patients with typical angina",
+      "label": "typical angina",
+      "n_train": 22
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "cp"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.0173132,
+     0.0937718
+    ],
+    "benefit_mean": 0.0528017,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -2.61792,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.0251298
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "cp",
+     "decoded": true,
+     "kind": "category",
+     "label": "chest pain type",
+     "short": "chest pain type",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_30",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.265323,
+    "n_ok": true,
+    "qualifiers": [],
+    "size": "large",
+    "test": "agrees",
+    "word": "clearly"
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 0.145978,
+    "odds_ratio_range": [
+     0.145978,
+     0.145978
+    ],
+    "range_across_patients": [
+     -1.9243,
+     -1.9243
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": -1.9243
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "no chest pain (asymptomatic)",
+     "n": 108
+    },
+    {
+     "label": "non-anginal chest pain",
+     "n": 70
+    }
+   ],
+   "id": "C08",
+   "key": "ann_30:direction:cp:3",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -0.265323,
+    "from": 0.333353,
+    "reference": "typical patient",
+    "to": 0.0680297
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "4",
+      "codes": [
+       "4"
+      ],
+      "cond": "the patient has no chest pain symptoms",
+      "decoded": true,
+      "group": "patients with no chest pain symptoms (asymptomatic)",
+      "label": "no chest pain (asymptomatic)",
+      "n_train": 108
+     },
+     "to": {
+      "code": "3",
+      "codes": [
+       "3"
+      ],
+      "cond": "the patient has non-anginal chest pain",
+      "decoded": true,
+      "group": "patients with non-anginal chest pain",
+      "label": "non-anginal chest pain",
+      "n_train": 70
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "cp"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.0173132,
+     0.0937718
+    ],
+    "benefit_mean": 0.0528017,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -1.9243,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.0251298
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "cp",
+     "decoded": true,
+     "kind": "category",
+     "label": "chest pain type",
+     "short": "chest pain type",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_30",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "consistent_across_patients": false,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.252853,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 0.437124,
+    "odds_ratio_range": [
+     0.17508,
+     1.16216
+    ],
+    "range_across_patients": [
+     -1.74251,
+     0.150284
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": -0.827539
+   },
+   "evidence": {
+    "share_opposite_sign": 0.338843,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "fasting blood sugar of 120 mg/dL or less",
+     "n": 209
+    },
+    {
+     "label": "fasting blood sugar above 120 mg/dL",
+     "n": 33
+    }
+   ],
+   "id": "C09",
+   "key": "ann_30:direction:fbs:1",
+   "n": 242,
+   "reasons": [
+    "34% of patients have the opposite sign (allowed: 10%)"
+   ],
+   "risk": {
+    "delta": -0.252853,
+    "from": 0.333353,
+    "reference": "typical patient",
+    "to": 0.0805
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "0",
+      "codes": [
+       "0"
+      ],
+      "cond": "fasting blood sugar is 120 mg/dL or less",
+      "decoded": true,
+      "group": "patients with fasting blood sugar of 120 mg/dL or less",
+      "label": "fasting blood sugar of 120 mg/dL or less",
+      "n_train": 209
+     },
+     "to": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "fasting blood sugar is above 120 mg/dL",
+      "decoded": true,
+      "group": "patients with fasting blood sugar above 120 mg/dL",
+      "label": "fasting blood sugar above 120 mg/dL",
+      "n_train": 33
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "moderate",
+    "variable": "fbs"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.00865801,
+     0.0294292
+    ],
+    "benefit_mean": 0.00646552,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -0.947383,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.00366909
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "fbs",
+     "decoded": true,
+     "kind": "category",
+     "label": "fasting blood sugar",
+     "short": "fasting blood sugar",
+     "unit": null
+    }
+   ],
+   "verified": false
+  },
+  {
+   "annotation": {
+    "id": "ann_30",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.226883,
+    "n_ok": true,
+    "qualifiers": [],
+    "size": "large",
+    "test": "agrees",
+    "word": "clearly"
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 0.412094,
+    "odds_ratio_range": [
+     0.238294,
+     0.751517
+    ],
+    "range_across_patients": [
+     -1.43425,
+     -0.285661
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": -0.886503
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0371901,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "no chest pain (asymptomatic)",
+     "n": 108
+    },
+    {
+     "label": "atypical angina",
+     "n": 42
+    }
+   ],
+   "id": "C10",
+   "key": "ann_30:direction:cp:2",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -0.226883,
+    "from": 0.333353,
+    "reference": "typical patient",
+    "to": 0.10647
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "4",
+      "codes": [
+       "4"
+      ],
+      "cond": "the patient has no chest pain symptoms",
+      "decoded": true,
+      "group": "patients with no chest pain symptoms (asymptomatic)",
+      "label": "no chest pain (asymptomatic)",
+      "n_train": 108
+     },
+     "to": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "the patient has atypical angina",
+      "decoded": true,
+      "group": "patients with atypical angina",
+      "label": "atypical angina",
+      "n_train": 42
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "moderate",
+    "variable": "cp"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.0173132,
+     0.0937718
+    ],
+    "benefit_mean": 0.0528017,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -0.857426,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.0251298
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "cp",
+     "decoded": true,
+     "kind": "category",
+     "label": "chest pain type",
+     "short": "chest pain type",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_30",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.204755,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 2.60746,
+    "odds_ratio_range": [
+     2.60746,
+     2.60746
+    ],
+    "range_across_patients": [
+     0.958377,
+     0.958377
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 0.958377
+   },
+   "evidence": {
+    "average_curve": {
+     "mean_log_odds": [
+      -0.99621,
+      -0.956277,
+      -0.876413,
+      -0.83648,
+      -0.716683,
+      -0.636818,
+      -0.556954,
+      -0.517021,
+      -0.477089,
+      -0.397224,
+      -0.357292,
+      -0.317359,
+      -0.277427,
+      -0.237495,
+      -0.15763,
+      -0.117698,
+      -0.0777652,
+      0.00209957,
+      0.0819643
+     ],
+     "rows": 242,
+     "values": [
+      41.0,
+      42.0,
+      44.0,
+      45.0,
+      48.0,
+      50.0,
+      52.0,
+      53.0,
+      54.0,
+      56.0,
+      57.0,
+      58.0,
+      59.0,
+      60.0,
+      62.0,
+      63.0,
+      64.0,
+      66.0,
+      68.0
+     ]
+    },
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [],
+   "id": "C11",
+   "key": "ann_30:direction:age",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.204755,
+    "from": 0.222335,
+    "reference": "typical patient",
+    "to": 0.42709
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "basis": "10th and 90th percentile of the training patients",
+     "from": {
+      "text": "42 years",
+      "value": 42.0
+     },
+     "to": {
+      "text": "66 years",
+      "value": 66.0
+     }
+    },
+    "direction": "raises",
+    "monotone": true,
+    "strength": "moderate",
+    "variable": "age"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0355603,
+     0.0107759
+    ],
+    "benefit_mean": -0.0107759,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 0.958377,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.00678435
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "age",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "age",
+     "short": "age",
+     "unit": "years"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_30",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "consistent_across_patients": false,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.146101,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "meaningful",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 1.76787,
+    "odds_ratio_range": [
+     0.460747,
+     6.46808
+    ],
+    "range_across_patients": [
+     -0.774907,
+     1.86688
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 0.569775
+   },
+   "evidence": {
+    "share_opposite_sign": 0.322314,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "no chest pain on exercise",
+     "n": 160
+    },
+    {
+     "label": "chest pain brought on by exercise",
+     "n": 82
+    }
+   ],
+   "id": "C12",
+   "key": "ann_30:direction:exang:1",
+   "n": 242,
+   "reasons": [
+    "32% of patients have the opposite sign (allowed: 10%)"
+   ],
+   "risk": {
+    "delta": -0.146101,
+    "from": 0.333353,
+    "reference": "typical patient",
+    "to": 0.187252
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "0",
+      "codes": [
+       "0"
+      ],
+      "cond": "exercise does not bring on chest pain",
+      "decoded": true,
+      "group": "patients without chest pain on exercise",
+      "label": "no chest pain on exercise",
+      "n_train": 160
+     },
+     "to": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "exercise brings on chest pain",
+      "decoded": true,
+      "group": "patients whose chest pain is brought on by exercise",
+      "label": "chest pain brought on by exercise",
+      "n_train": 82
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "moderate",
+    "variable": "exang"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0101506,
+     0.0392889
+    ],
+    "benefit_mean": 0.012931,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 0.491218,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.0105227
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "exang",
+     "decoded": true,
+     "kind": "category",
+     "label": "exercise-induced angina",
+     "short": "exercise-induced angina",
+     "unit": null
+    }
+   ],
+   "verified": false
+  },
+  {
+   "annotation": {
+    "id": "ann_30",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.110231,
+    "n_ok": false,
+    "qualifiers": [
+     "the model has little data on this",
+     "on the training data only"
+    ],
+    "size": "meaningful",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 0.574356,
+    "odds_ratio_range": [
+     0.574356,
+     0.574356
+    ],
+    "range_across_patients": [
+     -0.554505,
+     -0.554505
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": -0.554505
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "a normal thallium scan",
+     "n": 135
+    },
+    {
+     "label": "a fixed defect on the thallium scan",
+     "n": 15
+    }
+   ],
+   "id": "C13",
+   "key": "ann_30:direction:thal:6",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -0.110231,
+    "from": 0.333353,
+    "reference": "typical patient",
+    "to": 0.223122
+   },
+   "scope": "model",
+   "small_n": true,
+   "small_n_groups": [
+    "a fixed defect on the thallium scan"
+   ],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "3",
+      "codes": [
+       "3"
+      ],
+      "cond": "the thallium scan is normal",
+      "decoded": true,
+      "group": "patients with a normal thallium scan",
+      "label": "a normal thallium scan",
+      "n_train": 135
+     },
+     "to": {
+      "code": "6",
+      "codes": [
+       "6"
+      ],
+      "cond": "the thallium scan shows a fixed defect",
+      "decoded": true,
+      "group": "patients with a fixed defect on the thallium scan",
+      "label": "a fixed defect on the thallium scan",
+      "n_train": 15
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "moderate",
+    "variable": "thal"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.00217865,
+     0.0258106
+    ],
+    "benefit_mean": 0.0107759,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -0.554505,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.0103842
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "thal",
+     "decoded": false,
+     "kind": "category",
+     "label": "thallium stress test result",
+     "short": "thallium stress test result",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_30",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.0881788,
+    "n_ok": false,
+    "qualifiers": [
+     "the model has little data on this",
+     "on the training data only"
+    ],
+    "size": "meaningful",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 1.45728,
+    "odds_ratio_range": [
+     1.45728,
+     1.45728
+    ],
+    "range_across_patients": [
+     0.37657,
+     0.37657
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 0.37657
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "an upsloping ST segment",
+     "n": 115
+    },
+    {
+     "label": "a downsloping ST segment",
+     "n": 17
+    }
+   ],
+   "id": "C14",
+   "key": "ann_30:direction:slope:3",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.0881788,
+    "from": 0.333353,
+    "reference": "typical patient",
+    "to": 0.421532
+   },
+   "scope": "model",
+   "small_n": true,
+   "small_n_groups": [
+    "a downsloping ST segment"
+   ],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "the ST segment slopes up at peak exercise",
+      "decoded": true,
+      "group": "patients with an upsloping ST segment",
+      "label": "an upsloping ST segment",
+      "n_train": 115
+     },
+     "to": {
+      "code": "3",
+      "codes": [
+       "3"
+      ],
+      "cond": "the ST segment slopes down at peak exercise",
+      "decoded": true,
+      "group": "patients with a downsloping ST segment",
+      "label": "a downsloping ST segment",
+      "n_train": 17
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "moderate",
+    "variable": "slope"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0566565,
+     0.0322598
+    ],
+    "benefit_mean": -0.0107759,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 0.37657,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.0289373
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "slope",
+     "decoded": true,
+     "kind": "category",
+     "label": "slope of the ST segment at peak exercise",
+     "short": "slope of the ST segment at peak exercise",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_30",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.0094748,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly",
+     "on the training data only"
+    ],
+    "size": "slight",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 1.86726,
+    "odds_ratio_range": [
+     1.04325,
+     3.29014
+    ],
+    "range_across_patients": [
+     0.0423409,
+     1.19093
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 0.624474
+   },
+   "evidence": {
+    "share_opposite_sign": 0.00826446,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "a normal thallium scan",
+     "n": 135
+    },
+    {
+     "label": "a reversible defect on the thallium scan",
+     "n": 90
+    }
+   ],
+   "id": "C15",
+   "key": "ann_30:direction:thal:7",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.0094748,
+    "from": 0.333353,
+    "reference": "typical patient",
+    "to": 0.342828
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "3",
+      "codes": [
+       "3"
+      ],
+      "cond": "the thallium scan is normal",
+      "decoded": true,
+      "group": "patients with a normal thallium scan",
+      "label": "a normal thallium scan",
+      "n_train": 135
+     },
+     "to": {
+      "code": "7",
+      "codes": [
+       "7"
+      ],
+      "cond": "the thallium scan shows a reversible defect",
+      "decoded": true,
+      "group": "patients with a reversible defect on the thallium scan",
+      "label": "a reversible defect on the thallium scan",
+      "n_train": 90
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "moderate",
+    "variable": "thal"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.00217865,
+     0.0258106
+    ],
+    "benefit_mean": 0.0107759,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 0.504259,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.0103842
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "thal",
+     "decoded": false,
+     "kind": "category",
+     "label": "thallium stress test result",
+     "short": "thallium stress test result",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_30",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "agrees_with_direction": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.610991,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "method": "change in the model's log-odds for the typical patient",
+    "odds_ratio": 33.9317,
+    "unit": "log-odds (model)",
+    "value": 3.52435
+   },
+   "groups": [],
+   "id": "C16",
+   "key": "ann_30:magnitude:ca",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.610991,
+    "from": 0.333353,
+    "reference": "typical patient",
+    "to": 0.944344
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "basis": "10th and 90th percentile of the training patients",
+     "from": {
+      "text": "0 vessels",
+      "value": 0.0
+     },
+     "to": {
+      "text": "2 vessels",
+      "value": 2.0
+     }
+    },
+    "direction": "raises",
+    "related_direction": "ann_30:direction:ca",
+    "strength": "strong",
+    "variable": "ca"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0215323,
+     0.129679
+    ],
+    "benefit_mean": 0.0506466,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 3.52435,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.0362063
+   },
+   "type": "magnitude",
+   "variables": [
+    {
+     "base": "ca",
+     "decoded": true,
+     "kind": "count",
+     "label": "number of major vessels coloured by fluoroscopy",
+     "short": "number of vessels coloured by fluoroscopy",
+     "unit": "vessels"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_30",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "agrees_with_direction": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.47815,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "change in the model's log-odds for the typical patient",
+    "odds_ratio": 8.60948,
+    "unit": "log-odds (model)",
+    "value": 2.15286
+   },
+   "groups": [
+    {
+     "label": "an upsloping ST segment",
+     "n": 115
+    },
+    {
+     "label": "a flat ST segment",
+     "n": 110
+    }
+   ],
+   "id": "C17",
+   "key": "ann_30:magnitude:slope:2",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.47815,
+    "from": 0.333353,
+    "reference": "typical patient",
+    "to": 0.811503
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "the ST segment slopes up at peak exercise",
+      "decoded": true,
+      "group": "patients with an upsloping ST segment",
+      "label": "an upsloping ST segment",
+      "n_train": 115
+     },
+     "to": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "the ST segment is flat at peak exercise",
+      "decoded": true,
+      "group": "patients with a flat ST segment",
+      "label": "a flat ST segment",
+      "n_train": 110
+     }
+    },
+    "direction": "raises",
+    "related_direction": "ann_30:direction:slope:2",
+    "strength": "strong",
+    "variable": "slope"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0566565,
+     0.0322598
+    ],
+    "benefit_mean": -0.0107759,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 2.15286,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.0289373
+   },
+   "type": "magnitude",
+   "variables": [
+    {
+     "base": "slope",
+     "decoded": true,
+     "kind": "category",
+     "label": "slope of the ST segment at peak exercise",
+     "short": "slope of the ST segment at peak exercise",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_30",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "agrees_with_direction": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.365071,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "method": "change in the model's log-odds for the typical patient",
+    "odds_ratio": 4.80904,
+    "unit": "log-odds (model)",
+    "value": 1.5705
+   },
+   "groups": [],
+   "id": "C18",
+   "key": "ann_30:magnitude:oldpeak",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.365071,
+    "from": 0.247177,
+    "reference": "typical patient",
+    "to": 0.612248
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "basis": "10th and 90th percentile of the training patients",
+     "from": {
+      "text": "0.0 mm",
+      "value": 0.0
+     },
+     "to": {
+      "text": "2.8 mm",
+      "value": 2.8
+     }
+    },
+    "direction": "raises",
+    "related_direction": "ann_30:direction:oldpeak",
+    "strength": "strong",
+    "variable": "oldpeak"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0129324,
+     0.0398707
+    ],
+    "benefit_mean": 0.0118534,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 1.5705,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.00692281
+   },
+   "type": "magnitude",
+   "variables": [
+    {
+     "base": "oldpeak",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "ST depression during exercise (compared with rest)",
+     "short": "ST depression on exercise",
+     "unit": "mm"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_30",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "agrees_with_direction": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.346472,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "change in the model's log-odds for the typical patient",
+    "odds_ratio": 4.72406,
+    "unit": "log-odds (model)",
+    "value": 1.55267
+   },
+   "groups": [],
+   "id": "C19",
+   "key": "ann_30:magnitude:chol",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.346472,
+    "from": 0.209552,
+    "reference": "typical patient",
+    "to": 0.556024
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "basis": "10th and 90th percentile of the training patients",
+     "from": {
+      "text": "193 mg/dL (5.0 mmol/L)",
+      "value": 193.0
+     },
+     "to": {
+      "text": "308 mg/dL (8.0 mmol/L)",
+      "value": 308.0
+     }
+    },
+    "direction": "raises",
+    "related_direction": "ann_30:direction:chol",
+    "strength": "strong",
+    "variable": "chol"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0613206,
+     0.010777
+    ],
+    "benefit_mean": -0.0204741,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 1.55267,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.00972655
+   },
+   "type": "magnitude",
+   "variables": [
+    {
+     "base": "chol",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "serum cholesterol",
+     "short": "serum cholesterol",
+     "unit": "mg/dL"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_30",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "agrees_with_direction": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.317328,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "method": "change in the model's log-odds for the typical patient",
+    "odds_ratio": 0.0325701,
+    "unit": "log-odds (model)",
+    "value": -3.42436
+   },
+   "groups": [
+    {
+     "label": "male",
+     "n": 159
+    },
+    {
+     "label": "female",
+     "n": 83
+    }
+   ],
+   "id": "C20",
+   "key": "ann_30:magnitude:sex:0",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -0.317328,
+    "from": 0.333353,
+    "reference": "typical patient",
+    "to": 0.0160255
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "the patient is a man",
+      "decoded": true,
+      "group": "men",
+      "label": "male",
+      "n_train": 159
+     },
+     "to": {
+      "code": "0",
+      "codes": [
+       "0"
+      ],
+      "cond": "the patient is a woman",
+      "decoded": true,
+      "group": "women",
+      "label": "female",
+      "n_train": 83
+     }
+    },
+    "direction": "lowers",
+    "related_direction": "ann_30:direction:sex:0",
+    "strength": "strong",
+    "variable": "sex"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0279732,
+     0.0682014
+    ],
+    "benefit_mean": 0.0204741,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -2.63207,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.0297681
+   },
+   "type": "magnitude",
+   "variables": [
+    {
+     "base": "sex",
+     "decoded": true,
+     "kind": "category",
+     "label": "sex",
+     "short": "sex",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_30",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "no_numeric_effect": true,
+    "no_path": true
+   },
+   "estimate": {
+    "method": "exact Null rule (no path to the output over enabled, non-zero-weight edges), confirmed by moving every column to its minimum and maximum",
+    "unit": "max |change in log-odds|",
+    "value": 0.0
+   },
+   "groups": [],
+   "id": "C21",
+   "key": "ann_30:null:restecg",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "method": "exact",
+    "variable": "restecg"
+   },
+   "test_check": null,
+   "type": "null",
+   "variables": [
+    {
+     "base": "restecg",
+     "decoded": true,
+     "kind": "category",
+     "label": "resting ECG",
+     "short": "resting ECG",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_30",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "no_numeric_effect": true,
+    "no_path": true
+   },
+   "estimate": {
+    "method": "exact Null rule (no path to the output over enabled, non-zero-weight edges), confirmed by moving every column to its minimum and maximum",
+    "unit": "max |change in log-odds|",
+    "value": 0.0
+   },
+   "groups": [],
+   "id": "C22",
+   "key": "ann_30:null:thalach",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "method": "exact",
+    "variable": "thalach"
+   },
+   "test_check": null,
+   "type": "null",
+   "variables": [
+    {
+     "base": "thalach",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "maximum heart rate reached during the exercise test",
+     "short": "maximum heart rate",
+     "unit": "beats per minute"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_30",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "no_numeric_effect": true,
+    "no_path": true
+   },
+   "estimate": {
+    "method": "exact Null rule (no path to the output over enabled, non-zero-weight edges), confirmed by moving every column to its minimum and maximum",
+    "unit": "max |change in log-odds|",
+    "value": 0.0
+   },
+   "groups": [],
+   "id": "C23",
+   "key": "ann_30:null:trestbps",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "method": "exact",
+    "variable": "trestbps"
+   },
+   "test_check": null,
+   "type": "null",
+   "variables": [
+    {
+     "base": "trestbps",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "resting blood pressure",
+     "short": "resting blood pressure",
+     "unit": "mm Hg"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_28",
+    "name": "sex_exang_interaction"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.29823,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only where this part reads it",
+    "odds_ratio": 0.193102,
+    "odds_ratio_range": [
+     0.0727963,
+     1.0
+    ],
+    "range_across_patients": [
+     -2.62009,
+     0.0
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": -1.64454
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.128099
+   },
+   "groups": [
+    {
+     "label": "male",
+     "n": 159
+    },
+    {
+     "label": "female",
+     "n": 83
+    }
+   ],
+   "id": "C24",
+   "key": "ann_28:direction:sex:0",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -0.29823,
+    "from": 0.333353,
+    "reference": "typical patient",
+    "to": 0.0351229
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "the patient is a man",
+      "decoded": true,
+      "group": "men",
+      "label": "male",
+      "n_train": 159
+     },
+     "to": {
+      "code": "0",
+      "codes": [
+       "0"
+      ],
+      "cond": "the patient is a woman",
+      "decoded": true,
+      "group": "women",
+      "label": "female",
+      "n_train": 83
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "sex"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0250545,
+     0.0514914
+    ],
+    "benefit_mean": 0.0107759,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -1.82779,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.0166147
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "sex",
+     "decoded": true,
+     "kind": "category",
+     "label": "sex",
+     "short": "sex",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_28",
+    "name": "sex_exang_interaction"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.263299,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only where this part reads it",
+    "odds_ratio": 0.376129,
+    "odds_ratio_range": [
+     0.150649,
+     1.0
+    ],
+    "range_across_patients": [
+     -1.8928,
+     0.0
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": -0.977823
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.268595
+   },
+   "groups": [
+    {
+     "label": "fasting blood sugar of 120 mg/dL or less",
+     "n": 209
+    },
+    {
+     "label": "fasting blood sugar above 120 mg/dL",
+     "n": 33
+    }
+   ],
+   "id": "C25",
+   "key": "ann_28:direction:fbs:1",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -0.263299,
+    "from": 0.333353,
+    "reference": "typical patient",
+    "to": 0.0700542
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "0",
+      "codes": [
+       "0"
+      ],
+      "cond": "fasting blood sugar is 120 mg/dL or less",
+      "decoded": true,
+      "group": "patients with fasting blood sugar of 120 mg/dL or less",
+      "label": "fasting blood sugar of 120 mg/dL or less",
+      "n_train": 209
+     },
+     "to": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "fasting blood sugar is above 120 mg/dL",
+      "decoded": true,
+      "group": "patients with fasting blood sugar above 120 mg/dL",
+      "label": "fasting blood sugar above 120 mg/dL",
+      "n_train": 33
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "moderate",
+    "variable": "fbs"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0087146,
+     0.0313874
+    ],
+    "benefit_mean": 0.0075431,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -1.09767,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.00387677
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "fbs",
+     "decoded": true,
+     "kind": "category",
+     "label": "fasting blood sugar",
+     "short": "fasting blood sugar",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_28",
+    "name": "sex_exang_interaction"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.196497,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "meaningful",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only where this part reads it",
+    "odds_ratio": 0.567531,
+    "odds_ratio_range": [
+     0.317084,
+     1.0
+    ],
+    "range_across_patients": [
+     -1.14859,
+     0.0
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": -0.56646
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.359504
+   },
+   "groups": [
+    {
+     "label": "thallium stress test result other than a reversible defect on the thallium scan",
+     "n": 152
+    },
+    {
+     "label": "a reversible defect on the thallium scan",
+     "n": 90
+    }
+   ],
+   "id": "C26",
+   "key": "ann_28:direction:thal:7",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -0.196497,
+    "from": 0.333353,
+    "reference": "typical patient",
+    "to": 0.136856
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "3",
+      "codes": [
+       "3",
+       "4",
+       "6"
+      ],
+      "cond": "thallium stress test result is something other than a reversible defect on the thallium scan",
+      "decoded": true,
+      "group": "patients with thallium stress test result other than a reversible defect on the thallium scan",
+      "label": "thallium stress test result other than a reversible defect on the thallium scan",
+      "n_train": 152
+     },
+     "to": {
+      "code": "7",
+      "codes": [
+       "7"
+      ],
+      "cond": "the thallium scan shows a reversible defect",
+      "decoded": true,
+      "group": "patients with a reversible defect on the thallium scan",
+      "label": "a reversible defect on the thallium scan",
+      "n_train": 90
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "moderate",
+    "variable": "thal"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0194713,
+     0.0103023
+    ],
+    "benefit_mean": -0.00323276,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -0.686676,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.00214607
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "thal",
+     "decoded": false,
+     "kind": "category",
+     "label": "thallium stress test result",
+     "short": "thallium stress test result",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_28",
+    "name": "sex_exang_interaction"
+   },
+   "checks": {
+    "consistent_across_patients": false,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.146101,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "meaningful",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only where this part reads it",
+    "odds_ratio": 1.76787,
+    "odds_ratio_range": [
+     0.460747,
+     6.46808
+    ],
+    "range_across_patients": [
+     -0.774907,
+     1.86688
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 0.569775
+   },
+   "evidence": {
+    "share_opposite_sign": 0.322314,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "no chest pain on exercise",
+     "n": 160
+    },
+    {
+     "label": "chest pain brought on by exercise",
+     "n": 82
+    }
+   ],
+   "id": "C27",
+   "key": "ann_28:direction:exang:1",
+   "n": 242,
+   "reasons": [
+    "32% of patients have the opposite sign (allowed: 10%)"
+   ],
+   "risk": {
+    "delta": -0.146101,
+    "from": 0.333353,
+    "reference": "typical patient",
+    "to": 0.187252
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "0",
+      "codes": [
+       "0"
+      ],
+      "cond": "exercise does not bring on chest pain",
+      "decoded": true,
+      "group": "patients without chest pain on exercise",
+      "label": "no chest pain on exercise",
+      "n_train": 160
+     },
+     "to": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "exercise brings on chest pain",
+      "decoded": true,
+      "group": "patients whose chest pain is brought on by exercise",
+      "label": "chest pain brought on by exercise",
+      "n_train": 82
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "moderate",
+    "variable": "exang"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0101506,
+     0.0392889
+    ],
+    "benefit_mean": 0.012931,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 0.491218,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.0105227
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "exang",
+     "decoded": true,
+     "kind": "category",
+     "label": "exercise-induced angina",
+     "short": "exercise-induced angina",
+     "unit": null
+    }
+   ],
+   "verified": false
+  },
+  {
+   "annotation": {
+    "id": "ann_28",
+    "name": "sex_exang_interaction"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.0,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly",
+     "on the training data only"
+    ],
+    "size": "slight",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only where this part reads it",
+    "odds_ratio": 1.72936,
+    "odds_ratio_range": [
+     1.0,
+     3.15374
+    ],
+    "range_across_patients": [
+     0.0,
+     1.14859
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 0.547751
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.508264
+   },
+   "groups": [
+    {
+     "label": "chest pain type other than atypical angina",
+     "n": 200
+    },
+    {
+     "label": "atypical angina",
+     "n": 42
+    }
+   ],
+   "id": "C28",
+   "key": "ann_28:direction:cp:2",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.0,
+    "from": 0.333353,
+    "reference": "typical patient",
+    "to": 0.333353
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "4",
+      "codes": [
+       "1",
+       "3",
+       "4"
+      ],
+      "cond": "chest pain type is something other than atypical angina",
+      "decoded": true,
+      "group": "patients with chest pain type other than atypical angina",
+      "label": "chest pain type other than atypical angina",
+      "n_train": 200
+     },
+     "to": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "the patient has atypical angina",
+      "decoded": true,
+      "group": "patients with atypical angina",
+      "label": "atypical angina",
+      "n_train": 42
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "moderate",
+    "variable": "cp"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.00879665,
+     0.00677601
+    ],
+    "benefit_mean": 0.0,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 0.576829,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.00470751
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "cp",
+     "decoded": true,
+     "kind": "category",
+     "label": "chest pain type",
+     "short": "chest pain type",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_28",
+    "name": "sex_exang_interaction"
+   },
+   "checks": {
+    "both_groups_observed": true,
+    "consistent_across_patients": true,
+    "large_enough": true,
+    "mechanism_agrees": true
+   },
+   "confidence": {
+    "delta_risk": 0.234455,
+    "n_ok": true,
+    "qualifiers": [],
+    "size": "large",
+    "test": "agrees",
+    "word": "clearly"
+   },
+   "estimate": {
+    "method": "difference between the two groups (first minus second) of the mean change in the model's log-odds when the main variable changes everywhere",
+    "odds_ratio": 1.95607,
+    "unit": "log-odds (model)",
+    "value": 0.670938
+   },
+   "evidence": {
+    "counterfactual_did_through_part": 0.711405,
+    "counterfactual_modifier_settings": [
+     "0",
+     "1"
+    ],
+    "did_share_same_sign": 1.0,
+    "method_note": "groups are the patients' actual values; the difference-in-differences sets the modifier for every patient, only where this part reads it"
+   },
+   "groups": [
+    {
+     "cond": "exercise brings on chest pain",
+     "estimate": 1.06807,
+     "group": "patients whose chest pain is brought on by exercise",
+     "label": "chest pain brought on by exercise",
+     "n": 82,
+     "odds_ratio": 2.90976,
+     "part_effect": -0.122865,
+     "range_across_patients": [
+      0.701434,
+      1.19093
+     ],
+     "risk_from": 0.187252,
+     "risk_to": 0.431182
+    },
+    {
+     "cond": "exercise does not bring on chest pain",
+     "estimate": 0.397132,
+     "group": "patients without chest pain on exercise",
+     "label": "no chest pain on exercise",
+     "n": 160,
+     "odds_ratio": 1.48755,
+     "part_effect": -0.793803,
+     "range_across_patients": [
+      0.0423409,
+      1.19093
+     ],
+     "risk_from": 0.333353,
+     "risk_to": 0.342828
+    }
+   ],
+   "id": "C29",
+   "key": "ann_28:interaction:thalxexang",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.234455,
+    "delta_basis": "change in predicted risk in the stronger group minus in the weaker group",
+    "from": null,
+    "groups": [
+     {
+      "from": 0.187252,
+      "label": "chest pain brought on by exercise",
+      "to": 0.431182
+     },
+     {
+      "from": 0.333353,
+      "label": "no chest pain on exercise",
+      "to": 0.342828
+     }
+    ],
+    "reference": "typical patient of each group (the typical patient with the modifier set to the group's value)",
+    "to": null
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "3",
+      "codes": [
+       "3",
+       "4",
+       "6"
+      ],
+      "cond": "thallium stress test result is something other than a reversible defect on the thallium scan",
+      "decoded": true,
+      "group": "patients with thallium stress test result other than a reversible defect on the thallium scan",
+      "label": "thallium stress test result other than a reversible defect on the thallium scan",
+      "n_train": 152
+     },
+     "to": {
+      "code": "7",
+      "codes": [
+       "7"
+      ],
+      "cond": "the thallium scan shows a reversible defect",
+      "decoded": true,
+      "group": "patients with a reversible defect on the thallium scan",
+      "label": "a reversible defect on the thallium scan",
+      "n_train": 90
+     }
+    },
+    "direction": "raises",
+    "modifier": "exang",
+    "pattern": "amplified",
+    "strength": "strong",
+    "stronger_group": {
+     "cond": "exercise brings on chest pain",
+     "estimate": 1.06807,
+     "group": "patients whose chest pain is brought on by exercise",
+     "label": "chest pain brought on by exercise",
+     "n": 82,
+     "odds_ratio": 2.90976,
+     "part_effect": -0.122865,
+     "range_across_patients": [
+      0.701434,
+      1.19093
+     ],
+     "risk_from": 0.187252,
+     "risk_to": 0.431182
+    },
+    "variable": "thal",
+    "weaker_group": {
+     "cond": "exercise does not bring on chest pain",
+     "estimate": 0.397132,
+     "group": "patients without chest pain on exercise",
+     "label": "no chest pain on exercise",
+     "n": 160,
+     "odds_ratio": 1.48755,
+     "part_effect": -0.793803,
+     "range_across_patients": [
+      0.0423409,
+      1.19093
+     ],
+     "risk_from": 0.333353,
+     "risk_to": 0.342828
+    }
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0101506,
+     0.0392889
+    ],
+    "benefit_mean": 0.012931,
+    "bootstrap_B": 1000,
+    "difference": 0.832225,
+    "difference_ci95": [
+     0.682954,
+     0.966603
+    ],
+    "groups_n": [
+     17,
+     44
+    ],
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "measure_difference": "group difference of the main variable's effect on test patients, stratified bootstrap over test patients (seed 42)",
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.0105227
+   },
+   "type": "interaction",
+   "variables": [
+    {
+     "base": "thal",
+     "decoded": false,
+     "kind": "category",
+     "label": "thallium stress test result",
+     "short": "thallium stress test result",
+     "unit": null
+    },
+    {
+     "base": "exang",
+     "decoded": true,
+     "kind": "category",
+     "label": "exercise-induced angina",
+     "short": "exercise-induced angina",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_28",
+    "name": "sex_exang_interaction"
+   },
+   "checks": {
+    "both_groups_observed": true,
+    "consistent_across_patients": true,
+    "large_enough": true,
+    "mechanism_agrees": true
+   },
+   "confidence": {
+    "delta_risk": 0.228901,
+    "n_ok": true,
+    "qualifiers": [],
+    "size": "large",
+    "test": "agrees",
+    "word": "clearly"
+   },
+   "estimate": {
+    "method": "difference between the two groups (first minus second) of the mean change in the model's log-odds when the main variable changes everywhere",
+    "odds_ratio": 3.11291,
+    "unit": "log-odds (model)",
+    "value": 1.13556
+   },
+   "evidence": {
+    "counterfactual_did_through_part": 1.11964,
+    "counterfactual_modifier_settings": [
+     "0",
+     "1"
+    ],
+    "did_share_same_sign": 1.0,
+    "method_note": "groups are the patients' actual values; the difference-in-differences sets the modifier for every patient, only where this part reads it"
+   },
+   "groups": [
+    {
+     "cond": "exercise brings on chest pain",
+     "estimate": -0.0767566,
+     "group": "patients whose chest pain is brought on by exercise",
+     "label": "chest pain brought on by exercise",
+     "n": 82,
+     "odds_ratio": 0.926115,
+     "part_effect": -0.227041,
+     "range_across_patients": [
+      -0.838004,
+      0.150284
+     ],
+     "risk_from": 0.187252,
+     "risk_to": 0.211204
+    },
+    {
+     "cond": "exercise does not bring on chest pain",
+     "estimate": -1.21231,
+     "group": "patients without chest pain on exercise",
+     "label": "no chest pain on exercise",
+     "n": 160,
+     "odds_ratio": 0.297508,
+     "part_effect": -1.3626,
+     "range_across_patients": [
+      -1.74251,
+      0.0329559
+     ],
+     "risk_from": 0.333353,
+     "risk_to": 0.0805
+    }
+   ],
+   "id": "C30",
+   "key": "ann_28:interaction:fbsxexang",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.228901,
+    "delta_basis": "change in predicted risk in the stronger group minus in the weaker group",
+    "from": null,
+    "groups": [
+     {
+      "from": 0.187252,
+      "label": "chest pain brought on by exercise",
+      "to": 0.211204
+     },
+     {
+      "from": 0.333353,
+      "label": "no chest pain on exercise",
+      "to": 0.0805
+     }
+    ],
+    "reference": "typical patient of each group (the typical patient with the modifier set to the group's value)",
+    "to": null
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "0",
+      "codes": [
+       "0"
+      ],
+      "cond": "fasting blood sugar is 120 mg/dL or less",
+      "decoded": true,
+      "group": "patients with fasting blood sugar of 120 mg/dL or less",
+      "label": "fasting blood sugar of 120 mg/dL or less",
+      "n_train": 209
+     },
+     "to": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "fasting blood sugar is above 120 mg/dL",
+      "decoded": true,
+      "group": "patients with fasting blood sugar above 120 mg/dL",
+      "label": "fasting blood sugar above 120 mg/dL",
+      "n_train": 33
+     }
+    },
+    "direction": "lowers",
+    "modifier": "exang",
+    "pattern": "amplified",
+    "strength": "strong",
+    "stronger_group": {
+     "cond": "exercise does not bring on chest pain",
+     "estimate": -1.21231,
+     "group": "patients without chest pain on exercise",
+     "label": "no chest pain on exercise",
+     "n": 160,
+     "odds_ratio": 0.297508,
+     "part_effect": -1.3626,
+     "range_across_patients": [
+      -1.74251,
+      0.0329559
+     ],
+     "risk_from": 0.333353,
+     "risk_to": 0.0805
+    },
+    "variable": "fbs",
+    "weaker_group": {
+     "cond": "exercise brings on chest pain",
+     "estimate": -0.0767566,
+     "group": "patients whose chest pain is brought on by exercise",
+     "label": "chest pain brought on by exercise",
+     "n": 82,
+     "odds_ratio": 0.926115,
+     "part_effect": -0.227041,
+     "range_across_patients": [
+      -0.838004,
+      0.150284
+     ],
+     "risk_from": 0.187252,
+     "risk_to": 0.211204
+    }
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0101506,
+     0.0392889
+    ],
+    "benefit_mean": 0.012931,
+    "bootstrap_B": 1000,
+    "difference": 1.25882,
+    "difference_ci95": [
+     1.00142,
+     1.47975
+    ],
+    "groups_n": [
+     17,
+     44
+    ],
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "measure_difference": "group difference of the main variable's effect on test patients, stratified bootstrap over test patients (seed 42)",
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.0105227
+   },
+   "type": "interaction",
+   "variables": [
+    {
+     "base": "fbs",
+     "decoded": true,
+     "kind": "category",
+     "label": "fasting blood sugar",
+     "short": "fasting blood sugar",
+     "unit": null
+    },
+    {
+     "base": "exang",
+     "decoded": true,
+     "kind": "category",
+     "label": "exercise-induced angina",
+     "short": "exercise-induced angina",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_28",
+    "name": "sex_exang_interaction"
+   },
+   "checks": {
+    "both_groups_observed": true,
+    "consistent_across_patients": true,
+    "large_enough": true,
+    "mechanism_agrees": true
+   },
+   "confidence": {
+    "delta_risk": 0.223524,
+    "n_ok": true,
+    "qualifiers": [],
+    "size": "large",
+    "test": "agrees",
+    "word": "clearly"
+   },
+   "estimate": {
+    "method": "difference between the two groups (first minus second) of the mean change in the model's log-odds when the main variable changes everywhere",
+    "odds_ratio": 6.37254,
+    "unit": "log-odds (model)",
+    "value": 1.852
+   },
+   "evidence": {
+    "counterfactual_did_through_part": 1.98165,
+    "counterfactual_modifier_settings": [
+     "0",
+     "1"
+    ],
+    "did_share_same_sign": 1.0,
+    "method_note": "groups are the patients' actual values; the difference-in-differences sets the modifier for every patient, only where this part reads it"
+   },
+   "groups": [
+    {
+     "cond": "exercise brings on chest pain",
+     "estimate": -1.22435,
+     "group": "patients whose chest pain is brought on by exercise",
+     "label": "chest pain brought on by exercise",
+     "n": 82,
+     "odds_ratio": 0.293949,
+     "part_effect": -0.420077,
+     "range_across_patients": [
+      -1.79256,
+      -0.804272
+     ],
+     "risk_from": 0.187252,
+     "risk_to": 0.0934485
+    },
+    {
+     "cond": "exercise does not bring on chest pain",
+     "estimate": -3.07635,
+     "group": "patients without chest pain on exercise",
+     "label": "no chest pain on exercise",
+     "n": 160,
+     "odds_ratio": 0.0461274,
+     "part_effect": -2.27208,
+     "range_across_patients": [
+      -3.42436,
+      -2.35558
+     ],
+     "risk_from": 0.333353,
+     "risk_to": 0.0160255
+    }
+   ],
+   "id": "C31",
+   "key": "ann_28:interaction:sexxexang",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.223524,
+    "delta_basis": "change in predicted risk in the stronger group minus in the weaker group",
+    "from": null,
+    "groups": [
+     {
+      "from": 0.187252,
+      "label": "chest pain brought on by exercise",
+      "to": 0.0934485
+     },
+     {
+      "from": 0.333353,
+      "label": "no chest pain on exercise",
+      "to": 0.0160255
+     }
+    ],
+    "reference": "typical patient of each group (the typical patient with the modifier set to the group's value)",
+    "to": null
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "the patient is a man",
+      "decoded": true,
+      "group": "men",
+      "label": "male",
+      "n_train": 159
+     },
+     "to": {
+      "code": "0",
+      "codes": [
+       "0"
+      ],
+      "cond": "the patient is a woman",
+      "decoded": true,
+      "group": "women",
+      "label": "female",
+      "n_train": 83
+     }
+    },
+    "direction": "lowers",
+    "modifier": "exang",
+    "pattern": "amplified",
+    "strength": "strong",
+    "stronger_group": {
+     "cond": "exercise does not bring on chest pain",
+     "estimate": -3.07635,
+     "group": "patients without chest pain on exercise",
+     "label": "no chest pain on exercise",
+     "n": 160,
+     "odds_ratio": 0.0461274,
+     "part_effect": -2.27208,
+     "range_across_patients": [
+      -3.42436,
+      -2.35558
+     ],
+     "risk_from": 0.333353,
+     "risk_to": 0.0160255
+    },
+    "variable": "sex",
+    "weaker_group": {
+     "cond": "exercise brings on chest pain",
+     "estimate": -1.22435,
+     "group": "patients whose chest pain is brought on by exercise",
+     "label": "chest pain brought on by exercise",
+     "n": 82,
+     "odds_ratio": 0.293949,
+     "part_effect": -0.420077,
+     "range_across_patients": [
+      -1.79256,
+      -0.804272
+     ],
+     "risk_from": 0.187252,
+     "risk_to": 0.0934485
+    }
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0101506,
+     0.0392889
+    ],
+    "benefit_mean": 0.012931,
+    "bootstrap_B": 1000,
+    "difference": 1.56733,
+    "difference_ci95": [
+     1.27274,
+     1.86512
+    ],
+    "groups_n": [
+     17,
+     44
+    ],
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "measure_difference": "group difference of the main variable's effect on test patients, stratified bootstrap over test patients (seed 42)",
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.0105227
+   },
+   "type": "interaction",
+   "variables": [
+    {
+     "base": "sex",
+     "decoded": true,
+     "kind": "category",
+     "label": "sex",
+     "short": "sex",
+     "unit": null
+    },
+    {
+     "base": "exang",
+     "decoded": true,
+     "kind": "category",
+     "label": "exercise-induced angina",
+     "short": "exercise-induced angina",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_28",
+    "name": "sex_exang_interaction"
+   },
+   "checks": {
+    "both_groups_observed": true,
+    "consistent_across_patients": true,
+    "large_enough": true,
+    "mechanism_agrees": true
+   },
+   "confidence": {
+    "delta_risk": 0.0916749,
+    "n_ok": true,
+    "qualifiers": [],
+    "size": "meaningful",
+    "test": "agrees",
+    "word": "clearly"
+   },
+   "estimate": {
+    "method": "difference between the two groups (first minus second) of the mean change in the model's log-odds when the main variable changes everywhere",
+    "odds_ratio": 0.496905,
+    "unit": "log-odds (model)",
+    "value": -0.699357
+   },
+   "evidence": {
+    "counterfactual_did_through_part": -0.75012,
+    "counterfactual_modifier_settings": [
+     "0",
+     "1"
+    ],
+    "did_share_same_sign": 1.0,
+    "method_note": "groups are the patients' actual values; the difference-in-differences sets the modifier for every patient, only where this part reads it"
+   },
+   "groups": [
+    {
+     "cond": "exercise brings on chest pain",
+     "estimate": -1.34889,
+     "group": "patients whose chest pain is brought on by exercise",
+     "label": "chest pain brought on by exercise",
+     "n": 82,
+     "odds_ratio": 0.259529,
+     "part_effect": 0.0853666,
+     "range_across_patients": [
+      -1.43425,
+      -0.993705
+     ],
+     "risk_from": 0.187252,
+     "risk_to": 0.0520439
+    },
+    {
+     "cond": "exercise does not bring on chest pain",
+     "estimate": -0.649531,
+     "group": "patients without chest pain on exercise",
+     "label": "no chest pain on exercise",
+     "n": 160,
+     "odds_ratio": 0.52229,
+     "part_effect": 0.784723,
+     "range_across_patients": [
+      -1.43425,
+      -0.285661
+     ],
+     "risk_from": 0.333353,
+     "risk_to": 0.10647
+    }
+   ],
+   "id": "C32",
+   "key": "ann_28:interaction:cpxexang",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -0.0916749,
+    "delta_basis": "change in predicted risk in the stronger group minus in the weaker group",
+    "from": null,
+    "groups": [
+     {
+      "from": 0.187252,
+      "label": "chest pain brought on by exercise",
+      "to": 0.0520439
+     },
+     {
+      "from": 0.333353,
+      "label": "no chest pain on exercise",
+      "to": 0.10647
+     }
+    ],
+    "reference": "typical patient of each group (the typical patient with the modifier set to the group's value)",
+    "to": null
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "4",
+      "codes": [
+       "1",
+       "3",
+       "4"
+      ],
+      "cond": "chest pain type is something other than atypical angina",
+      "decoded": true,
+      "group": "patients with chest pain type other than atypical angina",
+      "label": "chest pain type other than atypical angina",
+      "n_train": 200
+     },
+     "to": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "the patient has atypical angina",
+      "decoded": true,
+      "group": "patients with atypical angina",
+      "label": "atypical angina",
+      "n_train": 42
+     }
+    },
+    "direction": "lowers",
+    "modifier": "exang",
+    "pattern": "amplified",
+    "strength": "strong",
+    "stronger_group": {
+     "cond": "exercise brings on chest pain",
+     "estimate": -1.34889,
+     "group": "patients whose chest pain is brought on by exercise",
+     "label": "chest pain brought on by exercise",
+     "n": 82,
+     "odds_ratio": 0.259529,
+     "part_effect": 0.0853666,
+     "range_across_patients": [
+      -1.43425,
+      -0.993705
+     ],
+     "risk_from": 0.187252,
+     "risk_to": 0.0520439
+    },
+    "variable": "cp",
+    "weaker_group": {
+     "cond": "exercise does not bring on chest pain",
+     "estimate": -0.649531,
+     "group": "patients without chest pain on exercise",
+     "label": "no chest pain on exercise",
+     "n": 160,
+     "odds_ratio": 0.52229,
+     "part_effect": 0.784723,
+     "range_across_patients": [
+      -1.43425,
+      -0.285661
+     ],
+     "risk_from": 0.333353,
+     "risk_to": 0.10647
+    }
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0101506,
+     0.0392889
+    ],
+    "benefit_mean": 0.012931,
+    "bootstrap_B": 1000,
+    "difference": -0.759775,
+    "difference_ci95": [
+     -0.950967,
+     -0.573492
+    ],
+    "groups_n": [
+     17,
+     44
+    ],
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "measure_difference": "group difference of the main variable's effect on test patients, stratified bootstrap over test patients (seed 42)",
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.0105227
+   },
+   "type": "interaction",
+   "variables": [
+    {
+     "base": "cp",
+     "decoded": true,
+     "kind": "category",
+     "label": "chest pain type",
+     "short": "chest pain type",
+     "unit": null
+    },
+    {
+     "base": "exang",
+     "decoded": true,
+     "kind": "category",
+     "label": "exercise-induced angina",
+     "short": "exercise-induced angina",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_29",
+    "name": "slope1_offset"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.0129796,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly",
+     "on the training data only"
+    ],
+    "size": "slight",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only where this part reads it",
+    "odds_ratio": 1.05957,
+    "odds_ratio_range": [
+     1.05957,
+     1.05957
+    ],
+    "range_across_patients": [
+     0.0578597,
+     0.0578597
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 0.0578597
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "an upsloping ST segment",
+     "n": 115
+    },
+    {
+     "label": "slope of the ST segment at peak exercise other than an upsloping ST segment",
+     "n": 127
+    }
+   ],
+   "id": "C33",
+   "key": "ann_29:direction:slope:2+3",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.0129796,
+    "from": 0.333353,
+    "reference": "typical patient",
+    "to": 0.346333
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "the ST segment slopes up at peak exercise",
+      "decoded": true,
+      "group": "patients with an upsloping ST segment",
+      "label": "an upsloping ST segment",
+      "n_train": 115
+     },
+     "to": {
+      "code": "2",
+      "codes": [
+       "2",
+       "3"
+      ],
+      "cond": "slope of the ST segment at peak exercise is something other than an upsloping ST segment",
+      "decoded": true,
+      "group": "patients with slope of the ST segment at peak exercise other than an upsloping ST segment",
+      "label": "slope of the ST segment at peak exercise other than an upsloping ST segment",
+      "n_train": 127
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "slight",
+    "variable": "slope"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.00645161,
+     0.0045263
+    ],
+    "benefit_mean": 0.0,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 0.0578597,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.000276912
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "slope",
+     "decoded": true,
+     "kind": "category",
+     "label": "slope of the ST segment at peak exercise",
+     "short": "slope of the ST segment at peak exercise",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_29",
+    "name": "slope1_offset"
+   },
+   "checks": {
+    "auc_unchanged": true,
+    "small_change": true
+   },
+   "estimate": {
+    "auc_change": 0.000276912,
+    "max_abs_log_odds": 0.0303644,
+    "method": "the part switched off (exits at 0, or at their mean when always on)",
+    "unit": "max |change in predicted risk|",
+    "value": 0.00758877
+   },
+   "groups": [],
+   "id": "C34",
+   "key": "ann_29:null:inert",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "max_change_in_risk": 0.00758877,
+    "method": "ablation"
+   },
+   "test_check": null,
+   "type": "null",
+   "variables": [
+    {
+     "base": "slope",
+     "decoded": true,
+     "kind": "category",
+     "label": "slope of the ST segment at peak exercise",
+     "short": "slope of the ST segment at peak exercise",
+     "unit": null
+    }
+   ],
+   "verified": true
+  }
+ ],
+ "claims_hash": "3790230c015613971ba0e792c751412bb4b1c44b703e2e76b444c87ba111205a",
+ "codebook": {
+  "checks": [
+   {
+    "check": "positive share plausible for Cleveland (about 46%)",
+    "detail": "positive share 0.442",
+    "passed": true
+   }
+  ],
+  "gaps": [
+   "thal:4 is not a code in the UCI documentation (3 normal, 6 fixed defect, 7 reversible defect); it is not decoded (2 training patients; most likely the raw file's missing thal values, but this is not recorded).",
+   "ca takes the value 0.672 for 3 training patients: missing values filled with the column mean. Printed as 'about 0.7 vessels (a filled-in missing value)'.",
+   "The dataset's feature_types lists oldpeak as an integer; it is a decimal in mm."
+  ],
+  "id": "uci-heart-cleveland",
+  "source": "UCI Machine Learning Repository, Heart Disease (dataset 45), attribute documentation heart-disease.names (Detrano et al. 1989)"
+ },
+ "counts": {
+  "by_type": {
+   "direction": [
+    18,
+    21
+   ],
+   "interaction": [
+    4,
+    4
+   ],
+   "magnitude": [
+    5,
+    5
+   ],
+   "null": [
+    4,
+    4
+   ],
+   "rule": [
+    0,
+    0
+   ],
+   "subgroup": [
+    0,
+    0
+   ],
+   "threshold": [
+    0,
+    0
+   ]
+  },
+  "claims": 34,
+  "clearly": 7,
+  "not_supported": 3,
+  "verified": 31
+ },
+ "dataset": {
+  "id": "eea247c2-bdb7-41af-8ec1-9e26dcb5050d",
+  "name": "Heart Disease (binary, prepared)"
+ },
+ "drafted": {
+  "annotations": {
+   "ann_28": [
+    {
+     "claims": [
+      "C24",
+      "C25",
+      "C26"
+     ],
+     "text": "Through this part, being a woman lowers a typical patient's predicted risk from about 33% to about 4%, fasting blood sugar above 120 mg/dL to about 7%, and a reversible thallium defect to about 14% (on the training data only)."
+    },
+    {
+     "claims": [
+      "C31"
+     ],
+     "text": "Being a woman clearly lowers the predicted risk more if exercise does not bring on chest pain (from about 33% to about 2%, against about 19% to about 9% with it)."
+    },
+    {
+     "claims": [
+      "C30"
+     ],
+     "text": "Fasting blood sugar above 120 mg/dL clearly lowers it more if exercise does not bring on chest pain (from about 33% to about 8%, against about 19% to about 21% with it)."
+    },
+    {
+     "claims": [
+      "C29"
+     ],
+     "text": "A reversible thallium defect clearly raises it more if exercise brings on chest pain (from about 19% to about 43%, against about 33% to about 34% without it)."
+    },
+    {
+     "claims": [
+      "C32"
+     ],
+     "text": "Atypical angina clearly lowers it more if exercise brings on chest pain (from about 19% to about 5%, against about 33% to about 11% without it)."
+    },
+    {
+     "claims": [
+      "C28"
+     ],
+     "text": "On its own through this part, atypical angina changes the predicted risk only slightly (on the training data only)."
+    }
+   ],
+   "ann_29": [
+    {
+     "claims": [
+      "C34"
+     ],
+     "text": "This part barely changes the predictions."
+    },
+    {
+     "claims": [
+      "C33"
+     ],
+     "text": "Through it, an ST segment that does not slope up at peak exercise raises a typical patient's predicted risk only slightly, from about 33% to about 35% (on the training data only)."
+    }
+   ],
+   "ann_30": [
+    {
+     "claims": [
+      "C07",
+      "C08",
+      "C10"
+     ],
+     "text": "For a typical patient, the model clearly gives a lower predicted risk of heart disease with typical angina (about 4%), non-anginal chest pain (about 7%) or atypical angina (about 11%) than with no chest pain symptoms (about 33%)."
+    },
+    {
+     "claims": [
+      "C01",
+      "C16",
+      "C03",
+      "C17",
+      "C04",
+      "C18",
+      "C05",
+      "C19",
+      "C11"
+     ],
+     "text": "Going from 0 to 2 vessels coloured raises a typical patient's predicted risk from about 33% to about 94%, a flat ST segment raises it to about 81%, more ST depression on exercise (0 to 2.8 mm) from about 25% to about 61%, higher cholesterol (193 to 308 mg/dL) from about 21% to about 56%, and older age (42 to 66 years) from about 22% to about 43% (on the training data only)."
+    },
+    {
+     "claims": [
+      "C06",
+      "C20"
+     ],
+     "text": "Being a woman lowers it from about 33% to about 2% (on the training data only)."
+    },
+    {
+     "claims": [
+      "C02",
+      "C13",
+      "C14"
+     ],
+     "text": "The model has little data on three categories: a thallium result coded 4 (2 patients; about 94%), a fixed defect on the thallium scan (15 patients; about 22%) and a downsloping ST segment (17 patients; about 42%), all on the training data only."
+    },
+    {
+     "claims": [
+      "C15"
+     ],
+     "text": "A reversible defect on the thallium scan raises it only slightly overall, to about 34% (on the training data only)."
+    },
+    {
+     "claims": [
+      "C21",
+      "C22",
+      "C23"
+     ],
+     "text": "It ignores the resting ECG, the maximum heart rate and resting blood pressure."
+    }
+   ]
+  },
+  "claims_hash": "3790230c015613971ba0e792c751412bb4b1c44b703e2e76b444c87ba111205a",
+  "drafted_at": "2026-11-08T10:23:20+00:00",
+  "drafted_by": "ai-assisted",
+  "hypothesis_revisions": {
+   "ann_28": {
+    "claims": [
+     "C31",
+     "C30",
+     "C29",
+     "C32"
+    ],
+    "original": "Hypothesis: a sex x exercise-angina interaction built from two chained ReLU gates. Gate 1213 = relu(1.23 sex:0 + 1.31 exang:0 - 0.509 cp:2 - 0.563 fbs:0 + 0.476 thal:7 + 0.091) is a female-without-exercise-angina score; gate 47 = relu(1.43 + 0.956 exang:0 - 1.93 h1213) fires for patients without exercise angina whose 1213 score is low (mostly men) and is shut off by 1213. The output reads -0.760 h1213 + 0.384 g47. Evidence (train, n=242): group mean block logit is +0.04 (male, exang), +0.18 (male, no exang), -0.39 (female, exang), -1.76 (female, no exang). Exercise angina has no direct edge to the output, so its entire effect is this block: flipping exang no->yes raises the logit by +1.81 on average for women (range 0.78..2.11) but by -0.17 for men (range -0.78..1.87). g47 is active for 84% of men without angina but 19% of women without angina. cp:2, fbs:0 and thal:7 only shift h1213 (sensitivities 0.22-0.26 vs 0.57-0.60 for sex:0/exang:0). Odd signs (thal:7 and fbs:1 making the block slightly less protective / more protective respectively) are small modifiers we do not interpret clinically. Ablating gate 47 to its mean drops train AUC 0.9457->0.9414; ablating 1213->output drops it to 0.9347.",
+    "proposed": "Through this part, whether exercise brings on chest pain changes how other factors act: without it, being a woman and fasting blood sugar above 120 mg/dL lower the predicted risk more; with it, a reversible thallium defect raises the risk more and atypical angina lowers it more.",
+    "status": "proposed (not applied)"
+   },
+   "ann_29": {
+    "claims": [
+     "C34",
+     "C33"
+    ],
+    "original": "Hypothesis: a near-inert affine pass-through of slope:1 (upsloping ST segment). Evidence: the ReLU pre-activation 0.446 slope:1 + 0.797 lies in [0.373, 1.266] on train, so it never clips; through the -0.0648 readout it adds -0.029 slope:1 - 0.052 to the logit (logit SD 0.029). Ablating it to its mean changes train AUC 0.9457->0.9454. It is a vestigial linear term, slightly protective for upsloping ST.",
+    "proposed": "A part that barely changes the predictions; an ST segment that does not slope up raises the risk only slightly through it.",
+    "status": "proposed (not applied)"
+   },
+   "ann_30": {
+    "claims": [
+     "C07",
+     "C08",
+     "C10",
+     "C01",
+     "C03",
+     "C04",
+     "C05",
+     "C11",
+     "C06",
+     "C21",
+     "C22",
+     "C23"
+    ],
+    "original": "Hypothesis: the risk logit is additive: a logistic-regression core over 14 direct input edges (dominated by ca +1.57, cp:4 +1.30, slope:2 +1.04, oldpeak +0.66, chol +0.65, thal:7 +0.58; all risk-raising except thal:6 -0.13) plus two child terms: -0.760 h1213 + 0.384 g47 from sex_exang_interaction (the only route by which exercise angina affects risk, and only materially for women) and -0.065 x 3660 from slope1_offset (near-inert). The output node applies ReLU and the model then applies a sigmoid, so p = sigmoid(relu(z)): negative logits (60% of train) all map to p=0.5 and the decision is z>0. The 8 inputs cp:1, trestbps, restecg:0/1/2, thalach, exang:1 and thal:3 have no edges in the phenotype and are included as entries with zero effect. Evidence (train, n=242): full AUC 0.9457 / acc 0.876; linear core alone (children at their means) AUC 0.9255 / acc 0.855; logit SD 3.58 total, 3.42 linear core, 1.04 interaction block, 0.029 slope:1 term. Node-0 sensitivity ranks ca 0.63, cp:4 0.52, slope:2 0.42, oldpeak 0.27, chol 0.26, exang:0 0.26 (via the block).",
+    "proposed": "Typical angina, non-anginal chest pain and atypical angina lower the predicted risk compared with no chest pain symptoms. More vessels coloured, a flat ST segment, more ST depression, higher cholesterol and older age raise it; being a woman lowers it. The model ignores the resting ECG, the maximum heart rate and resting blood pressure.",
+    "status": "proposed (not applied)"
+   }
+  },
+  "protocol": ".claude/skills/plain-language-explanations/SKILL.md",
+  "stale": false,
+  "status": "draft for review",
+  "summary": [
+   {
+    "claims": [
+     "C07",
+     "C08",
+     "C10"
+    ],
+    "text": "For a typical patient (a 56-year-old man with no chest pain symptoms and median test results, predicted risk about 33%), the model clearly gives a much lower predicted risk of heart disease with typical angina (about 4%), non-anginal chest pain (about 7%) or atypical angina (about 11%)."
+   },
+   {
+    "claims": [
+     "C01",
+     "C03"
+    ],
+    "text": "Going from 0 to 2 vessels coloured by fluoroscopy raises a typical patient's predicted risk from about 33% to about 94%, and a flat rather than upsloping ST segment at peak exercise raises it to about 81% (on the training data only)."
+   },
+   {
+    "claims": [
+     "C31"
+    ],
+    "text": "Being a woman lowers the predicted risk, and even more so if exercise does not bring on chest pain: for a typical patient it clearly falls from about 33% to about 2% without chest pain on exercise, and from about 19% to about 9% with it."
+   },
+   {
+    "claims": [
+     "C29"
+    ],
+    "text": "A reversible defect on the thallium scan raises the predicted risk, and even more so if exercise brings on chest pain: it clearly moves from about 19% to about 43% with chest pain on exercise, and from about 33% to about 34% without it."
+   },
+   {
+    "claims": [
+     "C30"
+    ],
+    "text": "Fasting blood sugar above 120 mg/dL clearly lowers the predicted risk if exercise does not bring on chest pain (from about 33% to about 8%), while with chest pain on exercise it moves from about 19% to about 21%."
+   },
+   {
+    "claims": [
+     "C21",
+     "C22",
+     "C23"
+    ],
+    "text": "It ignores the resting ECG, the maximum heart rate and resting blood pressure."
+   }
+  ],
+  "verified_by": null,
+  "worth_checking": [
+   {
+    "claims": [
+     "C30",
+     "C25"
+    ],
+    "flag": "high fasting blood sugar lowers risk",
+    "text": "Worth checking: the model treats fasting blood sugar above 120 mg/dL as lowering the risk of heart disease for patients without chest pain on exercise (for a typical patient from about 33% to about 8%)."
+   },
+   {
+    "claims": [
+     "C07",
+     "C08",
+     "C10"
+    ],
+    "flag": "typical angina lowest risk",
+    "text": "Worth checking: patients with typical angina get the lowest predicted risk of all chest pain types, below patients with no chest pain symptoms."
+   },
+   {
+    "claims": [
+     "C13"
+    ],
+    "flag": "fixed thallium defect lowers risk",
+    "text": "Worth checking: the model treats a fixed defect on the thallium scan as lowering the risk compared with a normal scan, from only 15 training patients."
+   },
+   {
+    "claims": [
+     "C02"
+    ],
+    "flag": "undecoded thallium code 4 gets high risk",
+    "text": "Worth checking: the model gives a very high predicted risk to the 2 training patients whose thallium result is coded 4, a code the dataset documentation does not define."
+   },
+   {
+    "claims": [
+     "C23"
+    ],
+    "flag": "ignores resting blood pressure",
+    "text": "Worth checking: the model ignores resting blood pressure."
+   },
+   {
+    "claims": [
+     "C22"
+    ],
+    "flag": "ignores maximum heart rate",
+    "text": "Worth checking: the model ignores the maximum heart rate reached during the exercise test."
+   },
+   {
+    "claims": [
+     "C21"
+    ],
+    "flag": "ignores resting ECG",
+    "text": "Worth checking: the model ignores the resting ECG."
+   },
+   {
+    "claims": [
+     "C26",
+     "C15"
+    ],
+    "flag": "reversible thallium defect lowers risk through one part",
+    "text": "Worth checking: through one part, a reversible thallium defect lowers the predicted risk of a typical patient, although overall it raises it slightly."
+   }
+  ]
+ },
+ "explanation_id": "cf7481a3-ad17-43b4-9c0f-2ad41432076b",
+ "genome_id": "9b644a62-ebe7-48cc-82cf-c53f7da36073",
+ "label": "heart-s6",
+ "outcome": {
+  "positive": "heart disease (more than 50% narrowing of a major coronary artery on angiography)",
+  "predicted": "the predicted risk of heart disease",
+  "risk": "the risk of heart disease",
+  "short": "heart disease"
+ },
+ "parts": [
+  {
+   "children": [
+    "sex_exang_interaction",
+    "slope1_offset"
+   ],
+   "contribution_sd": null,
+   "duplicate_of": null,
+   "gated": false,
+   "id": "ann_30",
+   "kind": "composition",
+   "name": "heart_disease_logit",
+   "nonlinear": false,
+   "order": 0,
+   "original_hypothesis": "Hypothesis: the risk logit is additive: a logistic-regression core over 14 direct input edges (dominated by ca +1.57, cp:4 +1.30, slope:2 +1.04, oldpeak +0.66, chol +0.65, thal:7 +0.58; all risk-raising except thal:6 -0.13) plus two child terms: -0.760 h1213 + 0.384 g47 from sex_exang_interaction (the only route by which exercise angina affects risk, and only materially for women) and -0.065 x 3660 from slope1_offset (near-inert). The output node applies ReLU and the model then applies a sigmoid, so p = sigmoid(relu(z)): negative logits (60% of train) all map to p=0.5 and the decision is z>0. The 8 inputs cp:1, trestbps, restecg:0/1/2, thalach, exang:1 and thal:3 have no edges in the phenotype and are included as entries with zero effect. Evidence (train, n=242): full AUC 0.9457 / acc 0.876; linear core alone (children at their means) AUC 0.9255 / acc 0.855; logit SD 3.58 total, 3.42 linear core, 1.04 interaction block, 0.029 slope:1 term. Node-0 sensitivity ranks ca 0.63, cp:4 0.52, slope:2 0.42, oldpeak 0.27, chol 0.26, exang:0 0.26 (via the block).",
+   "parent": null,
+   "role": "root",
+   "upstream_nodes": 0,
+   "variable_keys": [
+    "age",
+    "sex",
+    "cp",
+    "trestbps",
+    "chol",
+    "fbs",
+    "restecg",
+    "thalach",
+    "exang",
+    "oldpeak",
+    "slope",
+    "ca",
+    "thal"
+   ],
+   "variables": [
+    "age",
+    "sex",
+    "chest pain type",
+    "resting blood pressure",
+    "serum cholesterol",
+    "fasting blood sugar",
+    "resting ECG",
+    "maximum heart rate reached during the exercise test",
+    "exercise-induced angina",
+    "ST depression during exercise (compared with rest)",
+    "slope of the ST segment at peak exercise",
+    "number of major vessels coloured by fluoroscopy",
+    "thallium stress test result"
+   ]
+  },
+  {
+   "children": [],
+   "contribution_sd": 1.04472,
+   "duplicate_of": null,
+   "gated": true,
+   "id": "ann_28",
+   "kind": "leaf",
+   "name": "sex_exang_interaction",
+   "nonlinear": true,
+   "order": 1,
+   "original_hypothesis": "Hypothesis: a sex x exercise-angina interaction built from two chained ReLU gates. Gate 1213 = relu(1.23 sex:0 + 1.31 exang:0 - 0.509 cp:2 - 0.563 fbs:0 + 0.476 thal:7 + 0.091) is a female-without-exercise-angina score; gate 47 = relu(1.43 + 0.956 exang:0 - 1.93 h1213) fires for patients without exercise angina whose 1213 score is low (mostly men) and is shut off by 1213. The output reads -0.760 h1213 + 0.384 g47. Evidence (train, n=242): group mean block logit is +0.04 (male, exang), +0.18 (male, no exang), -0.39 (female, exang), -1.76 (female, no exang). Exercise angina has no direct edge to the output, so its entire effect is this block: flipping exang no->yes raises the logit by +1.81 on average for women (range 0.78..2.11) but by -0.17 for men (range -0.78..1.87). g47 is active for 84% of men without angina but 19% of women without angina. cp:2, fbs:0 and thal:7 only shift h1213 (sensitivities 0.22-0.26 vs 0.57-0.60 for sex:0/exang:0). Odd signs (thal:7 and fbs:1 making the block slightly less protective / more protective respectively) are small modifiers we do not interpret clinically. Ablating gate 47 to its mean drops train AUC 0.9457->0.9414; ablating 1213->output drops it to 0.9347.",
+   "parent": "heart_disease_logit",
+   "role": "part",
+   "upstream_nodes": 0,
+   "variable_keys": [
+    "sex",
+    "cp",
+    "fbs",
+    "exang",
+    "thal"
+   ],
+   "variables": [
+    "sex",
+    "chest pain type",
+    "fasting blood sugar",
+    "exercise-induced angina",
+    "thallium stress test result"
+   ]
+  },
+  {
+   "children": [],
+   "contribution_sd": 0.0288943,
+   "duplicate_of": null,
+   "gated": false,
+   "id": "ann_29",
+   "kind": "leaf",
+   "name": "slope1_offset",
+   "nonlinear": false,
+   "order": 2,
+   "original_hypothesis": "Hypothesis: a near-inert affine pass-through of slope:1 (upsloping ST segment). Evidence: the ReLU pre-activation 0.446 slope:1 + 0.797 lies in [0.373, 1.266] on train, so it never clips; through the -0.0648 readout it adds -0.029 slope:1 - 0.052 to the logit (logit SD 0.029). Ablating it to its mean changes train AUC 0.9457->0.9454. It is a vestigial linear term, slightly protective for upsloping ST.",
+   "parent": "heart_disease_logit",
+   "role": "part",
+   "upstream_nodes": 0,
+   "variable_keys": [
+    "slope"
+   ],
+   "variables": [
+    "slope of the ST segment at peak exercise"
+   ]
+  }
+ ],
+ "population": {
+  "plural": "patients",
+  "singular": "patient"
+ },
+ "reference_patient": {
+  "definition": "the typical patient: the median training patient for every number and the most common training category for every category (not a real patient)",
+  "predicted_risk": 0.333353,
+  "raw": [
+   56.0,
+   0.0,
+   1.0,
+   0.0,
+   0.0,
+   0.0,
+   1.0,
+   130.0,
+   240.0,
+   1.0,
+   0.0,
+   1.0,
+   0.0,
+   0.0,
+   152.5,
+   1.0,
+   0.0,
+   0.75,
+   1.0,
+   0.0,
+   0.0,
+   0.0,
+   1.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  "risk_scale": {
+   "formula": "risk = 1 / (1 + exp(-log-odds))",
+   "horizon": null,
+   "kind": "binary",
+   "label": "predicted risk"
+  },
+  "values": {
+   "age": "56 years",
+   "ca": "0 vessels",
+   "chol": "240 mg/dL (6.2 mmol/L)",
+   "cp": "no chest pain (asymptomatic)",
+   "exang": "no chest pain on exercise",
+   "fbs": "fasting blood sugar of 120 mg/dL or less",
+   "oldpeak": "0.8 mm",
+   "restecg": "a normal resting ECG",
+   "sex": "male",
+   "slope": "an upsloping ST segment",
+   "thal": "a normal thallium scan",
+   "thalach": "152 beats per minute",
+   "trestbps": "130 mm Hg"
+  }
+ },
+ "risk_scale": {
+  "formula": "risk = 1 / (1 + exp(-log-odds))",
+  "horizon": null,
+  "kind": "binary",
+  "label": "predicted risk"
+ },
+ "schema_version": "2.0.0",
+ "settings": {
+  "bootstrap_B": 1000,
+  "confidence_rules": {
+   "clearly": "a meaningful change in predicted risk for a typical patient (at least 5% points), the test split agrees (same sign, and its bootstrap interval over test patients excludes no benefit), and every group has at least 20 training patients",
+   "consistently across patients": "the claim holds for at least 90% of training patients (range across patients); this is not a significance statement",
+   "on the training data only": "the test split disagrees (opposite sign, or no benefit on test patients) or is unclear (its interval includes no benefit), or no test check is available",
+   "slightly": "the change in predicted risk for a typical patient is below 5% points",
+   "the model has little data on this": "a compared group has fewer than 20 training patients"
+  },
+  "effect_scale": "log-odds (output pre-activation) for verification; predicted risk for the typical patient for wording",
+  "max_interactions_per_part": 4,
+  "max_opposite_sign_share": 0.1,
+  "max_threshold_spread": 0.2,
+  "min_interaction": 0.1,
+  "min_threshold_effect": 0.1,
+  "prob_large": 0.2,
+  "prob_slight": 0.05,
+  "screen_rows": 4000,
+  "seed": 42,
+  "small_n": 20,
+  "top_magnitudes": 5
+ },
+ "split": {
+  "check": "test",
+  "id": "165cebbd-6609-46ca-867e-c09e17b2d6ec",
+  "primary": "train",
+  "scaler_type": "StandardScaler",
+  "test_n": 61,
+  "train_n": 242
+ },
+ "template": {
+  "annotations": {
+   "ann_28": [
+    {
+     "claims": [
+      "C29"
+     ],
+     "text": "The model gives a clearly higher predicted risk of heart disease if the thallium scan shows a reversible defect than if thallium stress test result is something other than a reversible defect on the thallium scan, and even more so if exercise brings on chest pain: for a typical patient, going from thallium stress test result other than a reversible defect on the thallium scan to a reversible defect on the thallium scan moves the predicted risk of heart disease from about 19% to about 43% if exercise brings on chest pain, and from about 33% to about 34% if exercise does not bring on chest pain."
+    },
+    {
+     "claims": [
+      "C30"
+     ],
+     "text": "The model gives a clearly lower predicted risk of heart disease if fasting blood sugar is above 120 mg/dL than if fasting blood sugar is 120 mg/dL or less, and even more so if exercise does not bring on chest pain: for a typical patient, going from fasting blood sugar of 120 mg/dL or less to fasting blood sugar above 120 mg/dL moves the predicted risk of heart disease from about 33% to about 8% if exercise does not bring on chest pain, and from about 19% to about 21% if exercise brings on chest pain."
+    },
+    {
+     "claims": [
+      "C31"
+     ],
+     "text": "The model gives a clearly lower predicted risk of heart disease if the patient is a woman than if the patient is a man, and even more so if exercise does not bring on chest pain: for a typical patient, going from male to female moves the predicted risk of heart disease from about 33% to about 2% if exercise does not bring on chest pain, and from about 19% to about 9% if exercise brings on chest pain."
+    },
+    {
+     "claims": [
+      "C32"
+     ],
+     "text": "For a typical patient, going from chest pain type other than atypical angina to atypical angina moves the predicted risk of heart disease from about 19% to about 5% if exercise brings on chest pain, and from about 33% to about 11% if exercise does not bring on chest pain."
+    },
+    {
+     "claims": [
+      "C24"
+     ],
+     "text": "Through this part, for a typical patient, the model gives a lower predicted risk of heart disease if the patient is a woman (about 4%) than if the patient is a man (about 33%) (on the training data only)."
+    },
+    {
+     "claims": [
+      "C25"
+     ],
+     "text": "Through this part, for a typical patient, the model gives a lower predicted risk of heart disease if fasting blood sugar is above 120 mg/dL (about 7%) than if fasting blood sugar is 120 mg/dL or less (about 33%) (on the training data only)."
+    },
+    {
+     "claims": [
+      "C26"
+     ],
+     "text": "Through this part, for a typical patient, the model gives a lower predicted risk of heart disease if the thallium scan shows a reversible defect (about 14%) than if thallium stress test result is something other than a reversible defect on the thallium scan (about 33%) (on the training data only)."
+    },
+    {
+     "claims": [
+      "C28"
+     ],
+     "text": "Through this part, for a typical patient, the model gives a slightly higher predicted risk of heart disease if the patient has atypical angina (about 33%) than if chest pain type is something other than atypical angina (about 33%) (on the training data only)."
+    }
+   ],
+   "ann_29": [
+    {
+     "claims": [
+      "C33"
+     ],
+     "text": "Through this part, for a typical patient, the model gives a slightly higher predicted risk of heart disease if slope of the ST segment at peak exercise is something other than an upsloping ST segment (about 35%) than if the ST segment slopes up at peak exercise (about 33%) (on the training data only)."
+    },
+    {
+     "claims": [
+      "C34"
+     ],
+     "text": "This part barely changes the model's predictions (by at most 0.8 percentage points)."
+    }
+   ],
+   "ann_30": [
+    {
+     "claims": [
+      "C01"
+     ],
+     "text": "For a typical patient, number of vessels coloured by fluoroscopy going from 0 vessels to 2 vessels raises the predicted risk of heart disease from about 33% to about 94% (on the training data only)."
+    },
+    {
+     "claims": [
+      "C02"
+     ],
+     "text": "For a typical patient, the model gives a higher predicted risk of heart disease if thallium stress test result coded 4 (meaning not recorded) applies (about 94%) than if the thallium scan is normal (about 33%) (on the training data only). The model has little data on this: only 2 training patients (thallium stress test result coded 4 (meaning not recorded))."
+    },
+    {
+     "claims": [
+      "C03"
+     ],
+     "text": "For a typical patient, the model gives a higher predicted risk of heart disease if the ST segment is flat at peak exercise (about 81%) than if the ST segment slopes up at peak exercise (about 33%) (on the training data only)."
+    },
+    {
+     "claims": [
+      "C04"
+     ],
+     "text": "For a typical patient, ST depression on exercise going from 0.0 mm to 2.8 mm raises the predicted risk of heart disease from about 25% to about 61% (on the training data only)."
+    },
+    {
+     "claims": [
+      "C05"
+     ],
+     "text": "For a typical patient, serum cholesterol going from 193 mg/dL (5.0 mmol/L) to 308 mg/dL (8.0 mmol/L) raises the predicted risk of heart disease from about 21% to about 56% (on the training data only)."
+    },
+    {
+     "claims": [
+      "C06"
+     ],
+     "text": "For a typical patient, the model gives a lower predicted risk of heart disease if the patient is a woman (about 2%) than if the patient is a man (about 33%) (on the training data only)."
+    },
+    {
+     "claims": [
+      "C07"
+     ],
+     "text": "For a typical patient, the model gives a clearly lower predicted risk of heart disease if the patient has typical angina (about 4%) than if the patient has no chest pain symptoms (about 33%)."
+    },
+    {
+     "claims": [
+      "C08"
+     ],
+     "text": "For a typical patient, the model gives a clearly lower predicted risk of heart disease if the patient has non-anginal chest pain (about 7%) than if the patient has no chest pain symptoms (about 33%)."
+    },
+    {
+     "claims": [
+      "C10"
+     ],
+     "text": "For a typical patient, the model gives a clearly lower predicted risk of heart disease if the patient has atypical angina (about 11%) than if the patient has no chest pain symptoms (about 33%)."
+    },
+    {
+     "claims": [
+      "C11"
+     ],
+     "text": "For a typical patient, age going from 42 years to 66 years raises the predicted risk of heart disease from about 22% to about 43% (on the training data only)."
+    },
+    {
+     "claims": [
+      "C13"
+     ],
+     "text": "For a typical patient, the model gives a lower predicted risk of heart disease if the thallium scan shows a fixed defect (about 22%) than if the thallium scan is normal (about 33%) (on the training data only). The model has little data on this: only 15 training patients (a fixed defect on the thallium scan)."
+    },
+    {
+     "claims": [
+      "C14"
+     ],
+     "text": "For a typical patient, the model gives a higher predicted risk of heart disease if the ST segment slopes down at peak exercise (about 42%) than if the ST segment slopes up at peak exercise (about 33%) (on the training data only). The model has little data on this: only 17 training patients (a downsloping ST segment)."
+    },
+    {
+     "claims": [
+      "C15"
+     ],
+     "text": "For a typical patient, the model gives a slightly higher predicted risk of heart disease if the thallium scan shows a reversible defect (about 34%) than if the thallium scan is normal (about 33%) (on the training data only)."
+    },
+    {
+     "claims": [
+      "C21",
+      "C22",
+      "C23"
+     ],
+     "text": "It ignores resting ECG, maximum heart rate reached during the exercise test and resting blood pressure."
+    }
+   ]
+  },
+  "hypotheses": {
+   "ann_28": "The model gives a clearly higher predicted risk of heart disease if the thallium scan shows a reversible defect than if thallium stress test result is something other than a reversible defect on the thallium scan, and even more so if exercise brings on chest pain: for a typical patient, going from thallium stress test result other than a reversible defect on the thallium scan to a reversible defect on the thallium scan moves the predicted risk of heart disease from about 19% to about 43% if exercise brings on chest pain, and from about 33% to about 34% if exercise does not bring on chest pain. The model gives a clearly lower predicted risk of heart disease if fasting blood sugar is above 120 mg/dL than if fasting blood sugar is 120 mg/dL or less, and even more so if exercise does not bring on chest pain: for a typical patient, going from fasting blood sugar of 120 mg/dL or less to fasting blood sugar above 120 mg/dL moves the predicted risk of heart disease from about 33% to about 8% if exercise does not bring on chest pain, and from about 19% to about 21% if exercise brings on chest pain. The model gives a clearly lower predicted risk of heart disease if the patient is a woman than if the patient is a man, and even more so if exercise does not bring on chest pain: for a typical patient, going from male to female moves the predicted risk of heart disease from about 33% to about 2% if exercise does not bring on chest pain, and from about 19% to about 9% if exercise brings on chest pain. For a typical patient, going from chest pain type other than atypical angina to atypical angina moves the predicted risk of heart disease from about 19% to about 5% if exercise brings on chest pain, and from about 33% to about 11% if exercise does not bring on chest pain. Through this part, for a typical patient, the model gives a lower predicted risk of heart disease if the patient is a woman (about 4%) than if the patient is a man (about 33%) (on the training data only). Through this part, for a typical patient, the model gives a lower predicted risk of heart disease if fasting blood sugar is above 120 mg/dL (about 7%) than if fasting blood sugar is 120 mg/dL or less (about 33%) (on the training data only). Through this part, for a typical patient, the model gives a lower predicted risk of heart disease if the thallium scan shows a reversible defect (about 14%) than if thallium stress test result is something other than a reversible defect on the thallium scan (about 33%) (on the training data only). Through this part, for a typical patient, the model gives a slightly higher predicted risk of heart disease if the patient has atypical angina (about 33%) than if chest pain type is something other than atypical angina (about 33%) (on the training data only).",
+   "ann_29": "Through this part, for a typical patient, the model gives a slightly higher predicted risk of heart disease if slope of the ST segment at peak exercise is something other than an upsloping ST segment (about 35%) than if the ST segment slopes up at peak exercise (about 33%) (on the training data only). This part barely changes the model's predictions (by at most 0.8 percentage points).",
+   "ann_30": "For a typical patient, number of vessels coloured by fluoroscopy going from 0 vessels to 2 vessels raises the predicted risk of heart disease from about 33% to about 94% (on the training data only). For a typical patient, the model gives a higher predicted risk of heart disease if thallium stress test result coded 4 (meaning not recorded) applies (about 94%) than if the thallium scan is normal (about 33%) (on the training data only). The model has little data on this: only 2 training patients (thallium stress test result coded 4 (meaning not recorded)). For a typical patient, the model gives a higher predicted risk of heart disease if the ST segment is flat at peak exercise (about 81%) than if the ST segment slopes up at peak exercise (about 33%) (on the training data only). For a typical patient, ST depression on exercise going from 0.0 mm to 2.8 mm raises the predicted risk of heart disease from about 25% to about 61% (on the training data only). For a typical patient, serum cholesterol going from 193 mg/dL (5.0 mmol/L) to 308 mg/dL (8.0 mmol/L) raises the predicted risk of heart disease from about 21% to about 56% (on the training data only). For a typical patient, the model gives a lower predicted risk of heart disease if the patient is a woman (about 2%) than if the patient is a man (about 33%) (on the training data only). For a typical patient, the model gives a clearly lower predicted risk of heart disease if the patient has typical angina (about 4%) than if the patient has no chest pain symptoms (about 33%). For a typical patient, the model gives a clearly lower predicted risk of heart disease if the patient has non-anginal chest pain (about 7%) than if the patient has no chest pain symptoms (about 33%). For a typical patient, the model gives a clearly lower predicted risk of heart disease if the patient has atypical angina (about 11%) than if the patient has no chest pain symptoms (about 33%). For a typical patient, age going from 42 years to 66 years raises the predicted risk of heart disease from about 22% to about 43% (on the training data only). For a typical patient, the model gives a lower predicted risk of heart disease if the thallium scan shows a fixed defect (about 22%) than if the thallium scan is normal (about 33%) (on the training data only). The model has little data on this: only 15 training patients (a fixed defect on the thallium scan). For a typical patient, the model gives a higher predicted risk of heart disease if the ST segment slopes down at peak exercise (about 42%) than if the ST segment slopes up at peak exercise (about 33%) (on the training data only). The model has little data on this: only 17 training patients (a downsloping ST segment). For a typical patient, the model gives a slightly higher predicted risk of heart disease if the thallium scan shows a reversible defect (about 34%) than if the thallium scan is normal (about 33%) (on the training data only). It ignores resting ECG, maximum heart rate reached during the exercise test and resting blood pressure."
+  },
+  "not_supported": [
+   {
+    "claim": "C09",
+    "text": "direction claim about fasting blood sugar in the whole model: not supported by the model (34% of patients have the opposite sign (allowed: 10%)).",
+    "type": "direction"
+   },
+   {
+    "claim": "C12",
+    "text": "direction claim about exercise-induced angina in the whole model: not supported by the model (32% of patients have the opposite sign (allowed: 10%)).",
+    "type": "direction"
+   },
+   {
+    "claim": "C27",
+    "text": "direction claim about exercise-induced angina in part ann_28: not supported by the model (32% of patients have the opposite sign (allowed: 10%)).",
+    "type": "direction"
+   }
+  ],
+  "renderer": "explaneat.analysis.plain_language_templates (deterministic, no language model)",
+  "summary": [
+   {
+    "claims": [
+     "C01"
+    ],
+    "text": "For a typical patient, number of vessels coloured by fluoroscopy going from 0 vessels to 2 vessels raises the predicted risk of heart disease from about 33% to about 94% (on the training data only)."
+   },
+   {
+    "claims": [
+     "C03"
+    ],
+    "text": "For a typical patient, the model gives a higher predicted risk of heart disease if the ST segment is flat at peak exercise (about 81%) than if the ST segment slopes up at peak exercise (about 33%) (on the training data only)."
+   },
+   {
+    "claims": [
+     "C04"
+    ],
+    "text": "For a typical patient, ST depression on exercise going from 0.0 mm to 2.8 mm raises the predicted risk of heart disease from about 25% to about 61% (on the training data only)."
+   },
+   {
+    "claims": [
+     "C29"
+    ],
+    "text": "The model gives a clearly higher predicted risk of heart disease if the thallium scan shows a reversible defect than if thallium stress test result is something other than a reversible defect on the thallium scan, and even more so if exercise brings on chest pain: for a typical patient, going from thallium stress test result other than a reversible defect on the thallium scan to a reversible defect on the thallium scan moves the predicted risk of heart disease from about 19% to about 43% if exercise brings on chest pain, and from about 33% to about 34% if exercise does not bring on chest pain."
+   },
+   {
+    "claims": [
+     "C30"
+    ],
+    "text": "The model gives a clearly lower predicted risk of heart disease if fasting blood sugar is above 120 mg/dL than if fasting blood sugar is 120 mg/dL or less, and even more so if exercise does not bring on chest pain: for a typical patient, going from fasting blood sugar of 120 mg/dL or less to fasting blood sugar above 120 mg/dL moves the predicted risk of heart disease from about 33% to about 8% if exercise does not bring on chest pain, and from about 19% to about 21% if exercise brings on chest pain."
+   },
+   {
+    "claims": [
+     "C21",
+     "C22",
+     "C23"
+    ],
+    "text": "The model ignores resting ECG, maximum heart rate reached during the exercise test and resting blood pressure."
+   }
+  ]
+ },
+ "units": {
+  "method": "raw = z * scale + mean, with the split's StandardScaler parameters (scaler_params mean and scale, fitted on the training rows)",
+  "round_trip_max_abs_err": 1.42109e-14,
+  "round_trip_note": "max |decoded - stored raw| and |re-encoded - model input| over the training rows",
+  "variables": [
+   {
+    "base": "age",
+    "columns": [
+     "age"
+    ],
+    "decoded": true,
+    "kind": "continuous",
+    "label": "age",
+    "max": 77.0,
+    "mean": 54.8058,
+    "median": 56.0,
+    "min": 29.0,
+    "p10": 42.0,
+    "p90": 66.0,
+    "scale": 9.09133,
+    "unit": "years"
+   },
+   {
+    "base": "sex",
+    "columns": [
+     "sex:0",
+     "sex:1"
+    ],
+    "decoded": true,
+    "kind": "category",
+    "label": "sex",
+    "levels": [
+     {
+      "code": "0",
+      "decoded": true,
+      "label": "female",
+      "n_train": 83
+     },
+     {
+      "code": "1",
+      "decoded": true,
+      "label": "male",
+      "n_train": 159
+     }
+    ],
+    "reference": {
+     "code": "1",
+     "label": "male"
+    },
+    "unit": null
+   },
+   {
+    "base": "cp",
+    "columns": [
+     "cp:1",
+     "cp:2",
+     "cp:3",
+     "cp:4"
+    ],
+    "decoded": true,
+    "kind": "category",
+    "label": "chest pain type",
+    "levels": [
+     {
+      "code": "1",
+      "decoded": true,
+      "label": "typical angina",
+      "n_train": 22
+     },
+     {
+      "code": "2",
+      "decoded": true,
+      "label": "atypical angina",
+      "n_train": 42
+     },
+     {
+      "code": "3",
+      "decoded": true,
+      "label": "non-anginal chest pain",
+      "n_train": 70
+     },
+     {
+      "code": "4",
+      "decoded": true,
+      "label": "no chest pain (asymptomatic)",
+      "n_train": 108
+     }
+    ],
+    "reference": {
+     "code": "4",
+     "label": "no chest pain (asymptomatic)"
+    },
+    "unit": null
+   },
+   {
+    "base": "trestbps",
+    "columns": [
+     "trestbps"
+    ],
+    "decoded": true,
+    "kind": "continuous",
+    "label": "resting blood pressure",
+    "max": 200.0,
+    "mean": 132.289,
+    "median": 130.0,
+    "min": 94.0,
+    "p10": 110.0,
+    "p90": 154.9,
+    "scale": 18.1713,
+    "unit": "mm Hg"
+   },
+   {
+    "base": "chol",
+    "columns": [
+     "chol"
+    ],
+    "decoded": true,
+    "kind": "continuous",
+    "label": "serum cholesterol",
+    "max": 417.0,
+    "mean": 245.62,
+    "median": 240.0,
+    "min": 126.0,
+    "p10": 193.0,
+    "p90": 307.9,
+    "scale": 48.1632,
+    "unit": "mg/dL"
+   },
+   {
+    "base": "fbs",
+    "columns": [
+     "fbs:0",
+     "fbs:1"
+    ],
+    "decoded": true,
+    "kind": "category",
+    "label": "fasting blood sugar",
+    "levels": [
+     {
+      "code": "0",
+      "decoded": true,
+      "label": "fasting blood sugar of 120 mg/dL or less",
+      "n_train": 209
+     },
+     {
+      "code": "1",
+      "decoded": true,
+      "label": "fasting blood sugar above 120 mg/dL",
+      "n_train": 33
+     }
+    ],
+    "reference": {
+     "code": "0",
+     "label": "fasting blood sugar of 120 mg/dL or less"
+    },
+    "unit": null
+   },
+   {
+    "base": "restecg",
+    "columns": [
+     "restecg:0",
+     "restecg:1",
+     "restecg:2"
+    ],
+    "decoded": true,
+    "kind": "category",
+    "label": "resting ECG",
+    "levels": [
+     {
+      "code": "0",
+      "decoded": true,
+      "label": "a normal resting ECG",
+      "n_train": 121
+     },
+     {
+      "code": "1",
+      "decoded": true,
+      "label": "an ST-T wave abnormality on the resting ECG",
+      "n_train": 2
+     },
+     {
+      "code": "2",
+      "decoded": true,
+      "label": "signs of left ventricular hypertrophy on the resting ECG",
+      "n_train": 119
+     }
+    ],
+    "reference": {
+     "code": "0",
+     "label": "a normal resting ECG"
+    },
+    "unit": null
+   },
+   {
+    "base": "thalach",
+    "columns": [
+     "thalach"
+    ],
+    "decoded": true,
+    "kind": "continuous",
+    "label": "maximum heart rate reached during the exercise test",
+    "max": 202.0,
+    "mean": 150.099,
+    "median": 152.5,
+    "min": 71.0,
+    "p10": 118.2,
+    "p90": 175.0,
+    "scale": 22.4245,
+    "unit": "beats per minute"
+   },
+   {
+    "base": "exang",
+    "columns": [
+     "exang:0",
+     "exang:1"
+    ],
+    "decoded": true,
+    "kind": "category",
+    "label": "exercise-induced angina",
+    "levels": [
+     {
+      "code": "0",
+      "decoded": true,
+      "label": "no chest pain on exercise",
+      "n_train": 160
+     },
+     {
+      "code": "1",
+      "decoded": true,
+      "label": "chest pain brought on by exercise",
+      "n_train": 82
+     }
+    ],
+    "reference": {
+     "code": "0",
+     "label": "no chest pain on exercise"
+    },
+    "unit": null
+   },
+   {
+    "base": "oldpeak",
+    "columns": [
+     "oldpeak"
+    ],
+    "decoded": true,
+    "kind": "continuous",
+    "label": "ST depression during exercise (compared with rest)",
+    "max": 6.2,
+    "mean": 1.03554,
+    "median": 0.75,
+    "min": 0.0,
+    "p10": 0.0,
+    "p90": 2.8,
+    "scale": 1.1854,
+    "unit": "mm"
+   },
+   {
+    "base": "slope",
+    "columns": [
+     "slope:1",
+     "slope:2",
+     "slope:3"
+    ],
+    "decoded": true,
+    "kind": "category",
+    "label": "slope of the ST segment at peak exercise",
+    "levels": [
+     {
+      "code": "1",
+      "decoded": true,
+      "label": "an upsloping ST segment",
+      "n_train": 115
+     },
+     {
+      "code": "2",
+      "decoded": true,
+      "label": "a flat ST segment",
+      "n_train": 110
+     },
+     {
+      "code": "3",
+      "decoded": true,
+      "label": "a downsloping ST segment",
+      "n_train": 17
+     }
+    ],
+    "reference": {
+     "code": "1",
+     "label": "an upsloping ST segment"
+    },
+    "unit": null
+   },
+   {
+    "base": "ca",
+    "columns": [
+     "ca"
+    ],
+    "decoded": true,
+    "kind": "count",
+    "label": "number of major vessels coloured by fluoroscopy",
+    "max": 3.0,
+    "mean": 0.648829,
+    "median": 0.0,
+    "min": 0.0,
+    "p10": 0.0,
+    "p90": 2.0,
+    "scale": 0.891833,
+    "unit": "vessels"
+   },
+   {
+    "base": "thal",
+    "columns": [
+     "thal:3",
+     "thal:4",
+     "thal:6",
+     "thal:7"
+    ],
+    "decoded": false,
+    "kind": "category",
+    "label": "thallium stress test result",
+    "levels": [
+     {
+      "code": "3",
+      "decoded": true,
+      "label": "a normal thallium scan",
+      "n_train": 135
+     },
+     {
+      "code": "4",
+      "decoded": false,
+      "label": "thallium stress test result coded 4 (meaning not recorded)",
+      "n_train": 2
+     },
+     {
+      "code": "6",
+      "decoded": true,
+      "label": "a fixed defect on the thallium scan",
+      "n_train": 15
+     },
+     {
+      "code": "7",
+      "decoded": true,
+      "label": "a reversible defect on the thallium scan",
+      "n_train": 90
+     }
+    ],
+    "reference": {
+     "code": "3",
+     "label": "a normal thallium scan"
+    },
+    "unit": null
+   }
+  ]
+ },
+ "verification": {
+  "notes": "",
+  "verified": null,
+  "verified_at": null,
+  "verified_by": null
+ }
+}

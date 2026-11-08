@@ -139,8 +139,8 @@ timeout).
 ## 2. Schema (v1)
 
 JSON Schema: `explaneat/export/schema/explanation-v1.schema.json` (draft 2020-12).
-`schema_version` is `1.1.0` (1.1 added the optional `plain_language` section, §6; 1.0
-documents still validate). Top level:
+`schema_version` is `1.2.0` (1.1 added the optional `plain_language` section, §6; 1.2 the
+layer-v2 claim type `rule`; 1.0 documents still validate). Top level:
 
 | Key | Contents |
 |---|---|
@@ -227,32 +227,53 @@ The UI has an Export tab in the Tools drawer, an Export button on Review rows an
 experiments. The API and CLI use the MCP helpers, so a restricted dataset is refused unless
 `EXPLANEAT_ALLOW_ASSISTED_RESTRICTED=1`.
 
-## 6. Plain-language layer (schema 1.1)
+## 6. Plain-language layer (schema 1.1+; layer v2 from export schema 1.2)
 
-Plain, real-world sentences about an explained genome ("the model treats higher cholesterol as
-raising the risk, and even more so if ..."), each backed by claims computed and checked on the
-model. Code: `explaneat/analysis/plain_language.py` (claims), `plain_language_codebooks.py`
-(real-world names, units, category codes), `plain_language_templates.py` (offline sentences, no
-language model), `plain_language_store.py` (files, draft lint, verdicts); printed forms in
-`explaneat/export/render_plain.py`. Writing protocol: `.claude/skills/plain-language-explanations/SKILL.md`.
+Plain, real-world sentences about an explained genome ("for a typical patient, going from 0 to
+2 vessels raises the predicted risk from about 29% to about 98%"; "…, and even more so if …"),
+each backed by claims computed and checked on the model. Code:
+`explaneat/analysis/plain_language.py` (claims), `plain_language_codebooks.py` (real-world
+names, units, category codes and their checks), `plain_language_templates.py` (offline
+sentences, no language model), `plain_language_store.py` (files, draft lint, verdicts); printed
+forms in `explaneat/export/render_plain.py`. Writing protocol:
+`.claude/skills/plain-language-explanations/SKILL.md`.
 
 - **Claims** (derived from each annotation, "part"): `direction`, `threshold`, `interaction`,
-  `magnitude` (at a stated reference patient), `subgroup`, `null` (exact Null rule, or
-  ablation). Each has an estimate on the model's log-odds with a bootstrap 95% interval over
-  training patients (seed 42, fresh per claim), n per group with small-n flags (n < 20), the
-  split (train primary; test as a sign check), the annotation id, `verified` and the reasons.
-- **Units:** z-scores are converted back with the split's StandardScaler `scaler_params`; the
-  round trip against the stored raw data is recorded. One-hot codes are decoded with a
-  documented codebook (UCI Heart: `heart-disease.names`); undocumented codes are listed as gaps
-  (Heart: `thal:4`, the mean-filled `ca` value), never guessed.
+  `magnitude`, `subgroup`, `null` (exact Null rule, or ablation) and `rule` (a codebook count
+  rule, MONK-2). Each has: the log-odds estimate and odds ratio (evidence only); the **range
+  across patients** (10th to 90th percentile of per-patient effects, a spread, not an
+  interval); the **change in predicted risk for a typical patient** (`risk`; per group for
+  interactions); n per group with small-n flags (n < 20); the split (train primary); the **test
+  check** (test AUC with minus without the mechanism's information, the information removed by
+  averaging the prediction over its training distribution; paired bootstrap over test patients,
+  seed 42; status agrees / unclear / disagrees / not available); `verified` (holds consistently
+  across training patients) with reasons; and `confidence`.
+- **Confidence words** (`CONFIDENCE_RULES`): "clearly" = risk change of at least 5 points for
+  the typical patient, the test check agrees, every group at least 20 patients; "slightly" =
+  below 5 points; "on the training data only" = the test check does not agree; "the model has
+  little data on this" = a group under 20. The template renderer and the draft lint apply them.
+- **Risk scale:** `BinaryRisk` (probability of the positive class); `SurvivalRisk` gives the
+  predicted risk at a horizon from a Breslow baseline (`explaneat.survival`), for later Cox
+  models (no survival test check yet).
+- **Units and codebooks:** z-scores are converted back with the split's StandardScaler
+  `scaler_params` (round trip recorded). Codebooks, with sources: UCI Heart
+  (`heart-disease.names`); PMLB adult = UCI Adult (sorted label encoding of the UCI strings,
+  checked against the data: education code to education-num, husbands male / wives female,
+  missing work class and occupation aligned, most common country; class 1 is "<=50K"); PMLB churn
+  (sorted state abbreviations, checked: most common state West Virginia, voice-mail plan vs
+  messages, charges per minute); MONK-2 (abstract attributes, rule terms, count rule on the
+  first values). A codebook whose checks fail is not used. Undocumented codes are gaps, never
+  guessed.
 - **Rendering rule:** claims with `verified: false` never become sentences; they are listed as
   "not supported by the model".
 - **Files:** `experiments/10seed/plain_language/<label>.json` holds the claims, the template
-  text, the draft (`drafted_by: "ai-assisted"`, `verified_by: null`) and proposed hypothesis
-  revisions. The database and the original hypotheses are never written. Re-extracting with
-  changed claims marks a draft `stale`.
-- **Export:** `collect` copies the layer into `plain_language`; the LaTeX/PDF and DOCX appendix
-  print a "Plain-language summary" subsection with claim references and the claim table.
+  text, the draft (`drafted_by: "ai-assisted"`, `verified_by: null`), "worth checking" flags and
+  proposed hypothesis revisions. The database and the original hypotheses are never written.
+  Re-extracting with changed claims marks a draft `stale`.
+- **Export and review:** `collect` copies the layer into `plain_language`; the LaTeX/PDF and
+  DOCX appendix print a "Plain-language summary" subsection with claim references and the claim
+  table; the verification pack's checklist shows the summary and the evidence of the claims it
+  cites.
 
 ```bash
 uv run python -m explaneat plain-language extract --labels heart-paper,heart-s5   # DB read-only
@@ -260,5 +281,6 @@ uv run python -m explaneat plain-language show heart-s5
 uv run python -m explaneat plain-language lint heart-s5 --from draft.json
 uv run python -m explaneat plain-language draft heart-s5 --from draft.json
 uv run python -m explaneat plain-language review --labels heart-paper,heart-s5 --out <dir>
+uv run python -m explaneat plain-language worth-checking --out <dir>   # cross-genome flag table
 uv run python -m explaneat export record-plain-verdict heart-s5 --verified --minutes N --notes "..."
 ```

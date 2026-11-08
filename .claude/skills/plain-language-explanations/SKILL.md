@@ -1,14 +1,15 @@
 ---
 name: plain-language-explanations
-description: Use when drafting plain-language explanations of an explained ExplaNEAT genome (summaries, per-annotation paragraphs, proposed hypothesis revisions) from its verified claims in experiments/10seed/plain_language/<label>.json, so every sentence is plain, real-world, traceable to evidence and marked as a draft for Mike's review.
+description: Use when drafting plain-language explanations of an explained ExplaNEAT genome (summaries, per-annotation paragraphs, "worth checking" flags, proposed hypothesis revisions) from its verified claims in experiments/10seed/plain_language/<label>.json, so every sentence is plain, real-world, led by the change in predicted risk for a typical patient, worded with evidence-based confidence, traceable to its claims and marked as a draft for Mike's review.
 ---
 
-# Plain-language explanations
+# Plain-language explanations (layer v2)
 
 You turn **verified claims** about an explained network into short, plain sentences that a
-clinician or a thesis examiner can read and check against what is known about the world.
-Mike's example: "smoking increases your risk, and even more so if you are diabetic". Titanic:
-"women and children were more likely to survive".
+clinician, a domain expert or a thesis examiner can check against what is known about the
+world. Mike's examples: "smoking increases your risk, and even more so if you are diabetic";
+"women and children were more likely to survive"; "for a typical patient, going from 0 to 2
+narrowed vessels raises the predicted risk from about 10% to about 75%".
 
 The claims are computed and checked by code (`explaneat/analysis/plain_language.py`). Your job
 is the writing. You never add a fact that is not in a verified claim.
@@ -21,129 +22,160 @@ is the writing. You never add a fact that is not in a verified claim.
    uv run python -m explaneat plain-language show <label>      # template text + every claim
    ```
    Read the JSON too: `experiments/10seed/plain_language/<label>.json` (`claims`, `parts`,
-   `reference_patient`, `codebook.gaps`, `template`).
-2. Write a draft file (anywhere outside the repo, e.g. your scratchpad):
+   `reference_patient`, `population`, `outcome`, `codebook.gaps`, `codebook.checks`,
+   `template`). For each claim look at `risk`, `confidence`, `test_check`, `groups`, `small_n`.
+2. Write a draft file outside the repo (e.g. your scratchpad):
    ```json
    {"summary": [{"text": "...", "claims": ["C02", "C03"]}],
     "annotations": {"ann_39": [{"text": "...", "claims": ["C10"]}]},
-    "worth_checking": [{"text": "...", "claims": ["C09"]}],
+    "worth_checking": [{"text": "Worth checking: ...", "claims": ["C09"], "flag": "high fasting blood sugar lowers risk"}],
     "hypothesis_revisions": {"ann_36": {"proposed": "...", "claims": ["C44"]}}}
    ```
-   One object per sentence. Keys under `annotations` / `hypothesis_revisions` are the part ids
-   in `parts` (annotation ids).
-3. Lint, then store (the store refuses a draft that breaks the rules below):
+   One object per sentence. Keys under `annotations` / `hypothesis_revisions` are part ids.
+3. Lint, then store (the store refuses a draft that breaks the rules):
    ```bash
    uv run python -m explaneat plain-language lint <label> --from draft.json
    uv run python -m explaneat plain-language draft <label> --from draft.json
-   uv run python -m explaneat plain-language review --labels <a>,<b> --out ~/.explaneat/exports/<name>
    ```
    The stored draft gets `"drafted_by": "ai-assisted"`, `"verified_by": null`. Only Mike sets
-   the verdict: `uv run python -m explaneat export record-plain-verdict <label> --verified`.
+   the verdict (`explaneat export record-plain-verdict <label> --verified`).
 
 ## 1. Evidence first
 
-- **Only verified claims.** Every sentence cites one or more claim ids (`C07`) whose
-  `verified` is `true`. A claim with `verified: false` is never turned into a statement, not
-  even hedged. The renderer lists those as "not supported by the model"; leave them there.
-- **Nothing without a claim.** No background knowledge, no mechanism stories, no numbers you
-  computed in your head. If the claims do not say it, do not write it.
-- **Read the evidence, not just the statement:** `estimate` (value, `ci95`, odds ratio),
-  `groups` (n per group), `small_n`, `test_check` (does the test split agree?), `evidence.who`
-  (who a part acts on), `reasons`.
-- What the intervals mean: bootstrap 95% intervals over training patients (seed 42). They show
-  how the model's effect varies across the sampled patients, not uncertainty about the
-  model's weights or the world. A linear term has a zero-width interval; that is correct.
+- **Only verified claims.** Every sentence cites claim ids (`C07`) with `verified: true`. A
+  failing claim is never turned into a statement, not even hedged; it is listed as "not
+  supported by the model".
+- **Nothing without a claim.** No background knowledge, no mechanism stories, no numbers of
+  your own. If the claims do not say it, do not write it.
+- **What "verified" means:** the claim holds for the model *consistently across patients*
+  (at least 90% of training patients go the same way; thresholds have one fold; interactions
+  are confirmed by the part's own counterfactual). It is not a significance statement.
+- **The range across patients** (10th to 90th percentile of per-patient effects) shows how
+  the effect varies between patients. It is not a confidence interval. A linear term has a
+  zero-width range; that says nothing about how sure we can be.
+- **The test check** (`test_check`) is the inferential part: does the mechanism help the model
+  rank *test* patients (test AUC with minus without its information, paired bootstrap over test
+  patients, seed 42)? Status `agrees`, `unclear` (interval includes no gain), `disagrees`
+  (no gain or the opposite sign), or `not available`.
 
 ## 2. Voice
 
 - Everyday words. One idea per sentence. Active voice.
-- Talk about people: "patients who ...", "women", "you" is fine in a summary.
-- **Name the real-world variable and its unit** from the claim (`variables[].label`, `unit`,
-  `statement.change.from/to.text`): "resting blood pressure from 110 to 155 mm Hg", "a flat ST
-  segment at peak exercise", "fasting blood sugar above 120 mg/dL".
-- **Never** in the text: node ids (`534`, `204_a`, `-12`), annotation ids (`ann_39`), column
-  names (`cp:4`), "z-score", "standardised", "ReLU", "sigmoid", "logit", "pre-activation",
-  weights or formulas. Use "this part of the model" for an annotation. (Annotation names may
-  appear as headings in the review document; not in sentences.)
-- Numbers: round. "about 2.3 times the odds", "about 285 mg/dL (7.4 mmol/L)", "8 of 242
-  patients", "two in three". Odds ratios above 10 to whole numbers; huge ones ("×1400") are
-  better said as "a very large increase in the odds" plus the number once.
+- Talk about the population the dataset is about: `population.plural` / `.singular`
+  ("patients", "people", "customers", "cases"). "You" is fine in a summary.
+- **Name the real-world variable and unit** (`variables[].label`, `unit`, `statement.change`):
+  "resting blood pressure from 110 to 155 mm Hg", "a flat ST segment at peak exercise",
+  "people whose highest education is a bachelor's degree", "customers with an international
+  plan".
+- **Never** in the text: node ids, annotation ids (`ann_39`), column names (`cp:4`, `a1:1`),
+  "z-score", "standardised", "ReLU", "sigmoid", "logit", "pre-activation", weights, formulas,
+  **odds or odds ratios** (they stay in the evidence table). "This part of the model" names an
+  annotation.
 
-## 3. Order and shapes
+## 3. Magnitudes: predicted risk for a typical patient
 
-- **Biggest effects first** (largest |estimate|), in the summary and inside each paragraph.
-- **Interactions:** "X raises the risk, and even more so if Y" (`pattern: amplified`);
-  "X raises the risk, but only if Y" (`only_if`); "X raises the risk if Y but lowers it if
-  not" (`reversed`). Y is `statement.stronger_group.cond`.
-- **Thresholds:** "only once X rises above about T" (`kind: above`), "only while X stays below
-  about T" (`below`). For counts, name the step: "from 1 vessel upwards". Say for whom when
-  `statement.conditions` is set ("for patients with a normal resting ECG").
-- **Subgroups:** "This part acts on 8 of 242 patients, all of them women whose chest pain is
-  brought on by exercise". Use `evidence.who.conditions` for "nearly all of them are ...".
-  The outcome count in the group ("7 of these 8 had heart disease") is a data fact from the
-  claim and may be stated.
-- **Magnitude:** always "on the model's odds scale", and state the reference patient once
-  (`reference_patient`: the median training patient for every number, the most common
-  category for the rest; it is not a real patient).
+- **Lead every effect with the change in predicted risk for a typical patient**, from the
+  claim's `risk` block: "for a typical patient, going from 0 to 2 vessels raises the predicted
+  risk of heart disease from about 29% to about 98%". Use the outcome's own words
+  (`outcome.predicted`: "the predicted risk of heart disease", "the predicted chance of an
+  income of $50,000 or less", "the predicted chance that a customer leaves", "the predicted
+  probability of 'yes'").
+- **The typical patient** is `risk.reference`: the median of every number and the most common
+  category (`reference_patient`, not a real patient); for a part that does not act on that
+  patient, "the typical patient this part acts on" (`risk.reference_values`). Say which, and
+  describe the typical patient once per genome (e.g. "a 56-year-old man with no chest pain
+  symptoms and median test results").
+- **Interactions:** give the change in each group (`risk.groups`): "…from about 29% to about
+  3% if exercise does not bring on chest pain, and from about 33% to about 32% if it does".
+- **Subgroups:** risk without the part, then with it, for the typical patient it acts on.
+- Round to whole percentages; "below 1%" and "above 99%" at the ends.
+- **Survival models** (`risk_scale.kind == "survival"`): the same pattern with the predicted
+  risk at the stated horizon ("predicted 5-year risk").
 
-## 4. Confidence words come from the evidence
+## 4. Confidence words (exact rules; the lint enforces them)
 
-| Word | Only when |
+Each verified claim carries `confidence` = {`word`, `size`, `test`, `n_ok`, `qualifiers`},
+computed from (a) |change in predicted risk for the typical patient| (`risk.delta`), (b) the
+test check and (c) n:
+
+| Word | Use when (and only when) |
 |---|---|
-| "clearly" | the claim's interval excludes 0 **and** `small_n` is false |
-| "slightly" | the effect is small: `statement.strength` is `slight` or `negligible` (|log-odds| < 0.25, odds ratio between about 0.78 and 1.28) |
-| "the model has little data on this" | `small_n` is true (a group has fewer than 20 training patients); say how many |
-| "the test patients agree" / "worth checking on new data" | from `test_check.consistent` (test n is 61, so only as a check) |
+| **"clearly"** | `confidence.word == "clearly"`: the risk change is meaningful (at least 5 percentage points), the test check `agrees`, and every compared group has at least 20 training patients. Every claim a "clearly" sentence cites must qualify. |
+| **"slightly"** (or "a little") | `confidence.size == "slight"`: the risk change for the typical patient is below 5 points. Required for such a claim; not allowed without one. |
+| **"on the training data only"** | the test check is `unclear`, `disagrees` or `not available`. Required for such a claim. |
+| **"the model has little data on this"** | `small_n` (a compared group has fewer than 20 training patients). Required; say how many. |
+| **"consistently across patients"** | optional, for a verified claim; never imply significance with it. |
 
-No other hedges or boosters ("strongly", "significantly", "proves").
+- Size words: "a large change" only for at least 20 points (`size == "large"`).
+- No other hedges or boosters ("strongly", "significantly", "proves", "definitely").
+- The lint applies these to summary and paragraph sentences that state an effect; a count
+  sentence ("this part acts on 8 of 242 patients") or a data fact ("7 of them had heart
+  disease") needs no qualifier. Sentences citing claims of different classes must carry every
+  required qualifier, so split them by class: "X and Y clearly raise it. Z also raises it
+  (on the training data only)."
 
-## 5. What to leave out
+## 5. Shapes and order
 
-- **Null parts:** one line. "It ignores resting blood pressure." Near-inert parts: "One small
-  part barely changes the predictions." Do not describe them further.
-- **Duplicates** (`parts[].role == "duplicate"`): a copy of another part's calculation made
-  during refactoring. Do not mention it as structure; its effect is in the part it feeds.
-- Refactoring operations, coverage, formulas: they are in the certificate, not here.
+- **Biggest risk changes first**, in the summary and in each paragraph.
+- **Interactions:** "X raises the predicted risk, and even more so if Y" (`amplified`); "…,
+  but only if Y" (`only_if`); "… if Y, but the other way if not" (`reversed`). Y is
+  `statement.stronger_group.cond`.
+- **Thresholds:** "only once X rises above about T" (`kind: above`), "only while X stays below
+  about T" (`below`); counts: "from 1 vessel upwards". Say for whom (`statement.conditions`).
+- **Rules** (MONK-2, `type: "rule"`): phrase in rule terms on the attribute values, with no
+  real-world meaning: "the model predicts 'yes' when exactly two attributes take their first
+  value". Attributes are written `a1 = 1`.
+- **Categories a part cannot tell apart** come as one class ("country of birth other than the
+  United States"); keep that wording.
 
-## 6. The model's view, not the world's
+## 6. What to leave out
 
-- Describe what the **model** does: "the model treats higher cholesterol as raising the risk",
-  "the model gives women a lower risk". Never "high cholesterol causes heart disease", never
-  "leads to". These are associations the model uses, on its own odds scale.
-- Do not assert real-world truth and do not judge plausibility in the text. That is Mike's
-  verification.
-- When a claim looks surprising in real-world terms, flag it **neutrally** in `worth_checking`:
-  "Worth checking: the model treats fasting blood sugar above 120 mg/dL as lowering the risk."
-  Also flag categories the codebook could not decode (`codebook.gaps`) and very small groups.
+- **Null parts:** one line ("It ignores resting blood pressure."; "One small part barely
+  changes the predictions.").
+- **Duplicates** (`parts[].role == "duplicate"`): not described as structure.
+- Refactoring operations, coverage, formulas, odds: in the certificate, not here.
+- Long lists of tiny effects (e.g. dozens of states or countries): group them in one sentence
+  with "slightly" and the right qualifiers, or leave them to the template and the evidence
+  table; the paragraph names the largest few.
 
-## 7. Two versions, plus hypothesis revisions
+## 7. The model's view, not the world's
 
-- **Summary:** 3 to 6 sentences for the whole model: the 2 or 3 biggest effects, the one or two
-  most important interactions or thresholds, then what it ignores. Prefer claims with adequate
-  data and decoded categories.
-- **Per-annotation paragraph:** for each non-duplicate part, 2 to 6 sentences: who it acts on,
-  its interaction or threshold, its directions. The root part's paragraph is the whole model.
-- **Hypothesis revisions:** rewrite each annotation's hypothesis in the same plain style, as a
-  *proposed* revision citing its claims. Never overwrite the original (`apply_operation`,
-  `update_narrative` and DB writes are forbidden here); the original stays next to the
-  proposal in the review document.
+- Describe what the **model** does: "the model gives women a lower predicted risk". Never
+  "X causes", "leads to".
+- Do not judge real-world plausibility in the text. That is Mike's verification.
+- When a claim looks surprising in real-world terms, put it in `worth_checking`, phrased
+  neutrally ("Worth checking: the model treats fasting blood sugar above 120 mg/dL as lowering
+  the risk."), with a short neutral **`flag`** for the cross-genome table. Reuse the same flag
+  wording across genomes of one dataset (e.g. "high fasting blood sugar lowers risk", "fixed
+  thallium defect lowers risk", "typical angina lowest risk", "ignores age"), so recurring flags
+  line up. Also flag undecoded categories and very small groups.
 
-## 8. Mike's thesis rules
+## 8. Two versions, plus hypothesis revisions
 
-- Never print the assistant's name ("Claude") in any output: text, file names, PDF.
+- **Summary:** 3 to 6 sentences for the whole model: the 2 or 3 biggest effects, the one or
+  two most important interactions, thresholds or rules, then what it ignores. Prefer claims
+  with adequate data and decoded categories.
+- **Per-annotation paragraph:** for each non-duplicate part, 2 to 6 sentences.
+- **Hypothesis revisions:** each annotation's hypothesis rewritten in the same plain style, as a
+  *proposed* revision citing its claims. Never overwrite the original (no `apply_operation`,
+  `update_narrative` or DB writes).
+
+## 9. Mike's thesis rules
+
+- Never print the assistant's name ("Claude") in any output.
 - Everything you write is a **draft for Mike's review**: `drafted_by: "ai-assisted"`,
-  `verified_by: null`. The review PDF and the appendix mark it as an AI-assisted draft.
+  `verified_by: null`.
 
-## 9. Self-check before storing
+## 10. Self-check before storing
 
-- [ ] Every sentence cites verified claims, and says nothing beyond them.
+- [ ] Every sentence cites verified claims and says nothing beyond them.
+- [ ] Every effect leads with the typical patient's predicted risk; no odds anywhere.
+- [ ] "clearly" / "slightly" / "on the training data only" / "little data" follow section 4.
 - [ ] No ids, column names, z-scores, activation names, formulas, causal words.
-- [ ] Real-world names and units; odds numbers say "on the model's odds scale".
-- [ ] "clearly" / "slightly" / "little data" match section 4.
-- [ ] Biggest effects first; interactions and thresholds in the standard shapes.
-- [ ] Surprising claims are in `worth_checking`, phrased neutrally.
+- [ ] Biggest changes first; interactions, thresholds and rules in the standard shapes.
+- [ ] Surprises in `worth_checking`, neutral, each with a `flag`.
 - [ ] `plain-language lint` passes.
 
 The offline template renderer (`explaneat/analysis/plain_language_templates.py`) applies the
-same rules mechanically, with no language model, for VARIANZ restricted mode. Your prose should
-be at least as faithful to the claims as the template, and easier to read.
+same rules mechanically, with no language model, for VARIANZ restricted mode, and passes the
+same lint. Your prose should be at least as faithful and easier to read.

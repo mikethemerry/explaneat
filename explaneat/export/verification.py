@@ -264,6 +264,21 @@ def checklist_block(doc, order: int) -> str:
     L += [r"\end{itemize}"]
     if rec.get("tool_bugs"):
         L += [r"\textbf{Tool notes (record):} " + tex(rec["tool_bugs"]), ""]
+    pl = doc.get("plain_language")
+    if pl:   # schema 1.1+: the plain-language layer, with the evidence of the claims it cites
+        from .render_plain import _status, claims_table, sentences_tex
+        d = pl.get("drafted") or {}
+        summ = d.get("summary") or (pl.get("template") or {}).get("summary") or []
+        cited = {cid for s in summ for cid in (s.get("claims") or [])}
+        L += [r"\textbf{Plain-language summary} (" + tex(_status(pl)) + ("" if d.get("summary") else
+              "; offline template") + r"):", "", sentences_tex(summ), ""]
+        if d.get("worth_checking"):
+            L += [r"\textbf{Worth checking:} " + sentences_tex(d["worth_checking"]), ""]
+        L += claims_table([c for c in pl.get("claims") or [] if c["id"] in cited])
+        L += ["", r"{\footnotesize Every paragraph and claim: the certificate's ``Plain-language summary'' "
+              r"subsection. Record a verdict on the plain-language layer with "
+              r"\texttt{" + tex(f"uv run python -m explaneat export record-plain-verdict {lab} --verified "
+                                f"--minutes N --notes \"...\"") + r"}.\par}", ""]
     L += [r"\textbf{Verdict.}", "",
           r"\begin{tabularx}{\linewidth}{@{}lX@{}}",
           r"Verified (correct as it stands, or after my changes): & $\square$ yes \quad $\square$ no \\[4pt]",

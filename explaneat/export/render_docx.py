@@ -117,11 +117,13 @@ def render_docx(doc, path: Path, figures: Optional[Dict[str, Path]] = None,
     # plain-language layer (schema 1.1)
     pl = doc.get("plain_language")
     if pl:
-        from .render_plain import _status, claim_brief, estimate_text, n_text, split_text
+        from .render_plain import (_status, claim_brief, confidence_text, estimate_text, n_text, risk_text,
+                                   split_text)
         D.add_heading("Plain-language summary", level=2)
         para(_status(pl) + ". Each sentence cites the claims that back it; every cited claim was computed "
-             "on the model and the training split and passed its automatic checks. Effects are on the "
-             "model's odds scale and describe what the model does, not the world.", italic=True)
+             "on the model and the training split and passed its automatic checks. Magnitudes are changes in "
+             "predicted risk for a typical patient; confidence words follow the test-split check and n. "
+             "The text describes what the model does, not the world.", italic=True)
 
         def sents(ss):
             return " ".join(s["text"] + (f" [{', '.join(s['claims'])}]" if s.get("claims") else "")
@@ -136,14 +138,18 @@ def render_docx(doc, path: Path, figures: Optional[Dict[str, Path]] = None,
             txt = (d.get("annotations") or {}).get(p_["id"]) or ((pl.get("template") or {}).get("annotations") or {}).get(p_["id"])
             if txt:
                 para(sents(txt), f"{p_['id']} ({p_['name']}). ")
-        tc = D.add_table(rows=1, cols=6)
+        if d.get("worth_checking"):
+            para(sents(d["worth_checking"]), "Worth checking against what is known. ")
+        tc = D.add_table(rows=1, cols=8)
         tc.style = "Light Grid Accent 1"
-        for i, h in enumerate(("Claim", "What is checked", "Estimate [95% CI]", "n", "Split", "Verified")):
+        for i, h in enumerate(("Claim", "What is checked", "Risk, typical patient",
+                               "Estimate (log-odds; OR); range across patients", "n", "Test check",
+                               "Verified", "Words")):
             tc.rows[0].cells[i].text = h
         for c_ in pl.get("claims") or []:
             cells = tc.add_row().cells
-            vals = (c_["id"], f"{c_['type']}: {claim_brief(c_)}", estimate_text(c_), n_text(c_),
-                    split_text(c_), "yes" if c_.get("verified") else "no")
+            vals = (c_["id"], f"{c_['type']}: {claim_brief(c_)}", risk_text(c_), estimate_text(c_),
+                    n_text(c_), split_text(c_), "yes" if c_.get("verified") else "no", confidence_text(c_))
             for i, v in enumerate(vals):
                 cells[i].text = printed(str(v))
         ns = (pl.get("template") or {}).get("not_supported") or []
