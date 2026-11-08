@@ -78,7 +78,7 @@ SHAPE_PHRASES = {
     "steady": r"steadily|the same amount (for|with) each|each extra .{0,40}adds? about the same",
     "hinge": (r"nothing until|no change until|only once|only above|only below|only up to|only from|"
               r"until about|then no further|no further|stops? (adding|changing|mattering)|from about .{0,40}"
-              r"(on|onwards|upwards)|then steadily|stays below about|rises above about|once it (rises|passes)"),
+              r"\b(on|onwards|upwards)\b|then steadily|stays below about|rises above about|once it (rises|passes)"),
     "step": r"jump|in a step|mostly (between|around|from)|sharply around",
     "levelling_off": r"levels? off|levelling off|quickly at first|then more slowly|flattens? out|flattening",
     "accelerating": r"slowly at first|then faster|speeds? up|more and more|increasingly",
