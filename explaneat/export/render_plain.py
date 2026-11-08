@@ -137,6 +137,37 @@ def split_text(c: Dict[str, Any]) -> str:
     return s
 
 
+SHAPE_WORDS = {"flat": "flat", "steady": "steady", "hinge": "hinge", "step": "step",
+               "levelling_off": "levelling off", "accelerating": "accelerating", "peak": "peak", "dip": "dip",
+               "multi_segment": "several pieces", "categorical": "categorical"}
+
+
+def shape_text(c: Dict[str, Any]) -> str:
+    """The shape of the effect (model score scale), its status and consistency, for tables."""
+    sh = c.get("shape") or {}
+    if not sh:
+        return ""
+    if sh.get("class") == "categorical":
+        order = sh.get("ordering_high_to_low") or []
+        return "categorical; highest to lowest: " + ", ".join(order[:6]) + (" ..." if len(order) > 6 else "")
+    pts = sh.get("points_text") or {}
+    where = (" at " + (pts.get("at") or pts.get("turning"))) if (pts.get("at") or pts.get("turning")) else ""
+    out = f"{SHAPE_WORDS.get(sh['class'], sh['class'])}{where}"
+    if sh.get("ordinal_pattern") and sh["ordinal_pattern"] != "uneven":
+        out += f" ({sh['ordinal_pattern'].replace('_', ' ')})"
+    if sh.get("share_same_shape") is not None:
+        out += f"; {100 * sh['share_same_shape']:.0f}% of patients same"
+    out += f"; {sh.get('status')}"
+    if sh.get("status") == "mixed" and sh.get("exceptions"):
+        e = sh["exceptions"][0]
+        out += f" (but {SHAPE_WORDS.get(e['class'], e['class'])} for {' and '.join(e['who'])})"
+    if sh.get("risk_saturation"):
+        out += f"; risk saturates {sh['risk_saturation']}"
+    if sh.get("matched_fold"):
+        out += f"; matches the fold at {sh['matched_fold']['text']}"
+    return out
+
+
 def confidence_text(c: Dict[str, Any]) -> str:
     cf = c.get("confidence") or {}
     if not cf:
@@ -172,7 +203,9 @@ def claims_table(claims: List[Dict[str, Any]]) -> List[str]:
          r"patients & n & Test check & Verified & Words \\", r"\midrule"]
     for c in claims:
         ver = VERIFIED_MARK if c.get("verified") else FAILED_MARK
-        L.append(f"{tex(c['id'])} & {tex(c['type'])}: {tex(claim_brief(c))} & {tex(risk_text(c))} & "
+        sht = shape_text(c)
+        L.append(f"{tex(c['id'])} & {tex(c['type'])}: {tex(claim_brief(c))}"
+                 + (f" \\newline\\textit{{shape: {tex(sht)}}}" if sht else "") + f" & {tex(risk_text(c))} & "
                  f"{tex(estimate_text(c))} & {tex(n_text(c))} & {tex(split_text(c))} & {ver} & "
                  f"{tex(confidence_text(c))} \\\\")
     L += [r"\bottomrule", r"\end{tabularx}}"]
@@ -313,6 +346,16 @@ def genome_block(layer: Dict[str, Any]) -> List[str]:
     return L
 
 
+CHANGES_V3 = (
+    "v3 adds the shape of every numeric or ordinal effect: the model's response curve on its internal "
+    "score, classified as flat, steady, a hinge (nothing until a point, then steady), a step (mostly a jump), "
+    "levelling off, speeding up, a peak or dip, or several pieces, with the point named in real units. "
+    "Ordinals record the change per level (equal steps, or mainly the first). A shape is used in the text "
+    "only if at least 90% of affected patients have the same shape and the class survives tolerances 25% "
+    "tighter or looser; otherwise the text says 'in an uneven way', or 'for most patients ..., but for ...'. "
+    "Whether the risk curve flattens near 0% or 100% is noted separately. Every draft was revised to carry "
+    "the shape words; the lint enforces them.")
+
 CHANGES_V2 = (
     "Confidence words no longer come from intervals over training patients (a linear term had a zero-width "
     "interval and was always 'clearly'). They now depend on the change in predicted risk for a typical "
@@ -352,7 +395,8 @@ def render_review(layers: List[Dict[str, Any]], title: str) -> str:
          r"bootstrap over test patients, seed 42). Confidence words: " + "; ".join(
              f"``{tex(k)}'' = {tex(v)}" for k, v in CONFIDENCE_RULES.items()) + r". "
          r"Whether each statement is plausible in the real world is for the reviewer to judge.",
-         r"\par\medskip\noindent\textbf{What changed since v1 (pilot).} " + tex(CHANGES_V2),
+         r"\par\medskip\noindent\textbf{What changed in v3 (shapes).} " + tex(CHANGES_V3),
+         r"\par\medskip\noindent\textbf{What changed in v2.} " + tex(CHANGES_V2),
          r"\tableofcontents", r"\clearpage"]
     for lay in layers:
         L += [r"\begin{drafted}[plain-language layer: " + tex(lay["label"]) + "]"]

@@ -35,6 +35,7 @@ FORBIDDEN = [
     (re.compile(r"\b(?i:node)\s*\d+|\b-?\d+_[a-z](?:_[a-z])*\b|\bann_\d+\b"), "node or annotation id"),
     (re.compile(r"\b[a-z]+:\d\b"), "one-hot column name"),
     (re.compile(r"\bcaus(?:es|ed|ing)\b|\bleads? to\b", re.I), "causal wording (describe the model, not the world)"),
+    (re.compile(r"\b(?:non-?)?linear(?:ly)?\b|\bconvex\b|\bconcave\b|\bmonoton\w*", re.I), "shape jargon (use the plain shape words)"),
 ]
 ODDS_MARK = re.compile(r"×\s*\d|\bodds\b", re.I)
 
@@ -182,7 +183,7 @@ SLIGHTLY = re.compile(r"\bslightly\b|\ba little\b|\bbarely\b", re.I)
 TRAINING_ONLY = re.compile(r"training data only", re.I)
 LITTLE_DATA = re.compile(r"little data", re.I)
 EFFECT = re.compile(r"\b(?:rais|lower|higher|add|increas|decreas|predict|risk|chance|probabilit|more so|"
-                    r"less likely|more likely)\w*", re.I)
+                    r"less likely|more likely|chang|move|push|pull|shift)\w*", re.I)
 
 
 def lint_confidence(text: str, claims: List[Dict[str, Any]]) -> List[str]:
@@ -215,6 +216,26 @@ def lint_confidence(text: str, claims: List[Dict[str, Any]]) -> List[str]:
     small = [c["id"] for c in cs if not c["confidence"].get("n_ok", True)]
     if small and not LITTLE_DATA.search(text):
         errs.append(f"{', '.join(small)}: small groups: say 'the model has little data on this'")
+    return errs
+
+
+def lint_shape(text: str, claims: List[Dict[str, Any]]) -> List[str]:
+    """Every effect sentence about a numeric or ordinal variable carries a phrase for the cited
+    claim's shape (``plain_language_shapes.SHAPE_PHRASES``), or the fallback "in an uneven way"
+    when the shape could not be verified; a mixed shape also needs "but for ..."."""
+    from .plain_language_shapes import shape_phrase_ok
+    if not EFFECT.search(text):
+        return []
+    errs = []
+    for c in claims:
+        sh = c.get("shape")
+        if c.get("type") not in ("direction", "magnitude", "threshold", "interaction") or not sh:
+            continue
+        if sh.get("class") == "categorical":
+            continue
+        ok, want = shape_phrase_ok(text, sh, c["type"])
+        if not ok:
+            errs.append(f"{c['id']}: needs {want}")
     return errs
 
 
@@ -257,7 +278,7 @@ def lint_draft(layer: Dict[str, Any], draft: Dict[str, Any]) -> List[str]:
         for p in lint_text(text):
             errs.append(f"{where}: {p}")
         if where.startswith(("summary", "annotations")):
-            for p in lint_confidence(text, cited):
+            for p in lint_confidence(text, cited) + lint_shape(text, cited):
                 errs.append(f"{where}: {p}")
         elif CLEARLY.search(text) and not all((c.get("confidence") or {}).get("word") == "clearly"
                                               for c in cited if c.get("type") != "null"):

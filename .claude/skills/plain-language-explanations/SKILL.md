@@ -1,9 +1,9 @@
 ---
 name: plain-language-explanations
-description: Use when drafting plain-language explanations of an explained ExplaNEAT genome (summaries, per-annotation paragraphs, "worth checking" flags, proposed hypothesis revisions) from its verified claims in experiments/10seed/plain_language/<label>.json, so every sentence is plain, real-world, led by the change in predicted risk for a typical patient, worded with evidence-based confidence, traceable to its claims and marked as a draft for Mike's review.
+description: Use when drafting plain-language explanations of an explained ExplaNEAT genome (summaries, per-annotation paragraphs, "worth checking" flags, proposed hypothesis revisions) from its verified claims in experiments/10seed/plain_language/<label>.json, so every sentence is plain, real-world, describes the shape of each effect, is led by the change in predicted risk for a typical patient, worded with evidence-based confidence, traceable to its claims and marked as a draft for Mike's review.
 ---
 
-# Plain-language explanations (layer v2)
+# Plain-language explanations (layer v3)
 
 You turn **verified claims** about an explained network into short, plain sentences that a
 clinician, a domain expert or a thesis examiner can check against what is known about the
@@ -128,6 +128,48 @@ test check and (c) n:
 - **Categories a part cannot tell apart** come as one class ("country of birth other than the
   United States"); keep that wording.
 
+### 5a. The nature of each shift (shapes; the lint enforces this)
+
+Every claim about a numeric or ordinal variable carries `shape`: the model's response curve on
+its internal score, over the observed range (1st to 99th percentile, or every level of an
+ordinal). Describe **the mechanism first, then the risk numbers as its consequence**:
+"higher cholesterol raises the predicted risk steadily: for a typical patient, from about 14%
+at 193 mg/dL to about 50% at 308 mg/dL". Use these plain words (never "linear", "non-linear",
+"convex", "concave", "monotone" or "logit"):
+
+| `shape.class` | Say |
+|---|---|
+| `steady` | "steadily"; "the same amount for each …" |
+| `hinge` | "nothing until about X, then steadily" (`hinge_kind: flat_then_moving`); "steadily up to about X, then no further" (`moving_then_flat`) |
+| `step` | "mostly in a jump around X" |
+| `levelling_off` | "rises quickly at first, then levels off" |
+| `accelerating` | "rises slowly at first, then faster" |
+| `peak` / `dip` | "highest at about X, lower either side" / "lowest at about X, higher either side" |
+| `multi_segment` | "in stages", then summarise the pieces (`shape.pieces`) if it matters |
+| `flat` | "barely" |
+| ordinal, `ordinal_pattern: equal_steps` | "each extra vessel adds about the same" |
+| ordinal, `ordinal_pattern: first_step` | "mainly the first vessel" |
+| `status: fallback` | direction only, "in an uneven way" |
+| `status: mixed` | "for most patients …, but for `exceptions[].who` it …" |
+
+- X is `shape.points_text` (real units). Use a shape only as its `status` allows: `verified`
+  (at least 90% of affected patients have the same shape and the class is stable when the
+  tolerances move by 25%), `mixed`, or `fallback`.
+- **Saturation is appearance, not mechanism.** When `shape.risk_saturation` is set, add after the
+  numbers: "…, flattening out near the top because the predicted risk cannot go much higher"
+  (or "near the bottom … much lower"). Do not call a steady effect "levelling off" because the
+  risk saturates.
+- **Tie the shape to the structure** where `shape.matched_fold` or a threshold claim exists:
+  "nothing until about 285 mg/dL, where one part of the model switches on, then steadily". Say
+  the fold once: cite the direction claim and the threshold claim together, do not repeat it.
+- Interactions: give the shape for the group named in `stronger_group` (`shape.groups` has
+  each group's).
+- Categorical variables have `shape.class: categorical` (levels relative to the reference,
+  `ordering_high_to_low`); no shape words are needed.
+- Shape-based "worth checking" flags only where real-world plausibility is in question, neutral:
+  "Worth checking: the predicted risk is highest at about 55 years and lower for older patients"
+  (flag e.g. "risk peaks at middle age then falls").
+
 ## 6. What to leave out
 
 - **Null parts:** one line ("It ignores resting blood pressure."; "One small part barely
@@ -170,6 +212,7 @@ test check and (c) n:
 
 - [ ] Every sentence cites verified claims and says nothing beyond them.
 - [ ] Every effect leads with the typical patient's predicted risk; no odds anywhere.
+- [ ] Every numeric or ordinal effect carries its shape words (section 5a), or "in an uneven way".
 - [ ] "clearly" / "slightly" / "on the training data only" / "little data" follow section 4.
 - [ ] No ids, column names, z-scores, activation names, formulas, causal words.
 - [ ] Biggest changes first; interactions, thresholds and rules in the standard shapes.
