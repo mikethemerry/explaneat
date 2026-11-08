@@ -1,0 +1,6100 @@
+{
+ "claims": [
+  {
+   "annotation": {
+    "id": "ann_25",
+    "name": "two_of_five_with_a5_veto"
+   },
+   "checks": {
+    "has_positive": true,
+    "pure": false
+   },
+   "confidence": {
+    "delta_risk": 0.697192,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "share of training patients predicted positive (predicted risk at least 0.5) at each count",
+    "table": [
+     {
+      "count": 0,
+      "n": 19,
+      "share_actually_positive": 0.0,
+      "share_predicted_positive": 0.0
+     },
+     {
+      "count": 1,
+      "n": 70,
+      "share_actually_positive": 0.0,
+      "share_predicted_positive": 0.0714286
+     },
+     {
+      "count": 2,
+      "n": 113,
+      "share_actually_positive": 1.0,
+      "share_predicted_positive": 0.752212
+     },
+     {
+      "count": 3,
+      "n": 92,
+      "share_actually_positive": 0.0,
+      "share_predicted_positive": 0.0108696
+     },
+     {
+      "count": 4,
+      "n": 42,
+      "share_actually_positive": 0.0,
+      "share_predicted_positive": 0.0
+     },
+     {
+      "count": 5,
+      "n": 8,
+      "share_actually_positive": 0.0,
+      "share_predicted_positive": 0.0
+     },
+     {
+      "count": 6,
+      "n": 1,
+      "share_actually_positive": 0.0,
+      "share_predicted_positive": 0.0
+     }
+    ],
+    "unit": "lowest purity over counts",
+    "value": 0.752212
+   },
+   "groups": [
+    {
+     "label": "count 0",
+     "n": 19
+    },
+    {
+     "label": "count 1",
+     "n": 70
+    },
+    {
+     "label": "count 2",
+     "n": 113
+    },
+    {
+     "label": "count 3",
+     "n": 92
+    },
+    {
+     "label": "count 4",
+     "n": 42
+    },
+    {
+     "label": "count 5",
+     "n": 8
+    },
+    {
+     "label": "count 6",
+     "n": 1
+    }
+   ],
+   "id": "C01",
+   "key": "ann_25:rule:first_values",
+   "n": 345,
+   "reasons": [
+    "at some count fewer than 95% of cases get the same prediction"
+   ],
+   "risk": {
+    "delta": 0.697192,
+    "from": 0.0458275,
+    "reference": "average training case with a count predicted negative, then positive",
+    "to": 0.74302
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [
+    "count 0",
+    "count 5",
+    "count 6"
+   ],
+   "split": "train",
+   "statement": {
+    "count_phrase": "attributes take their first value",
+    "counts_predicted_positive": [
+     2
+    ],
+    "description": "how many of a1..a6 equal 1",
+    "positive_label": "'yes'",
+    "rule": "number of attributes at their first value"
+   },
+   "test_check": {
+    "n": 87,
+    "share_following_rule": 0.908046,
+    "split": "test",
+    "status": "disagrees"
+   },
+   "type": "rule",
+   "variables": [
+    {
+     "base": "a1",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a1",
+     "short": "a1",
+     "unit": null
+    },
+    {
+     "base": "a2",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a2",
+     "short": "a2",
+     "unit": null
+    },
+    {
+     "base": "a3",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a3",
+     "short": "a3",
+     "unit": null
+    },
+    {
+     "base": "a4",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a4",
+     "short": "a4",
+     "unit": null
+    },
+    {
+     "base": "a5",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a5",
+     "short": "a5",
+     "unit": null
+    },
+    {
+     "base": "a6",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a6",
+     "short": "a6",
+     "unit": null
+    }
+   ],
+   "verified": false
+  },
+  {
+   "annotation": {
+    "id": "ann_25",
+    "name": "two_of_five_with_a5_veto"
+   },
+   "checks": {
+    "consistent_across_patients": false,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.340925,
+    "n_ok": true,
+    "qualifiers": [],
+    "size": "large",
+    "test": "agrees",
+    "word": "clearly"
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 106878000000.0,
+    "odds_ratio_range": [
+     0.00571483,
+     2.14345e+28
+    ],
+    "range_across_patients": [
+     -5.16469,
+     65.2348
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 25.3949
+   },
+   "evidence": {
+    "share_opposite_sign": 0.443478,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "a1 = 1",
+     "n": 122
+    },
+    {
+     "label": "a1 = 3",
+     "n": 107
+    }
+   ],
+   "id": "C02",
+   "key": "ann_25:direction:a1:3",
+   "n": 345,
+   "reasons": [
+    "44% of patients have the opposite sign (allowed: 10%)"
+   ],
+   "risk": {
+    "delta": 0.340925,
+    "from": 1.18083e-27,
+    "reference": "typical patient",
+    "to": 0.340925
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a1 = 1",
+      "decoded": true,
+      "group": "cases with a1 = 1",
+      "label": "a1 = 1",
+      "n_train": 122
+     },
+     "to": {
+      "code": "3",
+      "codes": [
+       "3"
+      ],
+      "cond": "a1 = 3",
+      "decoded": true,
+      "group": "cases with a1 = 3",
+      "label": "a1 = 3",
+      "n_train": 107
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "a1"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.0422089,
+     0.190099
+    ],
+    "benefit_mean": 0.109691,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 24.0401,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.134384
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a1",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a1",
+     "short": "a1",
+     "unit": null
+    }
+   ],
+   "verified": false
+  },
+  {
+   "annotation": {
+    "id": "ann_25",
+    "name": "two_of_five_with_a5_veto"
+   },
+   "checks": {
+    "consistent_across_patients": false,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.100903,
+    "n_ok": true,
+    "qualifiers": [],
+    "size": "meaningful",
+    "test": "agrees",
+    "word": "clearly"
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 23187800000.0,
+    "odds_ratio_range": [
+     0.00123987,
+     4.65016e+27
+    ],
+    "range_across_patients": [
+     -6.69275,
+     63.7067
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 23.8669
+   },
+   "evidence": {
+    "share_opposite_sign": 0.443478,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "a1 = 1",
+     "n": 122
+    },
+    {
+     "label": "a1 = 2",
+     "n": 116
+    }
+   ],
+   "id": "C03",
+   "key": "ann_25:direction:a1:2",
+   "n": 345,
+   "reasons": [
+    "44% of patients have the opposite sign (allowed: 10%)"
+   ],
+   "risk": {
+    "delta": 0.100903,
+    "from": 1.18083e-27,
+    "reference": "typical patient",
+    "to": 0.100903
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a1 = 1",
+      "decoded": true,
+      "group": "cases with a1 = 1",
+      "label": "a1 = 1",
+      "n_train": 122
+     },
+     "to": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "a1 = 2",
+      "decoded": true,
+      "group": "cases with a1 = 2",
+      "label": "a1 = 2",
+      "n_train": 116
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "a1"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.0422089,
+     0.190099
+    ],
+    "benefit_mean": 0.109691,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 22.5121,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.134384
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a1",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a1",
+     "short": "a1",
+     "unit": null
+    }
+   ],
+   "verified": false
+  },
+  {
+   "annotation": {
+    "id": "ann_25",
+    "name": "two_of_five_with_a5_veto"
+   },
+   "checks": {
+    "consistent_across_patients": false,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.0274056,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly"
+    ],
+    "size": "slight",
+    "test": "agrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 37529100000000.0,
+    "odds_ratio_range": [
+     0.000311307,
+     3.87548e+45
+    ],
+    "range_across_patients": [
+     -8.07473,
+     104.971
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 31.2561
+   },
+   "evidence": {
+    "share_opposite_sign": 0.504348,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "a3 = 1",
+     "n": 177
+    },
+    {
+     "label": "a3 = 2",
+     "n": 168
+    }
+   ],
+   "id": "C04",
+   "key": "ann_25:direction:a3:2",
+   "n": 345,
+   "reasons": [
+    "50% of patients have the opposite sign (allowed: 10%)"
+   ],
+   "risk": {
+    "delta": 0.0274056,
+    "from": 1.18083e-27,
+    "reference": "typical patient",
+    "to": 0.0274056
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a3 = 1",
+      "decoded": true,
+      "group": "cases with a3 = 1",
+      "label": "a3 = 1",
+      "n_train": 177
+     },
+     "to": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "a3 = 2",
+      "decoded": true,
+      "group": "cases with a3 = 2",
+      "label": "a3 = 2",
+      "n_train": 168
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "a3"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.100615,
+     0.282106
+    ],
+    "benefit_mean": 0.186683,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 29.9116,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.184754
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a3",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a3",
+     "short": "a3",
+     "unit": null
+    }
+   ],
+   "verified": false
+  },
+  {
+   "annotation": {
+    "id": "ann_25",
+    "name": "two_of_five_with_a5_veto"
+   },
+   "checks": {
+    "consistent_across_patients": false,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.010778,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly"
+    ],
+    "size": "slight",
+    "test": "agrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 85699200000000.0,
+    "odds_ratio_range": [
+     0.000120371,
+     1.10131e+47
+    ],
+    "range_across_patients": [
+     -9.02493,
+     108.318
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 32.0819
+   },
+   "evidence": {
+    "share_opposite_sign": 0.507246,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "a6 = 1",
+     "n": 177
+    },
+    {
+     "label": "a6 = 2",
+     "n": 168
+    }
+   ],
+   "id": "C05",
+   "key": "ann_25:direction:a6:2",
+   "n": 345,
+   "reasons": [
+    "51% of patients have the opposite sign (allowed: 10%)"
+   ],
+   "risk": {
+    "delta": 0.010778,
+    "from": 1.18083e-27,
+    "reference": "typical patient",
+    "to": 0.010778
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a6 = 1",
+      "decoded": true,
+      "group": "cases with a6 = 1",
+      "label": "a6 = 1",
+      "n_train": 177
+     },
+     "to": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "a6 = 2",
+      "decoded": true,
+      "group": "cases with a6 = 2",
+      "label": "a6 = 2",
+      "n_train": 168
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "a6"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.152154,
+     0.337711
+    ],
+    "benefit_mean": 0.244352,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 27.4511,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.173959
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a6",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a6",
+     "short": "a6",
+     "unit": null
+    }
+   ],
+   "verified": false
+  },
+  {
+   "annotation": {
+    "id": "ann_25",
+    "name": "two_of_five_with_a5_veto"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 7.50358e-24,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly",
+     "on the training data only"
+    ],
+    "size": "slight",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 6355.51,
+    "odds_ratio_range": [
+     6355.53,
+     6355.53
+    ],
+    "range_across_patients": [
+     8.75708,
+     8.75708
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 8.75708
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "a5 = 1",
+     "n": 87
+    },
+    {
+     "label": "a5 = 2",
+     "n": 87
+    }
+   ],
+   "id": "C06",
+   "key": "ann_25:direction:a5:2",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 7.50358e-24,
+    "from": 1.18083e-27,
+    "reference": "typical patient",
+    "to": 7.50476e-24
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a5 = 1",
+      "decoded": true,
+      "group": "cases with a5 = 1",
+      "label": "a5 = 1",
+      "n_train": 87
+     },
+     "to": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "a5 = 2",
+      "decoded": true,
+      "group": "cases with a5 = 2",
+      "label": "a5 = 2",
+      "n_train": 87
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "a5"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.103229,
+     0.0324173
+    ],
+    "benefit_mean": -0.033591,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 8.75708,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.0225435
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a5",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a5",
+     "short": "a5",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_25",
+    "name": "two_of_five_with_a5_veto"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 4.06908e-24,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly",
+     "on the training data only"
+    ],
+    "size": "slight",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 3446.96,
+    "odds_ratio_range": [
+     3446.97,
+     3446.97
+    ],
+    "range_across_patients": [
+     8.14525,
+     8.14525
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 8.14525
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "a5 = 1",
+     "n": 87
+    },
+    {
+     "label": "a5 = 3",
+     "n": 85
+    }
+   ],
+   "id": "C07",
+   "key": "ann_25:direction:a5:3",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 4.06908e-24,
+    "from": 1.18083e-27,
+    "reference": "typical patient",
+    "to": 4.07026e-24
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a5 = 1",
+      "decoded": true,
+      "group": "cases with a5 = 1",
+      "label": "a5 = 1",
+      "n_train": 87
+     },
+     "to": {
+      "code": "3",
+      "codes": [
+       "3"
+      ],
+      "cond": "a5 = 3",
+      "decoded": true,
+      "group": "cases with a5 = 3",
+      "label": "a5 = 3",
+      "n_train": 85
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "a5"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.103229,
+     0.0324173
+    ],
+    "benefit_mean": -0.033591,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 8.14525,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.0225435
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a5",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a5",
+     "short": "a5",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_25",
+    "name": "two_of_five_with_a5_veto"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 1.66466e-24,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly",
+     "on the training data only"
+    ],
+    "size": "slight",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 1894.64,
+    "odds_ratio_range": [
+     1410.74,
+     3391.37
+    ],
+    "range_across_patients": [
+     7.25187,
+     8.12899
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 7.54679
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "a5 = 1",
+     "n": 87
+    },
+    {
+     "label": "a5 = 4",
+     "n": 86
+    }
+   ],
+   "id": "C08",
+   "key": "ann_25:direction:a5:4",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 1.66466e-24,
+    "from": 1.18083e-27,
+    "reference": "typical patient",
+    "to": 1.66584e-24
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a5 = 1",
+      "decoded": true,
+      "group": "cases with a5 = 1",
+      "label": "a5 = 1",
+      "n_train": 87
+     },
+     "to": {
+      "code": "4",
+      "codes": [
+       "4"
+      ],
+      "cond": "a5 = 4",
+      "decoded": true,
+      "group": "cases with a5 = 4",
+      "label": "a5 = 4",
+      "n_train": 86
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "a5"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.103229,
+     0.0324173
+    ],
+    "benefit_mean": -0.033591,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 7.53416,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.0225435
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a5",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a5",
+     "short": "a5",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_25",
+    "name": "two_of_five_with_a5_veto"
+   },
+   "checks": {
+    "consistent_across_patients": false,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 1.18083e-27,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly"
+    ],
+    "size": "slight",
+    "test": "agrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 3.57614e-13,
+    "odds_ratio_range": [
+     6.6093e-35,
+     37850.5
+    ],
+    "range_across_patients": [
+     -78.702,
+     10.5414
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": -28.6593
+   },
+   "evidence": {
+    "share_opposite_sign": 0.434783,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "attribute a2 other than a2 = 1",
+     "n": 229
+    },
+    {
+     "label": "a2 = 1",
+     "n": 116
+    }
+   ],
+   "id": "C09",
+   "key": "ann_25:direction:a2:1",
+   "n": 345,
+   "reasons": [
+    "43% of patients have the opposite sign (allowed: 10%)"
+   ],
+   "risk": {
+    "delta": -1.18083e-27,
+    "from": 1.18083e-27,
+    "reference": "typical patient",
+    "to": 7.80432e-62
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "3",
+      "codes": [
+       "2",
+       "3"
+      ],
+      "cond": "attribute a2 is something other than a2 = 1",
+      "decoded": true,
+      "group": "cases with attribute a2 other than a2 = 1",
+      "label": "attribute a2 other than a2 = 1",
+      "n_train": 229
+     },
+     "to": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a2 = 1",
+      "decoded": true,
+      "group": "cases with a2 = 1",
+      "label": "a2 = 1",
+      "n_train": 116
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "a2"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.00775619,
+     0.15771
+    ],
+    "benefit_mean": 0.0808561,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -24.8365,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.139152
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a2",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a2",
+     "short": "a2",
+     "unit": null
+    }
+   ],
+   "verified": false
+  },
+  {
+   "annotation": {
+    "id": "ann_25",
+    "name": "two_of_five_with_a5_veto"
+   },
+   "checks": {
+    "consistent_across_patients": false,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 1.18083e-27,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly"
+    ],
+    "size": "slight",
+    "test": "agrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 1.7018e-16,
+    "odds_ratio_range": [
+     1.22097e-37,
+     36.921
+    ],
+    "range_across_patients": [
+     -84.996,
+     3.60878
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": -36.3097
+   },
+   "evidence": {
+    "share_opposite_sign": 0.408696,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "a4 = 2",
+     "n": 130
+    },
+    {
+     "label": "a4 = 1",
+     "n": 107
+    }
+   ],
+   "id": "C10",
+   "key": "ann_25:direction:a4:1",
+   "n": 345,
+   "reasons": [
+    "41% of patients have the opposite sign (allowed: 10%)"
+   ],
+   "risk": {
+    "delta": -1.18083e-27,
+    "from": 1.18083e-27,
+    "reference": "typical patient",
+    "to": 1.44175e-64
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "a4 = 2",
+      "decoded": true,
+      "group": "cases with a4 = 2",
+      "label": "a4 = 2",
+      "n_train": 130
+     },
+     "to": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a4 = 1",
+      "decoded": true,
+      "group": "cases with a4 = 1",
+      "label": "a4 = 1",
+      "n_train": 107
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "a4"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.0659386,
+     0.248353
+    ],
+    "benefit_mean": 0.156361,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -26.1497,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.12088
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a4",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a4",
+     "short": "a4",
+     "unit": null
+    }
+   ],
+   "verified": false
+  },
+  {
+   "annotation": {
+    "id": "ann_25",
+    "name": "two_of_five_with_a5_veto"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 9.32175e-28,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly"
+    ],
+    "size": "slight",
+    "test": "agrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
+    "odds_ratio": 0.210574,
+    "odds_ratio_range": [
+     0.210574,
+     0.210574
+    ],
+    "range_across_patients": [
+     -1.55792,
+     -1.55792
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": -1.55792
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "a4 = 2",
+     "n": 130
+    },
+    {
+     "label": "a4 = 3",
+     "n": 108
+    }
+   ],
+   "id": "C11",
+   "key": "ann_25:direction:a4:3",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -9.32175e-28,
+    "from": 1.18083e-27,
+    "reference": "typical patient",
+    "to": 2.48651e-28
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "a4 = 2",
+      "decoded": true,
+      "group": "cases with a4 = 2",
+      "label": "a4 = 2",
+      "n_train": 130
+     },
+     "to": {
+      "code": "3",
+      "codes": [
+       "3"
+      ],
+      "cond": "a4 = 3",
+      "decoded": true,
+      "group": "cases with a4 = 3",
+      "label": "a4 = 3",
+      "n_train": 108
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "a4"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.0659386,
+     0.248353
+    ],
+    "benefit_mean": 0.156361,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -1.55792,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.12088
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a4",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a4",
+     "short": "a4",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_25",
+    "name": "two_of_five_with_a5_veto"
+   },
+   "checks": {
+    "agrees_with_direction": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 7.50358e-24,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly",
+     "on the training data only"
+    ],
+    "size": "slight",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "change in the model's log-odds for the typical patient",
+    "odds_ratio": 6355.51,
+    "unit": "log-odds (model)",
+    "value": 8.75708
+   },
+   "groups": [
+    {
+     "label": "a5 = 1",
+     "n": 87
+    },
+    {
+     "label": "a5 = 2",
+     "n": 87
+    }
+   ],
+   "id": "C12",
+   "key": "ann_25:magnitude:a5:2",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 7.50358e-24,
+    "from": 1.18083e-27,
+    "reference": "typical patient",
+    "to": 7.50476e-24
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a5 = 1",
+      "decoded": true,
+      "group": "cases with a5 = 1",
+      "label": "a5 = 1",
+      "n_train": 87
+     },
+     "to": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "a5 = 2",
+      "decoded": true,
+      "group": "cases with a5 = 2",
+      "label": "a5 = 2",
+      "n_train": 87
+     }
+    },
+    "direction": "raises",
+    "related_direction": "ann_25:direction:a5:2",
+    "strength": "strong",
+    "variable": "a5"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.103229,
+     0.0324173
+    ],
+    "benefit_mean": -0.033591,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 8.75708,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.0225435
+   },
+   "type": "magnitude",
+   "variables": [
+    {
+     "base": "a5",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a5",
+     "short": "a5",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_25",
+    "name": "two_of_five_with_a5_veto"
+   },
+   "checks": {
+    "agrees_with_direction": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 9.32175e-28,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly"
+    ],
+    "size": "slight",
+    "test": "agrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "change in the model's log-odds for the typical patient",
+    "odds_ratio": 0.210574,
+    "unit": "log-odds (model)",
+    "value": -1.55792
+   },
+   "groups": [
+    {
+     "label": "a4 = 2",
+     "n": 130
+    },
+    {
+     "label": "a4 = 3",
+     "n": 108
+    }
+   ],
+   "id": "C13",
+   "key": "ann_25:magnitude:a4:3",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -9.32175e-28,
+    "from": 1.18083e-27,
+    "reference": "typical patient",
+    "to": 2.48651e-28
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "a4 = 2",
+      "decoded": true,
+      "group": "cases with a4 = 2",
+      "label": "a4 = 2",
+      "n_train": 130
+     },
+     "to": {
+      "code": "3",
+      "codes": [
+       "3"
+      ],
+      "cond": "a4 = 3",
+      "decoded": true,
+      "group": "cases with a4 = 3",
+      "label": "a4 = 3",
+      "n_train": 108
+     }
+    },
+    "direction": "lowers",
+    "related_direction": "ann_25:direction:a4:3",
+    "strength": "strong",
+    "variable": "a4"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.0659386,
+     0.248353
+    ],
+    "benefit_mean": 0.156361,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -1.55792,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.12088
+   },
+   "type": "magnitude",
+   "variables": [
+    {
+     "base": "a4",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a4",
+     "short": "a4",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_22",
+    "name": "count_gate_atleast3_of5"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.989073,
+    "n_ok": true,
+    "qualifiers": [],
+    "size": "large",
+    "test": "agrees",
+    "word": "clearly"
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only where this part reads it",
+    "odds_ratio": 18701800000000.0,
+    "odds_ratio_range": [
+     1.0,
+     3.75072e+30
+    ],
+    "range_across_patients": [
+     0.0,
+     70.3995
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 30.5596
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.443478
+   },
+   "groups": [
+    {
+     "label": "a1 = 1",
+     "n": 122
+    },
+    {
+     "label": "attribute a1 other than a1 = 1",
+     "n": 223
+    }
+   ],
+   "id": "C14",
+   "key": "ann_22:direction:a1:2+3",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.989073,
+    "from": 1.18083e-27,
+    "reference": "typical patient",
+    "to": 0.989073
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a1 = 1",
+      "decoded": true,
+      "group": "cases with a1 = 1",
+      "label": "a1 = 1",
+      "n_train": 122
+     },
+     "to": {
+      "code": "2",
+      "codes": [
+       "2",
+       "3"
+      ],
+      "cond": "attribute a1 is something other than a1 = 1",
+      "decoded": true,
+      "group": "cases with attribute a1 other than a1 = 1",
+      "label": "attribute a1 other than a1 = 1",
+      "n_train": 223
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "a1"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.05107,
+     0.196737
+    ],
+    "benefit_mean": 0.119501,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 29.2048,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.116532
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a1",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a1",
+     "short": "a1",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_22",
+    "name": "count_gate_atleast3_of5"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.989073,
+    "n_ok": true,
+    "qualifiers": [],
+    "size": "large",
+    "test": "agrees",
+    "word": "clearly"
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only where this part reads it",
+    "odds_ratio": 1.20554e+17,
+    "odds_ratio_range": [
+     1.0,
+     1.24524e+49
+    ],
+    "range_across_patients": [
+     0.0,
+     113.046
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 39.3309
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.504348
+   },
+   "groups": [
+    {
+     "label": "a3 = 1",
+     "n": 177
+    },
+    {
+     "label": "a3 = 2",
+     "n": 168
+    }
+   ],
+   "id": "C15",
+   "key": "ann_22:direction:a3:2",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.989073,
+    "from": 1.18083e-27,
+    "reference": "typical patient",
+    "to": 0.989073
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a3 = 1",
+      "decoded": true,
+      "group": "cases with a3 = 1",
+      "label": "a3 = 1",
+      "n_train": 177
+     },
+     "to": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "a3 = 2",
+      "decoded": true,
+      "group": "cases with a3 = 2",
+      "label": "a3 = 2",
+      "n_train": 168
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "a3"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.0420931,
+     0.158017
+    ],
+    "benefit_mean": 0.0939358,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 37.9863,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.160475
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a3",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a3",
+     "short": "a3",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_22",
+    "name": "count_gate_atleast3_of5"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.989073,
+    "n_ok": true,
+    "qualifiers": [],
+    "size": "large",
+    "test": "agrees",
+    "word": "clearly"
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only where this part reads it",
+    "odds_ratio": 7.11956e+17,
+    "odds_ratio_range": [
+     1.0,
+     9.14992e+50
+    ],
+    "range_across_patients": [
+     0.0,
+     117.343
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 41.1068
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.507246
+   },
+   "groups": [
+    {
+     "label": "a6 = 1",
+     "n": 177
+    },
+    {
+     "label": "a6 = 2",
+     "n": 168
+    }
+   ],
+   "id": "C16",
+   "key": "ann_22:direction:a6:2",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.989073,
+    "from": 1.18083e-27,
+    "reference": "typical patient",
+    "to": 0.989073
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a6 = 1",
+      "decoded": true,
+      "group": "cases with a6 = 1",
+      "label": "a6 = 1",
+      "n_train": 177
+     },
+     "to": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "a6 = 2",
+      "decoded": true,
+      "group": "cases with a6 = 2",
+      "label": "a6 = 2",
+      "n_train": 168
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "a6"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.0706117,
+     0.216679
+    ],
+    "benefit_mean": 0.137931,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 36.4761,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.15029
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a6",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a6",
+     "short": "a6",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_22",
+    "name": "count_gate_atleast3_of5"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 2.88142e-60,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly"
+    ],
+    "size": "slight",
+    "test": "agrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only where this part reads it",
+    "odds_ratio": 4.60933e-18,
+    "odds_ratio_range": [
+     3.30692e-39,
+     1.0
+    ],
+    "range_across_patients": [
+     -88.6048,
+     0.0
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": -39.9184
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.408696
+   },
+   "groups": [
+    {
+     "label": "attribute a4 other than a4 = 1",
+     "n": 238
+    },
+    {
+     "label": "a4 = 1",
+     "n": 107
+    }
+   ],
+   "id": "C17",
+   "key": "ann_22:direction:a4:1",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -2.88142e-60,
+    "from": 2.88142e-60,
+    "reference": "typical patient this part acts on",
+    "reference_values": {
+     "a1": "a1 = 1",
+     "a2": "a2 = 1",
+     "a3": "a3 = 1",
+     "a4": "a4 = 1",
+     "a5": "a5 = 1",
+     "a6": "a6 = 1"
+    },
+    "to": 9.52879e-99
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "2",
+      "codes": [
+       "2",
+       "3"
+      ],
+      "cond": "attribute a4 is something other than a4 = 1",
+      "decoded": true,
+      "group": "cases with attribute a4 other than a4 = 1",
+      "label": "attribute a4 other than a4 = 1",
+      "n_train": 238
+     },
+     "to": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a4 = 1",
+      "decoded": true,
+      "group": "cases with a4 = 1",
+      "label": "a4 = 1",
+      "n_train": 107
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "a4"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.0407357,
+     0.169237
+    ],
+    "benefit_mean": 0.0998811,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -29.7585,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.121872
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a4",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a4",
+     "short": "a4",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_22",
+    "name": "count_gate_atleast3_of5"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 2.26994e-60,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly"
+    ],
+    "size": "slight",
+    "test": "agrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only where this part reads it",
+    "odds_ratio": 1.82529e-17,
+    "odds_ratio_range": [
+     4.19762e-39,
+     1.0
+    ],
+    "range_across_patients": [
+     -88.3663,
+     0.0
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": -38.5422
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.434783
+   },
+   "groups": [
+    {
+     "label": "attribute a2 other than a2 = 1",
+     "n": 229
+    },
+    {
+     "label": "a2 = 1",
+     "n": 116
+    }
+   ],
+   "id": "C18",
+   "key": "ann_22:direction:a2:1",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -2.26994e-60,
+    "from": 2.26994e-60,
+    "reference": "typical patient this part acts on",
+    "reference_values": {
+     "a1": "a1 = 1",
+     "a2": "a2 = 1",
+     "a3": "a3 = 1",
+     "a4": "a4 = 1",
+     "a5": "a5 = 1",
+     "a6": "a6 = 1"
+    },
+    "to": 9.52879e-99
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "3",
+      "codes": [
+       "2",
+       "3"
+      ],
+      "cond": "attribute a2 is something other than a2 = 1",
+      "decoded": true,
+      "group": "cases with attribute a2 other than a2 = 1",
+      "label": "attribute a2 other than a2 = 1",
+      "n_train": 229
+     },
+     "to": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a2 = 1",
+      "decoded": true,
+      "group": "cases with a2 = 1",
+      "label": "a2 = 1",
+      "n_train": 116
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "a2"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.0433958,
+     0.196797
+    ],
+    "benefit_mean": 0.114744,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -34.7225,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.129959
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a2",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a2",
+     "short": "a2",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_22",
+    "name": "count_gate_atleast3_of5"
+   },
+   "checks": {
+    "both_groups_observed": true,
+    "consistent_across_patients": true,
+    "large_enough": true,
+    "mechanism_agrees": true
+   },
+   "confidence": {
+    "delta_risk": 0.0274056,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly"
+    ],
+    "size": "slight",
+    "test": "agrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "difference between the two groups (first minus second) of the mean change in the model's log-odds when the main variable changes everywhere",
+    "odds_ratio": 2.0002e+18,
+    "unit": "log-odds (model)",
+    "value": 42.1398
+   },
+   "evidence": {
+    "counterfactual_did_through_part": 42.6696,
+    "counterfactual_modifier_settings": [
+     "3",
+     "1"
+    ],
+    "did_share_same_sign": 1.0,
+    "method_note": "groups are the patients' actual values; the difference-in-differences sets the modifier for every patient, only where this part reads it"
+   },
+   "groups": [
+    {
+     "cond": "a2 = 1",
+     "estimate": 59.2272,
+     "group": "cases with a2 = 1",
+     "label": "a2 = 1",
+     "n": 116,
+     "odds_ratio": 5.27274e+25,
+     "part_effect": 67.3019,
+     "range_across_patients": [
+      -8.07473,
+      104.971
+     ],
+     "risk_from": 7.80432e-62,
+     "risk_to": 3.02488e-16
+    },
+    {
+     "cond": "attribute a2 is something other than a2 = 1",
+     "estimate": 17.0874,
+     "group": "cases with attribute a2 other than a2 = 1",
+     "label": "attribute a2 other than a2 = 1",
+     "n": 229,
+     "odds_ratio": 26361100.0,
+     "part_effect": 25.1621,
+     "range_across_patients": [
+      -8.07473,
+      76.6397
+     ],
+     "risk_from": 1.18083e-27,
+     "risk_to": 0.0274056
+    }
+   ],
+   "id": "C19",
+   "key": "ann_22:interaction:a3xa2",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -0.0274056,
+    "delta_basis": "change in predicted risk in the stronger group minus in the weaker group",
+    "from": null,
+    "groups": [
+     {
+      "from": 7.80432e-62,
+      "label": "a2 = 1",
+      "to": 3.02488e-16
+     },
+     {
+      "from": 1.18083e-27,
+      "label": "attribute a2 other than a2 = 1",
+      "to": 0.0274056
+     }
+    ],
+    "reference": "typical patient of each group (the typical patient with the modifier set to the group's value)",
+    "to": null
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a3 = 1",
+      "decoded": true,
+      "group": "cases with a3 = 1",
+      "label": "a3 = 1",
+      "n_train": 177
+     },
+     "to": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "a3 = 2",
+      "decoded": true,
+      "group": "cases with a3 = 2",
+      "label": "a3 = 2",
+      "n_train": 168
+     }
+    },
+    "direction": "raises",
+    "modifier": "a2",
+    "pattern": "amplified",
+    "strength": "strong",
+    "stronger_group": {
+     "cond": "a2 = 1",
+     "estimate": 59.2272,
+     "group": "cases with a2 = 1",
+     "label": "a2 = 1",
+     "n": 116,
+     "odds_ratio": 5.27274e+25,
+     "part_effect": 67.3019,
+     "range_across_patients": [
+      -8.07473,
+      104.971
+     ],
+     "risk_from": 7.80432e-62,
+     "risk_to": 3.02488e-16
+    },
+    "variable": "a3",
+    "weaker_group": {
+     "cond": "attribute a2 is something other than a2 = 1",
+     "estimate": 17.0874,
+     "group": "cases with attribute a2 other than a2 = 1",
+     "label": "attribute a2 other than a2 = 1",
+     "n": 229,
+     "odds_ratio": 26361100.0,
+     "part_effect": 25.1621,
+     "range_across_patients": [
+      -8.07473,
+      76.6397
+     ],
+     "risk_from": 1.18083e-27,
+     "risk_to": 0.0274056
+    }
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.0433958,
+     0.196797
+    ],
+    "benefit_mean": 0.114744,
+    "bootstrap_B": 1000,
+    "difference": 39.5558,
+    "difference_ci95": [
+     19.0176,
+     60.3483
+    ],
+    "groups_n": [
+     28,
+     59
+    ],
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "measure_difference": "group difference of the main variable's effect on test patients, stratified bootstrap over test patients (seed 42)",
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.129959
+   },
+   "type": "interaction",
+   "variables": [
+    {
+     "base": "a3",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a3",
+     "short": "a3",
+     "unit": null
+    },
+    {
+     "base": "a2",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a2",
+     "short": "a2",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_22",
+    "name": "count_gate_atleast3_of5"
+   },
+   "checks": {
+    "both_groups_observed": true,
+    "consistent_across_patients": true,
+    "large_enough": true,
+    "mechanism_agrees": true
+   },
+   "confidence": {
+    "delta_risk": 0.0166242,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly"
+    ],
+    "size": "slight",
+    "test": "agrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "difference between the two groups (first minus second) of the mean change in the model's log-odds when the main variable changes everywhere",
+    "odds_ratio": 5.90114e-22,
+    "unit": "log-odds (model)",
+    "value": -48.8817
+   },
+   "evidence": {
+    "counterfactual_did_through_part": -49.7148,
+    "counterfactual_modifier_settings": [
+     "1",
+     "2"
+    ],
+    "did_share_same_sign": 1.0,
+    "method_note": "groups are the patients' actual values; the difference-in-differences sets the modifier for every patient, only where this part reads it"
+   },
+   "groups": [
+    {
+     "cond": "a3 = 2",
+     "estimate": 7.00341,
+     "group": "cases with a3 = 2",
+     "label": "a3 = 2",
+     "n": 168,
+     "odds_ratio": 1100.38,
+     "part_effect": 16.0283,
+     "range_across_patients": [
+      -9.02493,
+      51.0099
+     ],
+     "risk_from": 0.0274056,
+     "risk_to": 3.39179e-06
+    },
+    {
+     "cond": "a3 = 1",
+     "estimate": 55.8851,
+     "group": "cases with a3 = 1",
+     "label": "a3 = 1",
+     "n": 177,
+     "odds_ratio": 1.8647e+24,
+     "part_effect": 64.9101,
+     "range_across_patients": [
+      -9.02493,
+      108.318
+     ],
+     "risk_from": 1.18083e-27,
+     "risk_to": 0.010778
+    }
+   ],
+   "id": "C20",
+   "key": "ann_22:interaction:a6xa3",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -0.0166242,
+    "delta_basis": "change in predicted risk in the stronger group minus in the weaker group",
+    "from": null,
+    "groups": [
+     {
+      "from": 0.0274056,
+      "label": "a3 = 2",
+      "to": 3.39179e-06
+     },
+     {
+      "from": 1.18083e-27,
+      "label": "a3 = 1",
+      "to": 0.010778
+     }
+    ],
+    "reference": "typical patient of each group (the typical patient with the modifier set to the group's value)",
+    "to": null
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a6 = 1",
+      "decoded": true,
+      "group": "cases with a6 = 1",
+      "label": "a6 = 1",
+      "n_train": 177
+     },
+     "to": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "a6 = 2",
+      "decoded": true,
+      "group": "cases with a6 = 2",
+      "label": "a6 = 2",
+      "n_train": 168
+     }
+    },
+    "direction": "raises",
+    "modifier": "a3",
+    "pattern": "amplified",
+    "strength": "strong",
+    "stronger_group": {
+     "cond": "a3 = 1",
+     "estimate": 55.8851,
+     "group": "cases with a3 = 1",
+     "label": "a3 = 1",
+     "n": 177,
+     "odds_ratio": 1.8647e+24,
+     "part_effect": 64.9101,
+     "range_across_patients": [
+      -9.02493,
+      108.318
+     ],
+     "risk_from": 1.18083e-27,
+     "risk_to": 0.010778
+    },
+    "variable": "a6",
+    "weaker_group": {
+     "cond": "a3 = 2",
+     "estimate": 7.00341,
+     "group": "cases with a3 = 2",
+     "label": "a3 = 2",
+     "n": 168,
+     "odds_ratio": 1100.38,
+     "part_effect": 16.0283,
+     "range_across_patients": [
+      -9.02493,
+      51.0099
+     ],
+     "risk_from": 0.0274056,
+     "risk_to": 3.39179e-06
+    }
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.0420931,
+     0.158017
+    ],
+    "benefit_mean": 0.0939358,
+    "bootstrap_B": 1000,
+    "difference": -55.8598,
+    "difference_ci95": [
+     -71.0446,
+     -39.4958
+    ],
+    "groups_n": [
+     48,
+     39
+    ],
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "measure_difference": "group difference of the main variable's effect on test patients, stratified bootstrap over test patients (seed 42)",
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.160475
+   },
+   "type": "interaction",
+   "variables": [
+    {
+     "base": "a6",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a6",
+     "short": "a6",
+     "unit": null
+    },
+    {
+     "base": "a3",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a3",
+     "short": "a3",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_22",
+    "name": "count_gate_atleast3_of5"
+   },
+   "checks": {
+    "both_groups_observed": true,
+    "consistent_across_patients": true,
+    "large_enough": true,
+    "mechanism_agrees": true
+   },
+   "confidence": {
+    "delta_risk": 0.010778,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly"
+    ],
+    "size": "slight",
+    "test": "agrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "difference between the two groups (first minus second) of the mean change in the model's log-odds when the main variable changes everywhere",
+    "odds_ratio": 8.98839e+18,
+    "unit": "log-odds (model)",
+    "value": 43.6425
+   },
+   "evidence": {
+    "counterfactual_did_through_part": 44.2292,
+    "counterfactual_modifier_settings": [
+     "1",
+     "2"
+    ],
+    "did_share_same_sign": 1.0,
+    "method_note": "groups are the patients' actual values; the difference-in-differences sets the modifier for every patient, only where this part reads it"
+   },
+   "groups": [
+    {
+     "cond": "a6 = 2",
+     "estimate": -13.9192,
+     "group": "cases with a6 = 2",
+     "label": "a6 = 2",
+     "n": 168,
+     "odds_ratio": 9.01513e-07,
+     "part_effect": -17.528,
+     "range_across_patients": [
+      -52.1287,
+      3.60878
+     ],
+     "risk_from": 0.010778,
+     "risk_to": 1.58818e-17
+    },
+    {
+     "cond": "a6 = 1",
+     "estimate": -57.5617,
+     "group": "cases with a6 = 1",
+     "label": "a6 = 1",
+     "n": 177,
+     "odds_ratio": 1.00297e-25,
+     "part_effect": -61.1704,
+     "range_across_patients": [
+      -84.996,
+      3.60878
+     ],
+     "risk_from": 1.18083e-27,
+     "risk_to": 1.44175e-64
+    }
+   ],
+   "id": "C21",
+   "key": "ann_22:interaction:a4xa6",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -0.010778,
+    "delta_basis": "change in predicted risk in the stronger group minus in the weaker group",
+    "from": null,
+    "groups": [
+     {
+      "from": 0.010778,
+      "label": "a6 = 2",
+      "to": 1.58818e-17
+     },
+     {
+      "from": 1.18083e-27,
+      "label": "a6 = 1",
+      "to": 1.44175e-64
+     }
+    ],
+    "reference": "typical patient of each group (the typical patient with the modifier set to the group's value)",
+    "to": null
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "2",
+      "codes": [
+       "2",
+       "3"
+      ],
+      "cond": "attribute a4 is something other than a4 = 1",
+      "decoded": true,
+      "group": "cases with attribute a4 other than a4 = 1",
+      "label": "attribute a4 other than a4 = 1",
+      "n_train": 238
+     },
+     "to": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a4 = 1",
+      "decoded": true,
+      "group": "cases with a4 = 1",
+      "label": "a4 = 1",
+      "n_train": 107
+     }
+    },
+    "direction": "lowers",
+    "modifier": "a6",
+    "pattern": "amplified",
+    "strength": "strong",
+    "stronger_group": {
+     "cond": "a6 = 1",
+     "estimate": -57.5617,
+     "group": "cases with a6 = 1",
+     "label": "a6 = 1",
+     "n": 177,
+     "odds_ratio": 1.00297e-25,
+     "part_effect": -61.1704,
+     "range_across_patients": [
+      -84.996,
+      3.60878
+     ],
+     "risk_from": 1.18083e-27,
+     "risk_to": 1.44175e-64
+    },
+    "variable": "a4",
+    "weaker_group": {
+     "cond": "a6 = 2",
+     "estimate": -13.9192,
+     "group": "cases with a6 = 2",
+     "label": "a6 = 2",
+     "n": 168,
+     "odds_ratio": 9.01513e-07,
+     "part_effect": -17.528,
+     "range_across_patients": [
+      -52.1287,
+      3.60878
+     ],
+     "risk_from": 0.010778,
+     "risk_to": 1.58818e-17
+    }
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.0706117,
+     0.216679
+    ],
+    "benefit_mean": 0.137931,
+    "bootstrap_B": 1000,
+    "difference": 42.2246,
+    "difference_ci95": [
+     27.6851,
+     55.813
+    ],
+    "groups_n": [
+     48,
+     39
+    ],
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "measure_difference": "group difference of the main variable's effect on test patients, stratified bootstrap over test patients (seed 42)",
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.15029
+   },
+   "type": "interaction",
+   "variables": [
+    {
+     "base": "a4",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a4",
+     "short": "a4",
+     "unit": null
+    },
+    {
+     "base": "a6",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a6",
+     "short": "a6",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_22",
+    "name": "count_gate_atleast3_of5"
+   },
+   "checks": {
+    "both_groups_observed": true,
+    "consistent_across_patients": true,
+    "large_enough": true,
+    "mechanism_agrees": true
+   },
+   "confidence": {
+    "delta_risk": 0.010778,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly"
+    ],
+    "size": "slight",
+    "test": "agrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "difference between the two groups (first minus second) of the mean change in the model's log-odds when the main variable changes everywhere",
+    "odds_ratio": 3.1023e+19,
+    "unit": "log-odds (model)",
+    "value": 44.8813
+   },
+   "evidence": {
+    "counterfactual_did_through_part": 44.3323,
+    "counterfactual_modifier_settings": [
+     "3",
+     "1"
+    ],
+    "did_share_same_sign": 1.0,
+    "method_note": "groups are the patients' actual values; the difference-in-differences sets the modifier for every patient, only where this part reads it"
+   },
+   "groups": [
+    {
+     "cond": "a2 = 1",
+     "estimate": 61.8726,
+     "group": "cases with a2 = 1",
+     "label": "a2 = 1",
+     "n": 116,
+     "odds_ratio": 7.42908e+26,
+     "part_effect": 70.8975,
+     "range_across_patients": [
+      -9.02493,
+      108.318
+     ],
+     "risk_from": 7.80432e-62,
+     "risk_to": 8.59696e-15
+    },
+    {
+     "cond": "attribute a2 is something other than a2 = 1",
+     "estimate": 16.9914,
+     "group": "cases with attribute a2 other than a2 = 1",
+     "label": "attribute a2 other than a2 = 1",
+     "n": 229,
+     "odds_ratio": 23947000.0,
+     "part_effect": 26.0163,
+     "range_across_patients": [
+      -9.02493,
+      75.6895
+     ],
+     "risk_from": 1.18083e-27,
+     "risk_to": 0.010778
+    }
+   ],
+   "id": "C22",
+   "key": "ann_22:interaction:a6xa2",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -0.010778,
+    "delta_basis": "change in predicted risk in the stronger group minus in the weaker group",
+    "from": null,
+    "groups": [
+     {
+      "from": 7.80432e-62,
+      "label": "a2 = 1",
+      "to": 8.59696e-15
+     },
+     {
+      "from": 1.18083e-27,
+      "label": "attribute a2 other than a2 = 1",
+      "to": 0.010778
+     }
+    ],
+    "reference": "typical patient of each group (the typical patient with the modifier set to the group's value)",
+    "to": null
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a6 = 1",
+      "decoded": true,
+      "group": "cases with a6 = 1",
+      "label": "a6 = 1",
+      "n_train": 177
+     },
+     "to": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "a6 = 2",
+      "decoded": true,
+      "group": "cases with a6 = 2",
+      "label": "a6 = 2",
+      "n_train": 168
+     }
+    },
+    "direction": "raises",
+    "modifier": "a2",
+    "pattern": "amplified",
+    "strength": "strong",
+    "stronger_group": {
+     "cond": "a2 = 1",
+     "estimate": 61.8726,
+     "group": "cases with a2 = 1",
+     "label": "a2 = 1",
+     "n": 116,
+     "odds_ratio": 7.42908e+26,
+     "part_effect": 70.8975,
+     "range_across_patients": [
+      -9.02493,
+      108.318
+     ],
+     "risk_from": 7.80432e-62,
+     "risk_to": 8.59696e-15
+    },
+    "variable": "a6",
+    "weaker_group": {
+     "cond": "attribute a2 is something other than a2 = 1",
+     "estimate": 16.9914,
+     "group": "cases with attribute a2 other than a2 = 1",
+     "label": "attribute a2 other than a2 = 1",
+     "n": 229,
+     "odds_ratio": 23947000.0,
+     "part_effect": 26.0163,
+     "range_across_patients": [
+      -9.02493,
+      75.6895
+     ],
+     "risk_from": 1.18083e-27,
+     "risk_to": 0.010778
+    }
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.0433958,
+     0.196797
+    ],
+    "benefit_mean": 0.114744,
+    "bootstrap_B": 1000,
+    "difference": 37.9221,
+    "difference_ci95": [
+     18.4261,
+     58.6892
+    ],
+    "groups_n": [
+     28,
+     59
+    ],
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "measure_difference": "group difference of the main variable's effect on test patients, stratified bootstrap over test patients (seed 42)",
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.129959
+   },
+   "type": "interaction",
+   "variables": [
+    {
+     "base": "a6",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a6",
+     "short": "a6",
+     "unit": null
+    },
+    {
+     "base": "a2",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a2",
+     "short": "a2",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_22",
+    "name": "count_gate_atleast3_of5"
+   },
+   "checks": {
+    "acts_on_someone": true,
+    "consistent_across_patients": true,
+    "not_negligible": true
+   },
+   "confidence": {
+    "delta_risk": 1.0,
+    "n_ok": true,
+    "qualifiers": [],
+    "size": "large",
+    "test": "agrees",
+    "word": "clearly"
+   },
+   "estimate": {
+    "method": "mean contribution of the part to the log-odds among the patients it acts on (the part switched off: exits at 0)",
+    "odds_ratio": 3.84546e-38,
+    "odds_ratio_range": [
+     4.31366e-68,
+     3.94815e-17
+    ],
+    "range_across_patients": [
+     -155.114,
+     -37.7707
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "share": {
+     "unit": "share of training patients",
+     "value": 0.324638
+    },
+    "unit": "log-odds (model)",
+    "value": -86.1513
+   },
+   "evidence": {
+    "outcome_rate_ci95": [
+     3.46945e-18,
+     0.0331613
+    ],
+    "outcome_rate_in_group": 0.0,
+    "outcome_rate_overall": 0.327536,
+    "who": {
+     "categories": [
+      {
+       "code": "1",
+       "decoded": true,
+       "group": "cases with a1 = 1",
+       "label": "a1 = 1",
+       "share_in": 0.580357,
+       "share_out": 0.244635,
+       "variable": "a1"
+      },
+      {
+       "code": "2",
+       "decoded": true,
+       "group": "cases with a1 = 2",
+       "label": "a1 = 2",
+       "share_in": 0.223214,
+       "share_out": 0.390558,
+       "variable": "a1"
+      },
+      {
+       "code": "3",
+       "decoded": true,
+       "group": "cases with a1 = 3",
+       "label": "a1 = 3",
+       "share_in": 0.196429,
+       "share_out": 0.364807,
+       "variable": "a1"
+      },
+      {
+       "code": "1",
+       "decoded": true,
+       "group": "cases with a2 = 1",
+       "label": "a2 = 1",
+       "share_in": 0.580357,
+       "share_out": 0.218884,
+       "variable": "a2"
+      },
+      {
+       "code": "2",
+       "decoded": true,
+       "group": "cases with a2 = 2",
+       "label": "a2 = 2",
+       "share_in": 0.205357,
+       "share_out": 0.377682,
+       "variable": "a2"
+      },
+      {
+       "code": "3",
+       "decoded": true,
+       "group": "cases with a2 = 3",
+       "label": "a2 = 3",
+       "share_in": 0.214286,
+       "share_out": 0.403433,
+       "variable": "a2"
+      },
+      {
+       "code": "1",
+       "decoded": true,
+       "group": "cases with a3 = 1",
+       "label": "a3 = 1",
+       "share_in": 0.776786,
+       "share_out": 0.386266,
+       "variable": "a3"
+      },
+      {
+       "code": "2",
+       "decoded": true,
+       "group": "cases with a3 = 2",
+       "label": "a3 = 2",
+       "share_in": 0.223214,
+       "share_out": 0.613734,
+       "variable": "a3"
+      },
+      {
+       "code": "1",
+       "decoded": true,
+       "group": "cases with a4 = 1",
+       "label": "a4 = 1",
+       "share_in": 0.580357,
+       "share_out": 0.180258,
+       "variable": "a4"
+      },
+      {
+       "code": "2",
+       "decoded": true,
+       "group": "cases with a4 = 2",
+       "label": "a4 = 2",
+       "share_in": 0.25,
+       "share_out": 0.437768,
+       "variable": "a4"
+      },
+      {
+       "code": "3",
+       "decoded": true,
+       "group": "cases with a4 = 3",
+       "label": "a4 = 3",
+       "share_in": 0.169643,
+       "share_out": 0.381974,
+       "variable": "a4"
+      },
+      {
+       "code": "1",
+       "decoded": true,
+       "group": "cases with a6 = 1",
+       "label": "a6 = 1",
+       "share_in": 0.758929,
+       "share_out": 0.39485,
+       "variable": "a6"
+      },
+      {
+       "code": "2",
+       "decoded": true,
+       "group": "cases with a6 = 2",
+       "label": "a6 = 2",
+       "share_in": 0.241071,
+       "share_out": 0.60515,
+       "variable": "a6"
+      }
+     ],
+     "conditions": [],
+     "n": 112,
+     "n_other": 233,
+     "numbers": []
+    }
+   },
+   "groups": [
+    {
+     "label": "patients the part acts on",
+     "n": 112
+    },
+    {
+     "label": "patients it does not act on",
+     "n": 233
+    }
+   ],
+   "id": "C23",
+   "key": "ann_22:subgroup:active",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -1.0,
+    "from": 1.0,
+    "reference": "typical patient this part acts on (risk without the part, then with it)",
+    "reference_values": {
+     "a1": "a1 = 1",
+     "a2": "a2 = 1",
+     "a3": "a3 = 1",
+     "a4": "a4 = 1",
+     "a5": "a5 = 1",
+     "a6": "a6 = 1"
+    },
+    "to": 9.52879e-99
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "conditions": [],
+    "direction": "lowers",
+    "n": 345,
+    "n_active": 112,
+    "outcome_in_group": {
+     "n": 112,
+     "positives": 0
+    },
+    "share": 0.324638,
+    "strength": "strong"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.271077,
+     0.504451
+    ],
+    "benefit_mean": 0.394768,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "n": 87,
+    "n_active": 24,
+    "share_active": 0.275862,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.425809
+   },
+   "type": "subgroup",
+   "variables": [
+    {
+     "base": "a1",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a1",
+     "short": "a1",
+     "unit": null
+    },
+    {
+     "base": "a2",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a2",
+     "short": "a2",
+     "unit": null
+    },
+    {
+     "base": "a3",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a3",
+     "short": "a3",
+     "unit": null
+    },
+    {
+     "base": "a4",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a4",
+     "short": "a4",
+     "unit": null
+    },
+    {
+     "base": "a6",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a6",
+     "short": "a6",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_24",
+    "name": "linear_indicator_ramp"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 4.46921e-23,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly",
+     "on the training data only"
+    ],
+    "size": "slight",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only where this part reads it",
+    "odds_ratio": 37849.2,
+    "odds_ratio_range": [
+     37850.5,
+     37850.5
+    ],
+    "range_across_patients": [
+     10.5414,
+     10.5414
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 10.5414
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "attribute a2 other than a2 = 1",
+     "n": 229
+    },
+    {
+     "label": "a2 = 1",
+     "n": 116
+    }
+   ],
+   "id": "C24",
+   "key": "ann_24:direction:a2:1",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 4.46921e-23,
+    "from": 1.18083e-27,
+    "reference": "typical patient",
+    "to": 4.46933e-23
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "3",
+      "codes": [
+       "2",
+       "3"
+      ],
+      "cond": "attribute a2 is something other than a2 = 1",
+      "decoded": true,
+      "group": "cases with attribute a2 other than a2 = 1",
+      "label": "attribute a2 other than a2 = 1",
+      "n_train": 229
+     },
+     "to": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a2 = 1",
+      "decoded": true,
+      "group": "cases with a2 = 1",
+      "label": "a2 = 1",
+      "n_train": 116
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "a2"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0299606,
+     0.0550887
+    ],
+    "benefit_mean": 0.0121879,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 10.5414,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.0432179
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a2",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a2",
+     "short": "a2",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_24",
+    "name": "linear_indicator_ramp"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 7.50358e-24,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly",
+     "on the training data only"
+    ],
+    "size": "slight",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only where this part reads it",
+    "odds_ratio": 6355.51,
+    "odds_ratio_range": [
+     6355.53,
+     6355.53
+    ],
+    "range_across_patients": [
+     8.75708,
+     8.75708
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 8.75708
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "a5 = 1",
+     "n": 87
+    },
+    {
+     "label": "a5 = 2",
+     "n": 87
+    }
+   ],
+   "id": "C25",
+   "key": "ann_24:direction:a5:2",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 7.50358e-24,
+    "from": 1.18083e-27,
+    "reference": "typical patient",
+    "to": 7.50476e-24
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a5 = 1",
+      "decoded": true,
+      "group": "cases with a5 = 1",
+      "label": "a5 = 1",
+      "n_train": 87
+     },
+     "to": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "a5 = 2",
+      "decoded": true,
+      "group": "cases with a5 = 2",
+      "label": "a5 = 2",
+      "n_train": 87
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "a5"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.103835,
+     0.036618
+    ],
+    "benefit_mean": -0.0318074,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 8.75708,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.0234399
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a5",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a5",
+     "short": "a5",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_24",
+    "name": "linear_indicator_ramp"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 4.06908e-24,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly",
+     "on the training data only"
+    ],
+    "size": "slight",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only where this part reads it",
+    "odds_ratio": 3446.96,
+    "odds_ratio_range": [
+     3446.97,
+     3446.97
+    ],
+    "range_across_patients": [
+     8.14525,
+     8.14525
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 8.14525
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "a5 = 1",
+     "n": 87
+    },
+    {
+     "label": "attribute a5 other than a5 = 1, a5 = 2",
+     "n": 171
+    }
+   ],
+   "id": "C26",
+   "key": "ann_24:direction:a5:3+4",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 4.06908e-24,
+    "from": 1.18083e-27,
+    "reference": "typical patient",
+    "to": 4.07026e-24
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a5 = 1",
+      "decoded": true,
+      "group": "cases with a5 = 1",
+      "label": "a5 = 1",
+      "n_train": 87
+     },
+     "to": {
+      "code": "4",
+      "codes": [
+       "3",
+       "4"
+      ],
+      "cond": "attribute a5 is something other than a5 = 1, a5 = 2",
+      "decoded": true,
+      "group": "cases with attribute a5 other than a5 = 1, a5 = 2",
+      "label": "attribute a5 other than a5 = 1, a5 = 2",
+      "n_train": 171
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "a5"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.103835,
+     0.036618
+    ],
+    "benefit_mean": -0.0318074,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 8.14525,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.0234399
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a5",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a5",
+     "short": "a5",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_24",
+    "name": "linear_indicator_ramp"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 4.24163e-26,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly",
+     "on the training data only"
+    ],
+    "size": "slight",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only where this part reads it",
+    "odds_ratio": 36.9208,
+    "odds_ratio_range": [
+     36.921,
+     36.921
+    ],
+    "range_across_patients": [
+     3.60878,
+     3.60878
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 3.60878
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "a4 = 2",
+     "n": 130
+    },
+    {
+     "label": "a4 = 1",
+     "n": 107
+    }
+   ],
+   "id": "C27",
+   "key": "ann_24:direction:a4:1",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 4.24163e-26,
+    "from": 1.18083e-27,
+    "reference": "typical patient",
+    "to": 4.35971e-26
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "a4 = 2",
+      "decoded": true,
+      "group": "cases with a4 = 2",
+      "label": "a4 = 2",
+      "n_train": 130
+     },
+     "to": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a4 = 1",
+      "decoded": true,
+      "group": "cases with a4 = 1",
+      "label": "a4 = 1",
+      "n_train": 107
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "a4"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0119267,
+     0.0985073
+    ],
+    "benefit_mean": 0.0410226,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 3.60878,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.0295621
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a4",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a4",
+     "short": "a4",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_24",
+    "name": "linear_indicator_ramp"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 1.18068e-27,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly"
+    ],
+    "size": "slight",
+    "test": "agrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only where this part reads it",
+    "odds_ratio": 0.000120371,
+    "odds_ratio_range": [
+     0.000120371,
+     0.000120371
+    ],
+    "range_across_patients": [
+     -9.02493,
+     -9.02493
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": -9.02493
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "a6 = 1",
+     "n": 177
+    },
+    {
+     "label": "a6 = 2",
+     "n": 168
+    }
+   ],
+   "id": "C28",
+   "key": "ann_24:direction:a6:2",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -1.18068e-27,
+    "from": 1.18083e-27,
+    "reference": "typical patient",
+    "to": 1.42138e-31
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a6 = 1",
+      "decoded": true,
+      "group": "cases with a6 = 1",
+      "label": "a6 = 1",
+      "n_train": 177
+     },
+     "to": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "a6 = 2",
+      "decoded": true,
+      "group": "cases with a6 = 2",
+      "label": "a6 = 2",
+      "n_train": 168
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "a6"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.0178213,
+     0.140357
+    ],
+    "benefit_mean": 0.0716409,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -9.02493,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.0440761
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a6",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a6",
+     "short": "a6",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_24",
+    "name": "linear_indicator_ramp"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 1.18046e-27,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly"
+    ],
+    "size": "slight",
+    "test": "agrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only where this part reads it",
+    "odds_ratio": 0.000311306,
+    "odds_ratio_range": [
+     0.000311307,
+     0.000311307
+    ],
+    "range_across_patients": [
+     -8.07473,
+     -8.07473
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": -8.07473
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "a3 = 1",
+     "n": 177
+    },
+    {
+     "label": "a3 = 2",
+     "n": 168
+    }
+   ],
+   "id": "C29",
+   "key": "ann_24:direction:a3:2",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -1.18046e-27,
+    "from": 1.18083e-27,
+    "reference": "typical patient",
+    "to": 3.67599e-31
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a3 = 1",
+      "decoded": true,
+      "group": "cases with a3 = 1",
+      "label": "a3 = 1",
+      "n_train": 177
+     },
+     "to": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "a3 = 2",
+      "decoded": true,
+      "group": "cases with a3 = 2",
+      "label": "a3 = 2",
+      "n_train": 168
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "a3"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.0182039,
+     0.148936
+    ],
+    "benefit_mean": 0.0790725,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -8.07473,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.0409864
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a3",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a3",
+     "short": "a3",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_24",
+    "name": "linear_indicator_ramp"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 1.17936e-27,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly",
+     "on the training data only"
+    ],
+    "size": "slight",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only where this part reads it",
+    "odds_ratio": 0.00123987,
+    "odds_ratio_range": [
+     0.00123987,
+     0.00123987
+    ],
+    "range_across_patients": [
+     -6.69275,
+     -6.69275
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": -6.69275
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "a1 = 1",
+     "n": 122
+    },
+    {
+     "label": "a1 = 2",
+     "n": 116
+    }
+   ],
+   "id": "C30",
+   "key": "ann_24:direction:a1:2",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -1.17936e-27,
+    "from": 1.18083e-27,
+    "reference": "typical patient",
+    "to": 1.46407e-30
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a1 = 1",
+      "decoded": true,
+      "group": "cases with a1 = 1",
+      "label": "a1 = 1",
+      "n_train": 122
+     },
+     "to": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "a1 = 2",
+      "decoded": true,
+      "group": "cases with a1 = 2",
+      "label": "a1 = 2",
+      "n_train": 116
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "a1"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0213061,
+     0.0193195
+    ],
+    "benefit_mean": -0.00208086,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -6.69275,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.0399947
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a1",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a1",
+     "short": "a1",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_24",
+    "name": "linear_indicator_ramp"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 1.17408e-27,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly",
+     "on the training data only"
+    ],
+    "size": "slight",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only where this part reads it",
+    "odds_ratio": 0.00571484,
+    "odds_ratio_range": [
+     0.00571483,
+     0.00571483
+    ],
+    "range_across_patients": [
+     -5.16469,
+     -5.16469
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": -5.16469
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "a1 = 1",
+     "n": 122
+    },
+    {
+     "label": "a1 = 3",
+     "n": 107
+    }
+   ],
+   "id": "C31",
+   "key": "ann_24:direction:a1:3",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -1.17408e-27,
+    "from": 1.18083e-27,
+    "reference": "typical patient",
+    "to": 6.74823e-30
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a1 = 1",
+      "decoded": true,
+      "group": "cases with a1 = 1",
+      "label": "a1 = 1",
+      "n_train": 122
+     },
+     "to": {
+      "code": "3",
+      "codes": [
+       "3"
+      ],
+      "cond": "a1 = 3",
+      "decoded": true,
+      "group": "cases with a1 = 3",
+      "label": "a1 = 3",
+      "n_train": 107
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "a1"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0213061,
+     0.0193195
+    ],
+    "benefit_mean": -0.00208086,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -5.16469,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.0399947
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a1",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a1",
+     "short": "a1",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_24",
+    "name": "linear_indicator_ramp"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 9.32175e-28,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly",
+     "on the training data only"
+    ],
+    "size": "slight",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only where this part reads it",
+    "odds_ratio": 0.210574,
+    "odds_ratio_range": [
+     0.210574,
+     0.210574
+    ],
+    "range_across_patients": [
+     -1.55792,
+     -1.55792
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": -1.55792
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "a4 = 2",
+     "n": 130
+    },
+    {
+     "label": "a4 = 3",
+     "n": 108
+    }
+   ],
+   "id": "C32",
+   "key": "ann_24:direction:a4:3",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -9.32175e-28,
+    "from": 1.18083e-27,
+    "reference": "typical patient",
+    "to": 2.48651e-28
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "a4 = 2",
+      "decoded": true,
+      "group": "cases with a4 = 2",
+      "label": "a4 = 2",
+      "n_train": 130
+     },
+     "to": {
+      "code": "3",
+      "codes": [
+       "3"
+      ],
+      "cond": "a4 = 3",
+      "decoded": true,
+      "group": "cases with a4 = 3",
+      "label": "a4 = 3",
+      "n_train": 108
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "a4"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0119267,
+     0.0985073
+    ],
+    "benefit_mean": 0.0410226,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -1.55792,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.0295621
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a4",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a4",
+     "short": "a4",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_23",
+    "name": "a2_a5_bonus_chain"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 1.09571e-61,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly",
+     "on the training data only"
+    ],
+    "size": "slight",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only where this part reads it",
+    "odds_ratio": 0.517638,
+    "odds_ratio_range": [
+     0.415978,
+     1.0
+    ],
+    "range_across_patients": [
+     -0.877124,
+     0.0
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": -0.658478
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.249275
+   },
+   "groups": [
+    {
+     "label": "attribute a2 other than a2 = 1",
+     "n": 229
+    },
+    {
+     "label": "a2 = 1",
+     "n": 116
+    }
+   ],
+   "id": "C33",
+   "key": "ann_23:direction:a2:1",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -1.09571e-61,
+    "from": 1.87614e-61,
+    "reference": "typical patient this part acts on",
+    "reference_values": {
+     "a1": "a1 = 1",
+     "a2": "a2 = 1",
+     "a3": "a3 = 1",
+     "a4": "a4 = 2",
+     "a5": "a5 = 1",
+     "a6": "a6 = 1"
+    },
+    "to": 7.80432e-62
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "3",
+      "codes": [
+       "2",
+       "3"
+      ],
+      "cond": "attribute a2 is something other than a2 = 1",
+      "decoded": true,
+      "group": "cases with attribute a2 other than a2 = 1",
+      "label": "attribute a2 other than a2 = 1",
+      "n_train": 229
+     },
+     "to": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a2 = 1",
+      "decoded": true,
+      "group": "cases with a2 = 1",
+      "label": "a2 = 1",
+      "n_train": 116
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "moderate",
+    "variable": "a2"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.00666324,
+     0.00493827
+    ],
+    "benefit_mean": -0.00059453,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -0.655322,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.000457736
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a2",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a2",
+     "short": "a2",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_23",
+    "name": "a2_a5_bonus_chain"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 1.25819e-63,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly",
+     "on the training data only"
+    ],
+    "size": "slight",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only where this part reads it",
+    "odds_ratio": 0.549658,
+    "odds_ratio_range": [
+     0.409271,
+     0.983878
+    ],
+    "range_across_patients": [
+     -0.893377,
+     -0.0162531
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": -0.59846
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "attribute a5 other than a5 = 4",
+     "n": 259
+    },
+    {
+     "label": "a5 = 4",
+     "n": 86
+    }
+   ],
+   "id": "C34",
+   "key": "ann_23:direction:a5:4",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -1.25819e-63,
+    "from": 7.80432e-62,
+    "reference": "typical patient this part acts on",
+    "reference_values": {
+     "a1": "a1 = 1",
+     "a2": "a2 = 1",
+     "a3": "a3 = 1",
+     "a4": "a4 = 2",
+     "a5": "a5 = 1",
+     "a6": "a6 = 1"
+    },
+    "to": 7.6785e-62
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1",
+       "2",
+       "3"
+      ],
+      "cond": "attribute a5 is something other than a5 = 4",
+      "decoded": true,
+      "group": "cases with attribute a5 other than a5 = 4",
+      "label": "attribute a5 other than a5 = 4",
+      "n_train": 259
+     },
+     "to": {
+      "code": "4",
+      "codes": [
+       "4"
+      ],
+      "cond": "a5 = 4",
+      "decoded": true,
+      "group": "cases with a5 = 4",
+      "label": "a5 = 4",
+      "n_train": 86
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "moderate",
+    "variable": "a5"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.00258227,
+     0.00543877
+    ],
+    "benefit_mean": 0.00059453,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -0.611084,
+    "n": 87,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": -0.000228868
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "a5",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a5",
+     "short": "a5",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_23",
+    "name": "a2_a5_bonus_chain"
+   },
+   "checks": {
+    "both_groups_observed": true,
+    "consistent_across_patients": true,
+    "large_enough": true,
+    "mechanism_agrees": true
+   },
+   "confidence": {
+    "delta_risk": 1.66466e-24,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly",
+     "on the training data only"
+    ],
+    "size": "slight",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "difference between the two groups (first minus second) of the mean change in the model's log-odds when the main variable changes everywhere",
+    "odds_ratio": 1416.08,
+    "unit": "log-odds (model)",
+    "value": 7.25565
+   },
+   "evidence": {
+    "counterfactual_did_through_part": 0.877124,
+    "counterfactual_modifier_settings": [
+     "1",
+     "4"
+    ],
+    "did_share_same_sign": 1.0,
+    "method_note": "groups are the patients' actual values; the difference-in-differences sets the modifier for every patient, only where this part reads it"
+   },
+   "groups": [
+    {
+     "cond": "a5 = 4",
+     "estimate": -23.2123,
+     "group": "cases with a5 = 4",
+     "label": "a5 = 4",
+     "n": 86,
+     "odds_ratio": 8.29877e-11,
+     "part_effect": 0.0,
+     "range_across_patients": [
+      -77.8249,
+      10.5414
+     ],
+     "risk_from": 1.66584e-24,
+     "risk_to": 2.64674e-58
+    },
+    {
+     "cond": "attribute a5 is something other than a5 = 4",
+     "estimate": -30.468,
+     "group": "cases with attribute a5 other than a5 = 4",
+     "label": "attribute a5 other than a5 = 4",
+     "n": 259,
+     "odds_ratio": 5.86038e-14,
+     "part_effect": -0.877124,
+     "range_across_patients": [
+      -78.702,
+      9.66424
+     ],
+     "risk_from": 1.18083e-27,
+     "risk_to": 7.80432e-62
+    }
+   ],
+   "id": "C35",
+   "key": "ann_23:interaction:a2xa5",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -1.66466e-24,
+    "delta_basis": "change in predicted risk in the stronger group minus in the weaker group",
+    "from": null,
+    "groups": [
+     {
+      "from": 1.66584e-24,
+      "label": "a5 = 4",
+      "to": 2.64674e-58
+     },
+     {
+      "from": 1.18083e-27,
+      "label": "attribute a5 other than a5 = 4",
+      "to": 7.80432e-62
+     }
+    ],
+    "reference": "typical patient of each group (the typical patient with the modifier set to the group's value)",
+    "to": null
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "3",
+      "codes": [
+       "2",
+       "3"
+      ],
+      "cond": "attribute a2 is something other than a2 = 1",
+      "decoded": true,
+      "group": "cases with attribute a2 other than a2 = 1",
+      "label": "attribute a2 other than a2 = 1",
+      "n_train": 229
+     },
+     "to": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "a2 = 1",
+      "decoded": true,
+      "group": "cases with a2 = 1",
+      "label": "a2 = 1",
+      "n_train": 116
+     }
+    },
+    "direction": "lowers",
+    "modifier": "a5",
+    "pattern": "amplified",
+    "strength": "strong",
+    "stronger_group": {
+     "cond": "attribute a5 is something other than a5 = 4",
+     "estimate": -30.468,
+     "group": "cases with attribute a5 other than a5 = 4",
+     "label": "attribute a5 other than a5 = 4",
+     "n": 259,
+     "odds_ratio": 5.86038e-14,
+     "part_effect": -0.877124,
+     "range_across_patients": [
+      -78.702,
+      9.66424
+     ],
+     "risk_from": 1.18083e-27,
+     "risk_to": 7.80432e-62
+    },
+    "variable": "a2",
+    "weaker_group": {
+     "cond": "a5 = 4",
+     "estimate": -23.2123,
+     "group": "cases with a5 = 4",
+     "label": "a5 = 4",
+     "n": 86,
+     "odds_ratio": 8.29877e-11,
+     "part_effect": 0.0,
+     "range_across_patients": [
+      -77.8249,
+      10.5414
+     ],
+     "risk_from": 1.66584e-24,
+     "risk_to": 2.64674e-58
+    }
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.00258227,
+     0.00543877
+    ],
+    "benefit_mean": 0.00059453,
+    "bootstrap_B": 1000,
+    "difference": -24.2353,
+    "difference_ci95": [
+     -40.815,
+     -8.64406
+    ],
+    "groups_n": [
+     22,
+     65
+    ],
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "measure_difference": "group difference of the main variable's effect on test patients, stratified bootstrap over test patients (seed 42)",
+    "n": 87,
+    "same_sign": false,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": -0.000228868
+   },
+   "type": "interaction",
+   "variables": [
+    {
+     "base": "a2",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a2",
+     "short": "a2",
+     "unit": null
+    },
+    {
+     "base": "a5",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a5",
+     "short": "a5",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_23",
+    "name": "a2_a5_bonus_chain"
+   },
+   "checks": {
+    "acts_on_someone": true,
+    "consistent_across_patients": true,
+    "not_negligible": true
+   },
+   "confidence": {
+    "delta_risk": 1.25819e-63,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly",
+     "on the training data only"
+    ],
+    "size": "slight",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean contribution of the part to the log-odds among the patients it acts on (the part switched off: exits at 0)",
+    "odds_ratio": 1.80755,
+    "odds_ratio_range": [
+     1.01639,
+     2.44337
+    ],
+    "range_across_patients": [
+     0.0162531,
+     0.893377
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "share": {
+     "unit": "share of training patients",
+     "value": 0.750725
+    },
+    "unit": "log-odds (model)",
+    "value": 0.591971
+   },
+   "evidence": {
+    "outcome_rate_ci95": [
+     0.262985,
+     0.37558
+    ],
+    "outcome_rate_in_group": 0.316602,
+    "outcome_rate_overall": 0.327536,
+    "who": {
+     "categories": [
+      {
+       "code": "1",
+       "decoded": true,
+       "group": "cases with a2 = 1",
+       "label": "a2 = 1",
+       "share_in": 0.343629,
+       "share_out": 0.313953,
+       "variable": "a2"
+      },
+      {
+       "code": "2",
+       "decoded": true,
+       "group": "cases with a2 = 2",
+       "label": "a2 = 2",
+       "share_in": 0.316602,
+       "share_out": 0.337209,
+       "variable": "a2"
+      },
+      {
+       "code": "3",
+       "decoded": true,
+       "group": "cases with a2 = 3",
+       "label": "a2 = 3",
+       "share_in": 0.339768,
+       "share_out": 0.348837,
+       "variable": "a2"
+      },
+      {
+       "code": "1",
+       "decoded": true,
+       "group": "cases with a5 = 1",
+       "label": "a5 = 1",
+       "share_in": 0.335907,
+       "share_out": 0.0,
+       "variable": "a5"
+      },
+      {
+       "code": "2",
+       "decoded": true,
+       "group": "cases with a5 = 2",
+       "label": "a5 = 2",
+       "share_in": 0.335907,
+       "share_out": 0.0,
+       "variable": "a5"
+      },
+      {
+       "code": "3",
+       "decoded": true,
+       "group": "cases with a5 = 3",
+       "label": "a5 = 3",
+       "share_in": 0.328185,
+       "share_out": 0.0,
+       "variable": "a5"
+      },
+      {
+       "code": "4",
+       "decoded": true,
+       "group": "cases with a5 = 4",
+       "label": "a5 = 4",
+       "share_in": 0.0,
+       "share_out": 1.0,
+       "variable": "a5"
+      }
+     ],
+     "conditions": [],
+     "n": 259,
+     "n_other": 86,
+     "numbers": []
+    }
+   },
+   "groups": [
+    {
+     "label": "patients the part acts on",
+     "n": 259
+    },
+    {
+     "label": "patients it does not act on",
+     "n": 86
+    }
+   ],
+   "id": "C36",
+   "key": "ann_23:subgroup:active",
+   "n": 345,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 1.25819e-63,
+    "from": 7.6785e-62,
+    "reference": "typical patient this part acts on (risk without the part, then with it)",
+    "reference_values": {
+     "a1": "a1 = 1",
+     "a2": "a2 = 1",
+     "a3": "a3 = 1",
+     "a4": "a4 = 2",
+     "a5": "a5 = 1",
+     "a6": "a6 = 1"
+    },
+    "to": 7.80432e-62
+   },
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "conditions": [],
+    "direction": "raises",
+    "n": 345,
+    "n_active": 259,
+    "outcome_in_group": {
+     "n": 259,
+     "positives": 82
+    },
+    "share": 0.750725,
+    "strength": "moderate"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.00666324,
+     0.00493827
+    ],
+    "benefit_mean": -0.00059453,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "n": 87,
+    "n_active": 65,
+    "share_active": 0.747126,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.000724748
+   },
+   "type": "subgroup",
+   "variables": [
+    {
+     "base": "a2",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a2",
+     "short": "a2",
+     "unit": null
+    },
+    {
+     "base": "a5",
+     "decoded": true,
+     "kind": "category",
+     "label": "attribute a5",
+     "short": "a5",
+     "unit": null
+    }
+   ],
+   "verified": true
+  }
+ ],
+ "claims_hash": "f078a11ea9f2e45121ed6d76f1c194b4bbf887a723634bedd98f950767f56b51",
+ "codebook": {
+  "checks": [],
+  "gaps": [
+   "a1-a6 are abstract attributes with no real-world meaning; values are written as a1 = 1 etc."
+  ],
+  "id": "monk2",
+  "source": "MONK-2 problem (Thrun et al. 1991), PMLB 'monk2' deduplicated to the 432 input configurations; attributes a1-a6 are abstract (no real-world meaning), so statements are phrased in rule terms on the attribute values"
+ },
+ "counts": {
+  "by_type": {
+   "direction": [
+    20,
+    26
+   ],
+   "interaction": [
+    5,
+    5
+   ],
+   "magnitude": [
+    2,
+    2
+   ],
+   "null": [
+    0,
+    0
+   ],
+   "rule": [
+    0,
+    1
+   ],
+   "subgroup": [
+    2,
+    2
+   ],
+   "threshold": [
+    0,
+    0
+   ]
+  },
+  "claims": 36,
+  "clearly": 4,
+  "not_supported": 7,
+  "verified": 29
+ },
+ "dataset": {
+  "id": "c2340904-9db2-4830-99be-e9ed637ed400",
+  "name": "monk2_onehot"
+ },
+ "drafted": {
+  "annotations": {
+   "ann_22": [
+    {
+     "claims": [
+      "C23"
+     ],
+     "text": "This part of the model acts on 112 of the 345 training cases, none of which is actually 'yes'."
+    },
+    {
+     "claims": [
+      "C23"
+     ],
+     "text": "For the typical case it acts on, which has every attribute at its first value, it clearly moves the predicted probability of 'yes' from above 99% without the part to below 1% with it."
+    },
+    {
+     "claims": [
+      "C14",
+      "C15",
+      "C16"
+     ],
+     "text": "For the typical case overall, moving a1, a3 or a6 away from its first value through this part clearly raises the predicted probability of 'yes' from below 1% to about 99%."
+    },
+    {
+     "claims": [
+      "C17",
+      "C18"
+     ],
+     "text": "For the typical case it acts on, giving a2 or a4 its first value slightly lowers it, staying below 1%."
+    },
+    {
+     "claims": [
+      "C19",
+      "C20",
+      "C21",
+      "C22"
+     ],
+     "text": "Through this part the effects of a3, a4 and a6 also depend slightly on one another and on a2, with the typical case staying at about 3% or below."
+    }
+   ],
+   "ann_23": [
+    {
+     "claims": [
+      "C36"
+     ],
+     "text": "This part of the model reads a2 and a5 and acts on 259 of the 345 training cases, 82 of which are actually 'yes'."
+    },
+    {
+     "claims": [
+      "C36"
+     ],
+     "text": "For the typical case it acts on (a1 = 1, a2 = 1, a3 = 1, a4 = 2, a5 = 1, a6 = 1), it slightly changes the predicted probability of 'yes', which stays below 1% (on the training data only)."
+    },
+    {
+     "claims": [
+      "C33",
+      "C34",
+      "C35"
+     ],
+     "text": "Through this part, giving a2 its first value or giving a5 the value 4 slightly lowers the predicted probability of 'yes', and the a2 effect is slightly larger when a5 is something other than 4 (on the training data only)."
+    }
+   ],
+   "ann_24": [
+    {
+     "claims": [
+      "C28",
+      "C29"
+     ],
+     "text": "Through this part, moving a3 or a6 away from its first value slightly lowers the predicted probability of 'yes' for the typical case, which stays below 1%."
+    },
+    {
+     "claims": [
+      "C30",
+      "C31",
+      "C32",
+      "C24",
+      "C27"
+     ],
+     "text": "Moving a1 away from its first value, or a4 from 2 to 3, also slightly lowers it, and giving a2 or a4 its first value slightly raises it (on the training data only)."
+    },
+    {
+     "claims": [
+      "C25",
+      "C26"
+     ],
+     "text": "Moving a5 away from its first value, in contrast, slightly raises it (on the training data only)."
+    }
+   ],
+   "ann_25": [
+    {
+     "claims": [
+      "C06",
+      "C07",
+      "C08",
+      "C12"
+     ],
+     "text": "In the model as a whole, moving a5 away from its first value slightly raises the predicted probability of 'yes' for the typical case, which stays below 1% (on the training data only)."
+    },
+    {
+     "claims": [
+      "C11",
+      "C13"
+     ],
+     "text": "Changing a4 from 2 to 3 slightly lowers it, so the model does not treat the two other values of a4 alike."
+    }
+   ]
+  },
+  "claims_hash": "f078a11ea9f2e45121ed6d76f1c194b4bbf887a723634bedd98f950767f56b51",
+  "drafted_at": "2026-11-08T10:20:29+00:00",
+  "drafted_by": "ai-assisted",
+  "hypothesis_revisions": {
+   "ann_22": {
+    "claims": [
+     "C23",
+     "C14",
+     "C15",
+     "C16"
+    ],
+    "original": "An at-least-three-of-five indicator detector over {a1=1, a2=1, a3=1, a4=1, a6=1} that ignores a5. Node 419 = ReLU(-4.585 + 4.540 z(a1:1) + 5.631 z(a2:1) - 7.622 z(a3:2) + 5.529 z(a4:1) + 6.541 z(a6:1) - 1.371 z(a6:2)). In indicator terms the pre-activation is -31.60 (no indicators active) plus a1 +9.50, a2 +11.92, a3 +15.25 (via the complement a3:2), a4 +11.95, a6 +15.83 (via a6:1 and the complement a6:2). The largest two-indicator sum (a3+a6 = 31.08) leaves it at -0.52 (off); the smallest three-indicator sum (a1+a2+a4 = 33.37) reaches +1.76 (on). So the unit fires iff at least three of these five indicators are active. Evidence (train, n=345, and all 432 configurations): fires iff >=3 of the five indicators hold, agreement 1.0; max pre-activation with <=2 active is -0.525. Sensitivity is spread over all six entries, smallest for a6:2 (0.44).",
+    "proposed": "This part acts on 112 training cases, none of them actually 'yes', and pushes their predicted probability of 'yes' below 1%; through it, moving a1, a3 or a6 away from its first value takes the typical case from below 1% to about 99%.",
+    "status": "proposed (not applied)"
+   },
+   "ann_23": {
+    "claims": [
+     "C33",
+     "C34",
+     "C35",
+     "C36"
+    ],
+    "original": "A small serial chain giving a bonus when neither a2=1 nor a5=4. Node 1701 = ReLU(0.632 + 0.732 z(a2:1)) is always positive (0.111 if a2!=1, 1.660 if a2=1), so it is a linear relay of a2:1. Node 2480 = ReLU(0.900 - 1.120 z(a5:4) - 0.915 * n1701) takes three values: 1.445 when a2!=1 and a5!=4, 0.026 when a2=1 and a5!=4, and 0 when a5=4 (ReLU clips). Through its +0.618 readout it adds about +0.89 to the output logit only when a2!=1 and a5!=4: a weak, AND-of-negations nudge. Evidence (train, n=345): n2480 > 1 iff a2!=1 and a5!=4, agreement 1.0. Local ablation: zeroing its readout flips only 2 train predictions and slightly raises train accuracy (0.901 -> 0.907), so it is near-vestigial.",
+    "proposed": "A small part that slightly lowers the predicted probability of 'yes' when a2 = 1 or a5 = 4 (on the training data only).",
+    "status": "proposed (not applied)"
+   },
+   "ann_24": {
+    "claims": [
+     "C28",
+     "C29",
+     "C30",
+     "C31",
+     "C24",
+     "C27",
+     "C25",
+     "C26"
+    ],
+    "original": "A linear indicator ramp with an a5=1 veto. Evaluated per attribute value, the direct connections contribute: a1 = 1/2/3: +3.85/-2.84/-1.31; a2 = 1/other: +7.00/-3.54; a3 = 1/2: +3.93/-4.14; a4 = 1/2/3: +2.98/-0.63/-2.19; a6 = 1/2: +4.40/-4.63. So for a1,a2,a3,a4,a6 the first value raises the sum by 3.6 to 10.5 units, making the sum rise roughly linearly with the number of these indicators. Attribute a5 is inverted: a5 = 1/2/3/4 contributes -6.25/+2.51/+1.90/+1.90, i.e. a5=1 is an 8-unit penalty rather than a positive indicator. Together with the output bias (+1.855) the ramp crosses zero between one and two active indicators among {a1,a2,a3,a4,a6} when a5!=1, and an a5=1 pushes it back below zero. Evidence: the per-value contributions are exact (linear in the one-hot columns); sensitivity on train is largest for a2:1 (4.98), a3:1 (4.04), a6:2 (3.73), a5:1 (3.54), a1:2 (3.16). Note a5=1 acts as a veto, not an indicator.",
+    "proposed": "This part slightly lowers the predicted probability of 'yes' when a1, a3 or a6 moves away from its first value and slightly raises it when a2 or a4 takes its first value, but it treats a5 the other way round: a5 away from its first value slightly raises it.",
+    "status": "proposed (not applied)"
+   },
+   "ann_25": {
+    "claims": [
+     "C06",
+     "C07",
+     "C08",
+     "C11"
+    ],
+    "original": "The output composes the three children additively under the sigmoid: logit = 1.855 + Ramp - 7.413*Gate + 0.618*Chain. Ramp: the first value of a1,a2,a3,a4,a6 raises the sum (by 3.6-10.5 each), so with the bias it crosses zero between one and two active indicators among {a1=1,a2=1,a3=1,a4=1,a6=1} when a5!=1 (lower edge of a response peak); a5=1 instead costs about 8 logit units, pushing count-two cases below zero (an a5=1 veto). Gate: when three or more of the same five indicators are active it fires (pre-activation >=1.76) and its -7.41 readout overwhelms the Ramp (upper edge). Chain: +0.89 when a2!=1 and a5!=4; flips only 2 train predictions and is near-vestigial. Net: the model predicts positive approximately iff exactly two of {a1=1,a2=1,a3=1,a4=1,a6=1} hold AND a5!=1. Evidence (train, n=345): this rule agrees with the model on 331/345 rows (418/432 of all configurations); the 14 disagreements are near-boundary cases (|logit| < 1.8). Train accuracy 0.901, AUC 0.915; every train positive with a5=1 and exactly one other indicator (20 rows) is missed. Ablation: zeroing the gate drops train accuracy to 0.58; zeroing the chain gives 0.907. Inputs a2:2, a2:3, a4:2, a5:3 have no enabled edges and are zero-effect entries (sensitivity exactly 0).",
+    "proposed": "In the model as a whole, a5 away from its first value slightly raises the predicted probability of 'yes' (on the training data only) and a4 = 3 slightly lowers it compared with a4 = 2.",
+    "status": "proposed (not applied)"
+   }
+  },
+  "protocol": ".claude/skills/plain-language-explanations/SKILL.md",
+  "stale": false,
+  "status": "draft for review",
+  "summary": [
+   {
+    "claims": [
+     "C23"
+    ],
+    "text": "One part of the model acts on 112 of the 345 training cases, none of which is actually 'yes'."
+   },
+   {
+    "claims": [
+     "C23"
+    ],
+    "text": "For the typical case this part acts on, which has every attribute at its first value, it clearly moves the predicted probability of 'yes' from above 99% without the part to below 1% with it."
+   },
+   {
+    "claims": [
+     "C14",
+     "C15",
+     "C16"
+    ],
+    "text": "For the typical case overall (the most common value of each attribute: a1 = 1, a2 = 3, a3 = 1, a4 = 2, a5 = 1, a6 = 1), moving a1, a3 or a6 away from its first value through this part clearly raises the predicted probability of 'yes' from below 1% to about 99%."
+   },
+   {
+    "claims": [
+     "C06",
+     "C07",
+     "C08"
+    ],
+    "text": "In the model as a whole, moving a5 away from its first value slightly raises the predicted probability of 'yes' for the typical case, which stays below 1% (on the training data only)."
+   },
+   {
+    "claims": [
+     "C11"
+    ],
+    "text": "Changing a4 from 2 to 3 slightly lowers it."
+   }
+  ],
+  "verified_by": null,
+  "worth_checking": [
+   {
+    "claims": [
+     "C24",
+     "C27",
+     "C25",
+     "C26"
+    ],
+    "flag": "model does not follow the exactly-two rule",
+    "text": "Worth checking: through one part, giving a2 or a4 its first value slightly raises the predicted probability of 'yes', but giving a5 its first value slightly lowers it (on the training data only), so this part does not count a5 = 1 the way the exactly-two rule does."
+   },
+   {
+    "claims": [
+     "C11",
+     "C13"
+    ],
+    "flag": "attribute values other than the first matter",
+    "text": "Worth checking: the model treats a4 = 3 differently from a4 = 2, slightly lowering the predicted probability of 'yes', although for the typical case it stays below 1%."
+   }
+  ]
+ },
+ "explanation_id": "65e97161-1f41-4288-a95f-7b8126b4563d",
+ "genome_id": "70ab29b1-bcfa-48a3-babf-cfc336efaa1c",
+ "label": "monk2-s3",
+ "outcome": {
+  "positive": "the 'yes' class",
+  "predicted": "the predicted probability of 'yes'",
+  "risk": "the chance of 'yes'",
+  "short": "'yes'"
+ },
+ "parts": [
+  {
+   "children": [
+    "count_gate_atleast3_of5",
+    "a2_a5_bonus_chain",
+    "linear_indicator_ramp"
+   ],
+   "contribution_sd": null,
+   "duplicate_of": null,
+   "gated": false,
+   "id": "ann_25",
+   "kind": "composition",
+   "name": "two_of_five_with_a5_veto",
+   "nonlinear": false,
+   "order": 0,
+   "original_hypothesis": "The output composes the three children additively under the sigmoid: logit = 1.855 + Ramp - 7.413*Gate + 0.618*Chain. Ramp: the first value of a1,a2,a3,a4,a6 raises the sum (by 3.6-10.5 each), so with the bias it crosses zero between one and two active indicators among {a1=1,a2=1,a3=1,a4=1,a6=1} when a5!=1 (lower edge of a response peak); a5=1 instead costs about 8 logit units, pushing count-two cases below zero (an a5=1 veto). Gate: when three or more of the same five indicators are active it fires (pre-activation >=1.76) and its -7.41 readout overwhelms the Ramp (upper edge). Chain: +0.89 when a2!=1 and a5!=4; flips only 2 train predictions and is near-vestigial. Net: the model predicts positive approximately iff exactly two of {a1=1,a2=1,a3=1,a4=1,a6=1} hold AND a5!=1. Evidence (train, n=345): this rule agrees with the model on 331/345 rows (418/432 of all configurations); the 14 disagreements are near-boundary cases (|logit| < 1.8). Train accuracy 0.901, AUC 0.915; every train positive with a5=1 and exactly one other indicator (20 rows) is missed. Ablation: zeroing the gate drops train accuracy to 0.58; zeroing the chain gives 0.907. Inputs a2:2, a2:3, a4:2, a5:3 have no enabled edges and are zero-effect entries (sensitivity exactly 0).",
+   "parent": null,
+   "role": "root",
+   "upstream_nodes": 0,
+   "variable_keys": [
+    "a1",
+    "a2",
+    "a3",
+    "a4",
+    "a5",
+    "a6"
+   ],
+   "variables": [
+    "attribute a1",
+    "attribute a2",
+    "attribute a3",
+    "attribute a4",
+    "attribute a5",
+    "attribute a6"
+   ]
+  },
+  {
+   "children": [],
+   "contribution_sd": 49.5861,
+   "duplicate_of": null,
+   "gated": true,
+   "id": "ann_22",
+   "kind": "leaf",
+   "name": "count_gate_atleast3_of5",
+   "nonlinear": true,
+   "order": 1,
+   "original_hypothesis": "An at-least-three-of-five indicator detector over {a1=1, a2=1, a3=1, a4=1, a6=1} that ignores a5. Node 419 = ReLU(-4.585 + 4.540 z(a1:1) + 5.631 z(a2:1) - 7.622 z(a3:2) + 5.529 z(a4:1) + 6.541 z(a6:1) - 1.371 z(a6:2)). In indicator terms the pre-activation is -31.60 (no indicators active) plus a1 +9.50, a2 +11.92, a3 +15.25 (via the complement a3:2), a4 +11.95, a6 +15.83 (via a6:1 and the complement a6:2). The largest two-indicator sum (a3+a6 = 31.08) leaves it at -0.52 (off); the smallest three-indicator sum (a1+a2+a4 = 33.37) reaches +1.76 (on). So the unit fires iff at least three of these five indicators are active. Evidence (train, n=345, and all 432 configurations): fires iff >=3 of the five indicators hold, agreement 1.0; max pre-activation with <=2 active is -0.525. Sensitivity is spread over all six entries, smallest for a6:2 (0.44).",
+   "parent": "two_of_five_with_a5_veto",
+   "role": "part",
+   "upstream_nodes": 0,
+   "variable_keys": [
+    "a1",
+    "a2",
+    "a3",
+    "a4",
+    "a6"
+   ],
+   "variables": [
+    "attribute a1",
+    "attribute a2",
+    "attribute a3",
+    "attribute a4",
+    "attribute a6"
+   ]
+  },
+  {
+   "children": [],
+   "contribution_sd": 9.21235,
+   "duplicate_of": null,
+   "gated": false,
+   "id": "ann_24",
+   "kind": "leaf",
+   "name": "linear_indicator_ramp",
+   "nonlinear": false,
+   "order": 2,
+   "original_hypothesis": "A linear indicator ramp with an a5=1 veto. Evaluated per attribute value, the direct connections contribute: a1 = 1/2/3: +3.85/-2.84/-1.31; a2 = 1/other: +7.00/-3.54; a3 = 1/2: +3.93/-4.14; a4 = 1/2/3: +2.98/-0.63/-2.19; a6 = 1/2: +4.40/-4.63. So for a1,a2,a3,a4,a6 the first value raises the sum by 3.6 to 10.5 units, making the sum rise roughly linearly with the number of these indicators. Attribute a5 is inverted: a5 = 1/2/3/4 contributes -6.25/+2.51/+1.90/+1.90, i.e. a5=1 is an 8-unit penalty rather than a positive indicator. Together with the output bias (+1.855) the ramp crosses zero between one and two active indicators among {a1,a2,a3,a4,a6} when a5!=1, and an a5=1 pushes it back below zero. Evidence: the per-value contributions are exact (linear in the one-hot columns); sensitivity on train is largest for a2:1 (4.98), a3:1 (4.04), a6:2 (3.73), a5:1 (3.54), a1:2 (3.16). Note a5=1 acts as a veto, not an indicator.",
+   "parent": "two_of_five_with_a5_veto",
+   "role": "part",
+   "upstream_nodes": 0,
+   "variable_keys": [
+    "a1",
+    "a2",
+    "a3",
+    "a4",
+    "a5",
+    "a6"
+   ],
+   "variables": [
+    "attribute a1",
+    "attribute a2",
+    "attribute a3",
+    "attribute a4",
+    "attribute a5",
+    "attribute a6"
+   ]
+  },
+  {
+   "children": [],
+   "contribution_sd": 0.442547,
+   "duplicate_of": null,
+   "gated": true,
+   "id": "ann_23",
+   "kind": "leaf",
+   "name": "a2_a5_bonus_chain",
+   "nonlinear": true,
+   "order": 3,
+   "original_hypothesis": "A small serial chain giving a bonus when neither a2=1 nor a5=4. Node 1701 = ReLU(0.632 + 0.732 z(a2:1)) is always positive (0.111 if a2!=1, 1.660 if a2=1), so it is a linear relay of a2:1. Node 2480 = ReLU(0.900 - 1.120 z(a5:4) - 0.915 * n1701) takes three values: 1.445 when a2!=1 and a5!=4, 0.026 when a2=1 and a5!=4, and 0 when a5=4 (ReLU clips). Through its +0.618 readout it adds about +0.89 to the output logit only when a2!=1 and a5!=4: a weak, AND-of-negations nudge. Evidence (train, n=345): n2480 > 1 iff a2!=1 and a5!=4, agreement 1.0. Local ablation: zeroing its readout flips only 2 train predictions and slightly raises train accuracy (0.901 -> 0.907), so it is near-vestigial.",
+   "parent": "two_of_five_with_a5_veto",
+   "role": "part",
+   "upstream_nodes": 0,
+   "variable_keys": [
+    "a2",
+    "a5"
+   ],
+   "variables": [
+    "attribute a2",
+    "attribute a5"
+   ]
+  }
+ ],
+ "population": {
+  "plural": "cases",
+  "singular": "case"
+ },
+ "reference_patient": {
+  "definition": "the typical patient: the median training patient for every number and the most common training category for every category (not a real patient)",
+  "predicted_risk": 1.18083e-27,
+  "raw": [
+   1.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   1.0,
+   1.0,
+   0.0,
+   0.0,
+   1.0,
+   0.0,
+   1.0,
+   0.0,
+   0.0,
+   0.0,
+   1.0,
+   0.0
+  ],
+  "risk_scale": {
+   "formula": "risk = 1 / (1 + exp(-log-odds))",
+   "horizon": null,
+   "kind": "binary",
+   "label": "predicted risk"
+  },
+  "values": {
+   "a1": "a1 = 1",
+   "a2": "a2 = 3",
+   "a3": "a3 = 1",
+   "a4": "a4 = 2",
+   "a5": "a5 = 1",
+   "a6": "a6 = 1"
+  }
+ },
+ "risk_scale": {
+  "formula": "risk = 1 / (1 + exp(-log-odds))",
+  "horizon": null,
+  "kind": "binary",
+  "label": "predicted risk"
+ },
+ "schema_version": "2.0.0",
+ "settings": {
+  "bootstrap_B": 1000,
+  "confidence_rules": {
+   "clearly": "a meaningful change in predicted risk for a typical patient (at least 5% points), the test split agrees (same sign, and its bootstrap interval over test patients excludes no benefit), and every group has at least 20 training patients",
+   "consistently across patients": "the claim holds for at least 90% of training patients (range across patients); this is not a significance statement",
+   "on the training data only": "the test split disagrees (opposite sign, or no benefit on test patients) or is unclear (its interval includes no benefit), or no test check is available",
+   "slightly": "the change in predicted risk for a typical patient is below 5% points",
+   "the model has little data on this": "a compared group has fewer than 20 training patients"
+  },
+  "effect_scale": "log-odds (output pre-activation) for verification; predicted risk for the typical patient for wording",
+  "max_interactions_per_part": 4,
+  "max_opposite_sign_share": 0.1,
+  "max_threshold_spread": 0.2,
+  "min_interaction": 0.1,
+  "min_threshold_effect": 0.1,
+  "prob_large": 0.2,
+  "prob_slight": 0.05,
+  "screen_rows": 4000,
+  "seed": 42,
+  "small_n": 20,
+  "top_magnitudes": 5
+ },
+ "split": {
+  "check": "test",
+  "id": "63257a45-49c9-42a6-8b28-8e346eab2bee",
+  "primary": "train",
+  "scaler_type": "StandardScaler",
+  "test_n": 87,
+  "train_n": 345
+ },
+ "template": {
+  "annotations": {
+   "ann_22": [
+    {
+     "claims": [
+      "C23"
+     ],
+     "text": "This part acts on 112 of 345 training cases (32%)."
+    },
+    {
+     "claims": [
+      "C23"
+     ],
+     "text": "For a typical case it acts on, it clearly lowers the predicted probability of 'yes' from above 99% without this part to below 1% with it."
+    },
+    {
+     "claims": [
+      "C23"
+     ],
+     "text": "In the training data, 0 of these 112 cases had 'yes'."
+    },
+    {
+     "claims": [
+      "C19"
+     ],
+     "text": "This changes the prediction only slightly: for a typical case, going from a3 = 1 to a3 = 2 moves the predicted probability of 'yes' from below 1% to below 1% if a2 = 1, and from below 1% to about 3% if attribute a2 is something other than a2 = 1."
+    },
+    {
+     "claims": [
+      "C20"
+     ],
+     "text": "This changes the prediction only slightly: for a typical case, going from a6 = 1 to a6 = 2 moves the predicted probability of 'yes' from below 1% to about 1% if a3 = 1, and from about 3% to below 1% if a3 = 2."
+    },
+    {
+     "claims": [
+      "C21"
+     ],
+     "text": "This changes the prediction only slightly: for a typical case, going from attribute a4 other than a4 = 1 to a4 = 1 moves the predicted probability of 'yes' from below 1% to below 1% if a6 = 1, and from about 1% to below 1% if a6 = 2."
+    },
+    {
+     "claims": [
+      "C22"
+     ],
+     "text": "This changes the prediction only slightly: for a typical case, going from a6 = 1 to a6 = 2 moves the predicted probability of 'yes' from below 1% to below 1% if a2 = 1, and from below 1% to about 1% if attribute a2 is something other than a2 = 1."
+    },
+    {
+     "claims": [
+      "C14"
+     ],
+     "text": "Through this part, for a typical case, the model gives a clearly higher predicted probability of 'yes' if attribute a1 is something other than a1 = 1 (about 99%) than if a1 = 1 (below 1%)."
+    },
+    {
+     "claims": [
+      "C15"
+     ],
+     "text": "Through this part, for a typical case, the model gives a clearly higher predicted probability of 'yes' if a3 = 2 (about 99%) than if a3 = 1 (below 1%)."
+    },
+    {
+     "claims": [
+      "C16"
+     ],
+     "text": "Through this part, for a typical case, the model gives a clearly higher predicted probability of 'yes' if a6 = 2 (about 99%) than if a6 = 1 (below 1%)."
+    },
+    {
+     "claims": [
+      "C17"
+     ],
+     "text": "Through this part, for a typical case this part acts on, the model gives a slightly lower predicted probability of 'yes' if a4 = 1 (below 1%) than if attribute a4 is something other than a4 = 1 (below 1%)."
+    },
+    {
+     "claims": [
+      "C18"
+     ],
+     "text": "Through this part, for a typical case this part acts on, the model gives a slightly lower predicted probability of 'yes' if a2 = 1 (below 1%) than if attribute a2 is something other than a2 = 1 (below 1%)."
+    }
+   ],
+   "ann_23": [
+    {
+     "claims": [
+      "C36"
+     ],
+     "text": "This part acts on 259 of 345 training cases (75%)."
+    },
+    {
+     "claims": [
+      "C36"
+     ],
+     "text": "For a typical case it acts on, it slightly raises the predicted probability of 'yes' from below 1% without this part to below 1% with it (on the training data only)."
+    },
+    {
+     "claims": [
+      "C36"
+     ],
+     "text": "In the training data, 82 of these 259 cases had 'yes'."
+    },
+    {
+     "claims": [
+      "C35"
+     ],
+     "text": "This changes the prediction only slightly: for a typical case, going from attribute a2 other than a2 = 1 to a2 = 1 moves the predicted probability of 'yes' from below 1% to below 1% if attribute a5 is something other than a5 = 4, and from below 1% to below 1% if a5 = 4 (on the training data only)."
+    },
+    {
+     "claims": [
+      "C33"
+     ],
+     "text": "Through this part, for a typical case this part acts on, the model gives a slightly lower predicted probability of 'yes' if a2 = 1 (below 1%) than if attribute a2 is something other than a2 = 1 (below 1%) (on the training data only)."
+    },
+    {
+     "claims": [
+      "C34"
+     ],
+     "text": "Through this part, for a typical case this part acts on, the model gives a slightly lower predicted probability of 'yes' if a5 = 4 (below 1%) than if attribute a5 is something other than a5 = 4 (below 1%) (on the training data only)."
+    }
+   ],
+   "ann_24": [
+    {
+     "claims": [
+      "C24"
+     ],
+     "text": "Through this part, for a typical case, the model gives a slightly higher predicted probability of 'yes' if a2 = 1 (below 1%) than if attribute a2 is something other than a2 = 1 (below 1%) (on the training data only)."
+    },
+    {
+     "claims": [
+      "C25"
+     ],
+     "text": "Through this part, for a typical case, the model gives a slightly higher predicted probability of 'yes' if a5 = 2 (below 1%) than if a5 = 1 (below 1%) (on the training data only)."
+    },
+    {
+     "claims": [
+      "C26"
+     ],
+     "text": "Through this part, for a typical case, the model gives a slightly higher predicted probability of 'yes' if attribute a5 is something other than a5 = 1, a5 = 2 (below 1%) than if a5 = 1 (below 1%) (on the training data only)."
+    },
+    {
+     "claims": [
+      "C27"
+     ],
+     "text": "Through this part, for a typical case, the model gives a slightly higher predicted probability of 'yes' if a4 = 1 (below 1%) than if a4 = 2 (below 1%) (on the training data only)."
+    },
+    {
+     "claims": [
+      "C28"
+     ],
+     "text": "Through this part, for a typical case, the model gives a slightly lower predicted probability of 'yes' if a6 = 2 (below 1%) than if a6 = 1 (below 1%)."
+    },
+    {
+     "claims": [
+      "C29"
+     ],
+     "text": "Through this part, for a typical case, the model gives a slightly lower predicted probability of 'yes' if a3 = 2 (below 1%) than if a3 = 1 (below 1%)."
+    },
+    {
+     "claims": [
+      "C30"
+     ],
+     "text": "Through this part, for a typical case, the model gives a slightly lower predicted probability of 'yes' if a1 = 2 (below 1%) than if a1 = 1 (below 1%) (on the training data only)."
+    },
+    {
+     "claims": [
+      "C31"
+     ],
+     "text": "Through this part, for a typical case, the model gives a slightly lower predicted probability of 'yes' if a1 = 3 (below 1%) than if a1 = 1 (below 1%) (on the training data only)."
+    },
+    {
+     "claims": [
+      "C32"
+     ],
+     "text": "Through this part, for a typical case, the model gives a slightly lower predicted probability of 'yes' if a4 = 3 (below 1%) than if a4 = 2 (below 1%) (on the training data only)."
+    }
+   ],
+   "ann_25": [
+    {
+     "claims": [
+      "C06"
+     ],
+     "text": "For a typical case, the model gives a slightly higher predicted probability of 'yes' if a5 = 2 (below 1%) than if a5 = 1 (below 1%) (on the training data only)."
+    },
+    {
+     "claims": [
+      "C07"
+     ],
+     "text": "For a typical case, the model gives a slightly higher predicted probability of 'yes' if a5 = 3 (below 1%) than if a5 = 1 (below 1%) (on the training data only)."
+    },
+    {
+     "claims": [
+      "C08"
+     ],
+     "text": "For a typical case, the model gives a slightly higher predicted probability of 'yes' if a5 = 4 (below 1%) than if a5 = 1 (below 1%) (on the training data only)."
+    },
+    {
+     "claims": [
+      "C11"
+     ],
+     "text": "For a typical case, the model gives a slightly lower predicted probability of 'yes' if a4 = 3 (below 1%) than if a4 = 2 (below 1%)."
+    }
+   ]
+  },
+  "hypotheses": {
+   "ann_22": "This part acts on 112 of 345 training cases (32%). For a typical case it acts on, it clearly lowers the predicted probability of 'yes' from above 99% without this part to below 1% with it. In the training data, 0 of these 112 cases had 'yes'. This changes the prediction only slightly: for a typical case, going from a3 = 1 to a3 = 2 moves the predicted probability of 'yes' from below 1% to below 1% if a2 = 1, and from below 1% to about 3% if attribute a2 is something other than a2 = 1. This changes the prediction only slightly: for a typical case, going from a6 = 1 to a6 = 2 moves the predicted probability of 'yes' from below 1% to about 1% if a3 = 1, and from about 3% to below 1% if a3 = 2. This changes the prediction only slightly: for a typical case, going from attribute a4 other than a4 = 1 to a4 = 1 moves the predicted probability of 'yes' from below 1% to below 1% if a6 = 1, and from about 1% to below 1% if a6 = 2. This changes the prediction only slightly: for a typical case, going from a6 = 1 to a6 = 2 moves the predicted probability of 'yes' from below 1% to below 1% if a2 = 1, and from below 1% to about 1% if attribute a2 is something other than a2 = 1. Through this part, for a typical case, the model gives a clearly higher predicted probability of 'yes' if attribute a1 is something other than a1 = 1 (about 99%) than if a1 = 1 (below 1%). Through this part, for a typical case, the model gives a clearly higher predicted probability of 'yes' if a3 = 2 (about 99%) than if a3 = 1 (below 1%). Through this part, for a typical case, the model gives a clearly higher predicted probability of 'yes' if a6 = 2 (about 99%) than if a6 = 1 (below 1%). Through this part, for a typical case this part acts on, the model gives a slightly lower predicted probability of 'yes' if a4 = 1 (below 1%) than if attribute a4 is something other than a4 = 1 (below 1%). Through this part, for a typical case this part acts on, the model gives a slightly lower predicted probability of 'yes' if a2 = 1 (below 1%) than if attribute a2 is something other than a2 = 1 (below 1%).",
+   "ann_23": "This part acts on 259 of 345 training cases (75%). For a typical case it acts on, it slightly raises the predicted probability of 'yes' from below 1% without this part to below 1% with it (on the training data only). In the training data, 82 of these 259 cases had 'yes'. This changes the prediction only slightly: for a typical case, going from attribute a2 other than a2 = 1 to a2 = 1 moves the predicted probability of 'yes' from below 1% to below 1% if attribute a5 is something other than a5 = 4, and from below 1% to below 1% if a5 = 4 (on the training data only). Through this part, for a typical case this part acts on, the model gives a slightly lower predicted probability of 'yes' if a2 = 1 (below 1%) than if attribute a2 is something other than a2 = 1 (below 1%) (on the training data only). Through this part, for a typical case this part acts on, the model gives a slightly lower predicted probability of 'yes' if a5 = 4 (below 1%) than if attribute a5 is something other than a5 = 4 (below 1%) (on the training data only).",
+   "ann_24": "Through this part, for a typical case, the model gives a slightly higher predicted probability of 'yes' if a2 = 1 (below 1%) than if attribute a2 is something other than a2 = 1 (below 1%) (on the training data only). Through this part, for a typical case, the model gives a slightly higher predicted probability of 'yes' if a5 = 2 (below 1%) than if a5 = 1 (below 1%) (on the training data only). Through this part, for a typical case, the model gives a slightly higher predicted probability of 'yes' if attribute a5 is something other than a5 = 1, a5 = 2 (below 1%) than if a5 = 1 (below 1%) (on the training data only). Through this part, for a typical case, the model gives a slightly higher predicted probability of 'yes' if a4 = 1 (below 1%) than if a4 = 2 (below 1%) (on the training data only). Through this part, for a typical case, the model gives a slightly lower predicted probability of 'yes' if a6 = 2 (below 1%) than if a6 = 1 (below 1%). Through this part, for a typical case, the model gives a slightly lower predicted probability of 'yes' if a3 = 2 (below 1%) than if a3 = 1 (below 1%). Through this part, for a typical case, the model gives a slightly lower predicted probability of 'yes' if a1 = 2 (below 1%) than if a1 = 1 (below 1%) (on the training data only). Through this part, for a typical case, the model gives a slightly lower predicted probability of 'yes' if a1 = 3 (below 1%) than if a1 = 1 (below 1%) (on the training data only). Through this part, for a typical case, the model gives a slightly lower predicted probability of 'yes' if a4 = 3 (below 1%) than if a4 = 2 (below 1%) (on the training data only).",
+   "ann_25": "For a typical case, the model gives a slightly higher predicted probability of 'yes' if a5 = 2 (below 1%) than if a5 = 1 (below 1%) (on the training data only). For a typical case, the model gives a slightly higher predicted probability of 'yes' if a5 = 3 (below 1%) than if a5 = 1 (below 1%) (on the training data only). For a typical case, the model gives a slightly higher predicted probability of 'yes' if a5 = 4 (below 1%) than if a5 = 1 (below 1%) (on the training data only). For a typical case, the model gives a slightly lower predicted probability of 'yes' if a4 = 3 (below 1%) than if a4 = 2 (below 1%)."
+  },
+  "not_supported": [
+   {
+    "claim": "C01",
+    "text": "rule claim about attribute a1 and attribute a2 in the whole model: not supported by the model (at some count fewer than 95% of cases get the same prediction).",
+    "type": "rule"
+   },
+   {
+    "claim": "C02",
+    "text": "direction claim about attribute a1 in the whole model: not supported by the model (44% of patients have the opposite sign (allowed: 10%)).",
+    "type": "direction"
+   },
+   {
+    "claim": "C03",
+    "text": "direction claim about attribute a1 in the whole model: not supported by the model (44% of patients have the opposite sign (allowed: 10%)).",
+    "type": "direction"
+   },
+   {
+    "claim": "C04",
+    "text": "direction claim about attribute a3 in the whole model: not supported by the model (50% of patients have the opposite sign (allowed: 10%)).",
+    "type": "direction"
+   },
+   {
+    "claim": "C05",
+    "text": "direction claim about attribute a6 in the whole model: not supported by the model (51% of patients have the opposite sign (allowed: 10%)).",
+    "type": "direction"
+   },
+   {
+    "claim": "C09",
+    "text": "direction claim about attribute a2 in the whole model: not supported by the model (43% of patients have the opposite sign (allowed: 10%)).",
+    "type": "direction"
+   },
+   {
+    "claim": "C10",
+    "text": "direction claim about attribute a4 in the whole model: not supported by the model (41% of patients have the opposite sign (allowed: 10%)).",
+    "type": "direction"
+   }
+  ],
+  "renderer": "explaneat.analysis.plain_language_templates (deterministic, no language model)",
+  "summary": [
+   {
+    "claims": [
+     "C19"
+    ],
+    "text": "This changes the prediction only slightly: for a typical case, going from a3 = 1 to a3 = 2 moves the predicted probability of 'yes' from below 1% to below 1% if a2 = 1, and from below 1% to about 3% if attribute a2 is something other than a2 = 1."
+   },
+   {
+    "claims": [
+     "C20"
+    ],
+    "text": "This changes the prediction only slightly: for a typical case, going from a6 = 1 to a6 = 2 moves the predicted probability of 'yes' from below 1% to about 1% if a3 = 1, and from about 3% to below 1% if a3 = 2."
+   }
+  ]
+ },
+ "units": {
+  "method": "raw = z * scale + mean, with the split's StandardScaler parameters (scaler_params mean and scale, fitted on the training rows)",
+  "round_trip_max_abs_err": 2.77556e-17,
+  "round_trip_note": "max |decoded - stored raw| and |re-encoded - model input| over the training rows",
+  "variables": [
+   {
+    "base": "a1",
+    "columns": [
+     "a1:1",
+     "a1:2",
+     "a1:3"
+    ],
+    "decoded": true,
+    "kind": "category",
+    "label": "attribute a1",
+    "levels": [
+     {
+      "code": "1",
+      "decoded": true,
+      "label": "a1 = 1",
+      "n_train": 122
+     },
+     {
+      "code": "2",
+      "decoded": true,
+      "label": "a1 = 2",
+      "n_train": 116
+     },
+     {
+      "code": "3",
+      "decoded": true,
+      "label": "a1 = 3",
+      "n_train": 107
+     }
+    ],
+    "reference": {
+     "code": "1",
+     "label": "a1 = 1"
+    },
+    "unit": null
+   },
+   {
+    "base": "a2",
+    "columns": [
+     "a2:1",
+     "a2:2",
+     "a2:3"
+    ],
+    "decoded": true,
+    "kind": "category",
+    "label": "attribute a2",
+    "levels": [
+     {
+      "code": "1",
+      "decoded": true,
+      "label": "a2 = 1",
+      "n_train": 116
+     },
+     {
+      "code": "2",
+      "decoded": true,
+      "label": "a2 = 2",
+      "n_train": 111
+     },
+     {
+      "code": "3",
+      "decoded": true,
+      "label": "a2 = 3",
+      "n_train": 118
+     }
+    ],
+    "reference": {
+     "code": "3",
+     "label": "a2 = 3"
+    },
+    "unit": null
+   },
+   {
+    "base": "a3",
+    "columns": [
+     "a3:1",
+     "a3:2"
+    ],
+    "decoded": true,
+    "kind": "category",
+    "label": "attribute a3",
+    "levels": [
+     {
+      "code": "1",
+      "decoded": true,
+      "label": "a3 = 1",
+      "n_train": 177
+     },
+     {
+      "code": "2",
+      "decoded": true,
+      "label": "a3 = 2",
+      "n_train": 168
+     }
+    ],
+    "reference": {
+     "code": "1",
+     "label": "a3 = 1"
+    },
+    "unit": null
+   },
+   {
+    "base": "a4",
+    "columns": [
+     "a4:1",
+     "a4:2",
+     "a4:3"
+    ],
+    "decoded": true,
+    "kind": "category",
+    "label": "attribute a4",
+    "levels": [
+     {
+      "code": "1",
+      "decoded": true,
+      "label": "a4 = 1",
+      "n_train": 107
+     },
+     {
+      "code": "2",
+      "decoded": true,
+      "label": "a4 = 2",
+      "n_train": 130
+     },
+     {
+      "code": "3",
+      "decoded": true,
+      "label": "a4 = 3",
+      "n_train": 108
+     }
+    ],
+    "reference": {
+     "code": "2",
+     "label": "a4 = 2"
+    },
+    "unit": null
+   },
+   {
+    "base": "a5",
+    "columns": [
+     "a5:1",
+     "a5:2",
+     "a5:3",
+     "a5:4"
+    ],
+    "decoded": true,
+    "kind": "category",
+    "label": "attribute a5",
+    "levels": [
+     {
+      "code": "1",
+      "decoded": true,
+      "label": "a5 = 1",
+      "n_train": 87
+     },
+     {
+      "code": "2",
+      "decoded": true,
+      "label": "a5 = 2",
+      "n_train": 87
+     },
+     {
+      "code": "3",
+      "decoded": true,
+      "label": "a5 = 3",
+      "n_train": 85
+     },
+     {
+      "code": "4",
+      "decoded": true,
+      "label": "a5 = 4",
+      "n_train": 86
+     }
+    ],
+    "reference": {
+     "code": "1",
+     "label": "a5 = 1"
+    },
+    "unit": null
+   },
+   {
+    "base": "a6",
+    "columns": [
+     "a6:1",
+     "a6:2"
+    ],
+    "decoded": true,
+    "kind": "category",
+    "label": "attribute a6",
+    "levels": [
+     {
+      "code": "1",
+      "decoded": true,
+      "label": "a6 = 1",
+      "n_train": 177
+     },
+     {
+      "code": "2",
+      "decoded": true,
+      "label": "a6 = 2",
+      "n_train": 168
+     }
+    ],
+    "reference": {
+     "code": "1",
+     "label": "a6 = 1"
+    },
+    "unit": null
+   }
+  ]
+ },
+ "verification": {
+  "notes": "",
+  "verified": null,
+  "verified_at": null,
+  "verified_by": null
+ }
+}
