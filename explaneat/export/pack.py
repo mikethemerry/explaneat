@@ -104,42 +104,86 @@ def _png(pdf: Path, log) -> Optional[Path]:
     return p if r.returncode == 0 and p.exists() else None
 
 
+def capabilities() -> Dict[str, Dict[str, Any]]:
+    """Which formats this machine can produce. JSON and TeX/TikZ source always work."""
+    try:
+        import docx  # noqa: F401
+        has_docx = True
+    except ImportError:
+        has_docx = False
+    latexmk = shutil.which("latexmk") is not None
+    pdflatex = shutil.which("pdflatex") is not None
+    pdftoppm = shutil.which("pdftoppm") is not None
+    pdf_ok = latexmk and pdflatex
+    return {
+        "json": {"available": True},
+        "tex": {"available": True},
+        "tikz": {"available": True},
+        "pdf": {"available": pdf_ok,
+                "reason": None if pdf_ok else "unavailable: install a TeX distribution with latexmk and pdflatex (e.g. TeX Live, MiKTeX, MacTeX)"},
+        "docx": {"available": has_docx,
+                 "reason": None if has_docx else "unavailable: install the optional extra: uv sync --extra export (python-docx)",
+                 "figures": pdf_ok and pdftoppm,
+                 "figures_reason": None if (pdf_ok and pdftoppm) else
+                 "figures need latexmk/pdflatex and pdftoppm (poppler); the DOCX is written without them"},
+    }
+
+
 def render_pack(doc: Dict[str, Any], out_dir: Path, formats: Iterable[str],
-                review_marks: bool = True, log=print) -> Dict[str, Any]:
-    """Render every requested non-JSON format from ``doc`` (the parsed JSON) into ``out_dir``."""
+                review_marks: bool = True, log=print, caps: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Render every requested non-JSON format from ``doc`` (the parsed JSON) into ``out_dir``.
+
+    Formats this machine cannot produce are skipped with a reason (``result["formats"]``);
+    the others are still written.
+    """
     formats = list(formats)
+    caps = caps or capabilities()
     out_dir.mkdir(parents=True, exist_ok=True)
     lab = doc["label"]
-    result: Dict[str, Any] = {"label": lab, "files": [], "compile": []}
+    result: Dict[str, Any] = {"label": lab, "files": [], "compile": [], "formats": {}}
     text = render_text(doc, review_marks=review_marks)
-    want_text = any(f in formats for f in ("tex", "tikz", "pdf", "docx"))
-    if want_text:
+    if any(f in formats for f in ("tex", "tikz", "pdf", "docx")):
         for name, body in text.items():
-            is_fig = "-fig-" in name
-            if not ("tex" in formats or "pdf" in formats or "docx" in formats) and not is_fig:
+            if "-fig-" not in name and not ("tex" in formats or "pdf" in formats):
                 continue
             (out_dir / name).write_text(body, encoding="utf-8")
             result["files"].append(name)
+    for f in ("tex", "tikz"):
+        if f in formats:
+            result["formats"][f] = "ok"
+    pdf_ok = caps["pdf"]["available"]
     figures: Dict[str, Path] = {}
-    if "pdf" in formats or "docx" in formats:
+    if "pdf" in formats and not pdf_ok:
+        result["formats"]["pdf"] = caps["pdf"]["reason"]
+        log("  pdf " + caps["pdf"]["reason"])
+    if pdf_ok and ("pdf" in formats or ("docx" in formats and caps["docx"]["available"])):
         build = out_dir / "build"
         if "pdf" in formats:
-            result["compile"].append(_latexmk(out_dir / f"{lab}-standalone.tex", build, log))
+            c = _latexmk(out_dir / f"{lab}-standalone.tex", build, log)
+            result["compile"].append(c)
+            if c["ok"]:
+                result["files"].append(c["pdf"])
+            result["formats"]["pdf"] = "ok" if c["ok"] else "failed: see build/" + lab + "-standalone.log"
         for key in render_tikz.view_keys(doc):
             c = _latexmk(out_dir / f"{lab}-fig-{key}-standalone.tex", build, log)
             result["compile"].append(c)
-            if c["ok"] and "docx" in formats:
-                png = _png(out_dir / c["pdf"], log)
-                if png:
-                    figures[key] = png
+            if c["ok"]:
+                result["files"].append(c["pdf"])
+                if "docx" in formats and caps["docx"]["figures"]:
+                    png = _png(out_dir / c["pdf"], log)
+                    if png:
+                        figures[key] = png
+                        result["files"].append(png.name)
     if "docx" in formats:
-        try:
+        if not caps["docx"]["available"]:
+            result["formats"]["docx"] = caps["docx"]["reason"]
+            log("  docx " + caps["docx"]["reason"])
+        else:
             from .render_docx import render_docx
             p = render_docx(doc, out_dir / f"{lab}.docx", figures=figures, review_marks=review_marks)
             result["files"].append(p.name)
-        except ImportError:
-            log("  python-docx is not installed: uv pip install -e '.[export]'")
-            result["docx_error"] = "python-docx not installed (optional extra 'export')"
+            result["formats"]["docx"] = "ok" if figures or not render_tikz.view_keys(doc) else \
+                "ok (" + (caps["docx"]["figures_reason"] or "no figures") + ")"
     return result
 
 
@@ -152,8 +196,9 @@ def export_doc(doc: Dict[str, Any], out_root: Path, formats: Iterable[str],
     parsed = load_json(jp)          # render from the file, exactly as `export render` would
     res = render_pack(parsed, out_dir, [f for f in formats if f != "json"],
                       review_marks=review_marks, log=log) if set(formats) - {"json"} else {
-        "label": doc["label"], "files": [], "compile": []}
+        "label": doc["label"], "files": [], "compile": [], "formats": {}}
     res["files"].insert(0, jp.name)
+    res["formats"] = {"json": "ok", **res["formats"]}
     res["json"] = str(jp)
     return res
 

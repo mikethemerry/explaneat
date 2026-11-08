@@ -57,6 +57,13 @@ class _Timeout(BaseException):
 
 def _with_timeout(fn, *a, **k):
     """(value, error_string)."""
+    import threading
+    if threading.current_thread() is not threading.main_thread() or not hasattr(signal, "SIGALRM"):
+        try:  # no SIGALRM off the main thread (API jobs) or on Windows: run without a timeout
+            return fn(*a, **k), None
+        except Exception as e:
+            return None, f"error: {type(e).__name__}: {e}"
+
     def _alarm(*_):
         raise _Timeout()
     old = signal.signal(signal.SIGALRM, _alarm)
@@ -243,6 +250,44 @@ def _infer_split(payload: Dict[str, Any], narrative: Optional[str]) -> Tuple[Opt
     return None, None
 
 
+PAYLOAD_LIST_MAX = 50     # longer lists in evidence payloads are omitted (could be data rows)
+PAYLOAD_TABLE_ROWS_MAX = 20  # lists of lists/dicts longer than this are omitted too
+
+
+def scrub_payload(obj: Any, path: str = "payload", omitted: Optional[List[str]] = None) -> Any:
+    """Copy of an evidence payload with anything that could hold raw data rows removed.
+
+    Exports carry the model, the explanation and aggregate metrics only. A list longer than
+    ``PAYLOAD_LIST_MAX`` items, or a list of lists/objects longer than
+    ``PAYLOAD_TABLE_ROWS_MAX`` rows, is replaced by a stub with its length and a SHA-256 of
+    its JSON, so the export can be matched to the database without carrying the rows.
+    """
+    import hashlib
+    import json as _json
+    if omitted is None:
+        omitted = []
+    if isinstance(obj, dict):
+        return {k: scrub_payload(v, f"{path}.{k}", omitted) for k, v in obj.items()
+                if k not in ("svg_data", "x_data", "y_data", "X", "y", "rows", "raw_rows")} | \
+            {k: {"omitted": "raw data field"} for k in obj if k in ("x_data", "y_data", "X", "y", "rows", "raw_rows")}
+    if isinstance(obj, list):
+        tabular = obj and all(isinstance(x, (list, dict)) for x in obj)
+        if len(obj) > PAYLOAD_LIST_MAX or (tabular and len(obj) > PAYLOAD_TABLE_ROWS_MAX):
+            omitted.append(path)
+            digest = hashlib.sha256(_json.dumps(obj, sort_keys=True, default=str).encode()).hexdigest()
+            return {"omitted": f"list of {len(obj)} items (possible row-level data)", "sha256": digest}
+        return [scrub_payload(x, f"{path}[{i}]", omitted) for i, x in enumerate(obj)]
+    return obj
+
+
+def _scrubbed(narrative, payload) -> Dict[str, Any]:
+    omitted: List[str] = []
+    out = {"narrative": narrative, "payload": scrub_payload(payload, "payload", omitted)}
+    if omitted:
+        out["omitted_paths"] = omitted
+    return out
+
+
 def _evidence_items(evidence: Any) -> List[Dict[str, Any]]:
     items: List[Dict[str, Any]] = []
     if not isinstance(evidence, dict):
@@ -265,7 +310,7 @@ def _evidence_items(evidence: Any) -> List[Dict[str, Any]]:
             "data_split_source": split_source,
             "dataset_split_id": pd.get("split_id"),
             "thresholds": thresholds or None,
-            "result": {"narrative": r.get("narrative"), "payload": p},
+            "result": _scrubbed(r.get("narrative"), p),
             "timestamp": r.get("timestamp"),
         })
     # Legacy category-based entries ({"visualizations": [...]}) and "_legacy".
@@ -291,7 +336,7 @@ def _evidence_items(evidence: Any) -> List[Dict[str, Any]]:
             "dataset_split_id": (vc.get("dataset_split_id") if isinstance(vc, dict) else None),
             "thresholds": None,
             "result": {"narrative": it.get("narrative"),
-                       "payload": {k: v for k, v in it.items() if k not in ("svg_data", "narrative")},
+                       "payload": scrub_payload({k: v for k, v in it.items() if k not in ("svg_data", "narrative")}),
                        "svg_omitted": bool(it.get("svg_data"))},
             "timestamp": it.get("timestamp"),
         })
@@ -405,6 +450,7 @@ def collect(genome_id: str, *, label: Optional[str] = None, study: Optional[Dict
     from ..analysis import explanation_records
     from ..db.models import Dataset, DatasetSplit, Experiment, Explanation, Genome, Population
 
+    mcp_db = db is None
     db = db or get_db()
     with db.session_scope() as s:
         if s.bind.dialect.name == "postgresql":
@@ -452,9 +498,15 @@ def collect(genome_id: str, *, label: Optional[str] = None, study: Optional[Dict
                          X_train=X_tr, y_train=y_tr, X_test=X_te, y_test=y_te,
                          num_classes=num_classes, now=now)
     # Acceptance check: the export's coverage equals get_coverage for this genome.
-    from mcp_server.tools.coverage import get_coverage
     import json as _json
-    live = _json.loads(get_coverage(genome_id))
+    if mcp_db:
+        from mcp_server.tools.coverage import get_coverage
+        live = _json.loads(get_coverage(genome_id))
+    else:  # another database (e.g. the API's): get_coverage's computation on that database
+        from ..analysis.coverage_report import coverage_report
+        with db.session_scope() as s2:
+            e2 = build_engine(s2, genome_id)
+            live = _json.loads(_json.dumps(coverage_report(e2.current_state, e2.annotations), default=str))
     doc["coverage"]["matches_get_coverage"] = (
         _json.dumps(live, sort_keys=True) == _json.dumps(doc["coverage"]["report"], sort_keys=True))
     return seal(doc)
@@ -771,6 +823,10 @@ def audit(doc: Dict[str, Any]) -> List[Dict[str, Any]]:
                 add("evidence_split_inferred", "info",
                     f"Evidence item {e['index']} ({e['type']}): data split {e['data_split']!r} "
                     f"is not recorded as a field; {e['data_split_source'].replace('_', ' ')}.", n)
+            if e["result"].get("omitted_paths"):
+                add("payload_list_omitted", "info",
+                    f"Evidence item {e['index']}: long list(s) left out of the export (possible row-level "
+                    f"data): {', '.join(e['result']['omitted_paths'])}.", n)
             if e["kind"] == "unknown":
                 add("evidence_kind_unknown", "info",
                     f"Evidence item {e['index']} has unclassified type {e['type']!r}.", n)

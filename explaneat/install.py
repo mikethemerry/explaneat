@@ -249,7 +249,21 @@ def run_checks() -> List[Check]:
                             "" if ok else "uv sync (reinstall the package)"))
 
     checks.append(ui_check())
+    checks.append(export_check())
     return checks
+
+
+def export_check() -> Check:
+    """Which export-pack formats this machine can produce (explaneat export)."""
+    from .export.pack import capabilities
+
+    caps = capabilities()
+    ok = [f for f in ("json", "tex", "tikz", "pdf", "docx") if caps[f]["available"]]
+    missing = [caps[f]["reason"] for f in ("pdf", "docx") if not caps[f]["available"]]
+    if caps["docx"]["available"] and not caps["docx"]["figures"]:
+        missing.append("DOCX " + caps["docx"]["figures_reason"])
+    return Check("Export formats", "OK" if not missing else "WARN", ", ".join(ok),
+                 "; ".join(missing))
 
 
 def ui_check(static: Path = UI_STATIC, src: Path = UI_SRC) -> Check:
