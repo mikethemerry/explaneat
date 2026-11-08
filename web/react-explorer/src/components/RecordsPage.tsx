@@ -4,6 +4,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { listRecords, type RecordSummary } from "../api/tools";
+import { ExportModal } from "./ExportPanel";
 
 export function RecordsPage({ onOpen }: { onOpen: (genomeId: string, experimentId: string, experimentName: string) => void }) {
   const [records, setRecords] = useState<RecordSummary[]>([]);
@@ -12,6 +13,7 @@ export function RecordsPage({ onOpen }: { onOpen: (genomeId: string, experimentI
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
   const [onlyUnverified, setOnlyUnverified] = useState(false);
+  const [exporting, setExporting] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     listRecords()
@@ -90,12 +92,23 @@ export function RecordsPage({ onOpen }: { onOpen: (genomeId: string, experimentI
                   onClick={() => r.experiment_id && onOpen(r.genome_id, r.experiment_id, r.experiment_name || r.label)}
                 >
                   Review
+                </button>{" "}
+                <button
+                  className="op-btn"
+                  disabled={!r.in_db}
+                  title={r.in_db ? "Export pack (JSON, LaTeX, TikZ, PDF, DOCX)" : "Genome not in this database"}
+                  onClick={() => setExporting({ id: r.genome_id, name: r.label })}
+                >
+                  Export
                 </button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+      {exporting && (
+        <ExportModal target={{ kind: "genome", id: exporting.id, name: exporting.name }} onClose={() => setExporting(null)} />
+      )}
     </div>
   );
 }

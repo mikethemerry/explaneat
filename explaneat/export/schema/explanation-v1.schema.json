@@ -1,0 +1,1414 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mikethemerry/explaneat/explaneat/export/schema/explanation-v1.schema.json",
+  "title": "ExplaNEAT explanation export, schema v1",
+  "description": "Canonical record of one explained genome: provenance, phenotype and explained model state, refactoring operations, function-preservation check, annotation hierarchy (hypothesis, closed form, evidence, authorship), coverage (current code, get_coverage), and an audit against the Ch 5 definitions. See docs/export_pack.md.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "label",
+    "provenance",
+    "conventions",
+    "model",
+    "phenotype",
+    "model_state",
+    "operations",
+    "function_preservation",
+    "annotations",
+    "hierarchy",
+    "coverage",
+    "authorship",
+    "record",
+    "issues"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^1\\.[0-9]+\\.[0-9]+$"
+    },
+    "label": {
+      "$ref": "#/$defs/label"
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "experiment",
+        "dataset",
+        "split",
+        "genome",
+        "explanation",
+        "label",
+        "study",
+        "seed",
+        "record_file",
+        "tool",
+        "export_timestamp",
+        "content_hash"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "experiment": {
+          "type": "object",
+          "required": [
+            "id",
+            "name",
+            "random_seed",
+            "training_git_commit"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "random_seed": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "training_git_commit": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "status": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "dataset": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "required": [
+            "id",
+            "name"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "num_classes": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "num_features": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "feature_names": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "split": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "required": [
+            "id",
+            "train_size",
+            "test_size"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "train_size": {
+              "type": "integer"
+            },
+            "test_size": {
+              "type": "integer"
+            },
+            "scaler_type": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "genome": {
+          "type": "object",
+          "required": [
+            "id",
+            "neat_key",
+            "generation",
+            "fitness"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "neat_key": {
+              "type": "integer"
+            },
+            "generation": {
+              "type": "integer"
+            },
+            "fitness": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          }
+        },
+        "explanation": {
+          "type": "object",
+          "required": [
+            "id",
+            "created_at",
+            "updated_at",
+            "n_operations"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "description": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "created_at": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "updated_at": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "n_operations": {
+              "type": "integer"
+            }
+          }
+        },
+        "label": {
+          "$ref": "#/$defs/label"
+        },
+        "study": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "set": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "position": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          }
+        },
+        "seed": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "record_file": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tool": {
+          "type": "object",
+          "required": [
+            "name",
+            "version",
+            "git_commit",
+            "git_dirty"
+          ],
+          "properties": {
+            "name": {
+              "const": "explaneat"
+            },
+            "version": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "git_commit": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "git_dirty": {
+              "type": "boolean"
+            }
+          }
+        },
+        "export_timestamp": {
+          "type": "string"
+        },
+        "content_hash": {
+          "type": "object",
+          "required": [
+            "algorithm",
+            "excludes",
+            "value"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "algorithm": {
+              "const": "sha256"
+            },
+            "excludes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "value": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        }
+      }
+    },
+    "conventions": {
+      "type": "object",
+      "required": [
+        "float_format",
+        "coverage",
+        "evidence_kind"
+      ]
+    },
+    "model": {
+      "type": "object",
+      "required": [
+        "task",
+        "output_activation",
+        "performance"
+      ],
+      "properties": {
+        "task": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "output_activation": {
+          "type": "string"
+        },
+        "output_activation_source": {
+          "type": "string"
+        },
+        "performance": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "model": {
+              "type": "string"
+            },
+            "train": {
+              "$ref": "#/$defs/perf"
+            },
+            "test": {
+              "$ref": "#/$defs/perf"
+            }
+          }
+        }
+      }
+    },
+    "phenotype": {
+      "$ref": "#/$defs/graph"
+    },
+    "model_state": {
+      "$ref": "#/$defs/graph"
+    },
+    "operations": {
+      "type": "object",
+      "required": [
+        "counts",
+        "n",
+        "refactoring"
+      ],
+      "properties": {
+        "counts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        },
+        "n": {
+          "type": "integer"
+        },
+        "refactoring": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "seq",
+              "type",
+              "params",
+              "function_preserving"
+            ],
+            "properties": {
+              "seq": {
+                "type": "integer"
+              },
+              "type": {
+                "type": "string"
+              },
+              "params": {
+                "type": "object"
+              },
+              "result": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "notes": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "function_preserving": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      }
+    },
+    "function_preservation": {
+      "type": "object",
+      "required": [
+        "data_split",
+        "n",
+        "max_abs_err",
+        "tolerance",
+        "preserved",
+        "non_function_preserving_operation_types",
+        "method"
+      ],
+      "properties": {
+        "data_split": {
+          "type": "string"
+        },
+        "n": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "max_abs_err": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "tolerance": {
+          "type": "number"
+        },
+        "preserved": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "non_function_preserving_operation_types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "method": {
+          "type": "string"
+        }
+      }
+    },
+    "annotations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/annotation"
+      }
+    },
+    "hierarchy": {
+      "type": "object",
+      "required": [
+        "roots",
+        "global_root",
+        "max_depth",
+        "tree"
+      ],
+      "properties": {
+        "roots": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "global_root": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "max_depth": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tree": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/tree"
+          }
+        }
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "required": [
+        "conventions",
+        "report",
+        "summary",
+        "null",
+        "uncovered_nodes",
+        "uncovered_edges",
+        "missing_compositions"
+      ],
+      "properties": {
+        "conventions": {
+          "type": "object"
+        },
+        "report": {
+          "description": "coverage_report() output verbatim (what get_coverage returns)",
+          "type": "object",
+          "required": [
+            "structural_coverage",
+            "compositional_coverage",
+            "node_coverage",
+            "edge_coverage",
+            "null",
+            "annotations_count",
+            "leaf_count",
+            "composition_count"
+          ]
+        },
+        "summary": {
+          "type": "object",
+          "required": [
+            "structural_coverage",
+            "compositional_coverage",
+            "full_coverage",
+            "candidate_nodes",
+            "uncovered_nodes",
+            "null_nodes",
+            "missing_compositions"
+          ],
+          "properties": {
+            "structural_coverage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "compositional_coverage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "full_coverage": {
+              "type": "boolean"
+            }
+          }
+        },
+        "null": {
+          "type": "object",
+          "required": [
+            "basis",
+            "nodes",
+            "edges",
+            "counts",
+            "exempt_annotations"
+          ],
+          "properties": {
+            "basis": {
+              "type": "string"
+            },
+            "nodes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "category",
+                  "reason"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "enum": [
+                      "disconnected_input",
+                      "dead_end"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "edges": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "from",
+                  "to",
+                  "category"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "from": {
+                    "type": "string"
+                  },
+                  "to": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "enum": [
+                      "zero_weight",
+                      "touches_null_node"
+                    ]
+                  }
+                }
+              }
+            },
+            "counts": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer"
+              }
+            },
+            "exempt_annotations": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "uncovered_nodes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "uncovered_edges": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "missing_compositions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "annotation",
+              "missing"
+            ],
+            "properties": {
+              "annotation": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "missing": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "matches_get_coverage": {
+          "type": "boolean"
+        }
+      }
+    },
+    "authorship": {
+      "type": "object",
+      "required": [
+        "drafter",
+        "protocol_version",
+        "session",
+        "human_verification",
+        "automated_verification"
+      ],
+      "properties": {
+        "drafter": {
+          "$ref": "#/$defs/drafter"
+        },
+        "protocol_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "session": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "human_verification": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "required": [
+            "verified",
+            "by",
+            "at"
+          ],
+          "properties": {
+            "verified": {
+              "type": "boolean"
+            },
+            "by": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "at": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "automated_verification": {
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      }
+    },
+    "record": {
+      "description": "The explanation record file (experiments/10seed/explanations/<label>.json) verbatim, or null",
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "code",
+          "severity",
+          "annotation",
+          "message"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "info",
+              "warning",
+              "error"
+            ]
+          },
+          "annotation": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "label": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "perf": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "required": [
+        "n"
+      ],
+      "properties": {
+        "n": {
+          "type": "integer"
+        },
+        "auc": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "accuracy_at_0.5": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "mse": {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      }
+    },
+    "graph": {
+      "type": "object",
+      "required": [
+        "nodes",
+        "edges",
+        "input_node_ids",
+        "output_node_ids",
+        "counts"
+      ],
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "display_name",
+              "type",
+              "activation",
+              "bias"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "display_name": {
+                "type": "string"
+              },
+              "type": {
+                "enum": [
+                  "input",
+                  "hidden",
+                  "output",
+                  "function"
+                ]
+              },
+              "activation": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "bias": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "response": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "aggregation": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "from",
+              "to",
+              "weight",
+              "enabled"
+            ],
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              },
+              "weight": {
+                "type": "number"
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "innovation": {}
+            }
+          }
+        },
+        "input_node_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "output_node_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "counts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "drafter": {
+      "type": "object",
+      "required": [
+        "kind",
+        "name",
+        "detail",
+        "source"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "ai_agent",
+            "human",
+            "unknown"
+          ]
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "model": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "detail": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        }
+      }
+    },
+    "tree": {
+      "type": "object",
+      "required": [
+        "name",
+        "children"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/tree"
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "required": [
+        "index",
+        "source",
+        "type",
+        "kind",
+        "method",
+        "data_split",
+        "data_split_source",
+        "thresholds",
+        "result",
+        "timestamp"
+      ],
+      "properties": {
+        "index": {
+          "type": "integer"
+        },
+        "source": {
+          "type": "string"
+        },
+        "type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "kind": {
+          "enum": [
+            "analytical",
+            "empirical",
+            "unknown"
+          ]
+        },
+        "method": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "data_split": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "data_split_source": {
+          "enum": [
+            "explicit",
+            "inferred_from_payload_keys",
+            "inferred_from_narrative",
+            null
+          ]
+        },
+        "dataset_split_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "thresholds": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "result": {
+          "type": "object",
+          "required": [
+            "narrative",
+            "payload"
+          ]
+        },
+        "timestamp": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "annotation": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "display_name",
+        "seq",
+        "kind",
+        "parent",
+        "children",
+        "depth",
+        "subgraph",
+        "covers_nodes",
+        "hypothesis",
+        "closed_form",
+        "evidence",
+        "authorship"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "display_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "seq": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "kind": {
+          "enum": [
+            "leaf",
+            "composition"
+          ]
+        },
+        "parent": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "depth": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "subgraph": {
+          "type": "object",
+          "required": [
+            "entry_nodes",
+            "exit_nodes",
+            "internal_nodes",
+            "nodes",
+            "edges"
+          ],
+          "properties": {
+            "entry_nodes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "exit_nodes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "internal_nodes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "nodes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "edges": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "from",
+                  "to",
+                  "weight"
+                ],
+                "properties": {
+                  "from": {
+                    "type": "string"
+                  },
+                  "to": {
+                    "type": "string"
+                  },
+                  "weight": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  }
+                }
+              }
+            },
+            "expanded_nodes": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string"
+              }
+            },
+            "function_entry_nodes": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string"
+              }
+            },
+            "added_entry_nodes": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "covers_nodes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "hypothesis": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "closed_form": {
+          "type": "object",
+          "required": [
+            "available",
+            "latex",
+            "latex_collapsed",
+            "sympy",
+            "error",
+            "note",
+            "rounding",
+            "sympy_srepr",
+            "sympy_collapsed",
+            "sympy_collapsed_srepr"
+          ],
+          "properties": {
+            "available": {
+              "type": "boolean"
+            },
+            "latex": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "latex_collapsed": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "sympy": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "dimensionality": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "error": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "required": [
+                "data_split",
+                "n",
+                "closed_form_max_abs_err",
+                "numeric_max_abs_err"
+              ],
+              "properties": {
+                "data_split": {
+                  "type": "string"
+                },
+                "n": {
+                  "type": "integer"
+                },
+                "closed_form_max_abs_err": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "numeric_max_abs_err": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "method": {
+                  "type": "string"
+                }
+              }
+            },
+            "note": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "rounding": {
+              "type": "string"
+            },
+            "sympy_srepr": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "sympy_collapsed": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "sympy_collapsed_srepr": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "authorship": {
+          "type": "object",
+          "required": [
+            "drafted_by",
+            "drafted_at",
+            "verified_by",
+            "verified_at"
+          ],
+          "properties": {
+            "drafted_by": {
+              "$ref": "#/$defs/drafter"
+            },
+            "drafted_at": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "verified_by": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "verified_at": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

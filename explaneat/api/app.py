@@ -125,6 +125,8 @@ def create_app() -> FastAPI:
     app.include_router(records.router, prefix="/api/records", tags=["records"])
     app.include_router(lineage.router, prefix="/api/genomes", tags=["lineage"])
     app.include_router(portal.router, prefix="/api/portal", tags=["portal"])
+    from .routes import exports
+    app.include_router(exports.router, prefix="/api", tags=["exports"])
 
     @app.get("/api/health")
     async def health_check():

@@ -15,6 +15,10 @@ def cli():
 # Add database commands
 cli.add_command(database, name='db')
 
+# Export packs (explaneat/export/cli.py)
+from .export.cli import export as _export  # noqa: E402
+cli.add_command(_export, name='export')
+
 
 @cli.command()
 @click.option("--host", default="127.0.0.1", show_default=True)

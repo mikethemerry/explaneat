@@ -7,6 +7,7 @@ import {
   type ExperimentListItem,
 } from "../api/client";
 import { DatasetSetupModal } from "./DatasetSetupModal";
+import { ExportModal } from "./ExportPanel";
 import { ExperimentCreateModal } from "./ExperimentCreateModal";
 
 type ExperimentListProps = {
@@ -21,6 +22,7 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
   const [loadingExperiment, setLoadingExperiment] = useState<string | null>(null);
   const [setupExperiment, setSetupExperiment] = useState<ExperimentListItem | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [exporting, setExporting] = useState<{ id: string; name: string } | null>(null);
   const [resumingExperiment, setResumingExperiment] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [appliedQuery, setAppliedQuery] = useState("");
@@ -249,6 +251,13 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
                         </button>
                       )}
                       <button
+                        className="op-btn"
+                        title="Export every explained genome (JSON, LaTeX, TikZ, PDF, DOCX) with an index"
+                        onClick={() => setExporting({ id: experiment.id, name: experiment.name })}
+                      >
+                        Export
+                      </button>
+                      <button
                         className="explore-btn"
                         onClick={() => handleSelectExperiment(experiment)}
                         disabled={loadingExperiment !== null}
@@ -270,6 +279,9 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
         </p>
       </div>
 
+      {exporting && (
+        <ExportModal target={{ kind: "experiment", id: exporting.id, name: exporting.name }} onClose={() => setExporting(null)} />
+      )}
       {setupExperiment && (
         <DatasetSetupModal
           experimentId={setupExperiment.id}

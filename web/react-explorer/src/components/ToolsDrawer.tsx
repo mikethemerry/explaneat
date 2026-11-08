@@ -21,8 +21,9 @@ import {
 import type { HighlightKind } from "./NetworkViewer";
 import { RecordPanel } from "./RecordPanel";
 import { LineagePanel, type LineageView } from "./LineagePanel";
+import { ExportPanel } from "./ExportPanel";
 
-export type ToolsTab = "review" | "checks" | "units" | "candidates" | "restore" | "categories" | "lineage";
+export type ToolsTab = "review" | "checks" | "units" | "candidates" | "restore" | "categories" | "lineage" | "export";
 
 const TABS: { key: ToolsTab; label: string; title: string }[] = [
   { key: "review", label: "Review & verify", title: "Claude explanation record, Mike's verification, import/export" },
@@ -32,6 +33,7 @@ const TABS: { key: ToolsTab; label: string; title: string }[] = [
   { key: "restore", label: "Restore gain", title: "Linearise annotations: how much each nonlinearity matters (train AUC)" },
   { key: "categories", label: "Categories", title: "One-hot levels grouped by base feature: model effect vs data" },
   { key: "lineage", label: "Lineage", title: "Ancestor chain, jumps and diffs" },
+  { key: "export", label: "Export", title: "Export pack: JSON, LaTeX appendix, TikZ, PDF, DOCX" },
 ];
 
 type Props = {
@@ -106,6 +108,7 @@ export function ToolsDrawer(props: Props) {
       </div>
       {open && (
         <div className="tools-body">
+          {tab === "export" && <ExportPanel target={{ kind: "genome", id: genomeId }} />}
           {tab === "review" && (
             <RecordPanel genomeId={genomeId} onOperationChange={props.onOperationChange} />
           )}
