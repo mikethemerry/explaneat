@@ -139,8 +139,8 @@ timeout).
 ## 2. Schema (v1)
 
 JSON Schema: `explaneat/export/schema/explanation-v1.schema.json` (draft 2020-12).
-`schema_version` is `1.2.0` (1.1 added the optional `plain_language` section, §6; 1.2 the
-layer-v2 claim type `rule`; 1.0 documents still validate). Top level:
+`schema_version` is `1.3.0` (1.1 added the optional `plain_language` section, §6; 1.2 the
+layer-v2 claim type `rule`; 1.3 the `shape` of each claim; 1.0 documents still validate). Top level:
 
 | Key | Contents |
 |---|---|
@@ -248,6 +248,17 @@ forms in `explaneat/export/render_plain.py`. Writing protocol:
   averaging the prediction over its training distribution; paired bootstrap over test patients,
   seed 42; status agrees / unclear / disagrees / not available); `verified` (holds consistently
   across training patients) with reasons; and `confidence`.
+- **Shapes** (layer v3, `explaneat/analysis/plain_language_shapes.py`): every claim about a numeric
+  or ordinal variable records the model's response curve on its score scale (41 points from the 1st
+  to the 99th percentile, or every common level of an ordinal) for the typical patient and for up
+  to 300 training patients, classified as `flat`, `steady`, `hinge`, `step`, `levelling_off`,
+  `accelerating`, `peak`/`dip` or `multi_segment` (tolerances `TOL`, documented in the module and
+  stored in every layer), with named points in real units, ordinal increments, the share of
+  affected patients with the same shape, a 25% tolerance sensitivity check, risk saturation and
+  the matching folds of threshold claims. Status `verified` (at least 90% the same and stable),
+  `mixed` (a majority shape whose exceptions are characterised by a category) or `fallback`
+  ("in an uneven way"). Categoricals record each level relative to the reference. The lint
+  requires the matching shape words in every numeric effect sentence.
 - **Confidence words** (`CONFIDENCE_RULES`): "clearly" = risk change of at least 5 points for
   the typical patient, the test check agrees, every group at least 20 patients; "slightly" =
   below 5 points; "on the training data only" = the test check does not agree; "the model has
