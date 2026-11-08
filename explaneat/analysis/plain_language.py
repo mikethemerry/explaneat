@@ -1321,6 +1321,12 @@ def interaction_claims(m: PlainModel, part: Part, total_effect: Dict[str, float]
         for g in groups:
             if g["n"] < SMALL_N:
                 c["small_n_groups"].append(g["label"])
+        if A.is_category():   # a rare main category is small data too, whatever the modifier groups
+            for cls in (sa[2], sa[3]):
+                if cls and cls["n_train"] < SMALL_N:
+                    c["small_n_groups"].append(cls["label"])
+                    c["groups"] = c["groups"] + [{"label": cls["label"], "n": cls["n_train"],
+                                                  "role": "main variable category"}]
         c["small_n"] = bool(c["small_n_groups"])
         c["test_check"] = _test_interaction(m, A, Bv, sa, sb, d, part)
         checks = {

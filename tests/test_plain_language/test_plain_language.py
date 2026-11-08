@@ -373,6 +373,35 @@ def test_reextract_marks_changed_draft_stale(layer):
     assert changed["verification"]["verified"] is None
 
 
+def test_reextract_keeps_a_draft_that_still_passes_the_lint(layer):
+    from explaneat.analysis.plain_language_store import merge_existing
+    old = copy.deepcopy(layer)
+    t = old["template"]
+    old["drafted"] = {"summary": (t["summary"] * 3)[:3], "annotations": {}, "worth_checking": [],
+                      "hypothesis_revisions": {}, "claims_hash": old["claims_hash"], "verified_by": None}
+    new = copy.deepcopy(layer)
+    new["claims_hash"] = "different"
+    kept = merge_existing(new, old)
+    assert not kept["drafted"].get("stale") and kept["drafted"]["claims_hash"] == "different"
+    assert kept["drafted"]["revalidated"]["from_claims_hash"] == layer["claims_hash"]
+
+
+def test_interaction_with_a_rare_category_is_small_n():
+    """An interaction involving a category with fewer than SMALL_N training patients is small-n."""
+    from explaneat.analysis.plain_language import interaction_claims, build_parts
+    m = model("interaction")
+    g = m.var_by_base["grp"]
+    keep = np.r_[np.where(g.raw_train == "1")[0][:10], np.where(g.raw_train == "0")[0]]
+    from .helpers import CODEBOOK, FEATURES, operations, structure
+    from explaneat.analysis.plain_language import PlainModel
+    m2 = PlainModel(structure("interaction"), operations("interaction"), m.X[keep], m.y[keep], m.Xt, m.yt,
+                    FEATURES, m.mean, m.scale, CODEBOOK, raw_train=m.raw_train[keep], raw_test=m.raw_test)
+    part = next(p for p in build_parts(m2) if p.name == "gate")
+    ints = interaction_claims(m2, part, {})
+    assert ints and all(c["small_n"] for c in ints)
+    assert all(c["confidence"]["word"] is None for c in ints)
+
+
 def test_export_section_validates_in_export_schema(layer, tmp_path):
     from explaneat.export.pack import validate
     from explaneat.export.render_tex import render_appendix

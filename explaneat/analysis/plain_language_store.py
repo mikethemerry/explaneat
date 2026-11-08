@@ -80,6 +80,14 @@ def save_layer(layer: Dict[str, Any], directory: Optional[Path] = None) -> Path:
     return p
 
 
+def draft_input(d: Dict[str, Any]) -> Dict[str, Any]:
+    """A stored draft back in the input form that ``lint_draft`` / ``set_draft`` take."""
+    return {"summary": d.get("summary") or [], "annotations": d.get("annotations") or {},
+            "worth_checking": d.get("worth_checking") or [],
+            "hypothesis_revisions": {pid: {"proposed": h.get("proposed", ""), "claims": h.get("claims") or []}
+                                     for pid, h in (d.get("hypothesis_revisions") or {}).items()}}
+
+
 def merge_existing(new: Dict[str, Any], old: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     """Carry the draft and the verdict over from the previous file."""
     if not old:
@@ -87,6 +95,17 @@ def merge_existing(new: Dict[str, Any], old: Optional[Dict[str, Any]]) -> Dict[s
     same = old.get("claims_hash") == new.get("claims_hash")
     if old.get("drafted"):
         d = dict(old["drafted"])
+        if not same and not d.get("stale"):
+            # the claims changed: keep the draft only if it still passes the full lint
+            errs = lint_draft(new, draft_input(d))
+            if not errs:
+                d["revalidated"] = {"from_claims_hash": d.get("claims_hash"),
+                                    "note": "claims changed after drafting; the draft was re-linted "
+                                            "against the new claims and passed"}
+                d["claims_hash"] = new.get("claims_hash")
+                new["drafted"] = d
+                return new
+            d["stale_errors"] = errs[:20]
         if not same:
             d["stale"] = True
             d["stale_reason"] = ("the claims changed after this draft was written "
