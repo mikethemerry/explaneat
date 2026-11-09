@@ -651,7 +651,8 @@ def _technical(layer, pid, titles, claims_by) -> List[str]:
 
 
 LEGEND_SHORT = ("Blue: positive weight (raises the score); red: negative weight (lowers it); thicker: larger "
-                "weight.")
+                "weight. Orange outline and up arrow: raises the final prediction; teal and down arrow: lowers it; "
+                "grey and double arrow: depends.")
 
 
 def _fig(tikz: str, caption: str, label: str, place: str = "H") -> List[str]:
@@ -662,6 +663,67 @@ def _fig(tikz: str, caption: str, label: str, place: str = "H") -> List[str]:
 
 def _figlab(layer, what: str) -> str:
     return f"fig:{_lk(layer['label'])}:{what}"
+
+
+def _evidence_figures(layer, pid, title) -> List[str]:
+    """The part's evidence plots as numbered figures, referred to from the text."""
+    figs = (layer.get("_figures") or {}).get(pid) or []
+    if not figs:
+        return []
+    labs = [_figlab(layer, f"plot-{_lk(pid)}-{i}") for i in range(len(figs))]
+    refs = ", ".join(r"Figure~\ref{" + x + "}" for x in labs)
+    L = [r"\par\noindent{\small Evidence plots: " + refs + r".\par}"]
+    for f, lab in zip(figs, labs):
+        d = f.get("data") or {}
+        k = len(d.get("panels") or d.get("units") or [None])
+        frac = 0.9 if f.get("kind") in ("effects", "levels") else min(1.0, 0.38 * k + 0.1)
+        L += [r"\begin{figure}[H]\centering", r"\includegraphics[width=" + f"{frac:.2f}" + r"\linewidth,"
+              r"height=0.42\textheight,keepaspectratio]{" + f.get("rel", f["pdf"]) + "}", r"\caption{" + tex(f"{title}: {f['caption']}") + "}",
+              r"\label{" + lab + "}", r"\end{figure}"]
+    return L
+
+
+def how_to_read(layer) -> List[str]:
+    """A short box before the first figure: edge colour is one connection's sign, the marker on an
+    input is its overall effect, with one worked example from this genome."""
+    from .render_structure import input_direction, part_direction, grouped_variables, top_part
+    g = layer.get("graph") or {}
+    titles = (layer.get("drafted") or {}).get("titles") or {}
+    nodes = {n["id"]: n for n in g.get("nodes") or []}
+    outcome = (layer.get("outcome") or {}).get("short") or "the outcome"
+    example = ""
+    by_id = {p["id"]: p for p in layer["parts"]}
+    for want_neg in (True, False):
+        for e in sorted(g.get("edges") or [], key=lambda e: -abs(e["weight"])):   # the strongest first
+            u, v = nodes.get(e["from"]), nodes.get(e["to"])
+            if not u or not v or u["kind"] != "input" or v["kind"] != "hidden" or u.get("column") in grouped_variables(layer):
+                continue
+            tp = top_part(layer, v.get("region")) if v.get("region") in by_id else None
+            if not tp or (e["weight"] < 0) != want_neg:
+                continue
+            pdir, idir = part_direction(layer, tp), input_direction(layer, tp, u)
+            if pdir not in ("up", "down") or idir not in ("up", "down"):
+                continue
+            sign_in = 1 if e["weight"] > 0 else -1
+            sign_out = 1 if pdir == "up" else -1
+            if (sign_in * sign_out > 0) != (idir == "up"):
+                continue          # the edge signs do not tell the story here (a hinge): pick another
+            example = (f"For example, {u.get('label')} has a {'negative' if sign_in < 0 else 'positive'} connection "
+                       f"into '{titles.get(tp, tp)}', a part that {'raises' if pdir == 'up' else 'lowers'} the "
+                       f"predicted {outcome}, so {u.get('label')} {'raises' if idir == 'up' else 'lowers'} it.")
+            break
+        if example:
+            break
+    lines = [
+        "Edge colour is the sign of that one connection: blue positive, red negative; thicker is a larger weight.",
+        "The outline and arrow on an input (and on a part's output box) is its overall effect on the final "
+        "prediction, read from the verified claims: orange and up arrow raises it, teal and down arrow lowers it, "
+        "grey and double arrow depends (it goes both ways, or differs between levels).",
+        "A negative connection into a part that itself raises the prediction means that input lowers the "
+        "prediction; through a hinge the overall effect can only be read from the claims, not from the edges.",
+    ] + ([example] if example else [])
+    return [r"\par\medskip\noindent\fbox{\begin{minipage}{0.96\linewidth}\small\textbf{How to read the "
+            r"diagrams.} " + " ".join(tex(x) for x in lines) + r"\end{minipage}}\par\medskip"]
 
 
 def overview_page(layer) -> List[str]:
@@ -694,8 +756,10 @@ def raw_page(layer) -> List[str]:
     intro = (r"\subsection*{The network before any explanation}\addcontentsline{toc}{subsection}{The network before "
              r"any explanation} Figure~\ref{" + lab + r"} (next page, landscape) is the trained network as it is, with "
              r"no parts, no splits and no inserted units: inputs at the bottom, hidden units by depth, the output at "
-             r"the top, every connection drawn. A many-level variable stays one grouped input.")
-    cap = tex("The network as trained, before any explanation. " + LEGEND_SHORT)
+             r"the top, every connection drawn, every input column its own node (one-hot levels included).")
+    unused = (layer.get("graph") or {}).get("not_used") or []
+    cap = tex("The network as trained, before any explanation, in full. " + LEGEND_SHORT
+              + (" Not used (no connection): " + ", ".join(unused) + "." if unused else ""))
     return [intro, r"\begin{landscape}"] + _fig(tk, cap, lab, "p") + [r"\end{landscape}"]
 
 
@@ -718,6 +782,8 @@ def genome_block_v5(layer: Dict[str, Any]) -> List[str]:
     L.append(r"\subsection{Summary}")
     L.append(r"\noindent " + sentences_tex(d.get("lead")) + r" Figure~\ref{" + _figlab(layer, "summary")
              + r"} shows the model at this level: one box per paragraph below.")
+    if layer.get("graph"):
+        L += how_to_read(layer)
     L += _fig(summary_diagram(layer), tex("The model at the level of the summary: one box per part."),
               _figlab(layer, "summary"))
     blocks = {b["block"]: b for b in d.get("blocks") or []}
@@ -755,6 +821,7 @@ def genome_block_v5(layer: Dict[str, Any]) -> List[str]:
         sec = rd.get(pid) or {}
         L.append(r"\paragraph{Hypothesis.} " + sentences_tex(sec.get("hypothesis")))
         L.append(r"\paragraph{Evidence.} " + sentences_tex(sec.get("evidence")))
+        L += _evidence_figures(layer, pid, titles.get(pid, p["name"]))
         kids = sorted([by_name[k] for k in p.get("children") or [] if k in by_name], key=lambda q: q["order"])
         deeper = []
         for k in kids:

@@ -169,6 +169,10 @@ def review(labels, out_dir, title, directory):
         layers.append(lay)
     out = Path(out_dir).expanduser()
     out.mkdir(parents=True, exist_ok=True)
+    from .plain_plots import make_figures
+    for lay in layers:
+        if (lay.get("drafted") or {}).get("structure") == "readdown-v5" and lay.get("graph"):
+            lay["_figures"] = make_figures(lay, out)
     tex_path = out / "review.tex"
     tex_path.write_text(render_review(layers, title), encoding="utf-8")
     res = _latexmk(tex_path, out / "build", click.echo)
