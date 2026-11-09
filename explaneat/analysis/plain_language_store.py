@@ -26,6 +26,8 @@ VERIFIER = "M. Merry"
 DRAFTED_BY = "ai-assisted"
 
 SUMMARY_MIN, SUMMARY_MAX = 3, 6
+PARAGRAPH_MAX = 6            # sentences in a per-annotation paragraph
+ROOT_PARAGRAPH_MAX = 8       # sentences in the whole-model paragraph
 
 # Text that must never appear in plain-language prose (the writing protocol).
 FORBIDDEN = [
@@ -36,6 +38,7 @@ FORBIDDEN = [
     (re.compile(r"\b[a-z]+:\d\b"), "one-hot column name"),
     (re.compile(r"\bcaus(?:es|ed|ing)\b|\bleads? to\b", re.I), "causal wording (describe the model, not the world)"),
     (re.compile(r"\b(?:non-?)?linear(?:ly)?\b|\bconvex\b|\bconcave\b|\bmonoton\w*", re.I), "shape jargon (use the plain shape words)"),
+    (re.compile(r"[;:,]\s*by shape\b|\bby shape\s*:", re.I), "mechanical shape clause ('by shape: ...'): weave the shape words into the sentence"),
 ]
 ODDS_MARK = re.compile(r"×\s*\d|\bodds\b", re.I)
 
@@ -239,6 +242,42 @@ def lint_shape(text: str, claims: List[Dict[str, Any]]) -> List[str]:
     return errs
 
 
+def _number_with_unit(text: str) -> Optional[re.Pattern]:
+    """A pattern for '154 mm Hg' style values (the number followed by its first unit word)."""
+    m = re.match(r"\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*([A-Za-z/%$]+)?", text or "")
+    if not m:
+        return None
+    num = re.escape(m.group(1))
+    unit = re.escape(m.group(2)) if m.group(2) else ""
+    return re.compile(r"(?<![0-9.])" + num + r"(?![0-9])" + (r"\s*" + unit if unit else ""), re.I)
+
+
+def lint_points(text: str, claims: List[Dict[str, Any]]) -> List[str]:
+    """A sentence may not quote two different points for the same fold: where a shape's hinge
+    was reconciled with a threshold claim, quote the named (median) point, not the typical
+    patient's own hinge."""
+    errs = []
+    for c in claims:
+        pt = (c.get("shape") or {}).get("point") or {}
+        if not (c.get("shape") or {}).get("point_reconciled") or not pt:
+            continue
+        named, typ = pt.get("text"), (pt.get("typical_hinge") or {}).get("text")
+        if not typ or not named:
+            continue
+        p_typ, p_named = _number_with_unit(typ), _number_with_unit(named)
+        if p_typ is None or p_named is None or p_typ.pattern == p_named.pattern:
+            continue
+        spread = [x for x in (pt.get("spread_text") or []) if x]
+        if any(_number_with_unit(x) and _number_with_unit(x).pattern == p_typ.pattern for x in spread):
+            continue
+        if p_typ.search(text) and p_named.search(text):
+            errs.append(f"{c['id']}: quotes two points for one fold ({named} and {typ}); use {named} "
+                        f"(the typical patient's own hinge is in the evidence)")
+        elif p_typ.search(text):
+            errs.append(f"{c['id']}: quotes the typical patient's hinge {typ}; the named point for this fold is {named}")
+    return errs
+
+
 def lint_draft(layer: Dict[str, Any], draft: Dict[str, Any]) -> List[str]:
     """Problems that stop a draft being stored (empty list: the draft follows the protocol).
 
@@ -257,6 +296,12 @@ def lint_draft(layer: Dict[str, Any], draft: Dict[str, Any]) -> List[str]:
     for pid in list((draft.get("annotations") or {})) + list((draft.get("hypothesis_revisions") or {})):
         if pid not in parts:
             errs.append(f"unknown annotation id {pid!r}")
+    roles = {p["id"]: p.get("role") for p in layer["parts"]}
+    for pid, sents in (draft.get("annotations") or {}).items():
+        cap = ROOT_PARAGRAPH_MAX if roles.get(pid) == "root" else PARAGRAPH_MAX
+        if len(sents) > cap:
+            errs.append(f"annotations.{pid}: {len(sents)} sentences (at most {cap}; merge related shape "
+                        f"statements or move minor effects into one closing 'Smaller effects: ...' sentence)")
     for i, w in enumerate(draft.get("worth_checking") or []):
         if not str(w.get("flag") or "").strip():
             errs.append(f"worth_checking[{i}]: needs a 'flag' (short neutral label)")
@@ -278,11 +323,14 @@ def lint_draft(layer: Dict[str, Any], draft: Dict[str, Any]) -> List[str]:
         for p in lint_text(text):
             errs.append(f"{where}: {p}")
         if where.startswith(("summary", "annotations")):
-            for p in lint_confidence(text, cited) + lint_shape(text, cited):
+            for p in lint_confidence(text, cited) + lint_shape(text, cited) + lint_points(text, cited):
                 errs.append(f"{where}: {p}")
         elif CLEARLY.search(text) and not all((c.get("confidence") or {}).get("word") == "clearly"
                                               for c in cited if c.get("type") != "null"):
             errs.append(f"{where}: says 'clearly' but not every cited claim may be called clear")
+        if not where.startswith(("summary", "annotations")):
+            for p in lint_points(text, cited):
+                errs.append(f"{where}: {p}")
     return errs
 
 

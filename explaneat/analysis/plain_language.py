@@ -54,7 +54,7 @@ from .explanation_tools import StateEvaluator, as_unit, default_auc, input_colum
 from .plain_language_codebooks import (base_of, codebook_checks, codebook_gaps, find_codebook,
                                        generic_codebook, level_info)
 
-LAYER_SCHEMA_VERSION = "3.0.0"   # 3: shape of every numeric effect
+LAYER_SCHEMA_VERSION = "3.1.0"   # 3: shape of every numeric effect; 3.1: one point per fold
 CLAIM_TYPES = ("direction", "threshold", "interaction", "magnitude", "subgroup", "null", "rule")
 
 SEED = 42
@@ -1128,6 +1128,7 @@ def threshold_claims(m: PlainModel, part: Part) -> List[Dict[str, Any]]:
         ts = t_all[rows]
         med = float(np.median(ts))
         q1, q3 = np.percentile(ts, [25, 75])
+        f10, f90 = np.percentile(ts, [10, 90])
         hinge = float(np.median(depth[rows]))
         p5, p95 = np.percentile(v.raw_train, [5, 95])
         va, vb = (lo, p95) if kind == "above" else (p5, hi)
@@ -1156,6 +1157,8 @@ def threshold_claims(m: PlainModel, part: Part) -> List[Dict[str, Any]]:
         c["estimate"] = {
             "threshold": {"value": sig(med), "unit": v.unit or "raw units",
                           "iqr_across_patients": _sig_list([q1, q3]), "spread_share_of_range": sig(spread_share),
+                          "p10_p90_across_patients": _sig_list([f10, f90]),
+                          "p10_p90_text": [v.fmt(round(f10, v.decimals)), v.fmt(round(f90, v.decimals))],
                           "method": "median over patients of the fold of each patient's curve "
                                     "(log-odds against the variable, changed only where this part reads it)"},
             "fold_depth": {"value": sig(hinge), "unit": "log-odds",
@@ -1592,11 +1595,11 @@ def extract_claims(m: PlainModel) -> Dict[str, Any]:
     claims = []
     for p in parts:
         claims.extend(sorted(by_part.get(p.id, []), key=_claim_sort_key))
-    from .plain_language_shapes import attach_shapes
-    attach_shapes(m, parts, claims)
     width = max(2, len(str(len(claims))))
     for i, c in enumerate(claims):
         c["id"] = f"C{i + 1:0{width}d}"
+    from .plain_language_shapes import attach_shapes
+    attach_shapes(m, parts, claims)   # after the ids, so reconciled points can name their claim
     return {"parts": parts, "claims": claims}
 
 

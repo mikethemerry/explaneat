@@ -22,6 +22,8 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, List, Optional
 
+from .plain_language_shapes import spread_phrase
+
 SUMMARY_MAX = 6
 TOP_DIRECTIONS_IN_SUMMARY = 3
 TOP_PATTERNS_IN_SUMMARY = 2
@@ -134,11 +136,12 @@ def shape_phrase(layer, c, v, shape=None) -> str:
         main = (f"steadily, each extra {u1} adding about the same" if sh.get("ordinal_pattern") == "equal_steps"
                 else "steadily")
     elif cls == "hinge":
-        main = (f"with nothing until about {pts.get('at')}, then steadily"
-                if sh.get("hinge_kind") == "flat_then_moving" else f"steadily up to about {pts.get('at')}, then no further")
+        sp = spread_phrase(sh)
+        main = (f"with nothing until about {pts.get('at')}{sp}, then steadily"
+                if sh.get("hinge_kind") == "flat_then_moving" else f"steadily up to about {pts.get('at')}{sp}, then no further")
     elif cls == "step":
         main = (f"in a step, mainly the first {u1}" if sh.get("ordinal_pattern") == "first_step"
-                else f"mostly in a jump around {pts.get('at')}")
+                else f"mostly in a jump around {pts.get('at')}{spread_phrase(sh)}")
     elif cls == "levelling_off":
         main = "quickly at first, then levelling off"
     elif cls == "accelerating":
@@ -234,7 +237,7 @@ def interaction_sentence(layer, c) -> Dict[str, Any]:
 def threshold_sentence(layer, c) -> Dict[str, Any]:
     st, v, r = c["statement"], c["variables"][0], c.get("risk") or {}
     name = _name(v)
-    t = st["threshold"]["text"]
+    t = st["threshold"]["text"] + spread_phrase(c.get("shape") or {})
     verb = "adds to" if st["direction"] == "raises" else "lowers"
     who = (" for " + " and ".join(st["conditions"])) if st.get("conditions") else ""
     step = st["threshold"].get("count_step")
@@ -323,7 +326,7 @@ def _directions_block(layer, ds, part_scope: bool) -> List[Dict[str, Any]]:
     return [direction_sentence(layer, c, part_scope) for c in ds]
 
 
-def part_paragraph(layer, part, cs) -> List[Dict[str, Any]]:
+def _part_paragraph_uncapped(layer, part, cs) -> List[Dict[str, Any]]:
     vs = _verified(cs)
     if part["role"] == "duplicate":
         return []
@@ -346,6 +349,97 @@ def part_paragraph(layer, part, cs) -> List[Dict[str, Any]]:
     for c in [c for c in vs if c["type"] == "null"]:
         out.append(inert_sentence(layer, c))
     return out
+
+
+PARAGRAPH_MAX = 6
+ROOT_PARAGRAPH_MAX = 8
+
+
+GROUP_MAX_ITEMS = 8
+
+
+def _short_level(label: str, v) -> str:
+    """'country of birth other than Germany, Greece, ...' -> 'any other country of birth'."""
+    if " other than " in (label or ""):
+        return f"any other {v['label']}"
+    return label
+
+
+def _group_item(layer, c) -> str:
+    st, v = c["statement"], c["variables"][0]
+    name = _name(v)
+    t = c["type"]
+    if t == "interaction":
+        base = f"{name} depending on {_name(c['variables'][1])}"
+    elif t == "threshold":
+        base = f"{name} past about {st['threshold']['text']}"
+    elif v["kind"] == "category":
+        base = f"{_short_level(st['change']['to']['label'], v)} (rather than {_short_level(st['change']['from']['label'], v)})"
+    else:
+        base = f"a higher {name}"
+    verb = "raises it" if st.get("direction") == "raises" else "lowers it"
+    shp = "" if v["kind"] == "category" else shape_phrase(layer, c, v)
+    return f"{base} {verb}" + (f" {shp}" if shp else "")
+
+
+def group_sentence(layer, claims, lead: str) -> Dict[str, Any]:
+    """One sentence for several minor effects, carrying every qualifier its claims need."""
+    claims = sorted(claims, key=lambda c: (-_delta(c), c["id"]))
+    extra = len(claims) - GROUP_MAX_ITEMS
+    claims = claims[:GROUP_MAX_ITEMS]
+    items = [_group_item(layer, c) for c in claims]
+    slight = any(_conf(c).get("size") == "slight" for c in claims)
+    text = lead + (", each changing the predicted value only slightly: " if slight else ": ") + "; ".join(items)
+    if extra > 0:
+        text += ("; and one still smaller effect listed in the evidence table" if extra == 1 else
+                 f"; and {extra} still smaller effects listed in the evidence table")
+    if any(_conf(c).get("test") not in (None, "agrees") for c in claims):
+        text += " (on the training data only)"
+    text += "."
+    small = [g for c in claims if c.get("small_n") for g in (c.get("groups") or []) if g.get("n", 99) < 20]
+    if any(c.get("small_n") for c in claims):
+        seen, bits = set(), []
+        for g in small:
+            if g["label"] not in seen:
+                seen.add(g["label"])
+                bits.append(f"{g['n']} training {_pop(layer)} ({g['label']})")
+        text += " The model has little data on " + ("some of these: only " + " and ".join(bits) if bits else "some of these") + "."
+    return _s(text, [c["id"] for c in claims])
+
+
+def cap_paragraph(layer, part, sents, cap: int) -> List[Dict[str, Any]]:
+    """At most ``cap`` sentences: minor effects (below 'slightly') go into one closing
+    'Smaller effects: ...' sentence; any further overflow into 'Other effects: ...'."""
+    if len(sents) <= cap:
+        return sents
+    by_id = {c["id"]: c for c in layer["claims"]}
+
+    def minor(sent):
+        cs = [by_id[i] for i in sent["claims"] if i in by_id]
+        return bool(cs) and all(c["type"] in ("direction", "magnitude", "interaction", "threshold")
+                                and _conf(c).get("size") == "slight" for c in cs)
+    keep = [x for x in sents if not minor(x)]
+    small = [by_id[i] for x in sents if minor(x) for i in x["claims"] if i in by_id]
+    tail = [group_sentence(layer, small, "Smaller effects")] if small else []
+    if len(keep) + len(tail) > cap:
+        room = cap - len(tail) - 1
+        movable = [x for x in keep if all(by_id.get(i, {}).get("type") in ("direction", "magnitude", "interaction",
+                                                                         "threshold") for i in x["claims"])]
+        overflow = []
+        while len(keep) > room and movable:
+            x = movable.pop()          # the smallest remaining effects are last
+            keep.remove(x)
+            overflow.append(x)
+        if overflow:
+            other = [by_id[i] for x in reversed(overflow) for i in x["claims"] if i in by_id]
+            tail = [group_sentence(layer, other, "Other effects")] + tail
+    return keep + tail
+
+
+def part_paragraph(layer, part, cs) -> List[Dict[str, Any]]:
+    out = _part_paragraph_uncapped(layer, part, cs)
+    cap = ROOT_PARAGRAPH_MAX if part["role"] == "root" else PARAGRAPH_MAX
+    return cap_paragraph(layer, part, out, cap)
 
 
 def _headline_ok(c) -> bool:
