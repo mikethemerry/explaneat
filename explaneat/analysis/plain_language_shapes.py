@@ -543,7 +543,7 @@ def reconcile_point(sh: Dict[str, Any], c: Dict[str, Any], v, folds: List[Dict[s
     sh["point_reason"] = "same variable and same part as threshold claim " + str(f["claim"])
 
 
-def spread_phrase(sh: Dict[str, Any]) -> str:
+def spread_phrase(sh: Dict[str, Any], who: str = "patients") -> str:
     """'(between 0.8 and 1.9 mm for different patients)' when a reconciled fold spreads widely."""
     pt = (sh or {}).get("point") or {}
     if not pt.get("wide") or not pt.get("spread_text"):
@@ -551,7 +551,7 @@ def spread_phrase(sh: Dict[str, Any]) -> str:
     a, b = pt["spread_text"]
     if a == b:
         return ""
-    return f" (between {a.split(' (')[0]} and {b} for different patients)"
+    return f" (between {a.split(' (')[0]} and {b} for different {who})"
 
 
 def shape_phrase_ok(text: str, shape: Optional[Dict[str, Any]], ctype: str) -> Tuple[bool, str]:

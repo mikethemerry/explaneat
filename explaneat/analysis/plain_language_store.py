@@ -278,6 +278,12 @@ def lint_points(text: str, claims: List[Dict[str, Any]]) -> List[str]:
         elif _range_for_point(text, named, spread):
             errs.append(f"{c['id']}: gives a range ({_range_for_point(text, named, spread)}) for one fold; "
                         f"name the point {named}" + (" with its spread phrase" if pt.get("wide") else ""))
+        if pt.get("wide") and len(spread) == 2 and spread[0] != spread[1] and p_named.search(text):
+            lo, hi = _num(spread[0]), _num(spread[1])
+            nums = [float(m.group(1).replace(",", "")) for m in re.finditer(_NUM, text)]
+            if not (lo in nums and hi in nums):
+                errs.append(f"{c['id']}: the fold at {named} differs widely between patients; add the spread phrase "
+                            f"'(between {spread[0].split(' (')[0]} and {spread[1]} for different patients)'")
     return errs
 
 

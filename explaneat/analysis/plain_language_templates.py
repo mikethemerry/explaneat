@@ -136,12 +136,12 @@ def shape_phrase(layer, c, v, shape=None) -> str:
         main = (f"steadily, each extra {u1} adding about the same" if sh.get("ordinal_pattern") == "equal_steps"
                 else "steadily")
     elif cls == "hinge":
-        sp = spread_phrase(sh)
+        sp = spread_phrase(sh, _pop(layer))
         main = (f"with nothing until about {pts.get('at')}{sp}, then steadily"
                 if sh.get("hinge_kind") == "flat_then_moving" else f"steadily up to about {pts.get('at')}{sp}, then no further")
     elif cls == "step":
         main = (f"in a step, mainly the first {u1}" if sh.get("ordinal_pattern") == "first_step"
-                else f"mostly in a jump around {pts.get('at')}{spread_phrase(sh)}")
+                else f"mostly in a jump around {pts.get('at')}{spread_phrase(sh, _pop(layer))}")
     elif cls == "levelling_off":
         main = "quickly at first, then levelling off"
     elif cls == "accelerating":
@@ -237,7 +237,7 @@ def interaction_sentence(layer, c) -> Dict[str, Any]:
 def threshold_sentence(layer, c) -> Dict[str, Any]:
     st, v, r = c["statement"], c["variables"][0], c.get("risk") or {}
     name = _name(v)
-    t = st["threshold"]["text"] + spread_phrase(c.get("shape") or {})
+    t = st["threshold"]["text"] + spread_phrase(c.get("shape") or {}, _pop(layer))
     verb = "adds to" if st["direction"] == "raises" else "lowers"
     who = (" for " + " and ".join(st["conditions"])) if st.get("conditions") else ""
     step = st["threshold"].get("count_step")

@@ -103,6 +103,10 @@ def test_lint_rejects_two_points_for_one_fold(fold_layer):
     assert lint_points("It adds nothing until about 4.6, then steadily.", [c])          # other precision
     assert lint_points("It adds nothing from about 3.5 to 4.0 mg, then steadily.", [c])  # a range for one fold
     assert lint_points("It adds nothing until about 4.0 mg (between 3.9 and 4.1 mg), then steadily.", [c]) == []
+    c["shape"]["point"]["wide"] = True                    # a wide fold needs its spread phrase
+    assert lint_points("It adds nothing until about 4.0 mg, then steadily.", [c])
+    assert lint_points("It adds nothing until about 4.0 mg (between 3.9 and 4.1 mg for different patients), "
+                       "then steadily.", [c]) == []
 
 
 def test_lint_rejects_mechanical_clause_and_long_paragraphs(fold_layer):
