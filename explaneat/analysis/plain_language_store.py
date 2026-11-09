@@ -463,7 +463,8 @@ def block_claims(layer, block) -> set:
     for c in layer["claims"]:
         pid = c["annotation"]["id"]
         if pid == root:
-            if _claim_vars(c) & keys:
+            # whole-model claims about the block's inputs; inputs the model ignores go with the sum
+            if _claim_vars(c) & keys or (c["type"] == "null" and block["block"] == ADDITIVE):
                 out.add(c["id"])
         elif pid in parts:
             out.add(c["id"])

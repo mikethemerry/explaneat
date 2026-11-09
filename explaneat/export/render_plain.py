@@ -194,14 +194,20 @@ def sentences_tex(sents: List[Dict[str, Any]]) -> str:
 TABLE_CHUNK = 12   # tabularx cannot break across pages (and the thesis preamble has no longtable)
 
 
-def claims_table(claims: List[Dict[str, Any]]) -> List[str]:
+def claims_table(claims: List[Dict[str, Any]], words: bool = True) -> List[str]:
     if not claims:
         return [r"\noindent{\small No claims for this part.}"]
     if len(claims) > TABLE_CHUNK:
         out: List[str] = []
         for i in range(0, len(claims), TABLE_CHUNK):
-            out += claims_table(claims[i:i + TABLE_CHUNK])
+            out += claims_table(claims[i:i + TABLE_CHUNK], words)
         return out
+    if not words:   # v4: the prose has no confidence words, so the table has no 'Words' column
+        L = claims_table(claims, True)
+        L = [x.replace(r"l>{\raggedright\arraybackslash}p{0.08\linewidth}@{}}", r"l@{}}")
+             .replace(r" & Verified & Words \\", r" & Verified \\") for x in L]
+        return [x if not x.endswith(r" \\") or "Verified" in x or not x.count(" & ") >= 7
+                else x.rsplit(" & ", 1)[0] + r" \\" for x in L]
     L = [r"\par{\tiny\noindent", r"\begin{tabularx}{\linewidth}{@{}l>{\raggedright\arraybackslash}X"
          r">{\raggedright\arraybackslash}p{0.11\linewidth}>{\raggedright\arraybackslash}p{0.16\linewidth}"
          r">{\raggedright\arraybackslash}p{0.05\linewidth}>{\raggedright\arraybackslash}p{0.15\linewidth}"
@@ -435,7 +441,7 @@ def _part_detail(layer, p, depth, claims_by, revs, titles, extra_parts=None) -> 
                       "itself (dashed).")
     L.append(r"\par\noindent " + (sentences_tex((d.get("annotations") or {}).get(p["id"])) or "(no draft)"))
     L.append(r"\par\smallskip")
-    L += claims_table(claims_by.get(p["id"], []))
+    L += claims_table(claims_by.get(p["id"], []), words=False)
     rv = revs.get(p["id"])
     if p["role"] != "root":
         L.append(r"\smallskip")
