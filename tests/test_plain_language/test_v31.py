@@ -126,3 +126,20 @@ def test_template_paragraphs_respect_caps(fold_layer):
     capped = cap_paragraph(lay, part, sents, 6)
     assert len(capped) <= 6
     assert "claude" not in str(capped).lower()
+
+
+def test_typical_fold_outside_the_spread_kept_separate():
+    from explaneat.analysis.plain_language_shapes import reconcile_point
+    fold = {"part": "ann_1", "claim": "C9", "value": 4.0, "text": "4.0 mg", "p10_p90": [3.8, 4.4],
+            "p10_p90_text": ["3.8 mg", "4.4 mg"], "count_step": None}
+    claim = {"annotation": {"id": "ann_1"}, "type": "direction", "scope": "part"}
+
+    def shape(at):
+        return {"class": "hinge", "points": {"at": at}, "points_text": {"at": f"{at} mg"}, "grid": [0.0, 10.0]}
+    near = shape(4.9)        # within 10% of the range of the spread: the same fold, read off the grid
+    reconcile_point(near, claim, None, [fold])
+    assert near["point_reconciled"] is True and near["point"]["text"] == "4.0 mg"
+    far = shape(7.5)         # this patient folds somewhere else
+    reconcile_point(far, claim, None, [fold])
+    assert far["point_reconciled"] is False and "outside" in far["point_reason"]
+    assert "point" not in far

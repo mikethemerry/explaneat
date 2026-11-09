@@ -265,7 +265,8 @@ forms in `explaneat/export/render_plain.py`. Writing protocol:
   median fold, `typical_hinge`, `spread_p10_p90`, `spread_text`, `wide` when the spread exceeds
   10% of the variable's range, `source_claim`) and `point_reconciled: true` with `point_reason`;
   otherwise `point_reconciled: false` with the reason (no fold, whole-model curve, no threshold
-  claim in that part). The lint rejects a sentence that quotes a second number for a reconciled
+  claim in that part, or the typical patient's own fold more than 10% of the range outside the
+  per-patient spread, i.e. a different fold for that patient). The lint rejects a sentence that quotes a second number for a reconciled
   fold, the mechanical "; by shape: ..." clause, and paragraphs over 6 sentences (part) or 8
   (whole model).
 - **Confidence words** (`CONFIDENCE_RULES`): "clearly" = risk change of at least 5 points for

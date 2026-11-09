@@ -488,6 +488,7 @@ def attach_shapes(m, parts, claims: List[Dict[str, Any]]) -> None:
 
 
 WIDE_SPREAD = 0.10   # a fold spread (10th-90th percentile) wider than this share of the range is "wide"
+OUTSIDE_TOL = 0.10   # the typical hinge may sit this share of the range (4 grid steps) outside the spread
 
 
 def reconcile_point(sh: Dict[str, Any], c: Dict[str, Any], v, folds: List[Dict[str, Any]]) -> None:
@@ -520,6 +521,15 @@ def reconcile_point(sh: Dict[str, Any], c: Dict[str, Any], v, folds: List[Dict[s
     f = same[0]
     span = (sh["grid"][-1] or 0) - (sh["grid"][0] or 0)
     lo, hi = (f.get("p10_p90") or [None, None])
+    # The typical patient's hinge is read off a 41-point grid (or one level of a count), so it may
+    # sit a grid step from the per-patient folds; beyond that it is a different fold for this patient.
+    tol = max(OUTSIDE_TOL * span, float(f.get("count_step") or 0), 0.0)
+    if lo is not None and (at < lo - tol or at > hi + tol):
+        sh["point_reconciled"] = False
+        sh["point_reason"] = (f"the typical patient's fold ({(sh.get('points_text') or {}).get('at')}) lies outside "
+                              f"the per-patient folds of threshold claim {f['claim']} "
+                              f"({' to '.join(f.get('p10_p90_text') or [])}): kept separate")
+        return
     wide = bool(lo is not None and span and (hi - lo) > WIDE_SPREAD * span)
     typical_text = (sh.get("points_text") or {}).get("at")
     sh["point"] = {"value": f["value"], "text": f["text"], "source_claim": f["claim"],
