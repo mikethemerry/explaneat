@@ -54,7 +54,7 @@ from .explanation_tools import StateEvaluator, as_unit, default_auc, input_colum
 from .plain_language_codebooks import (base_of, codebook_checks, codebook_gaps, find_codebook,
                                        generic_codebook, level_info)
 
-LAYER_SCHEMA_VERSION = "4.0.0"   # 3: shape of every numeric effect; 3.1: one point per fold; 4: blocks
+LAYER_SCHEMA_VERSION = "5.0.0"   # 3: shapes; 3.1: one point per fold; 4: blocks; 5: read-down
 CLAIM_TYPES = ("direction", "threshold", "interaction", "magnitude", "subgroup", "null", "rule")
 
 SEED = 42
@@ -437,7 +437,9 @@ class Part:
     duplicate_of: Optional[str] = None
     order: int = 0
     direct_variables: List[str] = field(default_factory=list)
+    direct_input_nodes: List[str] = field(default_factory=list)
     additive: Optional[bool] = None
+    closed_form: Optional[Dict[str, Any]] = None
 
 
 class PlainModel:
@@ -538,6 +540,11 @@ class PlainModel:
                 self.set_logit(X, var, v_from, scope, extra))
 
     # ------------------------------------------------------------------ structure
+    def _vals_train(self):
+        if getattr(self, "_vals_cache", None) is None:
+            self._vals_cache = self.ev.forward(self.X)
+        return self._vals_cache
+
     def reaching_output(self) -> set:
         """Nodes with a path to an output over enabled, non-zero-weight edges."""
         preds: Dict[str, List[str]] = {}
@@ -654,6 +661,7 @@ def _direct_inputs(m: PlainModel, parts: List[Part], vals) -> None:
                       if c.enabled and c.weight != 0 and str(c.to_node) in own
                       and str(c.from_node) in m.nodes and m.nodes[str(c.from_node)].type == NodeType.INPUT})
         p.direct_variables = m.vars_of_nodes(ins)
+        p.direct_input_nodes = ins
         if p.is_root:
             kid_exits = [x for k in p.children if k in by_name for x in by_name[k].exits]
             n = m.X.shape[0]
@@ -918,7 +926,7 @@ def _finish(c: Dict[str, Any], checks: Dict[str, Tuple[bool, str]]):
     c["verified"] = all(ok for ok, _ in checks.values())
     if c["verified"]:
         c["reasons"] = ["all checks passed"]
-    if c["type"] != "null":
+    if c["type"] not in ("null", "structure"):
         c["confidence"] = confidence(c)
     return c
 
@@ -1027,6 +1035,145 @@ def direction_claims(m: PlainModel, part: Part, scope) -> List[Dict[str, Any]]:
                                             "a category in the comparison has no training patients")
             out.append(_finish(c, checks))
     return out
+
+
+def direct_claims(m: PlainModel, root: Part, parts: List[Part]) -> List[Dict[str, Any]]:
+    """v5: for an input that feeds the model score directly *and* a part, its direct
+    contribution alone (the variable changed only on the inputs that feed the score directly),
+    so the additive paragraph does not count the part's share twice."""
+    import dataclasses
+    shared = [b for b in root.direct_variables
+              if any(b in q.variables for q in parts if not q.is_root and not q.duplicate_of)]
+    if not shared or not root.direct_input_nodes:
+        return []
+    scope = list(root.direct_input_nodes)
+    out = direction_claims(m, dataclasses.replace(root, variables=shared), scope)
+    for c in out:
+        c["scope"] = "direct"
+        c["key"] = c["key"].replace(":direction:", ":direct:", 1)
+        c["estimate"]["method"] = ("mean over training patients of the change in the model's log-odds when "
+                                   "the variable is changed only on the inputs that feed the model score "
+                                   "directly (not through any part)")
+        c["_ctx"]["scope"] = scope
+    return out
+
+
+def structure_claims(m: PlainModel, p: Part, parts: List[Part]) -> List[Dict[str, Any]]:
+    """v5: what a part is made of, read from the graph and checked on the data.
+
+    * ``composition``: the parts (and inputs) that feed this part's own nodes, how they combine
+      (``added``: its output is a weighted sum of them, checked by a least-squares fit on the
+      training patients; otherwise ``combined non-additively``) and which child feeds another;
+    * ``copy``: the part computes exactly what another part computes (same inputs, identical
+      outputs on every training and test patient);
+    * ``formula`` (leaves): the part's extracted formula reproduces its output on every training
+      patient.
+    """
+    by_name = {q.name: q for q in parts}
+    by_id = {q.id: q for q in parts}
+    vals = m._vals_train()
+    out = []
+    edges = {(str(c.from_node), str(c.to_node)) for c in m.structure.connections if c.enabled and c.weight != 0}
+
+    def own_nodes(q):
+        desc, stack = set(), list(q.children)
+        while stack:
+            r = by_name.get(stack.pop())
+            if r is None:
+                continue
+            desc |= {str(n) for n in r.unit.get("subgraph_nodes", [])} | set(r.exits)
+            stack += r.children
+        own = ({str(n) for n in q.unit.get("subgraph_nodes", [])} | set(q.exits)) - desc
+        return {n for n in own if n in m.nodes and m.nodes[n].type != NodeType.INPUT}
+
+    def subtree_nodes(q):
+        nodes = {str(n) for n in q.unit.get("subgraph_nodes", [])} | set(q.exits)
+        return {n for n in nodes if n in m.nodes and m.nodes[n].type != NodeType.INPUT}
+
+    if p.children:
+        kids = [by_name[k] for k in p.children if k in by_name]
+        own = own_nodes(p)
+        fed = [k for k in kids if any((x, n) in edges for x in k.exits for n in own)]
+        feeds = []
+        for a in kids:
+            for b in kids:
+                if a is not b and any((x, n) in edges for x in a.exits for n in subtree_nodes(b)):
+                    feeds.append([a.id, b.id])
+        if p.is_root:
+            additive = p.additive
+        else:
+            n = m.X.shape[0]
+            A = np.column_stack([np.ones(n)] + [vals[e] for e in p.direct_input_nodes]
+                                + [vals[x] for k in kids for x in k.exits])
+            additive = True
+            for x in p.exits:
+                coef, *_ = np.linalg.lstsq(A, vals[x], rcond=None)
+                if np.max(np.abs(vals[x] - A @ coef)) > 1e-6 * max(1.0, float(np.max(np.abs(vals[x])))):
+                    additive = False
+        how = "added" if additive else "combined non-additively"
+        c = _claim(p, "structure", "composition", variables=[],
+                   statement={"kind": "composition", "fed_by_parts": [k.id for k in kids],
+                              "fed_by_part_names": [k.name for k in kids],
+                              "direct_inputs": list(p.direct_variables), "combination": how,
+                              "feeds": feeds, "copies": [k.id for k in kids if k.duplicate_of]})
+        c["estimate"] = {"method": "graph: enabled non-zero connections from each child's outputs into "
+                                   "this part's own nodes; combination checked by a least-squares fit of "
+                                   "this part's output on its direct inputs and its children's outputs "
+                                   "(training patients)", "value": None}
+        c["n"] = int(m.X.shape[0])
+        out.append(_finish(c, {"children_feed_it": (len(fed) == len(kids),
+                                                     "a child part does not feed this part's own nodes")}))
+    if p.duplicate_of:
+        src = by_id.get(p.duplicate_of)
+        c = _claim(p, "structure", "copy", variables=[],
+                   statement={"kind": "copy", "copy_of": p.duplicate_of,
+                              "copy_of_name": src.name if src else None})
+        c["estimate"] = {"method": "same inputs; outputs identical (difference below 1e-12) on every "
+                                   "training and test patient", "value": 0.0}
+        c["n"] = int(m.X.shape[0])
+        out.append(_finish(c, {"identical_outputs": (src is not None, "the copied part is missing")}))
+    if not p.duplicate_of and not p.children:     # leaves: a composition is read through its parts
+        f = closed_form(m, p, parts)
+        if f is not None:
+            p.closed_form = f
+            err = f.get("numeric_max_abs_err")
+            scale = max(1.0, f.get("output_scale") or 1.0)
+            c = _claim(p, "structure", "formula", variables=[],
+                       statement={"kind": "formula", "max_abs_err": err, "n": f.get("n")})
+            c["estimate"] = {"method": "the part's extracted function (AnnotationFunction) evaluated on its "
+                                       "entries against its outputs in a full forward pass, training patients",
+                             "value": err}
+            c["n"] = f.get("n")
+            out.append(_finish(c, {"reproduces": (err is not None and err <= 1e-6 * scale,
+                                                  f"largest difference {err}")}))
+    return out
+
+
+def closed_form(m: PlainModel, p: Part, parts: List[Part]) -> Optional[Dict[str, Any]]:
+    """The part's closed form (LaTeX, weights at 3 significant figures) and how well its function
+    reproduces the part; None when it cannot be extracted."""
+    from ..export.collect import _latex_from_exprs, _with_timeout, sympy_srepr
+    from .annotation_function import AnnotationFunction
+    try:
+        fn = AnnotationFunction.from_structure(p.unit, m.structure)
+    except Exception:
+        return None
+    vals = m._vals_train()
+    try:
+        ent = np.column_stack([vals[str(e)] for e in fn.entry_nodes])
+        ex = np.column_stack([vals[str(x)] for x in fn.exit_nodes])
+        err = float(np.max(np.abs(np.asarray(fn(ent)).reshape(ex.shape) - ex)))
+    except Exception:
+        err = None
+        ex = None
+    latex, srepr = None, None
+    exprs, _ = _with_timeout(fn.to_sympy, force=True)
+    if exprs:
+        latex, _ = _with_timeout(_latex_from_exprs, exprs)
+        srepr = {k: sympy_srepr(v) for k, v in sorted(exprs.items())}
+    return {"latex": latex, "sympy_srepr": srepr, "numeric_max_abs_err": sig(err) if err is not None else None,
+            "n": int(m.X.shape[0]), "output_scale": sig(float(np.max(np.abs(ex)))) if ex is not None else None,
+            "rounding": "weights and biases at 3 significant figures"}
 
 
 def magnitude_claims(m: PlainModel, part: Part, directions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -1565,7 +1712,7 @@ def rule_claims(m: PlainModel, part: Part) -> List[Dict[str, Any]]:
 # ============================================================================ the layer
 
 TYPE_ORDER = {t: i for i, t in enumerate(("rule", "direction", "magnitude", "interaction", "threshold",
-                                          "subgroup", "null"))}
+                                          "subgroup", "null", "structure"))}
 
 
 def _claim_sort_key(c):
@@ -1610,7 +1757,7 @@ def extract_claims(m: PlainModel) -> Dict[str, Any]:
             if abs(d["estimate"]["value"]) > abs(total_effect.get(b, 0.0)):
                 total_effect[b] = d["estimate"]["value"]
         by_part[root.id] = (rule_claims(m, root) + dirs + magnitude_claims(m, root, dirs)
-                            + null_claims_model(m, root))
+                            + null_claims_model(m, root) + direct_claims(m, root, parts))
     for p in parts:
         if p.is_root:
             continue
@@ -1623,6 +1770,8 @@ def extract_claims(m: PlainModel) -> Dict[str, Any]:
         cl += subgroup_claims(m, p) + null_claim_part(m, p)
         by_part[p.id] = cl
     _dedupe_interactions(parts, by_part)
+    for p in parts:
+        by_part.setdefault(p.id, []).extend(structure_claims(m, p, parts))
     claims = []
     for p in parts:
         claims.extend(sorted(by_part.get(p.id, []), key=_claim_sort_key))
@@ -1642,6 +1791,7 @@ def part_record(m: PlainModel, p: Part) -> Dict[str, Any]:
             "variable_keys": list(p.variables), "upstream_nodes": len(p.upstream_nodes),
             "nonlinear": p.nonlinear, "gated": p.gated,
             "direct_variable_keys": list(p.direct_variables),
+            "closed_form": p.closed_form,
             **({"additive": p.additive} if p.is_root else {}),
             "contribution_sd": sig(float(np.std(p.contribution))) if p.contribution is not None else None,
             "original_hypothesis": p.ann.get("hypothesis")}

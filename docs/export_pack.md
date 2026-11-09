@@ -139,8 +139,9 @@ timeout).
 ## 2. Schema (v1)
 
 JSON Schema: `explaneat/export/schema/explanation-v1.schema.json` (draft 2020-12).
-`schema_version` is `1.3.0` (1.1 added the optional `plain_language` section, §6; 1.2 the
-layer-v2 claim type `rule`; 1.3 the `shape` of each claim; 1.0 documents still validate). Top level:
+`schema_version` is `1.4.0` (1.1 added the optional `plain_language` section, §6; 1.2 the
+layer-v2 claim type `rule`; 1.3 the `shape` of each claim; 1.4 the claim type `structure`; 1.0
+documents still validate). Top level:
 
 | Key | Contents |
 |---|---|
@@ -259,6 +260,14 @@ forms in `explaneat/export/render_plain.py`. Writing protocol:
   `mixed` (a majority shape whose exceptions are characterised by a category) or `fallback`
   ("in an uneven way"). Categoricals record each level relative to the reference. The lint
   requires the matching shape words in every numeric effect sentence.
+- **Read down** (layer v5, heart-paper): claim type `structure` (schema 1.4), checked on the
+  graph and the data: `composition` (the parts and inputs feeding a part's own nodes, and whether
+  it adds them up, by a least-squares fit), `copy` (identical outputs to another part) and
+  `formula` (the leaf's extracted function reproduces it on every training patient; the closed
+  form is in `parts[].closed_form`). Direction claims with `scope: "direct"` give an input's
+  direct contribution to the score when it also feeds a part. A v5 draft (`drafted.structure:
+  "readdown-v5"`) adds `readdown` (`hypothesis` and `evidence` per part from the root down);
+  the review prints it after the summary, with the technical record at the end.
 - **Blocks** (layer v4, Heart pilot): each part records `direct_variable_keys` (inputs that feed
   its own nodes rather than a child part) and the root records `additive` (the model score is a
   sum of its direct inputs and its children's outputs). A v4 draft (`drafted.structure:

@@ -44,7 +44,18 @@ def claim_brief(c: Dict[str, Any]) -> str:
         fr, to = ch.get("from") or {}, ch.get("to") or {}
         return f"{fr.get('text') or fr.get('label')} to {to.get('text') or to.get('label')}"
     if t == "direction":
-        return f"{name}: {change()} ({'whole model' if c['scope'] == 'model' else 'through this part'})"
+        where = {"model": "whole model", "direct": "direct contribution only, not through any part"}.get(
+            c["scope"], "through this part")
+        return f"{name}: {change()} ({where})"
+    if t == "structure":
+        if st.get("kind") == "copy":
+            return f"a copy of {st.get('copy_of_name') or st.get('copy_of')} (identical outputs)"
+        if st.get("kind") == "formula":
+            return f"its formula reproduces it on {st.get('n')} training patients (largest difference {st.get('max_abs_err')})"
+        return (f"made of {', '.join(st.get('fed_by_part_names') or [])}"
+                + (f" and inputs {', '.join(st.get('direct_inputs') or [])}" if st.get("direct_inputs") else "")
+                + f"; {st.get('combination')}"
+                + ("; " + "; ".join(f"{a} feeds {b}" for a, b in st.get("feeds") or []) if st.get("feeds") else ""))
     if t == "magnitude":
         return f"{name}: {change()}, typical patient"
     if t == "interaction":
@@ -505,6 +516,157 @@ def genome_block_v4(layer: Dict[str, Any]) -> List[str]:
     return L
 
 
+# ----------------------------------------------------------------------------- v5: read down
+def _block_paragraphs(sents) -> str:
+    """Block sentences; a sentence with a ``label`` starts its own paragraph with that lead-in."""
+    out = []
+    for s in sents or []:
+        if s.get("label"):
+            out.append(r"\par\noindent\textit{" + tex(s["label"]) + ".} ")
+        out.append(sentences_tex([s]))
+    return " ".join(out)
+
+
+def _lk(pid: str) -> str:
+    """A LaTeX label key for a part id (letters and digits only)."""
+    return "".join(ch for ch in str(pid) if ch.isalnum())
+
+
+def readdown_diagram(layer, pid) -> str:
+    """One level down from a part: its child parts as boxes (inputs feeding in); the root's own
+    inputs as one 'Added directly' box; a leaf's inputs straight into it."""
+    from .render_tikz import block_diagram
+    d = layer.get("drafted") or {}
+    titles = d.get("titles") or {}
+    lab = _var_labels(layer)
+    by_id = {p["id"]: p for p in layer["parts"]}
+    by_name = {p["name"]: p for p in layer["parts"]}
+    p = by_id[pid]
+    kids = sorted([by_name[k] for k in p.get("children") or [] if k in by_name], key=lambda q: q["order"])
+    direct = [lab.get(v, v) for v in (p.get("direct_variable_keys") or [])]
+    boxes = []
+    if p["role"] == "root" and direct:
+        boxes.append({"label": "Added directly", "listed": direct})
+        direct = []
+    for k in kids:
+        name = titles.get(k["id"]) or titles.get(k.get("duplicate_of") or "", k["name"])
+        if k["role"] == "duplicate":
+            name += " (second copy)"
+        boxes.append({"label": name, "inputs": [lab.get(v, v) for v in k.get("variable_keys") or []]})
+    out = (layer.get("outcome") or {}).get("predicted") or "predicted risk" if p["role"] == "root" \
+        else titles.get(pid, p["name"])
+    return block_diagram(boxes, out, direct=direct)
+
+
+def _technical(layer, pid, titles, claims_by) -> List[str]:
+    from .render_tex import math_block
+    p = {q["id"]: q for q in layer["parts"]}[pid]
+    L = [r"\subsection{" + tex(titles.get(pid, p["name"])) + r"}\label{tech:" + _lk(pid) + "}"]
+    L.append(r"\noindent{\footnotesize Annotation " + tex(pid) + " (" + tex(p["name"]) + "). Reads: "
+             + tex(", ".join(p.get("variables") or [])) + r".\par}")
+    L.append(r"\paragraph{Original hypothesis (unchanged).} " + tex(p.get("original_hypothesis") or "(none)"))
+    cf = p.get("closed_form") or {}
+    if cf.get("latex") or cf.get("sympy_srepr"):
+        L.append(r"\paragraph{Closed form} {\footnotesize(" + tex(cf.get("rounding") or "") + "; largest difference "
+                 "from the part on the training patients " + tex(str(cf.get("numeric_max_abs_err"))) + r").}")
+        L.append(math_block(cf.get("latex"), srepr=cf.get("sympy_srepr")))
+    elif p.get("children"):
+        L.append(r"\paragraph{Closed form.} Read through its parts (their formulas are in their own sections).")
+    L.append(r"\paragraph{Evidence table.}")
+    own = claims_by.get(pid, []) + [c for q in layer["parts"] if q.get("duplicate_of") and q.get("parent") == p["name"]
+                                    for c in claims_by.get(q["id"], [])]
+    L += claims_table(own, words=False)
+    rv = ((layer.get("drafted") or {}).get("hypothesis_revisions") or {}).get(pid)
+    if rv:
+        L.append(r"\paragraph{Proposed revision of the hypothesis (draft, not applied).} " + tex(rv["proposed"]))
+    return L
+
+
+def genome_block_v5(layer: Dict[str, Any]) -> List[str]:
+    from ..analysis.plain_language_store import ADDITIVE, readdown_order, summary_blocks
+    lab = layer["label"]
+    d = layer.get("drafted") or {}
+    titles = d.get("titles") or {}
+    cnt = layer.get("counts") or {}
+    by_id = {p["id"]: p for p in layer["parts"]}
+    by_name = {p["name"]: p for p in layer["parts"]}
+    L = [r"\section{" + tex(lab) + "}"]
+    L.append(r"\noindent{\small Genome \texttt{" + tex(layer.get("genome_id")) + r"}, explanation \texttt{"
+             + tex(layer.get("explanation_id")) + r"}. Split: train primary (n="
+             + tex(layer["split"].get("train_n")) + "), test as a check (n=" + tex(layer["split"].get("test_n"))
+             + "). Claims: " + tex(cnt.get("claims")) + ", verified " + tex(cnt.get("verified"))
+             + ", not supported " + tex(cnt.get("not_supported")) + r".\par}")
+    L.append(r"\noindent{\small\textcolor{BrickRed}{" + tex(_status(layer)) + r"}\par}\smallskip")
+    L.append(r"\noindent{\footnotesize " + tex(_ref_patient(layer)) + r"\par}")
+    L.append(r"\subsection{Summary}")
+    L.append(r"\noindent " + sentences_tex(d.get("lead")))
+    L += _diagram(summary_diagram(layer), "The model at the level of this summary: one box per paragraph below.")
+    blocks = {b["block"]: b for b in d.get("blocks") or []}
+    for b in summary_blocks(layer):
+        L.append(r"\paragraph{" + tex(titles.get(b["block"], b["block"])) + ".} "
+                 + _block_paragraphs((blocks.get(b["block"]) or {}).get("sentences")))
+    if d.get("worth_checking"):
+        L.append(r"\paragraph{Worth checking against what is known.} " + sentences_tex(d["worth_checking"]))
+    rd = d.get("readdown") or {}
+    order = readdown_order(layer)
+    L.append(r"\subsection{The model, read from the top down}")
+    L.append(r"\noindent{\small Each part of the explanation in turn, from the whole model down to the smallest "
+             r"parts: what it does for the prediction (hypothesis), what was checked (evidence), a diagram one "
+             r"level down, and where to read on. The technical record of each part is in "
+             r"``Technical detail'' at the end.\par}")
+    for pid in order:
+        p = by_id[pid]
+        parent = by_name.get(p.get("parent") or "")
+        L.append(r"\subsubsection{" + tex(titles.get(pid, p["name"])) + r"}\label{rd:" + _lk(pid) + "}")
+        if parent is not None:
+            L.append(r"\noindent{\footnotesize Part of: " + tex(titles.get(parent["id"], parent["name"]))
+                     + r" (\ref{rd:" + _lk(parent["id"]) + r"}).\par}")
+        L += _diagram(readdown_diagram(layer, pid), "One level down: what feeds this part.")
+        sec = rd.get(pid) or {}
+        L.append(r"\paragraph{Hypothesis.} " + sentences_tex(sec.get("hypothesis")))
+        L.append(r"\paragraph{Evidence.} " + sentences_tex(sec.get("evidence")))
+        kids = sorted([by_name[k] for k in p.get("children") or [] if k in by_name], key=lambda q: q["order"])
+        deeper = []
+        for k in kids:
+            if k["role"] == "duplicate":
+                src = by_id.get(k.get("duplicate_of") or "")
+                if src:
+                    deeper.append(tex(titles.get(src["id"], src["name"])) + r" (second copy; \ref{rd:" + _lk(src["id"]) + "})")
+            else:
+                deeper.append(tex(titles.get(k["id"], k["name"])) + r" (\ref{rd:" + _lk(k["id"]) + "})")
+        tail = r"Technical detail: \ref{tech:" + _lk(pid) + "}."
+        L.append(r"\par\smallskip\noindent{\small " + (r"\textbf{Dive deeper:} " + "; ".join(deeper) + ". "
+                                                       if deeper else "") + tail + r"\par}")
+    L.append(r"\subsection{Not supported by the model}")
+    L += _not_supported(layer)
+    claims_by: Dict[str, List[Dict[str, Any]]] = {}
+    for c in layer["claims"]:
+        claims_by.setdefault(c["annotation"]["id"], []).append(c)
+    L.append(r"\clearpage\section*{Technical detail: " + tex(lab) + "}")
+    L.append(r"\addcontentsline{toc}{section}{Technical detail: " + tex(lab) + "}")
+    L.append(r"\noindent{\small The record behind each part: the original hypothesis, the closed form, and every "
+             r"claim with its estimate (log-odds and odds ratio), range across patients, n and test check.\par}")
+    L.append(r"\renewcommand{\thesubsection}{T.\arabic{subsection}}\setcounter{subsection}{0}")
+    for pid in order:
+        L += _technical(layer, pid, titles, claims_by)
+    return L
+
+
+def is_v5(layer) -> bool:
+    return (layer.get("drafted") or {}).get("structure") == "readdown-v5"
+
+
+CHANGES_V5 = (
+    "v5 reads the explanation down. The summary (one line, a diagram, one paragraph per block) is as in v4, "
+    "except that the paragraph on what adds up is split into protective items, risk-raising items and rare "
+    "results, and an input that also feeds a part is quoted with its direct contribution only (the rest is "
+    "in that part's paragraph). Then the document walks the annotation hierarchy from the whole model down: "
+    "for each part a plain hypothesis (what it does for the prediction), plain evidence (what was checked "
+    "and what it showed; for a part made of others, what they are and how they combine), a diagram one "
+    "level down and where to read on. The original hypotheses, closed forms and evidence tables are in "
+    "'Technical detail' at the end. Statements about structure (what a part is made of, a copy of another "
+    "part, a formula that reproduces it) are now claims of their own, checked on the graph and the data.")
+
 CHANGES_V4 = (
     "v4 follows the structure of the explanation. The summary opens with one line and a diagram at the "
     "same grouping, then gives one paragraph per top-level block of the annotation hierarchy: one for "
@@ -570,6 +732,34 @@ HOW_TO_READ_V4 = (
 
 def render_review(layers: List[Dict[str, Any]], title: str) -> str:
     from .render_tex import DRAFTED_DEFS, PREAMBLE_PACKAGES
+    if layers and all(is_v5(x) for x in layers):
+        L = [r"% Plain-language review document (explaneat plain-language review), v5.",
+             r"\documentclass[a4paper,10pt]{article}",
+             r"\usepackage[margin=1.8cm]{geometry}",
+             PREAMBLE_PACKAGES.rstrip(),
+             r"\usepackage{array}",
+             r"\usepackage[unicode=true,hidelinks]{hyperref}",
+             r"\setcounter{tocdepth}{3}",
+             r"\setcounter{secnumdepth}{3}",
+             DRAFTED_DEFS.rstrip(),
+             r"\begin{document}",
+             r"\begin{center}{\Large\bfseries " + tex(title) + r"\par}\vspace{2mm}"
+             r"{\small AI-assisted drafts for review. Nothing here has been verified by a person.\par}\end{center}",
+             r"\noindent\textbf{How to read this.} Explanations are built up but read down: the summary first, then "
+             r"each part from the whole model down, in plain words, each sentence followed by the claims it rests on "
+             r"(C01, C02, \ldots; every cited claim was computed on the model and checked). Numbers are changes in "
+             r"predicted risk for a typical patient. The technical record (original hypotheses, formulas, evidence "
+             r"tables with the test check, ranges and n) is at the end. The text describes what the model does, not "
+             r"the world; whether it is plausible is for the reviewer to judge.",
+             r"\par\medskip\noindent\textbf{What changed in v5 (read down).} " + tex(CHANGES_V5),
+             r"\par\medskip\noindent\textbf{v4.} " + tex(CHANGES_V4),
+             r"\tableofcontents", r"\clearpage"]
+        for lay in layers:
+            L += [r"\begin{drafted}[plain-language layer: " + tex(lay["label"]) + "]"]
+            L += genome_block_v5(lay)
+            L += [r"\end{drafted}", r"\clearpage"]
+        L.append(r"\end{document}")
+        return printed("\n".join(L)) + "\n"
     if layers and all(is_v4(x) for x in layers):
         L = [r"% Plain-language review document (explaneat plain-language review), v4.",
              r"\documentclass[a4paper,10pt]{article}",

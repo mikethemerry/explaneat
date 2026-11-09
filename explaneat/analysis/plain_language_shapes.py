@@ -440,13 +440,13 @@ def attach_shapes(m, parts, claims: List[Dict[str, Any]]) -> None:
             continue
         v = m.var_by_base[ctx["var"]]
         part = part_by_id.get(c["annotation"]["id"])
-        scope = None if part is None or part.is_root else part.input_nodes
+        scope = ctx["scope"] if "scope" in ctx else (None if part is None or part.is_root else part.input_nodes)
         rows = ctx.get("rows")
         rows = np.ones(m.X.shape[0], dtype=bool) if rows is None else rows
         raw = ctx.get("typical") if ctx.get("typical") is not None else typical_raw(m)
         dvars = list(part.variables) if part is not None else []
         if v.is_category():
-            key = ("cat", v.base, c["annotation"]["id"], tuple(raw))
+            key = ("cat", v.base, c["annotation"]["id"], c.get("scope"), tuple(raw))
             if key not in cache:
                 cache[key] = categorical_shape(m, v, scope, raw)
             c["shape"] = cache[key]
@@ -465,7 +465,7 @@ def attach_shapes(m, parts, claims: List[Dict[str, Any]]) -> None:
                           "scale": main["scale"], "basis": "the stronger group's typical patient",
                           "groups": groups}
             continue
-        key = ("num", v.base, c["annotation"]["id"], tuple(raw), tuple(np.where(rows)[0][:5]), int(rows.sum()))
+        key = ("num", v.base, c["annotation"]["id"], c.get("scope"), tuple(raw), tuple(np.where(rows)[0][:5]), int(rows.sum()))
         if key not in cache:
             cache[key] = numeric_shape(m, v, scope, raw, rows, dvars)
         sh = dict(cache[key])

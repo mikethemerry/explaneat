@@ -14,6 +14,32 @@ narrowed vessels raises the predicted risk from about 10% to about 75%".
 The claims are computed and checked by code (`explaneat/analysis/plain_language.py`). Your job
 is the writing. You never add a fact that is not in a verified claim.
 
+## v5: built up, read down (heart-paper only for now; adds to v4 below)
+
+After the v4 summary the document walks the annotation hierarchy from the root down
+(`readdown_order(layer)`: root, then each child, depth first; copies are described by their
+parent). The v5 draft adds `readdown` and a title for every part including the root:
+```json
+"readdown": {"ann_39": {"hypothesis": [...], "evidence": [...]}, "ann_34": {...}}
+```
+- **Hypothesis** (1-3 sentences): what the part does for the prediction, in the v4 style (numbers,
+  shape words, no qualifiers, no maths, ids or "ReLU"). Start from the proposed revision.
+- **Evidence** (1-5 sentences): what was checked and what it showed, with numbers: who it acts on
+  (subgroup claims: "it acts on 118 of 242 patients"; "the risk is about 2% with it and about 3%
+  without it"), its effects, and "its formula reproduces the part exactly" (`structure` claim,
+  kind `formula`). A composition's evidence starts from what it is made of: cite its
+  `structure` claim (kind `composition`: `fed_by_parts`, `direct_inputs`, `combination` =
+  `added` or `combined non-additively`, `feeds`) and name any copy through the copy's own
+  `structure` claim (kind `copy`). Sections cite only their own and their descendants' claims
+  (the root may cite any).
+- **Additive paragraph:** protective items, risk-raising items and rare results, each a sentence
+  with a `label` ("Lowering the risk", "Raising the risk", "Rare results"; the review starts a
+  paragraph at each). An input that also feeds a part is quoted with its **direct** contribution
+  only (claims with `scope: "direct"`, "through this sum alone"), plus "also acts through …
+  (below)"; the lint refuses its whole-model claim there.
+- The review puts the original hypothesis, the closed form and the full evidence table in
+  "Technical detail" at the end; the plain text reads first.
+
 ## v4: structure follows the hierarchy (Heart pilot; overrides sections 4, 5 and 8 where they differ)
 
 A v4 draft (layer schema 4.0.0) has this shape; the lint switches to the v4 rules when `blocks`

@@ -31,15 +31,15 @@ def _claim(lay, pid, ctype, scope=None):
 
 def _draft(lay):
     root, part = _ids(lay)
-    d_root = _claim(lay, root["id"], "direction")
+    d_root = _claim(lay, root["id"], "direction", scope="direct")   # v5: the direct contribution
     d_part = _claim(lay, part["id"], "direction")
     sub = _claim(lay, part["id"], "subgroup")
     s = lambda t, *c: {"text": t, "claims": list(c)}
     return {
         "lead": [s("The model adds dose up directly and through one part that switches on above a level.", sub["id"])],
         "blocks": [
-            {"block": ADDITIVE, "sentences": [s("These add up independently: a higher dose raises the predicted "
-                                                "risk slowly at first, then faster.", d_root["id"])]},
+            {"block": ADDITIVE, "sentences": [s("These add up independently: through this sum alone a higher "
+                                                "dose raises the predicted risk steadily.", d_root["id"])]},
             {"block": part["id"], "sentences": [s("This part combines dose only: a higher dose adds nothing until "
                                                   "about 4.0 mg, then raises the predicted risk steadily.",
                                                   d_part["id"])]},

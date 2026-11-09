@@ -86,7 +86,7 @@ def save_layer(layer: Dict[str, Any], directory: Optional[Path] = None) -> Path:
 
 def draft_input(d: Dict[str, Any]) -> Dict[str, Any]:
     """A stored draft back in the input form that ``lint_draft`` / ``set_draft`` take."""
-    v4 = {k: d[k] for k in ("lead", "blocks", "titles") if k in d}
+    v4 = {k: d[k] for k in ("lead", "blocks", "titles", "readdown") if k in d}
     return {**v4, "summary": d.get("summary") or [], "annotations": d.get("annotations") or {},
             "worth_checking": d.get("worth_checking") or [],
             "hypothesis_revisions": {pid: {"proposed": h.get("proposed", ""), "claims": h.get("claims") or []}
@@ -334,6 +334,8 @@ def lint_draft(layer: Dict[str, Any], draft: Dict[str, Any]) -> List[str]:
     label used for the cross-genome table) and may not say "clearly" unless every cited claim is
     clear.
     """
+    if "readdown" in draft:
+        return lint_draft_v5(layer, draft)
     if "blocks" in draft:
         return lint_draft_v4(layer, draft)
     claims = {c["id"]: c for c in layer["claims"]}
@@ -460,11 +462,19 @@ def block_claims(layer, block) -> set:
     parts = set(block["parts"]) | {p["id"] for p in layer["parts"] if p.get("duplicate_of") in block["parts"]}
     keys = set(block["variables"])
     out = set()
+    # v5: an input that feeds the sum and a part has a direct-contribution claim; the additive
+    # paragraph quotes that one (not the whole-model effect, which includes the part's share)
+    has_direct = {c["statement"].get("variable") for c in layer["claims"] if c.get("scope") == "direct"}
+    additive = block["block"] == ADDITIVE
     for c in layer["claims"]:
         pid = c["annotation"]["id"]
         if pid == root:
-            # whole-model claims about the block's inputs; inputs the model ignores go with the sum
-            if _claim_vars(c) & keys or (c["type"] == "null" and block["block"] == ADDITIVE):
+            if c.get("scope") == "direct" or c["type"] in ("structure", "null"):
+                if additive:      # inputs the model ignores also go with the sum
+                    out.add(c["id"])
+            elif _claim_vars(c) & keys:
+                if additive and _claim_vars(c) <= has_direct:
+                    continue
                 out.add(c["id"])
         elif pid in parts:
             out.add(c["id"])
@@ -488,6 +498,101 @@ def lint_qualifiers(text: str, claims: List[Dict[str, Any]]) -> List[str]:
              and not (c.get("confidence") or {}).get("n_ok", True)]
     if small and EFFECT.search(text or "") and not LITTLE_DATA_N.search(text or ""):
         errs.append(f"{', '.join(small)}: small group: add '(the model has little data on this, n = ...)'")
+    return errs
+
+
+# ----------------------------------------------------------------------------- v5: read down
+# Explanations are built up but read down: after the v4 summary, the document walks the
+# annotation hierarchy from the root, and every part gets a plain hypothesis (what it does for
+# the prediction) and plain evidence (what was checked and what it showed). A composition's
+# evidence starts from what it is made of (its ``structure`` claim) and how the parts combine.
+HYPOTHESIS_MAX = 3
+EVIDENCE_MAX = 5
+
+
+def readdown_order(layer) -> List[str]:
+    """Part ids from the root down (depth first, children by size), copies left out."""
+    by_id, by_name = _part_index(layer)
+    out: List[str] = []
+
+    def walk(p):
+        if p["role"] == "duplicate":
+            return
+        out.append(p["id"])
+        for k in sorted([by_name[k] for k in p.get("children") or [] if k in by_name], key=lambda q: q["order"]):
+            walk(k)
+    walk(by_id[_root_id(layer)])
+    return out
+
+
+def section_claims(layer, pid) -> set:
+    """Claims a part's read-down section may cite: its own and its descendants' (copies
+    included); the root's section may cite any claim."""
+    if pid == _root_id(layer):
+        return {c["id"] for c in layer["claims"]}
+    by_id, _ = _part_index(layer)
+    ids = {pid} | set(descendants(layer, pid))
+    return {c["id"] for c in layer["claims"] if c["annotation"]["id"] in ids}
+
+
+def structure_claim(layer, pid, kind) -> Optional[Dict[str, Any]]:
+    return next((c for c in layer["claims"] if c["type"] == "structure" and c["annotation"]["id"] == pid
+                 and c["statement"].get("kind") == kind), None)
+
+
+def lint_draft_v5(layer: Dict[str, Any], draft: Dict[str, Any]) -> List[str]:
+    """v4 (lead, blocks, titles, no confidence words) plus ``readdown``: for every part from the
+    root down, ``hypothesis`` (1-3 sentences) and ``evidence`` (1-5 sentences), citing only that
+    part's (and its descendants') claims; a composition's evidence cites its ``structure``
+    claim, and a copy it contains is named through the copy's ``structure`` claim."""
+    claims = {c["id"]: c for c in layer["claims"]}
+    by_id, by_name = _part_index(layer)
+    errs = lint_draft_v4(layer, {k: v for k, v in draft.items() if k != "readdown"})
+    rd = draft.get("readdown") or {}
+    order = readdown_order(layer)
+    for pid in rd:
+        if pid not in order:
+            errs.append(f"readdown.{pid}: not a part to read down (unknown, or a copy described by its parent)")
+    for pid in order:
+        t = str((draft.get("titles") or {}).get(pid) or "").strip()
+        if not t or "_" in t or lint_text(t):
+            errs.append(f"titles: needs a plain name for {pid!r} (every part read down has a heading)")
+        sec = rd.get(pid)
+        if not sec:
+            errs.append(f"readdown: needs a section for {pid} ({by_id[pid]['name']})")
+            continue
+        ok = section_claims(layer, pid)
+        for field, cap in (("hypothesis", HYPOTHESIS_MAX), ("evidence", EVIDENCE_MAX)):
+            sents = sec.get(field) or []
+            if not 1 <= len(sents) <= cap:
+                errs.append(f"readdown.{pid}.{field}: {len(sents)} sentences (1-{cap})")
+            for j, s in enumerate(sents):
+                where = f"readdown.{pid}.{field}[{j}]"
+                text, cites = s.get("text", ""), s.get("claims") or []
+                if not cites:
+                    errs.append(f"{where}: cites no claim")
+                cited = []
+                for cid in cites:
+                    c = claims.get(cid)
+                    if c is None:
+                        errs.append(f"{where}: unknown claim {cid}")
+                    elif not c.get("verified"):
+                        errs.append(f"{where}: cites {cid}, which is not verified")
+                    elif cid not in ok:
+                        errs.append(f"{where}: cites {cid}, which belongs to another part")
+                    else:
+                        cited.append(c)
+                for p in lint_text(text) + lint_qualifiers(text, cited) + lint_points(text, cited) + lint_shape(text, cited):
+                    errs.append(f"{where}: {p}")
+        ev = {cid for s in (sec.get("evidence") or []) for cid in s.get("claims") or []}
+        comp = structure_claim(layer, pid, "composition")
+        if comp is not None and comp["id"] not in ev:
+            errs.append(f"readdown.{pid}.evidence: say what it is made of and how they combine (cite {comp['id']})")
+        for k in by_id[pid].get("children") or []:
+            q = by_name.get(k)
+            cp = structure_claim(layer, q["id"], "copy") if q else None
+            if cp is not None and cp["id"] not in ev:
+                errs.append(f"readdown.{pid}.evidence: name the copy {q['id']} through its structure claim ({cp['id']})")
     return errs
 
 
@@ -589,8 +694,9 @@ def set_draft(label: str, draft: Dict[str, Any], directory: Optional[Path] = Non
         "verified_by": None,
         "claims_hash": layer["claims_hash"],
         "stale": False,
-        **({"structure": "blocks-v4", "lead": draft["lead"], "blocks": draft["blocks"],
-            "titles": draft.get("titles") or {}} if "blocks" in draft else {}),
+        **({"structure": "readdown-v5" if "readdown" in draft else "blocks-v4", "lead": draft["lead"],
+            "blocks": draft["blocks"], "titles": draft.get("titles") or {}} if "blocks" in draft else {}),
+        **({"readdown": draft["readdown"]} if "readdown" in draft else {}),
         "summary": (summary_from_blocks(draft) if "blocks" in draft else draft["summary"]),
         "annotations": draft.get("annotations") or {},
         "worth_checking": draft.get("worth_checking") or [],
