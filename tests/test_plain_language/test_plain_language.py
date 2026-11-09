@@ -410,7 +410,7 @@ def test_export_section_validates_in_export_schema(layer, tmp_path):
     lay["label"] = "toy-s0"
     save_layer(lay, tmp_path)
     doc = toy_doc()
-    assert doc["schema_version"] == "1.3.0" and doc["plain_language"] is None
+    assert doc["schema_version"] == "1.4.0" and doc["plain_language"] is None
     doc["plain_language"] = export_section("toy-s0", tmp_path)
     validate(doc)
     tex = render_appendix(doc)
