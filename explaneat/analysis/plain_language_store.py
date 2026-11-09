@@ -86,7 +86,8 @@ def save_layer(layer: Dict[str, Any], directory: Optional[Path] = None) -> Path:
 
 def draft_input(d: Dict[str, Any]) -> Dict[str, Any]:
     """A stored draft back in the input form that ``lint_draft`` / ``set_draft`` take."""
-    return {"summary": d.get("summary") or [], "annotations": d.get("annotations") or {},
+    v4 = {k: d[k] for k in ("lead", "blocks", "titles") if k in d}
+    return {**v4, "summary": d.get("summary") or [], "annotations": d.get("annotations") or {},
             "worth_checking": d.get("worth_checking") or [],
             "hypothesis_revisions": {pid: {"proposed": h.get("proposed", ""), "claims": h.get("claims") or []}
                                      for pid, h in (d.get("hypothesis_revisions") or {}).items()}}
@@ -333,6 +334,8 @@ def lint_draft(layer: Dict[str, Any], draft: Dict[str, Any]) -> List[str]:
     label used for the cross-genome table) and may not say "clearly" unless every cited claim is
     clear.
     """
+    if "blocks" in draft:
+        return lint_draft_v4(layer, draft)
     claims = {c["id"]: c for c in layer["claims"]}
     parts = {p["id"] for p in layer["parts"]}
     errs: List[str] = []
@@ -380,6 +383,192 @@ def lint_draft(layer: Dict[str, Any], draft: Dict[str, Any]) -> List[str]:
     return errs
 
 
+# ----------------------------------------------------------------------------- v4: blocks
+# The v4 summary follows the annotation hierarchy: a lead line, then one paragraph per top-level
+# block (the root's children): one for everything that adds up independently (the inputs that feed
+# the model score directly and the parts that are a weighted sum), and one per part that combines
+# its inputs in a non-additive way. The detail sections follow the hierarchy below that.
+# The prose carries no confidence words: the numbers carry it; the test check, ranges and n stay
+# in the evidence table.
+LEAD_MAX = 2
+BLOCK_MAX = 4                # sentences in one summary block
+DETAIL_MAX = 6               # sentences in a detail section (part)
+ROOT_DETAIL_MAX = 8          # sentences in the detail section of the additive block
+QUALIFIERS = re.compile(r"\bclearly\b|\bslightly\b|\bconsistently\b|\btraining data only\b", re.I)
+LITTLE_DATA_N = re.compile(r"little data on this,?\s*\(?n\s*=\s*\d+", re.I)
+ADDITIVE = "additive"
+
+
+def _part_index(layer):
+    return {p["id"]: p for p in layer["parts"]}, {p["name"]: p for p in layer["parts"]}
+
+
+def _root_id(layer) -> str:
+    return next(p["id"] for p in layer["parts"] if p["role"] == "root")
+
+
+def descendants(layer, pid) -> List[str]:
+    by_id, by_name = _part_index(layer)
+    out, stack = [], list(by_id[pid].get("children") or [])
+    while stack:
+        q = by_name.get(stack.pop(0))
+        if q is None:
+            continue
+        out.append(q["id"])
+        stack += q.get("children") or []
+    return out
+
+
+def summary_blocks(layer) -> List[Dict[str, Any]]:
+    """The top-level blocks of the v4 summary, in order.
+
+    ``additive``: the root's direct inputs and the root's children that are a weighted sum of
+    their inputs (only when the root itself is a sum of those and its other children); then each
+    remaining (non-additive) child of the root, largest contribution first. Copies of another part
+    (``duplicate``) are described with the part they copy.
+    """
+    by_id, by_name = _part_index(layer)
+    root = by_id[_root_id(layer)]
+    kids = sorted([by_name[k] for k in root.get("children") or [] if k in by_name], key=lambda p: p["order"])
+    kids = [k for k in kids if k["role"] != "duplicate"]
+    lin = [k for k in kids if not k.get("nonlinear")] if root.get("additive") is not False else []
+    direct = root.get("direct_variable_keys")
+    if direct is None:
+        direct = root.get("variable_keys") or []
+    blocks = []
+    if direct or lin:
+        blocks.append({"block": ADDITIVE, "parts": [root["id"]] + [k["id"] for k in lin],
+                       "variables": list(dict.fromkeys(list(direct) + [v for k in lin for v in k["variable_keys"]])),
+                       "direct_variables": list(direct)})
+    for k in kids:
+        if k in lin:
+            continue
+        sub = [k["id"]] + descendants(layer, k["id"])
+        blocks.append({"block": k["id"], "parts": sub,
+                       "variables": list(dict.fromkeys(v for q in sub for v in by_id[q]["variable_keys"]))})
+    return blocks
+
+
+def _claim_vars(c) -> set:
+    return {v.get("base") for v in c.get("variables") or []}
+
+
+def block_claims(layer, block) -> set:
+    """Claims a block's paragraph may cite: its parts' claims (and their copies'), and the
+    whole-model claims about its variables."""
+    root = _root_id(layer)
+    parts = set(block["parts"]) | {p["id"] for p in layer["parts"] if p.get("duplicate_of") in block["parts"]}
+    keys = set(block["variables"])
+    out = set()
+    for c in layer["claims"]:
+        pid = c["annotation"]["id"]
+        if pid == root:
+            # whole-model claims about the block's inputs; inputs the model ignores go with the sum
+            if _claim_vars(c) & keys or (c["type"] == "null" and block["block"] == ADDITIVE):
+                out.add(c["id"])
+        elif pid in parts:
+            out.add(c["id"])
+    return out
+
+
+def summary_from_blocks(draft) -> List[Dict[str, Any]]:
+    """The flat summary (lead, then every block's sentences), for readers of the older schema."""
+    return list(draft.get("lead") or []) + [s for b in draft.get("blocks") or [] for s in b.get("sentences") or []]
+
+
+def lint_qualifiers(text: str, claims: List[Dict[str, Any]]) -> List[str]:
+    """v4: no confidence words in prose; a genuinely small group gets '(the model has little data
+    on this, n = ...)'."""
+    errs = []
+    m = QUALIFIERS.search(text or "")
+    if m:
+        errs.append(f"confidence word {m.group(0)!r} in prose (the numbers carry it; the test check, "
+                    f"ranges and n are in the evidence table)")
+    small = [c["id"] for c in claims if c.get("type") != "null"
+             and not (c.get("confidence") or {}).get("n_ok", True)]
+    if small and EFFECT.search(text or "") and not LITTLE_DATA_N.search(text or ""):
+        errs.append(f"{', '.join(small)}: small group: add '(the model has little data on this, n = ...)'")
+    return errs
+
+
+def lint_draft_v4(layer: Dict[str, Any], draft: Dict[str, Any]) -> List[str]:
+    """The v4 draft: ``lead`` (1-2 sentences), ``blocks`` (one paragraph per summary block, in
+    order, each citing only its block's claims), ``titles`` (a plain name per block and per part),
+    ``annotations`` (the detail sections), ``worth_checking``, ``hypothesis_revisions``."""
+    claims = {c["id"]: c for c in layer["claims"]}
+    by_id, _ = _part_index(layer)
+    errs: List[str] = []
+    lead = draft.get("lead") or []
+    if not 1 <= len(lead) <= LEAD_MAX:
+        errs.append(f"lead has {len(lead)} sentences (needs 1-{LEAD_MAX})")
+    want = summary_blocks(layer)
+    got = [b.get("block") for b in draft.get("blocks") or []]
+    if got != [b["block"] for b in want]:
+        errs.append(f"blocks must be {[b['block'] for b in want]} in this order (one paragraph per "
+                    f"top-level block of the hierarchy), got {got}")
+    allowed = {b["block"]: block_claims(layer, b) for b in want}
+    for i, b in enumerate(draft.get("blocks") or []):
+        sents = b.get("sentences") or []
+        if not 1 <= len(sents) <= BLOCK_MAX:
+            errs.append(f"blocks[{i}] ({b.get('block')}): {len(sents)} sentences (1-{BLOCK_MAX}; keep it "
+                        f"short, the detail goes in 'Parts in detail')")
+        ok = allowed.get(b.get("block"), set())
+        for j, s in enumerate(sents):
+            bad = [c for c in s.get("claims") or [] if c in claims and c not in ok]
+            if bad:
+                errs.append(f"blocks[{i}][{j}]: cites {', '.join(bad)}, which belong to another block")
+    titles = draft.get("titles") or {}
+    need = [b["block"] for b in want] + [p["id"] for p in layer["parts"] if p["role"] == "part"]
+    for k in need:
+        t = str(titles.get(k) or "").strip()
+        if not t:
+            errs.append(f"titles: needs a plain name for {k!r}")
+            continue
+        for p in lint_text(t):
+            errs.append(f"titles.{k}: {p}")
+        if "_" in t:
+            errs.append(f"titles.{k}: use a plain name, not an annotation name ({t!r})")
+    for pid in list((draft.get("annotations") or {})) + list((draft.get("hypothesis_revisions") or {})):
+        if pid not in by_id:
+            errs.append(f"unknown annotation id {pid!r}")
+    for pid, sents in (draft.get("annotations") or {}).items():
+        cap = ROOT_DETAIL_MAX if by_id.get(pid, {}).get("role") == "root" else DETAIL_MAX
+        if len(sents) > cap:
+            errs.append(f"annotations.{pid}: {len(sents)} sentences (at most {cap})")
+    for i, w in enumerate(draft.get("worth_checking") or []):
+        if not str(w.get("flag") or "").strip():
+            errs.append(f"worth_checking[{i}]: needs a 'flag' (short neutral label)")
+    items = [(f"lead[{i}]", s) for i, s in enumerate(lead)]
+    for i, b in enumerate(draft.get("blocks") or []):
+        items += [(f"blocks[{i}][{j}]", s) for j, s in enumerate(b.get("sentences") or [])]
+    items += list(_sentences({k: v for k, v in draft.items() if k != "summary"}))
+    for where, s in items:
+        text, cites = s.get("text", ""), s.get("claims") or []
+        if not text.strip():
+            errs.append(f"{where}: empty text")
+        if not cites:
+            errs.append(f"{where}: cites no claim")
+        cited = []
+        for cid in cites:
+            c = claims.get(cid)
+            if c is None:
+                errs.append(f"{where}: unknown claim {cid}")
+            elif not c.get("verified"):
+                errs.append(f"{where}: cites {cid}, which is not verified")
+            else:
+                cited.append(c)
+        prose = where.startswith(("lead", "blocks", "annotations"))
+        q = lint_qualifiers(text, cited)
+        if not prose:   # flagged items and revisions state their own counts ("from only 15 patients")
+            q = [x for x in q if "small group" not in x]
+        for p in lint_text(text) + q + lint_points(text, cited):
+            errs.append(f"{where}: {p}")
+        if prose:
+            for p in lint_shape(text, cited):
+                errs.append(f"{where}: {p}")
+    return errs
+
+
 def set_draft(label: str, draft: Dict[str, Any], directory: Optional[Path] = None,
               now: Optional[str] = None) -> Dict[str, Any]:
     layer = load_layer(label, directory)
@@ -400,7 +589,9 @@ def set_draft(label: str, draft: Dict[str, Any], directory: Optional[Path] = Non
         "verified_by": None,
         "claims_hash": layer["claims_hash"],
         "stale": False,
-        "summary": draft["summary"],
+        **({"structure": "blocks-v4", "lead": draft["lead"], "blocks": draft["blocks"],
+            "titles": draft.get("titles") or {}} if "blocks" in draft else {}),
+        "summary": (summary_from_blocks(draft) if "blocks" in draft else draft["summary"]),
         "annotations": draft.get("annotations") or {},
         "worth_checking": draft.get("worth_checking") or [],
         "hypothesis_revisions": revs,

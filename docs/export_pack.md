@@ -259,6 +259,17 @@ forms in `explaneat/export/render_plain.py`. Writing protocol:
   `mixed` (a majority shape whose exceptions are characterised by a category) or `fallback`
   ("in an uneven way"). Categoricals record each level relative to the reference. The lint
   requires the matching shape words in every numeric effect sentence.
+- **Blocks** (layer v4, Heart pilot): each part records `direct_variable_keys` (inputs that feed
+  its own nodes rather than a child part) and the root records `additive` (the model score is a
+  sum of its direct inputs and its children's outputs). A v4 draft (`drafted.structure:
+  "blocks-v4"`) has `lead`, `blocks` (one paragraph per top-level block of the hierarchy, from
+  `plain_language_store.summary_blocks`: first everything that adds up independently, then each
+  non-additive child of the root), `titles` (plain names) and detail `annotations`; `summary`
+  is kept as the flat list (lead, then every block) for older readers. The prose has no
+  confidence words ("clearly", "slightly", "consistently", "on the training data only" are
+  rejected); small groups carry "(the model has little data on this, n = ...)". The review
+  (`plain-language review`) prints a block diagram (`render_tikz.block_diagram`) after the lead
+  line and one level down for each part that contains others.
 - **One point per fold** (layer v3.1): threshold claims record the 10th-90th percentile of the
   per-patient folds (`p10_p90_across_patients`). When a part's hinge or step and its threshold
   claim on the same variable are the same fold, the shape gets `point` (`value`/`text` = the

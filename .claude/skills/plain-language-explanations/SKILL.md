@@ -3,7 +3,7 @@ name: plain-language-explanations
 description: Use when drafting plain-language explanations of an explained ExplaNEAT genome (summaries, per-annotation paragraphs, "worth checking" flags, proposed hypothesis revisions) from its verified claims in experiments/10seed/plain_language/<label>.json, so every sentence is plain, real-world, describes the shape of each effect, is led by the change in predicted risk for a typical patient, worded with evidence-based confidence, traceable to its claims and marked as a draft for Mike's review.
 ---
 
-# Plain-language explanations (layer v3.1)
+# Plain-language explanations (layer v4)
 
 You turn **verified claims** about an explained network into short, plain sentences that a
 clinician, a domain expert or a thesis examiner can check against what is known about the
@@ -13,6 +13,42 @@ narrowed vessels raises the predicted risk from about 10% to about 75%".
 
 The claims are computed and checked by code (`explaneat/analysis/plain_language.py`). Your job
 is the writing. You never add a fact that is not in a verified claim.
+
+## v4: structure follows the hierarchy (Heart pilot; overrides sections 4, 5 and 8 where they differ)
+
+A v4 draft (layer schema 4.0.0) has this shape; the lint switches to the v4 rules when `blocks`
+is present:
+```json
+{"lead": [{"text": "One line: the typical patient's risk and how the model is built.", "claims": ["C30"]}],
+ "blocks": [{"block": "additive", "sentences": [...]}, {"block": "ann_34", "sentences": [...]}],
+ "titles": {"additive": "Inputs that add up", "ann_34": "Low-risk profile", "ann_36": "..."},
+ "annotations": {"ann_39": [...], "ann_34": [...], "ann_36": [...]},
+ "worth_checking": [...], "hypothesis_revisions": {...}}
+```
+- **Blocks = the root's children.** `summary_blocks(layer)` (in `plain_language_store.py`) gives
+  the order: first `additive` (the inputs that feed the model score directly, `parts[root].
+  direct_variable_keys`, plus root children that are a weighted sum, `nonlinear: false`), then
+  one block per non-additive child of the root. One short paragraph per block (at most 4
+  sentences), citing only that block's claims (`block_claims`): the additive paragraph cites
+  whole-model claims; a composition's paragraph cites its own and its descendants' claims and
+  the whole-model claims about its inputs.
+  - **Additive paragraph:** "These add up independently: …", each item with what it is and its
+    risk numbers. Inputs that also enter a non-additive block: say so ("also act through the
+    parts below"), because their whole-model numbers include those parts.
+  - **Composition paragraph:** what it combines, how, and for whom ("acts on 165 of 242
+    patients, nearly all without chest pain on exercise"), then its main effects.
+- **Detail sections** (`annotations`): one per part, following the hierarchy (the review prints
+  them under "Parts in detail" with a sub-heading per part and a diagram one level down). The
+  root's paragraph is the additive block's detail (at most 8 sentences); other parts at most 6.
+- **Titles:** a plain name for the additive block and for every part (no underscores, no ids);
+  they label the diagrams and headings.
+- **No confidence words.** Never "clearly", "slightly", "consistently" or "on the training data
+  only" (the lint rejects them): the numbers carry it. Mike's style: "…it falls from about 29% to
+  about 3% without chest pain on exercise, but stays at about 32% to 33% with it." Shape words
+  stay (steadily, nothing until, in a jump, in an uneven way): they say how the change happens.
+- **Small groups only:** a claim with `confidence.n_ok: false` gets "(the model has little data
+  on this, n = 15)" in the same sentence. The test check, ranges and n otherwise stay in the
+  evidence table.
 
 ## 0. Workflow
 
