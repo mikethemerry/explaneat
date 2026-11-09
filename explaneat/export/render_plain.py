@@ -163,7 +163,14 @@ def shape_text(c: Dict[str, Any]) -> str:
         out += f" (but {SHAPE_WORDS.get(e['class'], e['class'])} for {' and '.join(e['who'])})"
     if sh.get("risk_saturation"):
         out += f"; risk saturates {sh['risk_saturation']}"
-    if sh.get("matched_fold"):
+    pt = sh.get("point") if sh.get("point_reconciled") else None
+    if pt:
+        sp = pt.get("spread_text") or []
+        out += (f"; one point with {pt.get('source_claim')} (median fold {pt['text']}"
+                + (f", typical patient {pt['typical_hinge']['text']}" if (pt.get("typical_hinge") or {}).get("text") else "")
+                + (f", 10th-90th percentile {sp[0]} to {sp[1]}" if len(sp) == 2 else "")
+                + (", wide" if pt.get("wide") else "") + ")")
+    elif sh.get("matched_fold"):
         out += f"; matches the fold at {sh['matched_fold']['text']}"
     return out
 
