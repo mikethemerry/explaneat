@@ -24,8 +24,10 @@ def _coverage(layer):
     assert meta["edges"] == edges                              # the overview draws every edge
     real = [d for d in meta["drawn"] if d[2] is not None]       # (the drawn sum's one edge aside)
     assert len(real) == len(g["edges"])
-    cols = {n.get("column") or n["id"] for n in g["nodes"] if n["kind"] == "input"}
-    assert len(meta["inputs"]) == len(cols)                   # each input drawn once (split copies merged)
+    from explaneat.export.render_structure import grouped_variables, input_key
+    groups = grouped_variables(layer)
+    keys = {input_key(n, groups) for n in g["nodes"] if n["kind"] == "input"}
+    assert meta["inputs"] == keys                             # each input (or input group) drawn once
     hidden = {n["id"] for n in g["nodes"] if n["kind"] != "input"}
     assert hidden <= meta["nodes"]                            # ... and every other node
     owned = []
@@ -49,6 +51,27 @@ def test_every_edge_drawn_once_heart_paper():
     if layer is None or "graph" not in layer:
         pytest.skip("heart-paper layer without a graph record")
     _coverage(layer)
+
+
+def test_grouped_inputs_cover_their_edges():
+    """churn100-s4: 'state' (51 one-hot levels) is one grouped input; each drawn grouped edge covers
+    the underlying edges from that variable's columns into one target, and every edge is still
+    drawn (overview) and owned by exactly one section."""
+    layer = load_layer("churn100-s4")
+    if layer is None or "graph" not in layer:
+        pytest.skip("churn100-s4 layer without a graph record")
+    from explaneat.export.render_structure import grouped_variables
+    groups = grouped_variables(layer)
+    assert {g["base"] for g in groups.values()} == {"state"}          # area code (3 levels) is not grouped
+    _coverage(layer)
+    tk, meta = overview(layer)
+    nodes = {n["id"]: n for n in layer["graph"]["nodes"]}
+    underlying = [e for e in layer["graph"]["edges"] if nodes[e["from"]].get("column") in groups]
+    grouped = [d for d in meta["merged"] if isinstance(d[2], list)]
+    assert sum(len(d[2]) for d in grouped) == len(underlying)        # grouped edges cover all of them
+    assert len({d[1] for d in grouped}) == len(grouped)              # one drawn edge per target
+    assert sum(1 for k in meta["inputs"] if k.startswith("grp::")) == 1
+    assert "state (" in tk and "of 51 used)" in tk
 
 
 def test_grouping_is_the_hierarchy(lay):
