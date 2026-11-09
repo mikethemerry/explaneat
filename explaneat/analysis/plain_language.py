@@ -1890,6 +1890,31 @@ def graph_record(m: PlainModel, parts: List[Part]) -> Dict[str, Any]:
     unused = [labels.get(m.feature_names[c]) or _column_label(m, c)
               for c in range(len(m.feature_names)) if c not in used_cols]
     exits = {p.id: list(p.exits) for p in parts}
+    # v5e plots: each hidden unit's activity on the training data (how often it is on, a
+    # histogram of its output, and its output against its main numeric input)
+    vals = m._vals_train()
+    rec_by = {r["id"]: r for r in nodes}
+    for n, rec in rec_by.items():
+        if rec["kind"] != "hidden" or n not in vals:
+            continue
+        a = np.asarray(vals[n], dtype=float)
+        on = a > 1e-12
+        hist, edges_h = np.histogram(a, bins=20)
+        act = {"n": int(len(a)), "active_n": int(on.sum()), "hist": [int(h) for h in hist],
+               "hist_edges": [sig(e) for e in edges_h]}
+        ins = [(abs(w), u) for u, v, w in edges if v == n and u in col_of]
+        num = []
+        for w, u in sorted(ins, reverse=True):
+            var = next((x for x in m.variables if col_of[u] in x.columns), None)
+            if var is not None and not var.is_category():
+                num.append((u, var))
+        if num:
+            u, var = num[0]
+            idx = np.linspace(0, len(a) - 1, min(300, len(a))).round().astype(int)
+            act["main_input"] = {"variable": var.base, "label": var.short or var.label, "unit": var.unit,
+                                 "x": [sig(x) for x in np.asarray(var.raw_train, dtype=float)[idx]],
+                                 "y": [sig(y) for y in a[idx]]}
+        rec["activity"] = act
     return {"nodes": nodes, "edges": [{"from": u, "to": v, "weight": sig(w)} for u, v, w in edges],
             "outputs": list(m.out_ids), "exits": exits, "not_used": unused,
             "depth": depth}

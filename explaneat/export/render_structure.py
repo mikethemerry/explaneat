@@ -35,7 +35,9 @@ Y0 = 1.9           # cm from the input row to the first layer of units
 GAP = 0.7          # cm between clusters
 CHAR = 0.15        # cm per character of a tiny bold title
 SUM = "__sum__"
-LEGEND = ("Edges: blue = positive weight (raises the score), red = negative weight (lowers it); "
+LEGEND = ("Inputs and part outputs: orange outline and up arrow = raises the final prediction, teal and down "
+          "arrow = lowers it, grey and double arrow = depends. "
+          "Edges: blue = positive weight (raises the score), red = negative weight (lowers it); "
           "thicker = larger weight. Grey: the drawn sum standing for the output unit's addition. A grouped "
           "input (a variable with many levels) has one edge per target, labelled with its number of edges and "
           "weight range; purple when the weights have both signs.")
@@ -145,6 +147,110 @@ def split_inputs(layer) -> List[Tuple[str, int]]:
     return [(lab[k], c) for k, c in sorted(count.items()) if c > 1]
 
 
+# ----------------------------------------------------------------------------- net direction
+NET_COLORS = {"up": "D95F02", "down": "1B9E77", "mixed": "7F7F7F"}     # orange, teal, grey
+NET_SYMBOL = {"up": r"$\uparrow$", "down": r"$\downarrow$", "mixed": r"$\updownarrow$"}
+NON_MONOTONE = {"peak", "dip", "multi_segment"}
+
+
+def _subtree_ids(layer, pid) -> set:
+    by_id, by_name = _parts(layer)
+    out, stack = {pid}, list(by_id[pid].get("children") or [])
+    while stack:
+        q = by_name.get(stack.pop())
+        if q is None:
+            continue
+        out.add(q["id"])
+        stack += q.get("children") or []
+    return out
+
+
+def _var_of_column(layer, col):
+    for v in (layer.get("units") or {}).get("variables") or []:
+        if col in (v.get("columns") or []):
+            return v
+    return None
+
+
+def _claim_dir(c) -> Optional[str]:
+    st = c.get("statement") or {}
+    sh = c.get("shape") or {}
+    if sh.get("class") in NON_MONOTONE or st.get("monotone") is False:
+        return "mixed"
+    return {"raises": "up", "lowers": "down"}.get(st.get("direction"))
+
+
+def input_direction(layer, where: Optional[str], node: Dict[str, Any]) -> Optional[str]:
+    """The net effect of an input on the final prediction, read from the verified direction
+    claims (never from multiplying edge signs, which is wrong through hinges): 'up', 'down',
+    'mixed' (non-monotone, or levels of a many-level variable that go both ways), or None.
+
+    ``where``: a part id (that part's and its descendants' claims), 'additive'/the root (direct
+    contributions, else whole-model claims), or None (whole-model claims)."""
+    col = node.get("column") or ""
+    v = _var_of_column(layer, col)
+    if v is None:
+        return None
+    if col in grouped_variables(layer):
+        return "mixed"
+    root = _root(layer)["id"]
+    claims = [c for c in layer["claims"] if c.get("verified") and c["type"] == "direction"
+              and (c.get("variables") or [{}])[0].get("base") == v["base"]]
+    if where in (None, "additive", root):
+        pick = [c for c in claims if c.get("scope") == "direct"] if where is not None else []
+        pick = pick or [c for c in claims if c.get("scope") == "model"]
+    else:
+        ids = _subtree_ids(layer, where)
+        pick = [c for c in claims if c["annotation"]["id"] in ids and c.get("scope") == "part"]
+        pick = pick or [c for c in claims if c.get("scope") == "model"]
+    if not pick:
+        return None
+    if v.get("kind") != "category":
+        return _claim_dir(pick[0])
+    code = col.split(":", 1)[1] if ":" in col else None
+    if code is None:                                   # a single 0/1 column: the claim is about it
+        return _claim_dir(pick[0])
+    for c in pick:
+        to = ((c.get("statement") or {}).get("change") or {}).get("to") or {}
+        if code in (to.get("codes") or [to.get("code")]):
+            return _claim_dir(c)
+    ref = ((v.get("reference") or {}).get("code"))
+    if code == ref:                                    # the reference column: the opposite of the others
+        ds = {_claim_dir(c) for c in pick}
+        if ds == {"up"}:
+            return "down"
+        if ds == {"down"}:
+            return "up"
+        return "mixed"
+    return None
+
+
+def part_direction(layer, pid) -> Optional[str]:
+    """The net effect of a part's output on the final prediction: the sign along every path from
+    its outputs to the model output (its units are never negative, so the sign is exact); 'mixed'
+    when paths disagree."""
+    g = layer["graph"]
+    outs = {n["id"] for n in g["nodes"] if n["kind"] == "output"}
+    succ: Dict[str, List[Tuple[str, float]]] = {}
+    for e in g["edges"]:
+        succ.setdefault(e["from"], []).append((e["to"], e["weight"]))
+    signs = set()
+
+    def walk(n, sgn, depth=0):
+        if n in outs:
+            signs.add(sgn)
+            return
+        if depth > 30:
+            return
+        for v, w in succ.get(n, []):
+            walk(v, sgn * (1 if w > 0 else -1), depth + 1)
+    for x in (g.get("exits") or {}).get(pid, []):
+        walk(x, 1)
+    if not signs:
+        return None
+    return "mixed" if len(signs) > 1 else ("up" if signs == {1} else "down")
+
+
 # ----------------------------------------------------------------------------- layout
 def _layers(nodes: List[str], edges: List[Tuple[str, str]], fixed0: set, top: set) -> Dict[str, int]:
     preds: Dict[str, List[str]] = {n: [] for n in nodes}
@@ -248,7 +354,7 @@ def _place(items, edges, clusters, subs, top, sweep: Optional[bool] = None) -> D
                 x0 += widths[i] + GAP * 1.4
             x_end = max(x0 - GAP * 1.4, start + total)
 
-    pos = {n: (round(i * DXI, 3), 0.0) for i, n in enumerate(row)}
+    pos = _input_row(row, users)
     place_clusters(pos)
     if sweep:
         for _ in range(3):
@@ -258,7 +364,7 @@ def _place(items, edges, clusters, subs, top, sweep: Optional[bool] = None) -> D
                     tx[u].append(pos[v][0])
             row = sorted(bottom, key=lambda n: ((sum(tx[n]) / len(tx[n])) if tx[n] else 1e9,
                                                 items[n].get("sort") or "", n))
-            pos = {n: (round(i * DXI, 3), 0.0) for i, n in enumerate(row)}
+            pos = _input_row(row, users)
             place_clusters(pos)
     xs = [p[0] for p in pos.values()] or [0.0]
     ytop = Y0 + (max((lay[n] for n in items if n not in top and n not in bottom), default=1)) * DY + 0.2
@@ -266,6 +372,33 @@ def _place(items, edges, clusters, subs, top, sweep: Optional[bool] = None) -> D
     mid = (min(xs) + max(xs)) / 2
     for i, n in enumerate(top):
         pos[n] = (round(mid + (i - (k - 1) / 2.0) * 3.0, 3), round(ytop, 3))
+    return pos
+
+
+ROW_WRAP = 6       # inputs per row under one cluster; more wrap into staggered rows below
+ROW_STEP = 1.05    # cm between wrapped input rows
+
+
+def _input_row(row: List[str], users: Dict[str, List[int]]) -> Dict[str, Tuple[float, float]]:
+    """Inputs in the given order; a run of more than ``ROW_WRAP`` inputs that feed the same
+    cluster(s) wraps into staggered rows, so a cluster with many inputs is not much wider than
+    its box."""
+    pos: Dict[str, Tuple[float, float]] = {}
+    groups: List[List[str]] = []
+    for n in row:
+        key = tuple(sorted(set(users.get(n) or [])))
+        if groups and tuple(sorted(set(users.get(groups[-1][0]) or []))) == key:
+            groups[-1].append(n)
+        else:
+            groups.append([n])
+    x = 0.0
+    for grp in groups:
+        cols = min(len(grp), ROW_WRAP)
+        nrows = -(-len(grp) // cols)
+        for i, n in enumerate(grp):
+            r, c = divmod(i, cols)
+            pos[n] = (round(x + (c + (0.5 if r % 2 else 0.0)) * DXI, 3), round(-r * ROW_STEP, 3))
+        x += (cols + (0.5 if nrows > 1 else 0.0)) * DXI
     return pos
 
 
@@ -317,7 +450,7 @@ def _edge(u, v, w) -> str:
         col = "wpos" if lo > 0 else ("wneg" if hi < 0 else "wmix")
         lab = f"{len(w)} edges, {lo:+.2f} to {hi:+.2f}" if len(w) > 1 else f"{lo:+.2f}"
         return (f"\\draw[->, {col}, line width={min(0.25 + 0.35 * max(abs(lo), abs(hi)), 1.4):.2f}pt] "
-                f"({_tname(u)}) -- node[pos=0.72, sloped, above, font=\\sffamily\\tiny, inner sep=1pt, fill=white, "
+                f"({_tname(u)}) -- node[pos=0.8, sloped, above, font=\\sffamily\\tiny, inner sep=1pt, fill=white, "
                 f"fill opacity=0.8, text opacity=1] {{{lab}}} ({_tname(v)});")
     if w is None:
         style = "wagg"
@@ -333,16 +466,23 @@ def _picture(items, pos, edges_w, clusters, subs, colors, hl, note: str = "") ->
         k = it["kind"]
         t = _tname(n)
         if k == "input":
-            L.append(f"\\node[inp] ({t}) at ({x},{y}) {{}};")
-            L.append(f"\\path ({t}.south) node[inlab, anchor=north] (lab{t}) {{{tex(it['label'])}}};")
+            style = "inp, densely dotted, thick" if it.get("copies", 1) > 1 else "inp"
+            nd = it.get("net")
+            if nd:
+                style += f", draw=net{nd}, very thick"
+            L.append(f"\\node[{style}] ({t}) at ({x},{y}) {{}};")
+            sym = (" " + NET_SYMBOL[nd]) if nd else ""
+            L.append(f"\\path ({t}.south) node[inlab, anchor=north] (lab{t}) {{{tex(it['label'])}{sym}}};")
         elif k == "output":
             L.append(f"\\node[outp] ({t}) at ({x},{y}) {{{tex(it['label'])}}};")
         elif k in ("stub_in", "stub_out"):
             L.append(f"\\node[stub] ({t}) at ({x},{y}) {{{tex(it['label'])}}};")
         elif k == "sum":
-            L.append(f"\\node[sumbox] ({t}) at ({x},{y}) {{{tex(it['label'])}}};")
+            sym = (" " + NET_SYMBOL[it["net"]]) if it.get("net") else ""
+            L.append(f"\\node[sumbox] ({t}) at ({x},{y}) {{{tex(it['label'])}{sym}}};")
         elif it.get("exit"):
-            L.append(f"\\node[exitbox] ({t}) at ({x},{y}) {{{tex(it.get('label') or hl.get(n, ''))}}};")
+            sym = (" " + NET_SYMBOL[it["net"]]) if it.get("net") else ""
+            L.append(f"\\node[exitbox] ({t}) at ({x},{y}) {{{tex(it.get('label') or hl.get(n, ''))}{sym}}};")
         else:
             L.append(f"\\node[hid] ({t}) at ({x},{y}) {{{hl.get(n, '')}}};")
     for si, (skey, stitle) in enumerate(subs):
@@ -380,7 +520,8 @@ def _picture(items, pos, edges_w, clusters, subs, colors, hl, note: str = "") ->
     if note:
         L.append("\\node[anchor=north west, font=\\sffamily\\scriptsize, inner sep=0pt, align=left] at "
                  "([yshift=-3mm]current bounding box.south west) {" + note + "};")
-    return ("\\resizebox{\\ifdim\\width>\\linewidth\\linewidth\\else\\width\\fi}{!}{%\n"
+    colors_def = "".join(f"\\definecolor{{net{k}}}{{HTML}}{{{v}}}" for k, v in NET_COLORS.items())
+    return ("\\resizebox{\\ifdim\\width>\\linewidth\\linewidth\\else\\width\\fi}{!}{%\n" + colors_def + "%\n"
             + "\n".join(HEAD + L) + "\n\\end{tikzpicture}}%\n")
 
 
@@ -475,6 +616,52 @@ def hidden_labels(layer) -> Dict[str, str]:
     return {n: f"h{i + 1}" for i, n in enumerate(hid)}
 
 
+def _mark_overview(layer, items, csums):
+    """Net direction on every input copy (from its cluster's claims) and on every cluster output."""
+    nodes = {n["id"]: n for n in layer["graph"]["nodes"]}
+    groups = grouped_variables(layer)
+    by_key = {}
+    for n in nodes.values():
+        if n["kind"] == "input":
+            by_key.setdefault(input_key(n, groups), n)
+    for k, it in items.items():
+        if it["kind"] == "input" and it.get("copy_of") in by_key:
+            it["net"] = input_direction(layer, it.get("cluster"), by_key[it["copy_of"]])
+        elif it.get("exit"):
+            reg = top_part(layer, nodes[k]["region"]) if k in nodes and nodes[k].get("region") else None
+            it["net"] = part_direction(layer, reg) if reg else None
+        elif k.startswith("csum::"):
+            it["net"] = part_direction(layer, k.split("::", 1)[1])
+
+
+def replicate_inputs(items, ew):
+    """v5e: one copy of an input under each cluster that uses it (same label; a copy of an input
+    used by several clusters has a dotted outline and the first copy says how many there are).
+    Each copy carries only the edges into its own cluster."""
+    inputs = {k: it for k, it in items.items() if it["kind"] == "input"}
+    for k in inputs:
+        items.pop(k)
+    uses: Dict[str, List[str]] = {}
+    out = []
+    for a, b, w in ew:
+        if a in inputs:
+            cl = items[b]["band"][0]
+            key = f"{a}@@{cl}"
+            if cl not in uses.setdefault(a, []):
+                uses[a].append(cl)
+                items[key] = dict(inputs[a], copy_of=a, cluster=cl)
+            a = key
+        out.append((a, b, w))
+    for a, cls in uses.items():
+        if len(cls) > 1:
+            for i, cl in enumerate(cls):
+                it = items[f"{a}@@{cl}"]
+                it["copies"] = len(cls)
+                if i == 0:
+                    it["label"] = f"{it['label']} (×{len(cls)})"
+    return out
+
+
 def overview(layer, note: bool = False) -> Tuple[str, Dict[str, Any]]:
     """(TikZ, meta). ``meta["edges"]``: every graph edge drawn (as ``drawn_edge`` maps it);
     ``meta["inputs"]``: the input circles (one per column)."""
@@ -495,6 +682,8 @@ def overview(layer, note: bool = False) -> Tuple[str, Dict[str, Any]]:
     else:
         items.pop(SUM)
     colors = {c: PALETTE[i % len(PALETTE)] for i, (c, _) in enumerate(clusters)}
+    ew = replicate_inputs(items, ew)
+    _mark_overview(layer, items, csums)
     drawn = list(ew)
     ew = _merge_groups(ew)
     pos = _place(items, [(u, v) for u, v, _ in ew], clusters, subs, [out])
@@ -507,7 +696,105 @@ def overview(layer, note: bool = False) -> Tuple[str, Dict[str, Any]]:
     return tk, {"edges": {(e["from"], e["to"]) for e in g["edges"]}, "drawn": drawn, "merged": ew,
                 "crossings": crossings(pos, [(u, v) for u, v, _ in ew]),
                 "inputs": {n for n, it in items.items() if it["kind"] == "input"},
+                "copies": {n: it.get("copy_of") for n, it in items.items() if it["kind"] == "input"},
+                "net": {n: it.get("net") for n, it in items.items() if it["kind"] == "input" or it.get("net")},
+                "clusters_of": {n: it.get("cluster") for n, it in items.items() if it["kind"] == "input"},
+                "band_of": {n: it["band"][0] for n, it in items.items()},
                 "nodes": set(items), "not_used": g.get("not_used") or []}
+
+
+# ----------------------------------------------------------------------------- raw network
+import re as _re
+
+_SPLIT = _re.compile(r"^(-?\d+)_[a-z]+$")
+
+
+def raw_network(layer) -> Dict[str, Any]:
+    """The network as trained, before any explanation: split copies merged back into one node
+    (their duplicated incoming edges counted once), inserted identity nodes contracted (an edge
+    through one becomes the product of its two weights). Returns nodes, edges and, for each
+    explained-state edge, the raw edge it belongs to."""
+    g = layer["graph"]
+    nodes = {n["id"]: n for n in g["nodes"]}
+
+    def base(n):
+        m = _SPLIT.match(n)
+        return m.group(1) if m else n
+    ident = {n for n in nodes if n.startswith("identity_")}
+    raw_edges: Dict[Tuple[str, str], float] = {}
+    belongs: Dict[Tuple[str, str], Tuple[str, str]] = {}
+    ins = {i: [e for e in g["edges"] if e["to"] == i] for i in ident}
+    for e in g["edges"]:
+        if e["to"] in ident:
+            continue
+        if e["from"] in ident:
+            for e0 in ins[e["from"]]:
+                k = (base(e0["from"]), base(e["to"]))
+                raw_edges[k] = raw_edges.get(k, 0.0) + e0["weight"] * e["weight"]
+                belongs[(e0["from"], e0["to"])] = k
+                belongs[(e["from"], e["to"])] = k
+            continue
+        k = (base(e["from"]), base(e["to"]))
+        if k in raw_edges and (e["from"], e["to"]) not in belongs:
+            # a split copy repeats its node's incoming edge: count it once
+            if not (base(e["from"]) == e["from"] and base(e["to"]) != e["to"]):
+                raw_edges[k] = raw_edges[k] if abs(raw_edges[k] - e["weight"]) < 1e-9 else raw_edges[k] + e["weight"]
+        else:
+            raw_edges.setdefault(k, e["weight"])
+        belongs[(e["from"], e["to"])] = k
+    rnodes: Dict[str, Dict[str, Any]] = {}
+    for n, nd in nodes.items():
+        if n in ident:
+            continue
+        b = base(n)
+        rnodes.setdefault(b, {"id": b, "kind": nd["kind"], "label": nd.get("label"), "column": nd.get("column"),
+                              "members": []})["members"].append(n)
+    return {"nodes": rnodes, "edges": raw_edges, "belongs": belongs}
+
+
+RAW_ROW_WRAP = 14   # inputs per staggered row in the raw network
+
+
+def raw_picture(layer, note: bool = False) -> Tuple[str, Dict[str, Any]]:
+    """The raw network in its full complexity: every connected input column as its own node (no
+    grouping of one-hot levels), hidden units by depth, the output at the top, every enabled edge
+    with the same legend; no parts, no shading, no splits. Unused columns are left out (listed)."""
+    global ROW_WRAP
+    raw = raw_network(layer)
+    hl = hidden_labels(layer)
+    items: Dict[str, Dict[str, Any]] = {}
+    key_of = {}
+    for b, nd in raw["nodes"].items():
+        if nd["kind"] == "input":
+            k = input_key({"id": b, "column": nd.get("column")})
+            key_of[b] = k
+            items.setdefault(k, {"kind": "input", "band": ("inputs", None), "label": nd.get("label") or "",
+                                 "sort": nd.get("label") or k, "column": nd.get("column")})
+        elif nd["kind"] == "output":
+            key_of[b] = b
+            items[b] = {"kind": "output", "band": ("top", None),
+                        "label": (layer.get("outcome") or {}).get("short") or "output"}
+        else:
+            key_of[b] = b
+            items[b] = {"kind": "hidden", "band": ("raw", None), "sort": b, "label": None}
+    lab = {b: hl.get(nd["members"][0], "") for b, nd in raw["nodes"].items() if nd["kind"] == "hidden"}
+    ew = [(key_of[u], key_of[v], w) for (u, v), w in sorted(raw["edges"].items())]
+    out = [n for n, it in items.items() if it["kind"] == "output"]
+    old, ROW_WRAP = ROW_WRAP, RAW_ROW_WRAP
+    try:
+        pos = _place(items, [(u, v) for u, v, _ in ew], [("raw", "")], [], out)
+    finally:
+        ROW_WRAP = old
+    text = ""
+    if note:
+        text = tex(LEGEND.split(" Grey:")[0].split("Edges: ")[-1])
+        if layer["graph"].get("not_used"):
+            text += r"\\" + tex("Not used by the model (input columns with no connection): "
+                                 + ", ".join(layer["graph"]["not_used"]) + ".")
+    tk = _picture(items, pos, ew, [], [], {"raw": PALETTE[0]}, lab, text)
+    return tk, {"edges": set(raw["edges"]), "drawn": ew, "belongs": raw["belongs"],
+                "inputs": {k: it.get("column") for k, it in items.items() if it["kind"] == "input"},
+                "crossings": crossings(pos, [(u, v) for u, v, _ in ew])}
 
 
 # ----------------------------------------------------------------------------- sections
@@ -592,10 +879,19 @@ def section(layer, pid) -> Tuple[str, Dict[str, Any]]:
         tp = top_part(layer, pid)
         ids = [k["id"] for k in kids]
         colors[pid] = PALETTE[(1 + ids.index(tp)) % len(PALETTE)] if tp in ids else PALETTE[0]
+    for k, it in items.items():
+        if it["kind"] == "input":
+            src = next((nodes[e["from"]] for e in owned if nodes[e["from"]]["kind"] == "input"
+                        and drawn_edge(layer, e)[0] == k), None)
+            if src is not None:
+                it["net"] = input_direction(layer, pid, src)
+        elif it.get("exit"):
+            it["net"] = part_direction(layer, pid)
     ew = _merge_groups(ew)
     pos = _place(items, [(u, v) for u, v, _ in ew], clusters, subs, tops)
     tk = _picture(items, pos, ew, clusters, subs, colors, hl)
     return tk, {"edges": {(e["from"], e["to"]) for e in owned},
+                "net": {k: it.get("net") for k, it in items.items() if it["kind"] == "input"},
                 "crossings": crossings(pos, [(u, v) for u, v, _ in ew]),
                 "stubs_out": {(e["from"], e["to"]) for e in out_edges}, "nodes": set(items)}
 

@@ -354,6 +354,11 @@ def numeric_shape(m, v, scope, typical_raw_row: np.ndarray, rows_mask: np.ndarra
            "grid": [sig(g) for g in grid], "grid_basis": ("every common observed level" if ordinal else
                                                           "41 points from the 1st to the 99th percentile"),
            "typical_curve": [sig(l) for l in Lt], "typical_risk": [sig(r) for r in risk],
+           # v5e plots: the 10th-90th percentile of the sampled patients' risk curves, and the
+           # observed values (101 quantiles of the training data) for a rug
+           "band_risk_p10": [sig(x) for x in np.percentile(m.risk(C), 10, axis=0)] if len(C) else None,
+           "band_risk_p90": [sig(x) for x in np.percentile(m.risk(C), 90, axis=0)] if len(C) else None,
+           "rug": [sig(x) for x in np.quantile(np.asarray(v.raw_train, dtype=float), np.linspace(0, 1, 101))],
            "points": {k: sig(val) for k, val in typ.get("points", {}).items()},
            "points_text": _points_text(v, typ, ordinal),
            "typical_patient_unaffected": rebased,
