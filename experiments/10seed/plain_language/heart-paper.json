@@ -292,7 +292,7 @@
     "status": "mixed",
     "structure_folds": [
      {
-      "claim": "C39",
+      "claim": "C45",
       "count_step": 1,
       "kind": "below",
       "p10_p90": [
@@ -390,6 +390,211 @@
    },
    "checks": {
     "consistent_across_patients": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.680555,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only on the inputs that feed the model score directly (not through any part)",
+    "odds_ratio": 94.5067,
+    "odds_ratio_range": [
+     94.5066,
+     94.5066
+    ],
+    "range_across_patients": [
+     4.54867,
+     4.54867
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 4.54867
+   },
+   "evidence": {
+    "average_curve": {
+     "mean_log_odds": [
+      -1.34087,
+      0.933468,
+      3.2078
+     ],
+     "rows": 242,
+     "values": [
+      0.0,
+      1.0,
+      2.0
+     ]
+    },
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [],
+   "id": "C03",
+   "key": "ann_39:direct:ca",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.680555,
+    "from": 0.294752,
+    "reference": "typical patient",
+    "to": 0.975308
+   },
+   "scope": "direct",
+   "shape": {
+    "class": "steady",
+    "classes_across_patients": {
+     "steady": 242
+    },
+    "consistent": true,
+    "consistent_share": 0.9,
+    "exceptions": [],
+    "grid": [
+     0.0,
+     1.0,
+     2.0,
+     3.0
+    ],
+    "grid_basis": "every common observed level",
+    "hinge_kind": null,
+    "increments": [
+     2.27434,
+     2.27434,
+     2.27434
+    ],
+    "ordinal": true,
+    "ordinal_pattern": "equal_steps",
+    "patients_sampled": 242,
+    "pieces": [
+     {
+      "flat": false,
+      "from": 0.0,
+      "slope": 2.27434,
+      "to": 3.0
+     }
+    ],
+    "point_reason": "no fold in this shape (steady)",
+    "point_reconciled": false,
+    "points": {},
+    "points_text": {},
+    "risk_saturation": "near 100%",
+    "scale": "model score (log-odds)",
+    "sensitivity": {
+     "x0.75": "steady",
+     "x1.25": "steady"
+    },
+    "share_basis": "among sampled patients whose curve moves",
+    "share_same_shape": 1.0,
+    "share_unaffected": 0.0,
+    "stable": true,
+    "status": "verified",
+    "structure_folds": [
+     {
+      "claim": "C45",
+      "count_step": 1,
+      "kind": "below",
+      "p10_p90": [
+       0.116994,
+       1.166
+      ],
+      "p10_p90_text": [
+       "0 vessels",
+       "1 vessels"
+      ],
+      "part": "ann_38",
+      "text": "1 vessels",
+      "value": 0.389809
+     }
+    ],
+    "tolerances": {
+     "equal_steps": 0.25,
+     "first_step": 0.6,
+     "flat_abs": 0.05,
+     "flat_slope": 0.05,
+     "kink": 0.15,
+     "min_piece": 0.05,
+     "reversal": 0.1,
+     "step_share": 0.7,
+     "step_width": 0.1,
+     "straight": 0.05
+    },
+    "typical_curve": [
+     -0.872413,
+     1.40192,
+     3.67626,
+     5.95059
+    ],
+    "typical_patient_unaffected": false,
+    "typical_risk": [
+     0.294752,
+     0.802489,
+     0.975308,
+     0.997402
+    ],
+    "verified": true
+   },
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "basis": "10th and 90th percentile of the training patients",
+     "from": {
+      "text": "0 vessels",
+      "value": 0.0
+     },
+     "to": {
+      "text": "2 vessels",
+      "value": 2.0
+     }
+    },
+    "direction": "raises",
+    "monotone": true,
+    "strength": "strong",
+    "variable": "ca"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0346533,
+     0.109918
+    ],
+    "benefit_mean": 0.03125,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 4.54867,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.0319142
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "ca",
+     "decoded": true,
+     "kind": "count",
+     "label": "number of major vessels coloured by fluoroscopy",
+     "short": "number of vessels coloured by fluoroscopy",
+     "unit": "vessels"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_39",
+    "name": "heart_disease_risk_score"
+   },
+   "checks": {
+    "consistent_across_patients": true,
     "level_observed": true,
     "non_zero": true
    },
@@ -432,7 +637,7 @@
      "n": 110
     }
    ],
-   "id": "C03",
+   "id": "C04",
    "key": "ann_39:direction:slope:2",
    "n": 242,
    "reasons": [
@@ -591,7 +796,7 @@
      "n": 2
     }
    ],
-   "id": "C04",
+   "id": "C05",
    "key": "ann_39:direction:restecg:1",
    "n": 242,
    "reasons": [
@@ -779,7 +984,7 @@
     "share_unaffected": 0.0
    },
    "groups": [],
-   "id": "C05",
+   "id": "C06",
    "key": "ann_39:direction:chol",
    "n": 242,
    "reasons": [
@@ -884,7 +1089,7 @@
     "status": "fallback",
     "structure_folds": [
      {
-      "claim": "C38",
+      "claim": "C44",
       "count_step": null,
       "kind": "below",
       "p10_p90": [
@@ -900,7 +1105,7 @@
       "value": 257.702
      },
      {
-      "claim": "C44",
+      "claim": "C52",
       "count_step": null,
       "kind": "above",
       "p10_p90": [
@@ -1075,6 +1280,366 @@
     "non_zero": true
    },
    "confidence": {
+    "delta_risk": 0.342702,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only on the inputs that feed the model score directly (not through any part)",
+    "odds_ratio": 5.02092,
+    "odds_ratio_range": [
+     5.0209,
+     5.0209
+    ],
+    "range_across_patients": [
+     1.61361,
+     1.61361
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 1.61361
+   },
+   "evidence": {
+    "average_curve": {
+     "mean_log_odds": [
+      -0.828046,
+      -0.603543,
+      -0.519355,
+      -0.449198,
+      -0.336946,
+      -0.252758,
+      -0.154538,
+      -0.098412,
+      -0.0282549,
+      0.0559337,
+      0.154154,
+      0.252374,
+      0.350594,
+      0.434782,
+      0.504939,
+      0.659285,
+      0.827662,
+      1.01007,
+      1.26264
+     ],
+     "rows": 242,
+     "values": [
+      177.0,
+      193.0,
+      199.0,
+      204.0,
+      212.0,
+      218.0,
+      225.0,
+      229.0,
+      234.0,
+      240.0,
+      247.0,
+      254.0,
+      261.0,
+      267.0,
+      272.0,
+      283.0,
+      295.0,
+      308.0,
+      326.0
+     ]
+    },
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [],
+   "id": "C07",
+   "key": "ann_39:direct:chol",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.342702,
+    "from": 0.177717,
+    "reference": "typical patient",
+    "to": 0.52042
+   },
+   "scope": "direct",
+   "shape": {
+    "class": "steady",
+    "classes_across_patients": {
+     "steady": 242
+    },
+    "consistent": true,
+    "consistent_share": 0.9,
+    "exceptions": [],
+    "grid": [
+     152.28,
+     158.515,
+     164.75,
+     170.984,
+     177.219,
+     183.454,
+     189.689,
+     195.923,
+     202.158,
+     208.393,
+     214.628,
+     220.862,
+     227.097,
+     233.332,
+     239.567,
+     245.801,
+     252.036,
+     258.271,
+     264.506,
+     270.74,
+     276.975,
+     283.21,
+     289.445,
+     295.679,
+     301.914,
+     308.149,
+     314.384,
+     320.618,
+     326.853,
+     333.088,
+     339.323,
+     345.557,
+     351.792,
+     358.027,
+     364.262,
+     370.496,
+     376.731,
+     382.966,
+     389.201,
+     395.435,
+     401.67
+    ],
+    "grid_basis": "41 points from the 1st to the 99th percentile",
+    "hinge_kind": null,
+    "increments": null,
+    "ordinal": false,
+    "ordinal_pattern": null,
+    "patients_sampled": 242,
+    "pieces": [
+     {
+      "flat": false,
+      "from": 152.28,
+      "slope": 0.0140314,
+      "to": 401.67
+     }
+    ],
+    "point_reason": "no fold in this shape (steady)",
+    "point_reconciled": false,
+    "points": {},
+    "points_text": {},
+    "risk_saturation": null,
+    "scale": "model score (log-odds)",
+    "sensitivity": {
+     "x0.75": "steady",
+     "x1.25": "steady"
+    },
+    "share_basis": "among sampled patients whose curve moves",
+    "share_same_shape": 1.0,
+    "share_unaffected": 0.0,
+    "stable": true,
+    "status": "verified",
+    "structure_folds": [
+     {
+      "claim": "C44",
+      "count_step": null,
+      "kind": "below",
+      "p10_p90": [
+       146.693,
+       325.096
+      ],
+      "p10_p90_text": [
+       "147 mg/dL (3.8 mmol/L)",
+       "325 mg/dL (8.4 mmol/L)"
+      ],
+      "part": "ann_38",
+      "text": "258 mg/dL (6.7 mmol/L)",
+      "value": 257.702
+     },
+     {
+      "claim": "C52",
+      "count_step": null,
+      "kind": "above",
+      "p10_p90": [
+       285.176,
+       285.176
+      ],
+      "p10_p90_text": [
+       "285 mg/dL (7.4 mmol/L)",
+       "285 mg/dL (7.4 mmol/L)"
+      ],
+      "part": "ann_36",
+      "text": "285 mg/dL (7.4 mmol/L)",
+      "value": 285.176
+     }
+    ],
+    "tolerances": {
+     "equal_steps": 0.25,
+     "first_step": 0.6,
+     "flat_abs": 0.05,
+     "flat_slope": 0.05,
+     "kink": 0.15,
+     "min_piece": 0.05,
+     "reversal": 0.1,
+     "step_share": 0.7,
+     "step_width": 0.1,
+     "straight": 0.05
+    },
+    "typical_curve": [
+     -2.10325,
+     -2.01577,
+     -1.92828,
+     -1.8408,
+     -1.75332,
+     -1.66584,
+     -1.57836,
+     -1.49087,
+     -1.40339,
+     -1.31591,
+     -1.22843,
+     -1.14094,
+     -1.05346,
+     -0.965978,
+     -0.878496,
+     -0.791013,
+     -0.703531,
+     -0.616049,
+     -0.528566,
+     -0.441084,
+     -0.353601,
+     -0.266119,
+     -0.178636,
+     -0.091154,
+     -0.00367156,
+     0.0838109,
+     0.171293,
+     0.258776,
+     0.346258,
+     0.433741,
+     0.521223,
+     0.608705,
+     0.696188,
+     0.78367,
+     0.871153,
+     0.958635,
+     1.04612,
+     1.1336,
+     1.22108,
+     1.30856,
+     1.39605
+    ],
+    "typical_patient_unaffected": false,
+    "typical_risk": [
+     0.108781,
+     0.117557,
+     0.126941,
+     0.136956,
+     0.147629,
+     0.15898,
+     0.171029,
+     0.183791,
+     0.197279,
+     0.2115,
+     0.226457,
+     0.242147,
+     0.258561,
+     0.275683,
+     0.29349,
+     0.311951,
+     0.33103,
+     0.350681,
+     0.370851,
+     0.391483,
+     0.412509,
+     0.43386,
+     0.455459,
+     0.477227,
+     0.499082,
+     0.52094,
+     0.542719,
+     0.564335,
+     0.58571,
+     0.606767,
+     0.627434,
+     0.647645,
+     0.667342,
+     0.686471,
+     0.704985,
+     0.722848,
+     0.740029,
+     0.756503,
+     0.772254,
+     0.787273,
+     0.801556
+    ],
+    "verified": true
+   },
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "basis": "10th and 90th percentile of the training patients",
+     "from": {
+      "text": "193 mg/dL (5.0 mmol/L)",
+      "value": 193.0
+     },
+     "to": {
+      "text": "308 mg/dL (8.0 mmol/L)",
+      "value": 308.0
+     }
+    },
+    "direction": "raises",
+    "monotone": true,
+    "strength": "strong",
+    "variable": "chol"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0463412,
+     0.0112823
+    ],
+    "benefit_mean": -0.0150862,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 1.61361,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.0044306
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "chol",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "serum cholesterol",
+     "short": "serum cholesterol",
+     "unit": "mg/dL"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_39",
+    "name": "heart_disease_risk_score"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "non_zero": true
+   },
+   "confidence": {
     "delta_risk": 0.296898,
     "n_ok": true,
     "qualifiers": [
@@ -1139,7 +1704,7 @@
     "share_unaffected": 0.0
    },
    "groups": [],
-   "id": "C06",
+   "id": "C08",
    "key": "ann_39:direction:oldpeak",
    "n": 242,
    "reasons": [
@@ -1430,7 +1995,7 @@
      "n": 83
     }
    ],
-   "id": "C07",
+   "id": "C09",
    "key": "ann_39:direction:sex:0",
    "n": 242,
    "reasons": [
@@ -1578,7 +2143,7 @@
      "n": 22
     }
    ],
-   "id": "C08",
+   "id": "C10",
    "key": "ann_39:direction:cp:1",
    "n": 242,
    "reasons": [
@@ -1744,7 +2309,7 @@
      "n": 33
     }
    ],
-   "id": "C09",
+   "id": "C11",
    "key": "ann_39:direction:fbs:1",
    "n": 242,
    "reasons": [
@@ -1892,7 +2457,7 @@
      "n": 70
     }
    ],
-   "id": "C10",
+   "id": "C12",
    "key": "ann_39:direction:cp:3",
    "n": 242,
    "reasons": [
@@ -2059,7 +2624,7 @@
      "n": 17
     }
    ],
-   "id": "C11",
+   "id": "C13",
    "key": "ann_39:direction:slope:3",
    "n": 242,
    "reasons": [
@@ -2219,7 +2784,7 @@
      "n": 90
     }
    ],
-   "id": "C12",
+   "id": "C14",
    "key": "ann_39:direction:thal:7",
    "n": 242,
    "reasons": [
@@ -2347,6 +2912,156 @@
     "non_zero": true
    },
    "confidence": {
+    "delta_risk": 0.209213,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only on the inputs that feed the model score directly (not through any part)",
+    "odds_ratio": 0.223812,
+    "odds_ratio_range": [
+     0.223812,
+     0.223812
+    ],
+    "range_across_patients": [
+     -1.49695,
+     -1.49695
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": -1.49695
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "male",
+     "n": 159
+    },
+    {
+     "label": "female",
+     "n": 83
+    }
+   ],
+   "id": "C15",
+   "key": "ann_39:direct:sex:0",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -0.209213,
+    "from": 0.294752,
+    "reference": "typical patient",
+    "to": 0.085539
+   },
+   "scope": "direct",
+   "shape": {
+    "class": "categorical",
+    "levels": [
+     {
+      "effect_score": -1.49695,
+      "label": "female",
+      "n_train": 83,
+      "reference": false,
+      "risk": 0.085539
+     },
+     {
+      "effect_score": 0.0,
+      "label": "male",
+      "n_train": 159,
+      "reference": true,
+      "risk": 0.294752
+     }
+    ],
+    "ordering_high_to_low": [
+     "male",
+     "female"
+    ],
+    "reference": "male",
+    "scale": "model score (log-odds) relative to the reference level",
+    "status": "verified",
+    "verified": true
+   },
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "the patient is a man",
+      "decoded": true,
+      "group": "men",
+      "label": "male",
+      "n_train": 159
+     },
+     "to": {
+      "code": "0",
+      "codes": [
+       "0"
+      ],
+      "cond": "the patient is a woman",
+      "decoded": true,
+      "group": "women",
+      "label": "female",
+      "n_train": 83
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "sex"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.00752688,
+     0.0420308
+    ],
+    "benefit_mean": 0.0150862,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -1.49695,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.00706127
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "sex",
+     "decoded": true,
+     "kind": "category",
+     "label": "sex",
+     "short": "sex",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_39",
+    "name": "heart_disease_risk_score"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
     "delta_risk": 0.189323,
     "n_ok": false,
     "qualifiers": [
@@ -2386,7 +3101,7 @@
      "n": 15
     }
    ],
-   "id": "C13",
+   "id": "C16",
    "key": "ann_39:direction:thal:6",
    "n": 242,
    "reasons": [
@@ -2581,7 +3296,7 @@
     "share_unaffected": 0.0
    },
    "groups": [],
-   "id": "C14",
+   "id": "C17",
    "key": "ann_39:direction:trestbps",
    "n": 242,
    "reasons": [
@@ -2909,7 +3624,7 @@
     "share_unaffected": 0.0
    },
    "groups": [],
-   "id": "C15",
+   "id": "C18",
    "key": "ann_39:direction:thalach",
    "n": 242,
    "reasons": [
@@ -3198,7 +3913,7 @@
      "n": 42
     }
    ],
-   "id": "C16",
+   "id": "C19",
    "key": "ann_39:direction:cp:2",
    "n": 242,
    "reasons": [
@@ -3400,7 +4115,7 @@
     "share_unaffected": 0.0
    },
    "groups": [],
-   "id": "C17",
+   "id": "C20",
    "key": "ann_39:direction:age",
    "n": 242,
    "reasons": [
@@ -3692,7 +4407,7 @@
      "n": 82
     }
    ],
-   "id": "C18",
+   "id": "C21",
    "key": "ann_39:direction:exang:1",
    "n": 242,
    "reasons": [
@@ -3799,6 +4514,157 @@
     "name": "heart_disease_risk_score"
    },
    "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.00531194,
+    "n_ok": true,
+    "qualifiers": [
+     "slightly",
+     "on the training data only"
+    ],
+    "size": "slight",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only on the inputs that feed the model score directly (not through any part)",
+    "odds_ratio": 0.974637,
+    "odds_ratio_range": [
+     0.974637,
+     0.974637
+    ],
+    "range_across_patients": [
+     -0.0256899,
+     -0.0256899
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": -0.0256899
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "fasting blood sugar of 120 mg/dL or less",
+     "n": 209
+    },
+    {
+     "label": "fasting blood sugar above 120 mg/dL",
+     "n": 33
+    }
+   ],
+   "id": "C22",
+   "key": "ann_39:direct:fbs:1",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -0.00531194,
+    "from": 0.294752,
+    "reference": "typical patient",
+    "to": 0.28944
+   },
+   "scope": "direct",
+   "shape": {
+    "class": "categorical",
+    "levels": [
+     {
+      "effect_score": 0.0,
+      "label": "fasting blood sugar of 120 mg/dL or less",
+      "n_train": 209,
+      "reference": true,
+      "risk": 0.294752
+     },
+     {
+      "effect_score": -0.0256899,
+      "label": "fasting blood sugar above 120 mg/dL",
+      "n_train": 33,
+      "reference": false,
+      "risk": 0.28944
+     }
+    ],
+    "ordering_high_to_low": [
+     "fasting blood sugar of 120 mg/dL or less",
+     "fasting blood sugar above 120 mg/dL"
+    ],
+    "reference": "fasting blood sugar of 120 mg/dL or less",
+    "scale": "model score (log-odds) relative to the reference level",
+    "status": "verified",
+    "verified": true
+   },
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "0",
+      "codes": [
+       "0"
+      ],
+      "cond": "fasting blood sugar is 120 mg/dL or less",
+      "decoded": true,
+      "group": "patients with fasting blood sugar of 120 mg/dL or less",
+      "label": "fasting blood sugar of 120 mg/dL or less",
+      "n_train": 209
+     },
+     "to": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "fasting blood sugar is above 120 mg/dL",
+      "decoded": true,
+      "group": "patients with fasting blood sugar above 120 mg/dL",
+      "label": "fasting blood sugar above 120 mg/dL",
+      "n_train": 33
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "negligible",
+    "variable": "fbs"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.0,
+     0.0
+    ],
+    "benefit_mean": 0.0,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -0.0256899,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": -6.92281e-05
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "fbs",
+     "decoded": true,
+     "kind": "category",
+     "label": "fasting blood sugar",
+     "short": "fasting blood sugar",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_39",
+    "name": "heart_disease_risk_score"
+   },
+   "checks": {
     "agrees_with_direction": true,
     "non_zero": true
    },
@@ -3819,7 +4685,7 @@
     "value": 4.74097
    },
    "groups": [],
-   "id": "C19",
+   "id": "C23",
    "key": "ann_39:magnitude:ca",
    "n": 242,
    "reasons": [
@@ -3890,7 +4756,7 @@
     "status": "mixed",
     "structure_folds": [
      {
-      "claim": "C39",
+      "claim": "C45",
       "count_step": 1,
       "kind": "below",
       "p10_p90": [
@@ -4016,7 +4882,7 @@
      "n": 110
     }
    ],
-   "id": "C20",
+   "id": "C24",
    "key": "ann_39:magnitude:slope:2",
    "n": 242,
    "reasons": [
@@ -4151,7 +5017,7 @@
     "value": 1.85619
    },
    "groups": [],
-   "id": "C21",
+   "id": "C25",
    "key": "ann_39:magnitude:chol",
    "n": 242,
    "reasons": [
@@ -4256,7 +5122,7 @@
     "status": "fallback",
     "structure_folds": [
      {
-      "claim": "C38",
+      "claim": "C44",
       "count_step": null,
       "kind": "below",
       "p10_p90": [
@@ -4272,7 +5138,7 @@
       "value": 257.702
      },
      {
-      "claim": "C44",
+      "claim": "C52",
       "count_step": null,
       "kind": "above",
       "p10_p90": [
@@ -4463,7 +5329,7 @@
     "value": 1.32129
    },
    "groups": [],
-   "id": "C22",
+   "id": "C26",
    "key": "ann_39:magnitude:oldpeak",
    "n": 242,
    "reasons": [
@@ -4740,7 +5606,7 @@
      "n": 83
     }
    ],
-   "id": "C23",
+   "id": "C27",
    "key": "ann_39:magnitude:sex:0",
    "n": 242,
    "reasons": [
@@ -4843,6 +5709,63 @@
   },
   {
    "annotation": {
+    "id": "ann_39",
+    "name": "heart_disease_risk_score"
+   },
+   "checks": {
+    "children_feed_it": true
+   },
+   "estimate": {
+    "method": "graph: enabled non-zero connections from each child's outputs into this part's own nodes; combination checked by a least-squares fit of this part's output on its direct inputs and its children's outputs (training patients)",
+    "value": null
+   },
+   "id": "C28",
+   "key": "ann_39:structure:composition",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "combination": "added",
+    "copies": [],
+    "direct_inputs": [
+     "age",
+     "sex",
+     "cp",
+     "chol",
+     "fbs",
+     "restecg",
+     "thalach",
+     "oldpeak",
+     "slope",
+     "ca",
+     "thal"
+    ],
+    "fed_by_part_names": [
+     "benign_profile_gate",
+     "restbp_chol_interaction",
+     "risk_aggregation_gate"
+    ],
+    "fed_by_parts": [
+     "ann_34",
+     "ann_37",
+     "ann_38"
+    ],
+    "feeds": [],
+    "kind": "composition"
+   },
+   "test_check": null,
+   "type": "structure",
+   "variables": [],
+   "verified": true
+  },
+  {
+   "annotation": {
     "id": "ann_34",
     "name": "benign_profile_gate"
    },
@@ -4890,7 +5813,7 @@
      "n": 83
     }
    ],
-   "id": "C24",
+   "id": "C29",
    "key": "ann_34:direction:sex:0",
    "n": 242,
    "reasons": [
@@ -5040,7 +5963,7 @@
      "n": 33
     }
    ],
-   "id": "C25",
+   "id": "C30",
    "key": "ann_34:direction:fbs:1",
    "n": 242,
    "reasons": [
@@ -5191,7 +6114,7 @@
      "n": 82
     }
    ],
-   "id": "C26",
+   "id": "C31",
    "key": "ann_34:direction:exang:1",
    "n": 242,
    "reasons": [
@@ -5360,7 +6283,7 @@
      "risk_to": 0.00501967
     }
    ],
-   "id": "C27",
+   "id": "C32",
    "key": "ann_34:interaction:sexxfbs",
    "n": 242,
    "reasons": [
@@ -5591,7 +6514,7 @@
      "risk_to": 0.0325454
     }
    ],
-   "id": "C28",
+   "id": "C33",
    "key": "ann_34:interaction:fbsxexang",
    "n": 242,
    "reasons": [
@@ -5822,7 +6745,7 @@
      "risk_to": 0.00501967
     }
    ],
-   "id": "C29",
+   "id": "C34",
    "key": "ann_34:interaction:sexxexang",
    "n": 242,
    "reasons": [
@@ -6114,7 +7037,7 @@
      "n": 77
     }
    ],
-   "id": "C30",
+   "id": "C35",
    "key": "ann_34:subgroup:active",
    "n": 242,
    "reasons": [
@@ -6205,6 +7128,39 @@
   },
   {
    "annotation": {
+    "id": "ann_34",
+    "name": "benign_profile_gate"
+   },
+   "checks": {
+    "reproduces": true
+   },
+   "estimate": {
+    "method": "the part's extracted function (AnnotationFunction) evaluated on its entries against its outputs in a full forward pass, training patients",
+    "value": 4.44089e-16
+   },
+   "id": "C36",
+   "key": "ann_34:structure:formula",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "kind": "formula",
+    "max_abs_err": 4.44089e-16,
+    "n": 242
+   },
+   "test_check": null,
+   "type": "structure",
+   "variables": [],
+   "verified": true
+  },
+  {
+   "annotation": {
     "id": "ann_38",
     "name": "risk_aggregation_gate"
    },
@@ -6252,7 +7208,7 @@
      "n": 83
     }
    ],
-   "id": "C31",
+   "id": "C37",
    "key": "ann_38:direction:sex:0",
    "n": 242,
    "reasons": [
@@ -6402,7 +7358,7 @@
      "n": 33
     }
    ],
-   "id": "C32",
+   "id": "C38",
    "key": "ann_38:direction:fbs:1",
    "n": 242,
    "reasons": [
@@ -6587,7 +7543,7 @@
     "share_unaffected": 0.347107
    },
    "groups": [],
-   "id": "C33",
+   "id": "C39",
    "key": "ann_38:direction:chol",
    "n": 242,
    "reasons": [
@@ -6666,7 +7622,7 @@
     "hinge_kind": "moving_then_flat",
     "increments": null,
     "matched_fold": {
-     "claim": "C38",
+     "claim": "C44",
      "count_step": null,
      "kind": "below",
      "p10_p90": [
@@ -6700,7 +7656,7 @@
     ],
     "point": {
      "basis": "median fold across the part's affected patients (threshold claim)",
-     "source_claim": "C38",
+     "source_claim": "C44",
      "spread_p10_p90": [
       146.693,
       325.096
@@ -6717,7 +7673,7 @@
      "value": 257.702,
      "wide": true
     },
-    "point_reason": "same variable and same part as threshold claim C38",
+    "point_reason": "same variable and same part as threshold claim C44",
     "point_reconciled": true,
     "points": {
      "at": 258.271
@@ -6738,7 +7694,7 @@
     "status": "mixed",
     "structure_folds": [
      {
-      "claim": "C38",
+      "claim": "C44",
       "count_step": null,
       "kind": "below",
       "p10_p90": [
@@ -6754,7 +7710,7 @@
       "value": 257.702
      },
      {
-      "claim": "C44",
+      "claim": "C52",
       "count_step": null,
       "kind": "above",
       "p10_p90": [
@@ -6972,7 +7928,7 @@
     "share_unaffected": 0.280992
    },
    "groups": [],
-   "id": "C34",
+   "id": "C40",
    "key": "ann_38:direction:ca",
    "n": 242,
    "reasons": [
@@ -7010,7 +7966,7 @@
      0.0
     ],
     "matched_fold": {
-     "claim": "C39",
+     "claim": "C45",
      "count_step": 1,
      "kind": "below",
      "p10_p90": [
@@ -7044,7 +8000,7 @@
     ],
     "point": {
      "basis": "median fold across the part's affected patients (threshold claim)",
-     "source_claim": "C39",
+     "source_claim": "C45",
      "spread_p10_p90": [
       0.116994,
       1.166
@@ -7061,7 +8017,7 @@
      "value": 0.389809,
      "wide": true
     },
-    "point_reason": "same variable and same part as threshold claim C39",
+    "point_reason": "same variable and same part as threshold claim C45",
     "point_reconciled": true,
     "points": {
      "at": 0.5,
@@ -7086,7 +8042,7 @@
     "status": "verified",
     "structure_folds": [
      {
-      "claim": "C39",
+      "claim": "C45",
       "count_step": 1,
       "kind": "below",
       "p10_p90": [
@@ -7227,7 +8183,7 @@
      "n": 82
     }
    ],
-   "id": "C35",
+   "id": "C41",
    "key": "ann_38:direction:exang:1",
    "n": 242,
    "reasons": [
@@ -7396,7 +8352,7 @@
      "risk_to": 0.979539
     }
    ],
-   "id": "C36",
+   "id": "C42",
    "key": "ann_38:interaction:caxfbs",
    "n": 242,
    "reasons": [
@@ -7759,7 +8715,7 @@
      "risk_to": 0.979539
     }
    ],
-   "id": "C37",
+   "id": "C43",
    "key": "ann_38:interaction:caxsex",
    "n": 242,
    "reasons": [
@@ -8216,7 +9172,7 @@
      "n": 102
     }
    ],
-   "id": "C38",
+   "id": "C44",
    "key": "ann_38:threshold:chol",
    "n": 181,
    "reasons": [
@@ -8311,7 +9267,7 @@
     "hinge_kind": "moving_then_flat",
     "increments": null,
     "matched_fold": {
-     "claim": "C38",
+     "claim": "C44",
      "count_step": null,
      "kind": "below",
      "p10_p90": [
@@ -8345,7 +9301,7 @@
     ],
     "point": {
      "basis": "median fold across the part's affected patients (threshold claim)",
-     "source_claim": "C38",
+     "source_claim": "C44",
      "spread_p10_p90": [
       146.693,
       325.096
@@ -8362,7 +9318,7 @@
      "value": 257.702,
      "wide": true
     },
-    "point_reason": "same variable and same part as threshold claim C38",
+    "point_reason": "same variable and same part as threshold claim C44",
     "point_reconciled": true,
     "points": {
      "at": 258.271
@@ -8383,7 +9339,7 @@
     "status": "mixed",
     "structure_folds": [
      {
-      "claim": "C38",
+      "claim": "C44",
       "count_step": null,
       "kind": "below",
       "p10_p90": [
@@ -8399,7 +9355,7 @@
       "value": 257.702
      },
      {
-      "claim": "C44",
+      "claim": "C52",
       "count_step": null,
       "kind": "above",
       "p10_p90": [
@@ -8738,7 +9694,7 @@
      "n": 67
     }
    ],
-   "id": "C39",
+   "id": "C45",
    "key": "ann_38:threshold:ca",
    "n": 105,
    "reasons": [
@@ -8790,7 +9746,7 @@
      0.0
     ],
     "matched_fold": {
-     "claim": "C39",
+     "claim": "C45",
      "count_step": 1,
      "kind": "below",
      "p10_p90": [
@@ -8824,7 +9780,7 @@
     ],
     "point": {
      "basis": "median fold across the part's affected patients (threshold claim)",
-     "source_claim": "C39",
+     "source_claim": "C45",
      "spread_p10_p90": [
       0.116994,
       1.166
@@ -8841,7 +9797,7 @@
      "value": 0.389809,
      "wide": true
     },
-    "point_reason": "same variable and same part as threshold claim C39",
+    "point_reason": "same variable and same part as threshold claim C45",
     "point_reconciled": true,
     "points": {
      "at": 0.5,
@@ -8866,7 +9822,7 @@
     "status": "verified",
     "structure_folds": [
      {
-      "claim": "C39",
+      "claim": "C45",
       "count_step": 1,
       "kind": "below",
       "p10_p90": [
@@ -9109,7 +10065,7 @@
      "n": 124
     }
    ],
-   "id": "C40",
+   "id": "C46",
    "key": "ann_38:subgroup:active",
    "n": 242,
    "reasons": [
@@ -9214,6 +10170,54 @@
   },
   {
    "annotation": {
+    "id": "ann_38",
+    "name": "risk_aggregation_gate"
+   },
+   "checks": {
+    "children_feed_it": true
+   },
+   "estimate": {
+    "method": "graph: enabled non-zero connections from each child's outputs into this part's own nodes; combination checked by a least-squares fit of this part's output on its direct inputs and its children's outputs (training patients)",
+    "value": null
+   },
+   "id": "C47",
+   "key": "ann_38:structure:composition",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "combination": "combined non-additively",
+    "copies": [
+     "ann_35"
+    ],
+    "direct_inputs": [
+     "chol",
+     "ca"
+    ],
+    "fed_by_part_names": [
+     "benign_profile_gate_534path",
+     "chol_threshold"
+    ],
+    "fed_by_parts": [
+     "ann_35",
+     "ann_36"
+    ],
+    "feeds": [],
+    "kind": "composition"
+   },
+   "test_check": null,
+   "type": "structure",
+   "variables": [],
+   "verified": true
+  },
+  {
+   "annotation": {
     "id": "ann_37",
     "name": "restbp_chol_interaction"
    },
@@ -9288,7 +10292,7 @@
     "share_unaffected": 0.0
    },
    "groups": [],
-   "id": "C41",
+   "id": "C48",
    "key": "ann_37:direction:trestbps",
    "n": 242,
    "reasons": [
@@ -9616,7 +10620,7 @@
     "share_unaffected": 0.0
    },
    "groups": [],
-   "id": "C42",
+   "id": "C49",
    "key": "ann_37:direction:chol",
    "n": 242,
    "reasons": [
@@ -9714,7 +10718,7 @@
     "status": "fallback",
     "structure_folds": [
      {
-      "claim": "C38",
+      "claim": "C44",
       "count_step": null,
       "kind": "below",
       "p10_p90": [
@@ -9730,7 +10734,7 @@
       "value": 257.702
      },
      {
-      "claim": "C44",
+      "claim": "C52",
       "count_step": null,
       "kind": "above",
       "p10_p90": [
@@ -9897,6 +10901,39 @@
   },
   {
    "annotation": {
+    "id": "ann_37",
+    "name": "restbp_chol_interaction"
+   },
+   "checks": {
+    "reproduces": true
+   },
+   "estimate": {
+    "method": "the part's extracted function (AnnotationFunction) evaluated on its entries against its outputs in a full forward pass, training patients",
+    "value": 8.88178e-16
+   },
+   "id": "C50",
+   "key": "ann_37:structure:formula",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "kind": "formula",
+    "max_abs_err": 8.88178e-16,
+    "n": 242
+   },
+   "test_check": null,
+   "type": "structure",
+   "variables": [],
+   "verified": true
+  },
+  {
+   "annotation": {
     "id": "ann_36",
     "name": "chol_threshold"
    },
@@ -9980,7 +11017,7 @@
     "share_unaffected": 0.495868
    },
    "groups": [],
-   "id": "C43",
+   "id": "C51",
    "key": "ann_36:direction:chol",
    "n": 242,
    "reasons": [
@@ -10051,7 +11088,7 @@
     "hinge_kind": null,
     "increments": null,
     "matched_fold": {
-     "claim": "C44",
+     "claim": "C52",
      "count_step": null,
      "kind": "above",
      "p10_p90": [
@@ -10091,7 +11128,7 @@
     ],
     "point": {
      "basis": "median fold across the part's affected patients (threshold claim)",
-     "source_claim": "C44",
+     "source_claim": "C52",
      "spread_p10_p90": [
       285.176,
       285.176
@@ -10108,7 +11145,7 @@
      "value": 285.176,
      "wide": false
     },
-    "point_reason": "same variable and same part as threshold claim C44",
+    "point_reason": "same variable and same part as threshold claim C52",
     "point_reconciled": true,
     "points": {
      "at": 289.445,
@@ -10133,7 +11170,7 @@
     "status": "fallback",
     "structure_folds": [
      {
-      "claim": "C38",
+      "claim": "C44",
       "count_step": null,
       "kind": "below",
       "p10_p90": [
@@ -10149,7 +11186,7 @@
       "value": 257.702
      },
      {
-      "claim": "C44",
+      "claim": "C52",
       "count_step": null,
       "kind": "above",
       "p10_p90": [
@@ -10403,7 +11440,7 @@
      "n": 9
     }
    ],
-   "id": "C44",
+   "id": "C52",
    "key": "ann_36:threshold:chol",
    "n": 122,
    "reasons": [
@@ -10490,7 +11527,7 @@
     "hinge_kind": null,
     "increments": null,
     "matched_fold": {
-     "claim": "C44",
+     "claim": "C52",
      "count_step": null,
      "kind": "above",
      "p10_p90": [
@@ -10530,7 +11567,7 @@
     ],
     "point": {
      "basis": "median fold across the part's affected patients (threshold claim)",
-     "source_claim": "C44",
+     "source_claim": "C52",
      "spread_p10_p90": [
       285.176,
       285.176
@@ -10547,7 +11584,7 @@
      "value": 285.176,
      "wide": false
     },
-    "point_reason": "same variable and same part as threshold claim C44",
+    "point_reason": "same variable and same part as threshold claim C52",
     "point_reconciled": true,
     "points": {
      "at": 301.914,
@@ -10572,7 +11609,7 @@
     "status": "fallback",
     "structure_folds": [
      {
-      "claim": "C38",
+      "claim": "C44",
       "count_step": null,
       "kind": "below",
       "p10_p90": [
@@ -10588,7 +11625,7 @@
       "value": 257.702
      },
      {
-      "claim": "C44",
+      "claim": "C52",
       "count_step": null,
       "kind": "above",
       "p10_p90": [
@@ -10834,7 +11871,7 @@
      "n": 233
     }
    ],
-   "id": "C45",
+   "id": "C53",
    "key": "ann_36:subgroup:active",
    "n": 242,
    "reasons": [
@@ -10906,9 +11943,75 @@
     }
    ],
    "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_36",
+    "name": "chol_threshold"
+   },
+   "checks": {
+    "reproduces": true
+   },
+   "estimate": {
+    "method": "the part's extracted function (AnnotationFunction) evaluated on its entries against its outputs in a full forward pass, training patients",
+    "value": 0.0
+   },
+   "id": "C54",
+   "key": "ann_36:structure:formula",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "kind": "formula",
+    "max_abs_err": 0.0,
+    "n": 242
+   },
+   "test_check": null,
+   "type": "structure",
+   "variables": [],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_35",
+    "name": "benign_profile_gate_534path"
+   },
+   "checks": {
+    "identical_outputs": true
+   },
+   "estimate": {
+    "method": "same inputs; outputs identical (difference below 1e-12) on every training and test patient",
+    "value": 0.0
+   },
+   "id": "C55",
+   "key": "ann_35:structure:copy",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "copy_of": "ann_34",
+    "copy_of_name": "benign_profile_gate",
+    "kind": "copy"
+   },
+   "test_check": null,
+   "type": "structure",
+   "variables": [],
+   "verified": true
   }
  ],
- "claims_hash": "2b17f1c5d6e16255b8c57b41e967b7dc9d564045bffd991b210cfeffdad702a2",
+ "claims_hash": "3e265e53ddd33e7f195850fc472964daad0f70de2be4143acdc639ed0b4b4efc",
  "codebook": {
   "checks": [
    {
@@ -10928,8 +12031,8 @@
  "counts": {
   "by_type": {
    "direction": [
-    29,
-    29
+    33,
+    33
    ],
    "interaction": [
     5,
@@ -10956,218 +12059,58 @@
     3
    ]
   },
-  "claims": 45,
+  "claims": 55,
   "clearly": 5,
   "not_supported": 0,
-  "verified": 45
+  "verified": 55
  },
  "dataset": {
   "id": "eea247c2-bdb7-41af-8ec1-9e26dcb5050d",
   "name": "Heart Disease (binary, prepared)"
  },
  "drafted": {
-  "annotations": {
-   "ann_34": [
-    {
-     "claims": [
-      "C30"
-     ],
-     "text": "This part acts on 165 of 242 training patients (68%), nearly all of them patients without chest pain on exercise; 51 of them had heart disease."
-    },
-    {
-     "claims": [
-      "C30"
-     ],
-     "text": "For the typical patient it acts on (a 54-year-old man with non-anginal chest pain and no chest pain on exercise), the predicted risk stays at about 3%."
-    },
-    {
-     "claims": [
-      "C24",
-      "C25",
-      "C26"
-     ],
-     "text": "Through it, being a woman lowers a typical patient's predicted risk from about 29% to about 7%, and fasting blood sugar above 120 mg/dL to about 9%; chest pain brought on by exercise raises it from about 29% to about 31%."
-    },
-    {
-     "claims": [
-      "C29",
-      "C28"
-     ],
-     "text": "Both are larger without chest pain on exercise: being a woman takes the risk from about 29% to about 1%, against about 33% to about 10% with chest pain on exercise, and fasting blood sugar above 120 mg/dL from about 29% to about 3%, against about 33% to about 32%."
-    },
-    {
-     "claims": [
-      "C27"
-     ],
-     "text": "Being a woman also lowers it more when fasting blood sugar is above 120 mg/dL: from about 3% to under 1%, against about 29% to about 1% otherwise."
-    }
-   ],
-   "ann_36": [
-    {
-     "claims": [
-      "C44",
-      "C43"
-     ],
-     "text": "This part adds to the predicted risk only once serum cholesterol rises above about 285 mg/dL, in an uneven way across patients, from about 2% to about 3% for the typical patient it acts on (the model has little data on this, n = 9)."
-    },
-    {
-     "claims": [
-      "C45"
-     ],
-     "text": "It acts on 9 of 242 training patients (4%), and 1 of them had heart disease."
-    }
-   ],
-   "ann_37": [
-    {
-     "claims": [
-      "C41"
-     ],
-     "text": "This part adds up resting blood pressure and cholesterol with fixed weights: higher resting blood pressure raises the predicted risk steadily, from about 22% at 110 mm Hg to about 40% at 155 mm Hg for a typical patient."
-    },
-    {
-     "claims": [
-      "C42"
-     ],
-     "text": "Through the same part, higher cholesterol lowers it in an uneven way, from about 34% at 193 mg/dL to about 24% at 308 mg/dL, offsetting part of cholesterol's overall rise."
-    }
-   ],
-   "ann_38": [
-    {
-     "claims": [
-      "C40"
-     ],
-     "text": "This part acts on 118 of 242 training patients (49%), and 23 of them had heart disease; for the typical patient it acts on it takes the predicted risk from about 3% to about 2%."
-    },
-    {
-     "claims": [
-      "C38",
-      "C33"
-     ],
-     "text": "Through it, cholesterol raises the predicted risk steadily up to about 258 mg/dL (between 147 and 325 mg/dL for different patients), then no further, for patients with fasting blood sugar of 120 mg/dL or less (from about 15% to about 29% for a typical such patient), but for women and patients without chest pain on exercise it rises in stages."
-    },
-    {
-     "claims": [
-      "C39",
-      "C34"
-     ],
-     "text": "Vessels coloured by fluoroscopy add to the predicted risk here in a step, mainly the first vessel, and further vessels add nothing more through this part: for men from about 22% to about 29%, and for a typical patient from about 29% to about 34% over 0 to 2 vessels."
-    },
-    {
-     "claims": [
-      "C36",
-      "C37"
-     ],
-     "text": "More vessels raise it in an uneven way, more so when fasting blood sugar is above 120 mg/dL (from about 3% to about 92%, against about 29% to about 98% otherwise) and for women (from about 1% to about 67%, against about 29% to about 98% for men)."
-    },
-    {
-     "claims": [
-      "C31",
-      "C32",
-      "C35"
-     ],
-     "text": "Through it, being a woman lowers a typical patient's predicted risk to about 11% and fasting blood sugar above 120 mg/dL to about 13%, while chest pain brought on by exercise raises it from about 29% to about 31%."
-    }
-   ],
-   "ann_39": [
-    {
-     "claims": [
-      "C02",
-      "C19"
-     ],
-     "text": "Across the whole model, each extra vessel coloured by fluoroscopy adds about the same to the model's score for most patients, but for patients without chest pain on exercise the rise levels off: a typical patient goes from about 29% at 0 vessels to about 98% at 2 vessels, flattening out near the top because the predicted risk cannot go much higher."
-    },
-    {
-     "claims": [
-      "C08",
-      "C10",
-      "C16"
-     ],
-     "text": "Typical angina (about 2%), non-anginal chest pain (about 4%) and atypical angina (about 18%) all give a lower predicted risk than no chest pain symptoms (about 29%)."
-    },
-    {
-     "claims": [
-      "C03",
-      "C20",
-      "C12"
-     ],
-     "text": "A flat rather than upsloping ST segment at peak exercise raises it to about 87%, and a reversible defect on the thallium scan to about 52%."
-    },
-    {
-     "claims": [
-      "C06",
-      "C22",
-      "C14",
-      "C17",
-      "C15"
-     ],
-     "text": "More ST depression on exercise (about 23% at 0 mm to about 52% at 2.8 mm), higher resting blood pressure (about 22% at 110 mm Hg to about 40% at 155 mm Hg) and older age (about 27% at 42 to about 32% at 66 years) raise it steadily; a higher maximum heart rate lowers it steadily, from about 38% at 118 to about 24% at 175 beats per minute."
-    },
-    {
-     "claims": [
-      "C05",
-      "C21",
-      "C18"
-     ],
-     "text": "Higher cholesterol raises it in an uneven way, from about 14% at 193 mg/dL to about 50% at 308 mg/dL, and chest pain brought on by exercise raises it from about 29% to about 33%."
-    },
-    {
-     "claims": [
-      "C07",
-      "C23",
-      "C09"
-     ],
-     "text": "Being a woman lowers a typical patient's predicted risk from about 29% to about 1%, and fasting blood sugar above 120 mg/dL to about 3%; both also act through the two parts below."
-    },
-    {
-     "claims": [
-      "C01",
-      "C04",
-      "C11",
-      "C13"
-     ],
-     "text": "Four rarer results count strongly (the model has little data on this, n = 2 to 17): a thallium result coded 4 (2 patients; about 99%), an ST-T wave abnormality on the resting ECG (2 patients; about 77%), a downsloping ST segment (17 patients; about 55%) and a fixed defect on the thallium scan (15 patients; about 11%)."
-    }
-   ]
-  },
+  "annotations": {},
   "blocks": [
    {
     "block": "additive",
     "sentences": [
      {
       "claims": [
-       "C08",
        "C10",
-       "C16",
-       "C03",
-       "C12"
-      ],
-      "text": "These add up independently: compared with no chest pain symptoms, typical angina lowers the predicted risk from about 29% to about 2%, non-anginal chest pain to about 4% and atypical angina to about 18%; a flat rather than upsloping ST segment raises it to about 87%, and a reversible defect on the thallium scan to about 52%."
-     },
-     {
-      "claims": [
-       "C06",
-       "C14",
-       "C17",
+       "C12",
+       "C19",
+       "C18",
        "C15"
       ],
-      "text": "More ST depression on exercise (from about 23% at 0 mm to about 52% at 2.8 mm), higher resting blood pressure (from about 22% at 110 mm Hg to about 40% at 155 mm Hg) and older age (from about 27% at 42 to about 32% at 66 years) raise it steadily, and a higher maximum heart rate lowers it steadily, from about 38% at 118 to about 24% at 175 beats per minute."
+      "label": "Lowering the risk",
+      "text": "These add up independently, and these lower the risk: compared with no chest pain symptoms, typical angina takes a typical patient's predicted risk from about 29% to about 2%, non-anginal chest pain to about 4% and atypical angina to about 18%; a higher maximum heart rate lowers it steadily, from about 38% at 118 to about 24% at 175 beats per minute; and being a woman lowers it, through this sum alone, from about 29% to about 9% (being a woman also acts through the low-risk profile, below)."
      },
      {
       "claims": [
-       "C07",
-       "C09",
-       "C02",
-       "C05"
-      ],
-      "text": "Sex, fasting blood sugar, the number of vessels coloured by fluoroscopy and cholesterol also enter this sum, and act through the two parts below as well: across the whole model, being a woman lowers a typical patient's risk from about 29% to about 1% and fasting blood sugar above 120 mg/dL to about 3%; each extra vessel adds about the same (from about 29% at 0 to about 98% at 2 vessels), but for patients without chest pain on exercise the rise levels off; higher cholesterol raises it in an uneven way, from about 14% at 193 mg/dL to about 50% at 308 mg/dL."
-     },
-     {
-      "claims": [
-       "C11",
        "C04",
-       "C01",
-       "C13"
+       "C14",
+       "C08",
+       "C17",
+       "C20"
       ],
+      "label": "Raising the risk",
+      "text": "A flat rather than upsloping ST segment raises the risk to about 87% and a reversible defect on the thallium scan to about 52%; more ST depression on exercise (about 23% at 0 mm to about 52% at 2.8 mm), higher resting blood pressure (about 22% at 110 mm Hg to about 40% at 155 mm Hg) and older age (about 27% at 42 to about 32% at 66 years) raise it steadily."
+     },
+     {
+      "claims": [
+       "C03",
+       "C07"
+      ],
+      "text": "Through this sum alone, each extra vessel coloured by fluoroscopy adds about the same (from about 29% at 0 to about 98% at 2 vessels), and higher cholesterol raises the risk steadily (from about 18% at 193 mg/dL to about 52% at 308 mg/dL); both also act through the vessels-and-cholesterol gate (below)."
+     },
+     {
+      "claims": [
+       "C13",
+       "C05",
+       "C01",
+       "C16"
+      ],
+      "label": "Rare results",
       "text": "Some rarer results also count strongly (the model has little data on this, n = 2 to 17): a downsloping ST segment raises the risk to about 55%, an ST-T wave abnormality on the resting ECG to about 77%, a thallium result coded 4 to about 99%, and a fixed defect on the thallium scan lowers it to about 11%."
      }
     ]
@@ -11177,19 +12120,19 @@
     "sentences": [
      {
       "claims": [
-       "C30"
+       "C35"
       ],
       "text": "This part combines sex, fasting blood sugar and chest pain on exercise, and acts on 165 of 242 training patients, nearly all of them without chest pain on exercise."
      },
      {
       "claims": [
-       "C29"
+       "C34"
       ],
       "text": "Through it, being a woman lowers the predicted risk more when exercise does not bring on chest pain: for a typical patient it falls from about 29% to about 1% without chest pain on exercise, against about 33% to about 10% with it."
      },
      {
       "claims": [
-       "C28"
+       "C33"
       ],
       "text": "Fasting blood sugar above 120 mg/dL works the same way: it falls from about 29% to about 3% without chest pain on exercise, but stays at about 32% to 33% with it."
      }
@@ -11200,180 +12143,300 @@
     "sentences": [
      {
       "claims": [
-       "C40"
+       "C47",
+       "C55",
+       "C46"
       ],
-      "text": "This part combines the number of vessels coloured, cholesterol and a second copy of the low-risk profile, and acts on 118 of 242 training patients, 23 of whom had heart disease."
+      "text": "This part combines the number of vessels coloured, cholesterol, a high-cholesterol step and a second copy of the low-risk profile, not as a simple sum, and acts on 118 of 242 training patients, 23 of whom had heart disease."
      },
      {
       "claims": [
-       "C38",
-       "C33"
+       "C44",
+       "C39"
       ],
       "text": "Through it, cholesterol raises the predicted risk steadily up to about 258 mg/dL (between 147 and 325 mg/dL for different patients), then no further, for patients with fasting blood sugar of 120 mg/dL or less (for a typical such patient from about 15% to about 29%), but for women and patients without chest pain on exercise it rises in stages."
      },
      {
       "claims": [
-       "C36"
+       "C42"
       ],
       "text": "More vessels raise it in an uneven way here, and more so when fasting blood sugar is above 120 mg/dL: from about 3% to about 92%, against about 29% to about 98% otherwise."
      }
     ]
    }
   ],
-  "claims_hash": "2b17f1c5d6e16255b8c57b41e967b7dc9d564045bffd991b210cfeffdad702a2",
-  "drafted_at": "2026-11-09T03:41:25+00:00",
+  "claims_hash": "3e265e53ddd33e7f195850fc472964daad0f70de2be4143acdc639ed0b4b4efc",
+  "drafted_at": "2026-11-09T07:36:28+00:00",
   "drafted_by": "ai-assisted",
-  "hypothesis_revisions": {
-   "ann_34": {
-    "claims": [
-     "C30",
-     "C29",
-     "C28"
-    ],
-    "original": "Node 155_a computes a 'benign profile' gate: 155_a = ReLU(0.824*sex:0 + 1.109*exang:0 - 0.509*fbs:0 + 0.088). Activates for female patients (sex:0=1) with no exertional angina (exang:0=1); normal fasting glucose slightly attenuates. Output-facing copy of hidden node 155. Activation profile: active 70% / hard-zero 30% (verified). Reads out to output with weight -0.960, lowering predicted risk. Ablation: removing this readout drops test AUC 0.897->0.869 (-0.028) - the single largest nonlinear contribution to generalisation.",
-    "proposed": "A part that acts on most patients without chest pain on exercise; through it, being a woman and fasting blood sugar above 120 mg/dL lower the predicted risk, more so without chest pain on exercise.",
-    "status": "proposed (not applied)"
-   },
-   "ann_36": {
-    "claims": [
-     "C44",
-     "C45"
-    ],
-    "original": "Node 3040 = ReLU(1.052*chol - 0.864): a one-sided cholesterol threshold. Since cholesterol is z-normalised, this turns on only above ~0.82 SD above the mean. Activation profile: hard-zero 82.5% / active 17.5% (verified) - a sparse threshold detector. Feeds node 534 with -0.677; net path effect +0.60 per unit (high cholesterol raises predicted risk). This is the sub-unit that lets cholesterol act as a risk factor only above a level rather than linearly - but it sits inside the 534 gate, which the ablation shows contributes nothing on test.",
-    "proposed": "Cholesterol above about 285 mg/dL (7.4 mmol/L) adds a little to the predicted risk (about 2% to 3% for the typical patient it acts on); only 9 training patients are that high, and 1 of them had heart disease.",
-    "status": "proposed (not applied)"
-   },
-   "ann_37": {
-    "claims": [
-     "C41",
-     "C42"
-    ],
-    "original": "Subgraph {trestbps, chol_c, 3240, 2379}: a near-linear resting-blood-pressure signal. 3240 = ReLU(0.978*trestbps + 3.4) is always-on (100% active, verified) - a linear pass-through, not a gate. 2379 = ReLU(0.931*3240 - 0.529*chol_c - 0.754) simplifies to ReLU(0.911*trestbps - 0.529*chol_c + 2.41), near-always-on. Reads out to output with +0.364 (higher resting BP raises risk). Ablation: removing this readout drops test AUC 0.897->0.885 (-0.012) - a modest but real generalising contribution.",
-    "proposed": "Higher resting blood pressure raises the predicted risk through this part, while higher cholesterol lowers it.",
-    "status": "proposed (not applied)"
-   },
-   "ann_38": {
-    "claims": [
-     "C40",
-     "C38",
-     "C39"
-    ],
-    "original": "Node 534 = ReLU(0.818*[benign_profile_gate_534path] - 0.677*[chol_threshold] - 1.155*ca - 0.592*chol - 0.761): the model's most elaborate unit, a genuine ReLU gate (hard-zero 53.5% verified) composing four risk signals - vessel count (ca), a cholesterol copy, the cholesterol threshold (3040), and the redundant benign-profile copy (155_b). Net per-unit output effects: ca +1.02, chol +0.52, chol_threshold +0.60, benign -0.72; when the benign signal is strong the whole block is clipped off together. KEY ABLATION RESULT: disabling 534's readout changes test AUC only 0.897->0.899 (+0.002) while train drops 0.946->0.942 - i.e. this showpiece unit is essentially train-only and does not generalise. Signs match cardiology but the structure is fit to the 242 training cases.",
-    "proposed": "A part that acts on about half the patients; through it, cholesterol adds risk only up to about 258 mg/dL, and for men vessels add risk only from 0 to 1.",
-    "status": "proposed (not applied)"
-   },
-   "ann_39": {
-    "claims": [
-     "C08",
-     "C10",
-     "C16",
-     "C02",
-     "C03",
-     "C05",
-     "C06",
-     "C12",
-     "C14",
-     "C07",
-     "C09",
-     "C15"
-    ],
-    "original": "Root: y0 = ReLU(bias 0.318 + linear core + 3 nonlinear pathways). (1) DIRECT LINEAR CORE of 17 inputs to the output - ca (largest, +2.03), cp:4 (+1.21), slope:2, chol, cp:2, oldpeak push risk up; sex:0 (-0.71), slope:1, thalach push down. By SHAP the top drivers are ca, cp:4, sex:0, slope:2, chol. (2) benign_profile_gate (155_a, -0.96) lowers risk for females without exertional angina. (3) restbp_chol_interaction (2379, +0.364). (4) risk_aggregation_gate (534, -0.884), the elaborate composed unit. 7 features unused. PERFORMANCE: train AUC 0.946 / test 0.897. ABLATION LADDER (test AUC, baseline 0.897): linear-core only 0.860 (nonlinearity buys +0.037); remove benign gate -0.028; remove restbp -0.012; remove 534 gate +0.002. So the two simple gates (benign, restbp) carry all the generalising benefit; the elaborate 534 aggregation gate is train-only. The benign signal is redundantly encoded twice (155_a direct + 155_b inside 534).",
-    "proposed": "Typical, atypical or non-anginal chest pain lower the predicted risk compared with no chest pain symptoms. More vessels coloured, a flat ST segment, higher cholesterol, more ST depression, a reversible thallium defect and higher resting blood pressure raise it; being a woman, fasting blood sugar above 120 mg/dL and a higher maximum heart rate lower it.",
-    "status": "proposed (not applied)"
-   }
-  },
+  "hypothesis_revisions": {},
   "lead": [
    {
     "claims": [
-     "C30",
-     "C40"
+     "C28",
+     "C35",
+     "C46"
     ],
-    "text": "For a typical patient (a 56-year-old man with no chest pain symptoms and median test results) the model predicts a risk of heart disease of about 29%; most of its inputs add up independently, and two parts change that sum for particular groups of patients."
+    "text": "For a typical patient (a 56-year-old man with no chest pain symptoms and median test results) the model predicts a risk of heart disease of about 29%; it adds up most of its inputs independently, and two parts change that sum for particular groups of patients."
    }
   ],
   "protocol": ".claude/skills/plain-language-explanations/SKILL.md",
+  "readdown": {
+   "ann_34": {
+    "evidence": [
+     {
+      "claims": [
+       "C35"
+      ],
+      "text": "It acts on 165 of 242 training patients, nearly all of them without chest pain on exercise, and 51 of them had heart disease."
+     },
+     {
+      "claims": [
+       "C34",
+       "C33"
+      ],
+      "text": "Through it, being a woman takes a typical patient's risk from about 29% to about 1% without chest pain on exercise, against about 33% to about 10% with it; fasting blood sugar above 120 mg/dL takes it from about 29% to about 3% without chest pain on exercise, but leaves it at about 32% to 33% with it."
+     },
+     {
+      "claims": [
+       "C36"
+      ],
+      "text": "Its formula reproduces the part exactly on all 242 training patients."
+     }
+    ],
+    "hypothesis": [
+     {
+      "claims": [
+       "C34",
+       "C33"
+      ],
+      "text": "This part marks a low-risk profile: through it, being a woman and fasting blood sugar above 120 mg/dL lower the predicted risk, much more so when exercise does not bring on chest pain."
+     }
+    ]
+   },
+   "ann_36": {
+    "evidence": [
+     {
+      "claims": [
+       "C53"
+      ],
+      "text": "It acts on 9 of 242 training patients, and 1 of them had heart disease (the model has little data on this, n = 9)."
+     },
+     {
+      "claims": [
+       "C52"
+      ],
+      "text": "For the typical patient it acts on, the predicted risk goes from about 2% to about 3%, in an uneven way across patients (the model has little data on this, n = 9)."
+     },
+     {
+      "claims": [
+       "C54"
+      ],
+      "text": "Its formula reproduces the part exactly on all 242 training patients."
+     }
+    ],
+    "hypothesis": [
+     {
+      "claims": [
+       "C52"
+      ],
+      "text": "This part adds to the predicted risk only once cholesterol rises above about 285 mg/dL, in an uneven way across patients (the model has little data on this, n = 9)."
+     }
+    ]
+   },
+   "ann_37": {
+    "evidence": [
+     {
+      "claims": [
+       "C48",
+       "C49"
+      ],
+      "text": "Through it, a typical patient's risk goes from about 22% at 110 mm Hg to about 40% at 155 mm Hg as blood pressure rises steadily, and from about 34% at 193 mg/dL to about 24% at 308 mg/dL as cholesterol rises, in an uneven way across patients."
+     },
+     {
+      "claims": [
+       "C50"
+      ],
+      "text": "Its formula reproduces the part exactly on all 242 training patients."
+     }
+    ],
+    "hypothesis": [
+     {
+      "claims": [
+       "C48",
+       "C49"
+      ],
+      "text": "This part adds resting blood pressure and cholesterol with fixed weights: higher blood pressure raises the predicted risk steadily, and higher cholesterol lowers it in an uneven way."
+     }
+    ]
+   },
+   "ann_38": {
+    "evidence": [
+     {
+      "claims": [
+       "C47",
+       "C55"
+      ],
+      "text": "It is made up of the high-cholesterol step and a second copy of the low-risk profile (the copy computes exactly what the low-risk profile computes; both explained below), together with the number of vessels and cholesterol themselves, and it combines them in a way that is not a simple sum."
+     },
+     {
+      "claims": [
+       "C46"
+      ],
+      "text": "It acts on 118 of 242 training patients, 23 of whom had heart disease; for the typical patient it acts on, the predicted risk is about 2% with it and about 3% without it."
+     },
+     {
+      "claims": [
+       "C45"
+      ],
+      "text": "Through it, more vessels add risk for men in a step, mainly the first vessel: from about 22% to about 29%."
+     },
+     {
+      "claims": [
+       "C42"
+      ],
+      "text": "More vessels raise it in an uneven way, and more so when fasting blood sugar is above 120 mg/dL: from about 3% to about 92%, against about 29% to about 98% otherwise."
+     }
+    ],
+    "hypothesis": [
+     {
+      "claims": [
+       "C42",
+       "C46"
+      ],
+      "text": "This part adds risk from more vessels coloured, in an uneven way and more so when fasting blood sugar is above 120 mg/dL, for about half the patients."
+     },
+     {
+      "claims": [
+       "C44",
+       "C39"
+      ],
+      "text": "It also adds risk from cholesterol steadily up to about 258 mg/dL (between 147 and 325 mg/dL for different patients), then no further, but for women and patients without chest pain on exercise it rises in stages."
+     }
+    ]
+   },
+   "ann_39": {
+    "evidence": [
+     {
+      "claims": [
+       "C28"
+      ],
+      "text": "It is made up of the inputs that feed the score directly and three parts: the low-risk profile, the vessels-and-cholesterol gate and blood pressure with cholesterol (each explained below); the score is their sum, which was checked on all 242 training patients."
+     },
+     {
+      "claims": [
+       "C10",
+       "C24"
+      ],
+      "text": "Changing one input at a time across the whole model, typical angina takes a typical patient's predicted risk from about 29% to about 2%, and a flat rather than upsloping ST segment takes it to about 87%."
+     },
+     {
+      "claims": [
+       "C15",
+       "C09"
+      ],
+      "text": "Being a woman lowers it from about 29% to about 9% through the sum alone, and to about 1% once the two parts below are included."
+     }
+    ],
+    "hypothesis": [
+     {
+      "claims": [
+       "C28",
+       "C10",
+       "C04",
+       "C14"
+      ],
+      "text": "The model adds up its inputs into one score: chest pain type, the ST segment, the thallium scan, vessels, cholesterol, ST depression, blood pressure, age and heart rate each move the predicted risk on their own, and two parts change that sum for particular groups of patients."
+     }
+    ]
+   }
+  },
   "stale": false,
   "status": "draft for review",
-  "structure": "blocks-v4",
+  "structure": "readdown-v5",
   "summary": [
    {
     "claims": [
-     "C30",
-     "C40"
+     "C28",
+     "C35",
+     "C46"
     ],
-    "text": "For a typical patient (a 56-year-old man with no chest pain symptoms and median test results) the model predicts a risk of heart disease of about 29%; most of its inputs add up independently, and two parts change that sum for particular groups of patients."
+    "text": "For a typical patient (a 56-year-old man with no chest pain symptoms and median test results) the model predicts a risk of heart disease of about 29%; it adds up most of its inputs independently, and two parts change that sum for particular groups of patients."
    },
    {
     "claims": [
-     "C08",
      "C10",
-     "C16",
-     "C03",
-     "C12"
-    ],
-    "text": "These add up independently: compared with no chest pain symptoms, typical angina lowers the predicted risk from about 29% to about 2%, non-anginal chest pain to about 4% and atypical angina to about 18%; a flat rather than upsloping ST segment raises it to about 87%, and a reversible defect on the thallium scan to about 52%."
-   },
-   {
-    "claims": [
-     "C06",
-     "C14",
-     "C17",
+     "C12",
+     "C19",
+     "C18",
      "C15"
     ],
-    "text": "More ST depression on exercise (from about 23% at 0 mm to about 52% at 2.8 mm), higher resting blood pressure (from about 22% at 110 mm Hg to about 40% at 155 mm Hg) and older age (from about 27% at 42 to about 32% at 66 years) raise it steadily, and a higher maximum heart rate lowers it steadily, from about 38% at 118 to about 24% at 175 beats per minute."
+    "label": "Lowering the risk",
+    "text": "These add up independently, and these lower the risk: compared with no chest pain symptoms, typical angina takes a typical patient's predicted risk from about 29% to about 2%, non-anginal chest pain to about 4% and atypical angina to about 18%; a higher maximum heart rate lowers it steadily, from about 38% at 118 to about 24% at 175 beats per minute; and being a woman lowers it, through this sum alone, from about 29% to about 9% (being a woman also acts through the low-risk profile, below)."
    },
    {
     "claims": [
-     "C07",
-     "C09",
-     "C02",
-     "C05"
-    ],
-    "text": "Sex, fasting blood sugar, the number of vessels coloured by fluoroscopy and cholesterol also enter this sum, and act through the two parts below as well: across the whole model, being a woman lowers a typical patient's risk from about 29% to about 1% and fasting blood sugar above 120 mg/dL to about 3%; each extra vessel adds about the same (from about 29% at 0 to about 98% at 2 vessels), but for patients without chest pain on exercise the rise levels off; higher cholesterol raises it in an uneven way, from about 14% at 193 mg/dL to about 50% at 308 mg/dL."
-   },
-   {
-    "claims": [
-     "C11",
      "C04",
-     "C01",
-     "C13"
+     "C14",
+     "C08",
+     "C17",
+     "C20"
     ],
+    "label": "Raising the risk",
+    "text": "A flat rather than upsloping ST segment raises the risk to about 87% and a reversible defect on the thallium scan to about 52%; more ST depression on exercise (about 23% at 0 mm to about 52% at 2.8 mm), higher resting blood pressure (about 22% at 110 mm Hg to about 40% at 155 mm Hg) and older age (about 27% at 42 to about 32% at 66 years) raise it steadily."
+   },
+   {
+    "claims": [
+     "C03",
+     "C07"
+    ],
+    "text": "Through this sum alone, each extra vessel coloured by fluoroscopy adds about the same (from about 29% at 0 to about 98% at 2 vessels), and higher cholesterol raises the risk steadily (from about 18% at 193 mg/dL to about 52% at 308 mg/dL); both also act through the vessels-and-cholesterol gate (below)."
+   },
+   {
+    "claims": [
+     "C13",
+     "C05",
+     "C01",
+     "C16"
+    ],
+    "label": "Rare results",
     "text": "Some rarer results also count strongly (the model has little data on this, n = 2 to 17): a downsloping ST segment raises the risk to about 55%, an ST-T wave abnormality on the resting ECG to about 77%, a thallium result coded 4 to about 99%, and a fixed defect on the thallium scan lowers it to about 11%."
    },
    {
     "claims": [
-     "C30"
+     "C35"
     ],
     "text": "This part combines sex, fasting blood sugar and chest pain on exercise, and acts on 165 of 242 training patients, nearly all of them without chest pain on exercise."
    },
    {
     "claims": [
-     "C29"
+     "C34"
     ],
     "text": "Through it, being a woman lowers the predicted risk more when exercise does not bring on chest pain: for a typical patient it falls from about 29% to about 1% without chest pain on exercise, against about 33% to about 10% with it."
    },
    {
     "claims": [
-     "C28"
+     "C33"
     ],
     "text": "Fasting blood sugar above 120 mg/dL works the same way: it falls from about 29% to about 3% without chest pain on exercise, but stays at about 32% to 33% with it."
    },
    {
     "claims": [
-     "C40"
+     "C47",
+     "C55",
+     "C46"
     ],
-    "text": "This part combines the number of vessels coloured, cholesterol and a second copy of the low-risk profile, and acts on 118 of 242 training patients, 23 of whom had heart disease."
+    "text": "This part combines the number of vessels coloured, cholesterol, a high-cholesterol step and a second copy of the low-risk profile, not as a simple sum, and acts on 118 of 242 training patients, 23 of whom had heart disease."
    },
    {
     "claims": [
-     "C38",
-     "C33"
+     "C44",
+     "C39"
     ],
     "text": "Through it, cholesterol raises the predicted risk steadily up to about 258 mg/dL (between 147 and 325 mg/dL for different patients), then no further, for patients with fasting blood sugar of 120 mg/dL or less (for a typical such patient from about 15% to about 29%), but for women and patients without chest pain on exercise it rises in stages."
    },
    {
     "claims": [
-     "C36"
+     "C42"
     ],
     "text": "More vessels raise it in an uneven way here, and more so when fasting blood sugar is above 120 mg/dL: from about 3% to about 92%, against about 29% to about 98% otherwise."
    }
@@ -11383,30 +12446,31 @@
    "ann_34": "Low-risk profile",
    "ann_36": "High-cholesterol step",
    "ann_37": "Blood pressure with cholesterol",
-   "ann_38": "Vessels and cholesterol gate"
+   "ann_38": "Vessels and cholesterol gate",
+   "ann_39": "The whole model"
   },
   "verified_by": null,
   "worth_checking": [
    {
     "claims": [
-     "C09",
-     "C28"
+     "C11",
+     "C33"
     ],
     "flag": "high fasting blood sugar lowers risk",
     "text": "Worth checking: the model treats fasting blood sugar above 120 mg/dL as lowering the risk of heart disease (for a typical patient from about 29% to about 3%)."
    },
    {
     "claims": [
-     "C08",
      "C10",
-     "C16"
+     "C12",
+     "C19"
     ],
     "flag": "typical angina lowest risk",
     "text": "Worth checking: patients with typical angina get the lowest predicted risk of all chest pain types, below patients with no chest pain symptoms."
    },
    {
     "claims": [
-     "C13"
+     "C16"
     ],
     "flag": "fixed thallium defect lowers risk",
     "text": "Worth checking: the model treats a fixed defect on the thallium scan as lowering the risk compared with a normal scan, from only 15 training patients."
@@ -11420,15 +12484,15 @@
    },
    {
     "claims": [
-     "C45"
+     "C53"
     ],
     "flag": "high-cholesterol part acts on few patients, mostly without disease",
     "text": "Worth checking: of the 9 patients in whom the high-cholesterol part adds risk, only 1 had heart disease."
    },
    {
     "claims": [
-     "C42",
-     "C05"
+     "C49",
+     "C06"
     ],
     "flag": "cholesterol lowers risk through one part",
     "text": "Worth checking: through one part, higher cholesterol lowers the predicted risk, offsetting part of its overall rise."
@@ -11452,6 +12516,7 @@
     "restbp_chol_interaction",
     "risk_aggregation_gate"
    ],
+   "closed_form": null,
    "contribution_sd": null,
    "direct_variable_keys": [
     "age",
@@ -11510,6 +12575,13 @@
   },
   {
    "children": [],
+   "closed_form": {
+    "latex": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 1.11 x_{exang:0_a} \\\\\n&\\quad - 0.509 x_{fbs:0_b_c} \\\\\n&\\quad + 0.824 x_{sex:0_b_c} \\\\\n&\\quad + 0.0879 \\bigr)\n\\end{aligned}",
+    "n": 242,
+    "numeric_max_abs_err": 4.44089e-16,
+    "output_scale": 3.30238,
+    "rounding": "weights and biases at 3 significant figures"
+   },
    "contribution_sd": 0.847097,
    "direct_variable_keys": [
     "sex",
@@ -11543,6 +12615,7 @@
     "benign_profile_gate_534path",
     "chol_threshold"
    ],
+   "closed_form": null,
    "contribution_sd": 0.63819,
    "direct_variable_keys": [
     "chol",
@@ -11576,6 +12649,13 @@
   },
   {
    "children": [],
+   "closed_form": {
+    "latex": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( - 0.529 x_{chol_c} \\\\\n&\\quad + 0.931 \\operatorname{relu}{\\left(0.978 x_{trestbps} + 3.4 \\right)} \\\\\n&\\quad -0.754 \\bigr)\n\\end{aligned}",
+    "n": 242,
+    "numeric_max_abs_err": 8.88178e-16,
+    "output_scale": 5.34087,
+    "rounding": "weights and biases at 3 significant figures"
+   },
    "contribution_sd": 0.362707,
    "direct_variable_keys": [
     "trestbps",
@@ -11603,6 +12683,13 @@
   },
   {
    "children": [],
+   "closed_form": {
+    "latex": "y_0 = \\operatorname{relu}{\\left(1.05 x_{chol_d} - 0.864 \\right)}",
+    "n": 242,
+    "numeric_max_abs_err": 0.0,
+    "output_scale": 2.88049,
+    "rounding": "weights and biases at 3 significant figures"
+   },
    "contribution_sd": 0.0547298,
    "direct_variable_keys": [
     "chol"
@@ -11627,6 +12714,7 @@
   },
   {
    "children": [],
+   "closed_form": null,
    "contribution_sd": 0.499035,
    "direct_variable_keys": [
     "sex",
@@ -11719,7 +12807,7 @@
   "kind": "binary",
   "label": "predicted risk"
  },
- "schema_version": "4.0.0",
+ "schema_version": "5.0.0",
  "settings": {
   "bootstrap_B": 1000,
   "confidence_rules": {
@@ -11779,40 +12867,40 @@
    "ann_34": [
     {
      "claims": [
-      "C30"
+      "C35"
      ],
      "text": "This part acts on 165 of 242 training patients (68%); nearly all of them are patients without chest pain on exercise."
     },
     {
      "claims": [
-      "C30"
+      "C35"
      ],
      "text": "For a typical patient it acts on, it slightly lowers the predicted risk of heart disease from about 3% without this part to about 3% with it (on the training data only)."
     },
     {
      "claims": [
-      "C30"
+      "C35"
      ],
      "text": "In the training data, 51 of these 165 patients had heart disease."
     },
     {
      "claims": [
-      "C27"
+      "C32"
      ],
      "text": "For a typical patient, going from male to female moves the predicted risk of heart disease from about 3% to below 1% if fasting blood sugar is above 120 mg/dL, and from about 29% to about 1% if fasting blood sugar is 120 mg/dL or less (on the training data only)."
     },
     {
      "claims": [
-      "C28",
-      "C24",
-      "C25",
-      "C29"
+      "C33",
+      "C29",
+      "C30",
+      "C34"
      ],
      "text": "Other effects: fasting blood sugar depending on exercise-induced angina lowers it; female (rather than male) lowers it; fasting blood sugar above 120 mg/dL (rather than fasting blood sugar of 120 mg/dL or less) lowers it; sex depending on exercise-induced angina lowers it (on the training data only)."
     },
     {
      "claims": [
-      "C26"
+      "C31"
      ],
      "text": "Smaller effects, each changing the predicted value only slightly: chest pain brought on by exercise (rather than no chest pain on exercise) raises it (on the training data only)."
     }
@@ -11821,31 +12909,31 @@
    "ann_36": [
     {
      "claims": [
-      "C45"
+      "C53"
      ],
      "text": "This part acts on 9 of 242 training patients (4%)."
     },
     {
      "claims": [
-      "C45"
+      "C53"
      ],
      "text": "For a typical patient it acts on, it slightly raises the predicted risk of heart disease from below 1% without this part to below 1% with it (on the training data only). The model has little data on this: only 9 training patients (patients the part acts on)."
     },
     {
      "claims": [
-      "C45"
+      "C53"
      ],
      "text": "In the training data, 1 of these 9 patients had heart disease."
     },
     {
      "claims": [
-      "C44"
+      "C52"
      ],
      "text": "Through this part, serum cholesterol only slightly adds to the predicted risk of heart disease once it rises above about 285 mg/dL (7.4 mmol/L): for a typical such patient, going from 126 mg/dL (3.3 mmol/L) to 326 mg/dL (8.4 mmol/L) moves it from about 2% to about 3%; across patients the change happens in an uneven way (on the training data only). The model has little data on this: only 9 training patients (of them, patients already past their fold)."
     },
     {
      "claims": [
-      "C43"
+      "C51"
      ],
      "text": "Through this part, the model treats a higher serum cholesterol as slightly raising the predicted risk of heart disease in an uneven way: for a typical patient, it goes from about 29% at 193 mg/dL (5.0 mmol/L) to about 34% at 308 mg/dL (8.0 mmol/L) (on the training data only)."
     }
@@ -11853,13 +12941,13 @@
    "ann_37": [
     {
      "claims": [
-      "C41"
+      "C48"
      ],
      "text": "Through this part, the model treats a higher resting blood pressure as raising the predicted risk of heart disease steadily: for a typical patient, it goes from about 22% at 110 mm Hg to about 40% at 155 mm Hg (on the training data only)."
     },
     {
      "claims": [
-      "C42"
+      "C49"
      ],
      "text": "Through this part, the model treats a higher serum cholesterol as lowering the predicted risk of heart disease in an uneven way: for a typical patient, it goes from about 34% at 193 mg/dL (5.0 mmol/L) to about 24% at 308 mg/dL (8.0 mmol/L) (on the training data only)."
     }
@@ -11867,43 +12955,43 @@
    "ann_38": [
     {
      "claims": [
-      "C40"
+      "C46"
      ],
      "text": "This part acts on 118 of 242 training patients (49%)."
     },
     {
      "claims": [
-      "C40"
+      "C46"
      ],
      "text": "For a typical patient it acts on, it slightly lowers the predicted risk of heart disease from about 3% without this part to about 2% with it (on the training data only)."
     },
     {
      "claims": [
-      "C40"
+      "C46"
      ],
      "text": "In the training data, 23 of these 118 patients had heart disease."
     },
     {
      "claims": [
-      "C36"
+      "C42"
      ],
      "text": "A higher number of vessels coloured by fluoroscopy raises the predicted risk of heart disease, and even more so if fasting blood sugar is above 120 mg/dL (in an uneven way for patients with fasting blood sugar above 120 mg/dL): for a typical patient, number of vessels coloured by fluoroscopy going from 0 vessels to 2 vessels moves the predicted risk of heart disease from about 3% to about 92% if fasting blood sugar is above 120 mg/dL, and from about 29% to about 98% if fasting blood sugar is 120 mg/dL or less (on the training data only)."
     },
     {
      "claims": [
-      "C31",
-      "C32",
+      "C37",
       "C38",
-      "C33",
-      "C39"
+      "C44",
+      "C39",
+      "C45"
      ],
      "text": "Other effects: female (rather than male) lowers it; fasting blood sugar above 120 mg/dL (rather than fasting blood sugar of 120 mg/dL or less) lowers it; serum cholesterol past about 258 mg/dL (6.7 mmol/L) raises it steadily up to about 258 mg/dL (6.7 mmol/L) (between 147 and 325 mg/dL for different patients), then no further for most patients, but for women and patients without chest pain on exercise it moves in stages; a higher serum cholesterol raises it steadily up to about 258 mg/dL (6.7 mmol/L) (between 147 and 325 mg/dL for different patients), then no further for most patients, but for women and patients without chest pain on exercise it moves in stages; number of vessels coloured by fluoroscopy past about 1 vessels raises it in a step, mainly the first vessel (on the training data only)."
     },
     {
      "claims": [
-      "C34",
-      "C37",
-      "C35"
+      "C40",
+      "C43",
+      "C41"
      ],
      "text": "Smaller effects, each changing the predicted value only slightly: a higher number of vessels coloured by fluoroscopy raises it in a step, mainly the first vessel; number of vessels coloured by fluoroscopy depending on sex raises it in an uneven way; chest pain brought on by exercise (rather than no chest pain on exercise) raises it (on the training data only)."
     }
@@ -11925,25 +13013,25 @@
      "claims": [
       "C03"
      ],
-     "text": "For a typical patient, the model gives a higher predicted risk of heart disease if the ST segment is flat at peak exercise (about 87%) than if the ST segment slopes up at peak exercise (about 29%) (on the training data only)."
+     "text": "The model treats a higher number of vessels coloured by fluoroscopy as raising the predicted risk of heart disease steadily, each extra vessel adding about the same: for a typical patient, it goes from about 29% at 0 vessels to about 98% at 2 vessels, flattening out near the top because the predicted risk cannot go much higher (on the training data only)."
     },
     {
      "claims": [
       "C04"
      ],
-     "text": "For a typical patient, the model gives a higher predicted risk of heart disease if the resting ECG shows an ST-T wave abnormality (about 77%) than if resting ECG is something other than an ST-T wave abnormality on the resting ECG (about 29%) (on the training data only). The model has little data on this: only 2 training patients (an ST-T wave abnormality on the resting ECG)."
+     "text": "For a typical patient, the model gives a higher predicted risk of heart disease if the ST segment is flat at peak exercise (about 87%) than if the ST segment slopes up at peak exercise (about 29%) (on the training data only)."
     },
     {
      "claims": [
       "C05"
      ],
-     "text": "The model treats a higher serum cholesterol as raising the predicted risk of heart disease in an uneven way: for a typical patient, it goes from about 14% at 193 mg/dL (5.0 mmol/L) to about 50% at 308 mg/dL (8.0 mmol/L) (on the training data only)."
+     "text": "For a typical patient, the model gives a higher predicted risk of heart disease if the resting ECG shows an ST-T wave abnormality (about 77%) than if resting ECG is something other than an ST-T wave abnormality on the resting ECG (about 29%) (on the training data only). The model has little data on this: only 2 training patients (an ST-T wave abnormality on the resting ECG)."
     },
     {
      "claims": [
       "C06"
      ],
-     "text": "The model treats a higher ST depression on exercise as raising the predicted risk of heart disease steadily: for a typical patient, it goes from about 23% at 0.0 mm to about 52% at 2.8 mm (on the training data only)."
+     "text": "The model treats a higher serum cholesterol as raising the predicted risk of heart disease in an uneven way: for a typical patient, it goes from about 14% at 193 mg/dL (5.0 mmol/L) to about 50% at 308 mg/dL (8.0 mmol/L) (on the training data only)."
     },
     {
      "claims": [
@@ -11956,14 +13044,15 @@
       "C13",
       "C14"
      ],
-     "text": "Other effects: female (rather than male) lowers it; typical angina (rather than no chest pain (asymptomatic)) lowers it; fasting blood sugar above 120 mg/dL (rather than fasting blood sugar of 120 mg/dL or less) lowers it; non-anginal chest pain (rather than no chest pain (asymptomatic)) lowers it; a downsloping ST segment (rather than an upsloping ST segment) raises it; a reversible defect on the thallium scan (rather than a normal thallium scan) raises it; a fixed defect on the thallium scan (rather than a normal thallium scan) lowers it; a higher resting blood pressure raises it steadily; and 2 still smaller effects listed in the evidence table (on the training data only). The model has little data on some of these: only 17 training patients (a downsloping ST segment) and 15 training patients (a fixed defect on the thallium scan)."
+     "text": "Other effects: a higher serum cholesterol raises it steadily; a higher ST depression on exercise raises it steadily; female (rather than male) lowers it; typical angina (rather than no chest pain (asymptomatic)) lowers it; fasting blood sugar above 120 mg/dL (rather than fasting blood sugar of 120 mg/dL or less) lowers it; non-anginal chest pain (rather than no chest pain (asymptomatic)) lowers it; a downsloping ST segment (rather than an upsloping ST segment) raises it; a reversible defect on the thallium scan (rather than a normal thallium scan) raises it; and 5 still smaller effects listed in the evidence table (on the training data only). The model has little data on some of these: only 17 training patients (a downsloping ST segment)."
     },
     {
      "claims": [
-      "C17",
-      "C18"
+      "C20",
+      "C21",
+      "C22"
      ],
-     "text": "Smaller effects, each changing the predicted value only slightly: a higher age raises it steadily; chest pain brought on by exercise (rather than no chest pain on exercise) raises it (on the training data only)."
+     "text": "Smaller effects, each changing the predicted value only slightly: a higher age raises it steadily; chest pain brought on by exercise (rather than no chest pain on exercise) raises it; fasting blood sugar above 120 mg/dL (rather than fasting blood sugar of 120 mg/dL or less) lowers it (on the training data only)."
     }
    ]
   },
@@ -11972,7 +13061,7 @@
    "ann_36": "This part acts on 9 of 242 training patients (4%). For a typical patient it acts on, it slightly raises the predicted risk of heart disease from below 1% without this part to below 1% with it (on the training data only). The model has little data on this: only 9 training patients (patients the part acts on). In the training data, 1 of these 9 patients had heart disease. Through this part, serum cholesterol only slightly adds to the predicted risk of heart disease once it rises above about 285 mg/dL (7.4 mmol/L): for a typical such patient, going from 126 mg/dL (3.3 mmol/L) to 326 mg/dL (8.4 mmol/L) moves it from about 2% to about 3%; across patients the change happens in an uneven way (on the training data only). The model has little data on this: only 9 training patients (of them, patients already past their fold). Through this part, the model treats a higher serum cholesterol as slightly raising the predicted risk of heart disease in an uneven way: for a typical patient, it goes from about 29% at 193 mg/dL (5.0 mmol/L) to about 34% at 308 mg/dL (8.0 mmol/L) (on the training data only).",
    "ann_37": "Through this part, the model treats a higher resting blood pressure as raising the predicted risk of heart disease steadily: for a typical patient, it goes from about 22% at 110 mm Hg to about 40% at 155 mm Hg (on the training data only). Through this part, the model treats a higher serum cholesterol as lowering the predicted risk of heart disease in an uneven way: for a typical patient, it goes from about 34% at 193 mg/dL (5.0 mmol/L) to about 24% at 308 mg/dL (8.0 mmol/L) (on the training data only).",
    "ann_38": "This part acts on 118 of 242 training patients (49%). For a typical patient it acts on, it slightly lowers the predicted risk of heart disease from about 3% without this part to about 2% with it (on the training data only). In the training data, 23 of these 118 patients had heart disease. A higher number of vessels coloured by fluoroscopy raises the predicted risk of heart disease, and even more so if fasting blood sugar is above 120 mg/dL (in an uneven way for patients with fasting blood sugar above 120 mg/dL): for a typical patient, number of vessels coloured by fluoroscopy going from 0 vessels to 2 vessels moves the predicted risk of heart disease from about 3% to about 92% if fasting blood sugar is above 120 mg/dL, and from about 29% to about 98% if fasting blood sugar is 120 mg/dL or less (on the training data only). Other effects: female (rather than male) lowers it; fasting blood sugar above 120 mg/dL (rather than fasting blood sugar of 120 mg/dL or less) lowers it; serum cholesterol past about 258 mg/dL (6.7 mmol/L) raises it steadily up to about 258 mg/dL (6.7 mmol/L) (between 147 and 325 mg/dL for different patients), then no further for most patients, but for women and patients without chest pain on exercise it moves in stages; a higher serum cholesterol raises it steadily up to about 258 mg/dL (6.7 mmol/L) (between 147 and 325 mg/dL for different patients), then no further for most patients, but for women and patients without chest pain on exercise it moves in stages; number of vessels coloured by fluoroscopy past about 1 vessels raises it in a step, mainly the first vessel (on the training data only). Smaller effects, each changing the predicted value only slightly: a higher number of vessels coloured by fluoroscopy raises it in a step, mainly the first vessel; number of vessels coloured by fluoroscopy depending on sex raises it in an uneven way; chest pain brought on by exercise (rather than no chest pain on exercise) raises it (on the training data only).",
-   "ann_39": "For a typical patient, the model gives a higher predicted risk of heart disease if thallium stress test result coded 4 (meaning not recorded) applies (about 99%) than if the thallium scan is normal (about 29%) (on the training data only). The model has little data on this: only 2 training patients (thallium stress test result coded 4 (meaning not recorded)). The model treats a higher number of vessels coloured by fluoroscopy as raising the predicted risk of heart disease steadily, each extra vessel adding about the same for most patients, but for patients without chest pain on exercise it levels off: for a typical patient, it goes from about 29% at 0 vessels to about 98% at 2 vessels, flattening out near the top because the predicted risk cannot go much higher (on the training data only). For a typical patient, the model gives a higher predicted risk of heart disease if the ST segment is flat at peak exercise (about 87%) than if the ST segment slopes up at peak exercise (about 29%) (on the training data only). For a typical patient, the model gives a higher predicted risk of heart disease if the resting ECG shows an ST-T wave abnormality (about 77%) than if resting ECG is something other than an ST-T wave abnormality on the resting ECG (about 29%) (on the training data only). The model has little data on this: only 2 training patients (an ST-T wave abnormality on the resting ECG). The model treats a higher serum cholesterol as raising the predicted risk of heart disease in an uneven way: for a typical patient, it goes from about 14% at 193 mg/dL (5.0 mmol/L) to about 50% at 308 mg/dL (8.0 mmol/L) (on the training data only). The model treats a higher ST depression on exercise as raising the predicted risk of heart disease steadily: for a typical patient, it goes from about 23% at 0.0 mm to about 52% at 2.8 mm (on the training data only). Other effects: female (rather than male) lowers it; typical angina (rather than no chest pain (asymptomatic)) lowers it; fasting blood sugar above 120 mg/dL (rather than fasting blood sugar of 120 mg/dL or less) lowers it; non-anginal chest pain (rather than no chest pain (asymptomatic)) lowers it; a downsloping ST segment (rather than an upsloping ST segment) raises it; a reversible defect on the thallium scan (rather than a normal thallium scan) raises it; a fixed defect on the thallium scan (rather than a normal thallium scan) lowers it; a higher resting blood pressure raises it steadily; and 2 still smaller effects listed in the evidence table (on the training data only). The model has little data on some of these: only 17 training patients (a downsloping ST segment) and 15 training patients (a fixed defect on the thallium scan). Smaller effects, each changing the predicted value only slightly: a higher age raises it steadily; chest pain brought on by exercise (rather than no chest pain on exercise) raises it (on the training data only)."
+   "ann_39": "For a typical patient, the model gives a higher predicted risk of heart disease if thallium stress test result coded 4 (meaning not recorded) applies (about 99%) than if the thallium scan is normal (about 29%) (on the training data only). The model has little data on this: only 2 training patients (thallium stress test result coded 4 (meaning not recorded)). The model treats a higher number of vessels coloured by fluoroscopy as raising the predicted risk of heart disease steadily, each extra vessel adding about the same for most patients, but for patients without chest pain on exercise it levels off: for a typical patient, it goes from about 29% at 0 vessels to about 98% at 2 vessels, flattening out near the top because the predicted risk cannot go much higher (on the training data only). The model treats a higher number of vessels coloured by fluoroscopy as raising the predicted risk of heart disease steadily, each extra vessel adding about the same: for a typical patient, it goes from about 29% at 0 vessels to about 98% at 2 vessels, flattening out near the top because the predicted risk cannot go much higher (on the training data only). For a typical patient, the model gives a higher predicted risk of heart disease if the ST segment is flat at peak exercise (about 87%) than if the ST segment slopes up at peak exercise (about 29%) (on the training data only). For a typical patient, the model gives a higher predicted risk of heart disease if the resting ECG shows an ST-T wave abnormality (about 77%) than if resting ECG is something other than an ST-T wave abnormality on the resting ECG (about 29%) (on the training data only). The model has little data on this: only 2 training patients (an ST-T wave abnormality on the resting ECG). The model treats a higher serum cholesterol as raising the predicted risk of heart disease in an uneven way: for a typical patient, it goes from about 14% at 193 mg/dL (5.0 mmol/L) to about 50% at 308 mg/dL (8.0 mmol/L) (on the training data only). Other effects: a higher serum cholesterol raises it steadily; a higher ST depression on exercise raises it steadily; female (rather than male) lowers it; typical angina (rather than no chest pain (asymptomatic)) lowers it; fasting blood sugar above 120 mg/dL (rather than fasting blood sugar of 120 mg/dL or less) lowers it; non-anginal chest pain (rather than no chest pain (asymptomatic)) lowers it; a downsloping ST segment (rather than an upsloping ST segment) raises it; a reversible defect on the thallium scan (rather than a normal thallium scan) raises it; and 5 still smaller effects listed in the evidence table (on the training data only). The model has little data on some of these: only 17 training patients (a downsloping ST segment). Smaller effects, each changing the predicted value only slightly: a higher age raises it steadily; chest pain brought on by exercise (rather than no chest pain on exercise) raises it; fasting blood sugar above 120 mg/dL (rather than fasting blood sugar of 120 mg/dL or less) lowers it (on the training data only)."
   },
   "not_supported": [],
   "renderer": "explaneat.analysis.plain_language_templates (deterministic, no language model)",
@@ -11987,23 +13076,23 @@
     "claims": [
      "C03"
     ],
+    "text": "The model treats a higher number of vessels coloured by fluoroscopy as raising the predicted risk of heart disease steadily, each extra vessel adding about the same: for a typical patient, it goes from about 29% at 0 vessels to about 98% at 2 vessels, flattening out near the top because the predicted risk cannot go much higher (on the training data only)."
+   },
+   {
+    "claims": [
+     "C04"
+    ],
     "text": "For a typical patient, the model gives a higher predicted risk of heart disease if the ST segment is flat at peak exercise (about 87%) than if the ST segment slopes up at peak exercise (about 29%) (on the training data only)."
    },
    {
     "claims": [
-     "C05"
-    ],
-    "text": "The model treats a higher serum cholesterol as raising the predicted risk of heart disease in an uneven way: for a typical patient, it goes from about 14% at 193 mg/dL (5.0 mmol/L) to about 50% at 308 mg/dL (8.0 mmol/L) (on the training data only)."
-   },
-   {
-    "claims": [
-     "C27"
+     "C32"
     ],
     "text": "For a typical patient, going from male to female moves the predicted risk of heart disease from about 3% to below 1% if fasting blood sugar is above 120 mg/dL, and from about 29% to about 1% if fasting blood sugar is 120 mg/dL or less (on the training data only)."
    },
    {
     "claims": [
-     "C28"
+     "C33"
     ],
     "text": "The model gives a clearly lower predicted risk of heart disease if fasting blood sugar is above 120 mg/dL than if fasting blood sugar is 120 mg/dL or less, and even more so if exercise does not bring on chest pain: for a typical patient, going from fasting blood sugar of 120 mg/dL or less to fasting blood sugar above 120 mg/dL moves the predicted risk of heart disease from about 29% to about 3% if exercise does not bring on chest pain, and from about 33% to about 32% if exercise brings on chest pain."
    }
