@@ -546,6 +546,49 @@ def readdown_diagram(layer, pid) -> str:
     return block_diagram(boxes, out, direct=direct)
 
 
+def _num(x, d=2) -> str:
+    return "" if x is None else _f(x, d)
+
+
+def claims_longtable(claims: List[Dict[str, Any]]) -> List[str]:
+    """v5c evidence table: landscape, compact columns, shaded alternate rows, header repeated on
+    every page (longtable + booktabs; xcolor's table option). Review PDF only: the thesis
+    preamble has no longtable or pdflscape."""
+    if not claims:
+        return [r"\noindent{\small No claims for this part.}"]
+    L = [r"\begin{landscape}", r"{\scriptsize\setlength{\tabcolsep}{3pt}\renewcommand{\arraystretch}{1.15}",
+         r"\rowcolors{2}{black!6}{white}",
+         r"\begin{longtable}{@{}l>{\raggedright\arraybackslash}p{0.36\linewidth}>{\raggedright\arraybackslash}"
+         r"p{0.14\linewidth}rrr>{\raggedright\arraybackslash}p{0.06\linewidth}>{\raggedright\arraybackslash}"
+         r"p{0.17\linewidth}c@{}}",
+         r"\toprule\rowcolor{white}",
+         r"ID & What is checked & Risk, typical patient & Log-odds & OR & Range (p10--p90) & n & Test check & OK \\",
+         r"\midrule\endfirsthead",
+         r"\toprule\rowcolor{white}",
+         r"ID & What is checked & Risk, typical patient & Log-odds & OR & Range (p10--p90) & n & Test check & OK \\",
+         r"\midrule\endhead",
+         r"\bottomrule\endfoot"]
+    for c in claims:
+        e = c.get("estimate") or {}
+        rng = e.get("range_across_patients") or [None, None]
+        rng_t = f"{_num(rng[0])} to {_num(rng[1])}" if rng[0] is not None else ""
+        val = e.get("value") if isinstance(e.get("value"), (int, float)) else None
+        what = tex(f"{c['type']}: {claim_brief(c)}")
+        sht = shape_text(c)
+        if sht:
+            what += r" \newline{\itshape shape: " + tex(sht) + "}"
+        tc = c.get("test_check") or {}
+        test = tex(tc.get("status", "")) if tc else "train only"
+        if tc.get("benefit_mean") is not None:
+            ci = tc.get("benefit_ci95") or [None, None]
+            test += tex(f"; AUC gain {_num(tc['benefit_mean'], 3)} [{_num(ci[0], 3)}, {_num(ci[1], 3)}]")
+        ok = VERIFIED_MARK if c.get("verified") else FAILED_MARK
+        L.append(f"{tex(c['id'])} & {what} & {tex(risk_text(c))} & {tex(_num(val))} & "
+                 f"{tex(_num(e.get('odds_ratio')))} & {tex(rng_t)} & {tex(n_text(c))} & {test} & {ok} \\\\")
+    L += [r"\end{longtable}}", r"\end{landscape}"]
+    return L
+
+
 def _technical(layer, pid, titles, claims_by) -> List[str]:
     from .render_tex import math_block
     p = {q["id"]: q for q in layer["parts"]}[pid]
@@ -560,13 +603,18 @@ def _technical(layer, pid, titles, claims_by) -> List[str]:
         L.append(math_block(cf.get("latex"), srepr=cf.get("sympy_srepr")))
     elif p.get("children"):
         L.append(r"\paragraph{Closed form.} Read through its parts (their formulas are in their own sections).")
-    L.append(r"\paragraph{Evidence table.}")
+    if p["role"] == "root" and layer.get("graph"):
+        from .render_structure import split_inputs
+        sp = split_inputs(layer)
+        if sp:
+            L.append(r"\paragraph{Split inputs.} " + tex(
+                "To annotate the parts, the explanation split these inputs into copies (a refactoring step that "
+                "does not change what the model computes); the diagrams draw each input once: "
+                + "; ".join(f"{lab} ({k} copies)" for lab, k in sp) + "."))
+    L.append(r"\paragraph{Evidence table} (next page, landscape).")
     own = claims_by.get(pid, []) + [c for q in layer["parts"] if q.get("duplicate_of") and q.get("parent") == p["name"]
                                     for c in claims_by.get(q["id"], [])]
-    L += claims_table(own, words=False)
-    rv = ((layer.get("drafted") or {}).get("hypothesis_revisions") or {}).get(pid)
-    if rv:
-        L.append(r"\paragraph{Proposed revision of the hypothesis (draft, not applied).} " + tex(rv["proposed"]))
+    L += claims_longtable(own)
     return L
 
 
@@ -579,10 +627,13 @@ def overview_page(layer) -> List[str]:
     unused = meta.get("not_used") or []
     return [r"\clearpage\begin{center}", r"\rotatebox{90}{\begin{minipage}{0.97\textheight}\centering", tk.rstrip(),
             r"\par\smallskip{\scriptsize " + tex(
-                "The whole network, every node and connection, nested by part: shaded clusters are the parts of "
-                "the model, darker boxes the parts inside them; circles are the model's units (inputs named, "
-                "hidden units h1, h2, ...), a rectangle is a part's output, the hexagon the model's output; blue "
-                "connections have a positive weight, red a negative one, thicker is larger.")
+                "The whole network, every node and connection, nested by part. Each input is drawn once, in the "
+                "row along the bottom, with a connection into every part that uses it. Shaded clusters are the "
+                "parts of the model, darker boxes the parts inside them; circles are hidden units (h1, h2, ...); "
+                "each cluster's rectangle is its output (the part's own output unit), and the dashed 'sum' "
+                "stands for the addition the output unit does on the inputs that feed it directly (drawn, not a "
+                "unit of the model); the hexagon is the model's output. Legend: blue = positive weight (raises "
+                "the score), red = negative weight (lowers it), thicker = larger weight; grey = the drawn sum.")
             + (r"\\" + tex("Not used by the model (input columns with no connection; a variable's other columns "
                               "may still carry it): " + ", ".join(unused) + ".") if unused else "") + r"\par}",
             r"\end{minipage}}", r"\end{center}\clearpage"]
@@ -633,8 +684,10 @@ def genome_block_v5(layer: Dict[str, Any]) -> List[str]:
         if layer.get("graph"):
             from .render_structure import section
             L += _diagram(section(layer, pid)[0],
-                          "The nodes of this part and every connection into them (blue: positive weight, red: "
-                          "negative; dashed boxes: connections from or to other parts, drawn in their own sections).")
+                          "The nodes of this part and every connection into them; inputs along the bottom, each "
+                          "drawn once. Legend: blue = positive weight (raises the score), red = negative (lowers "
+                          "it), thicker = larger; dashed boxes: connections from or to other parts (drawn in their "
+                          "own sections); dashed 'sum': the output unit's addition, drawn.")
         sec = rd.get(pid) or {}
         L.append(r"\paragraph{Hypothesis.} " + sentences_tex(sec.get("hypothesis")))
         L.append(r"\paragraph{Evidence.} " + sentences_tex(sec.get("evidence")))
@@ -668,6 +721,14 @@ def genome_block_v5(layer: Dict[str, Any]) -> List[str]:
 def is_v5(layer) -> bool:
     return (layer.get("drafted") or {}).get("structure") == "readdown-v5"
 
+
+CHANGES_V5C = (
+    "v5c: the evidence tables are landscape, compact and shaded by row, with the header repeated on every "
+    "page (longtable and pdflscape, used in this review PDF only; the thesis preamble has neither). In the "
+    "diagrams each input is drawn once, in a shared row along the bottom (the explanation's split copies of an "
+    "input are listed in the technical detail instead), every cluster has one output rectangle with its plain "
+    "name, the inputs that feed the output directly meet in a drawn 'sum', and a one-line legend explains the "
+    "edges.")
 
 CHANGES_V5B = (
     "v5b uses one grouping everywhere, the annotation hierarchy: the summary's diagram is the same picture "
@@ -762,6 +823,8 @@ def render_review(layers: List[Dict[str, Any]], title: str) -> str:
              r"\usepackage[margin=1.8cm]{geometry}",
              PREAMBLE_PACKAGES.rstrip(),
              r"\usetikzlibrary{shapes.geometric}",
+             r"\usepackage{longtable}",
+             r"\usepackage{pdflscape}",
              r"\usepackage{array}",
              r"\usepackage[unicode=true,hidelinks]{hyperref}",
              r"\setcounter{tocdepth}{3}",
@@ -776,6 +839,7 @@ def render_review(layers: List[Dict[str, Any]], title: str) -> str:
              r"predicted risk for a typical patient. The technical record (original hypotheses, formulas, evidence "
              r"tables with the test check, ranges and n) is at the end. The text describes what the model does, not "
              r"the world; whether it is plausible is for the reviewer to judge.",
+             r"\par\medskip\noindent\textbf{What changed in v5c (tables and diagrams).} " + tex(CHANGES_V5C),
              r"\par\medskip\noindent\textbf{What changed in v5b (diagrams).} " + tex(CHANGES_V5B),
              r"\par\medskip\noindent\textbf{What changed in v5 (read down).} " + tex(CHANGES_V5),
              r"\par\medskip\noindent\textbf{v4.} " + tex(CHANGES_V4),
