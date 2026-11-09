@@ -41145,7 +41145,7 @@
      "claims": [
       "C106"
      ],
-     "text": "For the typical customer, the daytime charge adds nothing until about 39.08 US dollars, where this part switches on, then steadily: going from 0 to 46.09 US dollars moves it from about 3% to about 9% (on the training data only)."
+     "text": "For the typical customer, the daytime charge adds nothing until about 39.08 US dollars (between 29.10 US dollars and 40.78 US dollars for different customers), where this part switches on, then steadily: going from 0 to 46.09 US dollars moves it from about 3% to about 9% (on the training data only)."
     },
     {
      "claims": [
@@ -41337,7 +41337,7 @@
      "C106"
     ],
     "original": "Day x eve usage interaction. 103 = relu(1.39 eveCharge + 1.13) feeds a relu chain 5908 -> 10233 into 9165 = relu(0.668 dayCharge + 0.481*10233 - 0.737), read out with weight 2.17: a hinge on (day charge + increasing function of eve charge), i.e. high combined day+eve bill. 103 and 12978 read out negatively, giving a mild negative bowl in eve charge alone. 5000 (via 8513 from 9165, plus customer service calls) is a near-dead tail unit.\n\nEvidence (train, n=4000): Local table (train): mean cascade+direct-eve logit term by (dayCharge z, eveCharge z) bin: D<0 any E: -0.25..-0.71 (churn 5-14%); D 0.5-1 & E>1.5: +1.56 (churn 44%); D 1-1.5 & E 1-1.5: +1.42 (62%); D>1.5 & E 0-0.5: +1.42 (70%); D>1.5 & E>1.5: +3.16 (77%). 9165 is on in 27.4% of rows (churn 26.8% when on vs 9.4% off). Contour is a ramp in roughly 0.668 D + 0.40 E: a combined day+eve bill threshold, which a linear model cannot represent (linear R2 of the term 0.46). 103 is 0 for eveCharge z < -0.82 (20.7% of rows). 5000 is active on only 3 train rows (8-9 customer service calls), so it is a negligible tail. totalDayCharge is identical to totalDayMinutes and totalEveCharge identical to totalEveMinutes after z-scoring. Ablation: logit-term sd 0.611, linear R2 0.459; full AUC 0.8918, replaced by its linear fit 0.8789, mean-ablated 0.8766.",
-    "proposed": "A combined bill: a higher daytime charge raises the chance of leaving, nothing until about 39.08 US dollars, then steadily, and far more when the evening charge is above 17.12 US dollars (about 3% to 12% against 3% to 4%).",
+    "proposed": "A combined bill: a higher daytime charge raises the chance of leaving, nothing until about 39.08 US dollars (between 29.10 US dollars and 40.78 US dollars for different customers), then steadily, and far more when the evening charge is above 17.12 US dollars (about 3% to 12% against 3% to 4%).",
     "status": "proposed (not applied)"
    },
    "ann_83": {
@@ -41399,10 +41399,6 @@
    }
   },
   "protocol": ".claude/skills/plain-language-explanations/SKILL.md",
-  "revalidated": {
-   "from_claims_hash": "6d83f77869d069c1bfa27b38cca76098a7577142e3b642873cab7c76d8e58442",
-   "note": "claims changed after drafting; the draft was re-linted against the new claims and passed"
-  },
   "stale": false,
   "status": "draft for review",
   "summary": [
@@ -41438,7 +41434,7 @@
      "C106",
      "C111"
     ],
-    "text": "Through two parts, the daytime charge adds to it nothing until about 39.08 US dollars, then steadily, and daytime minutes nothing until about 215 minutes, then steadily, each moving the typical customer from about 3% to about 9% across their range (on the training data only)."
+    "text": "Through two parts, the daytime charge adds to it nothing until about 39.08 US dollars (between 29.10 US dollars and 40.78 US dollars for different customers), then steadily, and daytime minutes nothing until about 215 minutes, then steadily, each moving the typical customer from about 3% to about 9% across their range (on the training data only)."
    },
    {
     "claims": [

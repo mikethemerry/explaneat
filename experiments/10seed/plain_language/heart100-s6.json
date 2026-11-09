@@ -13712,7 +13712,7 @@
       "C64",
       "C65"
      ],
-     "text": "Through it, a higher maximum heart rate lowers a typical patient's predicted risk steadily up to about 167 beats per minute, then no further: from about 68% at 118 to about 48% at 175 beats per minute (on the training data only)."
+     "text": "Through it, a higher maximum heart rate lowers a typical patient's predicted risk steadily up to about 167 beats per minute (between 151 beats per minute and 167 beats per minute for different patients), then no further: from about 68% at 118 to about 48% at 175 beats per minute (on the training data only)."
     }
    ],
    "ann_36": [
@@ -13846,7 +13846,7 @@
       "C54",
       "C56"
      ],
-     "text": "A higher maximum heart rate lowers it through this part steadily up to about 167 beats per minute, then no further (for a typical patient, from about 68% at 118 to about 48% at 175 beats per minute; for the typical patient with a fold, from about 68% to about 45%; on the training data only)."
+     "text": "A higher maximum heart rate lowers it through this part steadily up to about 167 beats per minute (between 151 beats per minute and 167 beats per minute for different patients), then no further (for a typical patient, from about 68% at 118 to about 48% at 175 beats per minute; for the typical patient with a fold, from about 68% to about 45%; on the training data only)."
     },
     {
      "claims": [
@@ -13908,7 +13908,7 @@
      "C66"
     ],
     "original": "Supported. low_thalach = ReLU(0.693 - 0.930 thalach): a ramp that grows as maximum heart rate falls, active for 181/242 patients. It only reaches the output through hub 47 (weight 0.46), where it lets angina patients with low max HR open the hub (69% of the 74 angina patients with active ramp, 0 of the 8 without). Evidence: line_plot (train, n=242): correlation -0.973 with thalach; zero above thalach = +0.745 SD; active for 181/242.",
-    "proposed": "A low maximum heart rate ramp: a maximum heart rate below about 167 beats per minute raises the predicted risk, more the lower it is.",
+    "proposed": "A low maximum heart rate ramp: a maximum heart rate below about 167 beats per minute (between 151 beats per minute and 167 beats per minute for different patients) raises the predicted risk, more the lower it is.",
     "status": "proposed (not applied)"
    },
    "ann_36": {
@@ -13958,7 +13958,7 @@
      "C55"
     ],
     "original": "Supported with revision. Serial chain: 5800 = ReLU(1.29 gate1213 - 1.30 cp:2 - 1.22) passes the gate score above threshold except for cp:2 patients; hub 47 = ReLU(1.37 + 1.30 exang:0 - 2.21 n5800 + 0.46 low_thalach + 0.48 thal4_flag + 0.40 thal:4 - 0.74 thal:6). The hub is open for no-angina patients unless they are female (5800 shuts it), and for angina patients only with low max HR. Readout +0.89. Its biggest effect is on cp:2 (atypical angina) patients, where the gate is suppressed, 5800 is off and the hub adds ~+2.2 logit, offsetting a very negative linear score (-4.2 for men, -3.7 for women; observed disease rate 20%/15%). Evidence: sensitivity (train): exang:0 0.78, thal:6 0.44, cp:2 0.31, gate1213 0.31, thal4_flag 0.28, low_thalach 0.27. Train group means of 47: male no-angina 1.75 (n=96; 2.47 with cp:2), male angina 0.44, female no-angina 0.62 (0.13 without cp:2, 2.56 with cp:2), female angina 0.11. Active 144/242. 5800 active 93/242, mean 3.1 for female/no-angina/no-cp:2.",
-    "proposed": "A part acting on 144 patients that raises their predicted risk; through it being a woman, a reversible thallium defect and a maximum heart rate up to about 167 beats per minute lower it, and atypical angina raises it.",
+    "proposed": "A part acting on 144 patients that raises their predicted risk; through it being a woman, a reversible thallium defect and a maximum heart rate up to about 167 beats per minute (between 151 beats per minute and 167 beats per minute for different patients) lower it, and atypical angina raises it.",
     "status": "proposed (not applied)"
    },
    "ann_40": {
@@ -13982,10 +13982,6 @@
    }
   },
   "protocol": ".claude/skills/plain-language-explanations/SKILL.md",
-  "revalidated": {
-   "from_claims_hash": "4d0fcaa08ff3f6f9fd43d6a86934d7a85f0530cbb310e7048d67cd9181f3f2cb",
-   "note": "claims changed after drafting; the draft was re-linted against the new claims and passed"
-  },
   "stale": false,
   "status": "draft for review",
   "summary": [

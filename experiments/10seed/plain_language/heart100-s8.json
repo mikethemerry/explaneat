@@ -22491,7 +22491,7 @@
      "C51"
     ],
     "original": "Supported. Young-and-fit score: 2445 = ReLU(0.827 - 2.13 age - 2.14 age_ramp + 1.51 trestbps + 1.30 exang:0 - 1.12 low_thalach). Age enters twice (slope -2.1/SD below age -0.19 SD, -4.3/SD above), so the hub is effectively shut for older patients; opened by no exercise angina and high max HR, and (clinically odd, reported not interpreted) by higher resting BP. Evidence: sensitivity (train, n=242): age_ramp 0.94, age 0.93, trestbps 0.66, exang:0 0.57, low_thalach 0.49. Active 106/242; mean 2.76 for young (age<mean) no-angina patients (n=82, disease rate 0.17) vs 0.19 old no-angina (0.42), 0.50 young angina (0.57), 0.05 old angina (0.83). Corr with age -0.70, thalach +0.53, exang:0 +0.37, trestbps +0.07 (BP effect is conditional, mostly inside the active region).",
-    "proposed": "A young-and-fit part: age up to about 55 years raises the predicted risk through it, higher resting blood pressure lowers it, and chest pain on exercise raises it.",
+    "proposed": "A young-and-fit part: age up to about 55 years (between 42 years and 60 years for different patients) raises the predicted risk through it, higher resting blood pressure lowers it, and chest pain on exercise raises it.",
     "status": "proposed (not applied)"
    },
    "ann_39": {
@@ -22503,7 +22503,7 @@
      "C65"
     ],
     "original": "Supported. Protective readout of the young-fit hub (never raises risk). 4037 = ReLU(1.077 hub - 1.570): passes the hub only above 1.46 (active 67/242, disease rate 0.19), read out -0.80: the main protective path. 4835 = ReLU(0.944 hub + 0.520), always active (linear copy of the hub, 0.52-7.69), read out -0.04 and inhibits 2116 (-0.61). 2116 = ReLU(-2.38 - 2.65 trestbps - 0.08 sex:1 - 0.61 n4835 - 0.0014 n9183): low-resting-BP flag (active 31/242, all trestbps < -1.1 SD, disease rate 0.32 vs 0.44 overall), read out -0.66, so very low BP is protective unless the hub is high. 9183 = ReLU(sex:1 - 1.08) is dead on the data (sex:1 max 0.72 standardised; 0/242 active) and its 2116 weight is -0.0014. Evidence: sensitivity (train, n=242): 4037<-hub 0.30; 4835<-hub 0.94; 2116<-trestbps 0.34, hub 0.07, sex:1 0.01. Block contribution to logit (incl. hub direct -0.016) mean -0.63, SD 1.08, range -5.73 to -0.02. Group means: young no-angina -1.56, old no-angina -0.11, young angina -0.28, old angina -0.12. Ablations (train AUC, node at mean): full 0.964; 4037 -> 0.952; 2116 -> 0.961; hub -> 0.948.",
-    "proposed": "The readout of the young-and-fit part: age up to about 55 years raises the predicted risk; other inputs change it only slightly.",
+    "proposed": "The readout of the young-and-fit part: age up to about 55 years (between 42 years and 60 years for different patients) raises the predicted risk; other inputs change it only slightly.",
     "status": "proposed (not applied)"
    },
    "ann_40": {

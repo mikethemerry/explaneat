@@ -59920,7 +59920,7 @@
      "claims": [
       "C132"
      ],
-     "text": "Across the usual range, the daytime charge does nothing here until about 33.32 US dollars, then slightly raises it steadily, to about 5% (on the training data only)."
+     "text": "Across the usual range, the daytime charge does nothing here until about 33.32 US dollars (between 33.32 US dollars and 53.72 US dollars for different customers), then slightly raises it steadily, to about 5% (on the training data only)."
     },
     {
      "claims": [
@@ -60356,7 +60356,7 @@
      "C135"
     ],
     "original": "10110 = relu(0.89*dayCharge - 0.95*vmailMessages - 0.801), readout +1.39: high day charge raises churn, but only for customers without voicemail messages. With 0 messages the hinge starts at about 0.29 SD of day charge (about $33.3, 196 minutes); each 13.5 messages pushes the threshold up by about 1 SD, so it is on for 38% of no-voicemail customers and 1% of the others. Mean contribution +1.30 logit at 250-300 day minutes, +2.36 above 300. Note: after z-scoring, totalDayCharge and totalDayMinutes are the same column (charge is an exact multiple of minutes), so the network uses them interchangeably. Evidence (train, 4,000 rows): closed form from get_formula (3 s.f. display matches exit activations to 0.00106); viz summary attached; local mean-ablation of this part's logit contribution gives AUC 0.896 (baseline 0.908), logit SD 0.545; replacing it by its best linear fit on its inputs gives AUC 0.903.",
-    "proposed": "Daytime charge without voice-mail: a higher daytime charge raises the chance of leaving, more so for customers with no voice-mail messages (about 2% to 13% against 4% to 10%), starting above about 33.32 US dollars.",
+    "proposed": "Daytime charge without voice-mail: a higher daytime charge raises the chance of leaving, more so for customers with no voice-mail messages (about 2% to 13% against 4% to 10%), starting above about 33.32 US dollars (between 33.32 US dollars and 53.72 US dollars for different customers).",
     "status": "proposed (not applied)"
    },
    "ann_102": {
@@ -60479,7 +60479,7 @@
      "C116"
     ],
     "original": "Heavy-usage detector with a service-call bump that heavy usage switches off. 7701 = relu(1.23*dayCharge + 1.46*eveMinutes - 0.506); 5611 = relu(0.60*dayCharge + 0.69*7701 + 0.01*state:40 - 0.763) = relu(1.45*dayCharge + 1.01*eveMinutes - 1.11) when 7701 is on; readout +1.30. So churn rises steeply (about 1.9 logit per SD of day charge) once combined day+evening usage is high: 5611 is on for 27% of rows (churn 27% vs 9%); mean contribution +1.69 logit at 250-300 day minutes and +3.48 above 300. 10992 = relu(0.68*custServCalls - 1.48*5611 - 0.585), readout +1.22: extra churn from customer-service calls (on for 73-100% of rows with 3+ calls; +0.63 logit at 4 calls, +1.9 at 6), cancelled when 5611 is large (heavy users who call are not penalised again). The state:40 weight (0.01) is negligible. Note: after z-scoring, totalDayCharge and totalDayMinutes are the same column (charge is an exact multiple of minutes), so the network uses them interchangeably. Evidence (train, 4,000 rows): closed form from get_formula (3 s.f. display matches exit activations to 0.0121); viz summary attached; local mean-ablation of this part's logit contribution gives AUC 0.878 (baseline 0.908), logit SD 0.863; replacing it by its best linear fit on its inputs gives AUC 0.896.",
-    "proposed": "Heavy usage: the daytime charge raises the chance of leaving above about 37.67 US dollars, and much more so with over 201 evening minutes (about 2% to 25% against 2% to 6%); customer-service calls add slightly from 3 calls upwards.",
+    "proposed": "Heavy usage: the daytime charge raises the chance of leaving above about 37.67 US dollars (between 29.61 US dollars and 42.38 US dollars for different customers), and much more so with over 201 evening minutes (about 2% to 25% against 2% to 6%); customer-service calls add slightly from 3 calls upwards.",
     "status": "proposed (not applied)"
    },
    "ann_99": {

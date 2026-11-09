@@ -34215,7 +34215,7 @@
      "claims": [
       "C082"
      ],
-     "text": "For the typical customer, more daytime minutes across the usual range do nothing until about 234 minutes, then slightly raise it steadily, from about 3% to about 6%."
+     "text": "For the typical customer, more daytime minutes across the usual range do nothing until about 234 minutes (between 199 minutes and 263 minutes for different customers), then slightly raise it steadily, from about 3% to about 6%."
     }
    ],
    "ann_83": [
@@ -34401,7 +34401,7 @@
      "C081"
     ],
     "original": "High-usage hinge: 3227 = relu(-1.044 + 0.972*dayMinutes + 0.363*eveMinutes + 0.371*relu(0.177+0.382*eveMinutes)), read out with weight 3.019. Zero for typical usage, rising steeply for the heaviest day (and evening) users, the well-known high-bill churn segment.\n\nEvidence (train, n=4000): High-usage hinge 3.019*relu(-1.044 + 0.972*dayMin + 0.363*eveMin + 0.371*relu(0.177+0.382*eveMin)). Zero for the lower 50% of day minutes; active in 13% of the 6th-7th deciles, 48% of the 9th and 93% of the top decile, where its mean logit term is +2.32 and train churn is 0.49 (vs 0.06-0.17 elsewhere). The inner eve-minutes relu makes the eve slope 0.363 (low eve) or 0.505 (high eve): heavy day+eve users (high total bill) churn. Linear R2 of the term only 0.41. Train AUC: mean-ablation -> 0.860; linearised -> 0.873.",
-    "proposed": "Heavy usage: daytime minutes add to the chance of leaving above about 234 minutes, far more with over 201 evening minutes (about 2% to 21% against 2% to 4%); for the 747 heavy users it acts on, evening minutes matter a lot as well.",
+    "proposed": "Heavy usage: daytime minutes add to the chance of leaving above about 234 minutes (between 199 minutes and 263 minutes for different customers), far more with over 201 evening minutes (about 2% to 21% against 2% to 4%); for the 747 heavy users it acts on, evening minutes matter a lot as well.",
     "status": "proposed (not applied)"
    },
    "ann_83": {

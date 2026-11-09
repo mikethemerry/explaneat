@@ -30374,7 +30374,7 @@
      "C84"
     ],
     "original": "Supported. Three ReLU ramps on max heart rate: 5718 = ReLU(0.908 thalach - 0.10) (active 121/242) feeds young_reserve with weight 1.04; 7245 = ReLU(1.01 thalach - 1.53) (active 10) and 7595 = ReLU(0.994 thalach - 0.868) (active 49) read out -0.015 and -0.078: their joint logit contribution has SD 0.017 and is negligible (AUC unchanged at the mean). Evidence: sensitivity (train, n=242): 5718 0.45, 7595 0.20, 7245 0.04 per unit thalach. Active counts 121/49/10. Readout of 7245+7595 SD 0.017 logit; setting it to its mean leaves train AUC 0.9594.",
-    "proposed": "A maximum heart rate above about 167 beats per minute lowers the predicted risk through this part.",
+    "proposed": "A maximum heart rate above about 167 beats per minute (between 153 beats per minute and 170 beats per minute for different patients) lowers the predicted risk through this part.",
     "status": "proposed (not applied)"
    },
    "ann_39": {
@@ -30432,7 +30432,7 @@
      "C71"
     ],
     "original": "Supported. 3880 = ReLU(1.88 age + 0.76 cp:1 + 0.92 slope:3 + 0.96 ReLU(1.05 chol + 1.08) - 2.06), read out -0.60, lowers the logit for older patients: active for 1/81 youngest-tertile, 16/72 middle, 67/89 oldest (mean 1.52), more so with high cholesterol (3464 is an affine chol relay, active 213/242), typical angina or downsloping ST. Together with young_reserve it makes the age effect an inverted U: mean logit over train when age is set to -2, 0, +0.5, +1, +2 SD is -1.14, 0.59, 0.66, 0.35, -0.92. Clinically counter-directional (older patients with high cholesterol get less risk); the network may be correcting the linear chol weight and the hinge for older patients, but this is not established. Evidence: sensitivity (train, n=242): age 0.65, cp:1 0.26, chol 0.33, slope:3 0.32. Active 84/242. Corr(3880, age) 0.52, corr(3880, chol) 0.34. Readout SD 0.75; at its mean train AUC 0.959 -> 0.950.",
-    "proposed": "A part acting on 84 patients through which older age above about 61 years, typical angina and a downsloping ST segment lower the predicted risk.",
+    "proposed": "A part acting on 84 patients through which older age above about 61 years (between 50 years and 67 years for different patients), typical angina and a downsloping ST segment lower the predicted risk.",
     "status": "proposed (not applied)"
    },
    "ann_44": {

@@ -44629,7 +44629,7 @@
       "C116",
       "C107"
      ],
-     "text": "Through this part itself, a higher daytime charge lowers it steadily up to about 25.73 US dollars, where this part switches off, then no further: for the typical customer, going from 15.49 to 59.76 US dollars moves it from about 11% to about 3%, and across the usual range it slightly lowers it (on the training data only)."
+     "text": "Through this part itself, a higher daytime charge lowers it steadily up to about 25.73 US dollars (between 24.80 US dollars and 31.05 US dollars for different customers), where this part switches off, then no further: for the typical customer, going from 15.49 to 59.76 US dollars moves it from about 11% to about 3%, and across the usual range it slightly lowers it (on the training data only)."
     },
     {
      "claims": [
@@ -44661,7 +44661,7 @@
      "claims": [
       "C103"
      ],
-     "text": "Through this part, more daytime minutes clearly lower the predicted chance of leaving steadily up to about 194 minutes, where this part switches off, then no further: for the typical customer, going from 91 to 352 minutes moves it from about 24% to about 2%."
+     "text": "Through this part, more daytime minutes clearly lower the predicted chance of leaving steadily up to about 194 minutes (between 160 minutes and 235 minutes for different customers), where this part switches off, then no further: for the typical customer, going from 91 to 352 minutes moves it from about 24% to about 2%."
     },
     {
      "claims": [
@@ -44886,7 +44886,7 @@
      "C112"
     ],
     "original": "HYPOTHESIS: 776 = relu(-0.567 + 1.565*relu(0.603*CSC-0.325) - 0.086*relu(0.993*CSC-0.196) - 0.782*day - 0.138*state22 - 0.589*state29) (day = dayCharge = dayMinutes after z-scoring; -0.836*dayCharge + 0.054*dayMinutes), read out with +1.646 on the logit. It is a customer-service-calls x low-day-usage interaction. The CSC term turns on from 3 calls (6258) and grows linearly; the unit is on when day usage is below a threshold that rises with CSC: day z < -0.6 for 0-2 calls (a weak low-usage hinge), < 0.0 at 3 calls, < 0.8 at 4, < 1.6 at 5+. EVIDENCE (train, n=4000): on for 26% of rows with 0-2 calls but 78-100% with 4+ calls; mean logit contribution 0.2 (0-2 calls) -> 1.07 (4 calls) -> 3.6 (6 calls); among 4+ callers with low day usage (z<-0.5) churn is 0.87-1.0 and the unit adds +2.5 to +4.9. Linear fit R2 0.54; linearising it alone drops train AUC 0.905 -> 0.894; restoring it alone onto the fully linearised model gains +0.050 AUC. Sensitivity: dayCharge 0.28, state29 0.20, CSC 0.11. state29 (72 rows) switches the unit off entirely (z=7.4 gives -4.35 pre-activation): for the 28 state-29 rows where it would be on, it removes 0.95 logit on average (1 churner among them). state22 removes up to 0.86. These are rare-category switches. For 0-2 callers with very low day usage (z<-2, 93 rows) the unit and 4496 overshoot the direct day slope, giving a logit 0.7 above the empirical log-odds (mild U-shape artefact).",
-    "proposed": "Service calls with low daytime charge: the part lowers the chance of leaving as the daytime charge rises, steadily up to about 25.73 US dollars, then no further, slightly raises it with calls in an uneven way, and makes the overall daytime-charge effect stronger for customers with 180 daytime minutes or fewer.",
+    "proposed": "Service calls with low daytime charge: the part lowers the chance of leaving as the daytime charge rises, steadily up to about 25.73 US dollars (between 24.80 US dollars and 31.05 US dollars for different customers), then no further, slightly raises it with calls in an uneven way, and makes the overall daytime-charge effect stronger for customers with 180 daytime minutes or fewer.",
     "status": "proposed (not applied)"
    },
    "ann_83": {
@@ -44896,7 +44896,7 @@
      "C097"
     ],
     "original": "HYPOTHESIS: 4496 = relu(-1.966 - 1.843*dayMinutes - 0.859*eveCharge + g(CSC)), read out with +0.809. g is a monotone piecewise-linear function of CSC from the chain 7068 = relu(0.577*CSC-0.148) (on from 2 calls) -> 7561, 11555, 12924, 9009 (always on, so affine in 7068) plus 10362 = relu(0.933*7068-0.505) (on from 4 calls, an extra kink); g = 2.23 at 0-1 calls, 2.30 at 2, then about +0.8 per extra call (3.04 at 3, 3.88 at 4, 5.58 at 6). So 4496 is a below-average day+evening usage hinge (0.26 - 1.84*day - 0.86*eve > 0 at 0-1 calls) whose threshold and height rise with service calls. EVIDENCE (train): on for 52% of 0-call rows, 82% at 4 calls, 100% at 7+; mean logit contribution 0.74 at 0 calls, 1.56 at 4, 3.65 at 6. With the +1.92 direct dayCharge edge it makes the day effect convex: slope 1.92 above average usage, 0.43 below (and about -0.86 below z=-0.73 together with 776). Linear fit R2 0.78; linearising it alone drops train AUC 0.905 -> 0.889; restoring it alone onto the fully linearised model gains +0.056. Sensitivity: dayMinutes 1.09, eveCharge 0.51, CSC 0.29. eveCharge equals eveMinutes after z-scoring (the backbone also uses both).",
-    "proposed": "Low usage with service calls: more daytime minutes lower the chance of leaving steadily up to about 194 minutes, then no further (about 24% to 2% from 91 to 352 minutes), and customer-service calls add to it, in an uneven way, from 2 calls upwards.",
+    "proposed": "Low usage with service calls: more daytime minutes lower the chance of leaving steadily up to about 194 minutes (between 160 minutes and 235 minutes for different customers), then no further (about 24% to 2% from 91 to 352 minutes), and customer-service calls add to it, in an uneven way, from 2 calls upwards.",
     "status": "proposed (not applied)"
    },
    "ann_84": {
@@ -44946,10 +44946,6 @@
    }
   },
   "protocol": ".claude/skills/plain-language-explanations/SKILL.md",
-  "revalidated": {
-   "from_claims_hash": "445664a98dc591eb63f905c7374d284c46819a79c27314b65d49b9b3b31c88ac",
-   "note": "claims changed after drafting; the draft was re-linted against the new claims and passed"
-  },
   "stale": false,
   "status": "draft for review",
   "summary": [
@@ -44973,7 +44969,7 @@
     "claims": [
      "C103"
     ],
-    "text": "Through one part, more daytime minutes clearly lower it steadily up to about 194 minutes, where this part switches off, then no further: for the typical customer, going from 91 to 352 minutes moves it from about 24% to about 2%."
+    "text": "Through one part, more daytime minutes clearly lower it steadily up to about 194 minutes (between 160 minutes and 235 minutes for different customers), where this part switches off, then no further: for the typical customer, going from 91 to 352 minutes moves it from about 24% to about 2%."
    },
    {
     "claims": [

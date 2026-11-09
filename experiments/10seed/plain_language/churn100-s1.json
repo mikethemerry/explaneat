@@ -32452,7 +32452,7 @@
      "claims": [
       "C60"
      ],
-     "text": "Across the usual range, more daytime minutes do nothing until about 218 minutes, then slightly raise it steadily, to about 4% (on the training data only)."
+     "text": "Across the usual range, more daytime minutes do nothing until about 218 minutes (between 171 minutes and 265 minutes for different customers), then slightly raise it steadily, to about 4% (on the training data only)."
     },
     {
      "claims": [
@@ -32659,7 +32659,7 @@
      "C67"
     ],
     "original": "HYPOTHESIS: two ReLU hinges on daytime usage that raise churn for heavy day users, mainly those without a voice-mail plan. total_day_minutes and total_day_charge are identical after z-scoring (max diff 5e-4), so the leaf uses both interchangeably. 1254 = relu(0.42*day - 0.73): on for day z > 1.74 (164 rows, churn 62% vs 12%), logit +2.08 per unit (up to +1.26). 3460 = relu(0.86*day - 0.83*voice_mail_plan - 0.85): on for day z > 0.39 without a voice-mail plan, z > 2.5 with one (995 rows, churn 28% vs 9.5%), logit +2.25 per unit (up to +5.3). EVIDENCE (train, n=4000): closed form above (max err 0.002); sensitivity: 3460 driven by voice_mail_plan (0.21) and day (0.21 total). Combined usage logit (with totalChargeChain): no voice-mail plan, day z>1 and eve z>1 -> +5.2 logit, empirical churn 94%; same usage with a voice-mail plan -> churn 10%. Replacing this leaf by its best linear fit costs 0.008 train AUC; mean-ablating 3460 costs 0.016.",
-    "proposed": "Heavy daytime usage slightly raises the chance of leaving, only for customers without a voice-mail plan, starting at about 218 minutes.",
+    "proposed": "Heavy daytime usage slightly raises the chance of leaving, only for customers without a voice-mail plan, starting at about 218 minutes (between 171 minutes and 265 minutes for different customers).",
     "status": "proposed (not applied)"
    },
    "ann_80": {
@@ -32670,7 +32670,7 @@
      "C69"
     ],
     "original": "HYPOTHESIS: a hinge chain on the combined day+evening bill. 5604 = relu(1.14*day_charge + 1.26*eve_charge - 0.94) (eve_charge == eve_minutes after z-scoring) is on for 1143 rows (churn 26%); 4045 = relu(0.60*day_charge + 0.73*5604 - 1.02) sharpens it (626 rows, churn 41% vs 9%), logit +1.57 per unit (up to +7.0). 9871 = relu(0.49*5604 - 0.84) is a higher threshold (244 rows, churn 56%) with a small negative logit weight (-0.24) and a tiny relay path. 387 = relu(0.94 - 1.07*vmail_messages + 0.56*intl_minutes + 0.04*state:1 - 0.86*4045) is on for 76% of rows; its -0.36 output weight lowers churn for customers with few voice-mail messages and many international minutes, and a high bill switches it off (removing that negative term). EVIDENCE: closed form (max err 0.008), sensitivity (4045: eve 0.14, day 0.22; 387: vmail messages 0.81, intl minutes 0.42). Linearising the leaf costs 0.008 AUC; jointly with dayUsageHinges 0.025 (the two overlap: both are day-usage hinges).",
-    "proposed": "The combined bill: the daytime charge adds to the chance of leaving above about 41.59 US dollars (about 2% to 8%), and the evening charge adds slightly only when the daytime charge is above 30.69 US dollars; voice-mail and international-minute effects here are slight.",
+    "proposed": "The combined bill: the daytime charge adds to the chance of leaving above about 41.59 US dollars (between 34.11 US dollars and 46.36 US dollars for different customers) (about 2% to 8%), and the evening charge adds slightly only when the daytime charge is above 30.69 US dollars; voice-mail and international-minute effects here are slight.",
     "status": "proposed (not applied)"
    },
    "ann_81": {

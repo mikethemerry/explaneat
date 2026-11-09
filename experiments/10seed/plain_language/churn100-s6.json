@@ -48848,7 +48848,7 @@
      "claims": [
       "C096"
      ],
-     "text": "Through this part, a higher daytime charge clearly raises the predicted chance of leaving: nothing until about 32.38 US dollars, where this part switches on, then steadily; for the typical customer, going from 0 to 46.09 US dollars moves it from about 1% to about 33%."
+     "text": "Through this part, a higher daytime charge clearly raises the predicted chance of leaving: nothing until about 32.38 US dollars (between 27.52 US dollars and 53.01 US dollars for different customers), where this part switches on, then steadily; for the typical customer, going from 0 to 46.09 US dollars moves it from about 1% to about 33%."
     },
     {
      "claims": [
@@ -48868,7 +48868,7 @@
       "C098",
       "C092"
      ],
-     "text": "For a typical customer in Alabama with about 218 daytime minutes, voice-mail messages slightly lower it in an uneven way, only while they stay below about 8 messages, from about 3% to below 1%."
+     "text": "For a typical customer in Alabama with about 218 daytime minutes, voice-mail messages slightly lower it in an uneven way, only while they stay below about 8 messages (between 1 messages and 19 messages for different customers), from about 3% to below 1%."
     },
     {
      "claims": [
@@ -48888,7 +48888,7 @@
      "claims": [
       "C107"
      ],
-     "text": "More daytime minutes slightly raise it: nothing until about 222 minutes, where this part switches on, then steadily; for the typical customer, from about 1% to about 6%."
+     "text": "More daytime minutes slightly raise it: nothing until about 222 minutes (between 173 minutes and 271 minutes for different customers), where this part switches on, then steadily; for the typical customer, from about 1% to about 6%."
     },
     {
      "claims": [
@@ -48914,7 +48914,7 @@
      "claims": [
       "C108"
      ],
-     "text": "For a typical customer in New Hampshire, the evening charge slightly adds to it only once it rises above about 21.83 US dollars, in an uneven way, from about 2% to about 4% (the model has little data on this: 13 customers there are past that point)."
+     "text": "For a typical customer in New Hampshire, the evening charge slightly adds to it only once it rises above about 21.83 US dollars (between 16.31 US dollars and 27.03 US dollars for different customers), in an uneven way, from about 2% to about 4% (the model has little data on this: 13 customers there are past that point)."
     }
    ],
    "ann_89": [
@@ -49083,7 +49083,7 @@
      "C093"
     ],
     "original": "2899 = relu(0.72*dayCharge - 0.88*vmailMessages - 0.25*CSC - 0.55), readout +3.00: high day charge raises churn, but only for customers with no voicemail messages, and a little less for customers who call service (these are covered by the service-call units). For no-voicemail customers the mean contribution is +0.44 logit at 180-200 day minutes, +1.95 at 220-250, +3.41 at 250-300 and +5.44 above 300 (train churn 21%, 55%, 95%); for voicemail users it is about 0 below 300 minutes. Note: after z-scoring, totalDayCharge and totalDayMinutes are identical columns (charge is an exact multiple of minutes), as are totalEveCharge and totalEveMinutes, so the network uses them interchangeably. Evidence (train): closed form and local table attached. Largest single nonlinear source: linearised (R2 0.58) AUC 0.910 -> 0.897; mean-ablated -> 0.848; restored alone onto the linearised model 0.834 -> 0.888. Largely redundant with heavy_day_eve_usage (both are high-day-usage hinges).",
-    "proposed": "Daytime charge without voice-mail: a higher charge raises the chance of leaving, nothing until about 32.38 US dollars, then steadily (about 1% to 33%), but only for customers with no voice-mail messages.",
+    "proposed": "Daytime charge without voice-mail: a higher charge raises the chance of leaving, nothing until about 32.38 US dollars (between 27.52 US dollars and 53.01 US dollars for different customers), then steadily (about 1% to 33%), but only for customers with no voice-mail messages.",
     "status": "proposed (not applied)"
    },
    "ann_88": {
@@ -49093,7 +49093,7 @@
      "C104"
     ],
     "original": "1694 = relu(1.09*dayMinutes + 0.78*eveCharge + 0.02*state:20 - 0.04*state:27 - 0.85), readout +1.60: a hinge on combined day+evening usage. Zero unless day and evening usage are both well above average; mean contribution +0.55 at 200-250 day and 200-250 evening minutes, +2.05 at 250-300/200-250, +4.7 when both are above 250/300 (train churn 63-83% in those cells). The state:20 (+0.37 at most) and state:27 (-0.43 at most) weights are small per-state shifts of the threshold. Note: after z-scoring, totalDayCharge and totalDayMinutes are identical columns (charge is an exact multiple of minutes), as are totalEveCharge and totalEveMinutes, so the network uses them interchangeably. Evidence (train): closed form and day x evening table attached. Linearised (R2 0.50) AUC 0.910 -> 0.902; restored alone onto the linearised model 0.834 -> 0.872. Overlaps with day_charge_no_voicemail.",
-    "proposed": "Heavy daytime and evening usage: acting on 1030 customers, it raises a typical such customer's chance of leaving from about 4% to 13%; daytime minutes add nothing until about 222 minutes, then steadily, and the evening charge counts more above 180 daytime minutes.",
+    "proposed": "Heavy daytime and evening usage: acting on 1030 customers, it raises a typical such customer's chance of leaving from about 4% to 13%; daytime minutes add nothing until about 222 minutes (between 173 minutes and 271 minutes for different customers), then steadily, and the evening charge counts more above 180 daytime minutes.",
     "status": "proposed (not applied)"
    },
    "ann_89": {
@@ -49142,10 +49142,6 @@
    }
   },
   "protocol": ".claude/skills/plain-language-explanations/SKILL.md",
-  "revalidated": {
-   "from_claims_hash": "62b57e8ddc8ae927e55a04f3edfdd94659632dd4c709a7061cbf7da318360bb3",
-   "note": "claims changed after drafting; the draft was re-linted against the new claims and passed"
-  },
   "stale": false,
   "status": "draft for review",
   "summary": [
@@ -49160,7 +49156,7 @@
     "claims": [
      "C096"
     ],
-    "text": "Through one part, a higher daytime charge clearly raises it: nothing until about 32.38 US dollars, where this part switches on, then steadily; for the typical customer, going from 0 to 46.09 US dollars moves it from about 1% to about 33%."
+    "text": "Through one part, a higher daytime charge clearly raises it: nothing until about 32.38 US dollars (between 27.52 US dollars and 53.01 US dollars for different customers), where this part switches on, then steadily; for the typical customer, going from 0 to 46.09 US dollars moves it from about 1% to about 33%."
    },
    {
     "claims": [
@@ -49225,7 +49221,7 @@
      "C096"
     ],
     "flag": "higher day charges lower churn",
-    "text": "Worth checking: through two parts, more daytime minutes or a higher daytime charge slightly lower the predicted chance of leaving, while another part raises it with the daytime charge, nothing until about 32.38 US dollars, then steadily."
+    "text": "Worth checking: through two parts, more daytime minutes or a higher daytime charge slightly lower the predicted chance of leaving, while another part raises it with the daytime charge, nothing until about 32.38 US dollars (between 27.52 US dollars and 53.01 US dollars for different customers), then steadily."
    },
    {
     "claims": [
