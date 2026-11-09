@@ -25,6 +25,50 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 UP, DOWN, MIX = "#D95F02", "#1B9E77", "#7F7F7F"
+WIDTH = 6.4          # inches: every figure, printed at the text width (fonts stay at 8 pt or more)
+PER_LEVEL = 0.22     # inches per category level
+MANY_LEVELS = 6      # a variable with more levels gets its own full-width figure
+
+
+def _level_label(label, var_label="") -> str:
+    """'state other than Alaska, Alabama, ...' -> 'any other state'."""
+    label = str(label or "")
+    if " other than " in label:
+        return "any other " + (var_label or label.split(" other than ")[0])
+    return label
+
+
+def _wrap(text, width=30):
+    import textwrap
+    return "\n".join(textwrap.wrap(str(text), width)) or str(text)
+
+
+def _grid(plt, k, row_h=2.5, per_row=2):
+    """k panels, at most ``per_row`` per row, WIDTH wide."""
+    import math
+    rows = max(1, math.ceil(k / per_row))
+    cols = min(k, per_row)
+    fig, axs = plt.subplots(rows, cols, figsize=(WIDTH, row_h * rows), squeeze=False)
+    flat = [a for r in axs for a in r]
+    for a in flat[k:]:
+        a.set_visible(False)
+    return fig, flat[:k]
+
+
+def labels_overlap(fig) -> bool:
+    """True when any two tick labels of one axis overlap (bounding boxes, drawn figure)."""
+    fig.canvas.draw()
+    r = fig.canvas.get_renderer()
+    for ax in fig.axes:
+        if not ax.get_visible():
+            continue
+        for ticks in (ax.get_yticklabels(), ax.get_xticklabels()):
+            boxes = [t.get_window_extent(renderer=r) for t in ticks if t.get_text() and t.get_visible()]
+            for i in range(len(boxes)):
+                for j in range(i + 1, len(boxes)):
+                    if boxes[i].overlaps(boxes[j]):
+                        return True
+    return False
 INK = "#222222"
 BAND = "#9ECAE1"
 
@@ -33,7 +77,8 @@ def _plt():
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    plt.rcParams.update({"font.size": 8, "axes.spines.top": False, "axes.spines.right": False,
+    plt.rcParams.update({"font.size": 8.5, "xtick.labelsize": 8, "ytick.labelsize": 8, "legend.fontsize": 8,
+                         "axes.labelsize": 8.5, "axes.spines.top": False, "axes.spines.right": False,
                          "axes.linewidth": 0.6, "xtick.major.width": 0.6, "ytick.major.width": 0.6,
                          "font.family": "DejaVu Sans", "pdf.fonttype": 42, "svg.hashsalt": "explaneat"})
     return plt
@@ -73,7 +118,7 @@ def _short_change(c) -> str:
     to = (ch.get("to") or {})
     fr = (ch.get("from") or {})
     if v.get("kind") == "category":
-        lab = to.get("label") or ""
+        lab = _level_label(to.get("label") or "", v.get("label") or "")
         return lab if len(lab) <= 38 else lab[:36] + "..."
     return f"{v.get('short') or v.get('label')}: {fr.get('text', '')} to {to.get('text', '')}"
 
@@ -96,7 +141,7 @@ def effect_overview(layer, base: Path, groups) -> Optional[Dict[str, Any]]:
     labels = [_short_change(c) for c in rows]
     d = [_pc(c["risk"]["to"] - c["risk"]["from"]) for c in rows]
     col = [UP if x > 0 else DOWN for x in d]
-    fig, ax = plt.subplots(figsize=(6.2, 0.26 * len(rows) + 0.8))
+    fig, ax = plt.subplots(figsize=(WIDTH, PER_LEVEL * 1.2 * len(rows) + 0.9))
     ax.barh(range(len(rows)), d, color=col, height=0.6)
     ax.set_yticks(range(len(rows)))
     ax.set_yticklabels(labels)
@@ -120,13 +165,14 @@ def level_plot(layer, base: Path, gbase: str, glabel: str) -> Optional[Dict[str,
     n = [(c.get("groups") or [{}, {}])[-1].get("n") for c in rows]
     small = [bool(c.get("small_n")) or not c.get("verified") for c in rows]
     x = [_pc(c["risk"]["to"]) for c in rows]
-    fig, ax = plt.subplots(figsize=(6.2, 0.2 * len(rows) + 0.8))
+    fig, ax = plt.subplots(figsize=(WIDTH, PER_LEVEL * len(rows) + 0.9))
     for i, (xi, s) in enumerate(zip(x, small)):
         ax.plot([_pc(ref), xi], [i, i], color="#cccccc", lw=0.8)
         ax.plot(xi, i, "o", ms=4, color=MIX if s else (UP if xi > _pc(ref) else DOWN))
     ax.axvline(_pc(ref), color=INK, lw=0.6, ls="--")
     ax.set_yticks(range(len(rows)))
-    ax.set_yticklabels([f"{lab} (n = {k})" for lab, k in zip(labels, n)], fontsize=6.5)
+    ax.set_yticklabels([f"{lab} (n = {k})" for lab, k in zip(labels, n)])
+    ax.set_ylim(-0.6, len(rows) - 0.4)
     ax.set_xlabel(_risk_label(layer) + f" for the typical case, by {glabel} (%)")
     data = {"kind": "levels", "variable": gbase, "claims": [c["id"] for c in rows], "labels": labels, "n": n,
             "risk": [c["risk"]["to"] for c in rows], "reference_risk": ref, "grey": small}
@@ -138,10 +184,9 @@ def response_curves(layer, base: Path, claims) -> Optional[Dict[str, Any]]:
     claims = [c for c in claims if _numeric(c)][:4]
     if not claims:
         return None
-    k = len(claims)
-    fig, axs = plt.subplots(1, k, figsize=(3.1 * k, 2.3), squeeze=False)
+    fig, axs = _grid(plt, len(claims))
     data = {"kind": "response", "panels": []}
-    for ax, c in zip(axs[0], claims):
+    for ax, c in zip(axs, claims):
         sh = c["shape"]
         x = sh["grid"]
         y = [_pc(r) for r in sh["typical_risk"]]
@@ -168,7 +213,7 @@ def response_curves(layer, base: Path, claims) -> Optional[Dict[str, Any]]:
         data["panels"].append({"claim": c["id"], "x": x, "typical_risk": sh["typical_risk"],
                                "band_p10": sh.get("band_risk_p10"), "band_p90": sh.get("band_risk_p90"),
                                "point": at, "spread": (pt or {}).get("spread_p10_p90"), "rug": rug})
-    axs[0][0].legend(frameon=False, fontsize=6.5, loc="best")
+    axs[0].legend(frameon=False, loc="best")
     fig.tight_layout()
     return {**_save(fig, base, data), "data": data}
 
@@ -179,26 +224,24 @@ def interaction_curves(layer, base: Path, claims) -> Optional[Dict[str, Any]]:
               and (c.get("shape") or {}).get("groups")][:3]
     if not claims:
         return None
-    k = len(claims)
-    fig, axs = plt.subplots(1, k, figsize=(3.1 * k, 2.3), squeeze=False)
+    fig, axs = _grid(plt, len(claims))
     data = {"kind": "interaction", "panels": []}
-    for ax, c in zip(axs[0], claims):
+    for ax, c in zip(axs, claims):
         pan = {"claim": c["id"], "groups": []}
         for i, g in enumerate(c["shape"]["groups"]):
             y = [_pc(r) for r in g.get("typical_risk") or []]
             ax.plot(g["grid"], y, lw=2 if i == 0 else 1.2, color=[INK, "#888888", "#bbbbbb"][min(i, 2)],
-                    ls="-" if i == 0 else "--", label=g.get("group"))
+                    ls="-" if i == 0 else "--", label=_wrap(g.get("group"), 34))
             pan["groups"].append({"group": g.get("group"), "x": g["grid"], "typical_risk": g.get("typical_risk")})
         ax.set_xlabel(_var_axis(c))
         ax.set_ylabel(_risk_label(layer) + " (%)")
-        ax.legend(frameon=False, fontsize=6, loc="best")
+        ax.legend(frameon=False, loc="best")
         data["panels"].append(pan)
     fig.tight_layout()
     return {**_save(fig, base, data), "data": data}
 
 
-def category_plot(layer, base: Path, claims) -> Optional[Dict[str, Any]]:
-    plt = _plt()
+def _cat_rows(claims):
     seen, rows = set(), []
     for c in claims:
         sh = c.get("shape") or {}
@@ -206,30 +249,136 @@ def category_plot(layer, base: Path, claims) -> Optional[Dict[str, Any]]:
         if sh.get("class") == "categorical" and b not in seen and c.get("verified") and c["type"] == "direction":
             seen.add(b)
             rows.append(c)
-    rows = rows[:4]
-    if not rows:
-        return None
+    return rows
+
+
+def category_figure(layer, rows, per_row=3):
+    """Dot charts of category levels; height grows with the number of levels."""
+    plt = _plt()
     k = len(rows)
-    fig, axs = plt.subplots(1, k, figsize=(3.0 * k, 1.9), squeeze=False)
+    nmax = max(len(c["shape"].get("levels") or []) for c in rows)
+    per_row = 1 if nmax > MANY_LEVELS else min(per_row, k)
+    import math
+    nrows = math.ceil(k / per_row)
+    h = max(1.6, PER_LEVEL * nmax + 0.9)
+    fig, axs = plt.subplots(nrows, per_row, figsize=(WIDTH, h * nrows), squeeze=False)
+    flat = [x for r in axs for x in r]
+    for x in flat[k:]:
+        x.set_visible(False)
     data = {"kind": "categories", "panels": []}
-    for ax, c in zip(axs[0], rows):
+    for ax, c in zip(flat, rows):
         lv = sorted(c["shape"].get("levels") or [], key=lambda x: x.get("risk") or 0)
         ref = next((x.get("risk") for x in lv if x.get("reference")), None)
-        ys = list(range(len(lv)))
         for i, x in enumerate(lv):
             r = _pc(x.get("risk") or 0)
             col = INK if x.get("reference") else (UP if ref is not None and x.get("risk", 0) > ref else DOWN)
             if (x.get("n_train") or 0) < 20:
                 col = MIX
             ax.plot(r, i, "o", ms=5, color=col)
-        ax.set_yticks(ys)
-        ax.set_yticklabels([f"{(x.get('label') or '')[:30]} (n = {x.get('n_train')})" for x in lv], fontsize=6.5)
+        ax.set_yticks(range(len(lv)))
+        width = 40 if per_row == 1 else 18
+        vlab = ((c.get("variables") or [{}])[0].get("label") or "")
+        ax.set_yticklabels([_wrap(f"{_level_label(x.get('label'), vlab)} (n = {x.get('n_train')})", width) for x in lv])
+        ax.set_ylim(-0.6, len(lv) - 0.4)
         ax.set_xlabel(_risk_label(layer) + " (%)")
         data["panels"].append({"claim": c["id"], "levels": [{"label": x.get("label"), "risk": x.get("risk"),
                                                               "n": x.get("n_train"), "reference": x.get("reference")}
                                                              for x in lv]})
     fig.tight_layout()
+    return fig, data
+
+
+def category_plots(layer, base: Path, claims) -> List[Dict[str, Any]]:
+    """Small variables (at most 6 levels) together, at most 3 per row; each many-level variable
+    in its own full-width figure."""
+    rows = _cat_rows(claims)
+    small = [c for c in rows if len(c["shape"].get("levels") or []) <= MANY_LEVELS]
+    big = [c for c in rows if len(c["shape"].get("levels") or []) > MANY_LEVELS]
+    out = []
+    if small:
+        fig, data = category_figure(layer, small[:6])
+        out.append({**_save(fig, Path(str(base) + "-small"), data), "data": data})
+    for c in big:
+        fig, data = category_figure(layer, [c])
+        out.append({**_save(fig, Path(str(base) + "-" + c["id"]), data), "data": data})
+    return out
+
+
+def partial_plot(layer, base: Path, rec, labels) -> Optional[Dict[str, Any]]:
+    """A selected node's own output (its activation; other inputs at the typical case): a 1D
+    curve with a band across individuals, the hinge and a rug; a heatmap over two interacting
+    inputs with the data overlaid and slices; each incoming non-linear unit's own curve; or, for
+    category inputs, the output for each combination of levels."""
+    plt = _plt()
+    name = labels.get(rec["node"], "unit")
+    ylab = f"{name} output"
+    data = {"kind": "partial", "node": rec["node"], "label": name, "why": rec.get("why")}
+    if rec.get("map"):
+        mp = rec["map"]
+        units = rec.get("units") or []
+        k = 2 + len(units)
+        fig, axs = _grid(plt, k, row_h=2.6)
+        ax = axs[0]
+        cs = ax.contourf(mp["x"], mp["y"], mp["z"], levels=12, cmap="Greys")
+        ax.contour(mp["x"], mp["y"], mp["z"], levels=[1e-9], colors=[UP], linewidths=1.2)
+        ax.plot(mp["points_x"], mp["points_y"], ".", ms=1.5, color=UP, alpha=0.35)
+        i1, i2 = rec["inputs"][0], rec["inputs"][1]
+        ax.set_xlabel(_ax(i1))
+        ax.set_ylabel(_ax(i2))
+        fig.colorbar(cs, ax=ax, label=ylab)
+        ax = axs[1]
+        for y, sl, ls in zip(mp["slices_at"], mp["slices"], ["--", "-", ":"]):
+            ax.plot(mp["x"], sl, ls, color=INK, lw=1.4, label=f"{y:.3g}")
+        ax.set_xlabel(_ax(i1))
+        ax.set_ylabel(ylab)
+        ax.legend(frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.28), ncol=3, title=_wrap(i2["label"], 40), title_fontsize=8)
+        for ax, u in zip(axs[2:], units):
+            ax.plot(u["grid"], u["typical"], color=INK, lw=1.6)
+            ax.set_xlabel(_ax(u))
+            ax.set_ylabel(f"{labels.get(u['node'], 'unit')} output (incoming unit)")
+        data.update({"map": mp, "units": units, "inputs": [i1["variable"], i2["variable"]]})
+    elif rec.get("inputs"):
+        i1 = rec["inputs"][0]
+        fig, axs = _grid(plt, 1 + len(rec.get("units") or []), row_h=2.6)
+        ax = axs[0]
+        ax.fill_between(i1["grid"], i1["band_p10"], i1["band_p90"], color=BAND, alpha=0.5, lw=0,
+                        label="10th–90th percentile across individuals")
+        ax.plot(i1["grid"], i1["typical"], color=INK, lw=2, label="typical case")
+        on = [x for x, y in zip(i1["grid"], i1["typical"]) if y > 1e-9]
+        off = [x for x, y in zip(i1["grid"], i1["typical"]) if y <= 1e-9]
+        if on and off:
+            hinge = min(on) if min(on) > min(off) else max(on)
+            ax.axvline(hinge, color=UP, lw=1, ls="--")
+            data["hinge"] = hinge
+        y0 = ax.get_ylim()[0]
+        ax.plot(i1["rug"], [y0] * len(i1["rug"]), "|", color="#555555", ms=5, mew=0.5)
+        ax.set_xlabel(_ax(i1))
+        ax.set_ylabel(ylab)
+        ax.legend(frameon=False, loc="best")
+        for ax, u in zip(axs[1:], rec.get("units") or []):
+            ax.plot(u["grid"], u["typical"], color=INK, lw=1.6)
+            ax.set_xlabel(_ax(u))
+            ax.set_ylabel(f"{labels.get(u['node'], 'unit')} output (incoming unit)")
+        data.update({"input": i1, "units": rec.get("units") or []})
+    elif rec.get("categories"):
+        cat = rec["categories"]
+        rows = cat["rows"]
+        fig, ax = plt.subplots(figsize=(WIDTH, max(1.6, PER_LEVEL * 1.6 * len(rows) + 0.8)))
+        lab = [_wrap("; ".join(r["levels"]), 60) for r in rows]
+        ax.barh(range(len(rows)), [r["value"] for r in rows], color=[UP if r["value"] > 1e-9 else "#bbbbbb"
+                                                                     for r in rows], height=0.6)
+        ax.set_yticks(range(len(rows)))
+        ax.set_yticklabels(lab)
+        ax.set_xlabel(ylab + " (other inputs at the typical case)")
+        data.update({"categories": cat})
+    else:
+        return None
+    fig.tight_layout()
     return {**_save(fig, base, data), "data": data}
+
+
+def _ax(i):
+    return f"{i['label']} ({i['unit']})" if i.get("unit") else i["label"]
 
 
 def activity_plot(layer, base: Path, units, labels) -> Optional[Dict[str, Any]]:
@@ -237,22 +386,31 @@ def activity_plot(layer, base: Path, units, labels) -> Optional[Dict[str, Any]]:
     units = [u for u in units if u.get("activity")][:4]
     if not units:
         return None
-    k = len(units)
-    fig, axs = plt.subplots(2, k, figsize=(2.6 * k, 3.4), squeeze=False,
-                            gridspec_kw={"height_ratios": [2, 1]})
+    k = min(len(units), 2)
+    units = units[:2]
+    scatter = any(u["activity"].get("main_input") for u in units)
+    if scatter:
+        fig, axs = plt.subplots(2, k, figsize=(WIDTH, 3.6), squeeze=False,
+                                gridspec_kw={"height_ratios": [2, 1]})
+    else:      # no numeric input to plot against: how often each unit is active, only
+        fig, axs1 = plt.subplots(1, k, figsize=(WIDTH, 1.8), squeeze=False)
+        axs = [[None] * k, axs1[0]]
     data = {"kind": "activity", "units": []}
     for j, u in enumerate(units):
         a = u["activity"]
         ax = axs[0][j]
         mi = a.get("main_input")
-        if mi:
+        if ax is None:
+            pass
+        elif mi:
             ax.plot(mi["x"], mi["y"], ".", ms=2.5, color=INK, alpha=0.5)
             ax.set_xlabel(f"{mi['label']}" + (f" ({mi['unit']})" if mi.get("unit") else ""))
         else:
             ax.text(0.5, 0.5, "no single numeric input", ha="center", va="center", transform=ax.transAxes,
-                    fontsize=7, color="#777777")
+                    color="#777777")
             ax.set_xticks([])
-        ax.set_ylabel(f"{labels.get(u['id'], 'unit')} output")
+        if ax is not None:
+            ax.set_ylabel(f"{labels.get(u['id'], 'unit')} output")
         hx = axs[1][j]
         e = a["hist_edges"]
         hx.bar(e[:-1], a["hist"], width=[e[i + 1] - e[i] for i in range(len(e) - 1)], align="edge",
@@ -263,6 +421,110 @@ def activity_plot(layer, base: Path, units, labels) -> Optional[Dict[str, Any]]:
                               "hist": a["hist"], "hist_edges": e, "main_input": mi})
     fig.tight_layout()
     return {**_save(fig, base, data), "data": data}
+
+
+def _map_panel(ax, mp, field, cmap, outcome_word, show_points=True, show_boundary=True):
+    import numpy as np
+    Z = np.array(mp[field], dtype=float)
+    off = np.array(mp["off"], dtype=bool)
+    ax.set_facecolor("#e6e6e6")                         # flat grey: the part is switched off
+    Zm = np.ma.masked_where(off, Z) if field == "z" else Z
+    cs = ax.contourf(mp["x"]["grid"], mp["y"]["grid"], Zm, levels=12, cmap=cmap)
+    if show_boundary and mp.get("boundary"):
+        b = np.array(mp["boundary"], dtype=float)
+        ax.plot(b[:, 0], b[:, 1], color=INK, lw=1.6)
+        k = len(b) // 2
+        ax.annotate("switches on", (b[k, 0], b[k, 1]), xytext=(8, 8), textcoords="offset points",
+                    fontsize=8, color=INK, bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.85})
+    if show_points:
+        pt = mp["points"]
+        x, y, o = np.array(pt["x"]), np.array(pt["y"]), np.array(pt["outcome"]).astype(bool)
+        ax.scatter(x[~o], y[~o], s=6, facecolors="none", edgecolors="#555555", linewidths=0.4,
+                   label=f"stayed / no {outcome_word}" if outcome_word != "churn" else "stayed")
+        ax.scatter(x[o], y[o], s=7, color="#111111", label="left" if outcome_word == "churn" else outcome_word)
+    ax.set_xlabel(_ax(mp["x"]))
+    ax.set_ylabel(_ax(mp["y"]))
+    return cs
+
+
+def deep_dive_figures(layer, base: Path, claim) -> List[Dict[str, Any]]:
+    """The deep dive of a non-linear part with two or more numeric inputs: the 2D map(s) of its own
+    output (off region flat grey, the switch-on boundary, the training data: hollow = no event,
+    filled = event), the slices, and the same map on the final risk scale for the typical case."""
+    import numpy as np
+    plt = _plt()
+    maps = (claim.get("evidence") or {}).get("maps") or []
+    if not maps:
+        return []
+    st = claim["statement"]
+    churn = "customer" in (layer.get("population") or {}).get("plural", "")
+    word = "churn" if churn else "disease"
+    up = (st.get("outcome_rate_on") or 0) >= (st.get("outcome_rate_off") or 0)
+    cmap = "Oranges"
+    out = []
+    # 1. the map(s)
+    k = len(maps)
+    fig, axs = plt.subplots(1, k, figsize=(WIDTH, 3.3 if k == 1 else 2.6), squeeze=False)
+    css = []
+    for ax, mp in zip(axs[0], maps):
+        css.append(_map_panel(ax, mp, "z", cmap, word))
+        if mp.get("held"):
+            ax.set_title(", ".join(f"{b} at {h['text']}" for b, h in mp["held"].items()), fontsize=8)
+    fig.colorbar(css[0], ax=list(axs[0]), label="part's output (score)", shrink=0.9)
+    axs[0][0].legend(frameon=True, loc="upper right", fontsize=8, markerscale=1.5)
+    n_on, share = st.get("n_on"), st.get("share_on")
+    rate = st.get("outcome_rate_on")
+    axs[0][0].text(0.02, 0.02, f"on for {n_on} ({100 * share:.0f}%); {100 * (rate or 0):.0f}% of them "
+                   + ("left" if churn else "had the event"), transform=axs[0][0].transAxes, fontsize=8,
+                   bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.8})
+    data = {"kind": "deep_map", "claim": claim["id"], "maps": [{"x": m["x"], "y": m["y"], "held": m.get("held")}
+                                                                for m in maps],
+            "n_on": n_on, "share_on": share, "outcome_rate_on": rate, "rule": (st.get("rule") or {}).get("text")}
+    out.append({**_save(fig, Path(str(base) + "-map"), data), "data": data, "kind": "deep_map"})
+    # 2. slices of the first map
+    mp = maps[0]
+    fig, axs = plt.subplots(1, 2, figsize=(WIDTH, 3.0), squeeze=False)
+    for sl, ls in zip(mp["slices_x"], ["--", "-", ":"]):
+        axs[0][0].plot(mp["x"]["grid"], sl["z"], ls, color=INK, lw=1.4, label=f"{sl['at']:.3g} ({sl['q']}th pct.)")
+    axs[0][0].set_xlabel(_ax(mp["x"]))
+    axs[0][0].set_ylabel("part's output (score)")
+    axs[0][0].legend(frameon=False, fontsize=8, title=_wrap(mp["y"]["label"], 40), title_fontsize=8,
+                     loc="upper center", bbox_to_anchor=(0.5, -0.28), ncol=1)
+    for sl, ls in zip(mp["slices_y"], ["--", "-", ":"]):
+        axs[0][1].plot(mp["y"]["grid"], sl["z"], ls, color=INK, lw=1.4, label=f"{sl['at']:.3g} ({sl['q']}th pct.)")
+    axs[0][1].set_xlabel(_ax(mp["y"]))
+    axs[0][1].set_ylabel("part's output (score)")
+    axs[0][1].legend(frameon=False, fontsize=8, title=_wrap(mp["x"]["label"], 40), title_fontsize=8,
+                     loc="upper center", bbox_to_anchor=(0.5, -0.28), ncol=1)
+    fig.tight_layout()
+    d2 = {"kind": "deep_slices", "claim": claim["id"], "slices_x": mp["slices_x"], "slices_y": mp["slices_y"]}
+    out.append({**_save(fig, Path(str(base) + "-slices"), d2), "data": d2, "kind": "deep_slices"})
+    # 3. the same map on the final risk scale (typical case)
+    fig, ax = plt.subplots(figsize=(WIDTH, 3.0))
+    R = np.array(mp["risk"], dtype=float) * 100
+    cs = ax.contourf(mp["x"]["grid"], mp["y"]["grid"], R, levels=12, cmap="Greys")
+    if mp.get("boundary"):
+        b = np.array(mp["boundary"], dtype=float)
+        ax.plot(b[:, 0], b[:, 1], color=UP, lw=1.6)
+    ax.set_xlabel(_ax(mp["x"]))
+    ax.set_ylabel(_ax(mp["y"]))
+    fig.colorbar(cs, ax=ax, label=_risk_label(layer) + " for the typical case (%)")
+    d3 = {"kind": "deep_risk", "claim": claim["id"], "risk": mp["risk"]}
+    out.append({**_save(fig, Path(str(base) + "-risk"), d3), "data": d3, "kind": "deep_risk"})
+    return out
+
+
+def partial_caption(rec, labels) -> str:
+    name = labels.get(rec["node"], "the unit")
+    base = (f"This part's own output, unit {name} ({rec.get('why')}), on its own scale (its activation), with "
+            f"every other input at the typical case; it is active for {rec.get('active_n')} of {rec.get('n')}. ")
+    if rec.get("map"):
+        return base + ("Left: its output over its two main inputs (orange line: where it switches on; dots: the "
+                       "data); right: slices at three values of the second input"
+                       + ("; then each incoming non-linear unit against its own main input." if rec.get("units") else "."))
+    if rec.get("inputs"):
+        return base + "Bold: the typical case; band: 10th to 90th percentile across individuals; dashed: where it switches on; ticks: the data."
+    return base + "Its output for each combination of the levels it reads."
 
 
 # ----------------------------------------------------------------------------- per genome
@@ -301,10 +563,32 @@ def make_figures(layer, out_dir) -> Dict[str, List[Dict[str, Any]]]:
             if f:
                 lst.append({**f, "kind": "interaction", "caption": "How the effect differs between groups: one "
                             "curve per group, for the typical case of each group."})
-            f = category_plot(layer, out / f"{pid}-categories", mine)
-            if f:
+            for f in category_plots(layer, out / f"{pid}-categories", mine):
                 lst.append({**f, "kind": "categories", "caption": "The predicted value for the typical case at "
                             f"each level, through this part (n = training {who}; grey: fewer than 20)."})
+            bc = next((c for c in layer["claims"] if c["type"] == "boundary" and c["annotation"]["id"] == pid
+                       and c.get("verified")), None)
+            if bc is not None:
+                three = len(bc["statement"]["variables"]) >= 3
+                caps = {"deep_map": ("The part's own output over " + ("each pair of its three main inputs (the third "
+                                     "held at its median, named above each panel; the points are the training rows "
+                                     "whose third input is between its 40th and 60th percentile)" if three else
+                                     "its two numeric inputs") + ", other inputs at the typical case: colour where it "
+                                     "is on, flat grey where it is switched off, the black line where it switches "
+                                     f"on; training {who} as hollow (no event) and filled (event) points, so the part "
+                                     "can be seen catching the events (the predicted-chance overlay was harder to "
+                                     "read)."),
+                        "deep_slices": "Slices of the same map: the part's own output against each input at three "
+                                       "values of the other, so the tilted boundary shows as a shifting hinge.",
+                        "deep_risk": "The same map on the final scale: the predicted value for the typical case, "
+                                     "with the switch-on line (orange)."}
+                for f in deep_dive_figures(layer, out / f"{pid}-deep", bc):
+                    lst.append({**f, "caption": caps[f["kind"]]})
+            for rec in [r for r in (layer["graph"].get("partials") or []) if r.get("region") == pid]:
+                f = partial_plot(layer, out / f"{pid}-partial-{rec['node']}", rec, hl)
+                if f:
+                    lst.append({**f, "kind": "partial", "node": rec["node"],
+                                "caption": partial_caption(rec, hl)})
             units = [n for n in layer["graph"]["nodes"] if n["kind"] == "hidden" and n.get("region") == pid]
             f = activity_plot(layer, out / f"{pid}-units", units, hl)
             if f:

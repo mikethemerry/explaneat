@@ -926,7 +926,7 @@ def _finish(c: Dict[str, Any], checks: Dict[str, Tuple[bool, str]]):
     c["verified"] = all(ok for ok, _ in checks.values())
     if c["verified"]:
         c["reasons"] = ["all checks passed"]
-    if c["type"] not in ("null", "structure"):
+    if c["type"] not in ("null", "structure", "boundary"):
         c["confidence"] = confidence(c)
     return c
 
@@ -1147,6 +1147,260 @@ def structure_claims(m: PlainModel, p: Part, parts: List[Part]) -> List[Dict[str
             out.append(_finish(c, {"reproduces": (err is not None and err <= 1e-6 * scale,
                                                   f"largest difference {err}")}))
     return out
+
+
+MAP_GRID = 40          # points per axis of a deep-dive map
+
+
+def _clipping_exits(m: PlainModel, p: Part) -> List[str]:
+    vals = m._vals_train()
+    out = []
+    for x in p.exits:
+        node = m.nodes.get(x)
+        if node is not None and node.activation not in ("identity", None) and float(np.min(vals[x])) <= 1e-12:
+            out.append(x)
+    return out
+
+
+def _fmt_num(x: float) -> str:
+    ax = abs(x)
+    return f"{x:.2f}" if ax < 10 else (f"{x:.1f}" if ax < 100 else f"{x:.0f}")
+
+
+def boundary_claims(m: PlainModel, p: Part) -> List[Dict[str, Any]]:
+    """v5f deep dive: a non-linear part with two or more numeric inputs (categorical inputs held at
+    the typical level). Maps of the part's own output over each pair of its (up to three, by
+    effect size) numeric inputs, the third held at its median; on the final risk scale too; and
+    a ``boundary`` claim: where the part switches on, in real units (an exact plane for a single
+    hinge unit fed by the inputs; otherwise the boundary traced on the data), verified by the
+    share of training rows on each side."""
+    if p.is_root or p.duplicate_of or not p.nonlinear:
+        return []
+    nums = [m.var_by_base[b] for b in p.variables if not m.var_by_base[b].is_category()]
+    if len(nums) < 2:
+        return []
+    clip = _clipping_exits(m, p)
+    vals = m._vals_train()
+    zt = (typical_raw(m) - m.mean) / m.scale
+
+    def part_out(X):
+        return m.logit(X) - m.logit(X, ablate=p.baselines)
+
+    def on_of(X):
+        if not clip:
+            return np.ones(X.shape[0], dtype=bool)
+        f = m.ev.forward(X)
+        return np.any(np.column_stack([f[x] > 1e-12 for x in clip]), axis=1)
+    # the main numeric inputs by how much they move the part's output for the typical case
+    eff = []
+    for v in nums:
+        grid = np.linspace(*np.percentile(v.raw_train, [1, 99]), 21)
+        X = np.repeat(zt[None, :], len(grid), axis=0)
+        X[:, v.columns[0]] = (grid - v.mean[0]) / v.scale[0]
+        o = part_out(X)
+        eff.append((float(np.max(o) - np.min(o)), v))
+    eff.sort(key=lambda t: -t[0])
+    mains = [v for _, v in eff[:3]]
+    held = [v.base for _, v in eff[3:]]
+    on_train = on_of(m.X)
+    y = m.y
+    cats = [m.var_by_base[b] for b in p.variables if m.var_by_base[b].is_category()]
+    typ_raw = typical_raw(m)
+    at_typical = np.ones(m.X.shape[0], dtype=bool)
+    for v in cats:
+        code = None
+        for c, cd in zip(v.columns, v.codes):
+            if abs(typ_raw[c] - 1.0) < 1e-9:
+                code = cd
+        if code is not None:
+            at_typical &= (np.asarray(v.raw_train).astype(str) == str(code))
+    pairs = [(0, 1)] if len(mains) == 2 else [(0, 1), (0, 2), (1, 2)]
+    maps = []
+    for i, j in pairs:
+        v1, v2 = mains[i], mains[j]
+        third = [v for k, v in enumerate(mains) if k not in (i, j)]
+        g1 = np.linspace(*np.percentile(v1.raw_train, [1, 99]), MAP_GRID)
+        g2 = np.linspace(*np.percentile(v2.raw_train, [1, 99]), MAP_GRID)
+        A, B = np.meshgrid(g1, g2)
+        X = np.repeat(zt[None, :], A.size, axis=0)
+        X[:, v1.columns[0]] = (A.ravel() - v1.mean[0]) / v1.scale[0]
+        X[:, v2.columns[0]] = (B.ravel() - v2.mean[0]) / v2.scale[0]
+        held_at = {}
+        for v3 in third:
+            med = float(np.median(v3.raw_train))
+            X[:, v3.columns[0]] = (med - v3.mean[0]) / v3.scale[0]
+            held_at[v3.base] = {"value": sig(med), "text": v3.fmt(med)}
+        Z = part_out(X).reshape(A.shape)
+        ON = on_of(X).reshape(A.shape)
+        R = m.risk(m.logit(X)).reshape(A.shape)
+        # the switch-on boundary along v1 for each value of v2: the grid switch, refined by bisection
+        bpts = []
+        for r in range(len(g2)):
+            row = ON[r]
+            ch = np.where(row[1:] != row[:-1])[0]
+            if not len(ch):
+                continue
+            lo_x, hi_x = float(g1[ch[0]]), float(g1[ch[0] + 1])
+            base = X[r * len(g1)].copy()
+            want_lo = bool(row[ch[0]])
+            for _ in range(40):
+                mid = (lo_x + hi_x) / 2
+                xb = base.copy()
+                xb[v1.columns[0]] = (mid - v1.mean[0]) / v1.scale[0]
+                if bool(on_of(xb[None, :])[0]) == want_lo:
+                    lo_x = mid
+                else:
+                    hi_x = mid
+            bpts.append([sig((lo_x + hi_x) / 2), sig(float(g2[r]))])
+        rows = np.arange(m.X.shape[0])
+        if third:
+            v3 = third[0]
+            lo, hi = np.percentile(v3.raw_train, [40, 60])
+            rows = rows[(v3.raw_train >= lo) & (v3.raw_train <= hi)]
+        pick = rows[np.linspace(0, len(rows) - 1, min(700, len(rows))).round().astype(int)] if len(rows) else rows
+        sl1 = []
+        for q in (10, 50, 90):
+            yv = float(np.percentile(v2.raw_train, q))
+            X1 = np.repeat(zt[None, :], len(g1), axis=0)
+            X1[:, v1.columns[0]] = (g1 - v1.mean[0]) / v1.scale[0]
+            X1[:, v2.columns[0]] = (yv - v2.mean[0]) / v2.scale[0]
+            for v3 in third:
+                X1[:, v3.columns[0]] = (np.median(v3.raw_train) - v3.mean[0]) / v3.scale[0]
+            sl1.append({"at": sig(yv), "q": q, "z": [sig(z) for z in part_out(X1)]})
+        sl2 = []
+        for q in (10, 50, 90):
+            xv = float(np.percentile(v1.raw_train, q))
+            X2 = np.repeat(zt[None, :], len(g2), axis=0)
+            X2[:, v2.columns[0]] = (g2 - v2.mean[0]) / v2.scale[0]
+            X2[:, v1.columns[0]] = (xv - v1.mean[0]) / v1.scale[0]
+            for v3 in third:
+                X2[:, v3.columns[0]] = (np.median(v3.raw_train) - v3.mean[0]) / v3.scale[0]
+            sl2.append({"at": sig(xv), "q": q, "z": [sig(z) for z in part_out(X2)]})
+        maps.append({"x": {"variable": v1.base, "label": v1.short or v1.label, "unit": v1.unit,
+                           "grid": [sig(a) for a in g1]},
+                     "y": {"variable": v2.base, "label": v2.short or v2.label, "unit": v2.unit,
+                           "grid": [sig(b) for b in g2]},
+                     "held": held_at, "z": [[sig(z) for z in row] for row in Z],
+                     "off": [[bool(not o) for o in row] for row in ON],
+                     "risk": [[sig(r) for r in row] for row in R], "boundary": bpts,
+                     "points": {"x": [sig(a) for a in np.asarray(v1.raw_train, float)[pick]],
+                                "y": [sig(b) for b in np.asarray(v2.raw_train, float)[pick]],
+                                "outcome": [int(t) for t in y[pick]], "on": [bool(o) for o in on_train[pick]],
+                                "rows_note": ("training rows whose " + (third[0].short or third[0].label)
+                                              + " is between its 40th and 60th percentile") if third else "training rows"},
+                     "slices_x": sl1, "slices_y": sl2})
+    # the rule, in real units
+    exit_ = clip[0] if len(clip) == 1 else None
+    rule, kind = None, "regions"
+    preds = [(str(c.from_node), float(c.weight)) for c in m.structure.connections
+             if c.enabled and c.weight != 0 and exit_ is not None and str(c.to_node) == exit_]
+    if exit_ is not None and preds and all(m.nodes[u].type == NodeType.INPUT for u, _ in preds if u in m.nodes):
+        coef: Dict[str, float] = {}
+        const = float(m.nodes[exit_].bias or 0.0)
+        col_of = {nd: c for c, nds in m.input_nodes_by_col.items() for nd in nds}
+        for u, w in preds:
+            c = col_of.get(u)
+            v = next((v for v in m.variables if c in v.columns), None)
+            if v is None or v.is_category():
+                code_z = zt[c] if c is not None else 0.0
+                const += w * code_z                      # a category input at the typical level
+                continue
+            coef[v.base] = coef.get(v.base, 0.0) + w / float(v.scale[0])
+            const -= w * float(v.mean[0]) / float(v.scale[0])
+        order = sorted(coef, key=lambda b: -abs(coef[b]) * float(np.std(m.var_by_base[b].raw_train)))
+        if order:
+            b0 = order[0]
+            a0 = coef[b0]
+            terms = [m.var_by_base[b0].short or m.var_by_base[b0].label]
+            for b in order[1:]:
+                r = coef[b] / a0
+                terms.append(("plus" if r > 0 else "minus") + f" about {_fmt_num(abs(r))} × "
+                             + (m.var_by_base[b].short or m.var_by_base[b].label))
+            thr = -const / a0
+            side = "exceed" if a0 > 0 else "fall below"
+            rule = {"coefficients": {b: sig(coef[b]) for b in order}, "constant": sig(const),
+                    "text": f"{' '.join(terms)} {side} about {_fmt_num(thr)}", "threshold": sig(thr),
+                    "main": b0, "on_side": "above" if a0 > 0 else "below"}
+            kind = "plane"
+            Xr = np.column_stack([m.var_by_base[b].raw_train for b in order])
+            pred_on = (Xr @ np.array([coef[b] for b in order]) + const) > 0
+            sel = at_typical if at_typical.any() else np.ones_like(at_typical)
+            agree = float(np.mean(pred_on[sel] == on_train[sel])) if a0 else 0.0
+    if kind != "plane":
+        # traced on the first map: the boundary as pieces of straight lines
+        mp = maps[0]
+        pts = np.array(mp["boundary"], dtype=float) if mp["boundary"] else np.zeros((0, 2))
+        pieces = []
+        if len(pts) >= 2:
+            sl = np.diff(pts[:, 0]) / np.where(np.diff(pts[:, 1]) == 0, 1e-12, np.diff(pts[:, 1]))
+            start = 0
+            for k in range(1, len(sl) + 1):
+                if k == len(sl) or abs(sl[k] - np.mean(sl[start:k])) > 0.25 * max(1e-9, np.max(np.abs(sl))):
+                    seg = pts[start:k + 1]
+                    kk = -float(np.mean(sl[start:k]))
+                    thr = float(np.mean(seg[:, 0] + kk * seg[:, 1]))
+                    pieces.append({"y_from": sig(float(seg[0, 1])), "y_to": sig(float(seg[-1, 1])),
+                                   "k": sig(kk), "threshold": sig(thr)})
+                    start = k
+        v1n, v2n = mp["x"]["label"], mp["y"]["label"]
+        if pieces:
+            # merge neighbouring pieces with nearly the same slope (grid noise)
+            merged = [pieces[0]]
+            for pc in pieces[1:]:
+                q = merged[-1]
+                if abs(pc["k"] - q["k"]) <= 0.1 * max(abs(q["k"]), abs(pc["k"]), 1e-9) or \
+                        float(pc["y_to"]) - float(pc["y_from"]) < 0.05 * (float(pts[-1, 1]) - float(pts[0, 1])):
+                    q["y_to"] = pc["y_to"]
+                    seg = pts[(pts[:, 1] >= float(q["y_from"]) - 1e-9) & (pts[:, 1] <= float(q["y_to"]) + 1e-9)]
+                    if len(seg) >= 2:
+                        kk = -float(np.polyfit(seg[:, 1], seg[:, 0], 1)[0])
+                        q["k"], q["threshold"] = sig(kk), sig(float(np.mean(seg[:, 0] + kk * seg[:, 1])))
+                else:
+                    merged.append(pc)
+            pieces = merged
+            # which side of the line is on: the grid cells to the right of the boundary
+            ONg = np.array(mp["off"], dtype=bool) == False  # noqa: E712
+            right_on = [bool(ONg[r, -1]) for r in range(ONg.shape[0]) if ONg[r].any() and not ONg[r].all()]
+            side_above = (sum(right_on) >= len(right_on) / 2.0) if right_on else True
+            side_word = "above" if side_above else "below"
+            bits = []
+            for pc in pieces[:3]:
+                bits.append(f"{v1n} {'plus' if pc['k'] >= 0 else 'minus'} about {_fmt_num(abs(pc['k']))} × {v2n} "
+                            f"{side_word} about {_fmt_num(pc['threshold'])} (for {v2n} from about "
+                            f"{_fmt_num(pc['y_from'])} to {_fmt_num(pc['y_to'])})")
+            rule = {"pieces": pieces, "text": "; ".join(bits), "on_side": side_word}
+            kind = "kinked" if len(pieces) > 1 else "line"
+        # agreement: the traced boundary (interpolated) against the actual on/off of the data
+        if len(pts) >= 2 and not held and len(mains) == 2:
+            o = np.argsort(pts[:, 1])
+            x2 = np.asarray(mains[1].raw_train, float)
+            x1 = np.asarray(mains[0].raw_train, float)
+            b = np.interp(x2, pts[o, 1], pts[o, 0])
+            sel = at_typical & (x2 >= pts[:, 1].min()) & (x2 <= pts[:, 1].max())
+            above = float(np.mean(on_train[sel & (x1 > b)])) if np.any(sel & (x1 > b)) else 0.0
+            pred_on = (x1 > b) if above >= 0.5 else (x1 <= b)
+            agree = float(np.mean(pred_on[sel] == on_train[sel])) if sel.any() else None
+        else:
+            agree = None
+    n_on = int(on_train.sum())
+    c = _claim(p, "boundary", "map", variables=[_var_desc(v) for v in mains],
+               statement={"kind": kind, "variables": [v.base for v in mains], "held_typical": held,
+                          "rule": rule, "share_on": sig(float(on_train.mean())), "n_on": n_on,
+                          "outcome_rate_on": sig(float(y[on_train].mean())) if n_on else None,
+                          "outcome_rate_off": sig(float(y[~on_train].mean())) if n_on < len(y) else None,
+                          "agreement": sig(agree) if agree is not None else None,
+                          "agreement_rows": "training rows at the typical level of the part's category inputs"
+                                            if cats else "all training rows"})
+    c["estimate"] = {"method": "where the part's switching units are on, from the weights (one hinge unit) or traced "
+                               "on a grid (several units); checked against the training rows", "value": agree}
+    c["evidence"] = {"maps": maps}
+    c["n"] = int(m.X.shape[0])
+    c["_ctx"] = None
+    checks = {"rule_matches_data": (agree is not None and agree >= 0.99,
+                                    f"the boundary rule matches {agree} of training rows (needs 0.99)")}
+    if rule is None:
+        checks["boundary_found"] = (False, "no switch-on boundary in the observed range")
+    return [_finish(c, checks)]
 
 
 def closed_form(m: PlainModel, p: Part, parts: List[Part]) -> Optional[Dict[str, Any]]:
@@ -1712,7 +1966,7 @@ def rule_claims(m: PlainModel, part: Part) -> List[Dict[str, Any]]:
 # ============================================================================ the layer
 
 TYPE_ORDER = {t: i for i, t in enumerate(("rule", "direction", "magnitude", "interaction", "threshold",
-                                          "subgroup", "null", "structure"))}
+                                          "subgroup", "null", "structure", "boundary"))}
 
 
 def _claim_sort_key(c):
@@ -1780,6 +2034,12 @@ def extract_claims(m: PlainModel) -> Dict[str, Any]:
         c["id"] = f"C{i + 1:0{width}d}"
     from .plain_language_shapes import attach_shapes
     attach_shapes(m, parts, claims)   # after the ids, so reconciled points can name their claim
+    # v5f: boundary claims come last, so adding them does not renumber the earlier claims
+    extra = [bc for p in parts for bc in boundary_claims(m, p)]
+    for k, c in enumerate(extra):
+        c["id"] = f"C{len(claims) + k + 1:0{width}d}"
+        c.pop("_ctx", None)
+    claims.extend(extra)
     return {"parts": parts, "claims": claims}
 
 
@@ -1920,6 +2180,181 @@ def graph_record(m: PlainModel, parts: List[Part]) -> Dict[str, Any]:
             "depth": depth}
 
 
+PARTIAL_MAX = 6          # partial-feature plots per genome
+PARTIAL_GRID = 41        # points of a 1D curve
+PARTIAL_GRID2 = 25       # points per axis of a 2D map
+
+
+def partial_features(m: PlainModel, parts: List[Part], graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """v5f: the shape of selected partial features: a node's own output (its activation) against
+    its main inputs, the other inputs held at the typical case.
+
+    Selected: (a) the exit of each non-linear part, and (b) any unit that combines the outputs of
+    two or more non-linear units (where non-linearities interact); at most ``PARTIAL_MAX``, ranked
+    by how much the node moves the score (std of its activation times |its weight onward|).
+    Linear parts are skipped. Each record carries a reproduction check: the evaluator's
+    activations on the training rows against ``StructureNetwork``'s (max abs difference)."""
+    vals = m._vals_train()
+    edges = [(e["from"], e["to"], e["weight"]) for e in graph["edges"]]
+    kind = {n["id"]: n["kind"] for n in graph["nodes"]}
+    region = {n["id"]: n.get("region") for n in graph["nodes"]}
+    out_w: Dict[str, float] = {}
+    for u, v, w in edges:
+        out_w[u] = out_w.get(u, 0.0) + abs(w)
+
+    def clipping(n):
+        node = m.nodes.get(n)
+        return (node is not None and node.activation not in ("identity", None) and kind.get(n) == "hidden"
+                and float(np.min(vals[n])) <= 1e-12 < float(np.max(vals[n])))
+    cand: Dict[str, str] = {}
+    for p in parts:
+        if p.is_root or p.duplicate_of or not p.nonlinear:
+            continue
+        for x in p.exits:
+            if kind.get(x) == "hidden":
+                cand.setdefault(x, f"output of the non-linear part '{p.name}'")
+    for n in kind:
+        if kind[n] != "hidden":
+            continue
+        ins = [u for u, v, _ in edges if v == n and clipping(u)]
+        if len(ins) >= 2:
+            cand[n] = f"combines {len(ins)} non-linear units"
+    score = {n: float(np.std(vals[n])) * out_w.get(n, 0.0) for n in cand}
+    chosen = sorted(cand, key=lambda n: (-score[n], n))[:PARTIAL_MAX]
+    # reproduction check against the evidence engine
+    sn_acts = {}
+    try:
+        import torch
+        from ..core.structure_network import StructureNetwork
+        sn = StructureNetwork(m.structure)
+        with torch.no_grad():
+            sn.forward(torch.tensor(m.X, dtype=torch.float64))
+        for n in chosen:
+            sn_acts[n] = np.asarray(sn.get_node_activation(n), dtype=float).reshape(-1)
+    except Exception:
+        sn_acts = {}
+    zt = (typical_raw(m) - m.mean) / m.scale
+    numeric = [v for v in m.variables if not v.is_category()]
+    out = []
+    for n in chosen:
+        # the numeric inputs that move this node most for the typical case
+        eff = []
+        for v in numeric:
+            grid, _ = grid_for_values(v)
+            X = np.repeat(zt[None, :], len(grid), axis=0)
+            X[:, v.columns[0]] = (grid - v.mean[0]) / v.scale[0]
+            a = m.ev.forward(X)[n]
+            eff.append((float(np.max(a) - np.min(a)), v))
+        eff.sort(key=lambda t: -t[0])
+        mains = [v for e, v in eff if e > 1e-9][:2]
+        rec = {"node": n, "why": cand[n], "region": region.get(n), "importance": sig(score[n]),
+               "active_n": int(np.sum(vals[n] > 1e-12)), "n": int(len(vals[n]))}
+        if n in sn_acts and len(sn_acts[n]) == len(vals[n]):
+            rec["reproduction_max_abs_err"] = sig(float(np.max(np.abs(sn_acts[n] - vals[n]))))
+        rec["inputs"] = []
+        for v in mains:
+            grid, _ = grid_for_values(v)
+            X = np.repeat(zt[None, :], len(grid), axis=0)
+            X[:, v.columns[0]] = (grid - v.mean[0]) / v.scale[0]
+            typ = m.ev.forward(X)[n]
+            idx = np.linspace(0, m.X.shape[0] - 1, min(200, m.X.shape[0])).round().astype(int)
+            Xs = np.repeat(m.X[idx], len(grid), axis=0)
+            Xs[:, v.columns[0]] = np.tile((grid - v.mean[0]) / v.scale[0], len(idx))
+            band = m.ev.forward(Xs)[n].reshape(len(idx), len(grid))
+            rec["inputs"].append({"variable": v.base, "label": v.short or v.label, "unit": v.unit,
+                                  "grid": [sig(g) for g in grid], "typical": [sig(a) for a in typ],
+                                  "band_p10": [sig(a) for a in np.percentile(band, 10, axis=0)],
+                                  "band_p90": [sig(a) for a in np.percentile(band, 90, axis=0)],
+                                  "rug": [sig(x) for x in np.quantile(np.asarray(v.raw_train, float),
+                                                                     np.linspace(0, 1, 101))]})
+        if len(mains) == 2:
+            v1, v2 = mains
+            g1 = np.linspace(*np.percentile(v1.raw_train, [1, 99]), PARTIAL_GRID2)
+            g2 = np.linspace(*np.percentile(v2.raw_train, [1, 99]), PARTIAL_GRID2)
+            A, B = np.meshgrid(g1, g2)
+            X = np.repeat(zt[None, :], A.size, axis=0)
+            X[:, v1.columns[0]] = (A.ravel() - v1.mean[0]) / v1.scale[0]
+            X[:, v2.columns[0]] = (B.ravel() - v2.mean[0]) / v2.scale[0]
+            Z = m.ev.forward(X)[n].reshape(A.shape)
+            idx = np.linspace(0, m.X.shape[0] - 1, min(400, m.X.shape[0])).round().astype(int)
+            rec["map"] = {"x": [sig(x) for x in g1], "y": [sig(y) for y in g2],
+                          "z": [[sig(z) for z in row] for row in Z],
+                          "points_x": [sig(x) for x in np.asarray(v1.raw_train, float)[idx]],
+                          "points_y": [sig(y) for y in np.asarray(v2.raw_train, float)[idx]],
+                          "slices_at": [sig(x) for x in np.percentile(v2.raw_train, [10, 50, 90])]}
+            sl = []
+            for y in np.percentile(v2.raw_train, [10, 50, 90]):
+                X = np.repeat(zt[None, :], len(g1), axis=0)
+                X[:, v1.columns[0]] = (g1 - v1.mean[0]) / v1.scale[0]
+                X[:, v2.columns[0]] = (y - v2.mean[0]) / v2.scale[0]
+                sl.append([sig(a) for a in m.ev.forward(X)[n]])
+            rec["map"]["slices"] = sl
+        # category inputs (no numeric input moves it, or categories feed it too): its output for
+        # each combination of the levels it reads, the rest at the typical case
+        preds_of: Dict[str, List[str]] = {}
+        for u, v, _ in edges:
+            preds_of.setdefault(v, []).append(u)
+        anc, stack = set(), [n]
+        while stack:
+            x = stack.pop()
+            for u in preds_of.get(x, []):
+                if u not in anc:
+                    anc.add(u)
+                    stack.append(u)
+        anc_cols = {m.feature_names[c] for c, nds in m.input_nodes_by_col.items() if any(d in anc for d in nds)}
+        cats = []
+        for v in m.variables:
+            if not v.is_category():
+                continue
+            cols = [m.feature_names[c] for c in v.columns]
+            read = [code for col, code in zip(cols, v.codes) if col in anc_cols]
+            if not read:
+                continue
+            other = next((code for code in v.all_codes if code not in read), None)
+            cats.append((v, read[:4] + ([other] if other is not None else []), other))
+        if cats and not mains:
+            import itertools
+            cats = cats[:3]
+            combos = list(itertools.product(*[codes for _, codes, _ in cats]))[:24]
+            rows = []
+            for combo in combos:
+                X = zt[None, :].copy()
+                for (v, _, _), code in zip(cats, combo):
+                    for c, z in v.encode(code).items():
+                        X[0, c] = z
+                a = float(m.ev.forward(X)[n][0])
+                rows.append({"levels": [v.level(code)["label"] + (" (a level it does not read)" if code == oth else "")
+                                        for (v, _, oth), code in zip(cats, combo)], "value": sig(a)})
+            rec["categories"] = {"variables": [v.short or v.label for v, _, _ in cats], "rows": rows}
+        # (b): the incoming non-linear units, each against its own main input
+        if "combines" in cand[n]:
+            units = []
+            for u in [u for u, v, _ in edges if v == n and clipping(u)][:3]:
+                best = None
+                for v in numeric:
+                    grid, _ = grid_for_values(v)
+                    X = np.repeat(zt[None, :], len(grid), axis=0)
+                    X[:, v.columns[0]] = (grid - v.mean[0]) / v.scale[0]
+                    a = m.ev.forward(X)[u]
+                    e = float(np.max(a) - np.min(a))
+                    if best is None or e > best[0]:
+                        best = (e, v, grid, a)
+                if best and best[0] > 1e-9:
+                    units.append({"node": u, "variable": best[1].base, "label": best[1].short or best[1].label,
+                                  "unit": best[1].unit, "grid": [sig(g) for g in best[2]],
+                                  "typical": [sig(a) for a in best[3]]})
+            rec["units"] = units
+        out.append(rec)
+    return out
+
+
+def grid_for_values(v) -> Tuple[np.ndarray, bool]:
+    """The 1st-99th percentile grid of a numeric variable (the shape module's grid)."""
+    from .plain_language_shapes import grid_for
+    g, ordinal = grid_for(v)
+    return np.asarray(g, dtype=float), ordinal
+
+
 def _column_label(m: PlainModel, c: int) -> str:
     for v in m.variables:
         if c in v.columns:
@@ -1964,7 +2399,7 @@ def build_layer(m: PlainModel, meta: Dict[str, Any]) -> Dict[str, Any]:
                      "effect_scale": "log-odds (output pre-activation) for verification; predicted "
                                      "risk for the typical patient for wording"},
         "parts": [_clean(part_record(m, p)) for p in parts],
-        "graph": graph_record(m, parts),
+        "graph": (lambda g: {**g, "partials": partial_features(m, parts, g)})(graph_record(m, parts)),
         "claims": claims,
         "claims_hash": claims_hash(claims),
         "counts": {"claims": len(claims), "verified": sum(1 for c in claims if c["verified"]),
