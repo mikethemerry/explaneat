@@ -22,8 +22,12 @@ def _coverage(layer):
     edges = {(e["from"], e["to"]) for e in g["edges"]}
     tk, meta = overview(layer)
     assert meta["edges"] == edges                              # the overview draws every edge
-    drawn = {n["id"] for n in g["nodes"]}
-    assert meta["nodes"] == drawn                             # ... and every node
+    real = [d for d in meta["drawn"] if d[2] is not None]       # (the drawn sum's one edge aside)
+    assert len(real) == len(g["edges"])
+    cols = {n.get("column") or n["id"] for n in g["nodes"] if n["kind"] == "input"}
+    assert len(meta["inputs"]) == len(cols)                   # each input drawn once (split copies merged)
+    hidden = {n["id"] for n in g["nodes"] if n["kind"] != "input"}
+    assert hidden <= meta["nodes"]                            # ... and every other node
     owned = []
     for pid in readdown_order(layer):
         owned += sorted(section(layer, pid)[1]["edges"])
