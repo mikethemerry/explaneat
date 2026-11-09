@@ -273,9 +273,49 @@ def lint_points(text: str, claims: List[Dict[str, Any]]) -> List[str]:
         if p_typ.search(text) and p_named.search(text):
             errs.append(f"{c['id']}: quotes two points for one fold ({named} and {typ}); use {named} "
                         f"(the typical patient's own hinge is in the evidence)")
-        elif p_typ.search(text):
+        elif p_typ.search(text) or _near_number(text, pt):
             errs.append(f"{c['id']}: quotes the typical patient's hinge {typ}; the named point for this fold is {named}")
+        elif _range_for_point(text, named, spread):
+            errs.append(f"{c['id']}: gives a range ({_range_for_point(text, named, spread)}) for one fold; "
+                        f"name the point {named}" + (" with its spread phrase" if pt.get("wide") else ""))
     return errs
+
+
+_NUM = r"(?<![0-9.])\$?([0-9][0-9,]*(?:\.[0-9]+)?)(?![0-9.%])"
+
+
+def _num(s: str) -> Optional[float]:
+    m = re.search(_NUM, s or "")
+    return float(m.group(1).replace(",", "")) if m else None
+
+
+def _near_number(text: str, pt: Dict[str, Any]) -> bool:
+    """The typical hinge written at another precision ('$39' for 39.05 US dollars)."""
+    typ, named = (pt.get("typical_hinge") or {}).get("value"), pt.get("value")
+    if typ is None or named is None or abs(typ - named) < 1e-9:
+        return False
+    tol = max(0.006 * abs(typ), 1e-9)
+    if abs(typ - named) <= 2 * tol:
+        return False
+    keep = [_num(x) for x in (pt.get("spread_text") or [])]
+    for m in re.finditer(_NUM, text):
+        n = float(m.group(1).replace(",", ""))
+        if abs(n - typ) <= tol and not any(k is not None and abs(n - k) <= tol for k in keep):
+            return True
+    return False
+
+
+def _range_for_point(text: str, named: str, spread: List[str]) -> str:
+    """'about 0.8 to 0.9 mm' where the fold has one named point (0.9 mm)."""
+    v = _num(named)
+    if v is None:
+        return ""
+    bounds = {_num(x) for x in spread}
+    for m in re.finditer(r"about\s+\$?([0-9][0-9,.]*)\s*(?:to|-|–)\s*\$?([0-9][0-9,.]*)", text):
+        a, b = (float(g.rstrip(".,").replace(",", "")) for g in m.groups())
+        if v in (a, b) and not {a, b} <= bounds:
+            return m.group(0)
+    return ""
 
 
 def lint_draft(layer: Dict[str, Any], draft: Dict[str, Any]) -> List[str]:
