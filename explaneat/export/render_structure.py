@@ -121,51 +121,95 @@ def _layers(nodes: List[str], edges: List[Tuple[str, str]], fixed0: set, top: se
     return out
 
 
-def _place(items, edges, clusters, subs, top) -> Dict[str, Tuple[float, float]]:
-    """Inputs (and incoming stubs) in a row at y = 0, ordered by the first cluster that uses
-    them; each cluster centred over its inputs, left to right; ``top`` items above everything."""
+SWEEP = True      # v5d: order the input row and the clusters by barycentre (False: the v5c fixed order)
+
+
+def _cluster_order(corder, items, edges, bottom) -> List[str]:
+    """Clusters that share inputs next to each other: start from the first cluster, then keep
+    appending the remaining cluster that shares the most inputs with the last one placed (ties:
+    hierarchy order)."""
+    uses: Dict[str, set] = {c: set() for c in corder}
+    for u, v in edges:
+        if u in bottom and v in items and items[v]["band"][0] in uses:
+            uses[items[v]["band"][0]].add(u)
+    out, rest = [corder[0]], list(corder[1:])
+    while rest:
+        last = out[-1]
+        nxt = max(rest, key=lambda c: (len(uses[c] & uses[last]), -corder.index(c)))
+        out.append(nxt)
+        rest.remove(nxt)
+    return out
+
+
+def _place(items, edges, clusters, subs, top, sweep: Optional[bool] = None) -> Dict[str, Tuple[float, float]]:
+    """Inputs (and incoming stubs) in a row at y = 0, each cluster centred over its inputs, ``top``
+    items above everything. With ``sweep`` (default): clusters sharing inputs are adjacent; an
+    input used by one cluster sits under it, a shared input at the barycentre of its targets
+    (three deterministic barycentre sweeps)."""
+    sweep = SWEEP if sweep is None else sweep
     bottom = {n for n, it in items.items() if it["kind"] in ("input", "stub_in")}
     lay = _layers(list(items), edges, bottom, set(top))
     corder = [c for c, _ in clusters]
+    if sweep and len(corder) > 1:
+        corder = _cluster_order(corder, items, edges, bottom)
     users: Dict[str, List[int]] = {n: [] for n in bottom}
     for u, v in edges:
         if u in bottom and v in items and items[v]["band"][0] in corder:
             users[u].append(corder.index(items[v]["band"][0]))
-    row = sorted(bottom, key=lambda n: (items[n]["kind"] != "stub_in", min(users[n] or [99]),
-                                        items[n].get("sort") or "", n))
-    pos = {n: (round(i * DXI, 3), 0.0) for i, n in enumerate(row)}
+    if sweep:
+        row = sorted(bottom, key=lambda n: ((sum(users[n]) / len(users[n])) if users[n] else 99.0,
+                                            items[n].get("sort") or "", n))
+    else:
+        row = sorted(bottom, key=lambda n: (items[n]["kind"] != "stub_in", min(users[n] or [99]),
+                                            items[n].get("sort") or "", n))
+
     def nw(n):   # drawn width of a node (cm)
         return 2.0 if (items[n]["kind"] == "sum" or items[n].get("exit")) else 0.7
-    x_end = -1e9
-    for c in corder:
-        bands = [s for s, _ in subs if s[0] == c] + [(c, None)]
-        rows_of, widths = [], []
-        for b in bands:
-            mem = sorted([n for n in items if items[n]["band"] == b and n not in bottom and n not in top],
-                         key=lambda n: (items[n].get("sort") or "", n))
-            per: Dict[int, List[str]] = {}
-            for n in mem:
-                per.setdefault(lay[n], []).append(n)
-            rows_of.append(per)
-            title = next((t for s, t in subs if s == b), "")
-            w = max([sum(nw(n) for n in r) + (len(r) - 1) * (DX - 0.7) for r in per.values()] or [0.0])
-            widths.append(max(w, len(title) * CHAR) if mem else 0.0)
-        live = [i for i in range(len(bands)) if rows_of[i]]
-        if not live:
-            continue
-        total = sum(widths[i] for i in live) + GAP * 1.4 * (len(live) - 1)
-        ins = [pos[u][0] for u, v in edges if u in bottom and v in items and items[v]["band"][0] == c]
-        want = (sum(ins) / len(ins)) if ins else (x_end + total / 2 + GAP)
-        x0 = max(want - total / 2, x_end + GAP * 2.2)
-        for i in live:
-            for L, r in rows_of[i].items():
-                rw = sum(nw(n) for n in r) + (len(r) - 1) * (DX - 0.7)
-                x = x0 + (widths[i] - rw) / 2.0
-                for n in r:
-                    pos[n] = (round(x + nw(n) / 2.0, 3), round(Y0 + (L - 1) * DY, 3))
-                    x += nw(n) + (DX - 0.7)
-            x0 += widths[i] + GAP * 1.4
-        x_end = x0 - GAP * 1.4
+
+    def place_clusters(pos):
+        x_end = -1e9
+        for c in corder:
+            bands = [s for s, _ in subs if s[0] == c] + [(c, None)]
+            rows_of, widths = [], []
+            for b in bands:
+                mem = sorted([n for n in items if items[n]["band"] == b and n not in bottom and n not in top],
+                             key=lambda n: (items[n].get("sort") or "", n))
+                per: Dict[int, List[str]] = {}
+                for n in mem:
+                    per.setdefault(lay[n], []).append(n)
+                rows_of.append(per)
+                title = next((t for s, t in subs if s == b), "")
+                w = max([sum(nw(n) for n in r) + (len(r) - 1) * (DX - 0.7) for r in per.values()] or [0.0])
+                widths.append(max(w, len(title) * CHAR) if mem else 0.0)
+            live = [i for i in range(len(bands)) if rows_of[i]]
+            if not live:
+                continue
+            total = sum(widths[i] for i in live) + GAP * 1.4 * (len(live) - 1)
+            ins = [pos[u][0] for u, v in edges if u in bottom and v in items and items[v]["band"][0] == c]
+            want = (sum(ins) / len(ins)) if ins else (x_end + total / 2 + GAP)
+            x0 = max(want - total / 2, x_end + GAP * 2.2)
+            for i in live:
+                for L, r in rows_of[i].items():
+                    rw = sum(nw(n) for n in r) + (len(r) - 1) * (DX - 0.7)
+                    x = x0 + (widths[i] - rw) / 2.0
+                    for n in r:
+                        pos[n] = (round(x + nw(n) / 2.0, 3), round(Y0 + (L - 1) * DY, 3))
+                        x += nw(n) + (DX - 0.7)
+                x0 += widths[i] + GAP * 1.4
+            x_end = x0 - GAP * 1.4
+
+    pos = {n: (round(i * DXI, 3), 0.0) for i, n in enumerate(row)}
+    place_clusters(pos)
+    if sweep:
+        for _ in range(3):
+            tx: Dict[str, List[float]] = {n: [] for n in bottom}
+            for u, v in edges:
+                if u in bottom and v in pos and v not in bottom:
+                    tx[u].append(pos[v][0])
+            row = sorted(bottom, key=lambda n: ((sum(tx[n]) / len(tx[n])) if tx[n] else 1e9,
+                                                items[n].get("sort") or "", n))
+            pos = {n: (round(i * DXI, 3), 0.0) for i, n in enumerate(row)}
+            place_clusters(pos)
     xs = [p[0] for p in pos.values()] or [0.0]
     ytop = Y0 + (max((lay[n] for n in items if n not in top and n not in bottom), default=1)) * DY + 0.2
     k = len(top)
@@ -173,6 +217,24 @@ def _place(items, edges, clusters, subs, top) -> Dict[str, Tuple[float, float]]:
     for i, n in enumerate(top):
         pos[n] = (round(mid + (i - (k - 1) / 2.0) * 3.0, 3), round(ytop, 3))
     return pos
+
+
+def crossings(pos, edges) -> int:
+    """Number of pairs of drawn (straight) edges that cross (shared endpoints do not count)."""
+    def ccw(a, b, c):
+        return (c[1] - a[1]) * (b[0] - a[0]) - (b[1] - a[1]) * (c[0] - a[0])
+    segs = [(u, v, pos[u], pos[v]) for u, v in edges if u in pos and v in pos]
+    n = 0
+    for i in range(len(segs)):
+        u1, v1, a, b = segs[i]
+        for j in range(i + 1, len(segs)):
+            u2, v2, c, d = segs[j]
+            if {u1, v1} & {u2, v2}:
+                continue
+            d1, d2, d3, d4 = ccw(c, d, a), ccw(c, d, b), ccw(a, b, c), ccw(a, b, d)
+            if ((d1 > 0) != (d2 > 0)) and ((d3 > 0) != (d4 > 0)) and 0 not in (d1, d2, d3, d4):
+                n += 1
+    return n
 
 
 # ----------------------------------------------------------------------------- drawing
@@ -332,6 +394,7 @@ def overview(layer, note: bool = False) -> Tuple[str, Dict[str, Any]]:
                                  + ", ".join(g["not_used"]) + ".")
     tk = _picture(items, pos, ew, clusters, subs, colors, hidden_labels(layer), text)
     return tk, {"edges": {(e["from"], e["to"]) for e in g["edges"]}, "drawn": ew,
+                "crossings": crossings(pos, [(u, v) for u, v, _ in ew]),
                 "inputs": {n for n, it in items.items() if it["kind"] == "input"},
                 "nodes": set(items), "not_used": g.get("not_used") or []}
 
@@ -420,6 +483,7 @@ def section(layer, pid) -> Tuple[str, Dict[str, Any]]:
     pos = _place(items, [(u, v) for u, v, _ in ew], clusters, subs, tops)
     tk = _picture(items, pos, ew, clusters, subs, colors, hl)
     return tk, {"edges": {(e["from"], e["to"]) for e in owned},
+                "crossings": crossings(pos, [(u, v) for u, v, _ in ew]),
                 "stubs_out": {(e["from"], e["to"]) for e in out_edges}, "nodes": set(items)}
 
 
