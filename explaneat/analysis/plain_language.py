@@ -54,7 +54,7 @@ from .explanation_tools import StateEvaluator, as_unit, default_auc, input_colum
 from .plain_language_codebooks import (base_of, codebook_checks, codebook_gaps, find_codebook,
                                        generic_codebook, level_info)
 
-LAYER_SCHEMA_VERSION = "3.1.0"   # 3: shape of every numeric effect; 3.1: one point per fold
+LAYER_SCHEMA_VERSION = "4.0.0"   # 3: shape of every numeric effect; 3.1: one point per fold; 4: blocks
 CLAIM_TYPES = ("direction", "threshold", "interaction", "magnitude", "subgroup", "null", "rule")
 
 SEED = 42
@@ -436,6 +436,8 @@ class Part:
     contribution_test: Optional[np.ndarray] = None
     duplicate_of: Optional[str] = None
     order: int = 0
+    direct_variables: List[str] = field(default_factory=list)
+    additive: Optional[bool] = None
 
 
 class PlainModel:
@@ -623,6 +625,7 @@ def build_parts(m: PlainModel) -> List[Part]:
                                          for a, b in zip(p.exits, q.exits)):
                     p.duplicate_of = q.id
                     break
+    _direct_inputs(m, parts, vals)
     seq = {a["name"]: i for i, a in enumerate(anns)}
     parts.sort(key=lambda p: (not p.is_root, p.duplicate_of is not None,
                               -float(np.std(p.contribution)) if p.contribution is not None else 0.0,
@@ -630,6 +633,34 @@ def build_parts(m: PlainModel) -> List[Part]:
     for i, p in enumerate(parts):
         p.order = i
     return parts
+
+
+def _direct_inputs(m: PlainModel, parts: List[Part], vals) -> None:
+    """Which variables feed each part directly (into its own nodes, not through a child part),
+    and, for the root, whether the model score is a sum of those inputs and its children's
+    outputs (the "add up independently" block of the v4 summary)."""
+    by_name = {q.name: q for q in parts}
+    for p in parts:
+        desc, stack = set(), list(p.children)
+        while stack:
+            q = by_name.get(stack.pop())
+            if q is None:
+                continue
+            desc |= {str(n) for n in q.unit.get("subgraph_nodes", [])} | set(q.exits)
+            stack += q.children
+        own = ({str(n) for n in p.unit.get("subgraph_nodes", [])} | set(p.exits)) - desc
+        own = {n for n in own if n in m.nodes and m.nodes[n].type != NodeType.INPUT}
+        ins = sorted({str(c.from_node) for c in m.structure.connections
+                      if c.enabled and c.weight != 0 and str(c.to_node) in own
+                      and str(c.from_node) in m.nodes and m.nodes[str(c.from_node)].type == NodeType.INPUT})
+        p.direct_variables = m.vars_of_nodes(ins)
+        if p.is_root:
+            kid_exits = [x for k in p.children if k in by_name for x in by_name[k].exits]
+            n = m.X.shape[0]
+            A = np.column_stack([np.ones(n)] + [vals[e] for e in ins] + [vals[x] for x in kid_exits])
+            y = np.asarray(m.base_logit, dtype=float)
+            coef, *_ = np.linalg.lstsq(A, y, rcond=None)
+            p.additive = bool(np.max(np.abs(y - A @ coef)) <= 1e-6 * max(1.0, float(np.max(np.abs(y)))))
 
 
 def _is_nonlinear(m: PlainModel, p: Part, vals) -> bool:
@@ -1610,6 +1641,8 @@ def part_record(m: PlainModel, p: Part) -> Dict[str, Any]:
             "variables": [m.var_by_base[b].label for b in p.variables],
             "variable_keys": list(p.variables), "upstream_nodes": len(p.upstream_nodes),
             "nonlinear": p.nonlinear, "gated": p.gated,
+            "direct_variable_keys": list(p.direct_variables),
+            **({"additive": p.additive} if p.is_root else {}),
             "contribution_sd": sig(float(np.std(p.contribution))) if p.contribution is not None else None,
             "original_hypothesis": p.ann.get("hypothesis")}
 

@@ -353,6 +353,163 @@ def genome_block(layer: Dict[str, Any]) -> List[str]:
     return L
 
 
+# ----------------------------------------------------------------------------- v4: blocks
+def _var_labels(layer) -> Dict[str, str]:
+    out: Dict[str, str] = {}
+    for p in layer["parts"]:
+        for k, lab in zip(p.get("variable_keys") or [], p.get("variables") or []):
+            out.setdefault(k, lab)
+    for c in layer["claims"]:
+        for v in c.get("variables") or []:
+            if v.get("base") and v.get("short"):
+                out[v["base"]] = v["short"]
+    return out
+
+
+def _sub(depth: int) -> str:
+    return {0: "subsubsection", 1: "paragraph"}.get(depth, "subparagraph")
+
+
+def _diagram(tikz: str, caption: str) -> List[str]:
+    return [r"\par\smallskip\begin{center}", tikz.rstrip(), r"\par{\scriptsize " + tex(caption) + r"\par}",
+            r"\end{center}"]
+
+
+def summary_diagram(layer) -> str:
+    from ..analysis.plain_language_store import ADDITIVE, summary_blocks
+    from .render_tikz import block_diagram
+    d = layer.get("drafted") or {}
+    titles = d.get("titles") or {}
+    lab = _var_labels(layer)
+    by_id = {p["id"]: p for p in layer["parts"]}
+    boxes = []
+    for b in summary_blocks(layer):
+        if b["block"] == ADDITIVE:
+            listed = [lab.get(v, v) for v in b["direct_variables"]]
+            listed += ["part: " + titles.get(pid, by_id[pid]["name"]) for pid in b["parts"][1:]]
+            boxes.append({"label": titles.get(ADDITIVE, "Inputs that add up"), "listed": listed})
+        else:
+            boxes.append({"label": titles.get(b["block"], b["block"]),
+                          "inputs": [lab.get(v, v) for v in b["variables"]]})
+    return block_diagram(boxes, (layer.get("outcome") or {}).get("predicted") or "predicted risk")
+
+
+def detail_diagram(layer, pid: str, additive_members: Optional[List[str]] = None) -> str:
+    """One level down from a block: its child parts as boxes (inputs feeding in) and the inputs it
+    reads itself (dashed), all feeding the block."""
+    from .render_tikz import block_diagram
+    d = layer.get("drafted") or {}
+    titles = d.get("titles") or {}
+    lab = _var_labels(layer)
+    by_id = {p["id"]: p for p in layer["parts"]}
+    by_name = {p["name"]: p for p in layer["parts"]}
+    p = by_id[pid]
+    if additive_members is not None:
+        kids = [by_id[k] for k in additive_members]
+        out = "the model score (a sum)"
+    else:
+        kids = [by_name[k] for k in p.get("children") or [] if k in by_name]
+        out = titles.get(pid, p["name"])
+    boxes = []
+    direct = [lab.get(v, v) for v in (p.get("direct_variable_keys") or [])]
+    if additive_members is not None and direct:     # the inputs added straight in: one listing box
+        boxes.append({"label": "Added directly", "listed": direct})
+        direct = []
+    for k in kids:
+        name = titles.get(k["id"]) or titles.get(k.get("duplicate_of") or "", k["name"])
+        if k["role"] == "duplicate":
+            name += " (second copy)"
+        boxes.append({"label": name, "inputs": [lab.get(v, v) for v in k.get("variable_keys") or []]})
+    return block_diagram(boxes, out, direct=direct)
+
+
+def _part_detail(layer, p, depth, claims_by, revs, titles, extra_parts=None) -> List[str]:
+    d = layer.get("drafted") or {}
+    by_name = {q["name"]: q for q in layer["parts"]}
+    L = [f"\\{_sub(depth)}{{{tex(titles.get(p['id'], p['name']))}}}"]
+    L.append(r"\noindent{\footnotesize Annotation " + tex(p["id"]) + " (" + tex(p["name"]) + "). Reads: "
+             + tex(", ".join(p.get("variables") or [])) + r".\par}")
+    if (p.get("children") and extra_parts is None) or extra_parts:
+        L += _diagram(detail_diagram(layer, p["id"], extra_parts),
+                      "One level down: the parts inside it (inputs feeding each), and the inputs it reads "
+                      "itself (dashed).")
+    L.append(r"\par\noindent " + (sentences_tex((d.get("annotations") or {}).get(p["id"])) or "(no draft)"))
+    L.append(r"\par\smallskip")
+    L += claims_table(claims_by.get(p["id"], []))
+    rv = revs.get(p["id"])
+    if p["role"] != "root":
+        L.append(r"\smallskip")
+        L += _two_col("Original hypothesis (unchanged)", tex(p.get("original_hypothesis") or "(none)"),
+                      "Proposed revision (draft, not applied)",
+                      (tex(rv["proposed"]) + r"\,{\scriptsize\textcolor{NavyBlue}{[" + tex(", ".join(rv.get("claims") or [])) + "]}}")
+                      if rv else "(none proposed)")
+    if extra_parts is not None:      # the additive block: its members, not the root's children
+        kids = [q for q in layer["parts"] if q["id"] in extra_parts]
+    else:
+        kids = [by_name[k] for k in p.get("children") or [] if k in by_name]
+    for q in sorted(kids, key=lambda q: q["order"]):
+        if q["role"] == "duplicate":
+            L.append(f"\\{_sub(depth + 1)}{{{tex(titles.get(q['duplicate_of'], q['name']))} (second copy)}}")
+            L.append(r"\noindent{\footnotesize Annotation " + tex(q["id"]) + ": the same calculation as "
+                     + tex(q["duplicate_of"]) + r", used a second time; described there.\par}")
+            continue
+        L += _part_detail(layer, q, depth + 1, claims_by, revs, titles)
+    return L
+
+
+def genome_block_v4(layer: Dict[str, Any]) -> List[str]:
+    from ..analysis.plain_language_store import ADDITIVE, summary_blocks
+    lab = layer["label"]
+    d = layer.get("drafted") or {}
+    titles = d.get("titles") or {}
+    cnt = layer.get("counts") or {}
+    L = [r"\section{" + tex(lab) + "}"]
+    L.append(r"\noindent{\small Genome \texttt{" + tex(layer.get("genome_id")) + r"}, explanation \texttt{"
+             + tex(layer.get("explanation_id")) + r"}. Split: train primary (n="
+             + tex(layer["split"].get("train_n")) + "), test as a check (n=" + tex(layer["split"].get("test_n"))
+             + "). Claims: " + tex(cnt.get("claims")) + ", verified " + tex(cnt.get("verified"))
+             + ", not supported " + tex(cnt.get("not_supported")) + r".\par}")
+    L.append(r"\noindent{\small\textcolor{BrickRed}{" + tex(_status(layer)) + r"}\par}\smallskip")
+    L.append(r"\noindent{\footnotesize " + tex(_ref_patient(layer)) + r"\par}")
+    L.append(r"\subsection{Summary}")
+    L.append(r"\noindent " + sentences_tex(d.get("lead")))
+    L += _diagram(summary_diagram(layer), "The model at the level of this summary: one box per paragraph below.")
+    blocks = {b["block"]: b for b in d.get("blocks") or []}
+    for b in summary_blocks(layer):
+        L.append(r"\paragraph{" + tex(titles.get(b["block"], b["block"])) + ".} "
+                 + sentences_tex((blocks.get(b["block"]) or {}).get("sentences")))
+    if d.get("worth_checking"):
+        L.append(r"\paragraph{Worth checking against what is known.} " + sentences_tex(d["worth_checking"]))
+    claims_by: Dict[str, List[Dict[str, Any]]] = {}
+    for c in layer["claims"]:
+        claims_by.setdefault(c["annotation"]["id"], []).append(c)
+    revs = d.get("hypothesis_revisions") or {}
+    by_id = {p["id"]: p for p in layer["parts"]}
+    L.append(r"\subsection{Parts in detail}")
+    for b in summary_blocks(layer):
+        if b["block"] == ADDITIVE:
+            root = by_id[b["parts"][0]]
+            sub = dict(titles)
+            sub[root["id"]] = titles.get(ADDITIVE, "Inputs that add up")
+            L += _part_detail(layer, root, 0, claims_by, revs, sub, extra_parts=b["parts"][1:])
+        else:
+            L += _part_detail(layer, by_id[b["block"]], 0, claims_by, revs, titles)
+    L.append(r"\subsection{Not supported by the model}")
+    L += _not_supported(layer)
+    return L
+
+
+CHANGES_V4 = (
+    "v4 follows the structure of the explanation. The summary opens with one line and a diagram at the "
+    "same grouping, then gives one paragraph per top-level block of the annotation hierarchy: one for "
+    "everything that adds up independently (the inputs that feed the model score directly, and parts "
+    "that are a weighted sum), and one for each part that combines its inputs in another way: what it "
+    "combines, how, and for whom. 'Parts in detail' follows the hierarchy below that, with a diagram one "
+    "level down for each part that contains others. The prose no longer says 'clearly', 'slightly', "
+    "'consistently' or 'on the training data only': the numbers carry it, and the test check, the ranges "
+    "and n stay in the evidence tables. Only genuinely small groups are marked, with their n. The lint "
+    "rejects the confidence words and checks the block structure.")
+
 CHANGES_V31 = (
     "v3.1 names one point per fold. Where a part's threshold and the hinge of its shape are the same "
     "fold (same variable, same part), the text gives one value: the median fold across the part's "
@@ -385,8 +542,53 @@ CHANGES_V2 = (
     "...'). The claim numbers changed, so every draft was rewritten.")
 
 
+def is_v4(layer) -> bool:
+    return (layer.get("drafted") or {}).get("structure") == "blocks-v4"
+
+
+HOW_TO_READ_V4 = (
+    r"\noindent\textbf{How to read this.} For each genome: a one-line summary, a diagram at the "
+    r"summary's grouping, and one paragraph per box: first everything that adds up independently, then "
+    r"each part that combines its inputs in another way. ``Parts in detail'' follows the explanation's "
+    r"hierarchy, with a diagram one level down for each part that contains others, the part's claims "
+    r"and evidence, and the original hypothesis next to the proposed revision. Every sentence ends with "
+    r"the claims it rests on. A claim is \emph{verified} when it holds for the model across the training "
+    r"patients; claims that failed are never written as statements and are listed under ``Not supported "
+    r"by the model''. Numbers are changes in \emph{predicted risk for a typical patient} (the median of "
+    r"every number and the most common category; for a part that does not act on that patient, the "
+    r"typical patient it acts on). The prose has no confidence words: the evidence tables give the test "
+    r"check (does the mechanism help the model rank test patients; paired bootstrap, seed 42), the range "
+    r"across patients (10th to 90th percentile), n, and the change in log-odds and odds ratio. The text "
+    r"describes what the model does, not the world; whether it is plausible is for the reviewer to judge.")
+
+
 def render_review(layers: List[Dict[str, Any]], title: str) -> str:
     from .render_tex import DRAFTED_DEFS, PREAMBLE_PACKAGES
+    if layers and all(is_v4(x) for x in layers):
+        L = [r"% Plain-language review document (explaneat plain-language review), v4.",
+             r"\documentclass[a4paper,10pt]{article}",
+             r"\usepackage[margin=1.8cm]{geometry}",
+             PREAMBLE_PACKAGES.rstrip(),
+             r"\usepackage{array}",
+             r"\usepackage[unicode=true,hidelinks]{hyperref}",
+             r"\setcounter{tocdepth}{2}",
+             r"\setcounter{secnumdepth}{3}",
+             DRAFTED_DEFS.rstrip(),
+             r"\begin{document}",
+             r"\begin{center}{\Large\bfseries " + tex(title) + r"\par}\vspace{2mm}"
+             r"{\small AI-assisted drafts for review. Nothing here has been verified by a person.\par}\end{center}",
+             HOW_TO_READ_V4,
+             r"\par\medskip\noindent\textbf{What changed in v4 (structure).} " + tex(CHANGES_V4),
+             r"\par\medskip\noindent\textbf{Earlier versions.} " + tex(
+                 "v3.1 named one point per fold (with the spread between patients when wide); v3 added the "
+                 "shape of every numeric effect; v2 based magnitudes on the typical patient's risk."),
+             r"\tableofcontents", r"\clearpage"]
+        for lay in layers:
+            L += [r"\begin{drafted}[plain-language layer: " + tex(lay["label"]) + "]"]
+            L += genome_block_v4(lay)
+            L += [r"\end{drafted}", r"\clearpage"]
+        L.append(r"\end{document}")
+        return printed("\n".join(L)) + "\n"
     L = [r"% Plain-language review document (explaneat plain-language review).",
          r"\documentclass[a4paper,10pt]{article}",
          r"\usepackage[margin=1.8cm]{geometry}",
@@ -419,7 +621,7 @@ def render_review(layers: List[Dict[str, Any]], title: str) -> str:
          r"\tableofcontents", r"\clearpage"]
     for lay in layers:
         L += [r"\begin{drafted}[plain-language layer: " + tex(lay["label"]) + "]"]
-        L += genome_block(lay)
+        L += genome_block_v4(lay) if is_v4(lay) else genome_block(lay)
         L += [r"\end{drafted}", r"\clearpage"]
     L.append(r"\end{document}")
     return printed("\n".join(L)) + "\n"

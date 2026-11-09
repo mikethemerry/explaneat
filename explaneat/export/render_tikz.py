@@ -367,3 +367,63 @@ def render_all(doc) -> Dict[str, str]:
                     f"% Plain TikZ (arrows.meta, fit, backgrounds, positioning, calc) + graphicx.\n"
                     + body)
     return out
+
+
+# ----------------------------------------------------------------------------- block view
+def block_diagram(boxes: List[Dict[str, Any]], out_label: str, direct: Optional[List[str]] = None) -> str:
+    """A small block view at the grouping of a plain-language summary (or of one of its detail
+    sections): input variables on the left feeding the boxes they enter; each box labelled with a
+    plain name (an additive block lists the inputs it adds up inside its box); every box feeds
+    ``out_label`` on the right. ``direct`` inputs feed ``out_label`` without a box (dashed).
+
+    ``boxes``: ``[{"label": str, "listed": [str], "inputs": [str]}]``. Same styles, palette and
+    sizing as :func:`render_view`; plain names only, never node ids.
+    """
+    direct = list(direct or [])
+    inputs: List[str] = []
+    for b in boxes:
+        for v in b.get("inputs") or []:
+            if v not in inputs:
+                inputs.append(v)
+    for v in direct:
+        if v not in inputs:
+            inputs.append(v)
+    yi = {v: round(-(i - (len(inputs) - 1) / 2.0) * DY, 3) for i, v in enumerate(inputs)}
+    heights = [0.6 + 0.3 * len(b.get("listed") or []) for b in boxes]
+    span = max(sum(heights) + 0.4 * max(len(boxes) - 1, 0), (len(inputs) - 1) * DY)
+    gap = (span - sum(heights)) / (len(boxes) - 1) if len(boxes) > 1 else 0.0
+    yb, top = [], span / 2.0
+    for h in heights:
+        yb.append(round(top - h / 2.0, 3) if len(boxes) > 1 else 0.0)
+        top -= h + gap
+    xb = 2.2 * DX if inputs else 0.0
+    xo = xb + 1.7 * DX
+    L = [r"\resizebox{!}{\ifdim\height>0.5\textheight 0.5\textheight\else\height\fi}{%",
+         r"\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{%",
+         r"\begin{tikzpicture}[",
+         r"  font=\sffamily\scriptsize, >={Stealth[length=1.6mm]},",
+         r"  inp/.style={draw, rounded corners=1pt, fill=white, inner sep=1.5pt, minimum height=3.2mm, anchor=east},",
+         r"  abox/.style={draw, thick, rounded corners=2pt, align=center, inner sep=3pt, minimum height=6mm, text width=42mm},",
+         r"  outp/.style={draw, double, rounded corners=2pt, fill=white, align=center, inner sep=3pt, text width=24mm},",
+         r"  agg/.style={draw=black!55},",
+         r"]"]
+    for i, v in enumerate(inputs):
+        L.append(f"\\node[inp] (i{i}) at (0,{yi[v]}) {{{tex(_short(v, 40))}}};")
+    for j, b in enumerate(boxes):
+        col = PALETTE[j % len(PALETTE)]
+        listed = b.get("listed") or []
+        body = r"\textbf{" + tex(b["label"]) + "}"
+        if listed:
+            body += r"\\[1pt]{\tiny " + r"\\ ".join(tex(_short(x, 44)) for x in listed) + "}"
+        L.append(f"\\node[abox, fill={col}!18, draw={col}!80!black] (b{j}) at ({xb},{yb[j]}) {{{body}}};")
+    L.append(f"\\node[outp] (out) at ({round(xo, 3)},0) {{{tex(out_label)}}};")
+    L.append(r"\begin{scope}[on background layer]")
+    for j, b in enumerate(boxes):
+        for v in b.get("inputs") or []:
+            L.append(f"\\draw[->, agg, thin] (i{inputs.index(v)}.east) -- (b{j}.west);")
+        L.append(f"\\draw[->, agg] (b{j}.east) -- (out.west);")
+    for v in direct:
+        L.append(f"\\draw[->, agg, thin, dashed] (i{inputs.index(v)}.east) -- (out.west);")
+    L.append(r"\end{scope}")
+    L.append(r"\end{tikzpicture}}}%")
+    return "\n".join(L) + "\n"
