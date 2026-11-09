@@ -259,6 +259,15 @@ forms in `explaneat/export/render_plain.py`. Writing protocol:
   `mixed` (a majority shape whose exceptions are characterised by a category) or `fallback`
   ("in an uneven way"). Categoricals record each level relative to the reference. The lint
   requires the matching shape words in every numeric effect sentence.
+- **One point per fold** (layer v3.1): threshold claims record the 10th-90th percentile of the
+  per-patient folds (`p10_p90_across_patients`). When a part's hinge or step and its threshold
+  claim on the same variable are the same fold, the shape gets `point` (`value`/`text` = the
+  median fold, `typical_hinge`, `spread_p10_p90`, `spread_text`, `wide` when the spread exceeds
+  10% of the variable's range, `source_claim`) and `point_reconciled: true` with `point_reason`;
+  otherwise `point_reconciled: false` with the reason (no fold, whole-model curve, no threshold
+  claim in that part). The lint rejects a sentence that quotes a second number for a reconciled
+  fold, the mechanical "; by shape: ..." clause, and paragraphs over 6 sentences (part) or 8
+  (whole model).
 - **Confidence words** (`CONFIDENCE_RULES`): "clearly" = risk change of at least 5 points for
   the typical patient, the test check agrees, every group at least 20 patients; "slightly" =
   below 5 points; "on the training data only" = the test check does not agree; "the model has
