@@ -10,6 +10,10 @@ Two levels:
   evidence to a remote model) refuses genomes trained on them and their splits,
   unless ``EXPLANEAT_ALLOW_ASSISTED_RESTRICTED=1`` is set explicitly.
 
+Local exports (``explaneat export``, the export API/UI) may read restricted
+datasets: they run on this machine and write files here (decision of 9 Nov
+2026). Only the assisted path above is refused.
+
 The API and the React Explorer never send data off the machine themselves:
 they bind to 127.0.0.1 by default and the UI bundle loads no external scripts
 or fonts.
@@ -17,8 +21,25 @@ or fonts.
 
 from __future__ import annotations
 
+import contextlib
+import contextvars
 import os
 from typing import Any, Optional
+
+# Set while local, non-assisted code (e.g. the export pack) reads data through
+# the shared helpers. Local exports of restricted datasets are allowed (Mike,
+# 9 Nov 2026); only the Claude/MCP-assisted path stays restricted.
+_LOCAL_USE = contextvars.ContextVar("explaneat_local_use", default=False)
+
+
+@contextlib.contextmanager
+def local_use():
+    """Mark the enclosed code as local use (not the Claude/MCP-assisted path)."""
+    token = _LOCAL_USE.set(True)
+    try:
+        yield
+    finally:
+        _LOCAL_USE.reset(token)
 
 _TRUE = {"1", "true", "yes", "on"}
 
@@ -62,6 +83,8 @@ def require_external_network(what: str = "this action") -> None:
 
 def require_assisted_access(dataset: Optional[Any]) -> None:
     """Raise unless the Claude/MCP-assisted path may read this dataset."""
+    if _LOCAL_USE.get():
+        return
     if restricted_server() and not assisted_restricted_allowed():
         raise GovernanceError(
             "The MCP (Claude-assisted) path is disabled in restricted mode "

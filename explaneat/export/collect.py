@@ -440,10 +440,19 @@ def explained_genomes_in_experiment(session, experiment_id: str) -> List[str]:
     return [str(r[0]) for r in rows]
 
 
-def collect(genome_id: str, *, label: Optional[str] = None, study: Optional[Dict[str, Any]] = None,
-            records_dir: Optional[Path] = None, db=None, compute_data_checks: bool = True,
-            now: Optional[str] = None) -> Dict[str, Any]:
-    """Build the sealed export document for ``genome_id`` (read-only)."""
+def collect(genome_id: str, **kwargs) -> Dict[str, Any]:
+    """Build the sealed export document for ``genome_id`` (read-only).
+
+    Export is local use, so it may read restricted datasets (Mike, 9 Nov
+    2026); the Claude/MCP-assisted path stays restricted."""
+    from .. import governance
+    with governance.local_use():
+        return _collect(genome_id, **kwargs)
+
+
+def _collect(genome_id: str, *, label: Optional[str] = None, study: Optional[Dict[str, Any]] = None,
+             records_dir: Optional[Path] = None, db=None, compute_data_checks: bool = True,
+             now: Optional[str] = None) -> Dict[str, Any]:
     from sqlalchemy import text
     from mcp_server.helpers import build_engine, load_split_data
     from mcp_server.server import get_db

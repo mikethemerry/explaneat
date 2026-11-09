@@ -466,6 +466,8 @@ checklist in §6.
   - The MCP (Claude-assisted) path refuses every genome and dataset, unless
     `EXPLANEAT_ALLOW_ASSISTED_RESTRICTED=1` is set.
   - Every CSV import is treated as restricted.
+  - Local exports (`explaneat export`, and Export in the UI) still work for
+    restricted datasets: they stay on this machine.
   - `GET /api/governance` reports the settings.
 - **Restricted datasets.** Tick *restricted data* at import, or set
   `additional_metadata.restricted = true`. The flag has these effects:
