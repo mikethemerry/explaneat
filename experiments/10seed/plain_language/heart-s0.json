@@ -97,6 +97,8 @@
       "to": 3.0
      }
     ],
+    "point_reason": "no fold in this shape (steady)",
+    "point_reconciled": false,
     "points": {},
     "points_text": {},
     "risk_saturation": "near 100%",
@@ -495,6 +497,8 @@
       "to": 4.2
      }
     ],
+    "point_reason": "no fold in this shape (steady)",
+    "point_reconciled": false,
     "points": {},
     "points_text": {},
     "risk_saturation": null,
@@ -819,6 +823,8 @@
       "to": 401.67
      }
     ],
+    "point_reason": "no fold in this shape (steady)",
+    "point_reconciled": false,
     "points": {},
     "points_text": {},
     "risk_saturation": null,
@@ -1942,6 +1948,8 @@
       "to": 72.77
      }
     ],
+    "point_reason": "no fold in this shape (steady)",
+    "point_reconciled": false,
     "points": {},
     "points_text": {},
     "risk_saturation": null,
@@ -2582,6 +2590,8 @@
       "to": 193.18
      }
     ],
+    "point_reason": "no fold in this shape (steady)",
+    "point_reconciled": false,
     "points": {},
     "points_text": {},
     "risk_saturation": null,
@@ -3278,6 +3288,8 @@
       "to": 3.0
      }
     ],
+    "point_reason": "no fold in this shape (steady)",
+    "point_reconciled": false,
     "points": {},
     "points_text": {},
     "risk_saturation": "near 100%",
@@ -3614,6 +3626,8 @@
       "to": 4.2
      }
     ],
+    "point_reason": "no fold in this shape (steady)",
+    "point_reconciled": false,
     "points": {},
     "points_text": {},
     "risk_saturation": null,
@@ -3880,6 +3894,8 @@
       "to": 401.67
      }
     ],
+    "point_reason": "no fold in this shape (steady)",
+    "point_reconciled": false,
     "points": {},
     "points_text": {},
     "risk_saturation": null,
@@ -7005,7 +7021,7 @@
    "verified": true
   }
  ],
- "claims_hash": "69fd8405a8f8ecc2b620ccafa30b335cb73694b11ddf29b4db553e10ed6037f6",
+ "claims_hash": "2717d7f9ef1fc91b852d22cba96303bf66396a96de8dea11104a644dd14164b7",
  "codebook": {
   "checks": [
    {
@@ -7088,7 +7104,7 @@
       "C31",
       "C30"
      ],
-     "text": "Through it, being a woman rather than a man raises that patient's predicted risk from about 12% to about 92%, and signs of left ventricular hypertrophy on the resting ECG lower it from about 92% to about 12% (on the training data only)."
+     "text": "Being a woman rather than a man also raises it there, from about 12% to about 92%, while signs of left ventricular hypertrophy on the resting ECG bring it back down from about 92% to about 12% (on the training data only)."
     },
     {
      "claims": [
@@ -7184,7 +7200,7 @@
       "C20",
       "C10"
      ],
-     "text": "More ST depression on exercise, higher cholesterol and older age raise it steadily: from about 16% at 0 mm to about 50% at 2.8 mm, from about 13% at 193 mg/dL to about 45% at 308 mg/dL, and from about 17% at 42 to about 28% at 66 years (on the training data only)."
+     "text": "More ST depression on exercise, higher cholesterol and older age each raise it steadily: from about 16% at 0 mm to about 50% at 2.8 mm, from about 13% at 193 mg/dL to about 45% at 308 mg/dL, and from about 17% at 42 to about 28% at 66 years (on the training data only)."
     },
     {
      "claims": [
@@ -7201,15 +7217,10 @@
     },
     {
      "claims": [
-      "C15"
-     ],
-     "text": "Fasting blood sugar above 120 mg/dL lowers it only slightly, to about 19% (on the training data only)."
-    },
-    {
-     "claims": [
+      "C15",
       "C13"
      ],
-     "text": "A higher maximum heart rate lowers it steadily but only slightly, from about 26% at 118 to about 21% at 175 beats per minute (on the training data only)."
+     "text": "Smaller effects, each changing the predicted risk only slightly (on the training data only): fasting blood sugar above 120 mg/dL lowers it to about 19%, and a higher maximum heart rate lowers it steadily, from about 26% at 118 to about 21% at 175 beats per minute."
     },
     {
      "claims": [
@@ -7219,8 +7230,8 @@
     }
    ]
   },
-  "claims_hash": "69fd8405a8f8ecc2b620ccafa30b335cb73694b11ddf29b4db553e10ed6037f6",
-  "drafted_at": "2026-11-08T21:32:14+00:00",
+  "claims_hash": "2717d7f9ef1fc91b852d22cba96303bf66396a96de8dea11104a644dd14164b7",
+  "drafted_at": "2026-11-09T01:09:21+00:00",
   "drafted_by": "ai-assisted",
   "hypothesis_revisions": {
    "ann_28": {
@@ -7564,7 +7575,7 @@
   "kind": "binary",
   "label": "predicted risk"
  },
- "schema_version": "3.0.0",
+ "schema_version": "3.1.0",
  "settings": {
   "bootstrap_B": 1000,
   "confidence_rules": {
@@ -7648,33 +7659,18 @@
     },
     {
      "claims": [
-      "C33"
-     ],
-     "text": "The model gives a slightly lower predicted risk of heart disease if the patient is a woman than if the patient is a man, and even more so if exercise does not bring on chest pain: for a typical patient, going from male to female moves the predicted risk of heart disease from about 23% to about 1% if exercise does not bring on chest pain, and from about 23% to about 4% if exercise brings on chest pain."
-    },
-    {
-     "claims": [
-      "C34"
-     ],
-     "text": "This changes the prediction only slightly: for a typical patient, going from no chest pain on exercise to chest pain brought on by exercise moves the predicted risk of heart disease from about 23% to about 23% if resting ECG is something other than signs of left ventricular hypertrophy on the resting ECG, and from about 33% to about 33% if the resting ECG shows left ventricular hypertrophy."
-    },
-    {
-     "claims": [
-      "C29"
-     ],
-     "text": "Through this part, for a typical patient this part acts on, the model gives a clearly higher predicted risk of heart disease if exercise brings on chest pain (about 92%) than if exercise does not bring on chest pain (about 12%)."
-    },
-    {
-     "claims": [
-      "C30"
-     ],
-     "text": "Through this part, for a typical patient this part acts on, the model gives a lower predicted risk of heart disease if the resting ECG shows left ventricular hypertrophy (about 12%) than if resting ECG is something other than signs of left ventricular hypertrophy on the resting ECG (about 92%) (on the training data only)."
-    },
-    {
-     "claims": [
+      "C29",
+      "C30",
       "C31"
      ],
-     "text": "Through this part, for a typical patient this part acts on, the model gives a higher predicted risk of heart disease if the patient is a woman (about 92%) than if the patient is a man (about 12%) (on the training data only)."
+     "text": "Other effects: chest pain brought on by exercise (rather than no chest pain on exercise) raises it; signs of left ventricular hypertrophy on the resting ECG (rather than any other resting ECG) lowers it; female (rather than male) raises it (on the training data only)."
+    },
+    {
+     "claims": [
+      "C33",
+      "C34"
+     ],
+     "text": "Smaller effects, each changing the predicted value only slightly: sex depending on exercise-induced angina lowers it; exercise-induced angina depending on resting ECG raises it."
     }
    ],
    "ann_29": [
@@ -7712,33 +7708,18 @@
     },
     {
      "claims": [
-      "C27"
-     ],
-     "text": "The model gives a slightly higher predicted risk of heart disease if the ST segment is flat at peak exercise than if slope of the ST segment at peak exercise is something other than a flat ST segment, and even more so if exercise brings on chest pain: for a typical patient, going from slope of the ST segment at peak exercise other than a flat ST segment to a flat ST segment moves the predicted risk of heart disease from about 23% to about 80% if exercise brings on chest pain, and from about 23% to about 80% if exercise does not bring on chest pain (on the training data only)."
-    },
-    {
-     "claims": [
       "C23"
      ],
      "text": "Through this part, for a typical patient, the model gives a higher predicted risk of heart disease if the ST segment is flat at peak exercise (about 29%) than if slope of the ST segment at peak exercise is something other than a flat ST segment (about 23%) (on the training data only)."
     },
     {
      "claims": [
-      "C24"
+      "C24",
+      "C25",
+      "C26",
+      "C27"
      ],
-     "text": "Through this part, for a typical patient this part acts on, the model gives a slightly higher predicted risk of heart disease if exercise brings on chest pain (about 97%) than if exercise does not bring on chest pain (about 97%)."
-    },
-    {
-     "claims": [
-      "C25"
-     ],
-     "text": "Through this part, for a typical patient this part acts on, the model gives a slightly higher predicted risk of heart disease if the resting ECG shows left ventricular hypertrophy (about 97%) than if resting ECG is something other than signs of left ventricular hypertrophy on the resting ECG (about 97%) (on the training data only)."
-    },
-    {
-     "claims": [
-      "C26"
-     ],
-     "text": "Through this part, for a typical patient this part acts on, the model gives a slightly higher predicted risk of heart disease if the patient is a woman (about 97%) than if the patient is a man (about 97%) (on the training data only)."
+     "text": "Smaller effects, each changing the predicted value only slightly: chest pain brought on by exercise (rather than no chest pain on exercise) raises it; signs of left ventricular hypertrophy on the resting ECG (rather than any other resting ECG) lowers it; female (rather than male) raises it; slope of the ST segment at peak exercise depending on exercise-induced angina raises it (on the training data only)."
     }
    ],
    "ann_31": [
@@ -7774,83 +7755,38 @@
     },
     {
      "claims": [
-      "C06"
-     ],
-     "text": "For a typical patient, the model gives a lower predicted risk of heart disease if the patient is a woman (about 1%) than if the patient is a man (about 23%) (on the training data only)."
-    },
-    {
-     "claims": [
-      "C07"
-     ],
-     "text": "For a typical patient, the model gives a clearly lower predicted risk of heart disease if the patient has typical angina (about 1%) than if the patient has no chest pain symptoms (about 23%)."
-    },
-    {
-     "claims": [
-      "C08"
-     ],
-     "text": "For a typical patient, the model gives a clearly lower predicted risk of heart disease if the patient has non-anginal chest pain (about 2%) than if the patient has no chest pain symptoms (about 23%)."
-    },
-    {
-     "claims": [
-      "C09"
-     ],
-     "text": "For a typical patient, the model gives a lower predicted risk of heart disease if the thallium scan shows a fixed defect (about 8%) than if thallium stress test result is something other than a fixed defect on the thallium scan, a reversible defect on the thallium scan (about 23%) (on the training data only). The model has little data on this: only 15 training patients (a fixed defect on the thallium scan)."
-    },
-    {
-     "claims": [
-      "C10"
-     ],
-     "text": "The model treats a higher age as raising the predicted risk of heart disease steadily: for a typical patient, it goes from about 17% at 42 years to about 28% at 66 years (on the training data only)."
-    },
-    {
-     "claims": [
-      "C11"
-     ],
-     "text": "For a typical patient, the model gives a clearly lower predicted risk of heart disease if the patient has atypical angina (about 12%) than if the patient has no chest pain symptoms (about 23%)."
-    },
-    {
-     "claims": [
-      "C12"
-     ],
-     "text": "For a typical patient, the model gives a higher predicted risk of heart disease if the resting ECG shows left ventricular hypertrophy (about 33%) than if resting ECG is something other than signs of left ventricular hypertrophy on the resting ECG (about 23%) (on the training data only)."
-    },
-    {
-     "claims": [
-      "C13"
-     ],
-     "text": "The model treats a higher maximum heart rate as slightly lowering the predicted risk of heart disease steadily: for a typical patient, it goes from about 26% at 118 beats per minute to about 21% at 175 beats per minute (on the training data only)."
-    },
-    {
-     "claims": [
-      "C14"
-     ],
-     "text": "For a typical patient, the model gives a slightly higher predicted risk of heart disease if the ST segment slopes down at peak exercise (about 27%) than if the ST segment slopes up at peak exercise (about 23%) (on the training data only). The model has little data on this: only 17 training patients (a downsloping ST segment)."
-    },
-    {
-     "claims": [
-      "C15"
-     ],
-     "text": "For a typical patient, the model gives a slightly lower predicted risk of heart disease if fasting blood sugar is above 120 mg/dL (about 19%) than if fasting blood sugar is 120 mg/dL or less (about 23%) (on the training data only)."
-    },
-    {
-     "claims": [
-      "C16"
-     ],
-     "text": "For a typical patient, the model gives a slightly higher predicted risk of heart disease if exercise brings on chest pain (about 23%) than if exercise does not bring on chest pain (about 23%)."
-    },
-    {
-     "claims": [
       "C22"
      ],
      "text": "It ignores resting blood pressure."
+    },
+    {
+     "claims": [
+      "C06",
+      "C07",
+      "C08",
+      "C09",
+      "C10",
+      "C11",
+      "C12"
+     ],
+     "text": "Other effects: female (rather than male) lowers it; typical angina (rather than no chest pain (asymptomatic)) lowers it; non-anginal chest pain (rather than no chest pain (asymptomatic)) lowers it; a fixed defect on the thallium scan (rather than any other thallium stress test result) lowers it; a higher age raises it steadily; atypical angina (rather than no chest pain (asymptomatic)) lowers it; signs of left ventricular hypertrophy on the resting ECG (rather than any other resting ECG) raises it (on the training data only). The model has little data on some of these: only 15 training patients (a fixed defect on the thallium scan)."
+    },
+    {
+     "claims": [
+      "C13",
+      "C14",
+      "C15",
+      "C16"
+     ],
+     "text": "Smaller effects, each changing the predicted value only slightly: a higher maximum heart rate lowers it steadily; a downsloping ST segment (rather than an upsloping ST segment) raises it; fasting blood sugar above 120 mg/dL (rather than fasting blood sugar of 120 mg/dL or less) lowers it; chest pain brought on by exercise (rather than no chest pain on exercise) raises it (on the training data only). The model has little data on some of these: only 17 training patients (a downsloping ST segment)."
     }
    ]
   },
   "hypotheses": {
-   "ann_28": "This part acts on 8 of 242 training patients (3%); nearly all of them are women and patients whose chest pain is brought on by exercise. For a typical patient it acts on, it raises the predicted risk of heart disease from about 12% without this part to about 92% with it (on the training data only). The model has little data on this: only 8 training patients (patients the part acts on). In the training data, 7 of these 8 patients had heart disease. The model gives a clearly lower predicted risk of heart disease if the patient is a woman than if the patient is a man, and even more so if the resting ECG shows left ventricular hypertrophy: for a typical patient, going from male to female moves the predicted risk of heart disease from about 33% to about 1% if the resting ECG shows left ventricular hypertrophy, and from about 23% to about 1% if resting ECG is something other than signs of left ventricular hypertrophy on the resting ECG. The model gives a slightly lower predicted risk of heart disease if the patient is a woman than if the patient is a man, and even more so if exercise does not bring on chest pain: for a typical patient, going from male to female moves the predicted risk of heart disease from about 23% to about 1% if exercise does not bring on chest pain, and from about 23% to about 4% if exercise brings on chest pain. This changes the prediction only slightly: for a typical patient, going from no chest pain on exercise to chest pain brought on by exercise moves the predicted risk of heart disease from about 23% to about 23% if resting ECG is something other than signs of left ventricular hypertrophy on the resting ECG, and from about 33% to about 33% if the resting ECG shows left ventricular hypertrophy. Through this part, for a typical patient this part acts on, the model gives a clearly higher predicted risk of heart disease if exercise brings on chest pain (about 92%) than if exercise does not bring on chest pain (about 12%). Through this part, for a typical patient this part acts on, the model gives a lower predicted risk of heart disease if the resting ECG shows left ventricular hypertrophy (about 12%) than if resting ECG is something other than signs of left ventricular hypertrophy on the resting ECG (about 92%) (on the training data only). Through this part, for a typical patient this part acts on, the model gives a higher predicted risk of heart disease if the patient is a woman (about 92%) than if the patient is a man (about 12%) (on the training data only).",
+   "ann_28": "This part acts on 8 of 242 training patients (3%); nearly all of them are women and patients whose chest pain is brought on by exercise. For a typical patient it acts on, it raises the predicted risk of heart disease from about 12% without this part to about 92% with it (on the training data only). The model has little data on this: only 8 training patients (patients the part acts on). In the training data, 7 of these 8 patients had heart disease. The model gives a clearly lower predicted risk of heart disease if the patient is a woman than if the patient is a man, and even more so if the resting ECG shows left ventricular hypertrophy: for a typical patient, going from male to female moves the predicted risk of heart disease from about 33% to about 1% if the resting ECG shows left ventricular hypertrophy, and from about 23% to about 1% if resting ECG is something other than signs of left ventricular hypertrophy on the resting ECG. Other effects: chest pain brought on by exercise (rather than no chest pain on exercise) raises it; signs of left ventricular hypertrophy on the resting ECG (rather than any other resting ECG) lowers it; female (rather than male) raises it (on the training data only). Smaller effects, each changing the predicted value only slightly: sex depending on exercise-induced angina lowers it; exercise-induced angina depending on resting ECG raises it.",
    "ann_29": "Through this part, for a typical patient, the model gives a slightly higher predicted risk of heart disease if the resting ECG shows left ventricular hypertrophy (about 24%) than if resting ECG is something other than signs of left ventricular hypertrophy on the resting ECG (about 23%) (on the training data only). This part barely changes the model's predictions (by at most 0.7 percentage points).",
-   "ann_30": "This part acts on 111 of 242 training patients (46%); nearly all of them are patients with a flat ST segment. For a typical patient it acts on, it slightly raises the predicted risk of heart disease from about 96% without this part to about 97% with it (on the training data only). In the training data, 72 of these 111 patients had heart disease. The model gives a slightly higher predicted risk of heart disease if the ST segment is flat at peak exercise than if slope of the ST segment at peak exercise is something other than a flat ST segment, and even more so if exercise brings on chest pain: for a typical patient, going from slope of the ST segment at peak exercise other than a flat ST segment to a flat ST segment moves the predicted risk of heart disease from about 23% to about 80% if exercise brings on chest pain, and from about 23% to about 80% if exercise does not bring on chest pain (on the training data only). Through this part, for a typical patient, the model gives a higher predicted risk of heart disease if the ST segment is flat at peak exercise (about 29%) than if slope of the ST segment at peak exercise is something other than a flat ST segment (about 23%) (on the training data only). Through this part, for a typical patient this part acts on, the model gives a slightly higher predicted risk of heart disease if exercise brings on chest pain (about 97%) than if exercise does not bring on chest pain (about 97%). Through this part, for a typical patient this part acts on, the model gives a slightly higher predicted risk of heart disease if the resting ECG shows left ventricular hypertrophy (about 97%) than if resting ECG is something other than signs of left ventricular hypertrophy on the resting ECG (about 97%) (on the training data only). Through this part, for a typical patient this part acts on, the model gives a slightly higher predicted risk of heart disease if the patient is a woman (about 97%) than if the patient is a man (about 97%) (on the training data only).",
-   "ann_31": "The model treats a higher number of vessels coloured by fluoroscopy as raising the predicted risk of heart disease steadily, each extra vessel adding about the same: for a typical patient, it goes from about 23% at 0 vessels to about 96% at 2 vessels, flattening out near the top because the predicted risk cannot go much higher (on the training data only). For a typical patient, the model gives a higher predicted risk of heart disease if the ST segment is flat at peak exercise (about 80%) than if the ST segment slopes up at peak exercise (about 23%) (on the training data only). The model treats a higher ST depression on exercise as raising the predicted risk of heart disease steadily: for a typical patient, it goes from about 16% at 0.0 mm to about 50% at 2.8 mm (on the training data only). The model treats a higher serum cholesterol as raising the predicted risk of heart disease steadily: for a typical patient, it goes from about 13% at 193 mg/dL (5.0 mmol/L) to about 45% at 308 mg/dL (8.0 mmol/L) (on the training data only). For a typical patient, the model gives a higher predicted risk of heart disease if the thallium scan shows a reversible defect (about 47%) than if thallium stress test result is something other than a fixed defect on the thallium scan, a reversible defect on the thallium scan (about 23%) (on the training data only). For a typical patient, the model gives a lower predicted risk of heart disease if the patient is a woman (about 1%) than if the patient is a man (about 23%) (on the training data only). For a typical patient, the model gives a clearly lower predicted risk of heart disease if the patient has typical angina (about 1%) than if the patient has no chest pain symptoms (about 23%). For a typical patient, the model gives a clearly lower predicted risk of heart disease if the patient has non-anginal chest pain (about 2%) than if the patient has no chest pain symptoms (about 23%). For a typical patient, the model gives a lower predicted risk of heart disease if the thallium scan shows a fixed defect (about 8%) than if thallium stress test result is something other than a fixed defect on the thallium scan, a reversible defect on the thallium scan (about 23%) (on the training data only). The model has little data on this: only 15 training patients (a fixed defect on the thallium scan). The model treats a higher age as raising the predicted risk of heart disease steadily: for a typical patient, it goes from about 17% at 42 years to about 28% at 66 years (on the training data only). For a typical patient, the model gives a clearly lower predicted risk of heart disease if the patient has atypical angina (about 12%) than if the patient has no chest pain symptoms (about 23%). For a typical patient, the model gives a higher predicted risk of heart disease if the resting ECG shows left ventricular hypertrophy (about 33%) than if resting ECG is something other than signs of left ventricular hypertrophy on the resting ECG (about 23%) (on the training data only). The model treats a higher maximum heart rate as slightly lowering the predicted risk of heart disease steadily: for a typical patient, it goes from about 26% at 118 beats per minute to about 21% at 175 beats per minute (on the training data only). For a typical patient, the model gives a slightly higher predicted risk of heart disease if the ST segment slopes down at peak exercise (about 27%) than if the ST segment slopes up at peak exercise (about 23%) (on the training data only). The model has little data on this: only 17 training patients (a downsloping ST segment). For a typical patient, the model gives a slightly lower predicted risk of heart disease if fasting blood sugar is above 120 mg/dL (about 19%) than if fasting blood sugar is 120 mg/dL or less (about 23%) (on the training data only). For a typical patient, the model gives a slightly higher predicted risk of heart disease if exercise brings on chest pain (about 23%) than if exercise does not bring on chest pain (about 23%). It ignores resting blood pressure."
+   "ann_30": "This part acts on 111 of 242 training patients (46%); nearly all of them are patients with a flat ST segment. For a typical patient it acts on, it slightly raises the predicted risk of heart disease from about 96% without this part to about 97% with it (on the training data only). In the training data, 72 of these 111 patients had heart disease. Through this part, for a typical patient, the model gives a higher predicted risk of heart disease if the ST segment is flat at peak exercise (about 29%) than if slope of the ST segment at peak exercise is something other than a flat ST segment (about 23%) (on the training data only). Smaller effects, each changing the predicted value only slightly: chest pain brought on by exercise (rather than no chest pain on exercise) raises it; signs of left ventricular hypertrophy on the resting ECG (rather than any other resting ECG) lowers it; female (rather than male) raises it; slope of the ST segment at peak exercise depending on exercise-induced angina raises it (on the training data only).",
+   "ann_31": "The model treats a higher number of vessels coloured by fluoroscopy as raising the predicted risk of heart disease steadily, each extra vessel adding about the same: for a typical patient, it goes from about 23% at 0 vessels to about 96% at 2 vessels, flattening out near the top because the predicted risk cannot go much higher (on the training data only). For a typical patient, the model gives a higher predicted risk of heart disease if the ST segment is flat at peak exercise (about 80%) than if the ST segment slopes up at peak exercise (about 23%) (on the training data only). The model treats a higher ST depression on exercise as raising the predicted risk of heart disease steadily: for a typical patient, it goes from about 16% at 0.0 mm to about 50% at 2.8 mm (on the training data only). The model treats a higher serum cholesterol as raising the predicted risk of heart disease steadily: for a typical patient, it goes from about 13% at 193 mg/dL (5.0 mmol/L) to about 45% at 308 mg/dL (8.0 mmol/L) (on the training data only). For a typical patient, the model gives a higher predicted risk of heart disease if the thallium scan shows a reversible defect (about 47%) than if thallium stress test result is something other than a fixed defect on the thallium scan, a reversible defect on the thallium scan (about 23%) (on the training data only). It ignores resting blood pressure. Other effects: female (rather than male) lowers it; typical angina (rather than no chest pain (asymptomatic)) lowers it; non-anginal chest pain (rather than no chest pain (asymptomatic)) lowers it; a fixed defect on the thallium scan (rather than any other thallium stress test result) lowers it; a higher age raises it steadily; atypical angina (rather than no chest pain (asymptomatic)) lowers it; signs of left ventricular hypertrophy on the resting ECG (rather than any other resting ECG) raises it (on the training data only). The model has little data on some of these: only 15 training patients (a fixed defect on the thallium scan). Smaller effects, each changing the predicted value only slightly: a higher maximum heart rate lowers it steadily; a downsloping ST segment (rather than an upsloping ST segment) raises it; fasting blood sugar above 120 mg/dL (rather than fasting blood sugar of 120 mg/dL or less) lowers it; chest pain brought on by exercise (rather than no chest pain on exercise) raises it (on the training data only). The model has little data on some of these: only 17 training patients (a downsloping ST segment)."
   },
   "not_supported": [],
   "renderer": "explaneat.analysis.plain_language_templates (deterministic, no language model)",
