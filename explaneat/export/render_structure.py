@@ -248,7 +248,7 @@ def _place(items, edges, clusters, subs, top, sweep: Optional[bool] = None) -> D
                 x0 += widths[i] + GAP * 1.4
             x_end = max(x0 - GAP * 1.4, start + total)
 
-    pos = {n: (round(i * DXI, 3), 0.0) for i, n in enumerate(row)}
+    pos = _input_row(row, users)
     place_clusters(pos)
     if sweep:
         for _ in range(3):
@@ -258,7 +258,7 @@ def _place(items, edges, clusters, subs, top, sweep: Optional[bool] = None) -> D
                     tx[u].append(pos[v][0])
             row = sorted(bottom, key=lambda n: ((sum(tx[n]) / len(tx[n])) if tx[n] else 1e9,
                                                 items[n].get("sort") or "", n))
-            pos = {n: (round(i * DXI, 3), 0.0) for i, n in enumerate(row)}
+            pos = _input_row(row, users)
             place_clusters(pos)
     xs = [p[0] for p in pos.values()] or [0.0]
     ytop = Y0 + (max((lay[n] for n in items if n not in top and n not in bottom), default=1)) * DY + 0.2
@@ -266,6 +266,33 @@ def _place(items, edges, clusters, subs, top, sweep: Optional[bool] = None) -> D
     mid = (min(xs) + max(xs)) / 2
     for i, n in enumerate(top):
         pos[n] = (round(mid + (i - (k - 1) / 2.0) * 3.0, 3), round(ytop, 3))
+    return pos
+
+
+ROW_WRAP = 6       # inputs per row under one cluster; more wrap into staggered rows below
+ROW_STEP = 1.05    # cm between wrapped input rows
+
+
+def _input_row(row: List[str], users: Dict[str, List[int]]) -> Dict[str, Tuple[float, float]]:
+    """Inputs in the given order; a run of more than ``ROW_WRAP`` inputs that feed the same
+    cluster(s) wraps into staggered rows, so a cluster with many inputs is not much wider than
+    its box."""
+    pos: Dict[str, Tuple[float, float]] = {}
+    groups: List[List[str]] = []
+    for n in row:
+        key = tuple(sorted(set(users.get(n) or [])))
+        if groups and tuple(sorted(set(users.get(groups[-1][0]) or []))) == key:
+            groups[-1].append(n)
+        else:
+            groups.append([n])
+    x = 0.0
+    for grp in groups:
+        cols = min(len(grp), ROW_WRAP)
+        nrows = -(-len(grp) // cols)
+        for i, n in enumerate(grp):
+            r, c = divmod(i, cols)
+            pos[n] = (round(x + (c + (0.5 if r % 2 else 0.0)) * DXI, 3), round(-r * ROW_STEP, 3))
+        x += (cols + (0.5 if nrows > 1 else 0.0)) * DXI
     return pos
 
 
@@ -317,7 +344,7 @@ def _edge(u, v, w) -> str:
         col = "wpos" if lo > 0 else ("wneg" if hi < 0 else "wmix")
         lab = f"{len(w)} edges, {lo:+.2f} to {hi:+.2f}" if len(w) > 1 else f"{lo:+.2f}"
         return (f"\\draw[->, {col}, line width={min(0.25 + 0.35 * max(abs(lo), abs(hi)), 1.4):.2f}pt] "
-                f"({_tname(u)}) -- node[pos=0.72, sloped, above, font=\\sffamily\\tiny, inner sep=1pt, fill=white, "
+                f"({_tname(u)}) -- node[pos=0.8, sloped, above, font=\\sffamily\\tiny, inner sep=1pt, fill=white, "
                 f"fill opacity=0.8, text opacity=1] {{{lab}}} ({_tname(v)});")
     if w is None:
         style = "wagg"
@@ -333,7 +360,8 @@ def _picture(items, pos, edges_w, clusters, subs, colors, hl, note: str = "") ->
         k = it["kind"]
         t = _tname(n)
         if k == "input":
-            L.append(f"\\node[inp] ({t}) at ({x},{y}) {{}};")
+            style = "inp, densely dotted, thick" if it.get("copies", 1) > 1 else "inp"
+            L.append(f"\\node[{style}] ({t}) at ({x},{y}) {{}};")
             L.append(f"\\path ({t}.south) node[inlab, anchor=north] (lab{t}) {{{tex(it['label'])}}};")
         elif k == "output":
             L.append(f"\\node[outp] ({t}) at ({x},{y}) {{{tex(it['label'])}}};")
@@ -475,6 +503,34 @@ def hidden_labels(layer) -> Dict[str, str]:
     return {n: f"h{i + 1}" for i, n in enumerate(hid)}
 
 
+def replicate_inputs(items, ew):
+    """v5e: one copy of an input under each cluster that uses it (same label; a copy of an input
+    used by several clusters has a dotted outline and the first copy says how many there are).
+    Each copy carries only the edges into its own cluster."""
+    inputs = {k: it for k, it in items.items() if it["kind"] == "input"}
+    for k in inputs:
+        items.pop(k)
+    uses: Dict[str, List[str]] = {}
+    out = []
+    for a, b, w in ew:
+        if a in inputs:
+            cl = items[b]["band"][0]
+            key = f"{a}@@{cl}"
+            if cl not in uses.setdefault(a, []):
+                uses[a].append(cl)
+                items[key] = dict(inputs[a], copy_of=a, cluster=cl)
+            a = key
+        out.append((a, b, w))
+    for a, cls in uses.items():
+        if len(cls) > 1:
+            for i, cl in enumerate(cls):
+                it = items[f"{a}@@{cl}"]
+                it["copies"] = len(cls)
+                if i == 0:
+                    it["label"] = f"{it['label']} (×{len(cls)})"
+    return out
+
+
 def overview(layer, note: bool = False) -> Tuple[str, Dict[str, Any]]:
     """(TikZ, meta). ``meta["edges"]``: every graph edge drawn (as ``drawn_edge`` maps it);
     ``meta["inputs"]``: the input circles (one per column)."""
@@ -495,6 +551,7 @@ def overview(layer, note: bool = False) -> Tuple[str, Dict[str, Any]]:
     else:
         items.pop(SUM)
     colors = {c: PALETTE[i % len(PALETTE)] for i, (c, _) in enumerate(clusters)}
+    ew = replicate_inputs(items, ew)
     drawn = list(ew)
     ew = _merge_groups(ew)
     pos = _place(items, [(u, v) for u, v, _ in ew], clusters, subs, [out])
@@ -507,7 +564,94 @@ def overview(layer, note: bool = False) -> Tuple[str, Dict[str, Any]]:
     return tk, {"edges": {(e["from"], e["to"]) for e in g["edges"]}, "drawn": drawn, "merged": ew,
                 "crossings": crossings(pos, [(u, v) for u, v, _ in ew]),
                 "inputs": {n for n, it in items.items() if it["kind"] == "input"},
+                "copies": {n: it.get("copy_of") for n, it in items.items() if it["kind"] == "input"},
+                "clusters_of": {n: it.get("cluster") for n, it in items.items() if it["kind"] == "input"},
+                "band_of": {n: it["band"][0] for n, it in items.items()},
                 "nodes": set(items), "not_used": g.get("not_used") or []}
+
+
+# ----------------------------------------------------------------------------- raw network
+import re as _re
+
+_SPLIT = _re.compile(r"^(-?\d+)_[a-z]+$")
+
+
+def raw_network(layer) -> Dict[str, Any]:
+    """The network as trained, before any explanation: split copies merged back into one node
+    (their duplicated incoming edges counted once), inserted identity nodes contracted (an edge
+    through one becomes the product of its two weights). Returns nodes, edges and, for each
+    explained-state edge, the raw edge it belongs to."""
+    g = layer["graph"]
+    nodes = {n["id"]: n for n in g["nodes"]}
+
+    def base(n):
+        m = _SPLIT.match(n)
+        return m.group(1) if m else n
+    ident = {n for n in nodes if n.startswith("identity_")}
+    raw_edges: Dict[Tuple[str, str], float] = {}
+    belongs: Dict[Tuple[str, str], Tuple[str, str]] = {}
+    ins = {i: [e for e in g["edges"] if e["to"] == i] for i in ident}
+    for e in g["edges"]:
+        if e["to"] in ident:
+            continue
+        if e["from"] in ident:
+            for e0 in ins[e["from"]]:
+                k = (base(e0["from"]), base(e["to"]))
+                raw_edges[k] = raw_edges.get(k, 0.0) + e0["weight"] * e["weight"]
+                belongs[(e0["from"], e0["to"])] = k
+                belongs[(e["from"], e["to"])] = k
+            continue
+        k = (base(e["from"]), base(e["to"]))
+        if k in raw_edges and (e["from"], e["to"]) not in belongs:
+            # a split copy repeats its node's incoming edge: count it once
+            if not (base(e["from"]) == e["from"] and base(e["to"]) != e["to"]):
+                raw_edges[k] = raw_edges[k] if abs(raw_edges[k] - e["weight"]) < 1e-9 else raw_edges[k] + e["weight"]
+        else:
+            raw_edges.setdefault(k, e["weight"])
+        belongs[(e["from"], e["to"])] = k
+    rnodes: Dict[str, Dict[str, Any]] = {}
+    for n, nd in nodes.items():
+        if n in ident:
+            continue
+        b = base(n)
+        rnodes.setdefault(b, {"id": b, "kind": nd["kind"], "label": nd.get("label"), "column": nd.get("column"),
+                              "members": []})["members"].append(n)
+    return {"nodes": rnodes, "edges": raw_edges, "belongs": belongs}
+
+
+def raw_picture(layer, note: bool = False) -> Tuple[str, Dict[str, Any]]:
+    """The raw network: inputs at the bottom (a many-level one-hot stays one grouped input),
+    hidden units by depth, the output at the top, every enabled edge with the same legend; no
+    parts, no shading, no splits."""
+    raw = raw_network(layer)
+    groups, glab = grouped_variables(layer), group_labels(layer)
+    hl = hidden_labels(layer)
+    items: Dict[str, Dict[str, Any]] = {}
+    key_of = {}
+    for b, nd in raw["nodes"].items():
+        if nd["kind"] == "input":
+            k = input_key({"id": b, "column": nd.get("column")}, groups)
+            key_of[b] = k
+            items.setdefault(k, {"kind": "input", "band": ("inputs", None), "label": glab.get(k) or nd.get("label") or "",
+                                 "sort": glab.get(k) or nd.get("label") or k})
+        elif nd["kind"] == "output":
+            key_of[b] = b
+            items[b] = {"kind": "output", "band": ("top", None),
+                        "label": (layer.get("outcome") or {}).get("short") or "output"}
+        else:
+            key_of[b] = b
+            items[b] = {"kind": "hidden", "band": ("raw", None), "sort": b,
+                        "label": None}
+    lab = {b: hl.get(nd["members"][0], "") for b, nd in raw["nodes"].items() if nd["kind"] == "hidden"}
+    ew = [(key_of[u], key_of[v], w) for (u, v), w in sorted(raw["edges"].items())]
+    drawn = list(ew)
+    ew = _merge_groups(ew)
+    out = [n for n, it in items.items() if it["kind"] == "output"]
+    pos = _place(items, [(u, v) for u, v, _ in ew], [("raw", "")], [], out)
+    text = tex(LEGEND.split(" Grey:")[0] + ".") if note else ""
+    tk = _picture(items, pos, ew, [], [], {"raw": PALETTE[0]}, lab, text)
+    return tk, {"edges": set(raw["edges"]), "drawn": drawn, "belongs": raw["belongs"],
+                "crossings": crossings(pos, [(u, v) for u, v, _ in ew])}
 
 
 # ----------------------------------------------------------------------------- sections

@@ -650,24 +650,53 @@ def _technical(layer, pid, titles, claims_by) -> List[str]:
     return L
 
 
+LEGEND_SHORT = ("Blue: positive weight (raises the score); red: negative weight (lowers it); thicker: larger "
+                "weight.")
+
+
+def _fig(tikz: str, caption: str, label: str, place: str = "H") -> List[str]:
+    """A numbered figure (caption at the caption package's small size)."""
+    return [r"\begin{figure}[" + place + r"]\centering", tikz.rstrip(), r"\caption{" + caption + "}",
+            r"\label{" + label + "}", r"\end{figure}"]
+
+
+def _figlab(layer, what: str) -> str:
+    return f"fig:{_lk(layer['label'])}:{what}"
+
+
 def overview_page(layer) -> List[str]:
-    """The whole network on its own page, turned sideways: every node and connection, nested by part."""
+    """The whole network, nested by part, on its own landscape page scaled to the page width;
+    the long description stays in the text before it."""
     from .render_structure import not_used_text, overview
     tk, meta = overview(layer)
     tk = tk.replace("\\resizebox{\\ifdim\\width>\\linewidth\\linewidth\\else\\width\\fi}{!}{%",
-                    "\\resizebox{0.97\\textheight}{!}{%")
-    unused = meta.get("not_used") or []
-    return [r"\clearpage\begin{center}", r"\rotatebox{90}{\begin{minipage}{0.97\textheight}\centering", tk.rstrip(),
-            r"\par\smallskip{\scriptsize " + tex(
-                "The whole network, every node and connection, nested by part. Each input is drawn once, in the "
-                "row along the bottom, with a connection into every part that uses it. Shaded clusters are the "
-                "parts of the model, darker boxes the parts inside them; circles are hidden units (h1, h2, ...); "
-                "each cluster's rectangle is its output (the part's own output unit), and the dashed 'sum' "
-                "stands for the addition the output unit does on the inputs that feed it directly (drawn, not a "
-                "unit of the model); the hexagon is the model's output. Legend: blue = positive weight (raises "
-                "the score), red = negative weight (lowers it), thicker = larger weight; grey = the drawn sum.")
-            + (r"\\" + tex(not_used_text(layer)) if not_used_text(layer) else "") + r"\par}",
-            r"\end{minipage}}", r"\end{center}\clearpage"]
+                    "\\resizebox{\\linewidth}{!}{%")
+    lab = _figlab(layer, "overview")
+    intro = (r"\paragraph{The whole network.} Figure~\ref{" + lab + r"} (next page, landscape) draws every unit "
+             r"and connection of the explained model, nested by part: shaded clusters are the parts of the model "
+             r"and darker boxes the parts inside them; circles are hidden units (h1, h2, \ldots); each cluster's "
+             r"rectangle is its output, and a dashed `sum' stands for an addition the next unit does (drawn, not a "
+             r"unit of the model); the hexagon is the model's output. An input used by several parts is drawn "
+             r"under each of them (same label, dotted outline, the first copy marked with the number of copies): "
+             r"it is the same input, repeated for readability. "
+             + tex(not_used_text(layer)))
+    cap = tex("Every unit and connection of the explained model, nested by part. " + LEGEND_SHORT)
+    return [intro, r"\begin{landscape}"] + _fig(tk, cap, lab, "p") + [r"\end{landscape}"]
+
+
+def raw_page(layer) -> List[str]:
+    """Appendix: the network as trained, before any explanation."""
+    from .render_structure import raw_picture
+    tk, meta = raw_picture(layer)
+    tk = tk.replace("\\resizebox{\\ifdim\\width>\\linewidth\\linewidth\\else\\width\\fi}{!}{%",
+                    "\\resizebox{\\linewidth}{!}{%")
+    lab = _figlab(layer, "raw")
+    intro = (r"\subsection*{The network before any explanation}\addcontentsline{toc}{subsection}{The network before "
+             r"any explanation} Figure~\ref{" + lab + r"} (next page, landscape) is the trained network as it is, with "
+             r"no parts, no splits and no inserted units: inputs at the bottom, hidden units by depth, the output at "
+             r"the top, every connection drawn. A many-level variable stays one grouped input.")
+    cap = tex("The network as trained, before any explanation. " + LEGEND_SHORT)
+    return [intro, r"\begin{landscape}"] + _fig(tk, cap, lab, "p") + [r"\end{landscape}"]
 
 
 def genome_block_v5(layer: Dict[str, Any]) -> List[str]:
@@ -687,8 +716,10 @@ def genome_block_v5(layer: Dict[str, Any]) -> List[str]:
     L.append(r"\noindent{\small\textcolor{BrickRed}{" + tex(_status(layer)) + r"}\par}\smallskip")
     L.append(r"\noindent{\footnotesize " + tex(_ref_patient(layer)) + r"\par}")
     L.append(r"\subsection{Summary}")
-    L.append(r"\noindent " + sentences_tex(d.get("lead")))
-    L += _diagram(summary_diagram(layer), "The model at the level of this summary: one box per paragraph below.")
+    L.append(r"\noindent " + sentences_tex(d.get("lead")) + r" Figure~\ref{" + _figlab(layer, "summary")
+             + r"} shows the model at this level: one box per paragraph below.")
+    L += _fig(summary_diagram(layer), tex("The model at the level of the summary: one box per part."),
+              _figlab(layer, "summary"))
     blocks = {b["block"]: b for b in d.get("blocks") or []}
     for b in summary_blocks(layer):
         L.append(r"\paragraph{" + tex(titles.get(b["block"], b["block"])) + ".} "
@@ -711,14 +742,16 @@ def genome_block_v5(layer: Dict[str, Any]) -> List[str]:
         if parent is not None:
             L.append(r"\noindent{\footnotesize Part of: " + tex(titles.get(parent["id"], parent["name"]))
                      + r" (\ref{rd:" + _lk(parent["id"]) + r"}).\par}")
-        L += _diagram(readdown_diagram(layer, pid), "One level down: what feeds this part.")
+        f1, f2 = _figlab(layer, "parts-" + _lk(pid)), _figlab(layer, "units-" + _lk(pid))
+        L.append(r"\noindent{\small Figure~\ref{" + f1 + r"} shows what feeds this part"
+                 + (r"; Figure~\ref{" + f2 + r"} its units and every connection into them (dashed boxes: "
+                    r"connections from or to other parts, drawn in their own sections)" if layer.get("graph") else "")
+                 + r".\par}")
+        L += _fig(readdown_diagram(layer, pid), tex(f"{titles.get(pid, p['name'])}: what feeds it, one level down."), f1)
         if layer.get("graph"):
             from .render_structure import section
-            L += _diagram(section(layer, pid)[0],
-                          "The nodes of this part and every connection into them; inputs along the bottom, each "
-                          "drawn once. Legend: blue = positive weight (raises the score), red = negative (lowers "
-                          "it), thicker = larger; dashed boxes: connections from or to other parts (drawn in their "
-                          "own sections); dashed 'sum': the output unit's addition, drawn.")
+            L += _fig(section(layer, pid)[0], tex(f"{titles.get(pid, p['name'])}: its units and every connection "
+                                                  f"into them. " + LEGEND_SHORT), f2)
         sec = rd.get(pid) or {}
         L.append(r"\paragraph{Hypothesis.} " + sentences_tex(sec.get("hypothesis")))
         L.append(r"\paragraph{Evidence.} " + sentences_tex(sec.get("evidence")))
@@ -746,12 +779,21 @@ def genome_block_v5(layer: Dict[str, Any]) -> List[str]:
     L.append(r"\renewcommand{\thesubsection}{T.\arabic{subsection}}\setcounter{subsection}{0}")
     for pid in order:
         L += _technical(layer, pid, titles, claims_by)
+    if layer.get("graph"):
+        L += raw_page(layer)
     return L
 
 
 def is_v5(layer) -> bool:
     return (layer.get("drafted") or {}).get("structure") == "readdown-v5"
 
+
+CHANGES_V5E = (
+    "v5e: every diagram is a numbered figure with a caption (list of figures after the contents) and the "
+    "text refers to it; the whole-network figure has its own landscape page, scaled to the page, with a short "
+    "caption and its description in the text; an input used by several parts is drawn under each of them "
+    "(same input, repeated for readability, dotted outline); and an appendix figure shows the trained network "
+    "before any explanation (no parts, no splits).")
 
 CHANGES_V5C = (
     "v5c: the evidence tables are landscape, compact and shaded by row, with the header repeated on every "
@@ -856,6 +898,8 @@ def render_review(layers: List[Dict[str, Any]], title: str) -> str:
              r"\usetikzlibrary{shapes.geometric}",
              r"\usepackage{longtable}",
              r"\usepackage{pdflscape}",
+             r"\usepackage{float}",
+             r"\usepackage[font=small,labelfont=bf]{caption}",
              r"\usepackage{array}",
              r"\usepackage[unicode=true,hidelinks]{hyperref}",
              r"\setcounter{tocdepth}{3}",
@@ -870,11 +914,12 @@ def render_review(layers: List[Dict[str, Any]], title: str) -> str:
              r"predicted risk for a typical patient. The technical record (original hypotheses, formulas, evidence "
              r"tables with the test check, ranges and n) is at the end. The text describes what the model does, not "
              r"the world; whether it is plausible is for the reviewer to judge.",
+             r"\par\medskip\noindent\textbf{What changed in v5e (figures).} " + tex(CHANGES_V5E),
              r"\par\medskip\noindent\textbf{What changed in v5c (tables and diagrams).} " + tex(CHANGES_V5C),
              r"\par\medskip\noindent\textbf{What changed in v5b (diagrams).} " + tex(CHANGES_V5B),
              r"\par\medskip\noindent\textbf{What changed in v5 (read down).} " + tex(CHANGES_V5),
              r"\par\medskip\noindent\textbf{v4.} " + tex(CHANGES_V4),
-             r"\tableofcontents", r"\clearpage"]
+             r"\tableofcontents", r"\listoffigures", r"\clearpage"]
         for lay in layers:
             L += [r"\begin{drafted}[plain-language layer: " + tex(lay["label"]) + "]"]
             L += genome_block_v5(lay)

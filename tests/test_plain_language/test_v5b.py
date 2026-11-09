@@ -27,14 +27,34 @@ def _coverage(layer):
     from explaneat.export.render_structure import grouped_variables, input_key
     groups = grouped_variables(layer)
     keys = {input_key(n, groups) for n in g["nodes"] if n["kind"] == "input"}
-    assert meta["inputs"] == keys                             # each input (or input group) drawn once
+    # v5e: an input is drawn once under each cluster that uses it; every input appears, and every
+    # edge from a copy goes into that copy's own cluster (no edge missing, none duplicated)
+    assert set(meta["copies"].values()) == keys
+    copies_per_cluster = [(meta["copies"][k], meta["clusters_of"][k]) for k in meta["inputs"]]
+    assert len(copies_per_cluster) == len(set(copies_per_cluster))
+    for u, v, w in meta["drawn"]:
+        if u in meta["inputs"]:
+            assert meta["band_of"][v] == meta["clusters_of"][u]
     hidden = {n["id"] for n in g["nodes"] if n["kind"] != "input"}
     assert hidden <= meta["nodes"]                            # ... and every other node
     owned = []
     for pid in readdown_order(layer):
         owned += sorted(section(layer, pid)[1]["edges"])
     assert sorted(owned) == sorted(edges)                     # each edge in exactly one section
+    _raw_coverage(layer)
     return tk
+
+
+def _raw_coverage(layer):
+    """The raw network (before any explanation) draws every one of its edges, and every edge of
+    the explained network belongs to one raw edge."""
+    from explaneat.export.render_structure import raw_network, raw_picture
+    raw = raw_network(layer)
+    tk, meta = raw_picture(layer)
+    assert meta["edges"] == set(raw["edges"]) and len(meta["drawn"]) == len(raw["edges"])
+    assert {(e["from"], e["to"]) for e in layer["graph"]["edges"]} <= set(raw["belongs"])
+    assert not any(n.startswith("identity_") or "_" in n.lstrip("-") for n in raw["nodes"])
+    assert "fill=" not in tk.split("on background layer")[1].split("draw[")[0]   # no shaded clusters
 
 
 def test_every_edge_drawn_once_synthetic(lay):
@@ -70,7 +90,7 @@ def test_grouped_inputs_cover_their_edges():
     grouped = [d for d in meta["merged"] if isinstance(d[2], list)]
     assert sum(len(d[2]) for d in grouped) == len(underlying)        # grouped edges cover all of them
     assert len({d[1] for d in grouped}) == len(grouped)              # one drawn edge per target
-    assert sum(1 for k in meta["inputs"] if k.startswith("grp::")) == 1
+    assert {meta["copies"][k] for k in meta["inputs"] if k.startswith("grp::")} == {"grp::state"}   # one input, copied per part
     assert "state (" in tk and "of 51 used)" in tk
 
 
