@@ -44,6 +44,17 @@ UCI_HEART: Dict[str, Any] = {
     },
     "patient": "patients",
     "patient_one": "patient",
+    # short names for the input nodes in structure diagrams (one per model input column)
+    "node_labels": {
+        "age": "age", "sex:0": "female", "sex:1": "male", "cp:1": "typical angina",
+        "cp:2": "atypical angina", "cp:3": "non-anginal pain", "cp:4": "no chest pain",
+        "trestbps": "blood pressure", "chol": "cholesterol", "fbs:0": "sugar 120 or less",
+        "fbs:1": "sugar above 120", "restecg:0": "normal ECG", "restecg:1": "ST-T abnormal ECG",
+        "restecg:2": "LVH on ECG", "thalach": "max heart rate", "exang:0": "no exercise pain",
+        "exang:1": "exercise pain", "oldpeak": "ST depression", "slope:1": "upsloping ST",
+        "slope:2": "flat ST", "slope:3": "downsloping ST", "ca": "vessels",
+        "thal:3": "normal thallium", "thal:4": "thallium code 4", "thal:6": "fixed defect",
+        "thal:7": "reversible defect"},
     "gaps": [
         "thal:4 is not a code in the UCI documentation (3 normal, 6 fixed defect, 7 reversible "
         "defect); it is not decoded (2 training patients; most likely the raw file's missing "

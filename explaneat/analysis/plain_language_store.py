@@ -424,16 +424,17 @@ def descendants(layer, pid) -> List[str]:
 def summary_blocks(layer) -> List[Dict[str, Any]]:
     """The top-level blocks of the v4 summary, in order.
 
-    ``additive``: the root's direct inputs and the root's children that are a weighted sum of
-    their inputs (only when the root itself is a sum of those and its other children); then each
-    remaining (non-additive) child of the root, largest contribution first. Copies of another part
-    (``duplicate``) are described with the part they copy.
+    The grouping is the annotation hierarchy, everywhere (v5b): ``additive`` holds the inputs
+    that feed the model score directly; then one block per child of the root, largest
+    contribution first, whether or not that part is itself a weighted sum (the text may say it
+    adds up, but that does not change the grouping). Copies of another part (``duplicate``) are
+    described with the part they copy.
     """
     by_id, by_name = _part_index(layer)
     root = by_id[_root_id(layer)]
     kids = sorted([by_name[k] for k in root.get("children") or [] if k in by_name], key=lambda p: p["order"])
     kids = [k for k in kids if k["role"] != "duplicate"]
-    lin = [k for k in kids if not k.get("nonlinear")] if root.get("additive") is not False else []
+    lin: List[Dict[str, Any]] = []      # v5b: parts are never folded into the additive block
     direct = root.get("direct_variable_keys")
     if direct is None:
         direct = root.get("variable_keys") or []
@@ -540,6 +541,29 @@ def structure_claim(layer, pid, kind) -> Optional[Dict[str, Any]]:
                  and c["statement"].get("kind") == kind), None)
 
 
+NUMBER_WORDS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8,
+                "nine": 9, "ten": 10}
+PARTS_RX = re.compile(r"\b(one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+(?:(?:smaller|other|more|"
+                      r"separate|further|inner)\s+)?parts\b", re.I)    # a count is plural: "one part" names one
+
+
+def lint_part_counts(layer, pid, text: str, cited: List[Dict[str, Any]]) -> List[str]:
+    """v5b: "three parts" must match the hierarchy: the number of parts the cited composition
+    (else the part the sentence is about; the root for the summary) is made of, copies included."""
+    errs = []
+    comp = next((c for c in cited if c["type"] == "structure" and c["statement"].get("kind") == "composition"), None)
+    if comp is None:
+        comp = structure_claim(layer, pid, "composition")
+    want = len(comp["statement"].get("fed_by_parts") or []) if comp else 0
+    for m in PARTS_RX.finditer(text or ""):
+        w = m.group(1).lower()
+        n = NUMBER_WORDS.get(w) or (int(w) if w.isdigit() else None)
+        if n is not None and n != want:
+            errs.append(f"says {m.group(0)!r} but the hierarchy has {want} part(s) here"
+                        + (f" (structure claim {comp['id']})" if comp else ""))
+    return errs
+
+
 def lint_draft_v5(layer: Dict[str, Any], draft: Dict[str, Any]) -> List[str]:
     """v4 (lead, blocks, titles, no confidence words) plus ``readdown``: for every part from the
     root down, ``hypothesis`` (1-3 sentences) and ``evidence`` (1-5 sentences), citing only that
@@ -547,7 +571,7 @@ def lint_draft_v5(layer: Dict[str, Any], draft: Dict[str, Any]) -> List[str]:
     claim, and a copy it contains is named through the copy's ``structure`` claim."""
     claims = {c["id"]: c for c in layer["claims"]}
     by_id, by_name = _part_index(layer)
-    errs = lint_draft_v4(layer, {k: v for k, v in draft.items() if k != "readdown"})
+    errs = lint_draft_v4(layer, {**{k: v for k, v in draft.items() if k != "readdown"}, "_v5": True})
     rd = draft.get("readdown") or {}
     order = readdown_order(layer)
     for pid in rd:
@@ -582,7 +606,8 @@ def lint_draft_v5(layer: Dict[str, Any], draft: Dict[str, Any]) -> List[str]:
                         errs.append(f"{where}: cites {cid}, which belongs to another part")
                     else:
                         cited.append(c)
-                for p in lint_text(text) + lint_qualifiers(text, cited) + lint_points(text, cited) + lint_shape(text, cited):
+                for p in (lint_text(text) + lint_qualifiers(text, cited) + lint_points(text, cited)
+                          + lint_shape(text, cited) + lint_part_counts(layer, pid, text, cited)):
                     errs.append(f"{where}: {p}")
         ev = {cid for s in (sec.get("evidence") or []) for cid in s.get("claims") or []}
         comp = structure_claim(layer, pid, "composition")
@@ -594,6 +619,20 @@ def lint_draft_v5(layer: Dict[str, Any], draft: Dict[str, Any]) -> List[str]:
             if cp is not None and cp["id"] not in ev:
                 errs.append(f"readdown.{pid}.evidence: name the copy {q['id']} through its structure claim ({cp['id']})")
     return errs
+
+
+def _where_part(layer, draft, where: str) -> str:
+    """The part a sentence is about: the root for the lead and the additive block, the block's
+    part for a block paragraph, the annotation for a detail paragraph."""
+    root = _root_id(layer)
+    m = re.match(r"blocks\[(\d+)\]", where)
+    if m:
+        b = (draft.get("blocks") or [{}] * (int(m.group(1)) + 1))[int(m.group(1))].get("block")
+        return root if b in (None, ADDITIVE) else b
+    m = re.match(r"annotations\.([^\[]+)\[", where)
+    if m:
+        return m.group(1)
+    return root
 
 
 def lint_draft_v4(layer: Dict[str, Any], draft: Dict[str, Any]) -> List[str]:
@@ -668,6 +707,9 @@ def lint_draft_v4(layer: Dict[str, Any], draft: Dict[str, Any]) -> List[str]:
             q = [x for x in q if "small group" not in x]
         for p in lint_text(text) + q + lint_points(text, cited):
             errs.append(f"{where}: {p}")
+        if "readdown" in draft or draft.get("_v5"):
+            for p in lint_part_counts(layer, _where_part(layer, draft, where), text, cited):
+                errs.append(f"{where}: {p}")
         if prose:
             for p in lint_shape(text, cited):
                 errs.append(f"{where}: {p}")

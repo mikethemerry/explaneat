@@ -54,7 +54,7 @@ from .explanation_tools import StateEvaluator, as_unit, default_auc, input_colum
 from .plain_language_codebooks import (base_of, codebook_checks, codebook_gaps, find_codebook,
                                        generic_codebook, level_info)
 
-LAYER_SCHEMA_VERSION = "5.0.0"   # 3: shapes; 3.1: one point per fold; 4: blocks; 5: read-down
+LAYER_SCHEMA_VERSION = "5.1.0"   # 3: shapes; 3.1: one point per fold; 4: blocks; 5: read-down; 5.1: graph
 CLAIM_TYPES = ("direction", "threshold", "interaction", "magnitude", "subgroup", "null", "rule")
 
 SEED = 42
@@ -1852,6 +1852,58 @@ def _shape_settings() -> Dict[str, Any]:
             "ordinal_max_levels": ORDINAL_MAX_LEVELS, "risk_saturation": SATURATION}
 
 
+def graph_record(m: PlainModel, parts: List[Part]) -> Dict[str, Any]:
+    """v5b: the explained network for the structure diagrams: every node and enabled non-zero
+    edge on a path to the output, each node's region (the deepest part that contains it), plain
+    short names for the input nodes, and the input columns the model does not use."""
+    reach = m.reaching_output()
+    edges = [(str(c.from_node), str(c.to_node), float(c.weight)) for c in m.structure.connections
+             if c.enabled and c.weight != 0 and str(c.from_node) in reach and str(c.to_node) in reach]
+    drawn = set(m.out_ids) | {u for u, _, _ in edges} | {v for _, v, _ in edges}
+    by_name = {p.name: p for p in parts}
+    depth = {}
+    for p in parts:
+        d, q = 0, p
+        while q.parent and q.parent in by_name and d < 50:
+            d, q = d + 1, by_name[q.parent]
+        depth[p.id] = d
+    owner: Dict[str, str] = {}
+    for p in sorted(parts, key=lambda p: (-depth[p.id], p.order)):
+        for n in [str(x) for x in p.unit.get("subgraph_nodes", [])] + list(p.exits) + list(p.input_nodes):
+            if n in drawn and n not in owner:
+                owner[n] = p.id
+    root = next((p for p in parts if p.is_root), None)
+    labels = m.codebook.get("node_labels") or {}
+    col_of = {nd: c for c, nds in m.input_nodes_by_col.items() for nd in nds}
+    nodes = []
+    for n in sorted(drawn, key=lambda x: (x not in col_of, x)):
+        node = m.nodes.get(n)
+        kind = ("output" if n in m.out_ids else "input" if node is not None and node.type == NodeType.INPUT
+                else "hidden")
+        rec = {"id": n, "kind": kind, "region": owner.get(n, root.id if root else None)}
+        if kind == "input" and n in col_of:
+            col = m.feature_names[col_of[n]]
+            rec["label"] = labels.get(col) or _column_label(m, col_of[n])
+            rec["column"] = col
+        nodes.append(rec)
+    used_cols = {col_of[n] for n in drawn if n in col_of}
+    unused = [labels.get(m.feature_names[c]) or _column_label(m, c)
+              for c in range(len(m.feature_names)) if c not in used_cols]
+    exits = {p.id: list(p.exits) for p in parts}
+    return {"nodes": nodes, "edges": [{"from": u, "to": v, "weight": sig(w)} for u, v, w in edges],
+            "outputs": list(m.out_ids), "exits": exits, "not_used": unused,
+            "depth": depth}
+
+
+def _column_label(m: PlainModel, c: int) -> str:
+    for v in m.variables:
+        if c in v.columns:
+            if v.is_category():
+                return v.level(v.codes[v.columns.index(c)])["label"]
+            return v.short or v.label
+    return m.feature_names[c]
+
+
 def build_layer(m: PlainModel, meta: Dict[str, Any]) -> Dict[str, Any]:
     """The plain-language layer document (claims, template text; no draft)."""
     from .plain_language_templates import render_template
@@ -1887,6 +1939,7 @@ def build_layer(m: PlainModel, meta: Dict[str, Any]) -> Dict[str, Any]:
                      "effect_scale": "log-odds (output pre-activation) for verification; predicted "
                                      "risk for the typical patient for wording"},
         "parts": [_clean(part_record(m, p)) for p in parts],
+        "graph": graph_record(m, parts),
         "claims": claims,
         "claims_hash": claims_hash(claims),
         "counts": {"claims": len(claims), "verified": sum(1 for c in claims if c["verified"]),

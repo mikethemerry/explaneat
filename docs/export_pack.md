@@ -260,6 +260,15 @@ forms in `explaneat/export/render_plain.py`. Writing protocol:
   `mixed` (a majority shape whose exceptions are characterised by a category) or `fallback`
   ("in an uneven way"). Categoricals record each level relative to the reference. The lint
   requires the matching shape words in every numeric effect sentence.
+- **Diagrams** (layer v5.1, heart-paper): the layer records `graph` (every node and enabled
+  non-zero edge on a path to the output, each node's region = the deepest part containing it,
+  short input names from the codebook's `node_labels`, unused input columns). One grouping
+  everywhere: the annotation hierarchy (`summary_blocks` no longer folds a weighted-sum part into
+  the additive block), and the lint checks every "N parts" against the composition's
+  `structure` claim. `export/render_structure.py` draws the overview (clusters per top-level
+  part, sub-boxes per part inside, nodes and real edges, output hexagon, "Not used by the
+  model") and one zoomed region per read-down section, where each edge is drawn in exactly one
+  section (the section of its target) and connections to other parts are labelled stubs.
 - **Read down** (layer v5, heart-paper): claim type `structure` (schema 1.4), checked on the
   graph and the data: `composition` (the parts and inputs feeding a part's own nodes, and whether
   it adds them up, by a least-squares fit), `copy` (identical outputs to another part) and
