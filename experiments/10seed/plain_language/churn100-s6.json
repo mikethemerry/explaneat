@@ -48848,7 +48848,7 @@
      "claims": [
       "C096"
      ],
-     "text": "Through this part, a higher daytime charge clearly raises the predicted chance of leaving: nothing until about 32.38 US dollars (between 27.52 US dollars and 53.01 US dollars for different customers), where this part switches on, then steadily; for the typical customer, going from 0 to 46.09 US dollars moves it from about 1% to about 33%."
+     "text": "Through this part, a higher daytime charge clearly raises the predicted chance of leaving: nothing until about 32.38 US dollars (between 27.52 and 53.01 US dollars for different customers), where this part switches on, then steadily; for the typical customer, going from 0 to 46.09 US dollars moves it from about 1% to about 33%."
     },
     {
      "claims": [
@@ -48868,7 +48868,7 @@
       "C098",
       "C092"
      ],
-     "text": "For a typical customer in Alabama with about 218 daytime minutes, voice-mail messages slightly lower it in an uneven way, only while they stay below about 8 messages (between 1 messages and 19 messages for different customers), from about 3% to below 1%."
+     "text": "For a typical customer in Alabama with about 218 daytime minutes, voice-mail messages slightly lower it in an uneven way, only while they stay below about 8 messages (between 1 and 19 messages for different customers), from about 3% to below 1%."
     },
     {
      "claims": [
@@ -48888,7 +48888,7 @@
      "claims": [
       "C107"
      ],
-     "text": "More daytime minutes slightly raise it: nothing until about 222 minutes (between 173 minutes and 271 minutes for different customers), where this part switches on, then steadily; for the typical customer, from about 1% to about 6%."
+     "text": "More daytime minutes slightly raise it: nothing until about 222 minutes (between 173 and 271 minutes for different customers), where this part switches on, then steadily; for the typical customer, from about 1% to about 6%."
     },
     {
      "claims": [
@@ -48914,7 +48914,7 @@
      "claims": [
       "C108"
      ],
-     "text": "For a typical customer in New Hampshire, the evening charge slightly adds to it only once it rises above about 21.83 US dollars (between 16.31 US dollars and 27.03 US dollars for different customers), in an uneven way, from about 2% to about 4% (the model has little data on this: 13 customers there are past that point)."
+     "text": "For a typical customer in New Hampshire, the evening charge slightly adds to it only once it rises above about 21.83 US dollars (between 16.31 and 27.03 US dollars for different customers), in an uneven way, from about 2% to about 4% (the model has little data on this: 13 customers there are past that point)."
     }
    ],
    "ann_89": [
@@ -49083,7 +49083,7 @@
      "C093"
     ],
     "original": "2899 = relu(0.72*dayCharge - 0.88*vmailMessages - 0.25*CSC - 0.55), readout +3.00: high day charge raises churn, but only for customers with no voicemail messages, and a little less for customers who call service (these are covered by the service-call units). For no-voicemail customers the mean contribution is +0.44 logit at 180-200 day minutes, +1.95 at 220-250, +3.41 at 250-300 and +5.44 above 300 (train churn 21%, 55%, 95%); for voicemail users it is about 0 below 300 minutes. Note: after z-scoring, totalDayCharge and totalDayMinutes are identical columns (charge is an exact multiple of minutes), as are totalEveCharge and totalEveMinutes, so the network uses them interchangeably. Evidence (train): closed form and local table attached. Largest single nonlinear source: linearised (R2 0.58) AUC 0.910 -> 0.897; mean-ablated -> 0.848; restored alone onto the linearised model 0.834 -> 0.888. Largely redundant with heavy_day_eve_usage (both are high-day-usage hinges).",
-    "proposed": "Daytime charge without voice-mail: a higher charge raises the chance of leaving, nothing until about 32.38 US dollars (between 27.52 US dollars and 53.01 US dollars for different customers), then steadily (about 1% to 33%), but only for customers with no voice-mail messages.",
+    "proposed": "Daytime charge without voice-mail: a higher charge raises the chance of leaving, nothing until about 32.38 US dollars (between 27.52 and 53.01 US dollars for different customers), then steadily (about 1% to 33%), but only for customers with no voice-mail messages.",
     "status": "proposed (not applied)"
    },
    "ann_88": {
@@ -49093,7 +49093,7 @@
      "C104"
     ],
     "original": "1694 = relu(1.09*dayMinutes + 0.78*eveCharge + 0.02*state:20 - 0.04*state:27 - 0.85), readout +1.60: a hinge on combined day+evening usage. Zero unless day and evening usage are both well above average; mean contribution +0.55 at 200-250 day and 200-250 evening minutes, +2.05 at 250-300/200-250, +4.7 when both are above 250/300 (train churn 63-83% in those cells). The state:20 (+0.37 at most) and state:27 (-0.43 at most) weights are small per-state shifts of the threshold. Note: after z-scoring, totalDayCharge and totalDayMinutes are identical columns (charge is an exact multiple of minutes), as are totalEveCharge and totalEveMinutes, so the network uses them interchangeably. Evidence (train): closed form and day x evening table attached. Linearised (R2 0.50) AUC 0.910 -> 0.902; restored alone onto the linearised model 0.834 -> 0.872. Overlaps with day_charge_no_voicemail.",
-    "proposed": "Heavy daytime and evening usage: acting on 1030 customers, it raises a typical such customer's chance of leaving from about 4% to 13%; daytime minutes add nothing until about 222 minutes (between 173 minutes and 271 minutes for different customers), then steadily, and the evening charge counts more above 180 daytime minutes.",
+    "proposed": "Heavy daytime and evening usage: acting on 1030 customers, it raises a typical such customer's chance of leaving from about 4% to 13%; daytime minutes add nothing until about 222 minutes (between 173 and 271 minutes for different customers), then steadily, and the evening charge counts more above 180 daytime minutes.",
     "status": "proposed (not applied)"
    },
    "ann_89": {
@@ -49156,7 +49156,7 @@
     "claims": [
      "C096"
     ],
-    "text": "Through one part, a higher daytime charge clearly raises it: nothing until about 32.38 US dollars (between 27.52 US dollars and 53.01 US dollars for different customers), where this part switches on, then steadily; for the typical customer, going from 0 to 46.09 US dollars moves it from about 1% to about 33%."
+    "text": "Through one part, a higher daytime charge clearly raises it: nothing until about 32.38 US dollars (between 27.52 and 53.01 US dollars for different customers), where this part switches on, then steadily; for the typical customer, going from 0 to 46.09 US dollars moves it from about 1% to about 33%."
    },
    {
     "claims": [
@@ -49221,7 +49221,7 @@
      "C096"
     ],
     "flag": "higher day charges lower churn",
-    "text": "Worth checking: through two parts, more daytime minutes or a higher daytime charge slightly lower the predicted chance of leaving, while another part raises it with the daytime charge, nothing until about 32.38 US dollars (between 27.52 US dollars and 53.01 US dollars for different customers), then steadily."
+    "text": "Worth checking: through two parts, more daytime minutes or a higher daytime charge slightly lower the predicted chance of leaving, while another part raises it with the daytime charge, nothing until about 32.38 US dollars (between 27.52 and 53.01 US dollars for different customers), then steadily."
    },
    {
     "claims": [
@@ -49737,7 +49737,7 @@
       "C096",
       "C090"
      ],
-     "text": "Other effects: total daytime charge past about 32.38 US dollars raises it with nothing until about 32.38 US dollars (between 27.52 US dollars and 53.01 US dollars for different customers), then steadily; a higher total daytime charge raises it with nothing until about 32.38 US dollars (between 27.52 US dollars and 53.01 US dollars for different customers), then steadily."
+     "text": "Other effects: total daytime charge past about 32.38 US dollars raises it with nothing until about 32.38 US dollars (between 27.52 and 53.01 US dollars for different customers), then steadily; a higher total daytime charge raises it with nothing until about 32.38 US dollars (between 27.52 and 53.01 US dollars for different customers), then steadily."
     },
     {
      "claims": [
@@ -49780,7 +49780,7 @@
       "C105",
       "C106"
      ],
-     "text": "Smaller effects, each changing the predicted value only slightly: total daytime minutes past about 222 minutes raises it with nothing until about 222 minutes (between 173 minutes and 271 minutes for different customers), then steadily; North Carolina (rather than any other state) lowers it; total evening charge depending on total daytime minutes raises it slowly at first, then faster; Maryland (rather than any other state) raises it; total evening charge past about 21.83 US dollars raises it in an uneven way; a higher total daytime minutes raises it with nothing until about 222 minutes (between 173 minutes and 271 minutes for different customers), then steadily; total daytime minutes depending on state lowers it in a curve that is lowest at about 236 minutes, higher either side; total evening charge depending on state raises it in an uneven way; and one still smaller effect listed in the evidence table (on the training data only). The model has little data on some of these: only 13 training customers (of them, patients already past their fold)."
+     "text": "Smaller effects, each changing the predicted value only slightly: total daytime minutes past about 222 minutes raises it with nothing until about 222 minutes (between 173 and 271 minutes for different customers), then steadily; North Carolina (rather than any other state) lowers it; total evening charge depending on total daytime minutes raises it slowly at first, then faster; Maryland (rather than any other state) raises it; total evening charge past about 21.83 US dollars raises it in an uneven way; a higher total daytime minutes raises it with nothing until about 222 minutes (between 173 and 271 minutes for different customers), then steadily; total daytime minutes depending on state lowers it in a curve that is lowest at about 236 minutes, higher either side; total evening charge depending on state raises it in an uneven way; and one still smaller effect listed in the evidence table (on the training data only). The model has little data on some of these: only 13 training customers (of them, patients already past their fold)."
     }
    ],
    "ann_89": [
@@ -49888,8 +49888,8 @@
   "hypotheses": {
    "ann_85": "Through this part, for a typical customer, the model gives a clearly higher predicted chance that a customer leaves if the customer has an international plan (about 20%) than if the customer has no international plan (about 1%). Smaller effects, each changing the predicted value only slightly: California (rather than any other state) raises it; a higher customer-service calls raises it steadily, each extra call adding about the same; Washington (rather than any other state) raises it; Montana (rather than any other state) raises it; a higher total daytime minutes lowers it steadily; Hawaii (rather than any other state) lowers it; New Jersey (rather than any other state) lowers it; Massachusetts (rather than any other state) raises it; and 26 still smaller effects listed in the evidence table (on the training data only).",
    "ann_86": "Smaller effects, each changing the predicted value only slightly: customer-service calls past about 4 calls raises it in an uneven way; total daytime charge past about 26.35 US dollars lowers it in an uneven way; customer-service calls depending on state raises it in an uneven way; Iowa (rather than any other state) lowers it; total evening charge depending on state raises it in an uneven way; a higher customer-service calls raises it in an uneven way; Alaska (rather than any other state) raises it; Ohio (rather than any other state) raises it; and 3 still smaller effects listed in the evidence table (on the training data only).",
-   "ann_87": "This part acts on 1390 of 4000 training customers (35%). For a typical customer it acts on, it slightly raises the predicted chance that a customer leaves from below 1% without this part to about 3% with it. In the training data, 305 of these 1390 customers had churn. A higher total daytime charge clearly raises the predicted chance that a customer leaves if voice-mail messages is at or below 0 messages, but the other way if voice-mail messages is above 0 messages (in an uneven way for patients with voice-mail messages at or below 0 messages): for a typical customer, total daytime charge going from 19.07 US dollars to 42.40 US dollars moves the predicted chance that a customer leaves from about 1% to about 17% if voice-mail messages is at or below 0 messages, and from about 1% to about 1% if voice-mail messages is above 0 messages. Other effects: total daytime charge past about 32.38 US dollars raises it with nothing until about 32.38 US dollars (between 27.52 US dollars and 53.01 US dollars for different customers), then steadily; a higher total daytime charge raises it with nothing until about 32.38 US dollars (between 27.52 US dollars and 53.01 US dollars for different customers), then steadily. Smaller effects, each changing the predicted value only slightly: voice-mail messages past about 8 messages lowers it in an uneven way; a higher customer-service calls lowers it in an uneven way; total daytime charge depending on customer-service calls raises it in an uneven way; customer-service calls depending on voice-mail messages raises it slowly at first, then faster; a higher voice-mail messages lowers it in an uneven way (on the training data only).",
-   "ann_88": "This part acts on 1030 of 4000 training customers (26%). For a typical customer it acts on, it clearly raises the predicted chance that a customer leaves from about 4% without this part to about 13% with it. In the training data, 288 of these 1030 customers had churn. Smaller effects, each changing the predicted value only slightly: total daytime minutes past about 222 minutes raises it with nothing until about 222 minutes (between 173 minutes and 271 minutes for different customers), then steadily; North Carolina (rather than any other state) lowers it; total evening charge depending on total daytime minutes raises it slowly at first, then faster; Maryland (rather than any other state) raises it; total evening charge past about 21.83 US dollars raises it in an uneven way; a higher total daytime minutes raises it with nothing until about 222 minutes (between 173 minutes and 271 minutes for different customers), then steadily; total daytime minutes depending on state lowers it in a curve that is lowest at about 236 minutes, higher either side; total evening charge depending on state raises it in an uneven way; and one still smaller effect listed in the evidence table (on the training data only). The model has little data on some of these: only 13 training customers (of them, patients already past their fold).",
+   "ann_87": "This part acts on 1390 of 4000 training customers (35%). For a typical customer it acts on, it slightly raises the predicted chance that a customer leaves from below 1% without this part to about 3% with it. In the training data, 305 of these 1390 customers had churn. A higher total daytime charge clearly raises the predicted chance that a customer leaves if voice-mail messages is at or below 0 messages, but the other way if voice-mail messages is above 0 messages (in an uneven way for patients with voice-mail messages at or below 0 messages): for a typical customer, total daytime charge going from 19.07 US dollars to 42.40 US dollars moves the predicted chance that a customer leaves from about 1% to about 17% if voice-mail messages is at or below 0 messages, and from about 1% to about 1% if voice-mail messages is above 0 messages. Other effects: total daytime charge past about 32.38 US dollars raises it with nothing until about 32.38 US dollars (between 27.52 and 53.01 US dollars for different customers), then steadily; a higher total daytime charge raises it with nothing until about 32.38 US dollars (between 27.52 and 53.01 US dollars for different customers), then steadily. Smaller effects, each changing the predicted value only slightly: voice-mail messages past about 8 messages lowers it in an uneven way; a higher customer-service calls lowers it in an uneven way; total daytime charge depending on customer-service calls raises it in an uneven way; customer-service calls depending on voice-mail messages raises it slowly at first, then faster; a higher voice-mail messages lowers it in an uneven way (on the training data only).",
+   "ann_88": "This part acts on 1030 of 4000 training customers (26%). For a typical customer it acts on, it clearly raises the predicted chance that a customer leaves from about 4% without this part to about 13% with it. In the training data, 288 of these 1030 customers had churn. Smaller effects, each changing the predicted value only slightly: total daytime minutes past about 222 minutes raises it with nothing until about 222 minutes (between 173 and 271 minutes for different customers), then steadily; North Carolina (rather than any other state) lowers it; total evening charge depending on total daytime minutes raises it slowly at first, then faster; Maryland (rather than any other state) raises it; total evening charge past about 21.83 US dollars raises it in an uneven way; a higher total daytime minutes raises it with nothing until about 222 minutes (between 173 and 271 minutes for different customers), then steadily; total daytime minutes depending on state lowers it in a curve that is lowest at about 236 minutes, higher either side; total evening charge depending on state raises it in an uneven way; and one still smaller effect listed in the evidence table (on the training data only). The model has little data on some of these: only 13 training customers (of them, patients already past their fold).",
    "ann_89": "This part acts on 3149 of 4000 training customers (79%). For a typical customer it acts on, it slightly lowers the predicted chance that a customer leaves from about 3% without this part to about 2% with it (on the training data only). In the training data, 454 of these 3149 customers had churn. Smaller effects, each changing the predicted value only slightly: total daytime charge depending on state raises it in an uneven way; Alaska (rather than any other state) lowers it; total daytime charge past about 23.13 US dollars lowers it in an uneven way; New Hampshire (rather than any other state) raises it; a higher total daytime charge lowers it in an uneven way (on the training data only).",
    "ann_90": "Through this part, the model treats a higher customer-service calls as slightly lowering the predicted chance that a customer leaves in an uneven way: for a typical customer, it goes from about 2% at 0 calls to about 1% at 3 calls, flattening out near the bottom because the predicted risk cannot go much lower (on the training data only).",
    "ann_91": "Through this part, for a typical customer, the model gives a higher predicted chance that a customer leaves if the customer is in New Jersey (about 14%) than if state is something other than Alaska, Indiana, Michigan, New Jersey, South Carolina, Vermont, Wyoming (about 1%) (on the training data only). Through this part, for a typical customer, the model gives a slightly lower predicted chance that a customer leaves if the customer is in Vermont (below 1%) than if state is something other than Alaska, Indiana, Michigan, New Jersey, South Carolina, Vermont, Wyoming (about 1%) (on the training data only). Through this part, for a typical customer, the model gives a slightly higher predicted chance that a customer leaves if the customer is in South Carolina (about 2%) than if state is something other than Alaska, Indiana, Michigan, New Jersey, South Carolina, Vermont, Wyoming (about 1%) (on the training data only). Through this part, for a typical customer, the model gives a slightly higher predicted chance that a customer leaves if the customer is in Indiana (about 2%) than if state is something other than Alaska, Indiana, Michigan, New Jersey, South Carolina, Vermont, Wyoming (about 1%) (on the training data only). Through this part, for a typical customer, the model gives a slightly lower predicted chance that a customer leaves if the customer is in Wyoming (about 1%) than if state is something other than Alaska, Indiana, Michigan, New Jersey, South Carolina, Vermont, Wyoming (about 1%) (on the training data only).",
@@ -49939,13 +49939,13 @@
     "claims": [
      "C096"
     ],
-    "text": "Through one part of the model, total daytime charge only clearly adds to the predicted chance that a customer leaves once it rises above about 32.38 US dollars (between 27.52 US dollars and 53.01 US dollars for different customers): for a typical such customer, going from 0.00 US dollars to 46.09 US dollars moves it from about 1% to about 33%."
+    "text": "Through one part of the model, total daytime charge only clearly adds to the predicted chance that a customer leaves once it rises above about 32.38 US dollars (between 27.52 and 53.01 US dollars for different customers): for a typical such customer, going from 0.00 US dollars to 46.09 US dollars moves it from about 1% to about 33%."
    },
    {
     "claims": [
      "C107"
     ],
-    "text": "Through one part of the model, total daytime minutes only slightly adds to the predicted chance that a customer leaves once it rises above about 222 minutes (between 173 minutes and 271 minutes for different customers): for a typical such customer, going from 0 minutes to 271 minutes moves it from about 1% to about 6%."
+    "text": "Through one part of the model, total daytime minutes only slightly adds to the predicted chance that a customer leaves once it rises above about 222 minutes (between 173 and 271 minutes for different customers): for a typical such customer, going from 0 minutes to 271 minutes moves it from about 1% to about 6%."
    },
    {
     "claims": [

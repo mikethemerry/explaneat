@@ -46171,7 +46171,7 @@
      "C110"
     ],
     "original": "Hypothesis: a low-usage hinge whose threshold rises with customer service calls (CSC). 807 = relu(-1.36 dayMin + 0.05 CSC + 0.69*2627 + 0.61*2796 - 1.30), where 2627 = 1.01 + 0.32 relu(0.87 CSC - 0.09) (always positive, affine in a CSC hinge) and 2796 = relu(0.41 - 1.00 eveCharge + 0.37 CSC + 0.15 state:41 + 0.34*12926), with 12926/13061 a two-stage CSC hinge that turns on at 3 calls. 1264 = relu(0.077 - 0.32 intlCharge + 0.39*807) adds 0.39*807 and a convex low-intl-charge hinge. Readout 1.59*807 + 1.81*1264 (252 is near dead, readout -2e-5, and holds a state:2/state:44/state:4 path). Evidence (train, n=4000): sensitivity of 807 is dayMin 0.63, eveCharge 0.22, CSC 0.20. Mean gate logit rises 1.1 -> 7.4 from 0 to 7 calls. With the backbone +2.02 dayMin, the logit is V-shaped in day minutes; for CSC>=4 the low-usage arm dominates (empirical churn 0.88 low-day vs 0.24 high-day, which the network reproduces). The same hinge also lifts low-CSC, very-low-day customers (93 rows, predicted 0.17 vs empirical 0.04): a mild overextension. totalEveCharge equals totalEveMinutes after z-scoring, so the gate effectively uses evening usage. Ablation: linearising this gate drops train AUC 0.901 -> 0.851; restoring it alone on the fully linearised model gives 0.836 -> 0.899. It is the source of nearly all of the network s gain over a linear model.",
-    "proposed": "A low-daytime-usage part: fewer daytime minutes raise the chance of leaving, steeply below about 169 minutes (between 154 minutes and 214 minutes for different customers) (about 47% to 1% from 91 to 352 minutes); it shapes how daytime minutes combine with the evening charge and makes customer-service calls count more at a low evening charge.",
+    "proposed": "A low-daytime-usage part: fewer daytime minutes raise the chance of leaving, steeply below about 169 minutes (between 154 and 214 minutes for different customers) (about 47% to 1% from 91 to 352 minutes); it shapes how daytime minutes combine with the evening charge and makes customer-service calls count more at a low evening charge.",
     "status": "proposed (not applied)"
    },
    "ann_92": {
@@ -46943,7 +46943,7 @@
     "claims": [
      "C112"
     ],
-    "text": "Through one part of the model, total daytime minutes only clearly lowers the predicted chance that a customer leaves while it stays below about 169 minutes (between 154 minutes and 214 minutes for different customers): for a typical such customer, going from 91 minutes to 352 minutes moves it from about 47% to about 1%; across patients the change happens in an uneven way."
+    "text": "Through one part of the model, total daytime minutes only clearly lowers the predicted chance that a customer leaves while it stays below about 169 minutes (between 154 and 214 minutes for different customers): for a typical such customer, going from 91 minutes to 352 minutes moves it from about 47% to about 1%; across patients the change happens in an uneven way."
    },
    {
     "claims": [

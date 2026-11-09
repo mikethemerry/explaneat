@@ -551,6 +551,22 @@ def spread_phrase(sh: Dict[str, Any], who: str = "patients") -> str:
     a, b = pt["spread_text"]
     if a == b:
         return ""
+    a, b = a.split(" (")[0], b.split(" (")[0]          # no second unit inside the brackets
+    na, _, ua = a.partition(" ")
+    nb, _, ub = b.partition(" ")
+    if ua and ua == ub:                                  # '0.8 and 1.9 mm', not '0.8 mm and 1.9 mm'
+        a = na
+    return f" (between {a} and {b} for different {who})"
+
+
+def old_spread_phrase(sh: Dict[str, Any], who: str = "patients") -> str:
+    """The first v3.1 wording, kept so stored drafts can be migrated to :func:`spread_phrase`."""
+    pt = (sh or {}).get("point") or {}
+    if not pt.get("wide") or not pt.get("spread_text"):
+        return ""
+    a, b = pt["spread_text"]
+    if a == b:
+        return ""
     return f" (between {a.split(' (')[0]} and {b} for different {who})"
 
 
