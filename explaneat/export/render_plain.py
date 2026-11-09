@@ -673,12 +673,49 @@ def _evidence_figures(layer, pid, title) -> List[str]:
     labs = [_figlab(layer, f"plot-{_lk(pid)}-{i}") for i in range(len(figs))]
     refs = ", ".join(r"Figure~\ref{" + x + "}" for x in labs)
     L = [r"\par\noindent{\small Evidence plots: " + refs + r".\par}"]
+    from .render_structure import hidden_labels
+    hl = hidden_labels(layer) if layer.get("graph") else {}
+    deep = [(f, lab) for f, lab in zip(figs, labs) if f.get("kind", "").startswith("deep_")]
+    if deep:
+        bc = next((c for c in layer["claims"] if c["type"] == "boundary" and c["annotation"]["id"] == pid), None)
+        st = (bc or {}).get("statement") or {}
+        r = {f["kind"]: lab for f, lab in deep}
+        churn = "customer" in (layer.get("population") or {}).get("plural", "")
+        who = "customers" if churn else "patients"
+        txt = (r"\par\medskip\noindent\textbf{Worked example: reading this part.} Figure~\ref{" + r["deep_map"]
+               + r"} maps the part's own output over its main inputs. In the grey region it is switched off and adds "
+               r"nothing; past the black line it switches on, and the colour shows how much it adds to the score. "
+               + tex(f"The line is the rule in the claim ({bc['id']}): it switches on when "
+                     f"{(st.get('rule') or {}).get('text', '')}. ")
+               + tex(f"{st.get('n_on')} of {round(st.get('n_on', 0) / max(st.get('share_on') or 1e-9, 1e-9))} "
+                     f"training {who} lie on the 'on' side, and {100 * (st.get('outcome_rate_on') or 0):.0f}% of them "
+                     f"{'left' if churn else 'had heart disease'}, against "
+                     f"{100 * (st.get('outcome_rate_off') or 0):.0f}% of the others: "
+                     + ("the filled points crowd on the 'on' side. "
+                        if (st.get("outcome_rate_on") or 0) > (st.get("outcome_rate_off") or 0) else
+                        "the 'on' side holds mostly hollow points, so the part picks out low-risk cases. "))
+               + (r"Figure~\ref{" + r["deep_slices"] + r"} cuts the map into slices: the hinge moves as the other "
+                  r"input changes, which is what a tilted line means. " if "deep_slices" in r else "")
+               + (r"Figure~\ref{" + r["deep_risk"] + r"} shows what this does to the final prediction for the "
+                  r"typical case." if "deep_risk" in r else "") + r"\par")
+        L.append(txt)
     for f, lab in zip(figs, labs):
-        d = f.get("data") or {}
-        k = len(d.get("panels") or d.get("units") or [None])
-        frac = 0.9 if f.get("kind") in ("effects", "levels") else min(1.0, 0.38 * k + 0.1)
-        L += [r"\begin{figure}[H]\centering", r"\includegraphics[width=" + f"{frac:.2f}" + r"\linewidth,"
-              r"height=0.42\textheight,keepaspectratio]{" + f.get("rel", f["pdf"]) + "}", r"\caption{" + tex(f"{title}: {f['caption']}") + "}",
+        if f.get("kind") == "partial":
+            d = f.get("data") or {}
+            name = hl.get(f.get("node"), "its unit")
+            what = ""
+            if d.get("hinge") is not None and (d.get("input") or {}).get("label"):
+                i = d["input"]
+                what = f": it switches on at about {d['hinge']:.4g}" + (f" {i['unit']}" if i.get("unit") else "") \
+                       + f" of {i['label']}, and is zero below"
+            elif d.get("map"):
+                what = ": over its two main inputs, with the line where it switches on"
+            L.append(r"\par\noindent{\small Figure~\ref{" + lab + r"} shows this part's own output, unit "
+                     + tex(name) + tex(what) + r".\par}")
+    for f, lab in zip(figs, labs):
+        # every plot is drawn 6.4 in wide and printed at the text width, so fonts stay at 8 pt or more
+        L += [r"\begin{figure}[H]\centering", r"\includegraphics[width=\linewidth,height=0.88\textheight,"
+              r"keepaspectratio]{" + f.get("rel", f["pdf"]) + "}", r"\caption{" + tex(f"{title}: {f['caption']}") + "}",
               r"\label{" + lab + "}", r"\end{figure}"]
     return L
 
