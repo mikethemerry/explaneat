@@ -423,6 +423,26 @@ def activity_plot(layer, base: Path, units, labels) -> Optional[Dict[str, Any]]:
     return {**_save(fig, base, data), "data": data}
 
 
+def _boundary_to_axes(b, xg, yg):
+    """The traced boundary with its first and last segments extended straight to the edge of the
+    plotted rectangle (the map's grid limits), so the line runs to the axes."""
+    import numpy as np
+    b = np.asarray(b, dtype=float)
+    if len(b) < 2:
+        return b
+    x0, x1, y0, y1 = float(min(xg)), float(max(xg)), float(min(yg)), float(max(yg))
+
+    def ray(p, q):                           # from p through q, on to the edge of the rectangle
+        d = q - p
+        ts = [((hi if d[k] > 0 else lo) - q[k]) / d[k]
+              for k, (lo, hi) in enumerate(((x0, x1), (y0, y1))) if abs(d[k]) > 1e-12]
+        t = max(0.0, min(ts)) if ts else 0.0
+        return q + t * d
+    head = ray(b[1], b[0])
+    tail = ray(b[-2], b[-1])
+    return np.vstack([head, b, tail])
+
+
 def _map_panel(ax, mp, field, cmap, outcome_word, show_points=True, show_boundary=True):
     import numpy as np
     Z = np.array(mp[field], dtype=float)
@@ -431,7 +451,7 @@ def _map_panel(ax, mp, field, cmap, outcome_word, show_points=True, show_boundar
     Zm = np.ma.masked_where(off, Z) if field == "z" else Z
     cs = ax.contourf(mp["x"]["grid"], mp["y"]["grid"], Zm, levels=12, cmap=cmap)
     if show_boundary and mp.get("boundary"):
-        b = np.array(mp["boundary"], dtype=float)
+        b = _boundary_to_axes(mp["boundary"], mp["x"]["grid"], mp["y"]["grid"])
         ax.plot(b[:, 0], b[:, 1], color=INK, lw=1.6)
         k = len(b) // 2
         ax.annotate("switches on", (b[k, 0], b[k, 1]), xytext=(8, 8), textcoords="offset points",
@@ -442,8 +462,10 @@ def _map_panel(ax, mp, field, cmap, outcome_word, show_points=True, show_boundar
         ax.scatter(x[~o], y[~o], s=6, facecolors="none", edgecolors="#555555", linewidths=0.4,
                    label=f"stayed / no {outcome_word}" if outcome_word != "churn" else "stayed")
         ax.scatter(x[o], y[o], s=7, color="#111111", label="left" if outcome_word == "churn" else outcome_word)
-    ax.set_xlabel(_ax(mp["x"]))
-    ax.set_ylabel(_ax(mp["y"]))
+    ax.set_xlim(min(mp["x"]["grid"]), max(mp["x"]["grid"]))
+    ax.set_ylim(min(mp["y"]["grid"]), max(mp["y"]["grid"]))
+    ax.set_xlabel(_wrap(_ax(mp["x"]), 60))
+    ax.set_ylabel(_wrap(_ax(mp["y"]), 30))
     return cs
 
 
@@ -504,10 +526,12 @@ def deep_dive_figures(layer, base: Path, claim) -> List[Dict[str, Any]]:
     R = np.array(mp["risk"], dtype=float) * 100
     cs = ax.contourf(mp["x"]["grid"], mp["y"]["grid"], R, levels=12, cmap="Greys")
     if mp.get("boundary"):
-        b = np.array(mp["boundary"], dtype=float)
+        b = _boundary_to_axes(mp["boundary"], mp["x"]["grid"], mp["y"]["grid"])
         ax.plot(b[:, 0], b[:, 1], color=UP, lw=1.6)
-    ax.set_xlabel(_ax(mp["x"]))
-    ax.set_ylabel(_ax(mp["y"]))
+    ax.set_xlim(min(mp["x"]["grid"]), max(mp["x"]["grid"]))
+    ax.set_ylim(min(mp["y"]["grid"]), max(mp["y"]["grid"]))
+    ax.set_xlabel(_wrap(_ax(mp["x"]), 60))
+    ax.set_ylabel(_wrap(_ax(mp["y"]), 30))
     fig.colorbar(cs, ax=ax, label=_risk_label(layer) + " for the typical case (%)")
     d3 = {"kind": "deep_risk", "claim": claim["id"], "risk": mp["risk"]}
     out.append({**_save(fig, Path(str(base) + "-risk"), d3), "data": d3, "kind": "deep_risk"})

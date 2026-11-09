@@ -1149,7 +1149,17 @@ def structure_claims(m: PlainModel, p: Part, parts: List[Part]) -> List[Dict[str
     return out
 
 
-MAP_GRID = 40          # points per axis of a deep-dive map
+MAP_GRID = 80          # points per axis of a deep-dive map
+MAP_MARGIN = 0.04      # margin beyond the data limits on each side of a deep-dive map
+
+
+def _map_axis(v, n: int = MAP_GRID) -> np.ndarray:
+    """The full plotted range of a deep-dive map axis: the training data limits plus a margin,
+    so the coloured field (and the boundary) reaches every plotted data point."""
+    x = np.asarray(v.raw_train, float)
+    lo, hi = float(np.min(x)), float(np.max(x))
+    pad = MAP_MARGIN * ((hi - lo) or 1.0)
+    return np.linspace(lo - pad, hi + pad, n)
 
 
 def _clipping_exits(m: PlainModel, p: Part) -> List[str]:
@@ -1219,8 +1229,7 @@ def boundary_claims(m: PlainModel, p: Part) -> List[Dict[str, Any]]:
     for i, j in pairs:
         v1, v2 = mains[i], mains[j]
         third = [v for k, v in enumerate(mains) if k not in (i, j)]
-        g1 = np.linspace(*np.percentile(v1.raw_train, [1, 99]), MAP_GRID)
-        g2 = np.linspace(*np.percentile(v2.raw_train, [1, 99]), MAP_GRID)
+        g1, g2 = _map_axis(v1), _map_axis(v2)
         A, B = np.meshgrid(g1, g2)
         X = np.repeat(zt[None, :], A.size, axis=0)
         X[:, v1.columns[0]] = (A.ravel() - v1.mean[0]) / v1.scale[0]
@@ -1358,6 +1367,11 @@ def boundary_claims(m: PlainModel, p: Part) -> List[Dict[str, Any]]:
                 else:
                     merged.append(pc)
             pieces = merged
+            # the stated ranges stay within the data (the map runs a margin beyond it)
+            y_raw = np.asarray(mains[1].raw_train, float)
+            for pc in pieces:
+                pc["y_from"] = sig(max(float(pc["y_from"]), float(y_raw.min())))
+                pc["y_to"] = sig(min(float(pc["y_to"]), float(y_raw.max())))
             # which side of the line is on: the grid cells to the right of the boundary
             ONg = np.array(mp["off"], dtype=bool) == False  # noqa: E712
             right_on = [bool(ONg[r, -1]) for r in range(ONg.shape[0]) if ONg[r].any() and not ONg[r].all()]
