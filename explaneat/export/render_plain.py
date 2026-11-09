@@ -163,7 +163,14 @@ def shape_text(c: Dict[str, Any]) -> str:
         out += f" (but {SHAPE_WORDS.get(e['class'], e['class'])} for {' and '.join(e['who'])})"
     if sh.get("risk_saturation"):
         out += f"; risk saturates {sh['risk_saturation']}"
-    if sh.get("matched_fold"):
+    pt = sh.get("point") if sh.get("point_reconciled") else None
+    if pt:
+        sp = pt.get("spread_text") or []
+        out += (f"; one point with {pt.get('source_claim')} (median fold {pt['text']}"
+                + (f", typical patient {pt['typical_hinge']['text']}" if (pt.get("typical_hinge") or {}).get("text") else "")
+                + (f", 10th-90th percentile {sp[0]} to {sp[1]}" if len(sp) == 2 else "")
+                + (", wide" if pt.get("wide") else "") + ")")
+    elif sh.get("matched_fold"):
         out += f"; matches the fold at {sh['matched_fold']['text']}"
     return out
 
@@ -346,6 +353,17 @@ def genome_block(layer: Dict[str, Any]) -> List[str]:
     return L
 
 
+CHANGES_V31 = (
+    "v3.1 names one point per fold. Where a part's threshold and the hinge of its shape are the same "
+    "fold (same variable, same part), the text gives one value: the median fold across the part's "
+    "patients, with the spread between patients (10th to 90th percentile) added in plain words when it "
+    "is wide; the typical patient's own hinge is recorded alongside. Folds of different parts, and the "
+    "whole model's curve, stay separate and are named with their own part. Paragraphs are capped at "
+    "6 sentences per part and 8 for the whole model: smaller effects are gathered into one closing "
+    "sentence. Thirteen drafts that had a mechanical 'by shape: ...' list were rewritten so the shape "
+    "words sit inside each sentence; the lint now rejects that list, two points for one fold, and "
+    "over-long paragraphs.")
+
 CHANGES_V3 = (
     "v3 adds the shape of every numeric or ordinal effect: the model's response curve on its internal "
     "score, classified as flat, steady, a hinge (nothing until a point, then steady), a step (mostly a jump), "
@@ -395,6 +413,7 @@ def render_review(layers: List[Dict[str, Any]], title: str) -> str:
          r"bootstrap over test patients, seed 42). Confidence words: " + "; ".join(
              f"``{tex(k)}'' = {tex(v)}" for k, v in CONFIDENCE_RULES.items()) + r". "
          r"Whether each statement is plausible in the real world is for the reviewer to judge.",
+         r"\par\medskip\noindent\textbf{What changed in v3.1 (one point per fold).} " + tex(CHANGES_V31),
          r"\par\medskip\noindent\textbf{What changed in v3 (shapes).} " + tex(CHANGES_V3),
          r"\par\medskip\noindent\textbf{What changed in v2.} " + tex(CHANGES_V2),
          r"\tableofcontents", r"\clearpage"]

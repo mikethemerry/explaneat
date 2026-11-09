@@ -3,7 +3,7 @@ name: plain-language-explanations
 description: Use when drafting plain-language explanations of an explained ExplaNEAT genome (summaries, per-annotation paragraphs, "worth checking" flags, proposed hypothesis revisions) from its verified claims in experiments/10seed/plain_language/<label>.json, so every sentence is plain, real-world, describes the shape of each effect, is led by the change in predicted risk for a typical patient, worded with evidence-based confidence, traceable to its claims and marked as a draft for Mike's review.
 ---
 
-# Plain-language explanations (layer v3)
+# Plain-language explanations (layer v3.1)
 
 You turn **verified claims** about an explained network into short, plain sentences that a
 clinician, a domain expert or a thesis examiner can check against what is known about the
@@ -159,6 +159,20 @@ at 193 mg/dL to about 50% at 308 mg/dL". Use these plain words (never "linear", 
   numbers: "…, flattening out near the top because the predicted risk cannot go much higher"
   (or "near the bottom … much lower"). Do not call a steady effect "levelling off" because the
   risk saturates.
+- **One point per fold.** When `shape.point_reconciled` is true, the shape's hinge and the
+  threshold claim are the same fold: quote only `shape.point.text` (the median fold across the
+  part's patients), never the typical patient's own hinge as a second number. When
+  `shape.point.wide` is true add the spread in plain words: "from about 1 mm (between 0.8 and
+  1.9 mm for different patients)". When it is false, folds of different parts (or a whole-model
+  curve) are separate points: name each with its own part. The lint rejects two points for one
+  fold.
+- **Weave the shape into the sentence.** One idea per sentence, the shape words inside it
+  ("Higher cholesterol raises the predicted risk steadily: …"). Never append a list such as
+  "; by shape: X steadily; Y in an uneven way" (the lint rejects it).
+- **Paragraph length:** at most 6 sentences per part and 8 for the whole model. Merge closely
+  related shape statements ("Older age and higher blood pressure both raise it steadily …"), or
+  move minor effects (below "slightly") into one closing sentence: "Smaller effects, each
+  changing the predicted risk only slightly: …".
 - **Tie the shape to the structure** where `shape.matched_fold` or a threshold claim exists:
   "nothing until about 285 mg/dL, where one part of the model switches on, then steadily". Say
   the fold once: cite the direction claim and the threshold claim together, do not repeat it.
@@ -212,7 +226,8 @@ at 193 mg/dL to about 50% at 308 mg/dL". Use these plain words (never "linear", 
 
 - [ ] Every sentence cites verified claims and says nothing beyond them.
 - [ ] Every effect leads with the typical patient's predicted risk; no odds anywhere.
-- [ ] Every numeric or ordinal effect carries its shape words (section 5a), or "in an uneven way".
+- [ ] Every numeric or ordinal effect carries its shape words (section 5a), or "in an uneven way",
+      woven into the sentence; one point per fold; paragraphs within 6 (part) / 8 (whole model).
 - [ ] "clearly" / "slightly" / "on the training data only" / "little data" follow section 4.
 - [ ] No ids, column names, z-scores, activation names, formulas, causal words.
 - [ ] Biggest changes first; interactions, thresholds and rules in the standard shapes.

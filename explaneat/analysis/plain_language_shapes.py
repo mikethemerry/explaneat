@@ -429,7 +429,10 @@ def attach_shapes(m, parts, claims: List[Dict[str, Any]]) -> None:
         if c["type"] == "threshold" and c.get("verified"):
             folds.setdefault(c["statement"]["variable"], []).append(
                 {"claim": c.get("id"), "part": c["annotation"]["id"], "kind": c["statement"]["kind"],
-                 "value": c["statement"]["threshold"]["value"], "text": c["statement"]["threshold"]["text"]})
+                 "value": c["statement"]["threshold"]["value"], "text": c["statement"]["threshold"]["text"],
+                 "p10_p90": (c.get("estimate") or {}).get("threshold", {}).get("p10_p90_across_patients"),
+                 "p10_p90_text": (c.get("estimate") or {}).get("threshold", {}).get("p10_p90_text"),
+                 "count_step": c["statement"]["threshold"].get("count_step")})
     cache: Dict[Tuple, Dict[str, Any]] = {}
     for c in claims:
         ctx = c.pop("_ctx", None)
@@ -480,7 +483,91 @@ def attach_shapes(m, parts, claims: List[Dict[str, Any]]) -> None:
             span = (sh["grid"][-1] or 0) - (sh["grid"][0] or 0)
             sh["agrees_with_threshold"] = bool(sh["class"] in ("hinge", "step") and at is not None and span
                                                and abs(at - th) <= 0.15 * span)
+        reconcile_point(sh, c, v, fl)
         c["shape"] = sh
+
+
+WIDE_SPREAD = 0.10   # a fold spread (10th-90th percentile) wider than this share of the range is "wide"
+OUTSIDE_TOL = 0.10   # the typical hinge may sit this share of the range (4 grid steps) outside the spread
+
+
+def reconcile_point(sh: Dict[str, Any], c: Dict[str, Any], v, folds: List[Dict[str, Any]]) -> None:
+    """One named point per fold.
+
+    A shape's hinge/step point and a threshold claim refer to the same fold when they concern the
+    same variable within the same annotation (part). Then the named point is the threshold claim's
+    median fold across affected patients; the typical patient's hinge is recorded alongside, with
+    the spread of per-patient folds (10th to 90th percentile). Points of different parts (or a
+    whole-model curve against a part's fold) are kept separate, each named with its own part.
+    """
+    from .plain_language import sig
+    at = (sh.get("points") or {}).get("at")
+    same = [f for f in folds if f["part"] == c["annotation"]["id"]]
+    if sh.get("class") not in ("hinge", "step") or at is None:
+        sh["point_reconciled"] = False
+        sh["point_reason"] = f"no fold in this shape ({sh.get('class')})"
+        return
+    if c.get("scope") == "model" or c["type"] == "interaction":
+        sh["point_reconciled"] = False
+        sh["point_reason"] = ("whole-model curve: its point is kept separate from the parts' folds"
+                              + (f" ({', '.join(f['part'] for f in folds)})" if folds else ""))
+        return
+    if not same:
+        sh["point_reconciled"] = False
+        sh["point_reason"] = ("no verified threshold claim for this variable in this part"
+                              + (f"; folds of other parts kept separate ({', '.join(f['part'] for f in folds)})"
+                                 if folds else ""))
+        return
+    f = same[0]
+    span = (sh["grid"][-1] or 0) - (sh["grid"][0] or 0)
+    lo, hi = (f.get("p10_p90") or [None, None])
+    # The typical patient's hinge is read off a 41-point grid (or one level of a count), so it may
+    # sit a grid step from the per-patient folds; beyond that it is a different fold for this patient.
+    tol = max(OUTSIDE_TOL * span, float(f.get("count_step") or 0), 0.0)
+    if lo is not None and (at < lo - tol or at > hi + tol):
+        sh["point_reconciled"] = False
+        sh["point_reason"] = (f"the typical patient's fold ({(sh.get('points_text') or {}).get('at')}) lies outside "
+                              f"the per-patient folds of threshold claim {f['claim']} "
+                              f"({' to '.join(f.get('p10_p90_text') or [])}): kept separate")
+        return
+    wide = bool(lo is not None and span and (hi - lo) > WIDE_SPREAD * span)
+    typical_text = (sh.get("points_text") or {}).get("at")
+    sh["point"] = {"value": f["value"], "text": f["text"], "source_claim": f["claim"],
+                   "basis": "median fold across the part's affected patients (threshold claim)",
+                   "typical_hinge": {"value": sig(at), "text": typical_text},
+                   "spread_p10_p90": [lo, hi], "spread_text": f.get("p10_p90_text"), "wide": wide}
+    sh["points_text"] = dict(sh.get("points_text") or {})   # the shape dict is shared via a cache
+    if f.get("count_step") is None:
+        sh["points_text"]["at"] = f["text"]
+    sh["point_reconciled"] = True
+    sh["point_reason"] = "same variable and same part as threshold claim " + str(f["claim"])
+
+
+def spread_phrase(sh: Dict[str, Any], who: str = "patients") -> str:
+    """'(between 0.8 and 1.9 mm for different patients)' when a reconciled fold spreads widely."""
+    pt = (sh or {}).get("point") or {}
+    if not pt.get("wide") or not pt.get("spread_text"):
+        return ""
+    a, b = pt["spread_text"]
+    if a == b:
+        return ""
+    a, b = a.split(" (")[0], b.split(" (")[0]          # no second unit inside the brackets
+    na, _, ua = a.partition(" ")
+    nb, _, ub = b.partition(" ")
+    if ua and ua == ub:                                  # '0.8 and 1.9 mm', not '0.8 mm and 1.9 mm'
+        a = na
+    return f" (between {a} and {b} for different {who})"
+
+
+def old_spread_phrase(sh: Dict[str, Any], who: str = "patients") -> str:
+    """The first v3.1 wording, kept so stored drafts can be migrated to :func:`spread_phrase`."""
+    pt = (sh or {}).get("point") or {}
+    if not pt.get("wide") or not pt.get("spread_text"):
+        return ""
+    a, b = pt["spread_text"]
+    if a == b:
+        return ""
+    return f" (between {a.split(' (')[0]} and {b} for different {who})"
 
 
 def shape_phrase_ok(text: str, shape: Optional[Dict[str, Any]], ctype: str) -> Tuple[bool, str]:
