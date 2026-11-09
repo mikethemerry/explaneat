@@ -393,22 +393,10 @@ def _diagram(tikz: str, caption: str) -> List[str]:
 
 
 def summary_diagram(layer) -> str:
-    from ..analysis.plain_language_store import ADDITIVE, summary_blocks
-    from .render_tikz import block_diagram
-    d = layer.get("drafted") or {}
-    titles = d.get("titles") or {}
-    lab = _var_labels(layer)
-    by_id = {p["id"]: p for p in layer["parts"]}
-    boxes = []
-    for b in summary_blocks(layer):
-        if b["block"] == ADDITIVE:
-            listed = [lab.get(v, v) for v in b["direct_variables"]]
-            listed += ["part: " + titles.get(pid, by_id[pid]["name"]) for pid in b["parts"][1:]]
-            boxes.append({"label": titles.get(ADDITIVE, "Inputs that add up"), "listed": listed})
-        else:
-            boxes.append({"label": titles.get(b["block"], b["block"]),
-                          "inputs": [lab.get(v, v) for v in b["variables"]]})
-    return block_diagram(boxes, (layer.get("outcome") or {}).get("predicted") or "predicted risk")
+    """The summary's picture: the root's children one level down, the same picture as the
+    whole-model section (one grouping everywhere: the annotation hierarchy)."""
+    root = next(p for p in layer["parts"] if p["role"] == "root")
+    return readdown_diagram(layer, root["id"])
 
 
 def detail_diagram(layer, pid: str, additive_members: Optional[List[str]] = None) -> str:
@@ -546,7 +534,7 @@ def readdown_diagram(layer, pid) -> str:
     direct = [lab.get(v, v) for v in (p.get("direct_variable_keys") or [])]
     boxes = []
     if p["role"] == "root" and direct:
-        boxes.append({"label": "Added directly", "listed": direct})
+        boxes.append({"label": titles.get("additive", "Inputs that add up"), "listed": direct})
         direct = []
     for k in kids:
         name = titles.get(k["id"]) or titles.get(k.get("duplicate_of") or "", k["name"])
@@ -582,6 +570,24 @@ def _technical(layer, pid, titles, claims_by) -> List[str]:
     return L
 
 
+def overview_page(layer) -> List[str]:
+    """The whole network on its own page, turned sideways: every node and connection, nested by part."""
+    from .render_structure import overview
+    tk, meta = overview(layer)
+    tk = tk.replace("\\resizebox{\\ifdim\\width>\\linewidth\\linewidth\\else\\width\\fi}{!}{%",
+                    "\\resizebox{0.97\\textheight}{!}{%")
+    unused = meta.get("not_used") or []
+    return [r"\clearpage\begin{center}", r"\rotatebox{90}{\begin{minipage}{0.97\textheight}\centering", tk.rstrip(),
+            r"\par\smallskip{\scriptsize " + tex(
+                "The whole network, every node and connection, nested by part: shaded clusters are the parts of "
+                "the model, darker boxes the parts inside them; circles are the model's units (inputs named, "
+                "hidden units h1, h2, ...), a rectangle is a part's output, the hexagon the model's output; blue "
+                "connections have a positive weight, red a negative one, thicker is larger.")
+            + (r"\\" + tex("Not used by the model (input columns with no connection; a variable's other columns "
+                              "may still carry it): " + ", ".join(unused) + ".") if unused else "") + r"\par}",
+            r"\end{minipage}}", r"\end{center}\clearpage"]
+
+
 def genome_block_v5(layer: Dict[str, Any]) -> List[str]:
     from ..analysis.plain_language_store import ADDITIVE, readdown_order, summary_blocks
     lab = layer["label"]
@@ -605,6 +611,8 @@ def genome_block_v5(layer: Dict[str, Any]) -> List[str]:
     for b in summary_blocks(layer):
         L.append(r"\paragraph{" + tex(titles.get(b["block"], b["block"])) + ".} "
                  + _block_paragraphs((blocks.get(b["block"]) or {}).get("sentences")))
+    if layer.get("graph"):
+        L += overview_page(layer)
     if d.get("worth_checking"):
         L.append(r"\paragraph{Worth checking against what is known.} " + sentences_tex(d["worth_checking"]))
     rd = d.get("readdown") or {}
@@ -622,6 +630,11 @@ def genome_block_v5(layer: Dict[str, Any]) -> List[str]:
             L.append(r"\noindent{\footnotesize Part of: " + tex(titles.get(parent["id"], parent["name"]))
                      + r" (\ref{rd:" + _lk(parent["id"]) + r"}).\par}")
         L += _diagram(readdown_diagram(layer, pid), "One level down: what feeds this part.")
+        if layer.get("graph"):
+            from .render_structure import section
+            L += _diagram(section(layer, pid)[0],
+                          "The nodes of this part and every connection into them (blue: positive weight, red: "
+                          "negative; dashed boxes: connections from or to other parts, drawn in their own sections).")
         sec = rd.get(pid) or {}
         L.append(r"\paragraph{Hypothesis.} " + sentences_tex(sec.get("hypothesis")))
         L.append(r"\paragraph{Evidence.} " + sentences_tex(sec.get("evidence")))
@@ -655,6 +668,17 @@ def genome_block_v5(layer: Dict[str, Any]) -> List[str]:
 def is_v5(layer) -> bool:
     return (layer.get("drafted") or {}).get("structure") == "readdown-v5"
 
+
+CHANGES_V5B = (
+    "v5b uses one grouping everywhere, the annotation hierarchy: the summary's diagram is the same picture "
+    "as the whole model's section, and a part that is itself a weighted sum (blood pressure with "
+    "cholesterol) is a part of its own, described as one that adds up, so the text counts three parts "
+    "throughout; the lint checks every 'N parts' against the hierarchy. A full-structure diagram follows "
+    "the summary: every node and connection, nested by part, with the inputs that feed the output directly "
+    "in their own cluster and the unused input columns listed. Each section from the top down adds its own "
+    "region of that diagram, with stubs for connections from or to other parts; each connection is drawn in "
+    "exactly one section. The gate's text now says that it lowers the risk for the patients it acts on, and "
+    "that more vessels and higher cholesterol take that lowering away; its vessel statements are one per group.")
 
 CHANGES_V5 = (
     "v5 reads the explanation down. The summary (one line, a diagram, one paragraph per block) is as in v4, "
@@ -737,6 +761,7 @@ def render_review(layers: List[Dict[str, Any]], title: str) -> str:
              r"\documentclass[a4paper,10pt]{article}",
              r"\usepackage[margin=1.8cm]{geometry}",
              PREAMBLE_PACKAGES.rstrip(),
+             r"\usetikzlibrary{shapes.geometric}",
              r"\usepackage{array}",
              r"\usepackage[unicode=true,hidelinks]{hyperref}",
              r"\setcounter{tocdepth}{3}",
@@ -751,6 +776,7 @@ def render_review(layers: List[Dict[str, Any]], title: str) -> str:
              r"predicted risk for a typical patient. The technical record (original hypotheses, formulas, evidence "
              r"tables with the test check, ranges and n) is at the end. The text describes what the model does, not "
              r"the world; whether it is plausible is for the reviewer to judge.",
+             r"\par\medskip\noindent\textbf{What changed in v5b (diagrams).} " + tex(CHANGES_V5B),
              r"\par\medskip\noindent\textbf{What changed in v5 (read down).} " + tex(CHANGES_V5),
              r"\par\medskip\noindent\textbf{v4.} " + tex(CHANGES_V4),
              r"\tableofcontents", r"\clearpage"]
