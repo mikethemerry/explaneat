@@ -36,7 +36,9 @@ GAP = 0.7          # cm between clusters
 CHAR = 0.15        # cm per character of a tiny bold title
 SUM = "__sum__"
 LEGEND = ("Edges: blue = positive weight (raises the score), red = negative weight (lowers it); "
-          "thicker = larger weight. Grey: the drawn sum standing for the output unit's addition.")
+          "thicker = larger weight. Grey: the drawn sum standing for the output unit's addition. A grouped "
+          "input (a variable with many levels) has one edge per target, labelled with its number of edges and "
+          "weight range; purple when the weights have both signs.")
 
 
 def _parts(layer):
@@ -70,17 +72,63 @@ def top_part(layer, pid) -> Optional[str]:
     return p["id"]
 
 
-def input_key(node: Dict[str, Any]) -> str:
-    """One drawn circle per model input column (split copies of an input share it)."""
-    return "in::" + (node.get("column") or node["id"])
+GROUP_LEVELS = 6   # a one-hot variable with more levels than this is drawn as one grouped input
+
+
+def grouped_variables(layer) -> Dict[str, Dict[str, Any]]:
+    """Category variables with more than ``GROUP_LEVELS`` one-hot columns: column -> group."""
+    out = {}
+    for v in (layer.get("units") or {}).get("variables") or []:
+        cols = v.get("columns") or []
+        if v.get("kind") == "category" and len(cols) > GROUP_LEVELS:
+            g = {"base": v["base"], "label": v.get("label") or v["base"], "levels": len(cols)}
+            for c in cols:
+                out[c] = g
+    return out
+
+
+def input_key(node: Dict[str, Any], groups: Optional[Dict[str, Any]] = None) -> str:
+    """One drawn circle per model input column (split copies of an input share it); the columns
+    of a many-level one-hot variable share one grouped circle."""
+    col = node.get("column") or node["id"]
+    if groups and col in groups:
+        return "grp::" + groups[col]["base"]
+    return "in::" + col
+
+
+def group_labels(layer) -> Dict[str, str]:
+    """grouped input key -> 'state (31 of 51 used)'."""
+    groups = grouped_variables(layer)
+    used: Dict[str, set] = {}
+    for n in layer["graph"]["nodes"]:
+        if n["kind"] == "input" and (n.get("column") in groups):
+            used.setdefault(groups[n["column"]]["base"], set()).add(n["column"])
+    lab = {}
+    for g in {id(x): x for x in groups.values()}.values():
+        k = len(used.get(g["base"], ()))
+        lab["grp::" + g["base"]] = f"{g['label']} ({k} of {g['levels']} used)"
+    return lab
+
+
+def _merge_groups(ew):
+    """One drawn edge per (grouped input, target), weights kept as a list (range in the label)."""
+    out, agg = [], {}
+    for u, v, w in ew:
+        if isinstance(u, str) and u.startswith("grp::"):
+            agg.setdefault((u, v), []).append(w)
+        else:
+            out.append((u, v, w))
+    for (u, v), ws in agg.items():
+        out.append((u, v, ws))
+    return out
 
 
 def drawn_edge(layer, e) -> Tuple[str, str]:
-    """Where an edge of the graph is drawn: from the shared input circle; an edge from an input
-    straight into the output is drawn into the "sum" of the inputs that add up."""
+    """Where an edge of the graph is drawn: from the shared (or grouped) input circle; an edge
+    from an input straight into the output is drawn into the "sum" of the inputs that add up."""
     nodes = {n["id"]: n for n in layer["graph"]["nodes"]}
     u, v = nodes[e["from"]], nodes[e["to"]]
-    a = input_key(u) if u["kind"] == "input" else u["id"]
+    a = input_key(u, grouped_variables(layer)) if u["kind"] == "input" else u["id"]
     b = SUM if (u["kind"] == "input" and v["kind"] == "output") else v["id"]
     return a, b
 
@@ -90,7 +138,7 @@ def split_inputs(layer) -> List[Tuple[str, int]]:
     count: Dict[str, int] = {}
     lab: Dict[str, str] = {}
     for n in layer["graph"]["nodes"]:
-        if n["kind"] == "input":
+        if n["kind"] == "input" and not input_key(n, grouped_variables(layer)).startswith("grp::"):
             k = input_key(n)
             count[k] = count.get(k, 0) + 1
             lab[k] = n.get("label") or k
@@ -150,6 +198,7 @@ def _place(items, edges, clusters, subs, top, sweep: Optional[bool] = None) -> D
     bottom = {n for n, it in items.items() if it["kind"] in ("input", "stub_in")}
     lay = _layers(list(items), edges, bottom, set(top))
     corder = [c for c, _ in clusters]
+    ctitles = dict(clusters)
     if sweep and len(corder) > 1:
         corder = _cluster_order(corder, items, edges, bottom)
     users: Dict[str, List[int]] = {n: [] for n in bottom}
@@ -184,10 +233,11 @@ def _place(items, edges, clusters, subs, top, sweep: Optional[bool] = None) -> D
             live = [i for i in range(len(bands)) if rows_of[i]]
             if not live:
                 continue
-            total = sum(widths[i] for i in live) + GAP * 1.4 * (len(live) - 1)
+            total = max(sum(widths[i] for i in live) + GAP * 1.4 * (len(live) - 1), len(ctitles.get(c, "")) * 0.2)
             ins = [pos[u][0] for u, v in edges if u in bottom and v in items and items[v]["band"][0] == c]
             want = (sum(ins) / len(ins)) if ins else (x_end + total / 2 + GAP)
             x0 = max(want - total / 2, x_end + GAP * 2.2)
+            start = x0
             for i in live:
                 for L, r in rows_of[i].items():
                     rw = sum(nw(n) for n in r) + (len(r) - 1) * (DX - 0.7)
@@ -196,7 +246,7 @@ def _place(items, edges, clusters, subs, top, sweep: Optional[bool] = None) -> D
                         pos[n] = (round(x + nw(n) / 2.0, 3), round(Y0 + (L - 1) * DY, 3))
                         x += nw(n) + (DX - 0.7)
                 x0 += widths[i] + GAP * 1.4
-            x_end = x0 - GAP * 1.4
+            x_end = max(x0 - GAP * 1.4, start + total)
 
     pos = {n: (round(i * DXI, 3), 0.0) for i, n in enumerate(row)}
     place_clusters(pos)
@@ -253,6 +303,7 @@ HEAD = [r"\begin{tikzpicture}[",
         r"  inlab/.style={font=\sffamily\tiny, align=center, text width=15mm, inner sep=1pt, fill=white, "
         r"fill opacity=0.8, text opacity=1},",
         r"  wpos/.style={draw=NavyBlue}, wneg/.style={draw=BrickRed}, wagg/.style={draw=black!45, line width=1.2pt},",
+        r"  wmix/.style={draw=Plum},",
         r"]"]
 
 
@@ -261,6 +312,13 @@ def _tname(n: str) -> str:
 
 
 def _edge(u, v, w) -> str:
+    if isinstance(w, list):
+        lo, hi = min(w), max(w)
+        col = "wpos" if lo > 0 else ("wneg" if hi < 0 else "wmix")
+        lab = f"{len(w)} edges, {lo:+.2f} to {hi:+.2f}" if len(w) > 1 else f"{lo:+.2f}"
+        return (f"\\draw[->, {col}, line width={min(0.25 + 0.35 * max(abs(lo), abs(hi)), 1.4):.2f}pt] "
+                f"({_tname(u)}) -- node[pos=0.72, sloped, above, font=\\sffamily\\tiny, inner sep=1pt, fill=white, "
+                f"fill opacity=0.8, text opacity=1] {{{lab}}} ({_tname(v)});")
     if w is None:
         style = "wagg"
     else:
@@ -341,26 +399,70 @@ def _clusters(layer):
     return clusters, subs, kids, titles
 
 
+def _cluster_sums(layer) -> Dict[str, str]:
+    """exit node -> drawn summary key, for top-level parts with several outputs into the model
+    output (their outputs meet in one drawn 'sum' rectangle, which sends one edge on)."""
+    g = layer["graph"]
+    _, by_name = _parts(layer)
+    root = _root(layer)
+    outs = {n["id"] for n in g["nodes"] if n["kind"] == "output"}
+    into_out = {e["from"] for e in g["edges"] if e["to"] in outs}
+    m = {}
+    for k in root.get("children") or []:
+        q = by_name.get(k)
+        if q is None:
+            continue
+        ex = [x for x in (g.get("exits") or {}).get(q["id"], []) if x in into_out]
+        if len(ex) > 1:
+            for x in ex:
+                m[x] = "csum::" + q["id"]
+    return m
+
+
+def not_used_text(layer) -> str:
+    """'Not used by the model: ...', with a many-level variable summarised ('state: 24 of 51 levels')."""
+    g = layer["graph"]
+    unused = list(g.get("not_used") or [])
+    groups = grouped_variables(layer)
+    parts = []
+    for v in (layer.get("units") or {}).get("variables") or []:
+        if v.get("columns") and v["columns"][0] in groups:
+            labs = {lv.get("label") for lv in v.get("levels") or []}
+            k = sum(1 for u in unused if u in labs)
+            unused = [u for u in unused if u not in labs]
+            if k:
+                parts.append(f"{v.get('label') or v['base']}: {k} of {len(v['columns'])} levels")
+    parts += unused
+    return ("Not used by the model (input columns with no connection): " + ", ".join(parts) + ".") if parts else ""
+
+
 def _overview_items(layer):
     g = layer["graph"]
     by_id, _ = _parts(layer)
     clusters, subs, kids, titles = _clusters(layer)
     top_exits = {x: k["id"] for k in kids for x in (g.get("exits") or {}).get(k["id"], [])}
     out_label = (layer.get("outcome") or {}).get("short") or "output"
+    groups, glab = grouped_variables(layer), group_labels(layer)
+    csums = _cluster_sums(layer)
     items: Dict[str, Dict[str, Any]] = {}
     for nd in g["nodes"]:
         n = nd["id"]
         if nd["kind"] == "output":
             items[n] = {"kind": "output", "band": ("top", None), "label": out_label}
         elif nd["kind"] == "input":
-            items[input_key(nd)] = {"kind": "input", "band": ("inputs", None), "label": nd.get("label") or "",
-                                    "sort": nd.get("label") or n}
+            k = input_key(nd, groups)
+            items[k] = {"kind": "input", "band": ("inputs", None), "label": glab.get(k) or nd.get("label") or "",
+                        "sort": glab.get(k) or nd.get("label") or n}
         else:
             reg = nd.get("region")
             tp = top_part(layer, reg) if reg in by_id else None
             cl = tp or "additive"
+            single = n in top_exits and n not in csums
             items[n] = {"kind": "hidden", "band": (cl, reg) if tp and reg != tp else (cl, None), "sort": n,
-                        "exit": n in top_exits, "label": titles.get(top_exits[n]) if n in top_exits else None}
+                        "exit": single, "label": titles.get(top_exits[n]) if single else None}
+    for x, key in csums.items():
+        pid = key.split("::", 1)[1]
+        items[key] = {"kind": "sum", "band": (pid, None), "label": "sum: " + titles.get(pid, pid), "sort": "~"}
     items[SUM] = {"kind": "sum", "band": ("additive", None),
                   "label": "sum: " + titles.get("additive", ADDITIVE_TITLE)}
     return items, clusters, subs
@@ -379,21 +481,30 @@ def overview(layer, note: bool = False) -> Tuple[str, Dict[str, Any]]:
     g = layer["graph"]
     items, clusters, subs = _overview_items(layer)
     out = next(n for n, it in items.items() if it["kind"] == "output")
-    ew = [(*drawn_edge(layer, e), e["weight"]) for e in g["edges"]]
+    csums = _cluster_sums(layer)
+    ew = []
+    for e in g["edges"]:
+        a, b = drawn_edge(layer, e)
+        if b == out and a in csums:
+            b = csums[a]
+        ew.append((a, b, e["weight"]))
+    for key in sorted(set(csums.values())):
+        ew.append((key, out, None))
     if any(v == SUM for _, v, _ in ew):
         ew.append((SUM, out, None))
     else:
         items.pop(SUM)
     colors = {c: PALETTE[i % len(PALETTE)] for i, (c, _) in enumerate(clusters)}
+    drawn = list(ew)
+    ew = _merge_groups(ew)
     pos = _place(items, [(u, v) for u, v, _ in ew], clusters, subs, [out])
     text = ""
     if note:
         text = tex(LEGEND)
-        if g.get("not_used"):
-            text += r"\\" + tex("Not used by the model (input columns with no connection): "
-                                 + ", ".join(g["not_used"]) + ".")
+        if not_used_text(layer):
+            text += r"\\" + tex(not_used_text(layer))
     tk = _picture(items, pos, ew, clusters, subs, colors, hidden_labels(layer), text)
-    return tk, {"edges": {(e["from"], e["to"]) for e in g["edges"]}, "drawn": ew,
+    return tk, {"edges": {(e["from"], e["to"]) for e in g["edges"]}, "drawn": drawn, "merged": ew,
                 "crossings": crossings(pos, [(u, v) for u, v, _ in ew]),
                 "inputs": {n for n, it in items.items() if it["kind"] == "input"},
                 "nodes": set(items), "not_used": g.get("not_used") or []}
@@ -444,14 +555,15 @@ def section(layer, pid) -> Tuple[str, Dict[str, Any]]:
                         "label": (layer.get("outcome") or {}).get("short") or "output"}
             continue
         items[n] = {"kind": "hidden", "band": (pid, nd["region"]) if nd["region"] in dups else (pid, None),
-                    "sort": n, "exit": n in exits, "label": titles.get(pid) if n in exits else None}
+                    "sort": n, "exit": n in exits and len(exits) == 1, "label": titles.get(pid) if (n in exits and len(exits) == 1) else None}
     ew = []
     for e in owned:
         u = nodes[e["from"]]
         if u["kind"] == "input":
             a, b = drawn_edge(layer, e)
-            items.setdefault(a, {"kind": "input", "band": ("inputs", None), "label": u.get("label") or "",
-                                 "sort": u.get("label") or a})
+            glab = group_labels(layer)
+            items.setdefault(a, {"kind": "input", "band": ("inputs", None), "label": glab.get(a) or u.get("label") or "",
+                                 "sort": glab.get(a) or u.get("label") or a})
             if b == SUM:
                 items.setdefault(SUM, {"kind": "sum", "band": (pid, None), "label": "sum: " + ctitle})
             ew.append((a, b, e["weight"]))
@@ -480,6 +592,7 @@ def section(layer, pid) -> Tuple[str, Dict[str, Any]]:
         tp = top_part(layer, pid)
         ids = [k["id"] for k in kids]
         colors[pid] = PALETTE[(1 + ids.index(tp)) % len(PALETTE)] if tp in ids else PALETTE[0]
+    ew = _merge_groups(ew)
     pos = _place(items, [(u, v) for u, v, _ in ew], clusters, subs, tops)
     tk = _picture(items, pos, ew, clusters, subs, colors, hl)
     return tk, {"edges": {(e["from"], e["to"]) for e in owned},

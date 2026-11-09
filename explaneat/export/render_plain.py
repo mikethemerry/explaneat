@@ -589,6 +589,36 @@ def claims_longtable(claims: List[Dict[str, Any]]) -> List[str]:
     return L
 
 
+def grouped_level_tables(layer) -> List[str]:
+    """For a many-level variable (drawn as one grouped input), a compact table of its levels: the
+    whole-model change for a typical customer, n and whether the claim holds."""
+    from .render_structure import grouped_variables
+    groups = {g["base"]: g for g in grouped_variables(layer).values()}
+    L: List[str] = []
+    for base, g in groups.items():
+        rows = [c for c in layer["claims"] if c.get("scope") == "model" and c["type"] == "direction"
+                and (c.get("variables") or [{}])[0].get("base") == base]
+        if not rows:
+            continue
+        rows.sort(key=lambda c: -((c.get("risk") or {}).get("to") or 0))
+        L.append(r"\paragraph{" + tex(f"{g['label'].capitalize()}: every level the model reads") + ".} "
+                 + tex(f"Whole-model change in the predicted chance for a typical customer when only the "
+                       f"{g['label']} changes from the reference; n = training customers in that level.")
+                 + r"\par\smallskip")
+        L += [r"{\scriptsize\rowcolors{2}{black!6}{white}", r"\begin{longtable}{@{}lllrlc@{}}", r"\toprule\rowcolor{white}",
+              r"Claim & From & To & n & Chance & OK \\", r"\midrule\endhead", r"\bottomrule\endfoot"]
+        for c in rows:
+            ch = (c.get("statement") or {}).get("change") or {}
+            n = (c.get("groups") or [{}, {}])[-1].get("n", "")
+            to = (ch.get("to") or {}).get("label") or ""
+            if len(to) > 60:
+                to = to[:57] + "..."
+            L.append(f"{tex(c['id'])} & {tex((ch.get('from') or {}).get('label') or '')} & {tex(to)} & {tex(n)} & "
+                     f"{tex(risk_text(c))} & {VERIFIED_MARK if c.get('verified') else FAILED_MARK} \\\\")
+        L += [r"\end{longtable}}"]
+    return L
+
+
 def _technical(layer, pid, titles, claims_by) -> List[str]:
     from .render_tex import math_block
     p = {q["id"]: q for q in layer["parts"]}[pid]
@@ -611,6 +641,8 @@ def _technical(layer, pid, titles, claims_by) -> List[str]:
                 "To annotate the parts, the explanation split these inputs into copies (a refactoring step that "
                 "does not change what the model computes); the diagrams draw each input once: "
                 + "; ".join(f"{lab} ({k} copies)" for lab, k in sp) + "."))
+    if p["role"] == "root" and layer.get("graph"):
+        L += grouped_level_tables(layer)
     L.append(r"\paragraph{Evidence table} (next page, landscape).")
     own = claims_by.get(pid, []) + [c for q in layer["parts"] if q.get("duplicate_of") and q.get("parent") == p["name"]
                                     for c in claims_by.get(q["id"], [])]
@@ -620,7 +652,7 @@ def _technical(layer, pid, titles, claims_by) -> List[str]:
 
 def overview_page(layer) -> List[str]:
     """The whole network on its own page, turned sideways: every node and connection, nested by part."""
-    from .render_structure import overview
+    from .render_structure import not_used_text, overview
     tk, meta = overview(layer)
     tk = tk.replace("\\resizebox{\\ifdim\\width>\\linewidth\\linewidth\\else\\width\\fi}{!}{%",
                     "\\resizebox{0.97\\textheight}{!}{%")
@@ -634,8 +666,7 @@ def overview_page(layer) -> List[str]:
                 "stands for the addition the output unit does on the inputs that feed it directly (drawn, not a "
                 "unit of the model); the hexagon is the model's output. Legend: blue = positive weight (raises "
                 "the score), red = negative weight (lowers it), thicker = larger weight; grey = the drawn sum.")
-            + (r"\\" + tex("Not used by the model (input columns with no connection; a variable's other columns "
-                              "may still carry it): " + ", ".join(unused) + ".") if unused else "") + r"\par}",
+            + (r"\\" + tex(not_used_text(layer)) if not_used_text(layer) else "") + r"\par}",
             r"\end{minipage}}", r"\end{center}\clearpage"]
 
 
