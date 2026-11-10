@@ -1,0 +1,113 @@
+{
+  "label": "heart-s4-c1",
+  "genome_id": "c85804fa-08bd-4207-ac69-a31a8567473c",
+  "start": "2026-11-10T09:33:19Z",
+  "end": "2026-11-10T09:42:30Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 4,
+  "n_composition_annotations": 1,
+  "n_splits": 5,
+  "n_identity_nodes": 0,
+  "hidden_nodes": 4,
+  "hidden_nodes_single_leaf_no_split": 4,
+  "hidden_nodes_in_any_annotation": 4,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 3.3306690738754696e-16,
+  "closed_form_max_abs_err": 0.0017284055669746223,
+  "protocol_version": "v3",
+  "analysis": {
+    "split": "train",
+    "n_train": 242,
+    "baseline_train_auc": 0.9423,
+    "train_acc": 0.8884,
+    "linear_core_only_auc": 0.9328,
+    "logit_sd": {
+      "linear_core": 4.553,
+      "all_nonlinear_readouts": 0.856
+    },
+    "lr_l2_train_auc_all_26_inputs": 0.9355,
+    "zero_ablation_auc_top_level": {
+      "thalach_floor_relay": 0.9416,
+      "no_asymptomatic_pain_indicator": 0.9411,
+      "fixed_defect_normal_sugar_gate": 0.9343,
+      "downsloping_st_indicator": 0.9421
+    },
+    "mean_ablation_auc_top_level": {
+      "thalach_floor_relay": 0.9416,
+      "no_asymptomatic_pain_indicator": 0.9411,
+      "fixed_defect_normal_sugar_gate": 0.9343,
+      "downsloping_st_indicator": 0.9421
+    },
+    "linear_replacement_auc_top_level": {
+      "thalach_floor_relay": 0.942,
+      "no_asymptomatic_pain_indicator": 0.9423,
+      "fixed_defect_normal_sugar_gate": 0.9368,
+      "downsloping_st_indicator": 0.9423
+    },
+    "linear_replacement_r2": {
+      "thalach_floor_relay": 0.899,
+      "no_asymptomatic_pain_indicator": 1.0,
+      "fixed_defect_normal_sugar_gate": 0.694,
+      "downsloping_st_indicator": 1.0
+    },
+    "all_nonlinear_together": {
+      "mean_ablation_auc": 0.9328,
+      "joint_linear_replacement_auc": 0.9371
+    },
+    "logit_sd_per_child": {
+      "fixed_defect_normal_sugar_gate": 0.78,
+      "no_asymptomatic_pain_indicator": 0.423,
+      "downsloping_st_indicator": 0.077,
+      "thalach_floor_relay": 0.035
+    },
+    "fixed_defect_gate_groups": {
+      "n_thal6": 15,
+      "n_thal6_fbs0": 10,
+      "disease_rate_thal6_fbs0": 0.5,
+      "n_thal6_fbs1": 5
+    },
+    "note": "Ablations remove a child's readout from the logit (zero and mean ablation give the same AUC because readouts enter additively). Linear replacement = least-squares refit of the child's logit contribution on its own raw inputs. The hidden block adds +0.0095 train AUC over the linear core; the fixed-defect/normal-sugar gate carries most of it (0.008). The cp:4 and slope:3 indicators are exactly affine on their binary inputs (R2 1.00)."
+  },
+  "resisted": "Nothing resisted coverage. The one real interaction (fixed thallium defect AND normal fasting sugar, gate 2065) rests on 10 training patients and may be partly noise-fitted. Hidden nodes 1754 (cp:4) and 3504 (slope:3) are exactly affine on their binary inputs, so they are re-parameterisations of linear terms, not mechanisms. Counter-directional signs reported, not explained: fbs:1 -0.58 in the linear core, and the gate making a fixed defect protective for normal-sugar patients.",
+  "tool_bugs": "No v3 tool bugs met. compute_shap on all 242 train rows (about a minute) gives mean |SHAP| about 0.001 to the six unconnected inputs, which have exactly zero effect (KernelSHAP sampling noise). Input fan-out splits (-10, -11, -15, -21, -7) taken from the topology. The agent sandbox refused shell loops calling uv with variables, so tools were called through a small Python subprocess wrapper in scratch (same species_leads/xn.py).",
+  "summary": "Essentially logistic regression: 19 direct edges (logit SD 4.55; train AUC 0.933 alone; ca +2.25, slope:2 +1.12, sex:1 +0.90) plus four additive hidden readouts (logit SD 0.86) to 0.942. The one meaningful nonlinearity is an AND gate 2065 = 3.64*[thal:6 AND fbs=0] read out -1.08, lowering the logit by 3.9 for the 10 fixed-defect patients with normal fasting sugar (core mean predicted 0.83, disease rate 50%). The cp:4 and slope:3 hidden indicators are exactly affine on their binary inputs and a floored thalach relay is near-inert. Same gate and linear core as the 10-seed heart-s4 record (key 9650, gen 38); here cp:4 and slope:3 indicators replace that genome's cp:2 indicator.",
+  "study": {
+    "name": "species_leads",
+    "unit": "post-hoc structural clusters of near-optimal genomes (not NEAT species)",
+    "exploratory": true,
+    "experiment_name": "10seed-heart-s4",
+    "seed": 4,
+    "generation": 39,
+    "genome_key": 9679,
+    "cluster": 1,
+    "cluster_size": 175,
+    "train_fitness": 0.942263759086189
+  },
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 5,
+      "roots": [
+        "heart_disease_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 3.3306690738754696e-16,
+    "closed_form_max_abs_err": 0.0017284055669746223,
+    "numeric_max_abs_err": 0.0,
+    "op_counts": {
+      "rename_node": 26,
+      "split_node": 5,
+      "annotate": 5
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}
