@@ -234,6 +234,17 @@ def record_command(label: str) -> str:
             f"--minutes N --changes \"...\" --notes \"...\"")
 
 
+def errata_line(rec) -> list:
+    """One line naming the errata applied to the record (its ``errata`` list), if any."""
+    errata = (rec or {}).get("errata") or []
+    if not errata:
+        return []
+    dates = sorted({str(e.get("date")) for e in errata if e.get("date")})
+    refs = sorted({str(e.get("ref")) for e in errata if e.get("ref")})
+    return [r"\textbf{Errata applied " + tex(", ".join(dates)) + r"}: " + tex(f"{len(errata)} correction(s)")
+            + (r", see \texttt{" + tex(", ".join(refs)) + "}" if refs else "") + ".", ""]
+
+
 def checklist_block(doc, order: int) -> str:
     lab = doc["label"]
     rows, bad = check_rows(doc)
@@ -248,6 +259,7 @@ def checklist_block(doc, order: int) -> str:
           + (f", changes: {tex(hv.get('changes'))}" if hv.get("changes") else "") + "."
           if hv else r"\textbf{Already recorded:} nothing (no verdict in the record)."),
          "",
+         *errata_line(rec),
          r"\textbf{Recorded vs live.} Agent = the drafting agent's report; orchestrator = the record's "
          r"automated re-check; live = this export (current code, training split).",
          "",

@@ -103846,7 +103846,7 @@
    "name": "area415_state47",
    "nonlinear": true,
    "order": 7,
-   "original_hypothesis": "595 = relu(-0.924+0.41*state47-1.077*areaCode415): small positive offset (~0.15) for rows outside area code 415, larger (~+3) for state 47 rows outside area 415, zero in area 415.\n\nEvidence (train, n=4000): 595 = relu(-0.924 - 1.077*areaCode415 + 0.41*state47), w 0.203. Zero in area 415 (2,016 rows); 0.16 for other areas (logit +0.03); 3.19 for state 47 rows outside area 415 (logit +0.65 on top of state 47's direct +0.81). Small: train AUC -0.0003 under mean-ablation.",
+   "original_hypothesis": "595 = relu(-0.924+0.41*state47-1.077*areaCode415): small positive offset (~0.11) for rows outside area code 415, larger (~+3) for state 47 rows outside area 415, zero in area 415 except for its 30 state 47 (Washington) rows (1.03).\n\nEvidence (train, n=4000): 595 = relu(-0.924 - 1.077*areaCode415 + 0.41*state47), w 0.203. Zero for 1,986 of the 2,016 area-415 rows, 1.03 (logit +0.21) for the 30 state 47 rows in area 415; 0.11 for other areas (logit +0.02); 3.19 for state 47 rows outside area 415 (logit +0.65 on top of state 47's direct +0.81). Small: train AUC -0.0003 under mean-ablation.",
    "parent": "full_model",
    "role": "part",
    "upstream_nodes": 0,

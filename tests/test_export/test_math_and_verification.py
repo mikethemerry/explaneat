@@ -73,6 +73,16 @@ def test_verdict_already_recorded_is_shown():
     assert "Already recorded:} verified" in verification.checklist_block(d, 1)
 
 
+def test_checklist_notes_errata_only_when_the_record_has_them():
+    assert "Errata applied" not in verification.checklist_block(toy_doc(), 1)
+    rec = dict(RECORD)
+    rec["errata"] = [{"date": "2026-11-11", "location": "x", "was": "a", "now": "b",
+                      "ref": "experiments/errata/2026-11-11/ERRATA.md"}]
+    block = verification.checklist_block(toy_doc(record=rec), 1)
+    assert block.count("Errata applied 2026-11-11") == 1
+    assert "ERRATA.md" in block
+
+
 def test_review_includes_the_complete_plain_language_document():
     """The combined review puts each genome's full v5 read-down PDF between its checklist and its
     certificate (page for page), with a table-of-contents entry."""

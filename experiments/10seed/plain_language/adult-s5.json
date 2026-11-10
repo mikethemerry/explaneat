@@ -50048,9 +50048,10 @@
     "sentences": [
      {
       "claims": [
-       "C143"
+       "C143",
+       "C142"
       ],
-      "text": "This part acts on the 31364 people who work less than about 50 hours a week, 25290 of whom have an income of $50,000 or less; for the typical person it acts on, the predicted chance of a low income ($50,000 or less) is about 62% without it and about 73% with it."
+      "text": "This part acts on the 31364 people who work less than about 50 hours a week (no further effect above that), 25290 of whom have an income of $50,000 or less; for the typical person it acts on, the predicted chance of a low income ($50,000 or less) is about 62% without it and about 73% with it."
      },
      {
       "claims": [
@@ -50273,9 +50274,10 @@
     "evidence": [
      {
       "claims": [
-       "C143"
+       "C143",
+       "C142"
       ],
-      "text": "It acts on 31364 of 39073 training people, those working less than about 50 hours a week, 25290 of whom have an income of $50,000 or less; for the typical person it acts on, the predicted chance is about 62% without it and about 73% with it."
+      "text": "It acts on 31364 of 39073 training people, those working less than about 50 hours a week (no further effect above that), 25290 of whom have an income of $50,000 or less; for the typical person it acts on, the predicted chance is about 62% without it and about 73% with it."
      },
      {
       "claims": [
@@ -50641,9 +50643,10 @@
    },
    {
     "claims": [
-     "C143"
+     "C143",
+     "C142"
     ],
-    "text": "This part acts on the 31364 people who work less than about 50 hours a week, 25290 of whom have an income of $50,000 or less; for the typical person it acts on, the predicted chance of a low income ($50,000 or less) is about 62% without it and about 73% with it."
+    "text": "This part acts on the 31364 people who work less than about 50 hours a week (no further effect above that), 25290 of whom have an income of $50,000 or less; for the typical person it acts on, the predicted chance of a low income ($50,000 or less) is about 62% without it and about 73% with it."
    },
    {
     "claims": [
@@ -59458,7 +59461,7 @@
    "name": "age_profile",
    "nonlinear": true,
    "order": 5,
-   "original_hypothesis": "Piecewise-linear age term in the logit of P(income<=50K), with a Thailand override. Direct age edge gives -1.03 per SD (-0.075/yr). 2990=relu(1.446 age-0.48) and 5070=relu(1.031*2990-0.32) form a stacked hinge that switches on at age ~46 (z=0.545) and adds +1.45/SD, so the net slope above 46 is +0.42/SD (+0.031/yr): the probability of earning >50K rises with age to a peak at ~46 and then declines. 2134 is a Thailand indicator (native-country:37); for Thai respondents (27 rows) it adds -4.0 directly and pushes 2990 permanently on (removing the hinge). Ireland (native-country:21) only adds a direct -1.57 and keeps 2134 off. EVIDENCE: Train evidence (39,073 rows): mean contribution by age (non-Thai) +1.63 at 17, +0.65 at 30, -0.10 at 40, minimum -0.55 at exactly 46, -0.29 at 55, +0.17 at 70, +0.79 at 90, which confirms a V shape with its vertex at 46. Thailand (26 rows): the -4.0 direct term and the released hinge almost cancel, so being Thai changes the logit by only +0.10 on average. Mean-ablation of the leaf: acc 0.8578->0.8534, AUC 0.9118->0.9051.",
+   "original_hypothesis": "Piecewise-linear age term in the logit of P(income<=50K), with a Thailand override. Direct age edge gives -1.03 per SD (-0.075/yr). 2990=relu(1.446 age+0.137*2134-0.48) and 5070=relu(1.031*2990-0.32) form a stacked hinge that switches on at age ~46 (z=0.545) and adds +1.45/SD, so the net slope above 46 is +0.42/SD (+0.031/yr): the probability of earning >50K rises with age to a peak at ~46 and then declines. 2134 is a Thailand indicator (native-country:37); for Thai respondents (26 rows) it adds -4.0 directly and pushes 2990 permanently on (removing the hinge). Ireland (native-country:21) only adds a direct -1.57 and keeps 2134 off. EVIDENCE: Train evidence (39,073 rows): mean contribution by age (non-Thai) +1.63 at 17, +0.65 at 30, -0.10 at 40, minimum -0.55 at exactly 46, -0.29 at 55, +0.17 at 70, +0.79 at 90, which confirms a V shape with its vertex at 46. Thailand (26 rows): the -4.0 direct term and the released hinge almost cancel, so being Thai changes the logit by only +0.10 on average. Mean-ablation of the leaf: acc 0.8578->0.8534, AUC 0.9118->0.9051.",
    "parent": "income_logit",
    "role": "part",
    "upstream_nodes": 0,
