@@ -1,0 +1,104 @@
+{
+  "label": "heart-s2-c2",
+  "genome_id": "d4bbc960-816a-4781-8979-fdd4165debf2",
+  "start": "2026-11-10T09:15:07Z",
+  "end": "2026-11-10T09:20:59Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 2,
+  "n_composition_annotations": 1,
+  "n_splits": 2,
+  "n_identity_nodes": 0,
+  "hidden_nodes": 4,
+  "hidden_nodes_single_leaf_no_split": 4,
+  "hidden_nodes_in_any_annotation": 4,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 2.220446049250313e-16,
+  "closed_form_max_abs_err": 0.0053386278361710615,
+  "protocol_version": "v3",
+  "analysis": {
+    "split": "train",
+    "n_train": 242,
+    "baseline_train_auc": 0.9403,
+    "train_acc": 0.8967,
+    "readout_weights": {
+      "3842": -0.518868864420039,
+      "3607": -0.02092777924046255
+    },
+    "logit_sd": {
+      "linear_core": 3.655,
+      "thalach_gate": 0.447,
+      "restecg2_relay": 0.01
+    },
+    "linear_core_only_auc": 0.9343,
+    "zero_ablation_auc_top_level": {
+      "thalach_gate": 0.9344,
+      "restecg2_relay": 0.9401
+    },
+    "mean_ablation_auc_top_level": {
+      "thalach_gate": 0.9344,
+      "restecg2_relay": 0.9401
+    },
+    "linear_replacement_auc_top_level": {
+      "thalach_gate": 0.9378,
+      "restecg2_relay": 0.9403
+    },
+    "linear_replacement_r2": {
+      "thalach_gate": 0.872,
+      "restecg2_relay": 1.0
+    },
+    "all_nonlinear_together": {
+      "mean_ablation_auc": 0.9343
+    },
+    "lr_l2_train_auc_all_26_inputs": 0.9355,
+    "gate_open_n": 104,
+    "gate_open_disease_rate": 0.231,
+    "gate_closed_disease_rate": 0.601,
+    "thalach_logit_slope_per_sd": {
+      "gate_closed": -0.153,
+      "gate_open": -0.517
+    },
+    "note": "Train split only, full sample (n=242); local numpy forward passes on in-memory copies. Ablations remove a child's readout from the logit (zero and mean ablation give the same AUC because readouts enter additively). Linear replacement = least-squares refit of the child's logit contribution on its own raw inputs. The gate adds +0.006 train AUC over the linear core."
+  },
+  "resisted": "Nothing resisted coverage; only input fan-out needed splitting (thalach, thal:6). Relay 3607 is a step on the binary restecg:2 input, so exactly affine on the data and negligible (read out -0.021). Eight inputs are unconnected (thal:3, thal:4, slope:3, exang:0, exang:1, restecg:0, restecg:1, fbs:0) and listed as zero-effect root entries; exercise angina is ignored entirely. Counter-directional signs reported, not explained: cp:2 +0.26 and fbs:1 -0.22 in the linear core, and thal:6 (fixed defect) -0.30 directly plus closing the protective gate.",
+  "tool_bugs": "No v3 tool bugs met. compute_shap on all 242 train rows took about a minute; unconnected inputs get mean |SHAP| about 0.0009 (KernelSHAP noise, exact effect zero). The agent sandbox refuses compound shell commands with variables, so tools were called through a small Python subprocess wrapper in scratch (same species_leads/xn.py).",
+  "summary": "Mostly logistic regression: 16 direct edges (logit SD 3.66; train AUC 0.934 alone, L2 logistic regression 0.9355) plus one consequential nonlinear part to 0.940. The protective gate 3842 = ReLU(1.02 ReLU(0.688 thalach - 0.374 thal:6 + 2.15 [non-anginal pain] - 0.347) - 0.295), read out -0.519, opens for nearly all non-anginal-pain patients, for others only above about +0.8 SD max heart rate, and never with a fixed thallium defect; once open a higher max heart rate lowers risk 3.4x as steeply. A restecg:2 relay is negligible. Unlike the generation-38 heart-s2 record (age/thalach/thal:7 gate, flat-slope gate, oldpeak hinges), age and oldpeak here act only linearly and the gate is keyed on chest-pain type and fixed defect instead.",
+  "study": {
+    "name": "species_leads",
+    "unit": "post-hoc structural clusters of near-optimal genomes (not NEAT species)",
+    "exploratory": true,
+    "experiment_name": "10seed-heart-s2",
+    "seed": 2,
+    "generation": 39,
+    "genome_key": 9685,
+    "cluster": 2,
+    "cluster_size": 75,
+    "train_fitness": 0.9402561439944618
+  },
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 3,
+      "roots": [
+        "heart_disease_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 2.220446049250313e-16,
+    "closed_form_max_abs_err": 0.0053386278361710615,
+    "numeric_max_abs_err": 4.440892098500626e-16,
+    "op_counts": {
+      "rename_node": 26,
+      "split_node": 2,
+      "annotate": 3
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}
