@@ -17,7 +17,9 @@ Seeding as experiments/10seed/run_seed.py and experiments/mnist/run_seed.py (pyt
 numpy and torch seeded before the population is built; 1 torch thread; deterministic
 algorithms; PYTHONHASHSEED=0 required). In memory (BackpropPopulation, mask_phantom=True,
 the library default: the stored genome is the trained network). The best genome is the best
-*training* fitness over all generations; the test split is only logged.
+*training* fitness over all generations; the test split is only logged. skip_invalid_genomes=True:
+a genome NeuralNeat rejects (no path from an input to the output; frequent with 6 inputs) is
+left untrained and scored 0.5 by auc_fitness instead of aborting the run.
 
 Outputs:
     experiments/complex_real/logs/<name>.csv      one row per generation (incl. n_species, threshold)
@@ -301,7 +303,7 @@ def main():
         config.species_set_config.compatibility_threshold = st["threshold"]
         pop = BackpropPopulation(config, data["X_train"], y_train,
                                  initial_state=(st["population"], st["species"], st["generation"]),
-                                 mask_phantom=True)
+                                 mask_phantom=True, skip_invalid_genomes=True)
         pop.reproduction.genome_indexer = count(st["genome_indexer_next"])
         pop.reproduction.ancestors = st["ancestors"]
         pop.species.reporters = pop.reporters
@@ -322,7 +324,7 @@ def main():
     else:
         if csv_path.exists():
             csv_path.unlink()
-        pop = BackpropPopulation(config, data["X_train"], y_train, mask_phantom=True)
+        pop = BackpropPopulation(config, data["X_train"], y_train, mask_phantom=True, skip_invalid_genomes=True)
         start_gen = 0
 
     run = dict(csv=csv_path, dir=run_dir, ckpt_every=args.ckpt_every, t0=time.time(),
