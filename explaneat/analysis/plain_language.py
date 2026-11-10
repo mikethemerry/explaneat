@@ -1337,8 +1337,11 @@ def boundary_claims(m: PlainModel, p: Part) -> List[Dict[str, Any]]:
             b0 = order[0]
             a0 = coef[b0]
             terms = [m.var_by_base[b0].short or m.var_by_base[b0].label]
+            s0 = float(np.std(m.var_by_base[b0].raw_train)) or 1.0
             for b in order[1:]:
                 r = coef[b] / a0
+                if abs(r) * float(np.std(m.var_by_base[b].raw_train)) < 0.01 * s0:
+                    continue            # moves the line by under 1% of the main input's spread
                 terms.append(("plus" if r > 0 else "minus") + f" about {_fmt_num(abs(r))} × "
                              + (m.var_by_base[b].short or m.var_by_base[b].label))
             thr = -const / a0
@@ -1394,9 +1397,14 @@ def boundary_claims(m: PlainModel, p: Part) -> List[Dict[str, Any]]:
             side_above = (sum(right_on) >= len(right_on) / 2.0) if right_on else True
             side_word = "above" if side_above else "below"
             bits = []
+            x_span = float(np.ptp(np.asarray(mains[0].raw_train, float))) or 1.0
             for pc in pieces[:3]:
-                bits.append(f"{v1n} {'plus' if pc['k'] >= 0 else 'minus'} about {_fmt_num(abs(pc['k']))} × {v2n} "
-                            f"{side_word} about {_fmt_num(pc['threshold'])} (for {v2n} from about "
+                # a term that moves the line by under 1% of the first input's range over this piece
+                # is left out: the line is upright there ("daytime minutes above about 221")
+                small = abs(float(pc["k"]) * (float(pc["y_to"]) - float(pc["y_from"]))) < 0.01 * x_span
+                term = "" if small else (f" {'plus' if pc['k'] >= 0 else 'minus'} about {_fmt_num(abs(pc['k']))} "
+                                         f"× {v2n}")
+                bits.append(f"{v1n}{term} {side_word} about {_fmt_num(pc['threshold'])} (for {v2n} from about "
                             f"{_fmt_num(pc['y_from'])} to {_fmt_num(pc['y_to'])})")
             rule = {"pieces": pieces, "text": "; ".join(bits), "on_side": side_word}
             kind = "kinked" if len(pieces) > 1 else "line"
