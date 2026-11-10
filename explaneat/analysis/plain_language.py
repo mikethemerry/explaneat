@@ -1228,8 +1228,18 @@ def boundary_claims(m: PlainModel, p: Part) -> List[Dict[str, Any]]:
         o = part_out(X)
         eff.append((float(np.max(o) - np.min(o)), v))
     eff.sort(key=lambda t: -t[0])
-    mains = [v for _, v in eff[:3]]
-    held = [v.base for _, v in eff[3:]]
+    # the main inputs: biggest effect first, skipping a near-duplicate of one already chosen (e.g.
+    # daytime minutes and daytime charge: their map would put every point on one line)
+    mains = []
+    for _, v in eff:
+        x = np.asarray(v.raw_train, float)
+        dup = any(abs(np.corrcoef(x, np.asarray(w.raw_train, float))[0, 1]) > 0.99 for w in mains
+                  if np.std(x) > 0 and np.std(np.asarray(w.raw_train, float)) > 0)
+        if not dup and len(mains) < 3:
+            mains.append(v)
+    if len(mains) < 2:
+        return []
+    held = [v.base for _, v in eff if v not in mains]
     on_train = on_of(m.X)
     y = m.y
     cats = [m.var_by_base[b] for b in p.variables if m.var_by_base[b].is_category()]
@@ -1355,8 +1365,12 @@ def boundary_claims(m: PlainModel, p: Part) -> List[Dict[str, Any]]:
             sel = at_typical if at_typical.any() else np.ones_like(at_typical)
             agree = float(np.mean(pred_on[sel] == on_train[sel])) if a0 else 0.0
     if kind != "plane":
-        # traced on the first map: the boundary as pieces of straight lines
-        mp = maps[0]
+        # traced on the map with the most boundary (the first map when tied): pieces of straight lines
+        ti = max(range(len(maps)), key=lambda i: (len(maps[i]["boundary"]), -i))
+        mp = maps[ti]
+        tx = m.var_by_base[mp["x"]["variable"]]
+        ty = m.var_by_base[mp["y"]["variable"]]
+        others = [v for v in mains if v.base not in (tx.base, ty.base)]
         pts = np.array(mp["boundary"], dtype=float) if mp["boundary"] else np.zeros((0, 2))
         pieces = []
         if len(pts) >= 2:
@@ -1387,7 +1401,7 @@ def boundary_claims(m: PlainModel, p: Part) -> List[Dict[str, Any]]:
                     merged.append(pc)
             pieces = merged
             # the stated ranges stay within the data (the map runs a margin beyond it)
-            y_raw = np.asarray(mains[1].raw_train, float)
+            y_raw = np.asarray(ty.raw_train, float)
             for pc in pieces:
                 pc["y_from"] = sig(max(float(pc["y_from"]), float(y_raw.min())))
                 pc["y_to"] = sig(min(float(pc["y_to"]), float(y_raw.max())))
@@ -1397,7 +1411,7 @@ def boundary_claims(m: PlainModel, p: Part) -> List[Dict[str, Any]]:
             side_above = (sum(right_on) >= len(right_on) / 2.0) if right_on else True
             side_word = "above" if side_above else "below"
             bits = []
-            x_span = float(np.ptp(np.asarray(mains[0].raw_train, float))) or 1.0
+            x_span = float(np.ptp(np.asarray(tx.raw_train, float))) or 1.0
             for pc in pieces[:3]:
                 # a term that moves the line by under 1% of the first input's range over this piece
                 # is left out: the line is upright there ("daytime minutes above about 221")
@@ -1411,12 +1425,12 @@ def boundary_claims(m: PlainModel, p: Part) -> List[Dict[str, Any]]:
         # agreement: the traced boundary (interpolated) against the actual on/off of the data
         if len(pts) >= 2:
             o = np.argsort(pts[:, 1])
-            x2 = np.asarray(mains[1].raw_train, float)
-            x1 = np.asarray(mains[0].raw_train, float)
+            x2 = np.asarray(ty.raw_train, float)
+            x1 = np.asarray(tx.raw_train, float)
             b = np.interp(x2, pts[o, 1], pts[o, 0])
             sel = at_typical & (x2 >= pts[:, 1].min()) & (x2 <= pts[:, 1].max())
             # the map holds the other numeric inputs at their median: check on the rows near it
-            for v in list(mains[2:]) + [m.var_by_base[b_] for b_ in held]:
+            for v in others + [m.var_by_base[b_] for b_ in held]:
                 xv = np.asarray(v.raw_train, float)
                 lo, hi = np.percentile(xv, [40, 60])
                 sel &= (xv >= lo) & (xv <= hi)
