@@ -223,7 +223,7 @@ def response_curves(layer, base: Path, claims) -> Optional[Dict[str, Any]]:
             ax.plot(shown, [y0] * len(shown), "|", color="#555555", ms=5, mew=0.5)
             beyond = len(rug) - len(shown)
             if beyond:       # a long tail (e.g. a capped value) beyond the curve: say so, keep the axis
-                ax.text(0.99, 0.02, f"{beyond}% of values above, up to {max(rug):,.6g}", transform=ax.transAxes,
+                ax.text(0.99, 0.97, f"{beyond}% of values above, up to {max(rug):,.6g}", transform=ax.transAxes,
                         ha="right", va="bottom", fontsize=8, color="#555555")
                 ax.set_xlim(right=hi_x + 0.03 * (hi_x - min(x)))
         ax.set_xlabel(_var_axis(c))
@@ -460,10 +460,9 @@ def activity_plot(layer, base: Path, units, labels) -> Optional[Dict[str, Any]]:
         elif mi:
             ax.plot(mi["x"], mi["y"], ".", ms=2.5, color=INK, alpha=0.5)
             ax.set_xlabel(f"{mi['label']}" + (f" ({mi['unit']})" if mi.get("unit") else ""))
-        else:
-            ax.text(0.5, 0.5, "no single numeric input", ha="center", va="center", transform=ax.transAxes,
-                    color="#777777")
-            ax.set_xticks([])
+        else:            # no numeric input for this unit: leave the panel out (its histogram is below)
+            ax.set_visible(False)
+            ax = None
         if ax is not None:
             ax.set_ylabel(f"{labels.get(u['id'], 'unit')} output")
         hx = axs[1][j]
@@ -614,7 +613,10 @@ def partial_caption(rec, labels, title: Optional[str] = None) -> str:
                        "data); right: slices at three values of the second input"
                        + ("; then each incoming non-linear unit against its own main input." if rec.get("units") else "."))
     if rec.get("inputs"):
-        return base + "Bold: the typical case; band: 10th to 90th percentile across individuals; dashed: where it switches on; ticks: the data."
+        i1 = rec["inputs"][0]
+        sw = _hinge_of(i1.get("grid") or [], i1.get("typical") or []) is not None
+        return base + ("Bold: the typical case; band: 10th to 90th percentile across individuals; "
+                       + ("dashed: where it switches on; " if sw else "") + "ticks: the data.")
     return base + "Its output for each combination of the levels it reads."
 
 

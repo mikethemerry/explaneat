@@ -2217,6 +2217,7 @@ def graph_record(m: PlainModel, parts: List[Part]) -> Dict[str, Any]:
 
 
 PARTIAL_MAX = 6          # partial-feature plots per genome
+PARTIAL_PER_PART = 3     # and per part
 PARTIAL_GRID = 41        # points of a 1D curve
 PARTIAL_GRID2 = 40       # points per axis of a 2D map
 
@@ -2256,7 +2257,12 @@ def partial_features(m: PlainModel, parts: List[Part], graph: Dict[str, Any]) ->
         if len(ins) >= 2:
             cand[n] = f"combines {len(ins)} non-linear units"
     score = {n: float(np.std(vals[n])) * out_w.get(n, 0.0) for n in cand}
-    chosen = sorted(cand, key=lambda n: (-score[n], n))[:PARTIAL_MAX]
+    chosen, per_part = [], {}
+    for n in sorted(cand, key=lambda n: (-score[n], n)):     # at most PARTIAL_PER_PART from one part
+        r = region.get(n)
+        if per_part.get(r, 0) < PARTIAL_PER_PART and len(chosen) < PARTIAL_MAX:
+            chosen.append(n)
+            per_part[r] = per_part.get(r, 0) + 1
     # reproduction check against the evidence engine
     sn_acts = {}
     try:
