@@ -681,7 +681,10 @@ def make_figures(layer, out_dir) -> Dict[str, List[Dict[str, Any]]]:
                 lst.append({**f, "kind": "categories", "caption": "The predicted value for the typical case at "
                             f"each level, through this part (n = training {who}; grey: fewer than 20)."})
             bc = next((c for c in layer["claims"] if c["type"] == "boundary" and c["annotation"]["id"] == pid
-                       and (c.get("evidence") or {}).get("maps")), None)
+                       and (c.get("evidence") or {}).get("maps")
+                       # a part switched off everywhere on its maps (at the typical case) has nothing to show
+                       and not all(all(all(r) for r in mp.get("off") or [[True]]) for mp in c["evidence"]["maps"])),
+                      None)
             if bc is not None:
                 three = len(bc["statement"]["variables"]) >= 3
                 caps = {"deep_map": ("The part's own output over " + ("each pair of its three main inputs (the third "
