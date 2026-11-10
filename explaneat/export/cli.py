@@ -184,6 +184,20 @@ def render(from_json, out_dir, formats, review_marks):
     sys.exit(1 if bad else 0)
 
 
+def _pdf_rotation(pdf: Path):
+    """(number of pages, pages shown rotated) of a PDF, from poppler's pdfinfo (None, [] without it)."""
+    import subprocess
+    try:
+        out = subprocess.run(["pdfinfo", "-f", "1", "-l", "100000", str(pdf)], capture_output=True,
+                             text=True, check=True).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return None, []
+    n = next((int(ln.split()[-1]) for ln in out.splitlines() if ln.startswith("Pages:")), None)
+    rot = [int(ln.split()[1]) for ln in out.splitlines()
+           if ln.startswith("Page ") and " rot:" in ln and ln.split()[-1] in ("90", "270")]
+    return n, rot
+
+
 @export.command("verification-pack")
 @click.option("--first", "first_n", default=10, show_default=True, type=int,
               help="The first N genomes of the pre-registered order (PRE), in that order.")
@@ -192,7 +206,10 @@ def render(from_json, out_dir, formats, review_marks):
 @click.option("--formats", default="json,tex,tikz,pdf,docx", show_default=True)
 @click.option("--review-marks/--no-review-marks", default=True, show_default=True)
 @click.option("--records-dir", default=None, type=click.Path(file_okay=False))
-def verification_pack(first_n, labels, out_dir, formats, review_marks, records_dir):
+@click.option("--plain/--no-plain", default=True, show_default=True,
+              help="Render each genome's complete plain-language (v5 read-down) document and include it "
+                   "in the combined review PDF.")
+def verification_pack(first_n, labels, out_dir, formats, review_marks, records_dir, plain):
     """Mike's verification pack: every format per genome plus one combined review PDF."""
     from .pack import _latexmk, index_entry, parse_formats, write_index
     from .verification import record_command, render_review
@@ -218,12 +235,20 @@ def verification_pack(first_n, labels, out_dir, formats, review_marks, records_d
             continue
         docs.append(res["doc"])
         entries.append(index_entry(res["doc"], lab))
-        # the v5 read-down document (rendered by `plain-language review`), next to the certificate
-        v5_pdf = Path.home() / ".explaneat" / "exports" / "plain-language" / f"{lab}.pdf"
-        if v5_pdf.exists():
-            import shutil
-            (out / lab).mkdir(parents=True, exist_ok=True)
-            shutil.copy(v5_pdf, out / lab / f"{lab}-plain-v5.pdf")
+        if plain:    # the complete v5 read-down document, rendered here, next to the certificate
+            from ..analysis.plain_language_store import load_layer
+            from .plain_cli import build_plain_document
+            lay = load_layer(lab)
+            if lay is not None and (lay.get("drafted") or {}).get("readdown"):
+                import shutil
+                try:
+                    pdf = build_plain_document([lay], out / lab / "plain-v5",
+                                               f"Plain-language explanation: {lab}", echo=click.echo)
+                    shutil.copy(pdf, out / lab / f"{lab}-plain-v5.pdf")
+                    res["doc"]["plain_pdf"] = f"{lab}/{lab}-plain-v5.pdf"
+                    res["doc"]["plain_pages"], res["doc"]["plain_rotated"] = _pdf_rotation(pdf)
+                except RuntimeError as e:
+                    failures.append({"label": lab, "plain": str(e)[-300:]})
         bad = [c for c in res["compile"] if not c["ok"]]
         if bad:
             failures.append({"label": lab, "compile": [b["file"] for b in bad]})

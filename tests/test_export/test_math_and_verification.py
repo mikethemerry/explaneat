@@ -71,3 +71,33 @@ def test_verdict_already_recorded_is_shown():
     assert d["annotations"][0]["authorship"]["verified_by"] == "M. Merry"
     assert "unverified" not in {i["code"] for i in d["issues"]}
     assert "Already recorded:} verified" in verification.checklist_block(d, 1)
+
+
+def test_review_includes_the_complete_plain_language_document():
+    """The combined review puts each genome's full v5 read-down PDF between its checklist and its
+    certificate (page for page), with a table-of-contents entry."""
+    d = toy_doc()
+    d["plain_pdf"] = "toy-s0/toy-s0-plain-v5.pdf"
+    doc = verification.render_review([d], "Verification pack")
+    assert r"\usepackage{pdfpages}" in doc
+    inc = doc.index(r"\includepdf[pages=-")
+    assert "toy-s0/toy-s0-plain-v5.pdf" in doc[inc:inc + 400]
+    assert "addtotoc" in doc[inc:inc + 400]
+    # order: checklist, then the plain-language document, then the certificate
+    assert doc.index("verification checklist") < inc < doc.index(r"\input{toy-s0/toy-s0.tex}")
+    # a genome without a v5 document still gets its checklist and certificate
+    d2 = toy_doc()
+    assert r"\includepdf" not in verification.render_review([d2], "Verification pack")
+
+
+def test_included_landscape_pages_stay_landscape():
+    lines = verification.include_pdf_lines("g/g-plain-v5.pdf", [6, 20, 21], 24, "g: plain", "plain:g")
+    assert lines[0].startswith(r"\includepdf[pages={1-5}") and "addtotoc" in lines[0]
+    assert r"\includepdf[pages={6},landscape]" in lines[1]
+    assert r"\includepdf[pages={20-21},landscape]" in lines[3]
+    covered = []
+    for ln in lines:
+        rng = ln.split("pages={")[1].split("}")[0]
+        a, _, b = rng.partition("-")
+        covered += list(range(int(a), int(b or a) + 1))
+    assert covered == list(range(1, 25))          # every page once, in order

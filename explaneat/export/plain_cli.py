@@ -167,18 +167,31 @@ def review(labels, out_dir, title, directory):
         if lay is None:
             raise click.ClickException(f"no layer for {lab}")
         layers.append(lay)
-    out = Path(out_dir).expanduser()
-    out.mkdir(parents=True, exist_ok=True)
+    try:
+        pdf = build_plain_document(layers, Path(out_dir).expanduser(), title, echo=click.echo)
+    except RuntimeError as e:
+        raise click.ClickException(str(e))
+    click.echo(f"Review PDF: {pdf}")
+
+
+def build_plain_document(layers, out: Path, title: str, echo=print) -> Path:
+    """The plain-language review document (v5 read-down: summary, how-to-read box, overview,
+    every figure, deep dives, partial-feature plots, evidence tables, technical detail and raw
+    network) for the given layers, written to ``out/review.pdf``. Used by ``plain-language
+    review`` and by ``export verification-pack`` (one per genome)."""
+    from .pack import _latexmk
     from .plain_plots import make_figures
+    from .render_plain import render_review
+    out.mkdir(parents=True, exist_ok=True)
     for lay in layers:
         if (lay.get("drafted") or {}).get("structure") == "readdown-v5" and lay.get("graph"):
             lay["_figures"] = make_figures(lay, out)
     tex_path = out / "review.tex"
     tex_path.write_text(render_review(layers, title), encoding="utf-8")
-    res = _latexmk(tex_path, out / "build", click.echo)
+    res = _latexmk(tex_path, out / "build", echo)
     if not res["ok"]:
-        raise click.ClickException("latexmk failed: " + str(res.get("error", ""))[-1500:])
-    click.echo(f"Review PDF: {out / 'review.pdf'}")
+        raise RuntimeError("latexmk failed: " + str(res.get("error", ""))[-1500:])
+    return out / "review.pdf"
 
 
 def record_plain_verdict_command(export_group):
