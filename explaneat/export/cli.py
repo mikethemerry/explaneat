@@ -218,6 +218,12 @@ def verification_pack(first_n, labels, out_dir, formats, review_marks, records_d
             continue
         docs.append(res["doc"])
         entries.append(index_entry(res["doc"], lab))
+        # the v5 read-down document (rendered by `plain-language review`), next to the certificate
+        v5_pdf = Path.home() / ".explaneat" / "exports" / "plain-language" / f"{lab}.pdf"
+        if v5_pdf.exists():
+            import shutil
+            (out / lab).mkdir(parents=True, exist_ok=True)
+            shutil.copy(v5_pdf, out / lab / f"{lab}-plain-v5.pdf")
         bad = [c for c in res["compile"] if not c["ok"]]
         if bad:
             failures.append({"label": lab, "compile": [b["file"] for b in bad]})

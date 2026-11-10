@@ -272,6 +272,14 @@ def _ref_patient(layer) -> str:
     return (f"Reference (typical) {one}: {defn}. {vals}. {pred}: {pct}." if p is not None else "")
 
 
+def v5_summary(d: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """The v5 draft's summary: its lead, then every block's sentences (the read-down's first page)."""
+    out = list(d.get("lead") or [])
+    for b in d.get("blocks") or []:
+        out += b.get("sentences") or []
+    return out
+
+
 def appendix_section(sec: Dict[str, Any], P: str) -> List[str]:
     """``\\subsection{Plain-language summary}`` for the explanation certificate."""
     L = [r"\subsection{Plain-language summary}\label{" + P + "plain}"]
@@ -282,17 +290,29 @@ def appendix_section(sec: Dict[str, Any], P: str) -> List[str]:
              r"what the model does, not the world.}}\par\smallskip")
     d = sec.get("drafted") or None
     tmpl = sec.get("template") or {}
-    if d:
-        L.append(r"\paragraph{Summary (drafted).} " + sentences_tex(d.get("summary")))
-    L.append(r"\paragraph{Summary (offline template).} " + sentences_tex(tmpl.get("summary")))
     parts = {p["id"]: p for p in sec.get("parts") or []}
-    for p in sorted(parts.values(), key=lambda p: p["order"]):
-        if p["role"] == "duplicate":
-            continue
-        txt = ((d or {}).get("annotations") or {}).get(p["id"]) or (tmpl.get("annotations") or {}).get(p["id"])
-        if not txt:
-            continue
-        L.append(r"\paragraph{" + tex(p["id"]) + " (" + tex(p["name"]) + ").} " + sentences_tex(txt))
+    if d and d.get("readdown"):      # v5: the read-down document (lead, blocks, then part by part)
+        titles = d.get("titles") or {}
+        L.append(r"\paragraph{Summary (drafted).} " + sentences_tex(v5_summary(d)))
+        from ..analysis.plain_language_store import readdown_order
+        for pid in readdown_order(sec):
+            rd = (d.get("readdown") or {}).get(pid) or {}
+            if not rd:
+                continue
+            name = titles.get(pid) or (parts.get(pid) or {}).get("name", pid)
+            L.append(r"\paragraph{" + tex(name) + ".} " + sentences_tex(rd.get("hypothesis"))
+                     + r" \textit{Evidence.} " + sentences_tex(rd.get("evidence")))
+    else:
+        if d:
+            L.append(r"\paragraph{Summary (drafted).} " + sentences_tex(d.get("summary")))
+        L.append(r"\paragraph{Summary (offline template).} " + sentences_tex(tmpl.get("summary")))
+        for p in sorted(parts.values(), key=lambda p: p["order"]):
+            if p["role"] == "duplicate":
+                continue
+            txt = ((d or {}).get("annotations") or {}).get(p["id"]) or (tmpl.get("annotations") or {}).get(p["id"])
+            if not txt:
+                continue
+            L.append(r"\paragraph{" + tex(p["id"]) + " (" + tex(p["name"]) + ").} " + sentences_tex(txt))
     if d and d.get("worth_checking"):
         L.append(r"\paragraph{Worth checking against what is known.} " + sentences_tex(d["worth_checking"]))
     L.append(r"\paragraph{Claims.}")
