@@ -1251,6 +1251,76 @@ def render_review(layers: List[Dict[str, Any]], title: str) -> str:
 DATASET_SHORT = {"uci-heart-cleveland": "Heart", "pmlb-adult": "Adult", "pmlb-churn": "Churn", "monk2": "MONK-2"}
 
 
+def _dataset_of(label: str) -> str:
+    return label.split("-")[0]
+
+
+def linearity_rows(directory=None):
+    """(per genome, per dataset): input classes, the variance share of the fixed-rate paths and
+    full vs linearised AUC, from each layer's model-level linearity claim."""
+    import glob
+    import json
+    import os
+    from ..analysis.plain_language_store import PLAIN_DIR
+    per = []
+    for path in sorted(glob.glob(os.path.join(str(directory or PLAIN_DIR), "*.json"))):
+        with open(path, encoding="utf-8") as f:
+            lay = json.load(f)
+        if not isinstance(lay, dict) or "claims" not in lay:
+            continue
+        mc = next((c for c in lay["claims"] if c["type"] == "linearity"
+                   and (c.get("statement") or {}).get("kind") == "model"), None)
+        if mc is None:
+            continue
+        st = mc["statement"]
+        per.append({"label": lay["label"], "dataset": _dataset_of(lay["label"]), "inputs": st.get("n_inputs", 0),
+                    **{k: st.get(f"n_{k}", 0) for k in ("exact_linear", "support_linear", "mixed", "nonlinear")},
+                    "variance_share_linear": st.get("variance_share_linear"),
+                    **{k: st.get(k) for k in ("auc_full_train", "auc_linearised_train", "auc_full_test",
+                                              "auc_linearised_test")},
+                    "nonlinear_parts": st.get("n_nonlinear_parts"), "parts": st.get("n_parts")})
+    out = []
+    for ds in sorted({r["dataset"] for r in per}):
+        rs = [r for r in per if r["dataset"] == ds]
+        tot = sum(r["inputs"] for r in rs) or 1
+        mean = lambda k: (sum(float(r[k]) for r in rs if isinstance(r.get(k), (int, float))) /
+                          max(1, sum(1 for r in rs if isinstance(r.get(k), (int, float)))))
+        row = {"dataset": ds, "genomes": len(rs), "inputs": sum(r["inputs"] for r in rs)}
+        for k in ("exact_linear", "support_linear", "mixed", "nonlinear"):
+            row[k] = sum(r[k] for r in rs)
+            row["share_" + k.split("_")[0] if k != "nonlinear" else "share_nonlinear"] = round(row[k] / tot, 3)
+        for k in ("variance_share_linear", "auc_full_train", "auc_linearised_train", "auc_full_test",
+                  "auc_linearised_test"):
+            row[k] = round(mean(k), 3)
+        out.append(row)
+    return per, out
+
+
+def render_linearity_summary(per_dataset, per_genome) -> str:
+    from .render_tex import DRAFTED_DEFS, PREAMBLE_PACKAGES
+    pct = lambda x: f"{100 * x:.0f}\\%"
+    L = [r"\documentclass[a4paper,10pt]{article}", r"\usepackage[margin=1.8cm,landscape]{geometry}",
+         PREAMBLE_PACKAGES.rstrip(), r"\usepackage{array}", DRAFTED_DEFS.rstrip(), r"\begin{document}",
+         r"\begin{center}{\Large\bfseries Linear factors across genomes\par}\end{center}",
+         r"\noindent An input acts at a fixed rate (\emph{linear}) when every path from it to the output is linear "
+         r"(direct edges, identity units: \emph{exact}) or also passes only through units that are active on every "
+         r"training row (\emph{on the data}); \emph{mixed} inputs have a fixed-rate path and one through a unit that "
+         r"switches on and off; \emph{switching} inputs act only through such units. Shares are of all used inputs "
+         r"(one-hot levels of a variable counted as one input). The variance share is that of the fixed-rate paths' "
+         r"contribution to the score (training rows, averaged over genomes); the linearised model replaces every "
+         r"switching unit by its least-squares straight-line fit on the training rows (test is reporting only).",
+         r"\par\medskip\begin{center}\begin{tabular}{@{}lrrrrrrrrrr@{}}", r"\toprule",
+         r"Dataset & Genomes & Inputs & Exact & On data & Mixed & Switching & Variance share & "
+         r"AUC train full / lin. & AUC test full / lin. \\ \midrule"]
+    for r in per_dataset:
+        L.append(f"{tex(r['dataset'])} & {r['genomes']} & {r['inputs']} & {pct(r['share_exact'])} & "
+                 f"{pct(r['share_support'])} & {pct(r['share_mixed'])} & {pct(r['share_nonlinear'])} & "
+                 f"{pct(r['variance_share_linear'])} & {r['auc_full_train']:.3f} / {r['auc_linearised_train']:.3f} & "
+                 f"{r['auc_full_test']:.3f} / {r['auc_linearised_test']:.3f} \\\\")
+    L += [r"\bottomrule\end{tabular}\end{center}", r"\end{document}"]
+    return printed("\n".join(L)) + "\n"
+
+
 def worth_checking_rows(directory=None):
     """(rows, table): every drafted 'worth checking' item, and one row per (dataset, flag) with
     the genomes that raise it, most frequent first."""

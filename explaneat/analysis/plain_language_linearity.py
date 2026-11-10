@@ -129,16 +129,24 @@ def classify_variables(m, kinds=None) -> Dict[str, Dict[str, Any]]:
         if cls is None:
             continue
         # finite-difference slopes on every training row, column by column
-        match, varies, max_dev = [], [], 0.0
+        match, varies, max_dev, slopes = [], [], 0.0, {}
         for c in cols:
             X1 = m.X.copy()
             X1[:, c] = X1[:, c] + FD_STEP
             slope = (m.logit(X1) - base) / FD_STEP
+            slopes[c] = slope
             dev = np.abs(slope - coef[c])
             tol = 1e-5 * max(1.0, abs(coef[c]))
             match.append(float(np.mean(dev <= tol)))
             varies.append(float(np.ptp(slope)) > tol)
             max_dev = max(max_dev, float(np.max(dev)))
+        if cls in ("mixed", "nonlinear") and not any(varies):
+            # its switching paths never switch with it on the data (the units' state is set by other
+            # inputs, or they only pass a constant): a fixed rate across the observed data
+            cls = "support_linear"
+            coef = {c: float(np.median(slopes[c])) for c in cols}
+            match = [1.0 for _ in cols]
+            max_dev = max(float(np.max(np.abs(slopes[c] - coef[c]))) for c in cols)
         out[v.base] = {"class": cls, "columns": cols,
                        "coef_z": {c: float(coef[c]) for c in cols},
                        "coef_raw": {c: float(coef[c]) / float(v.scale[v.columns.index(c)]) for c in cols},

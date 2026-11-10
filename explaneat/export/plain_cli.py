@@ -240,6 +240,37 @@ def worth_checking(out_dir, directory, csv_path):
                + (f", {out / 'worth_checking.pdf'}" if res["ok"] else " (PDF failed)"))
 
 
+@plain_language.command("linearity-summary")
+@click.option("--out", "out_dir", required=True, type=click.Path(file_okay=False))
+@click.option("--dir", "directory", default=None, type=click.Path(file_okay=False))
+@click.option("--csv", "csv_path", default=None, type=click.Path(dir_okay=False),
+              help="Also write the table here (e.g. experiments/10seed/plain_language/linearity_summary.csv).")
+def linearity_summary(out_dir, directory, csv_path):
+    """Cross-genome table of linear factors per dataset: share of inputs in each class, the score
+    variance share of the fixed-rate paths, and full vs linearised AUC (CSV and a one-page PDF)."""
+    import csv
+    from .pack import _latexmk
+    from .render_plain import linearity_rows, render_linearity_summary
+    per_genome, per_dataset = linearity_rows(Path(directory) if directory else None)
+    out = Path(out_dir).expanduser()
+    out.mkdir(parents=True, exist_ok=True)
+    cols = ["dataset", "genomes", "inputs", "exact_linear", "support_linear", "mixed", "nonlinear",
+            "share_exact", "share_support", "share_mixed", "share_nonlinear", "variance_share_linear",
+            "auc_full_train", "auc_linearised_train", "auc_full_test", "auc_linearised_test"]
+    for path in [out / "linearity_summary.csv"] + ([Path(csv_path)] if csv_path else []):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            w.writerow(cols)
+            for r in per_dataset:
+                w.writerow([r.get(c) for c in cols])
+    tex_path = out / "linearity_summary.tex"
+    tex_path.write_text(render_linearity_summary(per_dataset, per_genome), encoding="utf-8")
+    res = _latexmk(tex_path, out / "build", click.echo)
+    click.echo(f"{len(per_genome)} genomes, {len(per_dataset)} datasets; table: {out / 'linearity_summary.csv'}"
+               + (f", {out / 'linearity_summary.pdf'}" if res["ok"] else " (PDF failed)"))
+
+
 @plain_language.command("rerender")
 @click.option("--labels", default=None)
 @click.option("--all", "all_", is_flag=True)
