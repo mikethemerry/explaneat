@@ -23,6 +23,10 @@ cli.add_command(_export, name='export')
 from .export.plain_cli import plain_language as _plain_language  # noqa: E402
 cli.add_command(_plain_language, name='plain-language')
 
+# Explanation verifier tools (explaneat/verify/cli.py)
+from .verify.cli import verify as _verify  # noqa: E402
+cli.add_command(_verify, name='verify')
+
 
 @cli.command()
 @click.option("--host", default="127.0.0.1", show_default=True)

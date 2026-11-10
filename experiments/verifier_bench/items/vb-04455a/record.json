@@ -1,0 +1,49 @@
+{
+  "label": "vb-04455a",
+  "genome_id": "9c06b29f-4ca4-4a6a-b9ed-5d04ee037b66",
+  "start": "2026-11-05T12:22:26+13:00",
+  "end": "2026-11-05T12:37:38+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 7,
+  "n_composition_annotations": 1,
+  "n_splits": 2,
+  "n_identity_nodes": 4,
+  "hidden_nodes": 15,
+  "hidden_nodes_single_leaf_no_split": 15,
+  "hidden_nodes_in_any_annotation": 15,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 4.440892098500626e-16,
+  "closed_form_max_abs_err": 0.0650125195875102,
+  "protocol_version": "v3",
+  "resisted": "Nothing resisted coverage. Four hidden nodes never activate on train (race gate 9712/5394; education:15/Portugal/Holand-Netherlands chain 12643/2197), documented as dead code. Five categorical gates real but negligible (AUC change <=0.0003 each). Category names and USD/year scales inferred.",
+  "tool_bugs": "None. KernelSHAP (200) ~3 min.",
+  "summary": "P(<=50K) = sigmoid(0.776 + sparse linear backbone + additive child terms); backbone does most of the work (ablation AUC 0.908 -> 0.748). Two nonlinear terms matter: a concave piecewise-linear capital-gain penalty (kink ~5.2k USD; ablation AUC 0.890) and a youth hinge (+0.16 logit per year below ~35; ablation AUC 0.900). Five tiny categorical gates. Train acc 0.852, AUC 0.908.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 8,
+      "roots": [
+        "income_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.440892098500626e-16,
+    "closed_form_max_abs_err": 0.0650125195875102,
+    "numeric_max_abs_err": 2.220446049250313e-16,
+    "op_counts": {
+      "rename_node": 107,
+      "add_identity_node": 4,
+      "split_node": 2,
+      "annotate": 8
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}

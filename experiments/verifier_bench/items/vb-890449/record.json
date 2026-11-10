@@ -1,0 +1,47 @@
+{
+  "label": "vb-890449",
+  "genome_id": "0057df7a-62a2-43c3-b107-9afe3735a7c3",
+  "start": "2026-11-03T09:23:57+13:00",
+  "end": "2026-11-03T09:36:08+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 3,
+  "n_composition_annotations": 1,
+  "n_splits": 5,
+  "n_identity_nodes": 0,
+  "hidden_nodes": 6,
+  "hidden_nodes_single_leaf_no_split": 6,
+  "hidden_nodes_in_any_annotation": 6,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 1.7763568394002505e-15,
+  "closed_form_max_abs_err": 0.011048694034678341,
+  "resisted": "Nothing resisted coverage. Clinically counter-directional signs reported, not explained: cp:2 +0.42, fbs:1 -0.31 in the linear core, negative chol inside the flat-slope gate. Relays 3195 (thal:7) and 3464 (chol) are affine on the data (100%/93% active).",
+  "tool_bugs": "get_formula shows output as ReLU (sigmoid(z) reproduces train AUC 0.9434). compute_shap >120s. Input fan-out splits (-26,-15,-9,-20,-18) found by hand.",
+  "summary": "Mostly logistic regression: 16 direct edges (logit SD 3.28, train AUC 0.930 alone) plus three additive nonlinear corrections (logit SD 0.91) to 0.943: a protective heart-rate-reserve gate ReLU(-1.52 - 1.49 age + 1.02 thalach - 1.54 thal:7) read out -0.58 (largest effect); a flat-ST-slope gate scaled by oldpeak and down by chol; a convex two-kink oldpeak dose-response. Age and oldpeak reach the output only via these gates.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 4,
+      "roots": [
+        "heart_disease_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 1.7763568394002505e-15,
+    "closed_form_max_abs_err": 0.011048694034678341,
+    "numeric_max_abs_err": 8.881784197001252e-16,
+    "op_counts": {
+      "rename_node": 32,
+      "split_node": 5,
+      "annotate": 4
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}

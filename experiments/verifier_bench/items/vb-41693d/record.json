@@ -1,0 +1,48 @@
+{
+  "label": "vb-41693d",
+  "genome_id": "c32e8fc8-410f-4126-ab7e-974c658ef3fc",
+  "start": "2026-11-05T11:36:07+13:00",
+  "end": "2026-11-05T12:21:22+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 9,
+  "n_composition_annotations": 1,
+  "n_splits": 8,
+  "n_identity_nodes": 0,
+  "hidden_nodes": 15,
+  "hidden_nodes_single_leaf_no_split": 15,
+  "hidden_nodes_in_any_annotation": 15,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 6.661338147750939e-16,
+  "closed_form_max_abs_err": 0.012146997277238114,
+  "protocol_version": "v3",
+  "resisted": "Nothing resisted coverage. Most hidden structure trivial on the domain: five units never clip (affine relays); 2114 and the 4-deep chain 613->2245->8678->170 are identically 0 for every valid one-hot input (shown analytically); three readouts <0.02. Only the age hinge 4647 is consequential. native-country:4 and :32 are memorised rare categories. No semantic category names claimed.",
+  "tool_bugs": "compute_shap (500) ran ~20 min at load ~90 with no result; killed and replaced by an exact local logit-space interventional Shapley on full train (additivity error 0.0014). get_coverage needs child-exit->output readout edges in the root's subgraph_connections (redone).",
+  "summary": "Almost a sparse logistic regression on 55 of 107 inputs (direct edges carry logit SD 3.37 of 3.85; mean-ablating every hidden unit: acc 0.856 -> 0.838, AUC 0.910 -> 0.895). One consequential nonlinearity: an age hinge turning the age slope into a U-shape (high-income share peaks mid-career; keeping only that unit recovers AUC 0.904). Remaining hidden units are affine relays, category lookups, or dead structure.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 10,
+      "roots": [
+        "income_logit_root"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 6.661338147750939e-16,
+    "closed_form_max_abs_err": 0.012146997277238114,
+    "numeric_max_abs_err": 3.552713678800501e-15,
+    "op_counts": {
+      "rename_node": 107,
+      "split_node": 8,
+      "annotate": 10
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}
