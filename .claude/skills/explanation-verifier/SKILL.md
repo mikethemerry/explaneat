@@ -40,7 +40,9 @@ uv run python -m explaneat verify recheck $T --out <out>/<item_id>/recheck.json
 ```
 
 `recheck` caches the recomputed claims (by genome, operations, data and code), so a second run
-on a large dataset (Adult) takes seconds. The other tools, used at L1 to L3:
+on a large dataset (Adult) takes seconds. Its JSON report carries `target_hash`, the hash of the
+exact text you are verifying: copy it into `verdict.json` (section 7). The review tools use it to
+show your findings on that text, and to mark them stale once the text changes. The other tools, used at L1 to L3:
 
 | Command | What it gives |
 |---|---|
@@ -246,6 +248,7 @@ Write two files to `<out>/<item_id>/` (the output directory you were given):
 {
   "item_id": "vb-xxxxxx",
   "genome_id": "...",
+  "target_hash": "t-<16 hex: recheck.json's target_hash>",
   "verifier": "<who or which agent>",
   "started_at": "2026-11-10T09:00:00+13:00",
   "finished_at": "2026-11-10T09:40:00+13:00",
@@ -281,3 +284,6 @@ one line per part that was upheld; then flags. Plain words; no "Claude".
 - [ ] L4 problems that only conflict with domain knowledge are `flag`, not `refuted`.
 - [ ] Nothing was written to the database or the target directory.
 - [ ] Start, finish and minutes are recorded.
+- [ ] `target_hash` is copied from the `recheck` report. For a 10-seed record (target = a label),
+      also write the verdict to `experiments/10seed/review/verifier/<label>/<your id>.json`, so
+      the review queue shows your findings.

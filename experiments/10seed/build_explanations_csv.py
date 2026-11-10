@@ -9,6 +9,25 @@ H100 = [f'heart100-s{s}' for s in (5, 0, 1, 6, 9, 4, 2, 8, 7, 3)]
 C100 = [f'churn100-s{s}' for s in (4, 1, 0, 7, 8, 2, 9, 3, 6, 5)]
 C200 = [f'churn200-s{s}' for s in (1, 2, 4, 7, 9, 5, 3, 8, 0, 6)]
 
+def mike_verified(r):
+    mv = r.get('mike_verification') or {}
+    return bool(mv.get('verified')) and mv.get('protocol') == 'signoff-v1'
+
+
+def signoff_columns(r):
+    """The signoff-v1 summary (explaneat review signoff --write); empty until a genome is signed off.
+    signoff_wrong = sentences marked wrong (all fixed before the sign-off could pass);
+    signoff_error_bound = one-sided 95% Clopper-Pearson upper bound on the wrong share in the
+    sampled strata (signoff_sample_wrong of signoff_sample_n)."""
+    so = (r.get('mike_verification') or {}).get('signoff') or {}
+    c = so.get('counts') or {}
+    return dict(signoff_protocol=so.get('protocol', ''), signoff_date=(so.get('checked_at') or '')[:10],
+                signoff_confirmed=c.get('confirmed', ''),
+                signoff_wrong=(c.get('wrong', 0) + so.get('wrong_fixed', 0)) if so else '',
+                signoff_unsure=c.get('unsure', ''), signoff_sample_n=so.get('sample_n', ''),
+                signoff_sample_wrong=so.get('sample_wrong', ''), signoff_error_bound=so.get('error_bound_95', ''))
+
+
 def row(i, l):
     r = json.load(open(os.path.join(HERE, 'explanations', f'{l}.json')))
     v = r['verified_by_orchestrator']; oc = v['op_counts']
@@ -25,12 +44,14 @@ def row(i, l):
                 closed_form_max_abs_err=v['closed_form_max_abs_err'], numeric_max_abs_err=v['numeric_max_abs_err'],
                 claude_minutes=round(mins, 1),
                 # Mike's verification lives in the JSON record (key "mike_verification":
-                # {"verified": bool, "minutes": float, "changes": str}) so rebuilds keep it.
-                verified_by_mike='yes' if r.get('mike_verification', {}).get('verified') else 'no',
+                # {"verified": bool, "minutes": float, "changes": str, "protocol", "signoff"}) so rebuilds
+                # keep it. PREREG amendment 2026-11-11: verified_by_mike = signoff-v1 passed.
+                verified_by_mike='yes' if mike_verified(r) else 'no',
                 mike_minutes=r.get('mike_verification', {}).get('minutes', ''),
                 mike_changes=r.get('mike_verification', {}).get('changes', ''),
                 pilot=r.get('pilot', False), rule_agreement=r.get('rule_agreement', ''), vs_40gen=r.get('vs_40gen', ''),
-                resisted=r['resisted'])
+                resisted=r['resisted'],
+                **signoff_columns(r))
 
 for name, labels in (('explanations.csv', PRE), ('explanations_heart100.csv', H100),
                      ('../churn/explanations_churn100.csv', C100), ('../churn/explanations_churn200.csv', C200)):

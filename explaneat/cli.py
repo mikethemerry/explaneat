@@ -27,6 +27,9 @@ cli.add_command(_plain_language, name='plain-language')
 from .verify.cli import verify as _verify  # noqa: E402
 cli.add_command(_verify, name='verify')
 
+from .review.cli import review as _review  # noqa: E402
+cli.add_command(_review, name='review')
+
 
 @cli.command()
 @click.option("--host", default="127.0.0.1", show_default=True)

@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mikethemerry/explaneat/explaneat/review/verifier-verdict.schema.json",
+  "title": "Explanation verifier verdict (verdict.json)",
+  "description": "Output of the explanation-verifier skill (section 7). target_hash (added 2026-11-11) is the recheck report's hash of the exact text verified; the review overlay shows findings as live only while the text has that hash, and as stale after it changes. Verdicts without it (benchmark run 1) are matched through the benchmark item's own text instead.",
+  "type": "object",
+  "required": ["genome_id", "overall", "findings"],
+  "properties": {
+    "item_id": {"type": ["string", "null"]},
+    "genome_id": {"type": "string"},
+    "target_hash": {"type": ["string", "null"], "pattern": "^t-[0-9a-f]{16}$"},
+    "verifier": {"type": "string"},
+    "started_at": {"type": "string"},
+    "finished_at": {"type": "string"},
+    "minutes": {"type": ["number", "null"]},
+    "overall": {
+      "type": "object",
+      "required": ["grade"],
+      "properties": {"grade": {"enum": ["upheld", "weakened", "refuted"]}, "summary": {"type": "string"}}
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["grade", "location"],
+        "properties": {
+          "id": {"type": "string"},
+          "grade": {"enum": ["upheld", "weakened", "refuted", "flag"]},
+          "level": {"enum": ["L1", "L2", "L3", "L4"]},
+          "part": {"type": ["string", "null"]},
+          "claims": {"type": "array", "items": {"type": "string"}},
+          "location": {"type": "string"},
+          "statement": {"type": "string"},
+          "check": {"type": "string"},
+          "evidence": {"type": "string"},
+          "commands": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "parts": {"type": "object"},
+    "levels_completed": {"type": "array", "items": {"type": "string"}}
+  }
+}
