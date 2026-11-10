@@ -455,8 +455,67 @@ def _audit_section(doc, P) -> List[str]:
     return L
 
 
-def render_appendix(doc, review_marks: bool = True) -> str:
-    """The \\section-level appendix text."""
+CERTIFICATE_MODES = ("full", "coverage")
+
+
+def _closed_form_checks(doc, tags, P) -> List[str]:
+    """One row per annotation: the closed form's largest error against the forward pass and the
+    exact function on the training split."""
+    L = [r"\subsection{Closed-form checks}\label{" + P + "closedform}",
+         r"{\small\noindent\begin{tabularx}{\linewidth}{@{}lXrr@{}}", r"\toprule Tag & Annotation & Closed form vs forward pass & "
+         r"Exact function vs forward pass \\ \midrule"]
+    for a in sorted(doc["annotations"], key=lambda a: int(tags[a["name"]][1:])):
+        cf = a.get("closed_form") or {}
+        err = cf.get("error") or {}
+        if cf.get("available") and err:
+            c1, c2 = tex_num(err.get("closed_form_max_abs_err")), tex_num(err.get("numeric_max_abs_err"))
+        else:
+            c1, c2 = ("not available", "") if not cf.get("available") else ("n/a", "n/a")
+        L.append(f"{tags[a['name']]} & {tex(a['name'])} & {c1} & {c2} \\\\")
+    L += [r"\bottomrule", r"\end{tabularx}\par}"]
+    return L
+
+
+def render_coverage_certificate(doc, review_marks: bool = True) -> str:
+    """The slim certificate (``coverage`` mode): provenance and content hash, the coverage table
+    (structural / compositional, Null parts by category, uncovered nodes, missing compositions,
+    agreement with ``get_coverage``), function preservation and closed-form errors, the refactoring
+    operations, the audit findings, and authorship / verification. No plain-language summary,
+    hierarchy, evidence or figures: in the verification pack the read-down document carries those."""
+    lab = doc["label"]
+    P = f"app:{label_key(lab)}:"
+    tags = render_tikz.annotation_tags(doc)
+    pv = doc["provenance"]
+    L: List[str] = [f"% Coverage certificate for {lab} (genome {pv['genome']['id']}); content sha256 "
+                    f"{pv['content_hash']['value']}.", r"\providecommand{\explaneatcertdir}[1]{}"]
+    if review_marks:
+        L.append(f"\\begin{{drafted}}[{tex(lab)} coverage certificate]")
+    L.append(f"\\section{{Coverage certificate: {tex(title_of(doc))}}}\\label{{{P}sec}}")
+    L.append(f"Provenance, coverage and checks of the explanation, rendered from the canonical JSON record "
+             f"\\texttt{{{tex(lab)}.json}} (schema {tex(doc['schema_version'])}, SHA-256 "
+             f"{tex_code(pv['content_hash']['value'][:16])}\\ldots). The explanation itself (summary, parts, "
+             f"evidence, figures) is the read-down document before this page.")
+    L.append("")
+    L.extend(_summary_table(doc, P))
+    L.extend(_coverage_section(doc, P))
+    m = doc["coverage"].get("matches_get_coverage")
+    L.append(r"\noindent\textbf{Agreement with the \texttt{get\_coverage} tool:} "
+             + ("yes" if m else ("\\textbf{no}" if m is not None else "not checked")) + ".")
+    L.append("")
+    L.extend(_closed_form_checks(doc, tags, P))
+    L.extend(_ops_section(doc, P))
+    L.extend(_audit_section(doc, P))
+    if review_marks:
+        L.append(r"\end{drafted}")
+    return "\n".join(L).rstrip() + "\n"
+
+
+def render_appendix(doc, review_marks: bool = True, mode: str = "full") -> str:
+    """The \\section-level appendix text (``mode="coverage"``: the slim coverage certificate)."""
+    if mode == "coverage":
+        return render_coverage_certificate(doc, review_marks=review_marks)
+    if mode != "full":
+        raise ValueError(f"certificate mode {mode!r} (use one of {CERTIFICATE_MODES})")
     lab = doc["label"]
     P = f"app:{label_key(lab)}:"
     tags = render_tikz.annotation_tags(doc)

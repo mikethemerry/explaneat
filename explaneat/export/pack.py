@@ -58,10 +58,13 @@ def write_json(doc: Dict[str, Any], out_dir: Path) -> Path:
     return p
 
 
-def render_text(doc: Dict[str, Any], review_marks: bool = True) -> Dict[str, str]:
-    """filename -> text, for every text format (tex appendix, wrappers, TikZ modules)."""
+def render_text(doc: Dict[str, Any], review_marks: bool = True, certificate_mode: str = "full") -> Dict[str, str]:
+    """filename -> text, for every text format (tex appendix, wrappers, TikZ modules). The appendix
+    ``<label>.tex`` is the ``full`` certificate by default; ``<label>-coverage.tex`` is always the
+    slim coverage certificate (the verification pack's review uses it)."""
     lab = doc["label"]
-    files = {f"{lab}.tex": render_tex.render_appendix(doc, review_marks=review_marks),
+    files = {f"{lab}.tex": render_tex.render_appendix(doc, review_marks=review_marks, mode=certificate_mode),
+             f"{lab}-coverage.tex": render_tex.render_appendix(doc, review_marks=review_marks, mode="coverage"),
              f"{lab}-standalone.tex": render_tex.render_standalone(doc, review_marks=review_marks)}
     for key, text in render_tikz.render_all(doc).items():
         files[render_tex.tikz_filename(lab, key)] = text
@@ -130,7 +133,8 @@ def capabilities() -> Dict[str, Dict[str, Any]]:
 
 
 def render_pack(doc: Dict[str, Any], out_dir: Path, formats: Iterable[str],
-                review_marks: bool = True, log=print, caps: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+                review_marks: bool = True, log=print, caps: Optional[Dict[str, Any]] = None,
+                certificate_mode: str = "full") -> Dict[str, Any]:
     """Render every requested non-JSON format from ``doc`` (the parsed JSON) into ``out_dir``.
 
     Formats this machine cannot produce are skipped with a reason (``result["formats"]``);
@@ -141,7 +145,7 @@ def render_pack(doc: Dict[str, Any], out_dir: Path, formats: Iterable[str],
     out_dir.mkdir(parents=True, exist_ok=True)
     lab = doc["label"]
     result: Dict[str, Any] = {"label": lab, "files": [], "compile": [], "formats": {}}
-    text = render_text(doc, review_marks=review_marks)
+    text = render_text(doc, review_marks=review_marks, certificate_mode=certificate_mode)
     if any(f in formats for f in ("tex", "tikz", "pdf", "docx")):
         for name, body in text.items():
             if "-fig-" not in name and not ("tex" in formats or "pdf" in formats):
