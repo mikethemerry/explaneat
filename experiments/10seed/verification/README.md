@@ -29,7 +29,7 @@ Fields: `verified` (true or false), `minutes` (your time), `changes` (what you c
 
 ## Recorded vs live checks
 
-All 60 records were re-checked live on 2026-11-07T14:35:07+13:00 (commit `546261f`): function preservation, per-leaf closed-form and numeric error, structural and compositional coverage, the hierarchy check and the operation counts. Every live value agrees with the orchestrator's record, and the agents' own (rounded) numbers agree too.
+All 60 records were re-checked live on 2026-11-11T07:45:47+13:00 (commit `dfc261d`): function preservation, per-leaf closed-form and numeric error, structural and compositional coverage, the hierarchy check and the operation counts. Every live value agrees with the orchestrator's record, and the agents' own (rounded) numbers agree too.
 
 ## Progress: Pre-registered 30
 

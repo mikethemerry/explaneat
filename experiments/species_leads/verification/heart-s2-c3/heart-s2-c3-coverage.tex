@@ -1,0 +1,69 @@
+% Coverage certificate for heart-s2-c3 (genome 1a5255ec-4f4d-4ff4-916a-1b5c4622ccc9); content sha256 6b36c4ae4f91161350a650f7da79e66ec93b2fa97254ec7aeab35bbb6828150b.
+\providecommand{\explaneatcertdir}[1]{}
+\begin{drafted}[heart-s2-c3 coverage certificate]
+\section{Coverage certificate: heart-s2-c3}\label{app:heart-s2-c3:sec}
+Provenance, coverage and checks of the explanation, rendered from the canonical JSON record \texttt{heart-s2-c3.json} (schema 1.4.0, SHA-256 \texttt{6b36c4ae4f911613}\ldots). The explanation itself (summary, parts, evidence, figures) is the read-down document before this page.
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+\toprule
+Dataset & Heart Disease (binary, prepared) \\
+Experiment & 10seed-heart-s2, seed 2 \\
+Genome & \texttt{1a5255ec-4f4d-4ff4-916a-1b5c4622ccc9} (NEAT key 9600, generation 39) \\
+Explanation & \texttt{6565cffd-9c19-4ae2-b635-a2e35f3d485a} (34 operations) \\
+Train AUC / accuracy & 0.9381 / 0.8884 (n = 242) \\
+Test AUC / accuracy & 0.8987 / 0.8197 (n = 61) \\
+Output activation & sigmoid \\
+Phenotype & 30 nodes (26 inputs, 3 hidden, 1 output), 26 enabled edges \\
+Explained model state & 36 nodes, 26 enabled edges \\
+Refactoring operations & split\_\allowbreak{}node 4 \\
+Function preservation & max $|\Delta\,\mathrm{output}|$ = $2.22\times 10^{-16}$ on the training split \\
+Annotations & 4 (3 leaf, 1 composition) \\
+Structural coverage & 1 (35 of 35 candidate nodes; 9 Null) \\
+Compositional coverage & 1 \\
+Uncovered nodes / edges & 0 / 0 \\
+Missing compositions & 0 \\
+Full coverage & yes \\
+Drafted by & AI-assisted draft \\
+Verified by & unverified \\
+Record hash (SHA-256) & \texttt{6b36c4ae4f911613}\ldots \\
+\bottomrule
+\end{tabularx}
+\caption{Explanation certificate summary: heart-s2-c3.}
+\label{app:heart-s2-c3:summary}
+\end{table}
+\subsection{Coverage}\label{app:heart-s2-c3:coverage}
+Coverage is computed by the current code (the function behind the \texttt{get\_coverage} tool) under these conventions. \emph{Candidate nodes} are all nodes of the explained model state except the output nodes. A candidate node is \emph{covered} when some annotation of the hierarchy (a leaf, or a composition together with its descendants) contains it and all its enabled outgoing edges. \emph{Exact Null} parts, which have no effect on any output for any input, count as covered: nodes with no path to an output over enabled, non-zero-weight edges (disconnected inputs and dead ends), and edges that have zero weight or touch such a node. Compositional coverage is the fraction of required compositions present: every annotation except a single global root containing every output must have a parent; a parentless, childless annotation made only of Null nodes is exempt.
+
+\begin{itemize}
+\item \textbf{Null, disconnected input (9):} \texttt{-1} (age), \texttt{-10} (fbs:0), \texttt{-12} (restecg:0), \texttt{-13} (restecg:1), \texttt{-16} (exang:0), \texttt{-17} (exang:1), \texttt{-21} (slope:3), \texttt{-23} (thal:3), \texttt{-24} (thal:4).
+\item \textbf{Uncovered nodes:} none.
+\item \textbf{Uncovered edges:} none.
+\item \textbf{Missing compositions:} none.
+\end{itemize}
+\noindent\textbf{Agreement with the \texttt{get\_coverage} tool:} yes.
+
+\subsection{Closed-form checks}\label{app:heart-s2-c3:closedform}
+{\small\noindent\begin{tabularx}{\linewidth}{@{}lXrr@{}}
+\toprule Tag & Annotation & Closed form vs forward pass & Exact function vs forward pass \\ \midrule
+A1 & heart\_\allowbreak{}disease\_\allowbreak{}logit & 0.00141 & $2.22\times 10^{-16}$ \\
+A2 & nonanginal\_\allowbreak{}thalach\_\allowbreak{}gate & 0.00675 & 0 \\
+A3 & oldpeak\_\allowbreak{}gate\_\allowbreak{}without\_\allowbreak{}nonanginal & 0.00186 & 0 \\
+A4 & nonanginal\_\allowbreak{}low\_\allowbreak{}chol\_\allowbreak{}gate & 0.00471 & 0 \\
+\bottomrule
+\end{tabularx}\par}
+\subsection{Refactoring operations}\label{app:heart-s2-c3:operations}
+The explained model state is the phenotype after these operations, replayed in order. All are function-preserving; the largest change in the model output over the 242 training rows is $2.22\times 10^{-16}$ (tolerance $1.00\times 10^{-9}$).
+\begin{itemize}
+\item \#26: split \texttt{-6} into \texttt{-6\_\allowbreak{}a}, \texttt{-6\_\allowbreak{}b}, \texttt{-6\_\allowbreak{}c}.
+\item \#27: split \texttt{-15} into \texttt{-15\_\allowbreak{}a}, \texttt{-15\_\allowbreak{}b}, \texttt{-15\_\allowbreak{}c}.
+\item \#28: split \texttt{-18} into \texttt{-18\_\allowbreak{}a}, \texttt{-18\_\allowbreak{}b}.
+\item \#29: split \texttt{-9} into \texttt{-9\_\allowbreak{}a}, \texttt{-9\_\allowbreak{}b}.
+\end{itemize}
+\subsection{Audit against the definitions}\label{app:heart-s2-c3:audit}
+Automatic findings on the stored explanation (codes as in the JSON record's \texttt{issues}); they flag what an examiner should check, not verdicts.
+\begin{itemize}
+\item \textsc{warning} \texttt{unverified}: No human verification is recorded for this explanation.
+\end{itemize}
+\end{drafted}

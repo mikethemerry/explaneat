@@ -1,0 +1,26 @@
+% Standalone build of the explanation certificate for heart-s4-c1.
+\documentclass[a4paper,11pt]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{graphicx}
+\usepackage[table,usenames,dvipsnames]{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,fit,backgrounds,positioning,calc}
+\usepackage[unicode=true,hidelinks]{hyperref}
+\usepackage{cleveref}
+% Review markers, copied from dissertation.tex (7 Nov 2026) for standalone builds.
+\newif\ifreviewmarks
+\reviewmarkstrue
+\newcommand{\reviewrule}{\noindent{\color{BrickRed}\rule{\linewidth}{0.8pt}}}
+\newenvironment{drafted}[1][]{%
+  \ifreviewmarks\par\addvspace{\medskipamount}\reviewrule\par\nopagebreak
+  \noindent{\color{BrickRed}\sffamily\footnotesize\textbf{Thesis Draft}\quad #1\hfill review}\par\nopagebreak\smallskip\fi}{%
+  \ifreviewmarks\par\smallskip\noindent{\color{BrickRed}\sffamily\footnotesize end of thesis draft}\par\nopagebreak\reviewrule\par\medskip\fi}
+\newcommand{\figreview}[1]{\ifreviewmarks\par\smallskip{\color{NavyBlue}\sffamily\footnotesize\textbf{Figure note:} #1}\par\fi}
+
+\begin{document}
+\input{heart-s4-c1.tex}
+\end{document}

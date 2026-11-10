@@ -123,7 +123,7 @@ $$
    "5": "0/1"
   },
   "a1=3": {
-   "all counts": "108/108 pos"
+   "all counts": "107/107 pos"
   }
  }
 }
@@ -490,7 +490,7 @@ $$
 
 ## Checks: recorded vs live
 
-Live values were recomputed on 2026-11-07T14:35:07+13:00 (commit `546261f`) by `verification/collect_live.py`, which calls `check_explanation.check()` and `get_coverage` on the training split through a read-only database session. Agent values are the agent's own report (often rounded to 3 s.f.); orchestrator values are `verified_by_orchestrator` in the record.
+Live values were recomputed on 2026-11-11T07:45:47+13:00 (commit `dfc261d`) by `verification/collect_live.py`, which calls `check_explanation.check()` and `get_coverage` on the training split through a read-only database session. Agent values are the agent's own report (often rounded to 3 s.f.); orchestrator values are `verified_by_orchestrator` in the record.
 
 | Check | Agent | Orchestrator record | Live | Status |
 |---|---|---|---|---|
@@ -518,7 +518,7 @@ Closed-form error per leaf (live; the record keeps only the maximum):
 
 ## What resisted (from the record)
 
-> Nothing structural. Closed-form error 0.065 is 3-s.f. rounding on a linear leaf with range -33..+32. The a1=1/count-3 boundary is pattern-specific (74% positive), described via per-indicator weights rather than a clean rule. One root evidence payload says a1=3 '108/108 positive' (correct: 107/107; narrative corrected, payload not).
+> Nothing structural. Closed-form error 0.065 is 3-s.f. rounding on a linear leaf with range -33..+32. The a1=1/count-3 boundary is pattern-specific (74% positive), described via per-indicator weights rather than a clean rule. One root evidence payload says a1=3 '108/108 positive' (correct: 107/107; narrative corrected, payload corrected by the 2026-11-11 errata).
 
 **Tool notes (record):** Root annotate failed when subgraph\_nodes included child exits ('already covered'); worked with output + unconnected inputs. Sigmoid saturation (\|logit\| up to \~130) makes many outputs tie at exactly 1.0, so the sigmoid AUC (0.807, = fitness) is higher than the logit ranking AUC (0.734).
 

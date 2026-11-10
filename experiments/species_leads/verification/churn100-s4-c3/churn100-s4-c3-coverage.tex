@@ -1,0 +1,79 @@
+% Coverage certificate for churn100-s4-c3 (genome 27f540ac-6acb-4d58-9972-cd71fae31cf0); content sha256 99f3bce0c6f3eff7e465b5d629b8c3ce8fae606cf84601487b0a16525378c202.
+\providecommand{\explaneatcertdir}[1]{}
+\begin{drafted}[churn100-s4-c3 coverage certificate]
+\section{Coverage certificate: churn100-s4-c3}\label{app:churn100-s4-c3:sec}
+Provenance, coverage and checks of the explanation, rendered from the canonical JSON record \texttt{churn100-s4-c3.json} (schema 1.4.0, SHA-256 \texttt{99f3bce0c6f3eff7}\ldots). The explanation itself (summary, parts, evidence, figures) is the read-down document before this page.
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+\toprule
+Dataset & churn\_\allowbreak{}onehot \\
+Experiment & churn100-s4, seed 4 \\
+Genome & \texttt{27f540ac-6acb-4d58-9972-cd71fae31cf0} (NEAT key 24445, generation 99) \\
+Explanation & \texttt{ffdb207f-1e0f-4d2e-a330-f47b1ca75c4a} (89 operations) \\
+Train AUC / accuracy & 0.8884 / 0.8795 (n = 4000) \\
+Test AUC / accuracy & 0.8671 / 0.875 (n = 1000) \\
+Output activation & sigmoid \\
+Phenotype & 93 nodes (71 inputs, 21 hidden, 1 output), 76 enabled edges \\
+Explained model state & 103 nodes, 78 enabled edges \\
+Refactoring operations & add\_\allowbreak{}identity\_\allowbreak{}node 2, consolidate\_\allowbreak{}node 1, split\_\allowbreak{}node 8 \\
+Function preservation & max $|\Delta\,\mathrm{output}|$ = $4.44\times 10^{-16}$ on the training split \\
+Annotations & 7 (5 leaf, 2 composition) \\
+Structural coverage & 1 (102 of 102 candidate nodes; 30 Null) \\
+Compositional coverage & 1 \\
+Uncovered nodes / edges & 0 / 0 \\
+Missing compositions & 0 \\
+Full coverage & yes \\
+Drafted by & AI-assisted draft \\
+Verified by & unverified \\
+Record hash (SHA-256) & \texttt{99f3bce0c6f3eff7}\ldots \\
+\bottomrule
+\end{tabularx}
+\caption{Explanation certificate summary: churn100-s4-c3.}
+\label{app:churn100-s4-c3:summary}
+\end{table}
+\subsection{Coverage}\label{app:churn100-s4-c3:coverage}
+Coverage is computed by the current code (the function behind the \texttt{get\_coverage} tool) under these conventions. \emph{Candidate nodes} are all nodes of the explained model state except the output nodes. A candidate node is \emph{covered} when some annotation of the hierarchy (a leaf, or a composition together with its descendants) contains it and all its enabled outgoing edges. \emph{Exact Null} parts, which have no effect on any output for any input, count as covered: nodes with no path to an output over enabled, non-zero-weight edges (disconnected inputs and dead ends), and edges that have zero weight or touch such a node. Compositional coverage is the fraction of required compositions present: every annotation except a single global root containing every output must have a parent; a parentless, childless annotation made only of Null nodes is exempt.
+
+\begin{itemize}
+\item \textbf{Null, disconnected input (30):} \texttt{-10} (state:17), \texttt{-13} (state:2), \texttt{-14} (state:20), \texttt{-16} (state:22), \texttt{-17} (state:23), \texttt{-18} (state:24), \texttt{-2} (state:1), \texttt{-25} (state:30), \texttt{-26} (state:31), \texttt{-27} (state:32), \texttt{-30} (state:35), \texttt{-37} (state:41), \texttt{-39} (state:43), \texttt{-44} (state:48), \texttt{-45} (state:49), \texttt{-47} (state:50), \texttt{-48} (state:6), \texttt{-49} (state:7), \texttt{-5} (state:12), \texttt{-53} (areaCode:408), \texttt{-55} (areaCode:510), \texttt{-6} (state:13), \texttt{-62} (totalEveMinutes), \texttt{-63} (totalEveCalls), \texttt{-65} (totalNightMinutes), \texttt{-66} (totalNightCalls), \texttt{-67} (totalNightCharge), \texttt{-68} (totalIntlMinutes), \texttt{-69} (totalIntlCalls), \texttt{-70} (totalIntlCharge).
+\item \textbf{Uncovered nodes:} none.
+\item \textbf{Uncovered edges:} none.
+\item \textbf{Missing compositions:} none.
+\end{itemize}
+\noindent\textbf{Agreement with the \texttt{get\_coverage} tool:} yes.
+
+\subsection{Closed-form checks}\label{app:churn100-s4-c3:closedform}
+{\small\noindent\begin{tabularx}{\linewidth}{@{}lXrr@{}}
+\toprule Tag & Annotation & Closed form vs forward pass & Exact function vs forward pass \\ \midrule
+A1 & churn\_\allowbreak{}logit & 0.00303 & $4.44\times 10^{-16}$ \\
+A2 & linear\_\allowbreak{}backbone & 0.00552 & $1.78\times 10^{-15}$ \\
+A3 & day\_\allowbreak{}usage\_\allowbreak{}hinges & 0.00207 & $4.44\times 10^{-16}$ \\
+A4 & state\_\allowbreak{}offsets & 0.0277 & $4.44\times 10^{-16}$ \\
+A5 & service\_\allowbreak{}calls & 0.0157 & $8.88\times 10^{-16}$ \\
+A6 & csc\_\allowbreak{}late\_\allowbreak{}chain & 0.00148 & $2.22\times 10^{-16}$ \\
+A7 & csc\_\allowbreak{}early\_\allowbreak{}hinge & 0.00608 & 0 \\
+\bottomrule
+\end{tabularx}\par}
+\subsection{Refactoring operations}\label{app:churn100-s4-c3:operations}
+The explained model state is the phenotype after these operations, replayed in order. All are function-preserving; the largest change in the model output over the 4000 training rows is $4.44\times 10^{-16}$ (tolerance $1.00\times 10^{-9}$).
+\begin{itemize}
+\item \#71: split \texttt{-71} into \texttt{-71\_\allowbreak{}a}, \texttt{-71\_\allowbreak{}b}, \texttt{-71\_\allowbreak{}c}.
+\item \#72: split \texttt{-60} into \texttt{-60\_\allowbreak{}a}, \texttt{-60\_\allowbreak{}b}.
+\item \#73: split \texttt{-57} into \texttt{-57\_\allowbreak{}a}, \texttt{-57\_\allowbreak{}b}.
+\item \#74: split \texttt{-51} into \texttt{-51\_\allowbreak{}a}, \texttt{-51\_\allowbreak{}b}.
+\item \#75: split \texttt{-42} into \texttt{-42\_\allowbreak{}a}, \texttt{-42\_\allowbreak{}b}.
+\item \#76: split \texttt{-34} into \texttt{-34\_\allowbreak{}a}, \texttt{-34\_\allowbreak{}b}.
+\item \#77: split \texttt{-28} into \texttt{-28\_\allowbreak{}a}, \texttt{-28\_\allowbreak{}b}.
+\item \#78: split \texttt{-23} into \texttt{-23\_\allowbreak{}a}, \texttt{-23\_\allowbreak{}b}.
+\item \#79: consolidate \texttt{-71\_\allowbreak{}a}, \texttt{-71\_\allowbreak{}c}.
+\item \#80: identity node \texttt{identity\_\allowbreak{}lin} before \texttt{0} (28 connection(s)).
+\item \#81: identity node \texttt{identity\_\allowbreak{}svc} before \texttt{0} (3 connection(s)).
+\end{itemize}
+\subsection{Audit against the definitions}\label{app:churn100-s4-c3:audit}
+Automatic findings on the stored explanation (codes as in the JSON record's \texttt{issues}); they flag what an examiner should check, not verdicts.
+\begin{itemize}
+\item \textsc{warning} \texttt{unverified}: No human verification is recorded for this explanation.
+\end{itemize}
+\end{drafted}

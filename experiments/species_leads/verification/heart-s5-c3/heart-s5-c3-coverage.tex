@@ -1,0 +1,65 @@
+% Coverage certificate for heart-s5-c3 (genome 96fb45fb-972d-4aaa-b6d5-01fc63fbc4e6); content sha256 644db15ecc0191f8ed73b9a23757dccfcf5f1809df487f9171d22800751515e6.
+\providecommand{\explaneatcertdir}[1]{}
+\begin{drafted}[heart-s5-c3 coverage certificate]
+\section{Coverage certificate: heart-s5-c3}\label{app:heart-s5-c3:sec}
+Provenance, coverage and checks of the explanation, rendered from the canonical JSON record \texttt{heart-s5-c3.json} (schema 1.4.0, SHA-256 \texttt{644db15ecc0191f8}\ldots). The explanation itself (summary, parts, evidence, figures) is the read-down document before this page.
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+\toprule
+Dataset & Heart Disease (binary, prepared) \\
+Experiment & 10seed-heart-s5, seed 5 \\
+Genome & \texttt{96fb45fb-972d-4aaa-b6d5-01fc63fbc4e6} (NEAT key 9698, generation 39) \\
+Explanation & \texttt{1b3f669d-9fb5-4126-b6e4-35535db7b3b1} (30 operations) \\
+Train AUC / accuracy & 0.9376 / 0.8884 (n = 242) \\
+Test AUC / accuracy & 0.9084 / 0.8197 (n = 61) \\
+Output activation & sigmoid \\
+Phenotype & 31 nodes (26 inputs, 4 hidden, 1 output), 26 enabled edges \\
+Explained model state & 32 nodes, 26 enabled edges \\
+Refactoring operations & split\_\allowbreak{}node 1 \\
+Function preservation & max $|\Delta\,\mathrm{output}|$ = $2.22\times 10^{-16}$ on the training split \\
+Annotations & 3 (2 leaf, 1 composition) \\
+Structural coverage & 1 (31 of 31 candidate nodes; 7 Null) \\
+Compositional coverage & 1 \\
+Uncovered nodes / edges & 0 / 0 \\
+Missing compositions & 0 \\
+Full coverage & yes \\
+Drafted by & AI-assisted draft \\
+Verified by & unverified \\
+Record hash (SHA-256) & \texttt{644db15ecc0191f8}\ldots \\
+\bottomrule
+\end{tabularx}
+\caption{Explanation certificate summary: heart-s5-c3.}
+\label{app:heart-s5-c3:summary}
+\end{table}
+\subsection{Coverage}\label{app:heart-s5-c3:coverage}
+Coverage is computed by the current code (the function behind the \texttt{get\_coverage} tool) under these conventions. \emph{Candidate nodes} are all nodes of the explained model state except the output nodes. A candidate node is \emph{covered} when some annotation of the hierarchy (a leaf, or a composition together with its descendants) contains it and all its enabled outgoing edges. \emph{Exact Null} parts, which have no effect on any output for any input, count as covered: nodes with no path to an output over enabled, non-zero-weight edges (disconnected inputs and dead ends), and edges that have zero weight or touch such a node. Compositional coverage is the fraction of required compositions present: every annotation except a single global root containing every output must have a parent; a parentless, childless annotation made only of Null nodes is exempt.
+
+\begin{itemize}
+\item \textbf{Null, disconnected input (7):} \texttt{-11} (fbs:1), \texttt{-13} (restecg:1), \texttt{-14} (restecg:2), \texttt{-16} (exang:0), \texttt{-20} (slope:2), \texttt{-3} (sex:1), \texttt{-5} (cp:2).
+\item \textbf{Uncovered nodes:} none.
+\item \textbf{Uncovered edges:} none.
+\item \textbf{Missing compositions:} none.
+\end{itemize}
+\noindent\textbf{Agreement with the \texttt{get\_coverage} tool:} yes.
+
+\subsection{Closed-form checks}\label{app:heart-s5-c3:closedform}
+{\small\noindent\begin{tabularx}{\linewidth}{@{}lXrr@{}}
+\toprule Tag & Annotation & Closed form vs forward pass & Exact function vs forward pass \\ \midrule
+A1 & heart\_\allowbreak{}disease\_\allowbreak{}logit & 0.00216 & $2.78\times 10^{-16}$ \\
+A2 & ischaemia\_\allowbreak{}chain & 0.0205 & $1.78\times 10^{-15}$ \\
+A3 & age\_\allowbreak{}hinge & $2.75\times 10^{-4}$ & 0 \\
+\bottomrule
+\end{tabularx}\par}
+\subsection{Refactoring operations}\label{app:heart-s5-c3:operations}
+The explained model state is the phenotype after these operations, replayed in order. All are function-preserving; the largest change in the model output over the 242 training rows is $2.22\times 10^{-16}$ (tolerance $1.00\times 10^{-9}$).
+\begin{itemize}
+\item \#26: split \texttt{-12} into \texttt{-12\_\allowbreak{}a}, \texttt{-12\_\allowbreak{}b}.
+\end{itemize}
+\subsection{Audit against the definitions}\label{app:heart-s5-c3:audit}
+Automatic findings on the stored explanation (codes as in the JSON record's \texttt{issues}); they flag what an examiner should check, not verdicts.
+\begin{itemize}
+\item \textsc{warning} \texttt{unverified}: No human verification is recorded for this explanation.
+\end{itemize}
+\end{drafted}

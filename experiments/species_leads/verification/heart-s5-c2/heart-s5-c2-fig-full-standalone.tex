@@ -1,0 +1,20 @@
+% Standalone build of heart-s5-c2-fig-full.tex (page cropped to the picture).
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{graphicx}
+\usepackage[table,usenames,dvipsnames]{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,fit,backgrounds,positioning,calc}
+\pagestyle{empty}
+\newsavebox\figbox
+\begin{document}
+\setlength{\textheight}{40cm}\setlength{\linewidth}{16cm}
+\sbox\figbox{\input{heart-s5-c2-fig-full.tex}}
+\pdfpagewidth=\dimexpr\wd\figbox+8mm\relax
+\pdfpageheight=\dimexpr\ht\figbox+\dp\figbox+8mm\relax
+\hoffset=-1in \voffset=-1in
+\shipout\hbox{\vbox{\kern4mm\hbox{\kern4mm\usebox\figbox\kern4mm}\kern4mm}}
+\end{document}

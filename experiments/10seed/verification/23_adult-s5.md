@@ -287,7 +287,7 @@ $$
 
 **Hypothesis (DB):**
 
-> Piecewise-linear age term in the logit of P(income\<=50K), with a Thailand override. Direct age edge gives -1.03 per SD (-0.075/yr). 2990=relu(1.446 age-0.48) and 5070=relu(1.031\*2990-0.32) form a stacked hinge that switches on at age \~46 (z=0.545) and adds +1.45/SD, so the net slope above 46 is +0.42/SD (+0.031/yr): the probability of earning \>50K rises with age to a peak at \~46 and then declines. 2134 is a Thailand indicator (native-country:37); for Thai respondents (27 rows) it adds -4.0 directly and pushes 2990 permanently on (removing the hinge). Ireland (native-country:21) only adds a direct -1.57 and keeps 2134 off. EVIDENCE: Train evidence (39,073 rows): mean contribution by age (non-Thai) +1.63 at 17, +0.65 at 30, -0.10 at 40, minimum -0.55 at exactly 46, -0.29 at 55, +0.17 at 70, +0.79 at 90, which confirms a V shape with its vertex at 46. Thailand (26 rows): the -4.0 direct term and the released hinge almost cancel, so being Thai changes the logit by only +0.10 on average. Mean-ablation of the leaf: acc 0.8578-\>0.8534, AUC 0.9118-\>0.9051.
+> Piecewise-linear age term in the logit of P(income\<=50K), with a Thailand override. Direct age edge gives -1.03 per SD (-0.075/yr). 2990=relu(1.446 age+0.137\*2134-0.48) and 5070=relu(1.031\*2990-0.32) form a stacked hinge that switches on at age \~46 (z=0.545) and adds +1.45/SD, so the net slope above 46 is +0.42/SD (+0.031/yr): the probability of earning \>50K rises with age to a peak at \~46 and then declines. 2134 is a Thailand indicator (native-country:37); for Thai respondents (26 rows) it adds -4.0 directly and pushes 2990 permanently on (removing the hinge). Ireland (native-country:21) only adds a direct -1.57 and keeps 2134 off. EVIDENCE: Train evidence (39,073 rows): mean contribution by age (non-Thai) +1.63 at 17, +0.65 at 30, -0.10 at 40, minimum -0.55 at exactly 46, -0.29 at 55, +0.17 at 70, +0.79 at 90, which confirms a V shape with its vertex at 46. Thailand (26 rows): the -4.0 direct term and the released hinge almost cancel, so being Thai changes the logit by only +0.10 on average. Mean-ablation of the leaf: acc 0.8578-\>0.8534, AUC 0.9118-\>0.9051.
 
 **Evidence (2 records, DB):**
 
@@ -1364,7 +1364,7 @@ $$
 
 ## Checks: recorded vs live
 
-Live values were recomputed on 2026-11-07T14:35:07+13:00 (commit `546261f`) by `verification/collect_live.py`, which calls `check_explanation.check()` and `get_coverage` on the training split through a read-only database session. Agent values are the agent's own report (often rounded to 3 s.f.); orchestrator values are `verified_by_orchestrator` in the record.
+Live values were recomputed on 2026-11-11T07:45:47+13:00 (commit `dfc261d`) by `verification/collect_live.py`, which calls `check_explanation.check()` and `get_coverage` on the training split through a read-only database session. Agent values are the agent's own report (often rounded to 3 s.f.); orchestrator values are `verified_by_orchestrator` in the record.
 
 | Check | Agent | Orchestrator record | Live | Status |
 |---|---|---|---|---|
