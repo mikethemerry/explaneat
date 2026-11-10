@@ -266,12 +266,15 @@ def checklist_block(doc, order: int) -> str:
         L += [r"\textbf{Tool notes (record):} " + tex(rec["tool_bugs"]), ""]
     pl = doc.get("plain_language")
     if pl:   # schema 1.1+: the plain-language layer, with the evidence of the claims it cites
-        from .render_plain import _status, claims_table, sentences_tex
+        from .render_plain import _status, claims_table, sentences_tex, v5_summary
         d = pl.get("drafted") or {}
-        summ = d.get("summary") or (pl.get("template") or {}).get("summary") or []
+        v5 = bool(d.get("readdown"))
+        summ = (v5_summary(d) if v5 else d.get("summary")) or (pl.get("template") or {}).get("summary") or []
         cited = {cid for s in summ for cid in (s.get("claims") or [])}
-        L += [r"\textbf{Plain-language summary} (" + tex(_status(pl)) + ("" if d.get("summary") else
-              "; offline template") + r"):", "", sentences_tex(summ), ""]
+        L += [r"\textbf{Plain-language summary} (" + tex(_status(pl)) + ("" if (v5 or d.get("summary")) else
+              "; offline template") + (r"; the full read-down document with its figures is "
+              r"\texttt{" + tex(f"{lab}-plain-v5.pdf") + r"} in this genome's folder" if v5 else "")
+              + r"):", "", sentences_tex(summ), ""]
         if d.get("worth_checking"):
             L += [r"\textbf{Worth checking:} " + sentences_tex(d["worth_checking"]), ""]
         L += claims_table([c for c in pl.get("claims") or [] if c["id"] in cited])

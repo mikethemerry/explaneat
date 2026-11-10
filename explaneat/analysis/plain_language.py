@@ -1153,6 +1153,22 @@ MAP_GRID = 80          # points per axis of a deep-dive map
 MAP_MARGIN = 0.04      # margin beyond the data limits on each side of a deep-dive map
 
 
+def _slice_points(v) -> List[Tuple[Any, float]]:
+    """Where to slice a map along a variable: its 10th, 50th and 90th percentile, or, when those
+    coincide (a variable with few values, e.g. a count), distinct values (low, middle, high of
+    the observed values); each with its percentile label."""
+    x = np.asarray(v.raw_train, float)
+    qs = [(q, float(np.percentile(x, q))) for q in (10, 50, 90)]
+    if len({round(b, 9) for _, b in qs}) == 3:
+        return qs
+    u = np.unique(x)
+    pick = [u[0], u[len(u) // 2], u[-1]] if len(u) >= 3 else list(u)
+    out = []
+    for b in dict.fromkeys(float(b) for b in pick):
+        out.append((round(float(np.mean(x <= b)) * 100), b))
+    return out
+
+
 def _map_axis(v, n: int = MAP_GRID) -> np.ndarray:
     """The full plotted range of a deep-dive map axis: the training data limits plus a margin,
     so the coloured field (and the boundary) reaches every plotted data point."""
@@ -1174,6 +1190,8 @@ def _clipping_exits(m: PlainModel, p: Part) -> List[str]:
 
 def _fmt_num(x: float) -> str:
     ax = abs(x)
+    if 0 < ax < 0.1:          # two significant figures: 0.015, not 0.02
+        return f"{x:.2g}"
     return f"{x:.2f}" if ax < 10 else (f"{x:.1f}" if ax < 100 else f"{x:.0f}")
 
 
@@ -1210,8 +1228,18 @@ def boundary_claims(m: PlainModel, p: Part) -> List[Dict[str, Any]]:
         o = part_out(X)
         eff.append((float(np.max(o) - np.min(o)), v))
     eff.sort(key=lambda t: -t[0])
-    mains = [v for _, v in eff[:3]]
-    held = [v.base for _, v in eff[3:]]
+    # the main inputs: biggest effect first, skipping a near-duplicate of one already chosen (e.g.
+    # daytime minutes and daytime charge: their map would put every point on one line)
+    mains = []
+    for _, v in eff:
+        x = np.asarray(v.raw_train, float)
+        dup = any(abs(np.corrcoef(x, np.asarray(w.raw_train, float))[0, 1]) > 0.99 for w in mains
+                  if np.std(x) > 0 and np.std(np.asarray(w.raw_train, float)) > 0)
+        if not dup and len(mains) < 3:
+            mains.append(v)
+    if len(mains) < 2:
+        return []
+    held = [v.base for _, v in eff if v not in mains]
     on_train = on_of(m.X)
     y = m.y
     cats = [m.var_by_base[b] for b in p.variables if m.var_by_base[b].is_category()]
@@ -1268,8 +1296,7 @@ def boundary_claims(m: PlainModel, p: Part) -> List[Dict[str, Any]]:
             rows = rows[(v3.raw_train >= lo) & (v3.raw_train <= hi)]
         pick = rows[np.linspace(0, len(rows) - 1, min(700, len(rows))).round().astype(int)] if len(rows) else rows
         sl1 = []
-        for q in (10, 50, 90):
-            yv = float(np.percentile(v2.raw_train, q))
+        for q, yv in _slice_points(v2):
             X1 = np.repeat(zt[None, :], len(g1), axis=0)
             X1[:, v1.columns[0]] = (g1 - v1.mean[0]) / v1.scale[0]
             X1[:, v2.columns[0]] = (yv - v2.mean[0]) / v2.scale[0]
@@ -1277,8 +1304,7 @@ def boundary_claims(m: PlainModel, p: Part) -> List[Dict[str, Any]]:
                 X1[:, v3.columns[0]] = (np.median(v3.raw_train) - v3.mean[0]) / v3.scale[0]
             sl1.append({"at": sig(yv), "q": q, "z": [sig(z) for z in part_out(X1)]})
         sl2 = []
-        for q in (10, 50, 90):
-            xv = float(np.percentile(v1.raw_train, q))
+        for q, xv in _slice_points(v1):
             X2 = np.repeat(zt[None, :], len(g2), axis=0)
             X2[:, v2.columns[0]] = (g2 - v2.mean[0]) / v2.scale[0]
             X2[:, v1.columns[0]] = (xv - v1.mean[0]) / v1.scale[0]
@@ -1321,8 +1347,11 @@ def boundary_claims(m: PlainModel, p: Part) -> List[Dict[str, Any]]:
             b0 = order[0]
             a0 = coef[b0]
             terms = [m.var_by_base[b0].short or m.var_by_base[b0].label]
+            s0 = float(np.std(m.var_by_base[b0].raw_train)) or 1.0
             for b in order[1:]:
                 r = coef[b] / a0
+                if abs(r) * float(np.std(m.var_by_base[b].raw_train)) < 0.01 * s0:
+                    continue            # moves the line by under 1% of the main input's spread
                 terms.append(("plus" if r > 0 else "minus") + f" about {_fmt_num(abs(r))} × "
                              + (m.var_by_base[b].short or m.var_by_base[b].label))
             thr = -const / a0
@@ -1336,8 +1365,12 @@ def boundary_claims(m: PlainModel, p: Part) -> List[Dict[str, Any]]:
             sel = at_typical if at_typical.any() else np.ones_like(at_typical)
             agree = float(np.mean(pred_on[sel] == on_train[sel])) if a0 else 0.0
     if kind != "plane":
-        # traced on the first map: the boundary as pieces of straight lines
-        mp = maps[0]
+        # traced on the map with the most boundary (the first map when tied): pieces of straight lines
+        ti = max(range(len(maps)), key=lambda i: (len(maps[i]["boundary"]), -i))
+        mp = maps[ti]
+        tx = m.var_by_base[mp["x"]["variable"]]
+        ty = m.var_by_base[mp["y"]["variable"]]
+        others = [v for v in mains if v.base not in (tx.base, ty.base)]
         pts = np.array(mp["boundary"], dtype=float) if mp["boundary"] else np.zeros((0, 2))
         pieces = []
         if len(pts) >= 2:
@@ -1368,7 +1401,7 @@ def boundary_claims(m: PlainModel, p: Part) -> List[Dict[str, Any]]:
                     merged.append(pc)
             pieces = merged
             # the stated ranges stay within the data (the map runs a margin beyond it)
-            y_raw = np.asarray(mains[1].raw_train, float)
+            y_raw = np.asarray(ty.raw_train, float)
             for pc in pieces:
                 pc["y_from"] = sig(max(float(pc["y_from"]), float(y_raw.min())))
                 pc["y_to"] = sig(min(float(pc["y_to"]), float(y_raw.max())))
@@ -1378,19 +1411,29 @@ def boundary_claims(m: PlainModel, p: Part) -> List[Dict[str, Any]]:
             side_above = (sum(right_on) >= len(right_on) / 2.0) if right_on else True
             side_word = "above" if side_above else "below"
             bits = []
+            x_span = float(np.ptp(np.asarray(tx.raw_train, float))) or 1.0
             for pc in pieces[:3]:
-                bits.append(f"{v1n} {'plus' if pc['k'] >= 0 else 'minus'} about {_fmt_num(abs(pc['k']))} × {v2n} "
-                            f"{side_word} about {_fmt_num(pc['threshold'])} (for {v2n} from about "
+                # a term that moves the line by under 1% of the first input's range over this piece
+                # is left out: the line is upright there ("daytime minutes above about 221")
+                small = abs(float(pc["k"]) * (float(pc["y_to"]) - float(pc["y_from"]))) < 0.01 * x_span
+                term = "" if small else (f" {'plus' if pc['k'] >= 0 else 'minus'} about {_fmt_num(abs(pc['k']))} "
+                                         f"× {v2n}")
+                bits.append(f"{v1n}{term} {side_word} about {_fmt_num(pc['threshold'])} (for {v2n} from about "
                             f"{_fmt_num(pc['y_from'])} to {_fmt_num(pc['y_to'])})")
             rule = {"pieces": pieces, "text": "; ".join(bits), "on_side": side_word}
             kind = "kinked" if len(pieces) > 1 else "line"
         # agreement: the traced boundary (interpolated) against the actual on/off of the data
-        if len(pts) >= 2 and not held and len(mains) == 2:
+        if len(pts) >= 2:
             o = np.argsort(pts[:, 1])
-            x2 = np.asarray(mains[1].raw_train, float)
-            x1 = np.asarray(mains[0].raw_train, float)
+            x2 = np.asarray(ty.raw_train, float)
+            x1 = np.asarray(tx.raw_train, float)
             b = np.interp(x2, pts[o, 1], pts[o, 0])
             sel = at_typical & (x2 >= pts[:, 1].min()) & (x2 <= pts[:, 1].max())
+            # the map holds the other numeric inputs at their median: check on the rows near it
+            for v in others + [m.var_by_base[b_] for b_ in held]:
+                xv = np.asarray(v.raw_train, float)
+                lo, hi = np.percentile(xv, [40, 60])
+                sel &= (xv >= lo) & (xv <= hi)
             above = float(np.mean(on_train[sel & (x1 > b)])) if np.any(sel & (x1 > b)) else 0.0
             pred_on = (x1 > b) if above >= 0.5 else (x1 <= b)
             agree = float(np.mean(pred_on[sel] == on_train[sel])) if sel.any() else None
@@ -1403,15 +1446,20 @@ def boundary_claims(m: PlainModel, p: Part) -> List[Dict[str, Any]]:
                           "outcome_rate_on": sig(float(y[on_train].mean())) if n_on else None,
                           "outcome_rate_off": sig(float(y[~on_train].mean())) if n_on < len(y) else None,
                           "agreement": sig(agree) if agree is not None else None,
-                          "agreement_rows": "training rows at the typical level of the part's category inputs"
-                                            if cats else "all training rows"})
+                          "agreement_rows": ("training rows at the typical level of the part's category inputs"
+                                             if cats else "all training rows")
+                                            + ("" if kind == "plane" or (len(mains) == 2 and not held) else
+                                               ", with its other numeric inputs between their 40th and 60th "
+                                               "percentile (the map holds them at the median)")})
     c["estimate"] = {"method": "where the part's switching units are on, from the weights (one hinge unit) or traced "
                                "on a grid (several units); checked against the training rows", "value": agree}
     c["evidence"] = {"maps": maps}
     c["n"] = int(m.X.shape[0])
     c["_ctx"] = None
     checks = {"rule_matches_data": (agree is not None and agree >= 0.99,
-                                    f"the boundary rule matches {agree} of training rows (needs 0.99)")}
+                                    f"the boundary rule matches {agree} of training rows (needs 0.99)"
+                                    if agree is not None else
+                                    "no switch-on line could be traced on the first map to check against the data")}
     if rule is None:
         checks["boundary_found"] = (False, "no switch-on boundary in the observed range")
     return [_finish(c, checks)]
@@ -2172,7 +2220,7 @@ def graph_record(m: PlainModel, parts: List[Part]) -> Dict[str, Any]:
         if rec["kind"] != "hidden" or n not in vals:
             continue
         a = np.asarray(vals[n], dtype=float)
-        on = a > 1e-12
+        on = np.abs(a) > 1e-12      # non-zero (an identity unit can go negative)
         hist, edges_h = np.histogram(a, bins=20)
         act = {"n": int(len(a)), "active_n": int(on.sum()), "hist": [int(h) for h in hist],
                "hist_edges": [sig(e) for e in edges_h]}
@@ -2195,8 +2243,9 @@ def graph_record(m: PlainModel, parts: List[Part]) -> Dict[str, Any]:
 
 
 PARTIAL_MAX = 6          # partial-feature plots per genome
+PARTIAL_PER_PART = 3     # and per part
 PARTIAL_GRID = 41        # points of a 1D curve
-PARTIAL_GRID2 = 25       # points per axis of a 2D map
+PARTIAL_GRID2 = 40       # points per axis of a 2D map
 
 
 def partial_features(m: PlainModel, parts: List[Part], graph: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -2234,7 +2283,12 @@ def partial_features(m: PlainModel, parts: List[Part], graph: Dict[str, Any]) ->
         if len(ins) >= 2:
             cand[n] = f"combines {len(ins)} non-linear units"
     score = {n: float(np.std(vals[n])) * out_w.get(n, 0.0) for n in cand}
-    chosen = sorted(cand, key=lambda n: (-score[n], n))[:PARTIAL_MAX]
+    chosen, per_part = [], {}
+    for n in sorted(cand, key=lambda n: (-score[n], n)):     # at most PARTIAL_PER_PART from one part
+        r = region.get(n)
+        if per_part.get(r, 0) < PARTIAL_PER_PART and len(chosen) < PARTIAL_MAX:
+            chosen.append(n)
+            per_part[r] = per_part.get(r, 0) + 1
     # reproduction check against the evidence engine
     sn_acts = {}
     try:
@@ -2262,12 +2316,14 @@ def partial_features(m: PlainModel, parts: List[Part], graph: Dict[str, Any]) ->
         eff.sort(key=lambda t: -t[0])
         mains = [v for e, v in eff if e > 1e-9][:2]
         rec = {"node": n, "why": cand[n], "region": region.get(n), "importance": sig(score[n]),
-               "active_n": int(np.sum(vals[n] > 1e-12)), "n": int(len(vals[n]))}
+               "active_n": int(np.sum(np.abs(vals[n]) > 1e-12)), "n": int(len(vals[n]))}
         if n in sn_acts and len(sn_acts[n]) == len(vals[n]):
             rec["reproduction_max_abs_err"] = sig(float(np.max(np.abs(sn_acts[n] - vals[n]))))
         rec["inputs"] = []
         for v in mains:
-            grid, _ = grid_for_values(v)
+            grid, ordinal = grid_for_values(v)
+            if not ordinal:               # the whole observed range, so the curve spans the rug
+                grid = np.linspace(float(np.min(v.raw_train)), float(np.max(v.raw_train)), len(grid))
             X = np.repeat(zt[None, :], len(grid), axis=0)
             X[:, v.columns[0]] = (grid - v.mean[0]) / v.scale[0]
             typ = m.ev.forward(X)[n]
@@ -2283,8 +2339,7 @@ def partial_features(m: PlainModel, parts: List[Part], graph: Dict[str, Any]) ->
                                                                      np.linspace(0, 1, 101))]})
         if len(mains) == 2:
             v1, v2 = mains
-            g1 = np.linspace(*np.percentile(v1.raw_train, [1, 99]), PARTIAL_GRID2)
-            g2 = np.linspace(*np.percentile(v2.raw_train, [1, 99]), PARTIAL_GRID2)
+            g1, g2 = _map_axis(v1, PARTIAL_GRID2), _map_axis(v2, PARTIAL_GRID2)
             A, B = np.meshgrid(g1, g2)
             X = np.repeat(zt[None, :], A.size, axis=0)
             X[:, v1.columns[0]] = (A.ravel() - v1.mean[0]) / v1.scale[0]
@@ -2295,9 +2350,9 @@ def partial_features(m: PlainModel, parts: List[Part], graph: Dict[str, Any]) ->
                           "z": [[sig(z) for z in row] for row in Z],
                           "points_x": [sig(x) for x in np.asarray(v1.raw_train, float)[idx]],
                           "points_y": [sig(y) for y in np.asarray(v2.raw_train, float)[idx]],
-                          "slices_at": [sig(x) for x in np.percentile(v2.raw_train, [10, 50, 90])]}
+                          "slices_at": [sig(x) for _, x in _slice_points(v2)]}
             sl = []
-            for y in np.percentile(v2.raw_train, [10, 50, 90]):
+            for _, y in _slice_points(v2):
                 X = np.repeat(zt[None, :], len(g1), axis=0)
                 X[:, v1.columns[0]] = (g1 - v1.mean[0]) / v1.scale[0]
                 X[:, v2.columns[0]] = (y - v2.mean[0]) / v2.scale[0]
@@ -2324,8 +2379,12 @@ def partial_features(m: PlainModel, parts: List[Part], graph: Dict[str, Any]) ->
             read = [code for col, code in zip(cols, v.codes) if col in anc_cols]
             if not read:
                 continue
-            other = next((code for code in v.all_codes if code not in read), None)
-            cats.append((v, read[:4] + ([other] if other is not None else []), other))
+            unread = [code for code in v.all_codes if code not in read]
+            other = unread[0] if unread else None
+            # one level without a column of its own is simply that level (e.g. male against
+            # female); several such levels act as one: "any other ..."
+            oth = other if len(unread) > 1 else None
+            cats.append((v, read[:4] + ([other] if other is not None else []), oth))
         if cats and not mains:
             import itertools
             cats = cats[:3]
@@ -2337,7 +2396,7 @@ def partial_features(m: PlainModel, parts: List[Part], graph: Dict[str, Any]) ->
                     for c, z in v.encode(code).items():
                         X[0, c] = z
                 a = float(m.ev.forward(X)[n][0])
-                rows.append({"levels": [v.level(code)["label"] + (" (a level it does not read)" if code == oth else "")
+                rows.append({"levels": [("any other " + (v.short or v.label)) if code == oth else v.level(code)["label"]
                                         for (v, _, oth), code in zip(cats, combo)], "value": sig(a)})
             rec["categories"] = {"variables": [v.short or v.label for v, _, _ in cats], "rows": rows}
         # (b): the incoming non-linear units, each against its own main input

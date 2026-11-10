@@ -295,7 +295,8 @@ def _cluster_order(corder, items, edges, bottom) -> List[str]:
     return out
 
 
-def _place(items, edges, clusters, subs, top, sweep: Optional[bool] = None) -> Dict[str, Tuple[float, float]]:
+def _place(items, edges, clusters, subs, top, sweep: Optional[bool] = None,
+           owned: bool = False) -> Dict[str, Tuple[float, float]]:
     """Inputs (and incoming stubs) in a row at y = 0, each cluster centred over its inputs, ``top``
     items above everything. With ``sweep`` (default): clusters sharing inputs are adjacent; an
     input used by one cluster sits under it, a shared input at the barycentre of its targets
@@ -354,8 +355,12 @@ def _place(items, edges, clusters, subs, top, sweep: Optional[bool] = None) -> D
                 x0 += widths[i] + GAP * 1.4
             x_end = max(x0 - GAP * 1.4, start + total)
 
-    pos = _input_row(row, users)
-    place_clusters(pos)
+    if owned and all(len(set(users[n])) <= 1 for n in bottom):
+        pos = _place_owned(items, edges, corder, ctitles, subs, top, bottom, lay, users, nw)
+        sweep = False
+    else:
+        pos = _input_row(row, users)
+        place_clusters(pos)
     if sweep:
         for _ in range(3):
             tx: Dict[str, List[float]] = {n: [] for n in bottom}
@@ -372,6 +377,69 @@ def _place(items, edges, clusters, subs, top, sweep: Optional[bool] = None) -> D
     mid = (min(xs) + max(xs)) / 2
     for i, n in enumerate(top):
         pos[n] = (round(mid + (i - (k - 1) / 2.0) * 3.0, 3), round(ytop, 3))
+    return pos
+
+
+def _place_owned(items, edges, corder, ctitles, subs, top, bottom, lay, users, nw):
+    """v5f2: every input copy belongs to exactly one cluster, so each cluster's inputs sit
+    directly beneath it: centred on the cluster's x-span (staggered rows when there are more
+    than fit), the cluster as wide as max(its content, its title, its inputs), clusters left to
+    right in the given order with a fixed gap, and within a cluster the inputs ordered by the
+    x-position of the units they feed (barycentre)."""
+    pos: Dict[str, Tuple[float, float]] = {}
+    own: Dict[str, List[str]] = {c: [] for c in corder}
+    loose = []
+    for n in bottom:
+        (own[corder[users[n][0]]] if users[n] else loose).append(n)
+    x_end = None
+    for c in corder + ([None] if loose else []):
+        bands = [s for s, _ in subs if s[0] == c] + [(c, None)] if c is not None else []
+        rows_of, widths = [], []
+        for b in bands:
+            mem = sorted([n for n in items if items[n]["band"] == b and n not in bottom and n not in top],
+                         key=lambda n: (items[n].get("sort") or "", n))
+            per: Dict[int, List[str]] = {}
+            for n in mem:
+                per.setdefault(lay[n], []).append(n)
+            rows_of.append(per)
+            title = next((t for s, t in subs if s == b), "")
+            w = max([sum(nw(n) for n in r) + (len(r) - 1) * (DX - 0.7) for r in per.values()] or [0.0])
+            widths.append(max(w, len(title) * CHAR) if mem else 0.0)
+        live = [i for i in range(len(bands)) if rows_of[i]]
+        ins = own[c] if c is not None else loose
+        if not live and not ins:
+            continue
+        content = sum(widths[i] for i in live) + GAP * 1.4 * max(0, len(live) - 1)
+        base = max(content, len(ctitles.get(c, "") or "") * 0.2 if c is not None else 0.0)
+        k = len(ins)
+        cols = min(k, max(ROW_WRAP, int(base // DXI))) if k else 0
+        nrows = -(-k // cols) if cols else 0
+        in_w = (cols + (0.5 if nrows > 1 else 0.0)) * DXI
+        W = max(base, in_w, DXI)
+        x0 = 0.0 if x_end is None else x_end + GAP * 2.2
+        x = x0 + (W - content) / 2.0
+        for i in live:
+            for L, r in rows_of[i].items():
+                rw = sum(nw(n) for n in r) + (len(r) - 1) * (DX - 0.7)
+                xx = x + (widths[i] - rw) / 2.0
+                for n in r:
+                    pos[n] = (round(xx + nw(n) / 2.0, 3), round(Y0 + (L - 1) * DY, 3))
+                    xx += nw(n) + (DX - 0.7)
+            x += widths[i] + GAP * 1.4
+        if k:
+            tx: Dict[str, List[float]] = {n: [] for n in ins}
+            for u, v in edges:
+                if u in tx and v in pos:
+                    tx[u].append(pos[v][0])
+            mid = x0 + W / 2.0
+            order = sorted(ins, key=lambda n: ((sum(tx[n]) / len(tx[n])) if tx[n] else mid,
+                                               items[n].get("sort") or "", n))
+            slots = [(cc + (0.5 if r % 2 else 0.0), r) for r in range(nrows) for cc in range(cols)][:k]
+            slots.sort()
+            left = x0 + (W - in_w) / 2.0 + DXI / 2.0
+            for n, (sx, r) in zip(order, slots):
+                pos[n] = (round(left + sx * DXI, 3), round(-r * ROW_STEP, 3))
+        x_end = x0 + W
     return pos
 
 
@@ -495,6 +563,7 @@ def _picture(items, pos, edges_w, clusters, subs, colors, hl, note: str = "") ->
         L.append(f"\\node[font=\\sffamily\\tiny\\bfseries, text={col}!60!black, inner sep=1pt] (subt{si}) at "
                  f"({round((min(xs) + max(xs)) / 2, 3)},{round(max(ys) + 0.5, 3)}) {{{tex(stitle)}}};")
     L.append(r"\begin{scope}[on background layer]")
+    ctitles_after: List[str] = []      # cluster titles drawn over the edges (an edge passes behind them)
     for ci, (ckey, ctitle) in enumerate(clusters):
         mem = [n for n, it in items.items() if it["band"][0] == ckey and it["kind"] not in ("input", "stub_in")]
         if not mem:
@@ -503,9 +572,11 @@ def _picture(items, pos, edges_w, clusters, subs, colors, hl, note: str = "") ->
         tops = " ".join(f"(subt{si})" for si, (sk, _) in enumerate(subs) if sk[0] == ckey
                         and any(items[n]["band"] == sk for n in mem))
         fit = " ".join(f"({_tname(n)})" for n in mem) + " " + tops
-        L.append(f"\\node[fit={fit}, inner sep=8pt, rounded corners=5pt, fill={col}!10, draw={col}!45, "
-                 f"label={{[font=\\sffamily\\scriptsize\\bfseries, text={col}!55!black, anchor=south west, "
-                 f"inner sep=1pt]north west:{tex(ctitle)}}}] {{}};")
+        L.append(f"\\node[fit={fit}, inner sep=8pt, rounded corners=5pt, fill={col}!10, draw={col}!45] "
+                 f"(clu{ci}) {{}};")
+        ctitles_after.append(f"\\node[font=\\sffamily\\scriptsize\\bfseries, text={col}!55!black, anchor=south west, "
+                             f"inner sep=1pt, fill=white, fill opacity=0.85, text opacity=1] at (clu{ci}.north west) "
+                             f"{{{tex(ctitle)}}};")
     for si, (skey, _) in enumerate(subs):
         mem = [n for n, it in items.items() if it["band"] == skey]
         if not mem:
@@ -517,6 +588,7 @@ def _picture(items, pos, edges_w, clusters, subs, colors, hl, note: str = "") ->
     for u, v, w in edges_w:
         L.append(_edge(u, v, w))
     L.append(r"\end{scope}")
+    L.extend(ctitles_after)
     if note:
         L.append("\\node[anchor=north west, font=\\sffamily\\scriptsize, inner sep=0pt, align=left] at "
                  "([yshift=-3mm]current bounding box.south west) {" + note + "};")
@@ -686,7 +758,7 @@ def overview(layer, note: bool = False) -> Tuple[str, Dict[str, Any]]:
     _mark_overview(layer, items, csums)
     drawn = list(ew)
     ew = _merge_groups(ew)
-    pos = _place(items, [(u, v) for u, v, _ in ew], clusters, subs, [out])
+    pos = _place(items, [(u, v) for u, v, _ in ew], clusters, subs, [out], owned=True)
     text = ""
     if note:
         text = tex(LEGEND)
@@ -724,14 +796,27 @@ def raw_network(layer) -> Dict[str, Any]:
     raw_edges: Dict[Tuple[str, str], float] = {}
     belongs: Dict[Tuple[str, str], Tuple[str, str]] = {}
     ins = {i: [e for e in g["edges"] if e["to"] == i] for i in ident}
+
+    def sources(i, seen=()):
+        """(origin node, product of weights, edges on the way) for every path into identity node
+        ``i`` from a non-identity node (identity nodes can feed identity nodes)."""
+        out = []
+        for e0 in ins[i]:
+            if e0["from"] in ident and e0["from"] not in seen:
+                for src, w, path in sources(e0["from"], seen + (i,)):
+                    out.append((src, w * e0["weight"], path + [e0]))
+            elif e0["from"] not in ident:
+                out.append((e0["from"], e0["weight"], [e0]))
+        return out
     for e in g["edges"]:
         if e["to"] in ident:
             continue
         if e["from"] in ident:
-            for e0 in ins[e["from"]]:
-                k = (base(e0["from"]), base(e["to"]))
-                raw_edges[k] = raw_edges.get(k, 0.0) + e0["weight"] * e["weight"]
-                belongs[(e0["from"], e0["to"])] = k
+            for src, w, path in sources(e["from"]):
+                k = (base(src), base(e["to"]))
+                raw_edges[k] = raw_edges.get(k, 0.0) + w * e["weight"]
+                for e0 in path:
+                    belongs[(e0["from"], e0["to"])] = k
                 belongs[(e["from"], e["to"])] = k
             continue
         k = (base(e["from"]), base(e["to"]))
@@ -888,7 +973,7 @@ def section(layer, pid) -> Tuple[str, Dict[str, Any]]:
         elif it.get("exit"):
             it["net"] = part_direction(layer, pid)
     ew = _merge_groups(ew)
-    pos = _place(items, [(u, v) for u, v, _ in ew], clusters, subs, tops)
+    pos = _place(items, [(u, v) for u, v, _ in ew], clusters, subs, tops, owned=True)
     tk = _picture(items, pos, ew, clusters, subs, colors, hl)
     return tk, {"edges": {(e["from"], e["to"]) for e in owned},
                 "net": {k: it.get("net") for k, it in items.items() if it["kind"] == "input"},

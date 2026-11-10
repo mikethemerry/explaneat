@@ -611,12 +611,12 @@ def lint_draft_v5(layer: Dict[str, Any], draft: Dict[str, Any]) -> List[str]:
                     errs.append(f"{where}: {p}")
         ev = {cid for s in (sec.get("evidence") or []) for cid in s.get("claims") or []}
         comp = structure_claim(layer, pid, "composition")
-        if comp is not None and comp["id"] not in ev:
+        if comp is not None and comp.get("verified") and comp["id"] not in ev:
             errs.append(f"readdown.{pid}.evidence: say what it is made of and how they combine (cite {comp['id']})")
         for k in by_id[pid].get("children") or []:
             q = by_name.get(k)
             cp = structure_claim(layer, q["id"], "copy") if q else None
-            if cp is not None and cp["id"] not in ev:
+            if cp is not None and cp.get("verified") and cp["id"] not in ev:
                 errs.append(f"readdown.{pid}.evidence: name the copy {q['id']} through its structure claim ({cp['id']})")
     return errs
 
