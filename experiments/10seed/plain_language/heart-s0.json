@@ -66,6 +66,18 @@
    },
    "scope": "model",
    "shape": {
+    "band_risk_p10": [
+     0.00172975,
+     0.0148449,
+     0.115846,
+     0.532445
+    ],
+    "band_risk_p90": [
+     0.965125,
+     0.995862,
+     0.999522,
+     0.999945
+    ],
     "class": "steady",
     "classes_across_patients": {
      "steady": 242
@@ -102,6 +114,109 @@
     "points": {},
     "points_text": {},
     "risk_saturation": "near 100%",
+    "rug": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.672241,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0
+    ],
     "scale": "model score (log-odds)",
     "sensitivity": {
      "x0.75": "steady",
@@ -352,6 +467,164 @@
    },
    "checks": {
     "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.516457,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only on the inputs that feed the model score directly (not through any part)",
+    "odds_ratio": 9.86172,
+    "odds_ratio_range": [
+     9.86171,
+     9.86171
+    ],
+    "range_across_patients": [
+     2.28866,
+     2.28866
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 2.28866
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "an upsloping ST segment",
+     "n": 115
+    },
+    {
+     "label": "a flat ST segment",
+     "n": 110
+    }
+   ],
+   "id": "C03",
+   "key": "ann_31:direct:slope:2",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.516457,
+    "from": 0.228581,
+    "reference": "typical patient",
+    "to": 0.745038
+   },
+   "scope": "direct",
+   "shape": {
+    "class": "categorical",
+    "levels": [
+     {
+      "effect_score": 0.0,
+      "label": "an upsloping ST segment",
+      "n_train": 115,
+      "reference": true,
+      "risk": 0.228581
+     },
+     {
+      "effect_score": 2.28866,
+      "label": "a flat ST segment",
+      "n_train": 110,
+      "reference": false,
+      "risk": 0.745038
+     },
+     {
+      "effect_score": 0.2447,
+      "label": "a downsloping ST segment",
+      "n_train": 17,
+      "reference": false,
+      "risk": 0.274553
+     }
+    ],
+    "ordering_high_to_low": [
+     "a flat ST segment",
+     "a downsloping ST segment",
+     "an upsloping ST segment"
+    ],
+    "reference": "an upsloping ST segment",
+    "scale": "model score (log-odds) relative to the reference level",
+    "status": "verified",
+    "verified": true
+   },
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "the ST segment slopes up at peak exercise",
+      "decoded": true,
+      "group": "patients with an upsloping ST segment",
+      "label": "an upsloping ST segment",
+      "n_train": 115
+     },
+     "to": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "the ST segment is flat at peak exercise",
+      "decoded": true,
+      "group": "patients with a flat ST segment",
+      "label": "a flat ST segment",
+      "n_train": 110
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "slope"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0630725,
+     0.0108297
+    ],
+    "benefit_mean": -0.0226293,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 2.28866,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.0195916
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "slope",
+     "decoded": true,
+     "kind": "category",
+     "label": "slope of the ST segment at peak exercise",
+     "short": "slope of the ST segment at peak exercise",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_31",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "consistent_across_patients": true,
     "non_zero": true
    },
    "confidence": {
@@ -419,7 +692,7 @@
     "share_unaffected": 0.0
    },
    "groups": [],
-   "id": "C03",
+   "id": "C04",
    "key": "ann_31:direction:oldpeak",
    "n": 242,
    "reasons": [
@@ -433,6 +706,92 @@
    },
    "scope": "model",
    "shape": {
+    "band_risk_p10": [
+     0.00330577,
+     0.00351869,
+     0.00374528,
+     0.0039864,
+     0.00424297,
+     0.00451598,
+     0.00480648,
+     0.00511557,
+     0.00544442,
+     0.00579429,
+     0.0061665,
+     0.00656247,
+     0.00698368,
+     0.00743173,
+     0.00790829,
+     0.00841515,
+     0.0089542,
+     0.00952746,
+     0.010137,
+     0.0107852,
+     0.0114743,
+     0.0122069,
+     0.0129857,
+     0.0138134,
+     0.0146931,
+     0.015628,
+     0.0166213,
+     0.0176766,
+     0.0187977,
+     0.0199884,
+     0.0212529,
+     0.0225956,
+     0.0240209,
+     0.0255339,
+     0.0271395,
+     0.028843,
+     0.0306501,
+     0.0325666,
+     0.0345987,
+     0.0367528,
+     0.0390355
+    ],
+    "band_risk_p90": [
+     0.995834,
+     0.996086,
+     0.996323,
+     0.996545,
+     0.996754,
+     0.996951,
+     0.997135,
+     0.997309,
+     0.997472,
+     0.997625,
+     0.997769,
+     0.997904,
+     0.998031,
+     0.99815,
+     0.998262,
+     0.998368,
+     0.998467,
+     0.99856,
+     0.998647,
+     0.998729,
+     0.998806,
+     0.998879,
+     0.998947,
+     0.99901,
+     0.99907,
+     0.999127,
+     0.99918,
+     0.99923,
+     0.999276,
+     0.99932,
+     0.999361,
+     0.9994,
+     0.999437,
+     0.999471,
+     0.999503,
+     0.999533,
+     0.999561,
+     0.999588,
+     0.999613,
+     0.999637,
+     0.999659
+    ],
     "class": "steady",
     "classes_across_patients": {
      "steady": 242
@@ -502,6 +861,109 @@
     "points": {},
     "points_text": {},
     "risk_saturation": null,
+    "rug": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.1,
+     0.1,
+     0.2,
+     0.2,
+     0.2,
+     0.2,
+     0.24,
+     0.3,
+     0.4,
+     0.4,
+     0.404,
+     0.5,
+     0.586,
+     0.6,
+     0.6,
+     0.6,
+     0.75,
+     0.8,
+     0.8,
+     0.8,
+     0.8,
+     0.9,
+     0.996,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.001,
+     1.2,
+     1.2,
+     1.2,
+     1.2,
+     1.306,
+     1.4,
+     1.4,
+     1.4,
+     1.4,
+     1.411,
+     1.5,
+     1.593,
+     1.6,
+     1.6,
+     1.632,
+     1.8,
+     1.8,
+     1.839,
+     1.9,
+     2.0,
+     2.0,
+     2.003,
+     2.2,
+     2.2,
+     2.326,
+     2.567,
+     2.6,
+     2.6,
+     2.8,
+     2.931,
+     3.0,
+     3.026,
+     3.308,
+     3.495,
+     3.6,
+     3.754,
+     4.0,
+     4.2,
+     6.2
+    ],
     "scale": "model score (log-odds)",
     "sensitivity": {
      "x0.75": "steady",
@@ -745,7 +1207,7 @@
     "share_unaffected": 0.0
    },
    "groups": [],
-   "id": "C04",
+   "id": "C05",
    "key": "ann_31:direction:chol",
    "n": 242,
    "reasons": [
@@ -759,6 +1221,92 @@
    },
    "scope": "model",
    "shape": {
+    "band_risk_p10": [
+     0.00105139,
+     0.00115341,
+     0.00126531,
+     0.00138806,
+     0.0015227,
+     0.00167038,
+     0.00183236,
+     0.00201001,
+     0.00220484,
+     0.00241852,
+     0.00265284,
+     0.00290981,
+     0.00319158,
+     0.00350055,
+     0.00383931,
+     0.00421071,
+     0.00461788,
+     0.00506422,
+     0.00555346,
+     0.00608967,
+     0.00667731,
+     0.00732124,
+     0.00802676,
+     0.00879967,
+     0.00964628,
+     0.0105735,
+     0.0115887,
+     0.0127002,
+     0.0139169,
+     0.0152482,
+     0.0167048,
+     0.0182979,
+     0.0200398,
+     0.0219439,
+     0.0240244,
+     0.0262969,
+     0.0287781,
+     0.0314857,
+     0.0344391,
+     0.0376587,
+     0.0411665
+    ],
+    "band_risk_p90": [
+     0.991648,
+     0.992382,
+     0.993052,
+     0.993663,
+     0.994221,
+     0.99473,
+     0.995195,
+     0.995618,
+     0.996005,
+     0.996357,
+     0.996679,
+     0.996972,
+     0.997239,
+     0.997483,
+     0.997705,
+     0.997908,
+     0.998093,
+     0.998262,
+     0.998415,
+     0.998555,
+     0.998683,
+     0.9988,
+     0.998906,
+     0.999003,
+     0.999091,
+     0.999171,
+     0.999245,
+     0.999311,
+     0.999372,
+     0.999428,
+     0.999479,
+     0.999525,
+     0.999567,
+     0.999605,
+     0.99964,
+     0.999672,
+     0.999701,
+     0.999727,
+     0.999752,
+     0.999774,
+     0.999794
+    ],
     "class": "steady",
     "classes_across_patients": {
      "steady": 242
@@ -828,6 +1376,109 @@
     "points": {},
     "points_text": {},
     "risk_saturation": null,
+    "rug": [
+     126.0,
+     152.28,
+     163.28,
+     167.23,
+     174.64,
+     177.0,
+     177.0,
+     182.35,
+     185.28,
+     187.69,
+     193.0,
+     195.51,
+     196.92,
+     197.0,
+     197.74,
+     199.0,
+     199.56,
+     201.0,
+     203.38,
+     204.0,
+     204.0,
+     205.0,
+     207.02,
+     209.43,
+     211.0,
+     212.0,
+     212.0,
+     213.07,
+     214.48,
+     216.0,
+     218.3,
+     220.0,
+     221.0,
+     222.0,
+     223.0,
+     225.0,
+     226.0,
+     226.17,
+     227.58,
+     228.99,
+     229.4,
+     230.81,
+     232.0,
+     233.0,
+     233.04,
+     234.0,
+     235.0,
+     236.27,
+     239.0,
+     240.0,
+     240.0,
+     241.91,
+     243.0,
+     243.73,
+     245.14,
+     246.55,
+     248.96,
+     250.0,
+     251.56,
+     254.0,
+     254.0,
+     255.01,
+     256.0,
+     257.83,
+     259.24,
+     260.65,
+     262.06,
+     263.0,
+     264.0,
+     265.29,
+     266.7,
+     268.0,
+     269.0,
+     269.0,
+     270.0,
+     272.5,
+     274.0,
+     275.0,
+     276.98,
+     279.56,
+     282.8,
+     284.42,
+     287.24,
+     288.03,
+     291.32,
+     294.85,
+     298.0,
+     299.0,
+     303.0,
+     304.98,
+     307.9,
+     309.0,
+     314.44,
+     318.13,
+     323.62,
+     325.95,
+     335.0,
+     340.77,
+     354.26,
+     401.67,
+     417.0
+    ],
     "scale": "model score (log-odds)",
     "sensitivity": {
      "x0.75": "steady",
@@ -1036,7 +1687,7 @@
      "n": 90
     }
    ],
-   "id": "C05",
+   "id": "C06",
    "key": "ann_31:direction:thal:7",
    "n": 242,
    "reasons": [
@@ -1167,6 +1818,156 @@
     "word": null
    },
    "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only on the inputs that feed the model score directly (not through any part)",
+    "odds_ratio": 0.0293858,
+    "odds_ratio_range": [
+     0.0293859,
+     0.0293859
+    ],
+    "range_across_patients": [
+     -3.52724,
+     -3.52724
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": -3.52724
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "male",
+     "n": 159
+    },
+    {
+     "label": "female",
+     "n": 83
+    }
+   ],
+   "id": "C07",
+   "key": "ann_31:direct:sex:0",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -0.219949,
+    "from": 0.228581,
+    "reference": "typical patient",
+    "to": 0.00863223
+   },
+   "scope": "direct",
+   "shape": {
+    "class": "categorical",
+    "levels": [
+     {
+      "effect_score": 0.0,
+      "label": "male",
+      "n_train": 159,
+      "reference": true,
+      "risk": 0.228581
+     },
+     {
+      "effect_score": -3.52724,
+      "label": "female",
+      "n_train": 83,
+      "reference": false,
+      "risk": 0.00863223
+     }
+    ],
+    "ordering_high_to_low": [
+     "male",
+     "female"
+    ],
+    "reference": "male",
+    "scale": "model score (log-odds) relative to the reference level",
+    "status": "verified",
+    "verified": true
+   },
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "the patient is a man",
+      "decoded": true,
+      "group": "men",
+      "label": "male",
+      "n_train": 159
+     },
+     "to": {
+      "code": "0",
+      "codes": [
+       "0"
+      ],
+      "cond": "the patient is a woman",
+      "decoded": true,
+      "group": "women",
+      "label": "female",
+      "n_train": 83
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "strong",
+    "variable": "sex"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.00329875,
+     0.0882258
+    ],
+    "benefit_mean": 0.0355603,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -3.52724,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.0335064
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "sex",
+     "decoded": true,
+     "kind": "category",
+     "label": "sex",
+     "short": "sex",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_31",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.219949,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
     "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
     "odds_ratio": 0.0493888,
     "odds_ratio_range": [
@@ -1195,7 +1996,7 @@
      "n": 83
     }
    ],
-   "id": "C06",
+   "id": "C08",
    "key": "ann_31:direction:sex:0",
    "n": 242,
    "reasons": [
@@ -1343,7 +2144,7 @@
      "n": 22
     }
    ],
-   "id": "C07",
+   "id": "C09",
    "key": "ann_31:direction:cp:1",
    "n": 242,
    "reasons": [
@@ -1507,7 +2308,7 @@
      "n": 70
     }
    ],
-   "id": "C08",
+   "id": "C10",
    "key": "ann_31:direction:cp:3",
    "n": 242,
    "reasons": [
@@ -1674,7 +2475,7 @@
      "n": 15
     }
    ],
-   "id": "C09",
+   "id": "C11",
    "key": "ann_31:direction:thal:6",
    "n": 242,
    "reasons": [
@@ -1870,7 +2671,7 @@
     "share_unaffected": 0.0
    },
    "groups": [],
-   "id": "C10",
+   "id": "C12",
    "key": "ann_31:direction:age",
    "n": 242,
    "reasons": [
@@ -1884,6 +2685,92 @@
    },
    "scope": "model",
    "shape": {
+    "band_risk_p10": [
+     0.00246083,
+     0.00252661,
+     0.00259414,
+     0.00266347,
+     0.00273465,
+     0.00280773,
+     0.00288276,
+     0.00295978,
+     0.00303886,
+     0.00312004,
+     0.00320339,
+     0.00328895,
+     0.00337679,
+     0.00346697,
+     0.00355955,
+     0.00365459,
+     0.00375216,
+     0.00385232,
+     0.00395515,
+     0.00406071,
+     0.00416908,
+     0.00428033,
+     0.00439453,
+     0.00451176,
+     0.00463211,
+     0.00475565,
+     0.00488247,
+     0.00501266,
+     0.0051463,
+     0.00528348,
+     0.0054243,
+     0.00556886,
+     0.00571724,
+     0.00586955,
+     0.0060259,
+     0.00618638,
+     0.00635112,
+     0.00652021,
+     0.00669377,
+     0.00687192,
+     0.00705477
+    ],
+    "band_risk_p90": [
+     0.995851,
+     0.995959,
+     0.996064,
+     0.996166,
+     0.996266,
+     0.996363,
+     0.996457,
+     0.99655,
+     0.996639,
+     0.996727,
+     0.996812,
+     0.996895,
+     0.996976,
+     0.997054,
+     0.997131,
+     0.997206,
+     0.997278,
+     0.997349,
+     0.997418,
+     0.997485,
+     0.997551,
+     0.997615,
+     0.997677,
+     0.997737,
+     0.997796,
+     0.997854,
+     0.99791,
+     0.997964,
+     0.998017,
+     0.998069,
+     0.998119,
+     0.998168,
+     0.998216,
+     0.998262,
+     0.998307,
+     0.998352,
+     0.998395,
+     0.998436,
+     0.998477,
+     0.998517,
+     0.998555
+    ],
     "class": "steady",
     "classes_across_patients": {
      "steady": 242
@@ -1953,6 +2840,109 @@
     "points": {},
     "points_text": {},
     "risk_saturation": null,
+    "rug": [
+     29.0,
+     35.0,
+     37.0,
+     38.23,
+     39.64,
+     41.0,
+     41.0,
+     41.0,
+     41.0,
+     42.0,
+     42.0,
+     42.51,
+     43.0,
+     43.33,
+     44.0,
+     44.0,
+     44.0,
+     44.0,
+     45.0,
+     45.0,
+     45.2,
+     46.0,
+     46.0,
+     47.0,
+     47.0,
+     48.0,
+     48.0,
+     49.0,
+     49.48,
+     50.0,
+     50.3,
+     51.0,
+     51.0,
+     51.0,
+     52.0,
+     52.0,
+     52.0,
+     52.0,
+     52.0,
+     52.99,
+     53.0,
+     53.81,
+     54.0,
+     54.0,
+     54.0,
+     54.0,
+     54.0,
+     55.0,
+     55.0,
+     55.09,
+     56.0,
+     56.0,
+     56.0,
+     57.0,
+     57.0,
+     57.0,
+     57.0,
+     57.0,
+     57.78,
+     58.0,
+     58.0,
+     58.0,
+     58.0,
+     58.0,
+     59.0,
+     59.0,
+     59.0,
+     59.0,
+     59.0,
+     60.0,
+     60.0,
+     60.0,
+     60.52,
+     61.0,
+     61.0,
+     61.75,
+     62.0,
+     62.0,
+     62.98,
+     63.0,
+     63.0,
+     63.21,
+     64.0,
+     64.0,
+     64.0,
+     64.0,
+     65.0,
+     65.0,
+     66.0,
+     66.0,
+     66.0,
+     67.0,
+     67.0,
+     67.0,
+     68.0,
+     68.0,
+     69.0,
+     70.0,
+     70.18,
+     72.77,
+     77.0
+    ],
     "scale": "model score (log-odds)",
     "sensitivity": {
      "x0.75": "steady",
@@ -2159,7 +3149,7 @@
      "n": 42
     }
    ],
-   "id": "C11",
+   "id": "C13",
    "key": "ann_31:direction:cp:2",
    "n": 242,
    "reasons": [
@@ -2325,7 +3315,7 @@
      "n": 119
     }
    ],
-   "id": "C12",
+   "id": "C14",
    "key": "ann_31:direction:restecg:2",
    "n": 242,
    "reasons": [
@@ -2434,6 +3424,157 @@
    },
    "checks": {
     "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.088332,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "meaningful",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only on the inputs that feed the model score directly (not through any part)",
+    "odds_ratio": 1.56572,
+    "odds_ratio_range": [
+     1.56572,
+     1.56572
+    ],
+    "range_across_patients": [
+     0.448346,
+     0.448346
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 0.448346
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "resting ECG other than signs of left ventricular hypertrophy on the resting ECG",
+     "n": 123
+    },
+    {
+     "label": "signs of left ventricular hypertrophy on the resting ECG",
+     "n": 119
+    }
+   ],
+   "id": "C15",
+   "key": "ann_31:direct:restecg:2",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.088332,
+    "from": 0.228581,
+    "reference": "typical patient",
+    "to": 0.316913
+   },
+   "scope": "direct",
+   "shape": {
+    "class": "categorical",
+    "levels": [
+     {
+      "effect_score": 0.448346,
+      "label": "signs of left ventricular hypertrophy on the resting ECG",
+      "n_train": 119,
+      "reference": false,
+      "risk": 0.316913
+     },
+     {
+      "effect_score": 0.0,
+      "label": "resting ECG other than signs of left ventricular hypertrophy on the resting ECG",
+      "n_train": 123,
+      "reference": true,
+      "risk": 0.228581
+     }
+    ],
+    "ordering_high_to_low": [
+     "signs of left ventricular hypertrophy on the resting ECG",
+     "resting ECG other than signs of left ventricular hypertrophy on the resting ECG"
+    ],
+    "reference": "resting ECG other than signs of left ventricular hypertrophy on the resting ECG",
+    "scale": "model score (log-odds) relative to the reference level",
+    "status": "verified",
+    "verified": true
+   },
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "0",
+      "codes": [
+       "0",
+       "1"
+      ],
+      "cond": "resting ECG is something other than signs of left ventricular hypertrophy on the resting ECG",
+      "decoded": true,
+      "group": "patients with resting ECG other than signs of left ventricular hypertrophy on the resting ECG",
+      "label": "resting ECG other than signs of left ventricular hypertrophy on the resting ECG",
+      "n_train": 123
+     },
+     "to": {
+      "code": "2",
+      "codes": [
+       "2"
+      ],
+      "cond": "the resting ECG shows left ventricular hypertrophy",
+      "decoded": true,
+      "group": "patients whose resting ECG shows left ventricular hypertrophy",
+      "label": "signs of left ventricular hypertrophy on the resting ECG",
+      "n_train": 119
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "moderate",
+    "variable": "restecg"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.00763171,
+     0.012931
+    ],
+    "benefit_mean": 0.00215517,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 0.448346,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.000692281
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "restecg",
+     "decoded": true,
+     "kind": "category",
+     "label": "resting ECG",
+     "short": "resting ECG",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_31",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "consistent_across_patients": true,
     "non_zero": true
    },
    "confidence": {
@@ -2512,7 +3653,7 @@
     "share_unaffected": 0.0
    },
    "groups": [],
-   "id": "C13",
+   "id": "C16",
    "key": "ann_31:direction:thalach",
    "n": 242,
    "reasons": [
@@ -2526,6 +3667,92 @@
    },
    "scope": "model",
    "shape": {
+    "band_risk_p10": [
+     0.00540893,
+     0.00534748,
+     0.00528673,
+     0.00522667,
+     0.00516729,
+     0.00510857,
+     0.00505052,
+     0.00499313,
+     0.00493639,
+     0.00488028,
+     0.00482482,
+     0.00476998,
+     0.00471576,
+     0.00466215,
+     0.00460915,
+     0.00455675,
+     0.00450494,
+     0.00445372,
+     0.00440308,
+     0.00435301,
+     0.00430351,
+     0.00425457,
+     0.00420619,
+     0.00415835,
+     0.00411105,
+     0.00406429,
+     0.00401806,
+     0.00397235,
+     0.00392716,
+     0.00388249,
+     0.00383831,
+     0.00379464,
+     0.00375147,
+     0.00370878,
+     0.00366658,
+     0.00362486,
+     0.00358361,
+     0.00354283,
+     0.0035025,
+     0.00346264,
+     0.00342323
+    ],
+    "band_risk_p90": [
+     0.998346,
+     0.998327,
+     0.998308,
+     0.998289,
+     0.998269,
+     0.998249,
+     0.998229,
+     0.998208,
+     0.998188,
+     0.998167,
+     0.998146,
+     0.998124,
+     0.998103,
+     0.998081,
+     0.998059,
+     0.998036,
+     0.998014,
+     0.997991,
+     0.997967,
+     0.997944,
+     0.99792,
+     0.997896,
+     0.997872,
+     0.997848,
+     0.997823,
+     0.997798,
+     0.997772,
+     0.997747,
+     0.997721,
+     0.997694,
+     0.997668,
+     0.997641,
+     0.997614,
+     0.997586,
+     0.997558,
+     0.99753,
+     0.997502,
+     0.997473,
+     0.997444,
+     0.997414,
+     0.997385
+    ],
     "class": "steady",
     "classes_across_patients": {
      "steady": 242
@@ -2595,6 +3822,109 @@
     "points": {},
     "points_text": {},
     "risk_saturation": null,
+    "rug": [
+     71.0,
+     96.0,
+     98.64,
+     105.69,
+     109.0,
+     111.0,
+     112.0,
+     113.87,
+     114.28,
+     115.69,
+     118.2,
+     120.51,
+     122.0,
+     122.33,
+     125.0,
+     125.0,
+     125.0,
+     126.0,
+     128.38,
+     130.0,
+     130.2,
+     131.0,
+     132.0,
+     132.0,
+     133.0,
+     136.0,
+     137.66,
+     138.07,
+     140.0,
+     140.89,
+     142.0,
+     142.0,
+     143.0,
+     143.0,
+     143.94,
+     144.0,
+     144.76,
+     145.0,
+     146.0,
+     146.99,
+     147.0,
+     147.81,
+     148.22,
+     149.63,
+     150.0,
+     150.0,
+     151.0,
+     152.0,
+     152.0,
+     152.0,
+     152.5,
+     153.0,
+     154.0,
+     154.0,
+     155.0,
+     156.0,
+     156.0,
+     157.0,
+     157.0,
+     158.0,
+     159.0,
+     159.01,
+     160.0,
+     160.0,
+     160.24,
+     161.65,
+     162.0,
+     162.0,
+     162.0,
+     163.0,
+     163.0,
+     163.0,
+     163.52,
+     164.93,
+     165.34,
+     166.75,
+     168.0,
+     168.0,
+     169.0,
+     169.0,
+     169.8,
+     170.0,
+     171.0,
+     171.03,
+     172.0,
+     172.0,
+     172.26,
+     173.0,
+     173.08,
+     174.0,
+     175.0,
+     178.0,
+     178.0,
+     179.0,
+     179.54,
+     182.0,
+     184.36,
+     186.0,
+     188.36,
+     193.18,
+     202.0
+    ],
     "scale": "model score (log-odds)",
     "sensitivity": {
      "x0.75": "steady",
@@ -2777,6 +4107,168 @@
     "word": null
    },
    "estimate": {
+    "method": "mean over training patients of the change in the model's log-odds when the variable is changed only on the inputs that feed the model score directly (not through any part)",
+    "odds_ratio": 1.27724,
+    "odds_ratio_range": [
+     1.27724,
+     1.27724
+    ],
+    "range_across_patients": [
+     0.2447,
+     0.2447
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log-odds (model)",
+    "value": 0.2447
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "an upsloping ST segment",
+     "n": 115
+    },
+    {
+     "label": "a downsloping ST segment",
+     "n": 17
+    }
+   ],
+   "id": "C17",
+   "key": "ann_31:direct:slope:3",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.0459725,
+    "from": 0.228581,
+    "reference": "typical patient",
+    "to": 0.274553
+   },
+   "scope": "direct",
+   "shape": {
+    "class": "categorical",
+    "levels": [
+     {
+      "effect_score": 0.0,
+      "label": "an upsloping ST segment",
+      "n_train": 115,
+      "reference": true,
+      "risk": 0.228581
+     },
+     {
+      "effect_score": 2.28866,
+      "label": "a flat ST segment",
+      "n_train": 110,
+      "reference": false,
+      "risk": 0.745038
+     },
+     {
+      "effect_score": 0.2447,
+      "label": "a downsloping ST segment",
+      "n_train": 17,
+      "reference": false,
+      "risk": 0.274553
+     }
+    ],
+    "ordering_high_to_low": [
+     "a flat ST segment",
+     "a downsloping ST segment",
+     "an upsloping ST segment"
+    ],
+    "reference": "an upsloping ST segment",
+    "scale": "model score (log-odds) relative to the reference level",
+    "status": "verified",
+    "verified": true
+   },
+   "small_n": true,
+   "small_n_groups": [
+    "a downsloping ST segment"
+   ],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "the ST segment slopes up at peak exercise",
+      "decoded": true,
+      "group": "patients with an upsloping ST segment",
+      "label": "an upsloping ST segment",
+      "n_train": 115
+     },
+     "to": {
+      "code": "3",
+      "codes": [
+       "3"
+      ],
+      "cond": "the ST segment slopes down at peak exercise",
+      "decoded": true,
+      "group": "patients with a downsloping ST segment",
+      "label": "a downsloping ST segment",
+      "n_train": 17
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "slight",
+    "variable": "slope"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0630725,
+     0.0108297
+    ],
+    "benefit_mean": -0.0226293,
+    "bootstrap_B": 1000,
+    "measure": "test AUC of the full model minus test AUC with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 0.2447,
+    "n": 61,
+    "same_sign": true,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.0195916
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "slope",
+     "decoded": true,
+     "kind": "category",
+     "label": "slope of the ST segment at peak exercise",
+     "short": "slope of the ST segment at peak exercise",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_31",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.0459725,
+    "n_ok": false,
+    "qualifiers": [
+     "slightly",
+     "the model has little data on this",
+     "on the training data only"
+    ],
+    "size": "slight",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
     "method": "mean over training patients of the change in the model's log-odds when the variable is changed everywhere in the model",
     "odds_ratio": 1.27724,
     "odds_ratio_range": [
@@ -2805,7 +4297,7 @@
      "n": 17
     }
    ],
-   "id": "C14",
+   "id": "C18",
    "key": "ann_31:direction:slope:3",
    "n": 242,
    "reasons": [
@@ -2966,7 +4458,7 @@
      "n": 33
     }
    ],
-   "id": "C15",
+   "id": "C19",
    "key": "ann_31:direction:fbs:1",
    "n": 242,
    "reasons": [
@@ -3116,7 +4608,7 @@
      "n": 82
     }
    ],
-   "id": "C16",
+   "id": "C20",
    "key": "ann_31:direction:exang:1",
    "n": 242,
    "reasons": [
@@ -3243,7 +4735,7 @@
     "value": 4.32584
    },
    "groups": [],
-   "id": "C17",
+   "id": "C21",
    "key": "ann_31:magnitude:ca",
    "n": 242,
    "reasons": [
@@ -3257,6 +4749,18 @@
    },
    "scope": "model",
    "shape": {
+    "band_risk_p10": [
+     0.00172975,
+     0.0148449,
+     0.115846,
+     0.532445
+    ],
+    "band_risk_p90": [
+     0.965125,
+     0.995862,
+     0.999522,
+     0.999945
+    ],
     "class": "steady",
     "classes_across_patients": {
      "steady": 242
@@ -3293,6 +4797,109 @@
     "points": {},
     "points_text": {},
     "risk_saturation": "near 100%",
+    "rug": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.672241,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0
+    ],
     "scale": "model score (log-odds)",
     "sensitivity": {
      "x0.75": "steady",
@@ -3413,7 +5020,7 @@
      "n": 110
     }
    ],
-   "id": "C18",
+   "id": "C22",
    "key": "ann_31:magnitude:slope:2",
    "n": 242,
    "reasons": [
@@ -3548,7 +5155,7 @@
     "value": 1.67024
    },
    "groups": [],
-   "id": "C19",
+   "id": "C23",
    "key": "ann_31:magnitude:oldpeak",
    "n": 242,
    "reasons": [
@@ -3562,6 +5169,92 @@
    },
    "scope": "model",
    "shape": {
+    "band_risk_p10": [
+     0.00330577,
+     0.00351869,
+     0.00374528,
+     0.0039864,
+     0.00424297,
+     0.00451598,
+     0.00480648,
+     0.00511557,
+     0.00544442,
+     0.00579429,
+     0.0061665,
+     0.00656247,
+     0.00698368,
+     0.00743173,
+     0.00790829,
+     0.00841515,
+     0.0089542,
+     0.00952746,
+     0.010137,
+     0.0107852,
+     0.0114743,
+     0.0122069,
+     0.0129857,
+     0.0138134,
+     0.0146931,
+     0.015628,
+     0.0166213,
+     0.0176766,
+     0.0187977,
+     0.0199884,
+     0.0212529,
+     0.0225956,
+     0.0240209,
+     0.0255339,
+     0.0271395,
+     0.028843,
+     0.0306501,
+     0.0325666,
+     0.0345987,
+     0.0367528,
+     0.0390355
+    ],
+    "band_risk_p90": [
+     0.995834,
+     0.996086,
+     0.996323,
+     0.996545,
+     0.996754,
+     0.996951,
+     0.997135,
+     0.997309,
+     0.997472,
+     0.997625,
+     0.997769,
+     0.997904,
+     0.998031,
+     0.99815,
+     0.998262,
+     0.998368,
+     0.998467,
+     0.99856,
+     0.998647,
+     0.998729,
+     0.998806,
+     0.998879,
+     0.998947,
+     0.99901,
+     0.99907,
+     0.999127,
+     0.99918,
+     0.99923,
+     0.999276,
+     0.99932,
+     0.999361,
+     0.9994,
+     0.999437,
+     0.999471,
+     0.999503,
+     0.999533,
+     0.999561,
+     0.999588,
+     0.999613,
+     0.999637,
+     0.999659
+    ],
     "class": "steady",
     "classes_across_patients": {
      "steady": 242
@@ -3631,6 +5324,109 @@
     "points": {},
     "points_text": {},
     "risk_saturation": null,
+    "rug": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.1,
+     0.1,
+     0.2,
+     0.2,
+     0.2,
+     0.2,
+     0.24,
+     0.3,
+     0.4,
+     0.4,
+     0.404,
+     0.5,
+     0.586,
+     0.6,
+     0.6,
+     0.6,
+     0.75,
+     0.8,
+     0.8,
+     0.8,
+     0.8,
+     0.9,
+     0.996,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.001,
+     1.2,
+     1.2,
+     1.2,
+     1.2,
+     1.306,
+     1.4,
+     1.4,
+     1.4,
+     1.4,
+     1.411,
+     1.5,
+     1.593,
+     1.6,
+     1.6,
+     1.632,
+     1.8,
+     1.8,
+     1.839,
+     1.9,
+     2.0,
+     2.0,
+     2.003,
+     2.2,
+     2.2,
+     2.326,
+     2.567,
+     2.6,
+     2.6,
+     2.8,
+     2.931,
+     3.0,
+     3.026,
+     3.308,
+     3.495,
+     3.6,
+     3.754,
+     4.0,
+     4.2,
+     6.2
+    ],
     "scale": "model score (log-odds)",
     "sensitivity": {
      "x0.75": "steady",
@@ -3816,7 +5612,7 @@
     "value": 1.71009
    },
    "groups": [],
-   "id": "C20",
+   "id": "C24",
    "key": "ann_31:magnitude:chol",
    "n": 242,
    "reasons": [
@@ -3830,6 +5626,92 @@
    },
    "scope": "model",
    "shape": {
+    "band_risk_p10": [
+     0.00105139,
+     0.00115341,
+     0.00126531,
+     0.00138806,
+     0.0015227,
+     0.00167038,
+     0.00183236,
+     0.00201001,
+     0.00220484,
+     0.00241852,
+     0.00265284,
+     0.00290981,
+     0.00319158,
+     0.00350055,
+     0.00383931,
+     0.00421071,
+     0.00461788,
+     0.00506422,
+     0.00555346,
+     0.00608967,
+     0.00667731,
+     0.00732124,
+     0.00802676,
+     0.00879967,
+     0.00964628,
+     0.0105735,
+     0.0115887,
+     0.0127002,
+     0.0139169,
+     0.0152482,
+     0.0167048,
+     0.0182979,
+     0.0200398,
+     0.0219439,
+     0.0240244,
+     0.0262969,
+     0.0287781,
+     0.0314857,
+     0.0344391,
+     0.0376587,
+     0.0411665
+    ],
+    "band_risk_p90": [
+     0.991648,
+     0.992382,
+     0.993052,
+     0.993663,
+     0.994221,
+     0.99473,
+     0.995195,
+     0.995618,
+     0.996005,
+     0.996357,
+     0.996679,
+     0.996972,
+     0.997239,
+     0.997483,
+     0.997705,
+     0.997908,
+     0.998093,
+     0.998262,
+     0.998415,
+     0.998555,
+     0.998683,
+     0.9988,
+     0.998906,
+     0.999003,
+     0.999091,
+     0.999171,
+     0.999245,
+     0.999311,
+     0.999372,
+     0.999428,
+     0.999479,
+     0.999525,
+     0.999567,
+     0.999605,
+     0.99964,
+     0.999672,
+     0.999701,
+     0.999727,
+     0.999752,
+     0.999774,
+     0.999794
+    ],
     "class": "steady",
     "classes_across_patients": {
      "steady": 242
@@ -3899,6 +5781,109 @@
     "points": {},
     "points_text": {},
     "risk_saturation": null,
+    "rug": [
+     126.0,
+     152.28,
+     163.28,
+     167.23,
+     174.64,
+     177.0,
+     177.0,
+     182.35,
+     185.28,
+     187.69,
+     193.0,
+     195.51,
+     196.92,
+     197.0,
+     197.74,
+     199.0,
+     199.56,
+     201.0,
+     203.38,
+     204.0,
+     204.0,
+     205.0,
+     207.02,
+     209.43,
+     211.0,
+     212.0,
+     212.0,
+     213.07,
+     214.48,
+     216.0,
+     218.3,
+     220.0,
+     221.0,
+     222.0,
+     223.0,
+     225.0,
+     226.0,
+     226.17,
+     227.58,
+     228.99,
+     229.4,
+     230.81,
+     232.0,
+     233.0,
+     233.04,
+     234.0,
+     235.0,
+     236.27,
+     239.0,
+     240.0,
+     240.0,
+     241.91,
+     243.0,
+     243.73,
+     245.14,
+     246.55,
+     248.96,
+     250.0,
+     251.56,
+     254.0,
+     254.0,
+     255.01,
+     256.0,
+     257.83,
+     259.24,
+     260.65,
+     262.06,
+     263.0,
+     264.0,
+     265.29,
+     266.7,
+     268.0,
+     269.0,
+     269.0,
+     270.0,
+     272.5,
+     274.0,
+     275.0,
+     276.98,
+     279.56,
+     282.8,
+     284.42,
+     287.24,
+     288.03,
+     291.32,
+     294.85,
+     298.0,
+     299.0,
+     303.0,
+     304.98,
+     307.9,
+     309.0,
+     314.44,
+     318.13,
+     323.62,
+     325.95,
+     335.0,
+     340.77,
+     354.26,
+     401.67,
+     417.0
+    ],
     "scale": "model score (log-odds)",
     "sensitivity": {
      "x0.75": "steady",
@@ -4093,7 +6078,7 @@
      "n": 90
     }
    ],
-   "id": "C21",
+   "id": "C25",
    "key": "ann_31:magnitude:thal:7",
    "n": 242,
    "reasons": [
@@ -4218,7 +6203,7 @@
     "value": 0.0
    },
    "groups": [],
-   "id": "C22",
+   "id": "C26",
    "key": "ann_31:null:trestbps",
    "n": 242,
    "reasons": [
@@ -4245,6 +6230,61 @@
      "unit": "mm Hg"
     }
    ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_31",
+    "name": "heart_disease_logit"
+   },
+   "checks": {
+    "children_feed_it": true
+   },
+   "estimate": {
+    "method": "graph: enabled non-zero connections from each child's outputs into this part's own nodes; combination checked by a least-squares fit of this part's output on its direct inputs and its children's outputs (training patients)",
+    "value": null
+   },
+   "id": "C27",
+   "key": "ann_31:structure:composition",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "combination": "added",
+    "copies": [],
+    "direct_inputs": [
+     "age",
+     "sex",
+     "cp",
+     "chol",
+     "fbs",
+     "restecg",
+     "thalach",
+     "oldpeak",
+     "slope",
+     "ca",
+     "thal"
+    ],
+    "fed_by_part_names": [
+     "flat_slope_amplifier",
+     "restecg2_relay_2447"
+    ],
+    "fed_by_parts": [
+     "ann_30",
+     "ann_29"
+    ],
+    "feeds": [],
+    "kind": "composition"
+   },
+   "test_check": null,
+   "type": "structure",
+   "variables": [],
    "verified": true
   },
   {
@@ -4296,7 +6336,7 @@
      "n": 110
     }
    ],
-   "id": "C23",
+   "id": "C28",
    "key": "ann_30:direction:slope:2",
    "n": 242,
    "reasons": [
@@ -4447,7 +6487,7 @@
      "n": 82
     }
    ],
-   "id": "C24",
+   "id": "C29",
    "key": "ann_30:direction:exang:1",
    "n": 242,
    "reasons": [
@@ -4613,7 +6653,7 @@
      "n": 119
     }
    ],
-   "id": "C25",
+   "id": "C30",
    "key": "ann_30:direction:restecg:2",
    "n": 242,
    "reasons": [
@@ -4780,7 +6820,7 @@
      "n": 83
     }
    ],
-   "id": "C26",
+   "id": "C31",
    "key": "ann_30:direction:sex:0",
    "n": 242,
    "reasons": [
@@ -4965,7 +7005,7 @@
      "risk_to": 0.804808
     }
    ],
-   "id": "C27",
+   "id": "C32",
    "key": "ann_30:interaction:slopexexang",
    "n": 242,
    "reasons": [
@@ -5294,7 +7334,7 @@
      "n": 131
     }
    ],
-   "id": "C28",
+   "id": "C33",
    "key": "ann_30:subgroup:active",
    "n": 242,
    "reasons": [
@@ -5393,6 +7433,49 @@
   },
   {
    "annotation": {
+    "id": "ann_30",
+    "name": "flat_slope_amplifier"
+   },
+   "checks": {
+    "children_feed_it": true
+   },
+   "estimate": {
+    "method": "graph: enabled non-zero connections from each child's outputs into this part's own nodes; combination checked by a least-squares fit of this part's output on its direct inputs and its children's outputs (training patients)",
+    "value": null
+   },
+   "id": "C34",
+   "key": "ann_30:structure:composition",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "combination": "combined non-additively",
+    "copies": [],
+    "direct_inputs": [
+     "slope"
+    ],
+    "fed_by_part_names": [
+     "female_exertional_angina_gate"
+    ],
+    "fed_by_parts": [
+     "ann_28"
+    ],
+    "feeds": [],
+    "kind": "composition"
+   },
+   "test_check": null,
+   "type": "structure",
+   "variables": [],
+   "verified": true
+  },
+  {
+   "annotation": {
     "id": "ann_28",
     "name": "female_exertional_angina_gate"
    },
@@ -5438,7 +7521,7 @@
      "n": 82
     }
    ],
-   "id": "C29",
+   "id": "C35",
    "key": "ann_28:direction:exang:1",
    "n": 242,
    "reasons": [
@@ -5603,7 +7686,7 @@
      "n": 119
     }
    ],
-   "id": "C30",
+   "id": "C36",
    "key": "ann_28:direction:restecg:2",
    "n": 242,
    "reasons": [
@@ -5769,7 +7852,7 @@
      "n": 83
     }
    ],
-   "id": "C31",
+   "id": "C37",
    "key": "ann_28:direction:sex:0",
    "n": 242,
    "reasons": [
@@ -5954,7 +8037,7 @@
      "risk_to": 0.00863223
     }
    ],
-   "id": "C32",
+   "id": "C38",
    "key": "ann_28:interaction:sexxrestecg",
    "n": 242,
    "reasons": [
@@ -6187,7 +8270,7 @@
      "risk_to": 0.00863223
     }
    ],
-   "id": "C33",
+   "id": "C39",
    "key": "ann_28:interaction:sexxexang",
    "n": 242,
    "reasons": [
@@ -6420,7 +8503,7 @@
      "risk_to": 0.228581
     }
    ],
-   "id": "C34",
+   "id": "C40",
    "key": "ann_28:interaction:exangxrestecg",
    "n": 242,
    "reasons": [
@@ -6730,7 +8813,7 @@
      "n": 234
     }
    ],
-   "id": "C35",
+   "id": "C41",
    "key": "ann_28:subgroup:active",
    "n": 242,
    "reasons": [
@@ -6824,6 +8907,39 @@
   },
   {
    "annotation": {
+    "id": "ann_28",
+    "name": "female_exertional_angina_gate"
+   },
+   "checks": {
+    "reproduces": true
+   },
+   "estimate": {
+    "method": "the part's extracted function (AnnotationFunction) evaluated on its entries against its outputs in a full forward pass, training patients",
+    "value": 4.44089e-16
+   },
+   "id": "C42",
+   "key": "ann_28:structure:formula",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "kind": "formula",
+    "max_abs_err": 4.44089e-16,
+    "n": 242
+   },
+   "test_check": null,
+   "type": "structure",
+   "variables": [],
+   "verified": true
+  },
+  {
+   "annotation": {
     "id": "ann_29",
     "name": "restecg2_relay_2447"
    },
@@ -6872,7 +8988,7 @@
      "n": 119
     }
    ],
-   "id": "C36",
+   "id": "C43",
    "key": "ann_29:direction:restecg:2",
    "n": 242,
    "reasons": [
@@ -6991,7 +9107,7 @@
     "value": 0.0066687
    },
    "groups": [],
-   "id": "C37",
+   "id": "C44",
    "key": "ann_29:null:inert",
    "n": 242,
    "reasons": [
@@ -7019,9 +9135,42 @@
     }
    ],
    "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_29",
+    "name": "restecg2_relay_2447"
+   },
+   "checks": {
+    "reproduces": true
+   },
+   "estimate": {
+    "method": "the part's extracted function (AnnotationFunction) evaluated on its entries against its outputs in a full forward pass, training patients",
+    "value": 0.0
+   },
+   "id": "C45",
+   "key": "ann_29:structure:formula",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "kind": "formula",
+    "max_abs_err": 0.0,
+    "n": 242
+   },
+   "test_check": null,
+   "type": "structure",
+   "variables": [],
+   "verified": true
   }
  ],
- "claims_hash": "2717d7f9ef1fc91b852d22cba96303bf66396a96de8dea11104a644dd14164b7",
+ "claims_hash": "a05752dd607435b63454e526ec7fa1bfc08c4fc0d7fa5052b69b60ca63dcb5b0",
  "codebook": {
   "checks": [
    {
@@ -7041,8 +9190,8 @@
  "counts": {
   "by_type": {
    "direction": [
-    24,
-    24
+    28,
+    28
    ],
    "interaction": [
     4,
@@ -7069,207 +9218,59 @@
     0
    ]
   },
-  "claims": 37,
+  "claims": 45,
   "clearly": 5,
   "not_supported": 0,
-  "verified": 37
+  "verified": 45
  },
  "dataset": {
   "id": "eea247c2-bdb7-41af-8ec1-9e26dcb5050d",
   "name": "Heart Disease (binary, prepared)"
  },
  "drafted": {
-  "annotations": {
-   "ann_28": [
-    {
-     "claims": [
-      "C35"
-     ],
-     "text": "This part acts on only 8 of 242 training patients (3%), women whose chest pain is brought on by exercise; 7 of them had heart disease."
-    },
-    {
-     "claims": [
-      "C35"
-     ],
-     "text": "For the typical patient it acts on (a 62-year-old woman with chest pain on exercise, a normal resting ECG, a flat ST segment and resting blood pressure of 145 mm Hg), it raises the predicted risk from about 12% to about 92% (the model has little data on this, n = 8)."
-    },
-    {
-     "claims": [
-      "C29",
-      "C31"
-     ],
-     "text": "Through it, chest pain brought on by exercise raises that patient's predicted risk from about 12% to about 92%, and being a woman rather than a man does the same."
-    },
-    {
-     "claims": [
-      "C30"
-     ],
-     "text": "Signs of left ventricular hypertrophy on the resting ECG switch it off, bringing the risk back down from about 92% to about 12%."
-    },
-    {
-     "claims": [
-      "C32",
-      "C33"
-     ],
-     "text": "Across the whole model, being a woman lowers the predicted risk, more so if the resting ECG shows left ventricular hypertrophy (from about 33% to about 1%, against about 23% to about 1% otherwise) and if exercise does not bring on chest pain (to about 1%, against about 4% with it)."
-    },
-    {
-     "claims": [
-      "C34"
-     ],
-     "text": "Chest pain on exercise adds to the predicted risk only if the resting ECG shows no left ventricular hypertrophy, and a typical patient stays at about 23% either way."
-    }
-   ],
-   "ann_29": [
-    {
-     "claims": [
-      "C37"
-     ],
-     "text": "This part barely changes the predictions."
-    },
-    {
-     "claims": [
-      "C36"
-     ],
-     "text": "Through it, signs of left ventricular hypertrophy on the resting ECG raise a typical patient's predicted risk from about 23% to about 24%."
-    }
-   ],
-   "ann_30": [
-    {
-     "claims": [
-      "C28"
-     ],
-     "text": "This part acts on 111 of 242 training patients (46%), all of them patients with a flat ST segment; 72 of them had heart disease."
-    },
-    {
-     "claims": [
-      "C28"
-     ],
-     "text": "For the typical patient it acts on (a 58-year-old man with a flat ST segment, 1.2 mm of ST depression, signs of left ventricular hypertrophy on the resting ECG and a reversible thallium defect), it raises the predicted risk from about 96% to about 97%."
-    },
-    {
-     "claims": [
-      "C23"
-     ],
-     "text": "Through it, a flat ST segment raises a typical patient's predicted risk from about 23% to about 29%."
-    },
-    {
-     "claims": [
-      "C27"
-     ],
-     "text": "The rise from a flat ST segment is a little larger if exercise brings on chest pain, though for a typical patient it goes from about 23% to about 80% either way."
-    },
-    {
-     "claims": [
-      "C26",
-      "C25",
-      "C24"
-     ],
-     "text": "Through this part, being a woman, signs of left ventricular hypertrophy on the resting ECG and chest pain on exercise each barely move the predicted risk of the typical patient it acts on, which stays at about 97%."
-    }
-   ],
-   "ann_31": [
-    {
-     "claims": [
-      "C07",
-      "C08",
-      "C11"
-     ],
-     "text": "For a typical patient, the model gives a lower predicted risk of heart disease with typical angina (about 1%), non-anginal chest pain (about 2%) or atypical angina (about 12%) than with no chest pain symptoms (about 23%)."
-    },
-    {
-     "claims": [
-      "C01",
-      "C17"
-     ],
-     "text": "Each extra vessel coloured by fluoroscopy adds about the same: going from 0 to 2 vessels raises a typical patient's predicted risk from about 23% to about 96%, flattening out near the top because the predicted risk cannot go much higher."
-    },
-    {
-     "claims": [
-      "C02",
-      "C18",
-      "C05",
-      "C21"
-     ],
-     "text": "A flat rather than upsloping ST segment raises it to about 80%, and a reversible defect on the thallium scan to about 47%."
-    },
-    {
-     "claims": [
-      "C03",
-      "C19",
-      "C04",
-      "C20",
-      "C10"
-     ],
-     "text": "More ST depression on exercise, higher cholesterol and older age each raise it steadily: from about 16% at 0 mm to about 50% at 2.8 mm, from about 13% at 193 mg/dL to about 45% at 308 mg/dL, and from about 17% at 42 to about 28% at 66 years."
-    },
-    {
-     "claims": [
-      "C06",
-      "C12"
-     ],
-     "text": "Being a woman lowers it from about 23% to about 1%, and signs of left ventricular hypertrophy on the resting ECG raise it to about 33%; both also act through the flat ST segment part."
-    },
-    {
-     "claims": [
-      "C13",
-      "C15"
-     ],
-     "text": "A higher maximum heart rate lowers it steadily, from about 26% at 118 to about 21% at 175 beats per minute, and fasting blood sugar above 120 mg/dL lowers it to about 19%."
-    },
-    {
-     "claims": [
-      "C09",
-      "C14"
-     ],
-     "text": "A fixed defect on the thallium scan lowers it to about 8% and a downsloping ST segment raises it to about 27% (the model has little data on this, n = 15 and 17)."
-    },
-    {
-     "claims": [
-      "C22"
-     ],
-     "text": "It ignores resting blood pressure."
-    }
-   ]
-  },
+  "annotations": {},
   "blocks": [
    {
     "block": "additive",
     "sentences": [
      {
       "claims": [
+       "C09",
+       "C10",
+       "C13",
        "C07",
-       "C08",
-       "C11",
-       "C05",
-       "C15"
+       "C16",
+       "C19"
       ],
-      "text": "These add up independently: compared with no chest pain symptoms, typical angina lowers the predicted risk from about 23% to about 1%, non-anginal chest pain to about 2% and atypical angina to about 12%; a reversible defect on the thallium scan raises it to about 47%, and fasting blood sugar above 120 mg/dL lowers it to about 19%."
+      "label": "Lowering the risk",
+      "text": "These add up independently, and these lower the risk: compared with no chest pain symptoms, typical angina takes a typical patient's predicted risk from about 23% to about 1%, non-anginal chest pain to about 2% and atypical angina to about 12%; through this sum alone, being a woman lowers it to about 1% (being a woman also acts through the flat ST segment booster, below); a higher maximum heart rate lowers it steadily, from about 26% at 118 to about 21% at 175 beats per minute, and fasting blood sugar above 120 mg/dL lowers it to about 19%."
      },
      {
       "claims": [
        "C01",
-       "C03",
-       "C04",
-       "C10",
-       "C13"
-      ],
-      "text": "Each extra vessel coloured by fluoroscopy adds about the same (from about 23% at 0 to about 96% at 2 vessels, flattening out near the top because the predicted risk cannot go much higher); more ST depression on exercise (from about 16% at 0 mm to about 50% at 2.8 mm), higher cholesterol (from about 13% at 193 mg/dL to about 45% at 308 mg/dL) and older age (from about 17% at 42 to about 28% at 66 years) raise it steadily, and a higher maximum heart rate lowers it steadily, from about 26% at 118 to about 21% at 175 beats per minute."
-     },
-     {
-      "claims": [
        "C06",
-       "C02",
+       "C04",
+       "C05",
        "C12"
       ],
-      "text": "Sex, the resting ECG and the slope of the ST segment also enter this sum, and act through the part below as well: across the whole model, being a woman lowers a typical patient's risk from about 23% to about 1%, a flat rather than upsloping ST segment raises it to about 80%, and signs of left ventricular hypertrophy on the resting ECG to about 33%."
+      "label": "Raising the risk",
+      "text": "Each extra vessel coloured by fluoroscopy adds about the same, from about 23% at 0 to about 96% at 2 vessels, flattening out near the top because the predicted risk cannot go much higher; a reversible defect on the thallium scan raises it to about 47%; and more ST depression on exercise (from about 16% at 0 mm to about 50% at 2.8 mm), higher cholesterol (from about 13% at 193 mg/dL to about 45% at 308 mg/dL) and older age (from about 17% at 42 to about 28% at 66 years) raise it steadily."
      },
      {
       "claims": [
-       "C09",
-       "C14"
+       "C03",
+       "C15"
       ],
-      "text": "Two less common results also count (the model has little data on this, n = 15 and 17): a fixed defect on the thallium scan lowers the risk to about 8%, and a downsloping ST segment raises it to about 27%."
+      "text": "Through this sum alone, a flat rather than upsloping ST segment raises it to about 75% and signs of left ventricular hypertrophy on the resting ECG to about 32%; both also act through the parts below."
+     },
+     {
+      "claims": [
+       "C11",
+       "C17",
+       "C26"
+      ],
+      "label": "Rare results",
+      "text": "Two less common results also count (the model has little data on this, n = 15 and 17): a fixed defect on the thallium scan lowers the risk to about 8%, and through this sum alone a downsloping ST segment raises it to about 27%; the model ignores resting blood pressure."
      }
     ]
    },
@@ -7278,213 +9279,350 @@
     "sentences": [
      {
       "claims": [
-       "C28"
+       "C34",
+       "C33"
       ],
-      "text": "This part combines the slope of the ST segment with a smaller part that reads sex, the resting ECG and chest pain on exercise, and acts on 111 of 242 training patients, all of them with a flat ST segment; 72 of them had heart disease."
+      "text": "This part combines the slope of the ST segment with a smaller part that reads sex, the resting ECG and chest pain on exercise, not as a simple sum, and acts on 111 of 242 training patients, nearly all with a flat ST segment, 72 of whom had heart disease; for the typical patient it acts on, the predicted risk is about 96% without it and about 97% with it."
      },
      {
       "claims": [
-       "C23"
+       "C28"
       ],
       "text": "Through it, a flat ST segment raises a typical patient's predicted risk from about 23% to about 29%."
      },
      {
       "claims": [
-       "C35"
+       "C41"
       ],
       "text": "The smaller part inside it switches on only for women whose chest pain is brought on by exercise, and raises the predicted risk of the typical such patient from about 12% to about 92% (the model has little data on this, n = 8)."
      },
      {
       "claims": [
-       "C32"
+       "C38"
       ],
       "text": "Across the whole model, being a woman lowers the predicted risk more when the resting ECG shows left ventricular hypertrophy: it falls from about 33% to about 1% with those signs, against about 23% to about 1% without them."
      }
     ]
+   },
+   {
+    "block": "ann_29",
+    "sentences": [
+     {
+      "claims": [
+       "C44",
+       "C43"
+      ],
+      "text": "This part relays the resting ECG and barely changes the predictions: through it, signs of left ventricular hypertrophy raise a typical patient's predicted risk from about 23% to about 24%."
+     }
+    ]
    }
   ],
-  "claims_hash": "2717d7f9ef1fc91b852d22cba96303bf66396a96de8dea11104a644dd14164b7",
-  "drafted_at": "2026-11-09T03:46:27+00:00",
+  "claims_hash": "a05752dd607435b63454e526ec7fa1bfc08c4fc0d7fa5052b69b60ca63dcb5b0",
+  "drafted_at": "2026-11-10T03:00:36+00:00",
   "drafted_by": "ai-assisted",
-  "hypothesis_revisions": {
-   "ann_28": {
-    "claims": [
-     "C35",
-     "C29",
-     "C31",
-     "C30"
-    ],
-    "original": "Hypothesis: node 665 is a three-way AND gate that fires only for women (sex:0 set) with exercise-induced angina (exang:0 unset, i.e. exang=yes) and no left-ventricular hypertrophy on resting ECG (restecg:2 unset). The restecg:2 chain 2349 -> 2771 never leaves the ReLU linear region on standardized one-hot inputs (2349 in [1.15,3.11], 2771 in [1.99,3.72]), so the gate collapses exactly to relu(1.41 sex:0 - 1.71 exang:0 - 1.18 restecg:2 - 3.39). Evidence (train, n=242): pre-activation max is 2.117, reached only when all three conditions hold; removing any one condition drives it negative (no female: -0.86; no exang: -2.53; LVH present: -0.24). The gate is active on 8/242 rows (3.3%), always at the single value 2.117, and 7 of those 8 are positive cases. Closed form matches the forward pass (check_explanation closed-form err 0.0049, numeric err 0).",
-    "proposed": "A part that acts only on 8 women whose chest pain is brought on by exercise and raises their predicted risk from about 12% to about 92%; signs of left ventricular hypertrophy on the resting ECG switch it off.",
-    "status": "proposed (not applied)"
-   },
-   "ann_29": {
-    "claims": [
-     "C37",
-     "C36"
-    ],
-    "original": "Hypothesis: node 2447 is an always-active affine relay of restecg:2 (LVH on resting ECG). Evidence (train): pre-activation in [0.485, 2.516], so the ReLU never clips; through its 0.026 output weight it adds 0.026*1.02 = 0.026 per SD of restecg:2 to the logit (logit-term SD 0.026 vs total logit SD 4.3), i.e. it is practically inert and simply nudges the direct restecg:2 weight from 0.224 to 0.250. Closed-form err 0.0083 (3-s.f. rounding).",
-    "proposed": "A part that barely changes the predictions; through it, signs of left ventricular hypertrophy on the resting ECG raise a typical patient's predicted risk from about 23% to about 24%.",
-    "status": "proposed (not applied)"
-   },
-   "ann_30": {
-    "claims": [
-     "C28",
-     "C23"
-    ],
-    "original": "Hypothesis: serial composition H(G(sex:0, exang:0, restecg:2), slope:2). Node 3598 = relu(1.51 slope:2 + 1.05 G - 0.76) and node 1650 = relu(1.29 G + 1.31*3598 - 0.73). Because G takes only the values 0 or 2.117 and slope:2 is binary, 1650 has exactly four regimes on train: G=0 & slope not flat -> 0 (n=131, 27% positive); G=0 & flat slope (slope:2) -> 0.446 (n=103, 63% positive); G on & slope not flat -> 2.097 (n=1, negative); G on & flat slope -> 6.092 (n=7, all positive). So without the gate it is a small additional flat-ST-slope bonus (+0.34 logit after the 0.772 output weight, on top of the direct slope:2 weight); with the gate it amplifies the female-exertional-angina signal, and the flat-slope ReLU 3598 makes the two conditions super-additive (6.09 vs 0.45+2.10). Evidence: activation_profile on node 1650 (train): active 45.9%, mean 0.375, SD 1.018, max 6.092; values confirmed by local forward pass.",
-    "proposed": "A part that acts on patients with a flat ST segment and raises their predicted risk: through it a flat ST segment takes a typical patient from about 23% to about 29%, and the typical patient it acts on from about 96% to about 97%.",
-    "status": "proposed (not applied)"
-   },
-   "ann_31": {
-    "claims": [
-     "C07",
-     "C08",
-     "C11",
-     "C01",
-     "C02",
-     "C03",
-     "C05",
-     "C04",
-     "C10",
-     "C12",
-     "C06",
-     "C22"
-    ],
-    "original": "Hypothesis: additive composition. The logit z of node 0 is a linear score over 17 direct standardized inputs (dominated by ca 1.93, sex:1 1.67, cp:4 1.21, slope:2 1.05, chol 0.72, oldpeak 0.71) plus 0.772 x flat_slope_amplifier plus 0.026 x restecg2_relay; 7 inputs (trestbps, fbs:0, restecg:0, restecg:1, exang:1, thal:3, thal:4) are disconnected. get_formula shows node 0 as ReLU, but for this binary task the model output is sigmoid(z) on the pre-activation (compute_performance train AUC 0.945 equals AUC of z; sigmoid(relu(z)) would give 0.912). Evidence (train, n=242, local forward passes): direct-linear logit SD 4.33 vs amplifier term SD 0.79 vs relay term SD 0.026. Dropping the amplifier term lowers train AUC 0.945 -> 0.930 and accuracy 0.888 -> 0.868; the direct linear part alone gives AUC 0.931. So the network is essentially logistic regression plus one sparse nonlinear correction: a flat-slope bonus (+0.34 logit) and a large boost (+4.7 logit) for the 7 women with exertional angina, no LVH and flat ST slope. Kernel SHAP on the full model (train) ranks ca 0.149, sex:1 0.130, slope:2 0.121, cp:4 0.116, oldpeak 0.049, thal:7 0.046, chol 0.044 (mean |SHAP| on probability). Function preservation after the two input splits: max abs err 1.8e-15.",
-    "proposed": "Typical angina, non-anginal chest pain and atypical angina lower the predicted risk compared with no chest pain symptoms. More vessels coloured, a flat ST segment, more ST depression, a reversible thallium defect, higher cholesterol, older age and signs of left ventricular hypertrophy raise it; being a woman lowers it. The model ignores resting blood pressure.",
-    "status": "proposed (not applied)"
-   }
-  },
+  "hypothesis_revisions": {},
   "lead": [
    {
     "claims": [
-     "C28"
+     "C27",
+     "C33",
+     "C44"
     ],
-    "text": "For a typical patient (a 56-year-old man with no chest pain symptoms and median test results) the model predicts a risk of heart disease of about 23%; most of its inputs add up independently, and one part, with a smaller part inside it, changes that sum for the 111 of 242 training patients with a flat ST segment."
+    "text": "For a typical patient (a 56-year-old man with no chest pain symptoms and median test results) the model predicts a risk of heart disease of about 23%; it adds up most of its inputs independently, and one part, with a smaller part inside it, adds to that sum for the 111 of 242 training patients with a flat ST segment, while a second part barely changes it."
    }
   ],
   "protocol": ".claude/skills/plain-language-explanations/SKILL.md",
+  "readdown": {
+   "ann_28": {
+    "evidence": [
+     {
+      "claims": [
+       "C41"
+      ],
+      "text": "It acts on 8 of 242 training patients, all of them women whose chest pain is brought on by exercise, and 7 of them had heart disease (the model has little data on this, n = 8)."
+     },
+     {
+      "claims": [
+       "C35",
+       "C37",
+       "C36"
+      ],
+      "text": "For the typical patient it acts on, chest pain brought on by exercise and being a woman each take the predicted risk from about 12% to about 92% through it, and signs of left ventricular hypertrophy on the resting ECG take it from about 92% back to about 12%."
+     },
+     {
+      "claims": [
+       "C38",
+       "C39"
+      ],
+      "text": "Across the whole model, being a woman lowers a typical patient's risk more when the resting ECG shows left ventricular hypertrophy (from about 33% to about 1%, against about 23% to about 1% without), and more when exercise does not bring on chest pain (from about 23% to about 1%, against about 23% to about 4% when it does)."
+     },
+     {
+      "claims": [
+       "C40"
+      ],
+      "text": "Through it, chest pain on exercise adds to the risk only if the resting ECG shows no left ventricular hypertrophy, though for a typical patient the predicted risk stays at about 23%."
+     },
+     {
+      "claims": [
+       "C42"
+      ],
+      "text": "Its formula reproduces the part exactly on all 242 training patients."
+     }
+    ],
+    "hypothesis": [
+     {
+      "claims": [
+       "C41"
+      ],
+      "text": "This part switches on only for women whose chest pain is brought on by exercise, and then raises the predicted risk of the typical such patient from about 12% to about 92% (the model has little data on this, n = 8)."
+     }
+    ]
+   },
+   "ann_29": {
+    "evidence": [
+     {
+      "claims": [
+       "C43"
+      ],
+      "text": "Through it, signs of left ventricular hypertrophy on the resting ECG raise a typical patient's predicted risk from about 23% to about 24%."
+     },
+     {
+      "claims": [
+       "C45"
+      ],
+      "text": "Its formula reproduces the part exactly on all 242 training patients."
+     }
+    ],
+    "hypothesis": [
+     {
+      "claims": [
+       "C44"
+      ],
+      "text": "This part relays the resting ECG and barely changes the predictions."
+     }
+    ]
+   },
+   "ann_30": {
+    "evidence": [
+     {
+      "claims": [
+       "C34"
+      ],
+      "text": "It is made up of one smaller part, women with chest pain on exercise (explained below), together with the slope of the ST segment itself, combined in a way that is not a simple sum."
+     },
+     {
+      "claims": [
+       "C33"
+      ],
+      "text": "It acts on 111 of 242 training patients, nearly all with a flat ST segment, 72 of whom had heart disease; for the typical patient it acts on, the predicted risk is about 96% without it and about 97% with it."
+     },
+     {
+      "claims": [
+       "C28"
+      ],
+      "text": "Through it, a flat ST segment raises a typical patient's predicted risk from about 23% to about 29%."
+     },
+     {
+      "claims": [
+       "C32"
+      ],
+      "text": "Across the whole model, a flat ST segment takes a typical patient from about 23% to about 80% whether or not exercise brings on chest pain, though through this part it counts more when it does."
+     },
+     {
+      "claims": [
+       "C29",
+       "C30",
+       "C31"
+      ],
+      "text": "For the typical patient it acts on, chest pain on exercise, the resting ECG and sex barely change the predicted risk through it, which stays at about 97%."
+     }
+    ],
+    "hypothesis": [
+     {
+      "claims": [
+       "C28"
+      ],
+      "text": "This part raises the predicted risk for patients with a flat ST segment: through it, a flat ST segment takes a typical patient from about 23% to about 29%."
+     }
+    ]
+   },
+   "ann_31": {
+    "evidence": [
+     {
+      "claims": [
+       "C27"
+      ],
+      "text": "It is made up of the inputs that feed the score directly and two parts, the flat ST segment booster and the resting ECG relay (each explained below); the score is their sum, which was checked on all 242 training patients."
+     },
+     {
+      "claims": [
+       "C02",
+       "C03"
+      ],
+      "text": "Changing one input at a time across the whole model, a flat rather than upsloping ST segment takes a typical patient's predicted risk from about 23% to about 80%, against about 75% through the sum alone."
+     },
+     {
+      "claims": [
+       "C08",
+       "C14"
+      ],
+      "text": "Across the whole model, being a woman lowers it from about 23% to about 1%, and signs of left ventricular hypertrophy on the resting ECG raise it to about 33%."
+     },
+     {
+      "claims": [
+       "C26"
+      ],
+      "text": "The model ignores resting blood pressure."
+     }
+    ],
+    "hypothesis": [
+     {
+      "claims": [
+       "C27",
+       "C01",
+       "C02",
+       "C09",
+       "C26"
+      ],
+      "text": "The model adds up its inputs into one score: the vessels coloured (each extra vessel adding about the same), the ST segment and chest pain type each move the predicted risk on their own, one part adds to that sum for patients with a flat ST segment, and resting blood pressure is ignored."
+     }
+    ]
+   }
+  },
   "stale": false,
   "status": "draft for review",
-  "structure": "blocks-v4",
+  "structure": "readdown-v5",
   "summary": [
    {
     "claims": [
-     "C28"
+     "C27",
+     "C33",
+     "C44"
     ],
-    "text": "For a typical patient (a 56-year-old man with no chest pain symptoms and median test results) the model predicts a risk of heart disease of about 23%; most of its inputs add up independently, and one part, with a smaller part inside it, changes that sum for the 111 of 242 training patients with a flat ST segment."
-   },
-   {
-    "claims": [
-     "C07",
-     "C08",
-     "C11",
-     "C05",
-     "C15"
-    ],
-    "text": "These add up independently: compared with no chest pain symptoms, typical angina lowers the predicted risk from about 23% to about 1%, non-anginal chest pain to about 2% and atypical angina to about 12%; a reversible defect on the thallium scan raises it to about 47%, and fasting blood sugar above 120 mg/dL lowers it to about 19%."
-   },
-   {
-    "claims": [
-     "C01",
-     "C03",
-     "C04",
-     "C10",
-     "C13"
-    ],
-    "text": "Each extra vessel coloured by fluoroscopy adds about the same (from about 23% at 0 to about 96% at 2 vessels, flattening out near the top because the predicted risk cannot go much higher); more ST depression on exercise (from about 16% at 0 mm to about 50% at 2.8 mm), higher cholesterol (from about 13% at 193 mg/dL to about 45% at 308 mg/dL) and older age (from about 17% at 42 to about 28% at 66 years) raise it steadily, and a higher maximum heart rate lowers it steadily, from about 26% at 118 to about 21% at 175 beats per minute."
-   },
-   {
-    "claims": [
-     "C06",
-     "C02",
-     "C12"
-    ],
-    "text": "Sex, the resting ECG and the slope of the ST segment also enter this sum, and act through the part below as well: across the whole model, being a woman lowers a typical patient's risk from about 23% to about 1%, a flat rather than upsloping ST segment raises it to about 80%, and signs of left ventricular hypertrophy on the resting ECG to about 33%."
+    "text": "For a typical patient (a 56-year-old man with no chest pain symptoms and median test results) the model predicts a risk of heart disease of about 23%; it adds up most of its inputs independently, and one part, with a smaller part inside it, adds to that sum for the 111 of 242 training patients with a flat ST segment, while a second part barely changes it."
    },
    {
     "claims": [
      "C09",
-     "C14"
+     "C10",
+     "C13",
+     "C07",
+     "C16",
+     "C19"
     ],
-    "text": "Two less common results also count (the model has little data on this, n = 15 and 17): a fixed defect on the thallium scan lowers the risk to about 8%, and a downsloping ST segment raises it to about 27%."
+    "label": "Lowering the risk",
+    "text": "These add up independently, and these lower the risk: compared with no chest pain symptoms, typical angina takes a typical patient's predicted risk from about 23% to about 1%, non-anginal chest pain to about 2% and atypical angina to about 12%; through this sum alone, being a woman lowers it to about 1% (being a woman also acts through the flat ST segment booster, below); a higher maximum heart rate lowers it steadily, from about 26% at 118 to about 21% at 175 beats per minute, and fasting blood sugar above 120 mg/dL lowers it to about 19%."
+   },
+   {
+    "claims": [
+     "C01",
+     "C06",
+     "C04",
+     "C05",
+     "C12"
+    ],
+    "label": "Raising the risk",
+    "text": "Each extra vessel coloured by fluoroscopy adds about the same, from about 23% at 0 to about 96% at 2 vessels, flattening out near the top because the predicted risk cannot go much higher; a reversible defect on the thallium scan raises it to about 47%; and more ST depression on exercise (from about 16% at 0 mm to about 50% at 2.8 mm), higher cholesterol (from about 13% at 193 mg/dL to about 45% at 308 mg/dL) and older age (from about 17% at 42 to about 28% at 66 years) raise it steadily."
+   },
+   {
+    "claims": [
+     "C03",
+     "C15"
+    ],
+    "text": "Through this sum alone, a flat rather than upsloping ST segment raises it to about 75% and signs of left ventricular hypertrophy on the resting ECG to about 32%; both also act through the parts below."
+   },
+   {
+    "claims": [
+     "C11",
+     "C17",
+     "C26"
+    ],
+    "label": "Rare results",
+    "text": "Two less common results also count (the model has little data on this, n = 15 and 17): a fixed defect on the thallium scan lowers the risk to about 8%, and through this sum alone a downsloping ST segment raises it to about 27%; the model ignores resting blood pressure."
+   },
+   {
+    "claims": [
+     "C34",
+     "C33"
+    ],
+    "text": "This part combines the slope of the ST segment with a smaller part that reads sex, the resting ECG and chest pain on exercise, not as a simple sum, and acts on 111 of 242 training patients, nearly all with a flat ST segment, 72 of whom had heart disease; for the typical patient it acts on, the predicted risk is about 96% without it and about 97% with it."
    },
    {
     "claims": [
      "C28"
-    ],
-    "text": "This part combines the slope of the ST segment with a smaller part that reads sex, the resting ECG and chest pain on exercise, and acts on 111 of 242 training patients, all of them with a flat ST segment; 72 of them had heart disease."
-   },
-   {
-    "claims": [
-     "C23"
     ],
     "text": "Through it, a flat ST segment raises a typical patient's predicted risk from about 23% to about 29%."
    },
    {
     "claims": [
-     "C35"
+     "C41"
     ],
     "text": "The smaller part inside it switches on only for women whose chest pain is brought on by exercise, and raises the predicted risk of the typical such patient from about 12% to about 92% (the model has little data on this, n = 8)."
    },
    {
     "claims": [
-     "C32"
+     "C38"
     ],
     "text": "Across the whole model, being a woman lowers the predicted risk more when the resting ECG shows left ventricular hypertrophy: it falls from about 33% to about 1% with those signs, against about 23% to about 1% without them."
+   },
+   {
+    "claims": [
+     "C44",
+     "C43"
+    ],
+    "text": "This part relays the resting ECG and barely changes the predictions: through it, signs of left ventricular hypertrophy raise a typical patient's predicted risk from about 23% to about 24%."
    }
   ],
   "titles": {
    "additive": "Inputs that add up",
    "ann_28": "Women with chest pain on exercise",
    "ann_29": "Resting ECG relay",
-   "ann_30": "Flat ST segment booster"
+   "ann_30": "Flat ST segment booster",
+   "ann_31": "The whole model"
   },
   "verified_by": null,
   "worth_checking": [
    {
     "claims": [
-     "C22"
+     "C26"
     ],
     "flag": "ignores resting blood pressure",
     "text": "Worth checking: the model ignores resting blood pressure."
    },
    {
     "claims": [
-     "C07",
-     "C08",
-     "C11"
+     "C09",
+     "C10",
+     "C13"
     ],
     "flag": "typical angina lowest risk",
     "text": "Worth checking: patients with typical angina get the lowest predicted risk of all chest pain types, below patients with no chest pain symptoms."
    },
    {
     "claims": [
-     "C09"
+     "C11"
     ],
     "flag": "fixed thallium defect lowers risk",
     "text": "Worth checking: the model treats a fixed defect on the thallium scan as lowering the risk compared with other scan results apart from a reversible defect, from only 15 training patients."
    },
    {
     "claims": [
-     "C15"
+     "C19"
     ],
     "flag": "high fasting blood sugar lowers risk",
     "text": "Worth checking: the model treats fasting blood sugar above 120 mg/dL as lowering the risk of heart disease (for a typical patient from about 23% to about 19%)."
    },
    {
     "claims": [
-     "C35"
+     "C41"
     ],
     "flag": "rare category drives a large effect",
     "text": "Worth checking: one part raises the predicted risk from about 12% to about 92% for 8 training patients, women whose chest pain is brought on by exercise."
    },
    {
     "claims": [
-     "C29",
-     "C30",
-     "C34"
+     "C40",
+     "C36"
     ],
     "flag": "exercise-induced angina matters only with normal resting ECG",
     "text": "Worth checking: in that part, chest pain on exercise raises the risk only for patients without signs of left ventricular hypertrophy on the resting ECG, and those signs lower the predicted risk there."
@@ -7493,6 +9631,846 @@
  },
  "explanation_id": "912f98a4-9140-49ea-8059-9d2312ef566c",
  "genome_id": "e7221bd4-a46a-4c5b-ad27-ab01bbdeb290",
+ "graph": {
+  "depth": {
+   "ann_28": 2,
+   "ann_29": 1,
+   "ann_30": 1,
+   "ann_31": 0
+  },
+  "edges": [
+   {
+    "from": "-1",
+    "to": "0",
+    "weight": 0.254621
+   },
+   {
+    "from": "-3",
+    "to": "0",
+    "weight": 1.67439
+   },
+   {
+    "from": "-4",
+    "to": "0",
+    "weight": -0.196238
+   },
+   {
+    "from": "-5",
+    "to": "0",
+    "weight": 0.610381
+   },
+   {
+    "from": "-6",
+    "to": "0",
+    "weight": -0.122944
+   },
+   {
+    "from": "-7",
+    "to": "0",
+    "weight": 1.20509
+   },
+   {
+    "from": "-9",
+    "to": "0",
+    "weight": 0.716202
+   },
+   {
+    "from": "-11",
+    "to": "0",
+    "weight": -0.0842972
+   },
+   {
+    "from": "-15",
+    "to": "0",
+    "weight": -0.106021
+   },
+   {
+    "from": "-18",
+    "to": "0",
+    "weight": 0.707112
+   },
+   {
+    "from": "-19",
+    "to": "0",
+    "weight": -0.0861515
+   },
+   {
+    "from": "-21",
+    "to": "0",
+    "weight": 0.0184477
+   },
+   {
+    "from": "-22",
+    "to": "0",
+    "weight": 1.92896
+   },
+   {
+    "from": "-25",
+    "to": "0",
+    "weight": -0.302063
+   },
+   {
+    "from": "-26",
+    "to": "0",
+    "weight": 0.526533
+   },
+   {
+    "from": "-2",
+    "to": "665",
+    "weight": 1.41134
+   },
+   {
+    "from": "1650",
+    "to": "0",
+    "weight": 0.771952
+   },
+   {
+    "from": "2447",
+    "to": "0",
+    "weight": 0.0258437
+   },
+   {
+    "from": "-16",
+    "to": "665",
+    "weight": -1.71449
+   },
+   {
+    "from": "2349",
+    "to": "665",
+    "weight": -0.716809
+   },
+   {
+    "from": "2771",
+    "to": "665",
+    "weight": -0.554779
+   },
+   {
+    "from": "665",
+    "to": "1650",
+    "weight": 1.29262
+   },
+   {
+    "from": "665",
+    "to": "3598",
+    "weight": 1.04573
+   },
+   {
+    "from": "2349",
+    "to": "2771",
+    "weight": 0.882805
+   },
+   {
+    "from": "3598",
+    "to": "1650",
+    "weight": 1.31439
+   },
+   {
+    "from": "-14_a",
+    "to": "0",
+    "weight": 0.224142
+   },
+   {
+    "from": "-14_b",
+    "to": "2349",
+    "weight": 0.976584
+   },
+   {
+    "from": "-14_c",
+    "to": "2447",
+    "weight": 1.01546
+   },
+   {
+    "from": "-20_a",
+    "to": "0",
+    "weight": 1.05369
+   },
+   {
+    "from": "-20_b",
+    "to": "3598",
+    "weight": 1.51356
+   }
+  ],
+  "exits": {
+   "ann_28": [
+    "665"
+   ],
+   "ann_29": [
+    "2447"
+   ],
+   "ann_30": [
+    "1650"
+   ],
+   "ann_31": [
+    "0"
+   ]
+  },
+  "nodes": [
+   {
+    "column": "age",
+    "id": "-1",
+    "kind": "input",
+    "label": "age",
+    "region": "ann_31"
+   },
+   {
+    "column": "fbs:1",
+    "id": "-11",
+    "kind": "input",
+    "label": "sugar above 120",
+    "region": "ann_31"
+   },
+   {
+    "column": "restecg:2",
+    "id": "-14_a",
+    "kind": "input",
+    "label": "LVH on ECG",
+    "region": "ann_31"
+   },
+   {
+    "column": "restecg:2",
+    "id": "-14_b",
+    "kind": "input",
+    "label": "LVH on ECG",
+    "region": "ann_28"
+   },
+   {
+    "column": "restecg:2",
+    "id": "-14_c",
+    "kind": "input",
+    "label": "LVH on ECG",
+    "region": "ann_29"
+   },
+   {
+    "column": "thalach",
+    "id": "-15",
+    "kind": "input",
+    "label": "max heart rate",
+    "region": "ann_31"
+   },
+   {
+    "column": "exang:0",
+    "id": "-16",
+    "kind": "input",
+    "label": "no exercise pain",
+    "region": "ann_28"
+   },
+   {
+    "column": "oldpeak",
+    "id": "-18",
+    "kind": "input",
+    "label": "ST depression",
+    "region": "ann_31"
+   },
+   {
+    "column": "slope:1",
+    "id": "-19",
+    "kind": "input",
+    "label": "upsloping ST",
+    "region": "ann_31"
+   },
+   {
+    "column": "sex:0",
+    "id": "-2",
+    "kind": "input",
+    "label": "female",
+    "region": "ann_28"
+   },
+   {
+    "column": "slope:2",
+    "id": "-20_a",
+    "kind": "input",
+    "label": "flat ST",
+    "region": "ann_31"
+   },
+   {
+    "column": "slope:2",
+    "id": "-20_b",
+    "kind": "input",
+    "label": "flat ST",
+    "region": "ann_30"
+   },
+   {
+    "column": "slope:3",
+    "id": "-21",
+    "kind": "input",
+    "label": "downsloping ST",
+    "region": "ann_31"
+   },
+   {
+    "column": "ca",
+    "id": "-22",
+    "kind": "input",
+    "label": "vessels",
+    "region": "ann_31"
+   },
+   {
+    "column": "thal:6",
+    "id": "-25",
+    "kind": "input",
+    "label": "fixed defect",
+    "region": "ann_31"
+   },
+   {
+    "column": "thal:7",
+    "id": "-26",
+    "kind": "input",
+    "label": "reversible defect",
+    "region": "ann_31"
+   },
+   {
+    "column": "sex:1",
+    "id": "-3",
+    "kind": "input",
+    "label": "male",
+    "region": "ann_31"
+   },
+   {
+    "column": "cp:1",
+    "id": "-4",
+    "kind": "input",
+    "label": "typical angina",
+    "region": "ann_31"
+   },
+   {
+    "column": "cp:2",
+    "id": "-5",
+    "kind": "input",
+    "label": "atypical angina",
+    "region": "ann_31"
+   },
+   {
+    "column": "cp:3",
+    "id": "-6",
+    "kind": "input",
+    "label": "non-anginal pain",
+    "region": "ann_31"
+   },
+   {
+    "column": "cp:4",
+    "id": "-7",
+    "kind": "input",
+    "label": "no chest pain",
+    "region": "ann_31"
+   },
+   {
+    "column": "chol",
+    "id": "-9",
+    "kind": "input",
+    "label": "cholesterol",
+    "region": "ann_31"
+   },
+   {
+    "id": "0",
+    "kind": "output",
+    "region": "ann_31"
+   },
+   {
+    "activity": {
+     "active_n": 111,
+     "hist": [
+      131,
+      103,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      7
+     ],
+     "hist_edges": [
+      0.0,
+      0.304611,
+      0.609222,
+      0.913833,
+      1.21844,
+      1.52306,
+      1.82767,
+      2.13228,
+      2.43689,
+      2.7415,
+      3.04611,
+      3.35072,
+      3.65533,
+      3.95995,
+      4.26456,
+      4.56917,
+      4.87378,
+      5.17839,
+      5.483,
+      5.78761,
+      6.09222
+     ],
+     "n": 242
+    },
+    "id": "1650",
+    "kind": "hidden",
+    "region": "ann_30"
+   },
+   {
+    "activity": {
+     "active_n": 242,
+     "hist": [
+      123,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      119
+     ],
+     "hist_edges": [
+      1.15219,
+      1.24986,
+      1.34753,
+      1.4452,
+      1.54288,
+      1.64055,
+      1.73822,
+      1.83589,
+      1.93356,
+      2.03124,
+      2.12891,
+      2.22658,
+      2.32425,
+      2.42192,
+      2.51959,
+      2.61727,
+      2.71494,
+      2.81261,
+      2.91028,
+      3.00795,
+      3.10562
+     ],
+     "n": 242
+    },
+    "id": "2349",
+    "kind": "hidden",
+    "region": "ann_28"
+   },
+   {
+    "activity": {
+     "active_n": 242,
+     "hist": [
+      123,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      119
+     ],
+     "hist_edges": [
+      0.484997,
+      0.586557,
+      0.688117,
+      0.789678,
+      0.891238,
+      0.992798,
+      1.09436,
+      1.19592,
+      1.29748,
+      1.39904,
+      1.5006,
+      1.60216,
+      1.70372,
+      1.80528,
+      1.90684,
+      2.0084,
+      2.10996,
+      2.21152,
+      2.31308,
+      2.41464,
+      2.5162
+     ],
+     "n": 242
+    },
+    "id": "2447",
+    "kind": "hidden",
+    "region": "ann_29"
+   },
+   {
+    "activity": {
+     "active_n": 242,
+     "hist": [
+      123,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      119
+     ],
+     "hist_edges": [
+      1.99259,
+      2.07881,
+      2.16504,
+      2.25126,
+      2.33749,
+      2.42371,
+      2.50994,
+      2.59616,
+      2.68239,
+      2.76861,
+      2.85484,
+      2.94106,
+      3.02729,
+      3.11351,
+      3.19974,
+      3.28596,
+      3.37219,
+      3.45841,
+      3.54464,
+      3.63086,
+      3.71709
+     ],
+     "n": 242
+    },
+    "id": "2771",
+    "kind": "hidden",
+    "region": "ann_28"
+   },
+   {
+    "activity": {
+     "active_n": 111,
+     "hist": [
+      132,
+      0,
+      0,
+      0,
+      0,
+      103,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      7
+     ],
+     "hist_edges": [
+      0.0,
+      0.155545,
+      0.31109,
+      0.466635,
+      0.622181,
+      0.777726,
+      0.933271,
+      1.08882,
+      1.24436,
+      1.39991,
+      1.55545,
+      1.711,
+      1.86654,
+      2.02209,
+      2.17763,
+      2.33318,
+      2.48872,
+      2.64427,
+      2.79981,
+      2.95536,
+      3.1109
+     ],
+     "n": 242
+    },
+    "id": "3598",
+    "kind": "hidden",
+    "region": "ann_30"
+   },
+   {
+    "activity": {
+     "active_n": 8,
+     "hist": [
+      234,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      8
+     ],
+     "hist_edges": [
+      0.0,
+      0.105849,
+      0.211697,
+      0.317546,
+      0.423394,
+      0.529243,
+      0.635091,
+      0.74094,
+      0.846789,
+      0.952637,
+      1.05849,
+      1.16433,
+      1.27018,
+      1.37603,
+      1.48188,
+      1.58773,
+      1.69358,
+      1.79943,
+      1.90527,
+      2.01112,
+      2.11697
+     ],
+     "n": 242
+    },
+    "id": "665",
+    "kind": "hidden",
+    "region": "ann_28"
+   }
+  ],
+  "not_used": [
+   "blood pressure",
+   "sugar 120 or less",
+   "normal ECG",
+   "ST-T abnormal ECG",
+   "exercise pain",
+   "normal thallium",
+   "thallium code 4"
+  ],
+  "outputs": [
+   "0"
+  ],
+  "partials": [
+   {
+    "active_n": 8,
+    "categories": {
+     "rows": [
+      {
+       "levels": [
+        "female",
+        "signs of left ventricular hypertrophy on the resting ECG",
+        "no chest pain on exercise"
+       ],
+       "value": 0.0
+      },
+      {
+       "levels": [
+        "female",
+        "signs of left ventricular hypertrophy on the resting ECG",
+        "chest pain brought on by exercise (a level it does not read)"
+       ],
+       "value": 0.0
+      },
+      {
+       "levels": [
+        "female",
+        "a normal resting ECG (a level it does not read)",
+        "no chest pain on exercise"
+       ],
+       "value": 0.0
+      },
+      {
+       "levels": [
+        "female",
+        "a normal resting ECG (a level it does not read)",
+        "chest pain brought on by exercise (a level it does not read)"
+       ],
+       "value": 2.11697
+      },
+      {
+       "levels": [
+        "male (a level it does not read)",
+        "signs of left ventricular hypertrophy on the resting ECG",
+        "no chest pain on exercise"
+       ],
+       "value": 0.0
+      },
+      {
+       "levels": [
+        "male (a level it does not read)",
+        "signs of left ventricular hypertrophy on the resting ECG",
+        "chest pain brought on by exercise (a level it does not read)"
+       ],
+       "value": 0.0
+      },
+      {
+       "levels": [
+        "male (a level it does not read)",
+        "a normal resting ECG (a level it does not read)",
+        "no chest pain on exercise"
+       ],
+       "value": 0.0
+      },
+      {
+       "levels": [
+        "male (a level it does not read)",
+        "a normal resting ECG (a level it does not read)",
+        "chest pain brought on by exercise (a level it does not read)"
+       ],
+       "value": 0.0
+      }
+     ],
+     "variables": [
+      "sex",
+      "resting ECG",
+      "exercise-induced angina"
+     ]
+    },
+    "importance": 0.885038,
+    "inputs": [],
+    "n": 242,
+    "node": "665",
+    "region": "ann_28",
+    "reproduction_max_abs_err": 4.44089e-16,
+    "why": "output of the non-linear part 'female_exertional_angina_gate'"
+   },
+   {
+    "active_n": 111,
+    "categories": {
+     "rows": [
+      {
+       "levels": [
+        "female",
+        "signs of left ventricular hypertrophy on the resting ECG",
+        "no chest pain on exercise"
+       ],
+       "value": 0.0
+      },
+      {
+       "levels": [
+        "female",
+        "signs of left ventricular hypertrophy on the resting ECG",
+        "chest pain brought on by exercise (a level it does not read)"
+       ],
+       "value": 0.0
+      },
+      {
+       "levels": [
+        "female",
+        "a normal resting ECG (a level it does not read)",
+        "no chest pain on exercise"
+       ],
+       "value": 0.0
+      },
+      {
+       "levels": [
+        "female",
+        "a normal resting ECG (a level it does not read)",
+        "chest pain brought on by exercise (a level it does not read)"
+       ],
+       "value": 2.09685
+      },
+      {
+       "levels": [
+        "male (a level it does not read)",
+        "signs of left ventricular hypertrophy on the resting ECG",
+        "no chest pain on exercise"
+       ],
+       "value": 0.0
+      },
+      {
+       "levels": [
+        "male (a level it does not read)",
+        "signs of left ventricular hypertrophy on the resting ECG",
+        "chest pain brought on by exercise (a level it does not read)"
+       ],
+       "value": 0.0
+      },
+      {
+       "levels": [
+        "male (a level it does not read)",
+        "a normal resting ECG (a level it does not read)",
+        "no chest pain on exercise"
+       ],
+       "value": 0.0
+      },
+      {
+       "levels": [
+        "male (a level it does not read)",
+        "a normal resting ECG (a level it does not read)",
+        "chest pain brought on by exercise (a level it does not read)"
+       ],
+       "value": 0.0
+      }
+     ],
+     "variables": [
+      "sex",
+      "resting ECG",
+      "exercise-induced angina"
+     ]
+    },
+    "importance": 0.785725,
+    "inputs": [],
+    "n": 242,
+    "node": "1650",
+    "region": "ann_30",
+    "reproduction_max_abs_err": 8.88178e-16,
+    "units": [],
+    "why": "combines 2 non-linear units"
+   }
+  ]
+ },
  "label": "heart-s0",
  "outcome": {
   "positive": "heart disease (more than 50% narrowing of a major coronary artery on angiography)",
@@ -7507,6 +10485,7 @@
     "flat_slope_amplifier",
     "restecg2_relay_2447"
    ],
+   "closed_form": null,
    "contribution_sd": null,
    "direct_variable_keys": [
     "age",
@@ -7567,6 +10546,7 @@
    "children": [
     "female_exertional_angina_gate"
    ],
+   "closed_form": null,
    "contribution_sd": 0.785725,
    "direct_variable_keys": [
     "slope"
@@ -7597,6 +10577,16 @@
   },
   {
    "children": [],
+   "closed_form": {
+    "latex": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( - 1.71 x_{exang:0} \\\\\n&\\quad + 1.41 x_{sex:0} \\\\\n&\\quad - 0.717 \\operatorname{relu}{\\left(0.977 x_{restecg:2_b} + 2.11 \\right)} \\\\\n&\\quad - 0.555 \\operatorname{relu}{\\left(0.883 \\operatorname{relu}{\\left(0.977 x_{restecg:2_b} + 2.11 \\right)} + 0.975 \\right)} \\\\\n&\\quad -0.3 \\bigr)\n\\end{aligned}",
+    "n": 242,
+    "numeric_max_abs_err": 4.44089e-16,
+    "output_scale": 2.11697,
+    "rounding": "weights and biases at 3 significant figures",
+    "sympy_srepr": {
+     "y_0": "Function('relu')(Add(Mul(Integer(-1), Float('1.7146', precision=13), Symbol('x_{exang:0}')), Mul(Float('1.41138', precision=13), Symbol('x_{sex:0}')), Mul(Integer(-1), Float('0.716797', precision=13), Function('relu')(Add(Mul(Float('0.976563', precision=13), Symbol('x_{restecg:2_b}')), Float('2.11279', precision=13)))), Mul(Integer(-1), Float('0.55481', precision=13), Function('relu')(Add(Mul(Float('0.882813', precision=13), Function('relu')(Add(Mul(Float('0.976563', precision=13), Symbol('x_{restecg:2_b}')), Float('2.11279', precision=13)))), Float('0.975464', precision=13)))), Float('-0.299988', precision=13)))"
+    }
+   },
    "contribution_sd": 0.73669,
    "direct_variable_keys": [
     "sex",
@@ -7627,6 +10617,16 @@
   },
   {
    "children": [],
+   "closed_form": {
+    "latex": "y_0 = \\operatorname{relu}{\\left(1.02 x_{restecg:2_c} + 1.48 \\right)}",
+    "n": 242,
+    "numeric_max_abs_err": 0.0,
+    "output_scale": 2.5162,
+    "rounding": "weights and biases at 3 significant figures",
+    "sympy_srepr": {
+     "y_0": "Function('relu')(Add(Mul(Float('1.01538', precision=13), Symbol('x_{restecg:2_c}')), Float('1.48389', precision=13)))"
+    }
+   },
    "contribution_sd": 0.0262433,
    "direct_variable_keys": [
     "restecg"
@@ -7713,7 +10713,7 @@
   "kind": "binary",
   "label": "predicted risk"
  },
- "schema_version": "4.0.0",
+ "schema_version": "5.1.0",
  "settings": {
   "bootstrap_B": 1000,
   "confidence_rules": {
@@ -7773,40 +10773,40 @@
    "ann_28": [
     {
      "claims": [
-      "C35"
+      "C41"
      ],
      "text": "This part acts on 8 of 242 training patients (3%); nearly all of them are women and patients whose chest pain is brought on by exercise."
     },
     {
      "claims": [
-      "C35"
+      "C41"
      ],
      "text": "For a typical patient it acts on, it raises the predicted risk of heart disease from about 12% without this part to about 92% with it (on the training data only). The model has little data on this: only 8 training patients (patients the part acts on)."
     },
     {
      "claims": [
-      "C35"
+      "C41"
      ],
      "text": "In the training data, 7 of these 8 patients had heart disease."
     },
     {
      "claims": [
-      "C32"
+      "C38"
      ],
      "text": "The model gives a clearly lower predicted risk of heart disease if the patient is a woman than if the patient is a man, and even more so if the resting ECG shows left ventricular hypertrophy: for a typical patient, going from male to female moves the predicted risk of heart disease from about 33% to about 1% if the resting ECG shows left ventricular hypertrophy, and from about 23% to about 1% if resting ECG is something other than signs of left ventricular hypertrophy on the resting ECG."
     },
     {
      "claims": [
-      "C29",
-      "C30",
-      "C31"
+      "C35",
+      "C36",
+      "C37"
      ],
      "text": "Other effects: chest pain brought on by exercise (rather than no chest pain on exercise) raises it; signs of left ventricular hypertrophy on the resting ECG (rather than any other resting ECG) lowers it; female (rather than male) raises it (on the training data only)."
     },
     {
      "claims": [
-      "C33",
-      "C34"
+      "C39",
+      "C40"
      ],
      "text": "Smaller effects, each changing the predicted value only slightly: sex depending on exercise-induced angina lowers it; exercise-induced angina depending on resting ECG raises it."
     }
@@ -7814,13 +10814,13 @@
    "ann_29": [
     {
      "claims": [
-      "C36"
+      "C43"
      ],
      "text": "Through this part, for a typical patient, the model gives a slightly higher predicted risk of heart disease if the resting ECG shows left ventricular hypertrophy (about 24%) than if resting ECG is something other than signs of left ventricular hypertrophy on the resting ECG (about 23%) (on the training data only)."
     },
     {
      "claims": [
-      "C37"
+      "C44"
      ],
      "text": "This part barely changes the model's predictions (by at most 0.7 percentage points)."
     }
@@ -7828,34 +10828,34 @@
    "ann_30": [
     {
      "claims": [
-      "C28"
+      "C33"
      ],
      "text": "This part acts on 111 of 242 training patients (46%); nearly all of them are patients with a flat ST segment."
     },
     {
      "claims": [
-      "C28"
+      "C33"
      ],
      "text": "For a typical patient it acts on, it slightly raises the predicted risk of heart disease from about 96% without this part to about 97% with it (on the training data only)."
     },
     {
      "claims": [
-      "C28"
+      "C33"
      ],
      "text": "In the training data, 72 of these 111 patients had heart disease."
     },
     {
      "claims": [
-      "C23"
+      "C28"
      ],
      "text": "Through this part, for a typical patient, the model gives a higher predicted risk of heart disease if the ST segment is flat at peak exercise (about 29%) than if slope of the ST segment at peak exercise is something other than a flat ST segment (about 23%) (on the training data only)."
     },
     {
      "claims": [
-      "C24",
-      "C25",
-      "C26",
-      "C27"
+      "C29",
+      "C30",
+      "C31",
+      "C32"
      ],
      "text": "Smaller effects, each changing the predicted value only slightly: chest pain brought on by exercise (rather than no chest pain on exercise) raises it; signs of left ventricular hypertrophy on the resting ECG (rather than any other resting ECG) lowers it; female (rather than male) raises it; slope of the ST segment at peak exercise depending on exercise-induced angina raises it (on the training data only)."
     }
@@ -7877,23 +10877,23 @@
      "claims": [
       "C03"
      ],
-     "text": "The model treats a higher ST depression on exercise as raising the predicted risk of heart disease steadily: for a typical patient, it goes from about 16% at 0.0 mm to about 50% at 2.8 mm (on the training data only)."
+     "text": "For a typical patient, the model gives a higher predicted risk of heart disease if the ST segment is flat at peak exercise (about 75%) than if the ST segment slopes up at peak exercise (about 23%) (on the training data only)."
     },
     {
      "claims": [
       "C04"
      ],
-     "text": "The model treats a higher serum cholesterol as raising the predicted risk of heart disease steadily: for a typical patient, it goes from about 13% at 193 mg/dL (5.0 mmol/L) to about 45% at 308 mg/dL (8.0 mmol/L) (on the training data only)."
+     "text": "The model treats a higher ST depression on exercise as raising the predicted risk of heart disease steadily: for a typical patient, it goes from about 16% at 0.0 mm to about 50% at 2.8 mm (on the training data only)."
     },
     {
      "claims": [
       "C05"
      ],
-     "text": "For a typical patient, the model gives a higher predicted risk of heart disease if the thallium scan shows a reversible defect (about 47%) than if thallium stress test result is something other than a fixed defect on the thallium scan, a reversible defect on the thallium scan (about 23%) (on the training data only)."
+     "text": "The model treats a higher serum cholesterol as raising the predicted risk of heart disease steadily: for a typical patient, it goes from about 13% at 193 mg/dL (5.0 mmol/L) to about 45% at 308 mg/dL (8.0 mmol/L) (on the training data only)."
     },
     {
      "claims": [
-      "C22"
+      "C26"
      ],
      "text": "It ignores resting blood pressure."
     },
@@ -7905,18 +10905,20 @@
       "C09",
       "C10",
       "C11",
-      "C12"
+      "C12",
+      "C13"
      ],
-     "text": "Other effects: female (rather than male) lowers it; typical angina (rather than no chest pain (asymptomatic)) lowers it; non-anginal chest pain (rather than no chest pain (asymptomatic)) lowers it; a fixed defect on the thallium scan (rather than any other thallium stress test result) lowers it; a higher age raises it steadily; atypical angina (rather than no chest pain (asymptomatic)) lowers it; signs of left ventricular hypertrophy on the resting ECG (rather than any other resting ECG) raises it (on the training data only). The model has little data on some of these: only 15 training patients (a fixed defect on the thallium scan)."
+     "text": "Other effects: a reversible defect on the thallium scan (rather than any other thallium stress test result) raises it; female (rather than male) lowers it; female (rather than male) lowers it; typical angina (rather than no chest pain (asymptomatic)) lowers it; non-anginal chest pain (rather than no chest pain (asymptomatic)) lowers it; a fixed defect on the thallium scan (rather than any other thallium stress test result) lowers it; a higher age raises it steadily; atypical angina (rather than no chest pain (asymptomatic)) lowers it; and 2 still smaller effects listed in the evidence table (on the training data only). The model has little data on some of these: only 15 training patients (a fixed defect on the thallium scan)."
     },
     {
      "claims": [
-      "C13",
-      "C14",
-      "C15",
-      "C16"
+      "C16",
+      "C17",
+      "C18",
+      "C19",
+      "C20"
      ],
-     "text": "Smaller effects, each changing the predicted value only slightly: a higher maximum heart rate lowers it steadily; a downsloping ST segment (rather than an upsloping ST segment) raises it; fasting blood sugar above 120 mg/dL (rather than fasting blood sugar of 120 mg/dL or less) lowers it; chest pain brought on by exercise (rather than no chest pain on exercise) raises it (on the training data only). The model has little data on some of these: only 17 training patients (a downsloping ST segment)."
+     "text": "Smaller effects, each changing the predicted value only slightly: a higher maximum heart rate lowers it steadily; a downsloping ST segment (rather than an upsloping ST segment) raises it; a downsloping ST segment (rather than an upsloping ST segment) raises it; fasting blood sugar above 120 mg/dL (rather than fasting blood sugar of 120 mg/dL or less) lowers it; chest pain brought on by exercise (rather than no chest pain on exercise) raises it (on the training data only). The model has little data on some of these: only 17 training patients (a downsloping ST segment)."
     }
    ]
   },
@@ -7924,7 +10926,7 @@
    "ann_28": "This part acts on 8 of 242 training patients (3%); nearly all of them are women and patients whose chest pain is brought on by exercise. For a typical patient it acts on, it raises the predicted risk of heart disease from about 12% without this part to about 92% with it (on the training data only). The model has little data on this: only 8 training patients (patients the part acts on). In the training data, 7 of these 8 patients had heart disease. The model gives a clearly lower predicted risk of heart disease if the patient is a woman than if the patient is a man, and even more so if the resting ECG shows left ventricular hypertrophy: for a typical patient, going from male to female moves the predicted risk of heart disease from about 33% to about 1% if the resting ECG shows left ventricular hypertrophy, and from about 23% to about 1% if resting ECG is something other than signs of left ventricular hypertrophy on the resting ECG. Other effects: chest pain brought on by exercise (rather than no chest pain on exercise) raises it; signs of left ventricular hypertrophy on the resting ECG (rather than any other resting ECG) lowers it; female (rather than male) raises it (on the training data only). Smaller effects, each changing the predicted value only slightly: sex depending on exercise-induced angina lowers it; exercise-induced angina depending on resting ECG raises it.",
    "ann_29": "Through this part, for a typical patient, the model gives a slightly higher predicted risk of heart disease if the resting ECG shows left ventricular hypertrophy (about 24%) than if resting ECG is something other than signs of left ventricular hypertrophy on the resting ECG (about 23%) (on the training data only). This part barely changes the model's predictions (by at most 0.7 percentage points).",
    "ann_30": "This part acts on 111 of 242 training patients (46%); nearly all of them are patients with a flat ST segment. For a typical patient it acts on, it slightly raises the predicted risk of heart disease from about 96% without this part to about 97% with it (on the training data only). In the training data, 72 of these 111 patients had heart disease. Through this part, for a typical patient, the model gives a higher predicted risk of heart disease if the ST segment is flat at peak exercise (about 29%) than if slope of the ST segment at peak exercise is something other than a flat ST segment (about 23%) (on the training data only). Smaller effects, each changing the predicted value only slightly: chest pain brought on by exercise (rather than no chest pain on exercise) raises it; signs of left ventricular hypertrophy on the resting ECG (rather than any other resting ECG) lowers it; female (rather than male) raises it; slope of the ST segment at peak exercise depending on exercise-induced angina raises it (on the training data only).",
-   "ann_31": "The model treats a higher number of vessels coloured by fluoroscopy as raising the predicted risk of heart disease steadily, each extra vessel adding about the same: for a typical patient, it goes from about 23% at 0 vessels to about 96% at 2 vessels, flattening out near the top because the predicted risk cannot go much higher (on the training data only). For a typical patient, the model gives a higher predicted risk of heart disease if the ST segment is flat at peak exercise (about 80%) than if the ST segment slopes up at peak exercise (about 23%) (on the training data only). The model treats a higher ST depression on exercise as raising the predicted risk of heart disease steadily: for a typical patient, it goes from about 16% at 0.0 mm to about 50% at 2.8 mm (on the training data only). The model treats a higher serum cholesterol as raising the predicted risk of heart disease steadily: for a typical patient, it goes from about 13% at 193 mg/dL (5.0 mmol/L) to about 45% at 308 mg/dL (8.0 mmol/L) (on the training data only). For a typical patient, the model gives a higher predicted risk of heart disease if the thallium scan shows a reversible defect (about 47%) than if thallium stress test result is something other than a fixed defect on the thallium scan, a reversible defect on the thallium scan (about 23%) (on the training data only). It ignores resting blood pressure. Other effects: female (rather than male) lowers it; typical angina (rather than no chest pain (asymptomatic)) lowers it; non-anginal chest pain (rather than no chest pain (asymptomatic)) lowers it; a fixed defect on the thallium scan (rather than any other thallium stress test result) lowers it; a higher age raises it steadily; atypical angina (rather than no chest pain (asymptomatic)) lowers it; signs of left ventricular hypertrophy on the resting ECG (rather than any other resting ECG) raises it (on the training data only). The model has little data on some of these: only 15 training patients (a fixed defect on the thallium scan). Smaller effects, each changing the predicted value only slightly: a higher maximum heart rate lowers it steadily; a downsloping ST segment (rather than an upsloping ST segment) raises it; fasting blood sugar above 120 mg/dL (rather than fasting blood sugar of 120 mg/dL or less) lowers it; chest pain brought on by exercise (rather than no chest pain on exercise) raises it (on the training data only). The model has little data on some of these: only 17 training patients (a downsloping ST segment)."
+   "ann_31": "The model treats a higher number of vessels coloured by fluoroscopy as raising the predicted risk of heart disease steadily, each extra vessel adding about the same: for a typical patient, it goes from about 23% at 0 vessels to about 96% at 2 vessels, flattening out near the top because the predicted risk cannot go much higher (on the training data only). For a typical patient, the model gives a higher predicted risk of heart disease if the ST segment is flat at peak exercise (about 80%) than if the ST segment slopes up at peak exercise (about 23%) (on the training data only). For a typical patient, the model gives a higher predicted risk of heart disease if the ST segment is flat at peak exercise (about 75%) than if the ST segment slopes up at peak exercise (about 23%) (on the training data only). The model treats a higher ST depression on exercise as raising the predicted risk of heart disease steadily: for a typical patient, it goes from about 16% at 0.0 mm to about 50% at 2.8 mm (on the training data only). The model treats a higher serum cholesterol as raising the predicted risk of heart disease steadily: for a typical patient, it goes from about 13% at 193 mg/dL (5.0 mmol/L) to about 45% at 308 mg/dL (8.0 mmol/L) (on the training data only). It ignores resting blood pressure. Other effects: a reversible defect on the thallium scan (rather than any other thallium stress test result) raises it; female (rather than male) lowers it; female (rather than male) lowers it; typical angina (rather than no chest pain (asymptomatic)) lowers it; non-anginal chest pain (rather than no chest pain (asymptomatic)) lowers it; a fixed defect on the thallium scan (rather than any other thallium stress test result) lowers it; a higher age raises it steadily; atypical angina (rather than no chest pain (asymptomatic)) lowers it; and 2 still smaller effects listed in the evidence table (on the training data only). The model has little data on some of these: only 15 training patients (a fixed defect on the thallium scan). Smaller effects, each changing the predicted value only slightly: a higher maximum heart rate lowers it steadily; a downsloping ST segment (rather than an upsloping ST segment) raises it; a downsloping ST segment (rather than an upsloping ST segment) raises it; fasting blood sugar above 120 mg/dL (rather than fasting blood sugar of 120 mg/dL or less) lowers it; chest pain brought on by exercise (rather than no chest pain on exercise) raises it (on the training data only). The model has little data on some of these: only 17 training patients (a downsloping ST segment)."
   },
   "not_supported": [],
   "renderer": "explaneat.analysis.plain_language_templates (deterministic, no language model)",
@@ -7945,23 +10947,23 @@
     "claims": [
      "C03"
     ],
-    "text": "The model treats a higher ST depression on exercise as raising the predicted risk of heart disease steadily: for a typical patient, it goes from about 16% at 0.0 mm to about 50% at 2.8 mm (on the training data only)."
+    "text": "For a typical patient, the model gives a higher predicted risk of heart disease if the ST segment is flat at peak exercise (about 75%) than if the ST segment slopes up at peak exercise (about 23%) (on the training data only)."
    },
    {
     "claims": [
-     "C32"
+     "C38"
     ],
     "text": "The model gives a clearly lower predicted risk of heart disease if the patient is a woman than if the patient is a man, and even more so if the resting ECG shows left ventricular hypertrophy: for a typical patient, going from male to female moves the predicted risk of heart disease from about 33% to about 1% if the resting ECG shows left ventricular hypertrophy, and from about 23% to about 1% if resting ECG is something other than signs of left ventricular hypertrophy on the resting ECG."
    },
    {
     "claims": [
-     "C27"
+     "C32"
     ],
     "text": "The model gives a slightly higher predicted risk of heart disease if the ST segment is flat at peak exercise than if slope of the ST segment at peak exercise is something other than a flat ST segment, and even more so if exercise brings on chest pain: for a typical patient, going from slope of the ST segment at peak exercise other than a flat ST segment to a flat ST segment moves the predicted risk of heart disease from about 23% to about 80% if exercise brings on chest pain, and from about 23% to about 80% if exercise does not bring on chest pain (on the training data only)."
    },
    {
     "claims": [
-     "C22"
+     "C26"
     ],
     "text": "The model ignores resting blood pressure."
    }
