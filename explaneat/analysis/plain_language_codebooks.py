@@ -321,7 +321,76 @@ MONK2: Dict[str, Any] = {
                   for a, n in (("a1", 3), ("a2", 3), ("a3", 2), ("a4", 3), ("a5", 4), ("a6", 2))},
 }
 
-CODEBOOKS = [UCI_HEART, ADULT, CHURN, MONK2]
+# ----------------------------------------------------------------------------- KRK (chess)
+# UCI "Chess (King-Rook vs. King)" (Bain 1994), PMLB "krkopt", binarised in
+# experiments/complex_real/data.py: class 1 = draw, 0 = win for white; black to move. Inputs are
+# ordinal: file a-h -> 1-8 (PMLB 0-7 plus 1), rank 1-8. The white king is confined to the
+# a1-d1-d4 triangle (symmetry reduction in the source).
+_FILES = "abcdefgh"
+
+
+def _square_var(piece: str, what: str) -> Dict[str, Any]:
+    if what == "file":
+        special = {repr(float(i + 1)): f"file {_FILES[i]}" for i in range(8)}
+        label = f"{piece}'s file (a = 1 to h = 8)"
+    else:
+        special = {repr(float(i + 1)): f"rank {i + 1}" for i in range(8)}
+        label = f"{piece}'s rank (1 to 8)"
+    return {"label": label, "short": f"{piece} {what}", "unit": f"{what}s", "decimals": 0,
+            "kind": "count", "special_values": special}
+
+
+KRK: Dict[str, Any] = {
+    "id": "uci-krk",
+    "source": ("UCI Machine Learning Repository, Chess (King-Rook vs. King) (Bain 1994; PMLB "
+               "'krkopt'); positions with black to move, labelled by the exact tablebase "
+               "(draw or depth-to-mate); binarised to draw vs win in experiments/complex_real"),
+    "dataset_match": ["krk"],
+    "outcome": {"positive": "a draw (white cannot force mate)", "short": "a draw",
+                "risk": "the chance of a draw", "predicted": "the predicted chance of a draw"},
+    "patient": "positions", "patient_one": "position",
+    "gaps": ["Files are coded a = 1 to h = 8 and ranks 1 to 8; the white king only stands on the "
+             "a1-d1-d4 triangle (the source's symmetry reduction), so its file is 1-4 and its rank "
+             "at most its file."],
+    "node_labels": {"wk_file": "WK file", "wk_rank": "WK rank", "wr_file": "rook file",
+                    "wr_rank": "rook rank", "bk_file": "BK file", "bk_rank": "BK rank"},
+    "variables": {
+        "wk_file": _square_var("white king", "file"), "wk_rank": _square_var("white king", "rank"),
+        "wr_file": _square_var("white rook", "file"), "wr_rank": _square_var("white rook", "rank"),
+        "bk_file": _square_var("black king", "file"), "bk_rank": _square_var("black king", "rank"),
+    },
+}
+
+# ----------------------------------------------------------------------------- Connect-4
+# UCI "Connect-4" (Tromp), PMLB "connect_4": all legal 8-ply positions (4 x, 4 o, x to move)
+# where neither player has won and the next move is not forced, labelled by the game-theoretic
+# outcome for x. Binarised in experiments/complex_real/data.py: 1 = x wins, 0 = loss or draw.
+# Each cell c_<column a-g><row 1-6> (row 1 = bottom) is ordinal: x = +1, o = -1, empty = 0.
+_C4_SPECIAL = {"1.0": "x (the first player)", "0.0": "empty", "-1.0": "o (the second player)"}
+
+
+def _c4_var(col: str, row: int) -> Dict[str, Any]:
+    return {"label": f"square {col}{row} (column {col}, row {row} from the bottom; x = +1, empty = 0, o = -1)",
+            "short": f"square {col}{row}", "unit": "on the o-to-x scale", "decimals": 1, "kind": "count",
+            "special_values": dict(_C4_SPECIAL)}
+
+
+CONNECT4: Dict[str, Any] = {
+    "id": "uci-connect4",
+    "source": ("UCI Machine Learning Repository, Connect-4 (Tromp; PMLB 'connect_4'): every legal "
+               "8-ply position with x to move, labelled by the outcome for x under perfect play; "
+               "binarised to win vs not win in experiments/complex_real"),
+    "dataset_match": ["connect4"],
+    "outcome": {"positive": "a win for x (the first player) with perfect play", "short": "a win for x",
+                "risk": "the chance that x wins", "predicted": "the predicted chance that x wins"},
+    "patient": "positions", "patient_one": "position",
+    "gaps": ["Each square is coded x = +1, empty = 0, o = -1; values in between only arise inside "
+             "the model (no square takes them)."],
+    "node_labels": {f"c_{c}{r}": f"{c}{r}" for c in "abcdefg" for r in range(1, 7)},
+    "variables": {f"c_{c}{r}": _c4_var(c, r) for c in "abcdefg" for r in range(1, 7)},
+}
+
+CODEBOOKS = [UCI_HEART, ADULT, CHURN, MONK2, KRK, CONNECT4]
 
 
 def codebook_checks(cb: Dict[str, Any], feature_names: Sequence[str], raw, y) -> List[Dict[str, Any]]:
@@ -376,6 +445,15 @@ def codebook_checks(cb: Dict[str, Any], feature_names: Sequence[str], raw, y) ->
     elif cb.get("id") == "uci-heart-cleveland":
         add("positive share plausible for Cleveland (about 46%)", 0.35 < float(np.mean(y)) < 0.55,
             f"positive share {float(np.mean(y)):.3f}")
+    elif cb.get("id") == "uci-krk":
+        wkf, wkr = raw[:, col["wk_file"]], raw[:, col["wk_rank"]]
+        add("white king on the a1-d1-d4 triangle (file 1-4, rank <= file)",
+            bool(np.all((wkf >= 1) & (wkf <= 4) & (wkr <= wkf))), "")
+        add("every file and rank in 1-8", bool(np.all((raw >= 1) & (raw <= 8))), "")
+    elif cb.get("id") == "uci-connect4":
+        add("4 x (+1) and 4 o (-1) per position", bool(np.all((raw == 1).sum(1) == 4) and np.all((raw == -1).sum(1) == 4)), "")
+        b = raw.reshape(-1, 7, 6)
+        add("pieces obey gravity", not bool(((b[:, :, 1:] != 0) & (b[:, :, :-1] == 0)).any()), "")
     return out
 
 
@@ -491,6 +569,23 @@ def outcome_check(cb: Dict[str, Any], class_names, feature_names: Sequence[str],
             rule = (np.sum(raw[:, ones] > 0.5, axis=1) == 2).astype(float)
             add("the exactly-two rule reproduces every label", bool(np.all(rule == y)),
                 f"agreement {float(np.mean(rule == y)):.3f}")
+    elif cid == "uci-krk":
+        meaning = "a draw (white cannot force mate; black to move)"
+        add("class 1 is stored as 'draw'", (pos_name or "").lower() == "draw", f"class names {names}")
+        add("draws are about 10% of positions", 0.05 < rate < 0.15, f"share {rate:.3f}")
+        if all(f in col for f in ("wr_file", "wr_rank", "bk_file", "bk_rank", "wk_file", "wk_rank")):
+            g = lambda f: raw[:, col[f]]  # noqa: E731
+            adj = np.maximum(np.abs(g("bk_file") - g("wr_file")), np.abs(g("bk_rank") - g("wr_rank"))) == 1
+            free = np.maximum(np.abs(g("wk_file") - g("wr_file")), np.abs(g("wk_rank") - g("wr_rank"))) > 1
+            cap = adj & free
+            add("nearly every draw is a rook capture (black king next to an undefended rook)",
+                float(np.mean(cap[y == 1])) > 0.98 if np.any(y == 1) else False,
+                f"{float(np.mean(cap[y == 1])) if np.any(y == 1) else float('nan'):.4f} of draws; "
+                f"{float(np.mean(y[cap])) if cap.any() else float('nan'):.4f} of captures are draws")
+    elif cid == "uci-connect4":
+        meaning = "x (the first player, to move) wins with perfect play"
+        add("class 1 is stored as 'win'", (pos_name or "").lower() == "win", f"class names {names}")
+        add("x wins about 66% of positions", 0.6 < rate < 0.72, f"share {rate:.3f}")
     else:
         meaning = f"class 1 ({pos_name})" if pos_name else "the positive class"
     return {"positive_code": 1, "meaning": meaning, "class_names": names, "positive_name": pos_name,
