@@ -295,7 +295,8 @@ def _cluster_order(corder, items, edges, bottom) -> List[str]:
     return out
 
 
-def _place(items, edges, clusters, subs, top, sweep: Optional[bool] = None) -> Dict[str, Tuple[float, float]]:
+def _place(items, edges, clusters, subs, top, sweep: Optional[bool] = None,
+           owned: bool = False) -> Dict[str, Tuple[float, float]]:
     """Inputs (and incoming stubs) in a row at y = 0, each cluster centred over its inputs, ``top``
     items above everything. With ``sweep`` (default): clusters sharing inputs are adjacent; an
     input used by one cluster sits under it, a shared input at the barycentre of its targets
@@ -354,8 +355,12 @@ def _place(items, edges, clusters, subs, top, sweep: Optional[bool] = None) -> D
                 x0 += widths[i] + GAP * 1.4
             x_end = max(x0 - GAP * 1.4, start + total)
 
-    pos = _input_row(row, users)
-    place_clusters(pos)
+    if owned and all(len(set(users[n])) <= 1 for n in bottom):
+        pos = _place_owned(items, edges, corder, ctitles, subs, top, bottom, lay, users, nw)
+        sweep = False
+    else:
+        pos = _input_row(row, users)
+        place_clusters(pos)
     if sweep:
         for _ in range(3):
             tx: Dict[str, List[float]] = {n: [] for n in bottom}
@@ -372,6 +377,69 @@ def _place(items, edges, clusters, subs, top, sweep: Optional[bool] = None) -> D
     mid = (min(xs) + max(xs)) / 2
     for i, n in enumerate(top):
         pos[n] = (round(mid + (i - (k - 1) / 2.0) * 3.0, 3), round(ytop, 3))
+    return pos
+
+
+def _place_owned(items, edges, corder, ctitles, subs, top, bottom, lay, users, nw):
+    """v5f2: every input copy belongs to exactly one cluster, so each cluster's inputs sit
+    directly beneath it: centred on the cluster's x-span (staggered rows when there are more
+    than fit), the cluster as wide as max(its content, its title, its inputs), clusters left to
+    right in the given order with a fixed gap, and within a cluster the inputs ordered by the
+    x-position of the units they feed (barycentre)."""
+    pos: Dict[str, Tuple[float, float]] = {}
+    own: Dict[str, List[str]] = {c: [] for c in corder}
+    loose = []
+    for n in bottom:
+        (own[corder[users[n][0]]] if users[n] else loose).append(n)
+    x_end = None
+    for c in corder + ([None] if loose else []):
+        bands = [s for s, _ in subs if s[0] == c] + [(c, None)] if c is not None else []
+        rows_of, widths = [], []
+        for b in bands:
+            mem = sorted([n for n in items if items[n]["band"] == b and n not in bottom and n not in top],
+                         key=lambda n: (items[n].get("sort") or "", n))
+            per: Dict[int, List[str]] = {}
+            for n in mem:
+                per.setdefault(lay[n], []).append(n)
+            rows_of.append(per)
+            title = next((t for s, t in subs if s == b), "")
+            w = max([sum(nw(n) for n in r) + (len(r) - 1) * (DX - 0.7) for r in per.values()] or [0.0])
+            widths.append(max(w, len(title) * CHAR) if mem else 0.0)
+        live = [i for i in range(len(bands)) if rows_of[i]]
+        ins = own[c] if c is not None else loose
+        if not live and not ins:
+            continue
+        content = sum(widths[i] for i in live) + GAP * 1.4 * max(0, len(live) - 1)
+        base = max(content, len(ctitles.get(c, "") or "") * 0.2 if c is not None else 0.0)
+        k = len(ins)
+        cols = min(k, max(ROW_WRAP, int(base // DXI))) if k else 0
+        nrows = -(-k // cols) if cols else 0
+        in_w = (cols + (0.5 if nrows > 1 else 0.0)) * DXI
+        W = max(base, in_w, DXI)
+        x0 = 0.0 if x_end is None else x_end + GAP * 2.2
+        x = x0 + (W - content) / 2.0
+        for i in live:
+            for L, r in rows_of[i].items():
+                rw = sum(nw(n) for n in r) + (len(r) - 1) * (DX - 0.7)
+                xx = x + (widths[i] - rw) / 2.0
+                for n in r:
+                    pos[n] = (round(xx + nw(n) / 2.0, 3), round(Y0 + (L - 1) * DY, 3))
+                    xx += nw(n) + (DX - 0.7)
+            x += widths[i] + GAP * 1.4
+        if k:
+            tx: Dict[str, List[float]] = {n: [] for n in ins}
+            for u, v in edges:
+                if u in tx and v in pos:
+                    tx[u].append(pos[v][0])
+            mid = x0 + W / 2.0
+            order = sorted(ins, key=lambda n: ((sum(tx[n]) / len(tx[n])) if tx[n] else mid,
+                                               items[n].get("sort") or "", n))
+            slots = [(cc + (0.5 if r % 2 else 0.0), r) for r in range(nrows) for cc in range(cols)][:k]
+            slots.sort()
+            left = x0 + (W - in_w) / 2.0 + DXI / 2.0
+            for n, (sx, r) in zip(order, slots):
+                pos[n] = (round(left + sx * DXI, 3), round(-r * ROW_STEP, 3))
+        x_end = x0 + W
     return pos
 
 
@@ -686,7 +754,7 @@ def overview(layer, note: bool = False) -> Tuple[str, Dict[str, Any]]:
     _mark_overview(layer, items, csums)
     drawn = list(ew)
     ew = _merge_groups(ew)
-    pos = _place(items, [(u, v) for u, v, _ in ew], clusters, subs, [out])
+    pos = _place(items, [(u, v) for u, v, _ in ew], clusters, subs, [out], owned=True)
     text = ""
     if note:
         text = tex(LEGEND)
@@ -888,7 +956,7 @@ def section(layer, pid) -> Tuple[str, Dict[str, Any]]:
         elif it.get("exit"):
             it["net"] = part_direction(layer, pid)
     ew = _merge_groups(ew)
-    pos = _place(items, [(u, v) for u, v, _ in ew], clusters, subs, tops)
+    pos = _place(items, [(u, v) for u, v, _ in ew], clusters, subs, tops, owned=True)
     tk = _picture(items, pos, ew, clusters, subs, colors, hl)
     return tk, {"edges": {(e["from"], e["to"]) for e in owned},
                 "net": {k: it.get("net") for k, it in items.items() if it["kind"] == "input"},
