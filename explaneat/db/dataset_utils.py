@@ -577,7 +577,7 @@ def sample_dataset(
         Tuple of (X_sample, y_sample)
     """
     n = len(X)
-    n_sample = min(int(n * fraction), max_samples)
+    n_sample = int(n * fraction) if max_samples is None else min(int(n * fraction), max_samples)
     n_sample = max(n_sample, 1)  # at least 1
     if n_sample >= n:
         return X, y

@@ -19,7 +19,7 @@ sys.path.insert(0, str(HERE.parents[1]))
 
 from mcp_server.server import get_db  # noqa: E402
 
-MODULES = ["experiments", "models", "operations", "evidence", "coverage",
+MODULES = ["experiments", "models", "operations", "evidence", "coverage", "queries", "analysis_tools",
            "datasets", "snapshots", "workflow"]
 
 

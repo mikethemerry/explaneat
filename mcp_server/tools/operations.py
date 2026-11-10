@@ -75,7 +75,12 @@ def apply_operation(genome_id: str, operation_type: str, params: str, notes: Opt
       "bias", default 0.0, and "activation", default "identity").
       remove_node / prune_node require exactly 1 enabled input and 1 output.
     - annotate: all six keys are required; optional "child_annotation_ids"
-      (names or ann_<seq> ids) makes a composition annotation.
+      (names or ann_<seq> ids) makes a composition annotation. The hypothesis is
+      checked at write time (see update_narrative): numbers are referenced as
+      {{q:<id>.<path>|<fmt>}} placeholders (rendered from the evidence log; the raw
+      template is kept as "hypothesis_template"), exact formulas must reproduce, and in
+      strict mode (new explanations) bare typed numbers are refused. Optional
+      "allow_numbers": literals that are not computed numbers (e.g. a count in a name).
     - rename_node / rename_annotation: display_name must have no spaces
       (camelCase), or be null to clear; annotation_id may be the name or ann_<seq>.
 
@@ -103,7 +108,24 @@ def apply_operation(genome_id: str, operation_type: str, params: str, notes: Opt
 
             # Build engine and apply operation
             engine = build_engine(session, genome_id)
+            allow = params_dict.pop("allow_numbers", None) or []
             new_op = engine.add_operation(operation_type, params_dict, validate=True, notes=notes)
+
+            text_check = None
+            if operation_type == "annotate" and new_op.params.get("hypothesis"):
+                from explaneat.analysis.narrative_check import process_text
+                ops_now = [o.to_dict() for o in engine.operations]
+                text_check = process_text(db, genome_id, new_op.params["hypothesis"], ops_now,
+                                          part_name=new_op.params.get("name"),
+                                          location=f"operations.{new_op.params.get('name')}.hypothesis",
+                                          allow=allow, session=session)
+                if text_check["errors"]:
+                    return json.dumps({"error": "hypothesis refused (strict mode): " + "; ".join(text_check["errors"]),
+                                       "text_check": text_check}, indent=2, default=str)
+                new_op.params["hypothesis"] = text_check["text"]
+                if text_check["template"] is not None:
+                    new_op.params["hypothesis_template"] = text_check["template"]
+                    new_op.params["provenance"] = text_check["provenance"]
 
             # Save updated operations
             explanation.operations = engine.to_dict()["operations"]
@@ -115,6 +137,8 @@ def apply_operation(genome_id: str, operation_type: str, params: str, notes: Opt
                 "operation": new_op.to_dict(),
                 "total_operations": len(engine.operations),
             }
+            if text_check is not None:
+                result["text_check"] = {k: text_check[k] for k in ("strict", "warnings", "findings", "provenance")}
             return json.dumps(result, indent=2, default=str)
 
         except Exception as e:

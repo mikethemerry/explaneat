@@ -93,6 +93,17 @@ def _load_base_db(genome_id: str, db=None) -> BaseData:
     with db.session_scope() as s:
         if s.bind.dialect.name == "postgresql":
             s.execute(text("SET TRANSACTION READ ONLY"))
+        return base_from_session(s, genome_id)
+
+
+def base_from_session(s, genome_id: str) -> BaseData:
+    """The phenotype and data of a genome, read in an open session (no writes)."""
+    from mcp_server.helpers import load_genome_and_config, load_split_data
+
+    from ..core.explaneat import ExplaNEAT
+    from ..db.models import Dataset, DatasetSplit, Experiment, Genome, Population
+
+    if True:
         g = s.get(Genome, uuid.UUID(genome_id))
         if g is None:
             raise ValueError(f"Genome not found: {genome_id}")

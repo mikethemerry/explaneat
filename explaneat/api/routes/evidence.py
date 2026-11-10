@@ -224,7 +224,17 @@ def _apply_source_view(viz_result: dict, session, split_id: str, entry_names: Li
     return result
 
 
-def _load_split_data(session, split_id: str, split_choice: str, sample_frac: float, max_samples: int):
+import threading
+
+_STAMP = threading.local()
+
+
+def _last_split_info():
+    """The rows the last ``_load_split_data`` in this thread used (split, n, sampled, label)."""
+    return getattr(_STAMP, "info", None)
+
+
+def _load_split_data(session, split_id: str, split_choice: str, sample_frac: float, max_samples):
     """Load X, y data and dataset metadata from a dataset split.
 
     Applies the scaler stored on the split (if any) so that evaluation
@@ -289,8 +299,11 @@ def _load_split_data(session, split_id: str, split_choice: str, sample_frac: flo
             scale = np.array(split.scaler_params["scale_"])
             X = X * scale + np.array(split.scaler_params["min_"])
 
-    # Sample for visualization
-    X, y = sample_dataset(X, y, fraction=sample_frac, max_samples=max_samples)
+    # Sample only when asked (the UI passes explicit sampling for speed; the default is the split)
+    n_split = len(X)
+    X, y = sample_dataset(X, y, fraction=sample_frac if sample_frac is not None else 1.0, max_samples=max_samples)
+    from ...analysis.provenance import split_stamp
+    _STAMP.info = split_stamp(split_choice, len(X), n_split, len(X) < n_split, None, 42)
 
     return X, y, dataset.feature_names, dataset.class_names, dataset.num_classes
 
@@ -876,7 +889,7 @@ async def compute_viz_data(
                 response_kwargs, session, request.dataset_split_id, entry_names,
             )
 
-        return VizDataResponse(**response_kwargs)
+        return VizDataResponse(**response_kwargs, split_info=_last_split_info())
 
 
 @router.get("/formula", response_model=FormulaResponse)
@@ -1133,6 +1146,7 @@ async def compute_input_distribution(
             viz_type = "scatter2d"
 
         return InputDistributionResponse(
+            split_info=_last_split_info(),
             viz_type=viz_type,
             data=data,
             feature_names=names,
@@ -1175,6 +1189,7 @@ async def compute_performance(
                 horizons=request.horizons, calibration_horizon=request.calibration_horizon,
             )
             return PerformanceResponse(
+            split_info=_last_split_info(),
                 n_samples=int(len(y_ev)), at_seq=request.at_seq,
                 has_non_identity_ops=engine.has_non_identity_ops,
                 survival=surv,
@@ -1305,6 +1320,7 @@ async def compute_performance(
                 pass
 
         return PerformanceResponse(
+            split_info=_last_split_info(),
             mse=mse,
             rmse=rmse,
             mae=mae,
@@ -1354,7 +1370,7 @@ async def compute_shap(
             cached = get_cached_shap(
                 session, genome_id, request.dataset_split_id,
                 cache_key, request.split,
-                request.max_samples, ops_count,
+                request.max_samples or 0, ops_count,
             )
             if cached is not None:
                 logger.info("SHAP cache hit for genome=%s target=%s", genome_id, cache_key)
@@ -1370,6 +1386,7 @@ async def compute_shap(
             session, request.dataset_split_id, request.split,
             1.0, request.max_samples,
         )
+        shap_max = request.max_samples or len(X)
 
         display_map = model_state.get_display_map()
 
@@ -1432,7 +1449,7 @@ async def compute_shap(
     # --- Phase 2: Heavy SHAP computation (in thread pool) -----------------
     result = await asyncio.to_thread(
         compute_shap_values,
-        predict_fn, shap_input, feature_names, request.max_samples,
+        predict_fn, shap_input, feature_names, shap_max,
         shap_output_names,
     )
 
@@ -1441,10 +1458,11 @@ async def compute_shap(
         save_shap_cache(
             session, genome_id, request.dataset_split_id,
             cache_key, request.split,
-            request.max_samples, ops_count, result,
+            request.max_samples or 0, ops_count, result,
         )
 
     return ShapResponse(
+        split_info=_last_split_info(),
         feature_names=result["feature_names"],
         mean_abs_shap=result["mean_abs_shap"],
         base_value=result["base_value"],

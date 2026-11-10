@@ -86,4 +86,7 @@ def lock_explanation(
         explanation = Explanation(genome_id=gid, is_well_formed=False, operations=[])
         session.add(explanation)
         session.flush()
+        # a new explanation is strict (no bare typed numbers); existing ones stay legacy
+        from ..analysis.provenance import set_strict
+        set_strict(session, gid, True)
     return explanation

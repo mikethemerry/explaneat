@@ -25,11 +25,21 @@ def _ctx(session, genome_id, split_id, split):
     return engine, ops, X, y, names or []
 
 
-def _run(fn):
+def _run(fn, genome_id=None, tool=None, args=None, quantity=None, split="train"):
+    """Run ``fn``; with ``tool``, stamp the result with the split and store its provenance."""
     try:
-        return json.dumps(fn(), indent=2, default=str)
+        res = fn()
     except Exception as e:
         return json.dumps({"error": str(e)})
+    if tool and isinstance(res, dict):
+        from explaneat.analysis.provenance import split_stamp
+        from .evidence import stamp_and_record
+        n = res.pop("_n", None)
+        stamp = split_stamp(split, n, n, False) if n is not None else None
+        res = stamp_and_record(genome_id, tool, args or {}, {"quantity": quantity, "scope": "whole model",
+                                                             "population": f"{split} split", "unit": "see the result"},
+                               stamp, res)
+    return json.dumps(res, indent=2, default=str)
 
 
 def check_explanation(genome_id: str, dataset_split_id: Optional[str] = None, split: str = "train") -> str:
@@ -40,8 +50,9 @@ def check_explanation(genome_id: str, dataset_split_id: Optional[str] = None, sp
     def go():
         with get_db().session_scope() as s:
             engine, ops, X, _, _ = _ctx(s, genome_id, dataset_split_id, split)
-            return et.check_explanation(engine, ops, X)
-    return _run(go)
+            return {**et.check_explanation(engine, ops, X), "_n": int(X.shape[0])}
+    return _run(go, genome_id, "check_explanation", {"split": split},
+                "function preservation, closed-form error, hierarchy, operation counts", split)
 
 
 def linearise_annotations(genome_id: str, annotation_names: Optional[str] = None,
@@ -53,8 +64,9 @@ def linearise_annotations(genome_id: str, annotation_names: Optional[str] = None
         names = json.loads(annotation_names) if annotation_names else None
         with get_db().session_scope() as s:
             engine, ops, X, y, _ = _ctx(s, genome_id, dataset_split_id, split)
-        return et.linearise_annotations(engine.current_state, ops, X, y, names)
-    return _run(go)
+        return {**et.linearise_annotations(engine.current_state, ops, X, y, names), "_n": int(X.shape[0])}
+    return _run(go, genome_id, "linearise_annotations", {"annotation_names": annotation_names, "split": split},
+                "AUC with units linearised (all, each alone, restore gain)", split)
 
 
 def unit_activity(genome_id: str, dataset_split_id: Optional[str] = None, split: str = "train") -> str:
@@ -62,8 +74,8 @@ def unit_activity(genome_id: str, dataset_split_id: Optional[str] = None, split:
     def go():
         with get_db().session_scope() as s:
             engine, _, X, _, _ = _ctx(s, genome_id, dataset_split_id, split)
-        return et.unit_activity(engine.current_state, X)
-    return _run(go)
+        return {"units": et.unit_activity(engine.current_state, X), "_n": int(X.shape[0])}
+    return _run(go, genome_id, "unit_activity", {"split": split}, "per hidden node: status and active rows", split)
 
 
 def suggest_candidates(genome_id: str) -> str:
@@ -83,8 +95,9 @@ def category_offsets(genome_id: str, dataset_split_id: Optional[str] = None, spl
     def go():
         with get_db().session_scope() as s:
             engine, _, X, y, names = _ctx(s, genome_id, dataset_split_id, split)
-        return et.category_offsets(engine.current_state, X, y, names, large_effect)
-    return _run(go)
+        return {**et.category_offsets(engine.current_state, X, y, names, large_effect), "_n": int(X.shape[0])}
+    return _run(go, genome_id, "category_offsets", {"split": split, "large_effect": large_effect},
+                "per one-hot level: model logit effect vs empirical log-odds offset", split)
 
 
 def register(mcp: FastMCP) -> None:
