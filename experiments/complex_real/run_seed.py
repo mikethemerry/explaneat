@@ -251,7 +251,7 @@ def git_state():
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip()
     status = subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"],
                                      cwd=REPO, text=True).splitlines()
-    return commit, any(line.strip() for line in status)
+    return commit, any(line.strip() and not line.rstrip().endswith(".pyc") for line in status)
 
 
 def main():
