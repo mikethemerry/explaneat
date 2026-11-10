@@ -127,9 +127,11 @@ def _read_draft(path: str):
 @click.option("--dir", "directory", default=None, type=click.Path(file_okay=False))
 def lint(label, from_json, directory):
     """Check a draft against the writing protocol and the claims (nothing is written)."""
+    from ..analysis.plain_language_slots import render_draft
     from ..analysis.plain_language_store import lint_draft, load_layer
     layer = load_layer(label, Path(directory) if directory else None)
-    errs = lint_draft(layer, _read_draft(from_json))
+    draft, errs = render_draft(layer, _read_draft(from_json))   # fill {{C..}} slots first
+    errs = errs or lint_draft(layer, draft)
     for e in errs:
         click.echo(e)
     click.echo("ok" if not errs else f"{len(errs)} problem(s)")

@@ -106,7 +106,17 @@ def merge_existing(new: Dict[str, Any], old: Optional[Dict[str, Any]]) -> Dict[s
     if old.get("drafted"):
         d = dict(old["drafted"])
         if not same and not d.get("stale"):
-            # the claims changed: keep the draft only if it still passes the full lint
+            # the claims changed: fill the code-filled numbers (slots) again from the new claims,
+            # then keep the draft only if it still passes the full lint
+            from .plain_language_slots import has_slots, rerender_draft
+            if has_slots(d):
+                d2, slot_errs, n_re = rerender_draft(new, d)
+                if not slot_errs:
+                    d = d2
+                    d["rerendered"] = {"from_claims_hash": d.get("claims_hash"), "sentences": n_re,
+                                       "note": "the slots were filled again from the new claims"}
+                else:
+                    d["stale_errors"] = slot_errs[:20]
             errs = lint_draft(new, draft_input(d))
             if not errs:
                 d["revalidated"] = {"from_claims_hash": d.get("claims_hash"),
@@ -176,6 +186,12 @@ def _sentences(draft: Dict[str, Any]):
 
 
 def lint_text(text: str) -> List[str]:
+    if re.search(r"\{\{\s*C\d+\.", text or ""):
+        return ["an unfilled slot {{C..}}: render the draft (plain_language_slots.render_draft)"]
+    return _lint_text(text)
+
+
+def _lint_text(text: str) -> List[str]:
     out = []
     for rx, why in FORBIDDEN:
         m = rx.search(text or "")
@@ -863,6 +879,11 @@ def set_draft(label: str, draft: Dict[str, Any], directory: Optional[Path] = Non
     layer = load_layer(label, directory)
     if layer is None:
         raise FileNotFoundError(f"no plain-language layer for {label}: run extract first")
+    # slots ({{C086.risk.to|pct}}) are filled by code, rounded once, and the citations derived
+    from .plain_language_slots import render_draft
+    draft, slot_errs = render_draft(layer, draft)
+    if slot_errs:
+        raise ValueError("draft slots do not resolve:\n  " + "\n  ".join(slot_errs))
     errs = lint_draft(layer, draft)
     if errs:
         raise ValueError("draft does not follow the writing protocol:\n  " + "\n  ".join(errs))
