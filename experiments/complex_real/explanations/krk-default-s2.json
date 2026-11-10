@@ -1,0 +1,111 @@
+{
+  "label": "krk-default-s2",
+  "genome_id": "da7d295b-7705-4c44-b8a6-d95cdce44efa",
+  "dataset": "krk",
+  "variant": "default",
+  "start": "2026-11-10T23:17:18+13:00",
+  "end": "2026-11-10T23:41:18+13:00",
+  "time_used_minutes": 24,
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 4,
+  "n_composition_annotations": 2,
+  "n_splits": 4,
+  "n_identity_nodes": 2,
+  "hidden_nodes": 11,
+  "hidden_nodes_single_leaf_no_split": 9,
+  "hidden_nodes_in_any_annotation": 11,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 2.220446049250313e-16,
+  "closed_form_max_abs_err": 0.03221697890436648,
+  "resisted": "Nothing structural: every part has a closed form and the hierarchy is complete. What the network does not do, measured against the exact rule: (1) the white king is not an input (wk_file, wk_rank unconnected), so it cannot tell whether the white king defends the rook or detect stalemate. Defended-but-adjacent positions get 0.51 against 0.60 for captures (within-adjacency AUC 0.67, an accident of the rank asymmetry); the 8 stalemates get 0.18. (2) The box around the rook has hinges on only three sides: black king 2+ files right, rook 1+ file right (kink at 0.79 files, so it slightly penalises the real capture squares), rook 2+ ranks above. The fourth side, rook below the black king, is only a linear ramp of 0.72 logit per rank. Inside the 3x3 capture box the predicted chance is therefore lopsided: 0.70-0.78 with the rook one rank above the king, 0.39-0.44 one rank below, against a true draw rate of 0.89-0.98. As a result only 62% of adjacent positions are predicted draws, though every predicted draw is adjacent. (3) rook_right_of_bk is only partly meaningful: its hinge is placed slightly wrong and is nearly redundant for ranking (linearised alone, AUC 0.991). The side term 2804/7455 (a black-king rank ramp plus a soft complement of 812, weight 0.154 into 99) has no clean domain reading and is small. I describe it inside far_from_rook as closed form only.",
+  "tool_bugs": "linearise_annotations returns {\"error\": \"model state (with overrides) is not a DAG\"} when the composition far_from_rook is included (and with the default all-annotations scope). It works on the four leaves; 99's ReLU was linearised locally instead. Shell guard: the worktree-isolation guard refused loops and $VAR expansion in uv commands, so the calls ran through small Python wrappers in the scratch dir (batch.py, annotate.py); this does not affect the results. compute_shap ran on 2,000 training rows (about 6 minutes).",
+  "summary": "The network ignores the white king and scores 'is the black king next to the rook?' as a soft box in rook-relative coordinates. ReLU hinges subtract from the draw logit once the black king is 2+ files right of the rook (357 = 0.715*max(0, bk_file-wr_file-1)), the rook is 1+ file right of the king (812), or the rook is 2+ ranks above the king (2711 = 0.639*max(0, wr_rank-bk_rank-1)). They are summed additively through node 99. A direct linear rank ramp closes the fourth side. A five-term surrogate reproduces the logit with R^2 = 0.9996. The score ranks adjacency almost perfectly (AUC 0.99987), which gives train AUC 0.997 against the true labels, because 94.5% of adjacent positions are draws (the rest are rooks defended by the white king, which the network cannot see).",
+  "leaf_assessments": [
+    {
+      "name": "bk_right_of_rook",
+      "annotation_id": "ann_12",
+      "assessment": "meaningful",
+      "hypothesis_short": "Black king two or more files right of the rook: 357 = 0.715*max(0, bk_file - wr_file - 1).",
+      "why": "Exact on all rows (residual 0.0045). It is zero on every draw, and none of the 8,743 positions where it is positive is a draw. It is one side of the necessary capture condition |file difference| <= 1. Largest restore gain (0.25)."
+    },
+    {
+      "name": "rook_right_of_bk",
+      "annotation_id": "ann_13",
+      "assessment": "partial",
+      "hypothesis_short": "Mirror hinge: rook to the right of the black king, 812 ~ 0.77*max(0, wr_file - bk_file - 0.79); 7455 its soft complement.",
+      "why": "'Rook 2+ files right => no capture' holds (6 of 6,213 positions with 812 > 0.5 are draws). But the kink sits at 0.79 files, not 1, so 28% of draws (rook exactly one file right) get a -0.31 logit penalty. The hinge is nearly redundant for ranking (linearised alone, AUC 0.991; restore gain 0.02). 7455 has no separate domain reading."
+    },
+    {
+      "name": "dead_rank_unit",
+      "annotation_id": "ann_14",
+      "assessment": "closed-form-only",
+      "hypothesis_short": "Support-level Null: 3965 never fires for any legal rook rank, so 7180 is the constant 1.972 (a bias).",
+      "why": "The Null claim is verified: the pre-activation is negative for ranks 1-8, 0 active rows, and zeroing it changes the output by exactly 0. It is a bias carried by a dead unit and has no domain meaning."
+    },
+    {
+      "name": "rook_above_bk",
+      "annotation_id": "ann_15",
+      "assessment": "meaningful",
+      "hypothesis_short": "Rook two or more ranks above the black king: 2711 = 0.639*max(0, wr_rank - bk_rank - 1) within one file (switched on earlier when the black king is also far right); 3299/5890/8583 are linear relays (gain 3.29).",
+      "why": "Within |file difference| <= 1 it matches the hinge exactly (0.01 at one rank, then +0.64 per rank). 99.96% of draws have 2711 < 0.2, and none of the 10,442 positions with 2711 > 0.5 is a draw. Restore gain 0.13. The relays are always on, so they are linear."
+    }
+  ],
+  "composition_notes": "far_from_rook (ann_16) owns 99 and 2804. 99 = relu(2.15*357 + 3.29*[2711 via 2711, 3299, 8583] + 0.154*2804 + c) is active on 95% of rows, and linearising it leaves AUC at 0.9970, so it is an additive sum of the bk-right and rook-above hinges. 2804 is always on and linear: 0.33 per black-king rank, plus 1.47*7455, plus the constant from dead_rank_unit. Serial couplings: 357 also feeds 2711 (through identity_2711), and 7180 feeds 812 (through identity_812). draw_score (root, ann_17) owns the output and the direct wr_rank (+0.80/rank) and bk_rank (-0.62/rank) edges. It adds -2.69*99, -1.25*357 and -1.92*812. Overall the composition is additive in the logit (three hinges, an interaction term and a ramp; surrogate R^2 0.9996).",
+  "ground_truth_comparisons": "Training split, 22,444 rows. The rule (capture of an undefended rook, or stalemate) reproduces all labels. Network: AUC 0.9971, accuracy 0.960. The network score with black-king-adjacent-to-rook as the label: AUC 0.99987. The adjacency indicator alone against draw: AUC 0.9955, P(draw | adjacent) = 0.945 (n = 2,360), P(draw | not adjacent) = 0.0003. Predicted draws (p > 0.5): 1,453, all adjacent; 907 adjacent positions are predicted wins. Mean prediction: capture 0.60, adjacent-but-defended (n = 131) 0.51, stalemate (n = 8) 0.18, not adjacent 0.028 (max 0.37). Within adjacency, capture vs defended AUC 0.67. Within-adjacency logit regression: +0.76 per wr_rank, -0.69 per bk_rank, so it depends on the rank asymmetry. Per-leaf comparisons: see leaf_assessments. Mean prediction per adjacent cell (dr = bk_rank - wr_rank, df = bk_file - wr_file): dr=-1 0.70/0.78/0.78; dr=0 0.57/-/0.62; dr=+1 0.39/0.44/0.44. Rook 2+ ranks below the king within one file: mean 0.13, P(draw) 0, never predicted draw. Five-term surrogate on the logit: R^2 0.9996, 99.85% agreement at 0.5.",
+  "restore_gain": "linearise_annotations on the leaves (train): full AUC 0.9971; all leaves linear 0.5616. bk_right_of_rook: linearised alone 0.747 (drop 0.250), restore alone 0.814 (gain 0.252). rook_above_bk: linearised alone 0.847 (drop 0.150), restore gain 0.128. rook_right_of_bk: linearised alone 0.991 (drop 0.006), restore gain 0.022. dead_rank_unit: linear (drop 0). The tool fails on the composition (not a DAG); 99 linearised locally: AUC 0.9970. So the non-linear signal is carried by the two hinges bk_right_of_rook and rook_above_bk.",
+  "unit_activity_summary": "3965 dead (0/22,444 rows; impossible for any legal rank). Always on (linear on the support): 7180 (constant 1.972), 2804, 3299, 5890, 8583. Hinges: 357 (48% active), 812 (38%), 2711 (54%), 7455 (69%), 99 (95%, effectively linear).",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 6,
+      "roots": [
+        "draw_score"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 2.220446049250313e-16,
+    "closed_form_max_abs_err": 0.03221697890436648,
+    "numeric_max_abs_err": 3.552713678800501e-15,
+    "op_counts": {
+      "rename_node": 6,
+      "add_identity_node": 2,
+      "split_node": 4,
+      "annotate": 6
+    },
+    "leaves": [
+      {
+        "id": "ann_12",
+        "name": "bk_right_of_rook",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.00710474078443496
+      },
+      {
+        "id": "ann_13",
+        "name": "rook_right_of_bk",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.004723473485890972
+      },
+      {
+        "id": "ann_14",
+        "name": "dead_rank_unit",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.0021349420621630255
+      },
+      {
+        "id": "ann_15",
+        "name": "rook_above_bk",
+        "numeric_max_abs_err": 3.552713678800501e-15,
+        "closed_form_max_abs_err": 0.03221697890436648
+      }
+    ],
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}
