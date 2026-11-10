@@ -1,0 +1,357 @@
+{
+ "item_id": "vb-eccf26",
+ "genome_id": "7a8237f3-74cb-40bd-8268-b605f64dac2b",
+ "verifier": "explanation-verifier agent (run1, blind)",
+ "started_at": "2026-11-10T23:43:19+13:00",
+ "finished_at": "2026-11-10T23:47:51+13:00",
+ "minutes": 4.5,
+ "overall": {
+  "grade": "weakened",
+  "summary": "Coverage, closed forms, all 200 claims, the ablation figures, the kinks and the age and hours profiles reproduce; two short-hours sentences use the 50-hour threshold without citing the claim that holds it, and the age hypothesis gives the Thai group as 27 rows (26 in the data)."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "weakened",
+   "level": "L1",
+   "part": "ann_125",
+   "claims": [
+    "C143",
+    "C142"
+   ],
+   "location": "drafted.readdown.ann_125.evidence[0]",
+   "statement": "It is active for 31364 of 39073 training people, those working less than about 50 hours a week ... [C143]",
+   "check": "verify recheck prose check; C142",
+   "evidence": "50 is not in C143 (the subgroup claim); it is C142's threshold (49.9 hours), which the sentence does not cite. The number itself is right: the part is active up to 49 hours, 0 from 50.",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-eccf26"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "weakened",
+   "level": "L1",
+   "part": "ann_125",
+   "claims": [
+    "C143",
+    "C142"
+   ],
+   "location": "drafted.blocks[3]",
+   "statement": "This part acts on the 31364 people who work less than about 50 hours a week ... [C143]",
+   "check": "as V1",
+   "evidence": "50 belongs to C142, not cited",
+   "commands": []
+  },
+  {
+   "id": "V3",
+   "grade": "weakened",
+   "level": "L1",
+   "part": "ann_121",
+   "claims": [],
+   "location": "operations.age_profile.hypothesis",
+   "statement": "for Thai respondents (27 rows) it adds -4.0 directly ... Thailand (26 rows): ... +0.10 on average",
+   "check": "scratch frame.py: rows with native-country 37",
+   "evidence": "26 training rows (the same hypothesis gives both 27 and 26; the record says 26)",
+   "commands": [
+    "scratch frame.py: df[df['native-country']=='37'].shape[0] -> 26"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "coverage 1.0, full, preservation 5.6e-16, closed-form error 0.041",
+   "check": "verify recheck",
+   "evidence": "all reproduce; 200 of 200 claims reproduce",
+   "commands": []
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "backbone ablation AUC 0.912 -> 0.790; capital-gain ablation 0.894; vertex 46; acc 0.858, AUC 0.912",
+   "check": "verify ablate --to mean",
+   "evidence": "ann_129: 0.9118 -> 0.7895 (acc 0.801); ann_130: 0.8935 (acc 0.837); ann_122 0.9028; ann_123 0.9114; ann_121 0.9051; ann_125 0.9076; ann_124 0.9111; ann_128 0.9111, all as stated",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-eccf26 --part ann_129 --to mean"
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_129",
+   "claims": [
+    "C091",
+    "C095",
+    "C090",
+    "C093",
+    "C094",
+    "C096",
+    "C099",
+    "C109",
+    "C098",
+    "C100"
+   ],
+   "location": "operations.core_linear_backbone.hypothesis",
+   "statement": "Married-civ-spouse -2.87, male -0.50, Widowed -1.05, Married-AF-spouse -59, Never-worked +30, ...",
+   "check": "replayed weights times one-hot span",
+   "evidence": "marital-status:2 -1.43 z (span about 2) = -2.87; sex -0.237 z = -0.50; marital-status:6 -0.18 z (p 0.03) = -1.04; marital-status:1 -1.62 z on 29 rows = -59; workclass:3 +0.45 z on 9 rows = +30",
+   "commands": [
+    "scratch weights.py vb-eccf26 identity_core"
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_130",
+   "claims": [
+    "C073",
+    "C081",
+    "C083",
+    "C084",
+    "C126"
+   ],
+   "location": "operations.capital_gain_effect.hypothesis",
+   "statement": "concave penalty steepening above about $4.8k and $5.2k; Jamaica removes the $4.8k kink",
+   "check": "probe --sweep capital-gain=4500:5500:11 --sweep native-country=39,23",
+   "evidence": "US and Jamaica identical up to 4800; from 4900 the US falls faster (ann_130 -1.072 vs -1.057, -1.417 vs -1.312 at 5500); ann_122 slope per $100 -0.034 below 5100, -0.050 above 5300",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-eccf26 --sweep capital-gain=4500:5500:11 --sweep native-country=39,23"
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_121",
+   "claims": [
+    "C137",
+    "C139",
+    "C136"
+   ],
+   "location": "drafted.readdown.ann_121.hypothesis[0]",
+   "statement": "lowest at about 47 years and higher either side; Thailand rises with age",
+   "check": "mean contribution by age (scratch frame.py)",
+   "evidence": "minimum at 46 (-0.86), 47 -0.84, rising either side (17: +1.32, 90: +0.48); the stated table is the same curve shifted by a constant 0.31 (raw exit vs mean-centred contribution)",
+   "commands": []
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_125",
+   "claims": [
+    "C141",
+    "C142",
+    "C143"
+   ],
+   "location": "operations.short_hours_hinge.hypothesis",
+   "statement": "mean contribution 10h +2.04, 20h +1.53, 30h +1.02, 40h +0.51, 45h +0.25, >=50h 0; active 80%",
+   "check": "scratch frame.py groupby hours",
+   "evidence": "exactly 2.04, 1.53, 1.02, 0.51, 0.25, 0.00 at 50; active 80.3%, last active at 49 hours",
+   "commands": []
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_123",
+   "claims": [
+    "C134",
+    "C126",
+    "C132"
+   ],
+   "location": "operations.capital_gain_country_gate.hypothesis",
+   "statement": "active for 5.1% of rows",
+   "check": "claims",
+   "evidence": "1993 of 39073 = 5.1%",
+   "commands": []
+  },
+  {
+   "id": "V11",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_122",
+   "claims": [
+    "C085",
+    "C088"
+   ],
+   "location": "drafted.readdown.ann_122.hypothesis[0]",
+   "statement": "lowers chance as gains rise, slowly then faster",
+   "check": "claims; probe",
+   "evidence": "C085 reproduces; steepening seen in probe",
+   "commands": []
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_124",
+   "claims": [
+    "C162",
+    "C163"
+   ],
+   "location": "operations.self_emp_not_inc_offset.hypothesis",
+   "statement": "exit 1.49 for 7.8% of rows; +0.646",
+   "check": "claims; arithmetic",
+   "evidence": "3034 of 39073 = 7.8%; 0.433*1.49 = 0.645",
+   "commands": []
+  },
+  {
+   "id": "V13",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_128",
+   "claims": [
+    "C145",
+    "C146",
+    "C147",
+    "C148",
+    "C149",
+    "C150",
+    "C152"
+   ],
+   "location": "drafted.readdown.ann_128.hypothesis[0]",
+   "statement": "fixed per-country offsets",
+   "check": "claims",
+   "evidence": "reproduce",
+   "commands": []
+  },
+  {
+   "id": "V14",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_126",
+   "claims": [
+    "C165",
+    "C166"
+   ],
+   "location": "drafted.readdown.ann_126.hypothesis[0]",
+   "statement": "other relative raises the chance",
+   "check": "claims",
+   "evidence": "63% -> 82% reproduces",
+   "commands": []
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_127",
+   "claims": [
+    "C168",
+    "C169",
+    "C170"
+   ],
+   "location": "drafted.readdown.ann_127.hypothesis[0]",
+   "statement": "Trinidad and Tobago and preschool raise, Yugoslavia lowers",
+   "check": "claims",
+   "evidence": "reproduce",
+   "commands": []
+  },
+  {
+   "id": "V16",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_131",
+   "claims": [
+    "C072"
+   ],
+   "location": "drafted.readdown.ann_131.hypothesis[0]",
+   "statement": "adds up eight parts",
+   "check": "composition claim",
+   "evidence": "additive, verified",
+   "commands": []
+  },
+  {
+   "id": "V17",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_129",
+   "claims": [
+    "C001",
+    "C004"
+   ],
+   "location": "drafted.worth_checking[2]",
+   "statement": "Married-AF-spouse to below 1% (29 people), never worked to above 99% (9 people)",
+   "check": "domain",
+   "evidence": "extreme switches on tiny groups; already flagged",
+   "commands": []
+  },
+  {
+   "id": "V18",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_129",
+   "claims": [
+    "C016",
+    "C027",
+    "C032"
+   ],
+   "location": "drafted.worth_checking[4]",
+   "statement": "7th-8th, 9th and 10th grade lower the chance of a low income",
+   "check": "domain",
+   "evidence": "against the known education-income link (one-hot artefact next to education-num); already flagged",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_131": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_130": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_122": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_123": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_129": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_121": {
+   "grade": "weakened",
+   "level": "L1"
+  },
+  "ann_125": {
+   "grade": "weakened",
+   "level": "L1"
+  },
+  "ann_128": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_124": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_126": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_127": {
+   "grade": "upheld",
+   "level": "L4"
+  }
+ },
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ]
+}

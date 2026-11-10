@@ -1,0 +1,353 @@
+{
+ "item_id": "vb-a33fbd",
+ "genome_id": "9c06b29f-4ca4-4a6a-b9ed-5d04ee037b66",
+ "verifier": "explanation-verifier agent (run1, blind)",
+ "started_at": "2026-11-10T23:48:11+13:00",
+ "finished_at": "2026-11-10T23:51:10+13:00",
+ "minutes": 3.0,
+ "overall": {
+  "grade": "refuted",
+  "summary": "The youth part leaves out its relay node 8375, so coverage is not full and its formula does not reproduce, and the record and the youth hypothesis place the age hinge at about 41 years when it is at about 35. The other parts reproduce."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "refuted",
+   "level": "L1",
+   "part": "ann_113",
+   "claims": [],
+   "location": "operations.youth_hinge.subgraph_nodes",
+   "statement": "subgraph nodes -1, 599, 3328, identity_age (connections without 599->8375 and 8375->3328)",
+   "check": "verify recheck; replayed weights",
+   "evidence": "the model has 599 -> 8375 (0.4565) and 8375 -> 3328 (0.8124), and the part's own hypothesis uses 8375 as a relay; 8375 is in no annotation. Recheck: uncovered nodes 599, 8375; structural coverage 0.9844.",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-a33fbd"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "refuted",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "1.0 (also verified_by_orchestrator)",
+   "check": "verify recheck",
+   "evidence": "recomputed 0.9844",
+   "commands": []
+  },
+  {
+   "id": "V3",
+   "grade": "refuted",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.full_coverage",
+   "statement": "true",
+   "check": "verify recheck",
+   "evidence": "recomputed false",
+   "commands": []
+  },
+  {
+   "id": "V4",
+   "grade": "refuted",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.closed_form_max_abs_err",
+   "statement": "0.065",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.20",
+   "commands": []
+  },
+  {
+   "id": "V5",
+   "grade": "refuted",
+   "level": "L1",
+   "part": "ann_113",
+   "claims": [],
+   "location": "layer.parts.ann_113.closed_form",
+   "statement": "closed form with the 8375 relay, error 2.2e-16",
+   "check": "verify recheck",
+   "evidence": "recomputed from the stored subgraph: max error 1.194",
+   "commands": []
+  },
+  {
+   "id": "V6",
+   "grade": "refuted",
+   "level": "L1",
+   "part": "ann_113",
+   "claims": [
+    "C087"
+   ],
+   "location": "claims.C087",
+   "statement": "formula reproduces the part exactly",
+   "check": "verify recheck",
+   "evidence": "largest difference 1.194; not verified",
+   "commands": []
+  },
+  {
+   "id": "V7",
+   "grade": "refuted",
+   "level": "L1",
+   "part": "ann_113",
+   "claims": [
+    "C087"
+   ],
+   "location": "drafted.readdown.ann_113.evidence[2]",
+   "statement": "Its formula reproduces the part exactly on all 39073 training people.",
+   "check": "verify recheck (lint: cites unverified C087)",
+   "evidence": "max error 1.19",
+   "commands": []
+  },
+  {
+   "id": "V8",
+   "grade": "weakened",
+   "level": "L1",
+   "part": "ann_113",
+   "claims": [
+    "C121"
+   ],
+   "location": "claims.C121",
+   "statement": "2 always-on units",
+   "check": "verify recheck",
+   "evidence": "recomputed 1 (follows from V1)",
+   "commands": []
+  },
+  {
+   "id": "V9",
+   "grade": "refuted",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "Nothing resisted coverage.",
+   "check": "verify recheck",
+   "evidence": "599 and 8375 uncovered",
+   "commands": []
+  },
+  {
+   "id": "V10",
+   "grade": "refuted",
+   "level": "L3",
+   "part": null,
+   "claims": [
+    "C086"
+   ],
+   "location": "record.summary",
+   "statement": "a youth hinge (+0.16 logit per year below ~41; ablation AUC 0.900)",
+   "check": "probe --sweep age=17:50:12 and age=29:36:8 (typical person)",
+   "evidence": "the youth part's contribution falls 0.161 per year up to 35 years and is flat from 35 (exit 0.463 at 35, 36, ... 50); risk 61.9% at 35, 38, 41 and 44 years. The hinge is at about 35, not 41 (the root hypothesis and C086 say 35). Slope and ablation (AUC 0.9078 -> 0.9002) are right.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-a33fbd --sweep age=17:50:12",
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-a33fbd --sweep age=29:36:8"
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "refuted",
+   "level": "L1",
+   "part": "ann_113",
+   "claims": [],
+   "location": "operations.youth_hinge.hypothesis",
+   "statement": "599=relu(-1.763*age-0.494), active below z=-0.280 (~41 years, using est. mean 38.6/sd 13.7 y)",
+   "check": "arithmetic; probe",
+   "evidence": "38.6 - 0.280*13.7 = 34.8 years; the probe shows the hinge closes at 35 years. The same text later says 'flat (0.463) at 35+ years', which is right.",
+   "commands": []
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_113",
+   "claims": [
+    "C085",
+    "C086"
+   ],
+   "location": "drafted.readdown.ann_113.hypothesis[0]",
+   "statement": "falls steadily as age rises up to about 35 years, then no further",
+   "check": "probe",
+   "evidence": "linear 0.161 per year below 35, flat after",
+   "commands": []
+  },
+  {
+   "id": "V13",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_120",
+   "claims": [
+    "C082"
+   ],
+   "location": "operations.income_logit.hypothesis",
+   "statement": "bias 0.776; 40 direct inputs; education-num -1.41, marital-status:2 -0.73, relationship:5 -0.56, relationship:0 -0.56, sex -0.42, hours -0.33, capital-loss -0.30; youth below ~35; ablations 0.890 / 0.900",
+   "check": "replayed weights; ablate --to mean",
+   "evidence": "bias 0.7764; 40 direct input edges; weights -1.406, -0.725, -0.562, -0.559, -0.416, -0.331, -0.298; capital gain 0.9078 -> 0.8896, age -> 0.9002",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-a33fbd --part ann_114 --to mean"
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_114",
+   "claims": [
+    "C083",
+    "C084"
+   ],
+   "location": "operations.capital_gain_penalty.hypothesis",
+   "statement": "kink at z 0.554; +0.41 at cg = 0; ablation AUC 0.8896",
+   "check": "arithmetic; probe exit; ablate",
+   "evidence": "0.453/0.8175 = 0.554; exit 0.406 at cg = 0; AUC 0.9078 -> 0.8896, acc 0.832",
+   "commands": []
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_117",
+   "claims": [
+    "C088",
+    "C089",
+    "C090"
+   ],
+   "location": "operations.handlers_doctorate_relay.hypothesis",
+   "statement": "three levels on 36898 / 1683 / 492 rows; ablation AUC 0.9076",
+   "check": "claims; ablate",
+   "evidence": "doctorate 473 + Cambodia 19 = 492; handlers 1683; AUC 0.9078 -> 0.9076",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-a33fbd --part ann_117 --to mean"
+   ]
+  },
+  {
+   "id": "V16",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_118",
+   "claims": [
+    "C092",
+    "C093"
+   ],
+   "location": "drafted.readdown.ann_118.hypothesis[0]",
+   "statement": "acts only on 187 private household workers",
+   "check": "claims",
+   "evidence": "reproduce",
+   "commands": []
+  },
+  {
+   "id": "V17",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_115",
+   "claims": [
+    "C095",
+    "C096",
+    "C097"
+   ],
+   "location": "operations.tech_support_gate.hypothesis",
+   "statement": "table: occ13 1152 + both 21 = 1173; nc0 656 + 21 = 677",
+   "check": "claims counts",
+   "evidence": "consistent with C095 (1173) and C097 (677)",
+   "commands": []
+  },
+  {
+   "id": "V18",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_119",
+   "claims": [
+    "C100",
+    "C101"
+   ],
+   "location": "drafted.readdown.ann_119.hypothesis[0]",
+   "statement": "China raises the chance; 96 people",
+   "check": "claims",
+   "evidence": "reproduce",
+   "commands": []
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_116",
+   "claims": [
+    "C103"
+   ],
+   "location": "drafted.readdown.ann_116.hypothesis[0]",
+   "statement": "Asian or Pacific Islander lowers a little",
+   "check": "claims",
+   "evidence": "62% -> 58% reproduces",
+   "commands": []
+  },
+  {
+   "id": "V20",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_120",
+   "claims": [
+    "C004",
+    "C006",
+    "C001"
+   ],
+   "location": "drafted.worth_checking[3]",
+   "statement": "1st-4th and 7th-8th grade lower the chance of a low income",
+   "check": "domain",
+   "evidence": "against the known education-income link; already flagged",
+   "commands": []
+  },
+  {
+   "id": "V21",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_120",
+   "claims": [
+    "C010"
+   ],
+   "location": "drafted.worth_checking[0]",
+   "statement": "capital losses lower the chance of a low income",
+   "check": "domain",
+   "evidence": "already flagged",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_120": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_113": {
+   "grade": "refuted",
+   "level": "L1"
+  },
+  "ann_114": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_117": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_118": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_115": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_119": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_116": {
+   "grade": "upheld",
+   "level": "L4"
+  }
+ },
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ]
+}

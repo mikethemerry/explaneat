@@ -1,0 +1,298 @@
+{
+ "item_id": "vb-fd4da7",
+ "genome_id": "6a26c823-5e60-424d-a968-74f44d675efa",
+ "verifier": "explanation-verifier agent (run1, blind)",
+ "started_at": "2026-11-10T23:20:45+13:00",
+ "finished_at": "2026-11-10T23:27:20+13:00",
+ "minutes": 6.6,
+ "overall": {
+  "grade": "refuted",
+  "summary": "The many-service-calls part is described as raising the chance steadily from the first call, but it is off below 4 calls; its stated closed form has the wrong bias (-0.479 instead of -0.679). The rest reproduces."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "refuted",
+   "level": "L3",
+   "part": "ann_92",
+   "claims": [
+    "C126",
+    "C125"
+   ],
+   "location": "drafted.readdown.ann_92.hypothesis[0]",
+   "statement": "This part raises the chance of leaving steadily with every call to customer service, from the first call on, except in West Virginia.",
+   "check": "probe --set state=OH --sweep 'number customer service calls=0:7:8'; C126 threshold 4 calls; lint flags C126 hinge with no hinge phrase",
+   "evidence": "ann_92 contribution is 0 (off) at 0, 1, 2 and 3 calls, then +0.585 at 4, +1.199 at 5, +1.813 at 6, +2.427 at 7 calls (Ohio customer). It adds nothing until 4 calls (C126), not from the first call.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-fd4da7 --set state=OH --sweep \"number customer service calls=0:7:8\""
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "refuted",
+   "level": "L1",
+   "part": "ann_92",
+   "claims": [],
+   "location": "layer.parts.ann_92.closed_form",
+   "statement": "y_0 = relu(0.542 CSC - 0.367 state:49 - 0.479)",
+   "check": "verify recheck; node 7208 weights in the replayed model",
+   "evidence": "recomputed bias -0.679 (node 7208 bias -0.6786; weights CSC +0.5425, state:49 -0.3670). With -0.479 the hinge would open near 3 calls, not 4.",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-fd4da7"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "refuted",
+   "level": "L1",
+   "part": "ann_92",
+   "claims": [],
+   "location": "operations.csc_hinge_7208.evidence[0]",
+   "statement": "latex: relu(0.542 CSC - 0.367 state:49 - 0.479)",
+   "check": "verify recheck (warn: 0.479 not in the computed closed form)",
+   "evidence": "computed bias -0.679",
+   "commands": []
+  },
+  {
+   "id": "V4",
+   "grade": "refuted",
+   "level": "L1",
+   "part": "ann_92",
+   "claims": [],
+   "location": "operations.csc_hinge_7208.hypothesis",
+   "statement": "7208 = relu(0.54 CSC - 0.37 state:49 - 0.48), readout +1.48; active only when CSC >= 4",
+   "check": "replayed weights; subgroup CSC>=4; probe",
+   "evidence": "bias is -0.68, not -0.48 (the rest holds: readout +1.48, on from 4 calls, 306 of 318 customers with 4+ calls active, never in West Virginia, +0.61 logit per call 4->5). The payload's active_rows 304 differs slightly from the 306 recounted.",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-fd4da7 --where \"`number customer service calls` >= 4\""
+   ]
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_92",
+   "claims": [
+    "C126",
+    "C127",
+    "C125"
+   ],
+   "location": "drafted.readdown.ann_92.evidence[0]",
+   "statement": "acts on 306 of 4000, 154 left; 16% without, 26% with; off in West Virginia",
+   "check": "subgroup CSC>=4; probe typical (WV) sweep",
+   "evidence": "active 306 (96.2%) of the 318 with 4+ calls, 0 elsewhere; typical WV customer: ann_92 off at all call counts",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-fd4da7 --sweep \"number customer service calls=0:7:8\""
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_92",
+   "claims": [],
+   "location": "operations.csc_hinge_7208.evidence[1]",
+   "statement": "linearising 7208 costs only 0.002 AUC (0.901 -> 0.899)",
+   "check": "least-squares linearisation of 7208 on CSC and state:49 (scratch linearise.py)",
+   "evidence": "AUC 0.9009 -> 0.8988",
+   "commands": [
+    "scratch linearise.py vb-fd4da7 ann_92"
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "1.0, full coverage, hierarchy complete, function preservation 7.2e-16, closed-form error 0.0077",
+   "check": "verify recheck",
+   "evidence": "all recomputed equal; 158 of 158 claims reproduce; prose numbers all found",
+   "commands": []
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_95",
+   "claims": [],
+   "location": "operations.churn_logit.hypothesis",
+   "statement": "AUC 0.901; zeroing backbone 0.54; gate zeroed 0.7635; additive",
+   "check": "scratch multiablate.py",
+   "evidence": "full 0.9009; backbone zeroed 0.539; gate zeroed 0.7635; state offsets zeroed 0.9009",
+   "commands": [
+    "scratch multiablate.py vb-fd4da7 ann_90",
+    "scratch multiablate.py vb-fd4da7 ann_91"
+   ]
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_90",
+   "claims": [
+    "C060",
+    "C061",
+    "C062",
+    "C069",
+    "C063",
+    "C064",
+    "C070",
+    "C071"
+   ],
+   "location": "drafted.readdown.ann_90.hypothesis[0]",
+   "statement": "fixed weights; day minutes, international plan, messages raise; voice-mail plan lowers",
+   "check": "probe --sweep 'total day minutes=91:352:10'; claims recheck",
+   "evidence": "backbone contribution rises linearly -3.148 at 91 min to +6.661 at 352 min (steady); claims reproduce",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-fd4da7 --sweep \"total day minutes=91:352:10\""
+   ]
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_91",
+   "claims": [
+    "C114",
+    "C104",
+    "C102",
+    "C112",
+    "C116",
+    "C118"
+   ],
+   "location": "drafted.readdown.ann_91.hypothesis[0]",
+   "statement": "raises chance for low usage, more with service calls; day minutes lower it only below about 169",
+   "check": "probe 2-D sweep day minutes x calls (1, 4)",
+   "evidence": "1 call: gate +6.57 at 50 min, +0.78 at 150, flat +0.138 from 175 min; 4 calls: +9.90 at 50, still +1.21 at 200, flat at 225: the kink moves up with calls",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-fd4da7 --sweep \"total day minutes=50:250:9\" --sweep \"number customer service calls=1,4\""
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_91",
+   "claims": [],
+   "location": "operations.csc_usage_gate.hypothesis",
+   "statement": "for CSC>=4 ... empirical churn 0.88 low-day vs 0.24 high-day, which the network reproduces",
+   "check": "subgroup CSC>=4 by day minutes",
+   "evidence": "CSC>=4 and day < 160 min: empirical 88.5% but mean predicted 65.4%; day < 130: 98.0% vs 77.5%; day >= 160: 28.8% vs 40.5%. The direction is reproduced, the size is not.",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-fd4da7 --where \"`number customer service calls` >= 4 and `total day minutes` < 160\""
+   ]
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_91",
+   "claims": [],
+   "location": "operations.csc_usage_gate.evidence[3]",
+   "statement": "linearising the gate drops AUC 0.901 -> 0.851",
+   "check": "scratch linearise.py ann_91",
+   "evidence": "0.9009 -> 0.8505",
+   "commands": [
+    "scratch linearise.py vb-fd4da7 ann_91"
+   ]
+  },
+  {
+   "id": "V13",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_93",
+   "claims": [
+    "C120",
+    "C121"
+   ],
+   "location": "drafted.readdown.ann_93.hypothesis[0]",
+   "statement": "small voice-mail discount; exactly linear",
+   "check": "verify ablate ann_93",
+   "evidence": "AUC 0.9009 vs 0.9013 without; typical risk 1.5% vs 1.7%",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-fd4da7 --part ann_93"
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_94",
+   "claims": [
+    "C129",
+    "C130",
+    "C131",
+    "C132"
+   ],
+   "location": "drafted.readdown.ann_94.hypothesis[0]",
+   "statement": "small state offsets, up TN/OH, down NV/CA",
+   "check": "verify ablate ann_94; claims",
+   "evidence": "AUC unchanged 0.9009; NV n=77 (as stated)",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-fd4da7 --part ann_94"
+   ]
+  },
+  {
+   "id": "V15",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_92",
+   "claims": [
+    "C125"
+   ],
+   "location": "drafted.worth_checking[2]",
+   "statement": "many-service-calls part switched off in West Virginia",
+   "check": "domain; subgroup",
+   "evidence": "a one-state exemption fitted to 12 customers (5 left, 41.7%); no domain reason. Already flagged.",
+   "commands": []
+  },
+  {
+   "id": "V16",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_94",
+   "claims": [
+    "C130"
+   ],
+   "location": "operations.state_offsets.hypothesis",
+   "statement": "Nevada offset lowers the chance",
+   "check": "subgroup state=='33'",
+   "evidence": "Nevada churn 18.2% vs 14.1% elsewhere: the offset has the opposite sign to the data (as the explainer notes).",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_95": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_90": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_91": {
+   "grade": "weakened",
+   "level": "L2"
+  },
+  "ann_93": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_92": {
+   "grade": "refuted",
+   "level": "L1"
+  },
+  "ann_94": {
+   "grade": "upheld",
+   "level": "L4"
+  }
+ },
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ]
+}

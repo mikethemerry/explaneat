@@ -1,0 +1,486 @@
+{
+  "item_id": "vb-e95890",
+  "genome_id": "e324239d-f591-4c8a-b149-7699ec2d0346",
+  "verifier": "blind verifier agent (run1)",
+  "started_at": "2026-11-10T23:13:42+13:00",
+  "finished_at": "2026-11-10T23:19:00+13:00",
+  "minutes": 5,
+  "overall": {
+    "grade": "refuted",
+    "summary": "One plain evidence sentence for the direct sum reverses the direction of five effects; every number and the technical hypotheses reproduce, and the ramp hypothesis only restates its formula."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.structural_coverage",
+      "statement": "structural 1.0, compositional 1.0, hierarchy complete",
+      "check": "verify recheck",
+      "evidence": "recomputed 1.0 / 1.0, single root containing the output, all parts under it",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e95890 --out experiments/verifier_bench/runs/run1/vb-e95890/recheck.json"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.function_preservation_max_abs_err",
+      "statement": "8.33e-16; closed-form max err 0.065",
+      "check": "verify recheck",
+      "evidence": "recomputed 8.33e-16 and 0.0650",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e95890 --out experiments/verifier_bench/runs/run1/vb-e95890/recheck.json"
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.summary",
+      "statement": "node 263 about 19 with no first values, dropping 6.8-9.3 per first value of a2,a3,a4,a6; linear penalises a1=1 and a5=1 by about 15, a1=3 +24.9",
+      "check": "indicator-scale pre-activations",
+      "evidence": "263 = 18.98 - 8.46[a2=1] - 9.29[a3=1] - 6.75[a4=1] - 8.23[a6=1]; linear a1=1 -15.69, a5=1 -14.80, a1=3 +24.93",
+      "commands": [
+        "uv run python scratchpad/ind.py experiments/verifier_bench/items/vb-e95890 263,1855,3471,id_linear,0 (indicator-scale pre-activations from the replayed structure)"
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.resisted",
+      "statement": "a1=3 107/107 positive; a1=1 count-3 boundary 74% positive",
+      "check": "train-split forward pass",
+      "evidence": "a1=3: 107 of 107 predicted positive; a1=1 with 3 first values: 31/42 = 73.8% predicted positive",
+      "commands": [
+        "python forward pass over the training rows (scratchpad/e1.py)"
+      ]
+    },
+    {
+      "id": "V5",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "structure",
+      "statement": "5 annotations, 4 leaves + root; entries/exits/subgraphs as listed",
+      "check": "verify recheck structure checks",
+      "evidence": "no structure findings; coverage 1.0",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e95890 --out experiments/verifier_bench/runs/run1/vb-e95890/recheck.json"
+      ]
+    },
+    {
+      "id": "V6",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "claims",
+      "statement": "59 claims",
+      "check": "verify recheck",
+      "evidence": "59 of 59 claims reproduce; 0 prose numbers missing from their cited claims",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e95890 --out experiments/verifier_bench/runs/run1/vb-e95890/recheck.json"
+      ]
+    },
+    {
+      "id": "V7",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_28",
+      "claims": [],
+      "location": "operations.upper_edge_count_classifier.hypothesis",
+      "statement": "logit = 2.58 + Linear + 5.14 Ramp + 1.53 A5not4 + 0.105 A6; positive rates by (a1,count); predicts positive 85.5%, accuracy 0.472, logit AUC 0.734, sigmoid AUC 0.807; a1=3 107/107",
+      "check": "train forward pass and indicator coefficients",
+      "evidence": "reproduced: output constant 14.32 = 2.58+3.69+5.14*1.46+1.53*0.295+0.105*0.743; a1=1 count<=2 100%, 3 73.8%, >=4 0%; a1=2 count<=3 100%, 4 28.6%, 5 0%; pos rate 0.855, acc 0.472, AUC 0.7335 / 0.8065",
+      "commands": [
+        "uv run python scratchpad/ind.py experiments/verifier_bench/items/vb-e95890 263,1855,3471,id_linear,0 (indicator-scale pre-activations from the replayed structure)",
+        "scratchpad/e1.py"
+      ]
+    },
+    {
+      "id": "V8",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_28",
+      "claims": [],
+      "location": "operations.upper_edge_count_classifier.hypothesis",
+      "statement": "no lower edge: 0-1 first values get the largest logits; a5=1 not enough to flip a1=1 inputs with one other first value",
+      "check": "enumerated all 432 input combinations",
+      "evidence": "0-1 first values: min logit +15.1; maximum logit 134.9 at count 0; a1=1, a5=1 plus one other first value: 12/12 positive (min logit +27.5)",
+      "commands": [
+        "scratchpad/e1b.py (grid over all 432 combinations)"
+      ]
+    },
+    {
+      "id": "V9",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_28",
+      "claims": [
+        "C16",
+        "C27",
+        "C29",
+        "C30"
+      ],
+      "location": "drafted.readdown.ann_28.hypothesis[0]",
+      "statement": "adds four parts; ramp gives yes while few first values; direct sum where a1 and a5 count most",
+      "check": "claims + coefficients",
+      "evidence": "largest linear weights are a1 (+24.9 / -15.7) and a5 (-14.8); ramp on only when <=2 (a1=1) of a2,a3,a4,a6 are first",
+      "commands": [
+        "uv run python scratchpad/ind.py experiments/verifier_bench/items/vb-e95890 263,1855,3471,id_linear,0 (indicator-scale pre-activations from the replayed structure)"
+      ]
+    },
+    {
+      "id": "V10",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_28",
+      "claims": [
+        "C02",
+        "C12",
+        "C06",
+        "C07",
+        "C08",
+        "C13",
+        "C09",
+        "C11",
+        "C14",
+        "C15"
+      ],
+      "location": "drafted.readdown.ann_28.evidence[1]",
+      "statement": "a1=2 instead of 1: below 1% to above 99%; a5 levels 93%/55%/1%; a4=1 lowers, a2=2 raises",
+      "check": "probe --sweep a5=all (typical)",
+      "evidence": "a5=2 92.9%, a5=3 55.0%, a5=4 0.8%; claims C08/C09/C11 directions match",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-e95890 --sweep a5=all"
+      ]
+    },
+    {
+      "id": "V11",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_24",
+      "claims": [],
+      "location": "operations.few_first_values_ramp.hypothesis",
+      "statement": "263 = ReLU(18.98 - 8.46[a2=1] - 9.29[a3=1] - 6.75[a4=1] - 8.23[a6=1] + 5.81[a1=2] - 24.11[a1=3]); pairs >=1.23, triples <=-4.46; a1=2 triples 0.3-1.4 except -1.19; a1=3 max -5.13; a5 not read",
+      "check": "indicator coefficients + grid",
+      "evidence": "coefficients reproduce exactly; on the grid, a1=1: on for all 116 cases with <=2 of a2,a3,a4,a6 first, off for all 28 with >=3; a1=2: 16/24 on with 3; a1=3: never on; a5 never changes node 263",
+      "commands": [
+        "uv run python scratchpad/ind.py experiments/verifier_bench/items/vb-e95890 263,1855,3471,id_linear,0 (indicator-scale pre-activations from the replayed structure)",
+        "scratchpad/e1b.py"
+      ]
+    },
+    {
+      "id": "V12",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_24",
+      "claims": [],
+      "location": "operations.few_first_values_ramp.evidence[2]",
+      "statement": "ablation flips 112/345, logit AUC 0.734 -> 0.537; values 0..24.79, zero on 40.3%",
+      "check": "verify ablate --part ann_24",
+      "evidence": "112 flips, AUC 0.7335 -> 0.5372; values 0 to 24.79, zero on 40.3%",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-e95890 --part ann_24"
+      ]
+    },
+    {
+      "id": "V13",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_24",
+      "claims": [
+        "C27"
+      ],
+      "location": "drafted.readdown.ann_24.evidence[0]",
+      "statement": "206 of 345, 78 yes; typical active case 72% without, above 99% with",
+      "check": "probe at a1=2,a2=3,a3=2,a4=2,a5=4,a6=2",
+      "evidence": "score +128.3, part contribution +127.4 (score without 0.96 = 72%); ablate: 206 affected",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-e95890 --set a1=2 --set a2=3 --set a3=2 --set a4=2 --set a5=4 --set a6=2"
+      ]
+    },
+    {
+      "id": "V14",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_24",
+      "claims": [
+        "C17",
+        "C18",
+        "C19",
+        "C20",
+        "C21",
+        "C22",
+        "C23",
+        "C24",
+        "C25",
+        "C26",
+        "C28"
+      ],
+      "location": "drafted.readdown.ann_24.evidence[1]",
+      "statement": "direction sentences for a1, a2, a3, a4, a6 and the a1 x a3 / a6 interactions",
+      "check": "claim directions vs prose words",
+      "evidence": "all prose directions match the cited claims (a3=2, a6=2, a1=2 raise; a1=3, a2=1, a4=1 lower through the part)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e95890 --out experiments/verifier_bench/runs/run1/vb-e95890/recheck.json"
+      ]
+    },
+    {
+      "id": "V15",
+      "grade": "weakened",
+      "level": "L4",
+      "part": "ann_24",
+      "claims": [
+        "C17",
+        "C18",
+        "C19"
+      ],
+      "location": "drafted.readdown.ann_24.hypothesis[0]",
+      "statement": "a weighted sum of a1, a2, a3, a4 and a6 plus a constant, kept only where it is above zero and passed on with a fixed weight",
+      "check": "L4 meaning",
+      "evidence": "not meaningful: restates the closed form. What the part does (L3): it gives a large push towards yes while at most two of a2, a3, a4, a6 take their first value (a1=1), at most three for a1=2, and it is off for every a1=3 case",
+      "commands": [
+        "scratchpad/e1b.py"
+      ]
+    },
+    {
+      "id": "V16",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_27",
+      "claims": [],
+      "location": "operations.direct_linear.hypothesis",
+      "statement": "a1=1 -15.69, a1=3 +24.94; a5=1 -14.80, a5=2 +2.38, a5=4 -3.58; a4=1 -4.90; a3=2 -2.19; a2 +1.20/+0.73/+0.61; a6=2 -0.24",
+      "check": "indicator coefficients",
+      "evidence": "reproduce (a1=3 +24.93, within rounding)",
+      "commands": [
+        "uv run python scratchpad/ind.py experiments/verifier_bench/items/vb-e95890 263,1855,3471,id_linear,0 (indicator-scale pre-activations from the replayed structure)"
+      ]
+    },
+    {
+      "id": "V17",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_27",
+      "claims": [
+        "C29",
+        "C30",
+        "C31",
+        "C32",
+        "C33"
+      ],
+      "location": "drafted.readdown.ann_27.evidence[0]",
+      "statement": "a1=3 below 1% to above 99%, a1=2 about 75%, a5=2 93%, a5=3 55%, a5=4 3%",
+      "check": "claims",
+      "evidence": "C29 100%, C31 74.9%, C30 92.9%, C32 55.0%, C33 3.29%",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e95890 --out experiments/verifier_bench/runs/run1/vb-e95890/recheck.json"
+      ]
+    },
+    {
+      "id": "V18",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_27",
+      "claims": [
+        "C34",
+        "C35",
+        "C37",
+        "C36",
+        "C38"
+      ],
+      "location": "drafted.readdown.ann_27.evidence[1]",
+      "statement": "Through it, a4 = 1, a3 = 2 and a6 = 2 raise the probability and a2 = 1 or 2 instead of 3 lowers it",
+      "check": "cited claims and indicator coefficients",
+      "evidence": "the directions are reversed. The cited claims say a4=1 lowers (-4.90 log-odds), a3=2 lowers (-2.19), a6=2 lowers (-0.24), a2=1 raises (+0.58) and a2=2 raises (+0.12) through the part; the linear weights agree (a4=1 -4.90, a3=2 -2.19, a6=2 -0.24, a2=1 +1.20 vs a2=3 +0.61). The block sentence drafted.blocks[1][1] states the directions correctly",
+      "commands": [
+        "uv run python scratchpad/ind.py experiments/verifier_bench/items/vb-e95890 263,1855,3471,id_linear,0 (indicator-scale pre-activations from the replayed structure)",
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e95890 --out experiments/verifier_bench/runs/run1/vb-e95890/recheck.json"
+      ]
+    },
+    {
+      "id": "V19",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_27",
+      "claims": [
+        "C29",
+        "C30"
+      ],
+      "location": "drafted.readdown.ann_27.hypothesis[0]",
+      "statement": "adds up all six attributes with fixed weights; a1 and a5 count most",
+      "check": "coefficients",
+      "evidence": "a1 and a5 carry the largest weights (|24.9|, |15.7|, |14.8|); next largest a4=1 at 4.9",
+      "commands": [
+        "uv run python scratchpad/ind.py experiments/verifier_bench/items/vb-e95890 263,1855,3471,id_linear,0 (indicator-scale pre-activations from the replayed structure)"
+      ]
+    },
+    {
+      "id": "V20",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_27",
+      "claims": [],
+      "location": "operations.direct_linear.evidence[0]",
+      "statement": "switching the linear part off",
+      "check": "verify ablate --part ann_27",
+      "evidence": "typical case goes from 0% to 100% (score -14.6 -> +11.6); AUC 0.7335 -> 0.5992; 50 flips",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-e95890 --part ann_27"
+      ]
+    },
+    {
+      "id": "V21",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_25",
+      "claims": [],
+      "location": "operations.a5_not4_unit.hypothesis",
+      "statement": "1855 = ReLU(0.295 + 0.682[a3=1] - 3.271[a5=4]); values 0/0.295/0.977; readout adds at most 1.49; ablation flips 3/345, AUC 0.7335 -> 0.7329",
+      "check": "indicator coefficients + verify ablate",
+      "evidence": "reproduce exactly; 1.53*0.977 = 1.49; ablate: 3 flips, AUC 0.7335 -> 0.7329",
+      "commands": [
+        "uv run python scratchpad/ind.py experiments/verifier_bench/items/vb-e95890 263,1855,3471,id_linear,0 (indicator-scale pre-activations from the replayed structure)",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-e95890 --part ann_25"
+      ]
+    },
+    {
+      "id": "V22",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_25",
+      "claims": [
+        "C40",
+        "C41",
+        "C42",
+        "C43",
+        "C44"
+      ],
+      "location": "drafted.readdown.ann_25.evidence[0]",
+      "statement": "259 of 345 acts, 82 yes; a5=4 and a3=2 lower; a3=2 interaction with a5",
+      "check": "claims + ablate",
+      "evidence": "ablate: 259 affected; claims C40/C41 lower; C42 a5=4 group 0.76% -> 100%",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-e95890 --part ann_25"
+      ]
+    },
+    {
+      "id": "V23",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_26",
+      "claims": [
+        "C45",
+        "C46",
+        "C47",
+        "C48"
+      ],
+      "location": "operations.a6_tiny_unit.hypothesis",
+      "statement": "3471 = 0.743[a6=2]; readout adds at most 0.078; ablation flips no decisions",
+      "check": "indicator coefficients + verify ablate",
+      "evidence": "0.743 - 1.412[a6=1] reproduces; 0 flips, max risk change 0.019; 168 affected (a6=2)",
+      "commands": [
+        "uv run python scratchpad/ind.py experiments/verifier_bench/items/vb-e95890 263,1855,3471,id_linear,0 (indicator-scale pre-activations from the replayed structure)",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-e95890 --part ann_26"
+      ]
+    },
+    {
+      "id": "V24",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [
+        "C12",
+        "C16"
+      ],
+      "location": "drafted.lead[0]",
+      "statement": "typical case below 1%, a1=2 raises to above 99%; four parts",
+      "check": "claims",
+      "evidence": "C12 4.6e-07 -> 1.0",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e95890 --out experiments/verifier_bench/runs/run1/vb-e95890/recheck.json"
+      ]
+    },
+    {
+      "id": "V25",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [
+        "C27",
+        "C02",
+        "C06",
+        "C07",
+        "C08"
+      ],
+      "location": "drafted.worth_checking[0]",
+      "statement": "typical case (four first values) to above 99% with a1=2; a5 levels",
+      "check": "claims + typical case",
+      "evidence": "typical case a1=1,a3=1,a5=1,a6=1 has four first values; numbers match",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e95890 --out experiments/verifier_bench/runs/run1/vb-e95890/recheck.json"
+      ]
+    },
+    {
+      "id": "V26",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_27",
+      "claims": [
+        "C34",
+        "C35",
+        "C37",
+        "C36",
+        "C38"
+      ],
+      "location": "drafted.blocks[1]",
+      "statement": "block sentence: a4=1, a3=2, a6=2 lower; a2=1 or 2 raises",
+      "check": "claim directions",
+      "evidence": "matches the cited claims (the readdown copy does not)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e95890 --out experiments/verifier_bench/runs/run1/vb-e95890/recheck.json"
+      ]
+    }
+  ],
+  "parts": {
+    "ann_28": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_24": {
+      "grade": "weakened",
+      "level": "L4"
+    },
+    "ann_27": {
+      "grade": "refuted",
+      "level": "L1"
+    },
+    "ann_25": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_26": {
+      "grade": "upheld",
+      "level": "L1"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ]
+}

@@ -1,0 +1,120 @@
+{
+  "target": "experiments/verifier_bench/items/vb-e1f3eb",
+  "genome_id": "b19b9536-00dd-4e95-9f5a-def6dd8d6889",
+  "label": "vb-e1f3eb",
+  "operations_source": "target",
+  "files": {
+    "record": "experiments/verifier_bench/items/vb-e1f3eb/record.json",
+    "layer": "experiments/verifier_bench/items/vb-e1f3eb/plain_language.json",
+    "operations": "experiments/verifier_bench/items/vb-e1f3eb/operations.json",
+    "item": "experiments/verifier_bench/items/vb-e1f3eb/item.json"
+  },
+  "findings": [],
+  "structure": {
+    "n_train": 242,
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "uncovered_nodes": [],
+    "uncovered_edges": [],
+    "null_nodes": [
+      "-12",
+      "-13",
+      "-14",
+      "-17",
+      "-21",
+      "-23"
+    ],
+    "coverage_hierarchy": {
+      "roots": [
+        "heart_disease_logit"
+      ],
+      "global_root": "heart_disease_logit",
+      "root_contains_outputs": true,
+      "complete": true,
+      "composed": 5,
+      "required": 5,
+      "exempt_disconnected": []
+    },
+    "hierarchy": {
+      "n_annotations": 6,
+      "roots": [
+        "heart_disease_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "not_under_root": [],
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 3.3306690738754696e-16,
+    "closed_form_max_abs_err": 0.012934542112016167,
+    "numeric_max_abs_err": 0.0,
+    "leaves": [
+      {
+        "id": "ann_30",
+        "name": "vessel_count_linear_boost",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.0014220180214756795,
+        "exit_scale": 2.427796563415656
+      },
+      {
+        "id": "ann_31",
+        "name": "sex_exang_protective_gate",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.005145910818725508,
+        "exit_scale": 3.7016351299639894
+      },
+      {
+        "id": "ann_32",
+        "name": "fbs_normal_fixed_defect_gate",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.012934542112016167,
+        "exit_scale": 3.3859644115100975
+      },
+      {
+        "id": "ann_33",
+        "name": "oldpeak_hinge",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.00771439552875286,
+        "exit_scale": 3.9784243772919563
+      },
+      {
+        "id": "ann_34",
+        "name": "cp2_constant_offset",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.0017862694436412418,
+        "exit_scale": 0.28830968997848694
+      }
+    ],
+    "op_counts": {
+      "rename_node": 26,
+      "split_node": 4,
+      "annotate": 6
+    },
+    "full_coverage": true
+  },
+  "closed_forms": {
+    "ann_33": "y_0 = \\operatorname{relu}{\\left(1.0 x_{oldpeak} - 0.386 \\right)}",
+    "ann_31": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 2.2 x_{exang:0} \\\\\n&\\quad + 1.08 x_{sex:0_b} \\\\\n&\\quad - 0.218 x_{sex:1_b} \\\\\n&\\quad + 0.325 \\bigr)\n\\end{aligned}",
+    "ann_32": "y_0 = \\operatorname{relu}{\\left(1.16 x_{fbs:0} + 1.02 x_{thal:6} - 1.03 \\right)}",
+    "ann_30": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 0.282 x_{ca_b} \\\\\n&\\quad + 0.19 x_{thal:4} \\\\\n&\\quad + 0.552 \\bigr)\n\\end{aligned}",
+    "ann_34": "y_0 = \\operatorname{relu}{\\left(0.947 x_{cp:2_b} - 1.78 \\right)}"
+  },
+  "claims": {
+    "stated": 70,
+    "recomputed": 70,
+    "reproduced": 70
+  },
+  "prose": {
+    "sentences": 50,
+    "numbers": 168,
+    "unmatched_numbers": 0
+  },
+  "summary": {
+    "mismatch": 0,
+    "warn": 0,
+    "info": 0,
+    "verdict": "numbers reproduce",
+    "seconds": 8.9
+  }
+}

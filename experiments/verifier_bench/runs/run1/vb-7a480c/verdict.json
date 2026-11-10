@@ -1,0 +1,214 @@
+{
+ "item_id": "vb-7a480c",
+ "genome_id": "4b0eb5a6-5859-4ee8-80fe-18ab72f22959",
+ "verifier": "explanation-verifier agent (run1, blind)",
+ "started_at": "2026-11-10T23:52:49+13:00",
+ "finished_at": "2026-11-10T23:55:15+13:00",
+ "minutes": 2.4,
+ "overall": {
+  "grade": "refuted",
+  "summary": "The heavy daytime use hypothesis says day minutes raise the chance steadily from the lightest users upwards, but the part adds nothing below about 218 minutes. Three sentences round 4.45% up to 'about 5%'. The rest reproduces."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "refuted",
+   "level": "L3",
+   "part": "ann_79",
+   "claims": [
+    "C088",
+    "C086"
+   ],
+   "location": "drafted.readdown.ann_79.hypothesis[0]",
+   "statement": "daytime minutes raise it steadily from the lightest users upwards",
+   "check": "probe --sweep 'total day minutes=50:300:11' (typical customer, no voice-mail plan); C088 threshold 218 minutes; lint (hinge with no hinge phrase)",
+   "evidence": "ann_79 contribution 0 (off) from 50 to 200 minutes (risk flat 2.3%), +0.178 at 225, +0.721 at 250, +1.808 at 300 minutes. Nothing below about 218 minutes (C088), so not 'from the lightest users upwards'.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-7a480c --sweep \"total day minutes=50:300:11\""
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "weakened",
+   "level": "L1",
+   "part": "ann_79",
+   "claims": [
+    "C086"
+   ],
+   "location": "drafted.readdown.ann_79.evidence[2]",
+   "statement": "... rises steadily from about 2% to about 5%",
+   "check": "verify recheck prose",
+   "evidence": "C086 gives 2.26% -> 4.45%, which rounds to about 4%",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-7a480c"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "weakened",
+   "level": "L1",
+   "part": "ann_79",
+   "claims": [
+    "C086"
+   ],
+   "location": "drafted.blocks[2]",
+   "statement": "from 112 to 249 minutes the chance goes from about 2% to about 5% without one",
+   "check": "verify recheck prose",
+   "evidence": "C086: 4.45%",
+   "commands": []
+  },
+  {
+   "id": "V4",
+   "grade": "weakened",
+   "level": "L1",
+   "part": "ann_83",
+   "claims": [
+    "C012"
+   ],
+   "location": "drafted.readdown.ann_83.evidence[2]",
+   "statement": "from about 2% at 112 to about 5% at 249 minutes",
+   "check": "verify recheck prose",
+   "evidence": "C012: 2.26% -> 4.45%",
+   "commands": []
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "coverage 1.0, full, preservation 4.4e-16, closed-form error 0.022",
+   "check": "verify recheck",
+   "evidence": "all reproduce; 135 of 135 claims",
+   "commands": []
+  },
+  {
+   "id": "V6",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_83",
+   "claims": [
+    "C069"
+   ],
+   "location": "operations.churnModelRoot.hypothesis",
+   "statement": "full AUC 0.910; all hidden parts mean-ablated 0.717",
+   "check": "scratch multiablate.py --mean (four leaves)",
+   "evidence": "0.9095; four leaves mean-ablated 0.7153 (the always-on relay left in place)",
+   "commands": [
+    "scratch multiablate.py vb-7a480c ann_81 ann_79 ann_80 ann_82 --mean"
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_81",
+   "claims": [
+    "C078",
+    "C075",
+    "C080",
+    "C070",
+    "C079"
+   ],
+   "location": "operations.serviceCallsHinges.hypothesis",
+   "statement": "mean-ablating the leaf costs 0.113 train AUC",
+   "check": "verify ablate --to mean",
+   "evidence": "0.9095 -> 0.797 (-0.113)",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-7a480c --part ann_81 --to mean"
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_81",
+   "claims": [
+    "C078",
+    "C075"
+   ],
+   "location": "drafted.readdown.ann_81.hypothesis[0]",
+   "statement": "raises the chance once about 3 calls; more when the daytime charge is low",
+   "check": "claims recheck",
+   "evidence": "C078 threshold 3 calls, C075 interaction reproduce",
+   "commands": []
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_80",
+   "claims": [
+    "C101",
+    "C098",
+    "C092",
+    "C097"
+   ],
+   "location": "drafted.readdown.ann_80.hypothesis[0]",
+   "statement": "daytime charge nothing until about 41.59 US dollars, evening charge counts only with a high daytime charge",
+   "check": "claims; ablate",
+   "evidence": "claims reproduce; mean-ablation AUC 0.9095 -> 0.8943",
+   "commands": []
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_82",
+   "claims": [
+    "C107",
+    "C108",
+    "C112"
+   ],
+   "location": "operations.rareStateUnits.hypothesis",
+   "statement": "almost inert; mean-ablation -0.0002 AUC",
+   "check": "verify ablate --to mean",
+   "evidence": "0.9095 -> 0.9094",
+   "commands": []
+  },
+  {
+   "id": "V11",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_83",
+   "claims": [
+    "C013",
+    "C008"
+   ],
+   "location": "drafted.worth_checking[0]",
+   "statement": "voice-mail plan lowers, more messages raise the chance",
+   "check": "domain",
+   "evidence": "already flagged",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_83": {
+   "grade": "weakened",
+   "level": "L1"
+  },
+  "ann_81": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_79": {
+   "grade": "refuted",
+   "level": "L3"
+  },
+  "ann_80": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_82": {
+   "grade": "upheld",
+   "level": "L4"
+  }
+ },
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ]
+}

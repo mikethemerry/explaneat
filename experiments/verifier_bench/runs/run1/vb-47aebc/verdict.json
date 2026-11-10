@@ -1,0 +1,413 @@
+{
+  "item_id": "vb-47aebc",
+  "genome_id": "c32e8fc8-410f-4126-ab7e-974c658ef3fc",
+  "verifier": "independent blind verifier agent (run1)",
+  "started_at": "2026-11-10T23:31:35+13:00",
+  "finished_at": "2026-11-10T23:34:53+13:00",
+  "minutes": 3,
+  "overall": {
+    "grade": "refuted",
+    "summary": "Numbers reproduce, but the not-in-a-family part is said to lower the chance for everyone when it acts only on people not in a family; the capital-gains hypothesis only restates its formula, and the missing-occupation hypothesis is worded causally."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.structural_coverage",
+      "statement": "1.0 / 1.0 / complete",
+      "check": "verify recheck",
+      "evidence": "recomputed identical",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-47aebc"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.function_preservation_max_abs_err",
+      "statement": "6.7e-16",
+      "check": "verify recheck",
+      "evidence": "recomputed 6.7e-16",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-47aebc"
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.closed_form_max_abs_err",
+      "statement": "0.0121",
+      "check": "verify recheck",
+      "evidence": "recomputed 0.0121",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-47aebc"
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "upheld",
+      "level": "L3",
+      "part": null,
+      "claims": [],
+      "location": "record.summary",
+      "statement": "one consequential nonlinearity: age hinge giving a U-shape; AUC 0.910, acc 0.856",
+      "check": "probe age; ablate ann_116",
+      "evidence": "whole-model risk 81.0% at 22, 42.6% at 50, 65.6% at 70; hinge off below ~50; mean-ablation of the hinge AUC 0.9099->0.9009, the largest hidden effect (others: ann_120 ->0.9073, ann_115 ->0.9093)",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-47aebc --sweep age=22,30,40,45,48,50,52,58,70 --sweep native-country=39,4",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-47aebc --part ann_116 --to mean"
+      ]
+    },
+    {
+      "id": "V5",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_124",
+      "claims": [
+        "C089"
+      ],
+      "location": "structure",
+      "statement": "one root with nine leaves",
+      "check": "verify recheck",
+      "evidence": "hierarchy complete",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-47aebc"
+      ]
+    },
+    {
+      "id": "V6",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_124",
+      "claims": [
+        "C089",
+        "C002",
+        "C003",
+        "C011"
+      ],
+      "location": "drafted.readdown.ann_124.hypothesis[0]",
+      "statement": "additive score plus nine parts",
+      "check": "verify recheck",
+      "evidence": "claims reproduce",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-47aebc"
+      ]
+    },
+    {
+      "id": "V7",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_116",
+      "claims": [
+        "C091",
+        "C093",
+        "C090"
+      ],
+      "location": "drafted.readdown.ann_116.hypothesis[0]",
+      "statement": "adds nothing until about 50, then raises steadily; Colombia almost certain",
+      "check": "probe age x country",
+      "evidence": "US: contribution 0 up to 48, +0.045 at 50, +0.935 at 58, +2.27 at 70; Colombia +18.5 to +23.8 (risk 100%)",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-47aebc --sweep age=22,30,40,45,48,50,52,58,70 --sweep native-country=39,4"
+      ]
+    },
+    {
+      "id": "V8",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_116",
+      "claims": [
+        "C094"
+      ],
+      "location": "operations.age_late_career_hinge.evidence[0]",
+      "statement": "active 21.9%; knot z=0.798 (~49.5 years); mean-ablation acc ->0.8436, AUC ->0.9009",
+      "check": "ablate --to mean; C094",
+      "evidence": "8609 of 39073 active (22.0%); AUC 0.9009, acc 0.8436",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-47aebc --part ann_116 --to mean"
+      ]
+    },
+    {
+      "id": "V9",
+      "grade": "weakened",
+      "level": "L4",
+      "part": "ann_115",
+      "claims": [
+        "C096"
+      ],
+      "location": "drafted.readdown.ann_115.hypothesis[0]",
+      "statement": "multiplies capital gains by a fixed weight, adds a constant, never cut off at zero on the data",
+      "check": "probe capital gain",
+      "evidence": "not meaningful: restates the closed form. What it does: makes higher capital gains lower the chance of a low income a little more (contribution +0.10 at 0, -0.54 at 6849, -1.77 at 20000; on top of the direct capital-gain edge)",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-47aebc --sweep capital-gain=0,2000,4000,6849,20000"
+      ]
+    },
+    {
+      "id": "V10",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_115",
+      "claims": [],
+      "location": "operations.capital_gain_affine_relay.evidence[0]",
+      "statement": "never clips on train; mean-ablation AUC 0.9099->0.9093",
+      "check": "probe + ablate",
+      "evidence": "exit 0.786 at zero gain and rising linearly; AUC 0.9093, acc 0.8553",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-47aebc --sweep capital-gain=0,2000,4000,6849,20000",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-47aebc --part ann_115 --to mean"
+      ]
+    },
+    {
+      "id": "V11",
+      "grade": "refuted",
+      "level": "L3",
+      "part": "ann_120",
+      "claims": [
+        "C098"
+      ],
+      "location": "drafted.readdown.ann_120.hypothesis[0]",
+      "statement": "lowers the predicted chance of a low income for everyone, and most for people not living in a family",
+      "check": "probe relationship sweep; subgroup relationship != 1",
+      "evidence": "the part is exactly 0 for everyone who is not \"not in a family\": active in 0 of 29006 such people (contribution 0.0); it acts only on the 10067 not in a family (-1.03 logit). It does not lower the chance for everyone",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-47aebc --sweep relationship=0,1,2,3,4,5",
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-47aebc --where \"relationship != '1'\""
+      ]
+    },
+    {
+      "id": "V12",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_120",
+      "claims": [
+        "C099"
+      ],
+      "location": "operations.relationship1_indicator.evidence[0]",
+      "statement": "indicator: 0 for 29006 rows, -1.030 logit for 10067; mean-ablation AUC ->0.9073",
+      "check": "subgroup + ablate",
+      "evidence": "10067 rows, 9086 low income; AUC 0.9073, acc 0.8533",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-47aebc --where \"relationship == '1'\"",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-47aebc --part ann_120 --to mean"
+      ]
+    },
+    {
+      "id": "V13",
+      "grade": "weakened",
+      "level": "L2",
+      "part": "ann_121",
+      "claims": [
+        "C101"
+      ],
+      "location": "drafted.readdown.ann_121.hypothesis[0]",
+      "statement": "Not reporting an occupation pushes people into a low income; this part captures that effect",
+      "check": "subgroup occupation==0; recheck C101",
+      "evidence": "causal overclaim: the evidence shows only that the model predicts a higher chance (62% -> 80%) for a missing occupation (observed 90.7% low income among the 2197); it says nothing about what not reporting does to income",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-47aebc --where \"occupation == '0'\"",
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-47aebc"
+      ]
+    },
+    {
+      "id": "V14",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_121",
+      "claims": [
+        "C103",
+        "C104"
+      ],
+      "location": "operations.occupation0_country0_gate.hypothesis",
+      "statement": "+0.92 for missing occupation unless country missing (34 rows); 2197 rows",
+      "check": "subgroup occupation==0 and country != 0",
+      "evidence": "2197 rows (2231 - 34), mean contribution +0.905, active 98.5% of missing-occupation rows",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-47aebc --where \"occupation == '0' and `native-country` != '0'\""
+      ]
+    },
+    {
+      "id": "V15",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_117",
+      "claims": [
+        "C106"
+      ],
+      "location": "drafted.readdown.ann_117.hypothesis[0]",
+      "statement": "raises chance for other service work",
+      "check": "recheck + arithmetic",
+      "evidence": "+0.45 logit from 0.49 gives 72%, matches C106",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-47aebc"
+      ]
+    },
+    {
+      "id": "V16",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_118",
+      "claims": [
+        "C108"
+      ],
+      "location": "drafted.readdown.ann_118.hypothesis[0]",
+      "statement": "raises chance for administrative or clerical work",
+      "check": "recheck + arithmetic",
+      "evidence": "+0.37 logit gives 70%, matches C108",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-47aebc"
+      ]
+    },
+    {
+      "id": "V17",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_122",
+      "claims": [
+        "C110"
+      ],
+      "location": "drafted.readdown.ann_122.hypothesis[0]",
+      "statement": "lowers chance for people born in Portugal (49)",
+      "check": "recheck + arithmetic",
+      "evidence": "-1.98 logit from 0.49 gives 18%, matches C110; n=49",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-47aebc"
+      ]
+    },
+    {
+      "id": "V18",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_119",
+      "claims": [
+        "C112",
+        "C113"
+      ],
+      "location": "drafted.readdown.ann_119.hypothesis[0]",
+      "statement": "reads occupation and relationship but changes chance only a few points",
+      "check": "probe relationship",
+      "evidence": "contribution at most +0.001 across relationships at the typical person; C112 handlers 62% -> 64%",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-47aebc --sweep relationship=0,1,2,3,4,5",
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-47aebc"
+      ]
+    },
+    {
+      "id": "V19",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_123",
+      "claims": [
+        "C118"
+      ],
+      "location": "drafted.readdown.ann_123.hypothesis[0]",
+      "statement": "barely changes predictions",
+      "check": "recheck",
+      "evidence": "C118 reproduces (exit identically 0)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-47aebc"
+      ]
+    },
+    {
+      "id": "V20",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_124",
+      "claims": [
+        "C007",
+        "C023"
+      ],
+      "location": "drafted.worth_checking[3]",
+      "statement": "5th-6th grade lowers chance of low income to about 30%",
+      "check": "domain sense",
+      "evidence": "counter to what is known; caused by holding the 1-16 education level fixed",
+      "commands": []
+    },
+    {
+      "id": "V21",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_124",
+      "claims": [
+        "C057",
+        "C060"
+      ],
+      "location": "drafted.worth_checking[4]",
+      "statement": "master's and bachelor's degrees raise the chance of low income",
+      "check": "domain sense",
+      "evidence": "counter-intuitive category offsets on top of the education level",
+      "commands": []
+    },
+    {
+      "id": "V22",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_116",
+      "claims": [
+        "C090"
+      ],
+      "location": "drafted.readdown.ann_116.hypothesis[0]",
+      "statement": "born in Colombia makes low income almost certain",
+      "check": "domain sense",
+      "evidence": "a rare-category memorisation (64 people) riding on the age unit",
+      "commands": []
+    }
+  ],
+  "parts": {
+    "ann_124": {
+      "grade": "upheld",
+      "level": "L4"
+    },
+    "ann_116": {
+      "grade": "upheld",
+      "level": "L4"
+    },
+    "ann_115": {
+      "grade": "weakened",
+      "level": "L4"
+    },
+    "ann_120": {
+      "grade": "refuted",
+      "level": "L3"
+    },
+    "ann_121": {
+      "grade": "weakened",
+      "level": "L2"
+    },
+    "ann_117": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_118": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_122": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_119": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_123": {
+      "grade": "upheld",
+      "level": "L1"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ]
+}

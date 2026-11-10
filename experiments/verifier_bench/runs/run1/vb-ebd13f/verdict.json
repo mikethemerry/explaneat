@@ -1,0 +1,533 @@
+{
+  "item_id": "vb-ebd13f",
+  "genome_id": "60ee493c-bce5-4a2b-b7af-d06843835ae6",
+  "verifier": "explanation-verifier subagent (run1)",
+  "started_at": "2026-11-10T23:14:34+13:00",
+  "finished_at": "2026-11-10T23:21:01+13:00",
+  "minutes": 7,
+  "overall": {
+    "grade": "refuted",
+    "summary": "The plain hypothesis for the a5 part (always turns the prediction to 'no') is contradicted by the model, and the veto's and gate's technical hypotheses carry wrong numbers (veto switching on at two instead of three first values; 52 instead of 40 clipped rows). Everything else, including all 65 claims, reproduces."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_28",
+      "claims": [],
+      "location": "operations.atleast3_of_five_veto.hypothesis",
+      "statement": "with one or fewer indicators the pre-activation is at most -0.2 (exactly 0 output), with two it is at least +5.6 ... on all 345 training rows 274 > 0 exactly when two or more of a1,a2,a3,a4,a6 take their first value (112 rows)",
+      "check": "node 274 pre-activation by count of first values (weights and scaler from the replayed model); enumerate all 432 configurations; subgroup counts on train",
+      "evidence": "Pre-activation by count: 0: -19.2; 1: -12.0..-9.5; 2: -3.4..-0.2; 3: +5.6..+8.8. Node 274 fires on 0/152 two-count configurations and on all 100/32/4 with 3/4/5. On train it fires on 112 rows = rows with three or more first values (112); rows with two or more number 236. The veto switches on at three, not two (the part's own name and its evidence record say three).",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-ebd13f --where \"((a1=='1')*1+(a2=='1')*1+(a3=='1')*1+(a4=='1')*1+(a6=='1')*1) >= 3\"",
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-ebd13f --where \"(...) >= 2\"",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-ebd13f --part ann_28 --to zero",
+        "uv run python <scratch>/enum.py (all 432 configurations through the replayed model, node values read from the forward pass)"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "weakened",
+      "level": "L1",
+      "part": "ann_28",
+      "claims": [],
+      "location": "operations.atleast3_of_five_veto.hypothesis",
+      "statement": "a penalty of -70 or more (-269 with all five)",
+      "check": "exit id_suppress over all 432 configurations",
+      "evidence": "With exactly three first values the exit is -58.2 to -93.3 (typical case: -66.4); -269.3 with all five is right. The penalty is at least -58, not -70; still large enough to force a negative score in every case.",
+      "commands": [
+        "uv run python <scratch>/enum.py (all 432 configurations through the replayed model, node values read from the forward pass)",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-ebd13f --sweep a5=all --sweep a3=all"
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "weakened",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.summary",
+      "statement": "Veto a ReLU count unit, 0 for <=2 and down to -70 for >=3",
+      "check": "exit id_suppress over all 432 configurations",
+      "evidence": "0 for at most two first values (true); for three it ranges -58.2 to -93.3, so 'down to -70' understates the range and is not a bound. The same -70 appears in the root's technical hypothesis ('<= -70 for three or more').",
+      "commands": [
+        "uv run python <scratch>/enum.py (all 432 configurations through the replayed model, node values read from the forward pass)"
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "weakened",
+      "level": "L1",
+      "part": "ann_32",
+      "claims": [],
+      "location": "operations.two_of_five_peak.hypothesis",
+      "statement": "Veto (atleast3_of_five_veto) is exactly 0 for at most two first values and <= -70 for three or more",
+      "check": "exit id_suppress over all 432 configurations",
+      "evidence": "0 for at most two (true); for exactly three the exit is -58.2 to -93.3, so '<= -70' is not a bound. The sign conclusion (score negative for three or more) still holds.",
+      "commands": [
+        "uv run python <scratch>/enum.py"
+      ]
+    },
+    {
+      "id": "V5",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_29",
+      "claims": [],
+      "location": "operations.a5_a3_bonus_gate.hypothesis",
+      "statement": "on all 345 training rows 1223 = 0 exactly when a5 = 1 and a3 = 2 (52 rows)",
+      "check": "verify subgroup on a5=1 and a3=2; enumeration of 1223==0",
+      "evidence": "The subgroup a5 = 1 and a3 = 2 has 40 training rows, and the gate is off on exactly those 40 (active 0 of 40 vs 100% elsewhere; 305 active rows = C47). The 'exactly when' part holds (54/54 configurations), the count 52 does not; the part's evidence record correctly says 40.",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-ebd13f --where \"a5 == '1' and a3 == '2'\"",
+        "uv run python <scratch>/enum.py (all 432 configurations through the replayed model, node values read from the forward pass)"
+      ]
+    },
+    {
+      "id": "V6",
+      "grade": "refuted",
+      "level": "L2",
+      "part": "ann_30",
+      "claims": [
+        "C49",
+        "C50"
+      ],
+      "location": "drafted.readdown.ann_30.hypothesis[0]",
+      "statement": "This part decides the outcome whenever a5 = 2 or 4: it always turns the prediction to 'no'.",
+      "check": "subgroup a5 in {2,4} with predicted risk >= 0.5; ablation of the part; probe a5 x a3 at the typical case",
+      "evidence": "64 of the 173 training cases with a5 = 2 or 4 are predicted 'yes' (mean risk 97.1%). Switching the part off flips 1 of 345 predictions (accuracy 0.887 -> 0.890, AUC unchanged); its contribution is a fixed -0.72 on the score. Typical case with a3 = 2 and a5 = 2: risk 100% (score +9.6), part contributes -0.72. The cited claims only say a5 = 2 or 4 lowers the probability; the technical hypothesis itself calls it a small penalty.",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-ebd13f --where \"a5 in ['2','4'] and risk >= 0.5\"",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-ebd13f --part ann_30",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-ebd13f --sweep a5=all --sweep a3=all"
+      ]
+    },
+    {
+      "id": "V7",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.structural_coverage",
+      "statement": "1.0",
+      "check": "verify recheck",
+      "evidence": "recomputed 1.0, compositional 1.0, hierarchy complete, single root with output",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-ebd13f"
+      ]
+    },
+    {
+      "id": "V8",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.function_preservation_max_abs_err",
+      "statement": "4.44e-16",
+      "check": "verify recheck",
+      "evidence": "recomputed 4.44e-16",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-ebd13f"
+      ]
+    },
+    {
+      "id": "V9",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.closed_form_max_abs_err",
+      "statement": "0.170",
+      "check": "verify recheck",
+      "evidence": "recomputed 0.1699; closed forms match",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-ebd13f"
+      ]
+    },
+    {
+      "id": "V10",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.n_splits",
+      "statement": "8 splits, 2 identity nodes, 5 leaves, 1 composition",
+      "check": "operations.json / vars",
+      "evidence": "consistent with the replayed parts",
+      "commands": [
+        "uv run python -m explaneat verify vars experiments/verifier_bench/items/vb-ebd13f"
+      ]
+    },
+    {
+      "id": "V11",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.resisted",
+      "statement": "1717 near-inert, 1948 and 2786 affine, 927 inert",
+      "check": "enumeration",
+      "evidence": "1717 max 0.10 (only for a6=2); 1948 takes only 0.701/0.891; 2786 never clips while 274 on; 927 is 0 everywhere",
+      "commands": [
+        "uv run python <scratch>/enum.py (all 432 configurations through the replayed model, node values read from the forward pass)"
+      ]
+    },
+    {
+      "id": "V12",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.rule_agreement",
+      "statement": "113/114, 0/28, 23/38, 88.0%",
+      "check": "enumeration",
+      "evidence": "reproduced exactly",
+      "commands": [
+        "uv run python <scratch>/enum.py (all 432 configurations through the replayed model, node values read from the forward pass)"
+      ]
+    },
+    {
+      "id": "V13",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_32",
+      "claims": [
+        "C16",
+        "C52"
+      ],
+      "location": "drafted.readdown.ann_32.hypothesis[0]",
+      "statement": "adds up five parts",
+      "check": "recheck + C16",
+      "evidence": "structure claim reproduces; additive composition",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-ebd13f"
+      ]
+    },
+    {
+      "id": "V14",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_32",
+      "claims": [],
+      "location": "operations.two_of_five_peak.hypothesis",
+      "statement": "s<0 for <=1 (max -0.42); 113/114; 23/38; 96.3% / 95.9% agreement; acc 0.887, AUC 0.925; veto ablation 0.887->0.562; gate 0.887->0.690",
+      "check": "enumeration; subgroup; ablate --to zero",
+      "evidence": "max score with <=1 first value -0.419; 113/114; 23/38; 96.3% of configs; train 1-14/345=95.9%; ablations 0.562 and 0.690 reproduced (only the -70 figure is off, see V3)",
+      "commands": [
+        "uv run python <scratch>/enum.py (all 432 configurations through the replayed model, node values read from the forward pass)",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-ebd13f --part ann_28 --to zero",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-ebd13f --part ann_29"
+      ]
+    },
+    {
+      "id": "V15",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_32",
+      "claims": [],
+      "location": "operations.two_of_five_peak.evidence[1]",
+      "statement": "score negative for <=1 and >=3 first values",
+      "check": "enumeration",
+      "evidence": "0 positive among 144 (<=1) and 136 (>=3) configurations",
+      "commands": [
+        "uv run python <scratch>/enum.py (all 432 configurations through the replayed model, node values read from the forward pass)"
+      ]
+    },
+    {
+      "id": "V16",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_28",
+      "claims": [
+        "C17",
+        "C18",
+        "C19",
+        "C22",
+        "C23",
+        "C24"
+      ],
+      "location": "drafted.readdown.ann_28.hypothesis[0]",
+      "statement": "holds the typical case down; moving a1, a3 or a6 away lifts it above 99%",
+      "check": "recheck + probe",
+      "evidence": "claims reproduce; probe: typical (three first values) 0%, a3=2 gives 100%; veto exit 0 there",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-ebd13f --sweep a5=all --sweep a3=all"
+      ]
+    },
+    {
+      "id": "V17",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_28",
+      "claims": [],
+      "location": "operations.atleast3_of_five_veto.evidence[0]",
+      "statement": "274>0 iff count>=3 on all 345 rows (112 fire); min firing 5.6; max non-firing -0.2; ablation 0.887->0.562",
+      "check": "subgroup; pre-activation; ablate --to zero",
+      "evidence": "all reproduce",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-ebd13f --part ann_28 --to zero"
+      ]
+    },
+    {
+      "id": "V18",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_27",
+      "claims": [
+        "C27",
+        "C28",
+        "C29",
+        "C30",
+        "C31",
+        "C32",
+        "C33",
+        "C34",
+        "C35",
+        "C36",
+        "C37"
+      ],
+      "location": "drafted.readdown.ann_27.hypothesis[0]",
+      "statement": "first values raise, a2=3 and a4=3 lower",
+      "check": "recheck; closed form signs",
+      "evidence": "claims reproduce; closed-form signs agree",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-ebd13f"
+      ]
+    },
+    {
+      "id": "V19",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_27",
+      "claims": [],
+      "location": "operations.linear_first_value_score.hypothesis",
+      "statement": "per-value credits; 1948 never clips",
+      "check": "C54-C59 linearity claims; enumeration",
+      "evidence": "a6=1 +11.94, a1=1 +10.22, a2=1 +6.63, a4=1 +6.22, a3=1 +4.12, a5=1 +2.63 reproduce; 1948 only 0.70/0.89",
+      "commands": [
+        "uv run python <scratch>/enum.py (all 432 configurations through the replayed model, node values read from the forward pass)"
+      ]
+    },
+    {
+      "id": "V20",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_29",
+      "claims": [
+        "C39",
+        "C40",
+        "C41",
+        "C47"
+      ],
+      "location": "drafted.readdown.ann_29.hypothesis[0]",
+      "statement": "raises when a5 is not 1, lowers for a3=2 and a6=2",
+      "check": "recheck; probe; enumeration",
+      "evidence": "claims reproduce; gate readout a5!=1: 11.9-13.7 (a3=1), 4.7-6.5 (a3=2); a5=1: 1.1-2.8 / 0; a6=2 lowers only via 1717 (at most 0.07 on 1223)",
+      "commands": [
+        "uv run python <scratch>/enum.py (all 432 configurations through the replayed model, node values read from the forward pass)",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-ebd13f --sweep a5=all --sweep a3=all"
+      ]
+    },
+    {
+      "id": "V21",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_29",
+      "claims": [],
+      "location": "operations.a5_a3_bonus_gate.evidence[0]",
+      "statement": "1223==0 iff a5=1 and a3=2 (40 rows); ablation 0.887->0.690",
+      "check": "subgroup; ablate",
+      "evidence": "40 rows; accuracy 0.690",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-ebd13f --part ann_29"
+      ]
+    },
+    {
+      "id": "V22",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_30",
+      "claims": [],
+      "location": "operations.a5_in_2_4_penalty.hypothesis",
+      "statement": "1.198 for a5 in {2,4}, 0 otherwise; -0.72 penalty; 0.887->0.890",
+      "check": "enumeration; ablate",
+      "evidence": "reproduced",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-ebd13f --part ann_30",
+        "uv run python <scratch>/enum.py (all 432 configurations through the replayed model, node values read from the forward pass)"
+      ]
+    },
+    {
+      "id": "V23",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_31",
+      "claims": [
+        "C52",
+        "C53"
+      ],
+      "location": "drafted.readdown.ann_31.hypothesis[0]",
+      "statement": "switched off",
+      "check": "ablate; pre-activation",
+      "evidence": "exit 0 on all rows; 0 predictions change; max pre-activation -0.548",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-ebd13f --part ann_31"
+      ]
+    },
+    {
+      "id": "V24",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [
+        "C16",
+        "C06",
+        "C52"
+      ],
+      "location": "drafted.lead[0]",
+      "statement": "typical case below 1%, five parts",
+      "check": "recheck; probe",
+      "evidence": "typical risk 0.0%; prose numbers found in cited claims",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-ebd13f"
+      ]
+    },
+    {
+      "id": "V25",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [
+        "C17",
+        "C39",
+        "C09",
+        "C12"
+      ],
+      "location": "drafted.worth_checking[0]",
+      "statement": "a5 not counted in the veto; a5 != 1 raises",
+      "check": "vars; claims",
+      "evidence": "veto reads a1,a2,a3,a4,a6 only; C39 reproduces",
+      "commands": [
+        "uv run python -m explaneat verify vars experiments/verifier_bench/items/vb-ebd13f"
+      ]
+    },
+    {
+      "id": "V26",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "drafted.blocks[0]",
+      "statement": "block prose",
+      "check": "verify recheck prose check",
+      "evidence": "all 148 numbers in 36 sentences found in the cited claims; directions consistent with probes",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-ebd13f"
+      ]
+    },
+    {
+      "id": "V27",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "drafted.blocks[1]",
+      "statement": "block prose",
+      "check": "verify recheck prose check",
+      "evidence": "all 148 numbers in 36 sentences found in the cited claims; directions consistent with probes",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-ebd13f"
+      ]
+    },
+    {
+      "id": "V28",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "drafted.blocks[2]",
+      "statement": "block prose",
+      "check": "verify recheck prose check",
+      "evidence": "all 148 numbers in 36 sentences found in the cited claims; directions consistent with probes",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-ebd13f"
+      ]
+    },
+    {
+      "id": "V29",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "drafted.blocks[3]",
+      "statement": "block prose",
+      "check": "verify recheck prose check",
+      "evidence": "all 148 numbers in 36 sentences found in the cited claims; directions consistent with probes",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-ebd13f"
+      ]
+    },
+    {
+      "id": "V30",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "drafted.blocks[4]",
+      "statement": "block prose",
+      "check": "verify recheck prose check",
+      "evidence": "all 148 numbers in 36 sentences found in the cited claims; directions consistent with probes",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-ebd13f"
+      ]
+    },
+    {
+      "id": "V31",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "drafted.blocks[5]",
+      "statement": "block prose",
+      "check": "verify recheck prose check",
+      "evidence": "all 148 numbers in 36 sentences found in the cited claims; directions consistent with probes",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-ebd13f"
+      ]
+    }
+  ],
+  "parts": {
+    "ann_32": {
+      "grade": "weakened",
+      "level": "L1"
+    },
+    "ann_28": {
+      "grade": "refuted",
+      "level": "L1"
+    },
+    "ann_27": {
+      "grade": "upheld",
+      "level": "L4"
+    },
+    "ann_29": {
+      "grade": "refuted",
+      "level": "L1"
+    },
+    "ann_30": {
+      "grade": "refuted",
+      "level": "L2"
+    },
+    "ann_31": {
+      "grade": "upheld",
+      "level": "L4"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "target": "experiments/verifier_bench/items/vb-81f779",
+  "genome_id": "7c355ee7-77ad-426c-8a6d-9df81d1c65b3",
+  "label": "vb-81f779",
+  "operations_source": "target",
+  "files": {
+    "record": "experiments/verifier_bench/items/vb-81f779/record.json",
+    "layer": "experiments/verifier_bench/items/vb-81f779/plain_language.json",
+    "operations": "experiments/verifier_bench/items/vb-81f779/operations.json",
+    "item": "experiments/verifier_bench/items/vb-81f779/item.json"
+  },
+  "findings": [],
+  "structure": {
+    "n_train": 242,
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "uncovered_nodes": [],
+    "uncovered_edges": [],
+    "null_nodes": [
+      "-11",
+      "-13",
+      "-14",
+      "-5"
+    ],
+    "coverage_hierarchy": {
+      "roots": [
+        "heart_disease_logit"
+      ],
+      "global_root": "heart_disease_logit",
+      "root_contains_outputs": true,
+      "complete": true,
+      "composed": 3,
+      "required": 3,
+      "exempt_disconnected": []
+    },
+    "hierarchy": {
+      "n_annotations": 4,
+      "roots": [
+        "heart_disease_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "not_under_root": [],
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 2.220446049250313e-16,
+    "closed_form_max_abs_err": 0.02693294224879228,
+    "numeric_max_abs_err": 8.881784197001252e-16,
+    "leaves": [
+      {
+        "id": "ann_32",
+        "name": "st_depression_gate",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.02693294224879228,
+        "exit_scale": 4.715349484057489
+      },
+      {
+        "id": "ann_33",
+        "name": "female_exang_and_gate",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.0006551393179166087,
+        "exit_scale": 1.1993268814805154
+      },
+      {
+        "id": "ann_34",
+        "name": "thalach_cp3_protective_gate",
+        "numeric_max_abs_err": 4.440892098500626e-16,
+        "closed_form_max_abs_err": 0.00576318891298655,
+        "exit_scale": 2.8832156814349914
+      }
+    ],
+    "op_counts": {
+      "rename_node": 26,
+      "split_node": 6,
+      "annotate": 4
+    },
+    "full_coverage": true
+  },
+  "closed_forms": {
+    "ann_32": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( - 0.417 x_{fbs:0_b} \\\\\n&\\quad + 1.28 x_{oldpeak} \\\\\n&\\quad - 1.08 x_{slope:3} \\\\\n&\\quad + 0.559 x_{thal:7_b} \\\\\n&\\quad + 0.085 \\bigr)\n\\end{aligned}",
+    "ann_33": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 0.903 x_{exang:1_b} \\\\\n&\\quad + 0.571 x_{sex:0_b} \\\\\n&\\quad -0.853 \\bigr)\n\\end{aligned}",
+    "ann_34": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 0.763 x_{cp:3_b} \\\\\n&\\quad + 1.34 x_{thalach_b} \\\\\n&\\quad - 0.108 \\operatorname{relu}{\\left(1.0 x_{thal:3} - 0.191 \\right)} \\\\\n&\\quad -0.932 \\bigr)\n\\end{aligned}"
+  },
+  "claims": {
+    "stated": 78,
+    "recomputed": 78,
+    "reproduced": 78
+  },
+  "prose": {
+    "sentences": 43,
+    "numbers": 157,
+    "unmatched_numbers": 0
+  },
+  "summary": {
+    "mismatch": 0,
+    "warn": 0,
+    "info": 0,
+    "verdict": "numbers reproduce",
+    "seconds": 12.9
+  }
+}

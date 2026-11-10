@@ -1,0 +1,437 @@
+{
+  "item_id": "vb-61bbd6",
+  "genome_id": "1f180718-4e8b-43bc-be1d-9a4276f234c3",
+  "verifier": "blind verifier agent (run1)",
+  "started_at": "2026-11-10T23:42:54+13:00",
+  "finished_at": "2026-11-10T23:45:27+13:00",
+  "minutes": 3,
+  "overall": {
+    "grade": "weakened",
+    "summary": "Nothing is refuted; one technical hypothesis (the Washington / area-code unit) misstates two node values, and the rest reproduces."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.structural_coverage",
+      "statement": "structural 1.0, compositional 1.0, hierarchy complete",
+      "check": "verify recheck",
+      "evidence": "recomputed 1.0 / 1.0",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-61bbd6 --out experiments/verifier_bench/runs/run1/vb-61bbd6/recheck.json"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.function_preservation_max_abs_err",
+      "statement": "5.6e-16; closed-form max err 0.028",
+      "check": "verify recheck",
+      "evidence": "recomputed 5.55e-16 and 0.0280",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-61bbd6 --out experiments/verifier_bench/runs/run1/vb-61bbd6/recheck.json"
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.summary",
+      "statement": "CSC unit cancels the slope for 0-2 calls, off from 3-4 (+1.25/call); day/eve hinge +2.3 in the top decile; train AUC 0.898",
+      "check": "forward pass",
+      "evidence": "term by calls 0.94, 1.04, 1.11, 1.79, 3.04, 4.29, 5.55; top-decile hinge term +2.32; AUC 0.898",
+      "commands": [
+        "uv run python scratchpad/e9.py (train forward pass: node activity, terms by calls and day-minute decile, mean-ablation per part)"
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.resisted",
+      "statement": "3384 dead; 6468 and 3930 always on",
+      "check": "forward pass",
+      "evidence": "3384 max 0; 6468 min 2.04; 3930 min 0.58",
+      "commands": [
+        "uv run python scratchpad/e9.py (train forward pass: node activity, terms by calls and day-minute decile, mean-ablation per part)"
+      ]
+    },
+    {
+      "id": "V5",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "claims",
+      "statement": "140 claims",
+      "check": "verify recheck",
+      "evidence": "140 of 140 reproduce; prose numbers all found",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-61bbd6 --out experiments/verifier_bench/runs/run1/vb-61bbd6/recheck.json"
+      ]
+    },
+    {
+      "id": "V6",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_87",
+      "claims": [
+        "C051"
+      ],
+      "location": "operations.full_model.hypothesis",
+      "statement": "mean-ablation per child -0.084, -0.079, -0.038, -0.003, -0.001, -0.0004, -0.0003",
+      "check": "forward pass",
+      "evidence": "-0.0838, -0.0792, -0.0383, -0.0031, -0.0009, -0.0004, -0.0003; linearisation and SHAP not re-run",
+      "commands": [
+        "uv run python scratchpad/e9.py (train forward pass: node activity, terms by calls and day-minute decile, mean-ablation per part)"
+      ]
+    },
+    {
+      "id": "V7",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_87",
+      "claims": [
+        "C051",
+        "C001",
+        "C009",
+        "C006"
+      ],
+      "location": "drafted.readdown.ann_87.evidence[1]",
+      "statement": "international plan 3% -> 24%; calls 2% -> 5% at 3; day minutes 2% -> 9%",
+      "check": "claims",
+      "evidence": "match",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-61bbd6 --out experiments/verifier_bench/runs/run1/vb-61bbd6/recheck.json"
+      ]
+    },
+    {
+      "id": "V8",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_80",
+      "claims": [
+        "C052",
+        "C053",
+        "C059",
+        "C054",
+        "C062",
+        "C064"
+      ],
+      "location": "operations.linear_backbone.hypothesis",
+      "statement": "voiceMailPlan -2.73, internationalPlan +2.45, state offsets; mean-ablation AUC 0.898 -> 0.814",
+      "check": "claims + forward pass",
+      "evidence": "C059 -2.73, C052 +2.45; mean-ablation -0.0838 (0.814)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-61bbd6 --out experiments/verifier_bench/runs/run1/vb-61bbd6/recheck.json",
+        "uv run python scratchpad/e9.py (train forward pass: node activity, terms by calls and day-minute decile, mean-ablation per part)"
+      ]
+    },
+    {
+      "id": "V9",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_80",
+      "claims": [
+        "C052",
+        "C053",
+        "C059",
+        "C054",
+        "C062"
+      ],
+      "location": "drafted.readdown.ann_80.hypothesis[0]",
+      "statement": "international plan raises, messages raise steadily, voice-mail plan lowers, state shifts",
+      "check": "claims",
+      "evidence": "match",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-61bbd6 --out experiments/verifier_bench/runs/run1/vb-61bbd6/recheck.json"
+      ]
+    },
+    {
+      "id": "V10",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_82",
+      "claims": [
+        "C083",
+        "C084",
+        "C086",
+        "C088",
+        "C117"
+      ],
+      "location": "operations.day_eve_minutes_hinge.hypothesis",
+      "statement": "zero for the lower 50% of day minutes; active 48% of 9th and 93% of top decile; top-decile term +2.32, churn 0.49; mean-ablation AUC 0.860",
+      "check": "forward pass by decile",
+      "evidence": "deciles 1-4 zero, 5th 1%, 7th 13%, 9th 48%, 10th 93%; +2.32; churn 0.49; 747 active (36% vs 9%); AUC -0.0383 (0.860)",
+      "commands": [
+        "uv run python scratchpad/e9.py (train forward pass: node activity, terms by calls and day-minute decile, mean-ablation per part)"
+      ]
+    },
+    {
+      "id": "V11",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_81",
+      "claims": [
+        "C090",
+        "C093",
+        "C095",
+        "C118"
+      ],
+      "location": "operations.csc_threshold.hypothesis",
+      "statement": "1255 on in 95-98% at 0-2 calls, 3% at 3, 0% at 4+; mean term 0.94/1.04/1.11 then 1.79/3.04/4.30/5.55; churn 0.11 to 3 calls, 0.44/0.57/0.68; state 37 (84 rows) switches it off; mean-ablation 0.819",
+      "check": "forward pass by calls",
+      "evidence": "98.2/98.1/94.8%, 3%, 0%; terms reproduce; churn reproduces; Oregon (37) 84 rows; AUC -0.0792 (0.819)",
+      "commands": [
+        "uv run python scratchpad/e9.py (train forward pass: node activity, terms by calls and day-minute decile, mean-ablation per part)"
+      ]
+    },
+    {
+      "id": "V12",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_81",
+      "claims": [
+        "C090",
+        "C093"
+      ],
+      "location": "drafted.readdown.ann_81.hypothesis[0]",
+      "statement": "raises with each call, slowly then faster; in Oregon steadily and much more",
+      "check": "claims",
+      "evidence": "C090 accelerating 2.5% -> 5.4%; C093 Oregon 0.5% -> 17.6% (steady)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-61bbd6 --out experiments/verifier_bench/runs/run1/vb-61bbd6/recheck.json"
+      ]
+    },
+    {
+      "id": "V13",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_84",
+      "claims": [
+        "C097",
+        "C098",
+        "C099",
+        "C100",
+        "C101",
+        "C102"
+      ],
+      "location": "operations.state_switches.hypothesis",
+      "statement": "5685 Hawaii 73 rows churn 0.041; 5853 Alaska 56 rows 0.071; 10761 Maine 86 rows 0.186; 1529 off for South Dakota (66) and Utah (89); mean-ablation 0.895",
+      "check": "forward pass + state counts",
+      "evidence": "all counts and churn rates reproduce; part active on 3845 rows; AUC -0.0031",
+      "commands": [
+        "uv run python scratchpad/e9.py (train forward pass: node activity, terms by calls and day-minute decile, mean-ablation per part)"
+      ]
+    },
+    {
+      "id": "V14",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_83",
+      "claims": [
+        "C104",
+        "C105",
+        "C108"
+      ],
+      "location": "operations.day_charge_hinges.hypothesis",
+      "statement": "216 and 4311 each active ~16%; 216 off in state 22 (80 rows); 6468 always on (min 2.04), state 39 82 rows churn 0.061; 3384 dead; mean-ablation -0.0004",
+      "check": "forward pass",
+      "evidence": "15.6% / 16.5%; Michigan (22) 80 rows; 6468 min 2.04; Rhode Island (39) 82 rows, 0.061; 3384 max 0; -0.0004",
+      "commands": [
+        "uv run python scratchpad/e9.py (train forward pass: node activity, terms by calls and day-minute decile, mean-ablation per part)"
+      ]
+    },
+    {
+      "id": "V15",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_86",
+      "claims": [
+        "C110"
+      ],
+      "location": "operations.accountLength_affine.hypothesis",
+      "statement": "3930 always positive (min 0.58); mean-ablation -0.0009",
+      "check": "forward pass",
+      "evidence": "min 0.578; -0.0009",
+      "commands": [
+        "uv run python scratchpad/e9.py (train forward pass: node activity, terms by calls and day-minute decile, mean-ablation per part)"
+      ]
+    },
+    {
+      "id": "V16",
+      "grade": "weakened",
+      "level": "L1",
+      "part": "ann_85",
+      "claims": [
+        "C114"
+      ],
+      "location": "operations.area415_state47.hypothesis",
+      "statement": "595 ... Zero in area 415 (2,016 rows); 0.16 for other areas (logit +0.03); 3.19 for state 47 rows outside area 415",
+      "check": "node 595 values by area code and state",
+      "evidence": "not zero for all of area 415: the 30 Washington customers in area 415 get 1.03 (logit +0.21); the other 1986 area-415 rows are 0. Rows outside 415 get 0.11 (logit +0.02), not 0.16. The main point holds: 3.19 for the 42 Washington customers outside 415",
+      "commands": [
+        "uv run python scratchpad/e9.py (train forward pass: node activity, terms by calls and day-minute decile, mean-ablation per part)"
+      ]
+    },
+    {
+      "id": "V17",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_85",
+      "claims": [
+        "C114"
+      ],
+      "location": "drafted.readdown.ann_85.hypothesis[0]",
+      "statement": "raises the chance for Washington customers outside area code 415",
+      "check": "claim + node values",
+      "evidence": "C114 2.7% -> 14.3% outside 415 vs 2.7% -> 9.7% in 415; node 595 largest (3.19) for that group",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-61bbd6 --out experiments/verifier_bench/runs/run1/vb-61bbd6/recheck.json",
+        "uv run python scratchpad/e9.py (train forward pass: node activity, terms by calls and day-minute decile, mean-ablation per part)"
+      ]
+    },
+    {
+      "id": "V18",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_82",
+      "claims": [
+        "C086",
+        "C084"
+      ],
+      "location": "drafted.readdown.ann_82.hypothesis[0]",
+      "statement": "daytime minutes add nothing until about 234 minutes, then raise it steadily",
+      "check": "probe --sweep \"total day minutes=220:250:7\" (typical)",
+      "evidence": "risk 3.4% -> 3.8% from 220 to 235 minutes (backbone slope only), then 5.1%, 6.8%, 9.0% at 240-250: the hinge opens between 235 and 240",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-61bbd6 --sweep \"total day minutes=220:250:7\""
+      ]
+    },
+    {
+      "id": "V19",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_80",
+      "claims": [
+        "C052",
+        "C059",
+        "C053"
+      ],
+      "location": "drafted.readdown.ann_80.evidence[0]",
+      "statement": "international plan 3% -> 24%, voice-mail plan to under 1% (so having a voice-mail plan lowers the chance of leaving)",
+      "check": "claims",
+      "evidence": "numbers match; the closing clause restates the model effect and does not claim more",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-61bbd6 --out experiments/verifier_bench/runs/run1/vb-61bbd6/recheck.json"
+      ]
+    },
+    {
+      "id": "V20",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [
+        "C051",
+        "C052",
+        "C088",
+        "C090",
+        "C102"
+      ],
+      "location": "drafted.blocks[0]",
+      "statement": "lead and block paragraphs",
+      "check": "claims",
+      "evidence": "numbers and directions match",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-61bbd6 --out experiments/verifier_bench/runs/run1/vb-61bbd6/recheck.json"
+      ]
+    },
+    {
+      "id": "V21",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_80",
+      "claims": [
+        "C065",
+        "C079"
+      ],
+      "location": "drafted.worth_checking[0]",
+      "statement": "night minutes raise churn while night charge lowers it",
+      "check": "domain sense",
+      "evidence": "two copies of the same information pull in opposite directions; the net is small; for the domain reviewer",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-61bbd6 --out experiments/verifier_bench/runs/run1/vb-61bbd6/recheck.json"
+      ]
+    },
+    {
+      "id": "V22",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_84",
+      "claims": [
+        "C097",
+        "C098",
+        "C099",
+        "C100",
+        "C101"
+      ],
+      "location": "operations.state_switches.hypothesis",
+      "statement": "large single-state offsets from 56-89 rows each",
+      "check": "domain sense",
+      "evidence": "state-specific effects of up to 2 logits are hard to justify for a phone company and likely fitted to noise",
+      "commands": [
+        "uv run python scratchpad/e9.py (train forward pass: node activity, terms by calls and day-minute decile, mean-ablation per part)"
+      ]
+    }
+  ],
+  "parts": {
+    "ann_87": {
+      "grade": "upheld",
+      "level": "L2"
+    },
+    "ann_80": {
+      "grade": "upheld",
+      "level": "L4"
+    },
+    "ann_82": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_81": {
+      "grade": "upheld",
+      "level": "L2"
+    },
+    "ann_84": {
+      "grade": "upheld",
+      "level": "L4"
+    },
+    "ann_83": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_86": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_85": {
+      "grade": "weakened",
+      "level": "L1"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ]
+}

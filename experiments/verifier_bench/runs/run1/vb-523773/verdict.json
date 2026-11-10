@@ -1,0 +1,432 @@
+{
+ "item_id": "vb-523773",
+ "genome_id": "e324239d-f591-4c8a-b149-7699ec2d0346",
+ "verifier": "explanation-verifier subagent (run1)",
+ "started_at": "2026-11-10T23:21:52+13:00",
+ "finished_at": "2026-11-10T23:27:42+13:00",
+ "minutes": 6,
+ "overall": {
+  "grade": "refuted",
+  "summary": "Nearly everything reproduces; one root evidence payload count is wrong (a1=3 '108/108', really 107/107, already disclosed in the record), and the root hypothesis's 'four of a2,a3,a4,a6 switch a1=2 off' has counterexamples at a5=2 or 3."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "1.0 (compositional 1.0, full coverage, hierarchy complete)",
+   "check": "verify recheck",
+   "evidence": "recomputed structural 1.0, compositional 1.0, single root containing the output, all parts under it",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-523773 --out <scratch>/recheck.json"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "8.33e-16",
+   "check": "verify recheck",
+   "evidence": "recomputed 8.33e-16",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-523773 --out <scratch>/recheck.json"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.closed_form_max_abs_err",
+   "statement": "0.065",
+   "check": "verify recheck",
+   "evidence": "recomputed 0.0650; all four leaf closed forms identical to the recomputed ones",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-523773 --out <scratch>/recheck.json"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.n_splits",
+   "statement": "4 leaves, 1 composition, 6 splits, 1 identity node",
+   "check": "operations.json annotate/split/identity ops",
+   "evidence": "5 annotate (4 leaves + root), 6 split_node, 1 add_identity_node",
+   "commands": []
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "node 263 about 19 with no first values, dropping 6.8-9.3 per first value of a2,a3,a4,a6; linear -15 for a1=1 and a5=1, +24.9 for a1=3; 1855 and 3471 minor",
+   "check": "scratch script grid.py: all 432 attribute combinations (full MONK domain) through verify.probe.evaluate, part exits and scores",
+   "evidence": "263 = 18.98 at a1=1 with none of a2,a3,a4,a6 at 1; indicator drops 8.46/9.29/6.75/8.23; linear at typical case: a1 1->2 +15.69, a1=3 vs 2 +24.94, a5=1 vs 3 -14.80; ablating 1855 flips 3, 3471 flips 0",
+   "commands": []
+  },
+  {
+   "id": "V6",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "a1=3 is 107/107 positive on train (payload says 108)",
+   "check": "verify subgroup --where \"a1 == '3'\"",
+   "evidence": "n = 107, mean predicted risk 100%; all 107 predicted positive",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-523773 --where \"a1 == '3'\""
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [
+    "C01"
+   ],
+   "location": "claims.C01",
+   "statement": "all 59 claims",
+   "check": "verify recheck",
+   "evidence": "59 of 59 claims reproduce exactly; 38 prose sentences, 192 numbers, none missing from the cited claims",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-523773 --out <scratch>/recheck.json"
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "structure",
+   "statement": "annotation entries/exits/subgraphs",
+   "check": "operations.json + verify vars",
+   "evidence": "ramp reads a1,a2,a3,a4,a6 (not a5); a5_not4 reads a3,a5; a6 unit reads a6; linear reads all six through id_linear; root combines the four exits at node 0",
+   "commands": [
+    "uv run python -m explaneat verify vars experiments/verifier_bench/items/vb-523773"
+   ]
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_28",
+   "claims": [],
+   "location": "operations.upper_edge_count_classifier.hypothesis",
+   "statement": "logit = 2.58 + Linear + 5.14*Ramp + 1.53*A5not4 + 0.105*A6",
+   "check": "scratch script enum.py: forward pass on all 345 training rows (verify.model.load + probe.frame), per (a1, count) predicted-positive table, part values, AUCs, least-squares fit of the logit on the part outputs",
+   "evidence": "least-squares fit of the logit on the part outputs: 2.580, 1.000, 5.138, 1.530, 0.1047 (exact)",
+   "commands": []
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_28",
+   "claims": [],
+   "location": "operations.upper_edge_count_classifier.hypothesis",
+   "statement": "positive rate by (a1, count): a1=1 <=2 100%, 3 74%, >=4 0%; a1=2 <=3 100%, 4 29%, 5 0%; a1=3 100%; 85.5% predicted positive; accuracy 0.472; AUC 0.807 sigmoid / 0.734 logit; logits up to ~130",
+   "check": "scratch script enum.py: forward pass on all 345 training rows (verify.model.load + probe.frame), per (a1, count) predicted-positive table, part values, AUCs, least-squares fit of the logit on the part outputs",
+   "evidence": "a1=1: count1 9/9, 2 38/38, 3 73.8% of 42, 4-6 0/33; a1=2: 0-3 all positive (108 rows), 4 28.6% of 7, 5 0/1; a1=3 107/107; predicted positive 0.855; accuracy 0.4725; AUC risk 0.8065, logit 0.7335; logit range -29.7 to 134.9",
+   "commands": []
+  },
+  {
+   "id": "V11",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_28",
+   "claims": [],
+   "location": "operations.upper_edge_count_classifier.hypothesis",
+   "statement": "for a1 in {1,2} it is ... negative once about three of {a2,a3,a4,a6} (a1=1) or four (a1=2) do",
+   "check": "probe a1=2, a2=a3=a4=a6=1, sweep a5; subgroup on the same cases; grid over all 432 combinations",
+   "evidence": "a1=1 holds (three or four of a2,a3,a4,a6 at 1: 0 of 28 combinations positive). a1=2 with all four at 1 is not reliably negative: a5=2 gives 99.8% (score +6.4), a5=3 98.3% (+4.1); only a5=1 (0.0%) and a5=4 (26.7%) are negative. On train 2 of the 3 such cases are predicted 'yes' (mean risk 66.1%). The per-count table that includes a5 is right; the {a2,a3,a4,a6} wording for a1=2 is not.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-523773 --set a1=2 --set a2=1 --set a3=1 --set a4=1 --set a6=1 --sweep a5=1,2,3,4 --no-parts",
+    "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-523773 --where \"a1 == '2' and a2 == '1' and a3 == '1' and a4 == '1' and a6 == '1'\""
+   ]
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_28",
+   "claims": [],
+   "location": "operations.upper_edge_count_classifier.hypothesis",
+   "statement": "a5=1 is not enough to flip a1=1 inputs with one other first value; no lower edge (0-1 first values get the largest logits); a1=3 always positive",
+   "check": "scratch script grid.py: all 432 attribute combinations (full MONK domain) through verify.probe.evaluate, part exits and scores",
+   "evidence": "a1=1, a5=1 plus one other first value: 12/12 positive; count <=1: min score 15.1, mean 67.1 vs mean 41.7 at count 2; a1=3: 216/216 combinations positive",
+   "commands": []
+  },
+  {
+   "id": "V13",
+   "grade": "refuted",
+   "level": "L1",
+   "part": "ann_28",
+   "claims": [],
+   "location": "operations.upper_edge_count_classifier.evidence[2]",
+   "statement": "positive_rate_by_a1_and_first_value_count a1=3: '108/108 pos'",
+   "check": "verify subgroup --where \"a1 == '3'\"",
+   "evidence": "there are 107 a1=3 training cases, all predicted positive (107/107). The record's 'resisted' field discloses this and the hypothesis text says 107/107; the payload itself is wrong. The other payload numbers (9/9, 38/38, 74%, 0/26, 0/6, 0/1, 11/11, 29/29, 40/40, 28/28, 29%, 0/1, AUCs 0.7335/0.8065, rate 0.855) reproduce.",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-523773 --where \"a1 == '3'\""
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_28",
+   "claims": [],
+   "location": "operations.upper_edge_count_classifier.evidence[0]",
+   "statement": "closed form exp(1.53 x1855 + 5.14 x263 + 0.105 x3471 + x_lin)/(... + 0.0758)",
+   "check": "scratch script enum.py: forward pass on all 345 training rows (verify.model.load + probe.frame), per (a1, count) predicted-positive table, part values, AUCs, least-squares fit of the logit on the part outputs",
+   "evidence": "ln(1/0.0758) = 2.58, matching the fitted intercept and readouts",
+   "commands": []
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_28",
+   "claims": [
+    "C16",
+    "C27",
+    "C29",
+    "C30",
+    "C02",
+    "C12",
+    "C06",
+    "C07",
+    "C08",
+    "C13",
+    "C09",
+    "C11",
+    "C14",
+    "C15"
+   ],
+   "location": "drafted.readdown.ann_28.hypothesis[0]",
+   "statement": "four parts added into one score; ramp gives 'yes' while few attributes are at their first value; direct sum where a1 and a5 count most",
+   "check": "scratch script grid.py: all 432 attribute combinations (full MONK domain) through verify.probe.evaluate, part exits and scores",
+   "evidence": "score is an exact sum of the four exits; typical case -14.6 (0%); a1=2 -> +30.9 (100%); a5=2/3/4 -> 92.9%/55.0%/0.76%; a4=1 and a2=2 stay below 1%",
+   "commands": []
+  },
+  {
+   "id": "V16",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_28",
+   "claims": [
+    "C27",
+    "C02"
+   ],
+   "location": "drafted.worth_checking[0]",
+   "statement": "model gives 'yes' to cases with few first values, unlike the exactly-two rule",
+   "check": "scratch script grid.py: all 432 attribute combinations (full MONK domain) through verify.probe.evaluate, part exits and scores",
+   "evidence": "count 0-1 combinations: all positive while the MONK-2 target is 'no'; typical case with a1=2 has three first values and gets >99%",
+   "commands": []
+  },
+  {
+   "id": "V17",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_28",
+   "claims": [
+    "C06",
+    "C07",
+    "C08"
+   ],
+   "location": "drafted.worth_checking[1]",
+   "statement": "model separates a5=2/3/4",
+   "check": "scratch script grid.py: all 432 attribute combinations (full MONK domain) through verify.probe.evaluate, part exits and scores",
+   "evidence": "typical case a5=2 92.9%, a5=3 55.0%, a5=4 0.76%",
+   "commands": []
+  },
+  {
+   "id": "V18",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_24",
+   "claims": [],
+   "location": "operations.few_first_values_ramp.hypothesis",
+   "statement": "263 = ReLU(18.98 - 8.46[a2=1] - 9.29[a3=1] - 6.75[a4=1] - 8.23[a6=1] + 5.81[a1=2] - 24.11[a1=3]); a1=1 positive iff at most two (pairs >= 1.23, triples <= -4.46); a1=2 three leave 0.3-1.4 except a2+a3+a6; four switch off; a1=3 always 0; a5 not read",
+   "check": "scratch script grid.py: all 432 attribute combinations (full MONK domain) through verify.probe.evaluate, part exits and scores",
+   "evidence": "a1=1: none 18.98, one 9.69-12.24, two 1.22-4.01, three or four 0; a1=2: none 24.79, two 7.03-9.82, three 0-1.35, four 0; a1=3: max 0. z-scale weights convert to the stated indicator weights (e.g. 4.65/0.4998 = 9.30, -11.2/0.4626 = -24.2)",
+   "commands": []
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_24",
+   "claims": [
+    "C27"
+   ],
+   "location": "operations.few_first_values_ramp.evidence[2]",
+   "statement": "removing the ramp flips 112/345, logit AUC 0.734 -> 0.537; values 0 to 24.79, zero on 40.3%",
+   "check": "verify ablate --part ann_24 --to zero; enum",
+   "evidence": "112 flips, AUC 0.7335 -> 0.5372; range 0 to 24.790; zero on 40.29% (active 206)",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-523773 --part ann_24 --to zero"
+   ]
+  },
+  {
+   "id": "V20",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_24",
+   "claims": [
+    "C17",
+    "C18",
+    "C19",
+    "C20",
+    "C21",
+    "C22",
+    "C23",
+    "C24",
+    "C25",
+    "C26",
+    "C27",
+    "C28"
+   ],
+   "location": "drafted.readdown.ann_24.hypothesis[0]",
+   "statement": "moving a1, a3 or a6 off the first value takes the typical case from <1% to >99% through the ramp",
+   "check": "scratch script grid.py: all 432 attribute combinations (full MONK domain) through verify.probe.evaluate, part exits and scores",
+   "evidence": "typical ramp 1.46; a1=2 -> 7.27 (score +30.9); a3=2 or a6=2 lift the ramp by 9.3/8.2 (x5.14 readout = +48/+42 log-odds); acts on 206 cases, 78 'yes' (enum)",
+   "commands": []
+  },
+  {
+   "id": "V21",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_27",
+   "claims": [],
+   "location": "operations.direct_linear.hypothesis",
+   "statement": "indicator weights a1=1 -15.69, a1=3 +24.94, a5=1 -14.80, a5=2 +2.38, a5=4 -3.58, a4=1 -4.90, a3=2 -2.19, a2 +1.20/+0.73/+0.61, a6=2 -0.24; range -33.4..+32.2",
+   "check": "scratch script grid.py: all 432 attribute combinations (full MONK domain) through verify.probe.evaluate, part exits and scores; enum",
+   "evidence": "linear exit at typical case by a1: -26.19/-10.49/+14.44 (diffs 15.69, 24.94); by a5: -26.19/-9.01/-11.39/-14.97 (vs a5=3: -14.80, +2.38, -3.58); training range -33.39 to 32.20",
+   "commands": []
+  },
+  {
+   "id": "V22",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_27",
+   "claims": [
+    "C29",
+    "C30",
+    "C31",
+    "C32",
+    "C33",
+    "C34",
+    "C35",
+    "C36",
+    "C37",
+    "C38",
+    "C39"
+   ],
+   "location": "drafted.readdown.ann_27.hypothesis[0]",
+   "statement": "a1 and a5 count most; a1=3 -> >99%, a5=2 -> about 93%",
+   "check": "verify ablate --part ann_27 --to zero; grid",
+   "evidence": "largest weights are a1 (-15.7, +24.9) and a5=1 (-14.8); through the part alone a1 1->2 moves the typical score to +1.09 (74.9%); switching the part off flips 50 predictions and drops AUC to 0.599",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-523773 --part ann_27 --to zero"
+   ]
+  },
+  {
+   "id": "V23",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_25",
+   "claims": [
+    "C40",
+    "C41",
+    "C42",
+    "C43",
+    "C44"
+   ],
+   "location": "operations.a5_not4_unit.hypothesis",
+   "statement": "1855 = ReLU(0.295 + 0.682[a3=1] - 3.271[a5=4]) in {0, 0.295, 0.977}; readout adds at most 1.49; ablation flips 3/345, AUC 0.7335 -> 0.7329",
+   "check": "grid; verify ablate --part ann_25 --to zero",
+   "evidence": "values 0 (a5=4), 0.2946 (a3=2), 0.9769 (a3=1); 1.53 x 0.977 = 1.49; 3 flips, AUC 0.7335 -> 0.7329; active 259, 82 'yes'",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-523773 --part ann_25 --to zero"
+   ]
+  },
+  {
+   "id": "V24",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_26",
+   "claims": [
+    "C45",
+    "C46",
+    "C47",
+    "C48"
+   ],
+   "location": "operations.a6_tiny_unit.hypothesis",
+   "statement": "3471 = 0.743[a6=2]; adds at most 0.078; ablation flips no decisions",
+   "check": "grid; verify ablate --part ann_26 --to zero",
+   "evidence": "values 0 (a6=1), 0.743 (a6=2); 0 flips, AUC 0.7335 -> 0.7336, max risk change 0.019; active 168, 58 'yes'",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-523773 --part ann_26 --to zero"
+   ]
+  },
+  {
+   "id": "V25",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_26",
+   "claims": [
+    "C47"
+   ],
+   "location": "drafted.readdown.ann_26.hypothesis[0]",
+   "statement": "tiny unit barely changes predictions",
+   "check": "ablate",
+   "evidence": "0 predictions flip; MONK-2 is synthetic, no domain conflict",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_28": {
+   "grade": "refuted",
+   "level": "L1"
+  },
+  "ann_24": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_27": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_25": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_26": {
+   "grade": "upheld",
+   "level": "L4"
+  }
+ },
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ],
+ "notes": "Not checked: the sensitivity figures quoted in the technical hypotheses (ramp a1:3 6.66; a5 unit a5:4 1.06, a3:1 0.26; linear a1:3 11.5, a1:1 7.5, a5:1 6.4). Scratch scripts: enum.py (training rows), grid.py (all 432 attribute combinations)."
+}

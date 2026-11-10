@@ -1,0 +1,388 @@
+{
+  "item_id": "vb-e5e5d0",
+  "genome_id": "60ee493c-bce5-4a2b-b7af-d06843835ae6",
+  "verifier": "blind verifier agent (run1)",
+  "started_at": "2026-11-10T23:31:58+13:00",
+  "finished_at": "2026-11-10T23:34:11+13:00",
+  "minutes": 2,
+  "overall": {
+    "grade": "refuted",
+    "summary": "The veto annotation leaves out node 2786, so the stated full coverage, closed-form error and the veto formula claim do not reproduce; the veto hypothesis also overstates the minimum penalty (-58, not -70). The other parts hold."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_28",
+      "claims": [
+        "C26",
+        "C60"
+      ],
+      "location": "structure.atleast3_of_five_veto",
+      "statement": "subgraph nodes -1_b, -4_b, -7_b, -9_b, -16_b, 274, id_suppress (operations.atleast3_of_five_veto.subgraph_nodes)",
+      "check": "verify recheck structure + operations.json",
+      "evidence": "the veto subgraph omits hidden node 2786, which feeds id_suppress (id_suppress = -7.14*274 - 6.56*2786, as the technical hypothesis itself says). Recomputed structural coverage 0.947 with nodes 274 and 2786 uncovered and edges 274->2786, 2786->id_suppress outside every annotation",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e5e5d0 --out experiments/verifier_bench/runs/run1/vb-e5e5d0/recheck.json"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "refuted",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.structural_coverage",
+      "statement": "1.0 (and full_coverage true)",
+      "check": "verify recheck",
+      "evidence": "recomputed 0.9474; full coverage false (uncovered 274, 2786)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e5e5d0 --out experiments/verifier_bench/runs/run1/vb-e5e5d0/recheck.json"
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "refuted",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.closed_form_max_abs_err",
+      "statement": "0.170 (3-s.f. rounding)",
+      "check": "verify recheck",
+      "evidence": "recomputed 93.6: the veto closed form built from the stated subgraph misses the 2786 path (part error 93.7 against exit scale 269)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e5e5d0 --out experiments/verifier_bench/runs/run1/vb-e5e5d0/recheck.json"
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.function_preservation_max_abs_err",
+      "statement": "4.4e-16",
+      "check": "verify recheck",
+      "evidence": "recomputed 4.44e-16 (the replayed model still computes the network; only the annotation is short a node)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e5e5d0 --out experiments/verifier_bench/runs/run1/vb-e5e5d0/recheck.json"
+      ]
+    },
+    {
+      "id": "V5",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_28",
+      "claims": [
+        "C26"
+      ],
+      "location": "claims.C26",
+      "statement": "the veto formula reproduces the part (max err 4.3e-14)",
+      "check": "verify recheck",
+      "evidence": "recomputed max error 93.74; reproduces = false",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e5e5d0 --out experiments/verifier_bench/runs/run1/vb-e5e5d0/recheck.json"
+      ]
+    },
+    {
+      "id": "V6",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_28",
+      "claims": [
+        "C60"
+      ],
+      "location": "claims.C60",
+      "statement": "the veto has 2 switching units",
+      "check": "verify recheck",
+      "evidence": "recomputed 1 switching unit within the stated subgraph (2786 is outside it)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e5e5d0 --out experiments/verifier_bench/runs/run1/vb-e5e5d0/recheck.json"
+      ]
+    },
+    {
+      "id": "V7",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_28",
+      "claims": [
+        "C26"
+      ],
+      "location": "drafted.readdown.ann_28.evidence[3]",
+      "statement": "Its formula reproduces the part exactly on all 345 training cases.",
+      "check": "verify recheck",
+      "evidence": "does not reproduce from the explanation's operations (max error 93.7); recheck lint: cites C26, which is not verified",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e5e5d0 --out experiments/verifier_bench/runs/run1/vb-e5e5d0/recheck.json"
+      ]
+    },
+    {
+      "id": "V8",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_28",
+      "claims": [],
+      "location": "layer.parts.ann_28.closed_form",
+      "statement": "relu(... 274 ...) with the 0.605 / 0.609 / 6.56 terms of node 2786",
+      "check": "verify recheck closed forms",
+      "evidence": "the stated coefficients 0.605, 0.609, 6.56 are not in the closed form recomputed from the annotation (only -7.14 relu(...)). The stated formula matches the network, but not the annotated part as recorded",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e5e5d0 --out experiments/verifier_bench/runs/run1/vb-e5e5d0/recheck.json"
+      ]
+    },
+    {
+      "id": "V9",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_28",
+      "claims": [],
+      "location": "operations.atleast3_of_five_veto.hypothesis",
+      "statement": "Veto is exactly 0 for at most two first values and <= -70 for three or more ... a penalty of -70 or more (-269 with all five)",
+      "check": "indicator pre-activations + all 432 configurations",
+      "evidence": "with three first values the veto is between -58.2 and -93.3, not <= -70: the weakest triple (a1, a4, a6) gives pre-activation 5.6 and id_suppress = -11.11*5.6 + 4.00 = -58.2; maximum id_suppress when 274 fires is -58.2 over the grid. The rest reproduces: 274 > 0 exactly when 3+ of a1,a2,a3,a4,a6 are first (112 train rows), increments 7.2-9.7 on base -19.2, -269 with all five, ablation accuracy 0.887 -> 0.562",
+      "commands": [
+        "uv run python scratchpad/ind.py experiments/verifier_bench/items/vb-e5e5d0 id_linear,274,2786,id_suppress",
+        "uv run python scratchpad/e5.py (train forward pass + all 432 configurations)"
+      ]
+    },
+    {
+      "id": "V10",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_32",
+      "claims": [
+        "C16"
+      ],
+      "location": "operations.two_of_five_peak.hypothesis",
+      "statement": "113 of 114 positive when a5 != 1; 23 of 38 when a5 = 1; agreement 96.3% of 432 and 95.9% train; acc 0.887, AUC 0.925; s < 0 for <=1 (max -0.42) and >=3; misses all 28 two-of-six with a5 = 1; accepts 23 of 38 three-of-six with a5 = 1; rule agreement 88.0%",
+      "check": "all 432 configurations + train",
+      "evidence": "113/114, 23/38, 96.3%, 95.9%, 0.887, 0.9254, max -0.419, none positive with >=3, 0/28, 23/38, 88.0%",
+      "commands": [
+        "uv run python scratchpad/e5.py (train forward pass + all 432 configurations)"
+      ]
+    },
+    {
+      "id": "V11",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_32",
+      "claims": [
+        "C16",
+        "C52",
+        "C06",
+        "C07",
+        "C08",
+        "C09",
+        "C12"
+      ],
+      "location": "drafted.readdown.ann_32.evidence[1]",
+      "statement": "a5 = 2,3,4 and a2 = 2 raise; a4 = 3 lowers; typical case stays below 1%",
+      "check": "claims",
+      "evidence": "match",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e5e5d0 --out experiments/verifier_bench/runs/run1/vb-e5e5d0/recheck.json"
+      ]
+    },
+    {
+      "id": "V12",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_27",
+      "claims": [
+        "C27",
+        "C28",
+        "C29",
+        "C30",
+        "C31",
+        "C32",
+        "C33",
+        "C34",
+        "C35",
+        "C36",
+        "C37"
+      ],
+      "location": "operations.linear_first_value_score.hypothesis",
+      "statement": "a6=1 +11.94, a1=1 +10.22, a2=1 +6.63, a4=1 +6.22, a3=1 +4.12, a5=1 +2.63; a4=3 -4.60, a2=3 -3.07, a1=2 -3.00, a1=3 -1.71, a2=2 -1.91, a5=4 -0.26; 1948 only 0.70/0.89",
+      "check": "indicator coefficients + forward pass",
+      "evidence": "all reproduce; 1948 values 0.701 / 0.891",
+      "commands": [
+        "uv run python scratchpad/ind.py experiments/verifier_bench/items/vb-e5e5d0 id_linear,274,2786,id_suppress",
+        "uv run python scratchpad/e5.py (train forward pass + all 432 configurations)"
+      ]
+    },
+    {
+      "id": "V13",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_27",
+      "claims": [
+        "C27",
+        "C29",
+        "C28",
+        "C30",
+        "C31",
+        "C34",
+        "C35",
+        "C36",
+        "C32",
+        "C33"
+      ],
+      "location": "drafted.readdown.ann_27.evidence[0]",
+      "statement": "direction sentence for the attribute sum",
+      "check": "claims",
+      "evidence": "directions match",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e5e5d0 --out experiments/verifier_bench/runs/run1/vb-e5e5d0/recheck.json"
+      ]
+    },
+    {
+      "id": "V14",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_29",
+      "claims": [
+        "C39",
+        "C40",
+        "C41",
+        "C47",
+        "C43",
+        "C44"
+      ],
+      "location": "operations.a5_a3_bonus_gate.hypothesis",
+      "statement": "readout ranges +12.0..13.7 (a5 != 1, a3 = 1), +4.7..6.5 (a3 = 2), +1.1..2.75 (a5 = 1, a3 = 1), 0 (a5 = 1, a3 = 2); 1223 = 0 exactly on 40 rows; 1717 <= 0.10; ablation accuracy 0.690",
+      "check": "all 432 configurations + train",
+      "evidence": "11.87-13.68, 4.67-6.48, 1.12-2.76, 0; 40 rows; 1717 max 0.102; accuracy 0.690",
+      "commands": [
+        "uv run python scratchpad/e5.py (train forward pass + all 432 configurations)"
+      ]
+    },
+    {
+      "id": "V15",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_30",
+      "claims": [
+        "C49",
+        "C50"
+      ],
+      "location": "operations.a5_in_2_4_penalty.hypothesis",
+      "statement": "1751 = 1.198 for a5 in {2,4}, else 0; accuracy 0.887 -> 0.890",
+      "check": "forward pass",
+      "evidence": "values 0 / 1.1978, exactly a5 in {2,4} (173 rows); 0.890",
+      "commands": [
+        "uv run python scratchpad/e5.py (train forward pass + all 432 configurations)"
+      ]
+    },
+    {
+      "id": "V16",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_31",
+      "claims": [
+        "C52",
+        "C53"
+      ],
+      "location": "operations.inert_a32_unit.hypothesis",
+      "statement": "927 is 0 on every input",
+      "check": "forward pass",
+      "evidence": "max 0 on train",
+      "commands": [
+        "uv run python scratchpad/e5.py (train forward pass + all 432 configurations)"
+      ]
+    },
+    {
+      "id": "V17",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_28",
+      "claims": [
+        "C17",
+        "C18",
+        "C19",
+        "C22",
+        "C23"
+      ],
+      "location": "drafted.readdown.ann_28.hypothesis[0]",
+      "statement": "holds yes down for the typical case; moving a1, a3, a6 off the first value lifts to above 99%; a2 or a4 first brings it back",
+      "check": "claims",
+      "evidence": "C17-C19 raise to 100%; C22/C23 a3 = 2 group 100% -> below 1%",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e5e5d0 --out experiments/verifier_bench/runs/run1/vb-e5e5d0/recheck.json"
+      ]
+    },
+    {
+      "id": "V18",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [
+        "C16",
+        "C06",
+        "C52",
+        "C17",
+        "C47",
+        "C49"
+      ],
+      "location": "drafted.blocks[0]",
+      "statement": "block paragraphs and lead",
+      "check": "claims",
+      "evidence": "numbers and directions match",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e5e5d0 --out experiments/verifier_bench/runs/run1/vb-e5e5d0/recheck.json"
+      ]
+    },
+    {
+      "id": "V19",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [
+        "C17",
+        "C39",
+        "C09",
+        "C12"
+      ],
+      "location": "drafted.worth_checking[0]",
+      "statement": "a5 does not count like the other first values; a2/a4 levels separated",
+      "check": "claims",
+      "evidence": "consistent with the claims and the 432-configuration check",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e5e5d0 --out experiments/verifier_bench/runs/run1/vb-e5e5d0/recheck.json",
+        "uv run python scratchpad/e5.py (train forward pass + all 432 configurations)"
+      ]
+    }
+  ],
+  "parts": {
+    "ann_32": {
+      "grade": "upheld",
+      "level": "L2"
+    },
+    "ann_28": {
+      "grade": "refuted",
+      "level": "L1"
+    },
+    "ann_27": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_29": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_30": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_31": {
+      "grade": "upheld",
+      "level": "L1"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ]
+}

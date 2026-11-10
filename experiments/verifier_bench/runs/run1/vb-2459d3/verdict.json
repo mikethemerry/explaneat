@@ -1,0 +1,419 @@
+{
+  "item_id": "vb-2459d3",
+  "genome_id": "1f180718-4e8b-43bc-be1d-9a4276f234c3",
+  "verifier": "explanation-verifier subagent (run1)",
+  "started_at": "2026-11-10T23:28:10+13:00",
+  "finished_at": "2026-11-10T23:41:14+13:00",
+  "minutes": 13,
+  "overall": {
+    "grade": "refuted",
+    "summary": "Numbers, coverage and all 140 claims reproduce; one technical evidence statement (area415_state47 'zero in area 415') is contradicted by 30 Washington customers, and several plain sentences mis-scope a subgroup (Ohio), attribute a whole-model change to one part (Washington), or rest on out-of-support inputs (voice-mail messages)."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_85",
+      "claims": [],
+      "location": "operations.area415_state47.evidence[0]",
+      "statement": "595 ... Zero in area 415 (2,016 rows)",
+      "check": "subgroup on area code 415 and on Washington within 415; probe state x area code",
+      "evidence": "The part is on for 30 of the 2016 area-415 customers (all 30 Washington customers in area 415): exit 595 = 1.03, contribution +0.21 logit (subgroup mean 0.210). Only 1986 area-415 rows are zero.",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-2459d3 --where \"`area code` == '415'\"",
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-2459d3 --where \"state == '47' and `area code` == '415'\"",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-2459d3 --sweep state=49,47 --sweep 'area code=415,408'"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "weakened",
+      "level": "L3",
+      "part": "ann_85",
+      "claims": [],
+      "location": "operations.area415_state47.hypothesis",
+      "statement": "small positive offset (~0.15) outside 415, larger (~+3) for state 47 outside 415, zero in area 415",
+      "check": "probe state=47 x area code (typical customer)",
+      "evidence": "Offsets reproduce (0.106 for WV outside 415, 3.19 for Washington outside 415), but 'zero in area 415' fails for Washington: 1.03 in area 415 (logit +0.21, about a third of the +0.65 outside 415). Rule has 30 real counterexamples.",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-2459d3 --sweep state=49,47 --sweep 'area code=415,408'"
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "weakened",
+      "level": "L2",
+      "part": "ann_85",
+      "claims": [
+        "C114"
+      ],
+      "location": "drafted.readdown.ann_85.evidence[0]",
+      "statement": "For such a customer [Washington, outside 415] the chance rises from about 3% to about 14%.",
+      "check": "ablate ann_85 --to zero for the typical Washington area-408 customer",
+      "evidence": "C114 reproduces (2.7% -> 14.3%), but that is the whole-model change of moving to Washington outside 415; most of it comes from the backbone's state-47 term (ann_80 contribution -0.136 -> +1.022). This part alone moves the typical Washington/408 customer from 8.9% to 15.8% (+0.65 logit). Sentence attributes the full change to the part. Same wording in drafted.blocks[6].",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-2459d3 --part ann_85 --to zero --hold \"where:state == '47' and `area code` == '408'\" --where \"state == '47'\""
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "weakened",
+      "level": "L2",
+      "part": "ann_81",
+      "claims": [
+        "C095"
+      ],
+      "location": "drafted.readdown.ann_81.evidence[1]",
+      "statement": "For customers in Ohio, daytime minutes add to the chance only above about 85 minutes, in an uneven way, from about 2% to about 7%.",
+      "check": "probe day-minutes sweep at 2 calls, state West Virginia vs Ohio",
+      "evidence": "The part does not read Ohio (its state input is Oregon only). ann_81 contributions are identical in WV and Ohio (+0.540 flat to 80 min, +0.631 at 100, +1.379 at 220). The fold at about 85 minutes applies to any 2-call customer; 'Ohio' is an artefact of the 32 sampled patients. Numbers reproduce (C095), the subgroup is wrong. Same sentence in drafted.blocks[2].",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-2459d3 --set state=49 --set 'number customer service calls=2' --sweep 'total day minutes=60,80,100,120,160,220,270'",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-2459d3 --set state=35 --set 'number customer service calls=2' --sweep 'total day minutes=60,80,100,120,160,220,270'"
+      ]
+    },
+    {
+      "id": "V5",
+      "grade": "weakened",
+      "level": "L3",
+      "part": "ann_80",
+      "claims": [
+        "C053"
+      ],
+      "location": "drafted.readdown.ann_80.evidence[0]",
+      "statement": "more voice-mail messages raise it steadily, to about 13% at 32 messages",
+      "check": "subgroup on no plan with messages > 0; probe messages sweep for plan holders",
+      "evidence": "C053 reproduces, but it is computed for a customer with no voice-mail plan, and no training customer without a plan has any messages (n = 0): pure extrapolation. For plan holders (typical plan holder) the model goes 0.3% at 10, 0.8% at 29, 1.9% at 45 messages. Direction holds, size is out of support. Same in drafted.blocks[0] and drafted.readdown.ann_80.hypothesis[0].",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-2459d3 --where \"`voice mail plan` == '0' and `number vmail messages` > 0\"",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-2459d3 --hold \"where:`voice mail plan` == '1'\" --sweep 'number vmail messages=10,29,45'"
+      ]
+    },
+    {
+      "id": "V6",
+      "grade": "weakened",
+      "level": "L3",
+      "part": null,
+      "claims": [
+        "C054",
+        "C055",
+        "C062",
+        "C064"
+      ],
+      "location": "drafted.worth_checking[2]",
+      "statement": "the state moves the chance by several points (for example Montana and Oregon high, Vermont and Wyoming low)",
+      "check": "probe state sweep, typical customer, whole model; CSC sweep in Oregon",
+      "evidence": "Oregon is high only through the backbone (C055, 9%). In the whole model the typical (1-call) Oregon customer is at 1.7% vs 2.7% in WV (C027 lowers), because Oregon switches off the CSC unit (ann_81 contribution -0.712 vs +1.064). Oregon is higher only from 2-3 calls on (5.8% vs 2.9% at 2 calls; 17.6% vs 5.4% at 3). Montana, Vermont, Wyoming hold (10.3%, 0.6%, 1.3%).",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-2459d3 --sweep state=49,41,44,21,11,0,37,26,46,50",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-2459d3 --set state=37 --sweep 'number customer service calls=0,1,2,3,4,5,6'"
+      ]
+    },
+    {
+      "id": "V7",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.structural_coverage",
+      "statement": "1.0 (and compositional 1.0, hierarchy complete, full coverage)",
+      "check": "verify recheck",
+      "evidence": "recomputed 1.0 / 1.0, hierarchy complete, single root full_model containing the output",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-2459d3 --out <scratch>/recheck.json"
+      ]
+    },
+    {
+      "id": "V8",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.function_preservation_max_abs_err",
+      "statement": "5.55e-16",
+      "check": "verify recheck",
+      "evidence": "recomputed 5.55e-16",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-2459d3 --out <scratch>/recheck.json"
+      ]
+    },
+    {
+      "id": "V9",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.closed_form_max_abs_err",
+      "statement": "0.028",
+      "check": "verify recheck",
+      "evidence": "recomputed 0.02795; all leaf closed forms match at 3 s.f.; recheck 0 mismatch, 0 warn",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-2459d3 --out <scratch>/recheck.json"
+      ]
+    },
+    {
+      "id": "V10",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.n_splits",
+      "statement": "7 leaves, 1 composition, 6 splits, 2 identity nodes",
+      "check": "operations.json and recheck",
+      "evidence": "6 split inputs (-1,-32,-40,-43,-59,-62), identity_lin and identity_csc; 8 annotations",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-2459d3 --out <scratch>/recheck.json"
+      ]
+    },
+    {
+      "id": "V11",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.summary",
+      "statement": "CSC unit flat 0-2 calls then +1.25 logit per call; day/eve hinge +2.3 logit in top decile; AUC 0.898",
+      "check": "subgroup by calls; subgroup top decile of day minutes; ablate",
+      "evidence": "ann_81 mean term 0.94/1.04/1.11 for 0-2 calls, 1.79/3.04/4.29/5.55 for 3-6 (+1.25/call); top decile ann_82 contribution +2.32, active 93%, churn 49.2%; full AUC 0.8979. Refit-LR and linearised AUCs not re-run.",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-2459d3 --where '`number customer service calls` == N'",
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-2459d3 --where '`total day minutes` >= `total day minutes`.quantile(0.9)'"
+      ]
+    },
+    {
+      "id": "V12",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.resisted",
+      "statement": "3384 dead; 6468 and 3930 always on; state 44 near-cancelling pair",
+      "check": "closed form analysis and probe exit values",
+      "evidence": "3384 = relu(-1.27-1.16*216-0.527*6468) with 6468 >= 2.04 is always negative; 6468 = 2.04 at typical (3.39 RI); 3930 min pre-activation 0.58; 1529 off for Utah, backbone state:44_b -0.134/sd = -0.91",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-2459d3 --sweep state=49,41,44,21,11,0,37,26,46,50"
+      ]
+    },
+    {
+      "id": "V13",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "claims.C001",
+      "statement": "all 140 claims",
+      "check": "verify recheck",
+      "evidence": "140 of 140 reproduce exactly; 50 prose sentences, 158 numbers, none missing from cited claims",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-2459d3 --out <scratch>/recheck.json"
+      ]
+    },
+    {
+      "id": "V14",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_87",
+      "claims": [
+        "C051",
+        "C001",
+        "C009",
+        "C006"
+      ],
+      "location": "operations.full_model.hypothesis",
+      "statement": "seven children add in the logit; 31 inputs unconnected",
+      "check": "recheck, entry list count",
+      "evidence": "function preserved; 31 unconnected input ids listed in root entries; per-child mean-ablation AUCs reproduce (0.814, 0.819, 0.860, 0.8975, 0.8947, 0.8976, 0.897 = -0.084, -0.079, -0.038, -0.0004, -0.003, -0.0003, -0.0009)",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-2459d3 --part ann_8X --to mean"
+      ]
+    },
+    {
+      "id": "V15",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_80",
+      "claims": [
+        "C052",
+        "C059",
+        "C054",
+        "C062",
+        "C064"
+      ],
+      "location": "operations.linear_backbone.hypothesis",
+      "statement": "additive backbone of 30 direct edges, voiceMailPlan -1.20, numberVmail +0.71, intlPlan +0.72, 22 state offsets",
+      "check": "closed form count; hand check of logit spans; ablate mean",
+      "evidence": "30 terms, 22 state terms; spans: vmail plan -2.72, intl plan 2.45, state46 -1.91, state26 +1.08, state44 -0.91; mean-ablation AUC 0.898 -> 0.814",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-2459d3 --part ann_80 --to mean"
+      ]
+    },
+    {
+      "id": "V16",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_82",
+      "claims": [
+        "C086",
+        "C084",
+        "C088",
+        "C117",
+        "C083"
+      ],
+      "location": "drafted.readdown.ann_82.hypothesis[0]",
+      "statement": "nothing until about 234 minutes, then rises steadily",
+      "check": "probe day sweep 180:300 typical; 2-D sweep with eve minutes; decile subgroups",
+      "evidence": "off at 230 min, on at 240 (contribution +0.30), +3.58 at 300; eve partner shifts the threshold (day 260/eve 100 off, 260/200 on); active 0.2% below median, 4.5%/13.5%/26.4%/48.2%/93% in deciles 6-10; mean-ablation AUC 0.860",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-2459d3 --sweep 'total day minutes=180:300:13'",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-2459d3 --sweep 'total day minutes=200,230,260' --sweep 'total eve minutes=100,200,300'"
+      ]
+    },
+    {
+      "id": "V17",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_81",
+      "claims": [
+        "C090",
+        "C093",
+        "C118"
+      ],
+      "location": "operations.csc_threshold.hypothesis",
+      "statement": "flat for 0-2 calls then ~+1.25 logit per call; Oregon switches 1255 off",
+      "check": "probe CSC sweep typical and Oregon; subgroup by calls",
+      "evidence": "typical 2.5/2.7/2.9/5.4/16.6/41.0% for 0-5 calls; Oregon 0.5/1.7/5.8/17.6% (steady +1.25/call); Oregon effect -2.0 at 0 calls to +0.97 at 3+; churn by calls 11.5/11.0/11.0/10.6/43.7/57.1/67.9%",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-2459d3 --sweep 'number customer service calls=0,1,2,3,4,5,6'"
+      ]
+    },
+    {
+      "id": "V18",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_84",
+      "claims": [
+        "C102",
+        "C097",
+        "C098",
+        "C099",
+        "C100",
+        "C101"
+      ],
+      "location": "drafted.readdown.ann_84.hypothesis[0]",
+      "statement": "lowers chance for most states; higher SD, Utah, Maine; lower Hawaii, Alaska",
+      "check": "probe state sweep; subgroup SD/Utah",
+      "evidence": "ann_84 contribution -0.985 for most states, 0 for SD and Utah (155 rows, active 0), -0.43 Maine, -3.07 Hawaii, -2.09 Alaska; mean-ablation AUC 0.895",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-2459d3 --where \"state == '41' or state == '44'\""
+      ]
+    },
+    {
+      "id": "V19",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_83",
+      "claims": [
+        "C108",
+        "C105",
+        "C104"
+      ],
+      "location": "drafted.readdown.ann_83.hypothesis[0]",
+      "statement": "nothing until about 39.72 USD, then steadily; RI lower",
+      "check": "probe day charge sweep; state 49/22/39 at 50 USD",
+      "evidence": "contribution flat (+0.026) to 38 USD, +0.038 at 40, +0.564 at 52 (4.5% risk at the top of the data, 1.8 points); Michigan removes 216 (-0.35); Rhode Island -1.25 logit",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-2459d3 --sweep 'total day charge=38,40,42,46,52,56'",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-2459d3 --set 'total day charge=50' --sweep state=49,22,39"
+      ]
+    },
+    {
+      "id": "V20",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_86",
+      "claims": [
+        "C110"
+      ],
+      "location": "drafted.readdown.ann_86.hypothesis[0]",
+      "statement": "raises chance steadily with longer account",
+      "check": "closed form; ablate",
+      "evidence": "exact affine (min pre-activation 0.58), +0.105 logit/sd; mean-ablation AUC -0.0009",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-2459d3 --part ann_86 --to mean"
+      ]
+    },
+    {
+      "id": "V21",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_84",
+      "claims": [
+        "C097",
+        "C098",
+        "C099",
+        "C101"
+      ],
+      "location": "operations.state_switches.hypothesis",
+      "statement": "large single-state offsets (Hawaii -2.08, Alaska -0.85, SD +0.98)",
+      "check": "domain sense",
+      "evidence": "No plausible reason for state-level churn of this size; each from 56-90 rows. All states off costs 0.003 train AUC. Likely fitted noise; for the domain reviewer.",
+      "commands": []
+    },
+    {
+      "id": "V22",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_80",
+      "claims": [
+        "C065",
+        "C079"
+      ],
+      "location": "drafted.worth_checking[0]",
+      "statement": "night minutes raise, night charge lowers",
+      "check": "domain sense",
+      "evidence": "Charge is a fixed multiple of minutes; the two terms are one variable with net +0.14/sd. Correctly flagged by the explainer.",
+      "commands": []
+    }
+  ],
+  "parts": {
+    "ann_87": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_80": {
+      "grade": "weakened",
+      "level": "L3"
+    },
+    "ann_82": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_81": {
+      "grade": "weakened",
+      "level": "L2"
+    },
+    "ann_84": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_83": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_86": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_85": {
+      "grade": "refuted",
+      "level": "L1"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ]
+}

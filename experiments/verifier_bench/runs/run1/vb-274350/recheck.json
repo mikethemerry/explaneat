@@ -1,0 +1,170 @@
+{
+  "target": "experiments/verifier_bench/items/vb-274350",
+  "genome_id": "4b0eb5a6-5859-4ee8-80fe-18ab72f22959",
+  "label": "vb-274350",
+  "operations_source": "target",
+  "files": {
+    "record": "experiments/verifier_bench/items/vb-274350/record.json",
+    "layer": "experiments/verifier_bench/items/vb-274350/plain_language.json",
+    "operations": "experiments/verifier_bench/items/vb-274350/operations.json",
+    "item": "experiments/verifier_bench/items/vb-274350/item.json"
+  },
+  "findings": [
+    {
+      "level": "L1",
+      "check": "prose_number",
+      "location": "drafted.blocks[2:ann_79][2]",
+      "severity": "mismatch",
+      "stated": [
+        "5%"
+      ],
+      "note": "numbers in the sentence that are not in the claims it cites (C086), recomputed: Daytime minutes raise it only without a voice-mail plan, adding nothing until about 217 minutes, then steadily: from 112 to 249 minutes the chance goes from about 2% to about 5% without one, and stays below 1% with one."
+    },
+    {
+      "level": "L1",
+      "check": "prose_number",
+      "location": "drafted.readdown.ann_79.evidence[2]",
+      "severity": "mismatch",
+      "stated": [
+        "5%"
+      ],
+      "note": "numbers in the sentence that are not in the claims it cites (C086), recomputed: With a voice-mail plan they add nothing: the chance stays below 1%, while without one it adds nothing until about 217 minutes, then rises steadily from about 2% to about 5%."
+    },
+    {
+      "level": "L1",
+      "check": "prose_number",
+      "location": "drafted.readdown.ann_83.evidence[2]",
+      "severity": "mismatch",
+      "stated": [
+        "5%"
+      ],
+      "note": "numbers in the sentence that are not in the claims it cites (C012), recomputed: Across the whole model, daytime minutes add nothing until about 217 minutes, then raise it steadily, from about 2% at 112 to about 5% at 249 minutes."
+    }
+  ],
+  "structure": {
+    "n_train": 4000,
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "uncovered_nodes": [],
+    "uncovered_edges": [],
+    "null_nodes": [
+      "-10",
+      "-11",
+      "-12",
+      "-14",
+      "-15",
+      "-19",
+      "-20",
+      "-21",
+      "-25",
+      "-28",
+      "-3",
+      "-31",
+      "-33",
+      "-34",
+      "-36",
+      "-38",
+      "-4",
+      "-41",
+      "-45",
+      "-46",
+      "-48",
+      "-49",
+      "-50",
+      "-51",
+      "-53",
+      "-55",
+      "-6",
+      "-60",
+      "-65",
+      "-66",
+      "-69",
+      "-70",
+      "-9"
+    ],
+    "coverage_hierarchy": {
+      "roots": [
+        "churnModelRoot"
+      ],
+      "global_root": "churnModelRoot",
+      "root_contains_outputs": true,
+      "complete": true,
+      "composed": 4,
+      "required": 4,
+      "exempt_disconnected": []
+    },
+    "hierarchy": {
+      "n_annotations": 5,
+      "roots": [
+        "churnModelRoot"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "not_under_root": [],
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.440892098500626e-16,
+    "closed_form_max_abs_err": 0.022438454537383024,
+    "numeric_max_abs_err": 3.552713678800501e-15,
+    "leaves": [
+      {
+        "id": "ann_79",
+        "name": "dayUsageHinges",
+        "numeric_max_abs_err": 4.440892098500626e-16,
+        "closed_form_max_abs_err": 0.00184864387197603,
+        "exit_scale": 2.371838522987539
+      },
+      {
+        "id": "ann_80",
+        "name": "totalChargeChain",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.007659032133051635,
+        "exit_scale": 4.46001886696076
+      },
+      {
+        "id": "ann_81",
+        "name": "serviceCallsHinges",
+        "numeric_max_abs_err": 4.440892098500626e-16,
+        "closed_form_max_abs_err": 0.0026663089060527945,
+        "exit_scale": 3.227575133048163
+      },
+      {
+        "id": "ann_82",
+        "name": "rareStateUnits",
+        "numeric_max_abs_err": 3.552713678800501e-15,
+        "closed_form_max_abs_err": 0.022438454537383024,
+        "exit_scale": 15.445353461512527
+      }
+    ],
+    "op_counts": {
+      "rename_node": 71,
+      "split_node": 8,
+      "annotate": 5
+    },
+    "full_coverage": true
+  },
+  "closed_forms": {
+    "ann_81": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 0.282 x_{international_plan_b} \\\\\n&\\quad + 0.515 x_{number_customer_service_calls} \\\\\n&\\quad - 0.683 x_{state:41} \\\\\n&\\quad -0.66 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_1 &= \\operatorname{relu}\\bigl( 0.71 x_{number_customer_service_calls} \\\\\n&\\quad - 0.645 x_{total_day_charge_d} \\\\\n&\\quad -0.753 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_2 &= \\operatorname{relu}\\bigl( 0.66 x_{number_customer_service_calls} \\\\\n&\\quad -0.672 \\bigr)\n\\end{aligned}",
+    "ann_79": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 0.323 x_{total_day_charge_a} \\\\\n&\\quad + 0.0974 x_{total_day_minutes} \\\\\n&\\quad -0.731 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_1 &= \\operatorname{relu}\\bigl( 0.337 x_{total_day_charge_b} \\\\\n&\\quad + 0.52 x_{total_day_minutes} \\\\\n&\\quad - 0.831 x_{voice_mail_plan_b} \\\\\n&\\quad -0.849 \\bigr)\n\\end{aligned}",
+    "ann_80": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 0.598 x_{total_day_charge_c} \\\\\n&\\quad + 0.726 \\operatorname{relu}{\\left(1.14 x_{total_day_charge_e} + 1.26 x_{total_eve_charge} - 0.943 \\right)} \\\\\n&\\quad -1.02 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_1 &= \\operatorname{relu}\\bigl( 0.494 \\operatorname{relu}{\\left(1.14 x_{total_day_charge_e} + 1.26 x_{total_eve_charge} - 0.943 \\right)} \\\\\n&\\quad -0.842 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_2 &= \\operatorname{relu}\\bigl( - 1.07 x_{number_vmail_messages_b} \\\\\n&\\quad + 0.0379 x_{state:1_a} \\\\\n&\\quad + 0.559 x_{total_intl_minutes_b} \\\\\n&\\quad - 0.862 \\operatorname{relu}{\\left(0.598 x_{total_day_charge_c} + 0.726 \\operatorname{relu}{\\left(1.14 x_{total_day_charge_e} + 1.26 x_{total_eve_charge} - 0.943 \\right)} - 1.02 \\right)} \\\\\n&\\quad + 0.937 \\bigr)\n\\end{aligned}",
+    "ann_82": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( - 0.515 x_{number_vmail_messages_c} \\\\\n&\\quad + 1.08 x_{state:28} \\\\\n&\\quad + 0.998 \\operatorname{relu}{\\left(0.994 x_{state:28} + 0.652 \\right)} \\\\\n&\\quad - 0.0934 \\operatorname{relu}{\\left(1.0 \\operatorname{relu}{\\left(1.0 \\operatorname{relu}{\\left(1.01 \\operatorname{relu}{\\left(- 0.147 x_{state:22} + 1.24 x_{state:50_b} - 1.27 \\operatorname{relu}{\\left(1.01 x_{state:1_b} - 0.0674 \\right)} - 1.54 \\operatorname{relu}{\\left(1.0 x_{state:23_b} + 1.07 \\right)} + 1.24 \\operatorname{relu}{\\left(1.0 x_{state:50_c} + 1.0 \\operatorname{relu}{\\left(1.0 x_{state:50_d} - 1.07 \\operatorname{relu}{\\left(0.173 x_{state:32} - 0.685 x_{state:44} - 1.3 \\right)} - 0.392 \\right)} + 0.0774 \\right)} + 0.0738 \\right)} + 0.181 \\right)} + 1.0 \\operatorname{relu}{\\left(- 0.147 x_{state:22} + 1.24 x_{state:50_b} - 1.27 \\operatorname{relu}{\\left(1.01 x_{state:1_b} - 0.0674 \\right)} - 1.54 \\operatorname{relu}{\\left(1.0 x_{state:23_b} + 1.07 \\right)} + 1.24 \\operatorname{relu}{\\left(1.0 x_{state:50_c} + 1.0 \\operatorname{relu}{\\left(1.0 x_{state:50_d} - 1.07 \\operatorname{relu}{\\left(0.173 x_{state:32} - 0.685 x_{state:44} - 1.3 \\right)} - 0.392 \\right)} + 0.0774 \\right)} + 0.0738 \\right)} + 1.05 \\right)} + 0.733 \\right)} \\\\\n&\\quad - 0.0931 \\operatorname{relu}{\\left(1.0 \\operatorname{relu}{\\left(1.01 \\operatorname{relu}{\\left(- 0.147 x_{state:22} + 1.24 x_{state:50_b} - 1.27 \\operatorname{relu}{\\left(1.01 x_{state:1_b} - 0.0674 \\right)} - 1.54 \\operatorname{relu}{\\left(1.0 x_{state:23_b} + 1.07 \\right)} + 1.24 \\operatorname{relu}{\\left(1.0 x_{state:50_c} + 1.0 \\operatorname{relu}{\\left(1.0 x_{state:50_d} - 1.07 \\operatorname{relu}{\\left(0.173 x_{state:32} - 0.685 x_{state:44} - 1.3 \\right)} - 0.392 \\right)} + 0.0774 \\right)} + 0.0738 \\right)} + 0.181 \\right)} + 1.0 \\operatorname{relu}{\\left(- 0.147 x_{state:22} + 1.24 x_{state:50_b} - 1.27 \\operatorname{relu}{\\left(1.01 x_{state:1_b} - 0.0674 \\right)} - 1.54 \\operatorname{relu}{\\left(1.0 x_{state:23_b} + 1.07 \\right)} + 1.24 \\operatorname{relu}{\\left(1.0 x_{state:50_c} + 1.0 \\operatorname{relu}{\\left(1.0 x_{state:50_d} - 1.07 \\operatorname{relu}{\\left(0.173 x_{state:32} - 0.685 x_{state:44} - 1.3 \\right)} - 0.392 \\right)} + 0.0774 \\right)} + 0.0738 \\right)} + 1.05 \\right)} \\\\\n&\\quad -0.979 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_1 &= \\operatorname{relu}\\bigl( 0.173 x_{state:32} \\\\\n&\\quad - 0.685 x_{state:44} \\\\\n&\\quad -1.3 \\bigr)\n\\end{aligned} \\\\ y_2 = \\operatorname{relu}{\\left(1.14 x_{state:12} - 0.144 \\right)} \\\\ y_3 = \\operatorname{relu}{\\left(0.984 x_{state:44} + 1.13 \\right)} \\\\ y_4 = \\operatorname{relu}{\\left(1.0 x_{state:2} + 0.00966 \\right)}"
+  },
+  "claims": {
+    "stated": 135,
+    "recomputed": 135,
+    "reproduced": 135
+  },
+  "prose": {
+    "sentences": 45,
+    "numbers": 183,
+    "unmatched_numbers": 3
+  },
+  "summary": {
+    "mismatch": 3,
+    "warn": 0,
+    "info": 0,
+    "verdict": "some stated numbers do not reproduce",
+    "seconds": 122.7
+  }
+}

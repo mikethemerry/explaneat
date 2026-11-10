@@ -1,0 +1,332 @@
+{
+  "item_id": "vb-cda2d0",
+  "genome_id": "b19b9536-00dd-4e95-9f5a-def6dd8d6889",
+  "verifier": "blind verifier agent (run1)",
+  "started_at": "2026-11-10T23:36:32+13:00",
+  "finished_at": "2026-11-10T23:38:11+13:00",
+  "minutes": 2,
+  "overall": {
+    "grade": "refuted",
+    "summary": "The ST-depression hinge formula carries a wrong bias (-0.286 instead of -0.386) in the closed form and technical hypothesis; the plain hypothesis of the sex/exercise-angina part claims an effect for all patients when it acts only on those without exertional chest pain."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.structural_coverage",
+      "statement": "structural 1.0, compositional 1.0, hierarchy complete",
+      "check": "verify recheck",
+      "evidence": "recomputed 1.0 / 1.0",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-cda2d0 --out experiments/verifier_bench/runs/run1/vb-cda2d0/recheck.json"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.function_preservation_max_abs_err",
+      "statement": "1.8e-15; closed-form max err 0.0129",
+      "check": "verify recheck",
+      "evidence": "recomputed 3.3e-16 and 0.01293",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-cda2d0 --out experiments/verifier_bench/runs/run1/vb-cda2d0/recheck.json"
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.summary",
+      "statement": "logit SD 4.96 linear vs 1.41 corrections; oldpeak hinge above +0.39 SD; -3.19 for fixed defect with normal fbs (n=10); readouts at means AUC 0.9437 -> 0.9295",
+      "check": "forward pass",
+      "evidence": "SD 4.955 / 1.410; hinge on above 1.49 mm (z 0.385); 2034 = 3.386 on 10 rows (x0.942 = 3.19); 0.9295",
+      "commands": [
+        "uv run python scratchpad/e7.py (train forward pass: node values per group, readout mean-ablation AUC/accuracy)"
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.resisted",
+      "statement": "148 never clips; 3229 constant -0.044 for cp:2; 2034 flips 4 false positives",
+      "check": "forward pass",
+      "evidence": "148 min 0.330; 3229 values 0 / 0.288 (x -0.154 = -0.044); among the 10, logits of 4 negatives go from positive to negative",
+      "commands": [
+        "uv run python scratchpad/e7.py (train forward pass: node values per group, readout mean-ablation AUC/accuracy)"
+      ]
+    },
+    {
+      "id": "V5",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "claims",
+      "statement": "70 claims",
+      "check": "verify recheck",
+      "evidence": "70 of 70 reproduce; prose numbers all found",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-cda2d0 --out experiments/verifier_bench/runs/run1/vb-cda2d0/recheck.json"
+      ]
+    },
+    {
+      "id": "V6",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_35",
+      "claims": [
+        "C31"
+      ],
+      "location": "operations.heart_disease_logit.hypothesis",
+      "statement": "readouts 1.893 / -0.452 / -0.942 / 1.108 / -0.154; AUC 0.9437, acc 0.888; readouts at mean 0.9295 / 0.860",
+      "check": "forward pass",
+      "evidence": "weights reproduce; 0.9437, 0.888; 0.9295, 0.8595; SHAP not re-run",
+      "commands": [
+        "uv run python scratchpad/e7.py (train forward pass: node values per group, readout mean-ablation AUC/accuracy)"
+      ]
+    },
+    {
+      "id": "V7",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_33",
+      "claims": [
+        "C35"
+      ],
+      "location": "layer.parts.ann_33.closed_form",
+      "statement": "relu(1.0 x_oldpeak - 0.286) (bias -0.286)",
+      "check": "verify recheck closed forms + indicator coefficients",
+      "evidence": "the recomputed bias is -0.386, not -0.286 (sympy -0.386047 vs stated -0.286047). In raw units the node is on above 1.261 / 0.845 = 1.49 mm, i.e. z = 0.385, which needs a bias of -0.386; with -0.286 the hinge would open at z 0.285 (about 1.4 mm)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-cda2d0 --out experiments/verifier_bench/runs/run1/vb-cda2d0/recheck.json",
+        "uv run python scratchpad/ind.py experiments/verifier_bench/items/vb-cda2d0 2985"
+      ]
+    },
+    {
+      "id": "V8",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_33",
+      "claims": [
+        "C32",
+        "C33"
+      ],
+      "location": "operations.oldpeak_hinge.hypothesis",
+      "statement": "Node 2985 = ReLU(1.002*oldpeak - 0.286) ... zero for patients with oldpeak below +0.385 SD",
+      "check": "recomputed closed form + forward pass",
+      "evidence": "the stated bias does not reproduce (it is -0.386) and is inconsistent with the stated +0.385 SD threshold; the same wrong value is in operations.oldpeak_hinge.evidence[0] latex. The rest reproduces: zero for 71.1% of rows, 70 active, disease 0.71 vs 0.33, max contribution +4.41, mean-ablation AUC 0.9400, acc 0.876",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-cda2d0 --out experiments/verifier_bench/runs/run1/vb-cda2d0/recheck.json",
+        "uv run python scratchpad/e7.py (train forward pass: node values per group, readout mean-ablation AUC/accuracy)"
+      ]
+    },
+    {
+      "id": "V9",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_33",
+      "claims": [
+        "C32",
+        "C33"
+      ],
+      "location": "drafted.readdown.ann_33.hypothesis[0]",
+      "statement": "nothing until about 1.5 mm, then steadily",
+      "check": "probe --sweep oldpeak=0:2.8:8",
+      "evidence": "19.7% flat to 1.2 mm, 21.3% at 1.6, then +0.37 log-odds per 0.4 mm to 45.4% at 2.8 mm",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-cda2d0 --sweep oldpeak=0:2.8:8"
+      ]
+    },
+    {
+      "id": "V10",
+      "grade": "weakened",
+      "level": "L2",
+      "part": "ann_31",
+      "claims": [
+        "C39",
+        "C38"
+      ],
+      "location": "drafted.readdown.ann_31.hypothesis[0]",
+      "statement": "This part lowers the predicted risk for all patients, and lowers it most for women without chest pain on exercise.",
+      "check": "node 791 values by sex and exercise angina",
+      "evidence": "not for all patients: the part is exactly 0 for the 82 training patients with chest pain on exercise (19 women, 63 men) and acts only on the 160 without it (C39), lowering the logit by 0.43 for men and 1.67 for women. Right direction and right strongest group, stated for everyone",
+      "commands": [
+        "uv run python scratchpad/e7.py (train forward pass: node values per group, readout mean-ablation AUC/accuracy)"
+      ]
+    },
+    {
+      "id": "V11",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_31",
+      "claims": [
+        "C39",
+        "C36",
+        "C37",
+        "C38"
+      ],
+      "location": "operations.sex_exang_protective_gate.hypothesis",
+      "statement": "values 0 (exang, n=82, rate 0.73), 0.959 (men without, n=96), 3.702 (women without, n=64); -0.43 / -1.67; SD 0.66; AUC 0.9418",
+      "check": "forward pass",
+      "evidence": "reproduce exactly (82 = 19 + 63, rate 0.73); SD 0.661; AUC 0.9418",
+      "commands": [
+        "uv run python scratchpad/e7.py (train forward pass: node values per group, readout mean-ablation AUC/accuracy)"
+      ]
+    },
+    {
+      "id": "V12",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_32",
+      "claims": [
+        "C41",
+        "C42",
+        "C43",
+        "C44"
+      ],
+      "location": "operations.fbs_normal_fixed_defect_gate.hypothesis",
+      "statement": "3.386 for fixed defect + normal sugar (n=10), 0.018 with high sugar (n=5); -3.19; logits with/without listed; AUC 0.9388, acc 0.872",
+      "check": "forward pass",
+      "evidence": "reproduce exactly, including the ten logits with and without the gate",
+      "commands": [
+        "uv run python scratchpad/e7.py (train forward pass: node values per group, readout mean-ablation AUC/accuracy)"
+      ]
+    },
+    {
+      "id": "V13",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_30",
+      "claims": [
+        "C46",
+        "C47"
+      ],
+      "location": "operations.vessel_count_linear_boost.hypothesis",
+      "statement": "148 active 100% (min 0.330); values by ca 0.330/0.646/0.963/1.280; thal:4 2.428; effective ca weight 2.60; AUC 0.9408",
+      "check": "forward pass",
+      "evidence": "reproduce; SD 0.624; AUC 0.9408",
+      "commands": [
+        "uv run python scratchpad/e7.py (train forward pass: node values per group, readout mean-ablation AUC/accuracy)"
+      ]
+    },
+    {
+      "id": "V14",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_34",
+      "claims": [
+        "C49",
+        "C51"
+      ],
+      "location": "operations.cp2_constant_offset.hypothesis",
+      "statement": "indicator of cp:2 with value 0.288; -0.044 logit; AUC 0.9434",
+      "check": "forward pass",
+      "evidence": "values 0 / 0.288; AUC 0.9434",
+      "commands": [
+        "uv run python scratchpad/e7.py (train forward pass: node values per group, readout mean-ablation AUC/accuracy)"
+      ]
+    },
+    {
+      "id": "V15",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [
+        "C31",
+        "C34",
+        "C39",
+        "C10",
+        "C02",
+        "C32",
+        "C36",
+        "C41",
+        "C47",
+        "C51"
+      ],
+      "location": "drafted.blocks[0]",
+      "statement": "block paragraphs and lead",
+      "check": "claims",
+      "evidence": "numbers and directions match; the block sentence for the sex/exercise part correctly limits it to the 160 without exertional chest pain",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-cda2d0 --out experiments/verifier_bench/runs/run1/vb-cda2d0/recheck.json"
+      ]
+    },
+    {
+      "id": "V16",
+      "grade": "flag",
+      "level": "L4",
+      "part": null,
+      "claims": [
+        "C20",
+        "C19"
+      ],
+      "location": "drafted.worth_checking[2]",
+      "statement": "fasting blood sugar above 120 mg/dL lowers risk",
+      "check": "domain sense",
+      "evidence": "known risk factor given a protective effect (20% -> 3%)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-cda2d0 --out experiments/verifier_bench/runs/run1/vb-cda2d0/recheck.json"
+      ]
+    },
+    {
+      "id": "V17",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_32",
+      "claims": [
+        "C17",
+        "C41"
+      ],
+      "location": "drafted.worth_checking[3]",
+      "statement": "fixed thallium defect lowers risk (only with normal sugar)",
+      "check": "domain sense",
+      "evidence": "clinically odd and fitted to 10 patients; the explainer already calls it likely overfitted",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-cda2d0 --out experiments/verifier_bench/runs/run1/vb-cda2d0/recheck.json"
+      ]
+    }
+  ],
+  "parts": {
+    "ann_35": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_33": {
+      "grade": "refuted",
+      "level": "L1"
+    },
+    "ann_31": {
+      "grade": "weakened",
+      "level": "L2"
+    },
+    "ann_32": {
+      "grade": "upheld",
+      "level": "L4"
+    },
+    "ann_30": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_34": {
+      "grade": "upheld",
+      "level": "L1"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ]
+}

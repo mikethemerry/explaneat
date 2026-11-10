@@ -1,0 +1,193 @@
+{
+ "item_id": "vb-26c88a",
+ "genome_id": "1f2cf7ea-5c30-452a-9277-0b4043e888d9",
+ "verifier": "explanation-verifier agent (run1, blind)",
+ "started_at": "2026-11-10T23:39:31+13:00",
+ "finished_at": "2026-11-10T23:41:40+13:00",
+ "minutes": 2.1,
+ "overall": {
+  "grade": "weakened",
+  "summary": "Coverage, closed forms, weights, all 79 claims, prose numbers and ablations reproduce; one side figure in the ischaemia pathway's technical hypothesis (mean predicted risk 0.13 for the 35 low-BP-opened patients) recomputes as 0.18."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "weakened",
+   "level": "L1",
+   "part": "ann_39",
+   "claims": [],
+   "location": "operations.ischaemia_pathway.hypothesis",
+   "statement": "290 active 56% (100/135 of its active cases have 204 on; 35 open from low BP alone, mean predicted risk 0.13)",
+   "check": "node values over the training rows (scratch frame.py)",
+   "evidence": "290 active 135 of 242 (55.8%), 100 with 204 on, 35 without: as stated. Mean predicted risk of the 35 is 0.181 (median 0.057, observed disease rate 0.20), not 0.13. Same figure in operations.ischaemia_pathway.evidence[1].",
+   "commands": [
+    "scratch frame.py vb-26c88a: df.risk[(df.x_290>0)&(df['x_204_a']==0)].describe()"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "coverage 1.0, full, hierarchy complete, preservation 1.8e-15, closed-form error 0.022",
+   "check": "verify recheck",
+   "evidence": "all reproduce; 79 of 79 claims; prose numbers all found",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-26c88a"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_40",
+   "claims": [],
+   "location": "operations.heart_disease_logit.hypothesis",
+   "statement": "18 direct edges with listed coefficients; readouts 0.117/0.135/0.165/0.097; linear core alone AUC 0.932; SD 3.18 vs 0.78; pathway removal -0.0055, 204_a -0.0016",
+   "check": "replayed weights; scratch multiablate.py; verify ablate",
+   "evidence": "all 18 edge weights match to 2 decimals; readouts 0.1174, 0.1353, 0.1650, 0.0971; both children ablated: AUC 0.942 -> 0.9316, SD 3.18 left, 0.78 removed; ann_39 zeroed 0.9364 (-0.0056); ann_36 zeroed 0.9404 (-0.0016)",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-26c88a --part ann_39 --to zero"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_39",
+   "claims": [
+    "C34",
+    "C42",
+    "C36",
+    "C45"
+   ],
+   "location": "drafted.readdown.ann_39.hypothesis[0]",
+   "statement": "raises risk with ST depression, slowly then faster, more with a reversible defect; age adds nothing until about 53, then steadily",
+   "check": "probe --sweep oldpeak=0:3:7 --sweep thal=3,7; probe --sweep age=40:70:7",
+   "evidence": "pathway contribution normal scan: 0.03 at 0-1 mm, 0.13 at 1.5, 0.34 at 2, 1.03 at 3 mm (convex); reversible defect: 0.16 at 0.5 mm to 1.77 at 3 mm (larger). Age term off at 50, on at 55 (+0.019), +0.160 at 70.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-26c88a --sweep oldpeak=0:3:7 --sweep thal=3,7",
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-26c88a --sweep age=40:70:7"
+   ]
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_39",
+   "claims": [],
+   "location": "operations.ischaemia_pathway.evidence[1]",
+   "statement": "1834 active 26%, only when 204 and 290 both on, 78% diseased; 1987 on for 64% with 290 quiet vs 13%",
+   "check": "scratch frame.py",
+   "evidence": "26.0%, 0 cases outside 204&290, 77.8% diseased; 63.6% vs 12.6%",
+   "commands": []
+  },
+  {
+   "id": "V6",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_36",
+   "claims": [
+    "C49",
+    "C55",
+    "C56",
+    "C53",
+    "C52",
+    "C54"
+   ],
+   "location": "drafted.readdown.ann_36.hypothesis[0]",
+   "statement": "nothing until about 0.9 mm, then steadily",
+   "check": "probe (normal scan)",
+   "evidence": "ann_36 off at 0 and 0.5 mm, on at 1.0 mm (+0.031), rising linearly (+0.127 per 0.5 mm); active for 117 of 242 (48.3%)",
+   "commands": []
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_38",
+   "claims": [
+    "C59",
+    "C60"
+   ],
+   "location": "operations.thal6_linear_passthrough.hypothesis",
+   "statement": "2116 = 1.003 thal:6 + 2.165; -0.013 thal:6 - 0.029 into 290",
+   "check": "arithmetic from weights",
+   "evidence": "1.003*0.9996 = 1.003, 1.003*2.123 + 0.0355 = 2.165; 0.0132*2.165 = 0.0286",
+   "commands": []
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_37",
+   "claims": [
+    "C61"
+   ],
+   "location": "operations.st_ischaemia_gate_bp.hypothesis",
+   "statement": "copy computes exactly what ann_36 computes",
+   "check": "weights",
+   "evidence": "204_a and 204_b have identical weights (2.5542, 0.9369, 1.1329) and bias 0.2756",
+   "commands": []
+  },
+  {
+   "id": "V9",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_40",
+   "claims": [
+    "C18"
+   ],
+   "location": "drafted.worth_checking[0]",
+   "statement": "fasting blood sugar above 120 mg/dL lowers risk",
+   "check": "domain",
+   "evidence": "diabetes is a known risk factor; already flagged",
+   "commands": []
+  },
+  {
+   "id": "V10",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_36",
+   "claims": [
+    "C53",
+    "C54"
+   ],
+   "location": "drafted.worth_checking[4]",
+   "statement": "ST depression and a reversible defect count more with a normal resting ECG",
+   "check": "domain",
+   "evidence": "no clinical reason; already flagged",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_40": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_39": {
+   "grade": "weakened",
+   "level": "L1"
+  },
+  "ann_36": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_38": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_37": {
+   "grade": "upheld",
+   "level": "L1"
+  }
+ },
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ]
+}

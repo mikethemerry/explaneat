@@ -1,0 +1,214 @@
+{
+ "item_id": "vb-8859c7",
+ "genome_id": "e324239d-f591-4c8a-b149-7699ec2d0346",
+ "verifier": "explanation-verifier agent (run1, blind)",
+ "started_at": "2026-11-10T23:41:41+13:00",
+ "finished_at": "2026-11-10T23:43:18+13:00",
+ "minutes": 1.6,
+ "overall": {
+  "grade": "refuted",
+  "summary": "The ramp's active count is wrong (226 stated, 206 recomputed) in claim C27 and two prose sentences, and its technical rule for a1 = 1 says 'at most one' first value where the model is positive for at most two. The rest reproduces."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "refuted",
+   "level": "L1",
+   "part": "ann_24",
+   "claims": [
+    "C27"
+   ],
+   "location": "claims.C27",
+   "statement": "the ramp acts on 226 of 345 training cases (n_active 226)",
+   "check": "verify recheck; ablate ann_24; node 263 over training rows",
+   "evidence": "recomputed n_active 206 (ablate: affected 206, 59.7%; node 263 zero on 40.3% of rows, which the technical hypothesis itself states); 78 positives is right",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-8859c7",
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-8859c7 --part ann_24 --to zero"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "refuted",
+   "level": "L1",
+   "part": "ann_24",
+   "claims": [
+    "C27"
+   ],
+   "location": "drafted.readdown.ann_24.evidence[0]",
+   "statement": "It acts on 226 of 345 training cases, 78 of which are actually 'yes'",
+   "check": "verify recheck prose",
+   "evidence": "206 of 345",
+   "commands": []
+  },
+  {
+   "id": "V3",
+   "grade": "refuted",
+   "level": "L1",
+   "part": "ann_24",
+   "claims": [
+    "C27"
+   ],
+   "location": "drafted.blocks[0]",
+   "statement": "This ramp ... acts on 226 of 345 training cases",
+   "check": "verify recheck prose",
+   "evidence": "206 of 345",
+   "commands": []
+  },
+  {
+   "id": "V4",
+   "grade": "refuted",
+   "level": "L3",
+   "part": "ann_24",
+   "claims": [],
+   "location": "operations.few_first_values_ramp.hypothesis",
+   "statement": "a1=1: positive iff at most one of {a2,a3,a4,a6}=1 (all pairs >= 1.23, all triples <= -4.46)",
+   "check": "enumerated all 432 configurations; node 263 pre-activation by a1 and count of first values among a2,a3,a4,a6",
+   "evidence": "a1=1: count 0 pre 18.98, count 1 9.69..12.24, count 2 (pairs) 1.22..4.01 (positive), count 3 -7.00..-4.45. The unit is on for at most two, not at most one (the sentence's own pair figure 1.23 > 0 says so). The other figures (a1=2 shift +5.8, triples -1.19..1.35, a1=3 max -5.13) reproduce.",
+   "commands": [
+    "scratch enumeration of 432 configurations through vb-8859c7 (node 263 pre-activation)"
+   ]
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "coverage 1.0, full, preservation 8.3e-16, closed-form error 0.065",
+   "check": "verify recheck",
+   "evidence": "all reproduce; 58 of 59 claims reproduce (C27 fails)",
+   "commands": []
+  },
+  {
+   "id": "V6",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_28",
+   "claims": [
+    "C16"
+   ],
+   "location": "operations.upper_edge_count_classifier.hypothesis",
+   "statement": "positive rate by (a1, count): a1=1 <=2 100%, 3 74%, >=4 0%; a1=2 <=3 100%, 4 29%, 5 0%; a1=3 100% (107/107); 85.5% predicted positive; accuracy 0.472; logit AUC 0.734",
+   "check": "scratch frame.py groupby a1 and count of first values (all six)",
+   "evidence": "1.00/1.00/0.738/0/0/0; 1.00 up to 3, 0.286 at 4, 0 at 5; a1=3 107 rows all positive; 85.5%; 0.472; 0.7335",
+   "commands": [
+    "scratch frame.py vb-8859c7 groupby"
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_24",
+   "claims": [
+    "C17",
+    "C18",
+    "C19"
+   ],
+   "location": "drafted.readdown.ann_24.hypothesis[0]",
+   "statement": "ramp gives 'yes' while few first values; moving a1, a3 or a6 away lifts the typical case above 99%",
+   "check": "enumeration; ablate",
+   "evidence": "pre-activation falls by 6.8 to 9.3 per first value; removing it flips 112 decisions, logit AUC 0.734 -> 0.537 as stated",
+   "commands": []
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_27",
+   "claims": [
+    "C29",
+    "C30",
+    "C31",
+    "C32",
+    "C33"
+   ],
+   "location": "drafted.readdown.ann_27.hypothesis[0]",
+   "statement": "fixed weights, a1 and a5 count most",
+   "check": "claims; closed form",
+   "evidence": "largest z-weights a1:3 11.5, a1:1 -7.5, a5:1 -6.43; claims reproduce",
+   "commands": []
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_25",
+   "claims": [
+    "C40",
+    "C41",
+    "C43"
+   ],
+   "location": "operations.a5_not4_unit.hypothesis",
+   "statement": "acts on 259; ablation flips 3/345; AUC 0.7335 -> 0.7329",
+   "check": "verify ablate",
+   "evidence": "affected 259; 3 flips; 0.7335 -> 0.7329",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-8859c7 --part ann_25 --to zero"
+   ]
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_26",
+   "claims": [
+    "C45",
+    "C46",
+    "C47"
+   ],
+   "location": "drafted.readdown.ann_26.hypothesis[0]",
+   "statement": "tiny unit, barely changes predictions; acts on 168",
+   "check": "verify ablate",
+   "evidence": "affected 168; 0 flips; AUC unchanged",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-8859c7 --part ann_26 --to zero"
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_24",
+   "claims": [
+    "C27",
+    "C02"
+   ],
+   "location": "drafted.worth_checking[0]",
+   "statement": "the model gives 'yes' to cases with few first values",
+   "check": "domain (MONK-2 rule: exactly two)",
+   "evidence": "the model has no lower edge, so it disagrees with the target rule on 0 or 1 first values; already flagged",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_28": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_24": {
+   "grade": "refuted",
+   "level": "L1"
+  },
+  "ann_27": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_25": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_26": {
+   "grade": "upheld",
+   "level": "L4"
+  }
+ },
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ]
+}

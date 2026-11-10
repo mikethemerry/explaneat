@@ -1,0 +1,220 @@
+{
+ "item_id": "vb-efb747",
+ "genome_id": "b19b9536-00dd-4e95-9f5a-def6dd8d6889",
+ "verifier": "explanation-verifier agent (run1, blind)",
+ "started_at": "2026-11-10T23:55:18+13:00",
+ "finished_at": "2026-11-10T23:56:56+13:00",
+ "minutes": 1.6,
+ "overall": {
+  "grade": "refuted",
+  "summary": "The ST depression hinge is said to act only for patients with a flat ST segment, but it reads only ST depression and acts the same for every slope; the vessel count boost hypothesis only restates its formula. All numbers reproduce."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "refuted",
+   "level": "L2",
+   "part": "ann_33",
+   "claims": [
+    "C32",
+    "C33"
+   ],
+   "location": "drafted.readdown.ann_33.hypothesis[0]",
+   "statement": "nothing until about 1.5 mm, then steadily, but only for patients with a flat ST segment",
+   "check": "verify vars (ann_33 reads only oldpeak); probe --sweep oldpeak=0:3.5:8 --sweep slope=1,2",
+   "evidence": "the part reads only ST depression. Its contribution is 0 at 1.0 mm and +1.411 at 3.0 mm for both an upsloping and a flat segment (risk 19.7% -> 50.1% upsloping). C32 and C33 carry no slope condition. The 'only for a flat ST segment' qualifier is contradicted.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-efb747 --sweep oldpeak=0:3.5:8 --sweep slope=1,2"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_30",
+   "claims": [
+    "C47"
+   ],
+   "location": "drafted.readdown.ann_30.hypothesis[0]",
+   "statement": "it weights the number of vessels coloured by fluoroscopy and the rare thallium result coded 4, adds a constant, and passes the sum on unchanged because it never falls below zero",
+   "check": "L4 reading; lint (C47 shape 'steady' with no shape phrase); ablate",
+   "evidence": "not meaningful: restates the closed form. What the part does: each extra vessel adds the same amount of risk on top of the direct vessel effect (typical patient 20% -> 45% at 2 vessels through it; effective vessel weight 2.60, the largest in the model); AUC 0.9437 -> 0.9408 without it.",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-efb747 --part ann_30 --to mean"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "coverage 1.0, full, preservation 1.8e-15, closed-form error 0.013",
+   "check": "verify recheck",
+   "evidence": "all reproduce; 70 of 70 claims; prose numbers all found",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-efb747"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "linear core logit SD 4.96; readouts SD 1.41; readouts at means AUC 0.9437 -> 0.9295",
+   "check": "scratch multiablate.py --mean (all five leaves)",
+   "evidence": "SD 4.96 left, 1.41 removed; AUC 0.9437 -> 0.9295, accuracy 0.888 -> 0.860",
+   "commands": [
+    "scratch multiablate.py vb-efb747 ann_30 ann_31 ann_32 ann_33 ann_34 --mean"
+   ]
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_33",
+   "claims": [
+    "C32",
+    "C33",
+    "C34"
+   ],
+   "location": "operations.oldpeak_hinge.hypothesis",
+   "statement": "hinge above +0.385 SD; 70 active, disease 0.71 vs 0.33; ablation 0.9400",
+   "check": "probe; frame; ablate --to mean",
+   "evidence": "off up to 1.5 mm, on from 2.0 mm; 70 active, 0.714 vs 0.331; AUC 0.9437 -> 0.9400, accuracy 0.888 -> 0.876",
+   "commands": []
+  },
+  {
+   "id": "V6",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_31",
+   "claims": [
+    "C39",
+    "C38",
+    "C36",
+    "C37"
+   ],
+   "location": "operations.sex_exang_protective_gate.hypothesis",
+   "statement": "0 with exercise angina (n 82), 0.959 men without (96), 3.702 women without (64); ablation 0.9418",
+   "check": "frame groupby sex, exang; ablate",
+   "evidence": "exactly 0 / 0.9589 / 3.7016 with n 19+63 / 96 / 64; AUC 0.9418",
+   "commands": []
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_32",
+   "claims": [
+    "C41",
+    "C43",
+    "C44",
+    "C42"
+   ],
+   "location": "operations.fbs_normal_fixed_defect_gate.hypothesis",
+   "statement": "3.386 for fixed defect and normal sugar (n 10), 0.018 for fixed defect and high sugar (n 5), 0 otherwise; ablation 0.9388, acc 0.872",
+   "check": "frame groupby thal, fbs; ablate",
+   "evidence": "3.386 (10), 0.0177 (5), 0 elsewhere; AUC 0.9388, accuracy 0.872",
+   "commands": []
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_34",
+   "claims": [
+    "C49",
+    "C51"
+   ],
+   "location": "drafted.readdown.ann_34.hypothesis[0]",
+   "statement": "barely changes the predictions",
+   "check": "ablate",
+   "evidence": "AUC 0.9437 -> 0.9434, 0 flips",
+   "commands": []
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_35",
+   "claims": [
+    "C31",
+    "C01",
+    "C04",
+    "C11",
+    "C09",
+    "C30"
+   ],
+   "location": "drafted.readdown.ann_35.hypothesis[0]",
+   "statement": "adds inputs into one score; five small parts; resting ECG ignored",
+   "check": "claims recheck",
+   "evidence": "composition verified; C30 resting ECG no effect",
+   "commands": []
+  },
+  {
+   "id": "V10",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_32",
+   "claims": [
+    "C17",
+    "C41"
+   ],
+   "location": "drafted.worth_checking[3]",
+   "statement": "a fixed thallium defect lowers risk (10 patients drive it)",
+   "check": "domain",
+   "evidence": "a fixed defect usually indicates coronary disease; an overfitted correction, already flagged",
+   "commands": []
+  },
+  {
+   "id": "V11",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_35",
+   "claims": [
+    "C20"
+   ],
+   "location": "drafted.worth_checking[2]",
+   "statement": "fasting blood sugar above 120 mg/dL lowers risk",
+   "check": "domain",
+   "evidence": "already flagged",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_35": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_33": {
+   "grade": "refuted",
+   "level": "L2"
+  },
+  "ann_31": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_32": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_30": {
+   "grade": "weakened",
+   "level": "L4"
+  },
+  "ann_34": {
+   "grade": "upheld",
+   "level": "L4"
+  }
+ },
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ]
+}

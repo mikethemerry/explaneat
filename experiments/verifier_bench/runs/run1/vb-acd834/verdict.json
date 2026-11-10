@@ -1,0 +1,349 @@
+{
+  "item_id": "vb-acd834",
+  "genome_id": "1f2cf7ea-5c30-452a-9277-0b4043e888d9",
+  "verifier": "blind verifier agent (run1)",
+  "started_at": "2026-11-10T23:45:35+13:00",
+  "finished_at": "2026-11-10T23:47:18+13:00",
+  "minutes": 2,
+  "overall": {
+    "grade": "refuted",
+    "summary": "One number in the ischaemia-pathway hypothesis (and its evidence record) does not reproduce: the 35 patients opened by low blood pressure have mean predicted risk 0.18, not 0.13. Everything else holds."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.structural_coverage",
+      "statement": "structural 1.0, compositional 1.0, hierarchy complete",
+      "check": "verify recheck",
+      "evidence": "recomputed 1.0 / 1.0",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-acd834 --out experiments/verifier_bench/runs/run1/vb-acd834/recheck.json"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.function_preservation_max_abs_err",
+      "statement": "1.8e-15; closed-form max err 0.022",
+      "check": "verify recheck",
+      "evidence": "recomputed 2.2e-16 and 0.0217",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-acd834 --out experiments/verifier_bench/runs/run1/vb-acd834/recheck.json"
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.summary",
+      "statement": "linear logit SD 3.18 vs 0.78 nonlinear; linear-only AUC 0.932 vs 0.942",
+      "check": "forward pass",
+      "evidence": "3.184 / 0.781; 0.9316 / 0.9420",
+      "commands": [
+        "uv run python scratchpad/e10.py (train forward pass: node activity, readout removal)"
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.resisted",
+      "statement": "204 split; thal:6 chain affine and near-inert (weight -0.013 into 290)",
+      "check": "coefficients + forward pass",
+      "evidence": "3671 and 2116 active on 100% of rows; weight 2116 -> 290 is -0.013",
+      "commands": [
+        "uv run python scratchpad/e10.py (train forward pass: node activity, readout removal)",
+        "uv run python scratchpad/zc.py experiments/verifier_bench/items/vb-acd834 204_a,290,1834,1987,3671,2116"
+      ]
+    },
+    {
+      "id": "V5",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "claims",
+      "statement": "79 claims",
+      "check": "verify recheck",
+      "evidence": "79 of 79 reproduce; prose numbers all found",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-acd834 --out experiments/verifier_bench/runs/run1/vb-acd834/recheck.json"
+      ]
+    },
+    {
+      "id": "V6",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_40",
+      "claims": [
+        "C33"
+      ],
+      "location": "operations.heart_disease_logit.hypothesis",
+      "statement": "readouts 0.117 / 0.135 / 0.165 / 0.097; AUC 0.942, acc 0.876; linear 0.932; readout removals 290 -0.002, 1834 -0.0016, 204_a -0.0016, 1987 -0.0007, pathway -0.0055",
+      "check": "forward pass",
+      "evidence": "weights reproduce; 0.9420 / 0.876; 0.9316; -0.0023, -0.0016, -0.0016, -0.0007, -0.0055; SHAP not re-run",
+      "commands": [
+        "uv run python scratchpad/e10.py (train forward pass: node activity, readout removal)"
+      ]
+    },
+    {
+      "id": "V7",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_40",
+      "claims": [
+        "C33",
+        "C03",
+        "C04",
+        "C15",
+        "C07",
+        "C23"
+      ],
+      "location": "drafted.readdown.ann_40.evidence[1]",
+      "statement": "ST depression 19% -> 48%; reversible defect 44% vs 33% through the sum; blood pressure and age",
+      "check": "claims + probe",
+      "evidence": "probe of ST depression at the typical patient: rises slowly then faster",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-acd834 --out experiments/verifier_bench/runs/run1/vb-acd834/recheck.json",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-acd834 --sweep oldpeak=0:2.8:8"
+      ]
+    },
+    {
+      "id": "V8",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_39",
+      "claims": [
+        "C47"
+      ],
+      "location": "operations.ischaemia_pathway.hypothesis",
+      "statement": "290 active 56% (100/135 of its active cases have 204 on; 35 open from low BP alone, mean predicted risk 0.13)",
+      "check": "forward pass on the 35 rows",
+      "evidence": "the 35 patients in whom 290 is open while 204 is off have a mean predicted risk of 0.18 (median 0.06, disease rate 0.20), not 0.13. The rest reproduces: 290 active 135 rows (56%), 100 with 204 on; 1834 active 26%, all with 204 and 290 on, 78% diseased; 1987 on for 64% with 290 quiet vs 13% with it active",
+      "commands": [
+        "uv run python scratchpad/e10.py (train forward pass: node activity, readout removal)"
+      ]
+    },
+    {
+      "id": "V9",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_39",
+      "claims": [
+        "C47"
+      ],
+      "location": "operations.ischaemia_pathway.evidence[0]",
+      "statement": "35 cases open it from low resting BP alone and these patients have low predicted risk (mean 0.13)",
+      "check": "forward pass on the 35 rows",
+      "evidence": "mean predicted risk 0.18 for those 35 rows; the qualitative point (low risk) stands",
+      "commands": [
+        "uv run python scratchpad/e10.py (train forward pass: node activity, readout removal)"
+      ]
+    },
+    {
+      "id": "V10",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_39",
+      "claims": [
+        "C34",
+        "C36",
+        "C42",
+        "C43",
+        "C44",
+        "C45",
+        "C47"
+      ],
+      "location": "operations.ischaemia_pathway.hypothesis",
+      "statement": "290, 1834 (fires above 290 = 1.78), 1987 formulas",
+      "check": "incoming weights",
+      "evidence": "290 = relu(1.088*204_b - 0.817*trestbps + 0.151*cp:2 + 0.017*cp:3 + 0.046*thal:6 - 0.013*2116 - 0.485); 1834 threshold 1.672/0.941 = 1.78; 1987 = relu(0.880*age - 1.585*290 + 0.179)",
+      "commands": [
+        "uv run python scratchpad/zc.py experiments/verifier_bench/items/vb-acd834 204_a,290,1834,1987,3671,2116"
+      ]
+    },
+    {
+      "id": "V11",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_39",
+      "claims": [
+        "C34",
+        "C42",
+        "C36",
+        "C45"
+      ],
+      "location": "drafted.readdown.ann_39.hypothesis[0]",
+      "statement": "raises risk with ST depression, slowly then faster, more with a reversible defect; age adds a little above about 53",
+      "check": "claims",
+      "evidence": "C34 accelerating 19% -> 36%; C42 35% -> 84% vs 19% -> 48%; C45 threshold 53 years",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-acd834 --out experiments/verifier_bench/runs/run1/vb-acd834/recheck.json"
+      ]
+    },
+    {
+      "id": "V12",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_36",
+      "claims": [
+        "C49",
+        "C52",
+        "C53",
+        "C54",
+        "C55",
+        "C56"
+      ],
+      "location": "operations.st_ischaemia_gate_output.hypothesis",
+      "statement": "204 = relu(2.554*oldpeak + 1.133*thal:7 + 0.937*restecg:0 + 0.276); hard-zero 52%, active 48%; corr with oldpeak 0.88",
+      "check": "incoming weights + forward pass",
+      "evidence": "weights reproduce; active 117 (48.3%); corr 0.880",
+      "commands": [
+        "uv run python scratchpad/zc.py experiments/verifier_bench/items/vb-acd834 204_a,290,1834,1987,3671,2116",
+        "uv run python scratchpad/e10.py (train forward pass: node activity, readout removal)"
+      ]
+    },
+    {
+      "id": "V13",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_36",
+      "claims": [
+        "C49",
+        "C55"
+      ],
+      "location": "drafted.readdown.ann_36.hypothesis[0]",
+      "statement": "nothing until about 0.9 mm then steadily; steady from the start with a normal ECG or reversible defect",
+      "check": "claims",
+      "evidence": "C55 threshold 0.9 mm (0.7-1.7 across patients); C49 hinge",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-acd834 --out experiments/verifier_bench/runs/run1/vb-acd834/recheck.json"
+      ]
+    },
+    {
+      "id": "V14",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_38",
+      "claims": [
+        "C59",
+        "C60"
+      ],
+      "location": "operations.thal6_linear_passthrough.hypothesis",
+      "statement": "both ReLUs always active; 2116 = 1.003*thal:6 + 2.165; weight -0.013 into 290",
+      "check": "incoming weights + forward pass",
+      "evidence": "3671 = relu(thal:6 + 2.123), 2116 = relu(1.003*3671 + 0.036): 1.003*thal:6 + 2.165; active 100%",
+      "commands": [
+        "uv run python scratchpad/zc.py experiments/verifier_bench/items/vb-acd834 204_a,290,1834,1987,3671,2116",
+        "uv run python scratchpad/e10.py (train forward pass: node activity, readout removal)"
+      ]
+    },
+    {
+      "id": "V15",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [
+        "C33",
+        "C47",
+        "C56",
+        "C12",
+        "C18",
+        "C17",
+        "C01",
+        "C15"
+      ],
+      "location": "drafted.blocks[0]",
+      "statement": "lead and block paragraphs",
+      "check": "claims",
+      "evidence": "numbers and directions match",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-acd834 --out experiments/verifier_bench/runs/run1/vb-acd834/recheck.json"
+      ]
+    },
+    {
+      "id": "V16",
+      "grade": "flag",
+      "level": "L4",
+      "part": null,
+      "claims": [
+        "C18"
+      ],
+      "location": "drafted.worth_checking[0]",
+      "statement": "fasting blood sugar above 120 mg/dL lowers risk",
+      "check": "domain sense",
+      "evidence": "known risk factor given a protective effect (19% -> 10%)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-acd834 --out experiments/verifier_bench/runs/run1/vb-acd834/recheck.json"
+      ]
+    },
+    {
+      "id": "V17",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_36",
+      "claims": [
+        "C53",
+        "C54"
+      ],
+      "location": "drafted.worth_checking[4]",
+      "statement": "ST depression and a reversible defect count more with a normal resting ECG",
+      "check": "domain sense",
+      "evidence": "clinically one would expect an abnormal resting ECG to add to, not weaken, these signs",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-acd834 --out experiments/verifier_bench/runs/run1/vb-acd834/recheck.json"
+      ]
+    },
+    {
+      "id": "V18",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_39",
+      "claims": [
+        "C43"
+      ],
+      "location": "drafted.worth_checking[5]",
+      "statement": "ST depression counts more at lower resting blood pressure",
+      "check": "domain sense",
+      "evidence": "counter-intuitive interaction (high blood pressure raising the bar for the ischaemia signal); for the domain reviewer",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-acd834 --out experiments/verifier_bench/runs/run1/vb-acd834/recheck.json"
+      ]
+    }
+  ],
+  "parts": {
+    "ann_40": {
+      "grade": "upheld",
+      "level": "L2"
+    },
+    "ann_39": {
+      "grade": "refuted",
+      "level": "L1"
+    },
+    "ann_36": {
+      "grade": "upheld",
+      "level": "L4"
+    },
+    "ann_38": {
+      "grade": "upheld",
+      "level": "L1"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ]
+}

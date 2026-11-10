@@ -1,0 +1,264 @@
+{
+  "item_id": "vb-5718a4",
+  "genome_id": "60ee493c-bce5-4a2b-b7af-d06843835ae6",
+  "verifier": "independent blind verifier agent (run1)",
+  "started_at": "2026-11-10T23:38:27+13:00",
+  "finished_at": "2026-11-10T23:40:15+13:00",
+  "minutes": 2,
+  "overall": {
+    "grade": "upheld",
+    "summary": "All numbers and every rule statement reproduce, including an exhaustive check over the 432 configurations; nothing refuted or weakened."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.structural_coverage",
+      "statement": "1.0 / 1.0 / complete",
+      "check": "verify recheck",
+      "evidence": "recomputed identical",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-5718a4"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.function_preservation_max_abs_err",
+      "statement": "4.4e-16",
+      "check": "verify recheck",
+      "evidence": "recomputed 4.4e-16",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-5718a4"
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.closed_form_max_abs_err",
+      "statement": "0.170 (3 s.f. rounding at large magnitudes)",
+      "check": "verify recheck",
+      "evidence": "recomputed 0.170",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-5718a4"
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "upheld",
+      "level": "L3",
+      "part": null,
+      "claims": [],
+      "location": "record.summary",
+      "statement": "predicts exactly two of {a1,a2,a3,a4,a6}, preferably a5 != 1; train acc 0.887, AUC 0.925",
+      "check": "enumerate all 432 configurations",
+      "evidence": "positive in 0 of 144 configs with <=1 first values, 136 of 152 with exactly two, 0 of 136 with >=3; AUC 0.9254, acc 0.887",
+      "commands": [
+        "uv run python scratchpad/enum_monk.py vb-5718a4 out.json  (all 432 configurations through the verify model API: hold_row/set_raw/evaluate)"
+      ]
+    },
+    {
+      "id": "V5",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_32",
+      "claims": [],
+      "location": "operations.two_of_five_peak.hypothesis",
+      "statement": "113/114 positive when a5 != 1, 23/38 when a5 = 1; pairs (a2,a3) and (a3,a4) always fail; agreement 96.3% with count5==2 and 88.0% with the two-of-six rule; misses all 28 two-of-six cases with a5=1, accepts 23 of 38 three-of-six with a5=1",
+      "check": "enumerate all 432 configurations",
+      "evidence": "113/114; 23/38; (a2,a3) 0/4 and (a3,a4) 0/4; agreement 0.963 and 0.880; 0 of 28; 23 of 38: all reproduce",
+      "commands": [
+        "uv run python scratchpad/enum_monk.py vb-5718a4 out.json  (all 432 configurations through the verify model API: hold_row/set_raw/evaluate)"
+      ]
+    },
+    {
+      "id": "V6",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_32",
+      "claims": [],
+      "location": "operations.two_of_five_peak.evidence[0]",
+      "statement": "ablating the veto: acc 0.887 -> 0.562; the gate: -> 0.690",
+      "check": "ablate --to zero",
+      "evidence": "veto: 0.8870 -> 0.5623; gate: -> 0.6899",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-5718a4 --part ann_28 --to zero",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-5718a4 --part ann_29 --to zero"
+      ]
+    },
+    {
+      "id": "V7",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_32",
+      "claims": [
+        "C16",
+        "C52"
+      ],
+      "location": "structure",
+      "statement": "one root, five leaves",
+      "check": "verify recheck",
+      "evidence": "hierarchy complete",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-5718a4"
+      ]
+    },
+    {
+      "id": "V8",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_28",
+      "claims": [
+        "C17",
+        "C18",
+        "C19",
+        "C22",
+        "C23"
+      ],
+      "location": "drafted.readdown.ann_28.hypothesis[0]",
+      "statement": "holds the typical case down; moving a1, a3 or a6 off its first value lifts it; a2 or a4 first value brings it back",
+      "check": "subgroup count>=3 + ablate",
+      "evidence": "the veto acts on exactly the 112 rows with three or more first values among a1,a2,a3,a4,a6 (mean contribution -69.7); the typical case has three (a1, a3, a6), so removing one lifts it and adding a2 or a4 restores it",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-5718a4 --where \"((a1=='1')*1 + (a2=='1')*1 + (a3=='1')*1 + (a4=='1')*1 + (a6=='1')*1) >= 3\"",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-5718a4 --part ann_28 --to zero"
+      ]
+    },
+    {
+      "id": "V9",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_27",
+      "claims": [
+        "C27",
+        "C28",
+        "C29",
+        "C30",
+        "C31",
+        "C32",
+        "C33",
+        "C34",
+        "C35",
+        "C36"
+      ],
+      "location": "drafted.readdown.ann_27.hypothesis[0]",
+      "statement": "first values raise, a2=3 and a4=3 lower",
+      "check": "verify recheck",
+      "evidence": "claims reproduce in direction and size",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-5718a4"
+      ]
+    },
+    {
+      "id": "V10",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_29",
+      "claims": [
+        "C39",
+        "C40",
+        "C41",
+        "C47"
+      ],
+      "location": "drafted.readdown.ann_29.hypothesis[0]",
+      "statement": "raises when a5 != 1, lowers for a3 = 2 and a6 = 2; acts on 305",
+      "check": "recheck + ablate",
+      "evidence": "claims reproduce; 305 rows affected (345 - the 40 with a5 = 1 and a3 = 2)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-5718a4",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-5718a4 --part ann_29 --to zero"
+      ]
+    },
+    {
+      "id": "V11",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_30",
+      "claims": [
+        "C49",
+        "C50"
+      ],
+      "location": "drafted.readdown.ann_30.hypothesis[0]",
+      "statement": "lowers when a5 = 2 or 4; acts on 173; removing it 0.887 -> 0.890",
+      "check": "ablate --to zero",
+      "evidence": "173 rows (87+86); acc 0.8870 -> 0.8899",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-5718a4 --part ann_30 --to zero"
+      ]
+    },
+    {
+      "id": "V12",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_31",
+      "claims": [
+        "C52"
+      ],
+      "location": "drafted.readdown.ann_31.hypothesis[0]",
+      "statement": "switched off, no effect",
+      "check": "verify recheck",
+      "evidence": "C52 reproduces; exit identically 0",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-5718a4"
+      ]
+    },
+    {
+      "id": "V13",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_29",
+      "claims": [
+        "C17",
+        "C39"
+      ],
+      "location": "drafted.worth_checking[0]",
+      "statement": "a5 = 1 is treated as evidence against yes",
+      "check": "domain sense (the target rule)",
+      "evidence": "the target rule counts a5 = 1 like other first values; the model inverts it; correctly flagged in the draft",
+      "commands": [
+        "uv run python scratchpad/enum_monk.py vb-5718a4 out.json  (all 432 configurations through the verify model API: hold_row/set_raw/evaluate)"
+      ]
+    }
+  ],
+  "parts": {
+    "ann_32": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_28": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_27": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_29": {
+      "grade": "upheld",
+      "level": "L4"
+    },
+    "ann_30": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_31": {
+      "grade": "upheld",
+      "level": "L1"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ]
+}

@@ -1,0 +1,290 @@
+{
+  "item_id": "vb-81f779",
+  "genome_id": "7c355ee7-77ad-426c-8a6d-9df81d1c65b3",
+  "verifier": "independent blind verifier agent (run1)",
+  "started_at": "2026-11-10T23:36:43+13:00",
+  "finished_at": "2026-11-10T23:38:27+13:00",
+  "minutes": 2,
+  "overall": {
+    "grade": "weakened",
+    "summary": "Numbers reproduce; two weakenings: the heart-rate gate hypothesis gives the 147 bpm threshold that applies only with non-anginal chest pain (about 177 bpm for the typical patient), and the claim that exercise angina erases the female advantage overstates a partial cancellation."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.structural_coverage",
+      "statement": "1.0 / 1.0 / complete",
+      "check": "verify recheck",
+      "evidence": "recomputed identical",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-81f779"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.function_preservation_max_abs_err",
+      "statement": "1.8e-15",
+      "check": "verify recheck",
+      "evidence": "recomputed 2.2e-16",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-81f779"
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.closed_form_max_abs_err",
+      "statement": "0.0269",
+      "check": "verify recheck",
+      "evidence": "recomputed 0.0269",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-81f779"
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.summary",
+      "statement": "mean-ablating each gate gives AUC 0.938, 0.940, 0.945 (full 0.947); AND gate adds +2.07",
+      "check": "ablate --to mean each leaf; probe sex x exang",
+      "evidence": "AUC 0.9382, 0.9405, 0.9446; women with exercise angina get +2.075",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-81f779 --part ann_32 --to mean",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-81f779 --part ann_33 --to mean",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-81f779 --part ann_34 --to mean",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-81f779 --sweep sex=1,0 --sweep exang=0,1"
+      ]
+    },
+    {
+      "id": "V5",
+      "grade": "upheld",
+      "level": "L3",
+      "part": null,
+      "claims": [],
+      "location": "record.resisted",
+      "statement": "slope:3 suppresses risk in gate 557",
+      "check": "probe oldpeak x slope",
+      "evidence": "with a downsloping segment the gate stays at 0 even at 2.8 mm (upsloping: +1.265)",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-81f779 --sweep oldpeak=0,1.2,2.8 --sweep slope=1,3"
+      ]
+    },
+    {
+      "id": "V6",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_35",
+      "claims": [
+        "C36"
+      ],
+      "location": "structure",
+      "statement": "one root, three leaves",
+      "check": "verify recheck",
+      "evidence": "hierarchy complete",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-81f779"
+      ]
+    },
+    {
+      "id": "V7",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_35",
+      "claims": [
+        "C36",
+        "C01",
+        "C05",
+        "C16",
+        "C18"
+      ],
+      "location": "drafted.readdown.ann_35.hypothesis[0]",
+      "statement": "additive score with three parts",
+      "check": "verify recheck",
+      "evidence": "claims reproduce",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-81f779"
+      ]
+    },
+    {
+      "id": "V8",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_32",
+      "claims": [
+        "C37",
+        "C41"
+      ],
+      "location": "drafted.readdown.ann_32.hypothesis[0]",
+      "statement": "raises risk with ST depression, uneven, more with reversible defect",
+      "check": "probe oldpeak x thal",
+      "evidence": "normal scan: 0 up to 1.2 mm, +0.215 at 1.5, +1.265 at 2.8; reversible defect: on from 0.5 mm, +2.128 at 2.8 (risk 27% -> 76%)",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-81f779 --sweep oldpeak=0,0.5,1.0,1.2,1.5,2,2.8 --sweep thal=3,7"
+      ]
+    },
+    {
+      "id": "V9",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_32",
+      "claims": [
+        "C46"
+      ],
+      "location": "operations.st_depression_gate.evidence[0]",
+      "statement": "active 47.9%; mean-ablation AUC 0.947->0.938",
+      "check": "ablate --to mean",
+      "evidence": "116 of 242 (47.9%); AUC 0.9382",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-81f779 --part ann_32 --to mean"
+      ]
+    },
+    {
+      "id": "V10",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_33",
+      "claims": [
+        "C51"
+      ],
+      "location": "drafted.readdown.ann_33.hypothesis[0]",
+      "statement": "raises risk only for women with exercise angina (n=19)",
+      "check": "probe sex x exang; subgroup",
+      "evidence": "contribution +2.075 only for women with exercise angina, 0 in the other three cells; n=19, 12 with disease",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-81f779 --sweep sex=1,0 --sweep exang=0,1",
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-81f779 --where \"sex == '0' and exang == '1'\""
+      ]
+    },
+    {
+      "id": "V11",
+      "grade": "weakened",
+      "level": "L3",
+      "part": "ann_33",
+      "claims": [
+        "C50"
+      ],
+      "location": "operations.female_exang_and_gate.hypothesis",
+      "statement": "the network learns that exercise angina erases the female advantage",
+      "check": "probe sex x exang (typical patient)",
+      "evidence": "women with exercise angina get 1.6% against 11.6% for men with it (and 0.2% without): the gate cancels part of the female term (+2.07 of a 3.32 logit gap), it does not erase the advantage",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-81f779 --sweep sex=1,0 --sweep exang=0,1"
+      ]
+    },
+    {
+      "id": "V12",
+      "grade": "weakened",
+      "level": "L3",
+      "part": "ann_34",
+      "claims": [
+        "C54"
+      ],
+      "location": "drafted.readdown.ann_34.hypothesis[0]",
+      "statement": "maximum heart rate changes nothing until about 147 beats per minute, then lowers the risk (stated without qualification)",
+      "check": "probe thalach x chest pain type",
+      "evidence": "147 bpm is the threshold for patients with non-anginal chest pain; for the typical patient (no chest pain) the part stays at 0 up to 175 bpm and switches on near 177 bpm (-0.265 at 180). Active in 80% of non-anginal patients vs 10.5% of others",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-81f779 --sweep thalach=130,140,145,147,150,160,170,175,180,190 --sweep cp=4,3",
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-81f779 --where \"cp == '3'\""
+      ]
+    },
+    {
+      "id": "V13",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_34",
+      "claims": [
+        "C60",
+        "C58"
+      ],
+      "location": "operations.thalach_cp3_protective_gate.hypothesis",
+      "statement": "active 80% of cp:3 vs 10.5% others; mean-ablation AUC ->0.945",
+      "check": "subgroup cp==3; ablate",
+      "evidence": "80.0% vs 10.5%; AUC 0.9446",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-81f779 --where \"cp == '3'\"",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-81f779 --part ann_34 --to mean"
+      ]
+    },
+    {
+      "id": "V14",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_35",
+      "claims": [
+        "C24"
+      ],
+      "location": "drafted.worth_checking[2]",
+      "statement": "fasting blood sugar above 120 mg/dL lowers risk",
+      "check": "domain sense",
+      "evidence": "opposite of the known direction",
+      "commands": []
+    },
+    {
+      "id": "V15",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_32",
+      "claims": [
+        "C43"
+      ],
+      "location": "drafted.worth_checking[5]",
+      "statement": "downsloping ST segment switches the ST-depression gate off",
+      "check": "domain sense",
+      "evidence": "a downsloping segment is usually a stronger ischaemia sign; n=17",
+      "commands": []
+    },
+    {
+      "id": "V16",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_35",
+      "claims": [
+        "C23"
+      ],
+      "location": "drafted.worth_checking[3]",
+      "statement": "fixed thallium defect lowers risk",
+      "check": "domain sense",
+      "evidence": "counter-intuitive clinically; n=15",
+      "commands": []
+    }
+  ],
+  "parts": {
+    "ann_35": {
+      "grade": "upheld",
+      "level": "L4"
+    },
+    "ann_32": {
+      "grade": "upheld",
+      "level": "L4"
+    },
+    "ann_33": {
+      "grade": "weakened",
+      "level": "L3"
+    },
+    "ann_34": {
+      "grade": "weakened",
+      "level": "L3"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ]
+}

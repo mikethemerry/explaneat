@@ -1,0 +1,140 @@
+{
+  "target": "experiments/verifier_bench/items/vb-e8ef4b",
+  "genome_id": "1f2cf7ea-5c30-452a-9277-0b4043e888d9",
+  "label": "vb-e8ef4b",
+  "operations_source": "target",
+  "files": {
+    "record": "experiments/verifier_bench/items/vb-e8ef4b/record.json",
+    "layer": "experiments/verifier_bench/items/vb-e8ef4b/plain_language.json",
+    "operations": "experiments/verifier_bench/items/vb-e8ef4b/operations.json",
+    "item": "experiments/verifier_bench/items/vb-e8ef4b/item.json"
+  },
+  "findings": [
+    {
+      "level": "L1",
+      "check": "closed_form",
+      "location": "layer.parts.ann_36.closed_form.latex",
+      "severity": "mismatch",
+      "stated": [
+        0.637
+      ],
+      "recomputed": [
+        0.937
+      ],
+      "note": "coefficients in the stated closed form that the recomputed one does not have (stated) and the other way round (recomputed)"
+    },
+    {
+      "level": "L1",
+      "check": "closed_form",
+      "location": "layer.parts.ann_36.closed_form.sympy_srepr.y_0",
+      "severity": "mismatch",
+      "stated": [
+        0.63689
+      ],
+      "recomputed": [
+        0.93689
+      ]
+    },
+    {
+      "level": "L1",
+      "check": "closed_form",
+      "location": "operations.st_ischaemia_gate_output.evidence[0].payload.latex",
+      "severity": "warn",
+      "stated": [
+        0.637
+      ],
+      "note": "coefficients in the written formula that the computed closed form (3 s.f.) does not contain"
+    }
+  ],
+  "structure": {
+    "n_train": 242,
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "uncovered_nodes": [],
+    "uncovered_edges": [],
+    "null_nodes": [
+      "-11",
+      "-13",
+      "-14",
+      "-20",
+      "-24",
+      "-3"
+    ],
+    "coverage_hierarchy": {
+      "roots": [
+        "heart_disease_logit"
+      ],
+      "global_root": "heart_disease_logit",
+      "root_contains_outputs": true,
+      "complete": true,
+      "composed": 4,
+      "required": 4,
+      "exempt_disconnected": []
+    },
+    "hierarchy": {
+      "n_annotations": 5,
+      "roots": [
+        "heart_disease_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "not_under_root": [],
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 2.220446049250313e-16,
+    "closed_form_max_abs_err": 0.021697190439301295,
+    "numeric_max_abs_err": 0.0,
+    "leaves": [
+      {
+        "id": "ann_36",
+        "name": "st_ischaemia_gate_output",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.021697190439301295,
+        "exit_scale": 12.5197392864441
+      },
+      {
+        "id": "ann_37",
+        "name": "st_ischaemia_gate_bp",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.021697190439301295,
+        "exit_scale": 12.5197392864441
+      },
+      {
+        "id": "ann_38",
+        "name": "thal6_linear_passthrough",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.019509810061110855,
+        "exit_scale": 6.065168332966482
+      }
+    ],
+    "op_counts": {
+      "rename_node": 33,
+      "split_node": 10,
+      "annotate": 5
+    },
+    "full_coverage": true
+  },
+  "closed_forms": {
+    "ann_36": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 2.55 x_{oldpeak_a} \\\\\n&\\quad + 0.937 x_{restecg:0_b_c} \\\\\n&\\quad + 1.13 x_{thal:7_b_c} \\\\\n&\\quad + 0.276 \\bigr)\n\\end{aligned}",
+    "ann_38": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 1.0 \\operatorname{relu}{\\left(1.0 x_{thal:6_c} + 2.12 \\right)} \\\\\n&\\quad + 0.0355 \\bigr)\n\\end{aligned}",
+    "ann_37": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 2.55 x_{oldpeak_b} \\\\\n&\\quad + 0.937 x_{restecg:0_b_d} \\\\\n&\\quad + 1.13 x_{thal:7_b_d} \\\\\n&\\quad + 0.276 \\bigr)\n\\end{aligned}"
+  },
+  "claims": {
+    "stated": 79,
+    "recomputed": 79,
+    "reproduced": 79
+  },
+  "prose": {
+    "sentences": 39,
+    "numbers": 152,
+    "unmatched_numbers": 0
+  },
+  "summary": {
+    "mismatch": 2,
+    "warn": 1,
+    "info": 0,
+    "verdict": "some stated numbers do not reproduce",
+    "seconds": 10.2
+  }
+}

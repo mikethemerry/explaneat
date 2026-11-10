@@ -1,0 +1,746 @@
+{
+ "item_id": "vb-e37014",
+ "genome_id": "1f2cf7ea-5c30-452a-9277-0b4043e888d9",
+ "verifier": "explanation-verifier subagent (run1)",
+ "started_at": "2026-11-10T23:24:27+13:00",
+ "finished_at": "2026-11-10T23:33:06+13:00",
+ "minutes": 9,
+ "overall": {
+  "grade": "refuted",
+  "summary": "Numbers and structure mostly reproduce, but the ischaemia pathway's plain hypothesis gets the blood-pressure direction backwards, the root's technical hypothesis wrongly says thal:7 acts only through the gates, and one stated mean risk (0.13) does not reproduce (0.18); several smaller overstatements."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "refuted",
+   "level": "L1",
+   "part": "ann_39",
+   "claims": [
+    "C34",
+    "C42",
+    "C43"
+   ],
+   "location": "drafted.readdown.ann_39.hypothesis[0]",
+   "statement": "raises the predicted risk with ST depression ... and more so when resting blood pressure is high",
+   "check": "prose against claims, then probe oldpeak sweep at two blood pressures",
+   "evidence": "Neither cited claim is about blood pressure (C42 is the thallium interaction). The blood-pressure claim C43 says the opposite: the oldpeak effect is stronger at or below 130 mm Hg (log-odds 1.47 vs 1.07; DiD through the part -0.24). Probe, typical patient: ann_39 contribution goes +0.025 -> +1.085 from 0 to 2.8 mm at 115 mm Hg, but only +0.029 -> +0.628 at 150 mm Hg. Gate 290 has weight -0.817 on trestbps, so high blood pressure weakens this part. The block paragraph (drafted.blocks[1] sentence 3) and the technical hypothesis state the correct direction.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-e37014 --hold typical --sweep oldpeak=0:2.8:8 --sweep trestbps=115,150"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "refuted",
+   "level": "L1",
+   "part": "ann_40",
+   "claims": [],
+   "location": "operations.heart_disease_logit.hypothesis",
+   "statement": "oldpeak and thal:7 influence the output ONLY through these gates (oldpeak has no direct edge)",
+   "check": "dump of the replayed structure's enabled connections",
+   "evidence": "True for oldpeak, false for thal:7: there is a direct edge thal:7_a (-26_a) -> 0 with weight -0.0654, which the same hypothesis lists in its LINEAR CORE ('thal:7 -0.07'), and -26_a is an entry of the root. The direct effect is small (about -0.14 log-odds between thal 7 and not 7) but the structural statement is wrong.",
+   "commands": [
+    "dump_net.py (VerifyModel.structure.connections)"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "refuted",
+   "level": "L1",
+   "part": "ann_39",
+   "claims": [],
+   "location": "operations.ischaemia_pathway.evidence[1]",
+   "statement": "35 cases open [290] from low resting BP alone and these patients have low predicted risk (mean 0.13)",
+   "check": "recount with forward pass on the training split",
+   "evidence": "The count reproduces (35 patients with 290 on and 204 off; 100 of 135 with 204 on) but their mean predicted risk is 0.181 (median 0.057; 20% diseased), not 0.13. The same 0.13 appears in operations.ischaemia_pathway.hypothesis. Possibly from the 200-row subsample noted in record.protocol_version; it does not reproduce on the 242 training patients.",
+   "commands": [
+    "scratch script acts.py: numpy forward pass of the replayed structure (weights dumped from VerifyModel.structure; matches model logit to 4e-4) on the 242 training rows"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_36",
+   "claims": [
+    "C49",
+    "C55"
+   ],
+   "location": "drafted.readdown.ann_36.hypothesis[0]",
+   "statement": "nothing until about 0.9 mm ... but for patients with a normal resting ECG or a reversible defect on the thallium scan steadily from the start",
+   "check": "probe oldpeak sweeps by resting ECG and thallium result",
+   "evidence": "The hinge (about 0.9 mm, range 0.7 to 1.7 mm) reproduces: typical patient ann_36 off at 0.8 mm, on (+0.006) at 0.9 mm. But the exception holds only for patients with BOTH a normal ECG and a reversible defect (44 of 242): the typical patient has a normal ECG and shows the 0.9 mm hinge; with thal=7 and LVH ECG the part is off until about 0.7 mm (0 at 0.6 mm, +0.036 at 0.8 mm); with thal=7 and normal ECG it is on from 0 mm (+0.053). 'or' should be 'and'. The same wording is in drafted.readdown.ann_36.evidence[1] and drafted.blocks[2] sentence 1.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-e37014 --hold typical --sweep oldpeak=0:2.0:21 --sweep restecg=0,2",
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-e37014 --hold typical --set thal=7 --sweep oldpeak=0:1.2:7 --sweep restecg=0,2",
+    "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-e37014 --where \"restecg == '0' and thal == '7'\""
+   ]
+  },
+  {
+   "id": "V5",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_36",
+   "claims": [
+    "C53",
+    "C52",
+    "C54"
+   ],
+   "location": "drafted.readdown.ann_36.evidence[2]",
+   "statement": "ST depression counts more with a normal resting ECG (from about 19% to about 48%, against about 26% to about 37% otherwise)",
+   "check": "probe oldpeak 0 vs 2.8 mm at restecg 0 and 2, per-part contributions; claim evidence fields",
+   "evidence": "Direction is right for this part, but the risks are whole-model numbers presented as this part's effect. Typical patient: total log-odds change 1.35 (normal ECG) vs 0.53 (LVH); ann_36 contributes 0.49 vs 0.27, ann_39 0.86 vs 0.27. This part carries about a quarter of the difference (claim C53 DiD through the part -0.20 of -0.84). Same for evidence[3] (C52: through-part DiD 0.25 of 0.87, numbers identical to the ann_39 claim C42) and drafted.blocks[2] sentence 2. The ann_39 paragraph correctly says 'across the whole model'.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-e37014 --hold typical --sweep oldpeak=0,2.8 --sweep restecg=0,2"
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_39",
+   "claims": [],
+   "location": "operations.ischaemia_pathway.hypothesis",
+   "statement": "1987 ... an age term switched OFF by the gate, so age adds risk only for patients in whom 290 is quiet",
+   "check": "forward pass shares",
+   "evidence": "1987 is active for 17 of 135 patients with 290 open (12.6%) as well as 68 of 107 with 290 quiet (63.6%); the hypothesis's own evidence says 13%. 'Only' overstates: it is mostly, not only. The same overstatement is in record.summary ('an age term active only without ischaemia evidence').",
+   "commands": [
+    "scratch script acts.py: numpy forward pass of the replayed structure (weights dumped from VerifyModel.structure; matches model logit to 4e-4) on the 242 training rows"
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "weakened",
+   "level": "L2",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "an age term active only without ischaemia evidence",
+   "check": "forward pass shares",
+   "evidence": "See the ischaemia_pathway finding: the age node is active in 12.6% of patients with the gate open. All other numbers in the summary reproduce (18 direct edges; logit SD 3.18 vs 0.78; AUC 0.9316 linear-only vs 0.942).",
+   "commands": [
+    "scratch script acts.py: numpy forward pass of the replayed structure (weights dumped from VerifyModel.structure; matches model logit to 4e-4) on the 242 training rows"
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "1.0 (and compositional 1.0, full coverage, hierarchy complete)",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.0 / 1.0, no uncovered nodes, single root containing output; null nodes -3,-11,-13,-14,-20,-24",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e37014 --out <scratch>/recheck.json"
+   ]
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "1.78e-15",
+   "check": "verify recheck",
+   "evidence": "recomputed 2.2e-16, below 1e-9",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e37014 --out <scratch>/recheck.json"
+   ]
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.closed_form_max_abs_err",
+   "statement": "0.0217",
+   "check": "verify recheck",
+   "evidence": "recomputed 0.02170",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e37014 --out <scratch>/recheck.json"
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.n_splits",
+   "statement": "10 splits, 0 identity nodes, 3 leaves, 2 compositions, 6 hidden nodes",
+   "check": "operation counts",
+   "evidence": "10 split_node, 5 annotate (3 leaves, 2 compositions), hidden nodes 204,290,1834,1987,2116,3671",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e37014 --out <scratch>/recheck.json"
+   ]
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "validator split of 204; 290/1834/1987 only in composition; thal:6 chain near-inert (-0.013 into 290)",
+   "check": "structure dump, ablate ann_38",
+   "evidence": "204 split into 204_a/204_b with identical weights; 2116->290 weight -0.0132; ablating ann_38 changes risk by at most 0.0037 (baseline) / 0.0058 (zero), AUC unchanged",
+   "commands": [
+    "dump_net.py",
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-e37014 --part ann_38",
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-e37014 --part ann_38 --to zero"
+   ]
+  },
+  {
+   "id": "V13",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_40",
+   "claims": [],
+   "location": "structure",
+   "statement": "annotation entries, exits, subgraphs and hierarchy",
+   "check": "verify recheck, operations.json",
+   "evidence": "one root ann_40 containing output 0; ann_36, ann_39 children of root; ann_37, ann_38 children of ann_39; all nodes covered",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e37014 --out <scratch>/recheck.json"
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_40",
+   "claims": [],
+   "location": "operations.heart_disease_logit.hypothesis",
+   "statement": "root logit: bias -0.496, 18-term linear core, readouts 0.117/0.135/0.165/0.097; 6 unused inputs",
+   "check": "structure dump vs stated weights",
+   "evidence": "every weight matches at stated rounding; unused inputs sex:1, fbs:1, restecg:1, restecg:2, slope:2, thal:4 have no edges (except the thal:7 'ONLY' statement, refuted above)",
+   "commands": [
+    "dump_net.py"
+   ]
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_40",
+   "claims": [],
+   "location": "operations.heart_disease_logit.evidence[0]",
+   "statement": "train AUC 0.942, acc 0.876",
+   "check": "forward pass",
+   "evidence": "AUC 0.942, accuracy 0.876",
+   "commands": [
+    "scratch script acts.py: numpy forward pass of the replayed structure (weights dumped from VerifyModel.structure; matches model logit to 4e-4) on the 242 training rows"
+   ]
+  },
+  {
+   "id": "V16",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_40",
+   "claims": [],
+   "location": "operations.heart_disease_logit.evidence[1]",
+   "statement": "linear core alone AUC 0.932; readout removals 290 -0.002, 1834 -0.0016, 204_a -0.0016, 1987 -0.0007, pathway -0.0055; corr 0.39; logit SD 3.18 vs 0.78",
+   "check": "forward pass with readouts removed; ablate",
+   "evidence": "0.9316; -0.0023, -0.0016, -0.0016, -0.0007, -0.0055; corr 0.394; SD 3.184 vs 0.781. ablate ann_39 --to zero: AUC 0.942 -> 0.9364",
+   "commands": [
+    "scratch script acts.py: numpy forward pass of the replayed structure (weights dumped from VerifyModel.structure; matches model logit to 4e-4) on the 242 training rows",
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-e37014 --part ann_39 --to zero"
+   ]
+  },
+  {
+   "id": "V17",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_40",
+   "claims": [],
+   "location": "operations.heart_disease_logit.evidence[3]",
+   "statement": "closed-form root, additive",
+   "check": "structure dump",
+   "evidence": "additive readouts confirmed; output node is sigmoid in the replayed structure",
+   "commands": [
+    "dump_net.py"
+   ]
+  },
+  {
+   "id": "V18",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_40",
+   "claims": [
+    "C33",
+    "C01",
+    "C02",
+    "C12",
+    "C09"
+   ],
+   "location": "drafted.readdown.ann_40.hypothesis[0]",
+   "statement": "adds up inputs; vessels each adding about the same; two parts add to the sum",
+   "check": "verify recheck (claims reproduce); structure",
+   "evidence": "all cited claims reproduce exactly; C01 shape steady; composition purely additive in the logit",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e37014 --out <scratch>/recheck.json"
+   ]
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_40",
+   "claims": [
+    "C33",
+    "C03",
+    "C04",
+    "C15",
+    "C07",
+    "C23"
+   ],
+   "location": "drafted.readdown.ann_40.evidence[1]",
+   "statement": "whole-model oldpeak 19% -> 48% slowly then faster; thal 7 to 44% vs 33% through sum; BP and age uneven",
+   "check": "verify recheck",
+   "evidence": "numbers and shape classes reproduce (C07/C23 shape status 'fallback' -> 'in an uneven way' is the correct wording)",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e37014 --out <scratch>/recheck.json"
+   ]
+  },
+  {
+   "id": "V20",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_40",
+   "claims": [
+    "C33",
+    "C47",
+    "C56"
+   ],
+   "location": "drafted.lead[0]",
+   "statement": "19% typical risk; two parts act on 203 and 117 of 242",
+   "check": "verify recheck; forward pass",
+   "evidence": "reproduce; 290 or 1987 active for 203 (102 diseased), 204 active for 117 (77 diseased)",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e37014 --out <scratch>/recheck.json",
+    "scratch script acts.py: numpy forward pass of the replayed structure (weights dumped from VerifyModel.structure; matches model logit to 4e-4) on the 242 training rows"
+   ]
+  },
+  {
+   "id": "V21",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [
+    "C12",
+    "C18",
+    "C17",
+    "C08",
+    "C13",
+    "C21",
+    "C01",
+    "C02",
+    "C05",
+    "C16",
+    "C15",
+    "C24",
+    "C06",
+    "C26",
+    "C10",
+    "C19",
+    "C27"
+   ],
+   "location": "drafted.blocks[0]",
+   "statement": "additive inputs paragraph",
+   "check": "verify recheck",
+   "evidence": "all 79 claims and 155 prose numbers reproduce; directions and shapes match the cited claims",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e37014 --out <scratch>/recheck.json"
+   ]
+  },
+  {
+   "id": "V22",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_39",
+   "claims": [
+    "C48",
+    "C61",
+    "C47",
+    "C34",
+    "C44",
+    "C42",
+    "C43"
+   ],
+   "location": "drafted.blocks[1]",
+   "statement": "ischaemia pathway paragraph incl. stronger at or below 130 mm Hg",
+   "check": "recheck + probe by blood pressure",
+   "evidence": "reproduces; the low-BP direction is confirmed by the probe (see V1)",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e37014 --out <scratch>/recheck.json",
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-e37014 --hold typical --sweep oldpeak=0:2.8:8 --sweep trestbps=115,150"
+   ]
+  },
+  {
+   "id": "V23",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_39",
+   "claims": [
+    "C36",
+    "C45"
+   ],
+   "location": "drafted.readdown.ann_39.hypothesis[1]",
+   "statement": "age adds a little through it, nothing until about 53 years, then steadily",
+   "check": "probe age sweep, typical patient",
+   "evidence": "ann_39 off at 52 years, on at 56 (+0.029), rising steadily to +0.141 at 68; 1987 = ReLU(0.880 z(age) - 1.585*290 + 0.179) gives onset near 53 years when 290 is 0",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-e37014 --hold typical --sweep age=40:68:8"
+   ]
+  },
+  {
+   "id": "V24",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_39",
+   "claims": [
+    "C48",
+    "C61",
+    "C47",
+    "C34",
+    "C44",
+    "C42",
+    "C36",
+    "C45"
+   ],
+   "location": "drafted.readdown.ann_39.evidence[0]",
+   "statement": "evidence sentences 0-4 (copy identical; 203 of 242, 102 diseased; 61% -> 63%; oldpeak 19% -> 36% above about 1.3 mm; whole-model thal interaction; age hinge)",
+   "check": "recheck; forward pass; ablate",
+   "evidence": "reproduce; 204_a and 204_b have identical weights; ablate ann_39 --to zero affects 203 rows",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e37014 --out <scratch>/recheck.json",
+    "scratch script acts.py: numpy forward pass of the replayed structure (weights dumped from VerifyModel.structure; matches model logit to 4e-4) on the 242 training rows",
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-e37014 --part ann_39 --to zero"
+   ]
+  },
+  {
+   "id": "V25",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_39",
+   "claims": [],
+   "location": "operations.ischaemia_pathway.evidence[0]",
+   "statement": "gate 290, 1834, 1987 weights; 1834 fires when 290 > 1.78; slope +0.155 / -0.154",
+   "check": "structure dump",
+   "evidence": "weights match; 1.672/0.9413 = 1.776; 0.165*0.941 = 0.155; 0.097*1.585 = 0.154",
+   "commands": [
+    "dump_net.py"
+   ]
+  },
+  {
+   "id": "V26",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_39",
+   "claims": [],
+   "location": "operations.ischaemia_pathway.evidence[1]",
+   "statement": "290 active 56%; 1834 active 26% only when 204 and 290 on, 78% diseased; 1987 64% vs 13%",
+   "check": "forward pass",
+   "evidence": "135/242 = 55.8%; 63 = 26.0%, all with 204 and 290 on, 77.8% diseased; 63.6% vs 12.6% (the mean risk 0.13 is refuted above)",
+   "commands": [
+    "scratch script acts.py: numpy forward pass of the replayed structure (weights dumped from VerifyModel.structure; matches model logit to 4e-4) on the 242 training rows"
+   ]
+  },
+  {
+   "id": "V27",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_39",
+   "claims": [],
+   "location": "operations.ischaemia_pathway.hypothesis",
+   "statement": "high-BP patients need more ST-depression evidence to open the gate",
+   "check": "probe",
+   "evidence": "confirmed: 290 exit at 2.8 mm is 4.68 at 115 mm Hg vs 3.11 at 150 mm Hg; meaningful mechanism statement",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-e37014 --hold typical --sweep oldpeak=0:2.8:8 --sweep trestbps=115,150"
+   ]
+  },
+  {
+   "id": "V28",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_36",
+   "claims": [],
+   "location": "layer.parts.ann_36.closed_form",
+   "statement": "relu(2.55 oldpeak + 0.937 restecg:0 + 1.13 thal:7 + 0.276)",
+   "check": "verify recheck closed forms; structure dump",
+   "evidence": "coefficients match to 3 s.f.; numeric error 0",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e37014 --out <scratch>/recheck.json"
+   ]
+  },
+  {
+   "id": "V29",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_36",
+   "claims": [],
+   "location": "operations.st_ischaemia_gate_output.hypothesis",
+   "statement": "hard-zero 52%, active 48%; mean |grad| 1.23 > 0.55 > 0.45; corr 0.88; readout +0.117",
+   "check": "forward pass",
+   "evidence": "117/242 = 48.3% active; mean |grad| 1.235, 0.548, 0.453; corr 0.880; 204_a -> 0 weight 0.1174",
+   "commands": [
+    "scratch script acts.py: numpy forward pass of the replayed structure (weights dumped from VerifyModel.structure; matches model logit to 4e-4) on the 242 training rows"
+   ]
+  },
+  {
+   "id": "V30",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_36",
+   "claims": [],
+   "location": "operations.st_ischaemia_gate_output.evidence[0]",
+   "statement": "closed form, all weights positive, monotone",
+   "check": "structure dump",
+   "evidence": "confirmed",
+   "commands": [
+    "dump_net.py"
+   ]
+  },
+  {
+   "id": "V31",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_36",
+   "claims": [
+    "C56"
+   ],
+   "location": "drafted.readdown.ann_36.evidence[0]",
+   "statement": "acts on 117 of 242, 77 diseased; 88% -> 92%",
+   "check": "recheck; forward pass; ablate",
+   "evidence": "reproduce; ablate --to zero affects 117 rows",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e37014 --out <scratch>/recheck.json",
+    "scratch script acts.py: numpy forward pass of the replayed structure (weights dumped from VerifyModel.structure; matches model logit to 4e-4) on the 242 training rows",
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-e37014 --part ann_36 --to zero"
+   ]
+  },
+  {
+   "id": "V32",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_36",
+   "claims": [
+    "C57"
+   ],
+   "location": "drafted.readdown.ann_36.evidence[4]",
+   "statement": "formula reproduces exactly",
+   "check": "verify recheck",
+   "evidence": "numeric error 0",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e37014 --out <scratch>/recheck.json"
+   ]
+  },
+  {
+   "id": "V33",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_37",
+   "claims": [],
+   "location": "operations.st_ischaemia_gate_bp.hypothesis",
+   "statement": "copy 204_b bit-identical to 204_a, into 290 with +1.088, dominant excitatory input",
+   "check": "structure dump; ablate",
+   "evidence": "identical weights; 204_b -> 290 weight 1.0882 vs other inputs 0.151, 0.046, 0.017; ablate --to zero: AUC 0.942 -> 0.937, 4 flips",
+   "commands": [
+    "dump_net.py",
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-e37014 --part ann_37 --to zero"
+   ]
+  },
+  {
+   "id": "V34",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_37",
+   "claims": [],
+   "location": "layer.parts.ann_37.closed_form",
+   "statement": "same as ann_36",
+   "check": "verify recheck",
+   "evidence": "matches; no plain-language readdown exists for this part (described via ann_39 evidence[0])",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e37014 --out <scratch>/recheck.json"
+   ]
+  },
+  {
+   "id": "V35",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_38",
+   "claims": [],
+   "location": "layer.parts.ann_38.closed_form",
+   "statement": "relu(1.0 relu(1.0 thal:6 + 2.12) + 0.0355)",
+   "check": "verify recheck",
+   "evidence": "matches; numeric error 0",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e37014 --out <scratch>/recheck.json"
+   ]
+  },
+  {
+   "id": "V36",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_38",
+   "claims": [
+    "C59",
+    "C60"
+   ],
+   "location": "drafted.readdown.ann_38.hypothesis[0]",
+   "statement": "passes the thallium scan on and barely changes the predictions",
+   "check": "ablate (baseline and zero)",
+   "evidence": "max risk change 0.0037 (mean) / 0.0058 (zero); AUC 0.942 unchanged; 0 flips",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-e37014 --part ann_38",
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-e37014 --part ann_38 --to zero"
+   ]
+  },
+  {
+   "id": "V37",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_38",
+   "claims": [],
+   "location": "operations.thal6_linear_passthrough.hypothesis",
+   "statement": "both ReLUs always active since thal:6 >= -0.257; r = 1.000; -0.013 into 290",
+   "check": "forward pass",
+   "evidence": "z(thal:6) min -0.257; both nodes on for all 242; corr 1.000; net -0.0132 thal:6 - 0.0286",
+   "commands": [
+    "scratch script acts.py: numpy forward pass of the replayed structure (weights dumped from VerifyModel.structure; matches model logit to 4e-4) on the 242 training rows"
+   ]
+  },
+  {
+   "id": "V38",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [
+    "C18",
+    "C09",
+    "C14",
+    "C22",
+    "C20",
+    "C11",
+    "C53",
+    "C54",
+    "C43"
+   ],
+   "location": "drafted.worth_checking[0]",
+   "statement": "six worth-checking items",
+   "check": "verify recheck",
+   "evidence": "numbers reproduce; see flags",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e37014 --out <scratch>/recheck.json"
+   ]
+  },
+  {
+   "id": "V39",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_40",
+   "claims": [
+    "C18"
+   ],
+   "location": "drafted.worth_checking[0]",
+   "statement": "fasting blood sugar above 120 mg/dL lowers predicted risk (19% -> 10%)",
+   "check": "domain review",
+   "evidence": "Diabetes is an established risk factor; the model's direct fbs:0 weight is +0.275. Conflicts with domain knowledge, not with the data.",
+   "commands": []
+  },
+  {
+   "id": "V40",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_40",
+   "claims": [
+    "C09",
+    "C14",
+    "C22"
+   ],
+   "location": "drafted.worth_checking[1]",
+   "statement": "typical angina gets the lowest risk, below no chest pain symptoms",
+   "check": "domain review",
+   "evidence": "Known Cleveland pattern (asymptomatic patients have the highest disease rate), but clinically surprising; for the domain reviewer.",
+   "commands": []
+  },
+  {
+   "id": "V41",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_40",
+   "claims": [
+    "C20"
+   ],
+   "location": "drafted.worth_checking[2]",
+   "statement": "fixed thallium defect lowers risk vs normal scan (n=15)",
+   "check": "domain review",
+   "evidence": "A fixed defect (scar) is not protective clinically; small n.",
+   "commands": []
+  },
+  {
+   "id": "V42",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_36",
+   "claims": [
+    "C53",
+    "C54"
+   ],
+   "location": "drafted.worth_checking[4]",
+   "statement": "ST depression and reversible defect count more with a normal resting ECG",
+   "check": "domain review",
+   "evidence": "Plausible as a test-specificity effect (ST changes are less specific with LVH), but unusual; for the domain reviewer.",
+   "commands": []
+  },
+  {
+   "id": "V43",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_39",
+   "claims": [
+    "C43"
+   ],
+   "location": "drafted.worth_checking[5]",
+   "statement": "ST depression counts more at lower resting blood pressure",
+   "check": "domain review",
+   "evidence": "Gate 290 is offset down by blood pressure; no obvious clinical reason; the overall effect of blood pressure is still to raise risk.",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_40": {
+   "grade": "refuted",
+   "level": "L1"
+  },
+  "ann_39": {
+   "grade": "refuted",
+   "level": "L1"
+  },
+  "ann_36": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_37": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_38": {
+   "grade": "upheld",
+   "level": "L4"
+  }
+ },
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ],
+ "not_checked": [
+  "whole-model SHAP values in operations.heart_disease_logit.evidence[2] (no SHAP in the verify CLI)"
+ ]
+}

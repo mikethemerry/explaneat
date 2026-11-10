@@ -1,0 +1,288 @@
+{
+  "target": "experiments/verifier_bench/items/vb-caa642",
+  "genome_id": "7a8237f3-74cb-40bd-8268-b605f64dac2b",
+  "label": "vb-caa642",
+  "operations_source": "target",
+  "files": {
+    "record": "experiments/verifier_bench/items/vb-caa642/record.json",
+    "layer": "experiments/verifier_bench/items/vb-caa642/plain_language.json",
+    "operations": "experiments/verifier_bench/items/vb-caa642/operations.json",
+    "item": "experiments/verifier_bench/items/vb-caa642/item.json"
+  },
+  "findings": [
+    {
+      "level": "L1",
+      "check": "claim",
+      "location": "claims.C126",
+      "severity": "mismatch",
+      "note": "direction ann_123:direction:capital-gain: 5 field(s) differ",
+      "diffs": [
+        {
+          "path": "shape.grid[13]",
+          "stated": 4282.8,
+          "recomputed": 4882.8
+        },
+        {
+          "path": "shape.pieces[0].to",
+          "stated": 4282.8,
+          "recomputed": 4882.8
+        },
+        {
+          "path": "shape.pieces[1].from",
+          "stated": 4282.8,
+          "recomputed": 4882.8
+        },
+        {
+          "path": "shape.points.at",
+          "stated": 4282.8,
+          "recomputed": 4882.8
+        },
+        {
+          "path": "shape.points_text.at",
+          "stated": "4283 US dollars",
+          "recomputed": "4883 US dollars"
+        }
+      ]
+    },
+    {
+      "level": "L1",
+      "check": "prose_number",
+      "location": "drafted.blocks[0:ann_130][2]",
+      "severity": "mismatch",
+      "stated": [
+        "4283"
+      ],
+      "note": "numbers in the sentence that are not in the claims it cites (C084, C126), recomputed: It is made of two parts: the main capital-gains curve, and a second one that adds nothing until about 4283 US dollars, then lowers the chance steadily (about 63% to about 56% through it alone)."
+    },
+    {
+      "level": "L1",
+      "check": "prose_number",
+      "location": "drafted.blocks[3:ann_125][0]",
+      "severity": "mismatch",
+      "stated": [
+        "50"
+      ],
+      "note": "numbers in the sentence that are not in the claims it cites (C143), recomputed: This part acts on the 31364 people who work less than about 50 hours a week, 25290 of whom have an income of $50,000 or less; for the typical person it acts on, the predicted chance of a low income ($50,000 or less) is about 62% without it and about 73% with it."
+    },
+    {
+      "level": "L1",
+      "check": "prose_number",
+      "location": "drafted.readdown.ann_123.hypothesis[0]",
+      "severity": "mismatch",
+      "stated": [
+        "4283"
+      ],
+      "note": "numbers in the sentence that are not in the claims it cites (C126, C132), recomputed: This part adds nothing until capital gains reach about 4283 US dollars, then lowers the predicted chance of a low income ($50,000 or less) steadily; for people born in Jamaica the chance, falling slowly at first, then faster, starts and ends higher."
+    },
+    {
+      "level": "L1",
+      "check": "prose_number",
+      "location": "drafted.readdown.ann_123.evidence[1]",
+      "severity": "mismatch",
+      "stated": [
+        "4283"
+      ],
+      "note": "numbers in the sentence that are not in the claims it cites (C126), recomputed: Through it alone, a typical person's chance goes from about 63% at 0 to about 56% at 6849 US dollars, nothing until about 4283 US dollars, then steadily."
+    },
+    {
+      "level": "L1",
+      "check": "prose_number",
+      "location": "drafted.readdown.ann_125.evidence[0]",
+      "severity": "mismatch",
+      "stated": [
+        "50"
+      ],
+      "note": "numbers in the sentence that are not in the claims it cites (C143), recomputed: It acts on 31364 of 39073 training people, those working less than about 50 hours a week, 25290 of whom have an income of $50,000 or less; for the typical person it acts on, the predicted chance is about 62% without it and about 73% with it."
+    },
+    {
+      "level": "L1",
+      "check": "lint",
+      "location": "readdown.ann_125.hypothesis[0]",
+      "severity": "warn",
+      "note": "readdown.ann_125.hypothesis[0]: C141: needs a phrase for the shape 'hinge'"
+    },
+    {
+      "level": "L1",
+      "check": "lint",
+      "location": "readdown.ann_125.hypothesis[0]",
+      "severity": "warn",
+      "note": "readdown.ann_125.hypothesis[0]: C142: needs a phrase for the shape 'hinge'"
+    }
+  ],
+  "structure": {
+    "n_train": 39073,
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "uncovered_nodes": [],
+    "uncovered_edges": [],
+    "null_nodes": [
+      "-101",
+      "-103",
+      "-106",
+      "-14",
+      "-15",
+      "-16",
+      "-2",
+      "-20",
+      "-21",
+      "-22",
+      "-26",
+      "-27",
+      "-32",
+      "-33",
+      "-34",
+      "-37",
+      "-4",
+      "-42",
+      "-43",
+      "-44",
+      "-50",
+      "-51",
+      "-52",
+      "-59",
+      "-6",
+      "-60",
+      "-61",
+      "-66",
+      "-68",
+      "-70",
+      "-71",
+      "-74",
+      "-75",
+      "-77",
+      "-81",
+      "-83",
+      "-84",
+      "-85",
+      "-87",
+      "-93",
+      "-96"
+    ],
+    "coverage_hierarchy": {
+      "roots": [
+        "income_logit"
+      ],
+      "global_root": "income_logit",
+      "root_contains_outputs": true,
+      "complete": true,
+      "composed": 10,
+      "required": 10,
+      "exempt_disconnected": []
+    },
+    "hierarchy": {
+      "n_annotations": 11,
+      "roots": [
+        "income_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "not_under_root": [],
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 5.551115123125783e-16,
+    "closed_form_max_abs_err": 0.04082495714157375,
+    "numeric_max_abs_err": 1.4210854715202004e-14,
+    "leaves": [
+      {
+        "id": "ann_121",
+        "name": "age_profile",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.017326750818538073,
+        "exit_scale": 2.1256953608601568
+      },
+      {
+        "id": "ann_122",
+        "name": "capital_gain_hinge",
+        "numeric_max_abs_err": 1.7763568394002505e-15,
+        "closed_form_max_abs_err": 0.04082495714157375,
+        "exit_scale": 50.82733617020367
+      },
+      {
+        "id": "ann_123",
+        "name": "capital_gain_country_gate",
+        "numeric_max_abs_err": 2.220446049250313e-16,
+        "closed_form_max_abs_err": 0.0008445695873797732,
+        "exit_scale": 7.654531953296284
+      },
+      {
+        "id": "ann_124",
+        "name": "self_emp_not_inc_offset",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.0011859198046939579,
+        "exit_scale": 1.4902279087332224
+      },
+      {
+        "id": "ann_125",
+        "name": "short_hours_hinge",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.00048412051961443936,
+        "exit_scale": 3.0677128975238466
+      },
+      {
+        "id": "ann_126",
+        "name": "always_on_linear_gates",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.0021095040386651664,
+        "exit_scale": 1.4185163667716487
+      },
+      {
+        "id": "ann_127",
+        "name": "rare_category_indicators",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.0020692811528022492,
+        "exit_scale": 1.8662469334492475
+      },
+      {
+        "id": "ann_128",
+        "name": "country_linear_offsets",
+        "numeric_max_abs_err": 4.440892098500626e-16,
+        "closed_form_max_abs_err": 0.009830466355126966,
+        "exit_scale": 6.109210727053888
+      },
+      {
+        "id": "ann_129",
+        "name": "core_linear_backbone",
+        "numeric_max_abs_err": 1.4210854715202004e-14,
+        "closed_form_max_abs_err": 0.016981032678437202,
+        "exit_scale": 62.404453828947126
+      }
+    ],
+    "op_counts": {
+      "rename_node": 107,
+      "add_identity_node": 7,
+      "split_node": 6,
+      "consolidate_node": 1,
+      "annotate": 11
+    },
+    "full_coverage": true
+  },
+  "closed_forms": {
+    "ann_122": "\\begin{aligned}\ny_0 &= - 2.52 x_{capital-gain_bc} \\\\\n&\\quad - 2.73 \\operatorname{relu}{\\left(0.245 x_{capital-gain_bc} - 2.17 x_{native-country:7} - 0.2 \\right)} \\\\\n&\\quad - 2.79 \\operatorname{relu}{\\left(- 1.38 x_{native-country:15} + 0.77 \\operatorname{relu}{\\left(0.245 x_{capital-gain_bc} - 2.17 x_{native-country:7} - 0.2 \\right)} + 0.875 \\right)}\n\\end{aligned}",
+    "ann_129": "\\begin{aligned}\ny_0 &= - 0.282 x_{capital-loss} \\\\\n&\\quad - 0.986 x_{education-num} \\\\\n&\\quad - 0.0948 x_{education:0} \\\\\n&\\quad - 0.00674 x_{education:14} \\\\\n&\\quad - 0.0578 x_{education:15_b} \\\\\n&\\quad - 0.0318 x_{education:1} \\\\\n&\\quad - 0.155 x_{education:5} \\\\\n&\\quad - 0.0957 x_{education:6_b} \\\\\n&\\quad + 0.0714 x_{education:7} \\\\\n&\\quad - 0.102 x_{fnlwgt} \\\\\n&\\quad - 0.142 x_{marital-status:0} \\\\\n&\\quad - 1.62 x_{marital-status:1} \\\\\n&\\quad - 1.43 x_{marital-status:2} \\\\\n&\\quad - 0.18 x_{marital-status:6} \\\\\n&\\quad + 0.0864 x_{occupation:0} \\\\\n&\\quad - 0.122 x_{occupation:10} \\\\\n&\\quad - 0.0791 x_{occupation:11_b} \\\\\n&\\quad - 0.0643 x_{occupation:12} \\\\\n&\\quad - 0.0895 x_{occupation:13} \\\\\n&\\quad - 0.219 x_{occupation:4} \\\\\n&\\quad + 0.164 x_{occupation:5} \\\\\n&\\quad + 0.136 x_{occupation:6} \\\\\n&\\quad + 0.0913 x_{occupation:7} \\\\\n&\\quad + 0.255 x_{occupation:8} \\\\\n&\\quad + 0.0318 x_{race:0} \\\\\n&\\quad - 0.0612 x_{race:1} \\\\\n&\\quad + 0.186 x_{relationship:3} \\\\\n&\\quad - 0.0149 x_{relationship:4} \\\\\n&\\quad - 0.195 x_{relationship:5} \\\\\n&\\quad - 0.237 x_{sex} \\\\\n&\\quad - 0.0758 x_{workclass:1} \\\\\n&\\quad + 0.45 x_{workclass:3} \\\\\n&\\quad - 0.033 x_{workclass:5} \\\\\n&\\quad + 0.0735 x_{workclass:7_b} \\\\\n&\\quad + 0.0106 x_{workclass:8}\n\\end{aligned}",
+    "ann_123": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 0.603 x_{capital-gain_a} \\\\\n&\\quad - 0.984 x_{education:6_a} \\\\\n&\\quad - 1.27 x_{native-country:23} \\\\\n&\\quad - 0.254 x_{native-country:30} \\\\\n&\\quad - 1.28 \\operatorname{relu}{\\left(1.01 x_{native-country:23} + 0.347 x_{native-country:27} + 0.964 x_{native-country:30} + 1.02 x_{native-country:34_a} - 0.913 \\right)} \\\\\n&\\quad -0.5 \\bigr)\n\\end{aligned}",
+    "ann_121": "\\begin{aligned}\ny_0 &= - 1.03 x_{age} \\\\\n&\\quad - 0.0464 x_{native-country:21} \\\\\n&\\quad + 0.0192 x_{native-country:37} \\\\\n&\\quad + 0.975 \\operatorname{relu}{\\left(1.03 \\operatorname{relu}{\\left(1.45 x_{age} + 0.137 \\operatorname{relu}{\\left(- 0.673 x_{native-country:21} + 0.854 x_{native-country:37} - 0.705 \\right)} - 0.481 \\right)} - 0.317 \\right)} \\\\\n&\\quad - 0.124 \\operatorname{relu}{\\left(- 0.673 x_{native-country:21} + 0.854 x_{native-country:37} - 0.705 \\right)}\n\\end{aligned}",
+    "ann_125": "y_0 = \\operatorname{relu}{\\left(0.598 - 0.777 x_{hours-per-week} \\right)}",
+    "ann_128": "\\begin{aligned}\ny_0 &= - 0.0192 x_{native-country:11} \\\\\n&\\quad + 0.00525 x_{native-country:14} \\\\\n&\\quad - 0.00301 x_{native-country:18} \\\\\n&\\quad - 0.0146 x_{native-country:1} \\\\\n&\\quad - 0.00105 x_{native-country:20} \\\\\n&\\quad + 0.0301 x_{native-country:29} \\\\\n&\\quad - 0.0366 x_{native-country:2} \\\\\n&\\quad - 0.00654 x_{native-country:31} \\\\\n&\\quad - 0.0494 x_{native-country:32} \\\\\n&\\quad + 0.0359 x_{native-country:34_b} \\\\\n&\\quad + 0.0561 x_{native-country:35} \\\\\n&\\quad - 0.108 x_{native-country:39} \\\\\n&\\quad + 0.0381 x_{native-country:3} \\\\\n&\\quad + 0.234 x_{native-country:4} \\\\\n&\\quad + 0.0259 x_{native-country:6} \\\\\n&\\quad - 0.0402 x_{native-country:9}\n\\end{aligned}",
+    "ann_124": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 0.94 \\operatorname{relu}{\\left(0.827 x_{workclass:6} - 1.03 \\right)} \\\\\n&\\quad -0.222 \\bigr)\n\\end{aligned}",
+    "ann_126": "\\begin{aligned}\ny_0 &= - 0.037 \\operatorname{relu}{\\left(1.44 - 0.188 x_{education:15_a} \\right)} \\\\\n&\\quad + 0.306 \\operatorname{relu}{\\left(0.533 x_{relationship:2} + 1.74 \\right)}\n\\end{aligned}",
+    "ann_127": "\\begin{aligned}\ny_0 &= 0.0604 \\operatorname{relu}{\\left(0.999 x_{education:13} - 0.908 \\right)} \\\\\n&\\quad + 0.0467 \\operatorname{relu}{\\left(0.998 x_{native-country:38} - 0.0079 x_{occupation:11_a} - 2.13 \\right)} \\\\\n&\\quad - 0.0353 \\operatorname{relu}{\\left(0.812 x_{native-country:41} + 0.0583 x_{workclass:7_a} - 0.127 \\right)}\n\\end{aligned}"
+  },
+  "claims": {
+    "stated": 200,
+    "recomputed": 200,
+    "reproduced": 199
+  },
+  "prose": {
+    "sentences": 75,
+    "numbers": 284,
+    "unmatched_numbers": 5
+  },
+  "summary": {
+    "mismatch": 6,
+    "warn": 2,
+    "info": 0,
+    "verdict": "some stated numbers do not reproduce",
+    "seconds": 184.2
+  }
+}

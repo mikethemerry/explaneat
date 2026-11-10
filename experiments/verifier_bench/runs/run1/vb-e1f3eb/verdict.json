@@ -1,0 +1,336 @@
+{
+  "item_id": "vb-e1f3eb",
+  "genome_id": "b19b9536-00dd-4e95-9f5a-def6dd8d6889",
+  "verifier": "independent blind verifier agent (run1)",
+  "started_at": "2026-11-10T23:34:53+13:00",
+  "finished_at": "2026-11-10T23:36:43+13:00",
+  "minutes": 2,
+  "overall": {
+    "grade": "upheld",
+    "summary": "Every number, threshold and interaction checked reproduces against the model; nothing refuted or weakened, three domain flags."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.structural_coverage",
+      "statement": "1.0 / 1.0 / complete",
+      "check": "verify recheck",
+      "evidence": "recomputed identical",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e1f3eb"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.function_preservation_max_abs_err",
+      "statement": "1.8e-15",
+      "check": "verify recheck",
+      "evidence": "recomputed 3.3e-16",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e1f3eb"
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.closed_form_max_abs_err",
+      "statement": "0.0129",
+      "check": "verify recheck",
+      "evidence": "recomputed 0.0129",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e1f3eb"
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "upheld",
+      "level": "L3",
+      "part": null,
+      "claims": [],
+      "location": "record.summary",
+      "statement": "oldpeak hinge above +0.39 SD; protective no-angina gate stronger for women; -3.19 for fixed defect with normal sugar (n=10); near-inert cp:2",
+      "check": "probes + subgroup",
+      "evidence": "hinge starts at 1.5 mm; gate -0.43 men / -1.67 women without exercise angina, 0 with; fixed defect + normal sugar contribution -3.19 (n=10 in training); cp:2 ablation AUC change 0.0003",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-e1f3eb --sweep oldpeak=0,1,1.4,1.5,1.6,2,2.8,3.5",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-e1f3eb --sweep sex=1,0 --sweep exang=0,1",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-e1f3eb --sweep thal=3,6,7 --sweep fbs=0,1",
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-e1f3eb --where \"thal == '6' and fbs == '0'\""
+      ]
+    },
+    {
+      "id": "V5",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.resisted",
+      "statement": "2034 acts on 10 patients and flips 4 false positives",
+      "check": "technical evidence logits checked by hand; subgroup",
+      "evidence": "10 patients, 5 with disease; 4 of the 5 negatives had logit > 0 without the gate and all 5 < 0 with it",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-e1f3eb --where \"thal == '6' and fbs == '0'\""
+      ]
+    },
+    {
+      "id": "V6",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_35",
+      "claims": [
+        "C31"
+      ],
+      "location": "structure",
+      "statement": "one root, five leaves",
+      "check": "verify recheck",
+      "evidence": "hierarchy complete",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e1f3eb"
+      ]
+    },
+    {
+      "id": "V7",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_35",
+      "claims": [
+        "C31",
+        "C01",
+        "C04",
+        "C11",
+        "C09",
+        "C30"
+      ],
+      "location": "drafted.readdown.ann_35.hypothesis[0]",
+      "statement": "additive score; resting ECG ignored",
+      "check": "verify recheck",
+      "evidence": "claims reproduce; C30 zero effect for resting ECG",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e1f3eb"
+      ]
+    },
+    {
+      "id": "V8",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_33",
+      "claims": [
+        "C32",
+        "C33",
+        "C34"
+      ],
+      "location": "drafted.readdown.ann_33.hypothesis[0]",
+      "statement": "nothing until about 1.5 mm, then steadily",
+      "check": "probe oldpeak sweep",
+      "evidence": "contribution 0 up to 1.4 mm, +0.007 at 1.5, +0.475 at 2.0, +1.224 at 2.8, +1.879 at 3.5 (risk 19.7% -> 45.4% -> 61.6%)",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-e1f3eb --sweep oldpeak=0,1,1.4,1.5,1.6,2,2.8,3.5"
+      ]
+    },
+    {
+      "id": "V9",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_33",
+      "claims": [],
+      "location": "operations.oldpeak_hinge.hypothesis",
+      "statement": "zero for 71%; disease 0.71 active vs 0.33; mean-ablation AUC ->0.9400, acc ->0.876",
+      "check": "ablate --to mean",
+      "evidence": "AUC 0.9400, acc 0.876; 70 active (172/242 = 71% zero)",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-e1f3eb --part ann_33 --to mean"
+      ]
+    },
+    {
+      "id": "V10",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_31",
+      "claims": [
+        "C39",
+        "C38",
+        "C36",
+        "C37"
+      ],
+      "location": "drafted.readdown.ann_31.hypothesis[0]",
+      "statement": "lowers risk without chest pain on exercise, most for women",
+      "check": "probe sex x exang",
+      "evidence": "men without exercise angina -0.433, women -1.673, 0 with angina; subgroup exang==0 n=160 (47 with disease)",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-e1f3eb --sweep sex=1,0 --sweep exang=0,1",
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-e1f3eb --where \"exang == '0'\""
+      ]
+    },
+    {
+      "id": "V11",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_31",
+      "claims": [],
+      "location": "operations.sex_exang_protective_gate.hypothesis",
+      "statement": "values 0 / 0.959 / 3.702; n 82 / 96 / 64; mean-ablation AUC ->0.9418",
+      "check": "probe + subgroup + ablate",
+      "evidence": "exits 0, 0.959, 3.70; women without angina n=64; AUC 0.9418, accuracy unchanged",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-e1f3eb --sweep sex=1,0 --sweep exang=0,1",
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-e1f3eb --where \"exang == '0' and sex == '0'\"",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-e1f3eb --part ann_31 --to mean"
+      ]
+    },
+    {
+      "id": "V12",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_32",
+      "claims": [
+        "C41",
+        "C43",
+        "C44"
+      ],
+      "location": "drafted.readdown.ann_32.hypothesis[0]",
+      "statement": "lowers risk for fixed defect only with normal blood sugar",
+      "check": "probe thal x fbs",
+      "evidence": "fixed defect + normal sugar: contribution -3.188 (19.7% -> 1.0%); fixed defect + high sugar: -0.017; other thal results: 0",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-e1f3eb --sweep thal=3,6,7 --sweep fbs=0,1"
+      ]
+    },
+    {
+      "id": "V13",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_32",
+      "claims": [],
+      "location": "operations.fbs_normal_fixed_defect_gate.hypothesis",
+      "statement": "n=10; mean-ablation AUC ->0.9388, acc ->0.872",
+      "check": "subgroup + ablate",
+      "evidence": "n=10; AUC 0.9388, acc 0.872",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-e1f3eb --part ann_32 --to mean"
+      ]
+    },
+    {
+      "id": "V14",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_30",
+      "claims": [
+        "C47",
+        "C46"
+      ],
+      "location": "drafted.readdown.ann_30.hypothesis[0]",
+      "statement": "raises risk steadily with each vessel",
+      "check": "recheck + ablate",
+      "evidence": "C47 reproduces; affine (never clips); mean-ablation AUC 0.9437->0.9408 as stated",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e1f3eb",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-e1f3eb --part ann_30 --to mean"
+      ]
+    },
+    {
+      "id": "V15",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_34",
+      "claims": [
+        "C51",
+        "C49"
+      ],
+      "location": "drafted.readdown.ann_34.hypothesis[0]",
+      "statement": "barely changes predictions",
+      "check": "ablate --to mean",
+      "evidence": "AUC 0.9437 -> 0.9434, no predictions flip",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-e1f3eb --part ann_34 --to mean"
+      ]
+    },
+    {
+      "id": "V16",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_35",
+      "claims": [
+        "C20"
+      ],
+      "location": "drafted.worth_checking[2]",
+      "statement": "fasting blood sugar above 120 mg/dL lowers risk",
+      "check": "domain sense",
+      "evidence": "opposite of the known direction",
+      "commands": []
+    },
+    {
+      "id": "V17",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_32",
+      "claims": [
+        "C17",
+        "C41"
+      ],
+      "location": "drafted.worth_checking[3]",
+      "statement": "fixed thallium defect lowers risk (n=15; gate fitted to 10)",
+      "check": "domain sense",
+      "evidence": "a fixed defect usually signals past infarction; likely overfitted correction",
+      "commands": []
+    },
+    {
+      "id": "V18",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_35",
+      "claims": [
+        "C11",
+        "C16",
+        "C21"
+      ],
+      "location": "drafted.worth_checking[1]",
+      "statement": "typical angina lowest risk",
+      "check": "domain sense",
+      "evidence": "counter-intuitive clinically, though common in this dataset",
+      "commands": []
+    }
+  ],
+  "parts": {
+    "ann_35": {
+      "grade": "upheld",
+      "level": "L4"
+    },
+    "ann_33": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_31": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_32": {
+      "grade": "upheld",
+      "level": "L4"
+    },
+    "ann_30": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_34": {
+      "grade": "upheld",
+      "level": "L1"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ]
+}

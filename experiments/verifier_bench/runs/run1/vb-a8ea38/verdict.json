@@ -1,0 +1,420 @@
+{
+  "item_id": "vb-a8ea38",
+  "genome_id": "6a26c823-5e60-424d-a968-74f44d675efa",
+  "verifier": "blind verifier agent (run1)",
+  "started_at": "2026-11-10T23:28:38+13:00",
+  "finished_at": "2026-11-10T23:31:50+13:00",
+  "minutes": 3,
+  "overall": {
+    "grade": "refuted",
+    "summary": "The technical hypothesis of the service-call hinge says it switches on at 3 calls; it switches on at 4. The voice-mail part is described in causal terms the evidence cannot carry. The rest reproduces."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.structural_coverage",
+      "statement": "structural 1.0, compositional 1.0, hierarchy complete",
+      "check": "verify recheck",
+      "evidence": "recomputed 1.0 / 1.0",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-a8ea38 --out experiments/verifier_bench/runs/run1/vb-a8ea38/recheck.json"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.function_preservation_max_abs_err",
+      "statement": "7.2e-16; closed-form max err 0.0077",
+      "check": "verify recheck",
+      "evidence": "recomputed 7.22e-16 and 0.00766",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-a8ea38 --out experiments/verifier_bench/runs/run1/vb-a8ea38/recheck.json"
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.summary",
+      "statement": "gate kink moves up with each service call from 3 onward; frequent callers with low usage churn (0.88); train AUC 0.901, acc 0.906",
+      "check": "forward pass",
+      "evidence": "AUC 0.9009, acc 0.9063; nodes 12926/13061 on from 3 calls; with 4+ calls, churn 0.885 below 160 day minutes vs 0.288 above",
+      "commands": [
+        "uv run python scratchpad/e4.py (train forward pass: node activity by service calls, ablations, state counts)"
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.resisted",
+      "statement": "node 161 split; low-CSC very-low-day customers over-predicted (93 rows)",
+      "check": "not fully re-derived (cut-off for very low day minutes not given)",
+      "evidence": "structure reproduces; the 93-row figure was not re-counted",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-a8ea38 --out experiments/verifier_bench/runs/run1/vb-a8ea38/recheck.json"
+      ]
+    },
+    {
+      "id": "V5",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "claims",
+      "statement": "158 claims",
+      "check": "verify recheck",
+      "evidence": "158 of 158 reproduce; no prose number missing",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-a8ea38 --out experiments/verifier_bench/runs/run1/vb-a8ea38/recheck.json"
+      ]
+    },
+    {
+      "id": "V6",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_95",
+      "claims": [
+        "C059"
+      ],
+      "location": "operations.churn_logit.hypothesis",
+      "statement": "additive logit; train AUC 0.901, acc 0.906; least-squares linearisation AUCs",
+      "check": "forward pass",
+      "evidence": "AUC 0.9009, acc 0.9063; linearisation AUCs not re-run (refit procedure not reproducible from the text)",
+      "commands": [
+        "uv run python scratchpad/e4.py (train forward pass: node activity by service calls, ablations, state counts)"
+      ]
+    },
+    {
+      "id": "V7",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_95",
+      "claims": [
+        "C059",
+        "C001",
+        "C005",
+        "C055",
+        "C056",
+        "C057",
+        "C058"
+      ],
+      "location": "drafted.readdown.ann_95.evidence[1]",
+      "statement": "international plan 1% -> 16%; voice-mail messages 1% -> 6%; ignored inputs",
+      "check": "claims",
+      "evidence": "match",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-a8ea38 --out experiments/verifier_bench/runs/run1/vb-a8ea38/recheck.json"
+      ]
+    },
+    {
+      "id": "V8",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_90",
+      "claims": [
+        "C060",
+        "C061",
+        "C062",
+        "C069",
+        "C063",
+        "C064",
+        "C070",
+        "C071"
+      ],
+      "location": "operations.linear_backbone.hypothesis",
+      "statement": "zeroing the backbone drops AUC to 0.54; contribution SD 2.575; CSC has no direct edge",
+      "check": "ablation to zero",
+      "evidence": "AUC 0.5390; SD 2.575",
+      "commands": [
+        "uv run python scratchpad/e4.py (train forward pass: node activity by service calls, ablations, state counts)"
+      ]
+    },
+    {
+      "id": "V9",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_90",
+      "claims": [
+        "C060",
+        "C061",
+        "C062",
+        "C069"
+      ],
+      "location": "drafted.readdown.ann_90.hypothesis[0]",
+      "statement": "day minutes, international plan, voice-mail messages raise; voice-mail plan lowers",
+      "check": "claims",
+      "evidence": "C060 steady 0.1% -> 16.6%; C061 1.5% -> 16.4%; C062 1.5% -> 6.0%; C069 1.5% -> 0.16%",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-a8ea38 --out experiments/verifier_bench/runs/run1/vb-a8ea38/recheck.json"
+      ]
+    },
+    {
+      "id": "V10",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_91",
+      "claims": [
+        "C114",
+        "C102",
+        "C116",
+        "C103",
+        "C104",
+        "C112",
+        "C118"
+      ],
+      "location": "operations.csc_usage_gate.hypothesis",
+      "statement": "12926/13061 turn on at 3 calls; mean gate logit 1.1 -> 7.4 from 0 to 7 calls; gate zeroed AUC 0.7635",
+      "check": "forward pass by service calls",
+      "evidence": "12926 and 13061 off at 0-2 calls, on for every row with 3+; mean gate contribution 1.14, 1.22, 1.49, 1.90, 2.72, 4.14, 6.97, 7.41; zeroed AUC 0.7635",
+      "commands": [
+        "uv run python scratchpad/e4.py (train forward pass: node activity by service calls, ablations, state counts)"
+      ]
+    },
+    {
+      "id": "V11",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_91",
+      "claims": [
+        "C114",
+        "C104"
+      ],
+      "location": "drafted.readdown.ann_91.hypothesis[0]",
+      "statement": "raises the chance for low-usage customers, more so with service calls",
+      "check": "probe --sweep calls=0:7:8 (typical)",
+      "evidence": "gate contribution +0.14 at 0-2 calls, +0.81 at 3, +2.34 at 4, +6.90 at 7",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-a8ea38 --sweep \"number customer service calls=0:7:8\""
+      ]
+    },
+    {
+      "id": "V12",
+      "grade": "weakened",
+      "level": "L2",
+      "part": "ann_93",
+      "claims": [
+        "C120"
+      ],
+      "location": "drafted.readdown.ann_93.hypothesis[0]",
+      "statement": "Having a voice-mail plan keeps customers from leaving: this part shows the plan itself makes them stay.",
+      "check": "claims + probe",
+      "evidence": "causal overclaim: the part only shows what the model predicts. Through it a voice-mail plan lowers the typical customer's predicted chance from 1.5% to 0.8% (less than a point); nothing here shows the plan causes customers to stay",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-a8ea38 --out experiments/verifier_bench/runs/run1/vb-a8ea38/recheck.json",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-a8ea38 --sweep \"voice mail plan=all\" --no-parts"
+      ]
+    },
+    {
+      "id": "V13",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_93",
+      "claims": [
+        "C120",
+        "C121"
+      ],
+      "location": "operations.voicemail_chain.hypothesis",
+      "statement": "all three ReLUs active on every train row, chain exactly linear",
+      "check": "forward pass",
+      "evidence": "5577, 1133, 4051 active on 100% of rows",
+      "commands": [
+        "uv run python scratchpad/e4.py (train forward pass: node activity by service calls, ablations, state counts)"
+      ]
+    },
+    {
+      "id": "V14",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_92",
+      "claims": [
+        "C126",
+        "C127"
+      ],
+      "location": "operations.csc_hinge_7208.hypothesis",
+      "statement": "Active only when CSC >= 3 calls (7.6% of train rows)",
+      "check": "node 7208 activity by number of service calls; probe outside West Virginia",
+      "evidence": "7208 is never on at 3 calls: 0% active at 0-3 calls, 97% at 4 (all but West Virginia), first active value 4 calls; 306 rows (7.65%). Probe in Wyoming: off at 3 calls, on at 4 (+0.59), 5 (+1.20). The evidence record and the plain text say 4 calls correctly",
+      "commands": [
+        "uv run python scratchpad/e4.py (train forward pass: node activity by service calls, ablations, state counts)",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-a8ea38 --set state=50 --sweep \"number customer service calls=2:6:5\""
+      ]
+    },
+    {
+      "id": "V15",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_92",
+      "claims": [
+        "C125",
+        "C127"
+      ],
+      "location": "operations.csc_hinge_7208.hypothesis",
+      "statement": "12 West Virginia customers with CSC>=4 (5 churned, 42% vs 50% elsewhere); hinge never active there",
+      "check": "state counts",
+      "evidence": "12 customers, 5 churned; 50.3% (154/306) elsewhere; 7208 active on 0 of 122 West Virginia rows",
+      "commands": [
+        "uv run python scratchpad/e4.py (train forward pass: node activity by service calls, ablations, state counts)"
+      ]
+    },
+    {
+      "id": "V16",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_92",
+      "claims": [
+        "C126",
+        "C125",
+        "C127"
+      ],
+      "location": "drafted.readdown.ann_92.hypothesis[0]",
+      "statement": "nothing until about 4 calls, then steadily, except in West Virginia",
+      "check": "probe in Wyoming and at the typical (West Virginia) customer",
+      "evidence": "Wyoming: off up to 3 calls, then +0.59 per call; West Virginia: off at every call count",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-a8ea38 --set state=50 --sweep \"number customer service calls=2:6:5\"",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-a8ea38 --sweep \"number customer service calls=0:7:8\""
+      ]
+    },
+    {
+      "id": "V17",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_94",
+      "claims": [
+        "C129",
+        "C130",
+        "C131",
+        "C132"
+      ],
+      "location": "operations.state_offsets.hypothesis",
+      "statement": "6730 constant +0.43 except state:33 (-0.45 for 77 rows); opposite to the data (+0.33); zeroing leaves AUC 0.9009",
+      "check": "forward pass",
+      "evidence": "Nevada (state 33) n = 77, contribution 0.003 vs 0.451 elsewhere; empirical log-odds +0.33; zeroed AUC 0.9009",
+      "commands": [
+        "uv run python scratchpad/e4.py (train forward pass: node activity by service calls, ablations, state counts)"
+      ]
+    },
+    {
+      "id": "V18",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [
+        "C059",
+        "C060",
+        "C061",
+        "C118",
+        "C120",
+        "C126",
+        "C129"
+      ],
+      "location": "drafted.blocks[0]",
+      "statement": "block paragraphs",
+      "check": "claims",
+      "evidence": "numbers and directions match",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-a8ea38 --out experiments/verifier_bench/runs/run1/vb-a8ea38/recheck.json"
+      ]
+    },
+    {
+      "id": "V19",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [
+        "C003",
+        "C004",
+        "C014",
+        "C012",
+        "C005",
+        "C125"
+      ],
+      "location": "drafted.worth_checking[0]",
+      "statement": "worth-checking flags",
+      "check": "claims",
+      "evidence": "match (whole-model state effects 6.4% and 6.3%)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-a8ea38 --out experiments/verifier_bench/runs/run1/vb-a8ea38/recheck.json"
+      ]
+    },
+    {
+      "id": "V20",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_90",
+      "claims": [
+        "C062",
+        "C069",
+        "C005",
+        "C012"
+      ],
+      "location": "drafted.worth_checking[1]",
+      "statement": "voice-mail plan lowers but more messages raise churn",
+      "check": "domain sense",
+      "evidence": "opposite signs for plan and message count; correlated inputs; for the domain reviewer",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-a8ea38 --out experiments/verifier_bench/runs/run1/vb-a8ea38/recheck.json"
+      ]
+    },
+    {
+      "id": "V21",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_92",
+      "claims": [
+        "C125"
+      ],
+      "location": "operations.csc_hinge_7208.hypothesis",
+      "statement": "service-call hinge switched off for one state (12 rows)",
+      "check": "domain sense",
+      "evidence": "a state-specific exemption from the service-call effect has no plausible business reason; fitted to 12 customers",
+      "commands": [
+        "uv run python scratchpad/e4.py (train forward pass: node activity by service calls, ablations, state counts)"
+      ]
+    }
+  ],
+  "parts": {
+    "ann_95": {
+      "grade": "upheld",
+      "level": "L2"
+    },
+    "ann_90": {
+      "grade": "upheld",
+      "level": "L4"
+    },
+    "ann_91": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_93": {
+      "grade": "weakened",
+      "level": "L2"
+    },
+    "ann_92": {
+      "grade": "refuted",
+      "level": "L1"
+    },
+    "ann_94": {
+      "grade": "upheld",
+      "level": "L1"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ]
+}

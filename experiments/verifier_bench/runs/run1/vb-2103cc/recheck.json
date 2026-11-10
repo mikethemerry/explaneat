@@ -1,0 +1,106 @@
+{
+  "target": "experiments/verifier_bench/items/vb-2103cc",
+  "genome_id": "0057df7a-62a2-43c3-b107-9afe3735a7c3",
+  "label": "vb-2103cc",
+  "operations_source": "target",
+  "files": {
+    "record": "experiments/verifier_bench/items/vb-2103cc/record.json",
+    "layer": "experiments/verifier_bench/items/vb-2103cc/plain_language.json",
+    "operations": "experiments/verifier_bench/items/vb-2103cc/operations.json",
+    "item": "experiments/verifier_bench/items/vb-2103cc/item.json"
+  },
+  "findings": [],
+  "structure": {
+    "n_train": 242,
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "uncovered_nodes": [],
+    "uncovered_edges": [],
+    "null_nodes": [
+      "-10",
+      "-12",
+      "-14",
+      "-16",
+      "-21",
+      "-23",
+      "-24",
+      "-6"
+    ],
+    "coverage_hierarchy": {
+      "roots": [
+        "heart_disease_logit"
+      ],
+      "global_root": "heart_disease_logit",
+      "root_contains_outputs": true,
+      "complete": true,
+      "composed": 3,
+      "required": 3,
+      "exempt_disconnected": []
+    },
+    "hierarchy": {
+      "n_annotations": 4,
+      "roots": [
+        "heart_disease_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "not_under_root": [],
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 2.220446049250313e-16,
+    "closed_form_max_abs_err": 0.011048694034678341,
+    "numeric_max_abs_err": 8.881784197001252e-16,
+    "leaves": [
+      {
+        "id": "ann_31",
+        "name": "age_hr_reserve_gate",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.011048694034678341,
+        "exit_scale": 6.262015627306109
+      },
+      {
+        "id": "ann_32",
+        "name": "st_slope_chol_gate",
+        "numeric_max_abs_err": 4.440892098500626e-16,
+        "closed_form_max_abs_err": 0.006070166558432399,
+        "exit_scale": 3.1766759133488915
+      },
+      {
+        "id": "ann_33",
+        "name": "oldpeak_hinges",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.008571868337186483,
+        "exit_scale": 3.5066013766015587
+      }
+    ],
+    "op_counts": {
+      "rename_node": 32,
+      "split_node": 5,
+      "annotate": 4
+    },
+    "full_coverage": true
+  },
+  "closed_forms": {
+    "ann_31": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( - 1.49 x_{age} \\\\\n&\\quad - 0.762 x_{thal:7_b} \\\\\n&\\quad + 1.02 x_{thalach_b} \\\\\n&\\quad - 0.72 \\operatorname{relu}{\\left(1.07 x_{thal:7_c} + 0.981 \\right)} \\\\\n&\\quad -0.812 \\bigr)\n\\end{aligned}",
+    "ann_33": "y_0 = \\operatorname{relu}{\\left(0.767 x_{oldpeak_b} + 0.167 \\right)} \\\\ \\begin{aligned}\ny_1 &= \\operatorname{relu}\\bigl( 1.0 \\operatorname{relu}{\\left(0.767 x_{oldpeak_b} + 0.167 \\right)} \\\\\n&\\quad -0.582 \\bigr)\n\\end{aligned}",
+    "ann_32": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 0.77 x_{oldpeak_a} \\\\\n&\\quad + 1.15 x_{slope:2_b} \\\\\n&\\quad - 0.374 \\operatorname{relu}{\\left(1.01 x_{chol_b} + 1.3 \\right)} \\\\\n&\\quad + 0.257 \\bigr)\n\\end{aligned}"
+  },
+  "claims": {
+    "stated": 72,
+    "recomputed": 72,
+    "reproduced": 72
+  },
+  "prose": {
+    "sentences": 42,
+    "numbers": 190,
+    "unmatched_numbers": 0
+  },
+  "summary": {
+    "mismatch": 0,
+    "warn": 0,
+    "info": 0,
+    "verdict": "numbers reproduce",
+    "seconds": 17.2
+  }
+}

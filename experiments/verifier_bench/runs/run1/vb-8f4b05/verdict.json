@@ -1,0 +1,361 @@
+{
+  "item_id": "vb-8f4b05",
+  "genome_id": "4b0eb5a6-5859-4ee8-80fe-18ab72f22959",
+  "verifier": "blind verifier agent (run1)",
+  "started_at": "2026-11-10T23:38:19+13:00",
+  "finished_at": "2026-11-10T23:42:45+13:00",
+  "minutes": 4,
+  "overall": {
+    "grade": "refuted",
+    "summary": "Claim C080 and its read-down sentence say the service-call part takes its typical customer to about 8%; the model gives about 3%. A few percentages are rounded up one point and one hidden unit is described too narrowly."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.structural_coverage",
+      "statement": "structural 1.0, compositional 1.0, hierarchy complete",
+      "check": "verify recheck",
+      "evidence": "recomputed 1.0 / 1.0",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-8f4b05 --out experiments/verifier_bench/runs/run1/vb-8f4b05/recheck.json"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.function_preservation_max_abs_err",
+      "statement": "4.4e-16; closed-form max err 0.0224",
+      "check": "verify recheck",
+      "evidence": "recomputed 4.44e-16 and 0.0224",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-8f4b05 --out experiments/verifier_bench/runs/run1/vb-8f4b05/recheck.json"
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.summary",
+      "statement": "4 calls with day z < -1: +3.8 logit, 95% churn; international plan +2.67; voice-mail plan -2.37",
+      "check": "forward pass + claims",
+      "evidence": "21 customers: mean contribution +3.82, churn 95%; C001 +2.67 log-odds",
+      "commands": [
+        "uv run python scratchpad/e8.py (train forward pass: node activity and churn, mean-ablation per part)"
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.resisted",
+      "statement": "relay 2377, 12977 -> 5868 -> 7162 always on; rareStateUnits no measurable effect",
+      "check": "forward pass",
+      "evidence": "all four relay nodes active on 4000/4000 rows; mean-ablating rareStateUnits changes AUC by -0.0002",
+      "commands": [
+        "uv run python scratchpad/e8.py (train forward pass: node activity and churn, mean-ablation per part)"
+      ]
+    },
+    {
+      "id": "V5",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_81",
+      "claims": [
+        "C080"
+      ],
+      "location": "claims.C080",
+      "statement": "typical active customer: about 2% without the part, 8.12% with it (delta 0.0586)",
+      "check": "verify recheck + probe at the claim's own reference values",
+      "evidence": "recomputed 3.49% with it (delta 0.0123). Probe at the 19 stated reference values: risk 3.4%, part contribution +0.447 log-odds, so 2.2% without and 3.4% with",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-8f4b05 --out experiments/verifier_bench/runs/run1/vb-8f4b05/recheck.json",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-8f4b05 --set \"number customer service calls=3\" --set \"state=West Virginia\" --set \"total day charge=28.29\" ... (all 19 reference values of C080)"
+      ]
+    },
+    {
+      "id": "V6",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_81",
+      "claims": [
+        "C080"
+      ],
+      "location": "drafted.readdown.ann_81.evidence[0]",
+      "statement": "for the typical customer it acts on, the chance is about 2% without it and about 8% with it",
+      "check": "same check",
+      "evidence": "the model gives about 3% with the part (3.4-3.5%), not 8%; the block sentence drafted.blocks[1][0] correctly says about 3%",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-8f4b05 --out experiments/verifier_bench/runs/run1/vb-8f4b05/recheck.json",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-8f4b05 --set \"number customer service calls=3\" --set \"state=West Virginia\" --set \"total day charge=28.29\" ... (all 19 reference values of C080)"
+      ]
+    },
+    {
+      "id": "V7",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_81",
+      "claims": [
+        "C078",
+        "C075",
+        "C070",
+        "C079",
+        "C071"
+      ],
+      "location": "operations.serviceCallsHinges.hypothesis",
+      "statement": "9203 on at >=3 calls (848 rows, churn 25%); 553 on 555 rows (46%); state:41 66 rows; table +3.8/95%, +0.8/33%, +5.6/100%; mean-ablation costs 0.113 AUC",
+      "check": "forward pass",
+      "evidence": "9203: 848 rows, min 3 calls, churn 25.4%; 553: 555, 45.9%; South Dakota (41) 66 rows; +3.82/95%, +0.85/33%, +5.74/100%; -0.1126",
+      "commands": [
+        "uv run python scratchpad/e8.py (train forward pass: node activity and churn, mean-ablation per part)"
+      ]
+    },
+    {
+      "id": "V8",
+      "grade": "weakened",
+      "level": "L3",
+      "part": "ann_81",
+      "claims": [],
+      "location": "operations.serviceCallsHinges.hypothesis",
+      "statement": "5395 ... is on at >=4 calls unless day z > ~0.9, or 3 calls with below-average day usage (810 rows)",
+      "check": "node 5395 activity by number of calls",
+      "evidence": "810 rows reproduce, but 284 of them have 0-2 calls (7 at 0, 78 at 1, 199 at 2): the unit also fires for low-call customers with very low day usage, which the description leaves out",
+      "commands": [
+        "uv run python scratchpad/e8.py (train forward pass: node activity and churn, mean-ablation per part)"
+      ]
+    },
+    {
+      "id": "V9",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_81",
+      "claims": [
+        "C078",
+        "C075"
+      ],
+      "location": "drafted.readdown.ann_81.hypothesis[0]",
+      "statement": "raises the chance once about 3 calls are made; calls count more with an international plan",
+      "check": "claims",
+      "evidence": "C078 threshold about 3 calls, 2.3% -> 13.5% at 4; international plan path via 553 (on with >=1 call with a plan)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-8f4b05 --out experiments/verifier_bench/runs/run1/vb-8f4b05/recheck.json",
+        "uv run python scratchpad/e8.py (train forward pass: node activity and churn, mean-ablation per part)"
+      ]
+    },
+    {
+      "id": "V10",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_79",
+      "claims": [
+        "C088",
+        "C086",
+        "C085",
+        "C090"
+      ],
+      "location": "operations.dayUsageHinges.hypothesis",
+      "statement": "1254 on 164 rows (62% vs 12%); 3460 on 995 rows (28% vs 9.5%); mean-ablating costs about 0.016",
+      "check": "forward pass",
+      "evidence": "164 (62.2% vs 12.1%); 995 (28.3% vs 9.5%); mean-ablating the leaf -0.0176",
+      "commands": [
+        "uv run python scratchpad/e8.py (train forward pass: node activity and churn, mean-ablation per part)"
+      ]
+    },
+    {
+      "id": "V11",
+      "grade": "weakened",
+      "level": "L1",
+      "part": "ann_79",
+      "claims": [
+        "C086"
+      ],
+      "location": "drafted.readdown.ann_79.evidence[2]",
+      "statement": "without a voice-mail plan ... rises steadily from about 2% to about 5%",
+      "check": "verify recheck prose check",
+      "evidence": "C086 gives 4.45%, which rounds to about 4%, not 5% (last-digit rounding); same in drafted.blocks[2][2]",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-8f4b05 --out experiments/verifier_bench/runs/run1/vb-8f4b05/recheck.json"
+      ]
+    },
+    {
+      "id": "V12",
+      "grade": "weakened",
+      "level": "L1",
+      "part": "ann_79",
+      "claims": [
+        "C086"
+      ],
+      "location": "drafted.blocks[2]",
+      "statement": "from 112 to 249 minutes the chance goes from about 2% to about 5% without one",
+      "check": "verify recheck prose check",
+      "evidence": "C086: 2.26% -> 4.45% (about 4%)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-8f4b05 --out experiments/verifier_bench/runs/run1/vb-8f4b05/recheck.json"
+      ]
+    },
+    {
+      "id": "V13",
+      "grade": "weakened",
+      "level": "L1",
+      "part": "ann_83",
+      "claims": [
+        "C012"
+      ],
+      "location": "drafted.readdown.ann_83.evidence[2]",
+      "statement": "daytime minutes ... from about 2% at 112 to about 5% at 249 minutes",
+      "check": "verify recheck prose check",
+      "evidence": "C012: 2.26% -> 4.45% (about 4%)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-8f4b05 --out experiments/verifier_bench/runs/run1/vb-8f4b05/recheck.json"
+      ]
+    },
+    {
+      "id": "V14",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_80",
+      "claims": [
+        "C101",
+        "C098",
+        "C092",
+        "C103",
+        "C097"
+      ],
+      "location": "operations.totalChargeChain.hypothesis",
+      "statement": "5604 on 1143 rows (26%); 4045 on 626 (41% vs 9%); 9871 on 244 (56%); 387 on 76%",
+      "check": "forward pass",
+      "evidence": "1143 (25.5%); 626 (41.1% vs 9.2%); 244 (56.1%); 387 on 75.7%",
+      "commands": [
+        "uv run python scratchpad/e8.py (train forward pass: node activity and churn, mean-ablation per part)"
+      ]
+    },
+    {
+      "id": "V15",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_80",
+      "claims": [
+        "C101",
+        "C098"
+      ],
+      "location": "drafted.readdown.ann_80.hypothesis[0]",
+      "statement": "daytime charge adds nothing until about 41.59 dollars, then raises; evening charge only when daytime charge is high",
+      "check": "claims",
+      "evidence": "C101 hinge 2.3% -> 8.0%; C098 only_if day charge above 30.69 dollars",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-8f4b05 --out experiments/verifier_bench/runs/run1/vb-8f4b05/recheck.json"
+      ]
+    },
+    {
+      "id": "V16",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_82",
+      "claims": [
+        "C107",
+        "C108",
+        "C112"
+      ],
+      "location": "operations.rareStateUnits.hypothesis",
+      "statement": "almost inert; mean-ablation -0.0002 AUC",
+      "check": "forward pass",
+      "evidence": "-0.0002",
+      "commands": [
+        "uv run python scratchpad/e8.py (train forward pass: node activity and churn, mean-ablation per part)"
+      ]
+    },
+    {
+      "id": "V17",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_83",
+      "claims": [
+        "C069",
+        "C001",
+        "C003"
+      ],
+      "location": "operations.churnModelRoot.hypothesis",
+      "statement": "full AUC 0.910; all hidden parts mean-ablated 0.717",
+      "check": "forward pass",
+      "evidence": "0.9095; 0.7166",
+      "commands": [
+        "uv run python scratchpad/e8.py (train forward pass: node activity and churn, mean-ablation per part)"
+      ]
+    },
+    {
+      "id": "V18",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [
+        "C069",
+        "C001",
+        "C003",
+        "C080",
+        "C090"
+      ],
+      "location": "drafted.blocks[0]",
+      "statement": "lead and block paragraphs",
+      "check": "claims",
+      "evidence": "match apart from the 5% rounding noted",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-8f4b05 --out experiments/verifier_bench/runs/run1/vb-8f4b05/recheck.json"
+      ]
+    },
+    {
+      "id": "V19",
+      "grade": "flag",
+      "level": "L4",
+      "part": null,
+      "claims": [
+        "C013",
+        "C008"
+      ],
+      "location": "drafted.worth_checking[0]",
+      "statement": "voice-mail plan lowers churn but more messages raise it",
+      "check": "domain sense",
+      "evidence": "opposite signs for plan and message count; for the domain reviewer",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-8f4b05 --out experiments/verifier_bench/runs/run1/vb-8f4b05/recheck.json"
+      ]
+    }
+  ],
+  "parts": {
+    "ann_83": {
+      "grade": "weakened",
+      "level": "L1"
+    },
+    "ann_81": {
+      "grade": "refuted",
+      "level": "L1"
+    },
+    "ann_79": {
+      "grade": "weakened",
+      "level": "L1"
+    },
+    "ann_80": {
+      "grade": "upheld",
+      "level": "L2"
+    },
+    "ann_82": {
+      "grade": "upheld",
+      "level": "L1"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ]
+}

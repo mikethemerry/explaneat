@@ -1,0 +1,581 @@
+{
+  "item_id": "vb-785c68",
+  "genome_id": "7a8237f3-74cb-40bd-8268-b605f64dac2b",
+  "verifier": "explanation-verifier subagent (run1)",
+  "started_at": "2026-11-10T23:24:37+13:00",
+  "finished_at": "2026-11-10T23:39:30+13:00",
+  "minutes": 15,
+  "overall": {
+    "grade": "refuted",
+    "summary": "The age part's plain hypothesis swaps Ireland and Thailand, and the self-employment technical hypothesis states 12.4% of rows instead of 7.8%; coverage, preservation, closed forms, all 200 claims and every ablation otherwise reproduce, with some off-support category statements weakened."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "refuted",
+      "level": "L3",
+      "part": "ann_121",
+      "claims": [
+        "C137",
+        "C139",
+        "C136"
+      ],
+      "location": "drafted.readdown.ann_121.hypothesis[0]",
+      "statement": "lowest at about 47 years and higher either side, except for people born in Ireland, for whom it rises with age; being born in Thailand lowers it",
+      "check": "probe age 22..70 for the United States, Ireland and Thailand (typical person otherwise)",
+      "evidence": "Ireland and Thailand are swapped. Ireland keeps the V shape, shifted down: 61.1% at 22, 20.5% at 46 (lowest), 34.8% at 70; age-part contribution is the US value minus 1.57 at every age. Thailand is the group whose chance rises with age: 66.0% at 22, 76.1% at 38, 80.2% at 46, 89.5% at 70. Being Thai lowers the chance only for young people (66.0% vs 84.1% at 22, 71.3% vs 74.3% at 30); from about 32 years on it raises it (76.1% vs 61.4% at 38, 80.2% vs 46.5% at 46, 89.5% vs 64.2% at 70). The part's own evidence sentences (C139 Thailand rises 66%->85%; C136 Ireland lowers 63%->26%) say the opposite of this hypothesis.",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-785c68 --sweep age=22:70:7 --sweep native-country=39,21,37"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_124",
+      "claims": [],
+      "location": "operations.self_emp_not_inc_offset.hypothesis",
+      "statement": "Adds +0.646 to the logit of P(<=50K) for that group (12.4% of rows), 0 otherwise",
+      "check": "subgroup workclass == '6'",
+      "evidence": "n = 3034 of 39073 = 7.8% of training rows, not 12.4%. The part is active for exactly those 3034 (0% elsewhere), mean contribution +0.6456. The part's own evidence record says 7.8%. The +0.646, 8292 = 1.822 and 5559 = 1.49 values reproduce.",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-785c68 --where \"workclass == '6'\""
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "weakened",
+      "level": "L1",
+      "part": "ann_121",
+      "claims": [],
+      "location": "operations.age_profile.hypothesis",
+      "statement": "for Thai respondents (27 rows)",
+      "check": "subgroup native-country == '37'; verify vars",
+      "evidence": "26 training rows (vars and subgroup both give n = 26); the evidence text in the same record says 26. Other numbers reproduce: direct age slope -1.03/SD, hinge at z 0.545 (probe minimum at 46.1 years), Ireland -1.57 at every age.",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-785c68 --where \"native-country == '37'\"",
+        "uv run python -m explaneat verify vars experiments/verifier_bench/items/vb-785c68"
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "weakened",
+      "level": "L3",
+      "part": "ann_121",
+      "claims": [
+        "C137",
+        "C014"
+      ],
+      "location": "claims.C137",
+      "statement": "lowest at about 47 years (also drafted.blocks[2] age sentence, drafted.readdown.ann_121.evidence[0], drafted.worth_checking[6] via C014)",
+      "check": "probe age 42..52 by 1 year and 45.8..46.6 by 0.1 year",
+      "evidence": "The model's minimum is at about 46.1 years (score -0.146 at 46.1; -0.139 at 46, -0.121 at 47), matching the technical hypothesis (vertex 46). The claim's turning-point estimate 46.9 comes from a coarse average curve. Off by about one year; shape and the 84% at 22 / 55% at 58 values reproduce.",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-785c68 --sweep age=42:52:11 --no-parts",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-785c68 --sweep age=45.8:46.6:9 --no-parts"
+      ]
+    },
+    {
+      "id": "V5",
+      "grade": "weakened",
+      "level": "L3",
+      "part": "ann_129",
+      "claims": [
+        "C097",
+        "C102",
+        "C105"
+      ],
+      "location": "drafted.readdown.ann_129.evidence[3]",
+      "statement": "A highest education of 7th-8th grade lowers it to about 35%, 9th grade to about 44% and 10th grade to about 49% (same sentence in drafted.blocks[1][3])",
+      "check": "probe education x education-num; subgroup education == '5' and education-num != 4",
+      "evidence": "The numbers reproduce but only for an impossible person: the category is changed while education level stays at 10. All 739 training 7th-8th graders have education level 4 (0 rows otherwise). With matching levels the model does the opposite: high-school graduate (level 9) 71.5%, 7th-8th grade (level 4) 84.6%, 9th grade (5) 84.4%, 10th grade (6) 82.0%. The sentence is extrapolation outside the data and misleads about what the model does for real people. The worth_checking flag [4] correctly flags it.",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-785c68 --sweep education=11,5,6,0 --sweep education-num=9,4,5,6 --no-parts",
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-785c68 --where \"education == '5' and `education-num` != 4\""
+      ]
+    },
+    {
+      "id": "V6",
+      "grade": "weakened",
+      "level": "L3",
+      "part": "ann_129",
+      "claims": [
+        "C099",
+        "C109"
+      ],
+      "location": "drafted.readdown.ann_129.evidence[1]",
+      "statement": "being a wife lowers it to about 41% ... being a woman to about 74% (also drafted.blocks[1][1], drafted.worth_checking[3])",
+      "check": "probe sex x relationship; subgroup male wives",
+      "evidence": "41% is for a male wife (3 training rows); 74% is for a female husband. In support, a woman who is a wife gets 53.3% vs 63.1% for a male husband: the direction (wives lower) holds but the size is overstated (-10 points, not -22).",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-785c68 --sweep sex=male,female --sweep relationship=0,5 --no-parts",
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-785c68 --where \"sex == '1' and relationship == '5'\""
+      ]
+    },
+    {
+      "id": "V7",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.structural_coverage",
+      "statement": "1.0 (and compositional 1.0, full coverage, hierarchy complete)",
+      "check": "verify recheck",
+      "evidence": "recomputed 1.0 / 1.0, no uncovered nodes or edges, 41 Null input nodes, single root income_logit containing the output",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-785c68 --out <scratch>/recheck.json"
+      ]
+    },
+    {
+      "id": "V8",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.function_preservation_max_abs_err",
+      "statement": "5.55e-16",
+      "check": "verify recheck",
+      "evidence": "recomputed 5.55e-16",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-785c68 --out <scratch>/recheck.json"
+      ]
+    },
+    {
+      "id": "V9",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.closed_form_max_abs_err",
+      "statement": "0.0408",
+      "check": "verify recheck",
+      "evidence": "recomputed 0.0408 (ann_122); all leaf closed forms match the recomputed ones",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-785c68 --out <scratch>/recheck.json"
+      ]
+    },
+    {
+      "id": "V10",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.n_splits",
+      "statement": "9 leaves, 2 compositions, 6 splits, 7 identity nodes",
+      "check": "verify recheck",
+      "evidence": "op counts: 6 split_node, 7 add_identity_node, 11 annotate (9 leaves + 2 compositions)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-785c68 --out <scratch>/recheck.json"
+      ]
+    },
+    {
+      "id": "V11",
+      "grade": "upheld",
+      "level": "L3",
+      "part": null,
+      "claims": [],
+      "location": "record.summary",
+      "statement": "linear backbone ablation AUC 0.912->0.790; capital-gain ablation AUC 0.894; kinks ~$4.8k and $5.2k; V vertex 46; short-hours hinge; train acc 0.858 AUC 0.912",
+      "check": "ablate every part to its training mean; probe capital gain 0..6849",
+      "evidence": "AUC 0.9118 -> 0.7895 (backbone), 0.8935 (capital gains); acc 0.8578; gate 262 switches on between 4800 and 4900; main hinge slope steepens between 5000 and 5200; age minimum 46.1",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-785c68 --part ann_129 --to mean",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-785c68 --part ann_130 --to mean"
+      ]
+    },
+    {
+      "id": "V12",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.resisted",
+      "statement": "4262 always on (Holand-Netherlands never in train); Thailand 26 rows; Married-AF-spouse -59, Never-worked +30",
+      "check": "vars; arithmetic from closed form and category counts",
+      "evidence": "the Netherlands n=0; Thailand n=26; -1.62/sd(29 rows)= -59.5, 0.45/sd(9 rows)= +29.6. The 'net +0.10' Thai average was not re-derived.",
+      "commands": [
+        "uv run python -m explaneat verify vars experiments/verifier_bench/items/vb-785c68"
+      ]
+    },
+    {
+      "id": "V13",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "claims",
+      "statement": "200 claims",
+      "check": "verify recheck",
+      "evidence": "200 of 200 recomputed claims reproduce exactly",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-785c68 --out <scratch>/recheck.json"
+      ]
+    },
+    {
+      "id": "V14",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_125",
+      "claims": [
+        "C143",
+        "C142"
+      ],
+      "location": "drafted.readdown.ann_125.evidence[0]",
+      "statement": "those working less than about 50 hours a week (also drafted.blocks[3][0])",
+      "check": "recheck flagged '50' as not in C143",
+      "evidence": "C143's who-numbers give max 49 hours in the active group and C142's threshold is 49.93 hours; the number is right, only the citation omits C142",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-785c68 --out <scratch>/recheck.json"
+      ]
+    },
+    {
+      "id": "V15",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_125",
+      "claims": [
+        "C141",
+        "C142",
+        "C143"
+      ],
+      "location": "drafted.readdown.ann_125.hypothesis[0]",
+      "statement": "raises the chance for fewer hours, steadily up to about 50 hours, then no further",
+      "check": "probe hours 24..60; ablate",
+      "evidence": "79.5% at 24, 63.1% at 40, 50.8% at 50 and flat to 60; slope 0.051 logit/hour below 50; active 80.3%; mean-ablation AUC 0.9076, acc 0.8556 as stated",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-785c68 --sweep hours-per-week=24,30,40,45,48,49,50,51,55,60 --no-parts",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-785c68 --part ann_125 --to mean"
+      ]
+    },
+    {
+      "id": "V16",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_130",
+      "claims": [
+        "C073",
+        "C081",
+        "C083",
+        "C084"
+      ],
+      "location": "drafted.readdown.ann_130.hypothesis[0]",
+      "statement": "lowers as capital gains rise, slowly then faster; less for 9th grade; higher start for Jamaica",
+      "check": "probe capital gain 0..6849 x US/Jamaica/Ecuador; education 9th",
+      "evidence": "US 63.1%->8.8%, Jamaica 71.0%->15.7%; 9th grade at 6849 gives gate 0; logit slope -0.337/k below 4.8k, -0.485/k 4.8-5.2k, -0.644/k above",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-785c68 --sweep capital-gain=0,2000,4000,4600,4800,4900,5000,5200,5400,6000,6849 --sweep native-country=39,23,7"
+      ]
+    },
+    {
+      "id": "V17",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_130",
+      "claims": [],
+      "location": "operations.capital_gain_effect.hypothesis",
+      "statement": "Ecuador removes the $5.2k kink; 9th grade, Jamaica, Nicaragua, Philippines and Scotland remove the $4.8k kink; band means; observed 0.71->0.10; ablation AUC 0.894, acc 0.837",
+      "check": "probe at 6849 by country and education; subgroups by gain band; ablate",
+      "evidence": "gate 262 = 0 for Jamaica, Nicaragua, Philippines, Scotland and 9th grade, 0.165 for US; Ecuador main exit -4.37 vs -4.64; band means (raw) $4.5-5k -3.66, $5.5-8k -5.28; outcome 71.0% (n=131) and 10.3% (n=736); AUC 0.8935, acc 0.8372",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-785c68 --set capital-gain=6849 --sweep native-country=39,23,27,30,34",
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-785c68 --where \"capital-gain >= 5500 and capital-gain < 8000\"",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-785c68 --part ann_130 --to mean"
+      ]
+    },
+    {
+      "id": "V18",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_122",
+      "claims": [
+        "C085",
+        "C088",
+        "C089"
+      ],
+      "location": "operations.capital_gain_hinge.hypothesis",
+      "statement": "linear -0.337/k, hinge above ~$5.2k, 4262 always on, Ecuador disables hinge; ablation AUC 0.9028 acc 0.8463",
+      "check": "probe; ablate",
+      "evidence": "kink between $5.0k and $5.2k; exit -2.07 at 0; AUC 0.9028, acc 0.8463",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-785c68 --part ann_122 --to mean"
+      ]
+    },
+    {
+      "id": "V19",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_123",
+      "claims": [
+        "C126",
+        "C132",
+        "C134"
+      ],
+      "location": "drafted.readdown.ann_123.hypothesis[0]",
+      "statement": "nothing until about 4883 dollars, then steadily lower; Jamaica higher",
+      "check": "probe; ablate",
+      "evidence": "gate 0 at 4800, 0.008 at 4900; active 5.1% (1993 rows); AUC 0.9114 as stated",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-785c68 --part ann_123 --to mean"
+      ]
+    },
+    {
+      "id": "V20",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_129",
+      "claims": [
+        "C091",
+        "C095",
+        "C093",
+        "C094",
+        "C096",
+        "C109",
+        "C098",
+        "C100",
+        "C099",
+        "C090"
+      ],
+      "location": "operations.core_linear_backbone.hypothesis",
+      "statement": "main effects (education-num -0.98/SD, Married-civ -2.87, male -0.50, Exec -0.67, Other-service +0.85, Wife -0.91, Own-child +0.51, AF-spouse -59, Never-worked +30); ablation acc 0.801 AUC 0.790",
+      "check": "closed-form coefficients divided by one-hot SDs from vars counts; ablate",
+      "evidence": "all per-switch effects reproduce to 2 sig figs; ablation AUC 0.7895, acc 0.8007. Backbone+country combined ablation (0.833/0.878) and SHAP values not re-run.",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-785c68 --part ann_129 --to mean"
+      ]
+    },
+    {
+      "id": "V21",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_121",
+      "claims": [],
+      "location": "operations.age_profile.hypothesis",
+      "statement": "V shape, vertex ~46, Ireland direct -1.57, Thailand override; ablation acc 0.8534 AUC 0.9051",
+      "check": "probe; ablate",
+      "evidence": "vertex 46.1; Ireland shift -1.572 at every age; Thailand rises with age; AUC 0.9051, acc 0.8534 (27 rows: see V3)",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-785c68 --part ann_121 --to mean"
+      ]
+    },
+    {
+      "id": "V22",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_121",
+      "claims": [
+        "C137",
+        "C139",
+        "C136"
+      ],
+      "location": "drafted.blocks[2]",
+      "statement": "Age block: lowest ~47, Thailand goes the other way 66%->85%, Ireland lowers 63%->26%",
+      "check": "probe",
+      "evidence": "matches the model (apart from 47 vs 46, V4); this block contradicts the part's own plain hypothesis (V1)",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-785c68 --sweep age=22:70:7 --sweep native-country=39,21,37"
+      ]
+    },
+    {
+      "id": "V23",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_128",
+      "claims": [
+        "C145",
+        "C146",
+        "C147",
+        "C149",
+        "C150",
+        "C148",
+        "C152"
+      ],
+      "location": "operations.country_linear_offsets.hypothesis",
+      "statement": "Columbia +5.8 (64 rows), Scotland +1.77, Portugal -1.40, South +1.16, Peru +0.97, England -0.83, China +0.77, US -0.36; ablation AUC 0.9111",
+      "check": "closed form / one-hot SD; ablate",
+      "evidence": "all reproduce (e.g. 0.234/0.0404 = 5.79; -0.108/0.301 = -0.36); AUC 0.9111",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-785c68 --part ann_128 --to mean"
+      ]
+    },
+    {
+      "id": "V24",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_124",
+      "claims": [
+        "C162",
+        "C163"
+      ],
+      "location": "drafted.readdown.ann_124.hypothesis[0]",
+      "statement": "raises the chance for self-employed not incorporated",
+      "check": "subgroup; ablate",
+      "evidence": "active for exactly the 3034 rows, +0.646 logit, 2215 low incomes; AUC 0.9111, acc 0.8557",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-785c68 --where \"workclass == '6'\"",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-785c68 --part ann_124 --to mean"
+      ]
+    },
+    {
+      "id": "V25",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_126",
+      "claims": [
+        "C165",
+        "C166"
+      ],
+      "location": "drafted.readdown.ann_126.hypothesis[0]",
+      "statement": "raises the chance for other relatives; constant ~+0.48; no measurable ablation change",
+      "check": "arithmetic; ablate",
+      "evidence": "switch +0.95 logit (63%->82%); mean exit 0.479; AUC 0.9117",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-785c68 --part ann_126 --to mean"
+      ]
+    },
+    {
+      "id": "V26",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_127",
+      "claims": [
+        "C168",
+        "C169",
+        "C170"
+      ],
+      "location": "drafted.readdown.ann_127.hypothesis[0]",
+      "statement": "Trinidad and Tobago and preschool raise, Yugoslavia lowers; ~0.3% of rows",
+      "check": "arithmetic from closed form and counts; ablate",
+      "evidence": "T&T +1.86, preschool +1.44, Yugoslavia about -1.24; (21+22+64)/39073 = 0.27%; 19 predictions flip on ablation",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-785c68 --part ann_127 --to mean"
+      ]
+    },
+    {
+      "id": "V27",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_131",
+      "claims": [
+        "C072"
+      ],
+      "location": "operations.income_logit.hypothesis",
+      "statement": "additive root, 8 children, 0.814 and 0.433 weights, 41 unconnected inputs, bias 3.385",
+      "check": "recheck; formula",
+      "evidence": "8 children feed the output by addition; 41 Null inputs; e^-3.385 = 0.0339 matches the formula. SHAP values not re-run.",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-785c68 --out <scratch>/recheck.json"
+      ]
+    },
+    {
+      "id": "V28",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_129",
+      "claims": [
+        "C009",
+        "C095"
+      ],
+      "location": "drafted.worth_checking[0]",
+      "statement": "capital losses lower the chance of a low income",
+      "check": "domain",
+      "evidence": "plausible as a data pattern (people with capital losses hold investments) but not a cause; correctly flagged",
+      "commands": []
+    },
+    {
+      "id": "V29",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_129",
+      "claims": [
+        "C054",
+        "C116"
+      ],
+      "location": "drafted.worth_checking[7]",
+      "statement": "census sampling weight lowers the chance 66%->60%",
+      "check": "domain",
+      "evidence": "the weight describes the survey design, not the person; the model uses it; correctly flagged",
+      "commands": []
+    },
+    {
+      "id": "V30",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_121",
+      "claims": [
+        "C139"
+      ],
+      "location": "drafted.readdown.ann_121.evidence[1]",
+      "statement": "Thailand reverses the age effect",
+      "check": "domain",
+      "evidence": "rests on 26 people; the -4.0 direct term and released hinge are a rare-category artefact",
+      "commands": []
+    },
+    {
+      "id": "V31",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_129",
+      "claims": [
+        "C001",
+        "C004"
+      ],
+      "location": "drafted.worth_checking[2]",
+      "statement": "AF-spouse <1%, never-worked >99%",
+      "check": "domain",
+      "evidence": "extreme switches from 29 and 9 rows of standardised one-hots; correctly flagged",
+      "commands": []
+    }
+  ],
+  "parts": {
+    "ann_131": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_130": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_122": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_123": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_129": {
+      "grade": "weakened",
+      "level": "L3"
+    },
+    "ann_121": {
+      "grade": "refuted",
+      "level": "L3"
+    },
+    "ann_125": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_128": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_124": {
+      "grade": "refuted",
+      "level": "L1"
+    },
+    "ann_126": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_127": {
+      "grade": "upheld",
+      "level": "L3"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ]
+}

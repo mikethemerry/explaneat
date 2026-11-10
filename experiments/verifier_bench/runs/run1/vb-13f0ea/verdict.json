@@ -1,0 +1,179 @@
+{
+ "item_id": "vb-13f0ea",
+ "genome_id": "7c355ee7-77ad-426c-8a6d-9df81d1c65b3",
+ "verifier": "explanation-verifier agent (run1, blind)",
+ "started_at": "2026-11-10T23:51:14+13:00",
+ "finished_at": "2026-11-10T23:52:45+13:00",
+ "minutes": 1.5,
+ "overall": {
+  "grade": "refuted",
+  "summary": "The high heart rate gate is described as raising risk when it lowers it, and the ST depression gate is said to act more with a flat ST segment when the slope partner is a downsloping segment (which switches it off) and the amplifier is the thallium defect. All numbers reproduce."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "refuted",
+   "level": "L3",
+   "part": "ann_34",
+   "claims": [
+    "C54"
+   ],
+   "location": "drafted.readdown.ann_34.hypothesis[0]",
+   "statement": "This part raises the predicted risk for patients with a high maximum heart rate: ... then raises the risk steadily.",
+   "check": "probe --set cp=3 --sweep thalach=120:200:9; C54 direction; readout weight",
+   "evidence": "ann_34 contribution 0 up to 140 bpm, then -0.168 at 150, -0.715 at 160, -1.810 at 180, -2.905 at 200 (risk 2.7% -> 0.0%). C54 says 'lowers'; readout -0.918; the part's own evidence sentence says 'lowers'. The direction is reversed.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-13f0ea --set cp=3 --sweep thalach=120:200:9"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "refuted",
+   "level": "L3",
+   "part": "ann_32",
+   "claims": [
+    "C41",
+    "C43"
+   ],
+   "location": "drafted.readdown.ann_32.hypothesis[0]",
+   "statement": "This part raises the predicted risk with ST depression on exercise, in an uneven way, and more so with a flat ST segment. [C37, C41]",
+   "check": "probe --sweep oldpeak=0:3:7 --sweep slope=1,2,3; C41 is the oldpeak x thal interaction",
+   "evidence": "the gate's contribution is identical for upsloping and flat segments (+0.215 at 1.5 mm, +1.427 at 3 mm in both) and 0 at every oldpeak with a downsloping segment. A flat segment does not change it; C41 (cited) is about a reversible thallium defect, which does amplify it (active 83% with thal 7 vs 27% without).",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-13f0ea --sweep oldpeak=0:3:7 --sweep slope=1,2,3"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "coverage 1.0, full, preservation 1.8e-15, closed-form error 0.027",
+   "check": "verify recheck",
+   "evidence": "all reproduce; 78 of 78 claims; prose numbers all found",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-13f0ea"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_35",
+   "claims": [
+    "C36"
+   ],
+   "location": "operations.heart_disease_logit.hypothesis",
+   "statement": "AUC 0.947; linear core alone 0.930; mean-ablating each gate 0.938 / 0.940 / 0.945; core logit SD 4.90",
+   "check": "verify ablate --to mean; scratch multiablate.py",
+   "evidence": "0.9467; all gates zeroed 0.9299, SD 4.90 left; 0.9382 / 0.9405 / 0.9446",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-13f0ea --part ann_32 --to mean"
+   ]
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_32",
+   "claims": [
+    "C37",
+    "C45",
+    "C46"
+   ],
+   "location": "operations.st_depression_gate.hypothesis",
+   "statement": "active 47.9% (83% with thal:7, 27% without); pushed down by slope:3",
+   "check": "scratch frame.py; probe",
+   "evidence": "116 of 242; 83.3% vs 27.0%; downsloping switches it off in the probe",
+   "commands": []
+  },
+  {
+   "id": "V6",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_33",
+   "claims": [
+    "C51",
+    "C48",
+    "C49",
+    "C50"
+   ],
+   "location": "operations.female_exang_and_gate.hypothesis",
+   "statement": "AND of female and exercise angina; 1.199 for 19 women with exang, 0 elsewhere; cell sizes 96/63/64; positive rates 63/40/76/14%",
+   "check": "scratch frame.py truth table",
+   "evidence": "women+exang n=19, 63.2%, gate 1.199; men/no 96 39.6%; men/exang 63 76.2%; women/no 64 14.1%; gate 0 in the other cells",
+   "commands": []
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_34",
+   "claims": [
+    "C60",
+    "C58",
+    "C53",
+    "C56"
+   ],
+   "location": "operations.thalach_cp3_protective_gate.hypothesis",
+   "statement": "protective; active 80% with cp:3 vs 10.5% otherwise; threshold about 147 bpm",
+   "check": "frame; probe",
+   "evidence": "80.0% vs 10.5%; off at 140, on at 150 bpm (cp 3); readout lowers risk",
+   "commands": []
+  },
+  {
+   "id": "V8",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_32",
+   "claims": [
+    "C43"
+   ],
+   "location": "drafted.worth_checking[5]",
+   "statement": "a downsloping ST segment switches off the ST depression gate",
+   "check": "domain",
+   "evidence": "downsloping ST is usually the most worrying pattern; 17 patients. Already flagged.",
+   "commands": []
+  },
+  {
+   "id": "V9",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_35",
+   "claims": [
+    "C24"
+   ],
+   "location": "drafted.worth_checking[2]",
+   "statement": "fasting blood sugar above 120 mg/dL lowers risk",
+   "check": "domain",
+   "evidence": "already flagged",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_35": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_32": {
+   "grade": "refuted",
+   "level": "L3"
+  },
+  "ann_33": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_34": {
+   "grade": "refuted",
+   "level": "L3"
+  }
+ },
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ]
+}

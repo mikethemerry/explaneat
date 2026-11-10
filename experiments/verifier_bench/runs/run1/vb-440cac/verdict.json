@@ -1,0 +1,884 @@
+{
+ "item_id": "vb-440cac",
+ "genome_id": "4b0eb5a6-5859-4ee8-80fe-18ab72f22959",
+ "verifier": "explanation-verifier subagent (run1)",
+ "started_at": "2026-11-10T23:14:46+13:00",
+ "finished_at": "2026-11-10T23:27:16+13:00",
+ "minutes": 12,
+ "overall": {
+  "grade": "weakened",
+  "summary": "Coverage, function preservation, closed forms, all 135 claims and nearly every technical number reproduce, and probes confirm each part's behaviour. Weakenings: the voice-mail plan's linear term is stated as -2.37 logit (direct edge -1.96; -2.37 is close to the whole-model mean), the heavy-daytime part is said to act on customers 'all without a voice-mail plan' (38 of 1033 have one), two cells of the service-call table are off, and three sentences round 4.45% up to 'about 5%'."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "1.0 (compositional 1.0, full coverage, hierarchy complete)",
+   "check": "verify recheck",
+   "evidence": "recomputed structural 1.0, compositional 1.0, no uncovered nodes or edges; 33 unconnected inputs counted as Null; single root churnModelRoot containing the output",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-440cac --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/recheck.json"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "4.44e-16",
+   "check": "verify recheck",
+   "evidence": "recomputed 4.44e-16",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-440cac --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/recheck.json"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.closed_form_max_abs_err",
+   "statement": "0.0224",
+   "check": "verify recheck",
+   "evidence": "recomputed 0.02244 (rareStateUnits deep cascade); other leaves 0.0018-0.0077",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-440cac --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/recheck.json"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.n_splits",
+   "statement": "4 leaves, 1 composition, 8 splits, 0 identity nodes, 27 hidden nodes",
+   "check": "verify recheck op counts; node listing script",
+   "evidence": "op counts rename 71 / split 8 / annotate 5; hidden nodes 3+2+4+14 (leaves) + 4 relay = 27",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-440cac --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/recheck.json",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/nodes.py"
+   ]
+  },
+  {
+   "id": "V5",
+   "grade": "weakened",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "(3) linear terms (international plan +2.67, voice-mail plan -2.37, per-state offsets)",
+   "check": "direct-edge weights from the replayed structure divided by the training SD; whole-model mean effect of setting the plan 0->1 for every training customer",
+   "evidence": "direct edge of the voice-mail plan is -0.864 per SD = -1.96 logit for holders (typical-customer probe: score -3.765 -> -5.722, i.e. -1.96). -2.37 is not the linear term; the nearest reproducing figure is the whole-model mean effect -2.39, which includes the plan's gate on the heavy-day-use unit 3460. International plan +2.67 matches the whole-model mean (2.668; direct edge alone 2.62). The rest of the summary reproduces: 4 calls & day z<-1 leaf +3.82 logit, churn 95% (n=21); no plan, day z>1 and eve z>1 usage logit +5.24, churn 94% (n=69), same usage with a plan churn 10% (n=31); no shared hidden unit between international plan and international minutes.",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/nodes.py",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/plan.py",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/lin.py",
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-440cac --sweep 'voice mail plan=0,1' --sweep 'total day minutes=150:300:7'"
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "relay 2377,12977->5868->7162 always on and root-owned (4 hidden nodes); rareStateUnits 14 nodes, near dead",
+   "check": "node activations on training rows; mean-ablation of relay",
+   "evidence": "2377/12977/5868/7162 on for all 4000 rows; relay constant -1.28 logit; mean-ablating it changes train AUC by 0.0000; rareStateUnits has 14 hidden nodes, ablation drop 0.0002",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/nodes.py",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/cells.py"
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.performance_sources",
+   "statement": "full AUC 0.9095; all hidden ablated 0.7166; jointly linearised 0.8354; per-part drops",
+   "check": "own AUC script (ablation and least-squares linearisation of each part's logit contribution on its inputs)",
+   "evidence": "full 0.9095; all hidden mean-ablated 0.7166; ablation drops 0.1126 / 0.0176 / 0.0152 / 0.0002; linearise drops 0.0203 / 0.0076 / 0.0081 / 0.0000; day+bill jointly 0.0245; all four linearised 0.8349",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/lin.py",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/lin2.py"
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "structure",
+   "statement": "entry/exit/subgraph nodes of the 5 annotations; one root over 4 leaves",
+   "check": "verify recheck; verify vars",
+   "evidence": "hierarchy complete, single root containing output 0, all leaves under it; each leaf's numeric max error <= 3.6e-15",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-440cac --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/recheck.json",
+    "uv run python -m explaneat verify vars experiments/verifier_bench/items/vb-440cac"
+   ]
+  },
+  {
+   "id": "V9",
+   "grade": "weakened",
+   "level": "L1",
+   "part": "ann_83",
+   "claims": [],
+   "location": "operations.churnModelRoot.hypothesis",
+   "statement": "Linear term: international_plan +0.77/SD (+2.67 logit for plan holders), voice_mail_plan -0.86/SD (-2.37 for holders)",
+   "check": "direct-edge weights and training SDs",
+   "evidence": "-0.86/SD with SD 0.441 gives -1.96 per holder, not -2.37 (internally inconsistent); +0.77/SD with SD 0.293 gives +2.62 (stated 2.67, which is the whole-model mean 2.668). All other numbers in this hypothesis reproduce: bias -2.00; vmail messages +0.41, intl minutes +0.45, eve minutes +0.22, night charge +0.22, account length +0.12 per SD; 17 direct state edges; state:46 -1.89, state:4 +1.48, state:47 +1.22, state:31 +0.86, state:0 -0.82, state:50 -0.76 logit; 33 unconnected inputs; relay constant -1.28; AUCs 0.910 / 0.717 / 0.835 / 0.021 / 0.025.",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/lin.py",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/plan.py",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/lin2.py"
+   ]
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_83",
+   "claims": [
+    "C069"
+   ],
+   "location": "drafted.readdown.ann_83.hypothesis[0]",
+   "statement": "the model adds up its inputs into one score, with four parts adding to it",
+   "check": "structure (output node is sigmoid of a weighted sum of direct inputs and part exits); verify recheck C069",
+   "evidence": "output in-edges are 25 direct inputs plus the leaf exits and the relay; C069 reproduces",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-440cac --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/recheck.json",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/nodes.py"
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_83",
+   "claims": [
+    "C069"
+   ],
+   "location": "drafted.readdown.ann_83.evidence[0]",
+   "statement": "score is the sum, checked on 4000 customers",
+   "check": "verify recheck",
+   "evidence": "C069 reproduces; function preservation 4.4e-16",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-440cac --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/recheck.json"
+   ]
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_83",
+   "claims": [
+    "C001",
+    "C003"
+   ],
+   "location": "drafted.readdown.ann_83.evidence[1]",
+   "statement": "international plan 2% -> 24%; vmail messages 2% -> 10% at 32, levelling off",
+   "check": "probe --sweep 'international plan=0,1'; probe vmail messages",
+   "evidence": "international plan: 2.3% -> 24.4%; vmail messages 0/10/20/32 at 7 intl minutes: 1.7/3.1/4.3/6.3%, at 14 minutes 3.2/5.7/10.0/17.6% (rises, increments shrink at the typical customer); claims reproduce",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-440cac --sweep 'international plan=0,1'",
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-440cac --sweep 'number vmail messages=0,10,20,32' --sweep 'total intl minutes=7,14'"
+   ]
+  },
+  {
+   "id": "V13",
+   "grade": "weakened",
+   "level": "L1",
+   "part": "ann_83",
+   "claims": [
+    "C012"
+   ],
+   "location": "drafted.readdown.ann_83.evidence[2]",
+   "statement": "from about 2% at 112 to about 5% at 249 minutes",
+   "check": "verify recheck prose check; C012 risk.to",
+   "evidence": "C012 gives 0.0445 (about 4%), not about 5%; difference in the last rounded digit. Shape (nothing until about 217 minutes, then steady) confirmed by probe: 2.3% up to 200 min, 2.7% at 225, 4.5% at 250",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-440cac --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/recheck.json",
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-440cac --sweep 'total day minutes=150:300:7' --sweep 'voice mail plan=0,1'"
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_83",
+   "claims": [
+    "C069"
+   ],
+   "location": "drafted.lead[0]",
+   "statement": "typical customer (West Virginia, 415, no plans, 1 call) about 2%",
+   "check": "probe --hold typical",
+   "evidence": "typical risk 2.3%",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-440cac --sweep 'state=West Virginia,Utah'"
+   ]
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_83",
+   "claims": [
+    "C002",
+    "C013",
+    "C008",
+    "C011",
+    "C020",
+    "C023",
+    "C034",
+    "C004",
+    "C006",
+    "C009",
+    "C015",
+    "C021",
+    "C024",
+    "C054",
+    "C064",
+    "C065",
+    "C066",
+    "C067",
+    "C068"
+   ],
+   "location": "drafted.blocks[0]",
+   "statement": "direct inputs: plans, vmail messages, usage, states (CA 9%, WA 7%, NJ 5%, VT <1%, AK and WY 1%), nulls",
+   "check": "verify recheck (all claims reproduce); probe across states",
+   "evidence": "probe: California 9.2%, Washington 7.3%, New Jersey 5.2%, Vermont 0.3%, Alaska 1.0%, Wyoming 1.1%; voice-mail plan 0.3%; null inputs are among the 33 unconnected nodes",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-440cac --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/recheck.json",
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-440cac --sweep 'state=West Virginia,Utah,North Dakota,California,Vermont,Washington,New Jersey,Alaska,Wyoming'"
+   ]
+  },
+  {
+   "id": "V16",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_83",
+   "claims": [],
+   "location": "operations.churnModelRoot.evidence[0]",
+   "statement": "analytical formula, shap, empirical viz records",
+   "check": "root closed form against output weights",
+   "evidence": "1/(7.42 e^{...}): e^2.004 = 7.42 and the listed coefficients equal the output in-edge weights",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/nodes.py"
+   ]
+  },
+  {
+   "id": "V17",
+   "grade": "weakened",
+   "level": "L1",
+   "part": "ann_81",
+   "claims": [],
+   "location": "operations.serviceCallsHinges.hypothesis",
+   "statement": "table: ... 5 calls & day z<-1: +5.6 / 100%; <=2 calls: ~0 / 5-9% (except the high-usage bin)",
+   "check": "leaf contribution (model with leaf exits at 0) per calls x day-charge z bin, training rows",
+   "evidence": "2 calls & day z<-1: +0.88 logit (n=150), not ~0 (1 call & z<-1 +0.20); 5 calls & z<-1: +5.74 (n=10, churn 100%), stated +5.6. Other cells reproduce: 4 calls & z<-1 +3.82 / 95% (n=21); 4 calls & z>1 +0.85 / 33% (n=33). Unit counts and rates reproduce: 9203 on 848 rows churn 25.4%, weight +1.41; 5395 on 810 rows, +1.93, max +6.0; 553 on 555 rows churn 45.9%, relay +0.141 per unit, max +0.45; thresholds (>=3 calls; >=4 calls unless day z>0.88) follow from the weights; no direct edge from calls; ablation drop 0.1126, linearise 0.0203.",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/lin.py",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/cells.py",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/nodes.py"
+   ]
+  },
+  {
+   "id": "V18",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_81",
+   "claims": [
+    "C078",
+    "C075"
+   ],
+   "location": "drafted.readdown.ann_81.hypothesis[0]",
+   "statement": "raises churn from about 3 calls, more when the daytime charge is low",
+   "check": "probe --sweep calls=0:5 x day charge 20,40",
+   "evidence": "typical: 0-2 calls 2.3%, 3 calls 2.5%, 4 calls 13.7%; at $20: 2.3/2.3/3.5/10.1/40.5/80.7%, at $40: 2.3/2.3/2.3/2.4/5.0/21.5%. Low charge strengthens the calls effect as stated",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-440cac --sweep 'number customer service calls=0:5:6' --sweep 'total day charge=20,40'",
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-440cac --sweep 'number customer service calls=0:4:5'"
+   ]
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_81",
+   "claims": [
+    "C080"
+   ],
+   "location": "drafted.readdown.ann_81.evidence[0]",
+   "statement": "active for 1303 of 4000, 302 left; 2% -> 3%",
+   "check": "verify ablate --part ann_81",
+   "evidence": "affected 1303 (32.6%), outcome 23.2% where it acts (302 of 1303); C080 reproduces",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-440cac --part ann_81"
+   ]
+  },
+  {
+   "id": "V20",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_81",
+   "claims": [
+    "C078",
+    "C071"
+   ],
+   "location": "drafted.readdown.ann_81.evidence[1]",
+   "statement": "from about 3 calls; 0 -> 4 calls 2% -> 13%",
+   "check": "probe calls 0:4",
+   "evidence": "13.7% at 4 calls; first effect at 3 calls (2 calls at $20)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-440cac --sweep 'number customer service calls=0:4:5'"
+   ]
+  },
+  {
+   "id": "V21",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_81",
+   "claims": [
+    "C075",
+    "C070",
+    "C079"
+   ],
+   "location": "drafted.readdown.ann_81.evidence[2]",
+   "statement": "low charge: calls raise it to about 6% at 3 calls; higher day charge lowers it, then no further",
+   "check": "probe frequent callers (where calls>=3) day charge 10:45",
+   "evidence": "30.4% at $10, 10.1% at $20, 2.8% at $30, flat 2.4-2.5% at $35-40 through the part; claims reproduce",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-440cac --hold 'where:number_customer_service_calls >= 3' --sweep 'total day charge=10:45:8'"
+   ]
+  },
+  {
+   "id": "V22",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_81",
+   "claims": [
+    "C081"
+   ],
+   "location": "drafted.readdown.ann_81.evidence[3]",
+   "statement": "formula exact on 4000 customers",
+   "check": "verify recheck",
+   "evidence": "closed form max err 0.0027, numeric 4.4e-16; coefficients match",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-440cac --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/recheck.json"
+   ]
+  },
+  {
+   "id": "V23",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_81",
+   "claims": [
+    "C080",
+    "C078",
+    "C071",
+    "C075",
+    "C070",
+    "C079"
+   ],
+   "location": "drafted.blocks[1]",
+   "statement": "service-call paragraph",
+   "check": "verify recheck prose numbers",
+   "evidence": "all numbers found in cited claims",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-440cac --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/recheck.json"
+   ]
+  },
+  {
+   "id": "V24",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_81",
+   "claims": [],
+   "location": "layer.parts.ann_81.closed_form",
+   "statement": "three ReLU units",
+   "check": "verify recheck closed forms; node weights",
+   "evidence": "0.282/0.515/-0.683/-0.66; 0.71/-0.645/-0.753; 0.66/-0.672 match the replayed weights",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-440cac --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/recheck.json",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/nodes.py"
+   ]
+  },
+  {
+   "id": "V25",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_79",
+   "claims": [
+    "C088",
+    "C086"
+   ],
+   "location": "drafted.readdown.ann_79.hypothesis[0]",
+   "statement": "heavy day users without a voice-mail plan; nothing until about 218 minutes, then steadily",
+   "check": "probe day minutes 150:300 x plan",
+   "evidence": "no plan: 2.3% to 200 min, 2.7% at 225, 4.5% at 250, 7.6% at 275, 12.4% at 300; with a plan 0.3% throughout",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-440cac --sweep 'total day minutes=150:300:7' --sweep 'voice mail plan=0,1'"
+   ]
+  },
+  {
+   "id": "V26",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_79",
+   "claims": [
+    "C090"
+   ],
+   "location": "drafted.readdown.ann_79.evidence[0]",
+   "statement": "acts on 1033 of 4000 training customers, all without a voice-mail plan, 283 of whom left",
+   "check": "verify subgroup --where \"voice_mail_plan == '1'\"; C090 who.categories",
+   "evidence": "the part is active for 38 of the 1061 plan holders (3.6%); C090 itself gives share without a plan 0.963, not all (unit 1254 has no voice-mail input and switches on for any customer above day z 1.74). 1033 and 283 reproduce (ablate: affected 1033, 27.4% churn).",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-440cac --where \"voice_mail_plan == '1'\"",
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-440cac --part ann_79"
+   ]
+  },
+  {
+   "id": "V27",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_79",
+   "claims": [
+    "C090"
+   ],
+   "location": "drafted.blocks[2]",
+   "statement": "sentence 1: acts on 1033 of 4000 training customers, all without a voice-mail plan",
+   "check": "same as ann_79 evidence[0]",
+   "evidence": "38 of 1033 active customers have a voice-mail plan (96% without, not all)",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-440cac --where \"voice_mail_plan == '1'\""
+   ]
+  },
+  {
+   "id": "V28",
+   "grade": "weakened",
+   "level": "L1",
+   "part": "ann_79",
+   "claims": [
+    "C086"
+   ],
+   "location": "drafted.blocks[2]",
+   "statement": "sentence 3: from 112 to 249 minutes the chance goes from about 2% to about 5% without one",
+   "check": "verify recheck prose check",
+   "evidence": "C086 gives 0.0445 (about 4%); last-digit rounding. Rest of the sentence confirmed by probe",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-440cac --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/recheck.json"
+   ]
+  },
+  {
+   "id": "V29",
+   "grade": "weakened",
+   "level": "L1",
+   "part": "ann_79",
+   "claims": [
+    "C086"
+   ],
+   "location": "drafted.readdown.ann_79.evidence[2]",
+   "statement": "without one ... rises steadily from about 2% to about 5%",
+   "check": "verify recheck prose check",
+   "evidence": "C086 gives 0.0445 (about 4%); last-digit rounding. With a plan stays below 1% confirmed (0.3%)",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-440cac --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/recheck.json",
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-440cac --sweep 'total day minutes=150:300:7' --sweep 'voice mail plan=0,1'"
+   ]
+  },
+  {
+   "id": "V30",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_79",
+   "claims": [
+    "C088"
+   ],
+   "location": "drafted.readdown.ann_79.evidence[1]",
+   "statement": "nothing until about 218 minutes, then steadily from 2% to 7%",
+   "check": "probe; recheck",
+   "evidence": "probe hinge between 200 and 225 minutes; 7.6% at 275; C088 reproduces",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-440cac --sweep 'total day minutes=150:300:7' --sweep 'voice mail plan=0,1'"
+   ]
+  },
+  {
+   "id": "V31",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_79",
+   "claims": [
+    "C085",
+    "C091"
+   ],
+   "location": "drafted.readdown.ann_79.evidence[3]",
+   "statement": "counts more when daytime charge above 30.69",
+   "check": "verify recheck",
+   "evidence": "C085 reproduces (2.3%->7.2% vs 2.3%->2.7%); C091 formula exact",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-440cac --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/recheck.json"
+   ]
+  },
+  {
+   "id": "V32",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_79",
+   "claims": [],
+   "location": "operations.dayUsageHinges.hypothesis",
+   "statement": "1254 on for day z>1.74 (164 rows, churn 62% vs 12%), +2.08 (up to 1.26); 3460 on for z>0.39 without plan, z>2.5 with (995 rows, 28% vs 9.5%), +2.25 (up to 5.3); minutes == charge after z-scoring",
+   "check": "node activations; weights",
+   "evidence": "1254: 164 rows, 62.2% vs 12.1%, weight 2.084, max 0.606 -> 1.26; 3460: 995 rows, 28.3% vs 9.5%, weight 2.25, max 2.37 -> 5.34; thresholds z>0.41 / z>2.6 from weights; max z difference minutes vs charge 5e-4; linearise drop 0.0076",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/nodes.py",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/lin.py",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/lin2.py"
+   ]
+  },
+  {
+   "id": "V33",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_79",
+   "claims": [],
+   "location": "layer.parts.ann_79.closed_form",
+   "statement": "two ReLU units",
+   "check": "verify recheck",
+   "evidence": "coefficients match; max err 0.0018",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-440cac --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/recheck.json"
+   ]
+  },
+  {
+   "id": "V34",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_80",
+   "claims": [
+    "C101",
+    "C098"
+   ],
+   "location": "drafted.readdown.ann_80.hypothesis[0]",
+   "statement": "day charge adds nothing until about 41.59 dollars, then raises it; evening charge counts only when day charge is high",
+   "check": "probe day charge 30:55; probe eve charge x day charge 25,40",
+   "evidence": "through ann_80: off at $30-40, +0.45 at $45, +1.91 at $50, +3.24 at $55; eve charge at day $25: flat 2.3%; at day $40: 2.3% to $16, 3.0% at $19, 9.4% at $22, 46% at $28",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-440cac --sweep 'total day charge=30:55:6'",
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-440cac --sweep 'total eve charge=10:28:7' --sweep 'total day charge=25,40'"
+   ]
+  },
+  {
+   "id": "V35",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_80",
+   "claims": [
+    "C101",
+    "C094",
+    "C092",
+    "C103",
+    "C097",
+    "C106"
+   ],
+   "location": "drafted.readdown.ann_80.evidence[0]",
+   "statement": "2% -> 8% past about 41.59 dollars, uneven",
+   "check": "verify recheck",
+   "evidence": "claims reproduce; 'uneven' matches the claims' fallback shape status",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-440cac --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/recheck.json"
+   ]
+  },
+  {
+   "id": "V36",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_80",
+   "claims": [
+    "C097"
+   ],
+   "location": "drafted.readdown.ann_80.evidence[2]",
+   "statement": "vmail-message rise larger with more than 10 international minutes",
+   "check": "probe vmail messages x intl minutes",
+   "evidence": "at 14 min the rise 0->32 messages is 3.2%->17.6% vs 1.7%->6.3% at 7 min; consistent with unit 387 (-1.07 vmail +0.56 intl)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-440cac --sweep 'number vmail messages=0,10,20,32' --sweep 'total intl minutes=7,14'"
+   ]
+  },
+  {
+   "id": "V37",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_80",
+   "claims": [],
+   "location": "operations.totalChargeChain.hypothesis",
+   "statement": "5604 on 1143 rows (26%); 4045 626 rows 41% vs 9%, +1.57 (up to 7.0); 9871 244 rows 56%, -0.24; 387 on 76% of rows, -0.36",
+   "check": "node activations; weights",
+   "evidence": "5604 1143 rows 25.5%; 4045 626, 41.1% vs 9.2%, 1.569 x 4.46 = 7.0; 9871 244, 56.1%, -0.239, relay -0.018; 387 3028 rows (75.7%), -0.357; linearise drop 0.0081, joint 0.0245",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/nodes.py",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/lin2.py"
+   ]
+  },
+  {
+   "id": "V38",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_80",
+   "claims": [
+    "C098",
+    "C092",
+    "C103",
+    "C093"
+   ],
+   "location": "drafted.blocks[3]",
+   "statement": "total-bill paragraph",
+   "check": "verify recheck prose",
+   "evidence": "all numbers in cited claims; shapes match claim shape classes/status",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-440cac --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/recheck.json"
+   ]
+  },
+  {
+   "id": "V39",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_80",
+   "claims": [],
+   "location": "layer.parts.ann_80.closed_form",
+   "statement": "hinge chain",
+   "check": "verify recheck",
+   "evidence": "coefficients match; max err 0.0077",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-440cac --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/recheck.json"
+   ]
+  },
+  {
+   "id": "V40",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_82",
+   "claims": [
+    "C107",
+    "C108",
+    "C112"
+   ],
+   "location": "drafted.readdown.ann_82.hypothesis[0]",
+   "statement": "small state effects: Utah higher, North Dakota lower",
+   "check": "probe across states; ablate ann_82",
+   "evidence": "Utah 3.2%, North Dakota 1.8% vs 2.3%; ablation: AUC 0.9095 -> 0.9094, mean risk change -0.0002, 4 flips",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-440cac --sweep 'state=West Virginia,Utah,North Dakota,California,Vermont,Washington,New Jersey,Alaska,Wyoming'",
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-440cac --part ann_82"
+   ]
+  },
+  {
+   "id": "V41",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_82",
+   "claims": [
+    "C107",
+    "C108",
+    "C112",
+    "C114"
+   ],
+   "location": "drafted.readdown.ann_82.evidence[0]",
+   "statement": "Utah 3%, North Dakota 2%, messages barely",
+   "check": "verify recheck; probe",
+   "evidence": "claims reproduce; probe agrees",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-440cac --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/recheck.json"
+   ]
+  },
+  {
+   "id": "V42",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_82",
+   "claims": [
+    "C107",
+    "C108",
+    "C112"
+   ],
+   "location": "drafted.blocks[4]",
+   "statement": "about a point at most",
+   "check": "verify recheck; probe",
+   "evidence": "Utah +0.9 point is the largest; max risk change on data 0.085 but mean |change| 0.0013",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-440cac --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/recheck.json",
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-440cac --part ann_82"
+   ]
+  },
+  {
+   "id": "V43",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_82",
+   "claims": [],
+   "location": "operations.rareStateUnits.hypothesis",
+   "statement": "14 hidden nodes, state one-hots 50,23,22,1,28,32,44,12,2; 1887 at most -0.23; 7740 always on, at most +0.40; 4332 +0.07; 15985 +0.02; 3854 <= 0.08; ablation -0.0002",
+   "check": "node activations, weights, entry mapping",
+   "evidence": "entries map to exactly those states plus vmail messages; 1887 15.4 x -0.015 = -0.23 (68 rows); 7740 on 4000 rows, 7.65 x 0.053 = +0.40; 4332 +0.076; 15985 +0.021; 3854 max 0.083; ablation drop 0.0002",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/nodes.py",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/lin.py"
+   ]
+  },
+  {
+   "id": "V44",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_82",
+   "claims": [],
+   "location": "layer.parts.ann_82.closed_form",
+   "statement": "deep cascade",
+   "check": "verify recheck",
+   "evidence": "coefficients match; max err 0.0224 as stated",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-440cac --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/recheck.json"
+   ]
+  },
+  {
+   "id": "V45",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_83",
+   "claims": [
+    "C013",
+    "C008",
+    "C004",
+    "C006",
+    "C015",
+    "C070",
+    "C011",
+    "C093"
+   ],
+   "location": "drafted.worth_checking[0]",
+   "statement": "the four worth-checking flags",
+   "check": "verify recheck; probes",
+   "evidence": "each flag's direction reproduces (plan lowers, messages raise; state spread; day charge lowers via calls part; intl minutes raise via sum, lower via bill)",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-440cac --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vb-440cac/recheck.json"
+   ]
+  },
+  {
+   "id": "V46",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_83",
+   "claims": [
+    "C004",
+    "C006",
+    "C015"
+   ],
+   "location": "drafted.worth_checking[1]",
+   "statement": "state offsets of up to -1.89 / +1.48 logit from 41-90 customers per state",
+   "check": "domain sense; record rare_category_switches",
+   "evidence": "per-state direct offsets exceed the empirical log-odds deviation (Vermont -1.89 vs -0.91, California +1.48 vs +0.80 per the record); likely overfitting of small groups rather than a real regional effect; already flagged",
+   "commands": []
+  },
+  {
+   "id": "V47",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_83",
+   "claims": [
+    "C013",
+    "C008"
+   ],
+   "location": "drafted.worth_checking[0]",
+   "statement": "voice-mail plan lowers churn, more voice-mail messages raise it",
+   "check": "domain sense",
+   "evidence": "messages occur only with a plan, so the two direct terms partly cancel for plan holders; the positive message slope on its own is not a known churn driver; already flagged",
+   "commands": []
+  },
+  {
+   "id": "V48",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_81",
+   "claims": [],
+   "location": "drafted.readdown.ann_81.hypothesis[0]",
+   "statement": "many service calls raise churn, more so for low users",
+   "check": "domain sense",
+   "evidence": "matches well-known churn behaviour (frustrated callers leave); stated in customer terms, not a restatement",
+   "commands": []
+  },
+  {
+   "id": "V49",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_79",
+   "claims": [],
+   "location": "drafted.readdown.ann_79.hypothesis[0]",
+   "statement": "heavy daytime use without a voice-mail plan raises churn",
+   "check": "domain sense",
+   "evidence": "plausible (high bills, price-sensitive customers); domain terms",
+   "commands": []
+  },
+  {
+   "id": "V50",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_80",
+   "claims": [],
+   "location": "drafted.readdown.ann_80.hypothesis[0]",
+   "statement": "high total bill raises churn",
+   "check": "domain sense",
+   "evidence": "plausible and stated in domain terms",
+   "commands": []
+  },
+  {
+   "id": "V51",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_82",
+   "claims": [],
+   "location": "drafted.readdown.ann_82.hypothesis[0]",
+   "statement": "small state effects",
+   "check": "domain sense",
+   "evidence": "honestly described as near-inert; no domain claim beyond the model",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_83": {
+   "grade": "weakened",
+   "level": "L1"
+  },
+  "ann_81": {
+   "grade": "weakened",
+   "level": "L1"
+  },
+  "ann_79": {
+   "grade": "weakened",
+   "level": "L2"
+  },
+  "ann_80": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_82": {
+   "grade": "upheld",
+   "level": "L4"
+  }
+ },
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ]
+}

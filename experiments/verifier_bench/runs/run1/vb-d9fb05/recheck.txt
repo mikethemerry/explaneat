@@ -1,0 +1,38 @@
+... loading the model
+... structure checks
+... closed forms
+... recomputing every claim (this can take a minute on large data)
+... prose
+wrote experiments/verifier_bench/runs/run1/vb-d9fb05/recheck.json
+Re-check of vb-d9fb05 (genome 1f180718-4e8b-43bc-be1d-9a4276f234c3, operations from target)
+  structural coverage 0.9783, compositional 1.0, hierarchy complete True, full coverage False
+  function preservation max |err| 5.55e-16; closed-form max |err| 0.5211499391247294
+  uncovered nodes: ['-62_ab', '6038']
+  claims: 138 of 140 reproduce exactly (140 recomputed)
+  prose: 50 sentences, 158 numbers, 0 not found in the claims they cite
+  findings: 11 mismatch, 2 warn, 1 info (46.1 s): some stated numbers do not reproduce
+  - [mismatch] coverage at record.structural_coverage; stated 1.0; recomputed 0.9783
+  - [mismatch] coverage at record.full_coverage; stated true; recomputed false
+  - [mismatch] closed_form_error at record.closed_form_max_abs_err; stated 0.02795209712577318; recomputed 0.5211499391247294
+  - [mismatch] coverage at record.verified_by_orchestrator.structural_coverage; stated 1.0; recomputed 0.9783
+  - [mismatch] coverage at record.verified_by_orchestrator.full_coverage; stated true; recomputed false
+  - [mismatch] closed_form_error at record.verified_by_orchestrator.closed_form_max_abs_err; stated 0.02795209712577318; recomputed 0.5211499391247294
+  - [mismatch] closed_form at layer.parts.ann_82.closed_form.latex; stated [0.177, 0.371, 0.382]; recomputed []
+      coefficients in the stated closed form that the recomputed one does not have (stated) and the other way round (recomputed)
+  - [mismatch] closed_form at layer.parts.ann_82.closed_form.sympy_srepr.y_0; stated [0.177277, 0.371399, 0.381653]; recomputed []
+  - [mismatch] closed_form_error at layer.parts.ann_82.closed_form.numeric_max_abs_err; stated 6.66134e-16; recomputed 0.523971
+  - [warn] closed_form at operations.day_eve_minutes_hinge.evidence[0].payload.latex; stated [0.177, 0.371, 0.382]
+      coefficients in the written formula that the computed closed form (3 s.f.) does not contain
+  - [mismatch] claim at claims.C089
+      checks.reproduces: stated True, recomputed False
+      estimate.value: stated 6.66134e-16, recomputed 0.523971
+      reasons[0]: stated 'all checks passed', recomputed 'largest difference 0.523971'
+      statement.max_abs_err: stated 6.66134e-16, recomputed 0.523971
+      verified: stated True, recomputed False
+      structure ann_82:structure:formula: 5 field(s) differ
+  - [mismatch] claim at claims.C134
+      estimate.value: stated 2, recomputed 1
+      evidence.switching_units: stated 2, recomputed 1
+      linearity ann_82:linearity:part: 2 field(s) differ
+  - [warn] lint at readdown.ann_82.evidence[3]
+      readdown.ann_82.evidence[3]: cites C089, which is not verified

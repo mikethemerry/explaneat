@@ -1,0 +1,138 @@
+{
+  "target": "experiments/verifier_bench/items/vb-a8ea38",
+  "genome_id": "6a26c823-5e60-424d-a968-74f44d675efa",
+  "label": "vb-a8ea38",
+  "operations_source": "target",
+  "files": {
+    "record": "experiments/verifier_bench/items/vb-a8ea38/record.json",
+    "layer": "experiments/verifier_bench/items/vb-a8ea38/plain_language.json",
+    "operations": "experiments/verifier_bench/items/vb-a8ea38/operations.json",
+    "item": "experiments/verifier_bench/items/vb-a8ea38/item.json"
+  },
+  "findings": [],
+  "structure": {
+    "n_train": 4000,
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "uncovered_nodes": [],
+    "uncovered_edges": [],
+    "null_nodes": [
+      "-10",
+      "-11",
+      "-15",
+      "-16",
+      "-17",
+      "-19",
+      "-26",
+      "-29",
+      "-3",
+      "-34",
+      "-39",
+      "-49",
+      "-5",
+      "-51",
+      "-53",
+      "-6",
+      "-61",
+      "-63",
+      "-67",
+      "-69",
+      "-7",
+      "-8"
+    ],
+    "coverage_hierarchy": {
+      "roots": [
+        "churn_logit"
+      ],
+      "global_root": "churn_logit",
+      "root_contains_outputs": true,
+      "complete": true,
+      "composed": 5,
+      "required": 5,
+      "exempt_disconnected": []
+    },
+    "hierarchy": {
+      "n_annotations": 6,
+      "roots": [
+        "churn_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "not_under_root": [],
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 7.216449660063518e-16,
+    "closed_form_max_abs_err": 0.0076642890955742615,
+    "numeric_max_abs_err": 2.6645352591003757e-15,
+    "leaves": [
+      {
+        "id": "ann_90",
+        "name": "linear_backbone",
+        "numeric_max_abs_err": 2.6645352591003757e-15,
+        "closed_form_max_abs_err": 0.0076642890955742615,
+        "exit_scale": 10.633607340174045
+      },
+      {
+        "id": "ann_91",
+        "name": "csc_usage_gate",
+        "numeric_max_abs_err": 1.7763568394002505e-15,
+        "closed_form_max_abs_err": 0.006234255115733944,
+        "exit_scale": 6.75142363228124
+      },
+      {
+        "id": "ann_92",
+        "name": "csc_hinge_7208",
+        "numeric_max_abs_err": 4.440892098500626e-16,
+        "closed_form_max_abs_err": 0.003518546457539795,
+        "exit_scale": 2.4729896220672267
+      },
+      {
+        "id": "ann_93",
+        "name": "voicemail_chain",
+        "numeric_max_abs_err": 4.440892098500626e-16,
+        "closed_form_max_abs_err": 0.0014795179805986436,
+        "exit_scale": 3.6312777852179896
+      },
+      {
+        "id": "ann_94",
+        "name": "state_offsets",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.005973160647006814,
+        "exit_scale": 7.763164231169215
+      }
+    ],
+    "op_counts": {
+      "rename_node": 71,
+      "add_identity_node": 1,
+      "split_node": 16,
+      "consolidate_node": 2,
+      "annotate": 6
+    },
+    "full_coverage": true
+  },
+  "closed_forms": {
+    "ann_90": "\\begin{aligned}\ny_0 &= 0.127 x_{accountLength} \\\\\n&\\quad + 0.0463 x_{areaCode:415} \\\\\n&\\quad - 0.0167 x_{areaCode:510} \\\\\n&\\quad + 0.751 x_{internationalPlan} \\\\\n&\\quad + 0.609 x_{numberVmailMessages} \\\\\n&\\quad - 0.101 x_{state:0} \\\\\n&\\quad - 0.297 x_{state:11} \\\\\n&\\quad + 0.00648 x_{state:16} \\\\\n&\\quad - 0.0282 x_{state:1_b} \\\\\n&\\quad + 0.0767 x_{state:20} \\\\\n&\\quad - 0.0756 x_{state:24_b} \\\\\n&\\quad + 0.0899 x_{state:26} \\\\\n&\\quad + 0.0255 x_{state:27_b} \\\\\n&\\quad - 0.0274 x_{state:28} \\\\\n&\\quad - 0.0523 x_{state:29} \\\\\n&\\quad - 0.0114 x_{state:2_b} \\\\\n&\\quad - 0.0485 x_{state:30} \\\\\n&\\quad - 0.02 x_{state:36} \\\\\n&\\quad + 0.0288 x_{state:37} \\\\\n&\\quad - 0.103 x_{state:38} \\\\\n&\\quad - 0.0016 x_{state:3_b} \\\\\n&\\quad + 0.0552 x_{state:40} \\\\\n&\\quad - 0.0991 x_{state:41_b} \\\\\n&\\quad - 0.113 x_{state:45} \\\\\n&\\quad - 0.291 x_{state:46} \\\\\n&\\quad + 0.158 x_{state:47} \\\\\n&\\quad - 0.0969 x_{state:48} \\\\\n&\\quad + 0.139 x_{state:4_c} \\\\\n&\\quad - 0.11 x_{state:50_b} \\\\\n&\\quad - 0.196 x_{state:5} \\\\\n&\\quad + 0.0339 x_{state:6} \\\\\n&\\quad - 0.0121 x_{state:8} \\\\\n&\\quad + 0.124 x_{totalDayCalls} \\\\\n&\\quad + 2.02 x_{totalDayMinutes_b} \\\\\n&\\quad + 0.351 x_{totalEveCharge_b} \\\\\n&\\quad + 0.503 x_{totalEveMinutes} \\\\\n&\\quad + 0.701 x_{totalIntlCharge_c} \\\\\n&\\quad - 0.0217 x_{totalIntlMinutes} \\\\\n&\\quad - 0.00876 x_{totalNightCalls} \\\\\n&\\quad + 0.3 x_{totalNightMinutes} \\\\\n&\\quad - 0.99 x_{voiceMailPlan_b}\n\\end{aligned}",
+    "ann_91": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( - 0.317 x_{totalIntlCharge_ab} \\\\\n&\\quad + 0.39 \\operatorname{relu}{\\left(0.049 x_{numberCustomerServiceCalls_abdef} - 1.36 x_{totalDayMinutes_a} + 0.687 \\operatorname{relu}{\\left(0.322 \\operatorname{relu}{\\left(0.87 x_{numberCustomerServiceCalls_abdef} - 0.0887 \\right)} + 1.01 \\right)} + 0.61 \\operatorname{relu}{\\left(0.366 x_{numberCustomerServiceCalls_abdef} + 0.152 x_{state:41_a} - 1.0 x_{totalEveCharge_a} + 0.341 \\operatorname{relu}{\\left(0.986 x_{numberCustomerServiceCalls_abdef} + 0.949 \\operatorname{relu}{\\left(0.994 x_{numberCustomerServiceCalls_abdef} - 0.655 \\right)} - 0.64 \\right)} + 0.405 \\right)} - 1.3 \\right)} \\\\\n&\\quad + 0.0768 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_1 &= \\operatorname{relu}\\bigl( 0.76 x_{state:2_a} \\\\\n&\\quad + 0.432 x_{state:44} \\\\\n&\\quad - 0.851 x_{totalIntlCharge_ab} \\\\\n&\\quad - 0.378 \\operatorname{relu}{\\left(0.322 \\operatorname{relu}{\\left(0.87 x_{numberCustomerServiceCalls_abdef} - 0.0887 \\right)} + 1.01 \\right)} \\\\\n&\\quad + 0.791 \\operatorname{relu}{\\left(- 0.0107 x_{state:32_b} + 0.783 x_{state:4_b} - 0.14 \\right)} \\\\\n&\\quad -2.22 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_2 &= \\operatorname{relu}\\bigl( 0.049 x_{numberCustomerServiceCalls_abdef} \\\\\n&\\quad - 1.36 x_{totalDayMinutes_a} \\\\\n&\\quad + 0.687 \\operatorname{relu}{\\left(0.322 \\operatorname{relu}{\\left(0.87 x_{numberCustomerServiceCalls_abdef} - 0.0887 \\right)} + 1.01 \\right)} \\\\\n&\\quad + 0.61 \\operatorname{relu}{\\left(0.366 x_{numberCustomerServiceCalls_abdef} + 0.152 x_{state:41_a} - 1.0 x_{totalEveCharge_a} + 0.341 \\operatorname{relu}{\\left(0.986 x_{numberCustomerServiceCalls_abdef} + 0.949 \\operatorname{relu}{\\left(0.994 x_{numberCustomerServiceCalls_abdef} - 0.655 \\right)} - 0.64 \\right)} + 0.405 \\right)} \\\\\n&\\quad -1.3 \\bigr)\n\\end{aligned}",
+    "ann_93": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 0.0211 x_{state:27_a} \\\\\n&\\quad + 0.144 \\operatorname{relu}{\\left(0.248 x_{state:1_a} + 0.982 x_{voiceMailPlan_a} + 0.999 \\right)} \\\\\n&\\quad + 0.689 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_1 &= \\operatorname{relu}\\bigl( 0.0557 x_{state:49_a} \\\\\n&\\quad + 1.15 \\operatorname{relu}{\\left(0.0211 x_{state:27_a} + 0.144 \\operatorname{relu}{\\left(0.248 x_{state:1_a} + 0.982 x_{voiceMailPlan_a} + 0.999 \\right)} + 0.689 \\right)} \\\\\n&\\quad + 2.1 \\bigr)\n\\end{aligned}",
+    "ann_92": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 0.542 x_{numberCustomerServiceCalls_c} \\\\\n&\\quad - 0.367 x_{state:49_b} \\\\\n&\\quad -0.679 \\bigr)\n\\end{aligned}",
+    "ann_94": "y_0 = \\operatorname{relu}{\\left(0.999 x_{state:3_a} + 0.17 \\right)} \\\\ y_1 = \\operatorname{relu}{\\left(0.995 x_{state:42} + 0.194 \\right)} \\\\ y_2 = \\operatorname{relu}{\\left(1.0 x_{state:35} - 1.74 \\right)} \\\\ \\begin{aligned}\ny_3 &= \\operatorname{relu}\\bigl( - 0.0107 x_{state:32_a} \\\\\n&\\quad + 0.783 x_{state:4_a} \\\\\n&\\quad -0.14 \\bigr)\n\\end{aligned} \\\\ y_4 = \\operatorname{relu}{\\left(- 0.771 x_{state:50_a} - 0.431 \\right)} \\\\ \\begin{aligned}\ny_5 &= \\operatorname{relu}\\bigl( - 0.0184 x_{state:24_a} \\\\\n&\\quad - 0.414 x_{state:33} \\\\\n&\\quad + 0.00756 x_{state:35} \\\\\n&\\quad - 0.00151 \\operatorname{relu}{\\left(1.0 x_{state:35} - 1.09 \\right)} \\\\\n&\\quad + 1.25 \\bigr)\n\\end{aligned} \\\\ y_6 = \\operatorname{relu}{\\left(- 1.0 x_{state:19} - 0.134 \\right)}"
+  },
+  "claims": {
+    "stated": 158,
+    "recomputed": 158,
+    "reproduced": 158
+  },
+  "prose": {
+    "sentences": 41,
+    "numbers": 120,
+    "unmatched_numbers": 0
+  },
+  "summary": {
+    "mismatch": 0,
+    "warn": 0,
+    "info": 0,
+    "verdict": "numbers reproduce",
+    "seconds": 61.5
+  }
+}

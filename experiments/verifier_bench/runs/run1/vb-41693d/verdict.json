@@ -1,0 +1,311 @@
+{
+ "item_id": "vb-41693d",
+ "genome_id": "c32e8fc8-410f-4126-ab7e-974c658ef3fc",
+ "verifier": "explanation-verifier agent (run1, blind)",
+ "started_at": "2026-11-10T23:33:41+13:00",
+ "finished_at": "2026-11-10T23:39:30+13:00",
+ "minutes": 5.8,
+ "overall": {
+  "grade": "upheld",
+  "summary": "Coverage, closed forms, all 143 claims, the prose numbers, the ablation figures and the age hinge reproduce; only domain flags remain (already listed by the explainer)."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "coverage 1.0, full, hierarchy complete, preservation 6.7e-16, closed-form error 0.012",
+   "check": "verify recheck",
+   "evidence": "all reproduce; 143 of 143 claims; 218 prose numbers all found; no findings",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-41693d"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "55 of 107 inputs; direct edges logit SD 3.37 of 3.85; mean-ablating every hidden unit acc 0.856 -> 0.838, AUC 0.910 -> 0.895; keeping only the age hinge AUC 0.904",
+   "check": "scratch multiablate.py --mean (all hidden parts; all but ann_116); direct edge count",
+   "evidence": "48 direct input edges; SD 3.85 full, 3.37 without hidden, 1.32 removed; all hidden mean-ablated: AUC 0.9099 -> 0.8949, acc 0.8558 -> 0.8379; keeping ann_116: AUC 0.9044, acc 0.8501",
+   "commands": [
+    "scratch multiablate.py vb-41693d ann_115 ... ann_123 --mean"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_116",
+   "claims": [
+    "C091",
+    "C093",
+    "C090",
+    "C094",
+    "C011"
+   ],
+   "location": "drafted.readdown.ann_116.hypothesis[0]",
+   "statement": "age adds nothing until about 50, then raises steadily; Colombia raises to almost certain",
+   "check": "probe --sweep age=22:70:9 (typical); subgroup Colombia; ablate --to mean",
+   "evidence": "part off at 46 years, on at 52 (+0.27), +0.94 at 58, +2.27 at 70, linear above the knot; whole-model risk lowest near 50 (44.9% at 52) and higher either side; Colombia n=64 (98.4% low income); mean-ablation AUC 0.9099 -> 0.9009 as stated",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-41693d --sweep age=22:70:9",
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-41693d --part ann_116 --to mean"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_116",
+   "claims": [],
+   "location": "operations.age_late_career_hinge.hypothesis",
+   "statement": "knot at age z 0.798; slope -0.881 below, +0.648 above",
+   "check": "arithmetic from the closed form and readout",
+   "evidence": "0.968/1.249 = 0.775 plus 0.711*0.041/1.249 = 0.798; -0.881 + 1.224*1.249 = +0.648",
+   "commands": []
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_115",
+   "claims": [
+    "C096",
+    "C003"
+   ],
+   "location": "operations.capital_gain_affine_relay.hypothesis",
+   "statement": "affine relay; contribution -0.702 cg - 1.359; total slope -2.54; knot at z -1.94",
+   "check": "arithmetic from closed form and readout -1.599",
+   "evidence": "1.599*0.439 = 0.702; 1.599*0.850 = 1.359; -1.841 - 0.702 = -2.543; 0.850/0.439 = 1.94",
+   "commands": []
+  },
+  {
+   "id": "V6",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_120",
+   "claims": [
+    "C098",
+    "C099"
+   ],
+   "location": "operations.relationship1_indicator.hypothesis",
+   "statement": "indicator 2.466 for relationship:1, -1.030 logit",
+   "check": "arithmetic",
+   "evidence": "1.56*1.697 - 0.18 = 2.467; *(-0.418) = -1.031; probe shows 0 for non-members",
+   "commands": []
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_121",
+   "claims": [
+    "C101",
+    "C104",
+    "C103"
+   ],
+   "location": "drafted.readdown.ann_121.hypothesis[0]",
+   "statement": "raises the chance for a missing occupation; vetoed by a missing country",
+   "check": "probe --sweep native-country=39,0 --sweep occupation=10,0",
+   "evidence": "ann_121 contribution +0.919 only for missing occupation with known country (risk 62.0% -> 80.4%); 0 when both missing (72.5%) and 0 for a known occupation",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-41693d --sweep native-country=39,0 --sweep occupation=10,0"
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_117",
+   "claims": [
+    "C106"
+   ],
+   "location": "drafted.readdown.ann_117.evidence[0]",
+   "statement": "62% -> 72%; 3916 people do such work; +0.45 logit via 1303",
+   "check": "subgroup occupation=='8'; arithmetic",
+   "evidence": "n = 3916; (2.120-1.711)*1.098 = 0.449",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-41693d --where \"occupation == '8'\""
+   ]
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_118",
+   "claims": [
+    "C108"
+   ],
+   "location": "drafted.readdown.ann_118.evidence[0]",
+   "statement": "62% -> 70%; 4481 people; +0.368 logit",
+   "check": "vars count; arithmetic",
+   "evidence": "administrative or clerical n = 4481; (2.400-0.555)*0.200 = 0.369",
+   "commands": []
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_122",
+   "claims": [
+    "C110"
+   ],
+   "location": "drafted.readdown.ann_122.evidence[0]",
+   "statement": "Portugal 62% -> 18%; 49 people; -1.98 logit",
+   "check": "subgroup; arithmetic",
+   "evidence": "n = 49; (27.229-0.882)*0.075 = 1.98",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-41693d --where \"`native-country` == '32'\""
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_119",
+   "claims": [
+    "C112",
+    "C113"
+   ],
+   "location": "drafted.readdown.ann_119.hypothesis[0]",
+   "statement": "changes the chance by only a few points",
+   "check": "claims recheck",
+   "evidence": "62% -> 64%; readout 0.0186",
+   "commands": []
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_123",
+   "claims": [
+    "C118"
+   ],
+   "location": "drafted.readdown.ann_123.hypothesis[0]",
+   "statement": "barely changes the predictions (dead chain)",
+   "check": "claims recheck; closed form",
+   "evidence": "exit 0 on training rows; C118 reproduces",
+   "commands": []
+  },
+  {
+   "id": "V13",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_124",
+   "claims": [
+    "C089",
+    "C002",
+    "C003",
+    "C011",
+    "C005",
+    "C006",
+    "C018",
+    "C013"
+   ],
+   "location": "drafted.readdown.ann_124.hypothesis[0]",
+   "statement": "adds most characteristics on their own, nine parts add to the sum",
+   "check": "recheck composition claim C089",
+   "evidence": "additive composition verified",
+   "commands": []
+  },
+  {
+   "id": "V14",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_124",
+   "claims": [
+    "C007",
+    "C023"
+   ],
+   "location": "drafted.worth_checking[3]",
+   "statement": "5th-6th grade education lowers the chance of a low income to about 30%",
+   "check": "domain",
+   "evidence": "very low education is associated with low income; a sum-of-one-hots artefact. Already flagged.",
+   "commands": []
+  },
+  {
+   "id": "V15",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_124",
+   "claims": [
+    "C008"
+   ],
+   "location": "drafted.worth_checking[0]",
+   "statement": "capital losses lower the chance of a low income",
+   "check": "domain",
+   "evidence": "plausible marker of having investments, but worth a domain look; already flagged",
+   "commands": []
+  },
+  {
+   "id": "V16",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_116",
+   "claims": [
+    "C090",
+    "C110"
+   ],
+   "location": "drafted.worth_checking[1]",
+   "statement": "Colombia to above 99%, Portugal to about 27%",
+   "check": "domain; subgroup",
+   "evidence": "memorised rare categories (64 and 49 people); already flagged",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_124": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_116": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_115": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_120": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_121": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_117": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_118": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_122": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_119": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_123": {
+   "grade": "upheld",
+   "level": "L4"
+  }
+ },
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ]
+}

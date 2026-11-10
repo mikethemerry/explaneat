@@ -1,0 +1,394 @@
+{
+  "item_id": "vb-890449",
+  "genome_id": "0057df7a-62a2-43c3-b107-9afe3735a7c3",
+  "verifier": "blind verifier agent (run1)",
+  "started_at": "2026-11-10T23:34:18+13:00",
+  "finished_at": "2026-11-10T23:36:25+13:00",
+  "minutes": 2,
+  "overall": {
+    "grade": "refuted",
+    "summary": "One plain sentence (in the block and the read-down) says age raises risk in a jump for patients with a reversible thallium defect; the model raises it only for patients without one. Everything else reproduces."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.structural_coverage",
+      "statement": "structural 1.0, compositional 1.0, hierarchy complete",
+      "check": "verify recheck",
+      "evidence": "recomputed 1.0 / 1.0",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-890449 --out experiments/verifier_bench/runs/run1/vb-890449/recheck.json"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.function_preservation_max_abs_err",
+      "statement": "1.8e-15; closed-form max err 0.011",
+      "check": "verify recheck",
+      "evidence": "recomputed 2.2e-16 and 0.0110",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-890449 --out experiments/verifier_bench/runs/run1/vb-890449/recheck.json"
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.summary",
+      "statement": "16 direct edges, logit SD 3.28, AUC 0.930 alone; nonlinear SD 0.91; total 0.943",
+      "check": "forward pass",
+      "evidence": "linear core SD 3.283, AUC 0.9302; nonlinear SD 0.912; full AUC 0.9434",
+      "commands": [
+        "uv run python scratchpad/e6.py (train forward pass: node activity, disease rates, readout-removal AUCs)"
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.resisted",
+      "statement": "3195 and 3464 affine (100% / 93% active); cp:2 +0.42, fbs:1 -0.31 counter-directional",
+      "check": "forward pass + coefficients",
+      "evidence": "3195 active 100%, 3464 92.6%; cp:2 +1.10 raw (+0.42 z), fbs:1 -0.89 raw (-0.31 z)",
+      "commands": [
+        "uv run python scratchpad/e6.py (train forward pass: node activity, disease rates, readout-removal AUCs)",
+        "uv run python scratchpad/ind.py experiments/verifier_bench/items/vb-890449 0"
+      ]
+    },
+    {
+      "id": "V5",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "claims",
+      "statement": "72 claims",
+      "check": "verify recheck",
+      "evidence": "72 of 72 reproduce",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-890449 --out experiments/verifier_bench/runs/run1/vb-890449/recheck.json"
+      ]
+    },
+    {
+      "id": "V6",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_34",
+      "claims": [
+        "C29"
+      ],
+      "location": "operations.heart_disease_logit.hypothesis",
+      "statement": "AUC 0.943, acc 0.884; linear core 0.930; readout removals -0.0057, -0.0017, -0.0007, -0.0004; oldpeak terms together -0.0064",
+      "check": "forward pass, readout-only removal",
+      "evidence": "0.9434, 0.884; 0.9302; -0.0057, -0.0017, -0.0008, -0.0005; -0.0064 (within rounding); SHAP not re-run",
+      "commands": [
+        "uv run python scratchpad/e6.py (train forward pass: node activity, disease rates, readout-removal AUCs)"
+      ]
+    },
+    {
+      "id": "V7",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_34",
+      "claims": [
+        "C29",
+        "C02",
+        "C03",
+        "C22",
+        "C23",
+        "C15",
+        "C21"
+      ],
+      "location": "drafted.readdown.ann_34.evidence[2]",
+      "statement": "flat ST 28% -> 77% (73% sum alone); heart rate 32% -> 20%; fixed defect 11%, reversible 42%",
+      "check": "claims",
+      "evidence": "match",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-890449 --out experiments/verifier_bench/runs/run1/vb-890449/recheck.json"
+      ]
+    },
+    {
+      "id": "V8",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_31",
+      "claims": [
+        "C54",
+        "C30",
+        "C31",
+        "C32",
+        "C33",
+        "C35"
+      ],
+      "location": "operations.age_hr_reserve_gate.hypothesis",
+      "statement": "3195 always on; active 33% overall, 51% without vs 3% with a reversible defect; disease 11% vs 60%; AUC 0.943 -> 0.938; readout SD 0.64",
+      "check": "forward pass",
+      "evidence": "active 33.1%, 50.7% of 152 vs 3.3% of 90; 11.3% vs 60.5%; AUC -0.0057 (0.9378); SD 0.635",
+      "commands": [
+        "uv run python scratchpad/e6.py (train forward pass: node activity, disease rates, readout-removal AUCs)"
+      ]
+    },
+    {
+      "id": "V9",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_31",
+      "claims": [
+        "C54",
+        "C32"
+      ],
+      "location": "drafted.readdown.ann_31.hypothesis[0]",
+      "statement": "lowers risk when age is low relative to maximum heart rate; reversible defect raises it through the part 1% -> 4%",
+      "check": "claims + probe",
+      "evidence": "C54 boundary age - 0.28 x heart rate < 10.9, agreement 1.0; C32 1.3% -> 4.2%; probe: part on (negative contribution) at 42-50 years with a normal scan",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-890449 --out experiments/verifier_bench/runs/run1/vb-890449/recheck.json",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-890449 --sweep age=42:66:7 --sweep thal=3,7"
+      ]
+    },
+    {
+      "id": "V10",
+      "grade": "refuted",
+      "level": "L3",
+      "part": "ann_31",
+      "claims": [
+        "C30",
+        "C37",
+        "C33"
+      ],
+      "location": "drafted.readdown.ann_31.evidence[1]",
+      "statement": "Through it, older age raises the predicted risk steadily up to about 56 years ..., then no further for most patients, but for patients with a reversible defect on the thallium scan it rises in a jump",
+      "check": "probe --sweep age=42:66:7 --sweep thal=3,7 (typical patient)",
+      "evidence": "the model does the opposite: with a reversible defect the part is off at every age and the typical patient stays at 41.9% from 42 to 66 years; the rise (11.8% at 42 to 28.5% from 54 on) happens with a normal scan. The cited threshold claim C37 is conditioned on patients with a normal thallium scan, and C33 says age acts only without a reversible defect",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-890449 --sweep age=42:66:7 --sweep thal=3,7"
+      ]
+    },
+    {
+      "id": "V11",
+      "grade": "refuted",
+      "level": "L3",
+      "part": "ann_31",
+      "claims": [
+        "C30",
+        "C37"
+      ],
+      "location": "drafted.blocks[1]",
+      "statement": "block copy: Through it, older age raises the predicted risk steadily up to about 56 years ..., then no further for most patients, but for patients with a reversible defect on the thallium scan it rises in a jump",
+      "check": "same probe",
+      "evidence": "the model does the opposite: with a reversible defect the part is off at every age and the typical patient stays at 41.9% from 42 to 66 years; the rise (11.8% at 42 to 28.5% from 54 on) happens with a normal scan. The cited threshold claim C37 is conditioned on patients with a normal thallium scan, and C33 says age acts only without a reversible defect",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-890449 --sweep age=42:66:7 --sweep thal=3,7"
+      ]
+    },
+    {
+      "id": "V12",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_31",
+      "claims": [
+        "C33",
+        "C31",
+        "C35"
+      ],
+      "location": "drafted.readdown.ann_31.evidence[2]",
+      "statement": "with a reversible defect age leaves the risk at about 42%; heart rate lowers more without a defect",
+      "check": "probe + claims",
+      "evidence": "probe: 41.9% at every age with thal 7; C35 31.6% -> 20.3% vs 45.6% -> 39.6%",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-890449 --sweep age=42:66:7 --sweep thal=3,7"
+      ]
+    },
+    {
+      "id": "V13",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_33",
+      "claims": [
+        "C40",
+        "C41",
+        "C42"
+      ],
+      "location": "operations.oldpeak_hinges.hypothesis",
+      "statement": "1946 active 50% (disease 64%), 3284 active 24% (79%); convex two-kink; removal <= 0.001 AUC",
+      "check": "forward pass",
+      "evidence": "50.0% (121, 63.6%); 24.0% (58, 79.3%); readout removals -0.0008 / -0.0005",
+      "commands": [
+        "uv run python scratchpad/e6.py (train forward pass: node activity, disease rates, readout-removal AUCs)"
+      ]
+    },
+    {
+      "id": "V14",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_33",
+      "claims": [
+        "C40",
+        "C41"
+      ],
+      "location": "drafted.readdown.ann_33.hypothesis[0]",
+      "statement": "raises risk with ST depression, slowly then faster, only above about 0.8 mm",
+      "check": "claims",
+      "evidence": "C41 threshold 0.78 mm; C40 accelerating 28% -> 47%",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-890449 --out experiments/verifier_bench/runs/run1/vb-890449/recheck.json"
+      ]
+    },
+    {
+      "id": "V15",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_32",
+      "claims": [
+        "C44",
+        "C45",
+        "C46",
+        "C48",
+        "C52",
+        "C55"
+      ],
+      "location": "operations.st_slope_chol_gate.hypothesis",
+      "statement": "3464 active 93%; 1476 active for 98% of 110 flat vs 7% of others; disease 67% vs 23%; corr with oldpeak 0.69; AUC 0.943 -> 0.942; SD 0.18",
+      "check": "forward pass",
+      "evidence": "92.6%; 98.2% of 110 vs 6.8%; 66.7% vs 23.2%; corr 0.692; AUC -0.0017 (0.9418); SD 0.183",
+      "commands": [
+        "uv run python scratchpad/e6.py (train forward pass: node activity, disease rates, readout-removal AUCs)"
+      ]
+    },
+    {
+      "id": "V16",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_32",
+      "claims": [
+        "C44",
+        "C48"
+      ],
+      "location": "drafted.readdown.ann_32.hypothesis[0]",
+      "statement": "raises risk mainly with a flat ST segment, ST depression counts more for them",
+      "check": "claims",
+      "evidence": "C44 28% -> 33%; C48 75% -> 91% flat vs 28% -> 47% otherwise",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-890449 --out experiments/verifier_bench/runs/run1/vb-890449/recheck.json"
+      ]
+    },
+    {
+      "id": "V17",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_32",
+      "claims": [
+        "C55"
+      ],
+      "location": "drafted.readdown.ann_32.evidence[1]",
+      "statement": "switches on (non-flat) above about 2.23 mm ST depression, or ST depression - 0.012 x cholesterol above 0.03; 117 on, 67% vs 23%",
+      "check": "claim C55 rule",
+      "evidence": "rule pieces 2.23 and 0.031 / -0.0121, agreement 1.0, n_on 117",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-890449 --out experiments/verifier_bench/runs/run1/vb-890449/recheck.json"
+      ]
+    },
+    {
+      "id": "V18",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [
+        "C29",
+        "C42",
+        "C52"
+      ],
+      "location": "drafted.lead[0]",
+      "statement": "lead",
+      "check": "claims",
+      "evidence": "match",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-890449 --out experiments/verifier_bench/runs/run1/vb-890449/recheck.json"
+      ]
+    },
+    {
+      "id": "V19",
+      "grade": "flag",
+      "level": "L4",
+      "part": null,
+      "claims": [
+        "C18"
+      ],
+      "location": "drafted.worth_checking[2]",
+      "statement": "fasting blood sugar above 120 mg/dL lowers risk",
+      "check": "domain sense",
+      "evidence": "high fasting blood sugar is a known risk factor; the model gives it a protective effect (28% -> 14%)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-890449 --out experiments/verifier_bench/runs/run1/vb-890449/recheck.json"
+      ]
+    },
+    {
+      "id": "V20",
+      "grade": "flag",
+      "level": "L4",
+      "part": null,
+      "claims": [
+        "C15"
+      ],
+      "location": "drafted.worth_checking[3]",
+      "statement": "fixed thallium defect lowers risk",
+      "check": "domain sense",
+      "evidence": "a fixed defect usually means prior infarction; protective direction is clinically odd (n = 15)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-890449 --out experiments/verifier_bench/runs/run1/vb-890449/recheck.json"
+      ]
+    },
+    {
+      "id": "V21",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_32",
+      "claims": [
+        "C46"
+      ],
+      "location": "operations.st_slope_chol_gate.hypothesis",
+      "statement": "cholesterol lowers the flat-ST gate",
+      "check": "domain sense",
+      "evidence": "negative cholesterol term inside the gate runs against clinical expectation (already noted by the explainer)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-890449 --out experiments/verifier_bench/runs/run1/vb-890449/recheck.json"
+      ]
+    }
+  ],
+  "parts": {
+    "ann_34": {
+      "grade": "upheld",
+      "level": "L2"
+    },
+    "ann_31": {
+      "grade": "refuted",
+      "level": "L3"
+    },
+    "ann_33": {
+      "grade": "upheld",
+      "level": "L2"
+    },
+    "ann_32": {
+      "grade": "upheld",
+      "level": "L4"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ]
+}

@@ -1,0 +1,322 @@
+{
+  "item_id": "vb-274350",
+  "genome_id": "4b0eb5a6-5859-4ee8-80fe-18ab72f22959",
+  "verifier": "independent blind verifier agent (run1)",
+  "started_at": "2026-11-10T23:44:25+13:00",
+  "finished_at": "2026-11-10T23:46:46+13:00",
+  "minutes": 2,
+  "overall": {
+    "grade": "refuted",
+    "summary": "Mostly reproduces; refuted on one technical number (a voice-mail plan is said to move the logit by -2.37; the model gives -1.96), and three sentences round 4.45% up to about 5%."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.structural_coverage",
+      "statement": "1.0 / 1.0 / complete",
+      "check": "verify recheck",
+      "evidence": "recomputed identical",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-274350"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.function_preservation_max_abs_err",
+      "statement": "4.4e-16",
+      "check": "verify recheck",
+      "evidence": "recomputed 4.4e-16",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-274350"
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.closed_form_max_abs_err",
+      "statement": "0.0224",
+      "check": "verify recheck",
+      "evidence": "recomputed 0.0224",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-274350"
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.resisted",
+      "statement": "relay 2377, 12977 -> 5868 -> 7162 always on; rare-state leaf no measurable effect",
+      "check": "node activity; ablate ann_82",
+      "evidence": "all four relay nodes active on 4000/4000 rows; mean-ablating ann_82 AUC 0.9095 -> 0.9094",
+      "commands": [
+        "uv run python scratchpad/nodes.py vb-274350 <node ids>  (hidden-node activity and churn on training rows via the verify model API)",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-274350 --part ann_82 --to mean"
+      ]
+    },
+    {
+      "id": "V5",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_83",
+      "claims": [],
+      "location": "operations.churnModelRoot.hypothesis",
+      "statement": "voice_mail_plan -0.86/SD (-2.37 for holders)",
+      "check": "probe voice-mail plan 0 -> 1 at the typical customer (no part changes)",
+      "evidence": "the score falls by 1.96 logit (-3.765 -> -5.722), all from the direct edge, which matches -0.86/SD x 2.27 SD = -1.95; -2.37 does not reproduce. (International plan: +2.61 direct against the stated +2.67, close.)",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-274350 --sweep \"voice mail plan=0,1\"",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-274350 --sweep \"international plan=0,1\""
+      ]
+    },
+    {
+      "id": "V6",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_83",
+      "claims": [
+        "C069"
+      ],
+      "location": "structure",
+      "statement": "one root (with an always-on relay), four leaves",
+      "check": "verify recheck",
+      "evidence": "hierarchy complete",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-274350"
+      ]
+    },
+    {
+      "id": "V7",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_83",
+      "claims": [
+        "C069"
+      ],
+      "location": "drafted.readdown.ann_83.hypothesis[0]",
+      "statement": "additive score plus four parts",
+      "check": "verify recheck",
+      "evidence": "claims reproduce",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-274350"
+      ]
+    },
+    {
+      "id": "V8",
+      "grade": "weakened",
+      "level": "L1",
+      "part": "ann_83",
+      "claims": [
+        "C012"
+      ],
+      "location": "drafted.readdown.ann_83.evidence[2]",
+      "statement": "daytime minutes take it to about 5% at 249 minutes",
+      "check": "verify recheck",
+      "evidence": "C012 gives 4.45%, which reads as about 4%; only the last rounded digit differs",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-274350"
+      ]
+    },
+    {
+      "id": "V9",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_81",
+      "claims": [
+        "C078",
+        "C075",
+        "C080"
+      ],
+      "location": "drafted.readdown.ann_81.hypothesis[0]",
+      "statement": "raises the chance from about 3 calls, more when daytime charge is low",
+      "check": "probe calls x daytime charge",
+      "evidence": "at $30.69: contribution 0 up to 2 calls, +0.12 at 3, +1.92 at 4, +3.74 at 5; at $15: +1.14 at 2, +4.06 at 4; at $45: +0.83 at 4",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-274350 --sweep \"number customer service calls=0,1,2,3,4,5\" --sweep \"total day charge=15,30.69,45\""
+      ]
+    },
+    {
+      "id": "V10",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_81",
+      "claims": [],
+      "location": "operations.serviceCallsHinges.hypothesis",
+      "statement": "9203 on 848 rows (churn 25%); 5395 on 810; 553 on 555 (churn 46%); mean-ablating the leaf costs 0.113 AUC",
+      "check": "node activity + ablate",
+      "evidence": "848 (25.4%), 810, 555 (45.9%); AUC 0.9095 -> 0.797 (-0.1125)",
+      "commands": [
+        "uv run python scratchpad/nodes.py vb-274350 <node ids>  (hidden-node activity and churn on training rows via the verify model API)",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-274350 --part ann_81 --to mean"
+      ]
+    },
+    {
+      "id": "V11",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_79",
+      "claims": [
+        "C088",
+        "C086",
+        "C090"
+      ],
+      "location": "drafted.readdown.ann_79.hypothesis[0]",
+      "statement": "heavy daytime users without a voice-mail plan: nothing until about 218 minutes, then steadily",
+      "check": "probe day minutes x voice-mail plan",
+      "evidence": "no plan: 0 up to 215 min, +0.026 at 218, +0.721 at 250, +1.808 at 300; with a plan: 0 throughout",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-274350 --sweep \"total day minutes=150,200,215,218,225,250,300\" --sweep \"voice mail plan=0,1\""
+      ]
+    },
+    {
+      "id": "V12",
+      "grade": "weakened",
+      "level": "L1",
+      "part": "ann_79",
+      "claims": [
+        "C086"
+      ],
+      "location": "drafted.readdown.ann_79.evidence[2]",
+      "statement": "rises steadily from about 2% to about 5%",
+      "check": "verify recheck",
+      "evidence": "C086 gives 4.45% (about 4%); last rounded digit only. Same in drafted.blocks[2]",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-274350"
+      ]
+    },
+    {
+      "id": "V13",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_79",
+      "claims": [],
+      "location": "operations.dayUsageHinges.hypothesis",
+      "statement": "1254 on 164 rows (churn 62% vs 12%), up to +1.26; 3460 on 995 rows (28% vs 9.5%), up to +5.3",
+      "check": "node activity",
+      "evidence": "164 (62.2% vs 12.1%), max 0.606 x 2.08 = 1.26; 995 (28.3% vs 9.5%), max 2.372 x 2.25 = 5.34",
+      "commands": [
+        "uv run python scratchpad/nodes.py vb-274350 <node ids>  (hidden-node activity and churn on training rows via the verify model API)"
+      ]
+    },
+    {
+      "id": "V14",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_80",
+      "claims": [
+        "C101",
+        "C098"
+      ],
+      "location": "drafted.readdown.ann_80.hypothesis[0]",
+      "statement": "daytime charge adds from about 41.59 dollars; evening charge counts only when daytime charge is high",
+      "check": "probe evening charge x daytime charge",
+      "evidence": "day $25: contribution -0.552 at every evening charge; day $40: -0.552 up to $17, +0.365 at $20.56, +2.053 at $25",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-274350 --sweep \"total eve charge=12,17,20.56,22,25\" --sweep \"total day charge=25,40\""
+      ]
+    },
+    {
+      "id": "V15",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_80",
+      "claims": [],
+      "location": "operations.totalChargeChain.hypothesis",
+      "statement": "5604 on 1143 (26%); 4045 on 626 (41% vs 9%), up to +7.0; 9871 on 244 (56%); 387 on 76%",
+      "check": "node activity",
+      "evidence": "1143 (25.5%); 626 (41.1% vs 9.2%), 4.46 x 1.57 = 7.0; 244 (56.1%); 387 on 75.7%",
+      "commands": [
+        "uv run python scratchpad/nodes.py vb-274350 <node ids>  (hidden-node activity and churn on training rows via the verify model API)"
+      ]
+    },
+    {
+      "id": "V16",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_82",
+      "claims": [
+        "C107",
+        "C108",
+        "C112"
+      ],
+      "location": "drafted.readdown.ann_82.hypothesis[0]",
+      "statement": "small state effects: Utah higher, North Dakota lower",
+      "check": "recheck + ablate",
+      "evidence": "claims reproduce; AUC change -0.0001",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-274350",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-274350 --part ann_82 --to mean"
+      ]
+    },
+    {
+      "id": "V17",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_83",
+      "claims": [
+        "C013",
+        "C008"
+      ],
+      "location": "drafted.worth_checking[0]",
+      "statement": "voice-mail plan lowers churn but more messages raise it",
+      "check": "domain sense",
+      "evidence": "offsetting weights on the same feature family",
+      "commands": []
+    },
+    {
+      "id": "V18",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_81",
+      "claims": [
+        "C070"
+      ],
+      "location": "drafted.worth_checking[2]",
+      "statement": "a higher daytime charge lowers churn through the service-call part",
+      "check": "domain sense",
+      "evidence": "plausible as low-usage frequent callers, but runs against the usage effect elsewhere",
+      "commands": []
+    }
+  ],
+  "parts": {
+    "ann_83": {
+      "grade": "refuted",
+      "level": "L1"
+    },
+    "ann_81": {
+      "grade": "upheld",
+      "level": "L4"
+    },
+    "ann_79": {
+      "grade": "weakened",
+      "level": "L1"
+    },
+    "ann_80": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_82": {
+      "grade": "upheld",
+      "level": "L1"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ]
+}

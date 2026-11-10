@@ -1,0 +1,716 @@
+{
+  "item_id": "vb-3eccd0",
+  "genome_id": "7c355ee7-77ad-426c-8a6d-9df81d1c65b3",
+  "verifier": "explanation-verifier subagent (run1)",
+  "started_at": "2026-11-10T23:14:46+13:00",
+  "finished_at": "2026-11-10T23:23:27+13:00",
+  "minutes": 9,
+  "overall": {
+    "grade": "weakened",
+    "summary": "All record numbers, closed forms, counts and the 78 claims reproduce; weakened on shape and scope wording: the ST depression gate is described as 'uneven' and 'mainly' above 1.2 mm when it is a clean hinge, the 'only if not downsloping' rule fails at high ST depression, the 147 bpm threshold holds only with non-anginal chest pain, and one heart-rate-gate evidence sentence is a whole-model contrast the part barely contributes to."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.structural_coverage",
+      "statement": "1.0 (compositional 1.0, full coverage, hierarchy complete)",
+      "check": "verify recheck",
+      "evidence": "recomputed structural 1.0, compositional 1.0, hierarchy complete, single root containing the output",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-3eccd0 --out <scratch>/recheck.json"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.function_preservation_max_abs_err",
+      "statement": "1.8e-15",
+      "check": "verify recheck; own reconstruction of the logit from direct edges + gates",
+      "evidence": "recheck 2.2e-16; own additive reconstruction vs StructureNetwork 3.9e-16",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-3eccd0 --out <scratch>/recheck.json"
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.closed_form_max_abs_err",
+      "statement": "0.0269",
+      "check": "verify recheck",
+      "evidence": "recomputed 0.02693 (3-s.f. display rounding)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-3eccd0 --out <scratch>/recheck.json"
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.op_counts",
+      "statement": "3 leaves, 1 composition, 6 splits, 0 identity nodes",
+      "check": "structure of the replayed model",
+      "evidence": "4 annotations; split inputs -2,-6,-10,-15,-17,-26 (sex:0, cp:3, fbs:0, thalach, exang:1, thal:7); 4 hidden nodes 557, 1239, 2124, 3818",
+      "commands": [
+        "python script over vm.structure (scratch core.py)"
+      ]
+    },
+    {
+      "id": "V5",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.summary",
+      "statement": "19 direct edges, logit SD 4.90, ca +2.61, female -1.57; gate SDs 0.78/0.56/0.49; AND adds +2.07; linear core AUC 0.930 vs 0.947; mean-ablation AUC 0.938/0.940/0.945",
+      "check": "count direct edges into output; core and gate contribution SDs; AUCs; verify ablate --to mean per gate",
+      "evidence": "19 direct edges (ca 2.607, sex:0 -1.573); core SD 4.90; contribution SD 0.775/0.558/0.487; ann_33 mean contribution in its 19 patients 2.075; AUC full 0.9467, core only 0.9299; mean-ablation AUC 0.9382/0.9405/0.9446",
+      "commands": [
+        "scratch core2.py",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-3eccd0 --part ann_32 --to mean",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-3eccd0 --part ann_33 --to mean",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-3eccd0 --part ann_34 --to mean",
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-3eccd0 --where \"sex=='0' and exang=='1'\""
+      ]
+    },
+    {
+      "id": "V6",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.resisted",
+      "statement": "6 splits (fbs:0, thal:7, sex:0, exang:1, cp:3, thalach); slope:3 rare 7% with no direct edge; cp:2, fbs:1, restecg:1, restecg:2 unconnected",
+      "check": "structure; subgroup slope=='3'",
+      "evidence": "split list matches; slope:3 (-21) feeds only node 557; 17 of 242 = 7.0% downsloping; -5,-11,-13,-14 have no edges and are root entries",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-3eccd0 --where \"slope=='3'\"",
+        "scratch core.py"
+      ]
+    },
+    {
+      "id": "V7",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "structure",
+      "statement": "entries/exits/subgraphs of ann_32..ann_35 and hierarchy",
+      "check": "verify recheck structure checks; edge list",
+      "evidence": "each gate's subgraph is exactly its hidden node(s) plus split inputs; all three exits feed output 0 directly; no mismatches",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-3eccd0 --out <scratch>/recheck.json"
+      ]
+    },
+    {
+      "id": "V8",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_35",
+      "claims": [],
+      "location": "operations.heart_disease_logit.hypothesis",
+      "statement": "logit = -0.680 + linear core + 0.746*557 + 1.730*1239 - 0.918*2124; coefficients of the 19 direct edges; accuracy 0.876, AUC 0.947, RMSE 0.293",
+      "check": "output bias, direct weights, gate weights; metrics on train",
+      "evidence": "bias -0.6803, gate weights 0.746/1.730/-0.918, all listed direct weights reproduce to 3 s.f.; accuracy 0.876, AUC 0.9467, RMSE 0.2927. SHAP values not rechecked.",
+      "commands": [
+        "scratch core.py",
+        "scratch core2.py"
+      ]
+    },
+    {
+      "id": "V9",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_35",
+      "claims": [],
+      "location": "operations.heart_disease_logit.evidence[0]",
+      "statement": "formula",
+      "check": "recomputed",
+      "evidence": "reproduces (see root hypothesis and record summary checks)",
+      "commands": [
+        "scratch core2.py"
+      ]
+    },
+    {
+      "id": "V10",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_35",
+      "claims": [],
+      "location": "operations.heart_disease_logit.evidence[1]",
+      "statement": "n 242, rmse 0.293, auc 0.9467, acc 0.876",
+      "check": "recomputed",
+      "evidence": "reproduces (see root hypothesis and record summary checks)",
+      "commands": [
+        "scratch core2.py"
+      ]
+    },
+    {
+      "id": "V11",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_35",
+      "claims": [],
+      "location": "operations.heart_disease_logit.evidence[2]",
+      "statement": "AUCs 0.9467/0.9299/0.9382/0.9405/0.9446",
+      "check": "recomputed",
+      "evidence": "reproduces (see root hypothesis and record summary checks)",
+      "commands": [
+        "scratch core2.py"
+      ]
+    },
+    {
+      "id": "V12",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_35",
+      "claims": [],
+      "location": "operations.heart_disease_logit.evidence[3]",
+      "statement": "SHAP importance ranking (ca first)",
+      "check": "not recomputed; consistent with ca having the largest direct weight",
+      "evidence": "not independently checked; ca has the largest direct weight (2.607), consistent with ranking",
+      "commands": []
+    },
+    {
+      "id": "V13",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_35",
+      "claims": [
+        "C36",
+        "C01",
+        "C05",
+        "C16",
+        "C18"
+      ],
+      "location": "drafted.readdown.ann_35.hypothesis[0]",
+      "statement": "additive score; equal steps per vessel; ST segment, sex, chest pain type move risk; three parts add",
+      "check": "claims recheck; C01 ordinal_pattern equal_steps; structure",
+      "evidence": "claims reproduce; ca steps +2.92 logit each; structure is additive with three gates",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-3eccd0 --out <scratch>/recheck.json"
+      ]
+    },
+    {
+      "id": "V14",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_35",
+      "claims": [
+        "C36",
+        "C37"
+      ],
+      "location": "drafted.readdown.ann_35.evidence[1]",
+      "statement": "ST depression does not feed the score directly",
+      "check": "edge list",
+      "evidence": "oldpeak (-18) feeds only node 557",
+      "commands": [
+        "scratch core.py"
+      ]
+    },
+    {
+      "id": "V15",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_35",
+      "claims": [
+        "C09",
+        "C11",
+        "C24",
+        "C21",
+        "C16",
+        "C18",
+        "C19",
+        "C26"
+      ],
+      "location": "drafted.readdown.ann_35.evidence[2]",
+      "statement": "thal:7 12%->37% (27% sum only); fbs>120 to 3% (2% sum only); woman <1%; typical angina <1%, non-anginal 1%, atypical 7%",
+      "check": "verify recheck claim and prose comparison",
+      "evidence": "all cited claims reproduce exactly; numbers found in cited claims",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-3eccd0 --out <scratch>/recheck.json"
+      ]
+    },
+    {
+      "id": "V16",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_32",
+      "claims": [],
+      "location": "layer.parts.ann_32.closed_form",
+      "statement": "relu(-0.417 fbs:0 + 1.28 oldpeak - 1.08 slope:3 + 0.559 thal:7 + 0.085)",
+      "check": "edge weights into 557",
+      "evidence": "weights 1.283, -1.076, -0.417, 0.559 reproduce; recheck closed forms no mismatch",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-3eccd0 --out <scratch>/recheck.json",
+        "scratch core.py"
+      ]
+    },
+    {
+      "id": "V17",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_32",
+      "claims": [
+        "C46"
+      ],
+      "location": "operations.st_depression_gate.hypothesis",
+      "statement": "active 47.9% (83% with thal:7, 27% without); max 4.72; logit SD 0.78; weight +0.746; mean-ablation AUC 0.947->0.938",
+      "check": "verify subgroup thal=='7' / thal!='7'; own activations; ablate",
+      "evidence": "active 116/242 = 47.9%; 75/90 = 83.3% with thal:7, 41/152 = 27.0% without; max 4.715; contribution SD 0.775; AUC 0.9382 without. Sensitivity ranking not rechecked.",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-3eccd0 --where \"thal=='7'\"",
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-3eccd0 --where \"thal!='7'\"",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-3eccd0 --part ann_32 --to mean",
+        "scratch core2.py"
+      ]
+    },
+    {
+      "id": "V18",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_32",
+      "claims": [],
+      "location": "operations.st_depression_gate.evidence[1]",
+      "statement": "n 242, max 4.72, active_frac 0.479, logit_contrib_sd 0.775, 0.27 / 0.833",
+      "check": "same as above",
+      "evidence": "all reproduce",
+      "commands": [
+        "scratch core2.py"
+      ]
+    },
+    {
+      "id": "V19",
+      "grade": "weakened",
+      "level": "L3",
+      "part": "ann_32",
+      "claims": [
+        "C37",
+        "C41"
+      ],
+      "location": "drafted.readdown.ann_32.hypothesis[0]",
+      "statement": "raises the predicted risk with ST depression on exercise, in an uneven way",
+      "check": "probe --sweep oldpeak=0:3:16 (typical); per-patient fold points from the closed form",
+      "evidence": "the part's shape is a clean hinge: exactly zero up to about 1.23 mm for the typical patient (risk 11.9% flat from 0 to 1.2 mm), then a straight rise in the score (+0.16 per 0.2 mm, 13.3% at 1.4 mm to 35.9% at 3.0 mm). 'Uneven' does not name this shape; it should read 'changes nothing until about 1.2 mm, then raises it steadily'. Direction and thal:7 amplification are right.",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-3eccd0 --sweep oldpeak=0:3:16",
+        "scratch fold.py"
+      ]
+    },
+    {
+      "id": "V20",
+      "grade": "weakened",
+      "level": "L3",
+      "part": "ann_32",
+      "claims": [
+        "C37",
+        "C45"
+      ],
+      "location": "drafted.readdown.ann_32.evidence[1]",
+      "statement": "raises the risk in an uneven way, mainly once it rises above about 1.2 mm (between 0.2 and 1.2 mm for different patients); 12% at 0 mm to 32% at 2.8 mm",
+      "check": "same probe; per-patient folds",
+      "evidence": "numbers reproduce (11.9% -> 32.3%, fold 1.23 mm), but the part does nothing at all below the fold ('mainly' understates 'only'), and the rise above it is steady, not uneven. Folds among non-downsloping patients are 0.11, 0.17 or 1.23 mm (12 patients always past it); downsloping patients fold at 2.9 to 5.1 mm, outside the stated range. Same wording recurs in drafted.blocks[1] sentences 1-2, readdown.ann_32.evidence[2-3], readdown.ann_35.evidence[1] and worth_checking[5].",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-3eccd0 --sweep oldpeak=0:3:16",
+        "scratch fold.py"
+      ]
+    },
+    {
+      "id": "V21",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_32",
+      "claims": [
+        "C41"
+      ],
+      "location": "drafted.readdown.ann_32.evidence[2]",
+      "statement": "rise larger with reversible defect: 27%->76% vs 12%->32%",
+      "check": "probe --sweep oldpeak=0:2.8:8 --sweep thal=3,7",
+      "evidence": "thal 3: 11.9% -> 32.3% (gate on from 1.6 mm); thal 7: 27.1% -> 75.7% (gate on from 0.4 mm). Note: fbs above 120 mg/dL lowers the fold about as much (part contribution at 2.8 mm +2.17 vs +2.13 with thal:7), so thal:7 is not the only strong partner.",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-3eccd0 --sweep oldpeak=0:2.8:8 --sweep thal=3,7",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-3eccd0 --sweep oldpeak=0:2.8:8 --sweep fbs=0,1"
+      ]
+    },
+    {
+      "id": "V22",
+      "grade": "weakened",
+      "level": "L3",
+      "part": "ann_32",
+      "claims": [
+        "C43"
+      ],
+      "location": "drafted.readdown.ann_32.evidence[3]",
+      "statement": "raises the risk only if the ST segment does not slope down; with a downsloping segment the risk stays at about 42%",
+      "check": "probe --set slope=3 --sweep oldpeak=0:6:13; subgroup slope=='3'",
+      "evidence": "true over 0 to 2.8 mm (typical risk flat at 41.6%), but inside the data support (oldpeak up to 6.2 mm) the part switches on for downsloping patients too: typical downsloping patient 41.6% at 5.0 mm, 49.1% at 5.5, 59.1% at 6.0 mm; 4 of the 17 downsloping training patients have the part active (4 of 7 with oldpeak >= 3 mm). 'Only if' is an overclaim; 'only at very high ST depression' is what the model does.",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-3eccd0 --set slope=3 --sweep oldpeak=0:6:13",
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-3eccd0 --where \"slope=='3'\"",
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-3eccd0 --where \"slope=='3' and oldpeak>=3\""
+      ]
+    },
+    {
+      "id": "V23",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_32",
+      "claims": [
+        "C46",
+        "C39",
+        "C38",
+        "C47"
+      ],
+      "location": "drafted.readdown.ann_32.evidence[0]",
+      "statement": "acts on 116 of 242, 77 with heart disease; typical active patient >99% both ways",
+      "check": "subgroup / ablate ann_32",
+      "evidence": "ablate: affected 116 (47.9%), outcome rate 66.4% where it acts (= 77/116)",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-3eccd0 --part ann_32"
+      ]
+    },
+    {
+      "id": "V24",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_32",
+      "claims": [
+        "C39",
+        "C38"
+      ],
+      "location": "drafted.blocks[1]",
+      "statement": "thal:7 and fbs>120 each raise typical risk 12% -> 18% through the part",
+      "check": "claims recheck; closed form signs",
+      "evidence": "reproduce (0.177, 0.184); fbs:0 has a negative weight so fbs>120 raises the gate",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-3eccd0 --out <scratch>/recheck.json"
+      ]
+    },
+    {
+      "id": "V25",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_33",
+      "claims": [],
+      "location": "layer.parts.ann_33.closed_form",
+      "statement": "relu(0.903 exang:1 + 0.571 sex:0 - 0.853)",
+      "check": "edge weights into 1239",
+      "evidence": "0.903, 0.571 reproduce",
+      "commands": [
+        "scratch core.py"
+      ]
+    },
+    {
+      "id": "V26",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_33",
+      "claims": [
+        "C51"
+      ],
+      "location": "operations.female_exang_and_gate.hypothesis",
+      "statement": "AND gate: 1.199 for women with exang (n=19, 63%), 0 elsewhere (96/40%, 63/76%, 64/14%); male+exang pre-activation -0.004; +2.07 logit; female direct term -2.18 vs +1.14; active 7.9%; SD 0.56; AUC 0.947->0.940",
+      "check": "subgroup on all four cells; hand computation with standardised inputs; ablate",
+      "evidence": "cells: 19 (63.2%, active 100%), 96 (39.6%, active 0), 63 (76.2%, 0), 64 (14.1%, 0); max activation 1.1993; mean contribution 2.075; -1.573*1.384 = -2.18, -1.573*-0.723 = +1.14; male+exang pre-activation -0.004; SD 0.558; AUC 0.9405 without",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-3eccd0 --where \"sex=='0' and exang=='1'\"",
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-3eccd0 --where \"sex=='1' and exang=='0'\"",
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-3eccd0 --where \"sex=='1' and exang=='1'\"",
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-3eccd0 --where \"sex=='0' and exang=='0'\"",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-3eccd0 --part ann_33 --to mean"
+      ]
+    },
+    {
+      "id": "V27",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_33",
+      "claims": [
+        "C51"
+      ],
+      "location": "drafted.readdown.ann_33.hypothesis[0]",
+      "statement": "raises risk only for women with chest pain on exercise",
+      "check": "subgroup over the four sex x exang cells",
+      "evidence": "active in 19/19 women with exang and 0 of the other 223 patients; ablation raises typical active risk 9% -> 43%",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-3eccd0 --where \"sex=='0' and exang=='1'\""
+      ]
+    },
+    {
+      "id": "V28",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_33",
+      "claims": [
+        "C51",
+        "C48",
+        "C49",
+        "C50",
+        "C52"
+      ],
+      "location": "drafted.readdown.ann_33.evidence[0]",
+      "statement": "19 of 242, 12 positive; 9% -> 43%; whole-model woman effect <1% without exang, 2% with",
+      "check": "claims recheck; subgroup",
+      "evidence": "reproduce (12/19; 0.086 -> 0.429; 0.002 and 0.016)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-3eccd0 --out <scratch>/recheck.json"
+      ]
+    },
+    {
+      "id": "V29",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_34",
+      "claims": [],
+      "location": "layer.parts.ann_34.closed_form",
+      "statement": "relu(0.763 cp:3 + 1.34 thalach - 0.108 relu(1.0 thal:3 - 0.191) - 0.932)",
+      "check": "edge weights into 2124 and 3818",
+      "evidence": "1.338, 0.763, -0.108, 1.003 reproduce",
+      "commands": [
+        "scratch core.py"
+      ]
+    },
+    {
+      "id": "V30",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_34",
+      "claims": [
+        "C60"
+      ],
+      "location": "operations.thalach_cp3_protective_gate.hypothesis",
+      "statement": "3818 takes 0 / 0.702 (56%); 2124 active 80% of cp:3, 10.5% of others, 30.6% overall, max 2.88; weight -0.918; thal:3 branch shifts by -0.076; SD 0.49; AUC 0.947->0.945",
+      "check": "subgroup cp=='3' / cp!='3'; own activations; ablate",
+      "evidence": "3818 values {0, 0.702}, active 55.8%; 2124 active 56/70 = 80.0% and 18/172 = 10.5%, 74/242 = 30.6%; max 2.883; -0.108*0.702 = -0.076; SD 0.487; AUC 0.9446 without",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-3eccd0 --where \"cp=='3'\"",
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-3eccd0 --where \"cp!='3'\"",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-3eccd0 --part ann_34 --to mean",
+        "scratch core2.py"
+      ]
+    },
+    {
+      "id": "V31",
+      "grade": "weakened",
+      "level": "L3",
+      "part": "ann_34",
+      "claims": [
+        "C54",
+        "C59"
+      ],
+      "location": "drafted.readdown.ann_34.hypothesis[0]",
+      "statement": "lowers the predicted risk for patients with a high maximum heart rate: changes nothing until about 147 beats per minute, then lowers the risk steadily",
+      "check": "probe --sweep thalach=130:190:13 --sweep cp=3,4; per-patient folds",
+      "evidence": "147 bpm holds only for non-anginal chest pain (cp:3, 70 patients): cp=3 part off at 145, on at 150 (-0.17). For the typical asymptomatic patient it stays off up to 175 and switches on only by 180 bpm (-0.27). Per-patient folds: 145.7/146.9 bpm (70 patients) vs 173.9/175.1 bpm (172 patients). The threshold is stated for everyone; it should say 'about 147 with non-anginal chest pain, about 175 otherwise'.",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-3eccd0 --sweep thalach=130:190:13 --sweep cp=3,4",
+        "scratch fold.py"
+      ]
+    },
+    {
+      "id": "V32",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_34",
+      "claims": [
+        "C60",
+        "C54",
+        "C58"
+      ],
+      "location": "drafted.readdown.ann_34.evidence[0]",
+      "statement": "74 of 242, 13 positive; typical active patient about 1% -> below 1%",
+      "check": "ablate ann_34; claims recheck",
+      "evidence": "affected 74 (30.6%), outcome 17.6% where it acts (= 13/74); 0.008 -> 0.002",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-3eccd0 --part ann_34"
+      ]
+    },
+    {
+      "id": "V33",
+      "grade": "weakened",
+      "level": "L2",
+      "part": "ann_34",
+      "claims": [
+        "C56"
+      ],
+      "location": "drafted.readdown.ann_34.evidence[3]",
+      "statement": "a thallium result other than normal raises the risk more for patients without non-anginal chest pain (12%->37% vs 1%->4%)",
+      "check": "C56 group fields; closed form of ann_34",
+      "evidence": "the numbers reproduce, but this is a whole-model contrast offered as evidence for this part without 'across the whole model'. Through this part an abnormal thallium scan slightly lowers the risk (thal:3 enters 2124 with -0.108; part effects -0.007 and -0.055 log-odds), and the part's contribution narrows rather than drives the 1.47 vs 1.34 log-odds gap; the gap comes from the direct thal terms and the ST depression gate. Weak relevance to this part.",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-3eccd0 --out <scratch>/recheck.json"
+      ]
+    },
+    {
+      "id": "V34",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_34",
+      "claims": [
+        "C53",
+        "C58"
+      ],
+      "location": "drafted.blocks[3]",
+      "statement": "non-anginal chest pain 12% -> 9% through it; whole-model thalach x cp 3%->below 1% vs 22%->8%",
+      "check": "claims recheck; probe cp=3,4",
+      "evidence": "reproduce; probe shows cp=3 2.2% at 130 to 0.1% at 190 vs cp=4 17.7% to 2.6%",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-3eccd0 --out <scratch>/recheck.json",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-3eccd0 --sweep thalach=130:190:13 --sweep cp=3,4"
+      ]
+    },
+    {
+      "id": "V35",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_35",
+      "claims": [
+        "C36",
+        "C46",
+        "C60",
+        "C51"
+      ],
+      "location": "drafted.lead[0]",
+      "statement": "typical patient 12%; parts act on 116, 74 and 19 patients",
+      "check": "claims recheck; ablate counts",
+      "evidence": "typical risk 11.9%; 116 / 74 / 19 reproduce",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-3eccd0 --out <scratch>/recheck.json"
+      ]
+    },
+    {
+      "id": "V36",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_35",
+      "claims": [
+        "C15",
+        "C17",
+        "C20",
+        "C25",
+        "C21",
+        "C13",
+        "C01",
+        "C08",
+        "C12",
+        "C27",
+        "C28",
+        "C04",
+        "C11",
+        "C02",
+        "C06",
+        "C22"
+      ],
+      "location": "drafted.blocks[0]",
+      "statement": "sum-alone effects of sex, chest pain, fbs, thalach, vessels, cholesterol, blood pressure, age, ECG, slope, thallium",
+      "check": "verify recheck (claims and prose)",
+      "evidence": "all 78 claims reproduce; 0 of 157 prose numbers missing from cited claims; saturation notes match the claims (ca near 100%, chol near 0%)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-3eccd0 --out <scratch>/recheck.json"
+      ]
+    },
+    {
+      "id": "V37",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [
+        "C01",
+        "C18",
+        "C19",
+        "C26",
+        "C24",
+        "C23",
+        "C03",
+        "C43"
+      ],
+      "location": "drafted.worth_checking[0]",
+      "statement": "worth-checking flags (vessels, typical angina lowest, fbs lowers risk, fixed defect lowers risk, thal code 4, downsloping cancels ST depression)",
+      "check": "claims recheck",
+      "evidence": "numbers reproduce; ordering cp:1 0.5% < cp:3 1.0% < cp:2 6.7% < cp:4 11.9% confirmed. worth_checking[5] repeats the 'only if' overclaim of V22.",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-3eccd0 --out <scratch>/recheck.json"
+      ]
+    },
+    {
+      "id": "V38",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_35",
+      "claims": [
+        "C21",
+        "C24",
+        "C23",
+        "C17",
+        "C18"
+      ],
+      "location": "drafted.blocks[0]",
+      "statement": "fasting blood sugar above 120 mg/dL, a fixed thallium defect and typical angina all lower the predicted risk",
+      "check": "domain sense",
+      "evidence": "the model genuinely does this (claims reproduce), but each conflicts with clinical knowledge (diabetes and fixed perfusion defects are risk factors; typical angina is the most suggestive symptom). The explanation already flags these; listed here for the domain reviewer.",
+      "commands": []
+    },
+    {
+      "id": "V39",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_32",
+      "claims": [
+        "C40",
+        "C43"
+      ],
+      "location": "operations.st_depression_gate.hypothesis",
+      "statement": "a downsloping ST segment suppresses the ischaemia gate",
+      "check": "domain sense",
+      "evidence": "downsloping ST is clinically the most worrying slope; the model's -1.08 slope:3 weight in the gate is real (17 patients), and the explainer says so. Flag only.",
+      "commands": []
+    },
+    {
+      "id": "V40",
+      "grade": "upheld",
+      "level": "L4",
+      "part": null,
+      "claims": [],
+      "location": "operations.st_depression_gate.hypothesis",
+      "statement": "plain and technical hypotheses are stated in domain terms",
+      "check": "L4 read",
+      "evidence": "all three gates are described by what they do to the prediction and for whom (ischaemia evidence; women with exercise angina lose their sex protection; high heart rate with non-anginal pain protective); none merely restates the closed form",
+      "commands": []
+    }
+  ],
+  "parts": {
+    "ann_35": {
+      "grade": "upheld",
+      "level": "L4"
+    },
+    "ann_32": {
+      "grade": "weakened",
+      "level": "L3"
+    },
+    "ann_33": {
+      "grade": "upheld",
+      "level": "L4"
+    },
+    "ann_34": {
+      "grade": "weakened",
+      "level": "L3"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ]
+}

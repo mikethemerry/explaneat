@@ -1,0 +1,436 @@
+{
+  "item_id": "vb-e25fb6",
+  "genome_id": "c32e8fc8-410f-4126-ab7e-974c658ef3fc",
+  "verifier": "blind verifier agent (run1)",
+  "started_at": "2026-11-10T23:47:27+13:00",
+  "finished_at": "2026-11-10T23:50:44+13:00",
+  "minutes": 3,
+  "overall": {
+    "grade": "upheld",
+    "summary": "Every number, claim, hypothesis and sentence I checked reproduces; only domain flags (education one-hots and capital losses pointing the unexpected way, use of the survey weight)."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.structural_coverage",
+      "statement": "structural 1.0, compositional 1.0, hierarchy complete",
+      "check": "verify recheck",
+      "evidence": "recomputed 1.0 / 1.0",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e25fb6 --out experiments/verifier_bench/runs/run1/vb-e25fb6/recheck.json"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.function_preservation_max_abs_err",
+      "statement": "6.7e-16; closed-form max err 0.012",
+      "check": "verify recheck",
+      "evidence": "recomputed 6.66e-16 and 0.0121",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e25fb6 --out experiments/verifier_bench/runs/run1/vb-e25fb6/recheck.json"
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.summary",
+      "statement": "direct edges logit SD 3.37 of 3.85; all hidden mean-ablated acc 0.856 -> 0.838, AUC 0.910 -> 0.895; keeping only the age hinge AUC 0.904",
+      "check": "forward pass",
+      "evidence": "3.365 of 3.852; 0.8558 -> 0.8379, 0.9099 -> 0.8949; keep 4647 only: AUC 0.9044, acc 0.850",
+      "commands": [
+        "uv run python scratchpad/e11.py (train forward pass: readout values, mean-ablation per hidden unit, cell tables, empirical rates by age)"
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.resisted",
+      "statement": "five affine relays; 2114 and 613->2245->8678->170 identically 0; three readouts < 0.02",
+      "check": "forward pass",
+      "evidence": "2114 and 170 are 0 on every training row; 1303, 1870, 4973, 9258, 13173 never clip; readouts 170 0.0076, 3119 -0.0047, 9258 0.0015 (4249 0.0186)",
+      "commands": [
+        "uv run python scratchpad/e11.py (train forward pass: readout values, mean-ablation per hidden unit, cell tables, empirical rates by age)"
+      ]
+    },
+    {
+      "id": "V5",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "claims",
+      "statement": "143 claims",
+      "check": "verify recheck",
+      "evidence": "143 of 143 reproduce; prose numbers all found",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e25fb6 --out experiments/verifier_bench/runs/run1/vb-e25fb6/recheck.json"
+      ]
+    },
+    {
+      "id": "V6",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_124",
+      "claims": [
+        "C089"
+      ],
+      "location": "operations.income_logit_root.hypothesis",
+      "statement": "class 1 is 76%; acc 0.8558, AUC 0.9099; SD 3.37 / 1.32; hidden mean-ablated 0.838 / 0.895; only 4647 matters (0.850 / 0.904)",
+      "check": "forward pass",
+      "evidence": "class-1 rate 0.761; 0.8558 / 0.9099; 3.365 / 1.323; 0.838 / 0.895; 0.850 / 0.904; Shapley attributions not re-run",
+      "commands": [
+        "uv run python scratchpad/e11.py (train forward pass: readout values, mean-ablation per hidden unit, cell tables, empirical rates by age)"
+      ]
+    },
+    {
+      "id": "V7",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_124",
+      "claims": [
+        "C089",
+        "C002",
+        "C003",
+        "C011",
+        "C005",
+        "C006",
+        "C018",
+        "C013"
+      ],
+      "location": "drafted.readdown.ann_124.evidence[1]",
+      "statement": "education, capital gains, age, Colombia, Portugal, wife and other-relationship effects",
+      "check": "claims",
+      "evidence": "numbers and directions match",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e25fb6 --out experiments/verifier_bench/runs/run1/vb-e25fb6/recheck.json"
+      ]
+    },
+    {
+      "id": "V8",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_116",
+      "claims": [
+        "C090",
+        "C091",
+        "C092",
+        "C093",
+        "C094"
+      ],
+      "location": "operations.age_late_career_hinge.hypothesis",
+      "statement": "knot at age z 0.798; active 21.9% of non-Colombia rows; slope -0.881 below, +0.648 above; exit range up to 19.9 (Colombia rows ~16.6, +20 logit); empirical U 0.999 ... 0.816; mean-ablation acc 0.8436, AUC 0.9009",
+      "check": "forward pass + empirical rates",
+      "evidence": "active 21.9%; 64 Colombia rows mean exit 16.61; max exit 19.90; empirical rates 0.999, 0.944, 0.665, 0.606, 0.598, 0.663, 0.764, 0.816; 0.8436 / 0.9009",
+      "commands": [
+        "uv run python scratchpad/e11.py (train forward pass: readout values, mean-ablation per hidden unit, cell tables, empirical rates by age)"
+      ]
+    },
+    {
+      "id": "V9",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_116",
+      "claims": [
+        "C091",
+        "C093"
+      ],
+      "location": "drafted.readdown.ann_116.hypothesis[0]",
+      "statement": "age adds nothing until about 50 years, then raises the chance steadily",
+      "check": "probe --sweep age=40:60:6 (typical)",
+      "evidence": "part off at 40-48 years, on at 52 (+0.27), then +0.11 log-odds per year (0.71 at 56, 1.16 at 60)",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-e25fb6 --sweep age=40:60:6"
+      ]
+    },
+    {
+      "id": "V10",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_115",
+      "claims": [
+        "C096"
+      ],
+      "location": "operations.capital_gain_affine_relay.hypothesis",
+      "statement": "1870 = relu(0.439 cg + 0.850) never clips; adds -0.702 cg - 1.359; range [-10.61, -1.26]; 91.6% at zero gain; mean-ablation 0.8553 / 0.9093",
+      "check": "forward pass",
+      "evidence": "readout -1.599 x (0.439, 0.850) = -0.702, -1.359; never clips; 91.6% zero gain; 0.8553 / 0.9093",
+      "commands": [
+        "uv run python scratchpad/e11.py (train forward pass: readout values, mean-ablation per hidden unit, cell tables, empirical rates by age)"
+      ]
+    },
+    {
+      "id": "V11",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_120",
+      "claims": [
+        "C098",
+        "C099"
+      ],
+      "location": "operations.relationship1_indicator.hypothesis",
+      "statement": "7530 = 0 / 2.466, -1.030 logit; net relationship effects -0.14 (1), -0.81 (0), +0.90 (2, 3), +0.18 (4), -1.75 (5); mean-ablation 0.8533 / 0.9073",
+      "check": "forward pass + typical-case logits by relationship",
+      "evidence": "values 0 / 2.466 (x -0.4176 = -1.030); differences between relationship levels at the typical case reproduce (rel1 - rel0 = +0.67, rel2/3 - rel0 = +1.70, rel4 - rel0 = +0.99, rel5 - rel0 = -0.94); 0.8533 / 0.9073",
+      "commands": [
+        "uv run python scratchpad/e11.py (train forward pass: readout values, mean-ablation per hidden unit, cell tables, empirical rates by age)"
+      ]
+    },
+    {
+      "id": "V12",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_121",
+      "claims": [
+        "C101",
+        "C103",
+        "C104"
+      ],
+      "location": "operations.occupation0_country0_gate.hypothesis",
+      "statement": "2197 rows at 2.749 (+0.919), 34 rows at 0; P(y=1) 0.907, 0.853, ~0.75; mean-ablation 0.8547 / 0.9090",
+      "check": "cell table",
+      "evidence": "2197 at 2.749, 34 at 0; 0.907, 0.853, 0.752; 0.8547 / 0.9090",
+      "commands": [
+        "uv run python scratchpad/e11.py (train forward pass: readout values, mean-ablation per hidden unit, cell tables, empirical rates by age)"
+      ]
+    },
+    {
+      "id": "V13",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_117",
+      "claims": [
+        "C106"
+      ],
+      "location": "operations.occupation8_relays.hypothesis",
+      "statement": "1303 {1.711, 2.120}, 9258 {0.240, 3.140}, 2114 dead; +1.878 constant, +0.449 for occupation:8",
+      "check": "forward pass",
+      "evidence": "reproduce exactly",
+      "commands": [
+        "uv run python scratchpad/e11.py (train forward pass: readout values, mean-ablation per hidden unit, cell tables, empirical rates by age)"
+      ]
+    },
+    {
+      "id": "V14",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_118",
+      "claims": [
+        "C108"
+      ],
+      "location": "operations.occupation1_relays.hypothesis",
+      "statement": "4973 {0.555, 2.400}; 3119 {0, 2.349} with readout -0.0047; +0.111 and +0.368",
+      "check": "forward pass",
+      "evidence": "reproduce exactly",
+      "commands": [
+        "uv run python scratchpad/e11.py (train forward pass: readout values, mean-ablation per hidden unit, cell tables, empirical rates by age)"
+      ]
+    },
+    {
+      "id": "V15",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_122",
+      "claims": [
+        "C110"
+      ],
+      "location": "operations.country32_affine_relay.hypothesis",
+      "statement": "13173 {0.882, 27.229}; -1.98 logit for 49 Portugal rows",
+      "check": "forward pass",
+      "evidence": "reproduce (max change 1.98)",
+      "commands": [
+        "uv run python scratchpad/e11.py (train forward pass: readout values, mean-ablation per hidden unit, cell tables, empirical rates by age)"
+      ]
+    },
+    {
+      "id": "V16",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_119",
+      "claims": [
+        "C112",
+        "C113"
+      ],
+      "location": "operations.occupation6_relationship1_gate.hypothesis",
+      "statement": "levels 0 / 0.074 / 4.164 / 5.249 on 9693 / 27697 / 374 / 1309 rows; contribution <= 0.098",
+      "check": "forward pass",
+      "evidence": "values reproduce; counts add to 39073 and match occupation 6 (1683) and relationship 1 (10067); max 0.098",
+      "commands": [
+        "uv run python scratchpad/e11.py (train forward pass: readout values, mean-ablation per hidden unit, cell tables, empirical rates by age)"
+      ]
+    },
+    {
+      "id": "V17",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_123",
+      "claims": [
+        "C118",
+        "C119"
+      ],
+      "location": "operations.dead_relationship_chain.hypothesis",
+      "statement": "170 identically 0",
+      "check": "forward pass",
+      "evidence": "170 max 0 on train",
+      "commands": [
+        "uv run python scratchpad/e11.py (train forward pass: readout values, mean-ablation per hidden unit, cell tables, empirical rates by age)"
+      ]
+    },
+    {
+      "id": "V18",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [
+        "C089",
+        "C002",
+        "C001",
+        "C004",
+        "C016",
+        "C094",
+        "C096",
+        "C099",
+        "C104",
+        "C106",
+        "C108",
+        "C110",
+        "C112",
+        "C118"
+      ],
+      "location": "drafted.blocks[0]",
+      "statement": "lead and block paragraphs",
+      "check": "claims",
+      "evidence": "numbers and directions match",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e25fb6 --out experiments/verifier_bench/runs/run1/vb-e25fb6/recheck.json"
+      ]
+    },
+    {
+      "id": "V19",
+      "grade": "flag",
+      "level": "L4",
+      "part": null,
+      "claims": [
+        "C008"
+      ],
+      "location": "drafted.worth_checking[0]",
+      "statement": "capital losses lower the chance of a low income",
+      "check": "domain sense",
+      "evidence": "odd on its face; in census data people with capital losses tend to be better off; for the domain reviewer",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e25fb6 --out experiments/verifier_bench/runs/run1/vb-e25fb6/recheck.json"
+      ]
+    },
+    {
+      "id": "V20",
+      "grade": "flag",
+      "level": "L4",
+      "part": null,
+      "claims": [
+        "C007",
+        "C023"
+      ],
+      "location": "drafted.worth_checking[3]",
+      "statement": "5th-6th and 7th-8th grade lower the chance of a low income",
+      "check": "domain sense",
+      "evidence": "less schooling giving a lower chance of low income conflicts with expectation; probably offset by the collinear education-num term",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e25fb6 --out experiments/verifier_bench/runs/run1/vb-e25fb6/recheck.json"
+      ]
+    },
+    {
+      "id": "V21",
+      "grade": "flag",
+      "level": "L4",
+      "part": null,
+      "claims": [
+        "C057",
+        "C060"
+      ],
+      "location": "drafted.worth_checking[4]",
+      "statement": "a master's or bachelor's degree raises the chance of a low income",
+      "check": "domain sense",
+      "evidence": "conflicts with expectation; again likely compensated by education-num",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e25fb6 --out experiments/verifier_bench/runs/run1/vb-e25fb6/recheck.json"
+      ]
+    },
+    {
+      "id": "V22",
+      "grade": "flag",
+      "level": "L4",
+      "part": null,
+      "claims": [
+        "C072"
+      ],
+      "location": "drafted.worth_checking[6]",
+      "statement": "census sampling weight lowers the chance",
+      "check": "domain sense",
+      "evidence": "a survey weight should carry no information about the person",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-e25fb6 --out experiments/verifier_bench/runs/run1/vb-e25fb6/recheck.json"
+      ]
+    }
+  ],
+  "parts": {
+    "ann_124": {
+      "grade": "upheld",
+      "level": "L2"
+    },
+    "ann_116": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_115": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_120": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_121": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_117": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_118": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_122": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_119": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_123": {
+      "grade": "upheld",
+      "level": "L1"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ]
+}

@@ -1,0 +1,368 @@
+{
+  "item_id": "vb-2103cc",
+  "genome_id": "0057df7a-62a2-43c3-b107-9afe3735a7c3",
+  "verifier": "independent blind verifier agent (run1)",
+  "started_at": "2026-11-10T23:22:09+13:00",
+  "finished_at": "2026-11-10T23:25:20+13:00",
+  "minutes": 3,
+  "overall": {
+    "grade": "weakened",
+    "summary": "All numbers reproduce and the three parts behave as stated; one sentence attributes an age jump to patients with a reversible thallium defect, for whom the typical patient sees no age effect through the gate."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.structural_coverage",
+      "statement": "1.0, compositional 1.0, hierarchy complete",
+      "check": "verify recheck",
+      "evidence": "recomputed 1.0/1.0, complete",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-2103cc"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.function_preservation_max_abs_err",
+      "statement": "1.78e-15",
+      "check": "verify recheck",
+      "evidence": "recomputed 2.2e-16 (below 1e-9)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-2103cc"
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.closed_form_max_abs_err",
+      "statement": "0.0110",
+      "check": "verify recheck",
+      "evidence": "recomputed 0.0110",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-2103cc"
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.summary",
+      "statement": "gate read out -0.58 is the largest effect; AUC 0.943",
+      "check": "ablate each leaf to zero",
+      "evidence": "removing ann_31 gives AUC 0.9434->0.9378 (largest), ann_32 ->0.9418, ann_33 ->0.9414",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-2103cc --part ann_31 --to zero",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-2103cc --part ann_32 --to zero",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-2103cc --part ann_33 --to zero"
+      ]
+    },
+    {
+      "id": "V5",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.resisted",
+      "statement": "relays 3195 and 3464 affine on data (100%/93% active)",
+      "check": "closed form + vars ranges",
+      "evidence": "3195 = relu(1.07 thal:7 + 0.981) > 0 for both one-hot values; 3464 off only for z-chol < -1.29 (low cholesterol)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-2103cc"
+      ]
+    },
+    {
+      "id": "V6",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_34",
+      "claims": [
+        "C29"
+      ],
+      "location": "structure",
+      "statement": "one root containing the output; three leaves",
+      "check": "verify recheck",
+      "evidence": "hierarchy complete",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-2103cc"
+      ]
+    },
+    {
+      "id": "V7",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_34",
+      "claims": [
+        "C29",
+        "C01",
+        "C02",
+        "C06",
+        "C07"
+      ],
+      "location": "drafted.readdown.ann_34.hypothesis[0]",
+      "statement": "additive score; vessels, ST segment, chest pain, sex each move risk; three parts add",
+      "check": "verify recheck + probe slope",
+      "evidence": "all cited claims reproduce; flat vs upsloping at typical: 28.5% -> 77.2% whole model",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-2103cc",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-2103cc --sweep oldpeak=0,0.5,0.75,0.8,1.0,1.4,1.7,2.0,2.8,4 --sweep slope=1,2"
+      ]
+    },
+    {
+      "id": "V8",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_34",
+      "claims": [],
+      "location": "operations.heart_disease_logit.evidence[1]",
+      "statement": "full model AUC 0.9434, acc 0.884",
+      "check": "ablate output",
+      "evidence": "AUC 0.9434, accuracy 0.884",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-2103cc --part ann_31 --to zero"
+      ]
+    },
+    {
+      "id": "V9",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_31",
+      "claims": [
+        "C54",
+        "C32"
+      ],
+      "location": "drafted.readdown.ann_31.hypothesis[0]",
+      "statement": "lowers risk when age is low for the heart rate; reversible defect raises risk through it from about 1% to 4%",
+      "check": "probe age x thal and thalach x thal",
+      "evidence": "normal scan: contribution -1.76 at 35, -0.33 at 50, 0 from 54 (boundary age - 0.28*152.5 = 10.9 gives 53.6); higher thalach makes it more negative (-0.21 at 130 -> -1.80 at 190); with a reversible defect it is 0 everywhere",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-2103cc --sweep age=35,42,45,50,54,56,60,66,72 --sweep thal=3,7",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-2103cc --set age=45 --sweep thalach=100,118,130,140,150,160,165,175,190 --sweep thal=3,7"
+      ]
+    },
+    {
+      "id": "V10",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_31",
+      "claims": [
+        "C54"
+      ],
+      "location": "drafted.readdown.ann_31.evidence[0]",
+      "statement": "80 of 242 on, 11% vs 60% disease",
+      "check": "ablate ann_31 (rows affected, outcome rate)",
+      "evidence": "80 rows (33.1%), outcome 11.2% where it acts vs 60.5% elsewhere",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-2103cc --part ann_31 --to zero"
+      ]
+    },
+    {
+      "id": "V11",
+      "grade": "weakened",
+      "level": "L3",
+      "part": "ann_31",
+      "claims": [
+        "C30",
+        "C37"
+      ],
+      "location": "drafted.readdown.ann_31.evidence[1]",
+      "statement": "for patients with a reversible defect on the thallium scan, age rises in a jump (typical patient from about 12% at 42 to about 28% at 66)",
+      "check": "probe age sweep with thal=7 (typical patient)",
+      "evidence": "with a reversible defect the gate is off at every age for the typical patient (risk flat at 41.9%, contribution 0); only 3 of 90 such patients have the gate on (subgroup thal==7). The 12%->28% numbers belong to the normal-scan case; the jump applies to a small minority (14% of moving curves)",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-2103cc --sweep age=35,42,45,50,54,56,60,66,72 --sweep thal=3,7",
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-2103cc --where \"thal == '7'\""
+      ]
+    },
+    {
+      "id": "V12",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_31",
+      "claims": [],
+      "location": "operations.age_hr_reserve_gate.evidence[1]",
+      "statement": "active 33.1%; 50.7% of 152 without defect vs 3.3% of 90 with; AUC 0.9434->0.9378",
+      "check": "subgroup thal==7, ablate",
+      "evidence": "3 of 90 active (3.3%), 50.7% in the rest; AUC 0.9378",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-2103cc --where \"thal == '7'\"",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-2103cc --part ann_31 --to zero"
+      ]
+    },
+    {
+      "id": "V13",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_33",
+      "claims": [
+        "C40",
+        "C41"
+      ],
+      "location": "drafted.readdown.ann_33.hypothesis[0]",
+      "statement": "raises risk with ST depression, slowly then faster, only above about 0.8 mm",
+      "check": "probe oldpeak sweep",
+      "evidence": "contribution 0 up to 0.75 mm, +0.006 at 0.8, +0.054 at 1.0, +0.232 at 1.7, +0.793 at 2.8, +1.405 at 4.0 (second kink near 1.67 mm)",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-2103cc --sweep oldpeak=0,0.5,0.75,0.8,1.0,1.4,1.7,2.0,2.8,4 --sweep slope=1,2"
+      ]
+    },
+    {
+      "id": "V14",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_33",
+      "claims": [
+        "C42"
+      ],
+      "location": "operations.oldpeak_hinges.evidence[1]",
+      "statement": "1946 active 50% (121, 63.6%); 3284 active 24% (58, 79.3%)",
+      "check": "ablate ann_33; subgroup oldpeak > 1.66",
+      "evidence": "121 rows, 63.6%; 58 rows, 79.3%",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-2103cc --part ann_33 --to zero",
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-2103cc --where \"oldpeak > 1.66\""
+      ]
+    },
+    {
+      "id": "V15",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_32",
+      "claims": [
+        "C44",
+        "C48"
+      ],
+      "location": "drafted.readdown.ann_32.hypothesis[0]",
+      "statement": "raises risk mainly with a flat ST segment, ST depression counts more for them",
+      "check": "probe oldpeak x slope; subgroup slope==2",
+      "evidence": "flat: contribution +0.09 at 0 mm to +0.68 at 4 mm; upsloping: 0 until 4 mm (+0.16); active in 98.2% of 110 flat-slope patients vs 6.8% of others",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-2103cc --sweep oldpeak=0,0.5,0.75,0.8,1.0,1.4,1.7,2.0,2.8,4 --sweep slope=1,2",
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-2103cc --where \"slope == '2'\""
+      ]
+    },
+    {
+      "id": "V16",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_32",
+      "claims": [
+        "C55"
+      ],
+      "location": "drafted.readdown.ann_32.evidence[1]",
+      "statement": "not-flat patients switch on when oldpeak - 0.012 chol > 0.03 (chol 186-417)",
+      "check": "probe oldpeak, upsloping, chol 240",
+      "evidence": "off at 2.8 mm, on at 4.0 mm (boundary 0.03 + 0.012*240 = 2.9 mm)",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-2103cc --sweep oldpeak=0,0.5,0.75,0.8,1.0,1.4,1.7,2.0,2.8,4 --sweep slope=1,2"
+      ]
+    },
+    {
+      "id": "V17",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_32",
+      "claims": [],
+      "location": "operations.st_slope_chol_gate.evidence[1]",
+      "statement": "AUC 0.9434 -> 0.9418; disease 66.7% vs 23.2%",
+      "check": "ablate ann_32 --to zero",
+      "evidence": "AUC 0.9418; 66.7% vs 23.2%; 117 rows",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-2103cc --part ann_32 --to zero"
+      ]
+    },
+    {
+      "id": "V18",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_34",
+      "claims": [
+        "C18"
+      ],
+      "location": "drafted.worth_checking[2]",
+      "statement": "fasting blood sugar above 120 mg/dL lowers risk",
+      "check": "domain sense",
+      "evidence": "raised blood sugar is a known risk factor; the model gives the opposite sign",
+      "commands": []
+    },
+    {
+      "id": "V19",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_34",
+      "claims": [
+        "C06",
+        "C09",
+        "C17"
+      ],
+      "location": "drafted.worth_checking[1]",
+      "statement": "typical angina gets the lowest risk, below no-symptom patients",
+      "check": "domain sense",
+      "evidence": "asymptomatic patients in this dataset are known to carry high disease rates, so this is plausible for the data but counter-intuitive clinically",
+      "commands": []
+    },
+    {
+      "id": "V20",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_34",
+      "claims": [
+        "C15"
+      ],
+      "location": "drafted.worth_checking[3]",
+      "statement": "fixed thallium defect lowers risk (n=15)",
+      "check": "domain sense",
+      "evidence": "a fixed defect is usually a sign of past infarction; small group",
+      "commands": []
+    },
+    {
+      "id": "V21",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_32",
+      "claims": [
+        "C46"
+      ],
+      "location": "drafted.readdown.ann_32.evidence[2]",
+      "statement": "higher cholesterol lowers risk through this part",
+      "check": "domain sense",
+      "evidence": "counter-directional inside the part; offset by cholesterol's direct positive edge",
+      "commands": []
+    }
+  ],
+  "parts": {
+    "ann_34": {
+      "grade": "upheld",
+      "level": "L4"
+    },
+    "ann_31": {
+      "grade": "weakened",
+      "level": "L3"
+    },
+    "ann_33": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_32": {
+      "grade": "upheld",
+      "level": "L4"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ]
+}

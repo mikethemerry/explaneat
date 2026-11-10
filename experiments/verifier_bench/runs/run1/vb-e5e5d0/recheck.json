@@ -1,0 +1,335 @@
+{
+  "target": "experiments/verifier_bench/items/vb-e5e5d0",
+  "genome_id": "60ee493c-bce5-4a2b-b7af-d06843835ae6",
+  "label": "vb-e5e5d0",
+  "operations_source": "target",
+  "files": {
+    "record": "experiments/verifier_bench/items/vb-e5e5d0/record.json",
+    "layer": "experiments/verifier_bench/items/vb-e5e5d0/plain_language.json",
+    "operations": "experiments/verifier_bench/items/vb-e5e5d0/operations.json",
+    "item": "experiments/verifier_bench/items/vb-e5e5d0/item.json"
+  },
+  "findings": [
+    {
+      "level": "L1",
+      "check": "coverage",
+      "location": "record.structural_coverage",
+      "severity": "mismatch",
+      "stated": 1.0,
+      "recomputed": 0.9474
+    },
+    {
+      "level": "L1",
+      "check": "coverage",
+      "location": "record.full_coverage",
+      "severity": "mismatch",
+      "stated": true,
+      "recomputed": false
+    },
+    {
+      "level": "L1",
+      "check": "closed_form_error",
+      "location": "record.closed_form_max_abs_err",
+      "severity": "mismatch",
+      "stated": 0.16991625616246608,
+      "recomputed": 93.64754367538154
+    },
+    {
+      "level": "L1",
+      "check": "coverage",
+      "location": "record.verified_by_orchestrator.structural_coverage",
+      "severity": "mismatch",
+      "stated": 1.0,
+      "recomputed": 0.9474
+    },
+    {
+      "level": "L1",
+      "check": "coverage",
+      "location": "record.verified_by_orchestrator.full_coverage",
+      "severity": "mismatch",
+      "stated": true,
+      "recomputed": false
+    },
+    {
+      "level": "L1",
+      "check": "closed_form_error",
+      "location": "record.verified_by_orchestrator.closed_form_max_abs_err",
+      "severity": "mismatch",
+      "stated": 0.16991625616246608,
+      "recomputed": 93.64754367538154
+    },
+    {
+      "level": "L1",
+      "check": "coverage",
+      "location": "recomputed.structural_coverage",
+      "severity": "info",
+      "recomputed": 0.9474,
+      "note": "uncovered nodes: ['274', '2786']"
+    },
+    {
+      "level": "L1",
+      "check": "closed_form",
+      "location": "layer.parts.ann_28.closed_form.latex",
+      "severity": "mismatch",
+      "stated": [
+        0.605,
+        0.609,
+        1.34,
+        3.46,
+        3.98,
+        4.48,
+        4.56,
+        4.67,
+        6.56
+      ],
+      "recomputed": [],
+      "note": "coefficients in the stated closed form that the recomputed one does not have (stated) and the other way round (recomputed)"
+    },
+    {
+      "level": "L1",
+      "check": "closed_form",
+      "location": "layer.parts.ann_28.closed_form.sympy_srepr.y_0",
+      "severity": "mismatch",
+      "stated": [
+        0.605347,
+        0.608643,
+        1.0,
+        1.33862,
+        3.46191,
+        3.97754,
+        4.47949,
+        4.56445,
+        4.66602,
+        6.56348
+      ],
+      "recomputed": []
+    },
+    {
+      "level": "L1",
+      "check": "closed_form_error",
+      "location": "layer.parts.ann_28.closed_form.numeric_max_abs_err",
+      "severity": "mismatch",
+      "stated": 4.26326e-14,
+      "recomputed": 93.7385
+    },
+    {
+      "level": "L1",
+      "check": "closed_form",
+      "location": "operations.atleast3_of_five_veto.evidence[1].payload.latex",
+      "severity": "warn",
+      "stated": [
+        0.605,
+        0.609,
+        1.34,
+        3.46,
+        3.98,
+        4.48,
+        4.56,
+        4.67,
+        6.56
+      ],
+      "note": "coefficients in the written formula that the computed closed form (3 s.f.) does not contain"
+    },
+    {
+      "level": "L1",
+      "check": "claim",
+      "location": "claims.C26",
+      "severity": "mismatch",
+      "note": "structure ann_28:structure:formula: 5 field(s) differ",
+      "diffs": [
+        {
+          "path": "checks.reproduces",
+          "stated": true,
+          "recomputed": false
+        },
+        {
+          "path": "estimate.value",
+          "stated": 4.26326e-14,
+          "recomputed": 93.7385
+        },
+        {
+          "path": "reasons[0]",
+          "stated": "all checks passed",
+          "recomputed": "largest difference 93.7385"
+        },
+        {
+          "path": "statement.max_abs_err",
+          "stated": 4.26326e-14,
+          "recomputed": 93.7385
+        },
+        {
+          "path": "verified",
+          "stated": true,
+          "recomputed": false
+        }
+      ]
+    },
+    {
+      "level": "L1",
+      "check": "claim",
+      "location": "claims.C60",
+      "severity": "mismatch",
+      "note": "linearity ann_28:linearity:part: 2 field(s) differ",
+      "diffs": [
+        {
+          "path": "estimate.value",
+          "stated": 2,
+          "recomputed": 1
+        },
+        {
+          "path": "evidence.switching_units",
+          "stated": 2,
+          "recomputed": 1
+        }
+      ]
+    },
+    {
+      "level": "L1",
+      "check": "lint",
+      "location": "readdown.ann_28.evidence[3]",
+      "severity": "warn",
+      "note": "readdown.ann_28.evidence[3]: cites C26, which is not verified"
+    }
+  ],
+  "structure": {
+    "n_train": 345,
+    "structural_coverage": 0.9474,
+    "compositional_coverage": 1.0,
+    "uncovered_nodes": [
+      "274",
+      "2786"
+    ],
+    "uncovered_edges": [
+      [
+        "-16_b",
+        "274"
+      ],
+      [
+        "-1_b",
+        "274"
+      ],
+      [
+        "-4_b",
+        "274"
+      ],
+      [
+        "-7_b",
+        "274"
+      ],
+      [
+        "-9_b",
+        "274"
+      ],
+      [
+        "274",
+        "2786"
+      ],
+      [
+        "274",
+        "id_suppress"
+      ],
+      [
+        "2786",
+        "id_suppress"
+      ]
+    ],
+    "null_nodes": [
+      "-10",
+      "-13",
+      "-17"
+    ],
+    "coverage_hierarchy": {
+      "roots": [
+        "two_of_five_peak"
+      ],
+      "global_root": "two_of_five_peak",
+      "root_contains_outputs": true,
+      "complete": true,
+      "composed": 5,
+      "required": 5,
+      "exempt_disconnected": []
+    },
+    "hierarchy": {
+      "n_annotations": 6,
+      "roots": [
+        "two_of_five_peak"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "not_under_root": [],
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.440892098500626e-16,
+    "closed_form_max_abs_err": 93.64754367538154,
+    "numeric_max_abs_err": 93.73851027631366,
+    "leaves": [
+      {
+        "id": "ann_27",
+        "name": "linear_first_value_score",
+        "numeric_max_abs_err": 7.105427357601002e-15,
+        "closed_form_max_abs_err": 0.02418550535460029,
+        "exit_scale": 30.541071595566656
+      },
+      {
+        "id": "ann_28",
+        "name": "atleast3_of_five_veto",
+        "numeric_max_abs_err": 93.73851027631366,
+        "closed_form_max_abs_err": 93.64754367538154,
+        "exit_scale": 269.2558571078318
+      },
+      {
+        "id": "ann_29",
+        "name": "a5_a3_bonus_gate",
+        "numeric_max_abs_err": 2.220446049250313e-16,
+        "closed_form_max_abs_err": 0.006729486532491613,
+        "exit_scale": 5.3716889316593415
+      },
+      {
+        "id": "ann_30",
+        "name": "a5_in_2_4_penalty",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.003134616052523631,
+        "exit_scale": 1.1978183233278776
+      },
+      {
+        "id": "ann_31",
+        "name": "inert_a32_unit",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.0,
+        "exit_scale": 0.0
+      }
+    ],
+    "op_counts": {
+      "rename_node": 17,
+      "split_node": 8,
+      "add_identity_node": 2,
+      "annotate": 6
+    },
+    "full_coverage": false
+  },
+  "closed_forms": {
+    "ann_28": "y_0 = - 7.14 \\operatorname{relu}{\\left(3.46 x_{a1:1_b} + 4.56 x_{a2:1_b} + 4.67 x_{a3:1_b} + 3.98 x_{a4:1_b} + 4.48 x_{a6:1_b} - 1.34 \\right)}",
+    "ann_27": "\\begin{aligned}\ny_0 &= 4.89 x_{a1:1_a} \\\\\n&\\quad - 1.34 x_{a1:2} \\\\\n&\\quad - 0.789 x_{a1:3_a} \\\\\n&\\quad + 3.13 x_{a2:1_a} \\\\\n&\\quad - 0.892 x_{a2:2} \\\\\n&\\quad - 1.46 x_{a2:3} \\\\\n&\\quad + 2.06 x_{a3:1_a} \\\\\n&\\quad + 2.88 x_{a4:1_a} \\\\\n&\\quad - 2.13 x_{a4:3_a} \\\\\n&\\quad + 1.14 x_{a5:1_a} \\\\\n&\\quad - 0.112 x_{a5:4} \\\\\n&\\quad + 5.97 x_{a6:1_a} \\\\\n&\\quad + 0.899 \\operatorname{relu}{\\left(0.827 - 0.0898 x_{a1:2} \\right)}\n\\end{aligned}",
+    "ann_29": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 1.41 x_{a3:1_c} \\\\\n&\\quad + 0.298 x_{a4:3_b} \\\\\n&\\quad - 1.86 x_{a5:1_b} \\\\\n&\\quad - 0.691 \\operatorname{relu}{\\left(- 0.0341 x_{a1:3_b} - 0.0515 x_{a5:1_c} - 0.559 x_{a6:1_c} - 0.525 \\right)} \\\\\n&\\quad + 2.47 \\bigr)\n\\end{aligned}",
+    "ann_30": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( - 1.32 x_{a5:1_d} \\\\\n&\\quad - 1.26 x_{a5:3} \\\\\n&\\quad -0.286 \\bigr)\n\\end{aligned}",
+    "ann_31": "y_0 = \\operatorname{relu}{\\left(- 1.93 x_{a3:2} - 2.43 \\right)}"
+  },
+  "claims": {
+    "stated": 65,
+    "recomputed": 65,
+    "reproduced": 63
+  },
+  "prose": {
+    "sentences": 36,
+    "numbers": 148,
+    "unmatched_numbers": 0
+  },
+  "summary": {
+    "mismatch": 11,
+    "warn": 2,
+    "info": 1,
+    "verdict": "some stated numbers do not reproduce",
+    "seconds": 5.8
+  }
+}

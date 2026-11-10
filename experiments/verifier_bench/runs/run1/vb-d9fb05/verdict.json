@@ -1,0 +1,360 @@
+{
+  "item_id": "vb-d9fb05",
+  "genome_id": "1f180718-4e8b-43bc-be1d-9a4276f234c3",
+  "verifier": "independent blind verifier agent (run1)",
+  "started_at": "2026-11-10T23:40:15+13:00",
+  "finished_at": "2026-11-10T23:41:31+13:00",
+  "minutes": 1,
+  "overall": {
+    "grade": "refuted",
+    "summary": "Refuted: the heavy-daytime-use part leaves out hidden node 6038, so coverage is 0.978 not 1.0 and its closed form and formula claim do not reproduce; and the account-length part is said to act mainly with an international plan, which it does not read."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "refuted",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.structural_coverage",
+      "statement": "1.0 (and full_coverage true; same in verified_by_orchestrator)",
+      "check": "verify recheck",
+      "evidence": "recomputed 0.9783, full coverage false; uncovered nodes -62_ab and 6038",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-d9fb05"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "refuted",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.closed_form_max_abs_err",
+      "statement": "0.0280",
+      "check": "verify recheck",
+      "evidence": "recomputed 0.521 (the day/evening hinge closed form no longer matches its part)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-d9fb05"
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.function_preservation_max_abs_err",
+      "statement": "5.6e-16",
+      "check": "verify recheck",
+      "evidence": "recomputed 5.6e-16",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-d9fb05"
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_82",
+      "claims": [],
+      "location": "structure.day_eve_minutes_hinge",
+      "statement": "subgraph -59_b, -62_ab, 3227 (formula uses an inner evening-minutes relu)",
+      "check": "verify recheck + operations.json",
+      "evidence": "hidden node 6038 (relu(0.177 + 0.382 evening minutes)) that feeds 3227 is in no annotation, and -62_ab is left uncovered; the stated subgraph does not contain the computation its own formula describes",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-d9fb05"
+      ]
+    },
+    {
+      "id": "V5",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_82",
+      "claims": [
+        "C089"
+      ],
+      "location": "layer.parts.ann_82.closed_form",
+      "statement": "closed form with 0.177, 0.371, 0.382 terms reproduces exactly (6.7e-16)",
+      "check": "verify recheck",
+      "evidence": "the recomputed closed form of the stated subgraph has none of those terms; error 0.524",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-d9fb05"
+      ]
+    },
+    {
+      "id": "V6",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_82",
+      "claims": [
+        "C089"
+      ],
+      "location": "claims.C089",
+      "statement": "formula reproduces the part (max error 6.7e-16)",
+      "check": "verify recheck",
+      "evidence": "recomputed max error 0.524; not reproduced",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-d9fb05"
+      ]
+    },
+    {
+      "id": "V7",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_82",
+      "claims": [
+        "C089"
+      ],
+      "location": "drafted.readdown.ann_82.evidence[3]",
+      "statement": "its formula reproduces the part exactly on all 4000 training customers",
+      "check": "verify recheck",
+      "evidence": "cites C089, which does not reproduce (error 0.524)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-d9fb05"
+      ]
+    },
+    {
+      "id": "V8",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_82",
+      "claims": [
+        "C134"
+      ],
+      "location": "claims.C134",
+      "statement": "2 switching units",
+      "check": "verify recheck",
+      "evidence": "recomputed 1 switching unit in the stated subgraph",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-d9fb05"
+      ]
+    },
+    {
+      "id": "V9",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_82",
+      "claims": [
+        "C086",
+        "C084",
+        "C088"
+      ],
+      "location": "drafted.readdown.ann_82.hypothesis[0]",
+      "statement": "daytime minutes add nothing until about 234 minutes, then raise steadily",
+      "check": "probe day minutes",
+      "evidence": "contribution 0 up to 234 min, +0.304 at 240, +1.395 at 260, +3.578 at 300",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-d9fb05 --sweep \"total day minutes=180,200,220,230,234,240,260,300\""
+      ]
+    },
+    {
+      "id": "V10",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_82",
+      "claims": [],
+      "location": "operations.day_eve_minutes_hinge.evidence[1]",
+      "statement": "mean-ablation AUC -> 0.860",
+      "check": "ablate --to mean",
+      "evidence": "AUC 0.8979 -> 0.8596",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-d9fb05 --part ann_82 --to mean"
+      ]
+    },
+    {
+      "id": "V11",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [
+        "C051"
+      ],
+      "location": "record.summary",
+      "statement": "CSC unit cancels the slope for 0-2 calls, then +1.25 logit per call; AUC 0.898",
+      "check": "probe calls",
+      "evidence": "contribution +0.995, +1.064, +1.133 at 0-2 calls, then +1.791, +3.043, +4.295, +5.547 (about +1.25 per call); AUC 0.8979",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-d9fb05 --sweep \"number customer service calls=0,1,2,3,4,5,6\" --sweep state=49,37"
+      ]
+    },
+    {
+      "id": "V12",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_81",
+      "claims": [
+        "C090",
+        "C093"
+      ],
+      "location": "drafted.readdown.ann_81.hypothesis[0]",
+      "statement": "raises with each call, slowly then faster; for Oregon steadily and much more",
+      "check": "probe calls x state",
+      "evidence": "West Virginia 2.5% -> 5.4% (0-3 calls); Oregon contribution linear -1.96, -0.71, +0.54, +1.79 (0.5% -> 17.6%)",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-d9fb05 --sweep \"number customer service calls=0,1,2,3,4,5,6\" --sweep state=49,37"
+      ]
+    },
+    {
+      "id": "V13",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_81",
+      "claims": [],
+      "location": "operations.csc_threshold.evidence[1]",
+      "statement": "mean-ablation AUC 0.898 -> 0.819",
+      "check": "ablate --to mean",
+      "evidence": "AUC 0.8187",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-d9fb05 --part ann_81 --to mean"
+      ]
+    },
+    {
+      "id": "V14",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_80",
+      "claims": [
+        "C052",
+        "C053",
+        "C059",
+        "C054",
+        "C062"
+      ],
+      "location": "drafted.readdown.ann_80.hypothesis[0]",
+      "statement": "international plan raises, messages raise, voice-mail plan lowers, state shifts",
+      "check": "recheck + ablate",
+      "evidence": "claims reproduce; mean-ablation AUC 0.898 -> 0.814 as stated",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-d9fb05",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-d9fb05 --part ann_80 --to mean"
+      ]
+    },
+    {
+      "id": "V15",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_84",
+      "claims": [
+        "C102",
+        "C097",
+        "C098",
+        "C100",
+        "C099",
+        "C101"
+      ],
+      "location": "drafted.readdown.ann_84.hypothesis[0]",
+      "statement": "lowers chance in most states; higher in South Dakota, Utah, Maine; lower in Hawaii, Alaska",
+      "check": "verify recheck",
+      "evidence": "claims reproduce",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-d9fb05"
+      ]
+    },
+    {
+      "id": "V16",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_83",
+      "claims": [
+        "C108",
+        "C105",
+        "C104"
+      ],
+      "location": "drafted.readdown.ann_83.hypothesis[0]",
+      "statement": "nothing until about 39.72 dollars, then a little",
+      "check": "verify recheck",
+      "evidence": "claims reproduce",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-d9fb05"
+      ]
+    },
+    {
+      "id": "V17",
+      "grade": "refuted",
+      "level": "L3",
+      "part": "ann_86",
+      "claims": [
+        "C110"
+      ],
+      "location": "drafted.readdown.ann_86.hypothesis[0]",
+      "statement": "raises the chance steadily with a longer account, mainly for customers with an international plan",
+      "check": "probe account length x international plan",
+      "evidence": "the part reads only account length; its contribution is the same with and without an international plan (-0.137 at 48, 0 at 100, +0.137 at 152 in both)",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-d9fb05 --sweep \"account length=48,100,152\" --sweep \"international plan=0,1\""
+      ]
+    },
+    {
+      "id": "V18",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_85",
+      "claims": [
+        "C114"
+      ],
+      "location": "drafted.readdown.ann_85.hypothesis[0]",
+      "statement": "raises chance for Washington customers outside area code 415",
+      "check": "verify recheck",
+      "evidence": "C114 reproduces (3% -> 14%)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-d9fb05"
+      ]
+    },
+    {
+      "id": "V19",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_80",
+      "claims": [
+        "C065",
+        "C079"
+      ],
+      "location": "drafted.worth_checking[0]",
+      "statement": "night minutes raise churn, night charge lowers it",
+      "check": "domain sense",
+      "evidence": "the two columns are the same information; offsetting weights",
+      "commands": []
+    }
+  ],
+  "parts": {
+    "ann_87": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_80": {
+      "grade": "upheld",
+      "level": "L4"
+    },
+    "ann_82": {
+      "grade": "refuted",
+      "level": "L1"
+    },
+    "ann_81": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_84": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_83": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_86": {
+      "grade": "refuted",
+      "level": "L3"
+    },
+    "ann_85": {
+      "grade": "upheld",
+      "level": "L1"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ]
+}

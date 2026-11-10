@@ -1,0 +1,337 @@
+{
+  "item_id": "vb-0d1892",
+  "genome_id": "6a26c823-5e60-424d-a968-74f44d675efa",
+  "verifier": "independent blind verifier agent (run1)",
+  "started_at": "2026-11-10T23:28:16+13:00",
+  "finished_at": "2026-11-10T23:31:08+13:00",
+  "minutes": 3,
+  "overall": {
+    "grade": "weakened",
+    "summary": "Numbers, thresholds and directions reproduce; two small weakenings: the record says the network reproduces the 0.88 churn of frequent low-usage callers (it predicts about 65%), and one technical count (304 active rows) is 306."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.structural_coverage",
+      "statement": "1.0 / 1.0 / hierarchy complete",
+      "check": "verify recheck",
+      "evidence": "recomputed identical",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-0d1892"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.function_preservation_max_abs_err",
+      "statement": "7.2e-16",
+      "check": "verify recheck",
+      "evidence": "recomputed 7.2e-16",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-0d1892"
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.closed_form_max_abs_err",
+      "statement": "0.0077",
+      "check": "verify recheck",
+      "evidence": "recomputed 0.0077",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-0d1892"
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "upheld",
+      "level": "L3",
+      "part": null,
+      "claims": [],
+      "location": "record.summary",
+      "statement": "gate kink moves up with each service call from 3 on; V-shape in day minutes; service calls enter only via hinges; AUC 0.901, acc 0.906",
+      "check": "probe day minutes at 1 and 4 calls; probe calls",
+      "evidence": "at 1 call the gate is off above ~165 min, at 4 calls above ~225 min; whole-model risk 3.0% at 91 min, 0.7% at 160, 90.5% at 352 (V-shape); AUC 0.9009, acc 0.906",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-0d1892 --sweep \"total day minutes=91,120,150,160,170,180,200,250,300,352\"",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-0d1892 --set \"number customer service calls=4\" --sweep \"total day minutes=91,120,150,170,200,230,250,300\"",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-0d1892 --sweep \"number customer service calls=0,1,2,3,4,5,6,8\" --sweep state=49,43"
+      ]
+    },
+    {
+      "id": "V5",
+      "grade": "weakened",
+      "level": "L2",
+      "part": null,
+      "claims": [],
+      "location": "record.summary",
+      "statement": "frequent callers with low usage churn (empirical 0.88), which the network reproduces (also in operations.csc_usage_gate.hypothesis)",
+      "check": "subgroup calls>=4 and day minutes<160 / <180",
+      "evidence": "empirical 88.5% (n=113) for <160 min, but mean predicted risk there is 65.4%; for <180 min 75.0% empirical vs 57.9% predicted. The network ranks this group high but does not reproduce the 0.88 rate",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-0d1892 --where \"`number customer service calls` >= 4 and `total day minutes` < 160\""
+      ]
+    },
+    {
+      "id": "V6",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_95",
+      "claims": [
+        "C059"
+      ],
+      "location": "structure",
+      "statement": "one root, five leaves",
+      "check": "verify recheck",
+      "evidence": "hierarchy complete",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-0d1892"
+      ]
+    },
+    {
+      "id": "V7",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_95",
+      "claims": [
+        "C059",
+        "C001",
+        "C005",
+        "C055",
+        "C056",
+        "C057",
+        "C058"
+      ],
+      "location": "drafted.readdown.ann_95.hypothesis[0]",
+      "statement": "sum of five parts; ignores daytime charge, evening calls, international calls, night charge",
+      "check": "verify recheck",
+      "evidence": "claims reproduce (zero effect for the four ignored inputs)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-0d1892"
+      ]
+    },
+    {
+      "id": "V8",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_90",
+      "claims": [
+        "C060",
+        "C061",
+        "C062",
+        "C069"
+      ],
+      "location": "drafted.readdown.ann_90.hypothesis[0]",
+      "statement": "day minutes, international plan, voice-mail messages raise; voice-mail plan lowers",
+      "check": "recheck + probe day minutes",
+      "evidence": "claims reproduce; backbone contribution rises linearly -3.15 at 91 to +6.66 at 352 min",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-0d1892",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-0d1892 --sweep \"total day minutes=91,120,150,160,170,180,200,250,300,352\""
+      ]
+    },
+    {
+      "id": "V9",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_90",
+      "claims": [],
+      "location": "operations.linear_backbone.evidence[1]",
+      "statement": "zeroing the backbone drops AUC to 0.54",
+      "check": "ablate ann_90 --to zero",
+      "evidence": "AUC 0.9009 -> 0.539",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-0d1892 --part ann_90 --to zero"
+      ]
+    },
+    {
+      "id": "V10",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_91",
+      "claims": [
+        "C114",
+        "C104"
+      ],
+      "location": "drafted.readdown.ann_91.hypothesis[0]",
+      "statement": "raises chance with low usage, more with service calls; day minutes matter only below about 169",
+      "check": "probe day minutes at 1 and 4 calls; calls x evening charge",
+      "evidence": "1 call: contribution +4.20 at 91 min, +0.20 at 160, flat +0.14 from 170; 4 calls: +7.52 at 91, flat from ~230; at 3 calls contribution +3.14 with evening charge $10, +0.81 at $17.12, none at $25",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-0d1892 --sweep \"total day minutes=91,120,150,160,170,180,200,250,300,352\"",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-0d1892 --set \"number customer service calls=4\" --sweep \"total day minutes=91,120,150,170,200,230,250,300\"",
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-0d1892 --sweep \"number customer service calls=0,2,3\" --sweep \"total eve charge=10,17.12,25\""
+      ]
+    },
+    {
+      "id": "V11",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_91",
+      "claims": [
+        "C118"
+      ],
+      "location": "operations.csc_usage_gate.evidence[3]",
+      "statement": "gate zeroed AUC 0.7635; acts on 3147",
+      "check": "ablate ann_91 --to zero",
+      "evidence": "AUC 0.7635; 3147 rows affected",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-0d1892 --part ann_91 --to zero"
+      ]
+    },
+    {
+      "id": "V12",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_92",
+      "claims": [
+        "C126",
+        "C125",
+        "C127"
+      ],
+      "location": "drafted.readdown.ann_92.hypothesis[0]",
+      "statement": "adds nothing until about 4 calls, then steadily, except in West Virginia",
+      "check": "probe calls x state (West Virginia vs Texas)",
+      "evidence": "Texas: 0 up to 3 calls, +0.585 at 4, +1.199 at 5, +1.813 at 6 (about 0.61 per call); West Virginia: 0 at every count",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-0d1892 --sweep \"number customer service calls=0,1,2,3,4,5,6,8\" --sweep state=49,43"
+      ]
+    },
+    {
+      "id": "V13",
+      "grade": "weakened",
+      "level": "L1",
+      "part": "ann_92",
+      "claims": [],
+      "location": "operations.csc_hinge_7208.evidence[1]",
+      "statement": "active_rows: 304 (CSC>=4, never for state:49)",
+      "check": "subgroup calls>=4; ablate ann_92",
+      "evidence": "active on 306 rows (318 with 4+ calls minus the 12 in West Virginia); the plain claim C127 gives 306",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-0d1892 --where \"`number customer service calls` >= 4\"",
+        "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-0d1892 --part ann_92 --to zero"
+      ]
+    },
+    {
+      "id": "V14",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_92",
+      "claims": [],
+      "location": "operations.csc_hinge_7208.hypothesis",
+      "statement": "12 West Virginia customers with 4+ calls, 5 churned (42%)",
+      "check": "subgroup calls>=4 and state==49",
+      "evidence": "n=12, 5 churned (41.7%)",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/verifier_bench/items/vb-0d1892 --where \"`number customer service calls` >= 4 and state == '49'\""
+      ]
+    },
+    {
+      "id": "V15",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_93",
+      "claims": [
+        "C120",
+        "C121"
+      ],
+      "location": "drafted.readdown.ann_93.hypothesis[0]",
+      "statement": "small voice-mail discount; states other than Alabama, North Carolina, West Virginia slightly higher",
+      "check": "verify recheck + state codes from vars",
+      "evidence": "claims reproduce; the chain reads state:1 Alabama, 27 North Carolina, 49 West Virginia",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-0d1892"
+      ]
+    },
+    {
+      "id": "V16",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_94",
+      "claims": [
+        "C129",
+        "C131",
+        "C130",
+        "C132"
+      ],
+      "location": "drafted.readdown.ann_94.hypothesis[0]",
+      "statement": "up in Tennessee and Ohio, down in Nevada and California",
+      "check": "recheck + vars codes",
+      "evidence": "claims reproduce; units read state:42 Tennessee, 35 Ohio, 33 Nevada (77 rows as stated), 4 California",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-0d1892"
+      ]
+    },
+    {
+      "id": "V17",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_95",
+      "claims": [
+        "C012",
+        "C005"
+      ],
+      "location": "drafted.worth_checking[1]",
+      "statement": "voice-mail plan lowers churn but more messages raise it",
+      "check": "domain sense",
+      "evidence": "opposite signs for plan and message count are hard to read in domain terms; offsetting weights",
+      "commands": []
+    },
+    {
+      "id": "V18",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_92",
+      "claims": [
+        "C125"
+      ],
+      "location": "drafted.worth_checking[2]",
+      "statement": "service-call hinge switched off in West Virginia",
+      "check": "domain sense",
+      "evidence": "a rare-state switch fitted to 12 customers; no domain reason",
+      "commands": []
+    }
+  ],
+  "parts": {
+    "ann_95": {
+      "grade": "upheld",
+      "level": "L4"
+    },
+    "ann_90": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_91": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_93": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_92": {
+      "grade": "weakened",
+      "level": "L1"
+    },
+    "ann_94": {
+      "grade": "upheld",
+      "level": "L1"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ]
+}

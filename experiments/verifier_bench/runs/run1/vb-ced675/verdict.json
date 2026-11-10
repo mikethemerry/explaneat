@@ -1,0 +1,260 @@
+{
+ "item_id": "vb-ced675",
+ "genome_id": "1f180718-4e8b-43bc-be1d-9a4276f234c3",
+ "verifier": "explanation-verifier agent (run1, blind)",
+ "started_at": "2026-11-10T23:27:23+13:00",
+ "finished_at": "2026-11-10T23:30:25+13:00",
+ "minutes": 3.0,
+ "overall": {
+  "grade": "refuted",
+  "summary": "The customer-service-calls part is said to barely matter in Oregon, where the calls count most; one evidence sentence of the heavy daytime use part cites the wrong claim. The rest reproduces."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "refuted",
+   "level": "L3",
+   "part": "ann_81",
+   "claims": [
+    "C093"
+   ],
+   "location": "drafted.readdown.ann_81.hypothesis[0]",
+   "statement": "for customers in Oregon the calls barely matter",
+   "check": "probe --sweep 'number customer service calls=0:6:7' --sweep state=49,37; claim C093",
+   "evidence": "Oregon: part contribution -1.964 at 0 calls, -0.712 at 1, +0.540 at 2, +1.791 at 3 (risk 0.5% -> 17.6%); West Virginia: +0.99 -> +1.79 (2.5% -> 5.4%). C093: calls are amplified in Oregon (effect 3.76 logits vs 0.80 elsewhere). The calls matter more in Oregon, not less; the part's own evidence sentence says so.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/verifier_bench/items/vb-ced675 --sweep \"number customer service calls=0:6:7\" --sweep state=49,37"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "refuted",
+   "level": "L1",
+   "part": "ann_82",
+   "claims": [
+    "C086",
+    "C088"
+   ],
+   "location": "drafted.readdown.ann_82.evidence[0]",
+   "statement": "It acts on 747 of 4000 training customers, 269 of whom left; ... about 5% without it and about 23% with it. [C086]",
+   "check": "verify recheck prose check",
+   "evidence": "269, 5% and 23% are not in C086 (the day-minutes threshold claim); they are in C088 (subgroup:active, 747 active, 269 positives, risk 0.049 -> 0.225), which is the claim that should be cited.",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-ced675"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "coverage 1.0, full, hierarchy complete, preservation 5.6e-16, closed-form error 0.028",
+   "check": "verify recheck",
+   "evidence": "all reproduce; 140 of 140 claims reproduce",
+   "commands": []
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_87",
+   "claims": [],
+   "location": "operations.full_model.hypothesis",
+   "statement": "mean-ablation per child: backbone -0.084, csc -0.079, day/eve hinge -0.038, states -0.003",
+   "check": "verify ablate --to mean",
+   "evidence": "0.8979 -> 0.8141 (-0.084), 0.8187 (-0.079), 0.8596 (-0.038), 0.8947 (-0.003)",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-ced675 --part ann_81 --to mean"
+   ]
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_81",
+   "claims": [
+    "C090",
+    "C095",
+    "C118"
+   ],
+   "location": "operations.csc_threshold.hypothesis",
+   "statement": "flat logit for 0-2 calls, then about +1.25 per call; state 37 switches 1255 off",
+   "check": "probe sweep (West Virginia vs Oregon)",
+   "evidence": "WV contribution 0.99, 1.06, 1.13 for 0-2 calls, then 1.79, 3.04, 4.30, 5.55 (+1.25 per call); in Oregon linear throughout",
+   "commands": []
+  },
+  {
+   "id": "V6",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_82",
+   "claims": [
+    "C086",
+    "C084",
+    "C083",
+    "C117"
+   ],
+   "location": "drafted.readdown.ann_82.hypothesis[0]",
+   "statement": "heavy daytime users: nothing until about 234 minutes, then steadily",
+   "check": "decile table of node 3227 (scratch frame.py); claims",
+   "evidence": "active 0% in deciles 1-3, 4.5% in the 6th, 48% in the 9th, 93% in the top decile with mean logit term +2.32 and churn 0.49, as the technical hypothesis states",
+   "commands": [
+    "scratch frame.py decile groupby of x_3227"
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_80",
+   "claims": [
+    "C052",
+    "C053",
+    "C059",
+    "C054",
+    "C062"
+   ],
+   "location": "drafted.readdown.ann_80.hypothesis[0]",
+   "statement": "international plan raises, messages raise, voice-mail plan lowers, state shifts",
+   "check": "claims recheck; ablate --to mean",
+   "evidence": "claims reproduce; AUC 0.898 -> 0.814 without it as stated",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/verifier_bench/items/vb-ced675 --part ann_80 --to mean"
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_84",
+   "claims": [
+    "C102",
+    "C097",
+    "C098",
+    "C099",
+    "C100",
+    "C101"
+   ],
+   "location": "drafted.readdown.ann_84.hypothesis[0]",
+   "statement": "lowers most states, higher SD, UT, ME, lower HI, AK; AUC 0.898 -> 0.895",
+   "check": "claims; ablate --to mean",
+   "evidence": "claims reproduce; AUC 0.8979 -> 0.8947",
+   "commands": []
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_83",
+   "claims": [
+    "C108",
+    "C105",
+    "C104"
+   ],
+   "location": "drafted.readdown.ann_83.hypothesis[0]",
+   "statement": "nothing until about 39.72 US dollars, then steadily",
+   "check": "claims recheck; closed form",
+   "evidence": "C108 threshold 39.72; closed forms reproduce",
+   "commands": []
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_86",
+   "claims": [
+    "C110"
+   ],
+   "location": "drafted.readdown.ann_86.hypothesis[0]",
+   "statement": "longer account raises steadily",
+   "check": "claims; closed form",
+   "evidence": "C110 steady 2.3% -> 3.1%",
+   "commands": []
+  },
+  {
+   "id": "V11",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_85",
+   "claims": [
+    "C114"
+   ],
+   "location": "drafted.readdown.ann_85.hypothesis[0]",
+   "statement": "Washington outside area code 415 raises the chance",
+   "check": "claims; closed form",
+   "evidence": "C114 reproduces; relu(-0.924 - 1.08 area415 + 0.41 state47)",
+   "commands": []
+  },
+  {
+   "id": "V12",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_81",
+   "claims": [
+    "C093"
+   ],
+   "location": "operations.csc_threshold.hypothesis",
+   "statement": "Oregon disables the service-call threshold",
+   "check": "domain",
+   "evidence": "a one-state switch fitted to 84 customers, with no business reason",
+   "commands": []
+  },
+  {
+   "id": "V13",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_80",
+   "claims": [
+    "C065",
+    "C079"
+   ],
+   "location": "drafted.worth_checking[0]",
+   "statement": "night minutes raise and night charge lowers",
+   "check": "domain",
+   "evidence": "the same information with opposite signs; already flagged",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_87": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_80": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_82": {
+   "grade": "refuted",
+   "level": "L1"
+  },
+  "ann_81": {
+   "grade": "refuted",
+   "level": "L3"
+  },
+  "ann_84": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_83": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_86": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_85": {
+   "grade": "upheld",
+   "level": "L4"
+  }
+ },
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ]
+}

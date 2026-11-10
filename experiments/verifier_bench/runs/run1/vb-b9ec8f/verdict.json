@@ -1,0 +1,592 @@
+{
+  "item_id": "vb-b9ec8f",
+  "genome_id": "7a8237f3-74cb-40bd-8268-b605f64dac2b",
+  "verifier": "blind verifier agent (run1)",
+  "started_at": "2026-11-10T23:22:21+13:00",
+  "finished_at": "2026-11-10T23:28:29+13:00",
+  "minutes": 6,
+  "overall": {
+    "grade": "refuted",
+    "summary": "Nearly everything reproduces; one count in the age hypothesis is wrong (27 Thai respondents where the training data have 26), and the hours sentences cite a claim that does not hold their 50-hour threshold."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.structural_coverage",
+      "statement": "structural 1.0, compositional 1.0, hierarchy complete",
+      "check": "verify recheck",
+      "evidence": "recomputed 1.0 / 1.0, single root",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-b9ec8f --out experiments/verifier_bench/runs/run1/vb-b9ec8f/recheck.json"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.function_preservation_max_abs_err",
+      "statement": "5.6e-16; closed-form max err 0.041",
+      "check": "verify recheck",
+      "evidence": "recomputed 5.55e-16 and 0.0408",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-b9ec8f --out experiments/verifier_bench/runs/run1/vb-b9ec8f/recheck.json"
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.summary",
+      "statement": "backbone ablation AUC 0.912 -> 0.790; capital-gain composition ablation 0.894; kinks about $4.8k and $5.2k; age vertex 46; train acc 0.858, AUC 0.912",
+      "check": "train forward pass + capital-gain sweep",
+      "evidence": "AUC 0.9118, acc 0.8578; backbone mean-ablated AUC 0.7895; capital gains 0.8935; node 262 switches on at about $4.8k, node 1485 at about $5.16k; age contribution minimum at 46",
+      "commands": [
+        "uv run python scratchpad/e3.py (train forward pass: mean-ablation AUC/accuracy per part, contributions by band)",
+        "uv run python scratchpad/e3b.py (capital-gain sweep 4000-6000 at the typical person; Thai rows set to US)"
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.resisted",
+      "statement": "4262, 3843, 7420 always on; Thailand net +0.10 over 26 rows; Married-AF -59, Never-worked +30",
+      "check": "forward pass",
+      "evidence": "min values 0.875, 1.64, 1.09 (always on); Thai rows switched to US: age-part change +0.10 over 26 rows; claims C090 -56.6 vs married (-59.5 vs never married), C092 +29.7",
+      "commands": [
+        "uv run python scratchpad/e3.py (train forward pass: mean-ablation AUC/accuracy per part, contributions by band)",
+        "uv run python scratchpad/e3b.py (capital-gain sweep 4000-6000 at the typical person; Thai rows set to US)"
+      ]
+    },
+    {
+      "id": "V5",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "claims",
+      "statement": "200 claims",
+      "check": "verify recheck",
+      "evidence": "200 of 200 reproduce",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-b9ec8f --out experiments/verifier_bench/runs/run1/vb-b9ec8f/recheck.json"
+      ]
+    },
+    {
+      "id": "V6",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_131",
+      "claims": [
+        "C072"
+      ],
+      "location": "operations.income_logit.hypothesis",
+      "statement": "additive root with readouts 0.814 / 0.433; train acc 0.858, AUC 0.912",
+      "check": "forward pass",
+      "evidence": "acc 0.8578, AUC 0.9118; SHAP ranking not re-run",
+      "commands": [
+        "uv run python scratchpad/e3.py (train forward pass: mean-ablation AUC/accuracy per part, contributions by band)"
+      ]
+    },
+    {
+      "id": "V7",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_131",
+      "claims": [
+        "C072",
+        "C002",
+        "C003",
+        "C014",
+        "C001",
+        "C006",
+        "C008"
+      ],
+      "location": "drafted.readdown.ann_131.evidence[1]",
+      "statement": "whole-model capital-gain, education, age and marital-status effects",
+      "check": "claims",
+      "evidence": "numbers and directions match the cited claims",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-b9ec8f --out experiments/verifier_bench/runs/run1/vb-b9ec8f/recheck.json"
+      ]
+    },
+    {
+      "id": "V8",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_130",
+      "claims": [
+        "C073",
+        "C081",
+        "C083",
+        "C084"
+      ],
+      "location": "operations.capital_gain_effect.hypothesis",
+      "statement": "-0.337/$1000, -0.485 above ~$4.8k, -0.644 above ~$5.2k; band means -2.74 ... -63; observed P(<=50K) 0.71 -> 0.10 across $4.5k-8k; ablation AUC 0.912 -> 0.894, acc 0.837",
+      "check": "forward pass by gain band + sweep",
+      "evidence": "band means -2.74, -3.29, -3.66, -3.85, -5.28, -7.76, -11.36, -63.25; observed 0.710 ($4.5-5k) to 0.103 ($5.5-8k); mean-ablation AUC 0.8935, acc 0.8372; kinks at about 4.8k and 5.16k",
+      "commands": [
+        "uv run python scratchpad/e3.py (train forward pass: mean-ablation AUC/accuracy per part, contributions by band)",
+        "uv run python scratchpad/e3b.py (capital-gain sweep 4000-6000 at the typical person; Thai rows set to US)"
+      ]
+    },
+    {
+      "id": "V9",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_130",
+      "claims": [
+        "C073",
+        "C081",
+        "C083"
+      ],
+      "location": "drafted.readdown.ann_130.hypothesis[0]",
+      "statement": "lowers the chance as gains rise, slowly then faster; a little less for 9th grade; higher start for Jamaica",
+      "check": "claims",
+      "evidence": "C081 9th grade 44% -> 6% (interaction +0.30 log-odds, shallower); C083 Jamaica 71% -> 16%",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-b9ec8f --out experiments/verifier_bench/runs/run1/vb-b9ec8f/recheck.json"
+      ]
+    },
+    {
+      "id": "V10",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_122",
+      "claims": [
+        "C085",
+        "C088"
+      ],
+      "location": "operations.capital_gain_hinge.hypothesis",
+      "statement": "hinge 1485 on above ~$5.2k; Ecuador disables it; 4262 always on (constant); line from -2.07 to -50.8, corr -0.999; mean-ablation AUC 0.9118 -> 0.9028, acc 0.8463",
+      "check": "sweep + coefficients + forward pass",
+      "evidence": "1485 on from about $5.16k (0.1688 / 3.27e-5 per dollar); Ecuador weight -70.5 into 1485; 4262 min 0.875; contribution -2.07 at 0, -50.83 at max, corr -0.9989; AUC 0.9028, acc 0.8463",
+      "commands": [
+        "uv run python scratchpad/e3.py (train forward pass: mean-ablation AUC/accuracy per part, contributions by band)",
+        "uv run python scratchpad/e3b.py (capital-gain sweep 4000-6000 at the typical person; Thai rows set to US)",
+        "uv run python scratchpad/ind.py experiments/verifier_bench/items/vb-b9ec8f 1485,262,2391,4262,8292,5559,3843,7420,2134,2990,identity_age"
+      ]
+    },
+    {
+      "id": "V11",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_123",
+      "claims": [
+        "C126",
+        "C132",
+        "C134"
+      ],
+      "location": "operations.capital_gain_country_gate.hypothesis",
+      "statement": "262 on above ~$4.8k, off for 9th grade and via 2391 for Jamaica, Nicaragua, Philippines, Scotland; active 5.1%, max 7.65 (contribution -14.1); AUC 0.9114",
+      "check": "sweep + coefficients + forward pass",
+      "evidence": "262 on from about $4.8k; education:6 -7.9, countries 23/27/30/34 strongly negative, 2391 an OR of those four; active 5.10%, max 7.65 (x1.842 = 14.1); AUC 0.9114",
+      "commands": [
+        "uv run python scratchpad/e3.py (train forward pass: mean-ablation AUC/accuracy per part, contributions by band)",
+        "uv run python scratchpad/e3b.py (capital-gain sweep 4000-6000 at the typical person; Thai rows set to US)",
+        "uv run python scratchpad/ind.py experiments/verifier_bench/items/vb-b9ec8f 1485,262,2391,4262,8292,5559,3843,7420,2134,2990,identity_age"
+      ]
+    },
+    {
+      "id": "V12",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_123",
+      "claims": [
+        "C126"
+      ],
+      "location": "drafted.readdown.ann_123.hypothesis[0]",
+      "statement": "adds nothing until about 4883 US dollars, then lowers steadily",
+      "check": "capital-gain sweep 4000-6000 at the typical person",
+      "evidence": "node 262 is 0 up to $4,700, 0.0002 at $4,800, then rises linearly (0.008 per $100)",
+      "commands": [
+        "uv run python scratchpad/e3b.py (capital-gain sweep 4000-6000 at the typical person; Thai rows set to US)"
+      ]
+    },
+    {
+      "id": "V13",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_129",
+      "claims": [
+        "C091",
+        "C095",
+        "C093",
+        "C094",
+        "C096",
+        "C109",
+        "C098",
+        "C100",
+        "C099",
+        "C090"
+      ],
+      "location": "operations.core_linear_backbone.hypothesis",
+      "statement": "education-num -0.38/yr; Wife -0.91; Own-child +0.51; male -0.50; Widowed -1.05; Married-AF -59; Never-worked +30; mean-ablation acc 0.858 -> 0.801, AUC 0.912 -> 0.790",
+      "check": "claims + ablation",
+      "evidence": "C091 -2.31 over 7 -> 13 (= -0.385/yr); C099 -0.91; C107 +0.51; C109 +0.50; widowed -2.87 + 1.82 = -1.05; mean-ablated acc 0.8007, AUC 0.7895",
+      "commands": [
+        "uv run python scratchpad/e3.py (train forward pass: mean-ablation AUC/accuracy per part, contributions by band)",
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-b9ec8f --out experiments/verifier_bench/runs/run1/vb-b9ec8f/recheck.json"
+      ]
+    },
+    {
+      "id": "V14",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_129",
+      "claims": [
+        "C091",
+        "C095",
+        "C116",
+        "C090",
+        "C093",
+        "C094",
+        "C096",
+        "C099",
+        "C107",
+        "C109",
+        "C098",
+        "C100",
+        "C101",
+        "C104",
+        "C115",
+        "C092",
+        "C106",
+        "C097",
+        "C102",
+        "C105",
+        "C110"
+      ],
+      "location": "drafted.readdown.ann_129.evidence[0]",
+      "statement": "backbone plain evidence sentences",
+      "check": "claims",
+      "evidence": "all numbers and directions match the cited claims",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-b9ec8f --out experiments/verifier_bench/runs/run1/vb-b9ec8f/recheck.json"
+      ]
+    },
+    {
+      "id": "V15",
+      "grade": "refuted",
+      "level": "L1",
+      "part": "ann_121",
+      "claims": [
+        "C139"
+      ],
+      "location": "operations.age_profile.hypothesis",
+      "statement": "for Thai respondents (27 rows) it adds -4.0 directly and pushes 2990 permanently on",
+      "check": "count of Thai rows on the training split",
+      "evidence": "there are 26 people born in Thailand in the training split (node 2134 active on exactly 26 rows; 4 more in the test split), not 27; the same paragraph later says 26. The mechanism itself reproduces (2990 on for every Thai row; age-part change Thai vs US +0.10)",
+      "commands": [
+        "uv run python scratchpad/e3b.py (capital-gain sweep 4000-6000 at the typical person; Thai rows set to US)",
+        "uv run python scratchpad/e3c.py"
+      ]
+    },
+    {
+      "id": "V16",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_121",
+      "claims": [
+        "C137",
+        "C139",
+        "C136"
+      ],
+      "location": "operations.age_profile.evidence[0]",
+      "statement": "-0.075/yr below the hinge at ~46; contribution +1.63 at 17, +0.65 at 30, -0.10 at 40, -0.55 at 46, -0.29 at 55, +0.17 at 70, +0.79 at 90; Ireland -1.57; mean-ablation acc 0.8534, AUC 0.9051",
+      "check": "forward pass by age + coefficients",
+      "evidence": "+1.627, +0.642, -0.103, -0.555 (minimum at 46), -0.292, +0.171, +0.785; age -0.0752/yr; Ireland -1.573; AUC 0.9051, acc 0.8534",
+      "commands": [
+        "uv run python scratchpad/e3.py (train forward pass: mean-ablation AUC/accuracy per part, contributions by band)",
+        "uv run python scratchpad/ind.py experiments/verifier_bench/items/vb-b9ec8f 1485,262,2391,4262,8292,5559,3843,7420,2134,2990,identity_age"
+      ]
+    },
+    {
+      "id": "V17",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_121",
+      "claims": [
+        "C137",
+        "C139",
+        "C136"
+      ],
+      "location": "drafted.readdown.ann_121.hypothesis[0]",
+      "statement": "lowest at about 47, higher either side; Thailand rises with age; Ireland lowers",
+      "check": "claims + age contributions",
+      "evidence": "C137 dip; C139 reversed for Thailand (66% -> 85%); C136 63% -> 26%",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-b9ec8f --out experiments/verifier_bench/runs/run1/vb-b9ec8f/recheck.json",
+        "uv run python scratchpad/e3.py (train forward pass: mean-ablation AUC/accuracy per part, contributions by band)"
+      ]
+    },
+    {
+      "id": "V18",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_125",
+      "claims": [],
+      "location": "operations.short_hours_hinge.hypothesis",
+      "statement": "2451 = relu(0.598 - 0.777 hours_z), +0.051 per hour below ~50 h; contributions 10h +2.04 ... 45h +0.25, >=50h 0; active 80%; mean-ablation acc 0.8556, AUC 0.9076",
+      "check": "forward pass by hours",
+      "evidence": "+2.037, +1.527, +1.017, +0.507, +0.252, 0 at 50 and 60; active 80.3% (all rows below 50 h, none at 50 h or more); AUC 0.9076, acc 0.8556",
+      "commands": [
+        "uv run python scratchpad/e3.py (train forward pass: mean-ablation AUC/accuracy per part, contributions by band)"
+      ]
+    },
+    {
+      "id": "V19",
+      "grade": "weakened",
+      "level": "L1",
+      "part": "ann_125",
+      "claims": [
+        "C143",
+        "C142"
+      ],
+      "location": "drafted.readdown.ann_125.evidence[0]",
+      "statement": "It acts on 31364 of 39073 training people, those working less than about 50 hours a week ... [C143]",
+      "check": "verify recheck prose check",
+      "evidence": "the 50 hours is right (C142 threshold 49.9 h; the part is on for every row below 50 h and off from 50 h) but it is not in the cited claim C143; recheck flags it. Same in drafted.blocks[3][0]",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-b9ec8f --out experiments/verifier_bench/runs/run1/vb-b9ec8f/recheck.json",
+        "uv run python scratchpad/e3.py (train forward pass: mean-ablation AUC/accuracy per part, contributions by band)"
+      ]
+    },
+    {
+      "id": "V20",
+      "grade": "weakened",
+      "level": "L1",
+      "part": "ann_125",
+      "claims": [
+        "C143",
+        "C142"
+      ],
+      "location": "drafted.blocks[3]",
+      "statement": "This part acts on the 31364 people who work less than about 50 hours a week ... [C143]",
+      "check": "verify recheck prose check",
+      "evidence": "same citation gap as the readdown sentence: 50 hours is supported by C142, not by the cited C143",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-b9ec8f --out experiments/verifier_bench/runs/run1/vb-b9ec8f/recheck.json"
+      ]
+    },
+    {
+      "id": "V21",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_128",
+      "claims": [
+        "C145",
+        "C146",
+        "C147",
+        "C149",
+        "C150",
+        "C148",
+        "C152",
+        "C157",
+        "C154"
+      ],
+      "location": "operations.country_linear_offsets.hypothesis",
+      "statement": "per-switch effects Columbia +5.80, Scotland +1.77, Portugal -1.40, South +1.16, Peru +0.97, England -0.83, China +0.77, US -0.36; SD 0.29; AUC 0.9111",
+      "check": "claims (relative to US) + forward pass",
+      "evidence": "claims relative to the US equal stated effect + 0.36: 6.15, 2.13, -1.04, 1.52, 1.32, -0.48, 1.13; contribution SD 0.293; AUC 0.9111",
+      "commands": [
+        "uv run python scratchpad/e3.py (train forward pass: mean-ablation AUC/accuracy per part, contributions by band)",
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-b9ec8f --out experiments/verifier_bench/runs/run1/vb-b9ec8f/recheck.json"
+      ]
+    },
+    {
+      "id": "V22",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_124",
+      "claims": [
+        "C162",
+        "C163"
+      ],
+      "location": "operations.self_emp_not_inc_offset.hypothesis",
+      "statement": "8292 = 1.822 for Self-emp-not-inc; 5559 = relu(0.94*8292 - 0.22) = 1.49; +0.646 for 7.8% of rows; AUC 0.9111",
+      "check": "coefficients + claims",
+      "evidence": "8292 = -1.268 + 3.089 = 1.82; 5559 = 1.49; C162 +0.646; 3034/39073 = 7.8%; AUC 0.9111",
+      "commands": [
+        "uv run python scratchpad/ind.py experiments/verifier_bench/items/vb-b9ec8f 1485,262,2391,4262,8292,5559,3843,7420,2134,2990,identity_age",
+        "uv run python scratchpad/e3.py (train forward pass: mean-ablation AUC/accuracy per part, contributions by band)"
+      ]
+    },
+    {
+      "id": "V23",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_126",
+      "claims": [
+        "C165",
+        "C166"
+      ],
+      "location": "operations.always_on_linear_gates.hypothesis",
+      "statement": "3843 and 7420 always on (min pre-activations 1.64, 1.09); +0.95 for Other-relative, +0.017 Some-college",
+      "check": "forward pass + claims",
+      "evidence": "min 1.643 and 1.087; C165 +0.955, C166 +0.017; AUC unchanged 0.9117",
+      "commands": [
+        "uv run python scratchpad/e3.py (train forward pass: mean-ablation AUC/accuracy per part, contributions by band)"
+      ]
+    },
+    {
+      "id": "V24",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_127",
+      "claims": [
+        "C168",
+        "C169",
+        "C170",
+        "C171",
+        "C172"
+      ],
+      "location": "operations.rare_category_indicators.hypothesis",
+      "statement": "Yugoslavia -1.22, Trinidad and Tobago +1.87, Preschool +1.43; ~0.3% of rows; 0.06% and 0.16%",
+      "check": "claims + counts",
+      "evidence": "C168 -1.23, C169 +1.87, C170 +1.44; 21+22+64 = 107 rows (0.27%); 22 (0.056%), 64 (0.16%)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-b9ec8f --out experiments/verifier_bench/runs/run1/vb-b9ec8f/recheck.json"
+      ]
+    },
+    {
+      "id": "V25",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [
+        "C072",
+        "C073",
+        "C091",
+        "C137",
+        "C143",
+        "C145",
+        "C163",
+        "C165",
+        "C169"
+      ],
+      "location": "drafted.blocks[0]",
+      "statement": "block paragraphs (capital gains, backbone, age, hours, country, self-employment, relatives, rare categories)",
+      "check": "claims",
+      "evidence": "numbers and directions match; only the 50-hours citation gap above",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-b9ec8f --out experiments/verifier_bench/runs/run1/vb-b9ec8f/recheck.json"
+      ]
+    },
+    {
+      "id": "V26",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_129",
+      "claims": [
+        "C095",
+        "C009"
+      ],
+      "location": "drafted.worth_checking[0]",
+      "statement": "capital losses lower the predicted chance of a low income",
+      "check": "domain sense",
+      "evidence": "a capital loss lowering the chance of a low income reads oddly, though in this census data people with capital losses tend to have assets and higher incomes; for the domain reviewer",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-b9ec8f --out experiments/verifier_bench/runs/run1/vb-b9ec8f/recheck.json"
+      ]
+    },
+    {
+      "id": "V27",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_129",
+      "claims": [
+        "C097",
+        "C102",
+        "C105",
+        "C016"
+      ],
+      "location": "drafted.worth_checking[4]",
+      "statement": "7th-8th, 9th and 10th grade lower the predicted chance of a low income compared with a high-school graduate",
+      "check": "domain sense",
+      "evidence": "less schooling giving a lower chance of low income conflicts with expectation; likely offset by the separate education-num term (the one-hot and the 1-16 scale are collinear)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-b9ec8f --out experiments/verifier_bench/runs/run1/vb-b9ec8f/recheck.json"
+      ]
+    },
+    {
+      "id": "V28",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_129",
+      "claims": [
+        "C116",
+        "C054"
+      ],
+      "location": "drafted.worth_checking[7]",
+      "statement": "census sampling weight lowers the predicted chance",
+      "check": "domain sense",
+      "evidence": "a survey weight should carry no information about a person; the model uses it (66% -> 60%)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/verifier_bench/items/vb-b9ec8f --out experiments/verifier_bench/runs/run1/vb-b9ec8f/recheck.json"
+      ]
+    }
+  ],
+  "parts": {
+    "ann_131": {
+      "grade": "upheld",
+      "level": "L2"
+    },
+    "ann_130": {
+      "grade": "upheld",
+      "level": "L2"
+    },
+    "ann_122": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_123": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_129": {
+      "grade": "upheld",
+      "level": "L4"
+    },
+    "ann_121": {
+      "grade": "refuted",
+      "level": "L1"
+    },
+    "ann_125": {
+      "grade": "weakened",
+      "level": "L1"
+    },
+    "ann_128": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_124": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_126": {
+      "grade": "upheld",
+      "level": "L1"
+    },
+    "ann_127": {
+      "grade": "upheld",
+      "level": "L1"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ]
+}
