@@ -2094,8 +2094,9 @@ def extract_claims(m: PlainModel) -> Dict[str, Any]:
     width = max(2, len(str(len(claims))))
     for i, c in enumerate(claims):
         c["id"] = f"C{i + 1:0{width}d}"
-    from .plain_language_shapes import attach_shapes
+    from .plain_language_shapes import attach_shapes, cross_claim_conflicts
     attach_shapes(m, parts, claims)   # after the ids, so reconciled points can name their claim
+    cross_claim_conflicts(claims)     # records shape.conflicts on contradicting shape claims
     # v5f: boundary claims come last, so adding them does not renumber the earlier claims
     extra = [bc for p in parts for bc in boundary_claims(m, p)]
     for k, c in enumerate(extra):
