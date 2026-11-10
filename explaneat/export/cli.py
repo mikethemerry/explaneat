@@ -166,7 +166,9 @@ def export(ctx, experiment_id, genome_id, explanation_id, study, label, formats,
               help="Output directory (default: the JSON file's directory).")
 @click.option("--formats", default="tex,tikz,pdf,docx", show_default=True)
 @click.option("--review-marks/--no-review-marks", default=True, show_default=True)
-def render(from_json, out_dir, formats, review_marks):
+@click.option("--certificate-mode", type=click.Choice(["full", "coverage"]), default="full", show_default=True,
+              help="full: the self-contained appendix; coverage: provenance, coverage and checks only.")
+def render(from_json, out_dir, formats, review_marks, certificate_mode):
     """Re-render every non-JSON format from an export JSON file alone (no database)."""
     from .canonical import verify_hash
     from .pack import load_json, parse_formats, render_pack, validate
@@ -176,7 +178,7 @@ def render(from_json, out_dir, formats, review_marks):
         click.echo("WARNING: the content hash does not match the JSON content", err=True)
     out = Path(out_dir) if out_dir else Path(from_json).parent
     res = render_pack(doc, out, [f for f in parse_formats(formats) if f != "json"],
-                      review_marks=review_marks, log=click.echo)
+                      review_marks=review_marks, log=click.echo, certificate_mode=certificate_mode)
     click.echo(f"{doc['label']}: wrote {len(res['files'])} files to {out}")
     bad = [c for c in res["compile"] if not c["ok"]]
     for b in bad:

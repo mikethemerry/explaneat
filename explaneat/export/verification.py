@@ -272,18 +272,21 @@ def checklist_block(doc, order: int) -> str:
         summ = (v5_summary(d, pl) if v5 else d.get("summary")) or (pl.get("template") or {}).get("summary") or []
         from .render_plain import outcome_callout
         L += outcome_callout(pl)
-        cited = {cid for s in summ for cid in (s.get("claims") or [])}
-        L += [r"\textbf{Plain-language summary} (" + tex(_status(pl)) + ("" if (v5 or d.get("summary")) else
-              "; offline template") + (r"; the full read-down document with its figures is "
-              r"\texttt{" + tex(f"{lab}-plain-v5.pdf") + r"} in this genome's folder" if v5 else "")
-              + r"):", "", sentences_tex(summ), ""]
-        if d.get("worth_checking"):
-            L += [r"\textbf{Worth checking:} " + sentences_tex(d["worth_checking"]), ""]
-        L += claims_table([c for c in pl.get("claims") or [] if c["id"] in cited])
-        L += ["", r"{\footnotesize Every paragraph and claim: the certificate's ``Plain-language summary'' "
-              r"subsection. Record a verdict on the plain-language layer with "
-              r"\texttt{" + tex(f"uv run python -m explaneat export record-plain-verdict {lab} --verified "
-                                f"--minutes N --notes \"...\"") + r"}.\par}", ""]
+        verdict_cmd = (r"\texttt{" + tex(f"uv run python -m explaneat export record-plain-verdict {lab} --verified "
+                                          f"--minutes N --notes \"...\"") + "}")
+        if v5:   # the read-down document that follows opens with the summary: do not repeat it here
+            L += [r"\textbf{Plain-language layer} (" + tex(_status(pl)) + r"): the read-down document follows "
+                  r"this page (summary, parts, evidence, worth checking; also \texttt{" + tex(f"{lab}-plain-v5.pdf")
+                  + r"} in this genome's folder). Record a verdict on it with " + verdict_cmd + ".", ""]
+        else:
+            cited = {cid for s in summ for cid in (s.get("claims") or [])}
+            L += [r"\textbf{Plain-language summary} (" + tex(_status(pl)) + ("" if d.get("summary") else
+                  "; offline template") + r"):", "", sentences_tex(summ), ""]
+            if d.get("worth_checking"):
+                L += [r"\textbf{Worth checking:} " + sentences_tex(d["worth_checking"]), ""]
+            L += claims_table([c for c in pl.get("claims") or [] if c["id"] in cited])
+            L += ["", r"{\footnotesize Every paragraph and claim: the certificate's ``Plain-language summary'' "
+                  r"subsection. Record a verdict on the plain-language layer with " + verdict_cmd + r".\par}", ""]
     L += [r"\textbf{Verdict.}", "",
           r"\begin{tabularx}{\linewidth}{@{}lX@{}}",
           r"Verified (correct as it stands, or after my changes): & $\square$ yes \quad $\square$ no \\[4pt]",
@@ -370,7 +373,11 @@ def render_review(docs: List[Dict[str, Any]], title: str, review_marks: bool = T
                                    tex(d["label"]) + r": plain-language explanation (read-down document)",
                                    "plain:" + render_tex.label_key(d["label"]))
             L.append(r"\addcontentsline{toc}{section}{" + tex(d["label"]) + r": coverage certificate}")
-        L.append(f"\\input{{{d['label']}/{d['label']}.tex}}")
+            # the read-down document carries the summary, hierarchy, evidence and figures: only the
+            # slim coverage certificate follows it
+            L.append(f"\\input{{{d['label']}/{d['label']}-coverage.tex}}")
+        else:
+            L.append(f"\\input{{{d['label']}/{d['label']}.tex}}")
         L.append(r"\clearpage")
     L.append(r"\end{document}")
     return printed("\n".join(L)) + "\n"

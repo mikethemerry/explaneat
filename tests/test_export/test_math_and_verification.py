@@ -84,7 +84,7 @@ def test_review_includes_the_complete_plain_language_document():
     assert "toy-s0/toy-s0-plain-v5.pdf" in doc[inc:inc + 400]
     assert "addtotoc" in doc[inc:inc + 400]
     # order: checklist, then the plain-language document, then the certificate
-    assert doc.index("verification checklist") < inc < doc.index(r"\input{toy-s0/toy-s0.tex}")
+    assert doc.index("verification checklist") < inc < doc.index(r"\input{toy-s0/toy-s0-coverage.tex}")
     # a genome without a v5 document still gets its checklist and certificate
     d2 = toy_doc()
     assert r"\includepdf" not in verification.render_review([d2], "Verification pack")
@@ -101,3 +101,36 @@ def test_included_landscape_pages_stay_landscape():
         a, _, b = rng.partition("-")
         covered += list(range(int(a), int(b or a) + 1))
     assert covered == list(range(1, 25))          # every page once, in order
+
+
+SECTIONS = ["Plain-language summary", "Annotation hierarchy", "Linear factors", "Network figures",
+            r"\subsection{Annotations}", r"\begin{figure}"]
+
+
+def test_coverage_certificate_has_no_duplicate_sections():
+    """In the verification pack the read-down document is the single home for the summary,
+    hierarchy, linear factors, evidence and figures: the coverage certificate carries none of them,
+    but keeps provenance, coverage, closed-form checks, operations and authorship."""
+    d = toy_doc()
+    cov = render_tex.render_appendix(d, mode="coverage")
+    for s in SECTIONS:
+        assert s not in cov, s
+    for s in ["Coverage certificate", r"\subsection{Coverage}", "Closed-form checks",
+              "Refactoring operations", "Verified by", "Record hash", "get\\_coverage"]:
+        assert s in cov, s
+    full = render_tex.render_appendix(d)          # the standalone default is still the full appendix
+    assert "Annotation hierarchy" in full
+    with pytest.raises(ValueError):
+        render_tex.render_appendix(d, mode="other")
+
+
+def test_pack_review_has_each_section_once_per_genome():
+    """Checklist + read-down PDF + coverage certificate: the checklist does not repeat the summary
+    the read-down document opens with, and the full certificate is not input."""
+    d = toy_doc()
+    d["plain_pdf"] = "toy-s0/toy-s0-plain-v5.pdf"
+    d["plain_language"] = {"drafted": {"readdown": {"x": {}}, "lead": [{"text": "A lead.", "claims": []}]},
+                           "claims": [], "template": {}, "parts": [], "verification": {}}
+    doc = verification.render_review([d], "Verification pack")
+    assert "Plain-language summary" not in doc and "A lead." not in doc
+    assert r"\input{toy-s0/toy-s0-coverage.tex}" in doc and r"\input{toy-s0/toy-s0.tex}" not in doc
