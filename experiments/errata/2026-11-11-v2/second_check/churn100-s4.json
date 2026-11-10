@@ -1,0 +1,10 @@
+[
+ {"id":"E5","verdict":"confirm",
+  "commands":["uv run python scratchpad/v2/work/churn100-s4/a.py (resolve churn100-s4; load; read node 595 bias/edges from vm.structure; vals=vm.m.ev.forward(vm.m.X); group training rows by area code 415 x state 47)"],
+  "result":"595 = relu(-0.924 + 0.410*state47 - 1.077*area415), out-weight 0.2034. Area 415 has 2,016 rows: 1,986 non-WA rows give exactly 0, and the 30 state 47 rows give 1.033 each (logit +0.210). So the original claim 'zero in area 415 (2,016 rows)' is false.",
+  "note":""},
+ {"id":"E6","verdict":"confirm",
+  "commands":["same script: mean of node 595 over non-415 rows, split by state 47"],
+  "result":"Outside area 415 and outside state 47 (1,942 rows) 595 = 0.106 (logit +0.0215). State 47 outside 415 (42 rows) = 3.187 (logit +0.648). Mean over all 1,984 non-415 rows = 0.171 (logit +0.035).",
+  "note":"The proposed '~0.11' / '0.11 for other areas (logit +0.02)' only fits if 'other areas' means non-415 rows outside state 47. That is the natural reading here, because the sentence lists state 47 rows separately. The original '~0.15' / '0.16 (logit +0.03)' fits neither reading exactly. It comes closest to the mean over all non-415 rows (0.17, logit +0.035), but even there 0.15 is low. Rounding check: 0.106 -> 0.11 and 0.0215 -> +0.02 are both right."}
+]

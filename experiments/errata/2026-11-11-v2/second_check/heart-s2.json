@@ -1,0 +1,12 @@
+[
+ {"id": "E7",
+  "verdict": "confirm",
+  "commands": [
+   "uv run python -m explaneat verify probe heart-s2 --sweep age=42,56,66",
+   "uv run python -m explaneat verify probe heart-s2 --sweep age=42,50,56,61,66 --set thal=3",
+   "uv run python -m explaneat verify probe heart-s2 --sweep age=35,37,40,42,50,56,61,66 --set thal=7",
+   "uv run python scratchpad/v2/work/heart-s2/e7.py (per-patient age sweep 35-72.8, 41 points, ann_31 contribution = score minus score with ann_31 at its baseline, grouped by thal)"
+  ],
+  "result": "Typical patient (normal thal scan): ann_31 contribution -1.09 at 42 years and 0 from about 54 on; risk 11.8% at 42, 22.3% at 50, 28.5% at 56/61/66. Typical patient with thal=7: risk 41.9% at every age from 35 to 66 and ann_31 contributes 0 everywhere. Across the 90 reversible-defect training patients, 61 are flat at every age; the other 29 have only a small gradual ramp below about 37-46 years (same slope as other patients, no jump), and only 3 of 90 change at all between 42 and 66 (mean change +0.008 log-odds, largest risk change +2.7 points). By contrast 130/135 normal-scan patients move between 42 and 66 (median +1.29 log-odds). C30 (12%->28%) is the typical normal-scan patient; C33 has the reversible-defect group's typical patient at 41.9%->41.9%.",
+  "note": "Original was wrong twice: there is no jump for reversible-defect patients (age does almost nothing through ann_31 for them), and the 12%->28% numbers belong to the typical (normal-scan) patient, not to reversible-defect patients. Proposed is right. Small nuance only: the 56-year fold (45-61) in C37 is the median over normal-scan patients; the typical patient's own curve flattens at about 54 years."}
+]

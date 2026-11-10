@@ -1,0 +1,10 @@
+[
+ {"id": "E13",
+  "verdict": "confirm",
+  "commands": [
+   "uv run python -m explaneat verify probe heart100-s0 --hold typical",
+   "python3 scan of experiments/10seed/plain_language/heart100-s0.json: reference_patient.predicted_risk and every numeric value in [0.188, 0.198] within claims C25, C55, C84"
+  ],
+  "result": "The live probe with all inputs held at the typical patient gives a predicted risk of 19.8%; the layer's reference_patient.predicted_risk is 0.197958, which rounds once to 20%. The only value near 0.193 in the cited claims is C55 evidence.who.categories[3].share_out = 0.192982: the share of patients with atypical angina (cp=2) among the 171 patients the flat_slope_amplifier does NOT act on. That is a population share, not a predicted risk of the typical patient, and C25 and C84 hold no risk value near it.",
+  "note": "\"about 20%\" is correct. The \"19%\" edit came from the rounding lint matching an unrelated 19.3% share in C55. Nothing else in the sentence needed changing for this check."}
+]

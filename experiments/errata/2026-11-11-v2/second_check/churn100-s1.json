@@ -1,0 +1,31 @@
+[
+  {
+    "id": "E8",
+    "verdict": "confirm",
+    "commands": [
+      "uv run python scratchpad/v2/work/churn100-s1/e89.py (resolve churn100-s1; read enabled edges from voice mail plan input -57 split copies; whole-model logit with plan set 1 vs 0 for every training row, averaged over the 1061 holders)"
+    ],
+    "result": "Direct edge -57_a -> output 0 has weight -0.8641 per SD; scale 0.4415, so going from no plan to plan changes the logit by -1.957 (rounds to -1.96). Whole-model change (plan 0 -> 1) averaged over the 1061 holders is -2.368 (rounds to -2.37); median per holder -1.957, 10th percentile -3.47.",
+    "note": "The original used -2.37 as if it were the direct term's effect; it is the whole-model average. The proposed text separates the two correctly. (A second split copy -57_b -> 3460 carries -0.83/SD, which is why the whole-model effect is larger.)"
+  },
+  {
+    "id": "E9",
+    "verdict": "confirm",
+    "commands": [
+      "uv run python scratchpad/v2/work/churn100-s1/e89.py (same method for international plan input -56)"
+    ],
+    "result": "Direct edge -56_a -> output 0 has weight +0.7690 per SD; scale 0.2932, so no plan -> plan changes the logit by +2.623 (rounds to +2.62). Whole-model change averaged over the 380 holders is +2.666 (rounds to +2.67); per-holder 10th-90th percentile 2.62 to 2.74.",
+    "note": ""
+  },
+  {
+    "id": "E10",
+    "verdict": "confirm",
+    "commands": [
+      "python3 read claims C086 and C012 from experiments/10seed/plain_language/churn100-s1.json",
+      "uv run python -m explaneat verify probe churn100-s1 --claim C086",
+      "uv run python -m explaneat verify probe churn100-s1 --claim C012"
+    ],
+    "result": "C086 risk group 'no voice-mail plan' goes 0.0226401 -> 0.0445479 and C012 risk (typical customer, who has no voice-mail plan) goes 0.0226401 -> 0.0445479; probe --claim gives 2.3% at 112 min and 4.5% (0.04455) at 249 min without a plan, 0.3% at both with a plan. Rounded once, 0.04455 is about 4%, not 5%.",
+    "note": "'about 5%' came from rounding the displayed 4.5% a second time. 'stays below 1% with one' is right (0.33%)."
+  }
+]
