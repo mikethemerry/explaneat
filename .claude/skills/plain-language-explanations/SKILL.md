@@ -150,7 +150,9 @@ is present:
 - **Interactions:** give the change in each group (`risk.groups`): "…from about 29% to about
   3% if exercise does not bring on chest pain, and from about 33% to about 32% if it does".
 - **Subgroups:** risk without the part, then with it, for the typical patient it acts on.
-- Round to whole percentages; "below 1%" and "above 99%" at the ends.
+- Round to whole percentages; "below 1%" and "above 99%" at the ends. **Round once, from the
+  stored value** (0.0445 is "about 4%", not 4.5% then 5%), as `plain_language_templates.pct`
+  does; the lint rejects a percentage that looks rounded twice.
 - **Survival models** (`risk_scale.kind == "survival"`): the same pattern with the predicted
   risk at the stated horizon ("predicted 5-year risk").
 
