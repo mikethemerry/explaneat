@@ -744,6 +744,33 @@ def compute_shap(
     return json.dumps(output, indent=2, default=_json_default)
 
 
+def _multiclass_performance(outputs: np.ndarray, y: np.ndarray, output_activation: str) -> Dict[str, Any]:
+    """Metrics for a k-output model: accuracy (argmax), and with identity
+    outputs (logits) the softmax cross-entropy and one-vs-rest macro AUC."""
+    y_int = np.asarray(y).ravel().astype(int)
+    k = outputs.shape[1]
+    result: Dict[str, Any] = {
+        "n_samples": int(len(y_int)),
+        "n_outputs": int(k),
+        "accuracy": float(np.mean(outputs.argmax(axis=1) == y_int)),
+        "per_class_accuracy": {
+            str(c): float(np.mean(outputs[y_int == c].argmax(axis=1) == c))
+            for c in range(k) if np.any(y_int == c)
+        },
+    }
+    if output_activation == "identity":
+        z = outputs - outputs.max(axis=1, keepdims=True)
+        logp = z - np.log(np.exp(z).sum(axis=1, keepdims=True))
+        result["cross_entropy"] = float(-np.mean(logp[np.arange(len(y_int)), y_int]))
+        try:
+            from sklearn.metrics import roc_auc_score
+            result["auc_roc_ovr_macro"] = float(roc_auc_score(
+                y_int, np.exp(logp), multi_class="ovr", average="macro", labels=list(range(k))))
+        except Exception:
+            pass
+    return result
+
+
 def compute_performance(
     genome_id: str,
     dataset_split_id: str,
@@ -820,6 +847,14 @@ def compute_performance(
 
         if predictions.ndim == 2 and predictions.shape[1] == 1:
             predictions = predictions.ravel()
+
+        if predictions.ndim == 2 and predictions.shape[1] > 1:
+            # Multi-output (k-class logits, softmax-trained): the regression
+            # metrics below assume one output per row, so report the
+            # classification metrics only.
+            return json.dumps(
+                _multiclass_performance(predictions, y, struct_net.model_output_activation),
+                indent=2, default=_json_default)
 
         y_flat = y.ravel()
         pred_flat = predictions.ravel() if predictions.ndim > 1 else predictions

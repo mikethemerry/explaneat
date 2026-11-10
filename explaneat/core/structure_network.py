@@ -677,7 +677,7 @@ class StructureNetwork:
                 col = info["layer_index"]
                 self._node_activations[nid] = output[:, col]
 
-            if layer["is_output"]:
+            if layer["is_output"] and len(self.structure.output_node_ids) <= 1:
                 out_ids = set(self.structure.output_node_ids)
                 indices = [
                     self.node_info[nid]["layer_index"]
@@ -686,8 +686,35 @@ class StructureNetwork:
                 ]
                 return output[:, indices] if indices else output
 
+        if len(self.structure.output_node_ids) > 1:
+            return self._multi_output(x)
+
         # Fallback: return last layer
         return self._outputs[self._layer_order[-1]]
+
+    def _multi_output(self, x: torch.Tensor) -> torch.Tensor:
+        """[N, k] outputs in ``output_node_ids`` order (multi-output models).
+
+        Outputs can sit at different depths, so the whole network is run
+        first.  An output with no path from an input (not in the layered
+        network) is a constant: its activation applied to its bias, as in
+        NeuralNeat.
+        """
+        nodes_by_id = {n.id: n for n in self.structure.nodes}
+        cols = []
+        for nid in self.structure.output_node_ids:
+            if nid in self.node_info:
+                cols.append(self._node_activations[nid])
+                continue
+            node = nodes_by_id.get(nid)
+            bias = float(node.bias or 0.0) if node is not None else 0.0
+            act = (node.activation if node is not None and node.activation
+                   else self.model_output_activation)
+            val = float(get_numpy_activation(act)(np.array([bias]))[0])
+            const = torch.full((x.shape[0],), val, dtype=x.dtype)
+            self._node_activations[nid] = const
+            cols.append(const)
+        return torch.stack(cols, dim=1)
 
     # ------------------------------------------------------------------
     # Node activation lookup
