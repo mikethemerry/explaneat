@@ -271,6 +271,8 @@ def main():
     ap.add_argument("--n-train", type=int, default=None)
     ap.add_argument("--name", default=None)
     ap.add_argument("--ckpt-every", type=int, default=5)
+    ap.add_argument("--epochs", type=int, default=N_EPOCHS_BACKPROP,
+                    help="backprop epochs per generation (default 5, the 10-seed setting)")
     ap.add_argument("--fresh", action="store_true", help="ignore an existing checkpoint")
     args = ap.parse_args()
     if os.environ.get("PYTHONHASHSEED") != "0":
@@ -344,7 +346,7 @@ def main():
                  data["X_train"].shape, data["X_test"].shape, n_gen, start_gen, commit[:9],
                  " (dirty)" if dirty else "")
 
-    pop.run(fitness, n=n_gen - start_gen, nEpochs=N_EPOCHS_BACKPROP)
+    pop.run(fitness, n=n_gen - start_gen, nEpochs=args.epochs)
     wall = time.time() - run["t0"] + wall_before
 
     best = copy.deepcopy(pop.best_genome)
@@ -354,7 +356,7 @@ def main():
     config_text = Path(spec["config"]).read_text()
     meta = dict(task=args.task, seed=args.seed, name=name, n_generations=n_gen,
                 best_generation=reporter.best_generation, n_train=int(len(y_train)),
-                n_epochs_backprop=N_EPOCHS_BACKPROP, fitness_function="neg_ce" if multiclass else "auc",
+                n_epochs_backprop=args.epochs, fitness_function="neg_ce" if multiclass else "auc",
                 criterion="softmax_cross_entropy" if multiclass else "bce",
                 output_activation="identity" if multiclass else "sigmoid",
                 genome_type="OutputSinkGenome" if multiclass else "DefaultGenome",

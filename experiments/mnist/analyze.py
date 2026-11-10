@@ -180,6 +180,18 @@ def main():
         for k in ("structural_coverage", "compositional_coverage"):
             if k in cov:
                 tools["get_coverage"][k] = cov[k]
+    # The UI path: the REST routes the React explorer calls for a genome.
+    from fastapi.testclient import TestClient
+    from explaneat.api.app import create_app
+    client = TestClient(create_app())
+    for route in ("", "/phenotype", "/model"):
+        t = time.time()
+        r = client.get(f"/api/genomes/{gid}{route}")
+        body = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
+        tools[f"api GET /api/genomes/{{id}}{route}"] = dict(
+            ok=r.status_code == 200, error=None if r.status_code == 200 else str(body)[:300],
+            seconds=round(time.time() - t, 2),
+            n_nodes=len(body.get("nodes", [])) if isinstance(body, dict) else None)
     report["tools"] = tools
     report["structure"] = structure_stats(pheno, sn, X[tr], multiclass)
     out_path = HERE / "logs" / f"{args.name}.analysis.json"
