@@ -462,8 +462,8 @@ def _closed_form_checks(doc, tags, P) -> List[str]:
     """One row per annotation: the closed form's largest error against the forward pass and the
     exact function on the training split."""
     L = [r"\subsection{Closed-form checks}\label{" + P + "closedform}",
-         r"{\small\begin{longtable}{@{}llrr@{}}", r"\toprule Tag & Annotation & Closed form vs forward pass & "
-         r"Exact function vs forward pass \\ \midrule \endhead"]
+         r"{\small\noindent\begin{tabularx}{\linewidth}{@{}lXrr@{}}", r"\toprule Tag & Annotation & Closed form vs forward pass & "
+         r"Exact function vs forward pass \\ \midrule"]
     for a in sorted(doc["annotations"], key=lambda a: int(tags[a["name"]][1:])):
         cf = a.get("closed_form") or {}
         err = cf.get("error") or {}
@@ -472,7 +472,7 @@ def _closed_form_checks(doc, tags, P) -> List[str]:
         else:
             c1, c2 = ("not available", "") if not cf.get("available") else ("n/a", "n/a")
         L.append(f"{tags[a['name']]} & {tex(a['name'])} & {c1} & {c2} \\\\")
-    L += [r"\bottomrule", r"\end{longtable}}"]
+    L += [r"\bottomrule", r"\end{tabularx}\par}"]
     return L
 
 
