@@ -21,7 +21,7 @@ from typing import Any, Dict, List, Optional, Sequence
 
 import numpy as np
 
-CACHE_VERSION = 1
+CACHE_VERSION = 2   # 2: the explanation's operations are no longer part of the base
 
 
 @dataclass
@@ -41,7 +41,7 @@ class BaseData:
     scale: np.ndarray
     dataset_name: str
     meta: Dict[str, Any]
-    db_operations: List[Dict[str, Any]] = field(default_factory=list)
+    db_operations: List[Dict[str, Any]] = field(default_factory=list)   # tests only; never filled from the DB
     codebook: Optional[Dict[str, Any]] = None   # None: the dataset's codebook (by name)
 
 
@@ -55,7 +55,8 @@ def _cache_path(genome_id: str) -> Path:
 
 
 def load_base(genome_id: str, cache: bool = True, db=None) -> BaseData:
-    """Phenotype, data and stored operations of a genome (database read only)."""
+    """Phenotype and data of a genome (database read only). The explanation stored in the
+    database is not read here: see :func:`load_db_operations`."""
     genome_id = str(genome_id)
     path = _cache_path(genome_id)
     if cache and path.is_file():
@@ -86,7 +87,7 @@ def _load_base_db(genome_id: str, db=None) -> BaseData:
     from mcp_server.server import get_db
 
     from ..core.explaneat import ExplaNEAT
-    from ..db.models import Dataset, DatasetSplit, Experiment, Explanation, Genome, Population
+    from ..db.models import Dataset, DatasetSplit, Experiment, Genome, Population
 
     db = db or get_db()
     with db.session_scope() as s:
@@ -101,8 +102,6 @@ def _load_base_db(genome_id: str, db=None) -> BaseData:
         split = s.get(DatasetSplit, exp.split_id)
         neat_genome, config, _ = load_genome_and_config(s, genome_id)
         phenotype = ExplaNEAT(neat_genome, config).get_phenotype_network()
-        ex = (s.query(Explanation).filter(Explanation.genome_id == g.id).first())
-        ops = copy.deepcopy(list(ex.operations or [])) if ex is not None else []
         X_tr, y_tr, names, *_ = load_split_data(s, str(split.id), "train", 1.0, 10**9)
         try:
             X_te, y_te, *_ = load_split_data(s, str(split.id), "test", 1.0, 10**9)
@@ -114,7 +113,6 @@ def _load_base_db(genome_id: str, db=None) -> BaseData:
         if split.scaler_type != "StandardScaler":
             raise ValueError(f"scaler {split.scaler_type!r} is not supported (StandardScaler only)")
         meta = {"genome_id": genome_id,
-                "explanation_id": str(ex.id) if ex is not None else None,
                 "dataset": {"id": str(ds.id), "name": ds.name,
                             "class_names": list(ds.class_names or [])},
                 "split": {"id": str(split.id), "scaler_type": split.scaler_type},
@@ -127,8 +125,25 @@ def _load_base_db(genome_id: str, db=None) -> BaseData:
             feature_names=list(names or ds.feature_names), raw_train=raw_tr, raw_test=raw_te,
             mean=np.asarray(split.scaler_params["mean"], dtype=float),
             scale=np.asarray(split.scaler_params["scale"], dtype=float),
-            dataset_name=ds.name, meta=meta,
-            db_operations=json.loads(json.dumps(ops, default=str)))
+            dataset_name=ds.name, meta=meta)
+
+
+def load_db_operations(genome_id: str, db=None) -> List[Dict[str, Any]]:
+    """The operations of the explanation stored in the database (read only). Used only when a
+    target has no operations of its own."""
+    from sqlalchemy import text
+
+    from mcp_server.server import get_db
+
+    from ..db.models import Explanation
+
+    db = db or get_db()
+    with db.session_scope() as s:
+        if s.bind.dialect.name == "postgresql":
+            s.execute(text("SET TRANSACTION READ ONLY"))
+        ex = s.query(Explanation).filter(Explanation.genome_id == uuid.UUID(str(genome_id))).first()
+        ops = copy.deepcopy(list(ex.operations or [])) if ex is not None else []
+    return json.loads(json.dumps(ops, default=str))
 
 
 def build_engine_from(phenotype, operations: Sequence[Dict[str, Any]]):
@@ -163,8 +178,12 @@ class VerifyModel:
         from ..analysis.plain_language import PlainModel
 
         self.base = base
-        self.operations = copy.deepcopy(list(base.db_operations if operations is None else operations))
-        self.operations_source = "database" if operations is None else "given"
+        if operations is None:   # only now, and only for a target without its own operations
+            operations = base.db_operations or load_db_operations(base.genome_id)
+            self.operations_source = "database"
+        else:
+            self.operations_source = "given"
+        self.operations = copy.deepcopy(list(operations))
         self.engine = build_engine_from(base.phenotype, self.operations)
         self.structure = self.engine.current_state
         self.m = PlainModel(self.structure, self.operations, base.X_train, base.y_train,

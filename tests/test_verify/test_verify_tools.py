@@ -184,7 +184,7 @@ def test_variable_and_category_lookup(vm):
 
 def test_probe_matches_a_direct_forward_pass(vm):
     res = P.probe(vm, sets=["grp=1"], sweeps=["dose=0:10:6"])
-    assert [r["inputs"]["dose"] for r in res["rows"]][0].startswith("0.0")
+    assert [r["inputs"]["dose"] for r in res["rows"]][:2] == ["0 mg", "2 mg"]
     raw = P.hold_row(vm, "typical")
     P.set_raw(raw, P.variable(vm, "grp"), "1")
     for r, d in zip(res["rows"], np.linspace(0, 10, 6)):
@@ -202,7 +202,7 @@ def test_probe_two_dimensional_grid(vm):
     res = P.probe(vm, sweeps=["dose=2,8", "grp=all"], parts=False)
     assert len(res["rows"]) == 4
     by = {(r["inputs"]["dose"], r["inputs"]["grp"]): r["risk"] for r in res["rows"]}
-    assert by[("8.0 mg", "group B (grp=1)")] > by[("8.0 mg", "group A (grp=0)")] > by[("2.0 mg", "group A (grp=0)")]
+    assert by[("8 mg", "group B (grp=1)")] > by[("8 mg", "group A (grp=0)")] > by[("2 mg", "group A (grp=0)")]
 
 
 def test_ablate_switches_the_gate_off(vm):
@@ -221,7 +221,7 @@ def test_subgroup_counts_and_part_activity(vm):
     assert res["subgroup"]["n"] == want
     assert res["subgroup"]["n"] + res["rest"]["n"] == res["n_total"]
     gate = next(p for p in vm.parts if p.name == "gate")
-    assert res["subgroup"]["parts"][gate.id]["share_active"] == pytest.approx(1.0)
+    assert res["subgroup"]["parts"][gate.id]["share_acts_on"] == pytest.approx(1.0)
     lab = P.subgroup(vm, "grp_label == 'group B'")
     assert lab["subgroup"]["n"] == int(np.sum(v.raw_train == "1"))
 

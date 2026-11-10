@@ -39,6 +39,23 @@ uv run python -m explaneat verify vars $T          # variables, units, category 
 uv run python -m explaneat verify recheck $T --out <out>/<item_id>/recheck.json
 ```
 
+`recheck` caches the recomputed claims (by genome, operations, data and code), so a second run
+on a large dataset (Adult) takes seconds. The other tools, used at L1 to L3:
+
+| Command | What it gives |
+|---|---|
+| `verify probe $T --set var=value [--sweep var=a:b:steps]x2 [--hold ...]` | risk and each acting part's contribution for constructed inputs, values at full precision; `--wide` adds exit values, score and risk without each part; `--nodes 1718,ann_31` (or `all`) adds node values and pre-activations |
+| `verify probe $T --claim C41` | the claim's own reference case, swept over its change (and its modifier): compare with the claim's stated risk |
+| `verify ablate $T --part A [--part B] [--node N] [--edge A->B] [--direct] [--to ...]` | the prediction with parts, a single node (the units it feeds keep computing), a readout edge, or the root's direct edges switched off; `--to baseline` (default: a gated exit -> 0, an always-on exit -> its training mean), `zero`, `mean` |
+| `verify subgroup $T --where "expr"` | n, outcome rate (Wilson CI), and per part where it **acts** (contribution not zero) and where its exits are non-zero |
+| `verify linearise $T [--level parts\|nodes] [--core]` | AUC with switching units replaced by affine fits (alone and all together, restore gains), and the linear core alone |
+| `verify enumerate $T [--rule EXPR] [--group-by EXPR]` | every combination of a small discrete input space (MONK-2: 432), predicted; the rule's agreement and its counterexamples |
+
+`--where`, `--rule` and `--group-by` are pandas expressions over real-unit columns. Category
+codes are text, so quote them (`a5 == '1'`, `thal == '7'`), or use `sex_label == 'female'` or
+the 0/1 columns `<var>_<code>` (`a1_1 + a2_1 + a3_1 == 2`; adding `(a1 == '1') + (a2 == '1')`
+means "or" in pandas). Put names with spaces or hyphens in backticks (`` `capital-gain` > 5000 ``).
+
 Read `explanation.md` top to bottom (it is rendered from the JSON files). Then list every
 **unit to grade**, with a location string (section 6 gives the formats):
 
@@ -74,15 +91,39 @@ the unit**. A unit that survives all four levels is upheld (possibly with weaken
   weakened if the difference is only in the last rounded digit).
 - **Prose against claims.** Every number in a sentence must be in a claim it cites; every cited
   claim must exist and belong to that part. "About 31%" is consistent with a stated 0.305 to
-  0.315, not with 0.18. A sentence citing the wrong claim id is refuted at L1 (say which claim
-  would support it, if any).
-- **Hand checks for numbers the tool does not parse** (the technical hypotheses and evidence
-  records are free text): counts and shares with `verify subgroup`, ablation effects with
-  `verify ablate`, values at a point with `verify probe`. A count or rate that does not
-  reproduce is refuted at L1.
+  0.315, not with 0.18. `recheck` sorts a number that is not in the cited claims into:
+  - `prose_number` (mismatch): in no claim at all: refute at L1;
+  - `prose_uncited` (warn): in another claim the sentence does not cite: a citation gap; weaken
+    and name the claim that supports it (a sentence citing the wrong claim id outright, with
+    none of its numbers in the cited claim, is refuted);
+  - `prose_rounding` (warn): one unit of the last digit from a cited value at the stated
+    precision ("about 5%" for 4.45%, rounded twice): a weakened-level rounding note, not a
+    refutation.
+- **Prose directions.** `prose_direction` (mismatch): a sentence that cites one directional
+  claim says "raises" where the claim says "lowers" (or the other way round). Confirm with
+  `probe --claim` and refute. The check is deliberately narrow (one directional claim, no other
+  variable named, no negation), so still read every direction word yourself.
+- **Free text (technical hypotheses, evidence narratives, the record's summary).** `recheck`
+  parses and recomputes what it can (`freetext_*` findings; the full list is under
+  `freetext.checked` in the JSON report):
+  - node formulas (`1718 = ReLU(-0.81 - 1.49*age + ...)`), evaluated on the training rows
+    against the node's value: weights, biases and "reduces to" forms (`approx` = within 15% of
+    the node's range, e.g. a formula that holds only where a relay is on);
+  - readout weights ("read out with +1.108", `logit += 0.377*1946`);
+  - activity shares and counts ("1718 active 33%", "on for 1143 rows"), outcome rates when
+    active vs inactive, the training n, the full model's AUC and accuracy, and "AUC a -> b" when
+    b is this part switched off;
+  - "only ever adds risk" / "protective" against the sign of the part's contribution.
+  Everything else with a number is listed under `freetext.unchecked_sentences` (and
+  `freetext.unchecked_statements`, with the reason, e.g. a name the model does not have):
+  **that list is your manual work**. Check each item with `subgroup` (counts, shares, rates in a
+  subgroup), `ablate` (effects of switching something off), `probe --nodes` (node values),
+  `linearise` (linear-only AUCs) or `enumerate` (rules on discrete inputs). A number that does
+  not reproduce is refuted at L1.
 
-`recheck` severities: `mismatch` = a stated number does not reproduce (refute or weaken after
-you have confirmed it); `warn` = worth a look (lint, agent-written formulas); `info` = context.
+`recheck` severities: `mismatch` = a stated number does not reproduce (refute after you have
+confirmed it); `warn` = worth a look (rounding, citation gaps, approximate formulas, lint);
+`info` = context.
 
 ## 3. L2 Evidential: does each piece of evidence support its hypothesis?
 
@@ -92,7 +133,8 @@ For every hypothesis, read its evidence and ask:
   only as the layer's test check.
 - **The stated n and subgroup.** Re-count with `verify subgroup --where "..."`. Is the subgroup
   the one the hypothesis talks about? ("acts on the 85 customers with an international plan":
-  check that the subgroup expression gives that n and that the part is active exactly there.)
+  check that the subgroup expression gives that n and that the part *acts* exactly there; for an
+  always-on (linear) part the exits are non-zero everywhere, so use "acts on", not the exits.)
 - **Direction and shape.** Does the evidence show the direction the hypothesis states (raises vs
   lowers), and the shape (steady, nothing until X then steady, rises slowly then faster, in a
   jump)? The plain hypothesis, the evidence sentences, the claims and the probe must agree.
@@ -128,12 +170,23 @@ training range and counts; values outside it are extrapolation, not evidence).
 - **Subgroup boundaries.** For "only for X" or "mainly for X": probe inside and outside X and
   use `verify subgroup` to see where the part is active.
 - **Counterexamples.** For rules ("yes when at most two attributes take their first value"),
-  enumerate or probe cases on both sides of the rule; one real counterexample inside the data
+  on a small discrete space run `verify enumerate $T --rule "<the rule>"`: it lists every
+  combination where the model and the rule disagree, and how often each occurs in training.
+  Elsewhere probe cases on both sides of the rule. One real counterexample inside the data
   support refutes the rule.
-- **Ablate.** `verify ablate $T --part <id|name|title>` switches the part off (exits at 0 for
-  a gated part, else at their training mean) and reports the typical case and the data: share
-  affected, mean risk change, AUC and accuracy with and without, predictions that flip. Check
-  the stated effect size and sign, and which rows it acts on.
+- **Claims' own cases.** `verify probe $T --claim Cnn` reproduces a claim's reference case and
+  change; use it when a sentence's numbers or direction are in doubt.
+- **Node-level statements.** `verify probe $T --nodes <ids or part>` shows node values and
+  pre-activations ("never clips", "always on", "zero for 52%").
+- **Ablate.** `verify ablate $T --part <id|name|title>` switches a part off (`--to baseline`:
+  a gated exit to 0, an always-on exit to its training mean; `--to zero` removes its average
+  too) and reports the typical case and the data: share affected, mean risk change, AUC and
+  accuracy with and without, predictions that flip. Several `--part`s switch parts off
+  together; `--node N` fixes one node only (what it feeds keeps computing); `--edge 1718->0`
+  removes one readout; `--direct` removes the root's direct edges. Check the stated effect size
+  and sign, and which rows it acts on.
+- **Linear-only claims.** "The linear core alone gives AUC 0.930", "linearising X costs 0.002":
+  `verify linearise $T --core` (parts) or `--level nodes` (every switching ReLU).
 
 Write down the exact command, the inputs, and the numbers you saw: they are the evidence for
 your grade.

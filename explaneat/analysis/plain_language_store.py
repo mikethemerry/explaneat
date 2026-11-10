@@ -258,11 +258,52 @@ def _number_with_unit(text: str) -> Optional[re.Pattern]:
     return re.compile(r"(?<![0-9.])" + num + r"(?![0-9])" + (r"\s*" + unit if unit else ""), re.I)
 
 
+_PCT = re.compile(r"(?<![0-9.])([0-9]+(?:\.[0-9]+)?)%")
+_RISK_KEYS = re.compile(r"risk|rate|share|^from$|^to$|^delta$|predicted", re.I)
+_SKIP = {"rug", "band_risk_p10", "band_risk_p90", "typical_curve", "test_check", "estimate"}
+
+
+def _probabilities(obj, out: List[float], key: str = "") -> None:
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if k not in _SKIP:
+                _probabilities(v, out, k)
+    elif isinstance(obj, list):
+        for v in obj:
+            _probabilities(v, out, key)
+    elif isinstance(obj, (int, float)) and not isinstance(obj, bool) and _RISK_KEYS.search(key) and 0 <= abs(obj) <= 1:
+        out.append(abs(float(obj)))
+
+
+def lint_percents(text: str, claims: List[Dict[str, Any]]) -> List[str]:
+    """Round once. A percentage one unit of its last digit away from a cited probability, and
+    equal to none of them at the written precision, was rounded twice (4.45% -> 4.5% -> "about
+    5%"): write the value rounded once, as ``plain_language_templates.pct`` does ("about 4%")."""
+    probs: List[float] = []
+    for c in claims:
+        _probabilities(c, probs)
+    errs = []
+    for m in _PCT.finditer(text or ""):
+        tok = m.group(1)
+        v = float(tok)
+        d = len(tok.split(".", 1)[1]) if "." in tok else 0
+        unit = 10 ** (-d)
+        exact = [p for p in probs if abs(round(100 * p, d) - v) < 1e-9 or abs(100 * p - v) <= 0.5 * unit + 1e-9]
+        if exact or (v <= 1 and any(p < 0.01 for p in probs)) or (v >= 99 and any(p > 0.99 for p in probs)):
+            continue
+        near = [p for p in probs if abs(100 * p - v) <= unit + 1e-9]
+        if near:
+            p = min(near, key=lambda q: abs(100 * q - v))
+            errs.append(f"{tok}% looks rounded twice: the cited value is {100 * p:.3g}%, which rounds to "
+                        f"{round(100 * p, d):.{d}f}% (round once)")
+    return errs
+
+
 def lint_points(text: str, claims: List[Dict[str, Any]]) -> List[str]:
     """A sentence may not quote two different points for the same fold: where a shape's hinge
     was reconciled with a threshold claim, quote the named (median) point, not the typical
-    patient's own hinge."""
-    errs = []
+    patient's own hinge. Percentages must be rounded once (:func:`lint_percents`)."""
+    errs = lint_percents(text, claims)
     for c in claims:
         pt = (c.get("shape") or {}).get("point") or {}
         if not (c.get("shape") or {}).get("point_reconciled") or not pt:
