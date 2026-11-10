@@ -269,7 +269,9 @@ def checklist_block(doc, order: int) -> str:
         from .render_plain import _status, claims_table, sentences_tex, v5_summary
         d = pl.get("drafted") or {}
         v5 = bool(d.get("readdown"))
-        summ = (v5_summary(d) if v5 else d.get("summary")) or (pl.get("template") or {}).get("summary") or []
+        summ = (v5_summary(d, pl) if v5 else d.get("summary")) or (pl.get("template") or {}).get("summary") or []
+        from .render_plain import outcome_callout
+        L += outcome_callout(pl)
         cited = {cid for s in summ for cid in (s.get("claims") or [])}
         L += [r"\textbf{Plain-language summary} (" + tex(_status(pl)) + ("" if (v5 or d.get("summary")) else
               "; offline template") + (r"; the full read-down document with its figures is "

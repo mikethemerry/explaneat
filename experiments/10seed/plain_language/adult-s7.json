@@ -37550,9 +37550,1548 @@
    "type": "structure",
    "variables": [],
    "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_123",
+    "name": "income_logit_additive"
+   },
+   "checks": {
+    "slope_varies": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -0.0624255
+   },
+   "evidence": {
+    "fd_match_share": 0.562178,
+    "fd_max_deviation": 1.97601,
+    "fd_varies": true
+   },
+   "id": "C152",
+   "key": "ann_123:linearity:var:age",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "mixed",
+    "direction": "lowers",
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 0,
+      "label": "age",
+      "score_per_unit": -0.0045441191215997035,
+      "text": "−0.0045 per year"
+     }
+    ],
+    "per_unit_scope": "its paths that do not switch",
+    "variable": "age"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "age",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "age",
+     "short": "age",
+     "unit": "years"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_123",
+    "name": "income_logit_additive"
+   },
+   "checks": {
+    "slope_varies": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -0.0511068
+   },
+   "evidence": {
+    "fd_match_share": 0.165229,
+    "fd_max_deviation": 0.0526188,
+    "fd_varies": true
+   },
+   "id": "C153",
+   "key": "ann_123:linearity:var:workclass",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "mixed",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 1,
+      "label": "missing (?)",
+      "level": "0",
+      "score_per_unit": -0.4681394702536645,
+      "text": "−0.47 for missing (?)"
+     },
+     {
+      "column": 2,
+      "label": "federal government",
+      "level": "1",
+      "score_per_unit": -0.5065785650130048,
+      "text": "−0.51 for federal government"
+     },
+     {
+      "column": 4,
+      "label": "never worked",
+      "level": "3",
+      "score_per_unit": 0.4348888622396284,
+      "text": "+0.43 for never worked"
+     },
+     {
+      "column": 6,
+      "label": "self-employed, incorporated",
+      "level": "5",
+      "score_per_unit": -0.18714035493551004,
+      "text": "−0.19 for self-employed, incorporated"
+     },
+     {
+      "column": 7,
+      "label": "self-employed, not incorporated",
+      "level": "6",
+      "score_per_unit": 0.5590407075395669,
+      "text": "+0.56 for self-employed, not incorporated"
+     },
+     {
+      "column": 9,
+      "label": "without pay",
+      "level": "8",
+      "score_per_unit": 0.9871170969032601,
+      "text": "+0.99 for without pay"
+     }
+    ],
+    "per_unit_scope": "its paths that do not switch",
+    "variable": "workclass"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "workclass",
+     "decoded": true,
+     "kind": "category",
+     "label": "work class",
+     "short": "work class",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_123",
+    "name": "income_logit_additive"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -0.078001
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 3.71066e-11,
+    "fd_varies": false
+   },
+   "id": "C154",
+   "key": "ann_123:linearity:var:fnlwgt",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "from 66,572 (weight) to 328,216 (weight)",
+    "delta": -0.0470757,
+    "from": 0.599105,
+    "n": 39073,
+    "reference": "typical patient",
+    "to": 0.552029
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": "lowers",
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 10,
+      "label": "census sampling weight",
+      "score_per_unit": -7.371232698364952e-07,
+      "text": "−7.4e−07 per (weight)"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "fnlwgt"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "fnlwgt",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "census sampling weight",
+     "short": "census sampling weight",
+     "unit": "(weight)"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_123",
+    "name": "income_logit_additive"
+   },
+   "checks": {
+    "slope_varies": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -0.220187
+   },
+   "evidence": {
+    "fd_match_share": 0.0586594,
+    "fd_max_deviation": 0.100362,
+    "fd_varies": true
+   },
+   "id": "C155",
+   "key": "ann_123:linearity:var:education",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "mixed",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 11,
+      "label": "10th grade",
+      "level": "0",
+      "score_per_unit": 0.0,
+      "text": "+0 for 10th grade"
+     },
+     {
+      "column": 12,
+      "label": "11th grade",
+      "level": "1",
+      "score_per_unit": 0.3475045340231443,
+      "text": "+0.35 for 11th grade"
+     },
+     {
+      "column": 13,
+      "label": "doctorate",
+      "level": "10",
+      "score_per_unit": 0.0,
+      "text": "+0 for doctorate"
+     },
+     {
+      "column": 15,
+      "label": "master's degree",
+      "level": "12",
+      "score_per_unit": -0.40809713102069006,
+      "text": "−0.41 for master's degree"
+     },
+     {
+      "column": 16,
+      "label": "preschool",
+      "level": "13",
+      "score_per_unit": 1.1643885743097286,
+      "text": "+1.16 for preschool"
+     },
+     {
+      "column": 17,
+      "label": "professional school degree",
+      "level": "14",
+      "score_per_unit": -0.7158287526161516,
+      "text": "−0.72 for professional school degree"
+     },
+     {
+      "column": 18,
+      "label": "some college",
+      "level": "15",
+      "score_per_unit": -0.17681106147438957,
+      "text": "−0.18 for some college"
+     },
+     {
+      "column": 22,
+      "label": "7th-8th grade",
+      "level": "5",
+      "score_per_unit": 0.052896594405420244,
+      "text": "+0.053 for 7th-8th grade"
+     },
+     {
+      "column": 23,
+      "label": "9th grade",
+      "level": "6",
+      "score_per_unit": 0.22433370291296986,
+      "text": "+0.22 for 9th grade"
+     },
+     {
+      "column": 24,
+      "label": "associate degree (academic)",
+      "level": "7",
+      "score_per_unit": 0.020956022228804706,
+      "text": "+0.021 for associate degree (academic)"
+     },
+     {
+      "column": 25,
+      "label": "associate degree (vocational)",
+      "level": "8",
+      "score_per_unit": -0.06829889370354926,
+      "text": "−0.068 for associate degree (vocational)"
+     },
+     {
+      "column": 26,
+      "label": "bachelor's degree",
+      "level": "9",
+      "score_per_unit": -0.2688535677889507,
+      "text": "−0.27 for bachelor's degree"
+     }
+    ],
+    "per_unit_scope": "its paths that do not switch",
+    "variable": "education"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "education",
+     "decoded": true,
+     "kind": "category",
+     "label": "highest education",
+     "short": "highest education",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_123",
+    "name": "income_logit_additive"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -0.556606
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 6.15445e-11,
+    "fd_varies": false
+   },
+   "id": "C156",
+   "key": "ann_123:linearity:var:education-num",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "from 7 on the 1-16 scale to 13 on the 1-16 scale",
+    "delta": -0.307322,
+    "from": 0.725188,
+    "n": 39073,
+    "reference": "typical patient",
+    "to": 0.417866
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": "lowers",
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 27,
+      "label": "education level",
+      "score_per_unit": -0.21698033466191796,
+      "text": "−0.22 per on the 1-16 scale"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "education-num"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "education-num",
+     "decoded": true,
+     "kind": "count",
+     "label": "education level (1 = preschool to 16 = doctorate)",
+     "short": "education level",
+     "unit": "on the 1-16 scale"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_123",
+    "name": "income_logit_additive"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -1.27397
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 8.47296e-11,
+    "fd_varies": false
+   },
+   "id": "C157",
+   "key": "ann_123:linearity:var:marital-status",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "to married to a member of the armed forces",
+    "delta": -0.188452,
+    "from": 0.579178,
+    "n": 29,
+    "reference": "typical patient",
+    "to": 0.390726
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 29,
+      "label": "married to a member of the armed forces",
+      "level": "1",
+      "score_per_unit": -3.1484048608472834,
+      "text": "−3.15 for married to a member of the armed forces"
+     },
+     {
+      "column": 30,
+      "label": "married (civilian spouse)",
+      "level": "2",
+      "score_per_unit": -2.384741534706541,
+      "text": "−2.38 for married (civilian spouse)"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "marital-status"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "marital-status",
+     "decoded": true,
+     "kind": "category",
+     "label": "marital status",
+     "short": "marital status",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_123",
+    "name": "income_logit_additive"
+   },
+   "checks": {
+    "slope_varies": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": 0.882514
+   },
+   "evidence": {
+    "fd_match_share": 0.0586594,
+    "fd_max_deviation": 0.353367,
+    "fd_varies": true
+   },
+   "id": "C158",
+   "key": "ann_123:linearity:var:occupation",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "mixed",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 35,
+      "label": "missing (?)",
+      "level": "0",
+      "score_per_unit": 1.0599152640531306,
+      "text": "+1.06 for missing (?)"
+     },
+     {
+      "column": 37,
+      "label": "professional specialty",
+      "level": "10",
+      "score_per_unit": -0.3950943821995189,
+      "text": "−0.40 for professional specialty"
+     },
+     {
+      "column": 39,
+      "label": "sales",
+      "level": "12",
+      "score_per_unit": -0.290273432171655,
+      "text": "−0.29 for sales"
+     },
+     {
+      "column": 41,
+      "label": "transport or moving",
+      "level": "14",
+      "score_per_unit": 0.1307254945259519,
+      "text": "+0.13 for transport or moving"
+     },
+     {
+      "column": 42,
+      "label": "armed forces",
+      "level": "2",
+      "score_per_unit": 0.2994436616699496,
+      "text": "+0.30 for armed forces"
+     },
+     {
+      "column": 44,
+      "label": "executive or managerial",
+      "level": "4",
+      "score_per_unit": -0.38944337146915436,
+      "text": "−0.39 for executive or managerial"
+     },
+     {
+      "column": 45,
+      "label": "farming or fishing",
+      "level": "5",
+      "score_per_unit": 1.2865740940778214,
+      "text": "+1.29 for farming or fishing"
+     },
+     {
+      "column": 46,
+      "label": "handlers or cleaners",
+      "level": "6",
+      "score_per_unit": 0.0,
+      "text": "+0 for handlers or cleaners"
+     },
+     {
+      "column": 47,
+      "label": "machine operator or inspector",
+      "level": "7",
+      "score_per_unit": 0.0,
+      "text": "+0 for machine operator or inspector"
+     },
+     {
+      "column": 48,
+      "label": "other service",
+      "level": "8",
+      "score_per_unit": 1.0061607934428178,
+      "text": "+1.01 for other service"
+     },
+     {
+      "column": 49,
+      "label": "private household service",
+      "level": "9",
+      "score_per_unit": 6.269255308971973,
+      "text": "+6.27 for private household service"
+     }
+    ],
+    "per_unit_scope": "its paths that do not switch",
+    "variable": "occupation"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "occupation",
+     "decoded": true,
+     "kind": "category",
+     "label": "occupation",
+     "short": "occupation",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_123",
+    "name": "income_logit_additive"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -2.91057
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 1.18388e-10,
+    "fd_varies": false
+   },
+   "id": "C159",
+   "key": "ann_123:linearity:var:relationship",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "to wife",
+    "delta": -0.256492,
+    "from": 0.579178,
+    "n": 1897,
+    "reference": "typical patient",
+    "to": 0.322686
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 50,
+      "label": "husband",
+      "level": "0",
+      "score_per_unit": -1.5244750146972468,
+      "text": "−1.52 for husband"
+     },
+     {
+      "column": 51,
+      "label": "not in a family",
+      "level": "1",
+      "score_per_unit": -1.9484586269200805,
+      "text": "−1.95 for not in a family"
+     },
+     {
+      "column": 52,
+      "label": "other relative",
+      "level": "2",
+      "score_per_unit": -1.237923050105548,
+      "text": "−1.24 for other relative"
+     },
+     {
+      "column": 54,
+      "label": "unmarried",
+      "level": "4",
+      "score_per_unit": -1.7802096896255506,
+      "text": "−1.78 for unmarried"
+     },
+     {
+      "column": 55,
+      "label": "wife",
+      "level": "5",
+      "score_per_unit": -2.5853309113266856,
+      "text": "−2.59 for wife"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "relationship"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "relationship",
+     "decoded": true,
+     "kind": "category",
+     "label": "relationship in the household",
+     "short": "relationship in the household",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_123",
+    "name": "income_logit_additive"
+   },
+   "checks": {
+    "slope_varies": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -0.400752
+   },
+   "evidence": {
+    "fd_match_share": 0.14455,
+    "fd_max_deviation": 1.73489,
+    "fd_varies": true
+   },
+   "id": "C160",
+   "key": "ann_123:linearity:var:race",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "mixed",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 56,
+      "label": "American Indian or Eskimo",
+      "level": "0",
+      "score_per_unit": 0.14666569496581347,
+      "text": "+0.15 for American Indian or Eskimo"
+     },
+     {
+      "column": 57,
+      "label": "Asian or Pacific Islander",
+      "level": "1",
+      "score_per_unit": 0.0,
+      "text": "+0 for Asian or Pacific Islander"
+     },
+     {
+      "column": 59,
+      "label": "other race",
+      "level": "3",
+      "score_per_unit": -0.2108793515041333,
+      "text": "−0.21 for other race"
+     },
+     {
+      "column": 60,
+      "label": "White",
+      "level": "4",
+      "score_per_unit": -1.1246389848267226,
+      "text": "−1.12 for White"
+     }
+    ],
+    "per_unit_scope": "its paths that do not switch",
+    "variable": "race"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "race",
+     "decoded": true,
+     "kind": "category",
+     "label": "race",
+     "short": "race",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_123",
+    "name": "income_logit_additive"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -0.314357
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 1.18437e-10,
+    "fd_varies": false
+   },
+   "id": "C161",
+   "key": "ann_123:linearity:var:sex",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "to male",
+    "delta": 0.0,
+    "from": 0.579178,
+    "n": 26114,
+    "reference": "typical patient",
+    "to": 0.579178
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 61,
+      "label": "male",
+      "level": "1",
+      "score_per_unit": -0.6676943110920408,
+      "text": "−0.67 for male"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "sex"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "sex",
+     "decoded": true,
+     "kind": "category",
+     "label": "sex",
+     "short": "sex",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_123",
+    "name": "income_logit_additive"
+   },
+   "checks": {
+    "slope_varies": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -2.49214
+   },
+   "evidence": {
+    "fd_match_share": 0.946408,
+    "fd_max_deviation": 1.33551,
+    "fd_varies": true
+   },
+   "id": "C162",
+   "key": "ann_123:linearity:var:capital-gain",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "mixed",
+    "direction": "lowers",
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 62,
+      "label": "capital gains",
+      "score_per_unit": -0.0003322879302067128,
+      "text": "−0.00033 per US dollar"
+     }
+    ],
+    "per_unit_scope": "its paths that do not switch",
+    "variable": "capital-gain"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "capital-gain",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "capital gains",
+     "short": "capital gains",
+     "unit": "US dollars"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_123",
+    "name": "income_logit_additive"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -0.27259
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 4.29822e-11,
+    "fd_varies": false
+   },
+   "id": "C163",
+   "key": "ann_123:linearity:var:capital-loss",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "from 0 US dollars to 0 US dollars",
+    "delta": 0.0,
+    "from": 0.579178,
+    "n": 39073,
+    "reference": "typical patient",
+    "to": 0.579178
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": "lowers",
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 63,
+      "label": "capital losses",
+      "score_per_unit": -0.0006767178596943655,
+      "text": "−0.00068 per US dollar"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "capital-loss"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "capital-loss",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "capital losses",
+     "short": "capital losses",
+     "unit": "US dollars"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_123",
+    "name": "income_logit_additive"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -0.309618
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 6.37804e-11,
+    "fd_varies": false
+   },
+   "id": "C164",
+   "key": "ann_123:linearity:var:hours-per-week",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "from 24 hours to 55 hours",
+    "delta": -0.186242,
+    "from": 0.672413,
+    "n": 39073,
+    "reference": "typical patient",
+    "to": 0.48617
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": "lowers",
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 64,
+      "label": "weekly working hours",
+      "score_per_unit": -0.024982264790326097,
+      "text": "−0.025 per hour"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "hours-per-week"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "hours-per-week",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "hours worked per week",
+     "short": "weekly working hours",
+     "unit": "hours"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_123",
+    "name": "income_logit_additive"
+   },
+   "checks": {
+    "slope_varies": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": 0.564938
+   },
+   "evidence": {
+    "fd_match_share": 0.165229,
+    "fd_max_deviation": 0.406955,
+    "fd_varies": true
+   },
+   "id": "C165",
+   "key": "ann_123:linearity:var:native-country",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "mixed",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 69,
+      "label": "Greece",
+      "level": "12",
+      "score_per_unit": 0.3327016148126467,
+      "text": "+0.33 for Greece"
+     },
+     {
+      "column": 70,
+      "label": "Guatemala",
+      "level": "13",
+      "score_per_unit": 0.37659853436341373,
+      "text": "+0.38 for Guatemala"
+     },
+     {
+      "column": 71,
+      "label": "Haiti",
+      "level": "14",
+      "score_per_unit": 0.41770472228813904,
+      "text": "+0.42 for Haiti"
+     },
+     {
+      "column": 75,
+      "label": "Hungary",
+      "level": "18",
+      "score_per_unit": 0.0,
+      "text": "+0 for Hungary"
+     },
+     {
+      "column": 84,
+      "label": "Mexico",
+      "level": "26",
+      "score_per_unit": 0.7976527179493329,
+      "text": "+0.80 for Mexico"
+     },
+     {
+      "column": 85,
+      "label": "Nicaragua",
+      "level": "27",
+      "score_per_unit": 0.7498068173845714,
+      "text": "+0.75 for Nicaragua"
+     },
+     {
+      "column": 86,
+      "label": "outlying US territories (Guam, US Virgin Islands)",
+      "level": "28",
+      "score_per_unit": 0.6660324417770982,
+      "text": "+0.67 for outlying US territories (Guam, US Virgin Islands)"
+     },
+     {
+      "column": 87,
+      "label": "Peru",
+      "level": "29",
+      "score_per_unit": 1.1516791049402255,
+      "text": "+1.15 for Peru"
+     },
+     {
+      "column": 88,
+      "label": "China",
+      "level": "3",
+      "score_per_unit": 0.9908536146433305,
+      "text": "+0.99 for China"
+     },
+     {
+      "column": 91,
+      "label": "Portugal",
+      "level": "32",
+      "score_per_unit": 0.0,
+      "text": "+0 for Portugal"
+     },
+     {
+      "column": 94,
+      "label": "'South' (as recorded)",
+      "level": "35",
+      "score_per_unit": 1.3225849461310086,
+      "text": "+1.32 for 'South' (as recorded)"
+     },
+     {
+      "column": 95,
+      "label": "Taiwan",
+      "level": "36",
+      "score_per_unit": 0.19207847275868406,
+      "text": "+0.19 for Taiwan"
+     },
+     {
+      "column": 97,
+      "label": "Trinidad and Tobago",
+      "level": "38",
+      "score_per_unit": 3.231899817908351,
+      "text": "+3.23 for Trinidad and Tobago"
+     },
+     {
+      "column": 99,
+      "label": "Colombia",
+      "level": "4",
+      "score_per_unit": 0.0,
+      "text": "+0 for Colombia"
+     },
+     {
+      "column": 100,
+      "label": "Vietnam",
+      "level": "40",
+      "score_per_unit": 1.2250463148394326,
+      "text": "+1.23 for Vietnam"
+     },
+     {
+      "column": 103,
+      "label": "Dominican Republic",
+      "level": "6",
+      "score_per_unit": 1.0071113284672484,
+      "text": "+1.01 for Dominican Republic"
+     },
+     {
+      "column": 104,
+      "label": "Ecuador",
+      "level": "7",
+      "score_per_unit": 0.5488681536971057,
+      "text": "+0.55 for Ecuador"
+     },
+     {
+      "column": 105,
+      "label": "El Salvador",
+      "level": "8",
+      "score_per_unit": 0.540028466381039,
+      "text": "+0.54 for El Salvador"
+     }
+    ],
+    "per_unit_scope": "its paths that do not switch",
+    "variable": "native-country"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "native-country",
+     "decoded": true,
+     "kind": "category",
+     "label": "country of birth",
+     "short": "country of birth",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_115",
+    "name": "capital_gain_effect"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 1
+   },
+   "evidence": {
+    "always_on_units": 0,
+    "switching_units": 1
+   },
+   "id": "C166",
+   "key": "ann_115:linearity:part",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "nonlinear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_120",
+    "name": "household_linear"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 0
+   },
+   "evidence": {
+    "always_on_units": 0,
+    "switching_units": 0
+   },
+   "id": "C167",
+   "key": "ann_120:linearity:part",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_116",
+    "name": "age_youth_gate"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 1
+   },
+   "evidence": {
+    "always_on_units": 0,
+    "switching_units": 1
+   },
+   "id": "C168",
+   "key": "ann_116:linearity:part",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "nonlinear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_121",
+    "name": "numeric_linear"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 0
+   },
+   "evidence": {
+    "always_on_units": 0,
+    "switching_units": 0
+   },
+   "id": "C169",
+   "key": "ann_121:linearity:part",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_122",
+    "name": "category_linear"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 0
+   },
+   "evidence": {
+    "always_on_units": 0,
+    "switching_units": 0
+   },
+   "id": "C170",
+   "key": "ann_122:linearity:part",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_117",
+    "name": "occupation_hub_350"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 2
+   },
+   "evidence": {
+    "always_on_units": 2,
+    "switching_units": 2
+   },
+   "id": "C171",
+   "key": "ann_117:linearity:part",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "nonlinear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_119",
+    "name": "gated_category_offsets"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 5
+   },
+   "evidence": {
+    "always_on_units": 2,
+    "switching_units": 5
+   },
+   "id": "C172",
+   "key": "ann_119:linearity:part",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "nonlinear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_118",
+    "name": "race_white_effect"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 2
+   },
+   "evidence": {
+    "always_on_units": 0,
+    "switching_units": 2
+   },
+   "id": "C173",
+   "key": "ann_118:linearity:part",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "nonlinear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_123",
+    "name": "income_logit_additive"
+   },
+   "checks": {
+    "auc_computed": true,
+    "score_split": true
+   },
+   "estimate": {
+    "method": "variance of the linear-path contribution over (its variance + the variance of the rest of the score), training rows; linearised model: every switching unit replaced by its least-squares affine fit on the training rows",
+    "value": 0.835122
+   },
+   "evidence": {
+    "always_on_min_margin": 0.602204
+   },
+   "id": "C174",
+   "key": "ann_123:linearity:model",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "auc_full_test": 0.907529,
+    "auc_full_train": 0.909937,
+    "auc_linearised_test": 0.90073,
+    "auc_linearised_train": 0.903324,
+    "kind": "model",
+    "n_exact_linear": 7,
+    "n_inputs": 14,
+    "n_mixed": 7,
+    "n_nonlinear": 0,
+    "n_nonlinear_parts": 5,
+    "n_parts": 8,
+    "n_support_linear": 0,
+    "switching_units": 11,
+    "variance_share_linear": 0.835122
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
   }
  ],
- "claims_hash": "2dba95cc1d04865e68a9d9c9cb1d993f9c6fb6e082b312e827b82c8cc70d50ef",
+ "claims_hash": "b06c256e1fb3c699d81f53a04a7ce0ee67391a80f5931deb2189b188f545e4a0",
  "codebook": {
   "checks": [
    {
@@ -37624,12 +39163,16 @@
     0
    ]
   },
-  "claims": 151,
+  "claims": 174,
   "clearly": 62,
   "not_supported": 1,
-  "verified": 150
+  "verified": 173
  },
  "dataset": {
+  "class_names": [
+   ">50k",
+   "<=50k"
+  ],
   "id": "46c63b17-42c5-4142-9fcf-3b5f369319c5",
   "name": "adult_ohe_v2"
  },
@@ -37643,7 +39186,7 @@
       "claims": [
        "C072"
       ],
-      "text": "Through this part, higher capital gains lower a typical person's the predicted chance of an income of $50,000 or less slowly at first, then faster, from about 58% at 0 US dollars to about 9% at 6849 US dollars, flattening out near the bottom because the predicted chance cannot go much lower."
+      "text": "Through this part, higher capital gains lower a typical person's predicted chance of a low income ($50,000 or less) slowly at first, then faster, from about 58% at 0 US dollars to about 9% at 6849 US dollars, flattening out near the bottom because the predicted chance cannot go much lower."
      },
      {
       "claims": [
@@ -37661,7 +39204,7 @@
        "C076",
        "C077"
       ],
-      "text": "This part adds up marital status, relationship in the household and sex, each on its own: any marital status other than married (to a civilian or to a member of the armed forces) raises a typical person's the predicted chance of an income of $50,000 or less from about 58% to about 94%, and being a child of the household rather than a husband to about 86%."
+      "text": "This part adds up marital status, relationship in the household and sex, each on its own: any marital status other than married (to a civilian or to a member of the armed forces) raises a typical person's predicted chance of a low income ($50,000 or less) from about 58% to about 94%, and being a child of the household rather than a husband to about 86%."
      },
      {
       "claims": [
@@ -37683,7 +39226,7 @@
       "claims": [
        "C085"
       ],
-      "text": "Through this part, older age lowers a typical person's the predicted chance of an income of $50,000 or less steadily up to about 34 years, then no further: from about 90% at 22 to about 56% at 58 years."
+      "text": "Through this part, older age lowers a typical person's predicted chance of a low income ($50,000 or less) steadily up to about 34 years, then no further: from about 90% at 22 to about 56% at 58 years."
      },
      {
       "claims": [
@@ -37702,7 +39245,7 @@
        "C089",
        "C090"
       ],
-      "text": "This part adds up four numbers, each on its own: a higher education level lowers a typical person's the predicted chance of an income of $50,000 or less steadily, from about 73% at 7 to about 42% at 13 on the 1-16 scale, and higher capital losses lower it steadily, from about 58% at 0 to about 28% at 1887 US dollars."
+      "text": "This part adds up four numbers, each on its own: a higher education level lowers a typical person's predicted chance of a low income ($50,000 or less) steadily, from about 73% at 7 to about 42% at 13 on the 1-16 scale, and higher capital losses lower it steadily, from about 58% at 0 to about 28% at 1887 US dollars."
      },
      {
       "claims": [
@@ -37721,7 +39264,7 @@
        "C094",
        "C096"
       ],
-      "text": "This part adds up single categories of work class, highest education, occupation, race and country of birth, each on its own: compared with a professional job, private household service raises a typical person's the predicted chance of an income of $50,000 or less to above 99% and a missing occupation to about 86%."
+      "text": "This part adds up single categories of work class, highest education, occupation, race and country of birth, each on its own: compared with a professional job, private household service raises a typical person's predicted chance of a low income ($50,000 or less) to above 99% and a missing occupation to about 86%."
      },
      {
       "claims": [
@@ -37761,7 +39304,7 @@
        "C129",
        "C130"
       ],
-      "text": "This part reads occupation, work class, highest education and country of birth together: being born in Colombia raises a typical person's the predicted chance of an income of $50,000 or less to above 99% and farming or fishing to about 79%, while an executive or managerial job lowers it to about 41%."
+      "text": "This part reads occupation, work class, highest education and country of birth together: being born in Colombia raises a typical person's predicted chance of a low income ($50,000 or less) to above 99% and farming or fishing to about 79%, while an executive or managerial job lowers it to about 41%."
      },
      {
       "claims": [
@@ -37790,7 +39333,7 @@
        "C142",
        "C141"
       ],
-      "text": "This part adds single-category switches: other service work raises a typical person's the predicted chance of an income of $50,000 or less to about 77% and 11th grade as the highest education to about 66%, while being Asian or Pacific Islander lowers it to about 46%."
+      "text": "This part adds single-category switches: other service work raises a typical person's predicted chance of a low income ($50,000 or less) to about 77% and 11th grade as the highest education to about 66%, while being Asian or Pacific Islander lowers it to about 46%."
      },
      {
       "claims": [
@@ -37809,13 +39352,13 @@
       "claims": [
        "C150"
       ],
-      "text": "Through this part, a race other than White raises a typical person's the predicted chance of an income of $50,000 or less from about 58% to about 65%."
+      "text": "Through this part, a race other than White raises a typical person's predicted chance of a low income ($50,000 or less) from about 58% to about 65%."
      }
     ]
    }
   ],
-  "claims_hash": "2dba95cc1d04865e68a9d9c9cb1d993f9c6fb6e082b312e827b82c8cc70d50ef",
-  "drafted_at": "2026-11-10T03:06:51+00:00",
+  "claims_hash": "b06c256e1fb3c699d81f53a04a7ce0ee67391a80f5931deb2189b188f545e4a0",
+  "drafted_at": "2026-11-10T08:48:52+00:00",
   "drafted_by": "ai-assisted",
   "hypothesis_revisions": {},
   "lead": [
@@ -37823,7 +39366,7 @@
     "claims": [
      "C071"
     ],
-    "text": "For a typical person (a 37-year-old White married man born in the United States, a high-school graduate in a professional job in the private sector, working 40 hours a week, with no capital gains or losses) the model predicts a chance of an income of $50,000 or less of about 58%; it adds up eight parts, each of which changes that chance for particular people."
+    "text": "For a typical person (a 37-year-old White married man born in the United States, a high-school graduate in a professional job in the private sector, working 40 hours a week, with no capital gains or losses) the model predicts a chance of a low income ($50,000 or less) of about 58%; it adds up eight parts, each of which changes that chance for particular people."
    }
   ],
   "protocol": ".claude/skills/plain-language-explanations/SKILL.md",
@@ -37856,7 +39399,7 @@
        "C072",
        "C074"
       ],
-      "text": "This part lowers the predicted chance of an income of $50,000 or less as capital gains rise, slowly at first, then faster, a little less for people born in Portugal."
+      "text": "This part lowers the predicted chance of a low income ($50,000 or less) as capital gains rise, slowly at first, then faster, a little less for people born in Portugal."
      }
     ]
    },
@@ -37888,7 +39431,7 @@
        "C085",
        "C086"
       ],
-      "text": "This part raises the predicted chance of an income of $50,000 or less for younger people: as age rises it falls steadily up to about 34 years, then no further; it also raises the chance for handlers and cleaners."
+      "text": "This part raises the predicted chance of a low income ($50,000 or less) for younger people: as age rises it falls steadily up to about 34 years, then no further; it also raises the chance for handlers and cleaners."
      }
     ]
    },
@@ -37940,7 +39483,7 @@
        "C133",
        "C132"
       ],
-      "text": "This part reads occupation, work class, highest education and country of birth together: being born in Colombia raises the predicted chance of an income of $50,000 or less to almost certain and farming or fishing raises it, while executive or managerial jobs, sales and a doctorate lower it."
+      "text": "This part reads occupation, work class, highest education and country of birth together: being born in Colombia raises the predicted chance of a low income ($50,000 or less) to almost certain and farming or fishing raises it, while executive or managerial jobs, sales and a doctorate lower it."
      }
     ]
    },
@@ -37964,7 +39507,7 @@
       "claims": [
        "C150"
       ],
-      "text": "This part raises the predicted chance of an income of $50,000 or less for people who are not White."
+      "text": "This part raises the predicted chance of a low income ($50,000 or less) for people who are not White."
      }
     ]
    },
@@ -38000,7 +39543,7 @@
        "C142",
        "C141"
       ],
-      "text": "This part adds single-category switches: other service work and 11th grade as the highest education raise the predicted chance of an income of $50,000 or less, and being Asian or Pacific Islander lowers it."
+      "text": "This part adds single-category switches: other service work and 11th grade as the highest education raise the predicted chance of a low income ($50,000 or less), and being Asian or Pacific Islander lowers it."
      }
     ]
    },
@@ -38039,7 +39582,7 @@
        "C080",
        "C078"
       ],
-      "text": "This part adds up marital status, relationship in the household and sex, each on its own: being unmarried, a child of the household or a woman raises the predicted chance of an income of $50,000 or less, and being a wife lowers it."
+      "text": "This part adds up marital status, relationship in the household and sex, each on its own: being unmarried, a child of the household or a woman raises the predicted chance of a low income ($50,000 or less), and being a wife lowers it."
      }
     ]
    },
@@ -38074,7 +39617,7 @@
        "C091",
        "C092"
       ],
-      "text": "This part adds up education level, capital losses, working hours and the census sampling weight, each lowering the predicted chance of an income of $50,000 or less steadily."
+      "text": "This part adds up education level, capital losses, working hours and the census sampling weight, each lowering the predicted chance of a low income ($50,000 or less) steadily."
      }
     ]
    },
@@ -38130,7 +39673,7 @@
        "C094",
        "C095"
       ],
-      "text": "This part adds up single categories of work class, highest education, occupation, race and country of birth, each on its own; the largest raise the predicted chance of an income of $50,000 or less for private household service and for several countries of birth."
+      "text": "This part adds up single categories of work class, highest education, occupation, race and country of birth, each on its own; the largest raise the predicted chance of a low income ($50,000 or less) for private household service and for several countries of birth."
      }
     ]
    },
@@ -38175,6 +39718,10 @@
     ]
    }
   },
+  "revalidated": {
+   "from_claims_hash": "2dba95cc1d04865e68a9d9c9cb1d993f9c6fb6e082b312e827b82c8cc70d50ef",
+   "note": "claims changed after drafting; the draft was re-linted against the new claims and passed"
+  },
   "stale": false,
   "status": "draft for review",
   "structure": "readdown-v5",
@@ -38183,13 +39730,13 @@
     "claims": [
      "C071"
     ],
-    "text": "For a typical person (a 37-year-old White married man born in the United States, a high-school graduate in a professional job in the private sector, working 40 hours a week, with no capital gains or losses) the model predicts a chance of an income of $50,000 or less of about 58%; it adds up eight parts, each of which changes that chance for particular people."
+    "text": "For a typical person (a 37-year-old White married man born in the United States, a high-school graduate in a professional job in the private sector, working 40 hours a week, with no capital gains or losses) the model predicts a chance of a low income ($50,000 or less) of about 58%; it adds up eight parts, each of which changes that chance for particular people."
    },
    {
     "claims": [
      "C072"
     ],
-    "text": "Through this part, higher capital gains lower a typical person's the predicted chance of an income of $50,000 or less slowly at first, then faster, from about 58% at 0 US dollars to about 9% at 6849 US dollars, flattening out near the bottom because the predicted chance cannot go much lower."
+    "text": "Through this part, higher capital gains lower a typical person's predicted chance of a low income ($50,000 or less) slowly at first, then faster, from about 58% at 0 US dollars to about 9% at 6849 US dollars, flattening out near the bottom because the predicted chance cannot go much lower."
    },
    {
     "claims": [
@@ -38202,7 +39749,7 @@
      "C076",
      "C077"
     ],
-    "text": "This part adds up marital status, relationship in the household and sex, each on its own: any marital status other than married (to a civilian or to a member of the armed forces) raises a typical person's the predicted chance of an income of $50,000 or less from about 58% to about 94%, and being a child of the household rather than a husband to about 86%."
+    "text": "This part adds up marital status, relationship in the household and sex, each on its own: any marital status other than married (to a civilian or to a member of the armed forces) raises a typical person's predicted chance of a low income ($50,000 or less) from about 58% to about 94%, and being a child of the household rather than a husband to about 86%."
    },
    {
     "claims": [
@@ -38219,7 +39766,7 @@
     "claims": [
      "C085"
     ],
-    "text": "Through this part, older age lowers a typical person's the predicted chance of an income of $50,000 or less steadily up to about 34 years, then no further: from about 90% at 22 to about 56% at 58 years."
+    "text": "Through this part, older age lowers a typical person's predicted chance of a low income ($50,000 or less) steadily up to about 34 years, then no further: from about 90% at 22 to about 56% at 58 years."
    },
    {
     "claims": [
@@ -38233,7 +39780,7 @@
      "C089",
      "C090"
     ],
-    "text": "This part adds up four numbers, each on its own: a higher education level lowers a typical person's the predicted chance of an income of $50,000 or less steadily, from about 73% at 7 to about 42% at 13 on the 1-16 scale, and higher capital losses lower it steadily, from about 58% at 0 to about 28% at 1887 US dollars."
+    "text": "This part adds up four numbers, each on its own: a higher education level lowers a typical person's predicted chance of a low income ($50,000 or less) steadily, from about 73% at 7 to about 42% at 13 on the 1-16 scale, and higher capital losses lower it steadily, from about 58% at 0 to about 28% at 1887 US dollars."
    },
    {
     "claims": [
@@ -38247,7 +39794,7 @@
      "C094",
      "C096"
     ],
-    "text": "This part adds up single categories of work class, highest education, occupation, race and country of birth, each on its own: compared with a professional job, private household service raises a typical person's the predicted chance of an income of $50,000 or less to above 99% and a missing occupation to about 86%."
+    "text": "This part adds up single categories of work class, highest education, occupation, race and country of birth, each on its own: compared with a professional job, private household service raises a typical person's predicted chance of a low income ($50,000 or less) to above 99% and a missing occupation to about 86%."
    },
    {
     "claims": [
@@ -38282,7 +39829,7 @@
      "C129",
      "C130"
     ],
-    "text": "This part reads occupation, work class, highest education and country of birth together: being born in Colombia raises a typical person's the predicted chance of an income of $50,000 or less to above 99% and farming or fishing to about 79%, while an executive or managerial job lowers it to about 41%."
+    "text": "This part reads occupation, work class, highest education and country of birth together: being born in Colombia raises a typical person's predicted chance of a low income ($50,000 or less) to above 99% and farming or fishing to about 79%, while an executive or managerial job lowers it to about 41%."
    },
    {
     "claims": [
@@ -38306,7 +39853,7 @@
      "C142",
      "C141"
     ],
-    "text": "This part adds single-category switches: other service work raises a typical person's the predicted chance of an income of $50,000 or less to about 77% and 11th grade as the highest education to about 66%, while being Asian or Pacific Islander lowers it to about 46%."
+    "text": "This part adds single-category switches: other service work raises a typical person's predicted chance of a low income ($50,000 or less) to about 77% and 11th grade as the highest education to about 66%, while being Asian or Pacific Islander lowers it to about 46%."
    },
    {
     "claims": [
@@ -38320,7 +39867,7 @@
     "claims": [
      "C150"
     ],
-    "text": "Through this part, a race other than White raises a typical person's the predicted chance of an income of $50,000 or less from about 58% to about 65%."
+    "text": "Through this part, a race other than White raises a typical person's predicted chance of a low income ($50,000 or less) from about 58% to about 65%."
    }
   ],
   "titles": {
@@ -38341,7 +39888,7 @@
      "C008"
     ],
     "flag": "capital losses lower chance of low income",
-    "text": "Worth checking: the model treats capital losses (0 to 1887 US dollars) as lowering a typical person's the predicted chance of an income of $50,000 or less, from about 58% to about 28%."
+    "text": "Worth checking: the model treats capital losses (0 to 1887 US dollars) as lowering a typical person's predicted chance of a low income ($50,000 or less), from about 58% to about 28%."
    },
    {
     "claims": [
@@ -38349,7 +39896,7 @@
      "C004"
     ],
     "flag": "country of birth drives a large effect from few people",
-    "text": "Worth checking: being born in Colombia raises the predicted chance of an income of $50,000 or less to above 99% and in Trinidad and Tobago to about 97%, from groups of 64 and 22 people."
+    "text": "Worth checking: being born in Colombia raises the predicted chance of a low income ($50,000 or less) to above 99% and in Trinidad and Tobago to about 97%, from groups of 64 and 22 people."
    },
    {
     "claims": [
@@ -38357,21 +39904,21 @@
      "C027"
     ],
     "flag": "wives less likely than husbands to have low income",
-    "text": "Worth checking: being a wife rather than a husband lowers the predicted chance of an income of $50,000 or less to about 32%, while being a woman rather than a man raises it to about 73%."
+    "text": "Worth checking: being a wife rather than a husband lowers the predicted chance of a low income ($50,000 or less) to about 32%, while being a woman rather than a man raises it to about 73%."
    },
    {
     "claims": [
      "C034"
     ],
     "flag": "missing work class or occupation lowers chance of low income",
-    "text": "Worth checking: a missing work class lowers the predicted chance of an income of $50,000 or less from about 58% to about 46%."
+    "text": "Worth checking: a missing work class lowers the predicted chance of a low income ($50,000 or less) from about 58% to about 46%."
    },
    {
     "claims": [
      "C054"
     ],
     "flag": "census sampling weight affects prediction",
-    "text": "Worth checking: the census sampling weight, which describes the survey rather than the person, lowers the predicted chance of an income of $50,000 or less from about 60% to about 55%."
+    "text": "Worth checking: the census sampling weight, which describes the survey rather than the person, lowers the predicted chance of a low income ($50,000 or less) from about 60% to about 55%."
    }
   ]
  },
@@ -38936,6 +40483,193 @@
    "ann_123": [
     "0"
    ]
+  },
+  "linearity": {
+   "columns": {
+    "age": "mixed",
+    "capital-gain": "mixed",
+    "capital-loss": "exact_linear",
+    "education-num": "exact_linear",
+    "education:0": "mixed",
+    "education:1": "mixed",
+    "education:10": "mixed",
+    "education:12": "mixed",
+    "education:13": "mixed",
+    "education:14": "mixed",
+    "education:15": "mixed",
+    "education:5": "mixed",
+    "education:6": "mixed",
+    "education:7": "mixed",
+    "education:8": "mixed",
+    "education:9": "mixed",
+    "fnlwgt": "exact_linear",
+    "hours-per-week": "exact_linear",
+    "marital-status:1": "exact_linear",
+    "marital-status:2": "exact_linear",
+    "native-country:12": "mixed",
+    "native-country:13": "mixed",
+    "native-country:14": "mixed",
+    "native-country:18": "mixed",
+    "native-country:26": "mixed",
+    "native-country:27": "mixed",
+    "native-country:28": "mixed",
+    "native-country:29": "mixed",
+    "native-country:3": "mixed",
+    "native-country:32": "mixed",
+    "native-country:35": "mixed",
+    "native-country:36": "mixed",
+    "native-country:38": "mixed",
+    "native-country:4": "mixed",
+    "native-country:40": "mixed",
+    "native-country:6": "mixed",
+    "native-country:7": "mixed",
+    "native-country:8": "mixed",
+    "occupation:0": "mixed",
+    "occupation:10": "mixed",
+    "occupation:12": "mixed",
+    "occupation:14": "mixed",
+    "occupation:2": "mixed",
+    "occupation:4": "mixed",
+    "occupation:5": "mixed",
+    "occupation:6": "mixed",
+    "occupation:7": "mixed",
+    "occupation:8": "mixed",
+    "occupation:9": "mixed",
+    "race:0": "mixed",
+    "race:1": "mixed",
+    "race:3": "mixed",
+    "race:4": "mixed",
+    "relationship:0": "exact_linear",
+    "relationship:1": "exact_linear",
+    "relationship:2": "exact_linear",
+    "relationship:4": "exact_linear",
+    "relationship:5": "exact_linear",
+    "sex": "exact_linear",
+    "workclass:0": "mixed",
+    "workclass:1": "mixed",
+    "workclass:3": "mixed",
+    "workclass:5": "mixed",
+    "workclass:6": "mixed",
+    "workclass:8": "mixed"
+   },
+   "inputs": {
+    "-1": "mixed",
+    "-10": "mixed",
+    "-100": "mixed",
+    "-101": "mixed",
+    "-104": "mixed",
+    "-105": "mixed",
+    "-106": "mixed",
+    "-11": "exact_linear",
+    "-12": "mixed",
+    "-13": "mixed",
+    "-14": "mixed",
+    "-16": "mixed",
+    "-17": "mixed",
+    "-18": "mixed",
+    "-19": "mixed",
+    "-2": "mixed",
+    "-23": "mixed",
+    "-24": "mixed",
+    "-25": "mixed",
+    "-26": "mixed",
+    "-27": "mixed",
+    "-28": "exact_linear",
+    "-3": "mixed",
+    "-30": "exact_linear",
+    "-31": "exact_linear",
+    "-36": "mixed",
+    "-38": "mixed",
+    "-40": "mixed",
+    "-42": "mixed",
+    "-43": "mixed",
+    "-45": "mixed",
+    "-46": "mixed",
+    "-47": "mixed",
+    "-48": "mixed",
+    "-49": "mixed",
+    "-5": "mixed",
+    "-50": "mixed",
+    "-51": "exact_linear",
+    "-52": "exact_linear",
+    "-53": "exact_linear",
+    "-55": "exact_linear",
+    "-56": "exact_linear",
+    "-57": "mixed",
+    "-58": "mixed",
+    "-60": "mixed",
+    "-61": "mixed",
+    "-62": "exact_linear",
+    "-63": "mixed",
+    "-64": "exact_linear",
+    "-65": "exact_linear",
+    "-7": "mixed",
+    "-70": "mixed",
+    "-71": "mixed",
+    "-72": "mixed",
+    "-76": "mixed",
+    "-8": "mixed",
+    "-85": "mixed",
+    "-86": "mixed",
+    "-87": "mixed",
+    "-88": "mixed",
+    "-89": "mixed",
+    "-92": "mixed",
+    "-95": "mixed",
+    "-96": "mixed",
+    "-98": "mixed"
+   },
+   "parts": {
+    "ann_115": "nonlinear",
+    "ann_116": "nonlinear",
+    "ann_117": "nonlinear",
+    "ann_118": "nonlinear",
+    "ann_119": "nonlinear",
+    "ann_120": "exact_linear",
+    "ann_121": "exact_linear",
+    "ann_122": "exact_linear"
+   },
+   "units": {
+    "10607": "always_on",
+    "10878": "switching",
+    "10971": "always_on",
+    "12248": "switching",
+    "1339": "switching",
+    "1690": "switching",
+    "2682": "switching",
+    "3077": "always_on",
+    "350": "switching",
+    "3845": "switching",
+    "5330": "always_on",
+    "7193": "switching",
+    "771": "switching",
+    "7734": "switching",
+    "7974": "switching",
+    "idn_age": "linear",
+    "idn_capgain": "linear",
+    "idn_catlinear": "linear",
+    "idn_gatedcats": "linear",
+    "idn_household": "linear",
+    "idn_hub350": "linear",
+    "idn_numeric": "linear",
+    "idn_white": "linear"
+   },
+   "variables": {
+    "age": "mixed",
+    "capital-gain": "mixed",
+    "capital-loss": "exact_linear",
+    "education": "mixed",
+    "education-num": "exact_linear",
+    "fnlwgt": "exact_linear",
+    "hours-per-week": "exact_linear",
+    "marital-status": "exact_linear",
+    "native-country": "mixed",
+    "occupation": "mixed",
+    "race": "mixed",
+    "relationship": "exact_linear",
+    "sex": "exact_linear",
+    "workclass": "mixed"
+   }
   },
   "nodes": [
    {
@@ -44681,10 +46415,36 @@
  },
  "label": "adult-s7",
  "outcome": {
+  "direction_up": "towards a low income ($50,000 or less)",
   "positive": "an income of $50,000 a year or less",
-  "predicted": "the predicted chance of an income of $50,000 or less",
-  "risk": "the chance of an income of $50,000 or less",
-  "short": "an income of $50,000 or less"
+  "predicted": "the predicted chance of a low income ($50,000 or less)",
+  "risk": "the chance of a low income ($50,000 or less)",
+  "short": "a low income ($50,000 or less)"
+ },
+ "outcome_check": {
+  "base_rate_train": 0.7611649988483096,
+  "checks": [
+   {
+    "check": "class 1 is stored as '<=50k'",
+    "detail": "class names ['>50k', '<=50k']",
+    "passed": true
+   },
+   {
+    "check": "class 1 is the majority (about 76%)",
+    "detail": "share 0.761",
+    "passed": true
+   }
+  ],
+  "class_names": [
+   ">50k",
+   "<=50k"
+  ],
+  "inverted": true,
+  "meaning": "an income of $50,000 a year or less",
+  "n_train": 39073,
+  "positive_code": 1,
+  "positive_name": "<=50k",
+  "verified": true
  },
  "parts": [
   {
@@ -45279,19 +47039,19 @@
      "claims": [
       "C074"
      ],
-     "text": "A higher capital gains slightly lowers the predicted chance of an income of $50,000 or less, and even more so if country of birth is something other than Portugal (slowly at first, then faster for people with country of birth other than Portugal): for a typical person, capital gains going from 0 US dollars to 6849 US dollars moves the predicted chance of an income of $50,000 or less from about 58% to about 9% if country of birth is something other than Portugal, and from about 58% to about 12% if the country of birth is Portugal."
+     "text": "A higher capital gains slightly lowers the predicted chance of a low income ($50,000 or less), and even more so if country of birth is something other than Portugal (slowly at first, then faster for people with country of birth other than Portugal): for a typical person, capital gains going from 0 US dollars to 6849 US dollars moves the predicted chance of a low income ($50,000 or less) from about 58% to about 9% if country of birth is something other than Portugal, and from about 58% to about 12% if the country of birth is Portugal."
     },
     {
      "claims": [
       "C072"
      ],
-     "text": "Through this part, the model treats a higher capital gains as clearly lowering the predicted chance of an income of $50,000 or less slowly at first, then faster: for a typical person, it goes from about 58% at 0 US dollars to about 9% at 6849 US dollars, flattening out near the bottom because the predicted risk cannot go much lower."
+     "text": "Through this part, the model treats a higher capital gains as clearly lowering the predicted chance of a low income ($50,000 or less) slowly at first, then faster: for a typical person, it goes from about 58% at 0 US dollars to about 9% at 6849 US dollars, flattening out near the bottom because the predicted risk cannot go much lower."
     },
     {
      "claims": [
       "C073"
      ],
-     "text": "Through this part, for a typical person, the model gives a slightly higher predicted chance of an income of $50,000 or less if the country of birth is Portugal (about 58%) than if country of birth is something other than Portugal (about 58%)."
+     "text": "Through this part, for a typical person, the model gives a slightly higher predicted chance of a low income ($50,000 or less) if the country of birth is Portugal (about 58%) than if country of birth is something other than Portugal (about 58%)."
     }
    ],
    "ann_116": [
@@ -45299,19 +47059,19 @@
      "claims": [
       "C087"
      ],
-     "text": "This changes the prediction only slightly: for a typical person, age going from 22 years to 58 years moves the predicted chance of an income of $50,000 or less from about 98% to about 65% if the occupation is handlers or cleaners, and from about 90% to about 56% if occupation is something other than handlers or cleaners (it moves in an uneven way for people whose occupation is handlers or cleaners)."
+     "text": "This changes the prediction only slightly: for a typical person, age going from 22 years to 58 years moves the predicted chance of a low income ($50,000 or less) from about 98% to about 65% if the occupation is handlers or cleaners, and from about 90% to about 56% if occupation is something other than handlers or cleaners (it moves in an uneven way for people whose occupation is handlers or cleaners)."
     },
     {
      "claims": [
       "C085"
      ],
-     "text": "Through this part, the model treats a higher age as clearly lowering the predicted chance of an income of $50,000 or less steadily up to about 34 years, then no further: for a typical person, it goes from about 90% at 22 years to about 56% at 58 years."
+     "text": "Through this part, the model treats a higher age as clearly lowering the predicted chance of a low income ($50,000 or less) steadily up to about 34 years, then no further: for a typical person, it goes from about 90% at 22 years to about 56% at 58 years."
     },
     {
      "claims": [
       "C086"
      ],
-     "text": "Through this part, for a typical person, the model gives a higher predicted chance of an income of $50,000 or less if the occupation is handlers or cleaners (about 77%) than if occupation is something other than handlers or cleaners (about 58%) (on the training data only)."
+     "text": "Through this part, for a typical person, the model gives a higher predicted chance of a low income ($50,000 or less) if the occupation is handlers or cleaners (about 77%) than if occupation is something other than handlers or cleaners (about 58%) (on the training data only)."
     }
    ],
    "ann_117": [
@@ -45319,25 +47079,25 @@
      "claims": [
       "C135"
      ],
-     "text": "The model gives a higher predicted chance of an income of $50,000 or less if the country of birth is Colombia than if country of birth is something other than Colombia, and even more so if work class is something other than without pay: for a typical person, going from country of birth other than Colombia to Colombia moves the predicted chance of an income of $50,000 or less from about 58% to above 99% if work class is something other than without pay, and from about 73% to above 99% if the work class is without pay. The model has little data on this: only 17 training people (without pay)."
+     "text": "The model gives a higher predicted chance of a low income ($50,000 or less) if the country of birth is Colombia than if country of birth is something other than Colombia, and even more so if work class is something other than without pay: for a typical person, going from country of birth other than Colombia to Colombia moves the predicted chance of a low income ($50,000 or less) from about 58% to above 99% if work class is something other than without pay, and from about 73% to above 99% if the work class is without pay. The model has little data on this: only 17 training people (without pay)."
     },
     {
      "claims": [
       "C136"
      ],
-     "text": "The model gives a higher predicted chance of an income of $50,000 or less if the country of birth is Colombia than if country of birth is something other than Colombia, and even more so if occupation is something other than sales, armed forces, executive or managerial, farming or fishing: for a typical person, going from country of birth other than Colombia to Colombia moves the predicted chance of an income of $50,000 or less from about 58% to above 99% if occupation is something other than sales, armed forces, executive or managerial, farming or fishing, and from about 67% to above 99% if the occupation is armed forces. The model has little data on this: only 12 training people (armed forces)."
+     "text": "The model gives a higher predicted chance of a low income ($50,000 or less) if the country of birth is Colombia than if country of birth is something other than Colombia, and even more so if occupation is something other than sales, armed forces, executive or managerial, farming or fishing: for a typical person, going from country of birth other than Colombia to Colombia moves the predicted chance of a low income ($50,000 or less) from about 58% to above 99% if occupation is something other than sales, armed forces, executive or managerial, farming or fishing, and from about 67% to above 99% if the occupation is armed forces. The model has little data on this: only 12 training people (armed forces)."
     },
     {
      "claims": [
       "C137"
      ],
-     "text": "The model gives a higher predicted chance of an income of $50,000 or less if the occupation is armed forces than if occupation is something other than sales, armed forces, executive or managerial, farming or fishing, and even more so if the highest education is doctorate: for a typical person, going from occupation other than sales, armed forces, executive or managerial, farming or fishing to armed forces moves the predicted chance of an income of $50,000 or less from about 51% to about 67% if the highest education is doctorate, and from about 58% to about 67% if highest education is something other than doctorate. The model has little data on this: only 12 training people (armed forces)."
+     "text": "The model gives a higher predicted chance of a low income ($50,000 or less) if the occupation is armed forces than if occupation is something other than sales, armed forces, executive or managerial, farming or fishing, and even more so if the highest education is doctorate: for a typical person, going from occupation other than sales, armed forces, executive or managerial, farming or fishing to armed forces moves the predicted chance of a low income ($50,000 or less) from about 51% to about 67% if the highest education is doctorate, and from about 58% to about 67% if highest education is something other than doctorate. The model has little data on this: only 12 training people (armed forces)."
     },
     {
      "claims": [
       "C138"
      ],
-     "text": "For a typical person, going from country of birth other than Colombia to Colombia moves the predicted chance of an income of $50,000 or less from about 58% to above 99% if highest education is something other than doctorate, and from about 51% to above 99% if the highest education is doctorate."
+     "text": "For a typical person, going from country of birth other than Colombia to Colombia moves the predicted chance of a low income ($50,000 or less) from about 58% to above 99% if highest education is something other than doctorate, and from about 51% to above 99% if the highest education is doctorate."
     },
     {
      "claims": [
@@ -45362,7 +47122,7 @@
      "claims": [
       "C150"
      ],
-     "text": "Through this part, for a typical person, the model gives a higher predicted chance of an income of $50,000 or less if race is something other than White (about 65%) than if the recorded race is White (about 58%) (on the training data only)."
+     "text": "Through this part, for a typical person, the model gives a higher predicted chance of a low income ($50,000 or less) if race is something other than White (about 65%) than if the recorded race is White (about 58%) (on the training data only)."
     }
    ],
    "ann_119": [
@@ -45370,25 +47130,25 @@
      "claims": [
       "C140"
      ],
-     "text": "Through this part, for a typical person, the model gives a clearly higher predicted chance of an income of $50,000 or less if the occupation is other service (about 77%) than if occupation is something other than machine operator or inspector, other service (about 58%)."
+     "text": "Through this part, for a typical person, the model gives a clearly higher predicted chance of a low income ($50,000 or less) if the occupation is other service (about 77%) than if occupation is something other than machine operator or inspector, other service (about 58%)."
     },
     {
      "claims": [
       "C141"
      ],
-     "text": "Through this part, for a typical person, the model gives a lower predicted chance of an income of $50,000 or less if the recorded race is Asian or Pacific Islander (about 46%) than if race is something other than Asian or Pacific Islander (about 58%) (on the training data only)."
+     "text": "Through this part, for a typical person, the model gives a lower predicted chance of a low income ($50,000 or less) if the recorded race is Asian or Pacific Islander (about 46%) than if race is something other than Asian or Pacific Islander (about 58%) (on the training data only)."
     },
     {
      "claims": [
       "C142"
      ],
-     "text": "Through this part, for a typical person, the model gives a higher predicted chance of an income of $50,000 or less if the highest education is 11th grade (about 66%) than if highest education is something other than 10th grade, 11th grade, 7th-8th grade, associate degree (vocational) (about 58%) (on the training data only)."
+     "text": "Through this part, for a typical person, the model gives a higher predicted chance of a low income ($50,000 or less) if the highest education is 11th grade (about 66%) than if highest education is something other than 10th grade, 11th grade, 7th-8th grade, associate degree (vocational) (about 58%) (on the training data only)."
     },
     {
      "claims": [
       "C143"
      ],
-     "text": "Through this part, for a typical person, the model gives a lower predicted chance of an income of $50,000 or less if the country of birth is Hungary (about 51%) than if country of birth is something other than Hungary (about 58%) (on the training data only). The model has little data on this: only 16 training people (Hungary)."
+     "text": "Through this part, for a typical person, the model gives a lower predicted chance of a low income ($50,000 or less) if the country of birth is Hungary (about 51%) than if country of birth is something other than Hungary (about 58%) (on the training data only). The model has little data on this: only 16 training people (Hungary)."
     },
     {
      "claims": [
@@ -45405,31 +47165,31 @@
      "claims": [
       "C076"
      ],
-     "text": "Through this part, for a typical person, the model gives a clearly higher predicted chance of an income of $50,000 or less if marital status is something other than married to a member of the armed forces, married (civilian spouse) (about 94%) than if the marital status is married (civilian spouse) (about 58%)."
+     "text": "Through this part, for a typical person, the model gives a clearly higher predicted chance of a low income ($50,000 or less) if marital status is something other than married to a member of the armed forces, married (civilian spouse) (about 94%) than if the marital status is married (civilian spouse) (about 58%)."
     },
     {
      "claims": [
       "C077"
      ],
-     "text": "Through this part, for a typical person, the model gives a clearly higher predicted chance of an income of $50,000 or less if the person is a child of the household (about 86%) than if the person is a husband (about 58%)."
+     "text": "Through this part, for a typical person, the model gives a clearly higher predicted chance of a low income ($50,000 or less) if the person is a child of the household (about 86%) than if the person is a husband (about 58%)."
     },
     {
      "claims": [
       "C078"
      ],
-     "text": "Through this part, for a typical person, the model gives a clearly lower predicted chance of an income of $50,000 or less if the person is a wife (about 32%) than if the person is a husband (about 58%)."
+     "text": "Through this part, for a typical person, the model gives a clearly lower predicted chance of a low income ($50,000 or less) if the person is a wife (about 32%) than if the person is a husband (about 58%)."
     },
     {
      "claims": [
       "C079"
      ],
-     "text": "Through this part, for a typical person, the model gives a clearly lower predicted chance of an income of $50,000 or less if the marital status is married to a member of the armed forces (about 39%) than if the marital status is married (civilian spouse) (about 58%)."
+     "text": "Through this part, for a typical person, the model gives a clearly lower predicted chance of a low income ($50,000 or less) if the marital status is married to a member of the armed forces (about 39%) than if the marital status is married (civilian spouse) (about 58%)."
     },
     {
      "claims": [
       "C080"
      ],
-     "text": "Through this part, for a typical person, the model gives a clearly higher predicted chance of an income of $50,000 or less if the person is a woman (about 73%) than if the person is a man (about 58%)."
+     "text": "Through this part, for a typical person, the model gives a clearly higher predicted chance of a low income ($50,000 or less) if the person is a woman (about 73%) than if the person is a man (about 58%)."
     },
     {
      "claims": [
@@ -45445,25 +47205,25 @@
      "claims": [
       "C089"
      ],
-     "text": "Through this part, the model treats a higher education level as clearly lowering the predicted chance of an income of $50,000 or less steadily: for a typical person, it goes from about 73% at 7 on the 1-16 scale to about 42% at 13 on the 1-16 scale."
+     "text": "Through this part, the model treats a higher education level as clearly lowering the predicted chance of a low income ($50,000 or less) steadily: for a typical person, it goes from about 73% at 7 on the 1-16 scale to about 42% at 13 on the 1-16 scale."
     },
     {
      "claims": [
       "C090"
      ],
-     "text": "Through this part, the model treats a higher capital losses as clearly lowering the predicted chance of an income of $50,000 or less steadily: for a typical person, it goes from about 58% at 0 US dollars to about 28% at 1887 US dollars."
+     "text": "Through this part, the model treats a higher capital losses as clearly lowering the predicted chance of a low income ($50,000 or less) steadily: for a typical person, it goes from about 58% at 0 US dollars to about 28% at 1887 US dollars."
     },
     {
      "claims": [
       "C091"
      ],
-     "text": "Through this part, the model treats a higher weekly working hours as clearly lowering the predicted chance of an income of $50,000 or less steadily: for a typical person, it goes from about 67% at 24 hours to about 49% at 55 hours."
+     "text": "Through this part, the model treats a higher weekly working hours as clearly lowering the predicted chance of a low income ($50,000 or less) steadily: for a typical person, it goes from about 67% at 24 hours to about 49% at 55 hours."
     },
     {
      "claims": [
       "C092"
      ],
-     "text": "Through this part, the model treats a higher census sampling weight as slightly lowering the predicted chance of an income of $50,000 or less steadily: for a typical person, it goes from about 60% at 66,572 (weight) to about 55% at 328,216 (weight) (on the training data only)."
+     "text": "Through this part, the model treats a higher census sampling weight as slightly lowering the predicted chance of a low income ($50,000 or less) steadily: for a typical person, it goes from about 60% at 66,572 (weight) to about 55% at 328,216 (weight) (on the training data only)."
     }
    ],
    "ann_122": [
@@ -45471,25 +47231,25 @@
      "claims": [
       "C094"
      ],
-     "text": "Through this part, for a typical person, the model gives a clearly higher predicted chance of an income of $50,000 or less if the occupation is private household service (above 99%) than if the occupation is professional specialty (about 58%)."
+     "text": "Through this part, for a typical person, the model gives a clearly higher predicted chance of a low income ($50,000 or less) if the occupation is private household service (above 99%) than if the occupation is professional specialty (about 58%)."
     },
     {
      "claims": [
       "C095"
      ],
-     "text": "Through this part, for a typical person, the model gives a higher predicted chance of an income of $50,000 or less if the country of birth is Trinidad and Tobago (about 97%) than if country of birth is something other than Greece, Guatemala, Haiti, Mexico, Nicaragua, outlying US territories (Guam, US Virgin Islands), Peru, China, 'South' (as recorded), Taiwan, Trinidad and Tobago, Vietnam, Dominican Republic, Ecuador, El Salvador (about 58%) (on the training data only)."
+     "text": "Through this part, for a typical person, the model gives a higher predicted chance of a low income ($50,000 or less) if the country of birth is Trinidad and Tobago (about 97%) than if country of birth is something other than Greece, Guatemala, Haiti, Mexico, Nicaragua, outlying US territories (Guam, US Virgin Islands), Peru, China, 'South' (as recorded), Taiwan, Trinidad and Tobago, Vietnam, Dominican Republic, Ecuador, El Salvador (about 58%) (on the training data only)."
     },
     {
      "claims": [
       "C096"
      ],
-     "text": "Through this part, for a typical person, the model gives a clearly higher predicted chance of an income of $50,000 or less if the occupation is missing (?) (about 86%) than if the occupation is professional specialty (about 58%)."
+     "text": "Through this part, for a typical person, the model gives a clearly higher predicted chance of a low income ($50,000 or less) if the occupation is missing (?) (about 86%) than if the occupation is professional specialty (about 58%)."
     },
     {
      "claims": [
       "C097"
      ],
-     "text": "Through this part, for a typical person, the model gives a higher predicted chance of an income of $50,000 or less if the country of birth is 'South' (as recorded) (about 84%) than if country of birth is something other than Greece, Guatemala, Haiti, Mexico, Nicaragua, outlying US territories (Guam, US Virgin Islands), Peru, China, 'South' (as recorded), Taiwan, Trinidad and Tobago, Vietnam, Dominican Republic, Ecuador, El Salvador (about 58%) (on the training data only)."
+     "text": "Through this part, for a typical person, the model gives a higher predicted chance of a low income ($50,000 or less) if the country of birth is 'South' (as recorded) (about 84%) than if country of birth is something other than Greece, Guatemala, Haiti, Mexico, Nicaragua, outlying US territories (Guam, US Virgin Islands), Peru, China, 'South' (as recorded), Taiwan, Trinidad and Tobago, Vietnam, Dominican Republic, Ecuador, El Salvador (about 58%) (on the training data only)."
     },
     {
      "claims": [
@@ -45520,37 +47280,37 @@
      "claims": [
       "C001"
      ],
-     "text": "The model treats a higher capital gains as clearly lowering the predicted chance of an income of $50,000 or less slowly at first, then faster: for a typical person, it goes from about 58% at 0 US dollars to about 9% at 6849 US dollars, flattening out near the bottom because the predicted risk cannot go much lower."
+     "text": "The model treats a higher capital gains as clearly lowering the predicted chance of a low income ($50,000 or less) slowly at first, then faster: for a typical person, it goes from about 58% at 0 US dollars to about 9% at 6849 US dollars, flattening out near the bottom because the predicted risk cannot go much lower."
     },
     {
      "claims": [
       "C002"
      ],
-     "text": "For a typical person, the model gives a higher predicted chance of an income of $50,000 or less if the country of birth is Colombia (above 99%) than if country of birth is something other than Greece, Guatemala, Haiti, Hungary, Mexico, Nicaragua, outlying US territories (Guam, US Virgin Islands), Peru, China, Portugal, 'South' (as recorded), Taiwan, Trinidad and Tobago, Colombia, Vietnam, Dominican Republic, Ecuador, El Salvador (about 58%) (on the training data only)."
+     "text": "For a typical person, the model gives a higher predicted chance of a low income ($50,000 or less) if the country of birth is Colombia (above 99%) than if country of birth is something other than Greece, Guatemala, Haiti, Hungary, Mexico, Nicaragua, outlying US territories (Guam, US Virgin Islands), Peru, China, Portugal, 'South' (as recorded), Taiwan, Trinidad and Tobago, Colombia, Vietnam, Dominican Republic, Ecuador, El Salvador (about 58%) (on the training data only)."
     },
     {
      "claims": [
       "C003"
      ],
-     "text": "For a typical person, the model gives a clearly higher predicted chance of an income of $50,000 or less if the occupation is private household service (above 99%) than if the occupation is professional specialty (about 58%)."
+     "text": "For a typical person, the model gives a clearly higher predicted chance of a low income ($50,000 or less) if the occupation is private household service (above 99%) than if the occupation is professional specialty (about 58%)."
     },
     {
      "claims": [
       "C004"
      ],
-     "text": "For a typical person, the model gives a higher predicted chance of an income of $50,000 or less if the country of birth is Trinidad and Tobago (about 97%) than if country of birth is something other than Greece, Guatemala, Haiti, Hungary, Mexico, Nicaragua, outlying US territories (Guam, US Virgin Islands), Peru, China, Portugal, 'South' (as recorded), Taiwan, Trinidad and Tobago, Colombia, Vietnam, Dominican Republic, Ecuador, El Salvador (about 58%) (on the training data only)."
+     "text": "For a typical person, the model gives a higher predicted chance of a low income ($50,000 or less) if the country of birth is Trinidad and Tobago (about 97%) than if country of birth is something other than Greece, Guatemala, Haiti, Hungary, Mexico, Nicaragua, outlying US territories (Guam, US Virgin Islands), Peru, China, Portugal, 'South' (as recorded), Taiwan, Trinidad and Tobago, Colombia, Vietnam, Dominican Republic, Ecuador, El Salvador (about 58%) (on the training data only)."
     },
     {
      "claims": [
       "C005"
      ],
-     "text": "For a typical person, the model gives a clearly higher predicted chance of an income of $50,000 or less if marital status is something other than married to a member of the armed forces, married (civilian spouse) (about 94%) than if the marital status is married (civilian spouse) (about 58%)."
+     "text": "For a typical person, the model gives a clearly higher predicted chance of a low income ($50,000 or less) if marital status is something other than married to a member of the armed forces, married (civilian spouse) (about 94%) than if the marital status is married (civilian spouse) (about 58%)."
     },
     {
      "claims": [
       "C006"
      ],
-     "text": "The model treats a higher age as clearly lowering the predicted chance of an income of $50,000 or less steadily up to about 34 years, then no further: for a typical person, it goes from about 90% at 22 years to about 56% at 58 years."
+     "text": "The model treats a higher age as clearly lowering the predicted chance of a low income ($50,000 or less) steadily up to about 34 years, then no further: for a typical person, it goes from about 90% at 22 years to about 56% at 58 years."
     },
     {
      "claims": [
@@ -45581,15 +47341,15 @@
    ]
   },
   "hypotheses": {
-   "ann_115": "A higher capital gains slightly lowers the predicted chance of an income of $50,000 or less, and even more so if country of birth is something other than Portugal (slowly at first, then faster for people with country of birth other than Portugal): for a typical person, capital gains going from 0 US dollars to 6849 US dollars moves the predicted chance of an income of $50,000 or less from about 58% to about 9% if country of birth is something other than Portugal, and from about 58% to about 12% if the country of birth is Portugal. Through this part, the model treats a higher capital gains as clearly lowering the predicted chance of an income of $50,000 or less slowly at first, then faster: for a typical person, it goes from about 58% at 0 US dollars to about 9% at 6849 US dollars, flattening out near the bottom because the predicted risk cannot go much lower. Through this part, for a typical person, the model gives a slightly higher predicted chance of an income of $50,000 or less if the country of birth is Portugal (about 58%) than if country of birth is something other than Portugal (about 58%).",
-   "ann_116": "This changes the prediction only slightly: for a typical person, age going from 22 years to 58 years moves the predicted chance of an income of $50,000 or less from about 98% to about 65% if the occupation is handlers or cleaners, and from about 90% to about 56% if occupation is something other than handlers or cleaners (it moves in an uneven way for people whose occupation is handlers or cleaners). Through this part, the model treats a higher age as clearly lowering the predicted chance of an income of $50,000 or less steadily up to about 34 years, then no further: for a typical person, it goes from about 90% at 22 years to about 56% at 58 years. Through this part, for a typical person, the model gives a higher predicted chance of an income of $50,000 or less if the occupation is handlers or cleaners (about 77%) than if occupation is something other than handlers or cleaners (about 58%) (on the training data only).",
-   "ann_117": "The model gives a higher predicted chance of an income of $50,000 or less if the country of birth is Colombia than if country of birth is something other than Colombia, and even more so if work class is something other than without pay: for a typical person, going from country of birth other than Colombia to Colombia moves the predicted chance of an income of $50,000 or less from about 58% to above 99% if work class is something other than without pay, and from about 73% to above 99% if the work class is without pay. The model has little data on this: only 17 training people (without pay). The model gives a higher predicted chance of an income of $50,000 or less if the country of birth is Colombia than if country of birth is something other than Colombia, and even more so if occupation is something other than sales, armed forces, executive or managerial, farming or fishing: for a typical person, going from country of birth other than Colombia to Colombia moves the predicted chance of an income of $50,000 or less from about 58% to above 99% if occupation is something other than sales, armed forces, executive or managerial, farming or fishing, and from about 67% to above 99% if the occupation is armed forces. The model has little data on this: only 12 training people (armed forces). The model gives a higher predicted chance of an income of $50,000 or less if the occupation is armed forces than if occupation is something other than sales, armed forces, executive or managerial, farming or fishing, and even more so if the highest education is doctorate: for a typical person, going from occupation other than sales, armed forces, executive or managerial, farming or fishing to armed forces moves the predicted chance of an income of $50,000 or less from about 51% to about 67% if the highest education is doctorate, and from about 58% to about 67% if highest education is something other than doctorate. The model has little data on this: only 12 training people (armed forces). For a typical person, going from country of birth other than Colombia to Colombia moves the predicted chance of an income of $50,000 or less from about 58% to above 99% if highest education is something other than doctorate, and from about 51% to above 99% if the highest education is doctorate. Other effects: Colombia (rather than any other country of birth) raises it; farming or fishing (rather than any other occupation) raises it; executive or managerial (rather than any other occupation) lowers it; without pay (rather than any other work class) raises it; doctorate (rather than any other highest education) lowers it; sales (rather than any other occupation) lowers it (on the training data only). The model has little data on some of these: only 17 training people (without pay). Smaller effects, each changing the predicted value only slightly: armed forces (rather than any other occupation) raises it. The model has little data on some of these: only 12 training people (armed forces).",
-   "ann_118": "Through this part, for a typical person, the model gives a higher predicted chance of an income of $50,000 or less if race is something other than White (about 65%) than if the recorded race is White (about 58%) (on the training data only).",
-   "ann_119": "Through this part, for a typical person, the model gives a clearly higher predicted chance of an income of $50,000 or less if the occupation is other service (about 77%) than if occupation is something other than machine operator or inspector, other service (about 58%). Through this part, for a typical person, the model gives a lower predicted chance of an income of $50,000 or less if the recorded race is Asian or Pacific Islander (about 46%) than if race is something other than Asian or Pacific Islander (about 58%) (on the training data only). Through this part, for a typical person, the model gives a higher predicted chance of an income of $50,000 or less if the highest education is 11th grade (about 66%) than if highest education is something other than 10th grade, 11th grade, 7th-8th grade, associate degree (vocational) (about 58%) (on the training data only). Through this part, for a typical person, the model gives a lower predicted chance of an income of $50,000 or less if the country of birth is Hungary (about 51%) than if country of birth is something other than Hungary (about 58%) (on the training data only). The model has little data on this: only 16 training people (Hungary). Smaller effects, each changing the predicted value only slightly: 10th grade (rather than any other highest education) lowers it; associate degree (vocational) (rather than any other highest education) lowers it; machine operator or inspector (rather than any other occupation) raises it; 7th-8th grade (rather than any other highest education) raises it (on the training data only).",
-   "ann_120": "Through this part, for a typical person, the model gives a clearly higher predicted chance of an income of $50,000 or less if marital status is something other than married to a member of the armed forces, married (civilian spouse) (about 94%) than if the marital status is married (civilian spouse) (about 58%). Through this part, for a typical person, the model gives a clearly higher predicted chance of an income of $50,000 or less if the person is a child of the household (about 86%) than if the person is a husband (about 58%). Through this part, for a typical person, the model gives a clearly lower predicted chance of an income of $50,000 or less if the person is a wife (about 32%) than if the person is a husband (about 58%). Through this part, for a typical person, the model gives a clearly lower predicted chance of an income of $50,000 or less if the marital status is married to a member of the armed forces (about 39%) than if the marital status is married (civilian spouse) (about 58%). Through this part, for a typical person, the model gives a clearly higher predicted chance of an income of $50,000 or less if the person is a woman (about 73%) than if the person is a man (about 58%). Other effects: not in a family (rather than husband) lowers it; other relative (rather than husband) raises it; unmarried (rather than husband) lowers it.",
-   "ann_121": "Through this part, the model treats a higher education level as clearly lowering the predicted chance of an income of $50,000 or less steadily: for a typical person, it goes from about 73% at 7 on the 1-16 scale to about 42% at 13 on the 1-16 scale. Through this part, the model treats a higher capital losses as clearly lowering the predicted chance of an income of $50,000 or less steadily: for a typical person, it goes from about 58% at 0 US dollars to about 28% at 1887 US dollars. Through this part, the model treats a higher weekly working hours as clearly lowering the predicted chance of an income of $50,000 or less steadily: for a typical person, it goes from about 67% at 24 hours to about 49% at 55 hours. Through this part, the model treats a higher census sampling weight as slightly lowering the predicted chance of an income of $50,000 or less steadily: for a typical person, it goes from about 60% at 66,572 (weight) to about 55% at 328,216 (weight) (on the training data only).",
-   "ann_122": "Through this part, for a typical person, the model gives a clearly higher predicted chance of an income of $50,000 or less if the occupation is private household service (above 99%) than if the occupation is professional specialty (about 58%). Through this part, for a typical person, the model gives a higher predicted chance of an income of $50,000 or less if the country of birth is Trinidad and Tobago (about 97%) than if country of birth is something other than Greece, Guatemala, Haiti, Mexico, Nicaragua, outlying US territories (Guam, US Virgin Islands), Peru, China, 'South' (as recorded), Taiwan, Trinidad and Tobago, Vietnam, Dominican Republic, Ecuador, El Salvador (about 58%) (on the training data only). Through this part, for a typical person, the model gives a clearly higher predicted chance of an income of $50,000 or less if the occupation is missing (?) (about 86%) than if the occupation is professional specialty (about 58%). Through this part, for a typical person, the model gives a higher predicted chance of an income of $50,000 or less if the country of birth is 'South' (as recorded) (about 84%) than if country of birth is something other than Greece, Guatemala, Haiti, Mexico, Nicaragua, outlying US territories (Guam, US Virgin Islands), Peru, China, 'South' (as recorded), Taiwan, Trinidad and Tobago, Vietnam, Dominican Republic, Ecuador, El Salvador (about 58%) (on the training data only). Other effects: Vietnam (rather than any other country of birth) raises it; preschool (rather than any other highest education) raises it; Peru (rather than any other country of birth) raises it; Dominican Republic (rather than any other country of birth) raises it; China (rather than any other country of birth) raises it; professional school degree (rather than any other highest education) lowers it; Mexico (rather than any other country of birth) raises it; Nicaragua (rather than any other country of birth) raises it; and 16 still smaller effects listed in the evidence table (on the training data only). Smaller effects, each changing the predicted value only slightly: self-employed, incorporated (rather than any other work class) lowers it; Taiwan (rather than any other country of birth) raises it; some college (rather than any other highest education) lowers it; American Indian or Eskimo (rather than any other race) raises it; associate degree (academic) (rather than any other highest education) raises it (on the training data only).",
-   "ann_123": "The model treats a higher capital gains as clearly lowering the predicted chance of an income of $50,000 or less slowly at first, then faster: for a typical person, it goes from about 58% at 0 US dollars to about 9% at 6849 US dollars, flattening out near the bottom because the predicted risk cannot go much lower. For a typical person, the model gives a higher predicted chance of an income of $50,000 or less if the country of birth is Colombia (above 99%) than if country of birth is something other than Greece, Guatemala, Haiti, Hungary, Mexico, Nicaragua, outlying US territories (Guam, US Virgin Islands), Peru, China, Portugal, 'South' (as recorded), Taiwan, Trinidad and Tobago, Colombia, Vietnam, Dominican Republic, Ecuador, El Salvador (about 58%) (on the training data only). For a typical person, the model gives a clearly higher predicted chance of an income of $50,000 or less if the occupation is private household service (above 99%) than if the occupation is professional specialty (about 58%). For a typical person, the model gives a higher predicted chance of an income of $50,000 or less if the country of birth is Trinidad and Tobago (about 97%) than if country of birth is something other than Greece, Guatemala, Haiti, Hungary, Mexico, Nicaragua, outlying US territories (Guam, US Virgin Islands), Peru, China, Portugal, 'South' (as recorded), Taiwan, Trinidad and Tobago, Colombia, Vietnam, Dominican Republic, Ecuador, El Salvador (about 58%) (on the training data only). For a typical person, the model gives a clearly higher predicted chance of an income of $50,000 or less if marital status is something other than married to a member of the armed forces, married (civilian spouse) (about 94%) than if the marital status is married (civilian spouse) (about 58%). The model treats a higher age as clearly lowering the predicted chance of an income of $50,000 or less steadily up to about 34 years, then no further: for a typical person, it goes from about 90% at 22 years to about 56% at 58 years. Other effects: a higher education level lowers it steadily; a higher capital losses lowers it steadily; own child (rather than husband) raises it; missing (?) (rather than professional specialty) raises it; farming or fishing (rather than professional specialty) raises it; 'South' (as recorded) (rather than any other country of birth) raises it; wife (rather than husband) lowers it; handlers or cleaners (rather than professional specialty) raises it; and 39 still smaller effects listed in the evidence table (on the training data only). Smaller effects, each changing the predicted value only slightly: a higher census sampling weight lowers it steadily; self-employed, incorporated (rather than any other work class) lowers it; Taiwan (rather than any other country of birth) raises it; sales (rather than professional specialty) raises it; some college (rather than any other highest education) lowers it; 10th grade (rather than any other highest education) lowers it; Asian or Pacific Islander (rather than White) lowers it; other race (rather than White) raises it; and 4 still smaller effects listed in the evidence table (on the training data only)."
+   "ann_115": "A higher capital gains slightly lowers the predicted chance of a low income ($50,000 or less), and even more so if country of birth is something other than Portugal (slowly at first, then faster for people with country of birth other than Portugal): for a typical person, capital gains going from 0 US dollars to 6849 US dollars moves the predicted chance of a low income ($50,000 or less) from about 58% to about 9% if country of birth is something other than Portugal, and from about 58% to about 12% if the country of birth is Portugal. Through this part, the model treats a higher capital gains as clearly lowering the predicted chance of a low income ($50,000 or less) slowly at first, then faster: for a typical person, it goes from about 58% at 0 US dollars to about 9% at 6849 US dollars, flattening out near the bottom because the predicted risk cannot go much lower. Through this part, for a typical person, the model gives a slightly higher predicted chance of a low income ($50,000 or less) if the country of birth is Portugal (about 58%) than if country of birth is something other than Portugal (about 58%).",
+   "ann_116": "This changes the prediction only slightly: for a typical person, age going from 22 years to 58 years moves the predicted chance of a low income ($50,000 or less) from about 98% to about 65% if the occupation is handlers or cleaners, and from about 90% to about 56% if occupation is something other than handlers or cleaners (it moves in an uneven way for people whose occupation is handlers or cleaners). Through this part, the model treats a higher age as clearly lowering the predicted chance of a low income ($50,000 or less) steadily up to about 34 years, then no further: for a typical person, it goes from about 90% at 22 years to about 56% at 58 years. Through this part, for a typical person, the model gives a higher predicted chance of a low income ($50,000 or less) if the occupation is handlers or cleaners (about 77%) than if occupation is something other than handlers or cleaners (about 58%) (on the training data only).",
+   "ann_117": "The model gives a higher predicted chance of a low income ($50,000 or less) if the country of birth is Colombia than if country of birth is something other than Colombia, and even more so if work class is something other than without pay: for a typical person, going from country of birth other than Colombia to Colombia moves the predicted chance of a low income ($50,000 or less) from about 58% to above 99% if work class is something other than without pay, and from about 73% to above 99% if the work class is without pay. The model has little data on this: only 17 training people (without pay). The model gives a higher predicted chance of a low income ($50,000 or less) if the country of birth is Colombia than if country of birth is something other than Colombia, and even more so if occupation is something other than sales, armed forces, executive or managerial, farming or fishing: for a typical person, going from country of birth other than Colombia to Colombia moves the predicted chance of a low income ($50,000 or less) from about 58% to above 99% if occupation is something other than sales, armed forces, executive or managerial, farming or fishing, and from about 67% to above 99% if the occupation is armed forces. The model has little data on this: only 12 training people (armed forces). The model gives a higher predicted chance of a low income ($50,000 or less) if the occupation is armed forces than if occupation is something other than sales, armed forces, executive or managerial, farming or fishing, and even more so if the highest education is doctorate: for a typical person, going from occupation other than sales, armed forces, executive or managerial, farming or fishing to armed forces moves the predicted chance of a low income ($50,000 or less) from about 51% to about 67% if the highest education is doctorate, and from about 58% to about 67% if highest education is something other than doctorate. The model has little data on this: only 12 training people (armed forces). For a typical person, going from country of birth other than Colombia to Colombia moves the predicted chance of a low income ($50,000 or less) from about 58% to above 99% if highest education is something other than doctorate, and from about 51% to above 99% if the highest education is doctorate. Other effects: Colombia (rather than any other country of birth) raises it; farming or fishing (rather than any other occupation) raises it; executive or managerial (rather than any other occupation) lowers it; without pay (rather than any other work class) raises it; doctorate (rather than any other highest education) lowers it; sales (rather than any other occupation) lowers it (on the training data only). The model has little data on some of these: only 17 training people (without pay). Smaller effects, each changing the predicted value only slightly: armed forces (rather than any other occupation) raises it. The model has little data on some of these: only 12 training people (armed forces).",
+   "ann_118": "Through this part, for a typical person, the model gives a higher predicted chance of a low income ($50,000 or less) if race is something other than White (about 65%) than if the recorded race is White (about 58%) (on the training data only).",
+   "ann_119": "Through this part, for a typical person, the model gives a clearly higher predicted chance of a low income ($50,000 or less) if the occupation is other service (about 77%) than if occupation is something other than machine operator or inspector, other service (about 58%). Through this part, for a typical person, the model gives a lower predicted chance of a low income ($50,000 or less) if the recorded race is Asian or Pacific Islander (about 46%) than if race is something other than Asian or Pacific Islander (about 58%) (on the training data only). Through this part, for a typical person, the model gives a higher predicted chance of a low income ($50,000 or less) if the highest education is 11th grade (about 66%) than if highest education is something other than 10th grade, 11th grade, 7th-8th grade, associate degree (vocational) (about 58%) (on the training data only). Through this part, for a typical person, the model gives a lower predicted chance of a low income ($50,000 or less) if the country of birth is Hungary (about 51%) than if country of birth is something other than Hungary (about 58%) (on the training data only). The model has little data on this: only 16 training people (Hungary). Smaller effects, each changing the predicted value only slightly: 10th grade (rather than any other highest education) lowers it; associate degree (vocational) (rather than any other highest education) lowers it; machine operator or inspector (rather than any other occupation) raises it; 7th-8th grade (rather than any other highest education) raises it (on the training data only).",
+   "ann_120": "Through this part, for a typical person, the model gives a clearly higher predicted chance of a low income ($50,000 or less) if marital status is something other than married to a member of the armed forces, married (civilian spouse) (about 94%) than if the marital status is married (civilian spouse) (about 58%). Through this part, for a typical person, the model gives a clearly higher predicted chance of a low income ($50,000 or less) if the person is a child of the household (about 86%) than if the person is a husband (about 58%). Through this part, for a typical person, the model gives a clearly lower predicted chance of a low income ($50,000 or less) if the person is a wife (about 32%) than if the person is a husband (about 58%). Through this part, for a typical person, the model gives a clearly lower predicted chance of a low income ($50,000 or less) if the marital status is married to a member of the armed forces (about 39%) than if the marital status is married (civilian spouse) (about 58%). Through this part, for a typical person, the model gives a clearly higher predicted chance of a low income ($50,000 or less) if the person is a woman (about 73%) than if the person is a man (about 58%). Other effects: not in a family (rather than husband) lowers it; other relative (rather than husband) raises it; unmarried (rather than husband) lowers it.",
+   "ann_121": "Through this part, the model treats a higher education level as clearly lowering the predicted chance of a low income ($50,000 or less) steadily: for a typical person, it goes from about 73% at 7 on the 1-16 scale to about 42% at 13 on the 1-16 scale. Through this part, the model treats a higher capital losses as clearly lowering the predicted chance of a low income ($50,000 or less) steadily: for a typical person, it goes from about 58% at 0 US dollars to about 28% at 1887 US dollars. Through this part, the model treats a higher weekly working hours as clearly lowering the predicted chance of a low income ($50,000 or less) steadily: for a typical person, it goes from about 67% at 24 hours to about 49% at 55 hours. Through this part, the model treats a higher census sampling weight as slightly lowering the predicted chance of a low income ($50,000 or less) steadily: for a typical person, it goes from about 60% at 66,572 (weight) to about 55% at 328,216 (weight) (on the training data only).",
+   "ann_122": "Through this part, for a typical person, the model gives a clearly higher predicted chance of a low income ($50,000 or less) if the occupation is private household service (above 99%) than if the occupation is professional specialty (about 58%). Through this part, for a typical person, the model gives a higher predicted chance of a low income ($50,000 or less) if the country of birth is Trinidad and Tobago (about 97%) than if country of birth is something other than Greece, Guatemala, Haiti, Mexico, Nicaragua, outlying US territories (Guam, US Virgin Islands), Peru, China, 'South' (as recorded), Taiwan, Trinidad and Tobago, Vietnam, Dominican Republic, Ecuador, El Salvador (about 58%) (on the training data only). Through this part, for a typical person, the model gives a clearly higher predicted chance of a low income ($50,000 or less) if the occupation is missing (?) (about 86%) than if the occupation is professional specialty (about 58%). Through this part, for a typical person, the model gives a higher predicted chance of a low income ($50,000 or less) if the country of birth is 'South' (as recorded) (about 84%) than if country of birth is something other than Greece, Guatemala, Haiti, Mexico, Nicaragua, outlying US territories (Guam, US Virgin Islands), Peru, China, 'South' (as recorded), Taiwan, Trinidad and Tobago, Vietnam, Dominican Republic, Ecuador, El Salvador (about 58%) (on the training data only). Other effects: Vietnam (rather than any other country of birth) raises it; preschool (rather than any other highest education) raises it; Peru (rather than any other country of birth) raises it; Dominican Republic (rather than any other country of birth) raises it; China (rather than any other country of birth) raises it; professional school degree (rather than any other highest education) lowers it; Mexico (rather than any other country of birth) raises it; Nicaragua (rather than any other country of birth) raises it; and 16 still smaller effects listed in the evidence table (on the training data only). Smaller effects, each changing the predicted value only slightly: self-employed, incorporated (rather than any other work class) lowers it; Taiwan (rather than any other country of birth) raises it; some college (rather than any other highest education) lowers it; American Indian or Eskimo (rather than any other race) raises it; associate degree (academic) (rather than any other highest education) raises it (on the training data only).",
+   "ann_123": "The model treats a higher capital gains as clearly lowering the predicted chance of a low income ($50,000 or less) slowly at first, then faster: for a typical person, it goes from about 58% at 0 US dollars to about 9% at 6849 US dollars, flattening out near the bottom because the predicted risk cannot go much lower. For a typical person, the model gives a higher predicted chance of a low income ($50,000 or less) if the country of birth is Colombia (above 99%) than if country of birth is something other than Greece, Guatemala, Haiti, Hungary, Mexico, Nicaragua, outlying US territories (Guam, US Virgin Islands), Peru, China, Portugal, 'South' (as recorded), Taiwan, Trinidad and Tobago, Colombia, Vietnam, Dominican Republic, Ecuador, El Salvador (about 58%) (on the training data only). For a typical person, the model gives a clearly higher predicted chance of a low income ($50,000 or less) if the occupation is private household service (above 99%) than if the occupation is professional specialty (about 58%). For a typical person, the model gives a higher predicted chance of a low income ($50,000 or less) if the country of birth is Trinidad and Tobago (about 97%) than if country of birth is something other than Greece, Guatemala, Haiti, Hungary, Mexico, Nicaragua, outlying US territories (Guam, US Virgin Islands), Peru, China, Portugal, 'South' (as recorded), Taiwan, Trinidad and Tobago, Colombia, Vietnam, Dominican Republic, Ecuador, El Salvador (about 58%) (on the training data only). For a typical person, the model gives a clearly higher predicted chance of a low income ($50,000 or less) if marital status is something other than married to a member of the armed forces, married (civilian spouse) (about 94%) than if the marital status is married (civilian spouse) (about 58%). The model treats a higher age as clearly lowering the predicted chance of a low income ($50,000 or less) steadily up to about 34 years, then no further: for a typical person, it goes from about 90% at 22 years to about 56% at 58 years. Other effects: a higher education level lowers it steadily; a higher capital losses lowers it steadily; own child (rather than husband) raises it; missing (?) (rather than professional specialty) raises it; farming or fishing (rather than professional specialty) raises it; 'South' (as recorded) (rather than any other country of birth) raises it; wife (rather than husband) lowers it; handlers or cleaners (rather than professional specialty) raises it; and 39 still smaller effects listed in the evidence table (on the training data only). Smaller effects, each changing the predicted value only slightly: a higher census sampling weight lowers it steadily; self-employed, incorporated (rather than any other work class) lowers it; Taiwan (rather than any other country of birth) raises it; sales (rather than professional specialty) raises it; some college (rather than any other highest education) lowers it; 10th grade (rather than any other highest education) lowers it; Asian or Pacific Islander (rather than White) lowers it; other race (rather than White) raises it; and 4 still smaller effects listed in the evidence table (on the training data only)."
   },
   "not_supported": [
    {
@@ -45604,31 +47364,31 @@
     "claims": [
      "C001"
     ],
-    "text": "The model treats a higher capital gains as clearly lowering the predicted chance of an income of $50,000 or less slowly at first, then faster: for a typical person, it goes from about 58% at 0 US dollars to about 9% at 6849 US dollars, flattening out near the bottom because the predicted risk cannot go much lower."
+    "text": "The model treats a higher capital gains as clearly lowering the predicted chance of a low income ($50,000 or less) slowly at first, then faster: for a typical person, it goes from about 58% at 0 US dollars to about 9% at 6849 US dollars, flattening out near the bottom because the predicted risk cannot go much lower."
    },
    {
     "claims": [
      "C002"
     ],
-    "text": "For a typical person, the model gives a higher predicted chance of an income of $50,000 or less if the country of birth is Colombia (above 99%) than if country of birth is something other than Greece, Guatemala, Haiti, Hungary, Mexico, Nicaragua, outlying US territories (Guam, US Virgin Islands), Peru, China, Portugal, 'South' (as recorded), Taiwan, Trinidad and Tobago, Colombia, Vietnam, Dominican Republic, Ecuador, El Salvador (about 58%) (on the training data only)."
+    "text": "For a typical person, the model gives a higher predicted chance of a low income ($50,000 or less) if the country of birth is Colombia (above 99%) than if country of birth is something other than Greece, Guatemala, Haiti, Hungary, Mexico, Nicaragua, outlying US territories (Guam, US Virgin Islands), Peru, China, Portugal, 'South' (as recorded), Taiwan, Trinidad and Tobago, Colombia, Vietnam, Dominican Republic, Ecuador, El Salvador (about 58%) (on the training data only)."
    },
    {
     "claims": [
      "C003"
     ],
-    "text": "For a typical person, the model gives a clearly higher predicted chance of an income of $50,000 or less if the occupation is private household service (above 99%) than if the occupation is professional specialty (about 58%)."
+    "text": "For a typical person, the model gives a clearly higher predicted chance of a low income ($50,000 or less) if the occupation is private household service (above 99%) than if the occupation is professional specialty (about 58%)."
    },
    {
     "claims": [
      "C138"
     ],
-    "text": "For a typical person, going from country of birth other than Colombia to Colombia moves the predicted chance of an income of $50,000 or less from about 58% to above 99% if highest education is something other than doctorate, and from about 51% to above 99% if the highest education is doctorate."
+    "text": "For a typical person, going from country of birth other than Colombia to Colombia moves the predicted chance of a low income ($50,000 or less) from about 58% to above 99% if highest education is something other than doctorate, and from about 51% to above 99% if the highest education is doctorate."
    },
    {
     "claims": [
      "C074"
     ],
-    "text": "A higher capital gains slightly lowers the predicted chance of an income of $50,000 or less, and even more so if country of birth is something other than Portugal (slowly at first, then faster for people with country of birth other than Portugal): for a typical person, capital gains going from 0 US dollars to 6849 US dollars moves the predicted chance of an income of $50,000 or less from about 58% to about 9% if country of birth is something other than Portugal, and from about 58% to about 12% if the country of birth is Portugal."
+    "text": "A higher capital gains slightly lowers the predicted chance of a low income ($50,000 or less), and even more so if country of birth is something other than Portugal (slowly at first, then faster for people with country of birth other than Portugal): for a typical person, capital gains going from 0 US dollars to 6849 US dollars moves the predicted chance of a low income ($50,000 or less) from about 58% to about 9% if country of birth is something other than Portugal, and from about 58% to about 12% if the country of birth is Portugal."
    }
   ]
  },

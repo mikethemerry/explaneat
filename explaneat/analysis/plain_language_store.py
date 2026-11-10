@@ -39,6 +39,11 @@ FORBIDDEN = [
     (re.compile(r"\bcaus(?:es|ed|ing)\b|\bleads? to\b", re.I), "causal wording (describe the model, not the world)"),
     (re.compile(r"\b(?:non-?)?linear(?:ly)?\b|\bconvex\b|\bconcave\b|\bmonoton\w*", re.I), "shape jargon (use the plain shape words)"),
     (re.compile(r"[;:,]\s*by shape\b|\bby shape\s*:", re.I), "mechanical shape clause ('by shape: ...'): weave the shape words into the sentence"),
+    (re.compile(r"\bthe predicted (?:an?|the)\b", re.I), "outcome phrase after 'the predicted' (say 'the predicted chance of ...')"),
+    (re.compile(r"['’]s the predicted\b", re.I), "possessive before 'the predicted' (\"a typical person's predicted ...\")"),
+    (re.compile(r"\b(?:the|a|an) (?:the|a|an)\b", re.I), "doubled article"),
+    (re.compile(r"\bthe predicted (?!chance\b|risk\b|probability\b|value\b|\d|[a-z0-9]+-year\b)[a-z$'’]", re.I),
+     "outcome phrase without 'chance of' / 'risk of' / 'probability of' after 'the predicted'"),
 ]
 ODDS_MARK = re.compile(r"×\s*\d|\bodds\b", re.I)
 

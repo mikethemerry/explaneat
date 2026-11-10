@@ -272,9 +272,13 @@ def _ref_patient(layer) -> str:
     return (f"Reference (typical) {one}: {defn}. {vals}. {pred}: {pct}." if p is not None else "")
 
 
-def v5_summary(d: Dict[str, Any]) -> List[Dict[str, Any]]:
+def v5_summary(d: Dict[str, Any], layer: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
     """The v5 draft's summary: its lead, then every block's sentences (the read-down's first page)."""
     out = list(d.get("lead") or [])
+    if layer is not None:
+        ls = linear_sentence(layer)
+        if ls:
+            out.append(ls)
     for b in d.get("blocks") or []:
         out += b.get("sentences") or []
     return out
@@ -283,6 +287,7 @@ def v5_summary(d: Dict[str, Any]) -> List[Dict[str, Any]]:
 def appendix_section(sec: Dict[str, Any], P: str) -> List[str]:
     """``\\subsection{Plain-language summary}`` for the explanation certificate."""
     L = [r"\subsection{Plain-language summary}\label{" + P + "plain}"]
+    L += outcome_callout(sec)
     L.append(r"\noindent{\small\textit{" + tex(_status(sec)) + ". Each sentence cites the claims "
              r"(C01, C02, \ldots) that back it; every cited claim was computed on the model and the "
              r"training split and passed its automatic checks. Magnitudes are changes in predicted risk for "
@@ -293,7 +298,7 @@ def appendix_section(sec: Dict[str, Any], P: str) -> List[str]:
     parts = {p["id"]: p for p in sec.get("parts") or []}
     if d and d.get("readdown"):      # v5: the read-down document (lead, blocks, then part by part)
         titles = d.get("titles") or {}
-        L.append(r"\paragraph{Summary (drafted).} " + sentences_tex(v5_summary(d)))
+        L.append(r"\paragraph{Summary (drafted).} " + sentences_tex(v5_summary(d, sec)))
         from ..analysis.plain_language_store import readdown_order
         for pid in readdown_order(sec):
             rd = (d.get("readdown") or {}).get(pid) or {}
@@ -343,6 +348,7 @@ def genome_block(layer: Dict[str, Any]) -> List[str]:
     tmpl = layer.get("template") or {}
     cnt = layer.get("counts") or {}
     L = [r"\section{" + tex(lab) + "}"]
+    L += outcome_callout(layer)
     L.append(r"\noindent{\small Genome \texttt{" + tex(layer.get("genome_id")) + r"}, explanation \texttt{"
              + tex(layer.get("explanation_id")) + r"}. Split: train primary (n="
              + tex(layer["split"].get("train_n")) + "), test as a check (n=" + tex(layer["split"].get("test_n"))
@@ -495,7 +501,7 @@ def genome_block_v4(layer: Dict[str, Any]) -> List[str]:
     d = layer.get("drafted") or {}
     titles = d.get("titles") or {}
     cnt = layer.get("counts") or {}
-    L = [r"\section{" + tex(lab) + "}"]
+    L = [r"\section{" + tex(lab) + "}"] + outcome_callout(layer)
     L.append(r"\noindent{\small Genome \texttt{" + tex(layer.get("genome_id")) + r"}, explanation \texttt{"
              + tex(layer.get("explanation_id")) + r"}. Split: train primary (n="
              + tex(layer["split"].get("train_n")) + "), test as a check (n=" + tex(layer["split"].get("test_n"))
@@ -748,6 +754,115 @@ def _evidence_figures(layer, pid, title) -> List[str]:
     return L
 
 
+# ----------------------------------------------------------------------------- outcome and linear factors
+def outcome_text(layer) -> Optional[str]:
+    """The one-line (Adult: prominent) note on what the model's 1 means, from the data check."""
+    oc = layer.get("outcome_check") or {}
+    if not oc:
+        return None
+    who = (layer.get("population") or {}).get("plural") or "patients"
+    rate = oc.get("base_rate_train")
+    pct = f"{100 * rate:.0f}%" if isinstance(rate, (int, float)) else "?"
+    names = ", ".join(f"'{x}'" for x in oc.get("class_names") or []) or "not stored"
+    ok = "checked against the data" if oc.get("verified") else "NOT confirmed by the data checks"
+    if oc.get("inverted"):
+        return (f"Note: this model predicts the chance of an income of $50,000 or less (the majority class, {pct} of "
+                f"{who}). This is the reverse of the usual framing of this dataset, which predicts income above "
+                f"$50,000. Throughout, 'raises the chance' means 'makes lower income more likely'. (Outcome 1 = "
+                f"{oc.get('meaning')}; classes as stored: {names}; {ok}.)")
+    return (f"Outcome: 1 = {oc.get('meaning')}; {pct} of training {who}; classes as stored: {names} ({ok}).")
+
+
+def outcome_callout(layer) -> List[str]:
+    t = outcome_text(layer)
+    if not t:
+        return []
+    if (layer.get("outcome_check") or {}).get("inverted"):
+        return [r"\par\smallskip\noindent\fcolorbox{BrickRed}{white}{\begin{minipage}{0.96\linewidth}\small\textbf{"
+                + tex(t.split(". ", 1)[0]) + r".} " + tex(t.split(". ", 1)[1]) + r"\end{minipage}}\par\smallskip"]
+    return [r"\noindent{\small\textbf{" + tex(t.split(":", 1)[0]) + ":}" + tex(t.split(":", 1)[1]) + r"\par}"]
+
+
+def linearity_claims_of(layer, kind: str) -> List[Dict[str, Any]]:
+    return [c for c in layer.get("claims") or [] if c["type"] == "linearity"
+            and (c.get("statement") or {}).get("kind") == kind]
+
+
+def linear_sentence(layer) -> Optional[Dict[str, Any]]:
+    """The templated summary sentence on the fixed-rate (linear) inputs, from the model claim."""
+    mc = next(iter(linearity_claims_of(layer, "model")), None)
+    if mc is None or not mc.get("verified"):
+        return None
+    st = mc["statement"]
+    E, S, M = st.get("n_exact_linear", 0), st.get("n_support_linear", 0), st.get("n_inputs", 0)
+    N, K = E + S, st.get("n_nonlinear_parts", 0)
+    X = round(100 * float(st.get("variance_share_linear") or 0.0))
+    who = (layer.get("population") or {}).get("plural") or "patients"
+    if E and S:
+        detail = f", {E} of them everywhere and {S} across the observed data"
+    elif S:
+        detail = ", across the observed data"
+    else:
+        detail = ""
+    if N:
+        t = (f"{N} of the model's {M} inputs act at a fixed rate (each adds the same amount to the score per "
+             f"unit{detail}); together with the fixed-rate paths of the other inputs they account for about {X}% "
+             f"of how the score varies across {who}.")
+    else:
+        t = (f"None of the model's {M} inputs acts at a fixed rate throughout; the fixed-rate paths of its inputs "
+             f"account for about {X}% of how the score varies across {who}.")
+    t += (f" The rest of this document focuses on the {K} part{'s' if K != 1 else ''} that switch on and off."
+          if K else " No part of the model switches on and off.")
+    return {"text": t, "claims": [mc["id"]]}
+
+
+def linearised_sentence(layer) -> Optional[Dict[str, Any]]:
+    mc = next(iter(linearity_claims_of(layer, "model")), None)
+    if mc is None or not mc.get("verified"):
+        return None
+    st = mc["statement"]
+    f = lambda k: (f"{st[k]:.3f}" if isinstance(st.get(k), (int, float)) else "n/a")
+    t = (f"A version of the model with every switch replaced by a straight-line fit (on the training rows) scores "
+         f"an AUC of {f('auc_linearised_train')} on train ({f('auc_linearised_test')} on test), against "
+         f"{f('auc_full_train')} ({f('auc_full_test')}) for the full model.")
+    return {"text": t, "claims": [mc["id"]]}
+
+
+CLASS_WORD = {"exact_linear": "everywhere", "support_linear": "on the data"}
+
+
+def linear_factors_table(layer) -> List[str]:
+    """Each fixed-rate (linear) input: class, score change per unit in real units, direction,
+    typical-case risk change, n."""
+    rows = [c for c in linearity_claims_of(layer, "variable")
+            if c["statement"].get("class") in CLASS_WORD and c.get("verified")]
+    mc = next(iter(linearity_claims_of(layer, "model")), None)
+    if not rows:
+        return []
+    L = [r"\subsection*{Linear factors}\addcontentsline{toc}{subsection}{Linear factors}",
+         r"\noindent{\small Inputs that act at a fixed rate: each adds the same amount to the score (log-odds) per "
+         r"unit, everywhere or across the observed data, so their effect is explained by the rate alone. Mixed "
+         r"inputs (a fixed-rate path and a switching one) and inputs that only act through switching units are "
+         r"in the parts below. The risk change is for the typical case, from the 10th to the 90th percentile "
+         r"(numbers) or to the level with the largest effect (categories)."
+         + (r" Claim " + tex(mc["id"]) + r"." if mc else "") + r"\par}",
+         r"{\footnotesize\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.2\linewidth}l"
+         r">{\raggedright\arraybackslash}p{0.3\linewidth}l>{\raggedright\arraybackslash}p{0.2\linewidth}r@{}}",
+         r"\toprule Input & Fixed rate & Score change per unit & Direction & Typical case & n \\ \midrule \endhead"]
+    for c in rows:
+        st = c["statement"]
+        v = (c.get("variables") or [{}])[0]
+        pu = st.get("per_unit") or []
+        txt = "; ".join(x["text"] for x in pu[:4]) + ("; ..." if len(pu) > 4 else "")
+        r = c.get("risk") or {}
+        tc = (f"{r.get('change', '')}: {_pc(r.get('from'))} to {_pc(r.get('to'))}" if r.get("from") is not None else "")
+        L.append(f"{tex(v.get('short') or v.get('label') or v.get('base'))} \\textcolor{{NavyBlue}}{{[{tex(c['id'])}]}} & "
+                 f"{CLASS_WORD[st['class']]} & {tex(txt)} & {tex(st.get('direction') or 'by level')} & {tex(tc)} & "
+                 f"{tex(r.get('n', c.get('n')))} \\\\")
+    L += [r"\bottomrule", r"\end{longtable}}"]
+    return L
+
+
 def how_to_read(layer) -> List[str]:
     """A short box before the first figure: edge colour is one connection's sign, the marker on an
     input is its overall effect, with one worked example from this genome."""
@@ -756,6 +871,7 @@ def how_to_read(layer) -> List[str]:
     titles = (layer.get("drafted") or {}).get("titles") or {}
     nodes = {n["id"]: n for n in g.get("nodes") or []}
     outcome = (layer.get("outcome") or {}).get("short") or "the outcome"
+    pred = (layer.get("outcome") or {}).get("predicted") or "the predicted risk"
     example = ""
     by_id = {p["id"]: p for p in layer["parts"]}
     for want_neg in (True, False):
@@ -774,8 +890,8 @@ def how_to_read(layer) -> List[str]:
             if (sign_in * sign_out > 0) != (idir == "up"):
                 continue          # the edge signs do not tell the story here (a hinge): pick another
             example = (f"For example, {u.get('label')} has a {'negative' if sign_in < 0 else 'positive'} connection "
-                       f"into '{titles.get(tp, tp)}', a part that {'raises' if pdir == 'up' else 'lowers'} the "
-                       f"predicted {outcome}, so {u.get('label')} {'raises' if idir == 'up' else 'lowers'} it.")
+                       f"into '{titles.get(tp, tp)}', a part that {'raises' if pdir == 'up' else 'lowers'} "
+                       f"{pred}, so {u.get('label')} {'raises' if idir == 'up' else 'lowers'} it.")
             break
         if example:
             break
@@ -786,6 +902,12 @@ def how_to_read(layer) -> List[str]:
         "grey and double arrow depends (it goes both ways, or differs between levels).",
         "A negative connection into a part that itself raises the prediction means that input lowers the "
         "prediction; through a hinge the overall effect can only be read from the claims, not from the edges.",
+        f"Up arrow means {(layer.get('outcome') or {}).get('direction_up') or 'towards ' + outcome}; down arrow, "
+        f"away from it.",
+        "A double outline marks an input (or a part's output) that acts at a fixed rate everywhere: it adds the "
+        "same amount to the score per unit, so it is explained by its rate alone (see 'Linear factors'); a dashed "
+        "double outline, at a fixed rate on the observed data. The normal outline is an input whose effect "
+        "switches on and off somewhere.",
     ] + ([example] if example else [])
     return [r"\par\medskip\noindent\fbox{\begin{minipage}{0.96\linewidth}\small\textbf{How to read the "
             r"diagrams.} " + " ".join(tex(x) for x in lines) + r"\end{minipage}}\par\medskip"]
@@ -836,7 +958,7 @@ def genome_block_v5(layer: Dict[str, Any]) -> List[str]:
     cnt = layer.get("counts") or {}
     by_id = {p["id"]: p for p in layer["parts"]}
     by_name = {p["name"]: p for p in layer["parts"]}
-    L = [r"\section{" + tex(lab) + "}"]
+    L = [r"\section{" + tex(lab) + "}"] + outcome_callout(layer)
     L.append(r"\noindent{\small Genome \texttt{" + tex(layer.get("genome_id")) + r"}, explanation \texttt{"
              + tex(layer.get("explanation_id")) + r"}. Split: train primary (n="
              + tex(layer["split"].get("train_n")) + "), test as a check (n=" + tex(layer["split"].get("test_n"))
@@ -845,7 +967,9 @@ def genome_block_v5(layer: Dict[str, Any]) -> List[str]:
     L.append(r"\noindent{\small\textcolor{BrickRed}{" + tex(_status(layer)) + r"}\par}\smallskip")
     L.append(r"\noindent{\footnotesize " + tex(_ref_patient(layer)) + r"\par}")
     L.append(r"\subsection{Summary}")
-    L.append(r"\noindent " + sentences_tex(d.get("lead")) + r" Figure~\ref{" + _figlab(layer, "summary")
+    ls = linear_sentence(layer)
+    L.append(r"\noindent " + sentences_tex(d.get("lead")) + (" " + sentences_tex([ls]) if ls else "")
+             + r" Figure~\ref{" + _figlab(layer, "summary")
              + r"} shows the model at this level: one box per paragraph below.")
     if layer.get("graph"):
         L += how_to_read(layer)
@@ -855,6 +979,7 @@ def genome_block_v5(layer: Dict[str, Any]) -> List[str]:
     for b in summary_blocks(layer):
         L.append(r"\paragraph{" + tex(titles.get(b["block"], b["block"])) + ".} "
                  + _block_paragraphs((blocks.get(b["block"]) or {}).get("sentences")))
+    L += linear_factors_table(layer)
     if layer.get("graph"):
         L += overview_page(layer)
     if d.get("worth_checking"):
@@ -885,7 +1010,8 @@ def genome_block_v5(layer: Dict[str, Any]) -> List[str]:
                                                   f"into them. " + LEGEND_SHORT), f2)
         sec = rd.get(pid) or {}
         L.append(r"\paragraph{Hypothesis.} " + sentences_tex(sec.get("hypothesis")))
-        L.append(r"\paragraph{Evidence.} " + sentences_tex(sec.get("evidence")))
+        lz = linearised_sentence(layer) if p.get("role") == "root" else None
+        L.append(r"\paragraph{Evidence.} " + sentences_tex(sec.get("evidence")) + (" " + sentences_tex([lz]) if lz else ""))
         L += _evidence_figures(layer, pid, titles.get(pid, p["name"]))
         kids = sorted([by_name[k] for k in p.get("children") or [] if k in by_name], key=lambda q: q["order"])
         deeper = []
@@ -1125,6 +1251,76 @@ def render_review(layers: List[Dict[str, Any]], title: str) -> str:
 DATASET_SHORT = {"uci-heart-cleveland": "Heart", "pmlb-adult": "Adult", "pmlb-churn": "Churn", "monk2": "MONK-2"}
 
 
+def _dataset_of(label: str) -> str:
+    return label.split("-")[0]
+
+
+def linearity_rows(directory=None):
+    """(per genome, per dataset): input classes, the variance share of the fixed-rate paths and
+    full vs linearised AUC, from each layer's model-level linearity claim."""
+    import glob
+    import json
+    import os
+    from ..analysis.plain_language_store import PLAIN_DIR
+    per = []
+    for path in sorted(glob.glob(os.path.join(str(directory or PLAIN_DIR), "*.json"))):
+        with open(path, encoding="utf-8") as f:
+            lay = json.load(f)
+        if not isinstance(lay, dict) or "claims" not in lay:
+            continue
+        mc = next((c for c in lay["claims"] if c["type"] == "linearity"
+                   and (c.get("statement") or {}).get("kind") == "model"), None)
+        if mc is None:
+            continue
+        st = mc["statement"]
+        per.append({"label": lay["label"], "dataset": _dataset_of(lay["label"]), "inputs": st.get("n_inputs", 0),
+                    **{k: st.get(f"n_{k}", 0) for k in ("exact_linear", "support_linear", "mixed", "nonlinear")},
+                    "variance_share_linear": st.get("variance_share_linear"),
+                    **{k: st.get(k) for k in ("auc_full_train", "auc_linearised_train", "auc_full_test",
+                                              "auc_linearised_test")},
+                    "nonlinear_parts": st.get("n_nonlinear_parts"), "parts": st.get("n_parts")})
+    out = []
+    for ds in sorted({r["dataset"] for r in per}):
+        rs = [r for r in per if r["dataset"] == ds]
+        tot = sum(r["inputs"] for r in rs) or 1
+        mean = lambda k: (sum(float(r[k]) for r in rs if isinstance(r.get(k), (int, float))) /
+                          max(1, sum(1 for r in rs if isinstance(r.get(k), (int, float)))))
+        row = {"dataset": ds, "genomes": len(rs), "inputs": sum(r["inputs"] for r in rs)}
+        for k in ("exact_linear", "support_linear", "mixed", "nonlinear"):
+            row[k] = sum(r[k] for r in rs)
+            row["share_" + k.split("_")[0] if k != "nonlinear" else "share_nonlinear"] = round(row[k] / tot, 3)
+        for k in ("variance_share_linear", "auc_full_train", "auc_linearised_train", "auc_full_test",
+                  "auc_linearised_test"):
+            row[k] = round(mean(k), 3)
+        out.append(row)
+    return per, out
+
+
+def render_linearity_summary(per_dataset, per_genome) -> str:
+    from .render_tex import DRAFTED_DEFS, PREAMBLE_PACKAGES
+    pct = lambda x: f"{100 * x:.0f}\\%"
+    L = [r"\documentclass[a4paper,10pt]{article}", r"\usepackage[margin=1.8cm,landscape]{geometry}",
+         PREAMBLE_PACKAGES.rstrip(), r"\usepackage{array}", DRAFTED_DEFS.rstrip(), r"\begin{document}",
+         r"\begin{center}{\Large\bfseries Linear factors across genomes\par}\end{center}",
+         r"\noindent An input acts at a fixed rate (\emph{linear}) when every path from it to the output is linear "
+         r"(direct edges, identity units: \emph{exact}) or also passes only through units that are active on every "
+         r"training row (\emph{on the data}); \emph{mixed} inputs have a fixed-rate path and one through a unit that "
+         r"switches on and off; \emph{switching} inputs act only through such units. Shares are of all used inputs "
+         r"(one-hot levels of a variable counted as one input). The variance share is that of the fixed-rate paths' "
+         r"contribution to the score (training rows, averaged over genomes); the linearised model replaces every "
+         r"switching unit by its least-squares straight-line fit on the training rows (test is reporting only).",
+         r"\par\medskip\begin{center}\begin{tabular}{@{}lrrrrrrrrrr@{}}", r"\toprule",
+         r"Dataset & Genomes & Inputs & Exact & On data & Mixed & Switching & Variance share & "
+         r"AUC train full / lin. & AUC test full / lin. \\ \midrule"]
+    for r in per_dataset:
+        L.append(f"{tex(r['dataset'])} & {r['genomes']} & {r['inputs']} & {pct(r['share_exact'])} & "
+                 f"{pct(r['share_support'])} & {pct(r['share_mixed'])} & {pct(r['share_nonlinear'])} & "
+                 f"{pct(r['variance_share_linear'])} & {r['auc_full_train']:.3f} / {r['auc_linearised_train']:.3f} & "
+                 f"{r['auc_full_test']:.3f} / {r['auc_linearised_test']:.3f} \\\\")
+    L += [r"\bottomrule\end{tabular}\end{center}", r"\end{document}"]
+    return printed("\n".join(L)) + "\n"
+
+
 def worth_checking_rows(directory=None):
     """(rows, table): every drafted 'worth checking' item, and one row per (dataset, flag) with
     the genomes that raise it, most frequent first."""
@@ -1167,6 +1363,11 @@ def render_worth_checking(table) -> str:
          r"about what the model does that may be surprising in real-world terms. The flags say nothing about the "
          r"world; whether each is plausible is for the reviewer to judge. Rows are grouped by dataset, most "
          r"frequent first; an example sentence and its claims come from the first genome listed.",
+         (r"\par\smallskip\noindent\fcolorbox{BrickRed}{white}{\begin{minipage}{0.96\linewidth}\small\textbf{Adult:} "
+          r"the models predict the chance of an income of \$50,000 or less (the majority class, about 76\% of "
+          r"people), the reverse of the usual framing of this dataset; every 'raises the chance' there means "
+          r"'makes lower income more likely'.\end{minipage}}\par\smallskip"
+          if any("adult" in str(g.get("dataset", "")).lower() for g in table) else ""),
          r"\begin{drafted}[cross-genome worth-checking table]",
          r"{\footnotesize",
          r"\begin{longtable}{@{}l>{\raggedright\arraybackslash}p{0.2\linewidth}r>{\raggedright\arraybackslash}p{0.2\linewidth}"
