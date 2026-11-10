@@ -1,0 +1,129 @@
+{
+  "label": "heart-s5-c2",
+  "genome_id": "57c311c6-56f5-4c5d-a475-46433ef58bf2",
+  "start": "2026-11-10T09:53:36Z",
+  "end": "2026-11-10T10:04:00Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 5,
+  "n_composition_annotations": 1,
+  "n_splits": 5,
+  "n_identity_nodes": 2,
+  "hidden_nodes": 5,
+  "hidden_nodes_single_leaf_no_split": 5,
+  "hidden_nodes_in_any_annotation": 5,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 2.220446049250313e-16,
+  "closed_form_max_abs_err": 0.017298917949839065,
+  "protocol_version": "v3",
+  "analysis": {
+    "split": "train",
+    "n_train": 242,
+    "baseline_train_auc": 0.9389,
+    "train_acc": 0.8802,
+    "linear_core_only_auc": 0.9331,
+    "logit_sd": {
+      "linear_core": 3.194,
+      "all_nonlinear_readouts": 0.567,
+      "each_readout": {
+        "ischaemia_gate": 0.269,
+        "bp_offset_gate": 0.499,
+        "ischaemia_damping_thal6": 0.2,
+        "lvh_without_exercise_angina": 0.109,
+        "high_fasting_sugar": 0.025
+      }
+    },
+    "lr_l2_train_auc_all_26_inputs": 0.9355,
+    "zero_ablation_auc_readout_only": {
+      "ischaemia_gate": 0.9378,
+      "bp_offset_gate": 0.9332,
+      "ischaemia_damping_thal6": 0.9383,
+      "lvh_without_exercise_angina": 0.9386,
+      "high_fasting_sugar": 0.9388
+    },
+    "mean_ablation_auc_readout_only": {
+      "ischaemia_gate": 0.9378,
+      "bp_offset_gate": 0.9332,
+      "ischaemia_damping_thal6": 0.9383,
+      "lvh_without_exercise_angina": 0.9386,
+      "high_fasting_sugar": 0.9388
+    },
+    "zero_ablation_auc_node_with_downstream": {
+      "ischaemia_gate": 0.9321,
+      "bp_offset_gate": 0.9332,
+      "ischaemia_damping_thal6": 0.9383,
+      "lvh_without_exercise_angina": 0.9386,
+      "high_fasting_sugar": 0.9388
+    },
+    "mean_ablation_auc_node_with_downstream": {
+      "ischaemia_gate": 0.9324,
+      "bp_offset_gate": 0.9332,
+      "ischaemia_damping_thal6": 0.9383,
+      "lvh_without_exercise_angina": 0.9386,
+      "high_fasting_sugar": 0.9388
+    },
+    "linear_replacement_auc": {
+      "ischaemia_gate": 0.9382,
+      "bp_offset_gate": 0.9392,
+      "ischaemia_damping_thal6": 0.9389,
+      "lvh_without_exercise_angina": 0.9382,
+      "high_fasting_sugar": 0.9389
+    },
+    "linear_replacement_r2": {
+      "ischaemia_gate": 0.904,
+      "bp_offset_gate": 0.973,
+      "ischaemia_damping_thal6": 0.989,
+      "lvh_without_exercise_angina": 0.738,
+      "high_fasting_sugar": 1.0
+    },
+    "all_nonlinear_together": {
+      "mean_ablation_auc": 0.9331,
+      "all_relu_as_identity_auc": 0.917,
+      "joint_linear_replacement_auc": 0.9379,
+      "joint_linear_replacement_r2": 0.841
+    },
+    "note": "The ischaemia gate 204 fans out to the output, to the BP gate 290 and to the damping node 1416, each read out directly into the logit; 1611 (LVH without exercise angina) and 3884 (high fasting sugar) are independent indicators. 'Readout only' removes a node's direct edge to the output and leaves downstream nodes unchanged; 'node with downstream' replaces the node's activation (zero or train mean) and propagates. Linear replacement = the node's ReLU replaced by the least-squares affine fit of its activation on its own inputs, propagated. Removing the ischaemia gate with its downstream effects takes the model just below the linear-core level (0.932 vs 0.933); all hidden readouts together add +0.006 train AUC. Treating every ReLU as identity drops AUC to 0.917, so the gating (not the extra terms) is what the hidden nodes contribute."
+  },
+  "resisted": "Nothing resisted coverage. The ischaemia gate 204 feeds two downstream gates (290, 1416) as well as the output; the two links were intercepted with identity nodes (identity_290, identity_1416) so that each hidden node is its own leaf, and the root composes all five. Counter-directional signs reported, not explained: restecg:0 (normal ECG) raises the ischaemia score (its direct edge is -0.16), trestbps enters the risk-raising BP gate negatively (low resting BP opens it), thal:6 (fixed defect) has a direct -0.41 edge (partly offset by +0.07/SD through 1416), fbs:0 +0.26 directly so high fasting sugar lowers the logit overall despite the +0.07 indicator. thal:4 shuts the ischaemia gate but has only 2 training patients. The damping node 1416 and the fasting-sugar node 3884 are effectively linear (affine R2 0.99 and 1.0); the LVH indicator and fasting-sugar indicator barely affect ranking (readout ablation <= -0.0003 AUC).",
+  "tool_bugs": "get_input_distribution does not accept sample_fraction (called with max_samples only; all 242 rows used). get_viz_summary requires viz_type (sensitivity used). compute_shap (kernel, all 242 train rows) gives the five unconnected inputs mean |SHAP| about 0.001 instead of exactly 0 (sampling noise). get_model_state's 'operations' key is absent, so op counts come from check_explanation.py. The agent sandbox refused compound shell commands, so tools were called through a small Python subprocess wrapper in scratch (same xn.py).",
+  "summary": "Mostly logistic regression: 17 direct edges (logit SD 3.19; train AUC 0.933 alone) plus a small ischaemia block (logit SD 0.57 for all hidden readouts) to 0.939. An ischaemia gate ReLU(0.39 + 2.54 oldpeak + 0.99 restecg:0 - 0.88 thal:4) opens above an ST-depression threshold that is lower with a normal resting ECG and raises risk directly and through a gate that passes the score on minus a resting-blood-pressure offset (more risk when BP is low); a near-linear node takes back part of the ischaemia score and adds a fixed-defect term. Two small indicators add risk for LVH without exercise angina and (negligibly) for high fasting sugar. Same ischaemia-gate -> resting-BP-gate core as the 10-seed heart-s5 record (key 9330) and the sibling lead heart-s5-c1, but without their age gate.",
+  "study": {
+    "name": "species_leads",
+    "unit": "post-hoc structural clusters of near-optimal genomes (not NEAT species)",
+    "exploratory": true,
+    "experiment_name": "10seed-heart-s5",
+    "seed": 5,
+    "generation": 39,
+    "genome_key": 9858,
+    "cluster": 2,
+    "cluster_size": 2,
+    "train_fitness": 0.938871581862236
+  },
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 6,
+      "roots": [
+        "heart_disease_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 2.220446049250313e-16,
+    "closed_form_max_abs_err": 0.017298917949839065,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 26,
+      "split_node": 5,
+      "add_identity_node": 2,
+      "annotate": 6
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}

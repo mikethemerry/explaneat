@@ -1,0 +1,373 @@
+{
+  "label": "churn100-s4-c3",
+  "genome_id": "27f540ac-6acb-4d58-9972-cd71fae31cf0",
+  "start": "2026-11-10T10:02:33Z",
+  "end": "2026-11-10T10:11:29Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 5,
+  "n_composition_annotations": 2,
+  "n_splits": 8,
+  "n_identity_nodes": 2,
+  "hidden_nodes": 21,
+  "hidden_nodes_single_leaf_no_split": 21,
+  "hidden_nodes_in_any_annotation": 21,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 4.440892098500626e-16,
+  "closed_form_max_abs_err": 0.027702776514810346,
+  "protocol_version": "v3",
+  "resisted": "Nothing structural: no hidden node needed splitting (8 input splits, 1 consolidation of two customer-service-calls copies). 11 of the 21 hidden nodes are single-state offsets (exactly affine in one-hot indicators) and 5533 is never active on train (contributes exactly 0), so the nonlinearity sits in 8 nodes: the service-call hinges and the day-usage hinges. Near-cancelling state pairs: state:39 direct -2.85 vs unit +2.30 (net -0.55, empirical -0.93), state:46 -2.22 vs +0.77, state:33 +1.05 vs -0.68. The model is badly calibrated in level: mean prediction 0.082 against a base rate of 0.1415 (0-2 calls: 0.05-0.06 vs 0.11; 4 calls 0.21 vs 0.44), and over-confident from 6 calls (0.89-0.98 vs 0.55-0.68, 42 customers). state:18 gets +0.36 logit against an empirical -0.48 (65 rows); state:4 switches off the late service-call chain although its 41 customers churn more (empirical +0.80). closed_form_max_abs_err 0.028 (state_offsets) is 3-significant-figure rounding; numeric error 1.8e-15.",
+  "tool_bugs": "None new. Hidden-node splits were not needed; input splits were done before the one consolidation. The line_plot for csc_early_hinge sweeps only its first entry (state:29), so it is flat at 0; sensitivity and local forward passes were used instead. Display name of the consolidated copy -71_ac is None (cosmetic). Tool calls driven from scratch Python scripts that run experiments/species_leads/xn.py per call (all logged), because the Bash sandbox refuses shell variables around uv.",
+  "summary": "logit P(churn) = -1.35 + a sparse linear backbone over 28 inputs (voicemail plan -1.05 per SD, international plan +0.80, voicemail messages +0.68, evening charge +0.40, state offsets) + a customer-service-calls threshold (an early hinge from 3 calls, off in state:29, plus a late chain from 5 calls gated by state:4/state:5: nothing for 0-2 calls, then about +2.3 logit per call from 4) + three day-usage hinges (nothing below about 200 day minutes, then rising in stages to +4.7 logit above 300 minutes; the first hinge starts about 54 minutes later with a voicemail plan) + exact single-state offsets, all additive in the logit. Day minutes and service calls have no linear term. Train AUC 0.888, accuracy 0.880. Compared with the run's cluster-1 lead (churn100-s4, key 24573), the same two thresholds (service calls, high day usage) carry the nonlinearity, but here day usage is gated by the voicemail plan rather than combined with evening minutes, there is no evening term beyond the linear charge, and many more single-state units.",
+  "analysis": {
+    "split": "train",
+    "n": 4000,
+    "method": "local numpy forward passes on in-memory copies of the original phenotype; mean ablation = unit exits set to their train mean; linear replacement = each exit replaced by its least-squares fit on the unit's raw inputs",
+    "full_auc": 0.8884,
+    "full_acc": 0.8795,
+    "mean_ablation_auc": {
+      "csc_late_chain": 0.8889,
+      "csc_early_hinge": 0.8281,
+      "day_usage_hinges": 0.8083,
+      "state_offsets": 0.8856,
+      "service_calls": 0.8016
+    },
+    "linear_replacement_auc": {
+      "csc_late_chain": 0.8887,
+      "csc_early_hinge": 0.8736,
+      "day_usage_hinges": 0.8657,
+      "state_offsets": 0.8884,
+      "service_calls": 0.8713
+    },
+    "linear_fit_r2": {
+      "csc_late_chain": {
+        "5268": 0.26717
+      },
+      "csc_early_hinge": {
+        "9436": 0.56989,
+        "6713": 0.50453
+      },
+      "day_usage_hinges": {
+        "3118": 0.0543,
+        "4000": 0.44046,
+        "10131": 0.47116
+      },
+      "state_offsets": {
+        "1295": 1.0,
+        "7872": 1.0,
+        "1390": 1.0,
+        "9954": 1.0,
+        "11361": 1.0,
+        "12690": 1.0,
+        "13068": 1.0,
+        "15362": 1.0,
+        "15490": 1.0,
+        "15904": 1.0,
+        "17102": 1.0,
+        "5786": 1.0,
+        "5533": 1.0
+      },
+      "service_calls": {
+        "5268": 0.26718,
+        "9436": 0.56995,
+        "6713": 0.5046
+      }
+    },
+    "auc_all_linearised": 0.8352,
+    "auc_restore_one_onto_all_linear": {
+      "csc_late_chain": 0.8401,
+      "csc_early_hinge": 0.8654,
+      "day_usage_hinges": 0.8713,
+      "state_offsets": 0.8352,
+      "service_calls": 0.8657
+    },
+    "auc_restore_service_calls_and_day_usage": 0.8884,
+    "unit_logit_contrib_mean_std_min_max": {
+      "1295": [
+        -1.045,
+        0.151,
+        -1.067,
+        -0.0
+      ],
+      "1390": [
+        -0.38,
+        0.053,
+        -0.388,
+        -0.0
+      ],
+      "3118": [
+        0.002,
+        0.022,
+        0.0,
+        0.475
+      ],
+      "4000": [
+        0.124,
+        0.33,
+        0.0,
+        2.483
+      ],
+      "5268": [
+        0.029,
+        0.186,
+        0.0,
+        3.227
+      ],
+      "5533": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "5786": [
+        -0.376,
+        0.12,
+        -1.041,
+        -0.0
+      ],
+      "6713": [
+        0.148,
+        0.525,
+        0.0,
+        6.267
+      ],
+      "7872": [
+        -1.278,
+        0.175,
+        -1.304,
+        -0.071
+      ],
+      "9436": [
+        0.133,
+        0.411,
+        0.0,
+        4.681
+      ],
+      "9954": [
+        0.008,
+        0.052,
+        0.0,
+        0.368
+      ],
+      "10131": [
+        0.219,
+        0.547,
+        0.0,
+        3.94
+      ],
+      "11361": [
+        0.089,
+        0.108,
+        0.074,
+        0.843
+      ],
+      "12690": [
+        -0.004,
+        0.028,
+        -0.197,
+        -0.0
+      ],
+      "13068": [
+        -0.003,
+        0.019,
+        -0.136,
+        -0.0
+      ],
+      "15362": [
+        0.007,
+        0.052,
+        0.0,
+        0.381
+      ],
+      "15490": [
+        0.01,
+        0.026,
+        0.006,
+        0.209
+      ],
+      "15904": [
+        0.015,
+        0.044,
+        0.009,
+        0.348
+      ],
+      "17102": [
+        -0.015,
+        0.099,
+        -0.662,
+        -0.0
+      ]
+    },
+    "mean_prediction": 0.0819,
+    "base_rate": 0.1415
+  },
+  "performance_sources": {
+    "full_auc": 0.8884,
+    "auc_all_linearised": 0.8352,
+    "refit_L2_LR_train_auc_reference": 0.8433,
+    "auc_restore_one_onto_all_linear": {
+      "csc_late_chain": 0.8401,
+      "csc_early_hinge": 0.8654,
+      "day_usage_hinges": 0.8713,
+      "state_offsets": 0.8352,
+      "service_calls": 0.8657
+    },
+    "auc_restore_service_calls_and_day_usage": 0.8884,
+    "conclusion": "Of +0.053 above all-linear (0.8352 -> 0.8884), the day-usage hinges alone recover +0.036 (0.8713) and the service-call threshold alone +0.031 (0.8657; the early hinge alone 0.8654, the late chain alone 0.8401); together they recover all of it (0.8884), so they are complementary. The state units contribute nothing to ranking (exactly linear). The all-linearised network (0.835) is below a refitted L2 logistic regression (0.843)."
+  },
+  "rare_category_switches": [
+    {
+      "category": "state:11",
+      "n_rows": 73,
+      "churners": 3,
+      "logit_effect": -2.5,
+      "empirical_logodds_offset": -1.35,
+      "path": "direct",
+      "note": "overstated"
+    },
+    {
+      "category": "state:46",
+      "n_rows": 80,
+      "churners": 5,
+      "logit_effect": -1.46,
+      "empirical_logodds_offset": -0.91,
+      "path": "direct (-2.22) + state_offsets (+0.77)",
+      "note": "overstated"
+    },
+    {
+      "category": "state:47",
+      "n_rows": 72,
+      "churners": 21,
+      "logit_effect": 1.35,
+      "empirical_logodds_offset": 0.92,
+      "path": "direct",
+      "note": "overstated"
+    },
+    {
+      "category": "state:0",
+      "n_rows": 56,
+      "churners": 4,
+      "logit_effect": -0.97,
+      "empirical_logodds_offset": -0.76,
+      "path": "direct"
+    },
+    {
+      "category": "state:14",
+      "n_rows": 68,
+      "churners": 6,
+      "logit_effect": -0.94,
+      "empirical_logodds_offset": -0.53,
+      "path": "direct"
+    },
+    {
+      "category": "state:29",
+      "n_rows": 72,
+      "churners": 5,
+      "logit_effect": "mean -0.78 (range -6.15..-0.53): -0.53 direct, and switches off the early service-call hinge",
+      "empirical_logodds_offset": -0.79,
+      "path": "direct + csc_early_hinge"
+    },
+    {
+      "category": "state:45",
+      "n_rows": 91,
+      "churners": 6,
+      "logit_effect": -0.66,
+      "empirical_logodds_offset": -0.85,
+      "path": "state_offsets (17102)"
+    },
+    {
+      "category": "state:39",
+      "n_rows": 82,
+      "churners": 5,
+      "logit_effect": -0.55,
+      "empirical_logodds_offset": -0.93,
+      "path": "direct (-2.85) + state_offsets (+2.30)",
+      "note": "near-cancelling pair; understated"
+    },
+    {
+      "category": "state:33",
+      "n_rows": 77,
+      "churners": 14,
+      "logit_effect": 0.38,
+      "empirical_logodds_offset": 0.3,
+      "path": "direct (+1.05) + state_offsets (-0.68)",
+      "note": "near-cancelling pair"
+    },
+    {
+      "category": "state:18",
+      "n_rows": 65,
+      "churners": 6,
+      "logit_effect": 0.36,
+      "empirical_logodds_offset": -0.48,
+      "path": "direct",
+      "note": "opposite sign"
+    },
+    {
+      "category": "state:15",
+      "n_rows": 82,
+      "churners": 11,
+      "logit_effect": 0.37,
+      "empirical_logodds_offset": -0.06,
+      "path": "state_offsets (9954)",
+      "note": "overstated"
+    },
+    {
+      "category": "state:4",
+      "n_rows": 41,
+      "churners": 11,
+      "logit_effect": "mean -0.01 (range -0.53..0): switches off the late service-call chain",
+      "empirical_logodds_offset": 0.8,
+      "path": "csc_late_chain (349)",
+      "note": "opposite sign for many-call customers"
+    },
+    {
+      "category": "state:5",
+      "n_rows": 78,
+      "churners": 7,
+      "logit_effect": "mean +0.14 (range 0..+1.04): starts the late service-call chain one call earlier",
+      "empirical_logodds_offset": -0.51,
+      "path": "csc_late_chain (349)",
+      "note": "opposite sign"
+    }
+  ],
+  "study": {
+    "name": "species_leads",
+    "unit": "post-hoc structural clusters of near-optimal genomes (not NEAT species)",
+    "exploratory": true,
+    "experiment_name": "churn100-s4",
+    "seed": 4,
+    "generation": 99,
+    "genome_key": 24445,
+    "cluster": 3,
+    "cluster_size": 1,
+    "train_fitness": 0.8884353307498698
+  },
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 7,
+      "roots": [
+        "churn_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.440892098500626e-16,
+    "closed_form_max_abs_err": 0.027702776514810346,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 71,
+      "split_node": 8,
+      "consolidate_node": 1,
+      "add_identity_node": 2,
+      "annotate": 7
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "label": "heart-s1-c1",
+  "genome_id": "a2df22ce-983d-47b6-bbd6-3176d38ed5ff",
+  "start": "2026-11-10T08:57:40Z",
+  "end": "2026-11-10T09:05:38Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 5,
+  "n_composition_annotations": 1,
+  "n_splits": 3,
+  "n_identity_nodes": 0,
+  "hidden_nodes": 7,
+  "hidden_nodes_single_leaf_no_split": 7,
+  "hidden_nodes_in_any_annotation": 7,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 3.3306690738754696e-16,
+  "closed_form_max_abs_err": 0.00514036370054094,
+  "protocol_version": "v3",
+  "analysis": {
+    "n_train": 242,
+    "full_train_auc": 0.9392,
+    "mean_ablation_auc": {
+      "664": 0.9375,
+      "1173": 0.9373,
+      "1801": 0.9339,
+      "2009": 0.9391,
+      "2245": 0.9339,
+      "2650": 0.9395,
+      "3210": 0.9354
+    },
+    "linear_replacement_auc": {
+      "664": 0.9392,
+      "1173": 0.9392,
+      "1801": 0.9362,
+      "2009": 0.9392,
+      "2245": 0.9392,
+      "2650": 0.9392,
+      "3210": 0.9391
+    },
+    "all_hidden_linearised_jointly_auc": 0.9355,
+    "all_relu_identity_auc": 0.9078,
+    "all_hidden_mean_ablated_auc": 0.9241,
+    "restore_gain_one_onto_all_linear": {
+      "664": 0.0,
+      "1173": 0.0,
+      "1801": 0.0034,
+      "2009": 0.0008,
+      "2245": 0.0,
+      "2650": 0.0,
+      "3210": 0.0003
+    },
+    "L2_logreg_train_auc": 0.9355,
+    "logit_sd_total": 5.628,
+    "logit_sd_direct_edges": 4.25,
+    "note": "Train split only, full sample (n=242); local forward passes on in-memory copies. Linear replacement = each hidden ReLU replaced by its least-squares affine fit on its pre-activation; restore gain = AUC gain from putting one ReLU back onto the all-linearised model."
+  },
+  "resisted": "Nothing resisted coverage; only input fan-out needed splitting (ca x3, slope:2, thalach). Four of seven hidden ReLUs (664, 1173, 2245, 2650) never clip on train, so their annotations describe affine relays (reweighting of ca, slope:2, cp:3 and the heart-rate hinge) rather than distinct concepts. 3210 is a pure cp:1 switch (on for all 22 typical-angina patients, off for the rest), so its best linear fit is almost exact. Nine unconnected inputs (sex:1, fbs:0, restecg:1, restecg:2, exang:0, exang:1, slope:1, thal:4, thal:7) listed as zero-effect root entries.",
+  "tool_bugs": "Root annotation via apply_operation must exclude child subgraph nodes (passing the whole graph is refused as 'already covered'); not a bug, but undocumented in the protocol. Otherwise none observed with v3 tooling.",
+  "summary": "Essentially logistic regression (all hidden units linearised: train AUC 0.9355 vs 0.9392; L2 logistic regression 0.9355). 13 direct edges carry logit SD 4.25 of 5.63; ca enters by three parallel routes (effective +2.60 logit per SD), cp:3 only via always-on relay 1173. The one consequential nonlinearity is gate 1801 = ReLU(1.54 restecg:0 + 0.82 oldpeak - 1.52): ST depression adds risk only with a normal resting ECG (+0.0034 AUC over linear). Typical angina (cp:1) lowers risk via switch 3210, less with more vessels; a small hinge lets higher max heart rate lower risk. Same design as the 10-seed heart-s1 record (gen-31 genome), with an added typical-angina switch and heart-rate hinge.",
+  "study": {
+    "name": "species_leads",
+    "unit": "post-hoc structural clusters of near-optimal genomes (not NEAT species)",
+    "exploratory": true,
+    "experiment_name": "10seed-heart-s1",
+    "seed": 1,
+    "generation": 39,
+    "genome_key": 9674,
+    "cluster": 1,
+    "cluster_size": 140,
+    "train_fitness": 0.9392177223952926
+  },
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 6,
+      "roots": [
+        "heart_disease_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 3.3306690738754696e-16,
+    "closed_form_max_abs_err": 0.00514036370054094,
+    "numeric_max_abs_err": 0.0,
+    "op_counts": {
+      "rename_node": 26,
+      "split_node": 3,
+      "annotate": 6
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "label": "heart-s5-c3",
+  "genome_id": "96fb45fb-972d-4aaa-b6d5-01fc63fbc4e6",
+  "start": "2026-11-10T09:53:36Z",
+  "end": "2026-11-10T10:01:30Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 2,
+  "n_composition_annotations": 1,
+  "n_splits": 1,
+  "n_identity_nodes": 0,
+  "hidden_nodes": 4,
+  "hidden_nodes_single_leaf_no_split": 4,
+  "hidden_nodes_in_any_annotation": 4,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 2.220446049250313e-16,
+  "closed_form_max_abs_err": 0.02050348569203564,
+  "protocol_version": "v3",
+  "analysis": {
+    "split": "train",
+    "n_train": 242,
+    "baseline_train_auc": 0.9376,
+    "train_acc": 0.8884,
+    "linear_core_only_auc": 0.9317,
+    "logit_sd": {
+      "linear_core": 3.22,
+      "all_nonlinear_readouts": 0.804
+    },
+    "lr_l2_train_auc_all_26_inputs": 0.9355,
+    "zero_ablation_auc_readout_only": {
+      "ischaemia_gate_204": 0.938,
+      "steepener_3487_290": 0.9341,
+      "age_hinge_1987": 0.9371
+    },
+    "mean_ablation_auc_readout_only": {
+      "ischaemia_gate_204": 0.938,
+      "steepener_3487_290": 0.9341,
+      "age_hinge_1987": 0.9371
+    },
+    "zero_ablation_auc_node_with_downstream": {
+      "ischaemia_gate_204": 0.9317,
+      "steepener_3487_290": 0.9341,
+      "age_hinge_1987": 0.9371
+    },
+    "mean_ablation_auc_node_with_downstream": {
+      "ischaemia_gate_204": 0.9317,
+      "steepener_3487_290": 0.9341,
+      "age_hinge_1987": 0.9371
+    },
+    "linear_replacement_auc": {
+      "ischaemia_gate_204": 0.9373,
+      "steepener_3487_290": 0.9376,
+      "age_hinge_1987": 0.9376
+    },
+    "linear_replacement_r2": {
+      "ischaemia_gate_204": 0.891,
+      "steepener_3487_290": 0.998,
+      "age_hinge_1987": 0.801
+    },
+    "all_nonlinear_together": {
+      "mean_ablation_auc": 0.9317,
+      "all_relu_as_identity_auc": 0.9304,
+      "joint_linear_replacement_auc": 0.9355,
+      "joint_linear_replacement_r2": 0.876
+    },
+    "note": "Keys: ischaemia_gate_204 = node 204 (the ST-depression score), steepener_3487_290 = nodes 3487/290 (the steeper second stage), age_hinge_1987 = node 1987. 'Readout only' removes the node's direct edge to the output and leaves downstream nodes unchanged; 'node with downstream' replaces the node's activation (zero or train mean) and propagates. Linear replacement = the node's activation replaced by its least-squares affine fit on its own inputs (204 on restecg:0 and oldpeak; 290 on 204; 1987 on age), propagated. Zero and mean ablation agree because each removed signal enters the logit linearly. Removing the chain takes the model to the linear-core level (0.9317); the nonlinear parts add +0.006 train AUC, and a joint linear replacement recovers 0.9355 (= L2 logistic regression)."
+  },
+  "resisted": "Nothing resisted coverage. The chain 204 -> 3487 -> 290 (with 204 -> 290 as well, and both 204 and 290 read out) was kept as one two-exit leaf rather than two leaves: 3487's only input is 204, so it cannot be intercepted by an identity node (add_identity_node must leave one input un-redirected), and splitting 204 would have duplicated the gate. 3487 is a near-copy of 204 (ReLU(0.94*204 - 0.002)), so 290 = ReLU(1.818*204 - 0.470): a second, steeper threshold on the same score. Counter-directional signs reported, not explained: a normal resting ECG (restecg:0) lowers the oldpeak threshold inside the chain (raising risk) while its direct edge is -0.188; fbs:0 +0.27 directly; thal:7 only +0.025. The age hinge barely matters (readout ablation -0.0005 AUC). closed_form_max_abs_err 0.021 comes from 3-significant-figure display rounding in the nested chain formula (numeric error 1.8e-15).",
+  "tool_bugs": "get_input_distribution does not accept sample_fraction (called with max_samples only; all 242 rows used). get_viz_summary requires viz_type (sensitivity and line_plot used). add_identity_node cannot intercept a node's only input (by design), which forced the two-exit leaf. compute_shap (kernel, all 242 train rows) gives the seven unconnected inputs mean |SHAP| about 0.001 instead of exactly 0 (sampling noise). The agent sandbox refused compound shell commands, so tools were called through a small Python subprocess wrapper in scratch (same species_leads/xn.py).",
+  "summary": "Mostly logistic regression: 17 direct edges (logit SD 3.22; train AUC 0.932 alone) plus an ST-depression chain and an age hinge (logit SD 0.80 together) to 0.938. The chain scores oldpeak (threshold lowered by a normal resting ECG) and adds a second, much steeper stage of the same score, so oldpeak's effect is a hinge (about 0.12 logit per SD, then about 1.10 per SD above z -0.39 with a normal ECG or +0.40 without); age enters only through a small hinge starting just below the median. Same ischaemia gate as the 10-seed heart-s5 record (key 9330) and its cluster-1 sibling, but with no resting-BP offset and a free-standing age term.",
+  "study": {
+    "name": "species_leads",
+    "unit": "post-hoc structural clusters of near-optimal genomes (not NEAT species)",
+    "exploratory": true,
+    "experiment_name": "10seed-heart-s5",
+    "seed": 5,
+    "generation": 39,
+    "genome_key": 9698,
+    "cluster": 3,
+    "cluster_size": 1,
+    "train_fitness": 0.9375562478366216
+  },
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 3,
+      "roots": [
+        "heart_disease_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 2.220446049250313e-16,
+    "closed_form_max_abs_err": 0.02050348569203564,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 26,
+      "split_node": 1,
+      "annotate": 3
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}
