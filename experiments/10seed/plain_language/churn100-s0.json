@@ -144190,7 +144190,7 @@
    "key": "ann_105:boundary:map",
    "n": 4000,
    "reasons": [
-    "the boundary rule matches None of training rows (needs 0.99)",
+    "no switch-on line could be traced on the first map to check against the data",
     "no switch-on boundary in the observed range"
    ],
    "risk": null,
@@ -214523,7 +214523,7 @@
     "agreement": 1.0,
     "agreement_rows": "training rows at the typical level of the part's category inputs, with its other numeric inputs between their 40th and 60th percentile (the map holds them at the median)",
     "held_typical": [],
-    "kind": "line",
+    "kind": "kinked",
     "n_on": 1686,
     "outcome_rate_off": 0.0522904,
     "outcome_rate_on": 0.263938,
@@ -214531,13 +214531,19 @@
      "on_side": "above",
      "pieces": [
       {
-       "k": 0.0,
-       "threshold": 37.6844,
+       "k": 4.80468e-05,
+       "threshold": 42.3808,
        "y_from": 0.0,
-       "y_to": 2.59291
+       "y_to": 164.448
+      },
+      {
+       "k": 0.126769,
+       "threshold": 63.2156,
+       "y_from": 164.448,
+       "y_to": 363.7
       }
      ],
-     "text": "total daytime charge plus about 0.00 × customer-service calls above about 37.7 (for customer-service calls from about 0.00 to 2.59)"
+     "text": "total daytime charge above about 42.4 (for total evening minutes from about 0.00 to 164); total daytime charge plus about 0.13 × total evening minutes above about 63.2 (for total evening minutes from about 164 to 364)"
     },
     "share_on": 0.4215,
     "variables": [
@@ -214582,11 +214588,11 @@
     "name": "service_calls_low_day_usage"
    },
    "checks": {
-    "rule_matches_data": false
+    "rule_matches_data": true
    },
    "estimate": {
     "method": "where the part's switching units are on, from the weights (one hinge unit) or traced on a grid (several units); checked against the training rows",
-    "value": 0.0
+    "value": 1.0
    },
    "evidence": {
     "maps": [
@@ -285075,7 +285081,7 @@
    "key": "ann_99:boundary:map",
    "n": 4000,
    "reasons": [
-    "the boundary rule matches 0.0 of training rows (needs 0.99)"
+    "all checks passed"
    ],
    "risk": null,
    "scope": "part",
@@ -285083,7 +285089,7 @@
    "small_n_groups": [],
    "split": "train",
    "statement": {
-    "agreement": 0.0,
+    "agreement": 1.0,
     "agreement_rows": "training rows at the typical level of the part's category inputs, with its other numeric inputs between their 40th and 60th percentile (the map holds them at the median)",
     "held_typical": [
      "total intl charge"
@@ -285096,13 +285102,13 @@
      "on_side": "above",
      "pieces": [
       {
-       "k": -0.031891,
-       "threshold": -3.0936,
-       "y_from": 86.8516,
-       "y_to": 351.5
+       "k": 0.0,
+       "threshold": 2.65939,
+       "y_from": 0.0,
+       "y_to": 165.0
       }
      ],
-     "text": "customer-service calls minus about 0.03 × total daytime minutes above about -3.09 (for total daytime minutes from about 86.9 to 352)"
+     "text": "customer-service calls above about 2.66 (for total daytime calls from about 0.00 to 165)"
     },
     "share_on": 0.28725,
     "variables": [
@@ -285139,7 +285145,7 @@
      "unit": "calls"
     }
    ],
-   "verified": false
+   "verified": true
   },
   {
    "annotation": {
@@ -331867,7 +331873,7 @@
    "key": "ann_103:boundary:map",
    "n": 4000,
    "reasons": [
-    "the boundary rule matches None of training rows (needs 0.99)",
+    "no switch-on line could be traced on the first map to check against the data",
     "no switch-on boundary in the observed range"
    ],
    "risk": null,
@@ -331913,7 +331919,7 @@
    "verified": false
   }
  ],
- "claims_hash": "09d73fc85d5f824c064d33409e3cefe1f5599b2c5f55dc4c1e92b7c6d49f0d4d",
+ "claims_hash": "49318d202164df76f0f6b678e7b38c7ff855af0c1cc108c1961ea6f38879ac9b",
  "codebook": {
   "checks": [
    {
@@ -331973,8 +331979,8 @@
   },
   "claims": 185,
   "clearly": 11,
-  "not_supported": 16,
-  "verified": 169
+  "not_supported": 15,
+  "verified": 170
  },
  "dataset": {
   "id": "802129c2-b11b-43a5-b6af-8bcf80e4c252",
@@ -332085,7 +332091,7 @@
     ]
    }
   ],
-  "claims_hash": "09d73fc85d5f824c064d33409e3cefe1f5599b2c5f55dc4c1e92b7c6d49f0d4d",
+  "claims_hash": "49318d202164df76f0f6b678e7b38c7ff855af0c1cc108c1961ea6f38879ac9b",
   "drafted_at": "2026-11-10T03:02:17+00:00",
   "drafted_by": "ai-assisted",
   "hypothesis_revisions": {},
@@ -332575,7 +332581,7 @@
    }
   },
   "revalidated": {
-   "from_claims_hash": "c7ee48492c047bd118364ae8a5b165865092da8823e2e5fdf1adf14ec3bb98d3",
+   "from_claims_hash": "7a8635dea6d52d30c4a79f20fb131207424ed0285d8c0eaf4926ab88bb650244",
    "note": "claims changed after drafting; the draft was re-linted against the new claims and passed"
   },
   "stale": false,
@@ -353956,17 +353962,12 @@
    },
    {
     "claim": "C181",
-    "text": "boundary claim about number of calls to customer service and total daytime charge in part ann_105: not supported by the model (the boundary rule matches None of training rows (needs 0.99); no switch-on boundary in the observed range).",
-    "type": "boundary"
-   },
-   {
-    "claim": "C183",
-    "text": "boundary claim about number of calls to customer service and total daytime minutes in part ann_99: not supported by the model (the boundary rule matches 0.0 of training rows (needs 0.99)).",
+    "text": "boundary claim about number of calls to customer service and total daytime charge in part ann_105: not supported by the model (no switch-on line could be traced on the first map to check against the data; no switch-on boundary in the observed range).",
     "type": "boundary"
    },
    {
     "claim": "C185",
-    "text": "boundary claim about account length and total night-time calls in part ann_103: not supported by the model (the boundary rule matches None of training rows (needs 0.99); no switch-on boundary in the observed range).",
+    "text": "boundary claim about account length and total night-time calls in part ann_103: not supported by the model (no switch-on line could be traced on the first map to check against the data; no switch-on boundary in the observed range).",
     "type": "boundary"
    }
   ],
