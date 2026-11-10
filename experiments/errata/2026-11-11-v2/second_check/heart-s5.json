@@ -1,0 +1,22 @@
+[
+  {
+    "id": "E1",
+    "verdict": "confirm",
+    "commands": [
+      "uv run python -m explaneat verify vars heart-s5",
+      "uv run python scratchpad/v2/work/heart-s5/b.py  (vm.m.ev.forward on the 242 training rows; 290>0 vs 204_b>0; mean of output node 0)"
+    ],
+    "result": "Node 290 is active in 135/242 training patients; 100 of these also have 204 active and 35 do not. The mean predicted risk of those 35 is 0.181 (median 0.057), against 0.678 for the 100 with 204 active. The 0.13 in the original is wrong and 0.18 is right. The result is the same at activity thresholds of 0, 1e-6 and 1e-3.",
+    "note": "The mean is pulled up by a few high values (median 0.06), so 'low predicted risk' holds. The 35 have a mean resting BP of 111 against a training median of 130, which supports 'low resting BP'."
+  },
+  {
+    "id": "E16",
+    "verdict": "confirm",
+    "commands": [
+      "uv run python scratchpad/v2/work/heart-s5/a.py  (vm.structure.connections)",
+      "uv run python scratchpad/v2/work/heart-s5/b.py  (thal:7 set to 0 vs 1 for every training row, logit difference at node 0)"
+    ],
+    "result": "Edge -26_a -> 0 (thal:7 direct to the output) is enabled with weight -0.0654 (rounds to -0.07). Oldpeak (-18) only feeds 204_a and 204_b (weight 2.55 each), so it has no direct edge. Switching thal:7 from 0 to 1 changes the logit by +0.245 on average (range -0.135 to +0.88). The direct edge always contributes -0.135 and the gate path contributes +0.38 on average (median +0.17). So the original 'ONLY through these gates' is false for thal:7.",
+    "note": "-0.07 is the weight on the z-scored input. In real units it is -0.135 logit for a reversible defect against none. It also pushes the opposite way to the gates (lowering risk), and for 53/242 patients the gates contribute nothing, so the direct edge is the only thal:7 effect for them. 'Mainly through them' holds on average but not for those 53. Adding 'opposite sign' would make the text more exact."
+  }
+]

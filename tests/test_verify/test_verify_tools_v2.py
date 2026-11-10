@@ -155,6 +155,15 @@ def test_lint_percents_flags_double_rounding_only():
     assert pct(0.0445479) == "4%" and pct(0.0455) == "5%"
 
 
+def test_lint_percents_ignores_category_shares_of_a_subgroup():
+    """heart100-s0 (errata v2, E13): a 19.3% category share in evidence.who is not a risk."""
+    from explaneat.analysis.plain_language_store import lint_percents
+    claims = [{"evidence": {"who": {"categories": [{"share_in": 0.126761, "share_out": 0.192982}]}}}]
+    assert lint_percents("the model predicts a risk of heart disease of about 20%", claims) == []
+    claims.append({"risk": {"from": 0.192982, "to": 0.3}})      # the same value as a risk is still checked
+    assert lint_percents("about 20%", claims)
+
+
 # ----------------------------------------------------------------------------- ablate
 def test_ablate_node_edge_and_multiple(vm):
     part = P.ablate(vm, "gate")

@@ -1,0 +1,23 @@
+[
+  {
+    "id": "E2",
+    "verdict": "confirm",
+    "commands": ["uv run python -m explaneat verify vars adult-s5", "uv run python scratch/s1.py (loads the model and caches node values)", "uv run python scratch/s3.py"],
+    "result": "In the training split native-country=37 (Thailand) has n=26 (verify vars; the native-country_37 one-hot also sums to 26). Node 2134 is >0 on exactly those 26 rows (value 32.39 on each, 0 on every other row), and 2990 is >0 on all 26 Thai rows, at ages 19 to 55.",
+    "note": "The \"-4.0 directly\" part is consistent: 2134 -> identity_age weight -0.124 x 32.39 = -4.02."
+  },
+  {
+    "id": "E3",
+    "verdict": "confirm",
+    "commands": ["uv run python scratch/s1.py (prints the structure of nodes 2990 and 2134)", "uv run python scratch/s2.py", "uv run python scratch/s3.py"],
+    "result": "2990 is relu with bias -0.48102, inputs -1 (age, z-scored) w=1.44600 and 2134 w=0.137367 (both enabled); it feeds 5070 (w=1.031). On the training rows the proposed formula reproduces 2990 exactly (max abs error 8.9e-16, 0 rows wrong). The original age-only formula is wrong on 26 rows, exactly the 26 Thai rows, where it is too low by 1.90 to 4.45 (0.137 x 32.39 = 4.449 when the age term is not clipped).",
+    "note": "For completeness: 2134 = relu(0.853*[Thailand]z - 0.673*[Ireland]z - 0.705), which is 32.39 for Thai rows and 0 otherwise. Without Thailand, 2990 switches on above about 43 years of age."
+  },
+  {
+    "id": "E4",
+    "verdict": "confirm",
+    "commands": ["python3 (read claims C142, C143 and drafted.blocks[3] from experiments/10seed/plain_language/adult-s5.json)", "uv run python -m explaneat verify probe adult-s5 --sweep hours-per-week=40,45,48,49,50,51,52,55,60,70,80,99 --nodes ann_125", "uv run python -c (count training rows where node 2451 > 0 vs hours < 50)"],
+    "result": "C142 (annotation ann_125, threshold claim) gives the fold at 49.93 hours (\"50 hours\"), so it supports \"about 50 hours\". C143 (also ann_125) states no threshold: only n_active=31364 and 25290 positives (its who-summary gives max_in 49 and median_out 55). Probe: ann_125's contribution falls from +0.507 at 40 h to +0.048 at 49 h, is 0 from 50 h to 99 h (node 2451's pre-activation is negative), and the risk stays flat at 50.8% from 50 to 99 h; no other part changes with hours. Node 2451 is >0 on exactly the 31364 training rows with hours < 50, and 25290 of them have outcome 1.",
+    "note": "The block in the file already contains the proposed text. Strictly, \"less than about 50 hours\" means at most 49 hours (the fold is at 49.93)."
+  }
+]

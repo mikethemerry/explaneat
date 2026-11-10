@@ -260,7 +260,9 @@ def _number_with_unit(text: str) -> Optional[re.Pattern]:
 
 _PCT = re.compile(r"(?<![0-9.])([0-9]+(?:\.[0-9]+)?)%")
 _RISK_KEYS = re.compile(r"risk|rate|share|^from$|^to$|^delta$|predicted", re.I)
-_SKIP = {"rug", "band_risk_p10", "band_risk_p90", "typical_curve", "test_check", "estimate"}
+# "who": the category make-up of a subgroup (share_in / share_out), shares of patients, not risks
+# (heart100-s0: a 19.3% category share flagged a correct "about 20%" risk; errata v2, E13).
+_SKIP = {"rug", "band_risk_p10", "band_risk_p90", "typical_curve", "test_check", "estimate", "who"}
 
 
 def _probabilities(obj, out: List[float], key: str = "") -> None:

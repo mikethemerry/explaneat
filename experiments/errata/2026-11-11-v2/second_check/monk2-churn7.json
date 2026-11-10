@@ -1,0 +1,22 @@
+[
+  {
+    "id": "E11",
+    "verdict": "confirm",
+    "commands": [
+      "uv run python -m explaneat verify vars monk2-s0",
+      "uv run python scratchpad/v2/work/monk2-churn7/m.py  (P.frame(vm) on monk2-s0 training split; groupby a1 of risk>=0.5; and by count of first values within a1=3)"
+    ],
+    "result": "Training split has 107 cases with a1=3 (vars: n=107); all 107 are predicted positive (min risk 0.99998). By first-value count within a1=3: 8/8, 32/32, 35/35, 22/22, 9/9, 1/1, total 107/107. For reference a1=1 is 78/122 and a1=2 is 110/116.",
+    "note": ""
+  },
+  {
+    "id": "E12",
+    "verdict": "confirm",
+    "commands": [
+      "uv run python -c (read experiments/10seed/plain_language/churn100-s7.json: drafted.blocks[0].sentences[2], claims C055 risk)",
+      "uv run python -m explaneat verify probe churn100-s7 --claim C055"
+    ],
+    "result": "C055 risk: from 0.0092391 (0 calls) to 0.144801 (4 calls), reference = typical customer with a fold (also shape.typical_risk[4]=0.144801). Live probe at that reference: 0 calls 0.9%, 4 calls 14.5% (0.1448). Rounded once: about 1% to about 14%; 15% would need double rounding (14.48 -> 14.5 -> 15).",
+    "note": "The working-tree layer already reads 'about 14%' (changed in commit 5b77c6d); the layer has no 'readdown' key, so the readdown.ann_80.evidence[2] copy could not be checked in this file."
+  }
+]

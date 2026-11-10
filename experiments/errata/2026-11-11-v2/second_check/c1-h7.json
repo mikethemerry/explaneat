@@ -1,0 +1,28 @@
+[
+  {
+    "id": "E14",
+    "verdict": "confirm",
+    "commands": [
+      "python3 scratchpad/v2/work/c1-h7/a.py, b.py (read C22/C23 risk and shape.change from heart-s5-c1/plain_language.json)",
+      "uv run python -m explaneat verify probe <targets>/heart-s5-c1 --claim C22",
+      "uv run python -m explaneat verify probe <targets>/heart-s5-c1 --claim C23"
+    ],
+    "result": "C22 (thalach, change 118 -> 175 bpm) stores risk from 0.274963 to 0.183049; the probe gives 27.5% at 118 and 18.3% at 175, so it rounds once to 27% and 18%, not 28%. C23 (age, change 42 -> 66 years) stores risk from 0.180514 to 0.264513; the probe gives 18.1% at 42 and 26.5% at 66, so it rounds once to 18% and 26%, not 27%. 28% and 27% only come from rounding twice (27.5 -> 28, 26.5 -> 27).",
+    "note": ""
+  },
+  {
+    "id": "E15",
+    "verdict": "partly",
+    "commands": [
+      "python3 scratchpad/v2/work/c1-h7/c.py (read C82/C83 from experiments/10seed/plain_language/heart100-s7.json)",
+      "uv run python -m explaneat verify probe heart100-s7 --claim C83",
+      "uv run python -m explaneat verify probe heart100-s7 --set restecg=0 --sweep thalach=150:180:31 --nodes ann_38",
+      "uv run python -m explaneat verify probe heart100-s7 --set restecg=2 --sweep thalach=170,175,176,177,180,185,190,195,202",
+      "uv run python -m explaneat verify probe heart100-s7 --set restecg=1 --sweep thalach=175,177,185,202 --no-parts",
+      "uv run python scratchpad/v2/work/c1-h7/d.py (per-patient fold of node 2124 in thalach over all 242 training rows)",
+      "uv run python scratchpad/v2/work/c1-h7/e.py (count of patients past their fold, by resting ECG)"
+    ],
+    "result": "C83 (ann_38:threshold:thalach, same part ann_38 as C82) stores a threshold of 168.176 bpm with a p10-p90 spread of 160.23-176.12. C82 has no 168 or 160-176 (its own typical hinge is 159.167, a grid point). So the citation fix is right, and 168 / 160-176 do come from C83. But my per-patient fold calculation shows only two fold values, 160.3 bpm for all 121 patients with a normal resting ECG and 176.2 bpm for all 121 with any other ECG. The median of 168 is the midpoint of those two groups and is no patient's actual fold. Probing a typical patient with a normal ECG: risk stays at 38.0% up to 160, then falls to 36.7% at 161, 25.8% at 168 and 17.3% at 175. So that patient switches on at about 160, not 168. With restecg=2 or restecg=1 the risk stays at 38.0% up to 176, then falls to 36.5% at 177, 24.3% at 185 and 8.5% at 202. Ten of the 121 training patients with a non-normal ECG have thalach above 176 and are moved by this part.",
+    "note": "The proposed text still misdescribes the part. (1) 'nothing until about 168' does not hold for a typical patient with a normal ECG, who switches on at about 160 bpm. The 160-176 range is not a spread across patients but the two switch-on points, normal ECG (160) and other ECG (176). (2) 'only with a normal resting ECG ... with any other resting ECG the risk stays at about 38%' is wrong. With any other ECG the same steady fall starts at about 176 bpm, and 10 of 121 such training patients are past it. C82 shows zero effect only because its window stops at 175 bpm, just before that fold. A correct version would be along the lines of: 'nothing until about 160 beats per minute with a normal resting ECG (about 176 with any other resting ECG), then steadily.' The same problem applies to readdown.ann_38.evidence[2]."
+  }
+]
