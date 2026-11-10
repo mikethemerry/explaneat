@@ -75,11 +75,17 @@ def raw_value(v, raw: np.ndarray):
     return float(raw[v.columns[0]])
 
 
+def fmt_full(v, value) -> str:
+    """A number in real units at full precision (no rounding to the codebook's decimals)."""
+    s = f"{float(value):.10g}"
+    return s + (f" {v.unit}" if v.unit else "")
+
+
 def describe_value(v, raw: np.ndarray) -> str:
     val = raw_value(v, raw)
     if v.is_category():
         return f"{v.level(val)['label']} ({v.base}={val})" if val is not None else "none"
-    return v.fmt(val)
+    return fmt_full(v, val)
 
 
 def hold_row(vm, hold: str = "typical") -> np.ndarray:
@@ -127,37 +133,151 @@ def sweep_values(v, spec: str) -> List[Any]:
     return [x.strip() for x in spec.split(",") if x.strip()]
 
 
+def _leading_number(text: str) -> Optional[float]:
+    m = re.search(r"[-−]?\d[\d,]*(?:\.\d+)?", str(text))
+    return float(m.group(0).replace(",", "").replace("−", "-")) if m else None
+
+
+# ============================================================================ a claim's own case
+def claim_case(vm, claim: Dict[str, Any]) -> Dict[str, Any]:
+    """The reference case a claim was computed on, as probe settings: ``hold`` raw row,
+    ``sets`` (the reference values the claim lists), and ``sweeps`` (the claim's change, and
+    for an interaction the modifier's settings)."""
+    st = claim.get("statement") or {}
+    risk = claim.get("risk") or {}
+    raw = hold_row(vm, "typical")
+    sets: List[str] = []
+    notes: List[str] = []
+    for key, text in (risk.get("reference_values") or {}).items():
+        try:
+            v = variable(vm, key)
+        except KeyError:
+            notes.append(f"reference value for {key!r} not matched to a variable")
+            continue
+        try:
+            if v.is_category():
+                val = category_code(v, text)
+            else:
+                val = _leading_number(text)
+                if val is None:
+                    raise ValueError(text)
+            set_raw(raw, v, val)
+            sets.append(f"{v.base}={val}")
+        except ValueError:
+            notes.append(f"reference value {key}={text!r} not parsed")
+    sweeps: List[str] = []
+    var = st.get("variable") or ((claim.get("variables") or [{}])[0].get("base"))
+    ch = st.get("change") or {}
+    if var and ch.get("from") is not None and ch.get("to") is not None:
+        v = variable(vm, var)
+        f, t = ch["from"], ch["to"]
+        if v.is_category():
+            a, b = f.get("code"), t.get("code")
+        else:
+            a, b = f.get("value"), t.get("value")
+        if a is not None and b is not None:
+            sweeps.append(f"{v.base}={a},{b}")
+    mod = st.get("modifier")
+    settings = (claim.get("evidence") or {}).get("counterfactual_modifier_settings")
+    if mod and settings:
+        try:
+            mv = variable(vm, mod)
+            sweeps.append(f"{mv.base}=" + ",".join(str(s) for s in settings))
+        except KeyError:
+            notes.append(f"modifier {mod!r} not matched to a variable")
+    return {"raw": raw, "sets": sets, "sweeps": sweeps, "notes": notes,
+            "reference": risk.get("reference"),
+            "stated_risk": {k: risk.get(k) for k in ("from", "to", "groups") if risk.get(k) is not None}}
+
+
 # ============================================================================ evaluation
-def evaluate(vm, raws: np.ndarray, parts: bool = True) -> List[Dict[str, Any]]:
-    """Risk, score, and per part: exit values and contribution (score change when switched off)."""
+def _node_ids(vm, spec: Optional[Sequence[str]]) -> List[str]:
+    """Node ids for ``--nodes``: ids, display names, a part id/name (its internal nodes and
+    exits), or ``all`` (every hidden node)."""
+    from ..core.genome_network import NodeType
+    if not spec:
+        return []
+    st = vm.structure
+    nodes = {n.id: n for n in st.nodes}
+    dm = st.get_display_map()
+    by_name = {v: k for k, v in dm.items()}
+    out: List[str] = []
+    for s in spec:
+        for tok in str(s).split(","):
+            tok = tok.strip()
+            if not tok:
+                continue
+            if tok == "all":
+                out += [n.id for n in st.nodes if n.type not in (NodeType.INPUT,)]
+                continue
+            if tok in nodes:
+                out.append(tok)
+                continue
+            if tok in by_name:
+                out.append(by_name[tok])
+                continue
+            try:
+                p = vm.part(tok)
+                inner = [str(n) for n in p.unit.get("subgraph_nodes", [])
+                         if str(n) in nodes and nodes[str(n)].type != NodeType.INPUT]
+                out += inner + [x for x in p.exits if x not in inner]
+                continue
+            except KeyError:
+                pass
+            raise KeyError(f"no node or part {tok!r}")
+    seen, uniq = set(), []
+    for n in out:
+        if n not in seen:
+            seen.add(n)
+            uniq.append(n)
+    return uniq
+
+
+def evaluate(vm, raws: np.ndarray, parts: bool = True, nodes: Sequence[str] = ()) -> List[Dict[str, Any]]:
+    """Risk, score; per part its exit values and contribution (score change when switched off;
+    ``acts`` = contribution not zero); per requested node its value and pre-activation."""
     m = vm.m
     Z = to_z(vm, raws)
     logit = m.logit(Z)
     risk = m.risk(logit)
     rows = [{"risk": float(risk[i]), "score": float(logit[i])} for i in range(Z.shape[0])]
-    if not parts:
-        return rows
-    vals = m.ev.forward(Z)
-    for p in vm.parts:
-        if p.is_root or not p.exits:
-            continue
-        off = m.logit(Z, ablate=p.baselines)
+    if parts:
+        vals = m.ev.forward(Z)
+        for p in vm.parts:
+            if p.is_root or not p.exits:
+                continue
+            off = m.logit(Z, ablate=p.baselines)
+            for i in range(Z.shape[0]):
+                exits = {x: float(vals[x][i]) for x in p.exits}
+                contrib = float(logit[i] - off[i])
+                rows[i].setdefault("parts", {})[p.id] = {
+                    "name": p.name, "exits": exits, "acts": abs(contrib) > ON_TOL,
+                    "exit_nonzero": any(abs(v) > ON_TOL for v in exits.values()),
+                    "contribution": contrib, "risk_without": float(m.risk(off[i:i + 1])[0])}
+    if nodes:
+        vals = m.ev.forward(Z)
+        pre = m.ev.pre_activations(Z)
         for i in range(Z.shape[0]):
-            exits = {x: float(vals[x][i]) for x in p.exits}
-            on = any(abs(exits[x] - p.baselines.get(x, 0.0)) > ON_TOL for x in p.exits)
-            rows[i].setdefault("parts", {})[p.id] = {
-                "name": p.name, "exits": exits, "active": bool(on),
-                "contribution": float(logit[i] - off[i]),
-                "risk_without": float(m.risk(off[i:i + 1])[0])}
+            rows[i]["nodes"] = {n: {"value": float(vals[n][i]),
+                                    "pre_activation": float(pre[n][i]) if n in pre else float(vals[n][i])}
+                                for n in nodes}
     return rows
 
 
 def probe(vm, sets: Sequence[str] = (), hold: str = "typical", sweeps: Sequence[str] = (),
-          parts: bool = True) -> Dict[str, Any]:
-    """The model's prediction for constructed inputs (real units)."""
+          parts: bool = True, nodes: Sequence[str] = (), claim: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """The model's prediction for constructed inputs (real units). With ``claim``, start from
+    the claim's own reference case and sweep its change (extra ``sets``/``sweeps`` apply on top)."""
+    case = None
+    if claim is not None:
+        case = claim_case(vm, claim)
+        base = case["raw"]
+        sweeps = list(sweeps) or case["sweeps"]
+        hold = f"the reference case of claim {claim.get('id')} ({case['reference'] or 'typical'})"
+    else:
+        base = hold_row(vm, hold)
     if len(sweeps) > 2:
         raise ValueError("at most two --sweep (a 2-D grid)")
-    base = hold_row(vm, hold)
     fixed = []
     for s in sets:
         k, val = parse_assign(s)
@@ -177,22 +297,29 @@ def probe(vm, sets: Sequence[str] = (), hold: str = "typical", sweeps: Sequence[
             set_raw(r, v, val)
         raws.append(r)
     raws = np.array(raws)
-    ev = evaluate(vm, raws, parts=parts)
+    node_ids = _node_ids(vm, nodes)
+    ev = evaluate(vm, raws, parts=parts, nodes=node_ids)
     out_rows = []
     for combo, r, e in zip(combos, raws, ev):
         row = {"inputs": {v.base: describe_value(v, r) for v, _ in axes}}
         row.update(e)
         out_rows.append(row)
     shown = {v.base for v in fixed} | {v.base for v, _ in axes}
-    return {
+    dm = vm.structure.get_display_map()
+    res = {
         "genome_id": vm.genome_id, "hold": hold,
         "held_case": {v.base: describe_value(v, base) for v in vm.m.variables if v.base not in shown},
         "set": {v.base: describe_value(v, base) for v in fixed},
         "sweep": [v.base for v, _ in axes],
         "parts": {p.id: p.name for p in vm.parts},
+        "nodes": {n: dm.get(n, n) for n in node_ids},
         "rows": out_rows,
         "support": {v.base: support_note(vm, v, [raw_value(v, r) for r in raws]) for v in fixed + [a for a, _ in axes]},
     }
+    if case is not None:
+        res["claim"] = {"id": claim.get("id"), "key": claim.get("key"), "stated_risk": case["stated_risk"],
+                        "reference_sets": case["sets"], "notes": case["notes"]}
+    return res
 
 
 def support_note(vm, v, values) -> str:
@@ -205,58 +332,143 @@ def support_note(vm, v, values) -> str:
     p1, p99 = np.percentile(v.raw_train, [1, 99])
     vals = [float(x) for x in values]
     outside = [x for x in vals if x < lo or x > hi]
-    note = f"training range {v.fmt(lo)} to {v.fmt(hi)} (1st-99th percentile {v.fmt(p1)} to {v.fmt(p99)})"
+    note = (f"training range {fmt_full(v, lo)} to {fmt_full(v, hi)} (1st-99th percentile "
+            f"{fmt_full(v, p1)} to {fmt_full(v, p99)})")
     if outside:
-        note += f"; OUTSIDE the data: {', '.join(v.fmt(x) for x in outside)}"
+        note += f"; OUTSIDE the data: {', '.join(fmt_full(v, x) for x in outside)}"
     return note
 
 
 # ============================================================================ ablation
+TO_HELP = ("baseline (default): a gated ReLU exit is set to 0 (the unit is off) and an always-on exit to "
+           "its training mean (its variation removed, its average kept); zero: every exit to 0 "
+           "(for an always-on unit this also removes its average); mean: every exit to its training mean. "
+           "Edges: zero sets the weight to 0; baseline and mean replace the edge's contribution by its "
+           "training mean (moved into the target's bias).")
+
+
 def _auc(y, s) -> Optional[float]:
     from ..analysis.explanation_tools import default_auc
     a = default_auc(y, s)
     return None if a is None or (isinstance(a, float) and math.isnan(a)) else round(float(a), 4)
 
 
-def ablate(vm, part_ref: str, hold: str = "typical", split: str = "train", to: str = "baseline",
-           where: Optional[str] = None, titles: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
-    """Prediction change with a part switched off: its exits fixed at ``to`` (``baseline``:
-    0 for a gated part, the training mean otherwise; ``zero``; ``mean``)."""
+def _edge_ref(s: str) -> Tuple[str, str]:
+    m = re.fullmatch(r"\s*(.+?)\s*(?:->|→|:)\s*(.+?)\s*", s)
+    if not m:
+        raise ValueError(f"--edge wants FROM->TO, got {s!r}")
+    return m.group(1), m.group(2)
+
+
+class Ablation:
+    """Switch off parts, nodes and edges together, on a copy of the model state."""
+
+    def __init__(self, vm, parts: Sequence[str] = (), nodes: Sequence[str] = (), edges: Sequence[str] = (),
+                 direct: bool = False, to: str = "baseline", titles: Optional[Dict[str, str]] = None):
+        import copy as _copy
+        from ..analysis.explanation_tools import StateEvaluator
+        from ..core.genome_network import NodeType
+        if to not in ("baseline", "zero", "mean"):
+            raise ValueError("--to baseline | zero | mean")
+        self.vm, self.to = vm, to
+        m = vm.m
+        vals = m._vals_train()
+        st = _copy.deepcopy(vm.structure)
+        nodes_by_id = {n.id: n for n in st.nodes}
+        dm = st.get_display_map()
+        by_name = {v: k for k, v in dm.items()}
+        self.fix: Dict[str, float] = {}
+        self.what: List[Dict[str, Any]] = []
+        for ref in parts:
+            p = vm.part(ref, titles)
+            if p.is_root:
+                raise ValueError("the root is the whole model; use --direct for its direct edges, or ablate its parts")
+            if to == "baseline":
+                f = dict(p.baselines)
+            elif to == "zero":
+                f = {x: 0.0 for x in p.exits}
+            else:
+                f = {x: float(np.mean(vals[x])) for x in p.exits}
+            self.fix.update(f)
+            self.what.append({"part": p.id, "name": p.name, "exits_fixed_at": f, "gated": p.gated})
+        for ref in nodes:
+            nid = ref if ref in nodes_by_id else by_name.get(ref)
+            if nid is None:
+                raise KeyError(f"no node {ref!r}")
+            v = vals[nid]
+            if to == "zero":
+                k = 0.0
+            elif to == "mean":
+                k = float(np.mean(v))
+            else:
+                n = nodes_by_id[nid]
+                k = 0.0 if (n.activation != "identity" and float(np.min(v)) <= 1e-12) else float(np.mean(v))
+            self.fix[nid] = k
+            self.what.append({"node": nid, "name": dm.get(nid, nid), "fixed_at": k,
+                              "note": "only this node is fixed; the units it feeds still compute from their other inputs"})
+        targets: List[Tuple[str, str]] = [_edge_ref(e) for e in edges]
+        targets = [(a if a in nodes_by_id else by_name.get(a, a), b if b in nodes_by_id else by_name.get(b, b))
+                   for a, b in targets]
+        if direct:
+            outs = {str(o) for o in st.output_node_ids}
+            targets += [(str(c.from_node), str(c.to_node)) for c in st.connections
+                        if c.enabled and str(c.to_node) in outs and nodes_by_id[str(c.from_node)].type == NodeType.INPUT]
+        done = []
+        for a, b in targets:
+            conns = [c for c in st.connections if c.enabled and str(c.from_node) == a and str(c.to_node) == b]
+            if not conns:
+                raise KeyError(f"no enabled edge {a}->{b}")
+            for c in conns:
+                shift = 0.0 if to == "zero" else float(c.weight * np.mean(vals[a]))
+                nodes_by_id[b].bias = float(nodes_by_id[b].bias or 0.0) + shift
+                done.append({"edge": f"{a}->{b}", "weight": float(c.weight), "bias_shift": shift})
+                c.weight = 0.0
+        if direct:
+            self.what.append({"direct_edges_of_root": len(done)})
+        self.what += [{"edge": d["edge"], "weight": d["weight"], "replaced_by_mean_contribution": d["bias_shift"]}
+                      for d in done]
+        if not self.what:
+            raise ValueError("nothing to switch off: give --part, --node, --edge or --direct")
+        self.ev = StateEvaluator(st)
+
+    def logit(self, Z) -> np.ndarray:
+        n = Z.shape[0]
+        ov = {x: ((), (lambda vals, k=float(k), n=n: np.full(n, k))) for x, k in self.fix.items()}
+        return self.ev.logit(Z, ov or None)
+
+
+def ablate(vm, part_ref=None, hold: str = "typical", split: str = "train", to: str = "baseline",
+           where: Optional[str] = None, titles: Optional[Dict[str, str]] = None,
+           parts: Sequence[str] = (), nodes: Sequence[str] = (), edges: Sequence[str] = (),
+           direct: bool = False) -> Dict[str, Any]:
+    """Prediction change with parts, single nodes, edges or the root's direct edges switched
+    off (see :data:`TO_HELP` for ``to``), for the typical case and over the data."""
     m = vm.m
-    p = vm.part(part_ref, titles)
-    if p.is_root:
-        raise ValueError("the root is the whole model; ablate one of its parts")
-    vals = m._vals_train()
-    if to == "baseline":
-        fix = dict(p.baselines)
-    elif to == "zero":
-        fix = {x: 0.0 for x in p.exits}
-    elif to == "mean":
-        fix = {x: float(np.mean(vals[x])) for x in p.exits}
-    else:
-        raise ValueError("--to baseline | zero | mean")
-    raw0 = hold_row(vm, hold)
-    z0 = to_z(vm, raw0)
-    s_on, s_off = float(m.logit(z0)[0]), float(m.logit(z0, ablate=fix)[0])
+    parts = list(parts) + ([part_ref] if isinstance(part_ref, str) else list(part_ref or []))
+    ab = Ablation(vm, parts, nodes, edges, direct, to, titles)
+    z0 = to_z(vm, hold_row(vm, hold))
+    s_on, s_off = float(m.logit(z0)[0]), float(ab.logit(z0)[0])
     if split == "test":
         if m.Xt is None:
             raise ValueError("no test split")
-        X, y, raw = m.Xt, m.yt, m.raw_test
+        X, y = m.Xt, m.yt
     else:
-        X, y, raw = m.X, m.y, m.raw_train
-    mask = np.ones(X.shape[0], dtype=bool)
+        X, y = m.X, m.y
     if where:
         mask = query_mask(vm, where, split=split)
-    X, y = X[mask], y[mask]
+        X, y = X[mask], y[mask]
     on = m.logit(X)
-    off = m.logit(X, ablate=fix)
+    off = ab.logit(X)
     d = on - off
     r_on, r_off = m.risk(on), m.risk(off)
     affected = np.abs(d) > ON_TOL
     flips = int(np.sum((r_on >= 0.5) != (r_off >= 0.5)))
+    first = ab.what[0]
     return {
-        "genome_id": vm.genome_id, "part": {"id": p.id, "name": p.name, "exits": p.exits,
-                                             "switched_off_at": fix, "gated": p.gated},
+        "genome_id": vm.genome_id, "to": to, "to_meaning": TO_HELP, "switched_off": ab.what,
+        "part": ({"id": first.get("part"), "name": first.get("name"), "exits": list(first.get("exits_fixed_at", {})),
+                  "switched_off_at": first.get("exits_fixed_at"), "gated": first.get("gated")}
+                 if len(ab.what) == 1 and "part" in first else None),
         "typical": {"hold": hold, "risk_with": float(m.risk(np.array([s_on]))[0]),
                     "risk_without": float(m.risk(np.array([s_off]))[0]),
                     "score_with": s_on, "score_without": s_off, "acts": abs(s_on - s_off) > ON_TOL},
@@ -280,8 +492,8 @@ def ablate(vm, part_ref: str, hold: str = "typical", split: str = "train", to: s
 
 # ============================================================================ subgroups
 def frame(vm, split: str = "train"):
-    """A table of the rows in real units: numbers as values, categories as codes, plus
-    ``<var>_label`` (the plain label), ``outcome`` (0/1) and ``risk`` (predicted)."""
+    """A table of the rows in real units: numbers as values, categories as codes (strings),
+    plus ``<var>_label`` (the plain label), ``outcome`` (0/1) and ``risk`` (predicted)."""
     import pandas as pd
     m = vm.m
     raw = m.raw_test if split == "test" else m.raw_train
@@ -294,6 +506,8 @@ def frame(vm, split: str = "train"):
             cols[v.base] = np.array([str(c) if c is not None else "" for c in codes], dtype=object)
             cols[v.base + "_label"] = np.array([v.level(c)["label"] if c is not None else "" for c in codes],
                                                dtype=object)
+            for code in v.all_codes:     # 0/1 indicators: a5_1 == 1, or counts such as a1_1 + a2_1 == 2
+                cols[f"{v.base}_{code}"] = (codes == code).astype(int)
         else:
             cols[v.base] = raw[:, v.columns[0]].astype(float)
     cols["outcome"] = np.asarray(y, dtype=float)
@@ -301,21 +515,29 @@ def frame(vm, split: str = "train"):
     return pd.DataFrame(cols)
 
 
-def _safe_name(s: str) -> str:
-    return re.sub(r"\W", "_", s)
+QUERY_HELP = ("Write a pandas query over real-unit columns. Category columns hold their codes as text, "
+              "so quote them: a5 == '1', thal == '7' (or use the label: sex_label == 'female'). Put names "
+              "with spaces or hyphens in backticks: `capital-gain` > 5000, `total day minutes` > 200, "
+              "`voice mail plan_label` == 'no voice-mail plan'. Each category level also has a 0/1 column "
+              "<var>_<code> (a5_1 == 1; counts: a1_1 + a2_1 + a3_1 == 2). Also: outcome (0/1), risk (predicted).")
 
 
 def query_mask(vm, expr: str, split: str = "train") -> np.ndarray:
     """Rows matching a pandas ``query`` expression over :func:`frame` (e.g.
-    ``"age > 60 and sex_label == 'male'"``, ``"chol >= 258"``, ``"cp == '4'"``)."""
+    ``"age > 60 and sex_label == 'male'"``, ``"chol >= 258"``, ``"cp == '4'"``,
+    ``"`capital-gain` > 5000"``)."""
     df = frame(vm, split)
-    ren = {c: _safe_name(c) for c in df.columns}
-    df = df.rename(columns=ren)
-    e = expr
-    for c, s in sorted(ren.items(), key=lambda kv: -len(kv[0])):
-        if c != s:
-            e = e.replace(c, s)
-    return np.asarray(df.eval(e, engine="python"), dtype=bool)
+    cats = [v.base for v in vm.m.variables if v.is_category()]
+    for c in cats:   # a category compared with a bare number is always False: say so
+        rx = r"(?:`%s`|(?<![\w`])%s(?![\w`]))\s*(?:==|!=|<|>|<=|>=)\s*-?\d" % (re.escape(c), re.escape(c))
+        if re.search(rx, expr):
+            raise ValueError(f"{c} is a category: its codes are text, so write {c} == '1' (quoted), "
+                             f"not {c} == 1. " + QUERY_HELP)
+    try:
+        res = df.eval(expr, engine="python")
+    except Exception as e:
+        raise ValueError(f"cannot evaluate --where {expr!r} ({type(e).__name__}: {e}). " + QUERY_HELP) from None
+    return np.asarray(res, dtype=bool)
 
 
 def _wilson(k, n, z=1.959963984540054):
@@ -329,7 +551,10 @@ def _wilson(k, n, z=1.959963984540054):
 
 
 def subgroup(vm, where: str, split: str = "train") -> Dict[str, Any]:
-    """n, outcome rate and part activity for rows matching ``where`` (and the rest)."""
+    """n, outcome rate and, per part, where it acts (contribution not zero) for rows matching
+    ``where`` and for the rest. ``exit_nonzero`` is also given: for a gated ReLU part it is the
+    same as acting; an always-on (linear) part has non-zero exits everywhere but may act on
+    only some rows."""
     from ..analysis.plain_language import typical_raw, typical_values
     m = vm.m
     mask = query_mask(vm, where, split)
@@ -337,6 +562,11 @@ def subgroup(vm, where: str, split: str = "train") -> Dict[str, Any]:
     y = m.yt if split == "test" else m.y
     on = m.logit(X)
     vals = m.ev.forward(X)
+    contribs = {}
+    for p in vm.parts:
+        if p.is_root or not p.exits:
+            continue
+        contribs[p.id] = on - m.logit(X, ablate=p.baselines)
 
     def side(sel):
         n = int(sel.sum())
@@ -346,21 +576,25 @@ def subgroup(vm, where: str, split: str = "train") -> Dict[str, Any]:
                "outcome_rate_ci95": _wilson(k, n),
                "mean_predicted_risk": float(np.mean(m.risk(on[sel]))) if n else None, "parts": {}}
         for p in vm.parts:
-            if p.is_root or not p.exits:
+            if p.id not in contribs:
                 continue
-            act = np.zeros(len(y), dtype=bool)
+            contrib = contribs[p.id]
+            acts = np.abs(contrib) > ON_TOL
+            nz = np.zeros(len(y), dtype=bool)
             for x in p.exits:
-                act |= np.abs(vals[x] - p.baselines.get(x, 0.0)) > ON_TOL
-            contrib = on - m.logit(X, ablate=p.baselines)
-            out["parts"][p.id] = {"name": p.name,
-                                  "share_active": float(act[sel].mean()) if n else None,
-                                  "n_active": int(act[sel].sum()),
+                nz |= np.abs(vals[x]) > ON_TOL
+            out["parts"][p.id] = {"name": p.name, "gated": p.gated,
+                                  "n_acts_on": int(acts[sel].sum()),
+                                  "share_acts_on": float(acts[sel].mean()) if n else None,
+                                  "share_exit_nonzero": float(nz[sel].mean()) if n else None,
                                   "mean_contribution": float(np.mean(contrib[sel])) if n else None,
                                   "mean_abs_contribution": float(np.mean(np.abs(contrib[sel]))) if n else None}
         return out
 
     res = {"genome_id": vm.genome_id, "where": where, "split": split, "n_total": int(len(y)),
            "subgroup": side(mask), "rest": side(~mask)}
+    if not mask.any():
+        res["hint"] = "no rows match. " + QUERY_HELP
     if split == "train" and mask.any():
         raw = typical_raw(m, mask)
         res["typical_case_in_subgroup"] = {"values": typical_values(m, raw),
