@@ -1,0 +1,111 @@
+{
+  "label": "c4-default-s0",
+  "genome_id": "17776524-c7b3-430f-a9c7-0285bff924ca",
+  "dataset": "c4",
+  "variant": "default",
+  "start": "2026-11-11T00:34:35+13:00",
+  "end": "2026-11-11T01:12:00+13:00",
+  "time_used_minutes": 38,
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 4,
+  "n_composition_annotations": 1,
+  "n_splits": 5,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 7,
+  "hidden_nodes_single_leaf_no_split": 7,
+  "hidden_nodes_in_any_annotation": 7,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 4.996003610813204e-16,
+  "closed_form_max_abs_err": 0.011737097009184794,
+  "resisted": "Structurally nothing: every part has a closed form and the hierarchy is complete. In domain terms most of the network resists only in the sense that there is little to explain: it is a per-square value table (logit corr 0.996 with an ordinal logistic regression; AUC 0.8576 vs 0.8570). The linear backbone has a real domain reading (square quality close to the winning-line count, r = 0.81, 0.94 on rows 1-3), but its largest departure from the line count, a block penalty on rows 5-6 (an x piece high up counts against x, an o piece high up for x), is in the data (corr 0.93 with per-square empirical log-odds) and has no domain explanation I could verify. The three hinges (c1, f1 damped by b1, b6) are data-faithful per-value corrections (they match a one-hot regression and a b1-f1 interaction term, -0.32 vs -0.33) but have no line, threat, centre or parity concept behind them: closed-form-only. Against perfect play the network is blind to tactics: on the 765 positions where o has a three-in-a-line threat P(x wins) is 0.263 but the mean prediction 0.482; on the 66 with an odd-row x threat 0.939 vs 0.716. Adding open-line, two-in-a-line and threat counts to the logit raises AUC to 0.875; gradient boosting on raw squares reaches 0.972 (train). The game-theoretic value of Connect-4 (zugzwang, parity, deep threats) is not represented by this network, so there is nothing of it to explain.",
+  "tool_bugs": "category_offsets returns no groups (one-hot only; the Connect-4 inputs are ordinal x/empty/o), so per-value offsets were computed locally against a one-hot logistic regression. linearise_annotations ran with the four leaf names passed explicitly (no failure). Shell guard: tool calls went through small Python wrappers in the scratch dir (run.py, ev.py, viz.py). compute_shap on the root: a 1,500-row run was still going after 14 minutes (47 entries) and was stopped; the recorded run used 400 training rows (about 12 minutes).",
+  "summary": "The network scores a position as a weighted count of material by square: x on central low squares (d3, d4, c3, d2, e3) raises the predicted chance that x wins and o there lowers it, while edge columns a/g and the top two rows count the other way; the values track the classic count of winning lines through each square (r = 0.81) with an extra penalty on rows 5-6. Three small hinges add per-square x-vs-o asymmetries at c1, f1 (damped when x also holds b1) and b6; together they add 0.001 AUC (all-linear 0.8566 vs 0.8576). It does not see threats or any line structure, which is why it is no better than logistic regression (0.857) and far below gradient boosting (0.947 test baseline).",
+  "leaf_assessments": [
+    {
+      "name": "board_material_weights",
+      "annotation_id": "ann_48",
+      "assessment": "meaningful",
+      "hypothesis_short": "A fixed value per square, +1 for x and -1 for o: central low squares high, edge columns and rows 5-6 low.",
+      "why": "Corr 0.81 with the winning-lines-per-square count (0.94 on rows 1-3); value ~ lines + odd row + edge + top-rows fit R2 0.91 (lines alone 0.70). Line-count-weighted material alone: AUC 0.821, corr 0.90 with the logit. Matches the data's per-square log-odds (0.93). The top-rows block penalty and row 3 > row 4 are data-supported departures; only the latter has a (weak) domain reading (odd-row preference for x)."
+    },
+    {
+      "name": "c1_owner_hinge",
+      "annotation_id": "ann_49",
+      "assessment": "closed-form-only",
+      "hypothesis_short": "Hinge on c1: off when o holds c1, 0.43 empty, 1.74 x (weight -0.39), making c1 the one bottom square where x and o are not mirror images.",
+      "why": "Data-faithful (centred network x +0.09 / o -0.47 vs one-hot regression -0.00 / -0.52), but nothing in lines, centre, threats or parity explains why c1, and larger data asymmetries (d3, d2, b2) are left linear. Restore gain 0.0002."
+    },
+    {
+      "name": "b6_top_hinge",
+      "annotation_id": "ann_50",
+      "assessment": "closed-form-only",
+      "hypothesis_short": "Fires only when x holds b6 (119 rows), costing 0.23 logit extra; 4423 is an always-on relay.",
+      "why": "A rare-cell correction of the top-row penalty; calibration on those 119 rows is unchanged in practice (P(win) 0.395; prediction 0.377 with, 0.417 without). Restore gain 5e-6."
+    },
+    {
+      "name": "f1_edge_hinge",
+      "annotation_id": "ann_51",
+      "assessment": "closed-form-only",
+      "hypothesis_short": "On when x holds f1 (softening f1's negative value), damped when x also holds b1 (4093); a4 relay and e6 terms are minor or rare.",
+      "why": "Both effects are in the data (f1 asymmetry matches the one-hot regression; b1-and-f1 interaction -0.32 vs data -0.33, n = 4,467), but no four-cell line holds both b1 and f1 and no domain concept explains them. Largest hinge restore gain, 0.0007."
+    }
+  ],
+  "composition_notes": "win_logit (ann_52, root) owns the output: logit = 1.341 + board_material_weights - 0.390*c1_owner_hinge - 0.027*b6_top_hinge + 0.328*f1_edge_hinge; purely additive and parallel (no child feeds another). identity_0 collects the 36 direct square edges; the five inputs that also feed hidden units (a4, b1, b6, c1, f1) were split. The unconnected squares b3, d5, e4, f3, f4 are zero-effect entries of the root (exact Null). Always-on relays 1824, 2268, 4423 are linear inside their leaves.",
+  "ground_truth_comparisons": "Training split, 54,045 rows, ground truth = perfect-play outcome. Network AUC 0.8576, accuracy 0.787. Ordinal LR 0.8570, one-hot LR 0.8622, HGB 0.972 (train). Per-square values vs winning-line counts: r = 0.81 (rows 1-3: 0.94); vs per-square empirical log-odds 0.93. Domain features vs win: open-line difference AUC 0.817 (corr with logit 0.82), line-count material 0.821 (0.90), centre c-e count 0.712 (0.62); threat counts ~0.5 (rare) and corr with logit < 0.08. Incremental AUC over the logit: two-in-a-line diff +0.008, open-line diff +0.004, o threats +0.0016, odd x threats +0.0002; all line features together 0.875. Threat subgroups: o threat n=765 P(win) 0.263 vs pred 0.482; x threat n=660 0.839 vs 0.818; odd-row x threat n=66 0.939 vs 0.716; even-row o threat n=665 0.229 vs 0.469. Per-leaf comparisons in leaf_assessments; all attached as domain_ground_truth evidence. SHAP (root, 400 train rows): mean |SHAP| on predicted probability, top 10: c_a1 0.104, c_g1 0.094, c_b1 direct 0.067, c_a2 0.056, c_f1 direct 0.056, c_g2 0.054, c_e1 0.044, c_c1 via hinge 0.042, c_d2 0.042, c_d3 0.039. Edge bottom squares (a1, g1, b1, a2, g2) lead because they are occupied often; the centre squares have the largest per-piece values (d3 +2.01) but are filled less often. Hinge paths: c1 0.042, f1 0.017, b6 0.001, e6 0.002; unconnected squares ~0.0008 (sampling noise of the explainer).",
+  "restore_gain": "linearise_annotations (train, leaves named explicitly): full AUC 0.85763, all leaves linear 0.85661 (total non-linear gain 0.0010). Linearised alone drop / restore-alone gain: f1_edge_hinge 0.00076 / 0.00072; c1_owner_hinge 0.00029 / 0.00024; b6_top_hinge 0.000006 / 0.000005; board_material_weights linear (0). The network is effectively linear.",
+  "unit_activity_summary": "Always on (linear on the support): 1824, 2268 (a4 relays into 180), 4423 (b6 relay). Hinges: 4277 71.5% active (off exactly when o holds c1), 4093 38.5% (x holds b1, or e6 occupied), 180 23.6% (x holds f1, plus a few a4/e6 rows), 3400 0.22% (x holds b6, 119 rows). No dead units.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 5,
+      "roots": [
+        "win_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.996003610813204e-16,
+    "closed_form_max_abs_err": 0.011737097009184794,
+    "numeric_max_abs_err": 2.6645352591003757e-15,
+    "op_counts": {
+      "rename_node": 42,
+      "split_node": 5,
+      "add_identity_node": 1,
+      "annotate": 5
+    },
+    "leaves": [
+      {
+        "id": "ann_48",
+        "name": "board_material_weights",
+        "numeric_max_abs_err": 2.6645352591003757e-15,
+        "closed_form_max_abs_err": 0.007902399144594563
+      },
+      {
+        "id": "ann_49",
+        "name": "c1_owner_hinge",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.003404415641425018
+      },
+      {
+        "id": "ann_50",
+        "name": "b6_top_hinge",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.002862287789865192
+      },
+      {
+        "id": "ann_51",
+        "name": "f1_edge_hinge",
+        "numeric_max_abs_err": 4.440892098500626e-16,
+        "closed_form_max_abs_err": 0.011737097009184794
+      }
+    ],
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}
