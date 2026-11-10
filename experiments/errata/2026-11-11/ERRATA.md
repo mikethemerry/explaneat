@@ -77,3 +77,7 @@ approximate-formula warning. All corrected drafts pass `plain-language lint`. Th
 The species-leads combined `review.pdf` files were built with earlier export code. Rebuilding them would
 change every lead's pages, so they were left alone. They still show heart-s5-c1's two old percentages until
 `experiments/species_leads/make_pack.py` is re-run.
+
+**Update (2026-11-11, commit `4d619be`):** the verification packets in `experiments/10seed/verification/`
+and the species-leads verification pack, including its combined `review.pdf`, have since been regenerated.
+No rendered copy now shows the old text.
