@@ -563,6 +563,7 @@ def _picture(items, pos, edges_w, clusters, subs, colors, hl, note: str = "") ->
         L.append(f"\\node[font=\\sffamily\\tiny\\bfseries, text={col}!60!black, inner sep=1pt] (subt{si}) at "
                  f"({round((min(xs) + max(xs)) / 2, 3)},{round(max(ys) + 0.5, 3)}) {{{tex(stitle)}}};")
     L.append(r"\begin{scope}[on background layer]")
+    ctitles_after: List[str] = []      # cluster titles drawn over the edges (an edge passes behind them)
     for ci, (ckey, ctitle) in enumerate(clusters):
         mem = [n for n, it in items.items() if it["band"][0] == ckey and it["kind"] not in ("input", "stub_in")]
         if not mem:
@@ -571,9 +572,11 @@ def _picture(items, pos, edges_w, clusters, subs, colors, hl, note: str = "") ->
         tops = " ".join(f"(subt{si})" for si, (sk, _) in enumerate(subs) if sk[0] == ckey
                         and any(items[n]["band"] == sk for n in mem))
         fit = " ".join(f"({_tname(n)})" for n in mem) + " " + tops
-        L.append(f"\\node[fit={fit}, inner sep=8pt, rounded corners=5pt, fill={col}!10, draw={col}!45, "
-                 f"label={{[font=\\sffamily\\scriptsize\\bfseries, text={col}!55!black, anchor=south west, "
-                 f"inner sep=1pt]north west:{tex(ctitle)}}}] {{}};")
+        L.append(f"\\node[fit={fit}, inner sep=8pt, rounded corners=5pt, fill={col}!10, draw={col}!45] "
+                 f"(clu{ci}) {{}};")
+        ctitles_after.append(f"\\node[font=\\sffamily\\scriptsize\\bfseries, text={col}!55!black, anchor=south west, "
+                             f"inner sep=1pt, fill=white, fill opacity=0.85, text opacity=1] at (clu{ci}.north west) "
+                             f"{{{tex(ctitle)}}};")
     for si, (skey, _) in enumerate(subs):
         mem = [n for n, it in items.items() if it["band"] == skey]
         if not mem:
@@ -585,6 +588,7 @@ def _picture(items, pos, edges_w, clusters, subs, colors, hl, note: str = "") ->
     for u, v, w in edges_w:
         L.append(_edge(u, v, w))
     L.append(r"\end{scope}")
+    L.extend(ctitles_after)
     if note:
         L.append("\\node[anchor=north west, font=\\sffamily\\scriptsize, inner sep=0pt, align=left] at "
                  "([yshift=-3mm]current bounding box.south west) {" + note + "};")

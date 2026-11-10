@@ -152,6 +152,11 @@ def effect_overview(layer, base: Path, groups) -> Optional[Dict[str, Any]]:
     ax.set_yticks(range(len(rows)))
     ax.set_yticklabels(labels)
     ax.axvline(0, color=INK, lw=0.6)
+    span = max([abs(x) for x in d] + [0.0])
+    if span < 1.0:        # changes under one point: show them on a +-1 point axis, not 1e-7
+        ax.set_xlim(-1.0, 1.0)
+        ax.text(0.99, 0.01, "all changes under 1 point" if span < 0.5 else "", transform=ax.transAxes,
+                ha="right", va="bottom", fontsize=8, color="#555555")
     ax.set_xlabel("Change in " + _risk_label(layer).lower() + " for the typical case\n(percentage points)")
     data = {"kind": "effect_overview", "claims": [c["id"] for c in rows], "labels": labels,
             "change_points": [round(x, 3) for x in d],
@@ -179,6 +184,7 @@ def level_plot(layer, base: Path, gbase: str, glabel: str) -> Optional[Dict[str,
     ax.set_yticks(range(len(rows)))
     ax.set_yticklabels([f"{lab} (n = {k})" for lab, k in zip(labels, n)])
     ax.set_ylim(-0.6, len(rows) - 0.4)
+    _pct_axis(ax, x + [_pc(ref)])
     ax.set_xlabel(_risk_label(layer) + f" for the typical case, by {glabel} (%)")
     data = {"kind": "levels", "variable": gbase, "claims": [c["id"] for c in rows], "labels": labels, "n": n,
             "risk": [c["risk"]["to"] for c in rows], "reference_risk": ref, "grey": small}
@@ -264,6 +270,18 @@ def _cat_rows(claims):
     return rows
 
 
+def _pct_axis(ax, xs):
+    """A percentage axis inside 0-100 and at least 2 points wide around the plotted values."""
+    if not xs:
+        return
+    lo, hi = min(xs), max(xs)
+    pad = max(0.08 * (hi - lo), 1.0)
+    a, b = max(0.0, lo - pad), min(100.0, hi + pad)
+    if b - a < 2.0:
+        a, b = (max(0.0, (lo + hi) / 2 - 1.0), min(100.0, (lo + hi) / 2 + 1.0))
+    ax.set_xlim(a, b)
+
+
 def category_figure(layer, rows, per_row=3):
     """Dot charts of category levels; height grows with the number of levels."""
     plt = _plt()
@@ -292,6 +310,7 @@ def category_figure(layer, rows, per_row=3):
         vlab = ((c.get("variables") or [{}])[0].get("label") or "")
         ax.set_yticklabels([_wrap(f"{_level_label(x.get('label'), vlab)} (n = {x.get('n_train')})", width) for x in lv])
         ax.set_ylim(-0.6, len(lv) - 0.4)
+        _pct_axis(ax, [_pc(x.get("risk") or 0) for x in lv])
         ax.set_xlabel(_risk_label(layer) + " (%)")
         data["panels"].append({"claim": c["id"], "levels": [{"label": x.get("label"), "risk": x.get("risk"),
                                                               "n": x.get("n_train"), "reference": x.get("reference")}
@@ -330,6 +349,14 @@ def _hinge_of(xs, ys) -> Optional[float]:
                 return float(x0)
         return float(xs[j])
     return None
+
+
+def _titles_of(layer) -> Dict[str, str]:
+    try:
+        from .render_structure import _titles
+        return _titles(layer)
+    except Exception:
+        return {}
 
 
 def partial_plot(layer, base: Path, rec, labels) -> Optional[Dict[str, Any]]:
@@ -575,9 +602,12 @@ def deep_dive_figures(layer, base: Path, claim) -> List[Dict[str, Any]]:
     return out
 
 
-def partial_caption(rec, labels) -> str:
+def partial_caption(rec, labels, title: Optional[str] = None) -> str:
     name = labels.get(rec["node"], "the unit")
-    base = (f"This part's own output, unit {name} ({rec.get('why')}), on its own scale (its activation), with "
+    why = rec.get("why") or ""
+    if why.startswith("output of the non-linear part"):
+        why = "the output of " + (f"'{title}'" if title else "this non-linear part")
+    base = (f"This part's own output, unit {name} ({why}), on its own scale (its activation), with "
             f"every other input at the typical case; it is active for {rec.get('active_n')} of {rec.get('n')}. ")
     if rec.get("map"):
         return base + ("Left: its output over its two main inputs (orange line: where it switches on; dots: the "
@@ -653,7 +683,7 @@ def make_figures(layer, out_dir) -> Dict[str, List[Dict[str, Any]]]:
                 f = partial_plot(layer, out / f"{pid}-partial-{rec['node']}", rec, hl)
                 if f:
                     lst.append({**f, "kind": "partial", "node": rec["node"],
-                                "caption": partial_caption(rec, hl)})
+                                "caption": partial_caption(rec, hl, _titles_of(layer).get(pid))})
             units = [n for n in layer["graph"]["nodes"] if n["kind"] == "hidden" and n.get("region") == pid]
             f = activity_plot(layer, out / f"{pid}-units", units, hl)
             if f:
