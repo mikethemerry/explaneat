@@ -1,0 +1,79 @@
+{
+  "task": "krk",
+  "variant": "tuned",
+  "seed": 1,
+  "name": "krk-tuned-s1",
+  "n_generations": 100,
+  "best_generation": 99,
+  "n_train": 22444,
+  "n_epochs_backprop": 5,
+  "fitness_function": "auc",
+  "criterion": "bce",
+  "output_activation": "sigmoid",
+  "mask_phantom": true,
+  "torch_threads": 1,
+  "neat_config": "experiments/complex_real/configs/krk.ini",
+  "dynamic_threshold": {
+    "species_min": 5,
+    "species_max": 10,
+    "step": 0.3,
+    "floor": 0.3
+  },
+  "code_commit": "fc312fe24f886f24170c66827cee5c0630af106b",
+  "code_dirty": false,
+  "data": {
+    "task": "krk",
+    "source": "PMLB krkopt (UCI Chess KRK)",
+    "target": "1 = draw, 0 = win for white (any depth-to-mate 0-16)",
+    "encoding": "ordinal integers: file a-h -> 1-8, rank 1-8",
+    "class_names": [
+      "win",
+      "draw"
+    ],
+    "n_rows": 28056,
+    "n_train_full": 22444,
+    "n_train": 22444,
+    "n_test": 5612,
+    "positive_share": 0.09965782720273739,
+    "positive_share_train": 0.09967029050080199,
+    "split_seed": 42,
+    "subset_seed": null,
+    "scaler": "StandardScaler fit on the training rows"
+  },
+  "hardware": {
+    "machine": "arm64",
+    "cpu_count": 14,
+    "python": "3.12.12",
+    "torch": "2.2.2",
+    "numpy": "1.26.4",
+    "neat": "0.92"
+  },
+  "wall_clock_s": 512.6,
+  "best_key": 20566,
+  "best_fitness": 0.9925251740153248,
+  "best_size": {
+    "hidden": 8,
+    "conns": 17,
+    "inputs_used": 4,
+    "depth": 5
+  },
+  "train": {
+    "auc": 0.9925251740153248,
+    "acc": 0.9517911245767243,
+    "bce": 0.13987417652634473
+  },
+  "test": {
+    "auc": 0.9928374613710058,
+    "acc": 0.9497505345687812,
+    "bce": 0.14109987252672768
+  },
+  "species": {
+    "mean": 9.44,
+    "min": 1,
+    "max": 13,
+    "last": 8,
+    "mean_last50": 8.56
+  },
+  "final_threshold": 9.3,
+  "final_generation": 99
+}
