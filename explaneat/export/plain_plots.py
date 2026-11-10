@@ -587,7 +587,9 @@ def deep_dive_figures(layer, base: Path, claim) -> List[Dict[str, Any]]:
     # 3. the same map on the final risk scale (typical case)
     fig, ax = plt.subplots(figsize=(WIDTH, 3.0))
     R = np.array(mp["risk"], dtype=float) * 100
-    cs = ax.contourf(mp["x"]["grid"], mp["y"]["grid"], R, levels=12, cmap="Greys")
+    lo_r, hi_r = float(np.nanmin(R)), float(np.nanmax(R))
+    lv = np.linspace(max(0.0, lo_r), min(100.0, hi_r), 12) if hi_r - lo_r > 1e-6 else 12
+    cs = ax.contourf(mp["x"]["grid"], mp["y"]["grid"], R, levels=lv, cmap="Greys")
     if mp.get("boundary"):
         b = _boundary_to_axes(mp["boundary"], mp["x"]["grid"], mp["y"]["grid"])
         ax.plot(b[:, 0], b[:, 1], color=UP, lw=1.6)

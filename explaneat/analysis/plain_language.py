@@ -1190,6 +1190,8 @@ def _clipping_exits(m: PlainModel, p: Part) -> List[str]:
 
 def _fmt_num(x: float) -> str:
     ax = abs(x)
+    if 0 < ax < 0.1:          # two significant figures: 0.015, not 0.02
+        return f"{x:.2g}"
     return f"{x:.2f}" if ax < 10 else (f"{x:.1f}" if ax < 100 else f"{x:.0f}")
 
 
@@ -1433,7 +1435,9 @@ def boundary_claims(m: PlainModel, p: Part) -> List[Dict[str, Any]]:
     c["n"] = int(m.X.shape[0])
     c["_ctx"] = None
     checks = {"rule_matches_data": (agree is not None and agree >= 0.99,
-                                    f"the boundary rule matches {agree} of training rows (needs 0.99)")}
+                                    f"the boundary rule matches {agree} of training rows (needs 0.99)"
+                                    if agree is not None else
+                                    "no switch-on line could be traced on the first map to check against the data")}
     if rule is None:
         checks["boundary_found"] = (False, "no switch-on boundary in the observed range")
     return [_finish(c, checks)]

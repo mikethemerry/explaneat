@@ -408,7 +408,7 @@ def block_diagram(boxes: List[Dict[str, Any]], out_label: str, direct: Optional[
          r"  agg/.style={draw=black!55},",
          r"]"]
     for i, v in enumerate(inputs):
-        L.append(f"\\node[inp] (i{i}) at (0,{yi[v]}) {{{tex(_short(v, 40))}}};")
+        L.append(f"\\node[inp] (i{i}) at (0,{yi[v]}) {{{tex(_short(v, 64))}}};")
     for j, b in enumerate(boxes):
         col = PALETTE[j % len(PALETTE)]
         listed = b.get("listed") or []
