@@ -1,0 +1,89 @@
+label,severity,check,location,stated,recomputed,verdict,how_confirmed
+adult-paper,warn,closed_form,operations.capital_gain_core.evidence[0].payload.latex,"[73.0, 81.0, 82.0, 89.0, 94.0]",null,"listed (AAAI, closed-form display warning)",node ids in the written LaTeX
+adult-paper,mismatch,freetext_auc,operations.capital_gain_core.hypothesis,"[0.9055, 0.9054]",null,"listed (AAAI, test-split AUC; not checkable on train)",stated on the test split
+adult-s5,mismatch,freetext_formula,operations.age_profile.hypothesis,"""2990=relu(1.446 age-0.48)""","{""node"": ""2990"", ""max_abs_err"": 4.448353513995811, ""rows_off"": 26}","ERROR, corrected (E3)","node 2990 inputs: age 1.446, 2134 0.1374, bias -0.481"
+adult-s5,warn,prose_uncited,drafted.blocks[3:ann_125][0],"""50""","[""C005"", ""C007"", ""C010"", ""C011""]","ERROR (citation), corrected (E4)","the 50-hour threshold is C142, ann_125's own claim"
+adult-s5,warn,prose_uncited,drafted.readdown.ann_125.evidence[0],"""50""","[""C005"", ""C007"", ""C010"", ""C011""]","ERROR (citation), corrected (E4)","the 50-hour threshold is C142, ann_125's own claim"
+c4-default-s0,mismatch,freetext_n_train,operations.b6_top_hinge.evidence[2].payload.n,119,54045,not an error (tool reading),payload n is the b6 = x subgroup: verify subgroup 'c_b6 == 1' n = 119
+c4-tuned-s0,warn,prose_uncited,drafted.blocks[0:ann_44][0],"""29""","[""C146""]",listed (number correct),ann_44 reads 29 squares (verify vars; 29 direction claims C049-C077)
+c4-tuned-s0,warn,prose_uncited,drafted.readdown.ann_44.hypothesis[0],"""29""","[""C146""]",listed (number correct),ann_44 reads 29 squares (verify vars; 29 direction claims C049-C077)
+c4-tuned-s0,warn,prose_uncited,drafted.annotations.ann_44[0],"""29""","[""C146""]",listed (number correct),ann_44 reads 29 squares (verify vars; 29 direction claims C049-C077)
+c4-tuned-s0,warn,prose_uncited,drafted.hypothesis_revisions.ann_44,"""29""","[""C146""]",listed (number correct),ann_44 reads 29 squares (verify vars; 29 direction claims C049-C077)
+churn100-s0,mismatch,freetext_formula,operations.state0_state46_offset.hypothesis,"""14444 = relu(1.00*s0 + 0.432)""","{""node"": ""14444"", ""max_abs_err"": 8.389482881772892, ""rows_off"": 4000}",not an error (tool reading),"node 14444 = relu(0.9998*state:0 + 0.4319): matches; tool did not resolve ""s0"""
+churn100-s0,mismatch,freetext_active_share,operations.day_charge_no_voicemail.hypothesis,38.0,28.375,not an error (tool reading),10110 on for 38.4% of customers with 0 voice-mail messages (conditional share)
+churn100-s1,warn,prose_rounding,drafted.blocks[2:ann_79][2],"""5%""",4.4548,"ERROR (rounding), corrected (E10)",cited value 4.4548%
+churn100-s1,warn,prose_rounding,drafted.readdown.ann_79.evidence[2],"""5%""",4.4548,"ERROR (rounding), corrected (E10)",cited value 4.4548%
+churn100-s1,warn,prose_rounding,drafted.readdown.ann_83.evidence[2],"""5%""",4.4548,"ERROR (rounding), corrected (E10)",cited value 4.4548%
+churn100-s2-c2,warn,prose_uncited,drafted.blocks[5:ann_93][0],"""0.2""","[""C017"", ""C028"", ""C053"", ""C077""]",not an error (tool reading),C144 max change 0.0018 = 0.2 points
+churn100-s2-c2,warn,prose_uncited,drafted.readdown.ann_93.evidence[1],"""0.2""","[""C017"", ""C028"", ""C053"", ""C077""]",not an error (tool reading),C144 max change 0.0018 = 0.2 points
+churn100-s4-c3,mismatch,prose_direction,drafted.blocks[1:ann_87][1],"""lowers""","""raises""",not an error (tool reading),'lower' is the saturation phrase ('cannot go much lower'); the sentence says it adds
+churn100-s4-c3,mismatch,prose_direction,drafted.readdown.ann_87.evidence[1],"""lowers""","""raises""",not an error (tool reading),'lower' is the saturation phrase ('cannot go much lower'); the sentence says it adds
+churn100-s5,mismatch,freetext_active_count,record.resisted,3,4000,not an error (tool reading),state:9 gate 2039 active on 3 of 4000 rows
+churn100-s6,mismatch,freetext_auc,operations.service_calls_low_day_usage.hypothesis,"[0.834, 0.872]",null,not an error (tool reading),verify linearise: all-affine 0.8338 + restore gain 0.0379 = 0.872
+churn100-s7-c1,mismatch,freetext_active_share,operations.usage_hinge.hypothesis,47.0,34.55,not an error (tool reading),879 active for 47.0% of customers without a voice-mail plan (conditional)
+churn100-s7-c1,mismatch,freetext_active_share,operations.usage_hinge.evidence[1].narrative,47.0,34.55,not an error (tool reading),879 active for 47.0% of customers without a voice-mail plan (conditional)
+churn100-s7,mismatch,freetext_active_share,operations.usagePathway.hypothesis,46.0,34.1,not an error (tool reading),879 active 46.4% of no-voice-mail rows; 10552 on in 64% of the top day-minute decile
+churn100-s7,mismatch,freetext_active_share,operations.usageResponse.hypothesis,64.0,10.9,not an error (tool reading),879 active 46.4% of no-voice-mail rows; 10552 on in 64% of the top day-minute decile
+churn100-s7,warn,prose_rounding,drafted.blocks[0:ann_80][2],"""15%""",14.4801,"ERROR (rounding), corrected (E12)",cited value 14.48%
+churn100-s7,warn,prose_rounding,drafted.readdown.ann_80.evidence[2],"""15%""",14.4801,"ERROR (rounding), corrected (E12)",cited value 14.48%
+churn100-s7,warn,lint,blocks[0][2],null,null,"ERROR (rounding), corrected (E12)",cited value 14.48%
+churn100-s7,warn,lint,readdown.ann_80.evidence[2],null,null,"ERROR (rounding), corrected (E12)",cited value 14.48%
+churn100-s9,mismatch,freetext_readout,operations.day_eve_charge_cascade.hypothesis,2.17,0.286115005397484,not an error (tool reading),9165 -> output weight 2.1706 (tool took 10233)
+churn200-s0,mismatch,freetext_active_count,operations.cscLowDayGate.hypothesis,8,647,not an error (tool reading),2546 active on 8 of 4000 rows (tool took 104)
+churn200-s0,warn,freetext_formula,operations.cscVetoedByUsage.hypothesis,"""5611 = relu(0.80*7701 - 1.16)""","{""node"": ""5611"", ""max_abs_err"": 0.3685188184971757, ""rows_off"": 12}",listed (approximate formula),max error 0.37 on 12 of 4000 rows
+churn200-s0,mismatch,prose_direction,drafted.blocks[2:ann_118][2],"""lowers""","""raises""",not an error (tool reading),the 'lowers' clause cites C122 (day minutes lowers); C134 is the subgroup claim
+churn200-s4,mismatch,freetext_active_share,operations.day_eve_hinge.hypothesis,98.0,72.675,not an error (tool reading),6038 on for 98.0% of no-voice-mail rows (conditional)
+churn200-s4,mismatch,prose_direction,drafted.readdown.ann_85.evidence[2],"""raises""","""lowers""",not an error (tool reading),'raise' is about evening minutes (C050); the voice-mail clause says 35% to 5%
+churn200-s7,mismatch,freetext_active_share,operations.usageResponse.hypothesis,41.4,30.575,not an error (tool reading),879 active for 41.4% of no-voice-mail rows (conditional)
+churn200-s7,mismatch,freetext_active_share,operations.usageResponse.evidence[1].payload.local_tables,41.4,30.575,not an error (tool reading),879 active for 41.4% of no-voice-mail rows (conditional)
+churn200-s9,mismatch,freetext_active_count,operations.csc_tail.hypothesis,3,2,not an error (tool reading),verify subgroup: csc_tail acts on 3 rows (8-9 calls)
+heart-paper,warn,closed_form,operations.benign_profile_gate.evidence[0].payload.latex,[155.0],null,"listed (AAAI, closed-form display warning)",node ids in the written LaTeX
+heart-paper,warn,closed_form,operations.benign_profile_gate_534path.evidence[0].payload.latex,[155.0],null,"listed (AAAI, closed-form display warning)",node ids in the written LaTeX
+heart-paper,warn,closed_form,operations.chol_threshold.evidence[0].payload.latex,[3040.0],null,"listed (AAAI, closed-form display warning)",node ids in the written LaTeX
+heart-paper,warn,closed_form,operations.restbp_chol_interaction.evidence[0].payload.latex,"[0.529, 0.911, 2.41, 2379.0, 3240.0, 3240.0]",null,"listed (AAAI, closed-form display warning)",node ids in the written LaTeX
+heart-paper,warn,freetext_active_share,operations.benign_profile_gate.hypothesis,70.0,68.182,"listed (AAAI, rounding of activity share)","68.2% vs 70%, 19.0% vs 17.5%"
+heart-paper,mismatch,freetext_auc,operations.benign_profile_gate.hypothesis,"[0.897, 0.869]",null,"listed (AAAI, test-split AUC; not checkable on train)",stated on the test split
+heart-paper,warn,freetext_active_share,operations.chol_threshold.hypothesis,17.5,19.008,"listed (AAAI, rounding of activity share)","68.2% vs 70%, 19.0% vs 17.5%"
+heart-paper,mismatch,freetext_auc,operations.restbp_chol_interaction.hypothesis,"[0.897, 0.885]",null,"listed (AAAI, test-split AUC; not checkable on train)",stated on the test split
+heart-paper,mismatch,freetext_auc,operations.risk_aggregation_gate.hypothesis,"[0.897, 0.899]",null,"listed (AAAI, test-split AUC; not checkable on train)",stated on the test split
+heart-s0,warn,closed_form,operations.female_exertional_angina_gate.evidence[0].payload.latex,"[1.18, 1.41, 1.71, 3.39]",null,listed (closed-form display warning),written LaTeX coefficients
+heart-s0,warn,closed_form,operations.restecg2_relay_2447.evidence[0].payload.latex,"[1.02, 1.48]",null,listed (closed-form display warning),written LaTeX coefficients
+heart-s2-c1,mismatch,freetext_active_share,operations.age_hr_reserve_gate.hypothesis,100.0,33.058,not an error (tool reading),relays R3195 active 100% and C3464 active 92.6% (tool compared the gate)
+heart-s2-c1,mismatch,freetext_active_share,operations.st_slope_chol_gate.hypothesis,93.0,48.347,not an error (tool reading),relays R3195 active 100% and C3464 active 92.6% (tool compared the gate)
+heart-s2-c1,warn,freetext_formula,operations.st_slope_chol_gate.evidence[0].payload.simplified,"""1476 = relu(-0.239 + 0.776 oldpeak + 1.150 slope:2 - 0.384 chol)""","{""node"": ""1476"", ""max_abs_err"": 0.3401215217048821, ""rows_off"": 9}",listed (approximate formula),'nearly' stated; max error 0.34 on 9 of 242 rows
+heart-s2-c3,mismatch,prose_direction,drafted.worth_checking[5],"""lowers""","""raises""",not an error (tool reading),probe --claim C39: the part contributes -0.19 below the threshold (it lowers the risk there)
+heart-s2,warn,freetext_formula,operations.st_slope_chol_gate.evidence[0].payload.simplified,"""1476 = relu(-0.229 + 0.770 oldpeak + 1.145 slope:2 - 0.378 chol)""","{""node"": ""1476"", ""max_abs_err"": 0.33525648175109035, ""rows_off"": 9}",listed (approximate formula),'simplified' form; max error 0.34 on 9 of 242 rows
+heart-s5-c1,mismatch,freetext_active_share,operations.bp_offset_gate.hypothesis,100.0,57.851,not an error (tool reading),overall 58% stated and reproduced; 100% is the low-BP group with the gate open
+heart-s5-c1,mismatch,freetext_active_share,operations.bp_offset_gate.evidence[1].payload.activity,100.0,57.851,not an error (tool reading),overall 58% stated and reproduced; 100% is the low-BP group with the gate open
+heart-s5-c1,warn,prose_rounding,drafted.blocks[0:additive][0],"""28%""",27.4963,"ERROR (rounding), corrected (E14)",cited values 27.50% and 26.45%
+heart-s5-c1,warn,prose_rounding,drafted.readdown.ann_35.evidence[3],"""27%""",26.4513,"ERROR (rounding), corrected (E14)",cited values 27.50% and 26.45%
+heart-s5-c2,mismatch,freetext_active_share,operations.bp_offset_gate.hypothesis,100.0,59.917,not an error (tool reading),overall 60% stated and reproduced; 100% is the low-BP group with the gate open
+heart-s5-c2,mismatch,freetext_active_share,operations.bp_offset_gate.evidence[1].payload.activity,100.0,59.917,not an error (tool reading),overall 60% stated and reproduced; 100% is the low-BP group with the gate open
+heart-s5-c3,mismatch,freetext_readout,operations.ischaemia_chain.hypothesis,0.938,0.048734311913227434,not an error (tool reading),"'0.9380' is a train AUC, not a readout weight"
+heart-s5-c3,mismatch,freetext_readout,operations.ischaemia_chain.hypothesis,0.938,0.048734311913227434,not an error (tool reading),"'0.9380' is a train AUC, not a readout weight"
+heart-s6,warn,closed_form,operations.sex_exang_interaction.evidence[0].payload.latex,"[47.0, 1213.0, 1213.0]",null,listed (closed-form display warning),node ids in the written LaTeX
+heart-s6,mismatch,freetext_auc,record.summary,"[0.926, 0.946]",null,not an error (tool reading),"verify linearise --core: core alone 0.9255, full 0.9457"
+heart-s8,mismatch,freetext_readout,operations.age_noangina_cp4_chain.hypothesis,-0.77,-0.5145260271567207,not an error (tool reading),"mean readout = -0.5145 x mean(3353 | cp:4, no angina) 1.493 = -0.77"
+heart-s8,mismatch,freetext_readout,operations.age_noangina_cp4_chain.hypothesis,-0.77,-0.5145260271567207,not an error (tool reading),"mean readout = -0.5145 x mean(3353 | cp:4, no angina) 1.493 = -0.77"
+heart100-s0,warn,lint,lead[0],null,null,"ERROR (rounding), corrected (E13)",cited value 19.3%
+heart100-s1,mismatch,freetext_active_share,operations.normal_ecg_st_gate.hypothesis,27.0,35.537,not an error (tool reading),4375 active 27.3%; 1801 active 54.6% at ca = 0
+heart100-s1,mismatch,freetext_active_share,operations.normal_ecg_st_gate.hypothesis,55.0,35.537,not an error (tool reading),4375 active 27.3%; 1801 active 54.6% at ca = 0
+heart100-s4,warn,freetext_formula,operations.angina_bp_chain.hypothesis,"""7659 = relu(1.04 exang:1 - 1.31)""","{""node"": ""7659"", ""max_abs_err"": 0.010185944208762399, ""rows_off"": 82}",listed (approximate formula),max error 0.010
+heart100-s4,mismatch,freetext_active_share,operations.angina_bp_chain.hypothesis,99.0,45.868,not an error (tool reading),6931 active for 81 of 82 angina patients (99%)
+heart100-s5,mismatch,freetext_readout,operations.bp_gated_ischaemia_amplifier.hypothesis,0.939,0.7474771956981915,not an error (tool reading),"'0.939' is an AUC; '2.14*290' is a fitted slope, not a readout weight"
+heart100-s5,mismatch,freetext_readout,operations.bp_gated_ischaemia_amplifier.hypothesis,0.939,0.7474771956981915,not an error (tool reading),"'0.939' is an AUC; '2.14*290' is a fitted slope, not a readout weight"
+heart100-s5,mismatch,freetext_readout,operations.bp_gated_ischaemia_amplifier.hypothesis,2.14,0.4387248584021854,not an error (tool reading),"'0.939' is an AUC; '2.14*290' is a fitted slope, not a readout weight"
+heart100-s6,mismatch,freetext_auc,operations.heart_disease_logit.hypothesis,"[0.905, 0.958]",null,listed (ambiguous),ablate --edge 47->0 --edge 1213->0: AUC 0.9036 (stated 0.905); method not stated
+heart100-s7,mismatch,freetext_active_count,operations.ischaemia_gate.hypothesis,98,84,not an error (tool reading),counterfactual 'without the veto': pre-activation + 1.2554*2961 > 0 on 98 rows
+heart100-s7,mismatch,freetext_active_count,operations.ischaemia_gate.evidence[1].payload.summary,98,84,not an error (tool reading),counterfactual 'without the veto': pre-activation + 1.2554*2961 > 0 on 98 rows
+heart100-s7,warn,prose_uncited,drafted.blocks[2:ann_38][1],"""168""","[""C19"", ""C35"", ""C80"", ""C83""]","ERROR (citation), corrected (E15)","the 168 bpm threshold is C83, ann_38's own claim"
+heart100-s7,warn,prose_uncited,drafted.readdown.ann_38.evidence[2],"""168""","[""C19"", ""C35"", ""C80"", ""C83""]","ERROR (citation), corrected (E15)","the 168 bpm threshold is C83, ann_38's own claim"
+krk-tuned-s0,mismatch,freetext_formula,operations.file_offset_tent.hypothesis,"""2949 = relu(1.12 + 0.649*(wr_file-4.55) - 0.652*(bk_file-5.04))""","{""node"": ""2949"", ""max_abs_err"": 2.42806408950429, ""rows_off"": 20984}",not an error (tool reading),formula is in raw board units; evaluated in raw units max error 0.0017
+monk2-paper,mismatch,prose_direction,drafted.lead[0],"""raises""","""lowers""",listed (AAAI; not an error),'rises' is the ramp; the gate 'pulls yes down' as C24 says
+monk2-paper,mismatch,prose_direction,drafted.readdown.ann_10.hypothesis[0],"""raises""","""lowers""",listed (AAAI; not an error),'rises' is the ramp; the gate 'pulls yes down' as C24 says
+monk2-s4,warn,freetext_formula,operations.a5_a3_bonus_gate.hypothesis,"""unit 1717 = ReLU(-0.52 - 0.03 z(a1:3) - 0.05 z(a5:1) - 0.56 z(a6:1))""","{""node"": ""1717"", ""max_abs_err"": 0.011243061200731042, ""rows_off"": 128}",listed (approximate formula),max error 0.011
+monk2-s7,mismatch,freetext_readout,operations.linear_count_ramp.hypothesis,-0.888,1.0,not an error (tool reading),pool 389 -> output weight -0.8884
+monk2-s7,mismatch,freetext_readout,operations.linear_count_ramp.hypothesis,-0.888,1.0,not an error (tool reading),pool 389 -> output weight -0.8884
+monk2-s7,mismatch,prose_number,drafted.blocks[1:ann_24][1],"[""97%""]",null,not an error (tool reading),97% is C01's lowest purity 0.973 (estimate.value)
+monk2-s7,mismatch,prose_number,drafted.readdown.ann_26.evidence[1],"[""97%""]",null,not an error (tool reading),97% is C01's lowest purity 0.973 (estimate.value)
+monk2-s7,mismatch,prose_number,drafted.worth_checking[0],"[""97%""]",null,not an error (tool reading),97% is C01's lowest purity 0.973 (estimate.value)

@@ -18,7 +18,7 @@
   "function_preservation_max_abs_err": 8.33e-16,
   "closed_form_max_abs_err": 0.065,
   "protocol_version": "v3",
-  "resisted": "Nothing structural. Closed-form error 0.065 is 3-s.f. rounding on a linear leaf with range -33..+32. The a1=1/count-3 boundary is pattern-specific (74% positive), described via per-indicator weights rather than a clean rule. One root evidence payload says a1=3 '108/108 positive' (correct: 107/107; narrative corrected, payload not).",
+  "resisted": "Nothing structural. Closed-form error 0.065 is 3-s.f. rounding on a linear leaf with range -33..+32. The a1=1/count-3 boundary is pattern-specific (74% positive), described via per-indicator weights rather than a clean rule. One root evidence payload says a1=3 '108/108 positive' (correct: 107/107; narrative corrected, payload corrected by the 2026-11-11 errata).",
   "tool_bugs": "Root annotate failed when subgraph_nodes included child exits ('already covered'); worked with output + unconnected inputs. Sigmoid saturation (|logit| up to ~130) makes many outputs tie at exactly 1.0, so the sigmoid AUC (0.807, = fitness) is higher than the logit ranking AUC (0.734).",
   "rule_agreement": "Learned only the upper edge (>=3 first values, >=4 when a1=2, makes output negative); no lower edge, so 0-1 first values get the highest logits; ignores the count entirely when a1=3. Predicts positive on 85.5% of train rows; train accuracy 0.472.",
   "summary": "Additive logit under a saturating sigmoid, dominated by ReLU node 263 (about 19 with no first values, dropping 6.8-9.3 per first value of a2, a3, a4, a6). Direct linear term penalises a1=1 and a5=1 (about -15 each) and gives a1=3 +24.9. Nodes 1855 and 3471 are minor.",
@@ -46,5 +46,14 @@
     },
     "full_coverage": true,
     "agrees_with_agent": true
-  }
+  },
+  "errata": [
+    {
+      "date": "2026-11-11",
+      "location": "operations.upper_edge_count_classifier.evidence[2].payload.positive_rate_by_a1_and_first_value_count (DB) and record.resisted",
+      "was": "a1=3: '108/108 pos'",
+      "now": "'107/107 pos'",
+      "ref": "experiments/errata/2026-11-11/ERRATA.md"
+    }
+  ]
 }
