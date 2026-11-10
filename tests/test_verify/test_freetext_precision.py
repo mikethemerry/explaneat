@@ -181,7 +181,7 @@ def test_saturation_idiom_and_adjectives_are_not_direction_words():
 @pytest.mark.slow
 @pytest.mark.db
 def test_checker_precision_on_the_labelled_set():
-    """<= 5 of the 47 triaged false positives flagged (mismatch or warn), every one of the 14
+    """<= 5 of the 47 triaged false positives flagged (mismatch or warn), every one of the 15
     errata (E13 withdrawn) caught on the pre-errata snapshot, and E13 not flagged. Needs the
     research database (read only) or the verify cache."""
     from explaneat.verify import labelled
@@ -196,5 +196,5 @@ def test_checker_precision_on_the_labelled_set():
     assert fp["false_positives"] <= 5, [(r["label"], r["location"]) for r in fp["rows"] if r["still_flagged"]]
     er = labelled.errata_caught(lambda t: recheck(t, cache=True))
     missed = [k for k, v in er["errata"].items() if not v["caught"]]
-    assert er["n"] == 14 and not missed, missed
+    assert er["n"] == 15 and not missed, missed      # E1-E16 without the withdrawn E13
     assert not er["withdrawn"]["E13"]["flagged"], er["withdrawn"]["E13"]

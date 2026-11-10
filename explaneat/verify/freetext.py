@@ -1175,6 +1175,50 @@ def per_sd_statements(text: str, names: Names):
     return out
 
 
+ONLY_THROUGH = re.compile(r"(?P<feats>[A-Za-z][\w:\-]*(?:\s*(?:,|and)\s*[A-Za-z][\w:\-]*){0,4})\s+"
+                          r"(?:influences?|affects?|acts?|enters?|reach(?:es)?|feeds?)\s+(?:the\s+)?"
+                          r"(?:output|prediction|logit|risk|model)?\s*only\s+(?:through|via)\b", re.I)
+NO_DIRECT = re.compile(r"(?P<feat>[A-Za-z][\w:\-]*)\s+has\s+no\s+direct\s+(?:edge|connection|term|path)", re.I)
+
+
+def _direct_weight(names: Names, col: int) -> Optional[float]:
+    """The summed weight of the enabled edges from the input column ``col`` straight to an output."""
+    from ..analysis.explanation_tools import input_column
+    outs = set(names.vm.m.out_ids)
+    ws = []
+    for c in names.st.connections:
+        src = str(c.from_node)
+        n = names.nodes.get(src)
+        if c.enabled and str(c.to_node) in outs and n is not None and n.type == NodeType.INPUT \
+                and input_column(src) == col and abs(float(c.weight)) > 0:
+            ws.append(float(c.weight))
+    return float(sum(ws)) if ws else None
+
+
+def only_through_statements(text: str, names: Names):
+    """"oldpeak and thal:7 influence the output ONLY through these gates" / "oldpeak has no direct
+    edge": a variable with an enabled edge straight to the output is not only reached through the
+    gates (heart-s5, E16)."""
+    out = []
+    for m in ONLY_THROUGH.finditer(text):
+        feats = [f.strip() for f in re.split(r"\s*(?:,|\band\b)\s*", m.group("feats")) if f.strip()]
+        for f in feats:
+            col = names._col(f)
+            if col is None:
+                continue
+            w = _direct_weight(names, col)
+            out.append(_statement("only_through", f"{f}: {m.group(0)}", "ok" if w is None else "mismatch",
+                                  stated="no direct edge", model=None if w is None else {"direct_weight": round(w, 4)}))
+    for m in NO_DIRECT.finditer(text):
+        col = names._col(m.group("feat"))
+        if col is None:
+            continue
+        w = _direct_weight(names, col)
+        out.append(_statement("only_through", m.group(0), "ok" if w is None else "mismatch",
+                              stated="no direct edge", model=None if w is None else {"direct_weight": round(w, 4)}))
+    return out
+
+
 def n_statements(text: str, names: Names):
     out = []
     for m in NTRAIN.finditer(text):
@@ -1323,6 +1367,7 @@ def check_text(text: str, loc: str, names: Names, groups: Groups, metrics: Optio
     found += node_value_statements(masked, names, groups, exits)
     found += mean_risk_statements(masked, names)
     found += per_sd_statements(masked, names)
+    found += only_through_statements(masked, names)
     ns = n_statements(masked, names)
     if loc.endswith(".payload.n"):
         for s in ns:      # a payload's n may be a subgroup's size unless it says otherwise

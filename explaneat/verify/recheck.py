@@ -639,10 +639,10 @@ def lint_prose(layer: Dict[str, Any], computed_claims: Sequence[Dict[str, Any]])
 
 
 # ============================================================================ the whole re-check
-CLAIMS_CACHE_VERSION = 1
+CLAIMS_CACHE_VERSION = 2   # 2: the code digest is taken when the module is imported
 
 
-def _code_digest() -> str:
+def _code_digest_now() -> str:
     """A digest of the code that computes claims (so a code change invalidates the cache)."""
     import hashlib
     from pathlib import Path
@@ -652,6 +652,16 @@ def _code_digest() -> str:
         if p.is_file():
             h.update(p.read_bytes())
     return h.hexdigest()[:16]
+
+
+# taken once, at import: the digest of the code this process actually runs. Reading the files at
+# call time let a long-running process that loaded old code write its claims under the new
+# code's key (2026-11-11).
+_CODE_DIGEST = _code_digest_now()
+
+
+def _code_digest() -> str:
+    return _CODE_DIGEST
 
 
 def claims_cache_key(vm) -> str:

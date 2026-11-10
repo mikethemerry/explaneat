@@ -369,11 +369,37 @@ def lint_reference_risk(text: str, layer: Optional[Dict[str, Any]]) -> List[str]
     return errs
 
 
+_NO_CHANGE = re.compile(r"\b(?:stays?|remains?|only (?:with|if|for|when)|changes? nothing|no effect|does not change|"
+                        r"nothing (?:for|with|if))\b", re.I)
+
+
+def lint_window(text: str, claims: List[Dict[str, Any]]) -> List[str]:
+    """An interaction that holds "only if" within the window it was verified on
+    (``statement.only_within_window``: the other group's risk changes beyond it) may not be stated
+    without the window: "stays at about 38%" must say "between 118 and 175 beats per minute" or
+    what happens beyond it (heart100-s7, ann_38)."""
+    errs = []
+    for c in claims:
+        st = c.get("statement") or {}
+        if c.get("type") != "interaction" or not st.get("only_within_window") or not _NO_CHANGE.search(text or ""):
+            continue
+        ch = st.get("change") or {}
+        ends = [(ch.get(k) or {}).get("text") for k in ("from", "to")]
+        pats = [_number_with_unit(e) for e in ends if e]
+        if pats and any(p is not None and p.search(text) for p in pats):
+            continue
+        bw = (st.get("weaker_group") or {}).get("beyond_window") or {}
+        where = "above " + ends[1] if bw.get("above") else "below " + (ends[0] or "")
+        errs.append(f"{c['id']}: '{st.get('weaker_group', {}).get('group')}' do not change only between {ends[0]} "
+                    f"and {ends[1]}; {where} they do: give the range or say what happens beyond it")
+    return errs
+
+
 def lint_points(text: str, claims: List[Dict[str, Any]], context: Sequence[float] = ()) -> List[str]:
     """A sentence may not quote two different points for the same fold: where a shape's hinge
     was reconciled with a threshold claim, quote the named (median) point, not the typical
     patient's own hinge. Percentages must be rounded once (:func:`lint_percents`)."""
-    errs = lint_percents(text, claims, context)
+    errs = lint_percents(text, claims, context) + lint_window(text, claims)
     for c in claims:
         pt = (c.get("shape") or {}).get("point") or {}
         if not (c.get("shape") or {}).get("point_reconciled") or not pt:

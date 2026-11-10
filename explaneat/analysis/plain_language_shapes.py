@@ -57,6 +57,7 @@ interaction claim on the same part reports no effect for that group's typical pa
 from __future__ import annotations
 
 import math
+import re
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
@@ -439,6 +440,22 @@ def _exception_within(alt: str, conds: List[Dict[str, Any]], idx_all: np.ndarray
     return ex
 
 
+def _share_among_folds(threshold_claim: Dict[str, Any], group: str) -> float:
+    """The share of a threshold claim's fold patients in ``group`` (its ``evidence.who``); a group
+    "... other than <label>" is the complement of that label's category."""
+    cats = (((threshold_claim.get("evidence") or {}).get("who") or {}).get("categories")) or []
+    for c in cats:
+        if c.get("group") == group:
+            return float(c.get("share_in") or 0.0)
+    mm = re.search(r"other than (?:an? |the )?(.+)$", group)
+    if mm:
+        lab = mm.group(1).strip().lower()
+        for c in cats:
+            if str(c.get("label", "")).lower().lstrip("a ").strip() in lab or lab in str(c.get("label", "")).lower():
+                return 1.0 - float(c.get("share_in") or 0.0)
+    return 0.0
+
+
 def cross_claim_conflicts(claims: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Shape exceptions that contradict an interaction claim of the same part: the exception names
     a group (with a definite shape, not ``mixed within subgroup``) for whose typical patient an
@@ -469,6 +486,40 @@ def cross_claim_conflicts(claims: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                                     "why": f"{o.get('id')} reports no effect for the typical {who.split(' ', 1)[-1] if who else 'patient'}"}
                             out.append(conf)
                             sh.setdefault("conflicts", []).append(conf)
+    # an interaction claim says a group does not change, but only within its window; a threshold
+    # claim of the same part and variable puts that group's fold (or the folds' spread) outside it
+    for c in claims:
+        if c.get("type") != "interaction":
+            continue
+        st = c.get("statement") or {}
+        ch = st.get("change") or {}
+        lo = (ch.get("from") or {}).get("value")
+        hi = (ch.get("to") or {}).get("value")
+        if lo is None or hi is None:
+            continue
+        for g in (st.get("weaker_group"),):
+            if not g or g.get("risk_from") is None or abs((g.get("risk_to") or 0) - (g.get("risk_from") or 0)) > 1e-6:
+                continue
+            for o in by_part.get((c.get("annotation") or {}).get("id"), []):
+                if o.get("type") != "threshold" or (o.get("statement") or {}).get("variable") != st.get("variable"):
+                    continue
+                th = (o.get("estimate") or {}).get("threshold") or {}
+                if th.get("by_group"):
+                    folds = [f["value"] for f in th["by_group"] if f.get("group") == g.get("group")]
+                elif _share_among_folds(o, g.get("group") or "") >= 0.3:
+                    # legacy claims (no per-group folds): the spread of the folds, when the group
+                    # makes up a good part of the patients with a fold
+                    folds = list(th.get("p10_p90_across_patients") or [])
+                else:
+                    folds = []
+                outside = [f for f in folds if f is not None and (f > hi + 1e-9 or f < lo - 1e-9)]
+                if outside:
+                    conf = {"claim": c.get("id"), "exception": "no change", "group": g.get("group"),
+                            "other": o.get("id"),
+                            "why": f"{o.get('id')} puts a fold at {outside[0]:.4g}, outside the window "
+                                   f"{lo:.4g} to {hi:.4g} in which {c.get('id')} reports no change"}
+                    out.append(conf)
+                    (c.setdefault("checks_cross", [])).append(conf)
     return out
 
 
@@ -501,7 +552,7 @@ def attach_shapes(m, parts, claims: List[Dict[str, Any]]) -> None:
     part_by_id = {p.id: p for p in parts}
     folds: Dict[str, List[Dict[str, Any]]] = {}
     for c in claims:
-        if c["type"] == "threshold" and c.get("verified"):
+        if c["type"] == "threshold" and c.get("verified") and not c["statement"]["threshold"].get("by_group"):
             folds.setdefault(c["statement"]["variable"], []).append(
                 {"claim": c.get("id"), "part": c["annotation"]["id"], "kind": c["statement"]["kind"],
                  "value": c["statement"]["threshold"]["value"], "text": c["statement"]["threshold"]["text"],

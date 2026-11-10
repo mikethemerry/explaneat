@@ -226,6 +226,13 @@ def interaction_sentence(layer, c) -> Dict[str, Any]:
     numbers = (f"for a typical {one}, {tail_v} moves {_pred(layer)} from {_about(sg.get('risk_from'))} to "
                f"{_about(sg.get('risk_to'))} if {sg['cond']}, and from {_about(wg.get('risk_from'))} to "
                f"{_about(wg.get('risk_to'))} if {wg['cond']}")
+    bw = (wg.get("beyond_window") or {}) if st.get("only_within_window") else {}
+    if bw.get("above"):
+        numbers += (f" (above {ch['to']['text']} it changes for them too: from {_about(bw['above']['risk_from'])} "
+                    f"to {_about(bw['above']['risk_to'])} at {bw['above']['to_text']})")
+    elif bw.get("below"):
+        numbers += (f" (below {ch['from']['text']} it changes for them too: from {_about(bw['below']['risk_from'])} "
+                    f"at {bw['below']['from_text']} to {_about(bw['below']['risk_to'])})")
     if not consistent:
         shp = "" if v["kind"] == "category" else shape_phrase(layer, c, v)
         text = (("this changes the prediction only slightly: " if _conf(c).get("size") == "slight" else "")

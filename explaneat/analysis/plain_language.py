@@ -64,6 +64,7 @@ NEGLIGIBLE = 0.05            # |log-odds| below this: no effect worth a claim
 MIN_INTERACTION = 0.1        # |difference in log-odds| an interaction must reach
 MIN_THRESHOLD_EFFECT = 0.1   # |log-odds| the effect past a fold must reach
 MAX_CONTRADICTING = 0.10     # share of patients allowed the opposite sign
+WINDOW_RISK_CHANGE = 0.005  # an interaction group "does not change" beyond its window: less than this
 MAX_THRESHOLD_SPREAD = 0.20  # IQR of the folds, as a share of the observed range
 MIN_THRESHOLD_PATIENTS = 5
 MAX_INTERACTIONS_PER_PART = 4
@@ -1579,6 +1580,32 @@ def _folds(L: np.ndarray, grid: np.ndarray):
     return onset, offset, d_on, d_off
 
 
+def folds_by_group(t_all: np.ndarray, rows: np.ndarray, groups: Sequence[Tuple[Dict[str, Any], np.ndarray]],
+                   min_n: int = MIN_THRESHOLD_PATIENTS) -> Optional[List[Dict[str, Any]]]:
+    """Per-group folds when the pooled median is a fold no group has: ``groups`` are (description,
+    row mask) pairs of one categorical; the split applies when the pooled median of ``t_all[rows]``
+    lies outside the 10th-90th percentile of every group with at least ``min_n`` patients (each
+    group then has its own fold, e.g. about 160 beats per minute with a normal resting ECG and
+    about 176 otherwise; heart100-s7, ann_38). Returns the groups' folds or None."""
+    pooled = float(np.median(t_all[rows]))
+    out = []
+    for desc, g in groups:
+        gr = rows & g
+        if int(gr.sum()) < min_n:
+            continue
+        ts = t_all[gr]
+        f10, f90 = np.percentile(ts, [10, 90])
+        if f10 - 1e-9 <= pooled <= f90 + 1e-9:
+            return None
+        out.append({**desc, "value": float(np.median(ts)), "p10_p90": [float(f10), float(f90)], "n": int(gr.sum())})
+    if len(out) < 2:
+        return None
+    covered = sum(o["n"] for o in out)
+    if covered < 0.9 * int(rows.sum()):
+        return None
+    return sorted(out, key=lambda o: o["value"])
+
+
 def threshold_claims(m: PlainModel, part: Part) -> List[Dict[str, Any]]:
     out = []
     for bname in part.variables:
@@ -1639,6 +1666,28 @@ def threshold_claims(m: PlainModel, part: Part) -> List[Dict[str, Any]]:
         if v.kind == "count":
             step = int(math.floor(med)) + 1
             th.update({"count_step": step, "text": v.fmt(step)})
+        # the fold depends on a category: one fold per group, not a pooled median no patient has
+        by_group = None
+        if cond is None:
+            for w in part.variables:
+                W = m.var_by_base[w]
+                if w == bname or not W.is_category():
+                    continue
+                gs = []
+                for code in W.all_codes:
+                    li = W.level(code)
+                    gs.append(({"variable": w, "code": code, "label": li["label"], "group": li["group"],
+                                "cond": li["cond"]}, np.asarray(W.raw_train == code)))
+                fb = folds_by_group(t_all, rows, gs)
+                if fb is not None:
+                    by_group = [{**g, "value": sig(g["value"]), "text": v.fmt(round(g["value"], v.decimals)),
+                                 "p10_p90": _sig_list(g["p10_p90"]),
+                                 "p10_p90_text": [v.fmt(round(x, v.decimals)) for x in g["p10_p90"]]} for g in fb]
+                    break
+        if by_group:
+            th["by_group"] = by_group
+            th["pooled_median_is_no_group_fold"] = True
+            th["text"] = " and ".join(f"{g['text']} for {g['group']}" for g in by_group)
         raw_t = typical_raw(m, rows)
         ctx_threshold = {"var": bname, "typical": raw_t, "rows": rows}
         pa, pb = risk_pair(m, raw_t, v, va, vb, part.input_nodes)
@@ -1654,7 +1703,11 @@ def threshold_claims(m: PlainModel, part: Part) -> List[Dict[str, Any]]:
                           "p10_p90_across_patients": _sig_list([f10, f90]),
                           "p10_p90_text": [v.fmt(round(f10, v.decimals)), v.fmt(round(f90, v.decimals))],
                           "method": "median over patients of the fold of each patient's curve "
-                                    "(log-odds against the variable, changed only where this part reads it)"},
+                                    "(log-odds against the variable, changed only where this part reads it)",
+                          **({"by_group": by_group,
+                              "by_group_note": "the pooled median lies outside every group's 10th-90th "
+                                               "percentile: quote each group's fold, not the median"}
+                             if by_group else {})},
             "fold_depth": {"value": sig(hinge), "unit": "log-odds",
                            "method": "median distance at the flat end between the curve and the "
                                      "straight-line continuation of its moving part"},
@@ -1787,6 +1840,25 @@ def interaction_claims(m: PlainModel, part: Part, total_effect: Dict[str, float]
                            "risk_from": sig(pa), "risk_to": sig(pb),
                            "part_effect": sig(float(np.mean(m.effect(m.X[rows], A, sa[0], sa[1], scope))))
                            if rows.any() else None})
+        window = None
+        if not A.is_category():
+            lo_a, hi_a = float(np.min(A.raw_train)), float(np.max(A.raw_train))
+            window = {"from": {"value": sig(sa[0]), "text": A.fmt(round(sa[0], A.decimals))},
+                      "to": {"value": sig(sa[1]), "text": A.fmt(round(sa[1], A.decimals))},
+                      "observed": [A.fmt(round(lo_a, A.decimals)), A.fmt(round(hi_a, A.decimals))],
+                      "note": "the group risks are verified between these values only"}
+            for gi, (cg, g) in enumerate(zip(ctx_groups, groups)):
+                below = risk_pair(m, raw, A, lo_a, sa[0], None, cg["extra_raw"])
+                above = risk_pair(m, raw, A, sa[1], hi_a, None, cg["extra_raw"])
+                beyond = {}
+                if abs(below[1] - below[0]) > WINDOW_RISK_CHANGE:
+                    beyond["below"] = {"from_text": A.fmt(round(lo_a, A.decimals)), "risk_from": sig(below[0]),
+                                       "risk_to": sig(below[1])}
+                if abs(above[1] - above[0]) > WINDOW_RISK_CHANGE:
+                    beyond["above"] = {"to_text": A.fmt(round(hi_a, A.decimals)), "risk_from": sig(above[0]),
+                                       "risk_to": sig(above[1])}
+                if beyond:
+                    g["beyond_window"] = beyond
         strong, weak = (0, 1) if abs(m1) >= abs(m0) else (1, 0)
         ms, mw = groups[strong]["estimate"] or 0.0, groups[weak]["estimate"] or 0.0
         ew = e1 if weak == 0 else e0
@@ -1803,7 +1875,10 @@ def interaction_claims(m: PlainModel, part: Part, total_effect: Dict[str, float]
                               "change": _change_desc(A, sa[0], sa[1], sa[2], sa[3]),
                               "direction": "raises" if ms > 0 else "lowers",
                               "pattern": pattern, "stronger_group": groups[strong],
-                              "weaker_group": groups[weak], "strength": strength(ms)})
+                              "weaker_group": groups[weak], "strength": strength(ms),
+                              **({"window": window} if window else {}),
+                              **({"only_within_window": True}
+                                 if pattern == "only_if" and groups[weak].get("beyond_window") else {})})
         c["estimate"] = estimate_block(d, None, "difference between the two groups (first minus second) "
                                        "of the mean change in the model's log-odds when the main "
                                        "variable changes everywhere")

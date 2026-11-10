@@ -49,6 +49,9 @@ ERRATA: Dict[str, Dict[str, Any]] = {
     "E12": {"label": "churn100-s7", "loc": r"(drafted\.)?(blocks\[0(:ann_80)?\]\[2\]|readdown\.ann_80\.evidence\[2\])"},
     "E14": {"label": "heart-s5-c1", "loc": r"drafted\.(blocks\[0:[^\]]+\]\[0\]|readdown\.ann_35\.evidence\[3\])"},
     "E15": {"label": "heart100-s7", "loc": r"drafted\.(blocks\[2:ann_38\]\[1\]|readdown\.ann_38\.evidence\[2\])"},
+    # errata v2 (found by a blind verifier): its "before" state is the v2 snapshot
+    "E16": {"label": "heart-s5", "snapshot": "2026-11-11-v2", "loc": r"operations\.heart_disease_logit\.hypothesis",
+            "check": "freetext_only_through"},
 }
 
 
@@ -114,8 +117,10 @@ def sweep(run: Callable[[Target], Dict[str, Any]], labels: Optional[Sequence[str
     return {"findings": rows}
 
 
-def snapshot_target(label: str) -> Target:
-    d = SNAPSHOT / label
+def snapshot_target(label: str, snapshot: Optional[str] = None) -> Target:
+    """The pre-errata state of ``label``: ``snapshot/`` of 2026-11-11, or another errata
+    directory's (``"2026-11-11-v2"``)."""
+    d = (ERRATA_DIR.parent / snapshot / "snapshot" / label) if snapshot else SNAPSHOT / label
     rec, lay, ops = (_read(d / n) if (d / n).is_file() else None
                      for n in ("record.json", "plain_language.json", "operations.json"))
     gid = (rec or lay).get("genome_id")
@@ -188,11 +193,12 @@ def errata_caught(run: Callable[[Target], Dict[str, Any]], log=lambda *a: None) 
     out = {}
     for eid, spec in ERRATA.items():
         label = spec["label"]
-        if label not in reports:
-            log(f"recheck snapshot {label}")
-            reports[label] = run(snapshot_target(label))
+        key = (label, spec.get("snapshot"))
+        if key not in reports:
+            log(f"recheck snapshot {label} {spec.get('snapshot') or ''}")
+            reports[key] = run(snapshot_target(label, spec.get("snapshot")))
         rx = re.compile(spec["loc"])
-        hits = [f for f in reports[label]["findings"]
+        hits = [f for f in reports[key]["findings"]
                 if f["severity"] != "info" and rx.fullmatch(f["location"])
                 and (spec.get("check") is None or f["check"] == spec["check"])]
         if "stated" in spec:
@@ -205,15 +211,16 @@ def errata_caught(run: Callable[[Target], Dict[str, Any]], log=lambda *a: None) 
     withdrawn = {}
     for eid, spec in WITHDRAWN.items():      # must stay silent on the pre-errata text
         label = spec["label"]
-        if label not in reports:
+        key = (label, None)
+        if key not in reports:
             log(f"recheck snapshot {label}")
-            reports[label] = run(snapshot_target(label))
+            reports[key] = run(snapshot_target(label))
         rx = re.compile(spec["loc"])
-        hits = [f for f in reports[label]["findings"] if f["severity"] != "info" and rx.fullmatch(f["location"])]
+        hits = [f for f in reports[key]["findings"] if f["severity"] != "info" and rx.fullmatch(f["location"])]
         withdrawn[eid] = {"label": label, "flagged": bool(hits),
                           "findings": [{k: f.get(k) for k in ("check", "location", "severity", "note")} for f in hits]}
     return {"n": len(out), "caught": sum(1 for v in out.values() if v["caught"]), "errata": out,
-            "withdrawn": withdrawn, "reports": reports}
+            "withdrawn": withdrawn, "reports": {f"{k[0]}{'@' + k[1] if k[1] else ''}": v for k, v in reports.items()}}
 
 
 def _states(f: Dict[str, Any], want) -> bool:
