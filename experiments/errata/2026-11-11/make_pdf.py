@@ -23,10 +23,14 @@ def esc(s):
     return s
 
 
+def quotes(s):
+    return re.sub(r'"([^"]*)"', r"``\1''", s)
+
+
 def inline(s):
     out, i = [], 0
     for m in re.finditer(r"`([^`]+)`|\*\*([^*]+)\*\*", s):
-        out.append(esc(s[i:m.start()]))
+        out.append(esc(quotes(s[i:m.start()])))
         if m.group(1) is not None:
             out.append(r"\texttt{\small " + esc(m.group(1)).replace("/", r"/\allowbreak{}")
                        .replace(".", r".\allowbreak{}").replace(r"\_", r"\_\allowbreak{}")
@@ -34,7 +38,7 @@ def inline(s):
         else:
             out.append(r"\textbf{" + inline(m.group(2)) + "}")
         i = m.end()
-    out.append(esc(s[i:]))
+    out.append(esc(quotes(s[i:])))
     return "".join(out)
 
 
