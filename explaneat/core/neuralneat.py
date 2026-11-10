@@ -844,6 +844,12 @@ class NodeMapping(object):
                 node_tracker[input_id]["on_path_to_input"] = True
             del trace_stack[0]
 
+        # Several outputs (opt-in by config, num_outputs > 1): put every output
+        # in one final layer, in output_keys order.  Single-output genomes skip
+        # this, so their mapping is the original one bit for bit.
+        if len(genome_config.output_keys) > 1:
+            self._align_outputs(node_tracker, genome_config.output_keys)
+
         # Do final computations of node properties
         for _, node in node_tracker.items():
             # Is valid?
@@ -880,6 +886,38 @@ class NodeMapping(object):
             node_id for node_id, node in node_tracker.items() if not node["is_valid"]
         ]
 
+    @staticmethod
+    def _align_outputs(node_tracker, output_keys):
+        """Multi-output genomes: move every output to depth D = the deepest valid node.
+
+        NeuralNeat returns the layer that holds node 0, so with several
+        outputs at different longest-path depths it would return only some
+        of them (and hidden nodes sharing node 0's depth).  Outputs must be
+        sinks (no enabled connection into a valid node; ``OutputSinkGenome``
+        guarantees this), so moving them deeper does not change the function:
+        each output still reads the same sources, through skip connections.
+        Every valid hidden node feeds some output, so its depth is < D and the
+        final layer holds exactly the outputs.
+        """
+        out_set = set(output_keys)
+
+        def valid(n):
+            return n["is_input"] or n["is_output"] or (
+                n["on_path_to_input"] and n["on_path_to_output"])
+
+        for o in output_keys:
+            for t in node_tracker[o]["output_ids"]:
+                if valid(node_tracker[t]):
+                    raise GenomeNotValidError(
+                        f"multi-output genome: output {o} feeds node {t}; outputs "
+                        "must be sinks (use multiclass.OutputSinkGenome)")
+        D = max(n["depth"] for nid, n in node_tracker.items() if valid(n))
+        if D == 0:
+            raise GenomeNotValidError("multi-output genome: no output has an input")
+        for o in out_set:
+            node_tracker[o]["depth"] = D
+            node_tracker[o]["depths"] = [D]
+
     @property
     def width(self):
         layer_counts = {}
@@ -899,10 +937,18 @@ class NodeMapping(object):
     def _create_layer_mapping(self):
         self.layers = {}
         node_map = self.valid_node_mapping
+        node_order = list(node_map.items())
+        output_keys = self.config.genome_config.output_keys
+        if len(output_keys) > 1:
+            # Multi-output: the final (output) layer lists the outputs in
+            # output_keys order, so forward() returns [N, k] columns 0..k-1.
+            out_set = set(output_keys)
+            node_order = [(n, node_map[n]) for n, _ in node_order if n not in out_set] + [
+                (o, node_map[o]) for o in output_keys if o in node_map]
 
         # Create default layer information and add nodes
         # to the appropriate layer
-        for node_id, node in node_map.items():
+        for node_id, node in node_order:
             if not node["depth"] in self.layers:
                 # Default layer
                 self.layers[node["depth"]] = {
