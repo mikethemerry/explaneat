@@ -9,7 +9,56 @@ explanation is likely to be.
 
 ## Summary
 
-@@SUMMARY@@
+Under this protocol, **none of the runs is a good candidate for "not explained within our
+approach"**. Every best genome is close to a sparse linear model:
+- each has 0–5 hidden ReLU units, each fed by 1–5 pixels;
+- 88–100% of its connections are direct pixel → output weights.
+
+The 3-vs-8 models match logistic regression: test AUC 0.993–0.994 vs LR 0.9937 and a
+small GBM 0.9997.
+
+The 10-class models are under-trained: test accuracy 0.74–0.80 vs multinomial LR 0.91 and
+GBM 0.96. Their single hidden unit, where there is one, is always on, so it is linear on
+the data.
+
+Two reasons stand out, both visible in the logs:
+1. **One species.** Every run has a single species (two at most), so only 2 elites are kept.
+   The elite champion is retrained every generation, and new structure rarely beats it. In
+   mnist38-s0 the same champion genome (key 15891) leads from generation 64 to 99, and in
+   the 500-generation run it leads until generation 313. The 500-generation
+   run (a strict continuation of mnist38-s0) ends with 4 hidden units, a test AUC 0.0002
+   higher, and no added depth.
+2. **Training budget.** With 5 backprop epochs per generation, mnist10 is still improving at
+   generation 99. Five times the epochs (mnist10-e25-s0) reaches 0.80 test accuracy, but
+   the network shape stays the same.
+
+**For a harder candidate:**
+- **Raise speciation.** Lower `compatibility_threshold` or add a species target, so
+  structural innovations survive.
+- **Train longer per generation.**
+- **Grow structure.** Initialise with hidden nodes, or raise `node_add_prob` and the bias
+  init.
+- **Start mnist10 from `full_direct`.**
+
+These are suggestions only; none was run. The existing models are imported and loadable in
+the UI/MCP, and every tool check passes.
+
+| run | test | hidden | conns | inputs used | genome id |
+|---|---|---|---|---|---|
+| mnist38-s0 | AUC 0.9937 | 5 | 133 | 123/196 | `dbc4cbe9-968b-42d7-9b97-d3f6ae5b0abd` |
+| mnist38-s1 | AUC 0.9939 | 1 | 113 | 112/196 | `0a7fa35b-a747-4bab-9a16-d519af74f210` |
+| mnist38-s2 | AUC 0.9932 | 0 | 112 | 112/196 | `6187d7cf-ef21-45c5-8b6d-b9d4e8c57403` |
+| mnist38-g500-s0 (extension) | AUC 0.9939 | 4 | 131 | 122/196 | `7a51a92b-d432-4682-8a41-8e5669ae6e95` |
+| mnist10-s0 | acc 0.7522 | 1 | 568 | 414/784 | `f9d70c2b-5d5f-4c5c-b666-315571bb9777` |
+| mnist10-s1 | acc 0.7372 | 0 | 536 | 390/784 | `d362cbf2-585c-4595-a501-f75c1d6a6fda` |
+| mnist10-e25-s0 (extension) | acc 0.8039 | 1 | 741 | 500/784 | `e3ff56b5-326e-459b-9b52-c02e1224cac2` |
+
+**Extensions.** These were added because the protocol runs were far inside the time budget.
+They are labelled as extensions and are not part of the requested design:
+- **`mnist38-g500-s0`:** the same seed and config as mnist38-s0, for 500 generations. Its
+  first 100 generations are identical to mnist38-s0.
+- **`mnist10-e25-s0`:** mnist10 seed 0 with 25 backprop epochs per generation instead of 5
+  (`--epochs 25`).
 
 ## Data
 
@@ -87,7 +136,7 @@ trees.
   them. The single-output path is unchanged.
 - **Tests:** `tests/test_core/test_multiclass.py`, covering:
   - column order;
-  - NeuralNeat ↔ StructureNetwork parity on 10 random multi-output genomes;
+  - NeuralNeat ↔ StructureNetwork parity on 6 random multi-output genomes;
   - unconnected outputs;
   - rejection of non-sink outputs;
   - criterion and fitness;
@@ -131,7 +180,20 @@ reproduced the uninterrupted run exactly.
 Measured on an Apple M4 Pro, 1 thread per run, with up to 3 runs plus another agent's work
 on the machine.
 
-@@TIMINGS@@
+- **One generation (first timing):**
+  - mnist38 on all 11,982 rows: about 4–5 s.
+  - mnist10 on 10,000 rows: about 12–15 s, before machine contention.
+  - mnist10 with 25 epochs: about 55 s.
+- **Cost driver:** most of the cost is full-batch forward/backward passes over 250 genomes.
+  The networks stay small, so the time per generation barely grows.
+- **Whole runs (wall clock):**
+  - mnist38: 11–14 min per 100 generations; the 500-generation run took 95 min;
+  - mnist10: 40–57 min per 100 generations;
+  - mnist10-e25: 156 min.
+
+  All were far inside the 6–8 h budget, so no subsetting was needed for mnist38.
+
+The per-run columns (first-5 / last-5 seconds per generation) are in the results table.
 
 ## Results
 
@@ -139,7 +201,24 @@ Train and test metrics are for the best genome (best train fitness), from the in
 NeuralNeat. They are recomputed from the DB through StructureNetwork in the parity check
 below.
 
-@@RESULTS@@
+| run | train | test | best gen | wall (min) | s/gen first-5 / last-5 | genome id |
+|---|---|---|---|---|---|---|
+| mnist10-e25-s0 | acc 0.7987, CE 0.6284 | acc 0.8039, CE 0.6373 | 99 | 156 | 77.4 / 79.6 | `e3ff56b5-326e-459b-9b52-c02e1224cac2` |
+| mnist10-s0 | acc 0.7400, CE 0.7905 | acc 0.7522, CE 0.7683 | 99 | 40 | 18.6 / 28.1 | `f9d70c2b-5d5f-4c5c-b666-315571bb9777` |
+| mnist10-s1 | acc 0.7365, CE 0.8195 | acc 0.7372, CE 0.8013 | 99 | 57 | 22.3 / 37.5 | `d362cbf2-585c-4595-a501-f75c1d6a6fda` |
+| mnist38-g500-s0 | AUC 0.9929, acc 0.9696 | AUC 0.9939, acc 0.9688 | 499 | 95 | 6.1 / 9.2 | `7a51a92b-d432-4682-8a41-8e5669ae6e95` |
+| mnist38-s0 | AUC 0.9924, acc 0.9659 | AUC 0.9937, acc 0.9682 | 99 | 12 | 5.2 / 8.1 | `dbc4cbe9-968b-42d7-9b97-d3f6ae5b0abd` |
+| mnist38-s1 | AUC 0.9921, acc 0.9664 | AUC 0.9939, acc 0.9708 | 99 | 11 | 4.7 / 6.8 | `0a7fa35b-a747-4bab-9a16-d519af74f210` |
+| mnist38-s2 | AUC 0.9918, acc 0.9659 | AUC 0.9932, acc 0.9667 | 99 | 14 | 6.2 / 8.7 | `6187d7cf-ef21-45c5-8b6d-b9d4e8c57403` |
+
+**Baselines** (`baselines.py`, the same rows; `baselines.json`):
+
+| task | model | train | test |
+|---|---|---|---|
+| mnist38 | logistic_regression | AUC 0.9930, acc 0.9703 | AUC 0.9937, acc 0.9693 |
+| mnist38 | gbm_small | AUC 0.9999, acc 0.9982 | AUC 0.9997, acc 0.9914 |
+| mnist10 | logistic_regression | acc 0.9682, CE 0.1282 | acc 0.9097, CE 0.3408 |
+| mnist10 | gbm_small | acc 1.0000, CE 0.0019 | acc 0.9628, CE 0.1334 |
 
 ## Structure (how hard explanation is likely to be)
 
@@ -151,9 +230,31 @@ All counts are for the best genome's phenotype, the nodes on an input → output
 - **Fan-in:** the number of enabled incoming connections.
 - **Depth:** the number of layers after the input layer.
 
-@@STRUCTURE@@
+| run | hidden | depth | conns (direct in->out) | inputs used | fan-in hidden mean/max | switching / always-on / dead (strict) | same at 1% | parity | tools |
+|---|---|---|---|---|---|---|---|---|---|
+| mnist10-e25-s0 | 1 | 2 | 741 (739) | 500/784 | 1.0/1 | 0/1/0 | 0/1/0 | ok | ok |
+| mnist10-s0 | 1 | 2 | 568 (566) | 414/784 | 1.0/1 | 0/1/0 | 0/1/0 | ok | ok |
+| mnist10-s1 | 0 | 1 | 536 (536) | 390/784 | 0.0/0 | 0/0/0 | 0/0/0 | ok | ok |
+| mnist38-g500-s0 | 4 | 2 | 131 (116) | 122/196 | 2.8/5 | 3/0/1 | 3/0/1 | ok | ok |
+| mnist38-s0 | 5 | 2 | 133 (117) | 123/196 | 2.2/4 | 4/0/1 | 4/0/1 | ok | ok |
+| mnist38-s1 | 1 | 2 | 113 (111) | 112/196 | 1.0/1 | 0/0/1 | 0/0/1 | ok | ok |
+| mnist38-s2 | 0 | 1 | 112 (112) | 112/196 | 0.0/0 | 0/0/0 | 0/0/0 | ok | ok |
 
-@@INTERPRETATION@@
+- **Species:** every run had 1 species, apart from 2 briefly in mnist38-s2.
+- **Depth:** all genomes have depth ≤ 2, meaning inputs → (hidden) → output, with no
+  hidden → hidden connections.
+- **mnist10 hidden units:** the single hidden unit in mnist10-s0 and mnist10-e25-s0 is fed
+  by one pixel and is always on, so it is linear on the training rows.
+- **Per-unit detail:** active fractions per hidden unit, and the input ids used, are in
+  `logs/<name>.analysis.json`.
+
+**What this means for explanation (not attempted):**
+- **mnist38:** each model is a weighted pixel template, read directly from about 110–120
+  direct weights, plus at most 4 switching hinge units on 1–5 pixels each.
+- **mnist10:** each model is a 10-way linear template on about 400–500 pixels. The size is
+  in the number of direct weights (about 540–740), not in any interaction.
+- **Difficulty:** within the approach, the difficulty is breadth (many inputs per output),
+  not depth or non-linearity.
 
 ## Database import, parity and tool checks
 
@@ -191,7 +292,22 @@ All counts are for the best genome's phenotype, the nodes on an input → output
 Their results are in `logs/<name>.analysis.json`. The only breakage was `compute_performance`
 on 10 outputs (fixed above). Nothing broke for 196 or 784 inputs.
 
-@@DB@@
+**DB size** (`pg_database_size(explaneat_dev)`, measured by the importer immediately
+before and after each import). Other agents were writing to the same DB, so only the
+per-import deltas are attributable to this work:
+
+mnist10-e25-s0: DB +5.2 MB (10323 -> 10328 MB)
+mnist10-s0: DB +16.0 MB (10293 -> 10309 MB)
+mnist10-s1: DB +5.2 MB (10313 -> 10318 MB)
+mnist38-g500-s0: DB +1.4 MB (10320 -> 10321 MB)
+mnist38-s0: DB +5.7 MB (10281 -> 10286 MB)
+mnist38-s1: DB +1.4 MB (10288 -> 10289 MB)
+mnist38-s2: DB +1.4 MB (10292 -> 10293 MB)
+
+The total is about 36 MB. It includes the two datasets: mnist38, 13,966 × 196 float64, and
+mnist10, 20,000 × 784 float64, stored compressed by Postgres TOAST. On disk outside the repo:
+- `~/.explaneat/mnist_runs`: 19 MB;
+- `~/.explaneat/data`: 29 MB, the MNIST cache and the OpenML download.
 
 ### Opening the genomes in the UI
 
