@@ -1,0 +1,155 @@
+{
+  "label": "krk-tuned-s0",
+  "genome_id": "eb35335c-8428-4015-9850-8dfec30ba3e2",
+  "dataset": "krk",
+  "variant": "tuned",
+  "start": "2026-11-10T23:17:19+13:00",
+  "end": "2026-11-10T23:39:17+13:00",
+  "time_used_minutes": 22,
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 3,
+  "n_composition_annotations": 1,
+  "n_splits": 0,
+  "n_identity_nodes": 3,
+  "hidden_nodes": 6,
+  "hidden_nodes_single_leaf_no_split": 6,
+  "hidden_nodes_in_any_annotation": 6,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 4.440892098500626e-16,
+  "closed_form_max_abs_err": 0.04594058636250548,
+  "resisted": "Nothing structural. In domain terms the network only partly implements the draw rule: it detects 'rook on a square next to the black king' (AUC 0.997 against Chebyshev distance 1) but does not model the white king defending the rook (wk_file unconnected, wk_rank weight -0.035; capture-vs-defended AUC 0.548 among the 2,360 adjacent positions) or stalemate (8 rows, mean p 0.15). The soft additive AND leaves adjacent positions at mean p 0.53 and under-scores the column one file to the right of the black king (609 of 810 false negatives). The only defence-related signal is a weak level effect in the rank tent (corr 0.39 with bk_rank; capture-vs-defended AUC 0.57), so that part is partial, not a defence detector.",
+  "tool_bugs": "None blocking. Root annotation: child exits must be entry_nodes but not listed in subgraph_nodes (first two attempts rejected, as already recorded for adult-s0). Complex shell compounds were refused by the worktree sandbox, so calls went through small scratch wrappers (call.py / batch.py) that invoke experiments/complex_real/xn.py with DATABASE_URL set. category_offsets returns no groups (expected: ordinal inputs, no one-hot categories).",
+  "summary": "P(draw) = sigmoid(-1.80 + F(wr_file - bk_file) + G(wr_rank, bk_rank) - 0.035 z(wk_rank)). F is a tent in the rook-minus-black-king file offset that is ~0 only for offsets -1 and 0 (penalised -1 at +1, -3.7 to -6 further away); G is a tent in the rank offset peaking for offsets -1..+1. Added in logit, they make a soft AND that says 'the rook stands next to the black king', i.e. the geometric half of the capture rule. White-king defence and stalemate are not modelled, so the network is slightly worse than a plain adjacency indicator (train AUC 0.9932 vs 0.9955).",
+  "leaf_assessments": [
+    {
+      "name": "file_offset_tent",
+      "annotation_id": "ann_9",
+      "assessment": "meaningful",
+      "hypothesis_short": "Tent in dF = wr_file - bk_file: ~0 logit when the rook is on the black king's file or one file left, -0.98 one file right, -3.7..-6 further away (file half of 'rook adjacent').",
+      "why": "Exit depends only on dF (spread <= 0.11 within a dF value) and separates |dF|<=1 from |dF|>1 with AUC 1.0 on all 22,444 training rows; draw rate 0.298 inside vs 0.0004 outside. Exception stated: the dF=+1 column is under-scored by ~0.9 logit despite the same draw rate as dF=-1, causing 609 of 810 false negatives."
+    },
+    {
+      "name": "rank_offset_tent",
+      "annotation_id": "ann_10",
+      "assessment": "meaningful",
+      "hypothesis_short": "Tent in dR = wr_rank - bk_rank peaking (+2.1..+2.9) for |dR|<=1 (rank half of 'rook adjacent'); small boost when both pieces are high on the board.",
+      "why": "Separates |dR|<=1 from |dR|>1 with AUC 1.0 on train. The level effect matches the domain fact that the white king (ranks 1-4) cannot defend a high rook, but only weakly (capture-vs-defended AUC 0.57 among adjacent positions), so that secondary reading is partial."
+    },
+    {
+      "name": "wk_rank_negligible",
+      "annotation_id": "ann_11",
+      "assessment": "closed-form-only",
+      "hypothesis_short": "Negligible linear term -0.038 logit per white-king rank; the network does not model white-king defence.",
+      "why": "Ablating it changes AUC by 7e-5 and p by <= 0.02. Its sign weakly agrees with 'a low white king defends less' (AUC 0.60 among adjacent positions) but the effect size is too small for any domain role; the substantive (true) statement is the null one."
+    }
+  ],
+  "composition_notes": "Root rook_adjacent_box (ann_12): sigmoid(-1.80 + idn_file + idn_rank + idn_wk), additive in logit; entries are the three child exits plus the unconnected wk_file (-1). The additive combination of two tents is a soft AND: logit > 0 for 64% of adjacent positions and 0% of non-adjacent ones; the in-box logits range -0.72 (dF=+1, dR=+1) to +1.02 (dF=-1, dR=0). Three identity nodes (idn_file, idn_rank, idn_wk) intercept the edges into the output so each leaf has one exit; no splits were needed.",
+  "ground_truth_comparisons": {
+    "rows": "training split, 22,444 rows (2,237 draws: 2,229 captures + 8 stalemates)",
+    "network_vs_label_auc": 0.99318,
+    "network_vs_adjacency_auc": 0.99683,
+    "adjacency_indicator_vs_label_auc": 0.99547,
+    "adjacency_indicator_accuracy": 0.99399,
+    "exact_rule_vs_label_auc": 1.0,
+    "network_accuracy_at_0.5": 0.96061,
+    "confusion_at_0.5": {
+      "pred_pos": 1501,
+      "TP": 1427,
+      "FP": 74,
+      "FN": 810,
+      "FP_all_adjacent_and_defended": true,
+      "FN_with_dF_plus1": 609
+    },
+    "within_adjacent_capture_vs_defended_auc": {
+      "network": 0.548,
+      "rank_tent": 0.573,
+      "wk_rank_term": 0.599,
+      "n_adjacent": 2360,
+      "n_defended": 131
+    },
+    "mean_p": {
+      "capture": 0.531,
+      "adjacent_defended": 0.503,
+      "non_adjacent": 0.046,
+      "stalemate": 0.15
+    },
+    "max_p_non_adjacent": 0.481,
+    "file_tent_vs_absdF_le1_auc": 1.0,
+    "rank_tent_vs_absdR_le1_auc": 1.0,
+    "P_defended_given_adjacent_by_bk_rank": {
+      "1": 0.137,
+      "2": 0.106,
+      "3": 0.12,
+      "4": 0.062,
+      "5": 0.025,
+      "6": 0.003,
+      "7": 0.0,
+      "8": 0.0
+    }
+  },
+  "restore_gain": {
+    "full_auc": 0.99318,
+    "all_linear_auc": 0.55863,
+    "file_offset_tent": {
+      "linearised_alone_auc": 0.87899,
+      "restore_gain": 0.30347
+    },
+    "rank_offset_tent": {
+      "linearised_alone_auc": 0.8621,
+      "restore_gain": 0.32035
+    },
+    "wk_rank_negligible": {
+      "linear": true,
+      "restore_gain": 0.0
+    },
+    "reading": "Both tents carry the nonlinear signal and each is needed; together they lift AUC from ~0.56 (about logistic regression) to 0.993."
+  },
+  "unit_activity_summary": "All 6 hidden ReLUs are hinges (none dead, rare or always on): 2949 active 71%, 358 50%, 1729 61%, 7005 50%, 463 87% (off only for bk_rank 1), 18 45%. Logit SD of direct output contributions: 18 4.25, 463 2.30, 358 2.05, 7005 1.53.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 4,
+      "roots": [
+        "rook_adjacent_box"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.440892098500626e-16,
+    "closed_form_max_abs_err": 0.04594058636250548,
+    "numeric_max_abs_err": 6.217248937900877e-15,
+    "op_counts": {
+      "rename_node": 6,
+      "add_identity_node": 3,
+      "annotate": 4
+    },
+    "leaves": [
+      {
+        "id": "ann_9",
+        "name": "file_offset_tent",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.04594058636250548
+      },
+      {
+        "id": "ann_10",
+        "name": "rank_offset_tent",
+        "numeric_max_abs_err": 6.217248937900877e-15,
+        "closed_form_max_abs_err": 0.029285954829749272
+      },
+      {
+        "id": "ann_11",
+        "name": "wk_rank_negligible",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.00010941609051350054
+      }
+    ],
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}
