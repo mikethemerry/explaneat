@@ -36,7 +36,8 @@ GAP = 0.7          # cm between clusters
 CHAR = 0.15        # cm per character of a tiny bold title
 SUM = "__sum__"
 LEGEND = ("Inputs and part outputs: orange outline and up arrow = raises the final prediction, teal and down "
-          "arrow = lowers it, grey and double arrow = depends. "
+          "arrow = lowers it, grey and double arrow = depends. Double outline = acts at a fixed rate (linear) "
+          "everywhere; dashed double outline = at a fixed rate on the observed data. "
           "Edges: blue = positive weight (raises the score), red = negative weight (lowers it); "
           "thicker = larger weight. Grey: the drawn sum standing for the output unit's addition. A grouped "
           "input (a variable with many levels) has one edge per target, labelled with its number of edges and "
@@ -75,6 +76,25 @@ def top_part(layer, pid) -> Optional[str]:
 
 
 GROUP_LEVELS = 6   # a one-hot variable with more levels than this is drawn as one grouped input
+
+
+def lin_class(layer, key: Optional[str]) -> Optional[str]:
+    """Linear-factor class of a drawn input (``in::<column>`` or ``grp::<variable>``)."""
+    lg = (layer.get("graph") or {}).get("linearity") or {}
+    if not key:
+        return None
+    if key.startswith("grp::"):
+        return (lg.get("variables") or {}).get(key[5:])
+    col = key[4:] if key.startswith("in::") else key
+    return (lg.get("columns") or {}).get(col) or (lg.get("variables") or {}).get(col.split(":", 1)[0])
+
+
+def lin_part(layer, pid: Optional[str]) -> Optional[str]:
+    return ((layer.get("graph") or {}).get("linearity") or {}).get("parts", {}).get(pid or "")
+
+
+LIN_STYLE = {"exact_linear": ", double, double distance=0.9pt",
+             "support_linear": ", double, double distance=0.9pt, dash pattern=on 2pt off 1pt"}
 
 
 def grouped_variables(layer) -> Dict[str, Dict[str, Any]]:
@@ -538,6 +558,7 @@ def _picture(items, pos, edges_w, clusters, subs, colors, hl, note: str = "") ->
             nd = it.get("net")
             if nd:
                 style += f", draw=net{nd}, very thick"
+            style += LIN_STYLE.get(it.get("lin") or "", "")
             L.append(f"\\node[{style}] ({t}) at ({x},{y}) {{}};")
             sym = (" " + NET_SYMBOL[nd]) if nd else ""
             L.append(f"\\path ({t}.south) node[inlab, anchor=north] (lab{t}) {{{tex(it['label'])}{sym}}};")
@@ -547,10 +568,12 @@ def _picture(items, pos, edges_w, clusters, subs, colors, hl, note: str = "") ->
             L.append(f"\\node[stub] ({t}) at ({x},{y}) {{{tex(it['label'])}}};")
         elif k == "sum":
             sym = (" " + NET_SYMBOL[it["net"]]) if it.get("net") else ""
-            L.append(f"\\node[sumbox] ({t}) at ({x},{y}) {{{tex(it['label'])}{sym}}};")
+            L.append(f"\\node[sumbox{LIN_STYLE.get(it.get('lin') or '', '')}] ({t}) at ({x},{y}) "
+                     f"{{{tex(it['label'])}{sym}}};")
         elif it.get("exit"):
             sym = (" " + NET_SYMBOL[it["net"]]) if it.get("net") else ""
-            L.append(f"\\node[exitbox] ({t}) at ({x},{y}) {{{tex(it.get('label') or hl.get(n, ''))}{sym}}};")
+            L.append(f"\\node[exitbox{LIN_STYLE.get(it.get('lin') or '', '')}] ({t}) at ({x},{y}) "
+                     f"{{{tex(it.get('label') or hl.get(n, ''))}{sym}}};")
         else:
             L.append(f"\\node[hid] ({t}) at ({x},{y}) {{{hl.get(n, '')}}};")
     for si, (skey, stitle) in enumerate(subs):
@@ -699,11 +722,14 @@ def _mark_overview(layer, items, csums):
     for k, it in items.items():
         if it["kind"] == "input" and it.get("copy_of") in by_key:
             it["net"] = input_direction(layer, it.get("cluster"), by_key[it["copy_of"]])
+            it["lin"] = lin_class(layer, it.get("copy_of"))
         elif it.get("exit"):
             reg = top_part(layer, nodes[k]["region"]) if k in nodes and nodes[k].get("region") else None
             it["net"] = part_direction(layer, reg) if reg else None
+            it["lin"] = lin_part(layer, reg)
         elif k.startswith("csum::"):
             it["net"] = part_direction(layer, k.split("::", 1)[1])
+            it["lin"] = lin_part(layer, k.split("::", 1)[1])
 
 
 def replicate_inputs(items, ew):
@@ -854,7 +880,8 @@ def raw_picture(layer, note: bool = False) -> Tuple[str, Dict[str, Any]]:
             k = input_key({"id": b, "column": nd.get("column")})
             key_of[b] = k
             items.setdefault(k, {"kind": "input", "band": ("inputs", None), "label": nd.get("label") or "",
-                                 "sort": nd.get("label") or k, "column": nd.get("column")})
+                                 "sort": nd.get("label") or k, "column": nd.get("column"),
+                                 "lin": lin_class(layer, k)})
         elif nd["kind"] == "output":
             key_of[b] = b
             items[b] = {"kind": "output", "band": ("top", None),
@@ -970,8 +997,10 @@ def section(layer, pid) -> Tuple[str, Dict[str, Any]]:
                         and drawn_edge(layer, e)[0] == k), None)
             if src is not None:
                 it["net"] = input_direction(layer, pid, src)
+            it["lin"] = lin_class(layer, k)
         elif it.get("exit"):
             it["net"] = part_direction(layer, pid)
+            it["lin"] = lin_part(layer, pid)
     ew = _merge_groups(ew)
     pos = _place(items, [(u, v) for u, v, _ in ew], clusters, subs, tops, owned=True)
     tk = _picture(items, pos, ew, clusters, subs, colors, hl)

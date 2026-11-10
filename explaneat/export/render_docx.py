@@ -128,8 +128,14 @@ def render_docx(doc, path: Path, figures: Optional[Dict[str, Path]] = None,
         def sents(ss):
             return " ".join(s["text"] + (f" [{', '.join(s['claims'])}]" if s.get("claims") else "")
                             for s in ss or [])
+        from .render_plain import outcome_text, v5_summary
+        oc = outcome_text(pl)
+        if oc:
+            para(oc, "")
         d = pl.get("drafted") or {}
-        if d:
+        if d and d.get("readdown"):
+            para(sents(v5_summary(d, pl)), "Summary (drafted). ")
+        elif d:
             para(sents(d.get("summary")), "Summary (drafted). ")
         para(sents((pl.get("template") or {}).get("summary")), "Summary (offline template). ")
         for p_ in sorted(pl.get("parts") or [], key=lambda x: x["order"]):

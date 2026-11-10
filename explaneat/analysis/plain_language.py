@@ -52,7 +52,7 @@ from ..core.genome_network import NetworkStructure, NodeType
 from .composition import annotation_dicts_from_operations
 from .explanation_tools import StateEvaluator, as_unit, default_auc, input_column
 from .plain_language_codebooks import (base_of, codebook_checks, codebook_gaps, find_codebook,
-                                       generic_codebook, level_info)
+                                       generic_codebook, level_info, outcome_check)
 
 LAYER_SCHEMA_VERSION = "5.1.0"   # 3: shapes; 3.1: one point per fold; 4: blocks; 5: read-down; 5.1: graph
 CLAIM_TYPES = ("direction", "threshold", "interaction", "magnitude", "subgroup", "null", "rule")
@@ -926,7 +926,7 @@ def _finish(c: Dict[str, Any], checks: Dict[str, Tuple[bool, str]]):
     c["verified"] = all(ok for ok, _ in checks.values())
     if c["verified"]:
         c["reasons"] = ["all checks passed"]
-    if c["type"] not in ("null", "structure", "boundary"):
+    if c["type"] not in ("null", "structure", "boundary", "linearity"):
         c["confidence"] = confidence(c)
     return c
 
@@ -2028,7 +2028,7 @@ def rule_claims(m: PlainModel, part: Part) -> List[Dict[str, Any]]:
 # ============================================================================ the layer
 
 TYPE_ORDER = {t: i for i, t in enumerate(("rule", "direction", "magnitude", "interaction", "threshold",
-                                          "subgroup", "null", "structure", "boundary"))}
+                                          "subgroup", "null", "structure", "boundary", "linearity"))}
 
 
 def _claim_sort_key(c):
@@ -2102,7 +2102,13 @@ def extract_claims(m: PlainModel) -> Dict[str, Any]:
         c["id"] = f"C{len(claims) + k + 1:0{width}d}"
         c.pop("_ctx", None)
     claims.extend(extra)
-    return {"parts": parts, "claims": claims}
+    # linear factors: also appended, after the boundary claims
+    from .plain_language_linearity import linearity_claims
+    lin_claims, lin_graph = linearity_claims(m, parts)
+    for k, c in enumerate(lin_claims):
+        c["id"] = f"C{len(claims) + k + 1:0{width}d}"
+    claims.extend(lin_claims)
+    return {"parts": parts, "claims": claims, "linearity": lin_graph}
 
 
 def part_record(m: PlainModel, p: Part) -> Dict[str, Any]:
@@ -2452,6 +2458,8 @@ def build_layer(m: PlainModel, meta: Dict[str, Any]) -> Dict[str, Any]:
         "split": {**(meta.get("split") or {}), "primary": "train", "check": "test",
                   "train_n": int(m.X.shape[0]), "test_n": int(m.Xt.shape[0]) if m.Xt is not None else 0},
         "outcome": m.codebook.get("outcome"),
+        "outcome_check": outcome_check(m.codebook, (meta.get("dataset") or {}).get("class_names"),
+                                       m.feature_names, m.raw_train, m.y),
         "population": {"plural": m.codebook.get("patient", "patients"),
                        "singular": m.codebook.get("patient_one", "patient")},
         "risk_scale": m.risk_scale.describe(),
@@ -2472,7 +2480,8 @@ def build_layer(m: PlainModel, meta: Dict[str, Any]) -> Dict[str, Any]:
                      "effect_scale": "log-odds (output pre-activation) for verification; predicted "
                                      "risk for the typical patient for wording"},
         "parts": [_clean(part_record(m, p)) for p in parts],
-        "graph": (lambda g: {**g, "partials": partial_features(m, parts, g)})(graph_record(m, parts)),
+        "graph": (lambda g: {**g, "partials": partial_features(m, parts, g),
+                             "linearity": res.get("linearity") or {}})(graph_record(m, parts)),
         "claims": claims,
         "claims_hash": claims_hash(claims),
         "counts": {"claims": len(claims), "verified": sum(1 for c in claims if c["verified"]),
@@ -2520,7 +2529,7 @@ def load_model(genome_id: str, db=None) -> Tuple[PlainModel, Dict[str, Any]]:
         mean = np.asarray(split.scaler_params["mean"], dtype=float)
         scale = np.asarray(split.scaler_params["scale"], dtype=float)
         meta = {"genome_id": genome_id, "explanation_id": explanation_id,
-                "dataset": {"id": str(ds.id), "name": ds.name},
+                "dataset": {"id": str(ds.id), "name": ds.name, "class_names": list(ds.class_names or [])},
                 "split": {"id": str(split.id), "scaler_type": split.scaler_type},
                 "experiment": {"id": str(exp.id), "name": exp.name}}
         names = list(names or ds.feature_names)

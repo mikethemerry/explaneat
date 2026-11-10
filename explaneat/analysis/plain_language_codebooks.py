@@ -200,9 +200,10 @@ ADULT: Dict[str, Any] = {
                "common country)"),
     "dataset_match": ["adult"],
     # class 1 is "<=50k" (the dataset's class_names are ['>50k', '<=50k']; checked: about 76% positive)
-    "outcome": {"positive": "an income of $50,000 a year or less", "short": "an income of $50,000 or less",
-                "risk": "the chance of an income of $50,000 or less",
-                "predicted": "the predicted chance of an income of $50,000 or less"},
+    "outcome": {"positive": "an income of $50,000 a year or less", "short": "a low income ($50,000 or less)",
+                "risk": "the chance of a low income ($50,000 or less)",
+                "predicted": "the predicted chance of a low income ($50,000 or less)",
+                "direction_up": "towards a low income ($50,000 or less)"},
     "patient": "people", "patient_one": "person",
     "gaps": ["fnlwgt is the census sampling weight (how many people a row stands for), not a "
              "characteristic of the person; it has no unit.",
@@ -439,3 +440,59 @@ def codebook_gaps(cb: Dict[str, Any], feature_names: Sequence[str]) -> List[str]
                 if not any(f in g for g in gaps):
                     gaps.append(msg)
     return gaps
+
+
+# ----------------------------------------------------------------------------- outcome coding
+def outcome_check(cb: Dict[str, Any], class_names, feature_names: Sequence[str], raw, y) -> Dict[str, Any]:
+    """What the model's output 1 means, checked against the data: the class names as stored, the
+    base rate on the training rows, and dataset-specific checks (Adult: class 1 is '<=50k', the
+    majority; churn: class 1 is 'churned'; heart: the share and the known associations with the
+    number of vessels and exercise angina; MONK-2: the rule reproduces every label). ``inverted``
+    marks an outcome that reverses the dataset's usual framing (Adult)."""
+    import numpy as np
+    y = np.asarray(y, dtype=float).ravel()
+    raw = np.asarray(raw, dtype=float)
+    col = {f: i for i, f in enumerate(feature_names)}
+    names = [str(x) for x in (class_names or [])]
+    pos_name = names[1] if len(names) > 1 else None
+    rate = float(np.mean(y)) if len(y) else float("nan")
+    checks: List[Dict[str, Any]] = []
+
+    def add(name, ok, detail=""):
+        checks.append({"check": name, "passed": bool(ok), "detail": detail})
+    cid = cb.get("id")
+    meaning = (cb.get("outcome") or {}).get("positive") or "the positive class"
+    inverted = False
+    if cid == "pmlb-adult":
+        meaning, inverted = "an income of $50,000 a year or less", True
+        add("class 1 is stored as '<=50k'", (pos_name or "").replace(" ", "").lower() == "<=50k", f"class names {names}")
+        add("class 1 is the majority (about 76%)", 0.65 < rate < 0.85, f"share {rate:.3f}")
+    elif cid == "pmlb-churn":
+        meaning = "the customer left (churned)"
+        add("class 1 is stored as churned", "churn" in (pos_name or "").lower(), f"class names {names}")
+        add("churn is the minority (about 14%)", 0.05 < rate < 0.3, f"share {rate:.3f}")
+    elif cid == "uci-heart-cleveland":
+        meaning = "heart disease present (more than 50% narrowing of a major coronary artery)"
+        add("share with disease plausible for Cleveland (about 46%)", 0.35 < rate < 0.55, f"share {rate:.3f}")
+        if "ca" in col:
+            ca = raw[:, col["ca"]]
+            if np.any(ca >= 1) and np.any(ca == 0):
+                a, b = float(np.mean(y[ca >= 1])), float(np.mean(y[ca == 0]))
+                add("more vessels coloured goes with class 1", a > b, f"{a:.2f} with 1+ vessels, {b:.2f} with none")
+        if "exang:1" in col:
+            e = raw[:, col["exang:1"]] > 0.5
+            if e.any() and (~e).any():
+                a, b = float(np.mean(y[e])), float(np.mean(y[~e]))
+                add("exercise angina goes with class 1", a > b, f"{a:.2f} with, {b:.2f} without")
+    elif cid == "monk2":
+        meaning = "the rule's positive class: exactly two of a1..a6 equal 1"
+        ones = [col[f"a{i}:1"] for i in range(1, 7) if f"a{i}:1" in col]
+        if len(ones) == 6:
+            rule = (np.sum(raw[:, ones] > 0.5, axis=1) == 2).astype(float)
+            add("the exactly-two rule reproduces every label", bool(np.all(rule == y)),
+                f"agreement {float(np.mean(rule == y)):.3f}")
+    else:
+        meaning = f"class 1 ({pos_name})" if pos_name else "the positive class"
+    return {"positive_code": 1, "meaning": meaning, "class_names": names, "positive_name": pos_name,
+            "base_rate_train": rate, "n_train": int(len(y)), "inverted": inverted, "checks": checks,
+            "verified": bool(checks) and all(c["passed"] for c in checks)}
