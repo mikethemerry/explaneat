@@ -523,6 +523,12 @@ def _map_panel(ax, mp, field, cmap, outcome_word, show_points=True, show_boundar
     return cs
 
 
+def _var_name(layer, base: str) -> str:
+    """A variable's short plain name from the layer's codebook (falls back to its key)."""
+    v = ((layer.get("codebook") or {}).get("variables") or {}).get(base) or {}
+    return v.get("short") or v.get("label") or base
+
+
 def outcome_words(layer) -> Tuple[str, str, str]:
     """(event label, no-event label, verb phrase for 'x% of them ...') for the data overlay."""
     pop = (layer.get("population") or {}).get("plural", "")
@@ -549,19 +555,32 @@ def deep_dive_figures(layer, base: Path, claim) -> List[Dict[str, Any]]:
     out = []
     # 1. the map(s)
     k = len(maps)
-    fig, axs = plt.subplots(1, k, figsize=(WIDTH, 3.3 if k == 1 else 2.6), squeeze=False)
+    n_on, share = st.get("n_on"), st.get("share_on")
+    rate = st.get("outcome_rate_on")
+    count = f"on for {n_on} ({100 * share:.0f}%); {100 * (rate or 0):.0f}% of them " + word[2]
+    if k == 1:
+        fig, axs = plt.subplots(1, 1, figsize=(WIDTH, 3.3), squeeze=False)
+    else:            # three pairs: one map per row-slot, wide enough for their labels
+        fig, axs = plt.subplots(1, k, figsize=(WIDTH, 3.4), squeeze=False, layout="constrained")
     css = []
     for ax, mp in zip(axs[0], maps):
         css.append(_map_panel(ax, mp, "z", cmap, word))
         if mp.get("held"):
-            ax.set_title(", ".join(f"{b} at {h['text']}" for b, h in mp["held"].items()), fontsize=8)
+            names = {v.get("base"): (v.get("short") or v.get("label")) for v in claim.get("variables") or []}
+            ax.set_title(_wrap(", ".join(f"{names.get(b) or _var_name(layer, b)} at {h['text']}"
+                                         for b, h in mp["held"].items()), 26), fontsize=8)
+        if k > 1:
+            ax.set_xlabel(_wrap(ax.get_xlabel(), 22))
+            ax.set_ylabel(_wrap(ax.get_ylabel(), 22))
     fig.colorbar(css[0], ax=list(axs[0]), label="part's output (score)", shrink=0.9)
-    axs[0][0].legend(frameon=True, loc="upper right", fontsize=8, markerscale=1.5)
-    n_on, share = st.get("n_on"), st.get("share_on")
-    rate = st.get("outcome_rate_on")
-    axs[0][0].text(0.02, 0.02, f"on for {n_on} ({100 * share:.0f}%); {100 * (rate or 0):.0f}% of them "
-                   + word[2], transform=axs[0][0].transAxes, fontsize=8,
-                   bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.8})
+    if k == 1:
+        axs[0][0].legend(frameon=True, loc="upper right", fontsize=8, markerscale=1.5)
+        axs[0][0].text(0.02, 0.02, count, transform=axs[0][0].transAxes, fontsize=8,
+                       bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.8})
+    else:            # legend and count under the panels, not over the data
+        h, lab = axs[0][0].get_legend_handles_labels()
+        fig.legend(h, [x.replace("\n", " ") for x in lab] + [], loc="outside lower center", ncol=2, fontsize=8,
+                   frameon=False, markerscale=1.5, title=count, title_fontsize=8)
     data = {"kind": "deep_map", "claim": claim["id"], "maps": [{"x": m["x"], "y": m["y"], "held": m.get("held")}
                                                                 for m in maps],
             "n_on": n_on, "share_on": share, "outcome_rate_on": rate, "rule": (st.get("rule") or {}).get("text")}
