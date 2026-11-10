@@ -1,0 +1,288 @@
+{
+  "label": "churn100-s2-c1",
+  "genome_id": "f188e353-beb3-4b23-9e19-b64aba8cb5ba",
+  "start": "2026-11-10T08:57:50Z",
+  "end": "2026-11-10T09:16:28Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 8,
+  "n_composition_annotations": 2,
+  "n_splits": 17,
+  "n_identity_nodes": 2,
+  "hidden_nodes": 22,
+  "hidden_nodes_single_leaf_no_split": 20,
+  "hidden_nodes_in_any_annotation": 22,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 6.661338147750939e-16,
+  "closed_form_max_abs_err": 0.03120991398302575,
+  "protocol_version": "v3",
+  "resisted": "Nothing structural. Hidden nodes 2627 and 9555 (the always-on service-call encoding) were split so the near-dead state:2/state:44 unit 252 could be its own leaf; 161 and 3861 are identically 0 on train (dead). The gate under-predicts churn for frequent callers with low day usage (CSC>=4 and day minutes <160: 113 rows, model 0.66 vs empirical 0.88) and over-predicts it for low-usage customers with few calls (CSC<4, day minutes <120: 476 rows, 0.08 vs 0.05). closed_form_max_abs_err 0.031 is 3-significant-figure rounding on state one-hots (standardised values up to 8); the numeric function is exact.",
+  "tool_bugs": "split_node cannot re-split a consolidated copy ('Cannot re-split -71_bde: expected 3 outputs, got 5'), so the hidden splits (2627, 9555) had to come before the input splits (undo_operation from seq 71, then redo). The Bash sandbox refused shell loops/variables around uv, so tool calls were driven from a scratch Python script that runs experiments/species_leads/xn.py per call (all calls logged).",
+  "summary": "logit P(churn) = -1.05 + a sparse linear backbone over 40 inputs (day minutes +2.04 per SD, voicemail plan -0.90, international plan +0.76, international charge +0.71, voicemail messages +0.62, ...) + a service-call x low-day-usage gate + a 4+-calls hinge + an evening-minutes hinge + exactly linear voicemail and state-offset units, all additive in the logit. The gate is a low-day-minutes hinge whose kink moves up with each customer-service call (median 147 day minutes at 0 calls, 220 at 4, 276 at 6), so with the direct day-minutes edge the logit is V-shaped in day minutes and frequent callers with low usage churn. Service calls act only through hinges. Train AUC 0.901, accuracy 0.901.",
+  "analysis": {
+    "split": "train",
+    "n": 4000,
+    "method": "local numpy forward passes on in-memory copies of the original phenotype; mean ablation = unit exits set to their train mean; linear replacement = each exit replaced by its least-squares fit on the unit's raw inputs",
+    "full_auc": 0.9009,
+    "full_acc": 0.9008,
+    "mean_ablation_auc": {
+      "csc_usage_gate": 0.7635,
+      "intl_state_unit": 0.9009,
+      "eve_minutes_hinge": 0.9002,
+      "voicemail_chain": 0.8996,
+      "state_offsets": 0.9006,
+      "day_calls_state42": 0.9009,
+      "service_call_nonlinear": 0.7356,
+      "csc_hinge": 0.8996
+    },
+    "linear_replacement_auc": {
+      "csc_usage_gate": 0.848,
+      "intl_state_unit": 0.9009,
+      "eve_minutes_hinge": 0.9005,
+      "voicemail_chain": 0.9009,
+      "state_offsets": 0.9009,
+      "day_calls_state42": 0.9009,
+      "service_call_nonlinear": 0.8344,
+      "csc_hinge": 0.8986
+    },
+    "linear_fit_r2": {
+      "csc_usage_gate": {
+        "807": 0.70156,
+        "1264": 0.74579
+      },
+      "intl_state_unit": {
+        "252": 0.84287
+      },
+      "eve_minutes_hinge": {
+        "476": 0.46626
+      },
+      "voicemail_chain": {
+        "1133": 1.0,
+        "4051": 1.0
+      },
+      "state_offsets": {
+        "8896": 1.0,
+        "10249": 1.0,
+        "11951": 1.0,
+        "14942": 1.0,
+        "13827": 1.0,
+        "3861": 1.0
+      },
+      "day_calls_state42": {
+        "11427": 0.99927
+      },
+      "service_call_nonlinear": {
+        "807": 0.70158,
+        "1264": 0.7458,
+        "7208": 0.44086
+      },
+      "csc_hinge": {
+        "7208": 0.44057
+      }
+    },
+    "auc_all_linearised": 0.8368,
+    "auc_restore_one_onto_all_linear": {
+      "csc_usage_gate": 0.8981,
+      "intl_state_unit": 0.8367,
+      "eve_minutes_hinge": 0.8344,
+      "voicemail_chain": 0.8368,
+      "state_offsets": 0.8368,
+      "day_calls_state42": 0.8368,
+      "csc_hinge": 0.8507
+    },
+    "unit_logit_contrib_mean_std_min_max": {
+      "252": [
+        0.001,
+        0.008,
+        0.0,
+        0.096
+      ],
+      "476": [
+        -0.078,
+        0.199,
+        -1.462,
+        -0.0
+      ],
+      "807": [
+        0.934,
+        1.49,
+        0.0,
+        11.228
+      ],
+      "1133": [
+        -0.775,
+        0.134,
+        -1.189,
+        -0.689
+      ],
+      "1264": [
+        0.627,
+        0.716,
+        0.0,
+        5.475
+      ],
+      "3861": [
+        0.0,
+        0.0,
+        -0.0,
+        -0.0
+      ],
+      "4051": [
+        -3.001,
+        0.171,
+        -3.591,
+        -2.887
+      ],
+      "7208": [
+        0.072,
+        0.294,
+        0.0,
+        3.676
+      ],
+      "8896": [
+        0.001,
+        0.0,
+        0.0,
+        0.001
+      ],
+      "10249": [
+        0.007,
+        0.04,
+        0.001,
+        0.3
+      ],
+      "11427": [
+        0.011,
+        0.05,
+        0.0,
+        0.402
+      ],
+      "13827": [
+        0.25,
+        0.035,
+        0.0,
+        0.261
+      ],
+      "14942": [
+        0.005,
+        0.03,
+        0.0,
+        0.208
+      ]
+    }
+  },
+  "performance_sources": {
+    "full_auc": 0.9009,
+    "auc_all_linearised": 0.8368,
+    "refit_L2_LR_train_auc_reference": 0.8433,
+    "auc_restore_one_onto_all_linear": {
+      "csc_usage_gate": 0.8981,
+      "csc_hinge": 0.8507,
+      "eve_minutes_hinge": 0.8344,
+      "intl_state_unit": 0.8367,
+      "voicemail_chain": 0.8368,
+      "state_offsets": 0.8368,
+      "day_calls_state42": 0.8368
+    },
+    "conclusion": "Of +0.064 above all-linear, the service-call x low-usage gate alone recovers +0.061; the 4+-calls hinge adds +0.014 on its own but is redundant given the gate; the evening hinge slightly lowers AUC on its own; voicemail, state and day-calls units are exactly or nearly linear; 252 negligible."
+  },
+  "rare_category_switches": [
+    {
+      "category": "state:11",
+      "n_rows": 73,
+      "churners": 3,
+      "logit_effect": -2.24,
+      "empirical_logodds_offset": -1.35,
+      "path": "direct"
+    },
+    {
+      "category": "state:46",
+      "n_rows": 80,
+      "churners": 5,
+      "logit_effect": -1.89,
+      "empirical_logodds_offset": -0.91,
+      "path": "direct"
+    },
+    {
+      "category": "state:5",
+      "n_rows": 78,
+      "churners": 7,
+      "logit_effect": -1.46,
+      "empirical_logodds_offset": -0.51,
+      "path": "direct"
+    },
+    {
+      "category": "state:4",
+      "n_rows": 41,
+      "churners": 11,
+      "logit_effect": 1.35,
+      "empirical_logodds_offset": 0.8,
+      "path": "direct"
+    },
+    {
+      "category": "state:47",
+      "n_rows": 72,
+      "churners": 21,
+      "logit_effect": 1.16,
+      "empirical_logodds_offset": 0.92,
+      "path": "direct"
+    },
+    {
+      "category": "state:49",
+      "n_rows": 122,
+      "churners": 13,
+      "logit_effect": "mean -0.52; -0.42 offset, down to -2.87 on 12 rows with 4+ calls (turns off the 4+-calls hinge)",
+      "empirical_logodds_offset": -0.32,
+      "path": "direct + voicemail chain + csc_hinge"
+    },
+    {
+      "category": "state:35",
+      "n_rows": 87,
+      "churners": 13,
+      "logit_effect": 0.4,
+      "empirical_logodds_offset": 0.06,
+      "path": "direct + state_offsets",
+      "note": "overstated"
+    }
+  ],
+  "study": {
+    "name": "species_leads",
+    "unit": "post-hoc structural clusters of near-optimal genomes (not NEAT species)",
+    "exploratory": true,
+    "experiment_name": "churn100-s2",
+    "seed": 2,
+    "generation": 99,
+    "genome_key": 24636,
+    "cluster": 1,
+    "cluster_size": 41,
+    "train_fitness": 0.9008506701844574
+  },
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 10,
+      "roots": [
+        "churn_logit"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 6.661338147750939e-16,
+    "closed_form_max_abs_err": 0.03120991398302575,
+    "numeric_max_abs_err": 2.6645352591003757e-15,
+    "op_counts": {
+      "rename_node": 71,
+      "split_node": 17,
+      "consolidate_node": 3,
+      "annotate": 10,
+      "add_identity_node": 2
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}
