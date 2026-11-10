@@ -1,0 +1,121 @@
+{
+  "label": "vb-2459d3",
+  "genome_id": "1f180718-4e8b-43bc-be1d-9a4276f234c3",
+  "start": "2026-11-05T13:49:20+13:00",
+  "end": "2026-11-05T14:04:24+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 7,
+  "n_composition_annotations": 1,
+  "n_splits": 6,
+  "n_identity_nodes": 2,
+  "hidden_nodes": 13,
+  "hidden_nodes_single_leaf_no_split": 13,
+  "hidden_nodes_in_any_annotation": 13,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 5.551115123125783e-16,
+  "closed_form_max_abs_err": 0.02795209712577318,
+  "protocol_version": "v3",
+  "analysis": "churn100",
+  "resisted": "Nothing structural. 3384 dead on train; 6468 and 3930 always on (affine). state:44 offset a near-cancelling pair (+0.98 hidden, -0.91 direct). voiceMailPlan and numberVmailMessages partly offset.",
+  "tool_bugs": "rename_inputs.py failed on names with spaces (fixed afterwards in 92d1f11; camelCase workaround).",
+  "summary": "P(churn) = sigmoid(-2.18 + sparse linear backbone over 30 inputs + customer-service-calls threshold + high day/eve-minutes hinge + small day-charge hinges + single-state offsets + affine account-length term), additive. CSC unit cancels the direct slope for 0-2 calls then switches off from 3-4 calls (logit +1.25 per call after). Day/eve hinge adds +2.3 logit on average in the top decile. Train AUC 0.898 vs 0.843 refit LR, 0.837 all-linearised.",
+  "performance_sources": {
+    "full_auc": 0.8979,
+    "refit_L2_logreg_train_auc": 0.8433,
+    "all_children_linearised_auc": 0.8367,
+    "all_hidden_leaves_mean_ablated_auc": 0.7177,
+    "nonlinear_gain_total": 0.0612,
+    "restore_gain": {
+      "csc_threshold": 0.0322,
+      "day_eve_minutes_hinge": 0.0405,
+      "day_charge_hinges": 0.0062,
+      "state_switches": 0.0,
+      "area415_state47": 0.0001
+    },
+    "conclusion": "Gain over linear (~0.06) almost entirely from the CSC threshold and the high day+eve usage hinge (sub-additive); state units are exact one-hot offsets."
+  },
+  "rare_category_switches": [
+    {
+      "category": "state:11",
+      "n_rows": 73,
+      "logit_effect": -2.08
+    },
+    {
+      "category": "state:46",
+      "n_rows": 80,
+      "logit_effect": -1.92
+    },
+    {
+      "category": "state:39",
+      "n_rows": 82,
+      "logit_effect": -1.25
+    },
+    {
+      "category": "state:47",
+      "n_rows": 72,
+      "logit_effect": 1.26
+    },
+    {
+      "category": "state:26",
+      "n_rows": 75,
+      "logit_effect": 1.08
+    },
+    {
+      "category": "state:50",
+      "n_rows": 89,
+      "logit_effect": -1.07
+    },
+    {
+      "category": "state:41",
+      "n_rows": 66,
+      "logit_effect": 0.98
+    },
+    {
+      "category": "state:0",
+      "n_rows": 56,
+      "logit_effect": -0.85
+    },
+    {
+      "category": "state:37",
+      "n_rows": 84,
+      "logit_effect": "-2.01 (0 calls) .. +0.97 (3+ calls); switches off the CSC threshold"
+    },
+    {
+      "category": "state:21",
+      "n_rows": 86,
+      "logit_effect": 0.56
+    },
+    {
+      "note": "All state one-hots off costs only 0.0065 train AUC (0.898 -> 0.891)."
+    }
+  ],
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 8,
+      "roots": [
+        "full_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 5.551115123125783e-16,
+    "closed_form_max_abs_err": 0.02795209712577318,
+    "numeric_max_abs_err": 1.3322676295501878e-15,
+    "op_counts": {
+      "rename_node": 71,
+      "add_identity_node": 2,
+      "split_node": 6,
+      "consolidate_node": 1,
+      "annotate": 8
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true
+  }
+}
