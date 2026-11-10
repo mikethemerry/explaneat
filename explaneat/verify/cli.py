@@ -96,8 +96,8 @@ def _recheck_text(r: Dict[str, Any]) -> str:
                      f"{len(ft['unchecked_sentences'])} sentences with numbers left to check by hand "
                      f"(listed in the JSON report under freetext.unchecked_sentences)")
     sm = r["summary"]
-    lines.append(f"  findings: {sm['mismatch']} mismatch, {sm['warn']} warn, {sm['info']} info "
-                 f"({sm['seconds']} s): {sm['verdict']}")
+    lines.append(f"  findings: {sm['mismatch']} mismatch, {sm.get('needs_review', 0)} needs review, "
+                 f"{sm['warn']} warn, {sm['info']} info ({sm['seconds']} s): {sm['verdict']}")
     for f in r["findings"]:
         if f["severity"] == "info":
             continue

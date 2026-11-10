@@ -14,9 +14,14 @@ has one), this recomputes
    found in the claims it cites (recomputed); plus the layer's own lint on the recomputed claims.
 
 Each disagreement becomes a *finding* ``{level: "L1", check, location, stated, recomputed,
-severity}``. ``severity`` is ``mismatch`` (a stated number does not reproduce), ``warn``
-(worth a look; e.g. an agent-written formula with a coefficient that is not in the computed
-one) or ``info``.
+severity}``. ``severity`` is ``mismatch`` (a stated number does not reproduce, and the statement
+is unambiguous), ``needs_review`` (it does not reproduce, but what it refers to is not certain:
+e.g. the node was not named, or a number matches only a field prose does not usually quote),
+``warn`` (worth a look; e.g. an agent-written formula with a coefficient that is not in the
+computed one) or ``info``.
+
+An explanation can be marked complete only with no ``mismatch``; ``needs_review`` items are
+listed in the record (``recheck_summary``, see :func:`summary_block`).
 """
 
 from __future__ import annotations
@@ -329,6 +334,20 @@ def compare_claims(stated: Sequence[Dict[str, Any]], computed: Sequence[Dict[str
     return out, {"stated": len(stated), "recomputed": len(computed), "reproduced": n_ok}
 
 
+def claim_consistency(stated: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Cross-claim consistency of the stated claims: a shape exception naming a group for whose
+    typical patient an interaction claim of the same part reports no effect (heart-s2 C30/C33)."""
+    import copy as _copy
+    from ..analysis.plain_language_shapes import cross_claim_conflicts
+    out = []
+    for conf in cross_claim_conflicts(_copy.deepcopy(list(stated))):
+        out.append(finding("claim_consistency", f"claims.{conf['claim']}", conf["exception"], conf["other"],
+                           severity="needs_review",
+                           note=f"{conf['claim']} names '{conf['exception']}' as the shape for {conf['group']}, but "
+                                f"{conf['why']}: the exception may hold only for some of the group"))
+    return out
+
+
 # ============================================================================ prose
 def draft_sentences(drafted: Optional[Dict[str, Any]]) -> Iterable[Tuple[str, Dict[str, Any]]]:
     """(location, sentence) for every sentence of a v4/v5 draft."""
@@ -399,10 +418,13 @@ def _matches(tok: str, v: float, pct: bool, cand: Sequence[Tuple[str, float]]) -
 
 
 UP = re.compile(r"\b(raises?|raised|raising|increases?|increased|increasing|rises|rising|rise|adds risk|"
-                r"higher)\b", re.I)
+                r"adds? to|higher (?:the )?(?:predicted )?(?:risk|chance|probability))\b", re.I)
+# phrases that use a direction word for something else ("cannot go much lower": saturation)
+NOT_DIRECTION = re.compile(r"(?:because |as )?the predicted (?:risk|chance|probability) cannot go much (?:lower|higher)|"
+                           r"cannot go much (?:lower|higher)|flattening out near the (?:top|bottom)", re.I)
 DOWN = re.compile(r"\b(lowers|lowered|lowering|lower it|lower the (?:predicted )?(?:risk|chance|probability)|reduces?|"
                   r"reduced|decreases?|decreased|falls?|falling|drops?|protects?|"
-                  r"lower)\b", re.I)
+                  r"lower (?:the )?(?:predicted )?(?:risk|chance|probability))\b", re.I)
 NEGATED = re.compile(r"\b(?:not|no|never|barely|n't|nothing|neither|hardly)\b|without (?:chang|mov)", re.I)
 DIRECTION_TYPES = ("direction", "magnitude", "threshold", "subgroup", "linearity")   # not interactions: their
 # direction is the main variable's, and the prose often talks about the modifier
@@ -442,8 +464,12 @@ def prose_directions(where: str, text: str, cited: Sequence[Dict[str, Any]],
     magnitude, threshold, subgroup or linearity; not a peak, dip or mixed shape) and uses only
     "raises"-type or only "lowers"-type words, with no negation and no other variable named
     (whose direction the words might be about), is checked."""
-    dirs = [c for c in cited if _directional(c)]
-    if len(dirs) != 1 or NEGATED.search(text):
+    text = NOT_DIRECTION.sub(" ", text)
+    # only a sentence citing exactly one claim with a direction (whatever its shape) is checked:
+    # with two, the words may be about the other one
+    with_dir = [c for c in cited if claim_direction(c) and c.get("type") in DIRECTION_TYPES + ("interaction",)]
+    dirs = [c for c in with_dir if _directional(c)]
+    if len(with_dir) != 1 or len(dirs) != 1 or NEGATED.search(text):
         return []
     own = {str(v.get(k, "")).lower() for v in dirs[0].get("variables") or [] for k in ("label", "short")}
     low = text.lower()
@@ -468,6 +494,23 @@ def _cands(c: Dict[str, Any]) -> List[Tuple[str, float]]:
     vals: List[Tuple[str, float]] = []
     _values(c, vals)
     return vals
+
+
+def _skipped_values(obj, out: List[Tuple[str, float]], key: str = "", inside: bool = False):
+    """Scalar numbers under the keys ``_values`` skips (``estimate.value``, ``slope``, ...), short
+    lists only: a number found only there is ``needs_review``, not a mismatch."""
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            _skipped_values(v, out, k, inside or k in PROSE_SKIP_KEYS)
+    elif isinstance(obj, list):
+        if len(obj) > LONG_LIST:
+            return
+        for v in obj:
+            _skipped_values(v, out, key, inside)
+    elif isinstance(obj, bool) or obj is None:
+        return
+    elif isinstance(obj, (int, float)) and inside:
+        out.append((key, float(obj)))
 
 
 def _near_rounding(tok: str, v: float, pct: bool, cand: Sequence[Tuple[str, float]]) -> Optional[float]:
@@ -514,7 +557,7 @@ def check_prose(layer: Dict[str, Any], computed_claims: Sequence[Dict[str, Any]]
         for cid in cites:
             if cid in comp:
                 cand += all_cands[cid]
-        bad, uncited, rounding = [], [], []
+        bad, uncited, rounding, review = [], [], [], []
         for tok, v, pct in numbers_in(text):
             n_num += 1
             if not pct and v in small and "." not in tok:
@@ -536,12 +579,24 @@ def check_prose(layer: Dict[str, Any], computed_claims: Sequence[Dict[str, Any]]
             if r is not None:
                 rounding.append((label, r))
                 continue
+            skipped: List[Tuple[str, float]] = []
+            for cid in cites:
+                if cid in comp:
+                    _skipped_values(comp[cid], skipped)
+            if skipped and _matches(tok, v, pct, [("%" if pct else k, x) for k, x in skipped]):
+                review.append(label)
+                continue
             bad.append(label)
         if bad:
             n_bad += len(bad)
             out.append(finding("prose_number", where, bad, None,
                                note="numbers in the sentence that are in no claim (cited: "
                                     f"{', '.join(cites) or 'none'}), recomputed: " + text[:400]))
+        if review:
+            out.append(finding("prose_number", where, review, None, severity="needs_review",
+                               note="numbers found only in a field of the cited claims that prose does not usually "
+                                    "quote (an estimate, a slope, ...): check they are what the sentence means: "
+                                    + text[:300]))
         for label, others in uncited:
             n_uncited += 1
             f = finding("prose_uncited", where, label, others, severity="warn",
@@ -641,16 +696,18 @@ def recompute_claims(vm, cache: bool = True, log=lambda *a: None) -> List[Dict[s
 def freetext_findings(ft: Dict[str, Any]) -> List[Dict[str, Any]]:
     out = []
     for s in ft["statements"]:
-        if s["status"] not in ("mismatch", "approx"):
+        if s["status"] not in ("mismatch", "approx", "needs_review"):
             continue
-        sev = "mismatch" if s["status"] == "mismatch" else "warn"
+        sev = {"mismatch": "mismatch", "needs_review": "needs_review"}.get(s["status"], "warn")
         stated = s.get("stated", s["text"])
         model = s.get("model", s.get("model_mean_contribution"))
         note = f"{s['kind']}: {s['text']}"
-        if s["kind"] == "formula":
-            note += (f" (max |stated - model| {s['max_abs_err']:.3g}, {100 * s['rel_err']:.1f}% of the node's "
-                     f"range; off on {s['rows_off']} of {s['n_rows']} rows)")
+        if s["kind"] == "formula" and "max_abs_err" in s:
+            note += (f" (written as {s.get('tag', 'exact')}; max |stated - model| {s['max_abs_err']:.3g}, "
+                     f"{100 * s['rel_err']:.1f}% of the node's range; off on {s['rows_off']} of {s['n_rows']} rows)")
             model = {"node": s["node"], "max_abs_err": s["max_abs_err"], "rows_off": s["rows_off"]}
+        if s.get("reason"):
+            note += f" [{s['reason']}]"
         f = finding("freetext_" + s["kind"], s["location"], stated, model, severity=sev, note=note)
         f["part"] = s.get("part")
         out.append(f)
@@ -716,6 +773,7 @@ def recheck(target, vm=None, claims: bool = True, prose: bool = True, cache: boo
         cf, stats = compare_claims(layer.get("claims") or [], computed)
         F += cf
         report["claims"] = stats
+        F += claim_consistency(layer.get("claims") or [])
         if prose:
             log("prose")
             pf, pstats = check_prose(layer, computed)
@@ -723,8 +781,8 @@ def recheck(target, vm=None, claims: bool = True, prose: bool = True, cache: boo
             F += lint_prose(layer, computed)
             report["prose"] = pstats
     sev = Counter(f["severity"] for f in F)
-    report["summary"] = {"mismatch": sev.get("mismatch", 0), "warn": sev.get("warn", 0),
-                         "info": sev.get("info", 0),
+    report["summary"] = {"mismatch": sev.get("mismatch", 0), "needs_review": sev.get("needs_review", 0),
+                         "warn": sev.get("warn", 0), "info": sev.get("info", 0),
                          "unchecked_freetext": len((report.get("freetext") or {}).get("unchecked_sentences") or []),
                          "verdict": "numbers reproduce" if not sev.get("mismatch") else
                                     "some stated numbers do not reproduce",
