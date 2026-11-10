@@ -61,10 +61,19 @@ c. `apply_operation` type `annotate` with:
    - hypothesis: what you think this subgraph computes
    - entry_nodes, exit_nodes, subgraph_nodes, subgraph_connections
 d. `get_formula(genome_id, annotation_id=...)` → extract the closed-form expression
-e. `compute_viz_data` or `render_visualization` → empirical evidence (line plot, heatmap, etc.)
+e. `compute_viz_data` or `render_visualization` → empirical evidence (line plot, heatmap, etc.);
+   `query_subgroup` / `query_probe` / `query_ablate` / `query_enumerate` for counts, subgroup
+   means and direct vs whole-model effects (all on the full training split by default)
 f. `compute_shap(genome_id, dataset_split_id, annotation_id=...)` → feature importance within subgraph
-g. `save_snapshot` or `add_evidence` → attach evidence to the annotation
+g. `add_evidence` (with `query_id=` from a tool's `provenance.id`) or `save_snapshot` → attach evidence
 h. Refine the hypothesis based on what the formula and evidence show
+
+**Numbers are references, not typed.** Every evidence and query result returns `provenance.id`;
+write each number as `{{q:<id>.<path>|<fmt>}}` (e.g. `{{q:q_3f2a9c1b7e.subgroup.n}}`,
+`{{q:q_3f2a9c1b7e.subgroup.mean_predicted_risk|.2f}}`). Say the scope of every effect (direct,
+through this part, whole model). A formula written with `=` must reproduce the node exactly;
+use `≈` for a simplification. Every write returns `text_check`; fix its findings. New
+explanations are strict: bare typed numbers are refused.
 
 ## Phase 4: Compose
 

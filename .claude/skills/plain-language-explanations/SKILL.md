@@ -109,6 +109,16 @@ is present:
   supported by the model".
 - **Nothing without a claim.** No background knowledge, no mechanism stories, no numbers of
   your own. If the claims do not say it, do not write it.
+- **Numbers only from claims, as slots (2026-11-11).** Do not type a number. Write a **slot**
+  that names the claim field, `{{C086.risk.to|pct}}`, `{{C142.statement.threshold}}`,
+  `{{C33.groups[1].risk_to|pct}}`; `set-draft` and `lint` fill it by code, **rounded once**,
+  and add the claim to the sentence's citations (a number cannot then lack its claim: E4, E15).
+  When the claims are re-extracted the slots are filled again from the new claims. The only
+  numbers you may write yourself are the typical patient's values the layer gives you in words.
+- **One number, one population.** Put each number next to the group it is for (the slot's
+  claim says which: `groups[i].label`, `statement.conditions`). Never attach the typical
+  patient's numbers to an exception group (E7: "for patients with a reversible defect it rises
+  in a jump: from about 12% to 28%" used the typical patient's curve).
 - **What "verified" means:** the claim holds for the model *consistently across patients*
   (at least 90% of training patients go the same way; thresholds have one fold; interactions
   are confirmed by the part's own counterfactual). It is not a significance statement.
@@ -152,7 +162,9 @@ is present:
 - **Subgroups:** risk without the part, then with it, for the typical patient it acts on.
 - Round to whole percentages; "below 1%" and "above 99%" at the ends. **Round once, from the
   stored value** (0.0445 is "about 4%", not 4.5% then 5%), as `plain_language_templates.pct`
-  does; the lint rejects a percentage that looks rounded twice.
+  does. With slots (`|pct`) the code does it; the lint rejects a percentage that looks rounded
+  twice, and a "typical patient ... predicts ... about N%" that is not
+  `reference_patient.predicted_risk` rounded once.
 - **Survival models** (`risk_scale.kind == "survival"`): the same pattern with the predicted
   risk at the stated horizon ("predicted 5-year risk").
 
@@ -213,6 +225,15 @@ at 193 mg/dL to about 50% at 308 mg/dL". Use these plain words (never "linear", 
 | `flat` | "barely" |
 | ordinal, `ordinal_pattern: equal_steps` | "each extra vessel adds about the same" |
 | ordinal, `ordinal_pattern: first_step` | "mainly the first vessel" |
+
+**Exceptions that hold only for some of a group** (`shape.exceptions[0].class == "mixed within
+subgroup"`, with `n_alt` of `n_group`): say "for most patients …, but for **some** patients with
+… (n_alt of the n_group) it …"; never "for patients with … it …", which states it for the whole
+group (the lint refuses it; heart-s2 E7: 21 of 90). **Folds per group**
+(`statement.threshold.by_group`): quote each group's fold ("about 160 beats per minute with a
+normal resting ECG and about 176 otherwise"), not the pooled median. **Windows**
+(`statement.only_within_window`): "stays at about 38%" holds only between
+`statement.change.from` and `.to`; give the range or what happens beyond it (heart100-s7).
 | `status: fallback` | direction only, "in an uneven way" |
 | `status: mixed` | "for most patients …, but for `exceptions[].who` it …" |
 
@@ -289,6 +310,8 @@ at 193 mg/dL to about 50% at 308 mg/dL". Use these plain words (never "linear", 
 ## 10. Self-check before storing
 
 - [ ] Every sentence cites verified claims and says nothing beyond them.
+- [ ] Every number is a slot `{{C..|pct}}` (or a value of the typical patient), rounded once by code.
+- [ ] Every exception, fold and "stays at" says for whom and over which range (section 5a).
 - [ ] Every effect leads with the typical patient's predicted risk; no odds anywhere.
 - [ ] Every numeric or ordinal effect carries its shape words (section 5a), or "in an uneven way",
       woven into the sentence; one point per fold; paragraphs within 6 (part) / 8 (whole model).

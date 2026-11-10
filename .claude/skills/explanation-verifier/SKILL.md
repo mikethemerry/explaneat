@@ -15,6 +15,30 @@ The model is the genome in the database (read only) with the explanation's opera
 memory. The `explaneat verify` tools build it for you from the target directory; you never need
 to write to the database.
 
+
+## Provenance first (explanations written under protocol v4)
+
+Numbers in v4 explanations are references to stored computations, not typed text:
+- **Find them.** A hypothesis or evidence record with `hypothesis_template` / `narrative_template`
+  / `payload_template` and `provenance` (ids `q_...`) was rendered from the evidence log. The
+  record of each id (MCP `get_query`, or `explaneat.analysis.provenance.get_entry`) gives the
+  tool, its arguments, the **query** (population or `where`, quantity, scope: direct edge, part or
+  whole model, unit), the split, n, `sampled`, the rows hash, `op_seq` and the values.
+- **L1 is then a lookup.** `explaneat verify recheck` re-renders every template from the log and
+  flags text that differs (`provenance` mismatch), a missing query, a query computed on a sample
+  or another split, or one computed before a later structural operation (`needs_review`).
+- **L2/L3 move to the query.** Challenge whether the query is the right one for the sentence:
+  the population (E1 used one cell of a two-cell group), the quantity and the scope (E8/E9: a
+  whole-model average labelled as the direct term). Rerun the query with `verify subgroup` /
+  `probe` / `ablate` / `enumerate`, or a better-targeted one, and compare.
+- **Legacy explanations** (no templates; strict mode off) still need the free-text checks:
+  `recheck` v3 marks a disagreement it is sure of as `mismatch` and one whose referent it had to
+  guess (which node, which population, which quantity) as `needs_review`. Treat `needs_review`
+  as a lead to check, not a refutation; its 47 triaged false positives
+  (`experiments/errata/2026-11-11/sweep_triage.csv`) show why.
+- **Number words** ("zero in area 415", "all", "never") are claims about counts: check them with
+  `subgroup` / `enumerate` (E5).
+
 ## 0. Ground rules
 
 - **Independence.** Work only from the target's files, the `explaneat verify` tools, and the

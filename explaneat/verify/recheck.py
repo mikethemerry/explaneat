@@ -724,8 +724,106 @@ def freetext_findings(ft: Dict[str, Any]) -> List[Dict[str, Any]]:
     return out
 
 
+STRUCTURAL_OPS = {"split_node", "consolidate_node", "add_identity_node", "add_node", "remove_node",
+                  "disable_connection", "enable_connection", "prune_node", "prune_connection", "retrain"}
+
+
+def _templated_texts(operations: Sequence[Dict[str, Any]]):
+    """(location, rendered text, template, provenance ids) of every text written with
+    placeholders (hypotheses and evidence narratives)."""
+    for op in operations:
+        if op.get("type") != "annotate":
+            continue
+        prm = op.get("params") or {}
+        name = prm.get("name")
+        if prm.get("hypothesis_template"):
+            yield f"operations.{name}.hypothesis", prm.get("hypothesis", ""), prm["hypothesis_template"], \
+                list(prm.get("provenance") or [])
+        for j, r in enumerate((prm.get("evidence") or {}).get("records") or []):
+            if r.get("narrative_template"):
+                yield f"operations.{name}.evidence[{j}].narrative", r.get("narrative", ""), r["narrative_template"], \
+                    list(r.get("provenance") or [])
+            elif r.get("provenance"):
+                yield f"operations.{name}.evidence[{j}].payload", None, None, list(r.get("provenance") or [])
+
+
+def provenance_checks(operations: Sequence[Dict[str, Any]], genome_id: str,
+                      lookup=None) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    """Numbers written as references to stored queries: the stored text is its template
+    rendered from the evidence log; each query was computed on the full training split, before
+    no later structural operation, and still exists. ``lookup(id)`` returns a log entry (default:
+    the database, read only)."""
+    from ..analysis.provenance import render
+    items = list(_templated_texts(operations))
+    stats = {"templated_texts": len(items), "queries": 0}
+    if not items:
+        return [], stats
+    if lookup is None:
+        from mcp_server.server import get_db
+        from ..analysis.provenance import get_entry
+        db = get_db()
+
+        def lookup(qid):
+            with db.session_scope() as sess:
+                return get_entry(sess, genome_id, qid)
+    last_struct = max((i for i, op in enumerate(operations) if op.get("type") in STRUCTURAL_OPS), default=-1)
+    out: List[Dict[str, Any]] = []
+    seen = set()
+    for loc, text, template, ids in items:
+        if template is not None:
+            rendered, _used, errs = render(template, lookup)
+            for e in errs:
+                out.append(finding("provenance", loc, None, None, note=e))
+            if not errs and rendered != text:
+                out.append(finding("provenance", loc, text[:200], rendered[:200],
+                                   note="the stored text is not its template rendered from the evidence log"))
+        for qid in ids:
+            if qid in seen:
+                continue
+            seen.add(qid)
+            e = lookup(qid)
+            stats["queries"] += 1
+            if e is None:
+                out.append(finding("provenance", loc, qid, None, note=f"query {qid} is not in the evidence log"))
+                continue
+            if e.get("split") not in (None, "train") or e.get("sampled"):
+                out.append(finding("provenance", loc, qid, {"split": e.get("split"), "n": e.get("n"),
+                                                            "sampled": e.get("sampled")}, severity="needs_review",
+                                   note=f"{qid} ({e.get('tool')}) was computed on "
+                                        f"{'a sample of ' if e.get('sampled') else ''}the {e.get('split')} split, "
+                                        "not the full training split"))
+            if e.get("op_seq") is not None and e["op_seq"] <= last_struct:
+                out.append(finding("provenance", loc, qid, {"op_seq": e["op_seq"], "last_structural_op": last_struct},
+                                   severity="needs_review",
+                                   note=f"{qid} was computed before operation {last_struct} changed the structure"))
+    return out, stats
+
+
+def summary_block(report: Dict[str, Any]) -> Dict[str, Any]:
+    """The ``recheck_summary`` field of an explanation record: counts, every ``needs_review`` item
+    (to be answered), the unchecked free-text count, and whether the record may be marked
+    complete (no ``mismatch``)."""
+    import datetime as _dt
+    F = report.get("findings") or []
+    sm = report.get("summary") or {}
+
+    def item(f):
+        return {k: f.get(k) for k in ("check", "location", "stated", "recomputed", "note") if f.get(k) is not None}
+
+    return {"ran_at": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
+            "recheck_version": 3,
+            "mismatch": sm.get("mismatch", 0), "needs_review": sm.get("needs_review", 0), "warn": sm.get("warn", 0),
+            "mismatches": [item(f) for f in F if f["severity"] == "mismatch"],
+            "needs_review_items": [item(f) for f in F if f["severity"] == "needs_review"],
+            "unchecked_freetext_sentences": sm.get("unchecked_freetext", 0),
+            "provenance": report.get("provenance"),
+            "complete_ok": sm.get("mismatch", 0) == 0,
+            "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every "
+                    "needs_review item (fix it or say why it is not an error)"}
+
+
 def recheck(target, vm=None, claims: bool = True, prose: bool = True, cache: bool = True,
-            freetext: bool = True, log=lambda *a: None) -> Dict[str, Any]:
+            freetext: bool = True, log=lambda *a: None, provenance_lookup=None) -> Dict[str, Any]:
     """Run every L1 check for a :class:`~explaneat.verify.artefacts.Target`."""
     from .model import load
 
@@ -772,6 +870,13 @@ def recheck(target, vm=None, claims: bool = True, prose: bool = True, cache: boo
                               "checked": [x for x in ft["statements"] if x["status"] != "unchecked"],
                               "unchecked_statements": [x for x in ft["statements"] if x["status"] == "unchecked"],
                               "unchecked_sentences": ft["unchecked"]}
+    try:
+        pf, pstats = provenance_checks(vm.operations, vm.genome_id, provenance_lookup)
+        F += pf
+        report["provenance"] = pstats
+    except Exception as e:
+        F.append(finding("provenance", "evidence_log", None, None, severity="warn",
+                         note=f"the evidence log could not be read ({type(e).__name__})"))
     layer = target.layer
     if layer is not None:
         stated_parts = {p["id"]: p["name"] for p in layer.get("parts") or []}
