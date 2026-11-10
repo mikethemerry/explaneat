@@ -792,14 +792,27 @@ def raw_network(layer) -> Dict[str, Any]:
     raw_edges: Dict[Tuple[str, str], float] = {}
     belongs: Dict[Tuple[str, str], Tuple[str, str]] = {}
     ins = {i: [e for e in g["edges"] if e["to"] == i] for i in ident}
+
+    def sources(i, seen=()):
+        """(origin node, product of weights, edges on the way) for every path into identity node
+        ``i`` from a non-identity node (identity nodes can feed identity nodes)."""
+        out = []
+        for e0 in ins[i]:
+            if e0["from"] in ident and e0["from"] not in seen:
+                for src, w, path in sources(e0["from"], seen + (i,)):
+                    out.append((src, w * e0["weight"], path + [e0]))
+            elif e0["from"] not in ident:
+                out.append((e0["from"], e0["weight"], [e0]))
+        return out
     for e in g["edges"]:
         if e["to"] in ident:
             continue
         if e["from"] in ident:
-            for e0 in ins[e["from"]]:
-                k = (base(e0["from"]), base(e["to"]))
-                raw_edges[k] = raw_edges.get(k, 0.0) + e0["weight"] * e["weight"]
-                belongs[(e0["from"], e0["to"])] = k
+            for src, w, path in sources(e["from"]):
+                k = (base(src), base(e["to"]))
+                raw_edges[k] = raw_edges.get(k, 0.0) + w * e["weight"]
+                for e0 in path:
+                    belongs[(e0["from"], e0["to"])] = k
                 belongs[(e["from"], e["to"])] = k
             continue
         k = (base(e["from"]), base(e["to"]))

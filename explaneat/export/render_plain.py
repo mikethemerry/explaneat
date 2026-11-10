@@ -261,8 +261,15 @@ def _ref_patient(layer) -> str:
     rp = layer.get("reference_patient") or {}
     vals = "; ".join(f"{k}: {v}" for k, v in (rp.get("values") or {}).items())
     p = rp.get("predicted_risk")
-    return (f"Reference (typical) patient: {rp.get('definition', '')}. {vals}. "
-            f"Predicted risk {100 * p:.0f}%." if p is not None else "")
+    one = (layer.get("population") or {}).get("singular") or "patient"
+    defn = (rp.get("definition") or "").replace("patient", one)
+    pred = ((layer.get("outcome") or {}).get("predicted") or "the predicted risk")
+    pred = pred[0].upper() + pred[1:]
+    if pred.startswith("The "):
+        pred = pred[4:5].upper() + pred[5:]
+    pct = "below 1%" if p is not None and p < 0.005 else ("above 99%" if p is not None and p > 0.995 else
+                                                          f"{100 * p:.0f}%" if p is not None else "")
+    return (f"Reference (typical) {one}: {defn}. {vals}. {pred}: {pct}." if p is not None else "")
 
 
 def appendix_section(sec: Dict[str, Any], P: str) -> List[str]:
@@ -676,12 +683,13 @@ def _evidence_figures(layer, pid, title) -> List[str]:
     from .render_structure import hidden_labels
     hl = hidden_labels(layer) if layer.get("graph") else {}
     deep = [(f, lab) for f, lab in zip(figs, labs) if f.get("kind", "").startswith("deep_")]
-    if deep:
-        bc = next((c for c in layer["claims"] if c["type"] == "boundary" and c["annotation"]["id"] == pid), None)
+    bc = next((c for c in layer["claims"] if c["type"] == "boundary" and c["annotation"]["id"] == pid), None)
+    if deep and bc is not None and bc.get("verified"):
+        from .plain_plots import outcome_words
         st = (bc or {}).get("statement") or {}
         r = {f["kind"]: lab for f, lab in deep}
-        churn = "customer" in (layer.get("population") or {}).get("plural", "")
-        who = "customers" if churn else "patients"
+        who = (layer.get("population") or {}).get("plural") or "patients"
+        verb = outcome_words(layer)[2]
         txt = (r"\par\medskip\noindent\textbf{Worked example: reading this part.} Figure~\ref{" + r["deep_map"]
                + r"} maps the part's own output over its main inputs. In the grey region it is switched off and adds "
                r"nothing; past the black line it switches on, and the colour shows how much it adds to the score. "
@@ -689,7 +697,7 @@ def _evidence_figures(layer, pid, title) -> List[str]:
                      f"{(st.get('rule') or {}).get('text', '')}. ")
                + tex(f"{st.get('n_on')} of {round(st.get('n_on', 0) / max(st.get('share_on') or 1e-9, 1e-9))} "
                      f"training {who} lie on the 'on' side, and {100 * (st.get('outcome_rate_on') or 0):.0f}% of them "
-                     f"{'left' if churn else 'had heart disease'}, against "
+                     f"{verb}, against "
                      f"{100 * (st.get('outcome_rate_off') or 0):.0f}% of the others: "
                      + ("the filled points crowd on the 'on' side. "
                         if (st.get("outcome_rate_on") or 0) > (st.get("outcome_rate_off") or 0) else

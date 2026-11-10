@@ -1153,6 +1153,22 @@ MAP_GRID = 80          # points per axis of a deep-dive map
 MAP_MARGIN = 0.04      # margin beyond the data limits on each side of a deep-dive map
 
 
+def _slice_points(v) -> List[Tuple[Any, float]]:
+    """Where to slice a map along a variable: its 10th, 50th and 90th percentile, or, when those
+    coincide (a variable with few values, e.g. a count), distinct values (low, middle, high of
+    the observed values); each with its percentile label."""
+    x = np.asarray(v.raw_train, float)
+    qs = [(q, float(np.percentile(x, q))) for q in (10, 50, 90)]
+    if len({round(b, 9) for _, b in qs}) == 3:
+        return qs
+    u = np.unique(x)
+    pick = [u[0], u[len(u) // 2], u[-1]] if len(u) >= 3 else list(u)
+    out = []
+    for b in dict.fromkeys(float(b) for b in pick):
+        out.append((round(float(np.mean(x <= b)) * 100), b))
+    return out
+
+
 def _map_axis(v, n: int = MAP_GRID) -> np.ndarray:
     """The full plotted range of a deep-dive map axis: the training data limits plus a margin,
     so the coloured field (and the boundary) reaches every plotted data point."""
@@ -1268,8 +1284,7 @@ def boundary_claims(m: PlainModel, p: Part) -> List[Dict[str, Any]]:
             rows = rows[(v3.raw_train >= lo) & (v3.raw_train <= hi)]
         pick = rows[np.linspace(0, len(rows) - 1, min(700, len(rows))).round().astype(int)] if len(rows) else rows
         sl1 = []
-        for q in (10, 50, 90):
-            yv = float(np.percentile(v2.raw_train, q))
+        for q, yv in _slice_points(v2):
             X1 = np.repeat(zt[None, :], len(g1), axis=0)
             X1[:, v1.columns[0]] = (g1 - v1.mean[0]) / v1.scale[0]
             X1[:, v2.columns[0]] = (yv - v2.mean[0]) / v2.scale[0]
@@ -1277,8 +1292,7 @@ def boundary_claims(m: PlainModel, p: Part) -> List[Dict[str, Any]]:
                 X1[:, v3.columns[0]] = (np.median(v3.raw_train) - v3.mean[0]) / v3.scale[0]
             sl1.append({"at": sig(yv), "q": q, "z": [sig(z) for z in part_out(X1)]})
         sl2 = []
-        for q in (10, 50, 90):
-            xv = float(np.percentile(v1.raw_train, q))
+        for q, xv in _slice_points(v1):
             X2 = np.repeat(zt[None, :], len(g2), axis=0)
             X2[:, v2.columns[0]] = (g2 - v2.mean[0]) / v2.scale[0]
             X2[:, v1.columns[0]] = (xv - v1.mean[0]) / v1.scale[0]
@@ -1385,12 +1399,17 @@ def boundary_claims(m: PlainModel, p: Part) -> List[Dict[str, Any]]:
             rule = {"pieces": pieces, "text": "; ".join(bits), "on_side": side_word}
             kind = "kinked" if len(pieces) > 1 else "line"
         # agreement: the traced boundary (interpolated) against the actual on/off of the data
-        if len(pts) >= 2 and not held and len(mains) == 2:
+        if len(pts) >= 2:
             o = np.argsort(pts[:, 1])
             x2 = np.asarray(mains[1].raw_train, float)
             x1 = np.asarray(mains[0].raw_train, float)
             b = np.interp(x2, pts[o, 1], pts[o, 0])
             sel = at_typical & (x2 >= pts[:, 1].min()) & (x2 <= pts[:, 1].max())
+            # the map holds the other numeric inputs at their median: check on the rows near it
+            for v in list(mains[2:]) + [m.var_by_base[b_] for b_ in held]:
+                xv = np.asarray(v.raw_train, float)
+                lo, hi = np.percentile(xv, [40, 60])
+                sel &= (xv >= lo) & (xv <= hi)
             above = float(np.mean(on_train[sel & (x1 > b)])) if np.any(sel & (x1 > b)) else 0.0
             pred_on = (x1 > b) if above >= 0.5 else (x1 <= b)
             agree = float(np.mean(pred_on[sel] == on_train[sel])) if sel.any() else None
@@ -1403,8 +1422,11 @@ def boundary_claims(m: PlainModel, p: Part) -> List[Dict[str, Any]]:
                           "outcome_rate_on": sig(float(y[on_train].mean())) if n_on else None,
                           "outcome_rate_off": sig(float(y[~on_train].mean())) if n_on < len(y) else None,
                           "agreement": sig(agree) if agree is not None else None,
-                          "agreement_rows": "training rows at the typical level of the part's category inputs"
-                                            if cats else "all training rows"})
+                          "agreement_rows": ("training rows at the typical level of the part's category inputs"
+                                             if cats else "all training rows")
+                                            + ("" if kind == "plane" or (len(mains) == 2 and not held) else
+                                               ", with its other numeric inputs between their 40th and 60th "
+                                               "percentile (the map holds them at the median)")})
     c["estimate"] = {"method": "where the part's switching units are on, from the weights (one hinge unit) or traced "
                                "on a grid (several units); checked against the training rows", "value": agree}
     c["evidence"] = {"maps": maps}
@@ -2172,7 +2194,7 @@ def graph_record(m: PlainModel, parts: List[Part]) -> Dict[str, Any]:
         if rec["kind"] != "hidden" or n not in vals:
             continue
         a = np.asarray(vals[n], dtype=float)
-        on = a > 1e-12
+        on = np.abs(a) > 1e-12      # non-zero (an identity unit can go negative)
         hist, edges_h = np.histogram(a, bins=20)
         act = {"n": int(len(a)), "active_n": int(on.sum()), "hist": [int(h) for h in hist],
                "hist_edges": [sig(e) for e in edges_h]}
@@ -2196,7 +2218,7 @@ def graph_record(m: PlainModel, parts: List[Part]) -> Dict[str, Any]:
 
 PARTIAL_MAX = 6          # partial-feature plots per genome
 PARTIAL_GRID = 41        # points of a 1D curve
-PARTIAL_GRID2 = 25       # points per axis of a 2D map
+PARTIAL_GRID2 = 40       # points per axis of a 2D map
 
 
 def partial_features(m: PlainModel, parts: List[Part], graph: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -2262,12 +2284,14 @@ def partial_features(m: PlainModel, parts: List[Part], graph: Dict[str, Any]) ->
         eff.sort(key=lambda t: -t[0])
         mains = [v for e, v in eff if e > 1e-9][:2]
         rec = {"node": n, "why": cand[n], "region": region.get(n), "importance": sig(score[n]),
-               "active_n": int(np.sum(vals[n] > 1e-12)), "n": int(len(vals[n]))}
+               "active_n": int(np.sum(np.abs(vals[n]) > 1e-12)), "n": int(len(vals[n]))}
         if n in sn_acts and len(sn_acts[n]) == len(vals[n]):
             rec["reproduction_max_abs_err"] = sig(float(np.max(np.abs(sn_acts[n] - vals[n]))))
         rec["inputs"] = []
         for v in mains:
-            grid, _ = grid_for_values(v)
+            grid, ordinal = grid_for_values(v)
+            if not ordinal:               # the whole observed range, so the curve spans the rug
+                grid = np.linspace(float(np.min(v.raw_train)), float(np.max(v.raw_train)), len(grid))
             X = np.repeat(zt[None, :], len(grid), axis=0)
             X[:, v.columns[0]] = (grid - v.mean[0]) / v.scale[0]
             typ = m.ev.forward(X)[n]
@@ -2283,8 +2307,7 @@ def partial_features(m: PlainModel, parts: List[Part], graph: Dict[str, Any]) ->
                                                                      np.linspace(0, 1, 101))]})
         if len(mains) == 2:
             v1, v2 = mains
-            g1 = np.linspace(*np.percentile(v1.raw_train, [1, 99]), PARTIAL_GRID2)
-            g2 = np.linspace(*np.percentile(v2.raw_train, [1, 99]), PARTIAL_GRID2)
+            g1, g2 = _map_axis(v1, PARTIAL_GRID2), _map_axis(v2, PARTIAL_GRID2)
             A, B = np.meshgrid(g1, g2)
             X = np.repeat(zt[None, :], A.size, axis=0)
             X[:, v1.columns[0]] = (A.ravel() - v1.mean[0]) / v1.scale[0]
@@ -2295,9 +2318,9 @@ def partial_features(m: PlainModel, parts: List[Part], graph: Dict[str, Any]) ->
                           "z": [[sig(z) for z in row] for row in Z],
                           "points_x": [sig(x) for x in np.asarray(v1.raw_train, float)[idx]],
                           "points_y": [sig(y) for y in np.asarray(v2.raw_train, float)[idx]],
-                          "slices_at": [sig(x) for x in np.percentile(v2.raw_train, [10, 50, 90])]}
+                          "slices_at": [sig(x) for _, x in _slice_points(v2)]}
             sl = []
-            for y in np.percentile(v2.raw_train, [10, 50, 90]):
+            for _, y in _slice_points(v2):
                 X = np.repeat(zt[None, :], len(g1), axis=0)
                 X[:, v1.columns[0]] = (g1 - v1.mean[0]) / v1.scale[0]
                 X[:, v2.columns[0]] = (y - v2.mean[0]) / v2.scale[0]
@@ -2324,8 +2347,12 @@ def partial_features(m: PlainModel, parts: List[Part], graph: Dict[str, Any]) ->
             read = [code for col, code in zip(cols, v.codes) if col in anc_cols]
             if not read:
                 continue
-            other = next((code for code in v.all_codes if code not in read), None)
-            cats.append((v, read[:4] + ([other] if other is not None else []), other))
+            unread = [code for code in v.all_codes if code not in read]
+            other = unread[0] if unread else None
+            # one level without a column of its own is simply that level (e.g. male against
+            # female); several such levels act as one: "any other ..."
+            oth = other if len(unread) > 1 else None
+            cats.append((v, read[:4] + ([other] if other is not None else []), oth))
         if cats and not mains:
             import itertools
             cats = cats[:3]
@@ -2337,7 +2364,7 @@ def partial_features(m: PlainModel, parts: List[Part], graph: Dict[str, Any]) ->
                     for c, z in v.encode(code).items():
                         X[0, c] = z
                 a = float(m.ev.forward(X)[n][0])
-                rows.append({"levels": [v.level(code)["label"] + (" (a level it does not read)" if code == oth else "")
+                rows.append({"levels": [("any other " + (v.short or v.label)) if code == oth else v.level(code)["label"]
                                         for (v, _, oth), code in zip(cats, combo)], "value": sig(a)})
             rec["categories"] = {"variables": [v.short or v.label for v, _, _ in cats], "rows": rows}
         # (b): the incoming non-linear units, each against its own main input
