@@ -398,13 +398,109 @@ def _matches(tok: str, v: float, pct: bool, cand: Sequence[Tuple[str, float]]) -
     return any(abs(c - v) <= tol or abs(abs(c) - abs(v)) <= tol for _, c in cand)
 
 
+UP = re.compile(r"\b(raises?|raised|raising|increases?|increased|increasing|rises|rising|rise|adds risk|"
+                r"higher)\b", re.I)
+DOWN = re.compile(r"\b(lowers|lowered|lowering|lower it|lower the (?:predicted )?(?:risk|chance|probability)|reduces?|"
+                  r"reduced|decreases?|decreased|falls?|falling|drops?|protects?|"
+                  r"lower)\b", re.I)
+NEGATED = re.compile(r"\b(?:not|no|never|barely|n't|nothing|neither|hardly)\b|without (?:chang|mov)", re.I)
+DIRECTION_TYPES = ("direction", "magnitude", "threshold", "subgroup", "linearity")   # not interactions: their
+# direction is the main variable's, and the prose often talks about the modifier
+
+
+def claim_labels(c: Dict[str, Any]) -> List[str]:
+    """Words that name what a claim is about (variable labels, the level it moves to)."""
+    out = []
+    for v in c.get("variables") or []:
+        for k in ("label", "short"):
+            if v.get(k):
+                out.append(str(v[k]).lower())
+    ch = (c.get("statement") or {}).get("change") or {}
+    d = ch.get("to") or {}
+    for k in ("label", "group"):
+        if isinstance(d, dict) and d.get(k):
+            out.append(str(d[k]).lower())
+    return [x for x in out if len(x) > 2]
+
+
+def claim_direction(c: Dict[str, Any]) -> Optional[str]:
+    d = (c.get("statement") or {}).get("direction")
+    return d if d in ("raises", "lowers") else None
+
+
+def _directional(c: Dict[str, Any]) -> bool:
+    if not claim_direction(c) or c.get("type") not in DIRECTION_TYPES:
+        return False
+    sh = c.get("shape") or {}
+    return not (sh.get("class") in ("peak", "dip", "multi_segment") or sh.get("status") in ("mixed", "fallback"))
+
+
+def prose_directions(where: str, text: str, cited: Sequence[Dict[str, Any]],
+                     all_labels: Sequence[str] = ()) -> List[Dict[str, Any]]:
+    """Direction words in the prose against the sign of the claim they cite. Conservative, so
+    that it can be trusted: only a sentence that cites exactly one directional claim (direction,
+    magnitude, threshold, subgroup or linearity; not a peak, dip or mixed shape) and uses only
+    "raises"-type or only "lowers"-type words, with no negation and no other variable named
+    (whose direction the words might be about), is checked."""
+    dirs = [c for c in cited if _directional(c)]
+    if len(dirs) != 1 or NEGATED.search(text):
+        return []
+    own = {str(v.get(k, "")).lower() for v in dirs[0].get("variables") or [] for k in ("label", "short")}
+    low = text.lower()
+    if any(lab not in own and not any(lab in o for o in own) and re.search(r"\b" + re.escape(lab) + r"\b", low)
+           for lab in all_labels):
+        return []
+    up, down = bool(UP.search(text)), bool(DOWN.search(text))
+    if up == down:
+        return []
+    said = "raises" if up else "lowers"
+    c = dirs[0]
+    if claim_direction(c) == said:
+        return []
+    f = finding("prose_direction", where, said, claim_direction(c),
+                note=f"the sentence says it {said}; the claim it cites, {c['id']} ({c.get('key')}), says it "
+                     f"{claim_direction(c)}: {text.strip()[:240]}")
+    f["claims"] = [c["id"]]
+    return [f]
+
+
+def _cands(c: Dict[str, Any]) -> List[Tuple[str, float]]:
+    vals: List[Tuple[str, float]] = []
+    _values(c, vals)
+    return vals
+
+
+def _near_rounding(tok: str, v: float, pct: bool, cand: Sequence[Tuple[str, float]]) -> Optional[float]:
+    """A value the stated number is one unit of its last digit away from (e.g. "about 5%" for
+    4.45%: rounded twice). Returns that value, else None."""
+    unit = 10 ** (-_decimals(tok))
+    if pct:
+        probs = [c for k, c in cand if (k == "%" or PCT_KEY.search(k)) and -1.0 <= c <= 1.0]
+        hits = [100 * abs(c) for c in probs if abs(100 * abs(c) - v) <= unit + 1e-6]
+    else:
+        hits = [abs(c) for _, c in cand if abs(abs(c) - abs(v)) <= unit + 1e-9]
+    return min(hits, key=lambda h: abs(h - v)) if hits else None
+
+
 def check_prose(layer: Dict[str, Any], computed_claims: Sequence[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], Dict[str, int]]:
     """Cited claims exist (stated and recomputed); every number in a sentence is in its cited
-    claims (recomputed), the typical patient or the split sizes."""
+    claims (recomputed), the typical patient or the split sizes; direction words agree with the
+    cited claims.
+
+    A number that is not in the cited claims is classified as
+    * ``prose_uncited`` (warn): it is in another claim the sentence does not cite (a citation gap);
+    * ``prose_rounding`` (warn, a weakened-level note): one unit of its last digit away from a
+      cited value at the stated precision ("about 5%" for 4.45%);
+    * ``prose_number`` (mismatch): in no claim at all.
+    """
     stated = {c["id"]: c for c in layer.get("claims") or []}
     comp = {c["id"]: c for c in computed_claims}
     ctx = _context_values(layer)
-    out, n_sent, n_num, n_bad = [], 0, 0, 0
+    all_cands = {cid: _cands(c) for cid, c in comp.items()}
+    all_labels = sorted({str(v.get(k, "")).lower() for c in computed_claims for v in c.get("variables") or []
+                         for k in ("label", "short") if len(str(v.get(k, ""))) > 2})
+    out: List[Dict[str, Any]] = []
+    n_sent = n_num = n_bad = n_uncited = n_round = n_dir = 0
     small = set(range(0, 11))     # small counts in words and list positions
     for where, s in draft_sentences(layer.get("drafted")):
         n_sent += 1
@@ -417,20 +513,54 @@ def check_prose(layer: Dict[str, Any], computed_claims: Sequence[Dict[str, Any]]
         cand: List[Tuple[str, float]] = list(ctx)
         for cid in cites:
             if cid in comp:
-                _values(comp[cid], cand)
-        bad = []
+                cand += all_cands[cid]
+        bad, uncited, rounding = [], [], []
         for tok, v, pct in numbers_in(text):
             n_num += 1
             if not pct and v in small and "." not in tok:
                 continue
-            if not _matches(tok, v, pct, cand):
-                bad.append(tok + ("%" if pct else ""))
+            if _matches(tok, v, pct, cand):
+                continue
+            label = tok + ("%" if pct else "")
+            # a percentage one unit from a cited risk is a rounding slip ("about 5%" for 4.45%); a
+            # plain number found only in another claim is a citation gap; anything else is wrong
+            r = _near_rounding(tok, v, pct, cand) if pct else None
+            if r is not None:
+                rounding.append((label, r))
+                continue
+            others = [cid for cid, cc in all_cands.items() if cid not in cites and _matches(tok, v, pct, cc)]
+            if others:
+                uncited.append((label, others[:4]))
+                continue
+            r = _near_rounding(tok, v, pct, cand)
+            if r is not None:
+                rounding.append((label, r))
+                continue
+            bad.append(label)
         if bad:
             n_bad += len(bad)
             out.append(finding("prose_number", where, bad, None,
-                               note="numbers in the sentence that are not in the claims it cites "
-                                    f"({', '.join(cites) or 'none'}), recomputed: " + text[:400]))
-    return out, {"sentences": n_sent, "numbers": n_num, "unmatched_numbers": n_bad}
+                               note="numbers in the sentence that are in no claim (cited: "
+                                    f"{', '.join(cites) or 'none'}), recomputed: " + text[:400]))
+        for label, others in uncited:
+            n_uncited += 1
+            f = finding("prose_uncited", where, label, others, severity="warn",
+                        note=f"{label} is not in the cited claims ({', '.join(cites) or 'none'}) but is in "
+                             f"{', '.join(others)}: a citation gap, not a wrong number")
+            f["claims"] = others
+            out.append(f)
+        for label, r in rounding:
+            n_round += 1
+            out.append(finding("prose_rounding", where, label, round(r, 4), severity="warn",
+                               note=f"{label} is one unit of its last digit from the cited value {r:.4g}"
+                                    f"{'%' if label.endswith('%') else ''} (rounded twice?): a weakened-level "
+                                    "rounding note"))
+        cited = [comp[c] for c in cites if c in comp]
+        dfs = prose_directions(where, text, cited, all_labels)
+        n_dir += len(dfs)
+        out += dfs
+    return out, {"sentences": n_sent, "numbers": n_num, "unmatched_numbers": n_bad,
+                 "uncited_numbers": n_uncited, "rounding_notes": n_round, "direction_mismatches": n_dir}
 
 
 def lint_prose(layer: Dict[str, Any], computed_claims: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -454,10 +584,82 @@ def lint_prose(layer: Dict[str, Any], computed_claims: Sequence[Dict[str, Any]])
 
 
 # ============================================================================ the whole re-check
-def recheck(target, vm=None, claims: bool = True, prose: bool = True, cache: bool = True,
-            log=lambda *a: None) -> Dict[str, Any]:
-    """Run every L1 check for a :class:`~explaneat.verify.artefacts.Target`."""
+CLAIMS_CACHE_VERSION = 1
+
+
+def _code_digest() -> str:
+    """A digest of the code that computes claims (so a code change invalidates the cache)."""
+    import hashlib
+    from pathlib import Path
+    h = hashlib.sha256()
+    here = Path(__file__).resolve().parents[1] / "analysis"
+    for p in sorted(here.glob("plain_language*.py")) + [here / "explanation_tools.py", here / "composition.py"]:
+        if p.is_file():
+            h.update(p.read_bytes())
+    return h.hexdigest()[:16]
+
+
+def claims_cache_key(vm) -> str:
+    import hashlib
+    import json as _json
+    h = hashlib.sha256()
+    h.update(str(vm.genome_id).encode())
+    h.update(_json.dumps(vm.operations, sort_keys=True, default=str).encode())
+    h.update(np.ascontiguousarray(vm.m.X).tobytes()[:1 << 20])
+    h.update(str(vm.m.X.shape).encode())
+    h.update(_code_digest().encode())
+    h.update(str(CLAIMS_CACHE_VERSION).encode())
+    return h.hexdigest()[:32]
+
+
+def recompute_claims(vm, cache: bool = True, log=lambda *a: None) -> List[Dict[str, Any]]:
+    """Every claim recomputed from the model; cached under ``$EXPLANEAT_HOME/verify_cache/claims``
+    keyed by the genome, the operations replayed, the data and the claim code."""
+    import json as _json
     from ..analysis.plain_language import _clean, extract_claims
+    from .model import cache_dir
+    path = cache_dir() / "claims" / f"{claims_cache_key(vm)}.json"
+    if cache and path.is_file():
+        try:
+            log("claims from the cache")
+            return _json.loads(path.read_text())
+        except Exception:
+            pass
+    log("recomputing every claim (this can take a minute on large data; cached afterwards)")
+    computed = _clean(extract_claims(vm.m)["claims"])
+    if cache:
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = path.with_suffix(".tmp")
+            tmp.write_text(_json.dumps(computed))
+            tmp.replace(path)
+        except Exception:
+            pass
+    return computed
+
+
+def freetext_findings(ft: Dict[str, Any]) -> List[Dict[str, Any]]:
+    out = []
+    for s in ft["statements"]:
+        if s["status"] not in ("mismatch", "approx"):
+            continue
+        sev = "mismatch" if s["status"] == "mismatch" else "warn"
+        stated = s.get("stated", s["text"])
+        model = s.get("model", s.get("model_mean_contribution"))
+        note = f"{s['kind']}: {s['text']}"
+        if s["kind"] == "formula":
+            note += (f" (max |stated - model| {s['max_abs_err']:.3g}, {100 * s['rel_err']:.1f}% of the node's "
+                     f"range; off on {s['rows_off']} of {s['n_rows']} rows)")
+            model = {"node": s["node"], "max_abs_err": s["max_abs_err"], "rows_off": s["rows_off"]}
+        f = finding("freetext_" + s["kind"], s["location"], stated, model, severity=sev, note=note)
+        f["part"] = s.get("part")
+        out.append(f)
+    return out
+
+
+def recheck(target, vm=None, claims: bool = True, prose: bool = True, cache: bool = True,
+            freetext: bool = True, log=lambda *a: None) -> Dict[str, Any]:
+    """Run every L1 check for a :class:`~explaneat.verify.artefacts.Target`."""
     from .model import load
 
     t0 = time.time()
@@ -490,6 +692,19 @@ def recheck(target, vm=None, claims: bool = True, prose: bool = True, cache: boo
         report["closed_forms"] = {pid: (cf or {}).get("latex") for pid, cf in cfs.items()}
     except Exception as e:
         F.append(finding("closed_form", "recompute", None, str(e), severity="warn"))
+    if freetext:
+        log("free text of the hypotheses and evidence")
+        from .freetext import check_operations_text
+        extra = []
+        for k in ("summary", "resisted"):
+            if isinstance((target.record or {}).get(k), str):
+                extra.append((f"record.{k}", target.record[k]))
+        ft = check_operations_text(vm, extra_texts=extra)
+        F += freetext_findings(ft)
+        report["freetext"] = {"counts": ft["counts"],
+                              "checked": [x for x in ft["statements"] if x["status"] != "unchecked"],
+                              "unchecked_statements": [x for x in ft["statements"] if x["status"] == "unchecked"],
+                              "unchecked_sentences": ft["unchecked"]}
     layer = target.layer
     if layer is not None:
         stated_parts = {p["id"]: p["name"] for p in layer.get("parts") or []}
@@ -497,9 +712,7 @@ def recheck(target, vm=None, claims: bool = True, prose: bool = True, cache: boo
             F.append(finding("parts", "layer.parts", stated_parts, names,
                              note="the layer's parts differ from the annotations in the operations"))
     if claims and layer is not None:
-        log("recomputing every claim (this can take a minute on large data)")
-        res = extract_claims(vm.m)
-        computed = _clean(res["claims"])
+        computed = recompute_claims(vm, cache=cache, log=log)
         cf, stats = compare_claims(layer.get("claims") or [], computed)
         F += cf
         report["claims"] = stats
@@ -512,6 +725,7 @@ def recheck(target, vm=None, claims: bool = True, prose: bool = True, cache: boo
     sev = Counter(f["severity"] for f in F)
     report["summary"] = {"mismatch": sev.get("mismatch", 0), "warn": sev.get("warn", 0),
                          "info": sev.get("info", 0),
+                         "unchecked_freetext": len((report.get("freetext") or {}).get("unchecked_sentences") or []),
                          "verdict": "numbers reproduce" if not sev.get("mismatch") else
                                     "some stated numbers do not reproduce",
                          "seconds": round(time.time() - t0, 1)}
