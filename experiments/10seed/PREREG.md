@@ -129,6 +129,38 @@ generations by design (decided 2 Nov 2026).
   explanation agents run at once. Adult goes first in its pre-registered order (s0, s1,
   s2, s7, s4, s3, s9, s5, s8, s6), then Heart100. Each agent's 3-hour box is measured
   from its own first tool call.
+- **2026-11-11: definition of `verified_by_mike` (signoff-v1; Mike's decision, made before any
+  verification).** This pre-registration lists `verified_by_mike` as a recorded field but did
+  not define it. It is now defined as the **signoff-v1** protocol of
+  `docs/design/human-cross-verification.md` (section 7), implemented by
+  `uv run python -m explaneat review signoff <label>`. A genome is Mike-verified
+  (`verified_by_mike = yes`) only when all of these hold:
+  1. the automated checks agree (the verification pack's "Recorded vs live" table has no
+     DISAGREE);
+  2. every gate item (a failed check, a verifier refutation, a sentence changed since its last
+     verdict) and every tier-A item of the risk-ranked review queue (top 25 by risk score) has
+     a current verdict from Mike (confirmed, wrong or unsure), and no "wrong" remains unfixed;
+  3. a seeded random sample of 10 of the remaining scored sentences (tiers B and C, and 10 of
+     the tier-A overflow if any) has verdicts. The sample is drawn by code, not by Mike. If any
+     of the 10 is wrong, 10 more are drawn, and a wrong among those fails the sign-off unless
+     the whole stratum is reviewed;
+  4. a `recheck` of the current text has no mismatch that is not answered by a verdict;
+  5. every "unsure" verdict in the reviewed items is disclosed in the report.
+
+  The record then carries `mike_verification.protocol = "signoff-v1"` and a `signoff` block
+  holding the verdict counts, the sample size, the wrong items in the sample, and the
+  one-sided 95% Clopper-Pearson upper bound on the share of wrong sentences in the sampled
+  strata. A later change to the text makes the verification stale until the changed
+  sentences are verified again. `build_explanations_csv.py` sets `verified_by_mike = yes` only
+  for such records. It adds the columns `signoff_protocol`, `signoff_date`,
+  `signoff_confirmed`, `signoff_wrong`, `signoff_unsure`, `signoff_sample_n`,
+  `signoff_sample_wrong` and `signoff_error_bound`, and leaves every existing column
+  unchanged. Agent-only and Mike-verified results stay in separate columns, as above.
+
+  **Timing.** This amendment is made before any verification. On 2026-11-11 no genome has
+  been verified: `verified_by_mike` is "no" for all 30 pre-registered genomes, and no record
+  of any study carries `mike_verification`. `verified_by_mike` is therefore defined, but no
+  genome has been verified yet.
 
 ## Metrics (per run, `runs.csv`, all 30 best genomes)
 

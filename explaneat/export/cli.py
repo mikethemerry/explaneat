@@ -211,7 +211,11 @@ def _pdf_rotation(pdf: Path):
 @click.option("--plain/--no-plain", default=True, show_default=True,
               help="Render each genome's complete plain-language (v5 read-down) document and include it "
                    "in the combined review PDF.")
-def verification_pack(first_n, labels, out_dir, formats, review_marks, records_dir, plain):
+@click.option("--review/--no-review", "review_queue", default=True, show_default=True,
+              help="Print the signoff-v1 review queue (risk-ranked sentences with sids, verifier findings, "
+                   "random sample, changes since your verdicts) instead of the 'what to look at' bullets. "
+                   "Runs recheck per genome (cached; the database is only read).")
+def verification_pack(first_n, labels, out_dir, formats, review_marks, records_dir, plain, review_queue):
     """Mike's verification pack: every format per genome plus one combined review PDF."""
     from .pack import _latexmk, index_entry, parse_formats, write_index
     from .verification import record_command, render_review
@@ -235,6 +239,18 @@ def verification_pack(first_n, labels, out_dir, formats, review_marks, records_d
             failures.append({"label": lab, "error": f"{type(e).__name__}: {e}"})
             click.echo(f"FAILED {lab}: {e}", err=True)
             continue
+        if review_queue:
+            try:
+                from ..review.pack import review_summary
+                from ..review.report import build as build_review, write_status
+                rv = build_review(lab, log=lambda m: None)
+                write_status(rv)
+                res["doc"]["review"] = review_summary(rv)
+                click.echo(f"{lab}: review queue {res['doc']['review']['n_queue']} items + "
+                           f"{res['doc']['review']['n_sample']} sampled (about "
+                           f"{res['doc']['review']['estimate_minutes']} min)")
+            except Exception as e:  # the pack still builds, with the old bullets
+                failures.append({"label": lab, "review": f"{type(e).__name__}: {e}"})
         docs.append(res["doc"])
         entries.append(index_entry(res["doc"], lab))
         if plain:    # the complete v5 read-down document, rendered here, next to the certificate
@@ -265,9 +281,12 @@ def verification_pack(first_n, labels, out_dir, formats, review_marks, records_d
     else:
         failures.append({"label": "review", "compile": ["review.tex"]})
     (out / "RECORDING.txt").write_text(
-        "Record each verdict (writes mike_verification into experiments/10seed/explanations/<label>.json;\n"
-        "use --not-verified for no; then rebuild the CSVs with\n"
-        "uv run python experiments/10seed/build_explanations_csv.py). Re-exporting picks the verdict up.\n\n"
+        "Sentence verdicts (each queue item's sid; append-only, experiments/10seed/review/<label>.verdicts.jsonl):\n"
+        "  uv run python -m explaneat review verdict <label> <sid> confirmed|wrong|unsure --note \"...\"\n"
+        "Then the genome verdict. --verified runs the signoff-v1 check (PREREG amendment 2026-11-11) and is\n"
+        "refused until it passes; it writes mike_verification into experiments/10seed/explanations/<label>.json.\n"
+        "Use --not-verified for no; then rebuild the CSVs with\n"
+        "uv run python experiments/10seed/build_explanations_csv.py. Re-exporting picks the verdict up.\n\n"
         + "\n".join(f"{i + 1:2d}. {record_command(d['label'])}" for i, d in enumerate(docs)) + "\n",
         encoding="utf-8")
     for f in failures:
@@ -277,13 +296,48 @@ def verification_pack(first_n, labels, out_dir, formats, review_marks, records_d
 
 @export.command("record-verdict")
 @click.argument("label")
-@click.option("--verified/--not-verified", required=True)
+@click.option("--verified/--not-verified", default=None,
+              help="The genome verdict. --verified runs the signoff-v1 check (PREREG amendment 2026-11-11) "
+                   "and is refused unless it passes.")
 @click.option("--minutes", type=float, default=None)
 @click.option("--changes", default="")
 @click.option("--notes", default="")
+@click.option("--sentence", "sentence", default=None,
+              help="Record a sentence verdict instead (sid from the pack's review queue).")
+@click.option("--verdict", "sentence_verdict", type=click.Choice(["confirmed", "wrong", "unsure"]), default=None)
+@click.option("--note", default="", help="Note for a sentence verdict (required for 'wrong').")
+@click.option("--disclose", is_flag=True, help="For an 'unsure' sentence verdict: disclose it in the report.")
 @click.option("--records-dir", default=None, type=click.Path(file_okay=False))
-def record_verdict(label, verified, minutes, changes, notes, records_dir):
-    """Write Mike's verdict as mike_verification in the explanation record (no database)."""
+def record_verdict(label, verified, minutes, changes, notes, sentence, sentence_verdict, note, disclose, records_dir):
+    """Write Mike's verdict: on one sentence (--sentence SID --verdict ...), or on the genome
+    (mike_verification in the explanation record; no database)."""
+    if sentence:
+        if not sentence_verdict:
+            raise click.ClickException("--sentence needs --verdict confirmed|wrong|unsure")
+        from ..review.report import build
+        from ..review.verdicts import find_sentence, record
+        r = build(label, run_recheck=False, bench=False)
+        try:
+            s = find_sentence(r.sentences, sentence)
+            ln = record(label, s, sentence_verdict, note=note, disclosed=disclose, context=r.context)
+        except (KeyError, ValueError) as e:
+            raise click.ClickException(str(e))
+        click.echo(f"{label}: {ln['id']} {sentence_verdict} on {s.sid} ({s.ref})")
+        return
+    if verified is None:
+        raise click.ClickException("give --verified/--not-verified, or --sentence SID --verdict ...")
+    if verified:
+        if records_dir:
+            raise click.ClickException("--verified runs the sign-off on the repository records; drop --records-dir")
+        from ..review.cli import echo_signoff, run_signoff
+        res = run_signoff(label, write=True, minutes=minutes, changes=changes, notes=notes)
+        echo_signoff(res)
+        if not res["passed"]:
+            raise click.ClickException(
+                "not recorded: 'verified_by_mike' is defined as signoff-v1 (experiments/10seed/PREREG.md, "
+                "amendment 2026-11-11); answer the items above, then run this again")
+        click.echo(f"{label}: mike_verification recorded (signoff-v1)")
+        return
     from ..analysis.explanation_records import write_verification
     rec = write_verification(label, verified, minutes=minutes, changes=changes, notes=notes,
                              directory=Path(records_dir) if records_dir else None)

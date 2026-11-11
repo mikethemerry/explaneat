@@ -107,8 +107,12 @@ def write_verification(
     changes: str = "",
     notes: str = "",
     directory: Optional[Path] = None,
+    signoff: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Write ``mike_verification`` into the record, atomically.
+
+    ``signoff``: the ``signoff-v1`` block (``explaneat review signoff --write``). Under the PREREG
+    amendment of 2026-11-11, ``verified_by_mike`` is "yes" only for a record verified with it.
 
     The rest of the record is left untouched and written back in the same
     format as ``verify_record.py`` (indent 2, key order kept).
@@ -121,6 +125,9 @@ def write_verification(
     mv["changes"] = changes or ""
     if notes:
         mv["notes"] = notes
+    if signoff:
+        mv["protocol"] = signoff.get("protocol")
+        mv["signoff"] = signoff
     mv["recorded_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
     rec["mike_verification"] = mv
     fd, tmp = tempfile.mkstemp(dir=str(p.parent), prefix=f".{p.stem}.", suffix=".tmp")
