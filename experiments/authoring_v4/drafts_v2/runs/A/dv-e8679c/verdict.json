@@ -1,0 +1,425 @@
+{
+  "item_id": "dv-e8679c",
+  "genome_id": "6a26c823-5e60-424d-a968-74f44d675efa",
+  "target_hash": null,
+  "target_hash_note": "the recheck report has no target_hash field",
+  "verifier": "blind verifier, run A",
+  "started_at": "2026-11-11T03:30:04Z",
+  "finished_at": "2026-11-11T03:35:18Z",
+  "minutes": 5,
+  "overall": {
+    "grade": "weakened",
+    "summary": "All 173 claims and every drafted number reproduce; nothing is refuted. Seven weakenings: the root is said not to add up although it adds exactly in log-odds; the many-calls gate hypothesis omits its West Virginia exception; the calls-vs-evening-charge part names South Dakota as its partner and never mentions evening charge, the stronger one; two '1% to 1%' sentences; 'ignores' for linked inputs; 'patients' for customers."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "weakened",
+      "level": "L3",
+      "part": "ann_93",
+      "claims": [
+        "C064"
+      ],
+      "location": "drafted.readdown.ann_93.evidence[0]",
+      "statement": "It is made of those five parts plus the state and total international charge entering directly, combined in a way that does not simply add up.",
+      "check": "ablate --node 252 --to zero; probe sweep of day minutes, summing part contributions",
+      "evidence": "In log-odds the five parts add exactly: the implied constant is -4.86 at 90, 170 and 350 day minutes (within display rounding); the only non-additive unit, 252, changes no training prediction (max change 0.0000, AUC 0.9009 both ways). The non-additivity is only the final sigmoid. The sentence contradicts the root hypothesis and lead ('the model adds five parts').",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/authoring_v4/drafts_v2/items/dv-e8679c --node 252 --to zero",
+        "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --hold typical --sweep 'total day minutes=90:350:14'"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "weakened",
+      "level": "L3",
+      "part": "ann_88",
+      "claims": [
+        "C135"
+      ],
+      "location": "drafted.readdown.ann_88.hypothesis[0]",
+      "statement": "This gate does nothing until about 4 calls to customer service, then raises the predicted chance ... steadily.",
+      "check": "probe calls 0..9 for West Virginia and Idaho (typical customer)",
+      "evidence": "Idaho: gate 0 up to 3 calls, +0.59 logit at 4, +1.20 at 5. West Virginia (the typical customer's own state): gate 0.00 from 0 to 8 calls, +0.50 at 9. The hypothesis omits the West Virginia exception (122 customers), which claim C135's own typical case shows (risk change 0.0). The 'only from 4 calls' wording in blocks[4] and annotations is right (never on below 4). Same omission in hypothesis_revisions.ann_88.",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --hold typical --sweep 'number customer service calls=0:9:10' --sweep 'state=West Virginia,Idaho'"
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "weakened",
+      "level": "L3",
+      "part": "ann_87",
+      "claims": [
+        "C122"
+      ],
+      "location": "drafted.readdown.ann_87.hypothesis[0]",
+      "statement": "More customer-service calls raise the predicted chance ... slowly at first and then faster, and more so in South Dakota.",
+      "check": "probe calls 0..3 against evening charge 11.76/22.57 and against state South Dakota/West Virginia/Michigan",
+      "evidence": "The South Dakota effect reproduces (1.0% -> 9.2% vs 1.5% -> 2.9% in West Virginia), but evening charge is the stronger partner and applies to all customers: at 11.76 US dollars the part goes +0.15 -> +2.43 logit (risk 1.1% -> 10.0%); at 22.57 it stays 0 (risk 2.3% flat). The part's title and largest weight (-1.0 per sd) are evening charge, yet no drafted ann_87 sentence names it. South Dakota is 66 customers with test check 'unclear', stated without a hedge. Same in blocks[2] last sentence, annotations.ann_87[2] and hypothesis_revisions.ann_87.",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --hold typical --sweep 'number customer service calls=0:3:4' --sweep 'total eve charge=11.76,22.57'",
+        "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --hold typical --sweep 'number customer service calls=0:4:5' --sweep 'state=South Dakota,West Virginia,Michigan'"
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "weakened",
+      "level": "L4",
+      "part": "ann_89",
+      "claims": [
+        "C129"
+      ],
+      "location": "drafted.readdown.ann_89.evidence[0]",
+      "statement": "a voice-mail plan lowers the predicted chance ..., from about 1% to about 1% for a typical customer",
+      "check": "claim C129 values",
+      "evidence": "1.49% -> 0.78%; both round to 1%, so the sentence says 'lowers' while its numbers show no change. Uninformative; needs finer precision or a relative change. Same wording in blocks[3], annotations.ann_89[0], hypothesis_revisions.ann_89.",
+      "commands": []
+    },
+    {
+      "id": "V5",
+      "grade": "weakened",
+      "level": "L4",
+      "part": "ann_90",
+      "claims": [
+        "C142"
+      ],
+      "location": "drafted.readdown.ann_90.evidence[0]",
+      "statement": "Nevada lowers it from about 1% to about 1%",
+      "check": "claim C142 values",
+      "evidence": "1.49% -> 0.96%; both round to 1%, so the direction is not visible in the numbers. Same in blocks[5], annotations.ann_90[0], hypothesis_revisions.ann_90.",
+      "commands": []
+    },
+    {
+      "id": "V6",
+      "grade": "weakened",
+      "level": "L4",
+      "part": "ann_93",
+      "claims": [
+        "C060",
+        "C061",
+        "C062",
+        "C063"
+      ],
+      "location": "drafted.readdown.ann_93.evidence[3]",
+      "statement": "It ignores total daytime charge, total evening calls, total international calls and total night-time charge.",
+      "check": "claim C060 note",
+      "evidence": "No path exists (C060 max change 0.0), but C060 itself notes that day charge is tied to day minutes, which the model reads, and asks for 'does not read X itself' rather than 'ignores'. A reader may conclude daytime cost does not matter. Same in annotations.ann_93[4] and blocks[1] ('the daytime charge, which the model ignores').",
+      "commands": []
+    },
+    {
+      "id": "V7",
+      "grade": "weakened",
+      "level": "L4",
+      "part": "ann_92",
+      "claims": [
+        "C114",
+        "C116"
+      ],
+      "location": "drafted.annotations.ann_92[1]",
+      "statement": "'between 2.96 US dollars and 4.41 US dollars for different patients' (also 'for different patients' in readdown.ann_92.evidence[0] and hypothesis_revisions.ann_92)",
+      "check": "domain terms",
+      "evidence": "These are telecom customers, not patients: a template wording slip. Numbers reproduce (recheck).",
+      "commands": []
+    },
+    {
+      "id": "V8",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.prose",
+      "statement": "(the draft sentence at this location)",
+      "check": "recheck / probe",
+      "evidence": "recheck: 173 of 173 claims reproduce; 86 sentences, 238 numbers, 0 in no claim, 0 uncited, 0 rounding notes",
+      "commands": []
+    },
+    {
+      "id": "V9",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_88",
+      "claims": [
+        "C134"
+      ],
+      "location": "drafted.worth_checking[1]",
+      "statement": "(the draft sentence at this location)",
+      "check": "recheck / probe",
+      "evidence": "recheck flagged a direction mismatch; false positive: C134 moves West Virginia -> elsewhere and raises 16.1% -> 25.7%, so West Virginia is lower, as the sentence says. Probe agrees (Idaho 25.3% vs West Virginia 12.0% at 4 calls).",
+      "commands": []
+    },
+    {
+      "id": "V10",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [
+        "C064",
+        "C001"
+      ],
+      "location": "drafted.lead[0]",
+      "statement": "(the draft sentence at this location)",
+      "check": "recheck / probe",
+      "evidence": "typical customer 1.49% (probe): West Virginia, 1 call, 180 min; the five parts named match the hierarchy",
+      "commands": []
+    },
+    {
+      "id": "V11",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [
+        "C052",
+        "C053",
+        "C054"
+      ],
+      "location": "drafted.blocks[0]",
+      "statement": "(the draft sentence at this location)",
+      "check": "recheck / probe",
+      "evidence": "direct state and international charge change log-odds by under 1e-4; risk stays 1.49%",
+      "commands": []
+    },
+    {
+      "id": "V12",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_91",
+      "claims": [
+        "C065",
+        "C066",
+        "C067",
+        "C068",
+        "C106"
+      ],
+      "location": "drafted.blocks[1]",
+      "statement": "(the draft sentence at this location)",
+      "check": "recheck / probe",
+      "evidence": "probe: direct-terms contribution linear in day minutes (-3.19 at 90 to +6.59 at 350 min); international plan 1.5% -> 16.4%; evening charge 0.58% -> 5.2%",
+      "commands": []
+    },
+    {
+      "id": "V13",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_92",
+      "claims": [
+        "C114",
+        "C112",
+        "C122",
+        "C118",
+        "C127"
+      ],
+      "location": "drafted.blocks[2]",
+      "statement": "(the draft sentence at this location)",
+      "check": "recheck / probe",
+      "evidence": "probe: ann_92 contribution falls from +4.26 at 90 min to +0.14 by 170 min; whole-model curve lowest near 150-170 min; C112 probe at 14.19/19.88 dollars: 3.9% -> 13.5% vs 1.8% -> 20.0% (stronger at higher charge, as claimed). South Dakota wording: see V3.",
+      "commands": []
+    },
+    {
+      "id": "V14",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_89",
+      "claims": [
+        "C129",
+        "C018"
+      ],
+      "location": "drafted.blocks[3]",
+      "statement": "(the draft sentence at this location)",
+      "check": "recheck / probe",
+      "evidence": "whole model 1.49% -> 0.31% with a plan; numbers reproduce (wording: see V4)",
+      "commands": []
+    },
+    {
+      "id": "V15",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_88",
+      "claims": [
+        "C135",
+        "C136",
+        "C134"
+      ],
+      "location": "drafted.blocks[4]",
+      "statement": "(the draft sentence at this location)",
+      "check": "recheck / probe",
+      "evidence": "gate never on below 4 calls (probe, both states); 306 acting, 154 left; 16.1% -> 25.7%",
+      "commands": []
+    },
+    {
+      "id": "V16",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_90",
+      "claims": [
+        "C141",
+        "C142"
+      ],
+      "location": "drafted.blocks[5]",
+      "statement": "(the draft sentence at this location)",
+      "check": "recheck / probe",
+      "evidence": "Tennessee 1.49% -> 2.2%; Nevada 1.49% -> 0.96% (wording: see V5)",
+      "commands": []
+    },
+    {
+      "id": "V17",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_92",
+      "claims": [
+        "C114",
+        "C065"
+      ],
+      "location": "drafted.worth_checking[0]",
+      "statement": "(the draft sentence at this location)",
+      "check": "recheck / probe",
+      "evidence": "probe: ann_92 and ann_91 contributions move in opposite directions with day minutes (+4.26/-3.19 at 90 min, +0.14/+6.59 at 350)",
+      "commands": []
+    },
+    {
+      "id": "V18",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_93",
+      "claims": [
+        "C004"
+      ],
+      "location": "drafted.worth_checking[2]",
+      "statement": "(the draft sentence at this location)",
+      "check": "recheck / probe",
+      "evidence": "Washington 6.4% vs West Virginia 1.5%, n 72 and 122; test check disagrees, so the flag is apt",
+      "commands": []
+    },
+    {
+      "id": "V19",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_86",
+      "claims": [
+        "C138",
+        "C140"
+      ],
+      "location": "drafted.readdown.ann_86.hypothesis[0]",
+      "statement": "(the draft sentence at this location)",
+      "check": "recheck / probe",
+      "evidence": "2.3% -> 3.6% from 0 to 3 calls; flat from 0 to 1 call then rising, as the probe shows",
+      "commands": []
+    },
+    {
+      "id": "V20",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_91",
+      "claims": [
+        "C065",
+        "C066"
+      ],
+      "location": "drafted.readdown.ann_91.hypothesis[0]",
+      "statement": "(the draft sentence at this location)",
+      "check": "recheck / probe",
+      "evidence": "linear closed form, reproduces exactly (C106); directions agree with probe",
+      "commands": []
+    },
+    {
+      "id": "V21",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_92",
+      "claims": [
+        "C114",
+        "C118"
+      ],
+      "location": "drafted.readdown.ann_92.hypothesis[0]",
+      "statement": "(the draft sentence at this location)",
+      "check": "recheck / probe",
+      "evidence": "part acts strongly at low day minutes and with calls; the threshold is disclosed with its 1797 exceptions",
+      "commands": []
+    },
+    {
+      "id": "V22",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_93",
+      "claims": [
+        "C001",
+        "C014",
+        "C018",
+        "C004",
+        "C016"
+      ],
+      "location": "drafted.annotations.ann_93",
+      "statement": "(the draft sentence at this location)",
+      "check": "recheck / probe",
+      "evidence": "numbers reproduce; C014 1.5% -> 2.9% (probe)",
+      "commands": []
+    },
+    {
+      "id": "V23",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_89",
+      "claims": [
+        "C130"
+      ],
+      "location": "drafted.annotations.ann_89[1]",
+      "statement": "(the draft sentence at this location)",
+      "check": "recheck / probe",
+      "evidence": "2.1% elsewhere vs 1.5% West Virginia; probe shows ann_89 contribution +0.20 vs -0.12",
+      "commands": []
+    },
+    {
+      "id": "V24",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_92",
+      "claims": [
+        "C113"
+      ],
+      "location": "drafted.annotations.ann_92[2]",
+      "statement": "(the draft sentence at this location)",
+      "check": "recheck / probe",
+      "evidence": "1.9% -> 16.6% elsewhere vs 6.3% -> 11.2% South Dakota; test check agrees",
+      "commands": []
+    }
+  ],
+  "parts": {
+    "ann_93": {
+      "grade": "weakened",
+      "level": "L3"
+    },
+    "ann_91": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_92": {
+      "grade": "weakened",
+      "level": "L4"
+    },
+    "ann_87": {
+      "grade": "weakened",
+      "level": "L3"
+    },
+    "ann_86": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_88": {
+      "grade": "weakened",
+      "level": "L3"
+    },
+    "ann_89": {
+      "grade": "weakened",
+      "level": "L4"
+    },
+    "ann_90": {
+      "grade": "weakened",
+      "level": "L4"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ]
+}

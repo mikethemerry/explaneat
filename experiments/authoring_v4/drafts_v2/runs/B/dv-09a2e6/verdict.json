@@ -1,0 +1,448 @@
+{
+ "item_id": "dv-09a2e6",
+ "genome_id": "9c06b29f-4ca4-4a6a-b9ed-5d04ee037b66",
+ "target_hash": null,
+ "target_hash_note": "the recheck report from this tool version has no target_hash field",
+ "verifier": "blind verifier, run B (agent)",
+ "started_at": "2026-11-11T16:27:24+13:00",
+ "finished_at": "2026-11-11T16:37:00+13:00",
+ "minutes": 10,
+ "overall": {
+  "grade": "weakened",
+  "summary": "Nothing refuted: every number in the plain-language draft reproduces, and the directions, thresholds and counts hold under probing. Three weakenings: the doctorate sentence in the patches block uses whole-model numbers that mostly come from the direct education term; 'nearly all' for two gates that act on exactly their group; one 'about 34 years' against 35 everywhere else."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "coverage 1.0, preservation 5.0e-16, all claims",
+   "check": "verify recheck",
+   "evidence": "structural and compositional coverage 1.0, hierarchy complete, max |err| 5e-16; 163 of 163 claims reproduce; 94 draft sentences, 254 numbers: 0 not in a claim, 0 uncited, 0 rounding notes, 0 direction conflicts",
+   "commands": [
+    "DATABASE_URL=sqlite:////Users/mike/.explaneat/authoring_v4/eval.db uv run python -m explaneat verify recheck experiments/authoring_v4/drafts_v2/items/dv-09a2e6 --out <scratch>/recheck.json"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_124",
+   "claims": [
+    "C006"
+   ],
+   "location": "drafted.lead[0]",
+   "statement": "typical person (37, married White man, high-school graduate, professional specialty, private, US-born, 40 h) about 74%",
+   "check": "reference case values and probe --hold typical",
+   "evidence": "reference values match the stated description; probe gives 73.8%",
+   "commands": [
+    "DATABASE_URL=sqlite:////Users/mike/.explaneat/authoring_v4/eval.db uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-09a2e6 --hold typical --sweep age=20:60:21"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_124",
+   "claims": [
+    "C058"
+   ],
+   "location": "drafted.lead[1]",
+   "statement": "four parts added up",
+   "check": "recheck structure claim C058",
+   "evidence": "C058 verified: four children feed the output, combined by addition; preservation 5e-16",
+   "commands": []
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_115",
+   "claims": [
+    "C059"
+   ],
+   "location": "drafted.blocks[0]",
+   "statement": "education 7 -> 13 takes it from about 89% to about 24%, in stages",
+   "check": "recheck of C059",
+   "evidence": "C059 reproduces (0.894 -> 0.239, multi-segment)",
+   "commands": []
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_115",
+   "claims": [
+    "C060",
+    "C062"
+   ],
+   "location": "drafted.blocks[0]",
+   "statement": "capital gains through this list 74% -> 18% at 6849 USD; capital losses 74% -> 41% at 1887 USD",
+   "check": "probe --sweep capital-gain=0:6849:5",
+   "evidence": "direct-terms contribution moves -0.888 -> -3.433 (logit 1.035 - 2.545 gives 18%); whole model 10.6% because the switch adds -0.625; capital-loss C062 reproduces",
+   "commands": [
+    "DATABASE_URL=sqlite:////Users/mike/.explaneat/authoring_v4/eval.db uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-09a2e6 --hold typical --sweep capital-gain=0:6849:5"
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_115",
+   "claims": [
+    "C063",
+    "C065",
+    "C067"
+   ],
+   "location": "drafted.blocks[0]",
+   "statement": "a typical woman (as in the data never married, not in a family) about 99%; not married about 97%; own child about 97%",
+   "check": "probe sex alone and the linked typical woman; subgroup counts",
+   "evidence": "typical woman (never married, not in a family) 98.9%; never married is the commonest status for women (5750 of 12959) and the subgroup's typical case is 98.9%. Note: sex alone, marriage held, gives 87.2%, so most of the 74 -> 99% jump is marriage and household, which the sentence's framing ('Household and marriage raise it') says",
+   "commands": [
+    "DATABASE_URL=sqlite:////Users/mike/.explaneat/authoring_v4/eval.db uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-09a2e6 --hold typical --sweep sex=1,0",
+    "DATABASE_URL=sqlite:////Users/mike/.explaneat/authoring_v4/eval.db uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-09a2e6 --hold typical --set sex=0 --set marital-status=4 --set relationship=1",
+    "DATABASE_URL=sqlite:////Users/mike/.explaneat/authoring_v4/eval.db uv run python -m explaneat verify subgroup experiments/authoring_v4/drafts_v2/items/dv-09a2e6 --where \"sex_label == 'female' and `marital-status` == '4'\""
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_115",
+   "claims": [
+    "C061"
+   ],
+   "location": "drafted.blocks[0]",
+   "statement": "born in Ireland 74% -> 38%, n = 34",
+   "check": "probe --sweep native-country",
+   "evidence": "Ireland 38.1%; vars lists n = 34",
+   "commands": [
+    "DATABASE_URL=sqlite:////Users/mike/.explaneat/authoring_v4/eval.db uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-09a2e6 --hold typical --sweep native-country=39,21,34,3,1"
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_117",
+   "claims": [
+    "C103",
+    "C104"
+   ],
+   "location": "drafted.blocks[1]",
+   "statement": "does nothing until about 5258 USD, then lowers it steadily; 74% -> 60% at 6849 USD through this part",
+   "check": "probe --sweep capital-gain=5200:5300:11",
+   "evidence": "part is 0 up to 5240 USD and -0.001 at 5250 USD (switch at about 5247, as in C104); 5258 is a grid point, within 'about' but over-precise. At 6849 USD the part adds -0.625 (C103 0.601)",
+   "commands": [
+    "DATABASE_URL=sqlite:////Users/mike/.explaneat/authoring_v4/eval.db uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-09a2e6 --hold typical --sweep capital-gain=5200:5300:11"
+   ]
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_117",
+   "claims": [
+    "C105"
+   ],
+   "location": "drafted.blocks[1]",
+   "statement": "acts on 1757 of 39073, 108 had a low income",
+   "check": "subgroup capital-gain > 5250",
+   "evidence": "n = 1757, acts on 100% of them and on no one else; 108 of 1757 low income (6.1%)",
+   "commands": [
+    "DATABASE_URL=sqlite:////Users/mike/.explaneat/authoring_v4/eval.db uv run python -m explaneat verify subgroup experiments/authoring_v4/drafts_v2/items/dv-09a2e6 --where \"`capital-gain` > 5250\""
+   ]
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_116",
+   "claims": [
+    "C107",
+    "C108"
+   ],
+   "location": "drafted.blocks[2]",
+   "statement": "older lowers it steadily up to about 35 years, then no further; 96% at 22 to 74% at 58",
+   "check": "probe --sweep age=20:60:21",
+   "evidence": "young-age contribution falls by 0.161 per year (95.7% at 22, 76.2% at 34) and is flat at -0.426 from 36 years (73.8% up to 60)",
+   "commands": [
+    "DATABASE_URL=sqlite:////Users/mike/.explaneat/authoring_v4/eval.db uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-09a2e6 --hold typical --sweep age=20:60:21"
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "weakened",
+   "level": "L1",
+   "part": "ann_124",
+   "claims": [
+    "C011"
+   ],
+   "location": "drafted.annotations.ann_124[5]",
+   "statement": "Being older lowers it steadily up to about 34 years",
+   "check": "probe age sweep; C108 threshold",
+   "evidence": "the bend is at 34.8 years (C108; probe still moving at 34: 76.2%, flat by 36: 73.8%); every other draft sentence says 'about 35'. 34 comes from a grid point (34.1); minor inconsistency",
+   "commands": [
+    "DATABASE_URL=sqlite:////Users/mike/.explaneat/authoring_v4/eval.db uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-09a2e6 --hold typical --sweep age=20:60:21"
+   ]
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_123",
+   "claims": [
+    "C110",
+    "C111",
+    "C112",
+    "C113"
+   ],
+   "location": "drafted.blocks[3]",
+   "statement": "private household service about 92%, China about 91%, handlers or cleaners about 84%, technical support about 64%",
+   "check": "probe --sweep occupation and native-country",
+   "evidence": "92.0%, 90.7%, 84.4%; technical support: patches move -0.023 -> -0.500, giving 63.6% through the part (65.7% in the whole model)",
+   "commands": [
+    "DATABASE_URL=sqlite:////Users/mike/.explaneat/authoring_v4/eval.db uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-09a2e6 --hold typical --sweep occupation=10,13,6,9"
+   ]
+  },
+  {
+   "id": "V13",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_123",
+   "claims": [
+    "C119"
+   ],
+   "location": "drafted.blocks[3]",
+   "statement": "A doctorate lowers the predicted chance a great deal, and even more so for handlers or cleaners: 84% -> 5% for handlers or cleaners, 74% -> 4% in other occupations",
+   "check": "probe education x occupation with and without education-num moved to 16",
+   "evidence": "numbers reproduce (84.4 -> 4.5%, 73.8 -> 3.9%) and the interaction holds in this part (a doctorate moves the patches by -0.90 for handlers vs -0.39 otherwise). But the drop is mostly the direct education-level term (-0.888 -> -4.72 at level 16), not this part: through the patches alone a doctorate takes a typical person to about 66% (65.6%; C114/C123). Whole-model numbers in a part's block overstate the part's role (same sentence in drafted.readdown.ann_123.evidence[2] and drafted.annotations.ann_123[2])",
+   "commands": [
+    "DATABASE_URL=sqlite:////Users/mike/.explaneat/authoring_v4/eval.db uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-09a2e6 --hold typical --sweep education=11,10 --sweep occupation=6,10 --set education-num=16",
+    "DATABASE_URL=sqlite:////Users/mike/.explaneat/authoring_v4/eval.db uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-09a2e6 --hold typical --sweep education=11,10 --sweep occupation=6,10"
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_121",
+   "claims": [
+    "C127",
+    "C136"
+   ],
+   "location": "drafted.readdown.ann_121.evidence[1]",
+   "statement": "acts on 187 people, nearly all of them in private household service; (ann_122) acts on 96, nearly all of them born in China",
+   "check": "subgroup occupation == '9'; native-country == '3'",
+   "evidence": "each gate acts on exactly its group and no one else: 187 of 187 private household service workers (0% of the rest), 96 of 96 China-born (0% of the rest). 'Nearly all' understates and implies others are included; counts 185 and 68 reproduce. Same wording in drafted.annotations.ann_121[0], drafted.annotations.ann_122[0], drafted.readdown.ann_122.evidence[1]",
+   "commands": [
+    "DATABASE_URL=sqlite:////Users/mike/.explaneat/authoring_v4/eval.db uv run python -m explaneat verify subgroup experiments/authoring_v4/drafts_v2/items/dv-09a2e6 --where \"occupation == '9'\"",
+    "DATABASE_URL=sqlite:////Users/mike/.explaneat/authoring_v4/eval.db uv run python -m explaneat verify subgroup experiments/authoring_v4/drafts_v2/items/dv-09a2e6 --where \"`native-country` == '3'\""
+   ]
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_122",
+   "claims": [
+    "C136",
+    "C135"
+   ],
+   "location": "drafted.annotations.ann_122[1]",
+   "statement": "typical China-born person it acts on: about 22% without, 49% with; typical person 74% -> 91%",
+   "check": "probe --hold where:native-country == '3' --wide",
+   "evidence": "48.9% with, 21.7% without the China gate; typical person 90.7%",
+   "commands": [
+    "DATABASE_URL=sqlite:////Users/mike/.explaneat/authoring_v4/eval.db uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-09a2e6 --hold \"where:`native-country` == '3'\" --wide"
+   ]
+  },
+  {
+   "id": "V16",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_117",
+   "claims": [
+    "C105"
+   ],
+   "location": "drafted.annotations.ann_117[2]",
+   "statement": "typical person it acts on: about 1% without, below 1% with",
+   "check": "C105 values",
+   "evidence": "0.55% without, 0.07% with; 'about 1%' is the integer rounding of 0.55%",
+   "commands": []
+  },
+  {
+   "id": "V17",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_118",
+   "claims": [
+    "C129",
+    "C130",
+    "C131"
+   ],
+   "location": "drafted.readdown.ann_118.hypothesis[0]",
+   "statement": "technical support lowers it to about 64%; Guatemala about 77%, missing country about 76%",
+   "check": "probe occupation and native-country",
+   "evidence": "technical support -0.478 through the part (63.6%); Guatemala 76.6%, missing 76.3%",
+   "commands": [
+    "DATABASE_URL=sqlite:////Users/mike/.explaneat/authoring_v4/eval.db uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-09a2e6 --hold typical --sweep native-country=13,0"
+   ]
+  },
+  {
+   "id": "V18",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_119",
+   "claims": [
+    "C122",
+    "C123",
+    "C124"
+   ],
+   "location": "drafted.readdown.ann_119.hypothesis[0]",
+   "statement": "handlers or cleaners raise it to about 84%; a doctorate and Cambodia lower it to about 66% (n = 19)",
+   "check": "probe",
+   "evidence": "handlers 84.4% (+0.62), doctorate 65.6% (-0.41), Cambodia 65.6% (-0.41); n = 19",
+   "commands": [
+    "DATABASE_URL=sqlite:////Users/mike/.explaneat/authoring_v4/eval.db uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-09a2e6 --hold typical --sweep native-country=39,21,34,3,1"
+   ]
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_120",
+   "claims": [
+    "C138",
+    "C139"
+   ],
+   "location": "drafted.readdown.ann_120.hypothesis[0]",
+   "statement": "the race branch barely changes the predictions",
+   "check": "ablate --part ann_120",
+   "evidence": "0 of 39073 rows affected, max change 0, AUC 0.9078 both ways ('barely' understates: it changes nothing on the training data)",
+   "commands": [
+    "DATABASE_URL=sqlite:////Users/mike/.explaneat/authoring_v4/eval.db uv run python -m explaneat verify ablate experiments/authoring_v4/drafts_v2/items/dv-09a2e6 --part ann_120"
+   ]
+  },
+  {
+   "id": "V20",
+   "grade": "upheld",
+   "level": "L3",
+   "part": null,
+   "claims": [
+    "C135",
+    "C043",
+    "C013"
+   ],
+   "location": "drafted.worth_checking[0]",
+   "statement": "China 74% -> 91%; census weight 76% -> 71%; Scotland about 92% from 16 people (all three worth-checking items)",
+   "check": "probe countries; recheck C043",
+   "evidence": "China 90.7%, Scotland 92.4% (n = 16); C043 reproduces (0.756 -> 0.712). Sensible flags",
+   "commands": [
+    "DATABASE_URL=sqlite:////Users/mike/.explaneat/authoring_v4/eval.db uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-09a2e6 --hold typical --sweep native-country=39,21,34,3,1"
+   ]
+  },
+  {
+   "id": "V21",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [
+    "C003",
+    "C006",
+    "C058",
+    "C059",
+    "C060",
+    "C063",
+    "C103",
+    "C105",
+    "C107",
+    "C108",
+    "C110",
+    "C112",
+    "C113",
+    "C122",
+    "C123",
+    "C126",
+    "C127",
+    "C129",
+    "C130",
+    "C131",
+    "C135",
+    "C136",
+    "C138"
+   ],
+   "location": "drafted.hypothesis_revisions",
+   "statement": "proposed plain hypotheses for all ten parts",
+   "check": "recheck plus the probes above",
+   "evidence": "every number and direction in the proposed texts matches the claims and the probes above (status 'proposed (not applied)')",
+   "commands": []
+  },
+  {
+   "id": "V22",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_115",
+   "claims": [
+    "C061",
+    "C013"
+   ],
+   "location": "drafted.blocks[0]",
+   "statement": "born in Ireland lowers it from 74% to 38% (n = 34); Scotland raises it to 92% (n = 16)",
+   "check": "domain sense",
+   "evidence": "Large country-of-birth effects learnt from 34 and 16 training people are unlikely to say anything real about these groups; the draft notes 'little data', but a domain reviewer may want them presented as artefacts of very small groups",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_124": {
+   "grade": "weakened",
+   "level": "L1"
+  },
+  "ann_115": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_117": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_116": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_123": {
+   "grade": "weakened",
+   "level": "L2"
+  },
+  "ann_119": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_121": {
+   "grade": "weakened",
+   "level": "L2"
+  },
+  "ann_122": {
+   "grade": "weakened",
+   "level": "L2"
+  },
+  "ann_118": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_120": {
+   "grade": "upheld",
+   "level": "L3"
+  }
+ },
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ]
+}

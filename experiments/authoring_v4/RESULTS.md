@@ -191,3 +191,119 @@ and 3 hold but 2 fails. Here criterion 1 fails, so no re-run was done.
 - **Not committed:**
   - **Large and regenerable:** `items/`, `runs/` (verdicts), `v4/`.
   - **Local only:** the SQLite database is at `~/.explaneat/authoring_v4/`.
+
+## Draft-layer re-run (drafts v2, 2026-11-11)
+
+Branch `fix/draft-layer`. The results above are unchanged. This section adds a re-run of the
+draft arm only, after fixing the two mechanisms behind the six remaining draft errors. Files are
+in `drafts_v2/`.
+
+**The fixes:**
+- **Generator (layer v5g, `explaneat/analysis/plain_language_links.py`).**
+  - **Detecting links:** linked inputs are found from the training data. A link needs
+    structural zeros that rule out at least 2% of the other input's distribution, with a
+    codebook override.
+    - Found: education and education-num; relationship, sex and marital status; occupation and
+      work class (both "?"); each minutes and charge pair; voice-mail plan and messages.
+    - Not found: rare associations such as country of birth and race. Heart has no links.
+  - **Moving them:** every counterfactual (typical-case risks, per-row effects, shapes, folds)
+    moves the linked inputs to their typical value among the real rows with the new value.
+    - The typical person is aligned too: a high-school graduate now has education-num 9, not
+      the overall median 10.
+    - Claims record what moved (`linked.moved`).
+    - If the case cannot be put on the data, the claim gets `off_data` with the reason.
+  - **Test checks** stay one-input.
+- **Proof rule.**
+  - Threshold, "only if", subgroup and rule claims carry a `support_check` over the whole
+    population. For example, heart-s5's ST-depression threshold has 88 of 242 exceptions, and
+    adult-s5's age threshold has 26.
+  - Templates say "only" only when there is no exception, and leave `off_data` claims out.
+  - The lint refuses:
+    - real-people wording for an `off_data` claim (`lint_off_data`);
+    - "only / all / never / nothing" and superlatives without a cited check that shows no
+      exception (`lint_universal`).
+- **Drafting skill:** a v5g section covers naming what moved, `off_data`, and the proof rule.
+
+**How the re-run was done:**
+- **Database text:** the same six genomes and the same v4 database text (SQLite `eval.db`,
+  unchanged).
+- **Claims:** re-extracted with the fixed generator.
+- **Drafts:** a fresh drafting agent per genome, following the revised skill. Median about 4
+  minutes; all six passed the lint and were stored.
+- **Items:** blinded as before, in `drafts_v2/items`, with the key in `key.json`.
+- **Verification:** two blind verifiers per item (12 runs). The item README limited the scope
+  to the plain-language layer and the claims it cites.
+- **Adjudication:** one blind adjudicator per item, with the same `adjudication_final/RULES.md`.
+  No separate consistency reviewer was run. Instead, the two grade changes from the verifiers
+  were checked against the rules (below).
+
+| | Original | v4 | v4 database text + drafts v2 |
+|---|---|---|---|
+| Genuine errors in database text | 11 | 0 | 0 (the v4 text, not re-verified) |
+| Genuine errors in drafts | 6 | 6 | **0** |
+| **Total** | **17** | **6** | **0** |
+| Draft checkable statements | 979 | 1219 | 857 |
+| Draft errors per 100 draft statements | 0.61 | 0.49 | 0.00 (95% upper bound 0.43) |
+| Genuine weakened in drafts | 24 | 25 | 41 |
+
+**Per genome** (refuted / weakened in the drafts):
+
+| Genome | Original | v4 | drafts v2 |
+|---|---|---|---|
+| heart-s5 | 2 / 4 | 2 / 1 | 0 / 7 |
+| churn100-s1 | 3 / 3 | 1 / 3 | 0 / 8 |
+| adult-s5 | 1 / 7 | 2 / 10 | 0 / 10 |
+| adult-s6 | 0 / 3 | 1 / 6 | 0 / 5 |
+| churn100-s2 | 0 / 2 | 0 / 4 | 0 / 10 |
+| heart-s9 | 0 / 5 | 0 / 1 | 0 / 1 |
+
+**Decision rule (section 5.6), applied to v4 database text plus drafts v2:**
+
+| Criterion | Result | Holds? |
+|---|---|---|
+| 1. At most half the original's 17, and at most 2 | 0 | yes |
+| 2. No errors of mechanisms (b), (d), (e) or (f) in v4 database text | 0 (unchanged) | yes |
+| 3. Structure | unchanged from v4: 6 of 6; 6 of 6; 0 against 0 | yes |
+| 4. Detection parity | not applicable, as before | n/a |
+| 5. Median explaining time | 21.6 min (unchanged) | yes |
+
+**Outcome: with the draft-layer fix, the rule's criteria hold, so the rule says adopt v4
+together with drafts v2. That reading has caveats, set out next.**
+
+**Caveats:**
+- **Two downgrades decide the outcome.** Two errors that verifiers graded refuted were graded
+  weakened by the adjudicators under K3: a number that reproduces at the part's scope, written
+  as the model's.
+  - **adult-s5:** "state government ... about 72% to about 71%". This is the part's effect; the
+    whole model goes to 78%.
+  - **churn100-s1:** an interaction stated for a part that does not carry it. The whole-model
+    numbers reproduce.
+  - **Under a stricter reading:** if both were refuted, the total would be 2. That is still
+    within the rule, but only just.
+- **The weakened count rose (41 against 25), and the drafts are shorter.** The verifiers
+  looked at the drafts only, so this is not a like-for-like comparison.
+  - **By kind:** most are scope slips (K3, 7), omissions (K9, 8), roundings that hide a change
+    ("about 1% to about 1%", K10) and one-offs ("other", 10).
+  - **K1:** two K1 errors remain at weakened. Both are typical-case numbers where the moved
+    inputs carry most of the effect (for example, sex together with marital status).
+- **The universal-word lint is a regex.** The drafters reported two problems:
+  - false positives such as "never married" (now exempt) and "nothing changes until";
+  - slots cannot name `linked.moved` values whose input names contain spaces, so one drafter
+    typed "29 messages".
+- **The re-run is not fully independent.**
+  - The same mechanisms were fixed on the same six genomes.
+  - The skill's examples avoid these genomes' numbers, but the lessons are general.
+  - Adjudication was by agents; Mike has not spot-checked it.
+- **The fix changes the numbers in stored layers.** The typical person moves for the adult
+  data, and claims that involve linked inputs move. Re-extracting a stored 10-seed layer
+  therefore changes its claims, so the stored drafts would need redrafting. They were not
+  touched.
+
+**Files** (in `drafts_v2/`):
+- `build_items.py`, `tabulate.py`;
+- `table.json`, `key.json`;
+- `adjudication/` (one file per item);
+- `<label>/draft.json`;
+- `runs/{A,B}/<item>/verdict.*`.
+
+Not committed: `items/` and the `<label>/pl/` layers. They are large and can be regenerated.

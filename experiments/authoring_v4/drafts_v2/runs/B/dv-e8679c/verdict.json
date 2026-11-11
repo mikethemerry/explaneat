@@ -1,0 +1,500 @@
+{
+ "item_id": "dv-e8679c",
+ "genome_id": "6a26c823-5e60-424d-a968-74f44d675efa",
+ "target_hash": null,
+ "target_hash_note": "the recheck report (recheck.json in this folder) carries no target_hash field",
+ "verifier": "blind verifier, run B",
+ "started_at": "2026-11-11T03:35:44Z",
+ "finished_at": "2026-11-11T03:42:37Z",
+ "minutes": 7,
+ "overall": {
+  "grade": "weakened",
+  "summary": "Every claim and prose number reproduces and no sentence is refuted (the one recheck direction mismatch is a false positive). Weakened: the root's plain text calls the parts non-additive, blames the flat start of the calls effect on the floor and hides the steep rise above 3 calls; three part hypotheses leave out a main input (voice-mail plan in the usage terms, evening charge in the calls-vs-evening part, the West Virginia exception of the gate); two 'from about 1% to about 1%' sentences; 'patients' in a churn text."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "claims.*",
+   "statement": "173 plain-language claims",
+   "check": "verify recheck",
+   "evidence": "173 of 173 claims reproduce exactly; 238 prose numbers all in cited claims; 0 rounding notes",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/authoring_v4/drafts_v2/items/dv-e8679c --out <out>/recheck.json"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_93",
+   "claims": [
+    "C064",
+    "C001"
+   ],
+   "location": "drafted.lead[0]",
+   "statement": "typical West Virginia customer, one call, 180 day minutes: about 1%; the model adds usage/plan terms, the low-day-use part, the many-calls gate, the voice-mail part and state offsets",
+   "check": "probe --hold typical; calls sweep --wide",
+   "evidence": "typical risk 1.49%; the score equals the sum of the top-level part contributions plus a constant -4.861 at every call count (0 calls: -4.189; 7 calls: +2.570), so the parts do add in the model score",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --hold typical --sweep 'number customer service calls=0:7:8' --wide"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_93",
+   "claims": [
+    "C052",
+    "C053",
+    "C054",
+    "C064"
+   ],
+   "location": "drafted.blocks[0]",
+   "statement": "through the root's direct edges state and international charge barely change risk (1.84 to 3.70 dollars leaves about 1%); both matter more through the parts below",
+   "check": "probe --claim C052; probe intl charge sweep",
+   "evidence": "Arkansas direct edge: 1.4935% -> 1.4934%. Whole model, intl charge 1.84 -> 3.70 dollars: 1.3% -> 3.0%, the direct-terms contribution moving -0.67 -> +1.08 logit, so it matters more through the parts",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --claim C052",
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --hold typical --sweep 'total intl charge=1.84,2.78,3.70'"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_91",
+   "claims": [
+    "C106",
+    "C065",
+    "C066",
+    "C067",
+    "C068"
+   ],
+   "location": "drafted.blocks[1]",
+   "statement": "usage and plan terms add up; day minutes 112 -> 249 below 1% -> about 17% through these terms; international plan about 1% -> 16%; evening charge about 1% -> 5%",
+   "check": "probe --claim C065, C066",
+   "evidence": "C065 part-scope 0.12% -> 16.6% (direct-terms contribution -2.36 -> +2.79); C066 1.5% -> 16.4%; the part is linear in the score",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --claim C065",
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --claim C066"
+   ]
+  },
+  {
+   "id": "V5",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_91",
+   "claims": [
+    "C065",
+    "C066"
+   ],
+   "location": "drafted.readdown.ann_91.hypothesis[0]",
+   "statement": "More daytime minutes raise the predicted chance steadily, and an international plan raises it too (same in drafted.hypothesis_revisions.ann_91)",
+   "check": "probe voice-mail plan off/on; closed-form weights",
+   "evidence": "Incomplete: omits the voice-mail plan, the second-largest term (-0.99 per sd), and international charge (+0.70 per sd). With a plan the direct-terms contribution moves +0.215 -> -2.028 logit, much more than the voice-mail part itself (-0.124 -> -0.776); the lead and blocks credit the voice-mail effect to 'a voice-mail part'",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --claim C129"
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_92",
+   "claims": [
+    "C114",
+    "C118"
+   ],
+   "location": "drafted.readdown.ann_92.hypothesis[0]",
+   "statement": "for customers with low daytime use this part raises the predicted chance, and service calls add to it",
+   "check": "probe calls sweep; probe --claim C114",
+   "evidence": "ann_92 contribution +4.19 at 91 day minutes vs +0.14 at 352; with calls 0 -> 4 it rises +0.14 -> +2.33, and +6.90 at 7 calls",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --claim C114",
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --hold typical --sweep 'number customer service calls=0:7:8' --wide"
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_92",
+   "claims": [
+    "C118",
+    "C127",
+    "C114",
+    "C112",
+    "C122"
+   ],
+   "location": "drafted.blocks[2]",
+   "statement": "low-day-use block: 1418 of 4000; below about 169 minutes 47% -> 1% through the part; whole model 2% -> 26% (evening charge above 17.12) vs 3% -> 10%, lowest near 154 minutes; calls 0 -> 3: 1% -> 9% South Dakota, 1% -> 3% elsewhere",
+   "check": "whole-model probes with each group's evening charge and linked evening minutes; calls x state sweep",
+   "evidence": "high evening group (19.88 dollars, 234 min): 2.5% at 112, 1.1% at 154, 25.7% at 249; low group (14.19, 167 min): 2.8%, 1.2%, 10.0%; South Dakota 1.0% -> 9.2%, West Virginia 1.5% -> 2.9%, Michigan 2.1% -> 4.0%",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --hold typical --set 'total eve charge=19.88' --set 'total eve minutes=234' --sweep 'total day minutes=0,112,154,249,352'",
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --hold typical --set 'total eve charge=14.19' --set 'total eve minutes=167' --sweep 'total day minutes=0,112,154,249,352'",
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --hold typical --sweep 'number customer service calls=0:3:4' --sweep 'state=41,49,22'"
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_92",
+   "claims": [
+    "C114"
+   ],
+   "location": "drafted.readdown.ann_92.evidence[0]",
+   "statement": "'between 154 minutes and 214 minutes for different patients' (also in drafted.hypothesis_revisions.ann_92)",
+   "check": "wording",
+   "evidence": "the population is telephone customers, not patients; the block version of the same sentence correctly says 'customers'",
+   "commands": []
+  },
+  {
+   "id": "V9",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_87",
+   "claims": [
+    "C122",
+    "C127"
+   ],
+   "location": "drafted.readdown.ann_87.hypothesis[0]",
+   "statement": "More customer-service calls raise the predicted chance through this part, slowly then faster, more so in South Dakota (same in drafted.hypothesis_revisions.ann_87)",
+   "check": "probe evening charge sweep at 3 calls",
+   "evidence": "Incomplete: omits evening charge, which switches the part off. At 3 calls the part's contribution is +3.66 logit at 8 dollars, +2.35 at 12, +0.68 at 17.12 and 0 at 22 dollars (whole-model risk 21.7% -> 2.2%). The title names it; the hypothesis does not",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --hold typical --set 'number customer service calls=3' --sweep 'total eve charge=8,12,17.12,22,26'"
+   ]
+  },
+  {
+   "id": "V10",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_87",
+   "claims": [
+    "C122"
+   ],
+   "location": "drafted.annotations.ann_87[2]",
+   "statement": "calls raise risk more in South Dakota",
+   "check": "verify vars",
+   "evidence": "South Dakota has 66 training customers; a state-specific boost to the service-call effect looks fitted to that group, but is stated without the small-group caution the draft uses for the other state offsets",
+   "commands": [
+    "uv run python -m explaneat verify vars experiments/authoring_v4/drafts_v2/items/dv-e8679c"
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_87",
+   "claims": [
+    "C127",
+    "C122",
+    "C128"
+   ],
+   "location": "drafted.readdown.ann_87.evidence[0]",
+   "statement": "acts on 1418 of 4000; typical acted-on customer about 1% -> 2%; 0 -> 3 calls 1% -> 9% South Dakota, 1% -> 3% elsewhere",
+   "check": "recheck; calls x state probe",
+   "evidence": "claims reproduce; probe as in V7",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --hold typical --sweep 'number customer service calls=0:3:4' --sweep 'state=41,49,22'"
+   ]
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_86",
+   "claims": [
+    "C138",
+    "C140"
+   ],
+   "location": "drafted.readdown.ann_86.hypothesis[0]",
+   "statement": "more calls raise risk through this part in an uneven way, about 2% at 0 to 4% at 3 calls",
+   "check": "probe --claim C138; calls sweep --wide",
+   "evidence": "part-scope 2.3% -> 3.6% reproduces; exit 1.011 flat at 0-1 calls, 1.075 at 2, 2.147 at 7 (uneven)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --claim C138"
+   ]
+  },
+  {
+   "id": "V13",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_88",
+   "claims": [
+    "C135",
+    "C136"
+   ],
+   "location": "drafted.readdown.ann_88.hypothesis[0]",
+   "statement": "This gate does nothing until about 4 calls, then raises the predicted chance steadily (same in drafted.hypothesis_revisions.ann_88)",
+   "check": "subgroup West Virginia with 4+ calls",
+   "evidence": "true for 306 of the 318 customers with 4+ calls; for the 12 West Virginia customers with 4+ calls the gate acts on 0. The readdown omits this exception; only the block's third sentence and a worth-checking item mention West Virginia",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/authoring_v4/drafts_v2/items/dv-e8679c --where 'state == \"49\" and `number customer service calls` >= 4'"
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_88",
+   "claims": [
+    "C135",
+    "C136",
+    "C134"
+   ],
+   "location": "drafted.blocks[4]",
+   "statement": "only from 4 calls upwards, 0 exceptions; acts on 306 of 4000; Idaho customer with 4 calls 16% -> 26%; 154 of 306 left; 26% outside vs 16% in West Virginia through the gate",
+   "check": "subgroup calls < 4; probe --claim C134",
+   "evidence": "gate acts on 0 of 3682 customers with fewer than 4 calls and on 96.2% of the 318 with 4+ (= 306); C134 part-scope 16.1% vs 25.7% reproduces",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/authoring_v4/drafts_v2/items/dv-e8679c --where '`number customer service calls` < 4'",
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --claim C134"
+   ]
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_88",
+   "claims": [
+    "C134"
+   ],
+   "location": "drafted.worth_checking[1]",
+   "statement": "through the gate a typical acted-on customer gets a lower chance in West Virginia (about 16%) than elsewhere (about 26%)",
+   "check": "probe --claim C134",
+   "evidence": "recheck's prose_direction mismatch is a false positive: the claim 'raises' goes from West Virginia to other states, which is the same as West Virginia being lower. Part-scope 16.1% vs 25.7% (whole model, the same customer in West Virginia gets 12.2%, but the sentence is scoped to the gate)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --claim C134"
+   ]
+  },
+  {
+   "id": "V16",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_89",
+   "claims": [
+    "C129"
+   ],
+   "location": "drafted.readdown.ann_89.evidence[0]",
+   "statement": "a voice-mail plan lowers it 'from about 1% to about 1%' (also drafted.blocks[3], drafted.annotations.ann_89[0], drafted.hypothesis_revisions.ann_89)",
+   "check": "probe --claim C129",
+   "evidence": "the claim is 1.49% -> 0.78%: the change is real (about halved) but the rounded numbers are identical, so the reader sees 'lowers' with no visible change; 'below 1%' would show it",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --claim C129"
+   ]
+  },
+  {
+   "id": "V17",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_89",
+   "claims": [
+    "C129",
+    "C130"
+   ],
+   "location": "drafted.readdown.ann_89.hypothesis[0]",
+   "statement": "a voice-mail plan lowers risk through this part; other states about 2% vs about 1% in West Virginia",
+   "check": "probe --claim C129, C130",
+   "evidence": "part contribution -0.124 -> -0.776 with a plan; West Virginia -0.124 vs Minnesota +0.201 (1.5% vs 2.1%)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --claim C130"
+   ]
+  },
+  {
+   "id": "V18",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_90",
+   "claims": [
+    "C142"
+   ],
+   "location": "drafted.readdown.ann_90.evidence[0]",
+   "statement": "Nevada lowers it 'from about 1% to about 1%' (also drafted.blocks[5], drafted.hypothesis_revisions.ann_90)",
+   "check": "probe --claim C142",
+   "evidence": "claim 1.49% -> 0.96%; the identical rounded numbers hide the direction the sentence states",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --claim C142"
+   ]
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_90",
+   "claims": [
+    "C141",
+    "C142",
+    "C148"
+   ],
+   "location": "drafted.readdown.ann_90.hypothesis[0]",
+   "statement": "a few states shift risk by small amounts; Tennessee about 1% -> 2%",
+   "check": "probe --claim C141",
+   "evidence": "part-scope 1.5% -> 2.2% (contribution +0.44 -> +0.84); whole model 3.0%",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --claim C141"
+   ]
+  },
+  {
+   "id": "V20",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_93",
+   "claims": [
+    "C064"
+   ],
+   "location": "drafted.readdown.ann_93.evidence[0]",
+   "statement": "the five parts plus state and international charge are 'combined in a way that does not simply add up'",
+   "check": "calls sweep --wide: score against the sum of top-level part contributions",
+   "evidence": "At the root the parts add exactly in the model score: score minus the summed top-level contributions is -4.861 at 0 calls and at 7 calls. The only non-additive piece is unit 252 (output weight -2.2e-05); the curve comes only from the final sigmoid. The sentence also contradicts the lead, which says the model 'adds' the parts",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --hold typical --sweep 'number customer service calls=0:7:8' --wide"
+   ]
+  },
+  {
+   "id": "V21",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_93",
+   "claims": [
+    "C014"
+   ],
+   "location": "drafted.readdown.ann_93.evidence[1]",
+   "statement": "more calls raise it from about 1% at 0 to about 3% at 3 calls, 'flattening out near the bottom because it cannot go much lower' (also drafted.annotations.ann_93[1])",
+   "check": "calls sweep 0-7, typical customer",
+   "evidence": "numbers reproduce, but the flat start is not the floor: the score is identical (-4.189) at 0, 1 and 2 calls because the call units are off. The 0-3 window also hides the model's strongest effect: 12.0% at 4, 38.4% at 5, 74.1% at 6, 92.9% at 7 calls (318 training customers have 4+)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --hold typical --sweep 'number customer service calls=0:7:8' --wide"
+   ]
+  },
+  {
+   "id": "V22",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_93",
+   "claims": [
+    "C064",
+    "C001"
+   ],
+   "location": "drafted.readdown.ann_93.hypothesis[0]",
+   "statement": "The model adds five parts ...; typical about 1%, an international plan raises it to 16% (same in drafted.hypothesis_revisions.ann_93)",
+   "check": "calls and day-minutes probes",
+   "evidence": "not meaningful as a hypothesis: lists the parts but not what drives risk. The probes show two routes: heavy daytime use (249 -> 352 minutes: 25.7% -> 94.3% in the high-evening group) and many service calls, strongest at low daytime use (0 -> 7 calls: 1.5% -> 92.9%)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --hold typical --sweep 'number customer service calls=0:7:8' --wide"
+   ]
+  },
+  {
+   "id": "V23",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_93",
+   "claims": [
+    "C018",
+    "C060",
+    "C061",
+    "C062",
+    "C063",
+    "C004",
+    "C016"
+   ],
+   "location": "drafted.readdown.ann_93.evidence[2]",
+   "statement": "voice-mail plan about 1% -> below 1%; ignores day charge, evening calls, intl calls, night charge; Washington 6%, Hawaii below 1%",
+   "check": "recheck",
+   "evidence": "claims reproduce; numbers in cited claims",
+   "commands": []
+  },
+  {
+   "id": "V24",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_92",
+   "claims": [
+    "C114",
+    "C065"
+   ],
+   "location": "drafted.worth_checking[0]",
+   "statement": "through the low-day-use part fewer day minutes raise risk while the usage terms push the other way",
+   "check": "probe --claim C114",
+   "evidence": "day minutes 91 -> 352: ann_92 +4.19 -> +0.14, direct terms -3.15 -> +6.64",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-e8679c --claim C114"
+   ]
+  },
+  {
+   "id": "V25",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_93",
+   "claims": [
+    "C004"
+   ],
+   "location": "drafted.worth_checking[2]",
+   "statement": "Washington about 6% vs 1% in West Virginia, groups of 72 and 122",
+   "check": "recheck; verify vars",
+   "evidence": "C004 1.49% -> 6.42%; Washington n=72, West Virginia n=122; the claim's test check disagrees, consistent with the flag",
+   "commands": [
+    "uv run python -m explaneat verify vars experiments/authoring_v4/drafts_v2/items/dv-e8679c"
+   ]
+  },
+  {
+   "id": "V26",
+   "grade": "upheld",
+   "level": "L4",
+   "part": null,
+   "claims": [],
+   "location": "drafted.titles",
+   "statement": "part titles",
+   "check": "verify vars; parts' inputs",
+   "evidence": "titles match what each part reads",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_93": {
+   "grade": "weakened",
+   "level": "L2"
+  },
+  "ann_91": {
+   "grade": "weakened",
+   "level": "L4"
+  },
+  "ann_92": {
+   "grade": "weakened",
+   "level": "L4"
+  },
+  "ann_87": {
+   "grade": "weakened",
+   "level": "L4"
+  },
+  "ann_86": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_88": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_89": {
+   "grade": "weakened",
+   "level": "L4"
+  },
+  "ann_90": {
+   "grade": "weakened",
+   "level": "L4"
+  }
+ },
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ]
+}
