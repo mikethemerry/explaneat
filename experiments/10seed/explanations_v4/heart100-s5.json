@@ -1,0 +1,107 @@
+{
+  "label": "heart100-s5",
+  "genome_id": "ea5ce707-5f8b-4a05-8818-1e4e26df2da3",
+  "protocol_version": "v4",
+  "start": "2026-11-11T06:55:29Z",
+  "end": "2026-11-11T07:10:31Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 4,
+  "n_composition_annotations": 3,
+  "n_splits": 5,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 7,
+  "hidden_nodes_single_leaf_no_split": 3,
+  "hidden_nodes_in_any_annotation": 7,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 3.3306690738754696e-16,
+  "closed_form_max_abs_err": 0.010577258607534112,
+  "summary": "The model predicts heart disease from a linear score plus one nonlinear exercise-test pathway, joined by a sigmoid. The linear part (the direct edges) carries most of the ranking: replacing it by its training average lowers the training AUC from 0.953 to 0.686; the number of major vessels, sex and the ST slope lead it. The exercise pathway is switched on by ST depression and a reversible thallium defect, passes a gate and is steepened by a second hinge, so the predicted risk climbs fast once ST depression is large (the typical training patient with a normal thallium scan: 20% at 2 mm, 86% at 3 mm). A hinge on resting pressure switches on at 140 mm Hg and pushes the gate shut, so with marked ST depression a higher pressure lowers the predicted risk (90% at 140 mm Hg, 37% at 150 mm Hg), a reversal fitted to 25 training patients. High fasting sugar lowers the predicted risk when the exercise test is unremarkable and raises it when the pathway is open. Structural and compositional coverage are complete, and the annotated model reproduces the network to within 3.3e-16.",
+  "summary_template": "The model predicts heart disease from a linear score plus one nonlinear exercise-test pathway, joined by a sigmoid. The linear part (the direct edges) carries most of the ranking: replacing it by its training average lowers the training AUC from {{q:q_dba6fc4026.data.auc_with|.3f}} to {{q:q_dba6fc4026.data.auc_without|.3f}}; the number of major vessels, sex and the ST slope lead it. The exercise pathway is switched on by ST depression and a reversible thallium defect, passes a gate and is steepened by a second hinge, so the predicted risk climbs fast once ST depression is large (the typical training patient with a normal thallium scan: {{q:q_62b27e0d50.rows[8].risk|pct}} at {{q:q_62b27e0d50.rows[8].inputs.oldpeak}}, {{q:q_62b27e0d50.rows[12].risk|pct}} at {{q:q_62b27e0d50.rows[12].inputs.oldpeak}}). A hinge on resting pressure switches on at {{q:q_f8a21f00a4.rows[8].inputs.trestbps}} and pushes the gate shut, so with marked ST depression a higher pressure lowers the predicted risk ({{q:q_f8a21f00a4.rows[9].risk|pct}} at {{q:q_f8a21f00a4.rows[9].inputs.trestbps}}, {{q:q_f8a21f00a4.rows[11].risk|pct}} at {{q:q_f8a21f00a4.rows[11].inputs.trestbps}}), a reversal fitted to {{q:q_98247e7542.subgroup.n}} training patients. High fasting sugar lowers the predicted risk when the exercise test is unremarkable and raises it when the pathway is open. Structural and compositional coverage are complete, and the annotated model reproduces the network to within {{q:q_7f8d8c3b8d.function_preservation_max_abs_err|.1e}}.",
+  "resisted": "Nothing resisted explanation outright, but two readings are weak. In the exercise score, atypical angina and a normal resting ECG raise the score, a direction that is hard to read clinically; their weights are smaller than those of ST depression and the thallium defect. The fall in risk at high resting pressure for patients with marked ST depression rests on the 25 training patients whose gate the pressure hinge holds shut, and the high-sugar route into the second hinge on 20 patients; both look fitted to small groups.",
+  "resisted_template": "Nothing resisted explanation outright, but two readings are weak. In the exercise score, atypical angina and a normal resting ECG raise the score, a direction that is hard to read clinically; their weights are smaller than those of ST depression and the thallium defect. The fall in risk at high resting pressure for patients with marked ST depression rests on the {{q:q_98247e7542.subgroup.n}} training patients whose gate the pressure hinge holds shut, and the high-sugar route into the second hinge on {{q:q_ddf0b4b80b.subgroup.n}} patients; both look fitted to small groups.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 28,
+    "complete_ok": true
+  },
+  "recheck_notes": "Recheck v3: 0 mismatches, 0 needs_review, 41 templated texts over 40 queries. The 28 unchecked free-text sentences hold no numbers (qualitative mechanism statements and evidence captions); their claims are backed by the referenced probes in the same narratives. Every query was computed after the last structural operation (no stale queries).",
+  "tool_bugs": "None blocking. Notes: get_formula returns no provenance id, so formula evidence is attached as get_formula LaTeX payloads; the hierarchy rules (subgraph nodes become covered) mean downstream hidden units (290, 2335, 5615, 1834) are owned by composition annotations, not leaves; a bare 'zero' in an evidence caption describing an ablation setting trips the scope lint (fixed by rewording via amend_evidence).",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 148,
+    "provenance_backed": 148,
+    "allow_listed": 0,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 0,
+      "other": 7
+    },
+    "audit": {
+      "references": 148,
+      "checked": 148
+    },
+    "self_probe": {
+      "parts": [
+        "st_exercise_score",
+        "high_bp_hinge",
+        "normal_sugar_flag",
+        "direct_linear",
+        "bp_suppressed_ischaemia",
+        "ischaemia_amplifier",
+        "heart_disease_root"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 7,
+      "roots": [
+        "heart_disease_root"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 3.3306690738754696e-16,
+    "closed_form_max_abs_err": 0.010577258607534112,
+    "numeric_max_abs_err": 3.552713678800501e-15,
+    "op_counts": {
+      "rename_node": 26,
+      "add_identity_node": 1,
+      "split_node": 5,
+      "annotate": 7
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T07:11:05+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 28,
+      "provenance": {
+        "templated_texts": 41,
+        "queries": 40
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

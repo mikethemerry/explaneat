@@ -1,0 +1,107 @@
+{
+  "label": "heart-s9",
+  "genome_id": "b19b9536-00dd-4e95-9f5a-def6dd8d6889",
+  "protocol_version": "v4",
+  "start": "2026-11-11T18:37:53+13:00",
+  "end": "2026-11-11T18:49:16+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 6,
+  "n_composition_annotations": 1,
+  "n_splits": 4,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 5,
+  "hidden_nodes_single_leaf_no_split": 5,
+  "hidden_nodes_in_any_annotation": 5,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 2.220446049250313e-16,
+  "closed_form_max_abs_err": 0.02393540513943826,
+  "summary": "The model is a logistic score on the z-scored Heart Disease inputs: a linear backbone of direct edges plus five single hidden units; the six parts' outputs are added on the log-odds scale before the sigmoid. The direct edges carry most of its ranking: switching them off moves training AUC from 0.9437 to 0.8381. Through them, more vessels coloured by fluoroscopy (2.06 logit per sd), male sex (1.66), a flat ST slope (1.30) and higher cholesterol (1.07) raise the predicted risk, and typical or non-anginal chest pain and a higher maximum heart rate lower it; high fasting blood sugar also lowers it (-0.67), against domain sense. The five units: a second, always-on term in vessels (on for 242 of 242 training patients); a unit that lowers risk for the 160 patients without exercise angina, with a mean contribution of -1.67 logit on average for women and -0.43 for men; a unit that sharply lowers risk for a fixed thallium defect with normal fasting blood sugar (mean contribution -3.19 logit, fitted to 10 training rows and odd in domain terms); a hinge that raises risk for ST depression of 1.5 mm or more (70 patients, 1.02 logit on average); and a small offset for atypical angina (-0.044 logit for the typical case), described rather than explained. The annotated model reproduces the network on the training rows (largest difference 2.2e-16).",
+  "summary_template": "The model is a logistic score on the z-scored Heart Disease inputs: a linear backbone of direct edges plus five single hidden units; the six parts' outputs are added on the log-odds scale before the sigmoid. The direct edges carry most of its ranking: switching them off moves training AUC from {{q:q_150d6140e5.data.auc_with|.4f}} to {{q:q_150d6140e5.data.auc_without|.4f}}. Through them, more vessels coloured by fluoroscopy ({{q:q_00234dd21e.switched_off[13].weight|.2f}} logit per sd), male sex ({{q:q_00234dd21e.switched_off[2].weight|.2f}}), a flat ST slope ({{q:q_00234dd21e.switched_off[12].weight|.2f}}) and higher cholesterol ({{q:q_00234dd21e.switched_off[8].weight|.2f}}) raise the predicted risk, and typical or non-anginal chest pain and a higher maximum heart rate lower it; high fasting blood sugar also lowers it ({{q:q_00234dd21e.switched_off[9].weight|.2f}}), against domain sense. The five units: a second, always-on term in vessels (on for {{q:q_e2c223dc3d.subgroup.n}} of {{q:q_e2c223dc3d.n_total}} training patients); a unit that lowers risk for the {{q:q_dc35cdee2d.subgroup.n}} patients without exercise angina, with a mean contribution of {{q:q_6a7e13a7bd.subgroup.parts.ann_32.mean_contribution|.2f}} logit on average for women and {{q:q_ef758f4857.subgroup.parts.ann_32.mean_contribution|.2f}} for men; a unit that sharply lowers risk for a fixed thallium defect with normal fasting blood sugar (mean contribution {{q:q_ca62f18a97.subgroup.parts.ann_33.mean_contribution|.2f}} logit, fitted to {{q:q_ca62f18a97.subgroup.n}} training rows and odd in domain terms); a hinge that raises risk for ST depression of {{q:q_fcbf54a4e0.rows[6].inputs.oldpeak}} or more ({{q:q_8f82deffa7.subgroup.n}} patients, {{q:q_eec9902097.subgroup.parts.ann_34.mean_contribution|.2f}} logit on average); and a small offset for atypical angina ({{q:q_d9a1ecc1f1.rows[1].parts.ann_35.contribution|.3f}} logit for the typical case), described rather than explained. The annotated model reproduces the network on the training rows (largest difference {{q:q_796d998c5d.function_preservation_max_abs_err|.1e}}).",
+  "resisted": "No part resisted a hypothesis. The atypical angina unit is described rather than explained: it is a constant offset of -0.044 logit for the typical case on the 42 patients with atypical angina, with no domain reading beyond the direct chest-pain edges. The fixed-defect unit is explained as a behaviour but fitted to 10 training rows, and its direction runs against domain sense.",
+  "resisted_template": "No part resisted a hypothesis. The atypical angina unit is described rather than explained: it is a constant offset of {{q:q_d9a1ecc1f1.rows[1].parts.ann_35.contribution|.3f}} logit for the typical case on the {{q:q_03ba0c7352.subgroup.n}} patients with atypical angina, with no domain reading beyond the direct chest-pain edges. The fixed-defect unit is explained as a behaviour but fitted to {{q:q_ca62f18a97.subgroup.n}} training rows, and its direction runs against domain sense.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 40,
+    "complete_ok": true
+  },
+  "recheck_notes": "Recheck v3: 0 mismatch, 0 needs_review, 38 queries over 45 templated texts. The 40 unchecked free-text sentences are qualitative (directions, domain-sense flags) whose numbers are all placeholders.",
+  "tool_bugs": "None blocking. Notes: query_ablate(direct=true) switches off nothing once the direct edges are routed through identity_0 (as the skill warns); the direct weights were taken from query_ablate(edges=[...->identity_0]). query_enumerate refuses the whole model because continuous inputs have more than 12 values, so categorical cells were checked with query_subgroup counterexample counts (all 0) and query_probe crossings instead. get_formula returns no provenance id, so formula evidence carries the get_formula LaTeX as payload.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 169,
+    "provenance_backed": 169,
+    "allow_listed": 0,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 6,
+      "other": 1
+    },
+    "audit": {
+      "references": 38,
+      "checked": 38
+    },
+    "self_probe": {
+      "parts": [
+        "vessels_gate",
+        "no_exercise_angina_gate",
+        "fixed_defect_gate",
+        "st_depression_hinge",
+        "atypical_angina_gate",
+        "direct_terms",
+        "heart_risk_model"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 7,
+      "roots": [
+        "heart_risk_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 2.220446049250313e-16,
+    "closed_form_max_abs_err": 0.02393540513943826,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 26,
+      "split_node": 4,
+      "add_identity_node": 1,
+      "annotate": 7
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T05:49:40+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 40,
+      "provenance": {
+        "templated_texts": 45,
+        "queries": 38
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

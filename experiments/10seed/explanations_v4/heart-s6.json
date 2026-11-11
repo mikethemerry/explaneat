@@ -1,0 +1,109 @@
+{
+  "label": "heart-s6",
+  "genome_id": "9b644a62-ebe7-48cc-82cf-c53f7da36073",
+  "protocol_version": "v4",
+  "start": "2026-11-11T18:02:43+13:00",
+  "end": "2026-11-11T18:15:28+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 3,
+  "n_composition_annotations": 1,
+  "n_splits": 2,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 3,
+  "hidden_nodes_single_leaf_no_split": 3,
+  "hidden_nodes_in_any_annotation": 3,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 2.220446049250313e-16,
+  "closed_form_max_abs_err": 0.009802183851654434,
+  "summary": "The model predicts heart disease from a linear score of the direct edges plus one small gated correction by sex and exercise angina, through a sigmoid. Its training AUC is 0.946. The direct score carries most of the discrimination: holding it at its training mean drops the AUC to 0.596; its largest weights per sd are the number of coloured vessels (ca, 1.57), asymptomatic chest pain (1.30) and a flat ST segment (1.04). The gate (units 1213 and 47) lowers the score for women without exercise angina (-1.76 logit on average over those 64 training women) and raises it for the 57 men without exercise angina whose unit 1213 stays off (0.81 on average). Exercise angina reaches the prediction through this gate alone (it has no direct edge, and the root has 0 direct edges of its own), and for such men the model gives a lower predicted risk with exercise angina than without it: 19% against 33% for the typical man, the reverse of the observed outcome rates (heart disease in 32% of those 57 men against 76% of the 63 men with exercise angina). Switching the gate off lowers the AUC to 0.925. A third part, an always-on unit on the upsloping ST indicator, is negligible (AUC 0.9454 without it). Resting blood pressure, maximum heart rate and the resting ECG have no edge into the network (in the typical case the predicted risk is 0.3334 at a maximum heart rate of 90 beats per minute and 0.3334 at 200 beats per minute).",
+  "summary_template": "The model predicts heart disease from a linear score of the direct edges plus one small gated correction by sex and exercise angina, through a sigmoid. Its training AUC is {{q:q_cbe451e24b.data.auc_with|.3f}}. The direct score carries most of the discrimination: holding it at its training mean drops the AUC to {{q:q_cbe451e24b.data.auc_without|.3f}}; its largest weights per sd are the number of coloured vessels (ca, {{q:q_7faff28da1.switched_off[10].weight|.2f}}), asymptomatic chest pain ({{q:q_7faff28da1.switched_off[4].weight|.2f}}) and a flat ST segment ({{q:q_7faff28da1.switched_off[8].weight|.2f}}). The gate (units 1213 and 47) lowers the score for women without exercise angina ({{q:q_4c34b6d569.subgroup.parts.ann_29.mean_contribution|.2f}} logit on average over those {{q:q_4c34b6d569.subgroup.n}} training women) and raises it for the {{q:q_9e3826e216.subgroup.n}} men without exercise angina whose unit 1213 stays off ({{q:q_9e3826e216.subgroup.parts.ann_29.mean_contribution|.2f}} on average). Exercise angina reaches the prediction through this gate alone (it has no direct edge, and the root has {{q:q_130bd518d9.switched_off[0].direct_edges_of_root|d}} direct edges of its own), and for such men the model gives a lower predicted risk with exercise angina than without it: {{q:q_6747f4e447.rows[3].risk|pct}} against {{q:q_6747f4e447.rows[2].risk|pct}} for the typical man, the reverse of the observed outcome rates (heart disease in {{q:q_9e3826e216.subgroup.outcome_rate|.0%}} of those {{q:q_9e3826e216.subgroup.n}} men against {{q:q_6df7c476e8.subgroup.outcome_rate|.0%}} of the {{q:q_6df7c476e8.subgroup.n}} men with exercise angina). Switching the gate off lowers the AUC to {{q:q_c052b6f037.data.auc_without|.3f}}. A third part, an always-on unit on the upsloping ST indicator, is negligible (AUC {{q:q_8b066f4edb.data.auc_without|.4f}} without it). Resting blood pressure, maximum heart rate and the resting ECG have no edge into the network (in the typical case the predicted risk is {{q:q_e8068933a5.rows[0].risk|.4f}} at a maximum heart rate of {{q:q_e8068933a5.rows[0].inputs.thalach}} and {{q:q_e8068933a5.rows[1].risk|.4f}} at {{q:q_e8068933a5.rows[1].inputs.thalach}}).",
+  "resisted": "No part resisted explanation. The slope offset (unit 3660) is described rather than explained: a near-negligible linear term routed through a unit that stays on for 242 of the 242 training rows. Why the gate makes exercise angina lower the predicted risk for men whose unit 1213 stays off is not explained by the structure; it may be offset by correlated inputs such as asymptomatic chest pain in the direct score, which was not tested here.",
+  "resisted_template": "No part resisted explanation. The slope offset (unit 3660) is described rather than explained: a near-negligible linear term routed through a unit that stays on for {{q:q_5fd825058d.subgroup.n}} of the {{q:q_5fd825058d.n_total}} training rows. Why the gate makes exercise angina lower the predicted risk for men whose unit 1213 stays off is not explained by the structure; it may be offset by correlated inputs such as asymptomatic chest pain in the direct score, which was not tested here.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 25,
+    "complete_ok": true
+  },
+  "recheck_notes": "Recheck v3: 0 mismatches, 0 needs_review. The 25 unchecked free-text sentences are qualitative (part roles, the described-not-explained note, the untested correlated-input conjecture in resisted). Number audit: all 127 placeholders (92 distinct paths, 28 queries) were read back with get_query and their population, quantity and scope match the sentence.",
+  "tool_bugs": "None blocking. Notes: (1) a composition annotation's subgraph_nodes must exclude its children's nodes (including the child exits used as its entries), otherwise validation reports them as already covered; begin_explanation does not say so. (2) query_enumerate refuses any genome with a continuous input (age has 41 values), even with where/group_by restricted to one-hot inputs, so gate cells were counted with query_subgroup instead. (3) rename_annotation display_name refuses spaces. (4) get_query stores values in a form the rendered paths (subgroup.n, rows[k]...) do not index directly; rendering resolves them correctly.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 163,
+    "provenance_backed": 127,
+    "allow_listed": 36,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 0,
+      "other": 4,
+      "note": "no formula is typed in any text; the four get_formula closed forms (rounded to three significant figures) are attached as analytical_formula evidence; per-leaf closed-form errors are in check_explanation q_f296efa570"
+    },
+    "audit": {
+      "references": 127,
+      "checked": 127
+    },
+    "self_probe": {
+      "parts": [
+        "female_no_angina_gate (sexExangGate)",
+        "upsloping_offset",
+        "direct_linear_terms",
+        "heart_risk_model"
+      ],
+      "refuted_and_fixed": [
+        "female_no_angina_gate: the draft said the part lowers risk for patients without exercise angina; the sex x exang probe showed the opposite for men whose unit 1213 stays off, so the hypothesis was rewritten"
+      ]
+    },
+    "restatements": 1,
+    "restatements_note": "upsloping_offset is stated as described, not explained"
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 4,
+      "roots": [
+        "heart_risk_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 2.220446049250313e-16,
+    "closed_form_max_abs_err": 0.009802183851654434,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 26,
+      "split_node": 2,
+      "add_identity_node": 1,
+      "annotate": 4,
+      "rename_annotation": 1
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T05:16:08+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 25,
+      "provenance": {
+        "templated_texts": 27,
+        "queries": 28
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

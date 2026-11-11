@@ -1,0 +1,109 @@
+{
+  "label": "adult-s9",
+  "genome_id": "491150f3-2e88-4fb9-941d-77c48787c013",
+  "protocol_version": "v4",
+  "start": "2026-11-11T06:04:59Z",
+  "end": "2026-11-11T06:26:00Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 7,
+  "n_composition_annotations": 1,
+  "n_splits": 7,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 17,
+  "hidden_nodes_single_leaf_no_split": 17,
+  "hidden_nodes_in_any_annotation": 17,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 6.661338147750939e-16,
+  "closed_form_max_abs_err": 0.04643255449876449,
+  "summary": "The model gives the predicted chance of a low income (the lower of the two income classes in the data) as a sigmoid of a score that is mostly linear in the inputs. The direct edges carry most of the ranking: switching them off drops the training AUC from 0.9074 to 0.7083, while switching off the six hidden parts together leaves 0.9021. The largest direct terms lower the predicted chance: capital gain (-3.38 per sd), being a husband (-1.26) and education level (-1.09). The hidden parts add on the score: a capital-gain gate that opens between 4400 US dollars and 4600 US dollars and pushes the score further down for the 2143 training people for whom it is open; a working-hours hinge at 50 hours, below which shorter weeks raise the predicted chance, more steeply for very short weeks; a fixed step up for the 12,914 never-married people; and small category flags fitted to few rows: preschool (64 people, predicted at near certainty), working without pay (17) or born in Iran (50), born in Honduras (14, a large downward offset that runs against their observed low-income rate of 85.7%), unmarried and a professional-school degree.",
+  "summary_template": "The model gives the predicted chance of a low income (the lower of the two income classes in the data) as a sigmoid of a score that is mostly linear in the inputs. The direct edges carry most of the ranking: switching them off drops the training AUC from {{q:q_6cdcac29c6.data.auc_with|.4f}} to {{q:q_6cdcac29c6.data.auc_without|.4f}}, while switching off the six hidden parts together leaves {{q:q_f34db79d55.data.auc_without|.4f}}. The largest direct terms lower the predicted chance: capital gain ({{q:q_3fc1551876.switched_off[0].weight|.2f}} per sd), being a husband ({{q:q_3fc1551876.switched_off[1].weight|.2f}}) and education level ({{q:q_3fc1551876.switched_off[2].weight|.2f}}). The hidden parts add on the score: a capital-gain gate that opens between {{q:q_ac1828a1b6.rows[4].inputs.capital-gain}} and {{q:q_ac1828a1b6.rows[5].inputs.capital-gain}} and pushes the score further down for the {{q:q_7991c933a1.subgroup.n}} training people for whom it is open; a working-hours hinge at {{q:q_b8b266a953.rows[9].inputs.hours-per-week}}, below which shorter weeks raise the predicted chance, more steeply for very short weeks; a fixed step up for the {{q:q_637617f086.subgroup.n}} never-married people; and small category flags fitted to few rows: preschool ({{q:q_3c6ca468ff.subgroup.n}} people, predicted at near certainty), working without pay ({{q:q_b5ee1a78f1.subgroup.n}}) or born in Iran ({{q:q_0cc21b671b.subgroup.n}}), born in Honduras ({{q:q_b45cd0d6de.subgroup.n}}, a large downward offset that runs against their observed low-income rate of {{q:q_b45cd0d6de.subgroup.outcome_rate|.1%}}), unmarried and a professional-school degree.",
+  "resisted": "No part resisted. The Honduras offset inside category_offset_units is described, not explained: it is fitted to 14 training people and runs against their observed low-income rate of 85.7%, so it reads as an artefact of fitting rather than a domain effect.",
+  "resisted_template": "No part resisted. The Honduras offset inside category_offset_units is described, not explained: it is fitted to {{q:q_b45cd0d6de.subgroup.n}} training people and runs against their observed low-income rate of {{q:q_b45cd0d6de.subgroup.outcome_rate|.1%}}, so it reads as an artefact of fitting rather than a domain effect.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 52,
+    "complete_ok": true,
+    "ran_at": "2026-11-11T06:24:57+00:00"
+  },
+  "recheck_notes": "Final recheck (with the record): 0 mismatch, 0 needs_review. The 52 unchecked free-text sentences are structural descriptions (which nodes form a part, where the closed form is attached) and hypothesis framing without numbers. 'never' appears in the category name 'never married'; each such sentence carries a count reference. capital_gain_gate evidence records 6-11 duplicate records 0-5 (an accidental second run of the same add_evidence calls); they were amended to say so, as evidence records cannot be deleted.",
+  "tool_bugs": "(1) No way to delete an evidence record, so accidental duplicates can only be amended. (2) A typed '\u2248' formula with nested relu in a hypothesis was refused as bare numbers for its inner coefficients (0.977, 0.334, 0.00808, 0.437) while the outer ones passed, so the closed forms were attached as analytical_formula evidence instead of typed in the text. (3) --render has no allow_numbers, so a literal such as '$50,000' cannot appear in the summary. (4) amend_evidence has no allow_numbers either (record numbers in a narrative are refused). (5) query_ablate(direct=true) reports 0 direct edges once the direct edges are routed through an identity node inside a leaf; edge ablations on '->identity_0' were used instead.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 226,
+    "provenance_backed": 226,
+    "allow_listed": 4,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 7,
+      "other": 1
+    },
+    "audit": {
+      "references": 213,
+      "checked": 213
+    },
+    "self_probe": {
+      "parts": [
+        "capital_gain_gate",
+        "hours_chain",
+        "preschool_chain",
+        "never_married_chain",
+        "without_pay_or_iran_gate",
+        "category_offset_units",
+        "direct_linear",
+        "income_model"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 8,
+      "roots": [
+        "income_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 6.661338147750939e-16,
+    "closed_form_max_abs_err": 0.04643255449876449,
+    "numeric_max_abs_err": 2.1316282072803006e-14,
+    "op_counts": {
+      "rename_node": 107,
+      "split_node": 7,
+      "add_identity_node": 1,
+      "annotate": 8
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T06:25:43+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 52,
+      "provenance": {
+        "templated_texts": 66,
+        "queries": 54
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

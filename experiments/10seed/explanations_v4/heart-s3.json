@@ -1,0 +1,129 @@
+{
+  "label": "heart-s3",
+  "genome_id": "c426b094-0843-44e9-ab9a-7d9553d52601",
+  "protocol_version": "v4",
+  "start": "2026-11-11T19:34:05+13:00",
+  "end": "2026-11-11T19:47:00+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 6,
+  "n_composition_annotations": 1,
+  "n_splits": 3,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 5,
+  "hidden_nodes_single_leaf_no_split": 5,
+  "hidden_nodes_in_any_annotation": 5,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 3.885780586188048e-16,
+  "closed_form_max_abs_err": 0.013955960774561404,
+  "summary": "The model is a near-linear logistic score for heart disease (training AUC 0.941). Most of its ranking comes from the direct edges: replacing them by their mean contributions drops training AUC to 0.470. The largest direct terms raise the score with the number of vessels coloured by fluoroscopy (1.98 per sd), male sex (1.41), a flat ST slope (1.27) and having no chest pain (0.97). Five hidden units add corrections. For the typical patient, predicted risk rises with age up to 59 years (21%) and then falls (15% at 75 years) because an age hinge switches on. A blood-pressure hinge flattens the rise in risk with resting blood pressure, and switches on at a lower pressure when the ST segment is upsloping. Atypical angina raises the score through its own unit, by 1.00 on average for the 42 training patients with it. A minor unit lowers the score a little for non-anginal chest pain, and a flag is fitted to the 2 training rows with the rare thal code. Replacing the hidden units by their affine fits leaves training AUC at 0.938.",
+  "summary_template": "The model is a near-linear logistic score for heart disease (training AUC {{q:q_dd1a34fc6f.auc_roc|.3f}}). Most of its ranking comes from the direct edges: replacing them by their mean contributions drops training AUC to {{q:q_4b282f15b2.data.auc_without|.3f}}. The largest direct terms raise the score with the number of vessels coloured by fluoroscopy ({{q:q_402d753066.switched_off[15].weight|.2f}} per sd), male sex ({{q:q_402d753066.switched_off[1].weight|.2f}}), a flat ST slope ({{q:q_402d753066.switched_off[14].weight|.2f}}) and having no chest pain ({{q:q_402d753066.switched_off[4].weight|.2f}}). Five hidden units add corrections. For the typical patient, predicted risk rises with age up to {{q:q_e52d76e472.rows[3].inputs.age}} ({{q:q_e52d76e472.rows[3].risk|pct}}) and then falls ({{q:q_428682b3a8.rows[9].risk|pct}} at {{q:q_428682b3a8.rows[9].inputs.age}}) because an age hinge switches on. A blood-pressure hinge flattens the rise in risk with resting blood pressure, and switches on at a lower pressure when the ST segment is upsloping. Atypical angina raises the score through its own unit, by {{q:q_a8338d2849.subgroup.parts.ann_34.mean_contribution|.2f}} on average for the {{q:q_a8338d2849.subgroup.n}} training patients with it. A minor unit lowers the score a little for non-anginal chest pain, and a flag is fitted to the {{q:q_ebb82d8049.subgroup.n}} training rows with the rare thal code. Replacing the hidden units by their affine fits leaves training AUC at {{q:q_f5c5ec9cdb.auc_all_affine|.3f}}.",
+  "resisted": "Nothing was moved to resisted. Two parts are weak: the minor unit for non-anginal chest pain barely matters (switching it off changes training AUC from 0.9407 to 0.9404), and the rare-thal flag is fitted to 2 training rows, so its effect should not be read as a finding.",
+  "resisted_template": "Nothing was moved to resisted. Two parts are weak: the minor unit for non-anginal chest pain barely matters (switching it off changes training AUC from {{q:q_bafe125111.data.auc_with|.4f}} to {{q:q_bafe125111.data.auc_without|.4f}}), and the rare-thal flag is fitted to {{q:q_ebb82d8049.subgroup.n}} training rows, so its effect should not be read as a finding.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 1,
+    "needs_review_items": [
+      {
+        "check": "provenance",
+        "location": "operations.heart_root.evidence[3].payload",
+        "stated": "q_9728e173d5",
+        "recomputed": {
+          "op_seq": 29,
+          "last_structural_op": 29
+        },
+        "note": "q_9728e173d5 was computed before operation 29 changed the structure"
+      }
+    ],
+    "unchecked_freetext_sentences": 36,
+    "complete_ok": true
+  },
+  "recheck_notes": "The one needs_review item (heart_root evidence[3], provenance q_9728e173d5 computed before op 29) is not an error: the first recheck flagged q_9728e173d5 in the root hypothesis and that evidence record; compute_performance was rerun on the final structure (q_dd1a34fc6f), the hypothesis and summary now reference q_dd1a34fc6f, and the record was amended with query_id=q_dd1a34fc6f (its payload.query_id is now q_dd1a34fc6f). The record's provenance list still names the old id because amend_evidence does not update it (see tool_bugs). Both queries give the same values (train AUC and accuracy identical), and op 29 is add_identity_node, which preserves the function (max error 3.9e-16). 36 unchecked free-text sentences are qualitative statements around placeholders; their numbers are all placeholders.",
+  "tool_bugs": "amend_evidence(query_id=...) replaces the payload but leaves the record's 'provenance' list at the old query id, so recheck keeps flagging a replaced stale query (mcp_server/tools/snapshots.py amend_evidence: rec['provenance'] is not set from q_extra). query_enumerate refuses when any continuous input is in the model (age has 41 values), so one-hot gates were probed with query_probe sweeps instead. Strict mode refuses digits in a draft hypothesis even inside a feature name (cp code in 'Chest-pain type 3'); worked around with wording.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 144,
+    "provenance_backed": 144,
+    "allow_listed": 0,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 5,
+      "other": 0
+    },
+    "audit": {
+      "references": 144,
+      "checked": 144
+    },
+    "self_probe": {
+      "parts": [
+        "age_hinge",
+        "bp_slope1_hinge",
+        "cp3_slope3_unit",
+        "cp2_unit",
+        "thal4_unit",
+        "direct_linear",
+        "heart_root"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 7,
+      "roots": [
+        "heart_root"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 3.885780586188048e-16,
+    "closed_form_max_abs_err": 0.013955960774561404,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 26,
+      "split_node": 3,
+      "add_identity_node": 1,
+      "annotate": 7
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T06:47:05+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 1,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [
+        {
+          "check": "provenance",
+          "location": "operations.heart_root.evidence[3].payload",
+          "stated": "q_9728e173d5",
+          "recomputed": {
+            "op_seq": 29,
+            "last_structural_op": 29
+          },
+          "note": "q_9728e173d5 was computed before operation 29 changed the structure"
+        }
+      ],
+      "unchecked_freetext_sentences": 36,
+      "provenance": {
+        "templated_texts": 31,
+        "queries": 25
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

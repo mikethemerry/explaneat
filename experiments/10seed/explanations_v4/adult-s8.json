@@ -1,0 +1,139 @@
+{
+  "label": "adult-s8",
+  "genome_id": "2c47861c-efda-467a-b0b6-9dbd11dfac15",
+  "protocol_version": "v4",
+  "start": "2026-11-11T19:37:20+13:00",
+  "end": "2026-11-11T20:02:44+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 6,
+  "n_composition_annotations": 2,
+  "n_splits": 8,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 15,
+  "hidden_nodes_single_leaf_no_split": 15,
+  "hidden_nodes_in_any_annotation": 15,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 7.216449660063518e-16,
+  "closed_form_max_abs_err": 0.02545378331544157,
+  "summary": "The model predicts the probability of low income (the at-most-50k class) on the adult census data, with a training AUC of 0.911. It is mostly a linear model: the direct input edges carry most of the ranking (AUC 0.492 without them), led by marriage to a civilian spouse (direct weight -2.46 per sd), capital gains, education level, sex and hours worked, each lowering the predicted chance of low income in the expected direction. On top sit three kinds of nonlinear part. Capital-gain thresholds: two hinges open near 5000 US dollars of gains and remove a standing push towards low income, so the typical case falls from 59% with no gains to 0.01% with 15000 US dollars. A youth gate adds a push towards low income below about the median age except for other-service workers (17545 training rows have it on). Category switches add fixed pushes for single levels (never married for 12914 rows, widowed, tenth grade, self-employed, armed forces and a few countries of birth). Two switches are fitted to tiny groups and give certain predictions: armed forces (12 rows, predicted 0.0% although 9 have low income) and Honduras (14 rows, predicted 100.0%).",
+  "summary_template": "The model predicts the probability of low income (the at-most-50k class) on the adult census data, with a training AUC of {{q:q_f359bf7cd1.data.auc_with|.3f}}. It is mostly a linear model: the direct input edges carry most of the ranking (AUC {{q:q_f359bf7cd1.data.auc_without|.3f}} without them), led by marriage to a civilian spouse (direct weight {{q:q_98cec496c2.switched_off[0].weight|.2f}} per sd), capital gains, education level, sex and hours worked, each lowering the predicted chance of low income in the expected direction. On top sit three kinds of nonlinear part. Capital-gain thresholds: two hinges open near {{q:q_083d291e29.rows[5].inputs.capital-gain}} of gains and remove a standing push towards low income, so the typical case falls from {{q:q_c8e4ac5668.rows[0].risk|pct}} with no gains to {{q:q_44f96fa72a.rows[0].risk|.2%}} with {{q:q_44f96fa72a.set.capital-gain}}. A youth gate adds a push towards low income below about the median age except for other-service workers ({{q:q_8e3e37394f.subgroup.n|d}} training rows have it on). Category switches add fixed pushes for single levels (never married for {{q:q_9146cc0101.subgroup.n|d}} rows, widowed, tenth grade, self-employed, armed forces and a few countries of birth). Two switches are fitted to tiny groups and give certain predictions: armed forces ({{q:q_6f522685c0.subgroup.n|d}} rows, predicted {{q:q_6f522685c0.subgroup.mean_predicted_risk|.1%}} although {{q:q_6f522685c0.subgroup.outcome_n|d}} have low income) and Honduras ({{q:q_fd79929caa.subgroup.n|d}} rows, predicted {{q:q_fd79929caa.subgroup.mean_predicted_risk|.1%}}).",
+  "resisted": "Resisted: nothing. Each part's hypothesis survived its self-probe. The armed-forces switch (12 rows) and the Honduras regime (14 rows) are described as fitted artefacts rather than explained in domain terms, and the youth gate's exclusion of other-service workers (a young other-service worker gets 88% against 94% for a professional of 17 years) has no obvious domain reason.",
+  "resisted_template": "Resisted: nothing. Each part's hypothesis survived its self-probe. The armed-forces switch ({{q:q_6f522685c0.subgroup.n|d}} rows) and the Honduras regime ({{q:q_fd79929caa.subgroup.n|d}} rows) are described as fitted artefacts rather than explained in domain terms, and the youth gate's exclusion of other-service workers (a young other-service worker gets {{q:q_4dfb108f63.rows[1].risk|pct}} against {{q:q_4dfb108f63.rows[0].risk|pct}} for a professional of {{q:q_4dfb108f63.rows[0].inputs.age}}) has no obvious domain reason.",
+  "recheck_summary": {
+    "ran_at": "2026-11-11T07:02:44+00:00",
+    "recheck_version": 3,
+    "mismatch": 0,
+    "needs_review": 1,
+    "warn": 0,
+    "mismatches": [],
+    "needs_review_items": [
+      {
+        "check": "provenance",
+        "location": "operations.income_model.evidence[0].payload",
+        "stated": "q_3c101a2abd",
+        "recomputed": {
+          "op_seq": 107,
+          "last_structural_op": 115
+        },
+        "note": "q_3c101a2abd was computed before operation 115 changed the structure"
+      }
+    ],
+    "unchecked_freetext_sentences": 57,
+    "provenance": {
+      "templated_texts": 98,
+      "queries": 75
+    },
+    "complete_ok": true,
+    "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+  },
+  "recheck_notes": "needs_review (provenance, income_model evidence[0]): q_3c101a2abd (whole-split subgroup) was run before the splits. It was recomputed after the last structural operation as q_9547ef9129, the record was amended with query_id=q_9547ef9129 (its payload now carries the new query) and a fresh record was added; the stale id survives only in the amended record's top-level provenance list, which amend_evidence does not refresh. The values are unchanged because every operation is function-preserving (function_preservation_max_abs_err below 1e-15). Lint warnings on 'never' come from the category label 'never married'; each occurrence in the stored narratives is backed by a count.",
+  "tool_bugs": "amend_evidence(query_id=...) replaces the payload but leaves the record's top-level provenance list on the old query id, so the recheck keeps reporting the old (stale) id. get_input_distribution returned provenance.stored=false with a DataError warning asking for a db upgrade, while the other tools stored their queries; it was not used for any quoted number. The scope-word lint reads the category label 'never married' as the word 'never'.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 201,
+    "provenance_backed": 201,
+    "allow_listed": 16,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 6,
+      "other": 0
+    },
+    "audit": {
+      "references": 201,
+      "checked": 201,
+      "distinct_queries": 74
+    },
+    "self_probe": {
+      "parts": [
+        "direct_terms",
+        "capital_gain_thresholds",
+        "youth_gate",
+        "marital_switches",
+        "work_education_switches",
+        "country_switches",
+        "income_model"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 8,
+      "roots": [
+        "income_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 7.216449660063518e-16,
+    "closed_form_max_abs_err": 0.02545378331544157,
+    "numeric_max_abs_err": 2.842170943040401e-14,
+    "op_counts": {
+      "rename_node": 107,
+      "add_identity_node": 1,
+      "split_node": 8,
+      "annotate": 8
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T07:03:34+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 1,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [
+        {
+          "check": "provenance",
+          "location": "operations.income_model.evidence[0].payload",
+          "stated": "q_3c101a2abd",
+          "recomputed": {
+            "op_seq": 107,
+            "last_structural_op": 115
+          },
+          "note": "q_3c101a2abd was computed before operation 115 changed the structure"
+        }
+      ],
+      "unchecked_freetext_sentences": 57,
+      "provenance": {
+        "templated_texts": 98,
+        "queries": 75
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}
