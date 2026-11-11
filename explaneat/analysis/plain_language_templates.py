@@ -195,12 +195,13 @@ def direction_sentence(layer, c, part_scope: bool) -> Dict[str, Any]:
     if v["kind"] == "category":
         hl = "higher" if (b or 0) >= (a or 0) else "lower"
         text = (f"{via}{who}, the model gives a {_adv(c)}{hl} {_pred_noun(layer)} "
-                f"if {ch['to']['cond']} ({_about(b)}) than if {ch['from']['cond']} ({_about(a)})")
+                f"if {ch['to']['cond']}{moved_phrase(c, 'to')} ({_about(b)}) than if {ch['from']['cond']}"
+                f"{moved_phrase(c, 'from')} ({_about(a)})")
     else:
         verb = "raising" if (b or 0) >= (a or 0) else "lowering"
         text = (f"{via}the model treats a higher {_name(v)} as {_adv(c)}{verb} {_pred(layer)} "
                 f"{shape_phrase(layer, c, v)}: {who}, it goes from {_about(a)} at {ch['from']['text']} "
-                f"to {_about(b)} at {ch['to']['text']}{saturation_phrase(c)}")
+                f"to {_about(b)} at {ch['to']['text']}{moved_phrase(c, 'to')}{saturation_phrase(c)}")
     return _s(text + _tail(c) + "." + _little(layer, c), [c["id"]])
 
 
@@ -224,8 +225,9 @@ def interaction_sentence(layer, c) -> Dict[str, Any]:
     else:
         tail_v = f"{_name(v)} going from {ch['from']['text']} to {ch['to']['text']}"
     numbers = (f"for a typical {one}, {tail_v} moves {_pred(layer)} from {_about(sg.get('risk_from'))} to "
-               f"{_about(sg.get('risk_to'))} if {sg['cond']}, and from {_about(wg.get('risk_from'))} to "
-               f"{_about(wg.get('risk_to'))} if {wg['cond']}")
+               f"{_about(sg.get('risk_to'))} if {sg['cond']}{moved_phrase(c, group=sg.get('label'))}, and from "
+               f"{_about(wg.get('risk_from'))} to {_about(wg.get('risk_to'))} if {wg['cond']}"
+               f"{moved_phrase(c, group=wg.get('label'))}")
     bw = (wg.get("beyond_window") or {}) if st.get("only_within_window") else {}
     if bw.get("above"):
         numbers += (f" (above {ch['to']['text']} it changes for them too: from {_about(bw['above']['risk_from'])} "
@@ -243,8 +245,12 @@ def interaction_sentence(layer, c) -> Dict[str, Any]:
                 f"if {ch['to']['cond']} than if {ch['from']['cond']}")
     else:
         subj = f"a higher {_name(v)} {_adv(c)}{st['direction']} {_pred(layer)}"
-    if st["pattern"] == "only_if":
+    if st["pattern"] == "only_if" and only_ok(c):
         head = f"{subj}, but only if {sg['cond']}"
+    elif st["pattern"] == "only_if":
+        sc = st.get("support_check") or {}
+        head = (f"{subj}, mainly if {sg['cond']} (it also changes for {sc.get('exceptions')} of the "
+                f"{sc.get('n')} training {_pop(layer)} for whom it does not hold)")
     elif st["pattern"] == "reversed" and dwg * stated < 0:
         head = f"{subj} if {sg['cond']}, but the other way if {wg['cond']}"
     else:
@@ -262,14 +268,20 @@ def threshold_sentence(layer, c) -> Dict[str, Any]:
     verb = "adds to" if st["direction"] == "raises" else "lowers"
     who = (" for " + " and ".join(st["conditions"])) if st.get("conditions") else ""
     step = st["threshold"].get("count_step")
+    only = "only " if only_ok(c) else ""
     if step is not None and st["kind"] == "above":
-        head = f"through this part, the {name} only {_adv(c)}{verb} {_pred(layer)} from {t} upwards{who}"
+        head = f"through this part, the {name} {only}{_adv(c)}{verb} {_pred(layer)} from {t} upwards{who}"
     elif step is not None:
-        head = f"through this part, the {name} {_adv(c)}{verb} {_pred(layer)} only up to {t}{who}"
+        head = f"through this part, the {name} {_adv(c)}{verb} {_pred(layer)} {only}up to {t}{who}"
     elif st["kind"] == "above":
-        head = f"through this part, {name} only {_adv(c)}{verb} {_pred(layer)} once it rises above about {t}{who}"
+        head = f"through this part, {name} {only}{_adv(c)}{verb} {_pred(layer)} once it rises above about {t}{who}"
     else:
-        head = f"through this part, {name} only {_adv(c)}{verb} {_pred(layer)} while it stays below about {t}{who}"
+        head = f"through this part, {name} {only}{_adv(c)}{verb} {_pred(layer)} while it stays below about {t}{who}"
+    sc = st.get("support_check") or {}
+    if not only and sc.get("exceptions"):
+        side = "below" if st["kind"] == "above" else "above"
+        head += (f" (for {sc['exceptions']} of the {sc['n']} training {_pop(layer)} it already changes "
+                 f"{side} that)")
     ch = st.get("change") or {}
     text = (f"{head}: for a typical such {_pop(layer, True)}, going from {ch.get('from', {}).get('text')} to "
             f"{ch.get('to', {}).get('text')} moves it from {_about(r.get('from'))} to {_about(r.get('to'))}")
@@ -318,9 +330,17 @@ def rule_sentence(layer, c) -> Dict[str, Any]:
 def null_sentence(layer, cs: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     if not cs:
         return None
-    names = [c["variables"][0]["label"] for c in cs]
-    lst = names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
-    return _s(f"it ignores {lst}.", [c["id"] for c in cs])
+    def lst(names):
+        return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+    plain = [c["variables"][0]["label"] for c in cs if not c.get("linked")]
+    tied = [c["variables"][0]["label"] for c in cs if c.get("linked")]
+    parts = []
+    if plain:
+        parts.append(f"it ignores {lst(plain)}")
+    if tied:   # v5g: not read itself, but inputs tied to it in the data are
+        parts.append(f"it does not read {lst(tied)} itself (it reads inputs the data ties to "
+                     f"{'it' if len(tied) == 1 else 'them'})")
+    return _s("; ".join(parts) + ".", [c["id"] for c in cs])
 
 
 def inert_sentence(layer, c) -> Dict[str, Any]:
@@ -330,7 +350,31 @@ def inert_sentence(layer, c) -> Dict[str, Any]:
 
 
 def _verified(cs):
-    return [c for c in cs if c.get("verified")]
+    """Claims that may become sentences: verified, and not a constructed case off the data
+    (``off_data``, v5g: those are listed with the unsupported claims instead)."""
+    return [c for c in cs if c.get("verified") and not c.get("off_data")]
+
+
+def moved_phrase(c, end: str = "to", group: Optional[str] = None) -> str:
+    """' (with education-num at 5 on the 1-16 scale, as in the data)': the linked inputs the
+    claim's typical case moved with the changed one (``linked``, v5g)."""
+    lk = c.get("linked") or {}
+    if group is not None:
+        g = next((x for x in lk.get("groups") or [] if x.get("label") == group), None)
+        moved = ((g or {}).get("moved") or {}).get("modifier") or {}
+    else:
+        moved = (lk.get("moved") or {}).get(end) or {}
+    if not moved:
+        return ""
+    items = [f"{d['label']} at {d['to']}" for _, d in sorted(moved.items())]
+    return " (with " + " and ".join(items) + ", as in the data)"
+
+
+def only_ok(c) -> bool:
+    """A universal word ("only", "only if") is allowed only when the claim's ``support_check``
+    over the whole population found no exception (v5g)."""
+    sc = (c.get("statement") or {}).get("support_check") or {}
+    return bool(sc) and sc.get("exceptions") == 0
 
 
 def _by_part(layer) -> Dict[str, List[Dict[str, Any]]]:
@@ -512,10 +556,15 @@ def not_supported(layer) -> List[Dict[str, Any]]:
     """Failing claims, described neutrally (never as statements)."""
     out = []
     for c in layer["claims"]:
-        if c.get("verified"):
-            continue
         names = " and ".join(v["label"] for v in c.get("variables", [])[:2]) or "this part"
         where = "the whole model" if c["scope"] == "model" else f"part {c['annotation']['id']}"
+        if c.get("verified") and c.get("off_data"):
+            out.append({"claim": c["id"], "type": c["type"],
+                        "text": f"{c['type']} claim about {names} in {where}: a constructed case off the data, "
+                                f"not stated ({'; '.join(c['off_data'].get('reasons') or [])})."})
+            continue
+        if c.get("verified"):
+            continue
         out.append({"claim": c["id"], "type": c["type"],
                     "text": _CLAUDE.sub("assistant", f"{c['type']} claim about {names} in {where}: not supported by "
                                                      f"the model ({'; '.join(c.get('reasons') or [])}).")})

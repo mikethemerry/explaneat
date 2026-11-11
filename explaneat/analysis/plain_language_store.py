@@ -411,11 +411,82 @@ def lint_window(text: str, claims: List[Dict[str, Any]]) -> List[str]:
     return errs
 
 
+# v5g (2026-11-11, authoring-v4 evaluation, K1 and K2): constructed cases and universal words
+REAL_PEOPLE = re.compile(r"\b(?:people|patients|customers|persons|individuals|respondents|cases|those|anyone|"
+                         r"everyone|men|women|ones)\s+(?:whose|with|who|born|without|in|from|of|that)\b|"
+                         r"\breal\b|\bin the data\b", re.I)
+CONSTRUCTED = re.compile(r"\bconstructed\b", re.I)
+
+
+def lint_off_data(text: str, claims: List[Dict[str, Any]]) -> List[str]:
+    """A claim marked ``off_data`` (its typical case is a combination no training row has, e.g.
+    two linked inputs set independently) may be stated only as a constructed case for the
+    typical patient ("in a constructed case, for the typical ..."), never about real people."""
+    errs = []
+    for c in claims:
+        od = c.get("off_data")
+        if not od:
+            continue
+        if REAL_PEOPLE.search(text or "") or not CONSTRUCTED.search(text or "") \
+                or not re.search(r"\btypical\b", text or "", re.I):
+            why = "; ".join(od.get("reasons") or [])[:240]
+            errs.append(f"{c['id']} is a constructed case off the data ({why}): say 'in a constructed case' for "
+                        f"the typical case with this input alone changed, never about real people, or leave it out")
+    return errs
+
+
+UNIVERSAL = re.compile(
+    r"\b(?:only|never|always|nothing|no one|nobody|none of|everyone|everybody|regardless|whatever)\b|"
+    r"\b(?:all|every one) (?:of )?(?:the |these |those )?(?:[0-9,]+ )?(?:training )?"
+    r"(?:patients|people|customers|cases|persons|respondents|individuals|of them|rows)\b|"
+    r"\bmore than anything\b|\babove all\b|\bmost of all\b|"
+    r"\bthe (?:single )?(?:largest|biggest|strongest|most important) (?:effect|factor|driver|influence|input|reason)\b",
+    re.I)
+UNIVERSAL_EXEMPT = re.compile(r"training data only|only (?:slightly|barely|a little)|not only|nothing until|never[- ]married|"
+                              r"only to the typical|typical [a-z]+ only", re.I)
+
+
+def lint_universal(text: str, claims: List[Dict[str, Any]]) -> List[str]:
+    """The proof rule for "only", "all", "never", "nothing" and superlatives ("more than
+    anything else"): the sentence must cite a claim whose ``statement.support_check`` checked
+    the statement over the whole population and found no exception (a subgroup's exact count,
+    a threshold with no patient acting on the wrong side, an "only if" with nobody in the other
+    group affected, a rule with no exception). Otherwise drop the word. Superlatives have no
+    such check: always drop them."""
+    t = UNIVERSAL_EXEMPT.sub(" ", text or "")
+    mt = None
+    for mm in UNIVERSAL.finditer(t):
+        # a word scoped to the typical case ("for a typical patient ... it changes nothing") is a
+        # statement about one case, which the claim's own numbers check
+        clause = re.split(r"[;:]|\. ", t[:mm.start()])[-1]
+        if re.search(r"\btypical\b", clause, re.I) and not re.search(
+                r"anything|above all|most of all|largest|biggest|strongest|most important", mm.group(0), re.I):
+            continue
+        mt = mm
+        break
+    if not mt:
+        return []
+    word = mt.group(0)
+    checks = [(c["id"], (c.get("statement") or {}).get("support_check")) for c in claims]
+    checks = [(cid, sc) for cid, sc in checks if sc]
+    if any(sc.get("exceptions") == 0 for _, sc in checks) and not re.search(
+            r"anything|above all|most of all|largest|biggest|strongest|most important", word, re.I):
+        return []
+    found = "; ".join(f"{cid}: {sc.get('exceptions')} of {sc.get('n')} are exceptions ({sc.get('check')})"
+                      for cid, sc in checks if sc.get("exceptions"))
+    return [f"'{word}' is a universal word with no check over the whole population behind it"
+            + (f" ({found})" if found else "") + ": drop it, or cite a claim whose support_check found no "
+            "exception and state the check ('for all N training ...')"]
+
+
 def lint_points(text: str, claims: List[Dict[str, Any]], context: Sequence[float] = ()) -> List[str]:
     """A sentence may not quote two different points for the same fold: where a shape's hinge
     was reconciled with a threshold claim, quote the named (median) point, not the typical
-    patient's own hinge. Percentages must be rounded once (:func:`lint_percents`)."""
-    errs = lint_percents(text, claims, context) + lint_window(text, claims)
+    patient's own hinge. Percentages must be rounded once (:func:`lint_percents`). Also (v5g)
+    constructed cases off the data (:func:`lint_off_data`) and universal words
+    (:func:`lint_universal`)."""
+    errs = (lint_percents(text, claims, context) + lint_window(text, claims)
+            + lint_off_data(text, claims) + lint_universal(text, claims))
     for c in claims:
         pt = (c.get("shape") or {}).get("point") or {}
         if not (c.get("shape") or {}).get("point_reconciled") or not pt:

@@ -54,7 +54,7 @@ from .explanation_tools import StateEvaluator, as_unit, default_auc, input_colum
 from .plain_language_codebooks import (base_of, codebook_checks, codebook_gaps, find_codebook,
                                        generic_codebook, level_info, outcome_check)
 
-LAYER_SCHEMA_VERSION = "5.1.0"   # 3: shapes; 3.1: one point per fold; 4: blocks; 5: read-down; 5.1: graph
+LAYER_SCHEMA_VERSION = "5.2.0"   # 3: shapes; 3.1: one point per fold; 4: blocks; 5: read-down; 5.1: graph; 5.2: linked inputs
 CLAIM_TYPES = ("direction", "threshold", "interaction", "magnitude", "subgroup", "null", "rule")
 
 SEED = 42
@@ -476,6 +476,9 @@ class PlainModel:
         self.variables = build_variables(self.feature_names, self.raw_train, self.raw_test,
                                          self.mean, self.scale, codebook)
         self.var_by_base = {v.base: v for v in self.variables}
+        self.base_of_col = {c: v.base for v in self.variables for c in v.columns}
+        from .plain_language_links import Links
+        self.links = Links(self, codebook.get("linked_inputs"))
         self.input_nodes_by_col: Dict[int, List[str]] = {}
         for n in structure.nodes:
             if n.type == NodeType.INPUT:
@@ -529,14 +532,60 @@ class PlainModel:
     def risk(self, eta):
         return self.risk_scale.risk(eta)
 
-    def set_logit(self, X, var: Variable, value, scope=None, extra=None) -> np.ndarray:
-        assign = var.encode(value)
+    def set_logit(self, X, var: Variable, value, scope=None, extra=None, linked: bool = True,
+                  fixed: Sequence[str] = (), info: Optional[Dict[str, Any]] = None) -> np.ndarray:
+        """Log-odds with ``var`` set to ``value`` (a code, a number, or for a number one value
+        per row), on ``scope``.
+
+        ``linked`` (v5g): the inputs the data ties to ``var`` (:mod:`plain_language_links`)
+        move with it, row by row, wherever the held value would make a case no training row
+        has; on the same scope. Inputs in ``extra`` or ``fixed`` are set by the caller and
+        never move. ``info`` receives what moved (and what is off the data)."""
+        if not var.is_category() and np.ndim(value):
+            assign = {var.columns[0]: (np.asarray(value, dtype=float) - var.mean[0]) / var.scale[0]}
+        else:
+            assign = var.encode(value)
         if extra:
             assign = {**assign, **extra}
+        if linked and self.links.by_a.get(var.base):
+            assign = {**assign, **self._linked_assign(X, var, assign, extra, fixed, info)}
         return self.logit(X, assign, scope)
 
+    def _linked_assign(self, X, var: Variable, assign, extra, fixed, info) -> Dict[int, np.ndarray]:
+        X = np.asarray(X, dtype=float)
+        Z = X.copy()
+        for c, val in assign.items():
+            Z[:, c] = val
+        R = Z * self.scale + self.mean
+        keep = set(fixed) | {self.base_of_col[c] for c in (extra or {})}
+        R2, inf = self.links.align_raw(R, [var.base], keep)
+        out = {}
+        for b in inf["moved"]:
+            for c in self.var_by_base[b].columns:
+                diff = R2[:, c] != R[:, c]
+                out[c] = np.where(diff, (R2[:, c] - self.mean[c]) / self.scale[c], Z[:, c])
+        if info is not None:
+            info.update(inf)
+            if X.shape[0] == 1:
+                info["row_before"], info["row_after"] = R[0], R2[0]
+        return out
+
+    def with_modifiers(self, raw: np.ndarray, extra_raw: Optional[Dict[int, float]], keep: Sequence[str] = ()):
+        """The raw row with ``extra_raw`` set and the inputs linked to those set inputs moved
+        onto the data (``keep`` never moves). Returns (row, bases set, info)."""
+        row = np.array(raw, dtype=float)
+        if not extra_raw:
+            return row, [], {"moved": {}, "off": [], "none": []}
+        for c, val in extra_raw.items():
+            row[c] = val
+        bases = sorted({self.base_of_col[c] for c in extra_raw})
+        R2, inf = self.links.align_raw(row[None, :], bases, set(keep))
+        inf["row_before"], inf["row_after"] = row, R2[0]
+        return R2[0], bases, inf
+
     def effect(self, X, var: Variable, v_from, v_to, scope=None, extra=None) -> np.ndarray:
-        """Per-row change in log-odds when ``var`` goes from ``v_from`` to ``v_to``."""
+        """Per-row change in log-odds when ``var`` goes from ``v_from`` to ``v_to`` (with its
+        linked inputs moved onto the data, :meth:`set_logit`)."""
         return (self.set_logit(X, var, v_to, scope, extra) -
                 self.set_logit(X, var, v_from, scope, extra))
 
@@ -744,6 +793,15 @@ def typical_raw(m: PlainModel, rows: Optional[np.ndarray] = None) -> np.ndarray:
                 ref[c] = 1.0 if code == best else 0.0
         else:
             ref[v.columns[0]] = float(np.median(m.raw_train[mask, v.columns[0]]))
+    # v5g: inputs the data ties to a category take their typical value within it (education-num
+    # 9 for a high-school graduate, not the overall median 10); categories in order, each fixed
+    # once it has been read
+    seen: List[str] = []
+    for v in m.variables:
+        if v.is_category() and m.links.by_a.get(v.base):
+            seen.append(v.base)
+            R2, _ = m.links.align_raw(ref[None, :], [v.base], seen)
+            ref = R2[0]
     return ref
 
 
@@ -766,23 +824,75 @@ def reference_patient(m: PlainModel) -> Dict[str, Any]:
     raw = typical_raw(m)
     p = float(m.risk(m.logit(_z(m, raw)))[0])
     return {"definition": "the typical patient: the median training patient for every number and "
-                          "the most common training category for every category (not a real patient)",
+                          "the most common training category for every category (not a real patient); "
+                          "an input the data ties to a category takes its typical value within that "
+                          "category (linked inputs)",
             "values": typical_values(m, raw), "predicted_risk": sig(p),
             "risk_scale": m.risk_scale.describe(), "raw": _sig_list(raw)}
 
 
 def risk_pair(m: PlainModel, raw: np.ndarray, var: Variable, a, b, scope=None,
-              extra_raw: Optional[Dict[int, float]] = None) -> Tuple[float, float]:
-    """Predicted risk of the patient ``raw`` with ``var`` at ``a`` and at ``b`` (on ``scope``)."""
-    z = _z(m, raw)
-    extra = None
-    if extra_raw:
-        extra = {c: float((val - m.mean[c]) / m.scale[c]) for c, val in extra_raw.items()}
-        for c, val in extra.items():
-            z[0, c] = val
-    pa = float(m.risk(m.set_logit(z, var, a, scope))[0])
-    pb = float(m.risk(m.set_logit(z, var, b, scope))[0])
+              extra_raw: Optional[Dict[int, float]] = None,
+              info: Optional[Dict[str, Any]] = None) -> Tuple[float, float]:
+    """Predicted risk of the patient ``raw`` with ``var`` at ``a`` and at ``b`` (on ``scope``).
+
+    Inputs linked to ``var`` (and to the modifiers in ``extra_raw``) move onto the data
+    (v5g); ``info`` receives the moves and any off-data combination (:func:`links_block`)."""
+    row, fixed, i0 = m.with_modifiers(raw, extra_raw, keep=[var.base])
+    z = _z(m, row)
+    ia: Dict[str, Any] = {}
+    ib: Dict[str, Any] = {}
+    pa = float(m.risk(m.set_logit(z, var, a, scope, fixed=fixed, info=ia))[0])
+    pb = float(m.risk(m.set_logit(z, var, b, scope, fixed=fixed, info=ib))[0])
+    if info is not None:
+        info.update(links_block(m, var, raw, i0, ia, ib))
     return pa, pb
+
+
+def _off_reasons(m: PlainModel, inf: Dict[str, Any], skip: Sequence[str] = ()) -> List[str]:
+    out = []
+    row = inf.get("row_after")
+    one = m.codebook.get("patient_one", "patient")
+    for a, vb, _n in inf.get("off") or []:
+        if a in skip or vb in skip:
+            continue
+        if row is None:
+            out.append(f"{m.var_by_base[a].label} and {m.var_by_base[vb].label} are set to a combination "
+                       f"no training {one} has")
+            continue
+        va = typical_values(m, row)
+        out.append(f"no training {one} has {m.var_by_base[a].label} {va[a]} with "
+                   f"{m.var_by_base[vb].label} {va[vb]}")
+    for a, _n in inf.get("none") or []:
+        out.append(f"no training {one} has this value of {m.var_by_base[a].label}, so the inputs "
+                   f"linked to it cannot be set from the data")
+    return out
+
+
+def links_block(m: PlainModel, var: Variable, raw: np.ndarray, i0, ia, ib) -> Dict[str, Any]:
+    """What a typical-patient counterfactual moved with the changed input (``moved``: per end,
+    {input: {label, from, to}} against the typical patient), and why it is off the data
+    (``off_data``), if it is (v5g)."""
+    out: Dict[str, Any] = {}
+    start = i0.get("row_after") if i0.get("row_after") is not None else np.array(raw, dtype=float)
+    for key, inf in (("modifier", i0), ("from", ia), ("to", ib)):
+        if not inf or not inf.get("moved") or inf.get("row_after") is None:
+            continue
+        before = inf["row_before"] if key == "modifier" else start
+        d = {b: x for b, x in m.links.describe_row(before, inf["row_after"]).items() if b in inf["moved"]}
+        if d:
+            out.setdefault("moved", {})[key] = d
+    reasons: List[str] = []
+    # the modifier stage holds the changed input; a pair with it is judged at the two ends
+    for inf, skip in ((i0, [var.base]), (ia, []), (ib, [])):
+        for r in _off_reasons(m, inf or {}, skip):
+            if r not in reasons:
+                reasons.append(r)
+    if reasons:
+        out["off_data"] = {"reasons": reasons}
+    if out:
+        out["inputs"] = m.links.linked(var.base)
+    return out
 
 
 def risk_block(pa: float, pb: float, reference: str, values: Optional[Dict[str, str]] = None,
@@ -817,7 +927,7 @@ def _removed_risk(m: PlainModel, X, var: Optional[Variable], scope, part: Option
     if var is not None:
         acc = np.zeros(X.shape[0])
         for val, w in support(var):
-            acc += w * m.risk(m.set_logit(X, var, val, scope))
+            acc += w * m.risk(m.set_logit(X, var, val, scope, linked=False))
         return acc
     vals = m.ev.forward(m.X[m.screen_idx])
     rows = np.linspace(0, len(m.screen_idx) - 1, 20).round().astype(int)
@@ -962,19 +1072,54 @@ def _change_desc(v: Variable, a, b, ca=None, cb=None) -> Dict[str, Any]:
             "basis": "10th and 90th percentile of the training patients"}
 
 
-def _part_typical(m: PlainModel, part: Part, var: Variable, a, b, scope):
+def _part_typical(m: PlainModel, part: Part, var: Variable, a, b, scope, info: Optional[Dict[str, Any]] = None):
     """Typical patient for a statement about a part: the overall typical patient, or (if the
-    part does not move that patient's risk) the typical patient the part acts on."""
+    part does not move that patient's risk) the typical patient the part acts on. ``info``
+    receives the linked-input block of the risk pair used (:func:`links_block`)."""
     raw = typical_raw(m)
-    pa, pb = risk_pair(m, raw, var, a, b, scope)
+    i1: Dict[str, Any] = {}
+    pa, pb = risk_pair(m, raw, var, a, b, scope, info=i1)
     if abs(pb - pa) > 1e-9 or part.is_root or part.contribution is None:
+        if info is not None:
+            info.update(i1)
         return pa, pb, "typical patient", None, raw
     active = np.abs(part.contribution) > 1e-12
     if active.any() and not active.all():
         raw2 = typical_raw(m, active)
-        pa2, pb2 = risk_pair(m, raw2, var, a, b, scope)
+        pa2, pb2 = risk_pair(m, raw2, var, a, b, scope, info=info)
         return pa2, pb2, "typical patient this part acts on", typical_values(m, raw2), raw2
+    if info is not None:
+        info.update(i1)
     return pa, pb, "typical patient", None, raw
+
+
+def attach_links(c: Dict[str, Any], *infos: Dict[str, Any], groups: Optional[List[str]] = None) -> None:
+    """v5g: record on the claim what its typical-patient counterfactual moved with the changed
+    input (``linked``) and, if that case is not in the data, ``off_data`` with the reasons.
+    Templates and the lint refuse to state an off-data claim about real people."""
+    lk: Dict[str, Any] = {}
+    reasons: List[str] = []
+    for i, inf in enumerate(infos):
+        if not inf:
+            continue
+        if inf.get("moved"):
+            if groups:
+                lk.setdefault("groups", []).append({"label": groups[i], "moved": inf["moved"]})
+            else:
+                lk["moved"] = inf["moved"]
+        if inf.get("inputs"):
+            lk["inputs"] = sorted(set(lk.get("inputs", [])) | set(inf["inputs"]))
+        for r in (inf.get("off_data") or {}).get("reasons", []):
+            if r not in reasons:
+                reasons.append(r)
+    if lk:
+        lk["note"] = ("the inputs the data ties to the changed one were moved to their typical value among "
+                      "the training rows with the new value, so the case is one the data has")
+        c["linked"] = lk
+    if reasons:
+        c["off_data"] = {"reasons": reasons,
+                         "note": "a constructed case no training row has: state it only as a change for the "
+                                 "typical case with this input alone changed, never about real people"}
 
 
 def direction_claims(m: PlainModel, part: Part, scope) -> List[Dict[str, Any]]:
@@ -988,7 +1133,8 @@ def direction_claims(m: PlainModel, part: Part, scope) -> List[Dict[str, Any]]:
             mean = float(e.mean())
             sp = spread(e)
             key = bname if not v.is_category() else f"{bname}:{cz['key']}"
-            pa, pb, ref_name, ref_vals, ref_raw = _part_typical(m, part, v, a, z, scope)
+            linfo: Dict[str, Any] = {}
+            pa, pb, ref_name, ref_vals, ref_raw = _part_typical(m, part, v, a, z, scope, linfo)
             c = _claim(part, "direction", key, variables=[_var_desc(v)],
                        statement={"variable": bname, "change": _change_desc(v, a, z, ca, cz),
                                   "direction": "raises" if mean > 0 else "lowers",
@@ -998,6 +1144,7 @@ def direction_claims(m: PlainModel, part: Part, scope) -> List[Dict[str, Any]]:
                                            + ("everywhere in the model" if scope is None else
                                               "only where this part reads it"))
             c["risk"] = risk_block(pa, pb, ref_name, ref_vals)
+            attach_links(c, linfo)
             c["_ctx"] = {"var": bname, "typical": ref_raw, "rows": None}
             c["evidence"] = {"share_opposite_sign": sp["share_opposite_sign"],
                              "share_unaffected": sp["share_unaffected"]}
@@ -1512,12 +1659,14 @@ def magnitude_claims(m: PlainModel, part: Part, directions: List[Dict[str, Any]]
         a = ch["from"].get("code", ch["from"].get("value"))
         z_ = ch["to"].get("code", ch["to"].get("value"))
         e0 = float(m.effect(_z(m, raw), v, a, z_, None)[0])
-        pa, pb = risk_pair(m, raw, v, a, z_, None)
+        linfo = {}
+        pa, pb = risk_pair(m, raw, v, a, z_, None, info=linfo)
         c = _claim(part, "magnitude", d["key"].split(":", 2)[2], variables=[_var_desc(v)],
                    statement={"variable": b, "change": ch, "direction": "raises" if e0 > 0 else "lowers",
                               "strength": strength(e0), "related_direction": d["key"]})
         c["estimate"] = estimate_block(e0, None, "change in the model's log-odds for the typical patient")
         c["risk"] = risk_block(pa, pb, "typical patient")
+        attach_links(c, linfo)
         c["_ctx"] = {"var": b, "typical": raw, "rows": None}
         c["n"] = d["n"]
         c["groups"] = d.get("groups", [])
@@ -1544,8 +1693,7 @@ def _ice(m: PlainModel, v: Variable, grid: np.ndarray, scope, rows: np.ndarray) 
     for s in range(0, X.shape[0], per):
         Xc = X[s:s + per]
         Xr = np.repeat(Xc, G, axis=0)
-        z = (np.tile(grid, Xc.shape[0]) - v.mean[0]) / v.scale[0]
-        out[s:s + per] = m.logit(Xr, {col: z}, scope).reshape(Xc.shape[0], G)
+        out[s:s + per] = m.set_logit(Xr, v, np.tile(grid, Xc.shape[0]), scope).reshape(Xc.shape[0], G)
     return out
 
 
@@ -1688,15 +1836,37 @@ def threshold_claims(m: PlainModel, part: Part) -> List[Dict[str, Any]]:
             th["by_group"] = by_group
             th["pooled_median_is_no_group_fold"] = True
             th["text"] = " and ".join(f"{g['text']} for {g['group']}" for g in by_group)
+        # v5g: "only once it rises above T" is a universal statement: check it over every
+        # training row of the population (all rows, or the condition's group)
+        pop = np.ones(m.X.shape[0], dtype=bool) if cond is None else \
+            np.asarray(m.var_by_base[cond["variable"]].raw_train == cond["code"])
+        cuts = [(pop, med)]
+        if by_group:
+            Wb = m.var_by_base[by_group[0]["variable"]]
+            cuts = [(pop & np.asarray(Wb.raw_train == g["code"]), float(g["value"])) for g in by_group]
+        k_ex = 0
+        for prow, tcut in cuts:
+            cols = grid < tcut if kind == "above" else grid > tcut
+            if prow.any() and cols.sum() >= 2:
+                seg = L[prow][:, cols]
+                k_ex += int(np.sum(seg.max(axis=1) - seg.min(axis=1) > NEGLIGIBLE))
+        support_check = {"word": "only", "population": "all training " + m.codebook.get("patient", "patients")
+                         if cond is None else cond["group"], "n": int(pop.sum()), "exceptions": k_ex,
+                         "tolerance": NEGLIGIBLE,
+                         "check": f"training {m.codebook.get('patient', 'patients')} whose curve through this part "
+                                  f"already moves by more than {NEGLIGIBLE} log-odds "
+                                  f"{'below' if kind == 'above' else 'above'} the threshold"}
         raw_t = typical_raw(m, rows)
         ctx_threshold = {"var": bname, "typical": raw_t, "rows": rows}
-        pa, pb = risk_pair(m, raw_t, v, va, vb, part.input_nodes)
+        linfo = {}
+        pa, pb = risk_pair(m, raw_t, v, va, vb, part.input_nodes, info=linfo)
         c = _claim(part, "threshold", bname, variables=[_var_desc(v)],
                    statement={"variable": bname, "kind": kind, "threshold": th,
                               "direction": "raises" if emean > 0 else "lowers",
                               "strength": strength(emean), "group": cond, "conditions": conds,
                               "change": {"from": {"value": sig(va), "text": v.fmt(round(va, v.decimals))},
-                                         "to": {"value": sig(vb), "text": v.fmt(round(vb, v.decimals))}}})
+                                         "to": {"value": sig(vb), "text": v.fmt(round(vb, v.decimals))}},
+                              "support_check": support_check})
         c["estimate"] = {
             "threshold": {"value": sig(med), "unit": v.unit or "raw units",
                           "iqr_across_patients": _sig_list([q1, q3]), "spread_share_of_range": sig(spread_share),
@@ -1716,6 +1886,7 @@ def threshold_claims(m: PlainModel, part: Part) -> List[Dict[str, Any]]:
         c["_ctx"] = ctx_threshold
         c["risk"] = risk_block(pa, pb, "typical patient with a fold" + (f" ({cond['group']})" if cond else ""),
                                typical_values(m, raw_t))
+        attach_links(c, linfo)
         c["n"] = int(rows.sum())
         c["groups"] = [{"label": ("patients whose curve has a fold" if cond is None else
                                   f"{cond['group']} whose curve has a fold"), "n": int(rows.sum())},
@@ -1826,12 +1997,14 @@ def interaction_claims(m: PlainModel, part: Part, total_effect: Dict[str, float]
         # the typical patient of each group: the typical patient with the modifier set to the group
         risks = []
         ctx_groups = []
+        linfos = []
         for wv, cls, rows_g, dlab in ((w1v, sb[3], g1, d1["label"]), (w0v, sb[2], g0, d0["label"])):
             if Bv.is_category():
                 extra_raw = {c: (1.0 if code == cls["rep"] else 0.0) for c, code in zip(Bv.columns, Bv.codes)}
             else:
                 extra_raw = {Bv.columns[0]: wv}
-            risks.append(risk_pair(m, raw, A, sa[0], sa[1], None, extra_raw))
+            linfos.append({})
+            risks.append(risk_pair(m, raw, A, sa[0], sa[1], None, extra_raw, info=linfos[-1]))
             ctx_groups.append({"label": dlab, "rows": rows_g, "extra_raw": extra_raw})
         groups = []
         for dd, rows, e, (pa, pb), mm in ((d1, g1, e1, risks[0], m1), (d0, g0, e0, risks[1], m0)):
@@ -1870,6 +2043,13 @@ def interaction_claims(m: PlainModel, part: Part, total_effect: Dict[str, float]
         else:
             pattern = "amplified"
         dps = [abs((g["risk_to"] or 0) - (g["risk_from"] or 0)) for g in groups]
+        support_check = None
+        if pattern == "only_if":
+            k_ex = int(np.sum(np.abs(ew) >= NEGLIGIBLE))
+            support_check = {"word": "only if", "population": groups[weak]["group"], "n": int(len(ew)),
+                             "exceptions": k_ex, "tolerance": NEGLIGIBLE,
+                             "check": f"training {m.codebook.get('patient', 'patients')} of the other group whose own "
+                                      f"change in log-odds is at least {NEGLIGIBLE} (they are not unaffected)"}
         c = _claim(part, "interaction", f"{A.base}x{Bv.base}", variables=[_var_desc(A), _var_desc(Bv)],
                    statement={"variable": A.base, "modifier": Bv.base,
                               "change": _change_desc(A, sa[0], sa[1], sa[2], sa[3]),
@@ -1878,7 +2058,8 @@ def interaction_claims(m: PlainModel, part: Part, total_effect: Dict[str, float]
                               "weaker_group": groups[weak], "strength": strength(ms),
                               **({"window": window} if window else {}),
                               **({"only_within_window": True}
-                                 if pattern == "only_if" and groups[weak].get("beyond_window") else {})})
+                                 if pattern == "only_if" and groups[weak].get("beyond_window") else {}),
+                              **({"support_check": support_check} if support_check else {})})
         c["estimate"] = estimate_block(d, None, "difference between the two groups (first minus second) "
                                        "of the mean change in the model's log-odds when the main "
                                        "variable changes everywhere")
@@ -1890,6 +2071,7 @@ def interaction_claims(m: PlainModel, part: Part, total_effect: Dict[str, float]
                      "delta": sig(dps[strong] - dps[weak]),
                      "delta_basis": "change in predicted risk in the stronger group minus in the weaker group"}
         c["groups"] = groups
+        attach_links(c, *linfos, groups=[g["label"] for g in groups])
         c["n"] = int(g1.sum() + g0.sum())
         c["evidence"] = {"counterfactual_did_through_part": sig(did_mean),
                          "did_share_same_sign": sig(did_consistent),
@@ -1960,7 +2142,10 @@ def subgroup_claims(m: PlainModel, part: Part) -> List[Dict[str, Any]]:
                statement={"n_active": k, "n": n, "share": sig(k / n),
                           "direction": "raises" if emean > 0 else "lowers", "strength": strength(emean),
                           "conditions": [x["group"] for x in who["conditions"]],
-                          "outcome_in_group": {"positives": pos, "n": k}})
+                          "outcome_in_group": {"positives": pos, "n": k},
+                          "support_check": {"word": "only", "population": "all training "
+                                            + m.codebook.get("patient", "patients"), "n": n, "exceptions": 0,
+                                            "check": "the count is over every training row"}})
     c["estimate"] = {"share": {"value": sig(k / n), "unit": "share of training patients"},
                      **estimate_block(emean, eff, "mean contribution of the part to the log-odds among "
                                       "the patients it acts on (the part switched off: exits at 0)")}
@@ -2010,6 +2195,11 @@ def null_claims_model(m: PlainModel, part: Part) -> List[Dict[str, Any]]:
                                    "edges), confirmed by moving every column to its minimum and maximum"}
         c["n"] = m.X.shape[0]
         c["groups"] = []
+        tied = [b for b in m.links.linked(v.base) if b in m.var_by_base and any(
+            nd in reach for cc in m.var_by_base[b].columns for nd in m.input_nodes_by_col.get(cc, []))]
+        if tied:   # v5g: the model does not read it, but reads inputs the data ties to it
+            c["linked"] = {"inputs": tied, "note": "the model does not read this input itself, but it reads "
+                           "inputs the data ties to it; say 'it does not read X itself' rather than 'it ignores X'"}
         checks = {"no_path": (True, ""), "no_numeric_effect": (dmax <= 1e-12, "moving it changes the output")}
         out.append(_finish(c, checks))
     return out
@@ -2065,10 +2255,16 @@ def rule_claims(m: PlainModel, part: Part) -> List[Dict[str, Any]]:
                 positive.append(int(kv))
             table.append({"count": int(kv), "n": int(rows.sum()), "share_predicted_positive": sig(share),
                           "share_actually_positive": sig(float(m.y[rows].mean()))})
+        n_ex = int(sum(round(min(t["share_predicted_positive"], 1 - t["share_predicted_positive"]) * t["n"])
+                       for t in table))
         c = _claim(part, "rule", rule["id"], variables=[_var_desc(v) for v, _ in terms],
                    statement={"rule": rule["name"], "description": rule.get("description"),
                               "counts_predicted_positive": positive, "positive_label": rule.get("positive_label"),
-                              "count_phrase": rule.get("count_phrase")})
+                              "count_phrase": rule.get("count_phrase"),
+                              "support_check": {"word": "all", "population": "all training "
+                                                + m.codebook.get("patient", "patients"), "n": int(len(k)),
+                                                "exceptions": n_ex,
+                                                "check": "training rows whose prediction differs from the rule"}})
         c["estimate"] = {"value": sig(min(max(t["share_predicted_positive"], 1 - t["share_predicted_positive"])
                                           for t in table)), "unit": "lowest purity over counts",
                          "table": table, "method": "share of training patients predicted positive "
@@ -2544,6 +2740,7 @@ def build_layer(m: PlainModel, meta: Dict[str, Any]) -> Dict[str, Any]:
                      "checks": codebook_checks(m.codebook, m.feature_names, m.raw_train, m.y)},
         "units": units_record(m),
         "reference_patient": reference_patient(m),
+        "linked_inputs": m.links.record(),
         "settings": {"seed": SEED, "bootstrap_B": BOOTSTRAP_B, "small_n": SMALL_N,
                      "prob_slight": PROB_SLIGHT, "prob_large": PROB_LARGE,
                      "confidence_rules": CONFIDENCE_RULES,
