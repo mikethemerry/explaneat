@@ -1,0 +1,110 @@
+{
+  "label": "churn100-s7",
+  "genome_id": "12fe3281-8731-4f06-8c74-3c734384a5be",
+  "protocol_version": "v4",
+  "start": "2026-11-11T08:18:46Z",
+  "end": "2026-11-11T08:34:30Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 7,
+  "n_composition_annotations": 2,
+  "n_splits": 5,
+  "n_identity_nodes": 2,
+  "hidden_nodes": 14,
+  "hidden_nodes_single_leaf_no_split": 14,
+  "hidden_nodes_in_any_annotation": 14,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 9.992007221626409e-16,
+  "closed_form_max_abs_err": 0.03852625848713043,
+  "summary": "The model predicts telecom churn from three main routes, added on the logit scale. First, heavy daytime use without a voice mail plan: a usage score built from day minutes and charge (plus evening and night minutes) acts on 1364 of the 2939 training customers without a voice mail plan and on 0 of the 1061 with one, and a second step makes risk climb steeply for the heaviest users. Second, customer service calls: a gate opens once calls pass a small threshold for customers whose usage score is off (for the typical customer predicted risk goes from 1.8% to 25.0% across it), but the usage score shuts it, so heavy users need many more calls. Third, an international plan adds a step that takes the typical customer from 1.8% to 24.7%. A voice mail plan unit, offsets for a few states and small linear terms (international calls down, international charge up) adjust the score. Removing the usage pathway lowers training AUC from 0.919 to 0.655. The South Dakota terms look fitted to 66 customers.",
+  "summary_template": "The model predicts telecom churn from three main routes, added on the logit scale. First, heavy daytime use without a voice mail plan: a usage score built from day minutes and charge (plus evening and night minutes) acts on {{q:q_0c0d422ed4.subgroup.parts.ann_78.n_acts_on|d}} of the {{q:q_0c0d422ed4.subgroup.n|d}} training customers without a voice mail plan and on {{q:q_f03b315d65.subgroup.parts.ann_78.n_acts_on|d}} of the {{q:q_f03b315d65.subgroup.n|d}} with one, and a second step makes risk climb steeply for the heaviest users. Second, customer service calls: a gate opens once calls pass a small threshold for customers whose usage score is off (for the typical customer predicted risk goes from {{q:q_ccff8da863.rows[2].risk|.1%}} to {{q:q_ccff8da863.rows[4].risk|.1%}} across it), but the usage score shuts it, so heavy users need many more calls. Third, an international plan adds a step that takes the typical customer from {{q:q_489a34a9da.rows[0].risk|.1%}} to {{q:q_489a34a9da.rows[1].risk|.1%}}. A voice mail plan unit, offsets for a few states and small linear terms (international calls down, international charge up) adjust the score. Removing the usage pathway lowers training AUC from {{q:q_4b02a62a95.data.auc_with|.3f}} to {{q:q_4b02a62a95.data.auc_without|.3f}}. The South Dakota terms look fitted to {{q:q_d8e05ee253.subgroup.n|d}} customers.",
+  "resisted": "No part resisted explanation. Two pieces are described rather than explained: the Arkansas state unit is on for 0 training rows and so does nothing, and the individual state coefficients among the direct terms are small fitted offsets without a domain reading.",
+  "resisted_template": "No part resisted explanation. Two pieces are described rather than explained: the Arkansas state unit is on for {{q:q_adfdbb8a2c.subgroup.n|d}} training rows and so does nothing, and the individual state coefficients among the direct terms are small fitted offsets without a domain reading.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 34,
+    "complete_ok": true
+  },
+  "recheck_notes": "Recheck: 0 mismatches, 0 needs_review. The 34 unchecked free-text sentences have no numbers (structure and direction statements).",
+  "tool_bugs": "None blocking. Notes: (1) a node can sit in only one annotation, so serial leaves need an identity node on the downstream unit (identity_4344) rather than sharing node 879 as an entry; suggest_candidates still proposes 879 as a shared entry. (2) --render takes no allow list, so input literals (e.g. a call count) cannot appear in the summary. (3) There is no way to delete an evidence record; an accidental re-run of a calls file added five duplicates, which were amended into distinct supporting records with a reason.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 188,
+    "provenance_backed": 152,
+    "allow_listed": 36,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 0,
+      "other": 7
+    },
+    "audit": {
+      "references": 152,
+      "checked": 152
+    },
+    "self_probe": {
+      "parts": [
+        "usageLoad",
+        "serviceCallsGate",
+        "heavyUsageBoost",
+        "voiceMailGate",
+        "intlPlanGate",
+        "stateGates",
+        "directTerms",
+        "usagePathway",
+        "churnModel"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0
+  },
+  "notes": "formulas.other = the seven get_formula LaTeX closed forms attached as analytical_formula evidence (coefficients rounded to three significant figures; leaf closed-form error up to the stated closed_form_max_abs_err); no formula is written as '=' or '\u2248' in the text. numbers = 147 placeholders in hypotheses/summary/resisted + 5 in evidence narratives + 36 allow-listed input literals (probe settings and where-condition values such as day minutes and call counts).",
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 9,
+      "roots": [
+        "churnModel"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 9.992007221626409e-16,
+    "closed_form_max_abs_err": 0.03852625848713043,
+    "numeric_max_abs_err": 8.881784197001252e-16,
+    "op_counts": {
+      "rename_node": 71,
+      "split_node": 5,
+      "add_identity_node": 2,
+      "annotate": 9
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T08:34:38+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 34,
+      "provenance": {
+        "templated_texts": 51,
+        "queries": 58
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

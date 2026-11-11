@@ -1,0 +1,105 @@
+{
+  "label": "heart100-s9",
+  "genome_id": "c79ad49b-bcf7-4a23-9935-848c293a588b",
+  "protocol_version": "v4",
+  "start": "2026-11-11T07:18:28Z",
+  "end": "2026-11-11T07:32:49Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 4,
+  "n_composition_annotations": 1,
+  "n_splits": 7,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 5,
+  "hidden_nodes_single_leaf_no_split": 2,
+  "hidden_nodes_in_any_annotation": 5,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 3.3306690738754696e-16,
+  "closed_form_max_abs_err": 0.02296672618449902,
+  "summary": "The model (training AUC 0.9605 on 242 patients) is a linear score plus three gated corrections, passed through a sigmoid. The direct terms carry most of the signal (switching them to their mean drops training AUC to 0.8402): vessels coloured, a flat ST slope, blood pressure, male sex and cholesterol add risk. The oldpeak gate adds risk with ST depression, opening at almost no depression when the thallium scan is abnormal (99 of 107 such patients have it on) but rarely with a normal scan (11 of 135). A blood-pressure gate, open for 156 of the 160 patients without exercise angina, cancels the blood-pressure term for them: in the typical case their risk is 26% at 120 mm Hg and 24% at 180 mm Hg, against 21% and 81% with exercise angina. An age brake for patients with normal fasting sugar makes predicted risk fall with age from about 60 years (typical case with a reversible defect), and pushes risk down for fixed-defect patients (fitted to 15 rows). The annotated model reproduces the network to 3.3e-16.",
+  "summary_template": "The model (training AUC {{q:q_de58e2b9ae.auc_roc|.4f}} on {{q:q_de58e2b9ae.split.n}} patients) is a linear score plus three gated corrections, passed through a sigmoid. The direct terms carry most of the signal (switching them to their mean drops training AUC to {{q:q_41f94170e4.data.auc_without|.4f}}): vessels coloured, a flat ST slope, blood pressure, male sex and cholesterol add risk. The oldpeak gate adds risk with ST depression, opening at almost no depression when the thallium scan is abnormal ({{q:q_6778059678.subgroup.n}} of {{q:q_33806f0130.subgroup.n}} such patients have it on) but rarely with a normal scan ({{q:q_911b8fc856.subgroup.n}} of {{q:q_fcd65d4da4.subgroup.n}}). A blood-pressure gate, open for {{q:q_8d576ab4ee.subgroup.n}} of the {{q:q_3529f07c41.subgroup.n}} patients without exercise angina, cancels the blood-pressure term for them: in the typical case their risk is {{q:q_53277fa31c.rows[2].risk|pct}} at {{q:q_53277fa31c.rows[2].inputs.trestbps}} and {{q:q_53277fa31c.rows[8].risk|pct}} at {{q:q_53277fa31c.rows[8].inputs.trestbps}}, against {{q:q_53277fa31c.rows[3].risk|pct}} and {{q:q_53277fa31c.rows[9].risk|pct}} with exercise angina. An age brake for patients with normal fasting sugar makes predicted risk fall with age from about {{q:q_21573a10cf.rows[8].inputs.age}} (typical case with a reversible defect), and pushes risk down for fixed-defect patients (fitted to {{q:q_1ad8c64683.subgroup.n}} rows). The annotated model reproduces the network to {{q:q_e3f8c52508.function_preservation_max_abs_err|.1e}}.",
+  "resisted": "No part resisted. Two behaviours are described rather than explained in domain terms: the fixed-defect regime of the age brake, which gives fixed-defect patients a very low risk in the typical case and is fitted to 15 training rows; and the negative direct term for high fasting blood sugar (-0.68 per sd), which lowers predicted risk in the typical case from 26% to 5%.",
+  "resisted_template": "No part resisted. Two behaviours are described rather than explained in domain terms: the fixed-defect regime of the age brake, which gives fixed-defect patients a very low risk in the typical case and is fitted to {{q:q_1ad8c64683.subgroup.n}} training rows; and the negative direct term for high fasting blood sugar ({{q:q_344e97ea2b.switched_off[7].weight|.2f}} per sd), which lowers predicted risk in the typical case from {{q:q_5cabc9a96c.rows[0].risk|pct}} to {{q:q_5cabc9a96c.rows[1].risk|pct}}.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 39,
+    "complete_ok": true
+  },
+  "recheck_notes": "Recheck: 0 mismatches, 0 needs_review. The 39 unchecked free-text sentences are qualitative readings (directions, part roles) whose numbers are all placeholders; each referenced query was re-read with get_query in the audit (population, quantity, path).",
+  "tool_bugs": "No tool errors. Limitations met: (1) a hidden node that is an exit of one leaf cannot be the entry of another leaf (it is covered, and P1/P2 refuse it), so the serial chain 148 and 7566 -> 2034 had to be one leaf; a composition with its own node 2034 validates but would leave 2034 out of structural (leaf) coverage. (2) query_ablate(direct=true) reports 0 direct edges after add_identity_node on the output, because the edges then end at identity_0; edge weights were taken with query_ablate(edges=[...->identity_0]). (3) Probe input values such as '1 mm' typed next to a placeholder are refused as bare numbers; they were referenced via rows[k].inputs.<var> or set.<var>.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 161,
+    "provenance_backed": 160,
+    "allow_listed": 1,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 5,
+      "other": 0
+    },
+    "audit": {
+      "references": 140,
+      "checked": 140
+    },
+    "self_probe": {
+      "parts": [
+        "thal_ca_age_gate",
+        "oldpeak_gate",
+        "sex_bp_exang_gate",
+        "direct_terms",
+        "heart_risk_root"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 5,
+      "roots": [
+        "heart_risk_root"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 3.3306690738754696e-16,
+    "closed_form_max_abs_err": 0.02296672618449902,
+    "numeric_max_abs_err": 8.881784197001252e-16,
+    "op_counts": {
+      "rename_node": 26,
+      "split_node": 7,
+      "add_identity_node": 1,
+      "annotate": 5
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T07:33:51+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 39,
+      "provenance": {
+        "templated_texts": 44,
+        "queries": 34
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

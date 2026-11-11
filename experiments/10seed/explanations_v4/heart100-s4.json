@@ -1,0 +1,109 @@
+{
+  "label": "heart100-s4",
+  "genome_id": "46728358-be0d-403e-abc1-a22bfbc19355",
+  "protocol_version": "v4",
+  "start": "2026-11-11T07:29:57Z",
+  "end": "2026-11-11T07:45:05Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 5,
+  "n_composition_annotations": 2,
+  "n_splits": 6,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 8,
+  "hidden_nodes_single_leaf_no_split": 7,
+  "hidden_nodes_in_any_annotation": 8,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 3.3306690738754696e-16,
+  "closed_form_max_abs_err": 0.02378040495665701,
+  "summary": "The model (training AUC 0.954) is mostly a linear clinical risk score: the direct terms carry the ranking (switching them off drops the training AUC to 0.506), with more vessels on fluoroscopy, exercise angina, male sex, a flat ST slope and cholesterol raising the score, and a normal thallium scan, typical or non-anginal chest pain and a higher maximum heart rate lowering it. An ST-depression hinge adds risk from 0.5 mm upward, and a weak blood-pressure hinge from 128 mm Hg upward. The main interaction is a protective gate, open for 102 of 242 training patients (96 men, 6 women) and shut for every one of the 33 with high fasting blood sugar (0 open): exercise angina or atypical angina opens it, high blood pressure and heart rate close it, and when open it takes the exercise-angina penalty back off. In the typical man with normal blood sugar, exercise angina moves the predicted risk from 28% to 26%, while in the typical woman it raises it from 1% to 12%; in that man with exercise angina, raising resting blood pressure from 100 mm Hg to 180 mm Hg lifts the risk from 7% to 83%, mostly by closing the gate. Switching the gate off moves the training AUC to 0.920. Against clinical expectation, high fasting blood sugar has a negative direct term (-0.67 per sd) and atypical angina a positive one (0.20 per sd); both features also act through the gate.",
+  "summary_template": "The model (training AUC {{q:q_3cde106868.auc_roc|.3f}}) is mostly a linear clinical risk score: the direct terms carry the ranking (switching them off drops the training AUC to {{q:q_c2cf4c7cbf.data.auc_without|.3f}}), with more vessels on fluoroscopy, exercise angina, male sex, a flat ST slope and cholesterol raising the score, and a normal thallium scan, typical or non-anginal chest pain and a higher maximum heart rate lowering it. An ST-depression hinge adds risk from {{q:q_e4cc40aa25.rows[5].inputs.oldpeak}} upward, and a weak blood-pressure hinge from {{q:q_6874a4ecb6.rows[8].inputs.trestbps}} upward. The main interaction is a protective gate, open for {{q:q_e88606d9bb.subgroup.n}} of {{q:q_e88606d9bb.n_total}} training patients ({{q:q_377b53f73e.subgroup.n}} men, {{q:q_25f37b27ee.subgroup.n}} women) and shut for every one of the {{q:q_6fd09fbc52.subgroup.n}} with high fasting blood sugar ({{q:q_5ce76f9941.subgroup.n|d}} open): exercise angina or atypical angina opens it, high blood pressure and heart rate close it, and when open it takes the exercise-angina penalty back off. In the typical man with normal blood sugar, exercise angina moves the predicted risk from {{q:q_779e51dbb2.rows[2].risk|pct}} to {{q:q_779e51dbb2.rows[3].risk|pct}}, while in the typical woman it raises it from {{q:q_779e51dbb2.rows[0].risk|pct}} to {{q:q_779e51dbb2.rows[1].risk|pct}}; in that man with exercise angina, raising resting blood pressure from {{q:q_3380a7de04.rows[0].inputs.trestbps}} to {{q:q_3380a7de04.rows[4].inputs.trestbps}} lifts the risk from {{q:q_3380a7de04.rows[0].risk|pct}} to {{q:q_3380a7de04.rows[4].risk|pct}}, mostly by closing the gate. Switching the gate off moves the training AUC to {{q:q_03ca1946f9.data.auc_without|.3f}}. Against clinical expectation, high fasting blood sugar has a negative direct term ({{q:q_02bc8d0f82.switched_off[7].weight|.2f}} per sd) and atypical angina a positive one ({{q:q_02bc8d0f82.switched_off[4].weight|.2f}} per sd); both features also act through the gate.",
+  "resisted": "Nothing resisted. The direct_terms leaf is described rather than explained beyond the direction of each term (it is a weighted sum of the z-scored inputs). The gate is open for 6 women, a regime too small to read on its own.",
+  "resisted_template": "Nothing resisted. The direct_terms leaf is described rather than explained beyond the direction of each term (it is a weighted sum of the z-scored inputs). The gate is open for {{q:q_25f37b27ee.subgroup.n}} women, a regime too small to read on its own.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 42,
+    "complete_ok": true
+  },
+  "recheck_notes": "Recheck v3: 0 mismatches, 0 needs_review, 50 queries and 66 templated texts checked. The 42 unchecked free-text sentences are qualitative (directions, roles, cross-references); the number audit re-read all 185 placeholders with get_query (every path present; all queries at op_seq 40, after the last structural operation). The audit found and fixed a scope slip: subgroup.parts.<ann>.mean_contribution is a mean over the whole subgroup, so the two sentences that quoted it beside a smaller n_acts_on now say the mean is over all gated patients.",
+  "tool_bugs": "None blocking. Notes: query_ablate(direct=true) finds no edges once the direct edges are routed through identity_0 (expected; used edges=[...->identity_0]); query_enumerate refuses this genome because age and other inputs are continuous (used query_subgroup counts instead); composition annotate refuses subgraph_nodes already inside children (list only the composition's own nodes).",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 189,
+    "provenance_backed": 185,
+    "allow_listed": 0,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 2,
+      "other": 0
+    },
+    "audit": {
+      "references": 185,
+      "checked": 185
+    },
+    "self_probe": {
+      "parts": [
+        "direct_terms",
+        "oldpeak_hinge",
+        "bp_hinge",
+        "bp_thalach_chain",
+        "exang_cp2_chain",
+        "protective_gate",
+        "heart_risk_model"
+      ],
+      "refuted_and_fixed": [
+        "protective_gate: first draft said the gate takes back the male-sex penalty; the probe shows it is shut for a typical man without exercise angina, so the hypothesis now says it takes back the exercise-angina penalty in men (and opens for exercise or atypical angina)"
+      ]
+    },
+    "restatements": 0
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 7,
+      "roots": [
+        "heart_risk_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 3.3306690738754696e-16,
+    "closed_form_max_abs_err": 0.02378040495665701,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 26,
+      "split_node": 6,
+      "add_identity_node": 1,
+      "annotate": 7
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T07:46:20+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 42,
+      "provenance": {
+        "templated_texts": 66,
+        "queries": 50
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

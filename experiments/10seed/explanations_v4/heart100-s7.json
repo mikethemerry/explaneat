@@ -1,0 +1,108 @@
+{
+  "label": "heart100-s7",
+  "genome_id": "db788142-bb33-4134-9573-1692efd06786",
+  "protocol_version": "v4",
+  "start": "2026-11-11T07:40:51Z",
+  "end": "2026-11-11T07:55:49Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 6,
+  "n_composition_annotations": 2,
+  "n_splits": 9,
+  "n_identity_nodes": 3,
+  "hidden_nodes": 11,
+  "hidden_nodes_single_leaf_no_split": 11,
+  "hidden_nodes_in_any_annotation": 11,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 3.3306690738754696e-16,
+  "closed_form_max_abs_err": 0.03319431486968094,
+  "summary": "The model scores heart-disease risk as an additive set of direct terms plus a gated ST-depression pathway, a peak-heart-rate gate and a small thal chain, all summed on the logit scale (training AUC 0.959). The direct terms carry most of the ranking (AUC 0.767 without them): more vessels coloured by fluoroscopy raise the typical patient's predicted risk from 38% to 98%, asymptomatic chest pain is the riskiest pain type (38% for the typical patient against 5% for typical angina), and female sex has a large negative direct weight (-1.62 per sd). The ST pathway (AUC 0.881 without it) adds risk once ST depression passes a threshold that a flat slope lowers and that low resting blood pressure raises: at 2 mm on a flat slope the typical patient's risk is 66% at 120 mm Hg and 91% at 160 mm Hg. Inside it, a gate open for every woman in training (83 of 83) and for 37 of 159 men gives back part of the women's negative direct term when they have exercise angina, high fasting sugar or ST depression: exercise angina takes the typical woman from 3% to 20% but the typical man from 38% to 31%. A high peak heart rate lowers risk above a threshold that is lower with a normal resting ECG. Worth checking: high fasting sugar has a positive direct weight on its normal level, so for a constructed typical man high sugar lowers predicted risk from 38% to 2%, although the 23 training men with high sugar get a mean predicted risk of 46% against an outcome rate of 43%. The annotated model matches the network to within 3.3e-16 on the training rows.",
+  "summary_template": "The model scores heart-disease risk as an additive set of direct terms plus a gated ST-depression pathway, a peak-heart-rate gate and a small thal chain, all summed on the logit scale (training AUC {{q:q_bfae53697c.data.auc_with|.3f}}). The direct terms carry most of the ranking (AUC {{q:q_bfae53697c.data.auc_without|.3f}} without them): more vessels coloured by fluoroscopy raise the typical patient's predicted risk from {{q:q_33bfb5b401.rows[0].risk|pct}} to {{q:q_33bfb5b401.rows[3].risk|pct}}, asymptomatic chest pain is the riskiest pain type ({{q:q_e8b78cb6ce.rows[3].risk|pct}} for the typical patient against {{q:q_e8b78cb6ce.rows[0].risk|pct}} for typical angina), and female sex has a large negative direct weight ({{q:q_f88f08961a.switched_off[0].weight|.2f}} per sd). The ST pathway (AUC {{q:q_8e842e0589.data.auc_without|.3f}} without it) adds risk once ST depression passes a threshold that a flat slope lowers and that low resting blood pressure raises: at {{q:q_3ff4fdcf0d.set.oldpeak}} on a flat slope the typical patient's risk is {{q:q_3ff4fdcf0d.rows[1].risk|pct}} at {{q:q_3ff4fdcf0d.rows[1].inputs.trestbps}} and {{q:q_3ff4fdcf0d.rows[3].risk|pct}} at {{q:q_3ff4fdcf0d.rows[3].inputs.trestbps}}. Inside it, a gate open for every woman in training ({{q:q_033a9c3c9d.subgroup.parts.ann_40.n_acts_on}} of {{q:q_033a9c3c9d.subgroup.n}}) and for {{q:q_033a9c3c9d.rest.parts.ann_40.n_acts_on}} of {{q:q_033a9c3c9d.rest.n}} men gives back part of the women's negative direct term when they have exercise angina, high fasting sugar or ST depression: exercise angina takes the typical woman from {{q:q_6b69b79bce.rows[0].risk|pct}} to {{q:q_6b69b79bce.rows[1].risk|pct}} but the typical man from {{q:q_6b69b79bce.rows[2].risk|pct}} to {{q:q_6b69b79bce.rows[3].risk|pct}}. A high peak heart rate lowers risk above a threshold that is lower with a normal resting ECG. Worth checking: high fasting sugar has a positive direct weight on its normal level, so for a constructed typical man high sugar lowers predicted risk from {{q:q_623d67c7fa.rows[2].risk|pct}} to {{q:q_623d67c7fa.rows[3].risk|pct}}, although the {{q:q_fd4591c512.subgroup.n}} training men with high sugar get a mean predicted risk of {{q:q_fd4591c512.subgroup.mean_predicted_risk|pct}} against an outcome rate of {{q:q_fd4591c512.subgroup.outcome_rate|pct}}. The annotated model matches the network to within {{q:q_7cf2e46a8d.function_preservation_max_abs_err|.1e}} on the training rows.",
+  "resisted": "Nothing was moved to resisted. Two caveats: the thal chain's behaviour for the rare thal code is fitted to 2 training rows, and the brake's dependence on fasting sugar, slope and thal is read from its formula; its self-probe tests resting blood pressure.",
+  "resisted_template": "Nothing was moved to resisted. Two caveats: the thal chain's behaviour for the rare thal code is fitted to {{q:q_c6a9f80044.subgroup.n}} training rows, and the brake's dependence on fasting sugar, slope and thal is read from its formula; its self-probe tests resting blood pressure.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 36,
+    "complete_ok": true
+  },
+  "recheck_notes": "Recheck: 0 mismatches, 0 needs_review. The 36 unchecked free-text sentences carry no numbers (structural descriptions and qualitative readings, e.g. the brake's dependence on sugar, slope and thal, which is read from its formula). The six leaf closed forms are attached as analytical_formula evidence (get_formula LaTeX, coefficients to three significant figures, inputs in z units); no typed formula appears in any hypothesis. Their tolerance is in check_explanation (closed_form_max_abs_err per leaf, largest 0.033 on st_depression_gate).",
+  "tool_bugs": "query_ablate(direct=true) reports 0 direct edges once the output's direct edges are routed through an identity node; worked around with query_ablate(edges=[...->identity_0]). validate_operation for a composition that lists its children's nodes in subgraph_nodes reports them as already covered; compositions take only junction connections (worked as documented in explaneat/analysis/composition.py). add_identity_node cannot intercept a node's single input (9147), so 557->9147 stays inside st_depression_gate rather than at a boundary.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 197,
+    "provenance_backed": 191,
+    "allow_listed": 6,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 0,
+      "other": 6
+    },
+    "audit": {
+      "references": 191,
+      "checked": 191
+    },
+    "self_probe": {
+      "parts": [
+        "bp_thal_veto",
+        "st_depression_gate",
+        "sex_sugar_angina_gate",
+        "thal_chain",
+        "max_heart_rate_gate",
+        "direct_terms",
+        "st_pathway",
+        "heart_risk_model"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 8,
+      "roots": [
+        "heart_risk_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 3.3306690738754696e-16,
+    "closed_form_max_abs_err": 0.03319431486968094,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 26,
+      "split_node": 9,
+      "add_identity_node": 3,
+      "annotate": 8
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T07:56:24+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 36,
+      "provenance": {
+        "templated_texts": 48,
+        "queries": 39
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

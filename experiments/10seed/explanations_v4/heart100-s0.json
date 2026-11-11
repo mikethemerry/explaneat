@@ -1,0 +1,107 @@
+{
+  "label": "heart100-s0",
+  "genome_id": "128a5393-8369-4ecf-aa94-109f6ef23ccc",
+  "protocol_version": "v4",
+  "start": "2026-11-11T07:10:50Z",
+  "end": "2026-11-11T07:24:00Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 4,
+  "n_composition_annotations": 3,
+  "n_splits": 7,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 10,
+  "hidden_nodes_single_leaf_no_split": 5,
+  "hidden_nodes_in_any_annotation": 10,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 2.220446049250313e-16,
+  "closed_form_max_abs_err": 0.0072514365382421175,
+  "summary": "The model (training AUC 0.9528) is mostly a linear score: switching its direct terms off drops the training AUC to 0.6701. The largest direct weights, per standard deviation, are for the number of vessels coloured by fluoroscopy (1.50), male sex (1.42) and asymptomatic chest pain (1.03). On top sits one nonlinear pathway. A flat ST slope adds a fixed step for patients whose chest pain is not asymptomatic: the hinge is on for 100% of the 46 such training patients, with a mean contribution of 1.61 on the logit scale. An angina gate, open for 100% of the 19 women with exercise angina and for 25% of the 63 men with it, and pushed shut by LVH on the resting ECG and by a normal thallium scan, enlarges that step when the slope is flat: over the 13 training women with exercise angina and a flat slope the mean contribution through the gate is 6.62 on the logit scale and their mean predicted risk is 87%. A small exertional-angina hinge barely matters (training AUC 0.9526 without it), and a term for a rare thallium code is fitted to 2 rows.",
+  "summary_template": "The model (training AUC {{q:q_6a3483b8fb.data.auc_with|.4f}}) is mostly a linear score: switching its direct terms off drops the training AUC to {{q:q_6a3483b8fb.data.auc_without|.4f}}. The largest direct weights, per standard deviation, are for the number of vessels coloured by fluoroscopy ({{q:q_2a95fe6ea6.switched_off[0].weight|.2f}}), male sex ({{q:q_2a95fe6ea6.switched_off[1].weight|.2f}}) and asymptomatic chest pain ({{q:q_2a95fe6ea6.switched_off[2].weight|.2f}}). On top sits one nonlinear pathway. A flat ST slope adds a fixed step for patients whose chest pain is not asymptomatic: the hinge is on for {{q:q_7cc9398ea7.subgroup.parts.ann_39.share_exit_nonzero|.0%}} of the {{q:q_7cc9398ea7.subgroup.n|d}} such training patients, with a mean contribution of {{q:q_7cc9398ea7.subgroup.parts.ann_39.mean_contribution|.2f}} on the logit scale. An angina gate, open for {{q:q_07e8f35e60.subgroup.parts.ann_38.share_exit_nonzero|.0%}} of the {{q:q_07e8f35e60.subgroup.n|d}} women with exercise angina and for {{q:q_71852108cb.subgroup.parts.ann_38.share_exit_nonzero|.0%}} of the {{q:q_71852108cb.subgroup.n|d}} men with it, and pushed shut by LVH on the resting ECG and by a normal thallium scan, enlarges that step when the slope is flat: over the {{q:q_0134e535f0.subgroup.n|d}} training women with exercise angina and a flat slope the mean contribution through the gate is {{q:q_0134e535f0.subgroup.parts.ann_38.mean_contribution|.2f}} on the logit scale and their mean predicted risk is {{q:q_0134e535f0.subgroup.mean_predicted_risk|pct}}. A small exertional-angina hinge barely matters (training AUC {{q:q_34071db743.data.auc_without|.4f}} without it), and a term for a rare thallium code is fitted to {{q:q_35167c316e.subgroup.n|d}} rows.",
+  "resisted": "The thallium-code term inside thal_ecg_unit rests on 2 training rows and the LVH chain changes the prediction for 6 rows, so both are described from very little data rather than explained.",
+  "resisted_template": "The thallium-code term inside thal_ecg_unit rests on {{q:q_35167c316e.subgroup.n|d}} training rows and the LVH chain changes the prediction for {{q:q_9b9fbbdc09.subgroup.parts.ann_35.n_acts_on|d}} rows, so both are described from very little data rather than explained.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 26,
+    "complete_ok": true
+  },
+  "recheck_notes": "0 mismatches, 0 needs_review. The 26 unchecked free-text sentences carry no numbers (mechanism descriptions and self-probe predictions); each is backed by a numbered sentence next to it or by attached evidence. The number audit ran get_query on all 29 referenced queries (144 references); every path resolves, and every query was computed after the last structural operation (op_seq 41).",
+  "tool_bugs": "query_ablate(direct=true) reports zero direct edges once the direct edges are routed through an identity node on the output (identity_0); worked around with query_ablate(edges=[...->identity_0], to='zero') to read the edge weights. query_enumerate refuses this genome (age has 41 values), so discrete-cell claims use query_subgroup and query_probe instead (by design, not a bug).",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 145,
+    "provenance_backed": 144,
+    "allow_listed": 1,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 0,
+      "other": 0
+    },
+    "audit": {
+      "references": 144,
+      "checked": 144
+    },
+    "self_probe": {
+      "parts": [
+        "exertional_angina_hinge",
+        "lvh_ramp",
+        "thal_ecg_unit",
+        "angina_sex_gate",
+        "flat_slope_hinge",
+        "direct_terms",
+        "heart_risk_root"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 7,
+      "roots": [
+        "heart_risk_root"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 2.220446049250313e-16,
+    "closed_form_max_abs_err": 0.0072514365382421175,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 26,
+      "split_node": 7,
+      "add_identity_node": 1,
+      "annotate": 7
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T07:23:53+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 26,
+      "provenance": {
+        "templated_texts": 40,
+        "queries": 29
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

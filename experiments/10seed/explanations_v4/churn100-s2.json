@@ -1,0 +1,113 @@
+{
+  "label": "churn100-s2",
+  "genome_id": "6a26c823-5e60-424d-a968-74f44d675efa",
+  "protocol_version": "v4",
+  "start": "2026-11-11T08:28:42Z",
+  "end": "2026-11-11T08:52:00Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 6,
+  "n_composition_annotations": 3,
+  "n_splits": 18,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 20,
+  "hidden_nodes_single_leaf_no_split": 15,
+  "hidden_nodes_in_any_annotation": 20,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 7.771561172376096e-16,
+  "closed_form_max_abs_err": 0.0076642890955742615,
+  "summary": "This churn model (training AUC 0.901) has two main churn routes. Heavy daytime use raises risk through the direct edges (total day minutes 2.02 per sd, the largest edge; switching all direct edges off lowers training AUC to 0.539). Low daytime use combined with many customer service calls raises risk through the usage hinge, which switches off at higher day minutes the more calls a customer has made and is stronger when the evening charge is low (switching it off lowers AUC to 0.763). With four calls, an otherwise typical Georgia customer's risk is U-shaped in day minutes: 83% at very low use, 17% at moderate use and 96% at very high use. A separate gate adds risk from four calls upward outside West Virginia (it acts on 306 training customers; the West Virginia exception rests on the 12 customers in that state with four or more calls). A voice mail plan lowers risk through its direct edge (-0.99 per sd) and an always-on chain, and international plan (0.75 per sd) raises it. State terms shift the score for several states; Nevada's downward shift is fitted to 77 customers and is not supported by their churn rate (18% against a mean predicted risk of 12%). One unit of the small state gate (node 252) is described, not explained: its output weight is tiny.",
+  "summary_template": "This churn model (training AUC {{q:q_cf967d8098.auc_roc|.3f}}) has two main churn routes. Heavy daytime use raises risk through the direct edges (total day minutes {{q:q_f9d8ede740.switched_off[0].weight|.2f}} per sd, the largest edge; switching all direct edges off lowers training AUC to {{q:q_960c64186d.data.auc_without|.3f}}). Low daytime use combined with many customer service calls raises risk through the usage hinge, which switches off at higher day minutes the more calls a customer has made and is stronger when the evening charge is low (switching it off lowers AUC to {{q:q_27b6677035.data.auc_without|.3f}}). With four calls, an otherwise typical Georgia customer's risk is U-shaped in day minutes: {{q:q_0aaf843f28.rows[1].risk|pct}} at very low use, {{q:q_0aaf843f28.rows[15].risk|pct}} at moderate use and {{q:q_0aaf843f28.rows[25].risk|pct}} at very high use. A separate gate adds risk from four calls upward outside West Virginia (it acts on {{q:q_08c687cb08.subgroup.n|d}} training customers; the West Virginia exception rests on the {{q:q_cfd3f08059.subgroup.n|d}} customers in that state with four or more calls). A voice mail plan lowers risk through its direct edge ({{q:q_f9d8ede740.switched_off[2].weight|.2f}} per sd) and an always-on chain, and international plan ({{q:q_f9d8ede740.switched_off[1].weight|.2f}} per sd) raises it. State terms shift the score for several states; Nevada's downward shift is fitted to {{q:q_ec76261dcf.subgroup.n|d}} customers and is not supported by their churn rate ({{q:q_ec76261dcf.subgroup.outcome_rate|.0%}} against a mean predicted risk of {{q:q_ec76261dcf.subgroup.mean_predicted_risk|.0%}}). One unit of the small state gate (node 252) is described, not explained: its output weight is tiny.",
+  "resisted": "No part resisted explanation. The second unit of state_2_4_gate (node 252) is described, not explained: it is on for 190 training customers but its output edge is close to zero, so switching the whole part off changes mean predicted risk by -0.0002.",
+  "resisted_template": "No part resisted explanation. The second unit of state_2_4_gate (node 252) is described, not explained: it is on for {{q:q_69984a22a7.subgroup.n|d}} training customers but its output edge is close to zero, so switching the whole part off changes mean predicted risk by {{q:q_604a4ee4c6.data.mean_risk_change|.4f}}.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 49,
+    "complete_ok": true
+  },
+  "recheck_notes": "First recheck flagged one needs_review: the training-AUC query q_9f962a1697 predated the last split (op 89); recomputed as q_cf967d8098 (same AUC, splits are function-preserving) and the root hypothesis and summary now cite it. Second recheck: 0 mismatch, 0 needs_review. The 49 unchecked free-text sentences carry no numbers (qualitative statements, structural facts read from the formula evidence). The 8 analytical_formula records are get_formula LaTeX with rounded coefficients; the 6 leaf records state their closed-form error from check_explanation, the 2 composition records (usage_hinge, usage_block) are marked approximate without a stated tolerance. No hypothesis text writes a formula with = or approximately-equal.",
+  "tool_bugs": "annotate: a downstream leaf cannot list an upstream leaf's exit as an entry (entries must be subgraph nodes, and covered nodes are refused), so serial chains need either a composition with the upstream part as a child or extra splits; worked around by splitting 9555 and the call-count copy and making usage_hinge/usage_block compositions. query_ablate(direct=true) finds 0 direct edges after add_identity_node on the output (the edges end at identity_0); used edges=[...->identity_0] instead. --render has no allow_numbers option, so probe input literals cannot appear in the summary. annotate in strict mode refuses digits in a draft hypothesis (e.g. state codes) with no allow option at annotate time; drafts written without digits and then overwritten by update_narrative.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 227,
+    "provenance_backed": 171,
+    "allow_listed": 56,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 6,
+      "other": 2
+    },
+    "audit": {
+      "references": 171,
+      "checked": 171
+    },
+    "self_probe": {
+      "parts": [
+        "csc_steps",
+        "usage_hinge",
+        "usage_block",
+        "state_2_4_gate",
+        "voicemail_chain",
+        "csc_state49_gate",
+        "state_offsets",
+        "direct_edges",
+        "root"
+      ],
+      "refuted_and_fixed": [
+        "csc_steps: 'second signal climbs about twice as steeply per call' was wrong against the probe (it is much steeper); reworded",
+        "usage_block: 'largest hidden part' contradicted the ablations (hinge alone loses slightly more AUC); reworded",
+        "summary: WV exception customers were wrongly called a subset of the gate's active rows; fixed"
+      ]
+    },
+    "restatements": 0
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 9,
+      "roots": [
+        "root"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 7.771561172376096e-16,
+    "closed_form_max_abs_err": 0.0076642890955742615,
+    "numeric_max_abs_err": 3.1086244689504383e-15,
+    "op_counts": {
+      "rename_node": 71,
+      "split_node": 18,
+      "add_identity_node": 1,
+      "annotate": 9
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T08:53:10+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 49,
+      "provenance": {
+        "templated_texts": 48,
+        "queries": 34
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

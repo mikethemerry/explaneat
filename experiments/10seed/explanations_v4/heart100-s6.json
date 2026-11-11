@@ -1,0 +1,109 @@
+{
+  "label": "heart100-s6",
+  "genome_id": "b594daa0-ecc2-482e-af78-811d2b32482b",
+  "protocol_version": "v4",
+  "start": "2026-11-11T07:16:25Z",
+  "end": "2026-11-11T07:32:49Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 4,
+  "n_composition_annotations": 4,
+  "n_splits": 9,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 6,
+  "hidden_nodes_single_leaf_no_split": 2,
+  "hidden_nodes_in_any_annotation": 6,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 4.440892098500626e-16,
+  "closed_form_max_abs_err": 0.015253760322321952,
+  "summary": "The model (training AUC 0.958) adds a linear score of standard markers to three hidden pathways on the log-odds scale. The linear part (directTerms) carries most of the ranking: switching it off drops the training AUC to 0.582; its largest weights per sd are vessels coloured (1.49) and asymptomatic chest pain (1.21). The hidden part is a serial chain. A gate for women without exercise angina (on for 141 training patients) lowers the predicted risk directly, with weight -1.27, and through a relay that switches off a risk-raising hub except for atypical angina (the relay is on for 0 of the 42 atypical-angina patients). The hub (on for 144 patients, output weight 0.89) is raised by the absence of exercise angina and by a low maximum heart rate. As a result, for the typical patient (a man without exercise angina) exercise angina lowers the predicted risk from 54.4% to 15.7%, while for a typical woman it raises it from 0.5% to 15.7%; across the training patients, those with exercise angina still get a higher mean predicted risk (73% against 29%) through the linear score. A downsloping ST segment also feeds the gate, which lowers the typical patient's risk from 54% to 11%, against the usual clinical reading. A unit for an undocumented thallium code is fitted to 2 rows and hardly matters on the training data.",
+  "summary_template": "The model (training AUC {{q:q_b7b2a1eaa4.auc_roc|.3f}}) adds a linear score of standard markers to three hidden pathways on the log-odds scale. The linear part (directTerms) carries most of the ranking: switching it off drops the training AUC to {{q:q_1e5d0e7f63.data.auc_without|.3f}}; its largest weights per sd are vessels coloured ({{q:q_06604e5a76.switched_off[0].weight|.2f}}) and asymptomatic chest pain ({{q:q_06604e5a76.switched_off[1].weight|.2f}}). The hidden part is a serial chain. A gate for women without exercise angina (on for {{q:q_ec612e32c8.subgroup.n}} training patients) lowers the predicted risk directly, with weight {{q:q_1ad092197b.switched_off[0].weight|.2f}}, and through a relay that switches off a risk-raising hub except for atypical angina (the relay is on for {{q:q_513c85651f.subgroup.n}} of the {{q:q_44415915f4.subgroup.n}} atypical-angina patients). The hub (on for {{q:q_2504264a10.subgroup.n}} patients, output weight {{q:q_0907ba41d8.switched_off[0].weight|.2f}}) is raised by the absence of exercise angina and by a low maximum heart rate. As a result, for the typical patient (a man without exercise angina) exercise angina lowers the predicted risk from {{q:q_d42aaf300b.rows[2].risk|.1%}} to {{q:q_d42aaf300b.rows[3].risk|.1%}}, while for a typical woman it raises it from {{q:q_d42aaf300b.rows[0].risk|.1%}} to {{q:q_d42aaf300b.rows[1].risk|.1%}}; across the training patients, those with exercise angina still get a higher mean predicted risk ({{q:q_acdd0ccdcd.subgroup.mean_predicted_risk|pct}} against {{q:q_177a0bf420.subgroup.mean_predicted_risk|pct}}) through the linear score. A downsloping ST segment also feeds the gate, which lowers the typical patient's risk from {{q:q_9eb692f70d.rows[0].risk|pct}} to {{q:q_9eb692f70d.rows[4].risk|pct}}, against the usual clinical reading. A unit for an undocumented thallium code is fitted to {{q:q_34a9908a62.subgroup.n}} rows and hardly matters on the training data.",
+  "resisted": "Each part has a stated behaviour and a self-probe that the model follows, but the thal-4 unit and the hub are described rather than explained in domain terms. The thal-4 unit is fitted to 2 training rows of a code outside the documented ones, and drives the typical patient's predicted risk to 1.000 when the code is set, an extrapolation. The hub's treatment of the absence of exercise angina as a risk factor, and the protective readings of a downsloping ST segment (typical risk 11% against 54%) and a fixed thallium defect (typical risk 10% against 54%), are mechanisms the network uses, not clinical patterns; why training settled on them (for example, offsetting the linear score on correlated inputs) was not tested.",
+  "resisted_template": "Each part has a stated behaviour and a self-probe that the model follows, but the thal-4 unit and the hub are described rather than explained in domain terms. The thal-4 unit is fitted to {{q:q_34a9908a62.subgroup.n}} training rows of a code outside the documented ones, and drives the typical patient's predicted risk to {{q:q_aa16d0fd7c.rows[1].risk|.3f}} when the code is set, an extrapolation. The hub's treatment of the absence of exercise angina as a risk factor, and the protective readings of a downsloping ST segment (typical risk {{q:q_9eb692f70d.rows[4].risk|pct}} against {{q:q_9eb692f70d.rows[0].risk|pct}}) and a fixed thallium defect (typical risk {{q:q_aa16d0fd7c.rows[2].risk|pct}} against {{q:q_aa16d0fd7c.rows[0].risk|pct}}), are mechanisms the network uses, not clinical patterns; why training settled on them (for example, offsetting the linear score on correlated inputs) was not tested.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 47,
+    "complete_ok": true
+  },
+  "recheck_notes": "Recheck v3: 0 mismatches, 0 needs_review. The 47 unchecked free-text sentences are qualitative descriptions without numbers; every number in them is a placeholder or an allow-listed literal (thresholds and sweep points such as 120 mg/dL and 80/160/170 bpm, category codes such as thal 3/4/6/7 and sex:0, vessel counts 0-3).",
+  "tool_bugs": "No blocking bugs. Notes: (1) annotate refuses a node that is already in another annotation's subgraph, so hidden-to-hidden chains (4252->1213->5800->47) were annotated as serial compositions that own the downstream node (1213, 5800, 47) rather than as leaves. (2) query_enumerate enumerates every input variable and errors on continuous inputs, so it could not be used here; zero/all claims use query_subgroup counts of disagreement rows instead. (3) query_ablate(direct=true) returns zero edges once the output's direct edges are intercepted by identity_0; edge weights came from query_ablate(edges=[...->identity_0]). (4) update_narrative does not return the rendered text (read it back with get_annotations). (5) get_formula results carry no provenance id, so formula evidence was attached as a payload with its LaTeX.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 178,
+    "provenance_backed": 149,
+    "allow_listed": 29,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 4,
+      "other": 4
+    },
+    "audit": {
+      "references": 149,
+      "checked": 149
+    },
+    "self_probe": {
+      "parts": [
+        "fbsDownslopeUnit",
+        "femaleNoAnginaGate",
+        "protectiveRelay",
+        "lowHeartRateUnit",
+        "thal4Unit",
+        "noAnginaRiskHub",
+        "directTerms",
+        "heartDiseaseRisk"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0
+  },
+  "accuracy_notes": "formulas.other = the four composition/root closed forms attached as get_formula LaTeX evidence (marked approximate, rounded coefficients) without a stated tolerance; function preservation of the whole refactored model is 4.4e-16. numbers counts digit tokens in all hypotheses, summary and resisted: 149 placeholders + 29 allow-listed literals.",
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 8,
+      "roots": [
+        "heartDiseaseRisk"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.440892098500626e-16,
+    "closed_form_max_abs_err": 0.015253760322321952,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 26,
+      "split_node": 9,
+      "add_identity_node": 1,
+      "annotate": 8
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T07:33:18+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 47,
+      "provenance": {
+        "templated_texts": 41,
+        "queries": 47
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

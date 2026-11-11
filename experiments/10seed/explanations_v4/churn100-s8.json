@@ -1,0 +1,113 @@
+{
+  "label": "churn100-s8",
+  "genome_id": "b93656ca-06b7-43e0-8faf-0697ce124fcd",
+  "protocol_version": "v4",
+  "start": "2026-11-11T21:24:26+13:00",
+  "end": "2026-11-11T21:41:50+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 6,
+  "n_composition_annotations": 4,
+  "n_splits": 9,
+  "n_identity_nodes": 2,
+  "hidden_nodes": 16,
+  "hidden_nodes_single_leaf_no_split": 16,
+  "hidden_nodes_in_any_annotation": 16,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 7.216449660063518e-16,
+  "closed_form_max_abs_err": 0.031167657432154883,
+  "summary": "This churn model (training AUC 0.905) adds three groups on the logit scale. Plans and usage carry the most: switching them off drops the training AUC to 0.542. Day charge has the largest direct term (1.92 per sd), the international plan raises the typical customer's risk from 2.5% to 20.3%, and a voice-mail plan lowers it. Two service-call units, both closed by heavy daytime use, make frequent callers who are not heavy day users high risk: the typical customer's risk is 4.8% at three calls and 62.3% at five, while for a heavy day user (charge set to match) it stays at 56.3% up to five calls; switching these units off drops the AUC to 0.736. Heavy day use is the second route: the 363 training customers with at most three calls and heavy day use have a churn rate of 49.0%. Each state adds a fixed shift fitted to small state groups, from -2.46 (Hawaii, 73 customers) to 1.36 (California, 41 customers) on the score. The hierarchy covers the network and reproduces it to within 7.2e-16.",
+  "summary_template": "This churn model (training AUC {{q:q_d953d19716.auc_roc|.3f}}) adds three groups on the logit scale. Plans and usage carry the most: switching them off drops the training AUC to {{q:q_105b11fcb7.data.auc_without|.3f}}. Day charge has the largest direct term ({{q:q_c274f46525.switched_off[5].weight|.2f}} per sd), the international plan raises the typical customer's risk from {{q:q_e91339a504.rows[0].risk|.1%}} to {{q:q_e91339a504.rows[1].risk|.1%}}, and a voice-mail plan lowers it. Two service-call units, both closed by heavy daytime use, make frequent callers who are not heavy day users high risk: the typical customer's risk is {{q:q_fa205a93d1.rows[3].risk|.1%}} at three calls and {{q:q_fa205a93d1.rows[5].risk|.1%}} at five, while for a heavy day user (charge set to match) it stays at {{q:q_eaa5bca7f1.rows[5].risk|.1%}} up to five calls; switching these units off drops the AUC to {{q:q_32a7ef6bec.data.auc_without|.3f}}. Heavy day use is the second route: the {{q:q_743e8b45bd.subgroup.n}} training customers with at most three calls and heavy day use have a churn rate of {{q:q_743e8b45bd.subgroup.outcome_rate|.1%}}. Each state adds a fixed shift fitted to small state groups, from {{q:q_7be533ba0f.rows[11].parts.ann_89.contribution|.2f}} (Hawaii, {{q:q_baa9c15ac0.subgroup.n}} customers) to {{q:q_7be533ba0f.rows[4].parts.ann_89.contribution|.2f}} (California, {{q:q_84512d3114.subgroup.n}} customers) on the score. The hierarchy covers the network and reproduces it to within {{q:q_22f4458f8e.function_preservation_max_abs_err|.1e}}.",
+  "resisted": "Each part has a stated, self-probed behaviour. The weakest is the usage-hinge leaf: it is a small correction (switching it off moves the training AUC from 0.9052 to 0.9046), and its day-minutes unit only slightly tempers the day-usage risk. The state offsets are explained as fixed shifts that follow the training churn rates of small state groups; they are likely fitted to those groups rather than a lasting pattern.",
+  "resisted_template": "Each part has a stated, self-probed behaviour. The weakest is the usage-hinge leaf: it is a small correction (switching it off moves the training AUC from {{q:q_c766a545eb.data.auc_with|.4f}} to {{q:q_c766a545eb.data.auc_without|.4f}}), and its day-minutes unit only slightly tempers the day-usage risk. The state offsets are explained as fixed shifts that follow the training churn rates of small state groups; they are likely fitted to those groups rather than a lasting pattern.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 44,
+    "complete_ok": true
+  },
+  "recheck_notes": "Recheck: 0 mismatches, 0 needs_review. The 44 unchecked free-text sentences carry no numbers (structure descriptions, prediction headers, 'Self-probe passed'). Probe input settings (for example 300 day minutes, 30 voice-mail messages, night charges of 3 to 15 dollars) and area-code names are allow-listed literals, not computed values; the summary avoids them because --render has no allow list.",
+  "tool_bugs": "None blocking. Notes: (1) --render has no allow_numbers option, so constructed probe settings cannot be named in the summary; (2) analytical_formula payloads that list entry node ids (negative ids such as -18) are refused in strict mode as bare numbers, so formula evidence carries only the LaTeX; (3) placeholder paths cannot address keys with spaces (e.g. a probe's set value 'total day minutes'); (4) query_enumerate refuses this dataset (continuous inputs), so the state sweep used query_probe over all 51 state codes instead.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 204,
+    "provenance_backed": 174,
+    "allow_listed": 30,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 0,
+      "other": 0
+    },
+    "audit": {
+      "references": 174,
+      "checked": 174
+    },
+    "self_probe": {
+      "parts": [
+        "service_calls_light_day_gate",
+        "service_calls_day_hinge",
+        "usage_hinges",
+        "state_hinges",
+        "direct_usage_and_plan_terms",
+        "direct_state_and_area_terms",
+        "service_calls_vs_day_usage",
+        "state_and_area_offsets",
+        "plans_and_usage",
+        "churn_model"
+      ],
+      "refuted_and_fixed": [
+        "churn_model: heavy day users stay at the same risk only up to five calls (risk rises at six and seven calls in the probe); the claim was narrowed from 'whatever their calls' before writing",
+        "state_and_area_offsets: 'state groups of under a hundred customers each' was false (West Virginia has more); replaced with the Hawaii and California counts before writing"
+      ]
+    },
+    "restatements": 0
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 10,
+      "roots": [
+        "churn_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 7.216449660063518e-16,
+    "closed_form_max_abs_err": 0.031167657432154883,
+    "numeric_max_abs_err": 2.6645352591003757e-15,
+    "op_counts": {
+      "rename_node": 71,
+      "split_node": 9,
+      "add_identity_node": 2,
+      "annotate": 10
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T08:42:47+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 44,
+      "provenance": {
+        "templated_texts": 70,
+        "queries": 45
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

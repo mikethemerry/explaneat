@@ -1,0 +1,119 @@
+{
+  "label": "churn100-s3",
+  "genome_id": "1610f2fd-db39-4809-afbe-78d58c200986",
+  "protocol_version": "v4",
+  "start": "2026-11-11T21:44:38+13:00",
+  "end": "2026-11-11T22:09:02+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 12,
+  "n_composition_annotations": 3,
+  "n_splits": 7,
+  "n_identity_nodes": 2,
+  "hidden_nodes": 16,
+  "hidden_nodes_single_leaf_no_split": 16,
+  "hidden_nodes_in_any_annotation": 16,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 4.440892098500626e-16,
+  "closed_form_max_abs_err": 0.017298511329560284,
+  "summary": "The churn model (training AUC 0.899) is a sum of log-odds terms. Its strongest term is a ramp on total day minutes: for the typical customer it switches on between 205 and 210 minutes, and risk rises from 3% at 200 minutes to 81% at 300; switching it off lowers AUC to 0.793. Customer service calls add risk through a direct edge and a hinge that acts on 100% of the 848 customers with 3 or more calls (risk 4% at 2 calls, 23% at 4); calls also weaken the day-minutes ramp, so the two effects add less than their sum. An international plan raises the typical risk from 3% to 24% (more in Connecticut, fitted to 7 rows), and a voice-mail plan lowers it from 3% to 1%. State enters as a per-state offset: several state gates are large constants that their own direct state edges largely cancel; the remaining offsets, from -4.51 (Vermont) to -1.53 (California), rest on a few dozen customers per state.",
+  "summary_template": "The churn model (training AUC {{q:q_b1fb833b1f.data.auc_with|.3f}}) is a sum of log-odds terms. Its strongest term is a ramp on total day minutes: for the typical customer it switches on between 205 and 210 minutes, and risk rises from {{q:q_ec6ceb9a2f.rows[2].risk|pct}} at 200 minutes to {{q:q_ec6ceb9a2f.rows[6].risk|pct}} at 300; switching it off lowers AUC to {{q:q_b1fb833b1f.data.auc_without|.3f}}. Customer service calls add risk through a direct edge and a hinge that acts on {{q:q_dccacea851.subgroup.parts.ann_83.share_acts_on|.0%}} of the {{q:q_dccacea851.subgroup.n}} customers with 3 or more calls (risk {{q:q_6c4fda9c36.rows[2].risk|pct}} at 2 calls, {{q:q_6c4fda9c36.rows[4].risk|pct}} at 4); calls also weaken the day-minutes ramp, so the two effects add less than their sum. An international plan raises the typical risk from {{q:q_918d415215.rows[0].risk|pct}} to {{q:q_918d415215.rows[2].risk|pct}} (more in Connecticut, fitted to {{q:q_c86b733b38.subgroup.n}} rows), and a voice-mail plan lowers it from {{q:q_4b58c476e0.rows[0].risk|pct}} to {{q:q_4b58c476e0.rows[1].risk|pct}}. State enters as a per-state offset: several state gates are large constants that their own direct state edges largely cancel; the remaining offsets, from {{q:q_994333c5ec.rows[9].parts.ann_93.contribution|.2f}} (Vermont) to {{q:q_994333c5ec.rows[2].parts.ann_93.contribution|.2f}} (California), rest on a few dozen customers per state.",
+  "resisted": "No part resisted. The state gates (state2_gate, state22_38_gate, state32_night_calls_gate, state25_gate) and the service-calls chain are described, not explained: they are constants or small fitted corrections, the chain fitted to 14 rows.",
+  "resisted_template": "No part resisted. The state gates (state2_gate, state22_38_gate, state32_night_calls_gate, state25_gate) and the service-calls chain are described, not explained: they are constants or small fitted corrections, the chain fitted to {{q:q_f7d57330e7.subgroup.n}} rows.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 90,
+    "complete_ok": true
+  },
+  "recheck_notes": "No mismatches or needs_review items. The summary template contains probe input values (205, 210, 200, 300 day minutes; 3, 2, 4 service calls) that --render reports as bare typed numbers because it has no allow list; they are chosen sweep inputs, not computed values, and are allow-listed the same way in the stored hypotheses. The 90 unchecked free-text sentences are qualitative statements and the leaf names.",
+  "tool_bugs": "query_probe stores only the first rows of a long sweep (a 51-state sweep stored rows up to about index 4 for part contributions), so placeholders to later rows were refused; worked around with a shorter state sweep. query_enumerate refuses the whole input space when any continuous input exists (no way to hold continuous inputs fixed), so state cells were checked with query_subgroup and a probe sweep instead. Placeholders cannot reference probe input values (rows[k].inputs...), so sweep inputs must be allow-listed literals. One batched --calls run of 70 add_evidence writes exceeded the 120 s shell timeout (it completed in the background).",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 307,
+    "provenance_backed": 249,
+    "allow_listed": 58,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 12,
+      "other": 0
+    },
+    "audit": {
+      "references": 249,
+      "checked": 249,
+      "queries": 77
+    },
+    "self_probe": {
+      "parts": [
+        "day_minutes_ramp",
+        "high_day_minutes_hinge",
+        "low_day_minutes_service_calls",
+        "service_calls_hinge",
+        "service_calls_chain",
+        "international_plan_gate",
+        "state2_gate",
+        "state22_38_gate",
+        "state32_night_calls_gate",
+        "state25_gate",
+        "direct_usage_terms",
+        "direct_state_terms",
+        "day_minutes_and_service_calls",
+        "state_offsets",
+        "churn_model"
+      ],
+      "refuted_and_fixed": [
+        "international_plan_gate: first hypothesis said it adds risk for plan holders; the probe and subgroup showed it also acts on the 73 Connecticut non-holders, so the hypothesis was revised",
+        "state gates: first hypotheses read the gates as per-state risk raises; probes showed each gate is largely cancelled by the state's own direct edge, so they were rewritten as constants plus cancelling corrections"
+      ]
+    },
+    "restatements": 5
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 15,
+      "roots": [
+        "churn_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.440892098500626e-16,
+    "closed_form_max_abs_err": 0.017298511329560284,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 71,
+      "split_node": 7,
+      "add_identity_node": 2,
+      "annotate": 15
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T09:10:19+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 90,
+      "provenance": {
+        "templated_texts": 85,
+        "queries": 77
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

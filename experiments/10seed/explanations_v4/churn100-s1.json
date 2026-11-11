@@ -1,0 +1,113 @@
+{
+  "label": "churn100-s1",
+  "genome_id": "4b0eb5a6-5859-4ee8-80fe-18ab72f22959",
+  "protocol_version": "v4",
+  "start": "2026-11-11T21:03:43+13:00",
+  "end": "2026-11-11T21:20:19+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 6,
+  "n_composition_annotations": 1,
+  "n_splits": 13,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 27,
+  "hidden_nodes_single_leaf_no_split": 25,
+  "hidden_nodes_in_any_annotation": 27,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 3.3306690738754696e-16,
+  "closed_form_max_abs_err": 0.022438454537383024,
+  "summary": "The model gives the typical training customer a low predicted churn risk (2.3%) and raises it through three parts that add on the logit scale. Heavy daytime use: without a voicemail plan, and with day charge in step, the risk goes from 2.3% at moderate day use to 94.8% at very heavy day use, while with a voicemail plan the very heavy use gives 19.0%; evening charge feeds the same hinges. Customer service calls: for a light day user the risk goes from 5.0% with a few calls to 92.4% with many, and the climb is faster for light day users than for heavy ones. The direct linear terms, led by the international plan, which in the whole model moves the typical customer from 2.2% to 23.9%, and by the voicemail plan, which lowers the risk. Switching off the day-usage, service-call or direct part lowers the training AUC from 0.9095 to 0.7977, 0.8043 and 0.8069. A near-constant hub that adds a little for many service calls, a North Dakota offset (68 customers) and three one-state offsets are small corrections. The annotated network reproduces the original to within 3.3e-16.",
+  "summary_template": "The model gives the typical training customer a low predicted churn risk ({{q:q_b2b6fe91e3.typical.risk_with|.1%}}) and raises it through three parts that add on the logit scale. Heavy daytime use: without a voicemail plan, and with day charge in step, the risk goes from {{q:q_7310ec7275.rows[5].risk|.1%}} at moderate day use to {{q:q_7310ec7275.rows[15].risk|.1%}} at very heavy day use, while with a voicemail plan the very heavy use gives {{q:q_ba0c44bf32.rows[15].risk|.1%}}; evening charge feeds the same hinges. Customer service calls: for a light day user the risk goes from {{q:q_53a4b76108.rows[3].risk|.1%}} with a few calls to {{q:q_53a4b76108.rows[6].risk|.1%}} with many, and the climb is faster for light day users than for heavy ones. The direct linear terms, led by the international plan, which in the whole model moves the typical customer from {{q:q_7a2bb1cd4d.rows[1].risk|.1%}} to {{q:q_7a2bb1cd4d.rows[5].risk|.1%}}, and by the voicemail plan, which lowers the risk. Switching off the day-usage, service-call or direct part lowers the training AUC from {{q:q_b2b6fe91e3.data.auc_with|.4f}} to {{q:q_b2b6fe91e3.data.auc_without|.4f}}, {{q:q_70519f965a.data.auc_without|.4f}} and {{q:q_4cc63096d3.data.auc_without|.4f}}. A near-constant hub that adds a little for many service calls, a North Dakota offset ({{q:q_a35448097d.subgroup.n}} customers) and three one-state offsets are small corrections. The annotated network reproduces the original to within {{q:q_e4a06ea041.function_preservation_max_abs_err|.2g}}.",
+  "resisted": "No part resisted a hypothesis. Three parts are described rather than explained: the hub, a small correction in the direction of the service-call and direct terms (switching it off leaves the training AUC at 0.9095); the one-state offsets for Utah, Iowa and Arkansas, fitted to 89, 55 and 78 customers; and the state chain, a North Dakota offset fitted to 68 customers whose Wyoming branch acts on 0 of the 89 Wyoming customers.",
+  "resisted_template": "No part resisted a hypothesis. Three parts are described rather than explained: the hub, a small correction in the direction of the service-call and direct terms (switching it off leaves the training AUC at {{q:q_4f9c034eba.data.auc_without|.4f}}); the one-state offsets for Utah, Iowa and Arkansas, fitted to {{q:q_3f3d356a28.subgroup.n}}, {{q:q_c7c8c2142b.subgroup.n}} and {{q:q_3055b75649.subgroup.n}} customers; and the state chain, a North Dakota offset fitted to {{q:q_a35448097d.subgroup.n}} customers whose Wyoming branch acts on {{q:q_ae81c3640f.subgroup.parts.ann_91.n_acts_on}} of the {{q:q_ae81c3640f.subgroup.n}} Wyoming customers.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 46,
+    "complete_ok": true
+  },
+  "recheck_notes": "Recheck: 0 mismatches, 0 needs_review, complete_ok true. The unchecked free-text sentences are the templated hypothesis, evidence, summary and resisted sentences whose wording the recheck does not parse; each number in them is a placeholder to one of the stored queries, and the number audit re-read the population of every referenced query.",
+  "tool_bugs": "None blocking. Notes: (1) query_ablate(direct=true) finds no direct edges once they are routed through an identity node on the output, so the direct-edge weights were taken from query_ablate(edges=[...->identity_0]). (2) The first root annotation omitted the cross-leaf edge 5604->9871_b from its subgraph_connections, which made get_coverage report node 5604 and its edges uncovered; the root was redone with the edge and coverage became complete. (3) xn.py --render has no allow-list, so the summary describes probe settings in words rather than with their literal values. (4) The full-model AUC 0.90953 renders as 0.909 from query_ablate's rounded auc_with with .3f, which the AUC lint flags; four decimals were used.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 226,
+    "provenance_backed": 158,
+    "allow_listed": 68,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 6,
+      "other": 0
+    },
+    "audit": {
+      "references": 158,
+      "checked": 158
+    },
+    "self_probe": {
+      "parts": [
+        "day_charge_hinges",
+        "service_calls",
+        "vmail_intl_hub",
+        "state50_chain",
+        "single_state_hinges",
+        "direct_terms",
+        "churn_model"
+      ],
+      "refuted_and_fixed": [
+        "day_charge_hinges: unit 387 was first said to be switched off as the day-and-evening charge hinge rises; the probe shows it only shrinks, so the text says 'shrinks'",
+        "day_charge_hinges, vmail_intl_hub, direct_terms: probe rows at 150 day minutes were first called 'the typical customer'; rewritten as 'the typical customer at 150 day minutes', and the typical-case value for unit 387 now comes from a probe of the typical case itself",
+        "vmail_intl_hub: first said to raise the risk for an international plan on its own; the probe shows a tiny change without service calls, so the text now says many service calls, a little more with an international plan"
+      ]
+    },
+    "restatements": 0
+  },
+  "accuracy_notes": "Allow-listed literals are probe settings (day minutes, calls, minutes, messages, dollars) and node ids. The hub (vmail_intl_hub), the state offsets (single_state_hinges) and the state chain are stated as described rather than explained in their hypotheses and in resisted.",
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 7,
+      "roots": [
+        "churn_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 3.3306690738754696e-16,
+    "closed_form_max_abs_err": 0.022438454537383024,
+    "numeric_max_abs_err": 3.552713678800501e-15,
+    "op_counts": {
+      "rename_node": 71,
+      "split_node": 13,
+      "consolidate_node": 3,
+      "add_identity_node": 1,
+      "annotate": 7
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T08:21:30+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 46,
+      "provenance": {
+        "templated_texts": 46,
+        "queries": 33
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

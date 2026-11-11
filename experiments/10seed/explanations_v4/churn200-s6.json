@@ -1,0 +1,109 @@
+{
+  "label": "churn200-s6",
+  "genome_id": "c2ee592d-f300-42f7-a757-cd3021f8b5d5",
+  "protocol_version": "v4",
+  "start": "2026-11-11T23:26:53+13:00",
+  "end": "2026-11-12T00:03:00+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 7,
+  "n_composition_annotations": 2,
+  "n_splits": 8,
+  "n_identity_nodes": 6,
+  "hidden_nodes": 23,
+  "hidden_nodes_single_leaf_no_split": 23,
+  "hidden_nodes_in_any_annotation": 23,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 4.440892098500626e-16,
+  "closed_form_max_abs_err": 0.04161892456162963,
+  "summary": "This churn model (training AUC 0.919) is a sum of seven parts on the score scale, passed through a sigmoid. Its strongest part is a customer-service-call alarm gated by usage: of the training customers with 4 or more service calls, the 122 with low or average daytime spending (usage level off) have a churn rate of 91.8% and a mean predicted risk of 82.5%, while the 196 heavy daytime spenders have a churn rate of 24.0% and a mean predicted risk of 25.0%; switching the alarm off lowers the AUC to 0.812. The international plan enters through a direct edge of 0.86 per sd and raises the typical customer's predicted risk from 1.3% to 20.2%. Two usage hinges add risk for heavy users: one for high daytime spending without voicemail messages (acting on 1077 customers, churn rate 26.9%), one for heavy combined day and evening use (acting on 805 customers, churn rate 33.9%). State gates give a few states their own offset, the largest for New Jersey (90 customers, churn rate 24.4%); these are fitted to small groups. An evening-charge hinge is a small counterweight. At 3 service calls the alarm fires for 198 customers whose churn rate is 6.6% against a mean predicted risk of 14.7%, an over-prediction worth checking.",
+  "summary_template": "This churn model (training AUC {{q:q_8f0f60337c.data.auc_with|.3f}}) is a sum of seven parts on the score scale, passed through a sigmoid. Its strongest part is a customer-service-call alarm gated by usage: of the training customers with 4 or more service calls, the {{q:q_d1b35e7805.subgroup.n}} with low or average daytime spending (usage level off) have a churn rate of {{q:q_d1b35e7805.subgroup.outcome_rate|.1%}} and a mean predicted risk of {{q:q_d1b35e7805.subgroup.mean_predicted_risk|.1%}}, while the {{q:q_b12b73288f.subgroup.n}} heavy daytime spenders have a churn rate of {{q:q_b12b73288f.subgroup.outcome_rate|.1%}} and a mean predicted risk of {{q:q_b12b73288f.subgroup.mean_predicted_risk|.1%}}; switching the alarm off lowers the AUC to {{q:q_e789fcfc7b.data.auc_without|.3f}}. The international plan enters through a direct edge of {{q:q_99d5972250.switched_off[0].weight|.2f}} per sd and raises the typical customer's predicted risk from {{q:q_b3a3e0aff0.rows[0].risk|.1%}} to {{q:q_b3a3e0aff0.rows[1].risk|.1%}}. Two usage hinges add risk for heavy users: one for high daytime spending without voicemail messages (acting on {{q:q_bf67c4469c.subgroup.n}} customers, churn rate {{q:q_bf67c4469c.subgroup.outcome_rate|.1%}}), one for heavy combined day and evening use (acting on {{q:q_6b6178a6bf.subgroup.n}} customers, churn rate {{q:q_6b6178a6bf.subgroup.outcome_rate|.1%}}). State gates give a few states their own offset, the largest for New Jersey ({{q:q_36b68ab08b.subgroup.n}} customers, churn rate {{q:q_36b68ab08b.subgroup.outcome_rate|.1%}}); these are fitted to small groups. An evening-charge hinge is a small counterweight. At 3 service calls the alarm fires for {{q:q_08073cbb5c.subgroup.n}} customers whose churn rate is {{q:q_08073cbb5c.subgroup.outcome_rate|.1%}} against a mean predicted risk of {{q:q_08073cbb5c.subgroup.mean_predicted_risk|.1%}}, an over-prediction worth checking.",
+  "resisted": "The state gates are described more than explained: the model gives New Jersey, Washington and Iowa their own offsets, but nothing in the inputs says why, and Iowa's positive offset goes against its training churn rate of 10.9% (55 customers). The evening-charge hinge pulls against the observed churn rate of the customers it acts on (18.0% against 12.9%) and reads as an offset to the day-evening hinge rather than a signal of its own.",
+  "resisted_template": "The state gates are described more than explained: the model gives New Jersey, Washington and Iowa their own offsets, but nothing in the inputs says why, and Iowa's positive offset goes against its training churn rate of {{q:q_64e6eff566.subgroup.outcome_rate|.1%}} ({{q:q_64e6eff566.subgroup.n}} customers). The evening-charge hinge pulls against the observed churn rate of the customers it acts on ({{q:q_23d6d6f689.subgroup.outcome_rate|.1%}} against {{q:q_23d6d6f689.rest.outcome_rate|.1%}}) and reads as an offset to the day-evening hinge rather than a signal of its own.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 37,
+    "complete_ok": true
+  },
+  "recheck_notes": "0 mismatches, 0 needs_review. 37 free-text sentences carry no number and are unchecked by design. Splits are all on input nodes (-71,-61,-64,-59,-30,-26,-42,-44); cross-part hidden edges (20866->4397, 10379->7689, 1694->997, 4397->997) are carried by identity nodes so no hidden node is split; identity_direct and identity_state gather the direct edges and the state gates at the output.",
+  "tool_bugs": "(1) Placeholders cannot reference probe input values whose variable name has a space (rows[k].inputs.total day charge exists in the stored values, but the placeholder regex has no space), and the render leaves them silently unrendered with no error; probe settings (e.g. 4 calls, 35 US dollars) were therefore written as allow_numbers literals. (2) xn.py --render takes no allow list, so the summary's literals '4' and '3' (service-call counts used as subgroup definitions) show as render errors although they are constructed settings, not computed values. (3) add_evidence has no allow_numbers, so evidence narratives with a count in a label were refused and re-added with the count in words. (4) An annotation's entry nodes count as covered, so a hidden exit of one leaf cannot be the entry of another; worked around with identity nodes on the receiving edges.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 212,
+    "provenance_backed": 163,
+    "allow_listed": 49,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 4,
+      "other": 0
+    },
+    "audit": {
+      "references": 163,
+      "checked": 163
+    },
+    "self_probe": {
+      "parts": [
+        "direct_terms",
+        "state_adjustments",
+        "voicemail_day_charge",
+        "day_eve_minutes_hinge",
+        "evening_charge_hinge",
+        "usage_level",
+        "service_call_alarm",
+        "service_calls_vs_usage",
+        "churn_score"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 9,
+      "roots": [
+        "churn_score"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.440892098500626e-16,
+    "closed_form_max_abs_err": 0.04161892456162963,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 71,
+      "split_node": 8,
+      "add_identity_node": 6,
+      "annotate": 9
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T11:03:05+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 44,
+      "provenance": {
+        "templated_texts": 47,
+        "queries": 40
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

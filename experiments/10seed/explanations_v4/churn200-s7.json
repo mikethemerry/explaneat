@@ -1,0 +1,113 @@
+{
+  "label": "churn200-s7",
+  "genome_id": "5203b62d-92a0-4ab7-9da7-d27e02d575a2",
+  "protocol_version": "v4",
+  "start": "2026-11-11T09:24:43Z",
+  "end": "2026-11-11T09:44:30Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 9,
+  "n_composition_annotations": 2,
+  "n_splits": 14,
+  "n_identity_nodes": 2,
+  "hidden_nodes": 33,
+  "hidden_nodes_single_leaf_no_split": 32,
+  "hidden_nodes_in_any_annotation": 33,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 3.3306690738754696e-16,
+  "closed_form_max_abs_err": 0.04231382113577098,
+  "summary": "The model predicts churn through three main routes whose contributions add on the logit scale. First, heavy daytime use without a voice-mail plan: a usage score on day, evening and night minutes is on for 1223 of the 4000 training customers and a second hinge steepens it for the heaviest 372; a voice-mail plan holds the score off (it acts on 6 of 1061 voice-mail customers), so among the heaviest daytime users (the top 10% of customers by day minutes) the mean predicted risk is 61.5% without voice mail (observed 60.7%) and 7.1% with it (observed 8.0%). Second, customer-service calls: a gate that opens with repeated calls (typical customer: predicted risk 0.9% before the gate opens, then 13.7% and 83.8% as calls increase) but is held shut by the usage score, so it acts on 0 of the 372 customers on the heavy-use hinge. Third, the international plan: a gate on for all 380 plan holders (share 100%), adding 3.02 logits on average. Switching off the usage-and-service composition drops the training AUC from 0.926 to 0.594, the international gate to 0.870. Smaller parts: higher day charge lowers the score for customers below the heavy-use threshold, longer accounts raise it, state offsets add most for Washington (1.30 logits at the typical customer), direct linear terms make more international calls at a fixed international spend lower the score, and small usage hinges barely matter.",
+  "summary_template": "The model predicts churn through three main routes whose contributions add on the logit scale. First, heavy daytime use without a voice-mail plan: a usage score on day, evening and night minutes is on for {{q:q_003274e0ef.subgroup.n}} of the {{q:q_003274e0ef.n}} training customers and a second hinge steepens it for the heaviest {{q:q_4828b2d176.subgroup.n}}; a voice-mail plan holds the score off (it acts on {{q:q_3304a88995.subgroup.parts.ann_87.n_acts_on}} of {{q:q_3304a88995.subgroup.n}} voice-mail customers), so among the heaviest daytime users (the top {{q:q_604a3ba616.subgroup.share_of_rows|.0%}} of customers by day minutes) the mean predicted risk is {{q:q_b2a1ea940f.subgroup.mean_predicted_risk|.1%}} without voice mail (observed {{q:q_b2a1ea940f.subgroup.outcome_rate|.1%}}) and {{q:q_b244aef38e.subgroup.mean_predicted_risk|.1%}} with it (observed {{q:q_b244aef38e.subgroup.outcome_rate|.1%}}). Second, customer-service calls: a gate that opens with repeated calls (typical customer: predicted risk {{q:q_e25228ca4c.rows[2].risk|.1%}} before the gate opens, then {{q:q_e25228ca4c.rows[4].risk|.1%}} and {{q:q_e25228ca4c.rows[6].risk|.1%}} as calls increase) but is held shut by the usage score, so it acts on {{q:q_4828b2d176.subgroup.parts.ann_88.n_acts_on}} of the {{q:q_4828b2d176.subgroup.n}} customers on the heavy-use hinge. Third, the international plan: a gate on for all {{q:q_9ad00a71ed.subgroup.n}} plan holders (share {{q:q_9ad00a71ed.subgroup.parts.ann_90.share_acts_on|.0%}}), adding {{q:q_9ad00a71ed.subgroup.parts.ann_90.mean_contribution|.2f}} logits on average. Switching off the usage-and-service composition drops the training AUC from {{q:q_6f9d0cd162.data.auc_with|.3f}} to {{q:q_6f9d0cd162.data.auc_without|.3f}}, the international gate to {{q:q_12abaeb261.data.auc_without|.3f}}. Smaller parts: higher day charge lowers the score for customers below the heavy-use threshold, longer accounts raise it, state offsets add most for Washington ({{q:q_eb637aec4f.rows[0].parts.ann_93.contribution|.2f}} logits at the typical customer), direct linear terms make more international calls at a fixed international spend lower the score, and small usage hinges barely matter.",
+  "resisted": "Three of the four hinges in minutes_hinges (night minutes, evening charge, and night minutes with the Indiana and Tennessee indicators) are described, not explained: they are small corrections with no clear domain reading, and the whole part moves the training AUC from 0.9261 to 0.9258. The state offsets are fitted to small groups (72 Washington customers, 65 in Louisiana, 90 in New Jersey) and read as memorised state churn levels rather than a mechanism. Two units, at the end of the area-code-408 and Ohio chains, are off on every training row (0 rows have either on).",
+  "resisted_template": "Three of the four hinges in minutes_hinges (night minutes, evening charge, and night minutes with the Indiana and Tennessee indicators) are described, not explained: they are small corrections with no clear domain reading, and the whole part moves the training AUC from {{q:q_8a109e6784.data.auc_with|.4f}} to {{q:q_8a109e6784.data.auc_without|.4f}}. The state offsets are fitted to small groups ({{q:q_8692fc7834.subgroup.n}} Washington customers, {{q:q_c283bd57b2.subgroup.n}} in Louisiana, {{q:q_5a87978a46.subgroup.n}} in New Jersey) and read as memorised state churn levels rather than a mechanism. Two units, at the end of the area-code-408 and Ohio chains, are off on every training row ({{q:q_27a79fd109.subgroup.n}} rows have either on).",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 40,
+    "complete_ok": true
+  },
+  "recheck_notes": "Recheck (version 3, with this record): 0 mismatches, 0 needs_review. The 40 unchecked free-text sentences carry no numbers (mechanism descriptions and scope-free summaries); their scope words are proved by counts in adjacent referenced sentences.",
+  "tool_bugs": "Minor: add_identity_node refuses to redirect every input of a node (14351 has a single input), so the heavy-use hinge was annotated with 14351 as an entry instead of behind an identity port; not a bug in effect. query_ablate(direct=true) reports 0 root direct edges once direct edges are routed through an identity node, so per-edge weights were taken with query_ablate(edges=[...->identity_direct]). xn.py --calls output piped to head can be cut by SIGPIPE, leaving later calls unrun (first split batch had to be resumed). --render has no allow_numbers option, so literal probe inputs cannot appear in the summary.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 245,
+    "provenance_backed": 193,
+    "allow_listed": 52,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 0,
+      "other": 0
+    },
+    "audit": {
+      "references": 193,
+      "checked": 193
+    },
+    "self_probe": {
+      "parts": [
+        "usage_score",
+        "service_calls_gate",
+        "heavy_usage_hinge",
+        "intl_plan_gate",
+        "day_charge_gate",
+        "direct_terms",
+        "state_area_offsets",
+        "account_length_hinge",
+        "minutes_hinges",
+        "usage_service",
+        "churn_model"
+      ],
+      "refuted_and_fixed": [
+        "service_calls_gate: first draft said the usage score holds the gate shut whenever it is on; the subgroup query showed the gate still acts on 25 of 88 frequent callers whose usage score is on, so the text now says the gate closes as daytime use rises and is shut for the customers on the heavy-use hinge (0 of 372)"
+      ]
+    },
+    "restatements": 0
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 11,
+      "roots": [
+        "churn_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 3.3306690738754696e-16,
+    "closed_form_max_abs_err": 0.04231382113577098,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 71,
+      "split_node": 14,
+      "add_identity_node": 2,
+      "annotate": 11
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T09:44:27+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 40,
+      "provenance": {
+        "templated_texts": 64,
+        "queries": 47
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}
