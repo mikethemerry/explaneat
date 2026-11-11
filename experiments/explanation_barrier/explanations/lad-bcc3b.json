@@ -1,0 +1,180 @@
+{
+  "label": "lad-bcc3b",
+  "genome_id": "d113358a-ee7d-476c-bf23-829d89e91310",
+  "start": "2026-11-11T22:54:58+13:00",
+  "end": "2026-11-12T00:37:00+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 5,
+  "n_composition_annotations": 1,
+  "n_splits": 42,
+  "n_identity_nodes": 0,
+  "hidden_nodes": 16,
+  "hidden_nodes_single_leaf_no_split": 16,
+  "hidden_nodes_in_any_annotation": 16,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 0.0,
+  "closed_form_max_abs_err": 0.04606250026528258,
+  "summary": "A dense network of sixteen ReLU units over the board squares, grouped into five additive parts. The largest part credits x when o holds the bottom row and x's pieces sit higher (switching it off drops the training AUC from 0.926 to 0.825). A second part charges x for o on the centre bottom square d1 (mean -3.50 on the logit over positions with o on d1, -1.20 with x on d1). A third responds to x lines such as an open three on the bottom row (6.21 on the logit for the probed board), and a fourth reweights an x-on-d1 position by the corner a1; the remaining part (three units) resisted a domain reading.",
+  "summary_template": "A dense network of sixteen ReLU units over the board squares, grouped into five additive parts. The largest part credits x when o holds the bottom row and x's pieces sit higher (switching it off drops the training AUC from {{q:q_38112e24d8.data.auc_with|.3f}} to {{q:q_38112e24d8.data.auc_without|.3f}}). A second part charges x for o on the centre bottom square d1 (mean {{q:q_b0e82838e9.subgroup.parts.ann_85.mean_contribution|.2f}} on the logit over positions with o on d1, {{q:q_f6a463cfd3.subgroup.parts.ann_85.mean_contribution|.2f}} with x on d1). A third responds to x lines such as an open three on the bottom row ({{q:q_18f032caec.rows[0].parts.ann_88.contribution|.2f}} on the logit for the probed board), and a fourth reweights an x-on-d1 position by the corner a1; the remaining part (three units) resisted a domain reading.",
+  "resisted": "upperRowUnits (units 10, 11 and 13) has no domain reading: on training positions it lowers the score more when x leads on the second row (-2.43 against -1.56), but the self-probe failed (-1.35 and -1.35 on the two colour-swapped boards), so it is described by its closed form only. The other parts' readings cover the probed squares (d1, a1, the bottom row, an open three); the many smaller weights on the upper squares are not read.",
+  "resisted_template": "upperRowUnits (units 10, 11 and 13) has no domain reading: on training positions it lowers the score more when x leads on the second row ({{q:q_7c4514eb8d.subgroup.parts.ann_87.mean_contribution|.2f}} against {{q:q_6386392a92.subgroup.parts.ann_87.mean_contribution|.2f}}), but the self-probe failed ({{q:q_c0446e974f.rows[0].parts.ann_87.contribution|.2f}} and {{q:q_69e812cbfa.rows[0].parts.ann_87.contribution|.2f}} on the two colour-swapped boards), so it is described by its closed form only. The other parts' readings cover the probed squares (d1, a1, the bottom row, an open three); the many smaller weights on the upper squares are not read.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 24,
+    "complete_ok": true
+  },
+  "recheck_notes": "No mismatches and no needs_review items. The unchecked free-text sentences are the domain readings and wording around the placeholders; every number in them is a placeholder.",
+  "tool_bugs": "No tool errors. Each xn.py call took several minutes on this genome (42 inputs split into 16 copies each, 689 nodes), so most of the time box went on waiting for batches. The --recheck --record option reads the record file as input and fails if it does not exist yet, so the record was written before the recheck. A composition annotation may not list its children's nodes in subgraph_nodes (\"already covered\"); the root lists only the output node and takes the hidden units as entries.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 89,
+    "provenance_backed": 89,
+    "allow_listed": 0,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 5,
+      "other": 1
+    },
+    "audit": {
+      "references": 89,
+      "checked": 89
+    },
+    "self_probe": {
+      "parts": [
+        "xCentreBottom",
+        "oCentreBottom",
+        "bottomRowVsUpper",
+        "upperRowUnits",
+        "sideUnits",
+        "connect4Root"
+      ],
+      "refuted_and_fixed": [
+        "upperRowUnits: the second-row-balance reading failed its self-probe (same contribution on both colour-swapped boards); the reading was withdrawn and the part is reported as described by its closed form only"
+      ]
+    },
+    "restatements": 0
+  },
+  "leaves": [
+    {
+      "name": "xCentreBottom",
+      "units": [
+        "1",
+        "6",
+        "8"
+      ],
+      "meaning": "partial",
+      "why": "With x on d1, an o piece in the corner a1 raises the part and an x piece there lowers it (subgroups and a sweep agree), but its many other square weights are not read."
+    },
+    {
+      "name": "oCentreBottom",
+      "units": [
+        "9",
+        "12",
+        "16"
+      ],
+      "meaning": "meaningful",
+      "why": "It charges x most when o holds the centre bottom square d1 and least when x holds it, confirmed by the d1 sweep and the three d1 subgroups."
+    },
+    {
+      "name": "bottomRowVsUpper",
+      "units": [
+        "4"
+      ],
+      "meaning": "meaningful",
+      "why": "It credits x when o holds the bottom row and x's pieces are stacked higher, confirmed by the row-balance subgroups and the colour-swapped stacked boards."
+    },
+    {
+      "name": "upperRowUnits",
+      "units": [
+        "10",
+        "11",
+        "13"
+      ],
+      "meaning": "closed-form-only",
+      "why": "A second-row-balance trend shows on training averages, but the self-probe gave the same contribution on both colour-swapped boards, so no reading survived."
+    },
+    {
+      "name": "sideUnits",
+      "units": [
+        "2",
+        "3",
+        "5",
+        "7",
+        "14",
+        "15"
+      ],
+      "meaning": "partial",
+      "why": "They give a large contribution to an x open three on the bottom row and a small one to the colour-swapped o three, but the other patterns they respond to are not read."
+    }
+  ],
+  "overall_function": "The network adds five groups of ReLU units on the logit scale to predict whether x wins. Its strongest signal is vertical placement: x does better when o has its pieces on the bottom row and x's are stacked above them, especially in the centre columns. It also cares a lot about who holds the centre bottom square d1 (o there is penalised, x there is not), and with x on d1 it reads the bottom-left corner a1 (an x piece there counts against x, an o piece for x). A further group rewards x line patterns such as an open three on the bottom row, but o's equivalent threat is weighed against placement, so the model can underrate o's threats. Every square feeds every unit; the rarely occupied upper squares carry large but poorly supported weights, and no square is ignored outright.",
+  "stuck": "Tool latency: each query or write took several minutes, so ~70 percent of the box went on waiting and the probes were limited to a few constructed boards. Leaf meaning: in a dense layer every unit reads every square, so the readings cover the main squares only (partial), and one group (units 10, 11, 13) failed its self-probe. Structure: every input had to be split into 16 copies to give each unit its own leaf entries; the hierarchy is flat (five leaves under one root).",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 6,
+      "roots": [
+        "connect4Root"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 0.0,
+    "closed_form_max_abs_err": 0.04606250026528258,
+    "numeric_max_abs_err": 1.0658141036401503e-14,
+    "op_counts": {
+      "rename_node": 42,
+      "split_node": 42,
+      "annotate": 6
+    },
+    "leaves": [
+      {
+        "id": "ann_84",
+        "name": "xCentreBottom",
+        "numeric_max_abs_err": 8.881784197001252e-15,
+        "closed_form_max_abs_err": 0.02160272217136794
+      },
+      {
+        "id": "ann_85",
+        "name": "oCentreBottom",
+        "numeric_max_abs_err": 7.105427357601002e-15,
+        "closed_form_max_abs_err": 0.026777434818551438
+      },
+      {
+        "id": "ann_86",
+        "name": "bottomRowVsUpper",
+        "numeric_max_abs_err": 5.329070518200751e-15,
+        "closed_form_max_abs_err": 0.014977812765109455
+      },
+      {
+        "id": "ann_87",
+        "name": "upperRowUnits",
+        "numeric_max_abs_err": 1.0658141036401503e-14,
+        "closed_form_max_abs_err": 0.03236811320426103
+      },
+      {
+        "id": "ann_88",
+        "name": "sideUnits",
+        "numeric_max_abs_err": 8.881784197001252e-15,
+        "closed_form_max_abs_err": 0.04606250026528258
+      }
+    ],
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "tool_call_window": {
+      "n_calls": 133,
+      "first": 1794390930.659413,
+      "last": 1794396710.898904,
+      "minutes": 96.3373248497645
+    }
+  }
+}

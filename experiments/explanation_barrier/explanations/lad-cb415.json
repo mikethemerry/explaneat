@@ -1,0 +1,194 @@
+{
+  "label": "lad-cb415",
+  "genome_id": "face2eeb-c7f0-41fa-907f-698d49c850e4",
+  "start": "2026-11-12T00:28:44+13:00",
+  "end": "2026-11-12T00:44:00+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 6,
+  "n_composition_annotations": 1,
+  "n_splits": 10,
+  "n_identity_nodes": 0,
+  "hidden_nodes": 8,
+  "hidden_nodes_single_leaf_no_split": 8,
+  "hidden_nodes_in_any_annotation": 8,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 0.0,
+  "closed_form_max_abs_err": 0.05552021688414399,
+  "summary": "The model's predicted risk is the sigmoid of six ReLU parts added together, with no direct input-to-output edges (the root has 0 of them). Age dominates: risk rises steeply with age, faster for heavier people (age_bmi_rise; switching it off changes the training AUC from 0.937 to 0.866), and women get a lower risk than men up to middle age, a gap that closes with age (young_female_lowering, AUC 0.889 without it). Higher score raises risk, more for rural people, higher income lowers it, more so when the score is low, and more visits raise it, at fewer visits for smokers; insurance has a small effect in both directions, and noise is practically ignored (zeroing its edges changes the AUC from 0.9369 to 0.9368).",
+  "summary_template": "The model's predicted risk is the sigmoid of six ReLU parts added together, with no direct input-to-output edges (the root has {{q:q_2df8c72d5b.switched_off[0].direct_edges_of_root|d}} of them). Age dominates: risk rises steeply with age, faster for heavier people (age_bmi_rise; switching it off changes the training AUC from {{q:q_1e0a3f6648.data.auc_with|.3f}} to {{q:q_1e0a3f6648.data.auc_without|.3f}}), and women get a lower risk than men up to middle age, a gap that closes with age (young_female_lowering, AUC {{q:q_3eef4bf3ab.data.auc_without|.3f}} without it). Higher score raises risk, more for rural people, higher income lowers it, more so when the score is low, and more visits raise it, at fewer visits for smokers; insurance has a small effect in both directions, and noise is practically ignored (zeroing its edges changes the AUC from {{q:q_6076418b0c.data.auc_with|.4f}} to {{q:q_6076418b0c.data.auc_without|.4f}}).",
+  "resisted": "young_uninsured_lowering is described, not explained: it lowers the predicted risk for the uninsured below old age and for the insured when young, which has no domain reading, and in the whole model insurance cuts both ways with age; it is small (switching it off changes the training AUC from 0.9369 to 0.9358).",
+  "resisted_template": "young_uninsured_lowering is described, not explained: it lowers the predicted risk for the uninsured below old age and for the insured when young, which has no domain reading, and in the whole model insurance cuts both ways with age; it is small (switching it off changes the training AUC from {{q:q_a5ea74d5fe.data.auc_with|.4f}} to {{q:q_a5ea74d5fe.data.auc_without|.4f}}).",
+  "recheck_summary": {
+    "ran_at": "2026-11-11T11:43:37+00:00",
+    "recheck_version": 3,
+    "mismatch": 0,
+    "needs_review": 0,
+    "warn": 0,
+    "mismatches": [],
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 24,
+    "provenance": {
+      "templated_texts": 36,
+      "queries": 23
+    },
+    "complete_ok": true,
+    "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+  },
+  "recheck_notes": "Recheck: 0 mismatches and 0 needs_review items. The 24 unchecked free-text sentences are qualitative readings (directions, which inputs a unit uses), each backed in the same hypothesis by a probe quoted with placeholders.",
+  "tool_bugs": "A composition cannot list its children's exit nodes in subgraph_nodes (refused as already covered); the root was declared with subgraph_nodes = the output only and entries = every input copy, as the hierarchy doc describes. xn.py --recheck needs the --record file to exist before it runs. The splits use consolidate_node to give each leaf one copy of each input (10 split_node + 20 consolidate_node operations).",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 180,
+    "provenance_backed": 171,
+    "allow_listed": 9,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 6,
+      "other": 0
+    },
+    "audit": {
+      "references": 171,
+      "checked": 171
+    },
+    "self_probe": {
+      "parts": [
+        "age_bmi_rise",
+        "young_female_lowering",
+        "young_uninsured_lowering",
+        "score_rural_rise",
+        "income_low_score_lowering",
+        "visits_smoker_rise",
+        "risk_root"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 1
+  },
+  "leaves": [
+    {
+      "name": "age_bmi_rise",
+      "units": [
+        "1",
+        "4"
+      ],
+      "meaning": "meaningful",
+      "why": "Older and heavier people together cross a threshold that raises the predicted risk, and the age-by-bmi probe shows bmi mattering for older people and little for young ones."
+    },
+    {
+      "name": "young_female_lowering",
+      "units": [
+        "2",
+        "3"
+      ],
+      "meaning": "meaningful",
+      "why": "Women and young people get a lower predicted risk, and the age-by-sex probe shows the female lowering fading with age until it is off for both sexes in old age."
+    },
+    {
+      "name": "young_uninsured_lowering",
+      "units": [
+        "6"
+      ],
+      "meaning": "closed-form-only",
+      "why": "The probe confirms what it does (lowers risk for the uninsured below old age and for the young insured), but that has no domain reading and insurance acts in both directions in the whole model."
+    },
+    {
+      "name": "score_rural_rise",
+      "units": [
+        "5"
+      ],
+      "meaning": "meaningful",
+      "why": "A high score raises the predicted risk, switching on at a lower score for rural than for urban people, as the score-by-urban probe shows."
+    },
+    {
+      "name": "income_low_score_lowering",
+      "units": [
+        "8"
+      ],
+      "meaning": "meaningful",
+      "why": "Higher income lowers the predicted risk, more when the score is low, as the income-by-score probe shows."
+    },
+    {
+      "name": "visits_smoker_rise",
+      "units": [
+        "7"
+      ],
+      "meaning": "meaningful",
+      "why": "Several visits raise the predicted risk, with smokers crossing the threshold at fewer visits, and with few visits smoking adds nothing through this part."
+    }
+  ],
+  "overall_function": "The network adds six ReLU parts and passes the sum through a sigmoid; there are no direct input-to-output edges. Age is the main driver: the risk is lowered for the young (and for women up to middle age, a sex gap that closes with age) and raised for older people, more steeply when bmi is also high, so age interacts with both sex and bmi through thresholds. Score raises the risk, with a threshold that comes at a lower score for rural than for urban people, while income lowers it, more strongly when the score is low (an income-by-score interaction). Visits raise the risk above a threshold that smoking lowers, so smoking matters mainly for people with several visits; insurance has a small effect in both directions, and the noise input is practically ignored.",
+  "stuck": "Nothing blocked coverage. The time went on wording numbers as references; young_uninsured_lowering resisted a domain reading. Each leaf's formula is approximate only because get_formula rounds coefficients.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 7,
+      "roots": [
+        "risk_root"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 0.0,
+    "closed_form_max_abs_err": 0.05552021688414399,
+    "numeric_max_abs_err": 3.552713678800501e-15,
+    "op_counts": {
+      "rename_node": 10,
+      "split_node": 10,
+      "consolidate_node": 20,
+      "annotate": 7
+    },
+    "leaves": [
+      {
+        "id": "ann_40",
+        "name": "age_bmi_rise",
+        "numeric_max_abs_err": 1.7763568394002505e-15,
+        "closed_form_max_abs_err": 0.01851896045721768
+      },
+      {
+        "id": "ann_41",
+        "name": "young_female_lowering",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.016492012901234254
+      },
+      {
+        "id": "ann_42",
+        "name": "young_uninsured_lowering",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.002453874885372631
+      },
+      {
+        "id": "ann_43",
+        "name": "score_rural_rise",
+        "numeric_max_abs_err": 1.7763568394002505e-15,
+        "closed_form_max_abs_err": 0.008588125571421745
+      },
+      {
+        "id": "ann_44",
+        "name": "income_low_score_lowering",
+        "numeric_max_abs_err": 3.552713678800501e-15,
+        "closed_form_max_abs_err": 0.05552021688414399
+      },
+      {
+        "id": "ann_45",
+        "name": "visits_smoker_rise",
+        "numeric_max_abs_err": 1.7763568394002505e-15,
+        "closed_form_max_abs_err": 0.020284088550500456
+      }
+    ],
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "tool_call_window": {
+      "n_calls": 130,
+      "first": 1794396561.9786298,
+      "last": 1794397348.087923,
+      "minutes": 13.101821553707122
+    }
+  }
+}

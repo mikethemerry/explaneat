@@ -1,0 +1,210 @@
+{
+  "label": "lad-b29f2",
+  "genome_id": "7130d166-688d-464f-831d-59f4cac6b81e",
+  "start": "2026-11-11T23:32:37+13:00",
+  "end": "2026-11-12T00:19:00+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 7,
+  "n_composition_annotations": 1,
+  "n_splits": 10,
+  "n_identity_nodes": 0,
+  "hidden_nodes": 32,
+  "hidden_nodes_single_leaf_no_split": 16,
+  "hidden_nodes_in_any_annotation": 32,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 0.0,
+  "closed_form_max_abs_err": 0.018790938292064574,
+  "summary": "The network computes a short rule list: a high predicted risk for bmi of at least 32, for age at least 61 with at least 3 visits, or for a female smoker aged up to 34, unless the score is at least 80 without insurance (a veto that is weaker for the young female smokers). On the training split the 5709 rows this rule marks high have a mean predicted risk of 90% and the other 18,291 rows 8%; 109 and 13 rows fall on the other side of even odds (92 of the first group sit on the bmi step). First-layer hinges supply the thresholds (bmi, age, visits, the sex-smoking-age detectors, score with insurance), and the second layer forms the AND of age and visits, the OR of the rules by saturation and the veto; income, urban and noise move the typical case little but shift risk near the bmi step.",
+  "summary_template": "The network computes a short rule list: a high predicted risk for bmi of at least {{q:q_ec2d4e6363.rows[4].inputs.bmi}}, for age at least {{q:q_93e0741492.rows[5].inputs.age}} with at least {{q:q_24ff49193a.rows[3].inputs.visits}} visits, or for a female smoker aged up to {{q:q_4526f04ce8.rows[4].inputs.age}}, unless the score is at least {{q:q_37a8bb9ad1.rows[8].inputs.score}} without insurance (a veto that is weaker for the young female smokers). On the training split the {{q:q_db65ff2187.subgroup.n}} rows this rule marks high have a mean predicted risk of {{q:q_db65ff2187.subgroup.mean_predicted_risk|pct}} and the other {{q:q_432f618fb8.subgroup.n}} rows {{q:q_432f618fb8.subgroup.mean_predicted_risk|pct}}; {{q:q_f7782f99fe.subgroup.n}} and {{q:q_4512c877c4.subgroup.n}} rows fall on the other side of even odds ({{q:q_54de3b4a4a.subgroup.n}} of the first group sit on the bmi step). First-layer hinges supply the thresholds (bmi, age, visits, the sex-smoking-age detectors, score with insurance), and the second layer forms the AND of age and visits, the OR of the rules by saturation and the veto; income, urban and noise move the typical case little but shift risk near the bmi step.",
+  "resisted": "Three parts are read only partly: mixed_hinges and the low-score unit in score_insurance_hinges widen the gap between rule and non-rule cases (the mixed part's mean contribution to the score is 0.54 on rule-high rows and -0.28 on the others), but the split of roles between their units is left to the formulas; older_age_hinges gives a small downward slope in risk with age outside the rules (switching it off moves the training AUC from 0.901 to 0.896). The second layer sits in the root as a whole, because the two hidden layers are densely connected and the inputs cannot be split finely enough (the split tool runs out of copy letters) to give each second-layer group its own first-layer copies; its units are described by role in the root hypothesis, not as separate annotations. Three second-layer units are dead on the training split (0 rows with any of them positive).",
+  "resisted_template": "Three parts are read only partly: mixed_hinges and the low-score unit in score_insurance_hinges widen the gap between rule and non-rule cases (the mixed part's mean contribution to the score is {{q:q_db65ff2187.subgroup.parts.ann_26.mean_contribution|.2f}} on rule-high rows and {{q:q_432f618fb8.subgroup.parts.ann_26.mean_contribution|.2f}} on the others), but the split of roles between their units is left to the formulas; older_age_hinges gives a small downward slope in risk with age outside the rules (switching it off moves the training AUC from {{q:q_674dd1b9bd.data.auc_with|.3f}} to {{q:q_674dd1b9bd.data.auc_without|.3f}}). The second layer sits in the root as a whole, because the two hidden layers are densely connected and the inputs cannot be split finely enough (the split tool runs out of copy letters) to give each second-layer group its own first-layer copies; its units are described by role in the root hypothesis, not as separate annotations. Three second-layer units are dead on the training split ({{q:q_625416edd6.subgroup.n}} rows with any of them positive).",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 41,
+    "complete_ok": true
+  },
+  "recheck_notes": "No mismatch and no needs_review item. The unchecked free-text sentences are structural or mechanistic descriptions (which unit reads which input, how the second layer combines the hinges) that the checker cannot parse; their numbers are placeholders or allow-listed node ids, and the mechanism claims are backed by the attached probes and ablations.",
+  "tool_bugs": "split_node assigns one letter per output and has 26 letters, so an input feeding the 16 first-layer units can be split once but its copies cannot be re-split per second-layer group; a per-rule hierarchy of the second layer was therefore not reachable with function-preserving operations, and the second layer sits in the root. query_ablate mean_risk_change is with minus without (its sign reads opposite to 'change when switched off'); typical.risk_with/risk_without and AUCs were quoted instead. get_formula returns no provenance id, so formulas were attached as analytical_formula payloads.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 305,
+    "provenance_backed": 257,
+    "allow_listed": 48,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 0,
+      "other": 0
+    },
+    "audit": {
+      "references": 257,
+      "checked": 257
+    },
+    "self_probe": {
+      "parts": [
+        "high_bmi_hinges",
+        "under_age_hinge",
+        "few_visits_hinges",
+        "older_age_hinges",
+        "sex_smoking_age_detectors",
+        "score_insurance_hinges",
+        "mixed_hinges",
+        "risk_rules_root"
+      ],
+      "refuted_and_fixed": [
+        "few_visits_hinges: 'zero for many visits' refuted by a subgroup count (rows with three or more visits and a unit positive); reworded with the count",
+        "score_insurance_hinges: 'zero for every insured person' refuted by a subgroup count (insured rows with the high-score unit positive); reworded with the count",
+        "mixed_hinges: first written as described-not-explained; the part-contribution probe and rule-subgroup contributions supported a partial reading (widens the rule/non-rule gap for the insured); hypothesis and probe evidence amended"
+      ]
+    },
+    "restatements": 0
+  },
+  "leaves": [
+    {
+      "name": "high_bmi_hinges",
+      "units": [
+        "15",
+        "16"
+      ],
+      "meaning": "meaningful",
+      "why": "Two bmi hinges that switch on at the bmi threshold and, through the second layer, turn the predicted risk from low to high as a step, as the bmi sweep shows."
+    },
+    {
+      "name": "under_age_hinge",
+      "units": [
+        "3"
+      ],
+      "meaning": "meaningful",
+      "why": "An age hinge that is on below the age threshold and blocks the age-and-visits rule; the age sweep jumps with many visits and stays flat with few."
+    },
+    {
+      "name": "few_visits_hinges",
+      "units": [
+        "4",
+        "10"
+      ],
+      "meaning": "meaningful",
+      "why": "Visits hinges that are on for few visits and block the age-and-visits rule; the visits sweep jumps at an older age and stays flat at a younger one."
+    },
+    {
+      "name": "older_age_hinges",
+      "units": [
+        "1",
+        "8"
+      ],
+      "meaning": "partial",
+      "why": "Age hinges on for older people that give a small downward slope in risk with age outside the rules; their role inside the second layer is mixed."
+    },
+    {
+      "name": "sex_smoking_age_detectors",
+      "units": [
+        "2",
+        "7",
+        "9",
+        "12"
+      ],
+      "meaning": "meaningful",
+      "why": "Detectors whose second-layer combination fires for young female smokers, the one of the four smoker-by-sex cells with a high predicted risk, fading with age."
+    },
+    {
+      "name": "score_insurance_hinges",
+      "units": [
+        "6",
+        "14"
+      ],
+      "meaning": "meaningful",
+      "why": "The high-score-uninsured unit vetoes the bmi and age-and-visits rules as the score sweep shows; the low-score unit widens the rule gap for the uninsured (a partial reading)."
+    },
+    {
+      "name": "mixed_hinges",
+      "units": [
+        "5",
+        "11",
+        "13"
+      ],
+      "meaning": "partial",
+      "why": "For insured cases the part adds to the score when a rule fires and subtracts otherwise, but the roles of its three units are left to the formula."
+    }
+  ],
+  "overall_function": "The network implements a short rule list. The predicted risk is high when bmi is above a threshold, or when an older person has many visits (an AND of an age threshold and a visits threshold), or for young female smokers (an AND of sex, smoking and young age); the rules combine as an OR, because once one fires the score saturates. A high score without insurance acts as a veto that pulls the bmi and age-and-visits rules back to low risk, and weakens the young-female-smoker rule. Income, urban and noise are almost ignored in typical cases but shift the risk near the steep bmi threshold; outside the rules older age gives a slight decrease in risk.",
+  "stuck": "Operations: split_node's letter limit made a per-rule hierarchy of the second layer unreachable, so the leaves are first-layer feature groups and the second layer is explained in the root. Leaf meaning: mixed_hinges and the low-score unit resisted a unit-by-unit reading. Coverage, tools and time did not block.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 8,
+      "roots": [
+        "risk_rules_root"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 0.0,
+    "closed_form_max_abs_err": 0.018790938292064574,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 10,
+      "split_node": 10,
+      "annotate": 8
+    },
+    "leaves": [
+      {
+        "id": "ann_20",
+        "name": "high_bmi_hinges",
+        "numeric_max_abs_err": 1.7763568394002505e-15,
+        "closed_form_max_abs_err": 0.018790938292064574
+      },
+      {
+        "id": "ann_21",
+        "name": "under_age_hinge",
+        "numeric_max_abs_err": 1.7763568394002505e-15,
+        "closed_form_max_abs_err": 0.008451462974977453
+      },
+      {
+        "id": "ann_22",
+        "name": "few_visits_hinges",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.0071431092145639585
+      },
+      {
+        "id": "ann_23",
+        "name": "older_age_hinges",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.0025660053591464727
+      },
+      {
+        "id": "ann_24",
+        "name": "sex_smoking_age_detectors",
+        "numeric_max_abs_err": 1.7763568394002505e-15,
+        "closed_form_max_abs_err": 0.00888570955482304
+      },
+      {
+        "id": "ann_25",
+        "name": "score_insurance_hinges",
+        "numeric_max_abs_err": 4.440892098500626e-16,
+        "closed_form_max_abs_err": 0.0107077161010527
+      },
+      {
+        "id": "ann_26",
+        "name": "mixed_hinges",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.0029909640953455358
+      }
+    ],
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "tool_call_window": {
+      "n_calls": 188,
+      "first": 1794393205.908295,
+      "last": 1794395822.945355,
+      "minutes": 43.6172843337059
+    }
+  }
+}
