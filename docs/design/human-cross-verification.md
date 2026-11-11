@@ -191,7 +191,7 @@ Each factor comes from an error mechanism in the review. The weights are small i
 | Factor (once per sentence unless stated) | Mechanism and errata | Weight |
 |---|---|---|
 | Unchecked hand-typed number (U atom); per atom, at most 3 | (f), (b) and (d) in free text: E1, E2, E5, E6, E8, E9, E11. About 1% of the numeric statements in the ten corrected genomes' database text were wrong (8 of about 770) | 5 |
-| Retyped number checked only by `recheck` (R atom); per atom, at most 3 | Referent ambiguity: 37 of `recheck`'s 47 false positives were wrong population, referent, quantity or configuration; also drafted retyping | 2 |
+| Retyped number(s) checked only by `recheck` (R atoms); once per sentence (changed from "per atom, at most 3" when built, 2026-11-11: per atom, almost every numeric drafted sentence reached tier A) | Referent ambiguity: 37 of `recheck`'s 47 false positives were wrong population, referent, quantity or configuration; also drafted retyping | 2 |
 | Citation gap (`prose_uncited`) | (f) E4, E15 | 3 |
 | Scope or number word ("only", "all", "zero", "none", "never", "always", "every", "exactly") that is not proved by a reference | (e) E5 ("zero in area 415"); thal:7 "ONLY through these gates". Neither was reachable by `recheck` | 4 |
 | Formula with "=" or "reduces to" that has not passed an exact write-time check | (e) E3; the five listed approximate formulas | 4 |
@@ -216,7 +216,7 @@ The scope mismatch can only be detected once A1 holds, and it turns E8 and E9 fr
 ### 4.2 Score, tiers and ordering
 
 ```
-score(s) = prominence(s) * sum_f weight_f * count_f(s)        (U and R atoms capped at 3 each)
+score(s) = prominence(s) * sum_f weight_f * count_f(s)        (U atoms capped at 3; R counted once)
 tier(s)  = G  if any gate
            A  if score >= 5
            B  if 2 <= score < 5

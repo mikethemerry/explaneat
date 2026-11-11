@@ -245,6 +245,92 @@ def errata_line(rec) -> list:
             + (r", see \texttt{" + tex(", ".join(refs)) + "}" if refs else "") + ".", ""]
 
 
+VERDICT_BOXES = r"$\square$\,ok\ \ $\square$\,wrong\ \ $\square$\,unsure"
+AP = "A'"
+BADGE_WORD = {"C": "computed", "R": "rechecked", "U": "unchecked", "F": "FAILED", "n/a": "n/a"}
+
+
+def _short(s: str, n: int = 260) -> str:
+    s = " ".join(str(s or "").split())
+    return s if len(s) <= n else s[:n - 3].rstrip() + "..."
+
+
+def _queue_rows(items, start: int = 1) -> List[str]:
+    rows = []
+    for k, it in enumerate(items, start):
+        head = (r"\texttt{" + tex(it["sid"]) + "}" + r" \quad " + tex(f"[{it['tier']}] {BADGE_WORD.get(it['badge'], it['badge'])}"
+                f", score {it['score']:g}") + r" \quad {\scriptsize " + tex_code(_short(it["ref"], 70)) + "}")
+        cell = [head, r"\newline ``" + tex(_short(it["text"])) + "''"]
+        if it["why"]:
+            cell.append(r"\newline {\scriptsize Why: " + tex("; ".join(it["why"])) + "}")
+        for f in it["verifier"][:2]:
+            cell.append(r"\newline {\scriptsize\textbf{Verifier} (" + tex(f.get("source")) + "): "
+                        + tex(f"{f.get('grade')} {f.get('level') or ''}") + ("; stale" if f.get("stale") else "")
+                        + ". " + tex(_short(f.get("evidence"), 220)) + "}")
+        done = it.get("verdict")
+        box = (r"\textbf{" + tex(done) + "}" if done and done != "stale"
+               else (r"{\scriptsize changed since your verdict}\newline " if done == "stale" else "") + VERDICT_BOXES)
+        rows.append(f"{k} & " + "".join(cell) + r" & {\scriptsize " + box + r"} \\ \midrule")
+    return rows
+
+
+def _queue_table(items, start=1) -> List[str]:
+    return ([r"{\footnotesize\setlength{\tabcolsep}{3pt}",
+             r"\begin{longtable}{@{}>{\raggedleft\arraybackslash}p{0.5cm}>{\raggedright\arraybackslash}p{12.4cm}"
+             r">{\raggedright\arraybackslash}p{2.6cm}@{}}",
+             r"\toprule \# & Sentence (sid, tier, status, location) & Your verdict \\ \midrule \endhead"]
+            + _queue_rows(items, start) + [r"\end{longtable}}", ""])
+
+
+def review_queue_tex(rv: Dict[str, Any]) -> List[str]:
+    """The signoff-v1 review queue for one genome (docs/design/human-cross-verification.md, 4 and 7)."""
+    lab = rv["label"]
+    b, t = rv["badges"], rv["tiers"]
+    L = [r"\textbf{Review queue (signoff-v1).} Sentences ranked by the risk of the error mechanisms found in "
+         r"the 2026-11 review: unchecked hand-typed numbers, scope words (``only'', ``all'', ``zero''), formulas "
+         r"written as exact, small groups, direct vs whole-model effects, verifier findings, changes since your "
+         r"last verdict. Status: " + tex(f"computed {b.get('C', 0)}, rechecked {b.get('R', 0)}, unchecked "
+                                          f"{b.get('U', 0)}, failed {b.get('F', 0)}") +
+         r" (no sentence can be ``computed'' until numbers carry provenance). Tiers: " +
+         tex(f"gate {t.get('G', 0)}, A {t.get('A', 0)} (all reviewed), A-overflow {t.get(AP, 0)}, "
+             f"B {t.get('B', 0)}, C {t.get('C', 0)} (sampled)") + ". "
+         + tex(f"Verifier findings attached: {rv['overlay']['attached']}"
+               + (f" ({rv['overlay']['stale']} stale)" if rv['overlay']['stale'] else "")) + ". "
+         + r"\textbf{Estimated time: about " + tex(str(rv["estimate_minutes"])) + r" minutes} ("
+         + tex(f"{rv['n_queue']} queue items, {rv['n_sample']} sampled") + ").", ""]
+    if rv["changes"]:
+        L += [r"\textbf{Changed since your last review.}", r"\begin{itemize}"]
+        for c in rv["changes"][:12]:
+            line = tex(f"{c['sid']} ({c['state']}; you said {c['verdict']}): ")
+            if c["state"] == "changed":
+                line += r"\emph{" + tex(_short(c.get("word_diff"), 300)) + "}"
+                if c.get("numbers"):
+                    line += tex(" Numbers: " + "; ".join(f"{a} -> {x}" for a, x in c["numbers"]) + ".")
+            line += tex(" Why: " + "; ".join(c["why"]) + ".")
+            L.append(r"\item " + line)
+        L += [r"\end{itemize}"]
+    elif not rv["n_verdicts"]:
+        L += [r"{\small No sentence verdicts recorded yet, so nothing has changed since a review.\par}", ""]
+    else:
+        L += [r"{\small Nothing has changed since your last verdicts.\par}", ""]
+    if rv["queue"]:
+        L += [r"\textbf{Gate and tier-A items} (every one needs a verdict):", ""] + _queue_table(rv["queue"])
+    sample = rv["sample"]["BC"] + rv["sample"]["A_prime"]
+    if sample:
+        L += [r"\textbf{Random sample} (drawn by code from tiers A-overflow, B and C; every one needs a verdict; "
+              r"one ``wrong'' draws 10 more):", ""] + _queue_table(sample, len(rv["queue"]) + 1)
+    for f in rv.get("unattached_verifier") or []:
+        L += [r"{\small\textbf{Verifier, not about one sentence} (" + tex(f.get("location")) + "): "
+              + tex(f"{f.get('grade')} {f.get('level') or ''}. {_short(f.get('evidence'), 240)}") + r"\par}"]
+    L += [r"{\small\raggedright\textbf{Record a verdict} on an item (append-only, "
+          + tex_code(f"experiments/10seed/review/{lab}.verdicts.jsonl") + r"):\par}", r"{\footnotesize\raggedright\texttt{" + tex(
+              f"uv run python -m explaneat review verdict {lab} <sid> confirmed|wrong|unsure --note \"...\"") + r"}\par}",
+          r"{\small Then check and record the sign-off (it refuses until every item above has a verdict):\par}",
+          r"{\footnotesize\raggedright\texttt{" + tex(f"uv run python -m explaneat review signoff {lab} --write --minutes N")
+          + r"}\par}", ""]
+    return L
+
+
 def checklist_block(doc, order: int) -> str:
     lab = doc["label"]
     rows, bad = check_rows(doc)
@@ -270,10 +356,15 @@ def checklist_block(doc, order: int) -> str:
     for r in rows:
         st = r[4] if r[4] == "agree" else r"\textbf{DISAGREE}"
         L.append(" & ".join(tex(c) for c in r[:4]) + f" & {st} \\\\")
-    L += [r"\bottomrule", r"\end{tabularx}}", "",
-          r"\textbf{What to look at.}", r"\begin{itemize}"]
-    L += [r"\item " + x for x in look]
-    L += [r"\end{itemize}"]
+    L += [r"\bottomrule", r"\end{tabularx}}", ""]
+    if doc.get("review"):    # the risk-ranked queue replaces the "what to look at" bullets
+        if bad:
+            L += [look[0], ""]
+        L += review_queue_tex(doc["review"])
+    else:
+        L += [r"\textbf{What to look at.}", r"\begin{itemize}"]
+        L += [r"\item " + x for x in look]
+        L += [r"\end{itemize}"]
     if rec.get("tool_bugs"):
         L += [r"\textbf{Tool notes (record):} " + tex(rec["tool_bugs"]), ""]
     pl = doc.get("plain_language")
@@ -287,9 +378,9 @@ def checklist_block(doc, order: int) -> str:
         verdict_cmd = (r"\texttt{" + tex(f"uv run python -m explaneat export record-plain-verdict {lab} --verified "
                                           f"--minutes N --notes \"...\"") + "}")
         if v5:   # the read-down document that follows opens with the summary: do not repeat it here
-            L += [r"\textbf{Plain-language layer} (" + tex(_status(pl)) + r"): the read-down document follows "
-                  r"this page (summary, parts, evidence, worth checking; also \texttt{" + tex(f"{lab}-plain-v5.pdf")
-                  + r"} in this genome's folder). Record a verdict on it with " + verdict_cmd + ".", ""]
+            L += [r"{\raggedright\textbf{Plain-language layer} (" + tex(_status(pl)) + r"): the read-down document "
+                  r"follows this page (summary, parts, evidence, worth checking; also \texttt{" + tex(f"{lab}-plain-v5.pdf")
+                  + r"} in this genome's folder). Record a verdict on it with " + verdict_cmd + r".\par}", ""]
         else:
             cited = {cid for s in summ for cid in (s.get("claims") or [])}
             L += [r"\textbf{Plain-language summary} (" + tex(_status(pl)) + ("" if d.get("summary") else
@@ -301,16 +392,18 @@ def checklist_block(doc, order: int) -> str:
                   r"subsection. Record a verdict on the plain-language layer with " + verdict_cmd + r".\par}", ""]
     L += [r"\textbf{Verdict.}", "",
           r"\begin{tabularx}{\linewidth}{@{}lX@{}}",
-          r"Verified (correct as it stands, or after my changes): & $\square$ yes \quad $\square$ no \\[4pt]",
+          r"Verified (signoff-v1 passes; correct as it stands, or after my changes): & $\square$ yes \quad "
+          r"$\square$ no \\[4pt]",
           r"Minutes: & \rule{3cm}{0.4pt} \\[4pt]",
           r"Changes: & \rule{\linewidth}{0.4pt} \\[10pt]",
           r" & \rule{\linewidth}{0.4pt} \\[4pt]",
           r"Notes: & \rule{\linewidth}{0.4pt} \\[10pt]",
           r" & \rule{\linewidth}{0.4pt} \\",
           r"\end{tabularx}", "",
-          r"\textbf{Record it} (writes \texttt{mike\_verification} into \texttt{experiments/10seed/explanations/"
+          r"{\raggedright\textbf{Record it} (runs the signoff-v1 check, PREREG amendment 2026-11-11, and is "
+          r"refused until it passes; writes \texttt{mike\_verification} into \texttt{experiments/10seed/explanations/"
           + tex(lab) + r".json}; use \texttt{-{}-not-verified} for no; rebuild the CSVs with "
-          r"\texttt{uv run python experiments/10seed/build\_explanations\_csv.py}):",
+          r"\texttt{uv run python experiments/10seed/build\_explanations\_csv.py}):\par}",
           "", r"{\footnotesize\raggedright\texttt{" + tex(record_command(lab)) + r"}\par}", ""]
     return "\n".join(L) + "\n"
 
@@ -368,7 +461,7 @@ def render_review(docs: List[Dict[str, Any]], title: str, review_marks: bool = T
          r"\usepackage[margin=2.2cm]{geometry}",
          render_tex.PREAMBLE_PACKAGES.rstrip(),
          r"\usepackage[unicode=true,hidelinks]{hyperref}", r"\setcounter{tocdepth}{1}",
-         r"\usepackage{cleveref}", r"\usepackage{pdfpages}",
+         r"\usepackage{cleveref}", r"\usepackage{pdfpages}", r"\usepackage{longtable}",
          render_tex.DRAFTED_DEFS.rstrip(),
          "" if review_marks else r"\reviewmarksfalse",
          r"\providecommand{\explaneatcertdir}[1]{}",

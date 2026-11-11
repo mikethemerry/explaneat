@@ -113,8 +113,9 @@ def check(label: str, items: Sequence, sentences: Sequence, verdict_lines: List[
                                     f"({len(order)}) or regenerate the text")
         for s in drawn:
             need(idx[s], f"sample ({name})")
-        n_sampled += len(drawn)
-        x_wrong += sum(1 for s in drawn if s in ever_wrong)
+        reviewed = [s for s in drawn if s in last]          # the bound uses only reviewed sample items
+        n_sampled += len(reviewed)
+        x_wrong += sum(1 for s in reviewed if s in ever_wrong)
         sample_info[name] = {"items": len(its), "drawn": drawn, "extended": extended, "failed": failed}
 
     # recheck at the current text
