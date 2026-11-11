@@ -48,13 +48,18 @@ def test_levels_columns_blank_without_a_levels_file(tmp_path, monkeypatch):
     monkeypatch.setenv("EXPLANEAT_LEVELS_DIR", str(tmp_path))
     levels_columns, cols = _load_levels_columns()
     assert list(cols) == NEW
-    rec = {"function_preservation_max_abs_err": 1e-16, "n_leaf_annotations": 4}
+    rec = {"function_preservation_max_abs_err": 1e-16, "n_leaf_annotations": 4, "genome_id": "g1"}
     out = levels_columns(rec, "heart-s0")
     assert list(out) == NEW
     assert out["faithful_max_err"] == 1e-16 and out["n_leaves"] == 4
     assert out["granularity"] == "" and out["understood_fraction"] == "" and out["closed_form_only_fraction"] == ""
-    (tmp_path / "heart-s0.json").write_text(
-        '{"levels": {"decomposed": {"granularity": 1.0}, "understood": {"understood_fraction": 0.5, '
-        '"closed_form_only_fraction": 0.25}}}')
+    levels = ('{"records_dir": "%s", "genome_id": "%s", "levels": {"decomposed": {"granularity": 1.0}, '
+              '"understood": {"understood_fraction": 0.5, "closed_form_only_fraction": 0.25}}}')
+    # a levels file of another record set (or another genome) does not fill the columns
+    (tmp_path / "heart-s0.json").write_text(levels % ("explanations_v4", "g1"))
+    assert levels_columns(rec, "heart-s0")["granularity"] == ""
+    (tmp_path / "heart-s0.json").write_text(levels % ("explanations", "g2"))
+    assert levels_columns(rec, "heart-s0")["granularity"] == ""
+    (tmp_path / "heart-s0.json").write_text(levels % ("explanations", "g1"))     # the default --dir
     out = levels_columns(rec, "heart-s0")
     assert out["granularity"] == 1.0 and out["understood_fraction"] == 0.5 and out["closed_form_only_fraction"] == 0.25

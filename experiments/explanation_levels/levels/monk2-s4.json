@@ -1,0 +1,670 @@
+{
+ "label": "monk2-s4",
+ "genome_id": "60ee493c-bce5-4a2b-b7af-d06843835ae6",
+ "set": "v4",
+ "study": "monk2",
+ "records_dir": "explanations_v4",
+ "dataset": "monk2_onehot",
+ "n_train": 345,
+ "computed_at": "2026-11-11T22:43:53+00:00",
+ "method": "experiments/explanation_levels/compute_levels.py (read only; probes not stored, query_id null)",
+ "levels": {
+  "faithful": {
+   "function_preservation_max_abs_err": 4.440892098500626e-16,
+   "closed_form_max_abs_err": 0.023701640100661336,
+   "passed": true,
+   "test": "max |output(explained model) - output(phenotype)| over the training rows < 1e-9"
+  },
+  "decomposed": {
+   "n_leaves": 6,
+   "n_compositions": 1,
+   "hidden_units": 7,
+   "granularity": 1.0,
+   "largest_part": {
+    "name": "too_many_first_values",
+    "hidden_units": 2,
+    "width": 1,
+    "depth": 2,
+    "leaf": true,
+    "param_share": 0.186
+   },
+   "max_width": 1,
+   "max_depth": 2,
+   "warnings": [],
+   "passed": true,
+   "test": "share of hidden units whose part is at most 6 units wide (depth not penalised); no part wider than that holds half the units"
+  },
+  "understood": {
+   "leaves": 6,
+   "graded": 6,
+   "counts": {
+    "meaningful": 2,
+    "partial": 3,
+    "closed_form_only": 1,
+    "unnamed": 0
+   },
+   "grades": {
+    "too_many_first_values": "partial",
+    "direct_first_value_tally": "partial",
+    "a5_not_first_lift": "meaningful",
+    "a5_middle_levels": "partial",
+    "a1_second_value_offset": "meaningful",
+    "dead_a3_second": "closed_form_only"
+   },
+   "understood_fraction": 0.3333,
+   "partial_fraction": 0.5,
+   "closed_form_only_fraction": 0.1667,
+   "unnamed_fraction": 0.0,
+   "concepts": {
+    "too_many_first_values": "a2:1 and a3:1",
+    "direct_first_value_tally": "a1:1 and a2:1",
+    "a5_not_first_lift": "a5:1",
+    "a5_middle_levels": "a5:1",
+    "a1_second_value_offset": "a1:2",
+    "dead_a3_second": "a1:1"
+   },
+   "test": "concept probe per leaf: meaningful r2 >= 0.8 or AUC >= 0.9; partial r2 >= 0.5 or AUC >= 0.75; else closed_form_only; unnamed when no concept was probed",
+   "domain_only": null
+  }
+ },
+ "decomposition": {
+  "hidden_units": 7,
+  "small_width_max_units": 6,
+  "granularity": 1.0,
+  "largest_part": {
+   "name": "too_many_first_values",
+   "hidden_units": 2,
+   "width": 1,
+   "depth": 2,
+   "leaf": true,
+   "param_share": 0.186
+  },
+  "max_width": 1,
+  "max_depth": 2,
+  "units_only_in_root": 0,
+  "units_only_as_entries": 0,
+  "parts": {
+   "a5_not_first_lift": {
+    "units": 2,
+    "width": 1,
+    "depth": 2,
+    "leaf": true,
+    "param_share": 0.2093
+   },
+   "too_many_first_values": {
+    "units": 2,
+    "width": 1,
+    "depth": 2,
+    "leaf": true,
+    "param_share": 0.186
+   },
+   "a1_second_value_offset": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.0465
+   },
+   "a5_middle_levels": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.0698
+   },
+   "dead_a3_second": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.0465
+   }
+  },
+  "warnings": []
+ },
+ "leaves": {
+  "too_many_first_values": {
+   "id": "ann_27",
+   "exit_nodes": [
+    "274",
+    "2786"
+   ],
+   "n_exits": 2,
+   "gated": true,
+   "variables": [
+    "a1",
+    "a2",
+    "a3",
+    "a4",
+    "a6"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 62,
+   "score": 0.682222,
+   "grade": "partial",
+   "best_concepts": [
+    "a2:1 and a3:1"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.301449,
+   "auc": 0.841111,
+   "mi": 0.331787,
+   "meaning": {
+    "grade": "partial",
+    "concept": "a2:1 and a3:1",
+    "probe": {
+     "r2": 0.301449,
+     "auc": 0.841111,
+     "mi": 0.331787,
+     "n": 345,
+     "score": 0.682222,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "274": {
+     "best": {
+      "concept": "a2:1 and a3:1",
+      "kind": "binary",
+      "source": "pair",
+      "n": 345,
+      "r2": 0.300353,
+      "auc": 0.841111,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.331787,
+      "nmi": 0.174405,
+      "leaf_gated": true,
+      "score": 0.682222
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "a2:1 and a3:1",
+       "source": "pair",
+       "score": 0.682222,
+       "r2": 0.300353,
+       "auc": 0.841111,
+       "mi": 0.331787
+      },
+      {
+       "concept": "a2:1 and a4:1",
+       "source": "pair",
+       "score": 0.671524,
+       "r2": 0.25931,
+       "auc": 0.835762,
+       "mi": 0.301852
+      },
+      {
+       "concept": "a3:1 and a4:1",
+       "source": "pair",
+       "score": 0.65432,
+       "r2": 0.280513,
+       "auc": 0.82716,
+       "mi": 0.307478
+      }
+     ]
+    },
+    "2786": {
+     "best": {
+      "concept": "a2:1 and a3:1",
+      "kind": "binary",
+      "source": "pair",
+      "n": 345,
+      "r2": 0.302545,
+      "auc": 0.841111,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.331787,
+      "nmi": 0.174405,
+      "leaf_gated": true,
+      "score": 0.682222
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "a2:1 and a3:1",
+       "source": "pair",
+       "score": 0.682222,
+       "r2": 0.302545,
+       "auc": 0.841111,
+       "mi": 0.331787
+      },
+      {
+       "concept": "a2:1 and a4:1",
+       "source": "pair",
+       "score": 0.671524,
+       "r2": 0.266103,
+       "auc": 0.835762,
+       "mi": 0.301852
+      },
+      {
+       "concept": "a3:1 and a4:1",
+       "source": "pair",
+       "score": 0.65432,
+       "r2": 0.279064,
+       "auc": 0.82716,
+       "mi": 0.307478
+      }
+     ]
+    }
+   }
+  },
+  "direct_first_value_tally": {
+   "id": "ann_32",
+   "exit_nodes": [
+    "identity_0"
+   ],
+   "n_exits": 1,
+   "gated": false,
+   "variables": [
+    "a1",
+    "a2",
+    "a3",
+    "a4",
+    "a5",
+    "a6"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 62,
+   "score": 0.767702,
+   "grade": "partial",
+   "best_concepts": [
+    "a1:1 and a2:1"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.210954,
+   "auc": 0.883851,
+   "mi": 0.163036,
+   "meaning": {
+    "grade": "partial",
+    "concept": "a1:1 and a2:1",
+    "probe": {
+     "r2": 0.210954,
+     "auc": 0.883851,
+     "mi": 0.163036,
+     "n": 345,
+     "score": 0.767702,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "identity_0": {
+     "best": {
+      "concept": "a1:1 and a2:1",
+      "kind": "binary",
+      "source": "pair",
+      "n": 345,
+      "r2": 0.210954,
+      "auc": 0.883851,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.163036,
+      "nmi": 0.049088,
+      "leaf_gated": false,
+      "score": 0.767702
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "a1:1 and a2:1",
+       "source": "pair",
+       "score": 0.767702,
+       "r2": 0.210954,
+       "auc": 0.883851,
+       "mi": 0.163036
+      },
+      {
+       "concept": "a1:1 and a4:1",
+       "source": "pair",
+       "score": 0.75377,
+       "r2": 0.200984,
+       "auc": 0.876885,
+       "mi": 0.17947
+      },
+      {
+       "concept": "a2:1 and a4:1",
+       "source": "pair",
+       "score": 0.636036,
+       "r2": 0.141613,
+       "auc": 0.818018,
+       "mi": 0.143703
+      }
+     ]
+    }
+   }
+  },
+  "a5_not_first_lift": {
+   "id": "ann_28",
+   "exit_nodes": [
+    "1223"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "a1",
+    "a3",
+    "a4",
+    "a5",
+    "a6"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 62,
+   "score": 1.0,
+   "grade": "meaningful",
+   "best_concepts": [
+    "a5:1"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.5406,
+   "auc": 1.0,
+   "mi": 0.814706,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "a5:1",
+    "probe": {
+     "r2": 0.5406,
+     "auc": 1.0,
+     "mi": 0.814706,
+     "n": 345,
+     "score": 1.0,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "1223": {
+     "best": {
+      "concept": "a5:1",
+      "kind": "binary",
+      "source": "level",
+      "n": 345,
+      "r2": 0.5406,
+      "auc": 1.0,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit lower when the concept holds",
+      "mi": 0.814706,
+      "nmi": 0.256315,
+      "leaf_gated": true,
+      "score": 1.0
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "a5:1",
+       "source": "level",
+       "score": 1.0,
+       "r2": 0.5406,
+       "auc": 1.0,
+       "mi": 0.814706
+      },
+      {
+       "concept": "a3:2 and a5:1",
+       "source": "pair",
+       "score": 1.0,
+       "r2": 0.280337,
+       "auc": 1.0,
+       "mi": 0.517583
+      },
+      {
+       "concept": "a4:2 and a5:1",
+       "source": "pair",
+       "score": 0.868168,
+       "r2": 0.197317,
+       "auc": 0.934084,
+       "mi": 0.221717
+      }
+     ]
+    }
+   }
+  },
+  "a5_middle_levels": {
+   "id": "ann_29",
+   "exit_nodes": [
+    "1751"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "a5"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 23,
+   "score": 0.670542,
+   "grade": "partial",
+   "best_concepts": [
+    "a5:1"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.33917,
+   "auc": 0.835271,
+   "mi": 0.316203,
+   "meaning": {
+    "grade": "partial",
+    "concept": "a5:1",
+    "probe": {
+     "r2": 0.33917,
+     "auc": 0.835271,
+     "mi": 0.316203,
+     "n": 345,
+     "score": 0.670542,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "1751": {
+     "best": {
+      "concept": "a5:1",
+      "kind": "binary",
+      "source": "level",
+      "n": 345,
+      "r2": 0.33917,
+      "auc": 0.835271,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit lower when the concept holds",
+      "mi": 0.316203,
+      "nmi": 0.316205,
+      "leaf_gated": true,
+      "score": 0.670542
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "a5:1",
+       "source": "level",
+       "score": 0.670542,
+       "r2": 0.33917,
+       "auc": 0.835271,
+       "mi": 0.316203
+      },
+      {
+       "concept": "a5:2",
+       "source": "level",
+       "score": 0.666666,
+       "r2": 0.33526,
+       "auc": 0.833333,
+       "mi": 0.313268
+      },
+      {
+       "concept": "a5:3",
+       "source": "level",
+       "score": 0.665384,
+       "r2": 0.328824,
+       "auc": 0.832692,
+       "mi": 0.306983
+      }
+     ]
+    }
+   }
+  },
+  "a1_second_value_offset": {
+   "id": "ann_30",
+   "exit_nodes": [
+    "1948"
+   ],
+   "n_exits": 1,
+   "gated": false,
+   "variables": [
+    "a1"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 20,
+   "score": 1.0,
+   "grade": "meaningful",
+   "best_concepts": [
+    "a1:2"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 1.0,
+   "auc": 1.0,
+   "mi": 0.921167,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "a1:2",
+    "probe": {
+     "r2": 1.0,
+     "auc": 1.0,
+     "mi": 0.921167,
+     "n": 345,
+     "score": 1.0,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "1948": {
+     "best": {
+      "concept": "a1:2",
+      "kind": "binary",
+      "source": "level",
+      "n": 345,
+      "r2": 1.0,
+      "auc": 1.0,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit lower when the concept holds",
+      "mi": 0.921167,
+      "nmi": 1.0,
+      "leaf_gated": false,
+      "score": 1.0
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "a1:2",
+       "source": "level",
+       "score": 1.0,
+       "r2": 1.0,
+       "auc": 1.0,
+       "mi": 0.921167
+      },
+      {
+       "concept": "a1:1",
+       "source": "level",
+       "score": 0.52018,
+       "r2": 0.277126,
+       "auc": 0.76009,
+       "mi": 0.27555
+      },
+      {
+       "concept": "a1:3",
+       "source": "level",
+       "score": 0.487394,
+       "r2": 0.227735,
+       "auc": 0.743697,
+       "mi": 0.231628
+      }
+     ]
+    }
+   }
+  },
+  "dead_a3_second": {
+   "id": "ann_31",
+   "exit_nodes": [
+    "927"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "a3"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 18,
+   "score": 0.0,
+   "grade": "closed_form_only",
+   "best_concepts": [
+    "a1:1"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": null,
+   "auc": 0.5,
+   "mi": 0.0,
+   "meaning": {
+    "grade": "closed_form_only",
+    "concept": "a1:1",
+    "probe": {
+     "r2": null,
+     "auc": 0.5,
+     "mi": 0.0,
+     "n": 345,
+     "score": 0.0,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "927": {
+     "best": {
+      "concept": "a1:1",
+      "kind": "binary",
+      "source": "level",
+      "n": 345,
+      "r2": null,
+      "auc": 0.5,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.0,
+      "nmi": null,
+      "leaf_gated": false,
+      "score": 0.0
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "a1:1",
+       "source": "level",
+       "score": 0.0,
+       "r2": null,
+       "auc": 0.5,
+       "mi": 0.0
+      },
+      {
+       "concept": "a1:2",
+       "source": "level",
+       "score": 0.0,
+       "r2": null,
+       "auc": 0.5,
+       "mi": 0.0
+      },
+      {
+       "concept": "a1:3",
+       "source": "level",
+       "score": 0.0,
+       "r2": null,
+       "auc": 0.5,
+       "mi": 0.0
+      }
+     ]
+    }
+   }
+  }
+ }
+}

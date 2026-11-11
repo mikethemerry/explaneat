@@ -1,0 +1,779 @@
+{
+ "label": "lad-f6c4c",
+ "genome_id": "3feef87b-1996-45db-8f5d-f1b8c392a926",
+ "set": "ladder",
+ "study": "ladder",
+ "records_dir": "explanations",
+ "dataset": "ladder_syn_65dee",
+ "n_train": 24000,
+ "computed_at": "2026-11-11T22:34:39+00:00",
+ "method": "experiments/explanation_levels/compute_levels.py (read only; probes not stored, query_id null)",
+ "levels": {
+  "faithful": {
+   "function_preservation_max_abs_err": 0.0,
+   "closed_form_max_abs_err": 0.01348794676011611,
+   "passed": true,
+   "test": "max |output(explained model) - output(phenotype)| over the training rows < 1e-9"
+  },
+  "decomposed": {
+   "n_leaves": 6,
+   "n_compositions": 1,
+   "hidden_units": 8,
+   "granularity": 1.0,
+   "largest_part": {
+    "name": "urbanNonSmokingWomanLowerer",
+    "hidden_units": 2,
+    "width": 2,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.2292
+   },
+   "max_width": 2,
+   "max_depth": 1,
+   "warnings": [],
+   "passed": true,
+   "test": "share of hidden units whose part is at most 6 units wide (depth not penalised); no part wider than that holds half the units"
+  },
+  "understood": {
+   "leaves": 6,
+   "graded": 6,
+   "counts": {
+    "meaningful": 3,
+    "partial": 3,
+    "closed_form_only": 0,
+    "unnamed": 0
+   },
+   "grades": {
+    "fewFlagsRaiser": "meaningful",
+    "nonSmokingManLowerer": "partial",
+    "smokerOrRuralLowerer": "meaningful",
+    "urbanNonSmokingWomanLowerer": "partial",
+    "urbanNonSmokingManRaiser": "partial",
+    "smokerOrFemaleRaiser": "meaningful"
+   },
+   "understood_fraction": 0.5,
+   "partial_fraction": 0.5,
+   "closed_form_only_fraction": 0.0,
+   "unnamed_fraction": 0.0,
+   "concepts": {
+    "fewFlagsRaiser": "female and urban",
+    "nonSmokingManLowerer": "age * female",
+    "smokerOrRuralLowerer": "urban",
+    "urbanNonSmokingWomanLowerer": "female and urban",
+    "urbanNonSmokingManRaiser": "bmi * female",
+    "smokerOrFemaleRaiser": "smoker and female"
+   },
+   "test": "concept probe per leaf: meaningful r2 >= 0.8 or AUC >= 0.9; partial r2 >= 0.5 or AUC >= 0.75; else closed_form_only; unnamed when no concept was probed",
+   "ground_truth": {
+    "task": "parity3",
+    "arch": "8",
+    "family": "synthetic",
+    "gt_recovery": "recovered (at the root; the leaves are not the true terms)",
+    "gt_terms_recovered": "3",
+    "gt_terms_total": "3",
+    "explainer_leaf_grades": {
+     "fewFlagsRaiser": "meaningful",
+     "smokerOrRuralLowerer": "meaningful",
+     "urbanNonSmokingWomanLowerer": "meaningful",
+     "smokerOrFemaleRaiser": "meaningful",
+     "urbanNonSmokingManRaiser": "partial",
+     "nonSmokingManLowerer": "meaningful"
+    },
+    "truth": "f = 1.5*(4*parity(smoker, female, urban) - 2 + 0.5 za)"
+   },
+   "domain_only": null
+  }
+ },
+ "decomposition": {
+  "hidden_units": 8,
+  "small_width_max_units": 6,
+  "granularity": 1.0,
+  "largest_part": {
+   "name": "urbanNonSmokingWomanLowerer",
+   "hidden_units": 2,
+   "width": 2,
+   "depth": 1,
+   "leaf": true,
+   "param_share": 0.2292
+  },
+  "max_width": 2,
+  "max_depth": 1,
+  "units_only_in_root": 0,
+  "units_only_as_entries": 0,
+  "parts": {
+   "fewFlagsRaiser": {
+    "units": 2,
+    "width": 2,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.2292
+   },
+   "urbanNonSmokingWomanLowerer": {
+    "units": 2,
+    "width": 2,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.2292
+   },
+   "nonSmokingManLowerer": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.1146
+   },
+   "smokerOrFemaleRaiser": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.1146
+   },
+   "smokerOrRuralLowerer": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.1146
+   },
+   "urbanNonSmokingManRaiser": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.1146
+   }
+  },
+  "warnings": []
+ },
+ "leaves": {
+  "fewFlagsRaiser": {
+   "id": "ann_40",
+   "exit_nodes": [
+    "1",
+    "4"
+   ],
+   "n_exits": 2,
+   "gated": true,
+   "variables": [
+    "age",
+    "income",
+    "bmi",
+    "visits",
+    "score",
+    "smoker",
+    "female",
+    "urban",
+    "insured",
+    "noise"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 61,
+   "score": 0.833471,
+   "grade": "meaningful",
+   "best_concepts": [
+    "female and urban"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.236549,
+   "auc": 0.916735,
+   "mi": 0.522354,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "female and urban",
+    "probe": {
+     "r2": 0.236549,
+     "auc": 0.916735,
+     "mi": 0.522354,
+     "n": 24000,
+     "score": 0.833471,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "1": {
+     "best": {
+      "concept": "female and urban",
+      "kind": "binary",
+      "source": "pair",
+      "n": 24000,
+      "r2": 0.27224,
+      "auc": 0.934346,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit lower when the concept holds",
+      "mi": 0.567605,
+      "nmi": 0.189337,
+      "leaf_gated": true,
+      "score": 0.868692
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "female and urban",
+       "source": "pair",
+       "score": 0.868692,
+       "r2": 0.27224,
+       "auc": 0.934346,
+       "mi": 0.567605
+      },
+      {
+       "concept": "female",
+       "source": "level",
+       "score": 0.702498,
+       "r2": 0.341407,
+       "auc": 0.851249,
+       "mi": 0.369305
+      },
+      {
+       "concept": "urban",
+       "source": "level",
+       "score": 0.686116,
+       "r2": 0.411741,
+       "auc": 0.843058,
+       "mi": 0.372065
+      }
+     ]
+    },
+    "4": {
+     "best": {
+      "concept": "female and urban",
+      "kind": "binary",
+      "source": "pair",
+      "n": 24000,
+      "r2": 0.200858,
+      "auc": 0.899125,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit lower when the concept holds",
+      "mi": 0.477102,
+      "nmi": 0.16692,
+      "leaf_gated": true,
+      "score": 0.79825
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "female and urban",
+       "source": "pair",
+       "score": 0.79825,
+       "r2": 0.200858,
+       "auc": 0.899125,
+       "mi": 0.477102
+      },
+      {
+       "concept": "female",
+       "source": "level",
+       "score": 0.667022,
+       "r2": 0.311543,
+       "auc": 0.833511,
+       "mi": 0.328321
+      },
+      {
+       "concept": "smoker and urban",
+       "source": "pair",
+       "score": 0.66555,
+       "r2": 0.104824,
+       "auc": 0.832775,
+       "mi": 0.226094
+      }
+     ]
+    }
+   }
+  },
+  "nonSmokingManLowerer": {
+   "id": "ann_45",
+   "exit_nodes": [
+    "8"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "age",
+    "income",
+    "bmi",
+    "visits",
+    "score",
+    "smoker",
+    "female",
+    "urban",
+    "insured",
+    "noise"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 61,
+   "score": 0.760576,
+   "grade": "partial",
+   "best_concepts": [
+    "age * female"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.303129,
+   "auc": 0.880288,
+   "mi": 0.484753,
+   "meaning": {
+    "grade": "partial",
+    "concept": "age * female",
+    "probe": {
+     "r2": 0.303129,
+     "auc": 0.880288,
+     "mi": 0.484753,
+     "n": 24000,
+     "score": 0.760576,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "8": {
+     "best": {
+      "concept": "age * female",
+      "kind": "continuous",
+      "source": "pair",
+      "n": 24000,
+      "r2": 0.303129,
+      "auc": 0.880288,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is low",
+      "mi": 0.484753,
+      "nmi": 0.226653,
+      "leaf_gated": true,
+      "score": 0.760576
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "age * female",
+       "source": "pair",
+       "score": 0.760576,
+       "r2": 0.303129,
+       "auc": 0.880288,
+       "mi": 0.484753
+      },
+      {
+       "concept": "score * female",
+       "source": "pair",
+       "score": 0.758474,
+       "r2": 0.203513,
+       "auc": 0.879237,
+       "mi": 0.48239
+      },
+      {
+       "concept": "income * female",
+       "source": "pair",
+       "score": 0.756666,
+       "r2": 0.217724,
+       "auc": 0.878333,
+       "mi": 0.478949
+      }
+     ]
+    }
+   }
+  },
+  "smokerOrRuralLowerer": {
+   "id": "ann_41",
+   "exit_nodes": [
+    "2"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "age",
+    "income",
+    "bmi",
+    "visits",
+    "score",
+    "smoker",
+    "female",
+    "urban",
+    "insured",
+    "noise"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 61,
+   "score": 0.883486,
+   "grade": "meaningful",
+   "best_concepts": [
+    "urban"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.424752,
+   "auc": 0.941743,
+   "mi": 0.735517,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "urban",
+    "probe": {
+     "r2": 0.424752,
+     "auc": 0.941743,
+     "mi": 0.735517,
+     "n": 24000,
+     "score": 0.883486,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "2": {
+     "best": {
+      "concept": "urban",
+      "kind": "binary",
+      "source": "level",
+      "n": 24000,
+      "r2": 0.424752,
+      "auc": 0.941743,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit lower when the concept holds",
+      "mi": 0.735517,
+      "nmi": 0.257842,
+      "leaf_gated": true,
+      "score": 0.883486
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "urban",
+       "source": "level",
+       "score": 0.883486,
+       "r2": 0.424752,
+       "auc": 0.941743,
+       "mi": 0.735517
+      },
+      {
+       "concept": "bmi * urban",
+       "source": "pair",
+       "score": 0.747832,
+       "r2": 0.396797,
+       "auc": 0.873916,
+       "mi": 0.757556
+      },
+      {
+       "concept": "age * urban",
+       "source": "pair",
+       "score": 0.741302,
+       "r2": 0.375936,
+       "auc": 0.870651,
+       "mi": 0.755185
+      }
+     ]
+    }
+   }
+  },
+  "urbanNonSmokingWomanLowerer": {
+   "id": "ann_42",
+   "exit_nodes": [
+    "3",
+    "6"
+   ],
+   "n_exits": 2,
+   "gated": true,
+   "variables": [
+    "age",
+    "income",
+    "bmi",
+    "visits",
+    "score",
+    "smoker",
+    "female",
+    "urban",
+    "insured",
+    "noise"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 61,
+   "score": 0.756879,
+   "grade": "partial",
+   "best_concepts": [
+    "female and urban"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.601212,
+   "auc": 0.87844,
+   "mi": 0.511683,
+   "meaning": {
+    "grade": "partial",
+    "concept": "female and urban",
+    "probe": {
+     "r2": 0.601212,
+     "auc": 0.87844,
+     "mi": 0.511683,
+     "n": 24000,
+     "score": 0.756879,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "3": {
+     "best": {
+      "concept": "female and urban",
+      "kind": "binary",
+      "source": "pair",
+      "n": 24000,
+      "r2": 0.564952,
+      "auc": 0.836457,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.448615,
+      "nmi": 0.197893,
+      "leaf_gated": true,
+      "score": 0.672914
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "female and urban",
+       "source": "pair",
+       "score": 0.672914,
+       "r2": 0.564952,
+       "auc": 0.836457,
+       "mi": 0.448615
+      },
+      {
+       "concept": "female",
+       "source": "level",
+       "score": 0.517074,
+       "r2": 0.272088,
+       "auc": 0.758537,
+       "mi": 0.262731
+      },
+      {
+       "concept": "smoker",
+       "source": "level",
+       "score": 0.510442,
+       "r2": 0.136823,
+       "auc": 0.755221,
+       "mi": 0.205672
+      }
+     ]
+    },
+    "6": {
+     "best": {
+      "concept": "female and urban",
+      "kind": "binary",
+      "source": "pair",
+      "n": 24000,
+      "r2": 0.637471,
+      "auc": 0.920422,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.57475,
+      "nmi": 0.326032,
+      "leaf_gated": true,
+      "score": 0.840844
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "female and urban",
+       "source": "pair",
+       "score": 0.840844,
+       "r2": 0.637471,
+       "auc": 0.920422,
+       "mi": 0.57475
+      },
+      {
+       "concept": "income * female",
+       "source": "pair",
+       "score": 0.598902,
+       "r2": 0.175349,
+       "auc": 0.799451,
+       "mi": 0.282115
+      },
+      {
+       "concept": "score * female",
+       "source": "pair",
+       "score": 0.580992,
+       "r2": 0.147252,
+       "auc": 0.790496,
+       "mi": 0.290131
+      }
+     ]
+    }
+   }
+  },
+  "urbanNonSmokingManRaiser": {
+   "id": "ann_44",
+   "exit_nodes": [
+    "7"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "age",
+    "income",
+    "bmi",
+    "visits",
+    "score",
+    "smoker",
+    "female",
+    "urban",
+    "insured",
+    "noise"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 61,
+   "score": 0.619096,
+   "grade": "partial",
+   "best_concepts": [
+    "bmi * female"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.255596,
+   "auc": 0.809548,
+   "mi": 0.302566,
+   "meaning": {
+    "grade": "partial",
+    "concept": "bmi * female",
+    "probe": {
+     "r2": 0.255596,
+     "auc": 0.809548,
+     "mi": 0.302566,
+     "n": 24000,
+     "score": 0.619096,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "7": {
+     "best": {
+      "concept": "bmi * female",
+      "kind": "continuous",
+      "source": "pair",
+      "n": 24000,
+      "r2": 0.255596,
+      "auc": 0.809548,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is low",
+      "mi": 0.302566,
+      "nmi": 0.158998,
+      "leaf_gated": true,
+      "score": 0.619096
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "bmi * female",
+       "source": "pair",
+       "score": 0.619096,
+       "r2": 0.255596,
+       "auc": 0.809548,
+       "mi": 0.302566
+      },
+      {
+       "concept": "score * female",
+       "source": "pair",
+       "score": 0.614122,
+       "r2": 0.165576,
+       "auc": 0.807061,
+       "mi": 0.298723
+      },
+      {
+       "concept": "income * female",
+       "source": "pair",
+       "score": 0.607442,
+       "r2": 0.176204,
+       "auc": 0.803721,
+       "mi": 0.293878
+      }
+     ]
+    }
+   }
+  },
+  "smokerOrFemaleRaiser": {
+   "id": "ann_43",
+   "exit_nodes": [
+    "5"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "age",
+    "income",
+    "bmi",
+    "visits",
+    "score",
+    "smoker",
+    "female",
+    "urban",
+    "insured",
+    "noise"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 61,
+   "score": 0.987246,
+   "grade": "meaningful",
+   "best_concepts": [
+    "smoker and female"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.589439,
+   "auc": 0.993623,
+   "mi": 0.494123,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "smoker and female",
+    "probe": {
+     "r2": 0.589439,
+     "auc": 0.993623,
+     "mi": 0.494123,
+     "n": 24000,
+     "score": 0.987246,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "5": {
+     "best": {
+      "concept": "smoker and female",
+      "kind": "binary",
+      "source": "pair",
+      "n": 24000,
+      "r2": 0.589439,
+      "auc": 0.993623,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.494123,
+      "nmi": 0.156539,
+      "leaf_gated": true,
+      "score": 0.987246
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "smoker and female",
+       "source": "pair",
+       "score": 0.987246,
+       "r2": 0.589439,
+       "auc": 0.993623,
+       "mi": 0.494123
+      },
+      {
+       "concept": "female",
+       "source": "level",
+       "score": 0.764624,
+       "r2": 0.386068,
+       "auc": 0.882312,
+       "mi": 0.450519
+      },
+      {
+       "concept": "smoker",
+       "source": "level",
+       "score": 0.741884,
+       "r2": 0.408262,
+       "auc": 0.870942,
+       "mi": 0.363793
+      }
+     ]
+    }
+   }
+  }
+ }
+}

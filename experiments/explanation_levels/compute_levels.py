@@ -168,6 +168,8 @@ def compute_one(t, set_name: str, lmeta, gt, cache: bool = True):
         if rep.get("decomposition") and leaves and any(l.get("library") in ("c4", "krk") for l in leaves.values()) else None)
     return {
         "label": t["label"], "genome_id": t["genome_id"], "set": set_name, "study": study_of(t["label"], set_name),
+        # the record set these levels belong to (build_explanations_csv.py fills its columns only for it)
+        "records_dir": SETS[set_name]["records"].name if SETS[set_name]["records"] else None,
         "dataset": vm.base.dataset_name, "n_train": int(vm.base.X_train.shape[0]),
         "computed_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "method": "experiments/explanation_levels/compute_levels.py (read only; probes not stored, query_id null)",

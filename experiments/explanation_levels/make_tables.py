@@ -164,7 +164,10 @@ def tex_table(rows):
         if did_rule and name == next(n for n, _ in groups if n not in [STUDIES[k] for k in PREREG]):
             L.append(r"\multicolumn{10}{@{}l}{\emph{Additional analyses and the ladder (not pre-registered)}} \\")
         dom = mmm([r["domain"] for r in g], pct=True) if any(r["domain"] is not None for r in g) else "--"
-        L.append(f"{name} & {len(g)} & {sci(max(r['faithful'] for r in g)).replace('e-', 'e--')} & "
+        worst = max(r["faithful"] for r in g)
+        m, e = f"{worst:.1e}".split("e")
+        worst_tex = "0" if worst == 0 else f"${m}\\times10^{{{int(e)}}}$"
+        L.append(f"{name} & {len(g)} & {worst_tex} & "
                  f"{t(mmm_int([r['n_leaves'] for r in g]))} & {t(mmm([r['granularity'] for r in g]))} & "
                  f"{sum(r['coarse'] for r in g)} & {t(mmm([r['understood'] for r in g], pct=True))} & "
                  f"{t(mmm([r['partial'] for r in g], pct=True))} & {t(mmm([r['cfo'] for r in g], pct=True))} & {t(dom)} \\\\")

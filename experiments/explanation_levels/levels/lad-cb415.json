@@ -1,0 +1,780 @@
+{
+ "label": "lad-cb415",
+ "genome_id": "face2eeb-c7f0-41fa-907f-698d49c850e4",
+ "set": "ladder",
+ "study": "ladder",
+ "records_dir": "explanations",
+ "dataset": "ladder_syn_4bee6",
+ "n_train": 24000,
+ "computed_at": "2026-11-11T22:32:44+00:00",
+ "method": "experiments/explanation_levels/compute_levels.py (read only; probes not stored, query_id null)",
+ "levels": {
+  "faithful": {
+   "function_preservation_max_abs_err": 0.0,
+   "closed_form_max_abs_err": 0.05552021688414399,
+   "passed": true,
+   "test": "max |output(explained model) - output(phenotype)| over the training rows < 1e-9"
+  },
+  "decomposed": {
+   "n_leaves": 6,
+   "n_compositions": 1,
+   "hidden_units": 8,
+   "granularity": 1.0,
+   "largest_part": {
+    "name": "young_female_lowering",
+    "hidden_units": 2,
+    "width": 2,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.2292
+   },
+   "max_width": 2,
+   "max_depth": 1,
+   "warnings": [],
+   "passed": true,
+   "test": "share of hidden units whose part is at most 6 units wide (depth not penalised); no part wider than that holds half the units"
+  },
+  "understood": {
+   "leaves": 6,
+   "graded": 6,
+   "counts": {
+    "meaningful": 3,
+    "partial": 3,
+    "closed_form_only": 0,
+    "unnamed": 0
+   },
+   "grades": {
+    "young_female_lowering": "partial",
+    "age_bmi_rise": "meaningful",
+    "income_low_score_lowering": "partial",
+    "score_rural_rise": "partial",
+    "visits_smoker_rise": "meaningful",
+    "young_uninsured_lowering": "meaningful"
+   },
+   "understood_fraction": 0.5,
+   "partial_fraction": 0.5,
+   "closed_form_only_fraction": 0.0,
+   "unnamed_fraction": 0.0,
+   "concepts": {
+    "young_female_lowering": "age, female",
+    "age_bmi_rise": "age * bmi",
+    "income_low_score_lowering": "income",
+    "score_rural_rise": "score",
+    "visits_smoker_rise": "visits",
+    "young_uninsured_lowering": "age * insured"
+   },
+   "test": "concept probe per leaf: meaningful r2 >= 0.8 or AUC >= 0.9; partial r2 >= 0.5 or AUC >= 0.75; else closed_form_only; unnamed when no concept was probed",
+   "ground_truth": {
+    "task": "hinges6",
+    "arch": "8",
+    "family": "synthetic",
+    "gt_recovery": "mostly recovered (5 of 6 hinges as their own leaves)",
+    "gt_terms_recovered": "6",
+    "gt_terms_total": "7",
+    "explainer_leaf_grades": {
+     "age_bmi_rise": "meaningful",
+     "young_female_lowering": "meaningful",
+     "young_uninsured_lowering": "closed-form-only",
+     "score_rural_rise": "meaningful",
+     "income_low_score_lowering": "meaningful",
+     "visits_smoker_rise": "meaningful"
+    },
+    "truth": "f = 2*(-0.5 + sum of 6 hinges: +1.5 relu(-0.5 + za + 0.8 zb), -1.2 relu(-0.3 + zi - 0.7 zs), +1.0 relu(-1 + zv + smoker), -1.5 relu(-0.4 - 0.8 za + 1.2 female), +1.2 relu(zs - urban - 0.5 zb), +1.0 relu(0.2 + 0.7 zi - 1.5 insured + 0.5 za))"
+   },
+   "domain_only": null
+  }
+ },
+ "decomposition": {
+  "hidden_units": 8,
+  "small_width_max_units": 6,
+  "granularity": 1.0,
+  "largest_part": {
+   "name": "young_female_lowering",
+   "hidden_units": 2,
+   "width": 2,
+   "depth": 1,
+   "leaf": true,
+   "param_share": 0.2292
+  },
+  "max_width": 2,
+  "max_depth": 1,
+  "units_only_in_root": 0,
+  "units_only_as_entries": 0,
+  "parts": {
+   "age_bmi_rise": {
+    "units": 2,
+    "width": 2,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.2292
+   },
+   "young_female_lowering": {
+    "units": 2,
+    "width": 2,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.2292
+   },
+   "income_low_score_lowering": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.1146
+   },
+   "score_rural_rise": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.1146
+   },
+   "visits_smoker_rise": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.1146
+   },
+   "young_uninsured_lowering": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.1146
+   }
+  },
+  "warnings": []
+ },
+ "leaves": {
+  "young_female_lowering": {
+   "id": "ann_41",
+   "exit_nodes": [
+    "2",
+    "3"
+   ],
+   "n_exits": 2,
+   "gated": true,
+   "variables": [
+    "age",
+    "income",
+    "bmi",
+    "visits",
+    "score",
+    "smoker",
+    "female",
+    "urban",
+    "insured",
+    "noise"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 61,
+   "score": 0.692365,
+   "grade": "partial",
+   "best_concepts": [
+    "age",
+    "female"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.402531,
+   "auc": 0.846183,
+   "mi": 0.639336,
+   "meaning": {
+    "grade": "partial",
+    "concept": "age, female",
+    "probe": {
+     "r2": 0.402531,
+     "auc": 0.846183,
+     "mi": 0.639336,
+     "n": 24000,
+     "score": 0.692365,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "2": {
+     "best": {
+      "concept": "age",
+      "kind": "continuous",
+      "source": "input",
+      "n": 24000,
+      "r2": 0.458927,
+      "auc": 0.837311,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is low",
+      "mi": 0.941843,
+      "nmi": 0.335638,
+      "leaf_gated": true,
+      "score": 0.674622
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "age",
+       "source": "input",
+       "score": 0.674622,
+       "r2": 0.458927,
+       "auc": 0.837311,
+       "mi": 0.941843
+      },
+      {
+       "concept": "female",
+       "source": "level",
+       "score": 0.674204,
+       "r2": 0.308731,
+       "auc": 0.837102,
+       "mi": 0.308369
+      },
+      {
+       "concept": "age > 50",
+       "source": "threshold",
+       "score": 0.59919,
+       "r2": 0.287231,
+       "auc": 0.799595,
+       "mi": 0.309918
+      }
+     ]
+    },
+    "3": {
+     "best": {
+      "concept": "female",
+      "kind": "binary",
+      "source": "level",
+      "n": 24000,
+      "r2": 0.346134,
+      "auc": 0.855054,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.336829,
+      "nmi": 0.115143,
+      "leaf_gated": true,
+      "score": 0.710108
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "female",
+       "source": "level",
+       "score": 0.710108,
+       "r2": 0.346134,
+       "auc": 0.855054,
+       "mi": 0.336829
+      },
+      {
+       "concept": "female and urban",
+       "source": "pair",
+       "score": 0.641412,
+       "r2": 0.266467,
+       "auc": 0.820706,
+       "mi": 0.213575
+      },
+      {
+       "concept": "age",
+       "source": "input",
+       "score": 0.627084,
+       "r2": 0.410883,
+       "auc": 0.813542,
+       "mi": 0.540664
+      }
+     ]
+    }
+   }
+  },
+  "age_bmi_rise": {
+   "id": "ann_40",
+   "exit_nodes": [
+    "1",
+    "4"
+   ],
+   "n_exits": 2,
+   "gated": true,
+   "variables": [
+    "age",
+    "income",
+    "bmi",
+    "visits",
+    "score",
+    "smoker",
+    "female",
+    "urban",
+    "insured",
+    "noise"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 61,
+   "score": 0.958656,
+   "grade": "meaningful",
+   "best_concepts": [
+    "age * bmi"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.645116,
+   "auc": 0.979328,
+   "mi": 0.958683,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "age * bmi",
+    "probe": {
+     "r2": 0.645116,
+     "auc": 0.979328,
+     "mi": 0.958683,
+     "n": 24000,
+     "score": 0.958656,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "1": {
+     "best": {
+      "concept": "age * bmi",
+      "kind": "continuous",
+      "source": "pair",
+      "n": 24000,
+      "r2": 0.664485,
+      "auc": 0.981715,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 1.014246,
+      "nmi": 0.461663,
+      "leaf_gated": true,
+      "score": 0.96343
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "age * bmi",
+       "source": "pair",
+       "score": 0.96343,
+       "r2": 0.664485,
+       "auc": 0.981715,
+       "mi": 1.014246
+      },
+      {
+       "concept": "age",
+       "source": "input",
+       "score": 0.719594,
+       "r2": 0.359555,
+       "auc": 0.859797,
+       "mi": 0.388442
+      },
+      {
+       "concept": "bmi",
+       "source": "input",
+       "score": 0.589276,
+       "r2": 0.234626,
+       "auc": 0.794638,
+       "mi": 0.230072
+      }
+     ]
+    },
+    "4": {
+     "best": {
+      "concept": "age * bmi",
+      "kind": "continuous",
+      "source": "pair",
+      "n": 24000,
+      "r2": 0.625747,
+      "auc": 0.976941,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.90312,
+      "nmi": 0.426806,
+      "leaf_gated": true,
+      "score": 0.953882
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "age * bmi",
+       "source": "pair",
+       "score": 0.953882,
+       "r2": 0.625747,
+       "auc": 0.976941,
+       "mi": 0.90312
+      },
+      {
+       "concept": "age",
+       "source": "input",
+       "score": 0.737312,
+       "r2": 0.351898,
+       "auc": 0.868656,
+       "mi": 0.390887
+      },
+      {
+       "concept": "age * income",
+       "source": "pair",
+       "score": 0.59334,
+       "r2": 0.317965,
+       "auc": 0.79667,
+       "mi": 0.234963
+      }
+     ]
+    }
+   }
+  },
+  "income_low_score_lowering": {
+   "id": "ann_44",
+   "exit_nodes": [
+    "8"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "age",
+    "income",
+    "bmi",
+    "visits",
+    "score",
+    "smoker",
+    "female",
+    "urban",
+    "insured",
+    "noise"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 61,
+   "score": 0.678902,
+   "grade": "partial",
+   "best_concepts": [
+    "income"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.669591,
+   "auc": 0.839451,
+   "mi": 0.56466,
+   "meaning": {
+    "grade": "partial",
+    "concept": "income",
+    "probe": {
+     "r2": 0.669591,
+     "auc": 0.839451,
+     "mi": 0.56466,
+     "n": 24000,
+     "score": 0.678902,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "8": {
+     "best": {
+      "concept": "income",
+      "kind": "continuous",
+      "source": "input",
+      "n": 24000,
+      "r2": 0.669591,
+      "auc": 0.839451,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.56466,
+      "nmi": 0.216328,
+      "leaf_gated": true,
+      "score": 0.678902
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "income",
+       "source": "input",
+       "score": 0.678902,
+       "r2": 0.669591,
+       "auc": 0.839451,
+       "mi": 0.56466
+      },
+      {
+       "concept": "income * bmi",
+       "source": "pair",
+       "score": 0.634138,
+       "r2": 0.585341,
+       "auc": 0.817069,
+       "mi": 0.446728
+      },
+      {
+       "concept": "score",
+       "source": "input",
+       "score": 0.6308,
+       "r2": 0.159519,
+       "auc": 0.8154,
+       "mi": 0.258145
+      }
+     ]
+    }
+   }
+  },
+  "score_rural_rise": {
+   "id": "ann_43",
+   "exit_nodes": [
+    "5"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "age",
+    "income",
+    "bmi",
+    "visits",
+    "score",
+    "smoker",
+    "female",
+    "urban",
+    "insured",
+    "noise"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 61,
+   "score": 0.791334,
+   "grade": "partial",
+   "best_concepts": [
+    "score"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.340476,
+   "auc": 0.895667,
+   "mi": 0.424465,
+   "meaning": {
+    "grade": "partial",
+    "concept": "score",
+    "probe": {
+     "r2": 0.340476,
+     "auc": 0.895667,
+     "mi": 0.424465,
+     "n": 24000,
+     "score": 0.791334,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "5": {
+     "best": {
+      "concept": "score",
+      "kind": "continuous",
+      "source": "input",
+      "n": 24000,
+      "r2": 0.340476,
+      "auc": 0.895667,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.424465,
+      "nmi": 0.202203,
+      "leaf_gated": true,
+      "score": 0.791334
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "score",
+       "source": "input",
+       "score": 0.791334,
+       "r2": 0.340476,
+       "auc": 0.895667,
+       "mi": 0.424465
+      },
+      {
+       "concept": "age * score",
+       "source": "pair",
+       "score": 0.725812,
+       "r2": 0.286679,
+       "auc": 0.862906,
+       "mi": 0.331989
+      },
+      {
+       "concept": "income * score",
+       "source": "pair",
+       "score": 0.691694,
+       "r2": 0.286654,
+       "auc": 0.845847,
+       "mi": 0.300362
+      }
+     ]
+    }
+   }
+  },
+  "visits_smoker_rise": {
+   "id": "ann_45",
+   "exit_nodes": [
+    "7"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "age",
+    "income",
+    "bmi",
+    "visits",
+    "score",
+    "smoker",
+    "female",
+    "urban",
+    "insured",
+    "noise"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 61,
+   "score": 0.853952,
+   "grade": "meaningful",
+   "best_concepts": [
+    "visits"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.57604,
+   "auc": 0.926976,
+   "mi": 0.768776,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "visits",
+    "probe": {
+     "r2": 0.57604,
+     "auc": 0.926976,
+     "mi": 0.768776,
+     "n": 24000,
+     "score": 0.853952,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "7": {
+     "best": {
+      "concept": "visits",
+      "kind": "count",
+      "source": "input",
+      "n": 24000,
+      "r2": 0.57604,
+      "auc": 0.926976,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.768776,
+      "nmi": 0.430827,
+      "leaf_gated": true,
+      "score": 0.853952
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "visits",
+       "source": "input",
+       "score": 0.853952,
+       "r2": 0.57604,
+       "auc": 0.926976,
+       "mi": 0.768776
+      },
+      {
+       "concept": "age * visits",
+       "source": "pair",
+       "score": 0.832402,
+       "r2": 0.561369,
+       "auc": 0.916201,
+       "mi": 0.521425
+      },
+      {
+       "concept": "bmi * visits",
+       "source": "pair",
+       "score": 0.819964,
+       "r2": 0.516957,
+       "auc": 0.909982,
+       "mi": 0.542513
+      }
+     ]
+    }
+   }
+  },
+  "young_uninsured_lowering": {
+   "id": "ann_42",
+   "exit_nodes": [
+    "6"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "age",
+    "income",
+    "bmi",
+    "visits",
+    "score",
+    "smoker",
+    "female",
+    "urban",
+    "insured",
+    "noise"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 61,
+   "score": 0.905364,
+   "grade": "meaningful",
+   "best_concepts": [
+    "age * insured"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.50362,
+   "auc": 0.952682,
+   "mi": 0.738158,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "age * insured",
+    "probe": {
+     "r2": 0.50362,
+     "auc": 0.952682,
+     "mi": 0.738158,
+     "n": 24000,
+     "score": 0.905364,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "6": {
+     "best": {
+      "concept": "age * insured",
+      "kind": "continuous",
+      "source": "pair",
+      "n": 24000,
+      "r2": 0.50362,
+      "auc": 0.952682,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is low",
+      "mi": 0.738158,
+      "nmi": 0.359609,
+      "leaf_gated": true,
+      "score": 0.905364
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "age * insured",
+       "source": "pair",
+       "score": 0.905364,
+       "r2": 0.50362,
+       "auc": 0.952682,
+       "mi": 0.738158
+      },
+      {
+       "concept": "insured",
+       "source": "level",
+       "score": 0.761428,
+       "r2": 0.440346,
+       "auc": 0.880714,
+       "mi": 0.298433
+      },
+      {
+       "concept": "income * insured",
+       "source": "pair",
+       "score": 0.71403,
+       "r2": 0.269688,
+       "auc": 0.857015,
+       "mi": 0.395584
+      }
+     ]
+    }
+   }
+  }
+ }
+}

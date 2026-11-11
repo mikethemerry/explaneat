@@ -1,0 +1,1257 @@
+{
+ "label": "adult-s3",
+ "genome_id": "fe61877a-be94-4cdb-8f82-9a8ebe7eb975",
+ "set": "v4",
+ "study": "adult",
+ "records_dir": "explanations_v4",
+ "dataset": "adult_ohe_v2",
+ "n_train": 39073,
+ "computed_at": "2026-11-11T22:38:35+00:00",
+ "method": "experiments/explanation_levels/compute_levels.py (read only; probes not stored, query_id null)",
+ "levels": {
+  "faithful": {
+   "function_preservation_max_abs_err": 5.551115123125783e-16,
+   "closed_form_max_abs_err": 0.1584230681702934,
+   "passed": true,
+   "test": "max |output(explained model) - output(phenotype)| over the training rows < 1e-9"
+  },
+  "decomposed": {
+   "n_leaves": 12,
+   "n_compositions": 1,
+   "hidden_units": 15,
+   "granularity": 1.0,
+   "largest_part": {
+    "name": "capital_gain_switch",
+    "hidden_units": 3,
+    "width": 1,
+    "depth": 3,
+    "leaf": true,
+    "param_share": 0.0693
+   },
+   "max_width": 2,
+   "max_depth": 3,
+   "warnings": [],
+   "passed": true,
+   "test": "share of hidden units whose part is at most 6 units wide (depth not penalised); no part wider than that holds half the units"
+  },
+  "understood": {
+   "leaves": 12,
+   "graded": 12,
+   "counts": {
+    "meaningful": 12,
+    "partial": 0,
+    "closed_form_only": 0,
+    "unnamed": 0
+   },
+   "grades": {
+    "capital_gain_switch": "meaningful",
+    "direct_terms": "meaningful",
+    "scotland_gate": "meaningful",
+    "young_age_hinge": "meaningful",
+    "handlers_asian_gate": "meaningful",
+    "unmarried_gate": "meaningful",
+    "federal_gov_gate": "meaningful",
+    "us_born_offset": "meaningful",
+    "other_relative_gate": "meaningful",
+    "el_salvador_gate": "meaningful",
+    "transport_offset": "meaningful",
+    "missing_country_chain": "meaningful"
+   },
+   "understood_fraction": 1.0,
+   "partial_fraction": 0.0,
+   "closed_form_only_fraction": 0.0,
+   "unnamed_fraction": 0.0,
+   "concepts": {
+    "capital_gain_switch": "capital-gain",
+    "direct_terms": "workclass:8",
+    "scotland_gate": "native-country:34",
+    "young_age_hinge": "age",
+    "handlers_asian_gate": "occupation:6",
+    "unmarried_gate": "relationship:4",
+    "federal_gov_gate": "workclass:1",
+    "us_born_offset": "age, native-country:39",
+    "other_relative_gate": "relationship:2",
+    "el_salvador_gate": "native-country:8",
+    "transport_offset": "occupation:14",
+    "missing_country_chain": "native-country:0"
+   },
+   "test": "concept probe per leaf: meaningful r2 >= 0.8 or AUC >= 0.9; partial r2 >= 0.5 or AUC >= 0.75; else closed_form_only; unnamed when no concept was probed",
+   "domain_only": null
+  }
+ },
+ "decomposition": {
+  "hidden_units": 15,
+  "small_width_max_units": 6,
+  "granularity": 1.0,
+  "largest_part": {
+   "name": "capital_gain_switch",
+   "hidden_units": 3,
+   "width": 1,
+   "depth": 3,
+   "leaf": true,
+   "param_share": 0.0693
+  },
+  "max_width": 2,
+  "max_depth": 3,
+  "units_only_in_root": 0,
+  "units_only_as_entries": 0,
+  "parts": {
+   "capital_gain_switch": {
+    "units": 3,
+    "width": 1,
+    "depth": 3,
+    "leaf": true,
+    "param_share": 0.0693
+   },
+   "missing_country_chain": {
+    "units": 2,
+    "width": 1,
+    "depth": 2,
+    "leaf": true,
+    "param_share": 0.0495
+   },
+   "us_born_offset": {
+    "units": 2,
+    "width": 2,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.0396
+   },
+   "el_salvador_gate": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.0198
+   },
+   "federal_gov_gate": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.0198
+   },
+   "handlers_asian_gate": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.0297
+   },
+   "other_relative_gate": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.0198
+   },
+   "scotland_gate": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.0198
+   },
+   "transport_offset": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.0198
+   },
+   "unmarried_gate": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.0198
+   },
+   "young_age_hinge": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.0198
+   }
+  },
+  "warnings": []
+ },
+ "leaves": {
+  "capital_gain_switch": {
+   "id": "ann_113",
+   "exit_nodes": [
+    "6463",
+    "7310"
+   ],
+   "n_exits": 2,
+   "gated": true,
+   "variables": [
+    "relationship",
+    "capital-gain"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 134,
+   "score": 0.986113,
+   "grade": "meaningful",
+   "best_concepts": [
+    "capital-gain"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.978739,
+   "auc": 0.793114,
+   "mi": 0.222851,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "capital-gain",
+    "probe": {
+     "r2": 0.978739,
+     "auc": 0.793114,
+     "mi": 0.222851,
+     "n": 39073,
+     "score": 0.986113,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "6463": {
+     "best": {
+      "concept": "capital-gain",
+      "kind": "continuous",
+      "source": "input",
+      "n": 39073,
+      "r2": 0.985251,
+      "auc": 1.0,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.253948,
+      "nmi": 0.514324,
+      "leaf_gated": true,
+      "score": 1.0
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "capital-gain",
+       "source": "input",
+       "score": 1.0,
+       "r2": 0.985251,
+       "auc": 1.0,
+       "mi": 0.253948
+      },
+      {
+       "concept": "relationship:0 * capital-gain",
+       "source": "pair",
+       "score": 0.718623,
+       "r2": 0.718623,
+       "auc": 0.8269,
+       "mi": 0.151498
+      },
+      {
+       "concept": "capital-gain > 0",
+       "source": "threshold",
+       "score": 0.71172,
+       "r2": 0.139766,
+       "auc": 0.85586,
+       "mi": 0.253948
+      }
+     ]
+    },
+    "7310": {
+     "best": {
+      "concept": "capital-gain",
+      "kind": "continuous",
+      "source": "input",
+      "n": 39073,
+      "r2": 0.972227,
+      "auc": 0.586228,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.191754,
+      "nmi": 0.171612,
+      "leaf_gated": true,
+      "score": 0.972227
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "capital-gain",
+       "source": "input",
+       "score": 0.972227,
+       "r2": 0.972227,
+       "auc": 0.586228,
+       "mi": 0.191754
+      },
+      {
+       "concept": "relationship:1",
+       "source": "level",
+       "score": 0.903386,
+       "r2": 0.003808,
+       "auc": 0.951693,
+       "mi": 0.7433
+      },
+      {
+       "concept": "relationship:0 * capital-gain",
+       "source": "pair",
+       "score": 0.699869,
+       "r2": 0.699869,
+       "auc": 0.549342,
+       "mi": 0.102634
+      }
+     ]
+    }
+   }
+  },
+  "direct_terms": {
+   "id": "ann_124",
+   "exit_nodes": [
+    "identity_0"
+   ],
+   "n_exits": 1,
+   "gated": false,
+   "variables": [
+    "age",
+    "workclass",
+    "fnlwgt",
+    "education",
+    "education-num",
+    "marital-status",
+    "occupation",
+    "relationship",
+    "race",
+    "sex",
+    "capital-loss",
+    "hours-per-week",
+    "native-country"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 158,
+   "score": 0.99999,
+   "grade": "meaningful",
+   "best_concepts": [
+    "workclass:8"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.172148,
+   "auc": 0.999995,
+   "mi": 0.001446,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "workclass:8",
+    "probe": {
+     "r2": 0.172148,
+     "auc": 0.999995,
+     "mi": 0.001446,
+     "n": 39073,
+     "score": 0.99999,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "identity_0": {
+     "best": {
+      "concept": "workclass:8",
+      "kind": "binary",
+      "source": "level",
+      "n": 39073,
+      "r2": 0.172148,
+      "auc": 0.999995,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.001446,
+      "nmi": 0.000435,
+      "leaf_gated": false,
+      "score": 0.99999
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "workclass:8",
+       "source": "level",
+       "score": 0.99999,
+       "r2": 0.172148,
+       "auc": 0.999995,
+       "mi": 0.001446
+      },
+      {
+       "concept": "native-country:34",
+       "source": "level",
+       "score": 0.99914,
+       "r2": 0.126735,
+       "auc": 0.99957,
+       "mi": 0.001361
+      },
+      {
+       "concept": "marital-status:2",
+       "source": "level",
+       "score": 0.944072,
+       "r2": 0.456492,
+       "auc": 0.972036,
+       "mi": 0.686817
+      }
+     ]
+    }
+   }
+  },
+  "scotland_gate": {
+   "id": "ann_116",
+   "exit_nodes": [
+    "9997"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "native-country"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 158,
+   "score": 1.0,
+   "grade": "meaningful",
+   "best_concepts": [
+    "native-country:34"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 1.0,
+   "auc": 1.0,
+   "mi": 0.005199,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "native-country:34",
+    "probe": {
+     "r2": 1.0,
+     "auc": 1.0,
+     "mi": 0.005199,
+     "n": 39073,
+     "score": 1.0,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "9997": {
+     "best": {
+      "concept": "native-country:34",
+      "kind": "binary",
+      "source": "level",
+      "n": 39073,
+      "r2": 1.0,
+      "auc": 1.0,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.005199,
+      "nmi": 1.0,
+      "leaf_gated": true,
+      "score": 1.0
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "native-country:34",
+       "source": "level",
+       "score": 1.0,
+       "r2": 1.0,
+       "auc": 1.0,
+       "mi": 0.005199
+      },
+      {
+       "concept": "age",
+       "source": "input",
+       "score": 0.373442,
+       "r2": 0.000206,
+       "auc": 0.686721,
+       "mi": 0.000251
+      },
+      {
+       "concept": "fnlwgt",
+       "source": "input",
+       "score": 0.26294,
+       "r2": 7.4e-05,
+       "auc": 0.63147,
+       "mi": 0.000395
+      }
+     ]
+    }
+   }
+  },
+  "young_age_hinge": {
+   "id": "ann_114",
+   "exit_nodes": [
+    "3460"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "age"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 113,
+   "score": 1.0,
+   "grade": "meaningful",
+   "best_concepts": [
+    "age"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.708833,
+   "auc": 1.0,
+   "mi": 2.139077,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "age",
+    "probe": {
+     "r2": 0.708833,
+     "auc": 1.0,
+     "mi": 2.139077,
+     "n": 39073,
+     "score": 1.0,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "3460": {
+     "best": {
+      "concept": "age",
+      "kind": "continuous",
+      "source": "input",
+      "n": 39073,
+      "r2": 0.708833,
+      "auc": 1.0,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is low",
+      "mi": 2.139077,
+      "nmi": 0.751833,
+      "leaf_gated": true,
+      "score": 1.0
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "age",
+       "source": "input",
+       "score": 1.0,
+       "r2": 0.708833,
+       "auc": 1.0,
+       "mi": 2.139077
+      },
+      {
+       "concept": "age > 37",
+       "source": "threshold",
+       "score": 1.0,
+       "r2": 0.645762,
+       "auc": 1.0,
+       "mi": 0.927859
+      },
+      {
+       "concept": "workclass:3",
+       "source": "level",
+       "score": 0.865374,
+       "r2": 0.000822,
+       "auc": 0.932687,
+       "mi": 0.000655
+      }
+     ]
+    }
+   }
+  },
+  "handlers_asian_gate": {
+   "id": "ann_118",
+   "exit_nodes": [
+    "5934"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "occupation",
+    "race"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 158,
+   "score": 1.0,
+   "grade": "meaningful",
+   "best_concepts": [
+    "occupation:6"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.951106,
+   "auc": 1.0,
+   "mi": 0.25621,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "occupation:6",
+    "probe": {
+     "r2": 0.951106,
+     "auc": 1.0,
+     "mi": 0.25621,
+     "n": 39073,
+     "score": 1.0,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "5934": {
+     "best": {
+      "concept": "occupation:6",
+      "kind": "binary",
+      "source": "level",
+      "n": 39073,
+      "r2": 0.951106,
+      "auc": 1.0,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.25621,
+      "nmi": 0.564221,
+      "leaf_gated": true,
+      "score": 1.0
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "occupation:6",
+       "source": "level",
+       "score": 1.0,
+       "r2": 0.951106,
+       "auc": 1.0,
+       "mi": 0.25621
+      },
+      {
+       "concept": "native-country:25",
+       "source": "level",
+       "score": 0.970478,
+       "r2": 0.00073,
+       "auc": 0.985239,
+       "mi": 0.002207
+      },
+      {
+       "concept": "race:1",
+       "source": "level",
+       "score": 0.950628,
+       "r2": 0.049054,
+       "auc": 0.975314,
+       "mi": 0.198076
+      }
+     ]
+    }
+   }
+  },
+  "unmarried_gate": {
+   "id": "ann_122",
+   "exit_nodes": [
+    "10197"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "relationship"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 128,
+   "score": 1.0,
+   "grade": "meaningful",
+   "best_concepts": [
+    "relationship:4"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 1.0,
+   "auc": 1.0,
+   "mi": 0.481183,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "relationship:4",
+    "probe": {
+     "r2": 1.0,
+     "auc": 1.0,
+     "mi": 0.481183,
+     "n": 39073,
+     "score": 1.0,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "10197": {
+     "best": {
+      "concept": "relationship:4",
+      "kind": "binary",
+      "source": "level",
+      "n": 39073,
+      "r2": 1.0,
+      "auc": 1.0,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.481183,
+      "nmi": 1.0,
+      "leaf_gated": true,
+      "score": 1.0
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "relationship:4",
+       "source": "level",
+       "score": 1.0,
+       "r2": 1.0,
+       "auc": 1.0,
+       "mi": 0.481183
+      },
+      {
+       "concept": "marital-status:5",
+       "source": "level",
+       "score": 0.348408,
+       "r2": 0.04035,
+       "auc": 0.674204,
+       "mi": 0.018213
+      },
+      {
+       "concept": "native-country:16",
+       "source": "level",
+       "score": 0.324806,
+       "r2": 0.000406,
+       "auc": 0.662403,
+       "mi": 0.000181
+      }
+     ]
+    }
+   }
+  },
+  "federal_gov_gate": {
+   "id": "ann_119",
+   "exit_nodes": [
+    "7067"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "workclass"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 149,
+   "score": 1.0,
+   "grade": "meaningful",
+   "best_concepts": [
+    "workclass:1"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 1.0,
+   "auc": 1.0,
+   "mi": 0.189207,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "workclass:1",
+    "probe": {
+     "r2": 1.0,
+     "auc": 1.0,
+     "mi": 0.189207,
+     "n": 39073,
+     "score": 1.0,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "7067": {
+     "best": {
+      "concept": "workclass:1",
+      "kind": "binary",
+      "source": "level",
+      "n": 39073,
+      "r2": 1.0,
+      "auc": 1.0,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.189207,
+      "nmi": 1.0,
+      "leaf_gated": true,
+      "score": 1.0
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "workclass:1",
+       "source": "level",
+       "score": 1.0,
+       "r2": 1.0,
+       "auc": 1.0,
+       "mi": 0.189207
+      },
+      {
+       "concept": "occupation:2",
+       "source": "level",
+       "score": 0.971326,
+       "r2": 0.010297,
+       "auc": 0.985663,
+       "mi": 0.001571
+      },
+      {
+       "concept": "age",
+       "source": "input",
+       "score": 0.216112,
+       "r2": 0.002731,
+       "auc": 0.608056,
+       "mi": 0.004567
+      }
+     ]
+    }
+   }
+  },
+  "us_born_offset": {
+   "id": "ann_115",
+   "exit_nodes": [
+    "4018",
+    "4607"
+   ],
+   "n_exits": 2,
+   "gated": true,
+   "variables": [
+    "native-country"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 158,
+   "score": 1.0,
+   "grade": "meaningful",
+   "best_concepts": [
+    "age",
+    "native-country:39"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 1.0,
+   "auc": 1.0,
+   "mi": 0.236225,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "age, native-country:39",
+    "probe": {
+     "r2": 1.0,
+     "auc": 1.0,
+     "mi": 0.236225,
+     "n": 39073,
+     "score": 1.0,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "4018": {
+     "best": {
+      "concept": "native-country:39",
+      "kind": "binary",
+      "source": "level",
+      "n": 39073,
+      "r2": 1.0,
+      "auc": 1.0,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.47245,
+      "nmi": 1.0,
+      "leaf_gated": true,
+      "score": 1.0
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "native-country:39",
+       "source": "level",
+       "score": 1.0,
+       "r2": 1.0,
+       "auc": 1.0,
+       "mi": 0.47245
+      },
+      {
+       "concept": "native-country:26",
+       "source": "level",
+       "score": 0.916308,
+       "r2": 0.172127,
+       "auc": 0.958154,
+       "mi": 0.065276
+      },
+      {
+       "concept": "native-country:0",
+       "source": "level",
+       "score": 0.914756,
+       "r2": 0.156782,
+       "auc": 0.957378,
+       "mi": 0.059344
+      }
+     ]
+    },
+    "4607": {
+     "best": {
+      "concept": "age",
+      "kind": "continuous",
+      "source": "input",
+      "n": 39073,
+      "r2": null,
+      "auc": null,
+      "auc_of": null,
+      "direction": null,
+      "mi": 0.0,
+      "nmi": null,
+      "leaf_gated": false,
+      "score": null
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "age",
+       "source": "input",
+       "score": null,
+       "r2": null,
+       "auc": null,
+       "mi": 0.0
+      },
+      {
+       "concept": "age > 37",
+       "source": "threshold",
+       "score": 0.0,
+       "r2": null,
+       "auc": 0.5,
+       "mi": 0.0
+      },
+      {
+       "concept": "workclass:0",
+       "source": "level",
+       "score": 0.0,
+       "r2": null,
+       "auc": 0.5,
+       "mi": 0.0
+      }
+     ]
+    }
+   }
+  },
+  "other_relative_gate": {
+   "id": "ann_121",
+   "exit_nodes": [
+    "14966"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "relationship"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 128,
+   "score": 1.0,
+   "grade": "meaningful",
+   "best_concepts": [
+    "relationship:2"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 1.0,
+   "auc": 1.0,
+   "mi": 0.195393,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "relationship:2",
+    "probe": {
+     "r2": 1.0,
+     "auc": 1.0,
+     "mi": 0.195393,
+     "n": 39073,
+     "score": 1.0,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "14966": {
+     "best": {
+      "concept": "relationship:2",
+      "kind": "binary",
+      "source": "level",
+      "n": 39073,
+      "r2": 1.0,
+      "auc": 1.0,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.195393,
+      "nmi": 1.0,
+      "leaf_gated": true,
+      "score": 1.0
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "relationship:2",
+       "source": "level",
+       "score": 1.0,
+       "r2": 1.0,
+       "auc": 1.0,
+       "mi": 0.195393
+      },
+      {
+       "concept": "age",
+       "source": "input",
+       "score": 0.271604,
+       "r2": 0.004995,
+       "auc": 0.635802,
+       "mi": 0.006704
+      },
+      {
+       "concept": "education-num",
+       "source": "input",
+       "score": 0.271292,
+       "r2": 0.007093,
+       "auc": 0.635646,
+       "mi": 0.005167
+      }
+     ]
+    }
+   }
+  },
+  "el_salvador_gate": {
+   "id": "ann_117",
+   "exit_nodes": [
+    "13897"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "native-country"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 158,
+   "score": 1.0,
+   "grade": "meaningful",
+   "best_concepts": [
+    "native-country:8"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 1.0,
+   "auc": 1.0,
+   "mi": 0.029845,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "native-country:8",
+    "probe": {
+     "r2": 1.0,
+     "auc": 1.0,
+     "mi": 0.029845,
+     "n": 39073,
+     "score": 1.0,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "13897": {
+     "best": {
+      "concept": "native-country:8",
+      "kind": "binary",
+      "source": "level",
+      "n": 39073,
+      "r2": 1.0,
+      "auc": 1.0,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.029845,
+      "nmi": 1.0,
+      "leaf_gated": true,
+      "score": 1.0
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "native-country:8",
+       "source": "level",
+       "score": 1.0,
+       "r2": 1.0,
+       "auc": 1.0,
+       "mi": 0.029845
+      },
+      {
+       "concept": "education-num",
+       "source": "input",
+       "score": 0.503814,
+       "r2": 0.004567,
+       "auc": 0.751907,
+       "mi": 0.002142
+      },
+      {
+       "concept": "fnlwgt",
+       "source": "input",
+       "score": 0.256312,
+       "r2": 0.000735,
+       "auc": 0.628156,
+       "mi": 0.000734
+      }
+     ]
+    }
+   }
+  },
+  "transport_offset": {
+   "id": "ann_120",
+   "exit_nodes": [
+    "8156"
+   ],
+   "n_exits": 1,
+   "gated": false,
+   "variables": [
+    "occupation"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 158,
+   "score": 1.0,
+   "grade": "meaningful",
+   "best_concepts": [
+    "occupation:14"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 1.0,
+   "auc": 1.0,
+   "mi": 0.284257,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "occupation:14",
+    "probe": {
+     "r2": 1.0,
+     "auc": 1.0,
+     "mi": 0.284257,
+     "n": 39073,
+     "score": 1.0,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "8156": {
+     "best": {
+      "concept": "occupation:14",
+      "kind": "binary",
+      "source": "level",
+      "n": 39073,
+      "r2": 1.0,
+      "auc": 1.0,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.284257,
+      "nmi": 1.0,
+      "leaf_gated": false,
+      "score": 1.0
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "occupation:14",
+       "source": "level",
+       "score": 1.0,
+       "r2": 1.0,
+       "auc": 1.0,
+       "mi": 0.284257
+      },
+      {
+       "concept": "sex",
+       "source": "level",
+       "score": 0.062976,
+       "r2": 0.018685,
+       "auc": 0.531488,
+       "mi": 0.017821
+      },
+      {
+       "concept": "occupation:10",
+       "source": "level",
+       "score": 0.056736,
+       "r2": 0.007615,
+       "auc": 0.528368,
+       "mi": 0.010014
+      }
+     ]
+    }
+   }
+  },
+  "missing_country_chain": {
+   "id": "ann_123",
+   "exit_nodes": [
+    "12550"
+   ],
+   "n_exits": 1,
+   "gated": false,
+   "variables": [
+    "marital-status",
+    "native-country"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 158,
+   "score": 1.0,
+   "grade": "meaningful",
+   "best_concepts": [
+    "native-country:0"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.694164,
+   "auc": 1.0,
+   "mi": 0.126154,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "native-country:0",
+    "probe": {
+     "r2": 0.694164,
+     "auc": 1.0,
+     "mi": 0.126154,
+     "n": 39073,
+     "score": 1.0,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "12550": {
+     "best": {
+      "concept": "native-country:0",
+      "kind": "binary",
+      "source": "level",
+      "n": 39073,
+      "r2": 0.694164,
+      "auc": 1.0,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.126154,
+      "nmi": 0.566979,
+      "leaf_gated": false,
+      "score": 1.0
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "native-country:0",
+       "source": "level",
+       "score": 1.0,
+       "r2": 0.694164,
+       "auc": 1.0,
+       "mi": 0.126154
+      },
+      {
+       "concept": "marital-status:3 and native-country:0",
+       "source": "pair",
+       "score": 1.0,
+       "r2": 0.075513,
+       "auc": 1.0,
+       "mi": 0.007439
+      },
+      {
+       "concept": "marital-status:2 and native-country:0",
+       "source": "pair",
+       "score": 0.990118,
+       "r2": 0.305095,
+       "auc": 0.995059,
+       "mi": 0.05148
+      }
+     ]
+    }
+   }
+  }
+ }
+}
