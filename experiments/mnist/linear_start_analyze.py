@@ -64,14 +64,14 @@ def per_class_acc(logits, y):
 
 
 # ---------------------------------------------------------------- controls
-def linear_trajectory(W, b, d, epochs, checkpoints):
+def linear_trajectory(W, b, d, epochs, checkpoints, reset_every=5):
     W = torch.nn.Parameter(torch.tensor(W.copy()))
     b = torch.nn.Parameter(torch.tensor(b.copy()))
     X = torch.as_tensor(d["X_train"])
     y = torch.as_tensor(d["y_train"], dtype=torch.long)
     out = {}
     for e in range(epochs):
-        if e % 5 == 0:
+        if e % reset_every == 0:
             opt = torch.optim.Adadelta([W, b], lr=1.5)
         loss = F.cross_entropy(X @ W + b, y)
         opt.zero_grad()
@@ -101,13 +101,35 @@ def controls():
     print(json.dumps(res["lr_init"], indent=1))
 
 
+def matched_control():
+    """Linear LR-start lineage with the structural arm's exact 25-epoch resets."""
+    d = LS.load_data()
+    coef, intercept = LS.fit_lr(d)
+    res = dict(init="cached sklearn LR", epochs=2500, optimizer="Adadelta(lr=1.5)",
+               reset_every=25, selection="fixed budget; no validation/test selection",
+               scores=linear_trajectory(coef.T, intercept, d, 2500, {500, 2500},
+                                        reset_every=25))
+    (OUT / "control_reset25.json").write_text(json.dumps(res, indent=2) + "\n")
+    print(json.dumps(res, indent=2))
+
+
 # ---------------------------------------------------------------- genome forward
+class RunUnpickler(pickle.Unpickler):
+    """Read trusted local runs saved when linear_start.py was the CLI main module."""
+
+    def find_class(self, module, name):
+        if module == "__main__" and name == "WeightedAddNodeGenome":
+            return LS.WeightedAddNodeGenome
+        return super().find_class(module, name)
+
+
 def load_run(name):
     with gzip.open(RUNS_DIR / name / "best_genome.pkl.gz", "rb") as f:
-        b = pickle.load(f)
-    with tempfile.NamedTemporaryFile("w", suffix=".ini", delete=False) as t:
+        b = RunUnpickler(f).load()
+    with tempfile.NamedTemporaryFile("w", suffix=".ini") as t:
         t.write(b["config_text"])
-    config = LS.load_config(Path(t.name), False)
+        t.flush()
+        config = LS.load_config(Path(t.name), False)
     return b["genome"], config, b["meta"]
 
 
@@ -219,7 +241,11 @@ def hidden(name):
         fan_out = [(o, round(c.weight, 3)) for (a, o), c in g.connections.items()
                    if c.enabled and a == h]
         units.append(dict(node=h, bias=round(g.nodes[h].bias, 3), active_fraction=frac[h],
-                          train_mean=means[h], fan_in=fan_in, fan_out=fan_out))
+                          train_mean=means[h], fan_in=fan_in, fan_out=fan_out,
+                          train_by_digit=[dict(digit=c,
+                              active_fraction=float((v_tr[h][d["y_train"] == c] > 0).mean()),
+                              mean_activation=float(v_tr[h][d["y_train"] == c].mean()))
+                              for c in range(10)]))
 
     res = dict(name=name, meta=meta, parity_max_abs=par, hidden_kinds=kinds, units=units)
     variants = {"full": {}, "mean_ablate_all": dict(ablate=means),
@@ -249,6 +275,8 @@ if __name__ == "__main__":
     cmd = sys.argv[1]
     if cmd == "controls":
         controls()
+    elif cmd == "matched-control":
+        matched_control()
     elif cmd == "runs":
         runs()
     elif cmd == "hidden":
