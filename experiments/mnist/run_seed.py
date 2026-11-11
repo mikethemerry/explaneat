@@ -208,8 +208,7 @@ class RunReporter:
     def end_generation(self, config, population, species_set):
         pop = self.pop
         best_so_far = pop.best_genome.fitness if pop.best_genome is not None else None
-        if any(g is pop.best_genome for g in self._evaluated.values()):
-            self.best_generation = self.row["generation"]
+        self.best_generation = pop.best_generation
         self.row.update(gen_s=round(time.time() - self.t_gen, 2),
                         wall_s=round(time.time() - self.run["t0"] + self.run["wall_before"], 1),
                         best_so_far_fitness=best_so_far)
@@ -312,7 +311,8 @@ def main():
         pop.reproduction.ancestors = st["ancestors"]
         pop.species.reporters = pop.reporters
         pop.species.indexer = count(st["species_indexer_next"])
-        pop.best_genome = st["best_genome"]
+        pop.best_genome = copy.deepcopy(st["best_genome"])
+        pop.best_generation = st.get("best_generation")
         pop.parent_log = st["parent_log"]
         random.setstate(st["rng"]["random"])
         np.random.set_state(st["rng"]["numpy"])
