@@ -197,8 +197,7 @@ class RunReporter:
 
     def end_generation(self, config, population, species_set):
         pop = self.pop
-        if any(g is pop.best_genome for g in self._evaluated.values()):
-            self.best_generation = self.row["generation"]
+        self.best_generation = pop.best_generation
         # species of the *next* generation are formed now (speciate ran before this hook);
         # the threshold change applies from the following speciation
         nxt = self.controller.update(len(species_set.species)) if self.controller else \
@@ -308,7 +307,8 @@ def main():
         pop.reproduction.ancestors = st["ancestors"]
         pop.species.reporters = pop.reporters
         pop.species.indexer = count(st["species_indexer_next"])
-        pop.best_genome = st["best_genome"]
+        pop.best_genome = copy.deepcopy(st["best_genome"])
+        pop.best_generation = st.get("best_generation")
         pop.parent_log = st["parent_log"]
         random.setstate(st["rng"]["random"])
         np.random.set_state(st["rng"]["numpy"])

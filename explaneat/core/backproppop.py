@@ -155,6 +155,7 @@ class BackpropPopulation(Population):
             self.population, self.species, self.generation = initial_state
 
         self.best_genome = None
+        self.best_generation = None
 
         # Ancestry capture (read-only, RNG-neutral; see core/lineage_capture.py):
         # parent_log[generation] = {key: (parent1_key, parent2_key, is_elite_copy)}.
@@ -293,6 +294,8 @@ class BackpropPopulation(Population):
 
         With validation data, every genome is also scored on it and the best
         genome is the one with the best validation fitness.
+        The returned genome is a snapshot of the selected generation;
+        ``best_generation`` records that generation even if its elite trains again.
         ``validation_fitness_function`` (default None = ``fitness_function``,
         the original behaviour) scores the validation fold separately, e.g.
         the plain held-out Cox loss when the training fitness carries an
@@ -360,6 +363,7 @@ class BackpropPopulation(Population):
                 if gen_val_fitness > best_val_fitness:
                     best_val_fitness = gen_val_fitness
                     self.best_genome = copy.deepcopy(gen_best_val)
+                    self.best_generation = self.generation
                     patience_counter = 0
                 else:
                     patience_counter += 1
@@ -372,9 +376,11 @@ class BackpropPopulation(Population):
                     )
                     break
             else:
-                # Original behavior: select by training fitness
+                # Elites are trained in place in later generations. Keep the
+                # historical champion independent of those live genomes.
                 if self.best_genome is None or best.fitness > self.best_genome.fitness:
-                    self.best_genome = best
+                    self.best_genome = copy.deepcopy(best)
+                    self.best_generation = self.generation
 
             if not self.config.no_fitness_termination:
                 # End if the fitness threshold is reached.

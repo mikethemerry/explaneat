@@ -238,3 +238,36 @@ class TestBackwardCompatibility:
         # Should still run all generations
         assert pop.generation == n_gens
         assert best is not None
+
+
+class TestTrainingSelectionSnapshots:
+    @pytest.mark.parametrize(
+        "scores, expected_fitness, expected_generation",
+        [((0.9, 0.8), 0.9, 0), ((0.9, 0.8, 1.0), 1.0, 2)],
+    )
+    def test_later_elite_training_preserves_historical_champion(
+        self, monkeypatch, scores, expected_fitness, expected_generation
+    ):
+        config = _make_neat_config(num_inputs=2, pop_size=2)
+        config.reproduction_config.elitism = 2
+        pop = BackpropPopulation(config, np.zeros((4, 2)), np.zeros(4))
+
+        # Keep real reproduction and selection. Replace only gradient training
+        # with a deterministic sequence that can worsen a surviving elite.
+        def train(xs, ys, nEpochs):
+            for genome in pop.population.values():
+                genome.nodes[0].bias = scores[pop.generation]
+
+        def evaluate(population, config, xs, ys, device):
+            for genome in population.values():
+                genome.fitness = genome.nodes[0].bias
+
+        monkeypatch.setattr(pop, "backpropagate", train)
+        best = pop.run(evaluate, n=len(scores), nEpochs=1)
+
+        assert best.fitness == expected_fitness
+        assert best.nodes[0].bias == expected_fitness
+        assert pop.best_generation == expected_generation
+        assert best is not pop.population[best.key]
+        pop.population[best.key].nodes[0].bias = -1.0
+        assert best.nodes[0].bias == expected_fitness
