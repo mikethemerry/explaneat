@@ -378657,7 +378657,7 @@
      "slot_keys": {
       "C100": "ann_85:direction:total day minutes"
      },
-     "template": "More daytime minutes lower it in an uneven way: for a typical customer it acts on, going from {{C100.statement.change.from}} to {{C100.statement.change.to}} (with the daytime charge moved from 15.46 to 40.15 US dollars, as in the data) lowers it from about {{C100.risk.from|pct}} to about {{C100.risk.to|pct}}.",
+     "template": "More daytime minutes lower it in an uneven way: for a typical customer it acts on, going from {{C100.statement.change.from}} to {{C100.statement.change.to}} (with the daytime charge moved from {{C100.linked.moved.from[\"total day charge\"].to|num}} to {{C100.linked.moved.to[\"total day charge\"].to|num}} US dollars, as in the data) lowers it from about {{C100.risk.from|pct}} to about {{C100.risk.to|pct}}.",
      "text": "More daytime minutes lower it in an uneven way: for a typical customer it acts on, going from 112 minutes to 249 minutes (with the daytime charge moved from 15.46 to 40.15 US dollars, as in the data) lowers it from about 35% to about 12%."
     }
    ],
@@ -378734,7 +378734,7 @@
      "slot_keys": {
       "C086": "ann_88:interaction:total day chargextotal eve charge"
      },
-     "template": "A higher daytime charge raises it in an uneven way, and even more so when the evening charge is above 17.12 US dollars: for a typical customer with such an evening charge (and 234 evening minutes), going from {{C086.statement.change.from}} to {{C086.statement.change.to}} (with daytime minutes moved from 126 to 236, as in the data) raises it from about {{C086.risk.groups[0].from|pct}} to about {{C086.risk.groups[0].to|pct}}, against about {{C086.risk.groups[1].from|pct}} to about {{C086.risk.groups[1].to|pct}} with an evening charge at or below 17.12 US dollars (and 167 evening minutes).",
+     "template": "A higher daytime charge raises it in an uneven way, and even more so when the evening charge is above 17.12 US dollars: for a typical customer with such an evening charge (and {{C086.linked.groups[0].moved.modifier[\"total eve minutes\"].to|num}} evening minutes), going from {{C086.statement.change.from}} to {{C086.statement.change.to}} (with daytime minutes moved from {{C086.linked.groups[0].moved.from[\"total day minutes\"].to|num}} to {{C086.linked.groups[0].moved.to[\"total day minutes\"].to|num}}, as in the data) raises it from about {{C086.risk.groups[0].from|pct}} to about {{C086.risk.groups[0].to|pct}}, against about {{C086.risk.groups[1].from|pct}} to about {{C086.risk.groups[1].to|pct}} with an evening charge at or below 17.12 US dollars (and {{C086.linked.groups[1].moved.modifier[\"total eve minutes\"].to|num}} evening minutes).",
      "text": "A higher daytime charge raises it in an uneven way, and even more so when the evening charge is above 17.12 US dollars: for a typical customer with such an evening charge (and 234 evening minutes), going from 19.07 US dollars to 42.40 US dollars (with daytime minutes moved from 126 to 236, as in the data) raises it from about 11% to about 71%, against about 13% to about 18% with an evening charge at or below 17.12 US dollars (and 167 evening minutes)."
     },
     {
@@ -378892,7 +378892,7 @@
      "slot_keys": {
       "C071": "ann_95:interaction:total day minutesxtotal eve charge"
      },
-     "template": "Daytime minutes raise the predicted chance of leaving in an uneven way, and even more so when the evening charge is above 17.12 US dollars: for a typical customer with such an evening charge (and the 234 evening minutes such customers have), going from {{C071.statement.change.from}} to {{C071.statement.change.to}} (with the daytime charge moved from 15.46 to 40.15 US dollars, as in the data) raises it from about {{C071.risk.groups[0].from|pct}} to about {{C071.risk.groups[0].to|pct}}, against about {{C071.risk.groups[1].from|pct}} to about {{C071.risk.groups[1].to|pct}} with an evening charge at or below 17.12 US dollars (and 167 evening minutes).",
+     "template": "Daytime minutes raise the predicted chance of leaving in an uneven way, and even more so when the evening charge is above 17.12 US dollars: for a typical customer with such an evening charge (and the {{C071.linked.groups[0].moved.modifier[\"total eve minutes\"].to|num}} evening minutes such customers have), going from {{C071.statement.change.from}} to {{C071.statement.change.to}} (with the daytime charge moved from {{C071.linked.groups[0].moved.from[\"total day charge\"].to|num}} to {{C071.linked.groups[0].moved.to[\"total day charge\"].to|num}} US dollars, as in the data) raises it from about {{C071.risk.groups[0].from|pct}} to about {{C071.risk.groups[0].to|pct}}, against about {{C071.risk.groups[1].from|pct}} to about {{C071.risk.groups[1].to|pct}} with an evening charge at or below 17.12 US dollars (and {{C071.linked.groups[1].moved.modifier[\"total eve minutes\"].to|num}} evening minutes).",
      "text": "Daytime minutes raise the predicted chance of leaving in an uneven way, and even more so when the evening charge is above 17.12 US dollars: for a typical customer with such an evening charge (and the 234 evening minutes such customers have), going from 112 minutes to 249 minutes (with the daytime charge moved from 15.46 to 40.15 US dollars, as in the data) raises it from about 11% to about 48%, against about 13% to about 13% with an evening charge at or below 17.12 US dollars (and 167 evening minutes)."
     },
     {
@@ -379027,7 +379027,7 @@
       "slot_keys": {
        "C090": "ann_88:threshold:total day charge"
       },
-      "template": "Through it, the daytime charge adds to the predicted chance in an uneven way once it rises above about {{C090.statement.threshold}} (between {{C090.shape.point.spread_text[0]}} and {{C090.shape.point.spread_text[1]}} for different customers; for {{C090.statement.support_check.exceptions}} of the {{C090.statement.support_check.n}} training customers it already acts below that): for a typical such customer, going from {{C090.statement.change.from}} to {{C090.statement.change.to}} (with daytime minutes moved from 91 to 271 minutes, as in the data) raises it from about {{C090.risk.from|pct}} to about {{C090.risk.to|pct}}, flattening out near the top because the predicted chance cannot go much higher.",
+      "template": "Through it, the daytime charge adds to the predicted chance in an uneven way once it rises above about {{C090.statement.threshold}} (between {{C090.shape.point.spread_text[0]}} and {{C090.shape.point.spread_text[1]}} for different customers; for {{C090.statement.support_check.exceptions}} of the {{C090.statement.support_check.n}} training customers it already acts below that): for a typical such customer, going from {{C090.statement.change.from}} to {{C090.statement.change.to}} (with daytime minutes moved from {{C090.linked.moved.from[\"total day minutes\"].to|num}} to {{C090.linked.moved.to[\"total day minutes\"].to|num}} minutes, as in the data) raises it from about {{C090.risk.from|pct}} to about {{C090.risk.to|pct}}, flattening out near the top because the predicted chance cannot go much higher.",
       "text": "Through it, the daytime charge adds to the predicted chance in an uneven way once it rises above about 39.93 US dollars (between 32.28 US dollars and 53.10 US dollars for different customers; for 1681 of the 4000 training customers it already acts below that): for a typical such customer, going from 0.00 US dollars to 46.09 US dollars (with daytime minutes moved from 91 to 271 minutes, as in the data) raises it from about 12% to about 81%, flattening out near the top because the predicted chance cannot go much higher."
      },
      {
@@ -379062,7 +379062,7 @@
       "slot_keys": {
        "C038": "ann_97:direction:voice mail plan:1"
       },
-      "template": "Across the whole model, a voice-mail plan lowers it for a typical customer from about {{C038.risk.from|pct}} to about {{C038.risk.to|pct}} (with the voice-mail messages moved from 0 to 29, as in the data); voice-mail messages also act through the gates above.",
+      "template": "Across the whole model, a voice-mail plan lowers it for a typical customer from about {{C038.risk.from|pct}} to about {{C038.risk.to|pct}} (with the voice-mail messages moved from 0 to {{C038.linked.moved.to[\"number vmail messages\"].to|num}}, as in the data); voice-mail messages also act through the gates above.",
       "text": "Across the whole model, a voice-mail plan lowers it for a typical customer from about 12% to about 11% (with the voice-mail messages moved from 0 to 29, as in the data); voice-mail messages also act through the gates above."
      },
      {
@@ -379130,7 +379130,7 @@
       "slot_keys": {
        "C174": "ann_89:interaction:total intl chargexstate"
       },
-      "template": "A higher international charge raises it steadily, and even more so for customers in California: for a typical customer, going from {{C174.statement.change.from}} to {{C174.statement.change.to}} (with international minutes moved from 7 to 15 minutes, as in the data) raises it from about {{C174.risk.groups[0].from|pct}} to about {{C174.risk.groups[0].to|pct}} in California, and from about {{C174.risk.groups[1].from|pct}} to about {{C174.risk.groups[1].to|pct}} in states other than New York, California and Tennessee.",
+      "template": "A higher international charge raises it steadily, and even more so for customers in California: for a typical customer, going from {{C174.statement.change.from}} to {{C174.statement.change.to}} (with international minutes moved from {{C174.linked.groups[0].moved.from[\"total intl minutes\"].to|num}} to {{C174.linked.groups[0].moved.to[\"total intl minutes\"].to|num}} minutes, as in the data) raises it from about {{C174.risk.groups[0].from|pct}} to about {{C174.risk.groups[0].to|pct}} in California, and from about {{C174.risk.groups[1].from|pct}} to about {{C174.risk.groups[1].to|pct}} in states other than New York, California and Tennessee.",
       "text": "A higher international charge raises it steadily, and even more so for customers in California: for a typical customer, going from 1.84 US dollars to 3.70 US dollars (with international minutes moved from 7 to 15 minutes, as in the data) raises it from about 26% to about 58% in California, and from about 12% to about 18% in states other than New York, California and Tennessee."
      },
      {
@@ -379165,7 +379165,7 @@
       "slot_keys": {
        "C179": "ann_93:direction:total eve minutes"
       },
-      "template": "More evening minutes lower it steadily through this part, from about {{C179.risk.from|pct}} at {{C179.statement.change.from}} to about {{C179.risk.to|pct}} at {{C179.statement.change.to}} (with the evening charge moved from 10.12 to 24.21 US dollars, as in the data); evening usage also acts through the gates above.",
+      "template": "More evening minutes lower it steadily through this part, from about {{C179.risk.from|pct}} at {{C179.statement.change.from}} to about {{C179.risk.to|pct}} at {{C179.statement.change.to}} (with the evening charge moved from {{C179.linked.moved.from[\"total eve charge\"].to|num}} to {{C179.linked.moved.to[\"total eve charge\"].to|num}} US dollars, as in the data); evening usage also acts through the gates above.",
       "text": "More evening minutes lower it steadily through this part, from about 13% at 138 minutes to about 10% at 266 minutes (with the evening charge moved from 10.12 to 24.21 US dollars, as in the data); evening usage also acts through the gates above."
      },
      {
@@ -379369,7 +379369,7 @@
       "slot_keys": {
        "C100": "ann_85:direction:total day minutes"
       },
-      "template": "More daytime minutes lower it in an uneven way: for a typical customer it acts on, going from {{C100.statement.change.from}} to {{C100.statement.change.to}} (with the daytime charge moved from 15.46 to 40.15 US dollars, as in the data) lowers it from about {{C100.risk.from|pct}} to about {{C100.risk.to|pct}}.",
+      "template": "More daytime minutes lower it in an uneven way: for a typical customer it acts on, going from {{C100.statement.change.from}} to {{C100.statement.change.to}} (with the daytime charge moved from {{C100.linked.moved.from[\"total day charge\"].to|num}} to {{C100.linked.moved.to[\"total day charge\"].to|num}} US dollars, as in the data) lowers it from about {{C100.risk.from|pct}} to about {{C100.risk.to|pct}}.",
       "text": "More daytime minutes lower it in an uneven way: for a typical customer it acts on, going from 112 minutes to 249 minutes (with the daytime charge moved from 15.46 to 40.15 US dollars, as in the data) lowers it from about 35% to about 12%."
      },
      {
@@ -379506,7 +379506,7 @@
       "slot_keys": {
        "C086": "ann_88:interaction:total day chargextotal eve charge"
       },
-      "template": "A higher daytime charge raises it in an uneven way, and even more so when the evening charge is above 17.12 US dollars: for a typical customer with such an evening charge (and 234 evening minutes), going from {{C086.statement.change.from}} to {{C086.statement.change.to}} (with daytime minutes moved from 126 to 236, as in the data) raises it from about {{C086.risk.groups[0].from|pct}} to about {{C086.risk.groups[0].to|pct}}, against about {{C086.risk.groups[1].from|pct}} to about {{C086.risk.groups[1].to|pct}} with an evening charge at or below 17.12 US dollars (and 167 evening minutes).",
+      "template": "A higher daytime charge raises it in an uneven way, and even more so when the evening charge is above 17.12 US dollars: for a typical customer with such an evening charge (and {{C086.linked.groups[0].moved.modifier[\"total eve minutes\"].to|num}} evening minutes), going from {{C086.statement.change.from}} to {{C086.statement.change.to}} (with daytime minutes moved from {{C086.linked.groups[0].moved.from[\"total day minutes\"].to|num}} to {{C086.linked.groups[0].moved.to[\"total day minutes\"].to|num}}, as in the data) raises it from about {{C086.risk.groups[0].from|pct}} to about {{C086.risk.groups[0].to|pct}}, against about {{C086.risk.groups[1].from|pct}} to about {{C086.risk.groups[1].to|pct}} with an evening charge at or below 17.12 US dollars (and {{C086.linked.groups[1].moved.modifier[\"total eve minutes\"].to|num}} evening minutes).",
       "text": "A higher daytime charge raises it in an uneven way, and even more so when the evening charge is above 17.12 US dollars: for a typical customer with such an evening charge (and 234 evening minutes), going from 19.07 US dollars to 42.40 US dollars (with daytime minutes moved from 126 to 236, as in the data) raises it from about 11% to about 71%, against about 13% to about 18% with an evening charge at or below 17.12 US dollars (and 167 evening minutes)."
      },
      {
@@ -379559,7 +379559,7 @@
       "slot_keys": {
        "C174": "ann_89:interaction:total intl chargexstate"
       },
-      "template": "For a typical customer, going from {{C174.statement.change.from}} to {{C174.statement.change.to}} (with international minutes moved from 7 to 15 minutes, as in the data) raises it steadily from about {{C174.risk.groups[0].from|pct}} to about {{C174.risk.groups[0].to|pct}} in California, and from about {{C174.risk.groups[1].from|pct}} to about {{C174.risk.groups[1].to|pct}} in states other than New York, California and Tennessee.",
+      "template": "For a typical customer, going from {{C174.statement.change.from}} to {{C174.statement.change.to}} (with international minutes moved from {{C174.linked.groups[0].moved.from[\"total intl minutes\"].to|num}} to {{C174.linked.groups[0].moved.to[\"total intl minutes\"].to|num}} minutes, as in the data) raises it steadily from about {{C174.risk.groups[0].from|pct}} to about {{C174.risk.groups[0].to|pct}} in California, and from about {{C174.risk.groups[1].from|pct}} to about {{C174.risk.groups[1].to|pct}} in states other than New York, California and Tennessee.",
       "text": "For a typical customer, going from 1.84 US dollars to 3.70 US dollars (with international minutes moved from 7 to 15 minutes, as in the data) raises it steadily from about 26% to about 58% in California, and from about 12% to about 18% in states other than New York, California and Tennessee."
      },
      {
@@ -379734,7 +379734,7 @@
       "slot_keys": {
        "C179": "ann_93:direction:total eve minutes"
       },
-      "template": "More evening minutes lower it steadily, from about {{C179.risk.from|pct}} at {{C179.statement.change.from}} to about {{C179.risk.to|pct}} at {{C179.statement.change.to}} (with the evening charge moved from 10.12 to 24.21 US dollars, as in the data).",
+      "template": "More evening minutes lower it steadily, from about {{C179.risk.from|pct}} at {{C179.statement.change.from}} to about {{C179.risk.to|pct}} at {{C179.statement.change.to}} (with the evening charge moved from {{C179.linked.moved.from[\"total eve charge\"].to|num}} to {{C179.linked.moved.to[\"total eve charge\"].to|num}} US dollars, as in the data).",
       "text": "More evening minutes lower it steadily, from about 13% at 138 minutes to about 10% at 266 minutes (with the evening charge moved from 10.12 to 24.21 US dollars, as in the data)."
      },
      {
@@ -379841,7 +379841,7 @@
       "slot_keys": {
        "C071": "ann_95:interaction:total day minutesxtotal eve charge"
       },
-      "template": "Daytime minutes raise the predicted chance in an uneven way, and even more so when the evening charge is above 17.12 US dollars: for a typical customer with such an evening charge (and 234 evening minutes), going from {{C071.statement.change.from}} to {{C071.statement.change.to}} (with the daytime charge moved from 15.46 to 40.15 US dollars, as in the data) raises it from about {{C071.risk.groups[0].from|pct}} to about {{C071.risk.groups[0].to|pct}}, against about {{C071.risk.groups[1].from|pct}} to about {{C071.risk.groups[1].to|pct}} with an evening charge at or below 17.12 US dollars (and 167 evening minutes).",
+      "template": "Daytime minutes raise the predicted chance in an uneven way, and even more so when the evening charge is above 17.12 US dollars: for a typical customer with such an evening charge (and {{C071.linked.groups[0].moved.modifier[\"total eve minutes\"].to|num}} evening minutes), going from {{C071.statement.change.from}} to {{C071.statement.change.to}} (with the daytime charge moved from {{C071.linked.groups[0].moved.from[\"total day charge\"].to|num}} to {{C071.linked.groups[0].moved.to[\"total day charge\"].to|num}} US dollars, as in the data) raises it from about {{C071.risk.groups[0].from|pct}} to about {{C071.risk.groups[0].to|pct}}, against about {{C071.risk.groups[1].from|pct}} to about {{C071.risk.groups[1].to|pct}} with an evening charge at or below 17.12 US dollars (and {{C071.linked.groups[1].moved.modifier[\"total eve minutes\"].to|num}} evening minutes).",
       "text": "Daytime minutes raise the predicted chance in an uneven way, and even more so when the evening charge is above 17.12 US dollars: for a typical customer with such an evening charge (and 234 evening minutes), going from 112 minutes to 249 minutes (with the daytime charge moved from 15.46 to 40.15 US dollars, as in the data) raises it from about 11% to about 48%, against about 13% to about 13% with an evening charge at or below 17.12 US dollars (and 167 evening minutes)."
      }
     ],
@@ -379977,6 +379977,12 @@
     ]
    }
   },
+  "slots_rerendered": {
+   "at": "2026-11-11T11:32:09+00:00",
+   "by": "experiments/10seed/slot_moved_values.py",
+   "note": "hand-typed moved linked-input values replaced by quoted-key slots; text unchanged",
+   "slots": 38
+  },
   "stale": false,
   "status": "draft for review",
   "structure": "readdown-v5",
@@ -380020,7 +380026,7 @@
     "slot_keys": {
      "C090": "ann_88:threshold:total day charge"
     },
-    "template": "Through it, the daytime charge adds to the predicted chance in an uneven way once it rises above about {{C090.statement.threshold}} (between {{C090.shape.point.spread_text[0]}} and {{C090.shape.point.spread_text[1]}} for different customers; for {{C090.statement.support_check.exceptions}} of the {{C090.statement.support_check.n}} training customers it already acts below that): for a typical such customer, going from {{C090.statement.change.from}} to {{C090.statement.change.to}} (with daytime minutes moved from 91 to 271 minutes, as in the data) raises it from about {{C090.risk.from|pct}} to about {{C090.risk.to|pct}}, flattening out near the top because the predicted chance cannot go much higher.",
+    "template": "Through it, the daytime charge adds to the predicted chance in an uneven way once it rises above about {{C090.statement.threshold}} (between {{C090.shape.point.spread_text[0]}} and {{C090.shape.point.spread_text[1]}} for different customers; for {{C090.statement.support_check.exceptions}} of the {{C090.statement.support_check.n}} training customers it already acts below that): for a typical such customer, going from {{C090.statement.change.from}} to {{C090.statement.change.to}} (with daytime minutes moved from {{C090.linked.moved.from[\"total day minutes\"].to|num}} to {{C090.linked.moved.to[\"total day minutes\"].to|num}} minutes, as in the data) raises it from about {{C090.risk.from|pct}} to about {{C090.risk.to|pct}}, flattening out near the top because the predicted chance cannot go much higher.",
     "text": "Through it, the daytime charge adds to the predicted chance in an uneven way once it rises above about 39.93 US dollars (between 32.28 US dollars and 53.10 US dollars for different customers; for 1681 of the 4000 training customers it already acts below that): for a typical such customer, going from 0.00 US dollars to 46.09 US dollars (with daytime minutes moved from 91 to 271 minutes, as in the data) raises it from about 12% to about 81%, flattening out near the top because the predicted chance cannot go much higher."
    },
    {
@@ -380050,7 +380056,7 @@
     "slot_keys": {
      "C038": "ann_97:direction:voice mail plan:1"
     },
-    "template": "Across the whole model, a voice-mail plan lowers it for a typical customer from about {{C038.risk.from|pct}} to about {{C038.risk.to|pct}} (with the voice-mail messages moved from 0 to 29, as in the data); voice-mail messages also act through the gates above.",
+    "template": "Across the whole model, a voice-mail plan lowers it for a typical customer from about {{C038.risk.from|pct}} to about {{C038.risk.to|pct}} (with the voice-mail messages moved from 0 to {{C038.linked.moved.to[\"number vmail messages\"].to|num}}, as in the data); voice-mail messages also act through the gates above.",
     "text": "Across the whole model, a voice-mail plan lowers it for a typical customer from about 12% to about 11% (with the voice-mail messages moved from 0 to 29, as in the data); voice-mail messages also act through the gates above."
    },
    {
@@ -380108,7 +380114,7 @@
     "slot_keys": {
      "C174": "ann_89:interaction:total intl chargexstate"
     },
-    "template": "A higher international charge raises it steadily, and even more so for customers in California: for a typical customer, going from {{C174.statement.change.from}} to {{C174.statement.change.to}} (with international minutes moved from 7 to 15 minutes, as in the data) raises it from about {{C174.risk.groups[0].from|pct}} to about {{C174.risk.groups[0].to|pct}} in California, and from about {{C174.risk.groups[1].from|pct}} to about {{C174.risk.groups[1].to|pct}} in states other than New York, California and Tennessee.",
+    "template": "A higher international charge raises it steadily, and even more so for customers in California: for a typical customer, going from {{C174.statement.change.from}} to {{C174.statement.change.to}} (with international minutes moved from {{C174.linked.groups[0].moved.from[\"total intl minutes\"].to|num}} to {{C174.linked.groups[0].moved.to[\"total intl minutes\"].to|num}} minutes, as in the data) raises it from about {{C174.risk.groups[0].from|pct}} to about {{C174.risk.groups[0].to|pct}} in California, and from about {{C174.risk.groups[1].from|pct}} to about {{C174.risk.groups[1].to|pct}} in states other than New York, California and Tennessee.",
     "text": "A higher international charge raises it steadily, and even more so for customers in California: for a typical customer, going from 1.84 US dollars to 3.70 US dollars (with international minutes moved from 7 to 15 minutes, as in the data) raises it from about 26% to about 58% in California, and from about 12% to about 18% in states other than New York, California and Tennessee."
    },
    {
@@ -380138,7 +380144,7 @@
     "slot_keys": {
      "C179": "ann_93:direction:total eve minutes"
     },
-    "template": "More evening minutes lower it steadily through this part, from about {{C179.risk.from|pct}} at {{C179.statement.change.from}} to about {{C179.risk.to|pct}} at {{C179.statement.change.to}} (with the evening charge moved from 10.12 to 24.21 US dollars, as in the data); evening usage also acts through the gates above.",
+    "template": "More evening minutes lower it steadily through this part, from about {{C179.risk.from|pct}} at {{C179.statement.change.from}} to about {{C179.risk.to|pct}} at {{C179.statement.change.to}} (with the evening charge moved from {{C179.linked.moved.from[\"total eve charge\"].to|num}} to {{C179.linked.moved.to[\"total eve charge\"].to|num}} US dollars, as in the data); evening usage also acts through the gates above.",
     "text": "More evening minutes lower it steadily through this part, from about 13% at 138 minutes to about 10% at 266 minutes (with the evening charge moved from 10.12 to 24.21 US dollars, as in the data); evening usage also acts through the gates above."
    },
    {

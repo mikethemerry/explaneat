@@ -24,10 +24,12 @@ def context_of(record: Optional[Dict[str, Any]], layer: Optional[Dict[str, Any]]
     import json
     ops_text = json.dumps([(o.get("seq"), o.get("type"), o.get("params")) for o in operations or []],
                           sort_keys=True, default=str)
+    from ..analysis.explanation_records import record_set
     d = (layer or {}).get("drafted") or {}
     return {"claims_hash": (layer or {}).get("claims_hash"), "drafted_at": d.get("drafted_at"),
             "ops_hash": hashlib.sha1(ops_text.encode()).hexdigest()[:12],
-            "errata": len((record or {}).get("errata") or [])}
+            "errata": len((record or {}).get("errata") or []),
+            "records_dir": record_set()["records_dir"]}
 
 
 def word_diff(old: str, new: str) -> str:

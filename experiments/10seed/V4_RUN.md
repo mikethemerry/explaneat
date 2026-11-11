@@ -133,3 +133,26 @@ results.
 - **Badges, database text plus drafts:** C 694, R 99, U 89, F 13, plus 602 sentences with no
   number.
 - **Estimated review time:** 12 to 24 minutes per genome, mean 16, 163 minutes in total.
+
+## Fixed after the run (branch `fix/post-v4-run`)
+
+The numbers above are the run as it was. The fixes below change none of them.
+
+- **Review workflow on the v4 set:** `EXPLANEAT_RECORDS_DIR=experiments/10seed/explanations_v4`
+  (or `--records-dir`). The layers follow it. The commands are in `review/README.md`.
+- **`amend_evidence` provenance:** the tool now recomputes the record's `provenance` list after
+  every change.
+  - `fix_amended_provenance.py` applied the same function in `explaneat_v4` to the 33 amended
+    records that still listed an id they no longer use. The old list is kept as
+    `provenance_before_fix`.
+  - On the 13 affected genomes the provenance check now finds 0 needs_review items, against 12
+    before.
+  - The records' stored `recheck_summary` is unchanged.
+- **Slot keys with spaces:** slots take quoted keys (`linked.moved.to."total day minutes".to`).
+  An unquoted one is an error, never left in the text silently.
+  - `slot_moved_values.py` re-rendered the typed moved values through slots: 108 in
+    churn100-s8 and 38 in churn200-s0. The rendered text is identical.
+  - churn200-s9 names its moved inputs in words and has no typed value.
+  - None of the three is in the first-10 pack, so the pack was not rebuilt.
+- **`allow_numbers`:** `add_evidence`, `amend_evidence` and `xn.py --render --allow '[...]'` now
+  take it.

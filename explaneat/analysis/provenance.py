@@ -37,8 +37,31 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tupl
 
 import numpy as np
 
-PLACEHOLDER = re.compile(r"\{\{\s*(?:q|ev)\s*:\s*(?P<id>[A-Za-z0-9_]+)\.(?P<path>[\w.\[\]\-:]+?)"
+PLACEHOLDER = re.compile(r"\{\{\s*(?:q|ev)\s*:\s*(?P<id>[A-Za-z0-9_]+)\."
+                         r"(?P<path>(?:[\w.\[\]\-:]|\"[^\"{}|]*\"|'[^'{}|]*')+?)"
                          r"(?:\s*\|\s*(?P<fmt>[^}]+?))?\s*\}\}")
+# anything that opens like a reference: one that PLACEHOLDER does not parse is an error, never left as is
+OPENING = re.compile(r"\{\{\s*(?:(?:q|ev)\s*:|C\d+\.)[^{}]*\}\}")
+
+
+def value_key(path: str) -> str:
+    """A placeholder path as the key of a stored value: quoted keys ("resting bp", ["resting bp"])
+    unquoted, so ``rows[0].inputs."resting bp"`` reads ``rows[0].inputs.resting bp``."""
+    if '"' not in path and "'" not in path:
+        return path
+    from .plain_language_slots import path_parts
+    out = ""
+    for part in path_parts(path):
+        out += f"[{part}]" if isinstance(part, int) else (f".{part}" if out else str(part))
+    return out
+
+
+def unparsed(text: str, pattern=None) -> List[str]:
+    """References that open like ``{{q:...}}`` / ``{{C12....}}`` but do not parse (a key with a
+    space that is not quoted, a stray character): each would otherwise stay in the text unrendered."""
+    pat = pattern or PLACEHOLDER
+    return [m.group(0) for m in OPENING.finditer(text or "")
+            if m.group(0).lstrip("{ ").startswith(("q", "ev")) and not pat.fullmatch(m.group(0))]
 MAX_VALUES = 5000
 MAX_LIST = 64            # longer numeric lists are stored but not addressable element by element
 
@@ -304,6 +327,7 @@ def render(text: str, lookup: Callable[[str], Optional[Dict[str, Any]]]) -> Tupl
             errors.append(f"{{{{q:{qid}.{path}}}}}: no query record {qid} for this genome")
             return m.group(0)
         vals = e.get("values") or {}
+        path = value_key(path)
         if path in ("n", "split", "n_split", "sampled") and path not in vals:
             v = e.get(path)
         else:
@@ -323,6 +347,9 @@ def render(text: str, lookup: Callable[[str], Optional[Dict[str, Any]]]) -> Tupl
         return s
 
     out = PLACEHOLDER.sub(sub, text or "")
+    for bad in unparsed(text):
+        errors.append(f"{bad}: not a valid reference (quote a key with spaces: "
+                      f"{{{{q:<id>.rows[0].inputs.\"resting bp\"}}}})")
     return out, used, errors
 
 

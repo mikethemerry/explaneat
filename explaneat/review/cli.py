@@ -9,6 +9,12 @@
 
 The database is only read (operations, read only). Verdicts go to the append-only
 ``experiments/10seed/review/<label>.verdicts.jsonl``.
+
+Which records and layers: ``--records-dir`` / ``--layers-dir`` on every command, or the
+environment variables ``EXPLANEAT_RECORDS_DIR`` / ``EXPLANEAT_LAYERS_DIR``. The layers follow the
+records (``explanations_v4`` -> ``plain_language_v4``), so for the v4 set one is enough:
+
+    EXPLANEAT_RECORDS_DIR=experiments/10seed/explanations_v4 uv run python -m explaneat review queue heart-s5
 """
 
 from __future__ import annotations
@@ -18,6 +24,31 @@ import sys
 from pathlib import Path
 
 import click
+
+
+def _set_records(ctx, param, value):
+    if value:
+        from ..analysis.explanation_records import use_record_set
+        try:
+            use_record_set(**{param.name: value})
+        except FileNotFoundError as e:
+            raise click.BadParameter(str(e), ctx=ctx, param=param)
+    return value
+
+
+def record_set_options(f):
+    """``--records-dir`` and ``--layers-dir``: which explanation records and plain-language layers
+    to read and sign (default: $EXPLANEAT_RECORDS_DIR / $EXPLANEAT_LAYERS_DIR, else the repository's
+    ``explanations/`` and ``plain_language/``)."""
+    f = click.option("--layers-dir", "layers", default=None, expose_value=False, is_eager=True,
+                     callback=_set_records,
+                     help="Plain-language layers folder (default: follows --records-dir, "
+                          "explanations<sfx> -> plain_language<sfx>).")(f)
+    f = click.option("--records-dir", "records", default=None, expose_value=False, is_eager=True,
+                     callback=_set_records,
+                     help="Explanation records folder, e.g. experiments/10seed/explanations_v4 "
+                          "(or EXPLANEAT_RECORDS_DIR).")(f)
+    return f
 
 
 def _build(label, recheck=True, bench=True):
@@ -34,6 +65,7 @@ def review():
 
 
 @review.command("status")
+@record_set_options
 @click.argument("label")
 @click.option("--no-recheck", is_flag=True, help="Use a cached recheck report only (no recompute).")
 @click.option("--json", "as_json", is_flag=True)
@@ -52,12 +84,14 @@ def status_cmd(label, no_recheck, as_json):
 
 
 @review.command("queue")
+@record_set_options
 @click.argument("label")
 @click.option("--tier", "tiers", default="G,A", show_default=True, help="Tiers to list (G,A,A',B,C or all).")
 @click.option("--json", "as_json", is_flag=True)
 def queue_cmd(label, tiers, as_json):
     """The risk-ranked review queue, each item with its sid (record verdicts against it)."""
     r = _build(label)
+    click.echo(f"{label}: record {r.context.get('records_dir')}", err=True)
     want = None if tiers == "all" else set(t.strip() for t in tiers.split(","))
     items = [i for i in r.queue if i.tier != "-" and (want is None or i.tier in want)]
     if as_json:
@@ -79,6 +113,7 @@ def queue_cmd(label, tiers, as_json):
 
 
 @review.command("verdict")
+@record_set_options
 @click.argument("label")
 @click.argument("sid")
 @click.argument("verdict", type=click.Choice(["confirmed", "wrong", "unsure"]))
@@ -99,6 +134,7 @@ def verdict_cmd(label, sid, verdict, note, disclose, by, seconds):
 
 
 @review.command("list")
+@record_set_options
 @click.argument("label")
 def list_cmd(label):
     """Every verdict recorded for LABEL (latest last)."""
@@ -109,6 +145,7 @@ def list_cmd(label):
 
 
 @review.command("diff")
+@record_set_options
 @click.argument("label")
 @click.option("--json", "as_json", is_flag=True)
 def diff_cmd(label, as_json):
@@ -133,9 +170,14 @@ def diff_cmd(label, as_json):
 
 def run_signoff(label, write=False, minutes=None, changes="", notes=""):
     from .signoff import check, signoff_block, write_result
-    from .verdicts import load
+    from .verdicts import check_record_set, load
     r = _build(label)
-    res = check(label, r.queue, r.sentences, load(label), r.recheck, r.target_hash)
+    lines = load(label)
+    try:
+        check_record_set(label, lines, r.context.get("records_dir"))
+    except ValueError as e:
+        raise click.ClickException(str(e))
+    res = check(label, r.queue, r.sentences, lines, r.recheck, r.target_hash)
     write_result(res)
     if write and res["passed"]:
         from ..analysis.explanation_records import write_verification
@@ -164,6 +206,7 @@ def echo_signoff(res):
 
 
 @review.command("signoff")
+@record_set_options
 @click.argument("label")
 @click.option("--write", is_flag=True, help="If it passes, write mike_verification (verified, signoff block).")
 @click.option("--minutes", type=float, default=None)
@@ -179,6 +222,7 @@ def signoff_cmd(label, write, minutes, changes, notes):
 
 
 @review.command("bound")
+@record_set_options
 @click.argument("labels", nargs=-1, required=True)
 def bound_cmd(labels):
     """Pooled 95% Clopper-Pearson upper bound over the labels' last sign-off checks."""
