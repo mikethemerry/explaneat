@@ -245,7 +245,10 @@ def test_single_output_mapping_unchanged():
     cfg = make_config(n_in=6, n_out=1, init="full_direct", genome_type=neat.DefaultGenome,
                       identity=False)
     called = []
-    orig = nnmod.NodeMapping._align_outputs
+    # read the raw staticmethod: class attribute access unwraps it, and restoring the
+    # plain function would turn it into an instance method for every later test
+    orig_raw = nnmod.NodeMapping.__dict__["_align_outputs"]
+    orig = orig_raw.__func__
     nnmod.NodeMapping._align_outputs = staticmethod(lambda *a: called.append(1) or orig(*a))
     try:
         for seed in range(4):
@@ -255,5 +258,5 @@ def test_single_output_mapping_unchanged():
             assert 0 in net.layers[max(net.layers)]["nodes"]
             assert net.forward(torch.zeros(3, 6, dtype=torch.float64)).shape == (3, 1)
     finally:
-        nnmod.NodeMapping._align_outputs = orig
+        nnmod.NodeMapping._align_outputs = orig_raw
     assert called == []
