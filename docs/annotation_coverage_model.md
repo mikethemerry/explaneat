@@ -395,7 +395,8 @@ The coverage report also includes `decomposition`, a diagnostic separate from
 structural and compositional coverage. It counts original hidden units (split
 copies counted once), assigning each unit to the smallest annotation that
 contains it as a non-entry node. Ancestors do not count units already assigned
-to smaller parts. `granularity` is the fraction assigned to parts of at most six
+to smaller parts; equal-size ties prefer the deepest descendant. `granularity`
+is the fraction assigned to parts of at most six
 units. The report warns when an assigned part holds more than six units and at
 least half the hidden units, or when units remain outside parts or solely in a
 root composition. These warnings measure grouping size, not whether a

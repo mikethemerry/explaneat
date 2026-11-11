@@ -281,11 +281,19 @@ def decomposition_report(model_state, annotations_data, small_part: int = SMALL_
                           if str(n) not in entries} & hidden
     has_child = {ad.parent_annotation_id for ad in annotations_data if ad.parent_annotation_id}
     roots = [ad.name for ad in annotations_data if ad.parent_annotation_id is None]
+    parent_of = {ad.name: ad.parent_annotation_id for ad in annotations_data}
+    depths = {}
+    for name in owned:
+        cursor, seen = name, set()
+        while parent_of.get(cursor) in owned and cursor not in seen:
+            seen.add(cursor)
+            cursor = parent_of[cursor]
+        depths[name] = len(seen)
     part_of = {}
     for u in hidden:
         cands = [a for a, us in owned.items() if u in us]
         if cands:
-            part_of[u] = min(cands, key=lambda a: (len(owned[a]), a))
+            part_of[u] = min(cands, key=lambda a: (len(owned[a]), -depths[a], a))
     # Ancestors may include every descendant's nodes. Count each unit only in its
     # selected smallest part, so a fine hierarchy is not flagged for its root.
     sizes = {a: sum(owner == a for owner in part_of.values()) for a in owned}

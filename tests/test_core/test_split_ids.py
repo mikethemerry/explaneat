@@ -165,3 +165,13 @@ class TestDecompositionWarning:
         assert d["granularity"] == 1.0
         assert d["largest_part"]["hidden_units"] == 1
         assert d["warnings"] == []
+
+    def test_equal_size_ancestor_does_not_steal_a_units_leaf_assignment(self):
+        from explaneat.analysis.coverage_report import decomposition_report
+        net = wide_net(width=1)
+        anns = [self._ann("z_leaf", ["-1", "1"], ["-1"], parent="a_root"),
+                self._ann("a_root", ["1", "0"], ["-1"])]
+        d = decomposition_report(net, anns)
+        assert d["units_only_in_root"] == 0
+        assert d["largest_part"]["name"] == "z_leaf"
+        assert d["warnings"] == []
