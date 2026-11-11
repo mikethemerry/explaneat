@@ -42,6 +42,16 @@ def history(lines: List[Dict[str, Any]], sid: str) -> List[Dict[str, Any]]:
     return [ln for ln in lines if ln["target"]["sid"] == sid]
 
 
+def check_record_set(label: str, lines: List[Dict[str, Any]], records_dir: Optional[str]) -> None:
+    """Refuse to mix verdicts given on different record sets (e.g. the old records and the v4
+    ones share labels) in one store: each verdict's context names its ``records_dir``."""
+    seen = {(ln.get("context") or {}).get("records_dir") for ln in lines} - {None}
+    if records_dir and seen and seen != {records_dir}:
+        raise ValueError(f"{label}: the verdicts in this store were given on the records in "
+                         f"{', '.join(sorted(seen))}, not {records_dir}; set EXPLANEAT_RECORDS_DIR to "
+                         f"match, or use another store (EXPLANEAT_REVIEW_DIR)")
+
+
 def record(label: str, sentence, verdict: str, note: str = "", by: str = "mike", source: str = "cli",
            seconds: Optional[float] = None, disclosed: bool = False, context: Optional[Dict[str, Any]] = None,
            directory: Optional[Path] = None, now: Optional[str] = None) -> Dict[str, Any]:
@@ -53,6 +63,7 @@ def record(label: str, sentence, verdict: str, note: str = "", by: str = "mike",
     p = path_for(label, directory)
     p.parent.mkdir(parents=True, exist_ok=True)
     prev = load(label, directory)
+    check_record_set(label, prev, (context or {}).get("records_dir"))
     line = {
         "id": f"v-{len(prev) + 1:06d}",
         "target": {"kind": "sentence", "sid": sentence.sid, "ref": sentence.ref,

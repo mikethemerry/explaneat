@@ -48,10 +48,29 @@ FORBIDDEN = [
 ODDS_MARK = re.compile(r"×\s*\d|\bodds\b", re.I)
 
 
+def layers_dir() -> Path:
+    """The layers directory: ``$EXPLANEAT_LAYERS_DIR``; else, when ``$EXPLANEAT_RECORDS_DIR`` is
+    ``.../explanations<suffix>``, its sibling ``.../plain_language<suffix>`` if it exists (so
+    ``EXPLANEAT_RECORDS_DIR=experiments/10seed/explanations_v4`` alone selects the v4 layers);
+    else :data:`PLAIN_DIR`."""
+    from .explanation_records import resolve_dir
+    env = os.environ.get("EXPLANEAT_LAYERS_DIR")
+    if env:
+        return resolve_dir(env)
+    rec = os.environ.get("EXPLANEAT_RECORDS_DIR")
+    if rec:
+        p = resolve_dir(rec)
+        if p.name.startswith("explanations"):
+            sib = p.parent / ("plain_language" + p.name[len("explanations"):])
+            if sib.is_dir():
+                return sib
+    return PLAIN_DIR
+
+
 def layer_path(label: str, directory: Optional[Path] = None) -> Path:
     if not re.fullmatch(r"[A-Za-z0-9_.-]+", label or ""):
         raise ValueError(f"bad label {label!r}")
-    return Path(directory or PLAIN_DIR) / f"{label}.json"
+    return Path(directory or layers_dir()) / f"{label}.json"
 
 
 def dumps(layer: Dict[str, Any]) -> str:

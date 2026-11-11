@@ -225,6 +225,8 @@ def verification_pack(first_n, labels, out_dir, formats, review_marks, records_d
     pre = dict(orders)["PRE"]
     chosen = [s.strip() for s in labels.split(",")] if labels else pre[:first_n]
     out = Path(out_dir)
+    if records_dir:     # the layers and the review queue follow the same record set
+        explanation_records.use_record_set(records_dir)
     rdir = Path(records_dir) if records_dir else None
     docs, entries, failures = [], [], []
     for lab in chosen:
@@ -280,11 +282,12 @@ def verification_pack(first_n, labels, out_dir, formats, review_marks, records_d
         click.echo(f"Review PDF: {out / 'review.pdf'}")
     else:
         failures.append({"label": "review", "compile": ["review.tex"]})
+    from .verification import records_dir_shown, records_opt
     (out / "RECORDING.txt").write_text(
         "Sentence verdicts (each queue item's sid; append-only, experiments/10seed/review/<label>.verdicts.jsonl):\n"
-        "  uv run python -m explaneat review verdict <label> <sid> confirmed|wrong|unsure --note \"...\"\n"
+        f"  uv run python -m explaneat review verdict <label>{records_opt()} <sid> confirmed|wrong|unsure --note \"...\"\n"
         "Then the genome verdict. --verified runs the signoff-v1 check (PREREG amendment 2026-11-11) and is\n"
-        "refused until it passes; it writes mike_verification into experiments/10seed/explanations/<label>.json.\n"
+        f"refused until it passes; it writes mike_verification into {records_dir_shown()}/<label>.json.\n"
         "Use --not-verified for no; then rebuild the CSVs with\n"
         "uv run python experiments/10seed/build_explanations_csv.py. Re-exporting picks the verdict up.\n\n"
         + "\n".join(f"{i + 1:2d}. {record_command(d['label'])}" for i, d in enumerate(docs)) + "\n",
@@ -307,10 +310,19 @@ def verification_pack(first_n, labels, out_dir, formats, review_marks, records_d
 @click.option("--verdict", "sentence_verdict", type=click.Choice(["confirmed", "wrong", "unsure"]), default=None)
 @click.option("--note", default="", help="Note for a sentence verdict (required for 'wrong').")
 @click.option("--disclose", is_flag=True, help="For an 'unsure' sentence verdict: disclose it in the report.")
-@click.option("--records-dir", default=None, type=click.Path(file_okay=False))
-def record_verdict(label, verified, minutes, changes, notes, sentence, sentence_verdict, note, disclose, records_dir):
+@click.option("--records-dir", default=None, type=click.Path(file_okay=False),
+              help="Explanation records folder, e.g. experiments/10seed/explanations_v4 (or EXPLANEAT_RECORDS_DIR).")
+@click.option("--layers-dir", default=None, type=click.Path(file_okay=False),
+              help="Plain-language layers folder (default: follows the records folder).")
+def record_verdict(label, verified, minutes, changes, notes, sentence, sentence_verdict, note, disclose, records_dir,
+                   layers_dir):
     """Write Mike's verdict: on one sentence (--sentence SID --verdict ...), or on the genome
     (mike_verification in the explanation record; no database)."""
+    from ..analysis.explanation_records import use_record_set
+    try:
+        use_record_set(records_dir, layers_dir)
+    except FileNotFoundError as e:
+        raise click.ClickException(str(e))
     if sentence:
         if not sentence_verdict:
             raise click.ClickException("--sentence needs --verdict confirmed|wrong|unsure")
@@ -327,8 +339,6 @@ def record_verdict(label, verified, minutes, changes, notes, sentence, sentence_
     if verified is None:
         raise click.ClickException("give --verified/--not-verified, or --sentence SID --verdict ...")
     if verified:
-        if records_dir:
-            raise click.ClickException("--verified runs the sign-off on the repository records; drop --records-dir")
         from ..review.cli import echo_signoff, run_signoff
         res = run_signoff(label, write=True, minutes=minutes, changes=changes, notes=notes)
         echo_signoff(res)
@@ -339,8 +349,7 @@ def record_verdict(label, verified, minutes, changes, notes, sentence, sentence_
         click.echo(f"{label}: mike_verification recorded (signoff-v1)")
         return
     from ..analysis.explanation_records import write_verification
-    rec = write_verification(label, verified, minutes=minutes, changes=changes, notes=notes,
-                             directory=Path(records_dir) if records_dir else None)
+    rec = write_verification(label, verified, minutes=minutes, changes=changes, notes=notes)
     click.echo(f"{label}: mike_verification = {rec['mike_verification']}")
 
 

@@ -229,8 +229,20 @@ def what_to_look_at(doc, disagreements: List[str]) -> List[str]:
     return look[:6]
 
 
+def records_dir_shown() -> str:
+    """The records folder in use, repository-relative (``EXPLANEAT_RECORDS_DIR`` or the default)."""
+    from ..analysis.explanation_records import record_set
+    return record_set()["records_dir"]
+
+
+def records_opt() -> str:
+    """`` --records-dir <dir>`` when the records are not the repository's default folder."""
+    rd = records_dir_shown()
+    return "" if rd == "experiments/10seed/explanations" else f" --records-dir {rd}"
+
+
 def record_command(label: str) -> str:
-    return (f"uv run python -m explaneat export record-verdict {label} --verified "
+    return (f"uv run python -m explaneat export record-verdict {label}{records_opt()} --verified "
             f"--minutes N --changes \"...\" --notes \"...\"")
 
 
@@ -324,9 +336,10 @@ def review_queue_tex(rv: Dict[str, Any]) -> List[str]:
               + tex(f"{f.get('grade')} {f.get('level') or ''}. {_short(f.get('evidence'), 240)}") + r"\par}"]
     L += [r"{\small\raggedright\textbf{Record a verdict} on an item (append-only, "
           + tex_code(f"experiments/10seed/review/{lab}.verdicts.jsonl") + r"):\par}", r"{\footnotesize\raggedright\texttt{" + tex(
-              f"uv run python -m explaneat review verdict {lab} <sid> confirmed|wrong|unsure --note \"...\"") + r"}\par}",
+              f"uv run python -m explaneat review verdict {lab}{records_opt()} <sid> confirmed|wrong|unsure --note \"...\"")
+          + r"}\par}",
           r"{\small Then check and record the sign-off (it refuses until every item above has a verdict):\par}",
-          r"{\footnotesize\raggedright\texttt{" + tex(f"uv run python -m explaneat review signoff {lab} --write --minutes N")
+          r"{\footnotesize\raggedright\texttt{" + tex(f"uv run python -m explaneat review signoff {lab}{records_opt()} --write --minutes N")
           + r"}\par}", ""]
     return L
 
@@ -401,8 +414,8 @@ def checklist_block(doc, order: int) -> str:
           r" & \rule{\linewidth}{0.4pt} \\",
           r"\end{tabularx}", "",
           r"{\raggedright\textbf{Record it} (runs the signoff-v1 check, PREREG amendment 2026-11-11, and is "
-          r"refused until it passes; writes \texttt{mike\_verification} into \texttt{experiments/10seed/explanations/"
-          + tex(lab) + r".json}; use \texttt{-{}-not-verified} for no; rebuild the CSVs with "
+          r"refused until it passes; writes \texttt{mike\_verification} into \texttt{"
+          + tex(f"{records_dir_shown()}/{lab}") + r".json}; use \texttt{-{}-not-verified} for no; rebuild the CSVs with "
           r"\texttt{uv run python experiments/10seed/build\_explanations\_csv.py}):\par}",
           "", r"{\footnotesize\raggedright\texttt{" + tex(record_command(lab)) + r"}\par}", ""]
     return "\n".join(L) + "\n"

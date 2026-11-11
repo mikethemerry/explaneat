@@ -7,7 +7,8 @@ A target is one of:
 * a **JSON file**: an explanation record (``experiments/10seed/explanations/<label>.json``),
   a plain-language layer, or an operations list; files next to it with the item names are
   picked up too;
-* a **label** of the 10-seed study (``heart-s2``): its record and layer in the repository.
+* a **label** of the 10-seed study (``heart-s2``): its record and layer in the repository
+  (``$EXPLANEAT_RECORDS_DIR`` / ``$EXPLANEAT_LAYERS_DIR`` select another set, e.g. the v4 one).
 
 The operations come from the target when it has them (a copied list is checked as it is),
 otherwise from the database (read only).
@@ -22,8 +23,19 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 REPO = Path(__file__).resolve().parents[2]
-RECORDS = REPO / "experiments" / "10seed" / "explanations"
+RECORDS = REPO / "experiments" / "10seed" / "explanations"      # defaults; see _records() / _layers()
 LAYERS = REPO / "experiments" / "10seed" / "plain_language"
+
+
+def _records() -> Path:
+    """``$EXPLANEAT_RECORDS_DIR`` or the repository's records (same rule as explanation_records)."""
+    from ..analysis.explanation_records import records_dir
+    return records_dir()
+
+
+def _layers() -> Path:
+    from ..analysis.plain_language_store import layers_dir
+    return layers_dir()
 UUID_RX = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.I)
 
 ITEM_FILES = {"record": "record.json", "layer": "plain_language.json",
@@ -115,24 +127,24 @@ def resolve(target: str, operations_path: Optional[str] = None) -> Target:
         elif k == "operations":
             t.operations, t.paths["operations"] = _ops_list(doc), str(p)
         if t.layer is None and k == "record" and doc.get("label"):
-            lp = LAYERS / f"{doc['label']}.json"
+            lp = _layers() / f"{doc['label']}.json"
             if lp.is_file():
                 t.layer, t.paths["layer"] = _read(lp), str(lp)
     elif UUID_RX.match(target):
         t = Target(genome_id=target, source="genome id")
-        for rp in sorted(RECORDS.glob("*.json")):
+        for rp in sorted(_records().glob("*.json")):
             try:
                 rec = _read(rp)
             except Exception:
                 continue
             if str(rec.get("genome_id")) == target:
                 t.record, t.paths["record"] = rec, str(rp)
-                lp = LAYERS / f"{rec.get('label')}.json"
+                lp = _layers() / f"{rec.get('label')}.json"
                 if lp.is_file():
                     t.layer, t.paths["layer"] = _read(lp), str(lp)
                 break
     else:
-        rp, lp = RECORDS / f"{target}.json", LAYERS / f"{target}.json"
+        rp, lp = _records() / f"{target}.json", _layers() / f"{target}.json"
         if not rp.is_file() and not lp.is_file():
             raise ValueError(f"{target!r} is not an item directory, a JSON file, a genome id or a label")
         rec = _read(rp) if rp.is_file() else None

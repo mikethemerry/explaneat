@@ -6,7 +6,10 @@ Mike's verification is stored in the same file under ``mike_verification``
 (``experiments/10seed/README.md`` §6), which ``build_explanations_csv.py`` reads.
 
 The records directory is ``$EXPLANEAT_RECORDS_DIR`` or, by default, the
-repository's ``experiments/10seed/explanations``.
+repository's ``experiments/10seed/explanations``. A relative path is read from the working
+directory, else from the repository root, so ``EXPLANEAT_RECORDS_DIR=experiments/10seed/explanations_v4``
+works from anywhere in the checkout. The plain-language layers follow it
+(:func:`explaneat.analysis.plain_language_store.layers_dir`).
 """
 
 from __future__ import annotations
@@ -21,9 +24,45 @@ from typing import Any, Dict, List, Optional
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
+def resolve_dir(value: str) -> Path:
+    """A directory given on the command line or in an environment variable: as given when it
+    exists (relative to the working directory), else relative to the repository root."""
+    p = Path(value).expanduser()
+    if p.is_dir():
+        return p.resolve()
+    if p.is_absolute():
+        return p
+    q = REPO_ROOT / p
+    return q if q.is_dir() else p
+
+
 def records_dir() -> Path:
     env = os.environ.get("EXPLANEAT_RECORDS_DIR")
-    return Path(env) if env else REPO_ROOT / "experiments" / "10seed" / "explanations"
+    return resolve_dir(env) if env else REPO_ROOT / "experiments" / "10seed" / "explanations"
+
+
+def use_record_set(records: Optional[str] = None, layers: Optional[str] = None) -> None:
+    """Point this process at another set of records (and layers): sets ``EXPLANEAT_RECORDS_DIR``
+    (and ``EXPLANEAT_LAYERS_DIR``) so every reader and writer (review, export, recheck, sign-off)
+    uses the same files. Used by the ``--records-dir`` / ``--layers-dir`` options."""
+    for key, val in (("EXPLANEAT_RECORDS_DIR", records), ("EXPLANEAT_LAYERS_DIR", layers)):
+        if val:
+            d = resolve_dir(str(val))
+            if not d.is_dir():
+                raise FileNotFoundError(f"{val}: no such directory")
+            os.environ[key] = str(d)
+
+
+def record_set() -> Dict[str, str]:
+    """The records and layers directories in use (repository-relative when inside it)."""
+    from .plain_language_store import layers_dir
+
+    def rel(p: Path) -> str:
+        try:
+            return str(Path(p).resolve().relative_to(REPO_ROOT))
+        except ValueError:
+            return str(p)
+    return {"records_dir": rel(records_dir()), "layers_dir": rel(layers_dir())}
 
 
 def _read(path: Path) -> Dict[str, Any]:
