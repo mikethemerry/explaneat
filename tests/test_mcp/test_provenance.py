@@ -145,6 +145,12 @@ def test_query_subgroup_and_add_evidence_from_a_query(world):
     assert am["status"] == "ok" and am["history_length"] == 1
     rec = json.loads(list_operations(world["gid"]))["operations"][-1]["params"]["evidence"]["records"][0]
     assert rec["narrative"] == f"{n} rows." and rec["history"][0]["narrative"] == f"{n} rows with g = 1."
+    # a record can be re-pointed at a recomputed query in strict mode (its stored values are not typed text)
+    q2 = json.loads(query_subgroup(world["gid"], "`g` == '1'"))["provenance"]["id"]
+    am = json.loads(amend_evidence(world["gid"], "lin", 0, "recomputed after a split", query_id=q2))
+    assert am.get("status") == "ok", am
+    rec = json.loads(list_operations(world["gid"]))["operations"][-1]["params"]["evidence"]["records"][0]
+    assert rec["payload"]["query_id"] == q2 and rec["payload"]["values"]["subgroup.n"] == n
 
 
 def test_query_probe_and_ablate(world):
