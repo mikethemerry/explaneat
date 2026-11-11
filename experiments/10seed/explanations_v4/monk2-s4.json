@@ -1,0 +1,107 @@
+{
+  "label": "monk2-s4",
+  "genome_id": "60ee493c-bce5-4a2b-b7af-d06843835ae6",
+  "protocol_version": "v4",
+  "start": "2026-11-11T04:25:26Z",
+  "end": "2026-11-11T04:39:20Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 6,
+  "n_composition_annotations": 1,
+  "n_splits": 9,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 7,
+  "hidden_nodes_single_leaf_no_split": 7,
+  "hidden_nodes_in_any_annotation": 7,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 4.440892098500626e-16,
+  "closed_form_max_abs_err": 0.023701640100661336,
+  "summary": "The network approximates \"exactly two of a1, a2, a3, a4 and a6 take their first value\" and largely ignores a5's first value, which the MONK-2 target also counts. A linear tally of direct edges raises the score with each first value; a two-unit counter over a1, a2, a3, a4 and a6 opens on the 112 training rows with three or more such first values (share 100%) and lowers the score by 103.2 on average there; a gate lifts the score when a5 is not at its first value, and the direct a5:1 edge pays most of that back. Over all 432 attribute combinations the model agrees with the five-attribute rule on 416 and with the six-attribute target rule on 380; training accuracy is 88.7%, and 38 of the 39 training errors have a5 = 1. Switching off the counter, the tally or the a5 gate lowers the training AUC from 0.925 to 0.454, 0.811 and 0.878. Coverage is full and the explained structure matches the network to 4.4e-16.",
+  "summary_template": "The network approximates \"exactly two of a1, a2, a3, a4 and a6 take their first value\" and largely ignores a5's first value, which the MONK-2 target also counts. A linear tally of direct edges raises the score with each first value; a two-unit counter over a1, a2, a3, a4 and a6 opens on the {{q:q_1c297d68ab.subgroup.n}} training rows with three or more such first values (share {{q:q_1c297d68ab.subgroup.parts.ann_27.share_acts_on|.0%}}) and lowers the score by {{q:q_1c297d68ab.subgroup.parts.ann_27.mean_abs_contribution|.1f}} on average there; a gate lifts the score when a5 is not at its first value, and the direct a5:1 edge pays most of that back. Over all {{q:q_f68a1a5d35.rule.n}} attribute combinations the model agrees with the five-attribute rule on {{q:q_f68a1a5d35.rule.agree}} and with the six-attribute target rule on {{q:q_df1ed43ef1.rule.agree}}; training accuracy is {{q:q_1b7245a46e.accuracy|.1%}}, and {{q:q_c446a061e8.subgroup.n}} of the {{q:q_c331deb425.subgroup.n}} training errors have a5 = 1. Switching off the counter, the tally or the a5 gate lowers the training AUC from {{q:q_8d10016bc9.data.auc_with|.3f}} to {{q:q_8d10016bc9.data.auc_without|.3f}}, {{q:q_35ae0de497.data.auc_without|.3f}} and {{q:q_783c3d2ff9.data.auc_without|.3f}}. Coverage is full and the explained structure matches the network to {{q:q_9e4874baa1.function_preservation_max_abs_err|.1e}}.",
+  "resisted": "Nothing resisted, but three small parts are described rather than explained. The penalty for a5 at its second or fourth value (switching it off moves the training AUC from 0.9254 to 0.9255) and the a1 = 2 offset (AUC 0.9254 without its variation) are level offsets with no role in the rule, and node 927 is dead (open on 0 of 345 training rows). The a5 handling is explained as a mechanism but it is the model's main error: it does not count a5 = 1 as a first value.",
+  "resisted_template": "Nothing resisted, but three small parts are described rather than explained. The penalty for a5 at its second or fourth value (switching it off moves the training AUC from {{q:q_0119793490.data.auc_with|.4f}} to {{q:q_0119793490.data.auc_without|.4f}}) and the a1 = 2 offset (AUC {{q:q_6657bb0ffd.data.auc_without|.4f}} without its variation) are level offsets with no role in the rule, and node 927 is dead (open on {{q:q_0830cdcf57.units[0].active_rows}} of {{q:q_0830cdcf57.units[0].n_rows}} training rows). The a5 handling is explained as a mechanism but it is the model's main error: it does not count a5 = 1 as a first value.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 42,
+    "complete_ok": true
+  },
+  "recheck_notes": "Recheck: 0 mismatches, 0 needs_review. The 42 unchecked free-text sentences hold no numbers (mechanism descriptions). Two early queries (compute_performance, unit_activity) predated the splits; they were rerun after all structural operations and the references swapped before the recheck. Three small parts (a5_middle_levels, a1_second_value_offset, dead_a3_second) are labelled 'described, not explained' in their own text.",
+  "tool_bugs": "query_ablate(direct=true) reports 0 direct edges and no change once add_identity_node has moved the output's direct edges into a leaf (the edges end at identity_0); it fails silently rather than pointing to edges=[...] or the leaf, so the direct edges were ablated with edges=[...] and parts=[...]. xn.py --render has no allow_numbers option, so a category code such as a5 = 4 in the summary/resisted text is refused and had to be written in words. add_evidence has no evidence type for compute_performance; it was attached as 'subgroup'.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 122,
+    "provenance_backed": 122,
+    "allow_listed": 5,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 3,
+      "other": 4
+    },
+    "audit": {
+      "references": 122,
+      "checked": 122
+    },
+    "self_probe": {
+      "parts": [
+        "too_many_first_values",
+        "a5_not_first_lift",
+        "a5_middle_levels",
+        "a1_second_value_offset",
+        "dead_a3_second",
+        "direct_first_value_tally",
+        "exactly_two_of_five_rule"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 7,
+      "roots": [
+        "exactly_two_of_five_rule"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.440892098500626e-16,
+    "closed_form_max_abs_err": 0.023701640100661336,
+    "numeric_max_abs_err": 7.105427357601002e-15,
+    "op_counts": {
+      "rename_node": 17,
+      "split_node": 9,
+      "add_identity_node": 1,
+      "annotate": 7
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T04:40:12+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 42,
+      "provenance": {
+        "templated_texts": 35,
+        "queries": 30
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

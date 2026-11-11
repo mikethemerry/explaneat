@@ -1,0 +1,109 @@
+{
+  "label": "heart100-s3",
+  "genome_id": "fa8b81a0-d728-4a6f-b980-ba38b0f0f101",
+  "protocol_version": "v4",
+  "start": "2026-11-11T07:54:25Z",
+  "end": "2026-11-11T08:10:53Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 7,
+  "n_composition_annotations": 2,
+  "n_splits": 10,
+  "n_identity_nodes": 2,
+  "hidden_nodes": 10,
+  "hidden_nodes_single_leaf_no_split": 10,
+  "hidden_nodes_in_any_annotation": 10,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 3.3306690738754696e-16,
+  "closed_form_max_abs_err": 0.020434768416291327,
+  "summary": "The model predicts heart disease (training AUC 0.952) mostly through an additive backbone of direct edges; switching the backbone off lowers training AUC to 0.523. In it, high resting blood pressure, a flat ST segment, coloured vessels, male sex and asymptomatic chest pain raise predicted risk, and a normal thallium scan and a higher peak heart rate lower it. The hidden parts correct the backbone (switched off together, training AUC falls to 0.918): a blood-pressure brake makes pressure count mainly up to a threshold, which is lower with an upsloping ST segment; an exercise-reserve chain adds risk that grows with age for patients with a reassuring exercise test, so the gap between a flat and an upsloping segment shrinks with age; an age hinge from about 61 years turns whole-model risk down for older patients; an ST-depression hinge adds risk past 0.4 mm; an atypical-angina switch lowers risk; and a gate adds risk for combinations of atypical angina, a downsloping segment and women with several coloured vessels. Structural and compositional coverage are complete, and the annotated model reproduces the original to within 3.3e-16.",
+  "summary_template": "The model predicts heart disease (training AUC {{q:q_6bcb5caa63.auc_roc|.3f}}) mostly through an additive backbone of direct edges; switching the backbone off lowers training AUC to {{q:q_376e242da8.data.auc_without|.3f}}. In it, high resting blood pressure, a flat ST segment, coloured vessels, male sex and asymptomatic chest pain raise predicted risk, and a normal thallium scan and a higher peak heart rate lower it. The hidden parts correct the backbone (switched off together, training AUC falls to {{q:q_d5d21666ce.data.auc_without|.3f}}): a blood-pressure brake makes pressure count mainly up to a threshold, which is lower with an upsloping ST segment; an exercise-reserve chain adds risk that grows with age for patients with a reassuring exercise test, so the gap between a flat and an upsloping segment shrinks with age; an age hinge from about {{q:q_11fac9d3e4.rows[5].inputs.age}} turns whole-model risk down for older patients; an ST-depression hinge adds risk past {{q:q_d9b6c2d3e5.rows[4].inputs.oldpeak}}; an atypical-angina switch lowers risk; and a gate adds risk for combinations of atypical angina, a downsloping segment and women with several coloured vessels. Structural and compositional coverage are complete, and the annotated model reproduces the original to within {{q:q_2f0be4242e.function_preservation_max_abs_err|.1e}}.",
+  "resisted": "Resisted: not applicable at the level of parts. Two behaviours are worth checking: for the typical patient, predicted risk falls from 38% at 0 mm to 21% at 2 mm of ST depression before rising, and a normal fasting blood sugar carries a positive direct weight (0.33 per sd). The age hinge lowers risk for older patients whose observed outcome rate (55.9%) is higher than that of the 106 patients from their fifties up to the hinge (49.1%); it is a counterweight to age terms elsewhere, not a protective effect.",
+  "resisted_template": "Resisted: not applicable at the level of parts. Two behaviours are worth checking: for the typical patient, predicted risk falls from {{q:q_4edb50ae0b.rows[0].risk|pct}} at {{q:q_4edb50ae0b.rows[0].inputs.oldpeak}} to {{q:q_4edb50ae0b.rows[4].risk|pct}} at {{q:q_4edb50ae0b.rows[4].inputs.oldpeak}} of ST depression before rising, and a normal fasting blood sugar carries a positive direct weight ({{q:q_832303e085.switched_off[8].weight|.2f}} per sd). The age hinge lowers risk for older patients whose observed outcome rate ({{q:q_24a1eff8ba.subgroup.outcome_rate|.1%}}) is higher than that of the {{q:q_447040a98a.subgroup.n}} patients from their fifties up to the hinge ({{q:q_447040a98a.subgroup.outcome_rate|.1%}}); it is a counterweight to age terms elsewhere, not a protective effect.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 49,
+    "complete_ok": true
+  },
+  "recheck_notes": "The one needs_review from the first recheck (root hypothesis cited q_456fbede6f, a compute_performance run before the identity-node operation) was fixed by recomputing performance after the last structural operation (q_6bcb5caa63, same values since the function is preserved) and citing it in the root hypothesis and summary. Formulas: the leaf closed forms are attached as get_formula LaTeX evidence, marked approximate with check_explanation's closed_form_max_abs_err per leaf; the two composition formulas (hidden_unit_terms, root) are marked approximate through rounding without a quoted tolerance (counted as 'other'). No formula is written with '=' in any hypothesis. Scope words: 'no direct edge' for ST depression (hidden_unit_terms) rests on the direct-edge list in q_832303e085, which has no oldpeak edge; the gate rule's agreement is a training-row count (q_a2ced4d037, 0 disagreements) plus constructed-case probes, not a full enumeration. Literal numbers allow-listed are node ids, category codes in column names, the age bound 50 of a stored subgroup query, and small counting words.",
+  "tool_bugs": "query_enumerate refuses any genome with a continuous input (age has 41 values), even with a where clause, so the gate rule was checked on the training rows with query_subgroup (gate vs rule disagreement count) and on constructed cases with two-sweep query_probe grids instead; query_probe allows at most two sweeps. get_formula returns no provenance id, so formula evidence carries the LaTeX payload and cites check_explanation for the tolerance. add_evidence has no allow_numbers argument, so a narrative with a literal (an age bound, a thallium code) had to be reworded. rename_inputs leaves a trailing space on each display name in its printout (cosmetic).",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 230,
+    "provenance_backed": 198,
+    "allow_listed": 32,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 7,
+      "other": 2
+    },
+    "audit": {
+      "references": 198,
+      "checked": 198
+    },
+    "self_probe": {
+      "parts": [
+        "direct_linear",
+        "old_age_relief",
+        "cp2_offset",
+        "st_depression_hinge",
+        "bp_slope1_damper",
+        "vessels_sex_gate",
+        "exercise_reserve_age_chain",
+        "hidden_unit_terms",
+        "heart_disease_risk"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 9,
+      "roots": [
+        "heart_disease_risk"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 3.3306690738754696e-16,
+    "closed_form_max_abs_err": 0.020434768416291327,
+    "numeric_max_abs_err": 2.6645352591003757e-15,
+    "op_counts": {
+      "rename_node": 26,
+      "add_identity_node": 2,
+      "split_node": 10,
+      "annotate": 9
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T08:11:27+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 49,
+      "provenance": {
+        "templated_texts": 53,
+        "queries": 36
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

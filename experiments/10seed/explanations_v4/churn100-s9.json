@@ -1,0 +1,110 @@
+{
+  "label": "churn100-s9",
+  "genome_id": "94153368-e0af-4730-90af-95b4a86b03ac",
+  "protocol_version": "v4",
+  "start": "2026-11-11T08:29:35Z",
+  "end": "2026-11-11T08:46:07Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 8,
+  "n_composition_annotations": 1,
+  "n_splits": 8,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 21,
+  "hidden_nodes_single_leaf_no_split": 21,
+  "hidden_nodes_in_any_annotation": 21,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 4.440892098500626e-16,
+  "closed_form_max_abs_err": 0.012399866043466545,
+  "summary": "The model predicts churn as a sum of a few readable signals on the logit. The strongest is customer service calls: risk switches on at the third call and climbs with each further call (for the typical customer 3% at two calls, 17% at four, 73% at six); switching that gate off lowers training AUC from 0.892 to 0.803. An international plan adds a step (2.44 on the logit for the 380 holders; typical risk 3% to 27%). Heavy daytime use raises risk past a day-minutes threshold (1030 customers on the gate), and a combined-bill gate raises it when the day charge is high, earlier when the evening charge is also high, while at moderate evening charges the chain cancels the direct evening-charge edge. A direct linear score adds the rest; its largest term is the voice-mail plan (-0.46 per sd), and a Rhode Island state gate lowers risk (-1.65 on the logit in the probe). Two units are dormant on the training data: the voicemail-message gate and a second service-call pathway. The parts add on the logit (self-probe: the service-call and plan contributions are unchanged when the other is switched on), and the decomposition reproduces the model to 4.4e-16.",
+  "summary_template": "The model predicts churn as a sum of a few readable signals on the logit. The strongest is customer service calls: risk switches on at the third call and climbs with each further call (for the typical customer {{q:q_207c91809b.rows[2].risk|pct}} at two calls, {{q:q_207c91809b.rows[4].risk|pct}} at four, {{q:q_207c91809b.rows[6].risk|pct}} at six); switching that gate off lowers training AUC from {{q:q_9845acad3a.data.auc_with|.3f}} to {{q:q_9845acad3a.data.auc_without|.3f}}. An international plan adds a step ({{q:q_16fa21a61d.subgroup.parts.ann_85.mean_contribution|.2f}} on the logit for the {{q:q_16fa21a61d.subgroup.n}} holders; typical risk {{q:q_a28dd13985.rows[0].risk|pct}} to {{q:q_a28dd13985.rows[1].risk|pct}}). Heavy daytime use raises risk past a day-minutes threshold ({{q:q_ce47b87205.subgroup.n}} customers on the gate), and a combined-bill gate raises it when the day charge is high, earlier when the evening charge is also high, while at moderate evening charges the chain cancels the direct evening-charge edge. A direct linear score adds the rest; its largest term is the voice-mail plan ({{q:q_25b7fdf4db.switched_off[0].weight|.2f}} per sd), and a Rhode Island state gate lowers risk ({{q:q_1470ed3e88.rows[1].parts.ann_84.contribution|.2f}} on the logit in the probe). Two units are dormant on the training data: the voicemail-message gate and a second service-call pathway. The parts add on the logit (self-probe: the service-call and plan contributions are unchanged when the other is switched on), and the decomposition reproduces the model to {{q:q_b385c40bc3.function_preservation_max_abs_err|.1e}}.",
+  "resisted": "Not explained, only described: the vmail_gate (node 2149, on for 0 training customers) and the service-call pathway of dormant_service_branch (nodes 651 and 886, on for 0) are dormant, so they have a structure but no behaviour to explain; the state-indicator edges of direct_linear are small offsets without a domain reading. Node 5000 and node 7530 are on for 3 and 3 training customers: fitted to those rows.",
+  "resisted_template": "Not explained, only described: the vmail_gate (node 2149, on for {{q:q_9a69839eb3.subgroup.n}} training customers) and the service-call pathway of dormant_service_branch (nodes 651 and 886, on for {{q:q_2f7f15577c.subgroup.n}}) are dormant, so they have a structure but no behaviour to explain; the state-indicator edges of direct_linear are small offsets without a domain reading. Node 5000 and node 7530 are on for {{q:q_63fd5aeba3.subgroup.n}} and {{q:q_e6e9a3af24.subgroup.n}} training customers: fitted to those rows.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 40,
+    "complete_ok": true
+  },
+  "recheck_notes": "First recheck flagged one needs_review: the state_gates hypothesis cited unit_activity q_f24d4626d4, computed before the splits and identity node. Recomputed as q_f5c309487c (same values for node 3741), narrative updated, recheck rerun: 0 mismatch, 0 needs_review. The 40 unchecked free-text sentences are the non-numeric prose around the placeholders.",
+  "tool_bugs": "None blocking. Notes: (1) annotating a leaf whose entry is another leaf's node (8513 as entry of service_calls) is refused as 'already covered', so node 5000 (service-call gate fed by 8513) was placed in bill_chain; (2) after add_identity_node on the output, query_ablate(direct=true) finds 0 root direct edges, so edge weights were read with query_ablate(edges=[...->identity_0]); (3) get_formula returns no provenance id, so formula LaTeX was attached as analytical_formula payload.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 184,
+    "provenance_backed": 157,
+    "allow_listed": 27,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 0,
+      "other": 0
+    },
+    "audit": {
+      "references": 157,
+      "checked": 157
+    },
+    "self_probe": {
+      "parts": [
+        "service_calls",
+        "intl_plan_gate",
+        "direct_linear",
+        "bill_chain",
+        "day_minutes_gate",
+        "state_gates",
+        "dormant_service_branch",
+        "vmail_gate",
+        "churn_score"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0,
+    "formulas_note": "No typed formulas in any text; each part's get_formula LaTeX is attached as analytical_formula evidence (leaf closed-form max error up to 0.0124, check_explanation)."
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 9,
+      "roots": [
+        "churn_score"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.440892098500626e-16,
+    "closed_form_max_abs_err": 0.012399866043466545,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 71,
+      "split_node": 8,
+      "add_identity_node": 1,
+      "annotate": 9
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T08:46:55+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 40,
+      "provenance": {
+        "templated_texts": 40,
+        "queries": 41
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

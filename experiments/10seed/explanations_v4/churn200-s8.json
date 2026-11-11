@@ -1,0 +1,111 @@
+{
+  "label": "churn200-s8",
+  "genome_id": "a3049380-84c9-45be-9995-e76525ba1742",
+  "protocol_version": "v4",
+  "start": "2026-11-11T22:54:46+13:00",
+  "end": "2026-11-11T23:16:30+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 7,
+  "n_composition_annotations": 2,
+  "n_splits": 13,
+  "n_identity_nodes": 3,
+  "hidden_nodes": 24,
+  "hidden_nodes_single_leaf_no_split": 21,
+  "hidden_nodes_in_any_annotation": 24,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 9.992007221626409e-16,
+  "closed_form_max_abs_err": 0.04890547754267338,
+  "summary": "The churn model adds a linear backbone of direct terms to a day-usage engine, a service-call term and small state offsets on the log-odds scale (training AUC 0.917). Its main nonlinearity is a day-and-evening usage hinge: in probes of the typical customer at rising day minutes, predicted risk stays near 3% to 5% for ordinary use and climbs to 23% and then 83% for heavy users; switching the hinge off lowers AUC to 0.773. For low-usage customers without an international plan, a service-call escalation fires from the third call and, in a probe, pushes risk from 3% with two calls to 80% with four; a usage-level switch vetoes it for heavier users and plan holders. An international plan raises the typical customer's risk from 4% to 35%, a voice-mail plan lowers it from 4% to 1%. The state and area-code offsets and a light-day-user dampener are described rather than explained: small fitted adjustments that barely change ranking.",
+  "summary_template": "The churn model adds a linear backbone of direct terms to a day-usage engine, a service-call term and small state offsets on the log-odds scale (training AUC {{q:q_b81f0a8e19.data.auc_with|.3f}}). Its main nonlinearity is a day-and-evening usage hinge: in probes of the typical customer at rising day minutes, predicted risk stays near {{q:q_29746231f4.rows[0].risk|pct}} to {{q:q_fca5886925.rows[0].risk|pct}} for ordinary use and climbs to {{q:q_c2367dba43.rows[0].risk|pct}} and then {{q:q_e32294b890.rows[0].risk|pct}} for heavy users; switching the hinge off lowers AUC to {{q:q_190fe23121.data.auc_without|.3f}}. For low-usage customers without an international plan, a service-call escalation fires from the third call and, in a probe, pushes risk from {{q:q_15ba5df5ca.rows[2].risk|pct}} with two calls to {{q:q_15ba5df5ca.rows[4].risk|pct}} with four; a usage-level switch vetoes it for heavier users and plan holders. An international plan raises the typical customer's risk from {{q:q_01a03c7cc0.rows[0].risk|pct}} to {{q:q_01a03c7cc0.rows[1].risk|pct}}, a voice-mail plan lowers it from {{q:q_009ba4e1d8.rows[0].risk|pct}} to {{q:q_009ba4e1d8.rows[1].risk|pct}}. The state and area-code offsets and a light-day-user dampener are described rather than explained: small fitted adjustments that barely change ranking.",
+  "resisted": "Nothing resisted explanation. Two parts are described rather than explained: state_area_terms (per-state offsets on groups of about 80 customers, AUC change from 0.9174 to 0.9169 when held at their means) and low_day_minutes (AUC from 0.9174 to 0.9164 when switched off).",
+  "resisted_template": "Nothing resisted explanation. Two parts are described rather than explained: state_area_terms (per-state offsets on groups of about {{q:q_3eecabc5c8.subgroup.n|d}} customers, AUC change from {{q:q_ecd5b2bc57.data.auc_with|.4f}} to {{q:q_ecd5b2bc57.data.auc_without|.4f}} when held at their means) and low_day_minutes (AUC from {{q:q_d0242d7e7e.data.auc_with|.4f}} to {{q:q_d0242d7e7e.data.auc_without|.4f}} when switched off).",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 35,
+    "complete_ok": true
+  },
+  "recheck_notes": "Recheck: 0 mismatches, 0 needs_review. The 35 unchecked free-text sentences are structural descriptions (which parts feed which) and qualitative readings of the attached probes; every number in them is a placeholder.",
+  "tool_bugs": "None blocking. Notes: (1) get_formula returns latex null (tractable false) for the multi-exit leaf state_area_terms, so it has no analytical_formula record; its evidence is the state and area-code probes. (2) query_ablate(direct=true) reports 0 direct edges once the output's direct edges are routed through identity_0; direct weights were taken from query_ablate(edges=[...->identity_0]). (3) A leaf cannot take another leaf's exit as its entry (the entry is already covered), so serial leaves needed boundary identity nodes (identity_7068, identity_4496). (4) xn.py --render has no allow list, so the summary states probe input levels in words.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 220,
+    "provenance_backed": 162,
+    "allow_listed": 58,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 0,
+      "other": 0
+    },
+    "audit": {
+      "references": 162,
+      "checked": 162
+    },
+    "self_probe": {
+      "parts": [
+        "direct_terms",
+        "usage_level",
+        "service_call_escalation",
+        "day_eve_hinge",
+        "low_day_minutes",
+        "service_calls_charge",
+        "state_area_terms",
+        "day_usage_engine",
+        "churn_model"
+      ],
+      "refuted_and_fixed": [
+        "service_calls_charge: 'from 3 calls each extra call raises the score' was refuted by the 250-minute probe (unit stays at 0 up to 4 calls); rewritten to say the rise starts later for heavy day spenders"
+      ]
+    },
+    "restatements": 0
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 9,
+      "roots": [
+        "churn_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 9.992007221626409e-16,
+    "closed_form_max_abs_err": 0.04890547754267338,
+    "numeric_max_abs_err": 3.552713678800501e-15,
+    "op_counts": {
+      "rename_node": 71,
+      "add_identity_node": 3,
+      "split_node": 13,
+      "annotate": 9
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T10:16:54+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 35,
+      "provenance": {
+        "templated_texts": 68,
+        "queries": 51
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

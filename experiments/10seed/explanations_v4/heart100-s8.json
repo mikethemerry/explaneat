@@ -1,0 +1,108 @@
+{
+  "label": "heart100-s8",
+  "genome_id": "b4c5f225-ec5f-4e11-996d-27d32b7d1290",
+  "protocol_version": "v4",
+  "start": "2026-11-11T20:39:44+13:00",
+  "end": "2026-11-11T20:54:30+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 4,
+  "n_composition_annotations": 2,
+  "n_splits": 6,
+  "n_identity_nodes": 2,
+  "hidden_nodes": 9,
+  "hidden_nodes_single_leaf_no_split": 5,
+  "hidden_nodes_in_any_annotation": 9,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 2.220446049250313e-16,
+  "closed_form_max_abs_err": 0.015607441226486607,
+  "summary": "The model predicts heart disease as the sigmoid of the sum of its parts. The direct linear terms carry the classic risk factors: more vessels coloured by fluoroscopy, male sex, no chest pain (asymptomatic) and higher cholesterol raise the score; switching them off lowers the training AUC from 0.964 to 0.869. The ischaemia gate (node 855) opens for 93 of the 242 training patients when ST depression on exercise, a reversible thallium defect, chest pain on exercise, a high resting blood pressure or a high fasting blood sugar add up, is held shut by typical angina and an upsloping ST segment, and adds 4.78 to the score on average for those patients; switching it off gives an AUC of 0.894. The fitness pathway lowers the predicted risk for younger patients without exercise angina and with a high peak heart rate (for the typical man, risk 1% at 35 years against 31% at 55 years), and for older patients with a low resting blood pressure; replacing it by its training mean gives an AUC of 0.946. A hinge on the rare thallium code (the thal:4 column) is fitted to 2 training patients. Worth checking: through the fitness score a higher resting blood pressure lowers the predicted risk for a man of 45 years (33% at 110 mm Hg against 1% at 170 mm Hg), against its direction through the gate, and a high fasting blood sugar lowers the direct term while it raises the gate. Coverage is full and the annotated model reproduces the network to within 2.2e-16 on the training rows.",
+  "summary_template": "The model predicts heart disease as the sigmoid of the sum of its parts. The direct linear terms carry the classic risk factors: more vessels coloured by fluoroscopy, male sex, no chest pain (asymptomatic) and higher cholesterol raise the score; switching them off lowers the training AUC from {{q:q_c9b922265f.data.auc_with|.3f}} to {{q:q_c9b922265f.data.auc_without|.3f}}. The ischaemia gate (node 855) opens for {{q:q_b2bb4ecb6e.subgroup.n}} of the {{q:q_b2bb4ecb6e.n_total}} training patients when ST depression on exercise, a reversible thallium defect, chest pain on exercise, a high resting blood pressure or a high fasting blood sugar add up, is held shut by typical angina and an upsloping ST segment, and adds {{q:q_b2bb4ecb6e.subgroup.parts.ann_37.mean_contribution|.2f}} to the score on average for those patients; switching it off gives an AUC of {{q:q_f67550eddc.data.auc_without|.3f}}. The fitness pathway lowers the predicted risk for younger patients without exercise angina and with a high peak heart rate (for the typical man, risk {{q:q_e194a86363.rows[0].risk|pct}} at {{q:q_e194a86363.rows[0].inputs.age}} against {{q:q_e194a86363.rows[4].risk|pct}} at {{q:q_e194a86363.rows[4].inputs.age}}), and for older patients with a low resting blood pressure; replacing it by its training mean gives an AUC of {{q:q_e9d8f1f265.data.auc_without|.3f}}. A hinge on the rare thallium code (the thal:4 column) is fitted to {{q:q_eda722b782.subgroup.n}} training patients. Worth checking: through the fitness score a higher resting blood pressure lowers the predicted risk for a man of {{q:q_472118b2b4.set.age}} ({{q:q_472118b2b4.rows[1].risk|pct}} at {{q:q_472118b2b4.rows[1].inputs.trestbps}} against {{q:q_472118b2b4.rows[5].risk|pct}} at {{q:q_472118b2b4.rows[5].inputs.trestbps}}), against its direction through the gate, and a high fasting blood sugar lowers the direct term while it raises the gate. Coverage is full and the annotated model reproduces the network to within {{q:q_7cea2aa187.function_preservation_max_abs_err|.1e}} on the training rows.",
+  "resisted": "No part resisted: each part's hypothesis was confirmed by its self-probe. The hinge on the thal:4 column is explained but rests on 2 training patients, and the blood-pressure effects in the fitness pathway are described as the model does them, without a clinical reading.",
+  "resisted_template": "No part resisted: each part's hypothesis was confirmed by its self-probe. The hinge on the thal:4 column is explained but rests on {{q:q_eda722b782.subgroup.n}} training patients, and the blood-pressure effects in the fitness pathway are described as the model does them, without a clinical reading.",
+  "recheck_notes": "Recheck v3 on this explanation only: 0 mismatches, 0 needs_review; 51 free-text sentences are unchecked by the recheck (domain wording around the referenced numbers), reviewed by hand in the number audit.",
+  "tool_bugs": "(1) query_ablate(direct=true) reports no direct edges (n_affected 0) once the output's direct edges are routed through an identity node; worked around with query_ablate(edges=[...->identity_direct]). (2) A leaf cannot take another leaf's exit as an entry (annotate refuses: node already covered), so the serial readout of node 2445 (nodes 4037, 4835, 9183, 2116) is held as the composition's own nodes rather than a second leaf; check_explanation therefore reports no closed-form error for the composition, whose LaTeX is attached as evidence instead of a typed formula. (3) The strict lint refuses the literal in 'thal code 4' but accepts 'thal:4'; --render has no allow_numbers option, so summary and resisted use the column name.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 191,
+    "provenance_backed": 191,
+    "allow_listed": 2,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 3,
+      "other": 5
+    },
+    "audit": {
+      "references": 160,
+      "checked": 160
+    },
+    "self_probe": {
+      "parts": [
+        "direct_linear_terms",
+        "ischaemia_gate",
+        "thal4_hinge",
+        "fitness_score",
+        "fitness_pathway",
+        "heart_disease_model"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0,
+    "notes": "numbers counts placeholder occurrences in hypotheses, evidence narratives, summary and resisted (160 distinct query paths, all resolved and checked with get_query); formula coefficients in the three approximate formulas are not counted there. allow_listed: the code literal 4 in two hypotheses (thal code 4). formulas.other: five get_formula LaTeX closed forms attached as analytical_formula evidence."
+  },
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 51,
+    "complete_ok": true
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 6,
+      "roots": [
+        "heart_disease_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 2.220446049250313e-16,
+    "closed_form_max_abs_err": 0.015607441226486607,
+    "numeric_max_abs_err": 1.1102230246251565e-15,
+    "op_counts": {
+      "rename_node": 26,
+      "add_identity_node": 2,
+      "split_node": 6,
+      "consolidate_node": 2,
+      "annotate": 6
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T07:55:17+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 51,
+      "provenance": {
+        "templated_texts": 37,
+        "queries": 46
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

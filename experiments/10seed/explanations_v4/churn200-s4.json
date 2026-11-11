@@ -1,0 +1,111 @@
+{
+  "label": "churn200-s4",
+  "genome_id": "96351f52-f8fb-45c6-8a21-df5b420cac01",
+  "protocol_version": "v4",
+  "start": "2026-11-11T22:20:16+13:00",
+  "end": "2026-11-11T22:41:44+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 6,
+  "n_composition_annotations": 2,
+  "n_splits": 7,
+  "n_identity_nodes": 4,
+  "hidden_nodes": 15,
+  "hidden_nodes_single_leaf_no_split": 15,
+  "hidden_nodes_in_any_annotation": 15,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 4.440892098500626e-16,
+  "closed_form_max_abs_err": 0.007516223257626464,
+  "summary": "The model predicts churn as the logistic function of six leaf parts added on the log-odds scale (training AUC 0.911; mean prediction 14.0% against an observed rate of 14.1%). The strongest group reads daytime usage and customer service calls; replacing it by its baseline drops training AUC to 0.696. Service calls work as a hinge: for a typical customer predicted churn is 1.6% with a single call, 9.9% with four and 27.4% with five, because a gate cancels the direct calls term until the calls are high. Daytime usage is flat and then steep: with matching day charge, 1.5% at two hundred minutes, 11.2% at two hundred and fifty and 91.3% at three hundred; heavy evening use lowers, and a voicemail plan raises, the daytime level at which the usage gate opens. Many calls and heavy use stack: 92.0% with five calls and two hundred and eighty day minutes. An international plan takes the typical customer from 1.6% to 17.1%; a voicemail plan lowers predicted churn, more international calls lower it and a low daytime charge, together with a low international charge, raises it. State offsets follow each state's observed churn rate (Hawaii -1.95 on the log-odds, Washington 1.19), each fitted to one state's customers (Hawaii 73, Washington 72). Coverage is full and the annotated model reproduces the network to 4.4e-16.",
+  "summary_template": "The model predicts churn as the logistic function of six leaf parts added on the log-odds scale (training AUC {{q:q_5db1758e6e.auc_roc|.3f}}; mean prediction {{q:q_bf5814b93f.subgroup.mean_predicted_risk|.1%}} against an observed rate of {{q:q_bf5814b93f.subgroup.outcome_rate|.1%}}). The strongest group reads daytime usage and customer service calls; replacing it by its baseline drops training AUC to {{q:q_5f6810be9e.data.auc_without|.3f}}. Service calls work as a hinge: for a typical customer predicted churn is {{q:q_fe0a45ef8d.rows[1].risk|.1%}} with a single call, {{q:q_fe0a45ef8d.rows[4].risk|.1%}} with four and {{q:q_fe0a45ef8d.rows[5].risk|.1%}} with five, because a gate cancels the direct calls term until the calls are high. Daytime usage is flat and then steep: with matching day charge, {{q:q_60ccb15de9.rows[12].risk|.1%}} at two hundred minutes, {{q:q_60ccb15de9.rows[18].risk|.1%}} at two hundred and fifty and {{q:q_60ccb15de9.rows[24].risk|.1%}} at three hundred; heavy evening use lowers, and a voicemail plan raises, the daytime level at which the usage gate opens. Many calls and heavy use stack: {{q:q_197632cb35.rows[3].risk|.1%}} with five calls and two hundred and eighty day minutes. An international plan takes the typical customer from {{q:q_d54dfb11f8.rows[0].risk|.1%}} to {{q:q_d54dfb11f8.rows[1].risk|.1%}}; a voicemail plan lowers predicted churn, more international calls lower it and a low daytime charge, together with a low international charge, raises it. State offsets follow each state's observed churn rate (Hawaii {{q:q_2db58f8ffb.rows[11].parts.ann_86.contribution|.2f}} on the log-odds, Washington {{q:q_2db58f8ffb.rows[47].parts.ann_86.contribution|.2f}}), each fitted to one state's customers (Hawaii {{q:q_091f92e6c3.subgroup.n}}, Washington {{q:q_74e0908a6b.subgroup.n}}). Coverage is full and the annotated model reproduces the network to {{q:q_d0355faf91.function_preservation_max_abs_err|.1e}}.",
+  "resisted": "The state-specific terms are described, not explained: the per-state offsets in geography_offsets, the Oregon and Alaska terms on the service-calls gate (it is open for 0 of the 84 Oregon customers), and the Michigan, Rhode Island and Tennessee terms in state22_evening_chain (80, 82 and 68 customers). Each is fitted to a single state's customers and no domain reason is offered. The split of daytime usage between minutes (usage_gate, service_calls_hinge) and charge (intl_day_charge_gate, state22_evening_chain) is arbitrary because the two inputs move together; their combined effect, shown in usage_and_service, is the interpretable quantity.",
+  "resisted_template": "The state-specific terms are described, not explained: the per-state offsets in geography_offsets, the Oregon and Alaska terms on the service-calls gate (it is open for {{q:q_109e84dea3.subgroup.n}} of the {{q:q_8a9e38ee65.subgroup.n}} Oregon customers), and the Michigan, Rhode Island and Tennessee terms in state22_evening_chain ({{q:q_1615a389b1.subgroup.n}}, {{q:q_2559475f67.subgroup.n}} and {{q:q_ed39eaebe0.subgroup.n}} customers). Each is fitted to a single state's customers and no domain reason is offered. The split of daytime usage between minutes (usage_gate, service_calls_hinge) and charge (intl_day_charge_gate, state22_evening_chain) is arbitrary because the two inputs move together; their combined effect, shown in usage_and_service, is the interpretable quantity.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 62,
+    "complete_ok": true
+  },
+  "recheck_notes": "Recheck (version 3): 0 mismatches, 0 needs_review, 0 warnings over 48 templated texts and 84 queries. The 62 unchecked free-text sentences carry no figures (mechanism descriptions, scope statements and the prediction sentences whose numbers follow in the next sentence). Number audit: all 219 placeholders resolved by get_query against 84 stored queries, all computed at the final operation sequence (no stale queries); each query's population, quantity and scope was checked against its sentence.",
+  "tool_bugs": "update_narrative: allow_numbers must be a JSON list string; a comma-separated string makes xn.py crash with a JSONDecodeError traceback instead of returning an error. xn.py --render has no allow-list option, so literal probe settings in narratives always appear as lint errors there although update_narrative accepts them with allow_numbers. get_formula returns no provenance id, so formula evidence is attached as a typed LaTeX payload. Evidence records cannot be deleted: one accidental duplicate closed-form record on usage_gate (a repeated batch call) was marked as a duplicate with amend_evidence.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 292,
+    "provenance_backed": 219,
+    "allow_listed": 73,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 6,
+      "other": 2
+    },
+    "audit": {
+      "references": 219,
+      "checked": 219
+    },
+    "self_probe": {
+      "parts": [
+        "usage_gate",
+        "service_calls_hinge",
+        "intl_day_charge_gate",
+        "state22_evening_chain",
+        "geography_offsets",
+        "account_direct_terms",
+        "usage_and_service",
+        "churn_model"
+      ],
+      "refuted_and_fixed": [
+        "usage_and_service: the draft said training customers show the flat-then-steep shape; the day-minute bands show the low-usage band predicted higher than the 150-215 band, so the sentence was rewritten to say the low end sits a little higher and only the steep rise holds",
+        "usage_gate: a drafted 'about 50 minutes' shift from the voicemail plan was not a queried quantity and was removed"
+      ]
+    },
+    "restatements": 0
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 8,
+      "roots": [
+        "churn_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.440892098500626e-16,
+    "closed_form_max_abs_err": 0.007516223257626464,
+    "numeric_max_abs_err": 8.881784197001252e-16,
+    "op_counts": {
+      "rename_node": 71,
+      "split_node": 7,
+      "add_identity_node": 4,
+      "annotate": 8
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T09:42:39+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 62,
+      "provenance": {
+        "templated_texts": 48,
+        "queries": 84
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

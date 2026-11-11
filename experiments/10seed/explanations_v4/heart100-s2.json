@@ -1,0 +1,108 @@
+{
+  "label": "heart100-s2",
+  "genome_id": "fdbf1673-026e-4b10-991a-223dbad5bfb1",
+  "protocol_version": "v4",
+  "start": "2026-11-11T20:32:31+13:00",
+  "end": "2026-11-11T20:46:52+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 5,
+  "n_composition_annotations": 3,
+  "n_splits": 13,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 13,
+  "hidden_nodes_single_leaf_no_split": 8,
+  "hidden_nodes_in_any_annotation": 13,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 4.440892098500626e-16,
+  "closed_form_max_abs_err": 0.0150013649279781,
+  "summary": "The model (training AUC 0.959) is a linear score plus gates added before a sigmoid. The largest part is the ST-depression pathway: switching it off lowers the training AUC to 0.847. In it a thallium-defect detector (on for 90 of the 90 patients with a reversible defect) and ST depression add up in unit 1946, so for the typical patient a reversible defect gives a predicted risk of 36% without ST depression (against 59% with a normal scan) and 77% at 1 mm. A flat ST slope raises the risk through unit 1476 (for the typical patient 88% against 59% with an upsloping segment), and a youth gate (on for 103 patients, more with a high maximum heart rate) lowers it. The direct terms (AUC without them 0.875) are led by the number of major vessels (1.11 per sd) and female sex (-0.91 per sd). An older-age brake (unit 3880, on for 84 patients) lowers the risk of older patients, and two hinges at high heart rates have a negligible effect. Worth checking: with a reversible defect the model gives younger patients a higher predicted risk (87% at 40 years against 36% at 65 years).",
+  "summary_template": "The model (training AUC {{q:q_b1dc31bca3.data.auc_with|.3f}}) is a linear score plus gates added before a sigmoid. The largest part is the ST-depression pathway: switching it off lowers the training AUC to {{q:q_b1dc31bca3.data.auc_without|.3f}}. In it a thallium-defect detector (on for {{q:q_8ced434c95.subgroup.n}} of the {{q:q_6114393a84.subgroup.n}} patients with a reversible defect) and ST depression add up in unit 1946, so for the typical patient a reversible defect gives a predicted risk of {{q:q_2dae9f4419.rows[1].risk|pct}} without ST depression (against {{q:q_2dae9f4419.rows[0].risk|pct}} with a normal scan) and {{q:q_2dae9f4419.rows[3].risk|pct}} at {{q:q_2dae9f4419.rows[3].inputs.oldpeak}}. A flat ST slope raises the risk through unit 1476 (for the typical patient {{q:q_b1110aaaff.rows[4].risk|pct}} against {{q:q_b1110aaaff.rows[1].risk|pct}} with an upsloping segment), and a youth gate (on for {{q:q_ac00ff8f94.subgroup.n}} patients, more with a high maximum heart rate) lowers it. The direct terms (AUC without them {{q:q_9a11b8800b.data.auc_without|.3f}}) are led by the number of major vessels ({{q:q_9a11b8800b.switched_off[4].weight|.2f}} per sd) and female sex ({{q:q_9a11b8800b.switched_off[5].weight|.2f}} per sd). An older-age brake (unit 3880, on for {{q:q_2163b862c4.subgroup.n}} patients) lowers the risk of older patients, and two hinges at high heart rates have a negligible effect. Worth checking: with a reversible defect the model gives younger patients a higher predicted risk ({{q:q_1af80b1d6a.rows[0].risk|pct}} at {{q:q_1af80b1d6a.rows[0].inputs.age}} against {{q:q_1af80b1d6a.rows[1].risk|pct}} at {{q:q_1af80b1d6a.rows[1].inputs.age}}).",
+  "resisted": "The resisted list is empty. Units 4256 and 3956 are on for 0 and 0 training patients, so their role is untested on the training data, and the fixed-defect regime of the thallium-defect detector rests on 15 rows.",
+  "resisted_template": "The resisted list is empty. Units 4256 and 3956 are on for {{q:q_992d53faa1.subgroup.n}} and {{q:q_db4439be31.subgroup.n}} training patients, so their role is untested on the training data, and the fixed-defect regime of the thallium-defect detector rests on {{q:q_cd6e3f542b.subgroup.n}} rows.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 39,
+    "complete_ok": true
+  },
+  "recheck_notes": "Recheck v3: 0 mismatch, 0 needs_review. The unchecked free-text sentences are qualitative wording (direction words, structural descriptions such as which unit feeds which, and the 'worth checking' flag), each next to the placeholders of the probe or subgroup that supports it. 'The largest loss of any part' (st_depression_gate) rests on the stored part ablations of every other part (q_775c046f96, q_a287183f4f, q_8cb0d48c50, q_65f508921d, q_a7a706533b, q_8600eb4546). The one allow-listed literal is the age threshold 60 in the subgroup definition 'aged 60 or more' (q_700fbbeeeb where clause).",
+  "tool_bugs": "query_ablate(direct=true) found 0 direct edges of the root after add_identity_node moved the direct input edges onto identity_0 (switched_off: direct_edges_of_root 0); worked around with query_ablate(edges=[...->identity_0]). get_formula returns no provenance id, so formula evidence was attached as a payload; get_formula(direct_terms) without force returned latex null. Annotating a sibling leaf whose entry is another leaf's exit is refused ('already covered'), so the serial units 1476 and 1946/3284 sit as the own nodes of compositions (slope_gate, st_depression_gate) rather than as leaves.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 195,
+    "provenance_backed": 194,
+    "allow_listed": 1,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 5,
+      "other": 3
+    },
+    "audit": {
+      "references": 194,
+      "checked": 194
+    },
+    "self_probe": {
+      "parts": [
+        "heart_rate_age_gate",
+        "high_heart_rate_units",
+        "thal_age_gate",
+        "age_cholesterol_gate",
+        "direct_terms",
+        "slope_gate",
+        "st_depression_gate",
+        "heart_disease_model"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 8,
+      "roots": [
+        "heart_disease_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.440892098500626e-16,
+    "closed_form_max_abs_err": 0.0150013649279781,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 26,
+      "add_identity_node": 1,
+      "split_node": 13,
+      "annotate": 8
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T07:47:25+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 39,
+      "provenance": {
+        "templated_texts": 55,
+        "queries": 43
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

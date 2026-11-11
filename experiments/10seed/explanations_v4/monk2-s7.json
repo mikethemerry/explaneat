@@ -1,0 +1,126 @@
+{
+  "label": "monk2-s7",
+  "genome_id": "4cacc8f5-e09f-44eb-83e3-afd74922e268",
+  "protocol_version": "v4",
+  "start": "2026-11-11T05:13:06Z",
+  "end": "2026-11-11T05:25:56Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 3,
+  "n_composition_annotations": 1,
+  "n_splits": 5,
+  "n_identity_nodes": 2,
+  "hidden_nodes": 3,
+  "hidden_nodes_single_leaf_no_split": 3,
+  "hidden_nodes_in_any_annotation": 3,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 3.3306690738754696e-16,
+  "closed_form_max_abs_err": 0.01621401201626016,
+  "summary": "This MONK-2 network computes the target rule (yes when exactly two of the six attributes take their first value) as a band on the count of first values, with three parts added on the logit scale. A direct penalty lowers the score for each first value, so three or more first values give a no (share of cells predicted yes: 0%, 0%, 0% and 0% for three to six). Unit 389 registers a4:1 or a5:1. A veto unit, 288, fires when fewer than two attributes are at their first value (on for 89 of the 89 such training rows) and pushes the score far down. Enumerating all 432 input combinations, the model agrees with the rule on 428. The 4 misses are the cells whose two first values are a2 and a5, where the veto leaks and the prediction is 28%; 3 of them are training rows. Switching off the veto, unit 389 or the direct penalty takes the training AUC from 1.000 to 0.616, 0.699 and 0.814. The a4:2 branch (unit 2443) is dead, and seven one-hot inputs have no edges.",
+  "summary_template": "This MONK-2 network computes the target rule (yes when exactly two of the six attributes take their first value) as a band on the count of first values, with three parts added on the logit scale. A direct penalty lowers the score for each first value, so three or more first values give a no (share of cells predicted yes: {{q:q_8656502f95.groups[3].share_yes|.0%}}, {{q:q_8656502f95.groups[4].share_yes|.0%}}, {{q:q_8656502f95.groups[5].share_yes|.0%}} and {{q:q_8656502f95.groups[6].share_yes|.0%}} for three to six). Unit 389 registers a4:1 or a5:1. A veto unit, 288, fires when fewer than two attributes are at their first value (on for {{q:q_0e1f0b9060.subgroup.parts.ann_25.n_acts_on}} of the {{q:q_0e1f0b9060.subgroup.n}} such training rows) and pushes the score far down. Enumerating all {{q:q_8656502f95.rule.n}} input combinations, the model agrees with the rule on {{q:q_8656502f95.rule.agree}}. The {{q:q_8656502f95.rule.rule_yes_model_no}} misses are the cells whose two first values are a2 and a5, where the veto leaks and the prediction is {{q:q_8656502f95.rule.counterexamples[0].risk|pct}}; {{q:q_8656502f95.rule.counterexamples_in_training}} of them are training rows. Switching off the veto, unit 389 or the direct penalty takes the training AUC from {{q:q_94ba3a7840.data.auc_with|.3f}} to {{q:q_94ba3a7840.data.auc_without|.3f}}, {{q:q_52c8ad6736.data.auc_without|.3f}} and {{q:q_d3bd46190e.data.auc_without|.3f}}. The a4:2 branch (unit 2443) is dead, and seven one-hot inputs have no edges.",
+  "resisted": "No part resisted explanation; each leaf and the root carries a stored self-probe that the model passes. The one irregularity, the a2 and a5 cells that the veto leaks on, is explained in few_first_values_gate and the root (3 training rows).",
+  "resisted_template": "No part resisted explanation; each leaf and the root carries a stored self-probe that the model passes. The one irregularity, the a2 and a5 cells that the veto leaks on, is explained in few_first_values_gate and the root ({{q:q_a388dcab2c.subgroup.n}} training rows).",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 1,
+    "needs_review_items": [
+      {
+        "check": "provenance",
+        "location": "operations.first_value_count_rule.evidence[1].payload",
+        "stated": "q_d0330b0607",
+        "recomputed": {
+          "op_seq": 23,
+          "last_structural_op": 24
+        },
+        "note": "q_d0330b0607 was computed before operation 24 changed the structure"
+      }
+    ],
+    "unchecked_freetext_sentences": 32,
+    "complete_ok": true
+  },
+  "recheck_notes": "The one needs_review item is not an error. first_value_count_rule evidence[1] was first attached from q_d0330b0607, an enumeration computed before the last structural operation (identity_288, a function-preserving identity insertion; function preservation error 3.3e-16). I recomputed the same enumeration after that operation as q_8656502f95, which gives identical results (agree 428 of 432, same per-count shares), amended the record with that query (its payload now carries query_id q_8656502f95), and moved every placeholder in the root narrative and the summary to q_8656502f95. The flag remains only because amend_evidence keeps the record-level 'provenance' list at the old id (see tool_bugs). 32 free-text sentences are unchecked: they are qualitative mechanism sentences without numbers.",
+  "tool_bugs": "amend_evidence(query_id=...) replaces the record's payload with the new query but does not update the record-level 'provenance' list (mcp_server/tools/snapshots.py amend_evidence), so the recheck still sees the replaced query id and flags it as stale. Separately, a leaf whose entry is the exit of a sibling leaf (389 feeding 288) is refused ('entry_nodes must be subset of subgraph_nodes'); I worked around it with a function-preserving add_identity_node on 389->288 (identity_288) as the gate's entry port.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 112,
+    "provenance_backed": 112,
+    "allow_listed": 0,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 0,
+      "other": 0
+    },
+    "audit": {
+      "references": 112,
+      "checked": 112
+    },
+    "self_probe": {
+      "parts": [
+        "a4_a5_first_value_unit",
+        "few_first_values_gate",
+        "direct_first_value_penalty",
+        "first_value_count_rule"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 4,
+      "roots": [
+        "first_value_count_rule"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 3.3306690738754696e-16,
+    "closed_form_max_abs_err": 0.01621401201626016,
+    "numeric_max_abs_err": 3.552713678800501e-15,
+    "op_counts": {
+      "rename_node": 17,
+      "split_node": 5,
+      "add_identity_node": 2,
+      "annotate": 4
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T05:26:39+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 1,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [
+        {
+          "check": "provenance",
+          "location": "operations.first_value_count_rule.evidence[1].payload",
+          "stated": "q_d0330b0607",
+          "recomputed": {
+            "op_seq": 23,
+            "last_structural_op": 24
+          },
+          "note": "q_d0330b0607 was computed before operation 24 changed the structure"
+        }
+      ],
+      "unchecked_freetext_sentences": 32,
+      "provenance": {
+        "templated_texts": 23,
+        "queries": 21
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

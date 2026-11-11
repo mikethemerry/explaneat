@@ -1,6 +1,6 @@
 """Independently verify an agent's explanation report and save it as explanations/<label>.json.
 
-    uv run python experiments/10seed/verify_record.py <report.json>
+    uv run python experiments/10seed/verify_record.py <report.json> [--out-dir <dir>]
 Adds a `verified_by_orchestrator` block (tool coverage + check_explanation.py + the recheck
 summary, protocol v4) and flags any disagreement with the agent's own numbers. `complete_ok` is
 false while recheck reports a mismatch.
@@ -12,7 +12,9 @@ sys.path.insert(0, str(HERE)); sys.path.insert(0, str(HERE.parents[1]))
 from check_explanation import check, split_for_genome  # noqa: E402
 from mcp_server.tools.coverage import get_coverage  # noqa: E402
 
-rep = json.load(open(sys.argv[1]))
+args = sys.argv[1:]
+OUT_DIR = Path(args[args.index("--out-dir") + 1]) if "--out-dir" in args else HERE / "explanations"
+rep = json.load(open(args[0]))
 c = check(rep["genome_id"], split_for_genome(rep["genome_id"]))
 cov = json.loads(get_coverage(rep["genome_id"]))
 v = {"structural_coverage": cov["structural_coverage"],
@@ -35,7 +37,8 @@ v["complete_ok"] = bool(v["full_coverage"] and rc["complete_ok"])
 if "recheck_summary" in rep and (rep["recheck_summary"] or {}).get("mismatch") != rc["mismatch"]:
     v["recheck_agrees_with_agent"] = False
 rep["verified_by_orchestrator"] = v
-out = HERE / "explanations" / f"{rep['label']}.json"
+OUT_DIR.mkdir(parents=True, exist_ok=True)
+out = OUT_DIR / f"{rep['label']}.json"
 out.write_text(json.dumps(rep, indent=2))
 print(rep["label"], "full:", v["full_coverage"], "agrees:", v["agrees_with_agent"],
       "recheck mismatches:", rc["mismatch"], "needs review:", rc["needs_review"], "complete_ok:", v["complete_ok"],

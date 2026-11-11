@@ -1,0 +1,105 @@
+{
+  "label": "heart-s0",
+  "genome_id": "e7221bd4-a46a-4c5b-ad27-ab01bbdeb290",
+  "protocol_version": "v4",
+  "start": "2026-11-11T04:01:37Z",
+  "end": "2026-11-11T04:17:43Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 3,
+  "n_composition_annotations": 2,
+  "n_splits": 2,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 6,
+  "hidden_nodes_single_leaf_no_split": 4,
+  "hidden_nodes_in_any_annotation": 6,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 3.3306690738754696e-16,
+  "closed_form_max_abs_err": 0.017787749558869526,
+  "summary": "The model (training AUC 0.9449) is mostly an additive logistic risk score: its direct linear terms carry most of the discrimination (switching them to their mean drops the training AUC to 0.7356), led by the number of vessels coloured by fluoroscopy (1.93 per sd), male sex (1.67), asymptomatic chest pain (1.21) and a flat ST segment (1.05). On top of it sits one interaction: a gate that opens for women with chest pain on exercise and no left ventricular hypertrophy on the resting ECG (8 of the 83 training women, 7 of them with the outcome), amplified by a flat ST segment. Exercise angina reaches the prediction through this gate, so it raises a typical woman's risk from 11% to 90% when her ST segment is flat and leaves a typical man's unchanged (23% without, 23% with exercise angina); with a flat segment such a woman is predicted at higher risk than a comparable man (90% against 80%), a reversal fitted to the 7 training women in that regime. A flat ST segment also adds a small bonus through the same path for the 103 flat-segment rows with the gate shut, and a minor always-on unit adds a little risk for hypertrophy (switching it off moves the AUC to 0.9452). Resting blood pressure is ignored, and an ST-T abnormality on the resting ECG is treated like a normal ECG. The annotated model reproduces the network on the training rows to within 3.3e-16.",
+  "summary_template": "The model (training AUC {{q:q_029d588f52.data.auc_with|.4f}}) is mostly an additive logistic risk score: its direct linear terms carry most of the discrimination (switching them to their mean drops the training AUC to {{q:q_029d588f52.data.auc_without|.4f}}), led by the number of vessels coloured by fluoroscopy ({{q:q_3f78684281.switched_off[0].weight|.2f}} per sd), male sex ({{q:q_ccb3528479.switched_off[0].weight|.2f}}), asymptomatic chest pain ({{q:q_7781b964eb.switched_off[0].weight|.2f}}) and a flat ST segment ({{q:q_591216dc69.switched_off[0].weight|.2f}}). On top of it sits one interaction: a gate that opens for women with chest pain on exercise and no left ventricular hypertrophy on the resting ECG ({{q:q_d6a9ee51ca.subgroup.n}} of the {{q:q_79ab306f0a.subgroup.n}} training women, {{q:q_d6a9ee51ca.subgroup.outcome_n}} of them with the outcome), amplified by a flat ST segment. Exercise angina reaches the prediction through this gate, so it raises a typical woman's risk from {{q:q_25cfa07df3.rows[1].risk|pct}} to {{q:q_25cfa07df3.rows[4].risk|pct}} when her ST segment is flat and leaves a typical man's unchanged ({{q:q_a69857cd94.rows[0].risk|pct}} without, {{q:q_a69857cd94.rows[3].risk|pct}} with exercise angina); with a flat segment such a woman is predicted at higher risk than a comparable man ({{q:q_afa2549ba4.rows[1].risk|pct}} against {{q:q_afa2549ba4.rows[4].risk|pct}}), a reversal fitted to the {{q:q_5ea209ddb6.subgroup.n}} training women in that regime. A flat ST segment also adds a small bonus through the same path for the {{q:q_8202bdcb7e.subgroup.n}} flat-segment rows with the gate shut, and a minor always-on unit adds a little risk for hypertrophy (switching it off moves the AUC to {{q:q_65d1b40b43.data.auc_without|.4f}}). Resting blood pressure is ignored, and an ST-T abnormality on the resting ECG is treated like a normal ECG. The annotated model reproduces the network on the training rows to within {{q:q_a33dcc8327.function_preservation_max_abs_err|.1e}}.",
+  "resisted": "The hypertrophy offset (node 2447) is described, not explained: it is an always-on linear term of hypertrophy whose removal flips 0 training predictions. The female angina interaction is supported by its probes, but the regime that drives it is fitted to 7 training rows (gate open with a flat ST segment) and 1 row (gate open, ST segment not flat), so whether it reflects a real pattern rather than a fit to a few patients is open.",
+  "resisted_template": "The hypertrophy offset (node 2447) is described, not explained: it is an always-on linear term of hypertrophy whose removal flips {{q:q_65d1b40b43.data.predictions_flipped}} training predictions. The female angina interaction is supported by its probes, but the regime that drives it is fitted to {{q:q_5ea209ddb6.subgroup.n}} training rows (gate open with a flat ST segment) and {{q:q_364fb475e1.subgroup.n}} row (gate open, ST segment not flat), so whether it reflects a real pattern rather than a fit to a few patients is open.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 35,
+    "complete_ok": true
+  },
+  "recheck_notes": "Recheck: 0 mismatch, 0 needs_review. The 35 unchecked free-text sentences carry no numbers (structure descriptions, domain readings, direction words); their scope words were either backed by a count in the same sentence (gate open on 0 rows outside its cell; node 1650 positive on 0 rows with the gate shut and a non-flat segment; node 2447 positive on all rows, share 1.0) or removed. Number audit: every one of the 133 placeholders was resolved with get_query and its population, quantity and path checked against the sentence (probe row indices against the sweep order, ablation mean_risk_change is over all 242 rows and is labelled so). 7 allow-listed literals are probe inputs (0, 1, 2, 3 vessels; 100, 140, 180 mm Hg). Node ids in the text are identifiers, not counted. The amplifier nodes 3598 and 1650 are owned by the female_angina_path composition (not a separate leaf), because a sibling leaf cannot take the gate's exit 665 as an entry; the composition carries its own self-probe.",
+  "tool_bugs": "None blocking. Limitations met: query_enumerate refuses the genome (age has 41 values) and has no way to enumerate a subset of inputs, so the gate's cells were covered with two 2-D query_probe grids plus subgroup counts; query_probe allows at most two sweeps; get_formula returns no provenance id (formulas attached as analytical_formula payloads); xn.py --render has no allow_numbers argument, so rendering a narrative with literal probe inputs reports them as bare numbers although update_narrative with allow_numbers accepts them.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 140,
+    "provenance_backed": 133,
+    "allow_listed": 7,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 3,
+      "other": 2
+    },
+    "audit": {
+      "references": 133,
+      "checked": 133
+    },
+    "self_probe": {
+      "parts": [
+        "female_angina_gate",
+        "female_angina_path",
+        "lvh_minor_offset",
+        "direct_linear_terms",
+        "heart_disease_risk"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 1
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 5,
+      "roots": [
+        "heart_disease_risk"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 3.3306690738754696e-16,
+    "closed_form_max_abs_err": 0.017787749558869526,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 26,
+      "split_node": 2,
+      "add_identity_node": 1,
+      "annotate": 5
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T04:18:18+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 35,
+      "provenance": {
+        "templated_texts": 40,
+        "queries": 31
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

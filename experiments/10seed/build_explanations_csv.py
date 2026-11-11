@@ -1,7 +1,13 @@
 """Rebuild explanations.csv (pre-registered 30, in verification order) and
-explanations_heart100.csv (additional analysis) from explanations/*.json."""
-import csv, datetime as dt, json, os
+explanations_heart100.csv (additional analysis) from explanations/*.json.
+
+    uv run python experiments/10seed/build_explanations_csv.py [--dir explanations_v4 --suffix _v4]
+--dir reads the records from another folder; --suffix writes <name><suffix>.csv (defaults unchanged)."""
+import csv, datetime as dt, json, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
+_a = sys.argv[1:]
+REC_DIR = _a[_a.index('--dir') + 1] if '--dir' in _a else 'explanations'
+SUFFIX = _a[_a.index('--suffix') + 1] if '--suffix' in _a else ''
 PRE = ['adult-s0','heart-s5','monk2-s2','heart-s0','heart-s1','monk2-s3','monk2-s4','adult-s1','monk2-s5','adult-s2',
        'monk2-s9','heart-s6','adult-s7','monk2-s7','monk2-s8','monk2-s0','adult-s4','heart-s9','heart-s4','heart-s2',
        'adult-s3','adult-s9','adult-s5','heart-s8','heart-s7','monk2-s6','heart-s3','adult-s8','adult-s6','monk2-s1']
@@ -29,7 +35,7 @@ def signoff_columns(r):
 
 
 def row(i, l):
-    r = json.load(open(os.path.join(HERE, 'explanations', f'{l}.json')))
+    r = json.load(open(os.path.join(HERE, REC_DIR, f'{l}.json')))
     v = r['verified_by_orchestrator']; oc = v['op_counts']
     mins = (dt.datetime.fromisoformat(r['end']) - dt.datetime.fromisoformat(r['start'])).total_seconds() / 60
     return dict(order=i + 1, label=l, dataset=l.rsplit('-', 1)[0], seed=int(l.rsplit('s', 1)[1]), genome_id=r['genome_id'],
@@ -55,7 +61,9 @@ def row(i, l):
 
 for name, labels in (('explanations.csv', PRE), ('explanations_heart100.csv', H100),
                      ('../churn/explanations_churn100.csv', C100), ('../churn/explanations_churn200.csv', C200)):
-    rows = [row(i, l) for i, l in enumerate(labels) if os.path.exists(os.path.join(HERE, 'explanations', f'{l}.json'))]
-    with open(os.path.join(HERE, name), 'w', newline='') as f:
+    rows = [row(i, l) for i, l in enumerate(labels) if os.path.exists(os.path.join(HERE, REC_DIR, f'{l}.json'))]
+    if not rows:
+        continue
+    with open(os.path.join(HERE, name[:-4] + SUFFIX + '.csv'), 'w', newline='') as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0])); w.writeheader(); w.writerows(rows)
     print(name, len(rows), 'rows;', sum(r['full_coverage'] for r in rows), 'full coverage')

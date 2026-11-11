@@ -1,0 +1,136 @@
+{
+  "label": "churn200-s5",
+  "genome_id": "f33a6afb-34f3-4e75-b219-6f37848a8cf5",
+  "protocol_version": "v4",
+  "start": "2026-11-11T09:46:53Z",
+  "end": "2026-11-11T10:16:18Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 9,
+  "n_composition_annotations": 4,
+  "n_splits": 12,
+  "n_identity_nodes": 2,
+  "hidden_nodes": 15,
+  "hidden_nodes_single_leaf_no_split": 15,
+  "hidden_nodes_in_any_annotation": 15,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 4.440892098500626e-16,
+  "closed_form_max_abs_err": 0.027801601028992096,
+  "summary": "The model predicts churn for the training customers with AUC 0.908 (mean predicted risk 14%, churn rate 14.1%). Its score is a sum in the log-odds of four groups. The largest is day usage and service calls (switching it off drops the AUC to 0.757): a hinge adds risk for heavy daytime users (it is on for 1124 customers), a low-spend floor stops risk falling at low day and evening charges, and a gate adds a large amount of risk for customers with four or more service calls unless their day charge is high (typical customer: risk 3% at three calls, 43% at five). The direct plan and usage terms come next (AUC without them 0.771): an international plan raises the typical customer's risk from 2% to 17%, and a voice-mail plan lowers it. State offsets are fitted to small samples, the largest being a Missouri unit fitted to 80 rows. Minor hinges on international minutes, account length and voicemail messages add little. The annotated model reproduces the network to within 4.4e-16.",
+  "summary_template": "The model predicts churn for the training customers with AUC {{q:q_0709f592ef.data.auc_with|.3f}} (mean predicted risk {{q:q_fb37f683aa.subgroup.mean_predicted_risk|pct}}, churn rate {{q:q_fb37f683aa.subgroup.outcome_rate|.1%}}). Its score is a sum in the log-odds of four groups. The largest is day usage and service calls (switching it off drops the AUC to {{q:q_fa3b34d545.data.auc_without|.3f}}): a hinge adds risk for heavy daytime users (it is on for {{q:q_d33da156b0.subgroup.n|d}} customers), a low-spend floor stops risk falling at low day and evening charges, and a gate adds a large amount of risk for customers with four or more service calls unless their day charge is high (typical customer: risk {{q:q_361994ac4e.rows[3].risk|pct}} at three calls, {{q:q_361994ac4e.rows[5].risk|pct}} at five). The direct plan and usage terms come next (AUC without them {{q:q_0709f592ef.data.auc_without|.3f}}): an international plan raises the typical customer's risk from {{q:q_e481117d85.rows[0].risk|pct}} to {{q:q_e481117d85.rows[1].risk|pct}}, and a voice-mail plan lowers it. State offsets are fitted to small samples, the largest being a Missouri unit fitted to {{q:q_871e11dee5.subgroup.n|d}} rows. Minor hinges on international minutes, account length and voicemail messages add little. The annotated model reproduces the network to within {{q:q_50bdf1a033.function_preservation_max_abs_err|.1e}}.",
+  "resisted": "No part resisted explanation. Two parts are weakly grounded: the service-call gate also opens for 221 customers with three calls and a very low day charge, who churn at 5.9% against a mean predicted risk of 13%; and the Missouri state unit is fitted to 80 rows, which churn at 11.2% against 7% predicted.",
+  "resisted_template": "No part resisted explanation. Two parts are weakly grounded: the service-call gate also opens for {{q:q_d31120dfc4.subgroup.n|d}} customers with three calls and a very low day charge, who churn at {{q:q_d31120dfc4.subgroup.outcome_rate|.1%}} against a mean predicted risk of {{q:q_d31120dfc4.subgroup.mean_predicted_risk|pct}}; and the Missouri state unit is fitted to {{q:q_871e11dee5.subgroup.n|d}} rows, which churn at {{q:q_871e11dee5.subgroup.outcome_rate|.1%}} against {{q:q_871e11dee5.subgroup.mean_predicted_risk|pct}} predicted.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 1,
+    "needs_review_items": [
+      {
+        "check": "provenance",
+        "location": "operations.churn_score.evidence[1].narrative",
+        "stated": "q_cd1154e92a",
+        "recomputed": {
+          "op_seq": 71,
+          "last_structural_op": 84
+        },
+        "note": "q_cd1154e92a was computed before operation 84 changed the structure"
+      }
+    ],
+    "unchecked_freetext_sentences": 61,
+    "complete_ok": true
+  },
+  "recheck_notes": "First recheck flagged the whole-split subgroup q_cd1154e92a as computed before the identity-node operations. It was recomputed (q_fb37f683aa) and every hypothesis, the summary, and the root's evidence record 1 (payload and narrative, via amend_evidence) now use the new query. The one remaining needs_review (churn_score evidence[1]) is not an error in the text: the record's payload query_id and narrative reference q_fb37f683aa, but amend_evidence leaves the record-level 'provenance' list at the superseded id, which the recheck reads. The old query's numbers (n, churn rate, mean risk on the full train split) are identical to the new one's, since the identity nodes preserve the function.",
+  "tool_bugs": "amend_evidence(query_id=...) rebuilds payload and narrative but does not update the record-level 'provenance' list, so a superseded query id stays and recheck keeps flagging it. query_ablate(direct=true) reports zero direct edges once direct edges are routed through identity nodes; edge ablations on '-x->identity_0_usage' were used instead. query_probe takes at most two sweeps (worked around with sets).",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 237,
+    "provenance_backed": 201,
+    "allow_listed": 36,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 9,
+      "other": 0
+    },
+    "audit": {
+      "references": 201,
+      "checked": 201
+    },
+    "self_probe": {
+      "parts": [
+        "direct_usage_terms",
+        "direct_state_terms",
+        "state_gates",
+        "heavy_day_use_hinge",
+        "low_spend_hinge",
+        "service_calls_gate",
+        "intl_minutes_hinge",
+        "account_length_hinge",
+        "vmail_messages_hinge",
+        "day_use_and_service_calls",
+        "churn_score"
+      ],
+      "refuted_and_fixed": [
+        "service_calls_gate: first draft said the gate needs four or more calls; data show it also opens at three calls with a very low day charge (now stated, with the churn rate of those rows)",
+        "service_calls_gate: first draft had international minutes weakening the day-charge closer; the probe showed the reverse (more minutes keep the gate shut), corrected before writing"
+      ]
+    },
+    "restatements": 0
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 13,
+      "roots": [
+        "churn_score"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.440892098500626e-16,
+    "closed_form_max_abs_err": 0.027801601028992096,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 71,
+      "split_node": 12,
+      "add_identity_node": 2,
+      "annotate": 13
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T10:18:57+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 1,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [
+        {
+          "check": "provenance",
+          "location": "operations.churn_score.evidence[1].narrative",
+          "stated": "q_cd1154e92a",
+          "recomputed": {
+            "op_seq": 71,
+            "last_structural_op": 84
+          },
+          "note": "q_cd1154e92a was computed before operation 84 changed the structure"
+        }
+      ],
+      "unchecked_freetext_sentences": 61,
+      "provenance": {
+        "templated_texts": 73,
+        "queries": 51
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "label": "heart100-s1",
+  "genome_id": "38acd166-c8d4-4b14-90fb-491408d41adc",
+  "protocol_version": "v4",
+  "start": "2026-11-11T07:12:47Z",
+  "end": "2026-11-11T07:25:17Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 4,
+  "n_composition_annotations": 1,
+  "n_splits": 4,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 8,
+  "hidden_nodes_single_leaf_no_split": 8,
+  "hidden_nodes_in_any_annotation": 8,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 3.3306690738754696e-16,
+  "closed_form_max_abs_err": 0.013400314093612975,
+  "summary": "This heart-disease model (training AUC 0.951) is mostly a linear score: removing its direct input-to-output edges drops training AUC to 0.720. Through those edges the model gives men, asymptomatic chest pain, a flat ST slope, more coloured vessels, higher cholesterol and blood pressure a higher predicted risk, and a normal resting ECG or normal thallium scan a lower one; a fixed thallium defect also lowers the score, a reading that rests on 15 training patients. Two hidden parts correct it. A gate, open on 86 training rows (85 of them with a normal resting ECG and 77 with no coloured vessels), adds back risk for those patients when the peak heart rate is low or ST depression is marked: for the typical patient, risk falls from 80% at 100 beats per minute to 7% at 200 beats per minute. A vessel-count part adds a second rising ca term, but a brake fitted to 17 rows cuts it for patients with many vessels for their age, so for the typical man aged 56 years the predicted risk is 94% with two vessels and 48% with three; this non-monotone step runs against the training outcomes of those rows (outcome rate 82%) and is the main caveat. A near-constant unit adds a small non-anginal chest-pain term. Exercise-induced angina and fasting blood sugar change 0 of 242 training predictions.",
+  "summary_template": "This heart-disease model (training AUC {{q:q_ad7df72b97.data.auc_with|.3f}}) is mostly a linear score: removing its direct input-to-output edges drops training AUC to {{q:q_ad7df72b97.data.auc_without|.3f}}. Through those edges the model gives men, asymptomatic chest pain, a flat ST slope, more coloured vessels, higher cholesterol and blood pressure a higher predicted risk, and a normal resting ECG or normal thallium scan a lower one; a fixed thallium defect also lowers the score, a reading that rests on {{q:q_ea798c3937.subgroup.n}} training patients. Two hidden parts correct it. A gate, open on {{q:q_364533f900.subgroup.n}} training rows ({{q:q_d73690cdad.subgroup.n}} of them with a normal resting ECG and {{q:q_5cdb657c39.subgroup.n}} with no coloured vessels), adds back risk for those patients when the peak heart rate is low or ST depression is marked: for the typical patient, risk falls from {{q:q_0d3a860db7.rows[0].risk|pct}} at {{q:q_0d3a860db7.rows[0].inputs.thalach}} to {{q:q_0d3a860db7.rows[10].risk|pct}} at {{q:q_0d3a860db7.rows[10].inputs.thalach}}. A vessel-count part adds a second rising ca term, but a brake fitted to {{q:q_f610554403.subgroup.n}} rows cuts it for patients with many vessels for their age, so for the typical man aged {{q:q_71900e3724.held_case.age}} the predicted risk is {{q:q_71900e3724.rows[2].risk|pct}} with two vessels and {{q:q_71900e3724.rows[3].risk|pct}} with three; this non-monotone step runs against the training outcomes of those rows (outcome rate {{q:q_f610554403.subgroup.outcome_rate|pct}}) and is the main caveat. A near-constant unit adds a small non-anginal chest-pain term. Exercise-induced angina and fasting blood sugar change {{q:q_c20eea057a.data.n_affected}} of {{q:q_c20eea057a.data.n}} training predictions.",
+  "resisted": "Nothing resisted explanation. The near-constant chest-pain unit (cp3_offset) is described rather than explained: its effect on predicted risk is small (training AUC 0.9508 with it, 0.9504 without). The vessel brake's behaviour is explained but not justified: it is fitted to 17 training rows.",
+  "resisted_template": "Nothing resisted explanation. The near-constant chest-pain unit (cp3_offset) is described rather than explained: its effect on predicted risk is small (training AUC {{q:q_b3c08266e4.data.auc_with|.4f}} with it, {{q:q_b3c08266e4.data.auc_without|.4f}} without). The vessel brake's behaviour is explained but not justified: it is fitted to {{q:q_f610554403.subgroup.n}} training rows.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 1,
+    "needs_review_items": [
+      {
+        "check": "provenance",
+        "location": "operations.cp3_offset.evidence[2].payload",
+        "stated": "q_b50cfdc2c5",
+        "recomputed": {
+          "op_seq": 26,
+          "last_structural_op": 30
+        },
+        "note": "q_b50cfdc2c5 was computed before operation 30 changed the structure"
+      }
+    ],
+    "unchecked_freetext_sentences": 39,
+    "complete_ok": true
+  },
+  "recheck_notes": "0 mismatches. The one needs_review (operations.cp3_offset.evidence[2].payload cites q_b50cfdc2c5, a unit_activity run at op 26, before the splits and identity node) is not an error: that record was amended with query_id=q_8a71b06792 (unit_activity rerun at op 36, after every structural operation) and every narrative now cites the new id; the old id survives only in the record's provenance list, which amend_evidence does not refresh. The rerun gives the same values for every unit (the splits and identity node touch inputs and the output only), so nothing stated changes. The 39 unchecked free-text sentences are domain readings and descriptions whose numbers are placeholders audited against their queries (177 placeholders, 137 distinct paths, each read back with get_query).",
+  "tool_bugs": "query_ablate(direct=true) finds 0 direct edges once the direct input edges are routed through identity_0 (switched_off[0].direct_edges_of_root = 0), so the direct-edge weights were taken from query_ablate(edges=[...->identity_0]) instead. get_formula returns latex null (tractable false) for the 15-input linear leaf direct_linear_terms, so that leaf has no analytical_formula record; its weights are attached as ablation evidence. A typed approximate formula using a helper symbol (u, b) was refused as bare numbers; the nested form in input names was accepted. amend_evidence(query_id=...) replaces the payload but leaves the record's provenance list on the old query id, so the recheck still flags the old (stale) id.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 231,
+    "provenance_backed": 177,
+    "allow_listed": 32,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 3,
+      "other": 0
+    },
+    "audit": {
+      "references": 177,
+      "checked": 177
+    },
+    "self_probe": {
+      "parts": [
+        "direct_linear_terms",
+        "cp3_offset",
+        "normal_ecg_ischaemia_gate",
+        "vessel_count_age_brake",
+        "heart_disease_risk"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 1
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 5,
+      "roots": [
+        "heart_disease_risk"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 3.3306690738754696e-16,
+    "closed_form_max_abs_err": 0.013400314093612975,
+    "numeric_max_abs_err": 1.3322676295501878e-15,
+    "op_counts": {
+      "rename_node": 26,
+      "split_node": 4,
+      "add_identity_node": 1,
+      "annotate": 5
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T07:25:49+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 1,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [
+        {
+          "check": "provenance",
+          "location": "operations.cp3_offset.evidence[2].payload",
+          "stated": "q_b50cfdc2c5",
+          "recomputed": {
+            "op_seq": 26,
+            "last_structural_op": 30
+          },
+          "note": "q_b50cfdc2c5 was computed before operation 30 changed the structure"
+        }
+      ],
+      "unchecked_freetext_sentences": 39,
+      "provenance": {
+        "templated_texts": 33,
+        "queries": 34
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

@@ -1,0 +1,131 @@
+{
+  "label": "adult-s6",
+  "genome_id": "9c06b29f-4ca4-4a6a-b9ed-5d04ee037b66",
+  "protocol_version": "v4",
+  "start": "2026-11-11T06:49:05Z",
+  "end": "2026-11-11T07:10:30Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 8,
+  "n_composition_annotations": 1,
+  "n_splits": 5,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 15,
+  "hidden_nodes_single_leaf_no_split": 15,
+  "hidden_nodes_in_any_annotation": 15,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 4.996003610813204e-16,
+  "closed_form_max_abs_err": 0.0650125195875102,
+  "summary_template": "The model predicts the chance of a low income (the lower of the dataset's income classes); over the {{q:q_932c15a9d6.subgroup.n|d}} training rows its mean predicted chance is {{q:q_932c15a9d6.subgroup.mean_predicted_risk|.1%}} against an outcome rate of {{q:q_932c15a9d6.subgroup.outcome_rate|.1%}}. It is mostly a linear score: switching the direct linear terms off lowers the training AUC from {{q:q_9974ab5442.data.auc_with|.3f}} to {{q:q_9974ab5442.data.auc_without|.3f}}. Through their own edges, capital gains, education level, being married to a civilian spouse, being a husband or a wife, being a man and working more hours lower the predicted chance, and living as a child of the household raises it. Two nonlinear parts come next by ablation: people aged {{q:q_fb3f84a851.rows[1].inputs.age}} or younger ({{q:q_8209639532.subgroup.n|d}} rows) get a push towards a low income that grows the younger they are, and capital gains above a threshold between {{q:q_deff52e8c7.rows[2].inputs.capital-gain}} and {{q:q_deff52e8c7.rows[3].inputs.capital-gain}} (typical person; {{q:q_bed4dd2c92.subgroup.n|d}} rows with the hinge open) lower it well beyond the direct capital-gains term. Small single-category gates raise it for private-household service workers ({{q:q_415c07b480.subgroup.n|d}} rows) and China-born people ({{q:q_13e5325171.subgroup.n|d}} rows), raise it for handlers or cleaners, and lower it for technical-support workers and doctorate holders; a chain on race is inactive on the training data. The annotated model reproduces the original to within {{q:q_cb7492053c.function_preservation_max_abs_err|.1e}}.",
+  "resisted_template": "No part resisted explanation. The race chain is described, not explained: its exit is open on {{q:q_ce028a49aa.subgroup.n|d}} of the {{q:q_ce028a49aa.n_total|d}} training rows, so there is no behaviour to explain.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 1,
+    "needs_review_items": [
+      {
+        "check": "provenance",
+        "location": "operations.income_model_root.evidence[1].payload",
+        "stated": "q_864aff1939",
+        "recomputed": {
+          "op_seq": 107,
+          "last_structural_op": 112
+        },
+        "note": "q_864aff1939 was computed before operation 112 changed the structure"
+      }
+    ],
+    "unchecked_freetext_sentences": 42,
+    "complete_ok": true
+  },
+  "recheck_notes": "The one needs_review item (income_model_root evidence[1], q_864aff1939 computed before the splits) is not an error: the record was amended with amend_evidence(query_id='q_932c15a9d6'), the same subgroup (age > 0, the whole training split) recomputed after the last structural operation, and its payload now carries q_932c15a9d6; the operations are function-preserving, so n, outcome rate and mean predicted risk are unchanged. The root hypothesis and the summary reference q_932c15a9d6. The stale id survives only in the record's provenance list, which amend_evidence does not refresh (see tool_bugs). Mismatches: 0.",
+  "tool_bugs": "amend_evidence with query_id replaces the payload but leaves the record's 'provenance' list at the old query id, so recheck still reports the superseded query as stale. xn.py --render has no allow_numbers, so a literal such as an income threshold cannot appear in the summary (reworded). query_ablate(direct=true) does nothing after add_identity_node on the output (the direct edges end at identity_0, not at the root); edge weights were taken from query_ablate(edges=[...->identity_0]) instead.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 184,
+    "provenance_backed": 183,
+    "allow_listed": 1,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 9,
+      "other": 0
+    },
+    "audit": {
+      "references": 183,
+      "checked": 183
+    },
+    "self_probe": {
+      "parts": [
+        "direct_linear_terms",
+        "young_age_boost",
+        "large_capital_gain_hinge",
+        "doctorate_handler_offset",
+        "race_chain_inactive",
+        "technical_support_gate",
+        "household_service_gate",
+        "china_gate",
+        "income_model_root"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0
+  },
+  "summary": "The model predicts the chance of a low income (the lower of the dataset's income classes); over the 39073 training rows its mean predicted chance is 75.5% against an outcome rate of 76.1%. It is mostly a linear score: switching the direct linear terms off lowers the training AUC from 0.908 to 0.748. Through their own edges, capital gains, education level, being married to a civilian spouse, being a husband or a wife, being a man and working more hours lower the predicted chance, and living as a child of the household raises it. Two nonlinear parts come next by ablation: people aged 34 years or younger (16819 rows) get a push towards a low income that grows the younger they are, and capital gains above a threshold between 5200 US dollars and 5300 US dollars (typical person; 1757 rows with the hinge open) lower it well beyond the direct capital-gains term. Small single-category gates raise it for private-household service workers (187 rows) and China-born people (96 rows), raise it for handlers or cleaners, and lower it for technical-support workers and doctorate holders; a chain on race is inactive on the training data. The annotated model reproduces the original to within 5.0e-16.",
+  "resisted": "No part resisted explanation. The race chain is described, not explained: its exit is open on 0 of the 39073 training rows, so there is no behaviour to explain.",
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 9,
+      "roots": [
+        "income_model_root"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.996003610813204e-16,
+    "closed_form_max_abs_err": 0.0650125195875102,
+    "numeric_max_abs_err": 7.105427357601002e-15,
+    "op_counts": {
+      "rename_node": 107,
+      "split_node": 5,
+      "add_identity_node": 1,
+      "annotate": 9
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T07:09:32+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 1,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [
+        {
+          "check": "provenance",
+          "location": "operations.income_model_root.evidence[1].payload",
+          "stated": "q_864aff1939",
+          "recomputed": {
+            "op_seq": 107,
+            "last_structural_op": 112
+          },
+          "note": "q_864aff1939 was computed before operation 112 changed the structure"
+        }
+      ],
+      "unchecked_freetext_sentences": 42,
+      "provenance": {
+        "templated_texts": 70,
+        "queries": 53
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

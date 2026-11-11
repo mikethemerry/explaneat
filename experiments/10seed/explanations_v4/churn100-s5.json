@@ -1,0 +1,128 @@
+{
+  "label": "churn100-s5",
+  "genome_id": "594b7fac-c5ac-4c0e-bcc4-1aca258584c7",
+  "protocol_version": "v4",
+  "start": "2026-11-11T08:55:35Z",
+  "end": "2026-11-11T09:14:30Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 5,
+  "n_composition_annotations": 1,
+  "n_splits": 2,
+  "n_identity_nodes": 5,
+  "hidden_nodes": 16,
+  "hidden_nodes_single_leaf_no_split": 16,
+  "hidden_nodes_in_any_annotation": 16,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 4.440892098500626e-16,
+  "closed_form_max_abs_err": 0.01639759006151076,
+  "summary": "This churn model (training AUC 0.901) adds five parts on the logit scale. The strongest is a customer-service-call gate: after a few calls the predicted risk climbs steeply for customers with low or average daytime use, while heavy daytime users are barely affected by calls (training customers with many calls and a below-average day charge churned at 75.6%, n = 156; switching the part off lowers the AUC to 0.759). Heavy daytime use is a second route: risk rises with daytime minutes and steepens once a hinge opens for the heaviest users (1002 customers past the hinge churned at 28.4%, against 9.4% for the rest). An international plan is the third route (380 holders churned at 42.4%), and a voice-mail plan lowers the risk. Per-state offsets (up for California and Washington, down for Vermont) follow the direction of the state churn rates but are larger than the state counts warrant, and a mild account-length rise adds little (the AUC moves from 0.901 to 0.899 without it). Coverage is complete and the parts reproduce the network to within 4.4e-16.",
+  "summary_template": "This churn model (training AUC {{q:q_1bc7e7ccb1.auc_roc|.3f}}) adds five parts on the logit scale. The strongest is a customer-service-call gate: after a few calls the predicted risk climbs steeply for customers with low or average daytime use, while heavy daytime users are barely affected by calls (training customers with many calls and a below-average day charge churned at {{q:q_b3cd9da857.subgroup.outcome_rate|.1%}}, n = {{q:q_b3cd9da857.subgroup.n|d}}; switching the part off lowers the AUC to {{q:q_a09c63ea1b.data.auc_without|.3f}}). Heavy daytime use is a second route: risk rises with daytime minutes and steepens once a hinge opens for the heaviest users ({{q:q_e405f87f73.subgroup.n|d}} customers past the hinge churned at {{q:q_e405f87f73.subgroup.outcome_rate|.1%}}, against {{q:q_e405f87f73.rest.outcome_rate|.1%}} for the rest). An international plan is the third route ({{q:q_97966ab2a3.subgroup.n|d}} holders churned at {{q:q_97966ab2a3.subgroup.outcome_rate|.1%}}), and a voice-mail plan lowers the risk. Per-state offsets (up for California and Washington, down for Vermont) follow the direction of the state churn rates but are larger than the state counts warrant, and a mild account-length rise adds little (the AUC moves from {{q:q_6e1c851b33.data.auc_with|.3f}} to {{q:q_6e1c851b33.data.auc_without|.3f}} without it). Coverage is complete and the parts reproduce the network to within {{q:q_6648dd46ba.function_preservation_max_abs_err|.1e}}.",
+  "resisted": "No part was resisted. Two pieces are described rather than explained: the Florida-specific unit inside the service-call part opens on a handful of training rows and looks fitted to them, and the Colorado and Indiana units in the state part are dead; the account-length part is explained but weakly supported by the observed churn rates.",
+  "resisted_template": "No part was resisted. Two pieces are described rather than explained: the Florida-specific unit inside the service-call part opens on a handful of training rows and looks fitted to them, and the Colorado and Indiana units in the state part are dead; the account-length part is explained but weakly supported by the observed churn rates.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 1,
+    "needs_review_items": [
+      {
+        "check": "provenance",
+        "location": "operations.churn_score.evidence[2].payload",
+        "stated": "q_f5d263b07d",
+        "recomputed": {
+          "op_seq": 71,
+          "last_structural_op": 77
+        },
+        "note": "q_f5d263b07d was computed before operation 77 changed the structure"
+      }
+    ],
+    "unchecked_freetext_sentences": 29,
+    "complete_ok": true
+  },
+  "recheck_notes": "One needs_review item: operations.churn_score.evidence[2] still lists q_f5d263b07d (compute_performance run before the splits and identity nodes) in its provenance field. That record was amended with amend_evidence(query_id='q_1bc7e7ccb1'), a recomputation on the final model state, and the root narrative and summary reference q_1bc7e7ccb1. The old query is a whole-model AUC; every operation after it was function-preserving (max error 4.4e-16), and both queries give the same AUC, so this is not an error. It stays flagged because amend_evidence does not update the record's provenance list. unchecked_freetext_sentences counts sentences with no numbers; they were reviewed by hand.",
+  "tool_bugs": "amend_evidence(query_id=...) replaces the payload and appends history, but leaves the record's 'provenance' list pointing at the old query id, so recheck still flags the superseded query. get_formula returns no provenance id, so formula evidence is attached as a payload built from its LaTeX. The add_identity_node rule 'cannot redirect ALL connections' allowed the fifth identity node only because earlier identity edges remained; not a bug, but worth knowing.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 192,
+    "provenance_backed": 130,
+    "allow_listed": 62,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 1,
+      "other": 5
+    },
+    "audit": {
+      "references": 130,
+      "checked": 130
+    },
+    "self_probe": {
+      "parts": [
+        "service_calls_low_day_charge",
+        "daytime_minutes",
+        "account_length",
+        "state_offsets",
+        "plans_and_usage_linear",
+        "churn_score"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 6,
+      "roots": [
+        "churn_score"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.440892098500626e-16,
+    "closed_form_max_abs_err": 0.01639759006151076,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 71,
+      "split_node": 2,
+      "add_identity_node": 5,
+      "annotate": 6
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T09:14:26+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 1,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [
+        {
+          "check": "provenance",
+          "location": "operations.churn_score.evidence[2].payload",
+          "stated": "q_f5d263b07d",
+          "recomputed": {
+            "op_seq": 71,
+            "last_structural_op": 77
+          },
+          "note": "q_f5d263b07d was computed before operation 77 changed the structure"
+        }
+      ],
+      "unchecked_freetext_sentences": 29,
+      "provenance": {
+        "templated_texts": 38,
+        "queries": 33
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

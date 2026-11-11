@@ -1,0 +1,115 @@
+{
+  "label": "adult-s7",
+  "genome_id": "bec72bab-2859-4988-8862-3cfd3e478abd",
+  "protocol_version": "v4",
+  "start": "2026-11-11T05:05:15Z",
+  "end": "2026-11-11T05:34:01Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 11,
+  "n_composition_annotations": 2,
+  "n_splits": 12,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 15,
+  "hidden_nodes_single_leaf_no_split": 15,
+  "hidden_nodes_in_any_annotation": 15,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 6.106226635438361e-16,
+  "closed_form_max_abs_err": 0.033668102537212974,
+  "summary": "The model predicts the chance of a low income (the lower of the census income classes) as a sigmoid of a sum of separate parts (training AUC 0.9099; the explanation reproduces the network to within 6.1e-16). Most of the ranking comes from a linear score in the inputs (training AUC 0.7093 without it): more capital gains, capital losses, schooling and weekly hours, and being married, each lower the predicted chance. On top of it sit a youth hinge that pushes people up to their mid-thirties towards a low income (open for 17,107 training people) and leaves age almost without effect after that, a second, steeper capital-gains slope that opens for gains of about 4640 US dollars (shut for Portugal-born people at the usual threshold), an occupation and education gate that withholds a push towards a low income from executives or managers, the armed forces, farmers or fishers, doctorate holders and people working without pay, and two-valued offsets for single categories (White, Asian or Pacific Islander, other service, seventh-to-eighth grade, eleventh grade, Hungary). The parts add on the logit, so they do not interact. Some rare categories carry very large fitted shifts because their indicators are z-scored: the 64 Colombia-born training people get a mean push of 10.3 on the logit through the occupation gate.",
+  "summary_template": "The model predicts the chance of a low income (the lower of the census income classes) as a sigmoid of a sum of separate parts (training AUC {{q:q_b5075898a7.data.auc_with|.4f}}; the explanation reproduces the network to within {{q:q_a129ed703e.function_preservation_max_abs_err|.1e}}). Most of the ranking comes from a linear score in the inputs (training AUC {{q:q_b5075898a7.data.auc_without|.4f}} without it): more capital gains, capital losses, schooling and weekly hours, and being married, each lower the predicted chance. On top of it sit a youth hinge that pushes people up to their mid-thirties towards a low income (open for {{q:q_aa01b54377.subgroup.n}} training people) and leaves age almost without effect after that, a second, steeper capital-gains slope that opens for gains of about {{q:q_5161c53436.rows[4].inputs.capital-gain}} (shut for Portugal-born people at the usual threshold), an occupation and education gate that withholds a push towards a low income from executives or managers, the armed forces, farmers or fishers, doctorate holders and people working without pay, and two-valued offsets for single categories (White, Asian or Pacific Islander, other service, seventh-to-eighth grade, eleventh grade, Hungary). The parts add on the logit, so they do not interact. Some rare categories carry very large fitted shifts because their indicators are z-scored: the {{q:q_15b4ea77ef.subgroup.n}} Colombia-born training people get a mean push of {{q:q_15b4ea77ef.subgroup.parts.ann_122.mean_contribution|.1f}} on the logit through the occupation gate.",
+  "resisted": "No part resisted. Two regimes are fitted to few rows and are described more than explained: the Hungary unit (16 training people) and the Colombia term of the occupation gate (64 training people).",
+  "resisted_template": "No part resisted. Two regimes are fitted to few rows and are described more than explained: the Hungary unit ({{q:q_7cbb5d30fc.subgroup.n}} training people) and the Colombia term of the occupation gate ({{q:q_15b4ea77ef.subgroup.n}} training people).",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 65,
+    "complete_ok": true
+  },
+  "recheck_notes": "Recheck: 0 mismatches, 0 needs_review. The unchecked free-text sentences are sentences with no number (hypothesis statements, structural descriptions, scope of probes). Part ablations first computed before an undo/redo of later operations were recomputed on the final structure and every reference and evidence record was moved to the new ids (amend_evidence with reason).",
+  "tool_bugs": "1) Strict lint on a typed approximate formula: in 'gate \u2248 relu(0.576\u00b7x \u2212 0.0522\u00b7y \u2212 0.274)' it accepted the first coefficient but refused 0.0522 and 0.274 as bare numbers, so typed formulas were dropped from the text and each closed form was attached as analytical_formula evidence instead. 2) amend_evidence cannot change a record's evidence_type: an accidental duplicate formula record (capital_gain_gate, index 9) was amended to the Portugal-born subgroup query but keeps the type analytical_formula. 3) Not a bug, worth knowing: probe 'inputs' render with the level code, e.g. 'administrative or clerical (occupation=1)'.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 256,
+    "provenance_backed": 252,
+    "allow_listed": 4,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 11,
+      "other": 0
+    },
+    "audit": {
+      "references": 252,
+      "checked": 252
+    },
+    "self_probe": {
+      "parts": [
+        "capital_gain_gate",
+        "young_age_gate",
+        "white_race_chain",
+        "occupation_gate",
+        "asian_race_chain",
+        "other_service_unit",
+        "grade_seven_eight_unit",
+        "hungary_unit",
+        "eleventh_grade_unit",
+        "tenth_grade_operator_unit",
+        "direct_terms",
+        "single_category_units",
+        "income_model"
+      ],
+      "refuted_and_fixed": [
+        "tenth_grade_operator_unit: first draft said machine operators keep the unit on with tenth-grade or vocational-associate schooling; the probe showed the vocational-associate case off, rewritten to tenth grade only and backed by a count"
+      ]
+    },
+    "restatements": 0
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 13,
+      "roots": [
+        "income_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 6.106226635438361e-16,
+    "closed_form_max_abs_err": 0.033668102537212974,
+    "numeric_max_abs_err": 1.4210854715202004e-14,
+    "op_counts": {
+      "rename_node": 107,
+      "add_identity_node": 1,
+      "split_node": 12,
+      "annotate": 13
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T05:34:43+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 65,
+      "provenance": {
+        "templated_texts": 123,
+        "queries": 118
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}
