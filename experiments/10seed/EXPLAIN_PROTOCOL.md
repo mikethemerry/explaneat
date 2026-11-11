@@ -1,5 +1,9 @@
 # Explanation protocol v4 (Claude-assisted, 10-seed experiment)
 
+The explaining agent's instructions are now the skill `.claude/skills/explanation-authoring/SKILL.md`
+(authoring v4: query choice, scope words, formulas, self-probes, accuracy block). This file keeps
+the rules it is built on.
+
 v4 (2026-11-11, after the errata and `docs/reviews/explanation-errors-2026-11.md`): **every number
 in a hypothesis or evidence comes from a stored computation**, written as a placeholder; the
 verifier's query tools replace scratch scripts; formulas are tagged exact or approximate;
