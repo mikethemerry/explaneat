@@ -1,0 +1,187 @@
+{
+ "lead": [
+  {"text": "For a typical customer (a West Virginia customer with no international or voice-mail plan, one customer-service call and median usage, such as 180 daytime minutes) the model predicts about {{C001.risk.from|pct}} chance of leaving; it adds a set of usage and plan terms to a part for customers with low daytime use and service calls, a gate for many service calls, a voice-mail part and a few state offsets.", "claims": ["C064"]}
+ ],
+ "blocks": [
+  {"block": "additive", "sentences": [
+   {"text": "Through this sum alone, the customer's state and total international charge barely change the predicted chance that a customer leaves: for a typical customer, total international charge going from {{C054.statement.change.from}} to {{C054.statement.change.to}} (with the international minutes moved along, as in the data) leaves it at about {{C054.risk.to|pct}}.", "claims": ["C052", "C053"]},
+   {"text": "Both also act through the parts below, where they matter more.", "claims": ["C064"]}
+  ]},
+  {"block": "ann_91", "sentences": [
+   {"text": "These usage and plan terms add up independently.", "claims": ["C106"]},
+   {"text": "More daytime minutes raise the predicted chance that a customer leaves steadily through these terms: for a typical customer, from {{C065.risk.from|pct}} at {{C065.statement.change.from}} to about {{C065.risk.to|pct}} at {{C065.statement.change.to}} (with the daytime charge, which the model ignores, moved along as in the data), flattening out near the bottom because the predicted chance cannot go much lower.", "claims": []},
+   {"text": "An international plan raises it for a typical customer from about {{C066.risk.from|pct}} to about {{C066.risk.to|pct}}.", "claims": []},
+   {"text": "Higher evening charge and more evening minutes each raise it in an uneven way, from about {{C067.risk.from|pct}} at {{C067.statement.change.from}} to about {{C067.risk.to|pct}} at {{C067.statement.change.to}} of evening charge (with the evening minutes moved along, as in the data).", "claims": ["C068"]}
+  ]},
+  {"block": "ann_92", "sentences": [
+   {"text": "This part combines daytime minutes, customer-service calls, evening charge and international charge in a way that does not simply add up, and the calls-and-evening-charge piece inside it acts on {{C127.statement.n_active|d}} of {{C127.statement.n|d}} training customers.", "claims": ["C118"]},
+   {"text": "Through this part, fewer daytime minutes raise the predicted chance that a customer leaves in an uneven way while daytime minutes stay below about {{C114.statement.threshold}} (between {{C114.shape.point.spread_text[0]}} and {{C114.shape.point.spread_text[1]}} for different customers; for {{C114.statement.support_check.exceptions|d}} of the {{C114.statement.support_check.n|d}} training customers it still acts above that): for a typical customer, going from {{C114.statement.change.from}} to {{C114.statement.change.to}} (with the daytime charge moved along, as in the data) moves it from about {{C114.risk.from|pct}} to about {{C114.risk.to|pct}}.", "claims": []},
+   {"text": "In the whole model, more daytime minutes raise the predicted chance, and even more so if total evening charge is above 17.12 US dollars, in a curve that is lowest at about {{C112.shape.groups[0].points_text.turning}} and higher either side: for a typical customer with that evening charge (and the evening minutes such customers have in the data), going from {{C112.statement.change.from}} to {{C112.statement.change.to}} raises it from about {{C112.statement.stronger_group.risk_from|pct}} to about {{C112.statement.stronger_group.risk_to|pct}}, against about {{C112.statement.weaker_group.risk_from|pct}} to about {{C112.statement.weaker_group.risk_to|pct}} at or below that charge.", "claims": []},
+   {"text": "More customer-service calls raise it, slowly at first and then faster, and even more so if the customer is in South Dakota: for a typical customer, going from 0 to 3 calls moves it from about {{C122.statement.stronger_group.risk_from|pct}} to about {{C122.statement.stronger_group.risk_to|pct}} in South Dakota and from about {{C122.statement.weaker_group.risk_from|pct}} to about {{C122.statement.weaker_group.risk_to|pct}} elsewhere.", "claims": []}
+  ]},
+  {"block": "ann_89", "sentences": [
+   {"text": "Through this part, a voice-mail plan lowers the predicted chance that a customer leaves, from about {{C129.risk.from|pct}} to about {{C129.risk.to|pct}} for a typical customer (with the voice-mail messages moved to the 29 such customers have in the data).", "claims": []},
+   {"text": "In the whole model, a voice-mail plan takes the typical customer from about {{C018.risk.from|pct}} to {{C018.risk.to|pct}} (again with the messages moved along).", "claims": []}
+  ]},
+  {"block": "ann_88", "sentences": [
+   {"text": "This gate adds to the predicted chance that a customer leaves only from 4 calls to customer service upwards (checked for all {{C135.statement.support_check.n|d}} training customers, with {{C135.statement.support_check.exceptions|d}} exceptions), and it acts on {{C136.statement.n_active|d}} of {{C136.statement.n|d}} training customers.", "claims": []},
+   {"text": "For a typical customer it acts on (an Idaho customer with 4 calls), it raises the predicted chance from about {{C136.risk.from|pct}} without the gate to about {{C136.risk.to|pct}} with it; {{C136.statement.outcome_in_group.positives|d}} of these {{C136.statement.outcome_in_group.n|d}} customers left.", "claims": []},
+   {"text": "Through this gate, a typical customer it acts on gets about {{C134.risk.to|pct}} outside West Virginia and about {{C134.risk.from|pct}} in West Virginia.", "claims": []}
+  ]},
+  {"block": "ann_90", "sentences": [
+   {"text": "These state offsets move the predicted chance by small amounts for a few states: for a typical customer, Tennessee raises it from about {{C141.risk.from|pct}} to about {{C141.risk.to|pct}} and Nevada lowers it from about {{C142.risk.from|pct}} to about {{C142.risk.to|pct}}.", "claims": []}
+  ]}
+ ],
+ "titles": {
+  "additive": "Direct state and international charge",
+  "ann_93": "Churn model",
+  "ann_91": "Usage and plan terms",
+  "ann_92": "Low daytime use with service calls",
+  "ann_87": "Service calls against evening charge",
+  "ann_86": "Service calls beyond the first",
+  "ann_89": "Voice-mail plan",
+  "ann_88": "Many service calls",
+  "ann_90": "State offsets"
+ },
+ "annotations": {
+  "ann_93": [
+   {"text": "The model gives a typical customer about {{C001.risk.from|pct}} predicted chance of leaving, and an international plan raises it to about {{C001.risk.to|pct}}.", "claims": []},
+   {"text": "More customer-service calls raise it in an uneven way, from about {{C014.risk.from|pct}} at 0 calls to about {{C014.risk.to|pct}} at 3 calls for a typical customer, flattening out near the bottom because the predicted chance cannot go much lower.", "claims": []},
+   {"text": "A voice-mail plan lowers it from about {{C018.risk.from|pct}} to {{C018.risk.to|pct}} (with the voice-mail messages moved to the 29 such customers have in the data).", "claims": []},
+   {"text": "Compared with West Virginia, a typical customer in Washington gets about {{C004.risk.to|pct}} and one in Hawaii {{C016.risk.to|pct}}.", "claims": []},
+   {"text": "The model ignores total daytime charge, total evening calls, total international calls and total night-time charge.", "claims": ["C060", "C061", "C062", "C063"]}
+  ],
+  "ann_91": [
+   {"text": "More daytime minutes raise the predicted chance that a customer leaves steadily through these terms: for a typical customer, from {{C065.risk.from|pct}} at {{C065.statement.change.from}} to about {{C065.risk.to|pct}} at {{C065.statement.change.to}} (with the daytime charge moved along, as in the data), flattening out near the bottom because the predicted chance cannot go much lower.", "claims": []},
+   {"text": "An international plan raises it from about {{C066.risk.from|pct}} to about {{C066.risk.to|pct}}.", "claims": []},
+   {"text": "Higher evening charge raises it in an uneven way, from about {{C067.risk.from|pct}} at {{C067.statement.change.from}} to about {{C067.risk.to|pct}} at {{C067.statement.change.to}} (with the evening minutes moved along, as in the data).", "claims": []},
+   {"text": "Its formula reproduces the part exactly.", "claims": ["C106"]}
+  ],
+  "ann_92": [
+   {"text": "Through this part, fewer daytime minutes raise the predicted chance that a customer leaves in an uneven way while daytime minutes stay below about {{C114.statement.threshold}} (between {{C114.shape.point.spread_text[0]}} and {{C114.shape.point.spread_text[1]}} for different customers; for {{C114.statement.support_check.exceptions|d}} of the {{C114.statement.support_check.n|d}} training customers it still acts above that): for a typical customer, going from {{C114.statement.change.from}} to {{C114.statement.change.to}} (with the daytime charge moved along, as in the data) moves it from about {{C114.risk.from|pct}} to about {{C114.risk.to|pct}}.", "claims": []},
+   {"text": "Through this part, a higher total international charge lowers it in an uneven way while the charge stays below about {{C116.statement.threshold}} (between {{C116.shape.point.spread_text[0]}} and {{C116.shape.point.spread_text[1]}} for different patients; for {{C116.statement.support_check.exceptions|d}} of the {{C116.statement.support_check.n|d}} training customers it still acts above that), from about {{C116.risk.from|pct}} to about {{C116.risk.to|pct}} for a typical customer (with the international minutes moved along, as in the data).", "claims": []},
+   {"text": "In the whole model, more daytime minutes raise the predicted chance, and even more so outside South Dakota, in a curve that is lowest at about {{C113.shape.groups[1].points_text.turning}} and higher either side: from about {{C113.statement.stronger_group.risk_from|pct}} at {{C113.statement.change.from}} to about {{C113.statement.stronger_group.risk_to|pct}} at {{C113.statement.change.to}} for a typical customer elsewhere, and from about {{C113.statement.weaker_group.risk_from|pct}} to about {{C113.statement.weaker_group.risk_to|pct}} in South Dakota.", "claims": []},
+   {"text": "It combines its two service-call pieces with daytime minutes, international charge and calls in a way that does not simply add up.", "claims": ["C118"]}
+  ],
+  "ann_87": [
+   {"text": "This part acts on {{C127.statement.n_active|d}} of {{C127.statement.n|d}} training customers, and {{C127.statement.outcome_in_group.positives|d}} of them left.", "claims": []},
+   {"text": "For a typical customer it acts on, it raises the predicted chance that a customer leaves from about {{C127.risk.from|pct}} without the part to about {{C127.risk.to|pct}} with it.", "claims": []},
+   {"text": "More customer-service calls raise it, slowly at first and then faster, and even more so if the customer is in South Dakota: for a typical customer, going from 0 to 3 calls moves it from about {{C122.statement.stronger_group.risk_from|pct}} to about {{C122.statement.stronger_group.risk_to|pct}} in South Dakota and from about {{C122.statement.weaker_group.risk_from|pct}} to about {{C122.statement.weaker_group.risk_to|pct}} elsewhere.", "claims": []},
+   {"text": "Its formula reproduces the part exactly.", "claims": ["C128"]}
+  ],
+  "ann_86": [
+   {"text": "Through this part, more customer-service calls raise the predicted chance that a customer leaves in an uneven way: for a typical customer it acts on (an Arkansas customer with 2 calls), from about {{C138.risk.from|pct}} at 0 calls to about {{C138.risk.to|pct}} at 3 calls, flattening out near the bottom because the predicted chance cannot go much lower.", "claims": []},
+   {"text": "Its formula reproduces the part exactly.", "claims": ["C140"]}
+  ],
+  "ann_89": [
+   {"text": "Through this part, a voice-mail plan lowers the predicted chance that a customer leaves, from about {{C129.risk.from|pct}} to about {{C129.risk.to|pct}} for a typical customer (with the voice-mail messages moved to the 29 such customers have in the data).", "claims": []},
+   {"text": "A typical customer in a state other than Alabama, North Carolina and West Virginia gets about {{C130.risk.to|pct}} through this part, against about {{C130.risk.from|pct}} in West Virginia.", "claims": []},
+   {"text": "Its formula reproduces the part exactly.", "claims": ["C133"]}
+  ],
+  "ann_88": [
+   {"text": "This gate adds to the predicted chance that a customer leaves only from 4 calls to customer service upwards (checked for all {{C135.statement.support_check.n|d}} training customers, with {{C135.statement.support_check.exceptions|d}} exceptions), and it acts on {{C136.statement.n_active|d}} of {{C136.statement.n|d}} training customers.", "claims": []},
+   {"text": "For a typical customer it acts on (an Idaho customer with 4 calls), it raises the predicted chance from about {{C136.risk.from|pct}} without the gate to about {{C136.risk.to|pct}} with it; {{C136.statement.outcome_in_group.positives|d}} of these {{C136.statement.outcome_in_group.n|d}} customers left.", "claims": []},
+   {"text": "Through this gate, a typical customer it acts on gets about {{C134.risk.to|pct}} outside West Virginia and about {{C134.risk.from|pct}} in West Virginia.", "claims": []},
+   {"text": "Its formula reproduces the part exactly.", "claims": ["C137"]}
+  ],
+  "ann_90": [
+   {"text": "These state offsets move the predicted chance by small amounts for a few states: for a typical customer, Tennessee raises it from about {{C141.risk.from|pct}} to about {{C141.risk.to|pct}} and Nevada lowers it from about {{C142.risk.from|pct}} to about {{C142.risk.to|pct}}.", "claims": []},
+   {"text": "Its formula reproduces the part exactly.", "claims": ["C148"]}
+  ]
+ },
+ "readdown": {
+  "ann_93": {
+   "hypothesis": [
+    {"text": "The model adds five parts: usage and plan terms, a part for customers with low daytime use and service calls, a gate for many service calls, a voice-mail part and state offsets.", "claims": ["C064"]},
+    {"text": "For a typical customer it predicts about {{C001.risk.from|pct}}, and an international plan raises this to about {{C001.risk.to|pct}}.", "claims": []}
+   ],
+   "evidence": [
+    {"text": "It is made of those five parts plus the state and total international charge entering directly, combined in a way that does not simply add up.", "claims": ["C064"]},
+    {"text": "Raising the risk: more customer-service calls raise the predicted chance in an uneven way, from about {{C014.risk.from|pct}} at 0 calls to about {{C014.risk.to|pct}} at 3 calls for a typical customer, flattening out near the bottom because it cannot go much lower.", "claims": [], "label": "Raising the risk"},
+    {"text": "Lowering the risk: a voice-mail plan lowers it from about {{C018.risk.from|pct}} to {{C018.risk.to|pct}} (with the voice-mail messages moved to the 29 such customers have in the data).", "claims": [], "label": "Lowering the risk"},
+    {"text": "It ignores total daytime charge, total evening calls, total international calls and total night-time charge.", "claims": ["C060", "C061", "C062", "C063"]}
+   ]
+  },
+  "ann_91": {
+   "hypothesis": [
+    {"text": "More daytime minutes raise the predicted chance that a customer leaves steadily, and an international plan raises it too, each adding on its own.", "claims": ["C065", "C066"]}
+   ],
+   "evidence": [
+    {"text": "Daytime minutes raise it steadily, from {{C065.risk.from|pct}} at {{C065.statement.change.from}} to about {{C065.risk.to|pct}} at {{C065.statement.change.to}} for a typical customer (with the daytime charge moved along, as in the data), flattening out near the bottom because the predicted chance cannot go much lower.", "claims": []},
+    {"text": "An international plan raises it from about {{C066.risk.from|pct}} to about {{C066.risk.to|pct}}.", "claims": []},
+    {"text": "Its formula reproduces the part exactly.", "claims": ["C106"]}
+   ]
+  },
+  "ann_92": {
+   "hypothesis": [
+    {"text": "For customers with low daytime use, this part raises the predicted chance that a customer leaves in an uneven way, and service calls add to it.", "claims": ["C114", "C118"]}
+   ],
+   "evidence": [
+    {"text": "It is made of the two service-call pieces below plus daytime minutes, international charge and calls entering directly, combined in a way that does not simply add up.", "claims": ["C118"]},
+    {"text": "Through it, fewer daytime minutes raise the predicted chance in an uneven way while daytime minutes stay below about {{C114.statement.threshold}} (between {{C114.shape.point.spread_text[0]}} and {{C114.shape.point.spread_text[1]}} for different patients; for {{C114.statement.support_check.exceptions|d}} of the {{C114.statement.support_check.n|d}} training customers it still acts above that): for a typical customer, from about {{C114.risk.from|pct}} at {{C114.statement.change.from}} to about {{C114.risk.to|pct}} at {{C114.statement.change.to}} (with the daytime charge moved along, as in the data).", "claims": []}
+   ]
+  },
+  "ann_87": {
+   "hypothesis": [
+    {"text": "More customer-service calls raise the predicted chance that a customer leaves through this part, slowly at first and then faster, and more so in South Dakota.", "claims": ["C122"]}
+   ],
+   "evidence": [
+    {"text": "It acts on {{C127.statement.n_active|d}} of {{C127.statement.n|d}} training customers; for a typical one of them it raises the predicted chance from about {{C127.risk.from|pct}} without it to about {{C127.risk.to|pct}} with it.", "claims": []},
+    {"text": "It rises slowly at first, then faster: going from 0 to 3 calls moves a typical customer from about {{C122.statement.stronger_group.risk_from|pct}} to about {{C122.statement.stronger_group.risk_to|pct}} in South Dakota and from about {{C122.statement.weaker_group.risk_from|pct}} to about {{C122.statement.weaker_group.risk_to|pct}} elsewhere.", "claims": []},
+    {"text": "Its formula reproduces the part exactly.", "claims": ["C128"]}
+   ]
+  },
+  "ann_86": {
+   "hypothesis": [
+    {"text": "More customer-service calls raise the predicted chance that a customer leaves through this part in an uneven way.", "claims": ["C138"]}
+   ],
+   "evidence": [
+    {"text": "For a typical customer it acts on, it rises in an uneven way from about {{C138.risk.from|pct}} at 0 calls to about {{C138.risk.to|pct}} at 3 calls.", "claims": []},
+    {"text": "Its formula reproduces the part exactly.", "claims": ["C140"]}
+   ]
+  },
+  "ann_89": {
+   "hypothesis": [
+    {"text": "A voice-mail plan lowers the predicted chance that a customer leaves through this part.", "claims": ["C129"]}
+   ],
+   "evidence": [
+    {"text": "For a typical customer it goes from about {{C129.risk.from|pct}} to about {{C129.risk.to|pct}} (with the voice-mail messages moved to the 29 such customers have in the data).", "claims": []},
+    {"text": "Its formula reproduces the part exactly.", "claims": ["C133"]}
+   ]
+  },
+  "ann_88": {
+   "hypothesis": [
+    {"text": "This gate does nothing until about {{C135.shape.point.text}} to customer service, then raises the predicted chance that a customer leaves steadily.", "claims": ["C135"]}
+   ],
+   "evidence": [
+    {"text": "It acts on {{C136.statement.n_active|d}} of {{C136.statement.n|d}} training customers, and {{C136.statement.outcome_in_group.positives|d}} of them left.", "claims": []},
+    {"text": "For a typical one of them it raises the predicted chance from about {{C136.risk.from|pct}} without the gate to about {{C136.risk.to|pct}} with it.", "claims": []},
+    {"text": "Its formula reproduces the part exactly.", "claims": ["C137"]}
+   ]
+  },
+  "ann_90": {
+   "hypothesis": [
+    {"text": "A few states shift the predicted chance that a customer leaves up or down by small amounts.", "claims": ["C141", "C142"]}
+   ],
+   "evidence": [
+    {"text": "For a typical customer, Tennessee raises it from about {{C141.risk.from|pct}} to about {{C141.risk.to|pct}} and Nevada lowers it from about {{C142.risk.from|pct}} to about {{C142.risk.to|pct}}.", "claims": []},
+    {"text": "Its formula reproduces the part exactly.", "claims": ["C148"]}
+   ]
+  }
+ },
+ "worth_checking": [
+  {"text": "Worth checking: through the low-daytime-use part, fewer daytime minutes raise the predicted chance of leaving, while the usage terms push the other way.", "claims": ["C114", "C065"], "flag": "low day use raises churn through a gate"},
+  {"text": "Worth checking: through the many-service-calls gate, a typical customer it acts on gets a lower predicted chance in West Virginia (about {{C134.risk.from|pct}}) than elsewhere (about {{C134.risk.to|pct}}).", "claims": [], "flag": "West Virginia exception in service-call gate"},
+  {"text": "Worth checking: the model gives single states their own offsets, for example a typical customer in Washington gets about {{C004.risk.to|pct}} against {{C004.risk.from|pct}} in West Virginia, from groups of {{C004.groups[1].n|d}} and {{C004.groups[0].n|d}} training customers.", "claims": [], "flag": "state offsets fitted to small groups"}
+ ],
+ "hypothesis_revisions": {
+  "ann_93": {"proposed": "The model adds usage and plan terms, a part for low daytime use with service calls, a gate for many service calls, a voice-mail part and state offsets; a typical customer gets about {{C001.risk.from|pct}}, and an international plan raises this to about {{C001.risk.to|pct}}.", "claims": ["C064"]},
+  "ann_91": {"proposed": "More daytime minutes raise the predicted chance that a customer leaves steadily, from {{C065.risk.from|pct}} at {{C065.statement.change.from}} to about {{C065.risk.to|pct}} at {{C065.statement.change.to}} for a typical customer (with the daytime charge moved along, as in the data), and an international plan raises it from about {{C066.risk.from|pct}} to about {{C066.risk.to|pct}}.", "claims": []},
+  "ann_92": {"proposed": "Fewer daytime minutes raise the predicted chance that a customer leaves through this part in an uneven way while daytime minutes stay below about {{C114.statement.threshold}} (between {{C114.shape.point.spread_text[0]}} and {{C114.shape.point.spread_text[1]}} for different patients; for {{C114.statement.support_check.exceptions|d}} of the {{C114.statement.support_check.n|d}} training customers it still acts above that), from about {{C114.risk.from|pct}} to about {{C114.risk.to|pct}} for a typical customer.", "claims": ["C118"]},
+  "ann_87": {"proposed": "This part acts on {{C127.statement.n_active|d}} of {{C127.statement.n|d}} training customers; more customer-service calls raise the predicted chance through it, slowly at first and then faster, from about {{C122.statement.stronger_group.risk_from|pct}} to about {{C122.statement.stronger_group.risk_to|pct}} at 0 to 3 calls in South Dakota and from about {{C122.statement.weaker_group.risk_from|pct}} to about {{C122.statement.weaker_group.risk_to|pct}} elsewhere.", "claims": []},
+  "ann_86": {"proposed": "More customer-service calls raise the predicted chance that a customer leaves through this part in an uneven way, from about {{C138.risk.from|pct}} at 0 calls to about {{C138.risk.to|pct}} at 3 calls for a typical customer it acts on.", "claims": []},
+  "ann_89": {"proposed": "A voice-mail plan lowers the predicted chance that a customer leaves through this part, from about {{C129.risk.from|pct}} to about {{C129.risk.to|pct}} for a typical customer (with the voice-mail messages moved to the 29 such customers have in the data).", "claims": []},
+  "ann_88": {"proposed": "From 4 customer-service calls upwards this gate raises the predicted chance that a customer leaves; it acts on {{C136.statement.n_active|d}} of {{C136.statement.n|d}} training customers, taking a typical one of them from about {{C136.risk.from|pct}} to about {{C136.risk.to|pct}}.", "claims": []},
+  "ann_90": {"proposed": "A few states shift the predicted chance that a customer leaves by small amounts: for a typical customer, Tennessee raises it from about {{C141.risk.from|pct}} to about {{C141.risk.to|pct}} and Nevada lowers it from about {{C142.risk.from|pct}} to about {{C142.risk.to|pct}}.", "claims": []}
+ }
+}

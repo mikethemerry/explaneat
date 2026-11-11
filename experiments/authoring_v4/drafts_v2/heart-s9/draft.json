@@ -1,0 +1,668 @@
+{
+ "lead": [
+  {
+   "text": "For a typical patient (a 56-year-old man with no chest pain symptoms, no coloured vessels and median test results), the model predicts a risk of heart disease of about {{C03.risk.from|pct}}.",
+   "claims": [
+    "C03"
+   ]
+  },
+  {
+   "text": "The model adds up six parts, one of them a weighted sum of most inputs.",
+   "claims": [
+    "C24"
+   ]
+  }
+ ],
+ "blocks": [
+  {
+   "block": "ann_36",
+   "sentences": [
+    {
+     "text": "These inputs add up independently, biggest first: more vessels coloured by fluoroscopy raise the predicted risk steadily, each extra vessel adding about the same, from about {{C25.risk.from|pct}} at {{C25.statement.change.from}} to about {{C25.risk.to|pct}} at {{C25.statement.change.to}} for a typical patient, flattening out near the top because the predicted risk cannot go much higher.",
+     "claims": [
+      "C25"
+     ]
+    },
+    {
+     "text": "A flat rather than an upsloping ST segment at peak exercise raises it from about {{C26.risk.from|pct}} to about {{C26.risk.to|pct}}, and higher cholesterol raises it steadily, from about {{C27.risk.from|pct}} at {{C27.statement.change.from}} to about {{C27.risk.to|pct}} at {{C27.statement.change.to}}.",
+     "claims": [
+      "C26",
+      "C27"
+     ]
+    },
+    {
+     "text": "Higher resting blood pressure raises it steadily, from about {{C28.risk.from|pct}} at {{C28.statement.change.from}} to about {{C28.risk.to|pct}} at {{C28.statement.change.to}}.",
+     "claims": [
+      "C28"
+     ]
+    },
+    {
+     "text": "Typical angina, non-anginal chest pain (rather than no chest pain symptoms) and being a woman lower it from about {{C30.risk.from|pct}} to {{C30.risk.to|pct}}, about {{C33.risk.to|pct}} and about {{C32.risk.to|pct}} respectively; sex, chest pain type, fasting blood sugar, the thallium result and the vessel count also act through the parts below.",
+     "claims": [
+      "C30",
+      "C33",
+      "C32"
+     ]
+    }
+   ]
+  },
+  {
+   "block": "ann_34",
+   "sentences": [
+    {
+     "text": "ST depression on exercise adds to the predicted risk only once it rises above about {{C40.statement.threshold}} (checked for all {{C40.statement.support_check.n}} training patients): for a typical patient, going from {{C40.statement.change.from}} to {{C40.statement.change.to}} moves it from about {{C40.risk.from|pct}} to about {{C40.risk.to|pct}}.",
+     "claims": [
+      "C40"
+     ]
+    },
+    {
+     "text": "This part acts on {{C41.statement.n_active}} of {{C41.statement.n}} patients, those past that point; {{C41.statement.outcome_in_group.positives}} of them had heart disease.",
+     "claims": [
+      "C41"
+     ]
+    }
+   ]
+  },
+  {
+   "block": "ann_32",
+   "sentences": [
+    {
+     "text": "Being a woman rather than a man lowers the predicted risk, and even more so if exercise does not bring on chest pain: for a typical patient, from about {{C45.statement.stronger_group.risk_from|pct}} to {{C45.statement.stronger_group.risk_to|pct}} without chest pain on exercise, and from about {{C45.statement.weaker_group.risk_from|pct}} to about {{C45.statement.weaker_group.risk_to|pct}} with it.",
+     "claims": [
+      "C45"
+     ]
+    },
+    {
+     "text": "This part acts on {{C46.statement.n_active}} of {{C46.statement.n}} patients, those without chest pain on exercise; {{C46.statement.outcome_in_group.positives}} of them had heart disease.",
+     "claims": [
+      "C46"
+     ]
+    },
+    {
+     "text": "Through this part, chest pain brought on by exercise raises the predicted risk from about {{C44.risk.from|pct}} to about {{C44.risk.to|pct}} for a typical patient.",
+     "claims": [
+      "C44"
+     ]
+    }
+   ]
+  },
+  {
+   "block": "ann_33",
+   "sentences": [
+    {
+     "text": "A fixed defect on the thallium scan lowers the predicted risk, but only if fasting blood sugar is 120 mg/dL or less (checked for all {{C50.statement.support_check.n}} training patients with higher fasting blood sugar): for a typical patient, from about {{C50.statement.stronger_group.risk_from|pct}} to about {{C50.statement.stronger_group.risk_to|pct}} (the model has little data on this, n = {{C50.groups[2].n|d}}).",
+     "claims": [
+      "C50"
+     ]
+    },
+    {
+     "text": "This part acts on {{C51.statement.n_active}} of {{C51.statement.n}} patients, those with a fixed defect; {{C51.statement.outcome_in_group.positives}} of them had heart disease.",
+     "claims": [
+      "C51"
+     ]
+    },
+    {
+     "text": "For a typical patient it acts on, the predicted risk is {{C51.risk.from|pct}} without this part and about {{C51.risk.to|pct}} with it (the model has little data on this, n = {{C51.groups[0].n|d}}).",
+     "claims": [
+      "C51"
+     ]
+    }
+   ]
+  },
+  {
+   "block": "ann_31",
+   "sentences": [
+    {
+     "text": "Through this part, more coloured vessels raise the predicted risk a second time, steadily, each extra vessel adding about the same: for a typical patient, from about {{C54.risk.from|pct}} at {{C54.statement.change.from}} to about {{C54.risk.to|pct}} at {{C54.statement.change.to}}.",
+     "claims": [
+      "C54"
+     ]
+    },
+    {
+     "text": "A thallium result the data does not decode ({{C53.groups[1].label}}) raises it from about {{C53.risk.from|pct}} to about {{C53.risk.to|pct}} (the model has little data on this, n = {{C53.groups[1].n|d}}).",
+     "claims": [
+      "C53"
+     ]
+    }
+   ]
+  },
+  {
+   "block": "ann_35",
+   "sentences": [
+    {
+     "text": "This part flags atypical angina and barely changes the predictions, by at most {{C58.statement.max_change_in_risk|pct}}.",
+     "claims": [
+      "C58"
+     ]
+    },
+    {
+     "text": "For a typical patient, atypical angina through this part moves the predicted risk from about {{C56.risk.from|pct}} to about {{C56.risk.to|pct}}.",
+     "claims": [
+      "C56"
+     ]
+    }
+   ]
+  }
+ ],
+ "titles": {
+  "ann_37": "Heart disease risk",
+  "ann_36": "Inputs that add up",
+  "ann_34": "ST depression above a threshold",
+  "ann_32": "Protection without exercise angina",
+  "ann_33": "Fixed thallium defect",
+  "ann_31": "Vessels and an uncoded thallium result",
+  "ann_35": "Atypical angina flag"
+ },
+ "annotations": {
+  "ann_37": [
+   {
+    "text": "For a typical patient, the model predicts a risk of heart disease of about {{C03.risk.from|pct}}.",
+    "claims": [
+     "C03"
+    ]
+   },
+   {
+    "text": "In the whole model, more coloured vessels raise it steadily, each extra vessel adding about the same: from about {{C01.risk.from|pct}} at {{C01.statement.change.from}} to about {{C01.risk.to|pct}} at {{C01.statement.change.to}}, flattening out near the top because the predicted risk cannot go much higher.",
+    "claims": [
+     "C01"
+    ]
+   },
+   {
+    "text": "A flat rather than an upsloping ST segment raises it from about {{C03.risk.from|pct}} to about {{C03.risk.to|pct}}.",
+    "claims": [
+     "C03"
+    ]
+   },
+   {
+    "text": "Higher cholesterol raises it steadily, from about {{C04.risk.from|pct}} at {{C04.statement.change.from}} to about {{C04.risk.to|pct}} at {{C04.statement.change.to}}.",
+    "claims": [
+     "C04"
+    ]
+   },
+   {
+    "text": "Higher ST depression on exercise changes it by nothing until about {{C40.statement.threshold}}, then steadily: from about {{C05.risk.from|pct}} at {{C05.statement.change.from}} to about {{C05.risk.to|pct}} at {{C05.statement.change.to}}.",
+    "claims": [
+     "C05",
+     "C40"
+    ]
+   },
+   {
+    "text": "Being a woman lowers it from about {{C08.risk.from|pct}} to {{C08.risk.to|pct}}, and typical angina rather than no chest pain symptoms lowers it to {{C09.risk.to|pct}}.",
+    "claims": [
+     "C08",
+     "C09"
+    ]
+   },
+   {
+    "text": "A higher maximum heart rate lowers it steadily, from about {{C13.risk.from|pct}} at {{C13.statement.change.from}} to about {{C13.risk.to|pct}} at {{C13.statement.change.to}}.",
+    "claims": [
+     "C13"
+    ]
+   },
+   {
+    "text": "It ignores resting ECG.",
+    "claims": [
+     "C23"
+    ]
+   }
+  ],
+  "ann_36": [
+   {
+    "text": "These inputs add up independently, biggest first: more vessels coloured by fluoroscopy raise the predicted risk steadily, each extra vessel adding about the same, from about {{C25.risk.from|pct}} at {{C25.statement.change.from}} to about {{C25.risk.to|pct}} at {{C25.statement.change.to}} for a typical patient, flattening out near the top because the predicted risk cannot go much higher.",
+    "claims": [
+     "C25"
+    ]
+   },
+   {
+    "text": "A flat rather than an upsloping ST segment at peak exercise raises it from about {{C26.risk.from|pct}} to about {{C26.risk.to|pct}}, and higher cholesterol raises it steadily, from about {{C27.risk.from|pct}} at {{C27.statement.change.from}} to about {{C27.risk.to|pct}} at {{C27.statement.change.to}}.",
+    "claims": [
+     "C26",
+     "C27"
+    ]
+   },
+   {
+    "text": "Higher resting blood pressure raises it steadily, from about {{C28.risk.from|pct}} at {{C28.statement.change.from}} to about {{C28.risk.to|pct}} at {{C28.statement.change.to}}.",
+    "claims": [
+     "C28"
+    ]
+   },
+   {
+    "text": "A higher maximum heart rate lowers it steadily, from about {{C34.risk.from|pct}} at {{C34.statement.change.from}} to about {{C34.risk.to|pct}} at {{C34.statement.change.to}}.",
+    "claims": [
+     "C34"
+    ]
+   },
+   {
+    "text": "Fasting blood sugar above 120 mg/dL lowers it from about {{C35.risk.from|pct}} to about {{C35.risk.to|pct}}, and a reversible thallium defect raises it to about {{C31.risk.to|pct}}.",
+    "claims": [
+     "C35",
+     "C31"
+    ]
+   },
+   {
+    "text": "Older age raises it steadily, from about {{C37.risk.from|pct}} at {{C37.statement.change.from}} to about {{C37.risk.to|pct}} at {{C37.statement.change.to}}.",
+    "claims": [
+     "C37"
+    ]
+   }
+  ],
+  "ann_34": [
+   {
+    "text": "ST depression on exercise adds to the predicted risk only once it rises above about {{C40.statement.threshold}} (checked for all {{C40.statement.support_check.n}} training patients): for a typical patient, going from {{C40.statement.change.from}} to {{C40.statement.change.to}} moves it from about {{C40.risk.from|pct}} to about {{C40.risk.to|pct}}.",
+    "claims": [
+     "C40"
+    ]
+   },
+   {
+    "text": "Through this part, higher ST depression raises the predicted risk with nothing until that point, then steadily: for a typical patient, from about {{C39.risk.from|pct}} at {{C39.statement.change.from}} to about {{C39.risk.to|pct}} at {{C39.statement.change.to}}.",
+    "claims": [
+     "C39"
+    ]
+   },
+   {
+    "text": "This part acts on {{C41.statement.n_active}} of {{C41.statement.n}} patients, those past that point; {{C41.statement.outcome_in_group.positives}} of them had heart disease.",
+    "claims": [
+     "C41"
+    ]
+   }
+  ],
+  "ann_32": [
+   {
+    "text": "Being a woman rather than a man lowers the predicted risk, and even more so if exercise does not bring on chest pain: for a typical patient, from about {{C45.statement.stronger_group.risk_from|pct}} to {{C45.statement.stronger_group.risk_to|pct}} without chest pain on exercise, and from about {{C45.statement.weaker_group.risk_from|pct}} to about {{C45.statement.weaker_group.risk_to|pct}} with it.",
+    "claims": [
+     "C45"
+    ]
+   },
+   {
+    "text": "This part acts on {{C46.statement.n_active}} of {{C46.statement.n}} patients, those without chest pain on exercise; {{C46.statement.outcome_in_group.positives}} of them had heart disease.",
+    "claims": [
+     "C46"
+    ]
+   },
+   {
+    "text": "Through this part, chest pain brought on by exercise raises the predicted risk from about {{C44.risk.from|pct}} to about {{C44.risk.to|pct}} for a typical patient.",
+    "claims": [
+     "C44"
+    ]
+   },
+   {
+    "text": "Through this part, being a woman rather than a man lowers the predicted risk from about {{C43.risk.from|pct}} to about {{C43.risk.to|pct}} for a typical patient.",
+    "claims": [
+     "C43"
+    ]
+   }
+  ],
+  "ann_33": [
+   {
+    "text": "A fixed defect on the thallium scan lowers the predicted risk, but only if fasting blood sugar is 120 mg/dL or less (checked for all {{C50.statement.support_check.n}} training patients with higher fasting blood sugar): for a typical patient, from about {{C50.statement.stronger_group.risk_from|pct}} to about {{C50.statement.stronger_group.risk_to|pct}} (the model has little data on this, n = {{C50.groups[2].n|d}}).",
+    "claims": [
+     "C50"
+    ]
+   },
+   {
+    "text": "This part acts on {{C51.statement.n_active}} of {{C51.statement.n}} patients, those with a fixed defect; {{C51.statement.outcome_in_group.positives}} of them had heart disease.",
+    "claims": [
+     "C51"
+    ]
+   },
+   {
+    "text": "For a typical patient it acts on, the predicted risk is {{C51.risk.from|pct}} without this part and about {{C51.risk.to|pct}} with it (the model has little data on this, n = {{C51.groups[0].n|d}}).",
+    "claims": [
+     "C51"
+    ]
+   },
+   {
+    "text": "Through this part, a fixed defect lowers the predicted risk from about {{C48.risk.from|pct}} to about {{C48.risk.to|pct}} for a typical patient (the model has little data on this, n = {{C48.groups[1].n|d}}).",
+    "claims": [
+     "C48"
+    ]
+   }
+  ],
+  "ann_31": [
+   {
+    "text": "Through this part, more coloured vessels raise the predicted risk a second time, steadily, each extra vessel adding about the same: for a typical patient, from about {{C54.risk.from|pct}} at {{C54.statement.change.from}} to about {{C54.risk.to|pct}} at {{C54.statement.change.to}}.",
+    "claims": [
+     "C54"
+    ]
+   },
+   {
+    "text": "A thallium result the data does not decode ({{C53.groups[1].label}}) raises it from about {{C53.risk.from|pct}} to about {{C53.risk.to|pct}} (the model has little data on this, n = {{C53.groups[1].n|d}}).",
+    "claims": [
+     "C53"
+    ]
+   }
+  ],
+  "ann_35": [
+   {
+    "text": "This part flags atypical angina and barely changes the predictions, by at most {{C58.statement.max_change_in_risk|pct}}.",
+    "claims": [
+     "C58"
+    ]
+   },
+   {
+    "text": "For a typical patient, atypical angina through this part moves the predicted risk from about {{C56.risk.from|pct}} to about {{C56.risk.to|pct}}.",
+    "claims": [
+     "C56"
+    ]
+   }
+  ]
+ },
+ "readdown": {
+  "ann_37": {
+   "hypothesis": [
+    {
+     "text": "The model predicts heart disease by adding up six parts, one of them a weighted sum of most inputs; for a typical patient, more coloured vessels raise it steadily and a flat ST segment raises it.",
+     "claims": [
+      "C24",
+      "C01",
+      "C03"
+     ]
+    }
+   ],
+   "evidence": [
+    {
+     "text": "The model is made of six parts whose outputs are added.",
+     "claims": [
+      "C24"
+     ]
+    },
+    {
+     "text": "In the whole model, more coloured vessels raise it steadily, each extra vessel adding about the same: from about {{C01.risk.from|pct}} at {{C01.statement.change.from}} to about {{C01.risk.to|pct}} at {{C01.statement.change.to}}, flattening out near the top because the predicted risk cannot go much higher.",
+     "claims": [
+      "C01"
+     ]
+    },
+    {
+     "text": "Being a woman lowers it from about {{C08.risk.from|pct}} to {{C08.risk.to|pct}}, and typical angina rather than no chest pain symptoms lowers it to {{C09.risk.to|pct}}.",
+     "claims": [
+      "C08",
+      "C09"
+     ]
+    },
+    {
+     "text": "It ignores resting ECG.",
+     "claims": [
+      "C23"
+     ]
+    }
+   ]
+  },
+  "ann_36": {
+   "hypothesis": [
+    {
+     "text": "Each input here adds its own fixed amount to the score: more coloured vessels, higher cholesterol and higher blood pressure raise the predicted risk steadily, and so does a flat ST segment, while a higher maximum heart rate lowers it steadily and so do being a woman and typical or non-anginal chest pain.",
+     "claims": [
+      "C25",
+      "C26",
+      "C27",
+      "C28",
+      "C32",
+      "C30",
+      "C33",
+      "C34"
+     ]
+    }
+   ],
+   "evidence": [
+    {
+     "text": "These inputs add up independently, biggest first: more vessels coloured by fluoroscopy raise the predicted risk steadily, each extra vessel adding about the same, from about {{C25.risk.from|pct}} at {{C25.statement.change.from}} to about {{C25.risk.to|pct}} at {{C25.statement.change.to}} for a typical patient, flattening out near the top because the predicted risk cannot go much higher.",
+     "claims": [
+      "C25"
+     ]
+    },
+    {
+     "text": "A flat rather than an upsloping ST segment at peak exercise raises it from about {{C26.risk.from|pct}} to about {{C26.risk.to|pct}}, and higher cholesterol raises it steadily, from about {{C27.risk.from|pct}} at {{C27.statement.change.from}} to about {{C27.risk.to|pct}} at {{C27.statement.change.to}}.",
+     "claims": [
+      "C26",
+      "C27"
+     ]
+    },
+    {
+     "text": "Its formula reproduces the part exactly.",
+     "claims": [
+      "C38"
+     ]
+    }
+   ]
+  },
+  "ann_34": {
+   "hypothesis": [
+    {
+     "text": "This part adds to the predicted risk once ST depression on exercise passes about {{C40.statement.threshold}}: nothing until that point, then steadily.",
+     "claims": [
+      "C40"
+     ]
+    }
+   ],
+   "evidence": [
+    {
+     "text": "ST depression on exercise adds to the predicted risk only once it rises above about {{C40.statement.threshold}} (checked for all {{C40.statement.support_check.n}} training patients): for a typical patient, going from {{C40.statement.change.from}} to {{C40.statement.change.to}} moves it from about {{C40.risk.from|pct}} to about {{C40.risk.to|pct}}.",
+     "claims": [
+      "C40"
+     ]
+    },
+    {
+     "text": "This part acts on {{C41.statement.n_active}} of {{C41.statement.n}} patients, those past that point; {{C41.statement.outcome_in_group.positives}} of them had heart disease.",
+     "claims": [
+      "C41"
+     ]
+    },
+    {
+     "text": "Its formula reproduces the part exactly.",
+     "claims": [
+      "C42"
+     ]
+    }
+   ]
+  },
+  "ann_32": {
+   "hypothesis": [
+    {
+     "text": "This part lowers the predicted risk for patients without chest pain on exercise, by more for women than for men.",
+     "claims": [
+      "C45",
+      "C46"
+     ]
+    }
+   ],
+   "evidence": [
+    {
+     "text": "This part acts on {{C46.statement.n_active}} of {{C46.statement.n}} patients, those without chest pain on exercise; {{C46.statement.outcome_in_group.positives}} of them had heart disease.",
+     "claims": [
+      "C46"
+     ]
+    },
+    {
+     "text": "Being a woman rather than a man lowers the predicted risk, and even more so if exercise does not bring on chest pain: for a typical patient, from about {{C45.statement.stronger_group.risk_from|pct}} to {{C45.statement.stronger_group.risk_to|pct}} without chest pain on exercise, and from about {{C45.statement.weaker_group.risk_from|pct}} to about {{C45.statement.weaker_group.risk_to|pct}} with it.",
+     "claims": [
+      "C45"
+     ]
+    },
+    {
+     "text": "Its formula reproduces the part exactly.",
+     "claims": [
+      "C47"
+     ]
+    }
+   ]
+  },
+  "ann_33": {
+   "hypothesis": [
+    {
+     "text": "This part lowers the predicted risk for patients with a fixed defect on the thallium scan when their fasting blood sugar is 120 mg/dL or less (the model has little data on this, n = {{C51.groups[0].n|d}}).",
+     "claims": [
+      "C50",
+      "C51"
+     ]
+    }
+   ],
+   "evidence": [
+    {
+     "text": "This part acts on {{C51.statement.n_active}} of {{C51.statement.n}} patients, those with a fixed defect; {{C51.statement.outcome_in_group.positives}} of them had heart disease.",
+     "claims": [
+      "C51"
+     ]
+    },
+    {
+     "text": "For a typical patient it acts on, the predicted risk is {{C51.risk.from|pct}} without this part and about {{C51.risk.to|pct}} with it (the model has little data on this, n = {{C51.groups[0].n|d}}).",
+     "claims": [
+      "C51"
+     ]
+    },
+    {
+     "text": "A fixed defect on the thallium scan lowers the predicted risk, but only if fasting blood sugar is 120 mg/dL or less (checked for all {{C50.statement.support_check.n}} training patients with higher fasting blood sugar): for a typical patient, from about {{C50.statement.stronger_group.risk_from|pct}} to about {{C50.statement.stronger_group.risk_to|pct}} (the model has little data on this, n = {{C50.groups[2].n|d}}).",
+     "claims": [
+      "C50"
+     ]
+    },
+    {
+     "text": "Its formula reproduces the part exactly.",
+     "claims": [
+      "C52"
+     ]
+    }
+   ]
+  },
+  "ann_31": {
+   "hypothesis": [
+    {
+     "text": "This part raises the predicted risk a second time for more coloured vessels, steadily, and raises it for a thallium result the data does not decode (the model has little data on this, n = {{C53.groups[1].n|d}}).",
+     "claims": [
+      "C54",
+      "C53"
+     ]
+    }
+   ],
+   "evidence": [
+    {
+     "text": "Through this part, more coloured vessels raise the predicted risk a second time, steadily, each extra vessel adding about the same: for a typical patient, from about {{C54.risk.from|pct}} at {{C54.statement.change.from}} to about {{C54.risk.to|pct}} at {{C54.statement.change.to}}.",
+     "claims": [
+      "C54"
+     ]
+    },
+    {
+     "text": "A thallium result the data does not decode ({{C53.groups[1].label}}) raises it from about {{C53.risk.from|pct}} to about {{C53.risk.to|pct}} (the model has little data on this, n = {{C53.groups[1].n|d}}).",
+     "claims": [
+      "C53"
+     ]
+    },
+    {
+     "text": "Its formula reproduces the part exactly.",
+     "claims": [
+      "C55"
+     ]
+    }
+   ]
+  },
+  "ann_35": {
+   "hypothesis": [
+    {
+     "text": "This part flags atypical angina; its effect on the predictions is very small.",
+     "claims": [
+      "C58"
+     ]
+    }
+   ],
+   "evidence": [
+    {
+     "text": "This part flags atypical angina and barely changes the predictions, by at most {{C58.statement.max_change_in_risk|pct}}.",
+     "claims": [
+      "C58"
+     ]
+    },
+    {
+     "text": "For a typical patient, atypical angina through this part moves the predicted risk from about {{C56.risk.from|pct}} to about {{C56.risk.to|pct}}.",
+     "claims": [
+      "C56"
+     ]
+    },
+    {
+     "text": "Its formula reproduces the part exactly.",
+     "claims": [
+      "C59"
+     ]
+    }
+   ]
+  }
+ },
+ "worth_checking": [
+  {
+   "text": "Worth checking: the model treats a fixed defect on the thallium scan as lowering the predicted risk, from about {{C12.risk.from|pct}} to about {{C12.risk.to|pct}} for a typical patient (the model has little data on this, n = {{C12.groups[1].n|d}}).",
+   "claims": [
+    "C12"
+   ],
+   "flag": "fixed thallium defect lowers risk"
+  },
+  {
+   "text": "Worth checking: the model treats fasting blood sugar above 120 mg/dL as lowering the predicted risk, from about {{C14.risk.from|pct}} to about {{C14.risk.to|pct}} for a typical patient.",
+   "claims": [
+    "C14"
+   ],
+   "flag": "high fasting blood sugar lowers risk"
+  },
+  {
+   "text": "Worth checking: a thallium result the data does not decode ({{C02.groups[1].label}}) raises the predicted risk from about {{C02.risk.from|pct}} to about {{C02.risk.to|pct}} (the model has little data on this, n = {{C02.groups[1].n|d}}).",
+   "claims": [
+    "C02"
+   ],
+   "flag": "undecoded thallium code"
+  }
+ ],
+ "hypothesis_revisions": {
+  "ann_37": {
+   "proposed": "The model adds up six parts, one of them a weighted sum of most inputs; for a typical patient, more coloured vessels raise the predicted risk steadily, and resting ECG is ignored.",
+   "claims": [
+    "C24",
+    "C01",
+    "C23"
+   ]
+  },
+  "ann_36": {
+   "proposed": "Each input here adds its own fixed amount to the score: more coloured vessels, higher cholesterol and higher blood pressure raise the predicted risk steadily, and so does a flat ST segment, while a higher maximum heart rate lowers it steadily and so do being a woman and typical or non-anginal chest pain.",
+   "claims": [
+    "C25",
+    "C26",
+    "C27",
+    "C28",
+    "C32",
+    "C30",
+    "C33",
+    "C34"
+   ]
+  },
+  "ann_34": {
+   "proposed": "This part raises the predicted risk once ST depression on exercise passes about {{C40.statement.threshold}}, then steadily; it acts on {{C41.statement.n_active}} of {{C41.statement.n}} patients.",
+   "claims": [
+    "C40",
+    "C41"
+   ]
+  },
+  "ann_32": {
+   "proposed": "This part lowers the predicted risk for the {{C46.statement.n_active}} patients without chest pain on exercise, by more for women than for men.",
+   "claims": [
+    "C46",
+    "C45"
+   ]
+  },
+  "ann_33": {
+   "proposed": "This part lowers the predicted risk for the {{C51.statement.n_active}} patients with a fixed thallium defect, but only if fasting blood sugar is 120 mg/dL or less (checked for all {{C50.statement.support_check.n}} training patients with higher fasting blood sugar).",
+   "claims": [
+    "C51",
+    "C50"
+   ]
+  },
+  "ann_31": {
+   "proposed": "This part raises the predicted risk a second time for more coloured vessels, steadily, and raises it for a thallium result the data does not decode (the model has little data on this, n = {{C53.groups[1].n|d}}).",
+   "claims": [
+    "C54",
+    "C53"
+   ]
+  },
+  "ann_35": {
+   "proposed": "This part flags atypical angina and barely changes the predictions, by at most {{C58.statement.max_change_in_risk|pct}}.",
+   "claims": [
+    "C58"
+   ]
+  }
+ }
+}

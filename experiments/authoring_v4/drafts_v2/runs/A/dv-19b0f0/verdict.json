@@ -1,0 +1,570 @@
+{
+ "item_id": "dv-19b0f0",
+ "genome_id": "7a8237f3-74cb-40bd-8268-b605f64dac2b",
+ "target_hash": null,
+ "target_hash_note": "the recheck report from this tool version has no target_hash field",
+ "verifier": "blind verifier, run A (explanation-verifier skill)",
+ "started_at": "2026-11-11T03:18:53Z",
+ "finished_at": "2026-11-11T03:30:00Z",
+ "minutes": 11,
+ "scope": "plain-language draft and the claims it cites",
+ "overall": {
+  "grade": "refuted",
+  "summary": "All 214 claims and every number in the draft reproduce, but several part-only numbers are written as the model's predicted chance; for state government this reverses the direction (the model raises the typical person's chance from 72% to 78%; the draft says it barely lowers it to 71%). Smaller issues: the Yugoslavia, Trinidad and preschool part-only figures, the 26 Thailand-born described as an early onset, the age minimum (46 not 47), the hours knee (50 not 49) and the size of the sex effect."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "refuted",
+   "level": "L3",
+   "part": "ann_117",
+   "claims": [
+    "C182"
+   ],
+   "location": "drafted.blocks[9]",
+   "statement": "while working for a state government moves it [the predicted chance of a low income] from about 72% to about 71%",
+   "check": "probe --claim C182 (typical person, private -> state government), whole model",
+   "evidence": "C182 is a part-scope number (this part's contribution changes by -0.005). In the model the typical person's predicted chance goes from 71.5% (private) to 78.4% (state government): it rises by about 7 points, not falls by 1. The sentence names the predicted chance, so its direction is wrong for the model; it holds only for this part's contribution. The same reading is in readdown.ann_117.hypothesis[0], readdown.ann_117.evidence[0] and the ann_117 hypothesis revision.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --claim C182",
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --hold typical --set workclass=7"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_117",
+   "claims": [
+    "C182"
+   ],
+   "location": "drafted.annotations.ann_117[1]",
+   "statement": "Working for a state government barely moves it: from about 72% to about 71%.",
+   "check": "as V1",
+   "evidence": "True of this part only (contribution -0.0048 vs 0); the model's prediction moves 71.5% -> 78.4% because the linear terms read work class too. Needs 'through this part'.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --hold typical --set workclass=7"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_117",
+   "claims": [
+    "C181"
+   ],
+   "location": "drafted.blocks[9]",
+   "statement": "Being born in Yugoslavia rather than elsewhere lowers the predicted chance ... from about 72% to about 42%",
+   "check": "probe --set native-country=41 (typical)",
+   "evidence": "42% is the part-only figure. The model's prediction for a typical Yugoslavia-born person is 51.2% (the linear terms move from -0.98 to -0.62 once the person is not US-born). Direction right, size overstated for the model. Same in annotations.ann_117[0], readdown.ann_117.evidence[0] and the revision.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --hold typical --set native-country=41"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_118",
+   "claims": [
+    "C176"
+   ],
+   "location": "drafted.blocks[8]",
+   "statement": "Being born in Trinidad and Tobago rather than elsewhere raises the predicted chance ... from about 72% to about 94%",
+   "check": "probe --set native-country=38 (typical)",
+   "evidence": "94% is the part-only figure; the model predicts 95.9% for the typical Trinidad-born person. Direction right, small scope gap. Same in annotations.ann_118[1] and readdown.ann_118.evidence[1].",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --hold typical --set native-country=38"
+   ]
+  },
+  {
+   "id": "V5",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_121",
+   "claims": [
+    "C173"
+   ],
+   "location": "drafted.blocks[7]",
+   "statement": "A preschool education ... raises the predicted chance for a typical person with that education (and the education level of 1 such people have in the data) from about 72% to about 91%",
+   "check": "probe --claim C173; probe --set education=13 --set education-num=1",
+   "evidence": "The 91% case keeps the education level at 9 (this part does not read education level). A typical person with preschool and education level 1, as the sentence describes, gets 99.6% from the model. Direction right; the stated case and the number do not match. Same in annotations.ann_121[1] and readdown.ann_121.evidence[1].",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --claim C173",
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --hold typical --set education=13 --set education-num=1"
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_124",
+   "claims": [
+    "C161"
+   ],
+   "location": "drafted.blocks[2]",
+   "statement": "through it age adds to the predicted chance ... once it rises above about 46 years; for 26 of the 39073 training people it already acts below that",
+   "check": "subgroup native-country=='37'; subgroup age<=46.1; probe Thailand-born age sweep",
+   "evidence": "The 26 are the Thailand-born (no fold: the part acts on all 26 at every age). Only 21 of them are below 46 years, and below about 42 years the part lowers their predicted chance (contribution -2.63 at 17 years, -0.44 at 38 years) rather than adding to it. The sentence does not say who they are, and the 'adds' context misleads. Same in annotations.ann_124[1] and readdown.ann_124.evidence[2].",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --where \"`native-country` == '37'\"",
+    "uv run python -m explaneat verify subgroup experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --where \"age <= 46.1\"",
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --hold typical --set native-country=37 --sweep age=17:74:12"
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_129",
+   "claims": [
+    "C018"
+   ],
+   "location": "drafted.blocks[2]",
+   "statement": "the whole model's chance is lowest at about 47 years and higher either side",
+   "check": "probe --sweep age=45:48:7 (typical)",
+   "evidence": "Lowest at 46 to 46.5 years (56.1% at 46, 56.2% at 46.5, 56.6% at 47). The model is piecewise linear in log-odds, so the minimum sits at the age-hinge knee, 46.1 years, which the same draft calls 'about 46'. About a year off; the claim's grid point (46.9) is coarse. Same in annotations.ann_129[6], readdown.ann_124.hypothesis[0], readdown.ann_129.hypothesis[0], worth_checking[3] and the ann_124 revision.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --hold typical --sweep age=45:48:7",
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --hold typical --sweep age=22:82:31"
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_129",
+   "claims": [
+    "C018"
+   ],
+   "location": "drafted.worth_checking[3]",
+   "statement": "the chance is lowest at about 47 years and higher either side, so it rises again after middle age: from about 89% at 22 years to about 65% at 58 years",
+   "check": "probe --sweep age=22:82:31",
+   "evidence": "The rise is real (56.1% at 46 -> 64.6% at 58 -> 78.2% at 80), but the two numbers quoted (89% -> 65%) show a fall and do not evidence the rise being flagged.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --hold typical --sweep age=22:82:31"
+   ]
+  },
+  {
+   "id": "V9",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_129",
+   "claims": [
+    "C015"
+   ],
+   "location": "drafted.annotations.ann_129[5]",
+   "statement": "Working more hours lowers it steadily up to about 49 hours, then no further",
+   "check": "probe --sweep hours-per-week=10:90:17",
+   "evidence": "The hours part contributes +0.2517 at 45 h and 0 at 50 h, slope 0.051 per hour, so it ends at 49.9 hours: about 50, as the hours block itself says. '49' is outside rounding and inconsistent with the hours block. Same in readdown.ann_129.hypothesis[0].",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --hold typical --sweep hours-per-week=10:90:17"
+   ]
+  },
+  {
+   "id": "V10",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_129",
+   "claims": [
+    "C010",
+    "C072"
+   ],
+   "location": "drafted.readdown.ann_129.hypothesis[0]",
+   "statement": "marriage and sex move the predicted chance ... by large amounts",
+   "check": "probe --set sex=0 (typical, nothing else changed)",
+   "evidence": "Changing sex alone moves the typical person from 71.5% to 80.6%. The 72% -> 99% of C010 comes from the linked change to never married and not in a family. Marriage moves it a lot; sex alone moderately.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --hold typical --set sex=0"
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_129",
+   "claims": [
+    "C072"
+   ],
+   "location": "drafted.lead[1]",
+   "statement": "plus nine more, each built around one or two inputs",
+   "check": "verify vars (variables each part reads)",
+   "evidence": "The capital-gain composition (ann_128) and its second step (ann_123) read three variables (capital gains, country of birth, education). Minor.",
+   "commands": [
+    "uv run python -m explaneat verify vars experiments/authoring_v4/drafts_v2/items/dv-19b0f0"
+   ]
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "coverage 1.0 / 1.0, hierarchy complete, function preservation 7.8e-16, closed-form max error 0.058 (context for the draft)",
+   "check": "verify recheck",
+   "evidence": "all reproduce; 214 of 214 claims reproduce; 128 prose sentences, 427 numbers: 0 not in a claim, 0 uncited, 0 rounding notes, 0 direction mismatches",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --out <scratch>/recheck.json"
+   ]
+  },
+  {
+   "id": "V13",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_129",
+   "claims": [
+    "C001"
+   ],
+   "location": "drafted.lead[0]",
+   "statement": "typical person about 72%; married to a member of the armed forces -> below 1%",
+   "check": "probe --hold typical; --set marital-status=1",
+   "evidence": "71.5% typical; 0.0% for an armed-forces spouse (linear terms -57.6)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --hold typical --set marital-status=1"
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_127",
+   "claims": [
+    "C073",
+    "C074",
+    "C076",
+    "C077",
+    "C082"
+   ],
+   "location": "drafted.blocks[0]",
+   "statement": "weighted-sum effects of marriage, age, capital gains, education and sex, stated 'through this weighted sum'",
+   "check": "recheck; probe age sweep",
+   "evidence": "reproduce; the linear-term contribution falls steadily with age (+0.15 at 22 to -2.56 at 58); the sex sentence states the linked never-married case openly",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --hold typical --sweep age=22:82:31"
+   ]
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_128",
+   "claims": [
+    "C002",
+    "C130",
+    "C139"
+   ],
+   "location": "drafted.blocks[1]",
+   "statement": "capital gains: through the steps no change until about 4883 USD; model 72% -> 12% at 6849 USD, slowly then faster; Jamaica a little smaller",
+   "check": "probe --sweep capital-gain=0:7000:15 --wide",
+   "evidence": "second step starts between 4500 and 5000 USD, first step between 5000 and 5500 USD; model 71.5% -> 11.4% at 7000 USD, steeper after 5000 USD",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --hold typical --sweep capital-gain=0:7000:15 --wide"
+   ]
+  },
+  {
+   "id": "V16",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_123",
+   "claims": [
+    "C156",
+    "C148",
+    "C154"
+   ],
+   "location": "drafted.annotations.ann_123[0]",
+   "statement": "second step acts on 1993 people, 234 with a low income",
+   "check": "subgroup capital-gain > 4883",
+   "evidence": "acts on 1973 of the 1996 with gains above 4883 USD plus about 0.1% of the rest (about 2000 in all); consistent with 1993",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --where \"`capital-gain` > 4883\""
+   ]
+  },
+  {
+   "id": "V17",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_124",
+   "claims": [
+    "C158",
+    "C162",
+    "C160"
+   ],
+   "location": "drafted.readdown.ann_124.evidence[1]",
+   "statement": "no change until about 46 years, then rises; for the Thailand-born age raises the chance 74% -> 90%",
+   "check": "probe age sweeps (typical; Thailand-born)",
+   "evidence": "part 0 at 46, +0.199 at 48, knee 46.1; Thailand-born 74.2% at 22 -> 89.7% at 58",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --hold typical --sweep age=22:82:31",
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --hold typical --set native-country=37 --sweep age=17:74:12"
+   ]
+  },
+  {
+   "id": "V18",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_126",
+   "claims": [
+    "C164",
+    "C165",
+    "C166"
+   ],
+   "location": "drafted.blocks[3]",
+   "statement": "hours lower the chance steadily up to about 50 hours then no further, 85% at 24 h to 60% at 55 h; acts only below 50 hours",
+   "check": "probe hours sweep; subgroup hours < 50",
+   "evidence": "84.4% at 25 h, 60.2% from 50 h on, flat; part acts on exactly the 31364 working under 50 hours",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --hold typical --sweep hours-per-week=10:90:17",
+    "uv run python -m explaneat verify subgroup experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --where \"`hours-per-week` < 50\""
+   ]
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_125",
+   "claims": [
+    "C169",
+    "C168"
+   ],
+   "location": "drafted.blocks[4]",
+   "statement": "acts on the 3034 self-employed, not incorporated; raises the chance (typical 72% -> 83%)",
+   "check": "subgroup workclass == '6'; probe --set workclass=6",
+   "evidence": "acts on 3034 of 3034 and nowhere else; model 82.7%",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --where \"workclass == '6'\"",
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --hold typical --set workclass=6"
+   ]
+  },
+  {
+   "id": "V20",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_119",
+   "claims": [
+    "C171"
+   ],
+   "location": "drafted.blocks[5]",
+   "statement": "living with other relatives raises the chance 72% -> 87%",
+   "check": "probe --set relationship=2",
+   "evidence": "model 86.7% (the linear terms do not change here, so part and model agree)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --hold typical --set relationship=2"
+   ]
+  },
+  {
+   "id": "V21",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_121",
+   "claims": [
+    "C174"
+   ],
+   "location": "drafted.annotations.ann_121[0]",
+   "statement": "acts on the 64 preschool-educated, 63 with a low income",
+   "check": "subgroup education == '13'",
+   "evidence": "n 64, 63 low income; the part acts on 64 of 64 and nowhere else",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --where \"education == '13'\""
+   ]
+  },
+  {
+   "id": "V22",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_118",
+   "claims": [
+    "C179"
+   ],
+   "location": "drafted.annotations.ann_118[0]",
+   "statement": "acts on the 22 born in Trinidad and Tobago, 21 with a low income",
+   "check": "subgroup native-country == '38'",
+   "evidence": "n 22, 21 low income (95.5%); acts on 22 of 22 and nowhere else",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --where \"`native-country` == '38'\""
+   ]
+  },
+  {
+   "id": "V23",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_120",
+   "claims": [
+    "C186",
+    "C185"
+   ],
+   "location": "drafted.blocks[10]",
+   "statement": "the some-college part barely changes predictions",
+   "check": "recheck; probe (contribution -0.004 for the typical person)",
+   "evidence": "reproduces",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --out <scratch>/recheck.json"
+   ]
+  },
+  {
+   "id": "V24",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_122",
+   "claims": [
+    "C143",
+    "C145"
+   ],
+   "location": "drafted.annotations.ann_122[0]",
+   "statement": "first step: no change until about 5258 USD; the fall is smaller for the Ecuador-born",
+   "check": "recheck; capital-gain sweep",
+   "evidence": "reproduces; the first step changes between 5000 and 5500 USD",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --hold typical --sweep capital-gain=0:7000:15 --wide"
+   ]
+  },
+  {
+   "id": "V25",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_128",
+   "claims": [
+    "C137"
+   ],
+   "location": "drafted.annotations.ann_128[1]",
+   "statement": "9th-grade education: the fall is a little smaller",
+   "check": "recheck",
+   "evidence": "reproduces",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --out <scratch>/recheck.json"
+   ]
+  },
+  {
+   "id": "V26",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_127",
+   "claims": [
+    "C083",
+    "C081",
+    "C091",
+    "C092"
+   ],
+   "location": "drafted.annotations.ann_127[3]",
+   "statement": "single or separated about 98%, Colombia above 99%, farming and other service about 90% and 89%",
+   "check": "recheck",
+   "evidence": "reproduce",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --out <scratch>/recheck.json"
+   ]
+  },
+  {
+   "id": "V27",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_129",
+   "claims": [
+    "C003",
+    "C004",
+    "C005",
+    "C013"
+   ],
+   "location": "drafted.annotations.ann_129[2]",
+   "statement": "professional school about 19%, education level 82% -> 35%, capital losses 72% -> 40%, divorced about 97%",
+   "check": "recheck",
+   "evidence": "reproduce",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --out <scratch>/recheck.json"
+   ]
+  },
+  {
+   "id": "V28",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_129",
+   "claims": [
+    "C007",
+    "C008"
+   ],
+   "location": "drafted.worth_checking[1]",
+   "statement": "never worked above 99% (n = 9); Colombia above 99% (n = 64)",
+   "check": "recheck; vars counts",
+   "evidence": "reproduce; vars gives n = 9 and n = 64",
+   "commands": [
+    "uv run python -m explaneat verify vars experiments/authoring_v4/drafts_v2/items/dv-19b0f0"
+   ]
+  },
+  {
+   "id": "V29",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_129",
+   "claims": [
+    "C001"
+   ],
+   "location": "drafted.worth_checking[0]",
+   "statement": "armed-forces spouse: predicted chance of a low income below 1%",
+   "check": "subgroup marital-status == '1'",
+   "evidence": "The draft describes the model correctly and flags it. For the domain reviewer: the 29 training people with this status have an observed low-income rate of 55.2% (16 of 29), while the model's mean prediction for them is 0.0%; the weight is a fit to a rare one-hot column, not a plausible effect.",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/authoring_v4/drafts_v2/items/dv-19b0f0 --where \"`marital-status` == '1'\""
+   ]
+  }
+ ],
+ "parts": {
+  "ann_129": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_127": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_128": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_122": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_123": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_124": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_126": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_125": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_119": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_121": {
+   "grade": "weakened",
+   "level": "L2"
+  },
+  "ann_118": {
+   "grade": "weakened",
+   "level": "L2"
+  },
+  "ann_117": {
+   "grade": "refuted",
+   "level": "L3"
+  },
+  "ann_120": {
+   "grade": "upheld",
+   "level": "L3"
+  }
+ },
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ]
+}

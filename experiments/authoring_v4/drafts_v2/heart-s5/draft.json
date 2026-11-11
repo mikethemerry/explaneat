@@ -1,0 +1,140 @@
+{
+  "lead": [
+    {"text": "For a typical patient (a 56-year-old man with no chest pain symptoms, a normal resting ECG, a normal thallium scan and median test results), the model predicts a risk of heart disease of about {{C07.risk.from|pct}}.", "claims": ["C07"]},
+    {"text": "The model adds up two parts: a set of inputs that each add their own amount, and an ST-depression pathway that combines ST depression on exercise with the thallium scan, the resting ECG, resting blood pressure and age.", "claims": ["C24"]}
+  ],
+  "blocks": [
+    {"block": "ann_36", "sentences": [
+      {"text": "These add up independently, and more vessels coloured by fluoroscopy raise the predicted risk steadily, each extra vessel adding about the same: for a typical patient, from about {{C25.risk.from|pct}} at {{C25.statement.change.from}} to about {{C25.risk.to|pct}} at {{C25.statement.change.to}}, flattening out near the top because the predicted risk cannot go much higher.", "claims": ["C25"]},
+      {"text": "A flat ST segment at peak exercise (rather than an upsloping one) raises it to about {{C26.risk.to|pct}}, and higher serum cholesterol and higher resting blood pressure both raise it steadily: from about {{C27.risk.from|pct}} at {{C27.statement.change.from}} to about {{C27.risk.to|pct}} at {{C27.statement.change.to}}, and from about {{C28.risk.from|pct}} at {{C28.statement.change.from}} to about {{C28.risk.to|pct}} at {{C28.statement.change.to}}.", "claims": ["C26", "C27", "C28"]},
+      {"text": "Being a woman, or having typical angina or non-anginal chest pain rather than no chest pain, lowers it: for an otherwise typical patient, to about {{C31.risk.to|pct}}, {{C29.risk.to|pct}} and {{C32.risk.to|pct}}.", "claims": ["C31", "C29", "C32"]},
+      {"text": "Smaller effects: chest pain brought on by exercise raises it to about {{C34.risk.to|pct}}, while a higher maximum heart rate lowers it steadily (from about {{C35.risk.from|pct}} at {{C35.statement.change.from}} to about {{C35.risk.to|pct}} at {{C35.statement.change.to}}) and {{C36.groups[1].label|text}} lowers it to about {{C36.risk.to|pct}}; resting blood pressure, chest pain type, the thallium result, the resting ECG and age also act through the pathway below.", "claims": ["C34", "C35", "C36"]}
+    ]},
+    {"block": "ann_37", "sentences": [
+      {"text": "This part combines ST depression on exercise with the thallium scan, the resting ECG, resting blood pressure and age, and it acts on {{C56.statement.n_active|d}} of {{C56.statement.n|d}} training patients.", "claims": ["C57", "C56"]},
+      {"text": "Higher ST depression raises the predicted risk slowly at first, then faster, and even more so if the thallium scan shows a reversible defect: for a typical patient, going from {{C61.statement.change.from}} to {{C61.statement.change.to}} moves it from about {{C61.statement.stronger_group.risk_from|pct}} to about {{C61.statement.stronger_group.risk_to|pct}} with a reversible defect, and from about {{C61.statement.weaker_group.risk_from|pct}} to about {{C61.statement.weaker_group.risk_to|pct}} with any other thallium result (for most patients, but for some patients with a normal resting ECG, {{C61.shape.exceptions[0].n_alt|d}} of the {{C61.shape.exceptions[0].n_group|d}} sampled, it rises steadily).", "claims": ["C61"]},
+      {"text": "ST depression also raises it more with a normal resting ECG, slowly at first, then faster: from about {{C62.statement.stronger_group.risk_from|pct}} to about {{C62.statement.stronger_group.risk_to|pct}} over the same range, against about {{C62.statement.weaker_group.risk_from|pct}} to about {{C62.statement.weaker_group.risk_to|pct}} with any other resting ECG (for most patients, but for some patients with a reversible defect on the thallium scan, {{C62.shape.exceptions[0].n_alt|d}} of the {{C62.shape.exceptions[0].n_group|d}} sampled, it rises steadily).", "claims": ["C62"]},
+      {"text": "Through this part, ST depression adds to the risk once it rises above about {{C64.statement.threshold}}, and for {{C64.statement.support_check.exceptions|d}} of the {{C64.statement.support_check.n|d}} training patients it already acts below that.", "claims": ["C64"]}
+    ]}
+  ],
+  "titles": {
+    "ann_38": "Whole model",
+    "ann_36": "Inputs that add up",
+    "ann_37": "ST-depression pathway",
+    "ann_34": "ST-depression score",
+    "ann_35": "Fixed-defect relay"
+  },
+  "annotations": {
+    "ann_38": [
+      {"text": "The model adds up two parts: the inputs that add up and the ST-depression pathway.", "claims": ["C24"]},
+      {"text": "More vessels coloured by fluoroscopy raise the predicted risk steadily, each extra vessel adding about the same: for a typical patient, from about {{C01.risk.from|pct}} at {{C01.statement.change.from}} to about {{C01.risk.to|pct}} at {{C01.statement.change.to}}, flattening out near the top because the predicted risk cannot go much higher.", "claims": ["C01"]},
+      {"text": "A flat ST segment at peak exercise (rather than an upsloping one) raises it to about {{C02.risk.to|pct}}.", "claims": ["C02"]},
+      {"text": "Higher ST depression on exercise raises it slowly at first, then faster: from about {{C03.risk.from|pct}} at {{C03.statement.change.from}} to about {{C03.risk.to|pct}} at {{C03.statement.change.to}}.", "claims": ["C03"]},
+      {"text": "A reversible defect on the thallium scan (rather than a normal scan) raises it to about {{C04.risk.to|pct}}, and higher serum cholesterol raises it steadily, from about {{C05.risk.from|pct}} at {{C05.statement.change.from}} to about {{C05.risk.to|pct}} at {{C05.statement.change.to}}.", "claims": ["C04", "C05"]},
+      {"text": "Higher resting blood pressure raises it in an uneven way, from about {{C06.risk.from|pct}} at {{C06.statement.change.from}} to about {{C06.risk.to|pct}} at {{C06.statement.change.to}}.", "claims": ["C06"]},
+      {"text": "Typical angina, being a woman and non-anginal chest pain lower it, to about {{C07.risk.to|pct}}, {{C09.risk.to|pct}} and {{C10.risk.to|pct}} for an otherwise typical patient.", "claims": ["C07", "C09", "C10"]},
+      {"text": "Smaller effects: chest pain brought on by exercise raises it to about {{C11.risk.to|pct}}, a higher maximum heart rate lowers it steadily (from about {{C12.risk.from|pct}} to about {{C12.risk.to|pct}}), and {{C13.groups[1].label|text}} lowers it to about {{C13.risk.to|pct}}.", "claims": ["C11", "C12", "C13"]}
+    ],
+    "ann_36": [
+      {"text": "Each input in this part adds its own amount to the model's score, and its formula reproduces the part exactly.", "claims": ["C42"]},
+      {"text": "More vessels coloured by fluoroscopy raise the predicted risk steadily, each extra vessel adding about the same: for a typical patient, from about {{C25.risk.from|pct}} at {{C25.statement.change.from}} to about {{C25.risk.to|pct}} at {{C25.statement.change.to}}, flattening out near the top because the predicted risk cannot go much higher.", "claims": ["C25"]},
+      {"text": "A flat ST segment at peak exercise raises it to about {{C26.risk.to|pct}}, and higher serum cholesterol and higher resting blood pressure raise it steadily, to about {{C27.risk.to|pct}} at {{C27.statement.change.to}} and about {{C28.risk.to|pct}} at {{C28.statement.change.to}}.", "claims": ["C26", "C27", "C28"]},
+      {"text": "Typical angina, being a woman and non-anginal chest pain lower it, to about {{C29.risk.to|pct}}, {{C31.risk.to|pct}} and {{C32.risk.to|pct}}.", "claims": ["C29", "C31", "C32"]},
+      {"text": "A reversible defect on the thallium scan raises it to about {{C33.risk.to|pct}} and chest pain brought on by exercise to about {{C34.risk.to|pct}}, while {{C36.groups[1].label|text}} lowers it to about {{C36.risk.to|pct}}.", "claims": ["C33", "C34", "C36"]},
+      {"text": "A fixed defect on the thallium scan lowers it to about {{C37.risk.to|pct}} (the model has little data on this, n = {{C37.groups[1].n|d}}).", "claims": ["C37"]}
+    ],
+    "ann_37": [
+      {"text": "This part combines two smaller parts, the ST-depression score and the fixed-defect relay, with resting blood pressure, chest pain type, the thallium result and age, and not by simple adding.", "claims": ["C57"]},
+      {"text": "It acts on {{C56.statement.n_active|d}} of {{C56.statement.n|d}} training patients, and {{C56.statement.outcome_in_group.positives|d}} of them had heart disease.", "claims": ["C56"]},
+      {"text": "For a typical patient it acts on, the predicted risk is about {{C56.risk.from|pct}} without it and about {{C56.risk.to|pct}} with it.", "claims": ["C56"]},
+      {"text": "Higher ST depression raises the predicted risk slowly at first, then faster, and even more so with a reversible defect on the thallium scan: from about {{C51.statement.stronger_group.risk_from|pct}} to about {{C51.statement.stronger_group.risk_to|pct}} with the defect and from about {{C51.statement.weaker_group.risk_from|pct}} to about {{C51.statement.weaker_group.risk_to|pct}} without, between {{C51.statement.change.from}} and {{C51.statement.change.to}} (for most patients, but for some patients with a normal resting ECG, {{C51.shape.exceptions[0].n_alt|d}} of the {{C51.shape.exceptions[0].n_group|d}} sampled, it rises steadily).", "claims": ["C51"]},
+      {"text": "The rise with ST depression is a little steeper at lower resting blood pressure, slowly at first, then faster: from about {{C52.statement.stronger_group.risk_from|pct}} to about {{C52.statement.stronger_group.risk_to|pct}} at {{C52.statement.stronger_group.label|text}}, against about {{C52.statement.weaker_group.risk_from|pct}} to about {{C52.statement.weaker_group.risk_to|pct}} at {{C52.statement.weaker_group.label|text}} (for most patients, but for some patients with a normal resting ECG or a reversible defect on the thallium scan, {{C52.shape.exceptions[0].n_alt|d}} of the {{C52.shape.exceptions[0].n_group|d}} sampled, it rises steadily).", "claims": ["C52"]},
+      {"text": "Through this part, age adds a small amount: nothing until about {{C54.statement.threshold}} (between {{C45.shape.point.spread_text[0]|text}} and {{C45.shape.point.spread_text[1]|text}} for different patients), then steadily, from about {{C54.risk.from|pct}} to about {{C54.risk.to|pct}} for a typical patient with a fold.", "claims": ["C54", "C45"]}
+    ],
+    "ann_34": [
+      {"text": "This part acts on {{C65.statement.n_active|d}} of {{C65.statement.n|d}} training patients, and {{C65.statement.outcome_in_group.positives|d}} of them had heart disease.", "claims": ["C65"]},
+      {"text": "For a typical patient it acts on, the predicted risk is about {{C65.risk.from|pct}} without it and about {{C65.risk.to|pct}} with it.", "claims": ["C65"]},
+      {"text": "Higher ST depression raises the predicted risk slowly at first, then faster, and even more so with a reversible defect on the thallium scan: from about {{C61.statement.stronger_group.risk_from|pct}} to about {{C61.statement.stronger_group.risk_to|pct}} with the defect and from about {{C61.statement.weaker_group.risk_from|pct}} to about {{C61.statement.weaker_group.risk_to|pct}} without, between {{C61.statement.change.from}} and {{C61.statement.change.to}} (for most patients, but for some patients with a normal resting ECG, {{C61.shape.exceptions[0].n_alt|d}} of the {{C61.shape.exceptions[0].n_group|d}} sampled, it rises steadily).", "claims": ["C61"]},
+      {"text": "It also rises more with a normal resting ECG, slowly at first, then faster: from about {{C62.statement.stronger_group.risk_from|pct}} to about {{C62.statement.stronger_group.risk_to|pct}}, against about {{C62.statement.weaker_group.risk_from|pct}} to about {{C62.statement.weaker_group.risk_to|pct}} with any other resting ECG (for most patients, but for some patients with a reversible defect on the thallium scan, {{C62.shape.exceptions[0].n_alt|d}} of the {{C62.shape.exceptions[0].n_group|d}} sampled, it rises steadily).", "claims": ["C62"]},
+      {"text": "ST depression adds to the risk once it rises above about {{C64.statement.threshold}}, and for {{C64.statement.support_check.exceptions|d}} of the {{C64.statement.support_check.n|d}} training patients it already acts below that: for a typical patient with a fold, going from {{C64.statement.change.from}} to {{C64.statement.change.to}} moves the risk from about {{C64.risk.from|pct}} to about {{C64.risk.to|pct}}, slowly at first, then faster.", "claims": ["C64"]},
+      {"text": "A reversible defect on the thallium scan raises the risk more with a normal resting ECG, from about {{C63.statement.stronger_group.risk_from|pct}} to about {{C63.statement.stronger_group.risk_to|pct}}, than with any other resting ECG, from about {{C63.statement.weaker_group.risk_from|pct}} to about {{C63.statement.weaker_group.risk_to|pct}}.", "claims": ["C63"]}
+    ],
+    "ann_35": [
+      {"text": "This part passes on whether the thallium scan shows a fixed defect, and its formula reproduces the part exactly.", "claims": ["C69"]},
+      {"text": "Switching it off barely changes the predictions: the largest change in any patient's predicted risk is {{C68.statement.max_change_in_risk|pct}}.", "claims": ["C68"]}
+    ]
+  },
+  "readdown": {
+    "ann_38": {
+      "hypothesis": [
+        {"text": "The model is a sum of separate contributions, led by the number of vessels coloured by fluoroscopy, plus one pathway that makes ST depression on exercise count more steeply as it grows.", "claims": ["C24", "C01", "C03"]},
+        {"text": "For a typical patient the predicted risk of heart disease is about {{C01.risk.from|pct}}, and two vessels instead of none raise it steadily to about {{C01.risk.to|pct}}.", "claims": ["C01"]}
+      ],
+      "evidence": [
+        {"text": "It is made of two parts, the inputs that add up and the ST-depression pathway, and the two are added.", "claims": ["C24"]},
+        {"text": "More vessels raise the predicted risk steadily, each extra vessel adding about the same: from about {{C01.risk.from|pct}} at {{C01.statement.change.from}} to about {{C01.risk.to|pct}} at {{C01.statement.change.to}}, flattening out near the top because the predicted risk cannot go much higher.", "claims": ["C01"]},
+        {"text": "A flat ST segment raises it to about {{C02.risk.to|pct}}, and higher ST depression raises it slowly at first, then faster, to about {{C03.risk.to|pct}} at {{C03.statement.change.to}}.", "claims": ["C02", "C03"]},
+        {"text": "Typical angina, being a woman and non-anginal chest pain lower it, to about {{C07.risk.to|pct}}, {{C09.risk.to|pct}} and {{C10.risk.to|pct}}.", "claims": ["C07", "C09", "C10"]}
+      ]
+    },
+    "ann_36": {
+      "hypothesis": [
+        {"text": "Each input here adds its own amount to the score: more vessels, a flat ST segment, higher cholesterol and higher blood pressure raise the predicted risk steadily or in one step, while being a woman and having chest pain symptoms lower it.", "claims": ["C25", "C26", "C27", "C28", "C31", "C29"]}
+      ],
+      "evidence": [
+        {"text": "Its formula reproduces the part exactly.", "claims": ["C42"]},
+        {"text": "More vessels raise the predicted risk steadily, each extra vessel adding about the same: for a typical patient, from about {{C25.risk.from|pct}} at {{C25.statement.change.from}} to about {{C25.risk.to|pct}} at {{C25.statement.change.to}}, flattening out near the top because the predicted risk cannot go much higher.", "claims": ["C25"]},
+        {"text": "A flat ST segment raises it to about {{C26.risk.to|pct}}; higher cholesterol raises it steadily from about {{C27.risk.from|pct}} to about {{C27.risk.to|pct}}, and higher resting blood pressure steadily from about {{C28.risk.from|pct}} to about {{C28.risk.to|pct}}.", "claims": ["C26", "C27", "C28"]},
+        {"text": "Being a woman lowers it to about {{C31.risk.to|pct}}, and typical angina to about {{C29.risk.to|pct}}.", "claims": ["C31", "C29"]}
+      ]
+    },
+    "ann_37": {
+      "hypothesis": [
+        {"text": "This pathway adds risk for ST depression on exercise, slowly at first, then faster, and more with a reversible defect on the thallium scan (for most patients, but for some patients with a normal resting ECG it rises steadily).", "claims": ["C51", "C43"]},
+        {"text": "The rise is a little smaller for patients with {{C52.statement.weaker_group.label|text}}.", "claims": ["C52"]}
+      ],
+      "evidence": [
+        {"text": "It is made of two smaller parts, the ST-depression score and the fixed-defect relay, combined with age, chest pain type, resting blood pressure and the thallium result, and not by simple adding.", "claims": ["C57"]},
+        {"text": "It acts on {{C56.statement.n_active|d}} of {{C56.statement.n|d}} training patients; for a typical patient it acts on, the risk is about {{C56.risk.from|pct}} without it and about {{C56.risk.to|pct}} with it.", "claims": ["C56"]},
+        {"text": "Higher ST depression raises the predicted risk slowly at first, then faster: from about {{C51.statement.stronger_group.risk_from|pct}} to about {{C51.statement.stronger_group.risk_to|pct}} with a reversible defect and from about {{C51.statement.weaker_group.risk_from|pct}} to about {{C51.statement.weaker_group.risk_to|pct}} otherwise, between {{C51.statement.change.from}} and {{C51.statement.change.to}} (for most patients, but for some patients with a normal resting ECG, {{C51.shape.exceptions[0].n_alt|d}} of the {{C51.shape.exceptions[0].n_group|d}} sampled, it rises steadily).", "claims": ["C51"]},
+        {"text": "At {{C52.statement.stronger_group.label|text}} the same change moves it from about {{C52.statement.stronger_group.risk_from|pct}} to about {{C52.statement.stronger_group.risk_to|pct}}, slowly at first, then faster, against about {{C52.statement.weaker_group.risk_from|pct}} to about {{C52.statement.weaker_group.risk_to|pct}} at {{C52.statement.weaker_group.label|text}} (for most patients, but for some patients with a normal resting ECG or a reversible defect on the thallium scan, {{C52.shape.exceptions[0].n_alt|d}} of the {{C52.shape.exceptions[0].n_group|d}} sampled, it rises steadily).", "claims": ["C52"]}
+      ]
+    },
+    "ann_34": {
+      "hypothesis": [
+        {"text": "This part turns ST depression on exercise into added risk once it passes about {{C64.statement.threshold}}, rising slowly at first, then faster.", "claims": ["C64"]},
+        {"text": "ST depression counts for more when the thallium scan shows a reversible defect and when the resting ECG is normal.", "claims": ["C61", "C62"]}
+      ],
+      "evidence": [
+        {"text": "It acts on {{C65.statement.n_active|d}} of {{C65.statement.n|d}} training patients; for a typical patient it acts on, the risk is about {{C65.risk.from|pct}} without it and about {{C65.risk.to|pct}} with it.", "claims": ["C65"]},
+        {"text": "Its formula reproduces the part exactly.", "claims": ["C66"]},
+        {"text": "For {{C64.statement.support_check.exceptions|d}} of the {{C64.statement.support_check.n|d}} training patients it already acts below about {{C64.statement.threshold}}.", "claims": ["C64"]},
+        {"text": "With a reversible defect, going from {{C61.statement.change.from}} to {{C61.statement.change.to}} moves the risk from about {{C61.statement.stronger_group.risk_from|pct}} to about {{C61.statement.stronger_group.risk_to|pct}}, slowly at first, then faster, against about {{C61.statement.weaker_group.risk_from|pct}} to about {{C61.statement.weaker_group.risk_to|pct}} otherwise (for most patients, but for some patients with a normal resting ECG, {{C61.shape.exceptions[0].n_alt|d}} of the {{C61.shape.exceptions[0].n_group|d}} sampled, it rises steadily).", "claims": ["C61"]},
+        {"text": "With a normal resting ECG it moves from about {{C62.statement.stronger_group.risk_from|pct}} to about {{C62.statement.stronger_group.risk_to|pct}}, slowly at first, then faster, against about {{C62.statement.weaker_group.risk_from|pct}} to about {{C62.statement.weaker_group.risk_to|pct}} with any other resting ECG (for most patients, but for some patients with a reversible defect on the thallium scan, {{C62.shape.exceptions[0].n_alt|d}} of the {{C62.shape.exceptions[0].n_group|d}} sampled, it rises steadily).", "claims": ["C62"]}
+      ]
+    },
+    "ann_35": {
+      "hypothesis": [
+        {"text": "This part passes on whether the thallium scan shows a fixed defect, and it barely changes the predictions.", "claims": ["C68"]}
+      ],
+      "evidence": [
+        {"text": "Its formula reproduces the part exactly.", "claims": ["C69"]},
+        {"text": "Switching it off barely changes the predictions: the largest change in any patient's predicted risk is {{C68.statement.max_change_in_risk|pct}}.", "claims": ["C68"]}
+      ]
+    }
+  },
+  "worth_checking": [
+    {"text": "Worth checking: the model gives patients with {{C13.groups[1].label|text}} a lower predicted risk, about {{C13.risk.to|pct}} against about {{C13.risk.from|pct}} for an otherwise typical patient.", "claims": ["C13"], "flag": "high fasting blood sugar lowers risk"},
+    {"text": "Worth checking: the model gives a fixed defect on the thallium scan a lower predicted risk than a normal scan, about {{C14.risk.to|pct}} against about {{C14.risk.from|pct}}, from {{C14.groups[1].n|d}} training patients.", "claims": ["C14"], "flag": "fixed thallium defect lowers risk"},
+    {"text": "Worth checking: typical angina, non-anginal chest pain and atypical angina each lower the predicted risk compared with no chest pain, to about {{C07.risk.to|pct}}, {{C10.risk.to|pct}} and {{C15.risk.to|pct}} against about {{C07.risk.from|pct}}.", "claims": ["C07", "C10", "C15"], "flag": "typical angina lowest risk"},
+    {"text": "Worth checking: a thallium result coded 4 (meaning not recorded) raises the predicted risk to about {{C08.risk.to|pct}}, from {{C08.groups[1].n|d}} training patients.", "claims": ["C08"], "flag": "undecoded category: thallium coded 4"},
+    {"text": "Worth checking: ST depression on exercise raises the predicted risk more with a normal resting ECG than with an abnormal one.", "claims": ["C62"], "flag": "ST depression counts more with a normal resting ECG"}
+  ],
+  "hypothesis_revisions": {
+    "ann_38": {"proposed": "The model adds two parts: a set of inputs that each add their own amount, led by the number of vessels coloured by fluoroscopy (for a typical patient, from about {{C01.risk.from|pct}} at {{C01.statement.change.from}} to about {{C01.risk.to|pct}} at {{C01.statement.change.to}}), and a pathway through which higher ST depression on exercise raises the risk slowly at first, then faster.", "claims": ["C24", "C01", "C03"]},
+    "ann_36": {"proposed": "Each input adds its own amount to the score: more vessels, a flat ST segment, higher cholesterol and higher resting blood pressure raise the predicted risk, and being a woman or having chest pain symptoms lowers it (for an otherwise typical patient, to about {{C31.risk.to|pct}} for a woman and about {{C29.risk.to|pct}} with typical angina).", "claims": ["C25", "C26", "C27", "C28", "C31", "C29", "C42"]},
+    "ann_37": {"proposed": "This pathway raises the predicted risk with ST depression on exercise, slowly at first, then faster, and more with a reversible defect on the thallium scan (from about {{C51.statement.stronger_group.risk_from|pct}} to about {{C51.statement.stronger_group.risk_to|pct}}, against about {{C51.statement.weaker_group.risk_from|pct}} to about {{C51.statement.weaker_group.risk_to|pct}}); higher resting blood pressure makes the rise a little smaller, not a large discount.", "claims": ["C57", "C51", "C52"]},
+    "ann_34": {"proposed": "This part adds risk for ST depression on exercise once it passes about {{C64.statement.threshold}} ({{C64.statement.support_check.exceptions|d}} of {{C64.statement.support_check.n|d}} patients already move below that), rising slowly at first, then faster, and it counts more with a reversible defect on the thallium scan and with a normal resting ECG.", "claims": ["C64", "C61", "C62"]},
+    "ann_35": {"proposed": "This part passes on whether the thallium scan shows a fixed defect and barely changes the predictions (the largest change in any patient's predicted risk is {{C68.statement.max_change_in_risk|pct}}).", "claims": ["C68", "C69"]}
+  }
+}

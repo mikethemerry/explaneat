@@ -1,0 +1,90 @@
+{
+  "item": "dv-a78f9a",
+  "errors": [
+    {
+      "id": "E1",
+      "location": "drafted.blocks[1] (ann_37 block, sentence 3); drafted.annotations.ann_34[4]; drafted.readdown.ann_34.hypothesis[0]; drafted.readdown.ann_34.evidence[2]; drafted.hypothesis_revisions.ann_34",
+      "statement": "ST depression adds to the risk once it rises above about 0.9 mm, and for 88 of the 242 training patients it already acts below that",
+      "verifier_grades": {"A": "weakened", "B": "weakened"},
+      "found_by": ["A", "B"],
+      "finding_ids": {"A": ["V1"], "B": ["V7"]},
+      "genuine_level": "weakened",
+      "layer": "draft",
+      "kind": "K11",
+      "check": "probe --hold typical --sweep oldpeak=0,0.8,1.0,1.6,1.8 --sweep restecg=0,2 --nodes 204_a: with a normal ECG 204_a is off at 0.8 mm (pre -0.167) and on at 1.0 mm (+0.264), so 0.9 mm holds for the typical patient; with hypertrophy it is off at 1.6 mm (-0.317) and on at 1.8 mm (+0.114). C64: 0.9 mm is the median fold, p10-p90 0.7 to 1.7 mm (spread not stated in the draft). The 88 is C64's support_check count (counterfactual curves moving > 0.05 below the threshold); subgroup oldpeak < 0.9 gives n = 132 with ann_34 acting on 23. The threshold is the typical member's value given as general, and the 88 reproduces under the counterfactual reading; the sentence itself names an exception. Weakened, not refuted."
+    },
+    {
+      "id": "E2",
+      "location": "drafted.blocks[1] sentence 1; drafted.annotations.ann_34[2]; drafted.annotations.ann_37[3]; drafted.readdown.ann_34.evidence[3]; drafted.readdown.ann_37.evidence[2]",
+      "statement": "from about 19% to about 48% with any other thallium result (also 'without' / 'otherwise' a reversible defect), between 0.0 mm and 2.8 mm",
+      "verifier_grades": {"A": "weakened", "B": null},
+      "found_by": ["A"],
+      "finding_ids": {"A": ["V3"], "B": []},
+      "genuine_level": "weakened",
+      "layer": "draft",
+      "kind": "K11",
+      "check": "probe --hold typical --sweep thal=3,4,6,7 --sweep oldpeak=0,2.8: normal scan 19.4% to 48.1%, fixed defect 10.5% to 31.9%, coded 4 36.5% to 68.9%, reversible defect 34.6% to 84.2%. The pathway's addition is similar across non-reversible results (+1.35 to +1.39), so the rise holds on the score scale; the risk levels are the normal-scan typical case (135 of the 152 patients without a reversible defect) attributed to the whole group."
+    },
+    {
+      "id": "E3",
+      "location": "drafted.blocks[1] sentence 1; drafted.annotations.ann_34[2]; drafted.annotations.ann_37[3]; drafted.readdown.ann_34.evidence[3]; drafted.readdown.ann_37.evidence[2]",
+      "statement": "(for most patients, but for some patients with a normal resting ECG, 17 of the 44 sampled, it rises steadily) placed after the 'any other thallium result' clause",
+      "verifier_grades": {"A": null, "B": "weakened"},
+      "found_by": ["B"],
+      "finding_ids": {"A": [], "B": ["V5"]},
+      "genuine_level": "weakened",
+      "layer": "draft",
+      "kind": "other",
+      "check": "C61 shape: the exception (17 steady of 44) is in the reversible-defect group, among its normal-ECG patients; subgroup thal == '7' and restecg == '0' gives n = 44, ann_34 acting on all 44. The note's placement suggests it qualifies the non-reversible group, but it can also be read as qualifying the sentence's shape as a whole, and the 17 of 44 reproduces. Not wrong under every reading."
+    },
+    {
+      "id": "E4",
+      "location": "drafted.blocks[1] sentence 2; drafted.annotations.ann_34[3]; drafted.readdown.ann_34.evidence[4]",
+      "statement": "against about 26% to about 37% with any other resting ECG (for most patients, but for some patients with a reversible defect on the thallium scan, 17 of the 44 sampled, it rises steadily)",
+      "verifier_grades": {"A": null, "B": "weakened"},
+      "found_by": ["B"],
+      "finding_ids": {"A": [], "B": ["V6"]},
+      "genuine_level": "weakened",
+      "layer": "draft",
+      "kind": "other",
+      "check": "C62 shape: the exception (17 of 44, reversible defect) sits in the normal-ECG group, not in the 'any other resting ECG' group the note follows (that group's 121 sampled curves are all accelerating). Same subgroup as E3 (n = 44). The count reproduces and the note can be read as qualifying the sentence as a whole; misplaced, not false under every reading."
+    },
+    {
+      "id": "E5",
+      "location": "drafted.lead[1]; drafted.blocks[1] sentence 0",
+      "statement": "an ST-depression pathway that combines ST depression on exercise with the thallium scan, the resting ECG, resting blood pressure and age",
+      "verifier_grades": {"A": "weakened", "B": "weakened"},
+      "found_by": ["A", "B"],
+      "finding_ids": {"A": ["V4"], "B": ["V3"]},
+      "genuine_level": "weakened",
+      "layer": "draft",
+      "kind": "K9",
+      "check": "verify vars: ann_37 reads age, cp, trestbps, restecg, oldpeak, thal; C57 direct inputs age, cp, trestbps, thal. probe --set oldpeak=2 --sweep cp=1,2,3,4: pathway adds +0.744 with atypical angina against +0.628 otherwise. The list omits chest pain type but uses no universal word; other draft sentences name it."
+    },
+    {
+      "id": "E6",
+      "location": "drafted.annotations.ann_34[4] (same phrase in drafted.annotations.ann_37[5])",
+      "statement": "for a typical patient with a fold, going from 0.0 mm to 3.5 mm moves the risk from about 26% to about 53%",
+      "verifier_grades": {"A": "weakened", "B": null},
+      "found_by": ["A"],
+      "finding_ids": {"A": ["V2"], "B": []},
+      "genuine_level": "weakened",
+      "layer": "draft",
+      "kind": "other",
+      "check": "C64 risk 0.259 to 0.533 reproduces; reference_values have restecg = left ventricular hypertrophy, and the probe above shows that case flat until about 1.8 mm, so the case illustrating the 0.9 mm threshold does not show it, and 'with a fold' is tool jargon. The number is right; the reference case is unexplained. Weakened."
+    },
+    {
+      "id": "E7",
+      "location": "drafted.hypothesis_revisions.ann_37",
+      "statement": "higher resting blood pressure makes the rise a little smaller, not a large discount",
+      "verifier_grades": {"A": null, "B": "weakened"},
+      "found_by": ["B"],
+      "finding_ids": {"A": [], "B": ["V9"]},
+      "genuine_level": "weakened",
+      "layer": "draft",
+      "kind": "K10",
+      "check": "probe --sweep oldpeak=0,2.8 --sweep trestbps=110,130,150,170: pathway addition at 2.8 mm 1.64, 1.38, 1.11, 0.85 (almost halved over 110 to 170 mm Hg); risk rise 28.6, 28.7, 25.8, 20.3 points. 'A little smaller' fits the C52 two-group split at 130 mm Hg (rise 29 vs 27 points) but understates the spread across the data range. Vague size word: weakened."
+    }
+  ],
+  "counts": {"refuted_draft": 0, "refuted_database": 0, "weakened_draft": 7, "weakened_database": 0, "none": 0}
+}

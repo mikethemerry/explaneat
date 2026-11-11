@@ -14,6 +14,53 @@ narrowed vessels raises the predicted risk from about 10% to about 75%".
 The claims are computed and checked by code (`explaneat/analysis/plain_language.py`). Your job
 is the writing. You never add a fact that is not in a verified claim.
 
+## v5g: linked inputs and universal words (2026-11-11; applies to every version below)
+
+The authoring-v4 evaluation found the remaining draft errors were of two kinds. Both are now
+checked by code, and the lint refuses the sentences.
+
+**1. The typical case and linked inputs.** Some inputs are tied together in the data: an
+education category and the years-of-education number, "wife" and sex, day minutes and day
+charge, voice-mail messages and the plan. The generator finds these links
+(`layer.linked_inputs`). When a claim changes one of them for the typical case, it moves the
+linked inputs to their typical value among the real rows with the new value. The claim then
+records what it moved in `linked.moved` (per end: `from`, `to`, and for interactions
+`linked.groups[].moved.modifier`).
+- **Name what moved.** For example: "for a typical person with that education level (and the
+  education-num such people have in the data), from about {{C..|pct}} to about {{C..|pct}}"; "a typical wife (so a woman) rather than a typical
+  husband". Do not write "people whose highest education is ..." for a typical-case number:
+  it is one constructed person, not the group. Say "for a typical person whose ...".
+- **`off_data`.** When the moves are impossible, the claim carries `off_data.reasons`. This
+  happens, for example, when the claim itself sets two linked inputs separately. The case is a
+  combination no training row has.
+  - Never state such a claim about real people.
+  - Either leave it out, or say "in a constructed case for the typical ... (no training person
+    has ...)".
+  - The templates leave these claims out, and the lint refuses real-people wording and
+    sentences without "constructed".
+
+**2. The proof rule for "only", "all", "never".**
+- **Which words.** "only", "only if", "all", "never", "nothing", "none of", "always", "no
+  one", "everyone", "regardless" and superlatives ("more than anything else", "the biggest
+  factor") are universal statements. One real counterexample makes the sentence false.
+- **When one may stay.** Use such a word only when a cited claim checked it over the whole
+  population. The check is the claim's `statement.support_check`, with `population`, `n`,
+  `exceptions` and `check`, and it must show `exceptions: 0`. Then state the check in the
+  sentence: "for all 242 training patients". Claims with a check:
+  - thresholds: no patient's curve moves on the wrong side of the threshold;
+  - `only_if` interactions: nobody in the other group is affected;
+  - subgroups: exact counts;
+  - rules.
+- **Otherwise drop the word or give the exceptions.** For example: "adds to the risk once X rises
+  above about T; for {{C..statement.support_check.exceptions}} of the {{C..statement.support_check.n}}
+  patients it already acts below that".
+- **Superlatives.** No claim checks one, because that would need every input over its full
+  range. Never use them. Order the effects by size instead (biggest first) without saying
+  "the biggest".
+- **The lint.** `lint_universal` refuses a universal word without a cited claim whose check
+  shows no exception. "On the training data only", "only slightly" and "nothing until" are
+  exempt.
+
 ## v5: built up, read down (heart-paper only for now; adds to v4 below)
 
 After the v4 summary the document walks the annotation hierarchy from the root down
@@ -194,10 +241,12 @@ test check and (c) n:
 
 - **Biggest risk changes first**, in the summary and in each paragraph.
 - **Interactions:** "X raises the predicted risk, and even more so if Y" (`amplified`); "…,
-  but only if Y" (`only_if`); "… if Y, but the other way if not" (`reversed`). Y is
+  but only if Y" (`only_if`, and only when its `support_check` shows no exception; else "mainly
+  if Y" with the exceptions); "… if Y, but the other way if not" (`reversed`). Y is
   `statement.stronger_group.cond`.
-- **Thresholds:** "only once X rises above about T" (`kind: above`), "only while X stays below
-  about T" (`below`); counts: "from 1 vessel upwards". Say for whom (`statement.conditions`).
+- **Thresholds:** "once X rises above about T" (`kind: above`), "while X stays below about T"
+  (`below`); counts: "from 1 vessel upwards". Say for whom (`statement.conditions`). Add "only"
+  only when `statement.support_check.exceptions` is 0 (v5g); otherwise give the exceptions.
 - **Rules** (MONK-2, `type: "rule"`): phrase in rule terms on the attribute values, with no
   real-world meaning: "the model predicts 'yes' when exactly two attributes take their first
   value". Attributes are written `a1 = 1`.
@@ -312,6 +361,10 @@ normal resting ECG and about 176 otherwise"), not the pooled median. **Windows**
 - [ ] Every sentence cites verified claims and says nothing beyond them.
 - [ ] Every number is a slot `{{C..|pct}}` (or a value of the typical patient), rounded once by code.
 - [ ] Every exception, fold and "stays at" says for whom and over which range (section 5a).
+- [ ] Every "only / all / never / nothing" cites a claim whose `support_check` found no exception,
+      and the sentence states the check; no superlatives (v5g).
+- [ ] Every typical-case number names what was moved with it (`linked.moved`); no `off_data`
+      claim is stated about real people (v5g).
 - [ ] Every effect leads with the typical patient's predicted risk; no odds anywhere.
 - [ ] Every numeric or ordinal effect carries its shape words (section 5a), or "in an uneven way",
       woven into the sentence; one point per fold; paragraphs within 6 (part) / 8 (whole model).

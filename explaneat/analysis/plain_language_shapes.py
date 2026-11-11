@@ -289,8 +289,8 @@ def _curves(m, v, grid, scope, rows: np.ndarray, extra: Optional[Dict[int, float
             X[:, c] = z
     G = len(grid)
     Xr = np.repeat(X, G, axis=0)
-    z = (np.tile(grid, X.shape[0]) - v.mean[0]) / v.scale[0]
-    return m.logit(Xr, {v.columns[0]: z}, scope).reshape(X.shape[0], G)
+    return m.set_logit(Xr, v, np.tile(grid, X.shape[0]), scope,
+                       fixed=sorted({m.base_of_col[c] for c in (extra or {})})).reshape(X.shape[0], G)
 
 
 def _sample(rows_mask: np.ndarray) -> np.ndarray:
@@ -315,11 +315,9 @@ def numeric_shape(m, v, scope, typical_raw_row: np.ndarray, rows_mask: np.ndarra
     sample of the patients in ``rows_mask``."""
     from .plain_language import sig
     grid, ordinal = grid_for(v)
-    zrow = ((typical_raw_row - m.mean) / m.scale)[None, :]
-    if extra_raw:
-        for c, val in extra_raw.items():
-            zrow[0, c] = (val - m.mean[c]) / m.scale[c]
-    Lt = m.logit(np.repeat(zrow, len(grid), axis=0), {v.columns[0]: (grid - v.mean[0]) / v.scale[0]}, scope)
+    row, fixed, _ = m.with_modifiers(typical_raw_row, extra_raw, keep=[v.base])
+    zrow = ((row - m.mean) / m.scale)[None, :]
+    Lt = m.set_logit(np.repeat(zrow, len(grid), axis=0), v, np.asarray(grid, dtype=float), scope, fixed=fixed)
     typ = classify_robust(grid, Lt, ordinal)
     risk = m.risk(Lt)
     sat = None

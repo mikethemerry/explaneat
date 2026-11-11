@@ -1,0 +1,78 @@
+{
+  "item": "dv-09a2e6",
+  "errors": [
+    {
+      "id": "E1",
+      "location": "drafted.blocks[3] (also drafted.annotations.ann_123[2], drafted.readdown.ann_123.evidence[2])",
+      "statement": "A doctorate lowers the predicted chance a great deal, and even more so if the occupation is handlers or cleaners: from about 84% to about 5% for handlers or cleaners, and from about 74% to about 4% in other occupations (in the occupation/country patches block)",
+      "verifier_grades": {"A": "weakened", "B": "weakened"},
+      "found_by": ["A", "B"],
+      "finding_ids": {"A": ["V3"], "B": ["V13"]},
+      "genuine_level": "weakened",
+      "layer": "draft",
+      "kind": "K3",
+      "check": "probe --hold typical --sweep education=11,10 --sweep occupation=6,10, with and without --set education-num=16 (linked move). Whole model with education-num 16: handlers 84.4% -> 4.5%, other 73.8% -> 3.9%, so the numbers reproduce under the whole-model scope the sentence itself names ('and the education level such people have'). Most of the drop is the direct education-num term (ann_115 -0.89 -> -4.72); through the patches (ann_119/ann_123) a doctorate moves the score by -0.39 (other) and -0.90 (handlers), about 74% -> 66%. Interaction direction holds. Part effect stated with whole-model numbers in a part block: the number reproduces under the other scope, so weakened."
+    },
+    {
+      "id": "E2",
+      "location": "drafted.blocks[0] (also drafted.annotations.ann_115[1], drafted.readdown.ann_115.hypothesis[0] and evidence[1], drafted.annotations.ann_124[2], drafted.readdown.ann_124.evidence[1], hypothesis_revisions.ann_115)",
+      "statement": "A higher education level lowers the predicted chance of a low income in stages: about 89% at 7 to about 24% at 13, flattening out near the top",
+      "verifier_grades": {"A": "weakened", "B": "upheld"},
+      "found_by": ["A"],
+      "finding_ids": {"A": ["V4"], "B": []},
+      "genuine_level": "none",
+      "layer": "draft",
+      "kind": "other",
+      "check": "probe --hold typical --sweep education-num=1:16:16: ann_115 falls by exactly 0.548 log-odds per level (+3.50 at 1 ... -0.89 at 9 ... -4.72 at 16), risk 89.4% at 7, 23.9% at 13. The scale is discrete, so the effect does come level by level ('in stages' read as step by step), and the same sentence describes the chance-scale flattening correctly. 'In stages' does not assert uneven steps or plateaus; not an error under the natural reading."
+    },
+    {
+      "id": "E3",
+      "location": "drafted.blocks[3]",
+      "statement": "A few occupations and countries of birth get a small extra push each, added together.",
+      "verifier_grades": {"A": "weakened", "B": "upheld"},
+      "found_by": ["A"],
+      "finding_ids": {"A": ["V5"], "B": []},
+      "genuine_level": "weakened",
+      "layer": "draft",
+      "kind": "K10",
+      "check": "probe --hold typical --sweep occupation=10,9 --wide: private household service moves ann_123 from -0.02 to +1.38 (ann_121 +1.40), risk 73.8% -> 92.0%; China +1.24 (-> 90.7%, per both verifiers). The pushes are large for the people reached; only the reach (187, 96 people) and the AUC change are small. Vague size word with a reading (small reach) under which it holds, and the next sentence gives the large numbers: weakened."
+    },
+    {
+      "id": "E4",
+      "location": "drafted.readdown.ann_121.evidence[1] (also drafted.annotations.ann_121[0])",
+      "statement": "This part acts on 187 of 39073 training people, nearly all of them in private household service, and 185 of them had a low income.",
+      "verifier_grades": {"A": "weakened", "B": "weakened"},
+      "found_by": ["A", "B"],
+      "finding_ids": {"A": ["V6"], "B": ["V14"]},
+      "genuine_level": "weakened",
+      "layer": "draft",
+      "kind": "other",
+      "check": "subgroup --where \"occupation == '9'\": n = 187, ann_121 acts on 187 (100.0%) vs 0.0% in the rest; 185 of 187 low income. The gate acts on exactly this group; 'nearly all' for all understates and implies others are included. Counts reproduce."
+    },
+    {
+      "id": "E5",
+      "location": "drafted.readdown.ann_122.evidence[1] (also drafted.annotations.ann_122[0])",
+      "statement": "This part acts on 96 of 39073 training people, nearly all of them born in China, and 68 of them had a low income.",
+      "verifier_grades": {"A": "weakened", "B": "weakened"},
+      "found_by": ["A", "B"],
+      "finding_ids": {"A": ["V7"], "B": ["V14"]},
+      "genuine_level": "weakened",
+      "layer": "draft",
+      "kind": "other",
+      "check": "subgroup --where '`native-country` == \"3\"': n = 96, ann_122 acts on 96 (100.0%) vs 0.0% in the rest; 68 of 96 low income. Exactly the China-born, not 'nearly all'; counts reproduce."
+    },
+    {
+      "id": "E6",
+      "location": "drafted.annotations.ann_124[5]",
+      "statement": "Being older lowers it steadily up to about 34 years, then no further",
+      "verifier_grades": {"A": "weakened", "B": "weakened"},
+      "found_by": ["A", "B"],
+      "finding_ids": {"A": ["V8"], "B": ["V11"]},
+      "genuine_level": "weakened",
+      "layer": "draft",
+      "kind": "K5",
+      "check": "probe --hold typical --sweep age=33:36:7: ann_116 -0.14 at 33, -0.30 at 34 (risk 76.2%), -0.38 at 34.5, floor -0.426 from 35 (73.8%); bend at about 34.8 years. 'About 34' is within a year and the shape and place hold; other sentences say 'about 35'. Weakened."
+    }
+  ],
+  "counts": {"refuted_draft": 0, "refuted_database": 0, "weakened_draft": 5, "weakened_database": 0, "none": 1}
+}

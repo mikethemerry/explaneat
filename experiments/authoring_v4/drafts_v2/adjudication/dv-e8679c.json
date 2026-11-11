@@ -1,0 +1,250 @@
+{
+ "item": "dv-e8679c",
+ "errors": [
+  {
+   "id": "E1",
+   "location": "drafted.readdown.ann_93.evidence[0]",
+   "statement": "The five parts plus state and international charge are 'combined in a way that does not simply add up'",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V1"
+    ],
+    "B": [
+     "V20"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "kind": "K7",
+   "check": "probe --hold typical --sweep calls=0:7:8 --wide: score minus the sum of the five top-level contributions (ann_91, ann_92, ann_89, ann_88, ann_90) is -4.861 at 0 calls (-4.189 - 0.672) and at 7 calls (2.5696 - 7.4306). The parts add exactly on the score scale; non-additivity exists only on the chance scale (final sigmoid) and in the negligible unit 252. The chance-scale reading is a reasonable reading, so weakened; it also conflicts with the lead's 'adds'."
+  },
+  {
+   "id": "E2",
+   "location": "drafted.readdown.ann_88.hypothesis[0] (+ hypothesis_revisions.ann_88)",
+   "statement": "This gate does nothing until about 4 calls to customer service, then raises the predicted chance steadily",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V2"
+    ],
+    "B": [
+     "V13"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "kind": "K9",
+   "check": "probe --hold typical --sweep calls=0:9:10 --sweep state=West Virginia,Idaho: Idaho gate 0 to 3 calls, +0.59 at 4, +1.20 at 5; West Virginia gate 0.00 up to 8 calls, +0.50 at 9. subgroup state==49 and calls>=4: n=12, gate acts on 0 of 12. The rule is written as complete with no universal word; true for 306 of 318 customers with 4+ calls; the West Virginia exception is stated elsewhere in the draft (annotations.ann_88[2]) but not here."
+  },
+  {
+   "id": "E3",
+   "location": "drafted.readdown.ann_87.hypothesis[0] (+ blocks[2], annotations.ann_87[2], hypothesis_revisions.ann_87)",
+   "statement": "More customer-service calls raise the predicted chance through this part, slowly then faster, and more so in South Dakota (evening charge not named)",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V3"
+    ],
+    "B": [
+     "V9"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "kind": "K9",
+   "check": "probe --hold typical --set calls=3 --sweep 'total eve charge=8,12,17.12,22,26': ann_87 contribution +3.66, +2.35, +0.68, 0, 0; whole-model risk 21.7%, 9.4%, 2.9%, 2.2%, 3.0%. Evening charge switches the part off and is omitted; the stated calls and South Dakota direction holds (C122, both verifiers). Incomplete, not false."
+  },
+  {
+   "id": "E4",
+   "location": "drafted.readdown.ann_89.evidence[0] (+ blocks[3], annotations.ann_89[0], hypothesis_revisions.ann_89)",
+   "statement": "A voice-mail plan lowers the predicted chance through this part 'from about 1% to about 1%'",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V4"
+    ],
+    "B": [
+     "V16"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "kind": "K10",
+   "check": "claim C129 (part scope, voice-mail messages moved 0 to 29 as linked.moved): -0.652 log-odds, 1.49% to 0.78%. probe --set 'voice mail plan=1' --set 'number vmail messages=29' --wide: ann_89 -0.124 to -0.776 (difference -0.652), reproduces. The rounding shows no change although the risk about halves; direction and size are right."
+  },
+  {
+   "id": "E5",
+   "location": "drafted.readdown.ann_90.evidence[0] (+ annotations.ann_90[0], blocks[5], hypothesis_revisions.ann_90)",
+   "statement": "Nevada lowers it 'from about 1% to about 1%'",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V5"
+    ],
+    "B": [
+     "V18"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "kind": "K10",
+   "check": "probe --claim C142: stated 1.49% to 0.96% (part scope); ann_90 +0.4425 to -0.0050. Rounding hides a real fall; not wrong."
+  },
+  {
+   "id": "E6",
+   "location": "drafted.readdown.ann_93.evidence[3] (+ annotations.ann_93[4], blocks[1])",
+   "statement": "The model ignores total daytime charge, total evening calls, total international calls and total night-time charge",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": null
+   },
+   "found_by": [
+    "A"
+   ],
+   "finding_ids": {
+    "A": [
+     "V6"
+    ],
+    "B": []
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "kind": "other",
+   "check": "claim C060: no path, max change 0.0, so the structural statement holds; but C060's linked note says day charge is tied to day minutes, which the model reads, and asks for 'does not read X itself'. A reader may infer daytime cost does not matter; domain-sense wording issue, weakened."
+  },
+  {
+   "id": "E7",
+   "location": "drafted.annotations.ann_92[1], drafted.readdown.ann_92.evidence[1], hypothesis_revisions.ann_92",
+   "statement": "'for different patients' in a churn (telecom customer) text",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V7"
+    ],
+    "B": [
+     "V8"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "kind": "other",
+   "check": "Read the draft text: readdown.ann_92.evidence[1] and annotations.ann_92[1] say 'for different patients'; the population is telephone customers (blocks use 'customers'). Numbers reproduce per both verifiers; wording slip only."
+  },
+  {
+   "id": "E8",
+   "location": "drafted.readdown.ann_93.evidence[1] (+ annotations.ann_93[1])",
+   "statement": "More calls raise it from about 1% at 0 to about 3% at 3 calls, 'flattening out near the bottom because it cannot go much lower'",
+   "verifier_grades": {
+    "A": null,
+    "B": "weakened"
+   },
+   "found_by": [
+    "B"
+   ],
+   "finding_ids": {
+    "A": [],
+    "B": [
+     "V21"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "kind": "other",
+   "check": "probe --hold typical --sweep calls=0:7:8 --wide: score -4.189 at 0, 1 and 2 calls (call units off), -3.513 at 3; so the flat start is flat in the score itself, not a floor effect; the numbers 1.5% and 2.9% reproduce. The 0-3 window also hides the steep rise: 12.0% at 4, 38.4% at 5, 74.1% at 6, 92.9% at 7. Stated numbers hold; the stated cause of the shape is wrong and the size is understated, so weakened."
+  },
+  {
+   "id": "E9",
+   "location": "drafted.readdown.ann_93.hypothesis[0] (+ hypothesis_revisions.ann_93)",
+   "statement": "The model adds five parts (listed); typical about 1%, an international plan raises it to 16%",
+   "verifier_grades": {
+    "A": null,
+    "B": "weakened"
+   },
+   "found_by": [
+    "B"
+   ],
+   "finding_ids": {
+    "A": [],
+    "B": [
+     "V22"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "kind": "K9",
+   "check": "Statements reproduce (additive on the score scale per E1's check; C001). As a hypothesis it lists parts but not the drivers: calls sweep 0-7 for the typical customer gives 1.5% to 92.9%, which the hypothesis does not mention. Incomplete, not false."
+  },
+  {
+   "id": "E10",
+   "location": "drafted.readdown.ann_91.hypothesis[0] (+ hypothesis_revisions.ann_91)",
+   "statement": "More daytime minutes raise the predicted chance steadily, and an international plan raises it too, each adding on its own (voice-mail plan and international charge not named)",
+   "verifier_grades": {
+    "A": null,
+    "B": "weakened"
+   },
+   "found_by": [
+    "B"
+   ],
+   "finding_ids": {
+    "A": [],
+    "B": [
+     "V5"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "kind": "K9",
+   "check": "probe --claim C129 (messages 0): ann_91 +0.215 to -2.028 with a voice-mail plan; with messages moved to 29 (--set 'voice mail plan=1' --set 'number vmail messages=29') ann_91 is -0.720, still -0.94 log-odds, larger than ann_89's -0.65. Omitting the voice-mail plan makes the list look complete when it is not; stated terms hold."
+  }
+ ],
+ "counts": {
+  "refuted_draft": 0,
+  "refuted_database": 0,
+  "weakened_draft": 10,
+  "weakened_database": 0,
+  "none": 0
+ }
+}

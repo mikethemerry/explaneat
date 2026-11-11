@@ -1,0 +1,470 @@
+{
+  "item_id": "dv-b0aeaa",
+  "genome_id": "b19b9536-00dd-4e95-9f5a-def6dd8d6889",
+  "target_hash": null,
+  "target_hash_note": "the recheck report of this run has no target_hash field",
+  "verifier": "blind verifier, run B (explanation-verifier skill)",
+  "started_at": "2026-11-11T03:24:37Z",
+  "finished_at": "2026-11-11T03:29:22Z",
+  "minutes": 5,
+  "overall": {
+    "grade": "weakened",
+    "summary": "All numbers reproduce and every threshold, subgroup and interaction holds in the model; the sex-by-exercise-angina sentence says 'even more so' where that holds only on the odds scale and uses whole-model numbers for one part, and the thallium code 4 wording contradicts itself."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.structural_coverage",
+      "statement": "coverage 1.0/1.0, hierarchy complete, preservation 2.2e-16 (context only)",
+      "check": "verify recheck",
+      "evidence": "recomputed 1.0 and 1.0, hierarchy complete, max |err| 2.22e-16; closed-form err 0.0239 as stated",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/authoring_v4/drafts_v2/items/dv-b0aeaa --out <out>/recheck.json"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "claims",
+      "statement": "all 78 claims; 87 drafted sentences with 244 numbers",
+      "check": "verify recheck",
+      "evidence": "78 of 78 claims reproduce; 0 prose numbers outside cited claims, 0 citation gaps, 0 rounding notes, 0 direction mismatches",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/authoring_v4/drafts_v2/items/dv-b0aeaa --out <out>/recheck.json"
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_37",
+      "claims": [
+        "C03"
+      ],
+      "location": "drafted.lead[0]",
+      "statement": "typical patient (56-year-old man, no chest pain symptoms, no coloured vessels) about 20%",
+      "check": "probe --hold typical; vars",
+      "evidence": "typical risk 19.7%; median age 56, median ca 0, most common sex male and cp asymptomatic",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-b0aeaa --hold typical --sweep sex=1,0 --sweep exang=0,1"
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "upheld",
+      "level": "L2",
+      "part": "ann_37",
+      "claims": [
+        "C24"
+      ],
+      "location": "drafted.lead[1]",
+      "statement": "six parts added, one a weighted sum of most inputs",
+      "check": "vars; claim C24",
+      "evidence": "root fed by six parts; ann_36 reads 10 of 13 variables",
+      "commands": [
+        "uv run python -m explaneat verify vars experiments/authoring_v4/drafts_v2/items/dv-b0aeaa"
+      ]
+    },
+    {
+      "id": "V5",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_36",
+      "claims": [
+        "C25",
+        "C26",
+        "C27",
+        "C28",
+        "C30",
+        "C33",
+        "C32"
+      ],
+      "location": "drafted.blocks[0]",
+      "statement": "direct inputs add up; vessels 20->96%, flat slope 20->90%, chol 8->53%, BP 11->36%; typical angina / non-anginal / woman to below 1%, about 1%, about 1%",
+      "check": "recheck claims; probe (ann_36 contribution moves only with its own inputs)",
+      "evidence": "claims reproduce; 'biggest first' ordering holds (risk deltas 0.76, 0.70, 0.45, 0.25, 0.19). Note: the test-split checks of C26/C27 'disagree' (benefit CIs span 0); the block does not say so",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/authoring_v4/drafts_v2/items/dv-b0aeaa --out <out>/recheck.json"
+      ]
+    },
+    {
+      "id": "V6",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_34",
+      "claims": [
+        "C40",
+        "C41"
+      ],
+      "location": "drafted.blocks[1]",
+      "statement": "nothing until about 1.5 mm, then steadily; 0 to 3.5 mm moves 20% to 61%; acts on 70 of 242, 50 with disease",
+      "check": "probe sweeps of oldpeak; subgroup oldpeak>=1.5",
+      "evidence": "hinge 0 at 1.4 mm, +0.007 at 1.5, +0.10 at 1.6; risk 19.7% -> 61.6% at 3.5 mm, equal steps of 0.47 logit per 0.5 mm; subgroup n=70, 50 positives, part acts on 70 of 70 and 0 elsewhere",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-b0aeaa --hold typical --sweep oldpeak=1.3:1.7:5",
+        "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-b0aeaa --hold typical --sweep oldpeak=0:3.5:8",
+        "uv run python -m explaneat verify subgroup experiments/authoring_v4/drafts_v2/items/dv-b0aeaa --where \"oldpeak >= 1.5\""
+      ]
+    },
+    {
+      "id": "V7",
+      "grade": "weakened",
+      "level": "L2",
+      "part": "ann_32",
+      "claims": [
+        "C45",
+        "C43"
+      ],
+      "location": "drafted.blocks[2]",
+      "statement": "Being a woman rather than a man lowers the predicted risk, and even more so if exercise does not bring on chest pain: from about 20% to below 1% without chest pain on exercise, and from about 27% to about 1% with it",
+      "check": "probe --sweep sex=1,0 --sweep exang=0,1 (typical patient)",
+      "evidence": "numbers right (19.7% -> 0.2%, 27.4% -> 1.0%), but (a) 'even more so' holds only on the odds scale (-4.89 vs -3.65 log-odds); in risk points the drop is larger WITH exercise angina (26 vs 20 points), so a reader of the stated percentages sees the opposite; (b) under this part's heading the numbers are whole-model: of the -4.89 logit, -3.65 comes from the direct sex terms (ann_36 -0.64 -> -4.30) and only -1.24 from this gate; the part's own effect (C43: 20% -> 7%) is in the annotations but not in the summary block",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-b0aeaa --hold typical --sweep sex=1,0 --sweep exang=0,1"
+      ]
+    },
+    {
+      "id": "V8",
+      "grade": "weakened",
+      "level": "L2",
+      "part": "ann_32",
+      "claims": [
+        "C45"
+      ],
+      "location": "drafted.readdown.ann_32.evidence[1]",
+      "statement": "same sentence as drafted.blocks[2] sentence 0",
+      "check": "as V7",
+      "evidence": "as V7: 'even more so' true on log-odds, reversed in risk points; whole-model numbers presented as this part's evidence",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-b0aeaa --hold typical --sweep sex=1,0 --sweep exang=0,1"
+      ]
+    },
+    {
+      "id": "V9",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_32",
+      "claims": [
+        "C46",
+        "C44",
+        "C45"
+      ],
+      "location": "drafted.readdown.ann_32.hypothesis[0]",
+      "statement": "lowers risk for patients without exercise chest pain, more for women than men; acts on 160, 47 with disease; exercise angina 20% -> 27%",
+      "check": "subgroup exang=='0'; probe; ablate ann_32",
+      "evidence": "n=160, 47 positives, acts on 160 of 160 and 0 of 82; gate -1.67 logit for a woman, -0.43 for a man (typical); typical 19.7% -> 27.4% with exercise angina; ablation AUC 0.9437 -> 0.9418",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/authoring_v4/drafts_v2/items/dv-b0aeaa --where \"exang == '0'\"",
+        "uv run python -m explaneat verify ablate experiments/authoring_v4/drafts_v2/items/dv-b0aeaa --part ann_32"
+      ]
+    },
+    {
+      "id": "V10",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_33",
+      "claims": [
+        "C50",
+        "C51",
+        "C12"
+      ],
+      "location": "drafted.blocks[3]",
+      "statement": "fixed defect lowers risk only if fasting sugar <= 120 mg/dL; 20% -> 1%; acts on 15, 9 with disease; acted-on typical above 99% -> about 90%",
+      "check": "probe thal x fbs; subgroup thal=='6'",
+      "evidence": "fbs normal: 19.7% -> 1.0% (gate -3.19); fbs high: 3.4% -> 3.3% (gate -0.017); subgroup n=15, 9 positives, acts on 15 of 15; subgroup typical case 89.9%",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-b0aeaa --hold typical --sweep thal=3,6,7,4 --sweep fbs=0,1",
+        "uv run python -m explaneat verify subgroup experiments/authoring_v4/drafts_v2/items/dv-b0aeaa --where \"thal == '6'\""
+      ]
+    },
+    {
+      "id": "V11",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_31",
+      "claims": [
+        "C54"
+      ],
+      "location": "drafted.blocks[4]",
+      "statement": "vessels raise risk a second time, steadily, 20% -> 45% at 2 vessels",
+      "check": "recheck claim; unit positive on 242/242",
+      "evidence": "claim reproduces; unit always on, so its effect is linear in log-odds",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/authoring_v4/drafts_v2/items/dv-b0aeaa --out <out>/recheck.json"
+      ]
+    },
+    {
+      "id": "V12",
+      "grade": "weakened",
+      "level": "L4",
+      "part": "ann_31",
+      "claims": [
+        "C53",
+        "C02"
+      ],
+      "location": "drafted.blocks[4]",
+      "statement": "A thallium result the data does not decode (thallium stress test result coded 4 (meaning not recorded)) raises it from about 20% to about 93% (n = 2)",
+      "check": "probe thal=4 (typical); vars",
+      "evidence": "number right (92.9%, unit +3.55 logit) and small n stated, but the wording contradicts itself ('does not decode', then gives a meaning, 'not recorded'); the large push comes from z-scoring a 2-row one-hot column, which the plain text does not say",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-b0aeaa --hold typical --sweep thal=3,6,7,4 --sweep fbs=0,1"
+      ]
+    },
+    {
+      "id": "V13",
+      "grade": "weakened",
+      "level": "L4",
+      "part": "ann_31",
+      "claims": [
+        "C02"
+      ],
+      "location": "drafted.worth_checking[2]",
+      "statement": "thallium code 4 raises 20% -> 93% (n = 2)",
+      "check": "as V12",
+      "evidence": "same self-contradictory wording as V12; number reproduces",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-b0aeaa --hold typical --sweep thal=3,6,7,4 --sweep fbs=0,1"
+      ]
+    },
+    {
+      "id": "V14",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_35",
+      "claims": [
+        "C58",
+        "C56"
+      ],
+      "location": "drafted.blocks[5]",
+      "statement": "barely changes predictions, at most 1%; typical atypical angina 20% -> 19%",
+      "check": "ablate ann_35",
+      "evidence": "max risk change 0.0103, AUC 0.9437 -> 0.9434, 0 flips; C56 reproduces 19.0%",
+      "commands": [
+        "uv run python -m explaneat verify ablate experiments/authoring_v4/drafts_v2/items/dv-b0aeaa --part ann_35"
+      ]
+    },
+    {
+      "id": "V15",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_37",
+      "claims": [
+        "C24",
+        "C01",
+        "C08",
+        "C09",
+        "C23"
+      ],
+      "location": "drafted.readdown.ann_37.hypothesis[0]",
+      "statement": "six parts added; vessels raise steadily; flat ST raises; women and typical angina lower; ignores resting ECG",
+      "check": "recheck (C23 exact)",
+      "evidence": "claims reproduce; resting ECG columns have no edges",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/authoring_v4/drafts_v2/items/dv-b0aeaa --out <out>/recheck.json"
+      ]
+    },
+    {
+      "id": "V16",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_36",
+      "claims": [
+        "C25",
+        "C26",
+        "C27",
+        "C28",
+        "C32",
+        "C30",
+        "C33",
+        "C34"
+      ],
+      "location": "drafted.readdown.ann_36.hypothesis[0]",
+      "statement": "each input adds a fixed amount; directions listed",
+      "check": "recheck; closed form signs",
+      "evidence": "directions match the closed form (ca, chol, trestbps, slope:2 positive; thalach, cp:1, cp:3 negative; sex:1 positive)",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/authoring_v4/drafts_v2/items/dv-b0aeaa --out <out>/recheck.json"
+      ]
+    },
+    {
+      "id": "V17",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_34",
+      "claims": [
+        "C40",
+        "C41"
+      ],
+      "location": "drafted.readdown.ann_34.hypothesis[0]",
+      "statement": "adds once ST depression passes about 1.5 mm, nothing until then",
+      "check": "as V6",
+      "evidence": "as V6",
+      "commands": []
+    },
+    {
+      "id": "V18",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_33",
+      "claims": [
+        "C50",
+        "C51"
+      ],
+      "location": "drafted.readdown.ann_33.hypothesis[0]",
+      "statement": "lowers risk for a fixed defect when sugar <= 120 (n=15)",
+      "check": "as V10",
+      "evidence": "as V10",
+      "commands": []
+    },
+    {
+      "id": "V19",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_31",
+      "claims": [
+        "C54",
+        "C53"
+      ],
+      "location": "drafted.readdown.ann_31.hypothesis[0]",
+      "statement": "raises a second time for vessels, and for thal code 4 (n=2)",
+      "check": "as V11",
+      "evidence": "as V11 (wording caveat in V12)",
+      "commands": []
+    },
+    {
+      "id": "V20",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_35",
+      "claims": [
+        "C58"
+      ],
+      "location": "drafted.readdown.ann_35.hypothesis[0]",
+      "statement": "flags atypical angina, very small effect",
+      "check": "as V14",
+      "evidence": "as V14",
+      "commands": []
+    },
+    {
+      "id": "V21",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_37",
+      "claims": [
+        "C12",
+        "C14"
+      ],
+      "location": "drafted.worth_checking[0]",
+      "statement": "fixed defect 20% -> 1%; high fasting sugar 20% -> 3% (also worth_checking[1])",
+      "check": "probe thal x fbs",
+      "evidence": "1.0% and 3.4% for the typical patient",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-b0aeaa --hold typical --sweep thal=3,6,7,4 --sweep fbs=0,1"
+      ]
+    },
+    {
+      "id": "V22",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_33",
+      "claims": [
+        "C12",
+        "C50"
+      ],
+      "location": "drafted.worth_checking[0]",
+      "statement": "a fixed thallium defect lowers predicted risk",
+      "check": "subgroup thal=='6'",
+      "evidence": "clinically a fixed defect is not protective; observed rate 60% (9/15) vs 43% elsewhere; the drop is fitted to 15 rows. Correctly flagged by the draft",
+      "commands": [
+        "uv run python -m explaneat verify subgroup experiments/authoring_v4/drafts_v2/items/dv-b0aeaa --where \"thal == '6'\""
+      ]
+    },
+    {
+      "id": "V23",
+      "grade": "flag",
+      "level": "L4",
+      "part": "ann_36",
+      "claims": [
+        "C14",
+        "C35"
+      ],
+      "location": "drafted.worth_checking[1]",
+      "statement": "high fasting blood sugar lowers predicted risk",
+      "check": "probe thal=3, fbs=0,1",
+      "evidence": "typical 19.7% -> 3.4%; against clinical expectation. Correctly flagged by the draft",
+      "commands": [
+        "uv run python -m explaneat verify probe experiments/authoring_v4/drafts_v2/items/dv-b0aeaa --hold typical --sweep thal=3,6,7,4 --sweep fbs=0,1"
+      ]
+    },
+    {
+      "id": "V24",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_32",
+      "claims": [
+        "C46",
+        "C45"
+      ],
+      "location": "drafted.hypothesis_revisions.ann_32",
+      "statement": "lowers risk for the 160 patients without exercise chest pain, more for women",
+      "check": "as V9",
+      "evidence": "as V9 (true on the gate's log-odds contribution)",
+      "commands": []
+    },
+    {
+      "id": "V25",
+      "grade": "upheld",
+      "level": "L3",
+      "part": null,
+      "claims": [],
+      "location": "drafted.hypothesis_revisions",
+      "statement": "the other six proposed revisions (ann_31, ann_33, ann_34, ann_35, ann_36, ann_37) and the titles",
+      "check": "as the readdown hypotheses above",
+      "evidence": "consistent with the checked claims and probes",
+      "commands": []
+    }
+  ],
+  "parts": {
+    "ann_37": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_36": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_34": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_32": {
+      "grade": "weakened",
+      "level": "L2"
+    },
+    "ann_33": {
+      "grade": "upheld",
+      "level": "L3"
+    },
+    "ann_31": {
+      "grade": "weakened",
+      "level": "L4"
+    },
+    "ann_35": {
+      "grade": "upheld",
+      "level": "L3"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ]
+}

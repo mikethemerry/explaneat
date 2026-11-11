@@ -40,7 +40,7 @@ def _draft(lay):
         "blocks": [
             {"block": ADDITIVE, "sentences": [s("These add up independently: through this sum alone a higher "
                                                 "dose raises the predicted risk steadily.", d_root["id"])]},
-            {"block": part["id"], "sentences": [s("This part combines dose only: a higher dose adds nothing until "
+            {"block": part["id"], "sentences": [s("This part takes dose: a higher dose adds nothing until "
                                                   "about 4.0 mg, then raises the predicted risk steadily.",
                                                   d_part["id"])]},
         ],
