@@ -7,6 +7,8 @@ numbers.
 
 from typing import Any, Dict, List
 
+from ..core import split_ids
+
 from .coverage import (
     CoverageComputer,
     compute_compositional_coverage_from_hierarchy,
@@ -245,5 +247,68 @@ def coverage_report(model_state, annotations_data) -> Dict[str, Any]:
             "required": hierarchy["required"],
             "exempt_disconnected": hierarchy.get("exempt", []),
         },
+        "decomposition": decomposition_report(model_state, annotations_data),
     }
     return result
+
+
+#: a part with more original hidden units than this is "coarse"
+SMALL_PART = 6
+
+
+def decomposition_report(model_state, annotations_data, small_part: int = SMALL_PART) -> Dict[str, Any]:
+    """How finely the explanation divides the hidden units (a warning, not part of coverage).
+
+    Coverage can be 1.0 while one part swallows a whole wide layer (the explanation ladder: a
+    32-unit layer as a single leaf). Each original hidden unit (split copies counted once, by base
+    id) is assigned to the smallest annotation that owns a copy of it as a non-entry node;
+    ``granularity`` is the share of hidden units whose part has at most ``small_part`` units.
+    A warning is raised when one part holds more than ``small_part`` units and at least half of
+    all hidden units, when hidden units are owned only by the root composition, or when hidden
+    units appear in parts only as entry nodes.
+    """
+    from ..core.genome_network import NodeType
+
+    hidden = {split_ids.strip(str(n.id)) for n in model_state.nodes
+              if n.type == NodeType.HIDDEN and not str(n.id).startswith("identity_")}
+    if not hidden or not annotations_data:
+        return {"hidden_units": len(hidden), "granularity": None, "warnings": []}
+    owned = {}
+    for ad in annotations_data:
+        entries = {str(n) for n in ad.entry_nodes}
+        owned[ad.name] = {split_ids.strip(str(n)) for n in ad.subgraph_nodes
+                          if str(n) not in entries} & hidden
+    has_child = {ad.parent_annotation_id for ad in annotations_data if ad.parent_annotation_id}
+    roots = [ad.name for ad in annotations_data if ad.parent_annotation_id is None]
+    part_of = {}
+    for u in hidden:
+        cands = [a for a, us in owned.items() if u in us]
+        if cands:
+            part_of[u] = min(cands, key=lambda a: (len(owned[a]), a))
+    sizes = {a: len(owned[a]) for a in owned}
+    small = [u for u, a in part_of.items() if sizes[a] <= small_part]
+    largest = max(owned, key=lambda a: (sizes[a], a))
+    root_only = sorted(u for u, a in part_of.items() if a in roots and a in has_child)
+    warnings = []
+    if sizes[largest] > small_part and sizes[largest] >= 0.5 * len(hidden):
+        warnings.append(f"coarse decomposition: part '{largest}' holds {sizes[largest]} of the "
+                        f"{len(hidden)} hidden units; coverage can be complete while this part is "
+                        "explained only as a whole")
+    entry_only = sorted(hidden - set(part_of))
+    if entry_only:
+        warnings.append(f"{len(entry_only)} of the {len(hidden)} hidden units are inside no part: they "
+                        "appear only as entry nodes, so no part explains them")
+    if root_only:
+        warnings.append(f"{len(root_only)} of the {len(hidden)} hidden units sit only in the root "
+                        "composition, not in any leaf or sub-composition")
+    return {
+        "hidden_units": len(hidden),
+        "small_part_max_units": small_part,
+        "granularity": round(len(small) / len(hidden), 4),
+        "largest_part": {"name": largest, "hidden_units": sizes[largest],
+                         "leaf": largest not in has_child},
+        "units_only_in_root": len(root_only),
+        "units_only_as_entries": len(entry_only),
+        "parts": {a: n for a, n in sorted(sizes.items(), key=lambda kv: -kv[1]) if n},
+        "warnings": warnings,
+    }

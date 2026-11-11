@@ -159,7 +159,7 @@ class Names:
         return None
 
     def _col(self, name: str) -> Optional[int]:
-        name = re.sub(r"_[a-z](?:_[a-z])*$", "", name.strip())     # thal:7_b -> thal:7
+        name = re.sub(r"_(?:[a-z]|[A-Z][a-z])(?:_(?:[a-z]|[A-Z][a-z]))*$", "", name.strip())     # thal:7_b -> thal:7
         if name in self.feature_col:
             return self.feature_col[name]
         if name.lower() in self.feature_lower:
@@ -448,7 +448,7 @@ def eval_expr(text: str, names: Names, interval: bool = False, raw: bool = False
 
 # ============================================================================ statements
 FORMULA = re.compile(r"(?:\b(?:[Nn]ode|[Gg]ate|[Hh]inge|[Rr]elay|[Uu]nit|exit)\s+)?"
-                     r"(?<![\w.])(?P<lhs>[A-Za-z_][\w]*|\d+(?:_[a-z])?)\s*(?P<eq>=|≈|~=|~)\s*(?P<fn>relu|ReLU|RELU)?\s*\(")
+                     r"(?<![\w.])(?P<lhs>[A-Za-z_][\w]*|\d+(?:_(?:[a-z]|[A-Z][a-z]))?)\s*(?P<eq>=|≈|~=|~)\s*(?P<fn>relu|ReLU|RELU)?\s*\(")
 APPROX_WORDS = re.compile(r"\b(?:nearly|approximately|approx\.?|roughly|almost|simplified|simplifies to|"
                           r"to a good approximation|close to|about)\s*:?\s*$", re.I)
 
@@ -477,7 +477,7 @@ def _source_key(names: Names, src: str):
     if node is not None and node.type == NodeType.INPUT:
         from ..analysis.explanation_tools import input_column
         return ("col", input_column(src))
-    return ("node", re.sub(r"_[a-z]+$", "", str(src)))
+    return ("node", re.sub(r"_(?:[a-z]|[A-Z][a-z])+$", "", str(src)))
 
 
 def coefficient_check(lhs_node: str, expr: str, names: Names) -> Optional[Dict[str, Any]]:
@@ -532,7 +532,7 @@ def coefficient_check(lhs_node: str, expr: str, names: Names) -> Optional[Dict[s
             nid = names.node_id(tok)
             if nid is None:
                 return None
-            sk = ("node", re.sub(r"_[a-z]+$", "", nid))
+            sk = ("node", re.sub(r"_(?:[a-z]|[A-Z][a-z])+$", "", nid))
         acc = stated.setdefault(sk, [0.0, 0.0])
         acc[0] += mid
         acc[1] += d
@@ -667,7 +667,7 @@ def _nearest_node(text: str, end: int, names: Names, exits: Sequence[str]) -> Tu
     start = _sentence_start(text, end)
     seg = text[start:end]
     cands = []
-    for m in re.finditer(r"(?<![\w.])([A-Za-z]?\d{1,6}(?:_[a-z])?)(?![\w.%])", seg):
+    for m in re.finditer(r"(?<![\w.])([A-Za-z]?\d{1,6}(?:_(?:[a-z]|[A-Z][a-z]))?)(?![\w.%])", seg):
         cands.append(m.group(1))
     for tok in reversed(cands):
         nid = names.node_id(tok)
@@ -698,7 +698,7 @@ READOUT = [re.compile(p, re.I) for p in (
     r"weight\s+(?P<w>[-+−]?\d*\.\d+)\s+into the (?:logit|output)",
 )]
 LOGIT_TERMS = re.compile(r"logit\s*\+=\s*")
-TERM = re.compile(r"\s*(?P<sign>[-+−])?\s*(?P<w>\d*\.\d+)\s*\*\s*(?P<node>\d+(?:_[a-z])?)\b")
+TERM = re.compile(r"\s*(?P<sign>[-+−])?\s*(?P<w>\d*\.\d+)\s*\*\s*(?P<node>\d+(?:_(?:[a-z]|[A-Z][a-z]))?)\b")
 
 
 def readout_statements(text: str, names: Names, exits: Sequence[str]):
@@ -722,7 +722,7 @@ def readout_statements(text: str, names: Names, exits: Sequence[str]):
                                       reason="a metric in an ablation context (an AUC?), not a weight"))
                 continue
             after = text[m.end():m.end() + 40]
-            mm = re.match(r"\s*(?:x|×|\*)\s*(?P<name>[A-Za-z_][\w:]*|\d+(?:_[a-z])?)", after)
+            mm = re.match(r"\s*(?:x|×|\*)\s*(?P<name>[A-Za-z_][\w:]*|\d+(?:_(?:[a-z]|[A-Z][a-z]))?)", after)
             named = False
             nid = None
             if mm:
@@ -848,10 +848,10 @@ def _named_nodes(text: str, end: int, names: Names) -> List[str]:
     """The non-input nodes named in the sentence before ``end`` (split copies counted once)."""
     seg = text[_sentence_start(text, end):end]
     out: List[str] = []
-    for m in re.finditer(r"(?<![\w.])([A-Za-z]?\d{1,6}(?:_[a-z])?)(?![\w.%])", seg):
+    for m in re.finditer(r"(?<![\w.])([A-Za-z]?\d{1,6}(?:_(?:[a-z]|[A-Z][a-z]))?)(?![\w.%])", seg):
         nid = names.node_id(m.group(1))
         if nid is not None and names.nodes[nid].type not in (NodeType.INPUT, NodeType.OUTPUT) \
-                and re.sub(r"_[a-z]+$", "", nid) not in [re.sub(r"_[a-z]+$", "", x) for x in out]:
+                and re.sub(r"_(?:[a-z]|[A-Z][a-z])+$", "", nid) not in [re.sub(r"_(?:[a-z]|[A-Z][a-z])+$", "", x) for x in out]:
             out.append(nid)
     return out
 
@@ -1102,11 +1102,11 @@ def mean_risk_statements(text: str, names: Names):
             continue
         k = int(anchors[-1].group("k").replace(",", ""))
         nodes = []
-        for t in re.finditer(r"(?<![\w.])([A-Za-z]?\d{1,6}(?:_[a-z])?)(?![\w.%])", seg):
+        for t in re.finditer(r"(?<![\w.])([A-Za-z]?\d{1,6}(?:_(?:[a-z]|[A-Z][a-z]))?)(?![\w.%])", seg):
             nid = names.node_id(t.group(1))
             if nid is not None and names.nodes[nid].type not in (NodeType.INPUT, NodeType.OUTPUT):
-                key = re.sub(r"_[a-z]+$", "", nid)
-                if key not in [re.sub(r"_[a-z]+$", "", x) for x in nodes]:
+                key = re.sub(r"_(?:[a-z]|[A-Z][a-z])+$", "", nid)
+                if key not in [re.sub(r"_(?:[a-z]|[A-Z][a-z])+$", "", x) for x in nodes]:
                     nodes.append(nid)
         nodes = nodes[-4:]
         if not nodes:

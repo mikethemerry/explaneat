@@ -106,6 +106,8 @@ When a node needs to be split via `apply_split_node` (`explaneat/core/operations
 
 - **Original Node**: Removed from the model
 - **Split Nodes**: One per outgoing connection, named `{base_id}_{letter}` (e.g., `5_a`, `5_b`)
+  - Past 26 outgoing connections the copy tokens continue `Aa`, `Ab`, ... `Zz` (702 copies in all; `explaneat/core/split_ids.py`). Lowercase multi-letter suffixes are reserved for consolidations (`5_ac` = `5_a` + `5_c`), so `5_aa` is never a copy; the uppercase lead keeps a consolidated suffix such as `5_aAb` unambiguous. Ids with 26 or fewer copies are unchanged, so stored explanations replay identically (checked on 210 stored explanations).
+  - `validate_operation` dry-runs a split or consolidation, so it never reports as valid what the handler would refuse.
 - **Outgoing Connections**: Each split node carries **exactly one** outgoing connection
 - **Incoming Connections**: All split nodes receive copies of all original incoming connections
 - **Properties**: Split nodes inherit the original's type, bias, activation, response, aggregation

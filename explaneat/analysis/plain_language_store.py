@@ -34,7 +34,7 @@ FORBIDDEN = [
     (re.compile(r"\bclaude\b", re.I), "names the drafting assistant"),
     (re.compile(r"\brelu\b|\bsigmoid\b|\blogit\b|\bpre-?activation\b", re.I), "activation-function jargon"),
     (re.compile(r"\bz-?scores?\b|\bstandardi[sz]ed\b|\bz-?scored\b", re.I), "z-score jargon"),
-    (re.compile(r"\b(?i:node)\s*\d+|\b-?\d+_[a-z](?:_[a-z])*\b|\bann_\d+\b"), "node or annotation id"),
+    (re.compile(r"\b(?i:node)\s*\d+|\b-?\d+_(?:[a-z]|[A-Z][a-z])(?:_(?:[a-z]|[A-Z][a-z]))*\b|\bann_\d+\b"), "node or annotation id"),
     (re.compile(r"\b[a-z]+:\d\b"), "one-hot column name"),
     (re.compile(r"\bcaus(?:es|ed|ing)\b|\bleads? to\b", re.I), "causal wording (describe the model, not the world)"),
     (re.compile(r"\b(?:non-?)?linear(?:ly)?\b|\bconvex\b|\bconcave\b|\bmonoton\w*", re.I), "shape jargon (use the plain shape words)"),

@@ -364,7 +364,7 @@ def bare_numbers(text: str, node_ids: Iterable[str] = (), allow: Iterable[str] =
     """Numbers typed into ``text``: digits outside placeholders, identifiers (``ann_31``,
     ``state:41``, ``R3195``, ``z(a1:3)``), node ids, years, list markers ("(1)"), spans that a
     write-time check reproduced (``checked_spans``, e.g. an exact formula) and ``allow``."""
-    nodes = {str(n) for n in node_ids} | {re.sub(r"_[a-z]+$", "", str(n)) for n in node_ids}
+    nodes = {str(n) for n in node_ids} | {re.sub(r"_(?:[a-z]|[A-Z][a-z])+$", "", str(n)) for n in node_ids}
     allowed = {str(a).strip() for a in allow}
     t = PLACEHOLDER.sub(lambda m: " " * len(m.group(0)), text or "")
     for a, b in checked_spans:

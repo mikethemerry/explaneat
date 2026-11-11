@@ -180,7 +180,7 @@ def what_to_look_at(doc, disagreements: List[str]) -> List[str]:
         if a["kind"] != "leaf":
             continue
         h = a["hypothesis"] or ""
-        key = re.sub(r"\b\w+_[a-z]\b", "", h)[:300]
+        key = re.sub(r"\b\w+_(?:[a-z]|[A-Z][a-z])\b", "", h)[:300]
         if key in seen:
             continue
         seen.add(key)
@@ -202,7 +202,7 @@ def what_to_look_at(doc, disagreements: List[str]) -> List[str]:
     inputs = {n["id"] for n in doc["phenotype"]["nodes"] if n["type"] == "input"}
 
     def base(n):
-        return re.sub(r"(_[a-z])+$", "", str(n))
+        return re.sub(r"(_(?:[a-z]|[A-Z][a-z]))+$", "", str(n))
     hidden_splits = [o for o in ops if o["type"] == "split_node" and base((o["params"] or {}).get("node_id")) not in inputs]
     n_splits = sum(1 for o in ops if o["type"] == "split_node")
     if hidden_splits:

@@ -407,7 +407,7 @@ def ancestor_at_generation(genome_id, generation: int, mode: str = "fitter_paren
 
 
 # --------------------------------------------------------------------- annotations
-_BASE_RE = re.compile(r"^(-?\d+)(?:_[a-z]+)?$")
+_BASE_RE = re.compile(r"^(-?\d+)(?:_(?:[a-z]|[A-Z][a-z])+)?$")
 
 
 def base_node_id(node_id: Union[str, int]) -> Optional[int]:

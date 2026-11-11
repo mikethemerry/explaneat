@@ -804,7 +804,7 @@ def overview(layer, note: bool = False) -> Tuple[str, Dict[str, Any]]:
 # ----------------------------------------------------------------------------- raw network
 import re as _re
 
-_SPLIT = _re.compile(r"^(-?\d+)_[a-z]+$")
+_SPLIT = _re.compile(r"^(-?\d+)_(?:[a-z]|[A-Z][a-z])+$")
 
 
 def raw_network(layer) -> Dict[str, Any]:
