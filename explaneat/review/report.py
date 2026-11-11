@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Optional
 from . import review_dir
 from .diff import context_of, diff
 from .overlay import overlay
-from .provenance import NoProvenance, Provenance
+from .provenance import Provenance, default_provenance
 from .queue import build_queue, tier_counts
 from .sentences import extract, node_ids_of, report_hash
 from .status import badge_counts, statuses
@@ -38,6 +38,7 @@ class Report:
     queue: list
     target_hash: str
     context: Dict[str, Any] = field(default_factory=dict)
+    provenance: str = "NoProvenance"
 
     def sentence(self, sid):
         return next(s for s in self.sentences if s.sid == sid)
@@ -48,7 +49,8 @@ class Report:
             "label": self.label, "genome_id": self.genome_id, "target_hash": self.target_hash,
             "badges": badge_counts(self.statuses), "tiers": tier_counts(self.queue),
             "recheck": (self.recheck or {}).get("summary"),
-            "provenance": "none yet (legacy text: no sentence can be C)",
+            "provenance": ("evidence log (references rerun)" if self.provenance == "LogProvenance"
+                           else "none (no references in the text: no sentence can be C)"),
             "sentences": [dict(s.to_json(), **{"status": self.statuses[s.sid].to_json(),
                                                "tier": q[s.sid].tier, "score": q[s.sid].score,
                                                "factors": q[s.sid].factors, "gates": q[s.sid].gates,
@@ -92,13 +94,16 @@ def build(label: str, operations: Optional[List[Dict[str, Any]]] = None, run_rec
     th = report_hash(sents)
     rep = load_recheck(label, t, th, run=run_recheck, log=log)
     nids = node_ids_of(operations)
-    st = statuses(sents, rep, nids, t.layer, provenance or NoProvenance())
+    prov = provenance or default_provenance(t.genome_id, operations, t.layer, rep)
+    st = statuses(sents, rep, nids, t.layer, prov)
     ov, ovs = overlay(label, sents, t.genome_id, bench=bench, directory=directory, operations=operations)
     vlines = load_verdicts(label, directory)
     df = diff(sents, vlines, t.record, t.layer, operations)
     q = build_queue(sents, st, ov, df["states"])
-    return Report(label, t.genome_id, t.record, t.layer, list(operations), sents, rep, st, ov, ovs, vlines, df, q, th,
-                  context_of(t.record, t.layer, operations))
+    r = Report(label, t.genome_id, t.record, t.layer, list(operations), sents, rep, st, ov, ovs, vlines, df, q, th,
+               context_of(t.record, t.layer, operations))
+    r.provenance = type(prov).__name__
+    return r
 
 
 def write_status(r: Report, directory: Optional[Path] = None) -> Path:

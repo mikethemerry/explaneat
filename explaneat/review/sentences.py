@@ -23,12 +23,15 @@ import re
 from dataclasses import dataclass, field, asdict
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
-REF = re.compile(r"\{(?:q\d+|C\d+)[.\[][^{}]*\}")
+# references: v4 query placeholders {{q:q_3f2a9c1b7e.subgroup.n|d}}, draft slots {{C086.risk.to|pct}},
+# and the design's short form {q17.n}
+REF = re.compile(r"\{\{\s*(?:(?:q|ev)\s*:\s*[A-Za-z0-9_]+|C\d+)\.[^{}]*?\}\}|\{(?:q\d+|C\d+)[.\[][^{}]*\}")
 NUM = re.compile(r"(?<![\w.:/])[-+−]?\d[\d,]*(?:\.\d+)?%?(?![\w:])")
 NUMBER_WORDS = re.compile(r"\b(zero|none|all|every|only|never|always|exactly|solely|entirely)\b", re.I)
 SPLIT = re.compile(r"(?<=[.;!?])\s+(?=[A-Z(0-9\"'])")
 ABBR = re.compile(r"(?:\b(?:e\.g|i\.e|vs|approx|cf|etc|Fig|no|ca)\.|\b[A-Z]\.)$")
 SKIP_PAYLOAD_KEYS = {"latex", "latex_collapsed", "sympy_srepr"}
+QUERY_PAYLOAD_KEYS = {"query_id", "tool", "query", "split", "n", "sampled", "rows_hash", "values"}
 
 
 def _sha(s: str, n: int) -> str:
@@ -117,28 +120,33 @@ def split_sentences(text: str) -> List[str]:
     return [s for s in out if s]
 
 
-def operation_texts(op: Dict[str, Any]) -> List[Tuple[str, str, str]]:
-    """(location, text, origin) for the free text of an annotate operation."""
+def operation_texts(op: Dict[str, Any], templates: bool = False) -> List[Tuple]:
+    """(location, text, origin) for the free text of an annotate operation; with ``templates``,
+    (location, text, origin, template or None)."""
     prm = op.get("params") or {}
     name = prm.get("name")
     out = []
     if prm.get("hypothesis"):
-        out.append((f"operations.{name}.hypothesis", prm["hypothesis"], "operations"))
+        out.append((f"operations.{name}.hypothesis", prm["hypothesis"], "operations", prm.get("hypothesis_template")))
     for j, r in enumerate((prm.get("evidence") or {}).get("records") or []):
         if r.get("narrative"):
-            out.append((f"operations.{name}.evidence[{j}].narrative", r["narrative"], "operations"))
+            out.append((f"operations.{name}.evidence[{j}].narrative", r["narrative"], "operations",
+                        r.get("narrative_template")))
         pay = r.get("payload")
+        ptm = r.get("payload_template") if isinstance(r.get("payload_template"), dict) else {}
         if isinstance(pay, dict):
             for k, v in pay.items():
-                if k in SKIP_PAYLOAD_KEYS:
-                    continue
+                if k in SKIP_PAYLOAD_KEYS or ("query_id" in pay and k in QUERY_PAYLOAD_KEYS):
+                    continue                 # copied from the stored query by add_evidence(query_id=...)
                 if isinstance(v, str) and re.search(r"\d", v):
-                    out.append((f"operations.{name}.evidence[{j}].payload.{k}", v, "payload"))
+                    t = ptm.get(k) if isinstance(ptm.get(k), str) else None
+                    out.append((f"operations.{name}.evidence[{j}].payload.{k}", v, "payload", t))
                 elif isinstance(v, (dict, list)) and re.search(r"\d", json.dumps(v)) and k not in ("data",):
                     s = json.dumps(v, sort_keys=True)
                     if len(s) <= 600:    # long arrays are plots, not stated values
-                        out.append((f"operations.{name}.evidence[{j}].payload.{k}", s, "payload"))
-    return out
+                        t = json.dumps(ptm[k], sort_keys=True) if k in ptm and ptm[k] != v else None
+                        out.append((f"operations.{name}.evidence[{j}].payload.{k}", s, "payload", t))
+    return out if templates else [o[:3] for o in out]
 
 
 def node_ids_of(operations: Optional[Sequence[Dict[str, Any]]]) -> Set[str]:
@@ -179,15 +187,16 @@ def extract(record: Optional[Dict[str, Any]], layer: Optional[Dict[str, Any]],
     chash = {cid: claim_hash(c) for cid, c in claims.items()}
     seen: Dict[str, int] = {}
 
-    def add(location, index, part, origin, text, claim_ids=()):
-        sid = make_sid(location, part, text)
+    def add(location, index, part, origin, text, claim_ids=(), source=None):
+        source = source or text
+        sid = make_sid(location, part, source)
         if sid in seen:                     # the same sentence twice in one field kind: keep both
             seen[sid] += 1
             sid = f"{sid}~{seen[sid]}"
         else:
             seen[sid] = 1
         ch = make_content_hash(text, None, [chash.get(c, "missing") for c in claim_ids])
-        out.append(Sentence(sid, ch, location, index, part, origin, text, text, list(claim_ids)))
+        out.append(Sentence(sid, ch, location, index, part, origin, text, source, list(claim_ids)))
 
     drafted = (layer or {}).get("drafted") or {}
     for loc, s in draft_sentences(drafted):
@@ -195,7 +204,8 @@ def extract(record: Optional[Dict[str, Any]], layer: Optional[Dict[str, Any]],
             continue                        # v5: the read-down replaces the per-part paragraphs
         txt = (s or {}).get("text") or ""
         if txt.strip():
-            add(loc, 0, _part_of_drafted(loc), "drafted", txt, (s or {}).get("claims") or [])
+            add(loc, 0, _part_of_drafted(loc), "drafted", txt, (s or {}).get("claims") or [],
+                (s or {}).get("template"))
     for loc, s in ((f"drafted.summary[{i}]", s) for i, s in enumerate(drafted.get("summary") or [])
                    if not drafted.get("blocks")):
         add(loc, 0, None, "drafted", s.get("text") or "", s.get("claims") or [])
@@ -203,15 +213,15 @@ def extract(record: Optional[Dict[str, Any]], layer: Optional[Dict[str, Any]],
         if op.get("type") != "annotate":
             continue
         part = (op.get("result") or {}).get("annotation_id") or (f"ann_{op['seq']}" if "seq" in op else None)
-        for loc, text, origin in operation_texts(op):
-            pieces = [text] if origin == "payload" else split_sentences(text)
-            for i, piece in enumerate(pieces):
-                add(loc, i, part, origin, piece)
+        for loc, text, origin, template in operation_texts(op, templates=True):
+            pieces = [(text, template or text)] if origin == "payload" else paired_pieces(text, template)
+            for i, (piece, src) in enumerate(pieces):
+                add(loc, i, part, origin, piece, (), src)
     for k in ("summary", "resisted"):
         v = (record or {}).get(k)
         if isinstance(v, str):
-            for i, piece in enumerate(split_sentences(v)):
-                add(f"record.{k}", i, None, "record", piece)
+            for i, (piece, src) in enumerate(paired_pieces(v, (record or {}).get(f"{k}_template"))):
+                add(f"record.{k}", i, None, "record", piece, (), src)
     return out
 
 
@@ -241,4 +251,18 @@ def atoms(text: str, node_ids: Set[str] = frozenset()) -> List[Tuple[str, int, i
 
 
 def refs_in(text: str) -> List[str]:
-    return [m.group(0)[1:-1] for m in REF.finditer(text)]
+    """The references in ``text``, without braces: ``q:q_ab.subgroup.n|d``, ``C086.risk.to|pct``,
+    ``q17.n``."""
+    return [m.group(0).strip("{}").strip() for m in REF.finditer(text or "")]
+
+
+def paired_pieces(rendered: str, template: Optional[str]) -> List[Tuple[str, str]]:
+    """(rendered sentence, template sentence) pairs of a templated field. The template is split
+    with its references masked; when the rendered text splits differently (a value that starts a
+    sentence), the field is kept as one sentence."""
+    if not template:
+        return [(p, p) for p in split_sentences(rendered)]
+    r, t = split_sentences(rendered), split_sentences(template)
+    if len(r) == len(t):
+        return list(zip(r, t))
+    return [(rendered.strip(), template.strip())]

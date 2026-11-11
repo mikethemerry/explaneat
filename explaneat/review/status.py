@@ -4,7 +4,8 @@ Badges (precedence F > U > R > C; ``n/a`` = no number, no number word):
 
 * ``C`` computed and auto-checked: every numeric atom is inside a reference that resolves and last
   reproduced (``match``/``match-rounded``/``drift``), number words are inside references, cited
-  claims are verified. Needs the provenance store (:mod:`.provenance`); until then no sentence is C.
+  claims are verified (the store: :class:`.provenance.LogProvenance`). Legacy text has no
+  references, so no legacy sentence is C.
 * ``R`` free text checked by ``recheck``: every atom outside a reference was matched by ``recheck``
   (a free-text statement ``ok``; for a draft, the number is in a cited claim) and no atom is left.
 * ``U`` unchecked: some atom is neither referenced nor matched, or a reference does not resolve.
@@ -108,17 +109,19 @@ def sentence_status(s: Sentence, report: Optional[Dict[str, Any]], node_ids: Set
     reasons: List[str] = []
     failed: List[str] = []
     feats: Dict[str, Any] = {}
-    ats = atoms(text, node_ids)
+    refs = refs_in(s.source)
+    templated = bool(refs) and s.source != s.text
+    # a templated sentence's numbers are read from its template: those in references are not atoms
+    ats = atoms(s.source if templated else text, node_ids)
     classes: List[Dict[str, Any]] = []
 
     # references (C needs every one resolved and reproduced)
-    refs = refs_in(s.source)
     ref_ok = True
     for r in refs:
         res = prov.resolve(r)
         if res is None:
             ref_ok = False
-            reasons.append(f"reference {{{r}}} not resolvable (no provenance store)")
+            reasons.append(f"reference {{{{{r}}}}} not resolvable" + ("" if prov.available else " (no provenance store)"))
         elif res.get("reproduce") == "mismatch":
             failed.append(f"reference {{{r}}} does not reproduce")
         elif res.get("reproduce") not in REPRODUCED_OK:
@@ -174,8 +177,12 @@ def sentence_status(s: Sentence, report: Optional[Dict[str, Any]], node_ids: Set
                 if f.get("severity") == "mismatch":
                     failed.append(f"recheck {f.get('check')}: {f.get('stated')}")
 
+    if refs and ref_ok:                     # a number word in a sentence whose references reproduce
+        for i, (tok, a, b, kind) in enumerate(ats):
+            if kind == "word":
+                covered[i] = True
     for i, (tok, a, b, kind) in enumerate(ats):
-        cls = "R" if covered[i] else "U"
+        cls = ("C" if refs and ref_ok and kind == "word" else "R") if covered[i] else "U"
         classes.append({"token": tok, "kind": kind, "class": cls})
     n_u = sum(1 for c in classes if c["class"] == "U")
     n_r = sum(1 for c in classes if c["class"] == "R" and c["kind"] == "num")
