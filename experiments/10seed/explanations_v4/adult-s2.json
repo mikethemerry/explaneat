@@ -1,0 +1,112 @@
+{
+  "label": "adult-s2",
+  "genome_id": "b6600773-0fcc-4667-b053-776782913641",
+  "protocol_version": "v4",
+  "start": "2026-11-11T17:45:52+13:00",
+  "end": "2026-11-11T18:07:09+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 8,
+  "n_composition_annotations": 1,
+  "n_splits": 9,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 16,
+  "hidden_nodes_single_leaf_no_split": 16,
+  "hidden_nodes_in_any_annotation": 16,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 6.661338147750939e-16,
+  "closed_form_max_abs_err": 0.058889693843529045,
+  "summary": "The model is mostly a linear score on the logit scale: replacing its direct terms by their mean lowers training AUC from 0.9064 to 0.6458, while switching all the hidden parts off together lowers it to 0.8873. Being married to a civilian spouse (-1.75 per sd) and capital gain (-1.99 per sd) are strong direct terms lowering the predicted probability of the lower income class. On top of that score, education lowers the predicted probability more steeply from high-school graduation upward (the largest hidden part: AUC 0.8959 without it); capital gain switches on a second, steep downward slope past a threshold between 4500 US dollars and 5000 US dollars, adding -8.85 to the score on average for the 2042 training rows past it; and a gate open for husbands adds 0.75 on average for the 15748 husbands, giving back to them part of the marriage term. A missing occupation adds 1.27 for 2231 rows and machine operators get a small step up (0.51 on average for 2417 rows). The census sampling weight and a near-constant some-college part barely matter (training AUC without them: 0.9064 and 0.9064, against 0.9064 with them), and two units are off on every training row (the Peru unit: 0 rows on; the unit after the some-college unit: 0 rows on). Two small regimes are fitted to few rows: workclass without employment history (9 rows, pushed to a predicted lower-income probability of above 99%) and a Taiwan birthplace (49 rows). The annotated model reproduces the network on every training row to within 6.7e-16.",
+  "summary_template": "The model is mostly a linear score on the logit scale: replacing its direct terms by their mean lowers training AUC from {{q:q_184b93b708.data.auc_with|.4f}} to {{q:q_184b93b708.data.auc_without|.4f}}, while switching all the hidden parts off together lowers it to {{q:q_8208baffb8.data.auc_without|.4f}}. Being married to a civilian spouse ({{q:q_f97316a2d9.switched_off[1].weight|.2f}} per sd) and capital gain ({{q:q_f97316a2d9.switched_off[0].weight|.2f}} per sd) are strong direct terms lowering the predicted probability of the lower income class. On top of that score, education lowers the predicted probability more steeply from high-school graduation upward (the largest hidden part: AUC {{q:q_70f83cb683.data.auc_without|.4f}} without it); capital gain switches on a second, steep downward slope past a threshold between {{q:q_4b4a49c581.rows[5].inputs.capital-gain}} and {{q:q_4b4a49c581.rows[6].inputs.capital-gain}}, adding {{q:q_cba4a8cbcb.subgroup.parts.ann_117.mean_contribution|.2f}} to the score on average for the {{q:q_cba4a8cbcb.subgroup.n|d}} training rows past it; and a gate open for husbands adds {{q:q_4d6faf0d00.subgroup.parts.ann_122.mean_contribution|.2f}} on average for the {{q:q_4d6faf0d00.subgroup.n|d}} husbands, giving back to them part of the marriage term. A missing occupation adds {{q:q_b312de5393.subgroup.parts.ann_119.mean_contribution|.2f}} for {{q:q_b312de5393.subgroup.n|d}} rows and machine operators get a small step up ({{q:q_ba0c7f8e60.subgroup.parts.ann_123.mean_contribution|.2f}} on average for {{q:q_ba0c7f8e60.subgroup.n|d}} rows). The census sampling weight and a near-constant some-college part barely matter (training AUC without them: {{q:q_eca168623e.data.auc_without|.4f}} and {{q:q_f45c84c5ad.data.auc_without|.4f}}, against {{q:q_eca168623e.data.auc_with|.4f}} with them), and two units are off on every training row (the Peru unit: {{q:q_547a6f4358.subgroup.n|d}} rows on; the unit after the some-college unit: {{q:q_0ecbbc0c60.subgroup.n|d}} rows on). Two small regimes are fitted to few rows: workclass without employment history ({{q:q_2c6e6a8aac.subgroup.n|d}} rows, pushed to a predicted lower-income probability of {{q:q_2c6e6a8aac.subgroup.mean_predicted_risk|pct}}) and a Taiwan birthplace ({{q:q_2c1d5418fa.subgroup.n|d}} rows). The annotated model reproduces the network on every training row to within {{q:q_7091e98ae4.function_preservation_max_abs_err|.1e}}.",
+  "resisted": "No part resisted explanation. One part, the some-college pair of units, is described rather than explained: it is close to a constant, and switching it off leaves training AUC at 0.9064 (with it: 0.9064). The census-weight hinge is explained as a threshold but has no clear domain meaning.",
+  "resisted_template": "No part resisted explanation. One part, the some-college pair of units, is described rather than explained: it is close to a constant, and switching it off leaves training AUC at {{q:q_f45c84c5ad.data.auc_without|.4f}} (with it: {{q:q_f45c84c5ad.data.auc_with|.4f}}). The census-weight hinge is explained as a threshold but has no clear domain meaning.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 47,
+    "complete_ok": true
+  },
+  "recheck_notes": "Recheck: 0 mismatches, 0 needs_review. The 47 unchecked free-text sentences are prose without numbers (predictions, domain readings, structural statements such as 'no part feeds another', which holds by construction: every hidden exit goes to the output or to a unit inside its own leaf). Category labels come from the tools' codebook (e.g. workclass=4 'private'); training prevalences of the one-hot columns match the alphabetical Adult coding. The outcome (risk) is the lower income class, so negative weights lower the predicted probability of earning at most the threshold.",
+  "tool_bugs": "No tool failures. Notes: (1) query_ablate(direct=true) reports no direct edges after add_identity_node on the output, so direct weights were read with query_ablate(edges=[...->identity_0]). (2) query_enumerate refuses this genome (age has 74 values), so 'every level' claims use query_probe sweeps over each level of the one categorical input involved, plus query_subgroup counts of 0. (3) The active-count lint reads 'on for N rows' about a subset (rows below a threshold) as the unit's total active count and refuses it; reworded. (4) The scope-word lint flags category labels such as 'never worked' / 'never married' in evidence descriptions; reworded. (5) get_formula returns no provenance id, so formulas were attached as analytical_formula payloads (LaTeX) without a query_id.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 214,
+    "provenance_backed": 198,
+    "allow_listed": 16,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 0,
+      "other": 0
+    },
+    "formulas_note": "No formula is typed in any text; each leaf's get_formula LaTeX is attached as analytical_formula evidence, and check_explanation gives each leaf's closed-form error (largest 0.0589, the direct-terms leaf, from three-significant-figure rounding).",
+    "audit": {
+      "references": 198,
+      "checked": 198,
+      "query_ids": 54
+    },
+    "self_probe": {
+      "parts": [
+        "capital_gain_hinges",
+        "fnlwgt_hinge",
+        "occupation_unknown_offset",
+        "education_hinge",
+        "some_college_constant",
+        "husband_gate",
+        "category_hinges",
+        "direct_terms",
+        "income_model"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0,
+    "restatements_note": "some_college_constant is reported as 'described, not explained' (near-constant), not as an explanation."
+  },
+  "methodology": "methodology-v4-freeze-2026-11-11",
+  "database": "explaneat_v4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 9,
+      "roots": [
+        "income_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 6.661338147750939e-16,
+    "closed_form_max_abs_err": 0.058889693843529045,
+    "numeric_max_abs_err": 3.552713678800501e-14,
+    "op_counts": {
+      "rename_node": 107,
+      "add_identity_node": 1,
+      "split_node": 9,
+      "annotate": 9
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-11T05:08:15+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 47,
+      "provenance": {
+        "templated_texts": 66,
+        "queries": 55
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}
