@@ -1,18 +1,39 @@
 """Analysis must read legacy CLI-created weighted genomes without altering artifacts."""
 import gzip
+import importlib
 import pickle
 import sys
 from pathlib import Path
 
+import pytest
+
 MNIST = Path(__file__).resolve().parents[2] / "experiments" / "mnist"
-sys.path.insert(0, str(MNIST))
-import linear_start as LS
-import linear_start_analyze as analysis
 
 
-def test_load_run_reads_main_module_weighted_genome(tmp_path, monkeypatch):
+@pytest.fixture
+def analysis_modules(monkeypatch):
+    # These standalone research scripts import helpers by generic CLI names.
+    # Do not let their imports replace another experiment's run_seed or data.
+    names = ("data", "run_seed", "linear_start", "linear_start_analyze")
+    previous = {name: sys.modules.get(name) for name in names}
+    monkeypatch.syspath_prepend(str(MNIST))
+    for name in names:
+        sys.modules.pop(name, None)
+    try:
+        ls = importlib.import_module("linear_start")
+        analysis = importlib.import_module("linear_start_analyze")
+        yield ls, analysis
+    finally:
+        for name, module in previous.items():
+            sys.modules.pop(name, None)
+            if module is not None:
+                sys.modules[name] = module
+
+
+def test_load_run_reads_main_module_weighted_genome(tmp_path, monkeypatch, analysis_modules):
     import __main__
 
+    LS, analysis = analysis_modules
     cls = LS.WeightedAddNodeGenome
     original = cls.__module__
     monkeypatch.setattr(__main__, "WeightedAddNodeGenome", cls, raising=False)
@@ -36,11 +57,12 @@ def test_load_run_reads_main_module_weighted_genome(tmp_path, monkeypatch):
     assert meta == {"seed": 0}
 
 
-def test_linear_control_resets_optimizer_at_requested_generation_length():
+def test_linear_control_resets_optimizer_at_requested_generation_length(analysis_modules):
     import numpy as np
     import torch
     import torch.nn.functional as F
 
+    _, analysis = analysis_modules
     X = np.array([[0., 1.], [1., 0.], [0.5, 0.5]], dtype=np.float64)
     y = np.array([0, 1, 0])
     d = {f"{kind}_{split}": value for split in ("train", "val", "test")

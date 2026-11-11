@@ -78,6 +78,7 @@ def coverage_report(model_state, annotations_data) -> Dict[str, Any]:
             "annotations_count": 0,
             "leaf_count": 0,
             "composition_count": 0,
+            "decomposition": decomposition_report(model_state, annotations_data),
         }
         return result
 

@@ -119,6 +119,13 @@ class TestValidateNeverLies:
 
 
 class TestDecompositionWarning:
+    def test_unannotated_model_reports_decomposition_metadata(self):
+        from explaneat.analysis.coverage_report import coverage_report
+        report = coverage_report(wide_net(width=8), [])
+        assert report["decomposition"] == {
+            "hidden_units": 8, "granularity": None, "warnings": []
+        }
+
     def _ann(self, name, nodes, entries, parent=None):
         from explaneat.core.model_state import AnnotationData
         return AnnotationData(name=name, hypothesis="", entry_nodes=entries, exit_nodes=[nodes[-1]],
