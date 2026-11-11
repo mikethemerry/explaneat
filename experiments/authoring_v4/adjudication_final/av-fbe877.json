@@ -1,0 +1,344 @@
+{
+ "item": "av-fbe877",
+ "errors": [
+  {
+   "id": "E1",
+   "location": "operations.age_profile.hypothesis",
+   "statement": "for Thai respondents (27 rows) it adds -4.0 directly",
+   "verifier_grades": {
+    "A": "refuted",
+    "B": "refuted"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V1"
+    ],
+    "B": [
+     "V3"
+    ]
+   },
+   "genuine_level": "refuted",
+   "layer": "database",
+   "mechanism": "f",
+   "check": "subgroup native-country == '37': n = 26 of 39073 in training; the same text says 26 elsewhere. A typed count.",
+   "kind": "K4"
+  },
+  {
+   "id": "E2",
+   "location": "operations.rare_category_indicators.evidence[1] (and hypothesis)",
+   "statement": "State-gov gives 0.155 (node 1624), contribution -0.005",
+   "verifier_grades": {
+    "A": "refuted"
+   },
+   "found_by": [
+    "A"
+   ],
+   "finding_ids": {
+    "A": [
+     "V2"
+    ],
+    "B": []
+   },
+   "genuine_level": "refuted",
+   "layer": "database",
+   "mechanism": "f",
+   "check": "probe --hold typical --sweep workclass=4,7 --nodes 1624: node 1624 = 0.1368 for state government; subgroup workclass=='7' and node_1624 > 0.15: n = 0, > 0.13: n = 1595 (all of them). 0.155 does not reproduce for any state-government row; the -0.005 contribution does (-0.0049).",
+   "kind": "K4"
+  },
+  {
+   "id": "E3",
+   "location": "operations.age_profile.hypothesis",
+   "statement": "2990=relu(1.446 age-0.48)",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V3"
+    ],
+    "B": [
+     "V4"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "database",
+   "mechanism": "e",
+   "check": "recheck freetext_formula (both run folders): exact except on the 26 Thai rows (off by up to 4.45), because the +0.137*Thailand term is left out; the same paragraph says Thailand pushes 2990 on, so it is a simplification written as exact.",
+   "kind": "K9"
+  },
+  {
+   "id": "E4",
+   "location": "operations.income_logit.hypothesis",
+   "statement": "all nonlinearity is univariate relu hinges in age, capital gain and hours, plus category indicators",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V10"
+    ],
+    "B": [
+     "V23"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "database",
+   "mechanism": "e",
+   "check": "child formulas: 262 and 1485 take 9th grade, Jamaica, Ecuador etc. as inputs, 2990 takes Thailand; probe --wide Jamaica vs US at $0/$6849: ann_123 gives 0 for Jamaica vs -0.304 for the US. Between-part additivity holds. Each hinge still bends along one continuous variable with indicators shifting it, so the sentence is right under a charitable reading; overclaim, not refuted.",
+   "kind": "K2",
+   "reconcile_note": "K2 kept weakened: the sentence names the category indicators alongside the hinges, so 'all nonlinearity' holds under the reading that indicators shift the hinges."
+  },
+  {
+   "id": "E5",
+   "location": "operations.rare_category_indicators.hypothesis",
+   "statement": "Three relu indicators of rare categories (zero for everyone else) ... Affects ~0.3% of rows",
+   "verifier_grades": {
+    "B": "weakened"
+   },
+   "found_by": [
+    "B"
+   ],
+   "finding_ids": {
+    "A": [],
+    "B": [
+     "V20"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "database",
+   "mechanism": "e",
+   "check": "subgroup workclass=='7' and node_1624 > 0.13: n = 1595 (4.1%), so node 1624 is not zero for everyone else; the same sentence discloses that State-gov adds -0.005, and the rows with a meaningful effect are about 0.3%. Scope wording, disclosed in the text.",
+   "kind": "K2",
+   "reconcile_note": "K2 kept weakened: the exception (State-gov, -0.005) is stated inside the same sentence."
+  },
+  {
+   "id": "E6",
+   "location": "drafted.readdown.ann_121.hypothesis[0], evidence[0], blocks (Age), ann_131.evidence[2], worth_checking[6] (C137, C014)",
+   "statement": "lowest at about 47 years and higher either side",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V4"
+    ],
+    "B": [
+     "V5"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "g",
+   "check": "probe --hold typical --sweep age=44:49:6: 48.4% at 45, 46.5% at 46, 47.0% at 47, 47.8% at 48; minimum at 46 (kink ~46.1). The 47 is the claim's shape 'turning' points_text (a grid-fit artefact). Off by one year on an 'about' value.",
+   "kind": "K5"
+  },
+  {
+   "id": "E7",
+   "location": "drafted.readdown.ann_123.hypothesis[0], evidence[1], blocks (Capital gains) (C126)",
+   "statement": "adds nothing until capital gains reach about 4883 US dollars",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V9"
+    ],
+    "B": [
+     "V11"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "g",
+   "check": "C126 shape points 'at': 4882.8 from the generator's piecewise fit; both verifiers' probes put node 262 switching on at ~$4,795-4,797 (already -0.0078 at $4,850). Imprecise threshold by ~$90.",
+   "kind": "K5"
+  },
+  {
+   "id": "E8",
+   "location": "drafted.readdown.ann_123.hypothesis[0], evidence[2]; ann_130.hypothesis[0]; blocks (Capital gains) (C132, C083)",
+   "statement": "for people born in Jamaica the chance ... starts and ends higher (71% to 16% vs 63% to 9%) through this part",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V5",
+     "V6"
+    ],
+    "B": [
+     "V10"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "probe --hold typical --wide --sweep native-country=39,23 --sweep capital-gain=0,6849: at $0 ann_123 is 0 and ann_130 +0.5922 for both; the whole-model 71.0% vs 63.1% comes from ann_128 (country offset). Through the part Jamaica only loses the bend (0 vs -0.304 at $6849). Whole-model numbers credited to the part; the whole-model reading and the shallower fall hold.",
+   "kind": "K3"
+  },
+  {
+   "id": "E9",
+   "location": "drafted.readdown.ann_122.evidence[1] (C088)",
+   "statement": "For people born in Ecuador it starts and ends higher, from about 71% to about 15%",
+   "verifier_grades": {
+    "A": "weakened"
+   },
+   "found_by": [
+    "A"
+   ],
+   "finding_ids": {
+    "A": [
+     "V7"
+    ],
+    "B": []
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "Same pattern as E8 (A's probe --claim C088: ann_122 +0.4834 at $0 for both Ecuador and the US; the higher start is ann_128). The preceding sentence's 63% to 12% is part-only while 71%/15% are whole-model: scope mixed. The removal of the $5.2k hinge for Ecuador holds.",
+   "kind": "K3"
+  },
+  {
+   "id": "E10",
+   "location": "drafted.readdown.ann_129.evidence[3], blocks[1], worth_checking[4], worth_checking[5] (C097, C102, C105, C110, C016, C027, C032, C041)",
+   "statement": "a highest education of 7th-8th grade lowers it to about 35%, 9th grade to about 44% and 10th grade to about 49%",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "refuted"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V8"
+    ],
+    "B": [
+     "V7"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "probe --hold typical --sweep education=11,5,6,0 --sweep education-num=4,5,6,9,10: 35.4% / 44.2% / 49.4% reproduce only at education-num 10; subgroup education=='5' and education-num != 4: n = 0. At the matching levels, 7th-8th grade gives 84.6%, 9th grade 84.4% and 10th grade 87.0%, against 71.5% for a high-school graduate at level 9. The numbers are correct as the one-hot category's own effect with everything else held (the reading the draft uses throughout, and the item is already flagged as worth checking), so the claim is not refuted under every reading. Read plainly about real people, though, the direction is reversed. Off-support constructed case.",
+   "kind": "K1",
+   "reconcile_note": "K1 kept weakened: category wording ('A highest education of 7th-8th grade lowers it [a typical person's chance]'), the same as av-981a97 E1."
+  },
+  {
+   "id": "E11",
+   "location": "drafted.readdown.ann_130.hypothesis[0], evidence; blocks (Capital gains) (C081)",
+   "statement": "for people whose highest education is 9th grade the fall is smaller, from about 44% to about 6%",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V8"
+    ],
+    "B": [
+     "V14"
+    ]
+   },
+   "genuine_level": "refuted",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "The 44% start is 9th grade at education-num 10 (probe above: 44.2%), a combination with n = 0; a real 9th-grader (education-num 5) starts near 84%. The mechanism (9th grade switches off the $4.8k bend) holds.",
+   "kind": "K1",
+   "reconciled_from": "weakened",
+   "reconcile_reason": "K1 rule: the sentence names real people ('for people whose highest education is 9th grade the fall is smaller ... from about 44% to about 6%'), and for every real 9th-grader (education-num 5; education=='6' with education-num != 5 has n = 0) the start is about 84%, higher than the 63% for others, not lower, and the fall in points is not smaller (55 vs 54). The stated values and the implied comparison are wrong for the whole named group. Identical sentence and grade rule as av-7e63ce E1 (refuted)."
+  },
+  {
+   "id": "E12",
+   "location": "drafted.lead[0] (C072)",
+   "statement": "typical person: ... a high-school graduate ... predicted about 63%",
+   "verifier_grades": {
+    "B": "weakened"
+   },
+   "found_by": [
+    "B"
+   ],
+   "finding_ids": {
+    "A": [],
+    "B": [
+     "V8"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "probe: a high-school graduate at education-num 10 gives 63.1% (reproduces), but at education-num 9 (the level high-school graduates have) 71.5%; the typical case combines the most common category with the median level, which puts it off support. Wording and scope issue.",
+   "kind": "K1"
+  },
+  {
+   "id": "E13",
+   "location": "drafted.readdown.ann_125.evidence[0], blocks[3] (C143)",
+   "statement": "those working less than about 50 hours a week",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V11"
+    ],
+    "B": [
+     "V17"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "f",
+   "check": "recheck prose_uncited in both run folders: 50 is not in C143 (it is in C141/C142 and others); both verifiers confirm 31364 rows below 50 hours. Citation gap only.",
+   "kind": "other"
+  }
+ ],
+ "summary": {
+  "refuted": {
+   "database": 2,
+   "draft": 1
+  },
+  "weakened": {
+   "database": 3,
+   "draft": 7
+  },
+  "none": 0
+ }
+}

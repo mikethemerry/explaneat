@@ -1,0 +1,66 @@
+{
+ "item": "av-981a97",
+ "errors": [
+  {
+   "id": "E1",
+   "location": "drafted.readdown.ann_120.evidence[2]; drafted.blocks[0] sentence 2; drafted.worth_checking[3] (claims C003-C006)",
+   "statement": "A highest education of 1st-4th grade lowers the predicted chance to about 10% and 7th-8th grade to about 19% (across the whole model / through this sum alone)",
+   "verifier_grades": {"A": "weakened", "B": "weakened"},
+   "found_by": ["A", "B"],
+   "finding_ids": {"A": ["V9", "V10", "V12"], "B": ["V10", "V12"]},
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "probe --hold typical --set education=3 --sweep education-num=2,10: 89.8% / 9.9%; education=5 with education-num 4,10: 86.5% / 19.3%. subgroup education=='3' and education-num==10: n=0; education=='3': n=189, mean predicted 95.1%, observed 96.3%. The numbers reproduce as one-at-a-time counterfactuals, which the text says they are. But the combination is off-support, and a real person with that schooling gets a higher chance, so the sentence misleads. It is not wrong under the stated counterfactual reading."
+  },
+  {
+   "id": "E2",
+   "location": "drafted.readdown.ann_120.evidence[3]; drafted.blocks[0] sentence 2; drafted.worth_checking[2] (claim C009)",
+   "statement": "Being a wife rather than a husband lowers the predicted chance to about 27%",
+   "verifier_grades": {"A": "weakened", "B": "weakened"},
+   "found_by": ["A", "B"],
+   "finding_ids": {"A": ["V10", "V11", "V12"], "B": ["V11", "V12"]},
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "probe --hold typical --set relationship=5 --sweep sex=1,0: 27.1% (male wife) vs 47.4% (female wife); subgroup relationship=='5' and sex=='1': n=3 of 39073. The direction holds, but the size rests on an off-support male wife. It reproduces under the one-at-a-time reading."
+  },
+  {
+   "id": "E3",
+   "location": "drafted.readdown.ann_114.hypothesis[0] and evidence[0]; drafted.blocks[1]; drafted.readdown.ann_120.evidence[1] (claims C083, C002)",
+   "statement": "Higher capital gains lower the predicted chance slowly at first, then faster",
+   "verifier_grades": {"B": "weakened"},
+   "found_by": ["B"],
+   "finding_ids": {"B": ["V16"]},
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "probe --hold typical --sweep capital-gain=0:7000:8: 61.9, 52.9, 43.6, 34.8, 26.9, 20.2, 11.5, 5.7% (drops of 9.0, 9.3, 8.8, 7.9, 6.7, 8.7, 5.8 points per $1000), so the chance has no slow start. The claim's 'accelerating' shape is on the log-odds scale (slope -0.00037 then -0.00076 per $, kink ~$5258), where it is right. A log-odds shape is written as a shape of the chance."
+  },
+  {
+   "id": "E4",
+   "location": "operations.capital_gain_penalty.hypothesis; capital_gain_penalty evidence (local_ablation)",
+   "statement": "+0.41 (+0.406) logit at cg=0 (95% of rows)",
+   "verifier_grades": {"A": "weakened"},
+   "found_by": ["A"],
+   "finding_ids": {"A": ["V14"]},
+   "genuine_level": "refuted",
+   "layer": "database",
+   "mechanism": "b",
+   "check": "subgroup capital-gain == 0: n=35788 of 39073 = 91.6%, not 95%. capital-gain < 5246 (below the kink): 95.5%, so the 95% is the below-kink share attached to the cg=0 value. The +0.406 contribution reproduces, but the share does not reproduce for the population named."
+  },
+  {
+   "id": "E5",
+   "location": "record.summary ('Five tiny categorical gates'); record.resisted ('real but negligible'); operations.income_logit.hypothesis ('five near-inert categorical gates')",
+   "statement": "The five categorical gates are tiny / near-inert / negligible",
+   "verifier_grades": {"A": "weakened", "B": "weakened"},
+   "found_by": ["A", "B"],
+   "finding_ids": {"A": ["V4", "V8"], "B": ["V4", "V9"]},
+   "genuine_level": "weakened",
+   "layer": "database",
+   "mechanism": "d",
+   "check": "probe --hold typical --sweep occupation=10,9: 61.9% -> 86.9% (the private household service gate adds +1.40 logit for all 187 such workers); the verifiers found the China gate adds +1.24 (62% -> 85%). The AUC change of <= 0.0003 per gate holds, and resisted gives that qualifier. A population-AUC size is stated as if it were the per-person size."
+  }
+ ],
+ "summary": {"refuted": {"database": 1, "draft": 0}, "weakened": {"database": 1, "draft": 3}, "none": 0}
+}

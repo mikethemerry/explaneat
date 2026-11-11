@@ -1,0 +1,90 @@
+{
+  "item": "av-b528c6",
+  "errors": [
+    {
+      "id": "E1",
+      "location": "operations.direct_terms.hypothesis",
+      "statement": "The largest weights, per sd of the input: ... night minutes 0.30 and account length 0.13; the state edges are smaller.",
+      "verifier_grades": {"A": "weakened", "B": "weakened"},
+      "found_by": ["A", "B"],
+      "finding_ids": {"A": ["V9"], "B": ["V9"]},
+      "genuine_level": "weakened",
+      "layer": "database",
+      "mechanism": "e",
+      "check": "Parsed the ann_91 closed form in operations.json: every listed weight reproduces (2.02, -0.99, 0.751, 0.701, 0.609, 0.503, 0.351, 0.30, 0.127), but five state edges exceed account length's 0.127: state:11 (Hawaii) -0.297, state:46 -0.291, state:5 -0.196, state:47 (Washington) +0.158, state:4_b +0.139. Read strictly ('every state edge is below the listed weights'), it is false. Read loosely ('state edges are smaller than the leading terms'), it holds: the largest state edge, 0.297, is below every listed term except night minutes (0.30, a near tie) and account length. Imprecise, so weakened, not refuted."
+    },
+    {
+      "id": "E2",
+      "location": "record.summary (also operations.state_hidden_units.hypothesis 'shift churn risk for a few states')",
+      "statement": "small state units shift the level of risk for a few states",
+      "verifier_grades": {"A": "weakened"},
+      "found_by": ["A"],
+      "finding_ids": {"A": ["V5"]},
+      "genuine_level": "weakened",
+      "layer": "database",
+      "mechanism": "d",
+      "check": "ablate --part ann_90: affects 4000 of 4000 training rows, mean score change +0.441, mean risk change +2.9 points (max 20.1), 92 predictions flip; AUC 0.9009 either way. probe --sweep state: the contribution is +0.4425 for every state the units do not read; only Tennessee 0.84, Ohio 0.66 and Nevada (about 0) etc. differ. The between-state differences are confined to a few states, so one reasonable reading holds, but the part's effect on the risk level reaches every customer. The operations hypothesis gives the 0.44 offset; the record summary does not. Scope wording, so weakened."
+    },
+    {
+      "id": "E3",
+      "location": "operations.calls_vs_evening_charge.hypothesis",
+      "statement": "a small South Dakota term is also present",
+      "verifier_grades": {"B": "weakened"},
+      "found_by": ["B"],
+      "finding_ids": {"B": ["V13"]},
+      "genuine_level": "weakened",
+      "layer": "database",
+      "mechanism": "d",
+      "check": "probe --sweep state=22,41 x calls=1,3 --nodes 2796: hinge 2796 is 0.217 (MI) vs 1.413 (SD) at 1 call and 1.069 vs 2.264 at 3 calls, so the SD indicator lifts it by about 1.2, more than going from 1 to 3 calls (+0.85). ann_87 contributes 0.55 vs 0.00 at 1 call and 2.35 vs 0.68 at 3 calls, and whole-model risk at 3 calls is 9.2% vs 4.0%. SD has 66 training customers. Measured per sd of the indicator (the hypothesis's unit), the weight may be small, but in effect size it is not. A scale-dependent word, so weakened."
+    },
+    {
+      "id": "E4",
+      "location": "plain_language.drafted.readdown.ann_90.hypothesis[0]",
+      "statement": "This part shifts the predicted chance for a few named states: up for Tennessee and Ohio, down for Nevada, California, Arizona, Missouri and Massachusetts.",
+      "verifier_grades": {"A": "weakened", "B": "weakened"},
+      "found_by": ["A", "B"],
+      "finding_ids": {"A": ["V18"], "B": ["V20"]},
+      "genuine_level": "weakened",
+      "layer": "draft",
+      "mechanism": "g",
+      "check": "probe --sweep state: ann_90 contribution is +0.4420 for Massachusetts and +0.4425 for Michigan, a change of -0.0005 log-odds. Claim C145's delta_risk is 6.6e-06, but the claim generator still labels it size 'slight', and the draft lists it as a shift. The sign is technically down, so the claim is not reversed. Arizona (C143, delta_risk 9.5e-4) and Missouri (C144, 6.5e-4) are also tiny. All of C139 to C145 have test 'disagrees', and the sentence drops their 'slightly' and 'training data only' qualifiers. An overstatement driven by a generator labelling a null effect as 'slight', so weakened."
+    },
+    {
+      "id": "E5",
+      "location": "plain_language.drafted.blocks[5] (ann_90)",
+      "statement": "This part shifts the predicted chance for a few states only",
+      "verifier_grades": {"A": "weakened"},
+      "found_by": ["A"],
+      "finding_ids": {"A": ["V19"]},
+      "genuine_level": "weakened",
+      "layer": "draft",
+      "mechanism": "e",
+      "check": "Same ablate as E2: the part moves every training customer's score (+0.441 mean, 4000 of 4000 affected). 'Only' holds for the between-state differences but not for the part's effect on predicted chance. The draft-layer version of E2, with a stronger scope word."
+    },
+    {
+      "id": "E6",
+      "location": "plain_language.drafted.readdown.ann_91.evidence[3]; also drafted.readdown.ann_93.evidence[2], drafted.blocks[1] (and worth_checking[1])",
+      "statement": "More voice-mail messages ... raise it steadily: from about 1% at 0 messages to about 6% at 32 messages (typical customer, no voice-mail plan)",
+      "verifier_grades": {"B": "weakened"},
+      "found_by": ["B"],
+      "finding_ids": {"B": ["V8"]},
+      "genuine_level": "weakened",
+      "layer": "draft",
+      "mechanism": "d",
+      "check": "subgroup `voice mail plan` == '0' and `number vmail messages` > 0: n = 0 of 4000. The sweep is an off-support constructed case. The direction (positive direct edge 0.609) is right, and B's on-support probe for plan holders gives a much smaller rise (0.1% to 0.7%). The readdown sentences do not say the case is off-support (worth_checking[1] notes the typical customer has no plan). The numbers reproduce for the case they name, so weakened."
+    },
+    {
+      "id": "E7",
+      "location": "plain_language.drafted.worth_checking[2]",
+      "statement": "a customer in West Virginia gets about 16% where the same customer elsewhere gets about 26%, from only 122 West Virginia customers",
+      "verifier_grades": {"B": "weakened"},
+      "found_by": ["B"],
+      "finding_ids": {"B": ["V17"]},
+      "genuine_level": "weakened",
+      "layer": "draft",
+      "mechanism": "b",
+      "check": "subgroup state == '49' and calls >= 4: n = 12 (5 left). ann_88 acts on 0 of them, and the gate is off below 4 calls everywhere, so only these 12 bear on the exception. 122 is the right count of West Virginia customers, but it is the wrong denominator for the evidence base. C132's test check is 'disagrees'. The flag's direction (a caution) is right, so weakened."
+    }
+  ],
+  "summary": {"refuted": {"database": 0, "draft": 0}, "weakened": {"database": 3, "draft": 4}, "none": 0}
+}

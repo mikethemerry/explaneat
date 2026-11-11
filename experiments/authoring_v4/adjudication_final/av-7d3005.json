@@ -1,0 +1,296 @@
+{
+ "item": "av-7d3005",
+ "errors": [
+  {
+   "id": "E1",
+   "location": "operations.ischaemia_pathway.hypothesis; operations.ischaemia_pathway.evidence[1]",
+   "statement": "35 patients open gate 290 from low resting BP alone; their mean predicted risk is 0.13",
+   "verifier_grades": {
+    "A": "refuted",
+    "B": "refuted"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V4",
+     "V5"
+    ],
+    "B": [
+     "V2",
+     "V3"
+    ]
+   },
+   "genuine_level": "refuted",
+   "layer": "database",
+   "mechanism": "f",
+   "check": "subgroup --where \"node_290 > 0 and node_204_a == 0\" (train): n = 35 (count right), mean predicted risk 18.1%, outcome rate 20.0%. On test: n = 8, mean risk 34.2%. 0.13 does not reproduce on either split.",
+   "kind": "K4"
+  },
+  {
+   "id": "E2",
+   "location": "operations.heart_disease_logit.hypothesis",
+   "statement": "oldpeak and thal:7 influence the output ONLY through these gates",
+   "verifier_grades": {
+    "A": "refuted",
+    "B": "refuted"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V6"
+    ],
+    "B": [
+     "V1"
+    ]
+   },
+   "genuine_level": "refuted",
+   "layer": "database",
+   "mechanism": "e",
+   "check": "The root's closed form (operations.json latex) contains -0.0654 x_{thal:7_a} as a direct edge into the output, and the same hypothesis lists 'thal:7 -0.07' in its linear core. True for oldpeak, false for thal:7: the scope word ONLY is broken.",
+   "kind": "K2"
+  },
+  {
+   "id": "E3",
+   "location": "operations.ischaemia_pathway.hypothesis (1987 'switched OFF ... only for patients in whom 290 is quiet'); operations.heart_disease_logit.hypothesis ('active only when the score is quiet'); record.summary ('active only without ischaemia evidence')",
+   "statement": "the age term 1987 is active only when the ischaemia gate is quiet",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V8"
+    ],
+    "B": [
+     "V15",
+     "V16"
+    ]
+   },
+   "genuine_level": "refuted",
+   "layer": "database",
+   "mechanism": "e",
+   "check": "subgroup node_290 > 0 and node_1987 > 0: 17 of the 135 with 290 on (12.6%); node_204_a > 0 and node_1987 > 0: 26 of 117. 'only' is too strong, but the same evidence sentence itself reports 13% with 290 active, so under the reading 'mostly switched off' it holds: weakened, not refuted.",
+   "kind": "K2",
+   "reconciled_from": "weakened",
+   "reconcile_reason": "K2 rule: 'active only when the score is quiet' / 'active only without ischaemia evidence' is broken by real training rows (node_290 > 0 and node_1987 > 0: 17 of 135; node_204_a > 0 and node_1987 > 0: 26 of 117). The 13% exception is stated only in the ischaemia_pathway passage; the heart_disease_logit hypothesis and record.summary state 'only' with no exception, so for those locations no reading makes it true. A grouped error is graded by its most definite location."
+  },
+  {
+   "id": "E4",
+   "location": "operations.st_ischaemia_gate_output.hypothesis; operations.st_ischaemia_gate_bp.hypothesis",
+   "statement": "gate 204 switches on for ST depression and/or a reversible thallium defect, a normal resting ECG adding a little",
+   "verifier_grades": {
+    "A": "weakened"
+   },
+   "found_by": [
+    "A"
+   ],
+   "finding_ids": {
+    "A": [
+     "V14"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "database",
+   "mechanism": "e",
+   "check": "probe --set oldpeak=0 --sweep restecg=0,2 --sweep thal=3,7 --nodes 204_a: pre-activation normal ECG + normal scan -1.891, normal ECG + reversible defect +0.454 (on), LVH + reversible defect -1.42 (off), LVH + normal scan -3.764. A reversible defect alone switches it on only with a normal ECG; the normal ECG shifts the pre-activation by +1.87, comparable to the defect's +2.34, not 'a little'. The formula and the other numbers reproduce.",
+   "kind": "K6",
+   "reconcile_note": "K6 kept weakened: the sentence names the normal ECG as a modifier, and for the reference (normal-ECG) patient a reversible defect alone does switch the gate on; the error is the size word 'a little'."
+  },
+  {
+   "id": "E5",
+   "location": "operations.heart_disease_logit.hypothesis",
+   "statement": "Signs match cardiology (of the linear core)",
+   "verifier_grades": {
+    "B": "weakened"
+   },
+   "found_by": [
+    "B"
+   ],
+   "finding_ids": {
+    "B": [
+     "V17"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "database",
+   "mechanism": "e",
+   "check": "Root closed form: fbs:0 +0.275 (high fasting sugar lowers risk) and thal:6 -0.383 (a fixed defect lowers risk) run against domain knowledge and are left out of the listed examples. The listed examples do match, so an overgeneralisation, not a wrong statement.",
+   "kind": "other"
+  },
+  {
+   "id": "E6",
+   "location": "plain_language drafted.readdown.ann_36.hypothesis[0], .evidence[1]; drafted.blocks[ann_36][1]; claims C49 (exception)",
+   "statement": "ST depression adds nothing until about 0.9 mm, but for patients with a normal resting ECG OR a reversible defect it rises steadily from the start",
+   "verifier_grades": {
+    "A": "refuted",
+    "B": "refuted"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V10"
+    ],
+    "B": [
+     "V4",
+     "V5",
+     "V6",
+     "V7"
+    ]
+   },
+   "genuine_level": "refuted",
+   "layer": "draft",
+   "mechanism": "g",
+   "check": "Same probe as E4: gate 204_a is open at 0 mm only with BOTH a normal ECG and a reversible defect (pre +0.454); a normal ECG alone (-1.891, the typical patient, flat to 0.8 mm) and a reversible defect alone with LVH (-1.42) both hinge. C49's exception 'who' list (both traits at share_out 1.0, the 44 steady patients = restecg 0 and thal 7, n = 44) is a conjunction rendered as 'or'; recheck recomputes the exception class as 'mixed within subgroup'.",
+   "kind": "K6"
+  },
+  {
+   "id": "E7",
+   "location": "plain_language drafted.blocks[ann_39][3]; claims C43 (exception)",
+   "statement": "the ST-depression rise (BP interaction) is slow then faster for most, but steady for patients with a normal resting ECG OR a reversible defect",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "refuted"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V12"
+    ],
+    "B": [
+     "V8",
+     "V9"
+    ]
+   },
+   "genuine_level": "refuted",
+   "layer": "draft",
+   "mechanism": "g",
+   "check": "probe --set trestbps=120 --set restecg=0 --set thal=3 --sweep oldpeak=0:2.8:8: ann_39 contribution flat at +0.029 to 0.8 mm, then +0.096, +0.223, +0.475, +0.747, +1.020 (slow then faster). A normal ECG alone is a counterexample to the 'or'; recheck marks the C43 exception class 'mixed within subgroup'.",
+   "kind": "K6"
+  },
+  {
+   "id": "E8",
+   "location": "plain_language drafted.blocks[ann_39][3]; claims C43",
+   "statement": "the rise is larger when resting BP is at or below 130 mm Hg (16% to 45% against 25% to 52%)",
+   "verifier_grades": {
+    "A": "weakened"
+   },
+   "found_by": [
+    "A"
+   ],
+   "finding_ids": {
+    "A": [
+     "V12"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "f",
+   "check": "C43 reproduces: whole-model rises 29.1 vs 27.3 points, log-odds 1.47 vs 1.07, part effect 0.99 vs 0.61. The scope ('across the whole model') is stated in the previous sentence, so no scope confusion; but C43's confidence is 'slight' with the qualifier 'slightly' and test 'unclear', and the sentence drops the qualifier.",
+   "kind": "K10"
+  },
+  {
+   "id": "E9",
+   "location": "plain_language drafted.readdown.ann_39.hypothesis[0], .evidence[3]; drafted.blocks[ann_39][2]; claims C42 (exception)",
+   "statement": "with a reversible defect the rise is slow then faster, but steady for patients with a normal resting ECG",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V11"
+    ],
+    "B": [
+     "V9",
+     "V10",
+     "V11",
+     "V12"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "g",
+   "check": "subgroup restecg == '0' and thal == '7': n = 44. recheck: C42 exception class recomputes 'mixed within subgroup' (steady for 17 of 44). probe restecg=0, thal=7: ann_39 increments 0.10, 0.14, 0.27, 0.27, 0.27 per 0.4 mm, close to steady for the typical case. Right for some patients, not for the group.",
+   "kind": "K11"
+  },
+  {
+   "id": "E10",
+   "location": "plain_language drafted.readdown.ann_36.evidence[2], .evidence[3]; drafted.blocks[ann_36][2]; claims C52, C53 (exceptions)",
+   "statement": "within a normal ECG, steady for patients with a reversible defect (C53); within a reversible defect, steady for patients with a normal ECG (C52)",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V13"
+    ],
+    "B": [
+     "V13",
+     "V14"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "g",
+   "check": "recheck: C52 and C53 exception classes recompute 'mixed within subgroup' (C52: steady for 17 of 44). The main shapes and group risks reproduce. Overstated scope of a code-computed exception.",
+   "kind": "K11"
+  },
+  {
+   "id": "E11",
+   "location": "plain_language drafted.readdown.ann_36.evidence[2], .evidence[3]; drafted.blocks[ann_36][2], [3]; claims C52, C53, C54",
+   "statement": "in the ST-depression part's section: ST depression counts more with a normal ECG (19% to 48% vs 26% to 37%), more with a reversible defect (35% to 84% vs 19% to 48%), etc.",
+   "verifier_grades": {
+    "A": "weakened"
+   },
+   "found_by": [
+    "A"
+   ],
+   "finding_ids": {
+    "A": [
+     "V13"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "C53's risks are whole-model typical-patient values (risk.reference 'typical patient of each group'); the part's own effect is smaller (part_effect 0.567 vs 0.371; probe restecg=0 thal=3: ann_36 contribution reaches +0.486 at 2.8 mm, i.e. 19% to 28% through the part). The ann_36 sentences give no 'across the whole model' scope, unlike the ann_39 ones. Direction holds.",
+   "kind": "K3"
+  }
+ ],
+ "summary": {
+  "refuted": {
+   "database": 3,
+   "draft": 2
+  },
+  "weakened": {
+   "database": 2,
+   "draft": 4
+  },
+  "none": 0
+ }
+}
