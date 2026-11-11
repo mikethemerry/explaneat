@@ -388,3 +388,89 @@ For the full formalization of the collapse operation, its three preconditions, a
 ### Note on Output Node Coverage
 
 The paper's coverage definition ($\text{covered}_A(v) = v \in V_A \land E_{\text{out}}(v) \subseteq E_A$) allows output nodes to be covered when $E_{\text{out}}(v) = \emptyset$ (trivially satisfied). The "output nodes are never covered" rule in the implementation is a **practical visualization choice**: output nodes should always remain visible. This does not affect collapsibility.
+
+## Three levels of explanation
+
+(Added 2026-11-12.) Coverage says that every node and every composition is accounted for. It
+does not say that the explanation is readable, nor that it means anything. An explanation makes
+three separable claims; the pipeline guarantees the first two mechanically, and the third is
+measured. All three are reported side by side (`explaneat/analysis/explanation_levels.py`: the
+export certificate's summary table, `build_explanations_csv.py`, `experiments/explanation_levels/`).
+
+| Level | Claim | Test |
+|---|---|---|
+| **1. Faithful** | The hierarchy computes the model's function | max abs error: function preservation (explained model state against the phenotype on every training row, < 1e-9) and the closed-form error of every leaf (`check_explanation`) |
+| **2. Decomposed** | Each leaf is a small, separately readable part | leaf count; **granularity** (below); the swallowed-layer warning (`get_coverage`, `decomposition` block) |
+| **3. Understood** | Each leaf maps to a concept a domain reader recognises | ground-truth recovery (synthetic networks); the **concept probe** (real data, below); the closed-form-only fraction |
+
+### Depth is not penalised
+
+Composition does not need to be layer by layer. A subnetwork three or four layers deep is a
+perfectly good leaf when it is read as one function (a chain of gates, a serial hinge). What a
+leaf must not do is hold many *parallel, independent* units that are not read separately: a
+whole hidden layer of 32 units as one leaf is "covered, not decomposed" (the explanation
+ladder, `experiments/explanation_barrier/RESULTS.md`).
+
+For an annotation $A$ let the *layer* of a non-entry node be the length of the longest path to it
+from an entry node over $E_A$, and count each original hidden unit once (split copies share a
+base id). Then
+
+- $\text{width}(A)$ = the most hidden units in one layer of $A$;
+- $\text{depth}(A)$ = the number of layers holding hidden units;
+- each hidden unit belongs to the smallest annotation that holds a copy of it as a non-entry
+  node (`part_of`);
+- **granularity** = the share of hidden units whose part has $\text{width} \le 6$
+  (`SMALL_WIDTH`).
+
+A chain of four units has width 1 and depth 4, so it counts as fine; a layer of eight units in
+one leaf has width 8 and counts as coarse. The warning *coarse decomposition* is raised when
+one part is wider than 6 and holds at least half of the hidden units; the block also reports
+the largest part's share of the model's parameters (enabled connections plus hidden biases),
+hidden units that sit only in the root composition, and hidden units that appear in parts only
+as entry nodes (nothing explains them).
+
+### The concept probe
+
+A *concept* is a derived feature of the raw (real-unit) inputs with a name a domain reader
+recognises (`explaneat/analysis/concepts.py`). The probe scores how well a concept $c$
+predicts a leaf's exit activation $a$ over the training rows (`probe_concept`,
+`explaneat verify concept`, `explaneat/analysis/concept_probe.py`):
+
+- $R^2$ of $a$ on $c$ (least squares with an intercept);
+- AUC: for a binary concept, the AUC of $a$ as a score for $c$ (sign-free, with the direction);
+  for a continuous concept and a gated leaf (a ReLU exit that is 0 on some rows), the AUC of
+  $c$ as a score for the gate being on;
+- mutual information in bits of the discretised $c$ and $a$, and MI normalised by $H(a)$;
+- $n$, the rows used.
+
+The **score** is $\max(R^2,\; 2(\mathrm{AUC}-0.5))$. The **grade** follows the score and nothing
+else:
+
+| Grade | Rule |
+|---|---|
+| `meaningful` | score $\ge 0.8$ (i.e. $R^2 \ge 0.8$ or AUC $\ge 0.9$) |
+| `partial` | score $\ge 0.5$ ($R^2 \ge 0.5$ or AUC $\ge 0.75$) |
+| `closed_form_only` | below that: the leaf is described by its formula and nothing named predicts it |
+| `unnamed` | no concept was probed |
+
+A leaf with several exits is scored per exit and takes the mean. Each annotation carries the
+result as a `meaning` block, `{grade, concept, probe: {r2, auc, mi, n, score, query_id}}`
+(`set_meaning`, or the `meaning` param of `annotate`); the grade is re-derived from the probe
+whenever it is read, so a typed grade cannot disagree with its score. The probe is a
+provenance-stamped query (`probe_concept` returns `provenance.id`), so a stated probe score is a
+`{{q:<id>.score|.2f}}` reference like any other number. The `understood_fraction` of an
+explanation is the share of leaves graded `meaningful`; `partial_fraction`,
+`closed_form_only_fraction` and `unnamed_fraction` complete it.
+
+### Scope of the vocabulary
+
+The current concept vocabulary is **per-input and feature-based**: an input as it is, an input
+above its median, a one-hot level, and pairwise products or conjunctions of a leaf's own entry
+inputs; plus any ad-hoc pandas expression over the input names. For tabular data (heart, adult,
+churn, MONK-2) the probe therefore mostly confirms per-input readings, which is what those
+explanations claim. A **relational domain needs its concept library**: Connect-4 (threats per
+side, open lines, centre occupancy, row placement, parity, immediacy) and KRK (adjacency,
+capture, check, stalemate) ship with the package; a new domain without a library can be probed
+only with ad-hoc expressions, and its leaves will grade `closed_form_only` until someone names
+the concept. A low grade therefore means "nothing in this vocabulary predicts the leaf", not
+"the leaf means nothing".

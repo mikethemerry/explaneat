@@ -533,10 +533,63 @@ def list_evidence(genome_id: str) -> str:
         return json.dumps({"entries": entries, "records": records, "total": total}, indent=2, default=str)
 
 
+def set_meaning(genome_id: str, annotation_id: str, meaning: str) -> str:
+    """Store a ``meaning`` block on an annotation (the third level: understood). ``meaning`` is
+    the JSON ``meaning`` block a ``probe_concept`` call returned: ``{"grade", "concept",
+    "probe": {"r2", "auc", "mi", "n", "score", "query_id"}}``. The grade is re-derived from the
+    probe's score with the stated thresholds, so a typed grade cannot disagree with its score;
+    a block without a concept is stored as ``unnamed``. Pass ``"null"`` to remove the block.
+
+    Args:
+        genome_id: UUID of the genome.
+        annotation_id: ID of the annotation (e.g. "ann_3") or its name.
+        meaning: JSON of the meaning block (from probe_concept), or "null".
+    """
+    from sqlalchemy.orm.attributes import flag_modified
+
+    from explaneat.analysis.concept_probe import grade_from_meaning
+    from explaneat.db.models import Explanation
+
+    try:
+        block = json.loads(meaning)
+    except Exception as e:
+        return json.dumps({"error": f"meaning is not JSON: {e}"})
+    if block is not None:
+        if not isinstance(block, dict) or "probe" not in block:
+            return json.dumps({"error": "meaning must be the probe_concept 'meaning' block: "
+                                        "{grade, concept, probe: {r2, auc, mi, n, score, query_id}}"})
+        block = {"grade": grade_from_meaning(block), "concept": block.get("concept"),
+                 "probe": {k: (block.get("probe") or {}).get(k) for k in ("r2", "auc", "mi", "n", "score", "query_id")}}
+    db = get_db()
+    with db.session_scope() as session:
+        explanation = lock_explanation(session, _to_uuid(genome_id))
+        find_annotation_in_operations(session, genome_id, annotation_id)
+        if not explanation or not explanation.operations:
+            return json.dumps({"error": "No explanation found"})
+        operations = list(explanation.operations)
+        for op in operations:
+            if op.get("type") != "annotate":
+                continue
+            params = op.get("params", {})
+            ann_id = (op.get("result") or {}).get("annotation_id") or f"ann_{op.get('seq', 0)}"
+            if ann_id == annotation_id or params.get("name") == annotation_id:
+                if block is None:
+                    params.pop("meaning", None)
+                else:
+                    params["meaning"] = block
+                op["params"] = params
+                explanation.operations = operations
+                flag_modified(explanation, "operations")
+                session.flush()
+                return json.dumps({"status": "ok", "annotation_id": ann_id, "meaning": block}, indent=2)
+    return json.dumps({"error": f"Annotation not found: {annotation_id}"})
+
+
 def register(mcp: FastMCP) -> None:
     """Register snapshot tools with the MCP server."""
     mcp.tool()(save_snapshot)
     mcp.tool()(update_narrative)
+    mcp.tool()(set_meaning)
     mcp.tool()(add_evidence)
     mcp.tool()(amend_evidence)
     mcp.tool()(list_evidence)

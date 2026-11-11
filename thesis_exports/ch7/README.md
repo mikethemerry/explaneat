@@ -16,6 +16,7 @@ edit here.
 | `coverage_time.pdf` | Coverage reached against explanation time, all 60 networks | `experiments/10seed/make_figures.py` | `d4ee4d1` |
 | `xor_ridge_valley.pdf`, `.png` | XOR score surfaces: the count family's ridge and the difference family's valley | `experiments/xor/make_xor_figures.py` | `b281ad0` |
 | `xor_gates.pdf`, `.png` | XOR gate decomposition for each family | `experiments/xor/make_xor_figures.py` | `b281ad0` |
+| `ch7_levels_table.tex` | The three levels of explanation (faithful / decomposed / understood) per study, plus the explanation ladder and the Connect-4 capacity network (LaTeX, needs `booktabs`); added 2026-11-12, `ch7_table.tex` unchanged | `experiments/explanation_levels/make_tables.py` from `compute_levels.py` (read only) | see `experiments/explanation_levels/RESULTS.md` |
 
 The 10-seed PDFs and the table are byte-identical copies of `experiments/10seed/figures/*.pdf` and
 `experiments/10seed/ch7_table.tex`. Their PNG versions and the original draft captions are in

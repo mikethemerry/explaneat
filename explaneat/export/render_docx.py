@@ -82,6 +82,7 @@ def render_docx(doc, path: Path, figures: Optional[Dict[str, Path]] = None,
     def pf(split):
         x = perf.get(split) or {}
         return f"{fnum(x.get('auc'), 4)} / {fnum(x.get('accuracy_at_0.5'), 4)} (n = {x.get('n', 'n/a')})"
+    from .coverage_view import levels_rows
     rows = [
         ("Dataset", (pv.get("dataset") or {}).get("name") or "n/a"),
         ("Experiment", pv["experiment"]["name"] + (f", seed {pv['seed']}" if pv.get("seed") is not None else "")),
@@ -99,6 +100,7 @@ def render_docx(doc, path: Path, figures: Optional[Dict[str, Path]] = None,
         ("Uncovered nodes / edges", f"{s['uncovered_nodes']} / {s['uncovered_edges']}"),
         ("Missing compositions", str(s["missing_compositions"])),
         ("Full coverage", "yes" if s["full_coverage"] else "NO"),
+        *levels_rows(doc),
         ("Drafted by", drafter_label(au["drafter"])),
         ("Verified by", verifier_label(au["human_verification"])),
     ]

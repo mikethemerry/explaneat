@@ -34,6 +34,29 @@ def signoff_columns(r):
                 signoff_sample_wrong=so.get('sample_wrong', ''), signoff_error_bound=so.get('error_bound_95', ''))
 
 
+LEVELS_DIR = os.environ.get('EXPLANEAT_LEVELS_DIR') or os.path.join(HERE, '..', 'explanation_levels', 'levels')
+LEVELS_COLUMNS = ('faithful_max_err', 'n_leaves', 'granularity', 'understood_fraction', 'closed_form_only_fraction')
+
+
+def levels_columns(r, l):
+    """The three levels of explanation (appended after every existing column; 2026-11-12).
+    faithful_max_err and n_leaves come from the record itself; granularity (share of hidden
+    units in a part at most 6 units wide, depth not penalised), understood_fraction (share of
+    leaves whose concept probe grades meaningful) and closed_form_only_fraction come from
+    experiments/explanation_levels/levels/<label>.json (compute_levels.py, read only) and are
+    blank when that file is missing."""
+    out = dict(faithful_max_err=r.get('function_preservation_max_abs_err', ''), n_leaves=r.get('n_leaf_annotations', ''),
+               granularity='', understood_fraction='', closed_form_only_fraction='')
+    p = os.path.join(LEVELS_DIR, f'{l}.json')
+    if os.path.exists(p):
+        with open(p) as f:
+            lv = json.load(f).get('levels') or {}
+        d, u = lv.get('decomposed') or {}, lv.get('understood') or {}
+        out.update(granularity=d.get('granularity', ''), understood_fraction=u.get('understood_fraction', ''),
+                   closed_form_only_fraction=u.get('closed_form_only_fraction', ''))
+    return {k: ('' if v is None else v) for k, v in out.items()}
+
+
 def row(i, l):
     r = json.load(open(os.path.join(HERE, REC_DIR, f'{l}.json')))
     v = r['verified_by_orchestrator']; oc = v['op_counts']
@@ -57,7 +80,8 @@ def row(i, l):
                 mike_changes=r.get('mike_verification', {}).get('changes', ''),
                 pilot=r.get('pilot', False), rule_agreement=r.get('rule_agreement', ''), vs_40gen=r.get('vs_40gen', ''),
                 resisted=r['resisted'],
-                **signoff_columns(r))
+                **signoff_columns(r),
+                **levels_columns(r, l))
 
 for name, labels in (('explanations.csv', PRE), ('explanations_heart100.csv', H100),
                      ('../churn/explanations_churn100.csv', C100), ('../churn/explanations_churn200.csv', C200)):

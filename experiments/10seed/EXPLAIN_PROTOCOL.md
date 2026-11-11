@@ -93,6 +93,27 @@ Scratch files go in your own directory:
     Write `≈` (and the tolerance, e.g. "≈ ... (max error 0.34 on 9 rows)") for a simplification
     (E3 dropped a term but kept "=").
 
+## Clarification for future runs: leaf size, depth and the third level (2026-11-12)
+
+The protocol above is frozen for the v4 run (already complete; nothing here changes its records).
+For future runs:
+
+- **Deep leaves are valid.** Composition does not need to be layer by layer. A subnetwork three
+  or four layers deep (a chain of gates, a serial hinge) is a perfectly good leaf when it is read
+  as one function. Do not cut a serial chain into one-unit leaves for the sake of it.
+- **Wide leaves are the problem.** A leaf must not hold many *parallel, independent* units that
+  are not read separately (a whole hidden layer as one leaf is "covered, not decomposed").
+  `get_coverage` reports this in its `decomposition` block: granularity (share of hidden units
+  whose part is at most 6 units wide; depth is not penalised) and a *coarse decomposition*
+  warning. Aim for granularity 1.0 and no warning.
+- **Meaning is measured, not judged.** For every leaf, run `probe_concept` (a concept from the
+  dataset's library, or an ad-hoc expression over the inputs; omit `concept` to sweep the
+  library) and store the returned `meaning` block with `set_meaning`. The grade (meaningful /
+  partial / closed_form_only) follows the probe's score with fixed thresholds; a leaf no concept
+  predicts is `closed_form_only`, which is an honest result. The explanation is reported at three
+  levels: faithful (function preservation), decomposed (leaves, granularity) and understood
+  (probe grades). See `docs/annotation_coverage_model.md`, "Three levels of explanation".
+
 ## Known tool behaviour (protocol v3, after the tool fixes merged in 88c1b00)
 
 Heart was explained with v2 tooling. The following were fixed afterwards and no longer

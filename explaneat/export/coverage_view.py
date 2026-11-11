@@ -130,3 +130,29 @@ def coverage_block(state, annotations) -> Dict[str, Any]:
         "uncovered_edges": uncovered_edges,
         "missing_compositions": missing,
     }
+
+
+def levels_rows(doc: Dict[str, Any], esc=lambda s: s, num=None) -> List[tuple]:
+    """The three levels of explanation as (label, text) rows for the certificate summary table.
+    ``esc`` escapes text for the target format; ``num`` formats a number (default ``repr``)."""
+    lv = (doc.get("coverage") or {}).get("levels")
+    if not lv:
+        return []
+    num = num or (lambda v, d=4: ("n/a" if v is None else (f"{v:.{d}g}" if isinstance(v, float) else str(v))))
+    f, d, u = lv["faithful"], lv["decomposed"], lv["understood"]
+    fp = f.get("function_preservation_max_abs_err")
+    faithful = (f"{'yes' if f.get('passed') else 'no'}: max abs error {num(fp)} (function preservation)"
+                + (f", {num(f['closed_form_max_abs_err'])} (closed forms)" if f.get("closed_form_max_abs_err") is not None else "")
+                if fp is not None else "not checked")
+    lp = d.get("largest_part") or {}
+    decomposed = (f"{d.get('n_leaves')} leaves; granularity {num(d.get('granularity'))}; largest part "
+                  f"{esc(str(lp.get('name')))} ({lp.get('hidden_units')} units, width {lp.get('width')}, depth {lp.get('depth')})"
+                  + ("; " + esc("; ".join(w.split(":")[0] for w in d["warnings"])) if d.get("warnings") else "")
+                  if d.get("granularity") is not None else f"{d.get('n_leaves')} leaves; no hidden units")
+    c = u.get("counts") or {}
+    understood = (f"{num(u.get('understood_fraction'))} of {u.get('leaves')} leaves meaningful "
+                  f"({c.get('meaningful', 0)} meaningful, {c.get('partial', 0)} partial, "
+                  f"{c.get('closed_form_only', 0)} closed-form only, {c.get('unnamed', 0)} unnamed)"
+                  if u.get("leaves") else "no leaves")
+    return [("Level 1, faithful", faithful), ("Level 2, decomposed", decomposed),
+            ("Level 3, understood", understood)]
