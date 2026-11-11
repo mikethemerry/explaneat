@@ -28,6 +28,11 @@ args() {
     p17-h10-w015-e20-tuned) echo "$P --set DefaultGenome.num_hidden=10 --set DefaultGenome.weight_init_stdev=0.15 --epochs 20 --tuned --threshold-step 0.1" ;;
     p18-h10-w015-e50) echo "$P --set DefaultGenome.num_hidden=10 --set DefaultGenome.weight_init_stdev=0.15 --epochs 50" ;;
     p19-h5-w015-e20) echo "$P --set DefaultGenome.num_hidden=5 --set DefaultGenome.weight_init_stdev=0.15 --epochs 20" ;;
+    p20-lrwarm) echo "$P --lr-warm" ;;
+    p21-lrwarm-h10-w015-e20) echo "$P --lr-warm --set DefaultGenome.num_hidden=10 --set DefaultGenome.weight_init_stdev=0.15 --epochs 20" ;;
+    p22-lrwarm-grow-tuned) echo "$P --lr-warm --set DefaultGenome.node_add_prob=0.8 --set DefaultGenome.conn_add_prob=0.9 --tuned --threshold-step 0.1" ;;
+    p23-lrwarm-grow-e20) echo "$P --lr-warm --set DefaultGenome.node_add_prob=0.8 --set DefaultGenome.conn_add_prob=0.9 --epochs 20" ;;
+    p24-lrwarm-grow-disj3) echo "$P --lr-warm --set DefaultGenome.node_add_prob=0.8 --set DefaultGenome.conn_add_prob=0.9 --set DefaultGenome.compatibility_disjoint_coefficient=3.0 --set DefaultSpeciesSet.compatibility_threshold=2.0" ;;
     *) echo "unknown pilot $1" >&2; exit 1 ;;
   esac
 }

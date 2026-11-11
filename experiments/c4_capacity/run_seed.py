@@ -114,6 +114,24 @@ def align_initial_hidden(pop, config):
     pop.species.speciate(config, pop.population, pop.generation)
 
 
+def lr_warm_start(pop, config, X_fit, y_fit):
+    """Warm start from the linear model: set every initial genome's direct input->output weights
+    and output bias to a logistic regression fitted on the same (z-scored) fit rows. Requires
+    initial_connection = full_direct. Hidden units (if any) keep their random init. The LR fit
+    is deterministic, so this is RNG-neutral."""
+    from sklearn.linear_model import LogisticRegression
+    lr = LogisticRegression(max_iter=5000, C=1.0).fit(X_fit, y_fit)
+    out = config.genome_config.output_keys[0]
+    for g in pop.population.values():
+        for j, k in enumerate(config.genome_config.input_keys):
+            g.connections[(k, out)].weight = float(lr.coef_[0, j])
+        g.nodes[out].bias = float(lr.intercept_[0])
+    g0 = next(iter(pop.population.values()))
+    logging.info("LR warm start: genome %s fit-row AUC before backprop %.5f (LR %.5f)", g0.key,
+                 cr.evaluate(g0, config, X_fit, y_fit)["auc"],
+                 cr.roc_auc_score(y_fit, lr.decision_function(X_fit)))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("seed", type=int)
@@ -127,6 +145,8 @@ def main():
     ap.add_argument("--threshold-step", type=float, default=0.1)
     ap.add_argument("--threshold-min", type=float, default=0.3)
     ap.add_argument("--val-frac", type=float, default=None)
+    ap.add_argument("--lr-warm", action="store_true",
+                    help="warm-start the direct input->output weights from a fitted logistic regression")
     ap.add_argument("--ckpt-every", type=int, default=10)
     ap.add_argument("--fresh", action="store_true")
     args = ap.parse_args()
@@ -191,6 +211,8 @@ def main():
         start_gen = 0
         if config.genome_config.num_hidden > 0:
             align_initial_hidden(pop, config)
+        if args.lr_warm:
+            lr_warm_start(pop, config, X_fit, y_fit)
 
     run = dict(csv=csv_path, dir=run_dir, ckpt_every=args.ckpt_every, t0=time.time(), wall_before=wall_before)
     reporter = cr.RunReporter(run, mon, last_generation=args.generations - 1, controller=controller)
@@ -219,7 +241,7 @@ def main():
     nsp = [int(r["n_species"]) for r in rows]
     meta = dict(task="c4", study="c4_capacity", seed=args.seed, name=name, variant="tuned" if args.tuned else "static",
                 n_generations=args.generations, best_generation=reporter.best_generation,
-                n_fit=int(len(y_fit)), val_frac=args.val_frac, n_epochs_backprop=args.epochs, overrides=args.set,
+                n_fit=int(len(y_fit)), val_frac=args.val_frac, lr_warm=args.lr_warm, n_epochs_backprop=args.epochs, overrides=args.set,
                 fitness_function="auc", criterion="bce", output_activation="sigmoid", mask_phantom=True,
                 torch_threads=cr.TORCH_THREADS, neat_config=str(cfg_path.relative_to(REPO)),
                 dynamic_threshold=(dict(species_min=args.species_min, species_max=args.species_max,
