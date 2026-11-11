@@ -153,13 +153,27 @@ def shape_phrase(layer, c, v, shape=None) -> str:
     else:
         main = "in stages"
     if sh.get("status") == "mixed" and sh.get("exceptions"):
-        e = sh["exceptions"][0]
-        alt = {"flat": "it barely moves", "steady": "it moves steadily", "hinge": "it has a threshold",
+        main += exception_phrase(layer, sh["exceptions"][0])
+    return main
+
+
+ALT_PHRASES = {"flat": "it barely moves", "steady": "it moves steadily", "hinge": "it has a threshold",
                "step": "it moves mostly in a jump", "levelling_off": "it levels off",
                "accelerating": "it speeds up", "peak": "it peaks inside the range", "dip": "it dips inside the range",
-               "multi_segment": "it moves in stages"}.get(e["class"], "it moves differently")
-        main += f" for most {_pop(layer)}, but for {' and '.join(e['who'])} {alt}"
-    return main
+               "multi_segment": "it moves in stages"}
+
+
+def exception_phrase(layer, e: Dict[str, Any]) -> str:
+    """", but for <group> it ..." for an exception that holds within its group; ", but for some
+    <group> (n_alt of the n_group) it ..." when it holds only for some of them (``mixed within
+    subgroup``)."""
+    who = " and ".join(e.get("who") or [])
+    if e.get("class") == "mixed within subgroup":
+        alt = ALT_PHRASES.get(e.get("alt_class"), "it moves differently")
+        n = f" ({e['n_alt']} of the {e['n_group']} sampled)" if e.get("n_group") else ""
+        return f" for most {_pop(layer)}, but for some {who}{n} {alt}"
+    alt = ALT_PHRASES.get(e["class"], "it moves differently")
+    return f" for most {_pop(layer)}, but for {who} {alt}"
 
 
 def saturation_phrase(c, shape=None) -> str:
@@ -212,6 +226,13 @@ def interaction_sentence(layer, c) -> Dict[str, Any]:
     numbers = (f"for a typical {one}, {tail_v} moves {_pred(layer)} from {_about(sg.get('risk_from'))} to "
                f"{_about(sg.get('risk_to'))} if {sg['cond']}, and from {_about(wg.get('risk_from'))} to "
                f"{_about(wg.get('risk_to'))} if {wg['cond']}")
+    bw = (wg.get("beyond_window") or {}) if st.get("only_within_window") else {}
+    if bw.get("above"):
+        numbers += (f" (above {ch['to']['text']} it changes for them too: from {_about(bw['above']['risk_from'])} "
+                    f"to {_about(bw['above']['risk_to'])} at {bw['above']['to_text']})")
+    elif bw.get("below"):
+        numbers += (f" (below {ch['from']['text']} it changes for them too: from {_about(bw['below']['risk_from'])} "
+                    f"at {bw['below']['from_text']} to {_about(bw['below']['risk_to'])})")
     if not consistent:
         shp = "" if v["kind"] == "category" else shape_phrase(layer, c, v)
         text = (("this changes the prediction only slightly: " if _conf(c).get("size") == "slight" else "")
@@ -256,7 +277,9 @@ def threshold_sentence(layer, c) -> Dict[str, Any]:
     if sh.get("status") == "fallback":
         text += "; across patients the change happens in an uneven way"
     elif sh.get("status") == "mixed" and sh.get("exceptions"):
-        text += f"; this holds for most {_pop(layer)}, but for {' and '.join(sh['exceptions'][0]['who'])} it differs"
+        e = sh["exceptions"][0]
+        some = "some " if e.get("class") == "mixed within subgroup" else ""
+        text += f"; this holds for most {_pop(layer)}, but for {some}{' and '.join(e['who'])} it differs"
     return _s(text + _tail(c) + "." + _little(layer, c), [c["id"]])
 
 

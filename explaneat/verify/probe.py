@@ -512,6 +512,16 @@ def frame(vm, split: str = "train"):
             cols[v.base] = raw[:, v.columns[0]].astype(float)
     cols["outcome"] = np.asarray(y, dtype=float)
     cols["risk"] = m.risk(m.logit(X))
+    # node values: node_290 > 0 (on), node_204_a == 0 (off); hidden and identity nodes only
+    vals = m._vals_train() if split != "test" else m.ev.forward(X)
+    inputs = {str(n.id) for n in m.structure.nodes if n.type.name == "INPUT"}
+    outs = set(m.out_ids)
+    for nid, v in vals.items():
+        if str(nid) in inputs or str(nid) in outs:
+            continue
+        key = "node_" + re.sub(r"[^0-9A-Za-z_]", "_", str(nid))
+        if key not in cols:
+            cols[key] = np.asarray(v, dtype=float)
     return pd.DataFrame(cols)
 
 
@@ -519,7 +529,8 @@ QUERY_HELP = ("Write a pandas query over real-unit columns. Category columns hol
               "so quote them: a5 == '1', thal == '7' (or use the label: sex_label == 'female'). Put names "
               "with spaces or hyphens in backticks: `capital-gain` > 5000, `total day minutes` > 200, "
               "`voice mail plan_label` == 'no voice-mail plan'. Each category level also has a 0/1 column "
-              "<var>_<code> (a5_1 == 1; counts: a1_1 + a2_1 + a3_1 == 2). Also: outcome (0/1), risk (predicted).")
+              "<var>_<code> (a5_1 == 1; counts: a1_1 + a2_1 + a3_1 == 2). Also: outcome (0/1), risk (predicted), "
+              "and each hidden node's value node_<id> (node_290 > 0 and node_204_a == 0).")
 
 
 def query_mask(vm, expr: str, split: str = "train") -> np.ndarray:

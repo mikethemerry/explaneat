@@ -18,7 +18,7 @@ import os
 import re
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PLAIN_DIR = REPO_ROOT / "experiments" / "10seed" / "plain_language"
@@ -106,7 +106,17 @@ def merge_existing(new: Dict[str, Any], old: Optional[Dict[str, Any]]) -> Dict[s
     if old.get("drafted"):
         d = dict(old["drafted"])
         if not same and not d.get("stale"):
-            # the claims changed: keep the draft only if it still passes the full lint
+            # the claims changed: fill the code-filled numbers (slots) again from the new claims,
+            # then keep the draft only if it still passes the full lint
+            from .plain_language_slots import has_slots, rerender_draft
+            if has_slots(d):
+                d2, slot_errs, n_re = rerender_draft(new, d)
+                if not slot_errs:
+                    d = d2
+                    d["rerendered"] = {"from_claims_hash": d.get("claims_hash"), "sentences": n_re,
+                                       "note": "the slots were filled again from the new claims"}
+                else:
+                    d["stale_errors"] = slot_errs[:20]
             errs = lint_draft(new, draft_input(d))
             if not errs:
                 d["revalidated"] = {"from_claims_hash": d.get("claims_hash"),
@@ -176,6 +186,12 @@ def _sentences(draft: Dict[str, Any]):
 
 
 def lint_text(text: str) -> List[str]:
+    if re.search(r"\{\{\s*C\d+\.", text or ""):
+        return ["an unfilled slot {{C..}}: render the draft (plain_language_slots.render_draft)"]
+    return _lint_text(text)
+
+
+def _lint_text(text: str) -> List[str]:
     out = []
     for rx, why in FORBIDDEN:
         m = rx.search(text or "")
@@ -265,33 +281,69 @@ _RISK_KEYS = re.compile(r"risk|rate|share|^from$|^to$|^delta$|predicted", re.I)
 _SKIP = {"rug", "band_risk_p10", "band_risk_p90", "typical_curve", "test_check", "estimate", "who"}
 
 
-def _probabilities(obj, out: List[float], key: str = "") -> None:
+_SHARE_KEYS = re.compile(r"share", re.I)
+
+
+def _probabilities(obj, out: List[float], key: str = "", shares: Optional[List[float]] = None) -> None:
+    """Probabilities a sentence may quote as a percentage. A *share* (``share_out``: the share of a
+    category among the rows a claim is about) goes to ``shares`` when given, not ``out``: a share
+    may be quoted, but a percentage near a share is not a risk rounded twice."""
     if isinstance(obj, dict):
         for k, v in obj.items():
             if k not in _SKIP:
-                _probabilities(v, out, k)
+                _probabilities(v, out, k, shares)
     elif isinstance(obj, list):
         for v in obj:
-            _probabilities(v, out, key)
+            _probabilities(v, out, key, shares)
     elif isinstance(obj, (int, float)) and not isinstance(obj, bool) and _RISK_KEYS.search(key) and 0 <= abs(obj) <= 1:
-        out.append(abs(float(obj)))
+        if shares is not None and _SHARE_KEYS.search(key):
+            shares.append(abs(float(obj)))
+        else:
+            out.append(abs(float(obj)))
 
 
-def lint_percents(text: str, claims: List[Dict[str, Any]]) -> List[str]:
-    """Round once. A percentage one unit of its last digit away from a cited probability, and
-    equal to none of them at the written precision, was rounded twice (4.45% -> 4.5% -> "about
-    5%"): write the value rounded once, as ``plain_language_templates.pct`` does ("about 4%")."""
-    probs: List[float] = []
+def context_probabilities(layer: Optional[Dict[str, Any]]) -> List[float]:
+    """Risks every sentence may quote without citing them: the typical patient's predicted risk
+    and the outcome's base rate."""
+    out: List[float] = []
+    if not layer:
+        return out
+    r = (layer.get("reference_patient") or {}).get("predicted_risk")
+    if isinstance(r, (int, float)):
+        out.append(float(r))
+    for k in ("base_rate", "outcome_rate", "prevalence"):
+        v = (layer.get("outcome") or {}).get(k) if isinstance(layer.get("outcome"), dict) else None
+        if isinstance(v, (int, float)) and 0 <= v <= 1:
+            out.append(float(v))
+    v = (layer.get("split") or {}).get("train_base_rate") if isinstance(layer.get("split"), dict) else None
+    if isinstance(v, (int, float)):
+        out.append(float(v))
+    return out
+
+
+def lint_percents(text: str, claims: List[Dict[str, Any]], context: Sequence[float] = ()) -> List[str]:
+    """Round once. A percentage one unit of its last digit away from a cited risk, and equal to
+    no candidate at the written precision, was rounded twice (4.45% -> 4.5% -> "about 5%"): write
+    the value rounded once, as ``plain_language_templates.pct`` does ("about 4%").
+
+    The candidates are the cited claims' risks and shares plus ``context`` (the typical patient's
+    predicted risk and the base rate, :func:`context_probabilities`). Only a *risk* can be the
+    value that was rounded twice: a percentage next to a category share (``share_out``) is not
+    flagged (2026-11-11: "about 20%" for the typical patient's 19.80% was wrongly flagged against
+    a category share of 0.193)."""
+    probs: List[float] = [float(x) for x in context]
+    shares: List[float] = []
     for c in claims:
-        _probabilities(c, probs)
+        _probabilities(c, probs, shares=shares)
+    allp = probs + shares
     errs = []
     for m in _PCT.finditer(text or ""):
         tok = m.group(1)
         v = float(tok)
         d = len(tok.split(".", 1)[1]) if "." in tok else 0
         unit = 10 ** (-d)
-        exact = [p for p in probs if abs(round(100 * p, d) - v) < 1e-9 or abs(100 * p - v) <= 0.5 * unit + 1e-9]
-        if exact or (v <= 1 and any(p < 0.01 for p in probs)) or (v >= 99 and any(p > 0.99 for p in probs)):
+        exact = [p for p in allp if abs(round(100 * p, d) - v) < 1e-9 or abs(100 * p - v) <= 0.5 * unit + 1e-9]
+        if exact or (v <= 1 and any(p < 0.01 for p in allp)) or (v >= 99 and any(p > 0.99 for p in allp)):
             continue
         near = [p for p in probs if abs(100 * p - v) <= unit + 1e-9]
         if near:
@@ -301,11 +353,69 @@ def lint_percents(text: str, claims: List[Dict[str, Any]]) -> List[str]:
     return errs
 
 
-def lint_points(text: str, claims: List[Dict[str, Any]]) -> List[str]:
+_TYPICAL_RISK = re.compile(r"\bfor (?:a|the) typical (?:patient|person|customer|case|respondent|individual)\b"
+                           r"(?:\s*\([^)]*\))?[^.;%,()]{0,40}?\bpredict(?:s|ed)?\b[^.;%0-9,]{0,40}?"
+                           r"\b(?:risk|chance|probability)\b[^.;%0-9,]{0,50}?(?:about\s+|around\s+|roughly\s+|below\s+|above\s+)?"
+                           r"([0-9]+(?:\.[0-9]+)?)%", re.I)
+
+
+def lint_reference_risk(text: str, layer: Optional[Dict[str, Any]]) -> List[str]:
+    """"For a typical patient ... the model predicts a risk of about N%": N must be the typical
+    patient's predicted risk (``reference_patient.predicted_risk``) rounded once."""
+    r = ((layer or {}).get("reference_patient") or {}).get("predicted_risk")
+    if not isinstance(r, (int, float)):
+        return []
+    errs = []
+    for m in _TYPICAL_RISK.finditer(text or ""):
+        if re.search(r"\bacts on\b|\bsuch\b|\bwith it\b|\bwithout it\b", m.group(0), re.I):
+            continue                 # the typical patient a part acts on: another reference
+        tok = m.group(1)
+        before = (text or "")[max(0, m.start(1) - 12):m.start(1)].lower()
+        if re.search(r"(?:below|under|less than)\s*$", before):
+            if r < float(tok) / 100:
+                continue
+        elif re.search(r"(?:above|over|more than)\s*$", before):
+            if r > float(tok) / 100:
+                continue
+        d = len(tok.split(".", 1)[1]) if "." in tok else 0
+        want = round(100 * float(r), d)
+        if abs(float(tok) - want) > 1e-9 and not (float(tok) < 1 and r < 0.01) and not (float(tok) > 99 and r > 0.99):
+            errs.append(f"{tok}% is not the typical patient's predicted risk {100 * r:.3g}%, which rounds once to "
+                        f"{want:.{d}f}%")
+    return errs
+
+
+_NO_CHANGE = re.compile(r"\b(?:stays?|remains?|only (?:with|if|for|when)|changes? nothing|no effect|does not change|"
+                        r"nothing (?:for|with|if))\b", re.I)
+
+
+def lint_window(text: str, claims: List[Dict[str, Any]]) -> List[str]:
+    """An interaction that holds "only if" within the window it was verified on
+    (``statement.only_within_window``: the other group's risk changes beyond it) may not be stated
+    without the window: "stays at about 38%" must say "between 118 and 175 beats per minute" or
+    what happens beyond it (heart100-s7, ann_38)."""
+    errs = []
+    for c in claims:
+        st = c.get("statement") or {}
+        if c.get("type") != "interaction" or not st.get("only_within_window") or not _NO_CHANGE.search(text or ""):
+            continue
+        ch = st.get("change") or {}
+        ends = [(ch.get(k) or {}).get("text") for k in ("from", "to")]
+        pats = [_number_with_unit(e) for e in ends if e]
+        if pats and any(p is not None and p.search(text) for p in pats):
+            continue
+        bw = (st.get("weaker_group") or {}).get("beyond_window") or {}
+        where = "above " + ends[1] if bw.get("above") else "below " + (ends[0] or "")
+        errs.append(f"{c['id']}: '{st.get('weaker_group', {}).get('group')}' do not change only between {ends[0]} "
+                    f"and {ends[1]}; {where} they do: give the range or say what happens beyond it")
+    return errs
+
+
+def lint_points(text: str, claims: List[Dict[str, Any]], context: Sequence[float] = ()) -> List[str]:
     """A sentence may not quote two different points for the same fold: where a shape's hinge
     was reconciled with a threshold claim, quote the named (median) point, not the typical
     patient's own hinge. Percentages must be rounded once (:func:`lint_percents`)."""
-    errs = lint_percents(text, claims)
+    errs = lint_percents(text, claims, context) + lint_window(text, claims)
     for c in claims:
         pt = (c.get("shape") or {}).get("point") or {}
         if not (c.get("shape") or {}).get("point_reconciled") or not pt:
@@ -422,13 +532,13 @@ def lint_draft(layer: Dict[str, Any], draft: Dict[str, Any]) -> List[str]:
         for p in lint_text(text):
             errs.append(f"{where}: {p}")
         if where.startswith(("summary", "annotations")):
-            for p in lint_confidence(text, cited) + lint_shape(text, cited) + lint_points(text, cited):
+            for p in lint_confidence(text, cited) + lint_shape(text, cited) + (lint_points(text, cited, context_probabilities(layer)) + lint_reference_risk(text, layer)):
                 errs.append(f"{where}: {p}")
         elif CLEARLY.search(text) and not all((c.get("confidence") or {}).get("word") == "clearly"
                                               for c in cited if c.get("type") != "null"):
             errs.append(f"{where}: says 'clearly' but not every cited claim may be called clear")
         if not where.startswith(("summary", "annotations")):
-            for p in lint_points(text, cited):
+            for p in (lint_points(text, cited, context_probabilities(layer)) + lint_reference_risk(text, layer)):
                 errs.append(f"{where}: {p}")
     return errs
 
@@ -654,7 +764,7 @@ def lint_draft_v5(layer: Dict[str, Any], draft: Dict[str, Any]) -> List[str]:
                         errs.append(f"{where}: cites {cid}, which belongs to another part")
                     else:
                         cited.append(c)
-                for p in (lint_text(text) + lint_qualifiers(text, cited) + lint_points(text, cited)
+                for p in (lint_text(text) + lint_qualifiers(text, cited) + (lint_points(text, cited, context_probabilities(layer)) + lint_reference_risk(text, layer))
                           + lint_shape(text, cited) + lint_part_counts(layer, pid, text, cited)):
                     errs.append(f"{where}: {p}")
         ev = {cid for s in (sec.get("evidence") or []) for cid in s.get("claims") or []}
@@ -753,7 +863,7 @@ def lint_draft_v4(layer: Dict[str, Any], draft: Dict[str, Any]) -> List[str]:
         q = lint_qualifiers(text, cited)
         if not prose:   # flagged items and revisions state their own counts ("from only 15 patients")
             q = [x for x in q if "small group" not in x]
-        for p in lint_text(text) + q + lint_points(text, cited):
+        for p in lint_text(text) + q + (lint_points(text, cited, context_probabilities(layer)) + lint_reference_risk(text, layer)):
             errs.append(f"{where}: {p}")
         if "readdown" in draft or draft.get("_v5"):
             for p in lint_part_counts(layer, _where_part(layer, draft, where), text, cited):
@@ -769,6 +879,11 @@ def set_draft(label: str, draft: Dict[str, Any], directory: Optional[Path] = Non
     layer = load_layer(label, directory)
     if layer is None:
         raise FileNotFoundError(f"no plain-language layer for {label}: run extract first")
+    # slots ({{C086.risk.to|pct}}) are filled by code, rounded once, and the citations derived
+    from .plain_language_slots import render_draft
+    draft, slot_errs = render_draft(layer, draft)
+    if slot_errs:
+        raise ValueError("draft slots do not resolve:\n  " + "\n  ".join(slot_errs))
     errs = lint_draft(layer, draft)
     if errs:
         raise ValueError("draft does not follow the writing protocol:\n  " + "\n  ".join(errs))

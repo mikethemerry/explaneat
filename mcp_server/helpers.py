@@ -169,6 +169,21 @@ def load_split_data(
     sample_fraction: float = 0.1,
     max_samples: int = 1000,
 ) -> Tuple[np.ndarray, np.ndarray, Optional[List[str]], Optional[List[str]], Optional[int]]:
+    """Load X, y data and dataset metadata from a dataset split (see
+    :func:`load_split_data_stamped`, which also says which rows were used)."""
+    X, y, names, classes, k, _stamp = load_split_data_stamped(
+        session, split_id, split_choice, sample_fraction, max_samples)
+    return X, y, names, classes, k
+
+
+def load_split_data_stamped(
+    session,
+    split_id: str,
+    split_choice: str = "train",
+    sample_fraction: float = 1.0,
+    max_samples: Optional[int] = None,
+    seed: int = 42,
+):
     """Load X, y data and dataset metadata from a dataset split.
 
     Applies the scaler stored on the split (if any) so that evaluation
@@ -235,10 +250,26 @@ def load_split_data(
             scale = np.array(split.scaler_params["scale_"])
             X = X * scale + np.array(split.scaler_params["min_"])
 
-    # Sample for visualization
-    X, y = sample_dataset(X, y, fraction=sample_fraction, max_samples=max_samples)
+    # Sample only when asked (sample_fraction < 1 or max_samples below the split's size); the
+    # same rows as sample_dataset, so earlier sampled results reproduce
+    from explaneat.analysis.provenance import split_stamp
+    n_split = len(indices)
+    n_sample = n_split
+    if sample_fraction is not None and max_samples is not None:
+        n_sample = max(min(int(n_split * sample_fraction), int(max_samples)), 1)
+    elif sample_fraction is not None and sample_fraction < 1.0:
+        n_sample = max(int(n_split * sample_fraction), 1)
+    elif max_samples is not None:
+        n_sample = max(min(n_split, int(max_samples)), 1)
+    used = list(indices)
+    if n_sample < n_split:
+        rng = np.random.RandomState(seed)
+        pick = rng.choice(n_split, size=n_sample, replace=False)
+        X, y = X[pick], y[pick]
+        used = [indices[i] for i in pick]
+    stamp = split_stamp(split_choice, len(X), n_split, n_sample < n_split, used, seed)
 
-    return X, y, dataset.feature_names, dataset.class_names, dataset.num_classes
+    return X, y, dataset.feature_names, dataset.class_names, dataset.num_classes, stamp
 
 
 def load_split_metadata(session, split_id: str) -> Dict[str, Any]:

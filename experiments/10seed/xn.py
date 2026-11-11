@@ -2,6 +2,12 @@
 
     uv run python experiments/10seed/xn.py <tool_name> '<json kwargs>'
     uv run python experiments/10seed/xn.py --list
+    uv run python experiments/10seed/xn.py --recheck <genome_id> [<summary.json>]   # protocol v4, last step
+
+Protocol v4 (EXPLAIN_PROTOCOL.md): evidence and query tools (query_subgroup, query_probe,
+query_ablate, query_enumerate, query_linearise) return provenance.id; write numbers as
+{{q:<id>.<path>|<fmt>}} in hypotheses and narratives (add_evidence(query_id=...) for a query's
+result; amend_evidence to correct a record).
 
 Every call is appended to experiments/10seed/logs/mcp_calls.jsonl with a timestamp,
 which is used to measure explanation wall clock per genome.
@@ -19,7 +25,7 @@ sys.path.insert(0, str(HERE.parents[1]))
 
 from mcp_server.server import get_db  # noqa: E402
 
-MODULES = ["experiments", "models", "operations", "evidence", "coverage",
+MODULES = ["experiments", "models", "operations", "evidence", "coverage", "queries", "analysis_tools",
            "datasets", "snapshots", "workflow"]
 
 
@@ -33,8 +39,24 @@ def tools():
     return out
 
 
+def recheck(genome_id: str, summary_path: str = None) -> int:
+    """The end-of-protocol recheck: free text against the model and the provenance of every
+    referenced number. Prints the summary (and writes it); exit status 1 on any mismatch."""
+    from explaneat.verify.artefacts import resolve
+    from explaneat.verify.recheck import recheck as _recheck, summary_block
+    get_db()
+    sb = summary_block(_recheck(resolve(genome_id), claims=False))
+    txt = json.dumps(sb, indent=2, default=str)
+    if summary_path:
+        Path(summary_path).write_text(txt + "\n")
+    print(txt)
+    return 0 if sb["complete_ok"] else 1
+
+
 def main():
     available = tools()
+    if len(sys.argv) >= 3 and sys.argv[1] == "--recheck":
+        sys.exit(recheck(sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else None))
     if len(sys.argv) < 2 or sys.argv[1] == "--list":
         for name, fn in sorted(available.items()):
             print(f"{name}{inspect.signature(fn)}")

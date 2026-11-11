@@ -633,6 +633,48 @@ class Explanation(Base, TimestampMixin):
         }
 
 
+class EvidenceLogEntry(Base):
+    """One computation an evidence or query tool ran for an explanation (its provenance).
+
+    Narratives reference its values as ``{{q:<id>.<path>|<format>}}``: the number is rendered
+    from ``values``, never typed. The entry records the *query*: the population or subgroup, the
+    quantity, the scope (direct edge, part or whole model), the unit, the split and n, and the
+    rows used (a hash of their indices). Kept in its own table so the operations stream (and its
+    replay) is unchanged. See ``explaneat/analysis/provenance.py``.
+    """
+
+    __tablename__ = "evidence_log"
+
+    id = Column(String(32), primary_key=True)
+    genome_id = Column(UUID(as_uuid=True), ForeignKey("genomes.id", ondelete="CASCADE"),
+                       nullable=False, index=True)
+    tool = Column(String(64), nullable=False)
+    arguments = Column(JSONB, nullable=False, default=dict)
+    query = Column(JSONB, nullable=False, default=dict)
+    split = Column(String(16))
+    n = Column(Integer)
+    n_split = Column(Integer)
+    sampled = Column(Boolean, nullable=False, default=False)
+    rows_hash = Column(String(64))
+    op_seq = Column(Integer)          # operations in the stream when it was computed
+    code_hash = Column(String(32))
+    values = Column(JSONB, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class ExplanationIntegrity(Base):
+    """Per-explanation integrity settings. ``strict``: bare typed numbers and exact formulas
+    that do not reproduce are refused in hypotheses and evidence. A row is created (strict on)
+    when an explanation is created; explanations without a row (all those that existed before)
+    are legacy: strict off."""
+
+    __tablename__ = "explanation_integrity"
+
+    genome_id = Column(UUID(as_uuid=True), ForeignKey("genomes.id", ondelete="CASCADE"), primary_key=True)
+    strict = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
 class NodeSplit(Base, TimestampMixin):
     """Stores node splits for dual-function nodes.
     

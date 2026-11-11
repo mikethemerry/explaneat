@@ -633,9 +633,10 @@ class VizDataRequest(BaseModel):
         "activation_profile", "edge_influence", "regime_map",
     ]
     params: Optional[Dict[str, Any]] = None
-    split: Literal["train", "test", "val", "both"] = "both"
-    sample_fraction: float = 0.1
-    max_samples: int = 1000
+    # full training split by default (2026-11-11 errata, fix 2); the UI passes explicit sampling
+    split: Literal["train", "test", "val", "both"] = "train"
+    sample_fraction: float = 1.0
+    max_samples: Optional[int] = None
     view: Literal["network", "source"] = "network"
 
     @model_validator(mode="after")
@@ -659,6 +660,7 @@ class VizDataResponse(BaseModel):
     true_class: Optional[List[int]] = None
     class_names: Optional[List[str]] = None
     num_classes: Optional[int] = None
+    split_info: Optional[Dict[str, Any]] = None  # which rows: split, n, sampled, label
 
 
 class ChildFormulaInfo(BaseModel):
@@ -738,7 +740,7 @@ class InputDistributionRequest(BaseModel):
 
     dataset_split_id: str
     feature_indices: List[int]  # 1 or 2 indices
-    split: Literal["train", "test", "val", "both"] = "both"
+    split: Literal["train", "test", "val", "both"] = "train"
     num_bins: int = 30
 
 
@@ -748,6 +750,7 @@ class InputDistributionResponse(BaseModel):
     viz_type: str  # "histogram" or "scatter2d"
     data: Dict[str, Any]
     feature_names: List[str]
+    split_info: Optional[Dict[str, Any]] = None  # which rows: split, n, sampled, label
 
 
 # =============================================================================
@@ -761,8 +764,8 @@ class ShapRequest(BaseModel):
     dataset_split_id: str
     annotation_id: Optional[str] = None  # None = whole model
     node_id: Optional[str] = None  # Single-node evidence
-    split: Literal["train", "test", "val", "both"] = "both"
-    max_samples: int = 100
+    split: Literal["train", "test", "val", "both"] = "train"
+    max_samples: Optional[int] = None   # None: the whole split (slow on large data; the UI passes 100)
     force_recompute: bool = False
 
 
@@ -781,6 +784,7 @@ class ShapResponse(BaseModel):
     mean_abs_shap: List[float]
     base_value: float
     outputs: Optional[List[ShapOutputResult]] = None
+    split_info: Optional[Dict[str, Any]] = None  # which rows: split, n, sampled, label
 
 
 # =============================================================================
@@ -829,9 +833,9 @@ class PerformanceRequest(BaseModel):
     """Request for model performance computation."""
 
     dataset_split_id: str
-    split: Literal["train", "test", "val", "both"] = "both"
+    split: Literal["train", "test", "val", "both"] = "train"
     sample_fraction: float = 1.0
-    max_samples: int = 10000
+    max_samples: Optional[int] = None
     at_seq: Optional[int] = None  # Compute at specific operation seq (for before/after)
     # Survival datasets only (task_type "survival"): evaluation horizons and
     # the calibration horizon, in the dataset's time units.
@@ -862,6 +866,7 @@ class PerformanceResponse(BaseModel):
     at_seq: Optional[int] = None
     has_non_identity_ops: bool = False
     survival: Optional[Dict[str, Any]] = None  # Survival datasets only
+    split_info: Optional[Dict[str, Any]] = None  # which rows: split, n, sampled, label
 
 
 # =============================================================================

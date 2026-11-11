@@ -96,8 +96,8 @@ def _recheck_text(r: Dict[str, Any]) -> str:
                      f"{len(ft['unchecked_sentences'])} sentences with numbers left to check by hand "
                      f"(listed in the JSON report under freetext.unchecked_sentences)")
     sm = r["summary"]
-    lines.append(f"  findings: {sm['mismatch']} mismatch, {sm['warn']} warn, {sm['info']} info "
-                 f"({sm['seconds']} s): {sm['verdict']}")
+    lines.append(f"  findings: {sm['mismatch']} mismatch, {sm.get('needs_review', 0)} needs review, "
+                 f"{sm['warn']} warn, {sm['info']} info ({sm['seconds']} s): {sm['verdict']}")
     for f in r["findings"]:
         if f["severity"] == "info":
             continue
@@ -122,15 +122,26 @@ def _recheck_text(r: Dict[str, Any]) -> str:
 @click.option("--no-claims", is_flag=True, help="Skip recomputing the plain-language claims (slow on large data).")
 @click.option("--no-prose", is_flag=True, help="Skip the prose number and direction checks and lint.")
 @click.option("--no-freetext", is_flag=True, help="Skip the checks of the hypotheses' and evidence's free text.")
-def recheck_cmd(target, ops, no_cache, as_json, out, no_claims, no_prose, no_freetext):
+@click.option("--summary", "summary_out", default=None, type=click.Path(dir_okay=False),
+              help="Write the record's recheck_summary block (JSON) here ('-' for stdout).")
+@click.option("--strict", is_flag=True, help="Exit 1 when any finding is a mismatch (protocol v4 gate).")
+def recheck_cmd(target, ops, no_cache, as_json, out, no_claims, no_prose, no_freetext, summary_out, strict):
     """L1: recompute coverage, function preservation, closed forms, every claim and the prose
     numbers, and compare them with what the explanation states."""
-    from .recheck import recheck
+    from .recheck import recheck, summary_block
     t = _target(target, ops)
     r = recheck(t, claims=not no_claims, prose=not no_prose, cache=not no_cache, freetext=not no_freetext,
                 log=lambda m: click.echo(f"... {m}", err=True))
     _emit(r, as_json, out, _recheck_text)
-    sys.exit(0)
+    if summary_out:
+        sb = json.dumps(summary_block(r), indent=2, default=str)
+        if summary_out == "-":
+            click.echo(sb)
+        else:
+            with open(summary_out, "w") as f:
+                f.write(sb + "\n")
+            click.echo(f"wrote {summary_out}", err=True)
+    sys.exit(1 if strict and r["summary"]["mismatch"] else 0)
 
 
 # ----------------------------------------------------------------------------- probe

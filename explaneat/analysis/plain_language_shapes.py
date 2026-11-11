@@ -40,11 +40,24 @@ tolerance is scaled by 0.75 and by 1.25. A shape is ``verified`` only when it is
 robust; otherwise the safe description applies (direction only, "in an uneven way"), unless a
 clear majority shape has its exceptions characterised by a category (``mixed``: "for most
 patients ..., but for patients with ... it ...").
+
+An exception is attributed to a category **only when it holds within that category**: the share
+of the category's sampled patients whose curve has the exception shape, counted over *all* of
+them (patients whose curve does not move at all included), must reach ``consistent_share`` (the
+same 90%) with at least ``MIN_GROUP`` patients. Otherwise the exception is recorded as
+``"mixed within subgroup"`` with the counts (``n_alt`` of ``n_group``), and the templates say "for
+some patients with ...". (2026-11-11, heart-s2 C30: "step" was named for reversible-defect
+patients from 25 of 177 moving curves; within the 90 such patients it holds for a minority, and
+for the typical one the part is off at every age.)
+
+:func:`cross_claim_conflicts` flags a shape exception that names a group in which an
+interaction claim on the same part reports no effect for that group's typical patient.
 """
 
 from __future__ import annotations
 
 import math
+import re
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
@@ -66,6 +79,8 @@ TOL = {
 }
 CONSISTENT_SHARE = 0.90
 MIXED_MAJORITY = 0.60
+MIN_GROUP = 10               # an exception group needs at least this many sampled patients
+MIXED_WITHIN = "mixed within subgroup"
 SENSITIVITY = (0.75, 1.25)
 GRID = 41
 PATIENT_SAMPLE = 300
@@ -313,6 +328,7 @@ def numeric_shape(m, v, scope, typical_raw_row: np.ndarray, rows_mask: np.ndarra
     elif float(np.min(risk)) < SATURATION:
         sat = "near 0%"
     idx = _sample(rows_mask)
+    idx_all = idx
     extra = None
     if extra_raw:
         extra = {c: (val - m.mean[c]) / m.scale[c] for c, val in extra_raw.items()}
@@ -389,16 +405,121 @@ def numeric_shape(m, v, scope, typical_raw_row: np.ndarray, rows_mask: np.ndarra
                     ins = float(np.mean(codes[other] == code)) if other.any() else 0.0
                     oth = float(np.mean(codes[~other] == code)) if (~other).any() else 0.0
                     if ins >= 0.8 and ins - oth >= 0.3:
-                        conds.append({"group": W.level(code)["group"], "share_in": sig(ins), "share_out": sig(oth)})
+                        conds.append({"group": W.level(code)["group"], "share_in": sig(ins), "share_out": sig(oth),
+                                      "in_group": np.asarray(W.raw_train[idx_all] == code)})
             alt = max((k for k in counts if k != typ["class"]), key=lambda k: counts[k])
             if conds:
-                out["exceptions"] = [{"class": alt, "share": sig(1 - share),
-                                      "who": [c["group"] for c in conds]}]
+                out["exceptions"] = [_exception_within(alt, conds, idx_all, classes_all, sig(1 - share))]
                 status = "mixed"
     out["status"] = status
     out["verified"] = status in ("verified", "mixed")
     if status == "fallback":
         out["description"] = "direction only, in an uneven way"
+    return out
+
+
+def _exception_within(alt: str, conds: List[Dict[str, Any]], idx_all: np.ndarray, classes_all: Sequence[str],
+                      share_of_moving: float) -> Dict[str, Any]:
+    """The exception for the categories in ``conds``: named as ``alt`` only when ``alt`` holds for
+    at least ``CONSISTENT_SHARE`` of the category's sampled patients (all of them, unaffected
+    ones included) and the category has ``MIN_GROUP`` of them; otherwise ``mixed within
+    subgroup`` with the counts."""
+    from .plain_language import sig
+    in_group = np.zeros(len(idx_all), dtype=bool)
+    for c in conds:
+        in_group |= c["in_group"]
+    n_group = int(in_group.sum())
+    n_alt = int(sum(1 for i in np.where(in_group)[0] if classes_all[i] == alt))
+    within = n_alt / n_group if n_group else 0.0
+    ex = {"class": alt, "share": share_of_moving, "who": [c["group"] for c in conds],
+          "n_group": n_group, "n_alt": n_alt, "share_within": sig(within),
+          "share_basis": "among all sampled patients in the group, including those whose curve does not move"}
+    if within < CONSISTENT_SHARE or n_group < MIN_GROUP:
+        ex["class"] = MIXED_WITHIN
+        ex["alt_class"] = alt
+    return ex
+
+
+def _share_among_folds(threshold_claim: Dict[str, Any], group: str) -> float:
+    """The share of a threshold claim's fold patients in ``group`` (its ``evidence.who``); a group
+    "... other than <label>" is the complement of that label's category."""
+    cats = (((threshold_claim.get("evidence") or {}).get("who") or {}).get("categories")) or []
+    for c in cats:
+        if c.get("group") == group:
+            return float(c.get("share_in") or 0.0)
+    mm = re.search(r"other than (?:an? |the )?(.+)$", group)
+    if mm:
+        lab = mm.group(1).strip().lower()
+        for c in cats:
+            if str(c.get("label", "")).lower().lstrip("a ").strip() in lab or lab in str(c.get("label", "")).lower():
+                return 1.0 - float(c.get("share_in") or 0.0)
+    return 0.0
+
+
+def cross_claim_conflicts(claims: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Shape exceptions that contradict an interaction claim of the same part: the exception names
+    a group (with a definite shape, not ``mixed within subgroup``) for whose typical patient an
+    interaction claim reports no effect (risk from = to, or a zero part effect). Each conflict is
+    also recorded on the shape claim (``shape.conflicts``)."""
+    out = []
+    by_part: Dict[str, List[Dict[str, Any]]] = {}
+    for c in claims:
+        by_part.setdefault((c.get("annotation") or {}).get("id"), []).append(c)
+    for c in claims:
+        sh = c.get("shape") or {}
+        for ex in sh.get("exceptions") or []:
+            if ex.get("class") in (MIXED_WITHIN, "flat"):
+                continue
+            for who in ex.get("who") or []:
+                for o in by_part.get((c.get("annotation") or {}).get("id"), []):
+                    if o is c or o.get("type") != "interaction":
+                        continue
+                    for g in o.get("groups") or []:
+                        if g.get("group") != who:
+                            continue
+                        rf, rt = g.get("risk_from"), g.get("risk_to")
+                        flat = (rf is not None and rt is not None and abs(rf - rt) < 1e-6) or \
+                            abs(float(g.get("part_effect") or 0.0)) < 1e-6
+                        if flat:
+                            conf = {"claim": c.get("id"), "exception": ex.get("class"), "group": who,
+                                    "other": o.get("id"),
+                                    "why": f"{o.get('id')} reports no effect for the typical {who.split(' ', 1)[-1] if who else 'patient'}"}
+                            out.append(conf)
+                            sh.setdefault("conflicts", []).append(conf)
+    # an interaction claim says a group does not change, but only within its window; a threshold
+    # claim of the same part and variable puts that group's fold (or the folds' spread) outside it
+    for c in claims:
+        if c.get("type") != "interaction":
+            continue
+        st = c.get("statement") or {}
+        ch = st.get("change") or {}
+        lo = (ch.get("from") or {}).get("value")
+        hi = (ch.get("to") or {}).get("value")
+        if lo is None or hi is None:
+            continue
+        for g in (st.get("weaker_group"),):
+            if not g or g.get("risk_from") is None or abs((g.get("risk_to") or 0) - (g.get("risk_from") or 0)) > 1e-6:
+                continue
+            for o in by_part.get((c.get("annotation") or {}).get("id"), []):
+                if o.get("type") != "threshold" or (o.get("statement") or {}).get("variable") != st.get("variable"):
+                    continue
+                th = (o.get("estimate") or {}).get("threshold") or {}
+                if th.get("by_group"):
+                    folds = [f["value"] for f in th["by_group"] if f.get("group") == g.get("group")]
+                elif _share_among_folds(o, g.get("group") or "") >= 0.3:
+                    # legacy claims (no per-group folds): the spread of the folds, when the group
+                    # makes up a good part of the patients with a fold
+                    folds = list(th.get("p10_p90_across_patients") or [])
+                else:
+                    folds = []
+                outside = [f for f in folds if f is not None and (f > hi + 1e-9 or f < lo - 1e-9)]
+                if outside:
+                    conf = {"claim": c.get("id"), "exception": "no change", "group": g.get("group"),
+                            "other": o.get("id"),
+                            "why": f"{o.get('id')} puts a fold at {outside[0]:.4g}, outside the window "
+                                   f"{lo:.4g} to {hi:.4g} in which {c.get('id')} reports no change"}
+                    out.append(conf)
+                    (c.setdefault("checks_cross", [])).append(conf)
     return out
 
 
@@ -431,7 +552,7 @@ def attach_shapes(m, parts, claims: List[Dict[str, Any]]) -> None:
     part_by_id = {p.id: p for p in parts}
     folds: Dict[str, List[Dict[str, Any]]] = {}
     for c in claims:
-        if c["type"] == "threshold" and c.get("verified"):
+        if c["type"] == "threshold" and c.get("verified") and not c["statement"]["threshold"].get("by_group"):
             folds.setdefault(c["statement"]["variable"], []).append(
                 {"claim": c.get("id"), "part": c["annotation"]["id"], "kind": c["statement"]["kind"],
                  "value": c["statement"]["threshold"]["value"], "text": c["statement"]["threshold"]["text"],
@@ -595,4 +716,16 @@ def shape_phrase_ok(text: str, shape: Optional[Dict[str, Any]], ctype: str) -> T
     if st == "mixed":
         ok = ok and bool(re.search(r"\bbut for\b|\bexcept for\b", text, re.I))
     want = f"a phrase for the shape '{cls}'" + (" plus 'but for …' for the exceptions" if st == "mixed" else "")
+    # an exception that holds only for some of its group may not be stated as the group's shape
+    for e in shape.get("exceptions") or []:
+        if e.get("class") != MIXED_WITHIN or e.get("alt_class") not in SHAPE_PHRASES:
+            continue
+        alt_rx = SHAPE_PHRASES[e["alt_class"]]
+        for mm in re.finditer(r"\b(?:but|except) for\b(?P<rest>[^.;]*)", text, re.I):
+            rest = mm.group("rest")
+            if re.search(alt_rx, rest, re.I) and not re.search(r"\bsome\b|\bfew\b|\bminority\b|\b\d+ of\b", rest, re.I):
+                ok = False
+                want += (f"; the exception '{e['alt_class']}' holds only for {e.get('n_alt')} of the "
+                         f"{e.get('n_group')} {' and '.join(e.get('who') or [])}: say 'for some ...', not "
+                         "'for patients with ...'")
     return ok, want

@@ -15,9 +15,42 @@ from ..helpers import (
     find_annotation_in_operations,
     load_annotations,
     load_split_data,
+    load_split_data_stamped,
     load_split_metadata,
     resolve_annotation_for_evaluation,
 )
+
+# Every evidence tool defaults to the FULL TRAINING split (no sampling, no train+test mixing).
+# Sampling is opt-in (sample_fraction < 1 or max_samples); every result says which rows it used
+# ("split": {split, n, n_split, sampled, rows_hash, label}) and carries a provenance id
+# ("provenance": {"id": "q_...", ...}) whose stored values narratives reference as
+# {{q:<id>.<path>|<fmt>}} (see explaneat/analysis/provenance.py).
+DEFAULT_SPLIT = "train"
+
+
+def _scope(annotation_id=None, node_id=None) -> str:
+    if annotation_id:
+        return f"annotation {annotation_id} (its function from entry to exit activations)"
+    if node_id:
+        return f"node {node_id} (its subgraph from the inputs)"
+    return "whole model"
+
+
+def stamp_and_record(genome_id: str, tool: str, arguments: Dict[str, Any], query: Dict[str, Any],
+                     stamp: Optional[Dict[str, Any]], result: Dict[str, Any]) -> Dict[str, Any]:
+    """Add the split stamp and a provenance record (stored in the evidence log) to a result."""
+    from explaneat.analysis.provenance import record_query
+    if stamp is not None:
+        result["split"] = stamp
+    db = get_db()
+    try:
+        with db.session_scope() as session:
+            prov = record_query(session, genome_id, tool, arguments, {**query, **({"rows": stamp["label"]} if stamp else {})},
+                                stamp, {k: v for k, v in result.items() if k != "provenance"})
+    except Exception as e:  # never lose the result for want of a log entry
+        prov = {"id": None, "stored": False, "warning": f"provenance not stored ({type(e).__name__})"}
+    result["provenance"] = prov
+    return result
 
 
 VALID_VIZ_TYPES = (
@@ -177,10 +210,10 @@ def _do_compute_viz_data(
     dataset_split_id: str,
     annotation_id: Optional[str] = None,
     node_id: Optional[str] = None,
-    split: str = "test",
+    split: str = DEFAULT_SPLIT,
     output_index: int = 0,
     sample_fraction: float = 1.0,
-    max_samples: int = 200,
+    max_samples: Optional[int] = None,
     params: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Core implementation for computing viz data (shared by multiple tools)."""
@@ -195,7 +228,7 @@ def _do_compute_viz_data(
     params = params or {}
 
     with db.session_scope() as session:
-        X, y, feature_names, class_names, num_classes = load_split_data(
+        X, y, feature_names, class_names, num_classes, stamp = load_split_data_stamped(
             session, dataset_split_id, split, sample_fraction, max_samples,
         )
 
@@ -365,6 +398,7 @@ def _do_compute_viz_data(
             "exit_names": exit_names,
             "dimensionality": [n_in, n_out],
             "suggested_viz_types": suggested,
+            "split": stamp,
         }
 
 
@@ -465,10 +499,10 @@ def compute_viz_data(
     dataset_split_id: str,
     annotation_id: Optional[str] = None,
     node_id: Optional[str] = None,
-    split: str = "test",
+    split: str = DEFAULT_SPLIT,
     output_index: int = 0,
     sample_fraction: float = 1.0,
-    max_samples: int = 200,
+    max_samples: Optional[int] = None,
     params: Optional[str] = None,
 ) -> str:
     """Compute visualization data for an annotation, node, or whole model.
@@ -486,10 +520,12 @@ def compute_viz_data(
         dataset_split_id: UUID of the dataset split to use for data.
         annotation_id: Annotation ID (optional, for annotation-level viz).
         node_id: Node ID (optional, for node-level viz).
-        split: Which split to use: "train", "test", "val", or "both".
-        output_index: Which output dimension to visualize (default 0).
-        sample_fraction: Fraction of data to sample (0-1).
-        max_samples: Maximum number of samples.
+        split: Which split: "train" (default), "test", "val", or "both". Evidence for an
+            explanation uses train.
+        output_index: Which output dimension (default 0).
+        sample_fraction: Fraction of the split to sample (default 1.0: all rows).
+        max_samples: Optional cap on the rows (default None: all rows). Sampling is opt-in;
+            the result's "split" block says which rows were used.
         params: JSON string of extra params (e.g. {"input_dim": 1, "input_dims": [0,2]}).
     """
     extra_params = json.loads(params) if params else {}
@@ -508,6 +544,14 @@ def compute_viz_data(
         )
     except Exception as e:
         return json.dumps({"error": str(e)})
+    result = stamp_and_record(
+        genome_id, "compute_viz_data",
+        {"viz_type": viz_type, "dataset_split_id": dataset_split_id, "annotation_id": annotation_id,
+         "node_id": node_id, "split": split, "output_index": output_index, "sample_fraction": sample_fraction,
+         "max_samples": max_samples, "params": extra_params},
+        {"quantity": f"{result['viz_type']} visualisation data", "scope": _scope(annotation_id, node_id),
+         "population": f"{split} split", "unit": "the exit activation (model output for the whole model)"},
+        result.get("split"), result)
     return json.dumps(result, indent=2, default=_json_default)
 
 
@@ -517,10 +561,10 @@ def render_visualization(
     dataset_split_id: str,
     annotation_id: Optional[str] = None,
     node_id: Optional[str] = None,
-    split: str = "test",
+    split: str = DEFAULT_SPLIT,
     output_index: int = 0,
     sample_fraction: float = 1.0,
-    max_samples: int = 200,
+    max_samples: Optional[int] = None,
     params: Optional[str] = None,
     title: str = "",
 ) -> list:
@@ -535,10 +579,12 @@ def render_visualization(
         dataset_split_id: UUID of the dataset split.
         annotation_id: Annotation ID (optional).
         node_id: Node ID (optional).
-        split: Which split: "train", "test", "val", or "both".
+        split: Which split: "train" (default), "test", "val", or "both". Evidence for an
+            explanation uses train.
         output_index: Which output dimension (default 0).
-        sample_fraction: Fraction of data to sample (0-1).
-        max_samples: Maximum number of samples.
+        sample_fraction: Fraction of the split to sample (default 1.0: all rows).
+        max_samples: Optional cap on the rows (default None: all rows). Sampling is opt-in;
+            the result's "split" block says which rows were used.
         params: JSON string of extra params.
         title: Optional title for the plot.
     """
@@ -568,6 +614,7 @@ def render_visualization(
         "entry_names": result["entry_names"],
         "exit_names": result["exit_names"],
         "suggested_viz_types": result["suggested_viz_types"],
+        "split": result.get("split"),
     }
 
     return [
@@ -582,10 +629,10 @@ def get_viz_summary(
     dataset_split_id: str,
     annotation_id: Optional[str] = None,
     node_id: Optional[str] = None,
-    split: str = "test",
+    split: str = DEFAULT_SPLIT,
     output_index: int = 0,
     sample_fraction: float = 1.0,
-    max_samples: int = 200,
+    max_samples: Optional[int] = None,
     params: Optional[str] = None,
 ) -> str:
     """Compute visualization data and return summary statistics (no image).
@@ -599,10 +646,12 @@ def get_viz_summary(
         dataset_split_id: UUID of the dataset split.
         annotation_id: Annotation ID (optional).
         node_id: Node ID (optional).
-        split: Which split: "train", "test", "val", or "both".
+        split: Which split: "train" (default), "test", "val", or "both". Evidence for an
+            explanation uses train.
         output_index: Which output dimension (default 0).
-        sample_fraction: Fraction of data to sample (0-1).
-        max_samples: Maximum number of samples.
+        sample_fraction: Fraction of the split to sample (default 1.0: all rows).
+        max_samples: Optional cap on the rows (default None: all rows). Sampling is opt-in;
+            the result's "split" block says which rows were used.
         params: JSON string of extra params.
     """
     extra_params = json.loads(params) if params else {}
@@ -660,6 +709,14 @@ def get_viz_summary(
         if data["edges"]:
             summary["top_edge"] = data["edges"][0]
 
+    summary = stamp_and_record(
+        genome_id, "get_viz_summary",
+        {"viz_type": viz_type, "dataset_split_id": dataset_split_id, "annotation_id": annotation_id,
+         "node_id": node_id, "split": split, "output_index": output_index, "sample_fraction": sample_fraction,
+         "max_samples": max_samples, "params": extra_params},
+        {"quantity": f"summary of the {result['viz_type']} visualisation", "scope": _scope(annotation_id, node_id),
+         "population": f"{split} split", "unit": "the exit activation (model output for the whole model)"},
+        result.get("split"), summary)
     return json.dumps(summary, indent=2, default=_json_default)
 
 
@@ -668,8 +725,8 @@ def compute_shap(
     dataset_split_id: str,
     annotation_id: Optional[str] = None,
     node_id: Optional[str] = None,
-    split: str = "test",
-    max_samples: int = 200,
+    split: str = DEFAULT_SPLIT,
+    max_samples: Optional[int] = None,
 ) -> str:
     """Compute SHAP values to assess feature importance.
 
@@ -683,8 +740,10 @@ def compute_shap(
         dataset_split_id: UUID of the dataset split.
         annotation_id: Annotation ID (optional).
         node_id: Node ID (optional).
-        split: Which split: "train", "test", "val", or "both".
-        max_samples: Maximum samples for SHAP background (default 200).
+        split: Which split: "train" (default), "test", "val", or "both".
+        max_samples: Optional cap on the rows explained and used as background (default None:
+            the whole split; slow on large data, so pass e.g. 500 there and quote the n the
+            result's "split" block reports).
     """
     from explaneat.analysis.shap_analysis import compute_shap_values
     from explaneat.analysis.annotation_function import AnnotationFunction
@@ -694,7 +753,7 @@ def compute_shap(
 
     db = get_db()
     with db.session_scope() as session:
-        X, y, feature_names_ds, class_names, num_classes = load_split_data(
+        X, y, feature_names_ds, class_names, num_classes, stamp = load_split_data_stamped(
             session, dataset_split_id, split, 1.0, max_samples,
         )
 
@@ -731,7 +790,7 @@ def compute_shap(
             shap_input = X
 
     # Run SHAP (outside session since it's CPU-heavy)
-    result = compute_shap_values(predict_fn, shap_input, feat_names, max_samples)
+    result = compute_shap_values(predict_fn, shap_input, feat_names, max_samples or len(shap_input))
 
     output = {
         "feature_names": result["feature_names"],
@@ -741,6 +800,13 @@ def compute_shap(
     if "outputs" in result:
         output["outputs"] = result["outputs"]
 
+    output = stamp_and_record(
+        genome_id, "compute_shap",
+        {"dataset_split_id": dataset_split_id, "annotation_id": annotation_id, "node_id": node_id,
+         "split": split, "max_samples": max_samples},
+        {"quantity": "mean |SHAP value| per input", "scope": _scope(annotation_id, node_id),
+         "population": f"{split} split", "unit": "the exit activation (model output for the whole model)"},
+        stamp, output)
     return json.dumps(output, indent=2, default=_json_default)
 
 
@@ -775,8 +841,8 @@ def compute_performance(
     genome_id: str,
     dataset_split_id: str,
     annotation_id: Optional[str] = None,
-    split: str = "test",
-    max_samples: int = 1000,
+    split: str = DEFAULT_SPLIT,
+    max_samples: Optional[int] = None,
     horizons: Optional[List[float]] = None,
     calibration_horizon: Optional[float] = None,
 ) -> str:
@@ -797,8 +863,8 @@ def compute_performance(
         genome_id: UUID of the genome.
         dataset_split_id: UUID of the dataset split.
         annotation_id: Annotation ID (optional, for annotation-level perf).
-        split: Which split: "train", "test", "val", or "both".
-        max_samples: Maximum number of samples.
+        split: Which split: "train" (default), "test", "val", or "both".
+        max_samples: Optional cap on the rows (default None: the whole split).
         horizons: Survival only: evaluation times (dataset time units).
         calibration_horizon: Survival only: horizon for the calibration table.
     """
@@ -819,10 +885,17 @@ def compute_performance(
                 structure_log_risk_fn(model_state), X_tr, y_tr, X_ev, y_ev,
                 meta=meta, horizons=horizons, calibration_horizon=calibration_horizon,
             )
-            result["split"] = split
+            result["split_name"] = split
+            from explaneat.analysis.provenance import split_stamp
+            result = stamp_and_record(genome_id, "compute_performance",
+                                      {"dataset_split_id": dataset_split_id, "split": split, "horizons": horizons,
+                                       "calibration_horizon": calibration_horizon},
+                                      {"quantity": "survival performance", "scope": "whole model",
+                                       "population": f"{split} split", "unit": "metric"},
+                                      split_stamp(split, len(y_ev), len(y_ev), False), result)
             return json.dumps(result, indent=2, default=_json_default)
 
-        X, y, feature_names, class_names, num_classes = load_split_data(
+        X, y, feature_names, class_names, num_classes, stamp = load_split_data_stamped(
             session, dataset_split_id, split, 1.0, max_samples,
         )
 
@@ -852,9 +925,12 @@ def compute_performance(
             # Multi-output (k-class logits, softmax-trained): the regression
             # metrics below assume one output per row, so report the
             # classification metrics only.
-            return json.dumps(
-                _multiclass_performance(predictions, y, struct_net.model_output_activation),
-                indent=2, default=_json_default)
+            mres = stamp_and_record(
+                genome_id, "compute_performance", {"dataset_split_id": dataset_split_id, "split": split,
+                                                   "max_samples": max_samples},
+                {"quantity": "classification performance", "scope": "whole model", "population": f"{split} split",
+                 "unit": "metric"}, stamp, _multiclass_performance(predictions, y, struct_net.model_output_activation))
+            return json.dumps(mres, indent=2, default=_json_default)
 
         y_flat = y.ravel()
         pred_flat = predictions.ravel() if predictions.ndim > 1 else predictions
@@ -894,15 +970,20 @@ def compute_performance(
             except Exception:
                 pass
 
-        return json.dumps(result, indent=2, default=_json_default)
+    result = stamp_and_record(
+        genome_id, "compute_performance", {"dataset_split_id": dataset_split_id, "split": split,
+                                           "max_samples": max_samples, "annotation_id": annotation_id},
+        {"quantity": "model performance (mse, accuracy, AUC)", "scope": "whole model", "population": f"{split} split",
+         "unit": "metric"}, stamp, result)
+    return json.dumps(result, indent=2, default=_json_default)
 
 
 def get_input_distribution(
     genome_id: str,
     dataset_split_id: str,
     annotation_id: Optional[str] = None,
-    split: str = "test",
-    max_samples: int = 1000,
+    split: str = DEFAULT_SPLIT,
+    max_samples: Optional[int] = None,
 ) -> str:
     """Compute input feature distribution statistics.
 
@@ -913,15 +994,15 @@ def get_input_distribution(
         genome_id: UUID of the genome.
         dataset_split_id: UUID of the dataset split.
         annotation_id: Annotation ID (optional, to use entry activations).
-        split: Which split: "train", "test", "val", or "both".
-        max_samples: Maximum number of samples.
+        split: Which split: "train" (default), "test", "val", or "both".
+        max_samples: Optional cap on the rows (default None: the whole split).
     """
     from explaneat.analysis.activation_extractor import ActivationExtractor
     from explaneat.analysis.annotation_function import AnnotationFunction
 
     db = get_db()
     with db.session_scope() as session:
-        X, y, feature_names, class_names, num_classes = load_split_data(
+        X, y, feature_names, class_names, num_classes, stamp = load_split_data_stamped(
             session, dataset_split_id, split, 1.0, max_samples,
         )
 
@@ -966,6 +1047,11 @@ def get_input_distribution(
         "n_samples": data.shape[0],
         "n_features": n_features,
     }
+    result = stamp_and_record(
+        genome_id, "get_input_distribution", {"dataset_split_id": dataset_split_id, "annotation_id": annotation_id,
+                                              "split": split, "max_samples": max_samples},
+        {"quantity": "per-input distribution (standardised values)", "scope": _scope(annotation_id),
+         "population": f"{split} split", "unit": "standardised (z) input values"}, stamp, result)
     return json.dumps(result, indent=2, default=_json_default)
 
 
