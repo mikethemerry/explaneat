@@ -1,0 +1,40 @@
+{
+ "lad-b58a2": {
+  "task": "additive", "arch": "4",
+  "truth": "f = 2*(-1 + 1.2 za + 1.5 relu(zb - 0.5) - 0.8 zi + 1.0 smoker); other inputs unused",
+  "terms": {
+   "age (linear, +)": "recovered: age ramp, risk rises with age (the ramp switching off at the oldest is a network artefact on 1056 rows, flagged by the explainer itself)",
+   "bmi hinge above 29.5 (+)": "recovered: obesity hinge, off below about 30, steep above",
+   "income (linear in log income, -)": "recovered: low income adds risk through a hinge (a reasonable reading of a convex decreasing effect)",
+   "smoker step (+)": "recovered: smoking raises risk (read through the age ramp and the protective non-smoker unit)",
+   "unused inputs": "recovered: visits, score, female, urban, insured and noise move the prediction little"
+  },
+  "spurious": "two interactions that are not in the truth: income threshold rising with age, smoking mattering less for the oldest (sigmoid saturation; a model fact, not a truth fact)",
+  "recovered": 5, "total": 5, "grade": "recovered"
+ },
+ "lad-6f6c3": {
+  "task": "hinges3", "arch": "4",
+  "truth": "f = 2*(-0.5 + 1.5 relu(-0.5 + za + 0.8 zb) - 1.2 relu(-0.3 + zi - 0.7 zs) + 1.0 relu(-1 + zv + smoker))",
+  "terms": {
+   "hinge 1: age and bmi jointly (+)": "recovered: age_bmi_hinge, a joint threshold that heavier people reach younger",
+   "hinge 2: income relative to score (-)": "recovered: income_score_hinge, high income relative to score is protective and a higher score cancels it",
+   "hinge 3: visits plus smoking (+)": "recovered: visits_smoker_hinge, smoking lowers the visit threshold and adds to it",
+   "unused inputs": "recovered: female, urban, insured and noise barely change the prediction"
+  },
+  "spurious": "a fourth, near-linear correction unit (age, bmi, score) read only by its direction (a fitting artefact of width 4 for 3 true hinges)",
+  "recovered": 4, "total": 4, "grade": "recovered"
+ },
+ "lad-12979": {
+  "task": "threeway", "arch": "8",
+  "truth": "f = 2*(-0.6 + 0.6 za - 0.5 zi + 2.0 smoker*urban*za + 1.0 female*zb)",
+  "terms": {
+   "age (linear, +)": "recovered: age_risk, older means higher risk",
+   "income (-)": "recovered: low_income adds risk",
+   "3-way smoker x urban x age (sign-changing slope)": "recovered: urban_smoker_age_gate, the age effect is much steeper for urban smokers, lower risk when young and higher when old; smoking changes little in rural areas",
+   "2-way female x bmi": "recovered: female_bmi, steep bmi effect for women, flat for men",
+   "unused inputs": "recovered: visits, score, insured and noise have small effects"
+  },
+  "spurious": "low-income effect growing with age; a rise for very heavy men; the gate is not neutral for urban non-smokers (explainer flagged both as side effects)",
+  "recovered": 5, "total": 5, "grade": "recovered"
+ }
+}

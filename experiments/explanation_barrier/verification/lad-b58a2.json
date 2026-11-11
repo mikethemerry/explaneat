@@ -1,0 +1,386 @@
+{
+ "item_id": "lad-b58a2",
+ "genome_id": "ad642a9d-faae-4c1b-9b93-664b0198041d",
+ "target_hash": null,
+ "target_hash_note": "recheck.json has no target_hash for this record target (field null)",
+ "verifier": "independent verifier agent (explanation-verifier skill)",
+ "started_at": "2026-11-11T22:12:24+13:00",
+ "finished_at": "2026-11-11T22:19:00+13:00",
+ "minutes": 7,
+ "overall": {
+  "grade": "weakened",
+  "summary": "Every number, count, threshold, direction, closed form, coverage and preservation figure reproduces; two small imprecisions: income's effect above the low-income threshold is understated as 'a little', and the smoker's risk does not level off at 94% (it reaches 96% by age 90)."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "structural and compositional coverage 1.0, hierarchy complete",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.0 / 1.0, no uncovered nodes, one root (risk_model_root) containing output 0, all four leaves under it",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "0.0",
+   "check": "verify recheck",
+   "evidence": "recomputed 0 (numeric leaf error <= 1.8e-15)",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.closed_form_max_abs_err",
+   "statement": "0.0203 (and per-leaf 0.02, 0.0048, 0.0069, 0.012)",
+   "check": "verify recheck",
+   "evidence": "recomputed 0.02025 (bmi), 0.00483, 0.00689, 0.01195; all four closed forms match coefficient by coefficient (0 mismatches)",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "structure",
+   "statement": "10 input splits into four copies, one hidden unit per leaf, root over the output",
+   "check": "operations replayed from the database",
+   "evidence": "op counts split_node 10, annotate 5, rename 10; leaves each hold the 10 input copies plus one of units 1-4; root subgraph = output 0 with the four leaves as children",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json"
+   ]
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "age: <1% at 20, 93% at 75, levels off (earlier for smokers); smoking 11% -> 49%; bmi adds from ~30 (86% at 36); income below ~50k adds risk (82% at 10), threshold higher when older; score 2.66->2.94 at 75 vs -2.08->-0.02 at 50; ablation AUCs 0.793/0.871/0.895/0.911",
+   "check": "probe age x smoker sweep, bmi sweep, income x age sweep; ablate",
+   "evidence": "typical non-smoker: 0.04% at 20, 93.5% at 75, 95.4% at 90; smoker ramp off from 65; smoking 11.1% -> 49.5%; bmi 29 11.4%, 30 13.8%, 36 85.6%; income 10 -> 82.1%; hinge zero between 40 and 50 at age 35, between 50 and 60 at age 70; AUC 0.9128 -> 0.7928 with ramp off (others from recheck 0.8712, 0.8952, 0.9113)",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json --hold typical --sweep age=20:90:15 --sweep smoker=0,1 --nodes 1,2,3,4",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json --hold typical --sweep income=10:100:10 --sweep age=35,50,70 --nodes 3",
+    "uv run python -m explaneat verify ablate /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json --part age_smoker_ramp"
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "upheld",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "2157 of 7255 smokers keep the protective unit; AUC 0.913 -> 0.911; noise sweep 13.7% -> 10.2%; ramp affine fit alone AUC 0.9130; ramp off on 1056 rows",
+   "check": "subgroup counts, noise sweep, linearise",
+   "evidence": "2157 / 7255; noise -3: 13.7%, +3: 10.2%; ramp linearised alone 0.9130 (min R2 0.989); node_4 == 0 on 1056 rows",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json --hold typical --sweep noise=-3:3:7 --nodes 2",
+    "uv run python -m explaneat verify linearise /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json"
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_20",
+   "claims": [],
+   "location": "operations.bmi_obesity_hinge.hypothesis",
+   "statement": "off below an obesity threshold, steep above it; 0.00 at 29, 0.16 at 30, 2.91 at 36; risk 11% -> 86%; age 20->90 at bmi 36 moves unit 2.60 -> 3.32; 0 of 13,706 under 28 on; 3908 of 3908 at 32+ on; 19 under 29 on (adds 0.08); on for 7319 (30.5%), adds 1.86, outcome 58.4% vs 31.6%; AUC 0.913 -> 0.871",
+   "check": "probe bmi sweep and age sweep at bmi 36; subgroup counts on node_1",
+   "evidence": "all reproduce: unit 0 / 0.156 / 2.909; risk 10.7% -> 85.6%; 2.602 -> 3.318; counts 0/13706, 3908/3908, 19 (mean +0.082), 7319 (0.305), mean +1.856, outcome 0.584 vs 0.316. In the data the switch-on bmi ranges 28.4 to 31.1 (645 rows under 30 on, 77 at 30+ off), consistent with 'other inputs barely move it'",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json --hold typical --sweep bmi=24:36:13 --nodes 1",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json --hold typical --set bmi=36 --sweep age=20:90:8 --nodes 1"
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_20",
+   "claims": [],
+   "location": "operations.bmi_obesity_hinge.evidence[0]",
+   "statement": "closed form (z-scored), approx within 0.02",
+   "check": "verify recheck closed forms",
+   "evidence": "coefficients match; max error 0.0203",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json"
+   ]
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_20",
+   "claims": [],
+   "location": "operations.bmi_obesity_hinge.evidence[1..6]",
+   "statement": "probes, subgroups (node_1 > 0; bmi<28; bmi>=32), ablation",
+   "check": "relevance and split",
+   "evidence": "all on the train split (n = 24000) and about node 1, the part's own unit; populations match the hypothesis sentences",
+   "commands": []
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_21",
+   "claims": [],
+   "location": "operations.nonsmoker_young_affluent_unit.hypothesis",
+   "statement": "smoking switches it off for most smokers; larger for younger, richer, leaner; 1.27 vs 0.00 at typical; 2.77 at 20 -> 0.03 at 75 (non-smoker); 0.00 by 40 (smoker); 0.63 at income 10 -> 2.29 at 100; 2157/7255 and 15,198/16,745 on; 17,355 rows, -0.46; AUC 0.911; noise -3 -> 3 moves unit 0.17 -> 2.36, risk 14% -> 10%",
+   "check": "probe age x smoker, income, noise sweeps; subgroup counts; correlations of node 2 with inputs",
+   "evidence": "all reproduce (1.273 / 0; 2.769 -> 0.026; smoker -0.010 pre-activation at 40; 0.634 -> 2.29; 2157, 15198, 17355, mean -0.460; noise 0.168 -> 2.364, 13.7% -> 10.2%). Smokers under 40 keep it in 820 of 1388 rows. Correlation of node 2 with smoker -0.56, bmi -0.38, age -0.36, noise +0.29, income +0.27: the noise input weighs about as much as income, as the hypothesis admits",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json --hold typical --sweep age=20:90:15 --sweep smoker=0,1 --nodes 1,2,3,4",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json --hold typical --sweep noise=-3:3:7 --nodes 2"
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_21",
+   "claims": [],
+   "location": "operations.nonsmoker_young_affluent_unit.evidence[0]",
+   "statement": "closed form, approx within 0.0048",
+   "check": "verify recheck",
+   "evidence": "coefficients match; error 0.00483",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json"
+   ]
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_21",
+   "claims": [],
+   "location": "operations.nonsmoker_young_affluent_unit.evidence[1..6]",
+   "statement": "probes, smoker/non-smoker subgroups, ablation",
+   "check": "relevance and split",
+   "evidence": "train split, node 2 only; populations are the ones the sentences cite",
+   "commands": []
+  },
+  {
+   "id": "V13",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_22",
+   "claims": [],
+   "location": "operations.low_income_hinge.hypothesis",
+   "statement": "above the threshold income still lowers risk a little through the age ramp and the protective unit",
+   "check": "probe income sweep at ages 35, 50, 70",
+   "evidence": "on the logit scale the slope above the threshold is about a third of the slope below it (typical case: score -2.52 at 50k to -4.11 at 100k, -0.032 per thousand, against -0.10 per thousand from 10k to 50k), an odds ratio of about 4.9 between 50k and 100k; at age 70 risk falls from 81.4% at 50k to 38.2% at 100k with the hinge off. The attribution (age ramp and protective unit) is right; 'a little' understates it",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json --hold typical --sweep income=10:100:10 --sweep age=35,50,70 --nodes 3"
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_22",
+   "claims": [],
+   "location": "operations.low_income_hinge.hypothesis",
+   "statement": "on below an income threshold, grows as income falls, threshold higher when older; 0.68 at 40, 0.00 at 50, 3.09 at 10; risk 82% -> 7% -> 2%; age 35: 0.29 at 40, 0 at 50; age 70: 0.40 at 50, 0 at 60; 4991/4991 under 30 on; 12 of 6665 at 60+; 13,776 rows adds 1.10; outcome 49.7% vs 26.4%; AUC 0.895",
+   "check": "probe income x age sweep; subgroup counts",
+   "evidence": "all reproduce (0.684, 0, 3.086; 82.1%, 7.4%, 1.6%; 0.293, 0; 0.404, 0; 4991/4991; 12/6665; 13776, +1.102; 0.497 vs 0.264). In the data the hinge is on up to income 64.3 and off from 35.8, as an age-dependent threshold implies",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json --hold typical --sweep income=10:100:10 --sweep age=35,50,70 --nodes 3"
+   ]
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_22",
+   "claims": [],
+   "location": "operations.low_income_hinge.evidence[0]",
+   "statement": "closed form, approx within 0.0069",
+   "check": "verify recheck",
+   "evidence": "coefficients match; error 0.00689",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json"
+   ]
+  },
+  {
+   "id": "V16",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_22",
+   "claims": [],
+   "location": "operations.low_income_hinge.evidence[1..6]",
+   "statement": "probes at ages 35/50/70, subgroups, ablation",
+   "check": "relevance and split",
+   "evidence": "train split, node 3 only; partner (age) shown with two ages",
+   "commands": []
+  },
+  {
+   "id": "V17",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_23",
+   "claims": [],
+   "location": "operations.age_smoker_ramp.hypothesis",
+   "statement": "the smoker's risk levels off at 94% from that age (65)",
+   "check": "probe age x smoker sweep",
+   "evidence": "smoker risk is 93.7% at 65, 95.0% at 75 and 96.4% at 90: it keeps rising slowly through the low-income hinge, as the same hypothesis says for the non-smoker (93% -> 95%); 'levels off at 94%' is imprecise by about 2 points at the top of the age range",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json --hold typical --sweep age=20:90:15 --sweep smoker=0,1 --nodes 1,2,3,4"
+   ]
+  },
+  {
+   "id": "V18",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_23",
+   "claims": [],
+   "location": "operations.age_smoker_ramp.hypothesis",
+   "statement": "unit 4.79 at 20, 0.24 at 70, 0 at 75; risk <1% -> 93% -> 95% at 90 (rise after from low-income hinge); smoker unit 0 at 65 vs 0.70; smoking moves unit 2.06 -> 1.31, contribution -3.73 -> -2.37; on for 22,944 rows, -3.65; off for 1056 rows, outcome 96.9%, risk 94%; 8 under 60; 353 of 486 aged 75+; AUC 0.793 (largest loss); affine fit alone 0.9128 -> 0.9130",
+   "check": "probe age x smoker sweep; subgroup counts; ablate; linearise",
+   "evidence": "all reproduce (4.792, 0.241, 0; 0.04%, 93.5%, 95.4%; low-income contribution +0.86 -> +1.21 over 75-90; 0 vs 0.697; 2.062 -> 1.311, -3.731 -> -2.373; 22944, -3.653; 1056, 0.969, 0.935; 8; 353/486; 0.7928 = largest; 0.9130, min R2 0.989)",
+   "commands": [
+    "uv run python -m explaneat verify ablate /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json --part age_smoker_ramp",
+    "uv run python -m explaneat verify linearise /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json"
+   ]
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_23",
+   "claims": [],
+   "location": "operations.age_smoker_ramp.evidence[0]",
+   "statement": "closed form, approx within 0.012",
+   "check": "verify recheck",
+   "evidence": "coefficients match; error 0.01195",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json"
+   ]
+  },
+  {
+   "id": "V20",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_23",
+   "claims": [],
+   "location": "operations.age_smoker_ramp.evidence[1..6]",
+   "statement": "age probes (non-smoker, smoker), ramp-off subgroups, ablation, linearisation",
+   "check": "relevance and split",
+   "evidence": "train split, node 4; the linearisation evidence is reported honestly against the 'ramp that stops' reading",
+   "commands": []
+  },
+  {
+   "id": "V21",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_24",
+   "claims": [],
+   "location": "operations.risk_model_root.hypothesis",
+   "statement": "no direct edges (0 rows); additive logit of four units; main effects at the typical case; smoking-by-age score changes -5.99->-3.95 (30), -2.08->-0.02 (50), 2.66->2.94 (75); minor inputs: visits 11.2->10.6, score 11.4->10.8, female 11.1->10.6, urban 11.6->11.1, insured 11.7->11.1, noise 13.7->10.2; AUC 0.913; all affine 0.890; restore gains 0.017, 0.006",
+   "check": "ablate --direct; probes; linearise",
+   "evidence": "direct edges: 0, affected 0 rows; score differences from part contributions 2.04 / 2.06 / 0.27 match; visits 11.24% -> 10.57%, score 11.43% -> 10.81%, female 11.1/10.6 (urban 1), urban 11.6/11.1, insured 11.7/11.1, noise 13.7/10.2; linearise 0.8898, gains +0.0168 and +0.0064",
+   "commands": [
+    "uv run python -m explaneat verify ablate /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json --direct",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json --hold typical --sweep female=0,1 --sweep urban=0,1 --no-parts",
+    "uv run python -m explaneat verify linearise /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-b58a2/record.json"
+   ]
+  },
+  {
+   "id": "V22",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_24",
+   "claims": [],
+   "location": "operations.risk_model_root.evidence[0..6]",
+   "statement": "smoking probes at ages 30/50/75, direct-edge ablation, linearisation, noise sweep, root closed form",
+   "check": "relevance and split",
+   "evidence": "all bear on the root's composition; train split for data-level numbers",
+   "commands": []
+  },
+  {
+   "id": "V23",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_24",
+   "claims": [],
+   "location": "operations.risk_model_root.hypothesis",
+   "statement": "domain reading",
+   "check": "domain sense",
+   "evidence": "age, smoking, obesity (bmi ~30) and low income raise predicted risk; insurance, female sex, urban living and a higher score lower it slightly; nothing conflicts with general knowledge. The noise input's effect (larger than five real inputs at the typical case) is flagged by the record itself as a fitted weight",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_24": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_23": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_22": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_21": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_20": {
+   "grade": "upheld",
+   "level": "L4"
+  }
+ },
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ],
+ "leaf_meaning": {
+  "bmi_obesity_hinge": {
+   "grade": "meaningful",
+   "why": "An obesity threshold: the unit is off below a bmi of about 29-30 (28.4 to 31.1 depending on the other inputs) and rises steeply above it, taking the typical case from 11% to 86% by bmi 36, with age and income moving it little."
+  },
+  "nonsmoker_young_affluent_unit": {
+   "grade": "partial",
+   "why": "Smoking does switch it off for most smokers (2157 of 7255 keep it) and it lowers risk for younger, richer, leaner non-smokers, but it reads the noise input about as strongly as income and moves the training AUC only from 0.913 to 0.911."
+  },
+  "low_income_hinge": {
+   "grade": "meaningful",
+   "why": "A poverty threshold near 50 thousand at age 50 whose cut-off moves up with age (about 45 at 35, about 55 at 70) and adds up to 3 logit units at income 10; only income's effect above the threshold is left to other units and is understated as 'a little'."
+  },
+  "age_smoker_ramp": {
+   "grade": "meaningful",
+   "why": "Carries the main age effect (risk rises steadily with age on the logit scale, shifted up by smoking and lower income) and switches off for the oldest, earlier for smokers; on the data it is almost linear (R2 0.989), so the switch-off is a saturation detail on 1056 rows, as the hypothesis itself says."
+  }
+ },
+ "statements_checked": 128,
+ "counts": {
+  "refuted": 0,
+  "weakened": 2,
+  "upheld": 21
+ }
+}

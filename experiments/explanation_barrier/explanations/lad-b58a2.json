@@ -1,0 +1,161 @@
+{
+  "label": "lad-b58a2",
+  "genome_id": "ad642a9d-faae-4c1b-9b93-664b0198041d",
+  "start": "2026-11-11T21:52:51+13:00",
+  "end": "2026-11-11T22:10:42+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 4,
+  "n_composition_annotations": 1,
+  "n_splits": 10,
+  "n_identity_nodes": 0,
+  "hidden_nodes": 4,
+  "hidden_nodes_single_leaf_no_split": 4,
+  "hidden_nodes_in_any_annotation": 4,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 0.0,
+  "closed_form_max_abs_err": 0.02025016938825175,
+  "summary": "The model's logit is the sum of four ReLU units with no direct input edges, so the inputs act through an age ramp, an obesity hinge on bmi, a low-income hinge and a small protective unit for non-smokers. For the typical case the predicted risk rises steeply with age, from below 1% at age 20 to 93% at age 75, and then levels off once the age ramp switches off (earlier for smokers); smoking raises it from 11% to 49%, bmi adds risk from about 30 upwards (86% at bmi 36), and income below about 50 thousand adds risk (82% at income 10), with a threshold that is higher for older people. Smoking matters little for the oldest people, whose risk is already saturated by age (score moves from 2.66 to 2.94 at age 75, against -2.08 to -0.02 at age 50). Visits, score, sex, urban, insured and noise move the typical case's risk by small amounts (root narrative); switching off the age ramp, the obesity hinge, the low-income hinge or the protective unit lowers the training AUC from 0.913 to 0.793, 0.871, 0.895 and 0.911.",
+  "summary_template": "The model's logit is the sum of four ReLU units with no direct input edges, so the inputs act through an age ramp, an obesity hinge on bmi, a low-income hinge and a small protective unit for non-smokers. For the typical case the predicted risk rises steeply with age, from {{q:q_b0503dcf39.rows[0].risk|pct}} at age {{q:q_b0503dcf39.rows[0].inputs.age}} to {{q:q_b0503dcf39.rows[11].risk|pct}} at age {{q:q_b0503dcf39.rows[11].inputs.age}}, and then levels off once the age ramp switches off (earlier for smokers); smoking raises it from {{q:q_eed5f4eadb.rows[0].risk|pct}} to {{q:q_eed5f4eadb.rows[1].risk|pct}}, bmi adds risk from about {{q:q_11b2588326.rows[6].inputs.bmi}} upwards ({{q:q_11b2588326.rows[12].risk|pct}} at bmi {{q:q_11b2588326.rows[12].inputs.bmi}}), and income below about {{q:q_e053daeab7.rows[4].inputs.income}} thousand adds risk ({{q:q_e053daeab7.rows[0].risk|pct}} at income {{q:q_e053daeab7.rows[0].inputs.income}}), with a threshold that is higher for older people. Smoking matters little for the oldest people, whose risk is already saturated by age (score moves from {{q:q_1882f5e098.rows[0].score|.2f}} to {{q:q_1882f5e098.rows[1].score|.2f}} at age {{q:q_1882f5e098.set.age}}, against {{q:q_eed5f4eadb.rows[0].score|.2f}} to {{q:q_eed5f4eadb.rows[1].score|.2f}} at age {{q:q_eed5f4eadb.held_case.age}}). Visits, score, sex, urban, insured and noise move the typical case's risk by small amounts (root narrative); switching off the age ramp, the obesity hinge, the low-income hinge or the protective unit lowers the training AUC from {{q:q_aa2ed05425.data.auc_with|.3f}} to {{q:q_aa2ed05425.data.auc_without|.3f}}, {{q:q_3810b51cbd.data.auc_without|.3f}}, {{q:q_078630c6cb.data.auc_without|.3f}} and {{q:q_0ffbf6cb68.data.auc_without|.3f}}.",
+  "resisted": "The protective non-smoker unit is partly explained: smoking switches it off for most smokers (2157 of 7255 keep it), but it also mixes age, income, bmi and the noise input, and its effect on the training AUC is small (0.913 to 0.911). The model's small dependence on the noise input (risk 13.7% to 10.2% across the noise sweep at the typical case) has no domain reading; it is a fitted weight. The age ramp is read as a ramp that stops, but on the data it is almost linear (its affine fit alone gives AUC 0.9130), so its switching-off regime rests on 1056 rows.",
+  "resisted_template": "The protective non-smoker unit is partly explained: smoking switches it off for most smokers ({{q:q_9b26a42bc5.subgroup.n}} of {{q:q_d26e4a0fb8.subgroup.n}} keep it), but it also mixes age, income, bmi and the noise input, and its effect on the training AUC is small ({{q:q_0ffbf6cb68.data.auc_with|.3f}} to {{q:q_0ffbf6cb68.data.auc_without|.3f}}). The model's small dependence on the noise input (risk {{q:q_d5a91157db.rows[0].risk|.1%}} to {{q:q_d5a91157db.rows[6].risk|.1%}} across the noise sweep at the typical case) has no domain reading; it is a fitted weight. The age ramp is read as a ramp that stops, but on the data it is almost linear (its affine fit alone gives AUC {{q:q_c970f75cae.units.age_smoker_ramp.auc_linearised_alone|.4f}}), so its switching-off regime rests on {{q:q_2cc8d1c1eb.subgroup.n}} rows.",
+  "recheck_summary": {
+    "ran_at": "2026-11-11T09:10:35+00:00",
+    "recheck_version": 3,
+    "mismatch": 0,
+    "needs_review": 0,
+    "warn": 0,
+    "mismatches": [],
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 31,
+    "provenance": {
+      "templated_texts": 35,
+      "queries": 44
+    },
+    "complete_ok": true,
+    "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+  },
+  "recheck_notes": "mismatch 0; needs_review 0.",
+  "tool_bugs": "get_formula on a single-unit leaf with ten inputs returns latex null unless force=true (not a bug, but the error is silent: tractable false). The sandbox refuses shell loops, so renders and batches went through small Python scripts and --calls files.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 212,
+    "provenance_backed": 205,
+    "allow_listed": 7,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 4,
+      "other": 0
+    },
+    "audit": {
+      "references": 205,
+      "checked": 205
+    },
+    "self_probe": {
+      "parts": [
+        "bmi_obesity_hinge",
+        "nonsmoker_young_affluent_unit",
+        "low_income_hinge",
+        "age_smoker_ramp",
+        "risk_model_root"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0
+  },
+  "leaves": [
+    {
+      "name": "bmi_obesity_hinge",
+      "units": [
+        "1"
+      ],
+      "meaning": "meaningful",
+      "why": "An obesity threshold on bmi: off below it, steep rise above it, barely moved by other inputs; the bmi sweep self-probe confirms it."
+    },
+    {
+      "name": "nonsmoker_young_affluent_unit",
+      "units": [
+        "2"
+      ],
+      "meaning": "partial",
+      "why": "Reads as protection for non-smokers (smoking switches it off for most smokers), but it also mixes age, income, bmi and the noise input and matters little to the prediction."
+    },
+    {
+      "name": "low_income_hinge",
+      "units": [
+        "3"
+      ],
+      "meaning": "meaningful",
+      "why": "A low-income threshold whose cut-off rises with age; the income sweeps at two ages confirm both the hinge and the age shift."
+    },
+    {
+      "name": "age_smoker_ramp",
+      "units": [
+        "4"
+      ],
+      "meaning": "meaningful",
+      "why": "Risk rises with age (and smoking, lower income) through this ramp until it switches off for the oldest, earlier for smokers; the age sweeps for a non-smoker and a smoker confirm it."
+    }
+  ],
+  "overall_function": "The model adds four ReLU units on the logit scale, with no direct input edges. Predicted risk rises steeply with age through an age ramp that also reads smoking and income; the ramp switches off for the oldest people (earlier for smokers), after which age and smoking add little because risk is already saturated. Bmi adds risk through a hinge that is off below an obesity threshold and steep above it, and low income adds risk through a hinge whose income threshold is higher for older people; a small unit protects young, richer non-smokers. Visits, score, sex, urban and insured carry small weights and barely move the prediction; the noise input has a small fitted effect with no domain reading.",
+  "stuck": "Nothing blocked the work. The dense layout (every input feeding every unit) needed every input split into four copies before one-unit leaves could be annotated. The protective non-smoker unit has no clean single reading.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 5,
+      "roots": [
+        "risk_model_root"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 0.0,
+    "closed_form_max_abs_err": 0.02025016938825175,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 10,
+      "split_node": 10,
+      "annotate": 5
+    },
+    "leaves": [
+      {
+        "id": "ann_20",
+        "name": "bmi_obesity_hinge",
+        "numeric_max_abs_err": 1.7763568394002505e-15,
+        "closed_form_max_abs_err": 0.02025016938825175
+      },
+      {
+        "id": "ann_21",
+        "name": "nonsmoker_young_affluent_unit",
+        "numeric_max_abs_err": 1.7763568394002505e-15,
+        "closed_form_max_abs_err": 0.004832075459234808
+      },
+      {
+        "id": "ann_22",
+        "name": "low_income_hinge",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.006887758541439304
+      },
+      {
+        "id": "ann_23",
+        "name": "age_smoker_ramp",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.011945126799995265
+      }
+    ],
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "tool_call_window": {
+      "n_calls": 142,
+      "first": 1794387090.523662,
+      "last": 1794388099.6750789,
+      "minutes": 16.81919027964274
+    }
+  }
+}
