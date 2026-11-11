@@ -1,0 +1,321 @@
+{
+ "item": "av-7e63ce",
+ "errors": [
+  {
+   "id": "E1",
+   "location": "drafted.blocks[1] (Large capital gains), drafted.readdown.ann_128.evidence[2]; claim C137",
+   "statement": "For people whose highest education is 9th grade the same change in capital gains lowers the chance by less: from about 44% to about 6% (against 63% to 9% for others)",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "refuted"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V7"
+    ],
+    "B": [
+     "V1",
+     "V2"
+    ]
+   },
+   "genuine_level": "refuted",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "probe --claim C137 reproduces 44.2% -> 5.7%, but the case keeps education-num at 10 with a 9th-grade label; subgroup education=='6' and education-num!=5 gives no rows (every 9th-grade row has level 5). probe --set education=6 --set education-num=5 --sweep capital-gain=0,6849 gives 84.4% -> 29.2%. The sentence names 9th-grade people; for them the start is higher, not lower, and the fall in points is not smaller (55 vs 54). The stated values hold only for an impossible person.",
+   "kind": "K1"
+  },
+  {
+   "id": "E2",
+   "location": "drafted.lead[0]; claim C001 (typical case)",
+   "statement": "A typical person (... a high-school graduate ...) gets about 63%",
+   "verifier_grades": {
+    "A": "weakened"
+   },
+   "found_by": [
+    "A"
+   ],
+   "finding_ids": {
+    "A": [
+     "V7"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "subgroup education=='11' and education-num!=9: n = 0, so the typical case (education-num 10, high-school graduate) is off the data. probe --sweep education-num=9,10 gives 71.5% at level 9 (a real high-school graduate) and 63.1% at 10. The 63% reproduces for the defined typical case, which the item header says is not a real person, so an imprecise description, not a wrong number.",
+   "kind": "K1"
+  },
+  {
+   "id": "E3",
+   "location": "drafted.worth_checking[3]; claim C016",
+   "statement": "On top of the steady education-level effect, 7th-8th grade lowers the chance for a typical person from about 63% to about 35%",
+   "verifier_grades": {
+    "A": "weakened"
+   },
+   "found_by": [
+    "A"
+   ],
+   "finding_ids": {
+    "A": [
+     "V7"
+    ]
+   },
+   "genuine_level": "none",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "Same off-support coding as E1, but the sentence is explicitly scoped 'on top of the education-level effect' (the one-hot term holding level fixed), which is what C016 computes, and it is already a worth-checking flag. No separate error.",
+   "kind": "K1",
+   "reconcile_note": "K1 kept none: the sentence states the construction itself ('on top of the steady education-level effect')."
+  },
+  {
+   "id": "E4",
+   "location": "drafted.readdown.ann_117.hypothesis[0], evidence[1], drafted.blocks[8]; claim C181",
+   "statement": "Being born in Yugoslavia lowers the predicted chance for a typical person from about 63% to about 33%",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V3"
+    ],
+    "B": [
+     "V3"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "probe --claim C181: whole model 41.7% (linear term -1.364 -> -1.006 as the US edge drops out; part -1.231). 33.3% is the part alone (claim scope 'part'). Right under a through-this-part reading, not stated as such.",
+   "kind": "K3"
+  },
+  {
+   "id": "E5",
+   "location": "drafted.readdown.ann_117.evidence[2], drafted.blocks[8]; claim C182",
+   "statement": "State-government work barely changes the chance: it stays at about 63%",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V4"
+    ],
+    "B": [
+     "V4"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "probe --claim C182: part contribution -0.0048 (stays 63% through the part), whole model 71.2% via the linear workclass edge. Part-scope value read as the model's.",
+   "kind": "K3"
+  },
+  {
+   "id": "E6",
+   "location": "drafted.readdown.ann_120.evidence[1], drafted.blocks[9]; claims C185, C186",
+   "statement": "Some college barely raises the chance, which stays at about 64%",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V5"
+    ],
+    "B": [
+     "V5"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "probe --claim C185: through the part 63.1% -> 63.5% (-0.0037 -> +0.0130); whole model 60.2% (linear -1.364 -> -1.503), the opposite direction. Correct only under the part reading, which the paragraph sits in; weakened, not refuted.",
+   "kind": "K3"
+  },
+  {
+   "id": "E7",
+   "location": "drafted.readdown.ann_118.hypothesis[0], drafted.blocks (Trinidad); claim C176",
+   "statement": "Being born in Trinidad and Tobago raises the chance for a typical person from about 63% to about 92%",
+   "verifier_grades": {
+    "B": "weakened"
+   },
+   "found_by": [
+    "B"
+   ],
+   "finding_ids": {
+    "B": [
+     "V6"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "probe --claim C176: whole model 94.1% (US edge drops out), 92% is the part alone. Same scope slip as E4, small in size.",
+   "kind": "K3"
+  },
+  {
+   "id": "E8",
+   "location": "drafted.blocks[3] (Older age), drafted.readdown.ann_129.evidence, drafted.worth_checking[1]; claim C014",
+   "statement": "The whole model gives the lowest chance at about 47 years",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V1"
+    ],
+    "B": [
+     "V9"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "g",
+   "check": "probe --sweep age=44..50 --nodes 5070: 46.5% at 46, 46.6% at 46.5, 47.0% at 47; unit 5070 switches on just above 46 (threshold 46.12 in C158). The minimum is at the hinge, about 46; 47 comes from the claim's coarse grid. Imprecise threshold, inconsistent with 'about 46' in the same block.",
+   "kind": "K5"
+  },
+  {
+   "id": "E9",
+   "location": "drafted.readdown.ann_122.hypothesis[0] and evidence, ann_123 evidence, ann_128 evidence, drafted.blocks[1]; claims C143, C148, C130",
+   "statement": "The hinges do nothing until about 5258 US dollars (unit 1485) and about 4883 US dollars (unit 262)",
+   "verifier_grades": {
+    "A": "weakened"
+   },
+   "found_by": [
+    "A"
+   ],
+   "finding_ids": {
+    "A": [
+     "V2"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "g",
+   "check": "probe --sweep capital-gain=4800..5300 --nodes 1485,262: 262 is 0.0002 at 4800 and 0.008 at 4900; 1485 is 0 at 5100 and 0.0013 at 5200. Onsets about 4790 and 5160; 4883 and 5258 are grid points (376-dollar grid) quoted to the dollar. Right shape and place, false precision.",
+   "kind": "K5"
+  },
+  {
+   "id": "E10",
+   "location": "drafted.readdown.ann_124.hypothesis[0], drafted.blocks[3] (Older age); claim C161",
+   "statement": "Only once age rises above about 46 years does this part raise the predicted chance (block: 'switches on only once age rises above about 46 years')",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V6"
+    ],
+    "B": [
+     "V8"
+    ]
+   },
+   "genuine_level": "refuted",
+   "layer": "draft",
+   "mechanism": "e",
+   "check": "probe --set native-country=37 --sweep age=20,30,45,60 --nodes 2134,2990,5070: unit 5070 is on at every age (1.75 at 20 years); part contribution -2.31, -1.25, +0.33 (raises at 45 years), +1.92. subgroup Thailand-born and age < 46: 20 real training people, part acts on 20 of 20. The scope word 'only' is broken by real counterexamples; the technical hypothesis states the Thailand regime, the plain text drops it. Rare (26 rows), but the rule for 'only' makes it refuted.",
+   "kind": "K2"
+  },
+  {
+   "id": "E11",
+   "location": "drafted.readdown.ann_129.hypothesis[1], drafted.blocks[1], root and ann_128 evidence; claim C002",
+   "statement": "Capital gains lower the chance slowly at first, then faster, from about 63% at 0 to about 9% at 6849 US dollars",
+   "verifier_grades": {
+    "B": "weakened"
+   },
+   "found_by": [
+    "B"
+   ],
+   "finding_ids": {
+    "B": [
+     "V7"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "probe --sweep capital-gain=0..6849: end points 63.1% and 8.8% reproduce; the chance falls about 8 points per 1000 dollars throughout (63.1, 55.0, 46.6, 38.4, 30.8, 25.4 at 4800, 14.3 at 6000). The 'accelerating' shape class in C002 is on the log-odds; stated for the chance it is a scale confusion. Right on the score reading.",
+   "kind": "K7"
+  },
+  {
+   "id": "E12",
+   "location": "drafted.readdown.ann_122.evidence[2]; claim C145",
+   "statement": "For the 37 people born in Ecuador, the whole model's fall from capital gains is a little smaller: from about 71% to about 15%",
+   "verifier_grades": {
+    "A": "weakened"
+   },
+   "found_by": [
+    "A"
+   ],
+   "finding_ids": {
+    "A": [
+     "V8"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "subgroup native-country=='7' and capital-gain > 6000: n = 1 of the 37. The 71% -> 15% is a constructed typical Ecuador-born case (C145 group risk_from/risk_to), attributed to the 37 people. Mechanism (1485 off for Ecuador) holds.",
+   "kind": "K11"
+  },
+  {
+   "id": "E13",
+   "location": "drafted.readdown.ann_127.evidence[4], drafted.blocks[0] (Inputs that add up); claims C090, C104",
+   "statement": "Being a wife lowers it to about 41%; being a woman raises it to about 74%",
+   "verifier_grades": {
+    "B": "weakened"
+   },
+   "found_by": [
+    "B"
+   ],
+   "finding_ids": {
+    "B": [
+     "V10"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "probe --claim C090 / C104 reproduce 40.8% and 73.9%, but the cases are a male wife and a female husband (3 and 1 training rows per B's subgroups); a real wife (relationship 5, sex 0) gets 53.3% (B). Off-support constructed cases read as group effects.",
+   "kind": "K1"
+  }
+ ],
+ "summary": {
+  "refuted": {
+   "database": 0,
+   "draft": 2
+  },
+  "weakened": {
+   "database": 0,
+   "draft": 10
+  },
+  "none": 1
+ }
+}

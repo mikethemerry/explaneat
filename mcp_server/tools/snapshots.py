@@ -374,13 +374,19 @@ def amend_evidence(
                 entry = PV.get_entry(session, genome_id, query_id)
                 if entry is None:
                     return json.dumps({"error": f"no query record {query_id} for this genome"})
-                new_payload = {**(new_payload or {}), "query_id": entry["id"], "tool": entry["tool"],
-                               "query": entry["query"], "split": entry["split"], "n": entry["n"],
-                               "sampled": entry["sampled"], "rows_hash": entry["rows_hash"], "values": entry["values"]}
+                # the stored query's values are not typed text: merged after the lint, as add_evidence does
+                q_extra = {"query_id": entry["id"], "tool": entry["tool"], "query": entry["query"],
+                           "split": entry["split"], "n": entry["n"], "sampled": entry["sampled"],
+                           "rows_hash": entry["rows_hash"], "values": entry["values"]}
+                new_payload = new_payload or {}
+            else:
+                q_extra = {}
             if new_payload is not None:
                 pay, tmpl, prep = process_payload(db, genome_id, new_payload, operations, params.get("name"),
                                                   session=session)
                 errs += prep["errors"]; warns += prep["warnings"]; finds += prep["findings"]
+                if q_extra:
+                    pay = {**pay, **q_extra} if isinstance(pay, dict) else q_extra
                 rec["payload"] = pay
                 if tmpl is not None:
                     rec["payload_template"] = tmpl

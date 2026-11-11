@@ -1,0 +1,130 @@
+{
+ "item": "av-0491c5",
+ "errors": [
+  {
+   "id": "E1",
+   "location": "plain_language.json drafted.readdown.ann_34.hypothesis[0] (C64)",
+   "statement": "This part is a score for ST depression on exercise that adds to the risk only once ST depression rises above about 0.9 mm, then slowly at first, then faster.",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V15"
+    ],
+    "B": [
+     "V16"
+    ]
+   },
+   "genuine_level": "refuted",
+   "layer": "draft",
+   "mechanism": "e",
+   "check": "probe --hold typical --sweep oldpeak=0,0.9,1.2,1.5,1.7,1.8,2 --sweep restecg=0,2 --nodes 204_a: with a normal ECG 204_a pre-activation is +0.05 at 0.9 mm (on just above 0.9); with hypertrophy it is -0.10 at 1.7 mm and +0.11 at 1.8 mm. probe --set thal=7 --set restecg=0 --sweep oldpeak=0: 204_a is already +0.45 at 0 mm (no threshold). C64 itself gives 0.877 mm as the median fold with IQR 0.87 to 1.75 mm. So 0.9 mm is right as a median or for the typical normal-ECG patient, but 'only once above 0.9 mm' is written as one threshold for everyone; the technical hypothesis states the shifting threshold correctly. Overstatement, not refuted (true under the median/typical reading).",
+   "kind": "K2",
+   "reconciled_from": "weakened",
+   "reconcile_reason": "K2 rule: 'only once ST depression rises above about 0.9 mm' is broken by real training rows: subgroup thal == '7' and restecg == '0' and oldpeak < 0.8 has n = 18, ann_34 acts on all 18, and probe --set thal=7 --set restecg=0 --sweep oldpeak=0,0.4,0.8 gives ann_34 +0.05, +0.25, +0.49 (risk 34.6%, 39.2%, 45.2%), so for these patients ST depression adds risk from 0 mm. The sentence gives no spread or exception, so 'only' is wrong under every reading; same rule as av-7e63ce E10 ('only once age rises above about 46 years', Thai-born counterexamples)."
+  },
+  {
+   "id": "E2",
+   "location": "plain_language.json drafted.readdown.ann_37.evidence[2] (C53)",
+   "statement": "ST depression adds to the risk only once it rises above about 0.9 mm, slowly at first, then faster: for a typical such patient, from about 26% at 0.0 mm to about 53% at 3.5 mm.",
+   "verifier_grades": {
+    "A": "weakened"
+   },
+   "found_by": [
+    "A"
+   ],
+   "finding_ids": {
+    "A": [
+     "V12"
+    ]
+   },
+   "genuine_level": "refuted",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "C53 risk reference is the 'typical patient with a fold', who has left ventricular hypertrophy (26% at 0 mm matches the restecg=2 probe value 25.8%); C53's own shape is flat from 0 to 1.785 mm and records agrees_with_threshold false. Same probe as E1: for restecg=2, 204_a turns on between 1.7 and 1.8 mm. The 26% and 53% reproduce, but the sentence pairs a population-median threshold (0.9 mm) with an individual whose risk does not move until about 1.8 mm. Scope confusion; the 0.9 mm is still right as the median, so weakened. Kept separate from E1 because it is a different sentence with an extra mismatch (the named patient).",
+   "kind": "K2",
+   "reconciled_from": "weakened",
+   "reconcile_reason": "K2 rule: the same unqualified 'only once it rises above about 0.9 mm' in a separate ann_37 sentence; the 18 real normal-ECG, reversible-defect patients with oldpeak < 0.8 all have ann_37 acting, and its contribution rises from +0.08 at 0 mm to +0.52 at 0.8 mm (probe above). Kept as a separate error (different sentence, extra mismatch with the named patient), graded by the same rule as E1."
+  },
+  {
+   "id": "E3",
+   "location": "record.json summary",
+   "statement": "predicted risk ... is far lower for women (2% against 19%), for any symptomatic chest-pain type and for an upsloping ST segment.",
+   "verifier_grades": {
+    "A": "weakened"
+   },
+   "found_by": [
+    "A"
+   ],
+   "finding_ids": {
+    "A": [
+     "V5"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "database",
+   "mechanism": "e",
+   "check": "A's probe --hold typical --sweep slope=1,2,3 gives upsloping 19.4%, flat 59.3%, downsloping 22.5% (B's probes agree: flat 59.3%, down 22.5%). Closed form of ann_36: slope:1 -0.90, slope:3 -0.413, slope:2 has no edge. 'Far lower' holds against flat (the reference level) but not against downsloping; the same summary later says downsloping is close to upsloping, so the reader is partly warned. Comparison base unstated: wording issue, weakened.",
+   "kind": "other"
+  },
+  {
+   "id": "E4",
+   "location": "plain_language.json drafted.readdown.ann_37.evidence[4] (C45)",
+   "statement": "Age adds to the risk through this part, with nothing until about 53 years (between 53 years and 66 years for different patients), then steadily: for a typical patient, from about 19% at 42 years to about 21% at 66 years.",
+   "verifier_grades": {
+    "B": "weakened"
+   },
+   "found_by": [
+    "B"
+   ],
+   "finding_ids": {
+    "B": [
+     "V14"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "e",
+   "check": "C45 evidence: share_unaffected 0.3595 (about 87 of 242 patients get no age effect through ann_37), range_across_patients p10 0.0, test check 'disagrees', size 'slight'. The 53 to 66 years spread is the p10 to p90 fold of the affected patients only (C54 matched_fold). probe --hold typical --sweep age=40,53,60,70 --sweep trestbps=110,170: ann_37 contribution 0.054 to 0.153 at 110 mm Hg and 0.000 to 0.160 at 170 mm Hg, so the typical-patient numbers reproduce. 'Age adds to the risk through this part' and 'for different patients' read as covering everyone, while a third of patients are unaffected and the test check disagrees. Overstatement of scope, weakened.",
+   "kind": "K11"
+  },
+  {
+   "id": "E5",
+   "location": "operations.json direct_terms (ann_36) hypothesis",
+   "statement": "The largest weights, per sd of the input and through its own edge: ca 1.51, female sex (sex:0) -1.08, an upsloping ST segment (slope:1) -0.90, serum cholesterol 0.53 and resting blood pressure 0.49.",
+   "verifier_grades": {
+    "B": "weakened"
+   },
+   "found_by": [
+    "B"
+   ],
+   "finding_ids": {
+    "B": [
+     "V8"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "database",
+   "mechanism": "f",
+   "check": "Closed form of ann_36 in recheck.json: cp:1 -0.53, chol 0.533, trestbps_a 0.492, cp:3_a -0.473, thal:3 -0.432, exang:1 0.43. Typical angina (|w| 0.530) is larger than blood pressure (0.492) and level with cholesterol, but is left out of the 'largest' list. Every listed value is correct; the list is wrong only as an exhaustive top five, and it is fine under a non-exhaustive 'among the largest' reading, so weakened (omission slip), not refuted.",
+   "kind": "K9"
+  }
+ ],
+ "summary": {
+  "refuted": {
+   "database": 0,
+   "draft": 2
+  },
+  "weakened": {
+   "database": 2,
+   "draft": 1
+  },
+  "none": 0
+ }
+}

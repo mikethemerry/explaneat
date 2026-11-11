@@ -1,0 +1,216 @@
+{
+ "item": "av-75bfdb",
+ "errors": [
+  {
+   "id": "E1",
+   "location": "drafted.readdown.ann_115.evidence[2]; drafted.blocks[0]; drafted.worth_checking[0] (C059, C061, C003, C004)",
+   "statement": "Very little schooling lowers the predicted chance of a low income: 1st-4th grade about 10%, 7th-8th grade about 19% (worth_checking: the model gives people whose highest education is 1st-4th / 7th-8th grade a much lower chance than high-school graduates)",
+   "verifier_grades": {
+    "A": "refuted",
+    "B": "refuted"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V1",
+     "V2",
+     "V3"
+    ],
+    "B": [
+     "V1",
+     "V2",
+     "V3"
+    ]
+   },
+   "genuine_level": "refuted",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "probe --hold typical --sweep education=11,3,5 --sweep education-num=2,4,9,10: 9.9% / 19.3% only with education-num held at 10 (no 1st-4th grader has a level other than 2). With matching levels 1st-4th (level 2) 89.8%, 7th-8th (level 4) 86.5% vs high-school graduate (level 9) 73.8%. subgroup education=='3': n=189, typical-case risk 95.8%. The direction is reversed for every real person in the named group; the claims' own data test says 'disagrees'. The same wrong numbers appear in three places of the draft and are grouped here (both verifiers graded the worth_checking copy weakened only because it is flagged; it still states the artefact as what the model gives these people).",
+   "kind": "K1",
+   "reconcile_note": "K1 kept refuted: 'very little schooling lowers it' and 'the model gives people whose highest education is 1st-4th grade ... a much lower predicted chance' are claims about real people, reversed for every real member."
+  },
+  {
+   "id": "E2",
+   "location": "drafted.lead[0] (C006)",
+   "statement": "Typical person (a high-school graduate ...) predicted about 62%",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V4"
+    ],
+    "B": [
+     "V9"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "probe: high-school category at education-num 10 gives 61.9% (reproduces); at level 9 (every real high-school graduate) 73.8%. Right for the reference case the sentence defines, but that case is off-support.",
+   "kind": "K1"
+  },
+  {
+   "id": "E3",
+   "location": "drafted.readdown.ann_115.hypothesis[1]; drafted.readdown.ann_124.evidence[1]; drafted.blocks[0] (C063, C006, C008)",
+   "statement": "A wife gets about 27% against a husband's 62%",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V5",
+     "V6"
+    ],
+    "B": [
+     "V6"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "probe --sweep relationship=0,5 --sweep sex=1,0: wife+male 27.1% (3 training rows), wife+female 47.4%, husband+male 61.9%. Direction right; the size comes from an off-support male-wife case.",
+   "kind": "K1"
+  },
+  {
+   "id": "E4",
+   "location": "drafted.readdown.ann_115.hypothesis[1]; drafted.blocks[0] (C068)",
+   "statement": "Someone not married about 87%",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V5"
+    ],
+    "B": [
+     "V8"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "probe --sweep marital-status=2,4 --sweep relationship=0,1: never married but still a husband 87.5% (reproduces, off-support); with a consistent role (not in a family) married 83.6%, never married 95.6%. Direction right, size understated.",
+   "kind": "K1"
+  },
+  {
+   "id": "E5",
+   "location": "drafted.readdown.ann_124.evidence[3] (C023)",
+   "statement": "Women get a higher predicted chance than men: about 80% against 62%",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V7"
+    ],
+    "B": [
+     "V7"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "probe relationship x sex: 79.7% is a female husband (1 row). The sex term is +0.88 log-odds at every fixed role, so the sentence is right with role held fixed, but a typical married woman (wife, 47.4%) is below a typical married man (61.9%).",
+   "kind": "K1"
+  },
+  {
+   "id": "E6",
+   "location": "drafted.worth_checking[4]; drafted.blocks[3]; drafted.readdown.ann_123 (C119)",
+   "statement": "A doctorate makes no difference for people born in Cambodia (n = 19)",
+   "verifier_grades": {
+    "B": "refuted"
+   },
+   "found_by": [
+    "B"
+   ],
+   "finding_ids": {
+    "B": [
+     "V4",
+     "V5"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "probe --set native-country=1 --sweep education=11,10 --sweep education-num=9,16: at a fixed education level the doctorate category changes nothing in the whole model (65.6% = 65.6%, 3.9% = 3.9%), so the statement holds model-wide, not only through the part as B says. It fails only if 'a doctorate' includes the jump in education-num to 16 (65.6% to 3.9%), a reading that would change every doctorate sentence in the draft. subgroup education_10==1 and native-country_1==1: n = 0, so no real counterexample exists. A scope/wording issue (worth flagging that the level effect dominates), not refuted. Verifier A upheld this sentence.",
+   "kind": "K1"
+  },
+  {
+   "id": "E7",
+   "location": "drafted.readdown.ann_124.hypothesis[2]; drafted.blocks[1] (C002)",
+   "statement": "Capital gains lower the predicted chance slowly at first, then faster: about 62% at 0 to about 6% at 6849 US dollars",
+   "verifier_grades": {
+    "B": "weakened"
+   },
+   "found_by": [
+    "B"
+   ],
+   "finding_ids": {
+    "B": [
+     "V10"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "probe --sweep capital-gain=0,2500,5000,6849: 61.9%, 39.1%, 20.2%, 6.4%. On the chance scale the fall is fastest first (22.8 then 18.9 points per 2500 dollars, then 13.8 over 1849); 'slowly then faster' holds only on the log-odds scale (slope steepens past the hinge at about 5250 dollars; ann_117 is -0.63 at 6849). The end points reproduce.",
+   "kind": "K7"
+  },
+  {
+   "id": "E8",
+   "location": "record.summary (ann_116)",
+   "statement": "People under 35 ... adding 0.98 to the log-odds on average for the 16,819 training rows it acts on",
+   "verifier_grades": {
+    "B": "weakened"
+   },
+   "found_by": [
+    "B"
+   ],
+   "finding_ids": {
+    "B": [
+     "V11"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "database",
+   "mechanism": "d",
+   "check": "subgroup age >= 35: n = 22254, ann_116 acts on 100% of them with contribution -0.4263; the under-35 rows get +0.9789. The 0.98 and 16,819 reproduce, but the part acts on every row (always-on unit), so 'rows it acts on' is the wrong scope; relative to the older group the young gain about 1.41. The technical hypothesis states it correctly.",
+   "kind": "K8"
+  }
+ ],
+ "summary": {
+  "refuted": {
+   "database": 0,
+   "draft": 1
+  },
+  "weakened": {
+   "database": 1,
+   "draft": 6
+  },
+  "none": 0
+ }
+}

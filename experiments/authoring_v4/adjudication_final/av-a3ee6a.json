@@ -1,0 +1,138 @@
+{
+ "item": "av-a3ee6a",
+ "errors": [
+  {
+   "id": "E1",
+   "location": "drafted.readdown.ann_100.hypothesis[0] (C001)",
+   "statement": "An international plan raises the predicted chance that a customer leaves more than anything else: for a typical customer, from about 2% to about 24%.",
+   "verifier_grades": {
+    "B": "refuted"
+   },
+   "found_by": [
+    "B"
+   ],
+   "finding_ids": {
+    "B": [
+     "V5"
+    ]
+   },
+   "genuine_level": "refuted",
+   "layer": "draft",
+   "mechanism": "e",
+   "check": "probe --sweep calls=0,4,5,6 --no-parts: 2.3%, 13.7%, 49.4%, 85.7% (6 calls is inside the 1st-99th percentile); joint probe no plan, 271 min / $46.07: 50.0%; subgroup no plan, 260-280 min (n=130): mean predicted 54.6%, observed 56.2%. Service calls and heavy day use (both on support) move the typical customer far more than the plan's 2% -> 24%, so 'more than anything else' is broken by real counterexamples. The 2% -> 24% figure itself reproduces (C001). Within ann_87 alone ('matters most', blocks[1], C064) the ranking is fine and is not part of this error.",
+   "kind": "K2"
+  },
+  {
+   "id": "E2",
+   "location": "drafted.readdown.ann_88.hypothesis[0], ann_88.evidence[1..3], ann_98.hypothesis[1], ann_98.evidence[1], ann_100.hypothesis[1], blocks[0] (C058, C100, C101, C103)",
+   "statement": "Heavy daytime use without a voice-mail plan: nothing until about 218 minutes, then steadily; 0 to 271 minutes moves it from about 2% to about 7%.",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V1",
+     "V2"
+    ],
+    "B": [
+     "V6"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "subgroup day minutes > 270 and day charge < 40: 0 rows (charge is a fixed multiple of minutes); joint probe 271 min / $46.07, no plan: 50.0% vs the stated 7%; real no-plan customers at 260-280 min: 54.6% predicted. The 2% -> 7% reproduces for the stated construction (minutes moved with charge held at median), so not refuted, but it is an off-support case that understates the real effect about sevenfold, and C058's test check 'disagrees' is not carried into the prose. Direction and voice-mail gating hold.",
+   "kind": "K1"
+  },
+  {
+   "id": "E3",
+   "location": "drafted.readdown.ann_89.hypothesis[0], ann_89.evidence[0], ann_98.hypothesis[2], ann_98.evidence[2], blocks[0], worth_checking[0] (C116)",
+   "statement": "A daytime charge above about 41.59 US dollars adds to the predicted chance: for a typical customer, from about 2% at $0.00 to about 8% at $46.09.",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V1",
+     "V3"
+    ],
+    "B": [
+     "V7"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "probe --claim C116 --no-parts: changing the charge in the whole model gives 15.9% at $0 and 11.9% at $46.09 against the stated 2% -> 8%. The claim is part-scoped (charge changed only where ann_89 reads it) but the sentence reads as the typical customer's prediction. The $41.59 threshold holds for the part, so weakened, not refuted.",
+   "kind": "K3"
+  },
+  {
+   "id": "E4",
+   "location": "drafted.readdown.ann_87.evidence[1], ann_100.evidence[1], ann_89.evidence[2], blocks[1], worth_checking[2] (C002, C067, C007, C070, C112)",
+   "statement": "More voice-mail messages raise the predicted chance (typical customer 0 -> 32 messages: about 2% -> 6% in the part, about 10% in the whole model), while a voice-mail plan lowers it to below 1%.",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V4"
+    ],
+    "B": [
+     "V8"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "subgroup no plan and messages > 0: 0 rows, so the typical (no-plan) customer with 32 messages does not exist; probe plan=1, messages 0 -> 32: 0.3% -> 1.6%. The direction within plan holders holds and the stated numbers reproduce for the constructed cases, but the sizes and the worth-checking contrast rest on off-support combinations of two linked inputs.",
+   "kind": "K1"
+  },
+  {
+   "id": "E5",
+   "location": "operations.dayEveChargeCascade.hypothesis",
+   "statement": "5604 ~ relu(1.14*totalDayCharge_ce + 1.26*totalEveCharge - 0.943), ... (all off by up to 0.0077 from rounding)",
+   "verifier_grades": {
+    "A": "weakened"
+   },
+   "found_by": [
+    "A"
+   ],
+   "finding_ids": {
+    "A": [
+     "V5"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "database",
+   "mechanism": "f",
+   "check": "recheck.json formula checks: 5604 max_abs_err 0.0177 (rel 0.0034, within rounding, status ok); 4045 0.0064, 9871_a 0.0011, 387 0.0027. The 0.0077 bound is exceeded by 5604 in absolute terms but all coefficients are right within rounding and all relative errors are below 0.0077; a small transcription slip.",
+   "kind": "K4"
+  }
+ ],
+ "summary": {
+  "refuted": {
+   "database": 0,
+   "draft": 1
+  },
+  "weakened": {
+   "database": 1,
+   "draft": 3
+  },
+  "none": 0
+ }
+}

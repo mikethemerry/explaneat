@@ -1,0 +1,299 @@
+{
+ "item": "av-eaefd8",
+ "errors": [
+  {
+   "id": "E1",
+   "location": "operations.churnModelRoot.hypothesis; record.summary (3)",
+   "statement": "Linear term: voice_mail_plan -0.86/SD (-2.37 for holders); record: linear terms ... voice-mail plan -2.37",
+   "verifier_grades": {
+    "A": "refuted",
+    "B": "refuted"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V3",
+     "V4"
+    ],
+    "B": [
+     "V6",
+     "V8"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "database",
+   "mechanism": "d",
+   "check": "Claims C013 (direct, code-computed) -1.957 logit for holders = -0.864/0.4415; C014 (whole model) -2.39. -2.37 is near the whole-model effect, not the direct edge it is labelled as; -0.86/SD itself implies -1.96, so the sentence is internally inconsistent.",
+   "kind": "K3",
+   "reconciled_from": "refuted",
+   "reconcile_reason": "K3 rule: the -2.37 is the whole-model effect of the voice-mail plan (C014: mean -2.39, 10th-90th percentile -3.64 to -1.96 across customers) written under the label 'linear term'; it is within 0.02 of the whole-model mean and inside its range, so it holds under the whole-model reading. This is the same slip as E2 (+2.67, the whole-model value under the same label, graded weakened); the internal inconsistency with -0.86/SD is the label error itself, present in E2 too."
+  },
+  {
+   "id": "E2",
+   "location": "operations.churnModelRoot.hypothesis; record.summary (3)",
+   "statement": "Linear term: international_plan +0.77/SD (+2.67 logit for plan holders)",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V5",
+     "V4"
+    ],
+    "B": [
+     "V7",
+     "V8"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "database",
+   "mechanism": "d",
+   "check": "C002 direct +2.623 (0.769/0.2932); C001 whole model +2.668. Whole-model value under the linear-term label, but only 0.05 logit off.",
+   "kind": "K3"
+  },
+  {
+   "id": "E3",
+   "location": "record.resisted",
+   "statement": "rareStateUnits leaf (14 nodes) is an honest near-dead annotation with zero measurable logit effect",
+   "verifier_grades": {
+    "A": "refuted",
+    "B": "refuted"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V9"
+    ],
+    "B": [
+     "V24"
+    ]
+   },
+   "genuine_level": "refuted",
+   "layer": "database",
+   "mechanism": "e",
+   "check": "probe typical, 4 calls, day charge 20, state=44/49/28: ann_82 contributes +0.3435 (Utah), -0.0078, -0.2361 (North Dakota) logit; C107 +0.351, C108 -0.224; the leaf's own hypothesis says +0.40 for 7740. Only the AUC effect is ~0 (ablate: 0.9095 -> 0.9094); the logit effect is measurable.",
+   "kind": "K2"
+  },
+  {
+   "id": "E4",
+   "location": "drafted.blocks[4] (ann_82)",
+   "statement": "This part ... moves the chance by about a point at most",
+   "verifier_grades": {
+    "A": "refuted",
+    "B": "refuted"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V10"
+    ],
+    "B": [
+     "V23"
+    ]
+   },
+   "genuine_level": "refuted",
+   "layer": "draft",
+   "mechanism": "d",
+   "check": "ablate --part rareStateUnits: max risk change 0.0853 on training rows; probe Utah, 4 calls, day charge 20: 49.2% vs 40.5% West Virginia (+0.34 logit from this part). The typical-customer change (2% -> 3%) is written as a maximum.",
+   "kind": "K2"
+  },
+  {
+   "id": "E5",
+   "location": "drafted.readdown.ann_79.evidence[0]; drafted.blocks[2][0]",
+   "statement": "It acts on 1033 of 4000 training customers, all without a voice-mail plan",
+   "verifier_grades": {
+    "A": "refuted",
+    "B": "refuted"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V12"
+    ],
+    "B": [
+     "V18"
+    ]
+   },
+   "genuine_level": "refuted",
+   "layer": "draft",
+   "mechanism": "e",
+   "check": "subgroup voice mail plan == '1': ann_79 acts on 38 (3.6%) of 1061 plan holders; C090 itself gives share_in 0.963 without a plan, so 'all' is the drafter's overclaim.",
+   "kind": "K2"
+  },
+  {
+   "id": "E6",
+   "location": "drafted.readdown.ann_79.hypothesis[0], evidence[2]; drafted.blocks[2][2]",
+   "statement": "daytime minutes raise it only without a voice-mail plan; with a voice-mail plan they add nothing",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V13"
+    ],
+    "B": [
+     "V19"
+    ]
+   },
+   "genuine_level": "refuted",
+   "layer": "draft",
+   "mechanism": "e",
+   "check": "probe plan=1, 25 messages, minutes x charge: ann_79 0 up to 250 min / 47.6 USD, then +0.10 (280/47.6), +0.59 (310/52.7), +1.77 (340/57.8) logit. True over C086's 112-249 minute range; 'only'/'nothing' too strong for the heaviest users (38 real plan holders acted on).",
+   "kind": "K2",
+   "reconciled_from": "weakened",
+   "reconcile_reason": "K2 rule: 'with a voice-mail plan they add nothing: the chance stays below 1%' is broken by real training rows: subgroup voice mail plan == '1' and total day minutes > 270 has n = 47, ann_79 acts on 38 (mean +0.21 logit), typical case 8.9%, mean predicted 29.4%. The 112-249 minute range attaches to the numbers, not to 'only'/'nothing'. Same rule as E5 in this item ('all without a voice-mail plan', same 38 rows), which was already refuted."
+  },
+  {
+   "id": "E7",
+   "location": "drafted.readdown.ann_79.evidence[2]; drafted.blocks[2][2]; drafted.readdown.ann_83.evidence[2]",
+   "statement": "from about 2% to about 5%",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V14"
+    ],
+    "B": [
+     "V5"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "f",
+   "check": "C086 risk_to 0.04455 (recheck prose_rounding): 4.455% rounded twice to 'about 5%'.",
+   "kind": "K4"
+  },
+  {
+   "id": "E8",
+   "location": "operations.serviceCallsHinges.hypothesis",
+   "statement": "5395 is on at >=4 calls unless day z > ~0.9, or 3 calls with below-average day usage (810 rows)",
+   "verifier_grades": {
+    "A": "weakened",
+    "B": "weakened"
+   },
+   "found_by": [
+    "A",
+    "B"
+   ],
+   "finding_ids": {
+    "A": [
+     "V16"
+    ],
+    "B": [
+     "V16"
+    ]
+   },
+   "genuine_level": "weakened",
+   "layer": "database",
+   "mechanism": "e",
+   "check": "Both verifiers' node crosstabs: about 284 of 5395's 810 active rows have 0-2 calls (199 two-call, 78 one-call). subgroup calls == 2: ann_81 acts on 254 (28%). The rule is a simplification written as exact; 810 is right.",
+   "kind": "K9"
+  },
+  {
+   "id": "E9",
+   "location": "operations.serviceCallsHinges.hypothesis (table)",
+   "statement": "<=2 calls: ~0 / 5-9% (except the high-usage bin)",
+   "verifier_grades": {
+    "A": "weakened"
+   },
+   "found_by": [
+    "A"
+   ],
+   "finding_ids": {
+    "A": [
+     "V16"
+    ],
+    "B": []
+   },
+   "genuine_level": "weakened",
+   "layer": "database",
+   "mechanism": "e",
+   "check": "subgroup calls <= 2 and day charge < 21.4 (day z < -1, n=491): ann_81 acts on 49%, mean contribution +0.365 logit, not ~0. Small against the +3.8/+5.6 bins, so an overstatement rather than a wrong direction.",
+   "kind": "K10"
+  },
+  {
+   "id": "E10",
+   "location": "drafted.readdown.ann_81.evidence[2]; drafted.blocks[1][3]",
+   "statement": "A higher daytime charge lowers the chance steadily up to about 15.64 US dollars (between 7.93 and 31.04), then no further: for the typical customer it acts on, from about 11% at 19.07 to about 2% at 42.40",
+   "verifier_grades": {
+    "A": "weakened"
+   },
+   "found_by": [
+    "A"
+   ],
+   "finding_ids": {
+    "A": [
+     "V17"
+    ],
+    "B": []
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "b",
+   "check": "probe 3 calls, day charge 10..45: ann_81 +2.94 at 10, +1.58 at 20, +0.21 at 30, flat +0.07 from 35. The 15.64 fold is the all-customer median (C079) and does not describe the 3-call typical customer of C070 in the same sentence; the stated 7.93-31.04 spread covers it, so imprecise, not wrong.",
+   "kind": "K5"
+  },
+  {
+   "id": "E11",
+   "location": "drafted.readdown.ann_80.hypothesis[0]; drafted.blocks[3][1]",
+   "statement": "The evening charge raises it only for customers with a daytime charge above 30.69 US dollars",
+   "verifier_grades": {
+    "A": "weakened"
+   },
+   "found_by": [
+    "A"
+   ],
+   "finding_ids": {
+    "A": [
+     "V19"
+    ],
+    "B": []
+   },
+   "genuine_level": "weakened",
+   "layer": "draft",
+   "mechanism": "e",
+   "check": "probe eve 14..30 x day 24.5/36.72: at 24.5 flat to 26 USD, then 2.3% -> 2.6% at 30 (ann_80 -0.55 -> -0.42); at 36.72 2.3% -> 42.7%. C098 group mean for <=30.69 is 0.0. 'Only' slightly too strong at the top of the evening range.",
+   "kind": "K2",
+   "reconcile_note": "K2 kept weakened: the counterexample is real (day charge 22-30.69 and eve charge > 26, n = 23, ann_80 -0.24 vs -0.42 at eve < 20), but the sentence quantifies the others itself ('for the others it stays at about 2%'), which holds (2.3% to 2.6%), so the sentence reads as 'raises it materially only for ...'."
+  }
+ ],
+ "summary": {
+  "refuted": {
+   "database": 1,
+   "draft": 3
+  },
+  "weakened": {
+   "database": 4,
+   "draft": 3
+  },
+  "none": 0
+ }
+}

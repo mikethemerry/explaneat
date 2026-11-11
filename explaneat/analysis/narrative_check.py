@@ -128,7 +128,7 @@ def process_text(db, genome_id: str, text: str, operations: Sequence[Dict[str, A
                "computed each one, e.g. {{q:<id>.<path>|.2f}} with the id an evidence or query tool returned "
                "(or pass allow=[...] for a literal such as a count in a name)")
         (errors if strict else warnings).append(msg)
-    warnings.extend(P.number_word_warnings(rendered))
+    warnings.extend(P.number_word_warnings(text))   # the template: a placeholder backs its sentence
     return {"text": rendered, "template": text if has_ph else None, "provenance": used, "strict": bool(strict),
             "errors": errors, "warnings": warnings, "findings": findings}
 
