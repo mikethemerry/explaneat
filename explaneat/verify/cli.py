@@ -416,3 +416,57 @@ def vars_cmd(target, ops, no_cache, as_json):
                        + f": {p['kind']}, parent {p['parent']}, reads {', '.join(p['variables'])}")
         return "\n".join(out)
     _emit(res, as_json, None, text)
+
+
+# ----------------------------------------------------------------------------- concept
+def _concept_text(r: Dict[str, Any]) -> str:
+    t = r["thresholds"]
+    lines = [f"Concept probe of {r['name']} (exits {', '.join(r['exit_nodes'])}; {r['library']} library, "
+             f"{r['n_library_concepts']} concepts; n = {r['n']}). Grade: meaningful at score >= {t['meaningful_r2']} "
+             f"(AUC {t['meaningful_auc']}), partial at >= {t['partial_r2']} (AUC {t['partial_auc']})."]
+    if r.get("concept"):
+        lines.append(f"  {r['concept']} ({r['concept_kind']}, {r['concept_source']}): score {r['score']}, "
+                     f"r2 {r['r2']}, AUC {r['auc']}, MI {r['mi']} bits -> {r['grade']}")
+        for e, s in r["per_exit"].items():
+            lines.append(f"    exit {e}: r2 {s['r2']}, AUC {s['auc']} ({s['auc_of'] or 'n/a'}; {s['direction'] or ''}), "
+                         f"MI {s['mi']}, gated {s['leaf_gated']}")
+    else:
+        lines.append(f"  best per exit (leaf score {r['score']} -> {r['grade']}; domain concepts only: "
+                     f"{r.get('domain_score')} -> {r.get('domain_grade')})")
+        for e, p in r["per_exit"].items():
+            lines.append(f"    exit {e}:")
+            for s in p["top"]:
+                lines.append(f"      {s['concept']} [{s['source']}]: score {s['score']}, r2 {s['r2']}, "
+                             f"AUC {s['auc']}, MI {s['mi']}")
+    return "\n".join(lines)
+
+
+@verify.command("concept")
+@click.argument("target")
+@_common
+@click.option("--part", required=True, help="The annotation: id (ann_N), name or title.")
+@click.option("--concept", default=None,
+              help="A library concept name or a pandas expression over the inputs and library names; "
+                   "omit to sweep the dataset's library.")
+@click.option("--split", type=click.Choice(["train", "test"]), default="train", show_default=True)
+@click.option("--no-inputs", is_flag=True, help="Leave the raw inputs out of the library sweep.")
+@click.option("--top", default=5, show_default=True, type=int, help="Concepts listed per exit in a sweep.")
+def concept_cmd(target, ops, no_cache, as_json, part, concept, split, no_inputs, top):
+    """Does a concept predict a part's exit activation? (the "understood" level; nothing is stored)."""
+    from ..analysis.concept_probe import probe_leaf
+    t = _target(target, ops)
+    vm = _model(t, not no_cache)
+    try:
+        p = vm.part(part, _titles(t))
+        X = vm.m.Xt if split == "test" else vm.m.X
+        raw = vm.base.raw_test if split == "test" else vm.base.raw_train
+        if X is None or raw is None:
+            raise ValueError(f"no {split} split")
+        ann = {"id": p.id, "name": p.name, "entry_nodes": p.ann["entry_nodes"], "exit_nodes": p.ann["exit_nodes"],
+               "subgraph_nodes": p.ann["subgraph_nodes"], "subgraph_connections": p.ann["subgraph_connections"]}
+        res = probe_leaf(vm.structure, X, raw, vm.base.feature_names, vm.base.dataset_name, ann, concept=concept,
+                         entry_inputs=p.variables, top=top, include_inputs=not no_inputs)
+    except (ValueError, KeyError) as e:
+        raise click.ClickException(str(e))
+    res["split"] = split
+    _emit(res, as_json, None, _concept_text)

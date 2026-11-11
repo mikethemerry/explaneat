@@ -104,7 +104,8 @@ The MCP server exposes about 40 tools for model analysis (also the analysis tool
 - **Structure**: get_phenotype, get_model_state, get_node_info
 - **Operations**: list_operations, apply_operation, validate_operation, undo_operation, get_annotations
 - **Evidence**: get_formula, compute_viz_data, render_visualization, get_viz_summary, compute_shap, compute_performance, get_input_distribution (on a `task_type: "survival"` dataset, `compute_performance` returns Harrell/Uno C, td-AUC, Brier/IBS and calibration at a horizon instead of AUC/accuracy)
-- **Coverage**: classify_nodes, detect_splits, get_coverage
+- **Coverage**: classify_nodes, detect_splits, get_coverage (its `decomposition` block warns when one part holds a whole wide layer, or hidden units sit only in the root or only as entries: coverage can be 1.0 then)
+- **Levels** (faithful / decomposed / understood, `docs/annotation_coverage_model.md`): probe_concept (does a concept from `explaneat/analysis/concepts.py` or an ad-hoc expression predict a part's exit; r2, AUC, MI, grade; also `explaneat verify concept`), set_meaning (store the returned `meaning` block on the annotation); `explaneat/analysis/explanation_levels.py` reports the three levels (export certificate, `build_explanations_csv.py`, `experiments/explanation_levels/`)
 - **Datasets**: list_datasets, get_dataset, get_dataset_splits
 - **Snapshots**: save_snapshot, update_narrative, add_evidence, amend_evidence, list_evidence
 - **Queries** (verifier tools for the explaining agent, provenance-stamped): query_subgroup, query_probe, query_enumerate, query_ablate, query_linearise, get_query, list_queries, set_strict_mode

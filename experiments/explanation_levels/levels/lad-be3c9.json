@@ -1,0 +1,1274 @@
+{
+ "label": "lad-be3c9",
+ "genome_id": "38f7d721-fe96-4b99-9c04-96148e06e71a",
+ "set": "ladder",
+ "study": "ladder",
+ "records_dir": "explanations",
+ "dataset": "connect4_win_ordinal",
+ "n_train": 54045,
+ "computed_at": "2026-11-11T22:32:29+00:00",
+ "method": "experiments/explanation_levels/compute_levels.py (read only; probes not stored, query_id null)",
+ "levels": {
+  "faithful": {
+   "function_preservation_max_abs_err": 0.0,
+   "closed_form_max_abs_err": 0.02537906498435305,
+   "passed": true,
+   "test": "max |output(explained model) - output(phenotype)| over the training rows < 1e-9"
+  },
+  "decomposed": {
+   "n_leaves": 8,
+   "n_compositions": 1,
+   "hidden_units": 8,
+   "granularity": 1.0,
+   "largest_part": {
+    "name": "xRightOCentre",
+    "hidden_units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.1222
+   },
+   "max_width": 1,
+   "max_depth": 1,
+   "warnings": [],
+   "passed": true,
+   "test": "share of hidden units whose part is at most 6 units wide (depth not penalised); no part wider than that holds half the units"
+  },
+  "understood": {
+   "leaves": 8,
+   "graded": 8,
+   "counts": {
+    "meaningful": 0,
+    "partial": 3,
+    "closed_form_only": 5,
+    "unnamed": 0
+   },
+   "grades": {
+    "xCentreAboveOBottom": "partial",
+    "oBottomCentre": "partial",
+    "xCentreThirdRow": "closed_form_only",
+    "xLowColumnD": "closed_form_only",
+    "xOnC2": "partial",
+    "xRightOCentre": "closed_form_only",
+    "xBottomLeftRow": "closed_form_only",
+    "xHighColumnD": "closed_form_only"
+   },
+   "understood_fraction": 0.0,
+   "partial_fraction": 0.375,
+   "closed_form_only_fraction": 0.625,
+   "unnamed_fraction": 0.0,
+   "concepts": {
+    "xCentreAboveOBottom": "o_open_1",
+    "oBottomCentre": "c_c1",
+    "xCentreThirdRow": "c_d1",
+    "xLowColumnD": "centre_diff",
+    "xOnC2": "c_c2",
+    "xRightOCentre": "x_thr_odd",
+    "xBottomLeftRow": "c_b1",
+    "xHighColumnD": "c_c2"
+   },
+   "test": "concept probe per leaf: meaningful r2 >= 0.8 or AUC >= 0.9; partial r2 >= 0.5 or AUC >= 0.75; else closed_form_only; unnamed when no concept was probed",
+   "ground_truth": {
+    "task": "c4",
+    "arch": "8",
+    "family": "c4",
+    "gt_recovery": null,
+    "gt_terms_recovered": null,
+    "gt_terms_total": null,
+    "explainer_leaf_grades": {
+     "xCentreAboveOBottom": "meaningful",
+     "xBottomLeftRow": "partial",
+     "xCentreThirdRow": "meaningful",
+     "oBottomCentre": "meaningful",
+     "xOnC2": "meaningful",
+     "xLowColumnD": "meaningful",
+     "xHighColumnD": "partial",
+     "xRightOCentre": "partial"
+    },
+    "truth": null
+   },
+   "domain_only": {
+    "leaves": 8,
+    "meaningful": 0,
+    "partial": 1,
+    "closed_form_only": 7,
+    "understood_fraction": 0.0,
+    "mean_score": 0.3816
+   }
+  }
+ },
+ "decomposition": {
+  "hidden_units": 8,
+  "small_width_max_units": 6,
+  "granularity": 1.0,
+  "largest_part": {
+   "name": "xRightOCentre",
+   "hidden_units": 1,
+   "width": 1,
+   "depth": 1,
+   "leaf": true,
+   "param_share": 0.1222
+  },
+  "max_width": 1,
+  "max_depth": 1,
+  "units_only_in_root": 0,
+  "units_only_as_entries": 0,
+  "parts": {
+   "oBottomCentre": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.1222
+   },
+   "xBottomLeftRow": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.1222
+   },
+   "xCentreAboveOBottom": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.1222
+   },
+   "xCentreThirdRow": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.1222
+   },
+   "xHighColumnD": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.1222
+   },
+   "xLowColumnD": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.1222
+   },
+   "xOnC2": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.1222
+   },
+   "xRightOCentre": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.1222
+   }
+  },
+  "warnings": []
+ },
+ "leaves": {
+  "xCentreAboveOBottom": {
+   "id": "ann_84",
+   "exit_nodes": [
+    "1"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "c_a1",
+    "c_a2",
+    "c_a3",
+    "c_a4",
+    "c_a5",
+    "c_a6",
+    "c_b1",
+    "c_b2",
+    "c_b3",
+    "c_b4",
+    "c_b5",
+    "c_b6",
+    "c_c1",
+    "c_c2",
+    "c_c3",
+    "c_c4",
+    "c_c5",
+    "c_c6",
+    "c_d1",
+    "c_d2",
+    "c_d3",
+    "c_d4",
+    "c_d5",
+    "c_d6",
+    "c_e1",
+    "c_e2",
+    "c_e3",
+    "c_e4",
+    "c_e5",
+    "c_e6",
+    "c_f1",
+    "c_f2",
+    "c_f3",
+    "c_f4",
+    "c_f5",
+    "c_f6",
+    "c_g1",
+    "c_g2",
+    "c_g3",
+    "c_g4",
+    "c_g5",
+    "c_g6"
+   ],
+   "library": "c4",
+   "n_library_concepts": 95,
+   "score": 0.544612,
+   "grade": "partial",
+   "best_concepts": [
+    "o_open_1"
+   ],
+   "domain_score": 0.544612,
+   "domain_grade": "partial",
+   "best_domain_concepts": [
+    "o_open_1"
+   ],
+   "r2": 0.161335,
+   "auc": 0.772306,
+   "mi": 0.16649,
+   "meaning": {
+    "grade": "partial",
+    "concept": "o_open_1",
+    "probe": {
+     "r2": 0.161335,
+     "auc": 0.772306,
+     "mi": 0.16649,
+     "n": 54045,
+     "score": 0.544612,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "1": {
+     "best": {
+      "concept": "o_open_1",
+      "kind": "count",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.161335,
+      "auc": 0.772306,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is low",
+      "mi": 0.16649,
+      "nmi": 0.048393,
+      "leaf_gated": true,
+      "score": 0.544612
+     },
+     "best_domain": {
+      "concept": "o_open_1",
+      "kind": "count",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.161335,
+      "auc": 0.772306,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is low",
+      "mi": 0.16649,
+      "nmi": 0.048393,
+      "leaf_gated": true,
+      "score": 0.544612
+     },
+     "top": [
+      {
+       "concept": "o_open_1",
+       "source": "domain",
+       "score": 0.544612,
+       "r2": 0.161335,
+       "auc": 0.772306,
+       "mi": 0.16649
+      },
+      {
+       "concept": "o_row1",
+       "source": "domain",
+       "score": 0.542938,
+       "r2": 0.215822,
+       "auc": 0.771469,
+       "mi": 0.197361
+      },
+      {
+       "concept": "o_mean_row",
+       "source": "domain",
+       "score": 0.42556,
+       "r2": 0.078783,
+       "auc": 0.71278,
+       "mi": 0.122288
+      }
+     ]
+    }
+   }
+  },
+  "oBottomCentre": {
+   "id": "ann_87",
+   "exit_nodes": [
+    "4"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "c_a1",
+    "c_a2",
+    "c_a3",
+    "c_a4",
+    "c_a5",
+    "c_a6",
+    "c_b1",
+    "c_b2",
+    "c_b3",
+    "c_b4",
+    "c_b5",
+    "c_b6",
+    "c_c1",
+    "c_c2",
+    "c_c3",
+    "c_c4",
+    "c_c5",
+    "c_c6",
+    "c_d1",
+    "c_d2",
+    "c_d3",
+    "c_d4",
+    "c_d5",
+    "c_d6",
+    "c_e1",
+    "c_e2",
+    "c_e3",
+    "c_e4",
+    "c_e5",
+    "c_e6",
+    "c_f1",
+    "c_f2",
+    "c_f3",
+    "c_f4",
+    "c_f5",
+    "c_f6",
+    "c_g1",
+    "c_g2",
+    "c_g3",
+    "c_g4",
+    "c_g5",
+    "c_g6"
+   ],
+   "library": "c4",
+   "n_library_concepts": 95,
+   "score": 0.526608,
+   "grade": "partial",
+   "best_concepts": [
+    "c_c1"
+   ],
+   "domain_score": 0.28121,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [
+    "col_c_x"
+   ],
+   "r2": 0.309249,
+   "auc": 0.763304,
+   "mi": 0.307428,
+   "meaning": {
+    "grade": "partial",
+    "concept": "c_c1",
+    "probe": {
+     "r2": 0.309249,
+     "auc": 0.763304,
+     "mi": 0.307428,
+     "n": 54045,
+     "score": 0.526608,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "4": {
+     "best": {
+      "concept": "c_c1",
+      "kind": "count",
+      "source": "input",
+      "n": 54045,
+      "r2": 0.309249,
+      "auc": 0.763304,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is low",
+      "mi": 0.307428,
+      "nmi": 0.096629,
+      "leaf_gated": true,
+      "score": 0.526608
+     },
+     "best_domain": {
+      "concept": "col_c_x",
+      "kind": "count",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.064928,
+      "auc": 0.640605,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is low",
+      "mi": 0.08053,
+      "nmi": 0.025312,
+      "leaf_gated": true,
+      "score": 0.28121
+     },
+     "top": [
+      {
+       "concept": "c_c1",
+       "source": "input",
+       "score": 0.526608,
+       "r2": 0.309249,
+       "auc": 0.763304,
+       "mi": 0.307428
+      },
+      {
+       "concept": "c_b1",
+       "source": "input",
+       "score": 0.311358,
+       "r2": 0.130029,
+       "auc": 0.655679,
+       "mi": 0.110906
+      },
+      {
+       "concept": "c_d1",
+       "source": "input",
+       "score": 0.297468,
+       "r2": 0.097828,
+       "auc": 0.648734,
+       "mi": 0.201829
+      }
+     ]
+    }
+   }
+  },
+  "xCentreThirdRow": {
+   "id": "ann_86",
+   "exit_nodes": [
+    "3"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "c_a1",
+    "c_a2",
+    "c_a3",
+    "c_a4",
+    "c_a5",
+    "c_a6",
+    "c_b1",
+    "c_b2",
+    "c_b3",
+    "c_b4",
+    "c_b5",
+    "c_b6",
+    "c_c1",
+    "c_c2",
+    "c_c3",
+    "c_c4",
+    "c_c5",
+    "c_c6",
+    "c_d1",
+    "c_d2",
+    "c_d3",
+    "c_d4",
+    "c_d5",
+    "c_d6",
+    "c_e1",
+    "c_e2",
+    "c_e3",
+    "c_e4",
+    "c_e5",
+    "c_e6",
+    "c_f1",
+    "c_f2",
+    "c_f3",
+    "c_f4",
+    "c_f5",
+    "c_f6",
+    "c_g1",
+    "c_g2",
+    "c_g3",
+    "c_g4",
+    "c_g5",
+    "c_g6"
+   ],
+   "library": "c4",
+   "n_library_concepts": 95,
+   "score": 0.304226,
+   "grade": "closed_form_only",
+   "best_concepts": [
+    "c_d1"
+   ],
+   "domain_score": 0.30043,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [
+    "centre_diff"
+   ],
+   "r2": 0.096916,
+   "auc": 0.652113,
+   "mi": 0.085606,
+   "meaning": {
+    "grade": "closed_form_only",
+    "concept": "c_d1",
+    "probe": {
+     "r2": 0.096916,
+     "auc": 0.652113,
+     "mi": 0.085606,
+     "n": 54045,
+     "score": 0.304226,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "3": {
+     "best": {
+      "concept": "c_d1",
+      "kind": "count",
+      "source": "input",
+      "n": 54045,
+      "r2": 0.096916,
+      "auc": 0.652113,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.085606,
+      "nmi": 0.033437,
+      "leaf_gated": true,
+      "score": 0.304226
+     },
+     "best_domain": {
+      "concept": "centre_diff",
+      "kind": "count",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.096907,
+      "auc": 0.650215,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.09289,
+      "nmi": 0.036282,
+      "leaf_gated": true,
+      "score": 0.30043
+     },
+     "top": [
+      {
+       "concept": "c_d1",
+       "source": "input",
+       "score": 0.304226,
+       "r2": 0.096916,
+       "auc": 0.652113,
+       "mi": 0.085606
+      },
+      {
+       "concept": "centre_diff",
+       "source": "domain",
+       "score": 0.30043,
+       "r2": 0.096907,
+       "auc": 0.650215,
+       "mi": 0.09289
+      },
+      {
+       "concept": "c_a1",
+       "source": "input",
+       "score": 0.29051,
+       "r2": 0.073445,
+       "auc": 0.645255,
+       "mi": 0.069005
+      }
+     ]
+    }
+   }
+  },
+  "xLowColumnD": {
+   "id": "ann_89",
+   "exit_nodes": [
+    "6"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "c_a1",
+    "c_a2",
+    "c_a3",
+    "c_a4",
+    "c_a5",
+    "c_a6",
+    "c_b1",
+    "c_b2",
+    "c_b3",
+    "c_b4",
+    "c_b5",
+    "c_b6",
+    "c_c1",
+    "c_c2",
+    "c_c3",
+    "c_c4",
+    "c_c5",
+    "c_c6",
+    "c_d1",
+    "c_d2",
+    "c_d3",
+    "c_d4",
+    "c_d5",
+    "c_d6",
+    "c_e1",
+    "c_e2",
+    "c_e3",
+    "c_e4",
+    "c_e5",
+    "c_e6",
+    "c_f1",
+    "c_f2",
+    "c_f3",
+    "c_f4",
+    "c_f5",
+    "c_f6",
+    "c_g1",
+    "c_g2",
+    "c_g3",
+    "c_g4",
+    "c_g5",
+    "c_g6"
+   ],
+   "library": "c4",
+   "n_library_concepts": 95,
+   "score": 0.43979,
+   "grade": "closed_form_only",
+   "best_concepts": [
+    "centre_diff"
+   ],
+   "domain_score": 0.43979,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [
+    "centre_diff"
+   ],
+   "r2": 0.214111,
+   "auc": 0.719895,
+   "mi": 0.195791,
+   "meaning": {
+    "grade": "closed_form_only",
+    "concept": "centre_diff",
+    "probe": {
+     "r2": 0.214111,
+     "auc": 0.719895,
+     "mi": 0.195791,
+     "n": 54045,
+     "score": 0.43979,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "6": {
+     "best": {
+      "concept": "centre_diff",
+      "kind": "count",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.214111,
+      "auc": 0.719895,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.195791,
+      "nmi": 0.085073,
+      "leaf_gated": true,
+      "score": 0.43979
+     },
+     "best_domain": {
+      "concept": "centre_diff",
+      "kind": "count",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.214111,
+      "auc": 0.719895,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.195791,
+      "nmi": 0.085073,
+      "leaf_gated": true,
+      "score": 0.43979
+     },
+     "top": [
+      {
+       "concept": "centre_diff",
+       "source": "domain",
+       "score": 0.43979,
+       "r2": 0.214111,
+       "auc": 0.719895,
+       "mi": 0.195791
+      },
+      {
+       "concept": "c_e1",
+       "source": "input",
+       "score": 0.349674,
+       "r2": 0.111257,
+       "auc": 0.674837,
+       "mi": 0.10901
+      },
+      {
+       "concept": "c_d2",
+       "source": "input",
+       "score": 0.341556,
+       "r2": 0.174538,
+       "auc": 0.670778,
+       "mi": 0.145329
+      }
+     ]
+    }
+   }
+  },
+  "xOnC2": {
+   "id": "ann_88",
+   "exit_nodes": [
+    "5"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "c_a1",
+    "c_a2",
+    "c_a3",
+    "c_a4",
+    "c_a5",
+    "c_a6",
+    "c_b1",
+    "c_b2",
+    "c_b3",
+    "c_b4",
+    "c_b5",
+    "c_b6",
+    "c_c1",
+    "c_c2",
+    "c_c3",
+    "c_c4",
+    "c_c5",
+    "c_c6",
+    "c_d1",
+    "c_d2",
+    "c_d3",
+    "c_d4",
+    "c_d5",
+    "c_d6",
+    "c_e1",
+    "c_e2",
+    "c_e3",
+    "c_e4",
+    "c_e5",
+    "c_e6",
+    "c_f1",
+    "c_f2",
+    "c_f3",
+    "c_f4",
+    "c_f5",
+    "c_f6",
+    "c_g1",
+    "c_g2",
+    "c_g3",
+    "c_g4",
+    "c_g5",
+    "c_g6"
+   ],
+   "library": "c4",
+   "n_library_concepts": 95,
+   "score": 0.651872,
+   "grade": "partial",
+   "best_concepts": [
+    "c_c2"
+   ],
+   "domain_score": 0.376402,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [
+    "col_c_x"
+   ],
+   "r2": 0.200078,
+   "auc": 0.825936,
+   "mi": 0.237496,
+   "meaning": {
+    "grade": "partial",
+    "concept": "c_c2",
+    "probe": {
+     "r2": 0.200078,
+     "auc": 0.825936,
+     "mi": 0.237496,
+     "n": 54045,
+     "score": 0.651872,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "5": {
+     "best": {
+      "concept": "c_c2",
+      "kind": "count",
+      "source": "input",
+      "n": 54045,
+      "r2": 0.200078,
+      "auc": 0.825936,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.237496,
+      "nmi": 0.174781,
+      "leaf_gated": true,
+      "score": 0.651872
+     },
+     "best_domain": {
+      "concept": "col_c_x",
+      "kind": "count",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.118196,
+      "auc": 0.688201,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.119069,
+      "nmi": 0.087627,
+      "leaf_gated": true,
+      "score": 0.376402
+     },
+     "top": [
+      {
+       "concept": "c_c2",
+       "source": "input",
+       "score": 0.651872,
+       "r2": 0.200078,
+       "auc": 0.825936,
+       "mi": 0.237496
+      },
+      {
+       "concept": "col_c_x",
+       "source": "domain",
+       "score": 0.376402,
+       "r2": 0.118196,
+       "auc": 0.688201,
+       "mi": 0.119069
+      },
+      {
+       "concept": "x_thr_odd",
+       "source": "domain",
+       "score": 0.288324,
+       "r2": 0.001178,
+       "auc": 0.644162,
+       "mi": 0.000616
+      }
+     ]
+    }
+   }
+  },
+  "xRightOCentre": {
+   "id": "ann_91",
+   "exit_nodes": [
+    "8"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "c_a1",
+    "c_a2",
+    "c_a3",
+    "c_a4",
+    "c_a5",
+    "c_a6",
+    "c_b1",
+    "c_b2",
+    "c_b3",
+    "c_b4",
+    "c_b5",
+    "c_b6",
+    "c_c1",
+    "c_c2",
+    "c_c3",
+    "c_c4",
+    "c_c5",
+    "c_c6",
+    "c_d1",
+    "c_d2",
+    "c_d3",
+    "c_d4",
+    "c_d5",
+    "c_d6",
+    "c_e1",
+    "c_e2",
+    "c_e3",
+    "c_e4",
+    "c_e5",
+    "c_e6",
+    "c_f1",
+    "c_f2",
+    "c_f3",
+    "c_f4",
+    "c_f5",
+    "c_f6",
+    "c_g1",
+    "c_g2",
+    "c_g3",
+    "c_g4",
+    "c_g5",
+    "c_g6"
+   ],
+   "library": "c4",
+   "n_library_concepts": 95,
+   "score": 0.4491,
+   "grade": "closed_form_only",
+   "best_concepts": [
+    "x_thr_odd"
+   ],
+   "domain_score": 0.4491,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [
+    "x_thr_odd"
+   ],
+   "r2": 0.000567,
+   "auc": 0.72455,
+   "mi": 0.000848,
+   "meaning": {
+    "grade": "closed_form_only",
+    "concept": "x_thr_odd",
+    "probe": {
+     "r2": 0.000567,
+     "auc": 0.72455,
+     "mi": 0.000848,
+     "n": 54045,
+     "score": 0.4491,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "8": {
+     "best": {
+      "concept": "x_thr_odd",
+      "kind": "binary",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.000567,
+      "auc": 0.72455,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit lower when the concept holds",
+      "mi": 0.000848,
+      "nmi": 0.000263,
+      "leaf_gated": true,
+      "score": 0.4491
+     },
+     "best_domain": {
+      "concept": "x_thr_odd",
+      "kind": "binary",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.000567,
+      "auc": 0.72455,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit lower when the concept holds",
+      "mi": 0.000848,
+      "nmi": 0.000263,
+      "leaf_gated": true,
+      "score": 0.4491
+     },
+     "top": [
+      {
+       "concept": "x_thr_odd",
+       "source": "domain",
+       "score": 0.4491,
+       "r2": 0.000567,
+       "auc": 0.72455,
+       "mi": 0.000848
+      },
+      {
+       "concept": "o_thr_odd",
+       "source": "domain",
+       "score": 0.334492,
+       "r2": 0.000643,
+       "auc": 0.667246,
+       "mi": 0.000628
+      },
+      {
+       "concept": "o_row2",
+       "source": "domain",
+       "score": 0.326264,
+       "r2": 0.09873,
+       "auc": 0.663132,
+       "mi": 0.086156
+      }
+     ]
+    }
+   }
+  },
+  "xBottomLeftRow": {
+   "id": "ann_85",
+   "exit_nodes": [
+    "2"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "c_a1",
+    "c_a2",
+    "c_a3",
+    "c_a4",
+    "c_a5",
+    "c_a6",
+    "c_b1",
+    "c_b2",
+    "c_b3",
+    "c_b4",
+    "c_b5",
+    "c_b6",
+    "c_c1",
+    "c_c2",
+    "c_c3",
+    "c_c4",
+    "c_c5",
+    "c_c6",
+    "c_d1",
+    "c_d2",
+    "c_d3",
+    "c_d4",
+    "c_d5",
+    "c_d6",
+    "c_e1",
+    "c_e2",
+    "c_e3",
+    "c_e4",
+    "c_e5",
+    "c_e6",
+    "c_f1",
+    "c_f2",
+    "c_f3",
+    "c_f4",
+    "c_f5",
+    "c_f6",
+    "c_g1",
+    "c_g2",
+    "c_g3",
+    "c_g4",
+    "c_g5",
+    "c_g6"
+   ],
+   "library": "c4",
+   "n_library_concepts": 95,
+   "score": 0.420558,
+   "grade": "closed_form_only",
+   "best_concepts": [
+    "c_b1"
+   ],
+   "domain_score": 0.350032,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [
+    "o_row1"
+   ],
+   "r2": 0.086889,
+   "auc": 0.710279,
+   "mi": 0.09741,
+   "meaning": {
+    "grade": "closed_form_only",
+    "concept": "c_b1",
+    "probe": {
+     "r2": 0.086889,
+     "auc": 0.710279,
+     "mi": 0.09741,
+     "n": 54045,
+     "score": 0.420558,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "2": {
+     "best": {
+      "concept": "c_b1",
+      "kind": "count",
+      "source": "input",
+      "n": 54045,
+      "r2": 0.086889,
+      "auc": 0.710279,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.09741,
+      "nmi": 0.060151,
+      "leaf_gated": true,
+      "score": 0.420558
+     },
+     "best_domain": {
+      "concept": "o_row1",
+      "kind": "count",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.073287,
+      "auc": 0.675016,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is low",
+      "mi": 0.074611,
+      "nmi": 0.046073,
+      "leaf_gated": true,
+      "score": 0.350032
+     },
+     "top": [
+      {
+       "concept": "c_b1",
+       "source": "input",
+       "score": 0.420558,
+       "r2": 0.086889,
+       "auc": 0.710279,
+       "mi": 0.09741
+      },
+      {
+       "concept": "o_row1",
+       "source": "domain",
+       "score": 0.350032,
+       "r2": 0.073287,
+       "auc": 0.675016,
+       "mi": 0.074611
+      },
+      {
+       "concept": "x_row1",
+       "source": "domain",
+       "score": 0.290896,
+       "r2": 0.042211,
+       "auc": 0.645448,
+       "mi": 0.057056
+      }
+     ]
+    }
+   }
+  },
+  "xHighColumnD": {
+   "id": "ann_90",
+   "exit_nodes": [
+    "7"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "c_a1",
+    "c_a2",
+    "c_a3",
+    "c_a4",
+    "c_a5",
+    "c_a6",
+    "c_b1",
+    "c_b2",
+    "c_b3",
+    "c_b4",
+    "c_b5",
+    "c_b6",
+    "c_c1",
+    "c_c2",
+    "c_c3",
+    "c_c4",
+    "c_c5",
+    "c_c6",
+    "c_d1",
+    "c_d2",
+    "c_d3",
+    "c_d4",
+    "c_d5",
+    "c_d6",
+    "c_e1",
+    "c_e2",
+    "c_e3",
+    "c_e4",
+    "c_e5",
+    "c_e6",
+    "c_f1",
+    "c_f2",
+    "c_f3",
+    "c_f4",
+    "c_f5",
+    "c_f6",
+    "c_g1",
+    "c_g2",
+    "c_g3",
+    "c_g4",
+    "c_g5",
+    "c_g6"
+   ],
+   "library": "c4",
+   "n_library_concepts": 95,
+   "score": 0.393368,
+   "grade": "closed_form_only",
+   "best_concepts": [
+    "c_c2"
+   ],
+   "domain_score": 0.310902,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [
+    "o_row2"
+   ],
+   "r2": 0.088697,
+   "auc": 0.696684,
+   "mi": 0.138371,
+   "meaning": {
+    "grade": "closed_form_only",
+    "concept": "c_c2",
+    "probe": {
+     "r2": 0.088697,
+     "auc": 0.696684,
+     "mi": 0.138371,
+     "n": 54045,
+     "score": 0.393368,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "7": {
+     "best": {
+      "concept": "c_c2",
+      "kind": "count",
+      "source": "input",
+      "n": 54045,
+      "r2": 0.088697,
+      "auc": 0.696684,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is low",
+      "mi": 0.138371,
+      "nmi": 0.051041,
+      "leaf_gated": true,
+      "score": 0.393368
+     },
+     "best_domain": {
+      "concept": "o_row2",
+      "kind": "count",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.06587,
+      "auc": 0.655451,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.074711,
+      "nmi": 0.027559,
+      "leaf_gated": true,
+      "score": 0.310902
+     },
+     "top": [
+      {
+       "concept": "c_c2",
+       "source": "input",
+       "score": 0.393368,
+       "r2": 0.088697,
+       "auc": 0.696684,
+       "mi": 0.138371
+      },
+      {
+       "concept": "o_row2",
+       "source": "domain",
+       "score": 0.310902,
+       "r2": 0.06587,
+       "auc": 0.655451,
+       "mi": 0.074711
+      },
+      {
+       "concept": "x_row2",
+       "source": "domain",
+       "score": 0.295444,
+       "r2": 0.091908,
+       "auc": 0.647722,
+       "mi": 0.083446
+      }
+     ]
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,170 @@
+# Three levels of explanation: faithful, decomposed, understood
+
+**Read-only re-analysis, 2026-11-12, branch `feat/explanation-levels`.** Nothing in the stored
+explanations, records, summaries or earlier CSV columns was changed. Every number here is
+recomputed from the stored explanations by `compute_levels.py` (the genome's phenotype with the
+stored operations replayed in memory; database read only; the concept probes are run locally
+and not stored, so their `query_id` is null) and tabulated by `make_tables.py`
+(`tables.md`, `thesis_exports/ch7/ch7_levels_table.tex`). Definitions:
+`docs/annotation_coverage_model.md`, "Three levels of explanation".
+
+| Level | Claim | Test |
+|---|---|---|
+| Faithful | the hierarchy computes the model's function | max abs error of the explained model state against the phenotype on the training rows (the closed-form error of the leaves is the record's) |
+| Decomposed | each leaf is a small, separately readable part | leaf count; granularity = share of hidden units whose part is at most 6 units **wide** (depth not penalised); the *coarse decomposition* warning |
+| Understood | each leaf maps to a concept a domain reader recognises | the concept probe: the dataset's library swept against every leaf's exits; a leaf is *meaningful* at probe score >= 0.8 (R² >= 0.8 or AUC >= 0.9), *partial* at >= 0.5, else *closed-form only*; for Connect-4 the *domain* column counts only domain concepts (threats, open lines, centre, rows, parity), not raw cells |
+
+## Answer in brief
+
+- **All 77 explanations are faithful** (worst function-preservation error 2.4e-15; 60 ten-seed
+  records, 16 ladder networks, the evolved Connect-4 capacity network).
+- **The ten-seed explanations are decomposed**: granularity 1.0 in 55 of 60 (median 1.0 in every
+  study). The five below 1.0 are churn networks whose "state" leaves gather 6-10 parallel one-hot
+  state units (churn100-s0, churn100-s7, churn200-s7/s8/s9); churn200-s7 is the one *coarse*
+  flag (its `state_area_offsets` part is 10 units wide and 3 deep and holds half of the 33
+  hidden units). Heart, MONK-2, Adult and Heart-100 are 1.0 throughout.
+- **The ten-seed explanations are largely understood in the per-input vocabulary**: the median
+  share of leaves whose best library concept grades meaningful is 100% (Heart, Adult), 83-89%
+  (Heart-100, churn100, churn200) and 33% (MONK-2, where the leaves are conjunctions of
+  attributes: half grade partial). No study has a median closed-form-only share above 0%.
+  This is the expected result: those explanations claim per-input readings (a hinge on
+  oldpeak, a gate on the international plan), and the tabular library offers exactly that.
+- **The ladder's synthetic networks** are faithful; decomposed below two layers (granularity
+  1.0 for the one-layer networks, 0.0-0.5 for 8x8, 16x16, 32x16, where a leaf or the root
+  swallows a layer); and understood at 50-75% meaningful for the one-layer networks, with the
+  ground truth recovered at the root in every case (the grades of `gt_grades.json`).
+- **The Connect-4 networks are faithful and (up to width 24) decomposed, but not understood.**
+  This is the headline. Across the six ladder MLPs and the evolved capacity network, **no leaf
+  reaches *meaningful* on a domain concept**: the best domain concept per leaf scores 0.24-0.62
+  (R², or 2(AUC-0.5)). Nine of the 35 Connect-4 leaves reach *partial* on a domain concept
+  (`centre_diff` four times, `x_row6` twice, `o_open_1`, `x_row3`, `col_b_o`, `o_row1`); the
+  other 26 are closed-form only in domain terms. The leaves are what their names say, *positional gates*: the single
+  best predictor of a leaf is usually one raw cell (`c_c1`, `c_b1`, `c_d1`, `c_c2`, scores
+  0.4-0.8), which is a description of the weights, not a concept. The domain library (threat
+  counts, open lines, immediate threats, parity, centre occupancy) does not predict what these
+  units compute. Either the networks have not learnt those concepts (their AUCs, 0.885-0.942,
+  are below GBM's 0.944 and the networks are linear or one-layer) or the units encode
+  something the vocabulary does not name. The probe cannot tell these apart; it can only say
+  that nothing in this vocabulary predicts the leaf.
+- **Width is the barrier at the decomposed level, exactly where the ladder found it:** C4-32 and
+  C4-32x16 are one leaf of 32 parallel units (granularity 0.0, the coarse flag), closed-form only.
+
+## Granularity: the definition used here
+
+The ladder (`experiments/explanation_barrier`) used the share of hidden units in a leaf of at
+most 6 *units*, which penalises a deep leaf. Following the decision that a 3-4 deep subnetwork
+is a perfectly good leaf, the metric here is **width-based**: within each annotation, the
+layer of a node is its longest path from an entry node over the annotation's own edges; the
+annotation's width is the most hidden units in one layer (split copies counted once); each
+hidden unit belongs to the smallest annotation holding a copy of it as a non-entry node;
+granularity is the share of hidden units whose part has width <= 6. A chain of four units has
+width 1 and depth 4 (fine); a layer of 32 units in one leaf has width 32 (coarse). The block
+also reports units that sit only in the root composition and units that appear in parts only
+as entry nodes (both lower granularity: nothing explains them), the largest part's share of
+the model's parameters, and the max width and depth of any part. For the one-layer networks
+the two definitions agree; they differ on 8x8 (0.5 by units, 0.0 by width: each of the three
+leaves holds split copies of all 8 first-layer units, so each is 8 wide) and on 16x16 (0.5 by
+both, for different reasons).
+
+## Caveats
+
+- The probe scores *prediction* of a leaf's exit by a single concept. A leaf that genuinely
+  combines several concepts (a long direct-edge sum, a conjunction of three attributes) can grade
+  partial or closed-form only while being perfectly explained in words; MONK-2's conjunction
+  leaves are the clear case. Pairwise products and conjunctions of a leaf's own entry inputs are
+  in the tabular library, higher-order combinations are not. An explainer who names the
+  combination can test it as an ad-hoc expression (`probe_concept(concept="a1:1 and a2:1 and
+  a3:1")`).
+- The vocabulary is per-input and feature-based; relational domains need a library, and a low
+  grade means "nothing in this vocabulary predicts the leaf", not "the leaf means nothing".
+- `lad-e47f6` and `lad-f01d4` (the C4-32 and C4-32x16 re-runs on `exp/explanation-barrier-2`,
+  past the 26-copy split limit) have explanations in `explaneat_dev` with no annotations yet;
+  they are computed (faithful 0, no leaves) and left out of the tables.
+- The ladder's own explainer and verifier grades (`leaf_meaningful` etc. in `ladder.csv`) were
+  judgements; the grades here are the probe's. They agree in direction (the one-layer synthetic
+  networks high, the two-layer ones and Connect-4 low) but are not the same quantity.
+
+## Reproduce
+
+```bash
+uv run python experiments/explanation_levels/compute_levels.py --set v4       # explaneat_v4, 60 records, ~25 min
+uv run python experiments/explanation_levels/compute_levels.py --set ladder   # explaneat_dev, 16 explanations
+uv run python experiments/explanation_levels/compute_levels.py --set c4cap    # explaneat_dev, 1 explanation
+uv run python experiments/explanation_levels/make_tables.py                   # tables.md, thesis_exports/ch7/ch7_levels_table.tex
+uv run python experiments/10seed/build_explanations_csv.py --dir explanations_v4 --suffix _v4   # the five new columns
+```
+
+## Tables (generated: `tables.md`)
+### Three levels per study
+
+| Study | n | Faithful: max abs err (worst) | Leaves | Granularity | Coarse (n) | Understood: meaningful share | Partial | Closed-form only | Domain-concept share |
+|---|---|---|---|---|---|---|---|---|---|
+| Heart | 10 | 4.4e-16 | 3.5 [3-6] | 1.00 [1.00-1.00] | 0 | 100% [33%-100%] | 0% [0%-67%] | 0% [0%-0%] | n/a |
+| MONK-2 | 10 | 2.4e-15 | 3 [2-6] | 1.00 [1.00-1.00] | 0 | 33% [0%-100%] | 50% [0%-67%] | 0% [0%-50%] | n/a |
+| Adult | 10 | 7.8e-16 | 8 [6-12] | 1.00 [1.00-1.00] | 0 | 100% [88%-100%] | 0% [0%-0%] | 0% [0%-12%] | n/a |
+| Heart-100 | 10 | 4.4e-16 | 4 [4-7] | 1.00 [1.00-1.00] | 0 | 83% [75%-100%] | 17% [0%-25%] | 0% [0%-0%] | n/a |
+| churn100 | 10 | 1.0e-15 | 7 [5-12] | 1.00 [0.57-1.00] | 0 | 87% [57%-100%] | 6% [0%-43%] | 0% [0%-25%] | n/a |
+| churn200 | 10 | 1.3e-15 | 8.5 [6-10] | 1.00 [0.45-1.00] | 1 | 89% [71%-100%] | 11% [0%-29%] | 0% [0%-10%] | n/a |
+| Ladder, synthetic (MLP) | 8 | 3.3e-16 | 5 [3-7] | 1.00 [0.00-1.00] | 2 | 61% [0%-75%] | 39% [25%-100%] | 0% [0%-17%] | n/a |
+| Ladder, Connect-4 (MLP) | 6 | 0.0e+00 | 4.5 [1-8] | 1.00 [0.00-1.00] | 2 | 0% [0%-0%] | 31% [0%-80%] | 69% [20%-100%] | 0% [0%-0%] |
+| Connect-4 capacity (evolved) | 1 | 1.7e-15 | 11 | 1.00 | 0 | 9% | 55% | 36% | 0% |
+
+### The ladder and the Connect-4 capacity network
+
+| Label | Family | Task | Arch | Hidden | Faithful | Leaves | Granularity | Max width | Max depth | Understood | Partial | CFO | Domain share | Ground truth |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| lad-6eb46 | c4 | c4 | 4 | 4 | 0.0e+00 | 4 | 1.0 | 1 | 1 | 0% | 25% | 75% | 0% |  |
+| lad-be3c9 | c4 | c4 | 8 | 8 | 0.0e+00 | 8 | 1.0 | 1 | 1 | 0% | 38% | 62% | 0% |  |
+| c4cap-main-h10-e50-s1 | c4 |  | evolved | 10 | 1.7e-15 | 11 | 1.0 | 1 | 1 | 9% | 55% | 36% | 0% |  |
+| lad-bcc3b | c4 | c4 | 16 | 16 | 0.0e+00 | 5 | 1.0 | 6 | 1 | 0% | 80% | 20% | 0% |  |
+| lad-97ea3 | c4 | c4 | 24 | 24 | 0.0e+00 | 5 | 1.0 | 6 | 1 | 0% | 60% | 40% | 0% |  |
+| lad-da6de | c4 | c4 | 32 | 32 | 0.0e+00 | 1 | 0.0 | 32 | 1 | 0% | 0% | 100% | 0% |  |
+| lad-61e79 | c4 | c4 | 32x16 | 48 | 0.0e+00 | 1 | 0.0 | 32 | 1 | 0% | 0% | 100% | 0% |  |
+| lad-6f6c3 | synthetic | hinges3 | 4 | 4 | 0.0e+00 | 4 | 1.0 | 1 | 1 | 75% | 25% | 0% | n/a | recovered (4/4) |
+| lad-b58a2 | synthetic | additive | 4 | 4 | 0.0e+00 | 4 | 1.0 | 1 | 1 | 75% | 25% | 0% | n/a | recovered (5/5) |
+| lad-12979 | synthetic | threeway | 8 | 8 | 0.0e+00 | 4 | 1.0 | 3 | 1 | 75% | 25% | 0% | n/a | recovered (5/5) |
+| lad-cb415 | synthetic | hinges6 | 8 | 8 | 0.0e+00 | 6 | 1.0 | 2 | 1 | 50% | 50% | 0% | n/a | mostly recovered (5 of 6 hinges as their own leaves) (6/7) |
+| lad-f6c4c | synthetic | parity3 | 8 | 8 | 0.0e+00 | 6 | 1.0 | 2 | 1 | 50% | 50% | 0% | n/a | recovered (at the root; the leaves are not the true terms) (3/3) |
+| lad-6e63b | synthetic | pairwise | 8x8 | 16 | 0.0e+00 | 3 | 0.0 | 8 | 2 | 0% | 100% | 0% | n/a | mostly recovered (at the root; the leaves entangle the two true interactions) (4/5) |
+| lad-b29f2 | synthetic | rule | 16x16 | 32 | 0.0e+00 | 7 | 0.5 | 16 | 1 | 71% | 29% | 0% | n/a | recovered (the rule list at the root; the second layer is not annotated) (5.5/6) |
+| lad-ae239 | synthetic | hinges6 | 32x16 | 48 | 3.3e-16 | 6 | 0.3333 | 6 | 1 | 0% | 83% | 17% | n/a | recovered at the root and in second-layer leaves; the 32 first-layer units are described only (6.5/7) |
+
+### Connect-4 and KRK leaves against the concept library
+
+| Label | Arch | Leaf | Exits | Best concept (any) | Score | Grade | Best domain concept | Domain score | Domain grade |
+|---|---|---|---|---|---|---|---|---|---|
+| lad-6eb46 | 4 | xRaisedInCentre | 1 | o_row1 | 0.46 | closed_form_only | o_row1 | 0.46 | closed_form_only |
+| lad-6eb46 | 4 | xOwnsCentreColumn | 1 | centre_diff | 0.53 | partial | centre_diff | 0.53 | partial |
+| lad-6eb46 | 4 | leftXRightO | 1 | c_f1 | 0.41 | closed_form_only | col_c_o | 0.24 | closed_form_only |
+| lad-6eb46 | 4 | columnCOverBottomLeft | 1 | c_a1 | 0.42 | closed_form_only | x_has_thr | 0.35 | closed_form_only |
+| lad-be3c9 | 8 | xCentreAboveOBottom | 1 | o_open_1 | 0.54 | partial | o_open_1 | 0.54 | partial |
+| lad-be3c9 | 8 | oBottomCentre | 1 | c_c1 | 0.53 | partial | col_c_x | 0.28 | closed_form_only |
+| lad-be3c9 | 8 | xCentreThirdRow | 1 | c_d1 | 0.30 | closed_form_only | centre_diff | 0.30 | closed_form_only |
+| lad-be3c9 | 8 | xLowColumnD | 1 | centre_diff | 0.44 | closed_form_only | centre_diff | 0.44 | closed_form_only |
+| lad-be3c9 | 8 | xOnC2 | 1 | c_c2 | 0.65 | partial | col_c_x | 0.38 | closed_form_only |
+| lad-be3c9 | 8 | xRightOCentre | 1 | x_thr_odd | 0.45 | closed_form_only | x_thr_odd | 0.45 | closed_form_only |
+| lad-be3c9 | 8 | xBottomLeftRow | 1 | c_b1 | 0.42 | closed_form_only | o_row1 | 0.35 | closed_form_only |
+| lad-be3c9 | 8 | xHighColumnD | 1 | c_c2 | 0.39 | closed_form_only | o_row2 | 0.31 | closed_form_only |
+| c4cap-main-h10-e50-s1 | evolved | direct_square_values | 1 | o_row6 | 0.27 | closed_form_only | o_row6 | 0.27 | closed_form_only |
+| c4cap-main-h10-e50-s1 | evolved | positional_gate_1 | 1 | c_c1 | 0.71 | partial | centre_diff | 0.57 | partial |
+| c4cap-main-h10-e50-s1 | evolved | positional_gate_7 | 1 | c_b1 | 0.52 | partial | o_row1 | 0.38 | closed_form_only |
+| c4cap-main-h10-e50-s1 | evolved | positional_gate_4 | 1 | c_d1 | 0.57 | partial | centre_diff | 0.44 | closed_form_only |
+| c4cap-main-h10-e50-s1 | evolved | positional_gate_10 | 1 | c_a1 | 0.52 | partial | col_e_o | 0.34 | closed_form_only |
+| c4cap-main-h10-e50-s1 | evolved | positional_gate_9 | 1 | o_row2 | 0.46 | closed_form_only | o_row2 | 0.46 | closed_form_only |
+| c4cap-main-h10-e50-s1 | evolved | positional_gate_6 | 1 | x_row6 | 0.48 | closed_form_only | x_row6 | 0.48 | closed_form_only |
+| c4cap-main-h10-e50-s1 | evolved | positional_gate_8 | 1 | x_row6 | 0.58 | partial | x_row6 | 0.58 | partial |
+| c4cap-main-h10-e50-s1 | evolved | positional_gate_5 | 1 | c_b1 | 0.81 | meaningful | col_b_o | 0.62 | partial |
+| c4cap-main-h10-e50-s1 | evolved | positional_gate_3 | 1 | c_c3 | 0.47 | closed_form_only | o_row2 | 0.32 | closed_form_only |
+| c4cap-main-h10-e50-s1 | evolved | positional_gate_2 | 1 | x_row3 | 0.59 | partial | x_row3 | 0.59 | partial |
+| lad-bcc3b | 16 | bottomRowVsUpper | 1 | x_row6 | 0.58 | partial | x_row6 | 0.58 | partial |
+| lad-bcc3b | 16 | sideUnits | 6 | c_b1, c_c2, c_d1 | 0.51 | partial | col_b_x, col_c_x, col_f_o | 0.39 | closed_form_only |
+| lad-bcc3b | 16 | oCentreBottom | 3 | c_b1, c_c1, c_d1 | 0.62 | partial | centre_diff, col_b_x | 0.42 | closed_form_only |
+| lad-bcc3b | 16 | upperRowUnits | 3 | c_c3, o_row6, x_row5 | 0.40 | closed_form_only | o_row6, x_row5 | 0.37 | closed_form_only |
+| lad-bcc3b | 16 | xCentreBottom | 3 | c_d1, centre_diff | 0.64 | partial | centre_diff | 0.62 | partial |
+| lad-97ea3 | 24 | bottom_row_centre_A | 5 | c_c1, c_d1 | 0.61 | partial | centre_diff, col_c_x, x_thr_odd | 0.44 | closed_form_only |
+| lad-97ea3 | 24 | bottom_row_centre_B | 6 | c_c1, c_d1, o_row1 | 0.56 | partial | centre_diff, col_c_x, o_row1 | 0.51 | partial |
+| lad-97ea3 | 24 | second_row_centre | 5 | c_a2, c_b2, c_c2 | 0.51 | partial | col_b_o, col_b_x, o_row6 | 0.32 | closed_form_only |
+| lad-97ea3 | 24 | upper_rows_mixed | 3 | c_b3, c_d1, x_mean_row | 0.41 | closed_form_only | x_mean_row, x_row6, x_thr_odd | 0.37 | closed_form_only |
+| lad-97ea3 | 24 | low_board_mixed | 5 | c_e1, c_f2, c_g1 | 0.45 | closed_form_only | centre_diff, col_e_o, o_row1 | 0.33 | closed_form_only |
+| lad-da6de | 32 | board_detectors | 32 | c_a1, c_a3, c_b1 | 0.49 | closed_form_only | centre_diff, centre_o, col_a_x | 0.39 | closed_form_only |
+| lad-61e79 | 32x16 | board_square_features | 32 | c_a1, c_a2, c_b1 | 0.50 | closed_form_only | centre_diff, col_b_x, col_c_x | 0.39 | closed_form_only |

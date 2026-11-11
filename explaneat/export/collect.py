@@ -536,6 +536,27 @@ def default_label(meta) -> str:
     return f"{slug}-{meta['genome']['id'][:8]}"
 
 
+def sidecar_meanings(label: Optional[str]) -> Dict[str, Dict[str, Any]]:
+    """Leaf ``meaning`` blocks computed read-only for an explanation that stores none
+    (``experiments/explanation_levels/levels/<label>.json``, or ``$EXPLANEAT_LEVELS_DIR``), by
+    annotation name. A block stored on the annotation itself always wins."""
+    import json
+    import os
+    if not label:
+        return {}
+    root = Path(os.environ.get("EXPLANEAT_LEVELS_DIR") or
+                Path(__file__).resolve().parents[2] / "experiments" / "explanation_levels" / "levels")
+    path = root / f"{label}.json"
+    if not path.is_file():
+        return {}
+    try:
+        data = json.loads(path.read_text())
+    except Exception:
+        return {}
+    return {name: (leaf or {}).get("meaning") for name, leaf in (data.get("leaves") or {}).items()
+            if (leaf or {}).get("meaning")}
+
+
 def build_document(engine, ops: List[Dict[str, Any]], meta: Dict[str, Any], *,
                    record: Optional[Dict[str, Any]], label: str,
                    study: Optional[Dict[str, Any]] = None,
@@ -625,6 +646,16 @@ def build_document(engine, ops: List[Dict[str, Any]], meta: Dict[str, Any], *,
     authorship = _authorship(record, (study or {}).get("name"))
     cov = coverage_block(state, anns)
     covered_by = cov["report"]["node_coverage"]["by_annotation"]
+    # the three levels (faithful / decomposed / understood); the closed-form error is filled in
+    # once every leaf's check has run, below
+    from ..analysis.explanation_levels import explanation_levels, leaf_meanings_from_operations
+    meanings = leaf_meanings_from_operations(ops)
+    for name, block in sidecar_meanings(label).items():
+        if name in meanings and meanings[name] is None:
+            meanings[name] = block
+    cov["levels"] = explanation_levels(
+        cov["report"], {"function_preservation_max_abs_err": fp["max_abs_err"], "closed_form_max_abs_err": None},
+        meanings, leaf_names=[a.name for a in anns if not children_of.get(a.name)])
 
     annotations = []
     for a in anns:
@@ -743,6 +774,11 @@ def build_document(engine, ops: List[Dict[str, Any]], meta: Dict[str, Any], *,
 
     def tree(name):
         return {"name": name, "children": [tree(c) for c in children_of.get(name, [])]}
+    cfe = [((a["closed_form"] or {}).get("error") or {}).get("closed_form_max_abs_err")
+           for a in annotations if a["kind"] == "leaf"]
+    cfe = [e for e in cfe if isinstance(e, (int, float))]
+    cov["levels"]["faithful"]["closed_form_max_abs_err"] = max(cfe) if cfe else None
+
     hierarchy = {
         "roots": roots,
         "global_root": (cov["report"].get("hierarchy") or {}).get("global_root"),

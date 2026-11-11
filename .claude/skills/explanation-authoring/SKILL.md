@@ -53,6 +53,7 @@ and single-brace placeholders: ignore that; you work unattended and write `{{q:.
 | every cell of a small discrete space; a rule | `query_enumerate(rule, group_by, where)` | see `get_query` |
 | restore gains of nonlinear units | `query_linearise` | see `get_query` |
 | coverage, function preservation, closed-form error | `check_explanation` | `function_preservation_max_abs_err`, `closed_form_max_abs_err`, `leaves[i].closed_form_max_abs_err` |
+| does a named concept predict a leaf (the "understood" level) | `probe_concept(part, concept)`, then `set_meaning` | `score`, `r2`, `auc`, `mi`, `grade`, `meaning` |
 
 `where` is a pandas query over real-unit columns: quote codes (`thal == '7'`), backticks for
 names with spaces or hyphens, `node_<id>` for a node's value (`node_17 > 0`), `risk`, `outcome`.
@@ -153,6 +154,22 @@ A part is **explained** when all four hold:
    stated with its n; if it looks fitted, say "fitted to {{q:..subgroup.n}} rows".
 
 Self-probe every leaf, the root, and the three largest parts by ablation AUC loss.
+
+### 7b. Leaf size, depth and the concept probe (clarification, 2026-11-12)
+
+- **Deep leaves are valid.** Composition does not need to be layer by layer: a subnetwork
+  three or four layers deep that reads as one function (a chain of gates, a serial hinge) is a
+  good leaf. Do not cut a serial chain into one-unit leaves.
+- **Wide leaves are not.** A leaf holding many parallel, independent units that are not read
+  separately is "covered, not decomposed". `get_coverage`'s `decomposition` block gives the
+  granularity (share of hidden units in a part at most 6 units wide; depth is not penalised)
+  and a *coarse decomposition* warning: aim for 1.0 and no warning.
+- **Meaning is measured.** For every leaf run `probe_concept(part=..., concept=...)` with a
+  concept from the dataset's library (or omit `concept` to sweep it; an ad-hoc pandas
+  expression over the input names is allowed) and store the returned `meaning` block with
+  `set_meaning`. The grade follows the score (meaningful >= 0.8, partial >= 0.5, else
+  closed_form_only) and is not yours to set. Quote the score as `{{q:<id>.score|.2f}}`.
+  `closed_form_only` is an honest result: say "described, not explained".
 
 ## 8. Workflow
 

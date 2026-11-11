@@ -316,6 +316,7 @@ def _summary_table(doc, P) -> List[str]:
     ms = doc["model_state"]["counts"]
     fp = doc["function_preservation"]
     au = doc["authorship"]
+    from .coverage_view import levels_rows
 
     def p(split, k):
         v = (perf.get(split) or {}).get(k)
@@ -340,6 +341,7 @@ def _summary_table(doc, P) -> List[str]:
         ("Uncovered nodes / edges", f"{s['uncovered_nodes']} / {s['uncovered_edges']}"),
         ("Missing compositions", str(s["missing_compositions"])),
         ("Full coverage", "yes" if s["full_coverage"] else r"\textbf{no}"),
+        *levels_rows(doc, tex),
         ("Drafted by", tex(drafter_label(au["drafter"]))),
         ("Verified by", tex(verifier_label(au["human_verification"]))),
         ("Record hash (SHA-256)", tex_code(pv["content_hash"]["value"][:16]) + r"\ldots"),

@@ -181,6 +181,59 @@ def query_linearise(genome_id: str, level: str = "parts", core: bool = False, sp
                  "scope": "whole model with the named units linearised", "unit": "AUC"}, _stamp(vm, split), r)
 
 
+def probe_concept(genome_id: str, part: str, concept: Optional[str] = None, split: str = "train",
+                  include_inputs: bool = True, top: int = 5) -> str:
+    """Does a named concept predict a part's exit activation? The test of the third level of
+    explanation (understood). ``concept`` is a name from the dataset's concept library (Connect-4:
+    x_thr, o_thr_now, centre_x, x_row3 ...; KRK: capture, stalemate, rook_adjacent ...; tabular:
+    an input, "<input> > <median>", a one-hot level) or an ad-hoc pandas expression over the input
+    names and library names ("x_thr - o_thr", "age > 55 and sex == 1"). With ``concept`` omitted
+    the whole library is scored and the best concept per exit is reported.
+
+    Returns r2, auc (binary concept, or a gated exit), mutual information, n, the score
+    (max(r2, 2*(auc - 0.5))), the grade (meaningful: score >= 0.8; partial: >= 0.5; else
+    closed_form_only) and the ``meaning`` block to store with ``set_meaning``. Quote a score as
+    ``{{q:<provenance.id>.score|.2f}}``.
+
+    Args:
+        genome_id: UUID of the genome.
+        part: The annotation (id "ann_N", name or title).
+        concept: A library concept name or a pandas expression; omit to sweep the library.
+        split: "train" (default) or "test".
+        include_inputs: In the library sweep, also offer the raw inputs (source "input").
+        top: Concepts to list per exit in a sweep.
+    """
+    from explaneat.analysis.concept_probe import probe_leaf
+    try:
+        vm = _vm(genome_id)
+        p = vm.part(part)
+        X = vm.m.Xt if split == "test" else vm.m.X
+        raw = vm.base.raw_test if split == "test" else vm.base.raw_train
+        if X is None or raw is None:
+            raise ValueError(f"no {split} split")
+        ann = {"id": p.id, "name": p.name, "entry_nodes": p.ann["entry_nodes"], "exit_nodes": p.ann["exit_nodes"],
+               "subgraph_nodes": p.ann["subgraph_nodes"], "subgraph_connections": p.ann["subgraph_connections"]}
+        r = probe_leaf(vm.structure, X, raw, vm.base.feature_names, vm.base.dataset_name, ann, concept=concept,
+                       entry_inputs=p.variables, top=top, include_inputs=include_inputs)
+        r["split"] = split
+    except Exception as e:
+        return _err(e)
+    res = _out(genome_id, "probe_concept", {"part": part, "concept": concept, "split": split,
+                                            "include_inputs": include_inputs, "top": top},
+               {"population": f"{split} split", "quantity": "r2, AUC and mutual information of the concept "
+                "against the part's exit activation; grade by the stated thresholds",
+                "scope": f"part {p.name} (exits {', '.join(ann['exit_nodes'])})", "unit": "R2, AUC, bits"},
+               _stamp(vm, split), r)
+    try:   # the meaning block carries the query id of its own probe
+        d = json.loads(res)
+        if d.get("provenance", {}).get("id"):
+            d["meaning"]["probe"]["query_id"] = d["provenance"]["id"]
+            res = json.dumps(d, indent=2)
+    except Exception:
+        pass
+    return res
+
+
 def get_query(genome_id: str, query_id: str) -> str:
     """A stored query record: the tool, its arguments, the query (population, quantity, scope,
     unit), split, n, rows hash and every value by path (the paths placeholders use).
@@ -215,6 +268,6 @@ def set_strict_mode(genome_id: str, strict: bool = True) -> str:
 
 
 def register(mcp: FastMCP) -> None:
-    for f in (query_subgroup, query_probe, query_enumerate, query_ablate, query_linearise, get_query,
-              list_queries, set_strict_mode):
+    for f in (query_subgroup, query_probe, query_enumerate, query_ablate, query_linearise, probe_concept,
+              get_query, list_queries, set_strict_mode):
         mcp.tool()(f)

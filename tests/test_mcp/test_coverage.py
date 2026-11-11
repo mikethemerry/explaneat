@@ -313,7 +313,7 @@ def test_get_coverage_returns_valid_json(mock_build_engine, mock_get_db):
     expected_keys = {
         "structural_coverage", "compositional_coverage",
         "node_coverage", "edge_coverage",
-        "annotations_count", "leaf_count", "composition_count", "null",
+        "annotations_count", "leaf_count", "composition_count", "null", "decomposition",
     }
     assert expected_keys == set(result.keys())
     assert set(result["node_coverage"].keys()) == {"covered", "uncovered", "total_candidate", "by_annotation"}
