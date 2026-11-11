@@ -1,0 +1,404 @@
+{
+ "item_id": "lad-61e79",
+ "genome_id": "5c456faa-183c-41a2-bcc8-151f70b89e99",
+ "target_hash": null,
+ "target_hash_note": "verify recheck returned target_hash null for this record target",
+ "verifier": "independent verifier agent",
+ "started_at": "2026-11-12T01:25:06+13:00",
+ "finished_at": "2026-11-12T01:33:00+13:00",
+ "minutes": 8,
+ "overall": {
+  "grade": "weakened",
+  "summary": "Every stated number reproduces and nothing is refuted. Weakened: the 0.8534 \"second layer affine\" AUC is both hidden layers linearised (second layer alone 0.8844); the square ranking after d1 is partly wrong; the bottom-row dependence is occupancy, not the first layer's weighting; three of the \"centre-column\" units read other squares as much; the d1 flip self-probes use 3-x/5-o boards outside the data."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "structural 1.0, compositional 1.0, hierarchy complete, one root win_vote containing the output",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.0 / 1.0, no uncovered nodes, single root containing output 0",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/record.json"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "0.0",
+   "check": "verify recheck; own numpy forward pass",
+   "evidence": "recheck 0; own forward pass from the phenotype weights gives training AUC 0.95556, accuracy 0.888",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/record.json",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c1.py"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.closed_form_max_abs_err",
+   "statement": "0.0347",
+   "check": "verify recheck",
+   "evidence": "recomputed 0.034710915765307604 (exit scale 21.2); numeric replay error 1.8e-14",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/record.json"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.n_leaf_annotations",
+   "statement": "1 leaf, 2 compositions, 0 splits, 0 identity nodes, 48 hidden nodes",
+   "check": "recheck op_counts; phenotype",
+   "evidence": "42 rename_node + 3 annotate; 32 + 16 hidden units; W1 1344/1344 and W2 512/512 edges non-zero (dense)",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/record.json",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c4.py"
+   ]
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "mean predicted chance 77% where x holds d1 (15583) and 54% where o holds it (15289); holding d1 at its average lowers AUC 0.9556 -> 0.8897, against 0.9550 for d6",
+   "check": "own forward pass, square column set to its training mean (z = 0)",
+   "evidence": "0.7717 / 0.5404; AUC 0.88972 for d1, 0.95503 for d6; d1 is the largest drop of all 42 squares",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c2.py",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c4.py"
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "weakened",
+   "level": "L2",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "with the second layer replaced by an affine fit the AUC is 0.8534",
+   "check": "verify linearise (parts) and own affine fits",
+   "evidence": "0.8534 reproduces, but verify linearise fits the composition second_layer_evidence, which contains the first-layer leaf: it is both hidden layers replaced by one affine function of the board. Replacing only the second layer (least-squares affine in the first-layer outputs) gives AUC 0.8844; replacing only the first gives 0.8132. The conclusion (the thresholds matter) holds; the label is the wrong scope.",
+   "commands": [
+    "uv run python -m explaneat verify linearise /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/record.json",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c4.py"
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "reads the bottom row and the lower centre squares far more than the upper rows; some second-layer units detect x or o on the centre column; one unit partly offsets an o piece on d1",
+   "check": "all 42 squares held at their average; unit activity by d1 owner",
+   "evidence": "row-6 squares cost at most 0.0018 AUC, row-1 squares 0.021 to 0.066; holds as dependence on the training boards (see V13 for why it is occupancy, not per-piece weighting)",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c4.py",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c2.py"
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "nine units (33, 34, 35, 37, 40, 43, 44, 45, 48) unread; each square feeds each first-layer unit; o piece g1 -> d1 on one board raised the chance 45% -> 65%",
+   "check": "own probe on training row 43899; weight matrix",
+   "evidence": "0.4523 -> 0.6520; dense first layer confirmed. Note: some unread units are readable (43 active with o on b1, corr -0.65; 48 with x on c3, +0.38; 45 with x on d3, +0.36)",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c3.py",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c5.py"
+   ]
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "structure",
+   "statement": "leaf board_square_features (inputs -1..-42, units 1-32) under composition second_layer_evidence (units 33-48) under root win_vote (output 0)",
+   "check": "verify vars; stored operations; recheck hierarchy",
+   "evidence": "reproduces; note the 16 second-layer units are covered only by a composition, not by a leaf, as the record states",
+   "commands": [
+    "uv run python -m explaneat verify vars /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/record.json"
+   ]
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_42",
+   "claims": [],
+   "location": "layer.parts.ann_42.closed_form",
+   "statement": "closed form of the 32 first-layer units",
+   "check": "verify recheck",
+   "evidence": "numeric error 1.8e-14; closed-form (rounded) error 0.0347",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/record.json"
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_42",
+   "claims": [],
+   "location": "operations.board_square_features.evidence[1]",
+   "statement": "AUC 0.9556 -> 0.8897 (d1), 0.9042 (c1), 0.9136 (a1), 0.9156 (g1), 0.9138 (d3), 0.9550 (d6); hypothesis also b1 0.9091, e1 0.9252, f1 0.9346, c3 0.9185, d2 0.9242, a6 0.9538, g6 0.9550",
+   "check": "each square held at its training mean, whole model",
+   "evidence": "all 13 values reproduce to 4 decimals",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c1.py"
+   ]
+  },
+  {
+   "id": "V12",
+   "grade": "weakened",
+   "level": "L1",
+   "part": "ann_42",
+   "claims": [],
+   "location": "operations.board_square_features.hypothesis",
+   "statement": "the centre bottom square carries the most information of the bottom row, the lower centre squares come next",
+   "check": "all 42 squares ranked by AUC drop",
+   "evidence": "d1 is first (0.8897). But the next three are bottom-row c1 0.9042, b1 0.9091, a1 0.9136, ahead of d3 0.9138; g1 0.9156 ranks ahead of c3 0.9185 and d2 0.9242, and d2 ties e1 and c2. Most bottom-row squares rank above the lower centre squares.",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c4.py"
+   ]
+  },
+  {
+   "id": "V13",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_42",
+   "claims": [],
+   "location": "operations.board_square_features.hypothesis",
+   "statement": "read as a whole, the layer makes the network depend on the bottom row and the lower centre squares, and hardly on the upper rows",
+   "check": "holding a square at its average tests the whole model and is weighted by how often the square is filled; compared with the layer's per-piece weights",
+   "evidence": "Every square reaches the output only through this layer, so the AUC test is a whole-model property. Per piece, the layer reacts more to the upper squares: sum |w|/sd per square is 61 to 222 in row 6 and 19 to 31 in row 1. The low dependence on upper rows comes from occupancy (row 6 filled on 0 to 1% of boards, row 1 on 40 to 76%), which the hypothesis mentions, not from the layer weighting them less.",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c4.py"
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_42",
+   "claims": [],
+   "location": "operations.board_square_features.hypothesis",
+   "statement": "the left side of the bottom row (a1 to c1) matters more than the right side (e1 to f1); \"this is Connect-4 square value\"",
+   "check": "mirror pairs compared",
+   "evidence": "reproduces (c1 0.9042 vs e1 0.9252, b1 0.9091 vs f1 0.9346; a1 0.9136 vs g1 0.9156 about equal). Connect-4 is left-right symmetric, so square value would be symmetric; the asymmetry is the model's own, not a game property.",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c4.py"
+   ]
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_43",
+   "claims": [],
+   "location": "operations.second_layer_evidence.evidence[1]",
+   "statement": "unit counts: 36 8059 vs 653; 39 10881 vs 2495; 42 351 vs 6506; 38 1401 vs 5122; 46 283/3752 vs 3057/3460; 47 1250 vs 6655; 41 266/15289 vs 9826/38756; output weights 0.58, 0.21, -0.50, -0.47, -0.28, 0.41, 0.80",
+   "check": "own forward pass, unit > 0 by owner of d1 (and d2)",
+   "evidence": "all 14 counts, 4 subgroup sizes and 7 weights reproduce exactly",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c2.py"
+   ]
+  },
+  {
+   "id": "V16",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_43",
+   "claims": [],
+   "location": "operations.second_layer_evidence.hypothesis",
+   "statement": "several units detect who holds the centre column (36, 39 for x; 42, 38, 46 against x; 47 offsets o on d1)",
+   "check": "correlation of each unit's activity with each square",
+   "evidence": "d1 is the top square for 36 (+0.40), 39 (+0.41) and 42 (-0.39): upheld. Unit 38 tracks e2 first (+0.25, d1 -0.24); unit 46 tracks o on d2 and c2 (-0.38, -0.28) and is on for 45% of all boards; unit 47 tracks x on f1 (+0.40) and b1 (+0.37) as much as o on d1 (-0.31). These three are only partly centre-column units.",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c5.py"
+   ]
+  },
+  {
+   "id": "V17",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_43",
+   "claims": [],
+   "location": "operations.second_layer_evidence.evidence[13]",
+   "statement": "positive-weight units off: AUC 0.8667, mean chance +0.48; negative-weight units off: AUC 0.8916, -0.22",
+   "check": "verify ablate --to zero; own ablation",
+   "evidence": "0.8667 and +0.4756; 0.8916 and -0.2244",
+   "commands": [
+    "uv run python -m explaneat verify ablate /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/record.json --node 36 --node 39 --node 41 --node 43 --node 45 --node 47 --node 48 --to zero",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c2.py"
+   ]
+  },
+  {
+   "id": "V18",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_43",
+   "claims": [],
+   "location": "operations.second_layer_evidence.evidence[15]",
+   "statement": "replacing this layer by its least-squares affine fit lowers the AUC from 0.9556 to 0.8534",
+   "check": "verify linearise; own affine fit of the second layer on the first-layer outputs",
+   "evidence": "0.8534 is the composition (both hidden layers, including the child leaf) replaced by an affine function of the board; the second layer alone, affine in its actual inputs, gives 0.8844",
+   "commands": [
+    "uv run python -m explaneat verify linearise /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/record.json",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c4.py"
+   ]
+  },
+  {
+   "id": "V19",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_43",
+   "claims": [],
+   "location": "operations.second_layer_evidence.evidence[11]",
+   "statement": "self-probe: boards 9999 and 9786 with the x piece on d1 turned into o (50% -> 13%; 67% -> 71%, \"units 46 and 47 turn on\")",
+   "check": "own probe; piece counts of the training boards",
+   "evidence": "Values reproduce (0.4954 -> 0.1291, unit 47 4.23 -> 9.12, unit 46 0 -> 0.62; 0.6745 -> 0.7143, 39 2.25 -> 0, 46 4.25, 47 4.04). But every training board has exactly 4 x and 4 o, and the flip makes 3 x and 5 o: both cases are outside the data. On 9786 unit 46 was already on (0.12). An in-support version (swap the x on d1 with an o on another bottom square, counts kept, n = 7465) lowers the chance on 93% of boards (median -0.24), so the reading stands but the probe is weak evidence.",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c3.py",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c6.py"
+   ]
+  },
+  {
+   "id": "V20",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_43",
+   "claims": [],
+   "location": "operations.second_layer_evidence.hypothesis",
+   "statement": "unit 47 partly offsets the units against x",
+   "check": "mean contribution (weight x value) by owner of d1",
+   "evidence": "unit 47 adds +0.71 to the score where o holds d1 (+0.08 where x holds it); units 42, 38, 46 together give -1.66 there: a partial offset",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c6.py"
+   ]
+  },
+  {
+   "id": "V21",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_44",
+   "claims": [],
+   "location": "operations.win_vote.hypothesis",
+   "statement": "77% (15583) vs 54% (15289); both d1 and d2 83% (3752) vs 39% (3460); x on a1 56% (17709) vs o 77% (16216); x on g1 56% (15139) vs o 77% (15107)",
+   "check": "own forward pass, subgroup means",
+   "evidence": "0.7717, 0.5404, 0.8290, 0.3941, 0.5585, 0.7747, 0.5551, 0.7734; all n match; observed outcome rates agree in direction (x on d1 0.762 vs o 0.535)",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c2.py",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c4.py"
+   ]
+  },
+  {
+   "id": "V22",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_44",
+   "claims": [],
+   "location": "operations.win_vote.evidence[4]",
+   "statement": "eight move probes: a1->d1 x 45%->98% (51724), 64%->99% (45710); g1->d1 x 61%->>99% (32185), 62%->>99% (31488); o a1->d1 42%->24% (24670), 30%->4% (26097); o g1->d1 56%->2% (47819), 45%->65% (43899)",
+   "check": "own probe; legality (square above empty, d1 empty, counts kept)",
+   "evidence": "all eight reproduce (0.4456->0.9760, 0.6387->0.9888, 0.6106->0.9963, 0.6196->0.9999, 0.4175->0.2425, 0.3033->0.0393, 0.5617->0.0197, 0.4523->0.6520); all moves give legal boards",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c3.py"
+   ]
+  },
+  {
+   "id": "V23",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_44",
+   "claims": [],
+   "location": "operations.win_vote.hypothesis",
+   "statement": "the centre preference is a strong tendency of the model, not a rule",
+   "check": "every training board with a movable a1/g1 piece and empty d1, piece moved to d1",
+   "evidence": "x pieces: 97.3% of 6148 moves raise the chance (median +0.17); o pieces: 82.8% of 6264 moves lower it (median 0.07), 9.0% move it the wrong way by more than 5 points. Tendency confirmed; weaker for o than for x",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c4.py"
+   ]
+  },
+  {
+   "id": "V24",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_44",
+   "claims": [],
+   "location": "operations.win_vote.hypothesis",
+   "statement": "edge squares go the other way, presumably because a piece on the edge is a piece not in the centre",
+   "check": "same comparison restricted to boards with d1 empty",
+   "evidence": "edge effect persists with d1 empty (x on a1 61% vs o 75%; g1 56% vs 80%), so it is not only about d1; the reason is hedged (\"presumably\") and fits the centre columns more broadly. The data agree (x on a1 wins 54.8%, o on a1 76.7%)",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c4.py"
+   ]
+  },
+  {
+   "id": "V25",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_44",
+   "claims": [],
+   "location": "operations.win_vote.hypothesis",
+   "statement": "both layers are needed: AUC 0.9556, and 0.8534 with the second layer replaced by an affine fit",
+   "check": "own affine fits of each layer",
+   "evidence": "the conclusion holds (first layer affine 0.8132, second layer affine 0.8844), but the cited 0.8534 replaces both layers at once, not the second layer",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/verify/c4.py",
+    "uv run python -m explaneat verify linearise /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-61e79/record.json"
+   ]
+  }
+ ],
+ "parts": {
+  "ann_42": {
+   "grade": "weakened",
+   "level": "L2"
+  },
+  "ann_43": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_44": {
+   "grade": "weakened",
+   "level": "L2"
+  }
+ },
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ],
+ "leaf_meaning": {
+  "board_square_features": {
+   "grade": "partial",
+   "why": "The confirmed reading (d1 and the bottom row carry most of the model's information) is a whole-model, occupancy-weighted property every input must pass through this layer for; the layer's own units are not read and per piece it weights upper squares more."
+  }
+ },
+ "statements_checked": 110
+}

@@ -26,8 +26,9 @@ NETWORKS = [  # (family, task, arch) in ladder order within family
     ("synthetic", "additive", "4"), ("synthetic", "hinges3", "4"), ("synthetic", "parity2", "4"),
     ("synthetic", "threeway", "8"), ("synthetic", "parity3", "8"), ("synthetic", "parity4", "8"),
     ("synthetic", "hinges6", "8"), ("synthetic", "pairwise", "8x8"), ("synthetic", "additive", "16"),
-    ("synthetic", "rule", "16x16"),
-    ("c4", "c4", "4"), ("c4", "c4", "8"), ("c4", "c4", "16"), ("c4", "c4", "32"), ("c4", "c4", "32x16"),
+    ("synthetic", "rule", "16x16"), ("synthetic", "hinges6", "32x16"),
+    ("c4", "c4", "4"), ("c4", "c4", "8"), ("c4", "c4", "16"), ("c4", "c4", "24"), ("c4", "c4", "32"),
+    ("c4", "c4", "32x16"),
 ]
 
 
@@ -73,7 +74,8 @@ def row(fam, task, arch, usage, gt):
                  within_budget=ex.get("within_budget"),
                  explained=bool(v["full_coverage"] and ex.get("within_budget", True)),
                  minutes=u.get("minutes") or (v.get("tool_call_window") or {}).get("minutes"),
-                 tokens=u.get("tokens"), n_leaves=len(leaves),
+                 tokens=u.get("tokens"), tokens_cache_reads=u.get("cache_read"), n_leaves=len(leaves),
+                 max_units_per_leaf=max((len(lf.get("units") or []) for lf in leaves), default=None),
                  n_compositions=ex.get("n_composition_annotations"), n_splits=ex.get("n_splits"),
                  n_identity=ex.get("n_identity_nodes"),
                  leaf_meaningful=mean.count("meaningful"), leaf_partial=mean.count("partial"),
