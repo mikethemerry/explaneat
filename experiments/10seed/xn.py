@@ -4,7 +4,8 @@
     uv run python experiments/10seed/xn.py --list
     uv run python experiments/10seed/xn.py --recheck <genome_id> [<summary.json>] [--record <record.json>]  # last step
     uv run python experiments/10seed/xn.py --calls <calls.json>        # [[tool, kwargs], ...] in order
-    uv run python experiments/10seed/xn.py --render <genome_id> <text file>   # render + lint, nothing stored
+    uv run python experiments/10seed/xn.py --render <genome_id> <text file> [--allow '["5", "2 groups"]']
+        # render + lint, nothing stored; --allow: literals that are not computed numbers
 
 Protocol v4 (EXPLAIN_PROTOCOL.md): evidence and query tools (query_subgroup, query_probe,
 query_ablate, query_enumerate, query_linearise) return provenance.id; write numbers as
@@ -60,14 +61,15 @@ def recheck(genome_id: str, summary_path: str = None, record_path: str = None) -
     return 0 if sb["complete_ok"] else 1
 
 
-def render(genome_id: str, path: str) -> None:
+def render(genome_id: str, path: str, allow=()) -> None:
     """Render and lint a text with {{q:...}} placeholders without storing it (for the final
-    report's summary and resisted): prints {"text", "template", "errors", "warnings"}."""
+    report's summary and resisted): prints {"text", "template", "errors", "warnings"}. ``allow``:
+    literals that are not computed numbers, as ``allow_numbers`` in annotate / update_narrative."""
     from explaneat.analysis.narrative_check import process_text
     from explaneat.verify.model import load_db_operations
     db = get_db()
     r = process_text(db, genome_id, Path(path).read_text().strip(), load_db_operations(genome_id, db=db),
-                     location="record.summary")
+                     location="record.summary", allow=list(allow))
     print(json.dumps({k: r[k] for k in ("text", "template", "errors", "warnings")}, indent=2, default=str))
 
 
@@ -91,7 +93,9 @@ def main():
         pos = [a for i, a in enumerate(rest) if a != "--record" and (i == 0 or rest[i - 1] != "--record")]
         sys.exit(recheck(pos[0], pos[1] if len(pos) > 1 else None, rec))
     if len(sys.argv) >= 4 and sys.argv[1] == "--render":
-        return render(sys.argv[2], sys.argv[3])
+        rest = sys.argv[4:]
+        allow = json.loads(rest[rest.index("--allow") + 1]) if "--allow" in rest else []
+        return render(sys.argv[2], sys.argv[3], allow)
     if len(sys.argv) >= 3 and sys.argv[1] == "--calls":
         # a JSON list of [tool, kwargs] pairs, run in order; one result per call
         for name, kwargs in json.loads(Path(sys.argv[2]).read_text()):

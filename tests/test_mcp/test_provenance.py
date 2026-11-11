@@ -192,3 +192,60 @@ def test_render_and_bare_number_lint_units():
                           node_ids=["290"]) == []
     assert P.bare_numbers("mean risk 0.13 for 35 patients") == ["0.13", "35"]
     assert P.number_word_warnings("zero in area 415") and not P.number_word_warnings("{{q:q_1.n}}: zero there")
+
+
+def test_amend_evidence_query_id_moves_the_records_provenance(world):
+    """amend_evidence(query_id=...) re-points the record's provenance list at the new query (the
+    12 false needs_review items of the v4 run: the list kept the old, pre-split id)."""
+    from mcp_server.tools.operations import list_operations
+    from mcp_server.tools.queries import query_subgroup
+    from mcp_server.tools.snapshots import add_evidence, amend_evidence
+    annotate(world["gid"], "The output adds the inputs.")
+    q1 = json.loads(query_subgroup(world["gid"], "`g` == '1'"))["provenance"]["id"]
+    assert json.loads(add_evidence(world["gid"], "lin", "subgroup", "{}", query_id=q1))["status"] == "ok"
+    q2 = json.loads(query_subgroup(world["gid"], "`g` == '1'"))["provenance"]["id"]
+    assert q2 != q1
+    am = json.loads(amend_evidence(world["gid"], "lin", 0, "rerun after a split", query_id=q2))
+    assert am.get("status") == "ok", am
+    rec = json.loads(list_operations(world["gid"]))["operations"][-1]["params"]["evidence"]["records"][0]
+    assert rec["payload"]["query_id"] == q2 and rec["provenance"] == [q2]
+    assert rec["history"][0]["provenance"] == [q1]          # the old list is kept in the history
+    # a narrative amendment records the ids its placeholders use, next to the payload's query
+    q3 = json.loads(query_subgroup(world["gid"], "`g` == '1'"))["provenance"]["id"]
+    am = json.loads(amend_evidence(world["gid"], "lin", 0, "narrative", narrative=f"{{{{q:{q3}.subgroup.n}}}} rows."))
+    assert am.get("status") == "ok", am
+    rec = json.loads(list_operations(world["gid"]))["operations"][-1]["params"]["evidence"]["records"][0]
+    assert rec["provenance"] == [q3, q2]
+
+
+def test_add_evidence_takes_allow_numbers(world):
+    """A count in a label is not a computed number: add_evidence takes allow_numbers, like
+    annotate and update_narrative."""
+    from mcp_server.tools.snapshots import add_evidence
+    annotate(world["gid"], "The output adds the inputs.")
+    note = "Checked on the 2 groups of the label."
+    bad = json.loads(add_evidence(world["gid"], "lin", "note", "{}", narrative=note))
+    assert "error" in bad and "bare typed numbers" in bad["error"]
+    ok = json.loads(add_evidence(world["gid"], "lin", "note", json.dumps({"label": "2 groups"}), narrative=note,
+                                 allow_numbers=json.dumps(["2"])))
+    assert ok.get("status") == "ok", ok
+
+
+def test_placeholder_keys_with_spaces_quoted_or_refused():
+    from explaneat.analysis import provenance as P
+    e = {"values": {"rows[0].inputs.resting bp": 140.0}, "n": 3, "tool": "t"}
+
+    def look(q):
+        return e if q == "q_1" else None
+    for ref in ('{{q:q_1.rows[0].inputs."resting bp"|.0f}}', "{{q:q_1.rows[0].inputs['resting bp']|.0f}}"):
+        txt, used, err = P.render(f"bp {ref} mm", look)
+        assert txt == "bp 140 mm" and used == ["q_1"] and not err, (ref, txt, err)
+    # unquoted: an error, never left in the text silently
+    txt, used, err = P.render("bp {{q:q_1.rows[0].inputs.resting bp|.0f}} mm", look)
+    assert err and "not a valid reference" in err[0] and not used
+    from explaneat.analysis.narrative_check import process_text
+    from explaneat.verify.model import VerifyModel
+    from tests.test_verify.test_verify_tools import base_data
+    vm = VerifyModel(base_data())
+    r = process_text(None, "g", "bp {{q:q_1.rows[0].inputs.resting bp}} mm", vm.operations, strict=True, model=vm)
+    assert any("not a valid reference" in x for x in r["errors"])

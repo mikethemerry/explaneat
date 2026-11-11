@@ -3,7 +3,7 @@ name: plain-language-explanations
 description: Use when drafting plain-language explanations of an explained ExplaNEAT genome (summaries, per-annotation paragraphs, "worth checking" flags, proposed hypothesis revisions) from its verified claims in experiments/10seed/plain_language/<label>.json, so every sentence is plain, real-world, describes the shape of each effect, is led by the change in predicted risk for a typical patient, worded with evidence-based confidence, traceable to its claims and marked as a draft for Mike's review.
 ---
 
-# Plain-language explanations (layer v4)
+# Plain-language explanations (layer v4, drafts in v5)
 
 You turn **verified claims** about an explained network into short, plain sentences that a
 clinician, a domain expert or a thesis examiner can check against what is known about the
@@ -30,6 +30,9 @@ records what it moved in `linked.moved` (per end: `from`, `to`, and for interact
   education-num such people have in the data), from about {{C..|pct}} to about {{C..|pct}}"; "a typical wife (so a woman) rather than a typical
   husband". Do not write "people whose highest education is ..." for a typical-case number:
   it is one constructed person, not the group. Say "for a typical person whose ...".
+- **Moved values are slots too.** Input names have spaces, so quote that key in the slot:
+  `{{C002.linked.moved.to."total day minutes".to|text}}` or
+  `{{C002.linked.moved.to["total day minutes"].to|text}}`. Never type a moved value by hand.
 - **`off_data`.** When the moves are impossible, the claim carries `off_data.reasons`. This
   happens, for example, when the claim itself sets two linked inputs separately. The case is a
   combination no training row has.
@@ -61,7 +64,10 @@ records what it moved in `linked.moved` (per end: `from`, `to`, and for interact
   shows no exception. "On the training data only", "only slightly" and "nothing until" are
   exempt.
 
-## v5: built up, read down (heart-paper only for now; adds to v4 below)
+## v5: built up, read down (the default for every draft; adds to v4 below)
+
+Write every draft in v5: the v4 shape below plus `readdown` and `titles` for every part. Do not
+write the flat (v3) or plain v4 block format on its own.
 
 After the v4 summary the document walks the annotation hierarchy from the root down
 (`readdown_order(layer)`: root, then each child, depth first; copies are described by their

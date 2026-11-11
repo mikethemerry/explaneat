@@ -12,9 +12,15 @@ re-extracted, :func:`rerender_draft` fills the templates again from the new clai
 whose key changed is remapped by key; a slot whose meaning is gone is an error), instead of only
 re-linting the old text (63 of 80 drafts were re-linted and never re-read).
 
-Formats: ``pct`` (a probability as a rounded percentage), ``text`` (the value as written), ``d``
-(an integer), or a Python format spec (``.1f``). Without a format a probability-like key
-(risk, from, to, share, rate) is shown with ``pct``.
+Formats: ``pct`` (a probability as a rounded percentage), ``text`` (the value as written), ``num``
+(the number of a value written with its unit: "126 minutes" gives "126"), ``d`` (an integer), or
+a Python format spec (``.1f``). Without a format a probability-like key (risk, from, to, share,
+rate) is shown with ``pct``.
+
+Keys with spaces (or dots) are quoted, with double or single quotes, as a segment or in brackets::
+
+    {{C002.linked.moved.to."total day minutes".to|text}}
+    {{C002.linked.moved.to["total day minutes"].to|text}}
 """
 
 from __future__ import annotations
@@ -23,15 +29,32 @@ import copy
 import re
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
-SLOT = re.compile(r"\{\{\s*(?P<cid>C\d+)\.(?P<path>[\w.\[\]\-]+?)(?:\s*\|\s*(?P<fmt>[^}]+?))?\s*\}\}")
+SLOT = re.compile(r"\{\{\s*(?P<cid>C\d+)\.(?P<path>(?:[\w.\[\]\-]|\"[^\"{}|]*\"|'[^'{}|]*')+?)"
+                  r"(?:\s*\|\s*(?P<fmt>[^}]+?))?\s*\}\}")
+# one path segment: ["quoted key"] / ['quoted key'] / "quoted key" / 'quoted key' / [3] / plain_key
+_SEGMENT = re.compile(r"""\[\s*"(?P<b2>[^"]*)"\s*\]|\[\s*'(?P<b1>[^']*)'\s*\]|"(?P<q2>[^"]*)"|'(?P<q1>[^']*)'"""
+                      r"|\[(?P<idx>\d+)\]|(?P<key>[^.\[\]\"']+)")
+
+
+def path_parts(path: str) -> List[Any]:
+    """The keys (str) and list indices (int) of a slot path, quoted keys unquoted."""
+    out: List[Any] = []
+    for m in _SEGMENT.finditer(path):
+        if m.group("idx") is not None:
+            out.append(int(m.group("idx")))
+        else:
+            out.append(next(m.group(g) for g in ("b2", "b1", "q2", "q1", "key") if m.group(g) is not None))
+    return out
+
+
 _PROB_KEY = re.compile(r"(?:risk|^from$|^to$|share|rate|predicted)", re.I)
 
 
 def _get(obj: Any, path: str) -> Any:
     cur = obj
-    for part in re.findall(r"[^.\[\]]+|\[\d+\]", path):
-        if part.startswith("["):
-            i = int(part[1:-1])
+    for part in path_parts(path):
+        if isinstance(part, int):
+            i = part
             if not isinstance(cur, list) or i >= len(cur):
                 raise KeyError(path)
             cur = cur[i]
@@ -47,6 +70,11 @@ def fmt_slot(value: Any, fmt: Optional[str], key: str) -> str:
     fmt = (fmt or "").strip()
     if isinstance(value, dict) and "text" in value:
         return str(value["text"])
+    if fmt == "num":         # the number of a value written with its unit ("126 minutes" -> "126")
+        m = re.match(r"\s*[-+−]?\$?\d[\d,]*(?:\.\d+)?", str(value))
+        if not m:
+            raise ValueError(f"no number in {value!r}")
+        return m.group(0).strip()
     if fmt == "text" or isinstance(value, str):
         return str(value)
     if value is None:
@@ -86,6 +114,10 @@ def render_sentence(s: Dict[str, Any], key: str, claims: Dict[str, Dict[str, Any
                     by_key: Dict[str, Dict[str, Any]], where: str) -> List[str]:
     """Fill the slots of one sentence in place; returns errors."""
     template = s.get("template") or s.get(key) or ""
+    bad = [m.group(0) for m in re.finditer(r"\{\{\s*C\d+\.[^{}]*\}\}", template) if not SLOT.fullmatch(m.group(0))]
+    if bad:
+        return [f"{where}: slot {b}: not a valid slot (quote a key with spaces: "
+                f"{{{{C12.linked.moved.to.\"total day minutes\".to}}}})" for b in bad]
     if not SLOT.search(template):
         return []
     errs: List[str] = []
@@ -114,7 +146,8 @@ def render_sentence(s: Dict[str, Any], key: str, claims: Dict[str, Dict[str, Any
             return m.group(0)
         try:
             v = _get(c, path)
-            out = fmt_slot(v, fmt, path.split(".")[-1])
+            parts = path_parts(path)
+            out = fmt_slot(v, fmt, str(parts[-1]) if parts else path)
         except (KeyError, ValueError, TypeError) as e:
             errs.append(f"{where}: slot {m.group(0)}: {type(e).__name__} {e}")
             return m.group(0)

@@ -89,7 +89,8 @@ def process_text(db, genome_id: str, text: str, operations: Sequence[Dict[str, A
             with db.session_scope() as s:
                 strict = P.is_strict(s, genome_id)
     has_ph = bool(P.PLACEHOLDER.search(text))
-    rendered, used, perr = P.render(text, lookup) if has_ph else (text, [], [])
+    # a reference that does not parse (an unquoted key with spaces) is an error, never left as is
+    rendered, used, perr = P.render(text, lookup) if has_ph or P.unparsed(text) else (text, [], [])
     (errors if strict else warnings).extend(perr)
 
     findings: List[Dict[str, Any]] = []
@@ -134,7 +135,8 @@ def process_text(db, genome_id: str, text: str, operations: Sequence[Dict[str, A
 
 
 def process_payload(db, genome_id: str, payload: Any, operations: Sequence[Dict[str, Any]],
-                    part_name: Optional[str], strict: Optional[bool] = None, session=None, model=None):
+                    part_name: Optional[str], strict: Optional[bool] = None, session=None, model=None,
+                    allow: Sequence[str] = ()):
     """Every string in an evidence payload (but formulas copied from get_formula: ``latex``,
     ``latex_collapsed``, ``sympy_srepr``): rendered, checked and linted like a narrative. Returns
     (payload rendered, template payload or None, report)."""
@@ -162,7 +164,7 @@ def process_payload(db, genome_id: str, payload: Any, operations: Sequence[Dict[
         if isinstance(obj, str) and re.search(r"\d|\{\{", obj):
             mdl = get_model()
             r = process_text(db, genome_id, obj, operations, part_name, f"payload{path}", strict,
-                             session=session, model=mdl if mdl is not None else _Unavailable())
+                             allow=allow, session=session, model=mdl if mdl is not None else _Unavailable())
             for k in ("errors", "warnings"):
                 rep[k] += [f"payload{path}: {x}" for x in r[k]]
             rep["findings"] += r["findings"]

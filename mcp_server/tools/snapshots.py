@@ -3,7 +3,7 @@
 import json
 import uuid
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 from mcp.server.fastmcp import FastMCP
 
@@ -191,6 +191,7 @@ def add_evidence(
     payload: str = "{}",
     narrative: Optional[str] = None,
     query_id: Optional[str] = None,
+    allow_numbers: Optional[str] = None,
 ) -> str:
     """Add a structured evidence record to an annotation.
 
@@ -213,14 +214,17 @@ def add_evidence(
         payload: JSON string with the evidence payload data (optional with query_id).
         narrative: Optional text explanation of the evidence.
         query_id: Optional id of a stored query whose result is the evidence.
+        allow_numbers: Optional JSON list of literals that are not computed numbers (e.g. a
+            count in a label), as in update_narrative.
     """
     from explaneat.db.models import Explanation
     from sqlalchemy.orm.attributes import flag_modified
 
     try:
         payload_parsed = json.loads(payload) if isinstance(payload, str) else payload
+        allow = json.loads(allow_numbers) if isinstance(allow_numbers, str) else list(allow_numbers or [])
     except json.JSONDecodeError as e:
-        return json.dumps({"error": f"Invalid JSON payload: {e}"})
+        return json.dumps({"error": f"Invalid JSON payload or allow_numbers: {e}"})
 
     db = get_db()
     with db.session_scope() as session:
@@ -268,12 +272,12 @@ def add_evidence(
                              "split": entry["split"], "n": entry["n"], "sampled": entry["sampled"],
                              "rows_hash": entry["rows_hash"], "values": entry["values"]}
                 pay, pay_tmpl, prep = process_payload(db, genome_id, payload_parsed, operations, params.get("name"),
-                                                      session=session)
+                                                      session=session, allow=allow)
                 chk = {"errors": [], "warnings": [], "findings": [], "provenance": [], "template": None,
                        "text": narrative, "strict": PV.is_strict(session, genome_id)}
                 if narrative is not None:
                     chk = _check_text(db, session, genome_id, operations, params, narrative,
-                                      f"operations.{params.get('name')}.evidence.narrative")
+                                      f"operations.{params.get('name')}.evidence.narrative", allow=allow)
                 errs = chk["errors"] + prep["errors"]
                 if errs:
                     return json.dumps({"error": "evidence refused (strict mode): " + "; ".join(errs),
@@ -313,6 +317,31 @@ def add_evidence(
         return json.dumps({"error": f"Annotation '{annotation_id}' not found"})
 
 
+def record_provenance(rec: Dict[str, Any]) -> List[str]:
+    """The stored-query ids an evidence record depends on, from what it holds now: the ids its
+    narrative and payload templates reference, then the payload's own ``query_id``. This is what
+    add_evidence stores in ``provenance``; amend_evidence recomputes it after every change, so a
+    record re-pointed at a rerun query no longer lists the old id (the 12 false needs_review flags
+    of the v4 run)."""
+    from explaneat.analysis import provenance as PV
+    ids: List[str] = [p["id"] for p in PV.placeholders(rec.get("narrative_template") or "")]
+
+    def walk(o):
+        if isinstance(o, str):
+            ids.extend(p["id"] for p in PV.placeholders(o))
+        elif isinstance(o, dict):
+            for v in o.values():
+                walk(v)
+        elif isinstance(o, list):
+            for v in o:
+                walk(v)
+    walk(rec.get("payload_template"))
+    pay = rec.get("payload")
+    if isinstance(pay, dict) and pay.get("query_id"):
+        ids.append(str(pay["query_id"]))
+    return list(dict.fromkeys(ids))
+
+
 def amend_evidence(
     genome_id: str,
     annotation_id: str,
@@ -321,6 +350,7 @@ def amend_evidence(
     payload: Optional[str] = None,
     narrative: Optional[str] = None,
     query_id: Optional[str] = None,
+    allow_numbers: Optional[str] = None,
 ) -> str:
     """Correct an evidence record, keeping its history.
 
@@ -337,6 +367,7 @@ def amend_evidence(
         payload: Optional JSON string: the new payload.
         narrative: Optional new narrative.
         query_id: Optional id of a stored query whose result becomes the payload.
+        allow_numbers: Optional JSON list of literals that are not computed numbers.
     """
     import copy
     from sqlalchemy.orm.attributes import flag_modified
@@ -347,8 +378,9 @@ def amend_evidence(
         return json.dumps({"error": "nothing to amend: give payload, narrative or query_id"})
     try:
         new_payload = json.loads(payload) if isinstance(payload, str) else payload
+        allow = json.loads(allow_numbers) if isinstance(allow_numbers, str) else list(allow_numbers or [])
     except json.JSONDecodeError as e:
-        return json.dumps({"error": f"Invalid JSON payload: {e}"})
+        return json.dumps({"error": f"Invalid JSON payload or allow_numbers: {e}"})
     db = get_db()
     with db.session_scope() as session:
         explanation = lock_explanation(session, _to_uuid(genome_id))
@@ -383,7 +415,7 @@ def amend_evidence(
                 q_extra = {}
             if new_payload is not None:
                 pay, tmpl, prep = process_payload(db, genome_id, new_payload, operations, params.get("name"),
-                                                  session=session)
+                                                  session=session, allow=allow)
                 errs += prep["errors"]; warns += prep["warnings"]; finds += prep["findings"]
                 if q_extra:
                     pay = {**pay, **q_extra} if isinstance(pay, dict) else q_extra
@@ -394,7 +426,7 @@ def amend_evidence(
                     rec.pop("payload_template", None)
             if narrative is not None:
                 chk = _check_text(db, session, genome_id, operations, params, narrative,
-                                  f"operations.{params.get('name')}.evidence[{record_index}].narrative")
+                                  f"operations.{params.get('name')}.evidence[{record_index}].narrative", allow=allow)
                 errs += chk["errors"]; warns += chk["warnings"]; finds += chk["findings"]
                 rec["narrative"] = chk["text"]
                 if chk["template"] is not None:
@@ -405,6 +437,11 @@ def amend_evidence(
                 return json.dumps({"error": "amendment refused (strict mode): " + "; ".join(errs)}, indent=2)
             rec.setdefault("history", []).append({**old, "replaced_at": datetime.now(timezone.utc).isoformat(),
                                                   "reason": reason})
+            prov = record_provenance(rec)
+            if prov:
+                rec["provenance"] = prov
+            else:
+                rec.pop("provenance", None)
             rec["amended_at"] = datetime.now(timezone.utc).isoformat()
             explanation.operations = operations
             flag_modified(explanation, "operations")

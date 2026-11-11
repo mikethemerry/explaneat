@@ -93,18 +93,8 @@ def split_ref(ref: str):
 
 
 def _get_path(obj: Any, path: str) -> Any:
-    cur = obj
-    for part in re.findall(r"[^.\[\]]+|\[\d+\]", path):
-        if part.startswith("["):
-            i = int(part[1:-1])
-            if not isinstance(cur, list) or i >= len(cur):
-                raise KeyError(path)
-            cur = cur[i]
-        else:
-            if not isinstance(cur, dict) or part not in cur:
-                raise KeyError(path)
-            cur = cur[part]
-    return cur
+    from ..analysis.plain_language_slots import _get     # same path grammar as the slots (quoted keys)
+    return _get(obj, path)
 
 
 def compare_values(stored: Any, now: Any, fmt: str = "") -> str:
