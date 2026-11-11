@@ -21,7 +21,7 @@ cols = ["name", "gens", "epochs", "fit_auc", "val_auc", "train_auc"] + (["test_a
 print("| " + " | ".join(cols) + " |")
 print("|" + "---|" * len(cols))
 for f in files:
-    if f.name.endswith((".import.json", ".analysis.json")) or not f.exists():
+    if f.name.endswith((".import.json", ".analysis.json")) or not f.with_suffix(".csv").exists():
         continue
     s = json.loads(f.read_text())
     rows = list(csv.DictReader(open(f.with_suffix(".csv"))))

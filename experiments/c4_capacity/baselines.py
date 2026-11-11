@@ -8,7 +8,7 @@
                          with H dense hidden units
 GBM numbers are copied from experiments/complex_real/baselines.json (not refit).
 
-    uv run python experiments/c4_capacity/baselines.py      # -> baselines.json
+    uv run python experiments/c4_capacity/baselines.py [--no-mlp]     # -> baselines.json
 """
 
 import json
@@ -48,11 +48,14 @@ out = dict(n_train=int(len(tr)), n_test=int(len(te)), feature_names=fnames,
            lr_onehot_threats=lr(np.c_[onehot[tr], F[tr]], np.c_[onehot[te], F[te]]),
            gradient_boosting=json.loads((HERE.parent / "complex_real/baselines.json").read_text())["c4"]["gradient_boosting"])
 
+OUT = HERE / "baselines.json"
+if OUT.exists():  # keep earlier entries (e.g. the MLP ones) when rerun with --no-mlp
+    out = {**json.loads(OUT.read_text()), **out}
 torch.set_num_threads(1)
 X = torch.tensor(d["X_train"])
 Xt = torch.tensor(d["X_test"])
 y = torch.tensor(ytr, dtype=torch.float64)[:, None]
-for H in (10, 20):
+for H in ((10, 20) if "--no-mlp" not in sys.argv else ()):
     torch.manual_seed(0)
     net = torch.nn.Sequential(torch.nn.Linear(42, H), torch.nn.ReLU(), torch.nn.Linear(H, 1)).double()
     opt = torch.optim.Adadelta(net.parameters(), lr=1.5)
@@ -64,5 +67,5 @@ for H in (10, 20):
     with torch.no_grad():
         out[f"mlp_h{H}"] = dict(train=float(roc_auc_score(ytr, net(X).numpy().ravel())),
                                 test=float(roc_auc_score(yte, net(Xt).numpy().ravel())))
-(HERE / "baselines.json").write_text(json.dumps(out, indent=2) + "\n")
+OUT.write_text(json.dumps(out, indent=2) + "\n")
 print(json.dumps({k: v for k, v in out.items() if k != "feature_names"}, indent=2))
