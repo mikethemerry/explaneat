@@ -36,5 +36,29 @@
   },
   "spurious": "low-income effect growing with age; a rise for very heavy men; the gate is not neutral for urban non-smokers (explainer flagged both as side effects)",
   "recovered": 5, "total": 5, "grade": "recovered"
+ },
+ "lad-f6c4c": {
+  "task": "parity3", "arch": "8",
+  "truth": "f = 1.5*(4*parity(smoker, female, urban) - 2 + 0.5 za)",
+  "terms": {
+   "parity of smoker, female, urban (3-way)": "recovered: stated as the parity rule (high risk with one or three flags, low with none or two), checked per group on the training rows",
+   "age (linear, +)": "recovered: older age raises risk within each of the eight groups",
+   "unused inputs": "recovered: income, bmi, visits, score, insured and noise practically ignored"
+  },
+  "spurious": "none at the level of the whole function; the six leaves are group detectors with large opposing contributions that only mean something together",
+  "recovered": 3, "total": 3, "grade": "recovered (at the root; the leaves are not the true terms)"
+ },
+ "lad-6e63b": {
+  "task": "pairwise", "arch": "8x8",
+  "truth": "f = 2*(-0.8 + 0.8 za - 0.6 zi + 2.0 smoker*relu(zb) + 1.0 za*zi)",
+  "terms": {
+   "age x income product": "recovered: an age-by-income crossover, higher income lowers risk for the young and raises it for the old, income mattering little around late middle age (the true crossover is at za = 0.6, about age 57)",
+   "smoker x relu(bmi - 27)": "recovered: for smokers risk rises sharply once bmi passes the high twenties; bmi barely moves it for non-smokers",
+   "income main effect (-)": "recovered inside the crossover (income lowers risk below late middle age)",
+   "age main effect (+)": "not stated: the record never says that risk rises with age overall",
+   "unused inputs": "recovered: visits, score, sex, urban, insured and noise have small effects"
+  },
+  "spurious": "a 'brake' unit lowering risk with income for the young and broadly for smokers (no reading); the crossover leaf also carries part of the smoker-by-bmi effect (the leaves do not separate the two true interactions)",
+  "recovered": 4, "total": 5, "grade": "mostly recovered (at the root; the leaves entangle the two true interactions)"
  }
 }

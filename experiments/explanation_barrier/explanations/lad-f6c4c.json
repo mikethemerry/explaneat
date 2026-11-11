@@ -1,0 +1,204 @@
+{
+  "label": "lad-f6c4c",
+  "genome_id": "3feef87b-1996-45db-8f5d-f1b8c392a926",
+  "start": "2026-11-11T22:47:22+13:00",
+  "end": "2026-11-11T23:07:17+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 6,
+  "n_composition_annotations": 1,
+  "n_splits": 10,
+  "n_identity_nodes": 0,
+  "hidden_nodes": 8,
+  "hidden_nodes_single_leaf_no_split": 8,
+  "hidden_nodes_in_any_annotation": 8,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 0.0,
+  "closed_form_max_abs_err": 0.01348794676011611,
+  "summary": "The model predicts by the parity of smoker, female and urban: a high risk when one or three of them are present and a low risk when none or two are (mean predicted risk 94% over the 12008 odd-count training rows, of which 0 are predicted under one half; 7% over the 11992 even-count rows, of which 12 are predicted at or over one half). Six parts build it as a balance of group detectors: fewFlagsRaiser, smokerOrFemaleRaiser and urbanNonSmokingManRaiser raise the score and smokerOrRuralLowerer, urbanNonSmokingWomanLowerer and nonSmokingManLowerer lower it, with large opposing contributions that cancel in the even groups. Older age raises the score in each of the eight groups at typical other inputs (a typical non-smoking rural man goes from 1% at age 20 to 34% at age 80), while income, bmi, visits, score, insured and noise matter little (training AUC 0.9624 with them, 0.9618 with them set to their means).",
+  "summary_template": "The model predicts by the parity of smoker, female and urban: a high risk when one or three of them are present and a low risk when none or two are (mean predicted risk {{q:q_f8daeb80be.subgroup.mean_predicted_risk|pct}} over the {{q:q_f8daeb80be.subgroup.n|d}} odd-count training rows, of which {{q:q_e4c722c9a4.subgroup.n|d}} are predicted under one half; {{q:q_c1487af806.subgroup.mean_predicted_risk|pct}} over the {{q:q_c1487af806.subgroup.n|d}} even-count rows, of which {{q:q_2376ab2664.subgroup.n|d}} are predicted at or over one half). Six parts build it as a balance of group detectors: fewFlagsRaiser, smokerOrFemaleRaiser and urbanNonSmokingManRaiser raise the score and smokerOrRuralLowerer, urbanNonSmokingWomanLowerer and nonSmokingManLowerer lower it, with large opposing contributions that cancel in the even groups. Older age raises the score in each of the eight groups at typical other inputs (a typical non-smoking rural man goes from {{q:q_8b10f62c2d.rows[0].risk|pct}} at age {{q:q_8b10f62c2d.rows[0].inputs.age}} to {{q:q_8b10f62c2d.rows[6].risk|pct}} at age {{q:q_8b10f62c2d.rows[6].inputs.age}}), while income, bmi, visits, score, insured and noise matter little (training AUC {{q:q_085694bd7a.data.auc_with|.4f}} with them, {{q:q_085694bd7a.data.auc_without|.4f}} with them set to their means).",
+  "resisted": "The parts are group detectors whose sizes make sense together rather than one by one: for non-smoking rural men fewFlagsRaiser contributes 15.39 logits on average and nonSmokingManLowerer -13.24, so a single part's contribution is not a risk factor by itself. The small within-unit weights of income, bmi, visits, score, insured and noise are described by the closed forms but not explained, and of the 12 even-count rows predicted at or over one half, 11 are non-smoking rural men in their eighties or older (the age effect outweighing the parity); the remaining row was not examined.",
+  "resisted_template": "The parts are group detectors whose sizes make sense together rather than one by one: for non-smoking rural men fewFlagsRaiser contributes {{q:q_4c8fdac1f9.subgroup.parts.ann_40.mean_contribution|.2f}} logits on average and nonSmokingManLowerer {{q:q_4c8fdac1f9.subgroup.parts.ann_45.mean_contribution|.2f}}, so a single part's contribution is not a risk factor by itself. The small within-unit weights of income, bmi, visits, score, insured and noise are described by the closed forms but not explained, and of the {{q:q_2376ab2664.subgroup.n|d}} even-count rows predicted at or over one half, {{q:q_38ea771074.subgroup.n|d}} are non-smoking rural men in their eighties or older (the age effect outweighing the parity); the remaining row was not examined.",
+  "recheck_summary": {
+    "ran_at": "2026-11-11T10:07:33+00:00",
+    "recheck_version": 3,
+    "mismatch": 0,
+    "needs_review": 0,
+    "warn": 0,
+    "mismatches": [],
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 28,
+    "provenance": {
+      "templated_texts": 51,
+      "queries": 26
+    },
+    "complete_ok": true,
+    "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+  },
+  "recheck_notes": "No mismatch and no needs_review items. The 28 unchecked free-text sentences are qualitative framing (part names, group names, the parity reading) whose numbers sit in referenced sentences; the parity reading itself is backed by the odd/even subgroup counts.",
+  "tool_bugs": "query_enumerate refuses this dataset (age has 73 distinct values; it needs every input discrete), so the eight smoker/female/urban groups were checked with one query_subgroup per group and age-swept query_probe runs instead. query_probe allows at most two sweeps, so the eight groups needed four probes. The input splits were followed by consolidate_node (10 inputs x 2 multi-unit leaves) to give each leaf one copy of each input; all operations function-preserving (max error 0).",
+  "numbers": {
+    "in_text": 224,
+    "referenced": 224,
+    "allow_listed": 0
+  },
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 224,
+    "provenance_backed": 224,
+    "allow_listed": 0,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 0,
+      "other": 0,
+      "note": "no formula is written in the text; the seven closed forms (get_formula LaTeX) are attached as analytical_formula evidence; closed_form_max_abs_err from check_explanation"
+    },
+    "audit": {
+      "references": 224,
+      "checked": 224,
+      "distinct_queries": 26
+    },
+    "self_probe": {
+      "parts": [
+        "fewFlagsRaiser",
+        "smokerOrRuralLowerer",
+        "urbanNonSmokingWomanLowerer",
+        "smokerOrFemaleRaiser",
+        "urbanNonSmokingManRaiser",
+        "nonSmokingManLowerer",
+        "parityOfSmokerFemaleUrban"
+      ],
+      "refuted_and_fixed": [
+        "urbanNonSmokingManRaiser: first draft said it is off outside non-smoking urban men; the per-group subgroups showed it acts weakly on part of three other groups, so the text now gives those counts",
+        "fewFlagsRaiser and smokerOrRuralLowerer: 'switch off' with two or more flags was too strong (weak activity on part of two groups); rewritten with counts"
+      ]
+    },
+    "restatements": 0
+  },
+  "leaves": [
+    {
+      "name": "fewFlagsRaiser",
+      "units": [
+        "1",
+        "4"
+      ],
+      "meaning": "meaningful",
+      "why": "Raises risk for people with at most one of smoker/female/urban, largest for non-smoking rural men and rural male smokers, near off with two or more flags; the per-group probes confirm it."
+    },
+    {
+      "name": "smokerOrRuralLowerer",
+      "units": [
+        "2"
+      ],
+      "meaning": "meaningful",
+      "why": "Lowers risk for smokers and rural people and is the main reason rural female smokers and urban male smokers (two flags) are low risk; probes confirm the ordering and its weak or absent action for urban non-smokers."
+    },
+    {
+      "name": "urbanNonSmokingWomanLowerer",
+      "units": [
+        "3",
+        "6"
+      ],
+      "meaning": "meaningful",
+      "why": "The lowerer that makes non-smoking urban women (two flags) low risk where no other lowerer acts; weak elsewhere, as the probes show."
+    },
+    {
+      "name": "smokerOrFemaleRaiser",
+      "units": [
+        "5"
+      ],
+      "meaning": "meaningful",
+      "why": "Raises risk for smokers and women, growing with age, and is what makes urban female smokers (three flags) high risk; the age-swept probe confirms."
+    },
+    {
+      "name": "urbanNonSmokingManRaiser",
+      "units": [
+        "7"
+      ],
+      "meaning": "partial",
+      "why": "Raises risk for non-smoking urban men against nonSmokingManLowerer, but also acts weakly on part of three other groups, so the reading covers its main behaviour, not all of it."
+    },
+    {
+      "name": "nonSmokingManLowerer",
+      "units": [
+        "8"
+      ],
+      "meaning": "meaningful",
+      "why": "Lowers risk for non-smoking men, strongly for rural ones where it cancels fewFlagsRaiser; probes confirm, and it is the most important part by ablation."
+    }
+  ],
+  "overall_function": "The network computes the parity of three yes/no inputs, smoker, female and urban: it predicts a high risk when one or three of them are present and a low risk when none or two are, so each of the three flips the effect of the other two (a three-way interaction, not additive main effects). It does this with six group detectors whose large opposing contributions cancel in the even groups. Older age raises the risk within each of the eight groups (checked at typical other inputs), strong enough that the oldest non-smoking rural men cross into high risk. Income, bmi, visits, score, insured and noise have very small weights and are practically ignored.",
+  "stuck": "Nothing blocked the structure (dense 10-8-1 net: one split per input, then consolidations, six leaves and a root). query_enumerate could not be used because the continuous inputs make the space non-discrete, so the parity rule was checked on the training rows with subgroup counts rather than over every constructed cell. The individual units are cell detectors in a parity and have no meaning one by one beyond 'which groups they push up or down'.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 7,
+      "roots": [
+        "parityOfSmokerFemaleUrban"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 0.0,
+    "closed_form_max_abs_err": 0.01348794676011611,
+    "numeric_max_abs_err": 8.881784197001252e-16,
+    "op_counts": {
+      "rename_node": 10,
+      "split_node": 10,
+      "consolidate_node": 20,
+      "annotate": 7
+    },
+    "leaves": [
+      {
+        "id": "ann_40",
+        "name": "fewFlagsRaiser",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.008938835890568875
+      },
+      {
+        "id": "ann_41",
+        "name": "smokerOrRuralLowerer",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.01348794676011611
+      },
+      {
+        "id": "ann_42",
+        "name": "urbanNonSmokingWomanLowerer",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.01079096847655947
+      },
+      {
+        "id": "ann_43",
+        "name": "smokerOrFemaleRaiser",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.002913577895293562
+      },
+      {
+        "id": "ann_44",
+        "name": "urbanNonSmokingManRaiser",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.011185742538412535
+      },
+      {
+        "id": "ann_45",
+        "name": "nonSmokingManLowerer",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.013009519564985528
+      }
+    ],
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "tool_call_window": {
+      "n_calls": 181,
+      "first": 1794390478.426285,
+      "last": 1794391627.661383,
+      "minutes": 19.153918298085532
+    }
+  }
+}
