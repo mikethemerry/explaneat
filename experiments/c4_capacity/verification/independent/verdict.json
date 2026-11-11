@@ -1,0 +1,981 @@
+{
+  "item_id": "c4cap-main-h10-e50-s1-original",
+  "genome_id": "f0eb7635-7f85-437b-815b-993c5ad6cc14",
+  "verifier": "independent lead verifier",
+  "started_at": "2026-11-12T10:00:28.086643+13:00",
+  "finished_at": "2026-11-12T10:05:20.912642+13:00",
+  "minutes": 4.88,
+  "overall": {
+    "grade": "weakened",
+    "summary": "No numerical refutation. Eleven leaves remain accurately described without domain-level rules, as disclosed. One ambiguous threat term needs narrowing to open-three line patterns."
+  },
+  "findings": [
+    {
+      "id": "V1",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.structural_coverage",
+      "statement": "Complete structural and compositional coverage",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "Recomputed both 1.0; hierarchy complete; no uncovered nodes.",
+      "commands": [
+        "uv run python -m explaneat verify recheck experiments/c4_capacity/verification/item --strict"
+      ]
+    },
+    {
+      "id": "V2",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.function_preservation_max_abs_err",
+      "statement": "Function preserved",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "Recomputed max absolute error 1.6653345369377348e-15.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V3",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.closed_form_max_abs_err",
+      "statement": "Displayed rounded formula error is separate from exact preservation",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "Recomputed displayed-formula max error 0.023958600441962158; record explicitly discloses rounding.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V4",
+      "grade": "upheld",
+      "level": "L1",
+      "part": null,
+      "claims": [],
+      "location": "record.summary",
+      "statement": "Affine replacement lowers training AUC from 0.9189 to 0.8554",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "Strict provenance recheck reruns cited query; zero mismatches, needs-review, warnings.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V5",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_85",
+      "claims": [],
+      "location": "operations.positional_gate_1.hypothesis",
+      "statement": "Stated active-subgroup count",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "node_1>0 gives 45316 of 54045 training rows.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V6",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_85",
+      "claims": [],
+      "location": "operations.positional_gate_1.hypothesis",
+      "statement": "Conditional mean contribution through this part",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "Mean among active rows -5.02499663149 logit units; correct subgroup and part.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V7",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_85",
+      "claims": [],
+      "location": "operations.positional_gate_1.hypothesis",
+      "statement": "Zero-output ablation changes training AUC",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "AUC 0.9189 to 0.762; all training rows, not a subgroup.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V8",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_85",
+      "claims": [],
+      "location": "operations.positional_gate_1.hypothesis",
+      "statement": "Constructed per-square contribution direction",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "row:0, ['c_c1']: contributions [-0.904141354326951, -2.8884348357738854, -4.872728317220821]. Extra row:1, row:17 and row:100 two-square sweeps checked; no universal or legal-move claim made.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V9",
+      "grade": "weakened",
+      "level": "L4",
+      "part": "ann_85",
+      "claims": [],
+      "location": "operations.positional_gate_1.hypothesis",
+      "statement": "Distributed positional correction, explicitly described rather than tactically explained",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "The measured direction is sound, but the account does not identify a domain-level rule for the distributed gate. This limitation is already disclosed by the author; it is not a new numeric error.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V10",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_86",
+      "claims": [],
+      "location": "operations.positional_gate_2.hypothesis",
+      "statement": "Stated active-subgroup count",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "node_2>0 gives 8259 of 54045 training rows.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V11",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_86",
+      "claims": [],
+      "location": "operations.positional_gate_2.hypothesis",
+      "statement": "Conditional mean contribution through this part",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "Mean among active rows -1.34880157181 logit units; correct subgroup and part.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V12",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_86",
+      "claims": [],
+      "location": "operations.positional_gate_2.hypothesis",
+      "statement": "Zero-output ablation changes training AUC",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "AUC 0.9189 to 0.9077; all training rows, not a subgroup.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V13",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_86",
+      "claims": [],
+      "location": "operations.positional_gate_2.hypothesis",
+      "statement": "Constructed per-square contribution direction",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "row:0, ['c_a3']: contributions [0.0, 0.0, -2.7981872699584756]. Extra row:1, row:17 and row:100 two-square sweeps checked; no universal or legal-move claim made.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V14",
+      "grade": "weakened",
+      "level": "L4",
+      "part": "ann_86",
+      "claims": [],
+      "location": "operations.positional_gate_2.hypothesis",
+      "statement": "Distributed positional correction, explicitly described rather than tactically explained",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "The measured direction is sound, but the account does not identify a domain-level rule for the distributed gate. This limitation is already disclosed by the author; it is not a new numeric error.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V15",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_87",
+      "claims": [],
+      "location": "operations.positional_gate_3.hypothesis",
+      "statement": "Stated active-subgroup count",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "node_3>0 gives 12757 of 54045 training rows.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V16",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_87",
+      "claims": [],
+      "location": "operations.positional_gate_3.hypothesis",
+      "statement": "Conditional mean contribution through this part",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "Mean among active rows -1.22676452703 logit units; correct subgroup and part.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V17",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_87",
+      "claims": [],
+      "location": "operations.positional_gate_3.hypothesis",
+      "statement": "Zero-output ablation changes training AUC",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "AUC 0.9189 to 0.9021; all training rows, not a subgroup.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V18",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_87",
+      "claims": [],
+      "location": "operations.positional_gate_3.hypothesis",
+      "statement": "Constructed per-square contribution direction",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "row:29493, ['c_c3']: contributions [-9.338187819705077, -6.9861253160493035, -4.634062812393534]. Extra row:1, row:17 and row:100 two-square sweeps checked; no universal or legal-move claim made.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V19",
+      "grade": "weakened",
+      "level": "L4",
+      "part": "ann_87",
+      "claims": [],
+      "location": "operations.positional_gate_3.hypothesis",
+      "statement": "Distributed positional correction, explicitly described rather than tactically explained",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "The measured direction is sound, but the account does not identify a domain-level rule for the distributed gate. This limitation is already disclosed by the author; it is not a new numeric error.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V20",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_88",
+      "claims": [],
+      "location": "operations.positional_gate_4.hypothesis",
+      "statement": "Stated active-subgroup count",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "node_4>0 gives 38770 of 54045 training rows.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V21",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_88",
+      "claims": [],
+      "location": "operations.positional_gate_4.hypothesis",
+      "statement": "Conditional mean contribution through this part",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "Mean among active rows 3.79347063803 logit units; correct subgroup and part.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V22",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_88",
+      "claims": [],
+      "location": "operations.positional_gate_4.hypothesis",
+      "statement": "Zero-output ablation changes training AUC",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "AUC 0.9189 to 0.7883; all training rows, not a subgroup.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V23",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_88",
+      "claims": [],
+      "location": "operations.positional_gate_4.hypothesis",
+      "statement": "Constructed per-square contribution direction",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "row:0, ['c_d1']: contributions [3.486343688320153, 0.9214084968794749, 0.0]. Extra row:1, row:17 and row:100 two-square sweeps checked; no universal or legal-move claim made.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V24",
+      "grade": "weakened",
+      "level": "L4",
+      "part": "ann_88",
+      "claims": [],
+      "location": "operations.positional_gate_4.hypothesis",
+      "statement": "Distributed positional correction, explicitly described rather than tactically explained",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "The measured direction is sound, but the account does not identify a domain-level rule for the distributed gate. This limitation is already disclosed by the author; it is not a new numeric error.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V25",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_89",
+      "claims": [],
+      "location": "operations.positional_gate_5.hypothesis",
+      "statement": "Stated active-subgroup count",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "node_5>0 gives 7500 of 54045 training rows.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V26",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_89",
+      "claims": [],
+      "location": "operations.positional_gate_5.hypothesis",
+      "statement": "Conditional mean contribution through this part",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "Mean among active rows -1.67639096683 logit units; correct subgroup and part.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V27",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_89",
+      "claims": [],
+      "location": "operations.positional_gate_5.hypothesis",
+      "statement": "Zero-output ablation changes training AUC",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "AUC 0.9189 to 0.8986; all training rows, not a subgroup.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V28",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_89",
+      "claims": [],
+      "location": "operations.positional_gate_5.hypothesis",
+      "statement": "Constructed per-square contribution direction",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "row:0, ['c_b1']: contributions [-4.219223983311693, 0.0, 0.0]. Extra row:1, row:17 and row:100 two-square sweeps checked; no universal or legal-move claim made.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V29",
+      "grade": "weakened",
+      "level": "L4",
+      "part": "ann_89",
+      "claims": [],
+      "location": "operations.positional_gate_5.hypothesis",
+      "statement": "Distributed positional correction, explicitly described rather than tactically explained",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "The measured direction is sound, but the account does not identify a domain-level rule for the distributed gate. This limitation is already disclosed by the author; it is not a new numeric error.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V30",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_90",
+      "claims": [],
+      "location": "operations.positional_gate_6.hypothesis",
+      "statement": "Stated active-subgroup count",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "node_6>0 gives 17816 of 54045 training rows.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V31",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_90",
+      "claims": [],
+      "location": "operations.positional_gate_6.hypothesis",
+      "statement": "Conditional mean contribution through this part",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "Mean among active rows 1.4017612654 logit units; correct subgroup and part.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V32",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_90",
+      "claims": [],
+      "location": "operations.positional_gate_6.hypothesis",
+      "statement": "Zero-output ablation changes training AUC",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "AUC 0.9189 to 0.8978; all training rows, not a subgroup.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V33",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_90",
+      "claims": [],
+      "location": "operations.positional_gate_6.hypothesis",
+      "statement": "Constructed per-square contribution direction",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "row:0, ['c_e2']: contributions [4.430631895527101, 1.7810917249451501, 0.0]. Extra row:1, row:17 and row:100 two-square sweeps checked; no universal or legal-move claim made.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V34",
+      "grade": "weakened",
+      "level": "L4",
+      "part": "ann_90",
+      "claims": [],
+      "location": "operations.positional_gate_6.hypothesis",
+      "statement": "Distributed positional correction, explicitly described rather than tactically explained",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "The measured direction is sound, but the account does not identify a domain-level rule for the distributed gate. This limitation is already disclosed by the author; it is not a new numeric error.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V35",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_91",
+      "claims": [],
+      "location": "operations.positional_gate_7.hypothesis",
+      "statement": "Stated active-subgroup count",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "node_7>0 gives 43783 of 54045 training rows.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V36",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_91",
+      "claims": [],
+      "location": "operations.positional_gate_7.hypothesis",
+      "statement": "Conditional mean contribution through this part",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "Mean among active rows 4.84923833765 logit units; correct subgroup and part.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V37",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_91",
+      "claims": [],
+      "location": "operations.positional_gate_7.hypothesis",
+      "statement": "Zero-output ablation changes training AUC",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "AUC 0.9189 to 0.7496; all training rows, not a subgroup.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V38",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_91",
+      "claims": [],
+      "location": "operations.positional_gate_7.hypothesis",
+      "statement": "Constructed per-square contribution direction",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "row:0, ['c_b1']: contributions [2.9716345868520087, 0.0, 0.0]. Extra row:1, row:17 and row:100 two-square sweeps checked; no universal or legal-move claim made.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V39",
+      "grade": "weakened",
+      "level": "L4",
+      "part": "ann_91",
+      "claims": [],
+      "location": "operations.positional_gate_7.hypothesis",
+      "statement": "Distributed positional correction, explicitly described rather than tactically explained",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "The measured direction is sound, but the account does not identify a domain-level rule for the distributed gate. This limitation is already disclosed by the author; it is not a new numeric error.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V40",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_92",
+      "claims": [],
+      "location": "operations.positional_gate_8.hypothesis",
+      "statement": "Stated active-subgroup count",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "node_8>0 gives 12721 of 54045 training rows.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V41",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_92",
+      "claims": [],
+      "location": "operations.positional_gate_8.hypothesis",
+      "statement": "Conditional mean contribution through this part",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "Mean among active rows -1.29616688184 logit units; correct subgroup and part.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V42",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_92",
+      "claims": [],
+      "location": "operations.positional_gate_8.hypothesis",
+      "statement": "Zero-output ablation changes training AUC",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "AUC 0.9189 to 0.9053; all training rows, not a subgroup.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V43",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_92",
+      "claims": [],
+      "location": "operations.positional_gate_8.hypothesis",
+      "statement": "Constructed per-square contribution direction",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "row:47014, ['c_e2']: contributions [-6.283608284673906, -8.449935419804149, -10.616262554934394]. Extra row:1, row:17 and row:100 two-square sweeps checked; no universal or legal-move claim made.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V44",
+      "grade": "weakened",
+      "level": "L4",
+      "part": "ann_92",
+      "claims": [],
+      "location": "operations.positional_gate_8.hypothesis",
+      "statement": "Distributed positional correction, explicitly described rather than tactically explained",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "The measured direction is sound, but the account does not identify a domain-level rule for the distributed gate. This limitation is already disclosed by the author; it is not a new numeric error.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V45",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_93",
+      "claims": [],
+      "location": "operations.positional_gate_9.hypothesis",
+      "statement": "Stated active-subgroup count",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "node_9>0 gives 30113 of 54045 training rows.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V46",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_93",
+      "claims": [],
+      "location": "operations.positional_gate_9.hypothesis",
+      "statement": "Conditional mean contribution through this part",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "Mean among active rows -1.42003216097 logit units; correct subgroup and part.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V47",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_93",
+      "claims": [],
+      "location": "operations.positional_gate_9.hypothesis",
+      "statement": "Zero-output ablation changes training AUC",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "AUC 0.9189 to 0.8826; all training rows, not a subgroup.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V48",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_93",
+      "claims": [],
+      "location": "operations.positional_gate_9.hypothesis",
+      "statement": "Constructed per-square contribution direction",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "row:0, ['c_d3']: contributions [0.0, -1.2766478569842503, -3.141709117052126]. Extra row:1, row:17 and row:100 two-square sweeps checked; no universal or legal-move claim made.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V49",
+      "grade": "weakened",
+      "level": "L4",
+      "part": "ann_93",
+      "claims": [],
+      "location": "operations.positional_gate_9.hypothesis",
+      "statement": "Distributed positional correction, explicitly described rather than tactically explained",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "The measured direction is sound, but the account does not identify a domain-level rule for the distributed gate. This limitation is already disclosed by the author; it is not a new numeric error.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V50",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_94",
+      "claims": [],
+      "location": "operations.positional_gate_10.hypothesis",
+      "statement": "Stated active-subgroup count",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "node_10>0 gives 43369 of 54045 training rows.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V51",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_94",
+      "claims": [],
+      "location": "operations.positional_gate_10.hypothesis",
+      "statement": "Conditional mean contribution through this part",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "Mean among active rows -3.20742014451 logit units; correct subgroup and part.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V52",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_94",
+      "claims": [],
+      "location": "operations.positional_gate_10.hypothesis",
+      "statement": "Zero-output ablation changes training AUC",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "AUC 0.9189 to 0.8052; all training rows, not a subgroup.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V53",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_94",
+      "claims": [],
+      "location": "operations.positional_gate_10.hypothesis",
+      "statement": "Constructed per-square contribution direction",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "row:0, ['c_e1']: contributions [0.0, -0.5738213619776964, -2.8061218959490315]. Extra row:1, row:17 and row:100 two-square sweeps checked; no universal or legal-move claim made.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V54",
+      "grade": "weakened",
+      "level": "L4",
+      "part": "ann_94",
+      "claims": [],
+      "location": "operations.positional_gate_10.hypothesis",
+      "statement": "Distributed positional correction, explicitly described rather than tactically explained",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "The measured direction is sound, but the account does not identify a domain-level rule for the distributed gate. This limitation is already disclosed by the author; it is not a new numeric error.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V55",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_95",
+      "claims": [],
+      "location": "operations.direct_square_values.hypothesis",
+      "statement": "Zero direct-term ablation",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "Training AUC 0.9189 to 0.6875.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V56",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_95",
+      "claims": [],
+      "location": "operations.direct_square_values.hypothesis",
+      "statement": "Constructed direct positional contribution",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "row:0, ['c_c1']: [1.9553423892351751, 4.262337522879469, 6.569332656523761]; explicitly through this part, not total probability.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V57",
+      "grade": "weakened",
+      "level": "L4",
+      "part": "ann_95",
+      "claims": [],
+      "location": "operations.direct_square_values.hypothesis",
+      "statement": "Direct per-square values, described not tactically explained",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "The values are correct but do not provide an interpretable game concept. The author already discloses this.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V58",
+      "grade": "upheld",
+      "level": "L1",
+      "part": "ann_96",
+      "claims": [],
+      "location": "structure.connect4_score",
+      "statement": "Root combines children before sigmoid",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "Operations replay produces one root and every part under it; whole-model preservation passes; root links are additions in the logit.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V59",
+      "grade": "upheld",
+      "level": "L3",
+      "part": "ann_96",
+      "claims": [],
+      "location": "operations.connect4_score.hypothesis",
+      "statement": "Constructed whole-model probabilities",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "Bottom-c edit at row:0 produces [0.9161245113631968, 0.9134238966065651, 0.9420003075187071]; stated 92%,91%,94% rounds correctly; illegal-board caveat is explicit.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V60",
+      "grade": "weakened",
+      "level": "L2",
+      "part": "ann_96",
+      "claims": [],
+      "location": "operations.connect4_score.hypothesis",
+      "statement": "765 training positions with an open o threat",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "All 69 four-square lines enumerated: 765 open three-o/one-blank patterns, exactly matching the cited mask, but 0 gravity-supported immediate o completions. Outcome rate 0.262745098039, mean prediction 0.418430601542 reproduce. Narrow 'threat' to open-three line pattern; do not claim an immediate-threat blind spot.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    },
+    {
+      "id": "V61",
+      "grade": "upheld",
+      "level": "L4",
+      "part": null,
+      "claims": [],
+      "location": "record.resisted",
+      "statement": "Structural coverage is not semantic success",
+      "check": "Frozen-target verification APIs on all training rows; no test evaluation",
+      "evidence": "The unresolved tactical interpretation and potentially illegal coordinate edits are plainly disclosed. This is an honest partial result, not a fully explained game strategy.",
+      "commands": [
+        "DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_capacity/verification/independent/checks.py"
+      ]
+    }
+  ],
+  "parts": {
+    "ann_85": {
+      "grade": "weakened",
+      "level": "L4"
+    },
+    "ann_86": {
+      "grade": "weakened",
+      "level": "L4"
+    },
+    "ann_87": {
+      "grade": "weakened",
+      "level": "L4"
+    },
+    "ann_88": {
+      "grade": "weakened",
+      "level": "L4"
+    },
+    "ann_89": {
+      "grade": "weakened",
+      "level": "L4"
+    },
+    "ann_90": {
+      "grade": "weakened",
+      "level": "L4"
+    },
+    "ann_91": {
+      "grade": "weakened",
+      "level": "L4"
+    },
+    "ann_92": {
+      "grade": "weakened",
+      "level": "L4"
+    },
+    "ann_93": {
+      "grade": "weakened",
+      "level": "L4"
+    },
+    "ann_94": {
+      "grade": "weakened",
+      "level": "L4"
+    },
+    "ann_95": {
+      "grade": "weakened",
+      "level": "L4"
+    },
+    "ann_96": {
+      "grade": "weakened",
+      "level": "L2"
+    }
+  },
+  "levels_completed": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ],
+  "leaf_meaning": {
+    "positional_gate_1": {
+      "grade": "closed-form-only",
+      "why": "Local positional directions reproduce, but no supported tactical or broader domain rule is established."
+    },
+    "positional_gate_2": {
+      "grade": "closed-form-only",
+      "why": "Local positional directions reproduce, but no supported tactical or broader domain rule is established."
+    },
+    "positional_gate_3": {
+      "grade": "closed-form-only",
+      "why": "Local positional directions reproduce, but no supported tactical or broader domain rule is established."
+    },
+    "positional_gate_4": {
+      "grade": "closed-form-only",
+      "why": "Local positional directions reproduce, but no supported tactical or broader domain rule is established."
+    },
+    "positional_gate_5": {
+      "grade": "closed-form-only",
+      "why": "Local positional directions reproduce, but no supported tactical or broader domain rule is established."
+    },
+    "positional_gate_6": {
+      "grade": "closed-form-only",
+      "why": "Local positional directions reproduce, but no supported tactical or broader domain rule is established."
+    },
+    "positional_gate_7": {
+      "grade": "closed-form-only",
+      "why": "Local positional directions reproduce, but no supported tactical or broader domain rule is established."
+    },
+    "positional_gate_8": {
+      "grade": "closed-form-only",
+      "why": "Local positional directions reproduce, but no supported tactical or broader domain rule is established."
+    },
+    "positional_gate_9": {
+      "grade": "closed-form-only",
+      "why": "Local positional directions reproduce, but no supported tactical or broader domain rule is established."
+    },
+    "positional_gate_10": {
+      "grade": "closed-form-only",
+      "why": "Local positional directions reproduce, but no supported tactical or broader domain rule is established."
+    },
+    "direct_square_values": {
+      "grade": "closed-form-only",
+      "why": "An accurate linear readout description without an established tactical reading."
+    }
+  },
+  "statements_checked": 49,
+  "checking_scope": "All twelve parts; no plain-language drafts/claims supplied. Full training split only. Recorded commands require OpenMP shared-memory access when run inside a restricted agent sandbox.",
+  "source_hashes": {
+    "explanation.md": "bbfd444c129d0039a5d14a7281b3a78224036ebc2dd7b811188efc2279921c63",
+    "item.json": "ec51b5a3749f742be9b74bdf661bb1335ab32e66471a8d22307fa4ff37051221",
+    "operations.json": "495c7b3dd7c5e2c62d18993bbe1aea57d41e09c3634180b85e423eb3a4861571",
+    "queries.json": "10b1a40d271a410cb19300d8a9dd050bd5380a151334da27c884450cc1a554a8",
+    "record.json": "b8e13b0a8d861f865a5e38f76ef2411518abff175a2509f162dbc3f34702a72e"
+  },
+  "domain_source": "https://archive.ics.uci.edu/dataset/26/connect-4",
+  "domain_note": "UCI specifies legal eight-ply positions with no winner and no forced next move. The training check independently confirms zero immediate playable o completion squares."
+}

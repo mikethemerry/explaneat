@@ -1,0 +1,84 @@
+{
+  "task": "c4",
+  "study": "c4_capacity",
+  "seed": 0,
+  "name": "p3-grow",
+  "variant": "static",
+  "n_generations": 50,
+  "best_generation": 49,
+  "n_fit": 48640,
+  "val_frac": 0.1,
+  "n_epochs_backprop": 5,
+  "overrides": [
+    "NEAT.pop_size=150",
+    "DefaultGenome.node_add_prob=0.8",
+    "DefaultGenome.conn_add_prob=0.9"
+  ],
+  "fitness_function": "auc",
+  "criterion": "bce",
+  "output_activation": "sigmoid",
+  "mask_phantom": true,
+  "torch_threads": 1,
+  "neat_config": "experiments/c4_capacity/configs/p3-grow.ini",
+  "dynamic_threshold": null,
+  "code_commit": "bbb4986d74d536648b5f32421edb6a601e7dfee1",
+  "code_dirty": false,
+  "data": {
+    "task": "c4",
+    "source": "PMLB connect_4 (UCI Connect-4)",
+    "target": "1 = first player (x, to move) wins with perfect play; 0 = loss or draw",
+    "encoding": "ordinal per cell: x = +1, o = -1, blank = 0; c_<column a-g><row 1-6>, row 1 = bottom",
+    "class_names": [
+      "not win",
+      "win"
+    ],
+    "n_rows": 67557,
+    "n_train_full": 54045,
+    "n_train": 54045,
+    "n_test": 13512,
+    "positive_share": 0.6583033586452921,
+    "positive_share_train": 0.658303265797021,
+    "split_seed": 42,
+    "subset_seed": null,
+    "scaler": "StandardScaler fit on the training rows"
+  },
+  "hardware": {
+    "machine": "arm64",
+    "cpu_count": 14,
+    "python": "3.12.12",
+    "torch": "2.2.2",
+    "numpy": "1.26.4"
+  },
+  "wall_clock_s": 532.6,
+  "best_key": 6139,
+  "best_fitness": 0.8475813805826833,
+  "best_size": {
+    "hidden": 9,
+    "conns": 48,
+    "inputs_used": 32,
+    "depth": 4
+  },
+  "train": {
+    "auc": 0.8480771275377234,
+    "acc": 0.7768341197150522,
+    "bce": 0.49294439041758636
+  },
+  "fit_rows": {
+    "auc": 0.8475813805826833,
+    "acc": 0.7762746710526316,
+    "bce": 0.49341872826261063
+  },
+  "val": {
+    "auc": 0.8524665737216329,
+    "acc": 0.781868640148011,
+    "bce": 0.4886757886077844
+  },
+  "species": {
+    "mean": 1.0,
+    "min": 1,
+    "max": 1,
+    "last": 1,
+    "mean_last20": 1.0
+  },
+  "final_threshold": 3.0
+}
