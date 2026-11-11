@@ -117,7 +117,7 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
     return Array.from(selectedNodes).filter((nodeId) => {
       if (inputIds.has(nodeId)) return true;
       // Check split variants: "-20_a" -> base "-20"
-      const baseId = nodeId.replace(/_[a-z]$/, "");
+      const baseId = nodeId.replace(/_(?:[a-z]|[A-Z][a-z])$/, "");
       return inputIds.has(baseId);
     });
   }, [model, selectedNodes]);

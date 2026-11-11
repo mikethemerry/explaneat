@@ -56,11 +56,11 @@ export function InputDistributionPanel({
   // as their base node ("-20"), so we deduplicate by base ID.
   const getFeatureIndex = useCallback(
     (nodeId: string): number => {
-      const baseId = nodeId.replace(/_[a-z]$/, "");
+      const baseId = nodeId.replace(/_(?:[a-z]|[A-Z][a-z])$/, "");
       const seen = new Set<string>();
       let colIdx = 0;
       for (const nid of model.metadata.input_nodes) {
-        const base = nid.replace(/_[a-z]$/, "");
+        const base = nid.replace(/_(?:[a-z]|[A-Z][a-z])$/, "");
         if (!seen.has(base)) {
           if (base === baseId) return colIdx;
           seen.add(base);

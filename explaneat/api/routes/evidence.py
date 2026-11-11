@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 import numpy as np
+
+from ...core import split_ids
 from fastapi import APIRouter, HTTPException, Path
 
 from ...db import db
@@ -62,7 +64,7 @@ def _resolve_node_label(
     for node in model_state.nodes:
         if node.id.startswith(prefix):
             suffix = node.id[len(prefix):]
-            if suffix.isalpha() and len(suffix) == 1:
+            if split_ids.is_suffix(suffix) and len(split_ids.tokens(suffix)) == 1:
                 variant_names.append(display_map.get(node.id, node.id))
 
     if variant_names:

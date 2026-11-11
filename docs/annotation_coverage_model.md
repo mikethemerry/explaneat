@@ -388,3 +388,15 @@ For the full formalization of the collapse operation, its three preconditions, a
 ### Note on Output Node Coverage
 
 The paper's coverage definition ($\text{covered}_A(v) = v \in V_A \land E_{\text{out}}(v) \subseteq E_A$) allows output nodes to be covered when $E_{\text{out}}(v) = \emptyset$ (trivially satisfied). The "output nodes are never covered" rule in the implementation is a **practical visualization choice**: output nodes should always remain visible. This does not affect collapsibility.
+
+## Decomposition diagnostic
+
+The coverage report also includes `decomposition`, a diagnostic separate from
+structural and compositional coverage. It counts original hidden units (split
+copies counted once), assigning each unit to the smallest annotation that
+contains it as a non-entry node. Ancestors do not count units already assigned
+to smaller parts. `granularity` is the fraction assigned to parts of at most six
+units. The report warns when an assigned part holds more than six units and at
+least half the hidden units, or when units remain outside parts or solely in a
+root composition. These warnings measure grouping size, not whether a
+behavioral hypothesis has been explained or independently verified.

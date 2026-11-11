@@ -52,7 +52,7 @@ function buildColumnMapping(inputNodes: string[]): {
   let col = 0;
 
   for (const nid of inputNodes) {
-    const base = nid.replace(/_[a-z]$/, "");
+    const base = nid.replace(/_(?:[a-z]|[A-Z][a-z])$/, "");
     if (!seenBases.has(base)) {
       seenBases.set(base, col);
       colToNodes.set(col, []);
@@ -134,7 +134,7 @@ export function DatasetInfoPanel({
           if (nodes.length === 1) {
             displayName = featureName;
           } else {
-            const match = nodeId.match(/_([a-z])$/);
+            const match = nodeId.match(/_((?:[a-z]|[A-Z][a-z]))$/);
             displayName = match ? `${featureName}_${match[1]}` : featureName;
           }
 

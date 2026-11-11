@@ -180,7 +180,7 @@ type SelectionContext =
  */
 function getBaseNodeId(nodeId: string): string {
   // Match patterns like "nodeId_a", "nodeId_b", "nodeId_split"
-  const splitMatch = nodeId.match(/^(.+)_([a-z]|split)$/);
+  const splitMatch = nodeId.match(/^(.+)_((?:[a-z]|[A-Z][a-z])|split)$/);
   if (splitMatch) {
     return splitMatch[1];
   }
@@ -407,7 +407,7 @@ function detectJoinableNodes(selectedNodes: string[]): string | null {
   // Pattern 1: X_a, X_b, X_c... or X_split
   // Pattern 2: X_entry, X_exit
   const splitPatterns = [
-    /^(.+)_([a-z])$/,           // X_a, X_b
+    /^(.+)_((?:[a-z]|[A-Z][a-z]))$/,  // X_a, X_b, X_Ab (copies past z)
     /^(.+)_split$/,             // X_split
     /^(.+)_(entry|exit)$/,      // X_entry, X_exit
   ];
@@ -2157,7 +2157,7 @@ export function OperationsPanel({
         // For split input nodes (e.g. "-17_a"), look up the base node
         let suggestion = baseSuggestion;
         if (!suggestion && nodeId.includes("_")) {
-          const baseId = nodeId.replace(/_[a-z]+$/, "");
+          const baseId = nodeId.replace(/_(?:[a-z]|[A-Z][a-z])+$/, "");
           const baseIndex = model.metadata.input_nodes.indexOf(baseId);
           if (baseIndex >= 0 && featureNames && baseIndex < featureNames.length) {
             suggestion = featureNames[baseIndex];
