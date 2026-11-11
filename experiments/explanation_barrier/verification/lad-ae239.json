@@ -1,0 +1,486 @@
+{
+ "item_id": "lad-ae239",
+ "genome_id": "2fa03acd-0600-4bb3-adc3-55488b8b73d1",
+ "target_hash": null,
+ "target_hash_note": "recheck.json carries no target_hash for a record target",
+ "verifier": "independent verifier agent (explanation-verifier skill)",
+ "started_at": "2026-11-12T01:45:13+13:00",
+ "finished_at": "2026-11-12T02:00:00+13:00",
+ "minutes": 15,
+ "overall": {
+  "grade": "refuted",
+  "summary": "Every stated number reproduces and the structure is sound, but the root's conclusion that interactions matter for risk levels far more than for ranking is wrong (the linearisation kept the first layer; an additive model in the inputs loses 0.04 AUC). Two leaf readings are overstated in scope."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "structural and compositional coverage 1.0, full coverage, hierarchy complete",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.0 / 1.0, no uncovered nodes or edges, single root containing the output, all 8 non-root parts under it",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "3.3e-16; closed-form max error 0.0083",
+   "check": "verify recheck",
+   "evidence": "recomputed 3.33e-16 and 0.00826 (per leaf 0.0032 to 0.0083)",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.n_splits",
+   "statement": "6 leaves, 3 compositions, 32 splits, 0 identity nodes, 48 hidden nodes",
+   "check": "recheck op_counts; structure dump",
+   "evidence": "9 annotate ops (6 leaves, 3 compositions), 32 split_node, 64 consolidate_node, 10 rename_node; hidden units 1-32 (first layer) and 33-48 (second layer)",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "training AUC 0.940; risk below 1% at 25 and 97% at 75; 1% vs 21% at 45; not when old; bmi/income/score/visits/insurance/smoking/noise directions",
+   "check": "probe age x female; probes of each interaction",
+   "evidence": "AUC 0.9403; typical man 0.5% at 25, 96.7% at 75; age 45: man 21.4%, woman 0.7%; age 70: 89.6% vs 91.2%; all directions reproduce (see root findings)",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --hold typical --sweep age=25,45,50,60,70,75 --sweep female=0,1"
+   ]
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "risk-lowering core is the costliest leaf (AUC 0.940 to 0.928); one second-layer unit active on 0 rows",
+   "check": "recheck AUC checks of all six leaf ablations; output weights; subgroup",
+   "evidence": "leaf-off AUCs: high 0.930, low 0.928, unit36 0.938, unit38 0.940, unit42 0.940, unit47 0.939, so low_side_core is the costliest; unit 33 output weight 1.1e-11 and above zero on 0 rows",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json"
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "weakened",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "'the two core leaves and the income unit have partial readings'",
+   "check": "compare with record.leaves",
+   "evidence": "record.leaves grades low_side_core 'meaningful', contradicting 'the two core leaves ... have partial readings' in the same record: an internal inconsistency (this verifier grades low_side_core partial)",
+   "commands": []
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "structure",
+   "statement": "second-layer units grouped by output-weight sign: raising = 33,34,39,41,43,46 + 36 + 38; lowering = 35,37,40,44,45,48 + 42 + 47",
+   "check": "output weights read from the replayed structure",
+   "evidence": "positive: 34 +0.317, 36 +0.517, 38 +0.515, 39 +0.347, 41 +0.231, 43 +0.318, 46 +0.322 (33: +1.1e-11); negative: 35 -0.336, 37 -0.151, 40 -0.407, 42 -0.307, 44 -0.086, 45 -0.306, 47 -0.350, 48 -0.318; grouping matches",
+   "commands": []
+  },
+  {
+   "id": "V8",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_114",
+   "claims": [],
+   "location": "structure.root_risk_score",
+   "statement": "the 32 first-layer units sit in the root as consolidated per-leaf copies, 'described, not explained'",
+   "check": "structure dump",
+   "evidence": "coverage is formally 1.0, but every leaf's entries are the 32 first-layer copies and the root owns all input-to-first-layer edges, so the input-level meaning of every leaf rests on an unexplained layer; disclosed in record.resisted, so not refuted",
+   "commands": []
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_106",
+   "claims": [],
+   "location": "operations.high_side_core.hypothesis",
+   "statement": "0.37 at 25, 3.03 at 75; bmi 25->38: 0.49->0.80 at 30, 1.87->5.77 at 70; visits 1->6 at 40: 0.81->2.07; acts on 23664, mean +1.65; AUC 0.940->0.930; unit 33 never active",
+   "check": "probe; subgroup age > 0",
+   "evidence": "+0.3678, +3.0289; +0.4926/+0.8001, +1.8749/+5.7676; +0.8055/+2.0696; acts on 23664 (98.6%), mean +1.6519; AUC off 0.9299",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --hold typical --sweep bmi=25,38 --sweep age=30,70",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --hold typical --sweep visits=1,6 --sweep age=40,75",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --where 'age > 0'"
+   ]
+  },
+  {
+   "id": "V10",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_106",
+   "claims": [],
+   "location": "operations.high_side_core.hypothesis",
+   "statement": "'It is the main carrier of the rise in risk with age'",
+   "check": "probe age sweep, typical man, all parts",
+   "evidence": "from 25 to 75 high_side_core rises +2.66 (0.37 to 3.03) but low_side_core rises +4.40 (-4.40 to 0.00); from 25 to 60 the high side adds +0.71 and the low side +3.38. The fading of the risk-lowering core carries more of the age effect; the high side is the main carrier only above about 60",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --hold typical --sweep age=25,45,50,60,70,75 --sweep female=0,1"
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_107",
+   "claims": [],
+   "location": "operations.low_side_core.hypothesis",
+   "statement": "age x sex -4.40/-6.99, -1.59/-3.80, -0.18/-0.20; income x score -1.63->-5.20 at score 20, -1.21->-2.02 at 90; means -5.45 (2229 women <40), -3.06 (2260 men <40), -0.90 (5189 aged 60+); AUC 0.928",
+   "check": "probe; subgroups",
+   "evidence": "-4.4004/-6.9885, -1.5888/-3.8045, -0.1809/-0.1954; -1.6262/-5.2023, -1.2087/-2.0215; -5.4550 n=2229, -3.0647 n=2260, -0.8977 n=5189; AUC off 0.9279",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --hold typical --sweep income=30,120 --sweep score=20,90",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --where 'age < 40 and female == 1'"
+   ]
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_107",
+   "claims": [],
+   "location": "operations.low_side_core.hypothesis",
+   "statement": "pulls the score down for young people, women, high earners, low scores; fades for old people",
+   "check": "probe off the typical case (income 150, age 30/70; woman 35)",
+   "evidence": "income 150: -7.72 at 30 vs -3.12 at 70; woman 35: -5.64 at score 20 vs -3.06 at 95; direction holds away from the typical case",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --hold typical --set income=150 --sweep female=0,1 --sweep age=30,70"
+   ]
+  },
+  {
+   "id": "V13",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_108",
+   "claims": [],
+   "location": "operations.unit36_visits_bmi_smoker.hypothesis",
+   "statement": "0.00/0.63 at 40, 0.57/1.78 at 75; 0.25 uninsured smoker, 0.00 insured non-smoker; 1.42 at 70 bmi 38; 9070 of 24000; 747 of 749 (mean 1.66 vs 0.22); 62 of 2229; AUC 0.938",
+   "check": "probe; subgroups",
+   "evidence": "0.0000/0.6302, 0.5727/1.7825; 0.2460/0.0000; 1.4239; 9070; 747 of 749, +1.6560 vs +0.2178; 62 of 2229; AUC off 0.9378",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --hold typical --sweep insured=1,0 --sweep smoker=0,1",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --where 'age >= 65 and visits >= 4'"
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_108",
+   "claims": [],
+   "location": "operations.unit36_visits_bmi_smoker.hypothesis",
+   "statement": "off for most young and middle-aged profiles; switches on with older age, many visits, high bmi",
+   "check": "subgroup age < 60; probe bmi x age",
+   "evidence": "acts on 25.0% of rows under 60 vs 84.0% of 60+; bmi 38 at age 30: 0.00, at 70: 1.42 (bmi 25 at 70: 0.12)",
+   "commands": [
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --where 'age < 60'"
+   ]
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_109",
+   "claims": [],
+   "location": "operations.unit38_score_urban.hypothesis",
+   "statement": "score 95: 0.84 rural, 0.00 urban; score 20: 0, 0; 0.82 at 70 bmi 38; 1565 of 1934 rural score>=80 (0.57); 927 of 2920 urban (0.11); 5756 of 24000",
+   "check": "probe; subgroups",
+   "evidence": "0.8374/0.0000, 0/0; 0.8189; 1565 of 1934 (+0.5722); 927 of 2920 (+0.1062); 5756",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --hold typical --sweep score=20,95 --sweep urban=0,1",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --where 'score >= 80 and urban == 0'"
+   ]
+  },
+  {
+   "id": "V16",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_109",
+   "claims": [],
+   "location": "operations.unit38_score_urban.hypothesis",
+   "statement": "'switches on for a high score in rural patients (and for some very old, heavy or frequent-visit profiles)'",
+   "check": "subgroups by score and age; probe age sweep at score 95 rural; probe woman aged 35",
+   "evidence": "of its 5756 active rows only 1565 (27%) are high-score rural; 1892 are score<80 and aged 60+ (it acts on 45% of that group, mean +0.19) and 1372 are score<80 under 60. The high-score rural rows carry about 42% of its total contribution. It is also age-gated: at score 95 rural it gives +0.31 at age 30 and +1.24 at 75, and 0 for a rural woman aged 35. The rural high-score reading holds but covers less than half of what the unit does; 'some very old' understates the age role",
+   "commands": [
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --where 'score < 80 and age >= 60'",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --hold typical --set score=95 --set urban=0 --sweep age=30,45,60,75",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --hold typical --set age=35 --set female=1 --sweep score=20,95 --sweep urban=0,1"
+   ]
+  },
+  {
+   "id": "V17",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_110",
+   "claims": [],
+   "location": "operations.unit42_age_female.hypothesis",
+   "statement": "-0.98/-1.93 at 25, -0.00/-0.91 at 45, 0/0 at 70; every one of 2229 women <40 (mean -1.43); 2225 of 2260 men <40 (-0.48); 1172 of 5189 aged 60+ (-0.03); AUC 0.940",
+   "check": "probe; subgroups",
+   "evidence": "-0.9818/-1.9285, -0.0049/-0.9146, 0/0; 2229 of 2229 (-1.4256); 2225 of 2260 (-0.4800); 1172 of 5189 (-0.0294); AUC off 0.9398",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --hold typical --sweep age=25,45,50,60,70,75 --sweep female=0,1",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --where 'age < 40 and female == 1'"
+   ]
+  },
+  {
+   "id": "V18",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_110",
+   "claims": [],
+   "location": "operations.unit42_age_female.hypothesis",
+   "statement": "fades out with age, sooner for men",
+   "check": "probe age x sex",
+   "evidence": "man: 0 from age 50; woman: -0.67 at 50, -0.18 at 60, 0 at 70. It also acts on 62.6% of all rows (about 66% of ages 40-59) with small values, e.g. -0.10 for an insured smoking man of 50",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --hold typical --sweep age=25,45,50,60,70,75 --sweep female=0,1"
+   ]
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_111",
+   "claims": [],
+   "location": "operations.unit47_income.hypothesis",
+   "statement": "score 20: 0.00 -> -0.76 for income 30->120; score 90: 0.00 -> -0.01; 855 of 858 (mean -0.88 vs -0.20); 14982 of 24000; -0.39 woman 25; -0.32 uninsured smoker; AUC 0.939",
+   "check": "probe; subgroups",
+   "evidence": "0/-0.7551, 0/-0.0123; 855 of 858, -0.8799 vs -0.2041; 14982; -0.3918; -0.3162; AUC off 0.9391",
+   "commands": [
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --where 'income >= 80 and score <= 30'"
+   ]
+  },
+  {
+   "id": "V20",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_111",
+   "claims": [],
+   "location": "operations.unit47_income.evidence[2]",
+   "statement": "subgroup query over the whole split stored with type 'ablation'",
+   "check": "evidence payload",
+   "evidence": "payload tool is query_subgroup with where 'age > 0'; narrative amended to say so; the mislabel is disclosed in tool_bugs. Number reproduces (14982)",
+   "commands": []
+  },
+  {
+   "id": "V21",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_111",
+   "claims": [],
+   "location": "operations.unit47_income.hypothesis",
+   "statement": "not specific to the high-income low-score group (partial reading)",
+   "check": "probe income 150 at age 70; subgroups",
+   "evidence": "acts on 89.5% of income>=80 rows and 77.1% of score<=30 rows; -0.64 for a man aged 70 with income 150 at the typical score; the stated partial reading is accurate",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --hold typical --set income=150 --sweep female=0,1 --sweep age=30,70"
+   ]
+  },
+  {
+   "id": "V22",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_112",
+   "claims": [],
+   "location": "operations.risk_raising_units.hypothesis",
+   "statement": "0.37/0.63/1.07/3.73 at 25/50/60/75; 4.02 over 5189 aged 60+ vs 1.47 younger; AUC 0.910; score down 2.02 on average",
+   "check": "probe; subgroup age < 60; recheck",
+   "evidence": "+0.3678/+0.6324/+1.0737/+3.7303; +4.0150 vs +1.4741; AUC off 0.9097; mean contribution +2.0234",
+   "commands": [
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --where 'age < 60'"
+   ]
+  },
+  {
+   "id": "V23",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_113",
+   "claims": [],
+   "location": "operations.risk_lowering_units.hypothesis",
+   "statement": "-5.38/-1.46/0.00 at 25/50/75; -7.23 over 2229 women <40; -1.18 over 5189 aged 60+; AUC 0.905",
+   "check": "probe; subgroups; recheck",
+   "evidence": "-5.3821/-1.4594/0.0000; -7.2304; -1.1799; AUC off 0.9053",
+   "commands": [
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --where 'age >= 60'"
+   ]
+  },
+  {
+   "id": "V24",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_114",
+   "claims": [],
+   "location": "operations.root_risk_score.hypothesis",
+   "statement": "age <1%/24%/97%; sex x age incl. scores -5.35/-9.56; bmi x age 2%->1%, 76%->>99%; income x score 27%->0.2%, 41%->35%; score x urban 94/53, 11/11; visits 12%->79%; insurance x smoking 24/25/35/44; noise 27%->21%; AUC 0.940; linearised 0.939, gain 0.0012",
+   "check": "probes; verify linearise",
+   "evidence": "0.5/23.7/96.7%; score = -0.34 + parts gives -5.35 and -9.56; 1.7->1.2%, 76.4->100.0%; 27.4->0.2%, 40.5->34.7%; 94.2/53.2, 10.9/11.4; 12.0->79.2%; 23.7/25.1/34.6/43.6%; 26.6->20.6%; linearise: 0.9403, all affine 0.9391 (+0.0012)",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --hold typical --sweep noise=-2,0,2",
+    "uv run python -m explaneat verify linearise /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json"
+   ]
+  },
+  {
+   "id": "V25",
+   "grade": "refuted",
+   "level": "L3",
+   "part": "ann_114",
+   "claims": [],
+   "location": "operations.root_risk_score.hypothesis",
+   "statement": "'replacing both sides by least-squares affine fits gives 0.939, a nonlinear gain of 0.0012, so the interactions shape the predicted risk levels far more than the ranking of rows'",
+   "check": "linearise scope (as_unit entries); refit additive and main-effects models on the 24000 training rows",
+   "evidence": "the affine fits are in the 32 first-layer ReLU features (the leaves' entries), not in the inputs, so this test keeps the first layer's non-linearity and interactions and measures only the second layer. In the inputs, a main-effects logistic model reaches AUC 0.886 and an additive spline model (non-linear main effects, no interactions) 0.899 (test 0.899), against the model's 0.940; adding pairwise terms gives 0.931. Interactions are worth about 0.04 AUC of ranking, so the conclusion that they shape levels far more than ranking does not hold; 0.0012 is only the second layer's non-linear gain",
+   "commands": [
+    "scratch script: sklearn LogisticRegression / SplineTransformer(n_knots=8) on base.X_train from explaneat.verify.model.load"
+   ]
+  },
+  {
+   "id": "V26",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_114",
+   "claims": [],
+   "location": "operations.root_risk_score.hypothesis",
+   "statement": "noise has a small learned effect",
+   "check": "fix noise at its median on all training rows",
+   "evidence": "mean |change in risk| 0.9 points (95th percentile 4.0); AUC 0.9403 -> 0.9398 (test 0.9410 -> 0.9408); noise is uncorrelated with the outcome (r = -0.002). Small on the data, though the typical-case swing over -2 to +2 is 6 points",
+   "commands": [
+    "scratch script: ev.logit with the noise column fixed"
+   ]
+  },
+  {
+   "id": "V27",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_114",
+   "claims": [],
+   "location": "operations.root_risk_score.hypothesis",
+   "statement": "high score raises risk more for rural people; women lower risk when young only",
+   "check": "probes off the typical case",
+   "evidence": "woman aged 35: score 20->95 gives 0.0->3.0% rural vs 0.0->0.3% urban; income 150: woman vs man 0.0/0.0% at 30, 45.9 vs 51.5% at 70 (sex gap mostly gone)",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --hold typical --set age=35 --set female=1 --sweep score=20,95 --sweep urban=0,1"
+   ]
+  },
+  {
+   "id": "V28",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_114",
+   "claims": [],
+   "location": "operations.root_risk_score.hypothesis",
+   "statement": "'high bmi raises risk for older people but not for young ones'",
+   "check": "probe bmi x age",
+   "evidence": "at age 30 raising bmi 25->38 lowers risk (1.7% -> 1.2%); stated numerically in the hypothesis, but a protective high bmi in the young is odd for a risk model; for the domain reviewer",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-ae239/record.json --hold typical --sweep bmi=25,38 --sweep age=30,70"
+   ]
+  }
+ ],
+ "parts": {
+  "ann_114": {
+   "grade": "refuted",
+   "level": "L3"
+  },
+  "ann_112": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_113": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_106": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_107": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_108": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_109": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_110": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_111": {
+   "grade": "upheld",
+   "level": "L4"
+  }
+ },
+ "leaf_meaning": {
+  "high_side_core": {
+   "grade": "partial",
+   "why": "A mixture of five live units that rises with age (mostly above about 60), with bmi in older people, with visits and with score; the bmi-by-age reading is confirmed, but it is not the main carrier of the age effect below 60."
+  },
+  "low_side_core": {
+   "grade": "partial",
+   "why": "Its protective reading (strongest for young people, women, high income with low score, fading with age) is confirmed by probes and subgroups, but six units together carry most of every input's effect, so it is the whole risk-lowering side rather than one mechanism."
+  },
+  "unit36_visits_bmi_smoker": {
+   "grade": "meaningful",
+   "why": "Off for most people under 60 (acts on 25%), on for older, frequent-visit, heavy or uninsured-smoking profiles, adding risk; confirmed on 747 of 749 older frequent visitors and by the bmi-by-age probe."
+  },
+  "unit38_score_urban": {
+   "grade": "partial",
+   "why": "The rural high-score effect is real (0.84 vs 0.00 at score 95) but the unit is also age-gated and 73% of its active rows are not high-score rural."
+  },
+  "unit42_age_female": {
+   "grade": "meaningful",
+   "why": "Lowers risk for young people, about three times as much for young women as young men, and fades with age, sooner for men; confirmed by probes and subgroups."
+  },
+  "unit47_income": {
+   "grade": "partial",
+   "why": "Lowers risk most for high income with a low score, but it acts on 62% of all rows, including older high earners at average scores."
+  }
+ },
+ "statements_checked": 170,
+ "counts": {
+  "refuted": 1,
+  "weakened": 4,
+  "upheld": 22,
+  "flag": 1
+ },
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ]
+}

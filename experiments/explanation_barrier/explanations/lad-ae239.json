@@ -1,0 +1,198 @@
+{
+  "label": "lad-ae239",
+  "genome_id": "2fa03acd-0600-4bb3-adc3-55488b8b73d1",
+  "start": "2026-11-12T01:02:23+13:00",
+  "end": "2026-11-12T01:45:00+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 6,
+  "n_composition_annotations": 3,
+  "n_splits": 32,
+  "n_identity_nodes": 0,
+  "hidden_nodes": 48,
+  "hidden_nodes_single_leaf_no_split": 4,
+  "hidden_nodes_in_any_annotation": 48,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 3.3306690738754696e-16,
+  "closed_form_max_abs_err": 0.008259311298462357,
+  "summary": "The model's score is the sum of a risk-raising side (second-layer ReLU units with positive output weight, which grow with risk) and a risk-lowering side (units with negative output weight, which are most negative for low-risk profiles and shrink as risk rises), passed through a sigmoid; its training AUC is 0.940. Age dominates: in the typical case risk goes from below 1% at age 25 to 97% at 75. Women are given much lower risk when young (1% against 21% for a man at age 45) but not when old; high bmi raises risk for older people; income lowers risk mainly at low scores; a high score raises risk more for rural people; visits, being uninsured and smoking raise risk; noise has a small learned effect.",
+  "summary_template": "The model's score is the sum of a risk-raising side (second-layer ReLU units with positive output weight, which grow with risk) and a risk-lowering side (units with negative output weight, which are most negative for low-risk profiles and shrink as risk rises), passed through a sigmoid; its training AUC is {{q:q_249779784a.data.auc_with|.3f}}. Age dominates: in the typical case risk goes from {{q:q_fe7991fa75.rows[0].risk|pct}} at age {{q:q_fe7991fa75.rows[0].inputs.age}} to {{q:q_fe7991fa75.rows[10].risk|pct}} at {{q:q_fe7991fa75.rows[10].inputs.age}}. Women are given much lower risk when young ({{q:q_e646a67772.rows[3].risk|pct}} against {{q:q_e646a67772.rows[2].risk|pct}} for a man at age {{q:q_e646a67772.rows[2].inputs.age}}) but not when old; high bmi raises risk for older people; income lowers risk mainly at low scores; a high score raises risk more for rural people; visits, being uninsured and smoking raise risk; noise has a small learned effect.",
+  "resisted": "The first layer resisted: its thirty-two ReLU units each mix the ten inputs, and they are kept as copies (one per leaf) computed by the root's own input edges, described by formula but not given meanings. The leaves are groupings of redundant second-layer units: switching off any single leaf costs little AUC (the risk-lowering core, the costliest leaf, lowers it from 0.940 to 0.928), and the two core leaves and the income unit have partial readings because each unit responds to a mixture of inputs. One second-layer unit is never active on the training data (above zero on 0 rows).",
+  "resisted_template": "The first layer resisted: its thirty-two ReLU units each mix the ten inputs, and they are kept as copies (one per leaf) computed by the root's own input edges, described by formula but not given meanings. The leaves are groupings of redundant second-layer units: switching off any single leaf costs little AUC (the risk-lowering core, the costliest leaf, lowers it from {{q:q_f9eccfb00f.data.auc_with|.3f}} to {{q:q_f9eccfb00f.data.auc_without|.3f}}), and the two core leaves and the income unit have partial readings because each unit responds to a mixture of inputs. One second-layer unit is never active on the training data (above zero on {{q:q_179d3f0d3f.subgroup.n|d}} rows).",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 37,
+    "complete_ok": true
+  },
+  "recheck_notes": "No mismatches and no needs_review items. The unchecked free-text sentences are qualitative readings (e.g. 'fades out with age', 'pushes the score up') whose numbers are given by placeholders in neighbouring sentences.",
+  "tool_bugs": "split_node allows at most 26 copies, so the ten inputs (32 outgoing edges each) cannot be split; the inputs therefore sit in the root, which owns the input-to-first-layer edges, and each leaf takes its own consolidated copies of the 32 first-layer units as entries. query_probe accepts at most two sweeps. Compositions were created with empty entry_nodes and own subgraph (accepted by validation and coverage). One evidence record on unit47_income was stored with type 'ablation' though it is a subgroup query (labelling slip in the batch script); its narrative was amended to say so (amend_evidence cannot change the type).",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 239,
+    "provenance_backed": 225,
+    "allow_listed": 14,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 0,
+      "other": 6
+    },
+    "audit": {
+      "references": 225,
+      "checked": 225
+    },
+    "self_probe": {
+      "parts": [
+        "high_side_core",
+        "low_side_core",
+        "unit36_visits_bmi_smoker",
+        "unit38_score_urban",
+        "unit42_age_female",
+        "unit47_income",
+        "risk_raising_units",
+        "risk_lowering_units",
+        "root_risk_score"
+      ],
+      "refuted_and_fixed": [
+        "unit42_age_female: initial wording 'off from about age 45 for men' was not exact (contribution at 45 is small but non-zero); reworded to 'fades out with age (sooner for men)'",
+        "root: noise was expected to be ignored; the noise sweep shows a small learned effect, stated as such"
+      ]
+    },
+    "restatements": 0
+  },
+  "leaves": [
+    {
+      "name": "high_side_core",
+      "units": [
+        "33",
+        "34",
+        "39",
+        "41",
+        "43",
+        "46"
+      ],
+      "meaning": "partial",
+      "why": "Carries the steep rise of risk with age and the age-dependent bmi effect (self-probe: high bmi adds far more at 70 than at 30), but also rises with visits and score as a mixture; unit 33 is never active."
+    },
+    {
+      "name": "low_side_core",
+      "units": [
+        "35",
+        "37",
+        "40",
+        "44",
+        "45",
+        "48"
+      ],
+      "meaning": "meaningful",
+      "why": "A protective term, most negative for young, female, high-income, low-score profiles and fading in old age; the age-by-sex and income-by-score self-probes confirm it."
+    },
+    {
+      "name": "unit36_visits_bmi_smoker",
+      "units": [
+        "36"
+      ],
+      "meaning": "meaningful",
+      "why": "Off for typical young and middle-aged profiles, switches on with older age, many visits, high bmi or uninsured smoking and adds risk; the age-by-visits self-probe confirms it."
+    },
+    {
+      "name": "unit38_score_urban",
+      "units": [
+        "38"
+      ],
+      "meaning": "meaningful",
+      "why": "Switches on for a high score in rural (not urban) patients and adds risk, confirmed by the score-by-urban self-probe; it also fires for some very old, heavy profiles."
+    },
+    {
+      "name": "unit42_age_female",
+      "units": [
+        "42"
+      ],
+      "meaning": "meaningful",
+      "why": "Lowers risk for young people, more for women, and fades with age; the age-by-sex self-probe and its activity on every woman under 40 confirm it."
+    },
+    {
+      "name": "unit47_income",
+      "units": [
+        "47"
+      ],
+      "meaning": "partial",
+      "why": "Lowers risk most for high income with a low score (self-probe confirmed), but it is active on many other rows too, so the reading covers only part of its behaviour."
+    }
+  ],
+  "overall_function": "The network computes a risk score driven above all by age, which raises risk steeply. Sex acts as an age-gated effect: women get much lower risk when young, but the protection disappears in older age. Bmi interacts with age (high bmi raises risk for older people, not for young ones), income lowers risk mainly when score is low, and a high score raises risk more for rural than urban people; more visits, being uninsured and smoking (more so when uninsured) raise risk. The noise input should be ignored but has a small learned effect.",
+  "stuck": "The dense 32x16 layout forced a chain-free design: the inputs could not be split (32 outputs exceed the 26-copy limit), so the first layer is held by the root via per-leaf consolidated copies and is described, not explained. Second-layer units are highly redundant, so each leaf's ablation costs little AUC and two leaves have only partial readings. Batched writes were slow (minutes per batch).",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 9,
+      "roots": [
+        "root_risk_score"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 3.3306690738754696e-16,
+    "closed_form_max_abs_err": 0.008259311298462357,
+    "numeric_max_abs_err": 3.552713678800501e-15,
+    "op_counts": {
+      "rename_node": 10,
+      "split_node": 32,
+      "consolidate_node": 64,
+      "annotate": 9
+    },
+    "leaves": [
+      {
+        "id": "ann_106",
+        "name": "high_side_core",
+        "numeric_max_abs_err": 2.6645352591003757e-15,
+        "closed_form_max_abs_err": 0.004357038618649334
+      },
+      {
+        "id": "ann_107",
+        "name": "low_side_core",
+        "numeric_max_abs_err": 2.6645352591003757e-15,
+        "closed_form_max_abs_err": 0.008259311298462357
+      },
+      {
+        "id": "ann_108",
+        "name": "unit36_visits_bmi_smoker",
+        "numeric_max_abs_err": 3.552713678800501e-15,
+        "closed_form_max_abs_err": 0.00611281306924405
+      },
+      {
+        "id": "ann_109",
+        "name": "unit38_score_urban",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.004120047300031737
+      },
+      {
+        "id": "ann_110",
+        "name": "unit42_age_female",
+        "numeric_max_abs_err": 2.6645352591003757e-15,
+        "closed_form_max_abs_err": 0.005277657650384349
+      },
+      {
+        "id": "ann_111",
+        "name": "unit47_income",
+        "numeric_max_abs_err": 1.1102230246251565e-15,
+        "closed_form_max_abs_err": 0.0032264903470378137
+      }
+    ],
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "tool_call_window": {
+      "n_calls": 211,
+      "first": 1794398585.057537,
+      "last": 1794400949.8007529,
+      "minutes": 39.41238692998886
+    }
+  }
+}

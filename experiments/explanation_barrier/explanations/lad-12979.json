@@ -1,0 +1,166 @@
+{
+  "label": "lad-12979",
+  "genome_id": "bc1cad2c-d11b-4b76-b16e-abff9668283a",
+  "start": "2026-11-11T22:27:58+13:00",
+  "end": "2026-11-11T22:47:56+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 4,
+  "n_composition_annotations": 1,
+  "n_splits": 10,
+  "n_identity_nodes": 0,
+  "hidden_nodes": 8,
+  "hidden_nodes_single_leaf_no_split": 8,
+  "hidden_nodes_in_any_annotation": 8,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 0.0,
+  "closed_form_max_abs_err": 0.019098589943434163,
+  "summary": "The model (training AUC 0.877) adds four parts on the logit scale: an age effect (older means higher risk), a low-income effect that is larger at older ages, a bmi effect that is strong for women and weak for men in the usual bmi range, and an urban smoker gate that steepens the age effect for people who both smoke and live in an urban area. Switching off the bmi part costs the most (AUC 0.799 without it). For an urban man of the typical profile, smoking lowers predicted risk at age 40 (2% vs 10%) and raises it at age 60 (95% vs 48%). Visits, score, insured and noise have small effects: replacing their edges by training means moves the AUC from 0.8775 to 0.8773.",
+  "summary_template": "The model (training AUC {{q:q_ebfd5c808a.auc_roc|.3f}}) adds four parts on the logit scale: an age effect (older means higher risk), a low-income effect that is larger at older ages, a bmi effect that is strong for women and weak for men in the usual bmi range, and an urban smoker gate that steepens the age effect for people who both smoke and live in an urban area. Switching off the bmi part costs the most (AUC {{q:q_697ec166ce.data.auc_without|.3f}} without it). For an urban man of the typical profile, smoking lowers predicted risk at age {{q:q_37655b5df7.rows[7].inputs.age}} ({{q:q_37655b5df7.rows[7].risk|pct}} vs {{q:q_37655b5df7.rows[1].risk|pct}}) and raises it at age {{q:q_37655b5df7.rows[9].inputs.age}} ({{q:q_37655b5df7.rows[9].risk|pct}} vs {{q:q_37655b5df7.rows[3].risk|pct}}). Visits, score, insured and noise have small effects: replacing their edges by training means moves the AUC from {{q:q_2acfaf1439.data.auc_with|.4f}} to {{q:q_2acfaf1439.data.auc_without|.4f}}.",
+  "resisted": "The parts are groups of dense units: each unit takes the ten inputs, age and income terms appear in each part's formula, and the parts are named by their dominant behaviour, so they overlap in which inputs they use. The urban smoker gate is only partly explained: for urban non-smokers it is not neutral (contribution -0.73 at age 30 for the typical man) and it opens for 210 training rows that are not urban smokers. The bmi part also raises the risk of very heavy men (397 men in the heaviest band queried: mean predicted risk 45%, observed rate 32%), which reads as a side effect rather than a domain effect.",
+  "resisted_template": "The parts are groups of dense units: each unit takes the ten inputs, age and income terms appear in each part's formula, and the parts are named by their dominant behaviour, so they overlap in which inputs they use. The urban smoker gate is only partly explained: for urban non-smokers it is not neutral (contribution {{q:q_37655b5df7.rows[0].parts.ann_51.contribution|.2f}} at age {{q:q_37655b5df7.rows[0].inputs.age}} for the typical man) and it opens for {{q:q_03521b2c59.subgroup.n}} training rows that are not urban smokers. The bmi part also raises the risk of very heavy men ({{q:q_b8651bdd42.subgroup.n}} men in the heaviest band queried: mean predicted risk {{q:q_b8651bdd42.subgroup.mean_predicted_risk|pct}}, observed rate {{q:q_b8651bdd42.subgroup.outcome_rate|pct}}), which reads as a side effect rather than a domain effect.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 30,
+    "complete_ok": true
+  },
+  "recheck_notes": "No mismatch and no needs_review item. The unchecked free-text sentences are qualitative readings (no numbers or scope words) backed by the attached probes and subgroups.",
+  "tool_bugs": "query_probe accepts at most two sweeps, so the smoker x urban x age self-probe was run as two probes (urban fixed at each level). Not a bug: get_formula output is rounded, so the leaf formula evidence is labelled approximate with its tolerance; the root's formula is attached as LaTeX without a separate tolerance (the root itself is the exact sum-then-sigmoid wiring). The ten input splits were followed by consolidate_node to give each leaf one copy of each input (thirty consolidations).",
+  "numbers": {
+    "in_text": 175,
+    "referenced": 170,
+    "allow_listed": 5
+  },
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 175,
+    "provenance_backed": 170,
+    "allow_listed": 5,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 4,
+      "other": 1
+    },
+    "audit": {
+      "references": 170,
+      "checked": 170
+    },
+    "self_probe": {
+      "parts": [
+        "age_risk",
+        "urban_smoker_age_gate",
+        "female_bmi",
+        "low_income",
+        "risk_model"
+      ],
+      "refuted_and_fixed": [
+        "female_bmi: the first reading (bmi changes little for men) failed for very heavy men; restricted to the usual bmi range and the heavy-men regime stated",
+        "low_income: the first reading left out age; the probe showed the unit grows with age, added to the hypothesis",
+        "urban_smoker_age_gate: the first reading (the units cancel for other combinations) failed for urban non-smokers; stated as a partial reading"
+      ]
+    },
+    "restatements": 0
+  },
+  "leaves": [
+    {
+      "name": "age_risk",
+      "units": [
+        "1",
+        "2"
+      ],
+      "meaning": "meaningful",
+      "why": "Its contribution rises with age in each probed profile, so it reads as the main age effect (older means higher risk), with smaller side terms."
+    },
+    {
+      "name": "urban_smoker_age_gate",
+      "units": [
+        "3",
+        "4"
+      ],
+      "meaning": "partial",
+      "why": "It steepens the age effect for urban smokers (lower risk when young, much higher when old, matched by training outcomes), but it also gives a non-neutral, age-dependent term to urban non-smokers and opens for some older non-smokers."
+    },
+    {
+      "name": "female_bmi",
+      "units": [
+        "5",
+        "6",
+        "8"
+      ],
+      "meaning": "meaningful",
+      "why": "The self-probe confirms a steep bmi effect for women and a flat one for men in the usual bmi range; a rise for very heavy men is a stated side effect not borne out by outcomes."
+    },
+    {
+      "name": "low_income",
+      "units": [
+        "7"
+      ],
+      "meaning": "meaningful",
+      "why": "It adds risk at low income, fades out as income rises and grows with age, as the income and age self-probes show."
+    }
+  ],
+  "overall_function": "The network adds an age effect, a low-income effect that grows with age, a bmi effect that acts on women, and an urban smoker gate, then passes the sum through a sigmoid. Older age and lower income raise predicted risk for everyone; higher bmi raises it steeply for women and hardly for men except at very high bmi. Smoking matters mainly in combination with urban living: for urban smokers the age effect is much steeper, so young urban smokers get a lower predicted risk than young urban non-smokers and older ones a much higher one, while in rural areas smoking changes little. Visits, score, insured and noise have small effects on the prediction.",
+  "stuck": "Nothing blocked the work. The dense layer meant every leaf needed its own copy of every input (ten splits and thirty consolidations), and the leaves are named by dominant behaviour rather than being clean single-input functions; the urban smoker gate kept a non-neutral side term for urban non-smokers, so its reading is partial.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 5,
+      "roots": [
+        "risk_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 0.0,
+    "closed_form_max_abs_err": 0.019098589943434163,
+    "numeric_max_abs_err": 1.3322676295501878e-15,
+    "op_counts": {
+      "rename_node": 10,
+      "split_node": 10,
+      "consolidate_node": 30,
+      "annotate": 5
+    },
+    "leaves": [
+      {
+        "id": "ann_50",
+        "name": "age_risk",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.008372424512483878
+      },
+      {
+        "id": "ann_51",
+        "name": "urban_smoker_age_gate",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.006041419481894739
+      },
+      {
+        "id": "ann_52",
+        "name": "female_bmi",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.019098589943434163
+      },
+      {
+        "id": "ann_53",
+        "name": "low_income",
+        "numeric_max_abs_err": 1.3322676295501878e-15,
+        "closed_form_max_abs_err": 0.008773509203370278
+      }
+    ],
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "tool_call_window": {
+      "n_calls": 163,
+      "first": 1794389311.032205,
+      "last": 1794390441.5373702,
+      "minutes": 18.841752751668295
+    }
+  }
+}

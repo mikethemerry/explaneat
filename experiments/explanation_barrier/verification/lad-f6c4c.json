@@ -1,0 +1,342 @@
+{
+ "item_id": "lad-f6c4c",
+ "genome_id": "3feef87b-1996-45db-8f5d-f1b8c392a926",
+ "target_hash": null,
+ "target_hash_note": "this recheck version writes no target_hash in its report",
+ "verifier": "independent verifier (explanation-verifier skill)",
+ "started_at": "2026-11-11T23:09:18+13:00",
+ "finished_at": "2026-11-11T23:25:00+13:00",
+ "minutes": 16,
+ "overall": {
+  "grade": "weakened",
+  "summary": "Every number, count, probe, ablation and the parity rule reproduce, and the structure and coverage hold; two leaf headlines are looser than their own evidence (smokerOrRuralLowerer is also weak for urban female smokers; fewFlagsRaiser is mainly a rural-man detector)."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "structural 1.0, compositional 1.0, full coverage, hierarchy complete",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.0 / 1.0, no uncovered or null nodes, single root containing the output, 6 of 6 leaves composed",
+   "commands": [
+    "uv run python -m explaneat verify recheck <record.json>"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "0.0; closed_form_max_abs_err 0.0135",
+   "check": "verify recheck",
+   "evidence": "function preservation 0; closed-form max error 0.01349 (worst leaf smokerOrRuralLowerer); closed forms match the recomputed ones (0 mismatch)",
+   "commands": [
+    "uv run python -m explaneat verify recheck <record.json>"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.n_splits",
+   "statement": "6 leaves, 1 composition, 10 splits, 0 identity nodes, 8 hidden units each in exactly one leaf",
+   "check": "verify recheck op_counts; stored operations (read only)",
+   "evidence": "10 split_node, 20 consolidate_node, 7 annotate, 0 identity; leaves own units {1,4},{2},{3,6},{5},{7},{8}",
+   "commands": [
+    "uv run python -m explaneat verify recheck <record.json>"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "odd count of smoker/female/urban: 12008 rows, mean risk 94%, 0 under one half; even: 11992 rows, mean 7%, 12 at or over one half",
+   "check": "subgroup on the parity expressions",
+   "evidence": "odd n=12008 mean 94.3%, 0 rows with risk<0.5; even n=11992 mean 6.5% (rounds to 7%), 12 rows with risk>=0.5",
+   "commands": [
+    "uv run python -m explaneat verify subgroup <record.json> --where \"(smoker + female + urban) % 2 == 1\"",
+    "uv run python -m explaneat verify subgroup <record.json> --where \"(smoker + female + urban) % 2 == 0 and risk >= 0.5\""
+   ]
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "age raises the score in each of the eight groups; typical non-smoking rural man 1% at 20 to 34% at 80",
+   "check": "four probes, age 20:80:7 x urban 0,1, one per smoker/female pair",
+   "evidence": "risk rises monotonically with age in all eight groups; non-smoking rural man 1.0% -> 34.3%",
+   "commands": [
+    "uv run python -m explaneat verify probe <record.json> --hold typical --set smoker=0 --set female=0 --sweep age=20:80:7 --sweep urban=0,1"
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "six minor inputs set to their means: AUC 0.9624 -> 0.9618 (mean |risk change| 0.011 in the root hypothesis)",
+   "check": "ablate the 36 copies of income, bmi, visits, score, insured, noise to their mean",
+   "evidence": "AUC 0.9624 -> 0.9618, mean |change| 0.0107, 4 predictions flip (largest single-row change 0.29, so 'practically ignored' is an average statement)",
+   "commands": [
+    "uv run python -m explaneat verify ablate <record.json> --to mean --node=-2_ad ... --node=-10_h (36 nodes)"
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "non-smoking rural men: fewFlagsRaiser 15.39, nonSmokingManLowerer -13.24; 11 of the 12 high-risk even rows are non-smoking rural men aged 80+; the remaining row not examined",
+   "check": "subgroup",
+   "evidence": "15.3933 / -13.2442 reproduce; 11 rows, all age>=80 (11 of the 27 such men in training). The unexamined twelfth row is an urban male smoker predicted 51.3% (a disclosed gap, not an error)",
+   "commands": [
+    "uv run python -m explaneat verify subgroup <record.json> --where \"(smoker + female + urban) % 2 == 0 and risk >= 0.5 and smoker == 0 and female == 0 and urban == 0 and age >= 80\"",
+    "uv run python -m explaneat verify subgroup <record.json> --where \"risk >= 0.5 and smoker == 1 and female == 0 and urban == 1\""
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "structure",
+   "statement": "each leaf: 10 input copies -> its units; root subgraph {0} with entries 1..8 and the six leaves as children",
+   "check": "stored operations (read only) + recheck hierarchy",
+   "evidence": "entries/exits as stated; consolidations give each two-unit leaf one copy per input; all function-preserving",
+   "commands": [
+    "uv run python -m explaneat verify recheck <record.json>"
+   ]
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_40",
+   "claims": [],
+   "location": "operations.fewFlagsRaiser.hypothesis",
+   "statement": "acts on 3366/3366 non-smoking rural men (15.39), 1437/1437 rural male smokers (12.05), 5054/5054 urban men (3.02), 3402/3402 rural women (2.96); 0 of 4963 and 0 of 2115; 1005/2193 (0.06), 577/1470 (0.05); self-probe 15.29/11.96/2.92/2.86/0.00 at age 40; AUC 0.962 -> 0.876",
+   "check": "subgroup per group, probe, ablate",
+   "evidence": "all counts and means reproduce; probe values match at age 40; ablation AUC 0.876",
+   "commands": [
+    "uv run python -m explaneat verify subgroup <record.json> --where \"smoker==0 and female==0 and urban==0\"",
+    "uv run python -m explaneat verify ablate <record.json> --part ann_40"
+   ]
+  },
+  {
+   "id": "V10",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_40",
+   "claims": [],
+   "location": "operations.fewFlagsRaiser.hypothesis",
+   "statement": "raises risk of people with at most one of the three flags",
+   "check": "closed form and per-group means",
+   "evidence": "True as an envelope, but the part is mainly a rural-man detector: being female or urban cuts it to about 3 logits, while smoking only cuts it from 15.4 to 12.1 (closed form: -1.56 female, -1.52 urban, -0.54 smoker). The text names the two big groups, so the 'few flags' reading is looser than the evidence, not wrong",
+   "commands": [
+    "uv run python -m explaneat verify subgroup <record.json> --where \"smoker==1 and female==0 and urban==0\""
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_41",
+   "claims": [],
+   "location": "operations.smokerOrRuralLowerer.hypothesis",
+   "statement": "-10.78 / -6.52 / -5.51 / -4.47 / -1.24; 0 of 4963, 130 of 5054 (-0.00), 1470 of 2115 (-0.29); self-probe -11.04/-6.76/-4.72/0.00, -11.46 at 20 to -10.19 at 80; AUC 0.962 -> 0.849; the largest contribution and the reason for low risk in rural female smokers and urban male smokers",
+   "check": "subgroup, probe, ablate (also within urban male smokers)",
+   "evidence": "all reproduce; switching it off in urban male smokers raises their mean risk by 0.75 and flips 2192 of 2193 predictions",
+   "commands": [
+    "uv run python -m explaneat verify ablate <record.json> --part ann_41 --where \"smoker==1 and female==0 and urban==1\""
+   ]
+  },
+  {
+   "id": "V12",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_41",
+   "claims": [],
+   "location": "operations.smokerOrRuralLowerer.hypothesis",
+   "statement": "lowers the predicted risk of smokers and of rural people ... weak or off for urban non-smokers",
+   "check": "subgroup urban female smokers; probe smoker=1 female=1 urban=1",
+   "evidence": "For urban female smokers (smokers) it is also weak: mean -0.29, acting on 1470 of 2115, and 0 from age 70 at the typical case. Being female damps it (closed form -1.17 female), which the lead sentence leaves out; the counts later in the text show it, so this is a partial overclaim in the lead, not a contradiction",
+   "commands": [
+    "uv run python -m explaneat verify subgroup <record.json> --where \"smoker==1 and female==1 and urban==1\"",
+    "uv run python -m explaneat verify probe <record.json> --hold typical --set smoker=1 --set female=1 --sweep age=20:80:7 --sweep urban=0,1"
+   ]
+  },
+  {
+   "id": "V13",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_42",
+   "claims": [],
+   "location": "operations.urbanNonSmokingWomanLowerer.hypothesis",
+   "statement": "4963/4963 at -4.47, no other lowerer acts there, smokerOrFemaleRaiser 1.11; small elsewhere (2466/5054 -0.14, 2158/3402 -0.24, 1341/2115 -0.15; 0 in four groups); self-probe -4.65/-0.15/0.00/-0.14; AUC 0.962 -> 0.943",
+   "check": "subgroup, probe, ablate within the group",
+   "evidence": "all reproduce; switching it off in non-smoking urban women flips all 4963 predictions (mean risk +0.74)",
+   "commands": [
+    "uv run python -m explaneat verify ablate <record.json> --part ann_42 --where \"smoker==0 and female==1 and urban==1\""
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_43",
+   "claims": [],
+   "location": "operations.smokerOrFemaleRaiser.hypothesis",
+   "statement": "3.25/3.02/1.33/1.14/1.32/1.11; 539/3366 (0.05), 365/5054 (0.02); makes urban female smokers high risk (fewFlagsRaiser and urbanNonSmokingManRaiser on 0 rows there); 2.14/2.88/3.62 with age; 0.00 at 60, 0.54 at 80; AUC 0.962 -> 0.950",
+   "check": "subgroup, probe, ablate within urban female smokers",
+   "evidence": "all reproduce; grows with age in every probe; switched off in urban female smokers, mean risk falls by 0.45 and 1026 of 2115 flip",
+   "commands": [
+    "uv run python -m explaneat verify ablate <record.json> --part ann_43 --where \"smoker==1 and female==1 and urban==1\""
+   ]
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_44",
+   "claims": [],
+   "location": "operations.urbanNonSmokingManRaiser.hypothesis",
+   "statement": "5054/5054 at 3.54 vs -3.78; weak on 1088/3366 (0.08), 542/2193 (0.06), 649/4963 (0.03); 0 in four groups; self-probe 3.44/0/0/0, 3.12 at 20 to 4.09 at 80; AUC 0.962 -> 0.954",
+   "check": "subgroup, probe, ablate",
+   "evidence": "all reproduce; switching it off drops the typical urban non-smoking man from 96.0% to 39.6%",
+   "commands": [
+    "uv run python -m explaneat verify ablate <record.json> --part ann_44"
+   ]
+  },
+  {
+   "id": "V16",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_45",
+   "claims": [],
+   "location": "operations.nonSmokingManLowerer.hypothesis",
+   "statement": "3366/3366 at -13.24, 5054/5054 at -3.78; 158/3402, 63/1437 (-0.01); 0 in four groups; self-probe -13.49/-4.01/0/0, -13.97 at 20 to -12.54 at 80; AUC 0.962 -> 0.707, the largest drop",
+   "check": "subgroup, probe, ablate all six parts",
+   "evidence": "all reproduce; 0.707 is the lowest of the six ablation AUCs (0.876, 0.849, 0.943, 0.950, 0.954, 0.707)",
+   "commands": [
+    "uv run python -m explaneat verify ablate <record.json> --part ann_45"
+   ]
+  },
+  {
+   "id": "V17",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_46",
+   "claims": [],
+   "location": "operations.parityOfSmokerFemaleUrban.hypothesis",
+   "statement": "parity rule (odd -> high, even -> low) with 12008/94%/0 and 11992/7%/12, 11 old rural men; raisers/lowerers split; age raises in all eight groups (1%->34%, 73%->99%); age to mean AUC 0.9455; six inputs to mean 0.9618 (0.011); all parts affine 0.551",
+   "check": "subgroup, four probes, ablate age copies, ablate six-input copies, linearise --level parts",
+   "evidence": "all reproduce: age copies to mean AUC 0.9455; all parts linearised 0.5506; the signs in the root's closed form match each part's raise/lower label (units 1,4,5,7 positive; 2,3,6,8 negative); 23988 of 24000 rows follow the parity rule",
+   "commands": [
+    "uv run python -m explaneat verify linearise <record.json> --level parts",
+    "uv run python -m explaneat verify ablate <record.json> --to mean --node=-1_ad --node=-1_b --node=-1_cf --node=-1_e --node=-1_g --node=-1_h"
+   ]
+  },
+  {
+   "id": "V18",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_46",
+   "claims": [],
+   "location": "operations.parityOfSmokerFemaleUrban.evidence[1]",
+   "statement": "evidence records (formulas, per-group subgroups, probes, ablations) support their part, on the training split",
+   "check": "read the stored evidence records (read only) and the recheck provenance check",
+   "evidence": "26 queries, 51 templated texts, all on the full training split, 0 provenance mismatch; each leaf's evidence uses its own part's contributions",
+   "commands": [
+    "uv run python -m explaneat verify recheck <record.json>"
+   ]
+  }
+ ],
+ "parts": {
+  "ann_46": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_40": {
+   "grade": "weakened",
+   "level": "L4"
+  },
+  "ann_41": {
+   "grade": "weakened",
+   "level": "L2"
+  },
+  "ann_42": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_43": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_44": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_45": {
+   "grade": "upheld",
+   "level": "L3"
+  }
+ },
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ],
+ "leaf_meaning": {
+  "fewFlagsRaiser": {
+   "grade": "partial",
+   "why": "It raises risk strongly only for rural men (15.4 logits non-smoking, 12.1 smoking) and by about 3 for urban men and rural women, so 'at most one flag' is an envelope; the real reading is 'rural man', which the text gives but the headline does not."
+  },
+  "smokerOrRuralLowerer": {
+   "grade": "partial",
+   "why": "It lowers risk for rural people and male smokers and decides the two-flag smoker groups, but is nearly off for urban female smokers, so 'lowers the risk of smokers' holds only for part of its stated population."
+  },
+  "urbanNonSmokingWomanLowerer": {
+   "grade": "meaningful",
+   "why": "It is the only lowerer acting on non-smoking urban women, and switching it off flips all 4963 of their predictions; elsewhere it is small as stated."
+  },
+  "smokerOrFemaleRaiser": {
+   "grade": "meaningful",
+   "why": "It raises risk for smokers and women, most for female smokers, grows with age in every probe, and keeps urban female smokers high risk (1026 of 2115 flip without it)."
+  },
+  "urbanNonSmokingManRaiser": {
+   "grade": "meaningful",
+   "why": "It acts on every non-smoking urban man (3.54 logits) and the typical one drops from 96% to 40% without it; its other activity is small and disclosed with counts."
+  },
+  "nonSmokingManLowerer": {
+   "grade": "meaningful",
+   "why": "It lowers risk for non-smoking men, strongly for rural ones where it cancels fewFlagsRaiser, and is the most important part by ablation (AUC 0.707 without it)."
+  }
+ },
+ "statements_checked": 185,
+ "counts": {
+  "refuted": 0,
+  "weakened": 2,
+  "upheld": 16,
+  "flag": 0
+ }
+}

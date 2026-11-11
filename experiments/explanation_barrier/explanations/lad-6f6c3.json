@@ -1,0 +1,161 @@
+{
+  "label": "lad-6f6c3",
+  "genome_id": "69ef07cd-f1eb-4d5f-ac5f-c73769dc400c",
+  "start": "2026-11-11T22:12:21+13:00",
+  "end": "2026-11-11T22:27:00+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 4,
+  "n_composition_annotations": 1,
+  "n_splits": 10,
+  "n_identity_nodes": 0,
+  "hidden_nodes": 4,
+  "hidden_nodes_single_leaf_no_split": 4,
+  "hidden_nodes_in_any_annotation": 4,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 0.0,
+  "closed_form_max_abs_err": 0.03437674041252947,
+  "summary": "The model's predicted risk is a sigmoid of four terms added on the logit scale. A hinge on age and BMI together raises risk for older, heavier people (switching it off lowers the training AUC from 0.837 to 0.731); a hinge on income against score lowers risk when income is high relative to score (0.748 without it); a hinge on the visit count raises risk for frequent visitors, and smoking lowers its threshold and adds to it, so smoking matters mainly for frequent visitors (0.787 without it); a small, almost always-on linear term adds slight slopes in age, BMI and score (0.834 with it held at its mean). Female, urban, insured and noise carry small weights: replacing every edge from them by its mean contribution gives a training AUC of 0.8369.",
+  "summary_template": "The model's predicted risk is a sigmoid of four terms added on the logit scale. A hinge on age and BMI together raises risk for older, heavier people (switching it off lowers the training AUC from {{q:q_88434d6bdf.data.auc_with|.3f}} to {{q:q_88434d6bdf.data.auc_without|.3f}}); a hinge on income against score lowers risk when income is high relative to score ({{q:q_3432bb48e7.data.auc_without|.3f}} without it); a hinge on the visit count raises risk for frequent visitors, and smoking lowers its threshold and adds to it, so smoking matters mainly for frequent visitors ({{q:q_366dc14353.data.auc_without|.3f}} without it); a small, almost always-on linear term adds slight slopes in age, BMI and score ({{q:q_5ecec04ab5.data.auc_without|.3f}} with it held at its mean). Female, urban, insured and noise carry small weights: replacing every edge from them by its mean contribution gives a training AUC of {{q:q_9080b2ce1d.data.auc_without|.4f}}.",
+  "resisted": "Nothing resisted structurally: each hidden unit sits in its own leaf and the hierarchy is complete. The linear term is partly explained: its reading is the direction of a small, near-linear correction plus the baseline level of the logit, with no further domain meaning. The small weights of female, urban, insured and noise in each unit were measured but not given a reading.",
+  "resisted_template": "Nothing resisted structurally: each hidden unit sits in its own leaf and the hierarchy is complete. The linear term is partly explained: its reading is the direction of a small, near-linear correction plus the baseline level of the logit, with no further domain meaning. The small weights of female, urban, insured and noise in each unit were measured but not given a reading.",
+  "recheck_summary": {
+    "ran_at": "2026-11-11T09:26:55+00:00",
+    "recheck_version": 3,
+    "mismatch": 0,
+    "needs_review": 0,
+    "warn": 0,
+    "mismatches": [],
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 24,
+    "provenance": {
+      "templated_texts": 34,
+      "queries": 26
+    },
+    "complete_ok": true,
+    "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+  },
+  "recheck_notes": "No mismatch and no needs_review item. The 24 unchecked free-text sentences carry no numbers (directions, structure and readings); each reading is backed by the probe, subgroup or ablation in the same hypothesis.",
+  "tool_bugs": "get_formula on a leaf returned latex null (tractable false) without force=true even for a single 10-input ReLU unit; worked with force=true. Piping xn.py --calls into head killed the batch part-way (SIGPIPE), so only some splits were applied on the first try; reran the rest. A composition annotation is refused if its subgraph_nodes repeat the children's nodes; it validates with only its own nodes (the output) and the children's exits as entries. Not tool bugs as such: the evidence-narrative lint flags 'zero' in 'set to zero' (an ablation setting), fixed by rewording.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 146,
+    "provenance_backed": 146,
+    "allow_listed": 0,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 4,
+      "other": 1
+    },
+    "audit": {
+      "references": 146,
+      "checked": 146
+    },
+    "self_probe": {
+      "parts": [
+        "age_bmi_hinge",
+        "linear_age_bmi_score",
+        "visits_smoker_hinge",
+        "income_score_hinge",
+        "risk_model"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0
+  },
+  "leaves": [
+    {
+      "name": "age_bmi_hinge",
+      "units": [
+        "1"
+      ],
+      "meaning": "meaningful",
+      "why": "A joint age-and-BMI threshold above which predicted risk climbs, with a higher BMI lowering the age at which it starts; the age-by-BMI probe confirms the switch-on points."
+    },
+    {
+      "name": "linear_age_bmi_score",
+      "units": [
+        "2"
+      ],
+      "meaning": "partial",
+      "why": "Read only as the direction of a small near-linear correction (risk up with age and BMI, down with score) plus the logit baseline; it adds little ranking information."
+    },
+    {
+      "name": "visits_smoker_hinge",
+      "units": [
+        "3"
+      ],
+      "meaning": "meaningful",
+      "why": "Frequent visitors get higher risk and smoking lowers the visit threshold and adds to the hinge, so smoking matters mainly for frequent visitors; the visits-by-smoker probe and subgroup counts confirm it."
+    },
+    {
+      "name": "income_score_hinge",
+      "units": [
+        "4"
+      ],
+      "meaning": "meaningful",
+      "why": "High income relative to score lowers predicted risk, with a higher score raising the income needed for protection; the income-by-score probe confirms it."
+    }
+  ],
+  "overall_function": "The model adds four terms on the logit scale and applies a sigmoid. Risk rises once age and BMI together pass a threshold (the two trade off: heavier people reach it younger), and rises with the number of visits above a threshold, where smoking lowers that threshold and adds to the effect, so smoking matters mainly for frequent visitors. Risk falls when income is high relative to score: income is protective and a higher score cancels that protection. A small, almost always-on linear term adds slight slopes in age, BMI and score; female, urban, insured and noise carry small weights and barely change the prediction.",
+  "stuck": "Little: a SIGPIPE from piping a batch into head stopped the input splits part-way (rerun), the composition annotation needed only its own node in subgraph_nodes, and leaf formulas needed force=true. The linear unit has no reading beyond its direction.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 5,
+      "roots": [
+        "risk_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 0.0,
+    "closed_form_max_abs_err": 0.03437674041252947,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 10,
+      "split_node": 10,
+      "annotate": 5
+    },
+    "leaves": [
+      {
+        "id": "ann_20",
+        "name": "age_bmi_hinge",
+        "numeric_max_abs_err": 1.7763568394002505e-15,
+        "closed_form_max_abs_err": 0.009587320228348517
+      },
+      {
+        "id": "ann_21",
+        "name": "linear_age_bmi_score",
+        "numeric_max_abs_err": 4.440892098500626e-16,
+        "closed_form_max_abs_err": 0.005998467626572523
+      },
+      {
+        "id": "ann_22",
+        "name": "visits_smoker_hinge",
+        "numeric_max_abs_err": 1.7763568394002505e-15,
+        "closed_form_max_abs_err": 0.02582752789832643
+      },
+      {
+        "id": "ann_23",
+        "name": "income_score_hinge",
+        "numeric_max_abs_err": 1.7763568394002505e-15,
+        "closed_form_max_abs_err": 0.03437674041252947
+      }
+    ],
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "tool_call_window": {
+      "n_calls": 147,
+      "first": 1794388363.75146,
+      "last": 1794389147.112808,
+      "minutes": 13.056022465229034
+    }
+  }
+}

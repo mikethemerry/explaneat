@@ -1,0 +1,481 @@
+{
+ "item_id": "lad-6eb46",
+ "genome_id": "81877379-320d-4ad0-984a-efb47834d305",
+ "target_hash": null,
+ "target_hash_note": "the recheck report carries no target_hash field for this target",
+ "verifier": "independent verifier agent (explanation-verifier skill)",
+ "started_at": "2026-11-11T22:27:17+13:00",
+ "finished_at": "2026-11-11T22:35:30+13:00",
+ "minutes": 9,
+ "overall": {
+  "grade": "weakened",
+  "summary": "Every number, closed form, coverage and preservation claim reproduces; two leaf readings (xOwnsCentreColumn, columnCOverBottomLeft) cover only part of where their unit acts, and the \"small push\" from upper-row o pieces in leftXRightO is small only on the z-scored scale."
+ },
+ "counts": {
+  "refuted": 0,
+  "weakened": 5,
+  "upheld": 26
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "structural 1.0, compositional 1.0, full coverage, hierarchy complete",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.0 / 1.0, no uncovered or null nodes, single root winScore containing the output, 4 of 4 leaves composed",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-6eb46/record.json --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-6eb46/verify/recheck.json"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "0.0",
+   "check": "verify recheck",
+   "evidence": "recomputed 0 (numeric max |err| of leaves 5.3e-15)",
+   "commands": []
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.closed_form_max_abs_err",
+   "statement": "0.0297",
+   "check": "verify recheck",
+   "evidence": "recomputed 0.029732 (per leaf 0.0297, 0.0216, 0.0241, 0.0203, matching each hypothesis's \"within 0.03 / 0.022 / 0.024 / 0.02\")",
+   "commands": []
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.n_splits",
+   "statement": "42 splits, 0 identity nodes, 4 leaves, 1 composition, 4 hidden nodes each in one leaf",
+   "check": "recheck op_counts and the operations list",
+   "evidence": "op_counts: split_node 42, rename_node 42, annotate 5; leaves ann_84..ann_87 each hold one hidden unit (1..4) with 42 split inputs; root ann_88 holds node 0",
+   "commands": []
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_88",
+   "claims": [],
+   "location": "record.summary",
+   "statement": "AUC 0.884; xRaisedInCentre off gives 0.769; acts on 13.4% of the 449 positions with x on a1, b1, c1; o->x on d1 and d2 moves 47% to above 99%; four detectors add with positive weights",
+   "check": "own forward pass from the genome weights on the 54,045 training rows; constructed board x c1, o e1 f1",
+   "evidence": "AUC 0.88414; unit 3 zeroed AUC 0.76855; 60 of 449 (13.4%); board risk 47.22% (o on d1,d2) and 99.54% (x on both); output weights 0.445, 0.480, 0.698, 0.507 all positive",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vlad/a2.py"
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_85",
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "the smaller weights (for example o on the upper rows pushing leftXRightO up) ... not explained",
+   "check": "per-piece weights (closed-form coefficient / square sd) and a probe of o vs x on b5 on a legal stack",
+   "evidence": "The upper-row weights are small only on the z-scored scale. Per piece, the mean |weight| of rows 4-6 in leftXRightO is 1.31, the same as the bottom row (1.32); b5 (-2.97) and f6 (-3.28) are larger than f1 (-2.25). Probe (x b1 c1 b3, o f1 b2 b4): o vs x on b5 moves the unit from 9.13 to 3.19 and the risk from 92.4% to 45.8%. They are small in aggregate only because rows 4-6 are rarely filled (fill rate 6.7%, 2.3%, 0.5%). The 98.2% / 2600 and 34.2% / 11639 numbers reproduce.",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-6eb46/record.json --set c_b1=1 --set c_c1=1 --set c_f1=-1 --set c_b2=-1 --set c_b3=1 --set c_b4=-1 --sweep c_b5=-1:1:3 --nodes 2",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vlad/a1.py"
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_88",
+   "claims": [],
+   "location": "record.overall_function",
+   "statement": "ReLU units on x-minus-o, positive output weights, no gating; rows 4-6 at training mean costs a little AUC",
+   "check": "own forward pass; rows 4-6 set to their training mean in all units",
+   "evidence": "single hidden layer, all four output weights positive; AUC 0.8607 with rows 4-6 at mean vs 0.8841",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vlad/a2.py"
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "structure",
+   "statement": "four leaves (one hidden unit each, entries = 42 split inputs, exit = the unit) under root winScore (exit node 0)",
+   "check": "operations from the database replayed by verify recheck",
+   "evidence": "hierarchy single root, all under root, root contains output; leaves compose exactly (numeric error 5e-15)",
+   "commands": []
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_84",
+   "claims": [],
+   "location": "layer.parts.ann_84.closed_form",
+   "statement": "relu(-1.53 a1 - 1.48 b1 + 1.95 c2 + 1.4 c3 + ... - 0.255), z-scored squares",
+   "check": "stated LaTeX vs recomputed LaTeX",
+   "evidence": "identical; bias -0.2554 from the genome",
+   "commands": []
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_84",
+   "claims": [],
+   "location": "operations.columnCOverBottomLeft.hypothesis",
+   "statement": "probes 0.00 / 10.91 / 11.95 / 4.48; 1542 of 1542; 831 of 831; 22.3% of 12296; 5.6% of 4873; on in 25092 (79.2%) vs 28953 (54.2%); adds 1.19; AUC 0.884 -> 0.869",
+   "check": "own recomputation of every number",
+   "evidence": "all reproduce: 0.00, 10.91, 11.95, 4.48; 1542/1542; 831/831; 2739/12296 = 22.3%; 273/4873 = 5.6%; 25092 at 0.792, 28953 at 0.542; 1.191; 0.8692",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vlad/a2.py"
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_84",
+   "claims": [],
+   "location": "operations.columnCOverBottomLeft.hypothesis",
+   "statement": "it detects x building up column c above the bottom row (x on c2 and c3) while o holds the bottom-left corner squares a1 and b1",
+   "check": "subgroup with x on neither c2 nor c3; which squares separate active from inactive rows there",
+   "evidence": "The two halves add; they are not a conjunction. The unit acts on 36.8% of the 38,563 positions with x on neither c2 nor c3 (14,183 rows, 56.5% of all rows where it acts, 45% of its summed logit contribution); there o on a1 and b1 alone switches it on (mean a1 -0.67, b1 -0.51 lower in active rows). \"while\" overstates the dependence on column c.",
+   "commands": [
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-6eb46/record.json --where \"c_c2 != 1 and c_c3 != 1\"",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vlad/a4.py"
+   ]
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_84",
+   "claims": [],
+   "location": "operations.columnCOverBottomLeft.evidence[1]",
+   "statement": "self-probes on constructed boards",
+   "check": "legality of the boards and values",
+   "evidence": "both boards obey gravity (c2 over o on c1); values reproduce",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vlad/a2.py"
+   ]
+  },
+  {
+   "id": "V13",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_84",
+   "claims": [],
+   "location": "operations.columnCOverBottomLeft.hypothesis",
+   "statement": "domain sense: x on c2, c3 near the centre; o on a1, b1 is a tempo loss",
+   "check": "reading in board terms",
+   "evidence": "stated in board terms (squares, x wins); named squares carry 73% of the pre-activation variance (R2 0.72 with only c2, c3, a1, b1)",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vlad/a3.py"
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_85",
+   "claims": [],
+   "location": "layer.parts.ann_85.closed_form",
+   "statement": "relu(... + 1.27 b1 + 1.16 c1 + 1.13 c2 - 1.57 f1 - 1.08 g1 + ... + 1.04)",
+   "check": "stated vs recomputed",
+   "evidence": "identical",
+   "commands": []
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_85",
+   "claims": [],
+   "location": "operations.leftXRightO.hypothesis",
+   "statement": "probes 3.75 / 0.00 / 0.65 / 0.00; 98.2% of 2600; 89.2% of 4286; 34.2% of 11639; on in 33714 (70.8%) vs 20331 (57.5%); adds 1.41; AUC 0.839",
+   "check": "own recomputation",
+   "evidence": "all reproduce: 3.75, 0.00, 0.65, 0.00; 2554/2600; 3824/4286; 3984/11639; 0.708 / 0.575; 1.413; 0.8388",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vlad/a2.py"
+   ]
+  },
+  {
+   "id": "V16",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_85",
+   "claims": [],
+   "location": "operations.leftXRightO.hypothesis",
+   "statement": "the formula gives o on almost any square of rows four to six a small push up",
+   "check": "per-piece weights and probe of b5",
+   "evidence": "Direction right (18 of 21 upper squares negative), size wrong per piece: rows 4-6 per-piece |weight| averages 1.31 vs 1.32 on the bottom row; o vs x on b5 moves the unit 9.13 -> 3.19 (risk 92.4% -> 45.8%). With 2 o pieces on rows 4-6 the unit averages 3.10 vs 1.69 with none. \"Small\" reflects the z-scored coefficients, not the effect of a piece.",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-6eb46/record.json --set c_b1=1 --set c_c1=1 --set c_f1=-1 --set c_b2=-1 --set c_b3=1 --set c_b4=-1 --sweep c_b5=-1:1:3 --nodes 2",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vlad/a3.py"
+   ]
+  },
+  {
+   "id": "V17",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_85",
+   "claims": [],
+   "location": "operations.leftXRightO.evidence[1]",
+   "statement": "self-probe with x on c2, o on c3 and a1, b1 and f1 swept",
+   "check": "legality of the constructed board",
+   "evidence": "x on c2 sits over an empty c1 (and o on c3 over it): the board cannot occur in play, so the probe is outside the data support. The training-position subgroups (98.2% / 34.2%) carry the claim instead.",
+   "commands": []
+  },
+  {
+   "id": "V18",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_85",
+   "claims": [],
+   "location": "operations.leftXRightO.hypothesis",
+   "statement": "domain sense: partial (stated by the author)",
+   "check": "reading vs data",
+   "evidence": "left-centre bottom row x against o on e1-g1 carries 78% of the pre-activation variance; the author already grades it partial",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vlad/a3.py"
+   ]
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_86",
+   "claims": [],
+   "location": "layer.parts.ann_86.closed_form",
+   "statement": "relu(-0.913 a1 - 1.26 b1 - 1.15 c1 + 1.04 d2 + 1.1 d3 + ... + 2.44)",
+   "check": "stated vs recomputed",
+   "evidence": "identical",
+   "commands": []
+  },
+  {
+   "id": "V20",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_86",
+   "claims": [],
+   "location": "operations.xRaisedInCentre.hypothesis",
+   "statement": "largest output weight; probes 0.30 / 4.45 / 4.05 / 8.21, risk 24% -> 98%; 96.9% of 326; 46.0% of 359; 397 of 397; 13.4% of 449 with x wins 17.1%; on 43280 (72.7%) vs 10765 (38.1%); adds 2.40; AUC 0.769, largest loss",
+   "check": "own recomputation",
+   "evidence": "all reproduce: weight 0.698 is the largest; 0.30, 4.45, 4.05, 8.21; risk 23.8% -> 97.5%; 316/326; 165/359; 397/397; 60/449, 17.1%; 0.727 / 0.381; 2.395; 0.7686 (the others 0.839, 0.845, 0.869)",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vlad/a2.py"
+   ]
+  },
+  {
+   "id": "V21",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_86",
+   "claims": [],
+   "location": "operations.xRaisedInCentre.hypothesis",
+   "statement": "large with x on b2, c3, d2, d3, e2, e3, f2 and o on a1, b1, c1; x on those bottom squares lowers it",
+   "check": "per-piece weights; rows where it is off vs on; x pieces on the bottom row",
+   "evidence": "per-piece weights b2 1.57, c3 1.73, d2 1.88, d3 2.90, e2 2.08, e3 3.07, f2 1.40; a1 -1.15, b1 -1.54, c1 -1.35. On by default (blank-board pre-activation 2.75); in off rows x is more often on b1 (+0.47), a1, c1 (+0.33) and less often on b2 (-0.34), d2 (-0.26). Acts on 96.5% with one x on the bottom row, 35.0% with four.",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vlad/a1.py",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vlad/a3.py"
+   ]
+  },
+  {
+   "id": "V22",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_86",
+   "claims": [],
+   "location": "operations.xRaisedInCentre.hypothesis",
+   "statement": "domain sense: raised central x pieces vs x pieces spent on the bottom-left",
+   "check": "reading in board terms",
+   "evidence": "board-level reading; x wins only 16.3% when all four x pieces are on the bottom row, consistent with the reading",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vlad/a3.py"
+   ]
+  },
+  {
+   "id": "V23",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_87",
+   "claims": [],
+   "location": "layer.parts.ann_87.closed_form",
+   "statement": "relu(1.9 d1 + 1.62 d2 + 1.12 d3 + 1.13 c1 - ... + 0.742)",
+   "check": "stated vs recomputed",
+   "evidence": "identical",
+   "commands": []
+  },
+  {
+   "id": "V24",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_87",
+   "claims": [],
+   "location": "operations.xOwnsCentreColumn.hypothesis",
+   "statement": "probes 0.00 / 2.05 / 1.22 / 7.08; 254 of 254; 96.4% of 3752; 33.4% of 15289; on 32406 (72.2%) vs 21639 (56.2%); adds 1.42; AUC 0.845",
+   "check": "own recomputation",
+   "evidence": "all reproduce: 0.00, 2.05, 1.22, 7.08; 254/254; 3618/3752; 5102/15289; 0.722 / 0.562; 1.416; 0.8453",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vlad/a2.py"
+   ]
+  },
+  {
+   "id": "V25",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_87",
+   "claims": [],
+   "location": "operations.xOwnsCentreColumn.hypothesis",
+   "statement": "x owns the centre column: it fires when x holds d1, d2 and d3 (and c1)",
+   "check": "subgroup with x on none of d1, d2, d3",
+   "evidence": "The unit acts on 52.7% of the 32,795 positions where x holds none of d1-d3 (17,290 rows = 53% of all rows where it acts; mean contribution there +0.61 vs +1.21). In 89% of those rows d1 is empty: the unit is on by default (blank-board pre-activation 0.36) and fires when nobody has taken the centre column and x has c1. Less than half of its activity is \"x owns the centre column\".",
+   "commands": [
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-6eb46/record.json --where \"c_d1 != 1 and c_d2 != 1 and c_d3 != 1\"",
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vlad/a4.py"
+   ]
+  },
+  {
+   "id": "V26",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_87",
+   "claims": [],
+   "location": "operations.xOwnsCentreColumn.hypothesis",
+   "statement": "falls when x is on b2, c2, f2, g2 or o holds d1 and d2",
+   "check": "per-piece weights",
+   "evidence": "b2 -1.52, c2 -1.25, f2 -1.72, g2 -1.63 per piece; d1 2.51, d2 2.93 so o there lowers it; probe 0.00 with o on d1, d2",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vlad/a1.py"
+   ]
+  },
+  {
+   "id": "V27",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_87",
+   "claims": [],
+   "location": "operations.xOwnsCentreColumn.hypothesis",
+   "statement": "domain sense: owning the low centre column is the classic advantage",
+   "check": "domain knowledge",
+   "evidence": "consistent with Connect-4 play; the reading covers part of the unit (V above)",
+   "commands": []
+  },
+  {
+   "id": "V28",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_88",
+   "claims": [],
+   "location": "operations.winScore.hypothesis",
+   "statement": "output weights 0.445, 0.480, 0.698, 0.507; sigmoid; silent board low chance; probes 47% / >99%, 24% / 98%; AUC 0.884; off: 0.769, 0.839, 0.845, 0.869; rows 4-6 at mean 0.861",
+   "check": "genome weights and own forward pass",
+   "evidence": "weights 0.4446, 0.4802, 0.6978, 0.5073, output bias -2.759 (silent board 6.0%); 47.2% / 99.5%; 23.8% / 97.5%; AUCs reproduce; 0.8607",
+   "commands": [
+    "uv run python /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/vlad/a2.py"
+   ]
+  },
+  {
+   "id": "V29",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_88",
+   "claims": [],
+   "location": "operations.winScore.evidence[0]",
+   "statement": "closed form 1/(15.8 e^(-0.445 relu(...) - ...))",
+   "check": "exp(2.7589) = 15.78",
+   "evidence": "matches the output bias",
+   "commands": []
+  },
+  {
+   "id": "V30",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_88",
+   "claims": [],
+   "location": "operations.winScore.hypothesis",
+   "statement": "additive on the logit; no gating between units",
+   "check": "architecture",
+   "evidence": "one hidden layer of four ReLUs read straight into the sigmoid output: additive by construction",
+   "commands": []
+  },
+  {
+   "id": "V31",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_88",
+   "claims": [],
+   "location": "operations.winScore.hypothesis",
+   "statement": "the model scores x territory (centre column, raised central squares, left-centre bottom row)",
+   "check": "domain sense",
+   "evidence": "board-level summary; inherits the partial readings of leftXRightO and xOwnsCentreColumn",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_88": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_84": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_85": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_86": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_87": {
+   "grade": "weakened",
+   "level": "L3"
+  }
+ },
+ "leaf_meaning": {
+  "columnCOverBottomLeft": {
+   "grade": "meaningful",
+   "why": "x on c2/c3 and o on a1/b1 each push the unit up and together carry about 73% of its variance; the reading holds, though the two drivers add rather than require each other."
+  },
+  "leftXRightO": {
+   "grade": "partial",
+   "why": "the bottom-row left-against-right pattern carries most of the variance, but per piece o on the upper rows pushes it up as hard as the bottom-row squares, which the reading calls a small push and leaves unexplained."
+  },
+  "xRaisedInCentre": {
+   "grade": "meaningful",
+   "why": "a default-on unit switched off when x spends its pieces on the bottom row (a1, b1, c1) and kept high by x on the raised central squares, as stated; probes and subgroups confirm both sides."
+  },
+  "xOwnsCentreColumn": {
+   "grade": "partial",
+   "why": "it does fire when x holds d1-d3, but more than half of its active positions have no x in d1-d3, mostly with the centre column still empty."
+  }
+ },
+ "statements_checked": 124,
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ]
+}

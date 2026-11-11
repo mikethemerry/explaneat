@@ -1,0 +1,215 @@
+{
+  "label": "lad-be3c9",
+  "genome_id": "38f7d721-fe96-4b99-9c04-96148e06e71a",
+  "start": "2026-11-11T22:22:14+13:00",
+  "end": "2026-11-11T22:54:44+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 8,
+  "n_composition_annotations": 1,
+  "n_splits": 42,
+  "n_identity_nodes": 0,
+  "hidden_nodes": 8,
+  "hidden_nodes_single_leaf_no_split": 8,
+  "hidden_nodes_in_any_annotation": 8,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 0.0,
+  "closed_form_max_abs_err": 0.02537906498435305,
+  "summary": "The network adds eight ReLU units over the board, and they read as board-evaluation features about the lower centre: x pieces on the centre column d and on the second and third rows of columns c-e raise x's predicted win chance, and o pieces there lower it. The largest part, unit 1, rewards x pieces stacked on top of o in the centre (switching it off lowers the training AUC from 0.902 to 0.782); unit 4 (o on the bottom-row centre squares c1 and d1) and unit 8 (o on c2 or c3) lower the prediction, and unit 7 damps the reward for x on d3. On the data the mean predicted win chance is 84% where x has more pieces than o in column d and 43% where o has more.",
+  "summary_template": "The network adds eight ReLU units over the board, and they read as board-evaluation features about the lower centre: x pieces on the centre column d and on the second and third rows of columns c-e raise x's predicted win chance, and o pieces there lower it. The largest part, unit 1, rewards x pieces stacked on top of o in the centre (switching it off lowers the training AUC from {{q:q_6a1a034451.data.auc_with|.3f}} to {{q:q_6a1a034451.data.auc_without|.3f}}); unit 4 (o on the bottom-row centre squares c1 and d1) and unit 8 (o on c2 or c3) lower the prediction, and unit 7 damps the reward for x on d3. On the data the mean predicted win chance is {{q:q_1337b4cfd1.subgroup.mean_predicted_risk|pct}} where x has more pieces than o in column d and {{q:q_52d3af3786.subgroup.mean_predicted_risk|pct}} where o has more.",
+  "resisted": "Unit 7 has no reading beyond a brake on the reward for x on d3; its activity in the 24318 positions without x on d3 is unexplained. Unit 8's rise with x on e3 and f3 has no reading. Unit 2's strongest regime (x on b1, c1 and d1, 43 positions, o blocking both ends) predicts 77% on average where x wins 28%: the model's reading of that line does not match the game. Each unit has a weight on each square; the readings name the heaviest squares on the data and leave the rest to the closed forms.",
+  "resisted_template": "Unit 7 has no reading beyond a brake on the reward for x on d3; its activity in the {{q:q_c9c622ab35.subgroup.n|d}} positions without x on d3 is unexplained. Unit 8's rise with x on e3 and f3 has no reading. Unit 2's strongest regime (x on b1, c1 and d1, {{q:q_5287319e21.subgroup.n|d}} positions, o blocking both ends) predicts {{q:q_5287319e21.subgroup.mean_predicted_risk|pct}} on average where x wins {{q:q_5287319e21.subgroup.outcome_rate|pct}}: the model's reading of that line does not match the game. Each unit has a weight on each square; the readings name the heaviest squares on the data and leave the rest to the closed forms.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 41,
+    "complete_ok": true
+  },
+  "recheck_notes": "No mismatch and no needs_review item. An earlier run flagged the unit_activity query as computed before the last structural operation; it was recomputed after the structure was final (q_1a02e8dae0) and every reference moved to it. The unchecked free-text sentences are qualitative readings of which squares raise or lower each unit, backed by the attached closed forms and the self-probes rather than by a single number.",
+  "tool_bugs": "None blocking. xn.py --recheck --record fails with FileNotFoundError if the record file does not exist yet. A composition cannot group leaves without nodes of its own (the hidden units are covered by the leaves), so the hierarchy is eight leaves under one root. get_formula returns no provenance id, so formula evidence is a payload and its tolerance is quoted from check_explanation.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 140,
+    "provenance_backed": 140,
+    "allow_listed": 0,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 8,
+      "other": 1
+    },
+    "audit": {
+      "references": 140,
+      "checked": 140
+    },
+    "self_probe": {
+      "parts": [
+        "xCentreAboveOBottom",
+        "xBottomLeftRow",
+        "xCentreThirdRow",
+        "oBottomCentre",
+        "xOnC2",
+        "xLowColumnD",
+        "xHighColumnD",
+        "xRightOCentre",
+        "boardEvaluation"
+      ],
+      "refuted_and_fixed": [
+        "xBottomLeftRow: the bottom-row line reading implies x usually wins with x on b1, c1 and d1, but in those training positions o blocks both ends and x wins far less often than the model predicts; the hypothesis now says the regime is fitted and does not match the game",
+        "oBottomCentre: a draft implied o on c1 and d1 lowers the whole-model prediction; the probe shows it does not on the empty board because unit 1 rises more, and the hypothesis now says so with the part contributions"
+      ]
+    },
+    "restatements": 0
+  },
+  "leaves": [
+    {
+      "name": "xCentreAboveOBottom",
+      "units": [
+        "1"
+      ],
+      "meaning": "meaningful",
+      "why": "Rewards x pieces on the second and third rows of the centre sitting on top of o's bottom-row centre pieces; the d-column probe and the stacked-column subgroups confirm it."
+    },
+    {
+      "name": "xBottomLeftRow",
+      "units": [
+        "2"
+      ],
+      "meaning": "partial",
+      "why": "Detects x building a line along a1-d1 of the bottom row (the probe confirms it), but its strongest regime is fitted to a few dozen positions where o has blocked both ends and x wins far less often than predicted."
+    },
+    {
+      "name": "xCentreThirdRow",
+      "units": [
+        "3"
+      ],
+      "meaning": "meaningful",
+      "why": "Opens for x on the third-row centre squares d3 and c3; the probe and the d3 subgroups confirm it."
+    },
+    {
+      "name": "oBottomCentre",
+      "units": [
+        "4"
+      ],
+      "meaning": "meaningful",
+      "why": "Grows with o on the bottom-row centre squares c1 and d1 and lowers the win chance; the probe and the subgroup where o holds both confirm it."
+    },
+    {
+      "name": "xOnC2",
+      "units": [
+        "5"
+      ],
+      "meaning": "meaningful",
+      "why": "Opens mainly for x on c2 (helped by c3 and d3); the probe and the c2 subgroups confirm it."
+    },
+    {
+      "name": "xLowColumnD",
+      "units": [
+        "6"
+      ],
+      "meaning": "meaningful",
+      "why": "Rewards x owning the low squares of the centre column (d2, d1, d3); the d1-by-d2 probe and the d2 subgroups confirm it."
+    },
+    {
+      "name": "xHighColumnD",
+      "units": [
+        "7"
+      ],
+      "meaning": "partial",
+      "why": "Reads as a brake on the reward the other units give for x on d3 (the probe confirms it), but its activity in many positions without x on d3 has no reading."
+    },
+    {
+      "name": "xRightOCentre",
+      "units": [
+        "8"
+      ],
+      "meaning": "partial",
+      "why": "Grows with o on c2 or c3 (probe and subgroups confirm it), but its rise with x on e3 and f3 has no reading."
+    }
+  ],
+  "overall_function": "The network scores how well x controls the lower centre of the board: x pieces on the centre column and on the second and third rows of columns c to e raise the predicted win chance, and o pieces there lower it. The bottom row is treated differently: one unit rewards x pieces stacked on top of o's bottom-row centre pieces while another penalises o holding c1 and d1, so the two partly cancel, and a separate gate adds a bonus when x builds a line along the left of the bottom row. The units are added and passed through a sigmoid with no direct square-to-output edges, and one unit acts as a brake on the large combined reward for x on d3. Squares away from the lower centre carry smaller weights in the readings, but none is ignored outright.",
+  "stuck": "Coverage and operations were straightforward (42 input splits, eight single-unit leaves, one root). Leaf meaning was the hard part: each unit weighs every square, so readings name the heaviest squares on the data, and units 2, 7 and 8 keep behaviour without a domain reading. Constructed probes use an otherwise empty board, which is not a legal 8-ply position; data subgroups were added to check the readings on real positions.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 9,
+      "roots": [
+        "boardEvaluation"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 0.0,
+    "closed_form_max_abs_err": 0.02537906498435305,
+    "numeric_max_abs_err": 7.105427357601002e-15,
+    "op_counts": {
+      "rename_node": 42,
+      "split_node": 42,
+      "annotate": 9
+    },
+    "leaves": [
+      {
+        "id": "ann_84",
+        "name": "xCentreAboveOBottom",
+        "numeric_max_abs_err": 3.552713678800501e-15,
+        "closed_form_max_abs_err": 0.02304859676132942
+      },
+      {
+        "id": "ann_85",
+        "name": "xBottomLeftRow",
+        "numeric_max_abs_err": 3.552713678800501e-15,
+        "closed_form_max_abs_err": 0.02392566828616527
+      },
+      {
+        "id": "ann_86",
+        "name": "xCentreThirdRow",
+        "numeric_max_abs_err": 5.329070518200751e-15,
+        "closed_form_max_abs_err": 0.023574671576831463
+      },
+      {
+        "id": "ann_87",
+        "name": "oBottomCentre",
+        "numeric_max_abs_err": 3.552713678800501e-15,
+        "closed_form_max_abs_err": 0.020625102759067815
+      },
+      {
+        "id": "ann_88",
+        "name": "xOnC2",
+        "numeric_max_abs_err": 5.329070518200751e-15,
+        "closed_form_max_abs_err": 0.01195493177516127
+      },
+      {
+        "id": "ann_89",
+        "name": "xLowColumnD",
+        "numeric_max_abs_err": 5.329070518200751e-15,
+        "closed_form_max_abs_err": 0.015815536693958854
+      },
+      {
+        "id": "ann_90",
+        "name": "xHighColumnD",
+        "numeric_max_abs_err": 5.329070518200751e-15,
+        "closed_form_max_abs_err": 0.02537906498435305
+      },
+      {
+        "id": "ann_91",
+        "name": "xRightOCentre",
+        "numeric_max_abs_err": 7.105427357601002e-15,
+        "closed_form_max_abs_err": 0.0159756728185243
+      }
+    ],
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "tool_call_window": {
+      "n_calls": 224,
+      "first": 1794388966.078495,
+      "last": 1794390752.88661,
+      "minutes": 29.780135250091554
+    }
+  }
+}

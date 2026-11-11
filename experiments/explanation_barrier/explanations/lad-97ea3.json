@@ -1,0 +1,190 @@
+{
+  "label": "lad-97ea3",
+  "genome_id": "7ca33eef-f0a1-46d7-88ee-afdd6ab8108a",
+  "protocol_version": "v4",
+  "start": "2026-11-12T00:37:26+13:00",
+  "end": "2026-11-12T01:01:17+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 5,
+  "n_composition_annotations": 1,
+  "n_splits": 42,
+  "n_identity_nodes": 0,
+  "hidden_nodes": 24,
+  "hidden_nodes_single_leaf_no_split": 24,
+  "hidden_nodes_in_any_annotation": 24,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 0.0,
+  "closed_form_max_abs_err": 0.04038161492396597,
+  "summary": "The network is a single layer of 24 ReLU units over the board squares, added at a sigmoid output; it is grouped into five additive parts by the board rows that drive each unit. Its main reading is control of the centre column: over the 2710 training positions where x has at least two more pieces than o in column d the mean predicted chance of an x win is 98%, against 27% over the 2708 where o has at least two more. The largest part by ablation (bottom-row centre A) penalises o on the bottom centre square d1: switching it off lowers the training AUC from 0.938 to 0.823. Two parts (low_board_mixed, upper_rows_mixed) are partly readable: besides a centre-column term they carry corrections that run against the other parts.",
+  "summary_template": "The network is a single layer of 24 ReLU units over the board squares, added at a sigmoid output; it is grouped into five additive parts by the board rows that drive each unit. Its main reading is control of the centre column: over the {{q:q_6596ee45c6.subgroup.n|d}} training positions where x has at least two more pieces than o in column d the mean predicted chance of an x win is {{q:q_6596ee45c6.subgroup.mean_predicted_risk|pct}}, against {{q:q_f15d9e2b16.subgroup.mean_predicted_risk|pct}} over the {{q:q_f15d9e2b16.subgroup.n|d}} where o has at least two more. The largest part by ablation (bottom-row centre A) penalises o on the bottom centre square d1: switching it off lowers the training AUC from {{q:q_78ed765783.data.auc_with|.3f}} to {{q:q_78ed765783.data.auc_without|.3f}}. Two parts (low_board_mixed, upper_rows_mixed) are partly readable: besides a centre-column term they carry corrections that run against the other parts.",
+  "resisted": "No part resisted annotation, but the per-unit features are distributed: each part is read through single-square contrasts (x against o on one square), not as a detector of lines of four or threats. The low-board and upper-rows parts carry correction terms (o on c1 raising the score; x on b3 lowering it) that have no clear Connect-4 meaning on their own. Replacing the five parts together by affine fits lowers the training AUC from 0.938 to 0.855; that nonlinear share is described by the closed forms but not explained in game terms. Pieces in rows 5 and 6 occur in 8616 training positions; the large raw weights on those squares were not read.",
+  "resisted_template": "No part resisted annotation, but the per-unit features are distributed: each part is read through single-square contrasts (x against o on one square), not as a detector of lines of four or threats. The low-board and upper-rows parts carry correction terms (o on c1 raising the score; x on b3 lowering it) that have no clear Connect-4 meaning on their own. Replacing the five parts together by affine fits lowers the training AUC from {{q:q_61b08ac252.auc_full|.3f}} to {{q:q_61b08ac252.auc_all_affine|.3f}}; that nonlinear share is described by the closed forms but not explained in game terms. Pieces in rows 5 and 6 occur in {{q:q_15ddebbbdb.subgroup.n|d}} training positions; the large raw weights on those squares were not read.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 21,
+    "complete_ok": true
+  },
+  "recheck_notes": "No mismatches and no needs_review items. The unchecked free-text sentences are qualitative (part roles, game-terms readings); every number in them is a stored query reference.",
+  "tool_bugs": "query_probe hold takes \"row:N\", not a bare row index (the first call with a bare index errored; rerun with row:N). get_formula returns no provenance id, so the closed forms were attached as analytical_formula payloads.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 103,
+    "provenance_backed": 103,
+    "allow_listed": 30,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 5,
+      "other": 0
+    },
+    "audit": {
+      "references": 103,
+      "checked": 103
+    },
+    "self_probe": {
+      "parts": [
+        "bottom_row_centre_A",
+        "bottom_row_centre_B",
+        "low_board_mixed",
+        "second_row_centre",
+        "upper_rows_mixed",
+        "root_win_score"
+      ],
+      "refuted_and_fixed": [
+        "low_board_mixed: first self-probe position (row 58) had a saturated prediction; replaced by row 152 via amend_evidence (direction held in both)"
+      ]
+    },
+    "restatements": 0
+  },
+  "leaves": [
+    {
+      "name": "bottom_row_centre_A",
+      "units": [
+        1,
+        2,
+        9,
+        12,
+        19
+      ],
+      "meaning": "meaningful",
+      "why": "Penalises o holding the bottom centre square d1 (and credits x there); the d1/a1 colour swap self-probe moves the part and the prediction as stated."
+    },
+    {
+      "name": "bottom_row_centre_B",
+      "units": [
+        5,
+        10,
+        11,
+        16,
+        17,
+        18
+      ],
+      "meaning": "meaningful",
+      "why": "Rewards x on the bottom centre (d1) over x near the left edge (b1); the d1/b1 swap self-probe confirms it."
+    },
+    {
+      "name": "low_board_mixed",
+      "units": [
+        4,
+        8,
+        13,
+        15,
+        24
+      ],
+      "meaning": "partial",
+      "why": "Rewards x on d2 (confirmed by the swap probe) but also rewards o on c1, a correction against the bottom-row parts with no clear game meaning."
+    },
+    {
+      "name": "second_row_centre",
+      "units": [
+        7,
+        20,
+        21,
+        22,
+        23
+      ],
+      "meaning": "meaningful",
+      "why": "Rewards x pieces stacked just above the bottom row in columns b to d (b3, c2, d3); the b3/f3 swap self-probe confirms it."
+    },
+    {
+      "name": "upper_rows_mixed",
+      "units": [
+        3,
+        6,
+        14
+      ],
+      "meaning": "partial",
+      "why": "Rewards x on d3 in the centre column but penalises x on b3, offsetting the left-centre stack part; the swap probe confirms both directions but the b3 term has no separate game reading."
+    }
+  ],
+  "overall_function": "The network scores a position by who controls the centre of the board, above all the centre column d: x pieces in column d, especially on the bottom centre square d1 and on d2 and d3, raise the predicted chance of an x win, and o pieces there lower it, with o on d1 the strongest single penalty. Bottom-row pieces in the centre (c1, d1) count for x and pieces near the left edge (a1, b1) count against x, and x pieces built up in columns b to d just above the bottom row add further credit. The five parts are added at the output, so there is no explicit gate between them, but each part is a sum of ReLU thresholds, so a square matters more or less depending on the rest of the board; part of the accuracy comes from these thresholds and is described only by the closed forms. No square is ignored, but the top rows are rarely occupied in these positions and their large weights were not read; the network does not show an explicit detector of lines of four or threats.",
+  "stuck": "Leaf meaning: the 24 units are distributed features, so leaves were grouped by the board rows that drive them and read through single-square x-versus-o contrasts; two leaves keep correction terms without a game reading, and line-of-four or threat detection could not be shown. Operations: a dense layer needed 42 input splits and 210 consolidations to give each leaf its own input copies. No time pressure.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 6,
+      "roots": [
+        "root_win_score"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 0.0,
+    "closed_form_max_abs_err": 0.04038161492396597,
+    "numeric_max_abs_err": 1.4210854715202004e-14,
+    "op_counts": {
+      "rename_node": 42,
+      "split_node": 42,
+      "consolidate_node": 210,
+      "annotate": 6
+    },
+    "leaves": [
+      {
+        "id": "ann_294",
+        "name": "bottom_row_centre_A",
+        "numeric_max_abs_err": 1.4210854715202004e-14,
+        "closed_form_max_abs_err": 0.04038161492396597
+      },
+      {
+        "id": "ann_295",
+        "name": "bottom_row_centre_B",
+        "numeric_max_abs_err": 5.329070518200751e-15,
+        "closed_form_max_abs_err": 0.02719766893859621
+      },
+      {
+        "id": "ann_296",
+        "name": "low_board_mixed",
+        "numeric_max_abs_err": 7.105427357601002e-15,
+        "closed_form_max_abs_err": 0.030790390011975033
+      },
+      {
+        "id": "ann_297",
+        "name": "second_row_centre",
+        "numeric_max_abs_err": 1.0658141036401503e-14,
+        "closed_form_max_abs_err": 0.025909974653476553
+      },
+      {
+        "id": "ann_298",
+        "name": "upper_rows_mixed",
+        "numeric_max_abs_err": 8.881784197001252e-15,
+        "closed_form_max_abs_err": 0.030846573835072277
+      }
+    ],
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "tool_call_window": {
+      "n_calls": 415,
+      "first": 1794397087.913218,
+      "last": 1794398394.203789,
+      "minutes": 21.771509516239167
+    }
+  }
+}

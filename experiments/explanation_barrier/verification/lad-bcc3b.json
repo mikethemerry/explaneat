@@ -1,0 +1,345 @@
+{
+ "item_id": "lad-bcc3b",
+ "genome_id": "d113358a-ee7d-476c-bf23-829d89e91310",
+ "target_hash": null,
+ "target_hash_note": "this recheck version writes no target_hash (recheck.json has none)",
+ "verifier": "independent verifier agent (explanation-verifier skill)",
+ "started_at": "2026-11-12T00:44:25+13:00",
+ "finished_at": "2026-11-12T00:56:30+13:00",
+ "minutes": 12,
+ "overall": {
+  "grade": "weakened",
+  "summary": "Every stated number, the coverage and the structure reproduce; nothing is refuted. Four readings are weaker than stated: the sideUnits line detector and the root's 'underrates o's threats' rest only on boards outside the data, oCentreBottom is graded meaningful though d1 explains a quarter of it, and the upperRowUnits reading was withdrawn on a probe that changes rows 1 and 2 together."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "structural and compositional coverage 1.0, full coverage, hierarchy complete",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.0 / 1.0, no uncovered nodes or edges, single root connect4Root containing the output, all 5 leaves under it",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-bcc3b/record.json --out verify/recheck.json"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "function preservation max |err| 0.0; closed-form max |err| 0.046",
+   "check": "verify recheck",
+   "evidence": "recomputed 0 and 0.04606; per leaf 0.0216 / 0.0268 / 0.0150 / 0.0324 / 0.0461, matching the 0.022 / 0.027 / 0.015 / 0.032 / 0.046 stated in the hypotheses",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-bcc3b/record.json"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.n_splits",
+   "statement": "42 splits, 0 identity nodes, 5 leaves, 1 composition, 16 hidden units each in one leaf",
+   "check": "stored operations (read only)",
+   "evidence": "42 split_node + 42 rename_node + 6 annotate; leaf units {1,6,8},{9,12,16},{4},{10,11,13},{2,3,5,7,14,15} partition units 1-16; entries 126/126/42/126/252 = 42 copies per unit",
+   "commands": [
+    "load_db_operations (read only), scratch/dump_ops.py"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_89",
+   "claims": [],
+   "location": "record.summary",
+   "statement": "AUC 0.926 -> 0.825 without the largest part; -3.50 (o on d1) and -1.20 (x on d1); 6.21 on the open-three board; three units resisted",
+   "check": "verify recheck (provenance) + re-implementation",
+   "evidence": "0.9260 -> 0.8250; -3.497 / -1.202; 6.207; upperRowUnits = units 10, 11, 13",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-bcc3b/record.json",
+    "scratch/an1.py, an2.py, an3.py (numpy re-implementation of the 42-16-1 network from the phenotype; it reproduces every provenance-backed number in the record to the stated digits)"
+   ]
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_84",
+   "claims": [],
+   "location": "operations.xCentreBottom.hypothesis",
+   "statement": "15583 / 15289 positions, +0.11 / -0.02; 5128 / 4032 positions, +1.31 / -1.35; outcome 87.3% / 66.8%; self-probe 0.42 / -1.12 / -2.66 and 97% / 81% / 49%; AUC 0.926 -> 0.893",
+   "check": "subgroups and probes recomputed",
+   "evidence": "all reproduce: 0.112 / -0.015, 1.306 / -1.347, 0.873 / 0.668, 0.420 / -1.121 / -2.661, 0.973 / 0.809 / 0.487, AUC 0.8931",
+   "commands": [
+    "scratch/an1.py, an2.py, an3.py (numpy re-implementation of the 42-16-1 network from the phenotype; it reproduces every provenance-backed number in the record to the stated digits)"
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_84",
+   "claims": [],
+   "location": "operations.xCentreBottom.hypothesis",
+   "statement": "the units switch on mainly when x holds d1; with x on d1, x on a1 counts against x and o on a1 for x",
+   "check": "unit activity by d1 state; a1 effect within each d1 state (training rows)",
+   "evidence": "part non-zero on 92% of x-on-d1 rows, 54% d1 empty, 17% o-on-d1. a1 o vs x: +1.31 vs -1.35 with x on d1, +0.32 vs -0.51 with d1 empty, +0.07 vs -0.14 with o on d1, so the a1 reweighting is indeed concentrated on x-on-d1 positions. Not covered (acknowledged): with x on d1, f1 moves it almost as much the other way (o on f1 -0.82, x on f1 +1.32).",
+   "commands": [
+    "scratch/an1.py, an2.py, an3.py (numpy re-implementation of the 42-16-1 network from the phenotype; it reproduces every provenance-backed number in the record to the stated digits)"
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_85",
+   "claims": [],
+   "location": "operations.oCentreBottom.hypothesis",
+   "statement": "-3.50 / -2.34 / -1.20 over 15289 / 23173 / 15583 positions; 53.5% / 66.9% / 76.2%; self-probe -3.50 / -2.47 / 0.00; unit 16 positive output weight; AUC 0.846",
+   "check": "subgroups, probes and weights recomputed",
+   "evidence": "-3.497 / -2.342 / -1.202; 0.535 / 0.669 / 0.762; -3.496 / -2.472 / 0.000; output weights 9: -0.574, 12: -0.706, 16: +0.629; AUC 0.8459",
+   "commands": [
+    "scratch/an1.py, an2.py, an3.py (numpy re-implementation of the 42-16-1 network from the phenotype; it reproduces every provenance-backed number in the record to the stated digits)"
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_85",
+   "claims": [],
+   "location": "record.leaves",
+   "statement": "oCentreBottom reading graded 'meaningful': the part charges x for o holding d1",
+   "check": "share of the part's training variance explained by the d1 state; per-square correlations; one-piece probes",
+   "evidence": "the d1 state explains only 24% of the part's variance (between-group share 0.239); b1 (r = -0.37), e4 (0.32), e3 (-0.28) and f3 (-0.27) move it almost as much as d1 (0.49). On the empty-board probe x alone on e1 gives -2.96, nearly the -3.50 of o on d1. The d1 direction is right, but it is one strand of the part, so 'partial' fits better than 'meaningful'.",
+   "commands": [
+    "scratch/an1.py, an2.py, an3.py (numpy re-implementation of the 42-16-1 network from the phenotype; it reproduces every provenance-backed number in the record to the stated digits)"
+   ]
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_86",
+   "claims": [],
+   "location": "operations.bottomRowVsUpper.hypothesis",
+   "statement": "positive output weight, large positive bias; bottom-row weights negative, centre rows 2-3 mostly positive; 0.85 / 5.09 over 6027 / 4798; 47.3% / 86.8%; self-probe 7.04 / 0.00 and 99% / 60%; AUC 0.825",
+   "check": "closed form and re-implementation",
+   "evidence": "wo 0.898, bias 2.88; all seven row-1 weights negative (-0.27 to -0.96), c2-e2 and c3-e3 all positive (0.58 to 1.21); 0.849 / 5.087; 0.473 / 0.868; 7.041 / 0.000; 0.986 / 0.602; AUC 0.8250",
+   "commands": [
+    "scratch/an1.py, an2.py, an3.py (numpy re-implementation of the 42-16-1 network from the phenotype; it reproduces every provenance-backed number in the record to the stated digits)"
+   ]
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_86",
+   "claims": [],
+   "location": "operations.bottomRowVsUpper.hypothesis",
+   "statement": "credits x when o holds the bottom row and x's pieces sit higher; little when x's pieces are along the bottom row",
+   "check": "probes with and without x stacked above; training strata of bottom-row vs rows-2-3 balance; additive fit",
+   "evidence": "o on c1 d1 alone 4.64, adding x on c2 d2 7.04, x instead on a1 b1 3.61. In training rows with bottom-row balance 0, the part is 4.46 when x leads rows 2-3 by 2 (n=2262) and 1.68 when o leads (n=1846), so both halves of the reading hold separately. An additive per-square fit explains 95% of its variance, so the reading covers most of what it does.",
+   "commands": [
+    "scratch/an1.py, an2.py, an3.py (numpy re-implementation of the 42-16-1 network from the phenotype; it reproduces every provenance-backed number in the record to the stated digits)"
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_87",
+   "claims": [],
+   "location": "operations.upperRowUnits.hypothesis",
+   "statement": "negative output weights; -2.43 / -1.56 over 7516 / 7503; self-probe -1.35 / -1.35; bottomRowVsUpper 3.64 / 1.80; AUC 0.877; lowers the score in most positions",
+   "check": "re-implementation",
+   "evidence": "wo -0.348 / -0.428 / -0.641; -2.429 / -1.563; -1.351 / -1.347; 3.639 / 1.803; AUC 0.8772; contribution non-zero (always negative) on 92% of rows",
+   "commands": [
+    "scratch/an1.py, an2.py, an3.py (numpy re-implementation of the 42-16-1 network from the phenotype; it reproduces every provenance-backed number in the record to the stated digits)"
+   ]
+  },
+  {
+   "id": "V12",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_87",
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "the second-row reading failed its self-probe, so no domain reading survived",
+   "check": "row-2 balance within fixed row-1 balance (training rows)",
+   "evidence": "the self-probe boards flip rows 1 and 2 together (o c1 d1 / x c2 d2 against the reverse), so they do not isolate the second row. Holding row-1 balance at 0, the part is -2.81 when x leads row 2 by 2 (n=1717), -1.71 when row 2 is level (n=7562) and -1.53 when o leads (n=1506); with row-1 balance -2 it is -2.19 (x leads row 2) vs -1.33 (level). The second-row trend holds within strata, so the withdrawal rests on a confounded probe. Its largest swings come from rare column-a upper pieces (o on a6: -10.82, n=275; x on a5: -7.24, n=896).",
+   "commands": [
+    "scratch/an1.py, an2.py, an3.py (numpy re-implementation of the 42-16-1 network from the phenotype; it reproduces every provenance-backed number in the record to the stated digits)",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-bcc3b/record.json --where \"(c_a1 + ... + c_g1 == 0) & (c_a2 + ... + c_g2 == 2)\""
+   ]
+  },
+  {
+   "id": "V13",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_88",
+   "claims": [],
+   "location": "operations.sideUnits.hypothesis",
+   "statement": "positive output weights; open three 6.21 and above 99%; colour-swapped 1.42 and 95%; AUC 0.838",
+   "check": "re-implementation",
+   "evidence": "weights 0.43 to 0.85, all positive; 6.207 / 0.9964; 1.418 / 0.9516; AUC 0.8382",
+   "commands": [
+    "scratch/an1.py, an2.py, an3.py (numpy re-implementation of the 42-16-1 network from the phenotype; it reproduces every provenance-backed number in the record to the stated digits)"
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_88",
+   "claims": [],
+   "location": "operations.sideUnits.hypothesis",
+   "statement": "together they act as a detector of x lines on the bottom row",
+   "check": "data support of the probe board; bottom-row x threes and adjacent pairs in the training rows; other line shapes probed",
+   "evidence": "every training position has exactly 4 x and 4 o pieces and none has an open three on the bottom row (n=0 for x and for o), so the only evidence is a 6-piece board outside the data. On real positions the part does not track x lines: the 776 positions with three x in a row on the bottom row (all blocked) give 2.51 vs 2.38 for the rest; two adjacent x pairs 2.31 vs 2.19 for none. It mostly reads single squares (x on e1 +1.41, x on g1 -1.03, x on a1 -0.75). Off-support it does respond to bottom-row x threes (b1-d1 open three 7.24; spread a1 d1 g1 0.10).",
+   "commands": [
+    "scratch/an1.py, an2.py, an3.py (numpy re-implementation of the 42-16-1 network from the phenotype; it reproduces every provenance-backed number in the record to the stated digits)",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-bcc3b/record.json --where \"((c_a1 == 1) & (c_b1 == 1) & (c_c1 == 1)) | ...\""
+   ]
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_89",
+   "claims": [],
+   "location": "operations.connect4Root.hypothesis",
+   "statement": "parts additive, not connected to one another; ablation order 0.825 < 0.838 < 0.846 < 0.877 < 0.893 from 0.926; 54% / 81% on the empty board; mean 54% / 76% over 15289 / 15583; o open three: 95%, bottomRowVsUpper 6.01, oCentreBottom -4.01",
+   "check": "structure + re-implementation",
+   "evidence": "only input->hidden and hidden->output edges; all AUCs reproduce; 0.541 / 0.809; 0.540 / 0.764; 0.952, 6.009, -4.013",
+   "commands": [
+    "scratch/an1.py, an2.py, an3.py (numpy re-implementation of the 42-16-1 network from the phenotype; it reproduces every provenance-backed number in the record to the stated digits)"
+   ]
+  },
+  {
+   "id": "V16",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_89",
+   "claims": [],
+   "location": "record.overall_function",
+   "statement": "o's equivalent threat is weighed against placement, so the model can underrate o's threats (root: 'a limit of the model')",
+   "check": "data support; o bottom-row threes in the training rows",
+   "evidence": "the o-open-three board has 6 pieces and the data hold no open three on the bottom row at all (n=0), so this is an extrapolation, not a behaviour seen in training positions. On the 755 real positions with three o in a row on the bottom row, the model predicts 90.4% x wins against an observed 97.5%: it does not overrate o there. The root hypothesis does say 'on a constructed board'; the record's general wording overstates it.",
+   "commands": [
+    "scratch/an1.py, an2.py, an3.py (numpy re-implementation of the 42-16-1 network from the phenotype; it reproduces every provenance-backed number in the record to the stated digits)"
+   ]
+  },
+  {
+   "id": "V17",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_89",
+   "claims": [],
+   "location": "record.overall_function",
+   "statement": "a further group rewards x line patterns such as an open three on the bottom row (root: 'sideUnits (x line patterns)')",
+   "check": "probe other x line shapes",
+   "evidence": "x threes elsewhere barely move sideUnits: vertical d1-d3 1.52, vertical a1-a3 0.00, row-2 c2-e2 0.13, diagonal a1-b2-c3 0.00, against 6.21 for the bottom-row open three. 'x line patterns' in general is wider than what the part does (and see V14 for real positions).",
+   "commands": [
+    "scratch/an1.py, an2.py, an3.py (numpy re-implementation of the 42-16-1 network from the phenotype; it reproduces every provenance-backed number in the record to the stated digits)"
+   ]
+  },
+  {
+   "id": "V18",
+   "grade": "upheld",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.overall_function",
+   "statement": "strongest signal is vertical placement; with x on d1 it reads a1; every square feeds every unit; rarely occupied upper squares carry large poorly supported weights; no square ignored outright",
+   "check": "ablations; weight matrix by row; occupancy",
+   "evidence": "bottomRowVsUpper is the largest ablation (AUC 0.825). Mean |weight| per raw unit rises from 0.98 (row 1, occupied 58%) to 2.80 (row 6, occupied 0.5%); all 672 input weights present. The d1/a1 statement matches V6.",
+   "commands": [
+    "scratch/an1.py, an2.py, an3.py (numpy re-implementation of the 42-16-1 network from the phenotype; it reproduces every provenance-backed number in the record to the stated digits)"
+   ]
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L2",
+   "part": null,
+   "claims": [],
+   "location": "operations.*.evidence",
+   "statement": "evidence records on the training split; self-probes on near-empty boards",
+   "check": "payload split and n; data support",
+   "evidence": "all subgroup and ablation records are train split, n=54045, unsampled. The self-probes use 1-6 piece boards, outside the 8-piece support; for xCentreBottom, oCentreBottom and bottomRowVsUpper the in-data subgroups back the same direction, so the probes are illustrations, not the only evidence.",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-bcc3b/record.json"
+   ]
+  }
+ ],
+ "parts": {
+  "ann_84": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_85": {
+   "grade": "weakened",
+   "level": "L4"
+  },
+  "ann_86": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_87": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_88": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_89": {
+   "grade": "weakened",
+   "level": "L3"
+  }
+ },
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ],
+ "leaf_meaning": {
+  "xCentreBottom": {
+   "grade": "partial",
+   "why": "With x on d1, o on a1 raises it and x on a1 lowers it in the training rows (+1.31 vs -1.35, much weaker when d1 is not x), but f1 moves it nearly as much the other way and is not read."
+  },
+  "oCentreBottom": {
+   "grade": "partial",
+   "why": "o on d1 gives the largest penalty and x on d1 the smallest, but the d1 state explains only 24% of the part's variance; b1 and the e/f middle squares move it about as much."
+  },
+  "bottomRowVsUpper": {
+   "grade": "meaningful",
+   "why": "o pieces on the bottom row and x pieces on rows 2-3 each raise it separately in the training rows (4.46 vs 1.68 at equal bottom-row balance), and that additive reading explains 95% of its variance."
+  },
+  "upperRowUnits": {
+   "grade": "partial",
+   "why": "It does penalise x leading on the second row once the bottom row is held fixed (-2.81 vs -1.53), but its largest swings come from rare column-a upper pieces, which no reading covers."
+  },
+  "sideUnits": {
+   "grade": "closed-form-only",
+   "why": "The bottom-row line reading appears only on constructed 6-piece boards outside the data; on real positions three x in a row on the bottom row hardly changes it (2.51 vs 2.38)."
+  }
+ },
+ "statements_checked": 110,
+ "counts": {
+  "refuted": 0,
+  "weakened": 5,
+  "upheld": 14
+ }
+}

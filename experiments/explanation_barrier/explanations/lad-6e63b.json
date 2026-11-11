@@ -1,0 +1,157 @@
+{
+  "label": "lad-6e63b",
+  "genome_id": "8fc79414-567f-423f-b665-5ef791945ebc",
+  "start": "2026-11-11T23:09:13+13:00",
+  "end": "2026-11-11T23:40:00+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 3,
+  "n_composition_annotations": 1,
+  "n_splits": 18,
+  "n_identity_nodes": 0,
+  "hidden_nodes": 16,
+  "hidden_nodes_single_leaf_no_split": 8,
+  "hidden_nodes_in_any_annotation": 16,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 0.0,
+  "closed_form_max_abs_err": 0.0650184430671823,
+  "summary": "The model adds three parts on the logit scale and contains no direct input to output edges (0 direct edges). Its main part is an age by income crossover: a higher income lowers the predicted risk of younger people and raises it for older people (typical case: 99% at age 25 with income 15 against below 1% with income 100; 37% against above 99% at age 75), and switching it off lowers the training AUC from 0.883 to 0.725. A second, gated unit raises the risk for smokers once bmi is high (typical smoker: 17% at bmi 26, 94% at bmi 32; for a non-smoker bmi barely matters) and also for younger people on low income; a third unit is an income brake, strongest for young smokers. Visits, score, female, urban, insured and noise have small effects (holding all six at their means moves the training AUC from 0.8831 to 0.8812).",
+  "summary_template": "The model adds three parts on the logit scale and contains no direct input to output edges ({{q:q_ee2892f966.switched_off[0].direct_edges_of_root|d}} direct edges). Its main part is an age by income crossover: a higher income lowers the predicted risk of younger people and raises it for older people (typical case: {{q:q_fbb31526ca.rows[0].risk|pct}} at age {{q:q_fbb31526ca.rows[0].inputs.age}} with income {{q:q_fbb31526ca.rows[0].inputs.income}} against {{q:q_fbb31526ca.rows[5].risk|pct}} with income {{q:q_fbb31526ca.rows[5].inputs.income}}; {{q:q_fbb31526ca.rows[30].risk|pct}} against {{q:q_fbb31526ca.rows[35].risk|pct}} at age {{q:q_fbb31526ca.rows[30].inputs.age}}), and switching it off lowers the training AUC from {{q:q_5d790f2ca4.data.auc_with|.3f}} to {{q:q_5d790f2ca4.data.auc_without|.3f}}. A second, gated unit raises the risk for smokers once bmi is high (typical smoker: {{q:q_76f763a94e.rows[10].risk|pct}} at bmi {{q:q_76f763a94e.rows[10].inputs.bmi}}, {{q:q_76f763a94e.rows[13].risk|pct}} at bmi {{q:q_76f763a94e.rows[13].inputs.bmi}}; for a non-smoker bmi barely matters) and also for younger people on low income; a third unit is an income brake, strongest for young smokers. Visits, score, female, urban, insured and noise have small effects (holding all six at their means moves the training AUC from {{q:q_a7ac5b434f.data.auc_with|.4f}} to {{q:q_a7ac5b434f.data.auc_without|.4f}}).",
+  "resisted": "The network is a dense two-layer ReLU net, so the parts are groups of second-layer units that each read the inputs through their own copies of the eight first-layer units; the first-layer units have no separate reading. The crossover part is not a pure age by income term: it also carries part of the smoker by bmi effect (for the typical smoker its contribution goes from -1.62 at bmi 18 to 2.70 at bmi 40). The smoker and bmi gate does two unrelated jobs (high-bmi smokers and young people on low income). The brake acts on 5435 of the 7242 smokers, and why it is so broad for smokers is described, not explained. The small effects of the six minor inputs are described by probes, not explained. For the 242 older people on low income in the crossover part's subgroup evidence, the model's mean predicted risk (40%) is above their outcome rate (26%).",
+  "resisted_template": "The network is a dense two-layer ReLU net, so the parts are groups of second-layer units that each read the inputs through their own copies of the eight first-layer units; the first-layer units have no separate reading. The crossover part is not a pure age by income term: it also carries part of the smoker by bmi effect (for the typical smoker its contribution goes from {{q:q_76f763a94e.rows[8].parts.ann_66.contribution|.2f}} at bmi {{q:q_76f763a94e.rows[8].inputs.bmi}} to {{q:q_76f763a94e.rows[15].parts.ann_66.contribution|.2f}} at bmi {{q:q_76f763a94e.rows[15].inputs.bmi}}). The smoker and bmi gate does two unrelated jobs (high-bmi smokers and young people on low income). The brake acts on {{q:q_2e74d8a82a.subgroup.n|d}} of the {{q:q_657f292cde.subgroup.n|d}} smokers, and why it is so broad for smokers is described, not explained. The small effects of the six minor inputs are described by probes, not explained. For the {{q:q_1f5bc95baa.subgroup.n|d}} older people on low income in the crossover part's subgroup evidence, the model's mean predicted risk ({{q:q_1f5bc95baa.subgroup.mean_predicted_risk|pct}}) is above their outcome rate ({{q:q_1f5bc95baa.subgroup.outcome_rate|pct}}).",
+  "recheck_summary": {
+    "ran_at": "2026-11-11T10:35:59+00:00",
+    "recheck_version": 3,
+    "mismatch": 0,
+    "needs_review": 0,
+    "warn": 0,
+    "mismatches": [],
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 26,
+    "provenance": {
+      "templated_texts": 40,
+      "queries": 30
+    },
+    "complete_ok": true,
+    "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+  },
+  "recheck_notes": "Recheck: 0 mismatches and 0 needs_review. An earlier lint needs_review (the stated share of high-bmi smokers with the gate open was compared with the gate's overall active share) was fixed before the recheck by giving the count from the same subgroup query instead of a share. The 26 unchecked free-text sentences carry no numbers (readings, structure, caveats). Number audit: 179 placeholder references over 31 stored queries were re-read with get_query; every path exists, and the population and quantity of each match its sentence.",
+  "tool_bugs": "Piping a --calls batch into head closed the pipe and silently stopped the batch after the seventh of eight split_node calls; node 8 was split afterwards (batch output now goes to a file). get_formula returns no provenance id, so formula evidence was attached as a payload holding its LaTeX.",
+  "numbers": {
+    "in_text": 199,
+    "referenced": 179,
+    "allow_listed": 20
+  },
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 199,
+    "provenance_backed": 179,
+    "allow_listed": 20,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 3,
+      "other": 1
+    },
+    "audit": {
+      "references": 179,
+      "checked": 179
+    },
+    "self_probe": {
+      "parts": [
+        "age_income_units",
+        "unit11_smoker_bmi_lowincome",
+        "unit16_highincome_brake",
+        "risk_score_root"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0
+  },
+  "leaves": [
+    {
+      "name": "age_income_units",
+      "units": [
+        "9",
+        "10",
+        "12",
+        "13",
+        "14",
+        "15"
+      ],
+      "meaning": "partial",
+      "why": "The age by income crossover reading is confirmed by its self-probe, but the same units also carry part of the smoker by bmi effect, and unit 14 is dead."
+    },
+    {
+      "name": "unit11_smoker_bmi_lowincome",
+      "units": [
+        "11"
+      ],
+      "meaning": "meaningful",
+      "why": "A gate that opens for smokers once bmi is high and for younger people on low income, and then raises the risk; both regimes are confirmed by self-probes and subgroup counts."
+    },
+    {
+      "name": "unit16_highincome_brake",
+      "units": [
+        "16"
+      ],
+      "meaning": "partial",
+      "why": "An income brake for younger people is confirmed by its probe, but its broad action on smokers at most incomes has no domain reading."
+    }
+  ],
+  "overall_function": "The model's main signal is an age by income interaction: for younger people a higher income lowers the predicted risk steeply and a low income raises it, while for older people the direction reverses and a higher income raises the risk, with income mattering little around late middle age. Smoking and bmi interact as a threshold gate: for smokers the risk rises sharply once bmi passes the high twenties, while for non-smokers bmi barely moves the risk. A brake unit lowers the risk as income rises for young people and more broadly for smokers. Visits, score, sex, urban residence, insurance and the noise input have only small effects; the parts add on the logit scale with no direct input edges.",
+  "stuck": "Structure: the network is dense, so each of the eight first-layer units and each of the ten inputs had to be split into one copy per downstream unit and consolidated back into three groups (18 splits, 38 consolidations) before the second-layer units could be grouped into leaves. Leaf meaning: the dense units are entangled; the crossover leaf also carries part of the smoker by bmi effect, the gate unit does two unrelated jobs, and the brake unit's broad action on smokers has no domain reading; the first-layer units get no reading of their own. Time was not limiting.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 4,
+      "roots": [
+        "risk_score_root"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 0.0,
+    "closed_form_max_abs_err": 0.0650184430671823,
+    "numeric_max_abs_err": 5.329070518200751e-15,
+    "op_counts": {
+      "rename_node": 10,
+      "split_node": 18,
+      "consolidate_node": 38,
+      "annotate": 4
+    },
+    "leaves": [
+      {
+        "id": "ann_66",
+        "name": "age_income_units",
+        "numeric_max_abs_err": 5.329070518200751e-15,
+        "closed_form_max_abs_err": 0.0650184430671823
+      },
+      {
+        "id": "ann_67",
+        "name": "unit11_smoker_bmi_lowincome",
+        "numeric_max_abs_err": 3.552713678800501e-15,
+        "closed_form_max_abs_err": 0.014416755728936304
+      },
+      {
+        "id": "ann_68",
+        "name": "unit16_highincome_brake",
+        "numeric_max_abs_err": 3.9968028886505635e-15,
+        "closed_form_max_abs_err": 0.013027061233045423
+      }
+    ],
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "tool_call_window": {
+      "n_calls": 175,
+      "first": 1794391800.751334,
+      "last": 1794393493.305763,
+      "minutes": 28.20924048423767
+    }
+  }
+}

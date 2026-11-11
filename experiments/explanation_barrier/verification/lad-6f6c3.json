@@ -1,0 +1,472 @@
+{
+ "item_id": "lad-6f6c3",
+ "genome_id": "69ef07cd-f1eb-4d5f-ac5f-c73769dc400c",
+ "target_hash": null,
+ "target_hash_note": "the recheck report for a record target carries no target_hash (field absent)",
+ "verifier": "independent verifier agent (explanation-verifier skill)",
+ "started_at": "2026-11-11T22:34:55+13:00",
+ "finished_at": "2026-11-11T22:40:41+13:00",
+ "minutes": 6,
+ "overall": {
+  "grade": "weakened",
+  "summary": "Every number, direction, threshold and count reproduces on the training split, coverage and function preservation hold; one wording overclaim: the age-BMI hinge is said to be off 'for younger or leaner people', but lean older people have it on (the hinge is a joint age-BMI line)."
+ },
+ "counts": {
+  "refuted": 0,
+  "weakened": 1,
+  "upheld": 28,
+  "flag": 0
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "structural 1.0, compositional 1.0, hierarchy complete, full coverage",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.0 / 1.0, no uncovered or null nodes, single root risk_model containing the output, 4 of 4 leaves composed",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-6f6c3/record.json --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-6f6c3/verify/recheck.json"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "0.0",
+   "check": "verify recheck",
+   "evidence": "recomputed 0.0; per-leaf numeric error at most 1.8e-15",
+   "commands": []
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.closed_form_max_abs_err",
+   "statement": "0.0344",
+   "check": "verify recheck",
+   "evidence": "recomputed 0.03437674 (income_score_hinge); per-leaf 0.0096, 0.0060, 0.0258, 0.0344, matching the 0.0096 / 0.006 / 0.026 / 0.034 stated in the hypotheses, against unit maxima 8.77 / 2.77 / 7.27 / 15.92 (recomputed exit scales 8.775, 2.775, 7.271, 15.916)",
+   "commands": []
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.n_splits",
+   "statement": "10 splits, 0 identity nodes, 4 leaves, 1 composition, 4 hidden nodes each in one leaf",
+   "check": "operations replayed (op_counts) and annotations listed",
+   "evidence": "op_counts split_node 10, annotate 5, rename_node 10; leaves ann_20..ann_23 each own exactly one hidden node (1, 2, 3, 4) and one input copy per input; root ann_24 has subgraph {0}, entries {1,2,3,4}",
+   "commands": []
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_24",
+   "claims": [],
+   "location": "structure",
+   "statement": "one root with the output; each hidden unit in its own leaf; no direct input edges into the output",
+   "check": "verify vars; ops.json annotations",
+   "evidence": "risk_model entries 1,2,3,4, exit 0, subgraph {0}; all four leaves have parent risk_model",
+   "commands": [
+    "uv run python -m explaneat verify vars /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-6f6c3/record.json"
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "AUC 0.837 -> 0.731 / 0.748 / 0.787 / 0.834 (held at mean); 0.8369 with the female/urban/insured/noise edges at their mean contribution",
+   "check": "ablate each part (baseline) and the linear part at its mean; ablate the 16 edges from inputs 7-10 at baseline",
+   "evidence": "0.8370 full; 0.7311, 0.7479, 0.7872; linear at mean 0.8344; 16 edges 0.8369",
+   "commands": [
+    "verify/sg.py (subgroup + ablate through explaneat.verify.probe, train split)",
+    "verify/sg2.py (edge ablation, linear part at mean, boundary subgroups)"
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "nothing resisted structurally; linear term only partly explained; small weights unread",
+   "check": "structure + closed forms",
+   "evidence": "matches the structure and the closed forms; a fair statement of what is not read",
+   "commands": []
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_20",
+   "claims": [],
+   "location": "operations.age_bmi_hinge.hypothesis",
+   "statement": "self-probe: age 60 off at BMI 22 (31%), on at 27 (node 0.48, 49%); age 40 off at 32, on at 37 (0.44); age 80 on at 22 (2.08, 92%)",
+   "check": "probe --sweep age=40,60,80 --sweep bmi=22,27,32,37 --nodes 1,2,3,4",
+   "evidence": "60/22: node 0, 30.9%; 60/27: 0.476, 48.8%; 40/32: 0; 40/37: 0.444; 80/22: 2.082, 92.1%",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-6f6c3/record.json --hold typical --sweep age=40,60,80 --sweep bmi=22,27,32,37 --nodes 1,2,3,4"
+   ]
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_20",
+   "claims": [],
+   "location": "operations.age_bmi_hinge.evidence[2]",
+   "statement": "on for 8239 of 24,000; outcome 62.6% vs 25.7%; adds 2.52 to the logit on those rows",
+   "check": "subgroup node_1 > 0",
+   "evidence": "n 8239; 62.6% vs 25.7%; mean contribution +2.5167",
+   "commands": [
+    "verify/sg.py (subgroup + ablate through explaneat.verify.probe, train split)"
+   ]
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_20",
+   "claims": [],
+   "location": "operations.age_bmi_hinge.evidence[3]",
+   "statement": "switching it off: AUC 0.837 -> 0.731",
+   "check": "ablate --part age_bmi_hinge",
+   "evidence": "0.837 -> 0.7311; mean risk change +0.119",
+   "commands": [
+    "verify/sg.py (subgroup + ablate through explaneat.verify.probe, train split)"
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_20",
+   "claims": [],
+   "location": "operations.age_bmi_hinge.evidence[0]",
+   "statement": "closed form: age 1.9, BMI 1.56 large, other eight small; bias -0.994",
+   "check": "verify recheck closed forms",
+   "evidence": "recomputed coefficients identical at 3 s.f.; largest other weight 0.095 (income)",
+   "commands": []
+  },
+  {
+   "id": "V12",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_20",
+   "claims": [],
+   "location": "operations.age_bmi_hinge.hypothesis",
+   "statement": "so it is off for younger or leaner people",
+   "check": "probe the literal reading on both sides; subgroup the exceptions",
+   "evidence": "lean but old people have it on: age 80, BMI 22 gives node 2.08 (the hypothesis's own self-probe); in the data 166 rows with BMI below 22 and 67 rows under age 40 have it on. The hinge is off for people who are young AND lean together, i.e. below a joint age-BMI line, as the following clause and the 'higher BMI lowers the age' sentence say. Minor wording overclaim, the mechanism is right.",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-6f6c3/record.json --hold typical --sweep age=40,60,80 --sweep bmi=22,27,32,37 --nodes 1",
+    "verify/sg2.py (edge ablation, linear part at mean, boundary subgroups)"
+   ]
+  },
+  {
+   "id": "V13",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_20",
+   "claims": [],
+   "location": "operations.age_bmi_hinge.hypothesis",
+   "statement": "a higher BMI lowers the age at which it switches on; older, heavier people get higher predicted risk",
+   "check": "age x BMI grid and age 20 with BMI 30..45",
+   "evidence": "switch-on: age 80 by BMI 22, age 60 between BMI 22 and 27, age 40 between 32 and 37; at age 20 off even at BMI 45 (pre-activation -0.22); node grows linearly once on (2.05 -> 3.62 -> 5.23 per 5 BMI at age 60/80)",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-6f6c3/record.json --hold typical --set age=20 --sweep bmi=30,38,45 --nodes 1"
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_21",
+   "claims": [],
+   "location": "operations.linear_age_bmi_score.evidence[2]",
+   "statement": "positive on 23,987 of 24,000 training rows; enters the output with a negative weight",
+   "check": "subgroup node_2 > 0; composition closed form",
+   "evidence": "n 23,987; readout -0.374",
+   "commands": [
+    "verify/sg.py (subgroup + ablate through explaneat.verify.probe, train split)"
+   ]
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_21",
+   "claims": [],
+   "location": "operations.linear_age_bmi_score.hypothesis",
+   "statement": "self-probe: age 30 -> 80 lowers the unit 1.59 -> 0.47; at age 50 score 10 -> 90 raises it 0.79 -> 1.50",
+   "check": "probe --sweep age=30,50,80 --sweep score=10,50,90 --nodes 2; bmi x urban --nodes 2",
+   "evidence": "1.589 -> 0.4675; 0.7851 -> 1.495. Over the BMI range 16 -> 38 the contribution moves -0.595 -> -0.371 (risk up), urban 0 -> 1 moves it by +0.055, so the 'other inputs small' wording holds",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-6f6c3/record.json --hold typical --sweep age=30,50,80 --sweep score=10,50,90 --nodes 2",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-6f6c3/record.json --hold typical --sweep bmi=16,22,27,32,38 --sweep urban=0,1 --nodes 1,2"
+   ]
+  },
+  {
+   "id": "V16",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_21",
+   "claims": [],
+   "location": "operations.linear_age_bmi_score.evidence[3]",
+   "statement": "zero on 13 training rows, where the age-BMI hinge adds 9.29 and mean risk is 97%",
+   "check": "subgroup node_2 <= 0",
+   "evidence": "n 13; ann_20 mean +9.286; mean predicted risk 96.9%",
+   "commands": [
+    "verify/sg.py (subgroup + ablate through explaneat.verify.probe, train split)"
+   ]
+  },
+  {
+   "id": "V17",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_21",
+   "claims": [],
+   "location": "operations.linear_age_bmi_score.evidence[4]",
+   "statement": "replaced by its training mean: AUC 0.837 -> 0.834; set to zero: mean risk change -0.081 at AUC 0.834",
+   "check": "ablate --to mean and --to zero",
+   "evidence": "mean 1.284: AUC 0.8344; zero: AUC 0.8344, mean risk change (with minus without) -0.0813",
+   "commands": [
+    "verify/sg.py (subgroup + ablate through explaneat.verify.probe, train split)",
+    "verify/sg2.py (edge ablation, linear part at mean, boundary subgroups)"
+   ]
+  },
+  {
+   "id": "V18",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_22",
+   "claims": [],
+   "location": "operations.visits_smoker_hinge.hypothesis",
+   "statement": "non-smokers off at 3 visits, on at 4 (0.42); smokers off at 2, on at 3 (0.84, 57% vs 30%); at 5 visits 1.47 vs 2.94; at 0 visits 31% vs 31%",
+   "check": "probe --sweep visits=0:6:7 --sweep smoker=0,1 --nodes 3",
+   "evidence": "3/0 off; 4/0 0.418; 2/1 off; 3/1 0.842, 56.9% vs 30.0%; 5: 1.469 vs 2.943; 0 visits 30.7% vs 31.0%. Smoking shifts the node by a constant 1.47 once on and lowers the threshold by about 1.4 visits, so the interaction is the hinge's",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-6f6c3/record.json --hold typical --sweep visits=0:6:7 --sweep smoker=0,1 --nodes 3"
+   ]
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_22",
+   "claims": [],
+   "location": "operations.visits_smoker_hinge.evidence[3]",
+   "statement": "smokers with 3+ visits: on for 2388 of 2388, adds 2.27; non-smokers 3+: 2604 of 5503, 0.70; non-smokers exactly 3: 15 of 2914",
+   "check": "subgroups",
+   "evidence": "2388/2388, +2.2671; 2604/5503, +0.6998; 15/2914; non-smokers with 4+ visits: all 2589 on (0 rows with visits >= 4 and the node off)",
+   "commands": [
+    "verify/sg.py (subgroup + ablate through explaneat.verify.probe, train split)",
+    "verify/sg2.py (edge ablation, linear part at mean, boundary subgroups)"
+   ]
+  },
+  {
+   "id": "V20",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_22",
+   "claims": [],
+   "location": "operations.visits_smoker_hinge.evidence[5]",
+   "statement": "two or fewer visits: on for 481 of 4843 smokers (mean 0.013), 0 of 11,266 non-smokers",
+   "check": "subgroups",
+   "evidence": "481/4843, mean +0.0134; 0/11,266",
+   "commands": [
+    "verify/sg.py (subgroup + ablate through explaneat.verify.probe, train split)"
+   ]
+  },
+  {
+   "id": "V21",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_22",
+   "claims": [],
+   "location": "operations.visits_smoker_hinge.evidence[8]",
+   "statement": "on for 5473 (59.8% vs 32.1%); AUC 0.837 -> 0.787",
+   "check": "subgroup node_3 > 0; ablate",
+   "evidence": "5473, 59.8% vs 32.1%; AUC 0.7872",
+   "commands": [
+    "verify/sg.py (subgroup + ablate through explaneat.verify.probe, train split)"
+   ]
+  },
+  {
+   "id": "V22",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_23",
+   "claims": [],
+   "location": "operations.income_score_hinge.hypothesis",
+   "statement": "income 10 off at scores 10/50/90; income 70: 2.57, 1.08, 0.00 (risk 2%, 10%, 28%); income 110 on at score 90 (1.72); a higher score raises the income needed",
+   "check": "probe --sweep income=10,30,70,110 --sweep score=10,50,90 --nodes 4",
+   "evidence": "income 10: 0, 0, 0; income 70: 2.565, 1.078, 0 (1.8%, 9.7%, 27.5%); 110/90: 1.725. Switch-on income rises with score (on at income 30 only for score 10)",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-6f6c3/record.json --hold typical --sweep income=10,30,70,110 --sweep score=10,50,90 --nodes 4"
+   ]
+  },
+  {
+   "id": "V23",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_23",
+   "claims": [],
+   "location": "operations.income_score_hinge.evidence[2]",
+   "statement": "on for 11,156 of 24,000; -1.92 on the logit over them; 30.8% vs 45.0%",
+   "check": "subgroup node_4 > 0",
+   "evidence": "11,156; mean -1.9245; 30.8% vs 45.0%; no row with income above 100 has it off",
+   "commands": [
+    "verify/sg.py (subgroup + ablate through explaneat.verify.probe, train split)",
+    "verify/sg2.py (edge ablation, linear part at mean, boundary subgroups)"
+   ]
+  },
+  {
+   "id": "V24",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_23",
+   "claims": [],
+   "location": "operations.income_score_hinge.evidence[3]",
+   "statement": "AUC 0.837 -> 0.748",
+   "check": "ablate",
+   "evidence": "0.7479",
+   "commands": [
+    "verify/sg.py (subgroup + ablate through explaneat.verify.probe, train split)"
+   ]
+  },
+  {
+   "id": "V25",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_24",
+   "claims": [],
+   "location": "operations.risk_model.evidence[0]",
+   "statement": "sigmoid of 1.49 x1 - 0.374 x2 + 1.32 x3 - 1.29 x4, constant 1.51 in the denominator",
+   "check": "readouts from probe contributions / node values",
+   "evidence": "1.485, -0.374, 1.320, -1.292; bias -0.412 = -ln 1.51",
+   "commands": []
+  },
+  {
+   "id": "V26",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_24",
+   "claims": [],
+   "location": "operations.risk_model.hypothesis",
+   "statement": "score 10: age 70 income 30 -> 85%, income 110 -> 4%; income-score term -6.13, age-BMI term 3.34; age 40 -> 21% and below 1%",
+   "check": "probe --set score=10 --sweep age=40,70 --sweep income=30,110",
+   "evidence": "85.4%, 3.5%, -6.127, +3.343 (at income 110); 21.1%, 0.1%. The terms are added on the logit scale with no gating (root subgraph is the output alone)",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-6f6c3/record.json --hold typical --set score=10 --sweep age=40,70 --sweep income=30,110"
+   ]
+  },
+  {
+   "id": "V27",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_24",
+   "claims": [],
+   "location": "operations.risk_model.hypothesis",
+   "statement": "one part off at a time: 0.731, 0.748, 0.787, linear at mean 0.834",
+   "check": "ablate",
+   "evidence": "0.7311, 0.7479, 0.7872, 0.8344",
+   "commands": [
+    "verify/sg.py (subgroup + ablate through explaneat.verify.probe, train split)",
+    "verify/sg2.py (edge ablation, linear part at mean, boundary subgroups)"
+   ]
+  },
+  {
+   "id": "V28",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_24",
+   "claims": [],
+   "location": "operations.risk_model.evidence[5]",
+   "statement": "female/urban/insured/noise: small weights (female into age-BMI 0.025, noise into income-score 0.067); edges at mean contribution: AUC 0.8369; typical risk 30/29 man/woman, 29/30 rural/urban, 29/30 uninsured/insured, 30 to 30 for noise -2..2",
+   "check": "ablate the 16 edges; probes",
+   "evidence": "largest of the 16 weights 0.0725 (vs 1.41-1.9 for the main inputs); AUC 0.8369, 180 of 24,000 predictions flip; typical 30.2/29.2, 29.0/30.2, 29.0/30.2, 30.0 -> 30.4",
+   "commands": [
+    "verify/sg2.py (edge ablation, linear part at mean, boundary subgroups)",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-6f6c3/record.json --hold typical --sweep female=0,1 --sweep urban=0,1 --no-parts",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-6f6c3/record.json --hold typical --sweep insured=0,1 --no-parts",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/barrier/lad-6f6c3/record.json --hold typical --sweep noise=-2,0,2 --no-parts"
+   ]
+  },
+  {
+   "id": "V29",
+   "grade": "upheld",
+   "level": "L4",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "domain reading: older/heavier, frequent visitors (more so smokers) higher risk; high income relative to score lower risk",
+   "check": "domain sense on synthetic data",
+   "evidence": "plausible directions; no conflict with known domain knowledge; 'score' has no stated real-world meaning, so the income-score reading stays relative",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_24": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_20": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_21": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_22": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_23": {
+   "grade": "upheld",
+   "level": "L3"
+  }
+ },
+ "leaf_meaning": {
+  "age_bmi_hinge": {
+   "grade": "meaningful",
+   "why": "A joint age-BMI threshold above which predicted risk climbs steeply, heavier people reaching it younger; the age-by-BMI probe confirms the switch-on points."
+  },
+  "linear_age_bmi_score": {
+   "grade": "partial",
+   "why": "The direction (risk up a little with age and BMI, down with score) is confirmed, but the part mainly sets the logit baseline and its variation adds almost no ranking (AUC 0.837 -> 0.834 at its mean), so there is no reading beyond a small slope."
+  },
+  "visits_smoker_hinge": {
+   "grade": "meaningful",
+   "why": "Risk rises above about 3-4 visits, and smoking lowers that threshold by about one visit and adds a constant once on, so smoking matters only for frequent visitors; probes and subgroup counts confirm it."
+  },
+  "income_score_hinge": {
+   "grade": "meaningful",
+   "why": "High income relative to score lowers predicted risk, with a higher score pushing the protective income threshold up; the income-by-score grid confirms it, though 'score' itself has no stated real-world meaning."
+  }
+ },
+ "statements_checked": 144,
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ],
+ "notes": "No plain-language drafts or claims exist for this network; sections on drafts, claims and prose were skipped. Hypotheses and evidence read from the explanation's operations (read only). recheck: 0 mismatch, 0 needs_review, 0 warn; its 24 unchecked sentences were all checked by hand above."
+}

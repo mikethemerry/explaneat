@@ -1,0 +1,108 @@
+{
+ "lad-b58a2": {
+  "task": "additive", "arch": "4",
+  "truth": "f = 2*(-1 + 1.2 za + 1.5 relu(zb - 0.5) - 0.8 zi + 1.0 smoker); other inputs unused",
+  "terms": {
+   "age (linear, +)": "recovered: age ramp, risk rises with age (the ramp switching off at the oldest is a network artefact on 1056 rows, flagged by the explainer itself)",
+   "bmi hinge above 29.5 (+)": "recovered: obesity hinge, off below about 30, steep above",
+   "income (linear in log income, -)": "recovered: low income adds risk through a hinge (a reasonable reading of a convex decreasing effect)",
+   "smoker step (+)": "recovered: smoking raises risk (read through the age ramp and the protective non-smoker unit)",
+   "unused inputs": "recovered: visits, score, female, urban, insured and noise move the prediction little"
+  },
+  "spurious": "two interactions that are not in the truth: income threshold rising with age, smoking mattering less for the oldest (sigmoid saturation; a model fact, not a truth fact)",
+  "recovered": 5, "total": 5, "grade": "recovered"
+ },
+ "lad-6f6c3": {
+  "task": "hinges3", "arch": "4",
+  "truth": "f = 2*(-0.5 + 1.5 relu(-0.5 + za + 0.8 zb) - 1.2 relu(-0.3 + zi - 0.7 zs) + 1.0 relu(-1 + zv + smoker))",
+  "terms": {
+   "hinge 1: age and bmi jointly (+)": "recovered: age_bmi_hinge, a joint threshold that heavier people reach younger",
+   "hinge 2: income relative to score (-)": "recovered: income_score_hinge, high income relative to score is protective and a higher score cancels it",
+   "hinge 3: visits plus smoking (+)": "recovered: visits_smoker_hinge, smoking lowers the visit threshold and adds to it",
+   "unused inputs": "recovered: female, urban, insured and noise barely change the prediction"
+  },
+  "spurious": "a fourth, near-linear correction unit (age, bmi, score) read only by its direction (a fitting artefact of width 4 for 3 true hinges)",
+  "recovered": 4, "total": 4, "grade": "recovered"
+ },
+ "lad-12979": {
+  "task": "threeway", "arch": "8",
+  "truth": "f = 2*(-0.6 + 0.6 za - 0.5 zi + 2.0 smoker*urban*za + 1.0 female*zb)",
+  "terms": {
+   "age (linear, +)": "recovered: age_risk, older means higher risk",
+   "income (-)": "recovered: low_income adds risk",
+   "3-way smoker x urban x age (sign-changing slope)": "recovered: urban_smoker_age_gate, the age effect is much steeper for urban smokers, lower risk when young and higher when old; smoking changes little in rural areas",
+   "2-way female x bmi": "recovered: female_bmi, steep bmi effect for women, flat for men",
+   "unused inputs": "recovered: visits, score, insured and noise have small effects"
+  },
+  "spurious": "low-income effect growing with age; a rise for very heavy men; the gate is not neutral for urban non-smokers (explainer flagged both as side effects)",
+  "recovered": 5, "total": 5, "grade": "recovered"
+ },
+ "lad-f6c4c": {
+  "task": "parity3", "arch": "8",
+  "truth": "f = 1.5*(4*parity(smoker, female, urban) - 2 + 0.5 za)",
+  "terms": {
+   "parity of smoker, female, urban (3-way)": "recovered: stated as the parity rule (high risk with one or three flags, low with none or two), checked per group on the training rows",
+   "age (linear, +)": "recovered: older age raises risk within each of the eight groups",
+   "unused inputs": "recovered: income, bmi, visits, score, insured and noise practically ignored"
+  },
+  "spurious": "none at the level of the whole function; the six leaves are group detectors with large opposing contributions that only mean something together",
+  "recovered": 3, "total": 3, "grade": "recovered (at the root; the leaves are not the true terms)"
+ },
+ "lad-6e63b": {
+  "task": "pairwise", "arch": "8x8",
+  "truth": "f = 2*(-0.8 + 0.8 za - 0.6 zi + 2.0 smoker*relu(zb) + 1.0 za*zi)",
+  "terms": {
+   "age x income product": "recovered: an age-by-income crossover, higher income lowers risk for the young and raises it for the old, income mattering little around late middle age (the true crossover is at za = 0.6, about age 57)",
+   "smoker x relu(bmi - 27)": "recovered: for smokers risk rises sharply once bmi passes the high twenties; bmi barely moves it for non-smokers",
+   "income main effect (-)": "recovered inside the crossover (income lowers risk below late middle age)",
+   "age main effect (+)": "not stated: the record never says that risk rises with age overall",
+   "unused inputs": "recovered: visits, score, sex, urban, insured and noise have small effects"
+  },
+  "spurious": "a 'brake' unit lowering risk with income for the young and broadly for smokers (no reading); the crossover leaf also carries part of the smoker-by-bmi effect (the leaves do not separate the two true interactions)",
+  "recovered": 4, "total": 5, "grade": "mostly recovered (at the root; the leaves entangle the two true interactions)"
+ },
+ "lad-b29f2": {
+  "task": "rule", "arch": "16x16",
+  "truth": "f = 5*rule - 2.5; rule = ((age > 60 and visits >= 3) or bmi > 32) and not (uninsured and score > 80), or (smoker and female and age < 35)",
+  "terms": {
+   "bmi > 32": "recovered: high risk when bmi is above a threshold (step)",
+   "age > 60 AND visits >= 3": "recovered: an AND of an age threshold and a visits threshold",
+   "OR combination": "recovered: the rules combine as an OR (the score saturates once one fires)",
+   "exception: uninsured with score > 80 vetoes the base rule": "recovered: a high score without insurance pulls the bmi and age-and-visits rules back to low risk",
+   "exception: female smokers under 35 positive": "recovered: young female smokers are high risk (an AND of sex, smoking and young age)",
+   "unused inputs": "partly: income, urban and noise almost ignored in typical cases but shift risk near the bmi threshold (a model fact)"
+  },
+  "spurious": "the veto is said to also weaken the young-female-smoker rule (not in the truth); a slight decrease in risk with age outside the rules",
+  "recovered": 5.5, "total": 6, "grade": "recovered (the rule list at the root; the second layer is not annotated)"
+ },
+ "lad-cb415": {
+  "task": "hinges6", "arch": "8",
+  "truth": "f = 2*(-0.5 + sum of 6 hinges: +1.5 relu(-0.5 + za + 0.8 zb), -1.2 relu(-0.3 + zi - 0.7 zs), +1.0 relu(-1 + zv + smoker), -1.5 relu(-0.4 - 0.8 za + 1.2 female), +1.2 relu(zs - urban - 0.5 zb), +1.0 relu(0.2 + 0.7 zi - 1.5 insured + 0.5 za))",
+  "terms": {
+   "hinge 1 age+bmi (+)": "recovered: age_bmi_rise",
+   "hinge 2 income vs score (-)": "recovered: income_low_score_lowering, income lowers risk more when the score is low",
+   "hinge 3 visits+smoker (+)": "recovered: visits_smoker_rise",
+   "hinge 4 young women (-)": "recovered: young_female_lowering, a female lowering that fades with age",
+   "hinge 5 score, lower for urban (+)": "recovered: score_rural_rise, the threshold comes at a lower score for rural people (the bmi part of this hinge is not mentioned)",
+   "hinge 6 uninsured, richer, older (+)": "not recovered: young_uninsured_lowering is closed-form-only and 'insurance acts in both directions'",
+   "unused input (noise)": "recovered: practically ignored"
+  },
+  "spurious": "none beyond the unread insurance unit",
+  "recovered": 6, "total": 7, "grade": "mostly recovered (5 of 6 hinges as their own leaves)"
+ },
+ "lad-ae239": {
+  "task": "hinges6", "arch": "32x16",
+  "truth": "the same six hinges as lad-cb415 (hinges6), fitted by a 32x16 network",
+  "terms": {
+   "hinge 1 age+bmi (+)": "recovered: high bmi raises risk for older people, not young ones; steep age effect",
+   "hinge 2 income vs score (-)": "recovered: income lowers risk mainly when the score is low",
+   "hinge 3 visits+smoker (+)": "recovered: more visits and smoking raise risk",
+   "hinge 4 young women (-)": "recovered: women much lower risk when young, protection gone in old age",
+   "hinge 5 score, lower for urban (+)": "recovered: a high score raises risk more for rural than urban people",
+   "hinge 6 uninsured (+)": "recovered: being uninsured raises risk (mixed with smoking: 'more so when uninsured' is not in the truth)",
+   "unused input (noise)": "partly: a small learned effect, stated"
+  },
+  "spurious": "smoking stronger when uninsured (two true hinges mixed in one unit)",
+  "recovered": 6.5, "total": 7, "grade": "recovered at the root and in second-layer leaves; the 32 first-layer units are described only"
+ }
+}

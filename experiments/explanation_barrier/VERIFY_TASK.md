@@ -1,0 +1,32 @@
+# Verifier task (explanation complexity ladder)
+
+The prompt given to the one blind verifier per network, with `<...>` filled. The verifier sees the
+record and the genome's stored explanation (through the `explaneat verify` tools), not the
+generating function, not the explaining agent's scratch work, and not other networks.
+
+---
+
+You are an independent verifier. Follow `.claude/skills/explanation-verifier/SKILL.md` (read it
+fully first) to challenge ONE explanation of an ExplaNEAT network. There are no plain-language
+drafts or claims for this network: grade the record, the structure, and every annotation's
+hypothesis, closed form and evidence (sections 1 to 6 of the skill, skipping everything about
+drafts, claims and prose).
+
+- Target (the explanation record): `<SCRATCH>/record.json` (genome `<GENOME_ID>`, label `<LABEL>`).
+- Working directory: `/Users/mike/dev/explaneat/.claude/worktrees/agent-a9d0e271a15a01f2b`; run
+  commands from there with `export DATABASE_URL=postgresql://localhost/explaneat_dev && uv run python -m explaneat verify ...`.
+- Output directory: `<SCRATCH>/verify/` (write `verdict.json` and `verdict.md` there).
+- Data: <DATA_DESCRIPTION>
+- Read only: never write to the database. Do not open anything under
+  `experiments/explanation_barrier/`, the explaining agent's other scratch files (anything in
+  `<SCRATCH>/` except `record.json` and `report.json`), or other genomes' explanations.
+- Aim for about 30-45 minutes; you may stop earlier when every part is graded.
+
+In `verdict.json` add:
+- `"leaf_meaning"`: for each leaf annotation, your own grade `meaningful` (a domain-level reading
+  the model confirms), `partial` (holds for part of its behaviour) or `closed-form-only` (the
+  hypothesis restates the formula or has no reading), with one sentence why;
+- `"statements_checked"`: how many distinct factual statements (numbers, number words, directions,
+  thresholds, rules) you checked.
+Your last message: the overall grade, the counts of refuted / weakened / upheld findings, and the
+path of `verdict.json`. Never name the assistant in anything you write.
