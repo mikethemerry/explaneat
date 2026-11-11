@@ -32,6 +32,9 @@ NETWORKS = [  # (family, task, arch) in ladder order within family
 ]
 
 
+SMALL_LEAF = 6  # granularity = share of hidden units that sit in a leaf of at most this many units
+
+
 def load(p):
     return json.loads(p.read_text()) if p.is_file() else None
 
@@ -76,6 +79,8 @@ def row(fam, task, arch, usage, gt):
                  minutes=u.get("minutes") or (v.get("tool_call_window") or {}).get("minutes"),
                  tokens=u.get("tokens"), tokens_cache_reads=u.get("cache_read"), n_leaves=len(leaves),
                  max_units_per_leaf=max((len(lf.get("units") or []) for lf in leaves), default=None),
+                 granularity=sum(len(lf.get("units") or []) for lf in leaves
+                                 if len(lf.get("units") or []) <= SMALL_LEAF) / cx["hidden_units"],
                  n_compositions=ex.get("n_composition_annotations"), n_splits=ex.get("n_splits"),
                  n_identity=ex.get("n_identity_nodes"),
                  leaf_meaningful=mean.count("meaningful"), leaf_partial=mean.count("partial"),
@@ -106,6 +111,25 @@ def row(fam, task, arch, usage, gt):
     return r
 
 
+def meaning_score(r, who="v"):
+    """Leaf meaning score: meaningful = 1, partial = 0.5, closed-form-only = 0, averaged over leaves
+    (verifier's grades by default, the explainer's with who="e")."""
+    k = ("v_leaf_meaningful", "v_leaf_partial", "v_leaf_cfo") if who == "v" else \
+        ("leaf_meaningful", "leaf_partial", "leaf_cfo")
+    n = sum(r.get(x) or 0 for x in k)
+    return None if not n else ((r.get(k[0]) or 0) + 0.5 * (r.get(k[1]) or 0)) / n
+
+
+def outcome(r):
+    if not r.get("attempted"):
+        return None
+    if not r["explained"]:
+        return "not explained"
+    if (r.get("n_leaves") or 0) < 2 and r["hidden"] > 4:
+        return "covered, not decomposed"
+    return "explained"
+
+
 def plots(rows):
     import matplotlib
     matplotlib.use("Agg")
@@ -113,43 +137,82 @@ def plots(rows):
     figs = HERE / "figures"
     figs.mkdir(exist_ok=True)
     done = [r for r in rows if r.get("attempted")]
-    col = {True: "#2a7", False: "#c33", None: "#999"}
+    col = {"explained": "#2a7f62", "covered, not decomposed": "#c0392b", "not explained": "#555"}
     mk = {"synthetic": "o", "c4": "s"}
-    fig, axes = plt.subplots(1, 2, figsize=(11, 4.2))
+
+    def lab(r):
+        return f"{'C4' if r['task'] == 'c4' else r['task']}-{r['arch']}"
+
+    fig, axes = plt.subplots(2, 2, figsize=(12, 8.5))
+    axes = axes.ravel()
     for r in done:
-        share = (r["leaf_meaningful"] + 0.5 * r["leaf_partial"]) / max(r["n_leaves"], 1)
-        for ax, y in zip(axes, (r.get("minutes") or 0, share)):
-            ax.scatter(r["patterns"], y, c=col[r["explained"]], marker=mk[r["family"]], s=60, edgecolors="k")
-            ax.annotate(f"{r['task']}-{r['arch']}", (r["patterns"], y), fontsize=7, xytext=(4, 3),
-                        textcoords="offset points")
+        xs = r["patterns"]
+        for ax, y in zip(axes, (r.get("minutes"), r.get("granularity"), meaning_score(r), r.get("refuted_per100"))):
+            if y is None:
+                continue
+            ax.scatter(xs, y, c=col[outcome(r)], marker=mk[r["family"]], s=60, edgecolors="k", zorder=3)
+            ax.annotate(lab(r), (xs, y), fontsize=7, xytext=(4, 3), textcoords="offset points")
     for ax in axes:
         ax.set_xscale("log")
         ax.set_xlabel("distinct activation patterns on the training rows (log)")
-    axes[0].set_ylabel("explaining wall clock (min)")
-    axes[0].axhline(180, ls="--", c="grey", lw=0.8)
-    axes[1].set_ylabel("leaf meaning score (meaningful=1, partial=0.5)")
+        ax.grid(alpha=0.3)
+    axes[0].set_ylabel("explaining wall clock (min); box = 180")
+    axes[1].set_ylabel("granularity: share of hidden units in a leaf of <= 6 units")
     axes[1].set_ylim(-0.05, 1.05)
-    fig.suptitle("Explanation outcome vs network complexity (green = explained in the box, red = not; "
-                 "circle = synthetic, square = Connect-4)", fontsize=9)
+    axes[2].set_ylabel("leaf meaning score (verifier; meaningful 1, partial 0.5)")
+    axes[2].set_ylim(-0.05, 1.05)
+    axes[3].set_ylabel("verifier refuted findings per 100 checkable statements")
+    fig.suptitle("Outcome against complexity. Green: explained (full coverage, >= 2 leaves); red: covered but "
+                 "not decomposed (one leaf holds the whole hidden layer). Circle: synthetic; square: Connect-4.",
+                 fontsize=9)
     fig.tight_layout()
     fig.savefig(figs / "outcome_vs_patterns.png", dpi=150)
-    fig, ax = plt.subplots(figsize=(5.5, 4.2))
+
+    fig, ax = plt.subplots(figsize=(6.5, 4.4))
     for r in done:
-        share = (r["leaf_meaningful"] + 0.5 * r["leaf_partial"]) / max(r["n_leaves"], 1)
-        ax.scatter(r["interaction_strength"], share, c=col[r["explained"]], marker=mk[r["family"]], s=60,
-                   edgecolors="k")
-        ax.annotate(f"{r['task']}-{r['arch']}", (r["interaction_strength"], share), fontsize=7, xytext=(4, 3),
-                    textcoords="offset points")
-    ax.set_xlabel("interaction strength (1 - R2 of an additive model of the logit)")
-    ax.set_ylabel("leaf meaning score")
+        y = meaning_score(r)
+        ax.scatter(r["interaction_strength"], y, c=col[outcome(r)], marker=mk[r["family"]], s=60,
+                   edgecolors="k", zorder=3)
+        ax.annotate(lab(r), (r["interaction_strength"], y), fontsize=7, xytext=(4, 3), textcoords="offset points")
+    ax.set_xlabel("interaction strength of the logit (1 - R2 of an additive model)")
+    ax.set_ylabel("leaf meaning score (verifier)")
+    ax.set_ylim(-0.05, 1.05)
+    ax.grid(alpha=0.3)
     fig.tight_layout()
     fig.savefig(figs / "meaning_vs_interaction.png", dpi=150)
+
+
+def markdown(rows):
+    head = ["network", "label", "params", "hidden (switch)", "patterns", "R2 lin / add / pair", "test AUC",
+            "outcome", "granularity", "min", "tokens (k)", "leaves", "max units/leaf", "meaning E (m/p/c)", "meaning V (m/p/c)",
+            "verifier R/W/U", "R/100", "W/100", "GT recovery"]
+    out = ["| " + " | ".join(head) + " |", "|" + "---|" * len(head)]
+    for r in rows:
+        if not r.get("attempted"):
+            continue
+        name = f"{'C4' if r['task'] == 'c4' else r['task']} {r['arch']}"
+        gt = f"{r['gt_terms_recovered']:g}/{r['gt_terms_total']}" if r.get("gt_terms_total") else "n/a"
+        f = lambda v, d=1: "" if v is None else f"{v:.{d}f}"  # noqa: E731
+        out.append("| " + " | ".join(str(x) for x in [
+            name, r["label"], r["n_params"], f"{r['hidden']} ({r['switching']})", r["patterns"],
+            f"{r['r2_linear']:.2f} / {r['r2_additive']:.2f} / {r['r2_pairwise']:.2f}", f"{r['test_auc']:.3f}",
+            outcome(r), f(r.get("granularity"), 2), f(r.get("minutes"), 0), f((r.get("tokens") or 0) / 1000, 0), r.get("n_leaves"),
+            r.get("max_units_per_leaf"),
+            f"{r.get('leaf_meaningful')}/{r.get('leaf_partial')}/{r.get('leaf_cfo')}",
+            f"{r.get('v_leaf_meaningful')}/{r.get('v_leaf_partial')}/{r.get('v_leaf_cfo')}",
+            f"{r.get('refuted')}/{r.get('weakened')}/{r.get('upheld')}", f(r.get("refuted_per100"), 2),
+            f(r.get("weakened_per100"), 2), gt]) + " |")
+    return "\n".join(out)
 
 
 def main():
     usage = load(HERE / "usage.json") or {}
     gt = load(HERE / "gt_grades.json") or {}
     rows = [row(*n, usage, gt) for n in NETWORKS]
+    for r in rows:
+        r["outcome"] = outcome(r)
+        r["meaning_score_verifier"] = meaning_score(r) if r.get("attempted") else None
+        r["meaning_score_explainer"] = meaning_score(r, "e") if r.get("attempted") else None
     keys = []
     for r in rows:
         keys += [k for k in r if k not in keys]
@@ -158,9 +221,9 @@ def main():
         w.writeheader()
         w.writerows(rows)
     (HERE / "ladder.json").write_text(json.dumps(rows, indent=1, default=str) + "\n")
+    (HERE / "ladder_table.md").write_text(markdown(rows) + "\n")
     plots(rows)
-    for r in rows:
-        print({k: (round(v, 3) if isinstance(v, float) else v) for k, v in r.items()})
+    print(markdown(rows))
 
 
 if __name__ == "__main__":
