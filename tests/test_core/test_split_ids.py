@@ -148,3 +148,13 @@ class TestDecompositionWarning:
         anns = [self._ann("root", ["0"], [str(i) for i in range(1, 9)])]
         d = decomposition_report(net, anns)
         assert d["units_only_as_entries"] == 8 and d["warnings"]
+
+    def test_root_containing_fine_leaves_does_not_trigger_coarse_warning(self):
+        from explaneat.analysis.coverage_report import decomposition_report
+        net = wide_net(width=8)
+        anns = [self._ann(f"u{i}", ["-1", str(i)], ["-1"], parent="root") for i in range(1, 9)]
+        anns.append(self._ann("root", [str(i) for i in range(1, 9)] + ["0"], ["-1"]))
+        d = decomposition_report(net, anns)
+        assert d["granularity"] == 1.0
+        assert d["largest_part"]["hidden_units"] == 1
+        assert d["warnings"] == []

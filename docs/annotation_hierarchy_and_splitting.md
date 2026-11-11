@@ -29,6 +29,25 @@ A composition annotation:
 - Has its own subgraph (nodes and connections) that may include junction nodes/edges connecting the children
 - Can itself be a child of another composition annotation
 
+### Serial leaves with shared upstream units
+
+Separate leaves in successive dense layers need distinct entry nodes: listing a
+previous leaf's already owned hidden unit in a later leaf is refused. This does
+not require duplicating the whole upstream layer. Before annotating, insert an
+`add_identity_node` bridge on each inter-layer edge. A first-layer leaf owns its
+unit, and a second-layer leaf uses its private bridge nodes as entries. Each
+bridge preserves the edge weight; its value is the weighted upstream activation.
+The root composition lists both layers' leaves as children and owns the junction
+edges, including upstream-unit-to-bridge and final-unit-to-output edges.
+
+The structural regression in `tests/test_core/test_serial_identity_annotations.py`
+checks distinct signed weights, forward preservation, complete coverage and a
+single root without duplicating upstream hidden units. This establishes that the
+representation is possible; meaningful hypotheses and self-probes for the leaves
+remain separate requirements. Identity insertion must leave an existing input
+edge at each target at every step; inserting bridges one edge at a time does so
+when the dense layer has at least two inputs.
+
 ### Evaluating a Composition
 
 Because a composition's own `subgraph_nodes` hold only its junction nodes, its function (formula, viz, sensitivity, SHAP) must be computed over the whole subtree. `explaneat.analysis.composition.expand_annotation` builds that view, and the MCP/API evidence tools apply it automatically when given a composition's `annotation_id`:

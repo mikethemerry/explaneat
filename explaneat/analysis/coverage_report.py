@@ -285,7 +285,9 @@ def decomposition_report(model_state, annotations_data, small_part: int = SMALL_
         cands = [a for a, us in owned.items() if u in us]
         if cands:
             part_of[u] = min(cands, key=lambda a: (len(owned[a]), a))
-    sizes = {a: len(owned[a]) for a in owned}
+    # Ancestors may include every descendant's nodes. Count each unit only in its
+    # selected smallest part, so a fine hierarchy is not flagged for its root.
+    sizes = {a: sum(owner == a for owner in part_of.values()) for a in owned}
     small = [u for u, a in part_of.items() if sizes[a] <= small_part]
     largest = max(owned, key=lambda a: (sizes[a], a))
     root_only = sorted(u for u, a in part_of.items() if a in roots and a in has_child)
