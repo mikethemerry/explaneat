@@ -159,6 +159,7 @@ def _call(entry: Dict[str, Any], vm) -> Dict[str, Any]:
 
 
 DIRECT = re.compile(r"\bdirect(?:ly)?\b|\bown edge\b|\blinear term\b", re.I)
+SCOPE_FREE = re.compile(r"(?:^|\.)(?:n|n_total|share\w*|outcome_\w+|inputs\.[^.]+|values\.[^.]+|n_\w+)$")
 WHOLE = re.compile(r"\bwhole[- ]model\b|\bin the (?:whole|full) model\b|\bas a whole\b|\bacross the whole\b", re.I)
 
 
@@ -298,8 +299,11 @@ class LogProvenance(Provenance):
         return list(self._findings.get(location) or [])
 
     def scope_mismatch(self, sentence) -> bool:
-        """A sentence that says "direct" while every query it cites measures the whole model (E8,
-        E9), or "whole model" while every query it cites is a direct-edge ablation."""
+        """A sentence that says "direct" while every effect it quotes is a whole-model reading (a
+        probe, subgroup or enumerate value: E8, E9), or "whole model" while every effect it quotes
+        is a direct edge. Counts and shares (``n``, ``share``, rates, input settings) carry no
+        scope; an ablation of named edges or of the direct edges is a direct quantity; an ablation
+        of a part is neither (so "switching the direct terms off" is not a mismatch)."""
         from .sentences import refs_in
         text = sentence.text or ""
         says_direct, says_whole = bool(DIRECT.search(text)), bool(WHOLE.search(text))
@@ -307,18 +311,22 @@ class LogProvenance(Provenance):
             return False
         scopes = []
         for r in refs_in(sentence.source):
-            qid, _, _ = split_ref(r)
+            qid, path, _ = split_ref(r)
             if re.fullmatch(r"C\d+", qid):
                 sc = (self.claims.get(qid) or {}).get("scope")
                 if sc:
                     scopes.append("direct" if "direct" in str(sc) else "whole")
                 continue
             e = self.entry(qid)
-            if e is None:
+            if e is None or SCOPE_FREE.search(path):
                 continue
             a = e.get("arguments") or {}
-            direct = e.get("tool") == "query_ablate" and bool(a.get("direct")) or e.get("tool") == "get_node_info"
-            scopes.append("direct" if direct else "whole")
+            tool = e.get("tool")
+            if tool == "query_ablate":
+                if a.get("direct") or a.get("edges"):
+                    scopes.append("direct")
+            elif tool in ("query_probe", "query_subgroup", "query_enumerate"):
+                scopes.append("whole")
         if not scopes:
             return False
         return all(x == ("whole" if says_direct else "direct") for x in scopes)
