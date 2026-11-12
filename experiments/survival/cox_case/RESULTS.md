@@ -37,7 +37,12 @@ Method background: `docs/survival.md`; the earlier benchmark and protocol histor
   GBSG2 tumour-biology sum, the WHAS500 haemodynamics sum: best single concepts at score
   0.91 and 0.83 are thresholds on one of their inputs). The explainers call those two
   "described by their formula".
-- **Verifier:** see §6 (filled from `verdicts/`).
+- **Verifier.** GBSG2 upheld (62 of 64 findings upheld, none weakened or refuted); WHAS500
+  weakened by one wording slip (a spread quoted for the BMI term is labelled as spanning the
+  percentiles of age; the number is right), nothing refuted. Four domain flags, all with the
+  data agreeing with the model: a log-linear progesterone-receptor effect with no saturation,
+  the four dropped GBSG2 inputs (age and tumour size are standard prognostic factors), and
+  the protective BMI and Q-wave terms on WHAS500.
 
 ## 2. Design (fixed before any run; `run_case.py` docstring)
 
@@ -170,8 +175,8 @@ computed before the identity-node operations were flagged and rerun with identic
 
 | Label | Faithful: max abs err | Leaves | Granularity | Understood: meaningful / partial / closed-form only | Recheck | Verifier |
 |---|---|---|---|---|---|---|
-| cox-gbsg2-s1 | 4.4e-16 | 3 | n/a (0 hidden units) | 3 / 0 / 0 | 0 mismatch, 0 needs review | VERIFIER_GBSG2 |
-| cox-whas500-s0 | 4.4e-16 | 4 | n/a (0 hidden units) | 4 / 0 / 0 | 0 mismatch, 0 needs review | VERIFIER_WHAS500 |
+| cox-gbsg2-s1 | 4.4e-16 | 3 | n/a (0 hidden units) | 3 / 0 / 0 | 0 mismatch, 0 needs review | **upheld**: 64 findings, 62 upheld, 0 weakened, 0 refuted, 2 domain flags |
+| cox-whas500-s0 | 4.4e-16 | 4 | n/a (0 hidden units) | 4 / 0 / 0 | 0 mismatch, 0 needs review | **weakened**: 39 findings, 36 upheld, 1 weakened, 0 refuted, 2 domain flags |
 
 The probe grades are the library's (score = max(R², 2(AUC − 0.5)) of the best concept against
 each leaf's exit). For a leaf of one direct edge the best concept is that input (score 1.0),
@@ -180,7 +185,29 @@ single concept is a threshold on the dominant input (0.91, 0.83), which the expl
 qualify as direction-only. Read the "understood" column with that in mind: these are linear
 models whose parts are their inputs.
 
-VERIFIER_SECTION
+### Verifier findings (`verdicts/<label>/verdict.json`, `verdict.md`)
+
+Blind, read-only, one agent per genome, levels L1–L4 all completed; 9 and 12 minutes.
+Every stated number of both explanations reproduced: hazard ratios per unit re-derived from
+the edge weights and the training SDs and from probe sweeps, subgroup counts, part / edge /
+node ablations, concept scores, survival metrics recomputed with `explaneat.survival.metrics`
+on the model's log-risk, coverage and function preservation. Two-way sweeps confirm pure
+additivity (no interaction) on both.
+
+| Label | Overall | Upheld | Weakened | Refuted | Flags (L4, domain only; the data agree with the model) |
+|---|---|---|---|---|---|
+| cox-gbsg2-s1 | upheld | 62 | 0 | 0 | progesterone receptor is log-linear per fmol/l over 0–1600 with no saturation (HR 0.52 at the 95th percentile vs 0; practice uses a positive/negative cut-off); age, oestrogen receptor, menopausal status and tumour size have zero effect (0 of 438 rows change) although tumour size and age are standard prognostic factors |
+| cox-whas500-s0 | weakened | 36 | 1 | 0 | protective BMI, 0.957 per kg/m² (BMI ≥ 30: 29% died vs 48%; BMI < 22: 71% vs 37%; the obesity-paradox pattern); protective Q-wave infarction, HR 0.617 (26% died vs 50%; Q-wave patients are younger, corr −0.28) |
+
+The one weakened finding (L2, `age_and_body_mass`): the hypothesis says "between the
+patients at the 5th and the 95th percentile of age the age term changes the hazard
+3.19-fold, and the body-mass term 2.29-fold"; 2.29 is the BMI term across BMI's own
+5th–95th percentiles (19.1 → 38.1 kg/m²), so the population of the second number is
+misstated while the value is right. The stored explanation was not edited after
+verification (the record stands as verified).
+
+`verify recheck` gives no `target_hash` for a record-JSON target; both verdicts say so
+(the GBSG2 verdict records the record file's sha256 instead).
 
 ## 7. Caveats
 

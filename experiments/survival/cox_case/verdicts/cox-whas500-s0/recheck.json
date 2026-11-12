@@ -1,0 +1,784 @@
+{
+  "target": "experiments/survival/cox_case/explanations/cox-whas500-s0.json",
+  "genome_id": "f96ebc8d-5ab6-4b78-866f-5c82f1640771",
+  "label": "cox-whas500-s0",
+  "operations_source": "database",
+  "files": {
+    "record": "experiments/survival/cox_case/explanations/cox-whas500-s0.json"
+  },
+  "findings": [],
+  "structure": {
+    "n_train": 320,
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "uncovered_nodes": [],
+    "uncovered_edges": [],
+    "null_nodes": [
+      "-1",
+      "-11",
+      "-3",
+      "-6",
+      "-8"
+    ],
+    "coverage_hierarchy": {
+      "roots": [
+        "cox_log_risk"
+      ],
+      "global_root": "cox_log_risk",
+      "root_contains_outputs": true,
+      "complete": true,
+      "composed": 4,
+      "required": 4,
+      "exempt_disconnected": []
+    },
+    "hierarchy": {
+      "n_annotations": 5,
+      "roots": [
+        "cox_log_risk"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "not_under_root": [],
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.440892098500626e-16,
+    "closed_form_max_abs_err": 0.0014143475867554045,
+    "numeric_max_abs_err": 2.220446049250313e-16,
+    "leaves": [
+      {
+        "id": "ann_18",
+        "name": "age_and_body_mass",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.0014143475867554045,
+        "exit_scale": 1.5402068858488798
+      },
+      {
+        "id": "ann_19",
+        "name": "admission_haemodynamics",
+        "numeric_max_abs_err": 1.1102230246251565e-16,
+        "closed_form_max_abs_err": 0.001376928114198428,
+        "exit_scale": 1.4551063396482615
+      },
+      {
+        "id": "ann_20",
+        "name": "in_hospital_course",
+        "numeric_max_abs_err": 2.220446049250313e-16,
+        "closed_form_max_abs_err": 0.0006303248227873537,
+        "exit_scale": 1.3231731462752894
+      },
+      {
+        "id": "ann_21",
+        "name": "index_mi_type",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.0005103998767946316,
+        "exit_scale": 0.344250197589357
+      }
+    ],
+    "op_counts": {
+      "rename_node": 14,
+      "add_identity_node": 4,
+      "annotate": 5
+    },
+    "full_coverage": true
+  },
+  "closed_forms": {
+    "ann_18": "y_0 = 0.372 x_{age} - 0.242 x_{bmi}",
+    "ann_20": "y_0 = 0.333 x_{chf=1} + 0.0416 x_{los} + 0.121 x_{sho=1}",
+    "ann_19": "y_0 = - 0.199 x_{diasbp} + 0.286 x_{hr} - 0.0289 x_{sysbp}",
+    "ann_21": "y_0 = - 0.219 x_{mitype=1}"
+  },
+  "freetext": {
+    "counts": {
+      "formula": {
+        "ok": 3
+      },
+      "n_train": {
+        "ok": 43
+      },
+      "auc": {
+        "unchecked": 2
+      }
+    },
+    "checked": [
+      {
+        "kind": "formula",
+        "text": "identity_age_body = (0.372*age - 0.242*bmi)",
+        "status": "ok",
+        "node": "identity_age_body",
+        "max_abs_err": 0.0014143475867554045,
+        "rel_err": 0.0009182841602320792,
+        "node_scale": 1.5402068858488798,
+        "rows_off": 0,
+        "n_rows": 320,
+        "tag": "exact",
+        "within_rounding": true,
+        "rows_outside_rounding": 0,
+        "units": "standardised",
+        "method": "rows",
+        "location": "operations.age_and_body_mass.hypothesis",
+        "part": "ann_18"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.age_and_body_mass.evidence[1].payload.n",
+        "part": "ann_18"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.age_and_body_mass.evidence[2].payload.n",
+        "part": "ann_18"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.age_and_body_mass.evidence[3].payload.n",
+        "part": "ann_18"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.age_and_body_mass.evidence[4].payload.n",
+        "part": "ann_18"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.age_and_body_mass.evidence[5].payload.n",
+        "part": "ann_18"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.age_and_body_mass.evidence[6].payload.n",
+        "part": "ann_18"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.age_and_body_mass.evidence[9].payload.n",
+        "part": "ann_18"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.age_and_body_mass.evidence[10].payload.n",
+        "part": "ann_18"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.age_and_body_mass.evidence[11].payload.n",
+        "part": "ann_18"
+      },
+      {
+        "kind": "formula",
+        "text": "identity_haemo = (0.286*hr - 0.199*diasbp - 0.0289*sysbp)",
+        "status": "ok",
+        "node": "identity_haemo",
+        "max_abs_err": 0.001376928114198428,
+        "rel_err": 0.0009462731875192496,
+        "node_scale": 1.4551063396482613,
+        "rows_off": 0,
+        "n_rows": 320,
+        "tag": "exact",
+        "within_rounding": true,
+        "rows_outside_rounding": 0,
+        "units": "standardised",
+        "method": "rows",
+        "location": "operations.admission_haemodynamics.hypothesis",
+        "part": "ann_19"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.admission_haemodynamics.evidence[1].payload.n",
+        "part": "ann_19"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.admission_haemodynamics.evidence[2].payload.n",
+        "part": "ann_19"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.admission_haemodynamics.evidence[3].payload.n",
+        "part": "ann_19"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.admission_haemodynamics.evidence[4].payload.n",
+        "part": "ann_19"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.admission_haemodynamics.evidence[5].payload.n",
+        "part": "ann_19"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.admission_haemodynamics.evidence[6].payload.n",
+        "part": "ann_19"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.admission_haemodynamics.evidence[10].payload.n",
+        "part": "ann_19"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.admission_haemodynamics.evidence[11].payload.n",
+        "part": "ann_19"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.admission_haemodynamics.evidence[12].payload.n",
+        "part": "ann_19"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.admission_haemodynamics.evidence[13].payload.n",
+        "part": "ann_19"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.in_hospital_course.evidence[1].payload.n",
+        "part": "ann_20"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.in_hospital_course.evidence[2].payload.n",
+        "part": "ann_20"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.in_hospital_course.evidence[3].payload.n",
+        "part": "ann_20"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.in_hospital_course.evidence[4].payload.n",
+        "part": "ann_20"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.in_hospital_course.evidence[5].payload.n",
+        "part": "ann_20"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.in_hospital_course.evidence[6].payload.n",
+        "part": "ann_20"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.in_hospital_course.evidence[7].payload.n",
+        "part": "ann_20"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.in_hospital_course.evidence[12].payload.n",
+        "part": "ann_20"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.in_hospital_course.evidence[13].payload.n",
+        "part": "ann_20"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.index_mi_type.evidence[1].payload.n",
+        "part": "ann_21"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.index_mi_type.evidence[2].payload.n",
+        "part": "ann_21"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.index_mi_type.evidence[3].payload.n",
+        "part": "ann_21"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.index_mi_type.evidence[4].payload.n",
+        "part": "ann_21"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.index_mi_type.evidence[7].payload.n",
+        "part": "ann_21"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.index_mi_type.evidence[8].payload.n",
+        "part": "ann_21"
+      },
+      {
+        "kind": "formula",
+        "text": "0 = (identity_age_body + identity_haemo + identity_hospital + identity_mitype - 0.832)",
+        "status": "ok",
+        "node": "0",
+        "max_abs_err": 2.51338851398053e-05,
+        "rel_err": 8.05823722089751e-06,
+        "node_scale": 3.119030186232956,
+        "rows_off": 0,
+        "n_rows": 320,
+        "tag": "exact",
+        "within_rounding": true,
+        "rows_outside_rounding": 0,
+        "units": "standardised",
+        "method": "rows",
+        "location": "operations.cox_log_risk.hypothesis",
+        "part": "ann_22"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.cox_log_risk.evidence[1].payload.n",
+        "part": "ann_22"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.cox_log_risk.evidence[2].payload.n",
+        "part": "ann_22"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.cox_log_risk.evidence[3].payload.n",
+        "part": "ann_22"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.cox_log_risk.evidence[4].payload.n",
+        "part": "ann_22"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.cox_log_risk.evidence[5].payload.n",
+        "part": "ann_22"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.cox_log_risk.evidence[6].payload.n",
+        "part": "ann_22"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.cox_log_risk.evidence[7].payload.n",
+        "part": "ann_22"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.cox_log_risk.evidence[8].payload.n",
+        "part": "ann_22"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=320)",
+        "status": "ok",
+        "stated": 320,
+        "model": 320,
+        "location": "operations.cox_log_risk.evidence[13].payload.n",
+        "part": "ann_22"
+      }
+    ],
+    "unchecked_statements": [
+      {
+        "kind": "auc",
+        "text": "AUC falls to 0.781",
+        "status": "unchecked",
+        "stated": 0.781,
+        "model": 0.8333731485905399,
+        "reason": "not the full model's training value (a subgroup, the test split or another configuration?)",
+        "location": "operations.cox_log_risk.hypothesis",
+        "part": "ann_22"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC at three years 0.854",
+        "status": "unchecked",
+        "stated": 0.854,
+        "model": 0.8333731485905399,
+        "reason": "not the full model's training value (a subgroup, the test split or another configuration?)",
+        "location": "record.summary",
+        "part": "ann_22"
+      }
+    ],
+    "unchecked_sentences": [
+      {
+        "location": "operations.age_and_body_mass.hypothesis",
+        "part": "ann_18",
+        "text": "In clinical units, each additional year of age multiplies the hazard by 1.026 (hazard ratio 1.45 per standard deviation of age) and each additional kg/m\u00b2 of body-mass index multiplies it by 0.957 (0.79 per standard deviation), each through its own edge."
+      },
+      {
+        "location": "operations.age_and_body_mass.hypothesis",
+        "part": "ann_18",
+        "text": "The model therefore gives older and thinner patients a higher predicted risk: between the patients at the 5th and the 95th percentile of age the age term changes the hazard 3.19-fold, and the body-mass term 2.29-fold."
+      },
+      {
+        "location": "operations.age_and_body_mass.hypothesis",
+        "part": "ann_18",
+        "text": "Self-probe (whole model, the other inputs held at the typical case): sweeping age from 45 to 95 years raises the predicted 3-year risk of death from 17% to 49%; sweeping body-mass index from 20 to 40 kg/m\u00b2 lowers it from 38% to 18%."
+      },
+      {
+        "location": "operations.age_and_body_mass.hypothesis",
+        "part": "ann_18",
+        "text": "On the training split the 156 patients older than 72 have a mean predicted 3-year risk of 53% and 67% of them died during follow-up, against 22% and 20% for the 164 aged 72 or under; this part's mean contribution to the log-risk is 0.41 for the older group and -0.39 for the younger."
+      },
+      {
+        "location": "operations.age_and_body_mass.hypothesis",
+        "part": "ann_18",
+        "text": "Switching the part off (its exit fixed at its mean over the training rows) lowers the AUC of the score against the event indicator from 0.833 to 0.781, the largest loss among the four parts (the root lists them)."
+      },
+      {
+        "location": "operations.age_and_body_mass.hypothesis",
+        "part": "ann_18",
+        "text": "Meaning: age by itself predicts the part's exit with r\u00b2 0.82 (meaningful); age and body-mass index are correlated at -0.40 in the training rows, so in the data the two terms partly offset each other."
+      },
+      {
+        "location": "operations.age_and_body_mass.evidence[1].narrative",
+        "part": "ann_18",
+        "text": "Hazard-ratio readings of the age and body-mass terms: per year of age 1.026 and per kg/m\u00b2 of body-mass index 0.957 (readings[0] and readings[3]); each is a time-constant multiplicative effect on the hazard, and nothing else, which is the form the model can represent."
+      },
+      {
+        "location": "operations.admission_haemodynamics.hypothesis",
+        "part": "ann_19",
+        "text": "In clinical units, each additional beat per minute of admission heart rate multiplies the hazard by 1.0121 (1.33 per standard deviation), each additional mm Hg of diastolic blood pressure multiplies it by 0.9908 (0.82 per standard deviation), and each additional mm Hg of systolic blood pressure by 0"
+      },
+      {
+        "location": "operations.admission_haemodynamics.hypothesis",
+        "part": "ann_19",
+        "text": "The systolic term is small: between the patients at the 5th and the 95th percentile it changes the hazard 1.10-fold, against 2.44-fold for heart rate and 1.82-fold for diastolic pressure."
+      },
+      {
+        "location": "operations.admission_haemodynamics.hypothesis",
+        "part": "ann_19",
+        "text": "Self-probe (whole model, the other inputs held at the typical case): sweeping heart rate from 50 to 150 beats per minute raises the predicted 3-year risk of death from 22% to 56%; sweeping diastolic pressure from 50 to 120 mm Hg lowers it from 38% to 22%; sweeping systolic pressure from 90 to 200 mm"
+      },
+      {
+        "location": "operations.admission_haemodynamics.hypothesis",
+        "part": "ann_19",
+        "text": "On the training split the 154 patients with an admission heart rate above 85 have a mean predicted 3-year risk of 49% and 59% of them died during follow-up, against 26% and 28% for the 166 at 85 or below; this part's mean contribution to the log-risk is 0.25 for the faster group and -0.23 for the sl"
+      },
+      {
+        "location": "operations.admission_haemodynamics.hypothesis",
+        "part": "ann_19",
+        "text": "The 161 patients with diastolic pressure at or below 76 mm Hg have a mean predicted risk of 48% against 27% for the 159 above."
+      },
+      {
+        "location": "operations.admission_haemodynamics.hypothesis",
+        "part": "ann_19",
+        "text": "Switching the part off (its exit fixed at its mean over the training rows) lowers the AUC of the score against the event indicator from 0.833 to 0.822."
+      },
+      {
+        "location": "operations.admission_haemodynamics.hypothesis",
+        "part": "ann_19",
+        "text": "Meaning: heart rate by itself predicts the part's exit with r\u00b2 0.62 (partial), and the clinical shock index, heart rate divided by systolic pressure, with r\u00b2 0.73 (partial) because the model weights diastolic rather than systolic pressure; the raw-unit difference heart rate minus diastolic pressure "
+      },
+      {
+        "location": "operations.admission_haemodynamics.evidence[1].narrative",
+        "part": "ann_19",
+        "text": "Hazard-ratio readings of the haemodynamic terms: per beat per minute 1.0121, per mm Hg diastolic 0.9908, per mm Hg systolic 0.9991 (readings[2], [5], [8]); time-constant multiplicative effects, and nothing else, which is the form the model can represent."
+      },
+      {
+        "location": "operations.in_hospital_course.hypothesis",
+        "part": "ann_20",
+        "text": "This part is the weighted sum of three in-hospital-course inputs (congestive heart complications chf=1, cardiogenic shock sho=1 and length of stay los), read into the log-risk with weight one; the closed form is attached as evidence."
+      },
+      {
+        "location": "operations.in_hospital_course.hypothesis",
+        "part": "ann_20",
+        "text": "In clinical units, congestive heart complications during the admission multiply the hazard by 2.08 (hazard ratio 1.40 per standard deviation of the indicator), cardiogenic shock multiplies it by 1.94 (1.13 per standard deviation) and each additional day in hospital by 1.010 (1.04 per standard deviat"
+      },
+      {
+        "location": "operations.in_hospital_course.hypothesis",
+        "part": "ann_20",
+        "text": "Self-probe (whole model; a constructed patient aged 72, body-mass index 27, heart rate 85, diastolic pressure 78 and systolic pressure 145 mm Hg, a 5-day stay, a non-Q-wave infarction): with heart complications and without shock the predicted 3-year risk of death is 52% (log-risk -0.18) against 29% "
+      },
+      {
+        "location": "operations.in_hospital_course.hypothesis",
+        "part": "ann_20",
+        "text": "On the training split 93 patients had heart complications, with a mean predicted 3-year risk of 64% and 73% of them died during follow-up, against 26% and 31% for the 227 without; this part's mean contribution to the log-risk is 0.56 with complications and -0.23 without."
+      },
+      {
+        "location": "operations.in_hospital_course.hypothesis",
+        "part": "ann_20",
+        "text": "Cardiogenic shock is a small regime: the shock term is fitted to 11 training patients, of whom 64% died during follow-up (mean predicted risk 64%), and 100% of the 7 with both shock and heart complications died."
+      },
+      {
+        "location": "operations.in_hospital_course.hypothesis",
+        "part": "ann_20",
+        "text": "Switching the part off (its exit fixed at its mean over the training rows) lowers the AUC of the score against the event indicator from 0.833 to 0.807."
+      },
+      {
+        "location": "operations.in_hospital_course.hypothesis",
+        "part": "ann_20",
+        "text": "Meaning: the heart-complication indicator by itself predicts the part's exit with score 0.99 (meaningful); the shock and length-of-stay terms are small refinements on top of it."
+      },
+      {
+        "location": "operations.in_hospital_course.evidence[1].narrative",
+        "part": "ann_20",
+        "text": "Hazard-ratio readings of the in-hospital terms: heart complications 2.08, cardiogenic shock 1.94, per day of stay 1.010 (readings[1], [6], [7]); time-constant multiplicative effects, and nothing else, which is the form the model can represent."
+      },
+      {
+        "location": "operations.index_mi_type.hypothesis",
+        "part": "ann_21",
+        "text": "A single term: the index infarction being Q-wave (mitype=1) rather than non-Q-wave, read into the log-risk with weight one; the closed form is attached as evidence."
+      },
+      {
+        "location": "operations.index_mi_type.hypothesis",
+        "part": "ann_21",
+        "text": "In clinical units a Q-wave infarction multiplies the hazard by 0.617 relative to a non-Q-wave infarction (hazard ratio 0.80 per standard deviation of the indicator), through its own edge: the model gives Q-wave infarctions a lower predicted risk."
+      },
+      {
+        "location": "operations.index_mi_type.hypothesis",
+        "part": "ann_21",
+        "text": "Self-probe (whole model; a constructed patient aged 72, body-mass index 27, heart rate 85, diastolic pressure 78 and systolic pressure 145 mm Hg, a 5-day stay, without heart complications or shock): a Q-wave infarction gives a predicted 3-year risk of death of 19% (log-risk -1.39) against 29% (log-r"
+      },
+      {
+        "location": "operations.index_mi_type.hypothesis",
+        "part": "ann_21",
+        "text": "On the training split the 92 Q-wave patients have a mean predicted 3-year risk of 22% and 26% of them died during follow-up, against 44% and 50% for the 228 non-Q-wave patients; this part's mean contribution to the log-risk is -0.34 for Q-wave and 0.14 for non-Q-wave patients (age and the Q-wave ind"
+      },
+      {
+        "location": "operations.index_mi_type.hypothesis",
+        "part": "ann_21",
+        "text": "Switching the part off (its exit fixed at its mean over the training rows) lowers the AUC of the score against the event indicator from 0.833 to 0.832, the smallest loss among the four parts."
+      },
+      {
+        "location": "operations.index_mi_type.hypothesis",
+        "part": "ann_21",
+        "text": "Meaning: the indicator itself predicts the part's exit with score 1.00, as it must for one input re-scaled; beyond the direction and size of its hazard ratio this leaf is described, not explained."
+      },
+      {
+        "location": "operations.index_mi_type.evidence[1].narrative",
+        "part": "ann_21",
+        "text": "Hazard-ratio reading of the infarction-type term: Q-wave versus non-Q-wave 0.617 (readings[4]); a time-constant multiplicative effect, and nothing else, which is the form the model can represent."
+      },
+      {
+        "location": "operations.cox_log_risk.hypothesis",
+        "part": "ann_22",
+        "text": "The five inputs afb=1 (atrial fibrillation), av3=1 (complete heart block), cvd=1 (history of cardiovascular disease), gender=1 (female) and miord=1 (recurrent infarction) are not connected to the output in the phenotype (the coverage check's null basis) and are listed as entries of this root; the se"
+      },
+      {
+        "location": "operations.cox_log_risk.hypothesis",
+        "part": "ann_22",
+        "text": "Self-probe of the unconnected inputs (whole model; a constructed patient aged 72, body-mass index 27, heart rate 85, diastolic pressure 78 and systolic pressure 145 mm Hg, a 5-day stay, without heart complications, shock or a Q-wave infarction): the predicted 3-year risk of death is 29% (log-risk -0"
+      },
+      {
+        "location": "operations.cox_log_risk.hypothesis",
+        "part": "ann_22",
+        "text": "Self-probe of the composition: with the nine readout edges switched off at once (each part replaced by its mean over the training rows) the typical case's log-risk is -0.832, the constant, and the AUC of the score against the event indicator falls from 0.833 to 0.50; switched off one at a time, the "
+      },
+      {
+        "location": "operations.cox_log_risk.hypothesis",
+        "part": "ann_22",
+        "text": "Survival performance on the training split (320 patients, 138 deaths): Harrell's C 0.770, Uno's C 0.753, time-dependent AUC at 3 years 0.854, integrated Brier score 0.145, and the ratio of expected to observed 3-year risk 1.01; the spread of the log-risk gives a hazard ratio of 27.0 between the pati"
+      },
+      {
+        "location": "operations.cox_log_risk.evidence[1].narrative",
+        "part": "ann_22",
+        "text": "Hazard-ratio readings of the nine terms at the output, with each term's spread between the 5th- and 95th-percentile patient; the identity relays are expanded so the readings are the readout units of the current model state."
+      },
+      {
+        "location": "record.summary",
+        "part": "ann_22",
+        "text": "Per clinical unit the model multiplies the hazard by 1.026 per year of age, 0.957 per kg/m\u00b2 of body-mass index, 1.0121 per beat per minute of admission heart rate, 0.9908 per mm Hg of diastolic pressure, 0.9991 per mm Hg of systolic pressure, 2.08 for congestive heart complications, 1.94 for cardiog"
+      },
+      {
+        "location": "record.summary",
+        "part": "ann_22",
+        "text": "Coverage is complete (four leaves under one root, function preserved); on the training split Harrell's C is 0.770 and the time-dependent AUC at three years 0.854."
+      },
+      {
+        "location": "record.summary",
+        "part": "ann_22",
+        "text": "Each leaf is a weighted sum of its inputs, so the parts are described at the level of hazard ratios and named by their inputs (meaning: age r\u00b2 0.82, heart rate r\u00b2 0.62 partial, heart complications score 0.99, infarction type score 1.00); the model can represent time-constant multiplicative effects a"
+      },
+      {
+        "location": "record.resisted",
+        "part": "ann_22",
+        "text": "The admission_haemodynamics leaf is a weighted sum of heart rate and the two pressures, and a single named clinical concept predicts it at best partially: heart rate r\u00b2 0.62, the shock index (heart rate over systolic pressure) r\u00b2 0.73; the raw-unit difference heart rate minus diastolic pressure reac"
+      },
+      {
+        "location": "record.resisted",
+        "part": "ann_22",
+        "text": "The systolic-pressure term is small (1.10-fold between the patients at the 5th and the 95th percentile) and the cardiogenic-shock term is fitted to 11 training patients."
+      }
+    ]
+  },
+  "provenance": {
+    "templated_texts": 63,
+    "queries": 53
+  },
+  "summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "warn": 0,
+    "info": 0,
+    "unchecked_freetext": 40,
+    "verdict": "numbers reproduce",
+    "seconds": 3.1
+  }
+}

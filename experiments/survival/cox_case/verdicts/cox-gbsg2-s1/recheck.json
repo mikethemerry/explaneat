@@ -1,0 +1,967 @@
+{
+  "target": "experiments/survival/cox_case/explanations/cox-gbsg2-s1.json",
+  "genome_id": "e4c62516-fd1f-4e10-a997-adc574bbcef3",
+  "label": "cox-gbsg2-s1",
+  "operations_source": "database",
+  "files": {
+    "record": "experiments/survival/cox_case/explanations/cox-gbsg2-s1.json"
+  },
+  "findings": [],
+  "structure": {
+    "n_train": 438,
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "uncovered_nodes": [],
+    "uncovered_edges": [],
+    "null_nodes": [
+      "-1",
+      "-2",
+      "-4",
+      "-9"
+    ],
+    "coverage_hierarchy": {
+      "roots": [
+        "cox_log_risk"
+      ],
+      "global_root": "cox_log_risk",
+      "root_contains_outputs": true,
+      "complete": true,
+      "composed": 3,
+      "required": 3,
+      "exempt_disconnected": []
+    },
+    "hierarchy": {
+      "n_annotations": 4,
+      "roots": [
+        "cox_log_risk"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "not_under_root": [],
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.440892098500626e-16,
+    "closed_form_max_abs_err": 0.003520404747804129,
+    "numeric_max_abs_err": 0.0,
+    "leaves": [
+      {
+        "id": "ann_12",
+        "name": "tumour_biology",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.0012420002490327597,
+        "exit_scale": 2.3713456421812666
+      },
+      {
+        "id": "ann_13",
+        "name": "nodal_burden",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.003520404747804129,
+        "exit_scale": 2.2917889663080167
+      },
+      {
+        "id": "ann_14",
+        "name": "hormone_therapy",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.0002270900948664889,
+        "exit_scale": 0.2652031095930302
+      }
+    ],
+    "op_counts": {
+      "rename_node": 9,
+      "add_identity_node": 3,
+      "annotate": 4
+    },
+    "full_coverage": true
+  },
+  "closed_forms": {
+    "ann_12": "y_0 = - 0.316 x_{progrec} + 0.345 x_{tgrade=III} + 0.321 x_{tgrade=II}",
+    "ann_13": "y_0 = 0.293 x_{pnodes}",
+    "ann_14": "y_0 = - 0.206 x_{horTh=yes}"
+  },
+  "freetext": {
+    "counts": {
+      "auc": {
+        "ok": 6,
+        "unchecked": 11
+      },
+      "n_train": {
+        "ok": 28
+      }
+    },
+    "checked": [
+      {
+        "kind": "auc",
+        "text": "AUC against the event indicator from 0.6805 to 0.6675",
+        "status": "ok",
+        "stated": [
+          0.6805,
+          0.6675
+        ],
+        "model_full": 0.6805010916336351,
+        "model_part_off": [
+          0.6674544799372575,
+          0.6674544799372575,
+          0.6674544799372575
+        ],
+        "location": "operations.tumour_biology.hypothesis",
+        "part": "ann_12"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.tumour_biology.evidence[0].payload.n",
+        "part": "ann_12"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.tumour_biology.evidence[5].payload.n",
+        "part": "ann_12"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.tumour_biology.evidence[6].payload.n",
+        "part": "ann_12"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.tumour_biology.evidence[7].payload.n",
+        "part": "ann_12"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.tumour_biology.evidence[8].payload.n",
+        "part": "ann_12"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC against the event indicator 0.6805",
+        "status": "ok",
+        "stated": 0.6805,
+        "model": 0.6805010916336351,
+        "location": "operations.tumour_biology.evidence[9].narrative",
+        "part": "ann_12"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.tumour_biology.evidence[9].payload.n",
+        "part": "ann_12"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.tumour_biology.evidence[10].payload.n",
+        "part": "ann_12"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.tumour_biology.evidence[11].payload.n",
+        "part": "ann_12"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.tumour_biology.evidence[12].payload.n",
+        "part": "ann_12"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.tumour_biology.evidence[13].payload.n",
+        "part": "ann_12"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.tumour_biology.evidence[14].payload.n",
+        "part": "ann_12"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.tumour_biology.evidence[15].payload.n",
+        "part": "ann_12"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC against the event indicator from 0.6805 to 0.6258",
+        "status": "ok",
+        "stated": [
+          0.6805,
+          0.6258
+        ],
+        "model_full": 0.6805010916336351,
+        "model_part_off": [
+          0.6258452211882909,
+          0.6258452211882909,
+          0.6258452211882909
+        ],
+        "location": "operations.nodal_burden.hypothesis",
+        "part": "ann_13"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.nodal_burden.evidence[0].payload.n",
+        "part": "ann_13"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.nodal_burden.evidence[3].payload.n",
+        "part": "ann_13"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.nodal_burden.evidence[4].payload.n",
+        "part": "ann_13"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC against the event indicator 0.6805",
+        "status": "ok",
+        "stated": 0.6805,
+        "model": 0.6805010916336351,
+        "location": "operations.nodal_burden.evidence[5].narrative",
+        "part": "ann_13"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.nodal_burden.evidence[5].payload.n",
+        "part": "ann_13"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.nodal_burden.evidence[6].payload.n",
+        "part": "ann_13"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC against the event indicator from 0.6805 to 0.6767",
+        "status": "ok",
+        "stated": [
+          0.6805,
+          0.6767
+        ],
+        "model_full": 0.6805010916336351,
+        "model_part_off": [
+          0.6767280666426436,
+          0.6767280666426436,
+          0.6767280666426436
+        ],
+        "location": "operations.hormone_therapy.hypothesis",
+        "part": "ann_14"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.hormone_therapy.evidence[0].payload.n",
+        "part": "ann_14"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.hormone_therapy.evidence[3].payload.n",
+        "part": "ann_14"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.hormone_therapy.evidence[4].payload.n",
+        "part": "ann_14"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC against the event indicator 0.6805",
+        "status": "ok",
+        "stated": 0.6805,
+        "model": 0.6805010916336351,
+        "location": "operations.hormone_therapy.evidence[5].narrative",
+        "part": "ann_14"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.hormone_therapy.evidence[5].payload.n",
+        "part": "ann_14"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.hormone_therapy.evidence[6].payload.n",
+        "part": "ann_14"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.cox_log_risk.evidence[0].payload.n",
+        "part": "ann_15"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.cox_log_risk.evidence[1].payload.n",
+        "part": "ann_15"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.cox_log_risk.evidence[2].payload.n",
+        "part": "ann_15"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.cox_log_risk.evidence[3].payload.n",
+        "part": "ann_15"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.cox_log_risk.evidence[4].payload.n",
+        "part": "ann_15"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=438)",
+        "status": "ok",
+        "stated": 438,
+        "model": 438,
+        "location": "operations.cox_log_risk.evidence[8].payload.n",
+        "part": "ann_15"
+      }
+    ],
+    "unchecked_statements": [
+      {
+        "kind": "auc",
+        "text": "AUC 0.95",
+        "status": "unchecked",
+        "stated": 0.95,
+        "model": 0.6805010916336351,
+        "reason": "not the full model's training value (a subgroup, the test split or another configuration?)",
+        "location": "operations.tumour_biology.hypothesis",
+        "part": "ann_12"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC against the event indicator 0.6805 to 0.6742",
+        "status": "unchecked",
+        "stated": [
+          0.6805,
+          0.6742
+        ],
+        "model_full": 0.6805010916336351,
+        "model_part_off": [
+          0.6674544799372575,
+          0.6674544799372575,
+          0.6674544799372575
+        ],
+        "reason": "the second number is not this part switched off at its mean or at 0 (another configuration, e.g. a different readout or a linearisation)",
+        "location": "operations.tumour_biology.evidence[10].narrative",
+        "part": "ann_12"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC against the event indicator 0.6805 to 0.6387",
+        "status": "unchecked",
+        "stated": [
+          0.6805,
+          0.6387
+        ],
+        "model_full": 0.6805010916336351,
+        "model_part_off": [
+          0.6674544799372575,
+          0.6674544799372575,
+          0.6674544799372575
+        ],
+        "reason": "the second number is not this part switched off at its mean or at 0 (another configuration, e.g. a different readout or a linearisation)",
+        "location": "operations.tumour_biology.evidence[11].narrative",
+        "part": "ann_12"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC against the event indicator 0.6805 to 0.6751",
+        "status": "unchecked",
+        "stated": [
+          0.6805,
+          0.6751
+        ],
+        "model_full": 0.6805010916336351,
+        "model_part_off": [
+          0.6674544799372575,
+          0.6674544799372575,
+          0.6674544799372575
+        ],
+        "reason": "the second number is not this part switched off at its mean or at 0 (another configuration, e.g. a different readout or a linearisation)",
+        "location": "operations.tumour_biology.evidence[12].narrative",
+        "part": "ann_12"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC 0.95",
+        "status": "unchecked",
+        "stated": 0.95,
+        "model": 0.6805010916336351,
+        "reason": "not the full model's training value (a subgroup, the test split or another configuration?)",
+        "location": "operations.tumour_biology.evidence[13].narrative",
+        "part": "ann_12"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC at one, three and five years 0.765",
+        "status": "unchecked",
+        "stated": 0.765,
+        "model": 0.6805010916336351,
+        "reason": "not the full model's training value (a subgroup, the test split or another configuration?)",
+        "location": "operations.cox_log_risk.hypothesis",
+        "part": "ann_15"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC against the event indicator falls from 0.6805 to 0.50",
+        "status": "unchecked",
+        "stated": [
+          0.6805,
+          0.5
+        ],
+        "model_full": 0.6805010916336351,
+        "reason": "the second number is not this part switched off at its mean or at 0 (another configuration, e.g. a different readout or a linearisation)",
+        "location": "operations.cox_log_risk.hypothesis",
+        "part": "ann_15"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC losses rank nodal_burden (0.6258",
+        "status": "unchecked",
+        "stated": 0.6258,
+        "model": 0.6805010916336351,
+        "reason": "not the full model's training value (a subgroup, the test split or another configuration?)",
+        "location": "operations.cox_log_risk.hypothesis",
+        "part": "ann_15"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC at one, three and five years 0.765",
+        "status": "unchecked",
+        "stated": 0.765,
+        "model": 0.6805010916336351,
+        "reason": "not the full model's training value (a subgroup, the test split or another configuration?)",
+        "location": "operations.cox_log_risk.evidence[1].narrative",
+        "part": "ann_15"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC against the event indicator 0.6805 to 0.50",
+        "status": "unchecked",
+        "stated": [
+          0.6805,
+          0.5
+        ],
+        "model_full": 0.6805010916336351,
+        "reason": "the second number is not this part switched off at its mean or at 0 (another configuration, e.g. a different readout or a linearisation)",
+        "location": "operations.cox_log_risk.evidence[2].narrative",
+        "part": "ann_15"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC at five years 0.707",
+        "status": "unchecked",
+        "stated": 0.707,
+        "model": 0.6805010916336351,
+        "reason": "not the full model's training value (a subgroup, the test split or another configuration?)",
+        "location": "record.summary",
+        "part": "ann_15"
+      }
+    ],
+    "unchecked_sentences": [
+      {
+        "location": "operations.tumour_biology.hypothesis",
+        "part": "ann_12",
+        "text": "identity_biology \u2248 0.345\u00b7z(tgrade=III) + 0.321\u00b7z(tgrade=II) -0.316\u00b7z(progrec), coefficients per standardised input (rounded; off by up to 0.0012 on the training rows; the exact weights are in the analytical_formula evidence)."
+      },
+      {
+        "location": "operations.tumour_biology.hypothesis",
+        "part": "ann_12",
+        "text": "In hazard-ratio terms per clinical unit, holding the other inputs fixed: relative to a grade I tumour, the model multiplies the hazard by 1.96 for grade II and by 2.26 for grade III; each additional fmol/l of progesterone receptor multiplies it by 0.9984 (one SD of progesterone receptor: 0.73), a pr"
+      },
+      {
+        "location": "operations.tumour_biology.hypothesis",
+        "part": "ann_12",
+        "text": "Across the training patients the progesterone-receptor term spans a hazard ratio of 1.92 between its 95th and 5th percentile, the grade III term 2.26 and the grade II term 1.96."
+      },
+      {
+        "location": "operations.tumour_biology.hypothesis",
+        "part": "ann_12",
+        "text": "Self-probe (whole model; a constructed patient with progesterone receptor 29.5 fmol/l, 3 positive nodes and no hormone therapy, the remaining inputs at the typical values of each grade cell, which is harmless because fixing the four unconnected inputs moves 0 of 438 training predictions): the log-ri"
+      },
+      {
+        "location": "operations.tumour_biology.hypothesis",
+        "part": "ann_12",
+        "text": "Sweeping progesterone receptor from 0 to 300 fmol/l on the typical grade II patient lowers the log-risk from -0.479 to -0.964 (five-year risk 58% to 41%)."
+      },
+      {
+        "location": "operations.tumour_biology.hypothesis",
+        "part": "ann_12",
+        "text": "In the training split the part's mean contribution to the log-risk is 0.261 for the 102 grade III patients, 0.039 for the 285 grade II patients and -0.741 for the 51 grade I patients (the three grade cells are exhaustive: 0 patients carry both one-hot levels)."
+      },
+      {
+        "location": "operations.tumour_biology.hypothesis",
+        "part": "ann_12",
+        "text": "Switching the whole part off (exit fixed at its training mean) moves the predicted five-year risk by 9% on average over the 438 training rows and lowers the AUC against the event indicator from 0.6805 to 0.6675."
+      },
+      {
+        "location": "operations.tumour_biology.hypothesis",
+        "part": "ann_12",
+        "text": "Meaning (concept probe over the tabular library): the best single concept for the exit is a progesterone-receptor threshold, score 0.91 (AUC 0.95, R-squared 0.30); because the part sums three terms, one concept captures its direction and not its value, so the part is described by its formula rather "
+      },
+      {
+        "location": "operations.tumour_biology.evidence[0].narrative",
+        "part": "ann_12",
+        "text": "Hazard-ratio reading of the three terms of this part at the output (identity relays expanded): grade II versus grade I 1.96, grade III versus grade I 2.26, each fmol/l of progesterone receptor 0.9984 (per SD 0.73); the progesterone-receptor term spans a hazard ratio of 1.92 between its 95th and 5th "
+      },
+      {
+        "location": "operations.tumour_biology.evidence[1].narrative",
+        "part": "ann_12",
+        "text": "Self-probe, grade III cell: constructed patient with progesterone receptor 29.5 fmol/l, 3 positive nodes, no hormone therapy, grade III; log-risk -0.382, five-year risk 61%, this part's contribution 0.315."
+      },
+      {
+        "location": "operations.tumour_biology.evidence[2].narrative",
+        "part": "ann_12",
+        "text": "Self-probe, grade II cell: the same constructed patient with a grade II tumour; log-risk -0.526, five-year risk 56%, this part's contribution 0.171."
+      },
+      {
+        "location": "operations.tumour_biology.evidence[3].narrative",
+        "part": "ann_12",
+        "text": "Self-probe, grade I cell: the same constructed patient with a grade I tumour; log-risk -1.199, five-year risk 34%, this part's contribution -0.502."
+      },
+      {
+        "location": "operations.tumour_biology.evidence[4].narrative",
+        "part": "ann_12",
+        "text": "Self-probe, progesterone-receptor sweep on the typical grade II patient from 0 to 300 fmol/l: log-risk -0.479 to -0.964, five-year risk 58% to 41%; the decrease is linear in the log-risk."
+      },
+      {
+        "location": "operations.tumour_biology.evidence[5].narrative",
+        "part": "ann_12",
+        "text": "Grade III cell of the training split: 102 patients, mean predicted five-year risk 61%, 47% had an event during follow-up; this part's mean contribution 0.261."
+      },
+      {
+        "location": "operations.tumour_biology.evidence[6].narrative",
+        "part": "ann_12",
+        "text": "Grade II cell of the training split: 285 patients, mean predicted five-year risk 50%, 46% had an event during follow-up; this part's mean contribution 0.039."
+      },
+      {
+        "location": "operations.tumour_biology.evidence[7].narrative",
+        "part": "ann_12",
+        "text": "Grade I cell of the training split (both one-hot levels off): 51 patients, mean predicted five-year risk 26%, 22% had an event during follow-up; this part's mean contribution -0.741."
+      },
+      {
+        "location": "operations.tumour_biology.evidence[8].narrative",
+        "part": "ann_12",
+        "text": "Exhaustiveness of the grade cells: 0 training patients carry both one-hot grade levels, so grade I, II and III partition the 438 rows."
+      },
+      {
+        "location": "operations.tumour_biology.evidence[9].narrative",
+        "part": "ann_12",
+        "text": "Whole part switched off (exit fixed at its training mean): mean absolute change in five-year risk 9% over 438 training rows, largest 44%;"
+      },
+      {
+        "location": "operations.tumour_biology.evidence[9].narrative",
+        "part": "ann_12",
+        "text": "AUC against the event indicator 0.6805 with, 0.6675 without."
+      },
+      {
+        "location": "operations.tumour_biology.evidence[10].narrative",
+        "part": "ann_12",
+        "text": "Progesterone-receptor edge alone switched off (weight -0.316 per SD): AUC against the event indicator 0.6805 to 0.6742, mean absolute change in five-year risk 6%."
+      },
+      {
+        "location": "operations.tumour_biology.evidence[11].narrative",
+        "part": "ann_12",
+        "text": "Grade II edge alone switched off (weight 0.321 per SD): AUC against the event indicator 0.6805 to 0.6387, mean absolute change in five-year risk 9%."
+      },
+      {
+        "location": "operations.tumour_biology.evidence[12].narrative",
+        "part": "ann_12",
+        "text": "Grade III edge alone switched off (weight 0.345 per SD): AUC against the event indicator 0.6805 to 0.6751, mean absolute change in five-year risk 9%."
+      },
+      {
+        "location": "operations.tumour_biology.evidence[13].narrative",
+        "part": "ann_12",
+        "text": "Library sweep for the exit: best concept a progesterone-receptor threshold, score 0.91 (AUC 0.95, R-squared 0.30); stored as the meaning block."
+      },
+      {
+        "location": "operations.tumour_biology.evidence[14].narrative",
+        "part": "ann_12",
+        "text": "Ad-hoc concept, grade as an ordinal (II counts one, III counts two): R-squared 0.36, grade closed_form_only; the progesterone-receptor level alone: R-squared 0.70 (see the companion record)."
+      },
+      {
+        "location": "operations.tumour_biology.evidence[15].narrative",
+        "part": "ann_12",
+        "text": "Ad-hoc concept, progesterone receptor level (continuous): R-squared 0.70, grade partial."
+      },
+      {
+        "location": "operations.nodal_burden.hypothesis",
+        "part": "ann_13",
+        "text": "identity_nodal \u2248 0.293\u00b7z(pnodes), a single direct edge from the number of positive lymph nodes to an identity exit that is passed unchanged to the log-risk (rounded coefficient per standardised input, off by up to 0.0035 on the training rows; the exact weight is in the analytical_formula evidence)."
+      },
+      {
+        "location": "operations.nodal_burden.hypothesis",
+        "part": "ann_13",
+        "text": "In hazard-ratio terms per clinical unit, holding the other inputs fixed: each additional positive lymph node multiplies the hazard by 1.051 (one SD of the node count: 1.34); the part is one linear edge, so the effect is log-linear in the node count across the training range, without a threshold or a"
+      },
+      {
+        "location": "operations.nodal_burden.hypothesis",
+        "part": "ann_13",
+        "text": "Across the training patients the term spans a hazard ratio of 2.12 between its 95th and 5th percentile, and 1.92 between the 95th-percentile and the median patient."
+      },
+      {
+        "location": "operations.nodal_burden.hypothesis",
+        "part": "ann_13",
+        "text": "Self-probe (whole model, the typical patient: grade II, no hormone therapy, progesterone receptor 29.5 fmol/l): sweeping positive nodes from 1 to 29 raises the log-risk from -0.627 to 0.775 and the predicted five-year risk from 53% to 95%, the part's contribution rising from -0.211 to 1.191; going f"
+      },
+      {
+        "location": "operations.nodal_burden.hypothesis",
+        "part": "ann_13",
+        "text": "In the training split the 71 patients with ten or more positive nodes have a mean predicted five-year risk of 71% (73% had an event during follow-up), against 43% for the 234 patients with three or fewer (31% had an event); this part's mean contribution to the log-risk is 0.520 in the first group an"
+      },
+      {
+        "location": "operations.nodal_burden.hypothesis",
+        "part": "ann_13",
+        "text": "Switching the part off (exit fixed at its training mean) moves the predicted five-year risk by 6% on average over the 438 training rows (largest change 49%) and lowers the AUC against the event indicator from 0.6805 to 0.6258, the largest loss of the three parts."
+      },
+      {
+        "location": "operations.nodal_burden.hypothesis",
+        "part": "ann_13",
+        "text": "Meaning: the exit is the positive-node count itself, concept probe score 1.00 for the concept pnodes."
+      },
+      {
+        "location": "operations.nodal_burden.evidence[0].narrative",
+        "part": "ann_13",
+        "text": "Hazard-ratio reading of the positive-nodes term at the output: each additional positive lymph node multiplies the hazard by 1.051 (per SD 1.34, log-HR per node 0.0501); the term spans a hazard ratio of 2.12 between its 95th and 5th percentile over the training patients."
+      },
+      {
+        "location": "operations.nodal_burden.evidence[1].narrative",
+        "part": "ann_13",
+        "text": "Self-probe, sweep of positive nodes on the typical patient from 1 to 29: log-risk -0.627 to 0.775, five-year risk 53% to 95%, this part's contribution -0.211 to 1.191; equal steps in nodes give equal steps in the log-risk."
+      },
+      {
+        "location": "operations.nodal_burden.evidence[2].narrative",
+        "part": "ann_13",
+        "text": "Self-probe, one versus two positive nodes on the typical patient: log-risk -0.6266 and -0.5765; the step is the per-node log-hazard ratio of the hazard_ratio_reading record."
+      },
+      {
+        "location": "operations.nodal_burden.evidence[3].narrative",
+        "part": "ann_13",
+        "text": "Training patients with ten or more positive nodes: 71 patients, mean predicted five-year risk 71%, 73% had an event during follow-up; this part's mean contribution 0.520."
+      },
+      {
+        "location": "operations.nodal_burden.evidence[4].narrative",
+        "part": "ann_13",
+        "text": "Training patients with three or fewer positive nodes: 234 patients, mean predicted five-year risk 43%, 31% had an event during follow-up; this part's mean contribution -0.175."
+      },
+      {
+        "location": "operations.nodal_burden.evidence[5].narrative",
+        "part": "ann_13",
+        "text": "Part switched off (exit fixed at its training mean): mean absolute change in five-year risk 6% over 438 training rows, largest 49%;"
+      },
+      {
+        "location": "operations.nodal_burden.evidence[5].narrative",
+        "part": "ann_13",
+        "text": "AUC against the event indicator 0.6805 with, 0.6258 without."
+      },
+      {
+        "location": "operations.nodal_burden.evidence[6].narrative",
+        "part": "ann_13",
+        "text": "Concept probe: the exit is the positive-node count, score 1.00; stored as the meaning block."
+      },
+      {
+        "location": "operations.hormone_therapy.hypothesis",
+        "part": "ann_14",
+        "text": "identity_hormone \u2248 -0.206\u00b7z(horTh=yes), a single direct edge from the hormonal-therapy indicator to an identity exit that is passed unchanged to the log-risk (rounded coefficient per standardised input, off by up to 0.00023 on the training rows; the exact weight is in the analytical_formula evidence"
+      },
+      {
+        "location": "operations.hormone_therapy.hypothesis",
+        "part": "ann_14",
+        "text": "In hazard-ratio terms: holding the other inputs fixed, the model gives a patient who received hormonal therapy 0.653 times the hazard of a patient who did not (per SD of the indicator: 0.81); the part has one binary input, so this is a fixed offset on the log-hazard scale that does not depend on the"
+      },
+      {
+        "location": "operations.hormone_therapy.hypothesis",
+        "part": "ann_14",
+        "text": "Across the training patients the term spans a hazard ratio of 1.53 between its 95th and 5th percentile."
+      },
+      {
+        "location": "operations.hormone_therapy.hypothesis",
+        "part": "ann_14",
+        "text": "Self-probe (whole model; a constructed grade II patient with progesterone receptor 29.5 fmol/l and 3 positive nodes, the remaining inputs at the typical values of each therapy cell, which is harmless because fixing the four unconnected inputs moves 0 of 438 training predictions): the log-risk is -0."
+      },
+      {
+        "location": "operations.hormone_therapy.hypothesis",
+        "part": "ann_14",
+        "text": "In the training split the 165 treated patients have a mean predicted five-year risk of 41% (37% had an event during follow-up) and this part contributes -0.265 to their log-risk; the 273 untreated patients have 55% (48% had an event) with a contribution of 0.160."
+      },
+      {
+        "location": "operations.hormone_therapy.hypothesis",
+        "part": "ann_14",
+        "text": "Switching the part off (exit fixed at its training mean) moves the predicted five-year risk by 6% on average over the 438 training rows (largest change 10%) and lowers the AUC against the event indicator from 0.6805 to 0.6767, the smallest loss of the three parts."
+      },
+      {
+        "location": "operations.hormone_therapy.hypothesis",
+        "part": "ann_14",
+        "text": "Meaning: the exit is the therapy indicator itself, concept probe score 1.00 for the concept horTh=yes."
+      },
+      {
+        "location": "operations.hormone_therapy.evidence[0].narrative",
+        "part": "ann_14",
+        "text": "Hazard-ratio reading of the hormonal-therapy term at the output: a treated patient has 0.653 times the hazard of an untreated one (per SD 0.81, log-HR -0.425); the term spans a hazard ratio of 1.53 between its 95th and 5th percentile over the training patients."
+      },
+      {
+        "location": "operations.hormone_therapy.evidence[1].narrative",
+        "part": "ann_14",
+        "text": "Self-probe, treated cell: constructed grade II patient with progesterone receptor 29.5 fmol/l and 3 positive nodes, hormonal therapy yes; log-risk -0.952, five-year risk 42%, this part's contribution -0.265."
+      },
+      {
+        "location": "operations.hormone_therapy.evidence[2].narrative",
+        "part": "ann_14",
+        "text": "Self-probe, untreated cell: the same constructed patient without hormonal therapy; log-risk -0.526, five-year risk 56%, this part's contribution 0.160."
+      },
+      {
+        "location": "operations.hormone_therapy.evidence[3].narrative",
+        "part": "ann_14",
+        "text": "Treated training patients: 165 patients, mean predicted five-year risk 41%, 37% had an event during follow-up; this part's mean contribution -0.265."
+      },
+      {
+        "location": "operations.hormone_therapy.evidence[4].narrative",
+        "part": "ann_14",
+        "text": "Untreated training patients: 273 patients, mean predicted five-year risk 55%, 48% had an event during follow-up; this part's mean contribution 0.160."
+      },
+      {
+        "location": "operations.hormone_therapy.evidence[5].narrative",
+        "part": "ann_14",
+        "text": "Part switched off (exit fixed at its training mean): mean absolute change in five-year risk 6% over 438 training rows, largest 10%;"
+      },
+      {
+        "location": "operations.hormone_therapy.evidence[5].narrative",
+        "part": "ann_14",
+        "text": "AUC against the event indicator 0.6805 with, 0.6767 without."
+      },
+      {
+        "location": "operations.hormone_therapy.evidence[6].narrative",
+        "part": "ann_14",
+        "text": "Concept probe: the exit is the hormonal-therapy indicator, score 1.00; stored as the meaning block."
+      },
+      {
+        "location": "operations.cox_log_risk.hypothesis",
+        "part": "ann_15",
+        "text": "The 5 terms at the output are all direct input edges routed through the three identity exits (0 direct input edges remain at the output itself), so the model is a sparse linear Cox model with the following hazard ratios per clinical unit, holding the other inputs fixed: grade II versus grade I 1.96,"
+      },
+      {
+        "location": "operations.cox_log_risk.hypothesis",
+        "part": "ann_15",
+        "text": "The four remaining inputs, age, oestrogen receptor, menopausal status and tumour size, are unconnected entry nodes with zero effect: fixing all four at once changes 0 of the 438 training predictions (largest absolute change in five-year risk 0.0), and sweeping the typical patient across the training"
+      },
+      {
+        "location": "operations.cox_log_risk.hypothesis",
+        "part": "ann_15",
+        "text": "Across the training patients the log-risk spans a hazard ratio of 5.82 between the 95th- and the 5th-percentile patient."
+      },
+      {
+        "location": "operations.cox_log_risk.hypothesis",
+        "part": "ann_15",
+        "text": "Survival performance on the training split (n = 438, 191 events): Harrell's C 0.682, Uno's C 0.651, time-dependent AUC at one, three and five years 0.765, 0.731 and 0.707, integrated Brier score 0.132; five-year calibration over ten risk deciles: mean predicted risk 50% against a Kaplan-Meier observ"
+      },
+      {
+        "location": "operations.cox_log_risk.hypothesis",
+        "part": "ann_15",
+        "text": "Self-probe of the composition: switching all three parts off at once leaves the constant alone, so the typical patient's log-risk goes from -0.526 to -0.747, the output bias (five-year risk 56% to 48%), and the AUC against the event indicator falls from 0.6805 to 0.50, chance level; by single-part a"
+      },
+      {
+        "location": "operations.cox_log_risk.hypothesis",
+        "part": "ann_15",
+        "text": "Function preservation: the identity-node refactoring reproduces the original network's log-risk to 4.4e-16 on the training rows."
+      },
+      {
+        "location": "operations.cox_log_risk.evidence[0].narrative",
+        "part": "ann_15",
+        "text": "Hazard-ratio reading of all 5 terms at the output (per clinical unit, other inputs fixed): grade II 1.96, grade III 2.26, each positive node 1.051, each fmol/l progesterone receptor 0.9984, hormonal therapy 0.653."
+      },
+      {
+        "location": "operations.cox_log_risk.evidence[1].narrative",
+        "part": "ann_15",
+        "text": "Survival performance on the training split (n = 438, 191 events): Harrell's C 0.682, Uno's C 0.651, time-dependent AUC at one, three and five years 0.765, 0.731, 0.707, integrated Brier score 0.132, five-year calibration mean predicted 50% against Kaplan-Meier observed 49% (largest decile gap 11%); "
+      },
+      {
+        "location": "operations.cox_log_risk.evidence[2].narrative",
+        "part": "ann_15",
+        "text": "All three parts switched off at once: the typical patient's log-risk goes from -0.526 to -0.747 (the output bias), five-year risk 56% to 48%;"
+      },
+      {
+        "location": "operations.cox_log_risk.evidence[3].narrative",
+        "part": "ann_15",
+        "text": "The four unconnected inputs (age, oestrogen receptor, menopausal status, tumour size) fixed at once: 0 of 438 training predictions change, largest absolute change in five-year risk 0.0."
+      },
+      {
+        "location": "operations.cox_log_risk.evidence[5].narrative",
+        "part": "ann_15",
+        "text": "Sweep of age across its training range on the typical patient: log-risk -0.5265 at the low end and -0.5265 at the high end."
+      },
+      {
+        "location": "operations.cox_log_risk.evidence[6].narrative",
+        "part": "ann_15",
+        "text": "Sweep of tumour size across its training range on the typical patient: log-risk -0.5265 at the low end and -0.5265 at the high end."
+      },
+      {
+        "location": "operations.cox_log_risk.evidence[7].narrative",
+        "part": "ann_15",
+        "text": "Sweep of oestrogen receptor across its training range on the typical patient: log-risk -0.5265 at the low end and -0.5265 at the high end."
+      },
+      {
+        "location": "operations.cox_log_risk.evidence[8].narrative",
+        "part": "ann_15",
+        "text": "check_explanation: function preservation of the refactored model against the original, max absolute error 4.4e-16 on 438 training rows; hierarchy complete with a single root; closed-form max error over the leaves 0.0035."
+      },
+      {
+        "location": "record.summary",
+        "part": "ann_15",
+        "text": "A sparse linear Cox model: the log-risk is an exact sum of three leaf parts and a constant, with 5 direct input edges and four unconnected inputs (age, oestrogen receptor, menopausal status and tumour size; fixing all four changes 0 of 438 training predictions)."
+      },
+      {
+        "location": "record.summary",
+        "part": "ann_15",
+        "text": "Hazard ratios per clinical unit, other inputs fixed: tumour_biology gives 1.96 for a grade II and 2.26 for a grade III tumour against grade I, and 0.9984 per fmol/l of progesterone receptor (0.73 per SD); nodal_burden gives 1.051 per positive lymph node, log-linear across the training range; hormone"
+      },
+      {
+        "location": "record.summary",
+        "part": "ann_15",
+        "text": "Survival performance on the training split: Harrell's C 0.682, Uno's C 0.651, time-dependent AUC at five years 0.707, integrated Brier score 0.132, five-year calibration 50% predicted against 49% observed."
+      },
+      {
+        "location": "record.summary",
+        "part": "ann_15",
+        "text": "Structural and compositional coverage are complete under a single root; the identity-node refactoring preserves the function to 4.4e-16."
+      },
+      {
+        "location": "record.summary",
+        "part": "ann_15",
+        "text": "Every leaf passed its self-probe and grades meaningful on the concept probe: nodal_burden and hormone_therapy are their own input (scores 1.00 and 1.00), while tumour_biology's best single library concept is a progesterone-receptor threshold (score 0.91, R-squared 0.30) that captures its direction a"
+      },
+      {
+        "location": "record.resisted",
+        "part": "ann_15",
+        "text": "The resisted list is empty: each of the 5 output terms is a direct input edge, and each leaf's self-probe reproduced its per-unit log-hazard ratio."
+      },
+      {
+        "location": "record.resisted",
+        "part": "ann_15",
+        "text": "The limits are of a different kind. tumour_biology, a sum of three terms, has a best single concept that captures direction and not value (score 0.91, R-squared 0.30), so it is described by its formula rather than by one clinical concept."
+      },
+      {
+        "location": "record.resisted",
+        "part": "ann_15",
+        "text": "The four unconnected inputs are described as zero-effect (0 of 438 training predictions change when all four are fixed) and not explained, because the evolution left them out; and the hormonal-therapy term is an association learned from this cohort, not a treatment effect."
+      }
+    ]
+  },
+  "provenance": {
+    "templated_texts": 43,
+    "queries": 36
+  },
+  "summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "warn": 0,
+    "info": 0,
+    "unchecked_freetext": 77,
+    "verdict": "numbers reproduce",
+    "seconds": 2.9
+  }
+}
