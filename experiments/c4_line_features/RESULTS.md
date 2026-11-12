@@ -52,7 +52,8 @@ vocabulary (`tests/test_analysis/test_concepts_c4_lines.py`).
 
 Datasets in `explaneat_dev` (new rows only; no schema change; `explaneat_v4` not touched):
 `connect4_lines` `a520a67b-855a-4606-8038-88cb5bc1fb2c` (split `1bdaf11a-…`),
-`connect4_lines_cells` `347b3198-2332-4a01-97e2-cb207dfff87e` (split `b9e6a9cf-…`).
+`connect4_lines_cells` `347b3198-2332-4a01-97e2-cb207dfff87e` (split `b9e6a9cf-…`),
+`connect4_perline` `ed521255-65a3-486f-bc23-23e437636da7` (split `7bb132f0-…`).
 
 ## Signal check: where does the signal live? (`signal_check.py`)
 
@@ -103,18 +104,23 @@ per base: the largest training AUC over all its runs. Test AUC never entered sel
 | lines_cells | heavy | 2 | **0.9352** | 0.9293 | 10 | 648 | 58 | 108 |
 | lines_cells | default | 0 | 0.8862 | 0.8864 | 7 | 60 | 48 | 24 |
 | lines_cells | default | 1 | 0.8872 | 0.8885 | 8 | 59 | 42 | 24 |
-| lines_cells | default | 2 | PERLINE_LC2 |
-| perline | default | 0-2 | PERLINE_ROWS |
+| lines_cells | default | 2 | 0.8861 | 0.8859 | 4 | 46 | 40 | 23 |
+| perline | default | 0 | 0.9115 | 0.9146 | 6 | 98 | 87 | 38 |
+| perline | default | 1 | 0.9107 | 0.9137 | 2 | 81 | 79 | 37 |
+| perline | default | 2 | **0.9120** | 0.9140 | 3 | 86 | 82 | 35 |
 
-Bold: selected per base. Seed spread is small (heavy test AUC: lines 0.8782, SD 0.0006;
-lines_cells 0.9288, SD 0.0005). References on the same split (train / test AUC):
+Bold: selected per base. Seed spread is small (test AUC: lines heavy 0.8782, SD 0.0006;
+lines_cells heavy 0.9288, SD 0.0005; perline default 0.9141, SD 0.0004). On the per-line base the
+*default* config (no started hidden units, 5 epochs, 35 min a run) reaches the capacity champion's
+AUC (0.914 vs 0.915) with 2-6 hidden units and about 85 connections, where the cells needed 10
+started units, 50 epochs and 470 connections: on this base the function is nearly linear. References on the same split (train / test AUC):
 
 | Base | LR | GBM | PropNEAT |
 |---|---|---|---|
 | cells (earlier work) | 0.857 / 0.861 | 0.947 / 0.944 | complex_real 0.858 / 0.862; capacity 0.919 / 0.915 (selected; mean test 0.911) |
 | lines | 0.865 / 0.862 | 0.894 / 0.885 | heavy 0.882 / 0.879 (selected); default 0.872 / 0.870 |
 | lines_cells | 0.888 / 0.888 | 0.949 / 0.943 | heavy 0.935 / 0.929 (selected); default 0.887 / 0.889 |
-| perline | 0.917 / 0.919 | 0.959 / 0.952 | default PERLINE_BEST |
+| perline | 0.917 / 0.919 | 0.959 / 0.952 | default 0.912 / 0.914 (selected) |
 
 On the lines base PropNEAT closes 74% of the LR-to-GBM gap (0.862 to 0.885); on lines+cells 75%
 of the gap from LR (0.888) to GBM (0.943), against 60% for the capacity study on cells. The
@@ -127,6 +133,7 @@ of 150 and the best genome; the DB genome reproduces the stored train and test A
 
 - lines: experiment `b4b4e7b6-1bd1-4a5d-a496-7a6bf23fe884`, genome `6ebf7e0c-55ec-4215-9852-0ac982e43c0e`
 - lines_cells: experiment `19fd1a9f-69ab-4571-ba83-a3d8c7c86122`, genome `9e843d20-8e42-47d6-9c94-576c5f06fdf3`
+- perline: experiment `fd7c8e00-a9e0-4d3c-858b-4247ee6e4d99`, genome `94fb8bdc-784b-4f75-a63c-25b1ad31da15`
 
 ## Explanations (`EXPLAIN_TASK.md`, `explanations/<base>/`, `VERIFY_TASK.md`, `verification/<base>/`)
 
