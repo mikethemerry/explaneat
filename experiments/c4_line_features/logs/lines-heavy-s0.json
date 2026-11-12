@@ -1,0 +1,82 @@
+{
+  "task": "c4",
+  "study": "c4_line_features",
+  "inputs": "lines",
+  "config": "heavy",
+  "seed": 0,
+  "name": "lines-heavy-s0",
+  "variant": "static",
+  "n_generations": 80,
+  "best_generation": 79,
+  "n_fit": 54045,
+  "val_frac": null,
+  "n_epochs_backprop": 50,
+  "overrides": {
+    "NEAT.pop_size": "150",
+    "DefaultGenome.num_hidden": "10",
+    "DefaultGenome.weight_init_stdev": "0.15"
+  },
+  "fitness_function": "auc",
+  "criterion": "bce",
+  "output_activation": "sigmoid",
+  "mask_phantom": true,
+  "torch_threads": 1,
+  "neat_config": "experiments/c4_line_features/configs/lines-heavy-s0.ini",
+  "dynamic_threshold": null,
+  "code_commit": "f61fec2fda4346c2270aa4d65bc77dfe8bcfd426",
+  "code_dirty": false,
+  "data": {
+    "task": "c4",
+    "source": "PMLB connect_4 (UCI Connect-4)",
+    "target": "1 = first player (x, to move) wins with perfect play; 0 = loss or draw",
+    "encoding": "16 line features (counts) from the 42 ordinal cells",
+    "class_names": [
+      "not win",
+      "win"
+    ],
+    "inputs": "lines",
+    "n_inputs": 16,
+    "n_rows": 67557,
+    "n_train": 54045,
+    "n_test": 13512,
+    "positive_share": 0.6583033586452921,
+    "positive_share_train": 0.658303265797021,
+    "split_seed": 42,
+    "scaler": "StandardScaler fit on the training rows",
+    "study": "experiments/c4_line_features"
+  },
+  "hardware": {
+    "machine": "arm64",
+    "cpu_count": 14,
+    "python": "3.12.12",
+    "torch": "2.2.2",
+    "numpy": "1.26.4"
+  },
+  "wall_clock_s": 4384.6,
+  "best_key": 11300,
+  "best_fitness": 0.8815309096590622,
+  "best_size": {
+    "hidden": 11,
+    "conns": 127,
+    "inputs_used": 16,
+    "depth": 3
+  },
+  "train": {
+    "auc": 0.8815309096590622,
+    "acc": 0.8099176612082524,
+    "bce": 0.4010802300239161
+  },
+  "test": {
+    "auc": 0.8785141501767243,
+    "acc": 0.8076524570751924,
+    "bce": 0.40555113983487284
+  },
+  "species": {
+    "mean": 1.0,
+    "min": 1,
+    "max": 1,
+    "last": 1,
+    "mean_last20": 1.0
+  },
+  "max_logged_fitness": 0.8815309096590622
+}
