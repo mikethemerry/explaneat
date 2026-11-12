@@ -213,12 +213,20 @@ class BinaryRisk:
                 "formula": "risk = 1 / (1 + exp(-log-odds))"}
 
 
+PH_CAVEAT_PLAIN = ("Each effect multiplies the hazard by the same amount at every point of follow-up, "
+                   "because the model has no way to represent an effect that changes with time (the "
+                   "proportional-hazards assumption); this is not evidence that the effect is constant "
+                   "over time.")
+
+
 class SurvivalRisk:
     """Predicted risk by a horizon for a Cox model: ``1 - S0(t)^exp(g)`` (Breslow baseline).
 
-    Use with ``explaneat.survival`` models (identity output = log-risk ``g``). The test check
-    needs a survival loss, which is not implemented yet: survival claims get the test status
-    "not available" (so never "clearly").
+    Use with ``explaneat.survival`` models (identity output = log-risk ``g``): the model's
+    output is a log-hazard, so every effect on it is a log hazard ratio (``estimate.hazard_ratio``
+    on the claims) and the "predicted risk" is the risk by the dataset's calibration horizon.
+    The test check ranks test patients by Harrell's C (with the follow-up times) instead of
+    the AUC.
     """
     kind = "survival"
 
@@ -240,8 +248,43 @@ class SurvivalRisk:
 
     def describe(self) -> Dict[str, Any]:
         return {"kind": "survival", "label": f"predicted {self.horizon_label} risk",
-                "horizon": self.horizon, "baseline_survival_at_horizon": sig(self.s0),
-                "formula": "risk = 1 - S0(horizon) ** exp(log-risk)"}
+                "horizon": self.horizon, "horizon_label": self.horizon_label,
+                "baseline_survival_at_horizon": sig(self.s0),
+                "formula": "risk = 1 - S0(horizon) ** exp(log-risk)",
+                "effect_unit": "log hazard ratio (the change in the model's log-risk); hazard ratio = exp(change)",
+                "ph_caveat": PH_CAVEAT_PLAIN}
+
+
+def horizon_label(horizon: float, time_unit: Optional[str]) -> str:
+    """'5-year' for 5 years, '1826-day' for days under a year, '5-year' for 1826.25 days."""
+    unit = (time_unit or "").strip().lower()
+    h = float(horizon)
+    if unit in ("day", "days") and h >= 365:
+        return f"{round(h / 365.25, 1):g}-year"          # 1825 days -> 5-year
+    if unit in ("month", "months") and h >= 12 and abs(h / 12 - round(h / 12)) < 1e-9:
+        return f"{h / 12:g}-year"
+    return f"{round(h, 2):g}-{unit.rstrip('s')}" if unit else f"{round(h, 2):g}"
+
+
+def fit_survival_scale(structure: NetworkStructure, X_train, time_train, event_train,
+                       horizon: Optional[float] = None, time_unit: Optional[str] = None) -> SurvivalRisk:
+    """The :class:`SurvivalRisk` of a Cox genome: a Breslow baseline fitted on the training rows
+    of the model's own log-risk, read at ``horizon`` (default: the median event time)."""
+    from ..survival.breslow import BreslowBaseline
+    t = np.asarray(time_train, dtype=float).ravel()
+    e = np.asarray(event_train, dtype=float).ravel()
+    g = StateEvaluator(structure).logit(np.asarray(X_train, dtype=float))
+    bl = BreslowBaseline().fit(g, t, e)
+    h = float(horizon) if horizon is not None else float(np.median(t[e == 1])) if np.any(e == 1) else float(np.median(t))
+    return SurvivalRisk.from_breslow(bl, h, horizon_label(h, time_unit))
+
+
+def survival_outcome(event_name: Optional[str], label: str) -> Dict[str, str]:
+    """Outcome wording for a survival layer: 'the predicted 5-year risk of recurrence'."""
+    ev = (event_name or "the event").strip()
+    return {"positive": f"{ev} during follow-up", "short": ev,
+            "risk": f"the risk of {ev} by {label.replace('-', ' ')}s" if label[-1:].isalpha() else f"the risk of {ev}",
+            "predicted": f"the predicted {label} risk of {ev}"}
 
 
 # ============================================================================ variables
@@ -449,13 +492,16 @@ class PlainModel:
     def __init__(self, structure: NetworkStructure, operations: Sequence[Dict[str, Any]],
                  X_train, y_train, X_test, y_test, feature_names: Sequence[str],
                  mean, scale, codebook: Dict[str, Any], raw_train=None, raw_test=None,
-                 risk_scale=None):
+                 risk_scale=None, time_train=None, time_test=None):
         self.structure = structure
         self.ops = [dict(o) for o in operations]
         self.X = np.asarray(X_train, dtype=float)
         self.y = np.asarray(y_train, dtype=float).ravel()
         self.Xt = None if X_test is None else np.asarray(X_test, dtype=float)
         self.yt = None if y_test is None else np.asarray(y_test, dtype=float).ravel()
+        # survival: follow-up times (y is then the event indicator); the test check uses them
+        self.t = None if time_train is None else np.asarray(time_train, dtype=float).ravel()
+        self.tt = None if time_test is None else np.asarray(time_test, dtype=float).ravel()
         self.feature_names = list(feature_names)
         self.mean = np.asarray(mean, dtype=float)
         self.scale = np.asarray(scale, dtype=float)
@@ -961,25 +1007,44 @@ def test_benefit(m: PlainModel, var: Optional[Variable] = None, scope=None,
     is used rather than log-loss, which would also penalise an over-confident model for its
     confidence. The training value is reported for comparison.
     """
-    if getattr(m.risk_scale, "loss_p", None) is None or m.Xt is None or m.yt is None or len(m.yt) == 0:
+    survival = getattr(m.risk_scale, "kind", "binary") == "survival"
+    if m.Xt is None or m.yt is None or len(m.yt) == 0 or (survival and m.tt is None) \
+            or (not survival and getattr(m.risk_scale, "loss_p", None) is None):
         return {"split": "test", "status": "not available",
-                "note": "no test split, or no test measure for this risk scale (survival)"}
+                "note": "no test split, or no test measure for this risk scale"}
     yt = m.yt
     full = m.risk(m.base_logit_test)
     rem = _removed_risk(m, m.Xt, var, scope, part)
-    b = fast_auc(yt, full) - fast_auc(yt, rem)
-    B = BOOTSTRAP_B if len(yt) <= 2000 else 200
-    idx = _rng().integers(0, len(yt), size=(B, len(yt)))
-    diffs = np.array([fast_auc(yt[i], full[i]) - fast_auc(yt[i], rem[i]) for i in idx])
+    if survival:   # rank test patients by Harrell's C over the follow-up times (censoring respected)
+        from ..survival.metrics import concordance
+        tt = m.tt
+
+        def score(i):
+            return concordance(full[i], tt[i], yt[i]) - concordance(rem[i], tt[i], yt[i])
+        b = score(np.arange(len(yt)))
+        B = 200 if len(yt) <= 2000 else 100
+        idx = _rng().integers(0, len(yt), size=(B, len(yt)))
+        diffs = np.array([score(i) for i in idx])
+        measure = ("test Harrell's C of the full model minus Harrell's C with the mechanism's information "
+                   "removed (prediction averaged over its training distribution); positive = it helps; paired "
+                   "bootstrap over test patients, seed 42")
+        Xs, ys, ts = m.X[m.screen_idx], m.y[m.screen_idx], m.t[m.screen_idx] if m.t is not None else None
+        tr = (concordance(m.risk(m.base_logit[m.screen_idx]), ts, ys)
+              - concordance(_removed_risk(m, Xs, var, scope, part), ts, ys)) if ts is not None else float("nan")
+    else:
+        b = fast_auc(yt, full) - fast_auc(yt, rem)
+        B = BOOTSTRAP_B if len(yt) <= 2000 else 200
+        idx = _rng().integers(0, len(yt), size=(B, len(yt)))
+        diffs = np.array([fast_auc(yt[i], full[i]) - fast_auc(yt[i], rem[i]) for i in idx])
+        measure = ("test AUC of the full model minus test AUC with the mechanism's information removed "
+                   "(prediction averaged over its training distribution); positive = it helps; paired "
+                   "bootstrap over test patients, seed 42")
+        Xs, ys = m.X[m.screen_idx], m.y[m.screen_idx]
+        tr = fast_auc(ys, m.risk(m.base_logit[m.screen_idx])) - fast_auc(ys, _removed_risk(m, Xs, var, scope, part))
     diffs = diffs[np.isfinite(diffs)]
     ci = [float(np.percentile(diffs, 2.5)), float(np.percentile(diffs, 97.5))] if len(diffs) else [float("nan")] * 2
-    Xs, ys = m.X[m.screen_idx], m.y[m.screen_idx]
-    tr = fast_auc(ys, m.risk(m.base_logit[m.screen_idx])) - fast_auc(ys, _removed_risk(m, Xs, var, scope, part))
     return {"split": "test", "n": int(len(yt)), "benefit_mean": sig(b), "benefit_ci95": _sig_list(ci),
-            "bootstrap_B": int(B), "train_benefit_mean": sig(tr),
-            "measure": "test AUC of the full model minus test AUC with the mechanism's information removed "
-                       "(prediction averaged over its training distribution); positive = it helps; paired "
-                       "bootstrap over test patients, seed 42"}
+            "bootstrap_B": int(B), "train_benefit_mean": sig(tr), "measure": measure}
 
 
 def _status(benefit: Dict[str, Any], same_sign: Optional[bool] = True,
@@ -2721,6 +2786,9 @@ def build_layer(m: PlainModel, meta: Dict[str, Any]) -> Dict[str, Any]:
     res = extract_claims(m)
     parts = res["parts"]
     claims = _clean(res["claims"])
+    survival = m.risk_scale.kind == "survival"
+    if survival:
+        hazard_ratio_fields(claims)
     layer = {
         "schema_version": LAYER_SCHEMA_VERSION,
         "label": meta.get("label"),
@@ -2750,8 +2818,12 @@ def build_layer(m: PlainModel, meta: Dict[str, Any]) -> Dict[str, Any]:
                      "max_interactions_per_part": MAX_INTERACTIONS_PER_PART,
                      "top_magnitudes": TOP_MAGNITUDES, "screen_rows": SCREEN_ROWS,
                      "shape_tolerances": _shape_settings(),
-                     "effect_scale": "log-odds (output pre-activation) for verification; predicted "
-                                     "risk for the typical patient for wording"},
+                     "effect_scale": ("log hazard ratio (the model's log-risk) for verification; the hazard "
+                                      "ratio and the predicted risk by the horizon for the typical patient "
+                                      "for wording" if survival else
+                                      "log-odds (output pre-activation) for verification; predicted "
+                                      "risk for the typical patient for wording")},
+        **({"ph_caveat": PH_CAVEAT_PLAIN} if survival else {}),
         "parts": [_clean(part_record(m, p)) for p in parts],
         "graph": (lambda g: {**g, "partials": partial_features(m, parts, g),
                              "linearity": res.get("linearity") or {}})(graph_record(m, parts)),
@@ -2769,16 +2841,47 @@ def build_layer(m: PlainModel, meta: Dict[str, Any]) -> Dict[str, Any]:
     return _clean(layer)
 
 
+def hazard_ratio_fields(claims: List[Dict[str, Any]]) -> None:
+    """Survival layers: every estimate on the log-risk scale is a log hazard ratio, so its
+    ``odds_ratio`` (exp of the change) is the hazard ratio. Adds ``hazard_ratio`` (and the range)
+    next to it and names the unit, in place."""
+    for c in claims:
+        e = c.get("estimate")
+        if not isinstance(e, dict) or "odds_ratio" not in e:
+            continue
+        e["hazard_ratio"] = e["odds_ratio"]
+        if "odds_ratio_range" in e:
+            e["hazard_ratio_range"] = e["odds_ratio_range"]
+        e["unit"] = str(e.get("unit") or "").replace("log-odds", "log hazard ratio") or "log hazard ratio"
+        e["method"] = str(e.get("method") or "").replace("log-odds", "log-risk (log hazard ratio)")
+        st = c.get("statement") or {}
+        for g in (st.get("stronger_group"), st.get("weaker_group")):
+            if isinstance(g, dict) and isinstance(g.get("estimate"), (int, float)):
+                g["hazard_ratio"] = sig(math.exp(float(g["estimate"])))
+
+
 # ============================================================================ loading from the DB
 
 def load_model(genome_id: str, db=None) -> Tuple[PlainModel, Dict[str, Any]]:
-    """Build the :class:`PlainModel` for a genome from the database (read-only)."""
+    """Build the :class:`PlainModel` for a genome from the database (read-only).
+
+    Local use (the offline plain-language layer runs on this machine), so a restricted dataset
+    may be read. A survival dataset (``task_type: "survival"``, target ``[N, 2]``) gives the
+    event indicator as the outcome, the follow-up times for the test check and the
+    :class:`SurvivalRisk` scale at the dataset's calibration horizon."""
+    from .. import governance
+    with governance.local_use():
+        return _load_model(genome_id, db)
+
+
+def _load_model(genome_id: str, db=None) -> Tuple[PlainModel, Dict[str, Any]]:
     import uuid
     from sqlalchemy import text
     from mcp_server.helpers import build_engine, load_split_data
     from mcp_server.server import get_db
     from ..db.models import Dataset, DatasetSplit, Experiment, Explanation, Genome, Population
     from ..export.collect import resolve_target
+    from ..verify.model import split_target
     db = db or get_db()
     with db.session_scope() as s:
         if s.bind.dialect.name == "postgresql":
@@ -2807,6 +2910,9 @@ def load_model(genome_id: str, db=None) -> Tuple[PlainModel, Dict[str, Any]]:
                 "experiment": {"id": str(exp.id), "name": exp.name}}
         names = list(names or ds.feature_names)
         dsname = ds.name
+        dmeta = dict(ds.additional_metadata or {})
+    y_tr, extra_tr = split_target(y_tr, "train")
+    y_te, extra_te = split_target(y_te, "test")
     cb = find_codebook(dsname, names) or generic_codebook(names)
     failed = [c for c in codebook_checks(cb, names, raw_tr, y_tr) if not c["passed"]]
     if failed:   # never decode on a mapping the data contradicts
@@ -2814,6 +2920,18 @@ def load_model(genome_id: str, db=None) -> Tuple[PlainModel, Dict[str, Any]]:
                 + "; ".join(c["check"] for c in failed) + ")")
         cb = generic_codebook(names)
         cb["gaps"] = cb["gaps"] + [note]
+    risk_scale, t_tr, t_te = None, None, None
+    if extra_tr:   # survival: the risk by the calibration horizon, Breslow baseline on the training rows
+        t_tr = np.asarray(extra_tr["time_train"], dtype=float)
+        t_te = np.asarray(extra_te["time_test"], dtype=float) if extra_te else None
+        risk_scale = fit_survival_scale(engine.current_state, X_tr, t_tr, y_tr,
+                                        dmeta.get("calibration_horizon"), dmeta.get("time_unit"))
+        # the event's name: the CSV import's event column, else the codebook's outcome
+        event = dmeta.get("event_col") or dmeta.get("event_name") or (cb.get("outcome") or {}).get("short")
+        cb = dict(cb, outcome=survival_outcome(event, risk_scale.horizon_label))
+        meta["survival"] = {"horizon": risk_scale.horizon, "horizon_label": risk_scale.horizon_label,
+                            "time_unit": dmeta.get("time_unit"), "event_col": dmeta.get("event_col"),
+                            "outcome": "event indicator (1 = event during follow-up, 0 = censored)"}
     m = PlainModel(engine.current_state, ops, X_tr, y_tr, X_te, y_te, names, mean, scale, cb,
-                   raw_train=raw_tr, raw_test=raw_te)
+                   raw_train=raw_tr, raw_test=raw_te, risk_scale=risk_scale, time_train=t_tr, time_test=t_te)
     return m, meta

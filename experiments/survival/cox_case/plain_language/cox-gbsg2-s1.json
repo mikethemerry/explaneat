@@ -1,0 +1,7600 @@
+{
+ "claims": [
+  {
+   "annotation": {
+    "id": "ann_15",
+    "name": "cox_log_risk"
+   },
+   "checks": {
+    "consistent_across_patients": false,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.218336,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "hazard_ratio": 0.617108,
+    "hazard_ratio_range": [
+     0.510194,
+     1.15489
+    ],
+    "method": "mean over training patients of the change in the model's log-risk (log hazard ratio) when the variable is changed everywhere in the model",
+    "odds_ratio": 0.617108,
+    "odds_ratio_range": [
+     0.510194,
+     1.15489
+    ],
+    "range_across_patients": [
+     -0.672964,
+     0.144004
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log hazard ratio (model)",
+    "value": -0.482712
+   },
+   "evidence": {
+    "share_opposite_sign": 0.232877,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "tumour grade II",
+     "n": 285
+    },
+    {
+     "label": "a tumour grade other than II",
+     "n": 153
+    }
+   ],
+   "id": "C01",
+   "key": "ann_15:direction:tgrade=II:0",
+   "n": 438,
+   "reasons": [
+    "23% of patients have the opposite sign (allowed: 10%)"
+   ],
+   "risk": {
+    "delta": -0.218336,
+    "from": 0.562281,
+    "reference": "typical patient",
+    "to": 0.343945
+   },
+   "scope": "model",
+   "shape": {
+    "class": "categorical",
+    "levels": [
+     {
+      "effect_score": 0.0,
+      "label": "tumour grade II",
+      "n_train": 285,
+      "reference": true,
+      "risk": 0.562281
+     },
+     {
+      "effect_score": -0.672964,
+      "label": "a tumour grade other than II",
+      "n_train": 153,
+      "reference": false,
+      "risk": 0.343945
+     }
+    ],
+    "ordering_high_to_low": [
+     "tumour grade II",
+     "a tumour grade other than II"
+    ],
+    "reference": "tumour grade II",
+    "scale": "model score (log-odds) relative to the reference level",
+    "status": "verified",
+    "verified": true
+   },
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "the patient has tumour grade II",
+      "decoded": true,
+      "group": "patients with tumour grade II",
+      "label": "tumour grade II",
+      "n_train": 285
+     },
+     "to": {
+      "code": "0",
+      "codes": [
+       "0"
+      ],
+      "cond": "the patient has a tumour grade other than II",
+      "decoded": true,
+      "group": "patients with a tumour grade other than II",
+      "label": "a tumour grade other than II",
+      "n_train": 153
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "moderate",
+    "variable": "tgrade=II"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0409176,
+     0.0324602
+    ],
+    "benefit_mean": -0.0029081,
+    "bootstrap_B": 200,
+    "measure": "test Harrell's C of the full model minus Harrell's C with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -0.471682,
+    "n": 138,
+    "same_sign": true,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.0228066
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "tgrade=II",
+     "decoded": true,
+     "kind": "category",
+     "label": "tumour grade II",
+     "short": "tumour grade II",
+     "unit": null
+    }
+   ],
+   "verified": false
+  },
+  {
+   "annotation": {
+    "id": "ann_15",
+    "name": "cox_log_risk"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.200012,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "hazard_ratio": 1.73421,
+    "hazard_ratio_range": [
+     1.73421,
+     1.73421
+    ],
+    "method": "mean over training patients of the change in the model's log-risk (log hazard ratio) when the variable is changed everywhere in the model",
+    "odds_ratio": 1.73421,
+    "odds_ratio_range": [
+     1.73421,
+     1.73421
+    ],
+    "range_across_patients": [
+     0.55055,
+     0.55055
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log hazard ratio (model)",
+    "value": 0.55055
+   },
+   "evidence": {
+    "average_curve": {
+     "mean_log_odds": [
+      -0.957807,
+      -0.907757,
+      -0.857707,
+      -0.807657,
+      -0.757606,
+      -0.707556,
+      -0.657506,
+      -0.607456,
+      -0.507356,
+      -0.407256,
+      -0.207056
+     ],
+     "rows": 438,
+     "values": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      7.0,
+      8.0,
+      10.0,
+      12.0,
+      16.0
+     ]
+    },
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [],
+   "id": "C02",
+   "key": "ann_15:direction:pnodes",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.200012,
+    "from": 0.526443,
+    "reference": "typical patient",
+    "to": 0.726455
+   },
+   "scope": "model",
+   "shape": {
+    "band_risk_p10": [
+     0.237796,
+     0.245012,
+     0.25241,
+     0.25999,
+     0.267755,
+     0.275706,
+     0.283845,
+     0.292173,
+     0.30069,
+     0.309398,
+     0.318297,
+     0.327387,
+     0.336667,
+     0.346138,
+     0.355799,
+     0.365647,
+     0.375682,
+     0.385902,
+     0.396303,
+     0.406883,
+     0.417639,
+     0.428566,
+     0.43966,
+     0.450916,
+     0.462328,
+     0.47389,
+     0.485596,
+     0.497437,
+     0.509407,
+     0.521495,
+     0.533694,
+     0.545992,
+     0.55838,
+     0.570845,
+     0.583378,
+     0.595963,
+     0.60859,
+     0.621243,
+     0.63391,
+     0.646574,
+     0.65922
+    ],
+    "band_risk_p90": [
+     0.587424,
+     0.600025,
+     0.612662,
+     0.625321,
+     0.637988,
+     0.650648,
+     0.663285,
+     0.675884,
+     0.688428,
+     0.700901,
+     0.713285,
+     0.725563,
+     0.737717,
+     0.749731,
+     0.761587,
+     0.773267,
+     0.784753,
+     0.79603,
+     0.80708,
+     0.817887,
+     0.828435,
+     0.83871,
+     0.848697,
+     0.858384,
+     0.867757,
+     0.876806,
+     0.88552,
+     0.893891,
+     0.901911,
+     0.909574,
+     0.916875,
+     0.923813,
+     0.930384,
+     0.936589,
+     0.942429,
+     0.947909,
+     0.953031,
+     0.957803,
+     0.962233,
+     0.966328,
+     0.9701
+    ],
+    "class": "steady",
+    "classes_across_patients": {
+     "steady": 300
+    },
+    "consistent": true,
+    "consistent_share": 0.9,
+    "exceptions": [],
+    "grid": [
+     1.0,
+     1.688,
+     2.376,
+     3.064,
+     3.752,
+     4.44,
+     5.128,
+     5.816,
+     6.504,
+     7.192,
+     7.88,
+     8.568,
+     9.256,
+     9.944,
+     10.632,
+     11.32,
+     12.008,
+     12.696,
+     13.384,
+     14.072,
+     14.76,
+     15.448,
+     16.136,
+     16.824,
+     17.512,
+     18.2,
+     18.888,
+     19.576,
+     20.264,
+     20.952,
+     21.64,
+     22.328,
+     23.016,
+     23.704,
+     24.392,
+     25.08,
+     25.768,
+     26.456,
+     27.144,
+     27.832,
+     28.52
+    ],
+    "grid_basis": "41 points from the 1st to the 99th percentile",
+    "hinge_kind": null,
+    "increments": null,
+    "ordinal": false,
+    "ordinal_pattern": null,
+    "patients_sampled": 300,
+    "pieces": [
+     {
+      "flat": false,
+      "from": 1.0,
+      "slope": 0.05005,
+      "to": 28.52
+     }
+    ],
+    "point_reason": "no fold in this shape (steady)",
+    "point_reconciled": false,
+    "points": {},
+    "points_text": {},
+    "risk_saturation": null,
+    "rug": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     4.0,
+     4.0,
+     4.0,
+     4.0,
+     4.0,
+     4.0,
+     4.0,
+     4.0,
+     4.0,
+     5.0,
+     5.0,
+     5.0,
+     5.0,
+     5.0,
+     5.0,
+     5.53,
+     6.0,
+     6.0,
+     6.0,
+     6.01,
+     7.0,
+     7.0,
+     7.0,
+     7.0,
+     7.0,
+     7.23,
+     8.0,
+     8.0,
+     9.0,
+     9.0,
+     10.0,
+     10.0,
+     10.0,
+     11.0,
+     11.0,
+     11.0,
+     12.0,
+     12.0,
+     13.0,
+     14.0,
+     15.0,
+     16.0,
+     17.0,
+     18.89,
+     20.0,
+     28.52,
+     51.0
+    ],
+    "scale": "model score (log-odds)",
+    "sensitivity": {
+     "x0.75": "steady",
+     "x1.25": "steady"
+    },
+    "share_basis": "among sampled patients whose curve moves",
+    "share_same_shape": 1.0,
+    "share_unaffected": 0.0,
+    "stable": true,
+    "status": "verified",
+    "tolerances": {
+     "equal_steps": 0.25,
+     "first_step": 0.6,
+     "flat_abs": 0.05,
+     "flat_slope": 0.05,
+     "kink": 0.15,
+     "min_piece": 0.05,
+     "reversal": 0.1,
+     "step_share": 0.7,
+     "step_width": 0.1,
+     "straight": 0.05
+    },
+    "typical_curve": [
+     -0.626598,
+     -0.592164,
+     -0.557729,
+     -0.523295,
+     -0.48886,
+     -0.454426,
+     -0.419992,
+     -0.385557,
+     -0.351123,
+     -0.316688,
+     -0.282254,
+     -0.247819,
+     -0.213385,
+     -0.178951,
+     -0.144516,
+     -0.110082,
+     -0.0756473,
+     -0.0412128,
+     -0.0067784,
+     0.027656,
+     0.0620905,
+     0.0965249,
+     0.130959,
+     0.165394,
+     0.199828,
+     0.234263,
+     0.268697,
+     0.303131,
+     0.337566,
+     0.372,
+     0.406435,
+     0.440869,
+     0.475304,
+     0.509738,
+     0.544172,
+     0.578607,
+     0.613041,
+     0.647476,
+     0.68191,
+     0.716345,
+     0.750779
+    ],
+    "typical_patient_unaffected": false,
+    "typical_risk": [
+     0.526443,
+     0.538683,
+     0.551019,
+     0.56344,
+     0.575934,
+     0.58849,
+     0.601094,
+     0.613733,
+     0.626393,
+     0.63906,
+     0.651719,
+     0.664354,
+     0.676949,
+     0.689487,
+     0.701953,
+     0.714329,
+     0.726597,
+     0.73874,
+     0.750742,
+     0.762583,
+     0.774247,
+     0.785717,
+     0.796975,
+     0.808005,
+     0.81879,
+     0.829316,
+     0.839567,
+     0.84953,
+     0.85919,
+     0.868536,
+     0.877557,
+     0.886242,
+     0.894583,
+     0.902573,
+     0.910206,
+     0.917477,
+     0.924383,
+     0.930923,
+     0.937098,
+     0.942907,
+     0.948356
+    ],
+    "verified": true
+   },
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "basis": "10th and 90th percentile of the training patients",
+     "from": {
+      "text": "1 nodes",
+      "value": 1.0
+     },
+     "to": {
+      "text": "12 nodes",
+      "value": 12.0
+     }
+    },
+    "direction": "raises",
+    "monotone": true,
+    "strength": "moderate",
+    "variable": "pnodes"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.00213365,
+     0.0735461
+    ],
+    "benefit_mean": 0.0313106,
+    "bootstrap_B": 200,
+    "measure": "test Harrell's C of the full model minus Harrell's C with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 0.55055,
+    "n": 138,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.0472389
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "pnodes",
+     "decoded": true,
+     "kind": "count",
+     "label": "number of positive lymph nodes",
+     "short": "number of positive lymph nodes",
+     "unit": "nodes"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_15",
+    "name": "cox_log_risk"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.163792,
+    "n_ok": true,
+    "qualifiers": [],
+    "size": "meaningful",
+    "test": "agrees",
+    "word": "clearly"
+   },
+   "estimate": {
+    "hazard_ratio": 0.620311,
+    "hazard_ratio_range": [
+     0.620311,
+     0.620311
+    ],
+    "method": "mean over training patients of the change in the model's log-risk (log hazard ratio) when the variable is changed everywhere in the model",
+    "odds_ratio": 0.620311,
+    "odds_ratio_range": [
+     0.620311,
+     0.620311
+    ],
+    "range_across_patients": [
+     -0.477535,
+     -0.477535
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log hazard ratio (model)",
+    "value": -0.477535
+   },
+   "evidence": {
+    "average_curve": {
+     "mean_log_odds": [
+      -0.573243,
+      -0.574862,
+      -0.578099,
+      -0.582956,
+      -0.589431,
+      -0.595906,
+      -0.604,
+      -0.612093,
+      -0.621806,
+      -0.646087,
+      -0.667131,
+      -0.701125,
+      -0.731882,
+      -0.770732,
+      -0.833864,
+      -0.911564,
+      -1.05078,
+      -1.2256
+     ],
+     "rows": 438,
+     "values": [
+      0.0,
+      1.0,
+      3.0,
+      6.0,
+      10.0,
+      14.0,
+      19.0,
+      24.0,
+      30.0,
+      45.0,
+      58.0,
+      79.0,
+      98.0,
+      122.0,
+      161.0,
+      209.0,
+      295.0,
+      403.0
+     ]
+    },
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [],
+   "id": "C03",
+   "key": "ann_15:direction:progrec",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -0.163792,
+    "from": 0.579617,
+    "reference": "typical patient",
+    "to": 0.415825
+   },
+   "scope": "model",
+   "shape": {
+    "band_risk_p10": [
+     0.357333,
+     0.346376,
+     0.335662,
+     0.325192,
+     0.314967,
+     0.304987,
+     0.295251,
+     0.285758,
+     0.276508,
+     0.267499,
+     0.258728,
+     0.250194,
+     0.241893,
+     0.233823,
+     0.225981,
+     0.218363,
+     0.210965,
+     0.203784,
+     0.196816,
+     0.190057,
+     0.183503,
+     0.177149,
+     0.170991,
+     0.165026,
+     0.159248,
+     0.153653,
+     0.148237,
+     0.142996,
+     0.137925,
+     0.133019,
+     0.128274,
+     0.123686,
+     0.119251,
+     0.114965,
+     0.110822,
+     0.10682,
+     0.102953,
+     0.0992191,
+     0.095613,
+     0.0921311,
+     0.0887697
+    ],
+    "band_risk_p90": [
+     0.733393,
+     0.719572,
+     0.705603,
+     0.691512,
+     0.677324,
+     0.663063,
+     0.648753,
+     0.634418,
+     0.620078,
+     0.605757,
+     0.591474,
+     0.577249,
+     0.563101,
+     0.549048,
+     0.535105,
+     0.521289,
+     0.507614,
+     0.494094,
+     0.48074,
+     0.467565,
+     0.454577,
+     0.441788,
+     0.429205,
+     0.416836,
+     0.404686,
+     0.392763,
+     0.38107,
+     0.369611,
+     0.358391,
+     0.347412,
+     0.336675,
+     0.326182,
+     0.315933,
+     0.30593,
+     0.29617,
+     0.286655,
+     0.277382,
+     0.26835,
+     0.259557,
+     0.251,
+     0.242677
+    ],
+    "class": "steady",
+    "classes_across_patients": {
+     "steady": 300
+    },
+    "consistent": true,
+    "consistent_share": 0.9,
+    "exceptions": [],
+    "grid": [
+     0.0,
+     24.0837,
+     48.1675,
+     72.2512,
+     96.335,
+     120.419,
+     144.502,
+     168.586,
+     192.67,
+     216.754,
+     240.837,
+     264.921,
+     289.005,
+     313.089,
+     337.172,
+     361.256,
+     385.34,
+     409.424,
+     433.507,
+     457.591,
+     481.675,
+     505.759,
+     529.842,
+     553.926,
+     578.01,
+     602.094,
+     626.177,
+     650.261,
+     674.345,
+     698.429,
+     722.512,
+     746.596,
+     770.68,
+     794.764,
+     818.847,
+     842.931,
+     867.015,
+     891.099,
+     915.182,
+     939.266,
+     963.35
+    ],
+    "grid_basis": "41 points from the 1st to the 99th percentile",
+    "hinge_kind": null,
+    "increments": null,
+    "ordinal": false,
+    "ordinal_pattern": null,
+    "patients_sampled": 300,
+    "pieces": [
+     {
+      "flat": false,
+      "from": 0.0,
+      "slope": -0.00161876,
+      "to": 963.35
+     }
+    ],
+    "point_reason": "no fold in this shape (steady)",
+    "point_reconciled": false,
+    "points": {},
+    "points_text": {},
+    "risk_saturation": null,
+    "rug": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     1.0,
+     1.0,
+     1.0,
+     2.0,
+     2.0,
+     2.0,
+     3.0,
+     4.0,
+     5.0,
+     5.0,
+     5.88,
+     6.0,
+     7.0,
+     8.0,
+     9.0,
+     10.0,
+     10.0,
+     11.0,
+     11.0,
+     13.0,
+     13.58,
+     14.0,
+     15.0,
+     16.0,
+     17.0,
+     18.0,
+     19.0,
+     20.0,
+     21.0,
+     22.0,
+     23.0,
+     24.0,
+     25.0,
+     26.0,
+     26.0,
+     28.0,
+     29.5,
+     32.0,
+     37.24,
+     40.0,
+     42.98,
+     45.0,
+     48.0,
+     50.09,
+     52.46,
+     55.83,
+     58.4,
+     63.57,
+     68.88,
+     74.0,
+     76.68,
+     79.05,
+     82.84,
+     85.79,
+     89.32,
+     93.06,
+     98.0,
+     102.27,
+     108.64,
+     111.01,
+     116.0,
+     121.5,
+     131.12,
+     135.0,
+     140.86,
+     150.23,
+     161.2,
+     169.91,
+     176.7,
+     184.71,
+     197.0,
+     208.9,
+     226.28,
+     235.76,
+     250.0,
+     257.72,
+     295.3,
+     317.36,
+     340.36,
+     364.82,
+     388.0,
+     403.45,
+     434.6,
+     590.05,
+     753.82,
+     963.35,
+     1600.0
+    ],
+    "scale": "model score (log-odds)",
+    "sensitivity": {
+     "x0.75": "steady",
+     "x1.25": "steady"
+    },
+    "share_basis": "among sampled patients whose curve moves",
+    "share_same_shape": 1.0,
+    "share_unaffected": 0.0,
+    "stable": true,
+    "status": "verified",
+    "tolerances": {
+     "equal_steps": 0.25,
+     "first_step": 0.6,
+     "flat_abs": 0.05,
+     "flat_slope": 0.05,
+     "kink": 0.15,
+     "min_piece": 0.05,
+     "reversal": 0.1,
+     "step_share": 0.7,
+     "step_width": 0.1,
+     "straight": 0.05
+    },
+    "typical_curve": [
+     -0.478745,
+     -0.51773,
+     -0.556716,
+     -0.595702,
+     -0.634688,
+     -0.673674,
+     -0.71266,
+     -0.751646,
+     -0.790631,
+     -0.829617,
+     -0.868603,
+     -0.907589,
+     -0.946575,
+     -0.985561,
+     -1.02455,
+     -1.06353,
+     -1.10252,
+     -1.1415,
+     -1.18049,
+     -1.21948,
+     -1.25846,
+     -1.29745,
+     -1.33643,
+     -1.37542,
+     -1.41441,
+     -1.45339,
+     -1.49238,
+     -1.53136,
+     -1.57035,
+     -1.60933,
+     -1.64832,
+     -1.68731,
+     -1.72629,
+     -1.76528,
+     -1.80426,
+     -1.84325,
+     -1.88224,
+     -1.92122,
+     -1.96021,
+     -1.99919,
+     -2.03818
+    ],
+    "typical_patient_unaffected": false,
+    "typical_risk": [
+     0.579617,
+     0.565454,
+     0.551383,
+     0.537421,
+     0.523582,
+     0.509882,
+     0.496335,
+     0.482952,
+     0.469746,
+     0.456726,
+     0.443903,
+     0.431285,
+     0.418879,
+     0.406692,
+     0.39473,
+     0.382998,
+     0.371501,
+     0.360241,
+     0.349221,
+     0.338443,
+     0.327909,
+     0.31762,
+     0.307575,
+     0.297775,
+     0.288219,
+     0.278906,
+     0.269834,
+     0.261001,
+     0.252405,
+     0.244044,
+     0.235914,
+     0.228012,
+     0.220335,
+     0.21288,
+     0.205643,
+     0.198619,
+     0.191806,
+     0.185199,
+     0.178793,
+     0.172584,
+     0.166569
+    ],
+    "verified": true
+   },
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "basis": "10th and 90th percentile of the training patients",
+     "from": {
+      "text": "0 fmol/l",
+      "value": 0.0
+     },
+     "to": {
+      "text": "295 fmol/l",
+      "value": 295.0
+     }
+    },
+    "direction": "lowers",
+    "monotone": true,
+    "strength": "moderate",
+    "variable": "progrec"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.00467822,
+     0.0834404
+    ],
+    "benefit_mean": 0.0409073,
+    "bootstrap_B": 200,
+    "measure": "test Harrell's C of the full model minus Harrell's C with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -0.477535,
+    "n": 138,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.00830243
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "progrec",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "progesterone receptor",
+     "short": "progesterone receptor",
+     "unit": "fmol/l"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_15",
+    "name": "cox_log_risk"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.145108,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "meaningful",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "hazard_ratio": 0.653449,
+    "hazard_ratio_range": [
+     0.653449,
+     0.653449
+    ],
+    "method": "mean over training patients of the change in the model's log-risk (log hazard ratio) when the variable is changed everywhere in the model",
+    "odds_ratio": 0.653449,
+    "odds_ratio_range": [
+     0.653449,
+     0.653449
+    ],
+    "range_across_patients": [
+     -0.425491,
+     -0.425491
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log hazard ratio (model)",
+    "value": -0.425491
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "no hormonal therapy",
+     "n": 273
+    },
+    {
+     "label": "hormonal therapy",
+     "n": 165
+    }
+   ],
+   "id": "C04",
+   "key": "ann_15:direction:horTh=yes:1",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -0.145108,
+    "from": 0.562281,
+    "reference": "typical patient",
+    "to": 0.417173
+   },
+   "scope": "model",
+   "shape": {
+    "class": "categorical",
+    "levels": [
+     {
+      "effect_score": -0.425491,
+      "label": "hormonal therapy",
+      "n_train": 165,
+      "reference": false,
+      "risk": 0.417173
+     },
+     {
+      "effect_score": 0.0,
+      "label": "no hormonal therapy",
+      "n_train": 273,
+      "reference": true,
+      "risk": 0.562281
+     }
+    ],
+    "ordering_high_to_low": [
+     "no hormonal therapy",
+     "hormonal therapy"
+    ],
+    "reference": "no hormonal therapy",
+    "scale": "model score (log-odds) relative to the reference level",
+    "status": "verified",
+    "verified": true
+   },
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "0",
+      "codes": [
+       "0"
+      ],
+      "cond": "the patient has no hormonal therapy",
+      "decoded": true,
+      "group": "patients with no hormonal therapy",
+      "label": "no hormonal therapy",
+      "n_train": 273
+     },
+     "to": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "the patient has hormonal therapy",
+      "decoded": true,
+      "group": "patients with hormonal therapy",
+      "label": "hormonal therapy",
+      "n_train": 165
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "moderate",
+    "variable": "horTh=yes"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0586643,
+     0.0232121
+    ],
+    "benefit_mean": -0.013862,
+    "bootstrap_B": 200,
+    "measure": "test Harrell's C of the full model minus Harrell's C with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -0.425491,
+    "n": 138,
+    "same_sign": true,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.00748041
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "horTh=yes",
+     "decoded": true,
+     "kind": "category",
+     "label": "hormonal therapy",
+     "short": "hormonal therapy",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_15",
+    "name": "cox_log_risk"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.0525771,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "meaningful",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "hazard_ratio": 1.46094,
+    "hazard_ratio_range": [
+     1.15489,
+     2.26363
+    ],
+    "method": "mean over training patients of the change in the model's log-risk (log hazard ratio) when the variable is changed everywhere in the model",
+    "odds_ratio": 1.46094,
+    "odds_ratio_range": [
+     1.15489,
+     2.26363
+    ],
+    "range_across_patients": [
+     0.144004,
+     0.816968
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log hazard ratio (model)",
+    "value": 0.37908
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "a tumour grade other than III",
+     "n": 336
+    },
+    {
+     "label": "tumour grade III",
+     "n": 102
+    }
+   ],
+   "id": "C05",
+   "key": "ann_15:direction:tgrade=III:1",
+   "linked": {
+    "inputs": [
+     "tgrade=II"
+    ],
+    "moved": {
+     "to": {
+      "tgrade=II": {
+       "from": "tumour grade II",
+       "label": "tumour grade II",
+       "to": "a tumour grade other than II"
+      }
+     }
+    },
+    "note": "the inputs the data ties to the changed one were moved to their typical value among the training rows with the new value, so the case is one the data has"
+   },
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.0525771,
+    "from": 0.562281,
+    "reference": "typical patient",
+    "to": 0.614858
+   },
+   "scope": "model",
+   "shape": {
+    "class": "categorical",
+    "levels": [
+     {
+      "effect_score": 0.144004,
+      "label": "tumour grade III",
+      "n_train": 102,
+      "reference": false,
+      "risk": 0.614858
+     },
+     {
+      "effect_score": 0.0,
+      "label": "a tumour grade other than III",
+      "n_train": 336,
+      "reference": true,
+      "risk": 0.562281
+     }
+    ],
+    "ordering_high_to_low": [
+     "tumour grade III",
+     "a tumour grade other than III"
+    ],
+    "reference": "a tumour grade other than III",
+    "scale": "model score (log-odds) relative to the reference level",
+    "status": "verified",
+    "verified": true
+   },
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "0",
+      "codes": [
+       "0"
+      ],
+      "cond": "the patient has a tumour grade other than III",
+      "decoded": true,
+      "group": "patients with a tumour grade other than III",
+      "label": "a tumour grade other than III",
+      "n_train": 336
+     },
+     "to": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "the patient has tumour grade III",
+      "decoded": true,
+      "group": "patients with tumour grade III",
+      "label": "tumour grade III",
+      "n_train": 102
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "moderate",
+    "variable": "tgrade=III"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.00751641,
+     0.141073
+    ],
+    "benefit_mean": 0.062815,
+    "bootstrap_B": 200,
+    "measure": "test Harrell's C of the full model minus Harrell's C with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 0.402461,
+    "n": 138,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.0401878
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "tgrade=III",
+     "decoded": true,
+     "kind": "category",
+     "label": "tumour grade III",
+     "short": "tumour grade III",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_15",
+    "name": "cox_log_risk"
+   },
+   "checks": {
+    "agrees_with_direction": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.200012,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "hazard_ratio": 1.73421,
+    "method": "change in the model's log-risk (log hazard ratio) for the typical patient",
+    "odds_ratio": 1.73421,
+    "unit": "log hazard ratio (model)",
+    "value": 0.55055
+   },
+   "groups": [],
+   "id": "C06",
+   "key": "ann_15:magnitude:pnodes",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.200012,
+    "from": 0.526443,
+    "reference": "typical patient",
+    "to": 0.726455
+   },
+   "scope": "model",
+   "shape": {
+    "band_risk_p10": [
+     0.237796,
+     0.245012,
+     0.25241,
+     0.25999,
+     0.267755,
+     0.275706,
+     0.283845,
+     0.292173,
+     0.30069,
+     0.309398,
+     0.318297,
+     0.327387,
+     0.336667,
+     0.346138,
+     0.355799,
+     0.365647,
+     0.375682,
+     0.385902,
+     0.396303,
+     0.406883,
+     0.417639,
+     0.428566,
+     0.43966,
+     0.450916,
+     0.462328,
+     0.47389,
+     0.485596,
+     0.497437,
+     0.509407,
+     0.521495,
+     0.533694,
+     0.545992,
+     0.55838,
+     0.570845,
+     0.583378,
+     0.595963,
+     0.60859,
+     0.621243,
+     0.63391,
+     0.646574,
+     0.65922
+    ],
+    "band_risk_p90": [
+     0.587424,
+     0.600025,
+     0.612662,
+     0.625321,
+     0.637988,
+     0.650648,
+     0.663285,
+     0.675884,
+     0.688428,
+     0.700901,
+     0.713285,
+     0.725563,
+     0.737717,
+     0.749731,
+     0.761587,
+     0.773267,
+     0.784753,
+     0.79603,
+     0.80708,
+     0.817887,
+     0.828435,
+     0.83871,
+     0.848697,
+     0.858384,
+     0.867757,
+     0.876806,
+     0.88552,
+     0.893891,
+     0.901911,
+     0.909574,
+     0.916875,
+     0.923813,
+     0.930384,
+     0.936589,
+     0.942429,
+     0.947909,
+     0.953031,
+     0.957803,
+     0.962233,
+     0.966328,
+     0.9701
+    ],
+    "class": "steady",
+    "classes_across_patients": {
+     "steady": 300
+    },
+    "consistent": true,
+    "consistent_share": 0.9,
+    "exceptions": [],
+    "grid": [
+     1.0,
+     1.688,
+     2.376,
+     3.064,
+     3.752,
+     4.44,
+     5.128,
+     5.816,
+     6.504,
+     7.192,
+     7.88,
+     8.568,
+     9.256,
+     9.944,
+     10.632,
+     11.32,
+     12.008,
+     12.696,
+     13.384,
+     14.072,
+     14.76,
+     15.448,
+     16.136,
+     16.824,
+     17.512,
+     18.2,
+     18.888,
+     19.576,
+     20.264,
+     20.952,
+     21.64,
+     22.328,
+     23.016,
+     23.704,
+     24.392,
+     25.08,
+     25.768,
+     26.456,
+     27.144,
+     27.832,
+     28.52
+    ],
+    "grid_basis": "41 points from the 1st to the 99th percentile",
+    "hinge_kind": null,
+    "increments": null,
+    "ordinal": false,
+    "ordinal_pattern": null,
+    "patients_sampled": 300,
+    "pieces": [
+     {
+      "flat": false,
+      "from": 1.0,
+      "slope": 0.05005,
+      "to": 28.52
+     }
+    ],
+    "point_reason": "no fold in this shape (steady)",
+    "point_reconciled": false,
+    "points": {},
+    "points_text": {},
+    "risk_saturation": null,
+    "rug": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     4.0,
+     4.0,
+     4.0,
+     4.0,
+     4.0,
+     4.0,
+     4.0,
+     4.0,
+     4.0,
+     5.0,
+     5.0,
+     5.0,
+     5.0,
+     5.0,
+     5.0,
+     5.53,
+     6.0,
+     6.0,
+     6.0,
+     6.01,
+     7.0,
+     7.0,
+     7.0,
+     7.0,
+     7.0,
+     7.23,
+     8.0,
+     8.0,
+     9.0,
+     9.0,
+     10.0,
+     10.0,
+     10.0,
+     11.0,
+     11.0,
+     11.0,
+     12.0,
+     12.0,
+     13.0,
+     14.0,
+     15.0,
+     16.0,
+     17.0,
+     18.89,
+     20.0,
+     28.52,
+     51.0
+    ],
+    "scale": "model score (log-odds)",
+    "sensitivity": {
+     "x0.75": "steady",
+     "x1.25": "steady"
+    },
+    "share_basis": "among sampled patients whose curve moves",
+    "share_same_shape": 1.0,
+    "share_unaffected": 0.0,
+    "stable": true,
+    "status": "verified",
+    "tolerances": {
+     "equal_steps": 0.25,
+     "first_step": 0.6,
+     "flat_abs": 0.05,
+     "flat_slope": 0.05,
+     "kink": 0.15,
+     "min_piece": 0.05,
+     "reversal": 0.1,
+     "step_share": 0.7,
+     "step_width": 0.1,
+     "straight": 0.05
+    },
+    "typical_curve": [
+     -0.626598,
+     -0.592164,
+     -0.557729,
+     -0.523295,
+     -0.48886,
+     -0.454426,
+     -0.419992,
+     -0.385557,
+     -0.351123,
+     -0.316688,
+     -0.282254,
+     -0.247819,
+     -0.213385,
+     -0.178951,
+     -0.144516,
+     -0.110082,
+     -0.0756473,
+     -0.0412128,
+     -0.0067784,
+     0.027656,
+     0.0620905,
+     0.0965249,
+     0.130959,
+     0.165394,
+     0.199828,
+     0.234263,
+     0.268697,
+     0.303131,
+     0.337566,
+     0.372,
+     0.406435,
+     0.440869,
+     0.475304,
+     0.509738,
+     0.544172,
+     0.578607,
+     0.613041,
+     0.647476,
+     0.68191,
+     0.716345,
+     0.750779
+    ],
+    "typical_patient_unaffected": false,
+    "typical_risk": [
+     0.526443,
+     0.538683,
+     0.551019,
+     0.56344,
+     0.575934,
+     0.58849,
+     0.601094,
+     0.613733,
+     0.626393,
+     0.63906,
+     0.651719,
+     0.664354,
+     0.676949,
+     0.689487,
+     0.701953,
+     0.714329,
+     0.726597,
+     0.73874,
+     0.750742,
+     0.762583,
+     0.774247,
+     0.785717,
+     0.796975,
+     0.808005,
+     0.81879,
+     0.829316,
+     0.839567,
+     0.84953,
+     0.85919,
+     0.868536,
+     0.877557,
+     0.886242,
+     0.894583,
+     0.902573,
+     0.910206,
+     0.917477,
+     0.924383,
+     0.930923,
+     0.937098,
+     0.942907,
+     0.948356
+    ],
+    "verified": true
+   },
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "basis": "10th and 90th percentile of the training patients",
+     "from": {
+      "text": "1 nodes",
+      "value": 1.0
+     },
+     "to": {
+      "text": "12 nodes",
+      "value": 12.0
+     }
+    },
+    "direction": "raises",
+    "related_direction": "ann_15:direction:pnodes",
+    "strength": "moderate",
+    "variable": "pnodes"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.00213365,
+     0.0735461
+    ],
+    "benefit_mean": 0.0313106,
+    "bootstrap_B": 200,
+    "measure": "test Harrell's C of the full model minus Harrell's C with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 0.55055,
+    "n": 138,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.0472389
+   },
+   "type": "magnitude",
+   "variables": [
+    {
+     "base": "pnodes",
+     "decoded": true,
+     "kind": "count",
+     "label": "number of positive lymph nodes",
+     "short": "number of positive lymph nodes",
+     "unit": "nodes"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_15",
+    "name": "cox_log_risk"
+   },
+   "checks": {
+    "agrees_with_direction": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.163792,
+    "n_ok": true,
+    "qualifiers": [],
+    "size": "meaningful",
+    "test": "agrees",
+    "word": "clearly"
+   },
+   "estimate": {
+    "hazard_ratio": 0.620311,
+    "method": "change in the model's log-risk (log hazard ratio) for the typical patient",
+    "odds_ratio": 0.620311,
+    "unit": "log hazard ratio (model)",
+    "value": -0.477535
+   },
+   "groups": [],
+   "id": "C07",
+   "key": "ann_15:magnitude:progrec",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -0.163792,
+    "from": 0.579617,
+    "reference": "typical patient",
+    "to": 0.415825
+   },
+   "scope": "model",
+   "shape": {
+    "band_risk_p10": [
+     0.357333,
+     0.346376,
+     0.335662,
+     0.325192,
+     0.314967,
+     0.304987,
+     0.295251,
+     0.285758,
+     0.276508,
+     0.267499,
+     0.258728,
+     0.250194,
+     0.241893,
+     0.233823,
+     0.225981,
+     0.218363,
+     0.210965,
+     0.203784,
+     0.196816,
+     0.190057,
+     0.183503,
+     0.177149,
+     0.170991,
+     0.165026,
+     0.159248,
+     0.153653,
+     0.148237,
+     0.142996,
+     0.137925,
+     0.133019,
+     0.128274,
+     0.123686,
+     0.119251,
+     0.114965,
+     0.110822,
+     0.10682,
+     0.102953,
+     0.0992191,
+     0.095613,
+     0.0921311,
+     0.0887697
+    ],
+    "band_risk_p90": [
+     0.733393,
+     0.719572,
+     0.705603,
+     0.691512,
+     0.677324,
+     0.663063,
+     0.648753,
+     0.634418,
+     0.620078,
+     0.605757,
+     0.591474,
+     0.577249,
+     0.563101,
+     0.549048,
+     0.535105,
+     0.521289,
+     0.507614,
+     0.494094,
+     0.48074,
+     0.467565,
+     0.454577,
+     0.441788,
+     0.429205,
+     0.416836,
+     0.404686,
+     0.392763,
+     0.38107,
+     0.369611,
+     0.358391,
+     0.347412,
+     0.336675,
+     0.326182,
+     0.315933,
+     0.30593,
+     0.29617,
+     0.286655,
+     0.277382,
+     0.26835,
+     0.259557,
+     0.251,
+     0.242677
+    ],
+    "class": "steady",
+    "classes_across_patients": {
+     "steady": 300
+    },
+    "consistent": true,
+    "consistent_share": 0.9,
+    "exceptions": [],
+    "grid": [
+     0.0,
+     24.0837,
+     48.1675,
+     72.2512,
+     96.335,
+     120.419,
+     144.502,
+     168.586,
+     192.67,
+     216.754,
+     240.837,
+     264.921,
+     289.005,
+     313.089,
+     337.172,
+     361.256,
+     385.34,
+     409.424,
+     433.507,
+     457.591,
+     481.675,
+     505.759,
+     529.842,
+     553.926,
+     578.01,
+     602.094,
+     626.177,
+     650.261,
+     674.345,
+     698.429,
+     722.512,
+     746.596,
+     770.68,
+     794.764,
+     818.847,
+     842.931,
+     867.015,
+     891.099,
+     915.182,
+     939.266,
+     963.35
+    ],
+    "grid_basis": "41 points from the 1st to the 99th percentile",
+    "hinge_kind": null,
+    "increments": null,
+    "ordinal": false,
+    "ordinal_pattern": null,
+    "patients_sampled": 300,
+    "pieces": [
+     {
+      "flat": false,
+      "from": 0.0,
+      "slope": -0.00161876,
+      "to": 963.35
+     }
+    ],
+    "point_reason": "no fold in this shape (steady)",
+    "point_reconciled": false,
+    "points": {},
+    "points_text": {},
+    "risk_saturation": null,
+    "rug": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     1.0,
+     1.0,
+     1.0,
+     2.0,
+     2.0,
+     2.0,
+     3.0,
+     4.0,
+     5.0,
+     5.0,
+     5.88,
+     6.0,
+     7.0,
+     8.0,
+     9.0,
+     10.0,
+     10.0,
+     11.0,
+     11.0,
+     13.0,
+     13.58,
+     14.0,
+     15.0,
+     16.0,
+     17.0,
+     18.0,
+     19.0,
+     20.0,
+     21.0,
+     22.0,
+     23.0,
+     24.0,
+     25.0,
+     26.0,
+     26.0,
+     28.0,
+     29.5,
+     32.0,
+     37.24,
+     40.0,
+     42.98,
+     45.0,
+     48.0,
+     50.09,
+     52.46,
+     55.83,
+     58.4,
+     63.57,
+     68.88,
+     74.0,
+     76.68,
+     79.05,
+     82.84,
+     85.79,
+     89.32,
+     93.06,
+     98.0,
+     102.27,
+     108.64,
+     111.01,
+     116.0,
+     121.5,
+     131.12,
+     135.0,
+     140.86,
+     150.23,
+     161.2,
+     169.91,
+     176.7,
+     184.71,
+     197.0,
+     208.9,
+     226.28,
+     235.76,
+     250.0,
+     257.72,
+     295.3,
+     317.36,
+     340.36,
+     364.82,
+     388.0,
+     403.45,
+     434.6,
+     590.05,
+     753.82,
+     963.35,
+     1600.0
+    ],
+    "scale": "model score (log-odds)",
+    "sensitivity": {
+     "x0.75": "steady",
+     "x1.25": "steady"
+    },
+    "share_basis": "among sampled patients whose curve moves",
+    "share_same_shape": 1.0,
+    "share_unaffected": 0.0,
+    "stable": true,
+    "status": "verified",
+    "tolerances": {
+     "equal_steps": 0.25,
+     "first_step": 0.6,
+     "flat_abs": 0.05,
+     "flat_slope": 0.05,
+     "kink": 0.15,
+     "min_piece": 0.05,
+     "reversal": 0.1,
+     "step_share": 0.7,
+     "step_width": 0.1,
+     "straight": 0.05
+    },
+    "typical_curve": [
+     -0.478745,
+     -0.51773,
+     -0.556716,
+     -0.595702,
+     -0.634688,
+     -0.673674,
+     -0.71266,
+     -0.751646,
+     -0.790631,
+     -0.829617,
+     -0.868603,
+     -0.907589,
+     -0.946575,
+     -0.985561,
+     -1.02455,
+     -1.06353,
+     -1.10252,
+     -1.1415,
+     -1.18049,
+     -1.21948,
+     -1.25846,
+     -1.29745,
+     -1.33643,
+     -1.37542,
+     -1.41441,
+     -1.45339,
+     -1.49238,
+     -1.53136,
+     -1.57035,
+     -1.60933,
+     -1.64832,
+     -1.68731,
+     -1.72629,
+     -1.76528,
+     -1.80426,
+     -1.84325,
+     -1.88224,
+     -1.92122,
+     -1.96021,
+     -1.99919,
+     -2.03818
+    ],
+    "typical_patient_unaffected": false,
+    "typical_risk": [
+     0.579617,
+     0.565454,
+     0.551383,
+     0.537421,
+     0.523582,
+     0.509882,
+     0.496335,
+     0.482952,
+     0.469746,
+     0.456726,
+     0.443903,
+     0.431285,
+     0.418879,
+     0.406692,
+     0.39473,
+     0.382998,
+     0.371501,
+     0.360241,
+     0.349221,
+     0.338443,
+     0.327909,
+     0.31762,
+     0.307575,
+     0.297775,
+     0.288219,
+     0.278906,
+     0.269834,
+     0.261001,
+     0.252405,
+     0.244044,
+     0.235914,
+     0.228012,
+     0.220335,
+     0.21288,
+     0.205643,
+     0.198619,
+     0.191806,
+     0.185199,
+     0.178793,
+     0.172584,
+     0.166569
+    ],
+    "verified": true
+   },
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "basis": "10th and 90th percentile of the training patients",
+     "from": {
+      "text": "0 fmol/l",
+      "value": 0.0
+     },
+     "to": {
+      "text": "295 fmol/l",
+      "value": 295.0
+     }
+    },
+    "direction": "lowers",
+    "related_direction": "ann_15:direction:progrec",
+    "strength": "moderate",
+    "variable": "progrec"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.00467822,
+     0.0834404
+    ],
+    "benefit_mean": 0.0409073,
+    "bootstrap_B": 200,
+    "measure": "test Harrell's C of the full model minus Harrell's C with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -0.477535,
+    "n": 138,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.00830243
+   },
+   "type": "magnitude",
+   "variables": [
+    {
+     "base": "progrec",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "progesterone receptor",
+     "short": "progesterone receptor",
+     "unit": "fmol/l"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_15",
+    "name": "cox_log_risk"
+   },
+   "checks": {
+    "agrees_with_direction": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.145108,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "meaningful",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "hazard_ratio": 0.653449,
+    "method": "change in the model's log-risk (log hazard ratio) for the typical patient",
+    "odds_ratio": 0.653449,
+    "unit": "log hazard ratio (model)",
+    "value": -0.425491
+   },
+   "groups": [
+    {
+     "label": "no hormonal therapy",
+     "n": 273
+    },
+    {
+     "label": "hormonal therapy",
+     "n": 165
+    }
+   ],
+   "id": "C08",
+   "key": "ann_15:magnitude:horTh=yes:1",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -0.145108,
+    "from": 0.562281,
+    "reference": "typical patient",
+    "to": 0.417173
+   },
+   "scope": "model",
+   "shape": {
+    "class": "categorical",
+    "levels": [
+     {
+      "effect_score": -0.425491,
+      "label": "hormonal therapy",
+      "n_train": 165,
+      "reference": false,
+      "risk": 0.417173
+     },
+     {
+      "effect_score": 0.0,
+      "label": "no hormonal therapy",
+      "n_train": 273,
+      "reference": true,
+      "risk": 0.562281
+     }
+    ],
+    "ordering_high_to_low": [
+     "no hormonal therapy",
+     "hormonal therapy"
+    ],
+    "reference": "no hormonal therapy",
+    "scale": "model score (log-odds) relative to the reference level",
+    "status": "verified",
+    "verified": true
+   },
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "0",
+      "codes": [
+       "0"
+      ],
+      "cond": "the patient has no hormonal therapy",
+      "decoded": true,
+      "group": "patients with no hormonal therapy",
+      "label": "no hormonal therapy",
+      "n_train": 273
+     },
+     "to": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "the patient has hormonal therapy",
+      "decoded": true,
+      "group": "patients with hormonal therapy",
+      "label": "hormonal therapy",
+      "n_train": 165
+     }
+    },
+    "direction": "lowers",
+    "related_direction": "ann_15:direction:horTh=yes:1",
+    "strength": "moderate",
+    "variable": "horTh=yes"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0586643,
+     0.0232121
+    ],
+    "benefit_mean": -0.013862,
+    "bootstrap_B": 200,
+    "measure": "test Harrell's C of the full model minus Harrell's C with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -0.425491,
+    "n": 138,
+    "same_sign": true,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.00748041
+   },
+   "type": "magnitude",
+   "variables": [
+    {
+     "base": "horTh=yes",
+     "decoded": true,
+     "kind": "category",
+     "label": "hormonal therapy",
+     "short": "hormonal therapy",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_15",
+    "name": "cox_log_risk"
+   },
+   "checks": {
+    "agrees_with_direction": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.0525771,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "meaningful",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "hazard_ratio": 1.15489,
+    "method": "change in the model's log-risk (log hazard ratio) for the typical patient",
+    "odds_ratio": 1.15489,
+    "unit": "log hazard ratio (model)",
+    "value": 0.144004
+   },
+   "groups": [
+    {
+     "label": "a tumour grade other than III",
+     "n": 336
+    },
+    {
+     "label": "tumour grade III",
+     "n": 102
+    }
+   ],
+   "id": "C09",
+   "key": "ann_15:magnitude:tgrade=III:1",
+   "linked": {
+    "inputs": [
+     "tgrade=II"
+    ],
+    "moved": {
+     "to": {
+      "tgrade=II": {
+       "from": "tumour grade II",
+       "label": "tumour grade II",
+       "to": "a tumour grade other than II"
+      }
+     }
+    },
+    "note": "the inputs the data ties to the changed one were moved to their typical value among the training rows with the new value, so the case is one the data has"
+   },
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.0525771,
+    "from": 0.562281,
+    "reference": "typical patient",
+    "to": 0.614858
+   },
+   "scope": "model",
+   "shape": {
+    "class": "categorical",
+    "levels": [
+     {
+      "effect_score": 0.144004,
+      "label": "tumour grade III",
+      "n_train": 102,
+      "reference": false,
+      "risk": 0.614858
+     },
+     {
+      "effect_score": 0.0,
+      "label": "a tumour grade other than III",
+      "n_train": 336,
+      "reference": true,
+      "risk": 0.562281
+     }
+    ],
+    "ordering_high_to_low": [
+     "tumour grade III",
+     "a tumour grade other than III"
+    ],
+    "reference": "a tumour grade other than III",
+    "scale": "model score (log-odds) relative to the reference level",
+    "status": "verified",
+    "verified": true
+   },
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "0",
+      "codes": [
+       "0"
+      ],
+      "cond": "the patient has a tumour grade other than III",
+      "decoded": true,
+      "group": "patients with a tumour grade other than III",
+      "label": "a tumour grade other than III",
+      "n_train": 336
+     },
+     "to": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "the patient has tumour grade III",
+      "decoded": true,
+      "group": "patients with tumour grade III",
+      "label": "tumour grade III",
+      "n_train": 102
+     }
+    },
+    "direction": "raises",
+    "related_direction": "ann_15:direction:tgrade=III:1",
+    "strength": "slight",
+    "variable": "tgrade=III"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.00751641,
+     0.141073
+    ],
+    "benefit_mean": 0.062815,
+    "bootstrap_B": 200,
+    "measure": "test Harrell's C of the full model minus Harrell's C with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 0.402461,
+    "n": 138,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.0401878
+   },
+   "type": "magnitude",
+   "variables": [
+    {
+     "base": "tgrade=III",
+     "decoded": true,
+     "kind": "category",
+     "label": "tumour grade III",
+     "short": "tumour grade III",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_15",
+    "name": "cox_log_risk"
+   },
+   "checks": {
+    "no_numeric_effect": true,
+    "no_path": true
+   },
+   "estimate": {
+    "method": "exact Null rule (no path to the output over enabled, non-zero-weight edges), confirmed by moving every column to its minimum and maximum",
+    "unit": "max |change in log-odds|",
+    "value": 0.0
+   },
+   "groups": [],
+   "id": "C10",
+   "key": "ann_15:null:age",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "method": "exact",
+    "variable": "age"
+   },
+   "test_check": null,
+   "type": "null",
+   "variables": [
+    {
+     "base": "age",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "age",
+     "short": "age",
+     "unit": "years"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_15",
+    "name": "cox_log_risk"
+   },
+   "checks": {
+    "no_numeric_effect": true,
+    "no_path": true
+   },
+   "estimate": {
+    "method": "exact Null rule (no path to the output over enabled, non-zero-weight edges), confirmed by moving every column to its minimum and maximum",
+    "unit": "max |change in log-odds|",
+    "value": 0.0
+   },
+   "groups": [],
+   "id": "C11",
+   "key": "ann_15:null:estrec",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "method": "exact",
+    "variable": "estrec"
+   },
+   "test_check": null,
+   "type": "null",
+   "variables": [
+    {
+     "base": "estrec",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "oestrogen receptor",
+     "short": "oestrogen receptor",
+     "unit": "fmol/l"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_15",
+    "name": "cox_log_risk"
+   },
+   "checks": {
+    "no_numeric_effect": true,
+    "no_path": true
+   },
+   "estimate": {
+    "method": "exact Null rule (no path to the output over enabled, non-zero-weight edges), confirmed by moving every column to its minimum and maximum",
+    "unit": "max |change in log-odds|",
+    "value": 0.0
+   },
+   "groups": [],
+   "id": "C12",
+   "key": "ann_15:null:menostat=Post",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "method": "exact",
+    "variable": "menostat=Post"
+   },
+   "test_check": null,
+   "type": "null",
+   "variables": [
+    {
+     "base": "menostat=Post",
+     "decoded": true,
+     "kind": "category",
+     "label": "postmenopausal status",
+     "short": "postmenopausal status",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_15",
+    "name": "cox_log_risk"
+   },
+   "checks": {
+    "no_numeric_effect": true,
+    "no_path": true
+   },
+   "estimate": {
+    "method": "exact Null rule (no path to the output over enabled, non-zero-weight edges), confirmed by moving every column to its minimum and maximum",
+    "unit": "max |change in log-odds|",
+    "value": 0.0
+   },
+   "groups": [],
+   "id": "C13",
+   "key": "ann_15:null:tsize",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "method": "exact",
+    "variable": "tsize"
+   },
+   "test_check": null,
+   "type": "null",
+   "variables": [
+    {
+     "base": "tsize",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "tumour size",
+     "short": "tumour size",
+     "unit": "mm"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_15",
+    "name": "cox_log_risk"
+   },
+   "checks": {
+    "children_feed_it": true
+   },
+   "estimate": {
+    "method": "graph: enabled non-zero connections from each child's outputs into this part's own nodes; combination checked by a least-squares fit of this part's output on its direct inputs and its children's outputs (training patients)",
+    "value": null
+   },
+   "id": "C14",
+   "key": "ann_15:structure:composition",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "combination": "added",
+    "copies": [],
+    "direct_inputs": [],
+    "fed_by_part_names": [
+     "tumour_biology",
+     "nodal_burden",
+     "hormone_therapy"
+    ],
+    "fed_by_parts": [
+     "ann_12",
+     "ann_13",
+     "ann_14"
+    ],
+    "feeds": [],
+    "kind": "composition"
+   },
+   "test_check": null,
+   "type": "structure",
+   "variables": [],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_12",
+    "name": "tumour_biology"
+   },
+   "checks": {
+    "consistent_across_patients": false,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.218336,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "hazard_ratio": 0.617108,
+    "hazard_ratio_range": [
+     0.510194,
+     1.15489
+    ],
+    "method": "mean over training patients of the change in the model's log-risk (log hazard ratio) when the variable is changed only where this part reads it",
+    "odds_ratio": 0.617108,
+    "odds_ratio_range": [
+     0.510194,
+     1.15489
+    ],
+    "range_across_patients": [
+     -0.672964,
+     0.144004
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log hazard ratio (model)",
+    "value": -0.482712
+   },
+   "evidence": {
+    "share_opposite_sign": 0.232877,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "tumour grade II",
+     "n": 285
+    },
+    {
+     "label": "a tumour grade other than II",
+     "n": 153
+    }
+   ],
+   "id": "C15",
+   "key": "ann_12:direction:tgrade=II:0",
+   "n": 438,
+   "reasons": [
+    "23% of patients have the opposite sign (allowed: 10%)"
+   ],
+   "risk": {
+    "delta": -0.218336,
+    "from": 0.562281,
+    "reference": "typical patient",
+    "to": 0.343945
+   },
+   "scope": "part",
+   "shape": {
+    "class": "categorical",
+    "levels": [
+     {
+      "effect_score": 0.0,
+      "label": "tumour grade II",
+      "n_train": 285,
+      "reference": true,
+      "risk": 0.562281
+     },
+     {
+      "effect_score": -0.672964,
+      "label": "a tumour grade other than II",
+      "n_train": 153,
+      "reference": false,
+      "risk": 0.343945
+     }
+    ],
+    "ordering_high_to_low": [
+     "tumour grade II",
+     "a tumour grade other than II"
+    ],
+    "reference": "tumour grade II",
+    "scale": "model score (log-odds) relative to the reference level",
+    "status": "verified",
+    "verified": true
+   },
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "the patient has tumour grade II",
+      "decoded": true,
+      "group": "patients with tumour grade II",
+      "label": "tumour grade II",
+      "n_train": 285
+     },
+     "to": {
+      "code": "0",
+      "codes": [
+       "0"
+      ],
+      "cond": "the patient has a tumour grade other than II",
+      "decoded": true,
+      "group": "patients with a tumour grade other than II",
+      "label": "a tumour grade other than II",
+      "n_train": 153
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "moderate",
+    "variable": "tgrade=II"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0409176,
+     0.0324602
+    ],
+    "benefit_mean": -0.0029081,
+    "bootstrap_B": 200,
+    "measure": "test Harrell's C of the full model minus Harrell's C with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -0.471682,
+    "n": 138,
+    "same_sign": true,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.0228066
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "tgrade=II",
+     "decoded": true,
+     "kind": "category",
+     "label": "tumour grade II",
+     "short": "tumour grade II",
+     "unit": null
+    }
+   ],
+   "verified": false
+  },
+  {
+   "annotation": {
+    "id": "ann_12",
+    "name": "tumour_biology"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.163792,
+    "n_ok": true,
+    "qualifiers": [],
+    "size": "meaningful",
+    "test": "agrees",
+    "word": "clearly"
+   },
+   "estimate": {
+    "hazard_ratio": 0.620311,
+    "hazard_ratio_range": [
+     0.620311,
+     0.620311
+    ],
+    "method": "mean over training patients of the change in the model's log-risk (log hazard ratio) when the variable is changed only where this part reads it",
+    "odds_ratio": 0.620311,
+    "odds_ratio_range": [
+     0.620311,
+     0.620311
+    ],
+    "range_across_patients": [
+     -0.477535,
+     -0.477535
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log hazard ratio (model)",
+    "value": -0.477535
+   },
+   "evidence": {
+    "average_curve": {
+     "mean_log_odds": [
+      -0.573243,
+      -0.574862,
+      -0.578099,
+      -0.582956,
+      -0.589431,
+      -0.595906,
+      -0.604,
+      -0.612093,
+      -0.621806,
+      -0.646087,
+      -0.667131,
+      -0.701125,
+      -0.731882,
+      -0.770732,
+      -0.833864,
+      -0.911564,
+      -1.05078,
+      -1.2256
+     ],
+     "rows": 438,
+     "values": [
+      0.0,
+      1.0,
+      3.0,
+      6.0,
+      10.0,
+      14.0,
+      19.0,
+      24.0,
+      30.0,
+      45.0,
+      58.0,
+      79.0,
+      98.0,
+      122.0,
+      161.0,
+      209.0,
+      295.0,
+      403.0
+     ]
+    },
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [],
+   "id": "C16",
+   "key": "ann_12:direction:progrec",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -0.163792,
+    "from": 0.579617,
+    "reference": "typical patient",
+    "to": 0.415825
+   },
+   "scope": "part",
+   "shape": {
+    "band_risk_p10": [
+     0.357333,
+     0.346376,
+     0.335662,
+     0.325192,
+     0.314967,
+     0.304987,
+     0.295251,
+     0.285758,
+     0.276508,
+     0.267499,
+     0.258728,
+     0.250194,
+     0.241893,
+     0.233823,
+     0.225981,
+     0.218363,
+     0.210965,
+     0.203784,
+     0.196816,
+     0.190057,
+     0.183503,
+     0.177149,
+     0.170991,
+     0.165026,
+     0.159248,
+     0.153653,
+     0.148237,
+     0.142996,
+     0.137925,
+     0.133019,
+     0.128274,
+     0.123686,
+     0.119251,
+     0.114965,
+     0.110822,
+     0.10682,
+     0.102953,
+     0.0992191,
+     0.095613,
+     0.0921311,
+     0.0887697
+    ],
+    "band_risk_p90": [
+     0.733393,
+     0.719572,
+     0.705603,
+     0.691512,
+     0.677324,
+     0.663063,
+     0.648753,
+     0.634418,
+     0.620078,
+     0.605757,
+     0.591474,
+     0.577249,
+     0.563101,
+     0.549048,
+     0.535105,
+     0.521289,
+     0.507614,
+     0.494094,
+     0.48074,
+     0.467565,
+     0.454577,
+     0.441788,
+     0.429205,
+     0.416836,
+     0.404686,
+     0.392763,
+     0.38107,
+     0.369611,
+     0.358391,
+     0.347412,
+     0.336675,
+     0.326182,
+     0.315933,
+     0.30593,
+     0.29617,
+     0.286655,
+     0.277382,
+     0.26835,
+     0.259557,
+     0.251,
+     0.242677
+    ],
+    "class": "steady",
+    "classes_across_patients": {
+     "steady": 300
+    },
+    "consistent": true,
+    "consistent_share": 0.9,
+    "exceptions": [],
+    "grid": [
+     0.0,
+     24.0837,
+     48.1675,
+     72.2512,
+     96.335,
+     120.419,
+     144.502,
+     168.586,
+     192.67,
+     216.754,
+     240.837,
+     264.921,
+     289.005,
+     313.089,
+     337.172,
+     361.256,
+     385.34,
+     409.424,
+     433.507,
+     457.591,
+     481.675,
+     505.759,
+     529.842,
+     553.926,
+     578.01,
+     602.094,
+     626.177,
+     650.261,
+     674.345,
+     698.429,
+     722.512,
+     746.596,
+     770.68,
+     794.764,
+     818.847,
+     842.931,
+     867.015,
+     891.099,
+     915.182,
+     939.266,
+     963.35
+    ],
+    "grid_basis": "41 points from the 1st to the 99th percentile",
+    "hinge_kind": null,
+    "increments": null,
+    "ordinal": false,
+    "ordinal_pattern": null,
+    "patients_sampled": 300,
+    "pieces": [
+     {
+      "flat": false,
+      "from": 0.0,
+      "slope": -0.00161876,
+      "to": 963.35
+     }
+    ],
+    "point_reason": "no fold in this shape (steady)",
+    "point_reconciled": false,
+    "points": {},
+    "points_text": {},
+    "risk_saturation": null,
+    "rug": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     1.0,
+     1.0,
+     1.0,
+     2.0,
+     2.0,
+     2.0,
+     3.0,
+     4.0,
+     5.0,
+     5.0,
+     5.88,
+     6.0,
+     7.0,
+     8.0,
+     9.0,
+     10.0,
+     10.0,
+     11.0,
+     11.0,
+     13.0,
+     13.58,
+     14.0,
+     15.0,
+     16.0,
+     17.0,
+     18.0,
+     19.0,
+     20.0,
+     21.0,
+     22.0,
+     23.0,
+     24.0,
+     25.0,
+     26.0,
+     26.0,
+     28.0,
+     29.5,
+     32.0,
+     37.24,
+     40.0,
+     42.98,
+     45.0,
+     48.0,
+     50.09,
+     52.46,
+     55.83,
+     58.4,
+     63.57,
+     68.88,
+     74.0,
+     76.68,
+     79.05,
+     82.84,
+     85.79,
+     89.32,
+     93.06,
+     98.0,
+     102.27,
+     108.64,
+     111.01,
+     116.0,
+     121.5,
+     131.12,
+     135.0,
+     140.86,
+     150.23,
+     161.2,
+     169.91,
+     176.7,
+     184.71,
+     197.0,
+     208.9,
+     226.28,
+     235.76,
+     250.0,
+     257.72,
+     295.3,
+     317.36,
+     340.36,
+     364.82,
+     388.0,
+     403.45,
+     434.6,
+     590.05,
+     753.82,
+     963.35,
+     1600.0
+    ],
+    "scale": "model score (log-odds)",
+    "sensitivity": {
+     "x0.75": "steady",
+     "x1.25": "steady"
+    },
+    "share_basis": "among sampled patients whose curve moves",
+    "share_same_shape": 1.0,
+    "share_unaffected": 0.0,
+    "stable": true,
+    "status": "verified",
+    "tolerances": {
+     "equal_steps": 0.25,
+     "first_step": 0.6,
+     "flat_abs": 0.05,
+     "flat_slope": 0.05,
+     "kink": 0.15,
+     "min_piece": 0.05,
+     "reversal": 0.1,
+     "step_share": 0.7,
+     "step_width": 0.1,
+     "straight": 0.05
+    },
+    "typical_curve": [
+     -0.478745,
+     -0.51773,
+     -0.556716,
+     -0.595702,
+     -0.634688,
+     -0.673674,
+     -0.71266,
+     -0.751646,
+     -0.790631,
+     -0.829617,
+     -0.868603,
+     -0.907589,
+     -0.946575,
+     -0.985561,
+     -1.02455,
+     -1.06353,
+     -1.10252,
+     -1.1415,
+     -1.18049,
+     -1.21948,
+     -1.25846,
+     -1.29745,
+     -1.33643,
+     -1.37542,
+     -1.41441,
+     -1.45339,
+     -1.49238,
+     -1.53136,
+     -1.57035,
+     -1.60933,
+     -1.64832,
+     -1.68731,
+     -1.72629,
+     -1.76528,
+     -1.80426,
+     -1.84325,
+     -1.88224,
+     -1.92122,
+     -1.96021,
+     -1.99919,
+     -2.03818
+    ],
+    "typical_patient_unaffected": false,
+    "typical_risk": [
+     0.579617,
+     0.565454,
+     0.551383,
+     0.537421,
+     0.523582,
+     0.509882,
+     0.496335,
+     0.482952,
+     0.469746,
+     0.456726,
+     0.443903,
+     0.431285,
+     0.418879,
+     0.406692,
+     0.39473,
+     0.382998,
+     0.371501,
+     0.360241,
+     0.349221,
+     0.338443,
+     0.327909,
+     0.31762,
+     0.307575,
+     0.297775,
+     0.288219,
+     0.278906,
+     0.269834,
+     0.261001,
+     0.252405,
+     0.244044,
+     0.235914,
+     0.228012,
+     0.220335,
+     0.21288,
+     0.205643,
+     0.198619,
+     0.191806,
+     0.185199,
+     0.178793,
+     0.172584,
+     0.166569
+    ],
+    "verified": true
+   },
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "basis": "10th and 90th percentile of the training patients",
+     "from": {
+      "text": "0 fmol/l",
+      "value": 0.0
+     },
+     "to": {
+      "text": "295 fmol/l",
+      "value": 295.0
+     }
+    },
+    "direction": "lowers",
+    "monotone": true,
+    "strength": "moderate",
+    "variable": "progrec"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     0.00467822,
+     0.0834404
+    ],
+    "benefit_mean": 0.0409073,
+    "bootstrap_B": 200,
+    "measure": "test Harrell's C of the full model minus Harrell's C with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -0.477535,
+    "n": 138,
+    "same_sign": true,
+    "split": "test",
+    "status": "agrees",
+    "train_benefit_mean": 0.00830243
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "progrec",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "progesterone receptor",
+     "short": "progesterone receptor",
+     "unit": "fmol/l"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_12",
+    "name": "tumour_biology"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.0525771,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "meaningful",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "hazard_ratio": 1.46094,
+    "hazard_ratio_range": [
+     1.15489,
+     2.26363
+    ],
+    "method": "mean over training patients of the change in the model's log-risk (log hazard ratio) when the variable is changed only where this part reads it",
+    "odds_ratio": 1.46094,
+    "odds_ratio_range": [
+     1.15489,
+     2.26363
+    ],
+    "range_across_patients": [
+     0.144004,
+     0.816968
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log hazard ratio (model)",
+    "value": 0.37908
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "a tumour grade other than III",
+     "n": 336
+    },
+    {
+     "label": "tumour grade III",
+     "n": 102
+    }
+   ],
+   "id": "C17",
+   "key": "ann_12:direction:tgrade=III:1",
+   "linked": {
+    "inputs": [
+     "tgrade=II"
+    ],
+    "moved": {
+     "to": {
+      "tgrade=II": {
+       "from": "tumour grade II",
+       "label": "tumour grade II",
+       "to": "a tumour grade other than II"
+      }
+     }
+    },
+    "note": "the inputs the data ties to the changed one were moved to their typical value among the training rows with the new value, so the case is one the data has"
+   },
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.0525771,
+    "from": 0.562281,
+    "reference": "typical patient",
+    "to": 0.614858
+   },
+   "scope": "part",
+   "shape": {
+    "class": "categorical",
+    "levels": [
+     {
+      "effect_score": 0.144004,
+      "label": "tumour grade III",
+      "n_train": 102,
+      "reference": false,
+      "risk": 0.614858
+     },
+     {
+      "effect_score": 0.0,
+      "label": "a tumour grade other than III",
+      "n_train": 336,
+      "reference": true,
+      "risk": 0.562281
+     }
+    ],
+    "ordering_high_to_low": [
+     "tumour grade III",
+     "a tumour grade other than III"
+    ],
+    "reference": "a tumour grade other than III",
+    "scale": "model score (log-odds) relative to the reference level",
+    "status": "verified",
+    "verified": true
+   },
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "0",
+      "codes": [
+       "0"
+      ],
+      "cond": "the patient has a tumour grade other than III",
+      "decoded": true,
+      "group": "patients with a tumour grade other than III",
+      "label": "a tumour grade other than III",
+      "n_train": 336
+     },
+     "to": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "the patient has tumour grade III",
+      "decoded": true,
+      "group": "patients with tumour grade III",
+      "label": "tumour grade III",
+      "n_train": 102
+     }
+    },
+    "direction": "raises",
+    "monotone": null,
+    "strength": "moderate",
+    "variable": "tgrade=III"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.00751641,
+     0.141073
+    ],
+    "benefit_mean": 0.062815,
+    "bootstrap_B": 200,
+    "measure": "test Harrell's C of the full model minus Harrell's C with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 0.402461,
+    "n": 138,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.0401878
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "tgrade=III",
+     "decoded": true,
+     "kind": "category",
+     "label": "tumour grade III",
+     "short": "tumour grade III",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_12",
+    "name": "tumour_biology"
+   },
+   "checks": {
+    "reproduces": true
+   },
+   "estimate": {
+    "method": "the part's extracted function (AnnotationFunction) evaluated on its entries against its outputs in a full forward pass, training patients",
+    "value": 2.22045e-16
+   },
+   "id": "C18",
+   "key": "ann_12:structure:formula",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "kind": "formula",
+    "max_abs_err": 2.22045e-16,
+    "n": 438
+   },
+   "test_check": null,
+   "type": "structure",
+   "variables": [],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_13",
+    "name": "nodal_burden"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.200012,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "large",
+    "test": "unclear",
+    "word": null
+   },
+   "estimate": {
+    "hazard_ratio": 1.73421,
+    "hazard_ratio_range": [
+     1.73421,
+     1.73421
+    ],
+    "method": "mean over training patients of the change in the model's log-risk (log hazard ratio) when the variable is changed only where this part reads it",
+    "odds_ratio": 1.73421,
+    "odds_ratio_range": [
+     1.73421,
+     1.73421
+    ],
+    "range_across_patients": [
+     0.55055,
+     0.55055
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log hazard ratio (model)",
+    "value": 0.55055
+   },
+   "evidence": {
+    "average_curve": {
+     "mean_log_odds": [
+      -0.957807,
+      -0.907757,
+      -0.857707,
+      -0.807657,
+      -0.757606,
+      -0.707556,
+      -0.657506,
+      -0.607456,
+      -0.507356,
+      -0.407256,
+      -0.207056
+     ],
+     "rows": 438,
+     "values": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      7.0,
+      8.0,
+      10.0,
+      12.0,
+      16.0
+     ]
+    },
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [],
+   "id": "C19",
+   "key": "ann_13:direction:pnodes",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": 0.200012,
+    "from": 0.526443,
+    "reference": "typical patient",
+    "to": 0.726455
+   },
+   "scope": "part",
+   "shape": {
+    "band_risk_p10": [
+     0.237796,
+     0.245012,
+     0.25241,
+     0.25999,
+     0.267755,
+     0.275706,
+     0.283845,
+     0.292173,
+     0.30069,
+     0.309398,
+     0.318297,
+     0.327387,
+     0.336667,
+     0.346138,
+     0.355799,
+     0.365647,
+     0.375682,
+     0.385902,
+     0.396303,
+     0.406883,
+     0.417639,
+     0.428566,
+     0.43966,
+     0.450916,
+     0.462328,
+     0.47389,
+     0.485596,
+     0.497437,
+     0.509407,
+     0.521495,
+     0.533694,
+     0.545992,
+     0.55838,
+     0.570845,
+     0.583378,
+     0.595963,
+     0.60859,
+     0.621243,
+     0.63391,
+     0.646574,
+     0.65922
+    ],
+    "band_risk_p90": [
+     0.587424,
+     0.600025,
+     0.612662,
+     0.625321,
+     0.637988,
+     0.650648,
+     0.663285,
+     0.675884,
+     0.688428,
+     0.700901,
+     0.713285,
+     0.725563,
+     0.737717,
+     0.749731,
+     0.761587,
+     0.773267,
+     0.784753,
+     0.79603,
+     0.80708,
+     0.817887,
+     0.828435,
+     0.83871,
+     0.848697,
+     0.858384,
+     0.867757,
+     0.876806,
+     0.88552,
+     0.893891,
+     0.901911,
+     0.909574,
+     0.916875,
+     0.923813,
+     0.930384,
+     0.936589,
+     0.942429,
+     0.947909,
+     0.953031,
+     0.957803,
+     0.962233,
+     0.966328,
+     0.9701
+    ],
+    "class": "steady",
+    "classes_across_patients": {
+     "steady": 300
+    },
+    "consistent": true,
+    "consistent_share": 0.9,
+    "exceptions": [],
+    "grid": [
+     1.0,
+     1.688,
+     2.376,
+     3.064,
+     3.752,
+     4.44,
+     5.128,
+     5.816,
+     6.504,
+     7.192,
+     7.88,
+     8.568,
+     9.256,
+     9.944,
+     10.632,
+     11.32,
+     12.008,
+     12.696,
+     13.384,
+     14.072,
+     14.76,
+     15.448,
+     16.136,
+     16.824,
+     17.512,
+     18.2,
+     18.888,
+     19.576,
+     20.264,
+     20.952,
+     21.64,
+     22.328,
+     23.016,
+     23.704,
+     24.392,
+     25.08,
+     25.768,
+     26.456,
+     27.144,
+     27.832,
+     28.52
+    ],
+    "grid_basis": "41 points from the 1st to the 99th percentile",
+    "hinge_kind": null,
+    "increments": null,
+    "ordinal": false,
+    "ordinal_pattern": null,
+    "patients_sampled": 300,
+    "pieces": [
+     {
+      "flat": false,
+      "from": 1.0,
+      "slope": 0.05005,
+      "to": 28.52
+     }
+    ],
+    "point_reason": "no fold in this shape (steady)",
+    "point_reconciled": false,
+    "points": {},
+    "points_text": {},
+    "risk_saturation": null,
+    "rug": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     2.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     4.0,
+     4.0,
+     4.0,
+     4.0,
+     4.0,
+     4.0,
+     4.0,
+     4.0,
+     4.0,
+     5.0,
+     5.0,
+     5.0,
+     5.0,
+     5.0,
+     5.0,
+     5.53,
+     6.0,
+     6.0,
+     6.0,
+     6.01,
+     7.0,
+     7.0,
+     7.0,
+     7.0,
+     7.0,
+     7.23,
+     8.0,
+     8.0,
+     9.0,
+     9.0,
+     10.0,
+     10.0,
+     10.0,
+     11.0,
+     11.0,
+     11.0,
+     12.0,
+     12.0,
+     13.0,
+     14.0,
+     15.0,
+     16.0,
+     17.0,
+     18.89,
+     20.0,
+     28.52,
+     51.0
+    ],
+    "scale": "model score (log-odds)",
+    "sensitivity": {
+     "x0.75": "steady",
+     "x1.25": "steady"
+    },
+    "share_basis": "among sampled patients whose curve moves",
+    "share_same_shape": 1.0,
+    "share_unaffected": 0.0,
+    "stable": true,
+    "status": "verified",
+    "tolerances": {
+     "equal_steps": 0.25,
+     "first_step": 0.6,
+     "flat_abs": 0.05,
+     "flat_slope": 0.05,
+     "kink": 0.15,
+     "min_piece": 0.05,
+     "reversal": 0.1,
+     "step_share": 0.7,
+     "step_width": 0.1,
+     "straight": 0.05
+    },
+    "typical_curve": [
+     -0.626598,
+     -0.592164,
+     -0.557729,
+     -0.523295,
+     -0.48886,
+     -0.454426,
+     -0.419992,
+     -0.385557,
+     -0.351123,
+     -0.316688,
+     -0.282254,
+     -0.247819,
+     -0.213385,
+     -0.178951,
+     -0.144516,
+     -0.110082,
+     -0.0756473,
+     -0.0412128,
+     -0.0067784,
+     0.027656,
+     0.0620905,
+     0.0965249,
+     0.130959,
+     0.165394,
+     0.199828,
+     0.234263,
+     0.268697,
+     0.303131,
+     0.337566,
+     0.372,
+     0.406435,
+     0.440869,
+     0.475304,
+     0.509738,
+     0.544172,
+     0.578607,
+     0.613041,
+     0.647476,
+     0.68191,
+     0.716345,
+     0.750779
+    ],
+    "typical_patient_unaffected": false,
+    "typical_risk": [
+     0.526443,
+     0.538683,
+     0.551019,
+     0.56344,
+     0.575934,
+     0.58849,
+     0.601094,
+     0.613733,
+     0.626393,
+     0.63906,
+     0.651719,
+     0.664354,
+     0.676949,
+     0.689487,
+     0.701953,
+     0.714329,
+     0.726597,
+     0.73874,
+     0.750742,
+     0.762583,
+     0.774247,
+     0.785717,
+     0.796975,
+     0.808005,
+     0.81879,
+     0.829316,
+     0.839567,
+     0.84953,
+     0.85919,
+     0.868536,
+     0.877557,
+     0.886242,
+     0.894583,
+     0.902573,
+     0.910206,
+     0.917477,
+     0.924383,
+     0.930923,
+     0.937098,
+     0.942907,
+     0.948356
+    ],
+    "verified": true
+   },
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "basis": "10th and 90th percentile of the training patients",
+     "from": {
+      "text": "1 nodes",
+      "value": 1.0
+     },
+     "to": {
+      "text": "12 nodes",
+      "value": 12.0
+     }
+    },
+    "direction": "raises",
+    "monotone": true,
+    "strength": "moderate",
+    "variable": "pnodes"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.00213365,
+     0.0735461
+    ],
+    "benefit_mean": 0.0313106,
+    "bootstrap_B": 200,
+    "measure": "test Harrell's C of the full model minus Harrell's C with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": 0.55055,
+    "n": 138,
+    "same_sign": true,
+    "split": "test",
+    "status": "unclear",
+    "train_benefit_mean": 0.0472389
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "pnodes",
+     "decoded": true,
+     "kind": "count",
+     "label": "number of positive lymph nodes",
+     "short": "number of positive lymph nodes",
+     "unit": "nodes"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_13",
+    "name": "nodal_burden"
+   },
+   "checks": {
+    "reproduces": true
+   },
+   "estimate": {
+    "method": "the part's extracted function (AnnotationFunction) evaluated on its entries against its outputs in a full forward pass, training patients",
+    "value": 0.0
+   },
+   "id": "C20",
+   "key": "ann_13:structure:formula",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "kind": "formula",
+    "max_abs_err": 0.0,
+    "n": 438
+   },
+   "test_check": null,
+   "type": "structure",
+   "variables": [],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_14",
+    "name": "hormone_therapy"
+   },
+   "checks": {
+    "consistent_across_patients": true,
+    "level_observed": true,
+    "non_zero": true
+   },
+   "confidence": {
+    "delta_risk": 0.145108,
+    "n_ok": true,
+    "qualifiers": [
+     "on the training data only"
+    ],
+    "size": "meaningful",
+    "test": "disagrees",
+    "word": null
+   },
+   "estimate": {
+    "hazard_ratio": 0.653449,
+    "hazard_ratio_range": [
+     0.653449,
+     0.653449
+    ],
+    "method": "mean over training patients of the change in the model's log-risk (log hazard ratio) when the variable is changed only where this part reads it",
+    "odds_ratio": 0.653449,
+    "odds_ratio_range": [
+     0.653449,
+     0.653449
+    ],
+    "range_across_patients": [
+     -0.425491,
+     -0.425491
+    ],
+    "range_basis": "10th to 90th percentile of per-patient effects (training patients)",
+    "unit": "log hazard ratio (model)",
+    "value": -0.425491
+   },
+   "evidence": {
+    "share_opposite_sign": 0.0,
+    "share_unaffected": 0.0
+   },
+   "groups": [
+    {
+     "label": "no hormonal therapy",
+     "n": 273
+    },
+    {
+     "label": "hormonal therapy",
+     "n": 165
+    }
+   ],
+   "id": "C21",
+   "key": "ann_14:direction:horTh=yes:1",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "delta": -0.145108,
+    "from": 0.562281,
+    "reference": "typical patient",
+    "to": 0.417173
+   },
+   "scope": "part",
+   "shape": {
+    "class": "categorical",
+    "levels": [
+     {
+      "effect_score": -0.425491,
+      "label": "hormonal therapy",
+      "n_train": 165,
+      "reference": false,
+      "risk": 0.417173
+     },
+     {
+      "effect_score": 0.0,
+      "label": "no hormonal therapy",
+      "n_train": 273,
+      "reference": true,
+      "risk": 0.562281
+     }
+    ],
+    "ordering_high_to_low": [
+     "no hormonal therapy",
+     "hormonal therapy"
+    ],
+    "reference": "no hormonal therapy",
+    "scale": "model score (log-odds) relative to the reference level",
+    "status": "verified",
+    "verified": true
+   },
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "change": {
+     "from": {
+      "code": "0",
+      "codes": [
+       "0"
+      ],
+      "cond": "the patient has no hormonal therapy",
+      "decoded": true,
+      "group": "patients with no hormonal therapy",
+      "label": "no hormonal therapy",
+      "n_train": 273
+     },
+     "to": {
+      "code": "1",
+      "codes": [
+       "1"
+      ],
+      "cond": "the patient has hormonal therapy",
+      "decoded": true,
+      "group": "patients with hormonal therapy",
+      "label": "hormonal therapy",
+      "n_train": 165
+     }
+    },
+    "direction": "lowers",
+    "monotone": null,
+    "strength": "moderate",
+    "variable": "horTh=yes"
+   },
+   "test_check": {
+    "benefit_ci95": [
+     -0.0586643,
+     0.0232121
+    ],
+    "benefit_mean": -0.013862,
+    "bootstrap_B": 200,
+    "measure": "test Harrell's C of the full model minus Harrell's C with the mechanism's information removed (prediction averaged over its training distribution); positive = it helps; paired bootstrap over test patients, seed 42",
+    "model_effect_mean": -0.425491,
+    "n": 138,
+    "same_sign": true,
+    "split": "test",
+    "status": "disagrees",
+    "train_benefit_mean": 0.00748041
+   },
+   "type": "direction",
+   "variables": [
+    {
+     "base": "horTh=yes",
+     "decoded": true,
+     "kind": "category",
+     "label": "hormonal therapy",
+     "short": "hormonal therapy",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_14",
+    "name": "hormone_therapy"
+   },
+   "checks": {
+    "reproduces": true
+   },
+   "estimate": {
+    "method": "the part's extracted function (AnnotationFunction) evaluated on its entries against its outputs in a full forward pass, training patients",
+    "value": 0.0
+   },
+   "id": "C22",
+   "key": "ann_14:structure:formula",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "kind": "formula",
+    "max_abs_err": 0.0,
+    "n": 438
+   },
+   "test_check": null,
+   "type": "structure",
+   "variables": [],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_15",
+    "name": "cox_log_risk"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -0.206177
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 2.71344e-12,
+    "fd_varies": false
+   },
+   "id": "C23",
+   "key": "ann_15:linearity:var:horTh=yes",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "to hormonal therapy",
+    "delta": -0.145108,
+    "from": 0.562281,
+    "n": 165,
+    "reference": "typical patient",
+    "to": 0.417173
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 2,
+      "label": "hormonal therapy",
+      "level": "1",
+      "score_per_unit": -0.4254907033031033,
+      "text": "−0.43 for hormonal therapy"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "horTh=yes"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "horTh=yes",
+     "decoded": true,
+     "kind": "category",
+     "label": "hormonal therapy",
+     "short": "hormonal therapy",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_15",
+    "name": "cox_log_risk"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": 0.292551
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 2.16044e-12,
+    "fd_varies": false
+   },
+   "id": "C24",
+   "key": "ann_15:linearity:var:pnodes",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "from 1 nodes to 12 nodes",
+    "delta": 0.200012,
+    "from": 0.526443,
+    "n": 438,
+    "reference": "typical patient",
+    "to": 0.726455
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": "raises",
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 4,
+      "label": "number of positive lymph nodes",
+      "score_per_unit": 0.05005003825503147,
+      "text": "+0.05 per node"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "pnodes"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "pnodes",
+     "decoded": true,
+     "kind": "count",
+     "label": "number of positive lymph nodes",
+     "short": "number of positive lymph nodes",
+     "unit": "nodes"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_15",
+    "name": "cox_log_risk"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -0.316125
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 6.87139e-12,
+    "fd_varies": false
+   },
+   "id": "C25",
+   "key": "ann_15:linearity:var:progrec",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "from 0 fmol/l to 295 fmol/l",
+    "delta": -0.163945,
+    "from": 0.579617,
+    "n": 438,
+    "reference": "typical patient",
+    "to": 0.415672
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": "lowers",
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 5,
+      "label": "progesterone receptor",
+      "score_per_unit": -0.0016187625644079634,
+      "text": "−0.0016 per fmol/l"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "progrec"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "progrec",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "progesterone receptor",
+     "short": "progesterone receptor",
+     "unit": "fmol/l"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_15",
+    "name": "cox_log_risk"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": 0.320838
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 4.70246e-12,
+    "fd_varies": false
+   },
+   "id": "C26",
+   "key": "ann_15:linearity:var:tgrade=II",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "to tumour grade II",
+    "delta": 0.0,
+    "from": 0.562281,
+    "n": 285,
+    "reference": "typical patient",
+    "to": 0.562281
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 6,
+      "label": "tumour grade II",
+      "level": "1",
+      "score_per_unit": 0.6729644092852032,
+      "text": "+0.67 for tumour grade II"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "tgrade=II"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "tgrade=II",
+     "decoded": true,
+     "kind": "category",
+     "label": "tumour grade II",
+     "short": "tumour grade II",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_15",
+    "name": "cox_log_risk"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": 0.345303
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 6.04561e-12,
+    "fd_varies": false
+   },
+   "id": "C27",
+   "key": "ann_15:linearity:var:tgrade=III",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "to tumour grade III",
+    "delta": 0.28362,
+    "from": 0.562281,
+    "n": 102,
+    "reference": "typical patient",
+    "to": 0.845901
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 7,
+      "label": "tumour grade III",
+      "level": "1",
+      "score_per_unit": 0.8169679587125549,
+      "text": "+0.82 for tumour grade III"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "tgrade=III"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "tgrade=III",
+     "decoded": true,
+     "kind": "category",
+     "label": "tumour grade III",
+     "short": "tumour grade III",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_12",
+    "name": "tumour_biology"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 0
+   },
+   "evidence": {
+    "always_on_units": 0,
+    "switching_units": 0
+   },
+   "id": "C28",
+   "key": "ann_12:linearity:part",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_13",
+    "name": "nodal_burden"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 0
+   },
+   "evidence": {
+    "always_on_units": 0,
+    "switching_units": 0
+   },
+   "id": "C29",
+   "key": "ann_13:linearity:part",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_14",
+    "name": "hormone_therapy"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 0
+   },
+   "evidence": {
+    "always_on_units": 0,
+    "switching_units": 0
+   },
+   "id": "C30",
+   "key": "ann_14:linearity:part",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_15",
+    "name": "cox_log_risk"
+   },
+   "checks": {
+    "auc_computed": true,
+    "score_split": true
+   },
+   "estimate": {
+    "method": "variance of the linear-path contribution over (its variance + the variance of the rest of the score), training rows; linearised model: every switching unit replaced by its least-squares affine fit on the training rows",
+    "value": 1.0
+   },
+   "evidence": {
+    "always_on_min_margin": 0.0
+   },
+   "id": "C31",
+   "key": "ann_15:linearity:model",
+   "n": 438,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "auc_full_test": 0.658547,
+    "auc_full_train": 0.680501,
+    "auc_linearised_test": 0.658547,
+    "auc_linearised_train": 0.680501,
+    "kind": "model",
+    "n_exact_linear": 5,
+    "n_inputs": 5,
+    "n_mixed": 0,
+    "n_nonlinear": 0,
+    "n_nonlinear_parts": 0,
+    "n_parts": 3,
+    "n_support_linear": 0,
+    "switching_units": 0,
+    "variance_share_linear": 1.0
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  }
+ ],
+ "claims_hash": "588b2543f9e28d206659a278c4db488093c15a093aa0b244ec645fb620fd7a6c",
+ "codebook": {
+  "checks": [],
+  "gaps": [],
+  "id": "sksurv-gbsg2",
+  "source": "German Breast Cancer Study Group 2 (Schumacher et al. 1994), as distributed with scikit-survival (load_gbsg2) and in the R package TH.data"
+ },
+ "counts": {
+  "by_type": {
+   "direction": [
+    8,
+    10
+   ],
+   "interaction": [
+    0,
+    0
+   ],
+   "magnitude": [
+    4,
+    4
+   ],
+   "null": [
+    4,
+    4
+   ],
+   "rule": [
+    0,
+    0
+   ],
+   "subgroup": [
+    0,
+    0
+   ],
+   "threshold": [
+    0,
+    0
+   ]
+  },
+  "claims": 31,
+  "clearly": 3,
+  "not_supported": 2,
+  "verified": 29
+ },
+ "dataset": {
+  "class_names": [],
+  "id": "703cfe13-f0e7-43ed-938c-d6b95547a336",
+  "name": "gbsg2"
+ },
+ "drafted": {
+  "annotations": {},
+  "blocks": [
+   {
+    "block": "ann_12",
+    "sentences": [
+     {
+      "claims": [
+       "C03"
+      ],
+      "slot_keys": {
+       "C03": "ann_15:direction:progrec"
+      },
+      "template": "A higher progesterone receptor lowers the predicted 5-year risk of recurrence or death steadily: for a typical patient, from about {{C03.risk.from|pct}} at {{C03.statement.change.from}} to about {{C03.risk.to|pct}} at {{C03.statement.change.to}}, a hazard ratio of about {{C03.estimate.hazard_ratio|.2g}}.",
+      "text": "A higher progesterone receptor lowers the predicted 5-year risk of recurrence or death steadily: for a typical patient, from about 58% at 0 fmol/l to about 42% at 295 fmol/l, a hazard ratio of about 0.62."
+     },
+     {
+      "claims": [
+       "C05"
+      ],
+      "slot_keys": {
+       "C05": "ann_15:direction:tgrade=III:1"
+      },
+      "template": "A grade III tumour raises it: for a typical patient, from about {{C05.risk.from|pct}} to about {{C05.risk.to|pct}} (with tumour grade II set to {{C05.linked.moved.to.\"tgrade=II\".to|text}}, as in the data), a hazard ratio of about {{C05.estimate.hazard_ratio|.2g}}.",
+      "text": "A grade III tumour raises it: for a typical patient, from about 56% to about 61% (with tumour grade II set to a tumour grade other than II, as in the data), a hazard ratio of about 1.5."
+     }
+    ]
+   },
+   {
+    "block": "ann_13",
+    "sentences": [
+     {
+      "claims": [
+       "C02"
+      ],
+      "slot_keys": {
+       "C02": "ann_15:direction:pnodes"
+      },
+      "template": "More positive lymph nodes raise the predicted 5-year risk of recurrence or death steadily, each extra node adding about the same to the hazard: for a typical patient, from about {{C02.risk.from|pct}} with {{C02.statement.change.from|num}} positive node to about {{C02.risk.to|pct}} with {{C02.statement.change.to|num}}, a hazard ratio of about {{C02.estimate.hazard_ratio|.2g}}.",
+      "text": "More positive lymph nodes raise the predicted 5-year risk of recurrence or death steadily, each extra node adding about the same to the hazard: for a typical patient, from about 53% with 1 nodes positive node to about 73% with 12 nodes, a hazard ratio of about 1.7."
+     }
+    ]
+   },
+   {
+    "block": "ann_14",
+    "sentences": [
+     {
+      "claims": [
+       "C04"
+      ],
+      "slot_keys": {
+       "C04": "ann_15:direction:horTh=yes:1"
+      },
+      "template": "Hormonal therapy lowers the predicted 5-year risk of recurrence or death: for a typical patient, from about {{C04.risk.from|pct}} without it to about {{C04.risk.to|pct}} with it, a hazard ratio of about {{C04.estimate.hazard_ratio|.2g}}.",
+      "text": "Hormonal therapy lowers the predicted 5-year risk of recurrence or death: for a typical patient, from about 56% without it to about 42% with it, a hazard ratio of about 0.65."
+     }
+    ]
+   }
+  ],
+  "claims_hash": "588b2543f9e28d206659a278c4db488093c15a093aa0b244ec645fb620fd7a6c",
+  "drafted_at": "2026-11-12T21:52:07+00:00",
+  "drafted_by": "ai-assisted",
+  "hypothesis_revisions": {
+   "ann_12": {
+    "claims": [
+     "C16",
+     "C17"
+    ],
+    "original": "identity_biology ≈ 0.345·z(tgrade=III) + 0.321·z(tgrade=II) -0.316·z(progrec), coefficients per standardised input (rounded; off by up to 0.0012 on the training rows; the exact weights are in the analytical_formula evidence). This part is a sparse linear block of the log-risk: tumour grade (the two one-hot levels against grade I) and progesterone receptor level each have a direct edge, summed into one identity exit and passed unchanged to the output, so the part is additive on the log-hazard scale and multiplicative on the hazard. In hazard-ratio terms per clinical unit, holding the other inputs fixed: relative to a grade I tumour, the model multiplies the hazard by 1.96 for grade II and by 2.26 for grade III; each additional fmol/l of progesterone receptor multiplies it by 0.9984 (one SD of progesterone receptor: 0.73), a protective direction. Across the training patients the progesterone-receptor term spans a hazard ratio of 1.92 between its 95th and 5th percentile, the grade III term 2.26 and the grade II term 1.96. Self-probe (whole model; a constructed patient with progesterone receptor 29.5 fmol/l, 3 positive nodes and no hormone therapy, the remaining inputs at the typical values of each grade cell, which is harmless because fixing the four unconnected inputs moves 0 of 438 training predictions): the log-risk is -1.199 for grade I, -0.526 for grade II and -0.382 for grade III, a predicted five-year risk of 34%, 56% and 61%; the two gaps match the per-unit log-hazard ratios 0.673 and 0.817. Sweeping progesterone receptor from 0 to 300 fmol/l on the typical grade II patient lowers the log-risk from -0.479 to -0.964 (five-year risk 58% to 41%). In the training split the part's mean contribution to the log-risk is 0.261 for the 102 grade III patients, 0.039 for the 285 grade II patients and -0.741 for the 51 grade I patients (the three grade cells are exhaustive: 0 patients carry both one-hot levels). Switching the whole part off (exit fixed at its training mean) moves the predicted five-year risk by 9% on average over the 438 training rows and lowers the AUC against the event indicator from 0.6805 to 0.6675. Meaning (concept probe over the tabular library): the best single concept for the exit is a progesterone-receptor threshold, score 0.91 (AUC 0.95, R-squared 0.30); because the part sums three terms, one concept captures its direction and not its value, so the part is described by its formula rather than by a single clinical concept. Proportional-hazards caveat: the model's form is a time-constant multiplicative effect of grade and receptor level on the hazard, so this is not evidence that these effects are constant over follow-up.",
+    "proposed": "A higher progesterone receptor lowers the hazard steadily and a grade III tumour raises it.",
+    "status": "proposed (not applied)"
+   },
+   "ann_13": {
+    "claims": [
+     "C19"
+    ],
+    "original": "identity_nodal ≈ 0.293·z(pnodes), a single direct edge from the number of positive lymph nodes to an identity exit that is passed unchanged to the log-risk (rounded coefficient per standardised input, off by up to 0.0035 on the training rows; the exact weight is in the analytical_formula evidence). In hazard-ratio terms per clinical unit, holding the other inputs fixed: each additional positive lymph node multiplies the hazard by 1.051 (one SD of the node count: 1.34); the part is one linear edge, so the effect is log-linear in the node count across the training range, without a threshold or a plateau. Across the training patients the term spans a hazard ratio of 2.12 between its 95th and 5th percentile, and 1.92 between the 95th-percentile and the median patient. Self-probe (whole model, the typical patient: grade II, no hormone therapy, progesterone receptor 29.5 fmol/l): sweeping positive nodes from 1 to 29 raises the log-risk from -0.627 to 0.775 and the predicted five-year risk from 53% to 95%, the part's contribution rising from -0.211 to 1.191; going from one positive node to two moves the log-risk from -0.6266 to -0.5765, which is the per-node log-hazard ratio 0.0501. In the training split the 71 patients with ten or more positive nodes have a mean predicted five-year risk of 71% (73% had an event during follow-up), against 43% for the 234 patients with three or fewer (31% had an event); this part's mean contribution to the log-risk is 0.520 in the first group and -0.175 in the second. Switching the part off (exit fixed at its training mean) moves the predicted five-year risk by 6% on average over the 438 training rows (largest change 49%) and lowers the AUC against the event indicator from 0.6805 to 0.6258, the largest loss of the three parts. Meaning: the exit is the positive-node count itself, concept probe score 1.00 for the concept pnodes. Proportional-hazards caveat: the model's form is a time-constant multiplicative effect of nodal burden on the hazard, so this is not evidence that the effect is constant over follow-up.",
+    "proposed": "Each extra positive lymph node adds about the same to the hazard.",
+    "status": "proposed (not applied)"
+   },
+   "ann_14": {
+    "claims": [
+     "C21"
+    ],
+    "original": "identity_hormone ≈ -0.206·z(horTh=yes), a single direct edge from the hormonal-therapy indicator to an identity exit that is passed unchanged to the log-risk (rounded coefficient per standardised input, off by up to 0.00023 on the training rows; the exact weight is in the analytical_formula evidence). In hazard-ratio terms: holding the other inputs fixed, the model gives a patient who received hormonal therapy 0.653 times the hazard of a patient who did not (per SD of the indicator: 0.81); the part has one binary input, so this is a fixed offset on the log-hazard scale that does not depend on the other inputs, and it is an association the model learned from this cohort, not a treatment effect. Across the training patients the term spans a hazard ratio of 1.53 between its 95th and 5th percentile. Self-probe (whole model; a constructed grade II patient with progesterone receptor 29.5 fmol/l and 3 positive nodes, the remaining inputs at the typical values of each therapy cell, which is harmless because fixing the four unconnected inputs moves 0 of 438 training predictions): the log-risk is -0.952 with therapy and -0.526 without, a predicted five-year risk of 42% against 56%; the gap matches the per-unit log-hazard ratio -0.425, and the part's contribution is -0.265 with therapy against 0.160 without (the inputs are standardised, so the untreated level is a positive offset and the treated level a negative one; the difference between them is the effect). In the training split the 165 treated patients have a mean predicted five-year risk of 41% (37% had an event during follow-up) and this part contributes -0.265 to their log-risk; the 273 untreated patients have 55% (48% had an event) with a contribution of 0.160. Switching the part off (exit fixed at its training mean) moves the predicted five-year risk by 6% on average over the 438 training rows (largest change 10%) and lowers the AUC against the event indicator from 0.6805 to 0.6767, the smallest loss of the three parts. Meaning: the exit is the therapy indicator itself, concept probe score 1.00 for the concept horTh=yes. Proportional-hazards caveat: the model's form is a time-constant multiplicative effect of hormonal therapy on the hazard, so this is not evidence that the effect is constant over follow-up.",
+    "proposed": "Hormonal therapy lowers the hazard.",
+    "status": "proposed (not applied)"
+   },
+   "ann_15": {
+    "claims": [
+     "C14",
+     "C10",
+     "C11",
+     "C12",
+     "C13"
+    ],
+    "original": "The output is the Cox log-risk g(x) with an identity activation: g(x) = tumour_biology + nodal_burden + hormone_therapy + constant, an exact sum (each of the three identity exits enters the output with unit weight; the constant is the output bias, which carries no meaning because it is absorbed into the baseline hazard). The three parts therefore combine additively on the log-hazard scale, that is multiplicatively on the hazard, h(t|x) = h0(t)·exp(g(x)), with the five-year risk read off a Breslow baseline fitted on the training rows. The 5 terms at the output are all direct input edges routed through the three identity exits (0 direct input edges remain at the output itself), so the model is a sparse linear Cox model with the following hazard ratios per clinical unit, holding the other inputs fixed: grade II versus grade I 1.96, grade III versus grade I 2.26, each positive lymph node 1.051, each fmol/l of progesterone receptor 0.9984, hormonal therapy 0.653. The four remaining inputs, age, oestrogen receptor, menopausal status and tumour size, are unconnected entry nodes with zero effect: fixing all four at once changes 0 of the 438 training predictions (largest absolute change in five-year risk 0.0), and sweeping the typical patient across the training range of age leaves the log-risk at -0.5265 at both ends (-0.5265), of tumour size at -0.5265 and -0.5265, and of oestrogen receptor at -0.5265 and -0.5265 (menopausal status could not be swept by the probe tool, whose variable parser stops at the \"=\" in the input name; its effect is covered by the same node ablation, 0 of 438 predictions changed). Across the training patients the log-risk spans a hazard ratio of 5.82 between the 95th- and the 5th-percentile patient. Survival performance on the training split (n = 438, 191 events): Harrell's C 0.682, Uno's C 0.651, time-dependent AUC at one, three and five years 0.765, 0.731 and 0.707, integrated Brier score 0.132; five-year calibration over ten risk deciles: mean predicted risk 50% against a Kaplan-Meier observed 49%, largest decile gap 11%. Self-probe of the composition: switching all three parts off at once leaves the constant alone, so the typical patient's log-risk goes from -0.526 to -0.747, the output bias (five-year risk 56% to 48%), and the AUC against the event indicator falls from 0.6805 to 0.50, chance level; by single-part ablation the AUC losses rank nodal_burden (0.6258) above tumour_biology (0.6675) above hormone_therapy (0.6767). Function preservation: the identity-node refactoring reproduces the original network's log-risk to 4.4e-16 on the training rows. Proportional-hazards caveat: the model's form is a time-constant multiplicative effect of each term on the hazard, so this is not evidence that any effect is constant over follow-up.",
+    "proposed": "The hazard of recurrence or death is a sum of three parts (tumour biology, nodal burden, hormonal therapy); age, oestrogen receptor, menopausal status and tumour size are ignored.",
+    "status": "proposed (not applied)"
+   }
+  },
+  "lead": [
+   {
+    "claims": [
+     "C14"
+    ],
+    "text": "For a typical patient (a 53-year-old postmenopausal woman with 3 positive lymph nodes, a grade II tumour of 25 mm, a progesterone receptor of 30 fmol/l, an oestrogen receptor of 36 fmol/l and no hormonal therapy) the model predicts a 5-year risk of recurrence or death of about 56%; it adds up three parts, tumour biology, nodal burden and hormonal therapy, and reads no other input directly."
+   }
+  ],
+  "protocol": ".claude/skills/plain-language-explanations/SKILL.md",
+  "readdown": {
+   "ann_12": {
+    "evidence": [
+     {
+      "claims": [
+       "C16"
+      ],
+      "slot_keys": {
+       "C16": "ann_12:direction:progrec"
+      },
+      "template": "Through it, a higher progesterone receptor lowers the predicted 5-year risk of recurrence or death steadily: for a typical patient, from about {{C16.risk.from|pct}} at {{C16.statement.change.from}} to about {{C16.risk.to|pct}} at {{C16.statement.change.to}}, a hazard ratio of about {{C16.estimate.hazard_ratio|.2g}}.",
+      "text": "Through it, a higher progesterone receptor lowers the predicted 5-year risk of recurrence or death steadily: for a typical patient, from about 58% at 0 fmol/l to about 42% at 295 fmol/l, a hazard ratio of about 0.62."
+     },
+     {
+      "claims": [
+       "C17"
+      ],
+      "slot_keys": {
+       "C17": "ann_12:direction:tgrade=III:1"
+      },
+      "template": "A grade III tumour raises it: for a typical patient, from about {{C17.risk.from|pct}} to about {{C17.risk.to|pct}} (with tumour grade II set to {{C17.linked.moved.to.\"tgrade=II\".to|text}}, as in the data), a hazard ratio of about {{C17.estimate.hazard_ratio|.2g}}.",
+      "text": "A grade III tumour raises it: for a typical patient, from about 56% to about 61% (with tumour grade II set to a tumour grade other than II, as in the data), a hazard ratio of about 1.5."
+     },
+     {
+      "claims": [
+       "C18"
+      ],
+      "text": "Its formula reproduces the part exactly."
+     }
+    ],
+    "hypothesis": [
+     {
+      "claims": [
+       "C16",
+       "C17"
+      ],
+      "text": "This part reads the tumour's biology: a higher progesterone receptor lowers the hazard steadily, and a grade III tumour raises it."
+     }
+    ]
+   },
+   "ann_13": {
+    "evidence": [
+     {
+      "claims": [
+       "C19"
+      ],
+      "slot_keys": {
+       "C19": "ann_13:direction:pnodes"
+      },
+      "template": "Through it, more positive lymph nodes raise the predicted 5-year risk of recurrence or death steadily: for a typical patient, from about {{C19.risk.from|pct}} with {{C19.statement.change.from|num}} positive node to about {{C19.risk.to|pct}} with {{C19.statement.change.to|num}}, a hazard ratio of about {{C19.estimate.hazard_ratio|.2g}}.",
+      "text": "Through it, more positive lymph nodes raise the predicted 5-year risk of recurrence or death steadily: for a typical patient, from about 53% with 1 nodes positive node to about 73% with 12 nodes, a hazard ratio of about 1.7."
+     },
+     {
+      "claims": [
+       "C20"
+      ],
+      "text": "Its formula reproduces the part exactly."
+     }
+    ],
+    "hypothesis": [
+     {
+      "claims": [
+       "C19"
+      ],
+      "text": "This part counts the nodal burden: each extra positive lymph node adds about the same to the hazard."
+     }
+    ]
+   },
+   "ann_14": {
+    "evidence": [
+     {
+      "claims": [
+       "C21"
+      ],
+      "slot_keys": {
+       "C21": "ann_14:direction:horTh=yes:1"
+      },
+      "template": "Through it, hormonal therapy lowers the predicted 5-year risk of recurrence or death: for a typical patient, from about {{C21.risk.from|pct}} without it to about {{C21.risk.to|pct}} with it, a hazard ratio of about {{C21.estimate.hazard_ratio|.2g}}.",
+      "text": "Through it, hormonal therapy lowers the predicted 5-year risk of recurrence or death: for a typical patient, from about 56% without it to about 42% with it, a hazard ratio of about 0.65."
+     },
+     {
+      "claims": [
+       "C22"
+      ],
+      "text": "Its formula reproduces the part exactly."
+     }
+    ],
+    "hypothesis": [
+     {
+      "claims": [
+       "C21"
+      ],
+      "text": "This part lowers the hazard for patients on hormonal therapy."
+     }
+    ]
+   },
+   "ann_15": {
+    "evidence": [
+     {
+      "claims": [
+       "C14"
+      ],
+      "text": "It is made of three parts (each explained below), added together; no input feeds the risk directly."
+     },
+     {
+      "claims": [
+       "C10",
+       "C11",
+       "C12",
+       "C13"
+      ],
+      "text": "Age, oestrogen receptor, menopausal status and tumour size have no path to the risk: moving any of them leaves the predictions unchanged."
+     },
+     {
+      "claims": [
+       "C14"
+      ],
+      "text": "Each effect multiplies the hazard by the same amount at every point of follow-up, because the model has no way to represent an effect that changes with time (the proportional-hazards assumption); this is not evidence that the effect is constant over time."
+     }
+    ],
+    "hypothesis": [
+     {
+      "claims": [
+       "C14"
+      ],
+      "text": "The model is a sum of three parts, tumour biology, nodal burden and hormonal therapy, each adding its own amount to the hazard of recurrence or death."
+     },
+     {
+      "claims": [
+       "C10",
+       "C11",
+       "C12",
+       "C13"
+      ],
+      "text": "It ignores age, oestrogen receptor, menopausal status and tumour size."
+     }
+    ]
+   }
+  },
+  "stale": false,
+  "status": "draft for review",
+  "structure": "readdown-v5",
+  "summary": [
+   {
+    "claims": [
+     "C14"
+    ],
+    "text": "For a typical patient (a 53-year-old postmenopausal woman with 3 positive lymph nodes, a grade II tumour of 25 mm, a progesterone receptor of 30 fmol/l, an oestrogen receptor of 36 fmol/l and no hormonal therapy) the model predicts a 5-year risk of recurrence or death of about 56%; it adds up three parts, tumour biology, nodal burden and hormonal therapy, and reads no other input directly."
+   },
+   {
+    "claims": [
+     "C03"
+    ],
+    "slot_keys": {
+     "C03": "ann_15:direction:progrec"
+    },
+    "template": "A higher progesterone receptor lowers the predicted 5-year risk of recurrence or death steadily: for a typical patient, from about {{C03.risk.from|pct}} at {{C03.statement.change.from}} to about {{C03.risk.to|pct}} at {{C03.statement.change.to}}, a hazard ratio of about {{C03.estimate.hazard_ratio|.2g}}.",
+    "text": "A higher progesterone receptor lowers the predicted 5-year risk of recurrence or death steadily: for a typical patient, from about 58% at 0 fmol/l to about 42% at 295 fmol/l, a hazard ratio of about 0.62."
+   },
+   {
+    "claims": [
+     "C05"
+    ],
+    "slot_keys": {
+     "C05": "ann_15:direction:tgrade=III:1"
+    },
+    "template": "A grade III tumour raises it: for a typical patient, from about {{C05.risk.from|pct}} to about {{C05.risk.to|pct}} (with tumour grade II set to {{C05.linked.moved.to.\"tgrade=II\".to|text}}, as in the data), a hazard ratio of about {{C05.estimate.hazard_ratio|.2g}}.",
+    "text": "A grade III tumour raises it: for a typical patient, from about 56% to about 61% (with tumour grade II set to a tumour grade other than II, as in the data), a hazard ratio of about 1.5."
+   },
+   {
+    "claims": [
+     "C02"
+    ],
+    "slot_keys": {
+     "C02": "ann_15:direction:pnodes"
+    },
+    "template": "More positive lymph nodes raise the predicted 5-year risk of recurrence or death steadily, each extra node adding about the same to the hazard: for a typical patient, from about {{C02.risk.from|pct}} with {{C02.statement.change.from|num}} positive node to about {{C02.risk.to|pct}} with {{C02.statement.change.to|num}}, a hazard ratio of about {{C02.estimate.hazard_ratio|.2g}}.",
+    "text": "More positive lymph nodes raise the predicted 5-year risk of recurrence or death steadily, each extra node adding about the same to the hazard: for a typical patient, from about 53% with 1 nodes positive node to about 73% with 12 nodes, a hazard ratio of about 1.7."
+   },
+   {
+    "claims": [
+     "C04"
+    ],
+    "slot_keys": {
+     "C04": "ann_15:direction:horTh=yes:1"
+    },
+    "template": "Hormonal therapy lowers the predicted 5-year risk of recurrence or death: for a typical patient, from about {{C04.risk.from|pct}} without it to about {{C04.risk.to|pct}} with it, a hazard ratio of about {{C04.estimate.hazard_ratio|.2g}}.",
+    "text": "Hormonal therapy lowers the predicted 5-year risk of recurrence or death: for a typical patient, from about 56% without it to about 42% with it, a hazard ratio of about 0.65."
+   }
+  ],
+  "titles": {
+   "ann_12": "Tumour biology",
+   "ann_13": "Nodal burden",
+   "ann_14": "Hormonal therapy",
+   "ann_15": "The whole model"
+  },
+  "verified_by": null,
+  "worth_checking": [
+   {
+    "claims": [
+     "C03"
+    ],
+    "flag": "progesterone receptor effect does not level off",
+    "slot_keys": {
+     "C03": "ann_15:direction:progrec"
+    },
+    "template": "Worth checking: the model treats a higher progesterone receptor as lowering the risk steadily across its whole range, from {{C03.statement.change.from}} to {{C03.statement.change.to}}, with the same hazard ratio per fmol/l at every level.",
+    "text": "Worth checking: the model treats a higher progesterone receptor as lowering the risk steadily across its whole range, from 0 fmol/l to 295 fmol/l, with the same hazard ratio per fmol/l at every level."
+   },
+   {
+    "claims": [
+     "C13",
+     "C10"
+    ],
+    "flag": "ignores tumour size and age",
+    "text": "Worth checking: the model ignores tumour size and age."
+   },
+   {
+    "claims": [
+     "C17"
+    ],
+    "flag": "grade II has no effect of its own",
+    "text": "Worth checking: the model reads tumour grade III but gives grade II no consistent effect of its own."
+   }
+  ]
+ },
+ "explanation_id": "b6bb2953-1e94-4979-af08-9ddc13387a38",
+ "genome_id": "e4c62516-fd1f-4e10-a997-adc574bbcef3",
+ "graph": {
+  "depth": {
+   "ann_12": 1,
+   "ann_13": 1,
+   "ann_14": 1,
+   "ann_15": 0
+  },
+  "edges": [
+   {
+    "from": "-6",
+    "to": "identity_biology",
+    "weight": -0.316125
+   },
+   {
+    "from": "-7",
+    "to": "identity_biology",
+    "weight": 0.320838
+   },
+   {
+    "from": "-8",
+    "to": "identity_biology",
+    "weight": 0.345303
+   },
+   {
+    "from": "identity_biology",
+    "to": "0",
+    "weight": 1.0
+   },
+   {
+    "from": "-5",
+    "to": "identity_nodal",
+    "weight": 0.292551
+   },
+   {
+    "from": "identity_nodal",
+    "to": "0",
+    "weight": 1.0
+   },
+   {
+    "from": "-3",
+    "to": "identity_hormone",
+    "weight": -0.206177
+   },
+   {
+    "from": "identity_hormone",
+    "to": "0",
+    "weight": 1.0
+   }
+  ],
+  "exits": {
+   "ann_12": [
+    "identity_biology"
+   ],
+   "ann_13": [
+    "identity_nodal"
+   ],
+   "ann_14": [
+    "identity_hormone"
+   ],
+   "ann_15": [
+    "0"
+   ]
+  },
+  "linearity": {
+   "columns": {
+    "horTh=yes": "exact_linear",
+    "pnodes": "exact_linear",
+    "progrec": "exact_linear",
+    "tgrade=II": "exact_linear",
+    "tgrade=III": "exact_linear"
+   },
+   "inputs": {
+    "-3": "exact_linear",
+    "-5": "exact_linear",
+    "-6": "exact_linear",
+    "-7": "exact_linear",
+    "-8": "exact_linear"
+   },
+   "parts": {
+    "ann_12": "exact_linear",
+    "ann_13": "exact_linear",
+    "ann_14": "exact_linear"
+   },
+   "units": {
+    "identity_biology": "linear",
+    "identity_hormone": "linear",
+    "identity_nodal": "linear"
+   },
+   "variables": {
+    "horTh=yes": "exact_linear",
+    "pnodes": "exact_linear",
+    "progrec": "exact_linear",
+    "tgrade=II": "exact_linear",
+    "tgrade=III": "exact_linear"
+   }
+  },
+  "nodes": [
+   {
+    "column": "horTh=yes",
+    "id": "-3",
+    "kind": "input",
+    "label": "hormonal therapy",
+    "region": "ann_14"
+   },
+   {
+    "column": "pnodes",
+    "id": "-5",
+    "kind": "input",
+    "label": "number of positive lymph nodes",
+    "region": "ann_13"
+   },
+   {
+    "column": "progrec",
+    "id": "-6",
+    "kind": "input",
+    "label": "progesterone receptor",
+    "region": "ann_12"
+   },
+   {
+    "column": "tgrade=II",
+    "id": "-7",
+    "kind": "input",
+    "label": "tumour grade II",
+    "region": "ann_12"
+   },
+   {
+    "column": "tgrade=III",
+    "id": "-8",
+    "kind": "input",
+    "label": "tumour grade III",
+    "region": "ann_12"
+   },
+   {
+    "id": "0",
+    "kind": "output",
+    "region": "ann_15"
+   },
+   {
+    "activity": {
+     "active_n": 438,
+     "hist": [
+      1,
+      0,
+      3,
+      1,
+      0,
+      1,
+      1,
+      1,
+      2,
+      3,
+      5,
+      11,
+      12,
+      23,
+      15,
+      17,
+      18,
+      55,
+      182,
+      87
+     ],
+     "hist_edges": [
+      -2.37135,
+      -2.23464,
+      -2.09794,
+      -1.96124,
+      -1.82454,
+      -1.68784,
+      -1.55114,
+      -1.41444,
+      -1.27774,
+      -1.14103,
+      -1.00433,
+      -0.867633,
+      -0.730931,
+      -0.59423,
+      -0.457529,
+      -0.320828,
+      -0.184127,
+      -0.0474255,
+      0.0892756,
+      0.225977,
+      0.362678
+     ],
+     "main_input": {
+      "label": "progesterone receptor",
+      "unit": "fmol/l",
+      "variable": "progrec",
+      "x": [
+       61.0,
+       52.0,
+       181.0,
+       0.0,
+       16.0,
+       154.0,
+       113.0,
+       135.0,
+       112.0,
+       131.0,
+       28.0,
+       184.0,
+       89.0,
+       2.0,
+       299.0,
+       37.0,
+       0.0,
+       26.0,
+       103.0,
+       0.0,
+       13.0,
+       0.0,
+       15.0,
+       6.0,
+       0.0,
+       21.0,
+       2.0,
+       86.0,
+       67.0,
+       5.0,
+       233.0,
+       20.0,
+       22.0,
+       14.0,
+       55.0,
+       4.0,
+       41.0,
+       15.0,
+       91.0,
+       0.0,
+       73.0,
+       0.0,
+       295.0,
+       5.0,
+       187.0,
+       0.0,
+       64.0,
+       22.0,
+       2.0,
+       100.0,
+       2.0,
+       77.0,
+       206.0,
+       110.0,
+       45.0,
+       3.0,
+       0.0,
+       0.0,
+       84.0,
+       14.0,
+       111.0,
+       0.0,
+       542.0,
+       0.0,
+       235.0,
+       252.0,
+       0.0,
+       0.0,
+       39.0,
+       320.0,
+       35.0,
+       140.0,
+       0.0,
+       370.0,
+       0.0,
+       50.0,
+       0.0,
+       0.0,
+       32.0,
+       141.0,
+       375.0,
+       162.0,
+       23.0,
+       250.0,
+       254.0,
+       25.0,
+       107.0,
+       6.0,
+       23.0,
+       21.0,
+       88.0,
+       31.0,
+       44.0,
+       184.0,
+       65.0,
+       1.0,
+       24.0,
+       45.0,
+       135.0,
+       7.0,
+       408.0,
+       25.0,
+       1.0,
+       8.0,
+       235.0,
+       2.0,
+       1.0,
+       0.0,
+       0.0,
+       26.0,
+       126.0,
+       5.0,
+       82.0,
+       1.0,
+       26.0,
+       33.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       250.0,
+       366.0,
+       279.0,
+       51.0,
+       12.0,
+       41.0,
+       15.0,
+       3.0,
+       364.0,
+       40.0,
+       69.0,
+       340.0,
+       124.0,
+       2.0,
+       258.0,
+       3.0,
+       10.0,
+       11.0,
+       25.0,
+       26.0,
+       739.0,
+       10.0,
+       164.0,
+       170.0,
+       145.0,
+       1.0,
+       28.0,
+       402.0,
+       82.0,
+       13.0,
+       9.0,
+       18.0,
+       5.0,
+       30.0,
+       14.0,
+       11.0,
+       11.0,
+       20.0,
+       195.0,
+       0.0,
+       223.0,
+       796.0,
+       0.0,
+       239.0,
+       270.0,
+       48.0,
+       11.0,
+       73.0,
+       24.0,
+       0.0,
+       58.0,
+       680.0,
+       0.0,
+       53.0,
+       340.0,
+       27.0,
+       624.0,
+       10.0,
+       0.0,
+       44.0,
+       77.0,
+       45.0,
+       395.0,
+       151.0,
+       5.0,
+       12.0,
+       239.0,
+       48.0,
+       116.0,
+       122.0,
+       138.0,
+       324.0,
+       15.0,
+       1.0,
+       128.0,
+       80.0,
+       17.0,
+       8.0,
+       14.0,
+       0.0,
+       51.0,
+       132.0,
+       23.0,
+       229.0,
+       84.0,
+       162.0,
+       11.0,
+       2.0,
+       980.0,
+       0.0,
+       530.0,
+       432.0,
+       150.0,
+       139.0,
+       5.0,
+       144.0,
+       60.0,
+       38.0,
+       14.0,
+       912.0,
+       1.0,
+       5.0,
+       133.0,
+       26.0,
+       364.0,
+       0.0,
+       13.0,
+       4.0,
+       16.0,
+       13.0,
+       98.0,
+       8.0,
+       9.0,
+       96.0,
+       24.0,
+       25.0,
+       48.0,
+       6.0,
+       412.0,
+       199.0,
+       98.0,
+       11.0,
+       208.0,
+       241.0,
+       28.0,
+       76.0,
+       0.0,
+       10.0,
+       0.0,
+       3.0,
+       63.0,
+       0.0,
+       27.0,
+       6.0,
+       4.0,
+       74.0,
+       0.0,
+       16.0,
+       18.0,
+       7.0,
+       109.0,
+       58.0,
+       16.0,
+       92.0,
+       0.0,
+       91.0,
+       49.0,
+       119.0,
+       0.0,
+       210.0,
+       550.0,
+       20.0,
+       197.0,
+       0.0,
+       0.0,
+       48.0,
+       250.0,
+       1.0,
+       217.0,
+       10.0,
+       43.0,
+       0.0,
+       1356.0,
+       403.0,
+       74.0,
+       8.0,
+       388.0,
+       1.0,
+       26.0,
+       26.0,
+       14.0,
+       312.0,
+       296.0,
+       170.0,
+       120.0,
+       53.0,
+       113.0,
+       108.0,
+       15.0,
+       116.0
+      ],
+      "y": [
+       0.11993,
+       0.134499,
+       -0.0743216,
+       0.218674,
+       0.192774,
+       -0.030615,
+       0.0357543,
+       0.000141515,
+       0.0373731,
+       -0.666348,
+       0.173349,
+       -0.0791779,
+       0.0746046,
+       0.35944,
+       -0.265336,
+       0.15878,
+       0.218674,
+       -0.496378,
+       0.0519419,
+       0.218674,
+       0.197631,
+       0.362678,
+       0.194393,
+       0.208962,
+       0.362678,
+       0.18468,
+       0.215437,
+       0.0794609,
+       0.110217,
+       0.210581,
+       -0.831462,
+       0.186299,
+       0.183062,
+       0.196012,
+       0.129643,
+       0.212199,
+       0.152305,
+       0.194393,
+       0.0713671,
+       0.218674,
+       0.100505,
+       0.362678,
+       -0.25886,
+       0.354584,
+       0.0599694,
+       0.218674,
+       -0.557891,
+       0.183062,
+       0.215437,
+       0.0567982,
+       0.215437,
+       0.0940297,
+       -0.114791,
+       0.0406106,
+       0.14583,
+       0.213818,
+       0.218674,
+       0.218674,
+       0.0826984,
+       0.340015,
+       0.0389918,
+       0.218674,
+       -0.658695,
+       0.218674,
+       -0.161735,
+       -0.189254,
+       0.362678,
+       0.218674,
+       0.155543,
+       -0.29933,
+       0.162018,
+       -0.680917,
+       0.218674,
+       -0.380268,
+       0.362678,
+       0.137736,
+       0.218674,
+       0.362678,
+       0.166874,
+       0.134432,
+       -0.244358,
+       -0.716529,
+       0.181443,
+       -0.186016,
+       -0.192491,
+       -0.494759,
+       0.0454669,
+       0.208962,
+       0.325446,
+       0.328684,
+       0.0762234,
+       0.168493,
+       0.291452,
+       -0.0791779,
+       0.113455,
+       0.361059,
+       0.179824,
+       0.14583,
+       -0.672823,
+       0.351347,
+       -1.11475,
+       0.178205,
+       0.361059,
+       0.205724,
+       -0.161735,
+       -0.457527,
+       0.361059,
+       0.218674,
+       0.362678,
+       0.176587,
+       0.0147104,
+       0.210581,
+       -0.587028,
+       0.217056,
+       0.176587,
+       0.165255,
+       0.218674,
+       0.218674,
+       0.218674,
+       0.362678,
+       -0.186016,
+       -0.229789,
+       -0.23296,
+       -0.536847,
+       0.343253,
+       0.152305,
+       0.194393,
+       0.357822,
+       -1.04352,
+       0.153924,
+       -0.565985,
+       -0.331705,
+       0.0179479,
+       0.35944,
+       -0.198966,
+       0.357822,
+       -0.470478,
+       0.200868,
+       0.178205,
+       0.176587,
+       -0.977591,
+       0.34649,
+       -0.0468026,
+       0.0874884,
+       -0.0160461,
+       0.361059,
+       0.173349,
+       -0.432068,
+       0.0859359,
+       0.197631,
+       0.348109,
+       0.189537,
+       0.210581,
+       0.170112,
+       0.340015,
+       0.200868,
+       0.200868,
+       0.330303,
+       -0.769949,
+       0.362678,
+       -0.14231,
+       -1.06986,
+       0.362678,
+       -0.841174,
+       -0.218391,
+       0.140974,
+       0.344872,
+       -0.57246,
+       0.323828,
+       0.218674,
+       0.124786,
+       -0.882084,
+       0.218674,
+       0.13288,
+       -0.331705,
+       0.318971,
+       -0.791433,
+       0.34649,
+       0.218674,
+       0.147449,
+       -0.578935,
+       0.14583,
+       -0.420737,
+       -0.698723,
+       0.210581,
+       0.343253,
+       -0.841174,
+       0.140974,
+       0.030898,
+       0.0211854,
+       -0.00471477,
+       -0.305805,
+       0.338397,
+       0.217056,
+       0.0114729,
+       0.0891735,
+       0.335159,
+       0.349728,
+       0.196012,
+       0.218674,
+       0.280121,
+       -0.667967,
+       0.181443,
+       -0.152022,
+       0.0826984,
+       0.100438,
+       0.344872,
+       0.215437,
+       -1.36771,
+       0.362678,
+       -0.495266,
+       -0.336627,
+       -0.0241399,
+       0.13767,
+       0.210581,
+       -0.687392,
+       -0.551416,
+       -0.515803,
+       0.196012,
+       -1.9306,
+       0.361059,
+       0.210581,
+       -0.669585,
+       0.176587,
+       -0.370555,
+       0.218674,
+       0.341634,
+       0.212199,
+       -0.48019,
+       0.341634,
+       0.0600357,
+       0.349728,
+       0.204106,
+       0.0632733,
+       0.179824,
+       0.178205,
+       0.140974,
+       0.352965,
+       -0.304252,
+       -0.103459,
+       0.0600357,
+       0.344872,
+       -0.790993,
+       -0.844412,
+       0.173349,
+       0.0956485,
+       0.362678,
+       0.34649,
+       0.362678,
+       0.357822,
+       0.116692,
+       0.218674,
+       0.318971,
+       0.208962,
+       0.212199,
+       0.24289,
+       0.218674,
+       0.192774,
+       0.33354,
+       0.207343,
+       0.0422293,
+       0.124786,
+       0.192774,
+       0.0697483,
+       0.218674,
+       0.0713671,
+       0.283359,
+       0.0260417,
+       0.218674,
+       -0.121266,
+       -0.527641,
+       0.330303,
+       -0.100222,
+       0.362678,
+       0.362678,
+       0.140974,
+       -0.186016,
+       0.217056,
+       -0.132597,
+       -0.470478,
+       0.149068,
+       0.362678,
+       -1.97637,
+       -0.433687,
+       0.098886,
+       0.205724,
+       -0.409405,
+       0.361059,
+       0.176587,
+       0.176587,
+       0.196012,
+       -0.959344,
+       -0.933444,
+       0.0874884,
+       0.024423,
+       0.13288,
+       -0.63721,
+       0.0438481,
+       0.194393,
+       0.030898
+      ]
+     },
+     "n": 438
+    },
+    "id": "identity_biology",
+    "kind": "hidden",
+    "region": "ann_12"
+   },
+   {
+    "activity": {
+     "active_n": 438,
+     "hist": [
+      165,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      273
+     ],
+     "hist_edges": [
+      -0.265203,
+      -0.243929,
+      -0.222654,
+      -0.20138,
+      -0.180105,
+      -0.15883,
+      -0.137556,
+      -0.116281,
+      -0.0950068,
+      -0.0737323,
+      -0.0524578,
+      -0.0311832,
+      -0.00990869,
+      0.0113658,
+      0.0326404,
+      0.0539149,
+      0.0751895,
+      0.096464,
+      0.117739,
+      0.139013,
+      0.160288
+     ],
+     "n": 438
+    },
+    "id": "identity_hormone",
+    "kind": "hidden",
+    "region": "ann_14"
+   },
+   {
+    "activity": {
+     "active_n": 438,
+     "hist": [
+      234,
+      86,
+      35,
+      35,
+      16,
+      12,
+      6,
+      6,
+      1,
+      1,
+      1,
+      1,
+      0,
+      2,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1
+     ],
+     "hist_edges": [
+      -0.210713,
+      -0.0855879,
+      0.0395372,
+      0.164662,
+      0.289787,
+      0.414913,
+      0.540038,
+      0.665163,
+      0.790288,
+      0.915413,
+      1.04054,
+      1.16566,
+      1.29079,
+      1.41591,
+      1.54104,
+      1.66616,
+      1.79129,
+      1.91641,
+      2.04154,
+      2.16666,
+      2.29179
+     ],
+     "main_input": {
+      "label": "number of positive lymph nodes",
+      "unit": "nodes",
+      "variable": "pnodes",
+      "x": [
+       7.0,
+       9.0,
+       2.0,
+       30.0,
+       9.0,
+       1.0,
+       3.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       2.0,
+       3.0,
+       26.0,
+       2.0,
+       4.0,
+       1.0,
+       2.0,
+       5.0,
+       12.0,
+       3.0,
+       1.0,
+       1.0,
+       1.0,
+       12.0,
+       1.0,
+       1.0,
+       1.0,
+       7.0,
+       3.0,
+       4.0,
+       4.0,
+       4.0,
+       1.0,
+       5.0,
+       11.0,
+       1.0,
+       6.0,
+       16.0,
+       14.0,
+       3.0,
+       10.0,
+       3.0,
+       6.0,
+       6.0,
+       7.0,
+       2.0,
+       3.0,
+       14.0,
+       4.0,
+       20.0,
+       13.0,
+       2.0,
+       1.0,
+       51.0,
+       3.0,
+       1.0,
+       1.0,
+       2.0,
+       17.0,
+       3.0,
+       3.0,
+       7.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       9.0,
+       3.0,
+       2.0,
+       1.0,
+       3.0,
+       6.0,
+       5.0,
+       5.0,
+       5.0,
+       2.0,
+       5.0,
+       4.0,
+       5.0,
+       19.0,
+       1.0,
+       2.0,
+       15.0,
+       7.0,
+       3.0,
+       1.0,
+       2.0,
+       2.0,
+       16.0,
+       2.0,
+       2.0,
+       10.0,
+       1.0,
+       7.0,
+       3.0,
+       9.0,
+       3.0,
+       1.0,
+       10.0,
+       1.0,
+       5.0,
+       5.0,
+       1.0,
+       1.0,
+       1.0,
+       2.0,
+       1.0,
+       9.0,
+       1.0,
+       2.0,
+       1.0,
+       1.0,
+       1.0,
+       4.0,
+       2.0,
+       8.0,
+       2.0,
+       13.0,
+       4.0,
+       2.0,
+       5.0,
+       2.0,
+       11.0,
+       4.0,
+       2.0,
+       2.0,
+       12.0,
+       4.0,
+       6.0,
+       5.0,
+       1.0,
+       1.0,
+       10.0,
+       1.0,
+       8.0,
+       1.0,
+       1.0,
+       10.0,
+       10.0,
+       6.0,
+       7.0,
+       7.0,
+       2.0,
+       2.0,
+       4.0,
+       4.0,
+       4.0,
+       1.0,
+       3.0,
+       2.0,
+       3.0,
+       5.0,
+       20.0,
+       3.0,
+       10.0,
+       12.0,
+       3.0,
+       3.0,
+       5.0,
+       12.0,
+       5.0,
+       3.0,
+       5.0,
+       1.0,
+       3.0,
+       2.0,
+       3.0,
+       1.0,
+       5.0,
+       2.0,
+       11.0,
+       1.0,
+       7.0,
+       1.0,
+       4.0,
+       8.0,
+       3.0,
+       8.0,
+       3.0,
+       8.0,
+       7.0,
+       4.0,
+       3.0,
+       3.0,
+       16.0,
+       9.0,
+       1.0,
+       7.0,
+       2.0,
+       5.0,
+       2.0,
+       10.0,
+       11.0,
+       2.0,
+       5.0,
+       2.0,
+       1.0,
+       4.0,
+       4.0,
+       1.0,
+       2.0,
+       1.0,
+       1.0,
+       35.0,
+       8.0,
+       24.0,
+       19.0,
+       3.0,
+       10.0,
+       2.0,
+       12.0,
+       6.0,
+       1.0,
+       2.0,
+       5.0,
+       1.0,
+       1.0,
+       1.0,
+       2.0,
+       3.0,
+       2.0,
+       3.0,
+       13.0,
+       4.0,
+       9.0,
+       10.0,
+       10.0,
+       2.0,
+       1.0,
+       1.0,
+       1.0,
+       5.0,
+       4.0,
+       3.0,
+       7.0,
+       1.0,
+       1.0,
+       11.0,
+       1.0,
+       2.0,
+       18.0,
+       1.0,
+       1.0,
+       19.0,
+       7.0,
+       5.0,
+       16.0,
+       8.0,
+       1.0,
+       7.0,
+       4.0,
+       1.0,
+       5.0,
+       1.0,
+       1.0,
+       3.0,
+       23.0,
+       12.0,
+       1.0,
+       6.0,
+       7.0,
+       13.0,
+       2.0,
+       7.0,
+       1.0,
+       4.0,
+       1.0,
+       10.0,
+       2.0,
+       12.0,
+       7.0,
+       13.0,
+       2.0,
+       3.0,
+       10.0,
+       4.0,
+       9.0,
+       2.0,
+       4.0,
+       2.0,
+       1.0,
+       2.0,
+       3.0,
+       3.0,
+       6.0,
+       2.0,
+       1.0,
+       1.0,
+       2.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       2.0,
+       2.0,
+       5.0,
+       1.0,
+       3.0,
+       9.0
+      ],
+      "y": [
+       0.0895873,
+       0.189687,
+       -0.160663,
+       1.24074,
+       0.189687,
+       -0.210713,
+       -0.110613,
+       -0.210713,
+       -0.210713,
+       -0.210713,
+       -0.210713,
+       -0.160663,
+       -0.110613,
+       1.04054,
+       -0.160663,
+       -0.0605628,
+       -0.210713,
+       -0.160663,
+       -0.0105128,
+       0.339837,
+       -0.110613,
+       -0.210713,
+       -0.210713,
+       -0.210713,
+       0.339837,
+       -0.210713,
+       -0.210713,
+       -0.210713,
+       0.0895873,
+       -0.110613,
+       -0.0605628,
+       -0.0605628,
+       -0.0605628,
+       -0.210713,
+       -0.0105128,
+       0.289787,
+       -0.210713,
+       0.0395372,
+       0.540038,
+       0.439938,
+       -0.110613,
+       0.239737,
+       -0.110613,
+       0.0395372,
+       0.0395372,
+       0.0895873,
+       -0.160663,
+       -0.110613,
+       0.439938,
+       -0.0605628,
+       0.740238,
+       0.389888,
+       -0.160663,
+       -0.210713,
+       2.29179,
+       -0.110613,
+       -0.210713,
+       -0.210713,
+       -0.160663,
+       0.590088,
+       -0.110613,
+       -0.110613,
+       0.0895873,
+       -0.210713,
+       -0.210713,
+       -0.210713,
+       -0.210713,
+       0.189687,
+       -0.110613,
+       -0.160663,
+       -0.210713,
+       -0.110613,
+       0.0395372,
+       -0.0105128,
+       -0.0105128,
+       -0.0105128,
+       -0.160663,
+       -0.0105128,
+       -0.0605628,
+       -0.0105128,
+       0.690188,
+       -0.210713,
+       -0.160663,
+       0.489988,
+       0.0895873,
+       -0.110613,
+       -0.210713,
+       -0.160663,
+       -0.160663,
+       0.540038,
+       -0.160663,
+       -0.160663,
+       0.239737,
+       -0.210713,
+       0.0895873,
+       -0.110613,
+       0.189687,
+       -0.110613,
+       -0.210713,
+       0.239737,
+       -0.210713,
+       -0.0105128,
+       -0.0105128,
+       -0.210713,
+       -0.210713,
+       -0.210713,
+       -0.160663,
+       -0.210713,
+       0.189687,
+       -0.210713,
+       -0.160663,
+       -0.210713,
+       -0.210713,
+       -0.210713,
+       -0.0605628,
+       -0.160663,
+       0.139637,
+       -0.160663,
+       0.389888,
+       -0.0605628,
+       -0.160663,
+       -0.0105128,
+       -0.160663,
+       0.289787,
+       -0.0605628,
+       -0.160663,
+       -0.160663,
+       0.339837,
+       -0.0605628,
+       0.0395372,
+       -0.0105128,
+       -0.210713,
+       -0.210713,
+       0.239737,
+       -0.210713,
+       0.139637,
+       -0.210713,
+       -0.210713,
+       0.239737,
+       0.239737,
+       0.0395372,
+       0.0895873,
+       0.0895873,
+       -0.160663,
+       -0.160663,
+       -0.0605628,
+       -0.0605628,
+       -0.0605628,
+       -0.210713,
+       -0.110613,
+       -0.160663,
+       -0.110613,
+       -0.0105128,
+       0.740238,
+       -0.110613,
+       0.239737,
+       0.339837,
+       -0.110613,
+       -0.110613,
+       -0.0105128,
+       0.339837,
+       -0.0105128,
+       -0.110613,
+       -0.0105128,
+       -0.210713,
+       -0.110613,
+       -0.160663,
+       -0.110613,
+       -0.210713,
+       -0.0105128,
+       -0.160663,
+       0.289787,
+       -0.210713,
+       0.0895873,
+       -0.210713,
+       -0.0605628,
+       0.139637,
+       -0.110613,
+       0.139637,
+       -0.110613,
+       0.139637,
+       0.0895873,
+       -0.0605628,
+       -0.110613,
+       -0.110613,
+       0.540038,
+       0.189687,
+       -0.210713,
+       0.0895873,
+       -0.160663,
+       -0.0105128,
+       -0.160663,
+       0.239737,
+       0.289787,
+       -0.160663,
+       -0.0105128,
+       -0.160663,
+       -0.210713,
+       -0.0605628,
+       -0.0605628,
+       -0.210713,
+       -0.160663,
+       -0.210713,
+       -0.210713,
+       1.49099,
+       0.139637,
+       0.940438,
+       0.690188,
+       -0.110613,
+       0.239737,
+       -0.160663,
+       0.339837,
+       0.0395372,
+       -0.210713,
+       -0.160663,
+       -0.0105128,
+       -0.210713,
+       -0.210713,
+       -0.210713,
+       -0.160663,
+       -0.110613,
+       -0.160663,
+       -0.110613,
+       0.389888,
+       -0.0605628,
+       0.189687,
+       0.239737,
+       0.239737,
+       -0.160663,
+       -0.210713,
+       -0.210713,
+       -0.210713,
+       -0.0105128,
+       -0.0605628,
+       -0.110613,
+       0.0895873,
+       -0.210713,
+       -0.210713,
+       0.289787,
+       -0.210713,
+       -0.160663,
+       0.640138,
+       -0.210713,
+       -0.210713,
+       0.690188,
+       0.0895873,
+       -0.0105128,
+       0.540038,
+       0.139637,
+       -0.210713,
+       0.0895873,
+       -0.0605628,
+       -0.210713,
+       -0.0105128,
+       -0.210713,
+       -0.210713,
+       -0.110613,
+       0.890388,
+       0.339837,
+       -0.210713,
+       0.0395372,
+       0.0895873,
+       0.389888,
+       -0.160663,
+       0.0895873,
+       -0.210713,
+       -0.0605628,
+       -0.210713,
+       0.239737,
+       -0.160663,
+       0.339837,
+       0.0895873,
+       0.389888,
+       -0.160663,
+       -0.110613,
+       0.239737,
+       -0.0605628,
+       0.189687,
+       -0.160663,
+       -0.0605628,
+       -0.160663,
+       -0.210713,
+       -0.160663,
+       -0.110613,
+       -0.110613,
+       0.0395372,
+       -0.160663,
+       -0.210713,
+       -0.210713,
+       -0.160663,
+       -0.210713,
+       -0.210713,
+       -0.210713,
+       -0.210713,
+       -0.160663,
+       -0.160663,
+       -0.0105128,
+       -0.210713,
+       -0.110613,
+       0.189687
+      ]
+     },
+     "n": 438
+    },
+    "id": "identity_nodal",
+    "kind": "hidden",
+    "region": "ann_13"
+   }
+  ],
+  "not_used": [
+   "age",
+   "oestrogen receptor",
+   "postmenopausal status",
+   "tumour size"
+  ],
+  "outputs": [
+   "0"
+  ],
+  "partials": []
+ },
+ "label": "cox-gbsg2-s1",
+ "linked_inputs": {
+  "links": [
+   {
+    "changed": "age",
+    "example": {
+     "a_bin": "below 39 years",
+     "expected": 24.1,
+     "observed": 0,
+     "rows_of_a": 42,
+     "ruled_out_share": 0.1641,
+     "v_bin": "postmenopausal status"
+    },
+    "moves": "menostat=Post",
+    "source": "data"
+   },
+   {
+    "changed": "menostat=Post",
+    "example": {
+     "a_bin": "postmenopausal status",
+     "expected": 24.1,
+     "observed": 0,
+     "rows_of_a": 251,
+     "ruled_out_share": 0.1641,
+     "v_bin": "below 39 years"
+    },
+    "moves": "age",
+    "source": "data"
+   },
+   {
+    "changed": "tgrade=II",
+    "example": {
+     "a_bin": "tumour grade II",
+     "expected": 66.4,
+     "observed": 0,
+     "rows_of_a": 285,
+     "ruled_out_share": 0.1515,
+     "v_bin": "tumour grade III"
+    },
+    "moves": "tgrade=III",
+    "source": "data"
+   },
+   {
+    "changed": "tgrade=III",
+    "example": {
+     "a_bin": "tumour grade III",
+     "expected": 66.4,
+     "observed": 0,
+     "rows_of_a": 102,
+     "ruled_out_share": 0.1515,
+     "v_bin": "tumour grade II"
+    },
+    "moves": "tgrade=II",
+    "source": "data"
+   }
+  ],
+  "rule": "when a counterfactual sets an input, every linked input whose value (almost) never occurs with the new value in the training data is set to its typical value among the training rows with that value (median or most common level); moves chain, each input moves at most once, inputs the counterfactual sets itself never move (if they are off the data, the claim is marked off_data)",
+  "settings": {
+   "deciles": 10,
+   "max_discrete": 25,
+   "max_ratio": 0.05,
+   "max_zero_share": 0.002,
+   "min_expected": 20,
+   "min_expected_move": 3,
+   "min_level_rows": 20,
+   "min_ruled_out": 0.02,
+   "point_mass": 0.05
+  }
+ },
+ "outcome": {
+  "positive": "recurrence or death during follow-up",
+  "predicted": "the predicted 5-year risk of recurrence or death",
+  "risk": "the risk of recurrence or death by 5 years",
+  "short": "recurrence or death"
+ },
+ "outcome_check": {
+  "base_rate_train": 0.4360730593607306,
+  "checks": [],
+  "class_names": [],
+  "inverted": false,
+  "meaning": "the positive class",
+  "n_train": 438,
+  "positive_code": 1,
+  "positive_name": null,
+  "verified": false
+ },
+ "parts": [
+  {
+   "additive": true,
+   "children": [
+    "tumour_biology",
+    "nodal_burden",
+    "hormone_therapy"
+   ],
+   "closed_form": null,
+   "contribution_sd": null,
+   "direct_variable_keys": [],
+   "duplicate_of": null,
+   "gated": false,
+   "id": "ann_15",
+   "kind": "composition",
+   "name": "cox_log_risk",
+   "nonlinear": false,
+   "order": 0,
+   "original_hypothesis": "The output is the Cox log-risk g(x) with an identity activation: g(x) = tumour_biology + nodal_burden + hormone_therapy + constant, an exact sum (each of the three identity exits enters the output with unit weight; the constant is the output bias, which carries no meaning because it is absorbed into the baseline hazard). The three parts therefore combine additively on the log-hazard scale, that is multiplicatively on the hazard, h(t|x) = h0(t)·exp(g(x)), with the five-year risk read off a Breslow baseline fitted on the training rows. The 5 terms at the output are all direct input edges routed through the three identity exits (0 direct input edges remain at the output itself), so the model is a sparse linear Cox model with the following hazard ratios per clinical unit, holding the other inputs fixed: grade II versus grade I 1.96, grade III versus grade I 2.26, each positive lymph node 1.051, each fmol/l of progesterone receptor 0.9984, hormonal therapy 0.653. The four remaining inputs, age, oestrogen receptor, menopausal status and tumour size, are unconnected entry nodes with zero effect: fixing all four at once changes 0 of the 438 training predictions (largest absolute change in five-year risk 0.0), and sweeping the typical patient across the training range of age leaves the log-risk at -0.5265 at both ends (-0.5265), of tumour size at -0.5265 and -0.5265, and of oestrogen receptor at -0.5265 and -0.5265 (menopausal status could not be swept by the probe tool, whose variable parser stops at the \"=\" in the input name; its effect is covered by the same node ablation, 0 of 438 predictions changed). Across the training patients the log-risk spans a hazard ratio of 5.82 between the 95th- and the 5th-percentile patient. Survival performance on the training split (n = 438, 191 events): Harrell's C 0.682, Uno's C 0.651, time-dependent AUC at one, three and five years 0.765, 0.731 and 0.707, integrated Brier score 0.132; five-year calibration over ten risk deciles: mean predicted risk 50% against a Kaplan-Meier observed 49%, largest decile gap 11%. Self-probe of the composition: switching all three parts off at once leaves the constant alone, so the typical patient's log-risk goes from -0.526 to -0.747, the output bias (five-year risk 56% to 48%), and the AUC against the event indicator falls from 0.6805 to 0.50, chance level; by single-part ablation the AUC losses rank nodal_burden (0.6258) above tumour_biology (0.6675) above hormone_therapy (0.6767). Function preservation: the identity-node refactoring reproduces the original network's log-risk to 4.4e-16 on the training rows. Proportional-hazards caveat: the model's form is a time-constant multiplicative effect of each term on the hazard, so this is not evidence that any effect is constant over follow-up.",
+   "parent": null,
+   "role": "root",
+   "upstream_nodes": 0,
+   "variable_keys": [
+    "age",
+    "estrec",
+    "horTh=yes",
+    "menostat=Post",
+    "pnodes",
+    "progrec",
+    "tgrade=II",
+    "tgrade=III",
+    "tsize"
+   ],
+   "variables": [
+    "age",
+    "oestrogen receptor",
+    "hormonal therapy",
+    "postmenopausal status",
+    "number of positive lymph nodes",
+    "progesterone receptor",
+    "tumour grade II",
+    "tumour grade III",
+    "tumour size"
+   ]
+  },
+  {
+   "children": [],
+   "closed_form": {
+    "latex": "y_0 = - 0.316 x_{progrec} + 0.345 x_{tgrade=III} + 0.321 x_{tgrade=II}",
+    "n": 438,
+    "numeric_max_abs_err": 2.22045e-16,
+    "output_scale": 2.37135,
+    "rounding": "weights and biases at 3 significant figures",
+    "sympy_srepr": {
+     "y_0": "Add(Mul(Integer(-1), Float('0.316101', precision=13), Symbol('x_{progrec}')), Mul(Float('0.345276', precision=13), Symbol('x_{tgrade=III}')), Mul(Float('0.320862', precision=13), Symbol('x_{tgrade=II}')))"
+    }
+   },
+   "contribution_sd": 0.421966,
+   "direct_variable_keys": [
+    "progrec",
+    "tgrade=II",
+    "tgrade=III"
+   ],
+   "duplicate_of": null,
+   "gated": false,
+   "id": "ann_12",
+   "kind": "leaf",
+   "name": "tumour_biology",
+   "nonlinear": false,
+   "order": 1,
+   "original_hypothesis": "identity_biology ≈ 0.345·z(tgrade=III) + 0.321·z(tgrade=II) -0.316·z(progrec), coefficients per standardised input (rounded; off by up to 0.0012 on the training rows; the exact weights are in the analytical_formula evidence). This part is a sparse linear block of the log-risk: tumour grade (the two one-hot levels against grade I) and progesterone receptor level each have a direct edge, summed into one identity exit and passed unchanged to the output, so the part is additive on the log-hazard scale and multiplicative on the hazard. In hazard-ratio terms per clinical unit, holding the other inputs fixed: relative to a grade I tumour, the model multiplies the hazard by 1.96 for grade II and by 2.26 for grade III; each additional fmol/l of progesterone receptor multiplies it by 0.9984 (one SD of progesterone receptor: 0.73), a protective direction. Across the training patients the progesterone-receptor term spans a hazard ratio of 1.92 between its 95th and 5th percentile, the grade III term 2.26 and the grade II term 1.96. Self-probe (whole model; a constructed patient with progesterone receptor 29.5 fmol/l, 3 positive nodes and no hormone therapy, the remaining inputs at the typical values of each grade cell, which is harmless because fixing the four unconnected inputs moves 0 of 438 training predictions): the log-risk is -1.199 for grade I, -0.526 for grade II and -0.382 for grade III, a predicted five-year risk of 34%, 56% and 61%; the two gaps match the per-unit log-hazard ratios 0.673 and 0.817. Sweeping progesterone receptor from 0 to 300 fmol/l on the typical grade II patient lowers the log-risk from -0.479 to -0.964 (five-year risk 58% to 41%). In the training split the part's mean contribution to the log-risk is 0.261 for the 102 grade III patients, 0.039 for the 285 grade II patients and -0.741 for the 51 grade I patients (the three grade cells are exhaustive: 0 patients carry both one-hot levels). Switching the whole part off (exit fixed at its training mean) moves the predicted five-year risk by 9% on average over the 438 training rows and lowers the AUC against the event indicator from 0.6805 to 0.6675. Meaning (concept probe over the tabular library): the best single concept for the exit is a progesterone-receptor threshold, score 0.91 (AUC 0.95, R-squared 0.30); because the part sums three terms, one concept captures its direction and not its value, so the part is described by its formula rather than by a single clinical concept. Proportional-hazards caveat: the model's form is a time-constant multiplicative effect of grade and receptor level on the hazard, so this is not evidence that these effects are constant over follow-up.",
+   "parent": "cox_log_risk",
+   "role": "part",
+   "upstream_nodes": 0,
+   "variable_keys": [
+    "progrec",
+    "tgrade=II",
+    "tgrade=III"
+   ],
+   "variables": [
+    "progesterone receptor",
+    "tumour grade II",
+    "tumour grade III"
+   ]
+  },
+  {
+   "children": [],
+   "closed_form": {
+    "latex": "y_0 = 0.293 x_{pnodes}",
+    "n": 438,
+    "numeric_max_abs_err": 0.0,
+    "output_scale": 2.29179,
+    "rounding": "weights and biases at 3 significant figures",
+    "sympy_srepr": {
+     "y_0": "Mul(Float('0.292542', precision=13), Symbol('x_{pnodes}'))"
+    }
+   },
+   "contribution_sd": 0.292551,
+   "direct_variable_keys": [
+    "pnodes"
+   ],
+   "duplicate_of": null,
+   "gated": false,
+   "id": "ann_13",
+   "kind": "leaf",
+   "name": "nodal_burden",
+   "nonlinear": false,
+   "order": 2,
+   "original_hypothesis": "identity_nodal ≈ 0.293·z(pnodes), a single direct edge from the number of positive lymph nodes to an identity exit that is passed unchanged to the log-risk (rounded coefficient per standardised input, off by up to 0.0035 on the training rows; the exact weight is in the analytical_formula evidence). In hazard-ratio terms per clinical unit, holding the other inputs fixed: each additional positive lymph node multiplies the hazard by 1.051 (one SD of the node count: 1.34); the part is one linear edge, so the effect is log-linear in the node count across the training range, without a threshold or a plateau. Across the training patients the term spans a hazard ratio of 2.12 between its 95th and 5th percentile, and 1.92 between the 95th-percentile and the median patient. Self-probe (whole model, the typical patient: grade II, no hormone therapy, progesterone receptor 29.5 fmol/l): sweeping positive nodes from 1 to 29 raises the log-risk from -0.627 to 0.775 and the predicted five-year risk from 53% to 95%, the part's contribution rising from -0.211 to 1.191; going from one positive node to two moves the log-risk from -0.6266 to -0.5765, which is the per-node log-hazard ratio 0.0501. In the training split the 71 patients with ten or more positive nodes have a mean predicted five-year risk of 71% (73% had an event during follow-up), against 43% for the 234 patients with three or fewer (31% had an event); this part's mean contribution to the log-risk is 0.520 in the first group and -0.175 in the second. Switching the part off (exit fixed at its training mean) moves the predicted five-year risk by 6% on average over the 438 training rows (largest change 49%) and lowers the AUC against the event indicator from 0.6805 to 0.6258, the largest loss of the three parts. Meaning: the exit is the positive-node count itself, concept probe score 1.00 for the concept pnodes. Proportional-hazards caveat: the model's form is a time-constant multiplicative effect of nodal burden on the hazard, so this is not evidence that the effect is constant over follow-up.",
+   "parent": "cox_log_risk",
+   "role": "part",
+   "upstream_nodes": 0,
+   "variable_keys": [
+    "pnodes"
+   ],
+   "variables": [
+    "number of positive lymph nodes"
+   ]
+  },
+  {
+   "children": [],
+   "closed_form": {
+    "latex": "y_0 = - 0.206 x_{horTh=yes}",
+    "n": 438,
+    "numeric_max_abs_err": 0.0,
+    "output_scale": 0.265203,
+    "rounding": "weights and biases at 3 significant figures",
+    "sympy_srepr": {
+     "y_0": "Mul(Integer(-1), Float('0.206177', precision=13), Symbol('x_{horTh=yes}'))"
+    }
+   },
+   "contribution_sd": 0.206177,
+   "direct_variable_keys": [
+    "horTh=yes"
+   ],
+   "duplicate_of": null,
+   "gated": false,
+   "id": "ann_14",
+   "kind": "leaf",
+   "name": "hormone_therapy",
+   "nonlinear": false,
+   "order": 3,
+   "original_hypothesis": "identity_hormone ≈ -0.206·z(horTh=yes), a single direct edge from the hormonal-therapy indicator to an identity exit that is passed unchanged to the log-risk (rounded coefficient per standardised input, off by up to 0.00023 on the training rows; the exact weight is in the analytical_formula evidence). In hazard-ratio terms: holding the other inputs fixed, the model gives a patient who received hormonal therapy 0.653 times the hazard of a patient who did not (per SD of the indicator: 0.81); the part has one binary input, so this is a fixed offset on the log-hazard scale that does not depend on the other inputs, and it is an association the model learned from this cohort, not a treatment effect. Across the training patients the term spans a hazard ratio of 1.53 between its 95th and 5th percentile. Self-probe (whole model; a constructed grade II patient with progesterone receptor 29.5 fmol/l and 3 positive nodes, the remaining inputs at the typical values of each therapy cell, which is harmless because fixing the four unconnected inputs moves 0 of 438 training predictions): the log-risk is -0.952 with therapy and -0.526 without, a predicted five-year risk of 42% against 56%; the gap matches the per-unit log-hazard ratio -0.425, and the part's contribution is -0.265 with therapy against 0.160 without (the inputs are standardised, so the untreated level is a positive offset and the treated level a negative one; the difference between them is the effect). In the training split the 165 treated patients have a mean predicted five-year risk of 41% (37% had an event during follow-up) and this part contributes -0.265 to their log-risk; the 273 untreated patients have 55% (48% had an event) with a contribution of 0.160. Switching the part off (exit fixed at its training mean) moves the predicted five-year risk by 6% on average over the 438 training rows (largest change 10%) and lowers the AUC against the event indicator from 0.6805 to 0.6767, the smallest loss of the three parts. Meaning: the exit is the therapy indicator itself, concept probe score 1.00 for the concept horTh=yes. Proportional-hazards caveat: the model's form is a time-constant multiplicative effect of hormonal therapy on the hazard, so this is not evidence that the effect is constant over follow-up.",
+   "parent": "cox_log_risk",
+   "role": "part",
+   "upstream_nodes": 0,
+   "variable_keys": [
+    "horTh=yes"
+   ],
+   "variables": [
+    "hormonal therapy"
+   ]
+  }
+ ],
+ "ph_caveat": "Each effect multiplies the hazard by the same amount at every point of follow-up, because the model has no way to represent an effect that changes with time (the proportional-hazards assumption); this is not evidence that the effect is constant over time.",
+ "population": {
+  "plural": "patients",
+  "singular": "patient"
+ },
+ "reference_patient": {
+  "definition": "the typical patient: the median training patient for every number and the most common training category for every category (not a real patient); an input the data ties to a category takes its typical value within that category (linked inputs)",
+  "predicted_risk": 0.562281,
+  "raw": [
+   53.0,
+   35.5,
+   0.0,
+   1.0,
+   3.0,
+   29.5,
+   1.0,
+   0.0,
+   25.0
+  ],
+  "risk_scale": {
+   "baseline_survival_at_horizon": 0.246914,
+   "effect_unit": "log hazard ratio (the change in the model's log-risk); hazard ratio = exp(change)",
+   "formula": "risk = 1 - S0(horizon) ** exp(log-risk)",
+   "horizon": 1825.0,
+   "horizon_label": "5-year",
+   "kind": "survival",
+   "label": "predicted 5-year risk",
+   "ph_caveat": "Each effect multiplies the hazard by the same amount at every point of follow-up, because the model has no way to represent an effect that changes with time (the proportional-hazards assumption); this is not evidence that the effect is constant over time."
+  },
+  "values": {
+   "age": "53 years",
+   "estrec": "36 fmol/l",
+   "horTh=yes": "no hormonal therapy",
+   "menostat=Post": "postmenopausal status",
+   "pnodes": "3 nodes",
+   "progrec": "30 fmol/l",
+   "tgrade=II": "tumour grade II",
+   "tgrade=III": "a tumour grade other than III",
+   "tsize": "25 mm"
+  }
+ },
+ "risk_scale": {
+  "baseline_survival_at_horizon": 0.246914,
+  "effect_unit": "log hazard ratio (the change in the model's log-risk); hazard ratio = exp(change)",
+  "formula": "risk = 1 - S0(horizon) ** exp(log-risk)",
+  "horizon": 1825.0,
+  "horizon_label": "5-year",
+  "kind": "survival",
+  "label": "predicted 5-year risk",
+  "ph_caveat": "Each effect multiplies the hazard by the same amount at every point of follow-up, because the model has no way to represent an effect that changes with time (the proportional-hazards assumption); this is not evidence that the effect is constant over time."
+ },
+ "schema_version": "5.2.0",
+ "settings": {
+  "bootstrap_B": 1000,
+  "confidence_rules": {
+   "clearly": "a meaningful change in predicted risk for a typical patient (at least 5% points), the test split agrees (same sign, and its bootstrap interval over test patients excludes no benefit), and every group has at least 20 training patients",
+   "consistently across patients": "the claim holds for at least 90% of training patients (range across patients); this is not a significance statement",
+   "on the training data only": "the test split disagrees (opposite sign, or no benefit on test patients) or is unclear (its interval includes no benefit), or no test check is available",
+   "slightly": "the change in predicted risk for a typical patient is below 5% points",
+   "the model has little data on this": "a compared group has fewer than 20 training patients"
+  },
+  "effect_scale": "log hazard ratio (the model's log-risk) for verification; the hazard ratio and the predicted risk by the horizon for the typical patient for wording",
+  "max_interactions_per_part": 4,
+  "max_opposite_sign_share": 0.1,
+  "max_threshold_spread": 0.2,
+  "min_interaction": 0.1,
+  "min_threshold_effect": 0.1,
+  "prob_large": 0.2,
+  "prob_slight": 0.05,
+  "screen_rows": 4000,
+  "seed": 42,
+  "shape_tolerances": {
+   "consistent_share": 0.9,
+   "grid_points": 41,
+   "mixed_majority": 0.6,
+   "ordinal_max_levels": 12,
+   "patient_sample": 300,
+   "risk_saturation": 0.03,
+   "sensitivity_scales": [
+    0.75,
+    1.25
+   ],
+   "tolerances": {
+    "equal_steps": 0.25,
+    "first_step": 0.6,
+    "flat_abs": 0.05,
+    "flat_slope": 0.05,
+    "kink": 0.15,
+    "min_piece": 0.05,
+    "reversal": 0.1,
+    "step_share": 0.7,
+    "step_width": 0.1,
+    "straight": 0.05
+   }
+  },
+  "small_n": 20,
+  "top_magnitudes": 5
+ },
+ "split": {
+  "check": "test",
+  "id": "f858af57-d132-456b-9682-b307dcceb1b4",
+  "primary": "train",
+  "scaler_type": "StandardScaler",
+  "test_n": 138,
+  "train_n": 438
+ },
+ "template": {
+  "annotations": {
+   "ann_12": [
+    {
+     "claims": [
+      "C16"
+     ],
+     "text": "Through this part, the model treats a higher progesterone receptor as clearly lowering the predicted 5-year risk of recurrence or death steadily: for a typical patient, it goes from about 58% at 0 fmol/l to about 42% at 295 fmol/l, a hazard ratio of about 0.62."
+    },
+    {
+     "claims": [
+      "C17"
+     ],
+     "text": "Through this part, for a typical patient, the model gives a higher predicted 5-year risk of recurrence or death if the patient has tumour grade III (with tumour grade II at a tumour grade other than II, as in the data) (about 61%) than if the patient has a tumour grade other than III (about 56%), a hazard ratio of about 1.5 (on the training data only)."
+    }
+   ],
+   "ann_13": [
+    {
+     "claims": [
+      "C19"
+     ],
+     "text": "Through this part, the model treats a higher number of positive lymph nodes as raising the predicted 5-year risk of recurrence or death steadily: for a typical patient, it goes from about 53% at 1 nodes to about 73% at 12 nodes, a hazard ratio of about 1.7 (on the training data only)."
+    }
+   ],
+   "ann_14": [
+    {
+     "claims": [
+      "C21"
+     ],
+     "text": "Through this part, for a typical patient, the model gives a lower predicted 5-year risk of recurrence or death if the patient has hormonal therapy (about 42%) than if the patient has no hormonal therapy (about 56%), a hazard ratio of about 0.65 (on the training data only)."
+    }
+   ],
+   "ann_15": [
+    {
+     "claims": [
+      "C02"
+     ],
+     "text": "The model treats a higher number of positive lymph nodes as raising the predicted 5-year risk of recurrence or death steadily: for a typical patient, it goes from about 53% at 1 nodes to about 73% at 12 nodes, a hazard ratio of about 1.7 (on the training data only)."
+    },
+    {
+     "claims": [
+      "C03"
+     ],
+     "text": "The model treats a higher progesterone receptor as clearly lowering the predicted 5-year risk of recurrence or death steadily: for a typical patient, it goes from about 58% at 0 fmol/l to about 42% at 295 fmol/l, a hazard ratio of about 0.62."
+    },
+    {
+     "claims": [
+      "C04"
+     ],
+     "text": "For a typical patient, the model gives a lower predicted 5-year risk of recurrence or death if the patient has hormonal therapy (about 42%) than if the patient has no hormonal therapy (about 56%), a hazard ratio of about 0.65 (on the training data only)."
+    },
+    {
+     "claims": [
+      "C05"
+     ],
+     "text": "For a typical patient, the model gives a higher predicted 5-year risk of recurrence or death if the patient has tumour grade III (with tumour grade II at a tumour grade other than II, as in the data) (about 61%) than if the patient has a tumour grade other than III (about 56%), a hazard ratio of about 1.5 (on the training data only)."
+    },
+    {
+     "claims": [
+      "C10",
+      "C11",
+      "C12",
+      "C13"
+     ],
+     "text": "It ignores age, oestrogen receptor, postmenopausal status and tumour size."
+    }
+   ]
+  },
+  "hypotheses": {
+   "ann_12": "Through this part, the model treats a higher progesterone receptor as clearly lowering the predicted 5-year risk of recurrence or death steadily: for a typical patient, it goes from about 58% at 0 fmol/l to about 42% at 295 fmol/l, a hazard ratio of about 0.62. Through this part, for a typical patient, the model gives a higher predicted 5-year risk of recurrence or death if the patient has tumour grade III (with tumour grade II at a tumour grade other than II, as in the data) (about 61%) than if the patient has a tumour grade other than III (about 56%), a hazard ratio of about 1.5 (on the training data only).",
+   "ann_13": "Through this part, the model treats a higher number of positive lymph nodes as raising the predicted 5-year risk of recurrence or death steadily: for a typical patient, it goes from about 53% at 1 nodes to about 73% at 12 nodes, a hazard ratio of about 1.7 (on the training data only).",
+   "ann_14": "Through this part, for a typical patient, the model gives a lower predicted 5-year risk of recurrence or death if the patient has hormonal therapy (about 42%) than if the patient has no hormonal therapy (about 56%), a hazard ratio of about 0.65 (on the training data only).",
+   "ann_15": "The model treats a higher number of positive lymph nodes as raising the predicted 5-year risk of recurrence or death steadily: for a typical patient, it goes from about 53% at 1 nodes to about 73% at 12 nodes, a hazard ratio of about 1.7 (on the training data only). The model treats a higher progesterone receptor as clearly lowering the predicted 5-year risk of recurrence or death steadily: for a typical patient, it goes from about 58% at 0 fmol/l to about 42% at 295 fmol/l, a hazard ratio of about 0.62. For a typical patient, the model gives a lower predicted 5-year risk of recurrence or death if the patient has hormonal therapy (about 42%) than if the patient has no hormonal therapy (about 56%), a hazard ratio of about 0.65 (on the training data only). For a typical patient, the model gives a higher predicted 5-year risk of recurrence or death if the patient has tumour grade III (with tumour grade II at a tumour grade other than II, as in the data) (about 61%) than if the patient has a tumour grade other than III (about 56%), a hazard ratio of about 1.5 (on the training data only). It ignores age, oestrogen receptor, postmenopausal status and tumour size."
+  },
+  "not_supported": [
+   {
+    "claim": "C01",
+    "text": "direction claim about tumour grade II in the whole model: not supported by the model (23% of patients have the opposite sign (allowed: 10%)).",
+    "type": "direction"
+   },
+   {
+    "claim": "C15",
+    "text": "direction claim about tumour grade II in part ann_12: not supported by the model (23% of patients have the opposite sign (allowed: 10%)).",
+    "type": "direction"
+   }
+  ],
+  "renderer": "explaneat.analysis.plain_language_templates (deterministic, no language model)",
+  "summary": [
+   {
+    "claims": [
+     "C02"
+    ],
+    "text": "The model treats a higher number of positive lymph nodes as raising the predicted 5-year risk of recurrence or death steadily: for a typical patient, it goes from about 53% at 1 nodes to about 73% at 12 nodes, a hazard ratio of about 1.7 (on the training data only)."
+   },
+   {
+    "claims": [
+     "C03"
+    ],
+    "text": "The model treats a higher progesterone receptor as clearly lowering the predicted 5-year risk of recurrence or death steadily: for a typical patient, it goes from about 58% at 0 fmol/l to about 42% at 295 fmol/l, a hazard ratio of about 0.62."
+   },
+   {
+    "claims": [
+     "C04"
+    ],
+    "text": "For a typical patient, the model gives a lower predicted 5-year risk of recurrence or death if the patient has hormonal therapy (about 42%) than if the patient has no hormonal therapy (about 56%), a hazard ratio of about 0.65 (on the training data only)."
+   },
+   {
+    "claims": [
+     "C10",
+     "C11",
+     "C12",
+     "C13"
+    ],
+    "text": "The model ignores age, oestrogen receptor, postmenopausal status and tumour size."
+   },
+   {
+    "claims": [
+     "C10",
+     "C11",
+     "C12",
+     "C13",
+     "C14"
+    ],
+    "text": "Each effect multiplies the hazard by the same amount at every point of follow-up, because the model has no way to represent an effect that changes with time (the proportional-hazards assumption); this is not evidence that the effect is constant over time."
+   }
+  ]
+ },
+ "units": {
+  "method": "raw = z * scale + mean, with the split's StandardScaler parameters (scaler_params mean and scale, fitted on the training rows)",
+  "round_trip_max_abs_err": 1.13687e-13,
+  "round_trip_note": "max |decoded - stored raw| and |re-encoded - model input| over the training rows",
+  "variables": [
+   {
+    "base": "age",
+    "columns": [
+     "age"
+    ],
+    "decoded": true,
+    "kind": "continuous",
+    "label": "age",
+    "max": 80.0,
+    "mean": 52.8493,
+    "median": 53.0,
+    "min": 21.0,
+    "p10": 39.0,
+    "p90": 65.0,
+    "scale": 10.2175,
+    "unit": "years"
+   },
+   {
+    "base": "estrec",
+    "columns": [
+     "estrec"
+    ],
+    "decoded": true,
+    "kind": "continuous",
+    "label": "oestrogen receptor",
+    "max": 1144.0,
+    "mean": 101.479,
+    "median": 35.5,
+    "min": 0.0,
+    "p10": 0.0,
+    "p90": 300.5,
+    "scale": 163.644,
+    "unit": "fmol/l"
+   },
+   {
+    "base": "horTh=yes",
+    "columns": [
+     "horTh=yes"
+    ],
+    "decoded": true,
+    "kind": "category",
+    "label": "hormonal therapy",
+    "levels": [
+     {
+      "code": "1",
+      "decoded": true,
+      "label": "hormonal therapy",
+      "n_train": 165
+     },
+     {
+      "code": "0",
+      "decoded": true,
+      "label": "no hormonal therapy",
+      "n_train": 273
+     }
+    ],
+    "reference": {
+     "code": "0",
+     "label": "no hormonal therapy"
+    },
+    "unit": null
+   },
+   {
+    "base": "menostat=Post",
+    "columns": [
+     "menostat=Post"
+    ],
+    "decoded": true,
+    "kind": "category",
+    "label": "postmenopausal status",
+    "levels": [
+     {
+      "code": "1",
+      "decoded": true,
+      "label": "postmenopausal status",
+      "n_train": 251
+     },
+     {
+      "code": "0",
+      "decoded": true,
+      "label": "premenopausal status",
+      "n_train": 187
+     }
+    ],
+    "reference": {
+     "code": "1",
+     "label": "postmenopausal status"
+    },
+    "unit": null
+   },
+   {
+    "base": "pnodes",
+    "columns": [
+     "pnodes"
+    ],
+    "decoded": true,
+    "kind": "count",
+    "label": "number of positive lymph nodes",
+    "max": 51.0,
+    "mean": 5.21005,
+    "median": 3.0,
+    "min": 1.0,
+    "p10": 1.0,
+    "p90": 12.0,
+    "scale": 5.84516,
+    "unit": "nodes"
+   },
+   {
+    "base": "progrec",
+    "columns": [
+     "progrec"
+    ],
+    "decoded": true,
+    "kind": "continuous",
+    "label": "progesterone receptor",
+    "max": 1600.0,
+    "mean": 107.397,
+    "median": 29.5,
+    "min": 0.0,
+    "p10": 0.0,
+    "p90": 295.3,
+    "scale": 195.288,
+    "unit": "fmol/l"
+   },
+   {
+    "base": "tgrade=II",
+    "columns": [
+     "tgrade=II"
+    ],
+    "decoded": true,
+    "kind": "category",
+    "label": "tumour grade II",
+    "levels": [
+     {
+      "code": "1",
+      "decoded": true,
+      "label": "tumour grade II",
+      "n_train": 285
+     },
+     {
+      "code": "0",
+      "decoded": true,
+      "label": "a tumour grade other than II",
+      "n_train": 153
+     }
+    ],
+    "reference": {
+     "code": "1",
+     "label": "tumour grade II"
+    },
+    "unit": null
+   },
+   {
+    "base": "tgrade=III",
+    "columns": [
+     "tgrade=III"
+    ],
+    "decoded": true,
+    "kind": "category",
+    "label": "tumour grade III",
+    "levels": [
+     {
+      "code": "1",
+      "decoded": true,
+      "label": "tumour grade III",
+      "n_train": 102
+     },
+     {
+      "code": "0",
+      "decoded": true,
+      "label": "a tumour grade other than III",
+      "n_train": 336
+     }
+    ],
+    "reference": {
+     "code": "0",
+     "label": "a tumour grade other than III"
+    },
+    "unit": null
+   },
+   {
+    "base": "tsize",
+    "columns": [
+     "tsize"
+    ],
+    "decoded": true,
+    "kind": "continuous",
+    "label": "tumour size",
+    "max": 100.0,
+    "mean": 29.2854,
+    "median": 25.0,
+    "min": 4.0,
+    "p10": 15.0,
+    "p90": 50.0,
+    "scale": 13.744,
+    "unit": "mm"
+   }
+  ]
+ },
+ "verification": {
+  "notes": "",
+  "verified": null,
+  "verified_at": null,
+  "verified_by": null
+ }
+}

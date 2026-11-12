@@ -95,21 +95,25 @@ def estimate_text(c: Dict[str, Any]) -> str:
     t = c["type"]
     rng = e.get("range_across_patients") or [None, None]
     rtxt = f"; range across patients {_f(rng[0])} to {_f(rng[1])}" if rng[0] is not None else ""
+    # survival (Cox) claims: the estimate is a log hazard ratio and its exp a hazard ratio
+    surv = "hazard_ratio" in e
+    lo, ratio = ("log-HR", "HR") if surv else ("log-odds", "OR")
+    ratio_v = e.get("hazard_ratio") if surv else e.get("odds_ratio")
     if t == "threshold":
         th = e.get("threshold") or {}
         iq = th.get("iqr_across_patients") or [None, None]
         return (f"fold {_f(th.get('value'))} {th.get('unit') or ''} (IQR {_f(iq[0])} to {_f(iq[1])}); "
-                f"past it log-odds {_f(e.get('value'))}, OR {_f(e.get('odds_ratio'))}{rtxt}")
+                f"past it {lo} {_f(e.get('value'))}, {ratio} {_f(ratio_v)}{rtxt}")
     if t == "subgroup":
         sh = e.get("share") or {}
-        return f"share {_f(sh.get('value'))}; log-odds {_f(e.get('value'))}, OR {_f(e.get('odds_ratio'))}{rtxt}"
+        return f"share {_f(sh.get('value'))}; {lo} {_f(e.get('value'))}, {ratio} {_f(ratio_v)}{rtxt}"
     if t == "null":
         return f"max change {_f(e.get('value'), 3)} ({e.get('unit', '')})"
     if t == "rule":
         return "lowest purity " + _f(e.get("value")) + "; " + ", ".join(
             f"k={r['count']}: {_pc(r['share_predicted_positive'])} yes (n={r['n']})" for r in (e.get("table") or []))
-    lab = "log-odds difference" if t == "interaction" else "log-odds"
-    return f"{lab} {_f(e.get('value'))}, OR {_f(e.get('odds_ratio'))}{rtxt}"
+    lab = f"{lo} difference" if t == "interaction" else lo
+    return f"{lab} {_f(e.get('value'))}, {ratio} {_f(ratio_v)}{rtxt}"
 
 
 def risk_text(c: Dict[str, Any]) -> str:
