@@ -25,7 +25,16 @@ were available at comparable AUC, evolution and backprop went back to the cells.
 check explains why: at eight ply the aggregate tactical vocabulary (threats, open lines, centre,
 parity) carries much less of the signal than the cells, while a *per-line* vocabulary (138 named
 open-line counts) carries more than the cells (GBM 0.953, LR 0.917), so a nameable base that
-keeps the signal exists but it is positional at the line level, not tactical.
+keeps the signal exists but it is positional at the line level, not tactical. The third base
+tests that: on the per-line features the default config reaches the cells champion's AUC
+(0.914 test) with three hidden units, and the explanation is short and nearly linear (6 leaves,
+linearised AUC 0.9119 of 0.9120). Its three units are meaningful under every probe, but as
+single named lines (x on the diagonal b5-e2 against o on the vertical b3-b6, x on d6-g3, x's
+even-row threats), and the three direct-term groups that carry the discrimination are weighted
+sums over 34-35 lines whose best "concept" restates the formula: 3 of 6 leaves understood in game
+terms (50%), 4-6 of 6 by probe (the blind verifier: 1 meaningful, 2 partial, 3 closed-form-only). The change of base therefore moves what
+is understood from positional cell gates to positional line terms; it does not reach tactical
+concepts at the cells' AUC.
 
 ## Data and bases (`lfdata.py`)
 
@@ -140,21 +149,22 @@ of 150 and the best genome; the DB genome reproduces the stored train and test A
 One explaining agent per selected genome, the frozen method (authoring skill v4, strict mode with
 provenance, function-preserving operations only, 3-hour box, training split only, no plain-language
 layer), then one blind verifier per explanation (the verifier skill; read only; sees the record and
-the stored explanation, not the author's scratch work or the other genome). Both explanations
-reached full coverage with the recheck clean:
+the stored explanation, not the author's scratch work or the other genomes). The per-line
+explanation was done after the first two (same prompt and method, `explanations/perline/`,
+`verification/perline/`). All three explanations reached full coverage with the recheck clean:
 
-| | lines (`c4lf-lines-heavy-s0`) | lines_cells (`c4lf-lines_cells-heavy-s2`) |
-|---|---|---|
-| Time used of the 3-hour box | 27 min | 40 min |
-| Operations | 17 splits (16 inputs + 1 unit), 20 consolidations, 1 identity node | 58 input splits, 1 identity node |
-| Leaves / compositions | 8 / 1 | 11 / 3 |
-| Coverage (structural / compositional), hierarchy | 1.0 / 1.0, complete | 1.0 / 1.0, complete |
-| Function preservation (max abs err) | 8.9e-16 | 2.7e-15 |
-| Rounded closed-form error | 0.020 | 0.030 |
-| Numbers stated / provenance-backed / allow-listed | 229 / 202 / 27 | 251 / 219 / 32 |
-| Recheck | 0 mismatch, 0 needs-review | 0 mismatch, 0 needs-review |
-| Linearisation (AUC, all gates replaced by affine fits vs full) | 0.860 vs 0.882 | 0.885 vs 0.935 |
-| Verifier | weakened: 0 refuted / 7 weakened / 27 upheld (+2 flags); ~150 statements, every number reproduced | weakened: 0 refuted / 11 weakened / 27 upheld; 171 statements, every number reproduced |
+| | lines (`c4lf-lines-heavy-s0`) | lines_cells (`c4lf-lines_cells-heavy-s2`) | perline (`c4lf-perline-default-s2`) |
+|---|---|---|---|
+| Time used of the 3-hour box | 27 min | 40 min | 50 min |
+| Operations | 17 splits (16 inputs + 1 unit), 20 consolidations, 1 identity node | 58 input splits, 1 identity node | 1 input split, 3 identity nodes (one per direct-term group) |
+| Leaves / compositions | 8 / 1 | 11 / 3 | 6 / 1 |
+| Coverage (structural / compositional), hierarchy | 1.0 / 1.0, complete | 1.0 / 1.0, complete | 1.0 / 1.0, complete |
+| Function preservation (max abs err) | 8.9e-16 | 2.7e-15 | 8.9e-16 |
+| Rounded closed-form error | 0.020 | 0.030 | 0.009 |
+| Numbers stated / provenance-backed / allow-listed | 229 / 202 / 27 | 251 / 219 / 32 | 148 / 148 / 0 |
+| Recheck | 0 mismatch, 0 needs-review | 0 mismatch, 0 needs-review | 0 mismatch, 0 needs-review |
+| Linearisation (AUC, all gates replaced by affine fits vs full) | 0.860 vs 0.882 | 0.885 vs 0.935 | 0.9119 vs 0.9120 |
+| Verifier | weakened: 0 refuted / 7 weakened / 27 upheld (+2 flags); ~150 statements, every number reproduced | weakened: 0 refuted / 11 weakened / 27 upheld; 171 statements, every number reproduced | weakened: 0 refuted / 10 weakened / 15 upheld; 80 statements, every number reproduced |
 
 ### What the networks do in game terms
 
@@ -188,6 +198,25 @@ rather than an eight-ply position (on real positions the mean chance goes 40% to
 hypotheses restate their closed forms. It notes one real concept the record set aside for its
 small n: unit 4 fires on every one of the 66 x odd-row-threat positions.
 
+**perline.** A near-linear score with three hidden units. Three summed groups of direct terms
+carry the discrimination (training AUC 0.912; 0.841 without x's per-line terms, 0.869 without
+o's, 0.871 without the 16 aggregates): x's open counts on lines low on the board and through the
+centre (the bottom-row horizontals, row three, the centre column, the low diagonals through the
+middle), x's open singles, open twos and centre pieces raise x's chance; o's open horizontals on
+rows two to four, o's diagonals into the left-centre, o's open singles and twos and an o
+even-row threat lower it. The network uses 82 of the 154 inputs and none of the open-three,
+total-threat or playable-parity features. The three units are small: a hinge that is on exactly
+when x's open count on the diagonal b5-e2 is at least o's open count on the vertical b3-b6 (off
+on 3,115 training rows; AUC 0.910 without it), a hinge on x's open count on the diagonal d6-g3
+(a tiny bonus), and a unit on x's even-row threats that is on for every training row and partly
+cancels its own direct term; replacing the hinges by straight lines leaves the AUC at 0.9119. The
+author's own reading of the two per-line sums is a sign pattern (reward x's low and central open
+lines, penalise o's low horizontals) whose best concepts are signed unweighted sums of the lines
+the weights favour, which the author flags as partly restatements of the formula; the lines that
+pull "the wrong way" (x's diagonals reaching row six, o's centre verticals) are within-model
+offsets against the aggregate counts, not data patterns (positions with an x piece on an open
+c3-f6 still win 75% against 64%). The verifier reproduced every number, count, sweep, ablation and the gate rule (on every training row and on the full count grid including ties) and weakened ten readings: the two per-line sums and the d6-g3 hinge restate their closed forms (a concept built only from the x reading's board regions, rows one to three and column d minus every line touching row six, scores r2 0.36 against 0.80 for the sign-pattern copy; the o reading alone scores 0.77, so it has substance, but row four is mixed inside the part); "open twos worth about as much as open singles" holds per standard deviation but not per line (one more open single moves the typical chance 49% to 54%, one more open two 49% to 62%, and a game-unit concept with twos at three singles scores r2 0.95 against 0.82); the o even-row threat is "nearly decisive" at the typical case (9%) but 23% on the 665 real rows; three sweep values lie outside the training range; and the game-terms text's claim that the o centre verticals "still have above-average x-win rates" is wrong (o on an open d1-d4: 46% against 70%), though the "not a data pattern" conclusion stands. Its leaf grades are 1 meaningful (the b5-e2-vs-b3-b6 hinge), 2 partial (the o-lines and aggregate sums) and 3 closed-form-only (the x-lines sum, the d6-g3 hinge and the always-on threat unit, where the input itself is the concept).
+
 ### The three levels against the cells-only networks
 
 Computed read-only by `../explanation_levels/compute_levels.py --set c4lf` (same script and
@@ -207,6 +236,23 @@ closed-form only.
 | Cells, evolved capacity champion | 0.915 | 1.7e-15 | 11 | 1.0 | **9%** / 55% / 36% (domain: 0%) | same | 0 / 0 / 11 described | upheld numbers; semantics weakened |
 | **Lines (16 features)** | 0.879 | 8.9e-16 | 8 | 1.0 | **50%** / 50% / 0% | **38%** / 62% / 0% | 6 / 2 / 0 | 3 / 4 / 1 |
 | **Lines + cells (58)** | 0.929 | 2.7e-15 | 11 | 1.0 | **55%** / 27% / 18% | **9%** / 64% / 27% | 0 / 7 / 4 | 0 / 6 / 5 |
+| **Per-line (154)** | 0.914 | 8.9e-16 | 6 | 1.0 | **67%** / 17% / 17% | **50%** / 0% / 50% | 6 / 0 / 0 by probe; 3 / 0 / 3 with the direct-term groups counted as restatements | 1 / 2 / 3 |
+
+On the per-line base the understood fraction is given both ways because the "restatement"
+concern on the three direct-term groups is real. The three units (the b5-e2-vs-b3-b6 hinge, the
+d6-g3 hinge, the even-row-threat unit) are meaningful under every probe (library scores 0.99-1.0
+on single per-line inputs). The three direct-term groups score 0.80-0.83 on the author's ad-hoc
+concepts, but those concepts are signed unweighted sums of the lines the weights favour or
+penalise, that is, a rounded copy of the formula, and no library concept comes close (standard
+sweep: `x_thr_odd` 0.89 on the aggregates, a rare-flag artefact; row-six lines 0.47-0.59 on the
+per-line sums; support-aware sweep: 0.35-0.49, all closed-form-only). Counting the three as
+"meaningful by probe, restatement by reading" gives 3 of 6 understood (50%) in game terms, and
+6 of 6 (100%) by the probe alone; the support-aware library sweep lands on the former (50% / 0%
+/ 50%). The verifier goes further: it grades a leaf meaningful only when the reading adds
+something to the formula, so the two single-input hinges (x on d6-g3; the always-on threat unit)
+are closed-form-only to it and only the two-line hinge is meaningful (1 / 2 / 3, 17%). Under
+every grading the understood leaves are per-line positional readings (which line, whose pieces,
+how many), not tactical ones.
 
 Per-leaf probes are in `levels/*.json` and `levels/support_aware.json`. On the lines base the
 leaves that stay meaningful under every grading are the open-twos cap (`x_open_2`, score 0.88),
@@ -234,15 +280,29 @@ comparable AUC? **Partly, and not at comparable AUC.**
    the author's grading (0 meaningful / 7 partial / 4 closed-form-only) is about where the cells-only
    champion was (9% / 55% / 36%). The standard probe's 55% is an artefact of the rare threat
    flags; with support required it is 9%.
-3. **Where the complexity lives.** The signal check says the eight-ply signal is positional and
+3. **Per-line (0.914 test AUC, the capacity champion's AUC).** At comparable AUC the function
+   became nearly linear (three hidden units, linearised AUC 0.9119 of 0.9120) and the explanation
+   became short (6 leaves, 148 numbers, every one provenance-backed, closed-form error 0.009).
+   The three units are meaningful under every probe, but as per-line positional readings (x's
+   count on the diagonal b5-e2 against o's on the vertical b3-b6; x's count on d6-g3; x's
+   even-row threats), not tactical ones. The three direct-term groups, which carry nearly all of
+   the discrimination, are weighted sums over 34-35 lines each whose best "concept" is a signed
+   sum of the favoured lines, a restatement of the formula: understood 50% in game terms (3 of
+   6), 67-100% by probe (50% support-aware), and 1 of 6 (17%) to the blind verifier, which also grades the two single-input hinges closed-form-only (the input is the concept) and the o-lines and aggregate sums partial. So the per-line base gives a faithful,
+   decomposed and short explanation at the cells' AUC, but what is understood is the sign
+   pattern of a linear score over named lines.
+4. **Where the complexity lives.** The signal check says the eight-ply signal is positional and
    line-local: the per-line vocabulary (which line, how many of whose pieces) carries more of it
    than the cells and most of it linearly, while the aggregate tactical counts lose a third of the
-   LR-to-GBM gap. The complexity is therefore in the *realisation and the vocabulary* in the
-   specific sense that a nameable base exists on which the function is simpler (per-line counts),
-   but the named concepts are not the tactical ones (threats, parity): at eight ply those are too
-   rare to matter (1.2-1.4% of positions). When the cells are available, evolution and backprop
-   realise the function with cell gates even though a line-feature reading would have been
-   available: the base does not steer the realisation unless it forces it.
+   LR-to-GBM gap; the per-line network confirms it, reaching the cells' AUC with three small
+   hinges on top of a linear score. The complexity is therefore in the *realisation and the
+   vocabulary* in the specific sense that a nameable base exists on which the function is simpler
+   (per-line counts), but the named concepts are not the tactical ones (threats, parity): at
+   eight ply those are too rare to matter (1.2-1.4% of positions), and on the per-line base the
+   named parts are single lines while the bulk of the function is a weighted sum that no concept
+   names. When the cells are available, evolution and backprop realise the function with cell
+   gates even though a line-feature reading would have been available: the base does not steer
+   the realisation unless it forces it.
 
 ## Caveats
 
@@ -251,7 +311,13 @@ comparable AUC? **Partly, and not at comparable AUC.**
   correction. The signal check is a GBM diagnostic, not a model selection.
 - "Same signal" does not hold for the lines base (GBM 0.885 vs 0.944), so its understood fraction
   is at a lower AUC. The per-line base (added after the signal check) keeps the signal but was
-  only run with the default config and was not explained PERLINE_CAVEAT.
+  only run with the default config (no heavy runs: the default already matches the capacity
+  champion), and it was explained and verified after the first two arms, with the arms' results
+  in hand; its explanation is the smallest of the three (6 leaves, 3 hidden units), so its
+  understood fraction rests on how the three direct-term groups are counted (see the levels
+  section: 50% in game terms, 67-100% by probe). The per-line "concepts" are positional (a named
+  line and a count), which the concept library provides by construction; a reader who does not
+  accept a single line's open count as a game concept would grade the three units partial.
 - The heavy config is the capacity study's `p18` main config; the warm-start pilots there did not
   beat it, so no warm start was used.
 - The concept probe's grade is not stable to rare binary concepts: both authors and the
@@ -259,8 +325,12 @@ comparable AUC? **Partly, and not at comparable AUC.**
   rows are unaffected, so the comparison in the support-aware column is like for like. The
   meaningful / partial / closed-form-only thresholds are the ones fixed in `docs/annotation_coverage_model.md`.
 - The author grades and the verifier grades are judgements; the two disagree on 3 of 8 lines
-  leaves (quiet-o gate, o-lines ramp, direct terms, x-singles-vs-twos gate) in both directions.
-- Hidden units were not split in either explanation except one (lines); a leaf is one unit (or a
+  leaves (quiet-o gate, o-lines ramp, direct terms, x-singles-vs-twos gate) in both directions,
+  and on 5 of 6 per-line leaves in one direction (the author's "meaningful" is the probe grade;
+  the verifier asks whether the reading adds anything to the formula, and for a one-input hinge
+  or a weighted sum it mostly does not). The per-line understood fraction is therefore reported
+  as a range (17-67%, 50% by the support-aware probe), not a number.
+- Hidden units were not split in any explanation except one (lines); a leaf is one unit (or a
   small block), so granularity 1.0 is expected and the decomposed level is not informative here.
 - Only the selected genome per base was imported and explained; the other runs' genomes are in
   `~/.explaneat/c4_line_features_runs/<name>/` (not committed).

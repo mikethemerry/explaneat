@@ -1,0 +1,463 @@
+{
+ "item_id": "c4lf-perline-default-s2",
+ "genome_id": "94fb8bdc-784b-4f75-a63c-25b1ad31da15",
+ "target_hash": null,
+ "target_hash_note": "verify recheck returned target_hash null for this record target; the recheck report is recheck.json beside this file",
+ "verifier": "independent verifier (second pass over record.json)",
+ "started_at": "2026-11-12T21:38:02+13:00",
+ "finished_at": "2026-11-12T22:00:32+13:00",
+ "minutes": 22,
+ "overall": {
+  "grade": "weakened",
+  "summary": "Every number, count, sweep, ablation and the gate rule reproduce (0 refuted). Weakened: three of the six leaf readings restate their closed forms (both one-input units and the x per-line sum), the aggregates' 'open twos worth about as much as open singles' is true per sd but wrong per line (a two is worth about three singles), the o row-four reading is mixed, three stated sweep values lie outside the training range, and the record's game-terms sentence claims above-average x-win rates for the o centre-vertical positions, which have 46.4% against 70.0%."
+ },
+ "counts": {
+  "refuted": 0,
+  "weakened": 10,
+  "upheld": 15,
+  "flag": 0
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "structural 1.0, compositional 1.0, hierarchy complete, full coverage",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.0 / 1.0, no uncovered nodes or edges; one root winLogit containing the output, 6 of 6 leaves composed; 72 Null nodes (inputs with no enabled connection) counted covered",
+   "commands": [
+    "uv run python -m explaneat verify recheck <record.json> --out recheck.json"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "8.9e-16; closed-form max error 0.0086",
+   "check": "verify recheck",
+   "evidence": "function preservation 8.88e-16; closed-form max |err| 0.008578 (xThrEvenUnit, exit scale 14.3); numeric replay 3.1e-15",
+   "commands": [
+    "uv run python -m explaneat verify recheck <record.json>"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.n_leaf_annotations",
+   "statement": "6 leaves, 1 composition, 1 split, 3 identity nodes, 3 hidden nodes",
+   "check": "verify recheck op_counts; operations dump",
+   "evidence": "annotate 7 (6 leaves + winLogit), split_node 1 (-147 = x_thr_even), add_identity_node 3 (identity_xlines, identity_olines, identity_aggregates); hidden nodes 2326, 2649, 2829 each in one leaf",
+   "commands": [
+    "uv run python -m explaneat verify recheck <record.json>"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_164",
+   "claims": [],
+   "location": "record.summary",
+   "statement": "AUC 0.912; without x per-line terms 0.841, aggregates 0.871, o per-line terms 0.869; gate off on 3115 rows; AUC 0.910 without it; hinges linearised 0.9119; 8.9e-16",
+   "check": "recheck provenance + ablate + subgroup + linearise",
+   "evidence": "ablate --part: ann_161 0.8414, ann_163 0.8706, ann_162 0.8688, ann_159 0.9100, ann_158 0.912, ann_160 0.9119; subgroup x<o n=3115 and the gate acts on 0 of them; linearise all affine 0.9119",
+   "commands": [
+    "uv run python -m explaneat verify ablate <record.json> --part ann_161",
+    "uv run python -m explaneat verify ablate <record.json> --part ann_159",
+    "uv run python -m explaneat verify subgroup <record.json> --where '`x_line_b5-e2` < `o_line_b3-b6`'",
+    "uv run python -m explaneat verify linearise <record.json> --core"
+   ]
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_164",
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "concept scores 0.80 and 0.83; x on open c3-f6 win rate 0.75 vs 0.64; x even-row unit on for a share 1.00 of 54045 rows",
+   "check": "verify concept; subgroup",
+   "evidence": "concept r2 0.8045 (x signed sum), 0.8291 (o signed sum); subgroup x_line_c3-f6>=1: n 7274, 75.2% vs 64.4%; node_2829>0: 54045 of 54045",
+   "commands": [
+    "uv run python -m explaneat verify concept <record.json> --part ann_161 --concept '<x signed sum>'",
+    "uv run python -m explaneat verify subgroup <record.json> --where '`x_line_c3-f6` >= 1'",
+    "uv run python -m explaneat verify subgroup <record.json> --where 'node_2829 > 0'"
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_164",
+   "claims": [],
+   "location": "record.overall_function",
+   "statement": "the network ignores about half of the per-line inputs, both sides' open-three counts, the total threat counts and the playable-cell parity features",
+   "check": "recheck null_nodes against the input order",
+   "evidence": "72 Null inputs: 66 of the 138 per-line inputs (48%) plus -143 x_open_3, -144 o_open_3, -145 x_thr, -148 o_thr, -153, -154 (playable parities); the connected per-line inputs are 35 (x) + 34 (o) + 3 gate inputs",
+   "commands": [
+    "uv run python -m explaneat verify recheck <record.json>"
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_164",
+   "claims": [],
+   "location": "record.game_terms",
+   "statement": "the negative x row-six lines and the positive o centre verticals are within-model offsets, not data patterns (such positions still have above-average x-win rates)",
+   "check": "verify subgroup on each named line",
+   "evidence": "true for the x lines (x on open c3-f6: 75.2% vs 64.4%; b6-e3: 70.0% vs 65.4%) but false for the o verticals: o on open d1-d4 has an x-win rate of 46.4% vs 70.0% in the rest, o on open e1-e4 65.0% vs 66.0%. The conclusion (not a data pattern) still holds, the parenthetical reason is wrong for half its scope; the oLinesDirect hypothesis states it correctly (0.46 below 0.70)",
+   "commands": [
+    "uv run python -m explaneat verify subgroup <record.json> --where '`o_line_d1-d4` >= 1'",
+    "uv run python -m explaneat verify subgroup <record.json> --where '`o_line_e1-e4` >= 1'",
+    "uv run python -m explaneat verify subgroup <record.json> --where '`x_line_b6-e3` >= 1'"
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "weakened",
+   "level": "L4",
+   "part": null,
+   "claims": [],
+   "location": "record.leaves",
+   "statement": "every leaf graded meaning = meaningful (probe scores 1.0, 1.0, 1.0, 0.80, 0.83, 0.82)",
+   "check": "read the grades against the hypotheses' own words and the concept used",
+   "evidence": "xThrEvenUnit and xDiagD6G3Gate score 1.0 with the input itself as the concept, and the record's own text calls xThrEvenUnit 'described, not explained'; the x and o line concepts are the formulas' sign patterns (see V18, V20). The record's leaf grades overstate: my grades are 1 meaningful, 2 partial, 3 closed-form-only",
+   "commands": []
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "structure",
+   "statement": "entry/exit/subgraph nodes of each annotation; closed forms against the stated weights",
+   "check": "operations dump; recheck closed forms; probe node pre-activations",
+   "evidence": "xDiagD6G3Gate {-60 -> 2326}, xB5E2vsOB3B6Gate {-28, -92 -> 2649}, xThrEvenUnit {-147_b -> 2829}; the three direct groups are the 35 / 34 / 10 inputs feeding identity_xlines / identity_olines / identity_aggregates; x_line_b5-e2 and o_line_b3-b6 reach the output only through the gate. Every weight quoted in the hypotheses matches the recomputed closed form to 3 s.f. (e.g. a1-d1 0.718, c3-f6 -0.566, b2-e2 -0.384, d1-d4 0.322, o_open_1 -0.834, gate 0.236 / -0.218 / +0.719, unit 0.667 + 3.01, hinge 0.0138 - 1.47); readouts 0.88, 0.043 and -0.098 recovered from probe contributions (0.5721/0.6532, 0.0197/0.4633, -0.5543/5.671)",
+   "commands": [
+    "uv run python -m explaneat verify probe <record.json> --sweep 'x_line_b5-e2=0:2:3' --sweep 'o_line_b3-b6=0:2:3' --nodes 2649"
+   ]
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_158",
+   "claims": [],
+   "location": "operations.xDiagD6G3Gate.hypothesis",
+   "statement": "on for all 49405 rows with no x piece on d6-g3, on for 0 of the 4640 with one; 49% and 49% in the typical case, unit 0.46 to 0.00; mean change 0.002; AUC 0.912 to 0.912",
+   "check": "subgroup, probe, ablate",
+   "evidence": "subgroup x_line_d6-g3==0: n 49405, part acts on 100.0%, 0.0% in the rest; x>=1 and node_2326>0: 0 rows; probe 0 -> 49.2%, 1 -> 48.7%, node 0.4633 -> 0 (pre-activation -4.772); ablate mean change +0.0020, AUC 0.912 -> 0.912, 115 flips",
+   "commands": [
+    "uv run python -m explaneat verify subgroup <record.json> --where '`x_line_d6-g3` == 0'",
+    "uv run python -m explaneat verify probe <record.json> --sweep 'x_line_d6-g3=0:1:2' --nodes 2326 --wide",
+    "uv run python -m explaneat verify ablate <record.json> --part ann_158"
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_158",
+   "claims": [],
+   "location": "operations.xDiagD6G3Gate.hypothesis",
+   "statement": "game reading: x having an open piece on the high diagonal d6-g3 removes a small bonus; concept x_line_d6-g3 scores 1.00",
+   "check": "L4 reading",
+   "evidence": "not meaningful: restates the closed form relu(0.0138 - 1.47 z) x 0.043 in words, with the input itself as the concept; the part adds +0.02 logit when x is absent from one line and nothing otherwise, with no game reason offered",
+   "commands": []
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_159",
+   "claims": [],
+   "location": "operations.xB5E2vsOB3B6Gate.hypothesis",
+   "statement": "on iff x's open count on b5-e2 >= o's open count on b3-b6; 0 of 50930 / 0 of 3115 counterexamples; 3040 rows o-on-b with no x, win rate 0.56 vs 0.66; typical 49/61/72%, one o piece 49 -> 35%, with one x piece 46% then 35%; mean change 0.072, AUC 0.912 -> 0.910",
+   "check": "2-D probe grid, subgroups, ablate",
+   "evidence": "grid (x,o): (0,0) on 49.2%, (0,1) off 35.3% (pre-act -0.066), (0,2) off, (1,0) on 61.2%, (1,1) on 45.6%, (1,2) off 35.3%, (2,0) on 71.9%, (2,1) on 57.7%, (2,2) on 42.1%: on exactly when x >= o; subgroup node_2649==0 and x>=o: 0; node_2649>0 and x<o: 0; x<o: 3115 (gate acts on 0.0%); o>=1 and x==0: 3040, 56.2% vs 66.4%; ablate mean change +0.0725, AUC 0.91, 4555 flips",
+   "commands": [
+    "uv run python -m explaneat verify probe <record.json> --sweep 'x_line_b5-e2=0:2:3' --sweep 'o_line_b3-b6=0:2:3' --nodes 2649",
+    "uv run python -m explaneat verify subgroup <record.json> --where 'node_2649 == 0 and `x_line_b5-e2` >= `o_line_b3-b6`'",
+    "uv run python -m explaneat verify subgroup <record.json> --where '`o_line_b3-b6` >= 1 and `x_line_b5-e2` == 0'",
+    "uv run python -m explaneat verify ablate <record.json> --part ann_159"
+   ]
+  },
+  {
+   "id": "V13",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_159",
+   "claims": [],
+   "location": "operations.xB5E2vsOB3B6Gate.hypothesis",
+   "statement": "x pieces on b5-e2 at ... three give 81%; more o pieces change nothing further (35% at four)",
+   "check": "probe with the training range printed",
+   "evidence": "x_line_b5-e2 and o_line_b3-b6 both range 0 to 2 in training; the probe marks 3 and 4 as OUTSIDE the data (80.7% and 35.3% reproduce but are extrapolation, and four o pieces on b3-b6 is a finished game)",
+   "commands": [
+    "uv run python -m explaneat verify probe <record.json> --set 'o_line_b3-b6=0' --sweep 'x_line_b5-e2=0:3:4' --nodes 2649",
+    "uv run python -m explaneat verify probe <record.json> --set 'x_line_b5-e2=0' --sweep 'o_line_b3-b6=0:4:5' --nodes 2649"
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_160",
+   "claims": [],
+   "location": "operations.xThrEvenUnit.hypothesis",
+   "statement": "ReLU on for every row (share 1.00 of 54045); 0.67 per sd in, -0.098 out, direct edge 0.093; typical 49/55/61%; 594 rows with a threat (win rate 0.83), 54 with two; AUC 0.912 -> 0.9119",
+   "check": "subgroup, probe, ablate",
+   "evidence": "node_2829>0: 54045 of 54045; probe 0/1/2 -> 49.2/55.1/61.0%, node 2.946/8.617/14.29 (always on), part contribution +0.0066/-0.5477/-1.1021 (readout -0.0977), aggregates +0.6863 per threat; subgroup x_thr_even>=1: 594, 82.8%; >=2: 54; ablate AUC 0.9119, 59 flips",
+   "commands": [
+    "uv run python -m explaneat verify subgroup <record.json> --where 'node_2829 > 0'",
+    "uv run python -m explaneat verify probe <record.json> --sweep 'x_thr_even=0:2:3' --nodes 2829 --wide",
+    "uv run python -m explaneat verify subgroup <record.json> --where 'x_thr_even >= 1'",
+    "uv run python -m explaneat verify ablate <record.json> --part ann_160"
+   ]
+  },
+  {
+   "id": "V15",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_160",
+   "claims": [],
+   "location": "operations.xThrEvenUnit.hypothesis",
+   "statement": "the part is a linear rescaling of its input that partly cancels its own direct term; described, not explained",
+   "check": "L4 reading",
+   "evidence": "not meaningful: restates the closed form (an always-on ReLU of one input), as the hypothesis itself says; the record's leaf grade 'meaningful' contradicts this",
+   "commands": []
+  },
+  {
+   "id": "V16",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_161",
+   "claims": [],
+   "location": "operations.xLinesDirect.hypothesis",
+   "statement": "ten largest weights; the ten edges off take the AUC to 0.849; a1-d1 sweep 49/75/90%; c3-f6 sweep 49/16/3%; 7274 rows with x on open c3-f6, win rate 0.75, predicted 0.75 vs 0.64; part off AUC 0.841, mean |change| 0.15; signed-sum concept 0.80",
+   "check": "ablate --edge x10, probe, subgroup, ablate --part, concept",
+   "evidence": "edges -1,-16,-46,-21,-43,-36,-22,-31,-39,-30 off: AUC 0.8488; probe a1-d1 0/1/2 -> 49.2/75.0/90.3%; c3-f6 0/1/2 -> 49.2/15.7/3.4%; subgroup 7274, 75.2% observed, 75.2% predicted vs 64.4%; ablate 0.8414, mean |change| 0.1536, 9761 flips; concept r2 0.8045",
+   "commands": [
+    "uv run python -m explaneat verify ablate <record.json> --edge '-1->identity_xlines' ... --edge '-30->identity_xlines'",
+    "uv run python -m explaneat verify probe <record.json> --sweep 'x_line_a1-d1=0:3:4'",
+    "uv run python -m explaneat verify ablate <record.json> --part ann_161",
+    "uv run python -m explaneat verify concept <record.json> --part ann_161 --concept '<x signed sum>'"
+   ]
+  },
+  {
+   "id": "V17",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_161",
+   "claims": [],
+   "location": "operations.xLinesDirect.hypothesis",
+   "statement": "x pieces on a1-d1 at zero, one, two and three give 49%, 75%, 90% and 97%",
+   "check": "probe with the training range printed",
+   "evidence": "x_line_a1-d1 ranges 0 to 2 in training; the probe marks 3 as OUTSIDE the data (96.6% reproduces but is extrapolation)",
+   "commands": [
+    "uv run python -m explaneat verify probe <record.json> --sweep 'x_line_a1-d1=0:3:4'"
+   ]
+  },
+  {
+   "id": "V18",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_161",
+   "claims": [],
+   "location": "operations.xLinesDirect.hypothesis",
+   "statement": "game reading: the model rewards x's open lines low on the board and through the centre and penalises x's open pieces on the diagonals that reach row six; an unweighted signed sum of those lines scores 0.80",
+   "check": "concept built from the reading's words only (all lines in rows 1-3 or in column d, minus every line touching row six), against the author's weight-derived sum",
+   "evidence": "the reading on its own gives r2 0.356 (below the tool's partial bar of 0.5); material x_open_1 + 3*x_open_2 gives 0.279; the 0.80 comes from the formula's own sign pattern over the 35 connected lines. Within the part, 'low' is uneven (a2-d2 +0.035, b1-e4 -0.039, a4-d1 +0.034) while every connected line touching row six is negative (8 of 8). Not meaningful: a restatement of the closed form with a loose geometric gloss",
+   "commands": [
+    "uv run python -m explaneat verify concept <record.json> --part ann_161 --concept '<rows 1-3 and column d lines minus row-six lines>'",
+    "uv run python -m explaneat verify concept <record.json> --part ann_161 --concept 'x_open_1 + 3*x_open_2'"
+   ]
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_162",
+   "claims": [],
+   "location": "operations.oLinesDirect.hypothesis",
+   "statement": "ten largest weights; ten edges off take the AUC to 0.880; b2-e2 sweep 49/34/22/13%; d1-d4 sweep 49/65/78%; 9484 rows with o on open d1-d4, win rate 0.46, predicted 0.46 vs 0.70; part off 0.869; concept 0.83",
+   "check": "ablate --edge x10, probe, subgroup, ablate --part, concept",
+   "evidence": "edges -88,-79,-73,-103,-91,-82,-112,-116,-130,-94 off: AUC 0.8797; probe b2-e2 0..3 -> 49.2/34.3/22.0/13.2%; d1-d4 0..2 -> 49.2/64.9/77.9%; subgroup 9484, 46.4% observed, 46.3% predicted vs 70.0%; ablate 0.8688, mean |change| 0.1039; concept r2 0.8291",
+   "commands": [
+    "uv run python -m explaneat verify ablate <record.json> --edge '-88->identity_olines' ... --edge '-94->identity_olines'",
+    "uv run python -m explaneat verify probe <record.json> --sweep 'o_line_b2-e2=0:3:4'",
+    "uv run python -m explaneat verify subgroup <record.json> --where '`o_line_d1-d4` >= 1'",
+    "uv run python -m explaneat verify ablate <record.json> --part ann_162"
+   ]
+  },
+  {
+   "id": "V20",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_162",
+   "claims": [],
+   "location": "operations.oLinesDirect.hypothesis",
+   "statement": "game reading: o's open horizontals on rows two to four and o's diagonals into the left-centre are threats to x; o's vertical stacks in the centre columns are discounted",
+   "check": "closed-form signs by row; concept built from the reading's words only",
+   "evidence": "row four is mixed inside the part: a4-d4 -0.380 and d4-g4 -0.178 but b4-e4 +0.148 and c4-f4 +0.041 (the hypothesis itself lists b4-e4 as positive); rows two and three are uniformly negative (-0.241, -0.384, -0.300; -0.242, -0.150). 'Into the left-centre' fits a5-d2 but c5-f2 runs to the right side. The reading on its own (rows 2-4 horizontals plus a5-d2, c5-f2, minus d1-d4, e1-e4, c1-c4) still scores r2 0.767, so it has substance: partial, not a pure restatement",
+   "commands": [
+    "uv run python -m explaneat verify concept <record.json> --part ann_162 --concept '<rows 2-4 o horizontals + a5-d2 + c5-f2 - d1-d4 - e1-e4 - c1-c4>'"
+   ]
+  },
+  {
+   "id": "V21",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_163",
+   "claims": [],
+   "location": "operations.aggregatesDirect.hypothesis",
+   "statement": "ten weights; x open twos 36/49/62/74/83%; o open twos 62/49/37/26/17%; centre pieces 49/60/70/78%; one o even-row threat 49 -> 9%; 665 rows with one, win rate 0.23, predicted 0.23; part off 0.871; concept 0.82",
+   "check": "probe, subgroup, ablate, concept",
+   "evidence": "probe x_open_2 0..4 -> 36.3/49.2/62.2/73.7/82.6%; o_open_2 -> 61.8/49.2/36.6/25.7/17.1%; centre_x 0..3 -> 49.2/60.0/69.9/78.3%; o_thr_even 0/1/2 -> 49.2/8.8/1.0%; subgroup o_thr_even>=1: 665, 22.9% observed, 23.2% predicted; ablate 0.8706; concept r2 0.817",
+   "commands": [
+    "uv run python -m explaneat verify probe <record.json> --sweep 'x_open_2=0:4:5'",
+    "uv run python -m explaneat verify probe <record.json> --sweep 'o_thr_even=0:2:3'",
+    "uv run python -m explaneat verify subgroup <record.json> --where 'o_thr_even >= 1'",
+    "uv run python -m explaneat verify ablate <record.json> --part ann_163",
+    "uv run python -m explaneat verify concept <record.json> --part ann_163 --concept 'x_open_1 + x_open_2 + centre_x - o_open_1 - o_open_2'"
+   ]
+  },
+  {
+   "id": "V22",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_163",
+   "claims": [],
+   "location": "operations.aggregatesDirect.hypothesis",
+   "statement": "game reading: the model counts material in open lines, x's minus o's, with open twos worth about as much as open singles",
+   "check": "per-count sweeps of x_open_1 and x_open_2 from the typical case; a game-unit concept",
+   "evidence": "equal only per sd (0.687 vs 0.686). Per line: one more x open single moves the typical chance 49.2 -> 53.8% (about +0.18 logit), one more x open two 49.2 -> 62.2% (about +0.53 logit), so an open two is worth about three open singles; the same for o (one single 49.2 -> 43.7%, one two 49.2 -> 36.6%). A game-unit concept x_open_1 + 3*x_open_2 + 2*centre_x - o_open_1 - 3*o_open_2 scores r2 0.946 against 0.817 for the equal-weight one",
+   "commands": [
+    "uv run python -m explaneat verify probe <record.json> --sweep 'x_open_1=5:13:9' --no-parts",
+    "uv run python -m explaneat verify probe <record.json> --sweep 'x_open_2=0:4:5' --no-parts",
+    "uv run python -m explaneat verify concept <record.json> --part ann_163 --concept 'x_open_1 + 3*x_open_2 + 2*centre_x - o_open_1 - 3*o_open_2'"
+   ]
+  },
+  {
+   "id": "V23",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_163",
+   "claims": [],
+   "location": "operations.aggregatesDirect.hypothesis",
+   "statement": "treats an o threat on an even row as nearly decisive against x",
+   "check": "subgroup o_thr_even >= 1",
+   "evidence": "in the typical case one threat takes the chance to 8.8%, but on the 665 real rows with such a threat the mean predicted chance is 23.2% (observed 22.9%): a heavy penalty, not near-decisive; partial overclaim",
+   "commands": [
+    "uv run python -m explaneat verify subgroup <record.json> --where 'o_thr_even >= 1'"
+   ]
+  },
+  {
+   "id": "V24",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_164",
+   "claims": [],
+   "location": "operations.winLogit.hypothesis",
+   "statement": "a sigmoid of a bias plus the sum of six parts; hinges affine 0.9120 -> 0.9119; AUC 0.912, accuracy 0.838 on 54045; direct terms carry the discrimination; unconnected inputs leave the prediction unchanged; x open twos 36/62/83%, o open twos 62/37/17%",
+   "check": "recheck, linearise, ablate, probe",
+   "evidence": "function preservation 8.88e-16 with the parts added at the output; linearise: full 0.9120, all affine 0.9119, only xB5E2vsOB3B6Gate switches (R2 0.970, restore gain +0.0001), linear core alone 0.5000 (every part at its mean); AUC 0.91197, accuracy 0.83797; part ablations as in V4; probe x_open_2 0/2/4 -> 36.3/62.2/82.6%, o_open_2 -> 61.8/36.6/17.1%; 72 Null inputs",
+   "commands": [
+    "uv run python -m explaneat verify linearise <record.json> --core",
+    "uv run python -m explaneat verify recheck <record.json>"
+   ]
+  },
+  {
+   "id": "V25",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_159",
+   "claims": [],
+   "location": "operations.xB5E2vsOB3B6Gate.hypothesis",
+   "statement": "game reading: o building an open stack up column b, unanswered by x on the diagonal through b5, is bad for x",
+   "check": "L4 reading against the L3 grid",
+   "evidence": "a domain-level rule (who holds the crossing at b5: on iff x's count >= o's) confirmed exactly on every training row and the 3x3 grid; the 3040 rows it switches off on have an x-win rate of 56.2% vs 66.4%. Meaningful",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_164": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_158": {
+   "grade": "weakened",
+   "level": "L4"
+  },
+  "ann_159": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_160": {
+   "grade": "weakened",
+   "level": "L4"
+  },
+  "ann_161": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_162": {
+   "grade": "weakened",
+   "level": "L2"
+  },
+  "ann_163": {
+   "grade": "weakened",
+   "level": "L3"
+  }
+ },
+ "leaf_meaning": {
+  "xDiagD6G3Gate": {
+   "grade": "closed-form-only",
+   "why": "The reading ('an x piece on d6-g3 removes a small bonus') is relu(0.0138 - 1.47 z) x 0.043 in words, scored 1.0 with the input itself as the concept; no game reason is given or found."
+  },
+  "xB5E2vsOB3B6Gate": {
+   "grade": "meaningful",
+   "why": "A game-level rule about who holds the crossing cell b5 (on iff x's open count on b5-e2 >= o's on b3-b6) that the model confirms on every training row and on the full 3x3 count grid, with the off rows a weaker group for x (56.2% vs 66.4%)."
+  },
+  "xThrEvenUnit": {
+   "grade": "closed-form-only",
+   "why": "An always-on ReLU of one input (on for 54045 of 54045 rows) that partly cancels the input's direct term; the hypothesis itself says 'described, not explained'."
+  },
+  "xLinesDirect": {
+   "grade": "closed-form-only",
+   "why": "The 0.80 concept is the formula's own sign pattern over its 35 connected lines; the reading stated in board terms alone (low rows and the centre column, minus lines touching row six) scores only r2 0.356, and the negative lines are explained as within-model offsets, not play."
+  },
+  "oLinesDirect": {
+   "grade": "partial",
+   "why": "The reading in board terms alone (o horizontals on rows two to four and the two diagonals, minus the centre verticals) scores r2 0.767, so it is more than the sign pattern, but row four is mixed inside the part (b4-e4 +0.148, c4-f4 +0.041 against a4-d4 -0.380) and the centre-vertical discount is an offset without a game reading."
+  },
+  "aggregatesDirect": {
+   "grade": "partial",
+   "why": "Open-line material x minus o plus centre presence and an o even-row threat penalty is a game reading the model confirms in direction, but the stated equal worth of open twos and singles holds only per sd (per line a two is worth about three singles: 49.2 -> 62.2% vs 49.2 -> 53.8%; a game-unit count scores 0.946 vs 0.817) and 'nearly decisive' overstates a 23% mean predicted chance on the real rows."
+  }
+ },
+ "statements_checked": 80,
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ],
+ "commands_root": "cd /Users/mike/dev/explaneat/.claude/worktrees/c4-perline && export DATABASE_URL=postgresql://localhost/explaneat_dev; <record.json> = the target record.json in the perline scratch directory (this verify directory is beside it)",
+ "notes": [
+  "No plain-language drafts or claims exist for this network; sections on drafts, claims and prose were skipped.",
+  "Nothing was written to the database or the target directory; scratch outputs (probes2.txt, subgroups1.txt, batch3.txt, batch4.txt, concepts.txt, concepts2.txt, ops_dump.txt) sit in this verify directory.",
+  "The record's 'recheck_notes' and 'tool_bugs' were read but not graded; the hypotheses' 'parent' fields are empty in the operations dump while recheck reports every leaf under winLogit, which I took as the hierarchy of record."
+ ]
+}
