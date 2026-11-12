@@ -379,7 +379,8 @@ def bare_numbers(text: str, node_ids: Iterable[str] = (), allow: Iterable[str] =
     for m in _NUM.finditer(t):
         tok = m.group(0)
         core = tok.rstrip("%").lstrip("+-−$").replace(",", "")
-        if core in nodes or tok in allowed or core in allowed:
+        # input node ids are negative ("-6"): the token keeps its sign, the core does not
+        if core in nodes or tok in nodes or tok in allowed or core in allowed:
             continue
         if re.fullmatch(r"(19|20)\d\d", core):
             continue                                     # a year

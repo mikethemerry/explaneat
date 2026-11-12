@@ -390,7 +390,93 @@ CONNECT4: Dict[str, Any] = {
     "variables": {f"c_{c}{r}": _c4_var(c, r) for c in "abcdefg" for r in range(1, 7)},
 }
 
-CODEBOOKS = [UCI_HEART, ADULT, CHURN, MONK2, KRK, CONNECT4]
+
+# ----------------------------------------------------------------------------- survival (Cox) datasets
+def _binary(label: str, yes: str, no: str, who: str = "patients") -> Dict[str, Any]:
+    """A 0/1 column (scikit-survival's encoder names one-hot levels ``base=level``, so each
+    level is its own 0/1 column; the CSV import names them ``base:level`` as a category)."""
+    return {"label": label, "kind": "binary", "patients": who, "levels": {
+        "1": {"label": yes, "group": f"{who} with {yes}", "cond": f"the patient has {yes}"},
+        "0": {"label": no, "group": f"{who} with {no}", "cond": f"the patient has {no}"}}}
+
+
+def _levels(label: str, levels: Dict[str, str]) -> Dict[str, Any]:
+    return {"label": label, "kind": "category", "levels": {
+        code: {"label": text, "group": f"patients with {text}", "cond": f"the patient has {text}"}
+        for code, text in levels.items()}}
+
+
+GBSG2: Dict[str, Any] = {
+    "id": "sksurv-gbsg2",
+    "source": ("German Breast Cancer Study Group 2 (Schumacher et al. 1994), as distributed with "
+               "scikit-survival (load_gbsg2) and in the R package TH.data"),
+    "dataset_match": ["gbsg"],
+    "outcome": {"positive": "recurrence or death (the end of recurrence-free survival)",
+                "short": "recurrence or death", "risk": "the risk of recurrence or death",
+                "predicted": "the predicted risk of recurrence or death"},
+    "patient": "patients", "patient_one": "patient",
+    "gaps": [],
+    "variables": {
+        "age": {"label": "age", "unit": "years", "decimals": 0, "kind": "continuous"},
+        "estrec": {"label": "oestrogen receptor", "unit": "fmol/l", "decimals": 0, "kind": "continuous"},
+        "pnodes": {"label": "number of positive lymph nodes", "unit": "nodes", "decimals": 0, "kind": "count"},
+        "progrec": {"label": "progesterone receptor", "unit": "fmol/l", "decimals": 0, "kind": "continuous"},
+        "tsize": {"label": "tumour size", "unit": "mm", "decimals": 0, "kind": "continuous"},
+        # the CSV import's one-hot categories
+        "horTh": _levels("hormonal therapy", {"no": "no hormonal therapy", "yes": "hormonal therapy"}),
+        "menostat": _levels("menopausal status", {"Pre": "premenopausal status", "Post": "postmenopausal status"}),
+        "tgrade": _levels("tumour grade", {"I": "tumour grade I", "II": "tumour grade II", "III": "tumour grade III"}),
+        # scikit-survival's encoder: one 0/1 column per level
+        "horTh=yes": _binary("hormonal therapy", "hormonal therapy", "no hormonal therapy"),
+        "horTh=no": _binary("no hormonal therapy", "no hormonal therapy", "hormonal therapy"),
+        "menostat=Post": _binary("postmenopausal status", "postmenopausal status", "premenopausal status"),
+        "menostat=Pre": _binary("premenopausal status", "premenopausal status", "postmenopausal status"),
+        "tgrade=I": _binary("tumour grade I", "tumour grade I", "a tumour grade other than I"),
+        "tgrade=II": _binary("tumour grade II", "tumour grade II", "a tumour grade other than II"),
+        "tgrade=III": _binary("tumour grade III", "tumour grade III", "a tumour grade other than III"),
+    },
+}
+
+WHAS500: Dict[str, Any] = {
+    "id": "sksurv-whas500",
+    "source": ("Worcester Heart Attack Study, 500-patient subset (Hosmer, Lemeshow and May 2008), "
+               "as distributed with scikit-survival (load_whas500)"),
+    "dataset_match": ["whas"],
+    "outcome": {"positive": "death (from any cause, during follow-up after the index heart attack)",
+                "short": "death", "risk": "the risk of death", "predicted": "the predicted risk of death"},
+    "patient": "patients", "patient_one": "patient",
+    "gaps": [],
+    "variables": {
+        "age": {"label": "age at admission", "unit": "years", "decimals": 0, "kind": "continuous"},
+        "bmi": {"label": "body mass index", "unit": "kg/m2", "decimals": 1, "kind": "continuous"},
+        "diasbp": {"label": "diastolic blood pressure at admission", "unit": "mm Hg", "decimals": 0, "kind": "continuous"},
+        "sysbp": {"label": "systolic blood pressure at admission", "unit": "mm Hg", "decimals": 0, "kind": "continuous"},
+        "hr": {"label": "heart rate at admission", "unit": "beats per minute", "decimals": 0, "kind": "continuous"},
+        "los": {"label": "length of hospital stay", "unit": "days", "decimals": 0, "kind": "count"},
+        "afb": _levels("atrial fibrillation", {"0": "no atrial fibrillation", "1": "atrial fibrillation"}),
+        "av3": _levels("complete heart block", {"0": "no complete heart block", "1": "complete heart block"}),
+        "chf": _levels("congestive heart complications", {"0": "no congestive heart complications",
+                                                           "1": "congestive heart complications"}),
+        "cvd": _levels("history of cardiovascular disease", {"0": "no history of cardiovascular disease",
+                                                              "1": "a history of cardiovascular disease"}),
+        "gender": _levels("sex", {"0": "male sex", "1": "female sex"}),
+        "miord": _levels("heart attack order", {"0": "a first heart attack", "1": "a recurrent heart attack"}),
+        "mitype": _levels("heart attack type", {"0": "a non-Q-wave heart attack", "1": "a Q-wave heart attack"}),
+        "sho": _levels("cardiogenic shock", {"0": "no cardiogenic shock", "1": "cardiogenic shock"}),
+        "afb=1": _binary("atrial fibrillation", "atrial fibrillation", "no atrial fibrillation"),
+        "av3=1": _binary("complete heart block", "complete heart block", "no complete heart block"),
+        "chf=1": _binary("congestive heart complications", "congestive heart complications",
+                         "no congestive heart complications"),
+        "cvd=1": _binary("history of cardiovascular disease", "a history of cardiovascular disease",
+                         "no history of cardiovascular disease"),
+        "gender=1": _binary("female sex", "female sex", "male sex"),
+        "miord=1": _binary("recurrent heart attack", "a recurrent heart attack", "a first heart attack"),
+        "mitype=1": _binary("Q-wave heart attack", "a Q-wave heart attack", "a non-Q-wave heart attack"),
+        "sho=1": _binary("cardiogenic shock", "cardiogenic shock", "no cardiogenic shock"),
+    },
+}
+
+CODEBOOKS = [UCI_HEART, ADULT, CHURN, MONK2, KRK, CONNECT4, GBSG2, WHAS500]
 
 
 def codebook_checks(cb: Dict[str, Any], feature_names: Sequence[str], raw, y) -> List[Dict[str, Any]]:

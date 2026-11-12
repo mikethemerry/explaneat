@@ -441,6 +441,16 @@ split seed, and fits the same ridge Cox comparator. The rehearsal record in
    - the tools drawer works on survival models too. Restore gain uses
      Harrell's C. Category offsets are classification-only.
 
+   The local command-line path (`explaneat verify`, `explaneat export`,
+   `explaneat plain-language extract`) works on survival genomes and on
+   restricted datasets (it is local use; only the MCP path is refused). The
+   plain-language layer of a Cox genome uses the risk by the calibration
+   horizon as its "predicted risk", gives every effect a hazard ratio
+   (`estimate.hazard_ratio`), checks claims on the test split with Harrell's
+   C, and ends its summary with the proportional-hazards caveat; the export
+   pack reports Harrell's C and the AUC against the event indicator. The
+   runbook's §5a lists the commands.
+
 Not supported yet:
 - the published PREDICT/VAREANZ equation as a comparator (splines,
   interactions, strata): the portal fits a plain ridge Cox on the network's

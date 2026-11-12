@@ -567,7 +567,10 @@ class AnnotationFunction:
         layers) and force is False, or if sympy extraction fails.
         """
         if not force:
-            if self.n_inputs > 5:
+            # many inputs are only intractable through depth: a readout of up to three steps
+            # (an output node, perhaps behind identity relays), e.g. a 12-input linear Cox
+            # model, is a plain weighted sum whatever its width
+            if self.n_inputs > 5 and len(self._steps) > 3:
                 return None
 
             # Count distinct depths in internal nodes

@@ -80,6 +80,7 @@ jobs:
         run: >
           uv run pytest -q -p no:cacheprovider -m "not slow"
           tests/test_core tests/test_survival tests/test_api tests/test_mcp tests/test_install
+          tests/test_verify/test_tool_gaps.py tests/test_plain_language/test_survival_templates.py
 
       - name: Portal batch (CSV import, 2 seeds in worker processes, report)
         run: uv run pytest -q -p no:cacheprovider tests/test_api/test_portal.py

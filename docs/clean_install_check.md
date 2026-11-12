@@ -1,9 +1,21 @@
 # Clean-install check
 
-Two records. The first is the VARIANZ-readiness check of the four-command,
+Three records. The newest (13 Nov 2026) re-ran the four-command install and the GBSG2
+rehearsal on current `main` and checked the restricted explanation path end to end:
+[varianz_readiness.md](varianz_readiness.md) (pass/fail per step, what was fixed). The other
+two are kept as they were: The first is the VARIANZ-readiness check of the four-command,
 no-Node install (decisions D1/D2), with a rehearsal of the clinical path on a
 public dataset. The second is the earlier check of the `exp/install` branch,
 kept as it was.
+
+## 0. 13 Nov 2026: current `main`, four commands, no Node
+
+| | |
+|---|---|
+| Date | 2026-11-13 |
+| Commit | `3ff68d3` (`main`), fresh clone, Node hidden from PATH as the CI does |
+| Result | **PASS**: `uv sync --extra survival --extra dev`, `setup` 48 s, `doctor` all OK, `demo` 7/7 PASS in 29 s, `pytest -m smoke` 16 passed; the GBSG2 rehearsal (3 seeds, cancel/resume, comparator, report, hazard ratios) gave the same test-fold numbers as §2 below |
+| Found | four committed `.pyc` files left `git status` dirty after any import (untracked on `fix/varianz-readiness`); the local `verify`, `export` and `plain-language` commands failed on the restricted survival genome (fixed; see `varianz_readiness.md`) |
 
 ## 1. VARIANZ readiness: four commands, no Node (7 Nov 2026)
 

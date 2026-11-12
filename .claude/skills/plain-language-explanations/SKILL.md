@@ -218,8 +218,18 @@ is present:
   does. With slots (`|pct`) the code does it; the lint rejects a percentage that looks rounded
   twice, and a "typical patient ... predicts ... about N%" that is not
   `reference_patient.predicted_risk` rounded once.
-- **Survival models** (`risk_scale.kind == "survival"`): the same pattern with the predicted
-  risk at the stated horizon ("predicted 5-year risk").
+- **Survival models** (`risk_scale.kind == "survival"`, Cox log-risk output): the same pattern
+  with the predicted risk by the dataset's calibration horizon (`outcome.predicted`: "the
+  predicted 5-year risk of recurrence or death"), **and** each effect also stated as a hazard
+  ratio, the clinical unit of a Cox effect: `{{C12.estimate.hazard_ratio|.2g}}` ("a hazard ratio
+  of about 1.7"; interactions: `statement.stronger_group.hazard_ratio`). The hazard ratio is
+  not an odds ratio and the lint allows it; "odds" stays forbidden. The test check of a survival
+  claim is Harrell's C over the follow-up times (`test_check.measure`). Every survival summary
+  and every root read-down section ends with the proportional-hazards caveat
+  (`layer.ph_caveat`, cite the root's structure claim): the model multiplies the hazard by the
+  same amount at every point of follow-up because it can represent nothing else; this is not
+  evidence that the effect is constant over time. Never call a Cox effect "constant over time"
+  or "lasting" as a finding. The offline template (`plain_language_templates.py`) does the same.
 
 ## 4. Confidence words (exact rules; the lint enforces them)
 

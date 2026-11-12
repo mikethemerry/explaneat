@@ -185,19 +185,33 @@ def _latex_from_exprs(exprs) -> Optional[str]:
                          for name, expr in exprs.items())
 
 
-def _performance(structure, X, y, num_classes) -> Optional[Dict[str, Any]]:
+def _performance(structure, X, y, num_classes, times=None) -> Optional[Dict[str, Any]]:
+    """``times`` (survival): the follow-up times; ``y`` is then the event indicator, the output
+    the log-risk, and the measures are Harrell's C and the AUC against the event indicator."""
     import torch
     from ..core.structure_network import StructureNetwork
     if X is None or len(X) == 0:
         return None
     sn = StructureNetwork(structure)
     binary = num_classes == 2 and len(structure.output_node_ids) == 1
-    if binary:
+    if binary or times is not None:
         sn.override_output_activation(sn.model_output_activation)
     with torch.no_grad():
         pred = sn.forward(torch.as_tensor(X, dtype=torch.float64)).detach().numpy().ravel()
     y = np.asarray(y).ravel()
     out: Dict[str, Any] = {"n": int(len(y))}
+    if times is not None:
+        from sklearn.metrics import roc_auc_score
+        from ..survival.metrics import harrell_c
+        t = np.asarray(times, dtype=float).ravel()
+        out["events"] = int(np.sum(y > 0.5))
+        out["harrell_c"] = sig(float(harrell_c(pred, t, y)))
+        try:
+            out["auc_event_indicator"] = sig(float(roc_auc_score(y.astype(int), pred)))
+        except ValueError:
+            out["auc_event_indicator"] = None
+        out["note"] = "log-risk output; Harrell's C over the follow-up times (censoring respected)"
+        return out
     if binary:
         from sklearn.metrics import roc_auc_score
         out["accuracy_at_0.5"] = sig(float(np.mean((pred > 0.5).astype(int) == y.astype(int))))
@@ -495,6 +509,16 @@ def _collect(genome_id: str, *, label: Optional[str] = None, study: Optional[Dic
                             "created_at": _iso(ex.created_at), "updated_at": _iso(ex.updated_at),
                             "n_operations": len(ops)},
         }
+    # a survival target ([N, 2] time/event) is reduced to its event indicator; the times are kept
+    from ..verify.model import split_target
+    t_tr = t_te = None
+    if y_tr is not None:
+        y_tr, extra = split_target(y_tr, "train")
+        if extra:
+            t_tr = np.asarray(extra["time_train"], dtype=float)
+            y_te, extra_te = split_target(y_te, "test")
+            t_te = np.asarray(extra_te["time_test"], dtype=float) if extra_te else None
+            num_classes = 2
     if num_classes is None and y_tr is not None:
         u = np.unique(np.asarray(y_tr).ravel())
         if len(u) <= 20 and np.all(u == u.astype(int)):
@@ -505,7 +529,7 @@ def _collect(genome_id: str, *, label: Optional[str] = None, study: Optional[Dic
         label = (record or {}).get("label") or default_label(meta)
     doc = build_document(engine, ops, meta, record=record, label=label, study=study,
                          X_train=X_tr, y_train=y_tr, X_test=X_te, y_test=y_te,
-                         num_classes=num_classes, now=now)
+                         num_classes=num_classes, now=now, times_train=t_tr, times_test=t_te)
     # Acceptance check: the export's coverage equals get_coverage for this genome.
     import json as _json
     if mcp_db:
@@ -562,7 +586,8 @@ def build_document(engine, ops: List[Dict[str, Any]], meta: Dict[str, Any], *,
                    study: Optional[Dict[str, Any]] = None,
                    X_train=None, y_train=None, X_test=None, y_test=None,
                    num_classes: Optional[int] = None, now: Optional[str] = None,
-                   plain_language_dir: Optional[Path] = None) -> Dict[str, Any]:
+                   plain_language_dir: Optional[Path] = None,
+                   times_train=None, times_test=None) -> Dict[str, Any]:
     """The export document from an engine and its operations (no DB access).
 
     Split out of :func:`collect` so tests can build documents from synthetic engines.
@@ -790,8 +815,9 @@ def build_document(engine, ops: List[Dict[str, Any]], meta: Dict[str, Any], *,
     perf = None
     if X_train is not None:
         perf = {"model": "original phenotype, output activation " + output_activation,
-                "train": _performance(orig, X_train, y_train, num_classes),
-                "test": _performance(orig, X_test, y_test, num_classes)}
+                "train": _performance(orig, X_train, y_train, num_classes, times_train),
+                "test": _performance(orig, X_test, y_test, num_classes, times_test)}
+    survival = times_train is not None
 
     doc = {
         "schema_version": SCHEMA_VERSION,
@@ -818,7 +844,7 @@ def build_document(engine, ops: List[Dict[str, Any]], meta: Dict[str, Any], *,
             "closed_form_error_flag": CLOSED_FORM_ERR_FLAG,
         },
         "model": {
-            "task": "binary_classification" if num_classes == 2 else
+            "task": "survival_cox" if survival else "binary_classification" if num_classes == 2 else
                     (f"classification_{num_classes}" if num_classes else None),
             "output_activation": output_activation,
             "output_activation_source": "StructureNetwork.model_output_activation",
