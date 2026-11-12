@@ -3,6 +3,7 @@
     uv run python -m explaneat review status heart-s5          # badges + tiers -> review/heart-s5.status.json
     uv run python -m explaneat review queue heart-s5           # what to read, in order, with sids
     uv run python -m explaneat review verdict heart-s5 s-9f2c41d0 confirmed --note "checked q4"
+    uv run python -m explaneat review leaf heart-s5 direct_linear_terms understood --note "..."   # leaf verdict
     uv run python -m explaneat review diff heart-s5            # changed since you last verified
     uv run python -m explaneat review signoff heart-s5 [--write --minutes 25]
     uv run python -m explaneat review bound adult-s0 heart-s5 ...   # pooled error bound
@@ -133,15 +134,47 @@ def verdict_cmd(label, sid, verdict, note, disclose, by, seconds):
     click.echo(f"{label}: {ln['id']} {verdict} on {s.sid} ({s.ref})")
 
 
+@review.command("leaf")
+@record_set_options
+@click.argument("label")
+@click.argument("leaf")
+@click.argument("verdict", type=click.Choice(["understood", "partial", "not"]))
+@click.option("--note", default="")
+@click.option("--by", default="mike", show_default=True)
+@click.option("--seconds", type=float, default=None, help="Time spent on this leaf.")
+def leaf_cmd(label, leaf, verdict, note, by, seconds):
+    """Record a leaf verdict (understood / partial / not) on one leaf annotation, by name or
+    annotation id. Append-only, same store as the sentence verdicts. This verdict, not the
+    concept probe or the blind verifiers, decides whether the leaf counts as understood."""
+    from .verdicts import find_leaf, record_leaf
+    r = _build(label, recheck=False, bench=False)
+    try:
+        lf = find_leaf(r.leaves, leaf)
+        ln = record_leaf(label, lf, verdict, note=note, by=by, seconds=seconds, context=r.context)
+    except (KeyError, ValueError) as e:
+        raise click.ClickException(str(e))
+    click.echo(f"{label}: {ln['id']} {verdict} on leaf {lf['name']} ({lf['id']})")
+
+
 @review.command("list")
 @record_set_options
 @click.argument("label")
 def list_cmd(label):
-    """Every verdict recorded for LABEL (latest last)."""
-    from .verdicts import load
-    for ln in load(label):
+    """Every verdict recorded for LABEL (latest last): sentence verdicts, then leaf verdicts."""
+    from .verdicts import kind_of, load
+    lines = load(label)
+    for ln in lines:
+        if kind_of(ln) == "leaf":
+            continue
         click.echo(f"{ln['id']} {ln['at']} {ln['verdict']:9s} {ln['target']['sid']} {ln['target'].get('ref', '')}"
                    + (f"  -- {ln['note']}" if ln.get("note") else ""))
+    leaves = [ln for ln in lines if kind_of(ln) == "leaf"]
+    if leaves:
+        click.echo("leaf verdicts:")
+        for ln in leaves:
+            t = ln["target"]
+            click.echo(f"{ln['id']} {ln['at']} {ln['verdict']:9s} leaf {t.get('name')} ({t.get('annotation_id')})"
+                       + (f"  -- {ln['note']}" if ln.get("note") else ""))
 
 
 @review.command("diff")
@@ -168,7 +201,7 @@ def diff_cmd(label, as_json):
         click.echo("   why: " + "; ".join(c["why"]))
 
 
-def run_signoff(label, write=False, minutes=None, changes="", notes=""):
+def run_signoff(label, write=False, minutes=None, changes="", notes="", require_leaves=False):
     from .signoff import check, signoff_block, write_result
     from .verdicts import check_record_set, load
     r = _build(label)
@@ -177,7 +210,8 @@ def run_signoff(label, write=False, minutes=None, changes="", notes=""):
         check_record_set(label, lines, r.context.get("records_dir"))
     except ValueError as e:
         raise click.ClickException(str(e))
-    res = check(label, r.queue, r.sentences, lines, r.recheck, r.target_hash)
+    res = check(label, r.queue, r.sentences, lines, r.recheck, r.target_hash, leaves=r.leaves,
+                require_leaves=require_leaves)
     write_result(res)
     if write and res["passed"]:
         from ..analysis.explanation_records import write_verification
@@ -197,6 +231,12 @@ def echo_signoff(res):
         if s.get("items"):
             click.echo(f"  sample {name}: {len(s['drawn'])} of {s['items']}"
                        + (" (extended after a 'wrong')" if s.get("extended") else ""))
+    lv = res.get("leaf_verdicts")
+    if lv:
+        c = lv["counts"]
+        click.echo(f"  leaf verdicts: {lv['graded']} of {lv['leaves']} leaves graded (understood {c['understood']}, "
+                   f"partial {c['partial']}, not {c['not']})"
+                   + (f"; understood share {lv['understood_mike']:.2f}" if lv["understood_mike"] is not None else ""))
     for m in res["missing"][:40]:
         click.echo(f"  needs a verdict: [{m['tier']}] {m['sid']} {m['ref']} ({m['why']}{'; text changed' if m['stale'] else ''})")
     if len(res["missing"]) > 40:
@@ -212,9 +252,11 @@ def echo_signoff(res):
 @click.option("--minutes", type=float, default=None)
 @click.option("--changes", default="")
 @click.option("--notes", default="")
-def signoff_cmd(label, write, minutes, changes, notes):
+@click.option("--require-leaves", is_flag=True, default=False,
+              help="Also require a leaf verdict (understood / partial / not) on every leaf (default: reported only).")
+def signoff_cmd(label, write, minutes, changes, notes, require_leaves):
     """Check signoff-v1 (the definition of 'Mike-verified'); writes review/<label>.signoff.json."""
-    res = run_signoff(label, write, minutes, changes, notes)
+    res = run_signoff(label, write, minutes, changes, notes, require_leaves=require_leaves)
     echo_signoff(res)
     if write and res["passed"]:
         click.echo(f"  wrote mike_verification (verified, signoff-v1) into the record of {label}")

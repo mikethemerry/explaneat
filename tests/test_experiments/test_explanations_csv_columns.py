@@ -4,6 +4,7 @@ working."""
 
 import csv
 import importlib.util
+import json
 import os
 from pathlib import Path
 
@@ -20,7 +21,7 @@ FROZEN = ("order,label,dataset,seed,genome_id,protocol,structural_coverage,compo
           "pilot,rule_agreement,vs_40gen,resisted,signoff_protocol,signoff_date,signoff_confirmed,signoff_wrong,"
           "signoff_unsure,signoff_sample_n,signoff_sample_wrong,signoff_error_bound").split(",")
 NEW = ["faithful_max_err", "n_leaves", "granularity", "understood_fraction", "closed_form_only_fraction",
-       "understood_fraction_verifier"]
+       "understood_fraction_verifier", "understood_fraction_mike"]
 
 
 def _load_levels_columns():
@@ -41,12 +42,14 @@ def test_existing_columns_unchanged_and_levels_appended(name):
     with path.open() as f:
         header = next(csv.reader(f))
     assert header[:len(FROZEN)] == FROZEN
-    if len(header) > len(FROZEN):          # rebuilt after 2026-11-12
-        assert header[len(FROZEN):] == NEW
+    if len(header) > len(FROZEN):          # rebuilt after 2026-11-12: the new columns, in order, possibly not all yet
+        extra = header[len(FROZEN):]
+        assert extra == NEW[:len(extra)]
 
 
 def test_levels_columns_blank_without_a_levels_file(tmp_path, monkeypatch):
     monkeypatch.setenv("EXPLANEAT_LEVELS_DIR", str(tmp_path))
+    monkeypatch.setenv("EXPLANEAT_REVIEW_DIR", str(tmp_path / "review"))
     levels_columns, cols = _load_levels_columns()
     assert list(cols) == NEW
     rec = {"function_preservation_max_abs_err": 1e-16, "n_leaf_annotations": 4, "genome_id": "g1"}
@@ -54,6 +57,7 @@ def test_levels_columns_blank_without_a_levels_file(tmp_path, monkeypatch):
     assert list(out) == NEW
     assert out["faithful_max_err"] == 1e-16 and out["n_leaves"] == 4
     assert out["granularity"] == "" and out["understood_fraction"] == "" and out["closed_form_only_fraction"] == ""
+    assert out["understood_fraction_verifier"] == "" and out["understood_fraction_mike"] == ""
     levels = ('{"records_dir": "%s", "genome_id": "%s", "levels": {"decomposed": {"granularity": 1.0}, '
               '"understood": {"understood_fraction": 0.5, "closed_form_only_fraction": 0.25}}}')
     # a levels file of another record set (or another genome) does not fill the columns
@@ -64,3 +68,31 @@ def test_levels_columns_blank_without_a_levels_file(tmp_path, monkeypatch):
     (tmp_path / "heart-s0.json").write_text(levels % ("explanations", "g1"))     # the default --dir
     out = levels_columns(rec, "heart-s0")
     assert out["granularity"] == 1.0 and out["understood_fraction"] == 0.5 and out["closed_form_only_fraction"] == 0.25
+
+
+def test_understood_fraction_mike_from_the_review_store(tmp_path, monkeypatch):
+    """The last column is Mike's leaf verdicts: the share of the record's leaves whose latest leaf
+    verdict is understood, blank without one, and only verdicts given on this record set."""
+    monkeypatch.setenv("EXPLANEAT_LEVELS_DIR", str(tmp_path))
+    rdir = tmp_path / "review"
+    rdir.mkdir()
+    monkeypatch.setenv("EXPLANEAT_REVIEW_DIR", str(rdir))
+    levels_columns, _ = _load_levels_columns()
+    rec = {"function_preservation_max_abs_err": 0.0, "n_leaf_annotations": 4, "genome_id": "g1"}
+    assert levels_columns(rec, "heart-s0")["understood_fraction_mike"] == ""
+    lines = [
+        {"target": {"kind": "sentence", "sid": "s-1"}, "verdict": "confirmed",
+         "context": {"records_dir": "experiments/10seed/explanations"}},
+        {"target": {"kind": "leaf", "annotation_id": "ann_1", "name": "a"}, "verdict": "not",
+         "context": {"records_dir": "experiments/10seed/explanations"}},
+        {"target": {"kind": "leaf", "annotation_id": "ann_1", "name": "a"}, "verdict": "understood",
+         "context": {"records_dir": "experiments/10seed/explanations"}},
+        {"target": {"kind": "leaf", "annotation_id": "ann_2", "name": "b"}, "verdict": "partial",
+         "context": {"records_dir": "experiments/10seed/explanations"}},
+        {"target": {"kind": "leaf", "annotation_id": "ann_3", "name": "c"}, "verdict": "understood",
+         "context": {"records_dir": "experiments/10seed/explanations_v4"}},      # another record set
+    ]
+    (rdir / "heart-s0.verdicts.jsonl").write_text("\n".join(json.dumps(l) for l in lines) + "\n")
+    out = levels_columns(rec, "heart-s0")
+    assert out["understood_fraction_mike"] == 0.25                 # 1 of 4 leaves (latest verdict per leaf)
+    assert list(out)[-1] == "understood_fraction_mike"

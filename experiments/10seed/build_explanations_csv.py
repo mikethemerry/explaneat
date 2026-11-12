@@ -36,7 +36,34 @@ def signoff_columns(r):
 
 LEVELS_DIR = os.environ.get('EXPLANEAT_LEVELS_DIR') or os.path.join(HERE, '..', 'explanation_levels', 'levels')
 LEVELS_COLUMNS = ('faithful_max_err', 'n_leaves', 'granularity', 'understood_fraction', 'closed_form_only_fraction',
-                  'understood_fraction_verifier')
+                  'understood_fraction_verifier', 'understood_fraction_mike')
+REVIEW_DIR = os.environ.get('EXPLANEAT_REVIEW_DIR') or os.path.join(HERE, 'review')
+
+
+def mike_leaf_fraction(r, l):
+    """The share of the record's n_leaf_annotations leaves whose latest leaf verdict in
+    review/<label>.verdicts.jsonl is 'understood' ('' when no leaf has a verdict, or the
+    verdicts were given on another record set)."""
+    p = os.path.join(REVIEW_DIR, f'{l}.verdicts.jsonl')
+    n = r.get('n_leaf_annotations') or 0
+    if not n or not os.path.exists(p):
+        return ''
+    last = {}
+    with open(p) as f:
+        for ln in f:
+            if not ln.strip():
+                continue
+            d = json.loads(ln)
+            t = d.get('target') or {}
+            if t.get('kind') != 'leaf':
+                continue
+            if (d.get('context') or {}).get('records_dir', os.path.join('experiments/10seed', REC_DIR)) \
+                    != os.path.join('experiments/10seed', REC_DIR):
+                continue
+            last[t.get('annotation_id')] = d.get('verdict')
+    if not last:
+        return ''
+    return round(sum(1 for v in last.values() if v == 'understood') / n, 4)
 
 
 def levels_columns(r, l):
@@ -48,9 +75,14 @@ def levels_columns(r, l):
     blank when that file is missing or was computed for another record set (its records_dir
     must be this run's --dir: the older records in explanations/ are other explanations of the
     same genomes). understood_fraction_verifier (2026-11-13, after the existing columns) is the
-    blind verifier's share of leaves graded meaningful where a verdict exists, else blank."""
+    blind verifier's share of leaves graded meaningful where a verdict exists, else blank. Both
+    are automated screens. understood_fraction_mike (2026-11-13, last) is the measured level:
+    the share of the record's leaves Mike graded understood in the review store
+    (review/<label>.verdicts.jsonl, kind leaf, latest per leaf; verdicts given on this --dir
+    only), blank until a leaf of the record has a verdict."""
     out = dict(faithful_max_err=r.get('function_preservation_max_abs_err', ''), n_leaves=r.get('n_leaf_annotations', ''),
-               granularity='', understood_fraction='', closed_form_only_fraction='', understood_fraction_verifier='')
+               granularity='', understood_fraction='', closed_form_only_fraction='', understood_fraction_verifier='',
+               understood_fraction_mike=mike_leaf_fraction(r, l))
     p = os.path.join(LEVELS_DIR, f'{l}.json')
     if os.path.exists(p):
         with open(p) as f:

@@ -401,7 +401,24 @@ export certificate's summary table, `build_explanations_csv.py`, `experiments/ex
 |---|---|---|
 | **1. Faithful** | The hierarchy computes the model's function | max abs error: function preservation (explained model state against the phenotype on every training row, < 1e-9) and the closed-form error of every leaf (`check_explanation`) |
 | **2. Decomposed** | Each leaf is a small, separately readable part | leaf count; **granularity** (below); the swallowed-layer warning (`get_coverage`, `decomposition` block) |
-| **3. Understood** | Each leaf maps to a concept a domain reader recognises | ground-truth recovery (synthetic networks); the **concept probe** (real data, below); the closed-form-only fraction |
+| **3. Understood** | Each leaf maps to a concept a domain reader recognises | **Mike's leaf verdict** (below); screens: ground-truth recovery (synthetic networks), the **concept probe** (real data, below), the blind verifier's leaf grades |
+
+#### Who decides "understood" (2026-11-13)
+
+Whether a leaf is understood is decided by Mike's verification, not by the concept probe or
+the blind verifiers. Those are **automated screens**: the probe says whether some named concept
+in a vocabulary predicts the leaf's exit, the verifier whether the reading adds anything to the
+formula; both are reported, as `understood_probe` and `understood_verifier`, and both can be
+wrong in either direction (a per-cell reading of a Connect-4 leaf grades meaningful; a correct
+reading in a domain without a library grades closed-form only). The measured "understood"
+level is his **leaf verdict**: `explaneat review leaf <label> <leaf> understood|partial|not`,
+one per leaf, append-only in the review store (`experiments/10seed/review/<label>.verdicts.jsonl`,
+`kind: "leaf"`, beside the sentence verdicts of signoff-v1). `understood_mike` is the share of
+an explanation's leaves he graded understood, blank until a leaf has a verdict; it is the
+"Understood (verified)" column of the levels tables (`experiments/explanation_levels/`,
+`thesis_exports/ch7/ch7_levels_table.tex`) and `understood_fraction_mike` in the explanation
+CSVs, with the probe and verifier columns labelled as screens. A leaf verdict is not a
+condition of signoff-v1 unless asked for (`review signoff --require-leaves`).
 
 ### Depth is not penalised
 

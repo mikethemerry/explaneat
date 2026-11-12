@@ -5,26 +5,26 @@
 \centering
 \footnotesize
 \setlength{\tabcolsep}{3pt}
-\caption{The three levels of explanation per study. Faithful: the largest function-preservation error (explained model state against the phenotype, training rows) over the study's explanations. Decomposed: leaves per explanation and granularity, the share of hidden units whose part is at most 6 units wide (depth is not penalised); coarse counts explanations where one part wider than that holds half the hidden units. Understood: the share of leaves whose best library concept grades meaningful (probe score $\geq 0.8$), partial ($\geq 0.5$) or closed-form only, under the probe's simplicity and support conditions (a concept counts only when it is simpler than the leaf, and a binary concept's AUC only against a gate of comparable support); for Connect-4 the domain column counts only domain concepts (threats, open lines, centre, rows, parity), not raw cells. Verifier: the share of leaves the blind verifier graded meaningful, over the explanations with a verdict (count in brackets when fewer than $n$); disagree: leaves graded by both on which the probe and the verifier differ, over those compared. Cells are median [min--max] over the explanations. The ladder rows are plain backprop MLPs of the explanation complexity ladder; the capacity row is the evolved Connect-4 network.}
+\caption{The three levels of explanation per study. Faithful: the largest function-preservation error (explained model state against the phenotype, training rows) over the study's explanations. Decomposed: leaves per explanation and granularity, the share of hidden units whose part is at most 6 units wide (depth is not penalised); coarse counts explanations where one part wider than that holds half the hidden units. Understood: verified is the share of leaves the author graded understood in his leaf-by-leaf verification (the measured level; over the explanations with leaf verdicts, count in brackets when fewer than $n$; -- when none has one yet). The remaining columns are automated screens. Probe: the share of leaves whose best library concept grades meaningful (probe score $\geq 0.8$), partial ($\geq 0.5$) or closed-form only, under the probe's simplicity and support conditions (a concept counts only when it is simpler than the leaf, and a binary concept's AUC only against a gate of comparable support); for Connect-4 the domain column counts only domain concepts (threats, open lines, centre, rows, parity), not raw cells. Verifier: the share of leaves the blind verifier graded meaningful, over the explanations with a verdict (count in brackets when fewer than $n$); disagree: leaves graded by both on which the probe and the verifier differ, over those compared. Cells are median [min--max] over the explanations. The ladder rows are plain backprop MLPs of the explanation complexity ladder; the capacity row is the evolved Connect-4 network.}
 \label{tab:ch7-levels}
-\begin{tabular}{@{}lrlllrlllrll@{}}
+\begin{tabular}{@{}lrlllrllllrll@{}}
 \toprule
- & & \multicolumn{1}{c}{Faithful} & \multicolumn{3}{c}{Decomposed} & \multicolumn{6}{c}{Understood} \\
-\cmidrule(lr){3-3}\cmidrule(lr){4-6}\cmidrule(lr){7-12}
-Study & $n$ & Max err. & Leaves & Granularity & Coarse & Meaningful & Partial & Closed-form only & Domain & Verifier & Disagree \\
+ & & \multicolumn{1}{c}{Faithful} & \multicolumn{3}{c}{Decomposed} & \multicolumn{1}{c}{Understood} & \multicolumn{6}{c}{Screens} \\
+\cmidrule(lr){3-3}\cmidrule(lr){4-6}\cmidrule(lr){7-7}\cmidrule(lr){8-13}
+Study & $n$ & Max err. & Leaves & Granularity & Coarse & Verified & Probe & Partial & Closed-form only & Domain & Verifier & Disagree \\
 \midrule
-\multicolumn{12}{@{}l}{\emph{Pre-registered (ten seeds)}} \\
-Heart & 10 & $4.4\times10^{-16}$ & 3.5 [3--6] & 1.00 [1.00--1.00] & 0 & 67\% [25\%--80\%] & 33\% [0\%--75\%] & 0\% [0\%--33\%] & -- & -- & -- \\
-MONK-2 & 10 & $2.4\times10^{-15}$ & 3 [2--6] & 1.00 [1.00--1.00] & 0 & 33\% [0\%--75\%] & 29\% [0\%--40\%] & 33\% [0\%--100\%] & -- & -- & -- \\
-Adult & 10 & $7.8\times10^{-16}$ & 8 [6--12] & 1.00 [1.00--1.00] & 0 & 82\% [57\%--91\%] & 10\% [0\%--43\%] & 9\% [0\%--17\%] & -- & -- & -- \\
+\multicolumn{13}{@{}l}{\emph{Pre-registered (ten seeds)}} \\
+Heart & 10 & $4.4\times10^{-16}$ & 3.5 [3--6] & 1.00 [1.00--1.00] & 0 & -- & 67\% [25\%--80\%] & 33\% [0\%--75\%] & 0\% [0\%--33\%] & -- & -- & -- \\
+MONK-2 & 10 & $2.4\times10^{-15}$ & 3 [2--6] & 1.00 [1.00--1.00] & 0 & -- & 33\% [0\%--75\%] & 29\% [0\%--40\%] & 33\% [0\%--100\%] & -- & -- & -- \\
+Adult & 10 & $7.8\times10^{-16}$ & 8 [6--12] & 1.00 [1.00--1.00] & 0 & -- & 82\% [57\%--91\%] & 10\% [0\%--43\%] & 9\% [0\%--17\%] & -- & -- & -- \\
 \midrule
-\multicolumn{12}{@{}l}{\emph{Additional analyses and the ladder (not pre-registered)}} \\
-Heart-100 & 10 & $4.4\times10^{-16}$ & 4 [4--7] & 1.00 [1.00--1.00] & 0 & 60\% [33\%--75\%] & 22\% [0\%--50\%] & 20\% [0\%--25\%] & -- & -- & -- \\
-churn100 & 10 & $1.0\times10^{-15}$ & 7 [5--12] & 1.00 [0.57--1.00] & 0 & 67\% [29\%--75\%] & 17\% [0\%--43\%] & 21\% [0\%--60\%] & -- & -- & -- \\
-churn200 & 10 & $1.3\times10^{-15}$ & 8.5 [6--10] & 1.00 [0.45--1.00] & 1 & 82\% [33\%--90\%] & 11\% [0\%--33\%] & 11\% [0\%--33\%] & -- & -- & -- \\
-Ladder, synthetic (MLP) & 8 & $3.3\times10^{-16}$ & 5 [3--7] & 1.00 [0.00--1.00] & 2 & 61\% [0\%--75\%] & 39\% [25\%--100\%] & 0\% [0\%--17\%] & -- & 67\% [0\%--75\%] & 19/40 \\
-Ladder, Connect-4 (MLP) & 6 & 0 & 4.5 [1--8] & 1.00 [0.00--1.00] & 2 & 0\% [0\%--0\%] & 31\% [0\%--80\%] & 69\% [20\%--100\%] & 0\% [0\%--0\%] & 20\% [0\%--75\%] & 19/24 \\
-Connect-4 capacity (evolved) & 1 & $1.7\times10^{-15}$ & 11 & 1.00 & 0 & 9\% & 45\% & 45\% & 0\% & -- & -- \\
+\multicolumn{13}{@{}l}{\emph{Additional analyses and the ladder (not pre-registered)}} \\
+Heart-100 & 10 & $4.4\times10^{-16}$ & 4 [4--7] & 1.00 [1.00--1.00] & 0 & -- & 60\% [33\%--75\%] & 22\% [0\%--50\%] & 20\% [0\%--25\%] & -- & -- & -- \\
+churn100 & 10 & $1.0\times10^{-15}$ & 7 [5--12] & 1.00 [0.57--1.00] & 0 & -- & 67\% [29\%--75\%] & 17\% [0\%--43\%] & 21\% [0\%--60\%] & -- & -- & -- \\
+churn200 & 10 & $1.3\times10^{-15}$ & 8.5 [6--10] & 1.00 [0.45--1.00] & 1 & -- & 82\% [33\%--90\%] & 11\% [0\%--33\%] & 11\% [0\%--33\%] & -- & -- & -- \\
+Ladder, synthetic (MLP) & 8 & $3.3\times10^{-16}$ & 5 [3--7] & 1.00 [0.00--1.00] & 2 & -- & 61\% [0\%--75\%] & 39\% [25\%--100\%] & 0\% [0\%--17\%] & -- & 67\% [0\%--75\%] & 19/40 \\
+Ladder, Connect-4 (MLP) & 6 & 0 & 4.5 [1--8] & 1.00 [0.00--1.00] & 2 & -- & 0\% [0\%--0\%] & 31\% [0\%--80\%] & 69\% [20\%--100\%] & 0\% [0\%--0\%] & 20\% [0\%--75\%] & 19/24 \\
+Connect-4 capacity (evolved) & 1 & $1.7\times10^{-15}$ & 11 & 1.00 & 0 & -- & 9\% & 45\% & 45\% & 0\% & -- & -- \\
 \bottomrule
 \end{tabular}
 \end{table}

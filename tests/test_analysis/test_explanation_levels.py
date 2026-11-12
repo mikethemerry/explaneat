@@ -7,8 +7,8 @@ import pytest
 
 from explaneat.analysis.coverage_report import coverage_report, decomposition_report, part_shape
 from explaneat.analysis.explanation_levels import (explanation_levels, leaf_meanings_from_operations,
-                                                   levels_summary_row, normalise_grade, understood_block,
-                                                   verifier_leaf_grades)
+                                                   levels_summary_row, mike_leaf_grades, normalise_grade,
+                                                   understood_block, verifier_leaf_grades)
 from explaneat.core.genome_network import NetworkConnection, NetworkNode, NetworkStructure, NodeType
 
 
@@ -105,7 +105,8 @@ def test_levels_assemble():
     assert lv["understood"]["understood_fraction"] == 0.5 and lv["understood"]["closed_form_only_fraction"] == 0.5
     row = levels_summary_row(lv)
     assert row == {"faithful_max_err": 0.0, "n_leaves": 2, "granularity": 1.0, "understood_fraction": 0.5,
-                   "closed_form_only_fraction": 0.5, "understood_fraction_verifier": None}
+                   "closed_form_only_fraction": 0.5, "understood_fraction_verifier": None,
+                   "understood_fraction_mike": None}
     assert lv["understood"]["understood_probe"] == 0.5 and lv["understood"]["verifier_disagreements"] is None
     none = explanation_levels(rep, None, None)
     assert none["faithful"]["passed"] is None and none["understood"]["unnamed_fraction"] == 1.0
@@ -149,3 +150,33 @@ def test_verifier_grades_merge():
     u2 = understood_block(["a", "b"], meanings, vg)
     assert u2["counts"]["restatement"] == 1 and u2["restatement_fraction"] == 0.5 and u2["verifier_disagreements"] == 1
     assert normalise_grade("Closed form only") == "closed_form_only" and normalise_grade("odd") is None
+
+
+def test_mike_leaf_verdicts_merge(tmp_path, monkeypatch):
+    """Mike's leaf verdicts (the review store) give understood_mike, the measured level, beside the
+    probe and verifier screens; None until a leaf has a verdict; over all leaves."""
+    from explaneat.review import verdicts as vd
+    monkeypatch.setenv("EXPLANEAT_REVIEW_DIR", str(tmp_path))
+    meanings = {"a": {"concept": "x", "probe": {"score": 0.9}}, "b": {"concept": "y", "probe": {"score": 0.1}},
+                "c": None}
+    u = understood_block(["a", "b", "c"], meanings)
+    assert u["understood_mike"] is None and u["mike_graded"] == 0 and u["mike_grades"] is None
+    assert mike_leaf_grades("heart-s5", ["a", "b", "c"], {"a": "ann_1", "b": "ann_2", "c": "ann_3"}) == {}
+    u = understood_block(["a", "b", "c"], meanings, None, {})
+    assert u["understood_mike"] is None and u["mike_grades"] == {"a": None, "b": None, "c": None}
+    ctx = {"records_dir": "experiments/10seed/explanations_v4"}
+    vd.record_leaf("heart-s5", {"id": "ann_2", "name": "b", "hypothesis": "h"}, "understood", context=ctx)
+    vd.record_leaf("heart-s5", {"id": "ann_1", "name": "a", "hypothesis": "h"}, "not", context=ctx)
+    vd.record_leaf("heart-s5", {"id": "ann_1", "name": "a", "hypothesis": "h"}, "partial", context=ctx)   # supersedes
+    mg = mike_leaf_grades("heart-s5", ["a", "b", "c"], {"a": "ann_1", "b": "ann_2", "c": "ann_3"},
+                          records_dir="experiments/10seed/explanations_v4")
+    assert mg == {"a": "partial", "b": "understood"}
+    assert mike_leaf_grades("heart-s5", ["a", "b", "c"], {"a": "ann_1", "b": "ann_2", "c": "ann_3"},
+                            records_dir="experiments/10seed/explanations") == {}
+    u = understood_block(["a", "b", "c"], meanings, None, mg)
+    assert u["understood_mike"] == round(1 / 3, 4) and u["understood_fraction_mike"] == u["understood_mike"]
+    assert u["mike_graded"] == 2 and u["mike_counts"] == {"understood": 1, "partial": 1, "not": 0}
+    assert u["understood_probe"] == round(1 / 3, 4)          # the screen is untouched
+    lv = explanation_levels({"leaf_count": 3, "decomposition": {}}, None, meanings, ["a", "b", "c"], mike_grades=mg)
+    assert levels_summary_row(lv)["understood_fraction_mike"] == round(1 / 3, 4)
+    assert "understood_mike" in lv["understood"]["test"]

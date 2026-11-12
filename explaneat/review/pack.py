@@ -1,6 +1,7 @@
 """The review data the verification pack prints for one genome (pure data; LaTeX in
 :mod:`explaneat.export.verification`): the risk-ranked queue (gates, tier A), the signoff-v1
-random sample, verifier findings attached to sentences, and what changed since the last verdicts.
+random sample, verifier findings attached to sentences, what changed since the last verdicts, and
+the leaves with their recorded leaf verdicts (understood / partial / not).
 """
 
 from __future__ import annotations
@@ -39,7 +40,13 @@ def review_summary(r) -> Dict[str, Any]:
         sample[name] = [_item(its[s], r, last) for s in order]
     n_q = len(queue)
     n_s = sum(len(v) for v in sample.values())
+    from .verdicts import latest_leaf
+    last_leaf = latest_leaf(r.leaf_verdicts)
+    leaves = [dict(lf, verdict=(last_leaf.get(lf["id"]) or {}).get("verdict"),
+                   verdict_note=(last_leaf.get(lf["id"]) or {}).get("note"))
+              for lf in r.leaves]
     return {
+        "leaves": leaves,
         "label": r.label, "target_hash": r.target_hash, "badges": badge_counts(r.statuses),
         "tiers": tier_counts(r.queue), "queue": queue, "sample": sample,
         "changes": r.diff["changes"], "n_verdicts": len(r.verdicts),

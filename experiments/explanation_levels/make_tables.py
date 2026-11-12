@@ -54,6 +54,9 @@ def load():
             "disagree": lv["understood"].get("verifier_disagreements") or 0,
             "compared": lv["understood"].get("verifier_compared") or 0,
             "verifier_grades": lv["understood"].get("verifier_grades"),
+            # Mike's leaf verdicts: the measured "understood" (the probe and verifier columns are screens)
+            "mike": lv["understood"].get("understood_mike"),
+            "mike_n": lv["understood"].get("mike_graded") or 0,
             "probe_version": d.get("probe_version", 1),
             "gt": gt.get("gt_recovery"), "gt_terms": (gt.get("gt_terms_recovered"), gt.get("gt_terms_total")),
             "leaves": d["leaves"],
@@ -116,6 +119,14 @@ def verifier_cell(g):
     return f"{mmm([r['verifier'] for r in v], pct=True)}" + (f" ({len(v)} of {len(g)})" if len(v) < len(g) else "")
 
 
+def mike_cell(g):
+    """Mike's understood share over the explanations with leaf verdicts (k of n), else n/a."""
+    v = [r for r in g if r["mike"] is not None]
+    if not v:
+        return "n/a"
+    return f"{mmm([r['mike'] for r in v], pct=True)}" + (f" ({len(v)} of {len(g)})" if len(v) < len(g) else "")
+
+
 def disagree_cell(g):
     v = [r for r in g if r["verifier"] is not None]
     if not v:
@@ -124,11 +135,11 @@ def disagree_cell(g):
 
 
 def md_table(rows):
-    L = ["| Study | n | Faithful: max abs err (worst) | Leaves | Granularity | Coarse (n) | Understood (probe): meaningful share | Partial | Closed-form only | Domain-concept share | Author's concept (v2) | Understood (verifier) | Probe vs verifier disagree |",
-         "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    L = ["| Study | n | Faithful: max abs err (worst) | Leaves | Granularity | Coarse (n) | Understood (verified) | Probe (screen): meaningful share | Partial | Closed-form only | Domain-concept share | Author's concept (v2) | Verifier (screen) | Probe vs verifier disagree |",
+         "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for name, g in study_rows(rows):
         L.append(f"| {name} | {len(g)} | {sci(max(r['faithful'] for r in g))} | {mmm_int([r['n_leaves'] for r in g])} | "
-                 f"{mmm([r['granularity'] for r in g])} | {sum(r['coarse'] for r in g)} | "
+                 f"{mmm([r['granularity'] for r in g])} | {sum(r['coarse'] for r in g)} | {mike_cell(g)} | "
                  f"{mmm([r['understood'] for r in g], pct=True)} | {mmm([r['partial'] for r in g], pct=True)} | "
                  f"{mmm([r['cfo'] for r in g], pct=True)} | "
                  f"{mmm([r['domain'] for r in g], pct=True) if any(r['domain'] is not None for r in g) else 'n/a'} | "
@@ -137,7 +148,7 @@ def md_table(rows):
 
 
 def ladder_table(rows):
-    L = ["| Label | Family | Task | Arch | Hidden | Faithful | Leaves | Granularity | Max width | Max depth | Understood (probe) | Partial | CFO | Domain share | Author (v2) | Verifier | Disagree | Ground truth |",
+    L = ["| Label | Family | Task | Arch | Hidden | Faithful | Leaves | Granularity | Max width | Max depth | Probe (screen) | Partial | CFO | Domain share | Author (v2) | Verifier (screen) | Disagree | Ground truth |",
          "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in sorted([r for r in rows if r["set"] in ("ladder", "c4cap")], key=lambda r: (r["family"] or "", r["hidden"] or 0, r["label"])):
         gt = r["gt"] or ""
@@ -187,20 +198,23 @@ def tex_table(rows):
          r"(explained model state against the phenotype, training rows) over the study's explanations. Decomposed: "
          r"leaves per explanation and granularity, the share of hidden units whose part is at most 6 units wide "
          r"(depth is not penalised); coarse counts explanations where one part wider than that holds half the "
-         r"hidden units. Understood: the share of leaves whose best library concept grades meaningful (probe score "
-         r"$\geq 0.8$), partial ($\geq 0.5$) or closed-form only, under the probe's simplicity and support conditions "
-         r"(a concept counts only when it is simpler than the leaf, and a binary concept's AUC only against a gate of "
-         r"comparable support); for Connect-4 the domain column counts only domain concepts (threats, open lines, "
-         r"centre, rows, parity), not raw cells. Verifier: the share of leaves the blind verifier graded meaningful, "
-         r"over the explanations with a verdict (count in brackets when fewer than $n$); disagree: leaves graded by "
-         r"both on which the probe and the verifier differ, over those compared. Cells are median [min--max] "
+         r"hidden units. Understood: verified is the share of leaves the author graded understood in his leaf-by-leaf "
+         r"verification (the measured level; over the explanations with leaf verdicts, count in brackets when fewer "
+         r"than $n$; -- when none has one yet). The remaining columns are automated screens. Probe: the share of leaves "
+         r"whose best library concept grades meaningful (probe score $\geq 0.8$), partial ($\geq 0.5$) or closed-form "
+         r"only, under the probe's simplicity and support conditions (a concept counts only when it is simpler than "
+         r"the leaf, and a binary concept's AUC only against a gate of comparable support); for Connect-4 the domain "
+         r"column counts only domain concepts (threats, open lines, centre, rows, parity), not raw cells. Verifier: "
+         r"the share of leaves the blind verifier graded meaningful, over the explanations with a verdict (count in "
+         r"brackets when fewer than $n$); disagree: leaves graded by both on which the probe and the verifier differ, "
+         r"over those compared. Cells are median [min--max] "
          r"over the explanations. The ladder rows are plain backprop MLPs of the explanation complexity ladder; the "
          r"capacity row is the evolved Connect-4 network.}",
          r"\label{tab:ch7-levels}",
-         r"\begin{tabular}{@{}lrlllrlllrll@{}}", r"\toprule",
-         r" & & \multicolumn{1}{c}{Faithful} & \multicolumn{3}{c}{Decomposed} & \multicolumn{6}{c}{Understood} \\",
-         r"\cmidrule(lr){3-3}\cmidrule(lr){4-6}\cmidrule(lr){7-12}",
-         r"Study & $n$ & Max err. & Leaves & Granularity & Coarse & Meaningful & Partial & Closed-form only & Domain & Verifier & Disagree \\",
+         r"\begin{tabular}{@{}lrlllrllllrll@{}}", r"\toprule",
+         r" & & \multicolumn{1}{c}{Faithful} & \multicolumn{3}{c}{Decomposed} & \multicolumn{1}{c}{Understood} & \multicolumn{6}{c}{Screens} \\",
+         r"\cmidrule(lr){3-3}\cmidrule(lr){4-6}\cmidrule(lr){7-7}\cmidrule(lr){8-13}",
+         r"Study & $n$ & Max err. & Leaves & Granularity & Coarse & Verified & Probe & Partial & Closed-form only & Domain & Verifier & Disagree \\",
          r"\midrule"]
     groups = study_rows(rows)
     did_rule = False
@@ -209,18 +223,19 @@ def tex_table(rows):
             L.append(r"\midrule")
             did_rule = True
         if name == "Heart":
-            L.append(r"\multicolumn{12}{@{}l}{\emph{Pre-registered (ten seeds)}} \\")
+            L.append(r"\multicolumn{13}{@{}l}{\emph{Pre-registered (ten seeds)}} \\")
         if did_rule and name == next(n for n, _ in groups if n not in [STUDIES[k] for k in PREREG]):
-            L.append(r"\multicolumn{12}{@{}l}{\emph{Additional analyses and the ladder (not pre-registered)}} \\")
+            L.append(r"\multicolumn{13}{@{}l}{\emph{Additional analyses and the ladder (not pre-registered)}} \\")
         dom = mmm([r["domain"] for r in g], pct=True) if any(r["domain"] is not None for r in g) else "--"
         ver = verifier_cell(g).replace("n/a", "--")
+        mike = mike_cell(g).replace("n/a", "--")
         dis = disagree_cell(g).replace("n/a", "--")
         worst = max(r["faithful"] for r in g)
         m, e = f"{worst:.1e}".split("e")
         worst_tex = "0" if worst == 0 else f"${m}\\times10^{{{int(e)}}}$"
         L.append(f"{name} & {len(g)} & {worst_tex} & "
                  f"{t(mmm_int([r['n_leaves'] for r in g]))} & {t(mmm([r['granularity'] for r in g]))} & "
-                 f"{sum(r['coarse'] for r in g)} & {t(mmm([r['understood'] for r in g], pct=True))} & "
+                 f"{sum(r['coarse'] for r in g)} & {t(mike)} & {t(mmm([r['understood'] for r in g], pct=True))} & "
                  f"{t(mmm([r['partial'] for r in g], pct=True))} & {t(mmm([r['cfo'] for r in g], pct=True))} & {t(dom)} & "
                  f"{t(ver)} & {dis} \\\\")
     L += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]

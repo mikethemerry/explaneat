@@ -19,6 +19,10 @@ A genome passes when, on the current text:
 
 A verdict is **current** when its content hash equals the sentence's current content hash. A
 ``wrong`` verdict is fixed by changing the text (the sentence then needs a new verdict).
+
+The result also reports the leaf verdicts (``leaf_verdicts``: how many leaves have one, the
+counts, ``understood_mike``). They are not a condition of the sign-off unless ``require_leaves``
+is set (``review signoff --require-leaves``): then every leaf needs one.
 """
 
 from __future__ import annotations
@@ -56,8 +60,11 @@ def sample_order(label: str, sids: Sequence[str]) -> List[str]:
 
 
 def check(label: str, items: Sequence, sentences: Sequence, verdict_lines: List[Dict[str, Any]],
-          recheck_report: Optional[Dict[str, Any]], target_hash: str) -> Dict[str, Any]:
-    from .verdicts import latest
+          recheck_report: Optional[Dict[str, Any]], target_hash: str,
+          leaves: Optional[List[Dict[str, Any]]] = None, require_leaves: bool = False) -> Dict[str, Any]:
+    from .verdicts import latest, leaf_grades, leaf_summary, sentence_lines
+    all_lines = verdict_lines
+    verdict_lines = sentence_lines(verdict_lines)
     cur = {s.sid: s for s in sentences}
     last = latest(verdict_lines)
     ever_wrong = {ln["target"]["sid"] for ln in verdict_lines if ln["verdict"] == "wrong"}
@@ -132,6 +139,19 @@ def check(label: str, items: Sequence, sentences: Sequence, verdict_lines: List[
                 continue         # a sentence-level mismatch is an F gate, answered by a verdict (1)
             problems.append(f"recheck mismatch outside the text: {f.get('check')} at {f.get('location')}")
 
+    # leaf verdicts (understood / partial / not): reported; required only when asked
+    leaf_block = None
+    if leaves is not None:
+        from .verdicts import latest_leaf
+        last_leaf = latest_leaf(all_lines)
+        grades = {lf["name"]: last_leaf[lf["id"]]["verdict"] for lf in leaves if lf["id"] in last_leaf}
+        leaf_block = leaf_summary(leaves, grades)
+        leaf_block["grades"] = {lf["name"]: grades.get(lf["name"]) for lf in leaves}
+        if require_leaves:
+            for lf in leaves:
+                if lf["name"] not in grades:
+                    problems.append(f"leaf {lf['name']} ({lf['id']}) has no verdict (understood / partial / not)")
+
     valid = {sid: current(sid) for sid in cur}
     counts = {"confirmed": 0, "wrong": 0, "unsure": 0}
     for v in valid.values():
@@ -150,7 +170,8 @@ def check(label: str, items: Sequence, sentences: Sequence, verdict_lines: List[
                                               if ln["verdict"] == "wrong"} - {s for s, v in valid.items()
                                                                               if v and v["verdict"] == "wrong"}),
         "unsure_disclosed": sum(1 for v in valid.values() if v and v["verdict"] == "unsure" and v.get("disclosed")),
-        "minutes": round(sum((ln.get("seconds") or 0) for ln in verdict_lines) / 60, 1),
+        "minutes": round(sum((ln.get("seconds") or 0) for ln in all_lines) / 60, 1),
+        "leaf_verdicts": leaf_block,
     }
 
 
@@ -165,4 +186,7 @@ def signoff_block(result: Dict[str, Any]) -> Dict[str, Any]:
     """The ``mike_verification.signoff`` block written into the record when the sign-off passes."""
     keep = ("protocol", "checked_at", "content_hash", "tiers", "sample_n", "sample_wrong", "error_bound_95",
             "counts", "wrong_fixed", "unsure_disclosed")
-    return {k: result[k] for k in keep}
+    out = {k: result[k] for k in keep}
+    if result.get("leaf_verdicts"):
+        out["leaf_verdicts"] = {k: result["leaf_verdicts"].get(k) for k in ("leaves", "graded", "counts", "understood_mike")}
+    return out

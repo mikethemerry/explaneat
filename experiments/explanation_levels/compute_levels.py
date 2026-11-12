@@ -37,6 +37,11 @@ support of at least ``--min-support`` of the rows; otherwise r2), so the old
 * ``understood_verifier``: the blind verifier's leaf grades from its ``verdict.json``
   (``leaf_meaning``) where a verdict exists for the genome, with the count of leaves on which
   the probe and the verifier disagree.
+
+The probe and the verifier are automated screens. The measured "understood" is Mike's leaf
+verdict (``explaneat review leaf``, ``experiments/10seed/review/<label>.verdicts.jsonl``):
+``understood_mike``, the share of leaves he graded understood, null until a leaf of the
+explanation has a verdict (the v4 set; the other sets have no review store).
 """
 
 from __future__ import annotations
@@ -186,7 +191,7 @@ def compute_one(t, set_name: str, lmeta, gt, cache: bool = True, max_terms: int 
                                                   probe_leaf)
     from explaneat.analysis.coverage_report import coverage_report
     from explaneat.analysis.explanation_levels import (explanation_levels, leaf_meanings_from_operations,
-                                                       verifier_leaf_grades)
+                                                       mike_leaf_grades, verifier_leaf_grades)
     from explaneat.analysis.explanation_tools import check_explanation
     from explaneat.verify.model import load
 
@@ -260,7 +265,11 @@ def compute_one(t, set_name: str, lmeta, gt, cache: bool = True, max_terms: int 
                         "gt_terms_total": lm.get("gt_terms_total") or None,
                         "explainer_leaf_grades": {lf.get("name"): lf.get("meaning") for lf in rec.get("leaves") or []},
                         "truth": (gt.get(t["label"]) or {}).get("truth")}
-    lv = explanation_levels(rep, checks, meanings, leaf_names, ground_truth, verifier_grades)
+    # Mike's leaf verdicts (the measured level); the review store holds the v4 labels only
+    rd = SETS[set_name]["records"]
+    mike = (mike_leaf_grades(t["label"], leaf_names, {n: l.get("id") for n, l in leaves.items()},
+                             records_dir=str(rd.relative_to(ROOT))) if set_name == "v4" and rd else None)
+    lv = explanation_levels(rep, checks, meanings, leaf_names, ground_truth, verifier_grades, mike)
     lv["understood"]["verdict"] = verdict.get("_path") if verdict else None
     ag = {n: (a or {}).get("grade") for n, a in authors.items()}
     graded_a = [g for g in ag.values() if g]
@@ -335,7 +344,9 @@ def main():
               + (f", author {u['author']['understood_fraction_author']} ({u['author']['restatements']} restated)"
                  if u.get("author", {}).get("leaves") else "")
               + (f", verifier {u['understood_verifier']} ({u['verifier_disagreements']} of {u['verifier_compared']} disagree)"
-                 if u.get("verifier_graded") else ""),
+                 if u.get("verifier_graded") else "")
+              + (f", verified (Mike) {u['understood_mike']} ({u['mike_graded']} of {u['leaves']} leaves graded)"
+                 if u.get("mike_graded") else ""),
               flush=True)
 
 

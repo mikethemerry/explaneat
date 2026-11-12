@@ -1,20 +1,20 @@
 # Three levels per study
 
-| Study | n | Faithful: max abs err (worst) | Leaves | Granularity | Coarse (n) | Understood (probe): meaningful share | Partial | Closed-form only | Domain-concept share | Author's concept (v2) | Understood (verifier) | Probe vs verifier disagree |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Heart | 10 | 4.4e-16 | 3.5 [3-6] | 1.00 [1.00-1.00] | 0 | 67% [25%-80%] | 33% [0%-75%] | 0% [0%-33%] | n/a | n/a | n/a | n/a |
-| MONK-2 | 10 | 2.4e-15 | 3 [2-6] | 1.00 [1.00-1.00] | 0 | 33% [0%-75%] | 29% [0%-40%] | 33% [0%-100%] | n/a | n/a | n/a | n/a |
-| Adult | 10 | 7.8e-16 | 8 [6-12] | 1.00 [1.00-1.00] | 0 | 82% [57%-91%] | 10% [0%-43%] | 9% [0%-17%] | n/a | n/a | n/a | n/a |
-| Heart-100 | 10 | 4.4e-16 | 4 [4-7] | 1.00 [1.00-1.00] | 0 | 60% [33%-75%] | 22% [0%-50%] | 20% [0%-25%] | n/a | n/a | n/a | n/a |
-| churn100 | 10 | 1.0e-15 | 7 [5-12] | 1.00 [0.57-1.00] | 0 | 67% [29%-75%] | 17% [0%-43%] | 21% [0%-60%] | n/a | n/a | n/a | n/a |
-| churn200 | 10 | 1.3e-15 | 8.5 [6-10] | 1.00 [0.45-1.00] | 1 | 82% [33%-90%] | 11% [0%-33%] | 11% [0%-33%] | n/a | n/a | n/a | n/a |
-| Ladder, synthetic (MLP) | 8 | 3.3e-16 | 5 [3-7] | 1.00 [0.00-1.00] | 2 | 61% [0%-75%] | 39% [25%-100%] | 0% [0%-17%] | n/a | n/a | 67% [0%-75%] | 19/40 |
-| Ladder, Connect-4 (MLP) | 6 | 0.0e+00 | 4.5 [1-8] | 1.00 [0.00-1.00] | 2 | 0% [0%-0%] | 31% [0%-80%] | 69% [20%-100%] | 0% [0%-0%] | n/a | 20% [0%-75%] | 19/24 |
-| Connect-4 capacity (evolved) | 1 | 1.7e-15 | 11 | 1.00 | 0 | 9% | 45% | 45% | 0% | n/a | n/a | n/a |
+| Study | n | Faithful: max abs err (worst) | Leaves | Granularity | Coarse (n) | Understood (verified) | Probe (screen): meaningful share | Partial | Closed-form only | Domain-concept share | Author's concept (v2) | Verifier (screen) | Probe vs verifier disagree |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Heart | 10 | 4.4e-16 | 3.5 [3-6] | 1.00 [1.00-1.00] | 0 | n/a | 67% [25%-80%] | 33% [0%-75%] | 0% [0%-33%] | n/a | n/a | n/a | n/a |
+| MONK-2 | 10 | 2.4e-15 | 3 [2-6] | 1.00 [1.00-1.00] | 0 | n/a | 33% [0%-75%] | 29% [0%-40%] | 33% [0%-100%] | n/a | n/a | n/a | n/a |
+| Adult | 10 | 7.8e-16 | 8 [6-12] | 1.00 [1.00-1.00] | 0 | n/a | 82% [57%-91%] | 10% [0%-43%] | 9% [0%-17%] | n/a | n/a | n/a | n/a |
+| Heart-100 | 10 | 4.4e-16 | 4 [4-7] | 1.00 [1.00-1.00] | 0 | n/a | 60% [33%-75%] | 22% [0%-50%] | 20% [0%-25%] | n/a | n/a | n/a | n/a |
+| churn100 | 10 | 1.0e-15 | 7 [5-12] | 1.00 [0.57-1.00] | 0 | n/a | 67% [29%-75%] | 17% [0%-43%] | 21% [0%-60%] | n/a | n/a | n/a | n/a |
+| churn200 | 10 | 1.3e-15 | 8.5 [6-10] | 1.00 [0.45-1.00] | 1 | n/a | 82% [33%-90%] | 11% [0%-33%] | 11% [0%-33%] | n/a | n/a | n/a | n/a |
+| Ladder, synthetic (MLP) | 8 | 3.3e-16 | 5 [3-7] | 1.00 [0.00-1.00] | 2 | n/a | 61% [0%-75%] | 39% [25%-100%] | 0% [0%-17%] | n/a | n/a | 67% [0%-75%] | 19/40 |
+| Ladder, Connect-4 (MLP) | 6 | 0.0e+00 | 4.5 [1-8] | 1.00 [0.00-1.00] | 2 | n/a | 0% [0%-0%] | 31% [0%-80%] | 69% [20%-100%] | 0% [0%-0%] | n/a | 20% [0%-75%] | 19/24 |
+| Connect-4 capacity (evolved) | 1 | 1.7e-15 | 11 | 1.00 | 0 | n/a | 9% | 45% | 45% | 0% | n/a | n/a | n/a |
 
 # The ladder and the Connect-4 capacity network
 
-| Label | Family | Task | Arch | Hidden | Faithful | Leaves | Granularity | Max width | Max depth | Understood (probe) | Partial | CFO | Domain share | Author (v2) | Verifier | Disagree | Ground truth |
+| Label | Family | Task | Arch | Hidden | Faithful | Leaves | Granularity | Max width | Max depth | Probe (screen) | Partial | CFO | Domain share | Author (v2) | Verifier (screen) | Disagree | Ground truth |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | lad-6eb46 | c4 | c4 | 4 | 4 | 0.0e+00 | 4 | 1.0 | 1 | 1 | 0% | 25% | 75% | 0% | n/a | 50% | 3/4 |  |
 | lad-be3c9 | c4 | c4 | 8 | 8 | 0.0e+00 | 8 | 1.0 | 1 | 1 | 0% | 38% | 62% | 0% | n/a | 75% | 8/8 |  |
