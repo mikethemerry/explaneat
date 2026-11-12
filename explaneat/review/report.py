@@ -18,7 +18,9 @@ from .provenance import Provenance, default_provenance
 from .queue import build_queue, tier_counts
 from .sentences import extract, node_ids_of, report_hash
 from .status import badge_counts, statuses
+from .verdicts import leaf_lines, leaves_of
 from .verdicts import load as load_verdicts
+from .verdicts import sentence_lines
 
 
 @dataclass
@@ -39,6 +41,12 @@ class Report:
     target_hash: str
     context: Dict[str, Any] = field(default_factory=dict)
     provenance: str = "NoProvenance"
+    leaf_verdicts: List[Dict[str, Any]] = field(default_factory=list)
+
+    @property
+    def leaves(self) -> List[Dict[str, Any]]:
+        """The leaf annotations (``{id, name, hypothesis}``) the leaf verdicts grade."""
+        return leaves_of(self.operations)
 
     def sentence(self, sid):
         return next(s for s in self.sentences if s.sid == sid)
@@ -97,12 +105,14 @@ def build(label: str, operations: Optional[List[Dict[str, Any]]] = None, run_rec
     prov = provenance or default_provenance(t.genome_id, operations, t.layer, rep)
     st = statuses(sents, rep, nids, t.layer, prov)
     ov, ovs = overlay(label, sents, t.genome_id, bench=bench, directory=directory, operations=operations)
-    vlines = load_verdicts(label, directory)
+    all_lines = load_verdicts(label, directory)
+    vlines = sentence_lines(all_lines)
     df = diff(sents, vlines, t.record, t.layer, operations)
     q = build_queue(sents, st, ov, df["states"])
     r = Report(label, t.genome_id, t.record, t.layer, list(operations), sents, rep, st, ov, ovs, vlines, df, q, th,
                context_of(t.record, t.layer, operations))
     r.provenance = type(prov).__name__
+    r.leaf_verdicts = leaf_lines(all_lines)
     return r
 
 

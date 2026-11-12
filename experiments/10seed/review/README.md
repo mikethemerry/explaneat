@@ -7,7 +7,7 @@ operations are read from it, read only.
 
 | File | What | Tracked |
 |---|---|---|
-| `<label>.verdicts.jsonl` | Mike's verdicts, one JSON line each: sentence `sid`, the sentence's content hash and text at the time, `confirmed` / `wrong` / `unsure`, note, time, and the context (claims hash, draft time, operations hash, and `records_dir`, the record set the verdict was given on). **The source of truth.** Append-only: never edit or delete a line; a new line supersedes. | yes |
+| `<label>.verdicts.jsonl` | Mike's verdicts, one JSON line each: sentence `sid`, the sentence's content hash and text at the time, `confirmed` / `wrong` / `unsure`, note, time, and the context (claims hash, draft time, operations hash, and `records_dir`, the record set the verdict was given on). **The source of truth.** Append-only: never edit or delete a line; a new line supersedes. Leaf verdicts share the file (`target.kind: "leaf"`: annotation id, leaf name, hypothesis hash; `understood` / `partial` / `not`). | yes |
 | `<label>.signoff.json` | The last `review signoff` check: tiers, what still needs a verdict, the sample drawn, the error bound. | yes |
 | `verifier/<label>/*.json` | Blind verifiers' `verdict.json` on the record itself (with `target_hash`), shown in the queue. | yes |
 | `<label>.status.json` | Derived: every sentence with its badge, tier, score and factors (`review status`). Regenerate at will. | no (gitignored) |
@@ -57,6 +57,11 @@ uv run python -m explaneat review verdict heart-s5 s-77cd unsure --note "cannot 
 #    uv run python -m explaneat export record-verdict heart-s5 --sentence s-9f2c41d0 --verdict confirmed
 uv run python -m explaneat review list heart-s5                  # the verdicts given so far
 
+# 2b. One leaf verdict per leaf (by leaf name or annotation id; the pack's checklist page lists them)
+uv run python -m explaneat review leaf heart-s5 direct_linear_terms understood --note "additive terms, read off the weights"
+uv run python -m explaneat review leaf heart-s5 ann_31 partial --note "gate is right, the threshold reading is not"
+uv run python -m explaneat review leaf heart-s5 chest_pain_gate not --note "..."
+
 # 3. What changed since your verdicts (after errata, a re-draft, a claim re-extraction)
 uv run python -m explaneat review diff heart-s5
 
@@ -80,6 +85,19 @@ Without exporting, prefix each command instead:
 The pack's `RECORDING.txt` was written before these options existed, so it names
 `experiments/10seed/explanations/<label>.json`. With the settings above, its commands write the v4
 record instead.
+
+## Leaf verdicts: who decides "understood"
+
+Whether a leaf is understood is Mike's call, not the concept probe's or the blind verifiers'.
+Those are automated screens, reported beside his verdict as `understood_probe` and
+`understood_verifier`. The measured "understood" level of an explanation is the share of its
+leaves he graded `understood` with `review leaf` (`understood_mike`; `understood_fraction_mike`
+in the CSVs; "Understood (verified)" in the levels tables), blank until a leaf has a verdict. The
+verdicts go into the same append-only store with `kind: "leaf"`; `review list` shows them after
+the sentence verdicts, and `review signoff` reports how many leaves have one. They are not a
+condition of signoff-v1 unless asked (`review signoff --require-leaves`). The pack's checklist
+page lists each genome's leaves with the hypothesis's first sentence, the probe screen grade, an
+understood / partial / not box and the command.
 
 A "wrong" is fixed by correcting the text (errata, amend, re-draft). The sentence then has a new
 content hash, shows as "changed", and needs a new verdict. If the first 10 sampled items include

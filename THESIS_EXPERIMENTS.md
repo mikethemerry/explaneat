@@ -29,7 +29,7 @@ Mike-verified (signoff-v1) is **0 everywhere**: no record carries `mike_verifica
 | 1.6 | Connect-4 boundary case (capacity study) | complete; outcome "covered and described, not tactically explained" |
 | 2.1 | Ten-seed consistency study, frozen-method v4 re-run | complete (60/60); **interim** on two counts: Mike's sign-off 0/60, and whether `summary.md` switches to v4 (Mike's decision) |
 | 2.2 | Rashomon counts | complete |
-| 2.3 | Three levels of explanation | complete; **interim** if the probe v2 recompute (`fix/probe-simplicity`) lands: the understood column may move |
+| 2.3 | Three levels of explanation | faithful and decomposed complete; the understood level is **measured by Mike's leaf verdicts** (`review leaf`, 13 Nov: 0 of 60 explanations have any), so "Understood (verified)" is blank; the probe and verifier shares are automated screens, **interim** if the probe v2 recompute (`fix/probe-simplicity`) lands |
 | 2.4 | Verification pack and signoff-v1 | pack complete; **gap**: 0 of 10 (0 of 60) signed off |
 | 3.1 | Rashomon proposition (signal characterisation) | complete as a thesis draft for Mike's review |
 | 3.2 | Explanation complexity ladder | complete (round 1); round 2 (split past 26 copies, C4-32 and C4-32x16 re-explained) is on `exp/explanation-barrier-2`, **not merged** |
@@ -297,6 +297,12 @@ unchanged), `ch7_levels_table.tex`, the seven 10-seed PDFs.
   capacity network 9%.
 - **Exports:** `thesis_exports/ch7/ch7_levels_table.tex` (regenerates byte-identical).
 - **DB:** `explaneat_v4` (ten-seed), `explaneat_dev` (ladder, capacity), read only.
+- **Who decides "understood" (13 Nov).** The probe and the blind verifiers are automated screens.
+  The thesis-facing understood level is Mike's leaf verdict (`explaneat review leaf <label> <leaf>
+  understood|partial|not`, stored with the sentence verdicts in `experiments/10seed/review/`):
+  `understood_mike` in `levels/*.json`, `understood_fraction_mike` in the CSVs, the "Understood
+  (verified)" column of `ch7_levels_table.tex` and the experiment-2 table. Blank until he grades
+  leaves (0 of 60 on 13 Nov); the pack's checklist pages carry the per-leaf boxes.
 - **Status: complete; interim** if the probe v2 recompute lands. `fix/probe-simplicity` (worktree
   `probe-fix`, no commits ahead of `main` yet) is reworking the concept probe; the understood
   shares, and so `ch7_levels_table.tex` and the levels columns of the two new experiment tables,

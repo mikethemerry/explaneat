@@ -76,13 +76,24 @@ def levels_counts(p):
     return dict(faithful=L["faithful"]["function_preservation_max_abs_err"],
                 leaves=L["decomposed"]["n_leaves"], granularity=L["decomposed"]["granularity"],
                 m=u["meaningful"], p=u["partial"], c=u["closed_form_only"],
-                understood=L["understood"]["understood_fraction"])
+                understood=L["understood"]["understood_fraction"],
+                # the measured level: the author's leaf verdicts (None until a leaf has one)
+                mike=L["understood"].get("understood_mike"), mike_n=L["understood"].get("mike_graded") or 0)
 
 
 def verdict_counts(p):
     v = jload(p)
     c = v.get("counts") or Counter(f.get("grade") for f in v["findings"])
     return v["overall"]["grade"], int(c.get("upheld", 0)), int(c.get("weakened", 0)), int(c.get("refuted", 0)), int(c.get("flag", 0))
+
+
+def verified_cell(lv):
+    """Understood (verified): median of the author's understood share over the explanations with
+    leaf verdicts, with the count; 'none yet' until one has them."""
+    v = [x["mike"] for x in lv if x.get("mike") is not None]
+    if not v:
+        return "none yet"
+    return f"{100 * st.median(v):.0f}%" + (f" ({len(v)} of {len(lv)})" if len(v) < len(lv) else "")
 
 
 def f3(x):
@@ -244,17 +255,19 @@ def experiment2():
                      f"{full} / 10", f"{mism} / {nr}", f"{mins}",
                      f"{st.median(x['leaves'] for x in lv):g}; {st.median(x['granularity'] for x in lv):.2f}; "
                      f"{100 * st.median(x['understood'] for x in lv):.0f}%",
-                     f"{signed} / 10"])
+                     verified_cell(lv), f"{signed} / 10"])
         if key == "adult":
             body.append("midrule")
     header = ["Set", "Test AUC (median)", "Rashomon $\\varepsilon=0.01$", "Full coverage (v4)",
-              "Recheck: mismatch / needs review", "Minutes (median)", "Levels: leaves; granularity; meaningful",
-              "Signed off"]
+              "Recheck: mismatch / needs review", "Minutes (median)", "Levels: leaves; granularity; probe meaningful (screen)",
+              "Understood (verified)", "Signed off"]
     note = ("Ten seeds per set. Test AUC is the reported median (experiments/10seed/summary.md, unchanged). "
             "Rashomon: seeds within 0.01 test AUC of the best observed seed (results/thesis/rashomon\\_counts.csv). "
             "Coverage, recheck and minutes are the frozen-method v4 run (experiments/10seed/explanations\\_v4/ and the *\\_v4.csv files; "
             "recheck counts are the records' stored recheck\\_summary, before the amend\\_evidence fix that cleared the needs-review items). "
-            "Levels are medians over the ten v4 records (experiments/explanation\\_levels/levels/). "
+            "Levels are medians over the ten v4 records (experiments/explanation\\_levels/levels/); the probe's meaningful share is an "
+            "automated screen. Understood (verified): the share of leaves the author graded understood in his leaf-by-leaf verification "
+            "(review leaf verdicts), the measured level; none yet until a set has leaf verdicts. "
             "Signed off: verified by the author (signoff-v1); the three sets above the rule are pre-registered, the three below are supplementary.")
     return header, body, note
 
@@ -325,7 +338,7 @@ def main():
          "every other model was selected by its study's stated rule.", experiment1, "p{3.2cm}p{1.6cm}p{1.4cm}p{3.6cm}p{3.6cm}p{3.2cm}"),
         ("ch7_experiment2_consistency.tex", "tab:ch7-exp2-consistency",
          "Experiment 2: the ten-seed study under the frozen v4 explanation method, per set.", experiment2,
-         "lrrrrrp{3.2cm}r"),
+         "lrrrrrp{3.0cm}p{1.6cm}r"),
         ("ch7_experiment3_complexity.tex", "tab:ch7-exp3-complexity",
          "Experiment 3: where the complexity lives. One line per study with its finding.", experiment3,
          "p{3.6cm}p{6.2cm}p{5.4cm}"),

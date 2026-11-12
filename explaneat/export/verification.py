@@ -344,6 +344,53 @@ def review_queue_tex(rv: Dict[str, Any]) -> List[str]:
     return L
 
 
+LEAF_BOXES = r"$\square$\,understood\ \ $\square$\,partial\ \ $\square$\,not"
+PROBE_WORD = {"meaningful": "meaningful", "partial": "partial", "closed_form_only": "closed-form only",
+              "restatement": "restatement", "unnamed": "not probed"}
+
+
+def _first_sentence(text: str, n: int = 200) -> str:
+    from ..review.sentences import split_sentences
+    parts = split_sentences(" ".join(str(text or "").split()))
+    return _short(parts[0] if parts else "", n)
+
+
+def leaf_verdicts_tex(doc) -> List[str]:
+    """The leaves of the explanation with an understood / partial / not box each: whether a leaf
+    is understood is decided by this verdict; the probe grade shown beside it is a screen."""
+    lab = doc["label"]
+    leaves = [a for a in doc.get("annotations") or [] if a.get("kind") == "leaf"]
+    if not leaves:
+        return []
+    probe = (((doc.get("coverage") or {}).get("levels") or {}).get("understood") or {}).get("grades") or {}
+    recorded = {lf["id"]: lf for lf in (doc.get("review") or {}).get("leaves") or []}
+    L = [r"\textbf{Leaf verdicts.} Whether a leaf is understood is your call: one verdict per leaf, "
+         r"\emph{understood} (the hypothesis names what the part computes, in domain terms, and the evidence bears it "
+         r"out), \emph{partial} or \emph{not}. The probe grade is an automated screen (the best library concept "
+         r"against the leaf's exit), shown for information; the blind verifiers' findings are on the sentences above.", "",
+         r"{\footnotesize\setlength{\tabcolsep}{3pt}",
+         r"\begin{longtable}{@{}>{\raggedleft\arraybackslash}p{0.5cm}>{\raggedright\arraybackslash}p{3.2cm}"
+         r">{\raggedright\arraybackslash}p{7.6cm}>{\raggedright\arraybackslash}p{1.6cm}>{\raggedright\arraybackslash}p{2.6cm}@{}}",
+         r"\toprule \# & Leaf & Hypothesis (first sentence) & Probe (screen) & Your verdict \\ \midrule \endhead"]
+    for k, a in enumerate(leaves, 1):
+        name, aid = a.get("name") or "", a.get("id") or ""
+        rec = recorded.get(aid) or {}
+        done = rec.get("verdict")
+        box = (r"\textbf{" + tex(done) + "}" + (r"\newline {\scriptsize " + tex(_short(rec.get("verdict_note"), 80)) + "}"
+                                                if rec.get("verdict_note") else "") if done else LEAF_BOXES)
+        g = probe.get(name)
+        L.append(f"{k} & " + r"\texttt{" + tex(_short(name, 28)) + r"}\newline {\scriptsize " + tex(aid) + "} & "
+                 + tex(_first_sentence(a.get("hypothesis"))) + " & " + tex(PROBE_WORD.get(g, g or "not probed"))
+                 + r" & {\scriptsize " + box + r"} \\ \midrule")
+    L += [r"\end{longtable}}", "",
+          r"{\small\raggedright\textbf{Record a leaf verdict} (append-only, same store as the sentence verdicts; "
+          r"the leaf by name or id):\par}",
+          r"{\footnotesize\raggedright\texttt{" + tex(
+              f"uv run python -m explaneat review leaf {lab}{records_opt()} <leaf> understood|partial|not --note \"...\"")
+          + r"}\par}", ""]
+    return L
+
+
 def checklist_block(doc, order: int) -> str:
     lab = doc["label"]
     rows, bad = check_rows(doc)
@@ -378,6 +425,7 @@ def checklist_block(doc, order: int) -> str:
         L += [r"\textbf{What to look at.}", r"\begin{itemize}"]
         L += [r"\item " + x for x in look]
         L += [r"\end{itemize}"]
+    L += leaf_verdicts_tex(doc)
     if rec.get("tool_bugs"):
         L += [r"\textbf{Tool notes (record):} " + tex(rec["tool_bugs"]), ""]
     pl = doc.get("plain_language")
