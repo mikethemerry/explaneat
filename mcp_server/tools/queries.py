@@ -230,8 +230,11 @@ def probe_concept(genome_id: str, part: str, concept: Optional[str] = None, spli
     the whole library is scored and the best concept per exit is reported.
 
     Returns r2, auc (binary concept, or a gated exit), mutual information, n, the score
-    (max(r2, 2*(auc - 0.5))), the grade (meaningful: score >= 0.8; partial: >= 0.5; else
-    closed_form_only) and the ``meaning`` block to store with ``set_meaning``. Quote a score as
+    (max(r2, 2*(auc - 0.5)), or r2 alone for a binary concept unless the part is a gate of
+    comparable support: probe v2), the grade (meaningful: score >= 0.8; partial: >= 0.5; else
+    closed_form_only; restatement when the concept is not simpler than the part: an expression
+    over more than 3 variables, or a reweighting of the part's own entry inputs) and the
+    ``meaning`` block to store with ``set_meaning``. Quote a score as
     ``{{q:<provenance.id>.score|.2f}}``.
 
     Args:
