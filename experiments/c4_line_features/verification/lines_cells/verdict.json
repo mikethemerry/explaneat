@@ -1,0 +1,718 @@
+{
+ "item_id": "c4lf-lines_cells-heavy-s2",
+ "label": "c4lf-lines_cells-heavy-s2",
+ "genome_id": "9e843d20-8e42-47d6-9c94-576c5f06fdf3",
+ "target": "/private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines_cells/record.json",
+ "target_hash": null,
+ "target_hash_note": "verify recheck wrote no target_hash for this record target (field absent in recheck.json)",
+ "verifier": "independent verifier agent (explanation-verifier skill)",
+ "started_at": "2026-11-12T20:12:58+13:00",
+ "finished_at": "2026-11-12T20:25:41+13:00",
+ "minutes": 13,
+ "overall": {
+  "grade": "weakened",
+  "summary": "Every stated number reproduces (coverage, preservation, closed forms, 87 provenance-backed values, all 14 probe sweeps, every subgroup count, all 13 ablation AUCs, the linearisation). Nothing is refuted. Weakened: the open-two sweep (28% to above 99%) is a constructed empty-board case; on real positions the model goes 40% to 90%. The cell triggers named for units 2, 4, 6, 8 and 9 hold at the typical case but cover only 16% to 34% of each unit's active rows (unit9's \"needs\" rule 77%), and the four closed-form-only parts restate their formulas, as the record itself says."
+ },
+ "findings": [
+  {
+   "id": "V01",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "structural coverage 1.0, compositional 1.0, hierarchy complete, full coverage",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.0 / 1.0; no uncovered nodes or edges; one root win_logit containing output 0; 13 of 13 parts composed under it",
+   "commands": [
+    "uv run python -m explaneat verify recheck <T>"
+   ]
+  },
+  {
+   "id": "V02",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "2.66e-15",
+   "check": "verify recheck",
+   "evidence": "recomputed max |err| 2.66e-15 (numeric replay 8.9e-15)",
+   "commands": [
+    "uv run python -m explaneat verify recheck <T>"
+   ]
+  },
+  {
+   "id": "V03",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.closed_form_max_abs_err",
+   "statement": "0.0302 (direct terms); per unit 0.010 to 0.020",
+   "check": "verify recheck",
+   "evidence": "recomputed 0.030191 for direct_terms; leaves 0.0094 (unit8) to 0.0197 (unit10)",
+   "commands": [
+    "uv run python -m explaneat verify recheck <T>"
+   ]
+  },
+  {
+   "id": "V04",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.n_splits",
+   "statement": "58 splits, 1 identity node, 11 leaves + 3 compositions, 10 hidden nodes each in exactly one leaf",
+   "check": "operations replayed from the database",
+   "evidence": "op counts: rename_node 58, split_node 58, add_identity_node 1, annotate 14; each leaf unit1..unit10 holds one hidden node plus its 58 split inputs; direct_terms holds identity_0; the genome has no hidden-to-hidden connection and 58 enabled input->output edges",
+   "commands": []
+  },
+  {
+   "id": "V05",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "six raising ReLU gates and four lowering ones; readout signs",
+   "check": "readout weights read from the stored genome",
+   "evidence": "units 1,3,4,6,8,9 enter the output with +1.668, +1.053, +1.223, +1.648, +1.428, +1.583; units 2,5,7,10 with -1.302, -1.254, -1.023, -1.762 (unit10 the most negative, as unit10 says)",
+   "commands": []
+  },
+  {
+   "id": "V06",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "AUC 0.885 against 0.935 with the ten gates replaced by affine fits; o-threat positions mean predicted chance 31% vs 65%; seven partial scores 0.75, 0.72, 0.53, 0.78, 0.51, 0.63, 0.67",
+   "check": "verify linearise; verify subgroup; verify concept",
+   "evidence": "linearise: full 0.9352, all switching units affine 0.8849; subgroup o_thr > 0: n 765, mean predicted 31.4% vs 65.1%; concept scores recomputed 0.752, 0.718, (0.53 stored), 0.777, 0.514, 0.628, 0.674",
+   "commands": [
+    "uv run python -m explaneat verify linearise <T> --core",
+    "uv run python -m explaneat verify subgroup <T> --where \"o_thr > 0\"",
+    "uv run python -m explaneat verify concept <T> --part unit2 --concept \"c_c3 == 1\""
+   ]
+  },
+  {
+   "id": "V07",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_130",
+   "claims": [],
+   "location": "record.summary",
+   "statement": "x's open twos raise the predicted chance (28% at zero to above 99% at six in the sweep); the same sentence in operations.win_logit.hypothesis, operations.unit1.hypothesis and operations.direct_terms.hypothesis",
+   "check": "probe sweep x_open_2 0..6 at the typical case; subgroup by open-two count on the training rows",
+   "evidence": "the sweep reproduces (27.7% at zero, 99.7% at six) but its held case is an empty board with x_open_1 = 9, not an eight-ply position; on real positions the mean predicted chance is 39.7% at zero open twos (n 11218), 60.2% at one, 74.2% at two, 83.1% at three, 86.0% at four and 90.5% at five or more (n 1464). The direction holds; the constructed sweep overstates the size (99% vs 90%).",
+   "commands": [
+    "uv run python -m explaneat verify probe <T> --sweep x_open_2=0:6:7 --nodes 1,7,5",
+    "uv run python -m explaneat verify subgroup <T> --where \"x_open_2 == 0\"",
+    "uv run python -m explaneat verify subgroup <T> --where \"x_open_2 >= 5\""
+   ]
+  },
+  {
+   "id": "V08",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_130",
+   "claims": [],
+   "location": "record.summary",
+   "statement": "x's centre pieces raise it (58% with none to 87% with four)",
+   "check": "probe sweep centre_x 0..4; subgroup by centre count",
+   "evidence": "sweep 58.5%, 81.8%, 83.6%, 85.2%, 86.7%; training rows: 59.3% with none (n 32657), 69.0% (n 14183), 79.9% (n 5963), 81.5% (n 1147), 84.3% with four (n 95): same direction, ends within 3 points",
+   "commands": [
+    "uv run python -m explaneat verify probe <T> --sweep centre_x=0:4:5 --nodes 3,5,10",
+    "uv run python -m explaneat verify subgroup <T> --where \"centre_x == 4\""
+   ]
+  },
+  {
+   "id": "V09",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "best scores 0.50, 0.47, 0.46 (units 6, 7, 9), 0.08 (direct); unit4 odd-threat score 1.00 on 66 rows; o odd threats 100 rows; unit1 on 46681 of 54045",
+   "check": "provenance (87 queries re-rendered) and verify subgroup",
+   "evidence": "x_thr_odd > 0: n 66, unit4 acts on 66 (100%), unit5 on 66; o_thr_odd > 0: n 100, unit1 and unit7 act on all 100; unit1 acts on 46681 of 54045",
+   "commands": [
+    "uv run python -m explaneat verify subgroup <T> --where \"x_thr_odd > 0\"",
+    "uv run python -m explaneat verify subgroup <T> --where \"o_thr_odd > 0\"",
+    "uv run python -m explaneat verify subgroup <T> --where \"x_open_1 >= 1\""
+   ]
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.game_terms",
+   "statement": "660 x threats, 765 o threats, 66 x odd-row threats in training",
+   "check": "verify subgroup",
+   "evidence": "x_thr > 0: n 660 (outcome 83.9%); o_thr > 0: n 765 (26.3%); x_thr_odd > 0: n 66 (93.9%)",
+   "commands": [
+    "uv run python -m explaneat verify subgroup <T> --where \"x_thr > 0\""
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "structure",
+   "statement": "hierarchy and subgraphs",
+   "check": "operations replayed from the database",
+   "evidence": "raise_gates exits {1,3,4,6,8,9}, lower_gates exits {2,5,7,10}, direct_terms exit identity_0 (58 direct edges moved onto it), win_logit holds output 0; every leaf subgraph is one hidden ReLU plus its own split copies of the 58 inputs; no node is shared",
+   "commands": []
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_130",
+   "claims": [],
+   "location": "operations.win_logit.hypothesis",
+   "statement": "direct off AUC 0.935 to 0.768; raising gates off 0.718; lowering gates off 0.761; nonlinearity worth 0.050; base rate 65.8%, mean predicted 65%; o-threat outcome 26.3% and chance 31% vs 66.4% and 65%; preservation 2.7e-15",
+   "check": "verify ablate (parts), linearise, subgroup",
+   "evidence": "ablate direct_terms (baseline = mean): AUC 0.7678; raise_gates to zero: 0.7184; lower_gates to zero: 0.7614; linearise gain +0.0502; whole train: outcome 65.8% of 54045, mean predicted 64.7%; o_thr > 0: 26.3% / 31.4% vs 66.4% / 65.1%",
+   "commands": [
+    "uv run python -m explaneat verify ablate <T> --part direct_terms",
+    "uv run python -m explaneat verify ablate <T> --part raise_gates --to zero",
+    "uv run python -m explaneat verify ablate <T> --part lower_gates --to zero"
+   ]
+  },
+  {
+   "id": "V13",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_128",
+   "claims": [],
+   "location": "operations.raise_gates.hypothesis",
+   "statement": "six gates with positive weights; all off: AUC 0.935 to 0.718, mean chance down 0.56 over 53536 rows; affine fits cost 0.036",
+   "check": "verify ablate --to zero; linearise",
+   "evidence": "AUC 0.7184 without; mean risk change +0.5583 (with minus without) over 53536 affected rows (99.1%); linearise raise_gates alone drop 0.0360; readout weights all positive",
+   "commands": [
+    "uv run python -m explaneat verify ablate <T> --part raise_gates --to zero",
+    "uv run python -m explaneat verify linearise <T> --core"
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_129",
+   "claims": [],
+   "location": "operations.lower_gates.hypothesis",
+   "statement": "four gates with negative weights; all off: AUC 0.761, mean chance change -0.32 (rises) over 53282 rows; affine fits cost 0.021",
+   "check": "verify ablate --to zero; linearise",
+   "evidence": "AUC 0.7614 without; mean risk change -0.3171 over 53282 rows (98.6%); linearise lower_gates alone drop 0.0211; readout weights all negative",
+   "commands": [
+    "uv run python -m explaneat verify ablate <T> --part lower_gates --to zero"
+   ]
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_127",
+   "claims": [],
+   "location": "operations.direct_terms.hypothesis",
+   "statement": "direct weights per sd: e2 -1.70, e1 1.46, a4 -0.82, d4 -0.73, b1 0.66, d1 0.66, x_open_2 0.70, x_open_1 0.62, o_open_1 -0.56, o_open_2 -0.44, centre_o 0.82, centre_x 0.54",
+   "check": "coefficients parsed from the recomputed closed form",
+   "evidence": "-1.70, 1.46, -0.821, -0.732, 0.661, 0.659, 0.698, 0.618, -0.557, -0.445, 0.815, 0.539: all twelve agree to the stated rounding",
+   "commands": []
+  },
+  {
+   "id": "V16",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_127",
+   "claims": [],
+   "location": "operations.direct_terms.hypothesis",
+   "statement": "direct sum -1.39 to 1.85 across open twos; x at e2: whole-model 78% vs 58% blank; data 76.2% vs 64.7%; direct off AUC 0.768",
+   "check": "verify probe; subgroup; ablate",
+   "evidence": "direct contribution -1.3932 at zero open twos, +1.8541 at six; c_e2 sweep: 77.8% with x, 58.5% blank, 45.0% with o; subgroup c_e2 == 1: n 5220, outcome 76.2% vs 64.7%, mean predicted 75.0% vs 63.5%; ablate 0.7678",
+   "commands": [
+    "uv run python -m explaneat verify probe <T> --sweep c_e2=-1,0,1 --nodes 2,4",
+    "uv run python -m explaneat verify subgroup <T> --where \"c_e2 == 1\""
+   ]
+  },
+  {
+   "id": "V17",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_127",
+   "claims": [],
+   "location": "operations.direct_terms.hypothesis",
+   "statement": "the linear part, described by its 58 weights",
+   "check": "L4 reading",
+   "evidence": "not meaningful: restates the closed form (the record grades it closed-form-only itself). What it does: a linear score dominated by single cells (e2 against x, e1 for x) with x line counts positive and o line counts negative.",
+   "commands": []
+  },
+  {
+   "id": "V18",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_117",
+   "claims": [],
+   "location": "operations.unit1.hypothesis",
+   "statement": "on for 46681 of 54045 (67.1% vs 58.1%); 2.73 at zero open twos to 0 at six; o at c1 2.99, x 1.51; AUC 0.935 to 0.825; o_row1 0.62; ad-hoc 0.67; o odd threat 100 rows",
+   "check": "subgroup, probe, ablate (recheck), concept",
+   "evidence": "46681 rows, 67.06% vs 58.05%; node 1 = 2.73, 2.249, 1.768, 1.287, 0.805, 0.324, 0; c_c1 = -1: 2.986, +1: 1.512; ablate 0.8254; concept -(x_open_2 + c_b1 + c_c1 + c_d1 + c_e1) score 0.6738; acts on all 100 o-odd-threat rows (mean contribution +10.5 vs +3.2)",
+   "commands": [
+    "uv run python -m explaneat verify probe <T> --sweep c_c1=-1,0,1 --nodes 1,9,6",
+    "uv run python -m explaneat verify concept <T> --part unit1 --concept \"-(x_open_2 + c_b1 + c_c1 + c_d1 + c_e1)\""
+   ]
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_117",
+   "claims": [],
+   "location": "operations.unit1.hypothesis",
+   "statement": "largest when x has few open twos (an offset that shrinks as x's position improves)",
+   "check": "subgroup by open-two count",
+   "evidence": "acts on 95.1% of positions with zero open twos (mean contribution +4.17), 92.6% at one (+3.44), 82.4% at two (+2.79), 74.3% at three (+2.54), 70.3% at four (+2.31), 70.7% at five or more (+2.31): falls steadily",
+   "commands": [
+    "uv run python -m explaneat verify subgroup <T> --where \"x_open_2 == 0\"",
+    "uv run python -m explaneat verify subgroup <T> --where \"x_open_2 == 4\""
+   ]
+  },
+  {
+   "id": "V20",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_117",
+   "claims": [],
+   "location": "operations.unit1.hypothesis",
+   "statement": "stored meaning: the negative of x's open twos plus x on b1, c1, d1 and e1 (partial, 0.67)",
+   "check": "L4 reading; closed-form weights",
+   "evidence": "the stored concept is a fitted sum, not a game concept, and the hypothesis itself says the unit is \"described by its formula rather than explained\"; cells carry 81% of its |weight| per sd (top: c1 -0.63, b1 -0.62, x_open_2 -0.62, d2 +0.56, d1 -0.53, e1 -0.52). A compensating offset is a fair description but not a meaning.",
+   "commands": []
+  },
+  {
+   "id": "V21",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_118",
+   "claims": [],
+   "location": "operations.unit2.hypothesis",
+   "statement": "on for 15368; 4933 of 5498 with x at c3; 78.7% vs 64.4%; sweep 1.72 with x at c3, off blank/o, o at e2 0.79; 58% to 94%; AUC 0.922; c_c3 0.41; x threat 0.68 on 660 rows; rule 0.78",
+   "check": "subgroup, probe, concept",
+   "evidence": "15368 rows; c_c3 == 1: n 5498, outcome 78.7% vs 64.4%, unit2 acts on 4933; node 2 = 0, 0, 1.716 across c3 = o, blank, x; c_e2 = -1: 0.785; chance 58.5% to 94.2%; x_thr > 0: n 660 (unit2 acts on 80.2%); concept c_c3 == 1 score 0.7772",
+   "commands": [
+    "uv run python -m explaneat verify probe <T> --sweep c_c3=-1,0,1 --nodes 2,6,8",
+    "uv run python -m explaneat verify subgroup <T> --where \"c_c3 == 1\""
+   ]
+  },
+  {
+   "id": "V22",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_118",
+   "claims": [],
+   "location": "operations.unit2.hypothesis",
+   "statement": "a gate that lowers x's predicted chance when c3 is x; off with c3 blank or o (in the sweep)",
+   "check": "subgroup c_c3 == 0 and c_e2 == -1",
+   "evidence": "on the data 10361 of its 15368 active rows (67%) have c3 blank: it is on for 24.4% of the 42385 blank-c3 positions and 71.4% of the 4453 positions with o at e2; the rule \"x at c3\" covers 32% of where it acts (the sweep statement is true only at the typical case)",
+   "commands": [
+    "uv run python -m explaneat verify subgroup <T> --where \"c_c3 == 0\"",
+    "uv run python -m explaneat verify subgroup <T> --where \"c_e2 == -1\""
+   ]
+  },
+  {
+   "id": "V23",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_119",
+   "claims": [],
+   "location": "operations.unit3.hypothesis",
+   "statement": "rises with x centre pieces and x at d2; sweep 0.21 to 5.32; o at d2 off, x 1.71; chance 58% to 87%; on for 31176 (73.0% vs 56.1%) and 86.8% of 21388; AUC 0.896; centre_x 0.64; sum 0.75",
+   "check": "probe, subgroup by centre count, concept",
+   "evidence": "node 3 = 0.214, 1.49, 2.767, 4.043, 5.32; c_d2 = -1: 0, +1: 1.707; chance 58.5% to 86.7%; acts on 18575 of 21388 (86.8%); by centre count 1..4 it acts on 81.1%, 97.9%, 100%, 100% with mean contribution +1.55, +3.57, +5.10, +7.23; concept centre_x + c_d2 score 0.7519. Note: 12601 of its 31176 active rows (40%) have no x centre piece (on for 38.6% of those positions), so the centre reading is partial, as stated.",
+   "commands": [
+    "uv run python -m explaneat verify probe <T> --sweep c_d2=-1,0,1 --nodes 3,10",
+    "uv run python -m explaneat verify subgroup <T> --where \"centre_x == 2\"",
+    "uv run python -m explaneat verify concept <T> --part unit3 --concept \"centre_x + c_d2\""
+   ]
+  },
+  {
+   "id": "V24",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_120",
+   "claims": [],
+   "location": "operations.unit4.hypothesis",
+   "statement": "on for 7121; x at g3 0.57 (off blank/o); on for 100% of the 66 x odd-row-threat rows (outcome 93.9%, chance 95%); flag alone 5.62, chance 20%; AUC 0.930; c_g3 0.37; threat flag 1.00; rule 0.63",
+   "check": "probe, subgroup, concept",
+   "evidence": "7121 rows; node 4 = 0, 0, 0.575 across g3 = o, blank, x; x_thr_odd = 1: node 4 = 5.622, chance 20.2%; x_thr_odd > 0: n 66, acts on 66, outcome 93.9%, mean predicted 94.9%, mean contribution +7.21 vs +0.15; concept c_g3 == 1 score 0.6280; closed-form signs e2 +0.57, d3 +0.37, e3 +0.34, c2 -0.51, d4 -0.49, e1 -0.41, a6 -0.40 as stated",
+   "commands": [
+    "uv run python -m explaneat verify probe <T> --sweep x_thr_odd=0,1 --nodes 4,5",
+    "uv run python -m explaneat verify subgroup <T> --where \"x_thr_odd > 0\""
+   ]
+  },
+  {
+   "id": "V25",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_120",
+   "claims": [],
+   "location": "operations.unit4.hypothesis",
+   "statement": "its bulk behaviour is positional: an x at g3 switches it on",
+   "check": "subgroup c_g3 == 1",
+   "evidence": "it acts on 2439 of the 3384 positions with x at g3 (72%), but 4682 of its 7121 active rows (66%) have no x at g3; and positions with x at g3 get a lower whole-model chance (59.4% vs 65.0%; outcome 59.6% vs 66.2%), so the gate raises the score on positions the model scores low overall",
+   "commands": [
+    "uv run python -m explaneat verify subgroup <T> --where \"c_g3 == 1\""
+   ]
+  },
+  {
+   "id": "V26",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_121",
+   "claims": [],
+   "location": "operations.unit5.hypothesis",
+   "statement": "on for 29176 (55.2% vs 78.3%); 0.90 with no centre piece, off from one; 1.47 at zero open twos to off at three; 31.4% of 21388 vs 68.8% of 32657; AUC 0.902; x_open_2 0.53; fires on the 66 x odd-threat rows",
+   "check": "probe, subgroup, concept",
+   "evidence": "29176 rows; node 5 = 0.898, 0, 0, 0, 0 across centre count 0..4 and 1.471, 0.898, 0.325, 0, ... across open twos; acts on 6707 of 21388 (31.4%) and 22469 of 32657 (68.8%); acts on all 66 x-odd-threat rows; by open-two count it acts on 84.7%, 66.5%, 42.8%, 23.2%, 10.6%, 4.1% (a steady fall, not a hard cut at three); -(centre_x + x_open_2), the hypothesis in one expression, scores 0.626 (better than the stored 0.532)",
+   "commands": [
+    "uv run python -m explaneat verify probe <T> --sweep centre_x=0:4:5 --nodes 3,5,10",
+    "uv run python -m explaneat verify subgroup <T> --where \"centre_x == 0\"",
+    "uv run python -m explaneat verify concept <T> --part unit5 --concept \"-(centre_x + x_open_2)\""
+   ]
+  },
+  {
+   "id": "V27",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_122",
+   "claims": [],
+   "location": "operations.unit6.hypothesis",
+   "statement": "on for 14084 (80.1% vs 60.8%); x at c3 0.94, off blank/o; b1 alone 0.03; 3085 of 5498; AUC 0.922; c_c3 0.26; bottom-row x raises, o at f1/g1/e1 raises, o centre pieces lower",
+   "check": "probe, subgroup, closed form",
+   "evidence": "14084 rows; node 6 = 0, 0, 0.942 across c3; c_b1 = 1: 0.0294; acts on 3085 of 5498 with x at c3; per-sd weights c3 +0.81, b1 +0.68, c1 +0.52, d1 +0.35, a1 +0.38, f1 -0.63, g1 -0.50, e1 -0.48, centre_o -0.53 agree with the stated directions",
+   "commands": [
+    "uv run python -m explaneat verify probe <T> --sweep c_b1=-1,0,1 --nodes 6"
+   ]
+  },
+  {
+   "id": "V28",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_122",
+   "claims": [],
+   "location": "operations.unit6.hypothesis",
+   "statement": "it switches on when c3 is x",
+   "check": "subgroup c_c3 == 0",
+   "evidence": "10999 of its 14084 active rows (78%) have no x at c3; it is on for 25.4% of the 42385 blank-c3 positions and 4.0% of the o-at-c3 positions",
+   "commands": [
+    "uv run python -m explaneat verify subgroup <T> --where \"c_c3 == 0\"",
+    "uv run python -m explaneat verify subgroup <T> --where \"c_c3 == -1\""
+   ]
+  },
+  {
+   "id": "V29",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_122",
+   "claims": [],
+   "location": "operations.unit6.hypothesis",
+   "statement": "a positional gate, described not explained",
+   "check": "L4 reading",
+   "evidence": "not meaningful: restates the closed form (the record grades it closed-form-only). What it does: a positive gate on for 26% of positions, most often with x at c3 or x on the bottom row, whose active rows are won 80.1% of the time.",
+   "commands": []
+  },
+  {
+   "id": "V30",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_123",
+   "claims": [],
+   "location": "operations.unit7.hypothesis",
+   "statement": "on for 37604 (59.6% vs 80.2%); 2.11 at zero open twos to off at four; x at e1 2.75 vs 0.25 with o; 5518 of 11336 with three or more open twos; AUC 0.886; x_open_2 0.33; fires on the 100 o odd-threat rows",
+   "check": "probe, subgroup, ablate",
+   "evidence": "37604 rows; node 7 = 2.114, 1.501, 0.889, 0.277, 0, 0, 0; c_e1 = 1: 2.754, -1: 0.249; acts on 5518 of 11336; ablate AUC 0.8859; acts on all 100 o-odd-threat rows; by open-two count acts on 85.0%, 76.2%, 65.6%, 53.4%, 46.7%, 29.6% with mean contribution -2.07 to -0.32",
+   "commands": [
+    "uv run python -m explaneat verify probe <T> --sweep c_e1=-1,0,1 --nodes 7,6",
+    "uv run python -m explaneat verify ablate <T> --part unit7",
+    "uv run python -m explaneat verify subgroup <T> --where \"x_open_2 >= 3\""
+   ]
+  },
+  {
+   "id": "V31",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_123",
+   "claims": [],
+   "location": "operations.unit7.hypothesis",
+   "statement": "a positional gate whose slope is set by the open-two count and whose level is set by cells",
+   "check": "L4 reading",
+   "evidence": "not meaningful: restates the closed form (the record grades it closed-form-only). What it does: lowers the score on 70% of positions, less so the more open twos x has.",
+   "commands": []
+  },
+  {
+   "id": "V32",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_124",
+   "claims": [],
+   "location": "operations.unit8.hypothesis",
+   "statement": "on for 34275; o at c3 1.95, off with x; with o at c3 rises 0 to 1.72 across open ones 0..8 while the chance rises 1% to 38%; 5545 of 6162; AUC 0.885; x_open_1 0.10; rule 0.51",
+   "check": "probe, subgroup, concept",
+   "evidence": "34275 rows; node 8 = 1.955, 0.060, 0 across c3 = o, blank, x; with c_c3 = -1: node 8 = 0, 0.058, ..., 1.718 and chance 0.6% to 37.8% (x_open_1 = 0 is outside the data, minimum 1); acts on 5545 of 6162; concept c_c3 == -1 score 0.5140",
+   "commands": [
+    "uv run python -m explaneat verify probe <T> --set c_c3=-1 --sweep x_open_1=0:8:9 --nodes 8"
+   ]
+  },
+  {
+   "id": "V33",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_124",
+   "claims": [],
+   "location": "operations.unit8.hypothesis",
+   "statement": "it switches on when c3 is o (off with x there)",
+   "check": "subgroup c_c3 == 1, c_c3 == 0",
+   "evidence": "28730 of its 34275 active rows (84%) do not have o at c3: it is on for 46.7% of the 5498 positions with x at c3 and 61.7% of the 42385 blank-c3 positions. \"Off with x there\" holds only at the typical case.",
+   "commands": [
+    "uv run python -m explaneat verify subgroup <T> --where \"c_c3 == 1\"",
+    "uv run python -m explaneat verify subgroup <T> --where \"c_c3 == 0\""
+   ]
+  },
+  {
+   "id": "V34",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_125",
+   "claims": [],
+   "location": "operations.unit9.hypothesis",
+   "statement": "on for 9743 (81.8% vs 62.3%); with x at c1 and o at b1: 1.40 with o at g1, 0.40 blank, off with x; chance 91% to 68%; 7970 of 9743 have x at c1; AUC 0.929; c_c1 0.46",
+   "check": "probe, subgroup",
+   "evidence": "9743 rows; node 9 = 1.402, 0.395, 0 across g1 = o, blank, x with chance 91.3%, 68.7%, 67.9%; acts on 7970 of the 25639 positions with x at c1; closed-form weights g1 -0.75, b1 -0.73, a1 -0.51, c1 +0.48",
+   "commands": [
+    "uv run python -m explaneat verify probe <T> --set c_c1=1 --set c_b1=-1 --sweep c_g1=-1,0,1 --nodes 9",
+    "uv run python -m explaneat verify subgroup <T> --where \"c_c1 == 1\""
+   ]
+  },
+  {
+   "id": "V35",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_125",
+   "claims": [],
+   "location": "operations.unit9.hypothesis",
+   "statement": "it needs x at c1 together with o on the bottom row at b1, g1 or a1",
+   "check": "subgroup of the rule; verify concept",
+   "evidence": "1773 of its 9743 active rows (18%) have no x at c1 and 2233 (23%) fail the full rule; among the 18798 positions that satisfy the rule it is on for only 40.0%; the rule as a concept scores 0.34 (AUC 0.67). \"Needs\" overstates a tendency.",
+   "commands": [
+    "uv run python -m explaneat verify subgroup <T> --where \"c_c1 == 1 and (c_b1 == -1 or c_g1 == -1 or c_a1 == -1)\"",
+    "uv run python -m explaneat verify concept <T> --part unit9 --concept \"(c_c1 == 1) & ((c_b1 == -1) | (c_g1 == -1) | (c_a1 == -1))\""
+   ]
+  },
+  {
+   "id": "V36",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_125",
+   "claims": [],
+   "location": "operations.unit9.hypothesis",
+   "statement": "a bottom-row positional gate, described not explained",
+   "check": "L4 reading",
+   "evidence": "not meaningful: restates the closed form (the record grades it closed-form-only). What it does: a small positive gate on 18% of positions, mostly with x at c1 and o beside it on the bottom row.",
+   "commands": []
+  },
+  {
+   "id": "V37",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_126",
+   "claims": [],
+   "location": "operations.unit10.hypothesis",
+   "statement": "on for 44853; most negative readout; 0.42 with no centre piece to 5.06 with four; x at d2 2.09, off with o; rises with x at b3, f3 and o centre pieces; 94.4% of 21388; AUC 0.832; centre_x 0.50; sum 0.72",
+   "check": "probe, subgroup, ablate, concept, readout",
+   "evidence": "44853 rows; readout -1.762 (most negative of ten); node 10 = 0.424, 1.584, 2.743, 3.902, 5.062; c_d2 = 1: 2.089, -1: 0; c_b3 = 1: 2.051, -1: 0; weights b3 +0.72, f3 +0.42, centre_o +0.61; acts on 20180 of 21388 (94.4%); by centre count 1..4 mean contribution -3.46, -7.19, -10.69, -14.11; ablate AUC 0.8317; concept score 0.7182",
+   "commands": [
+    "uv run python -m explaneat verify probe <T> --sweep c_b3=-1,0,1 --nodes 10",
+    "uv run python -m explaneat verify ablate <T> --part unit10",
+    "uv run python -m explaneat verify subgroup <T> --where \"centre_x == 3\""
+   ]
+  },
+  {
+   "id": "V38",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_126",
+   "claims": [],
+   "location": "operations.unit10.hypothesis",
+   "statement": "the net effect of the centre column is positive and this part caps it",
+   "check": "probe centre_x sweep (contributions) and subgroup by centre count",
+   "evidence": "in the sweep unit10 goes -0.75 to -8.92 while unit3 goes +0.23 to +5.60 and the direct sum -0.85 to +1.89, net chance 58.5% to 86.7%; on real positions the mean predicted chance still rises 59.3% to 84.3% with the centre count",
+   "commands": [
+    "uv run python -m explaneat verify probe <T> --sweep centre_x=0:4:5 --nodes 3,5,10"
+   ]
+  }
+ ],
+ "parts": {
+  "ann_130": {
+   "grade": "weakened",
+   "level": "L3",
+   "name": "win_logit"
+  },
+  "ann_128": {
+   "grade": "upheld",
+   "level": "L3",
+   "name": "raise_gates"
+  },
+  "ann_129": {
+   "grade": "upheld",
+   "level": "L3",
+   "name": "lower_gates"
+  },
+  "ann_127": {
+   "grade": "weakened",
+   "level": "L4",
+   "name": "direct_terms"
+  },
+  "ann_117": {
+   "grade": "weakened",
+   "level": "L4",
+   "name": "unit1"
+  },
+  "ann_118": {
+   "grade": "weakened",
+   "level": "L2",
+   "name": "unit2"
+  },
+  "ann_119": {
+   "grade": "upheld",
+   "level": "L3",
+   "name": "unit3"
+  },
+  "ann_120": {
+   "grade": "weakened",
+   "level": "L2",
+   "name": "unit4"
+  },
+  "ann_121": {
+   "grade": "upheld",
+   "level": "L3",
+   "name": "unit5"
+  },
+  "ann_122": {
+   "grade": "weakened",
+   "level": "L2",
+   "name": "unit6"
+  },
+  "ann_123": {
+   "grade": "weakened",
+   "level": "L4",
+   "name": "unit7"
+  },
+  "ann_124": {
+   "grade": "weakened",
+   "level": "L2",
+   "name": "unit8"
+  },
+  "ann_125": {
+   "grade": "weakened",
+   "level": "L2",
+   "name": "unit9"
+  },
+  "ann_126": {
+   "grade": "upheld",
+   "level": "L3",
+   "name": "unit10"
+  }
+ },
+ "leaf_meaning": {
+  "unit1": {
+   "grade": "closed-form-only",
+   "reads": "cells",
+   "why": "The stored concept is a fitted sum of a count and four cells (score 0.67) and the hypothesis itself calls the unit \"described by its formula rather than explained\"; it is an offset that shrinks as x gains open twos, with cells carrying 81% of its weight."
+  },
+  "unit2": {
+   "grade": "partial",
+   "reads": "cells",
+   "why": "It is on for 90% of positions with x at c3 (score 0.78) and lowers the score there as a correction, but two thirds of its active rows have c3 blank, so the cell rule is only part of its behaviour."
+  },
+  "unit3": {
+   "grade": "partial",
+   "reads": "both",
+   "why": "A centre-column reading the model confirms on real positions (acts on 81%, 98%, 100%, 100% of positions with 1 to 4 centre pieces, contribution rising +1.6 to +7.2), but 40% of its active rows have no x centre piece."
+  },
+  "unit4": {
+   "grade": "partial",
+   "reads": "cells",
+   "why": "The x-at-g3 rule covers 72% of g3 positions but only a third of its active rows; its one clear game reading, firing on every x odd-row threat (+7.2 on 66 rows), is real but rests on too few rows."
+  },
+  "unit5": {
+   "grade": "partial",
+   "reads": "features",
+   "why": "A weak-position gate: on when x has no centre piece and few open twos (acts on 84.7% at zero open twos falling to 4.1% at five or more; 68.8% without a centre piece vs 31.4% with); -(centre_x + x_open_2) scores 0.63, a better match than the stored x_open_2 (0.53)."
+  },
+  "unit6": {
+   "grade": "closed-form-only",
+   "reads": "cells",
+   "why": "The x-at-c3 trigger accounts for 22% of its active rows and no concept reaches 0.5; it is a bottom-row cell pattern with no game reading."
+  },
+  "unit7": {
+   "grade": "partial",
+   "reads": "both",
+   "why": "It lowers the score less the more open twos x has (acts on 85% at zero to 30% at five or more, contribution -2.1 to -0.3), a consistent direction on real positions, but cells (e1, c3, e3, a4) set its level and the concept score is 0.33."
+  },
+  "unit8": {
+   "grade": "closed-form-only",
+   "reads": "both",
+   "why": "The o-at-c3 rule describes 16% of its active rows (it is on for 47% of x-at-c3 positions and 62% of blank-c3 ones); the growth with open ones is real but the unit has no reading that holds for most of where it acts."
+  },
+  "unit9": {
+   "grade": "closed-form-only",
+   "reads": "cells",
+   "why": "The stated rule (x at c1 with o at b1, g1 or a1) scores 0.34: the unit is on for only 40% of positions satisfying it and 23% of its active rows do not."
+  },
+  "unit10": {
+   "grade": "partial",
+   "reads": "both",
+   "why": "It rises with x centre pieces and x at d2 on real positions (contribution -3.5 to -14.1 for 1 to 4 pieces, acting on 92% to 100%) and caps the centre column's positive effect; a compensating term with a partial centre reading."
+  },
+  "direct_terms": {
+   "grade": "closed-form-only",
+   "reads": "both",
+   "why": "A 58-term linear sum; the stated largest weights reproduce, but the part has no reading beyond its coefficients (concept score 0.08)."
+  }
+ },
+ "statements_checked": 171,
+ "statements_checked_breakdown": {
+  "record and structure (coverage, preservation, errors, op counts, hierarchy)": 9,
+  "readout weights and signs": 10,
+  "direct-term coefficients": 12,
+  "closed-form cell directions named in unit hypotheses (units 2,3,4,6,7,8,9,10)": 46,
+  "subgroup n, outcome rates, mean chances, shares and acting counts": 38,
+  "probe sweep values and whole-model chances": 25,
+  "ablation and linearisation AUCs and mean changes": 18,
+  "concept scores": 8,
+  "threat and base-rate counts": 5
+ },
+ "counts": {
+  "refuted": 0,
+  "weakened": 11,
+  "upheld": 27,
+  "flag": 0
+ },
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ],
+ "notes": [
+  "Read-only: no database writes, no edits to the target directory; scratch files in the verify/ output directory only.",
+  "All evidence checked on the training split (n 54045).",
+  "The typical held case used by every probe sweep is an empty board with x_open_1 = 9, not an eight-ply position; directions were therefore confirmed on data subgroups as well."
+ ]
+}
