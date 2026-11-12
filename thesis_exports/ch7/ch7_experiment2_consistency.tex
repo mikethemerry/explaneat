@@ -1,0 +1,20 @@
+\begin{table}[htbp]
+\centering
+\small
+\caption{Experiment 2: the ten-seed study under the frozen v4 explanation method, per set.}
+\label{tab:ch7-exp2-consistency}
+\begin{tabular}{lrrrrrp{3.2cm}r}
+\toprule
+Set & Test AUC (median) & Rashomon $\varepsilon=0.01$ & Full coverage (v4) & Recheck: mismatch / needs review & Minutes (median) & Levels: leaves; granularity; meaningful & Signed off \\
+\midrule
+Heart & 0.878 & 1 / 10 & 10 / 10 & 0 / 1 & 12.9 & 3.5; 1.00; 100\% & 0 / 10 \\
+MONK-2 & 0.856 & 3 / 10 & 10 / 10 & 0 / 1 & 13.3 & 3; 1.00; 33\% & 0 / 10 \\
+Adult & 0.906 & 10 / 10 & 10 / 10 & 0 / 6 & 21.6 & 8; 1.00; 100\% & 0 / 10 \\
+\midrule
+Heart-100 (supp.) & 0.892 & 1 / 10 & 10 / 10 & 0 / 1 & 14.9 & 4; 1.00; 83\% & 0 / 10 \\
+churn100 (supp.) & 0.886 & 4 / 10 & 10 / 10 & 0 / 2 & 18.2 & 7; 1.00; 87\% & 0 / 10 \\
+churn200 (supp.) & 0.900 & 4 / 10 & 10 / 10 & 0 / 1 & 21.6 & 8.5; 1.00; 89\% & 0 / 10 \\
+\bottomrule
+\end{tabular}
+\begin{flushleft}\footnotesize Ten seeds per set. Test AUC is the reported median (experiments/10seed/summary.md, unchanged). Rashomon: seeds within 0.01 test AUC of the best observed seed (results/thesis/rashomon\_counts.csv). Coverage, recheck and minutes are the frozen-method v4 run (experiments/10seed/explanations\_v4/ and the *\_v4.csv files; recheck counts are the records' stored recheck\_summary, before the amend\_evidence fix that cleared the needs-review items). Levels are medians over the ten v4 records (experiments/explanation\_levels/levels/). Signed off: verified by the author (signoff-v1); the three sets above the rule are pre-registered, the three below are supplementary.\end{flushleft}
+\end{table}
