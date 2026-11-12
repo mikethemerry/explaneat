@@ -1,0 +1,134 @@
+{
+ "label": "c4lf-perline-default-s2",
+ "genome_id": "94fb8bdc-784b-4f75-a63c-25b1ad31da15",
+ "start": "2026-11-12T20:45:31+13:00",
+ "end": "2026-11-12T21:35:30+13:00",
+ "structural_coverage": 1.0,
+ "compositional_coverage": 1.0,
+ "full_coverage": true,
+ "within_budget": true,
+ "n_leaf_annotations": 6,
+ "n_composition_annotations": 1,
+ "n_splits": 1,
+ "n_identity_nodes": 3,
+ "hidden_nodes": 3,
+ "hidden_nodes_single_leaf_no_split": 3,
+ "hidden_nodes_in_any_annotation": 3,
+ "hierarchy_complete": true,
+ "function_preservation_max_abs_err": 8.881784197001252e-16,
+ "closed_form_max_abs_err": 0.008577888718491522,
+ "summary": "The network predicts an x win from a near-linear score: three summed groups of direct terms (x's per-line open counts, o's per-line open counts and the aggregate line features) carry the discrimination (training AUC 0.912; without x's per-line terms 0.841, without the aggregates 0.871, without o's per-line terms 0.869), with x's open lines low on the board and through the centre and x's open singles, twos and centre pieces raising the predicted chance, and o's open horizontals on rows two to four, o's open singles and twos and an o even-row threat lowering it. The three hidden units are small: a hinge that is on when x's open count on the diagonal b5-e2 is at least o's open count on the vertical b3-b6 (off on 3115 rows, taking the AUC to 0.910 when removed), an always-on unit that rescales x's even-row threats, and a hinge on x's open count on the diagonal d6-g3; replacing the hinges by straight lines leaves the AUC at 0.9119. The explained model reproduces the evolved one to 8.9e-16.",
+ "summary_template": "The network predicts an x win from a near-linear score: three summed groups of direct terms (x's per-line open counts, o's per-line open counts and the aggregate line features) carry the discrimination (training AUC {{q:q_644388c810.auc_roc|.3f}}; without x's per-line terms {{q:q_5f10e774e3.data.auc_without|.3f}}, without the aggregates {{q:q_ffbe1c03bf.data.auc_without|.3f}}, without o's per-line terms {{q:q_881e9daecf.data.auc_without|.3f}}), with x's open lines low on the board and through the centre and x's open singles, twos and centre pieces raising the predicted chance, and o's open horizontals on rows two to four, o's open singles and twos and an o even-row threat lowering it. The three hidden units are small: a hinge that is on when x's open count on the diagonal b5-e2 is at least o's open count on the vertical b3-b6 (off on {{q:q_773c5615f8.subgroup.n|d}} rows, taking the AUC to {{q:q_3bd977734d.data.auc_without|.3f}} when removed), an always-on unit that rescales x's even-row threats, and a hinge on x's open count on the diagonal d6-g3; replacing the hinges by straight lines leaves the AUC at {{q:q_617d6e017d.auc_all_affine|.4f}}. The explained model reproduces the evolved one to {{q:q_0a59c9a7ed.function_preservation_max_abs_err|.1e}}.",
+ "resisted": "The per-line direct terms resisted a reading beyond their sign pattern: the x-line and o-line sums are weighted sums over dozens of lines, and the best concepts found (unweighted signed sums of the lines the weights favour or penalise, scores 0.80 and 0.83) are partly restatements of the formulas rather than game concepts; the negative x lines ending on row six and the positive o verticals are within-model offsets against the aggregate counts, not data patterns (rows with an x piece on open c3-f6 have an observed x-win rate of 0.75 against 0.64 for the rest). The x even-row threat unit is on for every training row (a share 1.00 of the 54045 rows) and partly cancels its own direct term, so it is described, not explained.",
+ "resisted_template": "The per-line direct terms resisted a reading beyond their sign pattern: the x-line and o-line sums are weighted sums over dozens of lines, and the best concepts found (unweighted signed sums of the lines the weights favour or penalise, scores {{q:q_ec03a4f94d.score|.2f}} and {{q:q_896da4ea5b.score|.2f}}) are partly restatements of the formulas rather than game concepts; the negative x lines ending on row six and the positive o verticals are within-model offsets against the aggregate counts, not data patterns (rows with an x piece on open c3-f6 have an observed x-win rate of {{q:q_e39eee6c14.subgroup.outcome_rate|.2f}} against {{q:q_e39eee6c14.rest.outcome_rate|.2f}} for the rest). The x even-row threat unit is on for every training row (a share {{q:q_0681ef9d15.subgroup.share_of_rows|.2f}} of the {{q:q_0681ef9d15.subgroup.n|d}} rows) and partly cancels its own direct term, so it is described, not explained.",
+ "recheck_summary": {
+  "mismatch": 0,
+  "needs_review": 0,
+  "needs_review_items": [],
+  "unchecked_freetext_sentences": 42,
+  "complete_ok": true
+ },
+ "recheck_notes": "One needs_review item on the first run: the training-performance query referenced by the root hypothesis (q_db080614c4) had been computed before the split and identity-node operations. Fixed: recomputed as q_644388c810 on the final structure (same values, the operations are function-preserving) and the root hypothesis, its evidence record and the summary now reference it. Second run: 0 mismatch, 0 needs_review. The 42 unchecked free-text sentences are the sentences without numbers (line names, directions, game readings, scope statements).",
+ "tool_bugs": "None blocking. add_evidence in strict mode refuses an analytical_formula payload that lists entry_nodes/exit_nodes (node ids such as -60 are read as bare numbers); worked around by attaching only the LaTeX. The --calls batch runner is slow on this 54045-row split (about 15-20 s per query) so queries were run in background batches. xn.py --recheck needs the record file to exist (it is an input), so the record was drafted before the recheck.",
+ "numbers": {
+  "in_text": 148,
+  "referenced": 148,
+  "allow_listed": 0
+ },
+ "accuracy": {
+  "open_findings": 0,
+  "numbers": 148,
+  "provenance_backed": 148,
+  "allow_listed": 0,
+  "scope_mismatch": 0,
+  "formulas": {
+   "exact": 1,
+   "approx_with_tolerance": 6,
+   "other": 0
+  },
+  "audit": {
+   "references": 148,
+   "checked": 148
+  },
+  "self_probe": {
+   "parts": [
+    "xDiagD6G3Gate",
+    "xB5E2vsOB3B6Gate",
+    "xThrEvenUnit",
+    "xLinesDirect",
+    "oLinesDirect",
+    "aggregatesDirect",
+    "winLogit"
+   ],
+   "refuted_and_fixed": [
+    "xB5E2vsOB3B6Gate: the first hypothesis said the unit switches off only when o has a tall open stack on b3-b6; the sweep showed one o piece switches it off when x is absent from b5-e2, and the rule was rewritten as on iff x count on b5-e2 >= o count on b3-b6, which the subgroup counts confirm on every training row"
+   ]
+  },
+  "restatements": 1
+ },
+ "leaves": [
+  {
+   "name": "xDiagD6G3Gate",
+   "units": [
+    "2326"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 1.0,
+   "best_concept": "x_line_d6-g3",
+   "why": "The hinge is on exactly when x has no open piece on the diagonal d6-g3 (count check on every training row), with a tiny positive bonus to the logit."
+  },
+  {
+   "name": "xB5E2vsOB3B6Gate",
+   "units": [
+    "2649"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 1.0,
+   "best_concept": "`x_line_b5-e2` >= `o_line_b3-b6`",
+   "why": "On iff x open count on the diagonal b5-e2 is at least o open count on the vertical b3-b6 (zero counterexamples on the training rows); when on it adds to x chance with x pieces on b5-e2 and subtracts with o pieces up column b."
+  },
+  {
+   "name": "xThrEvenUnit",
+   "units": [
+    "2829"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 1.0,
+   "best_concept": "x_thr_even",
+   "why": "The ReLU is on for every training row so the part is a straight line in x even-row threats that partly cancels the same input direct term; the probe grade is meaningful but the part is described, not explained in game terms."
+  },
+  {
+   "name": "xLinesDirect",
+   "units": [
+    "identity_xlines"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 0.8,
+   "best_concept": "signed unweighted sum: x open lines on the bottom row, row three, the centre column and the low diagonals through the middle, minus x open lines on the diagonals reaching row six",
+   "why": "A 35-term weighted sum; the reading (reward x low and central open lines, penalise x open pieces on row-six diagonals) is confirmed by sweeps, but the concept is partly a restatement of the formula."
+  },
+  {
+   "name": "oLinesDirect",
+   "units": [
+    "identity_olines"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 0.83,
+   "best_concept": "signed unweighted sum: o open horizontals on rows two to four and o diagonals into the left-centre, minus o verticals d1-d4 and e1-e4 and b4-e4",
+   "why": "A 34-term weighted sum; the reading (o horizontals on rows two to four hurt x, o centre verticals are discounted) is confirmed by sweeps, but the concept is partly a restatement of the formula."
+  },
+  {
+   "name": "aggregatesDirect",
+   "units": [
+    "identity_aggregates"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 0.82,
+   "best_concept": "x_open_1 + x_open_2 + centre_x - o_open_1 - o_open_2",
+   "why": "Open-line material x minus o (singles and twos worth about the same) plus x centre pieces, with an o even-row threat as a near-decisive penalty on a rare regime."
+  }
+ ],
+ "overall_function": "The network computes a near-linear score of the position and passes it through a sigmoid. Almost all of the discrimination comes from three summed groups of direct terms: x's open counts per line, o's open counts per line, and the aggregate line features (open singles and twos per side, centre pieces, threats by parity). The only interaction is a hinge on two crossing lines (x on the diagonal b5-e2 against o on the vertical b3-b6) which is on when x's count is at least o's and adds a bonus that grows with x's pieces there; a second hinge on x's count on the diagonal d6-g3 and an always-on unit on x's even-row threats are tiny, and replacing all hinges by straight lines leaves the AUC essentially unchanged. The network ignores about half of the per-line inputs, both sides' open-three counts, the total threat counts and the playable-cell parity features (no enabled connection).",
+ "game_terms": "x's predicted chance rises with x's open lines low on the board and through the centre (the bottom-row horizontals a1-d1, b1-e1, c1-f1, d1-g1, row three, the centre column d1-d4 and d2-d5, the diagonals b2-e5, c5-f2, c2-f5, b4-e1, c4-f1), with x's open singles, open twos and centre-column pieces, and falls with o's open singles and twos and with o's open horizontals on rows two to four (b2-e2, a4-d4, a2-d2, c2-f2) and o's diagonals into the left-centre (a5-d2, c5-f2). An o threat on an even row (o's parity rows) is treated as nearly decisive against x. Oddly, x's open pieces on diagonals that reach row six (c3-f6, b6-e3, b3-e6, a6-d3, d3-g6) and o's open stacks in the centre verticals d1-d4 and e1-e4 pull the other way; these are within-model offsets against the aggregate counts, not data patterns (such positions still have above-average x-win rates). The one gate detects o building an open stack in column b (b3-b6) unanswered by x on the diagonal through b5, and withdraws a bonus when it does.",
+ "stuck": "Nothing blocked the work. Time went on the slow query batches (54045 rows, 15-20 s per query) and on the strict-mode refusals of formula payloads with node ids. The per-line direct terms resisted a reading beyond their sign pattern: their meaning scores come from signed sums of the favoured and penalised lines, which are close to restatements of the formula."
+}
