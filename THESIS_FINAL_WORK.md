@@ -165,3 +165,31 @@ shown to have zero effect on the result has the trivial explanation "Null".
 - **Support-level Null** (e.g. units never active on the data) needs an evidenced Null
   annotation.
 - Documented in `docs/annotation_coverage_model.md`. Re-checked on all 60 records: **0 changes**.
+
+## Progress, 13 Nov
+
+**Thesis experiment set finalised as a manifest:** `THESIS_EXPERIMENTS.md` (repo root) names every
+experiment in the three-experiment structure Mike set on 12 Nov (Experiment 1: cases; 2:
+consistency; 3: where the complexity lives), with what it did, pre-registered or exploratory, the
+results files and their commits, the key numbers and the file each comes from, the exports and
+figures, the database and experiment names, and a status (complete / interim / gap). Reported
+numbers (`summary.md`, `ch7_table.tex`, the AAAI paper, the signals README tables) are marked and
+unchanged. Audited against `origin/main` at `2386ee9`.
+
+Done with it, same branch (`docs/thesis-experiments`):
+- Three new exports in `thesis_exports/ch7/` from `scripts/thesis/thesis_experiment_tables.py`
+  (committed results files only, no database): `ch7_experiment1_cases.tex`,
+  `ch7_experiment2_consistency.tex`, `ch7_experiment3_complexity.tex`. `ch7_table.tex` untouched.
+  Every existing export regenerates byte-identical from its source.
+- The `c4_line_features` scripts and signal check, cited by its `RESULTS.md` but never committed,
+  recovered from the `c4-lines` worktree and added.
+- MNIST linear-start: the ninth run had finished; `summary.json`, `table.csv` and `runs.json`
+  regenerated (9 of 9, `complete`), a dated addendum in `LINEAR_START.md`.
+- `docs/signals-and-realisations/README.md` §3a: the stale "in progress" for the line-features run
+  corrected.
+
+Open (details and costs in the manifest's last section): Mike's sign-off (0 of 10); whether
+`summary.md` switches to the v4 numbers (Mike); the probe v2 recompute on `fix/probe-simplicity`
+(levels numbers may move); ladder round 2 on `exp/explanation-barrier-2` (not merged); levels for
+the three paper explanations; a single churn case, if wanted; KRK blind verification; the Cox
+plain-language draft after the survival-aware template on `fix/varianz-readiness`.

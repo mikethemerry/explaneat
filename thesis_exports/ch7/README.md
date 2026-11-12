@@ -18,6 +18,9 @@ edit here.
 | `xor_gates.pdf`, `.png` | XOR gate decomposition for each family | `experiments/xor/make_xor_figures.py` | `b281ad0` |
 | `ch7_levels_table.tex` | The three levels of explanation (faithful / decomposed / understood) per study, plus the explanation ladder and the Connect-4 capacity network (LaTeX, needs `booktabs`); added 2026-11-12, `ch7_table.tex` unchanged | `experiments/explanation_levels/make_tables.py` from `compute_levels.py` (read only) | see `experiments/explanation_levels/RESULTS.md` |
 | `ch7_cox_case_table.tex` | The Cox survival case for Experiment 1 (one PropNEAT-Cox model per dataset, GBSG2 and WHAS500, against ridge Cox, Cox PH and a random survival forest on the same split; the explanation's three levels and the verifier's verdict; LaTeX, needs `booktabs`); added 2026-11-12, nothing else here changed | `experiments/survival/cox_case/tables.py` (inputs: `run_case.py`, `references.py`, `levels.py`, the records and verdicts) | see `experiments/survival/cox_case/RESULTS.md` |
+| `ch7_experiment1_cases.tex` | Experiment 1: one row per case (Heart, MONK-2, Adult paper genomes; churn; GBSG2 and WHAS500 Cox; XOR; KRK and Connect-4 boundary cases): n, hidden / connections, test metric against the references, the three levels, verification (LaTeX, needs `booktabs`); added 2026-11-13, nothing else here changed | `scripts/thesis/thesis_experiment_tables.py` (reads only committed results files; sources in the table note) | see `THESIS_EXPERIMENTS.md` |
+| `ch7_experiment2_consistency.tex` | Experiment 2: the frozen-method v4 run per set (reported test AUC median, Rashomon count at ε = 0.01, full coverage, recheck, minutes, levels, sign-off); added 2026-11-13 | `scripts/thesis/thesis_experiment_tables.py` | see `THESIS_EXPERIMENTS.md` |
+| `ch7_experiment3_complexity.tex` | Experiment 3: one line per study (the explanation complexity ladder, the three Connect-4 bases, MNIST linear check and linear start) with its headline numbers and finding; added 2026-11-13 | `scripts/thesis/thesis_experiment_tables.py` | see `THESIS_EXPERIMENTS.md` |
 
 The 10-seed PDFs and the table are byte-identical copies of `experiments/10seed/figures/*.pdf` and
 `experiments/10seed/ch7_table.tex`. Their PNG versions and the original draft captions are in
@@ -33,7 +36,14 @@ Regenerate:
 uv run python experiments/10seed/make_figures.py      # then copy ch7_table.tex and figures/*.pdf here
 uv run python experiments/xor/verify_xor.py           # about 20 s
 uv run python experiments/xor/make_xor_figures.py     # writes xor_*.pdf/png here
+uv run python experiments/explanation_levels/make_tables.py   # ch7_levels_table.tex (from levels/, no DB)
+uv run python experiments/survival/cox_case/tables.py          # ch7_cox_case_table.tex
+uv run python scripts/thesis/thesis_experiment_tables.py       # ch7_experiment{1,2,3}_*.tex
 ```
+
+Checked 2026-11-13: every file here regenerates byte-identical from its source at `2386ee9` (the
+10-seed PDFs and `ch7_table.tex` are copies; the XOR figures, the levels table, the Cox table and
+the three experiment tables were regenerated and compared).
 
 ## Draft captions
 

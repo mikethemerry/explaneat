@@ -1,8 +1,21 @@
 # MNIST-10 linear-start series
 
+**Addendum, 13 November 2026: the ninth run is complete.** `ls-struct-s2` finished
+all 100 generations (280.5 min wall clock; `logs/linear_start/ls-struct-s2.json`, code
+commit `3456a05`). `linear_start_summary.py` and `linear_start_analyze.py runs` were
+rerun; `summary.json` now reads `complete`, 9 of 9, and `table.csv` and `runs.json` carry
+seed 2. Its saved champion: train acc .9751 / CE .105804, validation acc .9060 /
+CE .352146, test acc .9056 / CE .381745, 0 hidden nodes, 7,840 connections (the full
+backbone), 165 species at the end, last birth at generation 6, 740 offspring in total;
+forward parity 3.6e-14. It reproduces `ls-struct-s0` to four decimals and has no hidden
+unit, so there is no second hidden-unit case study and the provisional `ls-struct-s1`
+case study stands. Three-seed structural means: validation .9065, test .905667.
+The 12 November text below is kept as written; where it says "two completed structural
+runs", read three, with the same conclusion.
+
 **Interim report, 12 November 2026: eight of nine runs complete.** `ls-struct-s2`
-is still running unchanged; it is excluded from completed-run averages and model
-comparisons below. `logs/linear_start/summary.json` records the exact snapshot.
+was still running when this was written; it was excluded from the completed-run
+averages and model comparisons below (see the addendum above).
 
 Starting from a dense linear readout closes most of the earlier sparse-network
 accuracy gap. LR warm starts reproduce the linear training trajectory. The two
@@ -73,7 +86,7 @@ retain unrounded values.
 | lr s2 | .9698 | .122109 | .9110 | .324603 | .9087 | 0 | 7,840 |
 | struct s0 | .9751 | .105804 | .9060 | .352147 | .9056 | 0 | 7,840 |
 | struct s1 | .9754 | .105172 | .9076 | .351365 | .9058 | 1 | 7,842 |
-| struct s2 | pending | pending | pending | pending | pending | pending | pending |
+| struct s2 (13 Nov addendum) | .9751 | .105804 | .9060 | .352146 | .9056 | 0 | 7,840 |
 
 The full-start arm has mean validation accuracy .8818 and mean test accuracy
 .878567. All three LR-start champions follow exactly the 500-epoch LR-start
