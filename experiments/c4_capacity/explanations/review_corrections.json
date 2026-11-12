@@ -1,0 +1,43 @@
+[
+  {
+    "tool": "update_narrative",
+    "args": {
+      "genome_id": "f0eb7635-7f85-437b-815b-993c5ad6cc14",
+      "annotation_id": "connect4_score",
+      "narrative": "The direct positional values and gated corrections add in the logit before the sigmoid produces predicted x-win probability. Their combined nonlinearity matters: replacing the switching gates by least-squares affine fits on the training rows changes AUC from {{q:q_9c824faecf.auc_full|.4f}} to {{q:q_9c824faecf.auc_all_affine|.4f}}. This does not identify which game tactics they represent. On the {{q:q_b16d796df5.subgroup.n|d}} training positions with an open three-o line pattern and a blank completion square, the observed x-win fraction is {{q:q_b16d796df5.subgroup.outcome_rate|pct}} while mean predicted x-win probability is {{q:q_b16d796df5.subgroup.mean_predicted_risk|pct}}. The pattern definition does not require gravity support for the blank square. The dataset excludes forced-next-move positions; this subgroup is not a test of detecting an immediate winning move. In the constructed bottom-c-square edit, the whole-model predicted x-win probabilities for o, blank and x are {{q:q_9ee81a792f.rows[0].risk|pct}}, {{q:q_9ee81a792f.rows[1].risk|pct}}, {{q:q_9ee81a792f.rows[2].risk|pct}}, respectively; this is an artificial coordinate edit, not a legal move sequence. The operation hierarchy is complete; maximum function-preservation error is {{q:q_238becbfd6.function_preservation_max_abs_err|.2g}}. The separate gate hypotheses remain descriptions rather than tactical explanations."
+    },
+    "result": {
+      "status": "ok",
+      "text_check": {
+        "strict": true,
+        "warnings": [],
+        "findings": [],
+        "provenance": [
+          "q_9c824faecf",
+          "q_b16d796df5",
+          "q_9ee81a792f",
+          "q_238becbfd6"
+        ]
+      }
+    }
+  },
+  {
+    "tool": "amend_evidence",
+    "args": {
+      "genome_id": "f0eb7635-7f85-437b-815b-993c5ad6cc14",
+      "annotation_id": "connect4_score",
+      "record_index": 3,
+      "reason": "Independent review narrowed ambiguous threat terminology to the computed open-line pattern and clarified gravity and dataset sampling limits.",
+      "narrative": "This subgroup selects open three-o line patterns with a blank completion square, irrespective of support below the blank. It is not an immediate-winning-move test. The dataset excludes forced-next-move positions. The stored count and probabilities are unchanged."
+    },
+    "result": {
+      "status": "ok",
+      "record_index": 3,
+      "history_length": 1,
+      "text_check": {
+        "warnings": [],
+        "findings": []
+      }
+    }
+  }
+]

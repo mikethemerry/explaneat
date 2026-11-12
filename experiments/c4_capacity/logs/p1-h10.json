@@ -1,0 +1,83 @@
+{
+  "task": "c4",
+  "study": "c4_capacity",
+  "seed": 0,
+  "name": "p1-h10",
+  "variant": "static",
+  "n_generations": 50,
+  "best_generation": 49,
+  "n_fit": 48640,
+  "val_frac": 0.1,
+  "n_epochs_backprop": 5,
+  "overrides": [
+    "NEAT.pop_size=150",
+    "DefaultGenome.num_hidden=10"
+  ],
+  "fitness_function": "auc",
+  "criterion": "bce",
+  "output_activation": "sigmoid",
+  "mask_phantom": true,
+  "torch_threads": 1,
+  "neat_config": "experiments/c4_capacity/configs/p1-h10.ini",
+  "dynamic_threshold": null,
+  "code_commit": "0fcd63ad6692a53cb361397761886be74978c406",
+  "code_dirty": false,
+  "data": {
+    "task": "c4",
+    "source": "PMLB connect_4 (UCI Connect-4)",
+    "target": "1 = first player (x, to move) wins with perfect play; 0 = loss or draw",
+    "encoding": "ordinal per cell: x = +1, o = -1, blank = 0; c_<column a-g><row 1-6>, row 1 = bottom",
+    "class_names": [
+      "not win",
+      "win"
+    ],
+    "n_rows": 67557,
+    "n_train_full": 54045,
+    "n_train": 54045,
+    "n_test": 13512,
+    "positive_share": 0.6583033586452921,
+    "positive_share_train": 0.658303265797021,
+    "split_seed": 42,
+    "subset_seed": null,
+    "scaler": "StandardScaler fit on the training rows"
+  },
+  "hardware": {
+    "machine": "arm64",
+    "cpu_count": 14,
+    "python": "3.12.12",
+    "torch": "2.2.2",
+    "numpy": "1.26.4"
+  },
+  "wall_clock_s": 481.8,
+  "best_key": 7246,
+  "best_fitness": 0.8500629091249378,
+  "best_size": {
+    "hidden": 2,
+    "conns": 53,
+    "inputs_used": 36,
+    "depth": 2
+  },
+  "train": {
+    "auc": 0.8510163777230368,
+    "acc": 0.7732630215561106,
+    "bce": 0.47389102582857895
+  },
+  "fit_rows": {
+    "auc": 0.8500629091249378,
+    "acc": 0.7721217105263158,
+    "bce": 0.4750944059022216
+  },
+  "val": {
+    "auc": 0.8595079817384617,
+    "acc": 0.7835337650323775,
+    "bce": 0.4630617183758553
+  },
+  "species": {
+    "mean": 1.0,
+    "min": 1,
+    "max": 1,
+    "last": 1,
+    "mean_last20": 1.0
+  },
+  "final_threshold": 3.0
+}

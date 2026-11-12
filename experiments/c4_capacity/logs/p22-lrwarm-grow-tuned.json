@@ -1,0 +1,90 @@
+{
+  "task": "c4",
+  "study": "c4_capacity",
+  "seed": 0,
+  "name": "p22-lrwarm-grow-tuned",
+  "variant": "tuned",
+  "n_generations": 50,
+  "best_generation": 49,
+  "n_fit": 48640,
+  "val_frac": 0.1,
+  "lr_warm": true,
+  "n_epochs_backprop": 5,
+  "overrides": [
+    "NEAT.pop_size=150",
+    "DefaultGenome.node_add_prob=0.8",
+    "DefaultGenome.conn_add_prob=0.9"
+  ],
+  "fitness_function": "auc",
+  "criterion": "bce",
+  "output_activation": "sigmoid",
+  "mask_phantom": true,
+  "torch_threads": 1,
+  "neat_config": "experiments/c4_capacity/configs/p22-lrwarm-grow-tuned.ini",
+  "dynamic_threshold": {
+    "species_min": 5,
+    "species_max": 10,
+    "step": 0.1,
+    "floor": 0.3
+  },
+  "code_commit": "bea1f30d34124d4eab2a6db5ca11daa735dee73a",
+  "code_dirty": true,
+  "data": {
+    "task": "c4",
+    "source": "PMLB connect_4 (UCI Connect-4)",
+    "target": "1 = first player (x, to move) wins with perfect play; 0 = loss or draw",
+    "encoding": "ordinal per cell: x = +1, o = -1, blank = 0; c_<column a-g><row 1-6>, row 1 = bottom",
+    "class_names": [
+      "not win",
+      "win"
+    ],
+    "n_rows": 67557,
+    "n_train_full": 54045,
+    "n_train": 54045,
+    "n_test": 13512,
+    "positive_share": 0.6583033586452921,
+    "positive_share_train": 0.658303265797021,
+    "split_seed": 42,
+    "subset_seed": null,
+    "scaler": "StandardScaler fit on the training rows"
+  },
+  "hardware": {
+    "machine": "arm64",
+    "cpu_count": 14,
+    "python": "3.12.12",
+    "torch": "2.2.2",
+    "numpy": "1.26.4"
+  },
+  "wall_clock_s": 649.4,
+  "best_key": 5003,
+  "best_fitness": 0.8562634430120766,
+  "best_size": {
+    "hidden": 7,
+    "conns": 53,
+    "inputs_used": 39,
+    "depth": 3
+  },
+  "train": {
+    "auc": 0.8572014232965948,
+    "acc": 0.7874178924969932,
+    "bce": 0.4425241127438162
+  },
+  "fit_rows": {
+    "auc": 0.8562634430120766,
+    "acc": 0.786389802631579,
+    "bce": 0.44344010516017596
+  },
+  "val": {
+    "auc": 0.8655025407714925,
+    "acc": 0.7966697502312673,
+    "bce": 0.43428102835311444
+  },
+  "species": {
+    "mean": 6.86,
+    "min": 1,
+    "max": 11,
+    "last": 10,
+    "mean_last20": 10.65
+  },
+  "final_threshold": 3.2
+}
