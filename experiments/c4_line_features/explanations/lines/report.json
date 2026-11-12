@@ -1,0 +1,156 @@
+{
+ "label": "c4lf-lines-heavy-s0",
+ "genome_id": "6ebf7e0c-55ec-4215-9852-0ac982e43c0e",
+ "start": "2026-11-12T17:47:07+13:00",
+ "end": "2026-11-12T18:14:00+13:00",
+ "structural_coverage": 1.0,
+ "compositional_coverage": 1.0,
+ "full_coverage": true,
+ "within_budget": true,
+ "n_leaf_annotations": 8,
+ "n_composition_annotations": 1,
+ "n_splits": 17,
+ "n_identity_nodes": 1,
+ "hidden_nodes": 11,
+ "hidden_nodes_single_leaf_no_split": 10,
+ "hidden_nodes_in_any_annotation": 11,
+ "hierarchy_complete": true,
+ "function_preservation_max_abs_err": 8.881784197001252e-16,
+ "closed_form_max_abs_err": 0.020084290920314274,
+ "summary": "The network is largely a weighted sum of line features with a few gates: replacing each nonlinear unit by its affine fit leaves a training AUC of 0.860 against 0.882 for the full model. x's open twos and open singles raise x's predicted chance of winning and o's open singles and twos lower it (whole-model chance 44% to 97% as x's open twos go from 0 to 6 at the typical case; 88% to 8% as o's open twos go from 0 to 6). The gates: the x-open-twos cap saturates near two open twos; a single o threat switches the o-lines ramp and the cap off (chance 74% to 37% at the typical case); the centre column block raises the chance when x holds the centre and lowers it when the centre column is crowded by either side; the quiet-o gate fires when o has few open lines and x holds the centre (13329 positions, x winning 93.6% of them). Threat features are rare (660 and 765 positions) and their parity splits rarer; their weights are described, not explained.",
+ "summary_template": "The network is largely a weighted sum of line features with a few gates: replacing each nonlinear unit by its affine fit leaves a training AUC of {{q:q_ce159c271d.auc_all_affine|.3f}} against {{q:q_9a1dea33fd.auc_roc|.3f}} for the full model. x's open twos and open singles raise x's predicted chance of winning and o's open singles and twos lower it (whole-model chance {{q:q_652fe92047.rows[0].risk|pct}} to {{q:q_652fe92047.rows[6].risk|pct}} as x's open twos go from 0 to 6 at the typical case; {{q:q_3e23718b44.rows[0].risk|pct}} to {{q:q_3e23718b44.rows[6].risk|pct}} as o's open twos go from 0 to 6). The gates: the x-open-twos cap saturates near two open twos; a single o threat switches the o-lines ramp and the cap off (chance {{q:q_daf2178e5e.rows[0].risk|pct}} to {{q:q_daf2178e5e.rows[1].risk|pct}} at the typical case); the centre column block raises the chance when x holds the centre and lowers it when the centre column is crowded by either side; the quiet-o gate fires when o has few open lines and x holds the centre ({{q:q_bb538a9e33.subgroup.n|d}} positions, x winning {{q:q_bb538a9e33.subgroup.outcome_rate|.1%}} of them). Threat features are rare ({{q:q_efdd0b4e0e.subgroup.n|d}} and {{q:q_10b17cb77a.subgroup.n|d}} positions) and their parity splits rarer; their weights are described, not explained.",
+ "resisted": "Three leaves have partial rather than meaningful game readings: the o-centre-x-singles gate (probe score 0.65), the x-lines-vs-o-centre pair (score 0.61; unit 9 mixes x's line counts with o's centre pieces and parity terms and is described by its closed form), and the o-lines ramp, whose score of 0.83 comes from a five-term composite close to its own formula while the two-term reading 'o's open lines' scores 0.66. The threat inputs (x and o threats on 660 and 765 training positions; odd-row threats on 66 and 100) carry weights fitted to few rows: their switch effect on the o-lines ramp and the cap is shown but is not read in game terms beyond 'an o threat is bad for x'. The library sweep ranked the rare binary threat concepts first for several leaves (by the AUC of the exit as a score for the concept); those were not used as readings because they hold on 66 and 100 rows.",
+ "resisted_template": "Three leaves have partial rather than meaningful game readings: the o-centre-x-singles gate (probe score {{q:q_1d9d355bc3.score|.2f}}), the x-lines-vs-o-centre pair (score {{q:q_4dc72ff87e.score|.2f}}; unit 9 mixes x's line counts with o's centre pieces and parity terms and is described by its closed form), and the o-lines ramp, whose score of {{q:q_f1fc518ba9.score|.2f}} comes from a five-term composite close to its own formula while the two-term reading 'o's open lines' scores {{q:q_5f39cd838c.score|.2f}}. The threat inputs (x and o threats on {{q:q_efdd0b4e0e.subgroup.n|d}} and {{q:q_10b17cb77a.subgroup.n|d}} training positions; odd-row threats on {{q:q_4cb3bce25e.subgroup.n|d}} and {{q:q_9a8a256c0c.subgroup.n|d}}) carry weights fitted to few rows: their switch effect on the o-lines ramp and the cap is shown but is not read in game terms beyond 'an o threat is bad for x'. The library sweep ranked the rare binary threat concepts first for several leaves (by the AUC of the exit as a score for the concept); those were not used as readings because they hold on {{q:q_4cb3bce25e.subgroup.n|d}} and {{q:q_9a8a256c0c.subgroup.n|d}} rows.",
+ "recheck_summary": {
+  "mismatch": 0,
+  "needs_review": 0,
+  "needs_review_items": [],
+  "unchecked_freetext_sentences": 57,
+  "complete_ok": true
+ },
+ "recheck_notes": "First recheck raised one needs_review: the root's performance evidence cited q_a32e33a676, computed before the structural operations (seq 16 of 53). Fixed with amend_evidence to q_9a1dea33fd, the same metrics recomputed after the refactoring (function-preserving: identical AUC 0.8815 and accuracy 0.8099). Second recheck: mismatch 0, needs_review 0, complete_ok true. The 57 unchecked free-text sentences are qualitative (direction, mechanism and reading sentences without a number).",
+ "tool_bugs": "(1) query_ablate(direct=True) reports 'direct_edges_of_root: 0' once the direct edges are rerouted to identity_0 by add_identity_node, so it is a no-op here; the per-edge weights were taken with query_ablate(edges=['-3_i->identity_0', ...]) and the whole-group ablation with parts=['direct_terms']. (2) query_linearise refuses level='units' (accepts parts|nodes; the docstring agrees, my call was wrong). (3) get_annotations does not show the stored meaning block (set_meaning writes params['meaning'] on the annotate operation; visible through list_operations). (4) The probe_concept library sweep ranks rare binary concepts (x_thr_odd on 66 rows, o_thr_odd on 100 rows) first for several leaves by 'AUC of the exit as a score for the concept', e.g. 0.996 for o_lines_ramp with r2 0.02; a reading chosen that way would be degenerate, so ad-hoc expressions over the leaf's main inputs were probed and stored instead. (5) query_subgroup on an empty subgroup returns outcome_rate/mean_predicted_risk null (fine) and a `{{...subgroup.n|d}}` of 0 renders correctly.",
+ "accuracy": {
+  "open_findings": 0,
+  "numbers": 229,
+  "provenance_backed": 202,
+  "allow_listed": 27,
+  "scope_mismatch": 0,
+  "formulas": {
+   "exact": 0,
+   "approx_with_tolerance": 8,
+   "other": 0
+  },
+  "audit": {
+   "references": 202,
+   "checked": 202
+  },
+  "self_probe": {
+   "parts": [
+    "quiet_o_x_centre_gate",
+    "o_lines_ramp",
+    "x_open_twos_cap",
+    "o_centre_x_singles_gate",
+    "x_singles_vs_twos_gate",
+    "centre_column_block",
+    "x_lines_vs_o_centre_pair",
+    "direct_terms",
+    "win_probability_root"
+   ],
+   "refuted_and_fixed": [
+    "x_singles_vs_twos_gate: the first draft stated a count rule ('on when x's open singles exceed x's open twos plus even-row playable columns'); the converse query found 25727 rows satisfying the rule with the gate off, so the hypothesis was rewritten to say the rule is rarely violated by on-rows (10) but is far from sufficient"
+   ]
+  },
+  "restatements": 1
+ },
+ "leaves": [
+  {
+   "name": "quiet_o_x_centre_gate",
+   "units": [
+    "1"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 0.904698,
+   "best_concept": "centre_x - o_open_1 - o_open_2",
+   "why": "A gate on when o has few open singles and twos and x holds the centre; on its 13329 rows x wins 93.6% of the time, and the sweep confirms it falls with o's open singles."
+  },
+  {
+   "name": "o_lines_ramp",
+   "units": [
+    "2"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 0.8289,
+   "best_concept": "o_open_1 + o_open_2 + x_open_2 + o_thr - centre_o",
+   "why": "A mostly-on ramp falling with o's line presence (and x's open twos) and switched off by any o threat; the meaningful score needs a five-term composite close to the formula, so the game reading is thinner than the grade."
+  },
+  {
+   "name": "x_open_twos_cap",
+   "units": [
+    "3"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 0.881852,
+   "best_concept": "x_open_2",
+   "why": "Falls with x's open twos to a floor near two open twos; through its negative output weight x's open twos raise the chance until the cap, confirmed by the sweep."
+  },
+  {
+   "name": "o_centre_x_singles_gate",
+   "units": [
+    "7"
+   ],
+   "meaning": "partial",
+   "probe_score": 0.646698,
+   "best_concept": "centre_o + x_open_1 - centre_x",
+   "why": "A small gate on when o holds the centre and x has many open singles; the reading holds for part of its rows (1426 of 9018 on-rows have o out of the centre) and its whole-model effect is small."
+  },
+  {
+   "name": "x_singles_vs_twos_gate",
+   "units": [
+    "10_a"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 0.806762,
+   "best_concept": "x_open_1 - x_open_2 - n_even_empty_playable",
+   "why": "On when x's open singles outweigh x's open twos and even-row playable columns; the count-rule is necessary but far from sufficient (the per-sd weights set a high threshold)."
+  },
+  {
+   "name": "centre_column_block",
+   "units": [
+    "6",
+    "4",
+    "76",
+    "10_b"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 0.946565,
+   "best_concept": "centre_x + centre_o",
+   "why": "Unit 6 counts centre pieces of either side; 76 is a heavy-centre gate (about three or more centre pieces) that lowers the chance; 4 is an x-holds-the-centre gate that raises it; the grid probe confirms both directions."
+  },
+  {
+   "name": "x_lines_vs_o_centre_pair",
+   "units": [
+    "2510",
+    "8",
+    "9"
+   ],
+   "meaning": "partial",
+   "probe_score": 0.613579,
+   "best_concept": "x_open_1 + x_open_2 - o_open_1 - centre_o",
+   "why": "8 and 9 both push the chance up with x's open lines and down with o's centre pieces, but unit 9 mixes parity and line terms and is described by its closed form rather than read; 2510 is an always-on affine pass-through of o's open threes."
+  },
+  {
+   "name": "direct_terms",
+   "units": [
+    "identity_0"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 0.85592,
+   "best_concept": "x_open_2",
+   "why": "Seven direct edges dominated by x's open twos (+0.88 per sd); the full linear sum is attached as analytical_formula evidence with per-edge weights from the edge ablation."
+  }
+ ],
+ "overall_function": "The network is close to a weighted sum of the line features passed through a sigmoid, with a few gates. x's open twos and open singles raise x's predicted chance and o's open singles and open twos lower it, through the direct terms and through most of the ReLU units at once. Three nonlinearities matter: a cap on x's open twos (the unit reading them reaches its floor near two open twos, after which the effect flattens), a threat switch (a single o threat turns off the two largest positive units, so the chance collapses), and a centre-column block in which x holding the centre raises the chance while a crowded centre column (either side) lowers it. The x-singles-vs-twos gate adds a bonus when x's open singles outweigh x's open twos and even-row playable columns, and the quiet-o gate adds a large bonus when o has few open lines and x holds the centre. Odd/even threat splits and odd-row playable columns enter with small weights on few rows; no input is unconnected.",
+ "game_terms": "x's prospects rise with x's open twos (up to about two, then the model stops rewarding more) and open singles, and fall with o's open singles and twos; any o threat (an empty cell completing an open three of o) is read as very bad for x, cutting the predicted chance roughly in half at the typical position. The centre column is read two ways: x pieces in it are good for x, but once about three pieces of either side sit there the heavy-centre gate lowers x's chance. A position where o has few open lines while x holds the centre is scored as nearly won for x (that gate fires on 13329 training positions, 93.6% of which x wins). Playable-cell parity is used only weakly, mostly through the x-singles-vs-twos gate (fewer even-row playable columns helps x).",
+ "stuck": "Nothing blocked completion (about 27 minutes of the 3-hour box were used). Two leaves stay at partial meaning (o_centre_x_singles_gate, x_lines_vs_o_centre_pair) and one meaningful grade (o_lines_ramp) rests on a composite close to its formula; the rare threat features (660 and 765 rows, parity splits 66 and 100) are described, not explained. The library sweep's preference for rare binary concepts (see tool_bugs) cost some care in choosing readings."
+}
