@@ -22,7 +22,8 @@ import numpy as np
 from .common import StorageError, check_restricted_storage, current_database_url
 
 _TIME_HINTS = ("time", "fu", "follow", "duration", "days", "years", "months", "surv")
-_EVENT_HINTS = ("event", "status", "death", "dead", "died", "outcome", "cvd", "fail")
+_EVENT_HINTS = ("event", "status", "death", "dead", "died", "outcome", "cvd", "fail", "recur", "relapse",
+                "mortality")
 
 
 def _read(path):

@@ -452,6 +452,57 @@ def amend_evidence(
         return json.dumps({"error": f"Annotation '{annotation_id}' not found"})
 
 
+def delete_evidence(genome_id: str, annotation_id: str, record_index: int, reason: str) -> str:
+    """Remove an evidence record (a duplicate, or one added by mistake).
+
+    The record is moved to ``params.evidence.deleted`` with the time, its former index and
+    ``reason``, so the explanation's history stays complete; ``list_evidence`` and the exports
+    no longer show it. The remaining records keep their order (indices above the deleted one
+    shift down by one).
+
+    Args:
+        genome_id: UUID of the genome.
+        annotation_id: ID of the annotation (e.g. "ann_3").
+        record_index: Index of the record in the annotation's evidence records.
+        reason: Why it is deleted (kept with the deleted record).
+    """
+    from sqlalchemy.orm.attributes import flag_modified
+
+    if not str(reason or "").strip():
+        return json.dumps({"error": "give a reason (kept with the deleted record)"})
+    db = get_db()
+    with db.session_scope() as session:
+        explanation = lock_explanation(session, _to_uuid(genome_id))
+        find_annotation_in_operations(session, genome_id, annotation_id)
+        if not explanation or not explanation.operations:
+            return json.dumps({"error": "No explanation found"})
+        operations = list(explanation.operations)
+        for op in operations:
+            if op.get("type") != "annotate":
+                continue
+            ann_id = (op.get("result") or {}).get("annotation_id") or f"ann_{op.get('seq', 0)}"
+            params = op.get("params", {})
+            if not (ann_id == annotation_id or params.get("name") == annotation_id):
+                continue
+            evidence = dict(params.get("evidence") or {})
+            records = list(evidence.get("records") or [])
+            if not 0 <= int(record_index) < len(records):
+                return json.dumps({"error": f"no evidence record {record_index} (the annotation has {len(records)})"})
+            rec = records.pop(int(record_index))
+            evidence["records"] = records
+            evidence.setdefault("deleted", []).append({
+                "record": rec, "was_index": int(record_index), "reason": str(reason),
+                "deleted_at": datetime.now(timezone.utc).isoformat()})
+            params["evidence"] = evidence
+            op["params"] = params
+            explanation.operations = operations
+            flag_modified(explanation, "operations")
+            session.flush()
+            return json.dumps({"status": "ok", "deleted_index": int(record_index), "type": rec.get("type"),
+                               "record_count": len(records), "deleted_count": len(evidence["deleted"])}, indent=2)
+        return json.dumps({"error": f"Annotation '{annotation_id}' not found"})
+
+
 def list_evidence(genome_id: str) -> str:
     """List all evidence entries across all annotations for a genome.
 
@@ -592,4 +643,5 @@ def register(mcp: FastMCP) -> None:
     mcp.tool()(set_meaning)
     mcp.tool()(add_evidence)
     mcp.tool()(amend_evidence)
+    mcp.tool()(delete_evidence)
     mcp.tool()(list_evidence)

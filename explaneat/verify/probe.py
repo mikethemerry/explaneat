@@ -110,9 +110,20 @@ def to_z(vm, raw: np.ndarray) -> np.ndarray:
     return (raw - vm.m.mean) / vm.m.scale
 
 
-def parse_assign(s: str) -> Tuple[str, str]:
+def parse_assign(s: str, vm=None) -> Tuple[str, str]:
+    """``var=value``. With ``vm``, a variable whose own name contains ``=`` (a one-hot column
+    such as ``horTh=yes`` from scikit-survival's encoder) is found by trying the longest prefix
+    that names a variable first: ``horTh=yes=1`` sets ``horTh=yes`` to 1."""
     if "=" not in s:
         raise ValueError(f"expected var=value, got {s!r}")
+    if vm is not None:
+        for i in [j for j, ch in enumerate(s) if ch == "="][::-1]:
+            k = s[:i].strip()
+            try:
+                variable(vm, k)
+            except KeyError:
+                continue
+            return k, s[i + 1:].strip()
     k, v = s.split("=", 1)
     return k.strip(), v.strip()
 
@@ -280,13 +291,13 @@ def probe(vm, sets: Sequence[str] = (), hold: str = "typical", sweeps: Sequence[
         raise ValueError("at most two --sweep (a 2-D grid)")
     fixed = []
     for s in sets:
-        k, val = parse_assign(s)
+        k, val = parse_assign(s, vm)
         v = variable(vm, k)
         set_raw(base, v, val)
         fixed.append(v)
     axes = []
     for s in sweeps:
-        k, spec = parse_assign(s)
+        k, spec = parse_assign(s, vm)
         v = variable(vm, k)
         axes.append((v, sweep_values(v, spec)))
     combos = list(itertools.product(*[vals for _, vals in axes])) if axes else [()]
@@ -410,9 +421,24 @@ class Ablation:
         targets = [(a if a in nodes_by_id else by_name.get(a, a), b if b in nodes_by_id else by_name.get(b, b))
                    for a, b in targets]
         if direct:
-            outs = {str(o) for o in st.output_node_ids}
-            targets += [(str(c.from_node), str(c.to_node)) for c in st.connections
-                        if c.enabled and str(c.to_node) in outs and nodes_by_id[str(c.from_node)].type == NodeType.INPUT]
+            # the root's direct input edges: input -> output, also through identity relays
+            # (add_identity_node on the output puts identity_<k> between the inputs and the output)
+            def relay(n) -> bool:
+                return (n.type not in (NodeType.INPUT, NodeType.OUTPUT) and str(n.activation or "").lower() == "identity"
+                        and float(n.bias or 0.0) == 0.0)
+            frontier = [str(o) for o in st.output_node_ids]
+            seen = set(frontier)
+            while frontier:
+                b = frontier.pop()
+                for c in st.connections:
+                    if not (c.enabled and str(c.to_node) == b):
+                        continue
+                    a = nodes_by_id[str(c.from_node)]
+                    if a.type == NodeType.INPUT:
+                        targets.append((str(c.from_node), b))
+                    elif relay(a) and str(c.from_node) not in seen:
+                        seen.add(str(c.from_node))
+                        frontier.append(str(c.from_node))
         done = []
         for a, b in targets:
             conns = [c for c in st.connections if c.enabled and str(c.from_node) == a and str(c.to_node) == b]

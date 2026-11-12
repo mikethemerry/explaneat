@@ -21,23 +21,32 @@ MAX_DISTINCT = 12
 DEFAULT_LIMIT = 200_000
 
 
-def levels(v) -> List[Any]:
+def levels(v, bins: int = 0) -> List[Any]:
+    """The values a variable takes in the enumeration: every category, every distinct value of
+    a number with at most ``MAX_DISTINCT`` of them, else (``bins`` > 0) ``bins`` training
+    quantiles from the 5th to the 95th percentile (a continuous input is then binned, and the
+    cells' ``n_train`` counts no longer apply to it); else an error."""
     if v.is_category():
         return list(v.all_codes)
     vals = np.unique(v.raw_train)
     if len(vals) > MAX_DISTINCT:
+        if bins and bins > 0:
+            qs = np.percentile(v.raw_train, np.linspace(5, 95, int(bins)))
+            return [float(x) for x in np.unique(np.round(qs, v.decimals))]
         raise ValueError(f"{v.base} has {len(vals)} distinct values: not a small discrete input space "
-                         f"(enumerate handles categories and numbers with at most {MAX_DISTINCT} values)")
+                         f"(enumerate handles categories and numbers with at most {MAX_DISTINCT} values; "
+                         f"pass bins=N to bin continuous inputs at N quantiles)")
     return [float(x) for x in vals]
 
 
 def enumerate_space(vm, rule: Optional[str] = None, group_by: Optional[str] = None,
                     where: Optional[str] = None, cut: float = 0.5, limit: int = DEFAULT_LIMIT,
-                    max_examples: int = 20, parts: bool = False) -> Dict[str, Any]:
+                    max_examples: int = 20, parts: bool = False, bins: int = 0) -> Dict[str, Any]:
     import pandas as pd
     from .probe import evaluate, hold_row, set_raw
     m = vm.m
-    var_levels = [(v, levels(v)) for v in m.variables]
+    var_levels = [(v, levels(v, bins)) for v in m.variables]
+    binned = [v.base for v, _ in var_levels if not v.is_category() and len(np.unique(v.raw_train)) > MAX_DISTINCT]
     size = int(np.prod([len(l) for _, l in var_levels]))
     if size > limit:
         raise ValueError(f"{size} combinations (more than --limit {limit})")
@@ -83,6 +92,11 @@ def enumerate_space(vm, rule: Optional[str] = None, group_by: Optional[str] = No
     res: Dict[str, Any] = {"genome_id": vm.genome_id, "n_combinations": int(len(df)), "space_size": size,
                            "cut": cut, "share_yes": float(df["yes"].mean()) if len(df) else None,
                            "n_in_training": int((df["n_train"] > 0).sum()), "where": where}
+    if binned:
+        lv = {v.base: l for v, l in var_levels}
+        res["binned"] = {b: [float(x) for x in lv[b]] for b in binned}
+        res["binned_note"] = (f"{', '.join(binned)} binned at {bins} training quantiles (5th-95th percentile): "
+                              "cells are constructed cases, so n_train is 0 for them")
     if parts:
         res["parts_act_on_share"] = {c[5:]: float(df[c].mean()) for c in df.columns if c.startswith("acts_")}
     if rule:

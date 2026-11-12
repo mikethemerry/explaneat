@@ -134,6 +134,14 @@ def process_text(db, genome_id: str, text: str, operations: Sequence[Dict[str, A
             "errors": errors, "warnings": warnings, "findings": findings}
 
 
+# payload keys whose string values are node ids, never typed numbers (analytical_formula payloads
+# list entry_nodes such as "-6"; the cox_case explainers had to drop them in strict mode)
+NODE_KEYS = {"entry_nodes", "exit_nodes", "subgraph_nodes", "subgraph_connections", "nodes", "node_ids", "node",
+             "from", "to", "from_node", "to_node", "input_nodes", "output_nodes", "entries", "exits", "edges",
+             "connections", "inputs", "outputs"}
+NODE_ID = re.compile(r"-?\d+(?:_[A-Za-z]+)*|identity_-?\d+(?:_[A-Za-z]+)*|ann_\d+")
+
+
 def process_payload(db, genome_id: str, payload: Any, operations: Sequence[Dict[str, Any]],
                     part_name: Optional[str], strict: Optional[bool] = None, session=None, model=None,
                     allow: Sequence[str] = ()):
@@ -155,12 +163,14 @@ def process_payload(db, genome_id: str, payload: Any, operations: Sequence[Dict[
                 rep["warnings"].append(f"write-time model check unavailable ({type(e).__name__})")
         return state["model"]
 
-    def walk(obj, path):
+    def walk(obj, path, key=None):
         if isinstance(obj, dict):
-            return {k: (v if k in ("latex", "latex_collapsed", "sympy_srepr") else walk(v, f"{path}.{k}"))
+            return {k: (v if k in ("latex", "latex_collapsed", "sympy_srepr") else walk(v, f"{path}.{k}", k))
                     for k, v in obj.items()}
         if isinstance(obj, list):
-            return [walk(v, f"{path}[{i}]") for i, v in enumerate(obj)]
+            return [walk(v, f"{path}[{i}]", key) for i, v in enumerate(obj)]
+        if isinstance(obj, str) and key in NODE_KEYS and NODE_ID.fullmatch(obj.strip()):
+            return obj   # a node id under a node-list key (entry_nodes: ["-6"]) is not a typed number
         if isinstance(obj, str) and re.search(r"\d|\{\{", obj):
             mdl = get_model()
             r = process_text(db, genome_id, obj, operations, part_name, f"payload{path}", strict,
