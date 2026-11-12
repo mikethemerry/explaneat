@@ -111,8 +111,20 @@ the 10-seed wrapper plus the active analysis tools (`suggest_candidates`, `unit_
 `linearise_annotations`, `check_explanation`). At most 2 agents ran at a time.
 
 Every record carries `verified_by_orchestrator` from `verify_record.py`: the automated checks
-plus tool coverage, which agree with the agents. These are not an independent review. A
-separate verifier will challenge the records.
+plus tool coverage, which agree with the agents. These are not an independent review.
+
+**Blind verifier (krk-default-s2, 13 Nov; `VERIFY_TASK.md`, `verification/krk/`):** overall
+**refuted**: 1 refuted, 3 weakened, 24 upheld, 0 flags over 96 checked statements (18 min, read
+only). The refuted statement is one number in `rook_right_of_bk`'s hypothesis: "28% of draws"
+have the rook one file right of the king, where the model's count is 796 of 2,237 draws, 35.6%
+(28.4% is the other side, the king one file right of the rook). Weakened: that hinge depends on
+the rook's absolute file (0.05-0.32 at one file right; net penalty -0.22 logit, not -0.31); the
+"0 of 8,743 positions with 357 > 0" count holds for 357 > 0.01 (357 is tiny-positive, at most
+0.0045, on 636 draws); and the "0.72 logit per rank" ramp is the surrogate's coefficient, the
+model's slope being 0.76-0.80. Coverage, function preservation, every closed form, the hinge
+shapes, the dead unit, the additive composition, the root formula and every ground-truth
+comparison reproduce. The verifier's leaf grades (2 meaningful / 1 partial / 1 closed-form only)
+agree with the author's. The other three records are not blind-verified.
 
 | Label | Genome | Full coverage | Time | Leaves (meaningful / partial / closed-form-only) | Fn. preservation | Closed-form err |
 |---|---|---|---|---|---|---|
