@@ -1,0 +1,1188 @@
+{
+ "label": "c4lf-lines-heavy-s0",
+ "genome_id": "6ebf7e0c-55ec-4215-9852-0ac982e43c0e",
+ "set": "c4lf",
+ "study": "c4lf",
+ "records_dir": null,
+ "dataset": "connect4_lines",
+ "n_train": 54045,
+ "computed_at": "2026-11-12T07:13:25+00:00",
+ "method": "experiments/explanation_levels/compute_levels.py (read only; probes not stored, query_id null)",
+ "levels": {
+  "faithful": {
+   "function_preservation_max_abs_err": 8.881784197001252e-16,
+   "closed_form_max_abs_err": null,
+   "passed": true,
+   "test": "max |output(explained model) - output(phenotype)| over the training rows < 1e-9"
+  },
+  "decomposed": {
+   "n_leaves": 8,
+   "n_compositions": 1,
+   "hidden_units": 11,
+   "granularity": 1.0,
+   "largest_part": {
+    "name": "centre_column_block",
+    "hidden_units": 4,
+    "width": 2,
+    "depth": 2,
+    "leaf": true,
+    "param_share": 0.2632
+   },
+   "max_width": 2,
+   "max_depth": 2,
+   "warnings": [],
+   "passed": true,
+   "test": "share of hidden units whose part is at most 6 units wide (depth not penalised); no part wider than that holds half the units"
+  },
+  "understood": {
+   "leaves": 8,
+   "graded": 8,
+   "counts": {
+    "meaningful": 4,
+    "partial": 4,
+    "closed_form_only": 0,
+    "unnamed": 0
+   },
+   "grades": {
+    "o_lines_ramp": "meaningful",
+    "x_open_twos_cap": "meaningful",
+    "direct_terms": "meaningful",
+    "x_lines_vs_o_centre_pair": "partial",
+    "quiet_o_x_centre_gate": "partial",
+    "centre_column_block": "meaningful",
+    "x_singles_vs_twos_gate": "partial",
+    "o_centre_x_singles_gate": "partial"
+   },
+   "understood_fraction": 0.5,
+   "partial_fraction": 0.5,
+   "closed_form_only_fraction": 0.0,
+   "unnamed_fraction": 0.0,
+   "concepts": {
+    "o_lines_ramp": "x_thr_odd",
+    "x_open_twos_cap": "x_open_2",
+    "direct_terms": "x_open_2",
+    "x_lines_vs_o_centre_pair": "x_open_1, x_thr_odd",
+    "quiet_o_x_centre_gate": "o_open_1",
+    "centre_column_block": "centre_o, centre_x, x_thr_odd",
+    "x_singles_vs_twos_gate": "o_thr_odd",
+    "o_centre_x_singles_gate": "o_thr_odd"
+   },
+   "test": "concept probe per leaf: meaningful r2 >= 0.8 or AUC >= 0.9; partial r2 >= 0.5 or AUC >= 0.75; else closed_form_only; unnamed when no concept was probed",
+   "domain_only": {
+    "leaves": 8,
+    "meaningful": 4,
+    "partial": 4,
+    "closed_form_only": 0,
+    "understood_fraction": 0.5,
+    "mean_score": 0.8102
+   }
+  }
+ },
+ "decomposition": {
+  "hidden_units": 11,
+  "small_width_max_units": 6,
+  "granularity": 1.0,
+  "largest_part": {
+   "name": "centre_column_block",
+   "hidden_units": 4,
+   "width": 2,
+   "depth": 2,
+   "leaf": true,
+   "param_share": 0.2632
+  },
+  "max_width": 2,
+  "max_depth": 2,
+  "units_only_in_root": 0,
+  "units_only_as_entries": 0,
+  "parts": {
+   "centre_column_block": {
+    "units": 4,
+    "width": 2,
+    "depth": 2,
+    "leaf": true,
+    "param_share": 0.2632
+   },
+   "x_lines_vs_o_centre_pair": {
+    "units": 3,
+    "width": 2,
+    "depth": 2,
+    "leaf": true,
+    "param_share": 0.1908
+   },
+   "o_centre_x_singles_gate": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.0855
+   },
+   "o_lines_ramp": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.0921
+   },
+   "quiet_o_x_centre_gate": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.0789
+   },
+   "x_open_twos_cap": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.0855
+   },
+   "x_singles_vs_twos_gate": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.0921
+   }
+  },
+  "warnings": []
+ },
+ "leaves": {
+  "o_lines_ramp": {
+   "id": "ann_55",
+   "exit_nodes": [
+    "2"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "x_open_1",
+    "o_open_1",
+    "x_open_2",
+    "o_open_2",
+    "x_open_3",
+    "o_open_3",
+    "x_thr_odd",
+    "x_thr_even",
+    "o_thr",
+    "o_thr_odd",
+    "o_thr_even",
+    "centre_o",
+    "n_odd_empty_playable"
+   ],
+   "library": "c4_lines",
+   "n_library_concepts": 22,
+   "score": 0.992948,
+   "grade": "meaningful",
+   "best_concepts": [
+    "x_thr_odd"
+   ],
+   "domain_score": 0.992948,
+   "domain_grade": "meaningful",
+   "best_domain_concepts": [
+    "x_thr_odd"
+   ],
+   "r2": 0.020288,
+   "auc": 0.996474,
+   "mi": 0.004337,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "x_thr_odd",
+    "probe": {
+     "r2": 0.020288,
+     "auc": 0.996474,
+     "mi": 0.004337,
+     "n": 54045,
+     "score": 0.992948,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "2": {
+     "best": {
+      "concept": "x_thr_odd",
+      "kind": "binary",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.020288,
+      "auc": 0.996474,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.004337,
+      "nmi": 0.00126,
+      "leaf_gated": true,
+      "score": 0.992948
+     },
+     "best_domain": {
+      "concept": "x_thr_odd",
+      "kind": "binary",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.020288,
+      "auc": 0.996474,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.004337,
+      "nmi": 0.00126,
+      "leaf_gated": true,
+      "score": 0.992948
+     },
+     "top": [
+      {
+       "concept": "x_thr_odd",
+       "source": "domain",
+       "score": 0.992948,
+       "r2": 0.020288,
+       "auc": 0.996474,
+       "mi": 0.004337
+      },
+      {
+       "concept": "o_thr_odd",
+       "source": "domain",
+       "score": 0.86425,
+       "r2": 0.003892,
+       "auc": 0.932125,
+       "mi": 0.005315
+      },
+      {
+       "concept": "x_open_2",
+       "source": "domain",
+       "score": 0.593984,
+       "r2": 0.285742,
+       "auc": 0.796992,
+       "mi": 0.264117
+      }
+     ]
+    }
+   }
+  },
+  "x_open_twos_cap": {
+   "id": "ann_56",
+   "exit_nodes": [
+    "3"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "x_open_1",
+    "o_open_1",
+    "x_open_2",
+    "o_open_2",
+    "o_open_3",
+    "x_thr",
+    "x_thr_odd",
+    "o_thr",
+    "o_thr_odd",
+    "centre_x",
+    "centre_o",
+    "n_odd_empty_playable"
+   ],
+   "library": "c4_lines",
+   "n_library_concepts": 22,
+   "score": 0.881852,
+   "grade": "meaningful",
+   "best_concepts": [
+    "x_open_2"
+   ],
+   "domain_score": 0.881852,
+   "domain_grade": "meaningful",
+   "best_domain_concepts": [
+    "x_open_2"
+   ],
+   "r2": 0.575641,
+   "auc": 0.940926,
+   "mi": 0.965276,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "x_open_2",
+    "probe": {
+     "r2": 0.575641,
+     "auc": 0.940926,
+     "mi": 0.965276,
+     "n": 54045,
+     "score": 0.881852,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "3": {
+     "best": {
+      "concept": "x_open_2",
+      "kind": "count",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.575641,
+      "auc": 0.940926,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is low",
+      "mi": 0.965276,
+      "nmi": 0.300536,
+      "leaf_gated": true,
+      "score": 0.881852
+     },
+     "best_domain": {
+      "concept": "x_open_2",
+      "kind": "count",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.575641,
+      "auc": 0.940926,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is low",
+      "mi": 0.965276,
+      "nmi": 0.300536,
+      "leaf_gated": true,
+      "score": 0.881852
+     },
+     "top": [
+      {
+       "concept": "x_open_2",
+       "source": "domain",
+       "score": 0.881852,
+       "r2": 0.575641,
+       "auc": 0.940926,
+       "mi": 0.965276
+      },
+      {
+       "concept": "x_open_2_minus_o_open_2",
+       "source": "domain",
+       "score": 0.72017,
+       "r2": 0.410699,
+       "auc": 0.860085,
+       "mi": 0.491484
+      },
+      {
+       "concept": "x_thr_odd",
+       "source": "domain",
+       "score": 0.64639,
+       "r2": 0.001165,
+       "auc": 0.823195,
+       "mi": 0.001573
+      }
+     ]
+    }
+   }
+  },
+  "direct_terms": {
+   "id": "ann_61",
+   "exit_nodes": [
+    "identity_0"
+   ],
+   "n_exits": 1,
+   "gated": false,
+   "variables": [
+    "x_open_1",
+    "o_open_1",
+    "x_open_2",
+    "o_open_2",
+    "x_open_3",
+    "centre_o",
+    "n_even_empty_playable"
+   ],
+   "library": "c4_lines",
+   "n_library_concepts": 22,
+   "score": 0.85592,
+   "grade": "meaningful",
+   "best_concepts": [
+    "x_open_2"
+   ],
+   "domain_score": 0.85592,
+   "domain_grade": "meaningful",
+   "best_domain_concepts": [
+    "x_open_2"
+   ],
+   "r2": 0.85592,
+   "auc": null,
+   "mi": 1.229542,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "x_open_2",
+    "probe": {
+     "r2": 0.85592,
+     "auc": null,
+     "mi": 1.229542,
+     "n": 54045,
+     "score": 0.85592,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "identity_0": {
+     "best": {
+      "concept": "x_open_2",
+      "kind": "count",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.85592,
+      "auc": null,
+      "auc_of": null,
+      "direction": null,
+      "mi": 1.229542,
+      "nmi": 0.370129,
+      "leaf_gated": false,
+      "score": 0.85592
+     },
+     "best_domain": {
+      "concept": "x_open_2",
+      "kind": "count",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.85592,
+      "auc": null,
+      "auc_of": null,
+      "direction": null,
+      "mi": 1.229542,
+      "nmi": 0.370129,
+      "leaf_gated": false,
+      "score": 0.85592
+     },
+     "top": [
+      {
+       "concept": "x_open_2",
+       "source": "domain",
+       "score": 0.85592,
+       "r2": 0.85592,
+       "auc": null,
+       "mi": 1.229542
+      },
+      {
+       "concept": "x_open_2_minus_o_open_2",
+       "source": "domain",
+       "score": 0.665635,
+       "r2": 0.665635,
+       "auc": null,
+       "mi": 0.76715
+      },
+      {
+       "concept": "o_thr_odd",
+       "source": "domain",
+       "score": 0.13729,
+       "r2": 0.000132,
+       "auc": 0.568645,
+       "mi": 0.000614
+      }
+     ]
+    }
+   }
+  },
+  "x_lines_vs_o_centre_pair": {
+   "id": "ann_60",
+   "exit_nodes": [
+    "8",
+    "9"
+   ],
+   "n_exits": 2,
+   "gated": true,
+   "variables": [
+    "x_open_1",
+    "o_open_1",
+    "x_open_2",
+    "o_open_2",
+    "x_open_3",
+    "o_open_3",
+    "x_thr_odd",
+    "x_thr_even",
+    "o_thr",
+    "o_thr_odd",
+    "o_thr_even",
+    "centre_x",
+    "centre_o",
+    "n_odd_empty_playable",
+    "n_even_empty_playable"
+   ],
+   "library": "c4_lines",
+   "n_library_concepts": 22,
+   "score": 0.767582,
+   "grade": "partial",
+   "best_concepts": [
+    "x_open_1",
+    "x_thr_odd"
+   ],
+   "domain_score": 0.767582,
+   "domain_grade": "partial",
+   "best_domain_concepts": [
+    "x_open_1",
+    "x_thr_odd"
+   ],
+   "r2": 0.149013,
+   "auc": 0.883791,
+   "mi": 0.177243,
+   "meaning": {
+    "grade": "partial",
+    "concept": "x_open_1, x_thr_odd",
+    "probe": {
+     "r2": 0.149013,
+     "auc": 0.883791,
+     "mi": 0.177243,
+     "n": 54045,
+     "score": 0.767582,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "8": {
+     "best": {
+      "concept": "x_thr_odd",
+      "kind": "binary",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.01634,
+      "auc": 0.962151,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.003499,
+      "nmi": 0.001023,
+      "leaf_gated": true,
+      "score": 0.924302
+     },
+     "best_domain": {
+      "concept": "x_thr_odd",
+      "kind": "binary",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.01634,
+      "auc": 0.962151,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.003499,
+      "nmi": 0.001023,
+      "leaf_gated": true,
+      "score": 0.924302
+     },
+     "top": [
+      {
+       "concept": "x_thr_odd",
+       "source": "domain",
+       "score": 0.924302,
+       "r2": 0.01634,
+       "auc": 0.962151,
+       "mi": 0.003499
+      },
+      {
+       "concept": "centre_o",
+       "source": "domain",
+       "score": 0.71272,
+       "r2": 0.319362,
+       "auc": 0.85636,
+       "mi": 0.337514
+      },
+      {
+       "concept": "x_open_1_minus_o_open_1",
+       "source": "domain",
+       "score": 0.661238,
+       "r2": 0.424938,
+       "auc": 0.830619,
+       "mi": 0.436695
+      }
+     ]
+    },
+    "9": {
+     "best": {
+      "concept": "x_open_1",
+      "kind": "count",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.281685,
+      "auc": 0.805431,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is low",
+      "mi": 0.350988,
+      "nmi": 0.123372,
+      "leaf_gated": true,
+      "score": 0.610862
+     },
+     "best_domain": {
+      "concept": "x_open_1",
+      "kind": "count",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.281685,
+      "auc": 0.805431,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is low",
+      "mi": 0.350988,
+      "nmi": 0.123372,
+      "leaf_gated": true,
+      "score": 0.610862
+     },
+     "top": [
+      {
+       "concept": "x_open_1",
+       "source": "domain",
+       "score": 0.610862,
+       "r2": 0.281685,
+       "auc": 0.805431,
+       "mi": 0.350988
+      },
+      {
+       "concept": "o_thr_odd",
+       "source": "domain",
+       "score": 0.554512,
+       "r2": 0.001179,
+       "auc": 0.777256,
+       "mi": 0.00209
+      },
+      {
+       "concept": "x_open_1_minus_o_open_1",
+       "source": "domain",
+       "score": 0.521432,
+       "r2": 0.221321,
+       "auc": 0.760716,
+       "mi": 0.285784
+      }
+     ]
+    }
+   }
+  },
+  "quiet_o_x_centre_gate": {
+   "id": "ann_54",
+   "exit_nodes": [
+    "1"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "x_open_1",
+    "o_open_1",
+    "o_open_2",
+    "x_open_3",
+    "o_open_3",
+    "x_thr_odd",
+    "x_thr_even",
+    "o_thr",
+    "centre_x",
+    "centre_o",
+    "n_even_empty_playable"
+   ],
+   "library": "c4_lines",
+   "n_library_concepts": 22,
+   "score": 0.674338,
+   "grade": "partial",
+   "best_concepts": [
+    "o_open_1"
+   ],
+   "domain_score": 0.674338,
+   "domain_grade": "partial",
+   "best_domain_concepts": [
+    "o_open_1"
+   ],
+   "r2": 0.160436,
+   "auc": 0.837169,
+   "mi": 0.247075,
+   "meaning": {
+    "grade": "partial",
+    "concept": "o_open_1",
+    "probe": {
+     "r2": 0.160436,
+     "auc": 0.837169,
+     "mi": 0.247075,
+     "n": 54045,
+     "score": 0.674338,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "1": {
+     "best": {
+      "concept": "o_open_1",
+      "kind": "count",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.160436,
+      "auc": 0.837169,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is low",
+      "mi": 0.247075,
+      "nmi": 0.152032,
+      "leaf_gated": true,
+      "score": 0.674338
+     },
+     "best_domain": {
+      "concept": "o_open_1",
+      "kind": "count",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.160436,
+      "auc": 0.837169,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is low",
+      "mi": 0.247075,
+      "nmi": 0.152032,
+      "leaf_gated": true,
+      "score": 0.674338
+     },
+     "top": [
+      {
+       "concept": "o_open_1",
+       "source": "domain",
+       "score": 0.674338,
+       "r2": 0.160436,
+       "auc": 0.837169,
+       "mi": 0.247075
+      },
+      {
+       "concept": "x_open_1_minus_o_open_1",
+       "source": "domain",
+       "score": 0.630872,
+       "r2": 0.186232,
+       "auc": 0.815436,
+       "mi": 0.230978
+      },
+      {
+       "concept": "o_open_2",
+       "source": "domain",
+       "score": 0.51231,
+       "r2": 0.104933,
+       "auc": 0.756155,
+       "mi": 0.138392
+      }
+     ]
+    }
+   }
+  },
+  "centre_column_block": {
+   "id": "ann_59",
+   "exit_nodes": [
+    "6",
+    "4",
+    "76"
+   ],
+   "n_exits": 3,
+   "gated": true,
+   "variables": [
+    "x_open_1",
+    "o_open_1",
+    "x_open_2",
+    "o_open_2",
+    "x_open_3",
+    "o_open_3",
+    "x_thr",
+    "x_thr_odd",
+    "x_thr_even",
+    "o_thr",
+    "o_thr_odd",
+    "o_thr_even",
+    "centre_x",
+    "centre_o",
+    "n_odd_empty_playable",
+    "n_even_empty_playable"
+   ],
+   "library": "c4_lines",
+   "n_library_concepts": 22,
+   "score": 0.824991,
+   "grade": "meaningful",
+   "best_concepts": [
+    "centre_o",
+    "centre_x",
+    "x_thr_odd"
+   ],
+   "domain_score": 0.824991,
+   "domain_grade": "meaningful",
+   "best_domain_concepts": [
+    "centre_o",
+    "centre_x",
+    "x_thr_odd"
+   ],
+   "r2": 0.294683,
+   "auc": 0.912496,
+   "mi": 0.260705,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "centre_o, centre_x, x_thr_odd",
+    "probe": {
+     "r2": 0.294683,
+     "auc": 0.912496,
+     "mi": 0.260705,
+     "n": 54045,
+     "score": 0.824991,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "6": {
+     "best": {
+      "concept": "x_thr_odd",
+      "kind": "binary",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.004535,
+      "auc": 0.880886,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.002152,
+      "nmi": 0.000819,
+      "leaf_gated": true,
+      "score": 0.761772
+     },
+     "best_domain": {
+      "concept": "x_thr_odd",
+      "kind": "binary",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.004535,
+      "auc": 0.880886,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.002152,
+      "nmi": 0.000819,
+      "leaf_gated": true,
+      "score": 0.761772
+     },
+     "top": [
+      {
+       "concept": "x_thr_odd",
+       "source": "domain",
+       "score": 0.761772,
+       "r2": 0.004535,
+       "auc": 0.880886,
+       "mi": 0.002152
+      },
+      {
+       "concept": "centre_o",
+       "source": "domain",
+       "score": 0.709818,
+       "r2": 0.70407,
+       "auc": 0.854909,
+       "mi": 0.709876
+      },
+      {
+       "concept": "centre_x",
+       "source": "domain",
+       "score": 0.603294,
+       "r2": 0.459862,
+       "auc": 0.801647,
+       "mi": 0.439692
+      }
+     ]
+    },
+    "4": {
+     "best": {
+      "concept": "centre_x",
+      "kind": "count",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.383257,
+      "auc": 0.923732,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.314514,
+      "nmi": 0.319437,
+      "leaf_gated": true,
+      "score": 0.847464
+     },
+     "best_domain": {
+      "concept": "centre_x",
+      "kind": "count",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.383257,
+      "auc": 0.923732,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.314514,
+      "nmi": 0.319437,
+      "leaf_gated": true,
+      "score": 0.847464
+     },
+     "top": [
+      {
+       "concept": "centre_x",
+       "source": "domain",
+       "score": 0.847464,
+       "r2": 0.383257,
+       "auc": 0.923732,
+       "mi": 0.314514
+      },
+      {
+       "concept": "centre_o",
+       "source": "domain",
+       "score": 0.815444,
+       "r2": 0.337663,
+       "auc": 0.907722,
+       "mi": 0.276469
+      },
+      {
+       "concept": "o_open_1",
+       "source": "domain",
+       "score": 0.519938,
+       "r2": 0.206132,
+       "auc": 0.759969,
+       "mi": 0.116138
+      }
+     ]
+    },
+    "76": {
+     "best": {
+      "concept": "centre_o",
+      "kind": "count",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.496256,
+      "auc": 0.932869,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.46545,
+      "nmi": 0.361377,
+      "leaf_gated": true,
+      "score": 0.865738
+     },
+     "best_domain": {
+      "concept": "centre_o",
+      "kind": "count",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.496256,
+      "auc": 0.932869,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.46545,
+      "nmi": 0.361377,
+      "leaf_gated": true,
+      "score": 0.865738
+     },
+     "top": [
+      {
+       "concept": "centre_o",
+       "source": "domain",
+       "score": 0.865738,
+       "r2": 0.496256,
+       "auc": 0.932869,
+       "mi": 0.46545
+      },
+      {
+       "concept": "centre_x",
+       "source": "domain",
+       "score": 0.690752,
+       "r2": 0.311341,
+       "auc": 0.845376,
+       "mi": 0.265942
+      },
+      {
+       "concept": "x_thr_odd",
+       "source": "domain",
+       "score": 0.499112,
+       "r2": 0.004219,
+       "auc": 0.749556,
+       "mi": 0.001597
+      }
+     ]
+    }
+   }
+  },
+  "x_singles_vs_twos_gate": {
+   "id": "ann_58",
+   "exit_nodes": [
+    "10_a"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "x_open_1",
+    "o_open_1",
+    "x_open_2",
+    "o_open_2",
+    "o_open_3",
+    "x_thr_odd",
+    "x_thr_even",
+    "o_thr",
+    "o_thr_odd",
+    "o_thr_even",
+    "centre_x",
+    "centre_o",
+    "n_even_empty_playable"
+   ],
+   "library": "c4_lines",
+   "n_library_concepts": 22,
+   "score": 0.735664,
+   "grade": "partial",
+   "best_concepts": [
+    "o_thr_odd"
+   ],
+   "domain_score": 0.735664,
+   "domain_grade": "partial",
+   "best_domain_concepts": [
+    "o_thr_odd"
+   ],
+   "r2": 0.006019,
+   "auc": 0.867832,
+   "mi": 0.002945,
+   "meaning": {
+    "grade": "partial",
+    "concept": "o_thr_odd",
+    "probe": {
+     "r2": 0.006019,
+     "auc": 0.867832,
+     "mi": 0.002945,
+     "n": 54045,
+     "score": 0.735664,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "10_a": {
+     "best": {
+      "concept": "o_thr_odd",
+      "kind": "binary",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.006019,
+      "auc": 0.867832,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.002945,
+      "nmi": 0.001179,
+      "leaf_gated": true,
+      "score": 0.735664
+     },
+     "best_domain": {
+      "concept": "o_thr_odd",
+      "kind": "binary",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.006019,
+      "auc": 0.867832,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.002945,
+      "nmi": 0.001179,
+      "leaf_gated": true,
+      "score": 0.735664
+     },
+     "top": [
+      {
+       "concept": "o_thr_odd",
+       "source": "domain",
+       "score": 0.735664,
+       "r2": 0.006019,
+       "auc": 0.867832,
+       "mi": 0.002945
+      },
+      {
+       "concept": "x_open_1",
+       "source": "domain",
+       "score": 0.582816,
+       "r2": 0.421968,
+       "auc": 0.791408,
+       "mi": 0.319076
+      },
+      {
+       "concept": "x_open_1_minus_o_open_1",
+       "source": "domain",
+       "score": 0.483012,
+       "r2": 0.186382,
+       "auc": 0.741506,
+       "mi": 0.175261
+      }
+     ]
+    }
+   }
+  },
+  "o_centre_x_singles_gate": {
+   "id": "ann_57",
+   "exit_nodes": [
+    "7"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "x_open_1",
+    "o_open_1",
+    "o_open_2",
+    "o_open_3",
+    "x_thr",
+    "x_thr_odd",
+    "x_thr_even",
+    "o_thr_odd",
+    "o_thr_even",
+    "centre_x",
+    "centre_o",
+    "n_odd_empty_playable"
+   ],
+   "library": "c4_lines",
+   "n_library_concepts": 22,
+   "score": 0.74812,
+   "grade": "partial",
+   "best_concepts": [
+    "o_thr_odd"
+   ],
+   "domain_score": 0.74812,
+   "domain_grade": "partial",
+   "best_domain_concepts": [
+    "o_thr_odd"
+   ],
+   "r2": 0.010676,
+   "auc": 0.87406,
+   "mi": 0.003715,
+   "meaning": {
+    "grade": "partial",
+    "concept": "o_thr_odd",
+    "probe": {
+     "r2": 0.010676,
+     "auc": 0.87406,
+     "mi": 0.003715,
+     "n": 54045,
+     "score": 0.74812,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "7": {
+     "best": {
+      "concept": "o_thr_odd",
+      "kind": "binary",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.010676,
+      "auc": 0.87406,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.003715,
+      "nmi": 0.003084,
+      "leaf_gated": true,
+      "score": 0.74812
+     },
+     "best_domain": {
+      "concept": "o_thr_odd",
+      "kind": "binary",
+      "source": "domain",
+      "n": 54045,
+      "r2": 0.010676,
+      "auc": 0.87406,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.003715,
+      "nmi": 0.003084,
+      "leaf_gated": true,
+      "score": 0.74812
+     },
+     "top": [
+      {
+       "concept": "o_thr_odd",
+       "source": "domain",
+       "score": 0.74812,
+       "r2": 0.010676,
+       "auc": 0.87406,
+       "mi": 0.003715
+      },
+      {
+       "concept": "centre_o",
+       "source": "domain",
+       "score": 0.589386,
+       "r2": 0.208799,
+       "auc": 0.794693,
+       "mi": 0.16064
+      },
+      {
+       "concept": "x_open_1",
+       "source": "domain",
+       "score": 0.495312,
+       "r2": 0.155944,
+       "auc": 0.747656,
+       "mi": 0.108663
+      }
+     ]
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,82 @@
+{
+  "task": "c4",
+  "study": "c4_line_features",
+  "inputs": "lines_cells",
+  "config": "heavy",
+  "seed": 1,
+  "name": "lines_cells-heavy-s1",
+  "variant": "static",
+  "n_generations": 80,
+  "best_generation": 79,
+  "n_fit": 54045,
+  "val_frac": null,
+  "n_epochs_backprop": 50,
+  "overrides": {
+    "NEAT.pop_size": "150",
+    "DefaultGenome.num_hidden": "10",
+    "DefaultGenome.weight_init_stdev": "0.15"
+  },
+  "fitness_function": "auc",
+  "criterion": "bce",
+  "output_activation": "sigmoid",
+  "mask_phantom": true,
+  "torch_threads": 1,
+  "neat_config": "experiments/c4_line_features/configs/lines_cells-heavy-s1.ini",
+  "dynamic_threshold": null,
+  "code_commit": "6c649cb05c53027e8605216a15c3bc95566482ee",
+  "code_dirty": false,
+  "data": {
+    "task": "c4",
+    "source": "PMLB connect_4 (UCI Connect-4)",
+    "target": "1 = first player (x, to move) wins with perfect play; 0 = loss or draw",
+    "encoding": "16 line features (counts) from the 42 ordinal cells; then the 42 ordinal cells (x = +1, o = -1, blank = 0)",
+    "class_names": [
+      "not win",
+      "win"
+    ],
+    "inputs": "lines_cells",
+    "n_inputs": 58,
+    "n_rows": 67557,
+    "n_train": 54045,
+    "n_test": 13512,
+    "positive_share": 0.6583033586452921,
+    "positive_share_train": 0.658303265797021,
+    "split_seed": 42,
+    "scaler": "StandardScaler fit on the training rows",
+    "study": "experiments/c4_line_features"
+  },
+  "hardware": {
+    "machine": "arm64",
+    "cpu_count": 14,
+    "python": "3.12.12",
+    "torch": "2.2.2",
+    "numpy": "1.26.4"
+  },
+  "wall_clock_s": 7593.9,
+  "best_key": 71,
+  "best_fitness": 0.9336916605047691,
+  "best_size": {
+    "hidden": 10,
+    "conns": 648,
+    "inputs_used": 58,
+    "depth": 2
+  },
+  "train": {
+    "auc": 0.9336916605047691,
+    "acc": 0.8589878804699788,
+    "bce": 0.308454749529036
+  },
+  "test": {
+    "auc": 0.9282280956209078,
+    "acc": 0.8533155713439905,
+    "bce": 0.3214427630008866
+  },
+  "species": {
+    "mean": 1.0,
+    "min": 1,
+    "max": 1,
+    "last": 1,
+    "mean_last20": 1.0
+  },
+  "max_logged_fitness": 0.9339177909769985
+}

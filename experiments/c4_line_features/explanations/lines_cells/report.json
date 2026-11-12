@@ -1,0 +1,204 @@
+{
+ "label": "c4lf-lines_cells-heavy-s2",
+ "genome_id": "9e843d20-8e42-47d6-9c94-576c5f06fdf3",
+ "start": "2026-11-12T19:30:47+13:00",
+ "end": "2026-11-12T20:10:13+13:00",
+ "structural_coverage": 1.0,
+ "compositional_coverage": 1.0,
+ "full_coverage": true,
+ "within_budget": true,
+ "n_leaf_annotations": 11,
+ "n_composition_annotations": 3,
+ "n_splits": 58,
+ "n_identity_nodes": 1,
+ "hidden_nodes": 10,
+ "hidden_nodes_single_leaf_no_split": 10,
+ "hidden_nodes_in_any_annotation": 10,
+ "hierarchy_complete": true,
+ "function_preservation_max_abs_err": 2.6645352591003757e-15,
+ "closed_form_max_abs_err": 0.030191016871816245,
+ "summary": "The network scores a Connect-4 position for x as a sigmoid of a bias plus three added parts: a direct linear sum of the inputs, six raising ReLU gates and four lowering ones; each of the inputs feeds the direct sum and each gate, and the refactored model reproduces the evolved one to a max abs error of 2.7e-15. Replacing the ten gates by their best affine fits leaves AUC 0.885 against 0.935, so most of the model is a linear score over line counts and raw cells, with the gates adding thresholds on x's centre-column count, x's open-two count and single cells (c3, e2, e1, g3, c1). In the whole model x's open twos raise the predicted chance (28% at zero to above 99% at six in the sweep) and x's centre pieces raise it (58% with none to 87% with four); positions with a threat for o have mean predicted chance 31% against 65% for the rest. Seven leaves have a partial reading: the centre-column count with x at d2 for unit3 and unit10 (scores 0.75 and 0.72), the open-two count for unit5 (0.53), the single-cell rules x at c3, o at c3 and x at g3 for units 2, 8 and 4 (0.78, 0.51, 0.63) and a bottom-row-plus-open-twos sum for unit1 (0.67); units 6, 7 and 9 and the direct sum are positional gates described by their formulas, not explained.",
+ "summary_template": "The network scores a Connect-4 position for x as a sigmoid of a bias plus three added parts: a direct linear sum of the inputs, six raising ReLU gates and four lowering ones; each of the inputs feeds the direct sum and each gate, and the refactored model reproduces the evolved one to a max abs error of {{q:q_70a10bbcb1.function_preservation_max_abs_err|.1e}}. Replacing the ten gates by their best affine fits leaves AUC {{q:q_898dc3583a.auc_all_affine|.3f}} against {{q:q_898dc3583a.auc_full|.3f}}, so most of the model is a linear score over line counts and raw cells, with the gates adding thresholds on x's centre-column count, x's open-two count and single cells (c3, e2, e1, g3, c1). In the whole model x's open twos raise the predicted chance ({{q:q_14b55704f2.rows[0].risk|pct}} at zero to {{q:q_14b55704f2.rows[6].risk|pct}} at six in the sweep) and x's centre pieces raise it ({{q:q_11c7b413fb.rows[0].risk|pct}} with none to {{q:q_11c7b413fb.rows[4].risk|pct}} with four); positions with a threat for o have mean predicted chance {{q:q_57ea225895.subgroup.mean_predicted_risk|pct}} against {{q:q_57ea225895.rest.mean_predicted_risk|pct}} for the rest. Seven leaves have a partial reading: the centre-column count with x at d2 for unit3 and unit10 (scores {{q:q_d64be138d1.score|.2f}} and {{q:q_62f13bccb1.score|.2f}}), the open-two count for unit5 ({{q:q_681517a248.score|.2f}}), the single-cell rules x at c3, o at c3 and x at g3 for units 2, 8 and 4 ({{q:q_5855c9587c.score|.2f}}, {{q:q_e6243db9ee.score|.2f}}, {{q:q_eb7e9faf07.score|.2f}}) and a bottom-row-plus-open-twos sum for unit1 ({{q:q_6fb7475706.score|.2f}}); units 6, 7 and 9 and the direct sum are positional gates described by their formulas, not explained.",
+ "resisted": "Units 6, 7 and 9 and the direct sum are described, not explained: each unit is on or off according to a handful of single cells (c3, b1, f1, g1, e1, c1) or a mix of the open-two count and cells, and no library or ad-hoc concept reaches the partial threshold (best scores 0.50, 0.47 and 0.46 for units 6, 7 and 9; 0.08 for the direct sum). The six units with a partial reading (1, 2, 3, 4, 8, 10) are read by cell rules or by a line count plus cells, so they are positional gates, not line-feature detectors. The concept sweep ranks the rare threat flags first for several units (for example unit4 with the odd-row threat for x, score 1.00), but those flags hold on 66 (x, odd row) and 100 (o, odd row) training positions, so they were not stored as the units' meanings. Unit1 is an offset on 46681 of 54045 positions that shrinks as x's position improves and unit10 a large term that caps the centre column's positive effect; both are compensating terms whose purpose is visible against the direct sum rather than as a game concept on their own.",
+ "resisted_template": "Units 6, 7 and 9 and the direct sum are described, not explained: each unit is on or off according to a handful of single cells (c3, b1, f1, g1, e1, c1) or a mix of the open-two count and cells, and no library or ad-hoc concept reaches the partial threshold (best scores {{q:q_479236cd92.score|.2f}}, {{q:q_7e2760db07.score|.2f}} and {{q:q_69410686e4.score|.2f}} for units 6, 7 and 9; {{q:q_508dc3db4e.score|.2f}} for the direct sum). The six units with a partial reading (1, 2, 3, 4, 8, 10) are read by cell rules or by a line count plus cells, so they are positional gates, not line-feature detectors. The concept sweep ranks the rare threat flags first for several units (for example unit4 with the odd-row threat for x, score {{q:q_f17f2f2f99.score|.2f}}), but those flags hold on {{q:q_f8840df638.subgroup.n|d}} (x, odd row) and {{q:q_a3b36cb84a.subgroup.n|d}} (o, odd row) training positions, so they were not stored as the units' meanings. Unit1 is an offset on {{q:q_f29ba78770.subgroup.n|d}} of {{q:q_f29ba78770.n_total|d}} positions that shrinks as x's position improves and unit10 a large term that caps the centre column's positive effect; both are compensating terms whose purpose is visible against the direct sum rather than as a game concept on their own.",
+ "numbers": {
+  "in_text": 251,
+  "referenced": 219,
+  "allow_listed": 32
+ },
+ "recheck_summary": {
+  "mismatch": 0,
+  "needs_review": 0,
+  "needs_review_items": [],
+  "unchecked_freetext_sentences": 68,
+  "complete_ok": true
+ },
+ "recheck_notes": "Recheck: 0 mismatches, 0 needs_review (87 templated texts, 87 queries). The 68 unchecked free-text sentences are structural or qualitative statements (which cells raise or lower a unit, read from the attached closed forms; how parts are added). Lint warnings on 'none', 'zero' and 'All' in two composition hypotheses and thirteen evidence narratives were reworded (amend_evidence with a reason), not escaped: they were graph facts or definitions, not population claims. The concept probe's library sweep ranks rare binary threat flags first for units 1, 4, 5, 7, 10 and the direct sum (AUC-driven scores of 0.83-1.00 on the 66 x-odd-threat and 100 o-odd-threat rows); those were not stored as meanings. Stored meanings are the bulk concept (library or an ad-hoc cell rule / count-plus-cells sum), and the rare-flag response is stated in each hypothesis with its n. The eleven closed forms are attached as analytical_formula LaTeX (coefficients rounded to three significant figures); no formula is typed in prose. check_explanation gives closed_form_max_abs_err 0.030 (direct_terms) and 0.010-0.020 per unit.",
+ "tool_bugs": "query_ablate(direct=true) reports n_affected 0 after add_identity_node on the output (the direct edges now end at identity_0, so the root has none); the direct part's worth was taken from query_ablate(parts=[direct_terms]) instead. query_probe's 'typical' held case is the per-feature mode (an empty board with x_open_1 = 9), so single-input sweeps at it could not switch units 8 and 9 on; constructed cases (sets) were used. The x_thr_odd sweep sets the flag without the open three behind it, an impossible position; the data subgroup was used for that claim. probe_concept's score for a rare binary concept is max(r2, 2*(auc-0.5)) with the exit as a score for the concept, so a unit that merely fires on 66 rows gets a 'meaningful' grade; subgroup n was checked by hand. A node-ablation computed before the splits (q_4a45e8b707) was not flagged stale by text_check when quoted; it was replaced by the post-split part ablation anyway.",
+ "accuracy": {
+  "open_findings": 0,
+  "numbers": 251,
+  "provenance_backed": 219,
+  "allow_listed": 32,
+  "scope_mismatch": 0,
+  "formulas": {
+   "exact": 0,
+   "approx_with_tolerance": 0,
+   "other": 0,
+   "note": "11 closed forms attached as analytical_formula LaTeX evidence (exempt), none typed in prose"
+  },
+  "audit": {
+   "references": 88,
+   "checked": 88
+  },
+  "self_probe": {
+   "parts": [
+    "unit1",
+    "unit2",
+    "unit3",
+    "unit4",
+    "unit5",
+    "unit6",
+    "unit7",
+    "unit8",
+    "unit9",
+    "unit10",
+    "direct_terms",
+    "raise_gates",
+    "lower_gates",
+    "win_logit"
+   ],
+   "refuted_and_fixed": [
+    "unit8: the x_open_1 sweep at the typical case never switched the unit on; replaced by a sweep with o at c3, where it rises with open ones",
+    "unit9: single-cell sweeps at the typical case never switched it on; a constructed case (x at c1, o at b1) sweeping g1 does",
+    "unit4: the x_thr_odd sweep is not a real position (whole-model chance 20%); the claim uses the 66-row data subgroup instead",
+    "unit2: the sign of its weight suggested 'c3 is bad for x'; the c_c3 subgroup (outcome rate 78.7% vs 64.4%) refuted that, so it is stated as a correction term"
+   ]
+  },
+  "restatements": 4
+ },
+ "leaves": [
+  {
+   "name": "unit1",
+   "units": [
+    "1"
+   ],
+   "meaning": "partial",
+   "probe_score": 0.674,
+   "best_concept": "-(x_open_2 + c_b1 + c_c1 + c_d1 + c_e1) (ad-hoc); library best o_row1 0.62; rare flag o_thr_odd 0.94 on 100 rows",
+   "reads_cells_or_features": "both",
+   "why": "An offset on 86% of positions that shrinks with x's open twos and x on the bottom row b1-e1; a compensating term rather than a game concept."
+  },
+  {
+   "name": "unit2",
+   "units": [
+    "2"
+   ],
+   "meaning": "partial",
+   "probe_score": 0.777,
+   "best_concept": "c_c3 == 1 (x at c3), ad-hoc",
+   "reads_cells_or_features": "cells",
+   "why": "Switches on when x holds c3 (and when o holds e2); lowers the chance as a correction to the direct terms, since x at c3 positions are won more often."
+  },
+  {
+   "name": "unit3",
+   "units": [
+    "3"
+   ],
+   "meaning": "partial",
+   "probe_score": 0.752,
+   "best_concept": "centre_x + c_d2 (ad-hoc); library centre_x 0.64",
+   "reads_cells_or_features": "both",
+   "why": "Rises with x's centre-column count and x at d2, raising the chance; cells c1, c2, b2 adjust it."
+  },
+  {
+   "name": "unit4",
+   "units": [
+    "4"
+   ],
+   "meaning": "partial",
+   "probe_score": 0.628,
+   "best_concept": "c_g3 == 1 (x at g3), ad-hoc; library sweep ranks x_thr_odd 1.00 on 66 rows",
+   "reads_cells_or_features": "both",
+   "why": "A small positive gate on x at g3 plus cells; it fires on every x odd-row-threat position, but that is 66 rows."
+  },
+  {
+   "name": "unit5",
+   "units": [
+    "5"
+   ],
+   "meaning": "partial",
+   "probe_score": 0.532,
+   "best_concept": "x_open_2 (library; gate on when low); also off once x has a centre piece",
+   "reads_cells_or_features": "both",
+   "why": "A weak-position gate: on when x has no centre piece and few open twos, lowering the chance."
+  },
+  {
+   "name": "unit6",
+   "units": [
+    "6"
+   ],
+   "meaning": "closed-form-only",
+   "probe_score": 0.258,
+   "best_concept": "c_c3 (library); ad-hoc 'x at c3 and no o centre piece' 0.50",
+   "reads_cells_or_features": "cells",
+   "why": "A positive gate on x at c3 and bottom-row cells (x at b1, c1, d1, a1; o at f1, g1, e1); no concept reaches the partial threshold."
+  },
+  {
+   "name": "unit7",
+   "units": [
+    "7"
+   ],
+   "meaning": "closed-form-only",
+   "probe_score": 0.333,
+   "best_concept": "x_open_2 (library; gate on when low); ad-hoc c_e1 - x_open_2 0.47; rare flag o_thr_odd 0.95 on 100 rows",
+   "reads_cells_or_features": "both",
+   "why": "Lowers the chance when x has few open twos, with its level set by cells e1, c3, e3, a4; the count sets the slope only."
+  },
+  {
+   "name": "unit8",
+   "units": [
+    "8"
+   ],
+   "meaning": "partial",
+   "probe_score": 0.514,
+   "best_concept": "c_c3 == -1 (o at c3), ad-hoc",
+   "reads_cells_or_features": "both",
+   "why": "Switches on when o holds c3 and then grows with x's open ones and twos, raising the chance."
+  },
+  {
+   "name": "unit9",
+   "units": [
+    "9"
+   ],
+   "meaning": "closed-form-only",
+   "probe_score": 0.455,
+   "best_concept": "c_c1 (library); ad-hoc bottom-row rule 0.34",
+   "reads_cells_or_features": "cells",
+   "why": "A bottom-row pattern gate (x at c1 with o at b1, g1 or a1) raising the chance; no concept reaches partial."
+  },
+  {
+   "name": "unit10",
+   "units": [
+    "10"
+   ],
+   "meaning": "partial",
+   "probe_score": 0.718,
+   "best_concept": "centre_x + c_d2 + c_b3 (ad-hoc); library centre_x 0.50",
+   "reads_cells_or_features": "both",
+   "why": "The largest lowering term, rising with x's centre pieces, x at d2 and b3 (and o centre pieces); it caps the centre column's net positive effect."
+  },
+  {
+   "name": "direct_terms",
+   "units": [],
+   "meaning": "closed-form-only",
+   "probe_score": 0.081,
+   "best_concept": "x_open_2 (library); a 58-term linear sum",
+   "reads_cells_or_features": "both",
+   "why": "The linear part: largest terms are cells e2 (negative) and e1 (positive), then x's open twos and ones (positive), o's open ones and twos (negative) and both sides' centre counts (positive)."
+  }
+ ],
+ "overall_function": "The network computes a logistic score that is mostly a linear sum over all inputs, plus ten ReLU gates that add thresholds. Replacing every gate by its affine fit keeps most of the ranking, so the main effects are linear: x's open lines and centre pieces push the score up, o's open lines push it down, and a few single cells (e2, e1, a4, d4, b1, d1) carry large direct weights. The gates interact with the linear part as corrections: two centre-reading gates pull in opposite directions (one raising, one capping the centre column's effect), two gates switch on x's open-two count being low (lowering the score), and the rest are on/off according to single cells (c3 for x or for o, g3, c1 with bottom-row o pieces). Every input is connected to every unit and to the output; the threat and parity counts carry small direct weights and act mainly through the gates on the few positions where a threat exists.",
+ "game_terms": "x's open twos and open ones raise x's predicted chance of winning and o's lower it; x's pieces in the centre column raise it on net, with one gate adding to that and another capping it. Threats are rare at eight ply (660 x threats, 765 o threats, 66 x odd-row threats in training): positions with an o threat get a low predicted chance, and several units fire hard on the odd-row threat flags, but those are too few rows to read a unit by. Most gates read the raw cells, not the line features: they detect who holds c3, whether x holds g3 or d2, and bottom-row patterns around c1, so they are positional gates; only the two centre gates and the two open-two gates read line features alongside the cells.",
+ "stuck": "Nothing blocked the work. The decomposition was mechanical (58 input splits, one identity node, 11 leaves, 2 compositions, root) and took under an hour. What limits the result is meaning: the units read single cells more than line features, so seven leaves reach only a partial reading (cell rules or a count-plus-cells sum) and four are closed-form-only. The probe's rare-flag scores had to be set aside by checking subgroup sizes."
+}

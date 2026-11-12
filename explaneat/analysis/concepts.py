@@ -12,6 +12,11 @@ Libraries are keyed by dataset name:
   of 1-3 per side, centre-column occupancy, row placement, threat row parity and immediacy,
   piece counts; from ``experiments/c4_capacity/c4_features.py`` and ``C4_LINES`` in
   ``experiments/complex_real/data.py`` (re-implemented here so the library ships with the package).
+* ``connect4_lines``, ``connect4_lines_cells``, ``connect4_perline`` (Connect-4 with derived line
+  features as inputs, ``experiments/c4_line_features``): every non-cell input is itself a domain
+  concept (an open-line, threat, centre, parity or per-line count), plus the differences
+  x minus o of each paired count; when the 42 cells are among the inputs the full Connect-4
+  library above is computed from them and the cells are offered as inputs.
 * ``krk_draw_ordinal`` (KRK, 6 ordinal inputs): rook adjacency and capture, check, stalemate,
   king distances (the exact rule features of ``krk_rules``).
 * every other dataset (heart, adult, churn, monk2, the ladder's synthetic data): the generic
@@ -158,6 +163,41 @@ def _playable_parity(heights: np.ndarray, parity: int) -> np.ndarray:
     return ((heights % 2 == parity) & playable).sum(1)
 
 
+def c4_line_input_concepts(X: np.ndarray, names: Sequence[str], include_inputs: bool = True) -> List[Concept]:
+    """Connect-4 with derived line features as inputs: each non-cell input is a domain concept
+    (its description from the standard library when it is one of its features, else from its
+    name), plus x minus o for each paired count; the full cell library when the 42 cells are
+    among the inputs (and the cells as inputs)."""
+    names = [str(n) for n in names]
+    cols = {n: i for i, n in enumerate(names)}
+    cell_cols = [cols.get(n) for n in C4_FEATURES]
+    have_cells = all(c is not None for c in cell_cols)
+    std = c4_concepts(X[:, cell_cols]) if have_cells else c4_concepts(np.zeros((1, 42)))  # descriptions
+    std_desc = {c.name: c.description for c in std}
+    out: List[Concept] = []
+    for n, i in cols.items():
+        if n in C4_FEATURES:
+            continue
+        if n in std_desc:
+            desc = std_desc[n]
+        elif n.startswith(("x_line_", "o_line_")):
+            who, line = n[0], n[len("x_line_"):]
+            desc = f"{who} pieces on the line {line} when no {'o' if who == 'x' else 'x'} piece is on it (0 if blocked or empty)"
+        else:
+            desc = f"line feature {n}"
+        out.append(_concept(n, desc, X[:, i], "domain"))
+    for n in list(cols):
+        if n.startswith("x_") and ("o_" + n[2:]) in cols and n not in C4_FEATURES:
+            m = "o_" + n[2:]
+            out.append(_concept(f"{n}_minus_{m}", f"{n} minus {m}", X[:, cols[n]] - X[:, cols[m]], "domain"))
+    if have_cells:
+        seen = {c.name for c in out}
+        out += [c for c in std if c.name not in seen]
+        if include_inputs:
+            out += [_concept(n, f"cell {n} (+1 x, -1 o, 0 blank)", X[:, cols[n]], "input", "count") for n in C4_FEATURES]
+    return out
+
+
 # ============================================================================ KRK
 KRK_FEATURES = ["wk_file", "wk_rank", "wr_file", "wr_rank", "bk_file", "bk_rank"]
 
@@ -257,8 +297,10 @@ def tabular_concepts(X_raw: np.ndarray, names: Sequence[str], extra_pairs: Itera
 
 # ============================================================================ libraries
 def library_for(dataset_name: str) -> Optional[str]:
-    """The library a dataset uses: ``c4``, ``krk`` or ``tabular``."""
+    """The library a dataset uses: ``c4``, ``c4_lines``, ``krk`` or ``tabular``."""
     n = (dataset_name or "").lower()
+    if n.startswith("connect4_lines") or n.startswith("connect4_perline"):
+        return "c4_lines"
     if n.startswith("connect4") or n.startswith("connect_4"):
         return "c4"
     if n.startswith("krk"):
@@ -281,6 +323,8 @@ def library_concepts(dataset_name: str, X_raw: np.ndarray, names: Sequence[str],
             out += [_concept(str(n), f"cell {n} (+1 x, -1 o, 0 blank)", X[:, i], "input", "count")
                     for i, n in enumerate(names)]
         return out
+    if lib == "c4_lines":
+        return c4_line_input_concepts(X, names, include_inputs)
     if lib == "krk":
         if X.shape[1] != 6:
             raise ValueError(f"KRK library needs 6 inputs, got {X.shape[1]}")

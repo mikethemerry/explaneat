@@ -1,0 +1,662 @@
+{
+ "item_id": "c4lf-lines-heavy-s0",
+ "genome_id": "6ebf7e0c-55ec-4215-9852-0ac982e43c0e",
+ "label": "c4lf-lines-heavy-s0",
+ "target": "/private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json",
+ "target_hash": null,
+ "target_hash_note": "recheck.json carries no target_hash for a record JSON target",
+ "verifier": "independent verifier agent (explanation-verifier skill)",
+ "started_at": "2026-11-12T18:16:10+13:00",
+ "finished_at": "2026-11-12T18:31:00+13:00",
+ "minutes": 15,
+ "scope": "record, structure, every annotation's hypothesis, closed form and evidence; no drafts, claims or prose exist for this genome",
+ "overall": {
+  "grade": "weakened",
+  "summary": "Every stated number reproduces (coverage, preservation, closed forms, counts, AUCs, probe values, concept scores). Nothing is refuted. Five units are weakened: the quiet-o gate fires without x in the centre on 28% of its firings; the summary's o-threat switch is general for the ramp but not for the cap (still on for 149 of 765 o-threat rows); the pair's 'both raise x's chance with more open lines' fails for open twos through unit 8; o's open singles stop lowering the chance once the gated units floor (direct +0.20); the x-singles-vs-twos gate's hypothesis restates its closed form. Two domain flags (x's open twos lower x's chance through the ramp; o's open singles raise it directly)."
+ },
+ "counts": {
+  "refuted": 0,
+  "weakened": 7,
+  "upheld": 27,
+  "flag": 2
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "structural coverage 1.0, compositional 1.0, hierarchy complete, full coverage",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.0 / 1.0, no uncovered nodes or edges, one root containing the output, 8 of 8 leaves composed",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --out /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/verify/recheck.json"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "function preservation 8.9e-16; closed-form max error 0.0201",
+   "check": "verify recheck",
+   "evidence": "recomputed 8.88e-16 and 0.020084 (leaf errors 0.0035 to 0.020, the largest on the pair)",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.n_leaf_annotations",
+   "statement": "8 leaves, 1 composition, 17 splits, 1 identity node, 11 hidden nodes",
+   "check": "verify recheck op_counts; node list",
+   "evidence": "op_counts: split_node 17, add_identity_node 1, annotate 9 (8 leaves + root); hidden nodes 1,2,3,4,6,7,8,9,76,2510,10 = 11",
+   "commands": [
+    "uv run python -m explaneat verify recheck /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "replacing each nonlinear unit by its affine fit leaves AUC 0.860 against 0.882",
+   "check": "verify linearise --core",
+   "evidence": "full 0.8815; every switching unit affine 0.8595 (gain +0.0220); linear core alone 0.5000",
+   "commands": [
+    "uv run python -m explaneat verify linearise /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --core"
+   ]
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "whole-model chance 44% to 97% as x's open twos go 0 to 6; 88% to 8% as o's open twos go 0 to 6 (typical case)",
+   "check": "verify probe sweeps at the typical case",
+   "evidence": "x_open_2 0..6: 44.2%, 74.5%, 92.3%, 94.2%, 94.1%, 94.8%, 96.9%; o_open_2 0..6: 87.7%, 74.5%, 54.4%, 35.0%, 19.8%, 10.1%, 7.6%",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --sweep x_open_2=0:6:7 --nodes all --wide",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --sweep o_open_2=0:6:7 --nodes all --wide"
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "weakened",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "a single o threat switches the o-lines ramp and the cap off (chance 74% to 37% at the typical case)",
+   "check": "probe o_thr 0..2 at the typical case; subgroup o_thr > 0",
+   "evidence": "typical case: 74.5% -> 36.7%, unit 2 1.742 -> 0, unit 3 0.779 -> 0 (reproduces). On the data the ramp is off on all 765 o-threat positions, but the cap (unit 3) is still on for 149 of them (19.5%): the switch is general for the ramp, typical-case only for the cap",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --sweep o_thr=0:2:3 --nodes all --wide",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"o_thr > 0\""
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "the centre column block raises the chance when x holds the centre and lowers it when the centre column is crowded by either side",
+   "check": "probe grid centre_x x centre_o 0..3 --wide, block contribution",
+   "evidence": "block contribution: (x3,o0) +1.17, (x2,o0) +0.33; (x0,o3) -0.92, (x1,o2) -0.72, (x2,o2) -1.23, (x1,o3) -2.53, (x3,o3) -2.12. Note: whole-model chance at (x0,o3) is 87.7%, above 74.5% with an empty centre, because the ramp (+3.76) and gate 7 (+1.93) rise with o's centre pieces and outweigh the block",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --sweep centre_x=0:3:4 --sweep centre_o=0:3:4 --wide"
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "weakened",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "the quiet-o gate fires when o has few open lines and x holds the centre (13329 positions, x winning 93.6% of them)",
+   "check": "subgroup node_1 > 0; node_1 > 0 and centre_x == 0",
+   "evidence": "13329 (24.7%) and 93.6% reproduce; but 3785 of the 13329 firings (28%) have no x centre piece, so 'x holds the centre' is not a condition of the gate (see V18)",
+   "commands": [
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"node_1 > 0\"",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"node_1 > 0 and centre_x == 0\""
+   ]
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "threat features are rare (660 and 765 positions); odd-row threats on 66 and 100",
+   "check": "verify subgroup",
+   "evidence": "x_thr > 0: 660; o_thr > 0: 765; x_thr_odd > 0: 66; o_thr_odd > 0: 100",
+   "commands": [
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"x_thr > 0\"",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"o_thr > 0\"",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"x_thr_odd > 0\"",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"o_thr_odd > 0\""
+   ]
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "probe scores 0.65 (o-centre-x-singles gate), 0.61 (pair), 0.83 (ramp composite) and 0.66 (o's open lines)",
+   "check": "verify concept with the stated expressions",
+   "evidence": "0.6467, 0.6136, 0.8289, 0.6553 (AUC 0.823, 0.807, 0.914, 0.828)",
+   "commands": [
+    "uv run python -m explaneat verify concept /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --part ann_57 --concept \"centre_o + x_open_1 - centre_x\"",
+    "uv run python -m explaneat verify concept /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --part ann_60 --concept \"x_open_1 + x_open_2 - o_open_1 - centre_o\"",
+    "uv run python -m explaneat verify concept /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --part ann_55 --concept \"o_open_1 + o_open_2 + x_open_2 + o_thr - centre_o\"",
+    "uv run python -m explaneat verify concept /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --part ann_55 --concept \"o_open_1 + o_open_2\""
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "weakened",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "o's open singles and twos lower x's predicted chance",
+   "check": "probe o_open_1 over its full range at the typical case and held at the typical position with x_open_2 >= 3",
+   "evidence": "typical case: 99.8% at 1 open single down to 7.5% at 21-23, then back up to 15.0% at 31 (above the 99th percentile). Held at x_open_2 >= 3: 99.8% at 1, 78.9% at 17, then 82.6% at 19 and 88.4% at 21, inside the data: once units 1, 2 and 8 have floored the direct +0.20 per sd term on o's open singles raises the chance. The direction holds for usual counts, not for the whole range",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --sweep o_open_1=1:31:16 --nodes 1,2,8,9",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --hold \"where:x_open_2 >= 3\" --sweep o_open_1=1:21:11 --nodes 1,2"
+   ]
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "structure",
+   "statement": "one root (win_probability_root) containing the output; eight leaves under it; every part's exits feed node 0 only; all 16 inputs enter through split copies",
+   "check": "verify vars; recheck hierarchy; operations list",
+   "evidence": "hierarchy single_root True, all_under_root True, complete True; 16 variables each read by the root; leaf exits 1, 2, 3, 7, 10_a, {6,4,76}, {8,9}, identity_0 all feed node 0; 10_b sits inside the centre block as stated",
+   "commands": [
+    "uv run python -m explaneat verify vars /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json"
+   ]
+  },
+  {
+   "id": "V13",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_62",
+   "claims": [],
+   "location": "operations.win_probability_root.hypothesis",
+   "statement": "AUC 0.882, accuracy 0.810; affine replacement 0.860 (gain 0.022); largest parts off: ramp 0.8414, cap 0.8328, direct terms 0.8457",
+   "check": "recheck; linearise; ablate",
+   "evidence": "0.8815 / 0.8099; 0.8595 (+0.0220); 0.8414, 0.8328, 0.8457",
+   "commands": [
+    "uv run python -m explaneat verify ablate /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --part ann_55",
+    "uv run python -m explaneat verify ablate /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --part ann_56",
+    "uv run python -m explaneat verify ablate /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --part ann_61"
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_62",
+   "claims": [],
+   "location": "operations.win_probability_root.hypothesis",
+   "statement": "x's open twos: 44%, 92%, 97% at 0, 2, 6; o threat drops the chance to 37% from 74%; x's threats coincide with x's open threes and o's with o's (0 rows differ)",
+   "check": "probe sweeps; subgroup (x_thr > 0) != (x_open_3 > 0)",
+   "evidence": "44.2%, 92.3%, 96.9%; 74.5% -> 36.7%; both mismatch subgroups n = 0",
+   "commands": [
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"(x_thr > 0) != (x_open_3 > 0)\"",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"(o_thr > 0) != (o_open_3 > 0)\""
+   ]
+  },
+  {
+   "id": "V15",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_62",
+   "claims": [],
+   "location": "operations.win_probability_root.hypothesis",
+   "statement": "x's open singles raise it (chance 13% at 0 to 81% at 10, through the pair, the x-singles-vs-twos gate and the o-centre-x-singles gate)",
+   "check": "probe x_open_1 0..10 and 1..31 --nodes 7,8,9,10_a",
+   "evidence": "12.8% at 0 and 81.4% at 10 reproduce, but 0 is below the training minimum of 1 (16.8% at 1). At the typical case gate 7 is off for the whole sweep (first on at 17 singles) and gate 10_a only from 8, so the stated rise there runs through the pair; the two gates contribute elsewhere. Minor",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --sweep x_open_1=0:10:11 --nodes all",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --sweep x_open_1=1:31:16 --nodes 7,8,9,10_a"
+   ]
+  },
+  {
+   "id": "V16",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_54",
+   "claims": [],
+   "location": "operations.quiet_o_x_centre_gate.hypothesis",
+   "statement": "on for 13329 of 54045 (24.7%); outcome 93.6% vs 56.8%; mean predicted 94%; AUC 0.8815 -> 0.8793; raises mean chance by 0.009; concept AUC 0.95 (score 0.90)",
+   "check": "subgroup node_1 > 0; ablate; concept",
+   "evidence": "13329 / 24.7% / 93.6% vs 56.8% / 93.9%; 0.8793, +0.0091; AUC 0.952, score 0.905; readout weight +1.475 (raises)",
+   "commands": [
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"node_1 > 0\"",
+    "uv run python -m explaneat verify ablate /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --part ann_54",
+    "uv run python -m explaneat verify concept /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --part ann_54 --concept \"centre_x - o_open_1 - o_open_2\"",
+    "uv run python -m explaneat verify ablate /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --edge 1->0 --to zero"
+   ]
+  },
+  {
+   "id": "V17",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_54",
+   "claims": [],
+   "location": "operations.quiet_o_x_centre_gate.evidence[4]",
+   "statement": "with x holding two centre pieces the gate falls 3.07 -> 1.02 as o's open singles go 0 -> 8 and the chance from above 99% to 97%; at the typical case the gate is off from 7 singles",
+   "check": "probe --set centre_x=2 --sweep o_open_1=0:8:9; probe --sweep o_open_1=0:8:9",
+   "evidence": "3.073 -> 1.020; 99.99% -> 96.8%; typical: 0.1215 at 6, 0 at 7. Note o_open_1 = 0 is below the training minimum of 1 (2.816 at 1)",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --set centre_x=2 --sweep o_open_1=0:8:9 --nodes all",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --sweep o_open_1=0:8:9 --nodes all"
+   ]
+  },
+  {
+   "id": "V18",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_54",
+   "claims": [],
+   "location": "operations.quiet_o_x_centre_gate.hypothesis",
+   "statement": "switches on when o has few open singles and open twos while x holds the centre column",
+   "check": "subgroup node_1 > 0 and centre_x == 0; probe held at that subgroup's typical position",
+   "evidence": "3785 of the 13329 on-rows (28%) have centre_x = 0 (x wins 91.2% of them); at the typical such position the gate is 0.64 and stays on up to 9 o open singles (0.128 at 9, off at 11). Few o lines alone switch it: 'while x holds the centre' is a partial overclaim; x's centre pieces only shift the threshold",
+   "commands": [
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"node_1 > 0 and centre_x == 0\"",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --hold \"where:node_1 > 0 and centre_x == 0\" --sweep o_open_1=1:21:11 --nodes 1"
+   ]
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_55",
+   "claims": [],
+   "location": "operations.o_lines_ramp.hypothesis",
+   "statement": "on for 86.3%; 0 of 765 o-threat rows have it on; AUC 0.8815 -> 0.8414; raises mean chance by 0.188; composite AUC 0.91 (score 0.83); 'o's open lines' scores 0.66",
+   "check": "subgroup; ablate; concept",
+   "evidence": "46622 / 86.3%; 'o_thr > 0 and node_2 > 0' n = 0; 0.8414, +0.1882; 0.914 / 0.829; 0.655; readout +1.224",
+   "commands": [
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"node_2 > 0\"",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"o_thr > 0 and node_2 > 0\"",
+    "uv run python -m explaneat verify ablate /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --part ann_55"
+   ]
+  },
+  {
+   "id": "V20",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_55",
+   "claims": [],
+   "location": "operations.o_lines_ramp.evidence[6]",
+   "statement": "typical case: 3.36 -> 1.92 over o's open singles 0..8; 2.17 -> 0.00 and chance 88% -> 8% over o's open twos 0..6; 1.74 -> 0.00 with one o threat; rises with o's centre pieces and odd-row playable columns",
+   "check": "probe sweeps",
+   "evidence": "3.355 -> 1.921 (0 is below the minimum of 1; 3.176 at 1); 2.166 -> 0 (0.047 at 5), 87.7% -> 7.6%; 1.742 -> 0; centre_o 0..4: 1.74 -> 3.52; n_odd 1..7: 0.70 -> 2.27",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --sweep o_open_1=0:8:9 --nodes all",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --sweep o_open_2=0:6:7 --nodes all --wide",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --sweep centre_o=0:4:5 --nodes all",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --sweep n_odd_empty_playable=1:7:7 --nodes 2,3"
+   ]
+  },
+  {
+   "id": "V21",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_55",
+   "claims": [],
+   "location": "operations.o_lines_ramp.hypothesis",
+   "statement": "through this part o's line presence lowers x's predicted chance",
+   "check": "closed form and probe x_open_2 --nodes 2",
+   "evidence": "the unit also falls with x's own open twos (-0.60 per sd, as large as o's open twos' -0.55): unit 2 is 2.21 at 0 x open twos and 0 at 5, so through this part x's open twos lower x's chance. The hypothesis lists the term and grades its reading partial; the game sense of that term is not given. Domain flag, no data conflict",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --sweep x_open_2=0:6:7 --nodes all --wide"
+   ]
+  },
+  {
+   "id": "V22",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_56",
+   "claims": [],
+   "location": "operations.x_open_twos_cap.hypothesis",
+   "statement": "at its floor on 16079 (29.8%), x wins 82.5% vs 58.8%; 25058 rows with >= 2 open twos, 9321 still on, 342 with < 2 already off; AUC -> 0.8328; lowers mean chance by 0.137; concept AUC 0.94 (0.88)",
+   "check": "subgroup; ablate; concept",
+   "evidence": "16079 / 29.8% / 82.5% vs 58.8%; 25058; 9321; 342; 0.8328, -0.1373; 0.941 / 0.882; readout -1.421",
+   "commands": [
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"node_3 == 0\"",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"x_open_2 >= 2 and node_3 > 0\"",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"x_open_2 < 2 and node_3 == 0\"",
+    "uv run python -m explaneat verify ablate /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --part ann_56"
+   ]
+  },
+  {
+   "id": "V23",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_56",
+   "claims": [],
+   "location": "operations.x_open_twos_cap.evidence[7]",
+   "statement": "typical case: unit 1.57, 0.78, 0.00 then floor; chance 44% -> 92% over two open twos then 97% at six; a single o threat turns it off; the cap is near two open twos, moved by other inputs",
+   "check": "probe x_open_2 sweeps (typical; held at centre_o >= 2); probe o_thr",
+   "evidence": "1.572, 0.779, 0 (pre-activation -0.014 at 2), 44.2% -> 92.3% -> 96.9%; o_thr = 1: 0; held at centre_o >= 2 the unit floors at 4 open twos (0.077 at 3), consistent with 'other inputs move the cut-off'. On the data the unit is still on for 149 of the 765 o-threat rows; the hypothesis limits that switch to the typical case",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --sweep x_open_2=0:6:7 --nodes all --wide",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --hold \"where:centre_o >= 2\" --sweep x_open_2=0:6:7 --nodes 3",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"o_thr > 0\""
+   ]
+  },
+  {
+   "id": "V24",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_57",
+   "claims": [],
+   "location": "operations.o_centre_x_singles_gate.hypothesis",
+   "statement": "on for 9018 (16.7%), x wins 70.9% vs 64.8%; AUC -> 0.8796; raises mean chance by 0.011; on for 1426 rows with no o centre piece; concept AUC 0.82 (0.65, partial)",
+   "check": "subgroup; ablate; concept",
+   "evidence": "9018 / 16.7% / 70.9% vs 64.8%; 0.8796, +0.0105; 1426; 0.823 / 0.647; readout +1.194",
+   "commands": [
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"node_7 > 0\"",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"node_7 > 0 and centre_o == 0\"",
+    "uv run python -m explaneat verify ablate /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --part ann_57"
+   ]
+  },
+  {
+   "id": "V25",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_57",
+   "claims": [],
+   "location": "operations.o_centre_x_singles_gate.evidence[5]",
+   "statement": "with o holding two centre pieces and x none: off at three singles, 0.03 at four, 0.90 at ten, chance 17% -> 93%; o's centre sweep: off at 0 and 1, 0.75 at 2, 2.48 at 4; falls with x's centre pieces",
+   "check": "probe --set centre_o=2 --set centre_x=0 --sweep x_open_1; --sweep centre_o; --set centre_o=2 --sweep centre_x",
+   "evidence": "0 at 3, 0.028 at 4, 0.899 at 10; 17.3% (at x_open_1 = 0, below the minimum of 1; 23.6% at 1) -> 93.1%; 0, 0, 0.754, 1.615, 2.476; centre_x 0..2 at centre_o = 2: 0.754, 0.249, 0",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --set centre_o=2 --set centre_x=0 --sweep x_open_1=0:10:11 --nodes all",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --sweep centre_o=0:4:5 --nodes all",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --set centre_o=2 --sweep centre_x=0:4:5 --nodes 7"
+   ]
+  },
+  {
+   "id": "V26",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_57",
+   "claims": [],
+   "location": "operations.o_centre_x_singles_gate.hypothesis",
+   "statement": "switches on when o holds the centre column while x has many open singles and few centre pieces (reading partial)",
+   "check": "subgroup node_7 > 0 and centre_o >= 2",
+   "evidence": "3536 of the 9018 on-rows (39%) have o with two or more centre pieces, 1426 (16%) none (stated); the explainer already grades the reading partial (0.65), so the scope is as stated",
+   "commands": [
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"node_7 > 0 and centre_o >= 2\""
+   ]
+  },
+  {
+   "id": "V27",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_58",
+   "claims": [],
+   "location": "operations.x_singles_vs_twos_gate.hypothesis",
+   "statement": "on for 24466 (45.3%), x wins 70.6% vs 61.9%; 10 on-rows with singles < twos + even-row columns; off on 25727 rows that satisfy the count rule; AUC -> 0.8780; raises mean chance by 0.025; concept AUC 0.90 (0.81)",
+   "check": "subgroup; ablate; concept",
+   "evidence": "24466 / 45.3% / 70.6% vs 61.9%; 10; 25727 (strict >); 0.8780, +0.0254; 0.903 / 0.807; readout +0.566",
+   "commands": [
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"node_10_a > 0\"",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"node_10_a > 0 and x_open_1 < x_open_2 + n_even_empty_playable\"",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"node_10_a == 0 and x_open_1 > x_open_2 + n_even_empty_playable\"",
+    "uv run python -m explaneat verify ablate /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --part ann_58"
+   ]
+  },
+  {
+   "id": "V28",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_58",
+   "claims": [],
+   "location": "operations.x_singles_vs_twos_gate.evidence[5]",
+   "statement": "typical case: off up to seven x open singles, 0.06 at eight, 0.38 at ten; even-row columns: 1.07 at 0, off from 3, chance 86% -> 58% at 7; falls with x's open twos and x's odd-row threats",
+   "check": "probe sweeps",
+   "evidence": "0 at 7, 0.058 at 8, 0.376 at 10; 1.068 at 0, 0 at 3; 85.8% -> 58.3% at 7 (7 is above the training maximum of 6; 61.2% at 6); x_open_2 0..2: 0.65, 0.22, 0; an x odd-row threat sends the pre-activation to -10.6",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --sweep x_open_1=0:10:11 --nodes all",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --sweep n_even_empty_playable=0:7:8 --nodes all",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --set x_thr=1 --sweep x_thr_odd=0,1 --sweep x_thr_even=1,0 --nodes 10_a,2,3"
+   ]
+  },
+  {
+   "id": "V29",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_58",
+   "claims": [],
+   "location": "operations.x_singles_vs_twos_gate.hypothesis",
+   "statement": "A ReLU gate that rises with x's open singles and falls with x's open twos, the number of even-row playable columns and x's odd-row threats; when on it raises x's predicted chance",
+   "check": "read against the closed form",
+   "evidence": "not meaningful: restates the closed form (its four largest terms in words). What the part does: adds up to +0.57 per unit to the logit on the 45% of positions where x's open singles outnumber its open twos plus the even-row playable columns by a wide margin; the predicate is accurate (AUC 0.90) but no game reading is offered for why singles minus twos minus even-row columns should matter",
+   "commands": [
+    "uv run python -m explaneat verify concept /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --part ann_58 --concept \"x_open_1 - x_open_2 - n_even_empty_playable\""
+   ]
+  },
+  {
+   "id": "V30",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_59",
+   "claims": [],
+   "location": "operations.centre_column_block.hypothesis",
+   "statement": "unit 6 on for 49.0%; unit 76 on for 9826 (18.2%), x wins 53.6% vs 68.5%; rule '>= 3 centre pieces' (7713 rows): 2498 on with fewer, 385 off with >= 3; unit 4 on for 6984 (12.9%), 2275 with < 2 x centre pieces; AUC -> 0.8713; mean change 0.004, mean |change| 0.027; concept AUC 0.97 (0.95)",
+   "check": "subgroup; ablate; concept; edge weights",
+   "evidence": "26482 / 49.0%; 9826 / 18.2% / 53.6% vs 68.5%; 7713; 2498; 385; 6984 / 12.9%; 2275; 0.8713, +0.0045 / 0.0266; 0.973 / 0.947; readouts 6: +0.293 (weak), 76: -1.354 (lowers strongly), 4: +1.473 (raises)",
+   "commands": [
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"node_76 > 0\"",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"node_76 > 0 and centre_x + centre_o < 3\"",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"node_76 == 0 and centre_x + centre_o >= 3\"",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"node_4 > 0 and centre_x < 2\"",
+    "uv run python -m explaneat verify ablate /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --part ann_59",
+    "uv run python -m explaneat verify ablate /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --edge 76->0 --to zero"
+   ]
+  },
+  {
+   "id": "V31",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_59",
+   "claims": [],
+   "location": "operations.centre_column_block.evidence[10]",
+   "statement": "grid at the typical case: x 3 / o 0: unit 4 1.02, unit 76 0.74, chance 99%; two each: unit 76 2.57, 47%; o 3 / x 1: 43%; empty centre 74%; the block raises when x holds the centre and lowers when crowded by either side",
+   "check": "probe centre grid --nodes 4,6,76 and --wide",
+   "evidence": "1.018, 0.738, 99.0%; 2.57, 47.3%; 43.1%; 74.5%. Block contribution +1.17 at (3,0), -0.92 at (0,3), -1.23 at (2,2), -2.53 at (1,3). Unit 4 is on for only 64 rows with centre_x = 0. Note the whole-model chance at (0,3) is 87.7%, higher than with an empty centre: other parts rise with o's centre pieces",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --sweep centre_x=0:3:4 --sweep centre_o=0:3:4 --nodes 4,6,76",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --sweep centre_x=0:3:4 --sweep centre_o=0:3:4 --wide",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"node_4 > 0 and centre_x == 0\""
+   ]
+  },
+  {
+   "id": "V32",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_60",
+   "claims": [],
+   "location": "operations.x_lines_vs_o_centre_pair.hypothesis",
+   "statement": "unit 2510 positive on 54045 of 54045; unit 8 on for 83.5%; unit 9 on for 30176 (55.8%), x wins 55.8% vs 78.5%; 3842 rows with 8 off and 9 on, x wins 28.0%; AUC -> 0.8548, mean |change| 0.087; concept mean AUC 0.81 (0.61)",
+   "check": "subgroup; ablate; concept",
+   "evidence": "54045; 45108 / 83.5%; 30176 / 55.8% / 55.8% vs 78.5%; 3842 / 28.0%; 0.8548, 0.0873; 0.807 / 0.614; readouts 8: +0.525, 9: -1.008",
+   "commands": [
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"node_2510 > 0\"",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"node_9 > 0\"",
+    "uv run python -m explaneat verify subgroup /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --where \"node_8 == 0 and node_9 > 0\"",
+    "uv run python -m explaneat verify ablate /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --part ann_60"
+   ]
+  },
+  {
+   "id": "V33",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_60",
+   "claims": [],
+   "location": "operations.x_lines_vs_o_centre_pair.evidence[7]",
+   "statement": "typical case: unit 8 0.48 -> 2.28 and unit 9 2.91 -> 0.53 as x's open singles go 0 -> 10, chance 13% -> 81%; unit 8 2.10 -> 0.00 as o's centre pieces go 0 -> 3",
+   "check": "probe sweeps",
+   "evidence": "0.480 -> 2.277; 2.912 -> 0.529; 12.8% -> 81.4% (0 is below the minimum of 1; 16.8% at 1); 2.097 -> 0 at centre_o = 3; unit 9 also falls with centre_o (0.77 -> 0) and x's open twos (1.20 -> 0 at 3)",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --sweep x_open_1=0:10:11 --nodes all",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --sweep centre_o=0:4:5 --nodes all"
+   ]
+  },
+  {
+   "id": "V34",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_60",
+   "claims": [],
+   "location": "operations.x_lines_vs_o_centre_pair.hypothesis",
+   "statement": "Both therefore raise x's predicted chance when x has more open lines",
+   "check": "probe x_open_2 0..9 --nodes 8,9 --wide (pair contribution)",
+   "evidence": "holds for open singles. For open twos unit 8 falls (-0.33 per sd): 2.35 at 0 twos, 1.85 at 2, 0.83 at 6, 0.08 at 9, and feeds the output positively, so through unit 8 more x open twos lower the chance; unit 9 floors at 3 twos. The pair's contribution rises +0.02 -> +0.84 over 0..3 open twos then falls to +0.44 at 6. 'Unit 8 rises with x's open singles and falls with o's centre pieces and o's open singles and twos' omits that it falls with x's open twos",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --sweep x_open_2=0:9:10 --nodes 3,8,9",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --sweep x_open_2=0:6:7 --nodes all --wide"
+   ]
+  },
+  {
+   "id": "V35",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_61",
+   "claims": [],
+   "location": "operations.direct_terms.hypothesis",
+   "statement": "per sd: x's open twos +0.88, o's open singles +0.20, o's open twos -0.17, o's centre -0.15, x's open singles +0.08, even-row columns +0.06, x's open threes -0.04; x's open twos alone R-squared 0.86; exit -0.99 -> 3.11 over 0..6 open twos; AUC -> 0.8457, mean |change| 0.096",
+   "check": "recheck closed form; concept; probe; ablate",
+   "evidence": "closed form 0.881, 0.203, -0.173, -0.148, 0.0845, 0.0579, -0.0377 (rounded error 0.0035); r2 0.856; -0.9928 -> 3.106; 0.8457, 0.0963 (exit's mean is 0, so 'fixed at its mean' and the baseline agree)",
+   "commands": [
+    "uv run python -m explaneat verify concept /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --part ann_61 --concept \"x_open_2\"",
+    "uv run python -m explaneat verify ablate /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --part ann_61",
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --sweep x_open_2=0:6:7 --nodes all --wide"
+   ]
+  },
+  {
+   "id": "V36",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_61",
+   "claims": [],
+   "location": "operations.direct_terms.hypothesis",
+   "statement": "o's open singles add 0.20 to the logit directly",
+   "check": "closed form sign; probe o_open_1 at hold x_open_2 >= 3",
+   "evidence": "the model gives x a higher chance, directly, for each o open single (+0.20 per sd): odd in game terms. It is outweighed by the ramp and the pair at usual counts but shows once those units floor (chance 78.9% at 17 o singles rising to 88.4% at 21, held at x_open_2 >= 3). Domain flag for the reviewer; the weight is stated correctly",
+   "commands": [
+    "uv run python -m explaneat verify probe /private/tmp/claude-501/-Users-mike-dev-explaneat/49dbb6fc-1545-4ef1-86df-c44223c670ba/scratchpad/c4lf/lines/record.json --hold \"where:x_open_2 >= 3\" --sweep o_open_1=1:21:11 --nodes 1,2"
+   ]
+  }
+ ],
+ "parts": {
+  "ann_62": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_54": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_55": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_56": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_57": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_58": {
+   "grade": "weakened",
+   "level": "L4"
+  },
+  "ann_59": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_60": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_61": {
+   "grade": "upheld",
+   "level": "L3"
+  }
+ },
+ "leaf_meaning": {
+  "ann_54": {
+   "grade": "meaningful",
+   "why": "'o is quiet (few open singles and twos) and x holds the centre, so x is winning' is a game reading the model confirms (gate on where x wins 93.6%, concept AUC 0.95), though x's centre pieces only shift the threshold: 28% of firings have none."
+  },
+  "ann_55": {
+   "grade": "partial",
+   "why": "'o's line presence lowers x's chance, switched off by an o threat' holds (unit falls with o's singles and twos, off on all 765 o-threat rows), but the unit falls as much with x's own open twos and rises with o's centre pieces, terms the reading does not explain (two-term reading scores 0.66)."
+  },
+  "ann_56": {
+   "grade": "meaningful",
+   "why": "'x's open twos raise x's chance until about two, then the part adds nothing' is a game reading the model confirms (unit floors at 2 at the typical case, concept AUC 0.94, floor rows win 82.5% vs 58.8%)."
+  },
+  "ann_57": {
+   "grade": "partial",
+   "why": "the gate does rise with x's open singles and o's centre pieces and fall with x's centre pieces, but only 39% of its firings have o with two or more centre pieces and 16% have none; the concept scores 0.65 and the game sense of the conjunction is not given."
+  },
+  "ann_58": {
+   "grade": "closed-form-only",
+   "why": "the hypothesis is the closed form's largest terms in words (rises with x's singles, falls with x's twos, even-row columns and odd threats); the predicate is accurate (AUC 0.90) but no game reading says why singles minus twos minus even-row playable columns should matter."
+  },
+  "ann_59": {
+   "grade": "meaningful",
+   "why": "'x in the centre is good for x; a crowded centre column (either side) is bad' is a game reading the model confirms at the block level (contribution +1.17 at x3/o0, -0.92 at x0/o3, -2.53 at x1/o3; total centre pieces predict the three exits with AUC 0.97)."
+  },
+  "ann_60": {
+   "grade": "partial",
+   "why": "unit 8 reads x's open singles against o's centre and lines as stated, but unit 9 is described by its formula, the concept scores 0.61, and the stated 'both raise x's chance with more open lines' fails for open twos through unit 8."
+  },
+  "ann_61": {
+   "grade": "partial",
+   "why": "'the direct effect is dominated by x's open twos' is a reading the model confirms (R-squared 0.86), but the other six terms are listed as weights without a game reading, and the positive direct weight on o's open singles is unexplained."
+  }
+ },
+ "statements_checked": 150,
+ "statements_checked_note": "distinct numbers, number words, directions, thresholds and rules checked against the model: about 150 (coverage/preservation/closed-form figures, 7 op and node counts, 37 subgroup counts and rates, 9 ablation AUCs and mean changes, 10 readout weights, 7 direct weights, 9 concept scores and AUCs, about 60 probe values and risks, 3 thresholds, 3 rules, and the direction words of each part)",
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ],
+ "read_only": true
+}
