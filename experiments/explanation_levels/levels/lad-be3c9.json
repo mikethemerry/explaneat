@@ -6,8 +6,13 @@
  "records_dir": "explanations",
  "dataset": "connect4_win_ordinal",
  "n_train": 54045,
- "computed_at": "2026-11-11T22:32:29+00:00",
+ "computed_at": "2026-11-12T22:04:59+00:00",
  "method": "experiments/explanation_levels/compute_levels.py (read only; probes not stored, query_id null)",
+ "probe_version": 2,
+ "conditions": {
+  "max_terms": 3,
+  "min_support": 0.01
+ },
  "levels": {
   "faithful": {
    "function_preservation_max_abs_err": 0.0,
@@ -41,6 +46,7 @@
     "meaningful": 0,
     "partial": 3,
     "closed_form_only": 5,
+    "restatement": 0,
     "unnamed": 0
    },
    "grades": {
@@ -54,8 +60,10 @@
     "xHighColumnD": "closed_form_only"
    },
    "understood_fraction": 0.0,
+   "understood_probe": 0.0,
    "partial_fraction": 0.375,
    "closed_form_only_fraction": 0.625,
+   "restatement_fraction": 0.0,
    "unnamed_fraction": 0.0,
    "concepts": {
     "xCentreAboveOBottom": "o_open_1",
@@ -63,11 +71,33 @@
     "xCentreThirdRow": "c_d1",
     "xLowColumnD": "centre_diff",
     "xOnC2": "c_c2",
-    "xRightOCentre": "x_thr_odd",
+    "xRightOCentre": "o_row2",
     "xBottomLeftRow": "c_b1",
     "xHighColumnD": "c_c2"
    },
-   "test": "concept probe per leaf: meaningful r2 >= 0.8 or AUC >= 0.9; partial r2 >= 0.5 or AUC >= 0.75; else closed_form_only; unnamed when no concept was probed",
+   "understood_verifier": 0.75,
+   "understood_fraction_verifier": 0.75,
+   "verifier_graded": 8,
+   "verifier_grades": {
+    "xCentreAboveOBottom": "meaningful",
+    "oBottomCentre": "meaningful",
+    "xCentreThirdRow": "meaningful",
+    "xLowColumnD": "meaningful",
+    "xOnC2": "meaningful",
+    "xRightOCentre": "partial",
+    "xBottomLeftRow": "meaningful",
+    "xHighColumnD": "partial"
+   },
+   "verifier_compared": 8,
+   "verifier_disagreements": 8,
+   "verifier_counts": {
+    "meaningful": 6,
+    "partial": 2,
+    "closed_form_only": 0,
+    "restatement": 0,
+    "unnamed": 0
+   },
+   "test": "concept probe per leaf (v2): meaningful score >= 0.8; partial >= 0.5; else closed_form_only; restatement when the concept is not simpler than the leaf (more than 3 terms, or a reweighting of the leaf's entries); a binary concept's AUC counts only against a gate of comparable support (>= 1% of rows), else r2; unnamed when no concept was probed. understood_verifier: the blind verifier's leaf grades where a verdict exists",
    "ground_truth": {
     "task": "c4",
     "arch": "8",
@@ -87,13 +117,47 @@
     },
     "truth": null
    },
+   "verdict": "experiments/explanation_barrier/verification/lad-be3c9.json",
+   "author": {
+    "leaves": 0,
+    "grades": {
+     "xCentreAboveOBottom": null,
+     "oBottomCentre": null,
+     "xCentreThirdRow": null,
+     "xLowColumnD": null,
+     "xOnC2": null,
+     "xRightOCentre": null,
+     "xBottomLeftRow": null,
+     "xHighColumnD": null
+    },
+    "counts": {
+     "meaningful": 0,
+     "partial": 0,
+     "closed_form_only": 0,
+     "restatement": 0,
+     "unnamed": 0
+    },
+    "understood_fraction_author": null,
+    "restatements": 0,
+    "stored_grades": {
+     "xCentreAboveOBottom": null,
+     "oBottomCentre": null,
+     "xCentreThirdRow": null,
+     "xLowColumnD": null,
+     "xOnC2": null,
+     "xRightOCentre": null,
+     "xBottomLeftRow": null,
+     "xHighColumnD": null
+    },
+    "note": "the concept the explaining agent stored on each leaf (set_meaning), re-probed under the v2 simplicity and support conditions; None when no concept was stored"
+   },
    "domain_only": {
     "leaves": 8,
     "meaningful": 0,
     "partial": 1,
     "closed_form_only": 7,
     "understood_fraction": 0.0,
-    "mean_score": 0.3816
+    "mean_score": 0.3662
    }
   }
  },
@@ -243,15 +307,22 @@
    "meaning": {
     "grade": "partial",
     "concept": "o_open_1",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.161335,
      "auc": 0.772306,
      "mi": 0.16649,
      "n": 54045,
      "score": 0.544612,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 3,
+   "author": null,
    "per_exit": {
     "1": {
      "best": {
@@ -266,6 +337,11 @@
       "mi": 0.16649,
       "nmi": 0.048393,
       "leaf_gated": true,
+      "gate_share": 0.141049,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.544612
      },
      "best_domain": {
@@ -280,6 +356,11 @@
       "mi": 0.16649,
       "nmi": 0.048393,
       "leaf_gated": true,
+      "gate_share": 0.141049,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.544612
      },
      "top": [
@@ -380,15 +461,22 @@
    "meaning": {
     "grade": "partial",
     "concept": "c_c1",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.309249,
      "auc": 0.763304,
      "mi": 0.307428,
      "n": 54045,
      "score": 0.526608,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 3,
+   "author": null,
    "per_exit": {
     "4": {
      "best": {
@@ -403,6 +491,11 @@
       "mi": 0.307428,
       "nmi": 0.096629,
       "leaf_gated": true,
+      "gate_share": 0.31174,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.526608
      },
      "best_domain": {
@@ -417,6 +510,11 @@
       "mi": 0.08053,
       "nmi": 0.025312,
       "leaf_gated": true,
+      "gate_share": 0.31174,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.28121
      },
      "top": [
@@ -517,15 +615,22 @@
    "meaning": {
     "grade": "closed_form_only",
     "concept": "c_d1",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.096916,
      "auc": 0.652113,
      "mi": 0.085606,
      "n": 54045,
      "score": 0.304226,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 3,
+   "author": null,
    "per_exit": {
     "3": {
      "best": {
@@ -540,6 +645,11 @@
       "mi": 0.085606,
       "nmi": 0.033437,
       "leaf_gated": true,
+      "gate_share": 0.470423,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.304226
      },
      "best_domain": {
@@ -554,6 +664,11 @@
       "mi": 0.09289,
       "nmi": 0.036282,
       "leaf_gated": true,
+      "gate_share": 0.470423,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.30043
      },
      "top": [
@@ -654,15 +769,22 @@
    "meaning": {
     "grade": "closed_form_only",
     "concept": "centre_diff",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.214111,
      "auc": 0.719895,
      "mi": 0.195791,
      "n": 54045,
      "score": 0.43979,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 3,
+   "author": null,
    "per_exit": {
     "6": {
      "best": {
@@ -677,6 +799,11 @@
       "mi": 0.195791,
       "nmi": 0.085073,
       "leaf_gated": true,
+      "gate_share": 0.400444,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.43979
      },
      "best_domain": {
@@ -691,6 +818,11 @@
       "mi": 0.195791,
       "nmi": 0.085073,
       "leaf_gated": true,
+      "gate_share": 0.400444,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.43979
      },
      "top": [
@@ -791,15 +923,22 @@
    "meaning": {
     "grade": "partial",
     "concept": "c_c2",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.200078,
      "auc": 0.825936,
      "mi": 0.237496,
      "n": 54045,
      "score": 0.651872,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 3,
+   "author": null,
    "per_exit": {
     "5": {
      "best": {
@@ -814,6 +953,11 @@
       "mi": 0.237496,
       "nmi": 0.174781,
       "leaf_gated": true,
+      "gate_share": 0.194856,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.651872
      },
      "best_domain": {
@@ -828,6 +972,11 @@
       "mi": 0.119069,
       "nmi": 0.087627,
       "leaf_gated": true,
+      "gate_share": 0.194856,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.376402
      },
      "top": [
@@ -848,12 +997,12 @@
        "mi": 0.119069
       },
       {
-       "concept": "x_thr_odd",
+       "concept": "x_open_2",
        "source": "domain",
-       "score": 0.288324,
-       "r2": 0.001178,
-       "auc": 0.644162,
-       "mi": 0.000616
+       "score": 0.228502,
+       "r2": 0.027204,
+       "auc": 0.614251,
+       "mi": 0.028556
       }
      ]
     }
@@ -912,78 +1061,79 @@
    ],
    "library": "c4",
    "n_library_concepts": 95,
-   "score": 0.4491,
+   "score": 0.326264,
    "grade": "closed_form_only",
    "best_concepts": [
-    "x_thr_odd"
+    "o_row2"
    ],
-   "domain_score": 0.4491,
+   "domain_score": 0.326264,
    "domain_grade": "closed_form_only",
    "best_domain_concepts": [
-    "x_thr_odd"
+    "o_row2"
    ],
-   "r2": 0.000567,
-   "auc": 0.72455,
-   "mi": 0.000848,
+   "r2": 0.09873,
+   "auc": 0.663132,
+   "mi": 0.086156,
    "meaning": {
     "grade": "closed_form_only",
-    "concept": "x_thr_odd",
+    "concept": "o_row2",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
-     "r2": 0.000567,
-     "auc": 0.72455,
-     "mi": 0.000848,
+     "r2": 0.09873,
+     "auc": 0.663132,
+     "mi": 0.086156,
      "n": 54045,
-     "score": 0.4491,
+     "score": 0.326264,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 3,
+   "author": null,
    "per_exit": {
     "8": {
      "best": {
-      "concept": "x_thr_odd",
-      "kind": "binary",
+      "concept": "o_row2",
+      "kind": "count",
       "source": "domain",
       "n": 54045,
-      "r2": 0.000567,
-      "auc": 0.72455,
-      "auc_of": "exit activation as a score for the concept",
-      "direction": "exit lower when the concept holds",
-      "mi": 0.000848,
-      "nmi": 0.000263,
+      "r2": 0.09873,
+      "auc": 0.663132,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.086156,
+      "nmi": 0.026776,
       "leaf_gated": true,
-      "score": 0.4491
+      "gate_share": 0.294699,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 0.326264
      },
      "best_domain": {
-      "concept": "x_thr_odd",
-      "kind": "binary",
+      "concept": "o_row2",
+      "kind": "count",
       "source": "domain",
       "n": 54045,
-      "r2": 0.000567,
-      "auc": 0.72455,
-      "auc_of": "exit activation as a score for the concept",
-      "direction": "exit lower when the concept holds",
-      "mi": 0.000848,
-      "nmi": 0.000263,
+      "r2": 0.09873,
+      "auc": 0.663132,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.086156,
+      "nmi": 0.026776,
       "leaf_gated": true,
-      "score": 0.4491
+      "gate_share": 0.294699,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 0.326264
      },
      "top": [
-      {
-       "concept": "x_thr_odd",
-       "source": "domain",
-       "score": 0.4491,
-       "r2": 0.000567,
-       "auc": 0.72455,
-       "mi": 0.000848
-      },
-      {
-       "concept": "o_thr_odd",
-       "source": "domain",
-       "score": 0.334492,
-       "r2": 0.000643,
-       "auc": 0.667246,
-       "mi": 0.000628
-      },
       {
        "concept": "o_row2",
        "source": "domain",
@@ -991,6 +1141,22 @@
        "r2": 0.09873,
        "auc": 0.663132,
        "mi": 0.086156
+      },
+      {
+       "concept": "c_d1",
+       "source": "input",
+       "score": 0.311536,
+       "r2": 0.090565,
+       "auc": 0.655768,
+       "mi": 0.083355
+      },
+      {
+       "concept": "x_row2",
+       "source": "domain",
+       "score": 0.290952,
+       "r2": 0.10705,
+       "auc": 0.645476,
+       "mi": 0.085767
       }
      ]
     }
@@ -1065,15 +1231,22 @@
    "meaning": {
     "grade": "closed_form_only",
     "concept": "c_b1",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.086889,
      "auc": 0.710279,
      "mi": 0.09741,
      "n": 54045,
      "score": 0.420558,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 3,
+   "author": null,
    "per_exit": {
     "2": {
      "best": {
@@ -1088,6 +1261,11 @@
       "mi": 0.09741,
       "nmi": 0.060151,
       "leaf_gated": true,
+      "gate_share": 0.245462,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.420558
      },
      "best_domain": {
@@ -1102,6 +1280,11 @@
       "mi": 0.074611,
       "nmi": 0.046073,
       "leaf_gated": true,
+      "gate_share": 0.245462,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.350032
      },
      "top": [
@@ -1202,15 +1385,22 @@
    "meaning": {
     "grade": "closed_form_only",
     "concept": "c_c2",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.088697,
      "auc": 0.696684,
      "mi": 0.138371,
      "n": 54045,
      "score": 0.393368,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 3,
+   "author": null,
    "per_exit": {
     "7": {
      "best": {
@@ -1225,6 +1415,11 @@
       "mi": 0.138371,
       "nmi": 0.051041,
       "leaf_gated": true,
+      "gate_share": 0.484744,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.393368
      },
      "best_domain": {
@@ -1239,6 +1434,11 @@
       "mi": 0.074711,
       "nmi": 0.027559,
       "leaf_gated": true,
+      "gate_share": 0.484744,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.310902
      },
      "top": [

@@ -6,8 +6,13 @@
  "records_dir": "explanations_v4",
  "dataset": "monk2_onehot",
  "n_train": 345,
- "computed_at": "2026-11-11T22:43:53+00:00",
+ "computed_at": "2026-11-12T22:07:39+00:00",
  "method": "experiments/explanation_levels/compute_levels.py (read only; probes not stored, query_id null)",
+ "probe_version": 2,
+ "conditions": {
+  "max_terms": 3,
+  "min_support": 0.01
+ },
  "levels": {
   "faithful": {
    "function_preservation_max_abs_err": 1.1102230246251565e-15,
@@ -39,23 +44,54 @@
    "graded": 2,
    "counts": {
     "meaningful": 0,
-    "partial": 1,
-    "closed_form_only": 1,
+    "partial": 0,
+    "closed_form_only": 2,
+    "restatement": 0,
     "unnamed": 0
    },
    "grades": {
     "few_first_values_gate": "closed_form_only",
-    "direct_first_value_terms": "partial"
+    "direct_first_value_terms": "closed_form_only"
    },
    "understood_fraction": 0.0,
-   "partial_fraction": 0.5,
-   "closed_form_only_fraction": 0.5,
+   "understood_probe": 0.0,
+   "partial_fraction": 0.0,
+   "closed_form_only_fraction": 1.0,
+   "restatement_fraction": 0.0,
    "unnamed_fraction": 0.0,
    "concepts": {
-    "few_first_values_gate": "a1:3 and a3:2",
-    "direct_first_value_terms": "a2:1 and a4:1"
+    "few_first_values_gate": "a2:3 and a3:2",
+    "direct_first_value_terms": "a6:1"
    },
-   "test": "concept probe per leaf: meaningful r2 >= 0.8 or AUC >= 0.9; partial r2 >= 0.5 or AUC >= 0.75; else closed_form_only; unnamed when no concept was probed",
+   "understood_verifier": null,
+   "understood_fraction_verifier": null,
+   "verifier_graded": 0,
+   "verifier_grades": null,
+   "verifier_compared": 0,
+   "verifier_disagreements": null,
+   "test": "concept probe per leaf (v2): meaningful score >= 0.8; partial >= 0.5; else closed_form_only; restatement when the concept is not simpler than the leaf (more than 3 terms, or a reweighting of the leaf's entries); a binary concept's AUC counts only against a gate of comparable support (>= 1% of rows), else r2; unnamed when no concept was probed. understood_verifier: the blind verifier's leaf grades where a verdict exists",
+   "verdict": null,
+   "author": {
+    "leaves": 0,
+    "grades": {
+     "few_first_values_gate": null,
+     "direct_first_value_terms": null
+    },
+    "counts": {
+     "meaningful": 0,
+     "partial": 0,
+     "closed_form_only": 0,
+     "restatement": 0,
+     "unnamed": 0
+    },
+    "understood_fraction_author": null,
+    "restatements": 0,
+    "stored_grades": {
+     "few_first_values_gate": null,
+     "direct_first_value_terms": null
+    },
+    "note": "the concept the explaining agent stored on each leaf (set_meaning), re-probed under the v2 simplicity and support conditions; None when no concept was stored"
+   },
    "domain_only": null
   }
  },
@@ -104,55 +140,59 @@
    ],
    "library": "tabular",
    "n_library_concepts": 62,
-   "score": 0.415608,
+   "score": 0.405154,
    "grade": "closed_form_only",
    "best_concepts": [
-    "a1:3 and a3:2"
+    "a2:3 and a3:2"
    ],
    "domain_score": null,
    "domain_grade": "closed_form_only",
    "best_domain_concepts": [],
-   "r2": 0.106095,
-   "auc": 0.707804,
-   "mi": 0.162638,
+   "r2": 0.108856,
+   "auc": 0.702577,
+   "mi": 0.178512,
    "meaning": {
     "grade": "closed_form_only",
-    "concept": "a1:3 and a3:2",
+    "concept": "a2:3 and a3:2",
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
     "probe": {
-     "r2": 0.106095,
-     "auc": 0.707804,
-     "mi": 0.162638,
+     "r2": 0.108856,
+     "auc": 0.702577,
+     "mi": 0.178512,
      "n": 345,
-     "score": 0.415608,
+     "score": 0.405154,
+     "support": 0.162319,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "217": {
      "best": {
-      "concept": "a1:3 and a3:2",
+      "concept": "a2:3 and a3:2",
       "kind": "binary",
       "source": "pair",
       "n": 345,
-      "r2": 0.106095,
-      "auc": 0.707804,
+      "r2": 0.108856,
+      "auc": 0.702577,
       "auc_of": "exit activation as a score for the concept",
       "direction": "exit higher when the concept holds",
-      "mi": 0.162638,
-      "nmi": 0.093045,
+      "mi": 0.178512,
+      "nmi": 0.102127,
       "leaf_gated": true,
-      "score": 0.415608
+      "gate_share": 0.275362,
+      "support": 0.162319,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 0.405154
      },
      "best_domain": null,
      "top": [
-      {
-       "concept": "a1:3 and a3:2",
-       "source": "pair",
-       "score": 0.415608,
-       "r2": 0.106095,
-       "auc": 0.707804,
-       "mi": 0.162638
-      },
       {
        "concept": "a2:3 and a3:2",
        "source": "pair",
@@ -162,12 +202,20 @@
        "mi": 0.178512
       },
       {
-       "concept": "a1:3 and a2:3",
-       "source": "pair",
-       "score": 0.38954,
-       "r2": 0.040469,
-       "auc": 0.69477,
-       "mi": 0.138597
+       "concept": "a6:1",
+       "source": "level",
+       "score": 0.345002,
+       "r2": 0.123851,
+       "auc": 0.672501,
+       "mi": 0.221922
+      },
+      {
+       "concept": "a6:2",
+       "source": "level",
+       "score": 0.345002,
+       "r2": 0.123851,
+       "auc": 0.672501,
+       "mi": 0.221922
       }
      ]
     }
@@ -190,70 +238,82 @@
    ],
    "library": "tabular",
    "n_library_concepts": 62,
-   "score": 0.71644,
-   "grade": "partial",
+   "score": 0.309177,
+   "grade": "closed_form_only",
    "best_concepts": [
-    "a2:1 and a4:1"
+    "a6:1"
    ],
    "domain_score": null,
    "domain_grade": "closed_form_only",
    "best_domain_concepts": [],
-   "r2": 0.17549,
-   "auc": 0.85822,
-   "mi": 0.150815,
+   "r2": 0.309177,
+   "auc": 0.818604,
+   "mi": 0.436926,
    "meaning": {
-    "grade": "partial",
-    "concept": "a2:1 and a4:1",
+    "grade": "closed_form_only",
+    "concept": "a6:1",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
-     "r2": 0.17549,
-     "auc": 0.85822,
-     "mi": 0.150815,
+     "r2": 0.309177,
+     "auc": 0.818604,
+     "mi": 0.436926,
      "n": 345,
-     "score": 0.71644,
+     "score": 0.309177,
+     "support": 0.486957,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": false,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "identity_0": {
      "best": {
-      "concept": "a2:1 and a4:1",
+      "concept": "a6:1",
       "kind": "binary",
-      "source": "pair",
+      "source": "level",
       "n": 345,
-      "r2": 0.17549,
-      "auc": 0.85822,
+      "r2": 0.309177,
+      "auc": 0.818604,
       "auc_of": "exit activation as a score for the concept",
       "direction": "exit lower when the concept holds",
-      "mi": 0.150815,
-      "nmi": 0.045415,
+      "mi": 0.436926,
+      "nmi": 0.131572,
       "leaf_gated": false,
-      "score": 0.71644
+      "gate_share": null,
+      "support": 0.486957,
+      "low_support": false,
+      "auc_in_score": false,
+      "score_basis": "r2",
+      "score": 0.309177
      },
      "best_domain": null,
      "top": [
       {
-       "concept": "a2:1 and a4:1",
-       "source": "pair",
-       "score": 0.71644,
-       "r2": 0.17549,
-       "auc": 0.85822,
-       "mi": 0.150815
-      },
-      {
-       "concept": "a1:1 and a4:1",
-       "source": "pair",
-       "score": 0.660656,
-       "r2": 0.148554,
-       "auc": 0.830328,
-       "mi": 0.15342
-      },
-      {
        "concept": "a6:1",
        "source": "level",
-       "score": 0.637208,
+       "score": 0.309177,
        "r2": 0.309177,
        "auc": 0.818604,
        "mi": 0.436926
+      },
+      {
+       "concept": "a6:2",
+       "source": "level",
+       "score": 0.309177,
+       "r2": 0.309177,
+       "auc": 0.818604,
+       "mi": 0.436926
+      },
+      {
+       "concept": "a4:1",
+       "source": "level",
+       "score": 0.195602,
+       "r2": 0.195602,
+       "auc": 0.776368,
+       "mi": 0.201197
       }
      ]
     }

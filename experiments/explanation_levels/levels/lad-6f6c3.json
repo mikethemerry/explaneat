@@ -6,8 +6,13 @@
  "records_dir": "explanations",
  "dataset": "ladder_syn_ee610",
  "n_train": 24000,
- "computed_at": "2026-11-11T22:27:44+00:00",
+ "computed_at": "2026-11-12T21:55:10+00:00",
  "method": "experiments/explanation_levels/compute_levels.py (read only; probes not stored, query_id null)",
+ "probe_version": 2,
+ "conditions": {
+  "max_terms": 3,
+  "min_support": 0.01
+ },
  "levels": {
   "faithful": {
    "function_preservation_max_abs_err": 0.0,
@@ -41,6 +46,7 @@
     "meaningful": 3,
     "partial": 1,
     "closed_form_only": 0,
+    "restatement": 0,
     "unnamed": 0
    },
    "grades": {
@@ -50,8 +56,10 @@
     "linear_age_bmi_score": "meaningful"
    },
    "understood_fraction": 0.75,
+   "understood_probe": 0.75,
    "partial_fraction": 0.25,
    "closed_form_only_fraction": 0.0,
+   "restatement_fraction": 0.0,
    "unnamed_fraction": 0.0,
    "concepts": {
     "age_bmi_hinge": "age * bmi",
@@ -59,7 +67,25 @@
     "visits_smoker_hinge": "visits",
     "linear_age_bmi_score": "age * bmi"
    },
-   "test": "concept probe per leaf: meaningful r2 >= 0.8 or AUC >= 0.9; partial r2 >= 0.5 or AUC >= 0.75; else closed_form_only; unnamed when no concept was probed",
+   "understood_verifier": 0.75,
+   "understood_fraction_verifier": 0.75,
+   "verifier_graded": 4,
+   "verifier_grades": {
+    "age_bmi_hinge": "meaningful",
+    "income_score_hinge": "meaningful",
+    "visits_smoker_hinge": "meaningful",
+    "linear_age_bmi_score": "partial"
+   },
+   "verifier_compared": 4,
+   "verifier_disagreements": 2,
+   "verifier_counts": {
+    "meaningful": 3,
+    "partial": 1,
+    "closed_form_only": 0,
+    "restatement": 0,
+    "unnamed": 0
+   },
+   "test": "concept probe per leaf (v2): meaningful score >= 0.8; partial >= 0.5; else closed_form_only; restatement when the concept is not simpler than the leaf (more than 3 terms, or a reweighting of the leaf's entries); a binary concept's AUC counts only against a gate of comparable support (>= 1% of rows), else r2; unnamed when no concept was probed. understood_verifier: the blind verifier's leaf grades where a verdict exists",
    "ground_truth": {
     "task": "hinges3",
     "arch": "4",
@@ -74,6 +100,32 @@
      "income_score_hinge": "meaningful"
     },
     "truth": "f = 2*(-0.5 + 1.5 relu(-0.5 + za + 0.8 zb) - 1.2 relu(-0.3 + zi - 0.7 zs) + 1.0 relu(-1 + zv + smoker))"
+   },
+   "verdict": "experiments/explanation_barrier/verification/lad-6f6c3.json",
+   "author": {
+    "leaves": 0,
+    "grades": {
+     "age_bmi_hinge": null,
+     "income_score_hinge": null,
+     "visits_smoker_hinge": null,
+     "linear_age_bmi_score": null
+    },
+    "counts": {
+     "meaningful": 0,
+     "partial": 0,
+     "closed_form_only": 0,
+     "restatement": 0,
+     "unnamed": 0
+    },
+    "understood_fraction_author": null,
+    "restatements": 0,
+    "stored_grades": {
+     "age_bmi_hinge": null,
+     "income_score_hinge": null,
+     "visits_smoker_hinge": null,
+     "linear_age_bmi_score": null
+    },
+    "note": "the concept the explaining agent stored on each leaf (set_meaning), re-probed under the v2 simplicity and support conditions; None when no concept was stored"
    },
    "domain_only": null
   }
@@ -162,15 +214,22 @@
    "meaning": {
     "grade": "meaningful",
     "concept": "age * bmi",
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.679263,
      "auc": 0.996329,
      "mi": 1.245511,
      "n": 24000,
      "score": 0.992658,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "1": {
      "best": {
@@ -185,6 +244,11 @@
       "mi": 1.245511,
       "nmi": 0.602184,
       "leaf_gated": true,
+      "gate_share": 0.343292,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.992658
      },
      "best_domain": null,
@@ -252,15 +316,22 @@
    "meaning": {
     "grade": "partial",
     "concept": "income",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.659813,
      "auc": 0.835535,
      "mi": 0.561632,
      "n": 24000,
      "score": 0.67107,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "4": {
      "best": {
@@ -275,6 +346,11 @@
       "mi": 0.561632,
       "nmi": 0.221065,
       "leaf_gated": true,
+      "gate_share": 0.464833,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.67107
      },
      "best_domain": null,
@@ -342,15 +418,22 @@
    "meaning": {
     "grade": "meaningful",
     "concept": "visits",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.533947,
      "auc": 0.953586,
      "mi": 0.820612,
      "n": 24000,
      "score": 0.907172,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "3": {
      "best": {
@@ -365,6 +448,11 @@
       "mi": 0.820612,
       "nmi": 0.535606,
       "leaf_gated": true,
+      "gate_share": 0.228042,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.907172
      },
      "best_domain": null,
@@ -432,15 +520,22 @@
    "meaning": {
     "grade": "meaningful",
     "concept": "age * bmi",
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.493215,
      "auc": 0.994531,
      "mi": 0.456891,
      "n": 24000,
      "score": 0.989062,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "2": {
      "best": {
@@ -455,6 +550,11 @@
       "mi": 0.456891,
       "nmi": 0.137337,
       "leaf_gated": true,
+      "gate_share": 0.000542,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.989062
      },
      "best_domain": null,
