@@ -4,6 +4,7 @@ stored explanations, one JSON per explanation in ``levels/<label>.json``.
     uv run python experiments/explanation_levels/compute_levels.py --set v4        # 60 ten-seed records (explaneat_v4)
     uv run python experiments/explanation_levels/compute_levels.py --set ladder    # the explanation ladder (explaneat_dev)
     uv run python experiments/explanation_levels/compute_levels.py --set c4cap     # the Connect-4 capacity run (explaneat_dev)
+    uv run python experiments/explanation_levels/compute_levels.py --set c4lf      # the Connect-4 line-features runs (explaneat_dev)
     uv run python experiments/explanation_levels/compute_levels.py --set v4 --labels heart-s0,adult-s1
 
 Nothing is written to any database: the model is the genome's phenotype with the stored
@@ -40,6 +41,9 @@ SETS = {
     "v4": {"db": "postgresql://localhost/explaneat_v4", "records": ROOT / "experiments/10seed/explanations_v4"},
     "ladder": {"db": "postgresql://localhost/explaneat_dev", "records": ROOT / "experiments/explanation_barrier/explanations"},
     "c4cap": {"db": "postgresql://localhost/explaneat_dev", "records": None},
+    # the Connect-4 line-features base test (experiments/c4_line_features): every explained genome
+    # of an experiment named c4lf-*
+    "c4lf": {"db": "postgresql://localhost/explaneat_dev", "records": None},
 }
 #: ladder explanations stored in the database after the ladder's records were written (the
 #: re-runs of C4-32 and C4-32x16 past the 26-copy split limit, exp/explanation-barrier-2)
@@ -85,6 +89,15 @@ def explained_genomes_for(db, experiment_names):
     return out
 
 
+def experiment_names_like(db, prefix):
+    from sqlalchemy import text
+    from explaneat.db.models import Experiment
+    with db.session_scope() as s:
+        if s.bind.dialect.name == "postgresql":
+            s.execute(text("SET TRANSACTION READ ONLY"))
+        return [n for (n,) in s.query(Experiment.name).filter(Experiment.name.like(prefix + "%")).order_by(Experiment.name).all()]
+
+
 def targets(set_name: str, labels=None):
     spec = SETS[set_name]
     out = []
@@ -101,6 +114,10 @@ def targets(set_name: str, labels=None):
     if set_name == "c4cap":
         from mcp_server.server import get_db
         for name, gid in explained_genomes_for(get_db(), C4CAP_EXPERIMENTS):
+            out.append({"label": name, "genome_id": gid, "record": {}})
+    if set_name == "c4lf":
+        from mcp_server.server import get_db
+        for name, gid in explained_genomes_for(get_db(), experiment_names_like(get_db(), "c4lf-")):
             out.append({"label": name, "genome_id": gid, "record": {}})
     if labels:
         out = [t for t in out if t["label"] in labels]
@@ -165,7 +182,7 @@ def compute_one(t, set_name: str, lmeta, gt, cache: bool = True):
          "closed_form_only": dom_grades.count("closed_form_only"),
          "understood_fraction": round(dom_grades.count("meaningful") / len(dom_grades), 4) if dom_grades else None,
          "mean_score": round(float(np.mean(dom)), 4) if dom else None}
-        if rep.get("decomposition") and leaves and any(l.get("library") in ("c4", "krk") for l in leaves.values()) else None)
+        if rep.get("decomposition") and leaves and any(l.get("library") in ("c4", "c4_lines", "krk") for l in leaves.values()) else None)
     return {
         "label": t["label"], "genome_id": t["genome_id"], "set": set_name, "study": study_of(t["label"], set_name),
         # the record set these levels belong to (build_explanations_csv.py fills its columns only for it)
