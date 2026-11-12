@@ -443,24 +443,62 @@ predicts a leaf's exit activation $a$ over the training rows (`probe_concept`,
 - mutual information in bits of the discretised $c$ and $a$, and MI normalised by $H(a)$;
 - $n$, the rows used.
 
-The **score** is $\max(R^2,\; 2(\mathrm{AUC}-0.5))$. The **grade** follows the score and nothing
-else:
+The **score** is $\max(R^2,\; 2(\mathrm{AUC}-0.5))$ when the AUC may count (below), else $R^2$.
+The **grade** follows the score and the two conditions, and nothing else:
 
 | Grade | Rule |
 |---|---|
 | `meaningful` | score $\ge 0.8$ (i.e. $R^2 \ge 0.8$ or AUC $\ge 0.9$) |
 | `partial` | score $\ge 0.5$ ($R^2 \ge 0.5$ or AUC $\ge 0.75$) |
 | `closed_form_only` | below that: the leaf is described by its formula and nothing named predicts it |
+| `restatement` | the concept is not simpler than the leaf (below), whatever its score |
 | `unnamed` | no concept was probed |
 
 A leaf with several exits is scored per exit and takes the mean. Each annotation carries the
-result as a `meaning` block, `{grade, concept, probe: {r2, auc, mi, n, score, query_id}}`
-(`set_meaning`, or the `meaning` param of `annotate`); the grade is re-derived from the probe
-whenever it is read, so a typed grade cannot disagree with its score. The probe is a
-provenance-stamped query (`probe_concept` returns `provenance.id`), so a stated probe score is a
-`{{q:<id>.score|.2f}}` reference like any other number. The `understood_fraction` of an
-explanation is the share of leaves graded `meaningful`; `partial_fraction`,
-`closed_form_only_fraction` and `unnamed_fraction` complete it.
+result as a `meaning` block, `{grade, concept, concept_complexity, simpler_than_leaf, probe:
+{r2, auc, mi, n, score, support, query_id}}` (`set_meaning`, or the `meaning` param of
+`annotate`); the grade is re-derived from the probe whenever it is read, so a typed grade
+cannot disagree with its score. The probe is a provenance-stamped query (`probe_concept`
+returns `provenance.id`), so a stated probe score is a `{{q:<id>.score|.2f}}` reference like
+any other number. The `understood_fraction` of an explanation is the share of leaves graded
+`meaningful`; `partial_fraction`, `closed_form_only_fraction`, `restatement_fraction` and
+`unnamed_fraction` complete it.
+
+#### Two conditions on the concept (probe v2, 2026-11-13)
+
+Two failures found by blind verifiers on the first probe: an ad-hoc concept that is a signed
+combination of the leaf's own inputs with the leaf's own signs predicts the leaf by
+construction (the per-line Connect-4 direct-term groups: three 34–35-line weighted sums graded
+meaningful on "the signed unweighted sum of the lines the weights favour"); and a binary
+concept true on under 1% of the rows can reach AUC $\approx 1$ on a leaf while explaining none
+of its variance (`x_thr_odd`, 66 of 54,045 rows). A concept's score therefore counts only when
+the concept meets both conditions (`explaneat/analysis/concept_probe.py`):
+
+- **Simplicity.** The concept must be simpler than the leaf: a library concept (one named term;
+  a pairwise product or conjunction, two), or an ad-hoc expression over at most $k$ distinct
+  variables ($k = 3$, `MAX_CONCEPT_TERMS`, configurable). An expression whose variables all lie
+  among the leaf's entry inputs and number more than $k$ is a *reweighting of the leaf's
+  entries*, the leaf's own weighted sum with rounded weights. A concept that fails is graded
+  `restatement` whatever it scores, and reported separately from `closed_form_only`: the leaf
+  is predicted, by itself. The block records `concept_complexity` (the number of terms) and
+  `simpler_than_leaf`.
+- **Support.** A binary concept needs a minority share of at least 1% of the rows
+  (`MIN_SUPPORT`, configurable). Its AUC enters the score only when the leaf is itself a gate
+  with *comparable support*: both minority shares at least the floor and within a factor of two
+  of each other. Otherwise the score is $R^2$, which for a binary concept is the share of the
+  exit's variance between the two groups, a variance-explained measure; a rare flag that
+  separates the exit's top rows cannot grade the leaf meaningful, while a rare flag that *is*
+  the leaf ($R^2 = 1$, a gate on one rare level) still does. A binary concept below the floor
+  is scored by $R^2$ alone with `low_support` set, in a library sweep (`low_support_concepts`
+  lists them) as when named. A continuous concept against a gated leaf keeps the AUC of the
+  concept as a score for the gate.
+
+The levels tables report three gradings side by side where they exist: the library sweep
+(`understood_probe`, the `understood_fraction`), the concept the explaining agent stored on the
+leaf re-probed under these conditions (`author`), and the blind verifier's leaf grades from its
+`verdict.json` (`understood_verifier`, with `verifier_disagreements`, the leaves graded by both
+on which the probe and the verifier differ). The verifier grades on a different question
+(does the reading add anything to the formula?), so the two are reported, not reconciled.
 
 ### Scope of the vocabulary
 

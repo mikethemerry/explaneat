@@ -71,6 +71,27 @@ def _conf(c) -> Dict[str, Any]:
     return c.get("confidence") or {}
 
 
+def _survival(layer) -> bool:
+    return (layer.get("risk_scale") or {}).get("kind") == "survival"
+
+
+def hr_text(hr: Optional[float]) -> str:
+    """A hazard ratio to two significant figures ('1.8', '0.52', '12')."""
+    if hr is None:
+        return "?"
+    return f"{hr:.2g}" if hr < 10 else f"{hr:.0f}"
+
+
+def _hr(layer, c, key: str = "estimate") -> str:
+    """Survival layers: ', a hazard ratio of about 1.8' after the risk numbers (the clinical
+    unit of a Cox effect; the risk numbers remain the lead). Empty for classification."""
+    if not _survival(layer):
+        return ""
+    e = c.get(key) or {}
+    hr = e.get("hazard_ratio")
+    return f", a hazard ratio of about {hr_text(hr)}" if hr is not None else ""
+
+
 def _adv(c) -> str:
     """'clearly ' / 'slightly ' / ''."""
     cf = _conf(c)
@@ -196,12 +217,12 @@ def direction_sentence(layer, c, part_scope: bool) -> Dict[str, Any]:
         hl = "higher" if (b or 0) >= (a or 0) else "lower"
         text = (f"{via}{who}, the model gives a {_adv(c)}{hl} {_pred_noun(layer)} "
                 f"if {ch['to']['cond']}{moved_phrase(c, 'to')} ({_about(b)}) than if {ch['from']['cond']}"
-                f"{moved_phrase(c, 'from')} ({_about(a)})")
+                f"{moved_phrase(c, 'from')} ({_about(a)}){_hr(layer, c)}")
     else:
         verb = "raising" if (b or 0) >= (a or 0) else "lowering"
         text = (f"{via}the model treats a higher {_name(v)} as {_adv(c)}{verb} {_pred(layer)} "
                 f"{shape_phrase(layer, c, v)}: {who}, it goes from {_about(a)} at {ch['from']['text']} "
-                f"to {_about(b)} at {ch['to']['text']}{moved_phrase(c, 'to')}{saturation_phrase(c)}")
+                f"to {_about(b)} at {ch['to']['text']}{moved_phrase(c, 'to')}{saturation_phrase(c)}{_hr(layer, c)}")
     return _s(text + _tail(c) + "." + _little(layer, c), [c["id"]])
 
 
@@ -224,10 +245,12 @@ def interaction_sentence(layer, c) -> Dict[str, Any]:
         tail_v = f"going from {ch['from']['label']} to {ch['to']['label']}"
     else:
         tail_v = f"{_name(v)} going from {ch['from']['text']} to {ch['to']['text']}"
+    hr_s = f" (hazard ratio about {hr_text(sg.get('hazard_ratio'))})" if _survival(layer) and sg.get("hazard_ratio") else ""
+    hr_w = f" (hazard ratio about {hr_text(wg.get('hazard_ratio'))})" if _survival(layer) and wg.get("hazard_ratio") else ""
     numbers = (f"for a typical {one}, {tail_v} moves {_pred(layer)} from {_about(sg.get('risk_from'))} to "
-               f"{_about(sg.get('risk_to'))} if {sg['cond']}{moved_phrase(c, group=sg.get('label'))}, and from "
+               f"{_about(sg.get('risk_to'))} if {sg['cond']}{moved_phrase(c, group=sg.get('label'))}{hr_s}, and from "
                f"{_about(wg.get('risk_from'))} to {_about(wg.get('risk_to'))} if {wg['cond']}"
-               f"{moved_phrase(c, group=wg.get('label'))}")
+               f"{moved_phrase(c, group=wg.get('label'))}{hr_w}")
     bw = (wg.get("beyond_window") or {}) if st.get("only_within_window") else {}
     if bw.get("above"):
         numbers += (f" (above {ch['to']['text']} it changes for them too: from {_about(bw['above']['risk_from'])} "
@@ -284,7 +307,8 @@ def threshold_sentence(layer, c) -> Dict[str, Any]:
                  f"{side} that)")
     ch = st.get("change") or {}
     text = (f"{head}: for a typical such {_pop(layer, True)}, going from {ch.get('from', {}).get('text')} to "
-            f"{ch.get('to', {}).get('text')} moves it from {_about(r.get('from'))} to {_about(r.get('to'))}")
+            f"{ch.get('to', {}).get('text')} moves it from {_about(r.get('from'))} to {_about(r.get('to'))}"
+            f"{_hr(layer, c)}")
     sh = c.get("shape") or {}
     if sh.get("status") == "fallback":
         text += "; across patients the change happens in an uneven way"
@@ -549,6 +573,13 @@ def summary(layer, by_part) -> List[Dict[str, Any]]:
             out.append(_s("the model " + s["text"][3:], s["claims"]))
     if not out:
         out.append(_s("no claim about this model passed its checks, so there is no plain-language summary.", []))
+    if _survival(layer) and layer.get("ph_caveat"):
+        # the proportional-hazards caveat closes every survival summary; it is about the model's form,
+        # so it cites the root's structure (or null) claims rather than any one effect
+        form = [c["id"] for c in _verified(by_part.get(root["id"], []) if root else [])
+                if c["type"] in ("structure", "null")]
+        cited = form or list(dict.fromkeys(i for s in out for i in s["claims"]))
+        out = out[:SUMMARY_MAX - 1] + [_s(layer["ph_caveat"], cited)]
     return out[:SUMMARY_MAX]
 
 

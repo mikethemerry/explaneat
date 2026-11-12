@@ -79,8 +79,10 @@ def query_probe(genome_id: str, sets: Optional[str] = None, hold: str = "typical
     """The model's prediction for constructed inputs (real units): the typical case (``hold``)
     with ``sets`` (JSON list, e.g. ["age=60", "sex=female"]) and ``sweeps`` (JSON list, e.g.
     ["chol=150:350:9", "thal=3,7"]); every part's contribution, and node values with ``nodes``
-    (JSON list of ids or part names). The direct effect of an input is the root's direct-edge
-    weight; the whole-model effect is the change in score here (E8/E9: say which one you quote).
+    (JSON list of ids or part names). A one-hot input whose own name contains "=" (horTh=yes)
+    is set as "horTh=yes=1" (the longest prefix that names a variable is the variable). The
+    direct effect of an input is the root's direct-edge weight; the whole-model effect is the
+    change in score here (E8/E9: say which one you quote).
 
     Args:
         genome_id: UUID of the genome.
@@ -105,10 +107,13 @@ def query_probe(genome_id: str, sets: Optional[str] = None, hold: str = "typical
 
 
 def query_enumerate(genome_id: str, rule: Optional[str] = None, group_by: Optional[str] = None,
-                    where: Optional[str] = None, limit: int = 4096) -> str:
+                    where: Optional[str] = None, limit: int = 4096, bins: int = 0) -> str:
     """Every combination of the inputs' levels (small discrete input spaces): the prediction
     per cell, optionally grouped (``group_by``, a pandas expression) and checked against a
-    ``rule``. Use it for nodes of one-hot inputs (every cell of a gate).
+    ``rule``. Use it for nodes of one-hot inputs (every cell of a gate). A model with a
+    continuous input (more than 12 distinct values) is refused unless ``bins`` is given: the
+    continuous inputs are then binned at ``bins`` training quantiles (5th to 95th percentile),
+    so their cells are constructed cases (``binned``, ``binned_note`` in the result).
 
     Args:
         genome_id: UUID of the genome.
@@ -116,15 +121,18 @@ def query_enumerate(genome_id: str, rule: Optional[str] = None, group_by: Option
         group_by: Optional pandas expression to group the cells by.
         where: Optional subgroup of cells.
         limit: Maximum number of cells.
+        bins: Quantile bins for continuous inputs (0: refuse continuous inputs).
     """
     from explaneat.verify.enumerate import enumerate_space
     try:
         vm = _vm(genome_id)
-        r = enumerate_space(vm, rule=rule, group_by=group_by, where=where, limit=limit)
+        r = enumerate_space(vm, rule=rule, group_by=group_by, where=where, limit=limit, bins=bins)
     except Exception as e:
         return _err(e)
-    return _out(genome_id, "query_enumerate", {"rule": rule, "group_by": group_by, "where": where, "limit": limit},
-                {"population": "every combination of input levels" + (f" where {where}" if where else ""),
+    return _out(genome_id, "query_enumerate", {"rule": rule, "group_by": group_by, "where": where, "limit": limit,
+                                               "bins": bins},
+                {"population": "every combination of input levels" + (f" where {where}" if where else "")
+                 + (f" (continuous inputs binned at {bins} quantiles)" if bins else ""),
                  "quantity": "prediction per cell", "scope": "whole model", "unit": "probability"}, None, r)
 
 
@@ -133,7 +141,8 @@ def query_ablate(genome_id: str, parts: Optional[str] = None, nodes: Optional[st
                  where: Optional[str] = None, split: str = "train") -> str:
     """The prediction change (typical case and over the data) with parts, nodes, edges or the
     root's direct edges switched off. ``to``: "baseline" (a gated exit -> 0, an always-on exit ->
-    its mean), "zero" or "mean".
+    its mean), "zero" or "mean". ``direct`` follows identity relays (``identity_<k>`` after
+    add_identity_node on the output), so input edges into a relay count as direct edges.
 
     Args:
         genome_id: UUID of the genome.
@@ -230,8 +239,11 @@ def probe_concept(genome_id: str, part: str, concept: Optional[str] = None, spli
     the whole library is scored and the best concept per exit is reported.
 
     Returns r2, auc (binary concept, or a gated exit), mutual information, n, the score
-    (max(r2, 2*(auc - 0.5))), the grade (meaningful: score >= 0.8; partial: >= 0.5; else
-    closed_form_only) and the ``meaning`` block to store with ``set_meaning``. Quote a score as
+    (max(r2, 2*(auc - 0.5)), or r2 alone for a binary concept unless the part is a gate of
+    comparable support: probe v2), the grade (meaningful: score >= 0.8; partial: >= 0.5; else
+    closed_form_only; restatement when the concept is not simpler than the part: an expression
+    over more than 3 variables, or a reweighting of the part's own entry inputs) and the
+    ``meaning`` block to store with ``set_meaning``. Quote a score as
     ``{{q:<provenance.id>.score|.2f}}``.
 
     Args:

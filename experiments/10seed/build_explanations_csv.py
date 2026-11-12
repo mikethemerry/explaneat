@@ -35,7 +35,8 @@ def signoff_columns(r):
 
 
 LEVELS_DIR = os.environ.get('EXPLANEAT_LEVELS_DIR') or os.path.join(HERE, '..', 'explanation_levels', 'levels')
-LEVELS_COLUMNS = ('faithful_max_err', 'n_leaves', 'granularity', 'understood_fraction', 'closed_form_only_fraction')
+LEVELS_COLUMNS = ('faithful_max_err', 'n_leaves', 'granularity', 'understood_fraction', 'closed_form_only_fraction',
+                  'understood_fraction_verifier')
 
 
 def levels_columns(r, l):
@@ -46,9 +47,10 @@ def levels_columns(r, l):
     experiments/explanation_levels/levels/<label>.json (compute_levels.py, read only) and are
     blank when that file is missing or was computed for another record set (its records_dir
     must be this run's --dir: the older records in explanations/ are other explanations of the
-    same genomes)."""
+    same genomes). understood_fraction_verifier (2026-11-13, after the existing columns) is the
+    blind verifier's share of leaves graded meaningful where a verdict exists, else blank."""
     out = dict(faithful_max_err=r.get('function_preservation_max_abs_err', ''), n_leaves=r.get('n_leaf_annotations', ''),
-               granularity='', understood_fraction='', closed_form_only_fraction='')
+               granularity='', understood_fraction='', closed_form_only_fraction='', understood_fraction_verifier='')
     p = os.path.join(LEVELS_DIR, f'{l}.json')
     if os.path.exists(p):
         with open(p) as f:
@@ -58,7 +60,8 @@ def levels_columns(r, l):
             lv = {}
         d, u = lv.get('decomposed') or {}, lv.get('understood') or {}
         out.update(granularity=d.get('granularity', ''), understood_fraction=u.get('understood_fraction', ''),
-                   closed_form_only_fraction=u.get('closed_form_only_fraction', ''))
+                   closed_form_only_fraction=u.get('closed_form_only_fraction', ''),
+                   understood_fraction_verifier=u.get('understood_fraction_verifier', ''))
     return {k: ('' if v is None else v) for k, v in out.items()}
 
 

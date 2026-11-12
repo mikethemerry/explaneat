@@ -249,3 +249,37 @@ def test_placeholder_keys_with_spaces_quoted_or_refused():
     vm = VerifyModel(base_data())
     r = process_text(None, "g", "bp {{q:q_1.rows[0].inputs.resting bp}} mm", vm.operations, strict=True, model=vm)
     assert any("not a valid reference" in x for x in r["errors"])
+
+
+# ----------------------------------------------------------------------------- evidence: node ids, delete
+def test_add_evidence_accepts_node_ids_in_formula_payloads_in_strict_mode(world):
+    """The cox_case explainers had to strip entry_nodes ("-6") from analytical_formula payloads
+    because strict mode read them as bare numbers."""
+    from mcp_server.tools.snapshots import add_evidence
+    annotate(world["gid"], "The output adds the inputs.")
+    pay = {"entry_nodes": ["-10", "-9"], "exit_nodes": ["0"], "subgraph_connections": [["-10", "0"], ["-9", "0"]],
+           "latex": "0 = 0.5 x_{-10} + 0.2 x_{-9}", "method": "closed form"}
+    ok = json.loads(add_evidence(world["gid"], "lin", "analytical_formula", json.dumps(pay)))
+    assert ok.get("status") == "ok", ok
+    bad = json.loads(add_evidence(world["gid"], "lin", "analytical_formula",
+                                  json.dumps({**pay, "note": "fitted on 40 rows"})))
+    assert "error" in bad and "40" in bad["error"]
+
+
+def test_delete_evidence_keeps_the_record_in_history(world):
+    from mcp_server.tools.snapshots import add_evidence, delete_evidence, list_evidence
+    from mcp_server.tools.operations import list_operations
+    annotate(world["gid"], "The output adds the inputs.")
+    for note in ("first", "second"):
+        assert json.loads(add_evidence(world["gid"], "lin", "note", json.dumps({"label": note}))).get("status") == "ok"
+    refused = json.loads(delete_evidence(world["gid"], "lin", 0, ""))
+    assert "reason" in refused["error"]
+    missing = json.loads(delete_evidence(world["gid"], "lin", 5, "typo"))
+    assert "no evidence record 5" in missing["error"]
+    out = json.loads(delete_evidence(world["gid"], "lin", 0, "duplicate of the second record"))
+    assert out == {"status": "ok", "deleted_index": 0, "type": "note", "record_count": 1, "deleted_count": 1}
+    left = [e for e in json.loads(list_evidence(world["gid"]))["records"] if e.get("type") == "note"]
+    assert len(left) == 1 and left[0]["has_payload"]
+    ops = json.loads(list_operations(world["gid"]))["operations"]
+    ev = next(o for o in ops if o["type"] == "annotate")["params"]["evidence"]
+    assert ev["deleted"][0]["record"]["payload"]["label"] == "first" and ev["deleted"][0]["reason"]

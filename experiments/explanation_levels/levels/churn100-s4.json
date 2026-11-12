@@ -6,8 +6,13 @@
  "records_dir": "explanations_v4",
  "dataset": "churn_onehot",
  "n_train": 4000,
- "computed_at": "2026-11-11T22:43:06+00:00",
+ "computed_at": "2026-11-12T22:05:46+00:00",
  "method": "experiments/explanation_levels/compute_levels.py (read only; probes not stored, query_id null)",
+ "probe_version": 2,
+ "conditions": {
+  "max_terms": 3,
+  "min_support": 0.01
+ },
  "levels": {
   "faithful": {
    "function_preservation_max_abs_err": 4.440892098500626e-16,
@@ -38,36 +43,79 @@
    "leaves": 8,
    "graded": 8,
    "counts": {
-    "meaningful": 7,
-    "partial": 0,
-    "closed_form_only": 1,
+    "meaningful": 5,
+    "partial": 1,
+    "closed_form_only": 2,
+    "restatement": 0,
     "unnamed": 0
    },
    "grades": {
-    "planAndUsageDirect": "meaningful",
+    "planAndUsageDirect": "partial",
     "serviceCallsGate": "meaningful",
     "dayEveUsageHinge": "meaningful",
-    "stateDirectOffsets": "meaningful",
+    "stateDirectOffsets": "closed_form_only",
     "locationUnits": "meaningful",
     "accountLengthTerm": "meaningful",
     "dayChargeHinges": "meaningful",
     "neverActiveUnit": "closed_form_only"
    },
-   "understood_fraction": 0.875,
-   "partial_fraction": 0.0,
-   "closed_form_only_fraction": 0.125,
+   "understood_fraction": 0.625,
+   "understood_probe": 0.625,
+   "partial_fraction": 0.125,
+   "closed_form_only_fraction": 0.25,
+   "restatement_fraction": 0.0,
    "unnamed_fraction": 0.0,
    "concepts": {
-    "planAndUsageDirect": "number customer service calls > 1",
+    "planAndUsageDirect": "number customer service calls",
     "serviceCallsGate": "number customer service calls > 1",
     "dayEveUsageHinge": "total day minutes * total eve minutes",
-    "stateDirectOffsets": "state:26",
-    "locationUnits": "state:0, state:11, state:21, state:39, state:44, state:47",
+    "stateDirectOffsets": "state:46",
+    "locationUnits": "area code:415, state:0, state:11, state:21, state:39, state:44",
     "accountLengthTerm": "account length",
     "dayChargeHinges": "total day minutes",
     "neverActiveUnit": "state:0"
    },
-   "test": "concept probe per leaf: meaningful r2 >= 0.8 or AUC >= 0.9; partial r2 >= 0.5 or AUC >= 0.75; else closed_form_only; unnamed when no concept was probed",
+   "understood_verifier": null,
+   "understood_fraction_verifier": null,
+   "verifier_graded": 0,
+   "verifier_grades": null,
+   "verifier_compared": 0,
+   "verifier_disagreements": null,
+   "test": "concept probe per leaf (v2): meaningful score >= 0.8; partial >= 0.5; else closed_form_only; restatement when the concept is not simpler than the leaf (more than 3 terms, or a reweighting of the leaf's entries); a binary concept's AUC counts only against a gate of comparable support (>= 1% of rows), else r2; unnamed when no concept was probed. understood_verifier: the blind verifier's leaf grades where a verdict exists",
+   "verdict": null,
+   "author": {
+    "leaves": 0,
+    "grades": {
+     "planAndUsageDirect": null,
+     "serviceCallsGate": null,
+     "dayEveUsageHinge": null,
+     "stateDirectOffsets": null,
+     "locationUnits": null,
+     "accountLengthTerm": null,
+     "dayChargeHinges": null,
+     "neverActiveUnit": null
+    },
+    "counts": {
+     "meaningful": 0,
+     "partial": 0,
+     "closed_form_only": 0,
+     "restatement": 0,
+     "unnamed": 0
+    },
+    "understood_fraction_author": null,
+    "restatements": 0,
+    "stored_grades": {
+     "planAndUsageDirect": null,
+     "serviceCallsGate": null,
+     "dayEveUsageHinge": null,
+     "stateDirectOffsets": null,
+     "locationUnits": null,
+     "accountLengthTerm": null,
+     "dayChargeHinges": null,
+     "neverActiveUnit": null
+    },
+    "note": "the concept the explaining agent stored on each leaf (set_meaning), re-probed under the v2 simplicity and support conditions; None when no concept was stored"
+   },
    "domain_only": null
   }
  },
@@ -154,55 +202,59 @@
    ],
    "library": "tabular",
    "n_library_concepts": 122,
-   "score": 0.86616,
-   "grade": "meaningful",
+   "score": 0.736233,
+   "grade": "partial",
    "best_concepts": [
-    "number customer service calls > 1"
+    "number customer service calls"
    ],
    "domain_score": null,
    "domain_grade": "closed_form_only",
    "best_domain_concepts": [],
-   "r2": 0.48549,
-   "auc": 0.93308,
-   "mi": 0.547636,
+   "r2": 0.736233,
+   "auc": null,
+   "mi": 1.041101,
    "meaning": {
-    "grade": "meaningful",
-    "concept": "number customer service calls > 1",
+    "grade": "partial",
+    "concept": "number customer service calls",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
-     "r2": 0.48549,
-     "auc": 0.93308,
-     "mi": 0.547636,
+     "r2": 0.736233,
+     "auc": null,
+     "mi": 1.041101,
      "n": 4000,
-     "score": 0.86616,
+     "score": 0.736233,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": false,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "identity_usage": {
      "best": {
-      "concept": "number customer service calls > 1",
-      "kind": "binary",
-      "source": "threshold",
+      "concept": "number customer service calls",
+      "kind": "count",
+      "source": "input",
       "n": 4000,
-      "r2": 0.48549,
-      "auc": 0.93308,
-      "auc_of": "exit activation as a score for the concept",
-      "direction": "exit higher when the concept holds",
-      "mi": 0.547636,
-      "nmi": 0.164855,
+      "r2": 0.736233,
+      "auc": null,
+      "auc_of": null,
+      "direction": null,
+      "mi": 1.041101,
+      "nmi": 0.313402,
       "leaf_gated": false,
-      "score": 0.86616
+      "gate_share": null,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": false,
+      "score_basis": "r2",
+      "score": 0.736233
      },
      "best_domain": null,
      "top": [
-      {
-       "concept": "number customer service calls > 1",
-       "source": "threshold",
-       "score": 0.86616,
-       "r2": 0.48549,
-       "auc": 0.93308,
-       "mi": 0.547636
-      },
       {
        "concept": "number customer service calls",
        "source": "input",
@@ -218,6 +270,14 @@
        "r2": 0.686448,
        "auc": null,
        "mi": 0.909236
+      },
+      {
+       "concept": "total night charge * number customer service calls",
+       "source": "pair",
+       "score": 0.666915,
+       "r2": 0.666915,
+       "auc": null,
+       "mi": 0.851847
       }
      ]
     }
@@ -251,15 +311,22 @@
    "meaning": {
     "grade": "meaningful",
     "concept": "number customer service calls > 1",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.712108,
      "auc": 0.984424,
      "mi": 0.829482,
      "n": 4000,
      "score": 0.968848,
+     "support": 0.43525,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "1255": {
      "best": {
@@ -274,6 +341,11 @@
       "mi": 0.829482,
       "nmi": 0.248654,
       "leaf_gated": true,
+      "gate_share": 0.23,
+      "support": 0.43525,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.968848
      },
      "best_domain": null,
@@ -295,12 +367,12 @@
        "mi": 1.590958
       },
       {
-       "concept": "state:37",
-       "source": "level",
-       "score": 0.786516,
-       "r2": 0.032273,
-       "auc": 0.893258,
-       "mi": 0.045633
+       "concept": "total day charge",
+       "source": "input",
+       "score": 0.055114,
+       "r2": 0.055114,
+       "auc": 0.514701,
+       "mi": 1.145986
       }
      ]
     }
@@ -333,15 +405,22 @@
    "meaning": {
     "grade": "meaningful",
     "concept": "total day minutes * total eve minutes",
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.461607,
      "auc": 0.968716,
      "mi": 0.541473,
      "n": 4000,
      "score": 0.937432,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "3227": {
      "best": {
@@ -356,6 +435,11 @@
       "mi": 0.541473,
       "nmi": 0.41177,
       "leaf_gated": true,
+      "gate_share": 0.18675,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.937432
      },
      "best_domain": null,
@@ -400,67 +484,79 @@
    ],
    "library": "tabular",
    "n_library_concepts": 131,
-   "score": 1.0,
-   "grade": "meaningful",
+   "score": 0.299673,
+   "grade": "closed_form_only",
    "best_concepts": [
-    "state:26"
+    "state:46"
    ],
    "domain_score": null,
    "domain_grade": "closed_form_only",
    "best_domain_concepts": [],
-   "r2": 0.113846,
+   "r2": 0.299673,
    "auc": 1.0,
-   "mi": 0.065734,
+   "mi": 0.067004,
    "meaning": {
-    "grade": "meaningful",
-    "concept": "state:26",
+    "grade": "closed_form_only",
+    "concept": "state:46",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
-     "r2": 0.113846,
+     "r2": 0.299673,
      "auc": 1.0,
-     "mi": 0.065734,
+     "mi": 0.067004,
      "n": 4000,
-     "score": 1.0,
+     "score": 0.299673,
+     "support": 0.02,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": false,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "identity_state": {
      "best": {
-      "concept": "state:26",
+      "concept": "state:46",
       "kind": "binary",
       "source": "level",
       "n": 4000,
-      "r2": 0.113846,
+      "r2": 0.299673,
       "auc": 1.0,
       "auc_of": "exit activation as a score for the concept",
-      "direction": "exit higher when the concept holds",
-      "mi": 0.065734,
-      "nmi": 0.03845,
+      "direction": "exit lower when the concept holds",
+      "mi": 0.067004,
+      "nmi": 0.039192,
       "leaf_gated": false,
-      "score": 1.0
+      "gate_share": null,
+      "support": 0.02,
+      "low_support": false,
+      "auc_in_score": false,
+      "score_basis": "r2",
+      "score": 0.299673
      },
      "best_domain": null,
      "top": [
       {
-       "concept": "state:26",
-       "source": "level",
-       "score": 1.0,
-       "r2": 0.113846,
-       "auc": 1.0,
-       "mi": 0.065734
-      },
-      {
        "concept": "state:46",
        "source": "level",
-       "score": 1.0,
+       "score": 0.299673,
        "r2": 0.299673,
        "auc": 1.0,
        "mi": 0.067004
       },
       {
+       "concept": "state:26",
+       "source": "level",
+       "score": 0.113846,
+       "r2": 0.113846,
+       "auc": 1.0,
+       "mi": 0.065734
+      },
+      {
        "concept": "state:37",
        "source": "level",
-       "score": 0.961696,
+       "score": 0.105956,
        "r2": 0.105956,
        "auc": 0.980848,
        "mi": 0.073997
@@ -487,34 +583,41 @@
    ],
    "library": "tabular",
    "n_library_concepts": 131,
-   "score": 0.997187,
+   "score": 0.992332,
    "grade": "meaningful",
    "best_concepts": [
+    "area code:415",
     "state:0",
     "state:11",
     "state:21",
     "state:39",
-    "state:44",
-    "state:47"
+    "state:44"
    ],
    "domain_score": null,
    "domain_grade": "closed_form_only",
    "best_domain_concepts": [],
-   "r2": 0.892984,
-   "auc": 0.998594,
-   "mi": 0.129603,
+   "r2": 0.769804,
+   "auc": 0.996166,
+   "mi": 0.274585,
    "meaning": {
     "grade": "meaningful",
-    "concept": "state:0, state:11, state:21, state:39, state:44, state:47",
+    "concept": "area code:415, state:0, state:11, state:21, state:39, state:44",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
-     "r2": 0.892984,
-     "auc": 0.998594,
-     "mi": 0.129603,
+     "r2": 0.769804,
+     "auc": 0.996166,
+     "mi": 0.274585,
      "n": 4000,
-     "score": 0.997187,
+     "score": 0.992332,
+     "support": 0.01825,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "5685": {
      "best": {
@@ -529,6 +632,11 @@
       "mi": 0.131499,
       "nmi": 1.0,
       "leaf_gated": true,
+      "gate_share": 0.01825,
+      "support": 0.01825,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 1.0
      },
      "best_domain": null,
@@ -572,6 +680,11 @@
       "mi": 0.106274,
       "nmi": 1.0,
       "leaf_gated": true,
+      "gate_share": 0.014,
+      "support": 0.014,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 1.0
      },
      "best_domain": null,
@@ -615,6 +728,11 @@
       "mi": 0.149782,
       "nmi": 1.0,
       "leaf_gated": true,
+      "gate_share": 0.0215,
+      "support": 0.0215,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 1.0
      },
      "best_domain": null,
@@ -658,6 +776,11 @@
       "mi": 0.115762,
       "nmi": 0.489413,
       "leaf_gated": true,
+      "gate_share": 0.03875,
+      "support": 0.02225,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.983124
      },
      "best_domain": null,
@@ -673,7 +796,7 @@
       {
        "concept": "state:41",
        "source": "level",
-       "score": 0.977376,
+       "score": 0.416173,
        "r2": 0.416173,
        "auc": 0.988688,
        "mi": 0.083178
@@ -701,6 +824,11 @@
       "mi": 0.144239,
       "nmi": 1.0,
       "leaf_gated": false,
+      "gate_share": null,
+      "support": 0.0205,
+      "low_support": false,
+      "auc_in_score": false,
+      "score_basis": "r2",
       "score": 1.0
      },
      "best_domain": null,
@@ -714,48 +842,45 @@
        "mi": 0.144239
       },
       {
-       "concept": "state:49",
-       "source": "level",
-       "score": 0.021144,
-       "r2": 0.000658,
-       "auc": 0.510572,
-       "mi": 0.000926
+       "concept": "total eve minutes",
+       "source": "input",
+       "score": 0.001029,
+       "r2": 0.001029,
+       "auc": null,
+       "mi": 0.001918
       },
       {
-       "concept": "state:1",
-       "source": "level",
-       "score": 0.021052,
-       "r2": 0.000564,
-       "auc": 0.510526,
-       "mi": 0.000795
+       "concept": "total eve charge",
+       "source": "input",
+       "score": 0.001028,
+       "r2": 0.001028,
+       "auc": null,
+       "mi": 0.001918
       }
      ]
     },
     "595": {
      "best": {
-      "concept": "state:47",
+      "concept": "area code:415",
       "kind": "binary",
       "source": "level",
       "n": 4000,
-      "r2": 0.793398,
-      "auc": 1.0,
+      "r2": 0.054323,
+      "auc": 0.985434,
       "auc_of": "exit activation as a score for the concept",
-      "direction": "exit higher when the concept holds",
-      "mi": 0.130059,
-      "nmi": 0.115136,
+      "direction": "exit lower when the concept holds",
+      "mi": 0.999954,
+      "nmi": 0.885222,
       "leaf_gated": true,
-      "score": 1.0
+      "gate_share": 0.4965,
+      "support": 0.496,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 0.970868
      },
      "best_domain": null,
      "top": [
-      {
-       "concept": "state:47",
-       "source": "level",
-       "score": 1.0,
-       "r2": 0.793398,
-       "auc": 1.0,
-       "mi": 0.130059
-      },
       {
        "concept": "area code:415",
        "source": "level",
@@ -763,6 +888,14 @@
        "r2": 0.054323,
        "auc": 0.985434,
        "mi": 0.999954
+      },
+      {
+       "concept": "state:47",
+       "source": "level",
+       "score": 0.793398,
+       "r2": 0.793398,
+       "auc": 1.0,
+       "mi": 0.130059
       },
       {
        "concept": "area code:408",
@@ -802,15 +935,22 @@
    "meaning": {
     "grade": "meaningful",
     "concept": "account length",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 1.0,
      "auc": null,
      "mi": 3.321391,
      "n": 4000,
      "score": 1.0,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": false,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "3930": {
      "best": {
@@ -825,6 +965,11 @@
       "mi": 3.321391,
       "nmi": 1.0,
       "leaf_gated": false,
+      "gate_share": null,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": false,
+      "score_basis": "r2",
       "score": 1.0
      },
      "best_domain": null,
@@ -840,7 +985,7 @@
       {
        "concept": "account length > 100",
        "source": "threshold",
-       "score": 1.0,
+       "score": 0.638259,
        "r2": 0.638259,
        "auc": 1.0,
        "mi": 0.999753
@@ -848,7 +993,7 @@
       {
        "concept": "state:9",
        "source": "level",
-       "score": 0.197888,
+       "score": 0.002024,
        "r2": 0.002024,
        "auc": 0.598944,
        "mi": 0.00276
@@ -885,15 +1030,22 @@
    "meaning": {
     "grade": "meaningful",
     "concept": "total day minutes",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.375139,
      "auc": 0.999429,
      "mi": 0.678856,
      "n": 4000,
      "score": 0.998858,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "216_a": {
      "best": {
@@ -908,6 +1060,11 @@
       "mi": 0.651735,
       "nmi": 0.56956,
       "leaf_gated": true,
+      "gate_share": 0.15625,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.997716
      },
      "best_domain": null,
@@ -931,7 +1088,7 @@
       {
        "concept": "total day minutes > 180.5",
        "source": "threshold",
-       "score": 0.31297,
+       "score": 0.103548,
        "r2": 0.103548,
        "auc": 0.656485,
        "mi": 0.177649
@@ -951,6 +1108,11 @@
       "mi": 0.705977,
       "nmi": 0.591163,
       "leaf_gated": true,
+      "gate_share": 0.165,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 1.0
      },
      "best_domain": null,
@@ -974,7 +1136,7 @@
       {
        "concept": "total day minutes > 180.5",
        "source": "threshold",
-       "score": 0.330496,
+       "score": 0.110348,
        "r2": 0.110348,
        "auc": 0.665248,
        "mi": 0.189109
@@ -996,7 +1158,7 @@
    ],
    "library": "tabular",
    "n_library_concepts": 131,
-   "score": 0.0,
+   "score": null,
    "grade": "closed_form_only",
    "best_concepts": [
     "state:0"
@@ -1010,15 +1172,22 @@
    "meaning": {
     "grade": "closed_form_only",
     "concept": "state:0",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": null,
      "auc": 0.5,
      "mi": 0.0,
      "n": 4000,
-     "score": 0.0,
+     "score": null,
+     "support": 0.014,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": false,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "3384": {
      "best": {
@@ -1033,14 +1202,19 @@
       "mi": 0.0,
       "nmi": null,
       "leaf_gated": false,
-      "score": 0.0
+      "gate_share": null,
+      "support": 0.014,
+      "low_support": false,
+      "auc_in_score": false,
+      "score_basis": "r2",
+      "score": null
      },
      "best_domain": null,
      "top": [
       {
        "concept": "state:0",
        "source": "level",
-       "score": 0.0,
+       "score": null,
        "r2": null,
        "auc": 0.5,
        "mi": 0.0
@@ -1048,7 +1222,7 @@
       {
        "concept": "state:1",
        "source": "level",
-       "score": 0.0,
+       "score": null,
        "r2": null,
        "auc": 0.5,
        "mi": 0.0
@@ -1056,7 +1230,7 @@
       {
        "concept": "state:10",
        "source": "level",
-       "score": 0.0,
+       "score": null,
        "r2": null,
        "auc": 0.5,
        "mi": 0.0

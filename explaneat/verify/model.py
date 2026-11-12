@@ -96,16 +96,17 @@ def load_base(genome_id: str, cache: bool = True, db=None) -> BaseData:
 
 
 def _load_base_db(genome_id: str, db=None) -> BaseData:
+    """Local use (the ``explaneat verify`` / ``review`` / ``plain-language`` commands and the
+    export pack run on this machine), so restricted datasets may be read; the MCP path builds
+    its model through :func:`base_from_session` directly and stays refused."""
     from sqlalchemy import text
 
-    from mcp_server.helpers import load_genome_and_config, load_split_data
     from mcp_server.server import get_db
 
-    from ..core.explaneat import ExplaNEAT
-    from ..db.models import Dataset, DatasetSplit, Experiment, Genome, Population
+    from .. import governance
 
     db = db or get_db()
-    with db.session_scope() as s:
+    with governance.local_use(), db.session_scope() as s:
         if s.bind.dialect.name == "postgresql":
             s.execute(text("SET TRANSACTION READ ONLY"))
         return base_from_session(s, genome_id)
@@ -152,7 +153,8 @@ def base_from_session(s, genome_id: str) -> BaseData:
                                 "outcome": "event indicator (1 = event during follow-up, 0 = censored)",
                                 "score": "the log-risk g(x) (identity output); AUC is against the event indicator",
                                 "risk": "1 - S0(horizon)^exp(g): the predicted risk by the calibration horizon",
-                                "horizon": dmeta.get("calibration_horizon"), "time_unit": dmeta.get("time_unit")}
+                                "horizon": dmeta.get("calibration_horizon"), "time_unit": dmeta.get("time_unit"),
+                                "event_col": dmeta.get("event_col")}
         return BaseData(
             genome_id=genome_id, phenotype=phenotype,
             X_train=np.asarray(X_tr, dtype=float), y_train=y_tr,
@@ -198,19 +200,18 @@ def survival_risk_scale(base: BaseData):
     sv = (base.meta or {}).get("survival")
     if not sv:
         return None
-    from ..analysis.explanation_tools import StateEvaluator
-    from ..analysis.plain_language import SurvivalRisk
-    from ..survival.breslow import BreslowBaseline
+    from ..analysis.plain_language import fit_survival_scale
+    return fit_survival_scale(base.phenotype, base.X_train, sv["time_train"], base.y_train,
+                              sv.get("horizon"), sv.get("time_unit"))
 
-    t = np.asarray(sv["time_train"], dtype=float)
-    g = StateEvaluator(base.phenotype).logit(base.X_train)
-    bl = BreslowBaseline().fit(g, t, np.asarray(base.y_train, dtype=float))
-    h = sv.get("horizon")
-    if h is None:
-        h = float(np.median(t[np.asarray(base.y_train) == 1]))
-    unit = sv.get("time_unit") or ""
-    label = f"{h / 365.25:g}-year" if unit == "days" and h >= 365 else f"{h:g}-{unit}" if unit else f"{h:g}"
-    return SurvivalRisk.from_breslow(bl, float(h), label)
+
+def survival_times(base: BaseData):
+    """(time_train, time_test) of a survival genome, else (None, None)."""
+    sv = (base.meta or {}).get("survival") or {}
+    if not sv:
+        return None, None
+    tt = sv.get("time_test")
+    return np.asarray(sv["time_train"], dtype=float), (None if tt is None else np.asarray(tt, dtype=float))
 
 
 def codebook_for(base: BaseData):
@@ -226,6 +227,15 @@ def codebook_for(base: BaseData):
                 + "; ".join(c["check"] for c in failed) + ")")
         cb = generic_codebook(names)
         cb["gaps"] = cb["gaps"] + [note]
+    sv = (base.meta or {}).get("survival")
+    if sv:   # survival: the outcome is the event by the horizon, as in plain_language.load_model
+        from ..analysis.plain_language import horizon_label, survival_outcome
+        h = sv.get("horizon")
+        if h is None:
+            t, e = np.asarray(sv["time_train"], dtype=float), np.asarray(base.y_train, dtype=float)
+            h = float(np.median(t[e == 1])) if np.any(e == 1) else float(np.median(t))
+        event = sv.get("event_col") or (cb.get("outcome") or {}).get("short")
+        cb = dict(cb, outcome=survival_outcome(event, horizon_label(h, sv.get("time_unit"))))
     return cb
 
 
@@ -244,10 +254,11 @@ class VerifyModel:
         self.operations = copy.deepcopy(list(operations))
         self.engine = build_engine_from(base.phenotype, self.operations)
         self.structure = self.engine.current_state
+        t_tr, t_te = survival_times(base)
         self.m = PlainModel(self.structure, self.operations, base.X_train, base.y_train,
                             base.X_test, base.y_test, base.feature_names, base.mean, base.scale,
                             codebook_for(base), raw_train=base.raw_train, raw_test=base.raw_test,
-                            risk_scale=survival_risk_scale(base))
+                            risk_scale=survival_risk_scale(base), time_train=t_tr, time_test=t_te)
         self._parts = None
 
     @property

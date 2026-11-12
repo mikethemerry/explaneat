@@ -32,7 +32,8 @@ linearised AUC 0.9119 of 0.9120). Its three units are meaningful under every pro
 single named lines (x on the diagonal b5-e2 against o on the vertical b3-b6, x on d6-g3, x's
 even-row threats), and the three direct-term groups that carry the discrimination are weighted
 sums over 34-35 lines whose best "concept" restates the formula: 3 of 6 leaves understood in game
-terms (50%), 4-6 of 6 by probe (the blind verifier: 1 meaningful, 2 partial, 3 closed-form-only). The change of base therefore moves what
+terms (50%), 4-6 of 6 by the first probe (3 of 6 by probe v2, which grades those three sums
+`restatement`; the blind verifier: 1 meaningful, 2 partial, 3 closed-form-only). The change of base therefore moves what
 is understood from positional cell gates to positional line terms; it does not reach tactical
 concepts at the cells' AUC.
 
@@ -219,49 +220,65 @@ c3-f6 still win 75% against 64%). The verifier reproduced every number, count, s
 
 ### The three levels against the cells-only networks
 
-Computed read-only by `../explanation_levels/compute_levels.py --set c4lf` (same script and
-thresholds as the cells-only rows; `levels/`), plus the author's and verifier's own grades. The
-*probe (standard)* column is the script's grade from the best library concept; the *probe
-(support-aware)* column (`levels_support.py`) repeats the sweep with binary concepts holding on
-fewer than 1% of the training rows left out, because the standard score for a binary concept is
-the AUC of the exit as a score for the concept, and the odd-row threat flags (66 and 100 rows)
-top several leaves here with AUC near 1 while explaining none of their variance (both authors
-noticed and set those aside; the cells-only leaves never reached partial on those flags, so their
-rows are unchanged under the filter). Understood = share of leaves graded meaningful; CFO =
-closed-form only.
+**Probe v2 (2026-11-13).** The two failures this test exposed, a stored concept that restates
+the leaf's own weighted sum and a rare binary flag reaching AUC near 1, are now conditions of
+the probe itself (`docs/annotation_coverage_model.md`, "Two conditions on the concept"): a
+concept counts only when it is simpler than the leaf (a library concept, or an expression over
+at most 3 variables that is not a reweighting of the leaf's entries; otherwise `restatement`),
+and a binary concept's AUC counts only against a gate of comparable support (at least 1% of
+the rows, within a factor of two; otherwise R²). Computed read-only by
+`../explanation_levels/compute_levels.py --set c4lf --out levels` (same script and thresholds
+as the cells-only rows). Three gradings per leaf: the *probe* (the library sweep), the
+*author's concept* (the concept the explaining agent stored on the leaf with `set_meaning`,
+re-probed under the v2 conditions, so a restatement is graded as one) and the blind
+*verifier's* leaf grades (`verification/<base>/verdict.json`), with the number of leaves on
+which probe and verifier disagree. Understood = share of leaves graded meaningful; CFO =
+closed-form only; R = restatement.
 
-| Network | Test AUC | Faithful | Leaves | Granularity | Probe (standard): meaningful / partial / CFO | Probe (support-aware) | Author | Verifier |
+| Network | Test AUC | Faithful | Leaves | Granularity | Probe v2: meaningful / partial / CFO | Author's concept (v2): meaningful / partial / CFO / R | Verifier: meaningful / partial / CFO | Probe vs verifier disagree |
 |---|---|---|---|---|---|---|---|---|
-| Cells, ladder MLPs (6 networks, 35 leaves; domain concepts) | 0.885-0.942 | yes | 4.5 [1-8] | 1.0 [0-1] | **0%** / 31% / 69% | same | 0% meaningful (explainer grades) | — |
-| Cells, evolved capacity champion | 0.915 | 1.7e-15 | 11 | 1.0 | **9%** / 55% / 36% (domain: 0%) | same | 0 / 0 / 11 described | upheld numbers; semantics weakened |
-| **Lines (16 features)** | 0.879 | 8.9e-16 | 8 | 1.0 | **50%** / 50% / 0% | **38%** / 62% / 0% | 6 / 2 / 0 | 3 / 4 / 1 |
-| **Lines + cells (58)** | 0.929 | 2.7e-15 | 11 | 1.0 | **55%** / 27% / 18% | **9%** / 64% / 27% | 0 / 7 / 4 | 0 / 6 / 5 |
-| **Per-line (154)** | 0.914 | 8.9e-16 | 6 | 1.0 | **67%** / 17% / 17% | **50%** / 0% / 50% | 6 / 0 / 0 by probe; 3 / 0 / 3 with the direct-term groups counted as restatements | 1 / 2 / 3 |
+| Cells, ladder MLPs (6 networks, 35 leaves; domain concepts) | 0.885-0.942 | yes | 4.5 [1-8] | 1.0 [0-1] | **0%** / 31% / 69% | no stored concepts | 20% [0-75] (lad-be3c9: 6 of 8 meaningful) | 19 of 24 |
+| Cells, evolved capacity champion | 0.915 | 1.7e-15 | 11 | 1.0 | **9%** / 45% / 45% (domain: 0%) | no stored concepts | — | — |
+| **Lines (16 features)** | 0.879 | 8.9e-16 | 8 | 1.0 | **38%** / 62% / 0% | 5 / 1 / 0 / 2 | 3 / 4 / 1 | 3 of 8 |
+| **Lines + cells (58)** | 0.929 | 2.7e-15 | 11 | 1.0 | **0%** / 36% / 64% | 0 / 3 / 7 / 1 | 0 / 6 / 5 | 4 of 11 |
+| **Per-line (154)** | 0.914 | 8.9e-16 | 6 | 1.0 | **50%** / 0% / 50% | 3 / 0 / 0 / 3 | 1 / 2 / 3 | 4 of 6 |
 
-On the per-line base the understood fraction is given both ways because the "restatement"
-concern on the three direct-term groups is real. The three units (the b5-e2-vs-b3-b6 hinge, the
-d6-g3 hinge, the even-row-threat unit) are meaningful under every probe (library scores 0.99-1.0
-on single per-line inputs). The three direct-term groups score 0.80-0.83 on the author's ad-hoc
-concepts, but those concepts are signed unweighted sums of the lines the weights favour or
-penalise, that is, a rounded copy of the formula, and no library concept comes close (standard
-sweep: `x_thr_odd` 0.89 on the aggregates, a rare-flag artefact; row-six lines 0.47-0.59 on the
-per-line sums; support-aware sweep: 0.35-0.49, all closed-form-only). Counting the three as
-"meaningful by probe, restatement by reading" gives 3 of 6 understood (50%) in game terms, and
-6 of 6 (100%) by the probe alone; the support-aware library sweep lands on the former (50% / 0%
-/ 50%). The verifier goes further: it grades a leaf meaningful only when the reading adds
-something to the formula, so the two single-input hinges (x on d6-g3; the always-on threat unit)
-are closed-form-only to it and only the two-line hinge is meaningful (1 / 2 / 3, 17%). Under
-every grading the understood leaves are per-line positional readings (which line, whose pieces,
-how many), not tactical ones.
+The v1 gradings (2026-11-12, kept for the record; *standard* = the first probe, *support-aware*
+= `levels_support.py`, since removed, which left binary concepts under 1% support out of the
+sweep):
 
-Per-leaf probes are in `levels/*.json` and `levels/support_aware.json`. On the lines base the
-leaves that stay meaningful under every grading are the open-twos cap (`x_open_2`, score 0.88),
-the centre-column block (`centre_x + centre_o`, 0.81-0.95) and the direct terms (`x_open_2`,
-0.86); the quiet-o gate is meaningful to the author and verifier (an ad-hoc concept scores 0.90)
-but partial to the library sweep (0.67 on `o_open_1`). On lines+cells the only leaf meaningful
-under the support-aware probe is unit 7 (`o_has_thr`, 0.84: it is on when o has a threat), which
-the author grades closed-form-only because its level is set by cells; the leaves the author
-grades partial are cell rules (x at c3, o at c3, x at g3) or a count plus cells.
+| Network | Probe v1 (standard) | Probe v1 (support-aware) | Author's own grades | Verifier |
+|---|---|---|---|---|
+| Cells, ladder MLPs | 0% / 31% / 69% | same | 0% meaningful (explainer grades) | — |
+| Cells, evolved capacity champion | 9% / 55% / 36% | same | 0 / 0 / 11 described | upheld numbers; semantics weakened |
+| Lines | 50% / 50% / 0% | 38% / 62% / 0% | 6 / 2 / 0 | 3 / 4 / 1 |
+| Lines + cells | 55% / 27% / 18% | 9% / 64% / 27% | 0 / 7 / 4 | 0 / 6 / 5 |
+| Per-line | 67% / 17% / 17% | 50% / 0% / 50% | 6 / 0 / 0 by probe; 3 / 0 / 3 counting the direct-term groups as restatements | 1 / 2 / 3 |
+
+What moved. On the per-line base the three direct-term groups are now `restatement` under the
+author's own concepts (5, 16 and 19 terms, every one an entry of the leaf, scores 0.80-0.83)
+and closed-form only under the library sweep (best single lines 0.33-0.49), so the probe's
+understood fraction is 50%: the three units (the b5-e2-vs-b3-b6 hinge, the d6-g3 hinge, the
+even-row-threat unit) stay meaningful on single per-line inputs (0.99-1.0). The verifier goes
+further and grades the two single-input hinges closed-form-only (the input is the concept), so
+it lands at 17%; that is 4 of 6 leaves in disagreement, all in the direction "the probe is more
+generous". On lines + cells the v1 55% was the `o_thr_odd` flag (100 rows) on several gates;
+with R² in its place nothing reaches meaningful (0 / 36% / 64%), and `o_has_thr` on unit 7 (1.4%
+of rows against a gate on 30%) is not comparable either; the author's stored concepts give the
+same answer (0 meaningful; unit 1's five-term cell sum is a restatement), and the verifier's 0
+/ 6 / 5 differs from the probe on 4 leaves, all partial-against-closed-form-only. On the lines
+base the three leaves meaningful under every grading are the open-twos cap (`x_open_2`,
+0.88), the centre-column block (`centre_x + centre_o`, 0.81-0.95) and the direct terms
+(`x_open_2`, 0.86); the quiet-o gate is meaningful to the author's three-term concept (0.90) and
+the verifier but partial to the library sweep (0.67 on `o_open_1`); the o-lines ramp and the
+x-lines-vs-o-centre pair, meaningful to the author in v1 on four- and five-term signed sums of
+their own entries, are restatements under v2. The cells-only rows do not move at the
+meaningful level (no rare flag reached partial there); the capacity champion loses one partial
+(`x_row6`, scored by R² now). Under every grading the understood leaves are per-line positional
+readings (which line, whose pieces, how many), not tactical ones.
+
+Per-leaf probes are in `levels/*.json` (v2; `levels/support_aware.json` is the v1 support-aware
+sweep, kept for the record).
 
 ## Answer
 
@@ -288,7 +305,7 @@ comparable AUC? **Partly, and not at comparable AUC.**
    even-row threats), not tactical ones. The three direct-term groups, which carry nearly all of
    the discrimination, are weighted sums over 34-35 lines each whose best "concept" is a signed
    sum of the favoured lines, a restatement of the formula: understood 50% in game terms (3 of
-   6), 67-100% by probe (50% support-aware), and 1 of 6 (17%) to the blind verifier, which also grades the two single-input hinges closed-form-only (the input is the concept) and the o-lines and aggregate sums partial. So the per-line base gives a faithful,
+   6), 67-100% by the first probe, 50% by probe v2 (the three sums are `restatement`), and 1 of 6 (17%) to the blind verifier, which also grades the two single-input hinges closed-form-only (the input is the concept) and the o-lines and aggregate sums partial. So the per-line base gives a faithful,
    decomposed and short explanation at the cells' AUC, but what is understood is the sign
    pattern of a linear score over named lines.
 4. **Where the complexity lives.** The signal check says the eight-ply signal is positional and
@@ -320,9 +337,11 @@ comparable AUC? **Partly, and not at comparable AUC.**
   accept a single line's open count as a game concept would grade the three units partial.
 - The heavy config is the capacity study's `p18` main config; the warm-start pilots there did not
   beat it, so no warm start was used.
-- The concept probe's grade is not stable to rare binary concepts: both authors and the
-  support-aware re-probe disagree with the standard probe on 1-5 leaves per network. The cells-only
-  rows are unaffected, so the comparison in the support-aware column is like for like. The
+- The first probe's grade was not stable to rare binary concepts or to concepts that restate
+  the leaf: both authors and the support-aware re-probe disagreed with it on 1-5 leaves per
+  network. Probe v2 (2026-11-13) makes support and simplicity conditions of the probe, and the
+  levels section reports the v2 numbers with the v1 ones kept for the record. The cells-only
+  rows do not move at the meaningful level, so the comparison is like for like. The
   meaningful / partial / closed-form-only thresholds are the ones fixed in `docs/annotation_coverage_model.md`.
 - The author grades and the verifier grades are judgements; the two disagree on 3 of 8 lines
   leaves (quiet-o gate, o-lines ramp, direct terms, x-singles-vs-twos gate) in both directions,
@@ -343,6 +362,10 @@ uv run python experiments/c4_line_features/signal_check.py   # signal_check.json
 MAXJ=2 ./experiments/c4_line_features/run_queue.sh            # 15 runs, ~7 h at two at a time
 DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/c4_line_features/import_run.py lines-heavy-s0
 uv run python experiments/c4_line_features/summarize.py      # runs.csv, tables.md
-uv run python experiments/explanation_levels/compute_levels.py --set c4lf --out experiments/c4_line_features/levels
-uv run python experiments/c4_line_features/levels_support.py # levels/support_aware.json
+uv run python experiments/explanation_levels/compute_levels.py --set c4lf --out experiments/c4_line_features/levels   # probe v2
+uv run python experiments/explanation_levels/make_tables.py  # ../explanation_levels/tables.md (the c4lf rows are in levels/*.json here)
 ```
+
+`levels_support.py` (the v1 support-aware re-probe) was removed on 2026-11-13: its filter is
+part of the probe (`MIN_SUPPORT` in `explaneat/analysis/concept_probe.py`). Its output,
+`levels/support_aware.json`, is kept as the v1 record.

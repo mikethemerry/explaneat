@@ -49,6 +49,11 @@ Before the cohort: `uv run pytest tests/test_survival` and the simulation
 check `$env:PYTHONHASHSEED=0; uv run python experiments/survival/run_seed.py sim-nonlinear 0 --out D:\varianz\outputs\sim`
 (HDEC 2.6: unvalidated code is not run on patient data).
 
+After a later `git pull`, run `uv sync --extra survival` and
+`uv run python -m explaneat setup` again: `setup` adds any new tables to the
+SQLite database (it never alters or drops existing ones). `explaneat db upgrade`
+is for PostgreSQL only and refuses a SQLite database; that is expected.
+
 ## 4. CSV format checklist
 
 - [ ] One row per person; UTF-8 (Excel: "CSV UTF-8"); comma-separated; a header row.
@@ -66,7 +71,9 @@ check `$env:PYTHONHASHSEED=0; uv run python experiments/survival/run_seed.py sim
 1. **Load a local CSV**: enter the path (`D:\varianz\data\cohort.csv`) →
    *Preview columns* (column summaries, no rows) → set roles, event value,
    time unit `years`, **horizons `1, 3, 5`**, **calibration horizon `5`**,
-   test 0.25, validation 0.20, split seed → *Import dataset*.
+   test 0.25, validation 0.20, split seed → *Import dataset*. The preview
+   only *suggests* roles from column names (`time`, `fu`, `event`, `status`,
+   `death`, `recur`, ...) and value counts; check every role by hand.
 2. **Launch a batch**: dataset + split, template `survival-cox-v3` (protocol
    v3: population 150, 60 generations, 5 epochs, λ = 1), seeds `0-9`,
    concurrency at most the number of CPU cores minus one (each seed is one
@@ -79,6 +86,42 @@ check `$env:PYTHONHASHSEED=0; uv run python experiments/survival/run_seed.py sim
 Scripted equivalent (same encoding, split and comparator):
 `$env:PYTHONHASHSEED=0; uv run python experiments/survival/run_seed.py cohort 0 --csv D:\varianz\data\cohort.csv --time-col fu_years --event-col cvd_event --categorical sex --split-seed 0 --horizons 1,3,5 --calibration-horizon 5 --out D:\varianz\outputs\runs`.
 
+### 5a. Explaining the selected network (local path, no assistant)
+
+In restricted mode the Claude/MCP path is refused; everything below runs on
+the server and reads the local database only. `<id>` is the genome id shown
+by *Explain* (also in the results CSV).
+
+1. **Annotate in the explorer** (*Explain*): the evidence panel of the output
+   node gives the survival metrics, the calibration plot at the horizon and
+   the hazard-ratio readings of every output term; the tools drawer gives the
+   checks, coverage and the export. Annotate parts and write hypotheses as
+   hazard ratios per clinical unit, with the proportional-hazards caveat
+   (survival.md §3).
+2. **Local checks** (read only): `uv run python -m explaneat verify probe <id> --sweep "age=40:80:5"`,
+   `... verify ablate <id> --direct`, `... verify recheck <id>` (coverage,
+   function preservation, every number in the hypotheses).
+3. **Export pack** (JSON + LaTeX; PDF and DOCX need LaTeX and
+   `uv sync --extra export`, neither of which the server has):
+   `uv run python -m explaneat export --genome <id> --label cohort-s0 --formats json,tex --out D:\varianz\outputs\export`.
+4. **Plain-language layer** (claims checked by code, template text, no
+   language model): first give the cohort a codebook (variable labels, units,
+   category meanings, the outcome's name) in
+   `explaneat/analysis/plain_language_codebooks.py` (copy the `GBSG2` entry);
+   without one the text uses the column names and says so. Then
+   `uv run python -m explaneat plain-language extract --genome <id> --label cohort-s0 --dir D:\varianz\outputs\plain`
+   and `... plain-language show cohort-s0 --dir D:\varianz\outputs\plain`.
+   For a Cox model every effect is stated as the change in the predicted
+   risk by the calibration horizon for a typical patient *and* as a hazard
+   ratio, and the summary ends with the proportional-hazards caveat.
+5. **Verification pack** (for Mike's sign-off): a record file per label
+   (`{"label": "cohort-s0", "genome_id": "<id>"}` at least) in
+   `D:\varianz\outputs\records`, then
+   `uv run python -m explaneat export verification-pack --labels cohort-s0 --records-dir D:\varianz\outputs\records --formats json,tex --no-review --out D:\varianz\outputs\pack`
+   (`--no-review` because the review queue needs the explaining agent's
+   record; the pack's `review.pdf` needs LaTeX, so on the server read the
+   `.tex` files or move the folder to a machine with LaTeX).
+
 ## 6. Where outputs land
 
 | What | Where |
@@ -87,6 +130,8 @@ Scripted equivalent (same encoding, split and comparator):
 | Batch job files (settings, progress, logs; no rows) | `%EXPLANEAT_HOME%\jobs\<batch>\s<seed>\` |
 | Exported CSV / report / explanation JSON | the browser's download folder: move them to `D:\varianz\outputs` |
 | Scripted runs | `--out` folder (run JSON, splits JSON, genome pickle) |
+| Export pack, plain-language layer, verification pack | the `--out` / `--dir` folders of §5a (keep them under `D:\varianz\outputs`) |
+| Verify cache (phenotype and split rows of a genome, pickled by `explaneat verify`) | `%EXPLANEAT_HOME%\verify_cache\` (restricted rows: inside `EXPLANEAT_HOME`, never the repository) |
 
 Exports hold aggregates and model parameters only. They still go to VIEW for
 output checking before release (survival.md §6).
@@ -111,3 +156,6 @@ output checking before release (survival.md §6).
 | `[WARN] React Explorer build ... stale` | `git pull` a clean `main`; never rebuild on the server |
 | A run shows `interrupted` (API stopped) | *Resume* in the runs table |
 | Restricted import refused | the CSV, DB or `EXPLANEAT_HOME` is inside the repository |
+| `db upgrade` says "migrations are PostgreSQL-only" | expected on SQLite: rerun `setup` instead (adds new tables) |
+| `verify` / `export` / `plain-language` says "The MCP (Claude-assisted) path is disabled" | an old build: these commands are local use since 13 Nov 2026; `git pull` a clean `main` |
+| Plain-language text uses column names ("a higher pnodes") | no codebook for the cohort: add one (§5a step 4) and rerun `extract` |

@@ -18,8 +18,8 @@ directory; nothing already reported was changed.
   (international plan up, voice-mail plan down) and two nonlinear rules: a deep service-call gate
   (4 or more calls, suppressed for heavy daytime users, counted again inside a day-charge hinge) and
   a heavy-daytime-use hinge above about 220 day minutes; four small state flags; 29 inputs ignored.
-- **Levels and verifier.** Faithful 1.4e-15; 10 leaves, granularity 1.0; understood 10 / 0 / 0 by the
-  probe. Blind verifier: **weakened** (25 upheld, 9 weakened, 0 refuted, 2 domain flags): nothing
+- **Levels and verifier.** Faithful 1.4e-15; 10 leaves, granularity 1.0; understood 9 / 0 / 1 by the
+  library probe (probe v2; the author's stored concepts re-probed: 7 / 1 / 2, 0 restatements). Blind verifier: **weakened** (25 upheld, 9 weakened, 0 refuted, 2 domain flags): nothing
   refuted, four wording weakenings and a double-rounding digit; see section 6.
 - **Plain-language draft** stored (lint clean, 5 worth-checking flags), unverified.
 
@@ -90,7 +90,8 @@ connections, depth 8, mean hidden fan-in 1.67 (max 6); 42 inputs connected, 29 u
 - One blind verifier (`.claude/skills/explanation-verifier/SKILL.md`), read only, levels L1–L4,
   → `verdicts/churn-case-s10/`.
 - The three levels: `experiments/explanation_levels/compute_levels.py --set churn_case` (a new
-  set: `explaneat_dev`, records in this directory) → `levels/churn-case-s10.json`.
+  set: `explaneat_dev`, records in this directory, output here; included in `--set all`), concept
+  probe v2 → `levels/churn-case-s10.json`.
 - Plain-language draft: `plain-language extract` / `draft` with the plain-language skill, into
   `plain_language/churn-case-s10.json` (an AI-assisted draft, unverified).
 
@@ -149,18 +150,36 @@ annotation, so the hand-off edges had to be listed in the root.
 
 | Label | Faithful: max abs err | Leaves | Granularity (largest part) | Understood: meaningful / partial / closed-form only | Recheck | Verifier |
 |---|---|---|---|---|---|---|
-| churn-case-s10 | 1.4e-15 (closed form 0.052) | 10 (4 compositions) | 1.00 (`serviceCallChain`: 7 units, width 2, depth 6; no coarse-decomposition warning) | 10 / 0 / 0 | 0 mismatch, 0 needs review | **weakened**: 36 findings, 25 upheld, 9 weakened, 0 refuted, 2 domain flags |
+| churn-case-s10 | 1.4e-15 (closed form 0.052) | 10 (4 compositions) | 1.00 (`serviceCallChain`: 7 units, width 2, depth 6; no coarse-decomposition warning) | probe v2: 9 / 0 / 1 (restatement 0); author's concepts re-probed: 7 / 1 / 2 | 0 mismatch, 0 needs review | **weakened**: 36 findings, 25 upheld, 9 weakened, 0 refuted, 2 domain flags |
 
 Levels: `levels/churn-case-s10.json`, computed read-only by
-`experiments/explanation_levels/compute_levels.py --set churn_case`. Probe scores: the direct
-terms 0.88 (`international plan`), the chain 0.91 (`number customer service calls`), the
-day-charge boost 0.89 (`total day minutes`), the ramp 1.00 (`total day minutes > 180.5`), the
-heavy-use hinge 1.00 (`total day minutes`), the spike 1.00, the four state flags 1.00 (their
-state). As on the Cox case, a single-input leaf's best concept is its input, so the four state
-flags' grade is a description of a weight; the substantive "understood" readings are the chain,
-the day-charge boost and the two day-minute units. For the ten churn200 explanations the
-median is 8.5 leaves and 89% meaningful (`experiments/explanation_levels/tables.md`); this case
-has 10 leaves, all meaningful by the probe.
+`experiments/explanation_levels/compute_levels.py --set churn_case` under **concept probe v2**
+(13 Nov: the simplicity condition grades an ad-hoc concept over more than three variables, or a
+reweighting of the leaf's entries, as `restatement`; the support condition counts a binary
+concept's AUC only against a gate of comparable support, at least 1% of the rows, else R²).
+Three gradings per leaf: the library sweep (`understood_fraction`), the author's stored concept
+re-probed under v2, and the blind verifier's leaf grades where its verdict carries them (this
+verdict predates the v2 column and carries none, so that column is null).
+
+| Leaf | Library probe v2 (best concept, score) | Author's stored concept, re-probed |
+|---|---|---|
+| `serviceCallChain` | meaningful (`number customer service calls`, 0.91) | meaningful (`calls >= 4 and day minutes <= 220`, 0.99) |
+| `dayChargeBoost` | meaningful (`total day minutes`, 0.89) | meaningful (`day charge > 32 or calls >= 4`, 0.96) |
+| `serviceCallSpike` | meaningful (`number customer service calls`, 1.00) | meaningful (1.00) |
+| `heavyDayUse` | meaningful (`total day minutes`, 1.00) | meaningful (1.00) |
+| `dayMinutesRamp` | meaningful (`total day minutes`, 0.93) | partial (`total day minutes > 180.5`, 0.68: the threshold concept no longer passes the support-adjusted score) |
+| `twoStateFlag` | meaningful (`state:49`, 0.95) | closed-form only (`state:45`, 0.48: one of the two states, so it covers less than half of the flag's support) |
+| `state38Hinge`, `state18Hinge`, `state24Hinge` | meaningful (the state, 1.00) | meaningful (1.00) |
+| `directTerms` | **closed-form only** (`international plan`, 0.30) | closed-form only (0.30) |
+
+Under probe v1 (the first computation, superseded) all ten leaves were meaningful (direct terms
+0.88); v2's support condition drops the direct-terms sum to closed-form only, which is the
+honest reading of a 35-term linear sum with no single concept behind it (the stored hypothesis
+already calls it "the linear part of the model"), and demotes two author concepts. A
+single-input leaf's best concept is still its input (score 1.0), a description of a weight; the
+substantive "understood" readings are the chain, the day-charge boost and the two day-minute
+units. For the ten churn200 explanations the v2 medians are in
+`experiments/explanation_levels/tables.md`.
 
 ### Verifier findings (`verdicts/churn-case-s10/verdict.json`, `verdict.md`, `recheck.json`)
 
@@ -240,8 +259,10 @@ Virginia. Two round-once renderings read oddly ("from about 3% to about 3%" for 
 - **Not signed off.** The explanation is agent-written and agent-verified; `mike_verification`
   is absent. The plain-language draft is unverified.
 - **Probe grades.** The "understood" level grades a single-input leaf by its own input (score
-  1.0), which is a description of a weight, not a finding; four of the ten meaningful leaves
-  are such state flags.
+  1.0), which is a description of a weight, not a finding; four of the nine meaningful leaves
+  are such state flags. The levels were first computed under probe v1 (10 / 0 / 0) and
+  recomputed under v2 (9 / 0 / 1) when the probe changed on `main` the same day; the v2 file
+  is the one kept.
 - **Collinear inputs.** Day charge and day minutes are the same column after z-scoring; the
   model reads "daytime use" through both names, which the explanation states and the draft
   flags.

@@ -61,7 +61,7 @@ WITHDRAWN: Dict[str, Dict[str, Any]] = {
 
 
 def triage_rows(path: Path = TRIAGE) -> List[Dict[str, str]]:
-    with path.open() as f:
+    with path.open(encoding="utf-8") as f:
         return list(csv.DictReader(f))
 
 

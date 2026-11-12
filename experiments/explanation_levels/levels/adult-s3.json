@@ -6,8 +6,13 @@
  "records_dir": "explanations_v4",
  "dataset": "adult_ohe_v2",
  "n_train": 39073,
- "computed_at": "2026-11-11T22:38:35+00:00",
+ "computed_at": "2026-11-12T21:55:37+00:00",
  "method": "experiments/explanation_levels/compute_levels.py (read only; probes not stored, query_id null)",
+ "probe_version": 2,
+ "conditions": {
+  "max_terms": 3,
+  "min_support": 0.01
+ },
  "levels": {
   "faithful": {
    "function_preservation_max_abs_err": 5.551115123125783e-16,
@@ -38,14 +43,15 @@
    "leaves": 12,
    "graded": 12,
    "counts": {
-    "meaningful": 12,
-    "partial": 0,
-    "closed_form_only": 0,
+    "meaningful": 10,
+    "partial": 1,
+    "closed_form_only": 1,
+    "restatement": 0,
     "unnamed": 0
    },
    "grades": {
     "capital_gain_switch": "meaningful",
-    "direct_terms": "meaningful",
+    "direct_terms": "closed_form_only",
     "scotland_gate": "meaningful",
     "young_age_hinge": "meaningful",
     "handlers_asian_gate": "meaningful",
@@ -55,15 +61,17 @@
     "other_relative_gate": "meaningful",
     "el_salvador_gate": "meaningful",
     "transport_offset": "meaningful",
-    "missing_country_chain": "meaningful"
+    "missing_country_chain": "partial"
    },
-   "understood_fraction": 1.0,
-   "partial_fraction": 0.0,
-   "closed_form_only_fraction": 0.0,
+   "understood_fraction": 0.8333,
+   "understood_probe": 0.8333,
+   "partial_fraction": 0.0833,
+   "closed_form_only_fraction": 0.0833,
+   "restatement_fraction": 0.0,
    "unnamed_fraction": 0.0,
    "concepts": {
     "capital_gain_switch": "capital-gain",
-    "direct_terms": "workclass:8",
+    "direct_terms": "marital-status:2",
     "scotland_gate": "native-country:34",
     "young_age_hinge": "age",
     "handlers_asian_gate": "occupation:6",
@@ -75,7 +83,55 @@
     "transport_offset": "occupation:14",
     "missing_country_chain": "native-country:0"
    },
-   "test": "concept probe per leaf: meaningful r2 >= 0.8 or AUC >= 0.9; partial r2 >= 0.5 or AUC >= 0.75; else closed_form_only; unnamed when no concept was probed",
+   "understood_verifier": null,
+   "understood_fraction_verifier": null,
+   "verifier_graded": 0,
+   "verifier_grades": null,
+   "verifier_compared": 0,
+   "verifier_disagreements": null,
+   "test": "concept probe per leaf (v2): meaningful score >= 0.8; partial >= 0.5; else closed_form_only; restatement when the concept is not simpler than the leaf (more than 3 terms, or a reweighting of the leaf's entries); a binary concept's AUC counts only against a gate of comparable support (>= 1% of rows), else r2; unnamed when no concept was probed. understood_verifier: the blind verifier's leaf grades where a verdict exists",
+   "verdict": null,
+   "author": {
+    "leaves": 0,
+    "grades": {
+     "capital_gain_switch": null,
+     "direct_terms": null,
+     "scotland_gate": null,
+     "young_age_hinge": null,
+     "handlers_asian_gate": null,
+     "unmarried_gate": null,
+     "federal_gov_gate": null,
+     "us_born_offset": null,
+     "other_relative_gate": null,
+     "el_salvador_gate": null,
+     "transport_offset": null,
+     "missing_country_chain": null
+    },
+    "counts": {
+     "meaningful": 0,
+     "partial": 0,
+     "closed_form_only": 0,
+     "restatement": 0,
+     "unnamed": 0
+    },
+    "understood_fraction_author": null,
+    "restatements": 0,
+    "stored_grades": {
+     "capital_gain_switch": null,
+     "direct_terms": null,
+     "scotland_gate": null,
+     "young_age_hinge": null,
+     "handlers_asian_gate": null,
+     "unmarried_gate": null,
+     "federal_gov_gate": null,
+     "us_born_offset": null,
+     "other_relative_gate": null,
+     "el_salvador_gate": null,
+     "transport_offset": null,
+     "missing_country_chain": null
+    },
+    "note": "the concept the explaining agent stored on each leaf (set_meaning), re-probed under the v2 simplicity and support conditions; None when no concept was stored"
+   },
    "domain_only": null
   }
  },
@@ -205,15 +261,22 @@
    "meaning": {
     "grade": "meaningful",
     "concept": "capital-gain",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.978739,
      "auc": 0.793114,
      "mi": 0.222851,
      "n": 39073,
      "score": 0.986113,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 47,
+   "author": null,
    "per_exit": {
     "6463": {
      "best": {
@@ -228,6 +291,11 @@
       "mi": 0.253948,
       "nmi": 0.514324,
       "leaf_gated": true,
+      "gate_share": 0.059837,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 1.0
      },
      "best_domain": null,
@@ -271,6 +339,11 @@
       "mi": 0.191754,
       "nmi": 0.171612,
       "leaf_gated": true,
+      "gate_share": 0.301077,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.972227
      },
      "best_domain": null,
@@ -327,70 +400,82 @@
    ],
    "library": "tabular",
    "n_library_concepts": 158,
-   "score": 0.99999,
-   "grade": "meaningful",
+   "score": 0.456492,
+   "grade": "closed_form_only",
    "best_concepts": [
-    "workclass:8"
+    "marital-status:2"
    ],
    "domain_score": null,
    "domain_grade": "closed_form_only",
    "best_domain_concepts": [],
-   "r2": 0.172148,
-   "auc": 0.999995,
-   "mi": 0.001446,
+   "r2": 0.456492,
+   "auc": 0.972036,
+   "mi": 0.686817,
    "meaning": {
-    "grade": "meaningful",
-    "concept": "workclass:8",
+    "grade": "closed_form_only",
+    "concept": "marital-status:2",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
-     "r2": 0.172148,
-     "auc": 0.999995,
-     "mi": 0.001446,
+     "r2": 0.456492,
+     "auc": 0.972036,
+     "mi": 0.686817,
      "n": 39073,
-     "score": 0.99999,
+     "score": 0.456492,
+     "support": 0.458347,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": false,
+   "n_low_support_concepts": 47,
+   "author": null,
    "per_exit": {
     "identity_0": {
      "best": {
-      "concept": "workclass:8",
+      "concept": "marital-status:2",
       "kind": "binary",
       "source": "level",
       "n": 39073,
-      "r2": 0.172148,
-      "auc": 0.999995,
+      "r2": 0.456492,
+      "auc": 0.972036,
       "auc_of": "exit activation as a score for the concept",
-      "direction": "exit higher when the concept holds",
-      "mi": 0.001446,
-      "nmi": 0.000435,
+      "direction": "exit lower when the concept holds",
+      "mi": 0.686817,
+      "nmi": 0.206752,
       "leaf_gated": false,
-      "score": 0.99999
+      "gate_share": null,
+      "support": 0.458347,
+      "low_support": false,
+      "auc_in_score": false,
+      "score_basis": "r2",
+      "score": 0.456492
      },
      "best_domain": null,
      "top": [
       {
-       "concept": "workclass:8",
-       "source": "level",
-       "score": 0.99999,
-       "r2": 0.172148,
-       "auc": 0.999995,
-       "mi": 0.001446
-      },
-      {
-       "concept": "native-country:34",
-       "source": "level",
-       "score": 0.99914,
-       "r2": 0.126735,
-       "auc": 0.99957,
-       "mi": 0.001361
-      },
-      {
        "concept": "marital-status:2",
        "source": "level",
-       "score": 0.944072,
+       "score": 0.456492,
        "r2": 0.456492,
        "auc": 0.972036,
        "mi": 0.686817
+      },
+      {
+       "concept": "relationship:0",
+       "source": "level",
+       "score": 0.376369,
+       "r2": 0.376369,
+       "auc": 0.932606,
+       "mi": 0.535795
+      },
+      {
+       "concept": "marital-status:4",
+       "source": "level",
+       "score": 0.192249,
+       "r2": 0.192249,
+       "auc": 0.824116,
+       "mi": 0.283632
       }
      ]
     }
@@ -422,15 +507,22 @@
    "meaning": {
     "grade": "meaningful",
     "concept": "native-country:34",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 1.0,
      "auc": 1.0,
      "mi": 0.005199,
      "n": 39073,
      "score": 1.0,
+     "support": 0.000409,
      "query_id": null
     }
    },
+   "low_support": true,
+   "auc_in_score": false,
+   "n_low_support_concepts": 47,
+   "author": null,
    "per_exit": {
     "9997": {
      "best": {
@@ -445,6 +537,11 @@
       "mi": 0.005199,
       "nmi": 1.0,
       "leaf_gated": true,
+      "gate_share": 0.000409,
+      "support": 0.000409,
+      "low_support": true,
+      "auc_in_score": false,
+      "score_basis": "r2",
       "score": 1.0
      },
      "best_domain": null,
@@ -503,15 +600,22 @@
    "meaning": {
     "grade": "meaningful",
     "concept": "age",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.708833,
      "auc": 1.0,
      "mi": 2.139077,
      "n": 39073,
      "score": 1.0,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 47,
+   "author": null,
    "per_exit": {
     "3460": {
      "best": {
@@ -526,6 +630,11 @@
       "mi": 2.139077,
       "nmi": 0.751833,
       "leaf_gated": true,
+      "gate_share": 0.437642,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 1.0
      },
      "best_domain": null,
@@ -547,12 +656,12 @@
        "mi": 0.927859
       },
       {
-       "concept": "workclass:3",
+       "concept": "marital-status:4",
        "source": "level",
-       "score": 0.865374,
-       "r2": 0.000822,
-       "auc": 0.932687,
-       "mi": 0.000655
+       "score": 0.70169,
+       "r2": 0.395549,
+       "auc": 0.850845,
+       "mi": 0.305447
       }
      ]
     }
@@ -585,15 +694,22 @@
    "meaning": {
     "grade": "meaningful",
     "concept": "occupation:6",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.951106,
      "auc": 1.0,
      "mi": 0.25621,
      "n": 39073,
      "score": 1.0,
+     "support": 0.043073,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 47,
+   "author": null,
    "per_exit": {
     "5934": {
      "best": {
@@ -608,6 +724,11 @@
       "mi": 0.25621,
       "nmi": 0.564221,
       "leaf_gated": true,
+      "gate_share": 0.029944,
+      "support": 0.043073,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 1.0
      },
      "best_domain": null,
@@ -621,20 +742,20 @@
        "mi": 0.25621
       },
       {
-       "concept": "native-country:25",
-       "source": "level",
-       "score": 0.970478,
-       "r2": 0.00073,
-       "auc": 0.985239,
-       "mi": 0.002207
-      },
-      {
        "concept": "race:1",
        "source": "level",
        "score": 0.950628,
        "r2": 0.049054,
        "auc": 0.975314,
        "mi": 0.198076
+      },
+      {
+       "concept": "education-num",
+       "source": "input",
+       "score": 0.227732,
+       "r2": 0.018855,
+       "auc": 0.613866,
+       "mi": 0.018774
       }
      ]
     }
@@ -666,15 +787,22 @@
    "meaning": {
     "grade": "meaningful",
     "concept": "relationship:4",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 1.0,
      "auc": 1.0,
      "mi": 0.481183,
      "n": 39073,
      "score": 1.0,
+     "support": 0.103882,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 47,
+   "author": null,
    "per_exit": {
     "10197": {
      "best": {
@@ -689,6 +817,11 @@
       "mi": 0.481183,
       "nmi": 1.0,
       "leaf_gated": true,
+      "gate_share": 0.103882,
+      "support": 0.103882,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 1.0
      },
      "best_domain": null,
@@ -702,20 +835,20 @@
        "mi": 0.481183
       },
       {
-       "concept": "marital-status:5",
+       "concept": "marital-status:0",
        "source": "level",
-       "score": 0.348408,
-       "r2": 0.04035,
-       "auc": 0.674204,
-       "mi": 0.018213
+       "score": 0.294554,
+       "r2": 0.109221,
+       "auc": 0.647277,
+       "mi": 0.057114
       },
       {
-       "concept": "native-country:16",
+       "concept": "race:2",
        "source": "level",
-       "score": 0.324806,
-       "r2": 0.000406,
-       "auc": 0.662403,
-       "mi": 0.000181
+       "score": 0.157856,
+       "r2": 0.023136,
+       "auc": 0.578928,
+       "mi": 0.013049
       }
      ]
     }
@@ -747,15 +880,22 @@
    "meaning": {
     "grade": "meaningful",
     "concept": "workclass:1",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 1.0,
      "auc": 1.0,
      "mi": 0.189207,
      "n": 39073,
      "score": 1.0,
+     "support": 0.028971,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 47,
+   "author": null,
    "per_exit": {
     "7067": {
      "best": {
@@ -770,6 +910,11 @@
       "mi": 0.189207,
       "nmi": 1.0,
       "leaf_gated": true,
+      "gate_share": 0.028971,
+      "support": 0.028971,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 1.0
      },
      "best_domain": null,
@@ -783,20 +928,20 @@
        "mi": 0.189207
       },
       {
-       "concept": "occupation:2",
-       "source": "level",
-       "score": 0.971326,
-       "r2": 0.010297,
-       "auc": 0.985663,
-       "mi": 0.001571
-      },
-      {
        "concept": "age",
        "source": "input",
        "score": 0.216112,
        "r2": 0.002731,
        "auc": 0.608056,
        "mi": 0.004567
+      },
+      {
+       "concept": "education-num",
+       "source": "input",
+       "score": 0.198728,
+       "r2": 0.003447,
+       "auc": 0.599364,
+       "mi": 0.003273
       }
      ]
     }
@@ -830,15 +975,22 @@
    "meaning": {
     "grade": "meaningful",
     "concept": "age, native-country:39",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 1.0,
      "auc": 1.0,
      "mi": 0.236225,
      "n": 39073,
      "score": 1.0,
+     "support": 0.101093,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 47,
+   "author": null,
    "per_exit": {
     "4018": {
      "best": {
@@ -853,6 +1005,11 @@
       "mi": 0.47245,
       "nmi": 1.0,
       "leaf_gated": true,
+      "gate_share": 0.101093,
+      "support": 0.101093,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 1.0
      },
      "best_domain": null,
@@ -868,18 +1025,18 @@
       {
        "concept": "native-country:26",
        "source": "level",
-       "score": 0.916308,
+       "score": 0.172127,
        "r2": 0.172127,
        "auc": 0.958154,
        "mi": 0.065276
       },
       {
-       "concept": "native-country:0",
+       "concept": "race:4",
        "source": "level",
-       "score": 0.914756,
-       "r2": 0.156782,
-       "auc": 0.957378,
-       "mi": 0.059344
+       "score": 0.165376,
+       "r2": 0.037215,
+       "auc": 0.582688,
+       "mi": 0.021414
       }
      ]
     },
@@ -896,6 +1053,11 @@
       "mi": 0.0,
       "nmi": null,
       "leaf_gated": false,
+      "gate_share": null,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": false,
+      "score_basis": "r2",
       "score": null
      },
      "best_domain": null,
@@ -911,7 +1073,7 @@
       {
        "concept": "age > 37",
        "source": "threshold",
-       "score": 0.0,
+       "score": null,
        "r2": null,
        "auc": 0.5,
        "mi": 0.0
@@ -919,7 +1081,7 @@
       {
        "concept": "workclass:0",
        "source": "level",
-       "score": 0.0,
+       "score": null,
        "r2": null,
        "auc": 0.5,
        "mi": 0.0
@@ -954,15 +1116,22 @@
    "meaning": {
     "grade": "meaningful",
     "concept": "relationship:2",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 1.0,
      "auc": 1.0,
      "mi": 0.195393,
      "n": 39073,
      "score": 1.0,
+     "support": 0.0302,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 47,
+   "author": null,
    "per_exit": {
     "14966": {
      "best": {
@@ -977,6 +1146,11 @@
       "mi": 0.195393,
       "nmi": 1.0,
       "leaf_gated": true,
+      "gate_share": 0.0302,
+      "support": 0.0302,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 1.0
      },
      "best_domain": null,
@@ -1035,15 +1209,22 @@
    "meaning": {
     "grade": "meaningful",
     "concept": "native-country:8",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 1.0,
      "auc": 1.0,
      "mi": 0.029845,
      "n": 39073,
      "score": 1.0,
+     "support": 0.003046,
      "query_id": null
     }
    },
+   "low_support": true,
+   "auc_in_score": false,
+   "n_low_support_concepts": 47,
+   "author": null,
    "per_exit": {
     "13897": {
      "best": {
@@ -1058,6 +1239,11 @@
       "mi": 0.029845,
       "nmi": 1.0,
       "leaf_gated": true,
+      "gate_share": 0.003046,
+      "support": 0.003046,
+      "low_support": true,
+      "auc_in_score": false,
+      "score_basis": "r2",
       "score": 1.0
      },
      "best_domain": null,
@@ -1116,15 +1302,22 @@
    "meaning": {
     "grade": "meaningful",
     "concept": "occupation:14",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 1.0,
      "auc": 1.0,
      "mi": 0.284257,
      "n": 39073,
      "score": 1.0,
+     "support": 0.049497,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": false,
+   "n_low_support_concepts": 47,
+   "author": null,
    "per_exit": {
     "8156": {
      "best": {
@@ -1139,6 +1332,11 @@
       "mi": 0.284257,
       "nmi": 1.0,
       "leaf_gated": false,
+      "gate_share": null,
+      "support": 0.049497,
+      "low_support": false,
+      "auc_in_score": false,
+      "score_basis": "r2",
       "score": 1.0
      },
      "best_domain": null,
@@ -1154,18 +1352,18 @@
       {
        "concept": "sex",
        "source": "level",
-       "score": 0.062976,
+       "score": 0.018685,
        "r2": 0.018685,
        "auc": 0.531488,
        "mi": 0.017821
       },
       {
-       "concept": "occupation:10",
-       "source": "level",
-       "score": 0.056736,
-       "r2": 0.007615,
-       "auc": 0.528368,
-       "mi": 0.010014
+       "concept": "education-num",
+       "source": "input",
+       "score": 0.014382,
+       "r2": 0.014382,
+       "auc": null,
+       "mi": 0.016357
       }
      ]
     }
@@ -1184,8 +1382,8 @@
    ],
    "library": "tabular",
    "n_library_concepts": 158,
-   "score": 1.0,
-   "grade": "meaningful",
+   "score": 0.694164,
+   "grade": "partial",
    "best_concepts": [
     "native-country:0"
    ],
@@ -1196,17 +1394,24 @@
    "auc": 1.0,
    "mi": 0.126154,
    "meaning": {
-    "grade": "meaningful",
+    "grade": "partial",
     "concept": "native-country:0",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.694164,
      "auc": 1.0,
      "mi": 0.126154,
      "n": 39073,
-     "score": 1.0,
+     "score": 0.694164,
+     "support": 0.017327,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": false,
+   "n_low_support_concepts": 60,
+   "author": null,
    "per_exit": {
     "12550": {
      "best": {
@@ -1221,30 +1426,35 @@
       "mi": 0.126154,
       "nmi": 0.566979,
       "leaf_gated": false,
-      "score": 1.0
+      "gate_share": null,
+      "support": 0.017327,
+      "low_support": false,
+      "auc_in_score": false,
+      "score_basis": "r2",
+      "score": 0.694164
      },
      "best_domain": null,
      "top": [
       {
        "concept": "native-country:0",
        "source": "level",
-       "score": 1.0,
+       "score": 0.694164,
        "r2": 0.694164,
        "auc": 1.0,
        "mi": 0.126154
       },
       {
-       "concept": "marital-status:3 and native-country:0",
-       "source": "pair",
-       "score": 1.0,
-       "r2": 0.075513,
-       "auc": 1.0,
-       "mi": 0.007439
+       "concept": "marital-status:3",
+       "source": "level",
+       "score": 0.331474,
+       "r2": 0.331474,
+       "auc": 0.983911,
+       "mi": 0.096717
       },
       {
        "concept": "marital-status:2 and native-country:0",
        "source": "pair",
-       "score": 0.990118,
+       "score": 0.305095,
        "r2": 0.305095,
        "auc": 0.995059,
        "mi": 0.05148

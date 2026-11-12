@@ -40,7 +40,7 @@ def _titles(t) -> Dict[str, str]:
 def _emit(obj, as_json: bool, out: str = None, text_fn=None):
     s = json.dumps(obj, indent=2, default=str)
     if out:
-        with open(out, "w") as f:
+        with open(out, "w", encoding="utf-8") as f:
             f.write(s + "\n")
         click.echo(f"wrote {out}", err=True)
     if as_json or text_fn is None:
@@ -138,7 +138,7 @@ def recheck_cmd(target, ops, no_cache, as_json, out, no_claims, no_prose, no_fre
         if summary_out == "-":
             click.echo(sb)
         else:
-            with open(summary_out, "w") as f:
+            with open(summary_out, "w", encoding="utf-8") as f:
                 f.write(sb + "\n")
             click.echo(f"wrote {summary_out}", err=True)
     sys.exit(1 if strict and r["summary"]["mismatch"] else 0)
@@ -374,13 +374,15 @@ def _enum_text(r: Dict[str, Any]) -> str:
 @click.option("--cut", default=0.5, show_default=True, type=float, help="Predicted 'yes' when risk >= cut.")
 @click.option("--parts", is_flag=True, help="Also where each part acts.")
 @click.option("--limit", default=200_000, show_default=True, type=int)
-def enumerate_cmd(target, ops, no_cache, as_json, rule, group_by, where, cut, parts, limit):
+@click.option("--bins", default=0, show_default=True, type=int,
+              help="Bin continuous inputs at this many training quantiles (0: refuse continuous inputs).")
+def enumerate_cmd(target, ops, no_cache, as_json, rule, group_by, where, cut, parts, limit, bins):
     """Every combination of a small discrete input space, predicted (rule check, groups)."""
     from .enumerate import enumerate_space
     t = _target(target, ops)
     vm = _model(t, not no_cache)
     try:
-        res = enumerate_space(vm, rule, group_by, where, cut, limit, parts=parts)
+        res = enumerate_space(vm, rule, group_by, where, cut, limit, parts=parts, bins=bins)
     except ValueError as e:
         raise click.ClickException(str(e))
     _emit(res, as_json, None, _enum_text)
@@ -427,6 +429,12 @@ def _concept_text(r: Dict[str, Any]) -> str:
     if r.get("concept"):
         lines.append(f"  {r['concept']} ({r['concept_kind']}, {r['concept_source']}): score {r['score']}, "
                      f"r2 {r['r2']}, AUC {r['auc']}, MI {r['mi']} bits -> {r['grade']}")
+        lines.append(f"  conditions: {r.get('concept_complexity')} term(s) of at most {r.get('max_terms')}, "
+                     f"simpler than the leaf {r.get('simpler_than_leaf')}"
+                     + (" (a reweighting of the leaf's entries)" if r.get("reweighting_of_entries") else "")
+                     + (f"; support {r['support']}" if r.get("support") is not None else "")
+                     + (" (below the floor: r2 only)" if r.get("low_support") else "")
+                     + ("; AUC counts" if r.get("auc_in_score") else "; score is r2"))
         for e, s in r["per_exit"].items():
             lines.append(f"    exit {e}: r2 {s['r2']}, AUC {s['auc']} ({s['auc_of'] or 'n/a'}; {s['direction'] or ''}), "
                          f"MI {s['mi']}, gated {s['leaf_gated']}")

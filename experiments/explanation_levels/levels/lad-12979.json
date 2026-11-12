@@ -6,8 +6,13 @@
  "records_dir": "explanations",
  "dataset": "ladder_syn_abbe3",
  "n_train": 24000,
- "computed_at": "2026-11-11T22:24:29+00:00",
+ "computed_at": "2026-11-12T21:47:31+00:00",
  "method": "experiments/explanation_levels/compute_levels.py (read only; probes not stored, query_id null)",
+ "probe_version": 2,
+ "conditions": {
+  "max_terms": 3,
+  "min_support": 0.01
+ },
  "levels": {
   "faithful": {
    "function_preservation_max_abs_err": 0.0,
@@ -41,6 +46,7 @@
     "meaningful": 3,
     "partial": 1,
     "closed_form_only": 0,
+    "restatement": 0,
     "unnamed": 0
    },
    "grades": {
@@ -50,16 +56,36 @@
     "low_income": "meaningful"
    },
    "understood_fraction": 0.75,
+   "understood_probe": 0.75,
    "partial_fraction": 0.25,
    "closed_form_only_fraction": 0.0,
+   "restatement_fraction": 0.0,
    "unnamed_fraction": 0.0,
    "concepts": {
     "female_bmi": "bmi * female, female",
-    "urban_smoker_age_gate": "age * smoker, smoker and urban",
+    "urban_smoker_age_gate": "age * smoker, urban",
     "age_risk": "age",
     "low_income": "income * bmi"
    },
-   "test": "concept probe per leaf: meaningful r2 >= 0.8 or AUC >= 0.9; partial r2 >= 0.5 or AUC >= 0.75; else closed_form_only; unnamed when no concept was probed",
+   "understood_verifier": 0.75,
+   "understood_fraction_verifier": 0.75,
+   "verifier_graded": 4,
+   "verifier_grades": {
+    "female_bmi": "meaningful",
+    "urban_smoker_age_gate": "partial",
+    "age_risk": "meaningful",
+    "low_income": "meaningful"
+   },
+   "verifier_compared": 4,
+   "verifier_disagreements": 2,
+   "verifier_counts": {
+    "meaningful": 3,
+    "partial": 1,
+    "closed_form_only": 0,
+    "restatement": 0,
+    "unnamed": 0
+   },
+   "test": "concept probe per leaf (v2): meaningful score >= 0.8; partial >= 0.5; else closed_form_only; restatement when the concept is not simpler than the leaf (more than 3 terms, or a reweighting of the leaf's entries); a binary concept's AUC counts only against a gate of comparable support (>= 1% of rows), else r2; unnamed when no concept was probed. understood_verifier: the blind verifier's leaf grades where a verdict exists",
    "ground_truth": {
     "task": "threeway",
     "arch": "8",
@@ -74,6 +100,32 @@
      "low_income": "meaningful"
     },
     "truth": "f = 2*(-0.6 + 0.6 za - 0.5 zi + 2.0 smoker*urban*za + 1.0 female*zb)"
+   },
+   "verdict": "experiments/explanation_barrier/verification/lad-12979.json",
+   "author": {
+    "leaves": 0,
+    "grades": {
+     "female_bmi": null,
+     "urban_smoker_age_gate": null,
+     "age_risk": null,
+     "low_income": null
+    },
+    "counts": {
+     "meaningful": 0,
+     "partial": 0,
+     "closed_form_only": 0,
+     "restatement": 0,
+     "unnamed": 0
+    },
+    "understood_fraction_author": null,
+    "restatements": 0,
+    "stored_grades": {
+     "female_bmi": null,
+     "urban_smoker_age_gate": null,
+     "age_risk": null,
+     "low_income": null
+    },
+    "note": "the concept the explaining agent stored on each leaf (set_meaning), re-probed under the v2 simplicity and support conditions; None when no concept was stored"
    },
    "domain_only": null
   }
@@ -165,15 +217,22 @@
    "meaning": {
     "grade": "partial",
     "concept": "bmi * female, female",
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.489097,
      "auc": 0.896142,
      "mi": 0.617335,
      "n": 24000,
      "score": 0.792283,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "5": {
      "best": {
@@ -188,6 +247,11 @@
       "mi": 0.925461,
       "nmi": 0.343818,
       "leaf_gated": true,
+      "gate_share": 0.490667,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.794538
      },
      "best_domain": null,
@@ -231,6 +295,11 @@
       "mi": 0.54225,
       "nmi": 0.208424,
       "leaf_gated": true,
+      "gate_share": 0.482417,
+      "support": 0.495792,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.828662
      },
      "best_domain": null,
@@ -274,6 +343,11 @@
       "mi": 0.384295,
       "nmi": 0.12633,
       "leaf_gated": true,
+      "gate_share": 0.370583,
+      "support": 0.495792,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.75365
      },
      "best_domain": null,
@@ -287,20 +361,20 @@
        "mi": 0.384295
       },
       {
-       "concept": "smoker and female",
-       "source": "pair",
-       "score": 0.711424,
-       "r2": 0.129813,
-       "auc": 0.855712,
-       "mi": 0.207891
-      },
-      {
        "concept": "age * female",
        "source": "pair",
        "score": 0.667852,
        "r2": 0.399883,
        "auc": 0.833926,
        "mi": 0.420022
+      },
+      {
+       "concept": "female and insured",
+       "source": "pair",
+       "score": 0.644198,
+       "r2": 0.27859,
+       "auc": 0.822099,
+       "mi": 0.267237
       }
      ]
     }
@@ -328,56 +402,60 @@
    ],
    "library": "tabular",
    "n_library_concepts": 61,
-   "score": 0.910805,
+   "score": 0.817666,
    "grade": "meaningful",
    "best_concepts": [
     "age * smoker",
-    "smoker and urban"
+    "urban"
    ],
    "domain_score": null,
    "domain_grade": "closed_form_only",
    "best_domain_concepts": [],
-   "r2": 0.524143,
-   "auc": 0.955402,
-   "mi": 0.463959,
+   "r2": 0.343015,
+   "auc": 0.908833,
+   "mi": 0.426022,
    "meaning": {
     "grade": "meaningful",
-    "concept": "age * smoker, smoker and urban",
+    "concept": "age * smoker, urban",
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
     "probe": {
-     "r2": 0.524143,
-     "auc": 0.955402,
-     "mi": 0.463959,
+     "r2": 0.343015,
+     "auc": 0.908833,
+     "mi": 0.426022,
      "n": 24000,
-     "score": 0.910805,
+     "score": 0.817666,
+     "support": 0.401708,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "3": {
      "best": {
-      "concept": "smoker and urban",
+      "concept": "urban",
       "kind": "binary",
-      "source": "pair",
+      "source": "level",
       "n": 24000,
-      "r2": 0.680124,
-      "auc": 0.987549,
+      "r2": 0.317867,
+      "auc": 0.89441,
       "auc_of": "exit activation as a score for the concept",
       "direction": "exit higher when the concept holds",
-      "mi": 0.521528,
-      "nmi": 0.181129,
+      "mi": 0.445654,
+      "nmi": 0.154778,
       "leaf_gated": true,
-      "score": 0.975098
+      "gate_share": 0.43,
+      "support": 0.401708,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 0.78882
      },
      "best_domain": null,
      "top": [
-      {
-       "concept": "smoker and urban",
-       "source": "pair",
-       "score": 0.975098,
-       "r2": 0.680124,
-       "auc": 0.987549,
-       "mi": 0.521528
-      },
       {
        "concept": "urban",
        "source": "level",
@@ -393,6 +471,14 @@
        "r2": 0.239661,
        "auc": 0.862717,
        "mi": 0.451591
+      },
+      {
+       "concept": "female and urban",
+       "source": "pair",
+       "score": 0.698434,
+       "r2": 0.269754,
+       "auc": 0.849217,
+       "mi": 0.296887
       }
      ]
     },
@@ -409,6 +495,11 @@
       "mi": 0.406391,
       "nmi": 0.391364,
       "leaf_gated": true,
+      "gate_share": 0.138167,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.846512
      },
      "best_domain": null,
@@ -477,15 +568,22 @@
    "meaning": {
     "grade": "meaningful",
     "concept": "age",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.510425,
      "auc": 0.900471,
      "mi": 0.657474,
      "n": 24000,
      "score": 0.800943,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "1": {
      "best": {
@@ -500,6 +598,11 @@
       "mi": 0.852211,
       "nmi": 0.335713,
       "leaf_gated": true,
+      "gate_share": 0.46425,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.895038
      },
      "best_domain": null,
@@ -543,6 +646,11 @@
       "mi": 0.462737,
       "nmi": 0.152148,
       "leaf_gated": true,
+      "gate_share": 0.370833,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.706848
      },
      "best_domain": null,
@@ -610,15 +718,22 @@
    "meaning": {
     "grade": "meaningful",
     "concept": "income * bmi",
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.406445,
      "auc": 0.935071,
      "mi": 0.738437,
      "n": 24000,
      "score": 0.870142,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "7": {
      "best": {
@@ -633,6 +748,11 @@
       "mi": 0.738437,
       "nmi": 0.242646,
       "leaf_gated": true,
+      "gate_share": 0.370083,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.870142
      },
      "best_domain": null,

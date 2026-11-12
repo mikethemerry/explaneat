@@ -115,11 +115,18 @@ def experiment1():
     body = []
     for key, name in (("heart", "Heart"), ("monk2", "MONK-2"), ("adult", "Adult")):
         p, b = paper[key], base[key]
+        # the three levels of the paper explanation (compute_levels.py --set paper; probe v1 until the
+        # probe v2 recompute replaces the file)
+        lvp = E / "explanation_levels" / "levels" / f"paper-{key}.json"
+        if lvp.exists():
+            L = levels_counts(lvp)
+            lv_cell = f"{L['faithful']:.1e}; {L['leaves']} leaves; {L['m']} / {L['p']} / {L['c']} (probe v1)"
+        else:
+            lv_cell = "not computed (paper explanation; levels script not run on it)"
         body.append([f"{name} (paper genome)", f"{int(p['n_train']):,} / {int(p['n_test']):,}",
                      f"{p['hidden_nodes']} / {p['phenotype_connections_enabled']}",
                      f"AUC {float(p['test_auc']):.3f} vs LR {b['logistic']['test_auc']:.3f}, GB {b['gradient_boosting']['test_auc']:.3f}",
-                     "not computed (paper explanation; levels script not run on it)",
-                     "paper explanation; no blind verifier; not signed off"])
+                     lv_cell, "paper explanation; no blind verifier; not signed off"])
     # churn case (Experiment 1.2): one run, seed 10, 200 generations, best genome by training fitness
     cc = E / "churn_case"
     crun = rows(cc / "runs.csv")[0]
@@ -129,7 +136,7 @@ def experiment1():
     body.append(["Churn case (churn-case-s10)", f"{int(crun['n_train']):,} / {int(crun['n_test']):,}",
                  f"{crun['hidden_nodes']} / {crun['phenotype_connections_enabled']}",
                  f"AUC {float(crun['test_auc']):.3f} vs LR {cref['l2_logistic']['test_auc']:.3f}, GB {cref['gradient_boosting']['test_auc']:.3f}",
-                 f"{clv['faithful']:.1e}; {clv['leaves']} leaves; {clv['m']} / {clv['p']} / {clv['c']}",
+                 f"{clv['faithful']:.1e}; {clv['leaves']} leaves; {clv['m']} / {clv['p']} / {clv['c']} (probe v2)",
                  f"blind verifier {g} ({u} upheld, {w} weakened, {rf} refuted, {fl} flags); not signed off"])
     body.append("midrule")
     # Cox
@@ -164,12 +171,18 @@ def experiment1():
     rec = jload(E / "complex_real" / "explanations" / "krk-default-s2.json")
     la = rec["leaf_assessments"]
     grades = Counter((a.get("assessment") or a.get("grade")) for a in (la.values() if isinstance(la, dict) else la))
+    krk_vd = E / "complex_real" / "verification" / "krk" / "verdict.json"
+    if krk_vd.exists():
+        g, u, w, rf, fl = verdict_counts(krk_vd)
+        krk_ver = f"blind verifier {g} ({u} upheld, {w} weakened, {rf} refuted, {fl} flags); not signed off"
+    else:
+        krk_ver = "orchestrator checks only; no blind verifier; not signed off"
     body.append(["KRK, boundary case (krk-default-s2)", f"{b['n_train']:,} / {b['n_test']:,}",
                  f"{r['hidden']} / {r['conns']}",
                  f"AUC {float(r['test_auc']):.4f} vs LR {b['logistic_regression']['test']:.3f}, GB {b['gradient_boosting']['test']:.3f}, rule {b['ground_truth_rule']['test']:.3f}",
                  f"{rec['function_preservation_max_abs_err']:.1e}; {rec['n_leaf_annotations']} leaves; "
                  f"{grades.get('meaningful', 0)} / {grades.get('partial', 0)} / {grades.get('closed-form-only', 0)} (author's grades)",
-                 "orchestrator checks only; no blind verifier; not signed off"])
+                 krk_ver])
     # Connect-4 capacity
     c4 = {r["name"]: r for r in rows(E / "c4_capacity" / "runs.csv")}["main-h10-e50-s1"]
     c4b = jload(E / "c4_capacity" / "baselines.json")
@@ -189,9 +202,10 @@ def experiment1():
     note = ("Sources: results/thesis/baselines.json and experiments/10seed/runs\\_paper\\_reference.csv (paper genomes); "
             "experiments/churn\\_case/ (runs.csv, references.json, levels/, verdicts/; the churn case); "
             "experiments/survival/cox\\_case/ (runs, references.csv, levels/, verdicts/; n is train / validation / test); "
-            "experiments/xor/xor\\_results.json; experiments/complex\\_real/ (runs.csv, baselines.json, explanations/); "
+            "experiments/xor/xor\\_results.json; experiments/complex\\_real/ (runs.csv, baselines.json, explanations/, verification/krk/); "
             "experiments/c4\\_capacity/ (runs.csv, baselines.json, explanations/record.json, verification/independent/) and "
-            "experiments/explanation\\_levels/levels/. Understood counts are leaves graded meaningful / partial / closed-form only. "
+            "experiments/explanation\\_levels/levels/ (the paper rows: levels/paper-*.json, concept probe v1). "
+            "Understood counts are leaves graded meaningful / partial / closed-form only. "
             "Signed off means verified by the author under the signoff-v1 protocol; none is.")
     return header, body, note
 

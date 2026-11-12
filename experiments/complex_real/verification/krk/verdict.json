@@ -1,0 +1,463 @@
+{
+ "item_id": "krk-default-s2",
+ "genome_id": "da7d295b-7705-4c44-b8a6-d95cdce44efa",
+ "label": "krk-default-s2",
+ "target": "<T> = the record file krk/record.json given as the target (label krk-default-s2); commands below use <T> for it",
+ "target_hash": null,
+ "target_hash_note": "recheck.json reports target_hash null for this record file (operations read from the database)",
+ "verifier": "independent verifier agent (automated)",
+ "started_at": "2026-11-13T10:44:21+13:00",
+ "finished_at": "2026-11-13T11:02:47+13:00",
+ "minutes": 18,
+ "overall": {
+  "grade": "refuted",
+  "summary": "One stated number does not reproduce: the share of draws with the rook one file right of the black king (the rook_right_of_bk penalty) is 35.6%, not 28%. Three statements are weakened: the rook_right_of_bk hinge depends on the rook's absolute file (value at one file right 0.05 to 0.32, net penalty -0.22 logit, not -0.31), the '8,743 positions with 357 > 0' count holds only for 357 > 0.01 (357 is tiny-positive, at most 0.0045, on 636 draws), and the 'ramp of 0.72 logit per rank' is the surrogate's coefficient where the model's slope is 0.76 to 0.80. Everything else - coverage, function preservation, closed forms, all three hinge formulas, the dead unit, the additive composition, the root formula, the ground-truth comparisons (rule, stalemates, defended rooks, adjacency AUCs, cell means, surrogate) and the unit activity shares - reproduces."
+ },
+ "counts": {
+  "refuted": 1,
+  "weakened": 3,
+  "upheld": 24,
+  "flag": 0
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "structural coverage 1.0, compositional 1.0, hierarchy complete, full coverage",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.0 / 1.0, no uncovered nodes or edges; Null nodes -1 and -2 (white king) inside the root; one root (draw_score) containing output 0; 5 of 5 parts composed",
+   "commands": [
+    "uv run python -m explaneat verify recheck <T> --out recheck.json"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "2.22e-16",
+   "check": "verify recheck",
+   "evidence": "recomputed 2.220446049250313e-16; numeric max |err| of the leaves 3.55e-15",
+   "commands": []
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.closed_form_max_abs_err",
+   "statement": "0.0322",
+   "check": "verify recheck",
+   "evidence": "recomputed 0.03221697890436648 (ann_15); leaf errors 0.0071 / 0.0047 / 0.0021 / 0.0322 as recorded",
+   "commands": []
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.n_splits",
+   "statement": "4 splits, 2 identity nodes, 4 leaves, 2 compositions, 11 hidden nodes, 9 hidden nodes in a single leaf without a split",
+   "check": "operations dump (read only) and recheck op_counts",
+   "evidence": "split_node x4 (-3, -4, -5, -6), add_identity_node x2 (identity_812, identity_2711), annotate x6, rename x6; hidden nodes 357, 812, 7455, 3965, 7180, 2711, 3299, 5890, 8583 in leaves and 99, 2804 in far_from_rook = 11; 9 + 2",
+   "commands": []
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_17",
+   "claims": [],
+   "location": "record.summary",
+   "statement": "train AUC 0.997; adjacency ranked with AUC 0.99987; 94.5% of adjacent positions are draws, the rest are defended rooks; three hinge formulas; five-term surrogate R^2 0.9996",
+   "check": "recheck; subgroup; script gt_checks.py (forward pass on the 22,444 training rows)",
+   "evidence": "AUC 0.99708, accuracy 0.960; AUC of the logit against the adjacency label 0.999869; P(draw | adjacent) 0.9453 (2231 of 2360); every adjacent undefended position is a draw (2229 of 2229), so the 129 adjacent non-draws are all defended; surrogate R^2 0.99960; hinge formulas confirmed by sweeps (V13, V22, V17)",
+   "commands": [
+    "uv run python -m explaneat verify subgroup <T> --where \"abs(bk_file-wr_file)<=1 and abs(bk_rank-wr_rank)<=1\"",
+    "uv run python -m explaneat verify subgroup <T> --where \"abs(bk_file-wr_file)<=1 and abs(bk_rank-wr_rank)<=1 and not (abs(wk_file-wr_file)<=1 and abs(wk_rank-wr_rank)<=1)\""
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_17",
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "the fourth side, rook below the black king, is only a linear ramp of 0.72 logit per rank",
+   "check": "probe sweeps of wr_rank (rook on the king's file, king on rank 4) and of bk_rank (rook fixed on rank 4)",
+   "evidence": "with the rook below the king the risk goes 13.6% -> 25.9% -> 43.7% -> 63.3% for rook ranks 1..4: logit steps of 0.797 per rook rank (the direct edge); moving the king up with the rook fixed gives steps of -0.757 per rank (-0.620 direct plus -0.137 through 2804 -> 99). The side is a linear ramp (no hinge switches, V22), but 0.72 is the surrogate's fitted coefficient, not the model's slope (0.76 to 0.80); the record's composition_notes give the right direct slopes (+0.80, -0.62)",
+   "commands": [
+    "uv run python -m explaneat verify probe <T> --set wr_file=4 --set bk_file=4 --set bk_rank=4 --sweep wr_rank=1:8:8 --nodes 2711,99,2804",
+    "uv run python -m explaneat verify probe <T> --set wr_file=4 --set bk_file=4 --set wr_rank=4 --sweep bk_rank=1:8:8 --nodes 2711,99,2804"
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_17",
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "white king unconnected; defended-adjacent 0.51 vs captures 0.60; 8 stalemates get 0.18; within-adjacency AUC 0.67; kink at 0.79 files; box 0.70-0.78 above vs 0.39-0.44 below against true 0.89-0.98; 62% of adjacent positions predicted draws, every predicted draw adjacent; rook_right_of_bk linearised alone 0.991; 2804 weight 0.154 into 99",
+   "check": "recheck null nodes; subgroup; gt_checks.py (stalemate and defence computed from the inputs); linearise --level nodes; probe sweep",
+   "evidence": "-1, -2 are Null; adjacent and white king adjacent to the rook: n 131, mean risk 51.4%; adjacent and undefended: 2229, 59.7%; stalemates found 8, all draws, mean 0.183; capture vs defended within adjacency AUC 0.673; cells (rook one rank above) 0.699/0.783/0.782, (one below) 0.386/0.444/0.441, true draw rates in the 8 cells 0.895 to 0.981; 1453 of 2360 adjacent = 61.6% predicted draws, 0 predicted draws outside adjacency; 812 linearised alone AUC 0.9908; 99 rises 0.051 when 2804 rises 0.331 = 0.154",
+   "commands": [
+    "uv run python -m explaneat verify subgroup <T> --where \"risk > 0.5 and not (abs(bk_file-wr_file)<=1 and abs(bk_rank-wr_rank)<=1)\"",
+    "uv run python -m explaneat verify subgroup <T> --where \"abs(bk_file-wr_file)<=1 and abs(bk_rank-wr_rank)<=1 and abs(wk_file-wr_file)<=1 and abs(wk_rank-wr_rank)<=1\"",
+    "uv run python -m explaneat verify linearise <T> --level nodes"
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_17",
+   "claims": [],
+   "location": "record.ground_truth_comparisons",
+   "statement": "n 22,444; the rule reproduces all labels; AUC 0.9971 / accuracy 0.960; adjacency alone AUC 0.9955; P(draw|adjacent) 0.945 (n 2,360), P(draw|not adjacent) 0.0003; 1,453 predicted draws all adjacent, 907 adjacent predicted wins; means capture 0.60, defended (131) 0.51, stalemate (8) 0.18, not adjacent 0.028 (max 0.37); within-adjacency logit regression +0.76 wr_rank, -0.69 bk_rank; cell means; rook 2+ ranks below within one file mean 0.13, P(draw) 0; surrogate 99.85% agreement",
+   "check": "gt_checks.py; subgroup",
+   "evidence": "rule (capture of an undefended rook or stalemate) == label on all 22,444 rows (0 disagreements); AUC 0.99708, acc 0.960; adjacency indicator AUC 0.99547; 0.9453 / 0.0003 (6 of 20,084); 1453 predicted draws, all adjacent, 2360 - 1453 = 907; means 0.597 / 0.514 / 0.183 / 0.0278, max 0.373; regression const 0.142, wr_rank +0.755, bk_rank -0.694; cells as in V7; rook 2+ below within one file: n 2552, 0 draws, mean 12.9%; surrogate agreement 0.9985",
+   "commands": [
+    "uv run python -m explaneat verify subgroup <T> --where \"bk_rank - wr_rank >= 2 and abs(bk_file-wr_file)<=1\"",
+    "uv run python -m explaneat verify subgroup <T> --where \"risk > 0.5\""
+   ]
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.restore_gain",
+   "statement": "full AUC 0.9971; linearised alone: bk_right_of_rook 0.747, rook_above_bk 0.847, rook_right_of_bk 0.991, dead_rank_unit linear; 99 linearised 0.9970; the parts-level tool fails (not a DAG)",
+   "check": "linearise --level nodes (the parts level fails with the same error the author reported)",
+   "evidence": "357 alone 0.7468, 2711 alone 0.8480, 812 alone 0.9908, 7455 alone 0.9971, 99 alone 0.9970; every switching unit affine 0.5646. The leaf-level restore gains (0.252 / 0.128 / 0.022) and the all-leaves-linear 0.5616 could not be reproduced exactly because the parts-level tool raises 'model state (with overrides) is not a DAG'; the node-level analogues (five units linearised, including 99) are 0.201 / 0.109 / 0.017 on a base of 0.5646, same order and size",
+   "commands": [
+    "uv run python -m explaneat verify linearise <T> --level nodes",
+    "uv run python -m explaneat verify linearise <T> --level parts --core"
+   ]
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.unit_activity_summary",
+   "statement": "3965 dead (0 rows); always on: 7180 (1.972), 2804, 3299, 5890, 8583; 357 48%, 812 38%, 2711 54%, 7455 69%, 99 95%",
+   "check": "subgroup on node_<id> > 0; probes",
+   "evidence": "node_3965 > 0: 0 rows; 7180 min = max = 1.9721; 2804, 3299, 5890, 8583 positive in every probe and reported as always-on exits; node_357 > 0: 10,773 (48.0%); node_812 > 0: 8,614 (38.4%); node_2711 > 0: 12,184 (54.3%); node_7455 > 0: 15,435 (68.8%); node_99 > 0: 21,359 (95.2%)",
+   "commands": [
+    "uv run python -m explaneat verify subgroup <T> --where \"node_357 > 0\""
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "structure",
+   "statement": "entry, exit and subgraph nodes of the six annotations; one root containing the output; every part under it",
+   "check": "recheck structure block; operations dump",
+   "evidence": "hierarchy n 6, single root draw_score with exit 0, all under root, complete; leaves cover 357 / 812+7455 / 3965+7180 / 2711+3299+5890+8583 with identity_812 and identity_2711 as entry relays; far_from_rook owns 99 and 2804; draw_score owns 0 plus the direct inputs -4_a, -6_a and the Null inputs -1, -2",
+   "commands": []
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.tool_bugs",
+   "statement": "linearise_annotations fails with 'model state (with overrides) is not a DAG' when the composition is included",
+   "check": "linearise --level parts --core",
+   "evidence": "the same ValueError is raised by the parts-level tool here",
+   "commands": []
+  },
+  {
+   "id": "V13",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_12",
+   "claims": [],
+   "location": "operations.bk_right_of_rook.hypothesis",
+   "statement": "357 = 0.715*max(0, bk_file - wr_file - 1), exact to 0.0045; zero on the rook's file and one file either side, then +0.71 per file; feeds the output (-1.25), 99 (+2.15) and 2711 (+1.14); linearised alone 0.997 -> 0.747",
+   "check": "probe sweep of bk_file with the rook on file 4; n357.py (max |357 - fit| on all rows); linearise --level nodes; readouts from the sweeps",
+   "evidence": "357 = 0, 0, 0, 0, 0.0018, 0.716, 1.43, 2.144 for bk_file 1..8; max |357 - fit| 0.0045; the output logit falls by 1.25 per unit of 357 (sweep A: bk_file 6 gives logit -5.46 as the formula predicts), 99 rises 2.15 per unit (bk_file 6: 99 = 1.963), 2711's pre-activation rises 1.136 per unit (sweep E); 357 affine alone AUC 0.7468",
+   "commands": [
+    "uv run python -m explaneat verify probe <T> --set wr_file=4 --set wr_rank=4 --set bk_rank=4 --sweep bk_file=1:8:8 --nodes 357,812,7455,2711,99,2804"
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "weakened",
+   "level": "L1",
+   "part": "ann_12",
+   "claims": [],
+   "location": "operations.bk_right_of_rook.hypothesis",
+   "statement": "zero on every draw; 0 of 8,743 positions with 357 > 0 are draws (also evidence[2].narrative and record.leaf_assessments[0].why)",
+   "check": "subgroup node_357 > 0; n357.py",
+   "evidence": "357 > 0 on 10,773 rows, 636 of them draws (the black king one file right of the rook, where 357 is 0.0009 to 0.0045); 357 > 0.01 (or >= 0.5) gives the stated 8,743 rows and 0 draws. The count is right for the hinge proper, not for '357 > 0'; 'zero on every draw' holds within the stated 0.0045 tolerance (max 0.0045, mean 0.0005 on draws)",
+   "commands": [
+    "uv run python -m explaneat verify subgroup <T> --where \"node_357 > 0\""
+   ]
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_12",
+   "claims": [],
+   "location": "operations.bk_right_of_rook.hypothesis",
+   "statement": "domain reading: one side of the necessary capture condition |file difference| <= 1",
+   "check": "L3 results",
+   "evidence": "stated in chess terms (black king 2+ files right of the rook); the model confirms it: 0 draws where the hinge is on, the largest non-linear contribution of the leaves",
+   "commands": []
+  },
+  {
+   "id": "V16",
+   "grade": "refuted",
+   "level": "L1",
+   "part": "ann_13",
+   "claims": [],
+   "location": "operations.rook_right_of_bk.hypothesis",
+   "statement": "28% of draws (rook exactly one file right of the king) get a small penalty (also operations.rook_right_of_bk.evidence[2].narrative and record.leaf_assessments[1].why)",
+   "check": "subgroup on draws with wr_file - bk_file == 1, and on draws with node_812 > 0",
+   "evidence": "796 of 2,237 draws have the rook one file right of the king = 35.6%; draws with 812 > 0: 802 = 35.8%. 28% does not reproduce (636 of 2,237 = 28.4% is the share of draws with the black king one file right of the rook, the other side, where 357 is tiny-positive)",
+   "commands": [
+    "uv run python -m explaneat verify subgroup <T> --where \"wr_file - bk_file == 1 and outcome == 1\"",
+    "uv run python -m explaneat verify subgroup <T> --where \"outcome == 1 and node_812 > 0\"",
+    "uv run python -m explaneat verify subgroup <T> --where \"outcome == 1\""
+   ]
+  },
+  {
+   "id": "V17",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_13",
+   "claims": [],
+   "location": "operations.rook_right_of_bk.hypothesis",
+   "statement": "812 ~ 0.77*max(0, wr_file - bk_file - 0.79): 0.16 when the rook is one file right, 0.93 at two, +0.77 per file; the penalty on those draws is 0.16*1.92 = 0.31 logit; 7455 takes 0.234 / 0.074 / 0",
+   "check": "probe sweep (rook on file 4); gt_checks.py (812 by rook file; logit with 812 fixed at 0)",
+   "evidence": "812 is not a function of the file difference alone: at one file right it is 0.320 with the rook on the b-file down to 0.046 on the h-file (mean 0.162); with the rook on file 4 the steps are 0.229 / 1.017 / 1.806 (0.79 per file). The closed form weighs the rook's file at 0.743 and the king's at 0.787 per file, so the kink sits at 0.49 + 0.056*wr_file files (0.55 to 0.94), 0.79 only on average. Net penalty on draws with the rook one file right is -0.22 logit (direct edge -0.30, the 7455 -> 2804 -> 99 path gives +0.08 back), not -0.31. 7455 = 0.234 - 1.17*0.16 = 0.047, not 0.074 (0.074 corresponds to 812 = 0.137). Direction, order and the 'rook 2+ files right => no capture' reading hold",
+   "commands": [
+    "uv run python -m explaneat verify probe <T> --set wr_file=4 --set wr_rank=4 --set bk_rank=4 --sweep bk_file=1:8:8 --nodes 357,812,7455,2711,99,2804"
+   ]
+  },
+  {
+   "id": "V18",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_13",
+   "claims": [],
+   "location": "operations.rook_right_of_bk.evidence[2]",
+   "statement": "6 of 6,213 positions with 812 > 0.5 are draws; 0 when the black king is on or right of the rook's file; constant -0.239 from dead_rank_unit; 7455 = relu(0.234 - 1.17*812); linearised alone 0.991, restore gain small",
+   "check": "subgroup; probe; recheck formula check; linearise --level nodes",
+   "evidence": "wr_file - bk_file >= 2 (where 812 >= 0.84 > 0.5): n 6,213, 6 draws; 812 = 0 at bk_file 4..8 with the rook on file 4; identity_812 = -0.2395; 7455 formula ok (max err 0.0005); 812 affine alone AUC 0.9908, restore gain 0.017 at node level",
+   "commands": [
+    "uv run python -m explaneat verify subgroup <T> --where \"wr_file - bk_file >= 2\""
+   ]
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_13",
+   "claims": [],
+   "location": "operations.rook_right_of_bk.hypothesis",
+   "statement": "self-assessment: partial",
+   "check": "L3 results",
+   "evidence": "the 'rook 2+ files right => no capture' side holds; the one-file-right penalty on 35.6% of draws and the dependence on the absolute file make it only partly a domain unit; agree with 'partial'",
+   "commands": []
+  },
+  {
+   "id": "V20",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_14",
+   "claims": [],
+   "location": "operations.dead_rank_unit.hypothesis",
+   "statement": "3965 = relu(-1.383*wr_rank_z - 2.375) is never active (pre-activation at most -0.24, at rank 1; 0 of 22,444 rows); zeroing it changes the output by exactly 0; 7180 = relu(3965 + 1.972) is the constant 1.972; -0.239 into 812 via identity_812",
+   "check": "probe sweep of wr_rank with --nodes 3965,7180,identity_812; ablate --node 3965 --to zero; ablate --part ann_14; recheck",
+   "evidence": "pre-activation -0.2418 at rank 1 down to -4.487 at rank 8, value 0 everywhere; 0 rows with node_3965 > 0; ablation: 0 rows affected, max change 0, 0 flips, AUC 0.9971 unchanged; 7180 = 1.972134 on every row; identity_812 = -0.2395. recheck's only warning (7180 written with '=' while the weight is 1.000327) is a rounding note",
+   "commands": [
+    "uv run python -m explaneat verify probe <T> --sweep wr_rank=1:8:8 --nodes 3965,7180,identity_812 --no-parts",
+    "uv run python -m explaneat verify ablate <T> --node 3965 --to zero",
+    "uv run python -m explaneat verify ablate <T> --part ann_14"
+   ]
+  },
+  {
+   "id": "V21",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_14",
+   "claims": [],
+   "location": "operations.dead_rank_unit.hypothesis",
+   "statement": "self-assessment: closed-form-only (a verified Null)",
+   "check": "L3 results",
+   "evidence": "a bias carried by a dead unit; no domain reading is possible and none is claimed",
+   "commands": []
+  },
+  {
+   "id": "V22",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_15",
+   "claims": [],
+   "location": "operations.rook_above_bk.hypothesis",
+   "statement": "within one file: 2711 = 0.639*max(0, wr_rank - bk_rank - 1) (0.01 at one rank above, 0.64 at two, +0.64 per rank); 357 switches it on earlier; relays 3299/5890/8583 always on, gain 3.29 into 99; 99.96% of draws have 2711 < 0.2; 0 of 10,442 with 2711 > 0.5 are draws; linearised alone 0.847; no hinge on the rook-below side",
+   "check": "probe sweeps B, C, E; subgroup node_2711; gt_checks.py; linearise --level nodes",
+   "evidence": "sweep B (rook on the king's file): 2711 = 0, 0, 0, 0, 0.0002, 0.639, 1.278, 1.916 for rook ranks 1..8 with the king on rank 4; on the data 2711 at one rank above averages 0.0103 (max 0.036) and at two ranks 0.639 (0.602 to 0.675); with the king 4 files right (357 = 2.146) 2711 is already 0.39 with the rook two ranks below the king (sweep E); relays positive on every row, 99 rises 2.10 for 2711 = 0.639 (3.29x); draws with 2711 >= 0.2: 1 of 2,237; node_2711 > 0.5: 10,442 rows, 0 draws; 2711 affine alone AUC 0.8480; with the rook below the king (ranks 1 to 4) no hinge is on and the logit moves by the direct 0.797 per rank only",
+   "commands": [
+    "uv run python -m explaneat verify probe <T> --set wr_file=2 --set bk_file=6 --set bk_rank=4 --sweep wr_rank=1:8:8 --nodes 357,2711,99",
+    "uv run python -m explaneat verify subgroup <T> --where \"node_2711 > 0.5\"",
+    "uv run python -m explaneat verify subgroup <T> --where \"outcome == 1 and node_2711 >= 0.2\""
+   ]
+  },
+  {
+   "id": "V23",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_15",
+   "claims": [],
+   "location": "operations.rook_above_bk.hypothesis",
+   "statement": "domain reading: the 'rook too far above' side of |rank difference| <= 1",
+   "check": "L3 results",
+   "evidence": "stated in chess terms; the model confirms it (0 draws where the hinge is clearly on); the early switch-on with 357 only affects positions that are non-captures anyway",
+   "commands": []
+  },
+  {
+   "id": "V24",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_16",
+   "claims": [],
+   "location": "operations.far_from_rook.hypothesis",
+   "statement": "99 = relu(2.15*357 + 3.29*2711 + 0.154*2804 + c); 2804 = 0.33 per black-king rank + 1.47*7455 + constant, r(2804, bk_rank) = 0.98; 99 about 0.1 when adjacent, 6.1 otherwise; active on 95%; ReLU -> identity leaves AUC 0.9970 (max output change 0.095); additive",
+   "check": "probe sweeps A, B, C; gt_checks.py (node means, correlation, 99 overridden by its pre-activation)",
+   "evidence": "2804 rises 0.331 per king rank and 0.343 when 7455 goes 0 -> 0.2335 (1.47x); 99 rises 0.051 per 0.331 of 2804 (0.154x), 2.15 per unit of 357 and 3.29 per unit of 2711 (sweep A bk_file 7: 99 = 6.056 = c + 2.15*1.43 + 3.29*0.889 + 0.154*2.268 with c = -0.285); r(2804, bk_rank) = 0.978; node 99 mean 0.102 adjacent, 6.141 not adjacent; active 95.2%; identity instead of ReLU: AUC 0.9970, max |output change| 0.0948",
+   "commands": [
+    "uv run python -m explaneat verify probe <T> --set wr_file=4 --set bk_file=4 --set wr_rank=4 --sweep bk_rank=1:8:8 --nodes 2711,99,2804,7455"
+   ]
+  },
+  {
+   "id": "V25",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_16",
+   "claims": [],
+   "location": "operations.far_from_rook.hypothesis",
+   "statement": "an additive 'too far from the rook' penalty",
+   "check": "L3 results",
+   "evidence": "a meaningful composition: the sum of the two rank/file distance violations (plus a small rank ramp), passed through a ReLU that is open on 95% of rows",
+   "commands": []
+  },
+  {
+   "id": "V26",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_17",
+   "claims": [],
+   "location": "operations.draw_score.hypothesis",
+   "statement": "logit = 0.846 + 0.797*(wr_rank - 4.52) - 0.620*(bk_rank - 4.46) - 2.69*99 - 1.25*357 - 1.92*812; surrogate R^2 0.9996; adjacency AUC 0.99987; every predicted draw adjacent, 62% of adjacent predicted draws; 131 defended at 0.51, 8 stalemates at 0.18; train AUC 0.9971, accuracy 0.960",
+   "check": "probe typical case; sweeps; gt_checks.py",
+   "evidence": "typical case (rook e5, king e4): formula gives 1.341, model score +1.3417, risk 79.3%; slopes 0.797 / -0.620 from sweeps B and C; surrogate R^2 0.99960, agreement 0.9985; AUC vs adjacency 0.999869; 1453 predicted draws all adjacent (61.6%); 131 -> 0.514; 8 -> 0.183; AUC 0.99708, accuracy 0.960",
+   "commands": [
+    "uv run python -m explaneat verify probe <T> --hold typical --wide --nodes all"
+   ]
+  },
+  {
+   "id": "V27",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_17",
+   "claims": [],
+   "location": "operations.draw_score.evidence[3]",
+   "statement": "SHAP: the white king's file and rank have exactly zero importance (unconnected); the four rook and black-king coordinates share 0.045-0.053",
+   "check": "recheck structure (Null nodes)",
+   "evidence": "-1 and -2 are Null (no path to the output), so their SHAP values are exactly 0 by construction; the 0.045-0.053 magnitudes were not recomputed (a 6-minute SHAP run) and are not graded",
+   "commands": []
+  },
+  {
+   "id": "V28",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_17",
+   "claims": [],
+   "location": "operations.draw_score.hypothesis",
+   "statement": "a soft box around the rook, read as 'can the black king reach the rook?'",
+   "check": "L3 results",
+   "evidence": "a domain reading the model confirms (adjacency AUC 0.99987); the hypothesis itself states the two gaps against the exact rule (no white king, lopsided box)",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_17": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_16": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_12": {
+   "grade": "weakened",
+   "level": "L1"
+  },
+  "ann_13": {
+   "grade": "refuted",
+   "level": "L1"
+  },
+  "ann_14": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_15": {
+   "grade": "upheld",
+   "level": "L4"
+  }
+ },
+ "leaf_meaning": {
+  "ann_12": {
+   "name": "bk_right_of_rook",
+   "grade": "meaningful",
+   "why": "'black king two or more files right of the rook, so it cannot capture' is a chess reading the model confirms: the hinge is clearly on for 8,743 positions and none of them is a draw, and it carries the largest non-linear share of the ranking."
+  },
+  "ann_13": {
+   "name": "rook_right_of_bk",
+   "grade": "partial",
+   "why": "the 'rook two or more files right, no capture' side holds (6 of 6,213 draws), but the unit also penalises the capture square one file left of the rook on 35.6% of draws by about -0.22 logit, its kink moves with the rook's absolute file, and it is nearly redundant for ranking."
+  },
+  "ann_14": {
+   "name": "dead_rank_unit",
+   "grade": "closed-form-only",
+   "why": "3965 never fires on any legal rank and 7180 is the constant 1.972: a bias with no reading, as the author says."
+  },
+  "ann_15": {
+   "name": "rook_above_bk",
+   "grade": "meaningful",
+   "why": "'rook two or more ranks above the black king, so it cannot capture' is confirmed: 0 draws among the 10,442 positions where the hinge is on and 99.96% of draws leave it below 0.2; the early switch-on with the king far right only touches non-captures."
+  }
+ },
+ "statements_checked": 96,
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ],
+ "not_reproduced": [
+  "leaf-level restore gains 0.252 / 0.128 / 0.022 and all-leaves-linear AUC 0.5616 (the parts-level linearise tool fails with 'not a DAG', as the author reported; node-level analogues agree in order and size)",
+  "SHAP magnitudes 0.045-0.053 (not recomputed)"
+ ]
+}

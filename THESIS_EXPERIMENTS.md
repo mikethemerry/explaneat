@@ -21,11 +21,11 @@ Mike-verified (signoff-v1) is **0 everywhere**: no record carries `mike_verifica
 
 | # | Experiment | Status |
 |---|---|---|
-| 1.1 | Heart, Adult, MONK-2: the AAAI paper genomes, recomputed | complete (numbers); **gap**: three levels not computed on the paper explanations |
-| 1.2 | Churn case | complete (gap closed 13 Nov, `exp/churn-case`): one seeded run explained, levels computed, blind verifier weakened (0 refuted); not signed off |
+| 1.1 | Heart, Adult, MONK-2: the AAAI paper genomes, recomputed | complete; levels computed 13 Nov with probe v1 (to be recomputed with probe v2) |
+| 1.2 | Churn case | complete (gap closed 13 Nov, `exp/churn-case`): one seeded run explained, levels computed (probe v2), blind verifier weakened (0 refuted); not signed off |
 | 1.3 | Cox survival case (GBSG2, WHAS500) | complete; plain-language draft deliberately skipped (template change, `fix/varianz-readiness`) |
 | 1.4 | XOR worked example | complete |
-| 1.5 | KRK boundary case | complete as an exploratory write-up; no blind verifier (stated as pending in the README) |
+| 1.5 | KRK boundary case | complete as an exploratory write-up; blind verifier run 13 Nov on krk-default-s2 (refuted: 1 refuted, 3 weakened, 24 upheld) |
 | 1.6 | Connect-4 boundary case (capacity study) | complete; outcome "covered and described, not tactically explained" |
 | 2.1 | Ten-seed consistency study, frozen-method v4 re-run | complete (60/60); **interim** on two counts: Mike's sign-off 0/60, and whether `summary.md` switches to v4 (Mike's decision) |
 | 2.2 | Rashomon counts | complete |
@@ -73,10 +73,14 @@ plus `ch7_cox_case_table.tex` (Cox) and the XOR figures. The explanation level d
 - **DB:** `explaneat_dev`; experiments "Heart Binary" (`c8f3805e`, genome `9022a9eb`, explanation
   `a03ebc86`), "monk2 - OHE - 250-100-5" (`45e998d7`, genome `23dde0fa`, expl. `d6ff7ca0`), "No
   pressure" (`dbab685c`, genome `4bc8fa07`, expl. `7e3761fe`).
-- **Status: complete** for the numbers. **Gap:** the three levels (faithful / decomposed /
-  understood) have not been computed for the three paper explanations; `compute_levels.py` has no
-  set for them. Cost: add a `paper` set (3 explanations, `explaneat_dev`, read only), ~1 h; wait
-  for the probe v2 recompute first so the understood grades are computed once.
+- **Levels** (13 Nov, `compute_levels.py --set paper`, read only, concept probe v1;
+  `experiments/explanation_levels/RESULTS.md`, "The three AAAI paper explanations"): Heart
+  faithful 2.2e-16, 4 leaves, granularity 1.0, 4 / 0 / 0 meaningful / partial / closed-form only;
+  MONK-2 3.3e-16, 4 leaves, 1.0, 1 / 2 / 1 (the two count leaves partial, a dead unit
+  closed-form only); Adult 6.7e-16, 10 leaves, 1.0, 10 / 0 / 0. In `ch7_experiment1_cases.tex`
+  rows 1-3, marked "probe v1".
+- **Status: complete.** The levels rows are probe v1; the probe v2 recompute (`--set all` now
+  includes `paper`) replaces them with every other set.
 - **Audit:** no scratch paths, placeholders or "Claude" in the four reports. `paper_corrections.md`
   line 12 and `paper_recompute.md` line 5 name the paper's `.tex` in the vault (external path,
   fine). "Heart 34 enabled edges" in `paper_coverage_options.md` vs 31 in
@@ -106,8 +110,9 @@ plus `ch7_cox_case_table.tex` (Cox) and the XOR figures. The explanation level d
   vs LR 0.813, GB 0.932 (56% of the LR-to-GB gap closed); the churn200 ten-seed median is 0.900
   (range 0.876–0.911; reported, unchanged). 18 hidden units, 75 connections, 42 of 71 inputs.
   Explanation: 10 leaves, 4 compositions, coverage 1.0 / 1.0, function preservation 1.4e-15,
-  recheck 0 / 0, 234 provenance-backed numbers over 72 queries. Levels: 1.4e-15; 10 leaves,
-  granularity 1.0; understood 10 / 0 / 0. Verifier: **weakened** (25 upheld, 9 weakened, 0
+  recheck 0 / 0, 234 provenance-backed numbers over 72 queries. Levels (probe v2): 1.4e-15; 10
+  leaves, granularity 1.0; understood 9 / 0 / 1 by the library probe (the 35-term direct sum is
+  closed-form only), 7 / 1 / 2 for the author's stored concepts, 0 restatements. Verifier: **weakened** (25 upheld, 9 weakened, 0
   refuted, 2 domain flags): the root's "gated parts are off" for the typical customer misses the
   state-49 flag (−0.42), "flat to falling" for a rising 0.7–2.6% light-use range, "two hidden
   units" for one, "3 calls for light users" for a gate that reaches 2 calls on 21 rows, and a
@@ -176,8 +181,8 @@ plus `ch7_cox_case_table.tex` (Cox) and the XOR figures. The explanation level d
 - **Audit:** `verify_xor_report.md` header says the code was "commit `546261f` plus working-tree
   changes" (the script was committed later as `ddae7c9`; rerunning at `2386ee9` reproduces every
   claim, only the header commit and the 19 s / 20 s timing differ). `RESULTS.md` says raw hidden
-  "median 6.5"; the stored `raw_hidden_count` histogram gives a median of 6 (left as reported; the
-  export row gives the range only).
+  "median 6.5"; the stored `raw_hidden_count` histogram gives a median of 6 (left as reported, with
+  a one-line clarification added under it on 13 Nov; the export row gives the range only).
 
 ### 1.5 KRK boundary case
 
@@ -197,9 +202,16 @@ plus `ch7_cox_case_table.tex` (Cox) and the XOR figures. The explanation level d
   are outside the repo (`~/.explaneat/exports/complex-real/`).
 - **DB:** `explaneat_dev`; dataset `krk_draw_ordinal` (`bc948279`); experiments `complex-<run>`;
   genome `da7d295b` (krk-default-s2).
-- **Status: complete** as an exploratory write-up. The README says "A separate verifier will
-  challenge the records": none has (no `verification/` folder). Cost: one blind verifier run on
-  `krk-default-s2`, ~20 min; the levels script has no `complex_real` set (~30 min to add).
+- **Blind verifier** (13 Nov, `experiments/complex_real/VERIFY_TASK.md`, `verification/krk/`):
+  krk-default-s2 **refuted**, 1 refuted / 3 weakened / 24 upheld / 0 flags over 96 statements. The
+  refuted item is one number in a leaf hypothesis (28% of draws should be 35.6%: the two sides
+  of the rook were swapped); the weakened items are a hinge's dependence on the rook's absolute
+  file, a count that holds at a 0.01 threshold, and a ramp slope quoted from the surrogate
+  (0.72) rather than the model (0.76-0.80). Structure, closed forms, composition and every
+  ground-truth comparison reproduce; the verifier's leaf grades agree with the author's.
+- **Status: complete** as an exploratory write-up, blind-verified on the one explained-and-tabled
+  network. The levels script has no `complex_real` set (~30 min to add); the other three
+  records are not blind-verified.
 - **Audit:** home-directory paths at lines 13 and 197 (data cache and PDF exports; fine). No
   placeholders, no "Claude".
 
@@ -270,9 +282,9 @@ unchanged), `ch7_levels_table.tex`, the seven 10-seed PDFs.
   new results" (`V4_RUN.md` line 4). Cost to switch: rerun `make_figures.py` against the v4 CSVs
   and recopy the exports, ~1 h, plus Mike's decision; the thesis would then cite v4 minutes
   (medians 12.9–21.6) instead of v3 (9.6–44.3). (b) Mike's verification, below.
-- **Audit:** `V4_RUN.md` line 50 gives churn200's new free-text sentence count as 493; the 10
-  records sum to 486 (the other five sets match). Not a reported number; left for the next
-  V4_RUN edit. `V4_RUN.md` lines 41 and 127 and `review/README.md` line 36 point at
+- **Audit:** `V4_RUN.md` line 50 gave churn200's new free-text sentence count as 493; the 10
+  records sum to 486 (the other five sets match). Not a reported number; corrected to 486 on 13
+  Nov with a one-line note. `V4_RUN.md` lines 41 and 127 and `review/README.md` line 36 point at
   `~/.explaneat/exports/verification-pack-first10-final/` (outside the repo, by design).
   `EXPLAIN_PROTOCOL.md` lines 20, 49 and 172 contain `/Users/mike/dev/explaneat` and a session
   scratchpad path (a protocol for agents, not thesis text). "Claude" names the Claude-explained
@@ -532,17 +544,17 @@ MNIST, each with its one-line finding.
 |---|---|---|
 | Mike's verification pass: 0 of 10 signed off (0 of 60) | `experiments/10seed/review/`, pack PDF | Mike: ~16 min per genome, 163 min for the first ten |
 | Swap the v4 numbers into `summary.md`, `ch7_table.tex` and the figures | `experiments/10seed/` | Mike's decision; then `make_figures.py` on the v4 CSVs and recopy, ~1 h |
-| Probe v2 recompute of the understood level | `fix/probe-simplicity` (in progress, no commits ahead of `main`) | after it lands: `compute_levels.py` for v4, ladder, c4cap, c4lf, ~30 min read only; then `make_tables.py` and `thesis_experiment_tables.py`. The levels numbers in `ch7_levels_table.tex` and the two new tables may move |
+| Probe v2 recompute of the understood level | `fix/probe-simplicity` (in progress, no commits ahead of `main`) | after it lands: `compute_levels.py --set all` (v4, ladder, c4cap, c4lf, paper), ~30 min read only; then `make_tables.py` and `thesis_experiment_tables.py`. The levels numbers in `ch7_levels_table.tex` and the two new tables may move |
 | Ladder round 2 (split past 26 copies; C4-32 and C4-32×16 re-explained) | `exp/explanation-barrier-2` (`e691124` pushed; `8639a1f` and uncommitted edits local only) | review and merge, two rows in `RESULTS.md`, ~2 h; not merged here |
-| Three levels for the three paper explanations | `experiments/explanation_levels/compute_levels.py` | add a `paper` set, ~1 h, after probe v2 |
+| Three levels for the three paper explanations | `experiments/explanation_levels/compute_levels.py` | closed 13 Nov with probe v1 (`--set paper`, in `--set all`); recomputed with the rest when probe v2 lands |
 | Churn as a single Experiment 1 case | none | pick one genome by a stated rule, blind-verify, add the row, ~1 h; or drop the case (Mike) |
-| KRK blind verification | `experiments/complex_real/` | one verifier run, ~20 min |
+| KRK blind verification | `experiments/complex_real/verification/krk/` | closed 13 Nov: refuted (1 refuted, 3 weakened, 24 upheld); the table row carries it |
 | Cox plain-language draft | `fix/varianz-readiness` (survival-aware template, in progress) | ~30 min per dataset after the template lands |
 | MNIST linear-start ninth run | done in this commit (summary regenerated, addendum) | nothing further; the 12 Nov prose stands |
 | `c4_line_features` scripts not in git | added in this commit | — |
 | Authoring-v4 adjudication spot check | `experiments/authoring_v4/adjudication_final/` | Mike, ~30 min |
 | F/G section banner says "not cited in Ch 7" though F2 is in scope | `experiments/churn/EXTENSIONS_RESULTS.md` line 382 | one-line edit, Mike's call |
-| churn200 free-text count 493 vs 486 in the records | `experiments/10seed/V4_RUN.md` line 50 | one-number edit at the next V4_RUN change |
+| churn200 free-text count 493 vs 486 in the records | `experiments/10seed/V4_RUN.md` line 50 | closed 13 Nov: 486, with a note |
 
 ## "Claude" in results files (flagged, not changed)
 
