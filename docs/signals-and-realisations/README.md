@@ -83,6 +83,120 @@ split, are shown as external context.
   are not inside the set at small ε. Within 0.01 of the best seed: Adult 32%, Heart 13%, MONK-2
   about 1%.
 
+## 3a. The signal characterisation of the Rashomon set (proposition)
+
+> **Thesis draft (12 Nov 2026).** Written for Mike's review after the discussion with Jim on
+> 12 Nov. Placement: a discussion result in Chapter 7, with the open items as further work in
+> Chapter 9. It turns the "Expectation" of §3 into a proposition with stated assumptions. The
+> loss-based definition stays the definition; this is a characterisation of it.
+
+**Setting.** Let $f^*(x) = \mathbb{E}[y \mid x]$ be the Bayes predictor on the support (for a
+classifier, its log-odds). Write $f^*$ in its functional ANOVA decomposition over subsets $S$ of
+the inputs,
+
+$$f^* = \sum_{S} f_S(x_S),$$
+
+the Hoeffding decomposition for independent inputs, or Hooker's generalised functional ANOVA
+for dependent ones *(check: Hooker 2007, JCGS)*. Norms are data-weighted, $\|h\|^2 =
+\mathbb{E}_x[h(x)^2]$ on the support.
+
+**Definitions (sharpening §2).**
+
+- A **signal** is a component $f_S$ with strength $\|f_S\|^2 > 0$.
+- A model $g$ (decomposed the same way, $g = \sum_S g_S$) **realises** $f_S$ within tolerance
+  $\tau$ if $\|g_S - f_S\|^2 \le \tau$. A **realisation** in the sense of §2 is the subgraph
+  that computes $g_S$.
+- The **ε-Rashomon set** is, as in §3, $R(\varepsilon) = \{\, g \in \mathcal{F} : L(g) \le L^*
+  + \varepsilon \,\}$.
+
+**Assumptions.**
+
+1. The loss is a proper scoring rule, so the excess risk is a Bregman divergence from $f^*$
+   *(check: Gneiting and Raftery 2007, JASA)*. For squared loss it is exactly $\|g - f^*\|^2$;
+   for cross-entropy it is the expected KL divergence, which is bounded above and below by
+   constant multiples of $\|g - f^*\|^2$ on the log-odds scale when the predictions stay away
+   from 0 and 1. The Cox partial likelihood is treated with a caveat on the risk-set weighting.
+2. The decomposition is orthogonal in the data-weighted norm: exact for independent inputs;
+   under dependence it holds in Hooker's generalised sense, and the components are no longer
+   unique (see Consequence 4).
+3. Population quantities. The empirical set, with test loss as the proxy, is the object
+   measured in §3; the finite-sample side is handled by Semenova, Rudin and Parr (2022).
+
+**Proposition (signal characterisation).** Under assumptions 1 and 2, with squared loss for
+exactness,
+
+$$L(g) - L^* \;=\; \|g - f^*\|^2 \;=\; \sum_S \|g_S - f_S\|^2 .$$
+
+Hence:
+
+1. **Membership is a budget over signals.** $g \in R(\varepsilon)$ if and only if the total
+   realisation error, summed over every signal, is at most $\varepsilon$. "A model in the
+   Rashomon set realises all the signals" is true in this sense: all of them, up to one shared
+   budget $\varepsilon$.
+2. **Signals stronger than ε are mandatory.** If $\|f_S\|^2 > \varepsilon$, every member of
+   $R(\varepsilon)$ carries a non-zero $g_S$ with $\|g_S - f_S\|^2 \le \varepsilon$; omitting the
+   component alone would exhaust the budget. Signals with $\|f_S\|^2 \le \varepsilon$ are
+   **optional**: a member may drop them, and within the set they cannot be told from noise.
+3. **Spurious structure is bounded.** A member may carry components $g_S$ with $f_S = 0$, as
+   long as their total mass fits in the budget. So an explanation of a Rashomon-set model may
+   name structure that is not in the data, and the amount of it is at most $\varepsilon$.
+4. **Converse.** A model that realises every signal exactly is in $R(\varepsilon)$ for every
+   $\varepsilon \ge 0$.
+
+*Proof sketch.* The first equality is assumption 1 with squared loss. The second is
+orthogonality (assumption 2): cross terms $\mathbb{E}[(g_S - f_S)(g_T - f_T)]$ vanish for
+$S \neq T$. Consequence 1 is the definition of $R(\varepsilon)$ read through the identity.
+For 2, if $g_S = 0$ then the $S$ term is $\|f_S\|^2 > \varepsilon$, so the sum exceeds
+$\varepsilon$ and $g \notin R(\varepsilon)$; the bound on $\|g_S - f_S\|^2$ is the same sum
+with the other terms dropped. For 3, the terms with $f_S = 0$ contribute $\|g_S\|^2$ each and
+the sum is at most $\varepsilon$. For 4, every term is zero. For cross-entropy, replace the
+equalities by the two-sided bounds of assumption 1; the consequences hold with $\varepsilon$
+rescaled by the bound constants. $\square$
+
+**What it gives the thesis.**
+
+- **§3's expectation becomes a statement with a threshold.** The "major" signals are those
+  with strength above $\varepsilon$; relaxing $\varepsilon$ makes more of them optional, which
+  is why a larger $\varepsilon$ admits simpler models (Heart's seed-specific corrections, worth
+  0.005 to 0.022 train AUC, sit near the threshold at $\varepsilon = 0.01$).
+- **The explainer's obligations are defined.** An explanation must find every mandatory
+  signal; it may ignore optional ones; and anything it names that is not in the data is bounded
+  by $\varepsilon$ (the "spurious" interactions reported by the explanation ladder,
+  `experiments/explanation_barrier/RESULTS.md`, are instances).
+- **Aliases are realisations of the same mandatory components.** Two seeds in the set differ
+  in $g_S$ only within the budget, so their realisations of a strong signal agree on the
+  support; §4's XOR families are the smallest case.
+- **Consequence 4 of the assumptions, the basis dependence, is where complexity lives.** With
+  dependent inputs the decomposition is relative to the chosen input basis, and the same $f^*$
+  can have many high-order mandatory components in one basis and few low-order ones in another.
+  Choosing the base model (units over raw cells, over line features, a convolution, a
+  recurrence) is choosing the basis. Signal complexity is then well defined *relative to a
+  basis*: the number and order of the mandatory components. A signal is **irreducibly complex**
+  when no basis in the family a reader can understand makes its mandatory components low-order;
+  in that case a model can be good and its perfect realisation cannot be understood. Connect-4
+  is the test: in the cell basis the explained networks are faithful and decomposed but not
+  understood (`experiments/explanation_levels/RESULTS.md`); the line-features run
+  (`experiments/c4_line_features/`, in progress) asks whether a change of basis makes the same
+  signal understood at the same loss.
+
+**Open items (Chapter 9).**
+
+- Make the cross-entropy and Cox versions exact rather than two-sided, or state the constants.
+- State the finite-sample version: which signals are mandatory given $n$, with Semenova, Rudin
+  and Parr's bounds.
+- Define the "family of understandable bases" so that irreducible complexity is testable
+  rather than declared.
+- Measure signal strengths $\|f_S\|^2$ directly on the thesis datasets (a functional ANOVA of
+  the best model, or of gradient boosting as a proxy for $f^*$) and check consequence 2 against
+  the 10-seed explanations: do all seeds inside $\varepsilon$ carry every signal above
+  $\varepsilon$?
+
+**Citations to check in Mendeley:** Breiman 2001; Fisher, Rudin and Dominici 2019 (JMLR, the
+Rashomon-set definition used here); Semenova, Rudin and Parr 2022 (FAccT); Hooker 2007 (JCGS,
+generalised functional ANOVA); Gneiting and Raftery 2007 (JASA, proper scoring rules); Marx,
+Calmon and Ustun 2020 (ICML, predictive multiplicity). None of these states the proposition;
+the characterisation is the thesis's.
+
 ## 4. Worked example: XOR (`index.html`)
 
 - **Signal:** XOR on the four points 00, 10, 01, 11.
