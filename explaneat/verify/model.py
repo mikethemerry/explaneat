@@ -24,6 +24,21 @@ import numpy as np
 CACHE_VERSION = 2   # 2: the explanation's operations are no longer part of the base
 
 
+def split_target(y, label: str = "train"):
+    """``(outcome, extra)`` for a split's target.
+
+    A classification target is returned as a flat 0/1 vector and ``extra`` is empty. A
+    survival target (``[N, 2]`` time/event, ``explaneat.survival.data``) is reduced to its
+    event indicator, so the query tools' ``outcome`` is "had the event during follow-up"
+    (censoring ignored) and their AUC is against that indicator, not a concordance; the times
+    are returned in ``extra`` as ``time_<label>`` for the survival-aware tools.
+    """
+    arr = np.asarray(y, dtype=float)
+    if arr.ndim == 2 and arr.shape[1] == 2 and arr.shape[0] > 2:
+        return arr[:, 1].copy(), {f"time_{label}": arr[:, 0].tolist()}
+    return arr.ravel(), {}
+
+
 @dataclass
 class BaseData:
     """Everything the database contributes, independent of the explanation being checked."""
@@ -123,16 +138,26 @@ def base_from_session(s, genome_id: str) -> BaseData:
         raw_te = np.asarray(X_full[split.test_indices], dtype=float) if split.test_indices else None
         if split.scaler_type != "StandardScaler":
             raise ValueError(f"scaler {split.scaler_type!r} is not supported (StandardScaler only)")
+        y_tr, extra_tr = split_target(y_tr, "train")
+        y_te, extra_te = (None, {}) if y_te is None else split_target(y_te, "test")
         meta = {"genome_id": genome_id,
                 "dataset": {"id": str(ds.id), "name": ds.name,
                             "class_names": list(ds.class_names or [])},
                 "split": {"id": str(split.id), "scaler_type": split.scaler_type},
                 "experiment": {"id": str(exp.id), "name": exp.name}}
+        if extra_tr:
+            # survival dataset: outcome = event indicator; the times live here
+            dmeta = ds.additional_metadata or {}
+            meta["survival"] = {**extra_tr, **extra_te,
+                                "outcome": "event indicator (1 = event during follow-up, 0 = censored)",
+                                "score": "the log-risk g(x) (identity output); AUC is against the event indicator",
+                                "risk": "1 - S0(horizon)^exp(g): the predicted risk by the calibration horizon",
+                                "horizon": dmeta.get("calibration_horizon"), "time_unit": dmeta.get("time_unit")}
         return BaseData(
             genome_id=genome_id, phenotype=phenotype,
-            X_train=np.asarray(X_tr, dtype=float), y_train=np.asarray(y_tr, dtype=float).ravel(),
+            X_train=np.asarray(X_tr, dtype=float), y_train=y_tr,
             X_test=None if X_te is None else np.asarray(X_te, dtype=float),
-            y_test=None if y_te is None else np.asarray(y_te, dtype=float).ravel(),
+            y_test=y_te,
             feature_names=list(names or ds.feature_names), raw_train=raw_tr, raw_test=raw_te,
             mean=np.asarray(split.scaler_params["mean"], dtype=float),
             scale=np.asarray(split.scaler_params["scale"], dtype=float),
@@ -164,6 +189,28 @@ def build_engine_from(phenotype, operations: Sequence[Dict[str, Any]]):
     engine = ModelStateEngine(copy.deepcopy(phenotype))
     engine.load_operations({"operations": copy.deepcopy(list(operations))})
     return engine
+
+
+def survival_risk_scale(base: BaseData):
+    """For a survival genome (``meta["survival"]``): the risk by the dataset's calibration
+    horizon, ``1 - S0(h)^exp(g)``, with a Breslow baseline fitted on the training rows of the
+    phenotype's own log-risk. ``None`` for a classification genome (the sigmoid scale)."""
+    sv = (base.meta or {}).get("survival")
+    if not sv:
+        return None
+    from ..analysis.explanation_tools import StateEvaluator
+    from ..analysis.plain_language import SurvivalRisk
+    from ..survival.breslow import BreslowBaseline
+
+    t = np.asarray(sv["time_train"], dtype=float)
+    g = StateEvaluator(base.phenotype).logit(base.X_train)
+    bl = BreslowBaseline().fit(g, t, np.asarray(base.y_train, dtype=float))
+    h = sv.get("horizon")
+    if h is None:
+        h = float(np.median(t[np.asarray(base.y_train) == 1]))
+    unit = sv.get("time_unit") or ""
+    label = f"{h / 365.25:g}-year" if unit == "days" and h >= 365 else f"{h:g}-{unit}" if unit else f"{h:g}"
+    return SurvivalRisk.from_breslow(bl, float(h), label)
 
 
 def codebook_for(base: BaseData):
@@ -199,7 +246,8 @@ class VerifyModel:
         self.structure = self.engine.current_state
         self.m = PlainModel(self.structure, self.operations, base.X_train, base.y_train,
                             base.X_test, base.y_test, base.feature_names, base.mean, base.scale,
-                            codebook_for(base), raw_train=base.raw_train, raw_test=base.raw_test)
+                            codebook_for(base), raw_train=base.raw_train, raw_test=base.raw_test,
+                            risk_scale=survival_risk_scale(base))
         self._parts = None
 
     @property

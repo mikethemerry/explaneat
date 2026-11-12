@@ -43,12 +43,38 @@ def _input_col(node_id: str) -> Optional[int]:
     return -k - 1 if k < 0 else None
 
 
+def _is_identity_relay(node) -> bool:
+    """An identity node inserted by ``add_identity_node`` (bias 0, identity activation): it
+    passes its weighted sum through, so its inputs are terms of g with the weights multiplied."""
+    return (node is not None and node.type.value != "input" and node.type.value != "output"
+            and str(node.activation or "").lower() == "identity" and float(node.bias or 0.0) == 0.0)
+
+
 def output_terms(structure) -> Dict[str, object]:
-    """g(x) = bias + sum(weight * activation(from_node)) at the (single) output node."""
+    """g(x) = bias + sum(weight * activation(from_node)) at the (single) output node.
+
+    Identity relay nodes between the terms and the output (an explained model state after
+    ``add_identity_node`` on the output) are expanded, so the terms are the real readout units
+    with their effective weights; ``via`` names the relay(s) a term passed through.
+    """
     out_id = structure.output_node_ids[0]
     out = structure.get_node_by_id(out_id)
-    terms = [{"from": c.from_node, "weight": float(c.weight)}
-             for c in structure.connections if c.enabled and c.to_node == out_id]
+    terms: List[Dict[str, object]] = []
+
+    def expand(to_id: str, scale: float, via: List[str]) -> None:
+        for c in structure.connections:
+            if not (c.enabled and c.to_node == to_id):
+                continue
+            node = structure.get_node_by_id(c.from_node)
+            if _is_identity_relay(node):
+                expand(c.from_node, scale * float(c.weight), via + [c.from_node])
+            else:
+                t = {"from": c.from_node, "weight": scale * float(c.weight)}
+                if via:
+                    t["via"] = list(via)
+                terms.append(t)
+
+    expand(out_id, 1.0, [])
     return {"output": out_id, "activation": out.activation, "bias": float(out.bias or 0.0),
             "terms": sorted(terms, key=lambda t: -abs(t["weight"]))}
 
