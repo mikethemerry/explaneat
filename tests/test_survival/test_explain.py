@@ -70,3 +70,21 @@ def test_explain_output_spreads_match_the_model():
 def test_contribution_summary_constant_term():
     s = contribution_summary(np.zeros(10), 3.0)
     assert s["hr_p95_vs_p5"] == 1.0 and s["fraction_nonzero"] == 0.0
+
+
+def test_output_terms_expand_identity_relay():
+    """After add_identity_node on the output, the relay is transparent: the terms are the
+    units behind it with the weights multiplied through, and ``via`` names the relay."""
+    s = _structure()
+    s.nodes.append(NetworkNode(id="identity_0", type=NodeType.HIDDEN, bias=0.0, activation="identity"))
+    for c in s.connections:
+        if c.to_node == "0":
+            c.to_node = "identity_0"
+    s.connections.append(NetworkConnection(from_node="identity_0", to_node="0", weight=1.0, enabled=True))
+    t = output_terms(s)
+    assert [(x["from"], x["weight"], x.get("via")) for x in t["terms"]] == [
+        ("5", 0.8, ["identity_0"]), ("-1", 0.5, ["identity_0"])]
+    X = np.array([[1.0, 2.0], [-1.0, 0.0]])
+    readings = explain_output(s, X, SCALER, NAMES)
+    assert [r["node"] for r in readings] == ["5", "-1"]
+    assert readings[1]["hr_per_sd"] == pytest.approx(math.exp(0.5))

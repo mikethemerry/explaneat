@@ -1,0 +1,933 @@
+{
+ "item_id": "cox-gbsg2-s1",
+ "genome_id": "e4c62516-fd1f-4e10-a997-adc574bbcef3",
+ "target": "experiments/survival/cox_case/explanations/cox-gbsg2-s1.json",
+ "target_hash": null,
+ "target_hash_note": "recheck.json in this worktree carries no target_hash for a record target (the key is absent), so none could be copied. sha256 of the record JSON verified: 71f43de7aeb34e9ee7361430eb88d8c78b90de8f9d79cabcc6ea36924a213dfc",
+ "verifier": "independent blind verifier agent (explanation-verifier skill, cox-case worktree)",
+ "started_at": "2026-11-12T14:02:24+13:00",
+ "finished_at": "2026-11-12T14:11:11+13:00",
+ "minutes": 9,
+ "database": "postgresql://localhost/explaneat_dev (read only; operations from the stored explanation)",
+ "overall": {
+  "grade": "upheld",
+  "summary": "Every stated number, structure claim, hazard ratio, subgroup count, ablation effect and survival metric reproduces; the hypotheses hold under adversarial probes (additivity, full node range, therapy gap at other inputs); two domain flags for the reviewer (unbounded per-fmol/l receptor effect; tumour size and age unused)."
+ },
+ "counts": {
+  "upheld": 62,
+  "flag": 2
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "1.0",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.0; no uncovered nodes or edges; Null nodes -1, -2, -4, -9 (no path to the output) counted covered",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --out experiments/survival/cox_case/verdicts/cox-gbsg2-s1/recheck.json"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.compositional_coverage",
+   "statement": "1.0; hierarchy complete, single root cox_log_risk containing the output",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.0; roots ['cox_log_risk'], root_contains_outputs true, all_under_root true, composed 3 of 3 required",
+   "commands": []
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "4.4e-16",
+   "check": "verify recheck and an independent forward pass of the original phenotype against the replayed structure on the 438 training rows",
+   "evidence": "max |error| 4.440892098500626e-16 both ways",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/survival/cox_case/explanations/cox-gbsg2-s1.json",
+    "scratch recompute.py (StateEvaluator on phenotype vs replayed structure)"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.closed_form_max_abs_err",
+   "statement": "0.00352",
+   "check": "verify recheck",
+   "evidence": "0.003520404747804129 (nodal_burden 0.00352, tumour_biology 0.00124, hormone_therapy 0.000227)",
+   "commands": []
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.n_identity_nodes",
+   "statement": "3 identity nodes, 0 splits, 3 leaves, 1 composition, 0 hidden nodes",
+   "check": "verify recheck op_counts; probe --nodes all",
+   "evidence": "op_counts rename_node 9, add_identity_node 3, annotate 4, no split_node; the replayed structure has only node 0 and the three identity nodes besides the inputs",
+   "commands": []
+  },
+  {
+   "id": "V6",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "5 direct input edges; 0 of 438 predictions change when age, estrec, menostat, tsize are fixed; HR 1.96 / 2.26 / 0.9984 (0.73 per SD) / 1.051 / 0.653; Harrell 0.682, Uno 0.651, td-AUC(5y) 0.707, IBS 0.132, calibration 50% vs 49%; preservation 4.4e-16; concept scores 1.00, 1.00, 0.91 (R2 0.30)",
+   "check": "verify ablate --node x4; hazard ratios re-derived from the edge weights and the training SDs; survival_metrics recomputed from the model's log-risk; verify concept",
+   "evidence": "edges: 5 input edges all via the identity nodes (ablate --direct: 0 direct edges, 0 affected); node ablation 0 of 438 affected, max change 0.0; HR per unit 2.2636, 1.9600, 0.99838, 1.05132, 0.65345; Harrell 0.68217, Uno 0.65120, td-AUC 0.7646/0.7307/0.7075, IBS 0.13190, calibration 0.4995 predicted vs 0.4948 KM; concept scores 1.0, 1.0, 0.90534 (r2 0.302)",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --node age --node estrec --node \"menostat=Post\" --node tsize",
+    "uv run python -m explaneat verify ablate experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --direct",
+    "uv run python -m explaneat verify concept experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --part ann_12",
+    "uv run python -m explaneat verify concept experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --part ann_13 --concept pnodes",
+    "uv run python -m explaneat verify concept experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --part ann_14 --concept \"`horTh=yes`\"",
+    "scratch recompute.py"
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.hazard_ratio_summary",
+   "statement": "HR 1.96 (II), 2.26 (III), 1.051 per node, 0.9984 per fmol/l (0.73 per SD), 0.653 therapy; log-risk HR 5.82 between the 95th- and 5th-percentile patient; age, estrec, menostat, tsize do not enter",
+   "check": "recomputed from the edge weights and the training-row percentiles of the log-risk",
+   "evidence": "log-risk p5 -1.7332, p95 0.0286, exp(difference) 5.8225; the four inputs have no edge in the structure",
+   "commands": [
+    "scratch recompute.py"
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "each of the 5 output terms is a direct input edge; concept score 0.91, R2 0.30; 0 of 438 change when the four inputs are fixed; therapy term is an association; PH form inherited",
+   "check": "structure listing; concept probe; node ablation",
+   "evidence": "all five terms are single edges into identity nodes with unit readout; see V6",
+   "commands": []
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.meaning",
+   "statement": "tumour_biology concept progrec > 29.5 (score 0.91, direction only); nodal_burden pnodes 1.00; hormone_therapy horTh=yes 1.00",
+   "check": "verify concept sweep for ann_12; named concepts for ann_13 and ann_14",
+   "evidence": "ann_12 best: progrec > 29.5 score 0.90534, r2 0.302, AUC 0.953; ann_13 pnodes score 1.0, r2 1.0; ann_14 horTh=yes score 1.0, r2 1.0, AUC 1.0",
+   "commands": [
+    "uv run python -m explaneat verify concept experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --part ann_12"
+   ]
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L4",
+   "part": null,
+   "claims": [],
+   "location": "record.ph_caveat",
+   "statement": "proportional hazards inherited from the model's form, not tested; stated in the record and in all four hypotheses",
+   "check": "read every hypothesis",
+   "evidence": "each of the four hypotheses ends with the proportional-hazards caveat; the therapy term is called an association in the hypothesis and in resisted",
+   "commands": []
+  },
+  {
+   "id": "V11",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_12",
+   "claims": [],
+   "location": "structure.tumour_biology",
+   "statement": "entries -6, -7, -8 (progrec, tgrade=II, tgrade=III); exit identity_biology; subgraph those four nodes",
+   "check": "edge listing of the replayed structure",
+   "evidence": "edges -6, -7, -8 -> identity_biology with weights -0.3161, 0.3208, 0.3453; identity_biology -> 0 weight 1.0",
+   "commands": []
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_13",
+   "claims": [],
+   "location": "structure.nodal_burden",
+   "statement": "entry -5 (pnodes); exit identity_nodal",
+   "check": "edge listing",
+   "evidence": "edge -5 -> identity_nodal 0.2926; identity_nodal -> 0 weight 1.0",
+   "commands": []
+  },
+  {
+   "id": "V13",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_14",
+   "claims": [],
+   "location": "structure.hormone_therapy",
+   "statement": "entry -3 (horTh=yes); exit identity_hormone",
+   "check": "edge listing",
+   "evidence": "edge -3 -> identity_hormone -0.2062; identity_hormone -> 0 weight 1.0",
+   "commands": []
+  },
+  {
+   "id": "V14",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_15",
+   "claims": [],
+   "location": "structure.cox_log_risk",
+   "statement": "entries: the three identity exits and -1, -2, -4, -9; exit 0; subgraph -1, -2, -4, -9, 0",
+   "check": "verify recheck hierarchy; ablate --direct",
+   "evidence": "root contains the output; 0 direct input edges at the output; the four unconnected inputs are Null nodes inside the root",
+   "commands": []
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_12",
+   "claims": [],
+   "location": "operations.tumour_biology.hypothesis",
+   "statement": "identity_biology ~ 0.345 z(tgrade=III) + 0.321 z(tgrade=II) - 0.316 z(progrec); HR 1.96 (II vs I), 2.26 (III vs I), 0.9984 per fmol/l (0.73 per SD)",
+   "check": "edge weights and HR = exp(weight / training SD)",
+   "evidence": "weights 0.34530, 0.32084, -0.31613; SDs 0.4227, 0.4768, 195.29; HR per unit 2.2636, 1.9600, 0.99838; HR per SD 1.412, 1.378, 0.7290",
+   "commands": [
+    "scratch recompute.py"
+   ]
+  },
+  {
+   "id": "V16",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_12",
+   "claims": [],
+   "location": "operations.tumour_biology.hypothesis",
+   "statement": "progesterone-receptor term spans HR 1.92 between its 95th and 5th percentile; grade III term 2.26; grade II term 1.96",
+   "check": "percentiles of each term's contribution over the training rows",
+   "evidence": "progrec term p95-p5 HR 1.9215 (raw p5 0, p95 403.45 fmol/l); tgrade=III 2.2636; tgrade=II 1.9600",
+   "commands": []
+  },
+  {
+   "id": "V17",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_12",
+   "claims": [],
+   "location": "operations.tumour_biology.evidence[1]",
+   "statement": "grade III cell, progrec 29.5, pnodes 3, no therapy: log-risk -0.382, five-year risk 61%, contribution 0.315",
+   "check": "verify probe hold where grade III and no therapy",
+   "evidence": "score -0.3825, risk 61.5%, ann_12 +0.3149",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --hold \"where:`tgrade=III` == 1 and `horTh=yes` == 0\" --set progrec=29.5 --set pnodes=3"
+   ]
+  },
+  {
+   "id": "V18",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_12",
+   "claims": [],
+   "location": "operations.tumour_biology.evidence[2]",
+   "statement": "grade II cell: log-risk -0.526, risk 56%, contribution 0.171",
+   "check": "verify probe",
+   "evidence": "score -0.5265, risk 56.2%, ann_12 +0.1709",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --hold \"where:`tgrade=II` == 1 and `horTh=yes` == 0\" --set progrec=29.5 --set pnodes=3"
+   ]
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_12",
+   "claims": [],
+   "location": "operations.tumour_biology.evidence[3]",
+   "statement": "grade I cell: log-risk -1.199, risk 34%, contribution -0.502; gaps 0.673 and 0.817",
+   "check": "verify probe",
+   "evidence": "score -1.1995, risk 34.4%, ann_12 -0.5020; gaps to grade II 0.6730 and to grade III 0.8170",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --hold \"where:`tgrade=II` == 0 and `tgrade=III` == 0 and `horTh=yes` == 0\" --set progrec=29.5 --set pnodes=3"
+   ]
+  },
+  {
+   "id": "V20",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_12",
+   "claims": [],
+   "location": "operations.tumour_biology.evidence[4]",
+   "statement": "progrec sweep 0 to 300 on the typical grade II patient: log-risk -0.479 to -0.964, risk 58% to 41%, linear",
+   "check": "verify probe sweep progrec=0:300:7",
+   "evidence": "score -0.4787, -0.5597, -0.6406, -0.7216, -0.8025, -0.8834, -0.9644 (equal steps of 0.0809 per 50 fmol/l = -0.001619 per fmol/l, exp = 0.99838); risk 58.0% to 41.3%",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --sweep progrec=0:300:7"
+   ]
+  },
+  {
+   "id": "V21",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_12",
+   "claims": [],
+   "location": "operations.tumour_biology.evidence[5]",
+   "statement": "grade III cell: 102 patients, mean risk 61%, 47% events, contribution 0.261",
+   "check": "verify subgroup",
+   "evidence": "n 102, mean predicted risk 60.7%, outcome rate 47.1%, ann_12 mean contribution +0.2613",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --where \"`tgrade=III` == 1\""
+   ]
+  },
+  {
+   "id": "V22",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_12",
+   "claims": [],
+   "location": "operations.tumour_biology.evidence[6]",
+   "statement": "grade II cell: 285, 50%, 46%, 0.039",
+   "check": "verify subgroup",
+   "evidence": "n 285, risk 50.4%, outcome 46.3%, contribution +0.0391",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --where \"`tgrade=II` == 1\""
+   ]
+  },
+  {
+   "id": "V23",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_12",
+   "claims": [],
+   "location": "operations.tumour_biology.evidence[7]",
+   "statement": "grade I cell: 51, 26%, 22%, -0.741",
+   "check": "verify subgroup",
+   "evidence": "n 51, risk 25.7%, outcome 21.6%, contribution -0.7411",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --where \"`tgrade=II` == 0 and `tgrade=III` == 0\""
+   ]
+  },
+  {
+   "id": "V24",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_12",
+   "claims": [],
+   "location": "operations.tumour_biology.evidence[8]",
+   "statement": "0 patients carry both one-hot grade levels",
+   "check": "verify subgroup",
+   "evidence": "n 0 of 438; 102 + 285 + 51 = 438",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --where \"`tgrade=II` == 1 and `tgrade=III` == 1\""
+   ]
+  },
+  {
+   "id": "V25",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_12",
+   "claims": [],
+   "location": "operations.tumour_biology.evidence[9]",
+   "statement": "part off: mean |change| in five-year risk 9%, largest 44%; AUC 0.6805 to 0.6675",
+   "check": "verify ablate --part ann_12",
+   "evidence": "mean |change| 0.0905, max 0.4387, AUC 0.6805 with, 0.6675 without",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --part ann_12"
+   ]
+  },
+  {
+   "id": "V26",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_12",
+   "claims": [],
+   "location": "operations.tumour_biology.evidence[10]",
+   "statement": "progrec edge off (weight -0.316): AUC 0.6805 to 0.6742, mean |change| 6%",
+   "check": "verify ablate --edge progrec->identity_biology",
+   "evidence": "weight -0.3161, AUC 0.6742, mean |change| 0.0557",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --edge \"progrec->identity_biology\""
+   ]
+  },
+  {
+   "id": "V27",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_12",
+   "claims": [],
+   "location": "operations.tumour_biology.evidence[11]",
+   "statement": "grade II edge off (0.321): AUC 0.6387, mean |change| 9%",
+   "check": "verify ablate --edge",
+   "evidence": "weight +0.3208, AUC 0.6387, mean |change| 0.0941",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --edge \"tgrade=II->identity_biology\""
+   ]
+  },
+  {
+   "id": "V28",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_12",
+   "claims": [],
+   "location": "operations.tumour_biology.evidence[12]",
+   "statement": "grade III edge off (0.345): AUC 0.6751, mean |change| 9%",
+   "check": "verify ablate --edge",
+   "evidence": "weight +0.3453, AUC 0.6751, mean |change| 0.0930",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --edge \"tgrade=III->identity_biology\""
+   ]
+  },
+  {
+   "id": "V29",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_12",
+   "claims": [],
+   "location": "operations.tumour_biology.evidence[13]",
+   "statement": "best library concept progrec > 29.5, score 0.91, AUC 0.95, R2 0.30",
+   "check": "verify concept sweep",
+   "evidence": "progrec > 29.5 score 0.90534, r2 0.302174, AUC 0.95267; next tgrade=III 0.81, progrec (continuous) 0.70",
+   "commands": [
+    "uv run python -m explaneat verify concept experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --part ann_12"
+   ]
+  },
+  {
+   "id": "V30",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_12",
+   "claims": [],
+   "location": "operations.tumour_biology.evidence[14]",
+   "statement": "grade as an ordinal: R2 0.36; progrec alone R2 0.70",
+   "check": "verify concept with the expressions",
+   "evidence": "`tgrade=II` + 2 * `tgrade=III`: r2 0.362174 closed_form_only; progrec: r2 0.695159 partial",
+   "commands": [
+    "uv run python -m explaneat verify concept experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --part ann_12 --concept \"`tgrade=II` + 2 * `tgrade=III`\"",
+    "uv run python -m explaneat verify concept experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --part ann_12 --concept progrec"
+   ]
+  },
+  {
+   "id": "V31",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_12",
+   "claims": [],
+   "location": "operations.tumour_biology.evidence[15]",
+   "statement": "progrec continuous R2 0.70, grade partial",
+   "check": "verify concept",
+   "evidence": "r2 0.695159 -> partial",
+   "commands": []
+  },
+  {
+   "id": "V32",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_12",
+   "claims": [],
+   "location": "operations.tumour_biology.evidence[16]",
+   "statement": "closed form y = -0.316 x_progrec + 0.345 x_tgrade=III + 0.321 x_tgrade=II",
+   "check": "verify recheck closed forms",
+   "evidence": "recomputed identical; max |err| 0.00124",
+   "commands": []
+  },
+  {
+   "id": "V33",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_12",
+   "claims": [],
+   "location": "operations.tumour_biology.hypothesis",
+   "statement": "additive on the log-hazard scale: the grade gaps and the progrec slope do not depend on the other inputs",
+   "check": "grade cells at pnodes 15, progrec 300, therapy yes; 2-D grid pnodes x progrec",
+   "evidence": "grade I/II/III at pnodes 15, progrec 300, therapy: -1.4622, -0.7893, -0.6453 (gaps 0.6729, 0.8169, as at the typical patient); pnodes 1->16 adds 0.7507 at progrec 0 and 0.7507 at progrec 400",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --hold \"where:`horTh=yes` == 1 and `tgrade=III` == 1\" --set pnodes=15 --set progrec=300",
+    "uv run python -m explaneat verify probe experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --hold \"where:`horTh=yes` == 1 and `tgrade=II` == 1\" --set pnodes=15 --set progrec=300",
+    "uv run python -m explaneat verify probe experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --hold \"where:`horTh=yes` == 1 and `tgrade=II` == 0 and `tgrade=III` == 0\" --set pnodes=15 --set progrec=300",
+    "uv run python -m explaneat verify probe experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --sweep pnodes=1,16 --sweep progrec=0,400"
+   ]
+  },
+  {
+   "id": "V34",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_12",
+   "claims": [],
+   "location": "operations.tumour_biology.hypothesis",
+   "statement": "stated in clinical units (hazard per grade, per fmol/l of progesterone receptor, for which patients); not a bare restatement of the closed form; the grouping of grade with receptor level is the explainer's (the five terms are independent additive edges with no shared hidden node)",
+   "check": "read; linearise",
+   "evidence": "all three parts are linear (linearise: switches False, R2 1.000 each); the directions agree with the usual readings (higher grade raises, receptor level lowers the hazard)",
+   "commands": [
+    "uv run python -m explaneat verify linearise experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --core"
+   ]
+  },
+  {
+   "id": "V35",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_12",
+   "claims": [],
+   "location": "operations.tumour_biology.hypothesis",
+   "statement": "progesterone receptor acts log-linearly per fmol/l across the whole training range (0 to 1600 fmol/l) with no saturation",
+   "check": "probe sweep; domain reading",
+   "evidence": "the model gives HR 0.99838^1000 = 0.20 at 1000 fmol/l against 0 fmol/l, and 0.52 at the 95th percentile (403 fmol/l); clinical practice usually reads receptor status as positive/negative at a cut-off (around 20 fmol/l) rather than as an unbounded per-fmol/l effect. The data do not contradict the model (the sweep is linear by construction); this is for the domain reviewer",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --sweep progrec=0:300:7"
+   ]
+  },
+  {
+   "id": "V36",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_13",
+   "claims": [],
+   "location": "operations.nodal_burden.hypothesis",
+   "statement": "identity_nodal ~ 0.293 z(pnodes); HR 1.051 per node (1.34 per SD); spans HR 2.12 (p95 vs p5) and 1.92 (p95 vs median)",
+   "check": "edge weight; SD; percentiles of the term",
+   "evidence": "weight 0.29255, SD 5.8452, log-HR per node 0.05005, HR 1.05132; HR per SD 1.3398; p95-p5 HR 2.1186 (pnodes 16 vs 1); p95-median 1.9168 (16 vs 3)",
+   "commands": [
+    "scratch recompute.py"
+   ]
+  },
+  {
+   "id": "V37",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_13",
+   "claims": [],
+   "location": "operations.nodal_burden.evidence[1]",
+   "statement": "pnodes 1 to 29 on the typical patient: log-risk -0.627 to 0.775, risk 53% to 95%, contribution -0.211 to 1.191, equal steps",
+   "check": "verify probe sweep pnodes=1:29:8 and 1:51:11",
+   "evidence": "score -0.6266 to 0.7748, risk 52.6% to 95.2%, ann_13 -0.2107 to 1.1907, steps 0.2002 per 4 nodes; over 1 to 51 the steps stay 0.2502 per 5 nodes (no plateau): score 1.8759, risk 99.99% at 51",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --sweep pnodes=1:29:8",
+    "uv run python -m explaneat verify probe experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --sweep pnodes=1:51:11"
+   ]
+  },
+  {
+   "id": "V38",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_13",
+   "claims": [],
+   "location": "operations.nodal_burden.evidence[2]",
+   "statement": "one vs two nodes: -0.6266 and -0.5765, step 0.0501",
+   "check": "verify probe sweep pnodes=1,2",
+   "evidence": "scores -0.6266, -0.5765; step 0.05005",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --sweep pnodes=1,2"
+   ]
+  },
+  {
+   "id": "V39",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_13",
+   "claims": [],
+   "location": "operations.nodal_burden.evidence[3]",
+   "statement": "pnodes >= 10: 71 patients, mean risk 71%, 73% events, contribution 0.520",
+   "check": "verify subgroup",
+   "evidence": "n 71, risk 70.6%, outcome 73.2%, ann_13 +0.5203",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --where \"pnodes >= 10\""
+   ]
+  },
+  {
+   "id": "V40",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_13",
+   "claims": [],
+   "location": "operations.nodal_burden.evidence[4]",
+   "statement": "pnodes <= 3: 234, 43%, 31%, -0.175",
+   "check": "verify subgroup",
+   "evidence": "n 234, risk 43.4%, outcome 31.2%, ann_13 -0.1748",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --where \"pnodes <= 3\""
+   ]
+  },
+  {
+   "id": "V41",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_13",
+   "claims": [],
+   "location": "operations.nodal_burden.evidence[5]",
+   "statement": "part off: mean |change| 6%, largest 49%, AUC 0.6805 to 0.6258 (largest loss of the three)",
+   "check": "verify ablate --part ann_13",
+   "evidence": "mean |change| 0.0637, max 0.4896, AUC 0.6258; the other parts give 0.6675 and 0.6767",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --part ann_13"
+   ]
+  },
+  {
+   "id": "V42",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_13",
+   "claims": [],
+   "location": "operations.nodal_burden.evidence[6]",
+   "statement": "concept pnodes score 1.00",
+   "check": "verify concept",
+   "evidence": "score 1.0, r2 1.0",
+   "commands": [
+    "uv run python -m explaneat verify concept experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --part ann_13 --concept pnodes"
+   ]
+  },
+  {
+   "id": "V43",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_13",
+   "claims": [],
+   "location": "operations.nodal_burden.evidence[7]",
+   "statement": "closed form y = 0.293 x_pnodes",
+   "check": "verify recheck",
+   "evidence": "identical; max |err| 0.00352",
+   "commands": []
+  },
+  {
+   "id": "V44",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_13",
+   "claims": [],
+   "location": "operations.nodal_burden.hypothesis",
+   "statement": "each additional positive lymph node multiplies the hazard by 1.051, log-linear, no threshold or plateau; a known direction",
+   "check": "read; sweep over the full range",
+   "evidence": "direction and shape agree with the model and with the usual reading of nodal status",
+   "commands": []
+  },
+  {
+   "id": "V45",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_14",
+   "claims": [],
+   "location": "operations.hormone_therapy.hypothesis",
+   "statement": "identity_hormone ~ -0.206 z(horTh=yes); HR 0.653 (0.81 per SD); spans HR 1.53 between p95 and p5",
+   "check": "edge weight; SD; percentiles",
+   "evidence": "weight -0.20618, SD 0.4846, log-HR -0.42549, HR 0.65345; HR per SD 0.8137; p95-p5 HR 1.5303",
+   "commands": [
+    "scratch recompute.py"
+   ]
+  },
+  {
+   "id": "V46",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_14",
+   "claims": [],
+   "location": "operations.hormone_therapy.evidence[1]",
+   "statement": "treated cell (grade II, progrec 29.5, pnodes 3): log-risk -0.952, risk 42%, contribution -0.265",
+   "check": "verify probe",
+   "evidence": "score -0.9520, risk 41.7%, ann_14 -0.2652",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --hold \"where:`horTh=yes` == 1 and `tgrade=II` == 1\" --set progrec=29.5 --set pnodes=3"
+   ]
+  },
+  {
+   "id": "V47",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_14",
+   "claims": [],
+   "location": "operations.hormone_therapy.evidence[2]",
+   "statement": "untreated cell: log-risk -0.526, risk 56%, contribution 0.160; gap -0.425",
+   "check": "verify probe",
+   "evidence": "score -0.5265, risk 56.2%, ann_14 +0.1603; gap -0.4255",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --hold \"where:`horTh=yes` == 0 and `tgrade=II` == 1\" --set progrec=29.5 --set pnodes=3"
+   ]
+  },
+  {
+   "id": "V48",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_14",
+   "claims": [],
+   "location": "operations.hormone_therapy.hypothesis",
+   "statement": "a fixed offset on the log-hazard scale that does not depend on the other inputs",
+   "check": "therapy gap at grade III, pnodes 15, progrec 300",
+   "evidence": "treated -0.6453 vs untreated -0.2198: gap -0.4255, the same as at the typical patient",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --hold \"where:`horTh=yes` == 1 and `tgrade=III` == 1\" --set pnodes=15 --set progrec=300",
+    "uv run python -m explaneat verify probe experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --hold \"where:`horTh=yes` == 0 and `tgrade=III` == 1\" --set pnodes=15 --set progrec=300"
+   ]
+  },
+  {
+   "id": "V49",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_14",
+   "claims": [],
+   "location": "operations.hormone_therapy.evidence[3]",
+   "statement": "treated: 165 patients, mean risk 41%, 37% events, contribution -0.265",
+   "check": "verify subgroup",
+   "evidence": "n 165, risk 41.2%, outcome 37.0%, ann_14 -0.2652",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --where \"`horTh=yes` == 1\""
+   ]
+  },
+  {
+   "id": "V50",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_14",
+   "claims": [],
+   "location": "operations.hormone_therapy.evidence[4]",
+   "statement": "untreated: 273, 55%, 48%, 0.160",
+   "check": "verify subgroup",
+   "evidence": "n 273, risk 55.3%, outcome 47.6%, ann_14 +0.1603",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --where \"`horTh=yes` == 0\""
+   ]
+  },
+  {
+   "id": "V51",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_14",
+   "claims": [],
+   "location": "operations.hormone_therapy.evidence[5]",
+   "statement": "part off: mean |change| 6%, largest 10%, AUC 0.6805 to 0.6767 (smallest loss)",
+   "check": "verify ablate --part ann_14",
+   "evidence": "mean |change| 0.0630, max 0.0973, AUC 0.6767",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --part ann_14"
+   ]
+  },
+  {
+   "id": "V52",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_14",
+   "claims": [],
+   "location": "operations.hormone_therapy.evidence[6]",
+   "statement": "concept horTh=yes score 1.00",
+   "check": "verify concept",
+   "evidence": "score 1.0, r2 1.0, AUC 1.0",
+   "commands": [
+    "uv run python -m explaneat verify concept experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --part ann_14 --concept \"`horTh=yes`\""
+   ]
+  },
+  {
+   "id": "V53",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_14",
+   "claims": [],
+   "location": "operations.hormone_therapy.evidence[7]",
+   "statement": "closed form y = -0.206 x_horTh=yes; the untreated level is a negative standardised value",
+   "check": "verify recheck; z-scores",
+   "evidence": "identical; z(untreated) = -0.777 gives +0.160, z(treated) = +1.286 gives -0.265",
+   "commands": []
+  },
+  {
+   "id": "V54",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_14",
+   "claims": [],
+   "location": "operations.hormone_therapy.hypothesis",
+   "statement": "treated patients get 0.653 times the hazard; called an association learned from this cohort, not a treatment effect; PH caveat present",
+   "check": "read",
+   "evidence": "no sentence in the hypothesis, evidence, summary or hazard_ratio_summary claims a treatment effect",
+   "commands": []
+  },
+  {
+   "id": "V55",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_15",
+   "claims": [],
+   "location": "operations.cox_log_risk.hypothesis",
+   "statement": "g(x) = tumour_biology + nodal_burden + hormone_therapy + constant, exact, unit weights, bias -0.747; 5 terms all via the identity exits, 0 direct edges",
+   "check": "edge listing; ablate --direct; ablate all three parts",
+   "evidence": "identity_* -> 0 weights 1.0, 1.0, 1.0; bias -0.74709; 0 direct edges (0 affected); all three off: typical score -0.5265 -> -0.7471",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --direct",
+    "uv run python -m explaneat verify ablate experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --part ann_12 --part ann_13 --part ann_14"
+   ]
+  },
+  {
+   "id": "V56",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_15",
+   "claims": [],
+   "location": "operations.cox_log_risk.evidence[3]",
+   "statement": "age, estrec, menostat, tsize fixed at once: 0 of 438 change, largest change 0.0",
+   "check": "verify ablate --node x4 and --node menostat=Post alone",
+   "evidence": "affected 0 (0.0%), max |change| 0.0000, AUC unchanged 0.6805, both runs",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --node age --node estrec --node \"menostat=Post\" --node tsize",
+    "uv run python -m explaneat verify ablate experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --node \"menostat=Post\""
+   ]
+  },
+  {
+   "id": "V57",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_15",
+   "claims": [],
+   "location": "operations.cox_log_risk.evidence[5]",
+   "statement": "age, tumour size and oestrogen receptor sweeps leave the log-risk at -0.5265",
+   "check": "verify probe sweeps over the training ranges",
+   "evidence": "risk 56.2% at every step of age 21-80, tsize 4-100, estrec 0-1144; typical score -0.5265",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --sweep age=21:80:4 --no-parts",
+    "uv run python -m explaneat verify probe experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --sweep tsize=4:100:4 --no-parts",
+    "uv run python -m explaneat verify probe experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --sweep estrec=0:1144:4 --no-parts"
+   ]
+  },
+  {
+   "id": "V58",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_15",
+   "claims": [],
+   "location": "operations.cox_log_risk.evidence[1]",
+   "statement": "train n 438, 191 events: Harrell 0.682, Uno 0.651, td-AUC 0.765/0.731/0.707, IBS 0.132, calibration 50% vs 49% (largest decile gap 11%), log-risk HR p95/p5 5.82",
+   "check": "stored query q_9bf4102d6a (train, 438, not sampled, op_seq 16) and an independent recomputation with explaneat.survival.metrics on the model's log-risk and a Breslow baseline fitted on the training rows",
+   "evidence": "438 rows, 191 events; harrell_c 0.68217, uno_c 0.65120, td-AUC 0.76461, 0.73066, 0.70749, ibs 0.13190, mean predicted 0.49953 vs KM 0.49481, max group gap 0.11001; HR 5.8225",
+   "commands": [
+    "scratch recompute.py"
+   ]
+  },
+  {
+   "id": "V59",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_15",
+   "claims": [],
+   "location": "operations.cox_log_risk.evidence[2]",
+   "statement": "all three parts off: typical log-risk -0.526 to -0.747, risk 56% to 48%, AUC 0.6805 to 0.50; single-part AUC losses rank nodal_burden 0.6258, tumour_biology 0.6675, hormone_therapy 0.6767",
+   "check": "verify ablate",
+   "evidence": "score -0.5265 -> -0.7471, risk 56.2% -> 48.5%, AUC 0.5; singles 0.6258, 0.6675, 0.6767; linear core alone AUC 0.5000",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --part ann_12 --part ann_13 --part ann_14",
+    "uv run python -m explaneat verify linearise experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --core"
+   ]
+  },
+  {
+   "id": "V60",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_15",
+   "claims": [],
+   "location": "operations.cox_log_risk.evidence[8]",
+   "statement": "function preservation 4.4e-16; hierarchy complete; closed-form max error 0.0035",
+   "check": "verify recheck",
+   "evidence": "4.44e-16; complete; 0.00352",
+   "commands": []
+  },
+  {
+   "id": "V61",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_15",
+   "claims": [],
+   "location": "operations.cox_log_risk.evidence[9]",
+   "statement": "output closed form: -0.206 horTh + 0.293 pnodes - 0.316 progrec + 0.345 tgrade=III + 0.321 tgrade=II - 0.747; over the children: unit weights plus the bias",
+   "check": "edge listing",
+   "evidence": "weights -0.20618, 0.29255, -0.31613, 0.34530, 0.32084, bias -0.74709; child edges 1.0",
+   "commands": []
+  },
+  {
+   "id": "V62",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_15",
+   "claims": [],
+   "location": "operations.cox_log_risk.hypothesis",
+   "statement": "typical patient: grade II, no hormone therapy, progesterone receptor 29.5 fmol/l (and 3 positive nodes)",
+   "check": "verify probe held case",
+   "evidence": "held case: age 53, estrec 35.5, horTh=yes 0, menostat=Post 1, pnodes 3, progrec 29.5, tgrade=II 1, tgrade=III 0, tsize 25; score -0.5265",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --json"
+   ]
+  },
+  {
+   "id": "V63",
+   "grade": "upheld",
+   "level": "L4",
+   "part": "ann_15",
+   "claims": [],
+   "location": "operations.cox_log_risk.hypothesis",
+   "statement": "a sparse linear Cox model with time-constant multiplicative effects; PH inherited not tested; five-year risk from a Breslow baseline on the training rows",
+   "check": "read",
+   "evidence": "the hypothesis says what the model does and for whom in clinical units; the caveats are present",
+   "commands": []
+  },
+  {
+   "id": "V64",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_15",
+   "claims": [],
+   "location": "operations.cox_log_risk.hypothesis",
+   "statement": "age, oestrogen receptor, menopausal status and tumour size have zero effect",
+   "check": "node ablation and sweeps (the data agree: 0 of 438 change)",
+   "evidence": "tumour size and age are standard prognostic factors in this cohort's usual Cox analyses; the evolved model dropped them. The explanation states this as a model property and does not claim it is clinically right; for the domain reviewer",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/survival/cox_case/explanations/cox-gbsg2-s1.json --node age --node estrec --node \"menostat=Post\" --node tsize"
+   ]
+  }
+ ],
+ "parts": {
+  "ann_15": {
+   "grade": "upheld",
+   "level": "L4",
+   "flags": 1
+  },
+  "ann_12": {
+   "grade": "upheld",
+   "level": "L4",
+   "flags": 1
+  },
+  "ann_13": {
+   "grade": "upheld",
+   "level": "L4",
+   "flags": 0
+  },
+  "ann_14": {
+   "grade": "upheld",
+   "level": "L4",
+   "flags": 0
+  }
+ },
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ],
+ "notes": [
+  "No plain-language layer or claims file exists for this genome; drafted.* and claims.* were not graded.",
+  "The recheck reports 0 mismatch, 0 needs_review, 0 warn; its 77 unchecked sentences were checked by hand (probe, subgroup, ablate, concept, linearise, and a scratch recomputation of the hazard ratios, spreads and survival metrics).",
+  "The 'meaningful' grade of tumour_biology rests on the concept tool's rule (score 0.905 >= 0.8 from AUC 0.953 of a sign-level threshold); R2 is 0.30 and the text says the concept carries the direction, not the value.",
+  "The three leaves are the explainer's grouping of five independent additive edges (no hidden node); any grouping would preserve the function.",
+  "The hormonal-therapy term is consistently called an association; no text claims a treatment effect.",
+  "Nothing was written to the database or to the target; scratch files are under the verifier's scratch directory."
+ ]
+}

@@ -1,0 +1,400 @@
+{
+ "label": "cox-whas500-s0",
+ "genome_id": "f96ebc8d-5ab6-4b78-866f-5c82f1640771",
+ "set": "cox_case",
+ "study": "cox_case",
+ "records_dir": "explanations",
+ "dataset": "whas500",
+ "n_train": 320,
+ "computed_at": "2026-11-12T01:04:38+00:00",
+ "method": "experiments/explanation_levels/compute_levels.py (read only; probes not stored, query_id null)",
+ "levels": {
+  "faithful": {
+   "function_preservation_max_abs_err": 4.440892098500626e-16,
+   "closed_form_max_abs_err": 0.0014143475867554045,
+   "passed": true,
+   "test": "max |output(explained model) - output(phenotype)| over the training rows < 1e-9"
+  },
+  "decomposed": {
+   "n_leaves": 4,
+   "n_compositions": 1,
+   "hidden_units": 0,
+   "granularity": null,
+   "largest_part": null,
+   "max_width": null,
+   "max_depth": null,
+   "warnings": [],
+   "passed": null,
+   "test": "share of hidden units whose part is at most 6 units wide (depth not penalised); no part wider than that holds half the units"
+  },
+  "understood": {
+   "leaves": 4,
+   "graded": 4,
+   "counts": {
+    "meaningful": 4,
+    "partial": 0,
+    "closed_form_only": 0,
+    "unnamed": 0
+   },
+   "grades": {
+    "age_and_body_mass": "meaningful",
+    "in_hospital_course": "meaningful",
+    "admission_haemodynamics": "meaningful",
+    "index_mi_type": "meaningful"
+   },
+   "understood_fraction": 1.0,
+   "partial_fraction": 0.0,
+   "closed_form_only_fraction": 0.0,
+   "unnamed_fraction": 0.0,
+   "concepts": {
+    "age_and_body_mass": "age > 72",
+    "in_hospital_course": "chf=1 and sho=1",
+    "admission_haemodynamics": "hr > 85",
+    "index_mi_type": "mitype=1"
+   },
+   "test": "concept probe per leaf: meaningful r2 >= 0.8 or AUC >= 0.9; partial r2 >= 0.5 or AUC >= 0.75; else closed_form_only; unnamed when no concept was probed",
+   "domain_only": null
+  }
+ },
+ "decomposition": {
+  "hidden_units": 0,
+  "granularity": null,
+  "largest_part": null,
+  "units_only_in_root": 0,
+  "units_only_as_entries": 0,
+  "parts": {},
+  "warnings": [],
+  "small_width_max_units": 6
+ },
+ "leaves": {
+  "age_and_body_mass": {
+   "id": "ann_18",
+   "exit_nodes": [
+    "identity_age_body"
+   ],
+   "n_exits": 1,
+   "gated": false,
+   "variables": [
+    "age",
+    "bmi"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 21,
+   "score": 0.930582,
+   "grade": "meaningful",
+   "best_concepts": [
+    "age > 72"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.593563,
+   "auc": 0.965291,
+   "mi": 0.67428,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "age > 72",
+    "probe": {
+     "r2": 0.593563,
+     "auc": 0.965291,
+     "mi": 0.67428,
+     "n": 320,
+     "score": 0.930582,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "identity_age_body": {
+     "best": {
+      "concept": "age > 72",
+      "kind": "binary",
+      "source": "threshold",
+      "n": 320,
+      "r2": 0.593563,
+      "auc": 0.965291,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.67428,
+      "nmi": 0.202978,
+      "leaf_gated": false,
+      "score": 0.930582
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "age > 72",
+       "source": "threshold",
+       "score": 0.930582,
+       "r2": 0.593563,
+       "auc": 0.965291,
+       "mi": 0.67428
+      },
+      {
+       "concept": "age",
+       "source": "input",
+       "score": 0.817234,
+       "r2": 0.817234,
+       "auc": null,
+       "mi": 1.265799
+      },
+      {
+       "concept": "bmi > 25.8459",
+       "source": "threshold",
+       "score": 0.671406,
+       "r2": 0.327579,
+       "auc": 0.835703,
+       "mi": 0.306739
+      }
+     ]
+    }
+   }
+  },
+  "in_hospital_course": {
+   "id": "ann_20",
+   "exit_nodes": [
+    "identity_hospital"
+   ],
+   "n_exits": 1,
+   "gated": false,
+   "variables": [
+    "chf=1",
+    "los",
+    "sho=1"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 23,
+   "score": 1.0,
+   "grade": "meaningful",
+   "best_concepts": [
+    "chf=1 and sho=1"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.217681,
+   "auc": 1.0,
+   "mi": 0.078363,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "chf=1 and sho=1",
+    "probe": {
+     "r2": 0.217681,
+     "auc": 1.0,
+     "mi": 0.078363,
+     "n": 320,
+     "score": 1.0,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "identity_hospital": {
+     "best": {
+      "concept": "chf=1 and sho=1",
+      "kind": "binary",
+      "source": "pair",
+      "n": 320,
+      "r2": 0.217681,
+      "auc": 1.0,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.078363,
+      "nmi": 0.023963,
+      "leaf_gated": false,
+      "score": 1.0
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "chf=1 and sho=1",
+       "source": "pair",
+       "score": 1.0,
+       "r2": 0.217681,
+       "auc": 1.0,
+       "mi": 0.078363
+      },
+      {
+       "concept": "chf=1",
+       "source": "level",
+       "score": 0.993842,
+       "r2": 0.882349,
+       "auc": 0.996921,
+       "mi": 0.814436
+      },
+      {
+       "concept": "sho=1",
+       "source": "level",
+       "score": 0.835834,
+       "r2": 0.208997,
+       "auc": 0.917917,
+       "mi": 0.083993
+      }
+     ]
+    }
+   }
+  },
+  "admission_haemodynamics": {
+   "id": "ann_19",
+   "exit_nodes": [
+    "identity_haemo"
+   ],
+   "n_exits": 1,
+   "gated": false,
+   "variables": [
+    "diasbp",
+    "hr",
+    "sysbp"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 23,
+   "score": 0.825222,
+   "grade": "meaningful",
+   "best_concepts": [
+    "hr > 85"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.460825,
+   "auc": 0.912611,
+   "mi": 0.454314,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "hr > 85",
+    "probe": {
+     "r2": 0.460825,
+     "auc": 0.912611,
+     "mi": 0.454314,
+     "n": 320,
+     "score": 0.825222,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "identity_haemo": {
+     "best": {
+      "concept": "hr > 85",
+      "kind": "binary",
+      "source": "threshold",
+      "n": 320,
+      "r2": 0.460825,
+      "auc": 0.912611,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.454314,
+      "nmi": 0.136762,
+      "leaf_gated": false,
+      "score": 0.825222
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "hr > 85",
+       "source": "threshold",
+       "score": 0.825222,
+       "r2": 0.460825,
+       "auc": 0.912611,
+       "mi": 0.454314
+      },
+      {
+       "concept": "hr",
+       "source": "input",
+       "score": 0.620746,
+       "r2": 0.620746,
+       "auc": null,
+       "mi": 0.805299
+      },
+      {
+       "concept": "diasbp > 76",
+       "source": "threshold",
+       "score": 0.541076,
+       "r2": 0.219562,
+       "auc": 0.770538,
+       "mi": 0.232677
+      }
+     ]
+    }
+   }
+  },
+  "index_mi_type": {
+   "id": "ann_21",
+   "exit_nodes": [
+    "identity_mitype"
+   ],
+   "n_exits": 1,
+   "gated": false,
+   "variables": [
+    "mitype=1"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 20,
+   "score": 1.0,
+   "grade": "meaningful",
+   "best_concepts": [
+    "mitype=1"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 1.0,
+   "auc": 1.0,
+   "mi": 0.86547,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "mitype=1",
+    "probe": {
+     "r2": 1.0,
+     "auc": 1.0,
+     "mi": 0.86547,
+     "n": 320,
+     "score": 1.0,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "identity_mitype": {
+     "best": {
+      "concept": "mitype=1",
+      "kind": "binary",
+      "source": "level",
+      "n": 320,
+      "r2": 1.0,
+      "auc": 1.0,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit lower when the concept holds",
+      "mi": 0.86547,
+      "nmi": 1.0,
+      "leaf_gated": false,
+      "score": 1.0
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "mitype=1",
+       "source": "level",
+       "score": 1.0,
+       "r2": 1.0,
+       "auc": 1.0,
+       "mi": 0.86547
+      },
+      {
+       "concept": "av3=1",
+       "source": "level",
+       "score": 0.386412,
+       "r2": 0.013411,
+       "auc": 0.693206,
+       "mi": 0.0085
+      },
+      {
+       "concept": "age > 72",
+       "source": "threshold",
+       "score": 0.24828,
+       "r2": 0.075185,
+       "auc": 0.62414,
+       "mi": 0.055886
+      }
+     ]
+    }
+   }
+  }
+ }
+}

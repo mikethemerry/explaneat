@@ -160,6 +160,45 @@ def query_ablate(genome_id: str, parts: Optional[str] = None, nodes: Optional[st
                 _stamp(vm, split), r)
 
 
+def query_hazard_ratios(genome_id: str, split: str = "train") -> str:
+    """Hazard-ratio reading of every term at the output of a Cox (identity-output) model:
+    direct input edges as log-HR per SD and per raw unit, ReLU hinges with their threshold in
+    raw units and the log-HR per unit on the active side, and each term's spread over the
+    split as HRs against the median patient (``explaneat.survival.explain``). Identity relays
+    on the output are expanded, so the terms are the readout units of the current model state.
+
+    Quote values as ``{{q:<id>.readings[k].hr_per_unit|.3f}}``, ``...readings[k].threshold_raw``,
+    ``...readings[k].spread.hr_p95_vs_p5``. The reading describes a time-constant multiplicative
+    effect, which is all the model can represent (the proportional-hazards caveat).
+
+    Args:
+        genome_id: UUID of the genome (a survival experiment: identity output, Cox loss).
+        split: "train" (default) or "test".
+    """
+    from explaneat.survival.explain import explain_output, output_terms
+    try:
+        vm = _vm(genome_id)
+        X = vm.m.X if split == "train" else vm.m.Xt
+        if X is None:
+            raise ValueError(f"no {split} split")
+        act = str(output_terms(vm.structure)["activation"] or "").lower()
+        if act != "identity":
+            raise ValueError(f"the output activation is {act!r}, not identity: not a log-risk model")
+        scaler = {"mean": vm.base.mean.tolist(), "scale": vm.base.scale.tolist()}
+        readings = explain_output(vm.structure, X, scaler, list(vm.base.feature_names))
+        r = {"output": output_terms(vm.structure), "n_terms": len(readings), "readings": readings,
+             "ph_caveat": ("Each term is a time-constant multiplicative effect on the hazard, because the "
+                           "model can represent nothing else; this is not evidence that the effect is "
+                           "constant over follow-up.")}
+    except Exception as e:
+        return _err(e)
+    return _out(genome_id, "query_hazard_ratios", {"split": split},
+                {"population": f"{split} split", "quantity": "hazard ratios per term at the output",
+                 "scope": "direct terms of the log-risk (each edge or hinge feeding the output)",
+                 "unit": "log-HR per SD / per raw unit; HR; thresholds in raw units"},
+                _stamp(vm, split), r)
+
+
 def query_linearise(genome_id: str, level: str = "parts", core: bool = False, split: str = "train") -> str:
     """AUC with the nonlinear units replaced by their least-squares affine fits: all at once,
     each alone and each restored alone (the restore gain).
@@ -268,6 +307,7 @@ def set_strict_mode(genome_id: str, strict: bool = True) -> str:
 
 
 def register(mcp: FastMCP) -> None:
-    for f in (query_subgroup, query_probe, query_enumerate, query_ablate, query_linearise, probe_concept,
+    for f in (query_subgroup, query_probe, query_enumerate, query_ablate, query_linearise, query_hazard_ratios,
+              probe_concept,
               get_query, list_queries, set_strict_mode):
         mcp.tool()(f)
