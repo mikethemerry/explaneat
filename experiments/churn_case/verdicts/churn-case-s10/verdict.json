@@ -1,0 +1,632 @@
+{
+ "item_id": "churn-case-s10",
+ "genome_id": "9cacd431-a3b0-4649-89fb-961d5a6fe5b3",
+ "label": "churn-case-s10",
+ "target_hash": null,
+ "target_hash_note": "recheck gives no target_hash for a record-JSON target; sha256 of the record file experiments/churn_case/explanations/churn-case-s10.json: f20200aa97e605b3a2ca4624775652806e061f228f2eb0a8f5cb254ecdb7dace. The explanation's operations, hypotheses and evidence were read from the database (explanation ce11259b-9439-496e-90b7-cd32bb188b5b, updated 2026-11-13T11:44:41+13:00).",
+ "record_sha256": "f20200aa97e605b3a2ca4624775652806e061f228f2eb0a8f5cb254ecdb7dace",
+ "verifier": "independent blind verifier (explanation-verifier skill)",
+ "started_at": "2026-11-13T11:49:22+13:00",
+ "finished_at": "2026-11-13T12:13:26+13:00",
+ "minutes": 24,
+ "overall": {
+  "grade": "weakened",
+  "summary": "Nothing is refuted: every stated number, threshold, count, rate, AUC and closed form reproduces on the training split, the hierarchy covers the phenotype and the function is preserved to 1.4e-15. Nine weakenings: the root's 'gated parts are off' for the typical customer misses the two-state flag (state 49, contribution -0.42); the day-use shape 'flat to falling for light users' is rising below 130 minutes on a consistent sweep; 'day charge in two hidden units' is one; '3 calls for light users' understates the gate (2 calls below about 75 minutes, 21 rows); and two AUCs printed as 0.907 are 0.908 unrounded (state 24, double rounding). Two domain flags (the chain's light-use and heavy-caller ends; the positive state-18 flag against the observed rate)."
+ },
+ "counts": {
+  "upheld": 25,
+  "weakened": 9,
+  "refuted": 0,
+  "flag": 2
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "structural 1.0, compositional 1.0, hierarchy complete, full coverage",
+   "check": "verify recheck (coverage with exact Null, hierarchy)",
+   "evidence": "recomputed 1.0 / 1.0; uncovered nodes []; 29 Null nodes (no path to the output); single root churnScore containing output 0; 13 of 13 annotations composed under it",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/churn_case/explanations/churn-case-s10.json --out experiments/churn_case/verdicts/churn-case-s10/recheck.json"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "1.44e-15",
+   "check": "verify recheck",
+   "evidence": "recomputed max |err| 1.4432899320127035e-15 (numeric 2.66e-15)",
+   "commands": []
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.closed_form_max_abs_err",
+   "statement": "0.0518 (chain); each leaf's typed closed form",
+   "check": "verify recheck closed forms, coefficient by coefficient",
+   "evidence": "recomputed LaTeX identical for all 10 leaves; per-leaf errors 0.0518 (chain), 0.0013, 0.0014, 0.0014, 0.0104, 0.0187, 0.0027, 0.0030, 0.0109, 0.0096 match the evidence narratives",
+   "commands": []
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.n_splits",
+   "statement": "6 splits, 3 identity nodes, 1 consolidate, 71 renames, 10 leaves + 4 compositions, 18 hidden nodes each in one leaf and none split",
+   "check": "operations read from the database; subgraph lists counted",
+   "evidence": "op counts {rename_node 71, split_node 6, consolidate_node 1, add_identity_node 3, annotate 14}; hidden nodes 7783 8625 8965 13380 3344 6516 1792 | 14787 486 | 5276 | 1197 6686 | 21858 1994 | 2471 | 2564 | 14613 | 18206 = 18, each in exactly one leaf",
+   "commands": []
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "AUC 0.908 with everything on, 0.786 with the direct terms at their mean; chain on for 351 customers (41.0%), AUC 0.813 without it; heavy-use hinge above about 220 day minutes; ramp on across the training rows; four state flags; 29 inputs unconnected; lowest probe score 0.88 (direct terms); preservation 1.4e-15",
+   "check": "ablate --part directTerms / serviceCallChain; subgroup node_1792 > 0; probe day-minutes sweep; subgroup node_1994 > 0; input-name mapping of the 29 Null nodes; concept probes",
+   "evidence": "AUC 0.9077 -> 0.7860 (direct at mean) and -> 0.8126 (chain off); 351 rows, 41.0% (144/351) vs 11.6%; 1197 switches on at 218 minutes; 1994 > 0 for 4000 of 4000 rows; the 29 Null nodes are 24 state codes, area code 510, evening calls, night minutes, night calls, international minutes; direct-terms concept `international plan` score 0.882, all other leaves 0.957 to 1.0",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/churn_case/explanations/churn-case-s10.json --part directTerms",
+    "uv run python -m explaneat verify ablate experiments/churn_case/explanations/churn-case-s10.json --part serviceCallChain",
+    "uv run python -m explaneat verify subgroup experiments/churn_case/explanations/churn-case-s10.json --where \"node_1792 > 0\"",
+    "uv run python -m explaneat verify subgroup experiments/churn_case/explanations/churn-case-s10.json --where \"node_1994 > 0\"",
+    "uv run python -m explaneat verify concept experiments/churn_case/explanations/churn-case-s10.json --part directTerms --concept \"`international plan`\""
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "weakened",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "a flat-to-falling then steeply rising response to daytime use",
+   "check": "probes with day charge set consistently with day minutes (0.17 dollars per minute), 0 to 350 minutes",
+   "evidence": "typical customer: risk 1.1% at 0 min, 0.74% at 25, 1.35% at 75, 1.83% at 100, 2.64% at 130-140 (score -4.90 at 25 -> -3.61 at 130: rising, the direct day-charge edge acting alone while the ramp is constant); then falls slightly, 2.44% at 160, 2.18% at 190 (ramp offsets the direct edge); then rises steeply: 2.59% at 200, 4.02% at 220, 16.7% at 250, 73.3% at 300, 97.4% at 350. The 'falling' stretch is 140-190 minutes only; below 130 the response rises (about four-fold in risk), so 'flat to falling' describes the moderate range, not the light one. Numbers quoted in the hypotheses (2%, 2%, 4%, 17%, 73%, 97%) reproduce.",
+   "commands": [
+    "for m in 0 25 50 75 100 110 120 130 140 150 160 170 180 190 200 210 220 230 240 260 280 300 325 350; do uv run python -m explaneat verify probe experiments/churn_case/explanations/churn-case-s10.json --set \"total day minutes=$m\" --set \"total day charge=$(python3 -c \"print(round($m*0.17,2))\")\" --nodes 1197,1994,486 --json; done"
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "the falling branch beyond 5 calls rests on 42 training rows; the chain's typed formula is off by up to 0.052",
+   "check": "subgroup calls >= 6; recheck closed forms",
+   "evidence": "n = 42 (churn 66.7%, 28 of 42); chain closed-form max |err| 0.05184",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/churn_case/explanations/churn-case-s10.json --where \"`number customer service calls` >= 6\""
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L2",
+   "part": null,
+   "claims": [],
+   "location": "record.overall_function",
+   "statement": "sigmoid of a bias plus additive parts; chain threshold rises with day minutes and shuts for very heavy users; daytime use read three times positively and once negatively; 29 inputs ignored",
+   "check": "probe --wide typical; minute sweeps at 3/4/5 calls; name mapping",
+   "evidence": "parts add in the score (-3.7679 = bias + 0.3324 + 0.0900 - 0.4231); gate off from 140 min at 3 calls, 220 at 4, 240 at 5, off at every count at 300 min; day charge enters directly (+0.669 per SD) and in 486, day minutes in 1197/6686 and negatively through 1994; Null inputs as listed",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/churn_case/explanations/churn-case-s10.json --wide --nodes all",
+    "uv run python -m explaneat verify probe experiments/churn_case/explanations/churn-case-s10.json --set \"number customer service calls=4\" --sweep \"total day minutes=0:350:36\" --nodes 1792,3344 --no-parts"
+   ]
+  },
+  {
+   "id": "V9",
+   "grade": "weakened",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.customer_terms",
+   "statement": "the gate opens at a few calls for typical daytime use and one call earlier for light users",
+   "check": "probe minute sweeps at 3, 2, 1 and 0 calls; subgroup of acting rows with 2 or fewer calls",
+   "evidence": "at 3 calls the gate is on below about 140 minutes; at 2 calls below about 75 (1792 = 0.59 at 50 min, 0.036 at 70, 0 at 80); at 1 call below about 25 minutes (0.71 at 0 min, 0.16 at 20, 0 at 30); 21 training customers with 2 or fewer calls are inside the gate (0 of 21 churned). 'One call earlier' holds at about 100 minutes (3 calls) but very light users are let in two or three calls earlier.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/churn_case/explanations/churn-case-s10.json --set \"number customer service calls=2\" --sweep \"total day minutes=0:200:21\" --nodes 1792 --no-parts",
+    "uv run python -m explaneat verify subgroup experiments/churn_case/explanations/churn-case-s10.json --where \"`number customer service calls` <= 2 and node_1792 > 0\""
+   ]
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_94",
+   "claims": [],
+   "location": "structure",
+   "statement": "each annotation's entries, exits and subgraph; hand-offs through identity nodes; one root with the output",
+   "check": "operations JSON from the database against the dataset's input names (-k = feature k-1)",
+   "evidence": "-71_acd/-59_b = service calls / day minutes (chain); -61_b = day charge, -13 = state:2, -24 = state:3 (dayChargeBoost); -59_a = day minutes, -41_a = state:45 (heavyDayUse); -59_c (ramp); -45_b/-41_b = states 49/45 (twoStateFlag); -33_b = state:38; -11 = state:18; -18 = state:24; 35 direct entries = the 35 terms of the direct closed form; 1792 -> identity_1792_486 -> 486 and 6686 -> identity_6686_2471 -> 2471; root subgraph connections hold the 11 readouts and the 2 hand-off edges",
+   "commands": []
+  },
+  {
+   "id": "V11",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_81",
+   "claims": [],
+   "location": "operations.serviceCallChain.hypothesis",
+   "statement": "gate on the call count whose threshold rises with day minutes: typical off at 3 (0.00), on at 4 (1.07), largest at 5 (1.50), 0.42 at 9; at 100 min on from 3 calls (0.93, 3.72 at 5); at 300 min off at 5 and 9; 351 acting rows, 41.0% vs 11.6%, +3.19; 240 of 318 with 4+ calls, 111 with 3 or fewer; 13380 switches on at 5 calls; 42 rows with 6+ calls (66.7%); AUC 0.908 -> 0.813; concept 0.98 (AUC 0.992) vs 0.74 vs 0.91",
+   "check": "probe sweeps of the call count (typical; 100 min/17 dollars; 300 min/51 dollars) with node values; minute sweeps at 3/4/5 calls; subgroups; ablate; concept probes",
+   "evidence": "1792 = 0 / 1.070 / 1.497 / 0.420 at 3/4/5/9 calls; 0.9265 at 3 calls and 3.724 at 5 at 100 min; 0 at 5 and 9 at 300 min; 13380 = 0 at 4 calls, 0.6296 at 5 (enters 3344 with -0.767); gate off from 220 min at 4 calls, 240 at 5, 140 at 3; subgroup node_1792 > 0: 351, 41.0% vs 11.6%, chain +3.1949; calls >= 4: 318, chain acts on 240; calls <= 3 and gate on: 111; calls >= 6: 42, 66.7%; AUC 0.9077 -> 0.8126; concept scores 0.9845 (AUC 0.9923), 0.7383, 0.9054",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/churn_case/explanations/churn-case-s10.json --sweep \"number customer service calls=0:9:10\" --nodes 1792,5276,13380,3344,6516,2471,486",
+    "uv run python -m explaneat verify probe experiments/churn_case/explanations/churn-case-s10.json --set \"total day minutes=100\" --set \"total day charge=17\" --sweep \"number customer service calls=0:9:10\" --nodes 1792,5276,13380",
+    "uv run python -m explaneat verify probe experiments/churn_case/explanations/churn-case-s10.json --set \"total day minutes=300\" --set \"total day charge=51\" --sweep \"number customer service calls=0:9:10\" --nodes 1792,5276,2471,486",
+    "uv run python -m explaneat verify subgroup experiments/churn_case/explanations/churn-case-s10.json --where \"`number customer service calls` >= 4\"",
+    "uv run python -m explaneat verify concept experiments/churn_case/explanations/churn-case-s10.json --part serviceCallChain --concept \"`number customer service calls` >= 4 and `total day minutes` <= 220\""
+   ]
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_81",
+   "claims": [],
+   "location": "operations.serviceCallChain.evidence[0]",
+   "statement": "evidence[0] to evidence[9]: closed form (error 0.052), self-probes, subgroups (acting rows, light-use rows, 6+ calls), ablation, concept probes",
+   "check": "each record's query population and quantity against the sentence it supports; split train, n 4000, not sampled",
+   "evidence": "populations are the ones the hypothesis talks about (acts on = node_1792 > 0; light-use = calls <= 3 and node_1792 > 0; falling branch = calls >= 6); directions and shapes agree with the probes; all nodes named are in the part's subgraph",
+   "commands": []
+  },
+  {
+   "id": "V13",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_81",
+   "claims": [],
+   "location": "operations.serviceCallChain.hypothesis",
+   "statement": "the model reads it as a complaint signal; falls back for the few customers with six or more calls",
+   "check": "subgroups of acting rows by call count; call sweep",
+   "evidence": "of the 351 rows the gate is on for, 111 have 3 or fewer calls and churn at 7.2% (8 of 111, below the 14.3% of the rest) and 21 have 2 or fewer calls with 0 of 21 churned, yet the part adds +0.84 and +0.53 to their scores; and for 6 or more calls the part's output falls (1.50 at 5 calls -> 0.42 at 9 for the typical customer) although those 42 customers churn at 66.7% (the whole model still scores them high, mean predicted risk 72%, through the day-charge unit and the spike). Both are stated honestly in the hypothesis; whether 'complaint signal' is the right reading for the light-use and heavy-caller ends is for the domain reviewer.",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/churn_case/explanations/churn-case-s10.json --where \"`number customer service calls` <= 3 and node_1792 > 0\"",
+    "uv run python -m explaneat verify subgroup experiments/churn_case/explanations/churn-case-s10.json --where \"`number customer service calls` >= 6\""
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_82",
+   "claims": [],
+   "location": "operations.dayChargeBoost.hypothesis",
+   "statement": "486 off at 30 dollars, on at 35 (0.21), 2.23 at 60; risk 2% -> 89%; with 5 calls on at 15 dollars (0.27), 3.89 at 60; 1921 acting rows (23.9% vs 5.1%, +1.11), 1663 with the chain off; state 2 (78) and state 3 (73) shift the threshold slightly; AUC 0.908 -> 0.886, hand-off edge alone -> 0.890; concept 0.96 (0.978) vs 0.80 vs 0.89",
+   "check": "day-charge sweeps (typical; 5 calls; fine 28-36 dollars by state 49/2/3); subgroups; ablate part and edge 1792->identity_1792_486; concept probes",
+   "evidence": "486 = 0 at 30, 0.2117 at 35, 2.226 at 60 dollars; risk 2.1% -> 89.0%; with 5 calls 0.267 at 15 and 3.893 at 60; switches on between 32 and 32.5 dollars for state 49, at 32.0 for state 2, and is still off at 33.5 for state 3 (14787 = 7.84 there vs 0.24; shift about 3.5 dollars, a loose use of 'slightly'); 14787 > 0 for 4000 of 4000 rows; subgroups 1921 (23.9% vs 5.1%, +1.1143), 1663, 78, 73; AUC 0.9077 -> 0.8858; edge off -> 0.8896; concepts 0.9568 (AUC 0.9784), 0.7996, 0.8854. Note: 60 dollars is just outside the training range (max 59.76).",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/churn_case/explanations/churn-case-s10.json --sweep \"total day charge=0:60:13\" --nodes 486,14787",
+    "uv run python -m explaneat verify probe experiments/churn_case/explanations/churn-case-s10.json --set \"number customer service calls=5\" --sweep \"total day charge=0:60:13\" --nodes 486,1792",
+    "uv run python -m explaneat verify probe experiments/churn_case/explanations/churn-case-s10.json --sweep \"total day charge=28:36:17\" --sweep \"state=49,2,3\" --nodes 486,14787 --no-parts",
+    "uv run python -m explaneat verify subgroup experiments/churn_case/explanations/churn-case-s10.json --where \"node_486 > 0\"",
+    "uv run python -m explaneat verify ablate experiments/churn_case/explanations/churn-case-s10.json --edge \"1792->identity_1792_486\""
+   ]
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_82",
+   "claims": [],
+   "location": "operations.dayChargeBoost.evidence[0]",
+   "statement": "evidence[0] to evidence[8]",
+   "check": "query populations and quantities against the sentences",
+   "evidence": "acting rows = node_486 > 0; pure hinge = node_486 > 0 and node_1792 == 0; the hand-off ablation is the edge 1792->identity_1792_486 (the only enabled edge from 1792 into the unit); narratives agree with the probes",
+   "commands": []
+  },
+  {
+   "id": "V16",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_83",
+   "claims": [],
+   "location": "operations.serviceCallSpike.hypothesis",
+   "statement": "hinge on the call count alone: 0.00 at 3, 0.072 at 4, 1.21 at 9, unchanged at 300 day minutes; 318 acting rows (50.0% vs 11.1%, +0.30); 0 acting rows with 3 or fewer calls; AUC 0.908 -> 0.907",
+   "check": "call sweeps (typical and at 300 min); subgroups; ablate",
+   "evidence": "5276 = 0 / 0.07187 / 1.214 at 3/4/9 calls, 1.214 at 9 calls with 300 min; subgroup node_5276 > 0: 318, 50.0% vs 11.1%, +0.3040; node_5276 > 0 and calls <= 3: 0; AUC 0.9077 -> 0.9074 (unrounded 0.907374)",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/churn_case/explanations/churn-case-s10.json --where \"node_5276 > 0\"",
+    "uv run python -m explaneat verify ablate experiments/churn_case/explanations/churn-case-s10.json --part serviceCallSpike"
+   ]
+  },
+  {
+   "id": "V17",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_84",
+   "claims": [],
+   "location": "operations.heavyDayUse.hypothesis",
+   "statement": "off at 210 (0.00), just on at 220 (0.025), 0.31/0.78/1.25 at 250/300/350, 6686 2.05 at 350; 964 acting rows (29.3% vs 9.4%, +1.07); 50 acting rows at or below 220; state 45 (91) raises the threshold slightly; consistent-charge risk 3% at 200, 17% at 250, 73% at 300, 97% at 350; AUC 0.908 -> 0.895",
+   "check": "day-minutes sweep with nodes; fine sweep 200-230 by state 49/45; consistent probes; subgroups; ablate; concept",
+   "evidence": "1197 = 0 at 210, 0.0249 at 220, 0.3065 at 250, 0.7757 at 300, 1.245 at 350; 6686 = 2.053 at 350; 1197 switches on at 218 minutes for state 49 and is still off at 225 for state 45 (on near 230: threshold raised about 12 minutes); subgroup node_1197 > 0: 964, 29.3% vs 9.4%, +1.0669; node_1197 > 0 and minutes <= 220: 50; state_45: 91; consistent risks 2.59% (200), 16.7% (250), 73.27% (300), 97.4% (350); AUC 0.9077 -> 0.8946; concept `total day minutes` 0.9994",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/churn_case/explanations/churn-case-s10.json --sweep \"total day minutes=0:350:36\" --nodes 1197,6686,1994,21858",
+    "uv run python -m explaneat verify probe experiments/churn_case/explanations/churn-case-s10.json --sweep \"total day minutes=200:230:31\" --sweep \"state=49,45\" --nodes 1197,6686 --no-parts",
+    "uv run python -m explaneat verify subgroup experiments/churn_case/explanations/churn-case-s10.json --where \"node_1197 > 0 and `total day minutes` <= 220\"",
+    "uv run python -m explaneat verify ablate experiments/churn_case/explanations/churn-case-s10.json --part heavyDayUse"
+   ]
+  },
+  {
+   "id": "V18",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_85",
+   "claims": [],
+   "location": "operations.dayMinutesRamp.hypothesis",
+   "statement": "on for 4000 of 4000 rows, negative output weight; 21858 off below about 130, 1994 constant (1.30), 1.95 at 180, 4.26 at 350; risk (charge held typical) 5% at 130 -> 1% at 210; constant for 716 rows; replaced by its average: mean risk -0.023, AUC 0.908 -> 0.898",
+   "check": "day-minutes sweeps (0-350 and fine 100-160) with 21858/1994; subgroups; ablate --to mean; consistent sweep for the sign",
+   "evidence": "node_1994 > 0: 4000 of 4000; 21858 = 0 up to 130 minutes, 0.054 at 135; 1994 = 1.302 at 130, 1.951 at 180, 4.262 at 350; risk 4.8% at 130 -> 1.4% at 210; node_21858 == 0: 716; ramp at mean: mean risk change -0.0233, AUC 0.9077 -> 0.8981; the part's contribution falls from +0.88 (<= 130 min) to -2.68 at 350 on the consistent sweep, so the readout is negative",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/churn_case/explanations/churn-case-s10.json --sweep \"total day minutes=100:160:13\" --nodes 21858,1994 --no-parts",
+    "uv run python -m explaneat verify subgroup experiments/churn_case/explanations/churn-case-s10.json --where \"node_21858 == 0\"",
+    "uv run python -m explaneat verify ablate experiments/churn_case/explanations/churn-case-s10.json --part dayMinutesRamp --to mean"
+   ]
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_86",
+   "claims": [],
+   "location": "operations.twoStateFlag.hypothesis",
+   "statement": "on for the 91 state-45 and 122 state-49 customers and 0 others; 4.87 / 4.25 / 0.00 for states 45/49/0; -0.48 and -0.42 on average (churn 6.6% and 10.7% vs 14.3%); 4.34 at 300 day minutes vs 4.25; AUC 0.908 -> 0.907",
+   "check": "state probe; subgroups state_45, state_49, node_2471 > 0 outside them; 300-minute probe; ablate; concept",
+   "evidence": "2471 = 4.866 / 4.254 / 0; state_45: 91, 6.6% vs 14.3%, -0.4843; state_49: 122, 10.7% vs 14.3%, -0.4237; outside: 0 rows; 4.34 at 300 min (row 0 of the 300-minute sweep); AUC 0.9077 -> 0.9072 (unrounded 0.907176); concept `state:45` score 1.0 as stored (the two-state rule `state:45` == 1 or `state:49` == 1 fits better, r2 0.995 vs 0.482)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/churn_case/explanations/churn-case-s10.json --sweep \"state=45,49,0,38,18,24\" --nodes 2471,2564,14613,18206",
+    "uv run python -m explaneat verify subgroup experiments/churn_case/explanations/churn-case-s10.json --where \"node_2471 > 0 and state_45 == 0 and state_49 == 0\"",
+    "uv run python -m explaneat verify ablate experiments/churn_case/explanations/churn-case-s10.json --part twoStateFlag"
+   ]
+  },
+  {
+   "id": "V20",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_87",
+   "claims": [],
+   "location": "operations.state38Hinge.hypothesis",
+   "statement": "2564 = 4.71 in state 38, 0.00 in state 0; 56 customers (7.1% vs 14.2%), -1.02; risk 1% vs 1%; AUC 0.908 -> 0.907",
+   "check": "state probe; subgroup state_38; ablate",
+   "evidence": "2564 = 4.706; 56 rows, 7.1% (4/56) vs 14.2%, -1.0158; typical risk 1.3% in state 38 vs 0.7% in state 0; AUC 0.9077 -> 0.9072 (unrounded 0.907153)",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/churn_case/explanations/churn-case-s10.json --where \"state_38 == 1\"",
+    "uv run python -m explaneat verify ablate experiments/churn_case/explanations/churn-case-s10.json --part state38Hinge"
+   ]
+  },
+  {
+   "id": "V21",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_88",
+   "claims": [],
+   "location": "operations.state18Hinge.hypothesis",
+   "statement": "14613 = 6.99 in state 18, 0.00 in state 0; 65 customers (9.2% vs 14.2%), +0.20; risk 4% vs 1%; AUC 0.908 -> 0.908",
+   "check": "state probe; subgroup state_18; ablate",
+   "evidence": "14613 = 6.992; 65 rows, 9.2% (6/65) vs 14.2%, +0.2001; typical risk 3.6% vs 0.7%; AUC 0.9077 -> 0.9076 (unrounded 0.907593)",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/churn_case/explanations/churn-case-s10.json --where \"state_18 == 1\"",
+    "uv run python -m explaneat verify ablate experiments/churn_case/explanations/churn-case-s10.json --part state18Hinge"
+   ]
+  },
+  {
+   "id": "V22",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_88",
+   "claims": [],
+   "location": "operations.state18Hinge.hypothesis",
+   "statement": "its output weight is positive, so through this part the score changes by 0.20 for them",
+   "check": "subgroup state_18 == 1",
+   "evidence": "the model raises the score of state-18 customers (+0.20, typical risk 0.7% -> 3.6%) although their training churn rate, 9.2% (6 of 65), is below the 14.2% of the rest: a regional flag pointing against the observed rate, fitted to 65 customers. The hypothesis states this correctly; the domain reviewer should decide whether a state effect of this kind means anything.",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/churn_case/explanations/churn-case-s10.json --where \"state_18 == 1\""
+   ]
+  },
+  {
+   "id": "V23",
+   "grade": "weakened",
+   "level": "L1",
+   "part": "ann_89",
+   "claims": [],
+   "location": "operations.state24Hinge.hypothesis",
+   "statement": "Switching it off changes the AUC from 0.908 to 0.907",
+   "check": "ablate --part state24Hinge, AUC recomputed without the tool's 4-decimal rounding",
+   "evidence": "AUC without the part is 0.9075469, which is 0.908 at three decimals; the stored query holds 0.9075 (rounded to four decimals by the query tool) and the template printed that as 0.907. One unit of the last digit, from rounding twice; the AUC change is real but smaller than the text implies (0.00017, 1 prediction flips). All other numbers reproduce: 18206 = 6.363; 80 rows, 11.2% (9/80) vs 14.2%; -0.3301; typical risk 2.2% in state 24 vs 0.7% in state 0.",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/churn_case/explanations/churn-case-s10.json --part state24Hinge --json",
+    "python: default_auc(y, Ablation(vm, ['state24Hinge'], ...).logit(X)) = 0.9075469"
+   ]
+  },
+  {
+   "id": "V24",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_90",
+   "claims": [],
+   "location": "operations.directTerms.hypothesis",
+   "statement": "weighted sum of 35 inputs; weights per SD (international plan 0.79, voice-mail plan -1.13, ...); international plan moves the typical customer 2% -> 26%; 380 holders 42.4% vs 11.2%, +2.60; voice-mail plan with 30 messages 2% -> 1%; 1061 holders 7.4% vs 16.6%, -0.99; fixed at mean AUC 0.908 -> 0.786",
+   "check": "closed form coefficients; probes (plan toggle; voice-mail 1/30 vs 0/0); subgroups; ablate; concept",
+   "evidence": "coefficients in the recomputed closed form match the 12 quoted weights; risk 2.3% -> 25.6% with the plan; 0.6% with a voice-mail plan and 30 messages vs 2.3% without; `international plan` == '1': 380, 42.4% vs 11.2%, +2.5972; `voice mail plan` == '1': 1061, 7.4% vs 16.6%, -0.9918; AUC 0.9077 -> 0.7860; concept 0.8822. Note: states 47 and 4 (0.138 per SD) are slightly larger than account length (0.137) and are not in the 'largest weights include' list; 'include' keeps the sentence true.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/churn_case/explanations/churn-case-s10.json --sweep \"international plan=0,1\"",
+    "uv run python -m explaneat verify probe experiments/churn_case/explanations/churn-case-s10.json --set \"voice mail plan=1\" --set \"number vmail messages=30\"",
+    "uv run python -m explaneat verify subgroup experiments/churn_case/explanations/churn-case-s10.json --where \"`international plan` == '1'\"",
+    "uv run python -m explaneat verify ablate experiments/churn_case/explanations/churn-case-s10.json --part directTerms"
+   ]
+  },
+  {
+   "id": "V25",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_90",
+   "claims": [],
+   "location": "operations.directTerms.hypothesis",
+   "statement": "Day charge appears here as well as in two hidden units",
+   "check": "operations: the split of input -61 (total day charge) and every annotation that reads it",
+   "evidence": "-61 was split into -61_a (direct, in this part) and -61_b, and -61_b feeds only unit 486 (dayChargeBoost); no other hidden unit reads day charge. The second hidden reading of daytime use, unit 1197, is of total day minutes (-59_a). So day charge appears in one hidden unit, not two; daytime use (charge or minutes) appears in three.",
+   "commands": [
+    "operations seq 73 (split_node -61) and seq 82 (dayChargeBoost subgraph_connections: [-61_b, 486]); verify vars (which parts read total day charge)"
+   ]
+  },
+  {
+   "id": "V26",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_91",
+   "claims": [],
+   "location": "operations.serviceCallEffects.hypothesis",
+   "statement": "chain + day-charge unit off: AUC 0.908 -> 0.815, mean risk +0.074; spike 0.908 -> 0.907; typical risk 2% / 31% / 68% at 3/4/5 calls, 28% at 9; at 300 min 73% -> 94%; 318 with 4+ calls (50.0% vs 11.1%); 237 at or below 220 min (57.0%, mean risk 61%); 81 above (29.6%, 33%)",
+   "check": "ablate two parts; call sweeps; subgroups",
+   "evidence": "AUC 0.9077 -> 0.8154, mean risk change +0.0738; spike -> 0.9074; risks 2.3% / 31.0% / 68.4% / 27.9%; at 300 min 73.3% at 3 calls -> 94.5% at 9 with the chain off throughout; 318, 50.0% vs 11.1%; 237, 57.0%, 60.8%; 81, 29.6%, 33.5%",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/churn_case/explanations/churn-case-s10.json --part serviceCallChain --part dayChargeBoost",
+    "uv run python -m explaneat verify subgroup experiments/churn_case/explanations/churn-case-s10.json --where \"`number customer service calls` >= 4 and `total day minutes` <= 220\"",
+    "uv run python -m explaneat verify subgroup experiments/churn_case/explanations/churn-case-s10.json --where \"`number customer service calls` >= 4 and `total day minutes` > 220\""
+   ]
+  },
+  {
+   "id": "V27",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_91",
+   "claims": [],
+   "location": "operations.serviceCallEffects.hypothesis",
+   "statement": "the chain detects 4 or more calls (3 for light daytime users)",
+   "check": "minute sweeps at 3, 2, 1 and 0 calls; subgroups of acting rows by call count",
+   "evidence": "the threshold keeps falling with lighter use: at 3 calls the gate is on below about 140 minutes, at 2 calls below about 75 (1792 = 0.59 at 50 min, 0.036 at 70, 0 at 80), at 1 call below about 25 minutes (0.71 at 0 min, 0 at 30). Of the 111 light-use acting rows, 90 have exactly 3 calls and 21 have 2 or fewer (0 of 21 churned). '3 for light users' is right for most but not all of them.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/churn_case/explanations/churn-case-s10.json --set \"number customer service calls=2\" --sweep \"total day minutes=0:200:21\" --nodes 1792 --no-parts",
+    "uv run python -m explaneat verify probe experiments/churn_case/explanations/churn-case-s10.json --set \"number customer service calls=1\" --sweep \"total day minutes=0:200:21\" --nodes 1792 --no-parts",
+    "uv run python -m explaneat verify subgroup experiments/churn_case/explanations/churn-case-s10.json --where \"`number customer service calls` == 3 and node_1792 > 0\"",
+    "uv run python -m explaneat verify subgroup experiments/churn_case/explanations/churn-case-s10.json --where \"`number customer service calls` <= 2 and node_1792 > 0\""
+   ]
+  },
+  {
+   "id": "V28",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_92",
+   "claims": [],
+   "location": "operations.dayUseShape.hypothesis",
+   "statement": "consistent-charge risk 2% at 100, 2% at 180, 4% at 220, 17% at 250, 73% at 300, 97% at 350; 919 above 220 minutes (30.4% vs 9.3%; 29% vs 10%); hinge off and ramp at mean: AUC 0.908 -> 0.904",
+   "check": "consistent probes; subgroup; ablate two parts",
+   "evidence": "1.83%, 2.26%, 4.02%, 16.7%, 73.27%, 97.4%; 919, 30.4% vs 9.3%, mean risk 29.1% vs 9.8%; AUC 0.9077 -> 0.9039",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/churn_case/explanations/churn-case-s10.json --where \"`total day minutes` > 220\"",
+    "uv run python -m explaneat verify ablate experiments/churn_case/explanations/churn-case-s10.json --part heavyDayUse --part dayMinutesRamp"
+   ]
+  },
+  {
+   "id": "V29",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_92",
+   "claims": [],
+   "location": "operations.dayUseShape.hypothesis",
+   "statement": "the model's response to daytime use is flat to falling for light and moderate users and rises steeply for heavy users",
+   "check": "consistent-charge sweep 0-350 minutes (see V6)",
+   "evidence": "below 130 minutes the response rises (0.74% at 25 -> 2.64% at 130; score -4.90 -> -3.61) because only the direct day-charge edge moves while the ramp is constant; the falling stretch is 140-190 minutes (2.64% -> 2.18%) where the ramp outweighs the direct edge; from 200 minutes it rises steeply. The mechanism sentence (ramp lowers above about 130, direct edge raises, hinge takes over above about 220) is right; 'flat to falling for light users' is the part that is not.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/churn_case/explanations/churn-case-s10.json --set \"total day minutes=25\" --set \"total day charge=4.25\" --nodes 1197,1994,486 --json",
+    "uv run python -m explaneat verify probe experiments/churn_case/explanations/churn-case-s10.json --set \"total day minutes=130\" --set \"total day charge=22.1\" --nodes 1197,1994,486 --json",
+    "uv run python -m explaneat verify probe experiments/churn_case/explanations/churn-case-s10.json --set \"total day minutes=190\" --set \"total day charge=32.3\" --nodes 1197,1994,486 --json"
+   ]
+  },
+  {
+   "id": "V30",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_93",
+   "claims": [],
+   "location": "operations.stateAdjustments.hypothesis",
+   "statement": "four flags: states 45 and 49 (91, 122), 38 (56), 18 (65), 24 (80); each acts on its own state's customers; contributions -0.48, -1.02, 0.20, -0.33; four together change the AUC little",
+   "check": "subgroups per state; probe; ablate four parts",
+   "evidence": "counts 91/122/56/65/80 reproduce; each flag acts on 100% of its state and 0 rows elsewhere; contributions -0.4843 (45), -1.0158, +0.2001, -0.3301; four flags off: AUC 0.9077 -> 0.9063, 9 predictions flip",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/churn_case/explanations/churn-case-s10.json --part twoStateFlag --part state38Hinge --part state18Hinge --part state24Hinge"
+   ]
+  },
+  {
+   "id": "V31",
+   "grade": "weakened",
+   "level": "L1",
+   "part": "ann_93",
+   "claims": [],
+   "location": "operations.stateAdjustments.hypothesis",
+   "statement": "Switching off each flag changes the AUC by little: 0.907, 0.907, 0.908 and 0.907 against 0.908",
+   "check": "unrounded AUC with each flag off",
+   "evidence": "0.907176, 0.907153, 0.907593, 0.907547: the fourth (state 24) is 0.908 at three decimals, not 0.907 (same double rounding as V23). The claim 'by little' holds (largest change 0.0006).",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/churn_case/explanations/churn-case-s10.json --part state24Hinge --json"
+   ]
+  },
+  {
+   "id": "V32",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_94",
+   "claims": [],
+   "location": "operations.churnScore.hypothesis",
+   "statement": "AUC 0.908, accuracy 0.906 on 4000 rows, churn 14.1%, mean risk 14.3%; typical customer risk 2%, score -3.77, direct 0.33, ramp 0.09; direct at mean -> 0.786; chain + boost off -> 0.815; every nonlinear part affine -> 0.834; 29 unconnected inputs",
+   "check": "probe --wide; subgroup risk >= 0; ablations; stored linearisation query; name mapping",
+   "evidence": "AUC 0.9077166, accuracy 0.9065, n 4000, 566 churned (14.1%), mean risk 14.3%; typical risk 2.3%, score -3.7679, direct +0.3324, ramp +0.0900; 0.7860; 0.8154; the stored query q_d25f46e456 (query_linearise, level parts, op_seq 91, train, n 4000, not sampled) holds auc_all_affine 0.83384 -> 0.834. An independent rerun of the parts-level linearisation failed with a tool error ('model state (with overrides) is not a DAG'; also with --core); the node-level linearisation runs and gives 0.8348 (every switching ReLU affine), a different configuration. The 29 Null inputs are the ones named.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/churn_case/explanations/churn-case-s10.json --wide --nodes all",
+    "uv run python -m explaneat verify subgroup experiments/churn_case/explanations/churn-case-s10.json --where \"risk >= 0\"",
+    "uv run python -m explaneat verify linearise experiments/churn_case/explanations/churn-case-s10.json --level nodes",
+    "uv run python -m explaneat verify linearise experiments/churn_case/explanations/churn-case-s10.json  # fails: model state (with overrides) is not a DAG"
+   ]
+  },
+  {
+   "id": "V33",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_94",
+   "claims": [],
+   "location": "operations.churnScore.hypothesis",
+   "statement": "The typical customer (medians; state 49, no plans, 1 service call) ... where the direct terms contribute 0.33 and the day-minutes ramp 0.09 relative to its mean, and the gated parts are off",
+   "check": "probe --wide of the typical customer with every part's exit",
+   "evidence": "the typical customer is in state 49, so the two-state flag, a gated part, is on: exit 2471 = 4.254, contribution -0.4231. Seven of the eight gated parts are off. The score -3.7679 is the bias plus 0.3324 (direct) plus 0.0900 (ramp) minus 0.4231 (two-state flag); without the flag the typical risk would be 3.4%, not 2.3%.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/churn_case/explanations/churn-case-s10.json --wide --nodes all",
+    "uv run python -m explaneat verify ablate experiments/churn_case/explanations/churn-case-s10.json --part twoStateFlag"
+   ]
+  },
+  {
+   "id": "V34",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_94",
+   "claims": [],
+   "location": "operations.churnScore.evidence[0]",
+   "statement": "Self-probe: the typical customer with each part reported; the gated parts are off and the score is the bias plus the direct terms and the ramp",
+   "check": "same probe as V33",
+   "evidence": "the probe itself shows ann_86 (twoStateFlag) contributing -0.4231 for the typical customer (exit 4.254); the score is the bias plus the direct terms, the ramp and the two-state flag.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/churn_case/explanations/churn-case-s10.json --wide --nodes all"
+   ]
+  },
+  {
+   "id": "V35",
+   "grade": "upheld",
+   "level": "L2",
+   "part": "ann_94",
+   "claims": [],
+   "location": "operations.churnScore.evidence[1]",
+   "statement": "evidence[1] to evidence[9]: plan toggle, call sweep, heavy user, direct terms at mean, three service-call parts off, whole split, performance (op_seq 95), restore gains, composed closed form",
+   "check": "queries' split, n, sampling and op_seq; the numbers against my reruns",
+   "evidence": "all on the full training split (n 4000, not sampled); the performance record was recomputed after the structural operations (op_seq 95) and matches AUC 0.9077 / accuracy 0.9065; the three service-call parts off gives 0.7955 (not quoted in text); the composed closed form is the children expanded",
+   "commands": []
+  },
+  {
+   "id": "V36",
+   "grade": "upheld",
+   "level": "L4",
+   "part": null,
+   "claims": [],
+   "location": "operations.churnScore.hypothesis",
+   "statement": "all 14 hypotheses, domain sense",
+   "check": "read each hypothesis for domain terms, restatement and conflicts",
+   "evidence": "every hypothesis is in customer terms (calls to customer service, day minutes and dollars, plans, states), says whom the part acts on and what it does to the predicted chance of leaving, and quotes training counts and rates; none is a bare restatement of its closed form (the state flags come closest but add the acting subgroup, its churn rate and the model's risk change). Known churn drivers (service calls, heavy daytime use, international plan up; voice-mail plan down) are in the expected direction; the two domain oddities are flagged separately (V13, V22).",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_94": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_90": {
+   "grade": "weakened",
+   "level": "L2"
+  },
+  "ann_91": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_81": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_82": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_83": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_92": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_84": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_85": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_93": {
+   "grade": "weakened",
+   "level": "L1"
+  },
+  "ann_86": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_87": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_88": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_89": {
+   "grade": "weakened",
+   "level": "L1"
+  }
+ },
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ],
+ "recheck_summary": {
+  "mismatch": 0,
+  "needs_review": 0,
+  "warn": 0,
+  "info": 0,
+  "unchecked_freetext": 101,
+  "verdict": "numbers reproduce",
+  "seconds": 38.9
+ },
+ "tool_notes": [
+  "verify linearise (parts level, with or without --core) fails on this model: 'model state (with overrides) is not a DAG'; node level runs. The root's 0.834 was checked against the stored query only.",
+  "verify ablate --edge 1792->486 is refused (no enabled edge) because the hand-off now runs 1792->identity_1792_486->486; the identity edge works.",
+  "verify recheck wrote experiments/churn_case/plain_language/churn-case-s10.json (2.2 MB, timestamp of the recheck run) although the task said no plain-language layer exists; it was not opened.",
+  "query_ablate stores AUCs rounded to four decimals; templates then print three, so values ending in 5 at the fourth decimal can print one unit low (V23, V31)."
+ ]
+}

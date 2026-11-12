@@ -22,7 +22,7 @@ Mike-verified (signoff-v1) is **0 everywhere**: no record carries `mike_verifica
 | # | Experiment | Status |
 |---|---|---|
 | 1.1 | Heart, Adult, MONK-2: the AAAI paper genomes, recomputed | complete; levels computed 13 Nov with probe v1 (to be recomputed with probe v2) |
-| 1.2 | Churn case | **gap**: no single churn model was explained as a case; the 10-seed churn sets stand in |
+| 1.2 | Churn case | complete (gap closed 13 Nov, `exp/churn-case`): one seeded run explained, levels computed (probe v2), blind verifier weakened (0 refuted); not signed off |
 | 1.3 | Cox survival case (GBSG2, WHAS500) | complete; plain-language draft deliberately skipped (template change, `fix/varianz-readiness`) |
 | 1.4 | XOR worked example | complete |
 | 1.5 | KRK boundary case | complete as an exploratory write-up; blind verifier run 13 Nov on krk-default-s2 (refuted: 1 refuted, 3 weakened, 24 upheld) |
@@ -89,21 +89,50 @@ plus `ch7_cox_case_table.tex` (Cox) and the XOR figures. The explanation level d
 
 ### 1.2 Churn case
 
-- **What exists.** No single churn model has been explained as an Experiment 1 case. Churn appears
-  as two supplementary 10-seed sets (churn100, churn200; `experiments/churn/PLAN.md`, not
-  pre-registered), explained under v3 and again under v4, with levels computed for all 20
-  (`experiments/explanation_levels/levels/churn*.json`), plus the churn extensions (A, B, C2, D2, E
-  in `experiments/churn/EXTENSIONS_RESULTS.md`, `da06071`).
-- **Key numbers** (`experiments/10seed/summary.md`, reported): test AUC median churn100 0.886
-  [0.877, 0.895], churn200 0.900 [0.895, 0.906]; LR 0.813, GB 0.932; hidden nodes 17 and 22.5
-  (medians). Levels (`experiments/explanation_levels/tables.md`): churn100 7 leaves, 87%
-  meaningful; churn200 8.5 leaves, 89% meaningful; churn200-s7 is the one coarse flag.
-- **DB:** training runs in `explaneat_dev` (names in `experiments/churn/PLAN.md`); v4 explanations
-  in `explaneat_v4`.
-- **Status: gap.** The export row carries the two sets' medians and says so. To close: pick one
-  churn genome by a stated rule (e.g. the pre-registered tie-break, best training fitness, in
-  churn100), run a blind verifier on its v4 record (~20 min agent time), and add the row: ~1 h.
-  Mike decides whether a churn case is wanted at all.
+- **What it did.** One independent PropNEAT run on the 10-seed churn dataset and split
+  (`churn_onehot` `802129c2`, split `45962ea6`, 71 inputs with the state and area-code one-hots),
+  matched to the AAAI paper protocol (population 250, 5 backprop epochs per generation, AUC
+  fitness, sigmoid output, unmasked, best genome by training fitness, test never used; the Adult
+  paper config with `num_inputs` 71) at the churn200 budget of 200 generations (churn is harder;
+  the only deliberate departure from the paper budgets). Seed 10: the paper runs recorded no seed
+  (`random_seed` null), so the rule "the first integer after the study's seeds 0–9" was fixed
+  before the run; a seed in 0–9 would reproduce a churn200 genome bit for bit (a 3-generation
+  dry run reproduced churn200-s0's population statistics exactly). The selected genome was
+  explained with the frozen v4 method (strict, provenance, 3-hour box, one agent; 31 min),
+  rechecked, blind-verified, graded on the three levels and given a plain-language draft.
+  LR and GB were refitted on the split (identical to `experiments/churn/baselines.json`).
+- **Pre-registered:** no (the design and seed rule are stated in `RESULTS.md` §2 before the run;
+  nothing was re-run or reselected).
+- **Results files:** `experiments/churn_case/RESULTS.md`, `runs.csv`, `references.json`,
+  `explanations/churn-case-s10.json`, `levels/churn-case-s10.json`, `verdicts/churn-case-s10/`,
+  `plain_language/churn-case-s10.json`, `EXPLAIN_TASK.md`, `logs/`.
+- **Key numbers** (`RESULTS.md` §3, §5, §6): train AUC 0.9077, **test AUC 0.880 [0.844, 0.913]**
+  vs LR 0.813, GB 0.932 (56% of the LR-to-GB gap closed); the churn200 ten-seed median is 0.900
+  (range 0.876–0.911; reported, unchanged). 18 hidden units, 75 connections, 42 of 71 inputs.
+  Explanation: 10 leaves, 4 compositions, coverage 1.0 / 1.0, function preservation 1.4e-15,
+  recheck 0 / 0, 234 provenance-backed numbers over 72 queries. Levels (probe v2): 1.4e-15; 10
+  leaves, granularity 1.0; understood 9 / 0 / 1 by the library probe (the 35-term direct sum is
+  closed-form only), 7 / 1 / 2 for the author's stored concepts, 0 restatements. Verifier: **weakened** (25 upheld, 9 weakened, 0
+  refuted, 2 domain flags): the root's "gated parts are off" for the typical customer misses the
+  state-49 flag (−0.42), "flat to falling" for a rising 0.7–2.6% light-use range, "two hidden
+  units" for one, "3 calls for light users" for a gate that reaches 2 calls on 21 rows, and a
+  double-rounded 0.907 / 0.908. Draft: 184 claims, 175 verified, lint clean, 5 flags.
+- **What the model does:** a sigmoid of a bias plus a linear sum (international plan up,
+  voice-mail plan down) and two nonlinear rules: a 6-deep service-call gate (4 or more calls,
+  suppressed for heavy daytime users, counted again inside a day-charge hinge) and a heavy
+  daytime-use hinge above about 220 day minutes; four small state flags; 29 inputs ignored.
+  The same two rules as the churn200 summaries, on an independent seed.
+- **Already reported:** the churn200 medians and LR / GB baselines quoted for comparison.
+- **Exports / figures:** `ch7_experiment1_cases.tex` row 4 (replaces the "no single case" row;
+  the churn100 / churn200 sets stay in the Experiment 2 table).
+- **DB:** `explaneat_dev`; experiment `churn-case-s10` (`353e267d`, seed 10, `track_ancestry`
+  on: 49,750 of 50,000 genome rows carry a parent), genome `9cacd431` (key 31452, generation
+  197), explanation `ce11259b` (95 operations). The harness check `churn-case-dryrun-s0`
+  (`a7451153`, 3 generations) is also in `explaneat_dev`. Nothing in `explaneat_v4`.
+- **Status: complete; gap closed.** Not signed off (no `mike_verification`); the explanation
+  was not edited after verification (the verifier's weakenings are listed in `RESULTS.md` §6).
+- **Audit:** no "Claude" in the case files; the only external path is the scratch directory
+  named in `EXPLAIN_TASK.md` as the agent's working area.
 
 ### 1.3 Cox survival case (GBSG2, WHAS500)
 

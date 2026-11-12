@@ -127,18 +127,17 @@ def experiment1():
                      f"{p['hidden_nodes']} / {p['phenotype_connections_enabled']}",
                      f"AUC {float(p['test_auc']):.3f} vs LR {b['logistic']['test_auc']:.3f}, GB {b['gradient_boosting']['test_auc']:.3f}",
                      lv_cell, "paper explanation; no blind verifier; not signed off"])
-    # churn: no single-model case; the 10-seed sets, reported medians
-    cb = jload(E / "churn" / "baselines.json")
-    auc = summary_md_row("Test AUC", ["churn100", "churn200"])
-    lv = {s: [levels_counts(p) for p in sorted((E / "explanation_levels" / "levels").glob(f"{s}-s*.json"))]
-          for s in ("churn100", "churn200")}
-    lv_txt = "; ".join(f"{s}: median {st.median(x['leaves'] for x in v):g} leaves, "
-                       f"{100 * st.median(x['understood'] for x in v):.0f}% meaningful" for s, v in lv.items())
-    body.append(["Churn (no single case: 10 seeds each, churn100 and churn200)",
-                 f"{cb['n_train']:,} / {cb['n_test']:,}",
-                 "10 seeds each (see Experiment 2)",
-                 f"median AUC {auc['churn100']} / {auc['churn200']} vs LR {cb['l2_logistic']['test_auc']:.3f}, GB {cb['gradient_boosting']['test_auc']:.3f}",
-                 lv_txt, "recheck clean (v4); no blind verifier; 0 / 10 signed off"])
+    # churn case (Experiment 1.2): one run, seed 10, 200 generations, best genome by training fitness
+    cc = E / "churn_case"
+    crun = rows(cc / "runs.csv")[0]
+    cref = jload(cc / "references.json")
+    clv = levels_counts(cc / "levels" / "churn-case-s10.json")
+    g, u, w, rf, fl = verdict_counts(cc / "verdicts" / "churn-case-s10" / "verdict.json")
+    body.append(["Churn case (churn-case-s10)", f"{int(crun['n_train']):,} / {int(crun['n_test']):,}",
+                 f"{crun['hidden_nodes']} / {crun['phenotype_connections_enabled']}",
+                 f"AUC {float(crun['test_auc']):.3f} vs LR {cref['l2_logistic']['test_auc']:.3f}, GB {cref['gradient_boosting']['test_auc']:.3f}",
+                 f"{clv['faithful']:.1e}; {clv['leaves']} leaves; {clv['m']} / {clv['p']} / {clv['c']} (probe v2)",
+                 f"blind verifier {g} ({u} upheld, {w} weakened, {rf} refuted, {fl} flags); not signed off"])
     body.append("midrule")
     # Cox
     refs = {(r["dataset"], r["model"]): r for r in rows(E / "survival" / "cox_case" / "references.csv")}
@@ -201,7 +200,7 @@ def experiment1():
     header = ["Case", "n (train / test)", "Hidden / conns", "Test metric vs references",
               "Levels: faithful; decomposed; understood (m / p / c)", "Verification"]
     note = ("Sources: results/thesis/baselines.json and experiments/10seed/runs\\_paper\\_reference.csv (paper genomes); "
-            "experiments/10seed/summary.md and experiments/churn/baselines.json (churn); "
+            "experiments/churn\\_case/ (runs.csv, references.json, levels/, verdicts/; the churn case); "
             "experiments/survival/cox\\_case/ (runs, references.csv, levels/, verdicts/; n is train / validation / test); "
             "experiments/xor/xor\\_results.json; experiments/complex\\_real/ (runs.csv, baselines.json, explanations/, verification/krk/); "
             "experiments/c4\\_capacity/ (runs.csv, baselines.json, explanations/record.json, verification/independent/) and "

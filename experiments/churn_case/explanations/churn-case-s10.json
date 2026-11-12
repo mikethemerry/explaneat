@@ -1,0 +1,244 @@
+{
+  "label": "churn-case-s10",
+  "genome_id": "9cacd431-a3b0-4649-89fb-961d5a6fe5b3",
+  "start": "2026-11-13T11:16:13+13:00",
+  "end": "2026-11-13T11:47:05+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 10,
+  "n_composition_annotations": 4,
+  "n_splits": 6,
+  "n_identity_nodes": 3,
+  "hidden_nodes": 18,
+  "hidden_nodes_single_leaf_no_split": 18,
+  "hidden_nodes_in_any_annotation": 18,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 1.4432899320127035e-15,
+  "closed_form_max_abs_err": 0.05184165824064113,
+  "summary_template": "The network scores churn as a sigmoid of a bias plus additive parts. Its largest part is a linear sum of direct edges, led by an international plan (up) and a voice-mail plan (down): the training AUC is {{q:q_c84ee6cec0.data.auc_with|.3f}} with everything on and {{q:q_c84ee6cec0.data.auc_without|.3f}} with the direct terms fixed at their mean. Next come a service-call chain that switches on at 4 or more customer-service calls for customers who are not heavy daytime users ({{q:q_65e6aaa924.subgroup.n|d}} training customers, churn rate {{q:q_65e6aaa924.subgroup.outcome_rate|.1%}}; AUC {{q:q_8d1aaa9434.data.auc_without|.3f}} without it) and is counted again inside a day-charge hinge, and a heavy-daytime-use hinge above about 220 day minutes that, with a negative ramp that is on across the training rows and the direct day-charge edge, gives a flat-to-falling then steeply rising response to daytime use. Four small state flags and a linear service-call spike complete the model; 29 inputs are unconnected. The ten leaves each carry a probe grade of meaningful (lowest score {{q:q_204e404869.score|.2f}}, the direct terms), function preservation holds to {{q:q_88cb4131ee.function_preservation_max_abs_err|.1e}} and the hierarchy covers the whole phenotype.",
+  "resisted_template": "Nothing was left unannotated. Three limits are stated rather than explained away: the chain's falling branch beyond 5 calls rests on {{q:q_91d86fbeef.subgroup.n|d}} training rows; the day-charge unit's two small state terms and the two-state flag's hand-off from the heavy-use unit are described by their formulas without a reading of their own; and the typed closed forms are rounded to three significant figures, so the chain's formula is off by up to {{q:q_88cb4131ee.closed_form_max_abs_err|.2g}} on a training row.",
+  "summary": "The network scores churn as a sigmoid of a bias plus additive parts. Its largest part is a linear sum of direct edges, led by an international plan (up) and a voice-mail plan (down): the training AUC is 0.908 with everything on and 0.786 with the direct terms fixed at their mean. Next come a service-call chain that switches on at 4 or more customer-service calls for customers who are not heavy daytime users (351 training customers, churn rate 41.0%; AUC 0.813 without it) and is counted again inside a day-charge hinge, and a heavy-daytime-use hinge above about 220 day minutes that, with a negative ramp that is on across the training rows and the direct day-charge edge, gives a flat-to-falling then steeply rising response to daytime use. Four small state flags and a linear service-call spike complete the model; 29 inputs are unconnected. The ten leaves each carry a probe grade of meaningful (lowest score 0.88, the direct terms), function preservation holds to 1.4e-15 and the hierarchy covers the whole phenotype.",
+  "resisted": "Nothing was left unannotated. Three limits are stated rather than explained away: the chain's falling branch beyond 5 calls rests on 42 training rows; the day-charge unit's two small state terms and the two-state flag's hand-off from the heavy-use unit are described by their formulas without a reading of their own; and the typed closed forms are rounded to three significant figures, so the chain's formula is off by up to 0.052 on a training row.",
+  "numbers": {
+    "in_text": 426,
+    "referenced": 234,
+    "allow_listed": 192
+  },
+  "accuracy_counts": {
+    "placeholders": 226,
+    "distinct_query_ids": 66,
+    "allow_listed": 168
+  },
+  "recheck_summary": {
+    "ran_at": "2026-11-12T22:46:43+00:00",
+    "recheck_version": 3,
+    "mismatch": 0,
+    "needs_review": 0,
+    "warn": 0,
+    "mismatches": [],
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 101,
+    "provenance": {
+      "templated_texts": 95,
+      "queries": 72
+    },
+    "complete_ok": true,
+    "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+  },
+  "recheck_notes": "No mismatch and no needs_review item in the final recheck. The unchecked free-text sentences are descriptive sentences with no number in them (mechanism, scope and reading); every stated number is a placeholder rendered from a stored query, and the lint warnings raised during writing (scope words used for ablation settings) were reworded or proved with a count before the recheck.",
+  "tool_bugs": "None that blocked work. Two usability notes: query_probe and query_subgroup take the dataset's raw column names (with spaces; `state` as one coded variable; plan codes as quoted text), not the display names set by rename_inputs.py, which cost one failed batch; and compute_performance run before the structural operations keeps op_seq 71, so it was recomputed on the final state and the root's reference and evidence were switched to the new id.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 426,
+    "provenance_backed": 234,
+    "allow_listed": 192,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 10,
+      "other": 4
+    },
+    "audit": {
+      "references": 234,
+      "checked": 234,
+      "distinct_query_ids": 72
+    },
+    "self_probe": {
+      "parts": [
+        "serviceCallChain",
+        "dayChargeBoost",
+        "serviceCallSpike",
+        "heavyDayUse",
+        "dayMinutesRamp",
+        "twoStateFlag",
+        "state38Hinge",
+        "state18Hinge",
+        "state24Hinge",
+        "directTerms",
+        "serviceCallEffects",
+        "dayUseShape",
+        "stateAdjustments",
+        "churnScore"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0
+  },
+  "leaves": [
+    {
+      "name": "serviceCallChain",
+      "units": [
+        "7783",
+        "8625",
+        "8965",
+        "13380",
+        "3344",
+        "6516",
+        "1792"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 0.985,
+      "best_concept": "number customer service calls >= 4 and total day minutes <= 220",
+      "why": "A gate that opens at four or more customer-service calls for customers who are not heavy daytime users (one call earlier at light use, shut at 300 day minutes), peaks at five calls and falls back for the few customers with six or more."
+    },
+    {
+      "name": "dayChargeBoost",
+      "units": [
+        "14787",
+        "486"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 0.957,
+      "best_concept": "total day charge > 32 or number customer service calls >= 4",
+      "why": "A day-charge hinge from about 32 dollars that also carries the service-call chain's output, so the complaint signal is counted a second time."
+    },
+    {
+      "name": "serviceCallSpike",
+      "units": [
+        "5276"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 1.0,
+      "best_concept": "number customer service calls",
+      "why": "A single hinge rising linearly from four service calls, unaffected by day use."
+    },
+    {
+      "name": "heavyDayUse",
+      "units": [
+        "1197",
+        "6686"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 0.999,
+      "best_concept": "total day minutes",
+      "why": "A hinge from about 220 day minutes read out twice: the steep upper branch of the model's response to daytime use."
+    },
+    {
+      "name": "dayMinutesRamp",
+      "units": [
+        "21858",
+        "1994"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 1.0,
+      "best_concept": "total day minutes > 180.5",
+      "why": "A negative near-linear ramp above about 130 day minutes, on for the whole training split, that offsets the direct day-charge term for moderate users."
+    },
+    {
+      "name": "twoStateFlag",
+      "units": [
+        "2471"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 1.0,
+      "best_concept": "state:45",
+      "why": "A flag for states 45 and 49 (Virginia, West Virginia) with a small negative weight."
+    },
+    {
+      "name": "state38Hinge",
+      "units": [
+        "2564"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 1.0,
+      "best_concept": "state:38",
+      "why": "A flag for state 38 (Pennsylvania) with a small negative weight."
+    },
+    {
+      "name": "state18Hinge",
+      "units": [
+        "14613"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 1.0,
+      "best_concept": "state:18",
+      "why": "A flag for state 18 (Louisiana) with a small positive weight."
+    },
+    {
+      "name": "state24Hinge",
+      "units": [
+        "18206"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 1.0,
+      "best_concept": "state:24",
+      "why": "A flag for state 24 (Missouri) with a small negative weight."
+    },
+    {
+      "name": "directTerms",
+      "units": [],
+      "meaning": "meaningful",
+      "probe_score": 0.882,
+      "best_concept": "international plan",
+      "why": "The linear sum of the 35 direct edges, led by the international plan (up) and the voice-mail plan (down); the largest part by ablation."
+    }
+  ],
+  "overall_function": "The network is a sigmoid of a bias plus additive parts. The largest is a linear sum of direct edges whose leading terms are the international plan (raising the score), the voice-mail plan (lowering it, outweighing its positive message-count term), day charge, evening and international usage and a few state codes. Two inputs interact nonlinearly: the customer-service call count and daytime use. A deep chain of hinges detects many service calls among customers who are not heavy daytime users (its threshold rises with day minutes and it shuts off for very heavy users), feeds the output directly and is re-counted inside a day-charge hinge; a separate linear spike on service calls keeps the score rising for the most frequent callers. Daytime use is read three times (direct day-charge edge, day-charge hinge, heavy-use hinge) and once negatively (a near-linear ramp), giving a flat-to-falling response for light and moderate users and a steep rise for heavy users; four small state flags adjust the score slightly, and the remaining state codes, area code 510, evening calls, night minutes and calls and international minutes are unconnected and ignored.",
+  "customer_terms": "The model predicts a customer is more likely to leave when they hold an international plan, when they have called customer service several times (the gate opens at a few calls for typical daytime use and one call earlier for light users), and when they are heavy daytime users; a voice-mail plan lowers the predicted chance of leaving. The two risk gates are partly exclusive: the service-call gate is suppressed for heavy daytime users, who are already scored high on usage alone, and for customers who make a great many calls the gate eases while a separate linear term keeps the score up. Night, evening and international minutes play at most a small linear role, account length barely matters, and most states make no difference.",
+  "stuck": "Nothing blocked the work. Three things cost time: the probe and subgroup tools want the dataset's raw column names rather than the renamed node names (one failed batch); a leaf's exit cannot serve as another leaf's entry, so the two serial hand-offs (chain into the day-charge unit, heavy-use unit into the two-state flag) needed identity nodes; and structural coverage counts an exit as covered only when every one of its outgoing edges sits in some annotation, so the two hand-off edges had to be listed in the root and the compositions were undone and recreated once.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 14,
+      "roots": [
+        "churnScore"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 1.4432899320127035e-15,
+    "closed_form_max_abs_err": 0.05184165824064113,
+    "numeric_max_abs_err": 2.6645352591003757e-15,
+    "op_counts": {
+      "rename_node": 71,
+      "split_node": 6,
+      "consolidate_node": 1,
+      "add_identity_node": 3,
+      "annotate": 14
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-12T22:48:13+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 101,
+      "provenance": {
+        "templated_texts": 95,
+        "queries": 72
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

@@ -7,6 +7,7 @@ stored explanations, one JSON per explanation in ``levels/<label>.json``.
     uv run python experiments/explanation_levels/compute_levels.py --set c4lf      # the Connect-4 line-features runs (explaneat_dev)
     uv run python experiments/explanation_levels/compute_levels.py --set paper     # the three AAAI paper explanations (explaneat_dev)
     uv run python experiments/explanation_levels/compute_levels.py --set all       # every set above, one process each
+    uv run python experiments/explanation_levels/compute_levels.py --set churn_case  # the churn case (explaneat_dev)
     uv run python experiments/explanation_levels/compute_levels.py --set v4 --labels heart-s0,adult-s1
 
 Nothing is written to any database: the model is the genome's phenotype with the stored
@@ -62,6 +63,9 @@ SETS = {
     # the three AAAI paper explanations (results/thesis/paper_recompute.md): one explanation per
     # genome, no record file (the closed-form error is therefore null)
     "paper": {"db": "postgresql://localhost/explaneat_dev", "records": None},
+    # the churn case (experiments/churn_case): one genome, Experiment 1.2
+    "churn_case": {"db": "postgresql://localhost/explaneat_dev", "records": ROOT / "experiments/churn_case/explanations",
+                   "out": ROOT / "experiments/churn_case/levels"},
 }
 PAPER_GENOMES = [
     ("paper-heart", "9022a9eb-ecf9-41ba-b138-28ed4d131c9d"),   # "Heart Binary", explanation a03ebc86
@@ -296,20 +300,20 @@ def main():
                     help="a set, or 'all' (every set, each in its own process: the database handle is cached per process)")
     ap.add_argument("--labels", default=None, help="comma-separated labels (default: all)")
     ap.add_argument("--no-cache", action="store_true")
-    ap.add_argument("--out", default=str(HERE / "levels"))
+    ap.add_argument("--out", default=None, help=f"output directory (default: the set's own, else {HERE / 'levels'})")
     ap.add_argument("--max-terms", type=int, default=None, help="simplicity: most variables in an ad-hoc concept (default 3)")
     ap.add_argument("--min-support", type=float, default=None, help="support: least minority share of a binary concept (default 0.01)")
     a = ap.parse_args()
     if a.set == "all":
         import subprocess
         for name in SETS:
-            cmd = [sys.executable, __file__, "--set", name, "--out", a.out] + (["--no-cache"] if a.no_cache else [])
+            cmd = [sys.executable, __file__, "--set", name] + (["--out", a.out] if a.out else []) + (["--no-cache"] if a.no_cache else [])
             if a.labels:
                 cmd += ["--labels", a.labels]
             subprocess.run(cmd, check=False)
         return
     os.environ["DATABASE_URL"] = SETS[a.set]["db"]
-    out = Path(a.out)
+    out = Path(a.out) if a.out else Path(SETS[a.set].get("out") or HERE / "levels")
     out.mkdir(parents=True, exist_ok=True)
     lmeta, gt = ladder_meta()
     labels = set(a.labels.split(",")) if a.labels else None
