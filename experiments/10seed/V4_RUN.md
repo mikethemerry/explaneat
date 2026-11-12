@@ -47,7 +47,7 @@ results.
 |---|---|---|---|---|---|---|---|
 | adult | 10 / 10 | 10 / 10 | 0 / 0 | 0 / 6 | 696 / 571 | 849 / 1487 | 21.6 |
 | churn100 | 10 / 10 | 10 / 10 | 0 / 0 | 1 / 2 | 458 / 470 | 688 / 1353 | 18.2 |
-| churn200 | 10 / 10 | 10 / 10 | 0 / 0 | 0 / 1 | 525 / 493 | 714 / 1420 | 21.6 |
+| churn200 | 10 / 10 | 10 / 10 | 0 / 0 | 0 / 1 | 525 / 486 | 714 / 1420 | 21.6 |
 | heart | 10 / 10 | 10 / 10 | 0 / 0 | 0 / 1 | 449 / 338 | 562 / 981 | 12.9 |
 | heart100 | 10 / 10 | 10 / 10 | 0 / 0 | 0 / 1 | 634 / 396 | 694 / 1180 | 14.9 |
 | monk2 | 10 / 10 | 10 / 10 | 0 / 0 | 0 / 1 | 455 / 393 | 387 / 709 | 13.3 |
@@ -60,6 +60,7 @@ results.
 - **New columns:** every number in the new database text is a reference to a stored query that
   the recheck reran.
   - The new free-text count is sentences with no number at all.
+  - churn200's new count was first written as 493; the ten records' `recheck_summary.unchecked_freetext_sentences` sum to 486 (corrected 13 Nov from the records; the other five sets match theirs).
 - **Draft sentences:** every text object in the stored draft (summary, blocks, read-down,
   per-part detail, worth checking, revisions).
   - The new drafts are about twice as long. Every v4 draft has the full v5 read-down plus the

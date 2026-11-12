@@ -70,6 +70,7 @@ number of families is not: it is 2 for step, sigmoid and ReLU units.
 
 - **Solved:** 30/30, median generation 16.5.
 - **Raw networks:** 2–8 hidden units (median 6.5), of which 1–6 are nonlinear on the data.
+  (The 6.5 is the median of the raw hidden counts as summarised when this was written; the stored `raw_hidden_count` histogram in `xor_results.json` gives a median of 6. Left as reported; the range is what the thesis table cites.)
 
 **Reduction to a minimal form.** Two steps alternate to a fixed point:
 - *Exact relay collapse:* a hidden unit active on all four rows is linear there, so it is folded
