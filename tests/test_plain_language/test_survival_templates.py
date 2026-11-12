@@ -131,3 +131,9 @@ def test_classification_layers_are_unchanged():
     assert L["risk_scale"]["kind"] == "binary" and "ph_caveat" not in L
     assert all("hazard_ratio" not in (c.get("estimate") or {}) for c in L["claims"])
     assert "hazard ratio" not in sentences_text(L["template"]["summary"], cite=False)
+
+
+def test_num_slot_strips_the_unit_of_a_change_text():
+    from explaneat.analysis.plain_language_slots import fmt_slot
+    assert fmt_slot({"text": "12 nodes", "value": 12.0}, "num", "from") == "12"
+    assert fmt_slot({"text": "12 nodes", "value": 12.0}, None, "from") == "12 nodes"

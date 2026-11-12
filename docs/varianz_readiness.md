@@ -126,9 +126,12 @@ New: `tests/test_plain_language/test_survival_templates.py` (6), `tests/test_ver
 (5), two tests appended to `tests/test_mcp/test_provenance.py`. Suites re-run after the changes:
 `tests/test_plain_language`, `tests/test_verify`, `tests/test_mcp/test_provenance.py`,
 `tests/test_mcp/test_snapshots.py`, `tests/test_mcp/test_query_hazard_ratios.py`,
-`tests/test_export`, and the CI's fast subset (`tests/test_core tests/test_survival tests/test_api
-tests/test_mcp tests/test_install`, not slow) and `tests/test_api/test_portal.py` (see the commit
-message for the counts).
+`tests/test_export` (297 passed, 1 skipped); the CI's fast subset (`tests/test_core
+tests/test_survival tests/test_api tests/test_install`, not slow: 400 passed, 3 skipped),
+`tests/test_install`, `tests/test_api/test_portal.py` and `tests/test_survival` (55 passed).
+One finding on the way: a worktree synced without `--extra survival` fails the demo smoke tests
+and the portal workflow with "scikit-survival is not installed", which is what `doctor`
+reports; the README's `uv sync --extra survival` is required, not optional.
 
 ## 7. What Mike must do
 

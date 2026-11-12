@@ -69,7 +69,9 @@ def fmt_slot(value: Any, fmt: Optional[str], key: str) -> str:
     from .plain_language_templates import pct
     fmt = (fmt or "").strip()
     if isinstance(value, dict) and "text" in value:
-        return str(value["text"])
+        if fmt != "num":
+            return str(value["text"])
+        value = value["text"]        # "{{C02.statement.change.from|num}}": "12 nodes" -> "12"
     if fmt == "num":         # the number of a value written with its unit ("126 minutes" -> "126")
         m = re.match(r"\s*[-+−]?\$?\d[\d,]*(?:\.\d+)?", str(value))
         if not m:
