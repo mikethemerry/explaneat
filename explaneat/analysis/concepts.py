@@ -346,6 +346,29 @@ def concept_frame(dataset_name: str, X_raw: np.ndarray, names: Sequence[str], co
     return pd.DataFrame(cols)
 
 
+_BACKTICK = re.compile(r"`([^`]+)`")
+_IDENT = re.compile(r"(?<![\w.])[A-Za-z_][A-Za-z0-9_]*(?![\w(])")
+#: words of the pandas expression language that are not column names
+EXPR_WORDS = {"and", "or", "not", "in", "True", "False", "None", "abs", "sqrt", "log", "exp", "sin", "cos",
+              "tan", "floor", "ceil", "where", "max", "min"}
+
+
+def expression_variables(expr: str, columns: Optional[Iterable[str]] = None) -> List[str]:
+    """The distinct column names an ad-hoc expression refers to: backtick-quoted names, and bare
+    identifiers (those among ``columns`` when a column list is given, else every identifier that
+    is not an operator word). Sorted."""
+    names = set(_BACKTICK.findall(expr))
+    rest = _BACKTICK.sub(" ", expr)
+    cols = set(str(c) for c in columns) if columns is not None else None
+    for m in _IDENT.finditer(rest):
+        w = m.group(0)
+        if w in EXPR_WORDS:
+            continue
+        if cols is None or w in cols:
+            names.add(w)
+    return sorted(names)
+
+
 def evaluate_expression(expr: str, frame) -> Concept:
     """An ad-hoc concept: a pandas expression over the frame's columns (backticks for names with
     spaces or hyphens; the library's concept names are columns too)."""

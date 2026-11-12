@@ -6,8 +6,13 @@
  "records_dir": "explanations",
  "dataset": "connect4_win_ordinal",
  "n_train": 54045,
- "computed_at": "2026-11-11T22:34:45+00:00",
+ "computed_at": "2026-11-12T22:08:18+00:00",
  "method": "experiments/explanation_levels/compute_levels.py (read only; probes not stored, query_id null)",
+ "probe_version": 2,
+ "conditions": {
+  "max_terms": 3,
+  "min_support": 0.01
+ },
  "levels": {
   "faithful": {
    "function_preservation_max_abs_err": 0.0,
@@ -34,15 +39,24 @@
     "meaningful": 0,
     "partial": 0,
     "closed_form_only": 0,
+    "restatement": 0,
     "unnamed": 0
    },
    "grades": {},
    "understood_fraction": null,
+   "understood_probe": null,
    "partial_fraction": null,
    "closed_form_only_fraction": null,
+   "restatement_fraction": null,
    "unnamed_fraction": null,
    "concepts": {},
-   "test": "concept probe per leaf: meaningful r2 >= 0.8 or AUC >= 0.9; partial r2 >= 0.5 or AUC >= 0.75; else closed_form_only; unnamed when no concept was probed",
+   "understood_verifier": null,
+   "understood_fraction_verifier": null,
+   "verifier_graded": 0,
+   "verifier_grades": null,
+   "verifier_compared": 0,
+   "verifier_disagreements": null,
+   "test": "concept probe per leaf (v2): meaningful score >= 0.8; partial >= 0.5; else closed_form_only; restatement when the concept is not simpler than the leaf (more than 3 terms, or a reweighting of the leaf's entries); a binary concept's AUC counts only against a gate of comparable support (>= 1% of rows), else r2; unnamed when no concept was probed. understood_verifier: the blind verifier's leaf grades where a verdict exists",
    "ground_truth": {
     "task": null,
     "arch": null,
@@ -52,6 +66,22 @@
     "gt_terms_total": null,
     "explainer_leaf_grades": {},
     "truth": null
+   },
+   "verdict": null,
+   "author": {
+    "leaves": 0,
+    "grades": {},
+    "counts": {
+     "meaningful": 0,
+     "partial": 0,
+     "closed_form_only": 0,
+     "restatement": 0,
+     "unnamed": 0
+    },
+    "understood_fraction_author": null,
+    "restatements": 0,
+    "stored_grades": {},
+    "note": "the concept the explaining agent stored on each leaf (set_meaning), re-probed under the v2 simplicity and support conditions; None when no concept was stored"
    },
    "domain_only": null
   }

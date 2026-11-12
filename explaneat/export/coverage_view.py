@@ -152,7 +152,8 @@ def levels_rows(doc: Dict[str, Any], esc=lambda s: s, num=None) -> List[tuple]:
     c = u.get("counts") or {}
     understood = (f"{num(u.get('understood_fraction'))} of {u.get('leaves')} leaves meaningful "
                   f"({c.get('meaningful', 0)} meaningful, {c.get('partial', 0)} partial, "
-                  f"{c.get('closed_form_only', 0)} closed-form only, {c.get('unnamed', 0)} unnamed)"
+                  f"{c.get('closed_form_only', 0)} closed-form only, {c.get('restatement', 0)} restatement, "
+                  f"{c.get('unnamed', 0)} unnamed)"
                   if u.get("leaves") else "no leaves")
     return [("Level 1, faithful", faithful), ("Level 2, decomposed", decomposed),
             ("Level 3, understood", understood)]

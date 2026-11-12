@@ -427,6 +427,12 @@ def _concept_text(r: Dict[str, Any]) -> str:
     if r.get("concept"):
         lines.append(f"  {r['concept']} ({r['concept_kind']}, {r['concept_source']}): score {r['score']}, "
                      f"r2 {r['r2']}, AUC {r['auc']}, MI {r['mi']} bits -> {r['grade']}")
+        lines.append(f"  conditions: {r.get('concept_complexity')} term(s) of at most {r.get('max_terms')}, "
+                     f"simpler than the leaf {r.get('simpler_than_leaf')}"
+                     + (" (a reweighting of the leaf's entries)" if r.get("reweighting_of_entries") else "")
+                     + (f"; support {r['support']}" if r.get("support") is not None else "")
+                     + (" (below the floor: r2 only)" if r.get("low_support") else "")
+                     + ("; AUC counts" if r.get("auc_in_score") else "; score is r2"))
         for e, s in r["per_exit"].items():
             lines.append(f"    exit {e}: r2 {s['r2']}, AUC {s['auc']} ({s['auc_of'] or 'n/a'}; {s['direction'] or ''}), "
                          f"MI {s['mi']}, gated {s['leaf_gated']}")

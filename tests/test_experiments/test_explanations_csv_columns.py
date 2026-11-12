@@ -19,7 +19,8 @@ FROZEN = ("order,label,dataset,seed,genome_id,protocol,structural_coverage,compo
           "closed_form_max_abs_err,numeric_max_abs_err,claude_minutes,verified_by_mike,mike_minutes,mike_changes,"
           "pilot,rule_agreement,vs_40gen,resisted,signoff_protocol,signoff_date,signoff_confirmed,signoff_wrong,"
           "signoff_unsure,signoff_sample_n,signoff_sample_wrong,signoff_error_bound").split(",")
-NEW = ["faithful_max_err", "n_leaves", "granularity", "understood_fraction", "closed_form_only_fraction"]
+NEW = ["faithful_max_err", "n_leaves", "granularity", "understood_fraction", "closed_form_only_fraction",
+       "understood_fraction_verifier"]
 
 
 def _load_levels_columns():

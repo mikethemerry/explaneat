@@ -7,7 +7,8 @@ import pytest
 
 from explaneat.analysis.coverage_report import coverage_report, decomposition_report, part_shape
 from explaneat.analysis.explanation_levels import (explanation_levels, leaf_meanings_from_operations,
-                                                   levels_summary_row, understood_block)
+                                                   levels_summary_row, normalise_grade, understood_block,
+                                                   verifier_leaf_grades)
 from explaneat.core.genome_network import NetworkConnection, NetworkNode, NetworkStructure, NodeType
 
 
@@ -104,7 +105,8 @@ def test_levels_assemble():
     assert lv["understood"]["understood_fraction"] == 0.5 and lv["understood"]["closed_form_only_fraction"] == 0.5
     row = levels_summary_row(lv)
     assert row == {"faithful_max_err": 0.0, "n_leaves": 2, "granularity": 1.0, "understood_fraction": 0.5,
-                   "closed_form_only_fraction": 0.5}
+                   "closed_form_only_fraction": 0.5, "understood_fraction_verifier": None}
+    assert lv["understood"]["understood_probe"] == 0.5 and lv["understood"]["verifier_disagreements"] is None
     none = explanation_levels(rep, None, None)
     assert none["faithful"]["passed"] is None and none["understood"]["unnamed_fraction"] == 1.0
 
@@ -121,4 +123,29 @@ def test_meanings_from_operations():
     m = leaf_meanings_from_operations(ops)
     assert set(m) == {"a", "b"} and m["b"] is None and m["a"]["concept"] == "x"
     u = understood_block(["a", "b"], m)
-    assert u["counts"] == {"meaningful": 0, "partial": 1, "closed_form_only": 0, "unnamed": 1}
+    assert u["counts"] == {"meaningful": 0, "partial": 1, "closed_form_only": 0, "restatement": 0, "unnamed": 1}
+
+
+def test_verifier_grades_merge():
+    """The blind verifier's leaf grades (keyed by leaf name or annotation id, spelled its way)
+    sit beside the probe's; the disagreement count covers leaves graded by both."""
+    verdict = {"leaf_meaning": {"a": {"grade": "meaningful", "why": "..."},
+                                "ann_2": {"grade": "closed-form-only"},
+                                "ann_3": "partial",
+                                "no_such_leaf": {"grade": "meaningful"},
+                                "d": {"grade": "?"}}}
+    vg = verifier_leaf_grades(verdict, ["a", "b", "c", "d"], {"a": "ann_1", "b": "ann_2", "c": "ann_3", "d": "ann_4"})
+    assert vg == {"a": "meaningful", "b": "closed_form_only", "c": "partial"}
+    meanings = {"a": {"concept": "x", "probe": {"score": 0.9}}, "b": {"concept": "y", "probe": {"score": 0.95}},
+                "c": None, "d": {"concept": "z", "probe": {"score": 0.1}}}
+    u = understood_block(["a", "b", "c", "d"], meanings, vg)
+    assert u["understood_probe"] == 0.5 and u["understood_fraction"] == 0.5
+    assert u["understood_verifier"] == round(1 / 3, 4) and u["understood_fraction_verifier"] == u["understood_verifier"]
+    assert u["verifier_graded"] == 3 and u["verifier_compared"] == 2      # c is unnamed to the probe
+    assert u["verifier_disagreements"] == 1                              # b: probe meaningful, verifier cfo
+    assert u["verifier_grades"] == {"a": "meaningful", "b": "closed_form_only", "c": "partial", "d": None}
+    # a restatement block counts as its own grade, and the summary row carries the verifier column last
+    meanings["b"] = {"concept": "y", "simpler_than_leaf": False, "probe": {"score": 0.95}}
+    u2 = understood_block(["a", "b"], meanings, vg)
+    assert u2["counts"]["restatement"] == 1 and u2["restatement_fraction"] == 0.5 and u2["verifier_disagreements"] == 1
+    assert normalise_grade("Closed form only") == "closed_form_only" and normalise_grade("odd") is None

@@ -6,8 +6,13 @@
  "records_dir": "explanations",
  "dataset": "ladder_syn_0f400",
  "n_train": 24000,
- "computed_at": "2026-11-11T22:29:57+00:00",
+ "computed_at": "2026-11-12T21:59:34+00:00",
  "method": "experiments/explanation_levels/compute_levels.py (read only; probes not stored, query_id null)",
+ "probe_version": 2,
+ "conditions": {
+  "max_terms": 3,
+  "min_support": 0.01
+ },
  "levels": {
   "faithful": {
    "function_preservation_max_abs_err": 0.0,
@@ -44,6 +49,7 @@
     "meaningful": 5,
     "partial": 2,
     "closed_form_only": 0,
+    "restatement": 0,
     "unnamed": 0
    },
    "grades": {
@@ -56,19 +62,42 @@
     "older_age_hinges": "meaningful"
    },
    "understood_fraction": 0.7143,
+   "understood_probe": 0.7143,
    "partial_fraction": 0.2857,
    "closed_form_only_fraction": 0.0,
+   "restatement_fraction": 0.0,
    "unnamed_fraction": 0.0,
    "concepts": {
     "high_bmi_hinges": "bmi",
     "few_visits_hinges": "age * visits, visits",
-    "under_age_hinge": "age > 50",
+    "under_age_hinge": "age",
     "sex_smoking_age_detectors": "age, age * female, bmi * visits",
     "mixed_hinges": "bmi * insured, female and urban, visits * insured",
     "score_insurance_hinges": "age * insured, score * insured",
     "older_age_hinges": "age"
    },
-   "test": "concept probe per leaf: meaningful r2 >= 0.8 or AUC >= 0.9; partial r2 >= 0.5 or AUC >= 0.75; else closed_form_only; unnamed when no concept was probed",
+   "understood_verifier": 0.5714,
+   "understood_fraction_verifier": 0.5714,
+   "verifier_graded": 7,
+   "verifier_grades": {
+    "high_bmi_hinges": "meaningful",
+    "few_visits_hinges": "meaningful",
+    "under_age_hinge": "meaningful",
+    "sex_smoking_age_detectors": "meaningful",
+    "mixed_hinges": "partial",
+    "score_insurance_hinges": "partial",
+    "older_age_hinges": "partial"
+   },
+   "verifier_compared": 7,
+   "verifier_disagreements": 3,
+   "verifier_counts": {
+    "meaningful": 4,
+    "partial": 3,
+    "closed_form_only": 0,
+    "restatement": 0,
+    "unnamed": 0
+   },
+   "test": "concept probe per leaf (v2): meaningful score >= 0.8; partial >= 0.5; else closed_form_only; restatement when the concept is not simpler than the leaf (more than 3 terms, or a reweighting of the leaf's entries); a binary concept's AUC counts only against a gate of comparable support (>= 1% of rows), else r2; unnamed when no concept was probed. understood_verifier: the blind verifier's leaf grades where a verdict exists",
    "ground_truth": {
     "task": "rule",
     "arch": "16x16",
@@ -86,6 +115,38 @@
      "mixed_hinges": "partial"
     },
     "truth": "f = 5*rule - 2.5; rule = ((age > 60 and visits >= 3) or bmi > 32) and not (uninsured and score > 80), or (smoker and female and age < 35)"
+   },
+   "verdict": "experiments/explanation_barrier/verification/lad-b29f2.json",
+   "author": {
+    "leaves": 0,
+    "grades": {
+     "high_bmi_hinges": null,
+     "few_visits_hinges": null,
+     "under_age_hinge": null,
+     "sex_smoking_age_detectors": null,
+     "mixed_hinges": null,
+     "score_insurance_hinges": null,
+     "older_age_hinges": null
+    },
+    "counts": {
+     "meaningful": 0,
+     "partial": 0,
+     "closed_form_only": 0,
+     "restatement": 0,
+     "unnamed": 0
+    },
+    "understood_fraction_author": null,
+    "restatements": 0,
+    "stored_grades": {
+     "high_bmi_hinges": null,
+     "few_visits_hinges": null,
+     "under_age_hinge": null,
+     "sex_smoking_age_detectors": null,
+     "mixed_hinges": null,
+     "score_insurance_hinges": null,
+     "older_age_hinges": null
+    },
+    "note": "the concept the explaining agent stored on each leaf (set_meaning), re-probed under the v2 simplicity and support conditions; None when no concept was stored"
    },
    "domain_only": null
   }
@@ -206,15 +267,22 @@
    "meaning": {
     "grade": "meaningful",
     "concept": "bmi",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.387035,
      "auc": 0.999944,
      "mi": 0.723086,
      "n": 24000,
      "score": 0.999888,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "15": {
      "best": {
@@ -229,6 +297,11 @@
       "mi": 0.712349,
       "nmi": 0.593901,
       "leaf_gated": true,
+      "gate_share": 0.165917,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.999928
      },
      "best_domain": null,
@@ -272,6 +345,11 @@
       "mi": 0.733822,
       "nmi": 0.596312,
       "leaf_gated": true,
+      "gate_share": 0.171458,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.999848
      },
      "best_domain": null,
@@ -341,15 +419,22 @@
    "meaning": {
     "grade": "meaningful",
     "concept": "age * visits, visits",
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.533069,
      "auc": 0.96786,
      "mi": 1.234952,
      "n": 24000,
      "score": 0.93572,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "4": {
      "best": {
@@ -364,6 +449,11 @@
       "mi": 1.561962,
       "nmi": 0.520393,
       "leaf_gated": true,
+      "gate_share": 0.386125,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.944198
      },
      "best_domain": null,
@@ -407,6 +497,11 @@
       "mi": 0.907943,
       "nmi": 0.344619,
       "leaf_gated": true,
+      "gate_share": 0.492125,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.927242
      },
      "best_domain": null,
@@ -460,55 +555,59 @@
    ],
    "library": "tabular",
    "n_library_concepts": 61,
-   "score": 1.0,
+   "score": 0.999404,
    "grade": "meaningful",
    "best_concepts": [
-    "age > 50"
+    "age"
    ],
    "domain_score": null,
    "domain_grade": "closed_form_only",
    "best_domain_concepts": [],
-   "r2": 0.675164,
-   "auc": 1.0,
-   "mi": 0.929007,
+   "r2": 0.933242,
+   "auc": 0.999702,
+   "mi": 2.633052,
    "meaning": {
     "grade": "meaningful",
-    "concept": "age > 50",
+    "concept": "age",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
-     "r2": 0.675164,
-     "auc": 1.0,
-     "mi": 0.929007,
+     "r2": 0.933242,
+     "auc": 0.999702,
+     "mi": 2.633052,
      "n": 24000,
-     "score": 1.0,
+     "score": 0.999404,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "3": {
      "best": {
-      "concept": "age > 50",
-      "kind": "binary",
-      "source": "threshold",
+      "concept": "age",
+      "kind": "continuous",
+      "source": "input",
       "n": 24000,
-      "r2": 0.675164,
-      "auc": 1.0,
-      "auc_of": "exit activation as a score for the concept",
-      "direction": "exit lower when the concept holds",
-      "mi": 0.929007,
-      "nmi": 0.272421,
+      "r2": 0.933242,
+      "auc": 0.999702,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is low",
+      "mi": 2.633052,
+      "nmi": 0.772112,
       "leaf_gated": true,
-      "score": 1.0
+      "gate_share": 0.174458,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 0.999404
      },
      "best_domain": null,
      "top": [
-      {
-       "concept": "age > 50",
-       "source": "threshold",
-       "score": 1.0,
-       "r2": 0.675164,
-       "auc": 1.0,
-       "mi": 0.929007
-      },
       {
        "concept": "age",
        "source": "input",
@@ -524,6 +623,14 @@
        "r2": 0.578264,
        "auc": 0.876892,
        "mi": 0.66841
+      },
+      {
+       "concept": "age > 50",
+       "source": "threshold",
+       "score": 0.675164,
+       "r2": 0.675164,
+       "auc": 1.0,
+       "mi": 0.929007
       }
      ]
     }
@@ -569,15 +676,22 @@
    "meaning": {
     "grade": "partial",
     "concept": "age, age * female, bmi * visits",
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.27503,
      "auc": 0.802498,
      "mi": 0.608466,
      "n": 24000,
      "score": 0.604997,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "2": {
      "best": {
@@ -592,6 +706,11 @@
       "mi": 0.476298,
       "nmi": 0.192176,
       "leaf_gated": true,
+      "gate_share": 0.447458,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.68471
      },
      "best_domain": null,
@@ -635,6 +754,11 @@
       "mi": 0.82812,
       "nmi": 0.37302,
       "leaf_gated": true,
+      "gate_share": 0.379917,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.589424
      },
      "best_domain": null,
@@ -678,6 +802,11 @@
       "mi": 0.818699,
       "nmi": 0.374826,
       "leaf_gated": true,
+      "gate_share": 0.371083,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.544934
      },
      "best_domain": null,
@@ -721,6 +850,11 @@
       "mi": 0.310747,
       "nmi": 0.140324,
       "leaf_gated": true,
+      "gate_share": 0.378542,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.600918
      },
      "best_domain": null,
@@ -792,15 +926,22 @@
    "meaning": {
     "grade": "partial",
     "concept": "bmi * insured, female and urban, visits * insured",
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.288986,
      "auc": 0.864238,
      "mi": 0.48207,
      "n": 24000,
      "score": 0.728477,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "5": {
      "best": {
@@ -815,6 +956,11 @@
       "mi": 0.376465,
       "nmi": 0.135146,
       "leaf_gated": true,
+      "gate_share": 0.461167,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.669052
      },
      "best_domain": null,
@@ -828,20 +974,20 @@
        "mi": 0.376465
       },
       {
-       "concept": "insured",
-       "source": "level",
-       "score": 0.668518,
-       "r2": 0.134924,
-       "auc": 0.834259,
-       "mi": 0.256934
-      },
-      {
        "concept": "age * insured",
        "source": "pair",
        "score": 0.632346,
        "r2": 0.239133,
        "auc": 0.816173,
        "mi": 0.345132
+      },
+      {
+       "concept": "income * insured",
+       "source": "pair",
+       "score": 0.630054,
+       "r2": 0.279766,
+       "auc": 0.815027,
+       "mi": 0.344893
       }
      ]
     },
@@ -858,6 +1004,11 @@
       "mi": 0.872029,
       "nmi": 0.376112,
       "leaf_gated": true,
+      "gate_share": 0.404833,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.92359
      },
      "best_domain": null,
@@ -901,6 +1052,11 @@
       "mi": 0.197717,
       "nmi": 0.066825,
       "leaf_gated": true,
+      "gate_share": 0.401958,
+      "support": 0.295667,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.592788
      },
      "best_domain": null,
@@ -970,15 +1126,22 @@
    "meaning": {
     "grade": "meaningful",
     "concept": "age * insured, score * insured",
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.441694,
      "auc": 0.947254,
      "mi": 0.727606,
      "n": 24000,
      "score": 0.894509,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "6": {
      "best": {
@@ -993,6 +1156,11 @@
       "mi": 0.1352,
       "nmi": 0.271149,
       "leaf_gated": true,
+      "gate_share": 0.056167,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.834774
      },
      "best_domain": null,
@@ -1036,6 +1204,11 @@
       "mi": 1.320012,
       "nmi": 0.388291,
       "leaf_gated": true,
+      "gate_share": 0.183917,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.954244
      },
      "best_domain": null,
@@ -1104,15 +1277,22 @@
    "meaning": {
     "grade": "meaningful",
     "concept": "age",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
     "probe": {
      "r2": 0.384771,
      "auc": 0.933426,
      "mi": 0.488584,
      "n": 24000,
      "score": 0.866851,
+     "support": null,
      "query_id": null
     }
    },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": null,
    "per_exit": {
     "1": {
      "best": {
@@ -1127,6 +1307,11 @@
       "mi": 0.588352,
       "nmi": 0.283947,
       "leaf_gated": true,
+      "gate_share": 0.344167,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.850552
      },
      "best_domain": null,
@@ -1170,6 +1355,11 @@
       "mi": 0.388815,
       "nmi": 0.303252,
       "leaf_gated": true,
+      "gate_share": 0.18075,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
       "score": 0.88315
      },
      "best_domain": null,

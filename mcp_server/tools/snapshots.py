@@ -536,9 +536,11 @@ def list_evidence(genome_id: str) -> str:
 def set_meaning(genome_id: str, annotation_id: str, meaning: str) -> str:
     """Store a ``meaning`` block on an annotation (the third level: understood). ``meaning`` is
     the JSON ``meaning`` block a ``probe_concept`` call returned: ``{"grade", "concept",
-    "probe": {"r2", "auc", "mi", "n", "score", "query_id"}}``. The grade is re-derived from the
-    probe's score with the stated thresholds, so a typed grade cannot disagree with its score;
-    a block without a concept is stored as ``unnamed``. Pass ``"null"`` to remove the block.
+    "concept_complexity", "simpler_than_leaf", "probe": {"r2", "auc", "mi", "n", "score",
+    "support", "query_id"}}``. The grade is re-derived from the probe's score with the stated
+    thresholds (``restatement`` when the block says the concept is not simpler than the leaf),
+    so a typed grade cannot disagree with its score; a block without a concept is stored as
+    ``unnamed``. Pass ``"null"`` to remove the block.
 
     Args:
         genome_id: UUID of the genome.
@@ -558,8 +560,11 @@ def set_meaning(genome_id: str, annotation_id: str, meaning: str) -> str:
         if not isinstance(block, dict) or "probe" not in block:
             return json.dumps({"error": "meaning must be the probe_concept 'meaning' block: "
                                         "{grade, concept, probe: {r2, auc, mi, n, score, query_id}}"})
+        from explaneat.analysis.concept_probe import MEANING_PROBE_KEYS
         block = {"grade": grade_from_meaning(block), "concept": block.get("concept"),
-                 "probe": {k: (block.get("probe") or {}).get(k) for k in ("r2", "auc", "mi", "n", "score", "query_id")}}
+                 "concept_complexity": block.get("concept_complexity"),
+                 "simpler_than_leaf": block.get("simpler_than_leaf"),
+                 "probe": {k: (block.get("probe") or {}).get(k) for k in MEANING_PROBE_KEYS}}
     db = get_db()
     with db.session_scope() as session:
         explanation = lock_explanation(session, _to_uuid(genome_id))
