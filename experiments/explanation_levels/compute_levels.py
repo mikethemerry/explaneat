@@ -5,6 +5,7 @@ stored explanations, one JSON per explanation in ``levels/<label>.json``.
     uv run python experiments/explanation_levels/compute_levels.py --set ladder    # the explanation ladder (explaneat_dev)
     uv run python experiments/explanation_levels/compute_levels.py --set c4cap     # the Connect-4 capacity run (explaneat_dev)
     uv run python experiments/explanation_levels/compute_levels.py --set c4lf      # the Connect-4 line-features runs (explaneat_dev)
+    uv run python experiments/explanation_levels/compute_levels.py --set churn_case  # the churn case (explaneat_dev)
     uv run python experiments/explanation_levels/compute_levels.py --set v4 --labels heart-s0,adult-s1
 
 Nothing is written to any database: the model is the genome's phenotype with the stored
@@ -44,6 +45,8 @@ SETS = {
     # the Connect-4 line-features base test (experiments/c4_line_features): every explained genome
     # of an experiment named c4lf-*
     "c4lf": {"db": "postgresql://localhost/explaneat_dev", "records": None},
+    # the churn case (experiments/churn_case): one genome, Experiment 1.2
+    "churn_case": {"db": "postgresql://localhost/explaneat_dev", "records": ROOT / "experiments/churn_case/explanations"},
 }
 #: ladder explanations stored in the database after the ladder's records were written (the
 #: re-runs of C4-32 and C4-32x16 past the 26-copy split limit, exp/explanation-barrier-2)
