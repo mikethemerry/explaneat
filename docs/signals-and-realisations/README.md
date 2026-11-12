@@ -176,8 +176,8 @@ rescaled by the bound constants. $\square$
   in that case a model can be good and its perfect realisation cannot be understood. Connect-4
   is the test: in the cell basis the explained networks are faithful and decomposed but not
   understood (`experiments/explanation_levels/RESULTS.md`); the line-features run
-  (`experiments/c4_line_features/`, in progress) asks whether a change of basis makes the same
-  signal understood at the same loss.
+  (`experiments/c4_line_features/RESULTS.md`, complete 12 Nov) asked whether a change of basis
+  makes the same signal understood at the same loss: partly, and not at comparable AUC.
 
 **Open items (Chapter 9).**
 
