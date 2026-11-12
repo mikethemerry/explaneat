@@ -186,6 +186,14 @@ rescaled by the bound constants. $\square$
   and Parr's bounds.
 - Define the "family of understandable bases" so that irreducible complexity is testable
   rather than declared.
+- A learned basis (decided 13 Nov 2026, not run). The basis argument predicts that a
+  convolutional base with 4-cell line filters would realise the Connect-4 line signal as a
+  handful of shared filters applied at every line position (the 138 per-line counts give
+  gradient boosting 0.953, `experiments/c4_line_features/`). Reading such a network as one leaf
+  per filter needs a **template leaf**: an annotation naming one function and a list of
+  instances with tied weights, with coverage counting every instance. Both the prediction and
+  the operation are defined; neither is tested. PropNEAT does not evolve weight sharing, so this
+  is a statement about the explanation method on a different base model.
 - Measure signal strengths $\|f_S\|^2$ directly on the thesis datasets (a functional ANOVA of
   the best model, or of gradient boosting as a proxy for $f^*$) and check consequence 2 against
   the 10-seed explanations: do all seeds inside $\varepsilon$ carry every signal above
