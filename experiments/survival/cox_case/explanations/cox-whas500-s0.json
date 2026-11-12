@@ -1,0 +1,142 @@
+{
+  "label": "cox-whas500-s0",
+  "genome_id": "f96ebc8d-5ab6-4b78-866f-5c82f1640771",
+  "start": "2026-11-12T00:42:42Z",
+  "end": "2026-11-12T01:03:35Z",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 4,
+  "n_composition_annotations": 1,
+  "n_splits": 0,
+  "n_identity_nodes": 4,
+  "hidden_nodes": 0,
+  "hidden_nodes_single_leaf_no_split": 0,
+  "hidden_nodes_in_any_annotation": 0,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 4.440892098500626e-16,
+  "closed_form_max_abs_err": 0.0014143475867554045,
+  "summary": "The selected WHAS500 genome is a sparse linear Cox model: nine direct input edges into an identity output and not a single hidden node, so the log-risk is the sum of four annotated parts plus a constant, with five inputs (atrial fibrillation, complete heart block, cardiovascular history, sex and recurrent infarction) unconnected. Per clinical unit the model multiplies the hazard by 1.026 per year of age, 0.957 per kg/m\u00b2 of body-mass index, 1.0121 per beat per minute of admission heart rate, 0.9908 per mm Hg of diastolic pressure, 0.9991 per mm Hg of systolic pressure, 2.08 for congestive heart complications, 1.94 for cardiogenic shock, 1.010 per day of hospital stay and 0.617 for a Q-wave rather than a non-Q-wave infarction. Coverage is complete (four leaves under one root, function preserved); on the training split Harrell's C is 0.770 and the time-dependent AUC at three years 0.854. Each leaf is a weighted sum of its inputs, so the parts are described at the level of hazard ratios and named by their inputs (meaning: age r\u00b2 0.82, heart rate r\u00b2 0.62 partial, heart complications score 0.99, infarction type score 1.00); the model can represent time-constant multiplicative effects and nothing else.",
+  "summary_template": "The selected WHAS500 genome is a sparse linear Cox model: nine direct input edges into an identity output and not a single hidden node, so the log-risk is the sum of four annotated parts plus a constant, with five inputs (atrial fibrillation, complete heart block, cardiovascular history, sex and recurrent infarction) unconnected. Per clinical unit the model multiplies the hazard by {{q:q_0c0b20ea11.readings[0].hr_per_unit|.3f}} per year of age, {{q:q_0c0b20ea11.readings[3].hr_per_unit|.3f}} per kg/m\u00b2 of body-mass index, {{q:q_0c0b20ea11.readings[2].hr_per_unit|.4f}} per beat per minute of admission heart rate, {{q:q_0c0b20ea11.readings[5].hr_per_unit|.4f}} per mm Hg of diastolic pressure, {{q:q_0c0b20ea11.readings[8].hr_per_unit|.4f}} per mm Hg of systolic pressure, {{q:q_0c0b20ea11.readings[1].hr_per_unit|.2f}} for congestive heart complications, {{q:q_0c0b20ea11.readings[6].hr_per_unit|.2f}} for cardiogenic shock, {{q:q_0c0b20ea11.readings[7].hr_per_unit|.3f}} per day of hospital stay and {{q:q_0c0b20ea11.readings[4].hr_per_unit|.3f}} for a Q-wave rather than a non-Q-wave infarction. Coverage is complete (four leaves under one root, function preserved); on the training split Harrell's C is {{q:q_0fd1670bd4.harrell_c|.3f}} and the time-dependent AUC at three years {{q:q_0fd1670bd4.td_auc.auc[1]|.3f}}. Each leaf is a weighted sum of its inputs, so the parts are described at the level of hazard ratios and named by their inputs (meaning: age r\u00b2 {{q:q_75369efd34.score|.2f}}, heart rate r\u00b2 {{q:q_5c9fc4a446.score|.2f}} partial, heart complications score {{q:q_93d7085fc7.score|.2f}}, infarction type score {{q:q_8edfdc6c4a.score|.2f}}); the model can represent time-constant multiplicative effects and nothing else.",
+  "resisted": "Structurally nothing resisted: the genome is linear from inputs to output (its phenotype holds the inputs, four identity relays added for the leaves and the output), so there is not a nonlinear part to explain. What resists is the step from description to understanding. The admission_haemodynamics leaf is a weighted sum of heart rate and the two pressures, and a single named clinical concept predicts it at best partially: heart rate r\u00b2 0.62, the shock index (heart rate over systolic pressure) r\u00b2 0.73; the raw-unit difference heart rate minus diastolic pressure reaches r\u00b2 0.99 but is the closed form restated. The index_mi_type leaf is one input re-scaled and is described, not explained. The systolic-pressure term is small (1.10-fold between the patients at the 5th and the 95th percentile) and the cardiogenic-shock term is fitted to 11 training patients. The proportional-hazards form is inherited from the architecture and was not tested here.",
+  "resisted_template": "Structurally nothing resisted: the genome is linear from inputs to output (its phenotype holds the inputs, four identity relays added for the leaves and the output), so there is not a nonlinear part to explain. What resists is the step from description to understanding. The admission_haemodynamics leaf is a weighted sum of heart rate and the two pressures, and a single named clinical concept predicts it at best partially: heart rate r\u00b2 {{q:q_5c9fc4a446.score|.2f}}, the shock index (heart rate over systolic pressure) r\u00b2 {{q:q_b611943763.score|.2f}}; the raw-unit difference heart rate minus diastolic pressure reaches r\u00b2 {{q:q_306ca91c47.score|.2f}} but is the closed form restated. The index_mi_type leaf is one input re-scaled and is described, not explained. The systolic-pressure term is small ({{q:q_0c0b20ea11.readings[8].spread.hr_p95_vs_p5|.2f}}-fold between the patients at the 5th and the 95th percentile) and the cardiogenic-shock term is fitted to {{q:q_c533221341.subgroup.n}} training patients. The proportional-hazards form is inherited from the architecture and was not tested here.",
+  "hazard_ratio_summary": "Each year of age multiplies the hazard by 1.026 and each kg/m\u00b2 of body-mass index by 0.957; each beat per minute of admission heart rate multiplies it by 1.0121, each mm Hg of diastolic pressure by 0.9908 and each mm Hg of systolic pressure by 0.9991. Congestive heart complications multiply the hazard by 2.08, cardiogenic shock by 1.94, each day in hospital by 1.010, and a Q-wave infarction by 0.617 relative to a non-Q-wave one. Between the patients at the 5th and the 95th percentile of predicted log-risk the hazard ratio is 27.0; the five unconnected inputs do not change the prediction.",
+  "hazard_ratio_summary_template": "Each year of age multiplies the hazard by {{q:q_0c0b20ea11.readings[0].hr_per_unit|.3f}} and each kg/m\u00b2 of body-mass index by {{q:q_0c0b20ea11.readings[3].hr_per_unit|.3f}}; each beat per minute of admission heart rate multiplies it by {{q:q_0c0b20ea11.readings[2].hr_per_unit|.4f}}, each mm Hg of diastolic pressure by {{q:q_0c0b20ea11.readings[5].hr_per_unit|.4f}} and each mm Hg of systolic pressure by {{q:q_0c0b20ea11.readings[8].hr_per_unit|.4f}}. Congestive heart complications multiply the hazard by {{q:q_0c0b20ea11.readings[1].hr_per_unit|.2f}}, cardiogenic shock by {{q:q_0c0b20ea11.readings[6].hr_per_unit|.2f}}, each day in hospital by {{q:q_0c0b20ea11.readings[7].hr_per_unit|.3f}}, and a Q-wave infarction by {{q:q_0c0b20ea11.readings[4].hr_per_unit|.3f}} relative to a non-Q-wave one. Between the patients at the 5th and the 95th percentile of predicted log-risk the hazard ratio is {{q:q_0fd1670bd4.log_risk.hr_p95_vs_p5|.1f}}; the five unconnected inputs do not change the prediction.",
+  "ph_caveat": "The model can represent a time-constant multiplicative effect of each term on the hazard and nothing else, so these hazard ratios are not evidence that the effects are constant over follow-up.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 40,
+    "complete_ok": true
+  },
+  "recheck_notes": "First recheck: 0 mismatch, 2 needs_review (get_input_distribution q_f7e7a8b3dc and compute_performance q_188b22216c were computed before the four add_identity_node operations, seq 14-17). Both were recomputed after op 17 (q_8cc41f2d52, q_0fd1670bd4; identical values, the identity nodes preserve the function to 4.4e-16) and every reference and the three evidence records were switched to the new ids; final recheck 0 mismatch, 0 needs_review, complete_ok true. The 40 unchecked free-text sentences are prose whose numbers are all placeholders (hazard ratios, risks, subgroup means and AUCs in this phrasing have no checker statement kind); the three typed formulas (two leaves and the root) were checked exact. compute_performance names its evaluated-split keys n_test/events_test whatever the split; they are quoted as training-split counts (provenance population 'train split', n 320). The stored query list holds one pre-existing test-split compute_performance query (q_69e548c451) from the selection step; it was not run by this explanation and nothing quotes it. No test-split number was looked at.",
+  "tool_bugs": "(1) query_probe sets/sweeps cannot address an input whose name contains '=' (parse_assign splits on the first '='), so the one-hot features chf=1, sho=1, mitype=1 and the unconnected indicators cannot be set directly; worked around with hold='where:<subgroup>' (typical case of a subgroup) plus sets pinning the continuous inputs, checking in the returned exit-node values that the compared cases differ in the intended indicator alone (a first attempt without pinning the connected indicators gave confounded cases and was replaced). (2) query_ablate(direct=true) finds 0 edges once add_identity_node has moved the direct edges (known); used edges=['-2->identity_age_body', ...]. (3) get_formula returns no provenance id (known); its LaTeX is stored as analytical_formula payloads. (4) add_evidence in strict mode refuses node ids such as '-2' inside payload lists as bare numbers, so entry/exit node lists were dropped from the formula payloads. (5) probe_concept's library sweep for in_hospital_course picked 'chf=1 and sho=1' (a 7-row conjunction) as best with AUC 1.0 but r\u00b2 0.22, because score = max(r2, 2(auc-0.5)) lets a rare conjunction with perfect AUC win; the explicit 'chf=1' probe was stored instead. (6) The recheck flags any query computed before the last structural operation, including function-preserving identity nodes; recomputed and swapped. (7) xn.py --recheck --record fails with FileNotFoundError when the record file does not exist yet; a draft record must be written first. (8) When part of an add_evidence batch is refused (a '3-year' literal) the accepted records stay, so a corrected re-add created duplicates; there is no evidence delete, so the annotation operations were undone (seq 18) and rebuilt once cleanly.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 227,
+    "provenance_backed": 168,
+    "allow_listed": 59,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 3,
+      "approx_with_tolerance": 0,
+      "other": 0
+    },
+    "audit": {
+      "references": 42,
+      "checked": 42
+    },
+    "self_probe": {
+      "parts": [
+        "ann_18 age_and_body_mass",
+        "ann_19 admission_haemodynamics",
+        "ann_20 in_hospital_course",
+        "ann_21 index_mi_type",
+        "ann_22 cox_log_risk"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 1,
+    "notes": "numbers = placeholders in the five hypotheses, summary, resisted and hazard_ratio_summary (159) plus the evidence narratives' placeholders (9) plus allow-listed literals (59: constructed-case values, sweep ranges, '3-year', '5th/95th percentile'); the '=1' in one-hot names is not counted. audit: get_query on all 42 ids referenced by the texts (all train split, populations and scopes as stated). restatements: index_mi_type is one input re-scaled and is declared described, not explained; admission_haemodynamics is graded partial (heart rate r\u00b2 0.62) and says so."
+  },
+  "hierarchy": {
+    "root": "ann_22 cox_log_risk (output 0 + the five unconnected inputs; children ann_18..ann_21)",
+    "leaves": {
+      "ann_18 age_and_body_mass": [
+        "age",
+        "bmi"
+      ],
+      "ann_19 admission_haemodynamics": [
+        "hr",
+        "diasbp",
+        "sysbp"
+      ],
+      "ann_20 in_hospital_course": [
+        "chf=1",
+        "sho=1",
+        "los"
+      ],
+      "ann_21 index_mi_type": [
+        "mitype=1"
+      ]
+    },
+    "identity_nodes": [
+      "identity_age_body",
+      "identity_haemo",
+      "identity_hospital",
+      "identity_mitype"
+    ],
+    "meanings": {
+      "ann_18": "age, meaningful 0.82",
+      "ann_19": "hr, partial 0.62",
+      "ann_20": "chf=1, meaningful 0.99",
+      "ann_21": "mitype=1, meaningful 1.00"
+    }
+  },
+  "database": "postgresql://localhost/explaneat_dev",
+  "dataset_id": "6f1faef7-76da-411e-8428-f90aa8152d3e",
+  "split_id": "4047b5bc-49bc-4f30-b1c2-312bb98a9fd4",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 5,
+      "roots": [
+        "cox_log_risk"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.440892098500626e-16,
+    "closed_form_max_abs_err": 0.0014143475867554045,
+    "numeric_max_abs_err": 2.220446049250313e-16,
+    "op_counts": {
+      "rename_node": 14,
+      "add_identity_node": 4,
+      "annotate": 5
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-12T01:04:35+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 40,
+      "provenance": {
+        "templated_texts": 63,
+        "queries": 53
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

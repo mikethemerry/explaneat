@@ -1,0 +1,133 @@
+{
+ "label": "cox-gbsg2-s1",
+ "genome_id": "e4c62516-fd1f-4e10-a997-adc574bbcef3",
+ "experiment": "cox-case-gbsg2-s1",
+ "dataset_id": "703cfe13-f0e7-43ed-938c-d6b95547a336",
+ "split_id": "f858af57-d132-456b-9682-b307dcceb1b4",
+ "protocol_version": "authoring-v4",
+ "start": "2026-11-12T00:42:41Z",
+ "end": "2026-11-12T01:00:31Z",
+ "structural_coverage": 1.0,
+ "compositional_coverage": 1.0,
+ "full_coverage": true,
+ "within_budget": true,
+ "n_leaf_annotations": 3,
+ "n_composition_annotations": 1,
+ "n_splits": 0,
+ "n_identity_nodes": 3,
+ "hidden_nodes": 0,
+ "hidden_nodes_single_leaf_no_split": 0,
+ "hidden_nodes_in_any_annotation": 0,
+ "hierarchy_complete": true,
+ "function_preservation_max_abs_err": 4.440892098500626e-16,
+ "closed_form_max_abs_err": 0.003520404747804129,
+ "annotations": {
+  "ann_12": "tumour_biology (leaf: progrec, tgrade=II, tgrade=III -> identity_biology)",
+  "ann_13": "nodal_burden (leaf: pnodes -> identity_nodal)",
+  "ann_14": "hormone_therapy (leaf: horTh=yes -> identity_hormone)",
+  "ann_15": "cox_log_risk (root: the three identity exits and the four unconnected inputs age, estrec, menostat=Post, tsize -> output 0)"
+ },
+ "meaning": {
+  "tumour_biology": {
+   "grade": "meaningful",
+   "concept": "progrec > 29.5 (library sweep best; direction only)",
+   "score_query": "q_5a9c05193c"
+  },
+  "nodal_burden": {
+   "grade": "meaningful",
+   "concept": "pnodes",
+   "score_query": "q_dd91c18f7b"
+  },
+  "hormone_therapy": {
+   "grade": "meaningful",
+   "concept": "horTh=yes",
+   "score_query": "q_8010b0d388"
+  }
+ },
+ "summary": "A sparse linear Cox model: the log-risk is an exact sum of three leaf parts and a constant, with 5 direct input edges and four unconnected inputs (age, oestrogen receptor, menopausal status and tumour size; fixing all four changes 0 of 438 training predictions). Hazard ratios per clinical unit, other inputs fixed: tumour_biology gives 1.96 for a grade II and 2.26 for a grade III tumour against grade I, and 0.9984 per fmol/l of progesterone receptor (0.73 per SD); nodal_burden gives 1.051 per positive lymph node, log-linear across the training range; hormone_therapy gives 0.653 for treated patients. Survival performance on the training split: Harrell's C 0.682, Uno's C 0.651, time-dependent AUC at five years 0.707, integrated Brier score 0.132, five-year calibration 50% predicted against 49% observed. Structural and compositional coverage are complete under a single root; the identity-node refactoring preserves the function to 4.4e-16. Every leaf passed its self-probe and grades meaningful on the concept probe: nodal_burden and hormone_therapy are their own input (scores 1.00 and 1.00), while tumour_biology's best single library concept is a progesterone-receptor threshold (score 0.91, R-squared 0.30) that captures its direction and not its value, so that part is described by its three-term formula. Each effect is a time-constant hazard multiplier by construction, not by evidence.",
+ "summary_template": "A sparse linear Cox model: the log-risk is an exact sum of three leaf parts and a constant, with {{q:q_a89f7a058f.n_terms|d}} direct input edges and four unconnected inputs (age, oestrogen receptor, menopausal status and tumour size; fixing all four changes {{q:q_3c11263431.data.n_affected|d}} of {{q:q_3c11263431.data.n}} training predictions). Hazard ratios per clinical unit, other inputs fixed: tumour_biology gives {{q:q_a89f7a058f.readings[1].hr_per_unit|.2f}} for a grade II and {{q:q_a89f7a058f.readings[0].hr_per_unit|.2f}} for a grade III tumour against grade I, and {{q:q_a89f7a058f.readings[2].hr_per_unit|.4f}} per fmol/l of progesterone receptor ({{q:q_a89f7a058f.readings[2].hr_per_sd|.2f}} per SD); nodal_burden gives {{q:q_a89f7a058f.readings[3].hr_per_unit|.3f}} per positive lymph node, log-linear across the training range; hormone_therapy gives {{q:q_a89f7a058f.readings[4].hr_per_unit|.3f}} for treated patients. Survival performance on the training split: Harrell's C {{q:q_9bf4102d6a.harrell_c|.3f}}, Uno's C {{q:q_9bf4102d6a.uno_c|.3f}}, time-dependent AUC at five years {{q:q_9bf4102d6a.td_auc.auc[2]|.3f}}, integrated Brier score {{q:q_9bf4102d6a.ibs|.3f}}, five-year calibration {{q:q_9bf4102d6a.calibration.mean_predicted|pct}} predicted against {{q:q_9bf4102d6a.calibration.observed_km|pct}} observed. Structural and compositional coverage are complete under a single root; the identity-node refactoring preserves the function to {{q:q_a845de1f49.function_preservation_max_abs_err|.1e}}. Every leaf passed its self-probe and grades meaningful on the concept probe: nodal_burden and hormone_therapy are their own input (scores {{q:q_dd91c18f7b.score|.2f}} and {{q:q_8010b0d388.score|.2f}}), while tumour_biology's best single library concept is a progesterone-receptor threshold (score {{q:q_5a9c05193c.score|.2f}}, R-squared {{q:q_5a9c05193c.r2|.2f}}) that captures its direction and not its value, so that part is described by its three-term formula. Each effect is a time-constant hazard multiplier by construction, not by evidence.",
+ "resisted": "The resisted list is empty: each of the 5 output terms is a direct input edge, and each leaf's self-probe reproduced its per-unit log-hazard ratio. The limits are of a different kind. tumour_biology, a sum of three terms, has a best single concept that captures direction and not value (score 0.91, R-squared 0.30), so it is described by its formula rather than by one clinical concept. The four unconnected inputs are described as zero-effect (0 of 438 training predictions change when all four are fixed) and not explained, because the evolution left them out; and the hormonal-therapy term is an association learned from this cohort, not a treatment effect. The proportional-hazards form is inherited from the model, not tested.",
+ "resisted_template": "The resisted list is empty: each of the {{q:q_a89f7a058f.n_terms|d}} output terms is a direct input edge, and each leaf's self-probe reproduced its per-unit log-hazard ratio. The limits are of a different kind. tumour_biology, a sum of three terms, has a best single concept that captures direction and not value (score {{q:q_5a9c05193c.score|.2f}}, R-squared {{q:q_5a9c05193c.r2|.2f}}), so it is described by its formula rather than by one clinical concept. The four unconnected inputs are described as zero-effect ({{q:q_3c11263431.data.n_affected|d}} of {{q:q_3c11263431.data.n}} training predictions change when all four are fixed) and not explained, because the evolution left them out; and the hormonal-therapy term is an association learned from this cohort, not a treatment effect. The proportional-hazards form is inherited from the model, not tested.",
+ "hazard_ratio_summary": "The model multiplies a patient's hazard by 1.96 for a grade II tumour and by 2.26 for a grade III tumour relative to grade I, by 1.051 for each additional positive lymph node, by 0.9984 for each fmol/l of progesterone receptor (0.73 per SD, a protective direction), and by 0.653 when hormonal therapy was given, with the other inputs held fixed; age, oestrogen receptor, menopausal status and tumour size do not enter the log-risk. Across the training patients the log-risk spans a hazard ratio of 5.82 between the 95th- and the 5th-percentile patient, and the five-year risk is read off a Breslow baseline fitted on the training rows.",
+ "hazard_ratio_summary_template": "The model multiplies a patient's hazard by {{q:q_a89f7a058f.readings[1].hr_per_unit|.2f}} for a grade II tumour and by {{q:q_a89f7a058f.readings[0].hr_per_unit|.2f}} for a grade III tumour relative to grade I, by {{q:q_a89f7a058f.readings[3].hr_per_unit|.3f}} for each additional positive lymph node, by {{q:q_a89f7a058f.readings[2].hr_per_unit|.4f}} for each fmol/l of progesterone receptor ({{q:q_a89f7a058f.readings[2].hr_per_sd|.2f}} per SD, a protective direction), and by {{q:q_a89f7a058f.readings[4].hr_per_unit|.3f}} when hormonal therapy was given, with the other inputs held fixed; age, oestrogen receptor, menopausal status and tumour size do not enter the log-risk. Across the training patients the log-risk spans a hazard ratio of {{q:q_9bf4102d6a.log_risk.hr_p95_vs_p5|.2f}} between the 95th- and the 5th-percentile patient, and the five-year risk is read off a Breslow baseline fitted on the training rows.",
+ "ph_caveat": "The model represents each effect as a time-constant multiplier of the hazard (proportional hazards is inherited from its functional form, not tested), so this explanation is not evidence that any effect is constant over follow-up.",
+ "recheck_summary": {
+  "mismatch": 0,
+  "needs_review": 0,
+  "needs_review_items": [],
+  "unchecked_freetext_sentences": 77,
+  "complete_ok": true,
+  "ran_at": "2026-11-12T01:00:21+00:00",
+  "provenance": {
+   "templated_texts": 43,
+   "queries": 36
+  }
+ },
+ "recheck_notes": "mismatch 0 and needs_review 0 on both runs (without and with --record report.json); the unchecked free-text sentences are the sentences that state structure, scope or the proportional-hazards caveat without a number. Every write returned text_check errors [] and warnings [] after two fixes made before writing (a typed three-coefficient formula replaced by log_hr_per_sd placeholders; 'zero'/'every' scope words backed by the node-ablation count or reworded). Number audit: get_query was run on all 36 referenced queries; every one is on the train split or a constructed case, and the populations match the scope words (grade cells, therapy cells, pnodes >= 10 / <= 3, the typical patient, the constructed patient at progrec 29.5 and pnodes 3). The hazard-ratio 'spread' percentiles are percentiles of the term's contribution, and the text says so ('between its 95th and 5th percentile'). tumour_biology is honestly partial at the understood level: its best single concept (a progesterone-receptor threshold) carries the direction, not the value, which the hypothesis states.",
+ "tool_bugs": "(1) query_probe sets/sweeps cannot address one-hot inputs whose names contain '=' (horTh=yes, menostat=Post, tgrade=II, tgrade=III): parse_assign splits at the first '=' and looks up a variable 'horTh' that does not exist. Worked around with hold='where:<cell>' (the subgroup's typical row) plus sets for the continuous inputs, and query_subgroup per cell; menopausal status therefore has no probe sweep and its zero effect rests on the node ablation. (2) query_enumerate refuses the whole model because age has 51 distinct values; there is no way to enumerate only the one-hot subspace. Worked around with one query_subgroup per cell, including the empty both-levels cell. (3) add_evidence strict mode refuses payload fields holding node ids (entry_nodes '-6') as bare numbers; only latex, latex_collapsed and sympy_srepr are exempt, so formula payloads were reduced to those keys. (4) The text checker warned on an AUC quoted at three decimals (auc_with 0.6805 rendered 0.680: 'neither number is the full model's training value'); at four decimals it accepted. (5) The query log of this genome already held a compute_performance query on the test split (q_c3e50aeb46, 138 rows) before my first call; it is not mine and nothing references it. (6) My first pnodes sweep started at 0, outside the training range (the support block said so); it was replaced by a 1-29 sweep and never quoted. (7) An accidental second run of the analytical_formula batch created five duplicate records; there is no remove-evidence tool, so they are amended (reason recorded) as superseded duplicates. (8) get_annotations does not surface the stored meaning block (list_operations does).",
+ "accuracy": {
+  "open_findings": 0,
+  "numbers": 329,
+  "provenance_backed": 329,
+  "allow_listed": 0,
+  "scope_mismatch": 0,
+  "formulas": {
+   "exact": 1,
+   "approx_with_tolerance": 3,
+   "other": 0
+  },
+  "audit": {
+   "references": 329,
+   "checked": 329,
+   "distinct_queries": 36
+  },
+  "self_probe": {
+   "parts": [
+    "tumour_biology",
+    "nodal_burden",
+    "hormone_therapy",
+    "cox_log_risk"
+   ],
+   "refuted_and_fixed": []
+  },
+  "restatements": 0
+ },
+ "queries_referenced": [
+  "q_0d53257d59",
+  "q_1ad3b6c725",
+  "q_260c6ffafb",
+  "q_2637c66e86",
+  "q_2e82a39a9b",
+  "q_3c11263431",
+  "q_3d865ce923",
+  "q_45011b825b",
+  "q_5a9c05193c",
+  "q_642f3ed8d3",
+  "q_6935660144",
+  "q_7e8de05f57",
+  "q_7f19298248",
+  "q_7f3777d8b5",
+  "q_8010b0d388",
+  "q_82007d8f09",
+  "q_8867fd9604",
+  "q_8fc166e630",
+  "q_9be992dfbf",
+  "q_9bf4102d6a",
+  "q_9d56df660b",
+  "q_a845de1f49",
+  "q_a89f7a058f",
+  "q_ba1eb2487e",
+  "q_bd053c29f6",
+  "q_beb624032b",
+  "q_c1bed90de7",
+  "q_c2ac9c8104",
+  "q_ce0f939fd3",
+  "q_d11fd3e056",
+  "q_d9f1b9f853",
+  "q_dacb08e983",
+  "q_dd91c18f7b",
+  "q_e6ac01db93",
+  "q_ebcb5e816f",
+  "q_fe331fae5e"
+ ]
+}

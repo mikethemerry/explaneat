@@ -17,6 +17,7 @@ edit here.
 | `xor_ridge_valley.pdf`, `.png` | XOR score surfaces: the count family's ridge and the difference family's valley | `experiments/xor/make_xor_figures.py` | `b281ad0` |
 | `xor_gates.pdf`, `.png` | XOR gate decomposition for each family | `experiments/xor/make_xor_figures.py` | `b281ad0` |
 | `ch7_levels_table.tex` | The three levels of explanation (faithful / decomposed / understood) per study, plus the explanation ladder and the Connect-4 capacity network (LaTeX, needs `booktabs`); added 2026-11-12, `ch7_table.tex` unchanged | `experiments/explanation_levels/make_tables.py` from `compute_levels.py` (read only) | see `experiments/explanation_levels/RESULTS.md` |
+| `ch7_cox_case_table.tex` | The Cox survival case for Experiment 1 (one PropNEAT-Cox model per dataset, GBSG2 and WHAS500, against ridge Cox, Cox PH and a random survival forest on the same split; the explanation's three levels and the verifier's verdict; LaTeX, needs `booktabs`); added 2026-11-12, nothing else here changed | `experiments/survival/cox_case/tables.py` (inputs: `run_case.py`, `references.py`, `levels.py`, the records and verdicts) | see `experiments/survival/cox_case/RESULTS.md` |
 
 The 10-seed PDFs and the table are byte-identical copies of `experiments/10seed/figures/*.pdf` and
 `experiments/10seed/ch7_table.tex`. Their PNG versions and the original draft captions are in
