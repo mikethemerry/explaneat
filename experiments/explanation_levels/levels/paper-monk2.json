@@ -1,0 +1,489 @@
+{
+ "label": "paper-monk2",
+ "genome_id": "23dde0fa-a635-4974-91aa-c05266ea0747",
+ "set": "paper",
+ "study": "paper",
+ "records_dir": null,
+ "dataset": "monk2_onehot",
+ "n_train": 345,
+ "computed_at": "2026-11-12T21:44:01+00:00",
+ "method": "experiments/explanation_levels/compute_levels.py (read only; probes not stored, query_id null)",
+ "levels": {
+  "faithful": {
+   "function_preservation_max_abs_err": 3.3306690738754696e-16,
+   "closed_form_max_abs_err": null,
+   "passed": true,
+   "test": "max |output(explained model) - output(phenotype)| over the training rows < 1e-9"
+  },
+  "decomposed": {
+   "n_leaves": 4,
+   "n_compositions": 1,
+   "hidden_units": 3,
+   "granularity": 1.0,
+   "largest_part": {
+    "name": "linear_count_ramp",
+    "hidden_units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.4815
+   },
+   "max_width": 1,
+   "max_depth": 1,
+   "warnings": [],
+   "passed": true,
+   "test": "share of hidden units whose part is at most 6 units wide (depth not penalised); no part wider than that holds half the units"
+  },
+  "understood": {
+   "leaves": 4,
+   "graded": 4,
+   "counts": {
+    "meaningful": 1,
+    "partial": 2,
+    "closed_form_only": 1,
+    "unnamed": 0
+   },
+   "grades": {
+    "count_gate_atleast3": "partial",
+    "linear_count_ramp": "partial",
+    "inert_unit_a23": "closed_form_only",
+    "pruned_inputs": "meaningful"
+   },
+   "understood_fraction": 0.25,
+   "partial_fraction": 0.5,
+   "closed_form_only_fraction": 0.25,
+   "unnamed_fraction": 0.0,
+   "concepts": {
+    "count_gate_atleast3": "a2:1 and a3:1",
+    "linear_count_ramp": "a2:1 and a3:1",
+    "inert_unit_a23": "a1:1",
+    "pruned_inputs": "a2:2, a4:3"
+   },
+   "test": "concept probe per leaf: meaningful r2 >= 0.8 or AUC >= 0.9; partial r2 >= 0.5 or AUC >= 0.75; else closed_form_only; unnamed when no concept was probed",
+   "domain_only": null
+  }
+ },
+ "decomposition": {
+  "hidden_units": 3,
+  "small_width_max_units": 6,
+  "granularity": 1.0,
+  "largest_part": {
+   "name": "linear_count_ramp",
+   "hidden_units": 1,
+   "width": 1,
+   "depth": 1,
+   "leaf": true,
+   "param_share": 0.4815
+  },
+  "max_width": 1,
+  "max_depth": 1,
+  "units_only_in_root": 0,
+  "units_only_as_entries": 0,
+  "parts": {
+   "count_gate_atleast3": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.3333
+   },
+   "inert_unit_a23": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.0741
+   },
+   "linear_count_ramp": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.4815
+   }
+  },
+  "warnings": []
+ },
+ "leaves": {
+  "count_gate_atleast3": {
+   "id": "ann_8",
+   "exit_nodes": [
+    "21"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "a1",
+    "a2",
+    "a3",
+    "a4",
+    "a5",
+    "a6"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 62,
+   "score": 0.666842,
+   "grade": "partial",
+   "best_concepts": [
+    "a2:1 and a3:1"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.253322,
+   "auc": 0.833421,
+   "mi": 0.312534,
+   "meaning": {
+    "grade": "partial",
+    "concept": "a2:1 and a3:1",
+    "probe": {
+     "r2": 0.253322,
+     "auc": 0.833421,
+     "mi": 0.312534,
+     "n": 345,
+     "score": 0.666842,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "21": {
+     "best": {
+      "concept": "a2:1 and a3:1",
+      "kind": "binary",
+      "source": "pair",
+      "n": 345,
+      "r2": 0.253322,
+      "auc": 0.833421,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.312534,
+      "nmi": 0.133321,
+      "leaf_gated": true,
+      "score": 0.666842
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "a2:1 and a3:1",
+       "source": "pair",
+       "score": 0.666842,
+       "r2": 0.253322,
+       "auc": 0.833421,
+       "mi": 0.312534
+      },
+      {
+       "concept": "a3:1 and a4:1",
+       "source": "pair",
+       "score": 0.636058,
+       "r2": 0.243433,
+       "auc": 0.818029,
+       "mi": 0.210694
+      },
+      {
+       "concept": "a2:1 and a4:1",
+       "source": "pair",
+       "score": 0.621206,
+       "r2": 0.185683,
+       "auc": 0.810603,
+       "mi": 0.134118
+      }
+     ]
+    }
+   }
+  },
+  "linear_count_ramp": {
+   "id": "ann_9",
+   "exit_nodes": [
+    "id_linear"
+   ],
+   "n_exits": 1,
+   "gated": false,
+   "variables": [
+    "a1",
+    "a2",
+    "a3",
+    "a4",
+    "a5",
+    "a6"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 62,
+   "score": 0.729824,
+   "grade": "partial",
+   "best_concepts": [
+    "a2:1 and a3:1"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.229121,
+   "auc": 0.864912,
+   "mi": 0.230888,
+   "meaning": {
+    "grade": "partial",
+    "concept": "a2:1 and a3:1",
+    "probe": {
+     "r2": 0.229121,
+     "auc": 0.864912,
+     "mi": 0.230888,
+     "n": 345,
+     "score": 0.729824,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "id_linear": {
+     "best": {
+      "concept": "a2:1 and a3:1",
+      "kind": "binary",
+      "source": "pair",
+      "n": 345,
+      "r2": 0.229121,
+      "auc": 0.864912,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.230888,
+      "nmi": 0.069513,
+      "leaf_gated": false,
+      "score": 0.729824
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "a2:1 and a3:1",
+       "source": "pair",
+       "score": 0.729824,
+       "r2": 0.229121,
+       "auc": 0.864912,
+       "mi": 0.230888
+      },
+      {
+       "concept": "a1:1 and a2:1",
+       "source": "pair",
+       "score": 0.709584,
+       "r2": 0.162109,
+       "auc": 0.854792,
+       "mi": 0.149304
+      },
+      {
+       "concept": "a1:1 and a3:1",
+       "source": "pair",
+       "score": 0.67421,
+       "r2": 0.201681,
+       "auc": 0.837105,
+       "mi": 0.176277
+      }
+     ]
+    }
+   }
+  },
+  "inert_unit_a23": {
+   "id": "ann_1",
+   "exit_nodes": [
+    "673"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "a2"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 20,
+   "score": 0.0,
+   "grade": "closed_form_only",
+   "best_concepts": [
+    "a1:1"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": null,
+   "auc": 0.5,
+   "mi": 0.0,
+   "meaning": {
+    "grade": "closed_form_only",
+    "concept": "a1:1",
+    "probe": {
+     "r2": null,
+     "auc": 0.5,
+     "mi": 0.0,
+     "n": 345,
+     "score": 0.0,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "673": {
+     "best": {
+      "concept": "a1:1",
+      "kind": "binary",
+      "source": "level",
+      "n": 345,
+      "r2": null,
+      "auc": 0.5,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.0,
+      "nmi": null,
+      "leaf_gated": false,
+      "score": 0.0
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "a1:1",
+       "source": "level",
+       "score": 0.0,
+       "r2": null,
+       "auc": 0.5,
+       "mi": 0.0
+      },
+      {
+       "concept": "a1:2",
+       "source": "level",
+       "score": 0.0,
+       "r2": null,
+       "auc": 0.5,
+       "mi": 0.0
+      },
+      {
+       "concept": "a1:3",
+       "source": "level",
+       "score": 0.0,
+       "r2": null,
+       "auc": 0.5,
+       "mi": 0.0
+      }
+     ]
+    }
+   }
+  },
+  "pruned_inputs": {
+   "id": "ann_11",
+   "exit_nodes": [
+    "-5",
+    "-11"
+   ],
+   "n_exits": 2,
+   "gated": true,
+   "variables": [
+    "a2",
+    "a4"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 32,
+   "score": 1.0,
+   "grade": "meaningful",
+   "best_concepts": [
+    "a2:2",
+    "a4:3"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 1.0,
+   "auc": 1.0,
+   "mi": 0.901459,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "a2:2, a4:3",
+    "probe": {
+     "r2": 1.0,
+     "auc": 1.0,
+     "mi": 0.901459,
+     "n": 345,
+     "score": 1.0,
+     "query_id": null
+    }
+   },
+   "per_exit": {
+    "-5": {
+     "best": {
+      "concept": "a2:2",
+      "kind": "binary",
+      "source": "level",
+      "n": 345,
+      "r2": 1.0,
+      "auc": 1.0,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.906263,
+      "nmi": 1.0,
+      "leaf_gated": false,
+      "score": 1.0
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "a2:2",
+       "source": "level",
+       "score": 1.0,
+       "r2": 1.0,
+       "auc": 1.0,
+       "mi": 0.906263
+      },
+      {
+       "concept": "a2:2 and a4:2",
+       "source": "pair",
+       "score": 0.772278,
+       "r2": 0.292213,
+       "auc": 0.886139,
+       "mi": 0.226471
+      },
+      {
+       "concept": "a2:2 and a4:3",
+       "source": "pair",
+       "score": 0.75974,
+       "r2": 0.253247,
+       "auc": 0.87987,
+       "mi": 0.196102
+      }
+     ]
+    },
+    "-11": {
+     "best": {
+      "concept": "a4:3",
+      "kind": "binary",
+      "source": "level",
+      "n": 345,
+      "r2": 1.0,
+      "auc": 1.0,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.896655,
+      "nmi": 1.0,
+      "leaf_gated": false,
+      "score": 1.0
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "a4:3",
+       "source": "level",
+       "score": 1.0,
+       "r2": 1.0,
+       "auc": 1.0,
+       "mi": 0.896655
+      },
+      {
+       "concept": "a2:3 and a4:3",
+       "source": "pair",
+       "score": 0.771986,
+       "r2": 0.271625,
+       "auc": 0.885993,
+       "mi": 0.207435
+      },
+      {
+       "concept": "a2:2 and a4:3",
+       "source": "pair",
+       "score": 0.76948,
+       "r2": 0.263618,
+       "auc": 0.88474,
+       "mi": 0.201276
+      }
+     ]
+    }
+   }
+  }
+ }
+}

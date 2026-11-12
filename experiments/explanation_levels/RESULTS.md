@@ -84,12 +84,35 @@ both, for different reasons).
   judgements; the grades here are the probe's. They agree in direction (the one-layer synthetic
   networks high, the two-layer ones and Connect-4 low) but are not the same quantity.
 
+## The three AAAI paper explanations (added 13 Nov; concept probe v1)
+
+`compute_levels.py --set paper` (part of `--set all`): the paper's Heart, MONK-2 and Adult
+explanations (`results/thesis/paper_recompute.md`; genomes `9022a9eb`, `23dde0fa`, `4bc8fa07`,
+one explanation each, `explaneat_dev`, read only), written to `levels/paper-{heart,monk2,adult}.json`.
+These rows were computed with the current (v1) concept probe; the probe v2 recompute will
+replace them, as it will every other set. No record file exists for them, so the closed-form
+error is null. They feed rows 1-3 of `thesis_exports/ch7/ch7_experiment1_cases.tex`
+(`scripts/thesis/thesis_experiment_tables.py`) and are not part of the per-study table above.
+
+| Explanation | Hidden (with split copies) | Faithful: max abs err | Leaves | Granularity | Max width / depth | Meaningful / partial / closed-form only | Leaves below meaningful |
+|---|---|---|---|---|---|---|---|
+| paper-heart (`a03ebc86`) | 5 | 2.2e-16 | 4 | 1.0 | 1 / 2 | 4 / 0 / 0 (100%) | none (`restbp_chol_interaction` scores 0.80, best concept `trestbps > 130`) |
+| paper-monk2 (`d6ff7ca0`) | 3 | 3.3e-16 | 4 | 1.0 | 1 / 1 | 1 / 2 / 1 (25%) | `count_gate_atleast3` and `linear_count_ramp` partial (0.67, 0.73; best single concept `a2:1 and a3:1`, the leaves are counts over several attributes, as in the ten-seed MONK-2 runs); `inert_unit_a23` closed-form only (score 0, a dead unit) |
+| paper-adult (`7e3761fe`) | 16 | 6.7e-16 | 10 | 1.0 | 3 / 5 | 10 / 0 / 0 (100%) | none (every leaf is a per-input term or a one-hot bump, score 1.0) |
+
+The paper explanations are faithful and decomposed like the ten-seed ones, and understood in the
+per-input vocabulary where their leaves are per-input terms (Heart, Adult); MONK-2's two count
+leaves grade partial for the same reason as in the ten-seed study (the probe tests one concept at
+a time; a count over three attributes is not in the library). The levels per leaf are in the JSON.
+
 ## Reproduce
 
 ```bash
 uv run python experiments/explanation_levels/compute_levels.py --set v4       # explaneat_v4, 60 records, ~25 min
 uv run python experiments/explanation_levels/compute_levels.py --set ladder   # explaneat_dev, 16 explanations
 uv run python experiments/explanation_levels/compute_levels.py --set c4cap    # explaneat_dev, 1 explanation
+uv run python experiments/explanation_levels/compute_levels.py --set paper    # explaneat_dev, the 3 AAAI paper explanations
+uv run python experiments/explanation_levels/compute_levels.py --set all      # every set, one process each
 uv run python experiments/explanation_levels/make_tables.py                   # tables.md, thesis_exports/ch7/ch7_levels_table.tex
 uv run python experiments/10seed/build_explanations_csv.py --dir explanations_v4 --suffix _v4   # the five new columns
 ```

@@ -5,6 +5,8 @@ stored explanations, one JSON per explanation in ``levels/<label>.json``.
     uv run python experiments/explanation_levels/compute_levels.py --set ladder    # the explanation ladder (explaneat_dev)
     uv run python experiments/explanation_levels/compute_levels.py --set c4cap     # the Connect-4 capacity run (explaneat_dev)
     uv run python experiments/explanation_levels/compute_levels.py --set c4lf      # the Connect-4 line-features runs (explaneat_dev)
+    uv run python experiments/explanation_levels/compute_levels.py --set paper     # the three AAAI paper explanations (explaneat_dev)
+    uv run python experiments/explanation_levels/compute_levels.py --set all       # every set above, one process each
     uv run python experiments/explanation_levels/compute_levels.py --set v4 --labels heart-s0,adult-s1
 
 Nothing is written to any database: the model is the genome's phenotype with the stored
@@ -44,7 +46,15 @@ SETS = {
     # the Connect-4 line-features base test (experiments/c4_line_features): every explained genome
     # of an experiment named c4lf-*
     "c4lf": {"db": "postgresql://localhost/explaneat_dev", "records": None},
+    # the three AAAI paper explanations (results/thesis/paper_recompute.md): one explanation per
+    # genome, no record file (the closed-form error is therefore null)
+    "paper": {"db": "postgresql://localhost/explaneat_dev", "records": None},
 }
+PAPER_GENOMES = [
+    ("paper-heart", "9022a9eb-ecf9-41ba-b138-28ed4d131c9d"),   # "Heart Binary", explanation a03ebc86
+    ("paper-monk2", "23dde0fa-a635-4974-91aa-c05266ea0747"),   # "monk2 - OHE - 250-100-5", explanation d6ff7ca0
+    ("paper-adult", "4bc8fa07-bbf5-48e4-96a8-77be8b577ba3"),   # "No pressure", explanation 7e3761fe
+]
 #: ladder explanations stored in the database after the ladder's records were written (the
 #: re-runs of C4-32 and C4-32x16 past the 26-copy split limit, exp/explanation-barrier-2)
 LADDER_DB_ONLY = ["lad-e47f6", "lad-f01d4"]
@@ -119,6 +129,9 @@ def targets(set_name: str, labels=None):
         from mcp_server.server import get_db
         for name, gid in explained_genomes_for(get_db(), experiment_names_like(get_db(), "c4lf-")):
             out.append({"label": name, "genome_id": gid, "record": {}})
+    if set_name == "paper":
+        for label, gid in PAPER_GENOMES:
+            out.append({"label": label, "genome_id": gid, "record": {}})
     if labels:
         out = [t for t in out if t["label"] in labels]
     return out
@@ -198,11 +211,20 @@ def compute_one(t, set_name: str, lmeta, gt, cache: bool = True):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--set", required=True, choices=sorted(SETS))
+    ap.add_argument("--set", required=True, choices=sorted(SETS) + ["all"],
+                    help="a set, or 'all' (every set, each in its own process: the database handle is cached per process)")
     ap.add_argument("--labels", default=None, help="comma-separated labels (default: all)")
     ap.add_argument("--no-cache", action="store_true")
     ap.add_argument("--out", default=str(HERE / "levels"))
     a = ap.parse_args()
+    if a.set == "all":
+        import subprocess
+        for name in SETS:
+            cmd = [sys.executable, __file__, "--set", name, "--out", a.out] + (["--no-cache"] if a.no_cache else [])
+            if a.labels:
+                cmd += ["--labels", a.labels]
+            subprocess.run(cmd, check=False)
+        return
     os.environ["DATABASE_URL"] = SETS[a.set]["db"]
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
