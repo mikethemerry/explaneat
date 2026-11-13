@@ -86,6 +86,33 @@ The pack's `RECORDING.txt` was written before these options existed, so it names
 `experiments/10seed/explanations/<label>.json`. With the settings above, its commands write the v4
 record instead.
 
+## The review page (React Explorer)
+
+The same verdicts, without the CLI: start the API with the two settings and open the record's
+**Verify** button on `/review`, or `http://127.0.0.1:8000/review/heart-s5` directly.
+
+```bash
+DATABASE_URL=postgresql://localhost/explaneat_v4 EXPLANEAT_RECORDS_DIR=experiments/10seed/explanations_v4 \
+  uv run python -m explaneat api            # then http://127.0.0.1:8000/review
+```
+
+The page (`web/react-explorer/src/components/ReviewPage.tsx`, routes `explaneat/api/routes/review.py`,
+`/api/review/<label>`) shows, left, the queue in order (gates, tier A, then the signoff-v1 random
+sample), each sentence highlighted inside its paragraph with the why-flagged line, any verifier
+finding, the three verdict buttons and a note field. Keys: `c` confirmed, `w` wrong (a note is
+required: type it and press Enter), `u` unsure (disclosed by default), `n` / `p` next / previous.
+Verdicted items collapse and can be reopened; **Document** shows every sentence in reading order
+with the queue items marked. Right: progress and the time since the first verdict, the leaf table
+(understood / partial / not, with the probe screen grade), what changed since your verdicts, and
+**Run sign-off check**, which shows what is missing and the error bound and, when it passes,
+writes `mike_verification` with the minutes prefilled from the elapsed time; **Rebuild CSVs**
+then runs `build_explanations_csv.py --dir explanations_v4 --suffix _v4` on the server.
+
+Every write goes to the same append-only `<label>.verdicts.jsonl` (`source: "ui"`, same schema,
+same `records_dir` guard; `EXPLANEAT_REVIEW_DIR` moves the store). Reads write nothing. The
+database is read only. To try the page without recording anything, point `EXPLANEAT_REVIEW_DIR`
+at a scratch folder.
+
 ## Leaf verdicts: who decides "understood"
 
 Whether a leaf is understood is Mike's call, not the concept probe's or the blind verifiers'.

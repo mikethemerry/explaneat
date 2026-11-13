@@ -136,7 +136,8 @@ Effort: S < 2 h, M = half a day, L = days.
 
 | Feature | Where | API | MCP |
 |---|---|---|---|
-| Review queue for the 60 records | top nav **Review explanations** (`/review`) | `GET /api/records` | — |
+| Review queue for the 60 records | top nav **Review explanations** (`/review`); per-record **Verify** opens the sentence-by-sentence review | `GET /api/records`, `GET /api/review` | — |
+| signoff-v1 review of one record: queue (gates, tier A, sample) with paragraphs, verdict keys, leaf verdicts, diff, sign-off, CSV rebuild (`experiments/10seed/review/README.md`) | `/review/<label>` (`ReviewPage.tsx`) | `GET /api/review/{label}`, `POST .../verdict`, `.../leaf`, `.../signoff`, `.../rebuild-csv` (`routes/review.py`; the append-only store, the CLI's schema and guard) | — |
 | Record vs live checks, Mike's verification, export/import | explorer **Tools → Review & verify** | `GET /tools/record`, `PUT /api/records/{label}/verification`, `GET /tools/operations/export`, `POST /tools/operations/import-preview`, `POST /tools/operations/import` | — |
 | Checks + coverage/hierarchy checklist (uncovered nodes highlighted, clickable) | **Tools → Checks & coverage** | `GET /tools/check`, `GET /analyze/coverage` | `check_explanation`, `get_coverage` |
 | Dead / always-on / rare / hinge units | **Tools → Unit activity** | `GET /tools/unit-activity` | `unit_activity` |
