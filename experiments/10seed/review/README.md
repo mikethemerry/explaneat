@@ -115,8 +115,10 @@ for the selected node: its hypothesis, the closed form (live, KaTeX), entries an
 the probe screen grade, the understood / partial / not buttons for a leaf (same store), every
 stored evidence record (type, tool, split, n, provenance ids, the values as a small table, the
 narrative, any stored snapshot), a visualisation computed on demand against the live model (line
-/ heatmap / partial dependence / sensitivity on the train rows; automatic for leaves with at most
-three entries, on request otherwise), the plain-language paragraphs about the node and the
+/ heatmap / partial dependence / sensitivity on the train rows; by default a line over the first
+continuous entry, sensitivity when every entry is a one-hot; a one-hot entry is plotted as its two
+levels with the mean exit over the rows at each; automatic for leaves with at most three entries
+and recomputed when the type or entry changes, on request otherwise), the plain-language paragraphs about the node and the
 verifier findings on its sentences. At the root: performance on the train and test rows, coverage
 and the three levels (from `experiments/explanation_levels/levels/<label>.json`). Keys in that
 tab: `↑` parent, `↓` first child, `←` / `→` siblings. **Queue: this part** filters the left queue
