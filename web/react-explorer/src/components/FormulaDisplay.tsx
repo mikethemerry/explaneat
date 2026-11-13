@@ -3,6 +3,17 @@ import { getFormula, type FormulaResponse } from "../api/client";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 
+/** Display-mode LaTeX: a bare ``\\`` outside an alignment environment makes KaTeX warn
+ *  (newLineInDisplayMode). Wrap such input in ``aligned`` (an equation, aligned on its ``=``) or,
+ *  when it already holds environments, in ``gathered``. */
+export function displayTex(tex: string): string {
+  const t = tex.trim();
+  const outside = t.replace(/\\begin\{(aligned|align\*?|gathered|array|cases|matrix|pmatrix|bmatrix|split)\}[\s\S]*?\\end\{\1\}/g, "");
+  if (!/\\\\/.test(outside)) return t;
+  if (/\\begin\{/.test(t)) return `\\begin{gathered}${t}\\end{gathered}`;
+  return `\\begin{aligned}${t.replace(/^\s*([^=&]+?)\s*=/, "$1 &=")}\\end{aligned}`;
+}
+
 type FormulaDisplayProps = {
   genomeId: string;
   annotationId?: string;
@@ -68,7 +79,7 @@ export function FormulaDisplay({ genomeId, annotationId, nodeId }: FormulaDispla
     if (!mathRef.current) return;
     if (currentLatex) {
       try {
-        katex.render(currentLatex, mathRef.current, {
+        katex.render(displayTex(currentLatex), mathRef.current, {
           displayMode: true,
           throwOnError: false,
         });

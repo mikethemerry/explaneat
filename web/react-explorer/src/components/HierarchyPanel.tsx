@@ -11,6 +11,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import katex from "katex";
+import * as Plot from "@observablehq/plot";
 import {
   computePerformance,
   computeVizData,
@@ -20,7 +21,7 @@ import {
   type VizDataResponse,
 } from "../api/client";
 import { getReviewNode, getReviewTree, type LeafVerdictKind, type NodeCard, type Paragraph, type ReviewTree, type TreeNode } from "../api/review";
-import { FormulaDisplay } from "./FormulaDisplay";
+import { FormulaDisplay, displayTex } from "./FormulaDisplay";
 import { VizCanvas } from "./VizCanvas";
 
 const PROBE_WORD: Record<string, string> = {
@@ -43,12 +44,24 @@ function isEditable(target: EventTarget | null): boolean {
   return el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT" || el.isContentEditable;
 }
 
+/** A one-hot input (``feature:level``, possibly split ``_a``): two levels, never a curve. */
+export function isBinaryEntry(name: string): boolean {
+  return /:[^:]+(_[A-Za-z]+)?$/.test(name);
+}
+
+/** The default plot for a node: a line over its first continuous entry, else sensitivity. */
+export function defaultViz(entryNames: string[]): { vizType: string; inputDim: number } {
+  const i = entryNames.findIndex((n) => !isBinaryEntry(n));
+  if (i >= 0) return { vizType: "line", inputDim: i };
+  return { vizType: entryNames.length === 1 ? "line" : "sensitivity", inputDim: 0 };
+}
+
 function Latex({ tex }: { tex: string }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!ref.current) return;
     try {
-      katex.render(tex, ref.current, { displayMode: true, throwOnError: false });
+      katex.render(displayTex(tex), ref.current, { displayMode: true, throwOnError: false });
     } catch {
       ref.current.textContent = tex;
     }
@@ -127,9 +140,9 @@ export function HierarchyPanel(props: HierarchyPanelProps) {
       .then((c) => {
         if (cancelled) return;
         setCard(c);
-        const nIn = c.dimensionality[0];
-        setVizType(nIn === 1 ? "line" : nIn === 2 ? "heatmap" : "partial_dependence");
-        setInputDim(0);
+        const d = defaultViz(c.entry_names);
+        setVizType(d.vizType);
+        setInputDim(d.inputDim);
       })
       .catch((e) => !cancelled && setCardErr(errMsg(e)))
       .finally(() => !cancelled && setCardLoading(false));
@@ -173,11 +186,11 @@ export function HierarchyPanel(props: HierarchyPanelProps) {
     [splitId],
   );
 
-  // on-demand viz for small leaves, as soon as the card and the split are known
+  // on-demand viz for small leaves: on selection and whenever the type or the input changes
   useEffect(() => {
-    if (card && card.compute_viz && splitId && !viz && !vizLoading && !vizErr) runViz(card, vizType, inputDim);
+    if (card && card.compute_viz && splitId) runViz(card, vizType, inputDim);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [card, splitId]);
+  }, [card, splitId, vizType, inputDim]);
 
   // root: whole-model performance on train and test
   useEffect(() => {
@@ -375,10 +388,18 @@ export function HierarchyPanel(props: HierarchyPanelProps) {
                     </button>
                   </div>
                 )}
-                {vizErr && <p className="error-text">{vizErr}</p>}
-                {viz && (
-                  <div className="hier-viz">
-                    <VizCanvas vizType={viz.viz_type} data={viz.data} />
+                {splitId && (
+                  <div className="hier-viz" data-testid="hier-viz">
+                    {vizLoading && <p className="hint">Computing on the train rows…</p>}
+                    {vizErr && !vizLoading && <p className="error-text">{vizErr}</p>}
+                    {!vizLoading && !vizErr && !viz && (
+                      <p className="hint">{card.compute_viz ? "No plot yet." : "Press Compute to plot this part on the train rows."}</p>
+                    )}
+                    {viz && !vizLoading && (NEEDS_SINGLE_DIM.has(viz.viz_type) && isBinaryEntry(card.entry_names[inputDim] || "") ? (
+                      <TwoLevelPlot data={viz.data} />
+                    ) : (
+                      <VizCanvas vizType={viz.viz_type} data={viz.data} />
+                    ))}
                   </div>
                 )}
               </div>
@@ -448,6 +469,50 @@ export function HierarchyPanel(props: HierarchyPanelProps) {
       )}
     </div>
   );
+}
+
+/** A one-hot entry has two levels: the part's exit at each, as two bars (from the line-plot
+ *  grid: its ends are the two levels; the scatter gives the rows at each level). */
+function TwoLevelPlot({ data }: { data: Record<string, unknown> }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!ref.current) return;
+    ref.current.innerHTML = "";
+    const gx = (data.grid_x as number[]) || [];
+    const gy = (data.grid_y as number[]) || [];
+    const sx = (data.scatter_x as number[]) || [];
+    const sy = (data.scatter_y as number[]) || [];
+    const xLabel = (data.x_label as string) || "input";
+    const yLabel = (data.y_label as string) || "output";
+    if (gx.length < 2) return;
+    const mid = (gx[0] + gx[gx.length - 1]) / 2;
+    // bars: the mean exit over the rows at each level (the function at the other entries'
+    // medians, from the grid ends, when there are no rows)
+    const mean = (pred: (x: number) => boolean, fallback: number) => {
+      const ys = sx.map((x, i) => (pred(x) ? sy[i] : null)).filter((v): v is number => v != null);
+      return ys.length ? ys.reduce((a, b) => a + b, 0) / ys.length : fallback;
+    };
+    const levels = [
+      { level: `${xLabel} absent`, y: mean((x) => x <= mid, gy[0]), n: sx.filter((x) => x <= mid).length },
+      { level: `${xLabel} present`, y: mean((x) => x > mid, gy[gy.length - 1]), n: sx.filter((x) => x > mid).length },
+    ];
+    const dots = sx.map((x, i) => ({ level: x <= mid ? levels[0].level : levels[1].level, y: sy[i] }));
+    const plot = Plot.plot({
+      width: 500,
+      height: 260,
+      marginLeft: 60,
+      x: { label: null },
+      y: { label: `${yLabel} (bars: mean over the rows at each level)`, grid: true },
+      marks: [
+        Plot.barY(levels, { x: "level", y: "y", fill: "#2563eb", fillOpacity: 0.35, tip: true }),
+        ...(dots.length ? [Plot.dot(dots, Plot.dodgeX("middle", { x: "level", y: "y", fill: "#f97316", fillOpacity: 0.5, r: 2.5 }))] : []),
+        Plot.text(levels, { x: "level", y: "y", text: (d: { y: number; n: number }) => `mean ${d.y.toFixed(3)} (n = ${d.n})`, dy: -8 }),
+        Plot.ruleY([0]),
+      ],
+    });
+    ref.current.appendChild(plot);
+  }, [data]);
+  return <div ref={ref} className="viz-canvas" />;
 }
 
 function RootEvidence({ tree, perf, splitId, splitErr }: {
