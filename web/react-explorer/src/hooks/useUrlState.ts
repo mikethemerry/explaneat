@@ -8,6 +8,7 @@ export type UrlView =
   | { type: "datasets" }
   | { type: "templates" }
   | { type: "review" }
+  | { type: "review_label"; label: string }
   | { type: "portal" }
   | { type: "genome"; genomeId: string; experimentId: string; experimentName: string };
 
@@ -29,6 +30,8 @@ export function parseUrl(): UrlView {
 
   if (path.startsWith("/datasets")) return { type: "datasets" };
   if (path.startsWith("/templates")) return { type: "templates" };
+  const reviewMatch = path.match(/^\/review\/([^/]+)/);
+  if (reviewMatch) return { type: "review_label", label: decodeURIComponent(reviewMatch[1]) };
   if (path.startsWith("/review")) return { type: "review" };
   if (path.startsWith("/portal")) return { type: "portal" };
   return { type: "experiments" };
@@ -45,6 +48,8 @@ export function viewToUrl(view: UrlView): string {
       return "/templates";
     case "review":
       return "/review";
+    case "review_label":
+      return `/review/${encodeURIComponent(view.label)}`;
     case "portal":
       return "/portal";
     case "genome": {

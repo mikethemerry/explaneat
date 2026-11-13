@@ -4,10 +4,18 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { listRecords, type RecordSummary } from "../api/tools";
+import { getReviewProgress, type ReviewProgress } from "../api/review";
 import { ExportModal } from "./ExportPanel";
 
-export function RecordsPage({ onOpen }: { onOpen: (genomeId: string, experimentId: string, experimentName: string) => void }) {
+export function RecordsPage({
+  onOpen,
+  onVerify,
+}: {
+  onOpen: (genomeId: string, experimentId: string, experimentName: string) => void;
+  onVerify: (label: string) => void;
+}) {
   const [records, setRecords] = useState<RecordSummary[]>([]);
+  const [progress, setProgress] = useState<Record<string, ReviewProgress>>({});
   const [dir, setDir] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -23,6 +31,9 @@ export function RecordsPage({ onOpen }: { onOpen: (genomeId: string, experimentI
       })
       .catch((e) => setError(e instanceof Error ? e.message : String(e)))
       .finally(() => setLoading(false));
+    getReviewProgress()
+      .then((p) => setProgress(p.labels))
+      .catch(() => setProgress({}));
   }, []);
 
   const shown = useMemo(
@@ -40,9 +51,9 @@ export function RecordsPage({ onOpen }: { onOpen: (genomeId: string, experimentI
       <header className="experiment-list-header">
         <h2>Review explanations</h2>
         <p className="hint">
-          {records.length} Claude-produced explanation records in <code>{dir}</code>. <strong>{nVerified}</strong> verified
-          {minutes ? `, ${minutes} min recorded` : ""}. Open one to review it: the explorer's <em>Review &amp; verify</em> tab
-          compares the record with live checks and saves your verification into the record.
+          {records.length} explanation records in <code>{dir}</code>. <strong>{nVerified}</strong> verified
+          {minutes ? `, ${minutes} min recorded` : ""}. <strong>Verify</strong> opens the sentence-by-sentence review (signoff-v1:
+          gates, tier A, the random sample, leaf verdicts, sign-off); <em>Explore</em> opens the genome in the explorer.
         </p>
         <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
           <input
@@ -62,7 +73,7 @@ export function RecordsPage({ onOpen }: { onOpen: (genomeId: string, experimentI
       <table className="experiment-table">
         <thead>
           <tr>
-            <th>Record</th><th>Full coverage</th><th>Agrees</th><th>Leaves / comps</th><th>Hidden</th><th>Closed-form err</th><th>Verified</th><th>Summary</th><th></th>
+            <th>Record</th><th>Full coverage</th><th>Agrees</th><th>Leaves / comps</th><th>Hidden</th><th>Closed-form err</th><th>Verdicts</th><th>Verified</th><th>Summary</th><th></th>
           </tr>
         </thead>
         <tbody>
@@ -75,6 +86,16 @@ export function RecordsPage({ onOpen }: { onOpen: (genomeId: string, experimentI
               <td>{r.hidden_nodes ?? "—"}</td>
               <td>{r.closed_form_max_abs_err != null ? r.closed_form_max_abs_err.toPrecision(2) : "—"}</td>
               <td>
+                {progress[r.label] ? (
+                  <span className="hint" title={progress[r.label].last_at || ""}>
+                    {progress[r.label].n_sentences} sent., {progress[r.label].n_leaf_verdicts} leaf
+                    {progress[r.label].signoff_passed === true ? " · sign-off ok" : progress[r.label].signoff_passed === false ? " · sign-off open" : ""}
+                  </span>
+                ) : (
+                  <span className="hint">—</span>
+                )}
+              </td>
+              <td>
                 {r.verified ? (
                   <span className="check-pill ok" title={r.mike_verification?.changes || ""}>
                     ✓ {r.mike_verification?.minutes != null ? `${r.mike_verification.minutes} min` : ""}
@@ -85,13 +106,16 @@ export function RecordsPage({ onOpen }: { onOpen: (genomeId: string, experimentI
               </td>
               <td className="summary-cell" title={r.summary || ""}>{r.summary}</td>
               <td>
+                <button className="explore-btn" title="Sentence-by-sentence review and sign-off" onClick={() => onVerify(r.label)}>
+                  Verify
+                </button>{" "}
                 <button
-                  className="explore-btn"
+                  className="op-btn"
                   disabled={!r.in_db || !r.experiment_id}
                   title={r.in_db ? "Open in the explorer" : "Genome not in this database"}
                   onClick={() => r.experiment_id && onOpen(r.genome_id, r.experiment_id, r.experiment_name || r.label)}
                 >
-                  Review
+                  Explore
                 </button>{" "}
                 <button
                   className="op-btn"
