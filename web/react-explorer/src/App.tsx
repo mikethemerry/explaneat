@@ -38,6 +38,7 @@ export default function App() {
         genomeId={view.genomeId}
         experimentId={view.experimentId}
         experimentName={view.experimentName}
+        initialAnnotationId={view.annotationId}
         onBack={() => setView({ type: "experiments" })}
         onOpenGenome={(gid) =>
           setView({ type: "genome", genomeId: gid, experimentId: view.experimentId, experimentName: view.experimentName })

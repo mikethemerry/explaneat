@@ -53,9 +53,11 @@ type GenomeExplorerProps = {
   experimentName: string;
   onBack: () => void;
   onOpenGenome?: (genomeId: string) => void;
+  /** Select this annotation (id or name) once the annotations are loaded (from ?annotation=). */
+  initialAnnotationId?: string;
 };
 
-export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack, onOpenGenome }: GenomeExplorerProps) {
+export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack, onOpenGenome, initialAnnotationId }: GenomeExplorerProps) {
   const [model, setModel] = useState<ModelState | null>(null);
   const [operations, setOperations] = useState<Operation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,6 +82,13 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
   const [annotations, setAnnotations] = useState<AnnotationSummary[]>([]);
   const [collapsedAnnotations, setCollapsedAnnotations] = useState<Set<string>>(new Set());
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
+
+  // ?annotation=<id or name>: select it once the annotations are known
+  useEffect(() => {
+    if (!initialAnnotationId || !annotations.length) return;
+    const hit = annotations.find((a) => a.id === initialAnnotationId || a.name === initialAnnotationId);
+    if (hit) setSelectedAnnotationId(hit.id);
+  }, [initialAnnotationId, annotations]);
 
   // Node-level evidence state
   const [nodeEvidence, setNodeEvidence] = useState<{ annotation: AnnotationSummary; nodeId: string } | null>(null);

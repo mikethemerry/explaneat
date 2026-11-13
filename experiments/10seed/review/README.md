@@ -108,6 +108,24 @@ with the queue items marked. Right: progress and the time since the first verdic
 writes `mike_verification` with the minutes prefilled from the elapsed time; **Rebuild CSVs**
 then runs `build_explanations_csv.py --dir explanations_v4 --suffix _v4` on the server.
 
+The right-hand panel has four tabs: **Progress** (progress, elapsed time, what changed since
+your verdicts), **Hierarchy**, **Leaf verdicts** and **Sign-off**. The Hierarchy tab is the
+annotation tree (root, compositions, leaves; collapsible; the selected node highlighted) with,
+for the selected node: its hypothesis, the closed form (live, KaTeX), entries and exits by name,
+the probe screen grade, the understood / partial / not buttons for a leaf (same store), every
+stored evidence record (type, tool, split, n, provenance ids, the values as a small table, the
+narrative, any stored snapshot), a visualisation computed on demand against the live model (line
+/ heatmap / partial dependence / sensitivity on the train rows; automatic for leaves with at most
+three entries, on request otherwise), the plain-language paragraphs about the node and the
+verifier findings on its sentences. At the root: performance on the train and test rows, coverage
+and the three levels (from `experiments/explanation_levels/levels/<label>.json`). Keys in that
+tab: `↑` parent, `↓` first child, `←` / `→` siblings. **Queue: this part** filters the left queue
+to the node's sentences; opening a queue item selects its node; **Show in explorer** opens the
+genome with that annotation selected (`/genome/<id>?annotation=<ann>`). API:
+`GET /api/review/<label>/tree`, `GET /api/review/<label>/node/<annotation id or name>`; the
+closed form and the viz come from the existing `/api/genomes/<id>/evidence/formula` and
+`/evidence/viz-data`.
+
 Every write goes to the same append-only `<label>.verdicts.jsonl` (`source: "ui"`, same schema,
 same `records_dir` guard; `EXPLANEAT_REVIEW_DIR` moves the store). Reads write nothing. The
 database is read only. To try the page without recording anything, point `EXPLANEAT_REVIEW_DIR`

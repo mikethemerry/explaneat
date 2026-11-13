@@ -375,3 +375,196 @@ async def post_rebuild_csv(label: str):
     return {"ran": True, "command": shown, "returncode": proc.returncode,
             "stdout": proc.stdout[-4000:], "stderr": proc.stderr[-4000:],
             "at": dt.datetime.now().astimezone().isoformat(timespec="seconds")}
+
+
+# ----------------------------------------------------------------------------- hierarchy
+def _levels_sidecar(label: str) -> Optional[Dict[str, Any]]:
+    """The three levels (faithful / decomposed / understood) computed read-only for the label
+    (``experiments/explanation_levels/levels/<label>.json`` or ``$EXPLANEAT_LEVELS_DIR``)."""
+    import json
+    import os
+    root = Path(os.environ.get("EXPLANEAT_LEVELS_DIR") or REPO / "experiments" / "explanation_levels" / "levels")
+    p = root / f"{label}.json"
+    if not p.is_file():
+        return None
+    try:
+        d = json.loads(p.read_text())
+    except Exception:
+        return None
+    return {"levels": d.get("levels"), "decomposition": d.get("decomposition"), "computed_at": d.get("computed_at")}
+
+
+def annotation_tree(operations) -> Dict[str, Any]:
+    """The annotation hierarchy of an operations stream: every annotation with its kind (root /
+    composition / leaf), parent and children (``child_annotation_ids`` name children by name or
+    id; ``parent_annotation_id`` is honoured too), in stream order."""
+    from ...analysis.composition import annotation_dicts_from_operations
+    anns = annotation_dicts_from_operations(list(operations or []))
+    by_name = {a["name"]: a for a in anns if a.get("name")}
+    by_id = {a["id"]: a for a in anns}
+
+    def rid(ref) -> Optional[str]:
+        a = by_id.get(str(ref)) or by_name.get(str(ref))
+        return a["id"] if a else None
+
+    children: Dict[str, List[str]] = {a["id"]: [] for a in anns}
+    parent: Dict[str, Optional[str]] = {a["id"]: None for a in anns}
+    for a in anns:
+        for c in a.get("child_annotation_ids") or []:
+            cid = rid(c)
+            if cid and cid not in children[a["id"]]:
+                children[a["id"]].append(cid)
+                parent[cid] = a["id"]
+    for a in anns:
+        pid = rid(a.get("parent_annotation_id")) if a.get("parent_annotation_id") else None
+        if pid and parent[a["id"]] is None:
+            parent[a["id"]] = pid
+            if a["id"] not in children[pid]:
+                children[pid].append(a["id"])
+    nodes = []
+    for a in anns:
+        kids = children[a["id"]]
+        kind = "leaf" if not kids else ("root" if parent[a["id"]] is None else "composition")
+        nodes.append({"id": a["id"], "name": a["name"], "kind": kind, "hypothesis": a.get("hypothesis") or "",
+                      "entry_nodes": a["entry_nodes"], "exit_nodes": a["exit_nodes"],
+                      "n_subgraph_nodes": len(a.get("subgraph_nodes") or []),
+                      "n_evidence": len(((a.get("evidence") or {}).get("records")) or []),
+                      "parent": parent[a["id"]], "children": kids})
+    roots = [n["id"] for n in nodes if n["parent"] is None]
+    return {"nodes": nodes, "roots": roots}
+
+
+@router.get("/{label}/tree")
+async def get_tree(label: str):
+    """The annotation hierarchy with, per node, the probe screen grade, the leaf verdict and
+    the sids of its sentences; plus the record's coverage figures and the three levels."""
+    label = _label(label)
+    r = _build(label, recheck=False, bench=False)
+    tree = annotation_tree(r.operations)
+    probe = _probe_grades(label)
+    leaves = {lf["id"]: lf for lf in _leaves(r)}
+    sids: Dict[str, List[str]] = {}
+    for s in r.sentences:
+        if s.part:
+            sids.setdefault(s.part, []).append(s.sid)
+    for n in tree["nodes"]:
+        n["probe"] = probe.get(n["name"])
+        n["verdict"] = (leaves.get(n["id"]) or {}).get("verdict")
+        n["sids"] = sids.get(n["id"], [])
+    rec = r.record or {}
+    return {
+        "label": label, "genome_id": r.genome_id, "experiment": _experiment_of(r.genome_id),
+        "nodes": tree["nodes"], "roots": tree["roots"],
+        "coverage": {k: rec.get(k) for k in ("structural_coverage", "compositional_coverage", "full_coverage",
+                                            "hierarchy_complete", "function_preservation_max_abs_err",
+                                            "closed_form_max_abs_err", "hidden_nodes", "n_leaf_annotations",
+                                            "n_composition_annotations", "accuracy")},
+        "levels": _levels_sidecar(label),
+    }
+
+
+def _flat_values(obj: Any, prefix: str = "", out: Optional[List[List[str]]] = None, limit: int = 60) -> List[List[str]]:
+    """``[key, value]`` rows of a nested values dict, for a small table."""
+    if out is None:
+        out = []
+    if len(out) >= limit:
+        return out
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            _flat_values(v, f"{prefix}.{k}" if prefix else str(k), out, limit)
+    elif isinstance(obj, list):
+        if len(obj) > 12:
+            out.append([prefix, f"[{len(obj)} values]"])
+        else:
+            for i, v in enumerate(obj):
+                _flat_values(v, f"{prefix}[{i}]", out, limit)
+    else:
+        if isinstance(obj, float):
+            obj = f"{obj:.4g}"
+        out.append([prefix, str(obj)])
+    return out
+
+
+def _evidence_records(ann: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """The stored evidence of an annotation, normalised: the protocol's ``evidence.records`` and
+    the legacy per-category snapshot lists."""
+    ev = ann.get("evidence") or {}
+    out = []
+    for j, rec in enumerate(ev.get("records") or []):
+        if not isinstance(rec, dict):
+            continue
+        pay = rec.get("payload") if isinstance(rec.get("payload"), dict) else {}
+        vals = pay.get("values") if isinstance(pay.get("values"), dict) else None
+        rows = _flat_values(vals) if vals is not None else _flat_values(
+            {k: v for k, v in pay.items() if k not in ("latex", "latex_collapsed", "sympy_srepr", "query", "data")})
+        out.append({"index": j, "type": rec.get("type") or "evidence", "narrative": rec.get("narrative") or "",
+                    "provenance": [str(p) for p in (rec.get("provenance") or ([pay["query_id"]] if pay.get("query_id") else []))],
+                    "tool": pay.get("tool"), "split": pay.get("split"), "n": pay.get("n"),
+                    "query": pay.get("query") if isinstance(pay.get("query"), dict) else None,
+                    "rows": rows, "latex": pay.get("latex"), "latex_collapsed": pay.get("latex_collapsed"),
+                    "history": len(rec.get("history") or []), "timestamp": rec.get("timestamp"),
+                    "viz_config": rec.get("viz_config"), "svg_data": rec.get("svg_data"),
+                    "data": pay.get("data") if isinstance(pay.get("data"), dict) else None})
+    for cat, items in ev.items():
+        if cat == "records" or not isinstance(items, list):
+            continue
+        for j, it in enumerate(items):
+            if isinstance(it, dict):
+                out.append({"index": j, "type": cat, "narrative": it.get("narrative") or "", "provenance": [],
+                            "tool": None, "split": None, "n": None, "query": None, "rows": [], "latex": None,
+                            "latex_collapsed": None, "history": 0, "timestamp": it.get("timestamp"),
+                            "viz_config": it.get("viz_config"), "svg_data": it.get("svg_data"), "data": None})
+    return out
+
+
+def _display_names(genome_id: Optional[str], node_ids: List[str]) -> List[str]:
+    """Human labels for node ids from the live model state (read only); the ids when the
+    database is not reachable."""
+    if not genome_id:
+        return list(node_ids)
+    try:
+        from ...db import db
+        from .evidence import _build_model_state, _resolve_node_label
+        with db.session_scope() as s:
+            ms = _build_model_state(s, genome_id)
+            dm = ms.get_display_map()
+            return [_resolve_node_label(n, dm, ms) for n in node_ids]
+    except Exception:
+        return list(node_ids)
+
+
+@router.get("/{label}/node/{annotation_id}")
+async def get_node(label: str, annotation_id: str):
+    """One annotation's card: hypothesis, entries and exits with their names, the stored
+    evidence records (values as rows, narrative, provenance ids, any stored viz), the probe
+    meaning, the leaf verdict, its sentences' verifier findings, the paragraphs of the
+    plain-language document about it, and whether a viz should be computed on demand (a leaf
+    with at most three entries). The closed form comes from ``/evidence/formula``."""
+    label = _label(label)
+    r = _build(label, recheck=False, bench=True)
+    tree = annotation_tree(r.operations)
+    node = next((n for n in tree["nodes"] if n["id"] == annotation_id or n["name"] == annotation_id), None)
+    if node is None:
+        raise HTTPException(status_code=404, detail=f"annotation {annotation_id!r} not found in {label}")
+    from ...analysis.composition import annotation_dicts_from_operations
+    from ...analysis import viz_data as vdz
+    from ...export.collect import sidecar_meanings
+    ann = next(a for a in annotation_dicts_from_operations(r.operations) if a["id"] == node["id"])
+    names = _display_names(r.genome_id, list(ann["entry_nodes"]) + list(ann["exit_nodes"]))
+    n_in, n_out = len(ann["entry_nodes"]), len(ann["exit_nodes"])
+    sids = [s.sid for s in r.sentences if s.part == node["id"]]
+    findings = []
+    for sid in sids:
+        for f in r.overlay.get(sid) or []:
+            findings.append(dict(f, sid=sid))
+    paragraphs = sorted({paragraph_key(s.location) for s in r.sentences if s.part == node["id"] and s.origin == "drafted"})
+    leaf = next((lf for lf in _leaves(r) if lf["id"] == node["id"]), None)
+    meaning = sidecar_meanings(label).get(node["name"]) or None
+    return {
+        "label": label, "genome_id": r.genome_id, "node": node,
+        "entry_names": names[:n_in], "exit_names": names[n_in:],
+        "dimensionality": [n_in, n_out], "suggested_viz_types": vdz.suggest_viz_types(n_in, n_out),
+        "compute_viz": node["kind"] == "leaf" and n_in <= 3,
+        "evidence": _evidence_records(ann), "meaning": meaning,
+        "verdict": (leaf or {}).get("verdict"), "sids": sids, "findings": findings, "paragraphs": paragraphs,
+    }
