@@ -10,7 +10,7 @@ export type UrlView =
   | { type: "review" }
   | { type: "review_label"; label: string }
   | { type: "portal" }
-  | { type: "genome"; genomeId: string; experimentId: string; experimentName: string };
+  | { type: "genome"; genomeId: string; experimentId: string; experimentName: string; annotationId?: string };
 
 /** Parse the current URL into a View. */
 export function parseUrl(): UrlView {
@@ -25,6 +25,7 @@ export function parseUrl(): UrlView {
       genomeId: genomeMatch[1],
       experimentId: params.get("experiment") || "",
       experimentName: decodeURIComponent(params.get("name") || ""),
+      annotationId: params.get("annotation") || undefined,
     };
   }
 
@@ -56,6 +57,7 @@ export function viewToUrl(view: UrlView): string {
       const params = new URLSearchParams();
       if (view.experimentId) params.set("experiment", view.experimentId);
       if (view.experimentName) params.set("name", view.experimentName);
+      if (view.annotationId) params.set("annotation", view.annotationId);
       const qs = params.toString();
       return `/genome/${view.genomeId}${qs ? `?${qs}` : ""}`;
     }

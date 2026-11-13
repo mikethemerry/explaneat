@@ -212,3 +212,90 @@ def test_csv_command_and_route(client):
     r = client.post("/api/review/t-s0/rebuild-csv")
     assert r.status_code == 200
     assert r.json()["ran"] is False and "build_explanations_csv.py" in r.json()["command"]
+
+
+# ----------------------------------------------------------------------------- hierarchy
+def test_tree_kinds_parents_sids_and_levels(client, monkeypatch):
+    r = client.get("/api/review/t-s0/tree")
+    assert r.status_code == 200, r.text
+    d = r.json()
+    nodes = {n["id"]: n for n in d["nodes"]}
+    assert d["roots"] == ["ann_5"] and d["genome_id"] == GID
+    assert nodes["ann_5"]["kind"] == "root" and nodes["ann_5"]["children"] == ["ann_3", "ann_4"] and nodes["ann_5"]["parent"] is None
+    assert nodes["ann_3"]["kind"] == "leaf" and nodes["ann_3"]["parent"] == "ann_5" and nodes["ann_3"]["children"] == []
+    assert nodes["ann_3"]["hypothesis"].startswith("Gate on age") and nodes["ann_3"]["entry_nodes"] == ["-1"]
+    # the leaf's sentences: its hypothesis (2 sentences) and the drafted read-down (3)
+    assert len(nodes["ann_3"]["sids"]) == 5 and len(nodes["ann_4"]["sids"]) == 2
+    assert nodes["ann_3"]["probe"] is None and nodes["ann_3"]["verdict"] is None
+    assert d["coverage"]["structural_coverage"] == 1.0 and d["coverage"]["n_leaf_annotations"] == 2
+    assert d["levels"] is None
+    # a leaf verdict and a levels sidecar show up on the tree
+    assert client.post("/api/review/t-s0/leaf", json={"leaf": "age_gate", "verdict": "understood"}).status_code == 200
+    lv = client.dirs["review"].parent / "levels"
+    lv.mkdir()
+    (lv / "t-s0.json").write_text(json.dumps({"levels": {"faithful": {"passed": True}},
+                                              "leaves": {"age_gate": {"meaning": {"grade": "meaningful", "concept": "age"}}}}))
+    d = client.get("/api/review/t-s0/tree").json()
+    nodes = {n["id"]: n for n in d["nodes"]}
+    assert nodes["ann_3"]["verdict"]["verdict"] == "understood" and nodes["ann_3"]["probe"] == "meaningful"
+    assert d["levels"]["levels"] == {"faithful": {"passed": True}}
+
+
+def test_tree_resolves_children_by_name_or_parent_id():
+    from explaneat.api.routes.review import annotation_tree
+    o = ops()
+    o[2]["params"]["child_annotation_ids"] = ["age_gate", "ann_4"]          # by name and by id
+    t = annotation_tree(o)
+    root = next(n for n in t["nodes"] if n["id"] == "ann_5")
+    assert root["children"] == ["ann_3", "ann_4"] and root["kind"] == "root"
+    o[2]["params"].pop("child_annotation_ids")
+    o[0]["params"]["parent_annotation_id"] = "root"
+    o[1]["params"]["parent_annotation_id"] = "ann_5"
+    t = annotation_tree(o)
+    kinds = {n["id"]: (n["kind"], n["parent"]) for n in t["nodes"]}
+    assert kinds == {"ann_3": ("leaf", "ann_5"), "ann_4": ("leaf", "ann_5"), "ann_5": ("root", None)}
+    # a composition between root and leaves
+    o = ops()
+    o.append({"seq": 6, "type": "annotate", "result": {"annotation_id": "ann_6"},
+              "params": {"name": "top", "hypothesis": "", "entry_nodes": ["0"], "exit_nodes": ["0"], "subgraph_nodes": ["0"],
+                         "subgraph_connections": [], "child_annotation_ids": ["root"]}})
+    t = annotation_tree(o)
+    assert {n["id"]: n["kind"] for n in t["nodes"]} == {"ann_3": "leaf", "ann_4": "leaf", "ann_5": "composition", "ann_6": "root"}
+    assert t["roots"] == ["ann_6"]
+
+
+def test_node_card_evidence_paragraphs_and_viz_flag(client, monkeypatch):
+    import explaneat.api.routes.review as rv
+    monkeypatch.setattr(rv, "_display_names", lambda gid, ids: [f"name:{i}" for i in ids])
+    r = client.get("/api/review/t-s0/node/ann_3")
+    assert r.status_code == 200, r.text
+    c = r.json()
+    assert c["node"]["id"] == "ann_3" and c["node"]["kind"] == "leaf"
+    assert c["entry_names"] == ["name:-1"] and c["exit_names"] == ["name:7"] and c["dimensionality"] == [1, 1]
+    assert c["compute_viz"] is True and c["suggested_viz_types"][0] == "line"
+    assert c["paragraphs"] == ["drafted.readdown.ann_3.evidence", "drafted.readdown.ann_3.hypothesis"]
+    assert len(c["sids"]) == 5 and c["findings"] == [] and c["verdict"] is None and c["meaning"] is None
+    assert c["evidence"] == []                      # the synthetic ops store none
+    # by name, and the root has no on-demand viz (not a leaf)
+    root = client.get("/api/review/t-s0/node/root").json()
+    assert root["node"]["id"] == "ann_5" and root["compute_viz"] is False and root["dimensionality"] == [2, 1]
+    assert client.get("/api/review/t-s0/node/ann_99").status_code == 404
+
+
+def test_evidence_records_are_normalised():
+    from explaneat.api.routes.review import _evidence_records
+    ann = {"evidence": {"records": [
+        {"type": "analytical_formula", "payload": {"latex": "y = x", "sympy_srepr": "..."}, "narrative": "Closed form."},
+        {"type": "subgroup", "narrative": "Rows where the gate is on.", "provenance": ["q_1"],
+         "payload": {"query_id": "q_1", "tool": "query_subgroup", "split": "train", "n": 242,
+                     "query": {"population": "rows where node_7 > 0"},
+                     "values": {"subgroup": {"n": 117, "mean_risk": 0.41234}, "rest": {"n": 125}, "curve": list(range(20))}},
+         "history": [{"reason": "amended"}]},
+    ], "visualizations": [{"viz_config": {"viz_type": "line"}, "svg_data": "PHN2Zz4=", "narrative": "old snapshot"}]}}
+    ev = _evidence_records(ann)
+    assert [e["type"] for e in ev] == ["analytical_formula", "subgroup", "visualizations"]
+    assert ev[0]["latex"] == "y = x" and ev[0]["rows"] == [] and ev[0]["provenance"] == []
+    assert ev[1]["provenance"] == ["q_1"] and ev[1]["tool"] == "query_subgroup" and ev[1]["n"] == 242 and ev[1]["history"] == 1
+    assert ["subgroup.n", "117"] in ev[1]["rows"] and ["subgroup.mean_risk", "0.4123"] in ev[1]["rows"]
+    assert ["curve", "[20 values]"] in ev[1]["rows"] and ev[1]["query"] == {"population": "rows where node_7 > 0"}
+    assert ev[2]["svg_data"] == "PHN2Zz4=" and ev[2]["viz_config"] == {"viz_type": "line"}

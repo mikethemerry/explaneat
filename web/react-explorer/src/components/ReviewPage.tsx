@@ -23,6 +23,9 @@ import {
   type SentenceVerdictKind,
   type SignoffResult,
 } from "../api/review";
+import { HierarchyPanel } from "./HierarchyPanel";
+
+type SideTab = "progress" | "hierarchy" | "leaves" | "signoff";
 
 const VERDICT_LABEL: Record<SentenceVerdictKind, string> = { confirmed: "Confirmed", wrong: "Wrong", unsure: "Unsure" };
 const VERDICT_KEY: Record<SentenceVerdictKind, string> = { confirmed: "c", wrong: "w", unsure: "u" };
@@ -82,6 +85,9 @@ export function ReviewPage({ label, onBack }: { label: string; onBack: () => voi
   const [recordWritten, setRecordWritten] = useState(false);
   const [csvMsg, setCsvMsg] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const [tab, setTab] = useState<SideTab>("progress");
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const [partFilter, setPartFilter] = useState<string | null>(null);
   const openedAt = useRef<number>(Date.now());
   const noteRef = useRef<HTMLInputElement | null>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -119,6 +125,13 @@ export function ReviewPage({ label, onBack }: { label: string; onBack: () => voi
     return m;
   }, [data]);
 
+  const partName = (id: string): string => {
+    const p = data?.document.find((pp) => pp.part === id && pp.origin === "drafted");
+    if (p) return p.title.split(":")[0];
+    const loc = data?.queue.find((it) => it.part === id)?.location || "";
+    const m = loc.match(/^operations\.(.+?)\.(hypothesis|evidence)/);
+    return m ? m[1] : id;
+  };
   const nDone = data ? data.queue.filter(isCurrent).length : 0;
   const nQueue = data ? data.queue.length : 0;
 
@@ -128,25 +141,29 @@ export function ReviewPage({ label, onBack }: { label: string; onBack: () => voi
     setItemMsg(null);
     openedAt.current = Date.now();
     if (sid) {
+      const part = queueBySid.get(sid)?.part;
+      if (part) setSelectedNode(part);
       setView("queue");
       window.setTimeout(() => itemRefs.current[sid]?.scrollIntoView({ block: "center", behavior: "smooth" }), 30);
     }
-  }, []);
+  }, [queueBySid]);
 
   const moveOpen = useCallback(
     (dir: 1 | -1) => {
       if (!data || !data.queue.length) return;
-      const idx = openSid ? data.queue.findIndex((it) => it.sid === openSid) : -1;
+      const q = partFilter ? data.queue.filter((it) => it.part === partFilter) : data.queue;
+      if (!q.length) return;
+      const idx = openSid ? q.findIndex((it) => it.sid === openSid) : -1;
       if (dir === 1) {
         // the next item without a current verdict, after the open one; else the next item
-        const after = data.queue.slice(idx + 1).find((it) => !isCurrent(it)) || data.queue[idx + 1] || null;
+        const after = q.slice(idx + 1).find((it) => !isCurrent(it)) || q[idx + 1] || null;
         openItem(after ? after.sid : null);
       } else {
-        const before = idx > 0 ? data.queue[idx - 1] : data.queue[0];
+        const before = idx > 0 ? q[idx - 1] : q[0];
         openItem(before.sid);
       }
     },
-    [data, openSid, openItem],
+    [data, openSid, openItem, partFilter],
   );
 
   const submitVerdict = useCallback(
@@ -182,9 +199,10 @@ export function ReviewPage({ label, onBack }: { label: string; onBack: () => voi
         setNotes((n) => ({ ...n, [openSid]: "" }));
         setPending(null);
         // advance to the next item without a current verdict
-        const idx = data.queue.findIndex((it) => it.sid === openSid);
-        const next = data.queue.slice(idx + 1).find((it) => !isCurrent(it) && it.sid !== openSid)
-          || data.queue.find((it) => !isCurrent(it) && it.sid !== openSid) || null;
+        const q = partFilter ? data.queue.filter((it) => it.part === partFilter) : data.queue;
+        const idx = q.findIndex((it) => it.sid === openSid);
+        const next = q.slice(idx + 1).find((it) => !isCurrent(it) && it.sid !== openSid)
+          || q.find((it) => !isCurrent(it) && it.sid !== openSid) || null;
         openItem(next ? next.sid : null);
       } catch (e) {
         setItemMsg(errMsg(e));
@@ -192,7 +210,7 @@ export function ReviewPage({ label, onBack }: { label: string; onBack: () => voi
         setBusy(false);
       }
     },
-    [data, openSid, busy, notes, disclose, label, openItem],
+    [data, openSid, busy, notes, disclose, label, openItem, partFilter],
   );
 
   // keyboard: c / w / u verdicts, n / p move; not while typing
@@ -213,12 +231,12 @@ export function ReviewPage({ label, onBack }: { label: string; onBack: () => voi
     return () => window.removeEventListener("keydown", onKey);
   }, [submitVerdict, moveOpen]);
 
-  const submitLeaf = async (leafId: string, verdict: LeafVerdictKind) => {
+  const submitLeaf = async (leafId: string, verdict: LeafVerdictKind, noteOverride?: string) => {
     if (!data || busy) return;
     setBusy(true);
     setLeafMsg(null);
     try {
-      const r = await postLeafVerdict(label, { leaf: leafId, verdict, note: (leafNotes[leafId] || "").trim() });
+      const r = await postLeafVerdict(label, { leaf: leafId, verdict, note: (noteOverride ?? leafNotes[leafId] ?? "").trim() });
       setData((d) =>
         d
           ? {
@@ -329,7 +347,7 @@ export function ReviewPage({ label, onBack }: { label: string; onBack: () => voi
       </header>
       {data.record.summary && <p className="hint review-summary">{data.record.summary}</p>}
 
-      <div className="review-body">
+      <div className={"review-body" + (tab === "hierarchy" ? " wide" : "")}>
         <main className="review-queue">
           {view === "queue" ? (
             <>
@@ -337,8 +355,15 @@ export function ReviewPage({ label, onBack }: { label: string; onBack: () => voi
                 {nQueue} items: {data.tiers.G || 0} gates, {data.tiers.A || 0} tier A, the signoff-v1 sample from B/C
                 {data.tiers["A'"] ? " and A'" : ""}. Keys: <kbd>c</kbd> confirmed, <kbd>w</kbd> wrong, <kbd>u</kbd> unsure, <kbd>n</kbd> next, <kbd>p</kbd> previous.
               </p>
+              {partFilter && (
+                <p className="review-filter">
+                  Showing only the sentences of <strong>{data.queue.find((it) => it.part === partFilter)?.part === partFilter ? partName(partFilter) : partFilter}</strong>{" "}
+                  ({data.queue.filter((it) => it.part === partFilter).length} of {nQueue} items).{" "}
+                  <button className="link-btn" onClick={() => setPartFilter(null)}>show all</button>
+                </p>
+              )}
               {sections.map((sec) => {
-                const items = data.queue.filter((it) => it.section === sec);
+                const items = data.queue.filter((it) => it.section === sec && (!partFilter || it.part === partFilter));
                 if (!items.length) return null;
                 return (
                   <section key={sec} className="review-section">
@@ -390,6 +415,36 @@ export function ReviewPage({ label, onBack }: { label: string; onBack: () => voi
         </main>
 
         <aside className="review-side">
+          <div className="review-tabs">
+            {(["progress", "hierarchy", "leaves", "signoff"] as SideTab[]).map((t) => (
+              <button key={t} className={"review-tab" + (tab === t ? " active" : "")} onClick={() => setTab(t)}>
+                {t === "progress" ? "Progress" : t === "hierarchy" ? "Hierarchy" : t === "leaves" ? "Leaf verdicts" : "Sign-off"}
+              </button>
+            ))}
+          </div>
+          {tab === "hierarchy" && (
+            <div className="review-card">
+              <HierarchyPanel
+                label={label}
+                selected={selectedNode}
+                onSelect={setSelectedNode}
+                active={tab === "hierarchy"}
+                document={data.document}
+                filtered={partFilter}
+                onFilterQueue={(id) => {
+                  setPartFilter(id);
+                  if (id) {
+                    const first = data.queue.find((it) => it.part === id && !isCurrent(it)) || data.queue.find((it) => it.part === id);
+                    if (first) openItem(first.sid);
+                  }
+                }}
+                onLeafVerdict={(id, v, note) => submitLeaf(id, v, note)}
+                leafVerdicts={Object.fromEntries(data.leaves.map((lf) => [lf.id, lf.verdict]))}
+                busy={busy}
+              />
+            </div>
+          )}
+          {tab === "progress" && (
           <div className="review-card">
             <h3>Progress</h3>
             <div className="progress-bar"><div className="progress-fill" style={{ width: `${nQueue ? (100 * nDone) / nQueue : 0}%` }} /></div>
@@ -407,7 +462,9 @@ export function ReviewPage({ label, onBack }: { label: string; onBack: () => voi
               </p>
             )}
           </div>
+          )}
 
+          {tab === "leaves" && (
           <div className="review-card">
             <h3>Leaves <span className="hint">({data.leaves.filter((l) => l.verdict).length} of {data.leaves.length} graded)</span></h3>
             <p className="hint">Is each leaf understood? Your call; the probe grade is an automated screen.</p>
@@ -423,7 +480,9 @@ export function ReviewPage({ label, onBack }: { label: string; onBack: () => voi
             ))}
             {leafMsg && <p className="error-text">{leafMsg}</p>}
           </div>
+          )}
 
+          {tab === "progress" && (
           <div className="review-card">
             <h3>Changed since your verdicts <span className="hint">({data.changes.length})</span></h3>
             {data.changes.length === 0 ? (
@@ -446,7 +505,9 @@ export function ReviewPage({ label, onBack }: { label: string; onBack: () => voi
               ))
             )}
           </div>
+          )}
 
+          {tab === "signoff" && (
           <div className="review-card">
             <h3>Sign-off ({data.protocol})</h3>
             <div className="button-group">
@@ -518,6 +579,7 @@ export function ReviewPage({ label, onBack }: { label: string; onBack: () => voi
             )}
             {csvMsg && <pre className="review-pre">{csvMsg}</pre>}
           </div>
+          )}
         </aside>
       </div>
     </div>

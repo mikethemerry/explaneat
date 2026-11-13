@@ -201,3 +201,78 @@ export const postRebuildCsv = (label: string) =>
     `${API_BASE}/${encodeURIComponent(label)}/rebuild-csv`,
     { method: "POST", body: "{}" },
   );
+
+// ----------------------------------------------------------------- hierarchy (tree + node cards)
+
+export type TreeNode = {
+  id: string;
+  name: string | null;
+  kind: "root" | "composition" | "leaf";
+  hypothesis: string;
+  entry_nodes: string[];
+  exit_nodes: string[];
+  n_subgraph_nodes: number;
+  n_evidence: number;
+  parent: string | null;
+  children: string[];
+  probe: string | null;
+  verdict: LeafRow["verdict"];
+  sids: string[];
+};
+
+export type LevelsSidecar = {
+  levels: Record<string, Record<string, unknown>> | null;
+  decomposition: Record<string, unknown> | null;
+  computed_at: string | null;
+} | null;
+
+export type ReviewTree = {
+  label: string;
+  genome_id: string | null;
+  experiment: { in_db: boolean; experiment_id?: string; experiment_name?: string };
+  nodes: TreeNode[];
+  roots: string[];
+  coverage: Record<string, unknown>;
+  levels: LevelsSidecar;
+};
+
+export type EvidenceRecordView = {
+  index: number;
+  type: string;
+  narrative: string;
+  provenance: string[];
+  tool: string | null;
+  split: string | null;
+  n: number | string | null;
+  query: Record<string, unknown> | null;
+  rows: [string, string][];
+  latex: string | null;
+  latex_collapsed: string | null;
+  history: number;
+  timestamp: string | null;
+  viz_config: Record<string, unknown> | null;
+  svg_data: string | null;
+  data: Record<string, unknown> | null;
+};
+
+export type NodeCard = {
+  label: string;
+  genome_id: string | null;
+  node: TreeNode;
+  entry_names: string[];
+  exit_names: string[];
+  dimensionality: [number, number];
+  suggested_viz_types: string[];
+  compute_viz: boolean;
+  evidence: EvidenceRecordView[];
+  meaning: { grade?: string; concept?: string; probe?: { r2?: number | null; auc?: number | null; n?: number; score?: number } } | null;
+  verdict: LeafRow["verdict"];
+  sids: string[];
+  findings: (VerifierFinding & { sid: string })[];
+  paragraphs: string[];
+};
+
+export const getReviewTree = (label: string) => req<ReviewTree>(`${API_BASE}/${encodeURIComponent(label)}/tree`);
+
+export const getReviewNode = (label: string, annotationId: string) =>
+  req<NodeCard>(`${API_BASE}/${encodeURIComponent(label)}/node/${encodeURIComponent(annotationId)}`);
