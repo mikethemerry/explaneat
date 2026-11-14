@@ -520,3 +520,95 @@ experiments/ushape_saddle/launch_g300.sh                       # 5 runs to 300 g
 uv run python experiments/ushape_saddle/score_g300.py          # g300_scores.json / .csv
 uv run python experiments/ushape_saddle/shape_plots.py shape-C-s1-g300 --genome <genome_id> --task both
 ```
+
+## 12. Sigmoid hidden units on the both dataset (`launch_sig.sh`, `score_gens.py`, `sig_gens.json`)
+
+**Question (Mike).** Would sigmoid hidden units find both shapes more often than ReLU? A smooth unit can
+make a U from two sigmoids and a saddle from smooth gates, so it is a fair question.
+
+**Design.** Same dataset (shape-C), config (`configs/syn10.ini`), harness and seeds (0-4) as section 11,
+300 generations, with one change: hidden units apply the standard logistic 1/(1 + e^-z) instead of ReLU
+(`run_seed.py --hidden-activation sigmoid`, i.e. `config.hidden_activation = "sigmoid"`, recorded on the
+experiment as `config_json["training"]["hidden_activation"]`; the output stays sigmoid; this is the
+unscaled logistic, not neat-python's sigmoid(5z)). Experiments `shape-C-sig-s{n}` in `explaneat_dev`,
+about 9-11 minutes each, at most 2 at a time while the section 11 runs were going. The code default is
+unchanged: a 3-generation replay of `shape-C-s0` with the new code gave the same 750 genomes with the
+same fitness, bit for bit, and the engines agree on every scored genome (NeuralNeat vs the evidence
+forward pass, max |difference| < 1e-15).
+
+Scoring is section 11's, rerun by `score_gens.py` (which reproduces section 11's generation-100 ReLU rows
+exactly): best-by-train genome up to generations 99/199/299; U r and both ends rising > 1 logit over
+128-150 mmol/L at the typical case; saddle r and interaction share on the 41 x 41 heart rate x SBP grid;
+found = r >= 0.9. "U min" is where the model's sodium curve bottoms out (truth 137 mmol/L).
+
+| seed | gen | best at gen | train AUC | test AUC | train - test | U r | both ends rise | U min | saddle r | interaction share | U | saddle | both | hidden | conns | species |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | 100 | 99 | 0.817 | 0.822 | -0.005 | 0.96 | yes | 137 | 0.57 | 0.35 | yes | no | no | 13 | 42 | 1 |
+| 0 | 200 | 199 | 0.852 | 0.848 | +0.003 | 0.96 | yes | 137 | 0.80 | 0.89 | yes | no | no | 19 | 58 | 1 |
+| 0 | 300 | 299 | 0.887 | 0.875 | +0.012 | 0.97 | yes | 136 | 0.92 | 0.98 | yes | yes | yes | 19 | 58 | 1 |
+| 1 | 100 | 99 | 0.798 | 0.789 | +0.009 | 0.92 | yes | 139 | -0.05 | 0.00 | yes | no | no | 12 | 38 | 1 |
+| 1 | 200 | 199 | 0.811 | 0.807 | +0.004 | 0.98 | yes | 138 | 0.62 | 0.49 | yes | no | no | 12 | 42 | 1 |
+| 1 | 300 | 299 | 0.853 | 0.850 | +0.004 | 0.98 | yes | 138 | 0.83 | 0.81 | yes | no | no | 12 | 41 | 1 |
+| 2 | 100 | 99 | 0.795 | 0.788 | +0.006 | 0.95 | yes | 138 | -0.05 | 0.00 | yes | no | no | 14 | 40 | 2 |
+| 2 | 200 | 199 | 0.804 | 0.801 | +0.004 | 0.98 | yes | 138 | -0.05 | 0.00 | yes | no | no | 15 | 42 | 2 |
+| 2 | 300 | 299 | 0.808 | 0.805 | +0.002 | 0.98 | yes | 138 | 0.00 | 0.00 | yes | no | no | 16 | 47 | 2 |
+| 3 | 100 | 99 | 0.815 | 0.815 | 0.000 | 0.93 | yes | 136 | 0.80 | 0.84 | yes | no | no | 6 | 32 | 1 |
+| 3 | 200 | 199 | 0.866 | 0.851 | +0.015 | 0.87 | yes | 136 | 0.87 | 0.96 | no | no | no | 14 | 51 | 1 |
+| 3 | 300 | 299 | 0.878 | 0.867 | +0.011 | 0.89 | yes | 136 | 0.87 | 0.96 | no | no | no | 14 | 47 | 1 |
+| 4 | 100 | 99 | 0.794 | 0.799 | -0.005 | 0.92 | yes | 136 | 0.18 | 0.07 | yes | no | no | 7 | 32 | 1 |
+| 4 | 200 | 199 | 0.834 | 0.831 | +0.004 | 0.91 | yes | 138 | 0.80 | 0.86 | yes | no | no | 13 | 51 | 1 |
+| 4 | 300 | 299 | 0.877 | 0.854 | +0.023 | 0.81 | yes | 138 | 0.91 | 0.93 | no | yes | no | 15 | 55 | 1 |
+
+**Answer: no, sigmoid units did worse.** Both shapes were found by **0 of 5 seeds at generation 100, 0 of
+5 at 200 and 1 of 5 at 300** (seed 0), against ReLU's 2, 4 and 4 of 5 (section 11).
+
+| hidden units | both found at 100 / 200 / 300 | U found at 100 / 200 / 300 | saddle found at 100 / 200 / 300 | median test AUC at 100 / 200 / 300 |
+|---|---|---|---|---|
+| ReLU (sections 3 and 11) | 2 / 4 / 4 | 5 / 5 / 5 | 2 / 4 / 4 | 0.859 / 0.869 / 0.872 |
+| sigmoid (this section) | 0 / 0 / 1 | 5 / 4 / 3 | 0 / 0 / 2 | 0.799 / 0.831 / 0.854 |
+
+- **U.** Every sigmoid seed had the U at generation 100 (r 0.92-0.96, minimum at 136-139 mmol/L), but
+  shallower than ReLU's: the low end rose 1.1-2.3 logit above the minimum (ReLU 3.5-5.0). Two seeds then
+  bent it away from the true shape while fitting other terms: seed 3 at 200 and 300 (r 0.87, 0.89) and
+  seed 4 at 300 (r 0.81; both ends still rise, the high arm is now the lower one). With ReLU no seed lost the U.
+- **Saddle.** No sigmoid seed reached r 0.9 by generation 200; seeds 0 and 4 crossed it only near the end
+  (0.92, 0.91 at 300). Seed 2 never used heart rate and SBP together (r 0.00, no interaction) in 300
+  generations, and seed 1 reached 0.83. The saddle seed 0 built is bounded: its surface spans about
+  ±3 logit where the truth spans ±9, flattening at the corners as saturating units do
+  (`figures/shape-C-sig-best-g300-saddle.png`).
+- **Speed.** The sigmoid runs learn more slowly throughout: median test AUC at 300 generations (0.854)
+  is below ReLU's at 100 (0.859). Seed 0's best genome is from the last generation at every checkpoint,
+  so it was still improving at 300; more generations might add seeds, but at the same budget ReLU found
+  both shapes in 4 of 5 seeds and sigmoid in 1.
+
+**Overfitting check (1,500 training rows).** None to speak of. Test AUC rose at every checkpoint for every
+seed (0.788-0.822 at 100, 0.801-0.851 at 200, 0.805-0.875 at 300), and the train-test gap stayed small:
+-0.005 to +0.009 at 100, +0.002 to +0.023 at 300 (ReLU at 300: +0.017 to +0.028). The sigmoid models are
+underfitting, not overfitting: training AUC at 300 (0.808-0.887) is below the oracle's training AUC
+(0.893) for every seed. Networks were a little larger than ReLU's at 300 (hidden 12-19, connections
+41-58; ReLU 9-20, 40-55), one species throughout (two for seed 2).
+
+**Figures.** `figures/shape-C-sig-best-g300-sodium.png` and `figures/shape-C-sig-best-g300-saddle.png`:
+seed 0 at generation 300, the best-by-train sigmoid seed (training AUC 0.887; U minimum 136 mmol/L, U r
+0.97, saddle r 0.92, interaction share 0.98).
+
+**Caveats.** Five seeds, one trajectory each; the config's mutation and backprop settings were tuned with
+ReLU and were not retuned for sigmoid units (5 backprop epochs per generation may suit saturating units
+less). The found threshold is a cut on a continuous score (seed 4's U at 0.81, seed 3's saddle at 0.87).
+No explanations were run: the explanation tools' hinge readings assume ReLU (see the code note below).
+
+**Code.** `config.hidden_activation` ∈ {relu (default), sigmoid} (`explaneat/core/neuralneat.py`
+`set_hidden_activation`), restored by `load_neat_config`; the network structures carry it on hidden nodes
+and in `metadata["hidden_activation"]`, so StructureNetwork, ActivationExtractor, AnnotationFunction,
+formulas and the verify/plain-language evaluator compute the trained function
+(`tests/test_core/test_engine_parity.py`). Not yet adapted, and still assuming ReLU hinges: the
+plain-language claim generator and shape classes (hinge / threshold readings), the survival hazard-ratio
+readings of hidden units (`survival/explain.py`), linearisation (`query_linearise`,
+`linearise_annotations`), `unit_activity` (dead / always-on units), the regime map in the evidence
+routes, and the free-text formula checker (`verify/freetext.py`).
+
+```bash
+experiments/ushape_saddle/launch_sig.sh                        # 5 sigmoid runs to 300 generations
+uv run python experiments/ushape_saddle/score_gens.py --prefix shape-C-sig-s --gens 100 200 300 \
+    --out sig_gens.json --log-name "both-sig-s{seed}" --plots shape-C-sig
+```
