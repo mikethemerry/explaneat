@@ -42,6 +42,7 @@ term, but they sit in the denominators of every earlier event.
 | Setting | Where it lives | Survival value |
 |---|---|---|
 | Output activation | `config.output_activation` on the NEAT config (`neuralneat.set_output_activation(config, "identity")`). Absent means sigmoid, the classification default, unchanged. | `identity` |
+| Hidden activation | `config.hidden_activation` (`neuralneat.set_hidden_activation(config, "sigmoid")`; the standard logistic, not neat-python's scaled one). Absent means ReLU, unchanged. Recorded as `config_json["training"]["hidden_activation"]` and read back by `load_neat_config` like the output activation. | ReLU (default) |
 | Backprop loss | `BackpropPopulation(..., criterion=CoxCriterion("efron"))` | Efron Cox loss, full batch |
 | Target | `ys` is `[N, 2]`: column 0 the observed time (> 0), column 1 the event (1) or censoring (0) indicator | `make_survival_targets(time, event)` |
 | Fitness | `make_cox_fitness("efron", complexity_penalty=λ)` | `-loss - λ·k/D` |

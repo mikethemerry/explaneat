@@ -35,6 +35,10 @@ This section records what the export reads, found by reading the code and the da
   (`NeuralNeat` parity, `tests/test_core/test_engine_parity.py`).
   `StructureNetwork(structure).model_output_activation` gives the same value
   (`structure_output_activation`; "identity" only for survival / Cox models).
+  Hidden nodes keep their gene's activation (ReLU) unless the experiment set
+  `config.hidden_activation = "sigmoid"`; then they carry `activation="sigmoid"` and
+  the structure records `metadata["hidden_activation"]`
+  (`StructureNetwork(structure).model_hidden_activation`, `structure_hidden_activation`).
 - **Model state**: `ModelStateEngine(phenotype)` replays `Explanation.operations`
   (`mcp_server.helpers.build_engine`). `engine.current_state` is the explained model;
   `engine.original_phenotype` the unmodified phenotype; `engine.annotations` the
