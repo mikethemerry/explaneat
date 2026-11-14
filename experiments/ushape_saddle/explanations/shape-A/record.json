@@ -1,0 +1,126 @@
+{
+ "label": "shape-A",
+ "genome_id": "2aac39c4-20d1-48f1-8f43-e8dfcaf50a52",
+ "start": "2026-11-14T16:40:00+13:00",
+ "end": "2026-11-14T17:10:16+13:00",
+ "structural_coverage": 1.0,
+ "compositional_coverage": 1.0,
+ "full_coverage": true,
+ "within_budget": true,
+ "n_leaf_annotations": 4,
+ "n_composition_annotations": 3,
+ "n_splits": 7,
+ "n_identity_nodes": 0,
+ "hidden_nodes": 10,
+ "hidden_nodes_single_leaf_no_split": 7,
+ "hidden_nodes_in_any_annotation": 10,
+ "hierarchy_complete": true,
+ "function_preservation_max_abs_err": 3.3306690738754696e-16,
+ "closed_form_max_abs_err": 0.017835323935639913,
+ "summary": "The network's predicted risk is the sigmoid of a linear sum of direct terms plus a U-shaped response to serum sodium. The direct terms each raise the risk (per standardised unit: age 0.79, smoker 0.40, BMI 0.38, creatinine 0.36, diabetes 0.28, noise column 0.17); systolic blood pressure and heart rate have no connections. Sodium acts through three hinges (switch-on points from typical-case sweeps): a low-sodium arm that switches on between sodium 135 and 134 mmol/L (lower for higher BMI) and rises steeply as sodium falls, a first high-sodium hinge that switches on between 137 and 138 and rises gently (slightly more for men), and a steep high-sodium hinge that switches on between 141 and 142. In the typical case the whole-model risk is 77% at sodium 130, 10% at 137 and 92% at 145; switching the sodium structure off lowers AUC from 0.857 to 0.697, the six direct terms together from 0.857 to 0.767. Two further three-unit chains driven by the noise column (one switched off by diabetes, one by high creatinine) feed small negative terms into the low-sodium arm; together they are worth AUC 0.8565 against 0.8532 and are described, not explained.",
+ "summary_template": "The network's predicted risk is the sigmoid of a linear sum of direct terms plus a U-shaped response to serum sodium. The direct terms each raise the risk (per standardised unit: age {{q:q_3619d31733.switched_off[1].weight|.2f}}, smoker {{q:q_3619d31733.switched_off[5].weight|.2f}}, BMI {{q:q_3619d31733.switched_off[6].weight|.2f}}, creatinine {{q:q_3619d31733.switched_off[4].weight|.2f}}, diabetes {{q:q_3619d31733.switched_off[3].weight|.2f}}, noise column {{q:q_3619d31733.switched_off[2].weight|.2f}}); systolic blood pressure and heart rate have no connections. Sodium acts through three hinges (switch-on points from typical-case sweeps): a low-sodium arm that switches on between sodium {{q:q_cd3412c879.rows[15].inputs.sodium}} and {{q:q_cd3412c879.rows[14].inputs.sodium}} mmol/L (lower for higher BMI) and rises steeply as sodium falls, a first high-sodium hinge that switches on between {{q:q_855765bb18.rows[2].inputs.sodium}} and {{q:q_855765bb18.rows[4].inputs.sodium}} and rises gently (slightly more for men), and a steep high-sodium hinge that switches on between {{q:q_cd3412c879.rows[21].inputs.sodium}} and {{q:q_cd3412c879.rows[22].inputs.sodium}}. In the typical case the whole-model risk is {{q:q_cd3412c879.rows[10].risk|pct}} at sodium {{q:q_cd3412c879.rows[10].inputs.sodium}}, {{q:q_cd3412c879.rows[17].risk|pct}} at {{q:q_cd3412c879.rows[17].inputs.sodium}} and {{q:q_cd3412c879.rows[25].risk|pct}} at {{q:q_cd3412c879.rows[25].inputs.sodium}}; switching the sodium structure off lowers AUC from {{q:q_27302b9b92.data.auc_with|.3f}} to {{q:q_27302b9b92.data.auc_without|.3f}}, the six direct terms together from {{q:q_3619d31733.data.auc_with|.3f}} to {{q:q_3619d31733.data.auc_without|.3f}}. Two further three-unit chains driven by the noise column (one switched off by diabetes, one by high creatinine) feed small negative terms into the low-sodium arm; together they are worth AUC {{q:q_cc1edc3b2c.data.auc_with|.4f}} against {{q:q_cc1edc3b2c.data.auc_without|.4f}} and are described, not explained.",
+ "resisted": "The two noise chains (units 881_a, 6957, 8692 and 881_b, 7171, 8285) are described by their closed forms but have no clinical reading: their main input is the random noise column, and they change whole-model AUC only from 0.8565 to 0.8532 (mean risk change -0.0072). The concept probe's best library concepts are 'sodium * noise' for the first (score 0.79) and the gating input 'creatinine' for the second (score 0.91); these grades overstate their meaning, since neither concept names what the chain does to the prediction. The edge from the low-sodium arm into the first high-sodium hinge (weight 0.0087) is kept for function preservation but is inert on the training rows (0 rows with both units positive). The small direct noise-column term (weight 0.17) is fitted noise.",
+ "resisted_template": "The two noise chains (units 881_a, 6957, 8692 and 881_b, 7171, 8285) are described by their closed forms but have no clinical reading: their main input is the random noise column, and they change whole-model AUC only from {{q:q_cc1edc3b2c.data.auc_with|.4f}} to {{q:q_cc1edc3b2c.data.auc_without|.4f}} (mean risk change {{q:q_cc1edc3b2c.data.mean_risk_change|.4f}}). The concept probe's best library concepts are 'sodium * noise' for the first (score {{q:q_8f097d0e2d.score|.2f}}) and the gating input 'creatinine' for the second (score {{q:q_ea4eb95335.score|.2f}}); these grades overstate their meaning, since neither concept names what the chain does to the prediction. The edge from the low-sodium arm into the first high-sodium hinge (weight {{q:q_c6acbab56a.switched_off[0].weight|.4f}}) is kept for function preservation but is inert on the training rows ({{q:q_4588ba17b7.subgroup.n}} rows with both units positive). The small direct noise-column term (weight {{q:q_3619d31733.switched_off[2].weight|.2f}}) is fitted noise.",
+ "recheck_summary": {
+  "ran_at": "2026-11-14T04:10:29+00:00",
+  "recheck_version": 3,
+  "mismatch": 0,
+  "needs_review": 0,
+  "warn": 0,
+  "mismatches": [],
+  "needs_review_items": [],
+  "unchecked_freetext_sentences": 58,
+  "provenance": {
+   "templated_texts": 51,
+   "queries": 78
+  },
+  "complete_ok": true,
+  "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+ },
+ "recheck_notes": "0 mismatches and 0 needs_review. The unchecked free-text sentences are qualitative descriptions (shapes, directions, roles) with no stated number; their numbers sit in referenced sentences next to them.",
+ "tool_bugs": "None blocking. probe_concept grades the low_creatinine_noise_chain 'meaningful' from its gating input (creatinine) alone, which overstates the reading of a chain driven by the noise column; noted in the hypothesis and in resisted. The run was interrupted once and resumed from the stored state.",
+ "accuracy": {
+  "open_findings": 0,
+  "numbers": 365,
+  "provenance_backed": 324,
+  "allow_listed": 41,
+  "scope_mismatch": 0,
+  "formulas": {
+   "exact": 0,
+   "approx_with_tolerance": 0,
+   "other": 0
+  },
+  "audit": {
+   "references": 324,
+   "checked": 324
+  },
+  "self_probe": {
+   "parts": [
+    "low_sodium_hinge",
+    "high_sodium_steep_hinge",
+    "nondiabetic_noise_chain",
+    "low_creatinine_noise_chain",
+    "low_sodium_arm",
+    "sodium_U",
+    "risk_score"
+   ],
+   "refuted_and_fixed": [
+    "high_sodium_steep_hinge: claim that each mmol/L above the switch-on point adds more to the score than any other input per unit was not supported (it compared per-mmol/L with per-sd effects); removed",
+    "sodium_U: an edge's mean absolute risk change was worded as a mean risk change; reworded",
+    "low_sodium_hinge: the arm's row count was read from the hinge's acts-on path; repointed to the arm's (same value)",
+    "low_sodium_arm and summary: switch-on thresholds typed or allow-listed as literals; replaced by probe references"
+   ]
+  },
+  "restatements": 0
+ },
+ "leaves": [
+  {
+   "name": "low_sodium_hinge",
+   "units": [
+    "357",
+    "3629"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 0.999218,
+   "best_concept": "(137 - sodium) - 0.2 * (bmi - 27)",
+   "why": "The exit is how far sodium is below the low end of the normal range, with a higher BMI moving the switch-on point lower; the probe and a BMI-by-sodium sweep confirm it."
+  },
+  {
+   "name": "high_sodium_steep_hinge",
+   "units": [
+    "1180"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 0.987538,
+   "best_concept": "sodium - 142",
+   "why": "The exit is the excess of sodium above the top of the normal range (a switch-on point the typical-case sweep locates there), with a small shift from the noise column."
+  },
+  {
+   "name": "nondiabetic_noise_chain",
+   "units": [
+    "881_a",
+    "6957",
+    "8692"
+   ],
+   "meaning": "partial",
+   "probe_score": 0.785486,
+   "best_concept": "sodium * noise",
+   "why": "Driven by the random noise column and switched off for diabetic patients; it has no clinical reading and no measurable effect on AUC."
+  },
+  {
+   "name": "low_creatinine_noise_chain",
+   "units": [
+    "881_b",
+    "7171",
+    "8285"
+   ],
+   "meaning": "partial",
+   "probe_score": 0.908335,
+   "best_concept": "creatinine",
+   "why": "The probe's 'meaningful' grade comes from the creatinine gate that switches the chain off; what passes the gate is mainly the noise column, so only the gate has a reading."
+  }
+ ],
+ "overall_function": "The network adds a set of increasing direct terms (age, smoking, BMI, creatinine, diabetes and a small one for the noise column) to a U-shaped response to serum sodium, and passes the sum through a sigmoid. The sodium U is built from three hinges: a low-sodium arm that switches on below the normal range and rises steeply as sodium falls, and two high-sodium hinges (a gentle one from the middle of the normal range, slightly higher in men, and a steep one from the top of the normal range); normal sodium leaves all three off. A higher BMI moves the low-sodium switch-on point lower, smoking and diabetes add a little to the low-sodium arm, and two small chains driven by the noise column (gated off by diabetes and by high creatinine) pull the arm down slightly. Systolic blood pressure and heart rate are ignored, and the noise-column terms are fitted noise.",
+ "clinical_terms": "The model's predicted risk is lowest for normal serum sodium and rises sharply for both hyponatraemia and hypernatraemia, more steeply on the high side, with hypernatraemia carrying the heaviest edge into the output. Older age, smoking, diabetes, a higher BMI and a higher creatinine each raise the risk steadily, with smoking and diabetes adding a little more when sodium is low and a higher BMI making the model tolerate slightly lower sodium before the low-sodium risk starts. Blood pressure and heart rate have no effect on the prediction.",
+ "stuck": "The session was interrupted once and resumed from the stored state. The two noise chains resisted a clinical reading (their main input is the noise column); they are described by their closed forms and their small effect is quantified."
+}
