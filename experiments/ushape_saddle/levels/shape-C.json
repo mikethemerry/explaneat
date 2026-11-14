@@ -1,0 +1,1153 @@
+{
+ "label": "shape-C",
+ "genome_id": "a1cbdd4a-42e8-4c1a-b060-00aa3e22c76b",
+ "set": "ushape",
+ "study": "ushape",
+ "records_dir": "explanations",
+ "dataset": "shape_syn_90c30",
+ "n_train": 1500,
+ "computed_at": "2026-11-14T04:25:30+00:00",
+ "method": "experiments/explanation_levels/compute_levels.py (read only; probes not stored, query_id null)",
+ "probe_version": 2,
+ "conditions": {
+  "max_terms": 3,
+  "min_support": 0.01
+ },
+ "levels": {
+  "faithful": {
+   "function_preservation_max_abs_err": 3.3306690738754696e-16,
+   "closed_form_max_abs_err": 0.057034284221943565,
+   "passed": true,
+   "test": "max |output(explained model) - output(phenotype)| over the training rows < 1e-9"
+  },
+  "decomposed": {
+   "n_leaves": 8,
+   "n_compositions": 2,
+   "hidden_units": 8,
+   "granularity": 1.0,
+   "largest_part": {
+    "name": "tachycardia_low_sbp_gate",
+    "hidden_units": 2,
+    "width": 1,
+    "depth": 2,
+    "leaf": true,
+    "param_share": 0.1765
+   },
+   "max_width": 1,
+   "max_depth": 2,
+   "warnings": [],
+   "passed": true,
+   "test": "share of hidden units whose part is at most 6 units wide (depth not penalised); no part wider than that holds half the units"
+  },
+  "understood": {
+   "leaves": 8,
+   "graded": 8,
+   "counts": {
+    "meaningful": 4,
+    "partial": 3,
+    "closed_form_only": 1,
+    "restatement": 0,
+    "unnamed": 0
+   },
+   "grades": {
+    "high_sbp_and_hr_penalty": "meaningful",
+    "tachycardia_low_sbp_gate": "meaningful",
+    "linear_terms": "partial",
+    "sodium_V": "closed_form_only",
+    "hypertension_low_hr_gate": "partial",
+    "young_high_sodium_tachy": "partial",
+    "diabetes_step": "meaningful",
+    "sbp_hinge": "meaningful"
+   },
+   "understood_fraction": 0.5,
+   "understood_probe": 0.5,
+   "partial_fraction": 0.375,
+   "closed_form_only_fraction": 0.125,
+   "restatement_fraction": 0.0,
+   "unnamed_fraction": 0.0,
+   "concepts": {
+    "high_sbp_and_hr_penalty": "sbp * heart_rate",
+    "tachycardia_low_sbp_gate": "heart_rate",
+    "linear_terms": "age * creatinine",
+    "sodium_V": "sodium > 139",
+    "hypertension_low_hr_gate": "sbp",
+    "young_high_sodium_tachy": "sodium",
+    "diabetes_step": "diabetes",
+    "sbp_hinge": "sbp"
+   },
+   "understood_verifier": 0.875,
+   "understood_fraction_verifier": 0.875,
+   "verifier_graded": 8,
+   "verifier_grades": {
+    "high_sbp_and_hr_penalty": "partial",
+    "tachycardia_low_sbp_gate": "meaningful",
+    "linear_terms": "meaningful",
+    "sodium_V": "meaningful",
+    "hypertension_low_hr_gate": "meaningful",
+    "young_high_sodium_tachy": "meaningful",
+    "diabetes_step": "meaningful",
+    "sbp_hinge": "meaningful"
+   },
+   "verifier_compared": 8,
+   "verifier_disagreements": 5,
+   "understood_mike": null,
+   "understood_fraction_mike": null,
+   "mike_graded": 0,
+   "mike_grades": null,
+   "mike_counts": null,
+   "verifier_counts": {
+    "meaningful": 7,
+    "partial": 1,
+    "closed_form_only": 0,
+    "restatement": 0,
+    "unnamed": 0
+   },
+   "test": "understood_mike: the share of leaves graded understood by Mike's leaf verdict (the measured level; None until a leaf has one). Screens: concept probe per leaf (v2): meaningful score >= 0.8; partial >= 0.5; else closed_form_only; restatement when the concept is not simpler than the leaf (more than 3 terms, or a reweighting of the leaf's entries); a binary concept's AUC counts only against a gate of comparable support (>= 1% of rows), else r2; unnamed when no concept was probed. understood_verifier: the blind verifier's leaf grades where a verdict exists",
+   "ground_truth": {
+    "task": "both",
+    "arch": "evolved",
+    "family": "synthetic",
+    "gt_recovery": "recovered",
+    "gt_terms_recovered": 8,
+    "gt_terms_total": 9,
+    "explainer_leaf_grades": {
+     "sodium_V": "meaningful",
+     "tachycardia_low_sbp_gate": "meaningful",
+     "hypertension_low_hr_gate": "meaningful",
+     "high_sbp_and_hr_penalty": "meaningful",
+     "sbp_hinge": "meaningful",
+     "young_high_sodium_tachy": "meaningful",
+     "diabetes_step": "meaningful",
+     "linear_terms": "meaningful"
+    },
+    "truth": "the backbone + 1.0 ((zn + 0.5)^2 - 1) - 1.5 zh zp; noise unused"
+   },
+   "verdict": "experiments/ushape_saddle/verdicts/shape-C/verdict.json",
+   "author": {
+    "leaves": 8,
+    "grades": {
+     "high_sbp_and_hr_penalty": "meaningful",
+     "tachycardia_low_sbp_gate": "meaningful",
+     "linear_terms": "meaningful",
+     "sodium_V": "meaningful",
+     "hypertension_low_hr_gate": "meaningful",
+     "young_high_sodium_tachy": "meaningful",
+     "diabetes_step": "meaningful",
+     "sbp_hinge": "meaningful"
+    },
+    "counts": {
+     "meaningful": 8,
+     "partial": 0,
+     "closed_form_only": 0,
+     "restatement": 0,
+     "unnamed": 0
+    },
+    "understood_fraction_author": 1.0,
+    "restatements": 0,
+    "stored_grades": {
+     "high_sbp_and_hr_penalty": "meaningful",
+     "tachycardia_low_sbp_gate": "meaningful",
+     "linear_terms": "meaningful",
+     "sodium_V": "meaningful",
+     "hypertension_low_hr_gate": "meaningful",
+     "young_high_sodium_tachy": "meaningful",
+     "diabetes_step": "meaningful",
+     "sbp_hinge": "meaningful"
+    },
+    "note": "the concept the explaining agent stored on each leaf (set_meaning), re-probed under the v2 simplicity and support conditions; None when no concept was stored"
+   },
+   "domain_only": null
+  }
+ },
+ "decomposition": {
+  "hidden_units": 8,
+  "small_width_max_units": 6,
+  "granularity": 1.0,
+  "largest_part": {
+   "name": "tachycardia_low_sbp_gate",
+   "hidden_units": 2,
+   "width": 1,
+   "depth": 2,
+   "leaf": true,
+   "param_share": 0.1765
+  },
+  "max_width": 1,
+  "max_depth": 2,
+  "units_only_in_root": 0,
+  "units_only_as_entries": 0,
+  "parts": {
+   "high_sbp_and_hr_penalty": {
+    "units": 2,
+    "width": 1,
+    "depth": 2,
+    "leaf": true,
+    "param_share": 0.098
+   },
+   "hypertension_low_hr_gate": {
+    "units": 2,
+    "width": 1,
+    "depth": 2,
+    "leaf": true,
+    "param_share": 0.1373
+   },
+   "tachycardia_low_sbp_gate": {
+    "units": 2,
+    "width": 1,
+    "depth": 2,
+    "leaf": true,
+    "param_share": 0.1765
+   },
+   "diabetes_step": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.0784
+   },
+   "sbp_hinge": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.0392
+   },
+   "sodium_V": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.098
+   },
+   "young_high_sodium_tachy": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.0784
+   }
+  },
+  "warnings": []
+ },
+ "leaves": {
+  "high_sbp_and_hr_penalty": {
+   "id": "ann_25",
+   "exit_nodes": [
+    "3040",
+    "3544"
+   ],
+   "n_exits": 2,
+   "gated": true,
+   "variables": [
+    "sbp",
+    "heart_rate"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 18,
+   "score": 0.991131,
+   "grade": "meaningful",
+   "best_concepts": [
+    "sbp * heart_rate"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.746528,
+   "auc": 0.995565,
+   "mi": 1.58356,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "sbp * heart_rate",
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
+    "probe": {
+     "r2": 0.746528,
+     "auc": 0.995565,
+     "mi": 1.58356,
+     "n": 1500,
+     "score": 0.991131,
+     "support": null,
+     "query_id": null
+    }
+   },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": {
+    "concept": "sbp * heart_rate",
+    "stored_grade": "meaningful",
+    "stored_score": 0.991131,
+    "score": 0.991131,
+    "grade": "meaningful",
+    "r2": 0.746528,
+    "auc": 0.995565,
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
+    "reweighting_of_entries": false,
+    "support": null,
+    "low_support": false,
+    "auc_in_score": true
+   },
+   "per_exit": {
+    "3040": {
+     "best": {
+      "concept": "sbp * heart_rate",
+      "kind": "continuous",
+      "source": "pair",
+      "n": 1500,
+      "r2": 0.759661,
+      "auc": 0.995154,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 1.616609,
+      "nmi": 0.616343,
+      "leaf_gated": true,
+      "gate_share": 0.488667,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 0.990308
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "sbp * heart_rate",
+       "source": "pair",
+       "score": 0.990308,
+       "r2": 0.759661,
+       "auc": 0.995154,
+       "mi": 1.616609
+      },
+      {
+       "concept": "heart_rate",
+       "source": "input",
+       "score": 0.794114,
+       "r2": 0.502126,
+       "auc": 0.897057,
+       "mi": 0.601173
+      },
+      {
+       "concept": "heart_rate > 76",
+       "source": "threshold",
+       "score": 0.683368,
+       "r2": 0.300166,
+       "auc": 0.841684,
+       "mi": 0.340408
+      }
+     ]
+    },
+    "3544": {
+     "best": {
+      "concept": "sbp * heart_rate",
+      "kind": "continuous",
+      "source": "pair",
+      "n": 1500,
+      "r2": 0.733394,
+      "auc": 0.995977,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 1.550511,
+      "nmi": 0.609319,
+      "leaf_gated": true,
+      "gate_share": 0.466,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 0.991954
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "sbp * heart_rate",
+       "source": "pair",
+       "score": 0.991954,
+       "r2": 0.733394,
+       "auc": 0.995977,
+       "mi": 1.550511
+      },
+      {
+       "concept": "heart_rate",
+       "source": "input",
+       "score": 0.78227,
+       "r2": 0.48322,
+       "auc": 0.891135,
+       "mi": 0.589802
+      },
+      {
+       "concept": "heart_rate > 76",
+       "source": "threshold",
+       "score": 0.659256,
+       "r2": 0.281194,
+       "auc": 0.829628,
+       "mi": 0.321663
+      }
+     ]
+    }
+   }
+  },
+  "tachycardia_low_sbp_gate": {
+   "id": "ann_23",
+   "exit_nodes": [
+    "999"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "sbp",
+    "heart_rate",
+    "sodium",
+    "smoker",
+    "noise"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 27,
+   "score": 0.901682,
+   "grade": "meaningful",
+   "best_concepts": [
+    "heart_rate"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.466181,
+   "auc": 0.950841,
+   "mi": 0.643963,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "heart_rate",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
+    "probe": {
+     "r2": 0.466181,
+     "auc": 0.950841,
+     "mi": 0.643963,
+     "n": 1500,
+     "score": 0.901682,
+     "support": null,
+     "query_id": null
+    }
+   },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": {
+    "concept": "heart_rate / sbp",
+    "stored_grade": "meaningful",
+    "stored_score": 0.946652,
+    "score": 0.946652,
+    "grade": "meaningful",
+    "r2": 0.572913,
+    "auc": 0.973326,
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
+    "reweighting_of_entries": false,
+    "support": null,
+    "low_support": false,
+    "auc_in_score": true
+   },
+   "per_exit": {
+    "999": {
+     "best": {
+      "concept": "heart_rate",
+      "kind": "continuous",
+      "source": "input",
+      "n": 1500,
+      "r2": 0.466181,
+      "auc": 0.950841,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.643963,
+      "nmi": 0.340733,
+      "leaf_gated": true,
+      "gate_share": 0.302667,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 0.901682
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "heart_rate",
+       "source": "input",
+       "score": 0.901682,
+       "r2": 0.466181,
+       "auc": 0.950841,
+       "mi": 0.643963
+      },
+      {
+       "concept": "heart_rate * sodium",
+       "source": "pair",
+       "score": 0.863286,
+       "r2": 0.431145,
+       "auc": 0.931643,
+       "mi": 0.548494
+      },
+      {
+       "concept": "heart_rate > 76",
+       "source": "threshold",
+       "score": 0.594896,
+       "r2": 0.234773,
+       "auc": 0.797448,
+       "mi": 0.361861
+      }
+     ]
+    }
+   }
+  },
+  "linear_terms": {
+   "id": "ann_29",
+   "exit_nodes": [
+    "identity_linear"
+   ],
+   "n_exits": 1,
+   "gated": false,
+   "variables": [
+    "age",
+    "bmi",
+    "creatinine",
+    "smoker",
+    "noise"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 27,
+   "score": 0.749781,
+   "grade": "partial",
+   "best_concepts": [
+    "age * creatinine"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.749781,
+   "auc": null,
+   "mi": 0.977599,
+   "meaning": {
+    "grade": "partial",
+    "concept": "age * creatinine",
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
+    "probe": {
+     "r2": 0.749781,
+     "auc": null,
+     "mi": 0.977599,
+     "n": 1500,
+     "score": 0.749781,
+     "support": null,
+     "query_id": null
+    }
+   },
+   "low_support": false,
+   "auc_in_score": false,
+   "n_low_support_concepts": 0,
+   "author": {
+    "concept": "age + 0.23 * creatinine",
+    "stored_grade": "meaningful",
+    "stored_score": 0.904104,
+    "score": 0.904104,
+    "grade": "meaningful",
+    "r2": 0.904104,
+    "auc": null,
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
+    "reweighting_of_entries": false,
+    "support": null,
+    "low_support": false,
+    "auc_in_score": false
+   },
+   "per_exit": {
+    "identity_linear": {
+     "best": {
+      "concept": "age * creatinine",
+      "kind": "continuous",
+      "source": "pair",
+      "n": 1500,
+      "r2": 0.749781,
+      "auc": null,
+      "auc_of": null,
+      "direction": null,
+      "mi": 0.977599,
+      "nmi": 0.294287,
+      "leaf_gated": false,
+      "gate_share": null,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": false,
+      "score_basis": "r2",
+      "score": 0.749781
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "age * creatinine",
+       "source": "pair",
+       "score": 0.749781,
+       "r2": 0.749781,
+       "auc": null,
+       "mi": 0.977599
+      },
+      {
+       "concept": "age",
+       "source": "input",
+       "score": 0.721168,
+       "r2": 0.721168,
+       "auc": null,
+       "mi": 0.874589
+      },
+      {
+       "concept": "age * bmi",
+       "source": "pair",
+       "score": 0.486964,
+       "r2": 0.486964,
+       "auc": null,
+       "mi": 0.504793
+      }
+     ]
+    }
+   }
+  },
+  "sodium_V": {
+   "id": "ann_22",
+   "exit_nodes": [
+    "identity_sodium"
+   ],
+   "n_exits": 1,
+   "gated": false,
+   "variables": [
+    "sodium",
+    "noise"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 18,
+   "score": 0.375876,
+   "grade": "closed_form_only",
+   "best_concepts": [
+    "sodium > 139"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.375876,
+   "auc": 0.893063,
+   "mi": 0.558154,
+   "meaning": {
+    "grade": "closed_form_only",
+    "concept": "sodium > 139",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
+    "probe": {
+     "r2": 0.375876,
+     "auc": 0.893063,
+     "mi": 0.558154,
+     "n": 1500,
+     "score": 0.375876,
+     "support": 0.423333,
+     "query_id": null
+    }
+   },
+   "low_support": false,
+   "auc_in_score": false,
+   "n_low_support_concepts": 0,
+   "author": {
+    "concept": "abs(sodium - 138.7) * (1 + 1.6 * (sodium > 138.7))",
+    "stored_grade": "meaningful",
+    "stored_score": 0.997658,
+    "score": 0.997658,
+    "grade": "meaningful",
+    "r2": 0.997658,
+    "auc": null,
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
+    "reweighting_of_entries": false,
+    "support": null,
+    "low_support": false,
+    "auc_in_score": false
+   },
+   "per_exit": {
+    "identity_sodium": {
+     "best": {
+      "concept": "sodium > 139",
+      "kind": "binary",
+      "source": "threshold",
+      "n": 1500,
+      "r2": 0.375876,
+      "auc": 0.893063,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.558154,
+      "nmi": 0.182857,
+      "leaf_gated": false,
+      "gate_share": null,
+      "support": 0.423333,
+      "low_support": false,
+      "auc_in_score": false,
+      "score_basis": "r2",
+      "score": 0.375876
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "sodium > 139",
+       "source": "threshold",
+       "score": 0.375876,
+       "r2": 0.375876,
+       "auc": 0.893063,
+       "mi": 0.558154
+      },
+      {
+       "concept": "sodium",
+       "source": "input",
+       "score": 0.351708,
+       "r2": 0.351708,
+       "auc": null,
+       "mi": 2.417588
+      },
+      {
+       "concept": "noise",
+       "source": "input",
+       "score": 0.002184,
+       "r2": 0.002184,
+       "auc": null,
+       "mi": 0.110649
+      }
+     ]
+    }
+   }
+  },
+  "hypertension_low_hr_gate": {
+   "id": "ann_24",
+   "exit_nodes": [
+    "1595"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "sbp",
+    "heart_rate",
+    "sodium",
+    "noise"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 23,
+   "score": 0.71107,
+   "grade": "partial",
+   "best_concepts": [
+    "sbp"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.269769,
+   "auc": 0.855535,
+   "mi": 0.313314,
+   "meaning": {
+    "grade": "partial",
+    "concept": "sbp",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
+    "probe": {
+     "r2": 0.269769,
+     "auc": 0.855535,
+     "mi": 0.313314,
+     "n": 1500,
+     "score": 0.71107,
+     "support": null,
+     "query_id": null
+    }
+   },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": {
+    "concept": "sbp - heart_rate",
+    "stored_grade": "meaningful",
+    "stored_score": 0.915824,
+    "score": 0.915824,
+    "grade": "meaningful",
+    "r2": 0.408361,
+    "auc": 0.957912,
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
+    "reweighting_of_entries": false,
+    "support": null,
+    "low_support": false,
+    "auc_in_score": true
+   },
+   "per_exit": {
+    "1595": {
+     "best": {
+      "concept": "sbp",
+      "kind": "continuous",
+      "source": "input",
+      "n": 1500,
+      "r2": 0.269769,
+      "auc": 0.855535,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.313314,
+      "nmi": 0.193158,
+      "leaf_gated": true,
+      "gate_share": 0.246,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 0.71107
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "sbp",
+       "source": "input",
+       "score": 0.71107,
+       "r2": 0.269769,
+       "auc": 0.855535,
+       "mi": 0.313314
+      },
+      {
+       "concept": "heart_rate * sodium",
+       "source": "pair",
+       "score": 0.63503,
+       "r2": 0.183492,
+       "auc": 0.817515,
+       "mi": 0.239692
+      },
+      {
+       "concept": "sbp * sodium",
+       "source": "pair",
+       "score": 0.617586,
+       "r2": 0.198192,
+       "auc": 0.808793,
+       "mi": 0.243977
+      }
+     ]
+    }
+   }
+  },
+  "young_high_sodium_tachy": {
+   "id": "ann_27",
+   "exit_nodes": [
+    "1269"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "age",
+    "heart_rate",
+    "sodium"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 20,
+   "score": 0.77894,
+   "grade": "partial",
+   "best_concepts": [
+    "sodium"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.407022,
+   "auc": 0.88947,
+   "mi": 0.513681,
+   "meaning": {
+    "grade": "partial",
+    "concept": "sodium",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
+    "probe": {
+     "r2": 0.407022,
+     "auc": 0.88947,
+     "mi": 0.513681,
+     "n": 1500,
+     "score": 0.77894,
+     "support": null,
+     "query_id": null
+    }
+   },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": {
+    "concept": "sodium - 0.19 * age",
+    "stored_grade": "meaningful",
+    "stored_score": 0.922138,
+    "score": 0.922138,
+    "grade": "meaningful",
+    "r2": 0.527762,
+    "auc": 0.961069,
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
+    "reweighting_of_entries": false,
+    "support": null,
+    "low_support": false,
+    "auc_in_score": true
+   },
+   "per_exit": {
+    "1269": {
+     "best": {
+      "concept": "sodium",
+      "kind": "count",
+      "source": "input",
+      "n": 1500,
+      "r2": 0.407022,
+      "auc": 0.88947,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.513681,
+      "nmi": 0.238659,
+      "leaf_gated": true,
+      "gate_share": 0.363333,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 0.77894
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "sodium",
+       "source": "input",
+       "score": 0.77894,
+       "r2": 0.407022,
+       "auc": 0.88947,
+       "mi": 0.513681
+      },
+      {
+       "concept": "sodium > 139",
+       "source": "threshold",
+       "score": 0.627306,
+       "r2": 0.272557,
+       "auc": 0.813653,
+       "mi": 0.314467
+      },
+      {
+       "concept": "heart_rate * sodium",
+       "source": "pair",
+       "score": 0.482398,
+       "r2": 0.195391,
+       "auc": 0.741199,
+       "mi": 0.211929
+      }
+     ]
+    }
+   }
+  },
+  "diabetes_step": {
+   "id": "ann_28",
+   "exit_nodes": [
+    "identity_diabetes"
+   ],
+   "n_exits": 1,
+   "gated": false,
+   "variables": [
+    "diabetes"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 17,
+   "score": 1.0,
+   "grade": "meaningful",
+   "best_concepts": [
+    "diabetes"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 1.0,
+   "auc": 1.0,
+   "mi": 0.862616,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "diabetes",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
+    "probe": {
+     "r2": 1.0,
+     "auc": 1.0,
+     "mi": 0.862616,
+     "n": 1500,
+     "score": 1.0,
+     "support": 0.285333,
+     "query_id": null
+    }
+   },
+   "low_support": false,
+   "auc_in_score": false,
+   "n_low_support_concepts": 0,
+   "author": {
+    "concept": "diabetes",
+    "stored_grade": "meaningful",
+    "stored_score": 1.0,
+    "score": 1.0,
+    "grade": "meaningful",
+    "r2": 1.0,
+    "auc": 1.0,
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
+    "reweighting_of_entries": false,
+    "support": 0.285333,
+    "low_support": false,
+    "auc_in_score": false
+   },
+   "per_exit": {
+    "identity_diabetes": {
+     "best": {
+      "concept": "diabetes",
+      "kind": "binary",
+      "source": "level",
+      "n": 1500,
+      "r2": 1.0,
+      "auc": 1.0,
+      "auc_of": "exit activation as a score for the concept",
+      "direction": "exit higher when the concept holds",
+      "mi": 0.862616,
+      "nmi": 1.0,
+      "leaf_gated": false,
+      "gate_share": null,
+      "support": 0.285333,
+      "low_support": false,
+      "auc_in_score": false,
+      "score_basis": "r2",
+      "score": 1.0
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "diabetes",
+       "source": "level",
+       "score": 1.0,
+       "r2": 1.0,
+       "auc": 1.0,
+       "mi": 0.862616
+      },
+      {
+       "concept": "age",
+       "source": "input",
+       "score": 0.002844,
+       "r2": 0.002844,
+       "auc": null,
+       "mi": 0.002732
+      },
+      {
+       "concept": "age > 62",
+       "source": "threshold",
+       "score": 0.002536,
+       "r2": 0.002536,
+       "auc": 0.522789,
+       "mi": 0.001835
+      }
+     ]
+    }
+   }
+  },
+  "sbp_hinge": {
+   "id": "ann_26",
+   "exit_nodes": [
+    "4250"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "sbp"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 17,
+   "score": 1.0,
+   "grade": "meaningful",
+   "best_concepts": [
+    "sbp"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.862964,
+   "auc": 1.0,
+   "mi": 2.534356,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "sbp",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
+    "probe": {
+     "r2": 0.862964,
+     "auc": 1.0,
+     "mi": 2.534356,
+     "n": 1500,
+     "score": 1.0,
+     "support": null,
+     "query_id": null
+    }
+   },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": {
+    "concept": "sbp",
+    "stored_grade": "meaningful",
+    "stored_score": 1.0,
+    "score": 1.0,
+    "grade": "meaningful",
+    "r2": 0.862964,
+    "auc": 1.0,
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
+    "reweighting_of_entries": false,
+    "support": null,
+    "low_support": false,
+    "auc_in_score": true
+   },
+   "per_exit": {
+    "4250": {
+     "best": {
+      "concept": "sbp",
+      "kind": "continuous",
+      "source": "input",
+      "n": 1500,
+      "r2": 0.862964,
+      "auc": 1.0,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 2.534356,
+      "nmi": 0.798031,
+      "leaf_gated": true,
+      "gate_share": 0.308,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 1.0
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "sbp",
+       "source": "input",
+       "score": 1.0,
+       "r2": 0.862964,
+       "auc": 1.0,
+       "mi": 2.534356
+      },
+      {
+       "concept": "sbp > 132",
+       "source": "threshold",
+       "score": 1.0,
+       "r2": 0.645746,
+       "auc": 1.0,
+       "mi": 0.932444
+      },
+      {
+       "concept": "age",
+       "source": "input",
+       "score": 0.256184,
+       "r2": 0.067737,
+       "auc": 0.628092,
+       "mi": 0.102264
+      }
+     ]
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,685 @@
+{
+ "label": "shape-A",
+ "genome_id": "2aac39c4-20d1-48f1-8f43-e8dfcaf50a52",
+ "set": "ushape",
+ "study": "ushape",
+ "records_dir": "explanations",
+ "dataset": "shape_syn_37095",
+ "n_train": 1500,
+ "computed_at": "2026-11-14T04:25:29+00:00",
+ "method": "experiments/explanation_levels/compute_levels.py (read only; probes not stored, query_id null)",
+ "probe_version": 2,
+ "conditions": {
+  "max_terms": 3,
+  "min_support": 0.01
+ },
+ "levels": {
+  "faithful": {
+   "function_preservation_max_abs_err": 3.3306690738754696e-16,
+   "closed_form_max_abs_err": 0.017835323935639913,
+   "passed": true,
+   "test": "max |output(explained model) - output(phenotype)| over the training rows < 1e-9"
+  },
+  "decomposed": {
+   "n_leaves": 4,
+   "n_compositions": 3,
+   "hidden_units": 10,
+   "granularity": 1.0,
+   "largest_part": {
+    "name": "nondiabetic_noise_chain",
+    "hidden_units": 3,
+    "width": 1,
+    "depth": 3,
+    "leaf": true,
+    "param_share": 0.186
+   },
+   "max_width": 1,
+   "max_depth": 3,
+   "warnings": [],
+   "passed": true,
+   "test": "share of hidden units whose part is at most 6 units wide (depth not penalised); no part wider than that holds half the units"
+  },
+  "understood": {
+   "leaves": 4,
+   "graded": 4,
+   "counts": {
+    "meaningful": 3,
+    "partial": 1,
+    "closed_form_only": 0,
+    "restatement": 0,
+    "unnamed": 0
+   },
+   "grades": {
+    "high_sodium_steep_hinge": "meaningful",
+    "low_sodium_hinge": "meaningful",
+    "low_creatinine_noise_chain": "meaningful",
+    "nondiabetic_noise_chain": "partial"
+   },
+   "understood_fraction": 0.75,
+   "understood_probe": 0.75,
+   "partial_fraction": 0.25,
+   "closed_form_only_fraction": 0.0,
+   "restatement_fraction": 0.0,
+   "unnamed_fraction": 0.0,
+   "concepts": {
+    "high_sodium_steep_hinge": "sodium",
+    "low_sodium_hinge": "sodium",
+    "low_creatinine_noise_chain": "creatinine",
+    "nondiabetic_noise_chain": "sodium * noise"
+   },
+   "understood_verifier": 0.5,
+   "understood_fraction_verifier": 0.5,
+   "verifier_graded": 4,
+   "verifier_grades": {
+    "high_sodium_steep_hinge": "meaningful",
+    "low_sodium_hinge": "meaningful",
+    "low_creatinine_noise_chain": "partial",
+    "nondiabetic_noise_chain": "closed_form_only"
+   },
+   "verifier_compared": 4,
+   "verifier_disagreements": 2,
+   "understood_mike": null,
+   "understood_fraction_mike": null,
+   "mike_graded": 0,
+   "mike_grades": null,
+   "mike_counts": null,
+   "verifier_counts": {
+    "meaningful": 2,
+    "partial": 1,
+    "closed_form_only": 1,
+    "restatement": 0,
+    "unnamed": 0
+   },
+   "test": "understood_mike: the share of leaves graded understood by Mike's leaf verdict (the measured level; None until a leaf has one). Screens: concept probe per leaf (v2): meaningful score >= 0.8; partial >= 0.5; else closed_form_only; restatement when the concept is not simpler than the leaf (more than 3 terms, or a reweighting of the leaf's entries); a binary concept's AUC counts only against a gate of comparable support (>= 1% of rows), else r2; unnamed when no concept was probed. understood_verifier: the blind verifier's leaf grades where a verdict exists",
+   "ground_truth": {
+    "task": "u",
+    "arch": "evolved",
+    "family": "synthetic",
+    "gt_recovery": "recovered",
+    "gt_terms_recovered": 6.5,
+    "gt_terms_total": 8,
+    "explainer_leaf_grades": {
+     "low_sodium_hinge": "meaningful",
+     "high_sodium_steep_hinge": "meaningful",
+     "nondiabetic_noise_chain": "partial",
+     "low_creatinine_noise_chain": "partial"
+    },
+    "truth": "logit = -1.2 + 0.7 za + 0.5 zc + 0.3 zb + 0.8 smoker + 0.6 diabetes + 0.3 male + 1.0 ((zn + 0.5)^2 - 1); minimum at sodium 137 mmol/L; sbp, heart_rate, noise unused"
+   },
+   "verdict": "experiments/ushape_saddle/verdicts/shape-A/verdict.json",
+   "author": {
+    "leaves": 4,
+    "grades": {
+     "high_sodium_steep_hinge": "meaningful",
+     "low_sodium_hinge": "meaningful",
+     "low_creatinine_noise_chain": "meaningful",
+     "nondiabetic_noise_chain": "partial"
+    },
+    "counts": {
+     "meaningful": 3,
+     "partial": 1,
+     "closed_form_only": 0,
+     "restatement": 0,
+     "unnamed": 0
+    },
+    "understood_fraction_author": 0.75,
+    "restatements": 0,
+    "stored_grades": {
+     "high_sodium_steep_hinge": "meaningful",
+     "low_sodium_hinge": "meaningful",
+     "low_creatinine_noise_chain": "meaningful",
+     "nondiabetic_noise_chain": "partial"
+    },
+    "note": "the concept the explaining agent stored on each leaf (set_meaning), re-probed under the v2 simplicity and support conditions; None when no concept was stored"
+   },
+   "domain_only": null
+  }
+ },
+ "decomposition": {
+  "hidden_units": 10,
+  "small_width_max_units": 6,
+  "granularity": 1.0,
+  "largest_part": {
+   "name": "nondiabetic_noise_chain",
+   "hidden_units": 3,
+   "width": 1,
+   "depth": 3,
+   "leaf": true,
+   "param_share": 0.186
+  },
+  "max_width": 1,
+  "max_depth": 3,
+  "units_only_in_root": 0,
+  "units_only_as_entries": 0,
+  "parts": {
+   "low_creatinine_noise_chain": {
+    "units": 3,
+    "width": 1,
+    "depth": 3,
+    "leaf": true,
+    "param_share": 0.186
+   },
+   "nondiabetic_noise_chain": {
+    "units": 3,
+    "width": 1,
+    "depth": 3,
+    "leaf": true,
+    "param_share": 0.186
+   },
+   "low_sodium_hinge": {
+    "units": 2,
+    "width": 1,
+    "depth": 2,
+    "leaf": true,
+    "param_share": 0.1163
+   },
+   "high_sodium_steep_hinge": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.0698
+   },
+   "low_sodium_arm": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": false,
+    "param_share": 0.0698
+   },
+   "sodium_U": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": false,
+    "param_share": 0.0698
+   }
+  },
+  "warnings": []
+ },
+ "leaves": {
+  "high_sodium_steep_hinge": {
+   "id": "ann_18",
+   "exit_nodes": [
+    "1180"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "sodium",
+    "noise"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 18,
+   "score": 0.987538,
+   "grade": "meaningful",
+   "best_concepts": [
+    "sodium"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.463609,
+   "auc": 0.993769,
+   "mi": 0.856086,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "sodium",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
+    "probe": {
+     "r2": 0.463609,
+     "auc": 0.993769,
+     "mi": 0.856086,
+     "n": 1500,
+     "score": 0.987538,
+     "support": null,
+     "query_id": null
+    }
+   },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": {
+    "concept": "sodium - 142",
+    "stored_grade": "meaningful",
+    "stored_score": 0.987538,
+    "score": 0.987538,
+    "grade": "meaningful",
+    "r2": 0.463609,
+    "auc": 0.993769,
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
+    "reweighting_of_entries": false,
+    "support": null,
+    "low_support": false,
+    "auc_in_score": true
+   },
+   "per_exit": {
+    "1180": {
+     "best": {
+      "concept": "sodium",
+      "kind": "count",
+      "source": "input",
+      "n": 1500,
+      "r2": 0.463609,
+      "auc": 0.993769,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.856086,
+      "nmi": 0.568958,
+      "leaf_gated": true,
+      "gate_share": 0.222667,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 0.987538
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "sodium",
+       "source": "input",
+       "score": 0.987538,
+       "r2": 0.463609,
+       "auc": 0.993769,
+       "mi": 0.856086
+      },
+      {
+       "concept": "sodium > 139",
+       "source": "threshold",
+       "score": 0.50606,
+       "r2": 0.198198,
+       "auc": 0.75303,
+       "mi": 0.325054
+      },
+      {
+       "concept": "sodium * noise",
+       "source": "pair",
+       "score": 0.134762,
+       "r2": 0.013276,
+       "auc": 0.567381,
+       "mi": 0.144406
+      }
+     ]
+    }
+   }
+  },
+  "low_sodium_hinge": {
+   "id": "ann_17",
+   "exit_nodes": [
+    "3629"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "bmi",
+    "sodium"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 18,
+   "score": 0.97736,
+   "grade": "meaningful",
+   "best_concepts": [
+    "sodium"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.5608,
+   "auc": 0.98868,
+   "mi": 1.03549,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "sodium",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
+    "probe": {
+     "r2": 0.5608,
+     "auc": 0.98868,
+     "mi": 1.03549,
+     "n": 1500,
+     "score": 0.97736,
+     "support": null,
+     "query_id": null
+    }
+   },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": {
+    "concept": "(137 - sodium) - 0.2 * (bmi - 27)",
+    "stored_grade": "meaningful",
+    "stored_score": 0.999218,
+    "score": 0.999218,
+    "grade": "meaningful",
+    "r2": 0.573571,
+    "auc": 0.999609,
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
+    "reweighting_of_entries": false,
+    "support": null,
+    "low_support": false,
+    "auc_in_score": true
+   },
+   "per_exit": {
+    "3629": {
+     "best": {
+      "concept": "sodium",
+      "kind": "count",
+      "source": "input",
+      "n": 1500,
+      "r2": 0.5608,
+      "auc": 0.98868,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is low",
+      "mi": 1.03549,
+      "nmi": 0.514897,
+      "leaf_gated": true,
+      "gate_share": 0.33,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 0.97736
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "sodium",
+       "source": "input",
+       "score": 0.97736,
+       "r2": 0.5608,
+       "auc": 0.98868,
+       "mi": 1.03549
+      },
+      {
+       "concept": "sodium > 139",
+       "source": "threshold",
+       "score": 0.589286,
+       "r2": 0.197738,
+       "auc": 0.794643,
+       "mi": 0.367877
+      },
+      {
+       "concept": "bmi * sodium",
+       "source": "pair",
+       "score": 0.337138,
+       "r2": 0.059084,
+       "auc": 0.668569,
+       "mi": 0.196382
+      }
+     ]
+    }
+   }
+  },
+  "low_creatinine_noise_chain": {
+   "id": "ann_20",
+   "exit_nodes": [
+    "7171",
+    "8285"
+   ],
+   "n_exits": 2,
+   "gated": true,
+   "variables": [
+    "sodium",
+    "creatinine",
+    "noise"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 20,
+   "score": 0.908335,
+   "grade": "meaningful",
+   "best_concepts": [
+    "creatinine"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.398945,
+   "auc": 0.954168,
+   "mi": 0.950066,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "creatinine",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
+    "probe": {
+     "r2": 0.398945,
+     "auc": 0.954168,
+     "mi": 0.950066,
+     "n": 1500,
+     "score": 0.908335,
+     "support": null,
+     "query_id": null
+    }
+   },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": {
+    "concept": "creatinine",
+    "stored_grade": "meaningful",
+    "stored_score": 0.908335,
+    "score": 0.908335,
+    "grade": "meaningful",
+    "r2": 0.398945,
+    "auc": 0.954168,
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
+    "reweighting_of_entries": false,
+    "support": null,
+    "low_support": false,
+    "auc_in_score": true
+   },
+   "per_exit": {
+    "7171": {
+     "best": {
+      "concept": "creatinine",
+      "kind": "continuous",
+      "source": "input",
+      "n": 1500,
+      "r2": 0.484098,
+      "auc": 0.968589,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is low",
+      "mi": 1.175888,
+      "nmi": 0.398908,
+      "leaf_gated": true,
+      "gate_share": 0.405333,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 0.937178
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "creatinine",
+       "source": "input",
+       "score": 0.937178,
+       "r2": 0.484098,
+       "auc": 0.968589,
+       "mi": 1.175888
+      },
+      {
+       "concept": "sodium * creatinine",
+       "source": "pair",
+       "score": 0.918214,
+       "r2": 0.458499,
+       "auc": 0.959107,
+       "mi": 1.015983
+      },
+      {
+       "concept": "creatinine > 84",
+       "source": "threshold",
+       "score": 0.893784,
+       "r2": 0.435213,
+       "auc": 0.946892,
+       "mi": 0.66691
+      }
+     ]
+    },
+    "8285": {
+     "best": {
+      "concept": "creatinine",
+      "kind": "continuous",
+      "source": "input",
+      "n": 1500,
+      "r2": 0.313792,
+      "auc": 0.939746,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is low",
+      "mi": 0.724243,
+      "nmi": 0.326987,
+      "leaf_gated": true,
+      "gate_share": 0.378667,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 0.879492
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "creatinine",
+       "source": "input",
+       "score": 0.879492,
+       "r2": 0.313792,
+       "auc": 0.939746,
+       "mi": 0.724243
+      },
+      {
+       "concept": "sodium * creatinine",
+       "source": "pair",
+       "score": 0.854898,
+       "r2": 0.294381,
+       "auc": 0.927449,
+       "mi": 0.66767
+      },
+      {
+       "concept": "creatinine > 84",
+       "source": "threshold",
+       "score": 0.632842,
+       "r2": 0.244464,
+       "auc": 0.816421,
+       "mi": 0.335809
+      }
+     ]
+    }
+   }
+  },
+  "nondiabetic_noise_chain": {
+   "id": "ann_19",
+   "exit_nodes": [
+    "8692"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "sodium",
+    "diabetes",
+    "noise"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 20,
+   "score": 0.785486,
+   "grade": "partial",
+   "best_concepts": [
+    "sodium * noise"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.346802,
+   "auc": 0.892743,
+   "mi": 0.425816,
+   "meaning": {
+    "grade": "partial",
+    "concept": "sodium * noise",
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
+    "probe": {
+     "r2": 0.346802,
+     "auc": 0.892743,
+     "mi": 0.425816,
+     "n": 1500,
+     "score": 0.785486,
+     "support": null,
+     "query_id": null
+    }
+   },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": {
+    "concept": "sodium * noise",
+    "stored_grade": "partial",
+    "stored_score": 0.785486,
+    "score": 0.785486,
+    "grade": "partial",
+    "r2": 0.346802,
+    "auc": 0.892743,
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
+    "reweighting_of_entries": false,
+    "support": null,
+    "low_support": false,
+    "auc_in_score": true
+   },
+   "per_exit": {
+    "8692": {
+     "best": {
+      "concept": "sodium * noise",
+      "kind": "continuous",
+      "source": "pair",
+      "n": 1500,
+      "r2": 0.346802,
+      "auc": 0.892743,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.425816,
+      "nmi": 0.264672,
+      "leaf_gated": true,
+      "gate_share": 0.243333,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 0.785486
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "sodium * noise",
+       "source": "pair",
+       "score": 0.785486,
+       "r2": 0.346802,
+       "auc": 0.892743,
+       "mi": 0.425816
+      },
+      {
+       "concept": "noise",
+       "source": "input",
+       "score": 0.781106,
+       "r2": 0.337072,
+       "auc": 0.890553,
+       "mi": 0.411314
+      },
+      {
+       "concept": "sodium * diabetes",
+       "source": "pair",
+       "score": 0.375308,
+       "r2": 0.070733,
+       "auc": 0.687654,
+       "mi": 0.137843
+      }
+     ]
+    }
+   }
+  }
+ }
+}

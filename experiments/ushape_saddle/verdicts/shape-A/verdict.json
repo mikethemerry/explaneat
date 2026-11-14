@@ -1,0 +1,455 @@
+{
+ "item_id": "shape-A",
+ "genome_id": "2aac39c4-20d1-48f1-8f43-e8dfcaf50a52",
+ "target": "experiments/ushape_saddle/explanations/shape-A.json",
+ "target_hash": null,
+ "target_hash_note": "verify recheck did not report a target_hash for this record target",
+ "verifier": "independent verifier agent (explanation-verifier skill)",
+ "started_at": "2026-11-14T17:14:57+13:00",
+ "finished_at": "2026-11-14T17:27:00+13:00",
+ "minutes": 12,
+ "overall": {
+  "grade": "refuted",
+  "summary": "Every number reproduces, and so do the closed forms, coverage and function preservation. Three statements are refuted: the record says normal sodium leaves all three hinges off, but the model's floor is only 135-137 mmol/L and risk climbs through upper-normal sodium; the clinical summary says a higher BMI raises the risk steadily, but for low-sodium patients the model's risk falls as BMI rises (163 training rows); and one ablation sentence reverses the direction of a small effect. Several clinical labels for thresholds ('upper end', 'middle' of the normal range) do not fit the switch-on points the record itself reports."
+ },
+ "counts": {
+  "refuted": 3,
+  "weakened": 8,
+  "upheld": 14,
+  "flag": 0
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "structural 1.0, compositional 1.0, full coverage, hierarchy complete",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.0 / 1.0; no uncovered nodes or edges; sbp (-3) and heart_rate (-4) are Null nodes; single root risk_score contains the output",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/ushape_saddle/explanations/shape-A.json"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "3.33e-16",
+   "check": "verify recheck",
+   "evidence": "recomputed 3.33e-16",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/ushape_saddle/explanations/shape-A.json"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.closed_form_max_abs_err",
+   "statement": "0.0178 (leaf errors 0.0091, 0.0013, 0.018, 0.015)",
+   "check": "verify recheck",
+   "evidence": "recomputed 0.01784; per leaf 0.00913, 0.00127, 0.01784, 0.01492; each leaf's stated closed form (evidence[0] latex) is identical to the recomputed one",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/ushape_saddle/explanations/shape-A.json"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.n_splits",
+   "statement": "4 leaves, 3 compositions, 7 splits, 0 identity nodes, 10 hidden nodes, 7 in a single leaf without a split",
+   "check": "operations list from the database (read only)",
+   "evidence": "rename 10, split 7, annotate 7; hidden base nodes 357, 3629, 1180, 881, 6957, 8692, 7171, 8285, 1789, 219",
+   "commands": []
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "direct weights age 0.79, smoker 0.40, BMI 0.38, creatinine 0.36, diabetes 0.28, noise 0.17; sbp and heart rate unconnected; switch-on points 135/134, 137/138, 141/142; typical risk 77% at 130, 10% at 137, 92% at 145; AUC 0.857 -> 0.697 (sodium_U off), -> 0.767 (direct terms off); chains 0.8565 vs 0.8532",
+   "check": "probe sodium sweep (typical), ablate --part ann_22, --direct, --part ann_19 --part ann_20; connection list",
+   "evidence": "weights +0.787, +0.398, +0.377, +0.355, +0.284, +0.165; arm 0 at 135, 0.026 at 134; hinge 219 0 at 137, 0.141 at 138; steep hinge 0 at 141, 0.027 at 142; risk 77.2%, 10.4%, 91.7%; AUC 0.8565 -> 0.6971, 0.7671, 0.8532",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-A.json --sweep sodium=125:152:28 --nodes 3629,1789,219,1180",
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-A.json --part ann_22",
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-A.json --direct",
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-A.json --part ann_19 --part ann_20"
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "refuted",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.overall_function",
+   "statement": "normal sodium leaves all three [hinges] off; ... a gentle one from the middle of the normal range ... a steep one from the top of the normal range",
+   "check": "probe sodium sweep (typical, men and women); subgroup counts on node values",
+   "evidence": "Over the normal range 135-145 mmol/L only 135-137 leaves all three off. The gentle hinge (219) is on from 138 (men 0.14, women 0.017) and is positive on 812 of the 812 training rows with sodium >= 139; the steep hinge is on from 142 (0.027) and at 144 is 0.47. Typical risk is 10.4% at 137 but 20.9% at 140 (mid-normal) and 79.9% at 144 (still normal). The gentle hinge starts below the middle of the range (137-138, middle 140) and the steep one 3-4 mmol/L below its top (145).",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-A.json --no-parts --sweep sodium=136,137,138,139,140,150 --sweep male=0,1 --nodes 219",
+    "frame query: sodium>=139 and node_219>0 -> 812 of 812"
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "refuted",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.clinical_terms",
+   "statement": "Older age, smoking, diabetes, a higher BMI and a higher creatinine each raise the risk steadily",
+   "check": "probe BMI sweep at three sodium levels; per-row +5 BMI change on the training rows",
+   "evidence": "BMI's effect reverses at low sodium: at sodium 130 risk falls from 87.4% (BMI 16) to 58.1% (BMI 42), at 133 from 36.1% to 15.9% (BMI 34), while at 139 it rises from 7.6% to 37.1%. On 163 of the 1500 training rows (all with sodium 126-135) adding 5 BMI units lowers the predicted risk (mean -4.7 points). The hinge shift is mentioned, but the opposing direction of BMI for low-sodium patients is not; age, smoking, diabetes and creatinine never lower the risk (0 rows).",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-A.json --no-parts --sweep bmi=16:42:14 --sweep sodium=130,133,139",
+    "scratch bmi.py: risk(bmi+5) - risk(bmi) per training row"
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "weakened",
+   "level": "L4",
+   "part": null,
+   "claims": [],
+   "location": "record.clinical_terms",
+   "statement": "risk is lowest for normal serum sodium and rises sharply for both hyponatraemia and hypernatraemia, more steeply on the high side, with hypernatraemia carrying the heaviest edge into the output",
+   "check": "probe sodium sweep (typical)",
+   "evidence": "The floor is 135-137 only; most of the high-side rise is inside the normal range (21% at 140, 59% at 143, 92% at 145). The heaviest edge (1180, weight 3.22) switches on at 141-142, i.e. high-normal sodium, not hypernatraemia (>145). The high side is gentler than the low side for its first 4-5 mmol/L (logit slope about 0.30 vs 0.84 per mmol/L) and steeper only above 142 (about 1.01).",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-A.json --sweep sodium=125:152:28 --nodes 3629,1789,219,1180"
+   ]
+  },
+  {
+   "id": "V9",
+   "grade": "weakened",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "they change whole-model AUC only from 0.8565 to 0.8532 (mean risk change -0.0072)",
+   "check": "ablate --part ann_19 --part ann_20",
+   "evidence": "AUC 0.8565 -> 0.8532 reproduces; -0.0072 is the tool's with-minus-without difference: switching the chains off raises the mean predicted risk by 0.0072, which the sentence does not make clear.",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-A.json --part ann_19 --part ann_20"
+   ]
+  },
+  {
+   "id": "V10",
+   "grade": "weakened",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "Two further three-unit chains ... feed small negative terms into the low-sodium arm",
+   "check": "ablate the chains; probe a low-sodium, high-noise case",
+   "evidence": "The edge weights are small (-0.11, -0.18, -0.22) but the exits reach 6-9, so the terms are not always small: switching both chains off changes one row's risk by up to 0.49 and flips 14 predictions; at sodium 130, noise 2.5 the arm falls from 2.22 (creatinine 110) to 0.09 (creatinine 50). The mean effect is small (0.0072).",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-A.json --part ann_19 --part ann_20",
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-A.json --no-parts --set sodium=130 --set noise=2.5 --sweep creatinine=50,90,110 --nodes 7171,8285,1789"
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "edge 1789->219 weight 0.0087, inert (0 rows with both positive); concept scores 0.79 and 0.91; noise direct weight 0.17",
+   "check": "connection list; frame counts; verify concept",
+   "evidence": "weight 0.00868; 0 rows with node_1789>0 and node_219>0; removing it changes risk by 0.0002 on average; concept scores 0.785 and 0.908",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-A.json --edge '1789->219'",
+    "uv run python -m explaneat verify concept experiments/ushape_saddle/explanations/shape-A.json --part ann_19 --concept 'sodium * noise'",
+    "uv run python -m explaneat verify concept experiments/ushape_saddle/explanations/shape-A.json --part ann_20 --concept creatinine"
+   ]
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "structure",
+   "statement": "7 annotations, one root (risk_score) containing the output; leaves' entry, exit and subgraph nodes; sbp and heart rate not connected",
+   "check": "operations replay; recheck hierarchy",
+   "evidence": "single root, all under root, complete; -3 and -4 are Null (no enabled edges)",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/ushape_saddle/explanations/shape-A.json"
+   ]
+  },
+  {
+   "id": "V13",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_17",
+   "claims": [],
+   "location": "operations.low_sodium_hinge.hypothesis",
+   "statement": "typical exit 0.00 at 137, 0.46 at 136, 3.24 at 130; BMI 20 on at 138 (0.10) off at 139, BMI 30 on at 136 (0.27) off 137, BMI 40 on at 134 (0.43) off 135; 2 of 812 with sodium>=139 positive; 495 of 1500 positive (30.7%, 29% vs 45.1%, 46%); 406 of 417 below 137; arm positive on 187; AUC 0.857 -> 0.821, risk shift 0.036; concept score 1.00",
+   "check": "probe sweeps; frame counts; ablate; concept",
+   "evidence": "all reproduce: 0.4564, 3.236; 0.1033/off, 0.2652/off, 0.4272/off; 2 of 812; 495 (30.7%, 29.2% vs 45.1%, 45.6%); 406 of 417; 187; AUC 0.8205, +0.0360; score 0.9992",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-A.json --no-parts --sweep sodium=133:140:8 --sweep bmi=20,30,40 --nodes 3629,1789",
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-A.json --part ann_17",
+    "uv run python -m explaneat verify concept experiments/ushape_saddle/explanations/shape-A.json --part ann_17 --concept '(137 - sodium) - 0.2 * (bmi - 27)'"
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_17",
+   "claims": [],
+   "location": "operations.low_sodium_hinge.hypothesis",
+   "statement": "the exit is ... 5.55 at 125 (also low_sodium_arm 5.38 at 125; sodium_U risk above 99% at 125; risk_score creatinine 300 gives 77% and systolic pressure 200 mmHg)",
+   "check": "probe support notes",
+   "evidence": "The values reproduce (5.552, 5.379, 99.5%, 76.5%) but sodium 125 is below the training range (126-152), creatinine 300 above it (40-221) and systolic pressure 200 above it (85-186): extrapolation, not evidence.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-A.json --sweep sodium=125:152:28",
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-A.json --no-parts --sweep creatinine=50,120,300"
+   ]
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_18",
+   "claims": [],
+   "location": "operations.high_sodium_steep_hinge.hypothesis",
+   "statement": "typical exit 0.00 at 141, 0.027 at 142, 0.25 at 143, 0.69 at 145, 1.80 at 150; noise shifts; output weights 3.22/1.61/1.40; risk 34% at 142, 92% at 145, >99% at 148; 334 positive (75.7%, 76% vs 30.2%, 30%); 0 below 141; 63 at <=142; AUC 0.857 -> 0.839, shift 0.047; concept 0.99",
+   "check": "probe; connections; frame counts; ablate; concept",
+   "evidence": "reproduce: 0.0266, 0.248, 0.691, 1.800; weights 3.217, 1.613, 1.404; 34.5%, 91.7%, 99.6%; 334 (75.7%, 76.2% vs 30.2%, 29.9%); 0; 63; AUC 0.8385, +0.0467; score 0.988",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-A.json --sweep sodium=125:152:28 --nodes 1180",
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-A.json --part ann_18",
+    "uv run python -m explaneat verify concept experiments/ushape_saddle/explanations/shape-A.json --part ann_18 --concept 'sodium - 142'"
+   ]
+  },
+  {
+   "id": "V16",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_18",
+   "claims": [],
+   "location": "operations.high_sodium_steep_hinge.hypothesis",
+   "statement": "The exit is zero across the low and normal range and rises in a straight line above the upper end of the normal range (record leaves: 'the excess of sodium above the top of the normal range')",
+   "check": "probe sodium sweep",
+   "evidence": "The switch-on point is 141-142 mmol/L, which is inside the normal range (135-145): the exit is already 0.47 at 144 and 0.69 at 145. The reading 'sodium above about 142' holds; the label 'above the upper end of the normal range' does not.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-A.json --sweep sodium=125:152:28 --nodes 1180"
+   ]
+  },
+  {
+   "id": "V17",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_19",
+   "claims": [],
+   "location": "operations.nondiabetic_noise_chain.hypothesis",
+   "statement": "365 positive: 362 non-diabetic, 3 of 441 diabetic; sodium 130 noise 2.5: exit 1.70 vs 0.00, arm 1.51 vs 2.11; both positive on 7 rows; AUC 0.8565 vs 0.8565 (mean |change| 0.0001); concept 0.79",
+   "check": "frame counts; probe; ablate; concept",
+   "evidence": "reproduce: 365, 362, 3 of 441; 1.704 vs 0, 1.514 vs 2.110; 7; 0.8565/0.8565, 0.0001; 0.785",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-A.json --no-parts --set sodium=130 --set noise=2.5 --sweep diabetes=0,1 --nodes 8692,1789",
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-A.json --part ann_19"
+   ]
+  },
+  {
+   "id": "V18",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_19",
+   "claims": [],
+   "location": "operations.nondiabetic_noise_chain.hypothesis",
+   "statement": "Described, not explained ... no clinical reading",
+   "check": "L3 probes",
+   "evidence": "Not meaningful: the hypothesis restates the closed form (noise plus sodium, gated off by diabetes). The record says so itself, and the chain has no effect on AUC, so this is a disclosed gap, not an error.",
+   "commands": []
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_20",
+   "claims": [],
+   "location": "operations.low_creatinine_noise_chain.hypothesis",
+   "statement": "7171 positive for 892, 27 of 427 with creatinine>100; 8285 positive for 568, 6 with creatinine>100; sodium 130 noise 2.5: creatinine 50 exits 6.19/4.63, 90 1.97/0.45, 110 0/0; arm 0.09 and 11% vs 2.22 and 85%; both positive 83 and 41 rows; AUC 0.857 -> 0.853; concept 0.91",
+   "check": "frame counts; probe; ablate; concept",
+   "evidence": "reproduce: 892, 27 of 427, 568, 6; 6.188/4.633, 1.971/0.454, 0/0; 0.092 and 11.3% vs 2.224 and 84.8%; 83, 41; AUC 0.8534; 0.908",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-A.json --no-parts --set sodium=130 --set noise=2.5 --sweep creatinine=50,90,110 --nodes 7171,8285,1789",
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-A.json --part ann_20"
+   ]
+  },
+  {
+   "id": "V20",
+   "grade": "refuted",
+   "level": "L3",
+   "part": "ann_20",
+   "claims": [],
+   "location": "operations.low_creatinine_noise_chain.hypothesis",
+   "statement": "Switching the chain off changes ... the mean predicted risk by -0.007",
+   "check": "ablate --part ann_20",
+   "evidence": "Switching the chain off raises the mean predicted risk by 0.0070 (the chain only pulls the arm down; -0.0070 is the tool's with-minus-without difference). The size is right, the direction of the switch-off effect is reversed. Small in size, but a stated direction the model contradicts.",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-A.json --part ann_20"
+   ]
+  },
+  {
+   "id": "V21",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_21",
+   "claims": [],
+   "location": "operations.low_sodium_arm.hypothesis",
+   "statement": "187 positive (50.3%, 49% vs 38.9%, 39%); 0 with hinge zero; 12 with sodium>=135; switch-on 135 (0.00) / 134 (0.026), 2.41 at 130; risk 10% at 137, 39% at 132, 77% at 130, 98% at 127; smoking 2.69, diabetes 2.82, both 3.10, risks 77/93/92/98%; edges 0.122, 0.188; noise 1 -> 2.41 (80%), noise 3 -> 1.06 (46%); chain edges off 0.8565 -> 0.8538; arm off 0.857 -> 0.821, 0.036",
+   "check": "probe; frame counts; ablate",
+   "evidence": "reproduce: 187 (50.3%, 49.5% vs 38.9%, 38.9%); 0; 12; 0/0.0261, 2.405; 10.4, 39.0, 77.2, 97.7%; 2.689, 2.818, 3.102; 77.2, 92.7, 91.9, 97.7%; 0.1222, 0.1881; 2.405 (80.0%), 1.059 (45.6%); 0.8538; 0.8205, +0.0360",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-A.json --no-parts --set sodium=130 --sweep smoker=0,1 --sweep diabetes=0,1 --nodes 1789",
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-A.json --no-parts --set sodium=130 --sweep noise=-2,-1,0,1,2,2.5,3 --nodes 1789,8692,7171,8285",
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-A.json --edge=8692->1789 --edge=7171->1789 --edge=8285->1789",
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-A.json --part ann_21"
+   ]
+  },
+  {
+   "id": "V22",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_22",
+   "claims": [],
+   "location": "operations.sodium_U.hypothesis",
+   "statement": "output weights 1.40/1.61/3.22; hinge 219 women/men 0.00/0.00 at 137, 0.017/0.14 at 138, 0.39/0.51 at 140, 2.25/2.37 at 150; male edge 0.062, off 0.8565 -> 0.8557; 945 positive, 812 of 812 at >=139, 133 of 688 at <=138, 334 of 334; 0 rows arm with either high hinge; edge 0.0087, 0.0002; 316 of 328 in 135-137 all off, 368 overall, 19.0%, 19%; U risks 77/22/10/10/21/59/92/>99%; bands 227 (44.1%, 43%), 998 (28.2%, 28%), 275 (81.5%, 82%); off 0.857 -> 0.697, 0.204; hinge 219 alone 0.831",
+   "check": "probe; frame counts; ablate",
+   "evidence": "all reproduce (0.0165/0.141, 0.389/0.514, 2.249/2.374; 0.0622, 0.8557; counts as stated; band means 43.2%, 27.9%, 82.3%; AUC 0.6971, +0.2039; node 219 off 0.8308)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-A.json --no-parts --sweep sodium=136,137,138,139,140,150 --sweep male=0,1 --nodes 219",
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-A.json --edge=-9->219",
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-A.json --node 219",
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-A.json --part ann_22"
+   ]
+  },
+  {
+   "id": "V23",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_22",
+   "claims": [],
+   "location": "operations.sodium_U.hypothesis",
+   "statement": "The first high-sodium hinge switches on just above the middle of the normal range",
+   "check": "probe sodium x male",
+   "evidence": "It switches on between 137 and 138 mmol/L (pre-activation -0.045 at 137 for men, +0.017 at 138 for women), below the middle of the normal range (140), 2-3 mmol/L above its low end.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-A.json --no-parts --sweep sodium=136,137,138,139,140,150 --sweep male=0,1 --nodes 219"
+   ]
+  },
+  {
+   "id": "V24",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_22",
+   "claims": [],
+   "location": "operations.sodium_U.hypothesis",
+   "statement": "The high side is steeper and starts closer to the floor than the low side",
+   "check": "probe sodium sweep (typical), logit slopes",
+   "evidence": "Both sides start at the edges of the 135-137 floor. Three mmol/L out from the floor, the low side reaches 39% (132) and the high side only 21% (140): the high side is gentler for its first 4-5 mmol/L (score slope about 0.30 vs 0.84 per mmol/L) and steeper only above 142 (about 1.01). Partly right.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-A.json --sweep sodium=125:152:28 --nodes 3629,1789,219,1180"
+   ]
+  },
+  {
+   "id": "V25",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_23",
+   "claims": [],
+   "location": "operations.risk_score.hypothesis",
+   "statement": "weights 0.79/0.38/0.36/0.40/0.28/0.17; direct off 0.857 -> 0.767; age 30/60/90 -> 2/15/57%; BMI 18/40 -> 9/34%; creatinine 50/120 -> 11/24%; smoker-diabetes grid 16/27/33/48%; noise -2/2 -> 12/21%; sbp and heart rate no effect (16%); sodium_U off -> 0.697; outcome rate 40.3%, AUC 0.857, accuracy 0.775",
+   "check": "probe sweeps; ablate --direct; recheck",
+   "evidence": "reproduce: 2.2, 14.6, 56.8%; 8.7, 33.7%; 11.2, 23.9%; 16.4, 26.8, 33.1, 48.0%; 12.4, 21.4%; 16.4% at every sbp and heart rate; AUC 0.7671, 0.6971; 40.3%, 0.8565, 0.7747",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-A.json --no-parts --sweep age=30,60,90",
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-A.json --no-parts --sweep smoker=0,1 --sweep diabetes=0,1",
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-A.json --no-parts --sweep sbp=90,145,200",
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-A.json --direct"
+   ]
+  }
+ ],
+ "parts": {
+  "ann_23": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_22": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_21": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_17": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_18": {
+   "grade": "weakened",
+   "level": "L4"
+  },
+  "ann_19": {
+   "grade": "weakened",
+   "level": "L4"
+  },
+  "ann_20": {
+   "grade": "refuted",
+   "level": "L3"
+  }
+ },
+ "leaf_meaning": {
+  "low_sodium_hinge": {
+   "grade": "meaningful",
+   "why": "The exit tracks how far sodium falls below about 137 mmol/L, moved about 0.2 mmol/L lower per BMI unit (concept score 1.00, BMI sweeps confirm), and it reaches the prediction only below about 134.5 through the arm."
+  },
+  "high_sodium_steep_hinge": {
+   "grade": "meaningful",
+   "why": "The exit is the excess of sodium above about 142 mmol/L (score 0.99), slightly shifted by noise; the reading holds, only its label as 'above the normal range' is wrong."
+  },
+  "nondiabetic_noise_chain": {
+   "grade": "closed-form-only",
+   "why": "Driven by the random noise column, gated off by diabetes, with no effect on AUC; the only description is its own formula."
+  },
+  "low_creatinine_noise_chain": {
+   "grade": "partial",
+   "why": "Only the creatinine gate has a reading (on when creatinine is low, 27 of 427 rows above 100 umol/L); what passes the gate is mainly noise."
+  }
+ },
+ "flags": [
+  {
+   "location": "record.clinical_terms",
+   "note": "Domain (model, not explanation): the model's lowest risk sits at 135-137 mmol/L and risk is already doubled at 140 and about 80% at 144, inside the usual 135-145 normal range; and for low-sodium patients a higher BMI lowers the predicted risk. A domain reviewer should look at both."
+  }
+ ],
+ "statements_checked": 185,
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ],
+ "notes": "Evidence is all on the training split (n = 1500); no test-split numbers are used as evidence. No plain-language drafts or claims exist for this genome, so sections on drafts and claims were skipped. Nothing was written to the database or the target."
+}

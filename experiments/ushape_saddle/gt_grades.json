@@ -1,0 +1,57 @@
+{
+ "shape-A": {
+  "task": "u",
+  "truth": "logit = -1.2 + 0.7 za + 0.5 zc + 0.3 zb + 0.8 smoker + 0.6 diabetes + 0.3 male + 1.0 ((zn + 0.5)^2 - 1); minimum at sodium 137 mmol/L; sbp, heart_rate, noise unused",
+  "terms": {
+   "sodium U, minimum 137 mmol/L": "recovered: sodium_U composition of a low-sodium arm (on below 134-135 mmol/L) and two high-sodium hinges (137-138 gentle, 141-142 steep); the hypothesis says both ends raise risk; whole-model typical-case minimum is flat over 135-137 (truth 137); logit rise from the minimum 5.1 at 128 (truth 5.1) and 9.6 at 150 (truth 10.6); sodium_U contribution vs (zn+0.5)^2 R^2 0.95 on the training rows; the blind verifier refuted the record's wording that normal sodium leaves all three hinges off: the model's floor is 135-137 and risk climbs through upper-normal sodium (10% at 137, 21% at 140, 80% at 144 for the typical case), which is what the true U does, so the model is closer to the truth than the words",
+   "age (linear, +)": "recovered: direct edge, 0.79 per sd",
+   "creatinine (linear in log, +)": "recovered: direct edge, 0.36 per sd (linear in raw creatinine, the same direction)",
+   "bmi (linear, +)": "partial: direct edge 0.38 per sd, but bmi also enters the low-sodium hinge (-0.37), so for low-sodium patients risk falls as bmi rises (163 training rows; the blind verifier refuted the record's 'raises the risk steadily'); not in the truth",
+   "smoker step (+)": "recovered: direct edge 0.40",
+   "diabetes step (+)": "recovered: direct edge 0.28",
+   "male step (+)": "not recovered: male reaches the output only through a 0.06 edge into the first high-sodium hinge (\"slightly more for men\"); weak in the data too (LR coefficient 0.09)",
+   "unused inputs (sbp, heart_rate, noise)": "recovered: sbp and heart rate have no edges; the noise column's direct edge (0.17) and two noise chains are flagged by the explainer as fitted noise (AUC 0.8565 vs 0.8532 without the chains)"
+  },
+  "spurious": "bmi moves the low-sodium switch-on point; two noise-driven chains gated by diabetes and creatinine (described, not explained)",
+  "recovered": 6.5,
+  "total": 8,
+  "grade": "recovered"
+ },
+ "shape-B": {
+  "task": "saddle",
+  "truth": "logit = -1.2 + 0.7 za + 0.5 zc + 0.3 zb + 0.8 smoker + 0.6 diabetes + 0.3 male - 1.5 zh zp; sodium, noise unused",
+  "terms": {
+   "heart rate x sbp saddle (opposing directions, -)": "recovered: the summary and overall_function name a saddle (risk high for high pressure with a slow rate or a fast rate with low pressure, low when both are high). Structure: a hinge on sbp - 0.8 heart_rate (pressure_over_rate, unit 440, probe sbp - heart_rate 0.997), a serial chain of hinges on 1.9 sbp + 1.4 heart_rate (pressure_rate_load, units 534/1197/2442/560/7124/7602, lowering risk more steeply as both rise) and a direct heart-rate edge (1.29) for the fast-rate arm, i.e. hinges on z1 - z2 and z1 + z2. No single part is the saddle: against the ad-hoc concept heart_rate * sbp the two saddle parts together score R^2 0.47 (centred product -zh zp 0.31; product plus linear zh, zp 0.96); the whole-model heart-rate x sbp surface correlates 0.96 with the true -1.5 zh zp surface, 95% of its variance interaction",
+   "age (linear, +)": "recovered, with an artefact: direct edge 0.81 per sd plus an age-ceiling hinge that flattens risk above the early eighties (76 rows; not in the truth)",
+   "creatinine (linear in log, +)": "recovered: direct edge 0.46 per sd",
+   "bmi (linear, +)": "partial: the model's bmi hinge is nearly linear (R^2 0.996; on at bmi 15 in 41% of rows), close to the truth, but the record reads it as 'only above a turn in the overweight range', which the blind verifier refuted",
+   "smoker step (+)": "recovered: direct edge 0.45",
+   "diabetes step (+)": "recovered: direct edge 0.43",
+   "male step (+)": "recovered: direct edge 0.21",
+   "unused inputs (sodium, noise)": "recovered: neither is connected"
+  },
+  "spurious": "age ceiling above the early eighties; the bmi turn moving with heart rate and pressure",
+  "recovered": 7.5,
+  "total": 8,
+  "grade": "recovered (at the root)"
+ },
+ "shape-C": {
+  "task": "both",
+  "truth": "the backbone + 1.0 ((zn + 0.5)^2 - 1) - 1.5 zh zp; noise unused",
+  "terms": {
+   "sodium U, minimum 137 mmol/L": "recovered (as a V): sodium_V, one unit split into abs(sodium - 138.7) with a 2.6x steeper high side (probe 0.998); the hypothesis says both ends raise risk; whole-model typical-case minimum 138 mmol/L (truth 137, about 1-2 mmol/L high); logit rise from the minimum 3.6 at 128 (truth 5.1) and 8.0 at 150 (truth 10.6); sodium_V contribution vs (zn+0.5)^2 R^2 0.90",
+   "heart rate x sbp saddle (opposing directions, -)": "recovered: composition bp_hr_saddle named as a saddle with opposing directions (fast pulse with low pressure, or high pressure with slow pulse, raises risk; both high lowers it). Structure: two mismatch hinges, heart_rate - sbp (unit 999, best concept heart_rate / sbp 0.95) and sbp - heart_rate (unit 1595, 0.92), against a joint-high penalty chain on sbp + heart_rate (units 3040 -> 3544, sbp * heart_rate 0.99) and a small sbp hinge: hinges on z1 - z2 (both signs) and z1 + z2. The composition against -(heart_rate - 76)(sbp - 132) scores R^2 0.78 (0.80 with linear terms); against the raw heart_rate * sbp 0.03; the whole-model surface correlates 0.96 with the true term, 96% interaction",
+   "age (linear, +)": "recovered: direct edge 0.98 per sd (a small age term inside the young-high-sodium gate)",
+   "creatinine (linear in log, +)": "recovered: direct edge 0.60 per sd",
+   "bmi (linear, +)": "recovered: direct edge 0.23 per sd",
+   "smoker step (+)": "recovered: direct edge 0.31",
+   "diabetes step (+)": "recovered: diabetes_step plus a direct edge",
+   "male step (+)": "not recovered: no edge (weak in the data: LR coefficient 0.11)",
+   "unused inputs (noise)": "recovered: the noise column's small direct weight (0.17) is flagged by the explainer as spurious"
+  },
+  "spurious": "the high-sodium side opening earlier in younger patients (an age x sodium gate); low sodium opening both mismatch gates at a smaller mismatch (a sodium x saddle coupling through unit 174)",
+  "recovered": 8,
+  "total": 9,
+  "grade": "recovered"
+ }
+}
