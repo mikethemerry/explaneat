@@ -1,0 +1,540 @@
+{
+ "item_id": "shape-B",
+ "genome_id": "25f5830e-33cc-4dda-8ea8-16e092c09a3e",
+ "target": "experiments/ushape_saddle/explanations/shape-B.json",
+ "target_hash": null,
+ "target_hash_note": "recheck.json carries no target_hash for a record target",
+ "verifier": "independent verifier agent (explanation-verifier skill)",
+ "started_at": "2026-11-14T17:14:45+13:00",
+ "finished_at": "2026-11-14T17:26:00+13:00",
+ "minutes": 11,
+ "overall": {
+  "grade": "refuted",
+  "summary": "Numbers, weights, thresholds, coverage and the pressure-rate saddle all reproduce. One statement is refuted: the rate-bmi amplifier's clinical reading that a faster heart rate raises risk through it, more so when pressure is high for the rate; there the part falls with heart rate. The clinical summary's 'bmi only above a turn in the overweight range' is also refuted (41% of rows have bmi acting linearly from bmi 15). The bmi turn, several sweep end points outside the data range and two 'meaningful' leaf grades are weakened."
+ },
+ "counts": {
+  "upheld": 21,
+  "weakened": 9,
+  "refuted": 2,
+  "flag": 1
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "structural 1.0, compositional 1.0, hierarchy complete",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.0 / 1.0, no uncovered nodes; sodium (-5) and noise (-10) are Null (no path to the output); one root (risk_score) holding the output, all five leaves under it",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/ushape_saddle/explanations/shape-B.json --out experiments/ushape_saddle/verdicts/shape-B/recheck.json"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "4.4e-16",
+   "check": "verify recheck",
+   "evidence": "recomputed 4.44e-16",
+   "commands": []
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.closed_form_max_abs_err",
+   "statement": "0.044 (load chain), other leaves 0.0012 to 0.013",
+   "check": "verify recheck",
+   "evidence": "recomputed ann_18 0.0441 on exit scale 10.2; ann_17 0.0012, ann_19 0.0020, ann_21 0.0127, ann_22 0.0100",
+   "commands": []
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "linearising every hidden unit lowers training AUC from 0.8458 to 0.7450",
+   "check": "verify linearise --level nodes",
+   "evidence": "full 0.8458, every switching unit affine 0.7450 (gain +0.1009)",
+   "commands": [
+    "uv run python -m explaneat verify linearise experiments/ushape_saddle/explanations/shape-B.json --level nodes"
+   ]
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_23",
+   "claims": [],
+   "location": "record.summary",
+   "statement": "at systolic 110 mmHg risk rises with heart rate from 3% to 90% while at systolic 150 it falls",
+   "check": "probe --sweep heart_rate=40:120:9 --sweep sbp=110,150,180",
+   "evidence": "sbp 110: 3.2% at 40 -> 90.4% at 110 bpm; sbp 150: 88.7% -> 0.7%. Training corners agree (sbp<=115 & hr>=90: n 46, outcome 76.1%; sbp>=150 & hr>=90: n 38, outcome 5.3%)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-B.json --hold typical --sweep heart_rate=40:120:9 --sweep sbp=110,150,180"
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_21",
+   "claims": [],
+   "location": "record.summary",
+   "statement": "Bmi acts through an amplifier that is flat at low bmi and rising above a turn",
+   "check": "per-row bmi turn of node 1686 computed from the network weights; probe bmi sweeps at sbp 110/150 x hr 60/90; linearise",
+   "evidence": "true only for 58% of training rows, and the turn ranges from bmi 16 to 38 (median 24, 5th-95th pct). For 41% the part is on at bmi 15 and bmi raises risk linearly over the whole range (sbp 150, hr 60: 56.7% at bmi 15, 63.7% at 19, 91.1% at 43); at sbp 110, hr 60 bmi has no effect up to 43 (5.5% throughout). Node 1686 has affine R2 0.996 and linearising it costs 0.0005 AUC, so the hinge is nearly invisible in the predictions",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-B.json --hold typical --set sbp=150 --sweep bmi=15:43:8 --sweep heart_rate=60,90",
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-B.json --hold typical --set sbp=110 --sweep bmi=15:43:8 --sweep heart_rate=60,90",
+    "uv run python -m explaneat verify linearise experiments/ushape_saddle/explanations/shape-B.json --level nodes"
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_17",
+   "claims": [],
+   "location": "record.summary",
+   "statement": "age rises linearly and then flattens in the early eighties; sodium and noise are not connected",
+   "check": "probe --sweep age=30:95:14 --nodes 3514; structure null nodes",
+   "evidence": "risk 2.1% at 30, 41.0% at 80 (unit 0, pre-activation -0.03), 41.1% at 85, 39.8% at 95; -5 and -10 have no path to the output",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-B.json --hold typical --sweep age=30:95:14 --nodes 3514"
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "scores 0.82 / 0.84 / 0.61; 76 rows; 0.044",
+   "check": "verify concept, subgroup, recheck",
+   "evidence": "concept sbp + bmi + heart_rate on ann_21 score 0.842; age-ceiling on for 76 rows; closed-form error 0.0441; all provenance-backed and re-rendered by recheck without mismatch",
+   "commands": [
+    "uv run python -m explaneat verify concept experiments/ushape_saddle/explanations/shape-B.json --part ann_21 --concept 'sbp + bmi + heart_rate'"
+   ]
+  },
+  {
+   "id": "V9",
+   "grade": "refuted",
+   "level": "L3",
+   "part": "ann_21",
+   "claims": [],
+   "location": "record.clinical_terms",
+   "statement": "higher bmi raises it only above a turn in the overweight range",
+   "check": "per-row bmi turn of node 1686; probe bmi sweep at sbp 150, hr 60",
+   "evidence": "for 41% of training rows (amplifier on at bmi 15) bmi raises risk from the lowest bmi up: at sbp 150, hr 60 (typical otherwise) risk is 56.7% at bmi 15 and 63.7% at bmi 19, both underweight; among rows with a turn inside the range its median is bmi 24 (normal range), 5th-95th pct 16 to 38. The 'overweight' turn (about 26) is the typical case only",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-B.json --hold typical --set sbp=150 --sweep bmi=15:43:8 --sweep heart_rate=60,90"
+   ]
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_23",
+   "claims": [],
+   "location": "record.clinical_terms",
+   "statement": "high risk with high systolic and slow heart rate, and with fast heart rate at low or normal pressure; low when both are high; older age raises risk to the early eighties; creatinine, smoking, diabetes, male raise it; sodium has no effect",
+   "check": "subgroup corners; probe hr sweeps at sbp 100/120",
+   "evidence": "corners reproduce (61 rows 90.2% outcome / 89% predicted; 46 rows 76.1% / 70%; 38 rows 5.3% / 4%); sbp 100: 5.3% at hr 60 -> 97.7% at 120; sbp 120: 9.4% -> 67.3% at 100-110; direct weights all positive",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/ushape_saddle/explanations/shape-B.json --where 'sbp >= 150 and heart_rate <= 65'",
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-B.json --hold typical --sweep heart_rate=50:120:8 --sweep sbp=100,120"
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "weakened",
+   "level": "L4",
+   "part": null,
+   "claims": [],
+   "location": "record.leaves",
+   "statement": "direct_terms and rate_bmi_amplifier graded 'meaningful'",
+   "check": "read against the record's own 'resisted' and 'why' text and the concept probes",
+   "evidence": "the record says both are 'read as weighted sums rather than one clinical concept'; direct_terms' concept is the part's own three largest terms (a restatement of the closed form), and the amplifier's concept sbp + bmi + heart_rate has r2 0.59 and gives heart rate the wrong sign where the pressure-over-rate unit is on (see V-amplifier finding). Better graded closed-form-only and partial",
+   "commands": [
+    "uv run python -m explaneat verify concept experiments/ushape_saddle/explanations/shape-B.json --part ann_21 --concept 'sbp + bmi + heart_rate'"
+   ]
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "structure",
+   "statement": "5 leaves + 1 root; 5 splits, 3 identity nodes; each hidden node in one leaf",
+   "check": "verify recheck; dumped the replayed structure",
+   "evidence": "operations: splits of sbp, heart_rate, age, bmi, creatinine; identity_direct, identity_560, identity_440; leaves partition the 10 hidden nodes (440 | 534,1197,2442,560,7124,7602 | 2391,1686 | 3514 | direct edges); root holds output 0 plus the Null inputs",
+   "commands": []
+  },
+  {
+   "id": "V13",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_17",
+   "claims": [],
+   "location": "operations.age_ceiling.hypothesis",
+   "statement": "single hinge, 0.96/SD age, -0.085/SD creatinine, readout -0.91 cancels direct age +0.81; turn between 80 and 85 at creatinine 85; on for 76, 0 under 80, 36 of 36 aged 85+; AUC 0.8458 -> 0.8447; max risk change 0.25",
+   "check": "edge dump; probe age sweep; recomputed turn; numpy counts; ablate",
+   "evidence": "weights 0.9609, -0.0846, bias -1.551, readout -0.9087, direct age 0.8104 (net -0.063/SD above the turn: flat, slightly falling, 41.1% at 85 to 39.8% at 95). Turn at creatinine 85 = age 80.4. On for 76 rows, minimum age when on 80.0, 36/36 aged >=85. Ablate: 76 affected, max 0.2508, AUC 0.8447",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-B.json --hold typical --sweep age=30:95:14 --nodes 3514",
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-B.json --part ann_17"
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_17",
+   "claims": [],
+   "location": "operations.age_ceiling.hypothesis",
+   "statement": "Self-probe: risk 1% at age 20 ... 40% at 95 (also evidence[1] and the root)",
+   "check": "probe range check",
+   "evidence": "age 20 is outside the training range (30 to 95); at age 30 the model gives 2.1%. The shape holds inside the support but the quoted start point is extrapolation",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-B.json --hold typical --sweep age=30:95:14"
+   ]
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_17",
+   "claims": [],
+   "location": "operations.age_ceiling.hypothesis",
+   "statement": "Higher creatinine raises the age threshold a little: at age 85 the unit is 0.52 at creatinine 40 and 0.00 at 220; whole-model risk 22% to 91%",
+   "check": "probe --set age=85 --sweep creatinine=40:260:12 --nodes 3514",
+   "evidence": "unit 0.521 at 40, 0.025 at 200, 0 at 220; risk 22.3% -> 90.6%. Turn moves from age 78.7 (creatinine 40) to 85.5 (220); about 5 years across the 1st-99th pct of creatinine: 'a little' is fair",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-B.json --hold typical --set age=85 --sweep creatinine=40:260:12 --nodes 3514"
+   ]
+  },
+  {
+   "id": "V16",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_17",
+   "claims": [],
+   "location": "operations.age_ceiling.evidence[0-9]",
+   "statement": "closed form, sweeps, counts, ablations, concept score 1.00",
+   "check": "recheck (provenance re-render) plus spot probes/ablate above",
+   "evidence": "all reproduce; concept 'age' score 0.9989, gate AUC 0.9994",
+   "commands": [
+    "uv run python -m explaneat verify concept experiments/ushape_saddle/explanations/shape-B.json --part ann_17 --concept age"
+   ]
+  },
+  {
+   "id": "V17",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_18",
+   "claims": [],
+   "location": "operations.pressure_rate_load.hypothesis",
+   "statement": "serial chain on sbp (1.92/SD) + hr (1.42/SD); 1197 always-on copy; stage counts 963/419/224/73; readouts -0.20,-0.63,-0.54,-0.51,-0.63; decreasing convex penalty",
+   "check": "edge dump; probe hr sweep at sbp 133",
+   "evidence": "weights match (1.9174, 1.4195, 1.1638, 1.0458, 0.9469, 0.9768; readouts -0.1996, -0.6325, -0.5443, -0.5053, -0.6283); 1197 = relu(1.16*534 + 0.48) is always on. The part's contribution falls ever faster with heart rate at sbp 133: about -0.31 per 3 bpm (70-88), -0.45 to -0.49 (88-100), -0.56 (100-112), -0.76 (112-121)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-B.json --hold typical --sweep heart_rate=40:121:28"
+   ]
+  },
+  {
+   "id": "V18",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_18",
+   "claims": [],
+   "location": "operations.pressure_rate_load.hypothesis",
+   "statement": "Turning points: at sbp 133 stages switch on between hr 65-70, 85-90, 95-100, 110-115; at hr 76 between sbp 125-130, 145-150, 155-160, 170-175",
+   "check": "solved the chain's thresholds from the weights",
+   "evidence": "hr thresholds 69.0, 88.2, 98.6, 111.4 bpm; sbp thresholds 125.6, 145.9, 157.0, 170.6 mmHg: all inside the stated intervals",
+   "commands": []
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_18",
+   "claims": [],
+   "location": "operations.pressure_rate_load.hypothesis",
+   "statement": "side unit 560: on for 527, edge to score -0.024 (max 0.033), fixing at zero AUC 0.8458 -> 0.8414; whole-part ablation AUC 0.7258",
+   "check": "ablate --node 560; ablate --part ann_18",
+   "evidence": "node 560 fixed: 527 affected, AUC 0.8414, max 0.3765; part off: AUC 0.7258, mean risk change -0.0677, 362 flips",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-B.json --node 560",
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-B.json --part ann_18"
+   ]
+  },
+  {
+   "id": "V20",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_18",
+   "claims": [],
+   "location": "operations.pressure_rate_load.evidence[2].narrative",
+   "statement": "Whole-model risk peaks at 39% (systolic 160) and falls to 6% at 200",
+   "check": "probe --sweep sbp=85:192:22 (typical)",
+   "evidence": "peak 39.5% at 156 mmHg, 39.0% at 161: upheld; but 200 mmHg is outside the training range (max 192); at 192 the model gives 10.8%",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-B.json --hold typical --sweep sbp=85:192:22"
+   ]
+  },
+  {
+   "id": "V21",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_18",
+   "claims": [],
+   "location": "operations.pressure_rate_load.hypothesis",
+   "statement": "lowers the predicted risk when blood pressure and heart rate are both high (rate-pressure product, an index of myocardial oxygen demand)",
+   "check": "domain sense",
+   "evidence": "clinically a high rate-pressure product is a marker of higher, not lower, demand and risk; the training data agree with the model (sbp>=150 & hr>=90: 38 rows, outcome 5.3%), so this is flagged for the domain reviewer, not refuted",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/ushape_saddle/explanations/shape-B.json --where 'sbp >= 150 and heart_rate >= 90'"
+   ]
+  },
+  {
+   "id": "V22",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_19",
+   "claims": [],
+   "location": "operations.pressure_over_rate.hypothesis",
+   "statement": "hinge 1.13/SD sbp, -0.91/SD hr, on for 790; readout 1.13, feeds amplifier 1.21; turning points (hr 75/80 at sbp 133; sbp 130/135 at hr 76); hr 55 sweep 0 -> 3.27, risk 3% -> 92%; AUC 0.6658 without, largest loss",
+   "check": "edge dump; solved thresholds; probe; ablate",
+   "evidence": "weights 1.1305, -0.9116, bias 0.0923, readout 1.1319, 440->identity_440 1.2077. Zero crossing at sbp 133: hr 77.9; at hr 76: sbp 131.2 (unit 0.23-0.26 at 135). hr 55: 3.2% at 90 -> 91.9% at 160. Ablate: 790 affected, AUC 0.6658 (lowest of all parts; direct terms 0.6764 next)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-B.json --hold typical --sweep sbp=90:180:10 --sweep heart_rate=55,95",
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-B.json --part ann_19"
+   ]
+  },
+  {
+   "id": "V23",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_19",
+   "claims": [],
+   "location": "operations.pressure_over_rate.evidence[7-8]",
+   "statement": "sbp minus heart rate predicts the gate, score 1.00 (gate AUC 0.999)",
+   "check": "verify concept",
+   "evidence": "score 0.9974, gate AUC 0.9987; raw-unit coefficients 0.061/mmHg vs 0.071/bpm, so pressure minus rate is the right reading",
+   "commands": [
+    "uv run python -m explaneat verify concept experiments/ushape_saddle/explanations/shape-B.json --part ann_19 --concept 'sbp - heart_rate'"
+   ]
+  },
+  {
+   "id": "V24",
+   "grade": "refuted",
+   "level": "L3",
+   "part": "ann_21",
+   "claims": [],
+   "location": "operations.rate_bmi_amplifier.hypothesis",
+   "statement": "Clinically: higher bmi and a faster heart rate raise the predicted risk through this part, and more so when systolic pressure is high relative to the heart rate",
+   "check": "probe --set sbp=150 --sweep heart_rate=45:75:7 --nodes 440,2391,1686,560; weights",
+   "evidence": "where systolic pressure is high relative to heart rate (node 440 on) a faster heart rate LOWERS this part: heart rate enters node 2391 with +0.772/SD directly but -0.912*1.208 = -1.10/SD through the pressure-over-rate entry, net -0.33/SD. At sbp 150 (typical otherwise) the exit falls from 2.59 at 45 bpm to 1.82 at 75 bpm and its contribution from +2.40 to +1.69. For bmi the slope is the same wherever the part is on (no 'more so'); only the share of patients it acts on grows",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-B.json --hold typical --set sbp=150 --sweep heart_rate=45:75:7 --nodes 440,2391,1686,560 --wide"
+   ]
+  },
+  {
+   "id": "V25",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_21",
+   "claims": [],
+   "location": "operations.rate_bmi_amplifier.hypothesis",
+   "statement": "weights (bmi 0.34, hr 0.77, 440 via identity 1.21, 1.14, side 0.336, readout 0.93); on for 1271 / 1157; bmi sweep at typical case exit 0 at 26, 0.16 at 28, risk 15% at 16 and 26; sbp 110 exit 0 at hr 70, 2.26 at 110; AUC 0.7825 without; side edge AUC 0.8409, 1239 affected, max 0.37",
+   "check": "edge dump; probe bmi sweep (typical); ablate part and edge",
+   "evidence": "all reproduce: bmi 27 exit 0.079, 29 0.237; risk 15.1% flat to 25, 16.1% at 27, 38.3% at 43; part off AUC 0.7825, 1157 affected; edge identity_560->1686 off AUC 0.8409, 1239 affected, max 0.371",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-B.json --hold typical --sweep bmi=15:43:15 --wide",
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-B.json --part ann_21",
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-B.json --edge 'identity_560->1686'"
+   ]
+  },
+  {
+   "id": "V26",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_21",
+   "claims": [],
+   "location": "operations.rate_bmi_amplifier.hypothesis",
+   "statement": "flat at low bmi, rising above the turn; whole-model risk ... 33% at 40 and 44% at 46",
+   "check": "per-row bmi turn; probe range check",
+   "evidence": "bmi 46 is outside the training range (max 43.4; model 38.3% at 43). 'Flat then rising' is the typical case: 41% of rows have the part on at bmi 15 (linear in bmi throughout) and the turn elsewhere lies anywhere from bmi 16 to 38. The sentence does say the turn depends on heart rate and pressure, so weakened, not refuted",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-B.json --hold typical --sweep bmi=15:43:15"
+   ]
+  },
+  {
+   "id": "V27",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_21",
+   "claims": [],
+   "location": "operations.rate_bmi_amplifier.hypothesis",
+   "statement": "The side signal matters little: switching its edge off changes AUC from 0.8458 to 0.8409 (1239 patients affected, max risk change 0.37)",
+   "check": "ablate --edge identity_560->1686",
+   "evidence": "AUC reproduces, but the same check moves one patient's risk by 0.37 and 63 predictions flip; 'matters little' holds for discrimination, not for individual predictions",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-B.json --edge 'identity_560->1686'"
+   ]
+  },
+  {
+   "id": "V28",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_22",
+   "claims": [],
+   "location": "operations.direct_terms.hypothesis",
+   "statement": "weights hr 1.29, age 0.81, creatinine 0.46, smoker 0.45, diabetes 0.43, male 0.21, sbp 0.077, bmi 0.0013; creatinine at age 85 22% (40) to 85% (190); AUC 0.6764 without, mean |change| 0.21; sbp 110 / 150 heart-rate sweeps",
+   "check": "edge dump; probe; ablate",
+   "evidence": "weights match to 3 s.f.; creatinine 22.3% at 40, 82.0% at 180, 87.1% at 200; ablate AUC 0.6764, mean |change| 0.2099, 391 flips; heart-rate sweeps reproduce",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-B.json --part ann_22",
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-B.json --hold typical --set age=85 --sweep creatinine=40:260:12"
+   ]
+  },
+  {
+   "id": "V29",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_22",
+   "claims": [],
+   "location": "operations.direct_terms.hypothesis",
+   "statement": "a linear risk score; concept = weighted sum of heart rate, age and creatinine (score 0.82)",
+   "check": "L4 reading",
+   "evidence": "not meaningful beyond the closed form: the concept is the part's own leading terms. The hypothesis says so itself; the record's leaves[] still grades it 'meaningful'",
+   "commands": []
+  },
+  {
+   "id": "V30",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_23",
+   "claims": [],
+   "location": "operations.risk_score.hypothesis",
+   "statement": "saddle: heart-rate effect reverses with pressure and pressure effect reverses with heart rate (sbp 110: 3% -> 90%; sbp 150: 89% -> <1%; hr 55: 3% -> 97% at 180; hr 95: 85% -> 3% at 150); four training corners; sign of each part in the sum; ranking by AUC without each part",
+   "check": "probe 2-D sweeps; subgroup for each corner; ablate each part",
+   "evidence": "sbp 110: 3.2% -> 90.4%; sbp 150: 88.7% -> 0.7%; hr 55: 3.2% at 90 -> 96.9% at 180; hr 95: 84.7% -> 2.6% at 150. Corners: 61 / 90.2% / 88.5%; 46 / 76.1% / 69.9%; 38 / 5.3% / 4.3%; 57 / 1.8% / 7.8%. AUC without: 0.6658, 0.6764, 0.7258, 0.7825, 0.8447",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-B.json --hold typical --sweep sbp=90:180:10 --sweep heart_rate=55,95",
+    "uv run python -m explaneat verify subgroup experiments/ushape_saddle/explanations/shape-B.json --where 'sbp <= 115 and heart_rate <= 65'"
+   ]
+  },
+  {
+   "id": "V31",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_23",
+   "claims": [],
+   "location": "operations.risk_score.hypothesis",
+   "statement": "at systolic 180 it falls from above 99% to 9% by 80 bpm; typical-case curves heart rate ... 5% at 130; systolic ... 6% at 200; age 1% at 20; sodium 120 to 155",
+   "check": "support check with subgroup and probe ranges",
+   "evidence": "several quoted points are extrapolation: hr 130 (max 121; model 9.9% at 121), sbp 200 (max 192; 10.8% at 192), age 20 (min 30), sodium 120 (min 126), and the sbp 180 / hr 40 start point has no training rows near it (sbp>=175 & hr<=50: n 0; sbp>=170 & hr<=60: n 4). The directions and non-monotone shapes hold inside the support (hr: 34.7% at 40, 14.8% at 79, 25.8% at 100, 9.9% at 121; sbp: 20.6% at 85, 15.8% at 131, 39.5% at 156, 10.8% at 192)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-B.json --hold typical --sweep heart_rate=40:121:28",
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-B.json --hold typical --sweep sbp=85:192:22",
+    "uv run python -m explaneat verify subgroup experiments/ushape_saddle/explanations/shape-B.json --where 'sbp >= 175 and heart_rate <= 50'"
+   ]
+  },
+  {
+   "id": "V32",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_23",
+   "claims": [],
+   "location": "operations.risk_score.hypothesis",
+   "statement": "Bmi: flat up to about 26 kg/m2 then rising, through the amplifier",
+   "check": "per-row bmi turn",
+   "evidence": "typical case only: the turn ranges over bmi 16 to 38 and 41% of rows have no turn (bmi acts linearly over its whole range); see the record.summary finding",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-B.json --hold typical --set sbp=150 --sweep bmi=15:43:8 --sweep heart_rate=60,90"
+   ]
+  },
+  {
+   "id": "V33",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_23",
+   "claims": [],
+   "location": "operations.risk_score.evidence[0-12]",
+   "statement": "linearisation 0.7450, interaction sweeps, corners, sodium/noise sweeps, function preservation",
+   "check": "recheck provenance re-render; spot checks above",
+   "evidence": "0 mismatches; spot checks reproduce",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_23": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_17": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_18": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_19": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_21": {
+   "grade": "refuted",
+   "level": "L3"
+  },
+  "ann_22": {
+   "grade": "weakened",
+   "level": "L4"
+  }
+ },
+ "leaf_meaning": {
+  "age_ceiling": {
+   "grade": "meaningful",
+   "why": "A rising age effect that stops in the early eighties (turn 80.4 at creatinine 85); the model does exactly this and age alone predicts the gate (score 1.00)."
+  },
+  "pressure_rate_load": {
+   "grade": "meaningful",
+   "why": "Systolic pressure plus heart rate (near-equal raw weights) high together lowers risk ever more steeply, which the probes, the thresholds and the both-high training corner (5.3% outcome) confirm."
+  },
+  "pressure_over_rate": {
+   "grade": "meaningful",
+   "why": "Pressure high for the heart rate raises risk steeply; sbp minus heart rate predicts the gate almost perfectly and removing it costs the most AUC."
+  },
+  "rate_bmi_amplifier": {
+   "grade": "partial",
+   "why": "It does carry the model's bmi effect and the heart-rate effect at low pressure, but its stated heart-rate direction is wrong where pressure is high for the rate, the 'turn' is nearly invisible (R2 0.996 linear), and its concept is a three-term sum."
+  },
+  "direct_terms": {
+   "grade": "closed-form-only",
+   "why": "The hypothesis lists the linear weights and their signs; its concept is the part's own three largest terms."
+  }
+ },
+ "statements_checked": 112,
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ]
+}

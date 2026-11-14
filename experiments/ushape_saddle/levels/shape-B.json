@@ -1,0 +1,986 @@
+{
+ "label": "shape-B",
+ "genome_id": "25f5830e-33cc-4dda-8ea8-16e092c09a3e",
+ "set": "ushape",
+ "study": "ushape",
+ "records_dir": "explanations",
+ "dataset": "shape_syn_818e0",
+ "n_train": 1500,
+ "computed_at": "2026-11-14T04:25:29+00:00",
+ "method": "experiments/explanation_levels/compute_levels.py (read only; probes not stored, query_id null)",
+ "probe_version": 2,
+ "conditions": {
+  "max_terms": 3,
+  "min_support": 0.01
+ },
+ "levels": {
+  "faithful": {
+   "function_preservation_max_abs_err": 4.440892098500626e-16,
+   "closed_form_max_abs_err": 0.04413661216012432,
+   "passed": true,
+   "test": "max |output(explained model) - output(phenotype)| over the training rows < 1e-9"
+  },
+  "decomposed": {
+   "n_leaves": 5,
+   "n_compositions": 1,
+   "hidden_units": 10,
+   "granularity": 1.0,
+   "largest_part": {
+    "name": "pressure_rate_load",
+    "hidden_units": 6,
+    "width": 2,
+    "depth": 4,
+    "leaf": true,
+    "param_share": 0.2979
+   },
+   "max_width": 2,
+   "max_depth": 4,
+   "warnings": [],
+   "passed": true,
+   "test": "share of hidden units whose part is at most 6 units wide (depth not penalised); no part wider than that holds half the units"
+  },
+  "understood": {
+   "leaves": 5,
+   "graded": 5,
+   "counts": {
+    "meaningful": 2,
+    "partial": 3,
+    "closed_form_only": 0,
+    "restatement": 0,
+    "unnamed": 0
+   },
+   "grades": {
+    "pressure_rate_load": "meaningful",
+    "pressure_over_rate": "partial",
+    "direct_terms": "partial",
+    "rate_bmi_amplifier": "partial",
+    "age_ceiling": "meaningful"
+   },
+   "understood_fraction": 0.4,
+   "understood_probe": 0.4,
+   "partial_fraction": 0.6,
+   "closed_form_only_fraction": 0.0,
+   "restatement_fraction": 0.0,
+   "unnamed_fraction": 0.0,
+   "concepts": {
+    "pressure_rate_load": "sbp, sbp * heart_rate",
+    "pressure_over_rate": "sbp",
+    "direct_terms": "age * heart_rate",
+    "rate_bmi_amplifier": "sbp",
+    "age_ceiling": "age"
+   },
+   "understood_verifier": 0.6,
+   "understood_fraction_verifier": 0.6,
+   "verifier_graded": 5,
+   "verifier_grades": {
+    "pressure_rate_load": "meaningful",
+    "pressure_over_rate": "meaningful",
+    "direct_terms": "closed_form_only",
+    "rate_bmi_amplifier": "partial",
+    "age_ceiling": "meaningful"
+   },
+   "verifier_compared": 5,
+   "verifier_disagreements": 2,
+   "understood_mike": null,
+   "understood_fraction_mike": null,
+   "mike_graded": 0,
+   "mike_grades": null,
+   "mike_counts": null,
+   "verifier_counts": {
+    "meaningful": 3,
+    "partial": 1,
+    "closed_form_only": 1,
+    "restatement": 0,
+    "unnamed": 0
+   },
+   "test": "understood_mike: the share of leaves graded understood by Mike's leaf verdict (the measured level; None until a leaf has one). Screens: concept probe per leaf (v2): meaningful score >= 0.8; partial >= 0.5; else closed_form_only; restatement when the concept is not simpler than the leaf (more than 3 terms, or a reweighting of the leaf's entries); a binary concept's AUC counts only against a gate of comparable support (>= 1% of rows), else r2; unnamed when no concept was probed. understood_verifier: the blind verifier's leaf grades where a verdict exists",
+   "ground_truth": {
+    "task": "saddle",
+    "arch": "evolved",
+    "family": "synthetic",
+    "gt_recovery": "recovered (at the root; no single part is the saddle)",
+    "gt_terms_recovered": 7.5,
+    "gt_terms_total": 8,
+    "explainer_leaf_grades": {
+     "age_ceiling": "meaningful",
+     "pressure_rate_load": "meaningful",
+     "pressure_over_rate": "meaningful",
+     "rate_bmi_amplifier": "meaningful",
+     "direct_terms": "meaningful"
+    },
+    "truth": "logit = -1.2 + 0.7 za + 0.5 zc + 0.3 zb + 0.8 smoker + 0.6 diabetes + 0.3 male - 1.5 zh zp; sodium, noise unused"
+   },
+   "verdict": "experiments/ushape_saddle/verdicts/shape-B/verdict.json",
+   "author": {
+    "leaves": 5,
+    "grades": {
+     "pressure_rate_load": "meaningful",
+     "pressure_over_rate": "meaningful",
+     "direct_terms": "meaningful",
+     "rate_bmi_amplifier": "meaningful",
+     "age_ceiling": "meaningful"
+    },
+    "counts": {
+     "meaningful": 5,
+     "partial": 0,
+     "closed_form_only": 0,
+     "restatement": 0,
+     "unnamed": 0
+    },
+    "understood_fraction_author": 1.0,
+    "restatements": 0,
+    "stored_grades": {
+     "pressure_rate_load": "meaningful",
+     "pressure_over_rate": "meaningful",
+     "direct_terms": "meaningful",
+     "rate_bmi_amplifier": "meaningful",
+     "age_ceiling": "meaningful"
+    },
+    "note": "the concept the explaining agent stored on each leaf (set_meaning), re-probed under the v2 simplicity and support conditions; None when no concept was stored"
+   },
+   "domain_only": null
+  }
+ },
+ "decomposition": {
+  "hidden_units": 10,
+  "small_width_max_units": 6,
+  "granularity": 1.0,
+  "largest_part": {
+   "name": "pressure_rate_load",
+   "hidden_units": 6,
+   "width": 2,
+   "depth": 4,
+   "leaf": true,
+   "param_share": 0.2979
+  },
+  "max_width": 2,
+  "max_depth": 4,
+  "units_only_in_root": 0,
+  "units_only_as_entries": 0,
+  "parts": {
+   "pressure_rate_load": {
+    "units": 6,
+    "width": 2,
+    "depth": 4,
+    "leaf": true,
+    "param_share": 0.2979
+   },
+   "rate_bmi_amplifier": {
+    "units": 2,
+    "width": 1,
+    "depth": 2,
+    "leaf": true,
+    "param_share": 0.1489
+   },
+   "age_ceiling": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.0638
+   },
+   "pressure_over_rate": {
+    "units": 1,
+    "width": 1,
+    "depth": 1,
+    "leaf": true,
+    "param_share": 0.0638
+   }
+  },
+  "warnings": []
+ },
+ "leaves": {
+  "pressure_rate_load": {
+   "id": "ann_18",
+   "exit_nodes": [
+    "534",
+    "1197",
+    "2442",
+    "560",
+    "7124",
+    "7602"
+   ],
+   "n_exits": 6,
+   "gated": false,
+   "variables": [
+    "sbp",
+    "heart_rate"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 18,
+   "score": 0.939553,
+   "grade": "meaningful",
+   "best_concepts": [
+    "sbp",
+    "sbp * heart_rate"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.532233,
+   "auc": 0.982899,
+   "mi": 0.885265,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "sbp, sbp * heart_rate",
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
+    "probe": {
+     "r2": 0.532233,
+     "auc": 0.982899,
+     "mi": 0.885265,
+     "n": 1500,
+     "score": 0.939553,
+     "support": null,
+     "query_id": null
+    }
+   },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": {
+    "concept": "sbp + heart_rate",
+    "stored_grade": "meaningful",
+    "stored_score": 0.953636,
+    "score": 0.953636,
+    "grade": "meaningful",
+    "r2": 0.53439,
+    "auc": 0.989919,
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
+    "reweighting_of_entries": false,
+    "support": null,
+    "low_support": false,
+    "auc_in_score": true
+   },
+   "per_exit": {
+    "534": {
+     "best": {
+      "concept": "sbp * heart_rate",
+      "kind": "continuous",
+      "source": "pair",
+      "n": 1500,
+      "r2": 0.80833,
+      "auc": 0.979832,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 1.462865,
+      "nmi": 0.475933,
+      "leaf_gated": true,
+      "gate_share": 0.358,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 0.959664
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "sbp * heart_rate",
+       "source": "pair",
+       "score": 0.959664,
+       "r2": 0.80833,
+       "auc": 0.979832,
+       "mi": 1.462865
+      },
+      {
+       "concept": "sbp",
+       "source": "input",
+       "score": 0.781914,
+       "r2": 0.5313,
+       "auc": 0.890957,
+       "mi": 0.631659
+      },
+      {
+       "concept": "sbp > 133",
+       "source": "threshold",
+       "score": 0.733518,
+       "r2": 0.358615,
+       "auc": 0.866759,
+       "mi": 0.355126
+      }
+     ]
+    },
+    "1197": {
+     "best": {
+      "concept": "sbp * heart_rate",
+      "kind": "continuous",
+      "source": "pair",
+      "n": 1500,
+      "r2": 0.80833,
+      "auc": null,
+      "auc_of": null,
+      "direction": null,
+      "mi": 1.437923,
+      "nmi": 0.529308,
+      "leaf_gated": false,
+      "gate_share": null,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": false,
+      "score_basis": "r2",
+      "score": 0.80833
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "sbp * heart_rate",
+       "source": "pair",
+       "score": 0.80833,
+       "r2": 0.80833,
+       "auc": null,
+       "mi": 1.437923
+      },
+      {
+       "concept": "sbp",
+       "source": "input",
+       "score": 0.5313,
+       "r2": 0.5313,
+       "auc": null,
+       "mi": 0.619639
+      },
+      {
+       "concept": "sbp > 133",
+       "source": "threshold",
+       "score": 0.358615,
+       "r2": 0.358615,
+       "auc": 0.866759,
+       "mi": 0.353056
+      }
+     ]
+    },
+    "2442": {
+     "best": {
+      "concept": "sbp * heart_rate",
+      "kind": "continuous",
+      "source": "pair",
+      "n": 1500,
+      "r2": 0.560556,
+      "auc": 0.984932,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.846762,
+      "nmi": 0.47506,
+      "leaf_gated": true,
+      "gate_share": 0.279333,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 0.969864
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "sbp * heart_rate",
+       "source": "pair",
+       "score": 0.969864,
+       "r2": 0.560556,
+       "auc": 0.984932,
+       "mi": 0.846762
+      },
+      {
+       "concept": "sbp",
+       "source": "input",
+       "score": 0.786706,
+       "r2": 0.334466,
+       "auc": 0.893353,
+       "mi": 0.403875
+      },
+      {
+       "concept": "heart_rate",
+       "source": "input",
+       "score": 0.541516,
+       "r2": 0.185293,
+       "auc": 0.770758,
+       "mi": 0.214685
+      }
+     ]
+    },
+    "560": {
+     "best": {
+      "concept": "sbp",
+      "kind": "continuous",
+      "source": "input",
+      "n": 1500,
+      "r2": 0.457523,
+      "auc": 0.977556,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.90647,
+      "nmi": 0.431334,
+      "leaf_gated": true,
+      "gate_share": 0.351333,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 0.955112
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "sbp",
+       "source": "input",
+       "score": 0.955112,
+       "r2": 0.457523,
+       "auc": 0.977556,
+       "mi": 0.90647
+      },
+      {
+       "concept": "sbp * heart_rate",
+       "source": "pair",
+       "score": 0.725406,
+       "r2": 0.469736,
+       "auc": 0.862703,
+       "mi": 0.551242
+      },
+      {
+       "concept": "sbp > 133",
+       "source": "threshold",
+       "score": 0.68228,
+       "r2": 0.231315,
+       "auc": 0.84114,
+       "mi": 0.427164
+      }
+     ]
+    },
+    "7124": {
+     "best": {
+      "concept": "sbp * heart_rate",
+      "kind": "continuous",
+      "source": "pair",
+      "n": 1500,
+      "r2": 0.379032,
+      "auc": 0.981419,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.485446,
+      "nmi": 0.439639,
+      "leaf_gated": true,
+      "gate_share": 0.149333,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 0.962838
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "sbp * heart_rate",
+       "source": "pair",
+       "score": 0.962838,
+       "r2": 0.379032,
+       "auc": 0.981419,
+       "mi": 0.485446
+      },
+      {
+       "concept": "sbp",
+       "source": "input",
+       "score": 0.79578,
+       "r2": 0.206746,
+       "auc": 0.89789,
+       "mi": 0.261653
+      },
+      {
+       "concept": "heart_rate",
+       "source": "input",
+       "score": 0.58388,
+       "r2": 0.127939,
+       "auc": 0.79194,
+       "mi": 0.16733
+      }
+     ]
+    },
+    "7602": {
+     "best": {
+      "concept": "sbp * heart_rate",
+      "kind": "continuous",
+      "source": "pair",
+      "n": 1500,
+      "r2": 0.179628,
+      "auc": 0.990756,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.172122,
+      "nmi": 0.389208,
+      "leaf_gated": true,
+      "gate_share": 0.048667,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 0.981512
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "sbp * heart_rate",
+       "source": "pair",
+       "score": 0.981512,
+       "r2": 0.179628,
+       "auc": 0.990756,
+       "mi": 0.172122
+      },
+      {
+       "concept": "sbp",
+       "source": "input",
+       "score": 0.83936,
+       "r2": 0.101942,
+       "auc": 0.91968,
+       "mi": 0.123984
+      },
+      {
+       "concept": "heart_rate",
+       "source": "input",
+       "score": 0.698812,
+       "r2": 0.052251,
+       "auc": 0.849406,
+       "mi": 0.095743
+      }
+     ]
+    }
+   }
+  },
+  "pressure_over_rate": {
+   "id": "ann_19",
+   "exit_nodes": [
+    "440"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "sbp",
+    "heart_rate"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 18,
+   "score": 0.747174,
+   "grade": "partial",
+   "best_concepts": [
+    "sbp"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.484069,
+   "auc": 0.873587,
+   "mi": 0.562771,
+   "meaning": {
+    "grade": "partial",
+    "concept": "sbp",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
+    "probe": {
+     "r2": 0.484069,
+     "auc": 0.873587,
+     "mi": 0.562771,
+     "n": 1500,
+     "score": 0.747174,
+     "support": null,
+     "query_id": null
+    }
+   },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": {
+    "concept": "sbp - heart_rate",
+    "stored_grade": "meaningful",
+    "stored_score": 0.997374,
+    "score": 0.997374,
+    "grade": "meaningful",
+    "r2": 0.754879,
+    "auc": 0.998687,
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
+    "reweighting_of_entries": false,
+    "support": null,
+    "low_support": false,
+    "auc_in_score": true
+   },
+   "per_exit": {
+    "440": {
+     "best": {
+      "concept": "sbp",
+      "kind": "continuous",
+      "source": "input",
+      "n": 1500,
+      "r2": 0.484069,
+      "auc": 0.873587,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.562771,
+      "nmi": 0.20483,
+      "leaf_gated": true,
+      "gate_share": 0.473333,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 0.747174
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "sbp",
+       "source": "input",
+       "score": 0.747174,
+       "r2": 0.484069,
+       "auc": 0.873587,
+       "mi": 0.562771
+      },
+      {
+       "concept": "sbp > 133",
+       "source": "threshold",
+       "score": 0.705798,
+       "r2": 0.321196,
+       "auc": 0.852899,
+       "mi": 0.344887
+      },
+      {
+       "concept": "heart_rate",
+       "source": "input",
+       "score": 0.602898,
+       "r2": 0.292292,
+       "auc": 0.801449,
+       "mi": 0.342736
+      }
+     ]
+    }
+   }
+  },
+  "direct_terms": {
+   "id": "ann_22",
+   "exit_nodes": [
+    "identity_direct"
+   ],
+   "n_exits": 1,
+   "gated": false,
+   "variables": [
+    "age",
+    "bmi",
+    "sbp",
+    "heart_rate",
+    "creatinine",
+    "smoker",
+    "diabetes",
+    "male"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 45,
+   "score": 0.735158,
+   "grade": "partial",
+   "best_concepts": [
+    "age * heart_rate"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.735158,
+   "auc": null,
+   "mi": 0.9225,
+   "meaning": {
+    "grade": "partial",
+    "concept": "age * heart_rate",
+    "concept_complexity": 2,
+    "simpler_than_leaf": true,
+    "probe": {
+     "r2": 0.735158,
+     "auc": null,
+     "mi": 0.9225,
+     "n": 1500,
+     "score": 0.735158,
+     "support": null,
+     "query_id": null
+    }
+   },
+   "low_support": false,
+   "auc_in_score": false,
+   "n_low_support_concepts": 0,
+   "author": {
+    "concept": "heart_rate + 0.63 * age + 0.3 * creatinine",
+    "stored_grade": "meaningful",
+    "stored_score": 0.823,
+    "score": 0.82344,
+    "grade": "meaningful",
+    "r2": 0.82344,
+    "auc": null,
+    "concept_complexity": 3,
+    "simpler_than_leaf": true,
+    "reweighting_of_entries": false,
+    "support": null,
+    "low_support": false,
+    "auc_in_score": false
+   },
+   "per_exit": {
+    "identity_direct": {
+     "best": {
+      "concept": "age * heart_rate",
+      "kind": "continuous",
+      "source": "pair",
+      "n": 1500,
+      "r2": 0.735158,
+      "auc": null,
+      "auc_of": null,
+      "direction": null,
+      "mi": 0.9225,
+      "nmi": 0.2777,
+      "leaf_gated": false,
+      "gate_share": null,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": false,
+      "score_basis": "r2",
+      "score": 0.735158
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "age * heart_rate",
+       "source": "pair",
+       "score": 0.735158,
+       "r2": 0.735158,
+       "auc": null,
+       "mi": 0.9225
+      },
+      {
+       "concept": "heart_rate",
+       "source": "input",
+       "score": 0.512858,
+       "r2": 0.512858,
+       "auc": null,
+       "mi": 0.499622
+      },
+      {
+       "concept": "sbp * heart_rate",
+       "source": "pair",
+       "score": 0.451828,
+       "r2": 0.451828,
+       "auc": null,
+       "mi": 0.434645
+      }
+     ]
+    }
+   }
+  },
+  "rate_bmi_amplifier": {
+   "id": "ann_21",
+   "exit_nodes": [
+    "1686"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "bmi",
+    "heart_rate"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 18,
+   "score": 0.660594,
+   "grade": "partial",
+   "best_concepts": [
+    "sbp"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.581122,
+   "auc": 0.830297,
+   "mi": 0.908402,
+   "meaning": {
+    "grade": "partial",
+    "concept": "sbp",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
+    "probe": {
+     "r2": 0.581122,
+     "auc": 0.830297,
+     "mi": 0.908402,
+     "n": 1500,
+     "score": 0.660594,
+     "support": null,
+     "query_id": null
+    }
+   },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": {
+    "concept": "sbp + bmi + heart_rate",
+    "stored_grade": "meaningful",
+    "stored_score": 0.842,
+    "score": 0.842092,
+    "grade": "meaningful",
+    "r2": 0.593343,
+    "auc": 0.921046,
+    "concept_complexity": 3,
+    "simpler_than_leaf": true,
+    "reweighting_of_entries": false,
+    "support": null,
+    "low_support": false,
+    "auc_in_score": true
+   },
+   "per_exit": {
+    "1686": {
+     "best": {
+      "concept": "sbp",
+      "kind": "continuous",
+      "source": "input",
+      "n": 1500,
+      "r2": 0.581122,
+      "auc": 0.830297,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.908402,
+      "nmi": 0.272141,
+      "leaf_gated": true,
+      "gate_share": 0.228667,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 0.660594
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "sbp",
+       "source": "input",
+       "score": 0.660594,
+       "r2": 0.581122,
+       "auc": 0.830297,
+       "mi": 0.908402
+      },
+      {
+       "concept": "bmi * heart_rate",
+       "source": "pair",
+       "score": 0.635692,
+       "r2": 0.085081,
+       "auc": 0.817846,
+       "mi": 0.339599
+      },
+      {
+       "concept": "heart_rate",
+       "source": "input",
+       "score": 0.454592,
+       "r2": 0.02947,
+       "auc": 0.727296,
+       "mi": 0.277624
+      }
+     ]
+    }
+   }
+  },
+  "age_ceiling": {
+   "id": "ann_17",
+   "exit_nodes": [
+    "3514"
+   ],
+   "n_exits": 1,
+   "gated": true,
+   "variables": [
+    "age",
+    "creatinine"
+   ],
+   "library": "tabular",
+   "n_library_concepts": 18,
+   "score": 0.998854,
+   "grade": "meaningful",
+   "best_concepts": [
+    "age"
+   ],
+   "domain_score": null,
+   "domain_grade": "closed_form_only",
+   "best_domain_concepts": [],
+   "r2": 0.163536,
+   "auc": 0.999427,
+   "mi": 0.205205,
+   "meaning": {
+    "grade": "meaningful",
+    "concept": "age",
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
+    "probe": {
+     "r2": 0.163536,
+     "auc": 0.999427,
+     "mi": 0.205205,
+     "n": 1500,
+     "score": 0.998854,
+     "support": null,
+     "query_id": null
+    }
+   },
+   "low_support": false,
+   "auc_in_score": true,
+   "n_low_support_concepts": 0,
+   "author": {
+    "concept": "age",
+    "stored_grade": "meaningful",
+    "stored_score": 0.998854,
+    "score": 0.998854,
+    "grade": "meaningful",
+    "r2": 0.163536,
+    "auc": 0.999427,
+    "concept_complexity": 1,
+    "simpler_than_leaf": true,
+    "reweighting_of_entries": false,
+    "support": null,
+    "low_support": false,
+    "auc_in_score": true
+   },
+   "per_exit": {
+    "3514": {
+     "best": {
+      "concept": "age",
+      "kind": "continuous",
+      "source": "input",
+      "n": 1500,
+      "r2": 0.163536,
+      "auc": 0.999427,
+      "auc_of": "concept as a score for the gate being on",
+      "direction": "gate on when the concept is high",
+      "mi": 0.205205,
+      "nmi": 0.448653,
+      "leaf_gated": true,
+      "gate_share": 0.050667,
+      "support": null,
+      "low_support": false,
+      "auc_in_score": true,
+      "score_basis": "max(r2, 2(auc-0.5))",
+      "score": 0.998854
+     },
+     "best_domain": null,
+     "top": [
+      {
+       "concept": "age",
+       "source": "input",
+       "score": 0.998854,
+       "r2": 0.163536,
+       "auc": 0.999427,
+       "mi": 0.205205
+      },
+      {
+       "concept": "age * creatinine",
+       "source": "pair",
+       "score": 0.672642,
+       "r2": 0.060538,
+       "auc": 0.836321,
+       "mi": 0.083475
+      },
+      {
+       "concept": "sbp",
+       "source": "input",
+       "score": 0.389996,
+       "r2": 0.016663,
+       "auc": 0.694998,
+       "mi": 0.065051
+      }
+     ]
+    }
+   }
+  }
+ }
+}

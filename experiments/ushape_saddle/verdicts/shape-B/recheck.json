@@ -1,0 +1,1396 @@
+{
+  "target": "experiments/ushape_saddle/explanations/shape-B.json",
+  "genome_id": "25f5830e-33cc-4dda-8ea8-16e092c09a3e",
+  "label": "shape-B",
+  "operations_source": "database",
+  "files": {
+    "record": "experiments/ushape_saddle/explanations/shape-B.json"
+  },
+  "findings": [],
+  "structure": {
+    "n_train": 1500,
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "uncovered_nodes": [],
+    "uncovered_edges": [],
+    "null_nodes": [
+      "-10",
+      "-5"
+    ],
+    "coverage_hierarchy": {
+      "roots": [
+        "risk_score"
+      ],
+      "global_root": "risk_score",
+      "root_contains_outputs": true,
+      "complete": true,
+      "composed": 5,
+      "required": 5,
+      "exempt_disconnected": []
+    },
+    "hierarchy": {
+      "n_annotations": 6,
+      "roots": [
+        "risk_score"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "not_under_root": [],
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.440892098500626e-16,
+    "closed_form_max_abs_err": 0.04413661216012432,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "leaves": [
+      {
+        "id": "ann_17",
+        "name": "age_ceiling",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.0011904201981556284,
+        "exit_scale": 1.202712025308127
+      },
+      {
+        "id": "ann_18",
+        "name": "pressure_rate_load",
+        "numeric_max_abs_err": 1.7763568394002505e-15,
+        "closed_form_max_abs_err": 0.04413661216012432,
+        "exit_scale": 10.160561186294105
+      },
+      {
+        "id": "ann_19",
+        "name": "pressure_over_rate",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.0019547690550887342,
+        "exit_scale": 5.115419035289416
+      },
+      {
+        "id": "ann_21",
+        "name": "rate_bmi_amplifier",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.012749315198449018,
+        "exit_scale": 7.887559228735869
+      },
+      {
+        "id": "ann_22",
+        "name": "direct_terms",
+        "numeric_max_abs_err": 1.7763568394002505e-15,
+        "closed_form_max_abs_err": 0.010041579978589787,
+        "exit_scale": 6.0581739742018
+      }
+    ],
+    "op_counts": {
+      "rename_node": 10,
+      "split_node": 5,
+      "add_identity_node": 3,
+      "annotate": 6
+    },
+    "full_coverage": true
+  },
+  "closed_forms": {
+    "ann_18": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 1.42 x_{heart_rate_c} \\\\\n&\\quad + 1.92 x_{sbp_c} \\\\\n&\\quad + 0.78 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_1 &= \\operatorname{relu}\\bigl( 1.16 \\operatorname{relu}{\\left(1.42 x_{heart_rate_c} + 1.92 x_{sbp_c} + 0.78 \\right)} \\\\\n&\\quad + 0.48 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_2 &= \\operatorname{relu}\\bigl( 1.05 \\operatorname{relu}{\\left(1.42 x_{heart_rate_c} + 1.92 x_{sbp_c} + 0.78 \\right)} \\\\\n&\\quad -2.21 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_3 &= \\operatorname{relu}\\bigl( 0.967 x_{sbp_d} \\\\\n&\\quad + 1.0 \\operatorname{relu}{\\left(1.05 \\operatorname{relu}{\\left(1.42 x_{heart_rate_c} + 1.92 x_{sbp_c} + 0.78 \\right)} - 2.21 \\right)} \\\\\n&\\quad -0.519 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_4 &= \\operatorname{relu}\\bigl( 0.947 \\operatorname{relu}{\\left(1.05 \\operatorname{relu}{\\left(1.42 x_{heart_rate_c} + 1.92 x_{sbp_c} + 0.78 \\right)} - 2.21 \\right)} \\\\\n&\\quad -1.14 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_5 &= \\operatorname{relu}\\bigl( 0.977 \\operatorname{relu}{\\left(0.947 \\operatorname{relu}{\\left(1.05 \\operatorname{relu}{\\left(1.42 x_{heart_rate_c} + 1.92 x_{sbp_c} + 0.78 \\right)} - 2.21 \\right)} - 1.14 \\right)} \\\\\n&\\quad -1.36 \\bigr)\n\\end{aligned}",
+    "ann_19": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( - 0.912 x_{heart_rate_b} \\\\\n&\\quad + 1.13 x_{sbp_b} \\\\\n&\\quad + 0.0923 \\bigr)\n\\end{aligned}",
+    "ann_22": "\\begin{aligned}\ny_0 &= 0.81 x_{age_a} \\\\\n&\\quad + 0.00131 x_{bmi_a} \\\\\n&\\quad + 0.462 x_{creatinine_a} \\\\\n&\\quad + 0.427 x_{diabetes} \\\\\n&\\quad + 1.29 x_{heart_rate_a} \\\\\n&\\quad + 0.211 x_{male} \\\\\n&\\quad + 0.0767 x_{sbp_a} \\\\\n&\\quad + 0.449 x_{smoker}\n\\end{aligned}",
+    "ann_21": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 1.0 x_{identity_560} \\\\\n&\\quad + 1.14 \\operatorname{relu}{\\left(0.341 x_{bmi_b} + 0.772 x_{heart_rate_d} + 1.0 x_{identity_440} + 0.209 \\right)} \\\\\n&\\quad -0.269 \\bigr)\n\\end{aligned}",
+    "ann_17": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 0.961 x_{age_b} \\\\\n&\\quad - 0.0846 x_{creatinine_b} \\\\\n&\\quad -1.55 \\bigr)\n\\end{aligned}"
+  },
+  "freetext": {
+    "counts": {
+      "auc": {
+        "ok": 12,
+        "unchecked": 11
+      },
+      "n_train": {
+        "ok": 45
+      },
+      "active_count": {
+        "ok": 1
+      }
+    },
+    "checked": [
+      {
+        "kind": "auc",
+        "text": "AUC 0.8458",
+        "status": "ok",
+        "stated": 0.8458,
+        "model": 0.8458193892295369,
+        "location": "operations.age_ceiling.hypothesis",
+        "part": "ann_17"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.age_ceiling.evidence[3].payload.n",
+        "part": "ann_17"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.age_ceiling.evidence[4].payload.n",
+        "part": "ann_17"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.age_ceiling.evidence[5].payload.n",
+        "part": "ann_17"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC 0.8458",
+        "status": "ok",
+        "stated": 0.8458,
+        "model": 0.8458193892295369,
+        "location": "operations.age_ceiling.evidence[6].narrative",
+        "part": "ann_17"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.age_ceiling.evidence[6].payload.n",
+        "part": "ann_17"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.age_ceiling.evidence[7].payload.n",
+        "part": "ann_17"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.age_ceiling.evidence[8].payload.n",
+        "part": "ann_17"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.age_ceiling.evidence[9].payload.n",
+        "part": "ann_17"
+      },
+      {
+        "kind": "active_count",
+        "text": "on for 527 patients",
+        "status": "ok",
+        "node": "560",
+        "stated": 527,
+        "model": 527,
+        "node_named": true,
+        "location": "operations.pressure_rate_load.hypothesis",
+        "part": "ann_18"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC 0.8458",
+        "status": "ok",
+        "stated": 0.8458,
+        "model": 0.8458193892295369,
+        "location": "operations.pressure_rate_load.hypothesis",
+        "part": "ann_18"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.pressure_rate_load.evidence[3].payload.n",
+        "part": "ann_18"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.pressure_rate_load.evidence[4].payload.n",
+        "part": "ann_18"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.pressure_rate_load.evidence[5].payload.n",
+        "part": "ann_18"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.pressure_rate_load.evidence[6].payload.n",
+        "part": "ann_18"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.pressure_rate_load.evidence[7].payload.n",
+        "part": "ann_18"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC 0.8458",
+        "status": "ok",
+        "stated": 0.8458,
+        "model": 0.8458193892295369,
+        "location": "operations.pressure_rate_load.evidence[8].narrative",
+        "part": "ann_18"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.pressure_rate_load.evidence[8].payload.n",
+        "part": "ann_18"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.pressure_rate_load.evidence[9].payload.n",
+        "part": "ann_18"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.pressure_rate_load.evidence[10].payload.n",
+        "part": "ann_18"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.pressure_rate_load.evidence[11].payload.n",
+        "part": "ann_18"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.pressure_rate_load.evidence[12].payload.n",
+        "part": "ann_18"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.pressure_rate_load.evidence[13].payload.n",
+        "part": "ann_18"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.pressure_rate_load.evidence[14].payload.n",
+        "part": "ann_18"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.pressure_rate_load.evidence[15].payload.n",
+        "part": "ann_18"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC 0.8458",
+        "status": "ok",
+        "stated": 0.8458,
+        "model": 0.8458193892295369,
+        "location": "operations.pressure_over_rate.hypothesis",
+        "part": "ann_19"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.pressure_over_rate.evidence[3].payload.n",
+        "part": "ann_19"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC 0.8458",
+        "status": "ok",
+        "stated": 0.8458,
+        "model": 0.8458193892295369,
+        "location": "operations.pressure_over_rate.evidence[4].narrative",
+        "part": "ann_19"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.pressure_over_rate.evidence[4].payload.n",
+        "part": "ann_19"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.pressure_over_rate.evidence[5].payload.n",
+        "part": "ann_19"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.pressure_over_rate.evidence[6].payload.n",
+        "part": "ann_19"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.pressure_over_rate.evidence[7].payload.n",
+        "part": "ann_19"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.pressure_over_rate.evidence[8].payload.n",
+        "part": "ann_19"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC 0.8458",
+        "status": "ok",
+        "stated": 0.8458,
+        "model": 0.8458193892295369,
+        "location": "operations.rate_bmi_amplifier.hypothesis",
+        "part": "ann_21"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.rate_bmi_amplifier.evidence[3].payload.n",
+        "part": "ann_21"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.rate_bmi_amplifier.evidence[4].payload.n",
+        "part": "ann_21"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.rate_bmi_amplifier.evidence[5].payload.n",
+        "part": "ann_21"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC 0.8458",
+        "status": "ok",
+        "stated": 0.8458,
+        "model": 0.8458193892295369,
+        "location": "operations.rate_bmi_amplifier.evidence[6].narrative",
+        "part": "ann_21"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.rate_bmi_amplifier.evidence[6].payload.n",
+        "part": "ann_21"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.rate_bmi_amplifier.evidence[7].payload.n",
+        "part": "ann_21"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.rate_bmi_amplifier.evidence[8].payload.n",
+        "part": "ann_21"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.rate_bmi_amplifier.evidence[9].payload.n",
+        "part": "ann_21"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.rate_bmi_amplifier.evidence[10].payload.n",
+        "part": "ann_21"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.rate_bmi_amplifier.evidence[11].payload.n",
+        "part": "ann_21"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC 0.8458",
+        "status": "ok",
+        "stated": 0.8458,
+        "model": 0.8458193892295369,
+        "location": "operations.direct_terms.hypothesis",
+        "part": "ann_22"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC 0.8458 to 0.6764",
+        "status": "ok",
+        "stated": [
+          0.8458,
+          0.6764
+        ],
+        "model_full": 0.8458193892295369,
+        "model_part_off": [
+          0.6764078865605043,
+          0.6764078865605043,
+          0.6764078865605043
+        ],
+        "location": "operations.direct_terms.evidence[1].narrative",
+        "part": "ann_22"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.direct_terms.evidence[1].payload.n",
+        "part": "ann_22"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC 0.8458",
+        "status": "ok",
+        "stated": 0.8458,
+        "model": 0.8458193892295369,
+        "location": "operations.direct_terms.evidence[2].narrative",
+        "part": "ann_22"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.direct_terms.evidence[2].payload.n",
+        "part": "ann_22"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.direct_terms.evidence[4].payload.n",
+        "part": "ann_22"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.direct_terms.evidence[5].payload.n",
+        "part": "ann_22"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC 0.8458",
+        "status": "ok",
+        "stated": 0.8458,
+        "model": 0.8458193892295369,
+        "location": "operations.risk_score.evidence[0].narrative",
+        "part": "ann_23"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.risk_score.evidence[0].payload.n",
+        "part": "ann_23"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.risk_score.evidence[6].payload.n",
+        "part": "ann_23"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.risk_score.evidence[7].payload.n",
+        "part": "ann_23"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.risk_score.evidence[8].payload.n",
+        "part": "ann_23"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.risk_score.evidence[9].payload.n",
+        "part": "ann_23"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.risk_score.evidence[12].payload.n",
+        "part": "ann_23"
+      }
+    ],
+    "unchecked_statements": [
+      {
+        "kind": "auc",
+        "text": "AUC 0.8458 to 0.8458",
+        "status": "unchecked",
+        "stated": [
+          0.8458,
+          0.8458
+        ],
+        "model_full": 0.8458193892295369,
+        "model_part_off": [
+          0.844716962768307,
+          0.844716962768307,
+          0.844716962768307
+        ],
+        "reason": "the second number is not this part switched off at its mean or at 0 (another configuration, e.g. a different readout or a linearisation)",
+        "location": "operations.age_ceiling.evidence[8].narrative",
+        "part": "ann_17"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC 0.999",
+        "status": "unchecked",
+        "stated": 0.999,
+        "model": 0.8458193892295369,
+        "reason": "not the full model's training value (a subgroup, the test split or another configuration?)",
+        "location": "operations.age_ceiling.evidence[9].narrative",
+        "part": "ann_17"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.8458 to 0.8414",
+        "status": "unchecked",
+        "stated": [
+          0.8458,
+          0.8414
+        ],
+        "model_full": 0.8458193892295369,
+        "model_part_off": [
+          0.7248725377894571,
+          0.7257559763118688,
+          0.7257559763118688
+        ],
+        "reason": "the second number is not this part switched off at its mean or at 0 (another configuration, e.g. a different readout or a linearisation)",
+        "location": "operations.pressure_rate_load.hypothesis",
+        "part": "ann_18"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC 0.8458 to 0.8458",
+        "status": "unchecked",
+        "stated": [
+          0.8458,
+          0.8458
+        ],
+        "model_full": 0.8458193892295369,
+        "model_part_off": [
+          0.7248725377894571,
+          0.7257559763118688,
+          0.7257559763118688
+        ],
+        "reason": "the second number is not this part switched off at its mean or at 0 (another configuration, e.g. a different readout or a linearisation)",
+        "location": "operations.pressure_rate_load.evidence[12].narrative",
+        "part": "ann_18"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC 0.8458 to 0.8414",
+        "status": "unchecked",
+        "stated": [
+          0.8458,
+          0.8414
+        ],
+        "model_full": 0.8458193892295369,
+        "model_part_off": [
+          0.7248725377894571,
+          0.7257559763118688,
+          0.7257559763118688
+        ],
+        "reason": "the second number is not this part switched off at its mean or at 0 (another configuration, e.g. a different readout or a linearisation)",
+        "location": "operations.pressure_rate_load.evidence[13].narrative",
+        "part": "ann_18"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC 0.999",
+        "status": "unchecked",
+        "stated": 0.999,
+        "model": 0.8458193892295369,
+        "reason": "not the full model's training value (a subgroup, the test split or another configuration?)",
+        "location": "operations.pressure_over_rate.evidence[7].narrative",
+        "part": "ann_19"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.8458 to 0.8409",
+        "status": "unchecked",
+        "stated": [
+          0.8458,
+          0.8409
+        ],
+        "model_full": 0.8458193892295369,
+        "model_part_off": [
+          0.7824775958493363,
+          0.7824775958493363,
+          0.7824775958493363
+        ],
+        "reason": "the second number is not this part switched off at its mean or at 0 (another configuration, e.g. a different readout or a linearisation)",
+        "location": "operations.rate_bmi_amplifier.hypothesis",
+        "part": "ann_21"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC 0.8458 to 0.8409",
+        "status": "unchecked",
+        "stated": [
+          0.8458,
+          0.8409
+        ],
+        "model_full": 0.8458193892295369,
+        "model_part_off": [
+          0.7824775958493363,
+          0.7824775958493363,
+          0.7824775958493363
+        ],
+        "reason": "the second number is not this part switched off at its mean or at 0 (another configuration, e.g. a different readout or a linearisation)",
+        "location": "operations.rate_bmi_amplifier.evidence[8].narrative",
+        "part": "ann_21"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.8458 to 0.7450",
+        "status": "unchecked",
+        "stated": [
+          0.8458,
+          0.745
+        ],
+        "model_full": 0.8458193892295369,
+        "reason": "the second number is not this part switched off at its mean or at 0 (another configuration, e.g. a different readout or a linearisation)",
+        "location": "operations.risk_score.hypothesis",
+        "part": "ann_23"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC without the part: pressure-over-rate 0.6658",
+        "status": "unchecked",
+        "stated": 0.6658,
+        "model": 0.8458193892295369,
+        "reason": "not the full model's training value (a subgroup, the test split or another configuration?)",
+        "location": "operations.risk_score.hypothesis",
+        "part": "ann_23"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.8458 to 0.7450",
+        "status": "unchecked",
+        "stated": [
+          0.8458,
+          0.745
+        ],
+        "model_full": 0.8458193892295369,
+        "reason": "the second number is not this part switched off at its mean or at 0 (another configuration, e.g. a different readout or a linearisation)",
+        "location": "record.summary",
+        "part": "ann_23"
+      }
+    ],
+    "unchecked_sentences": [
+      {
+        "location": "operations.age_ceiling.hypothesis",
+        "part": "ann_17",
+        "text": "Through its own edge (in the direct terms) age adds 0.81 to the score per standard deviation."
+      },
+      {
+        "location": "operations.age_ceiling.hypothesis",
+        "part": "ann_17",
+        "text": "This part is a single hinge on age that switches on for the oldest patients: the unit grows by 0.96 per standard deviation of age (and by -0.085 per standard deviation of creatinine, a small shift of the threshold) and feeds the score with weight -0.91, which cancels the direct age term, so above th"
+      },
+      {
+        "location": "operations.age_ceiling.hypothesis",
+        "part": "ann_17",
+        "text": "Self-probe (age sweep at the typical case, creatinine 85 \u00b5mol/L): risk 1% at age 20, 15% at 60, 41% at 80 (hinge still off, unit value 0.00), then 41% at 85 (hinge on, value 0.38) and 40% at 95: the turn lies between ages 80 and 85 years at that creatinine."
+      },
+      {
+        "location": "operations.age_ceiling.hypothesis",
+        "part": "ann_17",
+        "text": "Higher creatinine raises the age threshold a little: at age 85 the unit is 0.52 at creatinine 40 and 0.00 at 220 \u00b5mol/L; switching the creatinine edge off changes the risk of 85 training patients, by at most 0.059."
+      },
+      {
+        "location": "operations.age_ceiling.hypothesis",
+        "part": "ann_17",
+        "text": "On the training data the hinge is on for 76 of 1500 patients (outcome rate 61.8%, mean predicted risk 63%), for 0 patients under 80 years and for 36 of the 36 aged 85 or more."
+      },
+      {
+        "location": "operations.age_ceiling.hypothesis",
+        "part": "ann_17",
+        "text": "Switching the part off: over the 76 patients it acts on, its mean effect on predicted risk is -0.050 (risk with the part minus risk without), at most 0.25 for one patient; whole-model AUC 0.8458 with it and 0.8447 without."
+      },
+      {
+        "location": "operations.age_ceiling.hypothesis",
+        "part": "ann_17",
+        "text": "Concept probe: age alone predicts the gate with score 1.00."
+      },
+      {
+        "location": "operations.age_ceiling.hypothesis",
+        "part": "ann_17",
+        "text": "The regime is small (76 rows) and may be fitted to those rows."
+      },
+      {
+        "location": "operations.age_ceiling.evidence[0].narrative",
+        "part": "ann_17",
+        "text": "Closed form of the exit (coefficients to three significant figures); max closed-form error on training rows 0.0012."
+      },
+      {
+        "location": "operations.age_ceiling.evidence[1].narrative",
+        "part": "ann_17",
+        "text": "The unit is 0.00 at age 80 and 0.38 at 85; risk 1% at age 20, 41% at 80, 40% at 95: rising then flat."
+      },
+      {
+        "location": "operations.age_ceiling.evidence[2].narrative",
+        "part": "ann_17",
+        "text": "Creatinine sweep at age 85: the unit falls from 0.52 at creatinine 40 to 0.00 at 220 \u00b5mol/L (creatinine shifts the threshold); whole-model risk still rises through the direct creatinine term, from 22% to 91%."
+      },
+      {
+        "location": "operations.age_ceiling.evidence[3].narrative",
+        "part": "ann_17",
+        "text": "Rows where the hinge is on: 76 of 1500, outcome rate 61.8%, mean predicted risk 63%."
+      },
+      {
+        "location": "operations.age_ceiling.evidence[4].narrative",
+        "part": "ann_17",
+        "text": "Rows under 80 years with the hinge on: 0."
+      },
+      {
+        "location": "operations.age_ceiling.evidence[5].narrative",
+        "part": "ann_17",
+        "text": "Rows aged 85 or more with the hinge on: 36 of 36."
+      },
+      {
+        "location": "operations.age_ceiling.evidence[6].narrative",
+        "part": "ann_17",
+        "text": "Part switched off (exit fixed at zero), whole training split: AUC 0.8458 with, 0.8447 without; 76 patients affected, max risk change 0.25."
+      },
+      {
+        "location": "operations.age_ceiling.evidence[7].narrative",
+        "part": "ann_17",
+        "text": "Part switched off, summarised over the 76 patients where it acts: mean risk change -0.050 (with minus without)."
+      },
+      {
+        "location": "operations.age_ceiling.evidence[8].narrative",
+        "part": "ann_17",
+        "text": "Creatinine edge into the hinge switched off: 85 patients affected, max risk change 0.059;"
+      },
+      {
+        "location": "operations.age_ceiling.evidence[9].narrative",
+        "part": "ann_17",
+        "text": "Concept probe: age predicts the gate, score 1.00 (gate AUC 0.999), grade meaningful."
+      },
+      {
+        "location": "operations.pressure_rate_load.hypothesis",
+        "part": "ann_18",
+        "text": "The first unit (node 534) sums systolic pressure (weight 1.92 per standard deviation) and heart rate (1.42 per standard deviation) and is on for 963 of 1500 training patients; node 1197 is an always-on linear copy of it (weight 1.16); the second stage (node 2442, weight 1.05 from the first unit, a h"
+      },
+      {
+        "location": "operations.pressure_rate_load.hypothesis",
+        "part": "ann_18",
+        "text": "Each stage feeds the score with a negative weight (-0.20, -0.63, -0.54, -0.51, -0.63 per unit), so the chain is a decreasing, convex penalty: the more stages are on, the steeper the fall in the score as pressure and rate rise together."
+      },
+      {
+        "location": "operations.pressure_rate_load.hypothesis",
+        "part": "ann_18",
+        "text": "Turning points at the typical case: with systolic 133 mmHg the first stage switches on between heart rates 65 and 70 beats/min (unit 0.11), the second between 85 and 90, the third between 95 and 100, the fourth between 110 and 115; with heart rate 76 beats/min the first stage switches on between sys"
+      },
+      {
+        "location": "operations.pressure_rate_load.hypothesis",
+        "part": "ann_18",
+        "text": "The side unit (node 560) adds systolic pressure (0.97 per standard deviation) to the second stage (1.00), is on for 527 patients, and passes mainly to the rate-bmi amplifier (edge weight 0.336); its own edge to the score (-0.024) moves a patient's risk by at most 0.033 when switched off, and fixing "
+      },
+      {
+        "location": "operations.pressure_rate_load.hypothesis",
+        "part": "ann_18",
+        "text": "Whole-part ablation (exits at baseline): AUC 0.8458 with, 0.7258 without; over the 419 patients with the second stage on, the part's mean effect on predicted risk is -0.427 (with minus without), and over the 963 with the first stage on it is -0.178."
+      },
+      {
+        "location": "operations.pressure_rate_load.hypothesis",
+        "part": "ann_18",
+        "text": "Concept probe: the sum systolic pressure + heart rate predicts the gates with score 0.95; the rate-pressure product (systolic pressure times heart rate, a clinical index of myocardial oxygen demand) scores 0.90."
+      },
+      {
+        "location": "operations.pressure_rate_load.evidence[0].narrative",
+        "part": "ann_18",
+        "text": "Closed form of the six exits (coefficients to three significant figures); max closed-form error on training rows 0.044 on an exit scale of 10.2."
+      },
+      {
+        "location": "operations.pressure_rate_load.evidence[1].narrative",
+        "part": "ann_18",
+        "text": "Self-probe: heart-rate sweep at the typical case (systolic 133 mmHg)."
+      },
+      {
+        "location": "operations.pressure_rate_load.evidence[1].narrative",
+        "part": "ann_18",
+        "text": "Stage units: 534 is 0.00 at 65 and 0.11 at 70 beats/min; 2442 is 0.21 at 90; 7124 is 0.15 at 100; 7602 is 0.38 at 115."
+      },
+      {
+        "location": "operations.pressure_rate_load.evidence[1].narrative",
+        "part": "ann_18",
+        "text": "Whole-model risk 26% at 100 falling to 11% at 120 as the stages switch on."
+      },
+      {
+        "location": "operations.pressure_rate_load.evidence[2].narrative",
+        "part": "ann_18",
+        "text": "Self-probe: systolic sweep at the typical case (heart rate 76 beats/min). 534 is 0.00 at 125 and 0.46 at 130 mmHg; 2442 is 0.45 at 150; 7124 is 0.31 at 160; 7602 is 0.44 at 175."
+      },
+      {
+        "location": "operations.pressure_rate_load.evidence[2].narrative",
+        "part": "ann_18",
+        "text": "Whole-model risk peaks at 39% (systolic 160) and falls to 6% at 200."
+      },
+      {
+        "location": "operations.pressure_rate_load.evidence[3].narrative",
+        "part": "ann_18",
+        "text": "Rows with the first stage (node 534) on: 963 of 1500, outcome rate 42.6%, mean predicted risk 43%."
+      },
+      {
+        "location": "operations.pressure_rate_load.evidence[4].narrative",
+        "part": "ann_18",
+        "text": "Rows with the second stage (node 2442) on: 419 of 1500, outcome rate 34.4%, mean predicted risk 36%."
+      },
+      {
+        "location": "operations.pressure_rate_load.evidence[5].narrative",
+        "part": "ann_18",
+        "text": "Rows with the third stage (node 7124) on: 224 of 1500, outcome rate 29.9%, mean predicted risk 30%."
+      },
+      {
+        "location": "operations.pressure_rate_load.evidence[6].narrative",
+        "part": "ann_18",
+        "text": "Rows with the fourth stage (node 7602) on: 73 of 1500, outcome rate 12.3%, mean predicted risk 14%."
+      },
+      {
+        "location": "operations.pressure_rate_load.evidence[7].narrative",
+        "part": "ann_18",
+        "text": "Rows with the side unit (node 560) on: 527 of 1500, outcome rate 44.2%, mean predicted risk 45%."
+      },
+      {
+        "location": "operations.pressure_rate_load.evidence[8].narrative",
+        "part": "ann_18",
+        "text": "Part switched off (gated exits to zero, the always-on copy to its mean), whole training split: AUC 0.8458 with, 0.7258 without; mean risk change -0.068 (with minus without), 362 predictions flipped."
+      },
+      {
+        "location": "operations.pressure_rate_load.evidence[9].narrative",
+        "part": "ann_18",
+        "text": "Part switched off, summarised over the 419 patients with the second stage on: mean risk change -0.427 (with minus without)."
+      },
+      {
+        "location": "operations.pressure_rate_load.evidence[10].narrative",
+        "part": "ann_18",
+        "text": "Part switched off, summarised over the 963 patients with the first stage on: mean risk change -0.178 (with minus without)."
+      },
+      {
+        "location": "operations.pressure_rate_load.evidence[12].narrative",
+        "part": "ann_18",
+        "text": "Side unit's own edge to the score switched off: max risk change 0.033;"
+      },
+      {
+        "location": "operations.pressure_rate_load.evidence[13].narrative",
+        "part": "ann_18",
+        "text": "Side unit (node 560) fixed at zero: 527 patients affected, AUC 0.8458 to 0.8414, max risk change 0.38."
+      },
+      {
+        "location": "operations.pressure_rate_load.evidence[14].narrative",
+        "part": "ann_18",
+        "text": "Concept probe: systolic pressure + heart rate, score 0.95, grade meaningful."
+      },
+      {
+        "location": "operations.pressure_rate_load.evidence[15].narrative",
+        "part": "ann_18",
+        "text": "Concept probe: the rate-pressure product (systolic pressure times heart rate), score 0.90."
+      },
+      {
+        "location": "operations.pressure_over_rate.hypothesis",
+        "part": "ann_19",
+        "text": "A hinge on the contrast between systolic blood pressure and heart rate: the unit (node 440) grows by 1.13 per standard deviation of systolic pressure and changes by -0.91 per standard deviation of heart rate, so it is on when pressure is high for the heart rate."
+      },
+      {
+        "location": "operations.pressure_over_rate.hypothesis",
+        "part": "ann_19",
+        "text": "It is on for 790 of 1500 training patients (outcome rate 42.9%, mean predicted risk 43%)."
+      },
+      {
+        "location": "operations.pressure_over_rate.hypothesis",
+        "part": "ann_19",
+        "text": "It adds to the score directly with weight 1.13 per unit and feeds the rate-bmi amplifier with weight 1.21."
+      },
+      {
+        "location": "operations.pressure_over_rate.hypothesis",
+        "part": "ann_19",
+        "text": "Turning points at the typical case: with systolic 133 mmHg the unit is 0.20 at heart rate 75 and 0.00 at 80 beats/min; with heart rate 76 beats/min it is 0.00 at systolic 130 and 0.25 at 135 mmHg."
+      },
+      {
+        "location": "operations.pressure_over_rate.hypothesis",
+        "part": "ann_19",
+        "text": "Self-probe at a slow heart rate (55 beats/min): raising systolic pressure from 90 to 160 mmHg takes the unit from 0.00 to 3.27 and the whole-model risk from 3% to 92%."
+      },
+      {
+        "location": "operations.pressure_over_rate.hypothesis",
+        "part": "ann_19",
+        "text": "Switching the part off: over the 790 patients where it acts, its mean effect on predicted risk is 0.313 (with minus without); whole-model AUC 0.8458 with and 0.6658 without, the largest loss of any part."
+      },
+      {
+        "location": "operations.pressure_over_rate.hypothesis",
+        "part": "ann_19",
+        "text": "Concept probe: the difference systolic pressure minus heart rate (raw units) predicts the gate with score 1.00; the ratio of pressure to rate scores 0.98."
+      },
+      {
+        "location": "operations.pressure_over_rate.evidence[0].narrative",
+        "part": "ann_19",
+        "text": "Closed form of the exit (coefficients to three significant figures); max closed-form error on training rows 0.002."
+      },
+      {
+        "location": "operations.pressure_over_rate.evidence[1].narrative",
+        "part": "ann_19",
+        "text": "Self-probe: systolic sweep at heart rate 55 beats/min."
+      },
+      {
+        "location": "operations.pressure_over_rate.evidence[1].narrative",
+        "part": "ann_19",
+        "text": "Unit 0.00 at 90 mmHg, 0.21 at 110, 3.27 at 160; risk 3% to 92%."
+      },
+      {
+        "location": "operations.pressure_over_rate.evidence[2].narrative",
+        "part": "ann_19",
+        "text": "Heart-rate sweep at systolic 133 mmHg: the unit falls from 2.68 at 40 beats/min to 0.20 at 75 and is 0.00 at 80."
+      },
+      {
+        "location": "operations.pressure_over_rate.evidence[3].narrative",
+        "part": "ann_19",
+        "text": "Rows where the unit is on: 790 of 1500, outcome rate 42.9%, mean predicted risk 43%."
+      },
+      {
+        "location": "operations.pressure_over_rate.evidence[4].narrative",
+        "part": "ann_19",
+        "text": "Part switched off, whole training split: AUC 0.8458 with, 0.6658 without; mean risk change 0.165 (with minus without), 286 predictions flipped."
+      },
+      {
+        "location": "operations.pressure_over_rate.evidence[5].narrative",
+        "part": "ann_19",
+        "text": "Part switched off, over the 790 patients where it acts: mean risk change 0.313 (with minus without)."
+      },
+      {
+        "location": "operations.pressure_over_rate.evidence[7].narrative",
+        "part": "ann_19",
+        "text": "Concept probe: systolic pressure minus heart rate, score 1.00 (gate AUC 0.999), grade meaningful."
+      },
+      {
+        "location": "operations.pressure_over_rate.evidence[8].narrative",
+        "part": "ann_19",
+        "text": "Concept probe: systolic pressure divided by heart rate, score 0.98."
+      },
+      {
+        "location": "operations.rate_bmi_amplifier.hypothesis",
+        "part": "ann_21",
+        "text": "The first (node 2391) sums bmi (0.34 per standard deviation), heart rate (0.77 per standard deviation) and the pressure-over-rate unit (weight 1.21 per unit, through an identity entry); the second (node 1686) takes the first with weight 1.14, adds the load chain's side unit scaled by 0.336, and feed"
+      },
+      {
+        "location": "operations.rate_bmi_amplifier.hypothesis",
+        "part": "ann_21",
+        "text": "The first hinge is on for 1271 and the second for 1157 of 1500 training patients (outcome rate 44.0% and mean predicted risk 45% when on)."
+      },
+      {
+        "location": "operations.rate_bmi_amplifier.hypothesis",
+        "part": "ann_21",
+        "text": "Self-probe (bmi sweep at the typical case): the exit is 0.00 at bmi 26 and 0.16 at 28 kg/m\u00b2; whole-model risk is 15% at bmi 16 and 15% at 26, then rises to 33% at 40 and 44% at 46."
+      },
+      {
+        "location": "operations.rate_bmi_amplifier.hypothesis",
+        "part": "ann_21",
+        "text": "The direct bmi edge is 0.0013 per standard deviation, so the model's bmi effect runs through this part: flat at low bmi, rising above the turn, whose position depends on heart rate and pressure."
+      },
+      {
+        "location": "operations.rate_bmi_amplifier.hypothesis",
+        "part": "ann_21",
+        "text": "At systolic 110 mmHg the exit is 0.00 at heart rate 70 and 2.26 at 110 beats/min, carrying part of the model's heart-rate effect at low pressure."
+      },
+      {
+        "location": "operations.rate_bmi_amplifier.hypothesis",
+        "part": "ann_21",
+        "text": "The side signal matters little: switching its edge off changes AUC from 0.8458 to 0.8409 (1239 patients affected, max risk change 0.37)."
+      },
+      {
+        "location": "operations.rate_bmi_amplifier.hypothesis",
+        "part": "ann_21",
+        "text": "Whole-part ablation: AUC 0.8458 with, 0.7825 without; over the 1157 patients where it acts its mean effect on predicted risk is 0.187 (with minus without)."
+      },
+      {
+        "location": "operations.rate_bmi_amplifier.hypothesis",
+        "part": "ann_21",
+        "text": "Concept probe: the sum systolic pressure + bmi + heart rate predicts the exit with score 0.84 (bmi + heart rate alone 0.61; the pressure enters through the pressure-over-rate unit), so the part is best read as a general haemodynamic-plus-body-size load rather than a single clinical concept."
+      },
+      {
+        "location": "operations.rate_bmi_amplifier.evidence[0].narrative",
+        "part": "ann_21",
+        "text": "Closed form of the exit (coefficients to three significant figures); max closed-form error on training rows 0.013."
+      },
+      {
+        "location": "operations.rate_bmi_amplifier.evidence[1].narrative",
+        "part": "ann_21",
+        "text": "Exit 0.00 at bmi 26, 0.16 at 28, 1.58 at 46 kg/m\u00b2; risk 15%, 15%, 44% at those points: flat then rising."
+      },
+      {
+        "location": "operations.rate_bmi_amplifier.evidence[2].narrative",
+        "part": "ann_21",
+        "text": "Heart-rate sweep at systolic 110 mmHg: exit 0.00 at 70 beats/min, 0.89 at 90, 2.26 at 110; whole-model risk 14% to 90%."
+      },
+      {
+        "location": "operations.rate_bmi_amplifier.evidence[3].narrative",
+        "part": "ann_21",
+        "text": "Rows where the exit is on: 1157 of 1500, outcome rate 44.0%, mean predicted risk 45%."
+      },
+      {
+        "location": "operations.rate_bmi_amplifier.evidence[4].narrative",
+        "part": "ann_21",
+        "text": "Rows where the first hinge (node 2391) is on: 1271 of 1500."
+      },
+      {
+        "location": "operations.rate_bmi_amplifier.evidence[5].narrative",
+        "part": "ann_21",
+        "text": "Rows where the first hinge is on but the exit is off: 114 (outcome rate 24.6%)."
+      },
+      {
+        "location": "operations.rate_bmi_amplifier.evidence[6].narrative",
+        "part": "ann_21",
+        "text": "Part switched off, whole training split: AUC 0.8458 with, 0.7825 without; mean risk change 0.145 (with minus without)."
+      },
+      {
+        "location": "operations.rate_bmi_amplifier.evidence[7].narrative",
+        "part": "ann_21",
+        "text": "Part switched off, over the 1157 patients where it acts: mean risk change 0.187 (with minus without)."
+      },
+      {
+        "location": "operations.rate_bmi_amplifier.evidence[8].narrative",
+        "part": "ann_21",
+        "text": "Side-signal edge (identity_560 into node 1686) switched off: AUC 0.8458 to 0.8409, 1239 patients affected, max risk change 0.37."
+      },
+      {
+        "location": "operations.rate_bmi_amplifier.evidence[10].narrative",
+        "part": "ann_21",
+        "text": "Concept probe: systolic pressure + bmi + heart rate, score 0.84, grade meaningful."
+      },
+      {
+        "location": "operations.rate_bmi_amplifier.evidence[11].narrative",
+        "part": "ann_21",
+        "text": "Concept probe: bmi + heart rate (the part's own two input features), score 0.61, grade partial."
+      },
+      {
+        "location": "operations.direct_terms.hypothesis",
+        "part": "ann_22",
+        "text": "Each input adds its edge weight per standard deviation to the score (inputs are standardised; the weights are not per raw unit): heart rate 1.29, age 0.81, creatinine 0.46, smoker 0.45, diabetes 0.43, male 0.21, systolic pressure 0.077, bmi 0.0013."
+      },
+      {
+        "location": "operations.direct_terms.hypothesis",
+        "part": "ann_22",
+        "text": "Smoking, diabetes and male sex each raise the score by a fixed amount (one-hot inputs, standardised); creatinine raises it linearly over its whole range (at age 85 the whole-model risk is 22% at creatinine 40 and 85% at 190 \u00b5mol/L); age's direct term is the rising line that the age ceiling flattens "
+      },
+      {
+        "location": "operations.direct_terms.hypothesis",
+        "part": "ann_22",
+        "text": "Heart rate's direct term is the largest but is opposed by the load chain and by the pressure-over-rate hinge, so the whole-model heart-rate effect is not this weight: at systolic 110 mmHg risk rises with heart rate from 3% to 90% (40 to 110 beats/min), while at systolic 150 it falls from 89% to belo"
+      },
+      {
+        "location": "operations.direct_terms.hypothesis",
+        "part": "ann_22",
+        "text": "Switching the direct edges off (each replaced by its mean contribution): AUC 0.8458 with, 0.6764 without; mean absolute risk change 0.21."
+      },
+      {
+        "location": "operations.direct_terms.hypothesis",
+        "part": "ann_22",
+        "text": "Concept probe: a weighted sum of heart rate, age and creatinine (the sum's own three largest terms) scores 0.82; heart rate alone scores 0.51."
+      },
+      {
+        "location": "operations.direct_terms.evidence[0].narrative",
+        "part": "ann_22",
+        "text": "Closed form of the exit (an exact linear sum; coefficients shown to three significant figures, so the typed form is approximate: max closed-form error on training rows 0.01)."
+      },
+      {
+        "location": "operations.direct_terms.evidence[2].narrative",
+        "part": "ann_22",
+        "text": "Part switched off (exit fixed at its mean), whole training split: AUC 0.8458 with, 0.6764 without; mean absolute risk change 0.21, 391 predictions flipped."
+      },
+      {
+        "location": "operations.direct_terms.evidence[3].narrative",
+        "part": "ann_22",
+        "text": "Creatinine sweep at age 85: whole-model risk 22% at creatinine 40, 63% at 130, 85% at 190 \u00b5mol/L: monotone rising through the direct term."
+      },
+      {
+        "location": "operations.direct_terms.evidence[4].narrative",
+        "part": "ann_22",
+        "text": "Concept probe: weighted sum of heart rate, age and creatinine, score 0.82 (r2 0.82), grade meaningful by the probe's threshold; the concept is the part's own leading terms."
+      },
+      {
+        "location": "operations.direct_terms.evidence[5].narrative",
+        "part": "ann_22",
+        "text": "Library sweep for the direct terms: best library concept age times heart rate, score 0.74 (grade partial)."
+      },
+      {
+        "location": "operations.risk_score.hypothesis",
+        "part": "ann_23",
+        "text": "By AUC without the part: pressure-over-rate 0.6658, direct terms 0.6764, load chain 0.7258, amplifier 0.7825, age ceiling 0.8447."
+      },
+      {
+        "location": "operations.risk_score.hypothesis",
+        "part": "ann_23",
+        "text": "So the heart-rate effect reverses with pressure: at systolic 110 mmHg risk rises with heart rate from 3% at 40 beats/min to 90% at 110; at systolic 150 it falls from 89% to below 1% over the same range; at systolic 180 it falls from above 99% to 9% by 80 beats/min."
+      },
+      {
+        "location": "operations.risk_score.hypothesis",
+        "part": "ann_23",
+        "text": "Likewise the pressure effect reverses with heart rate: at heart rate 55 risk rises with systolic pressure from 3% at 90 mmHg to 97% at 180, while at heart rate 95 it falls from 85% to 3% at 150 mmHg."
+      },
+      {
+        "location": "operations.risk_score.hypothesis",
+        "part": "ann_23",
+        "text": "The training data show the same four corners: systolic 150 or more with heart rate 65 or less, 61 patients, outcome rate 90.2%, mean predicted risk 89%; systolic 115 or less with heart rate 90 or more, 46 patients, 76.1%, 70%; both high (150 or more, 90 or more), 38 patients, 5.3%, 4%; both low (115"
+      },
+      {
+        "location": "operations.risk_score.hypothesis",
+        "part": "ann_23",
+        "text": "At the typical case the single-input curves are therefore non-monotone: heart rate 35% at 40, 16% at 80, 26% at 100, 5% at 130 beats/min; systolic 21% at 90, 17% at 130, 39% at 160, 6% at 200 mmHg."
+      },
+      {
+        "location": "operations.risk_score.hypothesis",
+        "part": "ann_23",
+        "text": "Age: risk rises from 1% at age 20 to 41% at 80, then is flat (40% at 95) because the age ceiling cancels the direct term."
+      },
+      {
+        "location": "operations.risk_score.hypothesis",
+        "part": "ann_23",
+        "text": "Bmi: flat up to about 26 kg/m\u00b2 then rising, through the amplifier."
+      },
+      {
+        "location": "operations.risk_score.hypothesis",
+        "part": "ann_23",
+        "text": "Sodium and noise are not connected to the output: sweeping sodium from 120 to 155 mmol/L leaves the typical case's risk at 17% and 17%, and noise from -3 to 3 at 17% and 17%."
+      },
+      {
+        "location": "operations.risk_score.hypothesis",
+        "part": "ann_23",
+        "text": "The annotated model reproduces the evolved network: max absolute output error 4.4e-16 over 1500 training rows."
+      },
+      {
+        "location": "operations.risk_score.evidence[0].narrative",
+        "part": "ann_23",
+        "text": "Linearisation: AUC 0.8458 with the hidden units, 0.7450 with every unit replaced by its affine fit (nonlinear gain 0.101)."
+      },
+      {
+        "location": "operations.risk_score.evidence[1].narrative",
+        "part": "ann_23",
+        "text": "Interaction self-probe: heart-rate sweep at systolic 110 mmHg, risk 3% at 40 to 90% at 110 beats/min (rising)."
+      },
+      {
+        "location": "operations.risk_score.evidence[2].narrative",
+        "part": "ann_23",
+        "text": "Interaction self-probe: heart-rate sweep at systolic 150 mmHg, risk 89% at 40 to below 1% at 130 beats/min (falling)."
+      },
+      {
+        "location": "operations.risk_score.evidence[3].narrative",
+        "part": "ann_23",
+        "text": "Interaction self-probe: heart-rate sweep at systolic 180 mmHg, risk above 99% at 40 to 9% at 80 beats/min (falling steeply)."
+      },
+      {
+        "location": "operations.risk_score.evidence[4].narrative",
+        "part": "ann_23",
+        "text": "Interaction self-probe: systolic sweep at heart rate 55, risk 3% at 90 to 97% at 180 mmHg (rising)."
+      },
+      {
+        "location": "operations.risk_score.evidence[5].narrative",
+        "part": "ann_23",
+        "text": "Interaction self-probe: systolic sweep at heart rate 95, risk 85% at 90 to 3% at 150 mmHg (falling)."
+      },
+      {
+        "location": "operations.risk_score.evidence[6].narrative",
+        "part": "ann_23",
+        "text": "Corner of the pressure-rate plane, systolic 150 or more and heart rate 65 or less: 61 training patients, outcome rate 90.2%, mean predicted risk 89%."
+      },
+      {
+        "location": "operations.risk_score.evidence[7].narrative",
+        "part": "ann_23",
+        "text": "Corner of the pressure-rate plane, systolic 115 or less and heart rate 90 or more: 46 training patients, outcome rate 76.1%, mean predicted risk 70%."
+      },
+      {
+        "location": "operations.risk_score.evidence[8].narrative",
+        "part": "ann_23",
+        "text": "Corner of the pressure-rate plane, systolic 150 or more and heart rate 90 or more: 38 training patients, outcome rate 5.3%, mean predicted risk 4%."
+      },
+      {
+        "location": "operations.risk_score.evidence[9].narrative",
+        "part": "ann_23",
+        "text": "Corner of the pressure-rate plane, systolic 115 or less and heart rate 65 or less: 57 training patients, outcome rate 1.8%, mean predicted risk 8%."
+      },
+      {
+        "location": "operations.risk_score.evidence[10].narrative",
+        "part": "ann_23",
+        "text": "Sodium sweep at the typical case: risk 17% at 120 and 17% at 155 mmol/L (sodium is not connected to the output)."
+      },
+      {
+        "location": "operations.risk_score.evidence[11].narrative",
+        "part": "ann_23",
+        "text": "Noise sweep at the typical case: risk 17% at -3 and 17% at 3 (noise is not connected to the output)."
+      },
+      {
+        "location": "operations.risk_score.evidence[12].narrative",
+        "part": "ann_23",
+        "text": "Function preservation: max absolute output error 4.4e-16 over 1500 training rows; max closed-form error of any leaf 0.044."
+      },
+      {
+        "location": "record.summary",
+        "part": "ann_23",
+        "text": "Its main nonlinear effect is a saddle in systolic pressure and heart rate: a pressure-over-rate hinge raises risk when systolic pressure is high for the heart rate, a serial chain of hinges on pressure plus rate pulls risk down when both are high, so at systolic 110 mmHg risk rises with heart rate f"
+      },
+      {
+        "location": "record.summary",
+        "part": "ann_23",
+        "text": "The annotated model reproduces the network to 4.4e-16 on the 1500 training rows, and linearising every hidden unit lowers training AUC from 0.8458 to 0.7450."
+      },
+      {
+        "location": "record.resisted",
+        "part": "ann_23",
+        "text": "Two leaves are read as weighted sums rather than one clinical concept: the direct terms (best reading, a weighted sum of heart rate, age and creatinine, score 0.82, which is the part's own leading terms) and the rate-bmi amplifier (systolic pressure + bmi + heart rate, score 0.84; bmi + heart rate a"
+      },
+      {
+        "location": "record.resisted",
+        "part": "ann_23",
+        "text": "The age ceiling acts on a small regime (76 rows) and may be fitted to it."
+      },
+      {
+        "location": "record.resisted",
+        "part": "ann_23",
+        "text": "The load chain's closed form is approximate, off by up to 0.044 on the exit."
+      }
+    ]
+  },
+  "provenance": {
+    "templated_texts": 72,
+    "queries": 60
+  },
+  "summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "warn": 0,
+    "info": 0,
+    "unchecked_freetext": 114,
+    "verdict": "numbers reproduce",
+    "seconds": 4.6
+  }
+}

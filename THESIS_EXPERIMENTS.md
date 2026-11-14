@@ -27,6 +27,7 @@ Mike-verified (signoff-v1) is **0 everywhere**: no record carries `mike_verifica
 | 1.4 | XOR worked example | complete |
 | 1.5 | KRK boundary case | complete as an exploratory write-up; blind verifier run 13 Nov on krk-default-s2 (refuted: 1 refuted, 3 weakened, 24 upheld) |
 | 1.6 | Connect-4 boundary case (capacity study) | complete; outcome "covered and described, not tactically explained" |
+| 1.7 | Synthetic U-shape and saddle cases (known truth; exploratory) | complete (14 Nov, `exp/ushape-saddle`): 15 runs, three best-by-train genomes explained, levels (probe v2), blind verifiers (A refuted, B refuted, C weakened; wording, not shapes), ground truth recovered on all three; plain-language drafts; not signed off |
 | 2.1 | Ten-seed consistency study, frozen-method v4 re-run | complete (60/60); **interim** on two counts: Mike's sign-off 0/60, and whether `summary.md` switches to v4 (Mike's decision) |
 | 2.2 | Rashomon counts | complete |
 | 2.3 | Three levels of explanation | faithful and decomposed complete; the understood level is **measured by Mike's leaf verdicts** (`review leaf`, 13 Nov: 0 of 60 explanations have any), so "Understood (verified)" is blank; the probe and verifier shares are automated screens, **interim** if the probe v2 recompute (`fix/probe-simplicity`) lands |
@@ -239,6 +240,53 @@ plus `ch7_cox_case_table.tex` (Cox) and the XOR figures. The explanation level d
 - **Audit:** `RESULTS.md` line 250 says "no push or merge was performed" (stale: merged in
   `4aaf3fc`'s merge). `verification/independent/recheck.json` `target` is a worktree path
   (`.claude/worktrees/agent-a88d…`); data field, not prose. No placeholders, no "Claude".
+
+### 1.7 Synthetic U-shape and saddle cases
+
+- **What it did.** Three synthetic clinical-style datasets with a known logit:
+  - **u:** a sodium U, β 1.0, minimum at 137 mmol/L;
+  - **saddle:** −1.5 · z(heart rate) · z(sbp);
+  - **both.**
+
+  All three share one linear backbone and 1,500 / 500 rows. The strengths were calibrated before any
+  run so that the oracle beats LR by 0.10 AUC and GB beats LR by 0.05. There were 5 PropNEAT seeds per
+  dataset (the Heart config with 10 inputs, 100 generations). The best-by-train genome per dataset was
+  explained with authoring v4 in strict mode, then blind-verified, run through the three levels and given
+  a plain-language draft. Ground-truth recovery is graded per term, in the style of the ladder.
+- **Pre-registered:** "Exploratory, not pre-registered." (`experiments/ushape_saddle/RESULTS.md` line 3).
+- **Results files:** in `experiments/ushape_saddle/`:
+  - `RESULTS.md`, `runs.csv`, `summary.json`, `references.json`, `calibration.json`;
+  - `explanations/shape-{A,B,C}.json`, `levels/`, `verdicts/`, `plain_language/`;
+  - `gt_grades.json`, `gt_probe.json`, `figures/`.
+- **Key numbers (test AUC).**
+
+  | Dataset | Oracle | LR | GB | PropNEAT median (range) | Explained seed | Gap closed |
+  |---|---|---|---|---|---|---|
+  | U | 0.851 | 0.732 | 0.830 | 0.844 (0.839–0.850) | s0, 0.844 | 0.94 |
+  | Saddle | 0.841 | 0.727 | 0.780 | 0.830 (0.823–0.835) | s0, 0.835 | 0.94 |
+  | Both | 0.884 | 0.699 | 0.854 | 0.859 (0.840–0.873) | s4, 0.873 | 0.94 |
+
+  - **Explanations:** coverage 1.0 / 1.0, function preservation ≤ 4.4e-16, recheck 0 / 0 on all three.
+  - **Probe v2 (m / p / c):** A 3 / 1 / 0, B 2 / 3 / 0, C 4 / 3 / 1.
+  - **Verifiers:** A refuted (3 / 8 / 14), B refuted (2 / 9 / 21), C weakened (0 / 4 / 18). Every
+    refutation is a clinical gloss (bmi wording, "normal sodium leaves the hinges off"), not a shape or
+    a number.
+  - **Ground truth:**
+    - A recovered, 6.5 / 8: U floor 135–137; R² 0.95 vs (zn + 0.5)².
+    - B recovered at the root, 7.5 / 8: hinge on sbp − hr plus a chain on sbp + hr; surface r = 0.96
+      with the true term.
+    - C recovered, 8 / 9: V minimum 138; composition vs −zh zp R² 0.78; surface r = 0.96.
+    - The male step (β 0.3) was missed in A and C.
+- **Exports / figures:** the three synthetic rows of `ch7_experiment1_cases.tex`
+  (`thesis_experiment_tables.py`). `figures/shape-{A,B,C}-{sodium,saddle}.png` are not exported.
+- **DB:** `explaneat_dev`.
+  - Datasets `shape_syn_37095` (`b4d7be76`), `shape_syn_818e0` (`3e662ee6`), `shape_syn_90c30` (`519c1f60`).
+  - Experiments `shape-{A,B,C}-s0..s4`.
+  - Genomes / explanations: A `2aac39c4` / `b5ff5e07`, B `25f5830e` / `4d8e6b70`, C `a1cbdd4a` / `f0f1da92`.
+  - The harness check `shape-A-dryrun-s0` is left in place.
+- **Status: complete.** Not signed off.
+- **Audit:** the explanations were interrupted at about 17:03 and resumed from the stored state; the
+  study's `RESULTS.md` section 4 states this. No "Claude" in the results files.
 
 ---
 

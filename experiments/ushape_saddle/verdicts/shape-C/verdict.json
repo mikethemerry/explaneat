@@ -1,0 +1,389 @@
+{
+ "item_id": "shape-C",
+ "genome_id": "a1cbdd4a-42e8-4c1a-b060-00aa3e22c76b",
+ "target_hash": null,
+ "target": "experiments/ushape_saddle/explanations/shape-C.json",
+ "verifier": "independent verifier agent (explanation-verifier skill)",
+ "started_at": "2026-11-14T17:14:46+13:00",
+ "finished_at": "2026-11-14T17:27:00+13:00",
+ "minutes": 13,
+ "overall": {
+  "grade": "weakened",
+  "summary": "Nothing is refuted: coverage, function preservation, closed forms and every probed number, threshold, direction and shape reproduce, and the sodium V and the pulse-pressure saddle are real. Four minor weakenings: the penalty chain is a weighted-sum threshold rather than strictly 'jointly high', one young-high-sodium threshold is about 1.5 mmol/L high, one creatinine sweep endpoint is outside the data, and one AUC is double-rounded (0.876 for 0.8766)."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_25",
+   "claims": [],
+   "location": "operations.high_sbp_and_hr_penalty.hypothesis",
+   "statement": "A two-unit chain that switches on when systolic blood pressure and heart rate are jointly high ... it is the part that makes the joint response fall when both are high",
+   "check": "subgroup by the four sbp 132 / heart rate 76 quadrants; probe thresholds",
+   "evidence": "The chain is a threshold on a weighted sum (about sbp + 1.5 x heart rate), not an AND of two highs: of the 733 rows where it acts, 334 are in the both-high quadrant, but 249 of the 394 low-pressure/high-rate rows (63%, mean contribution -1.40) and 150 of the 404 high-pressure/low-rate rows (37%) also have it on. It opens at heart rate 92 when sbp is 100 mmHg and at heart rate 59 when sbp is 170. The hypothesis does say 'a weighted sum', and it is off in all 368 both-low rows, so 'jointly high' is a partial overclaim, not wrong.",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/ushape_saddle/explanations/shape-C.json --where \"sbp <= 132 and heart_rate > 76\"",
+    "uv run python -m explaneat verify subgroup experiments/ushape_saddle/explanations/shape-C.json --where \"sbp > 132 and heart_rate <= 76\"",
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-C.json --no-parts --nodes 3040,3544 --set sbp=100 --sweep heart_rate=90,92,94,95"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_27",
+   "claims": [],
+   "location": "operations.young_high_sodium_tachy.hypothesis",
+   "statement": "at age 40 it is on from sodium 138 mmol/L (0.29)",
+   "check": "probe --set age=40 --sweep sodium=136,137,138 --nodes 1269",
+   "evidence": "At age 40 (typical heart rate) node 1269 is already on at 137 mmol/L (0.10) and off at 136 (pre-activation -0.085): it opens at about 136.5, so 'on from 138' places the threshold about 1.5 mmol/L too high. The 138 value (0.29) and the other brackets (age 62: off at 140, on at 142; age 80: off at 142, on at 146, actual opening about 144) reproduce.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-C.json --no-parts --nodes 1269 --set age=40 --sweep sodium=136,137,138",
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-C.json --no-parts --nodes 1269 --set age=80 --sweep sodium=142,144,145,146"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_29",
+   "claims": [],
+   "location": "operations.linear_terms.hypothesis",
+   "statement": "creatinine from 40 to 250 umol/L takes it from 6% to 87%",
+   "check": "probe --sweep creatinine=40,85,150,207,250",
+   "evidence": "The numbers reproduce (6.0% and 86.5%) but 250 umol/L is outside the training data (maximum 207); inside the data the sweep ends at 71.4% at 207. The endpoint is extrapolation, not evidence.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-C.json --no-parts --sweep creatinine=40,85,150,207,250"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "weakened",
+   "level": "L1",
+   "part": "ann_24",
+   "claims": [],
+   "location": "operations.hypertension_low_hr_gate.hypothesis",
+   "statement": "Switching it off lowers the AUC from 0.896 to 0.876",
+   "check": "ablate --part ann_24; stored query q_a8d8beaea0",
+   "evidence": "The model gives 0.87655 with the gate off, which rounds to 0.877. The stored query holds 0.8765 (already rounded to 4 places) and rendering it at 3 places gave 0.876: a double-rounding error of one unit in the last digit. Minor; the effect size and direction are right.",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/ushape_saddle/explanations/shape-C.json --part ann_24"
+   ]
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "1.0 (and compositional 1.0, hierarchy complete, full coverage)",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.0 / 1.0, no uncovered nodes or edges; only the male input (-9) is Null; single root risk_logit containing the output, 9 of 9 compositions required",
+   "commands": []
+  },
+  {
+   "id": "V6",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "3.3e-16",
+   "check": "verify recheck",
+   "evidence": "recomputed 3.33e-16",
+   "commands": []
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.closed_form_max_abs_err",
+   "statement": "0.057",
+   "check": "verify recheck",
+   "evidence": "recomputed 0.0570; the eight leaf closed forms match the recomputed ones",
+   "commands": []
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.n_leaf_annotations",
+   "statement": "8 leaves, 2 compositions, 8 hidden nodes, all in an annotation",
+   "check": "verify vars",
+   "evidence": "10 parts: 8 leaves, 2 compositions (bp_hr_saddle, risk_logit)",
+   "commands": []
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "training AUC 0.896; sodium V lowest near normal sodium, rises both sides, steeper high side; pulse-pressure saddle (fast rate + low sbp or high sbp + slow rate raise risk, both high lowers it); penalty chain removal costs most AUC (0.783); age, creatinine, BMI, smoking, diabetes monotone; noise weight 0.17 per sd; male has no edge",
+   "check": "probe sweeps of sodium, sbp x heart rate grid, ablate of every part, probe of male/noise",
+   "evidence": "AUC 0.8964; sodium V minimum between 138 and 139 mmol/L, slope about 0.21 logit/mmol below and 0.54 above; grid: sbp 170/hr 55 94%, sbp 100/hr 100 89%, sbp 170/hr 100 0.0%, sbp 90/hr 45 0.2%; ann_25 off -> 0.7826, the lowest of all leaves (ann_30 composition off 0.7895); noise direct weight +0.1712; male 0/1 both 14.6%",
+   "commands": []
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "saddle product R-squared 0.78; largest closed-form error 0.057 in the sodium term",
+   "check": "verify concept --part ann_30; recheck",
+   "evidence": "concept -(heart_rate-76)*(sbp-132): r2 0.782; closed-form error 0.0570",
+   "commands": []
+  },
+  {
+   "id": "V11",
+   "grade": "upheld",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.overall_function",
+   "statement": "independent additive terms; saddle high when discordant, low when both high or both low; male ignored, noise small positive",
+   "check": "sbp x heart rate grid (10 x 9) and quadrant subgroups",
+   "evidence": "both-low corner 0.2-4%, both-high corner below 1%, discordant corners 89-99%; quadrant mean risks 61/51/26/24% against observed 59/52/29/23%",
+   "commands": []
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.clinical_terms",
+   "statement": "hypernatraemia penalised more steeply, especially in younger patients; low sodium makes both mismatch gates open at a smaller mismatch; sex does not affect the prediction",
+   "check": "probe sodium sweeps by age; probe gates at sodium 132 vs 139",
+   "evidence": "sodium 145: gate 1269 1.94 at age 30, 0.19 at 80; tachycardia gate 0.21 vs 0 and hypertension gate 0.54 vs 0 at sodium 132 vs 139",
+   "commands": []
+  },
+  {
+   "id": "V13",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_31",
+   "claims": [],
+   "location": "operations.risk_logit.hypothesis",
+   "statement": "sigmoid of bias + five terms; male no edge (15% both); AUC 0.896, accuracy 0.815, observed and mean risk 42%; nine direct edges off -> 0.652; three switching terms affine -> 0.704 (non-linear 0.193); noise 0.17 per sd",
+   "check": "verify vars, probe male, ablate --direct, linearise",
+   "evidence": "five children under the root; AUC 0.8964, accuracy 0.8153; direct off 0.6525; all switching units affine 0.7036, gain 0.1928",
+   "commands": []
+  },
+  {
+   "id": "V14",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_30",
+   "claims": [],
+   "location": "operations.bp_hr_saddle.hypothesis",
+   "statement": "direct sbp 0.98 and heart-rate 0.81 per sd; risk grid at hr 55/100/76 x sbp 100/132/170; quadrant n and mean risks; 14 rows with both gates open; low-sodium copies off -> 0.886, 450 rows; term off -> 0.789; direct edges off -> 0.853; affine -> 0.798, restore gain 0.148; product R-squared 0.78",
+   "check": "probe grid, subgroup quadrants, subgroup node_999>0 and node_1595>0, ablate nodes 174_b/174_c, ablate edges, linearise, concept",
+   "evidence": "edge weights +0.9795/+0.8057; grid 0.7/5.0/94.1, 89.1/6.6/0.0, 3.8/14.6/7.9%; quadrants 404/394/334/368; 14 rows; 0.8863 and 450 affected; 0.7895; 0.8529; 0.7976 and +0.1478; r2 0.782",
+   "commands": []
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_22",
+   "claims": [],
+   "location": "operations.sodium_V.hypothesis",
+   "statement": "direct sodium 2.21 per sd + hinge (1.44) on below the turning point (0.08 at 138.5, 0 at 138.75); exit values 0.09/1.54/2.79/1.76/3.38 at 138/131/125/142/145; whole-model 14/50/98/54%; hinge on 713, 0 misplaced either side; sodium band risks; off -> 0.855, hinge off -> 0.808 and -23% over 713; V concept R-squared 1.00",
+   "check": "probe --sweep sodium=124:154:31, --nodes 174_a, subgroup, ablate --part ann_22 and --node 174_a, concept",
+   "evidence": "contribution differences reproduce the exit differences (1.45, 2.69, 1.67, 3.29); risks 14.0/50.2/98.1/53.8%; 713 affected, 0 rows on above 138.7 and 0 off below; 0.8551 and 0.8078; mean change 0.1109 x 1500/713 = 0.233; r2 0.998",
+   "commands": []
+  },
+  {
+   "id": "V16",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_23",
+   "claims": [],
+   "location": "operations.tachycardia_low_sbp_gate.hypothesis",
+   "statement": "output weight 1.25; at sbp 132 off at hr 85, on at 90 (0.86); at sbp 100 opens between 70 and 75 (0.11); whole-model 2/71/93% at sbp 100 and 11/4/10% at sbp 132 (penalty outweighs); low sodium opens it (0.21 vs 0 at hr 80); on for 454, 125 with sbp above 132; off -> 0.834, -24% over 454",
+   "check": "probe --nodes 999 sweeps, subgroup quadrants, ablate --part ann_23",
+   "evidence": "node 999 0 at 85, 0.863 at 90, opens at about 85.2; 0.113 at 75, 0 at 74; risks 1.9/70.8/92.8% and 10.6/4.3/10.1%; 0.214 vs 0 at sodium 132/139; 454 affected, 125 in the sbp>132 quadrants; 0.8344; 0.0735 x 1500/454 = 0.243",
+   "commands": []
+  },
+  {
+   "id": "V17",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_24",
+   "claims": [],
+   "location": "operations.hypertension_low_hr_gate.hypothesis",
+   "statement": "at hr 55 off at sbp 130, on at 140 (0.56); at hr 76 off at 150, on at 160 (0.29); whole-model 4/44/94% at hr 55, 8% at sbp 170 hr 76; low sodium opens it (0.54 vs 0); on for 369, 60 with hr above 76; -18% over 369",
+   "check": "probe --nodes 1595 sweeps, subgroup quadrants, ablate --part ann_24",
+   "evidence": "0 (pre -0.04) at 130, 0.565 at 140; 0 at 150 (opens about 155), 0.293 at 160; 3.9/44.0/94.1% and 7.9%; 0.536 vs 0; 369 affected, 57+3 = 60 with hr above 76; 0.0440 x 1500/369 = 0.179 (AUC see V4)",
+   "commands": []
+  },
+  {
+   "id": "V18",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_25",
+   "claims": [],
+   "location": "operations.high_sbp_and_hr_penalty.evidence",
+   "statement": "thresholds (sbp 132: off at 75, on at 80 = 0.38; sbp 170: on at 60 = 0.14; sbp 100: off at 90, on at 95 = 0.36); whole-model at sbp 170 92/35/2/<1%; on for 733, mean -3.06; both-high quadrant 334/334, -4.40, risk 26% (29%); both-low 0; off -> 0.783, the largest loss of any part; -35% over 733; output weights -0.85 and -1.03",
+   "check": "probe --nodes 3040,3544, subgroup, ablate",
+   "evidence": "0.377, 0.140, 0.359; 92.2/35.4/2.4/0.0%; 733 affected; -4.4009; 26.3% vs 28.7%; 0 of 368; 0.7826, lower than every other part; 0.1708 x 1500/733 = 0.350; at sbp 170 hr 80 contribution -5.536 = -0.85 x 2.503 - 1.03 x 3.314",
+   "commands": []
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_26",
+   "claims": [],
+   "location": "operations.sbp_hinge.hypothesis",
+   "statement": "output weight 0.27; off at 123, on from 124 (0.006), 0.51 at 135; on for 1038, 0 below 123; AUC 0.896 -> 0.896; -3% over 1038",
+   "check": "probe --nodes 4250, subgroup node_4250>0 and sbp<123, ablate",
+   "evidence": "0 (pre -0.040) at 123, 0.0057 at 124, 0.506 at 135; 1038 affected; 0 rows; 0.8961; 0.0178 x 1500/1038 = 0.026",
+   "commands": []
+  },
+  {
+   "id": "V20",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_27",
+   "claims": [],
+   "location": "operations.young_high_sodium_tachy.evidence",
+   "statement": "sodium 145: 1.94 at age 30, 0.19 at 80, off at 90; faster heart rate opens it; age response 3% at 30 to 9% at 55 then 73% at 95; on for 545, 52 below 138.7, 246 under 55; off -> 0.888, -8% over 545",
+   "check": "probe --nodes 1269 sweeps over age and heart rate, subgroup, ablate",
+   "evidence": "1.939, 0.193, 0 (pre -0.157); at sodium 141: 0 at hr 50, 0.077 at 76, 0.698 at 100; age sweep 2.9/8.6/73.4% with the gate closing at about 54; 545, 52, 246; 0.8879; 0.0304 x 1500/545 = 0.084",
+   "commands": []
+  },
+  {
+   "id": "V21",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_28",
+   "claims": [],
+   "location": "operations.diabetes_step.hypothesis",
+   "statement": "direct 0.13 + unit 0.17 on only for diabetics (unit 1.70); 0 misassigned; typical risk 15% -> 23%",
+   "check": "probe --sweep diabetes=0,1 --nodes 5825; subgroup (node_5825>0) != (diabetes==1)",
+   "evidence": "unit 0 (pre -0.42) vs 1.705; 0 rows misassigned; 14.6% -> 23.4%",
+   "commands": []
+  },
+  {
+   "id": "V22",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_29",
+   "claims": [],
+   "location": "operations.linear_terms.hypothesis",
+   "statement": "positive direct weights age 0.98, BMI 0.23, creatinine 0.60, smoking 0.31, noise 0.17; each raises risk monotonically; BMI 18-40 10% to 23%; smoking 15% to 26%; noise 9% at -3 to 22% at 3; age 3% to 73%",
+   "check": "ablate --direct (edge weights), probe sweeps, noise sweep at sodium 128 (where the hinge's small negative noise weight is active)",
+   "evidence": "weights +0.9834/+0.2296/+0.5999/+0.3096/+0.1712; 9.8->23.2%, 14.6->26.1%, 9.4->21.9%, 2.9->73.4%; noise still rises at sodium 128 (82.0/85.5/88.4%) and smoking still raises it at hr 100 (6.6->17.2%)",
+   "commands": []
+  },
+  {
+   "id": "V23",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_25",
+   "claims": [],
+   "location": "operations.high_sbp_and_hr_penalty.hypothesis",
+   "statement": "a concordant raised pressure and pulse (high rate-pressure product) lowers the predicted risk; bradycardia with low pressure is predicted lowest risk",
+   "check": "domain sense",
+   "evidence": "The model predicts below 1% for sbp 170 with heart rate 100 and 0.2% for sbp 90 with heart rate 45. Clinically, hypertension with tachycardia and also hypotension with bradycardia would usually be seen as higher risk. The training data agree with the model (both-high quadrant observed 28.7%, both-low 23.4%, against 59% and 52% in the discordant quadrants), so this is a flag on the data-generating process, not a model error.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/ushape_saddle/explanations/shape-C.json --sweep sbp=90,...,185 --sweep heart_rate=45,...,120 --no-parts"
+   ]
+  }
+ ],
+ "parts": {
+  "ann_31": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_30": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_22": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_23": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_24": {
+   "grade": "weakened",
+   "level": "L1"
+  },
+  "ann_25": {
+   "grade": "weakened",
+   "level": "L2"
+  },
+  "ann_26": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_27": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_28": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_29": {
+   "grade": "weakened",
+   "level": "L3"
+  }
+ },
+ "leaf_meaning": {
+  "sodium_V": {
+   "grade": "meaningful",
+   "why": "An asymmetric V in serum sodium with its minimum at about 138.7 mmol/L and a high side about 2.6 times steeper; the model confirms it (concept R-squared 0.998)."
+  },
+  "tachycardia_low_sbp_gate": {
+   "grade": "meaningful",
+   "why": "A pulse-fast-for-the-pressure (shock-index-like) gate whose thresholds move with sbp and sodium exactly as stated."
+  },
+  "hypertension_low_hr_gate": {
+   "grade": "meaningful",
+   "why": "A pressure-high-for-the-pulse gate whose thresholds move with heart rate and sodium exactly as stated."
+  },
+  "high_sbp_and_hr_penalty": {
+   "grade": "partial",
+   "why": "The 'jointly high' reading holds in the both-high corner, but the chain is a threshold on sbp + 1.5 x heart rate and also acts on 399 discordant-quadrant patients."
+  },
+  "sbp_hinge": {
+   "grade": "meaningful",
+   "why": "Risk rises linearly with systolic pressure above about 124 mmHg; a small but real reading, confirmed (off below 123 in every row)."
+  },
+  "young_high_sodium_tachy": {
+   "grade": "meaningful",
+   "why": "A high-sodium gate that opens earlier in younger and faster-pulsed patients and flattens the low end of the age response; confirmed, with one threshold about 1.5 mmol/L off."
+  },
+  "diabetes_step": {
+   "grade": "meaningful",
+   "why": "A fixed step for diabetics (typical risk 15% to 23%), confirmed."
+  },
+  "linear_terms": {
+   "grade": "meaningful",
+   "why": "Five positive, monotone direct effects (age and creatinine largest) plus a spurious noise weight, all confirmed by sweeps."
+  }
+ },
+ "statements_checked": 118,
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ],
+ "notes": "recheck.json carries no target_hash for a record target, so target_hash is null. No drafts or claims exist for this network; sections on drafts, claims and prose were skipped as instructed. Read only: no database writes."
+}

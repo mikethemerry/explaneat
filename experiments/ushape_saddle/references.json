@@ -1,0 +1,171 @@
+{
+ "u": {
+  "label": "shape-A",
+  "ground_truth": "f = backbone + BETA_U * ((zn + 0.5)^2 - 1): U-shaped risk on sodium, minimum 137 mmol/L",
+  "beta_u": 1.0,
+  "beta_s": 1.5,
+  "n_train": 1500,
+  "n_test": 500,
+  "positive_rate_train": 0.4033333333333333,
+  "positive_rate_test": 0.402,
+  "terms": [
+   "const",
+   "age (linear)",
+   "creatinine (linear in log)",
+   "bmi (linear)",
+   "smoker step",
+   "diabetes step",
+   "male step",
+   "sodium U: 1 * ((zn - (-0.5))^2 - 1), minimum at 137 mmol/L"
+  ],
+  "oracle": {
+   "train_auc": 0.8485839604783231,
+   "test_auc": 0.8511456097439225,
+   "test_auc_ci": [
+    0.8167831562050544,
+    0.883087474152062
+   ]
+  },
+  "l2_logistic": {
+   "train_auc": 0.7627480493097557,
+   "test_auc": 0.7316427893974939,
+   "test_auc_ci": [
+    0.6838071495381888,
+    0.7777453447816435
+   ],
+   "coef_z": {
+    "age": 0.5851539794152536,
+    "bmi": 0.26178595179732983,
+    "sbp": 0.005818319210976455,
+    "heart_rate": 0.02132096234300965,
+    "sodium": 0.6871640913551356,
+    "creatinine": 0.3006624047082585,
+    "smoker": 0.3520970580159227,
+    "diabetes": 0.25333096377998293,
+    "male": 0.08649719427261766,
+    "noise": 0.0813171687908655
+   }
+  },
+  "gradient_boosting": {
+   "train_auc": 0.9999796851193499,
+   "test_auc": 0.8300304497578994,
+   "test_auc_ci": [
+    0.7929679383116884,
+    0.8644148249901742
+   ]
+  }
+ },
+ "saddle": {
+  "label": "shape-B",
+  "ground_truth": "f = backbone - BETA_S * zh * zp: saddle between heart rate and systolic BP (opposing directions raise risk)",
+  "beta_u": 1.0,
+  "beta_s": 1.5,
+  "n_train": 1500,
+  "n_test": 500,
+  "positive_rate_train": 0.388,
+  "positive_rate_test": 0.388,
+  "terms": [
+   "const",
+   "age (linear)",
+   "creatinine (linear in log)",
+   "bmi (linear)",
+   "smoker step",
+   "diabetes step",
+   "male step",
+   "heart rate x systolic BP saddle: -1.5 * zh * zp"
+  ],
+  "oracle": {
+   "train_auc": 0.8443295225688595,
+   "test_auc": 0.8414864227477933,
+   "test_auc_ci": [
+    0.805733485373169,
+    0.8744427831885809
+   ]
+  },
+  "l2_logistic": {
+   "train_auc": 0.7314945833239749,
+   "test_auc": 0.7265009096422074,
+   "test_auc_ci": [
+    0.6809157669675497,
+    0.7710659379551582
+   ],
+   "coef_z": {
+    "age": 0.5658193681921528,
+    "bmi": 0.2304005953666228,
+    "sbp": 0.06617310136042444,
+    "heart_rate": -0.09498737851003664,
+    "sodium": -0.00927247168785786,
+    "creatinine": 0.40116451187321056,
+    "smoker": 0.36232077107878996,
+    "diabetes": 0.33570978963845666,
+    "male": 0.15054157984464392,
+    "noise": -0.03889012709441234
+   }
+  },
+  "gradient_boosting": {
+   "train_auc": 0.9998409061982945,
+   "test_auc": 0.7800687285223368,
+   "test_auc_ci": [
+    0.7385073439705293,
+    0.8211855670818984
+   ]
+  }
+ },
+ "both": {
+  "label": "shape-C",
+  "ground_truth": "f = backbone + the sodium U + the heart rate x systolic BP saddle",
+  "beta_u": 1.0,
+  "beta_s": 1.5,
+  "n_train": 1500,
+  "n_test": 500,
+  "positive_rate_train": 0.418,
+  "positive_rate_test": 0.418,
+  "terms": [
+   "const",
+   "age (linear)",
+   "creatinine (linear in log)",
+   "bmi (linear)",
+   "smoker step",
+   "diabetes step",
+   "male step",
+   "sodium U: 1 * ((zn - (-0.5))^2 - 1), minimum at 137 mmol/L",
+   "heart rate x systolic BP saddle: -1.5 * zh * zp"
+  ],
+  "oracle": {
+   "train_auc": 0.8927601206494314,
+   "test_auc": 0.8844275637547476,
+   "test_auc_ci": [
+    0.8539660848197889,
+    0.9125661967213456
+   ]
+  },
+  "l2_logistic": {
+   "train_auc": 0.7058430205473071,
+   "test_auc": 0.6986139199921078,
+   "test_auc_ci": [
+    0.6502202323437501,
+    0.7448339396293755
+   ],
+   "coef_z": {
+    "age": 0.45774254412427084,
+    "bmi": 0.1817137948431531,
+    "sbp": 0.047061639247467583,
+    "heart_rate": -0.0029141172306479967,
+    "sodium": 0.3654795701860341,
+    "creatinine": 0.3585089377467382,
+    "smoker": 0.21590675158021755,
+    "diabetes": 0.1952629164317788,
+    "male": 0.11309483768010886,
+    "noise": 0.11609194703551241
+   }
+  },
+  "gradient_boosting": {
+   "train_auc": 0.9999981730855306,
+   "test_auc": 0.8541574179121656,
+   "test_auc_ci": [
+    0.8203834239580629,
+    0.8859395992353419
+   ]
+  }
+ }
+}

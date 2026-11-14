@@ -1,0 +1,153 @@
+{
+ "label": "shape-C",
+ "genome_id": "a1cbdd4a-42e8-4c1a-b060-00aa3e22c76b",
+ "start": "2026-11-14T16:40:00+13:00",
+ "end": "2026-11-14T17:13:00+13:00",
+ "structural_coverage": 1.0,
+ "compositional_coverage": 1.0,
+ "full_coverage": true,
+ "within_budget": true,
+ "n_leaf_annotations": 8,
+ "n_composition_annotations": 2,
+ "n_splits": 8,
+ "n_identity_nodes": 4,
+ "hidden_nodes": 8,
+ "hidden_nodes_single_leaf_no_split": 7,
+ "hidden_nodes_in_any_annotation": 8,
+ "hierarchy_complete": true,
+ "function_preservation_max_abs_err": 3.3306690738754696e-16,
+ "closed_form_max_abs_err": 0.057034284221943565,
+ "summary": "The network (training AUC 0.896) adds five terms on the logit scale. A sodium V: the risk is lowest near a normal serum sodium and rises on both sides, steeper on the high side, where a gate that opens at a lower sodium in younger patients adds to it. A pulse-pressure saddle: a fast heart rate with a low systolic pressure, or a high pressure with a slow heart rate, raises the risk, while both high together switches on a penalty chain that lowers it (switching that chain off costs the most AUC, to 0.783). Age, creatinine, BMI, smoking and diabetes raise the risk monotonically through direct edges and one diabetes step; the noise column has a small spurious positive weight (0.17 per sd) and the male input has no edge.",
+ "summary_template": "The network (training AUC {{q:q_e00255dcd8.auc_roc|.3f}}) adds five terms on the logit scale. A sodium V: the risk is lowest near a normal serum sodium and rises on both sides, steeper on the high side, where a gate that opens at a lower sodium in younger patients adds to it. A pulse-pressure saddle: a fast heart rate with a low systolic pressure, or a high pressure with a slow heart rate, raises the risk, while both high together switches on a penalty chain that lowers it (switching that chain off costs the most AUC, to {{q:q_d720174848.data.auc_without|.3f}}). Age, creatinine, BMI, smoking and diabetes raise the risk monotonically through direct edges and one diabetes step; the noise column has a small spurious positive weight ({{q:q_1b38c3a73d.switched_off[4].weight|.2f}} per sd) and the male input has no edge.",
+ "resisted": "The pulse-pressure saddle composition is read only partially: the product -(heart_rate - 76) * (sbp - 132) predicts it with R-squared 0.78, because it is a piecewise sum of three gates and a hinge rather than a smooth product. The leaf closed forms are approximate (coefficients rounded to three significant figures; largest error 0.057 logit units, in the sodium term), so formulas are attached as evidence and the numbers come from the model itself.",
+ "resisted_template": "The pulse-pressure saddle composition is read only partially: the product -(heart_rate - 76) * (sbp - 132) predicts it with R-squared {{q:q_8232b2d4e4.score|.2f}}, because it is a piecewise sum of three gates and a hinge rather than a smooth product. The leaf closed forms are approximate (coefficients rounded to three significant figures; largest error {{q:q_c8fc26af63.closed_form_max_abs_err|.3f}} logit units, in the sodium term), so formulas are attached as evidence and the numbers come from the model itself.",
+ "recheck_summary": {
+  "mismatch": 0,
+  "needs_review": 0,
+  "needs_review_items": [],
+  "unchecked_freetext_sentences": 66,
+  "complete_ok": true
+ },
+ "recheck_notes": "0 mismatches, 0 needs_review on the final run. The 66 unchecked free-text sentences are qualitative readings (shape words, clinical wording) with no number; each numeric claim is a placeholder whose provenance the recheck verified.",
+ "tool_bugs": "None blocking. Note: query_ablate's data.mean_risk_change / mean_abs_risk_change average over every row of the split (or the where-subgroup), not over the n_affected rows; six leaf hypotheses had quoted the whole-split mean as a mean over the acting rows and were re-queried with where=<node> > 0 and corrected before the final recheck.",
+ "accuracy": {
+  "open_findings": 0,
+  "numbers": 373,
+  "provenance_backed": 352,
+  "allow_listed": 21,
+  "scope_mismatch": 0,
+  "formulas": {
+   "exact": 0,
+   "approx_with_tolerance": 0,
+   "other": 10
+  },
+  "audit": {
+   "references": 352,
+   "checked": 352
+  },
+  "self_probe": {
+   "parts": [
+    "sodium_V",
+    "tachycardia_low_sbp_gate",
+    "hypertension_low_hr_gate",
+    "high_sbp_and_hr_penalty",
+    "sbp_hinge",
+    "young_high_sodium_tachy",
+    "diabetes_step",
+    "linear_terms",
+    "bp_hr_saddle",
+    "risk_logit"
+   ],
+   "refuted_and_fixed": [
+    "per-part 'risk change for the N patients it acts on' in six leaves used a whole-split mean; re-queried over the acting rows (query_ablate with where) and rewritten"
+   ]
+  },
+  "restatements": 0
+ },
+ "leaves": [
+  {
+   "name": "sodium_V",
+   "units": [
+    "174_a"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 0.997658,
+   "best_concept": "abs(sodium - 138.7) * (1 + 1.6 * (sodium > 138.7))",
+   "why": "The term is an asymmetric V in serum sodium with its minimum near a normal sodium and a steeper high side; the ad-hoc V concept predicts it almost exactly."
+  },
+  {
+   "name": "tachycardia_low_sbp_gate",
+   "units": [
+    "174_b",
+    "999"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 0.946652,
+   "best_concept": "heart_rate / sbp",
+   "why": "The gate opens when the pulse is fast relative to systolic pressure (a raised shock index), earlier when sodium is low."
+  },
+  {
+   "name": "hypertension_low_hr_gate",
+   "units": [
+    "174_c",
+    "1595"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 0.915824,
+   "best_concept": "sbp - heart_rate",
+   "why": "The gate opens when systolic pressure is high relative to the pulse, earlier when sodium is low."
+  },
+  {
+   "name": "high_sbp_and_hr_penalty",
+   "units": [
+    "3040",
+    "3544"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 0.991131,
+   "best_concept": "sbp * heart_rate",
+   "why": "A serial chain that switches on when pressure and pulse are jointly high (high rate-pressure product) and lowers the predicted risk."
+  },
+  {
+   "name": "sbp_hinge",
+   "units": [
+    "4250"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 1.0,
+   "best_concept": "sbp",
+   "why": "A small hinge adding risk linearly with systolic pressure above the low-normal range."
+  },
+  {
+   "name": "young_high_sodium_tachy",
+   "units": [
+    "1269"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 0.922138,
+   "best_concept": "sodium - 0.19 * age",
+   "why": "A gate for high sodium that opens at a lower sodium in younger, faster-pulsed patients and flattens the low end of the age response."
+  },
+  {
+   "name": "diabetes_step",
+   "units": [
+    "5825"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 1.0,
+   "best_concept": "diabetes",
+   "why": "A fixed step in the logit for diabetics."
+  },
+  {
+   "name": "linear_terms",
+   "units": [],
+   "meaning": "meaningful",
+   "probe_score": 0.904104,
+   "best_concept": "age + 0.23 * creatinine",
+   "why": "Five positive direct edges (age, BMI, creatinine, smoking, noise), dominated by age and creatinine."
+  }
+ ],
+ "overall_function": "The network adds independent terms on the logit scale and passes the sum through a sigmoid. Age, creatinine, BMI and smoking raise the risk monotonically and linearly, and diabetes adds a fixed step. Serum sodium has a V-shaped (U-like) effect with its minimum near a normal sodium and a steeper high side, and the high-sodium side opens earlier in younger patients. Systolic blood pressure and heart rate interact as a saddle: risk is high when one is high and the other low, and low when both are high or both low, built from two opposing mismatch gates and a joint-high penalty chain. The male input is ignored (no edge), while the pure-noise column gets a small spurious positive weight.",
+ "clinical_terms": "Older age, impaired renal function (higher creatinine), higher BMI, smoking and diabetes each raise the predicted risk steadily. Both hyponatraemia and hypernatraemia raise the predicted risk relative to a normal sodium, with hypernatraemia penalised more steeply, especially in younger patients. A pulse out of proportion to the blood pressure (tachycardia with relative hypotension, a raised shock index) or hypertension with a relatively slow pulse raises the predicted risk, while a concordant raised pressure and pulse (high rate-pressure product) lowers it; low sodium makes both mismatch patterns count at a smaller mismatch. Sex does not affect the prediction.",
+ "stuck": "Nothing blocking. The previous session was cut off after all structure, hypotheses and formulas were written; this session attached the query evidence and self-probes, fixed a scope error in the per-part mean risk changes (whole-split mean quoted as a mean over the acting rows), and ran the closing recheck. The saddle composition has only a partial concept reading (piecewise, not a smooth product)."
+}
