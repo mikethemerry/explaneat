@@ -149,6 +149,33 @@ def experiment1():
                  f"AUC {float(crun['test_auc']):.3f} vs LR {cref['l2_logistic']['test_auc']:.3f}, GB {cref['gradient_boosting']['test_auc']:.3f}",
                  f"{clv['faithful']:.1e}; {clv['leaves']} leaves; {clv['m']} / {clv['p']} / {clv['c']} (probe v2)",
                  f"blind verifier {g} ({u} upheld, {w} weakened, {rf} refuted, {fl} flags); not signed off"])
+    # synthetic U-shape and saddle cases (Experiment 1.7): best-by-train genome of 5 seeds per dataset
+    us = E / "ushape_saddle"
+    if (us / "summary.json").exists():
+        usum, uref = jload(us / "summary.json"), jload(us / "references.json")
+        ugt = jload(us / "gt_grades.json") if (us / "gt_grades.json").exists() else {}
+        urun = {(r["dataset"], int(r["seed"])): r for r in rows(us / "runs.csv")}
+        for task, name in (("u", "Synthetic U on sodium"), ("saddle", "Synthetic heart-rate x BP saddle"), ("both", "Synthetic U + saddle")):
+            lab = usum[task]["label"]
+            run = urun[(task, int(usum[task]["best_by_train"]["seed"]))]
+            lvp, vdp = us / "levels" / f"{lab}.json", us / "verdicts" / lab / "verdict.json"
+            lv_cell = "not computed"
+            if lvp.exists():
+                L = levels_counts(lvp)
+                lv_cell = f"{L['faithful']:.1e}; {L['leaves']} leaves; {L['m']} / {L['p']} / {L['c']} (probe v2)"
+            if vdp.exists():
+                g, u, w, rf, fl = verdict_counts(vdp)
+                ver = f"blind verifier {g} ({u} upheld, {w} weakened, {rf} refuted, {fl} flags)"
+            else:
+                ver = "no blind verifier"
+            gt = ugt.get(lab, {}).get("grade")
+            ver += f"; ground truth {gt}" if gt else ""
+            ver += "; not signed off"
+            body.append([f"{name} ({lab}-s{run['seed']})", f"{int(run['n_train']):,} / {int(run['n_test']):,}",
+                         f"{run['hidden_nodes']} / {run['phenotype_connections_enabled']}",
+                         f"AUC {float(run['test_auc']):.3f} vs LR {uref[task]['l2_logistic']['test_auc']:.3f}, "
+                         f"GB {uref[task]['gradient_boosting']['test_auc']:.3f}, oracle {uref[task]['oracle']['test_auc']:.3f}",
+                         lv_cell, ver])
     body.append("midrule")
     # Cox
     refs = {(r["dataset"], r["model"]): r for r in rows(E / "survival" / "cox_case" / "references.csv")}
@@ -212,6 +239,8 @@ def experiment1():
               "Levels: faithful; decomposed; understood (m / p / c)", "Verification"]
     note = ("Sources: results/thesis/baselines.json and experiments/10seed/runs\\_paper\\_reference.csv (paper genomes); "
             "experiments/churn\\_case/ (runs.csv, references.json, levels/, verdicts/; the churn case); "
+            "experiments/ushape\\_saddle/ (runs.csv, references.json, levels/, verdicts/, gt\\_grades.json; the synthetic shape cases, "
+            "whose ground-truth grade is recovered / partial / not); "
             "experiments/survival/cox\\_case/ (runs, references.csv, levels/, verdicts/; n is train / validation / test); "
             "experiments/xor/xor\\_results.json; experiments/complex\\_real/ (runs.csv, baselines.json, explanations/, verification/krk/); "
             "experiments/c4\\_capacity/ (runs.csv, baselines.json, explanations/record.json, verification/independent/) and "
