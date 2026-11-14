@@ -39,6 +39,7 @@ Mike-verified (signoff-v1) is **0 everywhere**: no record carries `mike_verifica
 | 3.5 | Species leads and MONK-2 grafting | complete (exploratory; grafting in scope "light") |
 | 3.6 | Authoring-skill evaluation and errata | complete; adjudication by agents, not spot-checked by Mike |
 | 3.7 | Verifier benchmark | complete (run 1) |
+| 3.8 | Jumps and plateaus in PropNEAT lineages (secondary analysis, exploratory, not pre-registered) | complete (14 Nov, `exp/lineage-jumps`): 51 lineage runs + Adult and 21 old runs; jumps never consist of backprop-only (elite) steps, but node additions are not enriched beyond the stage of the run |
 
 ---
 
@@ -591,6 +592,19 @@ MNIST, each with its one-line finding.
 - **Audit:** clean.
 
 ---
+
+### 3.8 Jumps and plateaus in PropNEAT lineages (secondary analysis)
+
+Exploratory, not pre-registered; definitions committed before results. `experiments/lineage_jumps/RESULTS.md`.
+Tests Mike's claim (supervision meeting, 19 June 2025) that fitness jumps come with structural changes and
+plateaus with weight tuning, on 51 runs with replay-verified or DB lineages (heart100, MONK-2, churn200, the
+synthetic shape runs, the churn case) plus Adult and 21 old runs (trajectories only). Under the fixed rule
+there are 42 jumps and 40 climbs; clean stair steps are mainly MONK-2. No carried jump is made of elite
+(backprop-only) steps alone (0/34 vs 22% of non-jump windows, p < 0.001); a node added at the jump is
+enriched overall (RD +0.15 [+0.05, +0.29]) but not for late jumps or against windows at the same stage of
+the run. Case studies map MONK-2 jumps to named parts (`few_first_values_gate`, `a5_not_first_lift`); the
+ushape saddle's "+0.04 jump" is a 12-generation climb with six node additions. Figures and
+`figures_data.json` in the same directory.
 
 ## Gaps and interim items, with the cost to close
 

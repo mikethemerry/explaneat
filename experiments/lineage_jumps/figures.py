@@ -195,6 +195,37 @@ def case_figure(case, cache, res, tag):
     plt.close(fig)
 
 
+def zoom_figure(cache, res, lo, hi, tag):
+    fig, (ax, ax2) = plt.subplots(2, 1, figsize=(9, 5.2), height_ratios=[1.6, 1.6])
+    run_panel(ax, cache, res, title=False)
+    ax.axvspan(lo, hi, color=GRID, alpha=0.6, lw=0, zorder=0)
+    ax.set_title(f"{cache['run']}: best-so-far training fitness (shaded: zoom below)", loc="left",
+                 color=INK)
+    lin = cache["lineage"]
+    traj = cache["trajectory"]
+    g = np.array([t["generation"] for t in traj])
+    B = np.maximum.accumulate([t["best"] for t in traj])
+    sel = (g >= lo) & (g <= hi)
+    ax2.plot(g[sel], B[sel], color=BLUE, lw=1.8, label="best-so-far train fitness")
+    lr = [r for r in lin if lo <= r["generation"] <= hi]
+    ax2.plot([r["generation"] for r in lr], [r["fitness"] for r in lr], color=INK2, lw=0.9,
+             ls=(0, (2, 1.5)), label="champion lineage ancestor")
+    te = [r for r in lr if r.get("test_auc") is not None]
+    ax2.plot([r["generation"] for r in te], [r["test_auc"] for r in te], color=AQUA, lw=1.0,
+             label="lineage ancestor, test AUC")
+    ymin = min(min(r["fitness"] for r in lr), min(r["test_auc"] for r in te))
+    for r in lr:
+        if r.get("node_added") and not r["elite"]:
+            ax2.scatter([r["generation"]], [ymin - 0.004], marker="^", s=28, color=ORANGE, lw=0)
+    ax2.scatter([], [], marker="^", s=28, color=ORANGE, label="node added (lineage)")
+    ax2.set_xlim(lo, hi)
+    ax2.set_xlabel("generation")
+    ax2.legend(frameon=False, fontsize=8, ncol=2, loc="lower right")
+    fig.tight_layout()
+    fig.savefig(FIG / f"case_{tag}.png")
+    plt.close(fig)
+
+
 def main():
     FIG.mkdir(exist_ok=True)
     ana = json.loads((SCRATCH / "analysis.json").read_text())
@@ -209,10 +240,16 @@ def main():
     enrichment_chart(ana["enrichment"], studies)
     lag_chart(ana["lag"])
     meaning = json.loads((SCRATCH / "meaning.json").read_text()) if (SCRATCH / "meaning.json").exists() else {}
-    res_by = {r["run"]: r for r in res}
-    cases = sys.argv[1:]
-    for c in cases:
-        case_figure(meaning[c], caches[c], res_by[c], c)
+    res_v = {v: {r["run"]: r for r in ana["results"][v]} for v in ana["results"]}
+    cases = []
+    for arg in sys.argv[1:]:
+        c, v = (arg.split(":") + ["primary"])[:2]
+        if c in meaning:
+            case_figure(meaning[c], caches[c], res_v[v][c], c)
+            cases.append(c)
+        else:
+            lo, hi = (int(x) for x in v.split("-"))
+            zoom_figure(caches[c], res_v["primary"][c], lo, hi, c)
 
     # figures_data.json: the numbers behind every figure.
     traj = {}
@@ -244,6 +281,7 @@ def main():
                          for k in ("jumps", "jumps_late", "null")} for x in ana["lag"]},
         lag_note="counts of lag 0..20 (20 = 20 or more)",
         cases={c: meaning[c] for c in cases},
+        case_args=sys.argv[1:],
     )
     (HERE / "figures_data.json").write_text(json.dumps(out, default=lambda o: None))
     print("figures written", sorted(p.name for p in FIG.glob("*.png")))
