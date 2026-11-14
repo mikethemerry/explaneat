@@ -288,7 +288,7 @@ async def hazard_ratios(genome_id: str = Path(...)):
     out_id = str(state.output_node_ids[0])
     sn = StructureNetwork(state)
     sn.override_output_activation(sn.model_output_activation)
-    sn.override_hidden_activation("relu")
+    sn.override_hidden_activation(sn.model_hidden_activation)
     sn.forward(torch.as_tensor(X, dtype=torch.float64))
     ann_terms = []
     for a in engine.annotations:

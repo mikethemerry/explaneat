@@ -98,7 +98,7 @@ def structure_log_risk_fn(model_state) -> Callable:
 
     sn = StructureNetwork(model_state)
     sn.override_output_activation(sn.model_output_activation)
-    sn.override_hidden_activation("relu")
+    sn.override_hidden_activation(sn.model_hidden_activation)
 
     def g(X):
         out = sn.forward(torch.as_tensor(np.asarray(X), dtype=torch.float64)).detach().numpy()

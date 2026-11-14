@@ -96,6 +96,10 @@ class StateEvaluator:
         # The trained model's output activation (sigmoid, or identity for a
         # Cox log-risk), not the stored gene: same rule as StructureNetwork.
         self.output_activation = structure_output_activation(structure).lower()
+        from ..core.structure_network import structure_hidden_activation
+
+        # The trained model's hidden activation (ReLU by default, or sigmoid).
+        self.hidden_activation = structure_hidden_activation(structure).lower()
 
     def _order(self, extra_deps: Dict[str, Sequence[str]]):
         deps = {n: {p for p, _ in self.preds[n]} | set(extra_deps.get(n, ())) for n in self.nodes}
@@ -154,6 +158,8 @@ class StateEvaluator:
                     vals[n] = _sigmoid(z)
             elif node.activation == "identity":
                 vals[n] = z
+            elif self.hidden_activation == "sigmoid":
+                vals[n] = _sigmoid(z)
             else:
                 vals[n] = np.maximum(z, 0.0)
         return vals

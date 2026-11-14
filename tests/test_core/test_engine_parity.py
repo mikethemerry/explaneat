@@ -304,3 +304,108 @@ def test_output_activation_validation():
     assert normalise_output_activation(None) == "sigmoid"
     with pytest.raises(ValueError):
         normalise_output_activation("softmax")
+
+
+# --- Sigmoid hidden activation (config.hidden_activation) --------------------
+#
+# NeuralNeat applies ReLU on hidden layers by default; with
+# ``set_hidden_activation(config, "sigmoid")`` it applies the standard logistic
+# 1 / (1 + exp(-z)) instead.  Every engine must then follow it.
+
+
+def _sigmoid_hidden_config(neat_config):
+    import copy
+
+    from explaneat.core.neuralneat import set_hidden_activation
+
+    cfg = copy.deepcopy(neat_config)
+    set_hidden_activation(cfg, "sigmoid")
+    return cfg
+
+
+def test_hidden_activation_default_is_relu_and_metadata_unchanged(neat_config):
+    from explaneat.core.neuralneat import get_hidden_activation
+
+    genome = _make_genome(neat_config, seed=0)
+    assert get_hidden_activation(neat_config) == "relu"
+    assert NeuralNeat(genome, neat_config).hidden_activation == "relu"
+    ph = ExplaNEAT(genome, neat_config).get_phenotype_network()
+    assert "hidden_activation" not in ph.metadata
+    assert StructureNetwork(ph).model_hidden_activation == "relu"
+
+
+@pytest.mark.parametrize("seed", [0, 1, 2])
+def test_sigmoid_hidden_structure_network_matches_neuralneat(neat_config, seed):
+    cfg = _sigmoid_hidden_config(neat_config)
+    genome = _make_genome(neat_config, seed=seed)
+    X = np.random.default_rng(100 + seed).normal(size=(300, 10))
+    nn_out = _nn_out(genome, cfg, X)
+    assert not np.allclose(nn_out, _nn_out(genome, neat_config, X))  # it is a different model
+    ph = ExplaNEAT(genome, cfg).get_phenotype_network()
+    assert ph.metadata["hidden_activation"] == "sigmoid"
+    hidden = [n for n in ph.nodes if n.type.value == "hidden"]
+    assert hidden and all(n.activation == "sigmoid" for n in hidden)
+    sn = StructureNetwork(ph)
+    assert sn.model_hidden_activation == "sigmoid"
+    X_t = torch.tensor(X, dtype=torch.float64)
+    np.testing.assert_allclose(sn.forward(X_t).detach().numpy().ravel(), nn_out, atol=1e-6, rtol=0)
+    # the evidence tools' overrides keep the model's activations
+    sn.override_output_activation(sn.model_output_activation)
+    sn.override_hidden_activation(sn.model_hidden_activation)
+    np.testing.assert_allclose(sn.forward(X_t).detach().numpy().ravel(), nn_out, atol=1e-6, rtol=0)
+
+
+def test_sigmoid_hidden_extractor_function_and_state_evaluator(neat_config):
+    from explaneat.analysis.explanation_tools import StateEvaluator
+
+    cfg = _sigmoid_hidden_config(neat_config)
+    genome = _make_genome(neat_config, seed=3)
+    X = np.random.default_rng(7).normal(size=(200, 10))
+    nn_out = _nn_out(genome, cfg, X)
+    ph = ExplaNEAT(genome, cfg).get_phenotype_network()
+    out_ids = list(ph.output_node_ids)
+    _, exit_acts = ActivationExtractor.from_structure(ph).extract(
+        X, {"entry_nodes": out_ids, "exit_nodes": out_ids})
+    np.testing.assert_allclose(exit_acts.ravel(), nn_out, atol=1e-6, rtol=0)
+    ann = {
+        "entry_nodes": list(ph.input_node_ids),
+        "exit_nodes": out_ids,
+        "subgraph_nodes": [n.id for n in ph.nodes],
+        "subgraph_connections": [],
+    }
+    fn = AnnotationFunction.from_structure(ann, ph)
+    np.testing.assert_allclose(fn(X).ravel(), nn_out, atol=1e-6, rtol=0)
+    logit = StateEvaluator(ph).logit(X)
+    np.testing.assert_allclose(1.0 / (1.0 + np.exp(-logit)), nn_out, atol=1e-6, rtol=0)
+
+
+def test_sigmoid_hidden_legacy_genome_mode(neat_config):
+    cfg = _sigmoid_hidden_config(neat_config)
+    genome = _make_genome(neat_config, seed=6)
+    X = np.random.default_rng(6).normal(size=(50, 10))
+    nn_out = _nn_out(genome, cfg, X)
+    ins = [str(k) for k in cfg.genome_config.input_keys]
+    ph = ExplaNEAT(genome, cfg).get_phenotype_network()
+    ann = {
+        "entry_nodes": [i for i in ins if i in set(ph.input_node_ids)],
+        "exit_nodes": ["0"],
+        "subgraph_nodes": [n.id for n in ph.nodes],
+        "subgraph_connections": [[c.from_node, c.to_node] for c in ph.connections if c.enabled],
+    }
+    fn = AnnotationFunction(ann, genome, cfg)
+    X_in = X[:, [ins.index(i) for i in ann["entry_nodes"]]]
+    np.testing.assert_allclose(fn(X_in).ravel(), nn_out, atol=1e-6, rtol=0)
+
+
+def test_load_neat_config_reads_hidden_activation(neat_config):
+    from explaneat.core.config_utils import load_neat_config
+    from explaneat.core.neuralneat import get_hidden_activation, normalise_hidden_activation
+    from explaneat.db.serialization import serialize_population_config
+
+    cj = serialize_population_config(neat_config)
+    assert get_hidden_activation(load_neat_config("", cj)) == "relu"
+    cfg = load_neat_config("", {**cj, "training": {"hidden_activation": "sigmoid"}})
+    assert get_hidden_activation(cfg) == "sigmoid"
+    assert normalise_hidden_activation(None) == "relu"
+    with pytest.raises(ValueError):
+        normalise_hidden_activation("tanh")

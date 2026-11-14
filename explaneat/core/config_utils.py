@@ -250,9 +250,13 @@ def apply_training_settings(config: neat.Config, config_json: Optional[Dict[str,
     config makes every NeuralNeat / ExplaNEAT built from that config (phenotype,
     formulas, evidence) reproduce the trained function.  Experiments without the
     key (every classification run) are untouched and default to sigmoid.
+    Likewise ``hidden_activation`` ("sigmoid"; absent means ReLU).
     """
     training = (config_json or {}).get("training") or {}
     if training.get("output_activation"):
         from explaneat.core.neuralneat import set_output_activation
         set_output_activation(config, training["output_activation"])
+    if training.get("hidden_activation"):
+        from explaneat.core.neuralneat import set_hidden_activation
+        set_hidden_activation(config, training["hidden_activation"])
     return config

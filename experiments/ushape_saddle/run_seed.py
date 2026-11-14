@@ -6,7 +6,12 @@ datasets, read from datasets.json (written by make_datasets.py). Config: configs
 Heart thesis config with num_inputs 10 (pop 250, full_direct start, ReLU, sigmoid output).
 
     PYTHONHASHSEED=0 DATABASE_URL=postgresql://localhost/explaneat_dev \
-        uv run python experiments/ushape_saddle/run_seed.py u 0 [--generations 100] [--name ...]
+        uv run python experiments/ushape_saddle/run_seed.py u 0 [--generations 100] [--name ...] \
+            [--hidden-activation sigmoid]
+
+``--hidden-activation sigmoid`` trains with sigmoid hidden units instead of ReLU
+(``neuralneat.set_hidden_activation``; recorded as config_json["training"]["hidden_activation"]).
+Omitted, the run is the original ReLU run, unchanged.
 """
 import argparse
 import json
@@ -46,6 +51,7 @@ def main():
     ap.add_argument("seed", type=int)
     ap.add_argument("--generations", type=int, default=N_GENERATIONS)
     ap.add_argument("--name", default=None)
+    ap.add_argument("--hidden-activation", default=None, choices=["relu", "sigmoid"])
     args = ap.parse_args()
     if os.environ.get("PYTHONHASHSEED") != "0":
         sys.exit("Set PYTHONHASHSEED=0 for reproducibility")
@@ -56,6 +62,9 @@ def main():
     X_train, y_train, dataset_name = load_training_data(spec["dataset_id"], spec["split_id"])
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
                          neat.DefaultStagnation, str(CONFIG))
+    if args.hidden_activation and args.hidden_activation != "relu":
+        from explaneat.core.neuralneat import set_hidden_activation
+        set_hidden_activation(config, args.hidden_activation)
     seed_everything(args.seed)
     t0 = time.time()
     population = DatabaseBackpropPopulation(config, X_train, y_train, experiment_name=name, dataset_name=dataset_name,
@@ -72,7 +81,9 @@ def main():
             "torch": torch.__version__, "numpy": np.__version__, "neat": "0.92",
             "run_params": {"dataset": args.task, "label": spec["label"], "seed": args.seed, "n_generations": args.generations,
                            "n_epochs_backprop": N_EPOCHS_BACKPROP, "fitness_function": "auc",
-                           "neat_config": str(CONFIG.relative_to(REPO)), "code_commit": commit, "mask_phantom": False},
+                           "neat_config": str(CONFIG.relative_to(REPO)), "code_commit": commit, "mask_phantom": False,
+                           **({"hidden_activation": args.hidden_activation}
+                              if args.hidden_activation and args.hidden_activation != "relu" else {})},
         }
     print(f"EXPERIMENT_ID {population.experiment_id}", flush=True)
     population.run(auc_fitness, n=args.generations, nEpochs=N_EPOCHS_BACKPROP)

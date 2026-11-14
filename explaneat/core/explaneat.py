@@ -95,13 +95,19 @@ class ExplaNEAT:
         computes, so StructureNetwork, AnnotationFunction, formulas and
         collapsed function nodes all agree with NeuralNeat.  A non-default
         output activation is also recorded as
-        ``metadata["output_activation"]`` (absent means sigmoid).
+        ``metadata["output_activation"]`` (absent means sigmoid).  Likewise a
+        non-default hidden activation (``self.net.hidden_activation``, e.g.
+        "sigmoid"; ReLU by default) is set on every hidden node and recorded as
+        ``metadata["hidden_activation"]``; with the default ReLU, hidden nodes
+        keep their gene's activation as before.
 
         Returns:
             NetworkStructure containing all nodes and connections from the genome
         """
         from explaneat.core.neuralneat import OUTPUT_ACTIVATION
+        from explaneat.core.neuralneat import HIDDEN_ACTIVATION
         output_activation = getattr(self.net, "output_activation", OUTPUT_ACTIVATION)
+        hidden_activation = getattr(self.net, "hidden_activation", HIDDEN_ACTIVATION)
         # Get input/output node IDs from config
         input_node_ids = self._get_input_nodes()
         output_node_ids = self._get_output_nodes()
@@ -122,6 +128,8 @@ class ExplaNEAT:
                 activation = getattr(node, "activation", None)
                 if node_type == NodeType.OUTPUT:
                     activation = output_activation
+                elif node_type == NodeType.HIDDEN and hidden_activation != HIDDEN_ACTIVATION:
+                    activation = hidden_activation
                 nodes.append(
                     NetworkNode(
                         id=node_id_str,
@@ -168,6 +176,8 @@ class ExplaNEAT:
         metadata = {"representation": "genotype"}
         if output_activation != OUTPUT_ACTIVATION:
             metadata["output_activation"] = output_activation
+        if hidden_activation != HIDDEN_ACTIVATION:
+            metadata["hidden_activation"] = hidden_activation
         return NetworkStructure(
             nodes=nodes,
             connections=connections,
@@ -300,5 +310,7 @@ class ExplaNEAT:
                 "pruned_connections": len(genotype.connections) - len(active_connections),
                 **({"output_activation": genotype.metadata["output_activation"]}
                    if "output_activation" in genotype.metadata else {}),
+                **({"hidden_activation": genotype.metadata["hidden_activation"]}
+                   if "hidden_activation" in genotype.metadata else {}),
             },
         )

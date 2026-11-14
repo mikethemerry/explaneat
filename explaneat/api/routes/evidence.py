@@ -438,7 +438,7 @@ def _extract_all_node_activations(
     struct_net = StructureNetwork(model_state)
     # Match NeuralNeat training behaviour
     struct_net.override_output_activation(struct_net.model_output_activation)
-    struct_net.override_hidden_activation("relu")
+    struct_net.override_hidden_activation(struct_net.model_hidden_activation)
 
     X_tensor = torch.as_tensor(X, dtype=torch.float64)
     struct_net.forward(X_tensor)
@@ -846,7 +846,7 @@ async def compute_viz_data(
                 from ...core.structure_network import StructureNetwork
                 sn = StructureNetwork(ms)
                 sn.override_output_activation(sn.model_output_activation)
-                sn.override_hidden_activation("relu")
+                sn.override_hidden_activation(sn.model_hidden_activation)
                 X_tensor = torch.as_tensor(X, dtype=torch.float64)
                 y_pred = sn.forward(X_tensor).detach().numpy().ravel()
 

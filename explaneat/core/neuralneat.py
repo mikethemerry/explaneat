@@ -29,11 +29,13 @@ LAYER_ACTIVATION_INPUT = "Input"
 
 
 # Activations NeuralNeat actually applies, independent of the activation
-# stored on each node gene: hidden ("CONNECTED") layers use ReLU and the
-# output layer uses the configured output activation, a sigmoid by default
-# (see NeuralNeat.forward).  NetworkStructure representations of a genome
-# (ExplaNEAT.get_genotype_network) give output nodes that same activation so
-# every other engine computes the same function as the trained model.
+# stored on each node gene: hidden ("CONNECTED") layers use the configured
+# hidden activation, ReLU by default, and the output layer uses the
+# configured output activation, a sigmoid by default (see
+# NeuralNeat.forward).  NetworkStructure representations of a genome
+# (ExplaNEAT.get_genotype_network) give output nodes (and, when non-default,
+# hidden nodes) that same activation so every other engine computes the same
+# function as the trained model.
 HIDDEN_ACTIVATION = "relu"
 OUTPUT_ACTIVATION = "sigmoid"
 
@@ -77,6 +79,42 @@ def set_output_activation(config, name) -> str:
     return canon
 
 
+# Hidden activations NeuralNeat can apply.  "relu" is the default and the
+# original behaviour.  "sigmoid" is the standard logistic 1 / (1 + exp(-z))
+# (torch.sigmoid; explaneat.core.activations "sigmoid"), not neat-python's
+# scaled sigmoid(5z): every engine uses the same unscaled function.
+HIDDEN_ACTIVATION_CHOICES = ("relu", "sigmoid")
+
+
+def normalise_hidden_activation(name) -> str:
+    """Canonical hidden-activation name, or ValueError."""
+    if name is None:
+        return HIDDEN_ACTIVATION
+    key = str(name).strip().lower()
+    if key not in HIDDEN_ACTIVATION_CHOICES:
+        raise ValueError(
+            f"hidden_activation must be one of {HIDDEN_ACTIVATION_CHOICES}, got {name!r}"
+        )
+    return key
+
+
+def get_hidden_activation(config) -> str:
+    """The hidden activation configured on a NEAT ``config`` (default relu).
+
+    Stored as ``config.hidden_activation``, recorded on experiments as
+    ``config_json["training"]["hidden_activation"]`` when non-default and
+    restored by ``load_neat_config``, as for ``get_output_activation``.
+    """
+    return normalise_hidden_activation(getattr(config, "hidden_activation", None))
+
+
+def set_hidden_activation(config, name) -> str:
+    """Set ``config.hidden_activation`` (validated) and return the canonical name."""
+    canon = normalise_hidden_activation(name)
+    config.hidden_activation = canon
+    return canon
+
+
 LAYER_ACTIVATION_FUNCTIONS = {
     "ReLU": torch.relu,
     "Sigmoid": torch.sigmoid,
@@ -94,6 +132,7 @@ class NeuralNeat(nn.Module):
         optimiser=optim.Adadelta,
         mask_phantom: bool = False,
         output_activation=None,
+        hidden_activation=None,
     ):
         """Build the dense layered network for ``genome``.
 
@@ -117,6 +156,11 @@ class NeuralNeat(nn.Module):
         which is "sigmoid" unless the config sets ``output_activation``; the
         sigmoid path is the original code, bit for bit.  "identity" gives a
         linear output, e.g. a Cox log-risk.
+
+        ``hidden_activation`` ("relu" or "sigmoid"): the activation of every
+        hidden layer.  ``None`` (default) uses ``get_hidden_activation(config)``,
+        "relu" unless the config sets ``hidden_activation``; the relu path is
+        the original code, bit for bit.
         """
         # just run the init of parent class (nn.Module)
         super(NeuralNeat, self).__init__()
@@ -125,6 +169,10 @@ class NeuralNeat(nn.Module):
             self.output_activation = get_output_activation(config)
         else:
             self.output_activation = normalise_output_activation(output_activation)
+        if hidden_activation is None:
+            self.hidden_activation = get_hidden_activation(config)
+        else:
+            self.hidden_activation = normalise_hidden_activation(hidden_activation)
         # print("_----------------------_")
         # print("I'm a new net")
         self.genome = genome
@@ -504,7 +552,12 @@ class NeuralNeat(nn.Module):
                 layer_weights = layer_weights * self.weight_masks[layer_id]
 
             try:
-                if layer_type == LAYER_TYPE_CONNECTED:
+                if layer_type == LAYER_TYPE_CONNECTED and self.hidden_activation == "sigmoid":
+                    self._outputs[layer_id] = torch.sigmoid(
+                        torch.matmul(layer_input, layer_weights)
+                        + self.biases[layer_id]
+                    )
+                elif layer_type == LAYER_TYPE_CONNECTED:
                     self._outputs[layer_id] = torch.relu(
                         torch.matmul(layer_input, layer_weights)
                         + self.biases[layer_id]

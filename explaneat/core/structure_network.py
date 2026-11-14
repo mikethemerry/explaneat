@@ -26,6 +26,17 @@ def structure_output_activation(structure) -> str:
     """
     meta = getattr(structure, "metadata", None) or {}
     return meta.get("output_activation", "sigmoid")
+
+
+def structure_hidden_activation(structure) -> str:
+    """Hidden activation recorded on a NetworkStructure (default "relu").
+
+    ``ExplaNEAT.get_genotype_network`` / ``get_phenotype_network`` record a
+    non-default hidden activation (e.g. "sigmoid") in
+    ``metadata["hidden_activation"]``, as for the output activation.
+    """
+    meta = getattr(structure, "metadata", None) or {}
+    return meta.get("hidden_activation", "relu")
 from .genome_network import FunctionNodeMetadata, NetworkStructure, NodeType
 
 
@@ -539,6 +550,16 @@ class StructureNetwork:
         """
         return structure_output_activation(self.structure)
 
+    @property
+    def model_hidden_activation(self) -> str:
+        """The hidden activation of the trained model this structure describes.
+
+        ``structure_hidden_activation(self.structure)``: "relu" unless the
+        structure records otherwise (e.g. "sigmoid").  Pass this, not a
+        literal "relu", to ``override_hidden_activation``.
+        """
+        return structure_hidden_activation(self.structure)
+
     def override_output_activation(self, activation: str) -> None:
         """Override the activation function on all output nodes.
 
@@ -560,8 +581,10 @@ class StructureNetwork:
     def override_hidden_activation(self, activation: str) -> None:
         """Override the activation function on all hidden (non-input, non-output) nodes.
 
-        NeuralNeat hardcodes relu on hidden layers regardless of the genome's
-        per-node activation.  Call this to match that training behaviour.
+        NeuralNeat applies its configured hidden activation (relu by default)
+        on hidden layers regardless of the genome's per-node activation.  Call
+        this with ``self.model_hidden_activation`` to match that training
+        behaviour.
 
         Identity nodes (inserted by identity-preserving operations such as
         add_identity_node / add_node) and FUNCTION nodes are not genome

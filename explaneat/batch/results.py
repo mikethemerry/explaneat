@@ -161,7 +161,7 @@ def _genome_model(session, experiment):
     ph = ExplaNEAT(genome, config).get_phenotype_network()
     sn = StructureNetwork(ph)
     sn.override_output_activation(sn.model_output_activation)
-    sn.override_hidden_activation("relu")
+    sn.override_hidden_activation(sn.model_hidden_activation)
 
     def predict(X):
         return sn.forward(torch.as_tensor(np.asarray(X), dtype=torch.float64)).detach().numpy().reshape(len(X), -1)[:, 0]

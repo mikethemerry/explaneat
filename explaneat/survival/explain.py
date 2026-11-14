@@ -144,7 +144,7 @@ def explain_output(structure, X_std: np.ndarray, scaler=None, feature_names=None
 
     sn = StructureNetwork(structure)
     sn.override_output_activation(sn.model_output_activation)
-    sn.override_hidden_activation("relu")
+    sn.override_hidden_activation(sn.model_hidden_activation)
     sn.forward(torch.as_tensor(X_std, dtype=torch.float64))
     info = output_terms(structure)
     readings = []

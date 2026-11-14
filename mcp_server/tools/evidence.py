@@ -315,7 +315,7 @@ def _do_compute_viz_data(
             all_node_ids = [n.id for n in ms.nodes]
             struct_net = StructureNetwork(ms)
             struct_net.override_output_activation(struct_net.model_output_activation)
-            struct_net.override_hidden_activation("relu")
+            struct_net.override_hidden_activation(struct_net.model_hidden_activation)
             x_tensor = torch.as_tensor(X, dtype=torch.float64)
             struct_net.forward(x_tensor)
             node_acts = {}
@@ -347,7 +347,7 @@ def _do_compute_viz_data(
             source_ids = list({c.from_node for c in connections})
             struct_net = StructureNetwork(ms)
             struct_net.override_output_activation(struct_net.model_output_activation)
-            struct_net.override_hidden_activation("relu")
+            struct_net.override_hidden_activation(struct_net.model_hidden_activation)
             x_tensor = torch.as_tensor(X, dtype=torch.float64)
             struct_net.forward(x_tensor)
             node_acts = {}
@@ -366,7 +366,7 @@ def _do_compute_viz_data(
             all_node_ids = list(subgraph_nodes_set)
             struct_net = StructureNetwork(ms)
             struct_net.override_output_activation(struct_net.model_output_activation)
-            struct_net.override_hidden_activation("relu")
+            struct_net.override_hidden_activation(struct_net.model_hidden_activation)
             x_tensor = torch.as_tensor(X, dtype=torch.float64)
             struct_net.forward(x_tensor)
             node_acts = {}

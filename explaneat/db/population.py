@@ -159,6 +159,11 @@ class DatabaseBackpropPopulation(BackpropPopulation):
         if out_act != OUTPUT_ACTIVATION:
             # Only recorded when non-default (classification rows unchanged).
             training["output_activation"] = out_act
+        from ..core.neuralneat import HIDDEN_ACTIVATION, get_hidden_activation
+        hid_act = get_hidden_activation(config)
+        if hid_act != HIDDEN_ACTIVATION:
+            # Only recorded when non-default (ReLU rows unchanged).
+            training["hidden_activation"] = hid_act
         if hasattr(self.criterion, "describe"):
             training["criterion"] = self.criterion.describe()
         if training:
