@@ -444,3 +444,79 @@ uv run python experiments/ushape_saddle/shape_plots.py <label>  # figures/
 uv run python experiments/ushape_saddle/gt_probe.py             # gt_probe.json
 uv run python scripts/thesis/thesis_experiment_tables.py        # thesis_exports/ch7/ch7_experiment1_cases.tex
 ```
+
+## 11. Longer runs on the both dataset (`launch_g300.sh`, `score_g300.py`, `g300_scores.json`)
+
+**Question.** In section 3, only 2 of the 5 shape-C seeds (3 and 4) found both shapes in 100 generations.
+With another 100-200 generations, is "both" found more consistently?
+
+**Design.** The five shape-C seeds (0-4) were rerun from scratch to 300 generations with the same
+`run_seed.py`, config and dataset (`--generations 300`, experiments `shape-C-s{n}-g300` in
+`explaneat_dev`; the original 100-generation runs are untouched). Runs replay exactly: for every seed the
+best genome up to generation 100 of the rerun has the same NEAT key, generation and training fitness, bit
+for bit, as the original run's best genome (e.g. seed 0: key 24178, generation 98, 0.8556646223493756),
+so the generation-100 rows below are the section 3 genomes. Each run took about 7-8 minutes (3 lanes).
+
+At generations 100, 200 and 300 (generation indices up to 99, 199, 299) the best-by-train genome so far
+(highest training fitness, earliest generation, lowest key) is scored with no explanation:
+
+- **U:** the model's logit as sodium goes from 128 to 150 mmol/L (1 mmol/L steps, every other input at the
+  typical case, as in `shape_plots.py`); Pearson r with the true U term, and whether both ends rise (logit at
+  128 and at 150 each more than 1 above the curve's minimum).
+- **Saddle:** the logit on a 41 x 41 grid of heart rate x SBP (training 1st-99th percentiles, others typical),
+  mean removed; Pearson r with the true -zh*zp surface, and the interaction share (variance left after the
+  best additive f(heart rate) + g(SBP) fit; the truth's share is 1).
+- **Found** when r >= 0.9 (fixed before scoring). On the 100-generation genomes this threshold gives the
+  section 3 reading: U in all five, saddle only in seeds 3 and 4 (seeds 0-2 have saddle r 0.79-0.84).
+
+Train AUC is on the 1,500 training rows, test AUC on the 500 test rows; species count is from the run log.
+
+| seed | gen | best at gen | train AUC | test AUC | train - test | U r | both ends rise | saddle r | interaction share | U | saddle | both | hidden | conns | species |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | 100 | 98 | 0.856 | 0.853 | +0.003 | 0.98 | yes | 0.84 | 0.75 | yes | no | no | 12 | 31 | 1 |
+| 0 | 200 | 197 | 0.869 | 0.851 | +0.018 | 0.98 | yes | 0.82 | 0.77 | yes | no | no | 16 | 40 | 1 |
+| 0 | 300 | 298 | 0.882 | 0.865 | +0.017 | 0.98 | yes | 0.88 | 0.85 | yes | no | no | 18 | 42 | 1 |
+| 1 | 100 | 99 | 0.856 | 0.840 | +0.016 | 0.99 | yes | 0.79 | 0.76 | yes | no | no | 12 | 35 | 1 |
+| 1 | 200 | 195 | 0.896 | 0.869 | +0.027 | 0.99 | yes | 0.96 | 0.97 | yes | yes | yes | 13 | 39 | 1 |
+| 1 | 300 | 297 | 0.897 | 0.869 | +0.028 | 1.00 | yes | 0.96 | 0.97 | yes | yes | yes | 14 | 41 | 1 |
+| 2 | 100 | 99 | 0.855 | 0.859 | -0.003 | 0.97 | yes | 0.83 | 0.77 | yes | no | no | 11 | 36 | 2 |
+| 2 | 200 | 199 | 0.893 | 0.869 | +0.024 | 0.97 | yes | 0.91 | 0.90 | yes | yes | yes | 15 | 41 | 2 |
+| 2 | 300 | 298 | 0.894 | 0.872 | +0.023 | 0.96 | yes | 0.93 | 0.93 | yes | yes | yes | 20 | 55 | 2 |
+| 3 | 100 | 99 | 0.882 | 0.872 | +0.010 | 0.97 | yes | 0.92 | 0.93 | yes | yes | yes | 11 | 35 | 1 |
+| 3 | 200 | 199 | 0.895 | 0.869 | +0.026 | 0.98 | yes | 0.96 | 0.96 | yes | yes | yes | 13 | 40 | 1 |
+| 3 | 300 | 298 | 0.898 | 0.872 | +0.027 | 0.98 | yes | 0.95 | 0.94 | yes | yes | yes | 16 | 46 | 1 |
+| 4 | 100 | 98 | 0.896 | 0.873 | +0.023 | 0.98 | yes | 0.96 | 0.96 | yes | yes | yes | 8 | 35 | 1 |
+| 4 | 200 | 198 | 0.903 | 0.877 | +0.025 | 0.96 | yes | 0.97 | 0.97 | yes | yes | yes | 10 | 41 | 1 |
+| 4 | 300 | 283 | 0.903 | 0.876 | +0.028 | 0.96 | yes | 0.98 | 0.97 | yes | yes | yes | 9 | 40 | 1 |
+
+**Answer.** Yes, mostly. Both shapes are found by **2 of 5 seeds at generation 100, 4 of 5 at 200 and 4 of 5
+at 300**. Seeds 1 and 2 found the saddle between generations 100 and 200 (saddle r 0.79 -> 0.96 and 0.83 ->
+0.91). In each case the jump in training AUC (about +0.04) came with the saddle. The extra 100 generations to 300
+added no new seed. Seed 0 is still short at 300 (saddle r 0.88, interaction share 0.85; it is moving
+towards the saddle but is below the threshold). The U was found by every seed at every checkpoint, both ends rising by
+3.5-10 logit units. No seed lost a shape it had: r stayed at or above 0.9 once reached (lowest later
+value 0.91), and U r never fell below 0.96.
+
+**Overfitting check (1,500 training rows).** Test AUC kept rising or held: from generation 100 to 300 it went
+from 0.840-0.873 to 0.865-0.876 (median 0.859 -> 0.872), and no seed's test AUC fell by more than 0.003
+between checkpoints. The train-test gap widened from -0.003-0.023 to 0.017-0.028. At 300 generations, training AUC
+(0.882-0.903) is at or above the oracle's training AUC (0.893), while test AUC (0.865-0.876) stays below the
+oracle's 0.884 (oracle gap 0.008). So the longer runs fit some noise, mildly, but the extra generations
+mostly bought the saddle rather than overfitting: the generalisation gain from finding it is larger than
+the loss. Networks grew modestly (hidden units 8-12 -> 9-20, connections 31-36 -> 40-55); the populations
+stayed at one species (two for seed 2) throughout.
+
+**Figures.** `figures/shape-C-s1-g300-sodium.png` and `figures/shape-C-s1-g300-saddle.png` (with
+`-shape.json`) show seed 1 at generation 300, a seed that newly found both: U minimum at 135 mmol/L, saddle r
+0.96, interaction share 0.97. The genome is not explained, so the parts panels are empty (`shape_plots.py
+--genome <id> --task both`).
+
+**Caveats.** Five seeds; one run per seed (a single trajectory per seed, not a distribution). The found
+threshold (r >= 0.9) is a cut on a continuous score; seed 0 at 0.88 is close to it. The shape scores read
+the model at one held case (the typical patient). These genomes have not been explained or verified.
+
+```bash
+experiments/ushape_saddle/launch_g300.sh                       # 5 runs to 300 generations, 3 lanes
+uv run python experiments/ushape_saddle/score_g300.py          # g300_scores.json / .csv
+uv run python experiments/ushape_saddle/shape_plots.py shape-C-s1-g300 --genome <genome_id> --task both
+```
