@@ -41,12 +41,17 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("label")
     ap.add_argument("--part", default=None, help="part to show on the saddle grid (default: the one that moves most)")
+    ap.add_argument("--genome", default=None, help="genome id to plot without an explanation record (with --task)")
+    ap.add_argument("--task", default=None, choices=["u", "saddle", "both"], help="dataset of --genome")
     a = ap.parse_args()
     from explaneat.verify.model import load
     from explaneat.verify.probe import hold_row
     reg = data.registry()
-    task = next(t for t, v in reg.items() if v["label"] == a.label)
-    rec = json.loads((HERE / "explanations" / f"{a.label}.json").read_text())
+    if a.genome:
+        task, rec = a.task, {"genome_id": a.genome}
+    else:
+        task = next(t for t, v in reg.items() if v["label"] == a.label)
+        rec = json.loads((HERE / "explanations" / f"{a.label}.json").read_text())
     vm = load(rec["genome_id"])
     names = list(vm.base.feature_names) if hasattr(vm.base, "feature_names") else data.FEATURES
     col = {n: i for i, n in enumerate(names)}
