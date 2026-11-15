@@ -1,0 +1,16 @@
+# Verdict: lr-84498 (genome 41c36304)
+
+**Overall: refuted.** Coverage, function preservation, closed forms and almost every number and shape reproduce, but stateChain's list of states is incomplete (Louisiana gets the same shift), and two statements are weakened.
+
+| Location | Level | Stated | What the model does | Check |
+|---|---|---|---|---|
+| operations.stateChain.hypothesis (ann_96) | L3 refuted | Gives Oregon, New Jersey and Connecticut a small extra score "and does nothing else" | Louisiana is a fourth state: node 38365 = 1.081 (as in NJ and CT), contribution +0.0606 on all 65 Louisiana customers, the same as NJ (90) and CT (80). The exit's closed form carries -0.0473 x state:18 | `probe --sweep state=all --nodes 38365,160`; `subgroup --where "state == '18'"` |
+| record.leaves (stateChain) | L3 refuted | "drops for Oregon, New Jersey and Connecticut" | same omission of Louisiana | as above |
+| operations.serviceCallsDayGate.hypothesis (ann_92) | L3 weakened | While the hinge is open it "takes most of the direct term back, so calls barely move the prediction" | It takes back slightly more than all of it (3.6 x 0.711 = 2.56 against 2.50), so calls slightly lower the risk while it is open: at 45 US dollars 41.2% (0 calls) to 35.8% (5 calls), then 87.1% at 7 | `probe --sweep calls=0:9:10 --sweep "total day charge=45,50"` |
+| operations.stateDirect.hypothesis (ann_100) | L2 weakened | Offsets larger than churn rates warrant: Hawaii -3.69 vs empirical -1.20 (Vermont -2.40 vs -0.82, Washington 1.53 vs 0.93) | Compares different quantities (switching the indicator off against no state at all, vs a marginal log-odds that ignores the rest of the model). Like for like, the shift that reproduces each state's churn rate is -3.24 / -2.01 / +1.26: an excess of 0.3 to 0.45 logit. Hawaii's mean prediction is 3.7% against an observed 4.1% | category_offsets; uniform-shift fit on the training rows |
+| operations.locationOffsets.hypothesis (ann_103) | L2 weakened | "the largest are for small groups" | All states are small (41 to 122 customers, median 78); Hawaii (73) and Vermont (80) are typical in size; what is small is the number of churners (3, 5) | state counts |
+| record.summary | L2 weakened | "largest for small states such as Hawaii ... look fitted to small groups" | as the two findings above | as above |
+
+**Upheld:** churnRisk (unread inputs exact; plan and state add, step +2.87); usageAndPlans (additive steps); dayUseAndServiceCalls (flat to 41 US dollars, then steep; voice-mail plan damps it: 40.1% vs 2.1% at 45); lowDayUseHinge (873 closes at 41.07 to 41.09 US dollars, 502 rows, churn 44.0%); nightUse (residual slope 0.10 per sd outside Ohio; Ohio 0.5% to 3.6% vs West Virginia 1.2% to 1.8% from 130 to 350 minutes; 4813 closed for the 310 lightest night users); eveningUse (dip to 0.8% at 300 minutes, rise above 320); stateUnitsA (offsets -0.79, -0.22, +0.41, -0.03, +0.20, -0.033); stateUnitsB (inert, mean risk change -0.0001); usageDirect (edge off AUC 0.849; 380 with a plan churn 42.4%); record coverage 1.0, preservation 8.9e-16, closed-form error 0.138, operation counts.
+
+**Flags (L4):** the Ohio-by-night-use interaction rests on 87 Ohio customers with 13 churners; the evening rise at 350 minutes lies beyond the 99th percentile (5 training customers at 350 minutes or more).
