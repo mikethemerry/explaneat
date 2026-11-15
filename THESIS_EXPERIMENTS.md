@@ -24,6 +24,7 @@ Mike-verified (signoff-v1) is **0 everywhere**: no record carries `mike_verifica
 | 1.1 | Heart, Adult, MONK-2: the AAAI paper genomes, recomputed | complete; levels computed 13 Nov with probe v1 (to be recomputed with probe v2) |
 | 1.2 | Churn case | complete (gap closed 13 Nov, `exp/churn-case`): one seeded run explained, levels computed (probe v2), blind verifier weakened (0 refuted); not signed off |
 | 1.3 | Cox survival case (GBSG2, WHAS500) | complete; plain-language draft deliberately skipped (template change, `fix/varianz-readiness`) |
+| 1.3a | Cox case reference explanation (Cox PH per clinical unit with CI and PH test beside the network; the forest read by PD and H²) | complete (15 Nov, `exp/cox-reference-explanation`): `experiments/survival/cox_case/REFERENCE.md`, `ch7_cox_reference_table.tex`; forest's GBSG2 edge = non-linear age and node main effects |
 | 1.4 | XOR worked example | complete |
 | 1.5 | KRK boundary case | complete as an exploratory write-up; blind verifier run 13 Nov on krk-default-s2 (refuted: 1 refuted, 3 weakened, 24 upheld) |
 | 1.6 | Connect-4 boundary case (capacity study) | complete; outcome "covered and described, not tactically explained" |
@@ -157,6 +158,11 @@ plus `ch7_cox_case_table.tex` (Cox) and the XOR figures. The explanation level d
   `ch7_experiment1_cases.tex` rows 5–6. No figures.
 - **DB:** `explaneat_dev`; experiments `29c762ec` (gbsg2, genome `e4c62516`), `8d424f4c`
   (whas500, genome `f96ebc8d`).
+- **Reference explanation** (added 15 Nov): `REFERENCE.md`, `reference_explanation.py`,
+  `reference_explanation.json`, `figures/ref_*.png`; export `thesis_exports/ch7/ch7_cox_reference_table.tex`.
+  Network HRs inside the Cox 95% CI on 5 / 5 GBSG2 and 8 / 9 WHAS500 kept inputs (age outside);
+  the forest's GBSG2 edge is non-linear age and node main effects (no interaction, grade III non-PH
+  not the source).
 - **Status: complete.** The plain-language draft was skipped on purpose (`RESULTS.md` "Plain-
   language draft skipped": the template is not survival-aware); that template change is being
   made on `fix/varianz-readiness` (no commits ahead of `main` yet). Cost to add the draft after
