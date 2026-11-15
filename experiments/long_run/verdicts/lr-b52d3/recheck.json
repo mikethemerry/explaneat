@@ -1,0 +1,847 @@
+{
+  "target": "experiments/long_run/explanations/lr-b52d3.json",
+  "genome_id": "6e4d57e3-0223-4cdc-af13-909223f68601",
+  "label": "lr-b52d3",
+  "operations_source": "database",
+  "files": {
+    "record": "experiments/long_run/explanations/lr-b52d3.json"
+  },
+  "findings": [],
+  "structure": {
+    "n_train": 1500,
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "uncovered_nodes": [],
+    "uncovered_edges": [],
+    "null_nodes": [
+      "-9"
+    ],
+    "coverage_hierarchy": {
+      "roots": [
+        "risk_model"
+      ],
+      "global_root": "risk_model",
+      "root_contains_outputs": true,
+      "complete": true,
+      "composed": 9,
+      "required": 9,
+      "exempt_disconnected": []
+    },
+    "hierarchy": {
+      "n_annotations": 10,
+      "roots": [
+        "risk_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "not_under_root": [],
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 1.0547118733938987e-15,
+    "closed_form_max_abs_err": 0.019592008110826953,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "leaves": [
+      {
+        "id": "ann_19",
+        "name": "low_sodium_smoker_gate",
+        "numeric_max_abs_err": 1.3322676295501878e-15,
+        "closed_form_max_abs_err": 0.01749895037112781,
+        "exit_scale": 3.8772326337709244
+      },
+      {
+        "id": "ann_20",
+        "name": "high_sodium_hinges",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.006720494252155262,
+        "exit_scale": 3.75340611031873
+      },
+      {
+        "id": "ann_21",
+        "name": "bmi_hinge",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.0008345251190720049,
+        "exit_scale": 3.077946812639476
+      },
+      {
+        "id": "ann_22",
+        "name": "low_hr_hinge",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.0003766073497992739,
+        "exit_scale": 1.9545379025489276
+      },
+      {
+        "id": "ann_23",
+        "name": "direct_terms",
+        "numeric_max_abs_err": 1.3322676295501878e-15,
+        "closed_form_max_abs_err": 0.011963933418373873,
+        "exit_scale": 6.896473704115583
+      },
+      {
+        "id": "ann_27",
+        "name": "sbp_chain",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.01396696937823283,
+        "exit_scale": 8.209893748177311
+      },
+      {
+        "id": "ann_28",
+        "name": "bp_hr_gate",
+        "numeric_max_abs_err": 1.7763568394002505e-15,
+        "closed_form_max_abs_err": 0.019592008110826953,
+        "exit_scale": 13.42013448777879
+      }
+    ],
+    "op_counts": {
+      "rename_node": 10,
+      "split_node": 6,
+      "consolidate_node": 2,
+      "add_identity_node": 4,
+      "annotate": 10
+    },
+    "full_coverage": true
+  },
+  "closed_forms": {
+    "ann_28": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( - 0.145 x_{bmi_b} \\\\\n&\\quad - 1.37 x_{heart_rate_bd} \\\\\n&\\quad + 1.0 x_{identity_1906} \\\\\n&\\quad + 1.81 x_{sbp_b} \\\\\n&\\quad - 2.71 \\operatorname{relu}{\\left(1.0 x_{identity_228} + 1.92 \\operatorname{relu}{\\left(0.926 x_{heart_rate_bd} - 0.0199 \\right)} - 0.571 \\right)} \\\\\n&\\quad -0.906 \\bigr)\n\\end{aligned}",
+    "ann_23": "\\begin{aligned}\ny_0 &= 0.768 x_{age} \\\\\n&\\quad + 0.362 x_{bmi_a} \\\\\n&\\quad + 0.601 x_{creatinine_a} \\\\\n&\\quad + 0.244 x_{diabetes} \\\\\n&\\quad + 1.32 x_{heart_rate_a} \\\\\n&\\quad - 0.269 x_{sbp_a} \\\\\n&\\quad + 0.271 x_{smoker_a} \\\\\n&\\quad - 0.63 x_{sodium_a}\n\\end{aligned}",
+    "ann_20": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 0.224 x_{noise} \\\\\n&\\quad + 0.603 x_{sodium_bd} \\\\\n&\\quad -0.0947 \\bigr)\n\\end{aligned} \\\\ y_1 = \\operatorname{relu}{\\left(1.03 x_{sodium_bd} - 0.0983 \\right)}",
+    "ann_27": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 1.0 x_{identity_2502} \\\\\n&\\quad + 1.61 x_{sbp_c} \\\\\n&\\quad + 1.48 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_1 &= \\operatorname{relu}\\bigl( 1.11 \\operatorname{relu}{\\left(1.0 x_{identity_2502} + 1.61 x_{sbp_c} + 1.48 \\right)} \\\\\n&\\quad -1.41 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_2 &= \\operatorname{relu}\\bigl( 1.41 \\operatorname{relu}{\\left(1.11 \\operatorname{relu}{\\left(1.0 x_{identity_2502} + 1.61 x_{sbp_c} + 1.48 \\right)} - 1.41 \\right)} \\\\\n&\\quad -0.382 \\bigr)\n\\end{aligned}",
+    "ann_19": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( - 0.0322 x_{creatinine_b} \\\\\n&\\quad + 0.33 x_{smoker_b} \\\\\n&\\quad + 1.14 \\operatorname{relu}{\\left(0.855 \\operatorname{relu}{\\left(0.479 - 1.8 x_{sodium_c} \\right)} - 1.51 \\right)} \\\\\n&\\quad -1.18 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_1 &= \\operatorname{relu}\\bigl( 1.29 \\operatorname{relu}{\\left(- 0.0322 x_{creatinine_b} + 0.33 x_{smoker_b} + 1.14 \\operatorname{relu}{\\left(0.855 \\operatorname{relu}{\\left(0.479 - 1.8 x_{sodium_c} \\right)} - 1.51 \\right)} - 1.18 \\right)} \\\\\n&\\quad -0.872 \\bigr)\n\\end{aligned}",
+    "ann_22": "y_0 = \\operatorname{relu}{\\left(0.0209 - 0.699 x_{heart_rate_c} \\right)}",
+    "ann_21": "y_0 = \\operatorname{relu}{\\left(0.925 x_{bmi_c} + 0.142 \\right)}"
+  },
+  "freetext": {
+    "counts": {
+      "auc": {
+        "unchecked": 4,
+        "ok": 9
+      },
+      "n_train": {
+        "ok": 21
+      },
+      "active_count": {
+        "ok": 2
+      }
+    },
+    "checked": [
+      {
+        "kind": "auc",
+        "text": "AUC from 0.8883 to 0.8726",
+        "status": "ok",
+        "stated": [
+          0.8883,
+          0.8726
+        ],
+        "model_full": 0.8882531226535568,
+        "model_part_off": [
+          0.872846752933568,
+          0.8725599273618807,
+          0.8725599273618807
+        ],
+        "location": "operations.low_sodium_smoker_gate.hypothesis",
+        "part": "ann_19"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.low_sodium_smoker_gate.evidence[2].payload.n",
+        "part": "ann_19"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.low_sodium_smoker_gate.evidence[3].payload.n",
+        "part": "ann_19"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.8883 to 0.7631",
+        "status": "ok",
+        "stated": [
+          0.8883,
+          0.7631
+        ],
+        "model_full": 0.8882531226535568,
+        "model_part_off": [
+          0.7630674624706095,
+          0.7630674624706095,
+          0.7630674624706095
+        ],
+        "location": "operations.high_sodium_hinges.hypothesis",
+        "part": "ann_20"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.high_sodium_hinges.evidence[3].payload.n",
+        "part": "ann_20"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.high_sodium_hinges.evidence[4].payload.n",
+        "part": "ann_20"
+      },
+      {
+        "kind": "active_count",
+        "text": "on for 845 training patients",
+        "status": "ok",
+        "node": "7255",
+        "stated": 845,
+        "model": 845,
+        "node_named": false,
+        "location": "operations.bmi_hinge.hypothesis",
+        "part": "ann_21"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.8883 to 0.8883",
+        "status": "ok",
+        "stated": [
+          0.8883,
+          0.8883
+        ],
+        "model_full": 0.8882531226535568,
+        "model_part_off": [
+          0.8882604303114342,
+          0.8882604303114342,
+          0.8882604303114342
+        ],
+        "location": "operations.bmi_hinge.hypothesis",
+        "part": "ann_21"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.bmi_hinge.evidence[2].payload.n",
+        "part": "ann_21"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.bmi_hinge.evidence[3].payload.n",
+        "part": "ann_21"
+      },
+      {
+        "kind": "active_count",
+        "text": "on for 772 training patients",
+        "status": "ok",
+        "node": "2502",
+        "stated": 772,
+        "model": 772,
+        "node_named": false,
+        "location": "operations.low_hr_hinge.hypothesis",
+        "part": "ann_22"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.8883 to 0.8814",
+        "status": "ok",
+        "stated": [
+          0.8883,
+          0.8814
+        ],
+        "model_full": 0.8882531226535568,
+        "model_part_off": [
+          0.8832090118036943,
+          0.8814350778539601,
+          0.8814350778539601
+        ],
+        "location": "operations.low_hr_hinge.hypothesis",
+        "part": "ann_22"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.low_hr_hinge.evidence[2].payload.n",
+        "part": "ann_22"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.low_hr_hinge.evidence[3].payload.n",
+        "part": "ann_22"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.8883 to 0.7859",
+        "status": "ok",
+        "stated": [
+          0.8883,
+          0.7859
+        ],
+        "model_full": 0.8882531226535568,
+        "model_part_off": [
+          0.7858618743046306,
+          0.7858618743046306,
+          0.7858618743046306
+        ],
+        "location": "operations.direct_terms.hypothesis",
+        "part": "ann_23"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.direct_terms.evidence[4].payload.n",
+        "part": "ann_23"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.8883 to 0.8236",
+        "status": "ok",
+        "stated": [
+          0.8883,
+          0.8236
+        ],
+        "model_full": 0.8882531226535568,
+        "model_part_off": [
+          0.8260722617749204,
+          0.8236278502149365,
+          0.8236278502149365
+        ],
+        "location": "operations.sbp_chain.hypothesis",
+        "part": "ann_27"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.sbp_chain.evidence[2].payload.n",
+        "part": "ann_27"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.8883 to 0.6500",
+        "status": "ok",
+        "stated": [
+          0.8883,
+          0.65
+        ],
+        "model_full": 0.8882531226535568,
+        "model_part_off": [
+          0.6499613607589734,
+          0.6499613607589734,
+          0.6499613607589734
+        ],
+        "location": "operations.bp_hr_gate.hypothesis",
+        "part": "ann_28"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.bp_hr_gate.evidence[4].payload.n",
+        "part": "ann_28"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.bp_hr_gate.evidence[5].payload.n",
+        "part": "ann_28"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.8883 to 0.7555",
+        "status": "ok",
+        "stated": [
+          0.8883,
+          0.7555
+        ],
+        "model_full": 0.8882531226535568,
+        "model_part_off": [
+          0.7561562450330762,
+          0.7554620175347251,
+          0.7554620175347251
+        ],
+        "location": "operations.sodium_U.hypothesis",
+        "part": "ann_29"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.sodium_U.evidence[3].payload.n",
+        "part": "ann_29"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.sodium_U.evidence[4].payload.n",
+        "part": "ann_29"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.sodium_U.evidence[5].payload.n",
+        "part": "ann_29"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.sodium_U.evidence[6].payload.n",
+        "part": "ann_29"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.8883 to 0.7382",
+        "status": "ok",
+        "stated": [
+          0.8883,
+          0.7382
+        ],
+        "model_full": 0.8882531226535568,
+        "model_part_off": [
+          0.7382323871743296,
+          0.7382323871743296,
+          0.7382323871743296
+        ],
+        "location": "operations.bp_hr_interaction.hypothesis",
+        "part": "ann_30"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.bp_hr_interaction.evidence[3].payload.n",
+        "part": "ann_30"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.bp_hr_interaction.evidence[4].payload.n",
+        "part": "ann_30"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.bp_hr_interaction.evidence[5].payload.n",
+        "part": "ann_30"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.bp_hr_interaction.evidence[6].payload.n",
+        "part": "ann_30"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=1500)",
+        "status": "ok",
+        "stated": 1500,
+        "model": 1500,
+        "location": "operations.risk_model.evidence[3].payload.n",
+        "part": "ann_31"
+      }
+    ],
+    "unchecked_statements": [
+      {
+        "kind": "auc",
+        "text": "AUC from 0.8883 to 0.8882",
+        "status": "unchecked",
+        "stated": [
+          0.8883,
+          0.8882
+        ],
+        "model_full": 0.8882531226535568,
+        "model_part_off": [
+          0.872846752933568,
+          0.8725599273618807,
+          0.8725599273618807
+        ],
+        "reason": "the second number is not this part switched off at its mean or at 0 (another configuration, e.g. a different readout or a linearisation)",
+        "location": "operations.low_sodium_smoker_gate.hypothesis",
+        "part": "ann_19"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.8883 to 0.8870",
+        "status": "unchecked",
+        "stated": [
+          0.8883,
+          0.887
+        ],
+        "model_full": 0.8882531226535568,
+        "model_part_off": [
+          0.7630674624706095,
+          0.7630674624706095,
+          0.7630674624706095
+        ],
+        "reason": "the second number is not this part switched off at its mean or at 0 (another configuration, e.g. a different readout or a linearisation)",
+        "location": "operations.high_sodium_hinges.hypothesis",
+        "part": "ann_20"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.8883 to 0.5781",
+        "status": "unchecked",
+        "stated": [
+          0.8883,
+          0.5781
+        ],
+        "model_full": 0.8882531226535568,
+        "reason": "the second number is not this part switched off at its mean or at 0 (another configuration, e.g. a different readout or a linearisation)",
+        "location": "operations.risk_model.hypothesis",
+        "part": "ann_31"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.8883 to 0.7382",
+        "status": "unchecked",
+        "stated": [
+          0.8883,
+          0.7382
+        ],
+        "model_full": 0.8882531226535568,
+        "reason": "the second number is not this part switched off at its mean or at 0 (another configuration, e.g. a different readout or a linearisation)",
+        "location": "record.summary",
+        "part": "ann_31"
+      }
+    ],
+    "unchecked_sentences": [
+      {
+        "location": "operations.low_sodium_smoker_gate.hypothesis",
+        "part": "ann_19",
+        "text": "Creatinine also enters the gate, with a weight of -0.032 per sd; switching that edge off moves the AUC from 0.8883 to 0.8882, so creatinine plays no real part here."
+      },
+      {
+        "location": "operations.low_sodium_smoker_gate.hypothesis",
+        "part": "ann_19",
+        "text": "Shape (self-probe: the typical patient with sodium swept in steps of one mmol/L, smoker and non-smoker): for a non-smoker the first exit is off at sodium 133 and on at 132 (value 0.29), growing as sodium falls (value 2.01 at 128); for a smoker it is already on at 134 (value 0.20) and off at 135."
+      },
+      {
+        "location": "operations.low_sodium_smoker_gate.hypothesis",
+        "part": "ann_19",
+        "text": "Smoking therefore raises the sodium level at which the gate opens and makes it open wider (value 2.78 for a smoker against 2.01 for a non-smoker at sodium 128)."
+      },
+      {
+        "location": "operations.low_sodium_smoker_gate.hypothesis",
+        "part": "ann_19",
+        "text": "The second exit opens deeper: at 131 and below for a non-smoker and at 132 and below for a smoker."
+      },
+      {
+        "location": "operations.low_sodium_smoker_gate.hypothesis",
+        "part": "ann_19",
+        "text": "Through this part, the typical non-smoker at sodium 128 gets 5.77 added to the logit and the typical smoker 9.02."
+      },
+      {
+        "location": "operations.low_sodium_smoker_gate.hypothesis",
+        "part": "ann_19",
+        "text": "In the whole model the typical non-smoker's predicted risk is 14% at sodium 136 and 99% at 128; the typical smoker's is 24% and above 99%."
+      },
+      {
+        "location": "operations.low_sodium_smoker_gate.hypothesis",
+        "part": "ann_19",
+        "text": "On the training data the gate is open for 124 patients (67 non-smokers and 57 smokers), whose outcome rate is 67.7% and mean predicted risk 66.2%; the second exit is open for 66 patients (outcome rate 80.3%)."
+      },
+      {
+        "location": "operations.low_sodium_smoker_gate.hypothesis",
+        "part": "ann_19",
+        "text": "The closed form (analytical_formula evidence) reproduces the part to within 0.017 on the training rows (coefficients rounded)."
+      },
+      {
+        "location": "operations.low_sodium_smoker_gate.hypothesis",
+        "part": "ann_19",
+        "text": "Concept probe: serum sodium predicts the gate with score 0.99 (meaningful); a U-shaped concept (squared distance of sodium from the middle of its range) scored 0.93, because this part is only the low arm of the model's U in sodium (the high arm is the high-sodium hinges)."
+      },
+      {
+        "location": "operations.high_sodium_hinges.hypothesis",
+        "part": "ann_20",
+        "text": "Self-probe (typical patient, sodium swept one mmol/L at a time): both exits are off at sodium 139 and on at 140 (values 0.09 and 0.22), rising to 1.57 and 2.74 at sodium 150."
+      },
+      {
+        "location": "operations.high_sodium_hinges.hypothesis",
+        "part": "ann_20",
+        "text": "Both exits raise the predicted risk (output weights 1.96 and 1.99): in the whole model the typical patient's predicted risk is 9% at sodium 139, 80% at 145 and 99% at 150."
+      },
+      {
+        "location": "operations.high_sodium_hinges.hypothesis",
+        "part": "ann_20",
+        "text": "The noise column enters the first hinge with a weight of 0.224 per sd: for the typical patient with sodium set to 145, the predicted risk is 62% with noise at -2 sd and 90% at 2 sd."
+      },
+      {
+        "location": "operations.high_sodium_hinges.hypothesis",
+        "part": "ann_20",
+        "text": "On the training data the second hinge is on for 635 patients (outcome rate 52.4%, mean predicted risk 52.5%); the 75 training patients with sodium > 145 have an outcome rate of 98.7%."
+      },
+      {
+        "location": "operations.high_sodium_hinges.hypothesis",
+        "part": "ann_20",
+        "text": "The closed form (analytical_formula evidence) reproduces the part to within 0.0067 on the training rows."
+      },
+      {
+        "location": "operations.high_sodium_hinges.hypothesis",
+        "part": "ann_20",
+        "text": "Concept probe: serum sodium predicts the hinges with score 0.95 (meaningful); the excess of sodium over the middle of its range scored 0.92, and a U-shaped concept (squared distance from the middle) 0.18, because this part is only the high arm of the U."
+      },
+      {
+        "location": "operations.bmi_hinge.hypothesis",
+        "part": "ann_21",
+        "text": "A single hinge on BMI (kg/m2, raw units) that is off at BMI 25 and on at 30 (value 0.57), growing to 2.44 at 40 (self-probe: typical patient, BMI swept)."
+      },
+      {
+        "location": "operations.bmi_hinge.hypothesis",
+        "part": "ann_21",
+        "text": "Its output weight is 0.048, so switching the part off moves the AUC from 0.8883 to 0.8883, with a mean change in predicted risk of 0.0028."
+      },
+      {
+        "location": "operations.bmi_hinge.hypothesis",
+        "part": "ann_21",
+        "text": "BMI acts mainly through its direct term (weight 0.362 per sd, direct_terms), which raises predicted risk with BMI, and through a small negative input to the blood-pressure gate."
+      },
+      {
+        "location": "operations.bmi_hinge.hypothesis",
+        "part": "ann_21",
+        "text": "The closed form (analytical_formula evidence) reproduces the hinge to within 0.00083."
+      },
+      {
+        "location": "operations.bmi_hinge.hypothesis",
+        "part": "ann_21",
+        "text": "Concept probe: BMI predicts the hinge with score 1.00 (meaningful, but the part hardly matters)."
+      },
+      {
+        "location": "operations.low_hr_hinge.hypothesis",
+        "part": "ann_22",
+        "text": "Self-probe (typical patient, heart rate swept): off at 80 beats/min, on at 75 (value 0.08) and 0.89 at 60."
+      },
+      {
+        "location": "operations.low_hr_hinge.hypothesis",
+        "part": "ann_22",
+        "text": "It has two effects: its own output term (weight -0.75) lowers the logit as heart rate falls, and it subtracts from the first unit of the blood-pressure chain (sbp_chain, weight -0.78), damping that chain's risk-lowering terms for slow hearts; how the two combine is read at the composition (bp_hr_int"
+      },
+      {
+        "location": "operations.low_hr_hinge.hypothesis",
+        "part": "ann_22",
+        "text": "It is on for 772 training patients (outcome rate 42.1%)."
+      },
+      {
+        "location": "operations.low_hr_hinge.hypothesis",
+        "part": "ann_22",
+        "text": "The closed form (analytical_formula evidence) reproduces it to within 0.00038."
+      },
+      {
+        "location": "operations.low_hr_hinge.hypothesis",
+        "part": "ann_22",
+        "text": "Concept probe: heart rate predicts the hinge with score 1.00 (meaningful: a bradycardia-side hinge)."
+      },
+      {
+        "location": "operations.direct_terms.hypothesis",
+        "part": "ann_23",
+        "text": "They form a straight-line sum on the logit scale (per sd of each z-scored input): heart rate 1.317, age 0.768, sodium -0.631, creatinine 0.601, BMI 0.362, smoking 0.271, systolic pressure -0.269 and diabetes 0.244."
+      },
+      {
+        "location": "operations.direct_terms.hypothesis",
+        "part": "ann_23",
+        "text": "Self-probes (typical patient): predicted risk rises with age, 2% at 40 years, 8% at 60 and 25% at 80; with creatinine, 6% at 60 umol/L and 26% at 140; with diabetes, 9% without and 15% with."
+      },
+      {
+        "location": "operations.direct_terms.hypothesis",
+        "part": "ann_23",
+        "text": "The long linear sum is attached as analytical_formula evidence (reproduced to within 0.012)."
+      },
+      {
+        "location": "operations.direct_terms.hypothesis",
+        "part": "ann_23",
+        "text": "Concept probe: heart rate plus age scored 0.66 (partial): the sum is a generic risk score of several inputs, and no single named concept of up to three inputs reads it fully."
+      },
+      {
+        "location": "operations.sbp_chain.hypothesis",
+        "part": "ann_27",
+        "text": "Self-probe (typical patient, pressure swept): the first exit is off at 110 mmHg and on at 120 (value 0.35); the second and third are off at 130 and on at 140 (values 0.94 and 0.94), and at 180 the three are 5.67, 4.88 and 6.50."
+      },
+      {
+        "location": "operations.sbp_chain.hypothesis",
+        "part": "ann_27",
+        "text": "Their own output weights are -0.83, -0.78 and -0.97, so as a part this chain makes high pressure look protective; its first exit also feeds the blood-pressure gate (bp_hr_gate) positively, which reverses that for patients whose heart rate is not high."
+      },
+      {
+        "location": "operations.sbp_chain.hypothesis",
+        "part": "ann_27",
+        "text": "The closed form (analytical_formula evidence) reproduces it to within 0.014."
+      },
+      {
+        "location": "operations.sbp_chain.hypothesis",
+        "part": "ann_27",
+        "text": "Concept probe: systolic pressure predicts the three exits with score 0.98 (meaningful)."
+      },
+      {
+        "location": "operations.bp_hr_gate.hypothesis",
+        "part": "ann_28",
+        "text": "Its output raises the predicted risk (output weight 1.58)."
+      },
+      {
+        "location": "operations.bp_hr_gate.hypothesis",
+        "part": "ann_28",
+        "text": "Self-probe (typical patient, systolic pressure swept at two heart rates): at 60 beats/min the gate is off at 120 mmHg and on at 130 (value 1.23), reaching 11.59 at 180; at 90 beats/min it is still off at 150 and opens only at 160 (value 1.70), so a faster heart moves the opening pressure up."
+      },
+      {
+        "location": "operations.bp_hr_gate.hypothesis",
+        "part": "ann_28",
+        "text": "At 160 mmHg the gate is 6.58 at heart rate 76 and 0.00 at 100, where the fast-heart-rate hinge is 2.63; with sodium lowered from 140 to 128 it drops from 6.58 to 4.04."
+      },
+      {
+        "location": "operations.bp_hr_gate.hypothesis",
+        "part": "ann_28",
+        "text": "On the training data it is open for 729 patients (outcome rate 45.4%)."
+      },
+      {
+        "location": "operations.bp_hr_gate.hypothesis",
+        "part": "ann_28",
+        "text": "The closed form (analytical_formula evidence) reproduces it to within 0.02."
+      },
+      {
+        "location": "operations.bp_hr_gate.hypothesis",
+        "part": "ann_28",
+        "text": "Concept probe: the shock index (heart rate divided by systolic pressure) predicts the gate with score 0.91 (meaningful; gate open when the shock index is low); the difference systolic pressure minus heart rate scored 0.97."
+      },
+      {
+        "location": "operations.sodium_U.hypothesis",
+        "part": "ann_29",
+        "text": "The low-sodium gate (low arm) and the high-sodium hinges (high arm) sit side by side and their output terms are added on the logit; sodium's direct edge (weight -0.631 per sd, in direct_terms) tilts the U slightly downwards with rising sodium."
+      },
+      {
+        "location": "operations.sodium_U.hypothesis",
+        "part": "ann_29",
+        "text": "For the typical non-smoker the low arm is off from sodium 133 upwards and the high arm is off up to 139, so the bottom of the U lies between the two."
+      },
+      {
+        "location": "operations.sodium_U.hypothesis",
+        "part": "ann_29",
+        "text": "Self-probe (whole model, typical patient, sodium swept in steps of two mmol/L): predicted risk above 99% at 126, 35% at 132, 11% at 138, 67% at 144 and above 99% at 154; in steps of one mmol/L the lowest value is 9% at sodium 139."
+      },
+      {
+        "location": "operations.sodium_U.hypothesis",
+        "part": "ann_29",
+        "text": "On the logit the low arm is the steeper: the score is 9.11 at 126 and 7.08 at 154, against -2.28 at the bottom."
+      },
+      {
+        "location": "operations.sodium_U.hypothesis",
+        "part": "ann_29",
+        "text": "The training data follow the same U: the 94 patients with sodium < 133 have an outcome rate of 74.5%, the 739 with sodium >= 137 and sodium <= 141 29.6%, and the 75 with sodium > 145 98.7%."
+      },
+      {
+        "location": "operations.bp_hr_interaction.hypothesis",
+        "part": "ann_30",
+        "text": "Self-probe (whole model, typical patient, pressure swept at three heart rates): when systolic pressure is low a faster heart raises the predicted risk (1% at 100 mmHg and 55 beats/min, 67% at 100); when pressure is high a faster heart lowers it (58% at 160 mmHg and 55 beats/min, below 1% at 100)."
+      },
+      {
+        "location": "operations.bp_hr_interaction.hypothesis",
+        "part": "ann_30",
+        "text": "The heart-rate effect turns over between 120 mmHg (1% slow against 53% fast) and 140 mmHg (34% slow against 3% fast)."
+      },
+      {
+        "location": "operations.bp_hr_interaction.hypothesis",
+        "part": "ann_30",
+        "text": "Read the other way, higher pressure raises the risk for a slow heart (1% to 70% from 100 to 180 mmHg) and lowers it for a fast heart (67% to below 1%); at the typical heart rate the response to pressure is U-shaped, lowest among the swept values at 130 mmHg (7%, against 15% at 100 and 31% at 180)."
+      },
+      {
+        "location": "operations.bp_hr_interaction.hypothesis",
+        "part": "ann_30",
+        "text": "The training data show the same crossing: the 40 patients with sbp <= 115 and heart_rate >= 90 have an outcome rate of 85.0%, the 63 with sbp >= 150 and heart_rate <= 65 90.5%, and the 32 with sbp >= 150 and heart_rate >= 90 3.1% (mean predicted risk 0.8%; this corner holds few patients and the mode"
+      },
+      {
+        "location": "operations.bp_hr_interaction.hypothesis",
+        "part": "ann_30",
+        "text": "Concept probe on the composition: the product of heart rate and systolic pressure scored 0.59 averaged over the five exits, so the crossing is a property of the sum of the exits rather than of any one exit."
+      },
+      {
+        "location": "operations.risk_model.hypothesis",
+        "part": "ann_31",
+        "text": "Whole model: the output terms of the parts are added with the output bias on the logit scale and passed through the sigmoid; the decomposition reproduces the evolved network to within 1.1e-15 on the training rows."
+      },
+      {
+        "location": "operations.risk_model.hypothesis",
+        "part": "ann_31",
+        "text": "Sex has no edge in the network and is a zero-effect entry: the typical patient's predicted risk is 9% as female and 9% as male."
+      },
+      {
+        "location": "operations.risk_model.hypothesis",
+        "part": "ann_31",
+        "text": "Self-probe (typical patient with sodium at 139, the bottom of the U, so the sodium parts are off): at 110 mmHg the predicted risk is 2% at 60 beats/min and 51% at 95; at 150 mmHg it is 41% and below 1%."
+      },
+      {
+        "location": "record.summary",
+        "part": "ann_31",
+        "text": "The network predicts the outcome from three things: a U-shaped response to serum sodium (lowest predicted risk near 139 mmol/L for the typical patient, with a steeper low arm that smokers enter at a higher sodium); a crossing interaction of systolic pressure and heart rate, in which a faster heart r"
+      },
+      {
+        "location": "record.resisted",
+        "part": "ann_31",
+        "text": "Coverage is complete and every part has a reading, but two are weak: the direct-terms leaf is a straight-line sum of eight inputs that no named concept of up to three inputs reads fully (concept score 0.66, partial), and the BMI hinge has a reading but hardly changes the prediction."
+      },
+      {
+        "location": "record.resisted",
+        "part": "ann_31",
+        "text": "The very low predictions in the fast-heart, high-pressure corner rest on 32 training patients, and the noise column's edge is a fitted dependence with no clinical reading."
+      }
+    ]
+  },
+  "provenance": {
+    "templated_texts": 49,
+    "queries": 62
+  },
+  "summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "warn": 0,
+    "info": 0,
+    "unchecked_freetext": 55,
+    "verdict": "numbers reproduce",
+    "seconds": 3.5
+  }
+}

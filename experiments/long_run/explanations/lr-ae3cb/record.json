@@ -1,0 +1,59 @@
+{
+  "label": "lr-ae3cb",
+  "genome_id": "466cca51-4501-4488-8b8e-2f71f7ff7902",
+  "start": "2026-11-15T18:39:30+13:00",
+  "end": "",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 7,
+  "n_composition_annotations": 3,
+  "n_splits": 11,
+  "n_identity_nodes": 1,
+  "hidden_nodes": 19,
+  "hidden_nodes_single_leaf_no_split": 12,
+  "hidden_nodes_in_any_annotation": 19,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 1.7763568394002505e-15,
+  "closed_form_max_abs_err": 0.03579989433819897,
+  "summary": "The network combines four effects. A saddle in systolic pressure and heart rate: high pressure with a slow heart rate raises the predicted risk (an arm read as sbp / heart_rate, concept score 0.96), a fast heart rate without high pressure raises it through a shock gate (detector concept heart_rate > 76 and sbp < 145, score 0.97), and a brake that opens with a fast rate or high pressure cancels the direct terms, so a fast heart rate with high pressure is low risk (mean predicted risk 1.2% for the 38 training patients matching heart_rate > 90 and sbp > 145). A U in serum sodium with a flat bottom, steeper on the low side, where very low sodium also opens the shock gate (mean predicted risk 58.8% for sodium < 134, 28.0% for sodium >= 134 and sodium <= 139 and 53.1% for sodium > 139). Straight-line rises with age and creatinine through direct terms, and smaller additions for smoking, diabetes and male sex; body-mass index barely matters and the noise input is unconnected. The annotated model reproduces the network (function preservation error 1.8e-15) with full structural and compositional coverage.",
+  "summary_template": "The network combines four effects. A saddle in systolic pressure and heart rate: high pressure with a slow heart rate raises the predicted risk (an arm read as sbp / heart_rate, concept score {{q:q_2ff05f6ffa.score|.2f}}), a fast heart rate without high pressure raises it through a shock gate (detector concept {{q:q_2f3701e409.concept}}, score {{q:q_2f3701e409.score|.2f}}), and a brake that opens with a fast rate or high pressure cancels the direct terms, so a fast heart rate with high pressure is low risk (mean predicted risk {{q:q_05066f8d62.subgroup.mean_predicted_risk|.1%}} for the {{q:q_05066f8d62.subgroup.n}} training patients matching {{q:q_05066f8d62.where}}). A U in serum sodium with a flat bottom, steeper on the low side, where very low sodium also opens the shock gate (mean predicted risk {{q:q_fa69ce3c4a.subgroup.mean_predicted_risk|.1%}} for {{q:q_fa69ce3c4a.where}}, {{q:q_9a206f3486.subgroup.mean_predicted_risk|.1%}} for {{q:q_9a206f3486.where}} and {{q:q_8674f0ccb4.subgroup.mean_predicted_risk|.1%}} for {{q:q_8674f0ccb4.where}}). Straight-line rises with age and creatinine through direct terms, and smaller additions for smoking, diabetes and male sex; body-mass index barely matters and the noise input is unconnected. The annotated model reproduces the network (function preservation error {{q:q_8ddaa6b825.function_preservation_max_abs_err|.1e}}) with full structural and compositional coverage.",
+  "resisted": "No part resisted. Limits: the closed forms are rounded and so approximate (largest error 0.036 on a part whose output spans 10.4 score units); the direct-terms concept is the part's own three largest terms rather than a new concept; the gate, low-sodium hinge and relay are units owned by compositions, read through their self-probes but not concept-probed (the concept probe is for leaves); the hierarchy places the sodium composition inside the shock-gate composition because the relay feeds the gate, which is a data-flow grouping rather than a clinical one.",
+  "resisted_template": "No part resisted. Limits: the closed forms are rounded and so approximate (largest error {{q:q_8ddaa6b825.closed_form_max_abs_err|.3f}} on a part whose output spans {{q:q_8ddaa6b825.leaves[1].exit_scale|.1f}} score units); the direct-terms concept is the part's own three largest terms rather than a new concept; the gate, low-sodium hinge and relay are units owned by compositions, read through their self-probes but not concept-probed (the concept probe is for leaves); the hierarchy places the sodium composition inside the shock-gate composition because the relay feeds the gate, which is a data-flow grouping rather than a clinical one.",
+  "recheck_summary": {},
+  "recheck_notes": "Recheck v3: 0 mismatch, 0 needs_review. The unchecked free-text sentences are qualitative descriptions (shape words, part roles) with no numbers.",
+  "tool_bugs": "No tool failure. Notes: (1) a node that is a leaf's hidden entry (the relay's first unit, fed by the low-sodium hinge) is flagged by get_coverage as 'only as entries', and an edge from a composition-owned unit into another branch's leaf is left uncovered unless some annotation lists it; both were fixed by moving the relay into the sodium composition and nesting that composition under the shock gate. (2) query_subgroup's mean_contribution for a composition (shock_gate) includes every exit of its descendants, so the gate's own effect was quoted from query_ablate(nodes=[gate unit]) instead. (3) The system clock advanced slowly relative to the work; the start and end times are from date.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 306,
+    "provenance_backed": 306,
+    "allow_listed": 0,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 7,
+      "other": 3
+    },
+    "audit": {
+      "references": 306,
+      "checked": 306
+    },
+    "self_probe": {
+      "parts": [
+        "direct_terms",
+        "rate_pressure_brake",
+        "high_sbp_low_hr_arm",
+        "high_hr_low_sbp_detector",
+        "high_sodium_arm",
+        "male_unit",
+        "smoker_unit",
+        "sodium_u_with_pressure",
+        "shock_gate",
+        "root"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0
+  }
+}

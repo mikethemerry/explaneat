@@ -1,0 +1,523 @@
+{
+ "item_id": "lr-8a025",
+ "genome_id": "a5e92f55-d32c-4fdd-8b0b-a35369f11d45",
+ "target_hash": null,
+ "target_hash_note": "the recheck report for a record target carries no target_hash",
+ "target": "experiments/long_run/explanations/lr-8a025.json",
+ "verifier": "independent verifier agent (explanation-verifier skill)",
+ "started_at": "2026-11-15T20:41:33+13:00",
+ "finished_at": "2026-11-15T20:52:00+13:00",
+ "minutes": 11,
+ "overall": {
+  "grade": "weakened",
+  "summary": "Every number reproduces and no hypothesis is contradicted; the summary's 'both high' misdescribes a combined-use threshold, one heavy-use number uses the wrong population, the voice-mail crossover is extrapolation, the evening-charge onset is placed too high, and a stored meaning grade contradicts the record."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "weakened",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "Heavy use: when the day charge and evening minutes are both high and the customer has not taken a voice-mail plan, a serial hinge opens",
+   "check": "probe day charge x evening minutes; subgroup of open-gate rows below median evening minutes",
+   "evidence": "The gate is a threshold on combined use, not on both being high. Typical customer: day charge 58 dollars with 60 evening minutes gives 99.7%; 350 evening minutes with a 35-dollar day charge (median 30.69) gives 100%. In training, 66 of the 267 open-gate customers have below-median evening minutes (201.4) and 9 have under 150. The overall_function text ('combined day charge and evening minutes') states it correctly.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-8a025.json --sweep 'total day charge=46,50,54,58' --sweep 'total eve minutes=60,90,120'",
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-8a025.json --sweep 'total eve minutes=250,300,350' --sweep 'total day charge=25,30,35,40'",
+    "uv run python -m explaneat verify subgroup experiments/long_run/explanations/lr-8a025.json --where \"node_469 > 0 and `total eve minutes` < 201.4\""
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_107",
+   "claims": [],
+   "location": "operations.heavy_use_gate.hypothesis",
+   "statement": "the same customer with a voice-mail plan stays at below 1% at 50 dollars and crosses over at 60 (93%)",
+   "check": "probe day charge 57:60 with voice mail plan=1; subgroup of voice-mail customers with high day charge",
+   "evidence": "Reproduces (0.2% at 50, 93.2% at 60), but the crossover (0.9% at 58.5, 54.5% at 59.5) sits at the edge of the data: the training maximum is 59.76 dollars, the 99th percentile 51.8, and no voice-mail customer has a day charge above 58. In the data the voice-mail damping is supported only as 'stays low': 13 voice-mail customers above 50 dollars, 0 churned, mean predicted 1.0%. The crossover is extrapolation, not evidence.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-8a025.json --set 'voice mail plan=1' --sweep 'total day charge=57:60:7'",
+    "uv run python -m explaneat verify subgroup experiments/long_run/explanations/lr-8a025.json --where \"`voice mail plan` == '1' and `total day charge` > 58\"",
+    "uv run python -m explaneat verify subgroup experiments/long_run/explanations/lr-8a025.json --where \"`voice mail plan` == '1' and `total day charge` > 50\""
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_107",
+   "claims": [],
+   "location": "operations.heavy_use_gate.hypothesis",
+   "statement": "Second role: with the gate closed, node 4823 is a hinge that is positive for customers with few customer-service calls (it is on for 3207 customers)",
+   "check": "subgroup node_4823 > 0, with and without node_469 == 0",
+   "evidence": "3207 is the count over all rows (264 of them have the gate open). With the gate closed, node 4823 is on for 2943 customers. Right direction and mechanism, wrong population for the number.",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/long_run/explanations/lr-8a025.json --where 'node_4823 > 0'",
+    "uv run python -m explaneat verify subgroup experiments/long_run/explanations/lr-8a025.json --where 'node_4823 > 0 and node_469 == 0'"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_100",
+   "claims": [],
+   "location": "operations.eve_charge_hinge.hypothesis",
+   "statement": "a unit that rises with the total evening charge above roughly the typical value",
+   "check": "probe --sweep 'total eve charge=5:30:11'; subgroup node_263609 > 0",
+   "evidence": "The hinge switches on at about 15.3 dollars (0 at 15.0, -0.085 at 17.5), below the median of 17.12; it is on for 2615 of 4000 customers (65.4%), so the onset is near the 35th percentile, not the typical value. Values -0.38 at 25 dollars and -0.16 mean reproduce.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-8a025.json --sweep 'total eve charge=5:30:11'",
+    "uv run python -m explaneat verify subgroup experiments/long_run/explanations/lr-8a025.json --where 'node_263609 > 0'"
+   ]
+  },
+  {
+   "id": "V5",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_101",
+   "claims": [],
+   "location": "operations.account_length_gate.hypothesis",
+   "statement": "the part contributes 0.00 at 51 days and 0.50 at 201",
+   "check": "verify vars; probe --sweep 'account length=1:241:13' --sweep state=2,29",
+   "evidence": "The numbers reproduce (0 below about 92, 0.495 at 201, 0 for Nebraska), but the data give account length with no unit; 'days' is an assumption the data do not support.",
+   "commands": [
+    "uv run python -m explaneat verify vars experiments/long_run/explanations/lr-8a025.json",
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-8a025.json --sweep 'account length=1:241:13' --sweep 'state=2,29'"
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "weakened",
+   "level": "L1",
+   "part": "ann_108",
+   "claims": [],
+   "location": "structure.night_calls_tangle",
+   "statement": "leaf meaning 'partial' (record) and 'described rather than explained' (hypothesis)",
+   "check": "compare the meaning grade stored on the annotate operation with the record",
+   "evidence": "The annotation's stored meaning grade is 'meaningful' (concept 'area code:510, state:0, total night calls'), which contradicts the record's 'partial' and the hypothesis itself; the record's own resisted text says the concept matches are artefacts of constant exits.",
+   "commands": []
+  },
+  {
+   "id": "F1",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_102",
+   "claims": [],
+   "location": "operations.state_gates_lower.hypothesis",
+   "statement": "The 146 training customers from Hawaii and Washington DC have observed churn 6.2% against 14.5% for the rest, and this part adds -2.11 to their score",
+   "check": "subgroup state in ['7','11'] on train and on test",
+   "evidence": "Train numbers reproduce (9 of 146), but on the test split these customers churn at 17.9% (5 of 28) against 14.0%, while the model predicts 8.8%. A score shift of -2.1 for a location is likely fitted to sample noise in states of 70-100 customers. The same caution applies to the other state parts.",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/long_run/explanations/lr-8a025.json --split test --where \"state in ['7','11']\""
+   ]
+  },
+  {
+   "id": "F2",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_96",
+   "claims": [],
+   "location": "operations.day_charge_hinge.hypothesis",
+   "statement": "heavy daytime spending lowers the score through this part",
+   "check": "probe day charge 30:60 at the typical customer",
+   "evidence": "Below the heavy-use threshold the model predicts lower churn as day charge rises (1.6% at 35 dollars, 0.6% at 42.5) and then jumps (28.5% at 45, 100% at 47.5). Reproduces the hypothesis, but a dip just before a steep rise conflicts with the usual reading that heavier day use raises churn; the part reads as a compensating term, not a customer behaviour.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-8a025.json --sweep 'total day charge=30:60:13' --sweep 'voice mail plan=0,1'"
+   ]
+  },
+  {
+   "id": "U1",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "1.0 (compositional 1.0, hierarchy complete, single root churn_score containing the output)",
+   "check": "recheck / probe / subgroup / ablate as listed",
+   "evidence": "verify recheck: structural 1.0, compositional 1.0, no uncovered nodes or edges, 25 null inputs, hierarchy complete",
+   "commands": []
+  },
+  {
+   "id": "U2",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "6.66e-16",
+   "check": "recheck / probe / subgroup / ablate as listed",
+   "evidence": "recheck reproduces 6.66e-16",
+   "commands": []
+  },
+  {
+   "id": "U3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.closed_form_max_abs_err",
+   "statement": "0.0271",
+   "check": "recheck / probe / subgroup / ablate as listed",
+   "evidence": "recheck reproduces 0.02715 (direct_usage_terms); per-leaf closed forms agree",
+   "commands": []
+  },
+  {
+   "id": "U4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.n_splits",
+   "statement": "23 splits, 2 identity nodes, 13 leaves, 1 composition, 49 hidden nodes, 48 in a single leaf unsplit",
+   "check": "recheck / probe / subgroup / ablate as listed",
+   "evidence": "op counts 23 split_node, 2 add_identity_node, 14 annotate; leaf units sum to 51 including three copies of 171662 (two leaves)",
+   "commands": []
+  },
+  {
+   "id": "U5",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_109",
+   "claims": [],
+   "location": "record.summary",
+   "statement": "customer-service calls: at or below 3% up to three calls, 43% at five, 95% at seven; direct edge plus cancelling hinge",
+   "check": "recheck / probe / subgroup / ablate as listed",
+   "evidence": "probe sweep: 1.7, 1.6, 1.5, 3.0, 13.2, 42.8, 78.7, 94.8%; heavy_use_gate contribution falls from +0.69 to -3.53 at 3 calls while the direct term rises 1.60 per call",
+   "commands": []
+  },
+  {
+   "id": "U6",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_107",
+   "claims": [],
+   "location": "record.summary",
+   "statement": "open for 267 training customers, observed churn 90.3%",
+   "check": "recheck / probe / subgroup / ablate as listed",
+   "evidence": "subgroup node_469 > 0: n=267, 241 churned (90.3%), mean predicted 90.2%; test split 68 rows, 88.2%",
+   "commands": []
+  },
+  {
+   "id": "U7",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_105",
+   "claims": [],
+   "location": "record.summary",
+   "statement": "international plan: typical customer 2% to 25%; training AUC 0.928",
+   "check": "recheck / probe / subgroup / ablate as listed",
+   "evidence": "probe international plan=0,1: 1.6% to 25.5%; AUC 0.9277",
+   "commands": []
+  },
+  {
+   "id": "U8",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_108",
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "night-calls tangle: switching it off leaves AUC at 0.928; three dead units; one open-gate voice-mail customer; direct state offsets partial 0.55",
+   "check": "recheck / probe / subgroup / ablate as listed",
+   "evidence": "ablate night_calls_tangle: 0.9277 both ways, mean |change| 0.0004-0.0005; nodes 4009, 214911, 27897 (and 191982) never positive; subgroup node_469>0 and voice-mail: n=1; probe score 0.547",
+   "commands": []
+  },
+  {
+   "id": "U9",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_109",
+   "claims": [],
+   "location": "operations.churn_score.hypothesis",
+   "statement": "risk 2/1/3/13/43/95% at 0/2/3/4/5/7 calls; 318 with four or more calls churn 50.0%, predicted 44% vs 11.1% and 12%; unconnected inputs; direct edges to means AUC 0.928 -> 0.658",
+   "check": "recheck / probe / subgroup / ablate as listed",
+   "evidence": "probe and subgroup reproduce (318, 50.0%, 44.0% vs 11.1%, 11.8%); ablating both direct parts to means gives AUC 0.6585; null inputs are day minutes, eve calls, night charge, intl charge, vmail messages, area 408/415 and 18 of 51 states ('several', 'about a third' in overall_function)",
+   "commands": []
+  },
+  {
+   "id": "U10",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_107",
+   "claims": [],
+   "location": "operations.heavy_use_gate.hypothesis",
+   "statement": "day-charge sweep 1% at 40, 29% at 45, >99% at 50; 95% at 150 evening minutes for day charge 50; open gate 267, 90.3%, 90%, 8.7% rest; 4534 positive for 2972 outside 510 and 0 of 960 inside; node 97 zero on 87 rows, all Ohio; similar risk by area code; AUC 0.928 -> 0.649",
+   "check": "recheck / probe / subgroup / ablate as listed",
+   "evidence": "probe: 0.9%, 28.5%, 100%; 94.6% at 150 minutes (0.2% at 125); subgroups reproduce every count; area-510 mean predicted 14.4% vs 14.4%; ablate --to mean AUC 0.6489",
+   "commands": []
+  },
+  {
+   "id": "U11",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_105",
+   "claims": [],
+   "location": "operations.direct_usage_terms.hypothesis",
+   "statement": "weights 2.08, 0.79, -0.24, -0.18, 0.13, -0.09; contribution 1.73 with an international plan; -2.55 at zero calls to 8.62 at seven in equal steps; 380 plan holders churn 42.4% vs 11.2%, part adds 2.32; AUC 0.928 -> 0.668",
+   "check": "recheck / probe / subgroup / ablate as listed",
+   "evidence": "closed form reproduces each weight; probe +1.7324, -2.5522 ... +8.6185 (step 1.596); subgroup 380, 42.4%, +2.3174; ablate --to mean AUC 0.668",
+   "commands": []
+  },
+  {
+   "id": "U12",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_106",
+   "claims": [],
+   "location": "operations.direct_state_offsets.hypothesis",
+   "statement": "largest weights Ohio -0.59, Vermont -0.31, Washington 0.20, Texas 0.17, California 0.14; Arkansas 0.11, Vermont -2.13, Washington 1.62; risk <1%, 13%, 3%; Ohio -3.91 cancelled by heavy-use gate 4.50 over 87 Ohio customers; AUC 0.928 -> 0.918",
+   "check": "recheck / probe / subgroup / ablate as listed",
+   "evidence": "closed form top five confirmed; probe +0.1092, -2.1321, +1.6188, risk 0.4%, 13.1%, 3.2%; subgroup state 35: -3.9118 and +4.5045; ablate AUC 0.9176",
+   "commands": []
+  },
+  {
+   "id": "U13",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_96",
+   "claims": [],
+   "location": "operations.day_charge_hinge.hypothesis",
+   "statement": "0.00 at 35, -0.58 at 40, -3.19 at 60; heavy-use 78.72 at 60; on for 1182, -0.75; node 171662_a dead",
+   "check": "recheck / probe / subgroup / ablate as listed",
+   "evidence": "probe 0, -0.5757, -3.1930, +78.7210; subgroup 1182, -0.7517; node_171662_a > 0 on 0 rows",
+   "commands": []
+  },
+  {
+   "id": "U14",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_97",
+   "claims": [],
+   "location": "operations.state_gate_pair.hypothesis",
+   "statement": "Texas only; Alabama acts on 0 of 105; Texas 95 of 95, -0.41; 0.00/0.00/-0.41 for Arkansas/Alabama/Texas; Texas 2% vs Arkansas 3%",
+   "check": "recheck / probe / subgroup / ablate as listed",
+   "evidence": "subgroups reproduce; part acts on 0 of 3905 non-Texas rows; the evening-charge path is dead (contribution -0.4089 at every evening charge 0-30); probe risk 2.0% vs 3.2%",
+   "commands": []
+  },
+  {
+   "id": "U15",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_98",
+   "claims": [],
+   "location": "operations.day_calls.hypothesis",
+   "statement": "0.00 at 75, 0.21 at 100, 0.81 at 150; risk 1% at 50 to 3% at 150; on for 3309, 0.28",
+   "check": "recheck / probe / subgroup / ablate as listed",
+   "evidence": "probe: onset about 81 calls, +0.2059 at 100; subgroup 3309, +0.2845",
+   "commands": []
+  },
+  {
+   "id": "U16",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_99",
+   "claims": [],
+   "location": "operations.intl_plan_hinge.hypothesis",
+   "statement": "acts on 380 of 380 holders and 0 of 3620 others; 0.00 vs 0.37; with the direct edge 2% to 25%",
+   "check": "recheck / probe / subgroup / ablate as listed",
+   "evidence": "subgroups and probe reproduce (+0.3696)",
+   "commands": []
+  },
+  {
+   "id": "U17",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_102",
+   "claims": [],
+   "location": "operations.state_gates_lower.hypothesis",
+   "statement": "Arkansas 0.02, Hawaii -2.22, DC -2.00, Virginia -1.39, Nebraska -1.12, Connecticut -0.23, Oklahoma -0.05; 146 HI+DC customers 6.2% vs 14.5%, -2.11; 549 customers -0.99",
+   "check": "recheck / probe / subgroup / ablate as listed",
+   "evidence": "probe reproduces each value; subgroups 146 (9 churned), -2.1090; 549, -0.9931 (see flag F1). Note: the gates have positive biases, so the exits are non-zero for everyone and give a constant +0.02 to other states",
+   "commands": []
+  },
+  {
+   "id": "U18",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_103",
+   "claims": [],
+   "location": "operations.state_gates_raise.hypothesis",
+   "statement": "Arkansas -0.01, Maine 0.53, Minnesota 0.40, Michigan 0.11, New York 0.08, Tennessee 0.06; 427 customers churn 18.0% vs 13.7%, +0.25",
+   "check": "recheck / probe / subgroup / ablate as listed",
+   "evidence": "probe and subgroup reproduce",
+   "commands": []
+  },
+  {
+   "id": "U19",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_104",
+   "claims": [],
+   "location": "operations.single_state_boost.hypothesis",
+   "statement": "New Jersey +1.06 through this part, heavy-use gate -0.98 vs -2.33, whole-model risk 3% vs 2%; 90 NJ customers, +1.06, churn 24.4% vs 13.9%",
+   "check": "recheck / probe / subgroup / ablate as listed",
+   "evidence": "probe: the heavy-use gate takes back 1.35 at every customer-service count (0-5) and every day charge tested (30-50), so the net New Jersey effect is lower risk throughout; subgroup 90, 24.4%",
+   "commands": []
+  },
+  {
+   "id": "U20",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_108",
+   "claims": [],
+   "location": "operations.night_calls_tangle.hypothesis",
+   "statement": "15132 is 0.23 at 50 calls, 4.74 at 150; part contributes 0.038 at 150; the rise with night calls comes from the direct edge; AUC unchanged; mean |change| 0.0004",
+   "check": "recheck / probe / subgroup / ablate as listed",
+   "evidence": "probe --nodes: 0.23, 4.738, +0.0381; direct term -1.29 to -0.63; ablate reproduces",
+   "commands": []
+  },
+  {
+   "id": "U21",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_101",
+   "claims": [],
+   "location": "operations.account_length_gate.hypothesis",
+   "statement": "rises with account length, shut for Nebraska; 0 at 51, 0.50 at 201; 72 Nebraska rows act on 0; on for 2623, 0.16",
+   "check": "recheck / probe / subgroup / ablate as listed",
+   "evidence": "probe and subgroups reproduce (+0.4954 at 201; 2623, +0.1635); node 191982 never positive",
+   "commands": []
+  },
+  {
+   "id": "U22",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "structure",
+   "statement": "every annotation's entry, exit and subgraph nodes; one root with 13 leaf children",
+   "check": "recheck / probe / subgroup / ablate as listed",
+   "evidence": "recheck: hierarchy complete, all under root, root contains output; parts read the inputs listed by verify vars",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_109": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_105": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_106": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_96": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_102": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_98": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_104": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_99": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_103": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_97": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_107": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_100": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_101": {
+   "grade": "weakened",
+   "level": "L2"
+  },
+  "ann_108": {
+   "grade": "weakened",
+   "level": "L1"
+  }
+ },
+ "leaf_meaning": {
+  "heavy_use_gate": {
+   "grade": "meaningful",
+   "why": "Heavy combined day and evening use without a voice-mail plan sends the predicted churn towards certainty, and the data agree (90.3% observed in the 267 open-gate customers, 88.2% on test)."
+  },
+  "direct_usage_terms": {
+   "grade": "meaningful",
+   "why": "More customer-service calls and an international plan raise the predicted risk, more international calls and a voice-mail plan lower it; probes and subgroups confirm each direction."
+  },
+  "direct_state_offsets": {
+   "grade": "partial",
+   "why": "Per-state score offsets with no customer-level reading; the largest (Ohio) is cancelled inside another part."
+  },
+  "day_charge_hinge": {
+   "grade": "partial",
+   "why": "Holds only as a term that offsets the heavy-use gate; on its own it makes heavier day use lower the risk, which has no domain reading."
+  },
+  "state_gate_pair": {
+   "grade": "partial",
+   "why": "A Texas-only score offset (confirmed: acts on 95 of 95 Texas rows, none elsewhere) with no reading beyond location."
+  },
+  "day_calls": {
+   "grade": "meaningful",
+   "why": "More daytime calls raise the score from about 81 calls upwards; a small, monotone usage effect the probe confirms."
+  },
+  "intl_plan_hinge": {
+   "grade": "meaningful",
+   "why": "An extra rise for international-plan holders, on for all 380 of them and none of the others."
+  },
+  "eve_charge_hinge": {
+   "grade": "partial",
+   "why": "A small compensating term against the heavy-use gate; its stated onset is off (about 15.3 dollars, not the typical 17.1)."
+  },
+  "account_length_gate": {
+   "grade": "partial",
+   "why": "Longer accounts raise the score slightly, but the Nebraska shut-off has no reading and the unit is assumed."
+  },
+  "state_gates_lower": {
+   "grade": "partial",
+   "why": "Location offsets that reproduce on training but not on test for Hawaii and Washington DC; no customer-level reading."
+  },
+  "state_gates_raise": {
+   "grade": "partial",
+   "why": "Location offsets (mainly Maine and Minnesota) with no customer-level reading."
+  },
+  "single_state_boost": {
+   "grade": "partial",
+   "why": "A New Jersey offset that the heavy-use gate more than cancels, so the part's own direction is not the model's."
+  },
+  "night_calls_tangle": {
+   "grade": "closed-form-only",
+   "why": "Described, not explained: dead and constant units with negligible effect (AUC unchanged when switched off)."
+  }
+ },
+ "statements_checked": 118,
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ],
+ "counts": {
+  "refuted": 0,
+  "weakened": 6,
+  "upheld": 22,
+  "flag": 2
+ }
+}

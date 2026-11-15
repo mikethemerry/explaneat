@@ -1,0 +1,853 @@
+{
+  "target": "experiments/long_run/explanations/lr-8a025.json",
+  "genome_id": "a5e92f55-d32c-4fdd-8b0b-a35369f11d45",
+  "label": "lr-8a025",
+  "operations_source": "database",
+  "files": {
+    "record": "experiments/long_run/explanations/lr-8a025.json"
+  },
+  "findings": [],
+  "structure": {
+    "n_train": 4000,
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "uncovered_nodes": [],
+    "uncovered_edges": [],
+    "null_nodes": [
+      "-10",
+      "-13",
+      "-18",
+      "-19",
+      "-20",
+      "-21",
+      "-22",
+      "-27",
+      "-28",
+      "-32",
+      "-34",
+      "-36",
+      "-44",
+      "-46",
+      "-47",
+      "-51",
+      "-53",
+      "-54",
+      "-58",
+      "-59",
+      "-6",
+      "-63",
+      "-67",
+      "-7",
+      "-70"
+    ],
+    "coverage_hierarchy": {
+      "roots": [
+        "churn_score"
+      ],
+      "global_root": "churn_score",
+      "root_contains_outputs": true,
+      "complete": true,
+      "composed": 13,
+      "required": 13,
+      "exempt_disconnected": []
+    },
+    "hierarchy": {
+      "n_annotations": 14,
+      "roots": [
+        "churn_score"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "not_under_root": [],
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 6.661338147750939e-16,
+    "closed_form_max_abs_err": 0.027149765415757088,
+    "numeric_max_abs_err": 7.105427357601002e-15,
+    "leaves": [
+      {
+        "id": "ann_96",
+        "name": "day_charge_hinge",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.013954765657380186,
+        "exit_scale": 3.340378265619168
+      },
+      {
+        "id": "ann_97",
+        "name": "state_gate_pair",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.0027700408087465433,
+        "exit_scale": 5.880412796716989
+      },
+      {
+        "id": "ann_98",
+        "name": "day_calls",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.003490982188977476,
+        "exit_scale": 6.237240751863874
+      },
+      {
+        "id": "ann_99",
+        "name": "intl_plan_hinge",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.0009822388927450132,
+        "exit_scale": 0.19701742658640442
+      },
+      {
+        "id": "ann_100",
+        "name": "eve_charge_hinge",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.00039306739155220427,
+        "exit_scale": 3.64129084218887
+      },
+      {
+        "id": "ann_101",
+        "name": "account_length_gate",
+        "numeric_max_abs_err": 1.1102230246251565e-16,
+        "closed_form_max_abs_err": 0.0017697526218024562,
+        "exit_scale": 0.47797124915769074
+      },
+      {
+        "id": "ann_102",
+        "name": "state_gates_lower",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.00429669994401749,
+        "exit_scale": 6.851241652263856
+      },
+      {
+        "id": "ann_103",
+        "name": "state_gates_raise",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.005839539107662439,
+        "exit_scale": 6.635888035437388
+      },
+      {
+        "id": "ann_104",
+        "name": "single_state_boost",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.002164007995661521,
+        "exit_scale": 6.752944146113101
+      },
+      {
+        "id": "ann_105",
+        "name": "direct_usage_terms",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.027149765415757088,
+        "exit_scale": 14.048502825848455
+      },
+      {
+        "id": "ann_106",
+        "name": "direct_state_offsets",
+        "numeric_max_abs_err": 4.440892098500626e-16,
+        "closed_form_max_abs_err": 0.0032935237196061173,
+        "exit_scale": 3.91180909334526
+      },
+      {
+        "id": "ann_107",
+        "name": "heavy_use_gate",
+        "numeric_max_abs_err": 7.105427357601002e-15,
+        "closed_form_max_abs_err": 0.02328834754496434,
+        "exit_scale": 19.36040472653623
+      },
+      {
+        "id": "ann_108",
+        "name": "night_calls_tangle",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.006603781073019732,
+        "exit_scale": 6.816295682120645
+      }
+    ],
+    "op_counts": {
+      "rename_node": 71,
+      "split_node": 23,
+      "add_identity_node": 2,
+      "annotate": 14
+    },
+    "full_coverage": true
+  },
+  "closed_forms": {
+    "ann_107": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( - 1.45 x_{areaCode:510_b} \\\\\n&\\quad + 0.184 x_{state:31_a} \\\\\n&\\quad + 0.272 \\operatorname{relu}{\\left(1.05 x_{state:43_b} + 0.109 \\right)} \\\\\n&\\quad - 1.42 \\operatorname{relu}{\\left(0.988 x_{areaCode:510_d} - 0.811 \\operatorname{relu}{\\left(0.641 x_{totalDayCharge_a} + 0.642 x_{totalEveMinutes} + 0.103 x_{totalIntlMinutes} - 0.971 x_{voiceMailPlan_b} + 0.633 \\operatorname{relu}{\\left(1.29 x_{totalDayCharge_b} + 0.547 x_{totalNightMinutes} - 0.0552 \\right)} - 2.69 \\right)} - 0.319 \\right)} \\\\\n&\\quad + 0.532 \\operatorname{relu}{\\left(0.00358 x_{state:0_a} - 2.11 x_{state:35_b} - 0.0239 x_{state:41} + 1.47 \\right)} \\\\\n&\\quad -1.56 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_1 &= \\operatorname{relu}\\bigl( - 0.365 x_{numberCustomerServiceCalls_b} \\\\\n&\\quad + 5.25 \\operatorname{relu}{\\left(0.641 x_{totalDayCharge_a} + 0.642 x_{totalEveMinutes} + 0.103 x_{totalIntlMinutes} - 0.971 x_{voiceMailPlan_b} + 0.633 \\operatorname{relu}{\\left(1.29 x_{totalDayCharge_b} + 0.547 x_{totalNightMinutes} - 0.0552 \\right)} - 2.69 \\right)} \\\\\n&\\quad + 0.264 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_2 &= \\operatorname{relu}\\bigl( 0.882 \\operatorname{relu}{\\left(1.05 x_{state:43_b} + 0.109 \\right)} \\\\\n&\\quad + 1.01 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_3 &= \\operatorname{relu}\\bigl( 0.00358 x_{state:0_a} \\\\\n&\\quad - 2.11 x_{state:35_b} \\\\\n&\\quad - 0.0239 x_{state:41} \\\\\n&\\quad + 1.47 \\bigr)\n\\end{aligned}",
+    "ann_105": "\\begin{aligned}\ny_0 &= - 0.0918 x_{areaCode:510_a} \\\\\n&\\quad + 0.788 x_{internationalPlan_a} \\\\\n&\\quad + 2.08 x_{numberCustomerServiceCalls_a} \\\\\n&\\quad - 0.239 x_{totalIntlCalls_a} \\\\\n&\\quad + 0.131 x_{totalNightCalls_a} \\\\\n&\\quad - 0.183 x_{voiceMailPlan_a}\n\\end{aligned}",
+    "ann_106": "\\begin{aligned}\ny_0 &= - 0.129 x_{state:10} \\\\\n&\\quad - 0.0666 x_{state:12} \\\\\n&\\quad + 0.0406 x_{state:15} \\\\\n&\\quad + 0.115 x_{state:16_a} \\\\\n&\\quad + 0.0888 x_{state:18} \\\\\n&\\quad + 0.0498 x_{state:19_a} \\\\\n&\\quad - 0.0297 x_{state:20} \\\\\n&\\quad - 0.0162 x_{state:22_a} \\\\\n&\\quad - 0.0223 x_{state:30} \\\\\n&\\quad + 0.0181 x_{state:34_a} \\\\\n&\\quad - 0.587 x_{state:35_a} \\\\\n&\\quad - 0.0338 x_{state:36_a} \\\\\n&\\quad - 0.00298 x_{state:38} \\\\\n&\\quad - 0.0467 x_{state:3} \\\\\n&\\quad + 0.167 x_{state:43_a} \\\\\n&\\quad + 0.0409 x_{state:44} \\\\\n&\\quad - 0.314 x_{state:46} \\\\\n&\\quad + 0.201 x_{state:47} \\\\\n&\\quad - 0.126 x_{state:49_a} \\\\\n&\\quad + 0.144 x_{state:4} \\\\\n&\\quad - 0.129 x_{state:6_a} \\\\\n&\\quad - 0.0602 x_{state:8_a}\n\\end{aligned}",
+    "ann_96": "y_0 = \\operatorname{relu}{\\left(- 0.0674 x_{totalEveCharge_b} - 1.69 \\right)} \\\\ \\begin{aligned}\ny_1 &= \\operatorname{relu}\\bigl( 1.26 x_{totalDayCharge_c} \\\\\n&\\quad - 0.0714 \\operatorname{relu}{\\left(- 0.0674 x_{totalEveCharge_d} - 1.69 \\right)} \\\\\n&\\quad -0.678 \\bigr)\n\\end{aligned}",
+    "ann_102": "y_0 = \\operatorname{relu}{\\left(0.589 x_{state:29_b} + 0.11 \\right)} \\\\ y_1 = \\operatorname{relu}{\\left(0.764 x_{state:45} - 0.384 \\right)} \\\\ y_2 = \\operatorname{relu}{\\left(0.953 x_{state:36_b} + 0.133 \\right)} \\\\ \\begin{aligned}\ny_3 &= \\operatorname{relu}\\bigl( - 1.14 x_{state:49_b} \\\\\n&\\quad + 0.927 x_{state:6_b} \\\\\n&\\quad + 0.46 x_{state:8_b} \\\\\n&\\quad -0.272 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_4 &= \\operatorname{relu}\\bigl( 0.639 x_{state:11} \\\\\n&\\quad + 0.582 x_{state:7} \\\\\n&\\quad -0.117 \\bigr)\n\\end{aligned}",
+    "ann_98": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 0.786 x_{totalDayCalls} \\\\\n&\\quad + 0.795 \\operatorname{relu}{\\left(0.916 x_{totalDayCalls} + 0.725 \\right)} \\\\\n&\\quad + 0.739 \\bigr)\n\\end{aligned}",
+    "ann_104": "y_0 = \\operatorname{relu}{\\left(0.984 x_{state:31_e} + 0.265 \\right)} \\\\ \\begin{aligned}\ny_1 &= \\operatorname{relu}\\bigl( 0.0793 x_{state:31_c} \\\\\n&\\quad + 0.0214 \\operatorname{relu}{\\left(0.973 x_{state:31_d} - 1.33 \\right)} \\\\\n&\\quad -0.1 \\bigr)\n\\end{aligned}",
+    "ann_101": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 0.978 \\operatorname{relu}{\\left(0.987 - 0.224 \\operatorname{relu}{\\left(0.119 x_{accountLength} - 1.35 x_{state:29_a} - 0.13 \\right)} \\right)} \\\\\n&\\quad -2.41 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_1 &= \\operatorname{relu}\\bigl( 0.119 x_{accountLength} \\\\\n&\\quad - 1.35 x_{state:29_a} \\\\\n&\\quad -0.13 \\bigr)\n\\end{aligned}",
+    "ann_100": "y_0 = \\operatorname{relu}{\\left(1.0 x_{totalEveCharge_a} + 0.411 \\right)}",
+    "ann_99": "y_0 = \\operatorname{relu}{\\left(0.197 x_{internationalPlan_b} - 0.412 \\right)}",
+    "ann_103": "y_0 = \\operatorname{relu}{\\left(0.417 x_{state:21_a} - 0.763 \\right)} \\\\ y_1 = \\operatorname{relu}{\\left(0.951 x_{state:22_b} - 0.0183 \\right)} \\\\ y_2 = \\operatorname{relu}{\\left(0.83 x_{state:34_b} - 1.37 \\right)} \\\\ y_3 = \\operatorname{relu}{\\left(1.0 x_{state:42} - 1.41 \\right)} \\\\ y_4 = \\operatorname{relu}{\\left(0.975 x_{state:23} + 0.213 \\right)}",
+    "ann_97": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 0.598 x_{state:43_c} \\\\\n&\\quad + 0.588 \\operatorname{relu}{\\left(0.974 x_{state:43_d} - 0.93 \\right)} \\\\\n&\\quad - 0.245 \\operatorname{relu}{\\left(1.09 x_{state:1} + 1.02 \\operatorname{relu}{\\left(0.604 - 1.05 \\operatorname{relu}{\\left(- 0.0674 x_{totalEveCharge_c} - 1.69 \\right)} \\right)} + 0.807 \\right)} \\\\\n&\\quad -0.771 \\bigr)\n\\end{aligned}",
+    "ann_108": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 1.01 \\operatorname{relu}{\\left(0.926 x_{totalNightCalls_b} - 0.479 \\right)} \\\\\n&\\quad + 0.758 \\operatorname{relu}{\\left(0.945 x_{totalNightCalls_c} + 1.09 \\right)} \\\\\n&\\quad - 0.512 \\operatorname{relu}{\\left(- 0.118 x_{state:31_b} + 2.1 \\operatorname{relu}{\\left(0.942 \\operatorname{relu}{\\left(- 0.406 x_{totalIntlCalls_b} - 0.729 \\operatorname{relu}{\\left(1.03 x_{state:19_c} + 0.246 \\right)} - 0.295 \\operatorname{relu}{\\left(0.985 x_{state:21_b} + 0.365 \\operatorname{relu}{\\left(0.993 \\operatorname{relu}{\\left(1.06 - 0.411 \\operatorname{relu}{\\left(0.999 x_{state:0_b} + 0.563 \\right)} \\right)} + 0.567 \\right)} - 1.11 \\right)} - 1.08 \\right)} - 0.372 \\right)} - 0.525 \\right)} \\\\\n&\\quad + 0.23 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_1 &= \\operatorname{relu}\\bigl( 1.01 \\operatorname{relu}{\\left(0.495 - 0.138 \\operatorname{relu}{\\left(0.993 \\operatorname{relu}{\\left(1.06 - 0.411 \\operatorname{relu}{\\left(0.999 x_{state:0_b} + 0.563 \\right)} \\right)} + 0.567 \\right)} \\right)} \\\\\n&\\quad + 0.976 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_2 &= \\operatorname{relu}\\bigl( - 0.406 x_{totalIntlCalls_b} \\\\\n&\\quad - 0.729 \\operatorname{relu}{\\left(1.03 x_{state:19_c} + 0.246 \\right)} \\\\\n&\\quad - 0.295 \\operatorname{relu}{\\left(0.985 x_{state:21_b} + 0.365 \\operatorname{relu}{\\left(0.993 \\operatorname{relu}{\\left(1.06 - 0.411 \\operatorname{relu}{\\left(0.999 x_{state:0_b} + 0.563 \\right)} \\right)} + 0.567 \\right)} - 1.11 \\right)} \\\\\n&\\quad -1.08 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_3 &= \\operatorname{relu}\\bigl( 0.527 x_{state:16_b} \\\\\n&\\quad + 0.0126 x_{state:19_b} \\\\\n&\\quad + 0.285 \\operatorname{relu}{\\left(0.889 x_{areaCode:510_c} + 0.158 \\right)} \\\\\n&\\quad + 0.000994 \\operatorname{relu}{\\left(1.03 x_{state:19_c} + 0.246 \\right)} \\\\\n&\\quad -0.165 \\bigr)\n\\end{aligned}"
+  },
+  "freetext": {
+    "counts": {
+      "n_train": {
+        "ok": 30
+      },
+      "active_count": {
+        "ok": 2,
+        "unchecked": 1
+      },
+      "auc": {
+        "ok": 6,
+        "unchecked": 1
+      },
+      "mean_risk": {
+        "ok": 1
+      }
+    },
+    "checked": [
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.day_charge_hinge.evidence[2].payload.n",
+        "part": "ann_96"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.state_gate_pair.evidence[1].payload.n",
+        "part": "ann_97"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.state_gate_pair.evidence[2].payload.n",
+        "part": "ann_97"
+      },
+      {
+        "kind": "active_count",
+        "text": "on for 3309 training customers",
+        "status": "ok",
+        "node": "44670",
+        "stated": 3309,
+        "model": 3309,
+        "node_named": false,
+        "location": "operations.day_calls.hypothesis",
+        "part": "ann_98"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.day_calls.evidence[2].payload.n",
+        "part": "ann_98"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.intl_plan_hinge.evidence[1].payload.n",
+        "part": "ann_99"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.intl_plan_hinge.evidence[2].payload.n",
+        "part": "ann_99"
+      },
+      {
+        "kind": "active_count",
+        "text": "on for 2615 training customers",
+        "status": "ok",
+        "node": "263609",
+        "stated": 2615,
+        "model": 2615,
+        "node_named": false,
+        "location": "operations.eve_charge_hinge.hypothesis",
+        "part": "ann_100"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.eve_charge_hinge.evidence[2].payload.n",
+        "part": "ann_100"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.account_length_gate.evidence[3].payload.n",
+        "part": "ann_101"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.account_length_gate.evidence[4].payload.n",
+        "part": "ann_101"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.state_gates_lower.evidence[2].payload.n",
+        "part": "ann_102"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.state_gates_lower.evidence[3].payload.n",
+        "part": "ann_102"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.state_gates_raise.evidence[2].payload.n",
+        "part": "ann_103"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.single_state_boost.evidence[2].payload.n",
+        "part": "ann_104"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.928 to 0.668",
+        "status": "ok",
+        "stated": [
+          0.928,
+          0.668
+        ],
+        "model_full": 0.9276683384405785,
+        "model_part_off": [
+          0.6679512812017016,
+          0.6679512812017016,
+          0.6679512812017016
+        ],
+        "location": "operations.direct_usage_terms.hypothesis",
+        "part": "ann_105"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.direct_usage_terms.evidence[1].payload.n",
+        "part": "ann_105"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.direct_usage_terms.evidence[3].payload.n",
+        "part": "ann_105"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.direct_usage_terms.evidence[4].payload.n",
+        "part": "ann_105"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.928 to 0.918",
+        "status": "ok",
+        "stated": [
+          0.928,
+          0.918
+        ],
+        "model_full": 0.9276683384405785,
+        "model_part_off": [
+          0.917647984919049,
+          0.917647984919049,
+          0.917647984919049
+        ],
+        "location": "operations.direct_state_offsets.hypothesis",
+        "part": "ann_106"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.direct_state_offsets.evidence[1].payload.n",
+        "part": "ann_106"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.direct_state_offsets.evidence[3].payload.n",
+        "part": "ann_106"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.direct_state_offsets.evidence[4].payload.n",
+        "part": "ann_106"
+      },
+      {
+        "kind": "mean_risk",
+        "text": "mean predicted risk 90%",
+        "status": "ok",
+        "stated": 0.9,
+        "n": 267,
+        "model": [
+          {
+            "subgroup": "469 on",
+            "mean_risk": 0.9025
+          }
+        ],
+        "location": "operations.heavy_use_gate.hypothesis",
+        "part": "ann_107"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.928 to 0.649",
+        "status": "ok",
+        "stated": [
+          0.928,
+          0.649
+        ],
+        "model_full": 0.9276683384405785,
+        "model_part_off": [
+          0.6488677967775992,
+          0.6488677967775992,
+          0.6488677967775992
+        ],
+        "location": "operations.heavy_use_gate.hypothesis",
+        "part": "ann_107"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.heavy_use_gate.evidence[4].payload.n",
+        "part": "ann_107"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.heavy_use_gate.evidence[5].payload.n",
+        "part": "ann_107"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.heavy_use_gate.evidence[7].payload.n",
+        "part": "ann_107"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.heavy_use_gate.evidence[8].payload.n",
+        "part": "ann_107"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.heavy_use_gate.evidence[9].payload.n",
+        "part": "ann_107"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.heavy_use_gate.evidence[10].payload.n",
+        "part": "ann_107"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.heavy_use_gate.evidence[11].payload.n",
+        "part": "ann_107"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC at 0.928",
+        "status": "ok",
+        "stated": 0.928,
+        "model": 0.9276683384405785,
+        "location": "operations.night_calls_tangle.hypothesis",
+        "part": "ann_108"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.night_calls_tangle.evidence[2].payload.n",
+        "part": "ann_108"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.night_calls_tangle.evidence[3].payload.n",
+        "part": "ann_108"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.churn_score.evidence[1].payload.n",
+        "part": "ann_109"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.churn_score.evidence[2].payload.n",
+        "part": "ann_109"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC 0.928",
+        "status": "ok",
+        "stated": 0.928,
+        "model": 0.9276683384405785,
+        "location": "record.summary",
+        "part": "ann_109"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC at 0.928",
+        "status": "ok",
+        "stated": 0.928,
+        "model": 0.9276683384405785,
+        "location": "record.resisted",
+        "part": "ann_109"
+      }
+    ],
+    "unchecked_statements": [
+      {
+        "kind": "active_count",
+        "text": "on for 3207 customers",
+        "status": "unchecked",
+        "node": "4823",
+        "reason": "a share within a subgroup (qualifier before the number): check with verify subgroup",
+        "location": "operations.heavy_use_gate.hypothesis",
+        "part": "ann_107"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.928 to 0.658",
+        "status": "unchecked",
+        "stated": [
+          0.928,
+          0.658
+        ],
+        "model_full": 0.9276683384405785,
+        "reason": "the second number is not this part switched off at its mean or at 0 (another configuration, e.g. a different readout or a linearisation)",
+        "location": "operations.churn_score.hypothesis",
+        "part": "ann_109"
+      }
+    ],
+    "unchecked_sentences": [
+      {
+        "location": "operations.day_charge_hinge.hypothesis",
+        "part": "ann_96",
+        "text": "Self-probe (typical customer, sweeping day charge): this part contributes 0.00 at 35 US dollars, -0.58 at 40 and -3.19 at 60, while the heavy-use gate contributes 78.72 at 60."
+      },
+      {
+        "location": "operations.day_charge_hinge.hypothesis",
+        "part": "ann_96",
+        "text": "The hinge is on for 1182 training customers, adding -0.75 to their score on average."
+      },
+      {
+        "location": "operations.state_gate_pair.hypothesis",
+        "part": "ann_97",
+        "text": "Texas indicator: the part's exit (node 38242) is positive for Texas customers (code 43) and lowers their score slightly."
+      },
+      {
+        "location": "operations.state_gate_pair.hypothesis",
+        "part": "ann_97",
+        "text": "The Alabama input (code 1) pushes an inner unit up but that unit enters the exit with a negative weight, so it does not open the exit: over the 105 Alabama training customers the part acts on 0 rows."
+      },
+      {
+        "location": "operations.state_gate_pair.hypothesis",
+        "part": "ann_97",
+        "text": "Over the 95 Texas training customers the part acts on 95 and adds -0.41 on average."
+      },
+      {
+        "location": "operations.state_gate_pair.hypothesis",
+        "part": "ann_97",
+        "text": "Self-probe (typical customer, changing only the state): contribution 0.00 for Arkansas, 0.00 for Alabama and -0.41 for Texas."
+      },
+      {
+        "location": "operations.state_gate_pair.hypothesis",
+        "part": "ann_97",
+        "text": "In the whole model Texas's direct offset and the heavy-use gate's Texas terms also act; the typical Texas customer's risk is 2% against 3% for Arkansas."
+      },
+      {
+        "location": "operations.day_calls.hypothesis",
+        "part": "ann_98",
+        "text": "Self-probe (typical customer, sweeping day calls): the part contributes 0.00 at 75 calls, 0.21 at 100 and 0.81 at 150, and the whole-model risk goes from 1% at 50 calls to 3% at 150."
+      },
+      {
+        "location": "operations.day_calls.hypothesis",
+        "part": "ann_98",
+        "text": "It is on for 3309 training customers, adding 0.28 on average."
+      },
+      {
+        "location": "operations.intl_plan_hinge.hypothesis",
+        "part": "ann_99",
+        "text": "It acts on 380 of the 380 plan holders (share 1.00) and on 0 of the 3620 customers without one."
+      },
+      {
+        "location": "operations.intl_plan_hinge.hypothesis",
+        "part": "ann_99",
+        "text": "Self-probe (typical customer): the part contributes 0.00 without a plan and 0.37 with one; with the direct edge, the whole-model risk goes from 2% to 25%."
+      },
+      {
+        "location": "operations.eve_charge_hinge.hypothesis",
+        "part": "ann_100",
+        "text": "Self-probe (typical customer, sweeping evening charge): the part contributes 0.00 at 15 US dollars and -0.38 at 25."
+      },
+      {
+        "location": "operations.eve_charge_hinge.hypothesis",
+        "part": "ann_100",
+        "text": "It is on for 2615 training customers, adding -0.16 on average."
+      },
+      {
+        "location": "operations.account_length_gate.hypothesis",
+        "part": "ann_101",
+        "text": "Account-length gate: node 4025 rises with account length and raises the score slightly; it is shut for Nebraska customers (code 29)."
+      },
+      {
+        "location": "operations.account_length_gate.hypothesis",
+        "part": "ann_101",
+        "text": "Self-probe (typical customer, sweeping account length): the part contributes 0.00 at 51 days and 0.50 at 201; for a Nebraska customer it contributes 0.00 at 201."
+      },
+      {
+        "location": "operations.account_length_gate.hypothesis",
+        "part": "ann_101",
+        "text": "Over the 72 Nebraska training customers it acts on 0; it is on for 2623 training customers, adding 0.16 on average."
+      },
+      {
+        "location": "operations.state_gates_lower.hypothesis",
+        "part": "ann_102",
+        "text": "Self-probe (typical customer, changing only the state): the part contributes 0.02 for Arkansas, -2.22 for Hawaii, -2.00 for Washington DC, -1.39 for Virginia, -1.12 for Nebraska, -0.23 for Connecticut and -0.05 for Oklahoma."
+      },
+      {
+        "location": "operations.state_gates_lower.hypothesis",
+        "part": "ann_102",
+        "text": "The 146 training customers from Hawaii and Washington DC have observed churn 6.2% against 14.5% for the rest, and this part adds -2.11 to their score on average; over the 549 customers of the seven states it adds -0.99."
+      },
+      {
+        "location": "operations.state_gates_raise.hypothesis",
+        "part": "ann_103",
+        "text": "Self-probe (typical customer, changing only the state): the part contributes -0.01 for Arkansas, 0.53 for Maine, 0.40 for Minnesota, 0.11 for Michigan, 0.08 for New York and 0.06 for Tennessee;"
+      },
+      {
+        "location": "operations.state_gates_raise.hypothesis",
+        "part": "ann_103",
+        "text": "The 427 training customers of these states have observed churn 18.0% against 13.7% for the rest; this part adds 0.25 to their score on average."
+      },
+      {
+        "location": "operations.single_state_boost.hypothesis",
+        "part": "ann_104",
+        "text": "New Jersey indicator (code 31): two gates on for New Jersey customers raise their score through this part, but the heavy-use gate's New Jersey input takes back more, so in the whole model a typical New Jersey customer gets a lower risk than a comparable Arkansas customer."
+      },
+      {
+        "location": "operations.single_state_boost.hypothesis",
+        "part": "ann_104",
+        "text": "Self-probe (typical customer): this part contributes -0.02 for Arkansas and 1.06 for New Jersey, the heavy-use gate -0.98 and -2.33; the whole-model risk is 3% and 2%."
+      },
+      {
+        "location": "operations.single_state_boost.hypothesis",
+        "part": "ann_104",
+        "text": "Over the 90 New Jersey training customers the part adds 1.06 on average; their observed churn is 24.4% against 13.9% for the rest."
+      },
+      {
+        "location": "operations.direct_usage_terms.hypothesis",
+        "part": "ann_105",
+        "text": "Direct weights, per standard deviation of the input: number of customer-service calls 2.08, international plan 0.79, international calls -0.24, voice-mail plan -0.18, night calls 0.13 and area code 510 -0.09."
+      },
+      {
+        "location": "operations.direct_usage_terms.hypothesis",
+        "part": "ann_105",
+        "text": "Self-probe: at the typical customer, giving an international plan raises the whole-model predicted risk from 2% to 25% (this part's contribution 1.73 on the logit scale, plus the international-plan hinge); sweeping customer-service calls, this part's contribution rises in equal steps from -2.55 at z"
+      },
+      {
+        "location": "operations.direct_usage_terms.hypothesis",
+        "part": "ann_105",
+        "text": "The 380 training customers with an international plan have observed churn 42.4% against 11.2% for the rest; this part adds 2.32 to their score on average."
+      },
+      {
+        "location": "operations.direct_state_offsets.hypothesis",
+        "part": "ann_106",
+        "text": "The largest direct weights per standard deviation are Ohio (code 35) -0.59, Vermont (46) -0.31, Washington (47) 0.20, Texas (43) 0.17 and California (4) 0.14."
+      },
+      {
+        "location": "operations.direct_state_offsets.hypothesis",
+        "part": "ann_106",
+        "text": "Self-probe (typical customer, changing only the state): this part contributes 0.11 for Arkansas (a state without edges), -2.13 for Vermont and 1.62 for Washington, and the whole-model risk is below 1% for Vermont against 13% for Washington and 3% for Arkansas."
+      },
+      {
+        "location": "operations.direct_state_offsets.hypothesis",
+        "part": "ann_106",
+        "text": "Ohio's large negative offset (-3.91 at the typical customer) is mostly cancelled inside the heavy-use gate, where node 97 switches off for Ohio: over the 87 Ohio training customers this part averages -3.91 and the heavy-use gate 4.50."
+      },
+      {
+        "location": "operations.heavy_use_gate.hypothesis",
+        "part": "ann_107",
+        "text": "Prediction and self-probe: for a typical customer without a voice-mail plan, sweeping the day charge gives a predicted churn risk of 1% at 40 US dollars, 29% at 45 and above 99% at 50; the same customer with a voice-mail plan stays at below 1% at 50 dollars and crosses over at 60 (93%)."
+      },
+      {
+        "location": "operations.heavy_use_gate.hypothesis",
+        "part": "ann_107",
+        "text": "Evening use moves the same threshold: at a day charge of 50 dollars the risk is 95% at 150 evening minutes."
+      },
+      {
+        "location": "operations.heavy_use_gate.hypothesis",
+        "part": "ann_107",
+        "text": "On the training data the gate (node 469 > 0) is open for 267 customers; their observed churn rate is 90.3% and mean predicted risk 90%, against an observed 8.7% for the other 3733."
+      },
+      {
+        "location": "operations.heavy_use_gate.hypothesis",
+        "part": "ann_107",
+        "text": "Of the open-gate customers, 1 has a voice-mail plan (fitted to that one row)."
+      },
+      {
+        "location": "operations.heavy_use_gate.hypothesis",
+        "part": "ann_107",
+        "text": "Third role: node 4534 is positive for 2972 customers outside area code 510 and for 0 of the 960 area-510 customers, and node 97 is a large negative term that is zero on 87 training rows, 87 of them Ohio customers (code 35, 87 customers in all); both effects are largely cancelled by direct edges."
+      },
+      {
+        "location": "operations.heavy_use_gate.hypothesis",
+        "part": "ann_107",
+        "text": "At the typical customer the predicted risk is 2% in area 408, 2% in 415 and 2% in 510; the 960 area-510 training customers have mean predicted risk 14% against 14% for the rest."
+      },
+      {
+        "location": "operations.night_calls_tangle.hypothesis",
+        "part": "ann_108",
+        "text": "Three of its units are dead on the training data (unit activity: nodes 4009, 214911 and 27897 at 0, 0 and 0 active rows) and several are constant; the live terms are node 15132, which rises with the number of night calls, and node 8508, an area-code 510 and state indicator, both with tiny output wei"
+      },
+      {
+        "location": "operations.night_calls_tangle.hypothesis",
+        "part": "ann_108",
+        "text": "Self-probe (typical customer, sweeping night calls): node 15132 is 0.23 at 50 calls and 4.74 at 150, while the part contributes 0.038 to the score at 150; the whole-model rise in risk with night calls comes from the direct night-calls edge."
+      },
+      {
+        "location": "operations.night_calls_tangle.hypothesis",
+        "part": "ann_108",
+        "text": "Worth: switching the part off leaves the training AUC at 0.928 (with it 0.928); the mean absolute change in predicted risk is 0.0004."
+      },
+      {
+        "location": "operations.churn_score.hypothesis",
+        "part": "ann_109",
+        "text": "Unconnected inputs (day minutes, evening calls, night charge, international charge, voice-mail messages, the area-code 408 and 415 indicators and several states) are not connected to the output."
+      },
+      {
+        "location": "operations.churn_score.hypothesis",
+        "part": "ann_109",
+        "text": "Self-probe (typical customer, sweeping calls): predicted risk 2% at zero calls, 1% at two, 3% at three, 13% at four, 43% at five and 95% at seven."
+      },
+      {
+        "location": "operations.churn_score.hypothesis",
+        "part": "ann_109",
+        "text": "The 318 training customers with four or more calls have observed churn 50.0% and mean predicted risk 44%, against 11.1% and 12% for the rest."
+      },
+      {
+        "location": "record.summary",
+        "part": "ann_109",
+        "text": "Customer-service calls: a typical customer's predicted risk stays at or below 3% for up to three calls and climbs to 43% at five and 95% at seven, because a direct customer-service edge and a hinge that cancels it for few calls add up."
+      },
+      {
+        "location": "record.summary",
+        "part": "ann_109",
+        "text": "Heavy use: when the day charge and evening minutes are both high and the customer has not taken a voice-mail plan, a serial hinge opens and drives the risk towards certainty; it is open for 267 training customers, whose observed churn rate is 90.3%."
+      },
+      {
+        "location": "record.summary",
+        "part": "ann_109",
+        "text": "An international plan raises the risk through a direct edge and a hinge (a typical customer goes from 2% to 25%); state indicators, day calls, account length and day- and evening-charge hinges shift the score by small amounts."
+      },
+      {
+        "location": "record.resisted",
+        "part": "ann_109",
+        "text": "The state parts are readings of the form \"customers of these states get a higher or lower score\" and lack a customer-level explanation; the direct state offsets probe as partial (score 0.55)."
+      }
+    ]
+  },
+  "provenance": {
+    "templated_texts": 62,
+    "queries": 46
+  },
+  "summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "warn": 0,
+    "info": 0,
+    "unchecked_freetext": 45,
+    "verdict": "numbers reproduce",
+    "seconds": 8.4
+  }
+}
