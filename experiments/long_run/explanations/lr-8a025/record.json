@@ -1,0 +1,248 @@
+{
+ "label": "lr-8a025",
+ "genome_id": "a5e92f55-d32c-4fdd-8b0b-a35369f11d45",
+ "start": "2026-11-15T20:19:20+13:00",
+ "end": "2026-11-15T20:40:10+13:00",
+ "structural_coverage": 1.0,
+ "compositional_coverage": 1.0,
+ "full_coverage": true,
+ "within_budget": true,
+ "n_leaf_annotations": 13,
+ "n_composition_annotations": 1,
+ "n_splits": 23,
+ "n_identity_nodes": 2,
+ "hidden_nodes": 49,
+ "hidden_nodes_single_leaf_no_split": 48,
+ "hidden_nodes_in_any_annotation": 49,
+ "hierarchy_complete": true,
+ "function_preservation_max_abs_err": 6.661338147750939e-16,
+ "closed_form_max_abs_err": 0.027149765415757088,
+ "summary": "The network predicts churn mainly through two hinges. Customer-service calls: a typical customer's predicted risk stays at or below 3% for up to three calls and climbs to 43% at five and 95% at seven, because a direct customer-service edge and a hinge that cancels it for few calls add up. Heavy use: when the day charge and evening minutes are both high and the customer has not taken a voice-mail plan, a serial hinge opens and drives the risk towards certainty; it is open for 267 training customers, whose observed churn rate is 90.3%. An international plan raises the risk through a direct edge and a hinge (a typical customer goes from 2% to 25%); state indicators, day calls, account length and day- and evening-charge hinges shift the score by small amounts. Training AUC 0.928.",
+ "summary_template": "The network predicts churn mainly through two hinges. Customer-service calls: a typical customer's predicted risk stays at or below {{q:q_eaf52392a6.rows[3].risk|pct}} for up to three calls and climbs to {{q:q_eaf52392a6.rows[5].risk|pct}} at five and {{q:q_eaf52392a6.rows[7].risk|pct}} at seven, because a direct customer-service edge and a hinge that cancels it for few calls add up. Heavy use: when the day charge and evening minutes are both high and the customer has not taken a voice-mail plan, a serial hinge opens and drives the risk towards certainty; it is open for {{q:q_135b104531.subgroup.n|d}} training customers, whose observed churn rate is {{q:q_135b104531.subgroup.outcome_rate|.1%}}. An international plan raises the risk through a direct edge and a hinge (a typical customer goes from {{q:q_74f5e0705b.rows[0].risk|pct}} to {{q:q_74f5e0705b.rows[1].risk|pct}}); state indicators, day calls, account length and day- and evening-charge hinges shift the score by small amounts. Training AUC {{q:q_8f3e0113d4.data.auc_with|.3f}}.",
+ "resisted": "The night-calls tangle (fifteen units, three of them dead and several constant) is described, not explained: its effect on the prediction is negligible (switching it off leaves the training AUC at 0.928). Dead or constant exits inside the night-calls tangle, the day-charge hinge and the account-length gate are matched by the concept sweep to arbitrary state indicators; those matches are artefacts of exits that do not vary. The state parts are readings of the form \"customers of these states get a higher or lower score\" and lack a customer-level explanation; the direct state offsets probe as partial (score 0.55). The single customer with an open heavy-use gate and a voice-mail plan is a regime fitted to one row.",
+ "resisted_template": "The night-calls tangle (fifteen units, three of them dead and several constant) is described, not explained: its effect on the prediction is negligible (switching it off leaves the training AUC at {{q:q_0185fa498c.data.auc_without|.3f}}). Dead or constant exits inside the night-calls tangle, the day-charge hinge and the account-length gate are matched by the concept sweep to arbitrary state indicators; those matches are artefacts of exits that do not vary. The state parts are readings of the form \"customers of these states get a higher or lower score\" and lack a customer-level explanation; the direct state offsets probe as partial (score {{q:q_34c3334137.score|.2f}}). The single customer with an open heavy-use gate and a voice-mail plan is a regime fitted to one row.",
+ "recheck_summary": {
+  "mismatch": 0,
+  "needs_review": 0,
+  "needs_review_items": [],
+  "unchecked_freetext_sentences": 45,
+  "complete_ok": true
+ },
+ "recheck_notes": "No mismatch and no needs_review item. The unchecked free-text sentences are qualitative (mechanism descriptions without numbers) or carry only provenance-backed placeholders.",
+ "tool_bugs": "(1) query_ablate's switched_off list has a header entry at index 0 (direct_edges_of_root), so edge k of the printed list is switched_off[k+1] in the stored paths; first narratives quoted the wrong edges and were corrected before the audit. (2) probe_concept's sweep matches dead or constant exits (171662_a, 191982, 241555, 4009) to an arbitrary state indicator with score 1 or null and folds that into the leaf's concept string. (3) Piping xn.py --calls into head truncated a batch of splits mid-way (SIGPIPE), not a tool bug but worth knowing.",
+ "accuracy": {
+  "open_findings": 0,
+  "numbers": 235,
+  "provenance_backed": 171,
+  "allow_listed": 64,
+  "scope_mismatch": 0,
+  "formulas": {
+   "exact": 0,
+   "approx_with_tolerance": 0,
+   "other": 0
+  },
+  "audit": {
+   "references": 171,
+   "checked": 171
+  },
+  "self_probe": {
+   "parts": [
+    "heavy_use_gate",
+    "direct_usage_terms",
+    "direct_state_offsets",
+    "day_charge_hinge",
+    "state_gate_pair",
+    "day_calls",
+    "intl_plan_hinge",
+    "eve_charge_hinge",
+    "account_length_gate",
+    "state_gates_lower",
+    "state_gates_raise",
+    "single_state_boost",
+    "night_calls_tangle",
+    "churn_score"
+   ],
+   "refuted_and_fixed": [
+    "single_state_boost: first read as a New Jersey boost; the probe showed the heavy-use gate's New Jersey input outweighs it, so the hypothesis now says the whole-model effect is lower risk",
+    "state_gate_pair: first read as an Alabama and Texas gate; the probe and the Alabama subgroup show it acts on Texas customers alone, Alabama never opens it",
+    "heavy_use_gate area-code term: the probe showed the area-510 shut-off of node 4534 is cancelled by direct terms (similar risk in the three area codes), stated as such"
+   ]
+  },
+  "restatements": 0
+ },
+ "leaves": [
+  {
+   "name": "heavy_use_gate",
+   "units": [
+    "3570",
+    "469",
+    "4823",
+    "263103",
+    "4534",
+    "97",
+    "35285",
+    "82444"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 0.990152,
+   "best_concept": "number customer service calls (exit 4823, gate on when low); area code 510 (exit 4534); state 43 (exit 82444); state 0/35 (exit 97)",
+   "why": "A serial hinge on day charge and evening minutes, damped by a voice-mail plan, that drives churn risk towards certainty for heavy users; the self-probe reproduces the day-charge threshold and its shift with a voice-mail plan, and its main exit also carries the few-customer-service-calls hinge."
+  },
+  {
+   "name": "night_calls_tangle",
+   "units": [
+    "240844",
+    "220723",
+    "164445",
+    "12462",
+    "39992",
+    "8508",
+    "4009",
+    "27897",
+    "48989",
+    "241555",
+    "12862",
+    "49396",
+    "214911",
+    "131599",
+    "15132"
+   ],
+   "meaning": "partial",
+   "probe_score": 0.947053,
+   "best_concept": "total night calls (exit 15132); area code 510 / state 16 (exit 8508); constant exit matched to state 0",
+   "why": "Live terms read night calls and an area-510 indicator, but with negligible output weight and dead or constant links; described rather than explained."
+  },
+  {
+   "name": "day_charge_hinge",
+   "units": [
+    "171662_a",
+    "171662_c",
+    "215821"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 1.0,
+   "best_concept": "total day charge",
+   "why": "A hinge that lowers the score as daytime spending rises above a threshold; the sweep confirms the onset and the offset against the heavy-use gate."
+  },
+  {
+   "name": "state_gate_pair",
+   "units": [
+    "171662_b",
+    "172164",
+    "13257",
+    "242853",
+    "38242"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 1.0,
+   "best_concept": "state 43 (Texas)",
+   "why": "A Texas indicator lowering the score slightly; the Alabama input never opens the exit, confirmed on every Alabama row."
+  },
+  {
+   "name": "day_calls",
+   "units": [
+    "264138",
+    "44670"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 1.0,
+   "best_concept": "total day calls",
+   "why": "More day calls raise the score through a two-unit hinge; the sweep confirms the onset and rise."
+  },
+  {
+   "name": "intl_plan_hinge",
+   "units": [
+    "2383"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 1.0,
+   "best_concept": "international plan",
+   "why": "On for every international-plan holder and for none of the others, raising their score; confirmed by subgroup counts and the probe."
+  },
+  {
+   "name": "eve_charge_hinge",
+   "units": [
+    "263609"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 1.0,
+   "best_concept": "total eve minutes (same column as total eve charge after z-scoring)",
+   "why": "Heavier evening spending above the typical value lowers the score slightly; the sweep confirms the onset."
+  },
+  {
+   "name": "account_length_gate",
+   "units": [
+    "4025",
+    "11125",
+    "191982"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 0.965722,
+   "best_concept": "account length",
+   "why": "Longer accounts raise the score slightly, shut for Nebraska customers; the sweep and the Nebraska subgroup confirm both."
+  },
+  {
+   "name": "state_gates_lower",
+   "units": [
+    "7285",
+    "13698",
+    "13853",
+    "2455",
+    "6666"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 0.991835,
+   "best_concept": "states 11, 29, 36, 45, 8 (plus 7, 6 on shared gates)",
+   "why": "State indicators (Hawaii, Washington DC, Nebraska, Virginia, Connecticut, Delaware, Oklahoma) that lower the score; the probe confirms each state's shift."
+  },
+  {
+   "name": "state_gates_raise",
+   "units": [
+    "10403",
+    "40087",
+    "15346",
+    "16302",
+    "240435"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 1.0,
+   "best_concept": "states 21, 22, 23, 34, 42",
+   "why": "State indicators (Maine, Minnesota, Michigan, New York, Tennessee) that raise the score, mostly Maine and Minnesota; the probe confirms."
+  },
+  {
+   "name": "single_state_boost",
+   "units": [
+    "268653",
+    "252985",
+    "37594"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 1.0,
+   "best_concept": "state 31 (New Jersey)",
+   "why": "A New Jersey indicator that raises the score through this part, outweighed in the whole model by the heavy-use gate's New Jersey term; confirmed by the probe."
+  },
+  {
+   "name": "direct_usage_terms",
+   "units": [
+    "identity_usage"
+   ],
+   "meaning": "meaningful",
+   "probe_score": 0.854504,
+   "best_concept": "number customer service calls",
+   "why": "The linear direct terms, led by customer-service calls and an international plan; the probe confirms the international-plan shift and the linear rise with calls."
+  },
+  {
+   "name": "direct_state_offsets",
+   "units": [
+    "identity_state"
+   ],
+   "meaning": "partial",
+   "probe_score": 0.547145,
+   "best_concept": "state 35 (Ohio)",
+   "why": "Linear per-state offsets; the largest (Ohio) is cancelled inside the heavy-use gate, and the offsets have no reading beyond state membership."
+  }
+ ],
+ "overall_function": "The network scores churn mainly from customer-service calls and heavy phone use. Customer-service calls act as a hinge: the score is flat for a few calls and rises steeply beyond about three, built from a linear direct edge and a hinge that cancels it at low counts. Combined day charge and evening minutes (with a little night and international use) open a serial hinge that drives the predicted risk towards certainty for heavy users; a voice-mail plan raises the threshold, and separate small hinges on day charge and evening charge pull slightly the other way. An international plan raises the risk (direct edge plus a hinge), more international calls and a voice-mail plan lower it directly, and many states and account length shift the score by small amounts; the area code's terms largely cancel. The model ignores day minutes, night charge and international charge (it uses their twin columns), evening calls, voice-mail message counts, and about a third of the states.",
+ "clinical_terms": "In customer terms: customers who have called customer service four or more times, and customers with heavy daytime plus evening usage who have not taken a voice-mail plan, are predicted to churn at high rates; an international plan raises the predicted risk, while a voice-mail plan and more international calls lower it. The joint effect is a usage threshold: the heavy-use gate detects customers whose combined day and evening use exceeds a level that a voice-mail plan pushes higher. Location (state) adds small up or down offsets; area code has almost no net effect.",
+ "stuck": "Little: the main friction was tool behaviour (switched_off index offset, concept sweep matching constant exits to arbitrary states). The night-calls tangle stays one leaf because its dead and constant links tie its units together; splitting it would need a cascade of hidden and input splits for a part with negligible effect."
+}
