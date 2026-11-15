@@ -9,6 +9,7 @@ stored explanations, one JSON per explanation in ``levels/<label>.json``.
     uv run python experiments/explanation_levels/compute_levels.py --set all       # every set above, one process each
     uv run python experiments/explanation_levels/compute_levels.py --set churn_case  # the churn case (explaneat_dev)
     uv run python experiments/explanation_levels/compute_levels.py --set ushape    # the U-shape and saddle study (explaneat_dev)
+    uv run python experiments/explanation_levels/compute_levels.py --set longrun   # the very long runs (explaneat_dev)
     uv run python experiments/explanation_levels/compute_levels.py --set v4 --labels heart-s0,adult-s1
 
 Nothing is written to any database: the model is the genome's phenotype with the stored
@@ -76,6 +77,10 @@ SETS = {
     # dataset; the ground-truth recovery grade of its gt_grades.json is attached as for the ladder
     "ushape": {"db": "postgresql://localhost/explaneat_dev", "records": ROOT / "experiments/ushape_saddle/explanations",
                "out": ROOT / "experiments/ushape_saddle/levels"},
+    # the very long runs (experiments/long_run): the best-by-train genomes explained at three
+    # points of the longest shape-C run (and churn); ground truth from its gt_grades.json
+    "longrun": {"db": "postgresql://localhost/explaneat_dev", "records": ROOT / "experiments/long_run/explanations",
+                "out": ROOT / "experiments/long_run/levels"},
 }
 PAPER_GENOMES = [
     ("paper-heart", "9022a9eb-ecf9-41ba-b138-28ed4d131c9d"),   # "Heart Binary", explanation a03ebc86
@@ -103,8 +108,9 @@ def verdict_for(label: str, set_name: str, genome_id: str):
         cands.append(ROOT / "experiments/10seed/verification" / label / "verdict.json")
     elif set_name == "c4cap":
         cands.append(ROOT / "experiments/c4_capacity/verification" / label / "verdict.json")
-    elif set_name in ("churn_case", "ushape"):
-        base = {"churn_case": "experiments/churn_case", "ushape": "experiments/ushape_saddle"}[set_name]
+    elif set_name in ("churn_case", "ushape", "longrun"):
+        base = {"churn_case": "experiments/churn_case", "ushape": "experiments/ushape_saddle",
+                "longrun": "experiments/long_run"}[set_name]
         cands.append(ROOT / base / "verdicts" / label / "verdict.json")
     for p in cands:
         if p.exists():
@@ -273,8 +279,9 @@ def compute_one(t, set_name: str, lmeta, gt, cache: bool = True, max_terms: int 
                         "gt_terms_total": lm.get("gt_terms_total") or None,
                         "explainer_leaf_grades": {lf.get("name"): lf.get("meaning") for lf in rec.get("leaves") or []},
                         "truth": (gt.get(t["label"]) or {}).get("truth")}
-    if set_name == "ushape":
-        g = ROOT / "experiments/ushape_saddle/gt_grades.json"
+    if set_name in ("ushape", "longrun"):
+        g = ROOT / {"ushape": "experiments/ushape_saddle/gt_grades.json",
+                    "longrun": "experiments/long_run/gt_grades.json"}[set_name]
         ug = (json.loads(g.read_text()) if g.exists() else {}).get(t["label"]) or {}
         ground_truth = {"task": ug.get("task"), "arch": "evolved", "family": "synthetic",
                         "gt_recovery": ug.get("grade"), "gt_terms_recovered": ug.get("recovered"),
