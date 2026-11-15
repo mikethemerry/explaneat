@@ -30,7 +30,9 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                  _existing_experiment_id: Optional[str] = None,
                  mask_phantom: bool = True,
                  track_ancestry: bool = True,
-                 criterion=None):
+                 criterion=None,
+                 genome_storage: str = "all",
+                 full_save_generations=None):
         """
         Initialize population with database tracking
 
@@ -74,7 +76,27 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                 is recorded as ``config_json["training"]["output_activation"]``,
                 which ``load_neat_config`` reads back so genomes loaded from the
                 DB are rebuilt with the activation they were trained with.
+            genome_storage: ``"all"`` (default: every genome of every
+                generation is stored, as before) or ``"best"`` (light storage
+                for very long runs): each generation stores only its best
+                genome by fitness (ties: lowest NEAT key), except the
+                generations in ``full_save_generations`` and the generation at
+                which ``run(on_generation=...)`` stops the run, which are
+                stored in full. Population rows and results are stored every
+                generation either way. In ``"best"`` mode no parent ids are
+                written to the database (most parents have no row); the
+                in-memory ``parent_log`` / ``ancestry_rows()`` hold the
+                parents for a sidecar file. Storage reads no randomness, so
+                the evolution is bit-identical in both modes
+                (tests/test_db/test_population_light_storage.py).
+            full_save_generations: generations stored in full when
+                ``genome_storage == "best"`` (ignored otherwise).
         """
+        if genome_storage not in ("all", "best"):
+            raise ValueError(f"genome_storage must be 'all' or 'best', not {genome_storage!r}")
+        self.genome_storage = genome_storage
+        self.full_save_generations = set(int(g) for g in (full_save_generations or ()))
+        self.stop_reason = None
         extra = {} if criterion is None else {"criterion": criterion}
         super().__init__(config, x_train, y_train, xs_val=xs_val, ys_val=ys_val,
                          initial_state=initial_state, mask_phantom=mask_phantom,
@@ -107,6 +129,8 @@ class DatabaseBackpropPopulation(BackpropPopulation):
         self.current_generation = initial_state[2] if initial_state else 0
 
         # Store ancestry reporter for parent tracking
+        if genome_storage == "best":
+            ancestry_reporter, track_ancestry = None, False
         if ancestry_reporter is None and track_ancestry:
             from ..core.ancestry_reporter import AncestryReporter
             ancestry_reporter = AncestryReporter()
@@ -319,13 +343,27 @@ class DatabaseBackpropPopulation(BackpropPopulation):
             
         return population_id
     
-    def _save_genomes(self, population_id: str, ancestry_reporter=None):
+    def _genomes_to_save(self, generation: int, force_full: bool = False):
+        """The population's genomes to store this generation (see ``genome_storage``)."""
+        if (self.genome_storage == "all" or force_full
+                or int(generation) in self.full_save_generations):
+            return dict(self.population)
+        scored = [(k, g) for k, g in self.population.items() if g.fitness is not None]
+        if not scored:
+            return {}
+        k, g = max(scored, key=lambda kg: (kg[1].fitness, -kg[0]))
+        return {k: g}
+
+    def _save_genomes(self, population_id: str, ancestry_reporter=None, genomes=None):
         """Save all genomes in current population to database with ancestry tracking
 
         Args:
             population_id: Database ID of the population
             ancestry_reporter: Optional AncestryReporter for parent tracking
+            genomes: Optional subset {key: genome} to store (default: the
+                whole population)
         """
+        to_save = self.population if genomes is None else genomes
 
         # Resolve every parent before registering any row of this generation:
         # parent keys name rows of the previous generation, and an elite's key
@@ -333,11 +371,11 @@ class DatabaseBackpropPopulation(BackpropPopulation):
         parents = {}
         if ancestry_reporter is not None:
             parents = {gid: ancestry_reporter.get_parent_ids(gid)
-                       for gid in self.population}
+                       for gid in to_save}
 
         with db.session_scope() as session:
             new_ids = {}
-            for genome_id, neat_genome in self.population.items():
+            for genome_id, neat_genome in to_save.items():
                 # Determine species assignment (simplified)
                 species_id = getattr(neat_genome, 'species_id', None)
 
@@ -432,7 +470,7 @@ class DatabaseBackpropPopulation(BackpropPopulation):
             )
             session.add(result)
     
-    def run(self, fitness_function, n=None, nEpochs=5, patience=None):
+    def run(self, fitness_function, n=None, nEpochs=5, patience=None, on_generation=None):
         """Run evolution with database tracking.
 
         Args:
@@ -441,6 +479,13 @@ class DatabaseBackpropPopulation(BackpropPopulation):
             nEpochs: Backpropagation epochs per generation
             patience: Early stopping patience (generations without improvement).
                       None disables early stopping.
+            on_generation: Optional callable ``(generation, population,
+                best_genome) -> Optional[str]``, called after each
+                generation's evaluation and before its genomes are stored.
+                A non-empty string stops the run after this generation
+                (stored in full) and is kept as ``self.stop_reason``. It must
+                not consume the global RNGs if runs are to stay reproducible.
+                None (default) changes nothing.
         """
         # Mark experiment as running
         with db.session_scope() as session:
@@ -521,8 +566,18 @@ class DatabaseBackpropPopulation(BackpropPopulation):
 
                 self.reporters.post_evaluate(self.config, self.population, self.species, best_genome)
 
+                stop = on_generation(generation, self.population, best_genome) if on_generation else None
+
                 # Save genomes after evaluation with ancestry tracking
-                self._save_genomes(self.current_population_id, self.ancestry_reporter)
+                self._save_genomes(self.current_population_id, self.ancestry_reporter,
+                                   genomes=self._genomes_to_save(generation, force_full=bool(stop)))
+                if stop:
+                    self.stop_reason = str(stop)
+                    if best_genome:
+                        self._save_result('best_fitness', best_genome.fitness, generation)
+                    self._save_result('population_size', len(self.population), generation)
+                    logger.info("  Stopping at generation %d: %s", generation, stop)
+                    break
 
                 # Save generation results
                 if best_genome:
