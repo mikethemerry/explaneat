@@ -1,0 +1,229 @@
+{
+  "label": "lr-84498",
+  "genome_id": "41c36304-8cdf-48f9-84c5-3dd7feef08ce",
+  "start": "2026-11-15T19:11:35+13:00",
+  "end": "2026-11-15T19:31:26+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 9,
+  "n_composition_annotations": 4,
+  "n_splits": 13,
+  "n_identity_nodes": 4,
+  "hidden_nodes": 26,
+  "hidden_nodes_single_leaf_no_split": 24,
+  "hidden_nodes_in_any_annotation": 26,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 8.881784197001252e-16,
+  "closed_form_max_abs_err": 0.1381551400126142,
+  "summary": "The model predicts churn mainly from customer-service calls, daytime use, the voice-mail plan, the international plan and a few state offsets, added on the score. Many service calls raise the predicted risk once they close a hinge that daytime use holds open, so heavier daytime users need more calls (typical customer at 15 US dollars of daytime charge: 1.6% with 0 calls, 52.8% with 4 calls). The model is nearly flat in daytime charge up to a point and then rises steeply, much less so with a voice-mail plan (40.1% without and 2.1% with a plan at 45 US dollars). An international plan raises the score through its own edge (1.3% to 19.4% for the typical customer). Per-state offsets, largest for small states such as Hawaii (-3.69 on the score for 73 training customers), look fitted to small groups; night use matters mainly in Ohio, where the hinge that elsewhere cancels the direct night slope is pushed down.",
+  "summary_template": "The model predicts churn mainly from customer-service calls, daytime use, the voice-mail plan, the international plan and a few state offsets, added on the score. Many service calls raise the predicted risk once they close a hinge that daytime use holds open, so heavier daytime users need more calls (typical customer at {{q:q_66c4ca1ed8.rows[0].inputs.\"total day charge\"}} of daytime charge: {{q:q_66c4ca1ed8.rows[0].risk|.1%}} with {{q:q_66c4ca1ed8.rows[0].inputs.\"number customer service calls\"}}, {{q:q_66c4ca1ed8.rows[20].risk|.1%}} with {{q:q_66c4ca1ed8.rows[20].inputs.\"number customer service calls\"}}). The model is nearly flat in daytime charge up to a point and then rises steeply, much less so with a voice-mail plan ({{q:q_980ab435d2.rows[2].risk|.1%}} without and {{q:q_980ab435d2.rows[5].risk|.1%}} with a plan at {{q:q_980ab435d2.rows[2].inputs.\"total day charge\"}}). An international plan raises the score through its own edge ({{q:q_6f1fa23a36.rows[0].risk|.1%}} to {{q:q_6f1fa23a36.rows[1].risk|.1%}} for the typical customer). Per-state offsets, largest for small states such as Hawaii ({{q:q_e42364d96d.groups[0].levels[0].model_logit_effect|.2f}} on the score for {{q:q_e42364d96d.groups[0].levels[0].rows}} training customers), look fitted to small groups; night use matters mainly in Ohio, where the hinge that elsewhere cancels the direct night slope is pushed down.",
+  "resisted": "The main leaf, serviceCallsDayGate, is read as partial by its concept probe (score 0.57): its output is roughly the larger of a daytime-charge term and a service-call term, but the evening-minutes and voice-mail chain inside it is not captured by one concept; its behaviour is confirmed by the self-probes, not by a concept. stateDirect is read as being in Ohio, Hawaii or Vermont (score 0.80); its smaller state terms are described by the formula, not explained. stateUnitsB and most of stateChain are inert on the training data (dead units), so their readings are trivial.",
+  "resisted_template": "The main leaf, serviceCallsDayGate, is read as partial by its concept probe (score {{q:q_773cb477ff.score|.2f}}): its output is roughly the larger of a daytime-charge term and a service-call term, but the evening-minutes and voice-mail chain inside it is not captured by one concept; its behaviour is confirmed by the self-probes, not by a concept. stateDirect is read as being in Ohio, Hawaii or Vermont (score {{q:q_d4ef58cba4.score|.2f}}); its smaller state terms are described by the formula, not explained. stateUnitsB and most of stateChain are inert on the training data (dead units), so their readings are trivial.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 64,
+    "complete_ok": true
+  },
+  "recheck_notes": "Recheck v3: 0 mismatches, 0 needs_review; 64 free-text sentences carry no checkable number (descriptive wording).",
+  "tool_bugs": "None blocking. query_subgroup needs one-hot codes quoted (`international plan` == '1', state == '35'); backticked one-hot column names such as `state:35` are refused in where (but accepted in probe_concept). Placeholders to probe inputs need quoted keys (inputs.\"total day charge\"). A first hierarchy left node 318 as an entry only (decomposition warning); fixed by undoing the annotations and splitting 2640, 4813, night charge and the state-35 copy so the dead 318 branch sits whole inside stateChain.",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 270,
+    "provenance_backed": 252,
+    "allow_listed": 18,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 0,
+      "other": 13
+    },
+    "audit": {
+      "references": 252,
+      "checked": 252
+    },
+    "self_probe": {
+      "parts": [
+        "serviceCallsDayGate",
+        "lowDayUseHinge",
+        "nightUse",
+        "eveningUse",
+        "stateChain",
+        "stateUnitsA",
+        "stateUnitsB",
+        "usageDirect",
+        "stateDirect",
+        "dayUseAndServiceCalls",
+        "usageAndPlans",
+        "locationOffsets",
+        "churnRisk"
+      ],
+      "refuted_and_fixed": [
+        "lowDayUseHinge: first draft said lower daytime use lowers risk; the probe shows the part raises the score for lighter daytime users and cancels the daytime slope of serviceCallsDayGate",
+        "nightUse: first draft said night use raises risk; probes show night use barely matters outside Ohio and the part is mainly an Ohio-by-night-use interaction",
+        "stateChain: first draft named two states; probe shows three (Oregon, New Jersey, Connecticut)",
+        "nightUse: 'hinge shut in Ohio' corrected to 'pushed down' (it reopens a little at the heaviest night use)"
+      ]
+    },
+    "restatements": 0
+  },
+  "accuracy_notes": "Allow-listed literals are state codes, area codes and one subgroup threshold (41 US dollars). Typed formulas are not used in any text; the 13 get_formula closed forms are attached as analytical_formula evidence with rounded coefficients (leaf closed-form error up to the reported closed_form_max_abs_err, largest on serviceCallsDayGate whose exit spans about 29 logit units).",
+  "leaves": [
+    {
+      "name": "serviceCallsDayGate",
+      "units": [
+        "5116",
+        "4319",
+        "2470"
+      ],
+      "meaning": "partial",
+      "probe_score": 0.571922,
+      "best_concept": "larger of a daytime-charge term and a service-call term",
+      "why": "Many service calls raise risk once they close a hinge that daytime use holds open; the evening and voice-mail chain inside it is not captured by one concept, but the self-probe confirms the moving call threshold."
+    },
+    {
+      "name": "lowDayUseHinge",
+      "units": [
+        "873",
+        "25904",
+        "69759"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 0.999172,
+      "best_concept": "total day minutes",
+      "why": "A hinge that grows as daytime use falls and closes for the heaviest daytime users, cancelling most of the opposite daytime slope."
+    },
+    {
+      "name": "nightUse",
+      "units": [
+        "4813_b",
+        "2640_b"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 0.897934,
+      "best_concept": "state:35 (Ohio)",
+      "why": "Outside Ohio a night-charge hinge takes back most of the direct night slope; in Ohio it is pushed down and night use counts."
+    },
+    {
+      "name": "eveningUse",
+      "units": [
+        "137967",
+        "28405"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 1.0,
+      "best_concept": "total eve minutes; total eve calls",
+      "why": "Two hinges that lower the score for the heaviest evening users and for many evening calls."
+    },
+    {
+      "name": "stateChain",
+      "units": [
+        "4813_a",
+        "2640_a",
+        "318",
+        "160",
+        "145008",
+        "68869",
+        "38365"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 0.841585,
+      "best_concept": "state:37 (Oregon)",
+      "why": "Its one live exit is a near-constant that drops for Oregon, New Jersey and Connecticut, giving them a small extra score; the rest never switches on."
+    },
+    {
+      "name": "stateUnitsA",
+      "units": [
+        "154125",
+        "247870",
+        "27620",
+        "8520",
+        "28796"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 1.0,
+      "best_concept": "location indicators (Alaska, Georgia, Minnesota/Alabama, Texas, area code 415)",
+      "why": "Each unit is a per-location offset for states with no direct state term."
+    },
+    {
+      "name": "stateUnitsB",
+      "units": [
+        "144216",
+        "257796",
+        "27782",
+        "538",
+        "144710",
+        "26948"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 1.0,
+      "best_concept": "state:49 (West Virginia)",
+      "why": "Nearly inert: three exits never switch on and the West Virginia units carry tiny weights (the reading is trivial)."
+    },
+    {
+      "name": "usageDirect",
+      "units": [],
+      "meaning": "meaningful",
+      "probe_score": 0.91723,
+      "best_concept": "international plan",
+      "why": "Direct terms dominated by the international plan, which raises the score by a fixed step."
+    },
+    {
+      "name": "stateDirect",
+      "units": [],
+      "meaning": "meaningful",
+      "probe_score": 0.804489,
+      "best_concept": "in Ohio, Hawaii or Vermont",
+      "why": "Direct per-state offsets, the largest negative for Ohio, Hawaii and Vermont; they look fitted to small groups."
+    }
+  ],
+  "overall_function": "The network adds a handful of effects on the log-odds scale and passes the sum through a sigmoid. Customer-service calls raise the predicted churn risk through a threshold: they count only once they close a hinge that daytime use holds open, so the threshold rises with daytime use. Daytime use itself is nearly flat up to a point and then raises the risk steeply, mostly for customers without a voice-mail plan (the plan gates the serial chain that drives the rise); an international plan raises the risk by a fixed log-odds step that compounds with the others; evening use is non-monotone (a dip for heavy evening users, then a rise at the extreme through the daytime chain); night use matters mainly in Ohio. Per-state offsets (direct terms and single-state units) shift the score for about half the states; the model ignores voice-mail message counts, night calls, international minutes and charge, area codes 408 and 510, and the duplicate minutes/charge columns.",
+  "clinical_terms": "In customer terms the model flags as likely to leave the customers who have called customer service many times (more calls needed the heavier their daytime use), the heaviest daytime users without a voice-mail plan, and customers with an international plan; these effects compound. A voice-mail plan protects heavy daytime users, very heavy evening use slightly lowers the risk except at the very top, and night use raises it mainly for customers in Ohio. Some states get large fixed offsets (Hawaii and Vermont lower, Washington and California higher) that look fitted to small groups rather than to a real regional pattern.",
+  "stuck": "Little. The service-call leaf resists a single-concept reading (partial); a first hierarchy left a dead unit only as an entry, fixed by undoing the annotations and splitting the night chain; one-hot where-syntax took a retry.",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 13,
+      "roots": [
+        "churnRisk"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 8.881784197001252e-16,
+    "closed_form_max_abs_err": 0.1381551400126142,
+    "numeric_max_abs_err": 7.105427357601002e-15,
+    "op_counts": {
+      "rename_node": 71,
+      "split_node": 13,
+      "consolidate_node": 4,
+      "add_identity_node": 4,
+      "annotate": 13
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-15T06:32:13+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 64,
+      "provenance": {
+        "templated_texts": 63,
+        "queries": 59
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

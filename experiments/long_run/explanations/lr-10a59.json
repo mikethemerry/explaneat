@@ -1,0 +1,221 @@
+{
+  "label": "lr-10a59",
+  "genome_id": "d03ac194-9ffe-4831-8208-2e40839973b7",
+  "start": "2026-11-15T18:52:15+13:00",
+  "end": "2026-11-15T19:10:12+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 10,
+  "n_composition_annotations": 3,
+  "n_splits": 6,
+  "n_identity_nodes": 6,
+  "hidden_nodes": 18,
+  "hidden_nodes_single_leaf_no_split": 18,
+  "hidden_nodes_in_any_annotation": 18,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 4.440892098500626e-16,
+  "closed_form_max_abs_err": 0.03045934572487141,
+  "summary": "The network predicts churn mainly from daytime use, customer-service calls and the two plans, added on the logit scale. The predicted risk is U-shaped in the day charge, lowest for average daytime users and high for heavy ones: the 253 training customers with a day charge of 45 dollars or more have a mean predicted risk of 60.5%. Many service calls raise the risk steeply for light and average daytime users (for a typical customer with a day charge of 30 dollars, 1.4% at 1 call and 73.1% at 6 calls) but hardly for heavy ones (90.9% and 90.1% at 55 dollars), because the heavy-use unit loses about what the calls add. An international plan raises the risk and a voice-mail plan lowers it (direct edges of 0.75 and -0.52 per sd); international charges, night use and evening calls add small hinged terms, and the states add per-state offsets fitted to small groups, which move the training AUC from 0.899 to 0.894 when removed.",
+  "summary_template": "The network predicts churn mainly from daytime use, customer-service calls and the two plans, added on the logit scale. The predicted risk is U-shaped in the day charge, lowest for average daytime users and high for heavy ones: the {{q:q_cde8935ac2.subgroup.n}} training customers with a day charge of 45 dollars or more have a mean predicted risk of {{q:q_cde8935ac2.subgroup.mean_predicted_risk|.1%}}. Many service calls raise the risk steeply for light and average daytime users (for a typical customer with a day charge of 30 dollars, {{q:q_4848dc92f2.rows[2].risk|.1%}} at 1 call and {{q:q_4848dc92f2.rows[12].risk|.1%}} at 6 calls) but hardly for heavy ones ({{q:q_4848dc92f2.rows[3].risk|.1%}} and {{q:q_4848dc92f2.rows[13].risk|.1%}} at 55 dollars), because the heavy-use unit loses about what the calls add. An international plan raises the risk and a voice-mail plan lowers it (direct edges of {{q:q_18e14c184a.switched_off[1].weight|.2f}} and {{q:q_18e14c184a.switched_off[2].weight|.2f}} per sd); international charges, night use and evening calls add small hinged terms, and the states add per-state offsets fitted to small groups, which move the training AUC from {{q:q_7b57b12565.data.auc_with|.3f}} to {{q:q_7b57b12565.data.auc_without|.3f}} when removed.",
+  "resisted": "The chain on the Tennessee and Michigan indicators and night calls has no effect (its last unit is on for 0 training rows): described, not explained. The night leaf is partly read (concept score 0.62) because two copies of one column nearly cancel and leave a small residual. The direct state offsets are partly read (score 0.68 for Hawaii plus Vermont): they are per-state constants fitted to groups of a few dozen customers, of which Hawaii and Vermont stand out.",
+  "resisted_template": "The chain on the Tennessee and Michigan indicators and night calls has no effect (its last unit is on for {{q:q_11b436b36e.subgroup.n}} training rows): described, not explained. The night leaf is partly read (concept score {{q:q_28410bd04a.score|.2f}}) because two copies of one column nearly cancel and leave a small residual. The direct state offsets are partly read (score {{q:q_9b934ba8b8.score|.2f}} for Hawaii plus Vermont): they are per-state constants fitted to groups of a few dozen customers, of which Hawaii and Vermont stand out.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 53,
+    "complete_ok": true
+  },
+  "recheck_notes": "No mismatch and no needs_review item. The 53 unchecked free-text sentences are qualitative wording around referenced numbers (shape words, mechanism descriptions) that the checker cannot test; every number in them is a placeholder or an allow-listed literal (a probe setting, a where-clause threshold or a unit id).",
+  "tool_bugs": "In a batched --calls run the fourth add_identity_node (intercepting the 20 direct state/area-code edges into the output) was not applied, without a visible error in the truncated output; reapplied with the post-split input ids and it worked. query_probe takes the dataset's original column names (with spaces), not the renamed node names. annotate does not take allow_numbers, so hypotheses mentioning state codes were written without them and the codes were given as state names via update_narrative. query_probe accepts at most two sweeps, so the root self-probe used two probes (international plan set to 0 and 1).",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 250,
+    "provenance_backed": 192,
+    "allow_listed": 58,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 10,
+      "other": 3
+    },
+    "audit": {
+      "references": 172,
+      "checked": 172
+    },
+    "self_probe": {
+      "parts": [
+        "daytime_use",
+        "service_calls",
+        "night_use",
+        "evening_calls_hinge",
+        "intl_charge_hinge",
+        "direct_usage_terms",
+        "state_single_units",
+        "state7_chain",
+        "state42_night_calls_chain",
+        "direct_location_terms",
+        "usage_and_plans",
+        "location",
+        "churn_risk"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0
+  },
+  "leaves": [
+    {
+      "name": "daytime_use",
+      "units": [
+        "5116",
+        "4319",
+        "2470",
+        "873"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 0.98133,
+      "best_concept": "total day minutes (light-use unit); number customer service calls (gate of the heavy-use unit)",
+      "why": "A U-shaped daytime-use effect: a light-use unit fades out as day charge rises and a heavy-use chain grows with it, the latter switched down by service calls; the probe sweep reproduces both."
+    },
+    {
+      "name": "service_calls",
+      "units": [
+        "1342"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 0.999857,
+      "best_concept": "number customer service calls",
+      "why": "The direct service-call edge plus a hinge for the very heaviest callers, so risk rises steeply with calls for light and average daytime users."
+    },
+    {
+      "name": "night_use",
+      "units": [
+        "4813",
+        "2640"
+      ],
+      "meaning": "partial",
+      "probe_score": 0.620515,
+      "best_concept": "total night minutes",
+      "why": "Two copies of the same night column nearly cancel, leaving a small rise in risk with night use that night minutes predicts only partly."
+    },
+    {
+      "name": "evening_calls_hinge",
+      "units": [
+        "28405"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 1.0,
+      "best_concept": "total eve calls",
+      "why": "A hinge that slightly lowers risk for customers with many evening calls."
+    },
+    {
+      "name": "intl_charge_hinge",
+      "units": [
+        "28206"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 1.0,
+      "best_concept": "total intl minutes",
+      "why": "A hinge that raises risk as international charges rise above the typical level."
+    },
+    {
+      "name": "direct_usage_terms",
+      "units": [],
+      "meaning": "meaningful",
+      "probe_score": 0.807621,
+      "best_concept": "international plan - voice mail plan",
+      "why": "Direct linear terms dominated by an international plan raising and a voice-mail plan lowering the risk."
+    },
+    {
+      "name": "state_single_units",
+      "units": [
+        "318",
+        "3084",
+        "29294",
+        "26948"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 1.0,
+      "best_concept": "state indicators (Connecticut, Maryland, Wyoming; Georgia's unit is dead)",
+      "why": "Each unit is a per-state constant offset, proved by zero-count queries on the gates."
+    },
+    {
+      "name": "state7_chain",
+      "units": [
+        "28963",
+        "4927"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 1.0,
+      "best_concept": "state:7 (Washington DC)",
+      "why": "A chain that fires for DC customers and nobody else and lowers their predicted risk."
+    },
+    {
+      "name": "state42_night_calls_chain",
+      "units": [
+        "27782",
+        "3267",
+        "538"
+      ],
+      "meaning": "closed-form-only",
+      "probe_score": null,
+      "best_concept": "none",
+      "why": "Its last unit can never switch on, so the chain has no effect: described, not explained."
+    },
+    {
+      "name": "direct_location_terms",
+      "units": [],
+      "meaning": "partial",
+      "probe_score": 0.683051,
+      "best_concept": "state:11 + state:46 (Hawaii plus Vermont)",
+      "why": "Per-state direct offsets fitted to small groups; the two largest (Hawaii, Vermont) carry most of the variation, the many small ones are not captured."
+    }
+  ],
+  "overall_function": "The network adds a usage score and a location score on the logit scale. Its main effect is a U-shape in daytime charge (risk lowest for average daytime users, rising slowly for light users and steeply for heavy ones), joined by a strong rise with customer-service calls that is gated by daytime use: the heavy-use unit loses about what the calls add, so calls matter for light and average users but hardly for heavy users until the very highest call counts. An international plan raises and a voice-mail plan lowers the risk through direct edges; international charges (hinge, rising), evening calls (hinge, slightly falling) and night use (nearly flat, small rise) add small terms, and a set of per-state constant offsets is fitted to small state groups. It ignores most state indicators, two area codes, voice-mail message counts, international calls and the duplicate minutes columns (day and international minutes), and one state chain has no effect.",
+  "clinical_terms": "In customer terms: heavy daytime users and customers who call customer service many times are predicted to leave, but many service calls signal churn mainly for light and average daytime users, not for heavy ones. Having an international plan raises the predicted churn risk and a voice-mail plan lowers it; higher international charges add a little risk. The joint effect detects two churn profiles, heavy daytime users and frustrated light users with many service calls; state offsets are small and fitted to a few dozen customers per state.",
+  "stuck": "Little: one identity-node operation silently failed in a batch and was reapplied; annotate lacks allow_numbers; the night leaf and the direct state offsets could not be given a single concept (partial), and one state chain is dead (closed form only).",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 13,
+      "roots": [
+        "churn_risk"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 4.440892098500626e-16,
+    "closed_form_max_abs_err": 0.03045934572487141,
+    "numeric_max_abs_err": 8.881784197001252e-16,
+    "op_counts": {
+      "rename_node": 71,
+      "add_identity_node": 6,
+      "split_node": 6,
+      "annotate": 13
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-15T06:11:25+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 53,
+      "provenance": {
+        "templated_texts": 83,
+        "queries": 61
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}

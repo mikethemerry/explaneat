@@ -1,0 +1,679 @@
+{
+ "item_id": "lr-9475d",
+ "label": "lr-9475d",
+ "genome_id": "f7d31b31-6ebd-43b3-a5d1-b2d0238c0623",
+ "target": "experiments/long_run/explanations/lr-9475d.json",
+ "target_hash": null,
+ "target_hash_note": "recheck.json (v3) for a record target carries no target_hash field",
+ "verifier": "independent verifier agent (explanation-verifier skill)",
+ "started_at": "2026-11-15T18:29:10+13:00",
+ "finished_at": "2026-11-15T18:38:54+13:00",
+ "minutes": 10,
+ "overall": {
+  "grade": "weakened",
+  "summary": "Every stated number, count and threshold reproduces and no hypothesis is contradicted; the weakenings are shape words and readings: the sodium minimum is at 139 not 138, the age curve has a step at 75-85 for men rather than a steady rise, the BMI curve has a cliff at 20-23, the direct sodium tilt is not gentle, the noise effect is small only on average, and the renal unit's 'either input open' reading holds for under half of those rows."
+ },
+ "counts": {
+  "refuted": 0,
+  "weakened": 11,
+  "upheld": 24,
+  "flag": 3
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "structural and compositional coverage 1.0, hierarchy complete, one root containing the output",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.0 / 1.0, no uncovered nodes or edges, 10 annotations under one root",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/long_run/explanations/lr-9475d.json --out experiments/long_run/verdicts/lr-9475d/recheck.json"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "7.2e-16",
+   "check": "verify recheck",
+   "evidence": "recomputed 7.22e-16",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/long_run/explanations/lr-9475d.json --out experiments/long_run/verdicts/lr-9475d/recheck.json"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.closed_form_max_abs_err",
+   "statement": "0.0163; leaf closed forms",
+   "check": "verify recheck",
+   "evidence": "recomputed 0.01625 (bp_hr); every leaf closed form matches, 0 mismatches",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/long_run/explanations/lr-9475d.json --out experiments/long_run/verdicts/lr-9475d/recheck.json"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.n_splits",
+   "statement": "10 splits, 9 identity nodes, 7 leaves, 3 compositions, 19 hidden units",
+   "check": "verify recheck op_counts; forward pass on training rows",
+   "evidence": "op counts split_node 10, add_identity_node 9, annotate 10 (7 leaves); 19 hidden units all in a leaf",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/long_run/explanations/lr-9475d.json --out experiments/long_run/verdicts/lr-9475d/recheck.json"
+   ]
+  },
+  {
+   "id": "V5",
+   "grade": "weakened",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "for a typical patient the predicted risk is lowest at 138 mmol/L (6%)",
+   "check": "probe sodium sweep at 0.25 mmol/L steps",
+   "evidence": "the source query swept sodium in 2 mmol/L steps; the minimum is at 138.5-139 mmol/L (5.3%), not 138 (5.9%). Across training rows the per-row minimum has median 139",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --no-parts --sweep sodium=137:141:17",
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --wide --sweep sodium=126:154:29"
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "upheld",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "risk rises steeply below 134 and above 140 mmol/L; switching the sodium part off moves AUC 0.904 -> 0.752",
+   "check": "probe sodium sweep; ablate sodium_U",
+   "evidence": "risk 12.6% at 134, 44% at 132, 94.8% at 130; 5.3% at 139, 9.7% at 140, 31% at 142, 80% at 145; ablate: 0.904 -> 0.7516. Every training row has both ends of the sodium range more than 1 logit above its minimum",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --wide --sweep sodium=126:154:29",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-9475d.json --part sodium_U",
+    "uv run python <scratch>/ver-lr-9475d/an.py"
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "pressure x pulse with opposite slopes; 84.3% for 63 patients (sbp>=150, hr<=65); 77.8% for 52 (sbp<=115, hr>=88); concordant pairs low",
+   "check": "subgroup counts; per-row counterfactual sbp 100->180 at hr 55 and 100; 2-D probe",
+   "evidence": "63 rows mean risk 0.8429 (outcome 0.905); 52 rows 0.7783 (0.885); concordant 45 rows 1.9%, 59 rows 9.3%. Raising sbp 100->180 raises the logit for 99.6% of rows at hr 55 (median +8.2) and lowers it for 100% at hr 100 (median -13.9)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --no-parts --sweep sbp=90:190:11 --sweep heart_rate=50,55,65,76,88,100,110",
+    "uv run python <scratch>/ver-lr-9475d/an.py"
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "age, creatinine and smoking raise the risk, and so, mostly, does diabetes",
+   "check": "per-row counterfactual sweeps on the 1500 training rows",
+   "evidence": "no training row has any decrease in logit along an age sweep (30-95) or a creatinine sweep (40-207); smoking 0->1 raises every row (+0.66 to +1.69 logit); diabetes 0->1 raises risk for 91.5% of rows and lowers it for 8.5% (16% of men)",
+   "commands": [
+    "uv run python <scratch>/ver-lr-9475d/an.py"
+   ]
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "gate open for 0 women or diabetic patients; older lean man: 28% without diabetes, 15% with",
+   "check": "subgroup count; probe male x diabetes at age 85, BMI 20",
+   "evidence": "node 4009 > 0 for 297 rows, 0 outside the 576 non-diabetic men; probe: man 28.2% / 15.3%, woman 8.4% / 15.3%",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --no-parts --set age=85 --set bmi=20 --sweep male=0,1 --sweep diabetes=0,1 --nodes 4009,228",
+    "uv run python <scratch>/ver-lr-9475d/an.py"
+   ]
+  },
+  {
+   "id": "V10",
+   "grade": "weakened",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "the noise column has a small fitted effect",
+   "check": "fix noise at its mean on all training rows; probe noise at sodium 145",
+   "evidence": "small on average (AUC 0.904 -> 0.901, mean |risk change| 2.5 points) but not small for high-sodium patients: at sodium 145 noise -2 -> 2 moves risk 62.7% -> 90.6% (the record's own high_sodium evidence), and fixing noise moves single patients by up to 31 points",
+   "commands": [
+    "uv run python <scratch>/ver-lr-9475d/an2.py",
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --no-parts --set sodium=145 --sweep noise=-2,0,2"
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "probe scores 0.89 (gate), 0.81 (renal_228), 0.47 (direct); bp_hr crossover depends on BMI, the renal unit and the old-and-lean hinge",
+   "check": "verify concept; structure",
+   "evidence": "concept scores reproduce (0.8885, 0.8104); bp_hr reads bmi_a, identity_5821_228 (renal) and identity_1906/9033_7774 (age_bmi)",
+   "commands": [
+    "uv run python -m explaneat verify concept experiments/long_run/explanations/lr-9475d.json --part sex_diabetes_gate --concept 'male * (1 - diabetes) * age'",
+    "uv run python -m explaneat verify concept experiments/long_run/explanations/lr-9475d.json --part renal_228 --concept '(sodium < 134) * (134 - sodium) + male * (1 - diabetes)'"
+   ]
+  },
+  {
+   "id": "V12",
+   "grade": "flag",
+   "level": "L4",
+   "part": null,
+   "claims": [],
+   "location": "record.clinical_terms",
+   "statement": "discordant pressure and pulse is 'a shock-index-like pattern'",
+   "check": "domain reading",
+   "evidence": "shock index (heart rate / systolic pressure) covers only the low-pressure, fast-pulse arm; the model's other high-risk arm (high pressure with a slow pulse) is not a shock-index pattern. The data support both arms; the label covers half",
+   "commands": []
+  },
+  {
+   "id": "V13",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_40",
+   "claims": [],
+   "location": "record.clinical_terms",
+   "statement": "for older, lean men without diabetes the model gives a higher risk than diabetic men",
+   "check": "domain reading",
+   "evidence": "diabetes lowering predicted risk (28% -> 15% at age 85, BMI 20) conflicts with clinical expectation; the model does this (8.5% of training rows have lower risk with diabetes set to 1). For the domain reviewer",
+   "commands": [
+    "uv run python <scratch>/ver-lr-9475d/an.py"
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_36",
+   "claims": [],
+   "location": "record.summary",
+   "statement": "'a hyponatraemia hinge acting through a renal unit'",
+   "check": "weights of unit 228",
+   "evidence": "unit 228 is driven by the low-sodium chain (weight 2.05 x 1.0) and the gate (0.86); creatinine enters with 0.142 per SD and never opens it alone (0 rows). Calling it a renal unit has little support in the model; 'alarm unit' (overall_function) fits better",
+   "commands": [
+    "uv run python <scratch>/ver-lr-9475d/an2.py"
+   ]
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "structure",
+   "statement": "entries, exits and subgraphs of 7 leaves and 3 compositions; age_bmi's 7774 closes the gate",
+   "check": "verify vars; edge list of the replayed model",
+   "evidence": "every hidden unit in exactly one leaf; 7774 feeds identity_4572_13205 with -1.38 (closes the gate) and bp_hr via identity_1906/9033_7774; low_sodium's 687 feeds renal_228 only (2.05)",
+   "commands": [
+    "uv run python -m explaneat verify vars experiments/long_run/explanations/lr-9475d.json",
+    "uv run python <scratch>/ver-lr-9475d/an2.py"
+   ]
+  },
+  {
+   "id": "V16",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_24",
+   "claims": [],
+   "location": "operations.low_sodium.hypothesis",
+   "statement": "on exactly for sodium <= 134 (223 patients, outcome 48.9%); exit 0.00 at 136, 0.003 at 134, 2.89 at 126; risk 9% -> >99%; changes 119 predictions; AUC 0.904 -> 0.889",
+   "check": "forward pass counts; probe; ablate",
+   "evidence": "687 > 0 for 223 rows = sodium <= 134 (sodium is integer-valued), 0 exceptions either way, outcome 0.489; exit 0.0034 at 134, 2.888 at 126; risk 8.6% at 136; ablate: 119 affected, AUC 0.8894",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --wide --sweep sodium=126:154:29",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-9475d.json --part low_sodium",
+    "uv run python <scratch>/ver-lr-9475d/an.py"
+   ]
+  },
+  {
+   "id": "V17",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_24",
+   "claims": [],
+   "location": "operations.low_sodium.evidence[0]",
+   "statement": "closed form, error <= 0.0021",
+   "check": "verify recheck",
+   "evidence": "matches",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/long_run/explanations/lr-9475d.json --out experiments/long_run/verdicts/lr-9475d/recheck.json"
+   ]
+  },
+  {
+   "id": "V18",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_25",
+   "claims": [],
+   "location": "operations.high_sodium.hypothesis",
+   "statement": "1173 on exactly for sodium >= 140 (635); 338 on for 796; 1173 0.00 at 138, 0.26 at 140, 4.23 at 154; noise -2 -> 2 at sodium 145: 63% -> 91%; AUC 0.904 -> 0.757, next bp_hr 0.780",
+   "check": "forward pass counts; probes; ablate",
+   "evidence": "635 rows, min sodium with 1173 on 140, max with it off 139; 338 on 796; 1173 0.2576 at 140, 4.226 at 154; noise 62.7% / 90.6%; ablate 0.7575 (bp_hr 0.7803, direct 0.8064)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --wide --sweep sodium=126:154:29",
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --no-parts --set sodium=145 --sweep noise=-2,0,2",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-9475d.json --part high_sodium"
+   ]
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_25",
+   "claims": [],
+   "location": "operations.high_sodium.evidence[0]",
+   "statement": "closed form, error <= 0.0048",
+   "check": "verify recheck",
+   "evidence": "matches",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/long_run/explanations/lr-9475d.json --out experiments/long_run/verdicts/lr-9475d/recheck.json"
+   ]
+  },
+  {
+   "id": "V20",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_34",
+   "claims": [],
+   "location": "operations.age_bmi.hypothesis",
+   "statement": "older and leaner: at BMI 22, 13205 0.11 at 40 -> 2.42 at 90, 7774 opens at 70 (0.06) -> 0.59; at BMI 34, 13205 0 at 70, 7774 0 at 90; 13205 on for 1063, 7774 for 229; 301 predictions change",
+   "check": "probes with node values; counts; ablate",
+   "evidence": "13205 0.105 / 2.419; 7774 0.057 at 70, 0.593 at 90; BMI 34: 0 / 0; counts 1063 and 229; ablate 301 affected",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --no-parts --set bmi=22 --sweep age=40,60,65,70,75,90 --nodes 13205,7774",
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --no-parts --set bmi=34 --sweep age=40,70,90 --nodes 13205,7774",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-9475d.json --part age_bmi"
+   ]
+  },
+  {
+   "id": "V21",
+   "grade": "weakened",
+   "level": "L1",
+   "part": "ann_34",
+   "claims": [],
+   "location": "operations.age_bmi.hypothesis",
+   "statement": "switching it off moves the AUC from 0.904 to 0.895",
+   "check": "ablate",
+   "evidence": "AUC without is 0.89551, which rounds to 0.896; the stored value was rounded to 0.8955 first and then printed as 0.895 (double rounding, last digit only)",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-9475d.json --part age_bmi"
+   ]
+  },
+  {
+   "id": "V22",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_35",
+   "claims": [],
+   "location": "operations.sex_diabetes_gate.hypothesis",
+   "statement": "4009 on for 297, 0 female or diabetic; man aged 80, BMI 22: 2.47 / 0.78 / 0.00 at sodium 136 / 144 / 148; typical man 0.00 at 50, 0.32 at 60, 2.38 at 90; age 75: 2.60 at BMI 18, 0 at 38; diabetes 0.48 -> 0; 5% female, 5% male; 144 predictions change",
+   "check": "probes with node values; counts; ablate",
+   "evidence": "all reproduce: 2.475 / 0.782 / 0; 0 / 0.317 / 2.379; 2.601 / 0; 0.4817 -> 0; 5.3% / 5.3%; ablate 144 affected",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --no-parts --set male=1 --set diabetes=0 --sweep age=50,55,60,90 --nodes 4009",
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --no-parts --set male=1 --set diabetes=0 --set age=75 --sweep bmi=18,25,30,38 --nodes 4009",
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --no-parts --set male=1 --set diabetes=0 --set age=80 --set bmi=22 --sweep sodium=136,140,144,148 --nodes 4009,1173",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-9475d.json --part sex_diabetes_gate"
+   ]
+  },
+  {
+   "id": "V23",
+   "grade": "weakened",
+   "level": "L1",
+   "part": "ann_35",
+   "claims": [],
+   "location": "operations.sex_diabetes_gate.hypothesis",
+   "statement": "switching it off moves the AUC from 0.904 to 0.895",
+   "check": "ablate",
+   "evidence": "AUC without 0.89553, rounds to 0.896 (same double rounding as age_bmi)",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-9475d.json --part sex_diabetes_gate"
+   ]
+  },
+  {
+   "id": "V24",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_35",
+   "claims": [],
+   "location": "operations.sex_diabetes_gate.hypothesis",
+   "statement": "concept male x no-diabetes x age, score 0.89",
+   "check": "verify concept",
+   "evidence": "score 0.8885, but r2 only 0.36: the concept says when the gate is open (AUC 0.94), not how wide; the hypothesis itself names the BMI and sodium dependence",
+   "commands": [
+    "uv run python -m explaneat verify concept experiments/long_run/explanations/lr-9475d.json --part sex_diabetes_gate --concept 'male * (1 - diabetes) * age'"
+   ]
+  },
+  {
+   "id": "V25",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_36",
+   "claims": [],
+   "location": "operations.renal_228.hypothesis",
+   "statement": "on for 215 (63.3%); 0 rows on with both low-sodium chain and gate off; creatinine and smoking alone never open it; 1.88 / 2.40 at creatinine 60 / 160 at sodium 130; 4.96 at 126; AUC 0.904 -> 0.883",
+   "check": "counts; probes; ablate",
+   "evidence": "215 rows, outcome 0.633; 0 exceptions; a woman at sodium 136 who smokes with creatinine 207 keeps 228 at 0 (pre-activation -0.25); 4.96 at 126; ablate 0.8834",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --no-parts --set sodium=136 --set male=0 --set smoker=1 --sweep creatinine=40,120,207 --nodes 228",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-9475d.json --part renal_228",
+    "uv run python <scratch>/ver-lr-9475d/an2.py"
+   ]
+  },
+  {
+   "id": "V26",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_36",
+   "claims": [],
+   "location": "operations.renal_228.hypothesis",
+   "statement": "the unit reads as 'how far sodium is below the low end of normal, or being a non-diabetic man'",
+   "check": "forward pass on training rows",
+   "evidence": "the OR is necessary but not sufficient: of the 457 rows with the low-sodium chain or the gate open, 228 fires for 215; for 96 of 234 gate-only rows and 71 of 160 low-sodium-only rows. The unit is a threshold on the sum (bias -1.19), so most non-diabetic men (gate closed or small) never reach it",
+   "commands": [
+    "uv run python <scratch>/ver-lr-9475d/an2.py"
+   ]
+  },
+  {
+   "id": "V27",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_37",
+   "claims": [],
+   "location": "operations.bp_hr.hypothesis",
+   "statement": "hr 55: <1% at 90 -> 77% at 190 mmHg; hr 100: 60% -> <1%; sbp 110: <1% at 50 -> 82% at 110 bpm; sbp 160: 75% -> <1%, steepest drop 80 (8%) -> 90; hr 76: 4% to 19%; four subgroup cells; 1471 changed, AUC 0.780",
+   "check": "2-D probe; sweeps; subgroups; ablate",
+   "evidence": "0.1% / 77.4%; 59.5% / 0.0%; 0.0% / 81.6%; 75.1% / 0.0%, 8.2% at 80, 0.3% at 85; hr 76 range 4.3%-18.8%; cells 84.3% (63), 1.9% (45), 9.3% (59), 77.8% (52); ablate 1471 affected, 0.7803. Note: each slope is step-like (most of the change between 120 and 150 mmHg), and at 100 bpm the risk first rises slightly (59.5% -> 68.6% from 90 to 110 mmHg)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --no-parts --sweep sbp=90:190:11 --sweep heart_rate=50,55,65,76,88,100,110",
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --no-parts --set sbp=160 --sweep heart_rate=50:110:13",
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --no-parts --set heart_rate=76 --sweep sbp=90:190:21",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-9475d.json --part bp_hr"
+   ]
+  },
+  {
+   "id": "V28",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_37",
+   "claims": [],
+   "location": "operations.bp_hr.evidence[0]",
+   "statement": "closed form, error <= 0.016",
+   "check": "verify recheck",
+   "evidence": "matches",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/long_run/explanations/lr-9475d.json --out experiments/long_run/verdicts/lr-9475d/recheck.json"
+   ]
+  },
+  {
+   "id": "V29",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_38",
+   "claims": [],
+   "location": "operations.direct.hypothesis",
+   "statement": "direct terms hr 0.93, sodium -0.86, age 0.75, sbp 0.66, creatinine 0.61, BMI 0.48, diabetes 0.30, smoking 0.28, noise -0.12, no male edge; creatinine score -3.67 / -2.55 / -1.44 / -0.32 (2% -> 42%); smoking 5% -> 10%; diabetes 5% -> 10% for a woman; AUC 0.806",
+   "check": "edge list; probes; ablate",
+   "evidence": "weights 0.925, -0.860, 0.748, 0.659, 0.609, 0.482, 0.305, 0.282, -0.116, no male edge; scores -3.670 / -2.555 / -1.440 / -0.325, risk 2.5% / 42.0%; smoking 5.3% / 9.7%; woman 5.3% / 9.8%; ablate 0.8064",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --no-parts --sweep creatinine=50,100,150,200",
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --no-parts --sweep smoker=0,1",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-9475d.json --part direct"
+   ]
+  },
+  {
+   "id": "V30",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_39",
+   "claims": [],
+   "location": "operations.sodium_U.hypothesis",
+   "statement": "13% at 134, >99% at 126; 31% at 142, >99% at 154; score -2.36 at 136 -> 10.82 at 126, -2.23 at 140 -> 7.92 at 154; 858 outside the band 51.5% / 51.6%, 642 inside 28.8% / 28.2%; AUC 0.904 -> 0.752",
+   "check": "probe; subgroups; ablate",
+   "evidence": "all reproduce (12.6%, 31.4%; -2.357 / 10.825, -2.230 / 7.923; 858: 0.5152 / 0.5159; 642: 0.2882 / 0.2816; 0.7516)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --wide --sweep sodium=126:154:29",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-9475d.json --part sodium_U",
+    "uv run python <scratch>/ver-lr-9475d/an.py"
+   ]
+  },
+  {
+   "id": "V31",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_39",
+   "claims": [],
+   "location": "operations.sodium_U.hypothesis",
+   "statement": "the predicted risk is lowest at 138 mmol/L (6%)",
+   "check": "fine sodium sweep",
+   "evidence": "minimum at 138.5-139 mmol/L (5.3%); 138 gives 5.9%. Grid of 2 mmol/L",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --no-parts --sweep sodium=137:141:17"
+   ]
+  },
+  {
+   "id": "V32",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_39",
+   "claims": [],
+   "location": "operations.sodium_U.hypothesis",
+   "statement": "sodium's own direct edge (in direct) adds a gentle downward tilt",
+   "check": "direct part's contribution along the sodium sweep",
+   "evidence": "the direct sodium term is -0.86 per SD (4.09 mmol/L), -0.21 logit per mmol/L: it moves the score by 5.9 logit over the range (+2.24 at 126 to -3.66 at 154), about half the size of the high-side hinges' +14.1 at 154; not gentle",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --wide --sweep sodium=126:154:29"
+   ]
+  },
+  {
+   "id": "V33",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_40",
+   "claims": [],
+   "location": "operations.gate_and_renal.hypothesis",
+   "statement": "man aged 85, BMI 20: gate 2.69, renal 0.98, risk 28%; with diabetes 0 / 0, 15%; woman 8%; typical woman 5% -> 10% with diabetes; AUC 0.883; 367 predictions change",
+   "check": "probes; ablate",
+   "evidence": "2.686 / 0.983 / 28.2%; 0 / 0 / 15.3%; 8.4%; 5.3% / 9.8%; ablate 0.8834, 367 affected",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --no-parts --set age=85 --set bmi=20 --sweep male=0,1 --sweep diabetes=0,1 --nodes 4009,228",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-9475d.json --part gate_and_renal"
+   ]
+  },
+  {
+   "id": "V34",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_40",
+   "claims": [],
+   "location": "operations.gate_and_renal.hypothesis",
+   "statement": "the renal unit fires when either the gate or the low-sodium chain is open",
+   "check": "forward pass on training rows",
+   "evidence": "fires for 215 of the 457 rows where either is open (96 of 234 gate-only, 71 of 160 low-sodium-only); it needs their weighted sum plus creatinine and smoking to pass 1.19",
+   "commands": [
+    "uv run python <scratch>/ver-lr-9475d/an2.py"
+   ]
+  },
+  {
+   "id": "V35",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_41",
+   "claims": [],
+   "location": "operations.root.hypothesis",
+   "statement": "sum of the four children; sodium U, pressure x pulse slopes; creatinine 2% -> 42%; no direct male edge; AUC 0.904; every hidden unit affine 0.683",
+   "check": "probes; linearise --level nodes",
+   "evidence": "reproduce: AUC 0.90397; all switching units affine 0.6828",
+   "commands": [
+    "uv run python -m explaneat verify linearise experiments/long_run/explanations/lr-9475d.json --level nodes"
+   ]
+  },
+  {
+   "id": "V36",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_41",
+   "claims": [],
+   "location": "operations.root.hypothesis",
+   "statement": "age raising the risk steadily, from 1% at 35 years to 54% at 90, the largest step between 76.25 (15%) and 90",
+   "check": "age sweep at 2.5-year steps, typical patient (a non-diabetic man) and a woman",
+   "evidence": "for the typical man the curve is steady to 75 (11.6%), then jumps to 49.0% at 85 as the renal unit opens (228: 0.011 at 75 -> 0.64 at 85, gate_and_renal +1.37 logit), then flattens (54.5% at 90). For a woman it rises steadily to 22.5% at 90. The step is the gate chain, not a steady age effect",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --no-parts --sweep age=30:95:27",
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --sweep age=70,75,77.5,80,82.5,85,90 --nodes 13205,7774,4009,228",
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --no-parts --set male=0 --sweep age=30:95:14"
+   ]
+  },
+  {
+   "id": "V37",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_41",
+   "claims": [],
+   "location": "operations.root.hypothesis",
+   "statement": "BMI's curve is shallow and dips in the middle (10% at 18, 4% at 23.5, 10% at 40)",
+   "check": "BMI sweep at 1-unit steps with part contributions",
+   "evidence": "the numbers reproduce, but the shape is a peak then a cliff: 8.3% at 16 rising to 12.5% at 20, falling to 4.1% at 23 as the gate chain closes (gate_and_renal +1.40 -> +0.02), then a slow linear climb to 10.4% at 40",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --sweep bmi=16,18,20,21,22,23,26,40",
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --no-parts --sweep bmi=16:40:25"
+   ]
+  },
+  {
+   "id": "V38",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_41",
+   "claims": [],
+   "location": "operations.root.hypothesis",
+   "statement": "a U in sodium, lowest at 138 mmol/L (6%)",
+   "check": "fine sodium sweep",
+   "evidence": "minimum at 138.5-139 (5.3%)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-9475d.json --no-parts --sweep sodium=137:141:17"
+   ]
+  }
+ ],
+ "parts": {
+  "ann_24": {
+   "grade": "upheld",
+   "level": "L3",
+   "name": "low_sodium"
+  },
+  "ann_25": {
+   "grade": "upheld",
+   "level": "L3",
+   "name": "high_sodium"
+  },
+  "ann_34": {
+   "grade": "weakened",
+   "level": "L1",
+   "name": "age_bmi"
+  },
+  "ann_35": {
+   "grade": "weakened",
+   "level": "L1",
+   "name": "sex_diabetes_gate"
+  },
+  "ann_36": {
+   "grade": "weakened",
+   "level": "L3",
+   "name": "renal_228"
+  },
+  "ann_37": {
+   "grade": "upheld",
+   "level": "L3",
+   "name": "bp_hr"
+  },
+  "ann_38": {
+   "grade": "upheld",
+   "level": "L3",
+   "name": "direct"
+  },
+  "ann_39": {
+   "grade": "weakened",
+   "level": "L3",
+   "name": "sodium_U"
+  },
+  "ann_40": {
+   "grade": "weakened",
+   "level": "L3",
+   "name": "gate_and_renal"
+  },
+  "ann_41": {
+   "grade": "weakened",
+   "level": "L3",
+   "name": "root"
+  }
+ },
+ "leaf_meaning": {
+  "low_sodium": {
+   "grade": "meaningful",
+   "why": "An exact hyponatraemia hinge: on for exactly the 223 rows with sodium at or below 134 mmol/L and growing linearly as sodium falls (concept R2 1.00)."
+  },
+  "high_sodium": {
+   "grade": "meaningful",
+   "why": "Unit 1173 is an exact hypernatraemia hinge at 140 mmol/L (635 rows, 0 exceptions); the second unit is a shallower sodium hinge mixed with the noise column, which the hypothesis states."
+  },
+  "age_bmi": {
+   "grade": "meaningful",
+   "why": "Probes confirm 'older and leaner opens it': at BMI 22 the near copy grows with age and the high copy opens at 70, at BMI 34 both stay shut through age 70 and 90."
+  },
+  "sex_diabetes_gate": {
+   "grade": "meaningful",
+   "why": "Open only for non-diabetic men (0 exceptions in 1500 rows) and widening with age and leanness, closed by high sodium, as probed; the concept captures when it opens (AUC 0.94) better than how wide (R2 0.36), which the hypothesis covers in words."
+  },
+  "renal_228": {
+   "grade": "partial",
+   "why": "Low sodium or an open gate is needed for it to fire (0 exceptions), but not enough: it fires for 215 of the 457 rows where either is open, as a threshold on their sum plus creatinine and smoking."
+  },
+  "bp_hr": {
+   "grade": "meaningful",
+   "why": "The discordance reading holds on constructed cases and on training rows: raising pressure raises the score for 99.6% of rows at a pulse of 55 and lowers it for 100% at 100, and the four pressure-by-pulse cells order as stated."
+  },
+  "direct": {
+   "grade": "closed-form-only",
+   "why": "A linear sum of nine direct input edges; it is described by its coefficients, which reproduce, and has no single reading (the record says so)."
+  }
+ },
+ "statements_checked": 112,
+ "statements_checked_note": "distinct numbers, counts, directions, thresholds, rules and shapes across the record and the 10 hypotheses; includes the 34 free-text statements recheck verified automatically",
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ],
+ "scratch_scripts": [
+  "<scratch>/ver-lr-9475d/an.py",
+  "<scratch>/ver-lr-9475d/an2.py",
+  "<scratch>/ver-lr-9475d/ops.py"
+ ]
+}

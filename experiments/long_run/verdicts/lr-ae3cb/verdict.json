@@ -1,0 +1,456 @@
+{
+ "item_id": "lr-ae3cb",
+ "genome_id": "466cca51-4501-4488-8b8e-2f71f7ff7902",
+ "target_hash": null,
+ "target_hash_note": "recheck.json for this record carries no target_hash field",
+ "verifier": "independent verifier agent (explanation-verifier skill)",
+ "started_at": "2026-11-15T19:04:26+13:00",
+ "finished_at": "2026-11-15T19:16:00+13:00",
+ "minutes": 12,
+ "overall": {
+  "grade": "weakened",
+  "summary": "Every number reproduces and the saddle, sodium U, brake, arm, detector and gate behave as stated; nothing is refuted. 7 statements are weakened: a fast heart rate raises risk only at low (not normal) pressure, age is not monotone when sodium is raised, diabetes acts through the brake about as much as through the gate, the brake is not the only cause of the fall at high pressure, the high-sodium arm opens inside the normal range, the low-sodium hinge opens at normal sodium under high pressure, and the smoker unit's hypothesis restates its formula."
+ },
+ "counts": {
+  "refuted": 0,
+  "weakened": 7,
+  "upheld": 17
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "structural and compositional coverage 1.0, hierarchy complete, one root containing the output",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.0 / 1.0, no uncovered nodes or edges, single root, 9 of 9 compositions; noise (-10) is a Null node",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/long_run/explanations/lr-ae3cb.json --out experiments/long_run/verdicts/lr-ae3cb/recheck.json"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "function preservation error 1.8e-15",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.78e-15",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/long_run/explanations/lr-ae3cb.json"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.closed_form_max_abs_err",
+   "statement": "closed-form error 0.036 on a part whose output spans 10.4 score units (record.resisted)",
+   "check": "verify recheck (closed forms)",
+   "evidence": "recomputed 0.0358 on rate_pressure_brake, exit scale 10.43; the other six leaves 0.0003 to 0.0096; no coefficient mismatch",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/long_run/explanations/lr-ae3cb.json"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "all templated numbers (84 templated texts, 67 queries) and 57 parsed free-text statements",
+   "check": "verify recheck provenance + free-text",
+   "evidence": "0 mismatch, 0 needs_review, 57 of 57 parsed statements ok; one AUC (gate unit off, 0.805) not parsed, confirmed by hand (V-shock_gate)",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/long_run/explanations/lr-ae3cb.json"
+   ]
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "subgroups: 38 patients with heart_rate > 90 and sbp > 145, mean risk 1.2%; sodium < 134: 58.8%; 134 to 139: 28.0%; > 139: 53.1%",
+   "check": "verify subgroup on each expression",
+   "evidence": "n 38 / risk 1.2% / outcome 2.6%; n 157 / 58.8%; n 708 / 28.0%; n 635 / 53.1%",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/long_run/explanations/lr-ae3cb.json --where \"heart_rate > 90 and sbp > 145\"",
+    "uv run python -m explaneat verify subgroup experiments/long_run/explanations/lr-ae3cb.json --where \"sodium < 134\""
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_34",
+   "claims": [],
+   "location": "operations.root.hypothesis",
+   "statement": "saddle self-probe: at heart rate 100 risk 90% at sbp 100, 17% at 130, below 1% at 160; at 55 below 1%, 47%, 99% at sbp 100, 145, 175; training corners 87.4% (n 75), 74.4% (n 49), 12.8% (n 72), 1.2% (n 38)",
+   "check": "probe 2-D grid sbp 90..190 x heart_rate 50..120; probe --set heart_rate=55; subgroup per corner",
+   "evidence": "90.3%, 17.2%, 0.0%; 0.4%, 46.7%, 98.6%; corners reproduce exactly",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-ae3cb.json --sweep sbp=90:190:11 --sweep heart_rate=50,55,60,70,80,90,100,110,120 --no-parts"
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_34",
+   "claims": [],
+   "location": "operations.root.hypothesis",
+   "statement": "single-input sweeps are not monotone: heart rate 9% at 50, 5% at 60, 25% at 80, 8% at 85, 19% at 110; sbp 23% at 135, 12% at 155, 63% at 180",
+   "check": "probe --sweep heart_rate=50:120:15 and sbp=90:190:21 (typical)",
+   "evidence": "9.0, 4.6, 25.1, 8.3, 19.1%; 23.0, 11.8, 63.1%; the drop at 85 coincides with the brake opening (contribution -0.12 at 80, -2.55 at 85)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-ae3cb.json --sweep heart_rate=50:120:15",
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-ae3cb.json --sweep sbp=90:190:21 --no-parts"
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_34",
+   "claims": [],
+   "location": "operations.root.hypothesis",
+   "statement": "risk is high ... when heart rate is fast and pressure low or normal (also record.summary 'a fast heart rate without high pressure raises it', clinical_terms 'tachycardia with low or normal blood pressure')",
+   "check": "probe sbp 120..155 x heart_rate 80,90,100; subgroups by pressure band",
+   "evidence": "only true for low pressure (below about 125 mmHg). At sbp 130 to 140 a fast rate lowers the risk: sbp 130: 25.2% at 80 bpm, 12.4% at 90, 17.2% at 100; sbp 140: 18.6%, 4.2%, 6.0%. In training, heart_rate > 90 with sbp 120 to 145 (n 115) has mean risk 37.8% vs 41.4% for heart rate 65 to 90 at the same pressures (n 538); heart_rate > 90 with sbp < 110 (n 22) has 87.0%. The record's own corner uses sbp < 120, which is low, not normal, pressure.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-ae3cb.json --no-parts --sweep sbp=120,130,135,140,145,150,155 --sweep heart_rate=80,90,100 --nodes 1419,982",
+    "uv run python -m explaneat verify subgroup experiments/long_run/explanations/lr-ae3cb.json --where \"heart_rate > 90 and sbp >= 120 and sbp <= 145\""
+   ]
+  },
+  {
+   "id": "V9",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_34",
+   "claims": [],
+   "location": "operations.root.hypothesis",
+   "statement": "(3) monotone rises with age through the direct terms (also record.summary 'straight-line rises with age', clinical_terms 'older age ... raise risk throughout their ranges')",
+   "check": "probe --sweep age in four contexts (typical, gate open, sodium 131, sodium 142/143/146)",
+   "evidence": "monotone and straight on the score scale in the typical case (1.8% at 30 to 79.0% at 95) and with the gate open, but it reverses with raised sodium: at sodium 142 the risk is 81.0% at age 75, 74.6% at 80 and 67.1% at 85; at sodium 143, 89.5% at 75 and 73.8% at 90; for the typical patient of 'sodium > 141 and age > 70', 96.5% at 75 to 86.3% at 95. Cause: the age hinge (opens about 74 years, 207 patients) pulls the high-sodium arm down (node 144: 1.61 at 70 to 0.49 at 95 at sodium 146). 64 training patients have sodium >= 141 and age >= 75.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-ae3cb.json --no-parts --set sodium=142 --sweep age=65:95:7",
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-ae3cb.json --no-parts --set sodium=146 --sweep age=30:95:14 --nodes 144",
+    "uv run python -m explaneat verify subgroup experiments/long_run/explanations/lr-ae3cb.json --where \"sodium >= 141 and age >= 75\""
+   ]
+  },
+  {
+   "id": "V10",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_34",
+   "claims": [],
+   "location": "operations.root.hypothesis",
+   "statement": "(3) diabetes rises 'inside the gate' (record.overall_function: 'inside the gate, so mostly when it is open'; clinical_terms 'mainly in the shock pattern')",
+   "check": "probe diabetes 0/1 with the gate shut and brake on; ablate each diabetes edge to its mean, diabetics only",
+   "evidence": "diabetes has no direct edge and acts through two routes: the gate (edge -8_b->982) and the brake (edge -8_a->546, which the brake hypothesis does mention). With the gate shut and the brake on (sbp 160, heart rate 70) diabetes still raises the risk from 56.2% to 62.8%. Over the 428 training diabetics, the brake route changes the risk of 266 (mean |change| 0.015) and the gate route of 142 (mean |change| 0.020): the brake route is close to half of diabetes' effect, not a minor part.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-ae3cb.json --no-parts --set heart_rate=70 --set sbp=160 --sweep diabetes=0,1 --nodes 546",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-ae3cb.json --edge \"-8_a->546\" --to mean --where \"diabetes == 1\"",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-ae3cb.json --edge \"-8_b->982\" --to mean --where \"diabetes == 1\""
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_34",
+   "claims": [],
+   "location": "operations.root.hypothesis",
+   "statement": "(4) body-mass index barely matters (mean |risk change| 0.003, largest 0.088 with its edges at their means); noise has no edge (20% and 20% at -2 and 2)",
+   "check": "ablate the three bmi edges --to mean; probe noise and bmi",
+   "evidence": "mean |change| 0.0030, max 0.0885, AUC 0.9007 -> 0.9001; noise 20.0% / 20.0%; bmi 18, 27.7, 40 all 20.0%",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-ae3cb.json --edge \"-2_a->6726_a\" --edge \"-2_b->6726_b\" --edge \"-2_c->6726_cd\" --to mean"
+   ]
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_25",
+   "claims": [],
+   "location": "operations.direct_terms.hypothesis",
+   "statement": "direct weights per SD 0.96 age, 1.07 sbp, 1.35 heart rate, 0.64 creatinine, 0.40 smoking; creatinine 50 -> 170 raises risk 10% -> 64%; age 35 -> 90 raises 3% -> 71%; switching off lowers AUC 0.901 -> 0.764; concept age + sbp + heart_rate 0.85",
+   "check": "recheck closed form; probe creatinine and age endpoints; ablate --part direct_terms; concept",
+   "evidence": "0.957, 1.07, 1.35, 0.635, 0.40; 10.0% -> 64.4%; 2.7% -> 71.4%; AUC 0.7636; concept 0.847. Creatinine reaches the score only here, so its effect is a straight line on the score scale.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-ae3cb.json --no-parts --sweep creatinine=50,170",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-ae3cb.json --part direct_terms",
+    "uv run python -m explaneat verify concept experiments/long_run/explanations/lr-ae3cb.json --part direct_terms --concept \"age + sbp + heart_rate\""
+   ]
+  },
+  {
+   "id": "V13",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_26",
+   "claims": [],
+   "location": "operations.rate_pressure_brake.hypothesis",
+   "statement": "self-probe: at sbp 120 off at 60, 70, 80 bpm, on from 90 (1.99), 7.23 at 110; at sbp 160 on at 60 (1.42); readout -1.85; acts on 921, -3.49 on average; AUC 0.901 -> 0.787; concept 'heart_rate > 80 or sbp > 140' 0.92",
+   "check": "probe --nodes 546 at sbp 120 and 160; wide probe; subgroup over all rows; ablate; concept",
+   "evidence": "pre-activation -0.63 at 80, 1.994 at 90, 7.235 at 110; 1.416 at sbp 160 / 60 bpm; contribution/exit = -8.55/4.615 = -1.853; 921 rows, -2.1436*1500/921 = -3.49; AUC 0.7869; concept 0.917",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-ae3cb.json --set sbp=120 --sweep heart_rate=60,70,75,80,85,90,100,110 --nodes 1419,546,982,1652 --no-parts",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-ae3cb.json --part rate_pressure_brake"
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_26",
+   "claims": [],
+   "location": "operations.rate_pressure_brake.hypothesis",
+   "statement": "'In the whole model this is what makes a fast heart rate protective when pressure is high: at sbp 160, raising heart rate from 60 to 110 lowers the predicted risk from 73% to below 1%'",
+   "check": "probe at sbp 160 across heart rate, with each part's contribution",
+   "evidence": "the numbers reproduce (73.4% -> 0.0%), but most of the fall from 60 to 80 bpm (73.4% -> 8.1%) is the high-pressure arm closing (its contribution +5.02 -> 0), while the brake changes only from -2.63 to -3.12. The brake carries the fall above 80 bpm (-3.12 -> -17.69). It is one of two causes, not 'what makes' it.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-ae3cb.json --set sbp=160 --sweep heart_rate=60,75,80,90,110"
+   ]
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_27",
+   "claims": [],
+   "location": "operations.high_sbp_low_hr_arm.hypothesis",
+   "statement": "self-probe: at 55 bpm opens between sbp 125 (0.00) and 130 (0.08), 2.99 at 175; at 75 bpm between 150 and 155 (0.22); at 95 bpm off at 175; whole model 55 bpm sbp 110 -> 175: 1% -> 99%; acts on 326, +3.27; 75 patients heart_rate < 65 and sbp > 145: 87.4%; AUC -> 0.829; concepts sbp/heart_rate 0.96, sbp - heart_rate 0.96",
+   "check": "probe --nodes 1652 at three heart rates; subgroup; ablate; concept",
+   "evidence": "0.084 at 130, 2.991 at 175; 0 (-0.05) at 150, 0.224 at 155; pre -2.39 at 175 (95 bpm, off up to 190); 0.8% -> 98.6%; 326 rows, +3.27; 87.4%; AUC 0.8288; concepts 0.957 and 0.965. The ratio reading is loose: the opening pressure is not proportional to heart rate (about 128 at 55 bpm, 151 at 75, above 190 at 95), but the hypothesis states the probe values, not a ratio threshold.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-ae3cb.json --set heart_rate=55 --sweep sbp=110,120,125,130,140,150,155,160,175,190 --nodes 1652,330 --no-parts",
+    "uv run python -m explaneat verify concept experiments/long_run/explanations/lr-ae3cb.json --part high_sbp_low_hr_arm --concept \"sbp / heart_rate\""
+   ]
+  },
+  {
+   "id": "V16",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_28",
+   "claims": [],
+   "location": "operations.high_hr_low_sbp_detector.hypothesis",
+   "statement": "self-probe: sbp 120 off at 70, 0.41 at 75, 6.59 at 110; sbp 160 off to 100, 1.71 at 110; age hinge 0.59 at 70, 1.16 at 90; AUC -> 0.806; concept 'heart_rate > 76 and sbp < 145' 0.97, heart_rate/sbp 0.86",
+   "check": "probe --nodes 1419; age sweep; ablate; concept",
+   "evidence": "0.411, 6.587; -0.056 at 100, 1.708 at 110; 0.587 at 70, 1.156 at 90 (hinge opens about 74 years); AUC 0.8056; concepts 0.968 and 0.863. Opening near the median heart rate (76) at sbp 120 confirms 'above about the middle of its range'.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-ae3cb.json --set sbp=160 --sweep heart_rate=60,70,75,80,85,90,100,110 --nodes 1419,546,982,1652 --no-parts",
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-ae3cb.json --no-parts --sweep age=50,60,70,75,80,90 --nodes 1419"
+   ]
+  },
+  {
+   "id": "V17",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_29",
+   "claims": [],
+   "location": "operations.high_sodium_arm.hypothesis",
+   "statement": "self-probe: age 60 off at 138, 0.18 at 140, 2.08 at 148; age 85 off at 140, 0.07 at 142, 1.50 at 148; risk 18% at 138 to 99% at 148 (age 60); age hinge open for 207; acts on 588, +2.11; AUC -> 0.827; concept sodium 0.98",
+   "check": "probe --sweep sodium x age=60,85 --nodes 144; subgroup age > 74.5; ablate; concept",
+   "evidence": "0.181, 2.085; -0.40 at 140, 0.071 at 142, 1.498 at 148; 17.5% -> 98.9%; 207; 588 rows, +2.11; AUC 0.8272; 0.984",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-ae3cb.json --sweep sodium=138,139,140,141,142,144,148 --sweep age=60,85 --nodes 144 --no-parts"
+   ]
+  },
+  {
+   "id": "V18",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_29",
+   "claims": [],
+   "location": "operations.high_sodium_arm.hypothesis",
+   "statement": "'off through the normal range and rises ... once sodium passes the upper end of that range'; 'Clinically: hypernatraemia raises the predicted risk' (also leaves[].why 'opens just above the normal sodium range', clinical_terms)",
+   "check": "probe sodium sweep (typical); subgroup sodium > 139",
+   "evidence": "the hinge opens at about 139.2 mmol/L (pre-activation -0.057 at 139, +0.18 at 140), in the middle of the usual normal range (about 135 to 145), not above it. The predicted risk already triples inside the normal range (20.0% at 139, 62.9% at 142). The arm acts on 588 patients (39%); 635 (42%) have sodium > 139. 'Hypernatraemia' names only the top of where it acts; the numbers in the hypothesis are right, the clinical label is not.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-ae3cb.json --sweep sodium=126:154:29 --nodes 330,28074,40748,144,982 --no-parts",
+    "uv run python -m explaneat verify subgroup experiments/long_run/explanations/lr-ae3cb.json --where \"sodium > 139\""
+   ]
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_30",
+   "claims": [],
+   "location": "operations.male_unit.hypothesis",
+   "statement": "copy of male, weight 0.66 into the gate; gate open (heart rate 100, sbp 120): unit 0 -> 0.76, risk 22% -> 42%; 223 men with the gate open, +0.89; edge at its mean: AUC 0.901 -> 0.899",
+   "check": "probe male 0/1; subgroup; ablate edge 40922->982",
+   "evidence": "0.758, 22.0% -> 42.4%; contribution 0.961 = 0.758 x 0.66 x 1.92; 223 rows, 0.1325*1500/223 = 0.89; AUC 0.899; typical (gate shut) male makes no difference (20.0% / 20.0%)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-ae3cb.json --no-parts --set heart_rate=100 --set sbp=120 --sweep male=0,1 --nodes 40922",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-ae3cb.json --edge \"40922->982\" --to mean"
+   ]
+  },
+  {
+   "id": "V20",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_31",
+   "claims": [],
+   "location": "operations.smoker_unit.hypothesis",
+   "statement": "gate open: unit 0.96, gate 4.09 -> 3.91, risk 42% -> 57%, direct term 1.44 -> 2.38; switching off AUC 0.901 -> 0.901",
+   "check": "probe smoker 0/1 --nodes 92678,982,identity_0; ablate --part smoker_unit",
+   "evidence": "0.956; 4.087 -> 3.910; 42.4% -> 57.3%; 1.442 -> 2.381; AUC 0.9007 -> 0.9007 (6 predictions flip)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-ae3cb.json --no-parts --set heart_rate=100 --set sbp=120 --sweep smoker=0,1 --nodes 92678,982,identity_0",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-ae3cb.json --part smoker_unit"
+   ]
+  },
+  {
+   "id": "V21",
+   "grade": "weakened",
+   "level": "L4",
+   "part": "ann_31",
+   "claims": [],
+   "location": "operations.smoker_unit.hypothesis",
+   "statement": "'a copy of the smoker input ... a small negative push on the gate'",
+   "check": "ablate --part smoker_unit",
+   "evidence": "not meaningful: restates the closed form (a copy of smoking with weight -0.20 into the gate). Its effect is negligible (AUC unchanged at 0.9007, mean |risk change| 0.003); what smoking does to the prediction is its direct term (risk 20.0% -> 39.1% in the typical case).",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-ae3cb.json --part smoker_unit",
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-ae3cb.json --no-parts --sweep smoker=0,1"
+   ]
+  },
+  {
+   "id": "V22",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_32",
+   "claims": [],
+   "location": "operations.sodium_u_with_pressure.hypothesis",
+   "statement": "U with a flat bottom: 20% at 134 and 139 with the hinges off between; low-sodium hinge 0.42 at 133, risk 59% at 132, 97% at 130, relay 0.32 at 131; high-sodium arm 0.18 at 140, 87% at 144; low side steeper; bins 58.8% / 28.0% / 53.1%; AUC 0.901 -> 0.730, low hinge edge at mean 0.888; 0 of 198 for the high-sodium input",
+   "check": "probe --sweep sodium=126:154:29 --nodes 330,28074,40748,144,982; ablate --part and --edge 330->0",
+   "evidence": "20.0% flat from 134 to 139; 0.417 at 133; 59.4% at 132; 96.9% at 130; relay (40748) 0.315 at 131; 0.181 at 140; 87.1% at 144; slope on the score about 1.0 per mmol/L below vs 0.69 above; AUC 0.7297 and 0.8885",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-ae3cb.json --sweep sodium=126:154:29 --nodes 330,28074,40748,144,982 --no-parts",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-ae3cb.json --part sodium_u_with_pressure",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-ae3cb.json --edge \"330->0\" --to mean"
+   ]
+  },
+  {
+   "id": "V23",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_32",
+   "claims": [],
+   "location": "operations.sodium_u_with_pressure.hypothesis",
+   "statement": "pressure term: 'with a high pressure and slow heart rate the model penalises mild hyponatraemia that it ignores otherwise' (overall_function: 'makes the low-sodium hinge open at milder hyponatraemia')",
+   "check": "probe at heart rate 60, sbp 170 across sodium 128..150 --nodes 330",
+   "evidence": "the stated values reproduce (off at sbp 120, 2.709 at sbp 170, sodium 134), but at sbp 170 / 60 bpm the 'low-sodium' hinge is open through normal sodium too: 1.62 at 136 and 0.54 at 138, closing only near 139.5; even at sodium 139, sbp 175 and 55 bpm it is 0.71. In that corner the flat bottom shrinks to about 139 to 141 (risk minimum 88.4% at 140). The hinge is as much a pressure hinge as a sodium hinge there; 'mild hyponatraemia' understates it.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-ae3cb.json --no-parts --set heart_rate=60 --set sbp=170 --sweep sodium=128:150:12 --nodes 330,1652,144"
+   ]
+  },
+  {
+   "id": "V24",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_33",
+   "claims": [],
+   "location": "operations.shock_gate.hypothesis",
+   "statement": "sbp 120, sodium 139: off at 80, 1.90 at 90, 6.27 at 110; sodium 128: open at 60 bpm (3.77), risk above 99%; diabetes with gate open 42% -> 67%, typical 20% / 20%; open for 404; gate unit off AUC 0.901 -> 0.805, composition off 0.650; 49 patients heart_rate > 90 and sbp < 120: 74.4%; readout 1.92",
+   "check": "probe --nodes 982; probe diabetes; ablate --node 982 and --part shock_gate; subgroup",
+   "evidence": "pre -0.288 at 80, 1.900, 6.275; 3.771 and 100.0%; 42.4% -> 67.4%, 20.0% / 20.0%; 404 rows; AUC 0.8053 and 0.6498; 74.4% (n 49); 7.86/4.087 = 1.923. 'Opens in two situations' holds (the gate also opens at sbp 140 / 90 bpm, value 1.13, but the brake then dominates the risk).",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-ae3cb.json --no-parts --set sbp=120 --set sodium=128 --sweep heart_rate=60 --nodes 982,40748",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-ae3cb.json --node 982",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-ae3cb.json --part shock_gate"
+   ]
+  }
+ ],
+ "parts": {
+  "ann_34": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_33": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_26": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_32": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_28": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_25": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_27": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_29": {
+   "grade": "weakened",
+   "level": "L4"
+  },
+  "ann_30": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_31": {
+   "grade": "weakened",
+   "level": "L4"
+  }
+ },
+ "leaf_meaning": {
+  "direct_terms": {
+   "grade": "partial",
+   "why": "The straight-line reading is right for age, creatinine and smoking, whose effects run mainly here; for sbp and heart rate the direct terms are not the model's effect (the brake and gate bend them into a saddle), and the concept is just the formula's three largest terms."
+  },
+  "rate_pressure_brake": {
+   "grade": "meaningful",
+   "why": "Confirmed as a brake that opens with a fast heart rate or high pressure and makes a fast rate low-risk at high pressure, though the high-pressure arm closing carries the first part of that fall."
+  },
+  "high_sbp_low_hr_arm": {
+   "grade": "meaningful",
+   "why": "Confirmed as hypertension with a relatively slow heart rate raising risk, opening at a higher pressure the faster the heart rate (sbp 128 at 55 bpm, 151 at 75, off at 95)."
+  },
+  "high_hr_low_sbp_detector": {
+   "grade": "meaningful",
+   "why": "Confirmed as a tachycardia detector switched off by high pressure (opens about 74 bpm at sbp 120, about 100 bpm at sbp 160), the shock-index pattern."
+  },
+  "high_sodium_arm": {
+   "grade": "partial",
+   "why": "A real high-sodium arm, but it opens at about 140 mmol/L inside the normal range, so the 'hypernatraemia' reading covers only the top of where it acts."
+  },
+  "male_unit": {
+   "grade": "meaningful",
+   "why": "Confirmed: male sex raises the predicted risk only when the shock gate is open (22% to 42% at heart rate 100, sbp 120; no change in the typical case)."
+  },
+  "smoker_unit": {
+   "grade": "closed-form-only",
+   "why": "A copy of the smoking input with a negligible push on the gate (AUC unchanged); the reading is the sign of its weight, and smoking's effect lives in the direct term."
+  }
+ },
+ "statements_checked": 112,
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ]
+}

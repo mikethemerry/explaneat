@@ -1,0 +1,987 @@
+{
+  "target": "experiments/long_run/explanations/lr-84498.json",
+  "genome_id": "41c36304-8cdf-48f9-84c5-3dd7feef08ce",
+  "label": "lr-84498",
+  "operations_source": "database",
+  "files": {
+    "record": "experiments/long_run/explanations/lr-84498.json"
+  },
+  "findings": [],
+  "structure": {
+    "n_train": 4000,
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "uncovered_nodes": [],
+    "uncovered_edges": [],
+    "null_nodes": [
+      "-12",
+      "-13",
+      "-14",
+      "-15",
+      "-16",
+      "-19",
+      "-20",
+      "-21",
+      "-24",
+      "-25",
+      "-27",
+      "-28",
+      "-31",
+      "-34",
+      "-36",
+      "-40",
+      "-41",
+      "-44",
+      "-46",
+      "-47",
+      "-5",
+      "-50",
+      "-53",
+      "-55",
+      "-58",
+      "-59",
+      "-6",
+      "-64",
+      "-66",
+      "-68",
+      "-70",
+      "-9"
+    ],
+    "coverage_hierarchy": {
+      "roots": [
+        "churnRisk"
+      ],
+      "global_root": "churnRisk",
+      "root_contains_outputs": true,
+      "complete": true,
+      "composed": 12,
+      "required": 12,
+      "exempt_disconnected": []
+    },
+    "hierarchy": {
+      "n_annotations": 13,
+      "roots": [
+        "churnRisk"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "not_under_root": [],
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 8.881784197001252e-16,
+    "closed_form_max_abs_err": 0.1381551400126142,
+    "numeric_max_abs_err": 7.105427357601002e-15,
+    "leaves": [
+      {
+        "id": "ann_92",
+        "name": "serviceCallsDayGate",
+        "numeric_max_abs_err": 7.105427357601002e-15,
+        "closed_form_max_abs_err": 0.1381551400126142,
+        "exit_scale": 29.214041791726086
+      },
+      {
+        "id": "ann_93",
+        "name": "lowDayUseHinge",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.0006051549846637361,
+        "exit_scale": 1.3343772801742397
+      },
+      {
+        "id": "ann_94",
+        "name": "nightUse",
+        "numeric_max_abs_err": 1.7763568394002505e-15,
+        "closed_form_max_abs_err": 0.02334232321720453,
+        "exit_scale": 6.083973084651179
+      },
+      {
+        "id": "ann_95",
+        "name": "eveningUse",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.011776526482975891,
+        "exit_scale": 2.632288423069104
+      },
+      {
+        "id": "ann_96",
+        "name": "stateChain",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.001471748893971725,
+        "exit_scale": 1.202506720233715
+      },
+      {
+        "id": "ann_97",
+        "name": "stateUnitsA",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.006629424852378385,
+        "exit_scale": 8.949516390040333
+      },
+      {
+        "id": "ann_98",
+        "name": "stateUnitsB",
+        "numeric_max_abs_err": 0.0,
+        "closed_form_max_abs_err": 0.0010714799207205417,
+        "exit_scale": 5.198156565239937
+      },
+      {
+        "id": "ann_99",
+        "name": "usageDirect",
+        "numeric_max_abs_err": 4.440892098500626e-16,
+        "closed_form_max_abs_err": 0.0018416123553630648,
+        "exit_scale": 3.2197846857408563
+      },
+      {
+        "id": "ann_100",
+        "name": "stateDirect",
+        "numeric_max_abs_err": 8.881784197001252e-16,
+        "closed_form_max_abs_err": 0.0035042917084209257,
+        "exit_scale": 4.516030527077718
+      }
+    ],
+    "op_counts": {
+      "rename_node": 71,
+      "split_node": 13,
+      "consolidate_node": 4,
+      "add_identity_node": 4,
+      "annotate": 13
+    },
+    "full_coverage": true
+  },
+  "closed_forms": {
+    "ann_92": "\\begin{aligned}\ny_0 &= 2.5 x_{-71_ab} \\\\\n&\\quad + 3.6 \\operatorname{relu}{\\left(0.361 x_{-61_bc} - 0.711 x_{-71_ab} + 2.82 \\operatorname{relu}{\\left(0.41 x_{totalEveMinutes_a} + 1.44 \\operatorname{relu}{\\left(0.542 x_{-61_bc} - 0.611 x_{voiceMailPlan} - 0.0735 \\right)} - 1.3 \\right)} + 0.72 \\right)}\n\\end{aligned}",
+    "ann_93": "y_0 = \\operatorname{relu}{\\left(0.338 - 0.297 x_{-61_ad} \\right)} \\\\ \\begin{aligned}\ny_1 &= \\operatorname{relu}\\bigl( 0.525 \\operatorname{relu}{\\left(0.144 - 0.063 x_{-61_ad} \\right)} \\\\\n&\\quad + 0.1 \\bigr)\n\\end{aligned}",
+    "ann_100": "\\begin{aligned}\ny_0 &= - 0.494 x_{state:11} \\\\\n&\\quad - 0.0258 x_{state:14} \\\\\n&\\quad + 0.0305 x_{state:15} \\\\\n&\\quad + 0.00372 x_{state:17} \\\\\n&\\quad + 0.0245 x_{state:24} \\\\\n&\\quad - 0.0303 x_{state:28} \\\\\n&\\quad - 0.0722 x_{state:29} \\\\\n&\\quad + 0.0998 x_{state:31_a} \\\\\n&\\quad - 0.694 x_{state:35_a} \\\\\n&\\quad - 0.00925 x_{state:38} \\\\\n&\\quad - 0.0164 x_{state:41} \\\\\n&\\quad - 0.0202 x_{state:42_a} \\\\\n&\\quad - 0.336 x_{state:46} \\\\\n&\\quad + 0.203 x_{state:47} \\\\\n&\\quad - 0.105 x_{state:49_a} \\\\\n&\\quad + 0.116 x_{state:4_a} \\\\\n&\\quad - 0.118 x_{state:6_a} \\\\\n&\\quad - 0.135 x_{state:7} \\\\\n&\\quad - 0.06 x_{state:9}\n\\end{aligned}",
+    "ann_99": "\\begin{aligned}\ny_0 &= 0.117 x_{accountLength} \\\\\n&\\quad + 0.842 x_{internationalPlan} \\\\\n&\\quad + 0.117 x_{totalDayCalls} \\\\\n&\\quad - 0.195 x_{totalIntlCalls}\n\\end{aligned}",
+    "ann_94": "\\begin{aligned}\ny_0 &= 0.824 x_{totalNightMinutes} \\\\\n&\\quad - 1.16 \\operatorname{relu}{\\left(- 0.603 x_{state:35_b_d} + 1.01 \\operatorname{relu}{\\left(0.615 x_{totalNightCharge_b} + 0.865 \\right)} + 2.64 \\right)}\n\\end{aligned}",
+    "ann_95": "y_0 = \\operatorname{relu}{\\left(1.03 x_{totalEveMinutes_b} - 1.48 \\right)} \\\\ y_1 = \\operatorname{relu}{\\left(0.948 x_{totalEveCalls} - 0.702 \\right)}",
+    "ann_97": "y_0 = \\operatorname{relu}{\\left(1.02 x_{state:0} + 0.383 \\right)} \\\\ y_1 = \\operatorname{relu}{\\left(0.987 x_{state:10} - 0.218 \\right)} \\\\ \\begin{aligned}\ny_2 &= \\operatorname{relu}\\bigl( - 0.922 x_{state:1} \\\\\n&\\quad + 0.972 x_{state:23} \\\\\n&\\quad + 0.485 \\bigr)\n\\end{aligned} \\\\ y_3 = \\operatorname{relu}{\\left(0.817 x_{state:43} + 0.946 \\right)} \\\\ y_4 = \\operatorname{relu}{\\left(1.38 x_{areaCode:415} - 1.31 \\right)}",
+    "ann_96": "\\begin{aligned}\ny_0 &= \\operatorname{relu}\\bigl( 0.976 \\operatorname{relu}{\\left(- 0.209 x_{state:49_c} + 1.0 \\operatorname{relu}{\\left(- 0.0473 x_{state:18} - 1.19 x_{state:31_b} - 0.684 x_{state:6_b} - 0.0538 \\operatorname{relu}{\\left(- 0.0234 x_{state:4_b} - 0.212 \\operatorname{relu}{\\left(- 0.603 x_{state:35_b_c} + 1.01 \\operatorname{relu}{\\left(0.615 x_{totalNightCharge_a} + 0.865 \\right)} + 2.64 \\right)} - 0.376 \\right)} - 0.156 \\right)} - 1.07 \\right)} \\\\\n&\\quad -0.854 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_1 &= \\operatorname{relu}\\bigl( - 0.0669 x_{state:37} \\\\\n&\\quad + 0.945 \\operatorname{relu}{\\left(- 0.0473 x_{state:18} - 1.19 x_{state:31_b} - 0.684 x_{state:6_b} - 0.0538 \\operatorname{relu}{\\left(- 0.0234 x_{state:4_b} - 0.212 \\operatorname{relu}{\\left(- 0.603 x_{state:35_b_c} + 1.01 \\operatorname{relu}{\\left(0.615 x_{totalNightCharge_a} + 0.865 \\right)} + 2.64 \\right)} - 0.376 \\right)} - 0.156 \\right)} \\\\\n&\\quad + 1.07 \\bigr)\n\\end{aligned}",
+    "ann_98": "y_0 = \\operatorname{relu}{\\left(0.989 x_{state:49_b} - 0.377 \\right)} \\\\ \\begin{aligned}\ny_1 &= \\operatorname{relu}\\bigl( 0.997 \\operatorname{relu}{\\left(0.989 x_{state:49_b} - 0.377 \\right)} \\\\\n&\\quad -0.927 \\bigr)\n\\end{aligned} \\\\ \\begin{aligned}\ny_2 &= \\operatorname{relu}\\bigl( - 0.833 \\operatorname{relu}{\\left(0.946 x_{state:42_bc} + 0.0439 \\right)} \\\\\n&\\quad -0.331 \\bigr)\n\\end{aligned} \\\\ y_3 = \\operatorname{relu}{\\left(- 1.04 x_{state:42_bc} - 1.1 \\right)} \\\\ y_4 = \\operatorname{relu}{\\left(- 0.65 x_{state:34} - 0.511 \\right)}"
+  },
+  "freetext": {
+    "counts": {
+      "auc": {
+        "ok": 12,
+        "unchecked": 1
+      },
+      "n_train": {
+        "ok": 31
+      }
+    },
+    "checked": [
+      {
+        "kind": "auc",
+        "text": "AUC from 0.916 to 0.527",
+        "status": "ok",
+        "stated": [
+          0.916,
+          0.527
+        ],
+        "model_full": 0.9155586105274423,
+        "model_part_off": [
+          0.5274422682343063,
+          0.5274422682343063,
+          0.5274422682343063
+        ],
+        "location": "operations.serviceCallsDayGate.hypothesis",
+        "part": "ann_92"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.serviceCallsDayGate.evidence[3].payload.n",
+        "part": "ann_92"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.serviceCallsDayGate.evidence[4].payload.n",
+        "part": "ann_92"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.serviceCallsDayGate.evidence[5].payload.n",
+        "part": "ann_92"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.serviceCallsDayGate.evidence[6].payload.n",
+        "part": "ann_92"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.serviceCallsDayGate.evidence[7].payload.n",
+        "part": "ann_92"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.916 to 0.896",
+        "status": "ok",
+        "stated": [
+          0.916,
+          0.896
+        ],
+        "model_full": 0.9155586105274423,
+        "model_part_off": [
+          0.8956907746480323,
+          0.8956907746480323,
+          0.8956907746480323
+        ],
+        "location": "operations.lowDayUseHinge.hypothesis",
+        "part": "ann_93"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.lowDayUseHinge.evidence[2].payload.n",
+        "part": "ann_93"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.lowDayUseHinge.evidence[3].payload.n",
+        "part": "ann_93"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.916 to 0.904",
+        "status": "ok",
+        "stated": [
+          0.916,
+          0.904
+        ],
+        "model_full": 0.9155586105274423,
+        "model_part_off": [
+          0.9036443916684331,
+          0.9036443916684331,
+          0.9036443916684331
+        ],
+        "location": "operations.nightUse.hypothesis",
+        "part": "ann_94"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.nightUse.evidence[4].payload.n",
+        "part": "ann_94"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.nightUse.evidence[5].payload.n",
+        "part": "ann_94"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.nightUse.evidence[6].payload.n",
+        "part": "ann_94"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.nightUse.evidence[7].payload.n",
+        "part": "ann_94"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.916 to 0.915",
+        "status": "ok",
+        "stated": [
+          0.916,
+          0.915
+        ],
+        "model_full": 0.9155586105274423,
+        "model_part_off": [
+          0.9148172196142915,
+          0.9148172196142915,
+          0.9148172196142915
+        ],
+        "location": "operations.eveningUse.hypothesis",
+        "part": "ann_95"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.eveningUse.evidence[3].payload.n",
+        "part": "ann_95"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.eveningUse.evidence[4].payload.n",
+        "part": "ann_95"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC at 0.9156",
+        "status": "ok",
+        "stated": 0.9156,
+        "model": 0.9155586105274423,
+        "location": "operations.stateChain.hypothesis",
+        "part": "ann_96"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.stateChain.evidence[2].payload.n",
+        "part": "ann_96"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.stateChain.evidence[3].payload.n",
+        "part": "ann_96"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.9156 to 0.9148",
+        "status": "ok",
+        "stated": [
+          0.9156,
+          0.9148
+        ],
+        "model_full": 0.9155586105274423,
+        "model_part_off": [
+          0.9148305965495739,
+          0.9148305965495739,
+          0.9148305965495739
+        ],
+        "location": "operations.stateUnitsA.hypothesis",
+        "part": "ann_97"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.stateUnitsA.evidence[3].payload.n",
+        "part": "ann_97"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.stateUnitsB.evidence[2].payload.n",
+        "part": "ann_98"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.stateUnitsB.evidence[3].payload.n",
+        "part": "ann_98"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.916 to 0.835",
+        "status": "ok",
+        "stated": [
+          0.916,
+          0.835
+        ],
+        "model_full": 0.9155586105274423,
+        "model_part_off": [
+          0.8352265126741317,
+          0.8352265126741317,
+          0.8352265126741317
+        ],
+        "location": "operations.usageDirect.hypothesis",
+        "part": "ann_99"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.usageDirect.evidence[3].payload.n",
+        "part": "ann_99"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.usageDirect.evidence[4].payload.n",
+        "part": "ann_99"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.usageDirect.evidence[5].payload.n",
+        "part": "ann_99"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.usageDirect.evidence[6].payload.n",
+        "part": "ann_99"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.916 to 0.904",
+        "status": "ok",
+        "stated": [
+          0.916,
+          0.904
+        ],
+        "model_full": 0.9155586105274423,
+        "model_part_off": [
+          0.9040462142244156,
+          0.9040462142244156,
+          0.9040462142244156
+        ],
+        "location": "operations.stateDirect.hypothesis",
+        "part": "ann_100"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.stateDirect.evidence[2].payload.n",
+        "part": "ann_100"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.stateDirect.evidence[3].payload.n",
+        "part": "ann_100"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.stateDirect.evidence[4].payload.n",
+        "part": "ann_100"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.916 to 0.668",
+        "status": "ok",
+        "stated": [
+          0.916,
+          0.668
+        ],
+        "model_full": 0.9155586105274423,
+        "model_part_off": [
+          0.6679618284006742,
+          0.6679618284006742,
+          0.6679618284006742
+        ],
+        "location": "operations.dayUseAndServiceCalls.hypothesis",
+        "part": "ann_101"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.dayUseAndServiceCalls.evidence[2].payload.n",
+        "part": "ann_101"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.dayUseAndServiceCalls.evidence[3].payload.n",
+        "part": "ann_101"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.916 to 0.560",
+        "status": "ok",
+        "stated": [
+          0.916,
+          0.56
+        ],
+        "model_full": 0.9155586105274423,
+        "model_part_off": [
+          0.5603096554718868,
+          0.5603096554718868,
+          0.5603096554718868
+        ],
+        "location": "operations.usageAndPlans.hypothesis",
+        "part": "ann_102"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.usageAndPlans.evidence[2].payload.n",
+        "part": "ann_102"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC from 0.916 to 0.903",
+        "status": "ok",
+        "stated": [
+          0.916,
+          0.903
+        ],
+        "model_full": 0.9155586105274423,
+        "model_part_off": [
+          0.9028870513324456,
+          0.9028870513324456,
+          0.9028870513324456
+        ],
+        "location": "operations.locationOffsets.hypothesis",
+        "part": "ann_103"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.locationOffsets.evidence[2].payload.n",
+        "part": "ann_103"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.locationOffsets.evidence[3].payload.n",
+        "part": "ann_103"
+      },
+      {
+        "kind": "auc",
+        "text": "AUC is 0.916",
+        "status": "ok",
+        "stated": 0.916,
+        "model": 0.9155586105274423,
+        "location": "operations.churnRisk.hypothesis",
+        "part": "ann_104"
+      },
+      {
+        "kind": "n_train",
+        "text": "(train, n=4000)",
+        "status": "ok",
+        "stated": 4000,
+        "model": 4000,
+        "location": "operations.churnRisk.evidence[2].payload.n",
+        "part": "ann_104"
+      }
+    ],
+    "unchecked_statements": [
+      {
+        "kind": "auc",
+        "text": "AUC at 0.9155",
+        "status": "unchecked",
+        "stated": 0.9155,
+        "model": 0.9155586105274423,
+        "reason": "not the full model's training value (a subgroup, the test split or another configuration?)",
+        "location": "operations.stateUnitsB.hypothesis",
+        "part": "ann_98"
+      }
+    ],
+    "unchecked_sentences": [
+      {
+        "location": "operations.serviceCallsDayGate.hypothesis",
+        "part": "ann_92",
+        "text": "The part adds a direct service-call term (2.50 on the score per sd of calls, through its own edge) to a hinge (node 2470) that reads daytime charge upwards, service calls downwards, and a serial chain through evening minutes and the absence of a voice-mail plan."
+      },
+      {
+        "location": "operations.serviceCallsDayGate.hypothesis",
+        "part": "ann_92",
+        "text": "Self-probe (constructed typical customer, whole model): at a daytime charge of 15 US dollars the predicted risk is 1.6% with 0 calls, 14.2% with 3 calls and 52.8% with 4 calls; at 35 US dollars it is 1.2% with 3 calls, 5.2% with 4 calls and 71.4% with 6 calls."
+      },
+      {
+        "location": "operations.serviceCallsDayGate.hypothesis",
+        "part": "ann_92",
+        "text": "On the training data the hinge is closed for 644 customers (churn rate 24.7%, against 12.1% for the 3356 with it open)."
+      },
+      {
+        "location": "operations.serviceCallsDayGate.hypothesis",
+        "part": "ann_92",
+        "text": "Of the 318 customers with four or more calls (churn rate 50.0%), 285 have it closed."
+      },
+      {
+        "location": "operations.serviceCallsDayGate.hypothesis",
+        "part": "ann_92",
+        "text": "The voice-mail plan acts through the chain's first unit (node 5116): for the typical customer at a daytime charge of 45 US dollars the predicted risk is 40.1% without a voice-mail plan and 2.1% with one, while at 30 US dollars it makes little difference (1.4% with the plan, 1.4% without)."
+      },
+      {
+        "location": "operations.serviceCallsDayGate.hypothesis",
+        "part": "ann_92",
+        "text": "Concept probe: the best reading is the larger of a daytime-charge term and a service-call term (score 0.57, partial); daytime charge by itself scores 0.47."
+      },
+      {
+        "location": "operations.lowDayUseHinge.hypothesis",
+        "part": "ann_93",
+        "text": "The second exit (node 69759, through node 25904) is nearly constant (sd 0.033 on the training rows)."
+      },
+      {
+        "location": "operations.lowDayUseHinge.hypothesis",
+        "part": "ann_93",
+        "text": "Self-probe (constructed typical customer, whole model): node 873 is 1.01 at a daytime charge of 10 US dollars, 0.035 at 40 US dollars and 0.00 at 45 US dollars; over that range the predicted risk goes from 1.6% to 1.2%, then jumps to 40.1% once the hinge has closed."
+      },
+      {
+        "location": "operations.lowDayUseHinge.hypothesis",
+        "part": "ann_93",
+        "text": "On the training data node 873 is closed for 502 customers, whose churn rate is 44.0% (against 9.9% for the other 3498)."
+      },
+      {
+        "location": "operations.lowDayUseHinge.hypothesis",
+        "part": "ann_93",
+        "text": "Concept probe: total day minutes (the same column as daytime charge after scaling), score 1.00, meaningful."
+      },
+      {
+        "location": "operations.nightUse.hypothesis",
+        "part": "ann_94",
+        "text": "Hypothesis: this part joins night use and being in Ohio (state code 35), and they interact."
+      },
+      {
+        "location": "operations.nightUse.hypothesis",
+        "part": "ann_94",
+        "text": "It adds a direct night-minutes term (0.82 on the score per sd, through its own edge) to a hinge (node 2640) that rises with night charge and enters the output negatively, so outside Ohio the hinge takes back most of the direct slope and night use barely moves the prediction."
+      },
+      {
+        "location": "operations.nightUse.hypothesis",
+        "part": "ann_94",
+        "text": "Self-probe (constructed typical customer, whole model, state switched): with 100 minutes of night use the predicted risk is 0.7% in West Virginia and 0.3% in Ohio; with 200 minutes it is 1.3% and 1.5%; with 300 minutes it is 1.6% and 3.3%."
+      },
+      {
+        "location": "operations.nightUse.hypothesis",
+        "part": "ann_94",
+        "text": "Node 2640 is 3.60 for the West Virginia case and 0.00 for the Ohio case at 200 minutes, and 4.84 against 0.71 at 300 minutes, where it reopens a little in Ohio."
+      },
+      {
+        "location": "operations.nightUse.hypothesis",
+        "part": "ann_94",
+        "text": "The night-charge hinge feeding node 2640 (node 4813) is closed for the 310 lightest night users on the training data; for them too the direct night slope acts by itself."
+      },
+      {
+        "location": "operations.nightUse.hypothesis",
+        "part": "ann_94",
+        "text": "Ohio has 87 training customers (churn rate 14.9%, mean predicted risk 12.1%)."
+      },
+      {
+        "location": "operations.nightUse.hypothesis",
+        "part": "ann_94",
+        "text": "Ohio also has a negative direct term in stateDirect (-0.69 per sd); in the whole model the two net to an Ohio offset of -0.56 on the score."
+      },
+      {
+        "location": "operations.nightUse.hypothesis",
+        "part": "ann_94",
+        "text": "Concept probe: Ohio, score 0.90, meaningful; night charge by itself is a weak reading of the exit."
+      },
+      {
+        "location": "operations.eveningUse.hypothesis",
+        "part": "ann_95",
+        "text": "Self-probe (constructed typical customer, whole model): the predicted risk is 1.3% from 100 minutes to 250 minutes of evening use (1.3% at the upper end), dips to 0.8% at 300 minutes as node 137967 opens (0.54), and rises to 8.6% at 350 minutes, where the chain's node 4319 opens too (0.33)."
+      },
+      {
+        "location": "operations.eveningUse.hypothesis",
+        "part": "ann_95",
+        "text": "For evening calls the risk is 1.3% at 100 calls, 1.3% at 125 calls and 1.0% at 150 calls."
+      },
+      {
+        "location": "operations.eveningUse.hypothesis",
+        "part": "ann_95",
+        "text": "On the training data node 137967 is open for 294 customers (churn rate 20.1%) and node 28405 for 921."
+      },
+      {
+        "location": "operations.eveningUse.hypothesis",
+        "part": "ann_95",
+        "text": "Concept probe: total evening minutes and total evening calls (one per exit), score 1.00, meaningful."
+      },
+      {
+        "location": "operations.stateChain.hypothesis",
+        "part": "ann_96",
+        "text": "Hypothesis: this deep chain gives customers in Oregon (state code 37), New Jersey (31) and Connecticut (6) a small extra score, and does nothing else on the data."
+      },
+      {
+        "location": "operations.stateChain.hypothesis",
+        "part": "ann_96",
+        "text": "Its working exit, node 38365, is on for 4000 of the 4000 training customers and drops for those three states; it enters the output negatively, so a lower value means a higher score."
+      },
+      {
+        "location": "operations.stateChain.hypothesis",
+        "part": "ann_96",
+        "text": "Self-probe (constructed typical customer with the state switched, whole model): node 38365 is 1.203 in West Virginia, 0.736 in Oregon, 1.081 in New Jersey and 1.081 in Connecticut (where node 160 is 0.00, against 0.129 in West Virginia)."
+      },
+      {
+        "location": "operations.stateChain.hypothesis",
+        "part": "ann_96",
+        "text": "On the training rows its sd is 0.072."
+      },
+      {
+        "location": "operations.stateChain.hypothesis",
+        "part": "ann_96",
+        "text": "The effect is small: switching the part off leaves the training AUC at 0.9156 (against 0.9156)."
+      },
+      {
+        "location": "operations.stateChain.hypothesis",
+        "part": "ann_96",
+        "text": "Concept probe: Oregon for node 38365, score 0.84, meaningful."
+      },
+      {
+        "location": "operations.stateUnitsA.hypothesis",
+        "part": "ann_97",
+        "text": "Hypothesis: five location units, each reading one or two location indicators, that give a fixed score shift to the customers of that location: Alaska (state code 0, node 154125), Georgia (10, node 247870), Minnesota up and Alabama down (23 and 1, node 27620), Texas (43, node 8520) and area code 415 "
+      },
+      {
+        "location": "operations.stateUnitsA.hypothesis",
+        "part": "ann_97",
+        "text": "Self-probe (constructed typical customer with the location switched, whole model): node 247870 is 7.78 in Georgia and 0.00 in West Virginia; node 154125 is 8.95 in Alaska against 0.26; node 27620 is 6.71 in Minnesota and 0.00 in Alabama; node 8520 is 6.18 in Texas."
+      },
+      {
+        "location": "operations.stateUnitsA.hypothesis",
+        "part": "ann_97",
+        "text": "The predicted risk is 1.2% in Georgia, 2.1% in Alaska, 3.9% in Minnesota and 3.2% in Texas, against 1.3% in West Virginia."
+      },
+      {
+        "location": "operations.stateUnitsA.hypothesis",
+        "part": "ann_97",
+        "text": "The whole-model offsets on the score are -0.79 for Georgia, -0.22 for Alaska, 0.41 for Minnesota, -0.03 for Alabama and 0.20 for Texas."
+      },
+      {
+        "location": "operations.stateUnitsA.hypothesis",
+        "part": "ann_97",
+        "text": "Area code 415 moves the typical risk from 1.4% (area code 408) to 1.3% (offset -0.033), a negligible shift."
+      },
+      {
+        "location": "operations.stateUnitsA.hypothesis",
+        "part": "ann_97",
+        "text": "Concept probe: each exit is its location indicator, score 1.00, meaningful."
+      },
+      {
+        "location": "operations.stateUnitsB.hypothesis",
+        "part": "ann_98",
+        "text": "The other two exits (nodes 144216 and 257796) are on for West Virginia customers (122 training rows) and carry tiny output weights."
+      },
+      {
+        "location": "operations.stateUnitsB.hypothesis",
+        "part": "ann_98",
+        "text": "Self-probe (constructed typical customer, whole model): node 144216 is 5.20 in West Virginia and 0.00 in Hawaii; in Tennessee node 27782 opens (7.24) but the exit it feeds stays shut."
+      },
+      {
+        "location": "operations.stateUnitsB.hypothesis",
+        "part": "ann_98",
+        "text": "Switching the part off changes the mean predicted risk by -0.00008 and leaves the training AUC at 0.9155 (against 0.9156)."
+      },
+      {
+        "location": "operations.stateUnitsB.hypothesis",
+        "part": "ann_98",
+        "text": "Concept probe: West Virginia for the live exits, score 1.00, meaningful (the dead exits are constant)."
+      },
+      {
+        "location": "operations.usageDirect.hypothesis",
+        "part": "ann_99",
+        "text": "The direct weights on the score per sd are 0.84 for the international plan, 0.12 for account length, 0.12 for day calls and -0.19 for international calls."
+      },
+      {
+        "location": "operations.usageDirect.hypothesis",
+        "part": "ann_99",
+        "text": "Self-probe (constructed typical customer, whole model): the predicted risk is 1.3% without an international plan and 19.4% with one; with 4 calls it is 9.5% and 64.9%: the plan shifts the score by a fixed amount, which compounds in risk."
+      },
+      {
+        "location": "operations.usageDirect.hypothesis",
+        "part": "ann_99",
+        "text": "On the training data the 380 customers with an international plan churn at 42.4% (mean predicted risk 43.5%), the 3620 without at 11.2%."
+      },
+      {
+        "location": "operations.usageDirect.hypothesis",
+        "part": "ann_99",
+        "text": "Switching the part off lowers the training AUC from 0.916 to 0.835; switching the international-plan edge off by itself lowers it from 0.916 to 0.849."
+      },
+      {
+        "location": "operations.usageDirect.hypothesis",
+        "part": "ann_99",
+        "text": "Concept probe: international plan, score 0.92, meaningful."
+      },
+      {
+        "location": "operations.stateDirect.hypothesis",
+        "part": "ann_100",
+        "text": "Hypothesis: direct per-state terms that move the score for customers of a few states, mostly downwards: Hawaii (state code 11, -0.49 per sd through its own edge), Ohio (35, -0.69) and Vermont (46, -0.34) down, Washington (47, 0.20) up; the other direct state terms are smaller."
+      },
+      {
+        "location": "operations.stateDirect.hypothesis",
+        "part": "ann_100",
+        "text": "Self-probe (constructed typical customer with the state switched, whole model): the predicted risk is 1.3% in West Virginia, 0.1% in Hawaii, 0.2% in Vermont, 10.9% in Washington and 7.8% in California."
+      },
+      {
+        "location": "operations.stateDirect.hypothesis",
+        "part": "ann_100",
+        "text": "These offsets are larger than the training churn rates warrant for small groups: Hawaii has 73 training customers (3 churners) and a whole-model offset of -3.69 on the score against an empirical log-odds offset of -1.20;"
+      },
+      {
+        "location": "operations.stateDirect.hypothesis",
+        "part": "ann_100",
+        "text": "Vermont 80 customers, -2.40 against -0.82;"
+      },
+      {
+        "location": "operations.stateDirect.hypothesis",
+        "part": "ann_100",
+        "text": "Washington 72 customers, 1.53 against 0.93."
+      },
+      {
+        "location": "operations.stateDirect.hypothesis",
+        "part": "ann_100",
+        "text": "Concept probe: being in Ohio, Hawaii or Vermont, score 0.80, meaningful."
+      },
+      {
+        "location": "operations.dayUseAndServiceCalls.hypothesis",
+        "part": "ann_101",
+        "text": "Self-probe (constructed typical customer, whole model): the predicted risk is 1.6% at a daytime charge of 10 US dollars, 1.4% at 30 US dollars, 1.2% at 40 US dollars, 40.1% at 45 US dollars and 99.0% at 50 US dollars."
+      },
+      {
+        "location": "operations.dayUseAndServiceCalls.hypothesis",
+        "part": "ann_101",
+        "text": "With a voice-mail plan the rise at 45 US dollars is much smaller (2.1% against 40.1%)."
+      },
+      {
+        "location": "operations.dayUseAndServiceCalls.hypothesis",
+        "part": "ann_101",
+        "text": "On the training data the 506 customers with a daytime charge above 41 US dollars churn at 43.7% (mean predicted risk 44.4%), against 9.9% for the other 3494."
+      },
+      {
+        "location": "operations.usageAndPlans.hypothesis",
+        "part": "ann_102",
+        "text": "Self-probe (constructed typical customer, whole model): the predicted risk is 1.3% with 1 calls and no international plan, 9.5% with 4 calls, 19.4% with an international plan and 1 calls, and 64.9% with both; on the score the steps are -4.29, -2.26, -1.42 and 0.61, so the two effects add."
+      },
+      {
+        "location": "operations.locationOffsets.hypothesis",
+        "part": "ann_103",
+        "text": "The model gives 26 of the 51 states an offset; the largest are for small groups and exceed what their churn rates warrant."
+      },
+      {
+        "location": "operations.locationOffsets.hypothesis",
+        "part": "ann_103",
+        "text": "Self-probe (constructed typical customer with the state switched, whole model): the predicted risk ranges from 0.1% in Hawaii to 10.9% in Washington, against 1.3% in West Virginia; the whole-model offsets on the score run from -3.69 (Hawaii) to 1.53 (Washington); for Hawaii, with 73 training custome"
+      },
+      {
+        "location": "operations.churnRisk.hypothesis",
+        "part": "ann_104",
+        "text": "The model does not read voice-mail message counts, night calls, international minutes or charge, area codes 408 and 510, the duplicate daytime-minutes and evening-charge columns, or the state indicators that have no edge: these are unconnected entry nodes of this root."
+      },
+      {
+        "location": "operations.churnRisk.hypothesis",
+        "part": "ann_104",
+        "text": "The predicted risk is 1.3% in West Virginia without an international plan and 19.4% with one; in Hawaii 0.1% and 1.2%; in Washington 10.9% and 68.4%."
+      },
+      {
+        "location": "operations.churnRisk.hypothesis",
+        "part": "ann_104",
+        "text": "On the score the plan moves West Virginia from -4.29 to -1.42 and Hawaii from -7.31 to -4.44: equal steps, so the plan and the state add."
+      },
+      {
+        "location": "operations.churnRisk.hypothesis",
+        "part": "ann_104",
+        "text": "The annotated model reproduces the evolved network to within 8.9e-16 on the training rows, and its training AUC is 0.916."
+      },
+      {
+        "location": "record.summary",
+        "part": "ann_104",
+        "text": "Many service calls raise the predicted risk once they close a hinge that daytime use holds open, so heavier daytime users need more calls (typical customer at 15 US dollars of daytime charge: 1.6% with 0 calls, 52.8% with 4 calls)."
+      },
+      {
+        "location": "record.summary",
+        "part": "ann_104",
+        "text": "The model is nearly flat in daytime charge up to a point and then rises steeply, much less so with a voice-mail plan (40.1% without and 2.1% with a plan at 45 US dollars)."
+      },
+      {
+        "location": "record.summary",
+        "part": "ann_104",
+        "text": "An international plan raises the score through its own edge (1.3% to 19.4% for the typical customer)."
+      },
+      {
+        "location": "record.summary",
+        "part": "ann_104",
+        "text": "Per-state offsets, largest for small states such as Hawaii (-3.69 on the score for 73 training customers), look fitted to small groups; night use matters mainly in Ohio, where the hinge that elsewhere cancels the direct night slope is pushed down."
+      },
+      {
+        "location": "record.resisted",
+        "part": "ann_104",
+        "text": "The main leaf, serviceCallsDayGate, is read as partial by its concept probe (score 0.57): its output is roughly the larger of a daytime-charge term and a service-call term, but the evening-minutes and voice-mail chain inside it is not captured by one concept; its behaviour is confirmed by the self-p"
+      }
+    ]
+  },
+  "provenance": {
+    "templated_texts": 63,
+    "queries": 59
+  },
+  "summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "warn": 0,
+    "info": 0,
+    "unchecked_freetext": 64,
+    "verdict": "numbers reproduce",
+    "seconds": 5.1
+  }
+}

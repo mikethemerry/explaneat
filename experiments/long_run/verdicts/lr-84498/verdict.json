@@ -1,0 +1,540 @@
+{
+ "item_id": "lr-84498",
+ "genome_id": "41c36304-8cdf-48f9-84c5-3dd7feef08ce",
+ "target_hash": null,
+ "target_hash_note": "the recheck report for a record target carries no target_hash",
+ "verifier": "independent verifier agent (explanation-verifier skill)",
+ "started_at": "2026-11-15T19:32:27+13:00",
+ "finished_at": "2026-11-15T19:43:00+13:00",
+ "minutes": 11,
+ "overall": {
+  "grade": "refuted",
+  "summary": "Numbers, coverage and shapes reproduce, but stateChain's state list misses Louisiana, which gets the same extra score as New Jersey and Connecticut; the 'fitted to small groups' comparison for state offsets uses mismatched references and overstates the excess; service calls slightly lower risk (not just barely move it) while the hinge is open."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "structural and compositional coverage 1.0, full coverage, hierarchy complete",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.0 / 1.0, no uncovered nodes or edges; 32 null nodes are exactly the unread inputs; single root churnRisk contains the output, 12 of 12 parts composed",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/long_run/explanations/lr-84498.json --out experiments/long_run/verdicts/lr-84498/recheck.json"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "8.9e-16",
+   "check": "verify recheck",
+   "evidence": "recomputed 8.88e-16",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/long_run/explanations/lr-84498.json --out experiments/long_run/verdicts/lr-84498/recheck.json"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.closed_form_max_abs_err",
+   "statement": "0.138 (largest on serviceCallsDayGate, exit spans about 29 logit units)",
+   "check": "verify recheck",
+   "evidence": "recomputed 0.1382 on ann_92 with exit scale 29.2; other leaves at most 0.023",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/long_run/explanations/lr-84498.json --out experiments/long_run/verdicts/lr-84498/recheck.json"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.n_splits",
+   "statement": "9 leaves, 4 compositions, 13 splits, 4 identity nodes, 26 hidden nodes",
+   "check": "operations replayed",
+   "evidence": "annotate 13 (9 leaves + 4 compositions), split_node 13, add_identity_node 4, consolidate_node 4; leaf unit lists cover 26 base hidden nodes",
+   "commands": []
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "structure",
+   "statement": "every annotation's entries/exits/subgraph form one hierarchy under churnRisk; unread inputs are entry-only nodes of the root",
+   "check": "verify recheck + input-column mapping",
+   "evidence": "null nodes map to number vmail messages, total day minutes, total eve charge, total night calls, total intl minutes/charge, area codes 408/510 and 24 unused state levels, as the root hypothesis lists",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/long_run/explanations/lr-84498.json --out experiments/long_run/verdicts/lr-84498/recheck.json"
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_92",
+   "claims": [],
+   "location": "operations.serviceCallsDayGate.hypothesis",
+   "statement": "While the hinge is open its service-call term takes most of the direct term back, so calls barely move the prediction",
+   "check": "closed form + probe --sweep calls=0:9:10 at day charge 45 and 50 US dollars",
+   "evidence": "the hinge's call coefficient is 3.6 x 0.711 = 2.56 against the direct 2.50, so while it is open it takes back all of the direct term and a little more: calls slightly LOWER the risk. Typical customer at 45 US dollars: 41.2% with 0 calls, 40.1% with 1, 37.9% with 3, 35.8% with 5, then 49.9% with 6 and 87.1% with 7; at 35 US dollars 1.4% (0 calls) to 1.2% (3 calls). The threshold mechanism and the moving threshold hold",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-84498.json --sweep \"number customer service calls=0:9:10\" --sweep \"total day charge=45,50\" --no-parts",
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-84498.json --sweep \"number customer service calls=0:6:7\" --sweep \"total day charge=15,35\""
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_92",
+   "claims": [],
+   "location": "operations.serviceCallsDayGate.hypothesis",
+   "statement": "self-probe: 1.6% / 14.2% / 52.8% at 15 US dollars with 0/3/4 calls; 1.2% / 5.2% / 71.4% at 35 US dollars with 3/4/6 calls",
+   "check": "probe sweep calls x day charge",
+   "evidence": "reproduces exactly (1.6, 14.2, 52.8; 1.2, 5.2, 71.4)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-84498.json --sweep \"number customer service calls=0:6:7\" --sweep \"total day charge=15,35\""
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_92",
+   "claims": [],
+   "location": "operations.serviceCallsDayGate.hypothesis",
+   "statement": "hinge closed for 644 (churn 24.7%) vs 12.1% for 3356 open; of 318 with 4+ calls (churn 50.0%) 285 have it closed",
+   "check": "node 2470 values on the training rows",
+   "evidence": "644 closed, churn 0.2469; 3356 open, 0.1213; 318 with 4+ calls, churn 0.500, 285 closed",
+   "commands": []
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_92",
+   "claims": [],
+   "location": "operations.serviceCallsDayGate.hypothesis",
+   "statement": "voice-mail plan acts through node 5116: 40.1% without vs 2.1% with at 45 US dollars; little difference at 30",
+   "check": "probe --sweep total day charge=36:54:19 x voice mail plan",
+   "evidence": "45 US dollars: 40.1% vs 2.1%; identical up to 41 US dollars; 5116 carries -0.611 x voice mail plan in the closed form",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-84498.json --sweep \"total day charge=36:54:19\" --sweep \"voice mail plan=0,1\" --no-parts"
+   ]
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_93",
+   "claims": [],
+   "location": "operations.lowDayUseHinge.hypothesis",
+   "statement": "node 873 grows as daytime charge falls and closes for the heaviest users; 1.01 / 0.035 / 0.00 at 10 / 40 / 45 US dollars; closed for 502 (churn 44.0% vs 9.9%); exit 69759 sd 0.033",
+   "check": "probe --nodes 873 and node values on the training rows",
+   "evidence": "873 = 1.01, 0.0354, 0 (pre -0.127); closed for 502 rows exactly those with day charge above 41.07-41.09 US dollars, churn 0.440 vs 0.0986; 69759 sd 0.0328",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-84498.json --sweep \"total day charge=10,30,40,45\" --nodes 873,2470,5116,4319 --no-parts"
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_101",
+   "claims": [],
+   "location": "operations.dayUseAndServiceCalls.hypothesis",
+   "statement": "nearly flat in daytime charge up to a point, then a steep rise, much smaller with a voice-mail plan; 506 above 41 US dollars churn 43.7% (mean predicted 44.4%) vs 9.9%",
+   "check": "probe sweep 36 to 54 US dollars in 1-dollar steps, by voice-mail plan; subgroup day charge > 41",
+   "evidence": "1.3% at 36 to 1.2% at 41, then 3.2% at 42, 40.1% at 45, 99.0% at 50 without a plan; 1.4% at 42 to 4.2% at 50 with a plan. The switch point (41 US dollars) matches node 873's closing at 41.07-41.09. Subgroup: 506 rows, churn 0.437, mean risk 0.444; rest 0.0987",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-84498.json --sweep \"total day charge=36:54:19\" --sweep \"voice mail plan=0,1\" --no-parts"
+   ]
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_94",
+   "claims": [],
+   "location": "operations.nightUse.hypothesis",
+   "statement": "outside Ohio the night hinge takes back most of the direct night slope; in Ohio it is pushed down; 0.7/0.3%, 1.3/1.5%, 1.6/3.3% at 100/200/300 minutes; node 2640 4.84 vs 0.71 at 300; 4813 closed for the 310 lightest night users; Ohio net offset -0.56",
+   "check": "probe night minutes 60 to 350 (charge = 0.045 x minutes) in West Virginia, Ohio, Alabama; node values; category offsets",
+   "evidence": "closed form: residual slope with the hinge open is 0.824 - 1.16 x 1.01 x 0.615 = 0.10 per sd (88% taken back). West Virginia 1.2% at 130 minutes to 1.8% at 350; Ohio 0.5% to 3.6%; node 2640 = 4.843 vs 0.713 at 300 minutes; 4813 closed for 310 rows, all with night charge <= 5.84 US dollars (about 130 minutes); below that night use moves risk everywhere (West Virginia 0.4% at 60 minutes to 1.2% at 130), as the hypothesis notes. Ohio: 87 rows, churn 0.149, mean risk 0.121, whole-model offset -0.564",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-84498.json --set \"total night minutes=300\" --set \"total night charge=13.5\" --sweep \"state=49,35\" --nodes 2640_b --no-parts"
+   ]
+  },
+  {
+   "id": "V13",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_94",
+   "claims": [],
+   "location": "operations.nightUse.hypothesis",
+   "statement": "night use matters mainly in Ohio (an Ohio-by-night-use interaction)",
+   "check": "subgroup Ohio by night minutes",
+   "evidence": "the interaction rests on 87 Ohio customers with 13 churners (10 of 44 above 200 minutes, 3 of 43 at or below); the model has learned it, but it is the kind of small-group pattern the record itself calls fitted for the state offsets; no domain reason for a state-specific night-use effect",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/long_run/explanations/lr-84498.json --where \"state == '35' and `total night minutes` > 200\""
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_95",
+   "claims": [],
+   "location": "operations.eveningUse.hypothesis",
+   "statement": "both hinges lower the score; whole model flat 100-250 minutes, dip to 0.8% at 300, rise to 8.6% at 350; 137967 open for 294 (churn 20.1%), 28405 for 921; calls 1.3/1.3/1.0% at 100/125/150",
+   "check": "probe sweeps with --nodes; node values on the training rows",
+   "evidence": "risk 1.3% from 100 to 260 minutes, 0.8% at 300 (137967 = 0.54), 1.4% at 320, 4.7% at 340, 15.1% at 360 (4319 opens near 315); 294 open, churn 0.2007; 921 open; evening calls 1.3% to 110 calls, 1.0% at 150",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-84498.json --sweep \"total eve minutes=100:360:14\" --nodes 137967,4319 --no-parts",
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-84498.json --sweep \"total eve calls=60:160:11\" --no-parts --nodes 28405"
+   ]
+  },
+  {
+   "id": "V15",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_95",
+   "claims": [],
+   "location": "operations.eveningUse.hypothesis",
+   "statement": "rises to 8.6% at 350 minutes (the rise at the extreme)",
+   "check": "training counts above the 99th percentile",
+   "evidence": "350 minutes is beyond the 99th percentile (319 minutes); only 39 training customers exceed 320 minutes, 12 exceed 340 and 5 reach 350, so the rise is model behaviour with very thin data support",
+   "commands": []
+  },
+  {
+   "id": "V16",
+   "grade": "refuted",
+   "level": "L3",
+   "part": "ann_96",
+   "claims": [],
+   "location": "operations.stateChain.hypothesis",
+   "statement": "gives customers in Oregon, New Jersey and Connecticut a small extra score, and does nothing else on the data; node 38365 drops for those three states",
+   "check": "probe --sweep state=all --nodes 38365,160; subgroup per state",
+   "evidence": "Louisiana (state 18) is a fourth state: node 38365 is 1.081 there, exactly as in New Jersey and Connecticut (1.203 elsewhere), node 160 is 0 (pre-activation -0.245), and on all 65 Louisiana training customers the part's mean contribution is +0.0606, identical to New Jersey (90 rows) and Connecticut (80 rows). The closed form of the exit itself carries -0.0473 x state:18 inside node 160. Effect is small, but the stated list is incomplete and 'does nothing else' is false",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-84498.json --sweep \"state=all\" --nodes 38365,160 --no-parts",
+    "uv run python -m explaneat verify subgroup experiments/long_run/explanations/lr-84498.json --where \"state == '18'\"",
+    "uv run python -m explaneat verify subgroup experiments/long_run/explanations/lr-84498.json --where \"state == '31'\""
+   ]
+  },
+  {
+   "id": "V17",
+   "grade": "refuted",
+   "level": "L3",
+   "part": "ann_96",
+   "claims": [],
+   "location": "record.leaves",
+   "statement": "stateChain: 'Its one live exit is a near-constant that drops for Oregon, New Jersey and Connecticut'",
+   "check": "as V-stateChain",
+   "evidence": "same omission: Louisiana gets the same drop (38365 = 1.081, contribution +0.0606 on 65 rows)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-84498.json --sweep \"state=all\" --nodes 38365 --no-parts"
+   ]
+  },
+  {
+   "id": "V18",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_96",
+   "claims": [],
+   "location": "operations.stateChain.hypothesis",
+   "statement": "38365 on for 4000/4000, sd 0.072, values 1.203 / 0.736 / 1.081 / 1.081; 318, 145008, 68869, 538, 144710, 26948 never positive; AUC 0.9156 with and without",
+   "check": "node values on the training rows; ablate",
+   "evidence": "38365 min 0.736 max 1.203 sd 0.0718, positive on all 4000; the six units are 0 on every training row; ablation AUC 0.9156 vs 0.9156",
+   "commands": [
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-84498.json --part stateChain"
+   ]
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_97",
+   "claims": [],
+   "location": "operations.stateUnitsA.hypothesis",
+   "statement": "five location units (Alaska, Georgia, Minnesota up / Alabama down, Texas, area code 415), not among stateDirect's states; offsets -0.79, -0.22, 0.41, -0.03, 0.20, area 415 -0.033",
+   "check": "category offsets on the training rows; closed form; probe by state",
+   "evidence": "whole-model effects -0.789 (Georgia), -0.220 (Alaska), +0.414 (Minnesota), -0.032 (Alabama), +0.204 (Texas), -0.033 (area code 415); none of states 0, 1, 10, 23, 43 has a stateDirect edge; risks 1.2% Georgia, 2.1% Alaska, 3.9% Minnesota, 3.2% Texas, 1.3% West Virginia",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-84498.json --sweep \"state=all\" --no-parts"
+   ]
+  },
+  {
+   "id": "V20",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_98",
+   "claims": [],
+   "location": "operations.stateUnitsB.hypothesis",
+   "statement": "nearly inert: three exits (Tennessee, New York) never on; two West Virginia exits (122 rows) with tiny weights; Tennessee opens 27782 (7.24) but its exit stays shut; mean risk change -0.00008, AUC 0.9155",
+   "check": "node values; probe --nodes; ablate",
+   "evidence": "538/144710/26948 zero on all rows; 144216 and 257796 positive on exactly 122 (West Virginia) rows; Tennessee 27782 = 7.238 with 538 at pre -6.36; ablation mean risk change -0.0001, AUC 0.9156 vs 0.9155, mean contribution in West Virginia -0.06",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-84498.json --sweep \"state=42,34,49,11\" --nodes 27782,538,144710,26948,144216,257796 --no-parts",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-84498.json --part stateUnitsB"
+   ]
+  },
+  {
+   "id": "V21",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_99",
+   "claims": [],
+   "location": "operations.usageDirect.hypothesis",
+   "statement": "international plan raises the score by a fixed step through its own edge (0.84/sd); account length 0.12, day calls 0.12, intl calls -0.19; 1.3% -> 19.4%, with 4 calls 9.5% -> 64.9%; 380 with a plan churn 42.4% (predicted 43.5%) vs 11.2%; edge off AUC 0.849",
+   "check": "closed form; probe; subgroup; ablate --edge",
+   "evidence": "coefficients 0.842, 0.117, 0.117, -0.195; international plan has no other path (only usageDirect reads it); risks reproduce, score step +2.87 the same in West Virginia, Hawaii and Washington; 380 rows churn 0.4237, mean risk 0.4349; 3620 at 0.1119; edge -56->identity_usage off: AUC 0.8494",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-84498.json --sweep \"international plan=0,1\" --sweep \"number customer service calls=1,4\" --no-parts",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-84498.json --edge \"-56->identity_usage\""
+   ]
+  },
+  {
+   "id": "V22",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_100",
+   "claims": [],
+   "location": "operations.stateDirect.hypothesis",
+   "statement": "Hawaii -0.49, Ohio -0.69, Vermont -0.34 down, Washington 0.20 up per sd, mostly downwards; risks 1.3 / 0.1 / 0.2 / 10.9 / 7.8% (WV, HI, VT, WA, CA)",
+   "check": "closed form; probe by state",
+   "evidence": "closed form -0.494, -0.694, -0.336, +0.203; 13 of 19 direct terms negative; risks reproduce",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-84498.json --sweep \"state=49,11,46,47,4\" --no-parts"
+   ]
+  },
+  {
+   "id": "V23",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_100",
+   "claims": [],
+   "location": "operations.stateDirect.hypothesis",
+   "statement": "These offsets are larger than the training churn rates warrant for small groups: Hawaii -3.69 on the score against an empirical log-odds offset of -1.20; Vermont -2.40 against -0.82; Washington 1.53 against 0.93",
+   "check": "category_offsets definitions; uniform logit shift that reproduces each state's training churn rate given the rest of the model",
+   "evidence": "the two numbers compare different quantities: -3.69 is the mean logit change from switching the state indicator off (an all-zero state, off the data) for that state's customers, while -1.20 is the state's marginal log-odds against the overall rate, which ignores the rest of the model. Like for like, the uniform shift that makes the model's mean prediction equal the state's churn rate is -3.24 for Hawaii, -2.01 for Vermont and +1.26 for Washington: the model overshoots by 0.3 to 0.45 logit, not by about 2.5. The model's mean prediction for Hawaii's 73 customers is 3.7% against an observed 4.1% (3 churners), inside the Wilson interval; Vermont 5.4% vs 6.2%; Washington 31.5% vs 29.2%. Direction ('somewhat larger') holds, size of the excess is overstated",
+   "commands": []
+  },
+  {
+   "id": "V24",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_102",
+   "claims": [],
+   "location": "operations.usageAndPlans.hypothesis",
+   "statement": "parts add on the score; 1.3 / 9.5 / 19.4 / 64.9% with steps -4.29, -2.26, -1.42, 0.61; AUC off 0.560",
+   "check": "probe intl plan x calls; recheck",
+   "evidence": "risks reproduce; 4 calls adds 2.03 and the plan 2.87, together 4.90: additive (the plan is a direct edge); AUC 0.5603 off",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-84498.json --sweep \"international plan=0,1\" --sweep \"number customer service calls=1,4\" --no-parts"
+   ]
+  },
+  {
+   "id": "V25",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_103",
+   "claims": [],
+   "location": "operations.locationOffsets.hypothesis",
+   "statement": "26 of the 51 states get an offset; risk from 0.1% (Hawaii) to 10.9% (Washington); offsets -3.69 to 1.53; AUC off 0.903",
+   "check": "category offsets; probe state=all",
+   "evidence": "26 state levels with a non-zero effect, range -3.687 (Hawaii) to +1.525 (Washington); probe range 0.1% to 10.9% at the typical customer; AUC 0.9029 off",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-84498.json --sweep \"state=all\" --no-parts"
+   ]
+  },
+  {
+   "id": "V26",
+   "grade": "weakened",
+   "level": "L2",
+   "part": "ann_103",
+   "claims": [],
+   "location": "operations.locationOffsets.hypothesis",
+   "statement": "the largest are for small groups and exceed what their churn rates warrant",
+   "check": "state sizes; like-for-like warranted shift (as for stateDirect)",
+   "evidence": "every state is a small group (41 to 122 training customers, median 78); the largest offsets are not specifically on the smaller states: Hawaii has 73 (15th smallest of 51) and Vermont 80 (above the median); what is small is the number of churners (3 and 5). The excess over the warranted shift is 0.3 to 0.45 logit (see the stateDirect finding), not the gap the -3.69 vs -1.20 comparison suggests",
+   "commands": []
+  },
+  {
+   "id": "V27",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_104",
+   "claims": [],
+   "location": "operations.churnRisk.hypothesis",
+   "statement": "sigmoid of the sum of two branches; unread inputs listed; WV 1.3% / 19.4%, Hawaii 0.1% / 1.2%, Washington 10.9% / 68.4%; plan moves WV -4.29 -> -1.42 and Hawaii -7.31 -> -4.44 (equal steps); AUC 0.916",
+   "check": "probe --wide intl plan x state; input mapping of null nodes",
+   "evidence": "scores -4.2948 -> -1.4229 and -7.3115 -> -4.4396 (step 2.87 both); risks reproduce; unread list matches the null inputs exactly; linearise: location branch is exactly affine (R2 1.000)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-84498.json --sweep \"international plan=0,1\" --sweep \"state=49,11,47\" --wide",
+    "uv run python -m explaneat verify linearise experiments/long_run/explanations/lr-84498.json --core"
+   ]
+  },
+  {
+   "id": "V28",
+   "grade": "upheld",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "service calls count once they close a hinge daytime use holds open (1.6% with 0 calls, 52.8% with 4 at 15 US dollars); flat then steep in daytime charge, much less with a voice-mail plan (40.1% vs 2.1% at 45); international plan 1.3% to 19.4%; night use matters mainly in Ohio",
+   "check": "as the part findings",
+   "evidence": "all numbers reproduce; shapes confirmed (switch at 41 US dollars)",
+   "commands": []
+  },
+  {
+   "id": "V29",
+   "grade": "weakened",
+   "level": "L2",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "Per-state offsets, largest for small states such as Hawaii (-3.69 on the score for 73 training customers), look fitted to small groups",
+   "check": "state sizes; like-for-like warranted shift",
+   "evidence": "Hawaii (73) and Vermont (80) are typical-sized states (median 78); -3.69 is measured against an all-zero state; the model's mean prediction for Hawaii (3.7%) is close to its churn rate (4.1%) and the warranted uniform shift is -3.24, so 'fitted to small groups' rests on 3 churners rather than on a large excess",
+   "commands": []
+  },
+  {
+   "id": "V30",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "serviceCallsDayGate concept score 0.57 (partial); stateDirect 0.80; stateUnitsB and most of stateChain inert",
+   "check": "recheck provenance re-render; node values",
+   "evidence": "provenance templates re-render with no mismatch; the six dead units are zero on all 4000 rows",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/long_run/explanations/lr-84498.json --out experiments/long_run/verdicts/lr-84498/recheck.json"
+   ]
+  },
+  {
+   "id": "V31",
+   "grade": "upheld",
+   "level": "L3",
+   "part": null,
+   "claims": [],
+   "location": "record.overall_function",
+   "statement": "evening use non-monotone (dip, then rise at the extreme), per-state offsets for about half the states, inputs ignored",
+   "check": "probes and input mapping above",
+   "evidence": "dip at 300 minutes and rise above 320 confirmed; 26 of 51 states; ignored inputs match the null nodes",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_104": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_102": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_101": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_103": {
+   "grade": "weakened",
+   "level": "L2"
+  },
+  "ann_92": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_93": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_94": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_95": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_96": {
+   "grade": "refuted",
+   "level": "L3"
+  },
+  "ann_97": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_98": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_99": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_100": {
+   "grade": "weakened",
+   "level": "L2"
+  }
+ },
+ "leaf_meaning": {
+  "serviceCallsDayGate": {
+   "grade": "partial",
+   "why": "The model confirms the reading 'many service calls raise churn risk, with a threshold that rises with daytime use', but the evening-minutes and voice-mail chain inside the part (which drives the steep heavy-daytime rise) is not part of that reading."
+  },
+  "lowDayUseHinge": {
+   "grade": "partial",
+   "why": "Its reading is mostly mechanical (it cancels the opposite daytime slope below 41 US dollars); its domain meaning, 'daytime use does not matter below about 41 US dollars', only appears together with serviceCallsDayGate."
+  },
+  "nightUse": {
+   "grade": "meaningful",
+   "why": "The model confirms that night use moves the prediction far more in Ohio than elsewhere (0.5% to 3.6% vs 1.2% to 1.8% from 130 to 350 minutes), though the pattern rests on 13 Ohio churners."
+  },
+  "eveningUse": {
+   "grade": "partial",
+   "why": "Within the part, heavy evening use and many evening calls lower the score as stated, but the whole-model evening effect turns upward above about 320 minutes through another part."
+  },
+  "stateChain": {
+   "grade": "partial",
+   "why": "A per-state offset reading holds, but the stated state list is incomplete: Louisiana gets the same shift as New Jersey and Connecticut."
+  },
+  "stateUnitsA": {
+   "grade": "meaningful",
+   "why": "Each unit is a fixed score shift for one location (Georgia -0.79, Minnesota +0.41, Texas +0.20, Alaska -0.22), confirmed by the category offsets."
+  },
+  "stateUnitsB": {
+   "grade": "closed-form-only",
+   "why": "The part is inert (mean risk change -0.0001); the reading is a description of dead units and a tiny West Virginia term, with nothing to explain."
+  },
+  "usageDirect": {
+   "grade": "meaningful",
+   "why": "An international plan adds a fixed +2.87 on the score (1.3% to 19.4% for the typical customer), confirmed in every state probed."
+  },
+  "stateDirect": {
+   "grade": "meaningful",
+   "why": "Direct per-state offsets (Hawaii, Ohio, Vermont down; Washington up) are confirmed; only the claim about how far they exceed the churn rates is overstated."
+  }
+ },
+ "statements_checked": 160,
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ]
+}

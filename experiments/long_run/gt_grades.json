@@ -1,0 +1,57 @@
+{
+ "lr-b52d3": {
+  "task": "both",
+  "point": "longrun-shape-C-s1, generation 300",
+  "truth": "the backbone (-1.2 + 0.7 za + 0.5 zc + 0.3 zb + 0.8 smoker + 0.6 diabetes + 0.3 male) + 1.0 ((zn + 0.5)^2 - 1) - 1.5 zh zp; noise unused",
+  "terms": {
+   "sodium U, minimum 137": "recovered: sodium_U composition (low-sodium serial gate + two high-sodium hinges), hypothesis says both ends raise risk, typical-case minimum near 139 mmol/L (truth 137); the verifier weakened 'steeper low arm' (the U is nearly symmetric in the 1st-99th percentile range)",
+   "saddle -1.5 zh zp": "recovered: bp_hr_interaction composition; named as a crossing interaction (faster heart raises risk at low pressure, lowers it at high pressure, crossover 120-140 mmHg); upheld by the verifier",
+   "age, creatinine, smoker, diabetes (linear/steps)": "recovered: direct edges",
+   "bmi (linear)": "recovered: direct edge (the bmi hinge adds nothing measurable)",
+   "male step": "not recovered: no edge",
+   "noise unused": "partial: one small fitted edge into a high-sodium hinge, flagged as fitted noise (AUC 0.8883 vs 0.887 without)"
+  },
+  "spurious": "smoker x low-sodium interaction (smokers enter the low arm at higher sodium); low sodium shuts the blood-pressure gate",
+  "recovered": 7.5,
+  "total": 9,
+  "grade": "recovered"
+ },
+ "lr-9475d": {
+  "task": "both",
+  "point": "longrun-shape-C-s1, final stop (generation 2,650; best genome from generation 2,064, the same network as the generation-2,000 point)",
+  "truth": "the backbone (-1.2 + 0.7 za + 0.5 zc + 0.3 zb + 0.8 smoker + 0.6 diabetes + 0.3 male) + 1.0 ((zn + 0.5)^2 - 1) - 1.5 zh zp; noise unused",
+  "terms": {
+   "sodium U, minimum 137": "recovered: sodium_U (hyponatraemia hinge at 134 via the 'renal' unit, hypernatraemia hinges from 140); minimum 138.5-139 per the verifier (record says 138)",
+   "saddle -1.5 zh zp": "recovered: bp_hr leaf named as opposite slopes / discordant pressure and pulse high risk (84% vs 2% at high pressure, 9% vs 78% at low)",
+   "age (linear)": "partial: rises for every row, but a gate for older lean non-diabetic men makes a step (11.6% at 75 to 49% at 85 for the typical man) that the truth lacks",
+   "creatinine, smoker": "recovered",
+   "diabetes step": "partial: raises risk for 91.5% of rows but lowers it for older lean men through the gate (spurious)",
+   "bmi (linear)": "partial: non-monotone (peak at bmi 20, dip at 23, slow climb) via the age-bmi gate",
+   "male step": "not recovered: no direct edge; acts only through the spurious sex-diabetes gate",
+   "noise unused": "partial: fitted effect through a sodium unit and a direct edge, flagged as fitted; small on average but moves risk 63% to 91% at sodium 145"
+  },
+  "spurious": "sex x diabetes x age x bmi gate feeding a shared alarm unit with low sodium (diabetes protective for older lean men); larger noise effect",
+  "recovered": 6.0,
+  "total": 9,
+  "grade": "recovered (signals) with more spurious structure"
+ },
+ "lr-ae3cb": {
+  "task": "both",
+  "point": "longrun-shape-C-s2, final stop (generation 1,304; added point, see RESULTS.md 2.5 amendment)",
+  "truth": "the backbone (-1.2 + 0.7 za + 0.5 zc + 0.3 zb + 0.8 smoker + 0.6 diabetes + 0.3 male) + 1.0 ((zn + 0.5)^2 - 1) - 1.5 zh zp; noise unused",
+  "terms": {
+   "sodium U, minimum 137": "recovered: high-sodium arm plus a low-sodium hinge in a composition; flat bottom about 134-139 mmol/L, steeper low side (mean predicted risk 58.8% below 134, 28.0% at 134-139, 53.1% above 139)",
+   "saddle -1.5 zh zp": "recovered: named a saddle (high pressure with slow rate and fast rate without high pressure raise risk, both high low risk: 1.2% for 38 patients) built from an sbp/heart_rate arm, a tachycardia detector feeding a gate, and a brake",
+   "age, creatinine": "recovered: direct straight-line terms",
+   "smoker step": "recovered: mainly direct",
+   "diabetes step": "partial: acts mainly inside the gate (when it is open)",
+   "bmi (linear)": "not recovered: barely matters",
+   "male step": "partial: acts through the gate only",
+   "noise unused": "recovered: unconnected"
+  },
+  "spurious": "sodium hinge threshold moved by pressure and heart rate; low sodium opens the shock gate; diabetes and sex act only through the gate",
+  "recovered": 7.0,
+  "total": 9,
+  "grade": "recovered"
+ }
+}

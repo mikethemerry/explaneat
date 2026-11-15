@@ -41,6 +41,7 @@ Mike-verified (signoff-v1) is **0 everywhere**: no record carries `mike_verifica
 | 3.6 | Authoring-skill evaluation and errata | complete; adjudication by agents, not spot-checked by Mike |
 | 3.7 | Verifier benchmark | complete (run 1) |
 | 3.8 | Jumps and plateaus in PropNEAT lineages (secondary analysis, exploratory, not pre-registered) | complete (14 Nov, `exp/lineage-jumps`): 51 lineage runs + Adult and 21 old runs; jumps never consist of backprop-only (elite) steps, but node additions are not enriched beyond the stage of the run |
+| 3.9 | Very long runs (exploratory, not pre-registered) | complete (15 Nov, `exp/long-run`): 5 runs (shape-C s0–s2, churn s0–s1) with a monitoring-split plateau stop; all stopped at 1,304–2,650 generations (none near 10,000); seven explanations at generations 200–2,650 all at full coverage in 17–28 min, verifier rates not worse late; answer: not explainable only because of the budget, but late runs add spurious couplings; not signed off |
 
 ---
 
@@ -611,6 +612,28 @@ enriched overall (RD +0.15 [+0.05, +0.29]) but not for late jumps or against win
 the run. Case studies map MONK-2 jumps to named parts (`few_first_values_gate`, `a5_not_first_lift`); the
 ushape saddle's "+0.04 jump" is a 12-generation climb with six node additions. Figures and
 `figures_data.json` in the same directory.
+
+### 3.9 Very long runs (secondary analysis)
+
+Exploratory, not pre-registered; design committed before any run. `experiments/long_run/RESULTS.md`.
+Tests whether PropNEAT models are explainable only because runs stop at 40–300 generations.
+- **Runs:** shape-C (the synthetic U + saddle dataset) seeds 0–2 and churn seeds 0–1, unchanged
+  configs and fitness, up to 10,000 generations. The stop is a plateau rule on a 20% monitoring
+  split of the training rows (no 0.001 gain in 1,000 generations). Light storage (best genome per
+  generation, full populations at checkpoints, parents in sidecars).
+- **Every run stopped by the plateau rule**, at 1,304–2,650 generations. Test AUC stayed flat
+  (shape-C 0.860–0.868 at the stop; churn 0.890 / 0.912). Phenotypes grew modestly (shape-C
+  19–21 hidden units, churn 26 / 49); the genotypes grew much more (up to 187 nodes).
+- **Shape-C signal kept at the stop:** U r 0.76–0.94, saddle r 0.93–0.94. Seed 2 lost part of its
+  U in its last 300 generations (spurious share 0.10 → 0.27).
+- **Seven explanations (frozen v4, 3 h box)** at generations 200–2,650: all full coverage with
+  exact function preservation, in 17–28 min. Blind verifiers: refuted / weakened per 100
+  statements 0.0–1.3 / 2.5–9.8, with no trend with age. The U and the saddle were named at all
+  three shape-C points; the ground-truth score fell from 7.5 / 9 to 6 / 9 as late spurious gates
+  appeared.
+- **Figures:** `experiments/long_run/figures/shape-C_curves.png`, `churn_curves.png`.
+- **DB:** `explaneat_dev`, experiments `longrun-*`.
+- **Status:** complete; not signed off; no plain-language drafts.
 
 ## Gaps and interim items, with the cost to close
 

@@ -1,0 +1,454 @@
+{
+ "item_id": "lr-b52d3",
+ "genome_id": "6e4d57e3-0223-4cdc-af13-909223f68601",
+ "target_hash": null,
+ "target_hash_note": "the recheck report (recheck.json) carries no target_hash for this record target",
+ "verifier": "independent verifier agent (explanation-verifier skill)",
+ "started_at": "2026-11-15T18:20:39+13:00",
+ "finished_at": "2026-11-15T18:28:25+13:00",
+ "minutes": 8,
+ "overall": {
+  "grade": "weakened",
+  "summary": "Every stated number, threshold, direction and subgroup reproduces and coverage and function preservation hold; the sodium U is described with a 'steeper low arm' and a 'slight' direct tilt that are only partly right, and smoking's 'wider' gate is the same parallel shift."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_29",
+   "claims": [],
+   "location": "operations.sodium_U.hypothesis",
+   "statement": "U-shaped risk in serum sodium, with a steeper low arm ... On the logit the low arm is the steeper: the score is 9.11 at 126 and 7.08 at 154, against -2.28 at the bottom",
+   "check": "probe the typical patient, sodium swept 126 to 154; compare the arms at equal distance from the bottom (139)",
+   "evidence": "The numbers reproduce (score 9.110 at 126, 7.081 at 154, -2.278 at 139) and once open the low arm is steeper per mmol/L (about 1.8 logit per mmol/L below 133 against 0.79 above 139). But the high arm opens right at the bottom (139 to 140) while the low arm opens only below 133, so near the normal range the high side rises much faster: 6 mmol/L below the bottom (133) the score is -1.35 (risk 20.6%), 6 mmol/L above (145) it is +1.36 (risk 79.6%). Inside the 1st-99th percentile range the U is close to symmetric in risk: 96.2% at 129 (10 below) and 96.3% at 148 (9 above). 'Steeper low arm' holds only for the slope once the arm is open and for the end-to-end range, not for the shape a reader would picture.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-b52d3.json --sweep sodium=126:154:29 --sweep smoker=0,1 --nodes 228,2101,338,1173",
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-b52d3.json --sweep sodium=126,133,139,145,154 --json"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_31",
+   "claims": [],
+   "location": "record.summary",
+   "statement": "a U-shaped response to serum sodium (lowest predicted risk near 139 mmol/L for the typical patient, with a steeper low arm that smokers enter at a higher sodium)",
+   "check": "same sodium sweep as V1",
+   "evidence": "Lowest risk at 139 (9.3%) and smokers entering the low arm at a higher sodium (gate on at 134 for a smoker, 132 for a non-smoker) reproduce. 'Steeper low arm' is only partly right: near the bottom the high arm rises faster (risk 79.6% at 145 against 20.6% at 133 for the typical non-smoker); the same wording in record.overall_function and in risk_model's hypothesis carries the same caveat.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-b52d3.json --sweep sodium=126,133,139,145,154 --json"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_29",
+   "claims": [],
+   "location": "operations.sodium_U.hypothesis",
+   "statement": "sodium's direct edge (weight -0.631 per sd, in direct_terms) tilts the U slightly downwards with rising sodium",
+   "check": "direct_terms contribution across the sodium sweep (typical patient)",
+   "evidence": "The weight reproduces (-0.6305 per sd; sd 4.09 mmol/L), but the tilt is not slight: the direct term changes the logit by about 2.9 across the 1st-99th percentile range (129 to 148) and by 0.93 across the flat bottom 133 to 139, where it is the only thing moving the risk (20.6% to 9.3%). The floor of the U is a downward slope ending at a corner where the high arm opens.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-b52d3.json --sweep sodium=126:154:29 --sweep smoker=0,1 --nodes 228,2101,338,1173"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_19",
+   "claims": [],
+   "location": "operations.low_sodium_smoker_gate.hypothesis",
+   "statement": "Smoking therefore raises the sodium level at which the gate opens and makes it open wider (value 2.78 for a smoker against 2.01 for a non-smoker at sodium 128)",
+   "check": "node 228 value and pre-activation for smokers and non-smokers, sodium swept",
+   "evidence": "The values reproduce (2.785 vs 2.010), but smoking is a single parallel shift: the gate's pre-activation is higher by 0.775 at every open sodium value (2.785-2.010 at 128, 1.062-0.288 at 132, 3.646-2.872 at 126), with the same slope. 'Opens wider' is the same shift seen at one sodium, not a second effect; record.overall_function's 'shifts to higher sodium and widens' reads as two effects.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-b52d3.json --sweep sodium=126:154:29 --sweep smoker=0,1 --nodes 228,2101,338,1173"
+   ]
+  },
+  {
+   "id": "V5",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "structural and compositional coverage 1.0, hierarchy complete, single root risk_model",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.0 / 1.0, no uncovered nodes, only null node -9 (male), 10 annotations under one root containing the output",
+   "commands": [
+    "uv run python -m explaneat verify recheck experiments/long_run/explanations/lr-b52d3.json --out experiments/long_run/verdicts/lr-b52d3/recheck.json"
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "1.05e-15; closed-form max error 0.0196",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.05e-15 and 0.01959 (worst leaf bp_hr_gate); per-leaf closed-form errors match the hypotheses' stated 0.017, 0.0067, 0.00083, 0.00038, 0.012, 0.014, 0.02",
+   "commands": []
+  },
+  {
+   "id": "V7",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.n_splits",
+   "statement": "6 splits, 4 identity nodes, 7 leaves, 3 compositions, 14 hidden nodes",
+   "check": "operation counts from the replayed operations",
+   "evidence": "op_counts split_node 6, add_identity_node 4, annotate 10 (7 leaves + 3 compositions); 14 hidden ReLU units each in exactly one leaf",
+   "commands": []
+  },
+  {
+   "id": "V8",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_31",
+   "claims": [],
+   "location": "structure",
+   "statement": "every leaf's entries, exits and subgraph; three identity port nodes are function-preserving",
+   "check": "replayed structure (connections and weights)",
+   "evidence": "leaves partition the 14 hidden units (866,687,228,2101 | 338,1173 | 7255 | 2502 | 1906,7613,9033 | 16161,5821,491) plus identity_0; ports identity_2502, identity_1906, identity_228 carry single edges (weights -0.777, 1.208, 0.750)",
+   "commands": []
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_31",
+   "claims": [],
+   "location": "record.summary",
+   "statement": "switching bp_hr_interaction off moves the training AUC from 0.8883 to 0.7382; sex has no edge; noise has one edge into a high-sodium hinge",
+   "check": "recheck ablation + structure",
+   "evidence": "AUC 0.88825 -> 0.73823; input -9 (male) has no edges; noise only -10->338 (+0.224). Probe male 0 vs 1: 9.3% both",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-b52d3.json --sweep male=0,1 --no-parts"
+   ]
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_31",
+   "claims": [],
+   "location": "record.summary",
+   "statement": "a faster heart raises the predicted risk when pressure is low and lowers it when pressure is high; straight-line rises with age, creatinine, diabetes, smoking, BMI and heart rate through the direct edges",
+   "check": "2-D probe sbp x heart_rate; direct-edge weights",
+   "evidence": "at 100 mmHg risk 0.9% (55 bpm) to 67.0% (100 bpm); at 160 mmHg 57.6% to 0.0%; all eight direct weights positive except sodium and sbp as stated",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-b52d3.json --sweep sbp=100:180:9 --sweep heart_rate=55,60,76,90,100 --nodes 1906,7613,9033,491,5821,16161,2502 --no-parts"
+   ]
+  },
+  {
+   "id": "V11",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_31",
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "concept score 0.66 for direct_terms; BMI hinge hardly changes the prediction; 32 patients in the fast-heart high-pressure corner",
+   "check": "concept, ablate, subgroup",
+   "evidence": "heart_rate + age score 0.664; bmi_hinge off: AUC 0.8883 both, mean risk change 0.0028; sbp >= 150 and heart_rate >= 90: n = 32, outcome 3.1%, mean predicted 0.8%",
+   "commands": [
+    "uv run python -m explaneat verify concept experiments/long_run/explanations/lr-b52d3.json --part direct_terms --concept 'heart_rate + age'",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-b52d3.json --part bmi_hinge",
+    "uv run python -m explaneat verify subgroup experiments/long_run/explanations/lr-b52d3.json --where 'sbp >= 150 and heart_rate >= 90'"
+   ]
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_31",
+   "claims": [],
+   "location": "record.clinical_terms",
+   "statement": "older age, higher creatinine, diabetes, smoking and higher BMI each raise the predicted risk steadily; sex does not change it",
+   "check": "probes of each input at the typical patient, plus BMI with the gate wide open",
+   "evidence": "age 2.3/8.2/25.1% at 40/60/80; creatinine 5.6% at 60 and 25.6% at 140; diabetes 9.3% vs 15.0%; BMI 6.8% at 15 rising to 15.0% at 43 (BMI's negative gate weight -0.145 is smaller than its direct +0.362 plus hinge); smoking raises risk at every sodium; male 9.3% both",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-b52d3.json --sweep age=40,60,80 --no-parts",
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-b52d3.json --sweep bmi=15:43:8 --nodes 7255,491 --no-parts"
+   ]
+  },
+  {
+   "id": "V13",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_19",
+   "claims": [],
+   "location": "operations.low_sodium_smoker_gate.hypothesis",
+   "statement": "thresholds 133/132 (non-smoker), 135/134 (smoker); second exit at 131/132; contributions 5.77 and 9.02 at 128; risks 14%/99% and 24%/>99%; 124 open (67+57), outcome 67.7%, mean risk 66.2%; second exit 66 (80.3%); AUC 0.8726 off; creatinine edge -0.032, AUC 0.8882 off; concept 0.99",
+   "check": "probe sodium x smoker with nodes 228, 2101; subgroup node_228 > 0, node_2101 > 0; ablate the creatinine edge; concept",
+   "evidence": "every value reproduces: node 228 0.288 at 132 and 0 at 133 (non-smoker), 0.201 at 134 and 0 at 135 (smoker); 2101 0.054 at 131 / 0.497 at 132; ann_19 +5.769 / +9.018 at 128; risk 14.0%, 99.4%, 23.5%, 100.0%; n 124, 57 smokers; 66 at 80.3%; edge off AUC 0.8882; concept 0.989",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/long_run/explanations/lr-b52d3.json --where 'node_228 > 0'",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-b52d3.json --edge '-6_b->228'",
+    "uv run python -m explaneat verify concept experiments/long_run/explanations/lr-b52d3.json --part low_sodium_smoker_gate --concept sodium"
+   ]
+  },
+  {
+   "id": "V14",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_20",
+   "claims": [],
+   "location": "operations.high_sodium_hinges.hypothesis",
+   "statement": "both exits off at 139, on at 140 (0.09, 0.22), 1.57 and 2.74 at 150; output weights 1.96, 1.99; risk 9/80/99% at 139/145/150; noise weight 0.224, risk 62% vs 90% at noise -2/+2 sd (sodium 145); noise edge off AUC 0.8870; 635 on (52.4%, 52.5%); 75 with sodium > 145 at 98.7%; AUC 0.7631 off; concept 0.95",
+   "check": "probe, subgroup, ablate edge -10->338, concept",
+   "evidence": "all reproduce: 0.090/0.219 at 140, 1.565/2.744 at 150; weights 1.9575, 1.9857; 9.3%/79.6%/98.9%; 62.3% vs 90.1%; AUC 0.887; n 635; n 75 at 98.7%; concept 0.951. The noise edge is small by AUC but moves one patient's risk by up to 37 points (ablate max change 0.373); the hypothesis states the 62% vs 90% case, so the reader is told",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-b52d3.json --set sodium=145 --sweep noise=-2,2 --no-parts",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-b52d3.json --edge '-10->338'",
+    "uv run python -m explaneat verify subgroup experiments/long_run/explanations/lr-b52d3.json --where 'node_1173 > 0'"
+   ]
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_21",
+   "claims": [],
+   "location": "operations.bmi_hinge.hypothesis",
+   "statement": "off at BMI 25, on at 30 (0.57), 2.44 at 40; weight 0.048; AUC unchanged off, mean change 0.0028; on for 845; concept 1.00",
+   "check": "probe BMI sweep with node 7255; ablate; subgroup",
+   "evidence": "hinge turns on near BMI 26.9 (0.0076 at 27, 0.757 at 31, so about 0.57 at 30); weight 0.0477; AUC 0.8883 both; mean risk change 0.0028; n 845",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-b52d3.json --sweep bmi=15:43:8 --nodes 7255,491 --no-parts",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-b52d3.json --part bmi_hinge"
+   ]
+  },
+  {
+   "id": "V16",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_22",
+   "claims": [],
+   "location": "operations.low_hr_hinge.hypothesis",
+   "statement": "on below about the average heart rate; off at 80, on at 75 (0.08), 0.89 at 60; output weight -0.75, -0.78 into sbp_chain; on for 772 (42.1%); AUC 0.8814 off; concept 1.00",
+   "check": "probe heart_rate 60..80 with node 2502; structure weights; subgroup",
+   "evidence": "threshold about 76.6 bpm (median 76); 0.084 at 75, 0 at 77 and 80, 0.886 at 60; weights -0.7517 and -0.7769; n 772 at 42.1%",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-b52d3.json --sweep heart_rate=60,75,76,77,80 --nodes 2502 --no-parts",
+    "uv run python -m explaneat verify subgroup experiments/long_run/explanations/lr-b52d3.json --where 'node_2502 > 0'"
+   ]
+  },
+  {
+   "id": "V17",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_23",
+   "claims": [],
+   "location": "operations.direct_terms.hypothesis",
+   "statement": "eight weights (hr 1.317, age 0.768, sodium -0.631, creatinine 0.601, BMI 0.362, smoking 0.271, sbp -0.269, diabetes 0.244); age and diabetes reach no hidden unit; age 2/8/25%, creatinine 6/26%, diabetes 9/15%; AUC 0.7859 off; concept 0.66",
+   "check": "structure weights; probes; recheck ablation; concept",
+   "evidence": "all eight weights reproduce exactly; -1 and -8 connect only to identity_0; creatinine only also to 228 (-0.032); probes 2.3/8.2/25.1%, 5.6/25.6%, 9.3/15.0%; AUC 0.78586; concept 0.664",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-b52d3.json --sweep creatinine=60,140 --no-parts",
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-b52d3.json --sweep diabetes=0,1 --no-parts"
+   ]
+  },
+  {
+   "id": "V18",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_27",
+   "claims": [],
+   "location": "operations.sbp_chain.hypothesis",
+   "statement": "first exit off at 110, on at 120 (0.35); second and third off at 130, on at 140 (0.94, 0.94); 5.67, 4.88, 6.50 at 180; weights -0.83, -0.78, -0.97; AUC 0.8236 off; concept 0.98",
+   "check": "2-D probe with nodes 1906, 7613, 9033",
+   "evidence": "0 at 110 and 0.346 at 120; 0/0 at 130, 0.939/0.943 at 140; 5.675/4.877/6.504 at 180; weights -0.8323, -0.7778, -0.9746; AUC 0.82363; concept 0.976. 'Makes high pressure look protective' is stated at part level and is reversed by the gate for slow hearts, as said",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-b52d3.json --sweep sbp=100:180:9 --sweep heart_rate=55,60,76,90,100 --nodes 1906,7613,9033,491,5821,16161,2502 --no-parts"
+   ]
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_28",
+   "claims": [],
+   "location": "operations.bp_hr_gate.hypothesis",
+   "statement": "open when sbp is high relative to heart rate, shut by fast heart rate or low-sodium gate; weight 1.58; at 60 bpm off at 120, on at 130 (1.23), 11.59 at 180; at 90 bpm off at 150, on at 160 (1.70); at 160 mmHg 6.58 at 76 bpm, 0 at 100 with the fast-heart hinge 2.63; sodium 140->128 drops it 6.58->4.04; open for 729 (45.4%); AUC 0.6500 off; concept shock index 0.91, sbp - hr 0.97",
+   "check": "2-D probe with gate nodes; probe at sbp 160 over sodium; subgroup node_491 > 0; concept",
+   "evidence": "all reproduce: 1.226, 11.59, 0 at 150 and 1.703 at 160 (90 bpm); 6.578 and 0; node 5821 2.628; 6.578 -> 4.036; n 729 at 45.4%; weight 1.583; concept 0.909 (shock index, gate on when low) and 0.969 (sbp - hr). The opening pressure rises with heart rate (about 120-125 mmHg at 55-60 bpm, 128 at 76, 152 at 90, 176 at 100)",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-b52d3.json --set sbp=160 --sweep sodium=140,128 --nodes 491 --no-parts",
+    "uv run python -m explaneat verify concept experiments/long_run/explanations/lr-b52d3.json --part bp_hr_gate --concept 'heart_rate / sbp'",
+    "uv run python -m explaneat verify concept experiments/long_run/explanations/lr-b52d3.json --part bp_hr_gate --concept 'sbp - heart_rate'"
+   ]
+  },
+  {
+   "id": "V20",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_29",
+   "claims": [],
+   "location": "operations.sodium_U.evidence",
+   "statement": "risk >99% at 126, 35% at 132, 11% at 138, 67% at 144, >99% at 154, lowest 9% at 139; 94 with sodium < 133 at 74.5%; 739 with 137-141 at 29.6%; 75 above 145 at 98.7%; AUC 0.7555 off; low sodium shuts the gate",
+   "check": "probe; subgroups; ablation",
+   "evidence": "100.0/35.3/10.7/67.3/99.9%; 9.3% at 139; n 94 (74.5%), 739 (29.6%), 75 (98.7%); AUC 0.75546; gate contribution falls from +1.22 to 0 at sodium <= 130 (non-smoker) and <= 131 (smoker). Low sodium raises risk overall even with the gate wide open (sbp 170, 55 bpm: 67.5% at 138 to 99.8% at 126)",
+   "commands": [
+    "uv run python -m explaneat verify subgroup experiments/long_run/explanations/lr-b52d3.json --where 'sodium < 133'",
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-b52d3.json --set sbp=170 --set heart_rate=55 --sweep sodium=126:140:8 --nodes 491,228"
+   ]
+  },
+  {
+   "id": "V21",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_30",
+   "claims": [],
+   "location": "operations.bp_hr_interaction.hypothesis",
+   "statement": "crossing interaction: 1% vs 67% at 100 mmHg (55 vs 100 bpm); 58% vs <1% at 160; turns over between 120 (1% vs 53%) and 140 (34% vs 3%); slow heart 1% to 70% from 100 to 180; fast 67% to <1%; U-shaped at typical heart rate, lowest at 130 (7%, 15% at 100, 31% at 180); 40 at 85.0%, 63 at 90.5%, 32 at 3.1% (mean predicted 0.8%); AUC 0.7382 off; product concept 0.59",
+   "check": "2-D probe sbp 100..180 x heart_rate 55..100; subgroups",
+   "evidence": "0.9/67.0%, 57.6/0.0%, 0.7/52.6% at 120, 33.8/3.3% at 140 (at 130 still 4.4/31.3%, so the turn is between 130 and 140); 0.9->70.1%, 67.0->0.0%; 76 bpm: 15.0, 13.2, 9.0, 6.7, 13.1, ... 31.0%; subgroups n 40/63/32 with 85.0/90.5/3.1%; AUC 0.73823",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-b52d3.json --sweep sbp=100:180:9 --sweep heart_rate=55,60,76,90,100 --no-parts",
+    "uv run python -m explaneat verify subgroup experiments/long_run/explanations/lr-b52d3.json --where 'sbp <= 115 and heart_rate >= 90'",
+    "uv run python -m explaneat verify subgroup experiments/long_run/explanations/lr-b52d3.json --where 'sbp >= 150 and heart_rate <= 65'"
+   ]
+  },
+  {
+   "id": "V22",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_31",
+   "claims": [],
+   "location": "operations.risk_model.hypothesis",
+   "statement": "decomposition reproduces to 1.1e-15; bp_hr_interaction the largest effect; female 9% vs male 9%; at sodium 139: 2% / 51% at 110 mmHg (60/95 bpm), 41% / <1% at 150; both compositions off AUC 0.5781",
+   "check": "recheck, probes, ablation of both compositions",
+   "evidence": "1.05e-15; composition AUC drops: bp_hr_interaction 0.738 < sodium_U 0.755 < direct_terms 0.786; 9.3% both sexes; 1.6/51.4/41.1/0.1%; both off AUC 0.5781",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-b52d3.json --set sodium=139 --sweep sbp=110,150 --sweep heart_rate=60,95 --no-parts",
+    "uv run python -m explaneat verify ablate experiments/long_run/explanations/lr-b52d3.json --part sodium_U --part bp_hr_interaction"
+   ]
+  },
+  {
+   "id": "V23",
+   "grade": "upheld",
+   "level": "L2",
+   "part": null,
+   "claims": [],
+   "location": "operations.<all>.evidence",
+   "statement": "evidence records: analytical formulas, probes, subgroups and ablations, all on the training split (n=1500) and about the part they are attached to",
+   "check": "verify recheck (provenance: 62 queries, 49 templated texts) and reading each record's query",
+   "evidence": "no provenance mismatch or needs_review; every subgroup is the part's own exit node (node_228, node_1173, node_7255, node_2502, node_491) or the stated sodium/sbp/hr band; bp_hr_interaction's formula record says its LaTeX renders one argument as a constant, so it is not offered as an evaluable formula",
+   "commands": []
+  },
+  {
+   "id": "V24",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_30",
+   "claims": [],
+   "location": "operations.bp_hr_interaction.hypothesis",
+   "statement": "a fast heart with high pressure is predicted low risk",
+   "check": "subgroup sbp >= 150 and heart_rate >= 90",
+   "evidence": "clinically, tachycardia with hypertension is not a known protective state; the data agree with the model (1 of 32, 3.1%), but predictions there are extreme (mean 0.8%, 0.0% at 160 mmHg and 100 bpm) on 32 patients. For the domain reviewer",
+   "commands": []
+  },
+  {
+   "id": "V25",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_20",
+   "claims": [],
+   "location": "operations.high_sodium_hinges.hypothesis",
+   "statement": "the noise column enters the first high-sodium hinge",
+   "check": "probe noise at sodium 145",
+   "evidence": "a column with no meaning moves the typical patient's risk from 62% to 90% (noise -2 to +2 sd) when sodium is 145; disclosed by the explanation; a fitted artefact",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_31": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_29": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_19": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_20": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_21": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_22": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_23": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_27": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_28": {
+   "grade": "upheld",
+   "level": "L4"
+  },
+  "ann_30": {
+   "grade": "upheld",
+   "level": "L4"
+  }
+ },
+ "leaf_meaning": {
+  "low_sodium_smoker_gate": {
+   "grade": "meaningful",
+   "why": "A hyponatraemia detector that the model confirms: off above 133 mmol/L for a non-smoker, steeply rising below, opening about 2 mmol/L higher in smokers."
+  },
+  "high_sodium_hinges": {
+   "grade": "meaningful",
+   "why": "The hypernatraemia arm: both hinges switch on at 140 mmol/L and rise in a straight line, matching an outcome rate of 98.7% above 145; one hinge also carries a fitted noise input."
+  },
+  "bmi_hinge": {
+   "grade": "meaningful",
+   "why": "A clean hinge on BMI above about 27 kg/m2, correctly described as almost unused (AUC unchanged when removed)."
+  },
+  "low_hr_hinge": {
+   "grade": "meaningful",
+   "why": "A slow-heart-rate hinge below about 77 beats/min whose two roles (own negative term, damping the pressure chain) reproduce; its net effect is only readable at the composition."
+  },
+  "sbp_chain": {
+   "grade": "partial",
+   "why": "Three serial pressure hinges whose own terms make high pressure look protective; that reading is part-level only and is reversed by the gate for slow hearts, so the leaf's domain meaning exists only inside bp_hr_interaction."
+  },
+  "bp_hr_gate": {
+   "grade": "meaningful",
+   "why": "A gate open when systolic pressure is high relative to heart rate (sbp minus heart rate scores 0.97; shock index 0.91), shut by a fast heart or low sodium, as stated."
+  },
+  "direct_terms": {
+   "grade": "partial",
+   "why": "A linear risk score of eight inputs; age, creatinine and diabetes readings are clear, but the sum as a whole has no single reading (best concept 0.66)."
+  }
+ },
+ "statements_checked": 142,
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ],
+ "tool_notes": [
+  "verify linearise --core fails on this model ('model state (with overrides) is not a DAG'); no linear-only claim depended on it",
+  "recheck.json has no target_hash for a record target"
+ ]
+}
