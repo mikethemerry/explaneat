@@ -375,3 +375,220 @@ uv run python experiments/lineage_jumps/meaning.py
 uv run python experiments/lineage_jumps/figures.py monk2-s1 monk2-s7 monk2-s4 shape-A-s0 \
     churn200-s7:loose shape-C-s1-g300:95-135
 ```
+
+## 11. Jumps as signal discovery
+
+> Exploratory follow-up (15 Nov 2026), not pre-registered. Sections 1-10 are unchanged. The
+> definitions in 11.1 were written before the tests in 11.2-11.4 were run; the generation-matched
+> control (11.2) and the connection-level analysis were added after the first node-level table was
+> seen, and are marked as such.
+
+**Hypothesis (Mike, in the terms of `docs/signals-and-realisations/README.md` §2-3a).** A jump in
+best training fitness marks the **discovery of a new signal** (a component of the true function: a
+hinge, an interaction); most added nodes are **marginal capacity** that refines a realisation
+without adding signal.
+
+### 11.1 Definitions
+
+- **Lineages.** shape-C-s1-g300 (primary; U and saddle), shape-C-s2-g300, shape-A-s0 (U only),
+  monk2-s7 (known rule), churn200-s7 (truth unknown). Champion and fitter-parent lineage as in
+  1.4; shape lineages from `explaneat_dev`, monk2 and churn200 from the verified replay dumps
+  (nothing written to any database). Every ancestor's recomputed train AUC equals its stored
+  fitness (max abs error 0 in all five).
+- **Importance.** Each **hidden node of the champion's phenotype** is mean-ablated: fixed at its
+  training-mean activation (`explaneat.verify.probe.Ablation(to="mean")`, the `query_ablate`
+  logic), so the constant it passes on is kept. Importance = drop in training AUC; the rise in
+  training log-loss is recorded too. Genotype-only hidden nodes (pruned from the phenotype) are
+  inert and are reported separately. Named parts of explained champions (shape-A-s0, monk2-s7,
+  churn200-s7) are ablated the same way, all exits at their means.
+- **Ground-truth signals** (the drop in each is also recorded per ablation):
+  - shape runs (`experiments/ushape_saddle/score_g300.py`): **U r**, Pearson r of the model logit
+    over sodium 128..150 mmol/L (other inputs typical) with the true U term; **saddle r**, r of the
+    mean-removed logit on a 41 x 41 heart rate x SBP grid with the true -z_hr z_sbp (shape-C only).
+  - MONK-2 (rule: exactly k = 2 of the six attributes at their first value): **"at least two" r**,
+    r of the logit with [k = 2] on training rows with k <= 2; **"at most two" r**, the same on rows
+    with k >= 2. Nodes are also probed (`concept_probe.score_concept`) against the six
+    "a_i = 1" indicators, k, and [k = 2].
+  - churn200: none; AUC only.
+- **Signal-carrying vs marginal.** A node (part, connection) is **signal-carrying** if ablating it
+  lowers some ground-truth r by >= 0.10 or training AUC by >= 0.01; otherwise **marginal**.
+  Sensitivity: half (0.05, 0.005) and double (0.20, 0.02). A signal-carrying node **serves** the
+  signal whose r it lowers most (if that drop is >= 0.10).
+- **Birth.** The generation the node gene entered the winning lineage: the last lineage step that
+  added it (meaning.py's rule). A node is **event-born** if its birth lies in a primary-rule
+  jump or climb window (1.3), **jump-born** if in a jump. Because the rule finds few late events
+  (it misses the 110-122 saddle climb of shape-C-s1), a wider window set is used as a secondary
+  analysis: **rise windows**, every window of <= 12 generations in which best-so-far rises by
+  >= tau, trimmed and merged as in 1.3 (event windows count as rise windows).
+- **Test 1.** Fisher exact (one-sided: event-born more often signal-carrying) per lineage and on
+  the pooled 2 x 2; permutation p by shuffling the signal labels within each lineage (10,000,
+  `default_rng(42)`).
+- **Signal curves (test 2).** For every lineage ancestor, U r and saddle r (or the two MONK-2 r).
+  An event has a **signal step** when some r rises by >= 0.10 from `L_{o-1}` to `L_e`; null:
+  every same-width window outside all event and rise windows. **Plateau additions**: lineage steps
+  that add a node outside every event and rise window, with the r change over that step. The
+  converse: **curve steps** (some r rises >= 0.20 within <= 3 generations), placed against the
+  windows.
+- **Marginal share (test 3).** Marginal phenotype hidden nodes / phenotype hidden nodes; also
+  counting genotype-only nodes as marginal.
+
+### 11.2 Are jump-born nodes signal-carrying? (`figures/signal_share_summary.png`)
+
+| Lineage | Hidden (phenotype) | Signal-carrying | Event-born: signal | Outside events: signal | Fisher p (one-sided) |
+|---|---|---|---|---|---|
+| shape-C-s1-g300 | 14 | 9 (4 U, 5 saddle) | 4/4 | 5/10 | 0.13 |
+| shape-C-s2-g300 | 20 | 10 | 1/1 | 9/19 | 0.50 |
+| shape-A-s0 | 10 | 5 | 3/3 | 2/7 | 0.08 |
+| monk2-s7 | 3 | 2 | 0/0 | 2/3 | - |
+| churn200-s7 | 33 | 7 | 1/2 | 6/31 | 0.38 |
+| **pooled** | 80 | 33 | **9/10** | **24/70** | **0.001** (perm 0.004) |
+
+shape-C-s1's signal nodes: four U nodes born at generations 2-8 (in the opening climb) and five
+saddle nodes born at 48, 50, 69, 93 and 112 (none in a primary-rule event; 112 in a rise window).
+
+Pooled, other cuts:
+
+| Cut | Primary (0.10 r / 0.01 AUC) | Half | Double |
+|---|---|---|---|
+| Event-born vs not | 9/10 vs 24/70, p 0.001 | 9/10 vs 25/70, p 0.002 | 9/10 vs 20/70, p < 0.001 |
+| Jump-born vs not | 4/4 vs 29/76, p 0.026 | 4/4 vs 30/76, p 0.029 | 4/4 vs 25/76, p 0.015 |
+| Rise-window-born vs not (secondary) | 17/25 vs 16/55, p 0.001 | 17/25 vs 17/55, p 0.002 | 14/25 vs 15/55, p 0.014 |
+| **Born at generation <= 20 only**: event-born vs not (added after the first table) | **9/10 vs 7/11, p 0.18** (perm 0.10) | 9/10 vs 7/11, p 0.18 | 9/10 vs 4/11, p 0.017 |
+| Connections (added after the first table; initial genes excluded): event-born vs not | 10/11 vs 66/228, p < 0.001 | 11/11 vs 74/228 | 10/11 vs 50/228 |
+| Connections born at generation <= 20 | 9/10 vs 12/15, p 0.47 | 10/10 vs 15/15 | 9/10 vs 10/15, p 0.20 |
+
+**Reading.** Nodes born inside jumps and climbs are nearly always signal-carrying (9 of 10), and
+nodes born elsewhere mostly are not (24 of 70). But almost every event window is in the first 12
+generations, and **the signal-carrying share falls steadily with birth generation whatever the
+window**: 11/13 of nodes born at generations 1-10, 5/8 at 11-20, 7/11 at 21-50, 6/17 at 51-100,
+4/31 after 100 (connections: 7/8, 14/17, 19/22, 22/46, 14/146). Among nodes born in the first 20
+generations, event-born and other nodes differ much less (9/10 vs 7/11, p 0.18; significant only
+under the double threshold). So the association is largely **early vs late**, not jump vs
+plateau: early additions, in or out of a jump, become the main realisations; late additions are
+mostly marginal.
+
+### 11.3 Do jumps coincide with steps in the signal curves? (`figures/signal_<run>.png`)
+
+| Lineage | Event | Signal step over the window | r change | Null: same-width windows with a step |
+|---|---|---|---|---|
+| shape-C-s1-g300 | climb 1-8 | yes | U +0.27 | 7% |
+| | jump 10-12 | no | 0.00 | 2% |
+| shape-C-s2-g300 | climb 1-3 | yes | U +0.34 | 1% |
+| | jump 14-16 | yes | U +0.11, saddle +0.11 | 1% |
+| shape-A-s0 | jump 1-9 | yes | U +0.30 | 0% |
+| | jump 17-19 | no | U +0.07 | 0% |
+| monk2-s7 | jump 18-20 | yes | "at least two" +0.19 | 37% |
+| | jump 34-36 | yes | "at least two" +0.51 | 37% |
+| | climb 59-61 | no | "at most two" -0.26 (it rises +0.58 over 61-66) | 37% |
+
+- **Six of nine events carry a signal step, against 0-7% of same-width windows on the shape
+  lineages.** Where the r curves are smooth (the shape runs), a step at a jump is far above
+  chance. On MONK-2 the lineage curves are jagged (weight mutation, section 4), so 37% of quiet
+  windows also move an r by 0.10 and the two jump steps are only suggestive.
+- **But signal discovery does not need a jump.** The curve steps (>= 0.20 within 3 generations)
+  on the shape lineages are six: the three U steps fall in the opening climbs (generations 1-3),
+  and **all three saddle steps fall outside every jump, climb and rise window**: shape-C-s1 at
+  generations 51-53 and 55-56, shape-C-s2 at 32-34. Each is a node-adding step.
+- **Plateau additions mostly leave the curves flat**: of 83 plateau node additions on the shape
+  lineages, 2 moved a signal r by >= 0.10, and those 2 are exactly the saddle discoveries
+  (shape-C-s1 generation 53, saddle r +0.32; shape-C-s2 generation 34, +0.22). The other 81 are
+  flat to 0.10.
+
+### 11.4 How much of the champion is marginal capacity?
+
+| Lineage | Nodes added on the lineage | In the champion's phenotype | Marginal (primary; half / double) | Marginal counting genotype-only nodes |
+|---|---|---|---|---|
+| shape-C-s1-g300 | 43 | 14 | 5 (36%; 36% / 36%) | 18/27 (67%) |
+| shape-C-s2-g300 | 52 | 20 | 10 (50%; 45% / 60%) | 27/37 (73%) |
+| shape-A-s0 | 20 | 10 | 5 (50%; 50% / 60%) | 11/16 (69%) |
+| monk2-s7 | 5 | 3 | 1 (33%) | 2/4 (50%) |
+| churn200-s7 | 78 | 33 | 26 (79%; 79% / 82%) | 61/68 (90%) |
+
+Named parts tell the same story. shape-A-s0: `sodium_U` (U r drop 0.99, AUC 0.16) and its leaves
+`high_sodium_steep_hinge` (0.18) and `low_sodium_hinge` (0.11) carry the U; the two leaves the
+explanation itself called noise chains (`low_creatinine_noise_chain`, `nondiabetic_noise_chain`,
+nodes born at generations 71-88) are marginal (AUC drop <= 0.002). churn200-s7: four of nine leaves
+are signal-carrying (`usage_score` 0.29, `service_calls_gate` 0.084, `intl_plan_gate` 0.056,
+`heavy_usage_hinge` 0.023); `state_area_offsets` (19 hidden nodes, 0.004), `minutes_hinges` (0.000),
+`account_length_hinge` (0.003) and `day_charge_gate` (0.002, the part the loose-rule jump at 14-16
+fed in case 4) are marginal capacity. monk2-s7: all three named parts are signal-carrying
+(`few_first_values_gate` 0.38, `a4_a5_first_value_unit` 0.22, `direct_first_value_penalty` 0.19);
+node 2443, born at 66, is inert.
+
+### 11.5 Examples
+
+- **The saddle was discovered on a plateau, and the "saddle climb" was refinement.** In
+  shape-C-s1-g300 the lineage's saddle r sits at 0.00-0.04 until generation 52, then jumps to 0.35
+  at generation 53 (a node added) and 0.43 by 56. Best-so-far training AUC moves +0.002 at
+  generation 53 and +0.014 over the next five generations: below the jump threshold (tau 0.022).
+  The discovery is a step in the signal curve, not in fitness; backprop and later additions then
+  build the realisation out over 60 generations (saddle r 0.42 at 58, 0.83 at 100, 0.96 at the
+  champion). The climb at 110-122 that section 7 (case 5) linked to the saddle, six nodes in nine
+  generations, moves saddle r only 0.85 -> 0.91 (it crosses the 0.9 "found" line of the ushape
+  study, which is why the 100-vs-200 checkpoints read it as the saddle arriving). Of its six
+  nodes, one survives as signal-carrying (11048, saddle r drop 0.43), two survive as marginal
+  (11275, 11557) and three are gone. shape-C-s2 repeats the pattern: saddle r 0.04 -> 0.26 at
+  generation 34 with best-so-far +0.0006.
+- **MONK-2: the jumps are terms added to a counter.** Node 288 of monk2-s7 is probed best by k,
+  the count of first values (score 0.99), and node 389 by "a4 = 1" (1.0); both were born on
+  quiet generations (8 and 10). The two stair steps add inputs to them, not nodes: the jump at
+  18-20 adds a3 = 1 -> 288 (`-7_288`, AUC drop 0.26) and the jump at 34-36 adds a4 = 1 -> 389
+  (`-9_389`, 0.15), each with a step in the "at least two" r (+0.19, +0.51). Every indicator edge
+  into the counter (a1, a2, a3, a6 = 1 into 288; a4, a5 = 1 into 389; 389 into 288) is
+  signal-carrying, and they arrive one at a time between generations 8 and 56. At the level of
+  connections, a MONK-2 jump is one more term of the rule's count.
+
+### 11.6 Answer
+
+1. **Jump-born nodes are more often signal-carrying (9/10 vs 24/70 pooled, p 0.001), but this
+   is mostly an age effect.** Nearly all jumps and climbs are early, and the signal-carrying
+   share falls from 85% for nodes born at generations 1-10 to 13% after 100 in or out of an
+   event; within the first 20 generations the difference is 9/10 vs 7/11 (p 0.18).
+2. **Jumps usually coincide with a signal step (6 of 9; 0-7% of quiet windows on the shape
+   lineages), but discovery is not always a jump.** The U arrived in the opening climbs; the
+   saddle (the interaction, the harder signal) arrived in both shape-C lineages as a sharp step
+   in saddle r on a fitness plateau, with fitness following slowly. Plateau node additions leave
+   the signal curves flat (81 of 83) except those two discoveries.
+3. **Most of each champion is marginal capacity**: 33-50% of the phenotype's hidden nodes on the
+   synthetic and MONK-2 lineages, 79% on churn200-s7; 50-90% counting the genotype-only nodes.
+   Of the nodes a lineage adds, 19-25% (shape), 40% (MONK-2, 2 of 5) and 9% (churn) end up
+   signal-carrying in the champion.
+
+So Mike's hypothesis holds in part: **signal discovery is a sharp event in the signal curves,
+and most additions are marginal**, but the fitness trajectory is a weak detector of it. A new
+signal enters small (the saddle at +0.002 AUC) and grows as its realisation is refined, so the
+signal shows as a jump in fitness only when it is large on arrival (the U in the first
+generations, MONK-2's counting terms).
+
+### 11.7 Caveats
+
+- **Few nodes.** 80 champion hidden nodes in five lineages, 10 event-born; the per-lineage tests
+  have no power. One lineage per study, chosen in advance.
+- **Single-node ablation cannot tell discovery from refinement.** In a serial chain every link is
+  necessary (shape-A's 357, 1789 and 3629 have identical drops), and a node that refines a
+  distributed realisation (the saddle's five nodes) can still remove 0.17-0.59 of saddle r alone.
+  "Signal-carrying" means "the realisation needs it now", not "it brought the signal".
+- **Birth is the node gene's.** A node can be born marginal and become important when later
+  connections reach it (MONK-2's 288 and 389), so node birth under-dates signal arrival; the
+  connection analysis helps where connections are stable, but churn200's lineage re-enables many
+  connections late (connection births there are mostly the last re-enable).
+- **Survivorship.** Only genes that survive into the champion are scored; early genes have had
+  the longest to be selected and trained into the main realisations.
+- **MONK-2 lineage curves are jagged**, so its step-vs-null comparison is weak.
+
+### 11.8 Files
+
+`signal_nodes.py` (per lineage: ablations, probes, ancestor curves; output in scratch),
+`signal_analyze.py` (tests, figures), `figures_data_signal.json` (all numbers: per node, part
+and connection drops and births, curves, tests, pooled tables). Figures:
+`figures/signal_shape-C-s1-g300.png`, `signal_shape-C-s2-g300.png`, `signal_shape-A-s0.png`,
+`signal_monk2-s7.png`, `signal_churn200-s7.png` (best-so-far with jumps, climbs and rise windows
+shaded; signal r curves; node strip at birth generation, sized by importance, coloured by signal
+served or marginal), `signal_share_summary.png`.
+
+```bash
+for r in shape-C-s1-g300 shape-C-s2-g300 shape-A-s0 monk2-s7 churn200-s7; do
+  DATABASE_URL=postgresql://localhost/explaneat_dev uv run python experiments/lineage_jumps/signal_nodes.py $r
+done   # monk2 and churn200 need the replay dumps (replay_dump.py); about 15 s each
+uv run python experiments/lineage_jumps/signal_analyze.py
+```
