@@ -1,0 +1,189 @@
+{
+  "label": "lr-b52d3",
+  "genome_id": "6e4d57e3-0223-4cdc-af13-909223f68601",
+  "start": "2026-11-15T17:33:02+13:00",
+  "end": "2026-11-15T17:50:09+13:00",
+  "structural_coverage": 1.0,
+  "compositional_coverage": 1.0,
+  "full_coverage": true,
+  "within_budget": true,
+  "n_leaf_annotations": 7,
+  "n_composition_annotations": 3,
+  "n_splits": 6,
+  "n_identity_nodes": 4,
+  "hidden_nodes": 14,
+  "hidden_nodes_single_leaf_no_split": 14,
+  "hidden_nodes_in_any_annotation": 14,
+  "hierarchy_complete": true,
+  "function_preservation_max_abs_err": 1.0547118733938987e-15,
+  "closed_form_max_abs_err": 0.019592008110826953,
+  "summary": "The network predicts the outcome from three things: a U-shaped response to serum sodium (lowest predicted risk near 139 mmol/L for the typical patient, with a steeper low arm that smokers enter at a higher sodium); a crossing interaction of systolic pressure and heart rate, in which a faster heart raises the predicted risk when pressure is low and lowers it when pressure is high (switching that composition off moves the training AUC from 0.8883 to 0.7382); and straight-line rises with age, creatinine, diabetes, smoking, BMI and heart rate through the direct edges. Sex has no edge in the network, and the noise column has one small fitted edge into a high-sodium hinge.",
+  "summary_template": "The network predicts the outcome from three things: a U-shaped response to serum sodium (lowest predicted risk near {{q:q_35020fbfca.rows[3].inputs.sodium}} mmol/L for the typical patient, with a steeper low arm that smokers enter at a higher sodium); a crossing interaction of systolic pressure and heart rate, in which a faster heart raises the predicted risk when pressure is low and lowers it when pressure is high (switching that composition off moves the training AUC from {{q:q_767fb89c1e.data.auc_with|.4f}} to {{q:q_767fb89c1e.data.auc_without|.4f}}); and straight-line rises with age, creatinine, diabetes, smoking, BMI and heart rate through the direct edges. Sex has no edge in the network, and the noise column has one small fitted edge into a high-sodium hinge.",
+  "resisted": "Coverage is complete and every part has a reading, but two are weak: the direct-terms leaf is a straight-line sum of eight inputs that no named concept of up to three inputs reads fully (concept score 0.66, partial), and the BMI hinge has a reading but hardly changes the prediction. The very low predictions in the fast-heart, high-pressure corner rest on 32 training patients, and the noise column's edge is a fitted dependence with no clinical reading.",
+  "resisted_template": "Coverage is complete and every part has a reading, but two are weak: the direct-terms leaf is a straight-line sum of eight inputs that no named concept of up to three inputs reads fully (concept score {{q:q_d0f29db4a5.score|.2f}}, partial), and the BMI hinge has a reading but hardly changes the prediction. The very low predictions in the fast-heart, high-pressure corner rest on {{q:q_ae8c181be6.subgroup.n}} training patients, and the noise column's edge is a fitted dependence with no clinical reading.",
+  "recheck_summary": {
+    "mismatch": 0,
+    "needs_review": 0,
+    "needs_review_items": [],
+    "unchecked_freetext_sentences": 55,
+    "complete_ok": true
+  },
+  "recheck_notes": "Recheck v3: 0 mismatch, 0 needs_review; 62 queries and 49 templated texts checked for provenance. The 55 unchecked free-text sentences are qualitative readings (shape words, clinical terms) whose numbers are all placeholders.",
+  "tool_bugs": "(1) annotate refuses a leaf whose entry is another leaf's exit (P1/P3 and 'already covered'), so serial leaves were joined through function-preserving identity 'port' nodes (identity_2502, identity_1906, identity_228) on the receiving side. (2) get_formula for the composition bp_hr_interaction renders the gate's argument from sbp_chain's first exit as the constant 0.0 instead of that exit; noted in the amended evidence record. (3) get_formula returns no provenance id, so formulas are attached as analytical_formula payloads. (4) xn.py --recheck needs the --record file to exist before it runs (it exits 1 silently otherwise).",
+  "accuracy": {
+    "open_findings": 0,
+    "numbers": 259,
+    "provenance_backed": 259,
+    "allow_listed": 0,
+    "scope_mismatch": 0,
+    "formulas": {
+      "exact": 0,
+      "approx_with_tolerance": 7,
+      "other": 0
+    },
+    "audit": {
+      "references": 259,
+      "checked": 259
+    },
+    "self_probe": {
+      "parts": [
+        "low_sodium_smoker_gate",
+        "high_sodium_hinges",
+        "bmi_hinge",
+        "low_hr_hinge",
+        "direct_terms",
+        "sbp_chain",
+        "bp_hr_gate",
+        "sodium_U",
+        "bp_hr_interaction",
+        "risk_model"
+      ],
+      "refuted_and_fixed": []
+    },
+    "restatements": 0
+  },
+  "leaves": [
+    {
+      "name": "low_sodium_smoker_gate",
+      "units": [
+        "866",
+        "687",
+        "228",
+        "2101"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 0.989252,
+      "best_concept": "sodium",
+      "why": "A serial hinge on low serum sodium (hyponatraemia) that opens at a slightly higher sodium and wider in smokers; creatinine's input is negligible."
+    },
+    {
+      "name": "high_sodium_hinges",
+      "units": [
+        "338",
+        "1173"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 0.951479,
+      "best_concept": "sodium",
+      "why": "Two hinges that switch on above mid-range sodium and rise linearly (hypernatraemia arm), one with a small fitted noise input."
+    },
+    {
+      "name": "bmi_hinge",
+      "units": [
+        "7255"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 1.0,
+      "best_concept": "bmi",
+      "why": "A hinge on BMI that reads cleanly but has a tiny output weight and no effect on AUC."
+    },
+    {
+      "name": "low_hr_hinge",
+      "units": [
+        "2502"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 1.0,
+      "best_concept": "heart_rate",
+      "why": "A hinge on below-average heart rate that lowers the logit and damps the systolic-pressure chain."
+    },
+    {
+      "name": "sbp_chain",
+      "units": [
+        "1906",
+        "7613",
+        "9033"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 0.97583,
+      "best_concept": "sbp",
+      "why": "Three serial hinges on systolic pressure whose own output terms lower risk as pressure rises, more steeply above mid-range."
+    },
+    {
+      "name": "bp_hr_gate",
+      "units": [
+        "16161",
+        "5821",
+        "491"
+      ],
+      "meaning": "meaningful",
+      "probe_score": 0.908628,
+      "best_concept": "heart_rate / sbp",
+      "why": "A gate open when systolic pressure is high relative to heart rate (low shock index), shut by a fast heart rate or the low-sodium gate; the largest part by ablation."
+    },
+    {
+      "name": "direct_terms",
+      "units": [],
+      "meaning": "partial",
+      "probe_score": 0.664408,
+      "best_concept": "heart_rate + age",
+      "why": "A straight-line sum of eight direct edges; no concept of up to three inputs reads it fully."
+    }
+  ],
+  "overall_function": "The network adds three groups of effects on the logit. Serum sodium has a U-shaped effect built from a low-sodium serial hinge and two high-sodium hinges, lowest in the normal range, with a steeper low arm that smoking shifts to higher sodium and widens (a smoker x low-sodium interaction). Systolic pressure and heart rate interact with a sign change: a hinge chain on pressure lowers risk while a gate open for high pressure relative to heart rate raises it, so a faster heart raises risk at low pressure and lowers it at high pressure, and the response to pressure is U-shaped at a typical heart rate; low sodium also shuts that gate. Age, creatinine, diabetes, smoking and BMI raise risk in straight lines through direct edges (heart rate also has a direct positive edge); a BMI hinge adds almost nothing, sex is not connected, and the noise column has one small fitted edge into a high-sodium hinge.",
+  "clinical_terms": "The model raises predicted risk for both hyponatraemia and hypernatraemia, lowest for normal sodium, and smokers with mild hyponatraemia get extra risk sooner. It reads a fast heart rate with low systolic pressure (a high shock index, as in haemodynamic compromise) as high risk, and also a slow heart rate with high pressure, while a fast heart rate with high pressure is predicted low risk (a corner with few training patients). Older age, higher creatinine, diabetes, smoking and higher BMI each raise the predicted risk steadily; sex does not change it.",
+  "stuck": "Leaves cannot read another leaf's exit directly (annotate refuses it), so three identity port nodes were needed to join the serial parts; the composed formula for bp_hr_interaction renders one argument as a constant. The direct-terms leaf stays partial because a linear sum of eight inputs has no simpler named concept. No time pressure (finished in well under the box).",
+  "verified_by_orchestrator": {
+    "structural_coverage": 1.0,
+    "compositional_coverage": 1.0,
+    "hierarchy": {
+      "n_annotations": 10,
+      "roots": [
+        "risk_model"
+      ],
+      "single_root": true,
+      "root_contains_outputs": true,
+      "all_under_root": true,
+      "complete": true
+    },
+    "function_preservation_max_abs_err": 1.0547118733938987e-15,
+    "closed_form_max_abs_err": 0.019592008110826953,
+    "numeric_max_abs_err": 1.7763568394002505e-15,
+    "op_counts": {
+      "rename_node": 10,
+      "split_node": 6,
+      "consolidate_node": 2,
+      "add_identity_node": 4,
+      "annotate": 10
+    },
+    "full_coverage": true,
+    "agrees_with_agent": true,
+    "recheck_summary": {
+      "ran_at": "2026-11-15T04:51:28+00:00",
+      "recheck_version": 3,
+      "mismatch": 0,
+      "needs_review": 0,
+      "warn": 0,
+      "mismatches": [],
+      "needs_review_items": [],
+      "unchecked_freetext_sentences": 55,
+      "provenance": {
+        "templated_texts": 49,
+        "queries": 62
+      },
+      "complete_ok": true,
+      "rule": "an explanation cannot be marked complete with an unresolved mismatch; answer every needs_review item (fix it or say why it is not an error)"
+    },
+    "complete_ok": true
+  }
+}
