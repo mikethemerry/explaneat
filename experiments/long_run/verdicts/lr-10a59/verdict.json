@@ -1,0 +1,464 @@
+{
+ "item_id": "lr-10a59",
+ "genome_id": "d03ac194-9ffe-4831-8208-2e40839973b7",
+ "target_hash": null,
+ "target_hash_note": "recheck.json (v3) carries no target_hash field for a record target",
+ "verifier": "independent verifier agent (explanation-verifier skill)",
+ "started_at": "2026-11-15T19:16:03+13:00",
+ "finished_at": "2026-11-15T19:23:21+13:00",
+ "minutes": 7,
+ "overall": {
+  "grade": "refuted",
+  "summary": "Every stated number, closed form, coverage and preservation figure reproduces, but the daytime leaf calls evening minutes a minor partner of the heavy-use unit when at heavy day use they move the predicted risk from 5% to 93%; the service-call reading misses the 0-2 call plateau and 'hardly for heavy users' holds only above about 50 dollars."
+ },
+ "findings": [
+  {
+   "id": "V1",
+   "grade": "refuted",
+   "level": "L3",
+   "part": "ann_81",
+   "claims": [],
+   "location": "operations.daytime_use.hypothesis",
+   "statement": "a heavy-use unit (2470) ... that grows with the day charge (and a little with evening minutes)",
+   "check": "probe with evening minutes and charge set to consistent pairs at a day charge of 48 dollars; training subgroups by day charge and evening minutes (fewer than 4 service calls)",
+   "evidence": "Evening use is a major partner of the heavy-use unit, not a small one. Typical customer at a day charge of 48 dollars: 5.1% at 100 evening minutes, 45.7% at 200, 93.0% at 300. In the data (fewer than 4 calls), day charge 40-45 dollars: mean predicted risk 5.9% (n=56, outcome 5.4%) with under 150 evening minutes against 53.8% (n=50, outcome 62.0%) with 250 or more; day charge 45-50: 14.1% (n=30) against 81.1% (n=30). Per sd the closed form gives evening minutes 0.514 inside the chain against about 1.06 for the day charge: half as strong, not 'a little'.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-10a59.json --set 'total day charge=48' --sweep 'total eve minutes=100,200,300' --sweep 'total eve charge=8.5,17,25.5' --no-parts",
+    "scratch a4.py: training subgroups by day charge x evening minutes (calls < 4)"
+   ]
+  },
+  {
+   "id": "V2",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_81",
+   "claims": [],
+   "location": "operations.daytime_use.hypothesis",
+   "statement": "a heavy-use unit (2470) ... pushed down by customer-service calls",
+   "check": "node values of 2470 on the training rows and in probes",
+   "evidence": "Unit 2470 is on for 3307 of 4000 customers, including every customer with 0, 1 or 2 service calls whatever the day charge (392 of 472 with a day charge of 20 dollars or less); at 10 dollars and 1 call it is 0.53. Its on/off state is set by service calls (concept probe: calls AUC 0.98, r2 0.33). It is a 'few service calls' gate whose call threshold rises with day and evening use, rather than a heavy-use unit; as a result the first two service calls add nothing for any customer.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-10a59.json --set 'total day charge=10' --sweep 'number customer service calls=0,1,2,3,4' --nodes 873,2470,4319,5116,1342 --no-parts",
+    "uv run python -m explaneat verify concept experiments/long_run/explanations/lr-10a59.json --part daytime_use",
+    "scratch a1.py: crosstab of 2470 on by calls and day charge"
+   ]
+  },
+  {
+   "id": "V3",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_82",
+   "claims": [],
+   "location": "operations.service_calls.hypothesis",
+   "statement": "the predicted risk rises steeply with calls, 1.4% at 1 call, 16.1% at 4, 73.1% at 6 and 98.4% at 8 calls",
+   "check": "probe grid day charge x service calls 0-9",
+   "evidence": "The numbers reproduce, but the shape is a threshold, not a steady steep rise: at 30 dollars the risk is 1.4%, 1.4%, 1.4% at 0, 1, 2 calls, then 4.8%, 16.1%, 41.9%, 73.1%. The same holds at every day charge (10 dollars: 4.3%, 4.2%, 4.1%, then 13.6% at 3 calls). The onset moves with the day charge (3 calls up to 35 dollars, 4 at 40, 5 at 45, 7 at 50, 8 at 55). The hypothesis does not say that 0 to 2 calls make no difference.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-10a59.json --sweep 'total day charge=10,20,30,35,40,45,50,55,60' --sweep 'number customer service calls=0,1,2,3,4,5,6,7,8,9' --no-parts"
+   ]
+  },
+  {
+   "id": "V4",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_95",
+   "claims": [],
+   "location": "record.summary",
+   "statement": "Many service calls raise the risk steeply for light and average daytime users ... but hardly for heavy ones (90.9% and 90.1% at 55 dollars)",
+   "check": "probe grid day charge x calls; training counts by day charge",
+   "evidence": "Holds only for the very heaviest users. Only 16 training customers have a day charge of 55 dollars or more (above the 99th percentile, 51.78). At 45 dollars, the summary's own threshold for heavy users (253 customers), calls raise the risk from 22.7% at 4 calls to 32.7% at 5 and 64.7% at 6; at 50 dollars it is flat to 6 calls and 88.1% at 7.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-10a59.json --sweep 'total day charge=10,20,30,35,40,45,50,55,60' --sweep 'number customer service calls=0,1,2,3,4,5,6,7,8,9' --no-parts",
+    "scratch a2.py"
+   ]
+  },
+  {
+   "id": "V5",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_93",
+   "claims": [],
+   "location": "operations.usage_and_plans.hypothesis",
+   "statement": "The main interaction is between two children: the heavy-use unit of daytime_use loses about what the service-call edge adds, so service calls raise the risk of light and average daytime users much more than that of heavy ones",
+   "check": "node values and probe grid",
+   "evidence": "The cancellation is real (2.59 x 0.677 = 1.75 per sd against the edge's 1.73) but it applies to every customer while unit 2470 is on, which is all customers with up to 2 calls; heavy users differ only in keeping it on to more calls (V2, V3). The self-probe numbers reproduce (1.4%, 41.9%, 90.9%, 90.3%; with an international plan 15.6%, 90.4%, 99.2%, 99.2%).",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-10a59.json --sweep 'international plan=0,1' --sweep 'total day charge=30,55' --set 'number customer service calls=5' --no-parts"
+   ]
+  },
+  {
+   "id": "V6",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_95",
+   "claims": [],
+   "location": "record.overall_function",
+   "statement": "Its main effect is a U-shape in daytime charge ... calls matter for light and average users but hardly for heavy users until the very highest call counts",
+   "check": "as V1, V3, V4",
+   "evidence": "The high end of the 'U' depends as much on evening use as on the day charge (V1); evening minutes are not named as a driver anywhere in the record, and the service-call effect is described without its 0-2 call plateau. Same applies to record.summary's opening ('mainly from daytime use, customer-service calls and the two plans') and record.clinical_terms ('heavy daytime users'): the profile is heavy day plus evening use.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-10a59.json --set 'total day charge=48' --sweep 'total eve minutes=100,200,300' --sweep 'total eve charge=8.5,17,25.5' --no-parts"
+   ]
+  },
+  {
+   "id": "V7",
+   "grade": "weakened",
+   "level": "L3",
+   "part": "ann_81",
+   "claims": [],
+   "location": "operations.daytime_use.hypothesis",
+   "statement": "Self-probe ... 98.3% at 60 dollars; with 5 service calls ... 98.1% at 60 dollars",
+   "check": "probe range report",
+   "evidence": "60 dollars is outside the training range (maximum 59.76); the probe reports it as outside the data. The values reproduce (98.3%, 98.1%) but are extrapolation; the U-shape itself (4.2%, 2.4%, 1.4%, 63.7%) holds inside the data.",
+   "commands": [
+    "uv run python -m explaneat verify probe experiments/long_run/explanations/lr-10a59.json --sweep 'total day charge=10,20,30,35,40,45,50,55,60' --sweep 'number customer service calls=0,1,2,3,4,5,6,7,8,9' --no-parts"
+   ]
+  },
+  {
+   "id": "V8",
+   "grade": "flag",
+   "level": "L4",
+   "part": "ann_90",
+   "claims": [],
+   "location": "operations.direct_location_terms.hypothesis",
+   "statement": "Hawaii -2.66, Vermont -1.92, California 1.46, Washington 1.35 on the score",
+   "check": "subgroup counts",
+   "evidence": "Logit offsets of -2.7 for Hawaii rest on 3 churners in 73 customers (4.1%) and +1.5 for California on 11 in 41: state-level churn effects this large are unlikely to be real and probably overfit. The record already says the offsets are fitted to small groups; not a data contradiction.",
+   "commands": [
+    "scratch a3.py: state subgroups"
+   ]
+  },
+  {
+   "id": "V9",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.structural_coverage",
+   "statement": "structural and compositional coverage 1.0, hierarchy complete, single root churn_risk",
+   "check": "verify recheck",
+   "evidence": "recomputed 1.0 / 1.0, no uncovered nodes, 33 Null input nodes, 13 annotations all under the root",
+   "commands": []
+  },
+  {
+   "id": "V10",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.function_preservation_max_abs_err",
+   "statement": "4.44e-16; closed-form max error 0.0305",
+   "check": "verify recheck",
+   "evidence": "recomputed 4.44e-16 and 0.03046",
+   "commands": []
+  },
+  {
+   "id": "V11",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.op_counts",
+   "statement": "6 splits, 6 identity nodes, 10 leaves, 3 compositions",
+   "check": "DB operations replayed read-only",
+   "evidence": "96 operations: 71 rename, 6 add_identity_node, 6 split_node, 13 annotate",
+   "commands": []
+  },
+  {
+   "id": "V12",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "layer.parts.closed_form",
+   "statement": "the ten leaves' closed forms",
+   "check": "stated LaTeX vs recheck's recomputed closed form",
+   "evidence": "identical text for all ten leaves; per-leaf errors 0.0019 to 0.0305 match the stated 'off by up to' values",
+   "commands": []
+  },
+  {
+   "id": "V13",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.summary",
+   "statement": "253 customers with day charge >= 45, mean predicted risk 60.5%; 1.4% at 1 call and 73.1% at 6 calls (30 dollars); edges 0.75 and -0.52; AUC 0.899 -> 0.894",
+   "check": "subgroup and probe",
+   "evidence": "n=253, outcome 60.1%, predicted 60.5%; probe 1.4%/73.1%; closed form 0.752/-0.522; location off 0.8942, direct offsets off 0.8937",
+   "commands": []
+  },
+  {
+   "id": "V14",
+   "grade": "upheld",
+   "level": "L1",
+   "part": null,
+   "claims": [],
+   "location": "record.resisted",
+   "statement": "last unit on for 0 rows; concept scores 0.62 and 0.68",
+   "check": "node 538 activity; verify concept",
+   "evidence": "0 rows; 0.6205 and 0.6831",
+   "commands": []
+  },
+  {
+   "id": "V15",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_95",
+   "claims": [],
+   "location": "record.overall_function",
+   "statement": "ignores most state indicators, two area codes, voice-mail message counts, international calls, day and international minutes",
+   "check": "Null input nodes from recheck",
+   "evidence": "27 of 51 state indicators, area codes 408 and 415, number vmail messages, day minutes, intl minutes and intl calls have no path to the output",
+   "commands": []
+  },
+  {
+   "id": "V16",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_81",
+   "claims": [],
+   "location": "operations.daytime_use.hypothesis",
+   "statement": "light-use unit 873 adds risk for low day charge and fades out; on for 3043; U-shape 4.2%/2.4%/1.4%/63.7%; 69.1% at 10 dollars with 5 calls; 253 customers, 60.1% vs 11.0%; AUC 0.899 -> 0.731; concept 0.98",
+   "check": "probe, node counts, subgroup, recheck AUC",
+   "evidence": "873 = 1.49 at 10 dollars, 0.39 at 30, 0 from 40; on for 3043; all numbers reproduce",
+   "commands": []
+  },
+  {
+   "id": "V17",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_82",
+   "claims": [],
+   "location": "operations.service_calls.hypothesis",
+   "statement": "edge 1.73 per sd; hinge 1342 on for 14 customers (64.3%); 90.9%-90.1% at 55 dollars, 97.7% at 8 calls once the heavy unit is off; 318 with 4+ calls 50.0% vs 11.1%; 156 below 30 dollars 75.6% (predicted 48.3%); AUC 0.722",
+   "check": "node values, subgroup, probe",
+   "evidence": "1342 on for the 14 customers with 7-9 calls, outcome 64.3%; 2470 off at 55 dollars and 8 calls; counts and rates reproduce exactly",
+   "commands": []
+  },
+  {
+   "id": "V18",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_83",
+   "claims": [],
+   "location": "operations.night_use.hypothesis",
+   "statement": "0.73% at 100 min, 1.35% at 200, 1.60% at 300; steeper at the low end where the chain's first unit is off (257 customers, 10.1%); AUC 0.898; concept 0.62",
+   "check": "consistent minute/charge probe, node 4813 counts",
+   "evidence": "0.7%, 1.3%, 1.6%; 4813 off below about 125 minutes (0.3% at 50 min -> 1.2% at 125, then 1.2% -> 1.7% to 350); off for 257, outcome 10.1%",
+   "commands": []
+  },
+  {
+   "id": "V19",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_84",
+   "claims": [],
+   "location": "operations.evening_calls_hinge.hypothesis",
+   "statement": "on for 857 customers with many evening calls, lowers risk a little: 1.35%/1.27%/1.06%; 14.6% vs 14.0%; AUC unchanged",
+   "check": "node counts, probe",
+   "evidence": "on from 116 calls (median 100), n=857, 14.6% vs 14.0%; 1.3% -> 1.1% at 150 calls",
+   "commands": []
+  },
+  {
+   "id": "V20",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_85",
+   "claims": [],
+   "location": "operations.intl_charge_hinge.hypothesis",
+   "statement": "on for 2258 with above-typical international charges; 1.3%/1.5%/2.2%/3.4% at 2-5 dollars; 15.6% vs 12.2%; AUC 0.897",
+   "check": "node counts, probe",
+   "evidence": "on from 2.70 dollars (median 2.78), n=2258, 15.6% vs 12.2%; probe reproduces",
+   "commands": []
+  },
+  {
+   "id": "V21",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_86",
+   "claims": [],
+   "location": "operations.direct_usage_terms.hypothesis",
+   "statement": "edges 0.75, -0.52, -0.32, 0.17, 0.13, 0.14; 1.3%/15.1%/0.4%/5.2% by plan; 380 at 42.4% vs 11.2%; 1061 at 7.4% vs 16.6%; AUC 0.835; concept 0.81",
+   "check": "closed form, probe, subgroup",
+   "evidence": "all reproduce; the evening term is small only among the direct edges (see V1 for evening use overall)",
+   "commands": []
+  },
+  {
+   "id": "V22",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_87",
+   "claims": [],
+   "location": "operations.state_single_units.hypothesis",
+   "statement": "Georgia unit never on; Connecticut unit on for all other states and off for CT; Maryland and Wyoming units fire only for their state; Wyoming -0.71, Maryland 0.06, CT 0.00, WV -0.05; 80/82/89 customers",
+   "check": "node activity by state, probe",
+   "evidence": "318 on 0 rows; 3084 on for 3920 (all but the 80 CT customers) at 0.088; 29294 only the 82 MD; 26948 only the 89 WY; contributions -0.711, +0.056, 0.000, -0.048",
+   "commands": []
+  },
+  {
+   "id": "V23",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_88",
+   "claims": [],
+   "location": "operations.state7_chain.hypothesis",
+   "statement": "fires for DC and nobody else, lowers their risk: -1.84 on the score, 0.55% vs 1.35%; Nebraska 0.00; 73 DC customers 8.2% (predicted 4.02%)",
+   "check": "node activity, probe, subgroup",
+   "evidence": "28963 and 4927 on for exactly the 73 DC customers; contribution -1.844 (the DC direct edge adds +0.49, so the net location offset is -1.31); 0.6% vs 1.3%; Nebraska 0.000",
+   "commands": []
+  },
+  {
+   "id": "V24",
+   "grade": "upheld",
+   "level": "L1",
+   "part": "ann_89",
+   "claims": [],
+   "location": "operations.state42_night_calls_chain.hypothesis",
+   "statement": "last unit 538 on for 0 rows and cannot switch on; switching off changes 0 predictions",
+   "check": "closed form, node activity",
+   "evidence": "538 = relu(-0.139 relu(.) - 0.31) <= 0 for every input; on for 0 rows",
+   "commands": []
+  },
+  {
+   "id": "V25",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_90",
+   "claims": [],
+   "location": "operations.direct_location_terms.hypothesis",
+   "statement": "largest offsets Hawaii -0.36 and Vermont -0.27 per sd; Hawaii -2.66, Vermont -1.92, California 1.46, Washington 1.35, WV -0.45; 73 HI 4.1%, 80 VT 6.2%, 41 CA 26.8%, 72 WA 29.2%; AUC 0.894; concept 0.68",
+   "check": "closed form, probe, subgroup, verify concept",
+   "evidence": "all reproduce (-2.663, -1.918, +1.461, +1.348, -0.449)",
+   "commands": []
+  },
+  {
+   "id": "V26",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_94",
+   "claims": [],
+   "location": "operations.location.hypothesis",
+   "statement": "one offset per state; Hawaii -2.62, DC -1.31, Vermont -1.87, California 1.51, Washington 1.39; AUC 0.894",
+   "check": "probe",
+   "evidence": "-2.618, -1.306, -1.873, +1.506, +1.394; the area-code term (510) is the only non-state input apart from the dead night-calls chain",
+   "commands": []
+  },
+  {
+   "id": "V27",
+   "grade": "upheld",
+   "level": "L3",
+   "part": "ann_95",
+   "claims": [],
+   "location": "operations.churn_risk.hypothesis",
+   "statement": "sigmoid of the two scores plus a bias; usage off -> AUC 0.568, location off -> 0.894; international plan 1.4%->15.6%, 41.9%->90.4%, 90.9%->99.2%, 90.3%->99.2%; largest effect where risk is middling",
+   "check": "recheck AUC, probe",
+   "evidence": "AUCs 0.5676 and 0.8942; probe reproduces all eight risks",
+   "commands": []
+  }
+ ],
+ "parts": {
+  "ann_95": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_93": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_81": {
+   "grade": "refuted",
+   "level": "L3"
+  },
+  "ann_82": {
+   "grade": "weakened",
+   "level": "L3"
+  },
+  "ann_83": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_84": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_85": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_86": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_94": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_87": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_88": {
+   "grade": "upheld",
+   "level": "L3"
+  },
+  "ann_89": {
+   "grade": "upheld",
+   "level": "L1"
+  },
+  "ann_90": {
+   "grade": "upheld",
+   "level": "L4",
+   "flag": "V8"
+  }
+ },
+ "leaf_meaning": {
+  "daytime_use": {
+   "grade": "partial",
+   "why": "The light-use unit is a clear 'low day charge adds risk' term, but the second exit is mainly a gate that switches off with service calls, and its heavy-use side depends on evening minutes about half as much as on the day charge, which the reading calls 'a little'."
+  },
+  "service_calls": {
+   "grade": "meaningful",
+   "why": "More service calls raise the predicted churn risk, with an extra hinge for 7 or more calls; the reading misses only the 0-2 call plateau created by the daytime gate."
+  },
+  "night_use": {
+   "grade": "partial",
+   "why": "A small rise in risk with night use, steeper below about 125 minutes, from two nearly cancelling copies of one column."
+  },
+  "evening_calls_hinge": {
+   "grade": "meaningful",
+   "why": "Customers with more than about 115 evening calls get a slightly lower predicted risk; confirmed by node counts and probe."
+  },
+  "intl_charge_hinge": {
+   "grade": "meaningful",
+   "why": "International charges above about 2.70 dollars raise the predicted risk steadily; confirmed by probe."
+  },
+  "direct_usage_terms": {
+   "grade": "meaningful",
+   "why": "An international plan raises and a voice-mail plan lowers the predicted risk, plus small usage terms; confirmed by probe and subgroups."
+  },
+  "state_single_units": {
+   "grade": "meaningful",
+   "why": "Per-state constant offsets for Connecticut, Maryland and Wyoming (Georgia's unit dead), each confirmed to fire exactly for its state."
+  },
+  "state7_chain": {
+   "grade": "meaningful",
+   "why": "A Washington DC offset that fires for exactly the 73 DC customers and lowers their predicted risk."
+  },
+  "state42_night_calls_chain": {
+   "grade": "closed-form-only",
+   "why": "Its last unit can never switch on, so it has no effect; there is nothing to read."
+  },
+  "direct_location_terms": {
+   "grade": "partial",
+   "why": "Per-state constants on small groups; Hawaii and Vermont stand out, the rest are small unnamed offsets."
+  }
+ },
+ "statements_checked": 168,
+ "levels_completed": [
+  "L1",
+  "L2",
+  "L3",
+  "L4"
+ ]
+}
