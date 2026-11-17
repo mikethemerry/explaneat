@@ -18,6 +18,9 @@ parts that varied:
   (monk2-s2, adult-s0, heart-s1) were written from an earlier version without the "Structure"
   rule. They were redrafted from this version before the verification pack was built
   (`V4_RUN.md`, "What differs", item 5).
+- **Model and harness:** every explaining and drafting agent ran on `claude-opus-5-5` in Claude
+  Code 2.1.280, read from the agents' transcripts (60 explaining agents, 63 drafting agents
+  including the three redrafts).
 - **Agents and limits:** one fresh agent per genome. At most four agents ran at once. Each
   explaining agent had a 3-hour time box.
 
