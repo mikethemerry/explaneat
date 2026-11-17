@@ -1,0 +1,21 @@
+METHOD = {
+    "items": [
+        ["Freeze point", "Git tag `methodology-v4-freeze-2026-11-11` at commit `0fcd63a` (11 Nov 2026, the merge of `fix/draft-layer`). Every v4 explanation (the ten-seed re-run and later studies such as the churn case, Cox case, Connect-4, U-shape and saddle, ladder and long runs) uses this method unchanged."],
+        ["Protocol v4", "`experiments/10seed/EXPLAIN_PROTOCOL.md` (v4, 11 Nov, written after the errata): one agent explains exactly one genome, unattended; function-preserving refactoring only (`split_node`, `consolidate_node`, `add_identity_node`, renames; never add/remove nodes or edges); training split only for evidence, never test; full sample by default; the scope of every effect stated (direct, through this part, or whole-model mean over a group)."],
+        ["Authoring skill v4", "The explaining agent's instructions: query choice, scope words, exact vs approximate formulas (\"=\" only when the formula reproduces the node at the written precision; otherwise \"≈\" with a tolerance), a stored self-probe for every leaf, the root and the largest parts, and an accuracy block. Adopted on the authoring-skill evaluation (Experiment 3.6) together with drafts v2."],
+        ["Strict provenance", "Every number in a hypothesis or evidence is a reference `{{q:<id>.<path>|<fmt>}}` to a stored, provenance-stamped query (evidence log: tool, arguments, population, quantity, scope, split, n, rows hash). In strict mode (`explanation_integrity`) a bare typed number, or an exact formula that does not reproduce, is refused at write time. Number words (\"zero\", \"all\", \"only\", \"never\") also need a query behind them."],
+        ["Recheck and record", "`recheck` v3 runs at the end (`xn.py --recheck`); its summary goes into the record (`recheck_summary`); `verify_record.py` writes the record. Mismatch only when confident, else needs_review."],
+        ["Plain-language layer", "Layer v5g with drafts v2: numbers are claim slots filled by code; linked inputs named and moved together; off-data claims left out; \"only\", \"all\", \"none\" used only with a support check that found 0 exceptions."],
+        ["Time box", "3 hours wall clock per network from the agent's first tool call; failure to reach full coverage in the box is recorded as \"not explained within budget\"."],
+        ["Completeness", "Full coverage = tool structural coverage 1.0, tool compositional coverage 1.0 and `hierarchy.complete` (one root containing the output, every annotation beneath it), with function preserved (max |delta output| < 1e-9 on train). Null explanations (8 Nov): exact-null parts (no path to an output, zero-weight edges) count as covered automatically."],
+        ["Blind verifier", "An independent agent challenges each claim at four levels (L1 mechanical re-check, L2 evidential, L3 adversarial probing, L4 domain sense) and grades it upheld, weakened or refuted; the record's verdict is the worst grade."],
+        ["signoff-v1", "Mike's verification protocol (PREREG amendment of 11 Nov; `docs/design/human-cross-verification.md` §7; `explaneat review signoff`): recorded vs live checks agree; every gate and tier-A item has a current verdict with no unfixed \"wrong\"; a code-drawn sample of 10 further sentences has verdicts (escalating on a wrong); no unanswered recheck mismatch; every \"unsure\" disclosed. The record carries a one-sided 95% Clopper-Pearson bound on the share of wrong sentences. A protocol name, not a git tag. Used 0 times so far."],
+        ["After the freeze", "Fixes on `fix/post-v4-run` (the `amend_evidence` provenance bug, quoted slot keys, `allow_numbers`) change no v4 number. The 12 Nov clarifications (deep leaves are valid; wide leaves are the problem; meaning measured by the probe) apply to future runs only."],
+    ],
+    "sources": [
+        "git tag methodology-v4-freeze-2026-11-11 (`0fcd63a`)",
+        "experiments/10seed/EXPLAIN_PROTOCOL.md; experiments/10seed/V4_RUN.md; the explanation-authoring skill (authoring v4)",
+        "docs/design/explanation-authoring-skill-v4.md; docs/design/human-cross-verification.md; experiments/10seed/PREREG.md (amendment 2026-11-11)",
+        "docs/annotation_coverage_model.md (completeness, Null explanations, three levels)",
+    ],
+}

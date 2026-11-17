@@ -1,0 +1,53 @@
+CARD = {
+    "id": "S.3",
+    "anchor": "s-3",
+    "group": "side",
+    "name": "ConvNEAT long MNIST 10-class run and hyperparameter check",
+    "status": "interim",
+    "status_note": "side experiment, not on main; candidate thesis extension. Long run paused at generation 14 (checkpoints kept) for a move to a GPU rig; a hyperparameter sweep was running on 17 Nov with no write-up",
+    "prereg": "exploratory",
+    "oneline_question": "With a much larger budget (population 100, full 50k MNIST, train-fitness plateau stop), how far does ConvNEAT get on 10-class MNIST?",
+    "headline": "Paused after 14 generations: monitored validation accuracy 0.6743 (s0) and 0.7048 (s1); no test numbers yet",
+    "question": "The 40-generation 10-class MNIST runs reached 0.861 and were still improving. Does a long run with a plateau stop close the gap to standard references, and which population, epoch and mutation-rate settings make it affordable?",
+    "design": [
+        ["Data and splits", "MNIST 10-class: 50,000 train / 10,000 validation / 10,000 test (`config.json` sizes); training uses a rotating 5,000-row chunk per generation (`train_chunk` 5000) on the Mac."],
+        ["Models and config", "`run_long.py`: population 100, 5 epochs per generation, batch 256, λ 0.001, fitness on train, head GAP + linear, max level 2, plateau stop patience 30 / min Δ 0.001, cap 400 generations, 20 fine-tune epochs at the end; seeds 0 and 1; MPS, torch 2.2.2. Rig plan (`rig/README.md`): population 150, full 50k pool, batch 256, workers 4 to 8 on an RTX 5080."],
+        ["Selection rule", "Monitored genome = best by training fitness; selected genome's validation accuracy logged each generation; test reserved for the end (`results.json` at the stop)."],
+        ["Hyperparameter check", "Sweep runs `sweep_p50_m4_e5` and `sweep_p50_m4_e20`: population 50, mutation rates scaled 4x (`mut_scale` 4), 5 vs 20 epochs, 10,000 training rows, 22-minute wall budget, no final evaluation. Running on 17 Nov; outputs untracked."],
+        ["Registration", "Exploratory; no pre-registration."],
+        ["Departures from plan", "`rig/README.md` points to a protocol in RESULTS.md \"section 11b\" that does not exist in the committed RESULTS.md. The Mac run was paused (STOP file) to continue on the rig."],
+    ],
+    "results": [
+        {
+            "caption": "Long run, last logged generation before the pause",
+            "source": "experiments/conv_neat/results/mnist10long_gap_s{0,1}/log.jsonl (committed `f9b3a3c`)",
+            "headers": ["Run", "Generation", "Monitored val acc", "Selected val acc", "Population mean val acc", "Mean complexity", "Seconds per generation"],
+            "rows": [
+                ["mnist10long_gap_s0", "13", "0.6743", "0.6743", "0.57239", "27.38", "127.57"],
+                ["mnist10long_gap_s1", "13", "0.7021", "0.7048", "0.601023", "24.67", "125.07"],
+            ],
+            "note": "Interim: the runs are paused, not finished; no test accuracy exists yet.",
+        },
+    ],
+    "results_text": [
+        "Mac benchmark: a genome's training step on MPS is overhead-bound (about 1.3 ms per PropNEAT layer), compute-bound from batch 512 at about 44 us per image per epoch for a complexity-50 genome; population 150 x 50k images x 5 epochs would take about 50 min per generation on the Mac (source: experiments/conv_neat/rig/README.md; bench/mnist_scale_*.json).",
+        "Rig speed-up of 8 to 15 times in aggregate is an estimate, not measured (source: experiments/conv_neat/rig/README.md).",
+    ],
+    "shows": "Nothing final yet. After 14 generations the long runs were still climbing steadily (validation accuracy about 0.67 to 0.70), well below the earlier 40-generation runs' 0.861 test, which used a different budget. The practical finding so far is about cost: on a laptop GPU each generation is dominated by per-layer overhead, which is why the run was moved to a dedicated GPU machine.",
+    "caveats": [
+        "Interim: paused at generation 14 of up to 400; no stop reason, test accuracy or selected genome yet.",
+        "The hyperparameter sweep has no committed outputs or write-up; its logs are untracked and it was still running when this page was built.",
+        "`figures/mnist_long_curves.png` is untracked and was drawn after only 2 generations, so it is stale and not shown.",
+        "Comparison lines in that figure (LR 0.910, GBM 0.963) are not stated in any written results file.",
+    ],
+    "figures": [],
+    "sources": [
+        "Branch `conv-neat-prototype` (local), not on main",
+        "experiments/conv_neat/run_long.py, summarise_long.py, bench_mnist_scale.py, bench/mnist_scale_*.json, rig/README.md, rig/run_rig.sh",
+        "experiments/conv_neat/results/mnist10long_gap_s0, mnist10long_gap_s1 (config.json, log.jsonl, checkpoint.pkl); logs/mnist10long_gap_s*.log",
+        "Untracked: results/sweep_p50_m4_e5, results/sweep_p50_m4_e20, logs/sweep_*.log",
+        "Commits: `8b6e695` long-run runner, benchmark, checkpoints, parallel workers; `a2b5690` RTX 5080 rig kit, run started; `f9b3a3c` paused at generation 14, mutation-rate scaling, wall budget for the sweep",
+        "DB: none",
+    ],
+    "thesis_note": "Side experiment, not on main; candidate thesis extension. Interim; nothing here should be cited until the run finishes and is written up. If it completes, it would be the scale point for ConvNEAT (a real 10-class image task), next to the main-branch MNIST linear check (3.4).",
+}
