@@ -32,6 +32,42 @@ cli.add_command(_review, name='review')
 
 
 @cli.command()
+@click.argument("genome_id")
+@click.argument("input_name")
+@click.option("--annotation", default=None,
+              help="Vary the input only on its copies entering this annotation (name or id); "
+                   "the curves are still of the whole model's output.")
+@click.option("--out", "out_dir", default=None, type=click.Path(file_okay=False),
+              help="Output directory (default: feature_dossier_<genome>_<input>).")
+@click.option("--label", default=None, help="A label for the report title (e.g. heart100-s8).")
+@click.option("--notes", default=None, type=click.Path(exists=True, dir_okay=False),
+              help="Markdown inserted at the top of report.md (a hand-written reading).")
+@click.option("--grid-points", default=401, show_default=True, type=int)
+@click.option("--max-families", default=7, show_default=True, type=int)
+@click.option("--min-family", default=5, show_default=True, type=int)
+def dossier(genome_id, input_name, annotation, out_dir, label, notes, grid_points, max_families,
+            min_family):
+    """Feature dossier for one numeric input: ICE curves, unit bends, shape families (read-only)."""
+    from .analysis.feature_dossier import DossierConfig, build_dossier
+    from .analysis.feature_dossier_report import write_dossier
+    from .analysis.plain_language import load_model
+
+    m, meta = load_model(genome_id)   # read-only transaction on Postgres
+    if label:
+        meta["label"] = label
+    cfg = DossierConfig(grid_points=grid_points, max_families=max_families, min_family=min_family)
+    d = build_dossier(m, input_name, annotation=annotation, cfg=cfg, meta=meta)
+    out_dir = out_dir or f"feature_dossier_{genome_id[:8]}_{d['input']['base']}"
+    text = open(notes).read() if notes else None
+    files = write_dossier(d, out_dir, notes=text)
+    for k, v in files.items():
+        if v:
+            click.echo(f"{k}: {v}")
+    for f in d["families"]:
+        click.echo(f"  {f['family']}  n={f['n']:4d}  {f['shape_text']}")
+
+
+@cli.command()
 @click.option("--host", default="127.0.0.1", show_default=True)
 @click.option("--port", default=8000, show_default=True, type=int)
 @click.option("--reload", is_flag=True, help="Auto-reload on code changes (development).")

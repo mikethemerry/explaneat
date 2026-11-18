@@ -1,0 +1,5002 @@
+{
+ "schema_version": "1.0.0",
+ "kind": "feature_dossier",
+ "meta": {
+  "genome_id": "b4c5f225-ec5f-4e11-996d-27d32b7d1290",
+  "explanation_id": "27df9ddc-3b43-4777-91cf-a282e6de32f5",
+  "dataset": {
+   "id": "eea247c2-bdb7-41af-8ec1-9e26dcb5050d",
+   "name": "Heart Disease (binary, prepared)",
+   "class_names": [
+    "0",
+    "1"
+   ]
+  },
+  "split": {
+   "id": "165cebbd-6609-46ca-867e-c09e17b2d6ec",
+   "scaler_type": "StandardScaler"
+  },
+  "experiment": {
+   "id": "24fde191-6233-4b5a-ad4c-7bc5528e443e",
+   "name": "10seed-heart100-s8"
+  },
+  "label": "heart100-s8"
+ },
+ "input": {
+  "base": "trestbps",
+  "label": "resting blood pressure",
+  "unit": "mm Hg",
+  "column": "trestbps",
+  "copies_varied": [
+   "-8_a",
+   "-8_b",
+   "-8_c"
+  ],
+  "copies_held": [],
+  "scope_annotation": null,
+  "observed_range_train": [
+   94.0,
+   200.0
+  ],
+  "grid_points": 401,
+  "train_quantiles": {
+   "p5": 106.1,
+   "p25": 120.0,
+   "median": 130.0,
+   "p75": 140.0,
+   "p95": 163.8
+  },
+  "decoding": "raw = z * scale + mean (split StandardScaler)",
+  "scale": 18.171332438411195,
+  "mean": 132.28925619834712
+ },
+ "config": {
+  "grid_points": 401,
+  "bisect_iters": 48,
+  "min_bend": 0.05,
+  "max_families": 7,
+  "min_family": 5,
+  "tree_depth": 3,
+  "tree_min_leaf": 5,
+  "support_window": 0.05,
+  "thin_support": 5,
+  "n_bands": 5,
+  "flat_logodds": 0.5,
+  "min_segment": 0.03,
+  "seed": 0
+ },
+ "data": {
+  "split": "train",
+  "n_train": 242,
+  "n_test": 61,
+  "outcome_rate_train": 0.442,
+  "bands": [
+   {
+    "from": 94.0,
+    "to": 120.0,
+    "label": "≤ 120"
+   },
+   {
+    "from": 120.0,
+    "to": 128.0,
+    "label": "120–128"
+   },
+   {
+    "from": 128.0,
+    "to": 136.0,
+    "label": "128–136"
+   },
+   {
+    "from": 136.0,
+    "to": 145.0,
+    "label": "136–145"
+   },
+   {
+    "from": 145.0,
+    "to": 200.0,
+    "label": "> 145"
+   }
+  ]
+ },
+ "checks": {
+  "kinks_unattributed": 0,
+  "n_crossings": 766,
+  "threshold_formula_max_abs_err": 1.14e-13,
+  "structure_network_median_curve_max_abs_err": 9.99e-16,
+  "note": "every kink of every training curve (second difference above tolerance on the grid) lies within one grid step of a located unit crossing; threshold formulas are checked against the bisection crossings"
+ },
+ "units": [
+  {
+   "unit": "2445",
+   "parts": [
+    {
+     "id": "ann_39",
+     "name": "fitness_score",
+     "size": 3,
+     "kind": "leaf",
+     "hypothesis_first_sentence": "Node 2445 ≈ relu(−2.13·age + 1.3·exang:0 + 1.51·trestbps − 1.12·relu(0.675 − 0.573·thalach) − 2.14·relu(1.01·age + 0.189) + 0.827), in z-units, not raw units (off by up to 0.016 on the training rows)."
+    },
+    {
+     "id": "ann_40",
+     "name": "fitness_pathway",
+     "size": 8,
+     "kind": "composition",
+     "hypothesis_first_sentence": "Hypothesis: a serial readout of the fitness score S (child fitness_score) that lowers the predicted risk for young, exercise-tolerant patients and, separately, for patients with a low resting blood pressure when S is small."
+    },
+    {
+     "id": "ann_41",
+     "name": "heart_disease_model",
+     "size": 12,
+     "kind": "composition",
+     "hypothesis_first_sentence": "Hypothesis: the output node adds its parts in the logit, with no interaction term, and passes the sum through a sigmoid: the score is the direct linear terms, plus the ischaemia gate times 2.09, plus the thal code 4 hinge times 0.205, plus the fitness pathway, plus a constant."
+    }
+   ],
+   "part": "fitness_score",
+   "reached_directly_from": [
+    {
+     "copy": "-8_c",
+     "weight": 1.51
+    }
+   ],
+   "reached_through": [],
+   "n_patients_switching_in_range": 171,
+   "n_on_throughout": 39,
+   "n_off_throughout": 32,
+   "switch": "on",
+   "threshold_quantiles": {
+    "min": 94.95,
+    "p10": 103.3,
+    "median": 144.8,
+    "p90": 186.6,
+    "max": 199.5
+   },
+   "dslope_median": -0.004687,
+   "bend_logodds_over_range_median": -0.4968,
+   "patterns": [
+    {
+     "upstream_states": {
+      "9765": "on",
+      "5869": "on"
+     },
+     "upstream_conditions": [
+      {
+       "unit": "9765",
+       "on": true,
+       "on_when": "age > 53.1 years",
+       "holds": "age > 53.1 years"
+      },
+      {
+       "unit": "5869",
+       "on": true,
+       "on_when": "maximum heart rate reached during the exercise test < 176.5 beats per minute",
+       "holds": "maximum heart rate reached during the exercise test < 176.5 beats per minute"
+      }
+     ],
+     "n_crossings": 109,
+     "formula": {
+      "const": -100.604,
+      "terms": {
+       "exang:0": -32.997,
+       "thalach": -0.344397,
+       "age": 5.66367
+      },
+      "text": "resting blood pressure* = -100.6 − 33.0·[exercise-induced angina = no chest pain on exercise] + 5.66·age − 0.344·maximum heart rate reached during the exercise test  (mm Hg)",
+      "text_columns": "trestbps* = -100.6 − 33.0·[exang:0] + 5.66·age − 0.344·thalach  (mm Hg)",
+      "unit_on": "above the threshold"
+     },
+     "max_abs_err_vs_crossings": 1.14e-13
+    },
+    {
+     "upstream_states": {
+      "9765": "off",
+      "5869": "on"
+     },
+     "upstream_conditions": [
+      {
+       "unit": "9765",
+       "on": false,
+       "on_when": "age > 53.1 years",
+       "holds": "age < 53.1 years"
+      },
+      {
+       "unit": "5869",
+       "on": true,
+       "on_when": "maximum heart rate reached during the exercise test < 176.5 beats per minute",
+       "holds": "maximum heart rate reached during the exercise test < 176.5 beats per minute"
+      }
+     ],
+     "n_crossings": 53,
+     "formula": {
+      "const": 50.818,
+      "terms": {
+       "exang:0": -32.997,
+       "thalach": -0.344397,
+       "age": 2.81218
+      },
+      "text": "resting blood pressure* = 50.82 − 33.0·[exercise-induced angina = no chest pain on exercise] + 2.81·age − 0.344·maximum heart rate reached during the exercise test  (mm Hg)",
+      "text_columns": "trestbps* = 50.82 − 33.0·[exang:0] + 2.81·age − 0.344·thalach  (mm Hg)",
+      "unit_on": "above the threshold"
+     },
+     "max_abs_err_vs_crossings": 5.68e-14
+    },
+    {
+     "upstream_states": {
+      "9765": "off",
+      "5869": "off"
+     },
+     "upstream_conditions": [
+      {
+       "unit": "9765",
+       "on": false,
+       "on_when": "age > 53.1 years",
+       "holds": "age < 53.1 years"
+      },
+      {
+       "unit": "5869",
+       "on": false,
+       "on_when": "maximum heart rate reached during the exercise test < 176.5 beats per minute",
+       "holds": "maximum heart rate reached during the exercise test > 176.5 beats per minute"
+      }
+     ],
+     "n_crossings": 7,
+     "formula": {
+      "const": -9.9737,
+      "terms": {
+       "exang:0": -32.997,
+       "age": 2.81218
+      },
+      "text": "resting blood pressure* = -9.974 − 33.0·[exercise-induced angina = no chest pain on exercise] + 2.81·age  (mm Hg)",
+      "text_columns": "trestbps* = -9.974 − 33.0·[exang:0] + 2.81·age  (mm Hg)",
+      "unit_on": "above the threshold"
+     },
+     "max_abs_err_vs_crossings": 2.84e-14
+    },
+    {
+     "upstream_states": {
+      "9765": "on",
+      "5869": "off"
+     },
+     "upstream_conditions": [
+      {
+       "unit": "9765",
+       "on": true,
+       "on_when": "age > 53.1 years",
+       "holds": "age > 53.1 years"
+      },
+      {
+       "unit": "5869",
+       "on": false,
+       "on_when": "maximum heart rate reached during the exercise test < 176.5 beats per minute",
+       "holds": "maximum heart rate reached during the exercise test > 176.5 beats per minute"
+      }
+     ],
+     "n_crossings": 2,
+     "formula": {
+      "const": -161.396,
+      "terms": {
+       "exang:0": -32.997,
+       "age": 5.66367
+      },
+      "text": "resting blood pressure* = -161.4 − 33.0·[exercise-induced angina = no chest pain on exercise] + 5.66·age  (mm Hg)",
+      "text_columns": "trestbps* = -161.4 − 33.0·[exang:0] + 5.66·age  (mm Hg)",
+      "unit_on": "above the threshold"
+     },
+     "max_abs_err_vs_crossings": 2.84e-14
+    }
+   ]
+  },
+  {
+   "unit": "4835",
+   "parts": [
+    {
+     "id": "ann_40",
+     "name": "fitness_pathway",
+     "size": 8,
+     "kind": "composition",
+     "hypothesis_first_sentence": "Hypothesis: a serial readout of the fitness score S (child fitness_score) that lowers the predicted risk for young, exercise-tolerant patients and, separately, for patients with a low resting blood pressure when S is small."
+    },
+    {
+     "id": "ann_41",
+     "name": "heart_disease_model",
+     "size": 12,
+     "kind": "composition",
+     "hypothesis_first_sentence": "Hypothesis: the output node adds its parts in the logit, with no interaction term, and passes the sum through a sigmoid: the score is the direct linear terms, plus the ischaemia gate times 2.09, plus the thal code 4 hinge times 0.205, plus the fitness pathway, plus a constant."
+    }
+   ],
+   "part": "fitness_pathway",
+   "reached_directly_from": [],
+   "reached_through": [
+    "2445"
+   ],
+   "n_patients_switching_in_range": 0,
+   "n_on_throughout": 242,
+   "n_off_throughout": 0,
+   "switch": "on",
+   "threshold_quantiles": null,
+   "dslope_median": null,
+   "bend_logodds_over_range_median": null,
+   "patterns": []
+  },
+  {
+   "unit": "2116",
+   "parts": [
+    {
+     "id": "ann_40",
+     "name": "fitness_pathway",
+     "size": 8,
+     "kind": "composition",
+     "hypothesis_first_sentence": "Hypothesis: a serial readout of the fitness score S (child fitness_score) that lowers the predicted risk for young, exercise-tolerant patients and, separately, for patients with a low resting blood pressure when S is small."
+    },
+    {
+     "id": "ann_41",
+     "name": "heart_disease_model",
+     "size": 12,
+     "kind": "composition",
+     "hypothesis_first_sentence": "Hypothesis: the output node adds its parts in the logit, with no interaction term, and passes the sum through a sigmoid: the score is the direct linear terms, plus the ischaemia gate times 2.09, plus the thal code 4 hinge times 0.205, plus the fitness pathway, plus a constant."
+    }
+   ],
+   "part": "fitness_pathway",
+   "reached_directly_from": [
+    {
+     "copy": "-8_b",
+     "weight": -2.651
+    }
+   ],
+   "reached_through": [
+    "4835"
+   ],
+   "n_patients_switching_in_range": 242,
+   "n_on_throughout": 0,
+   "n_off_throughout": 0,
+   "switch": "off",
+   "threshold_quantiles": {
+    "min": 94.91,
+    "p10": 105.9,
+    "median": 113.4,
+    "p90": 114.6,
+    "max": 114.6
+   },
+   "dslope_median": -0.09663,
+   "bend_logodds_over_range_median": -10.24,
+   "patterns": [
+    {
+     "upstream_states": {
+      "9183": "off",
+      "9765": "on",
+      "5869": "on",
+      "2445": "off",
+      "4835": "on"
+     },
+     "upstream_conditions": [
+      {
+       "unit": "9183",
+       "on": false,
+       "on_when": "never",
+       "holds": "always"
+      },
+      {
+       "unit": "9765",
+       "on": true,
+       "on_when": "age > 53.1 years",
+       "holds": "age > 53.1 years"
+      },
+      {
+       "unit": "5869",
+       "on": true,
+       "on_when": "maximum heart rate reached during the exercise test < 176.5 beats per minute",
+       "holds": "maximum heart rate reached during the exercise test < 176.5 beats per minute"
+      },
+      {
+       "unit": "2445",
+       "on": false,
+       "on_when": "8.361 + 2.74·[exercise-induced angina = no chest pain on exercise] − 0.471·age + 0.0831·resting blood pressure + 0.0286·maximum heart rate reached during the exercise test > 0",
+       "holds": "-8.361 − 2.74·[exercise-induced angina = no chest pain on exercise] + 0.471·age − 0.0831·resting blood pressure − 0.0286·maximum heart rate reached during the exercise test > 0"
+      },
+      {
+       "unit": "4835",
+       "on": true,
+       "on_when": "always",
+       "holds": "always"
+      }
+     ],
+     "n_crossings": 141,
+     "formula": {
+      "const": 114.59,
+      "terms": {
+       "sex:1": -1.16043
+      },
+      "text": "resting blood pressure* = 114.6 − 1.16·[sex = male]  (mm Hg)",
+      "text_columns": "trestbps* = 114.6 − 1.16·[sex:1]  (mm Hg)",
+      "unit_on": "below the threshold"
+     },
+     "max_abs_err_vs_crossings": 1.42e-14
+    },
+    {
+     "upstream_states": {
+      "9183": "off",
+      "9765": "off",
+      "5869": "on",
+      "2445": "on",
+      "4835": "on"
+     },
+     "upstream_conditions": [
+      {
+       "unit": "9183",
+       "on": false,
+       "on_when": "never",
+       "holds": "always"
+      },
+      {
+       "unit": "9765",
+       "on": false,
+       "on_when": "age > 53.1 years",
+       "holds": "age < 53.1 years"
+      },
+      {
+       "unit": "5869",
+       "on": true,
+       "on_when": "maximum heart rate reached during the exercise test < 176.5 beats per minute",
+       "holds": "maximum heart rate reached during the exercise test < 176.5 beats per minute"
+      },
+      {
+       "unit": "2445",
+       "on": true,
+       "on_when": "-4.224 + 2.74·[exercise-induced angina = no chest pain on exercise] − 0.234·age + 0.0831·resting blood pressure + 0.0286·maximum heart rate reached during the exercise test > 0",
+       "holds": "-4.224 + 2.74·[exercise-induced angina = no chest pain on exercise] − 0.234·age + 0.0831·resting blood pressure + 0.0286·maximum heart rate reached during the exercise test > 0"
+      },
+      {
+       "unit": "4835",
+       "on": true,
+       "on_when": "-3.468 + 2.59·[exercise-induced angina = no chest pain on exercise] − 0.221·age + 0.0785·resting blood pressure + 0.027·maximum heart rate reached during the exercise test > 0",
+       "holds": "-3.468 + 2.59·[exercise-induced angina = no chest pain on exercise] − 0.221·age + 0.0785·resting blood pressure + 0.027·maximum heart rate reached during the exercise test > 0"
+      }
+     ],
+     "n_crossings": 53,
+     "formula": {
+      "const": 98.8074,
+      "terms": {
+       "exang:0": -8.1661,
+       "thalach": -0.0852316,
+       "age": 0.695959,
+       "sex:1": -0.873248
+      },
+      "text": "resting blood pressure* = 98.81 − 8.17·[exercise-induced angina = no chest pain on exercise] − 0.873·[sex = male] + 0.696·age − 0.0852·maximum heart rate reached during the exercise test  (mm Hg)",
+      "text_columns": "trestbps* = 98.81 − 8.17·[exang:0] − 0.873·[sex:1] + 0.696·age − 0.0852·thalach  (mm Hg)",
+      "unit_on": "below the threshold"
+     },
+     "max_abs_err_vs_crossings": 2.84e-14
+    },
+    {
+     "upstream_states": {
+      "9183": "off",
+      "9765": "off",
+      "5869": "on",
+      "2445": "off",
+      "4835": "on"
+     },
+     "upstream_conditions": [
+      {
+       "unit": "9183",
+       "on": false,
+       "on_when": "never",
+       "holds": "always"
+      },
+      {
+       "unit": "9765",
+       "on": false,
+       "on_when": "age > 53.1 years",
+       "holds": "age < 53.1 years"
+      },
+      {
+       "unit": "5869",
+       "on": true,
+       "on_when": "maximum heart rate reached during the exercise test < 176.5 beats per minute",
+       "holds": "maximum heart rate reached during the exercise test < 176.5 beats per minute"
+      },
+      {
+       "unit": "2445",
+       "on": false,
+       "on_when": "-4.224 + 2.74·[exercise-induced angina = no chest pain on exercise] − 0.234·age + 0.0831·resting blood pressure + 0.0286·maximum heart rate reached during the exercise test > 0",
+       "holds": "4.224 − 2.74·[exercise-induced angina = no chest pain on exercise] + 0.234·age − 0.0831·resting blood pressure − 0.0286·maximum heart rate reached during the exercise test > 0"
+      },
+      {
+       "unit": "4835",
+       "on": true,
+       "on_when": "always",
+       "holds": "always"
+      }
+     ],
+     "n_crossings": 24,
+     "formula": {
+      "const": 114.59,
+      "terms": {
+       "sex:1": -1.16043
+      },
+      "text": "resting blood pressure* = 114.6 − 1.16·[sex = male]  (mm Hg)",
+      "text_columns": "trestbps* = 114.6 − 1.16·[sex:1]  (mm Hg)",
+      "unit_on": "below the threshold"
+     },
+     "max_abs_err_vs_crossings": 1.42e-14
+    },
+    {
+     "upstream_states": {
+      "9183": "off",
+      "9765": "off",
+      "5869": "off",
+      "2445": "on",
+      "4835": "on"
+     },
+     "upstream_conditions": [
+      {
+       "unit": "9183",
+       "on": false,
+       "on_when": "never",
+       "holds": "always"
+      },
+      {
+       "unit": "9765",
+       "on": false,
+       "on_when": "age > 53.1 years",
+       "holds": "age < 53.1 years"
+      },
+      {
+       "unit": "5869",
+       "on": false,
+       "on_when": "maximum heart rate reached during the exercise test < 176.5 beats per minute",
+       "holds": "maximum heart rate reached during the exercise test > 176.5 beats per minute"
+      },
+      {
+       "unit": "2445",
+       "on": true,
+       "on_when": "0.8289 + 2.74·[exercise-induced angina = no chest pain on exercise] − 0.234·age + 0.0831·resting blood pressure > 0",
+       "holds": "0.8289 + 2.74·[exercise-induced angina = no chest pain on exercise] − 0.234·age + 0.0831·resting blood pressure > 0"
+      },
+      {
+       "unit": "4835",
+       "on": true,
+       "on_when": "1.303 + 2.59·[exercise-induced angina = no chest pain on exercise] − 0.221·age + 0.0785·resting blood pressure > 0",
+       "holds": "1.303 + 2.59·[exercise-induced angina = no chest pain on exercise] − 0.221·age + 0.0785·resting blood pressure > 0"
+      }
+     ],
+     "n_crossings": 20,
+     "formula": {
+      "const": 83.7626,
+      "terms": {
+       "exang:0": -8.1661,
+       "age": 0.695959,
+       "sex:1": -0.873248
+      },
+      "text": "resting blood pressure* = 83.76 − 8.17·[exercise-induced angina = no chest pain on exercise] − 0.873·[sex = male] + 0.696·age  (mm Hg)",
+      "text_columns": "trestbps* = 83.76 − 8.17·[exang:0] − 0.873·[sex:1] + 0.696·age  (mm Hg)",
+      "unit_on": "below the threshold"
+     },
+     "max_abs_err_vs_crossings": 2.84e-14
+    },
+    {
+     "upstream_states": {
+      "9183": "off",
+      "9765": "off",
+      "5869": "off",
+      "2445": "off",
+      "4835": "on"
+     },
+     "upstream_conditions": [
+      {
+       "unit": "9183",
+       "on": false,
+       "on_when": "never",
+       "holds": "always"
+      },
+      {
+       "unit": "9765",
+       "on": false,
+       "on_when": "age > 53.1 years",
+       "holds": "age < 53.1 years"
+      },
+      {
+       "unit": "5869",
+       "on": false,
+       "on_when": "maximum heart rate reached during the exercise test < 176.5 beats per minute",
+       "holds": "maximum heart rate reached during the exercise test > 176.5 beats per minute"
+      },
+      {
+       "unit": "2445",
+       "on": false,
+       "on_when": "0.8289 + 2.74·[exercise-induced angina = no chest pain on exercise] − 0.234·age + 0.0831·resting blood pressure > 0",
+       "holds": "-0.8289 − 2.74·[exercise-induced angina = no chest pain on exercise] + 0.234·age − 0.0831·resting blood pressure > 0"
+      },
+      {
+       "unit": "4835",
+       "on": true,
+       "on_when": "always",
+       "holds": "always"
+      }
+     ],
+     "n_crossings": 2,
+     "formula": {
+      "const": 114.59,
+      "terms": {
+       "sex:1": -1.16043
+      },
+      "text": "resting blood pressure* = 114.6 − 1.16·[sex = male]  (mm Hg)",
+      "text_columns": "trestbps* = 114.6 − 1.16·[sex:1]  (mm Hg)",
+      "unit_on": "below the threshold"
+     },
+     "max_abs_err_vs_crossings": 1.42e-14
+    },
+    {
+     "upstream_states": {
+      "9183": "off",
+      "9765": "on",
+      "5869": "off",
+      "2445": "off",
+      "4835": "on"
+     },
+     "upstream_conditions": [
+      {
+       "unit": "9183",
+       "on": false,
+       "on_when": "never",
+       "holds": "always"
+      },
+      {
+       "unit": "9765",
+       "on": true,
+       "on_when": "age > 53.1 years",
+       "holds": "age > 53.1 years"
+      },
+      {
+       "unit": "5869",
+       "on": false,
+       "on_when": "maximum heart rate reached during the exercise test < 176.5 beats per minute",
+       "holds": "maximum heart rate reached during the exercise test > 176.5 beats per minute"
+      },
+      {
+       "unit": "2445",
+       "on": false,
+       "on_when": "13.41 + 2.74·[exercise-induced angina = no chest pain on exercise] − 0.471·age + 0.0831·resting blood pressure > 0",
+       "holds": "-13.41 − 2.74·[exercise-induced angina = no chest pain on exercise] + 0.471·age − 0.0831·resting blood pressure > 0"
+      },
+      {
+       "unit": "4835",
+       "on": true,
+       "on_when": "always",
+       "holds": "always"
+      }
+     ],
+     "n_crossings": 1,
+     "formula": {
+      "const": 114.59,
+      "terms": {
+       "sex:1": -1.16043
+      },
+      "text": "resting blood pressure* = 114.6 − 1.16·[sex = male]  (mm Hg)",
+      "text_columns": "trestbps* = 114.6 − 1.16·[sex:1]  (mm Hg)",
+      "unit_on": "below the threshold"
+     },
+     "max_abs_err_vs_crossings": 0.0
+    },
+    {
+     "upstream_states": {
+      "9183": "off",
+      "9765": "on",
+      "5869": "off",
+      "2445": "on",
+      "4835": "on"
+     },
+     "upstream_conditions": [
+      {
+       "unit": "9183",
+       "on": false,
+       "on_when": "never",
+       "holds": "always"
+      },
+      {
+       "unit": "9765",
+       "on": true,
+       "on_when": "age > 53.1 years",
+       "holds": "age > 53.1 years"
+      },
+      {
+       "unit": "5869",
+       "on": false,
+       "on_when": "maximum heart rate reached during the exercise test < 176.5 beats per minute",
+       "holds": "maximum heart rate reached during the exercise test > 176.5 beats per minute"
+      },
+      {
+       "unit": "2445",
+       "on": true,
+       "on_when": "13.41 + 2.74·[exercise-induced angina = no chest pain on exercise] − 0.471·age + 0.0831·resting blood pressure > 0",
+       "holds": "13.41 + 2.74·[exercise-induced angina = no chest pain on exercise] − 0.471·age + 0.0831·resting blood pressure > 0"
+      },
+      {
+       "unit": "4835",
+       "on": true,
+       "on_when": "13.19 + 2.59·[exercise-induced angina = no chest pain on exercise] − 0.444·age + 0.0785·resting blood pressure > 0",
+       "holds": "13.19 + 2.59·[exercise-induced angina = no chest pain on exercise] − 0.444·age + 0.0785·resting blood pressure > 0"
+      }
+     ],
+     "n_crossings": 1,
+     "formula": {
+      "const": 46.2886,
+      "terms": {
+       "exang:0": -8.1661,
+       "age": 1.40165,
+       "sex:1": -0.873248
+      },
+      "text": "resting blood pressure* = 46.29 − 8.17·[exercise-induced angina = no chest pain on exercise] + 1.4·age − 0.873·[sex = male]  (mm Hg)",
+      "text_columns": "trestbps* = 46.29 − 8.17·[exang:0] + 1.4·age − 0.873·[sex:1]  (mm Hg)",
+      "unit_on": "below the threshold"
+     },
+     "max_abs_err_vs_crossings": 0.0
+    }
+   ]
+  },
+  {
+   "unit": "4037",
+   "parts": [
+    {
+     "id": "ann_40",
+     "name": "fitness_pathway",
+     "size": 8,
+     "kind": "composition",
+     "hypothesis_first_sentence": "Hypothesis: a serial readout of the fitness score S (child fitness_score) that lowers the predicted risk for young, exercise-tolerant patients and, separately, for patients with a low resting blood pressure when S is small."
+    },
+    {
+     "id": "ann_41",
+     "name": "heart_disease_model",
+     "size": 12,
+     "kind": "composition",
+     "hypothesis_first_sentence": "Hypothesis: the output node adds its parts in the logit, with no interaction term, and passes the sum through a sigmoid: the score is the direct linear terms, plus the ischaemia gate times 2.09, plus the thal code 4 hinge times 0.205, plus the fitness pathway, plus a constant."
+    }
+   ],
+   "part": "fitness_pathway",
+   "reached_directly_from": [],
+   "reached_through": [
+    "2445"
+   ],
+   "n_patients_switching_in_range": 163,
+   "n_on_throughout": 16,
+   "n_off_throughout": 63,
+   "switch": "on",
+   "threshold_quantiles": {
+    "min": 94.52,
+    "p10": 105.7,
+    "median": 145.0,
+    "p90": 188.2,
+    "max": 198.0
+   },
+   "dslope_median": -0.07142,
+   "bend_logodds_over_range_median": -7.57,
+   "patterns": [
+    {
+     "upstream_states": {
+      "9765": "on",
+      "5869": "on",
+      "2445": "on"
+     },
+     "upstream_conditions": [
+      {
+       "unit": "9765",
+       "on": true,
+       "on_when": "age > 53.1 years",
+       "holds": "age > 53.1 years"
+      },
+      {
+       "unit": "5869",
+       "on": true,
+       "on_when": "maximum heart rate reached during the exercise test < 176.5 beats per minute",
+       "holds": "maximum heart rate reached during the exercise test < 176.5 beats per minute"
+      },
+      {
+       "unit": "2445",
+       "on": true,
+       "on_when": "8.361 + 2.74·[exercise-induced angina = no chest pain on exercise] − 0.471·age + 0.0831·resting blood pressure + 0.0286·maximum heart rate reached during the exercise test > 0",
+       "holds": "8.361 + 2.74·[exercise-induced angina = no chest pain on exercise] − 0.471·age + 0.0831·resting blood pressure + 0.0286·maximum heart rate reached during the exercise test > 0"
+      }
+     ],
+     "n_crossings": 78,
+     "formula": {
+      "const": -83.0702,
+      "terms": {
+       "exang:0": -32.997,
+       "thalach": -0.344397,
+       "age": 5.66367
+      },
+      "text": "resting blood pressure* = -83.07 − 33.0·[exercise-induced angina = no chest pain on exercise] + 5.66·age − 0.344·maximum heart rate reached during the exercise test  (mm Hg)",
+      "text_columns": "trestbps* = -83.07 − 33.0·[exang:0] + 5.66·age − 0.344·thalach  (mm Hg)",
+      "unit_on": "above the threshold"
+     },
+     "max_abs_err_vs_crossings": 1.14e-13
+    },
+    {
+     "upstream_states": {
+      "9765": "off",
+      "5869": "on",
+      "2445": "on"
+     },
+     "upstream_conditions": [
+      {
+       "unit": "9765",
+       "on": false,
+       "on_when": "age > 53.1 years",
+       "holds": "age < 53.1 years"
+      },
+      {
+       "unit": "5869",
+       "on": true,
+       "on_when": "maximum heart rate reached during the exercise test < 176.5 beats per minute",
+       "holds": "maximum heart rate reached during the exercise test < 176.5 beats per minute"
+      },
+      {
+       "unit": "2445",
+       "on": true,
+       "on_when": "-4.224 + 2.74·[exercise-induced angina = no chest pain on exercise] − 0.234·age + 0.0831·resting blood pressure + 0.0286·maximum heart rate reached during the exercise test > 0",
+       "holds": "-4.224 + 2.74·[exercise-induced angina = no chest pain on exercise] − 0.234·age + 0.0831·resting blood pressure + 0.0286·maximum heart rate reached during the exercise test > 0"
+      }
+     ],
+     "n_crossings": 71,
+     "formula": {
+      "const": 68.3518,
+      "terms": {
+       "exang:0": -32.997,
+       "thalach": -0.344397,
+       "age": 2.81218
+      },
+      "text": "resting blood pressure* = 68.35 − 33.0·[exercise-induced angina = no chest pain on exercise] + 2.81·age − 0.344·maximum heart rate reached during the exercise test  (mm Hg)",
+      "text_columns": "trestbps* = 68.35 − 33.0·[exang:0] + 2.81·age − 0.344·thalach  (mm Hg)",
+      "unit_on": "above the threshold"
+     },
+     "max_abs_err_vs_crossings": 5.68e-14
+    },
+    {
+     "upstream_states": {
+      "9765": "off",
+      "5869": "off",
+      "2445": "on"
+     },
+     "upstream_conditions": [
+      {
+       "unit": "9765",
+       "on": false,
+       "on_when": "age > 53.1 years",
+       "holds": "age < 53.1 years"
+      },
+      {
+       "unit": "5869",
+       "on": false,
+       "on_when": "maximum heart rate reached during the exercise test < 176.5 beats per minute",
+       "holds": "maximum heart rate reached during the exercise test > 176.5 beats per minute"
+      },
+      {
+       "unit": "2445",
+       "on": true,
+       "on_when": "0.8289 + 2.74·[exercise-induced angina = no chest pain on exercise] − 0.234·age + 0.0831·resting blood pressure > 0",
+       "holds": "0.8289 + 2.74·[exercise-induced angina = no chest pain on exercise] − 0.234·age + 0.0831·resting blood pressure > 0"
+      }
+     ],
+     "n_crossings": 12,
+     "formula": {
+      "const": 7.56008,
+      "terms": {
+       "exang:0": -32.997,
+       "age": 2.81218
+      },
+      "text": "resting blood pressure* = 7.56 − 33.0·[exercise-induced angina = no chest pain on exercise] + 2.81·age  (mm Hg)",
+      "text_columns": "trestbps* = 7.56 − 33.0·[exang:0] + 2.81·age  (mm Hg)",
+      "unit_on": "above the threshold"
+     },
+     "max_abs_err_vs_crossings": 2.84e-14
+    },
+    {
+     "upstream_states": {
+      "9765": "on",
+      "5869": "off",
+      "2445": "on"
+     },
+     "upstream_conditions": [
+      {
+       "unit": "9765",
+       "on": true,
+       "on_when": "age > 53.1 years",
+       "holds": "age > 53.1 years"
+      },
+      {
+       "unit": "5869",
+       "on": false,
+       "on_when": "maximum heart rate reached during the exercise test < 176.5 beats per minute",
+       "holds": "maximum heart rate reached during the exercise test > 176.5 beats per minute"
+      },
+      {
+       "unit": "2445",
+       "on": true,
+       "on_when": "13.41 + 2.74·[exercise-induced angina = no chest pain on exercise] − 0.471·age + 0.0831·resting blood pressure > 0",
+       "holds": "13.41 + 2.74·[exercise-induced angina = no chest pain on exercise] − 0.471·age + 0.0831·resting blood pressure > 0"
+      }
+     ],
+     "n_crossings": 2,
+     "formula": {
+      "const": -143.862,
+      "terms": {
+       "exang:0": -32.997,
+       "age": 5.66367
+      },
+      "text": "resting blood pressure* = -143.9 − 33.0·[exercise-induced angina = no chest pain on exercise] + 5.66·age  (mm Hg)",
+      "text_columns": "trestbps* = -143.9 − 33.0·[exang:0] + 5.66·age  (mm Hg)",
+      "unit_on": "above the threshold"
+     },
+     "max_abs_err_vs_crossings": 2.84e-14
+    }
+   ]
+  },
+  {
+   "unit": "855",
+   "parts": [
+    {
+     "id": "ann_37",
+     "name": "ischaemia_gate",
+     "size": 1,
+     "kind": "leaf",
+     "hypothesis_first_sentence": "Node 855 ≈ relu(1.11·trestbps + 1.08·oldpeak + 0.935·thal:7 + 0.54·fbs:1 + 0.344·exang:1 − 1.98·cp:1 − 0.894·slope:1 − 1.01), in z-units, not raw units (the rounded coefficients are off by up to 0.011 on the training rows)."
+    },
+    {
+     "id": "ann_41",
+     "name": "heart_disease_model",
+     "size": 12,
+     "kind": "composition",
+     "hypothesis_first_sentence": "Hypothesis: the output node adds its parts in the logit, with no interaction term, and passes the sum through a sigmoid: the score is the direct linear terms, plus the ischaemia gate times 2.09, plus the thal code 4 hinge times 0.205, plus the fitness pathway, plus a constant."
+    }
+   ],
+   "part": "ischaemia_gate",
+   "reached_directly_from": [
+    {
+     "copy": "-8_a",
+     "weight": 1.111
+    }
+   ],
+   "reached_through": [],
+   "n_patients_switching_in_range": 190,
+   "n_on_throughout": 33,
+   "n_off_throughout": 19,
+   "switch": "on",
+   "threshold_quantiles": {
+    "min": 98.04,
+    "p10": 109.3,
+    "median": 153.5,
+    "p90": 188.7,
+    "max": 196.8
+   },
+   "dslope_median": 0.1281,
+   "bend_logodds_over_range_median": 13.58,
+   "patterns": [
+    {
+     "upstream_states": {},
+     "upstream_conditions": [],
+     "n_crossings": 190,
+     "formula": {
+      "const": 159.415,
+      "terms": {
+       "fbs:1": -25.7422,
+       "exang:1": -11.8826,
+       "oldpeak": -14.8733,
+       "thal:7": -31.6256,
+       "cp:1": 112.562,
+       "slope:1": 29.2863
+      },
+      "text": "resting blood pressure* = 159.4 + 113.0·[chest pain type = typical angina] − 31.6·[thallium stress test result = a reversible defect on the thallium scan] + 29.3·[slope of the ST segment at peak exercise = an upsloping ST segment] − 25.7·[fasting blood sugar = fasting blood sugar above 120 mg/dL] − 14.9·ST depression during exercise (compared with rest) − 11.9·[exercise-induced angina = chest pain brought on by exercise]  (mm Hg)",
+      "text_columns": "trestbps* = 159.4 + 113.0·[cp:1] − 31.6·[thal:7] + 29.3·[slope:1] − 25.7·[fbs:1] − 14.9·oldpeak − 11.9·[exang:1]  (mm Hg)",
+      "unit_on": "above the threshold"
+     },
+     "max_abs_err_vs_crossings": 5.68e-14
+    }
+   ]
+  }
+ ],
+ "median_others_curve": {
+  "definition": "every other column at its training median (z), as the evidence panel's line plot",
+  "values_held": {
+   "age": "56 years",
+   "sex": "male",
+   "chest pain type": "none",
+   "serum cholesterol": "240 mg/dL (6.2 mmol/L)",
+   "fasting blood sugar": "fasting blood sugar of 120 mg/dL or less",
+   "resting ECG": "none",
+   "maximum heart rate reached during the exercise test": "152 beats per minute",
+   "exercise-induced angina": "no chest pain on exercise",
+   "ST depression during exercise (compared with rest)": "0.8 mm",
+   "slope of the ST segment at peak exercise": "none",
+   "number of major vessels coloured by fluoroscopy": "0 vessels",
+   "thallium stress test result": "a normal thallium scan"
+  },
+  "x": [
+   94.0,
+   95.325,
+   96.65,
+   97.975,
+   99.3,
+   100.62,
+   101.95,
+   103.28,
+   104.6,
+   105.92,
+   107.25,
+   108.58,
+   109.9,
+   111.22,
+   112.55,
+   113.88,
+   115.2,
+   116.53,
+   117.85,
+   119.17,
+   120.5,
+   121.83,
+   123.15,
+   124.47,
+   125.8,
+   127.12,
+   128.45,
+   129.78,
+   131.1,
+   132.43,
+   133.75,
+   135.07,
+   136.4,
+   137.72,
+   139.05,
+   140.38,
+   141.7,
+   143.03,
+   144.35,
+   145.68,
+   147.0,
+   148.32,
+   149.65,
+   150.97,
+   152.3,
+   153.62,
+   154.95,
+   156.28,
+   157.6,
+   158.93,
+   160.25,
+   161.57,
+   162.9,
+   164.23,
+   165.55,
+   166.88,
+   168.2,
+   169.53,
+   170.85,
+   172.18,
+   173.5,
+   174.82,
+   176.15,
+   177.48,
+   178.8,
+   180.12,
+   181.45,
+   182.78,
+   184.1,
+   185.43,
+   186.75,
+   188.07,
+   189.4,
+   190.73,
+   192.05,
+   193.38,
+   194.7,
+   196.03,
+   197.35,
+   198.68,
+   200.0
+  ],
+  "logit": [
+   -4.473,
+   -4.345,
+   -4.217,
+   -4.089,
+   -3.961,
+   -3.833,
+   -3.705,
+   -3.577,
+   -3.449,
+   -3.321,
+   -3.193,
+   -3.065,
+   -2.937,
+   -2.809,
+   -2.681,
+   -2.596,
+   -2.596,
+   -2.596,
+   -2.596,
+   -2.596,
+   -2.596,
+   -2.596,
+   -2.596,
+   -2.596,
+   -2.596,
+   -2.596,
+   -2.596,
+   -2.596,
+   -2.596,
+   -2.602,
+   -2.609,
+   -2.615,
+   -2.621,
+   -2.627,
+   -2.633,
+   -2.64,
+   -2.646,
+   -2.652,
+   -2.658,
+   -2.664,
+   -2.671,
+   -2.669,
+   -2.582,
+   -2.513,
+   -2.444,
+   -2.375,
+   -2.306,
+   -2.237,
+   -2.168,
+   -2.099,
+   -2.03,
+   -1.962,
+   -1.893,
+   -1.824,
+   -1.755,
+   -1.686,
+   -1.617,
+   -1.548,
+   -1.479,
+   -1.41,
+   -1.342,
+   -1.273,
+   -1.204,
+   -1.135,
+   -1.066,
+   -0.9971,
+   -0.9282,
+   -0.8594,
+   -0.7905,
+   -0.7216,
+   -0.6527,
+   -0.5838,
+   -0.5149,
+   -0.446,
+   -0.3771,
+   -0.3082,
+   -0.2393,
+   -0.1705,
+   -0.1016,
+   -0.03268,
+   0.03621
+  ],
+  "risk": [
+   0.01128,
+   0.0128,
+   0.01452,
+   0.01648,
+   0.01868,
+   0.02118,
+   0.02401,
+   0.0272,
+   0.0308,
+   0.03486,
+   0.03943,
+   0.04458,
+   0.05036,
+   0.05685,
+   0.06411,
+   0.0694,
+   0.0694,
+   0.0694,
+   0.0694,
+   0.0694,
+   0.0694,
+   0.0694,
+   0.0694,
+   0.0694,
+   0.0694,
+   0.0694,
+   0.0694,
+   0.0694,
+   0.06939,
+   0.06899,
+   0.06859,
+   0.06819,
+   0.0678,
+   0.06741,
+   0.06702,
+   0.06663,
+   0.06625,
+   0.06586,
+   0.06548,
+   0.0651,
+   0.06473,
+   0.06486,
+   0.07033,
+   0.07497,
+   0.07989,
+   0.0851,
+   0.09062,
+   0.09646,
+   0.1026,
+   0.1092,
+   0.116,
+   0.1233,
+   0.1309,
+   0.139,
+   0.1474,
+   0.1563,
+   0.1656,
+   0.1753,
+   0.1855,
+   0.1962,
+   0.2073,
+   0.2188,
+   0.2308,
+   0.2433,
+   0.2562,
+   0.2695,
+   0.2833,
+   0.2975,
+   0.3121,
+   0.327,
+   0.3424,
+   0.3581,
+   0.374,
+   0.3903,
+   0.4068,
+   0.4235,
+   0.4404,
+   0.4575,
+   0.4746,
+   0.4918,
+   0.5091
+  ],
+  "bends": [
+   {
+    "bend": "2116-",
+    "unit": "2116",
+    "part": "fitness_pathway",
+    "x": 113.4,
+    "dslope": -0.09663,
+    "risk_at": 0.0694
+   },
+   {
+    "bend": "2445+",
+    "unit": "2445",
+    "part": "fitness_score",
+    "x": 131.0,
+    "dslope": -0.004687,
+    "risk_at": 0.0694
+   },
+   {
+    "bend": "855+",
+    "unit": "855",
+    "part": "ischaemia_gate",
+    "x": 148.3,
+    "dslope": 0.1281,
+    "risk_at": 0.0644
+   },
+   {
+    "bend": "4037+",
+    "unit": "4037",
+    "part": "fitness_pathway",
+    "x": 148.6,
+    "dslope": -0.07142,
+    "risk_at": 0.0668
+   }
+  ]
+ },
+ "partial_dependence": {
+  "x": [
+   94.0,
+   95.325,
+   96.65,
+   97.975,
+   99.3,
+   100.62,
+   101.95,
+   103.28,
+   104.6,
+   105.92,
+   107.25,
+   108.58,
+   109.9,
+   111.22,
+   112.55,
+   113.88,
+   115.2,
+   116.53,
+   117.85,
+   119.17,
+   120.5,
+   121.83,
+   123.15,
+   124.47,
+   125.8,
+   127.12,
+   128.45,
+   129.78,
+   131.1,
+   132.43,
+   133.75,
+   135.07,
+   136.4,
+   137.72,
+   139.05,
+   140.38,
+   141.7,
+   143.03,
+   144.35,
+   145.68,
+   147.0,
+   148.32,
+   149.65,
+   150.97,
+   152.3,
+   153.62,
+   154.95,
+   156.28,
+   157.6,
+   158.93,
+   160.25,
+   161.57,
+   162.9,
+   164.23,
+   165.55,
+   166.88,
+   168.2,
+   169.53,
+   170.85,
+   172.18,
+   173.5,
+   174.82,
+   176.15,
+   177.48,
+   178.8,
+   180.12,
+   181.45,
+   182.78,
+   184.1,
+   185.43,
+   186.75,
+   188.07,
+   189.4,
+   190.73,
+   192.05,
+   193.38,
+   194.7,
+   196.03,
+   197.35,
+   198.68,
+   200.0
+  ],
+  "risk_mean": [
+   0.2208,
+   0.2331,
+   0.2458,
+   0.2591,
+   0.273,
+   0.2874,
+   0.3018,
+   0.3165,
+   0.3313,
+   0.3457,
+   0.3595,
+   0.3733,
+   0.3863,
+   0.3983,
+   0.4092,
+   0.4173,
+   0.4195,
+   0.4202,
+   0.421,
+   0.4219,
+   0.423,
+   0.4243,
+   0.426,
+   0.4276,
+   0.4294,
+   0.4311,
+   0.4327,
+   0.4341,
+   0.4358,
+   0.4372,
+   0.4388,
+   0.4404,
+   0.4419,
+   0.4432,
+   0.4443,
+   0.4453,
+   0.4464,
+   0.4476,
+   0.4488,
+   0.4505,
+   0.4525,
+   0.4546,
+   0.4567,
+   0.4588,
+   0.4608,
+   0.463,
+   0.4655,
+   0.4681,
+   0.4708,
+   0.4737,
+   0.4766,
+   0.4796,
+   0.4826,
+   0.4856,
+   0.4885,
+   0.4915,
+   0.4945,
+   0.4972,
+   0.4999,
+   0.5025,
+   0.5051,
+   0.5077,
+   0.5104,
+   0.5132,
+   0.5163,
+   0.5193,
+   0.5222,
+   0.5252,
+   0.5281,
+   0.5312,
+   0.5343,
+   0.5374,
+   0.5407,
+   0.5443,
+   0.5479,
+   0.5513,
+   0.5546,
+   0.5578,
+   0.5609,
+   0.5641,
+   0.5672
+  ],
+  "logit_mean": [
+   -2.301,
+   -2.151,
+   -2.001,
+   -1.851,
+   -1.699,
+   -1.549,
+   -1.399,
+   -1.25,
+   -1.103,
+   -0.9607,
+   -0.824,
+   -0.687,
+   -0.5556,
+   -0.4295,
+   -0.3115,
+   -0.2166,
+   -0.1764,
+   -0.1526,
+   -0.1274,
+   -0.1024,
+   -0.0764,
+   -0.05003,
+   -0.02211,
+   0.005289,
+   0.03354,
+   0.06228,
+   0.09106,
+   0.1202,
+   0.152,
+   0.1834,
+   0.2154,
+   0.2484,
+   0.2816,
+   0.3152,
+   0.3491,
+   0.384,
+   0.4192,
+   0.4547,
+   0.4898,
+   0.5267,
+   0.5656,
+   0.6049,
+   0.6447,
+   0.6847,
+   0.7263,
+   0.768,
+   0.811,
+   0.8548,
+   0.9,
+   0.9473,
+   0.9968,
+   1.048,
+   1.098,
+   1.151,
+   1.203,
+   1.255,
+   1.308,
+   1.36,
+   1.411,
+   1.463,
+   1.515,
+   1.567,
+   1.619,
+   1.675,
+   1.733,
+   1.792,
+   1.85,
+   1.907,
+   1.964,
+   2.02,
+   2.076,
+   2.133,
+   2.205,
+   2.291,
+   2.376,
+   2.46,
+   2.543,
+   2.626,
+   2.708,
+   2.789,
+   2.87
+  ]
+ },
+ "families": [
+  {
+   "family": "F1",
+   "shape": [
+    "up",
+    "flat",
+    "up"
+   ],
+   "shape_text": "rises → flat → rises",
+   "n": 76,
+   "share": 0.314,
+   "merged_from": [
+    {
+     "shape": [
+      "up",
+      "flat"
+     ],
+     "n": 4
+    }
+   ],
+   "variants": [
+    {
+     "bends_in_order": [
+      "2116-",
+      "855+",
+      "2445+",
+      "4037+"
+     ],
+     "n": 20
+    },
+    {
+     "bends_in_order": [
+      "2116-",
+      "855+",
+      "2445+"
+     ],
+     "n": 17
+    },
+    {
+     "bends_in_order": [
+      "2116-",
+      "855+"
+     ],
+     "n": 15
+    },
+    {
+     "bends_in_order": [
+      "2116-",
+      "2445+",
+      "855+",
+      "4037+"
+     ],
+     "n": 10
+    },
+    {
+     "bends_in_order": [
+      "2116-",
+      "2445+",
+      "4037+",
+      "855+"
+     ],
+     "n": 5
+    },
+    {
+     "bends_in_order": [
+      "2116-"
+     ],
+     "n": 4
+    },
+    {
+     "bends_in_order": [
+      "2445+",
+      "2116-",
+      "855+",
+      "4037+"
+     ],
+     "n": 3
+    },
+    {
+     "bends_in_order": [
+      "2445+",
+      "2116-",
+      "4037+",
+      "855+"
+     ],
+     "n": 1
+    },
+    {
+     "bends_in_order": [
+      "2116-",
+      "2445+",
+      "855+"
+     ],
+     "n": 1
+    }
+   ],
+   "pieces": [
+    {
+     "piece": 1,
+     "word": "up",
+     "reads": "rises",
+     "n_exact": 72,
+     "members_whose_own_value_is_on_this_piece": 13,
+     "from_median": 94.0,
+     "to_median": 113.4,
+     "from_p10_p90": [
+      94.0,
+      94.0
+     ],
+     "to_p10_p90": [
+      113.4,
+      114.6
+     ],
+     "logodds_change_median": 1.88,
+     "ends_with": {
+      "2116-": 71,
+      "2445+": 1
+     },
+     "bends_inside": {
+      "2445+": 4,
+      "2116-": 1
+     },
+     "typical_member": {
+      "from_x": 94.0,
+      "to_x": 113.4,
+      "risk_from": 0.0492,
+      "risk_to": 0.251
+     }
+    },
+    {
+     "piece": 2,
+     "word": "flat",
+     "reads": "flat",
+     "n_exact": 72,
+     "members_whose_own_value_is_on_this_piece": 34,
+     "from_median": 113.4,
+     "to_median": 141.9,
+     "from_p10_p90": [
+      113.4,
+      114.6
+     ],
+     "to_p10_p90": [
+      121.4,
+      176.8
+     ],
+     "logodds_change_median": 0.0,
+     "ends_with": {
+      "855+": 65,
+      "4037+": 5,
+      "2445+": 2
+     },
+     "bends_inside": {
+      "2445+": 15,
+      "855+": 7,
+      "4037+": 6
+     },
+     "typical_member": {
+      "from_x": 113.4,
+      "to_x": 145.2,
+      "risk_from": 0.251,
+      "risk_to": 0.249
+     }
+    },
+    {
+     "piece": 3,
+     "word": "up",
+     "reads": "rises",
+     "n_exact": 72,
+     "members_whose_own_value_is_on_this_piece": 25,
+     "from_median": 141.9,
+     "to_median": 200.0,
+     "from_p10_p90": [
+      121.4,
+      176.8
+     ],
+     "to_p10_p90": [
+      200.0,
+      200.0
+     ],
+     "logodds_change_median": 5.33,
+     "ends_with": {},
+     "bends_inside": {
+      "2445+": 35,
+      "4037+": 28
+     },
+     "typical_member": {
+      "from_x": 145.2,
+      "to_x": 200.0,
+      "risk_from": 0.249,
+      "risk_to": 0.938
+     }
+    }
+   ],
+   "bends": [
+    {
+     "bend": "2116-",
+     "unit": "2116",
+     "part": "fitness_pathway",
+     "unit_switches": "off",
+     "n_patients_with_bend": 76,
+     "share_of_family": 1.0,
+     "x_median": 113.4,
+     "x_p10": 113.4,
+     "x_p90": 114.6,
+     "dslope_median": -0.09663,
+     "bend_logodds_over_range": -10.24,
+     "region": [
+      108.1,
+      119.9
+     ],
+     "family_patients_with_value_in_region": 9,
+     "all_training_patients_in_region": 28,
+     "family_patients_past_their_own_bend": 62,
+     "thin": false
+    },
+    {
+     "bend": "855+",
+     "unit": "855",
+     "part": "ischaemia_gate",
+     "unit_switches": "on",
+     "n_patients_with_bend": 72,
+     "share_of_family": 0.947,
+     "x_median": 141.9,
+     "x_p10": 121.4,
+     "x_p90": 176.8,
+     "dslope_median": 0.1281,
+     "bend_logodds_over_range": 13.58,
+     "region": [
+      116.1,
+      182.1
+     ],
+     "family_patients_with_value_in_region": 61,
+     "all_training_patients_in_region": 198,
+     "family_patients_past_their_own_bend": 25,
+     "thin": false
+    },
+    {
+     "bend": "2445+",
+     "unit": "2445",
+     "part": "fitness_score",
+     "unit_switches": "on",
+     "n_patients_with_bend": 57,
+     "share_of_family": 0.75,
+     "x_median": 152.9,
+     "x_p10": 120.1,
+     "x_p90": 190.9,
+     "dslope_median": -0.004687,
+     "bend_logodds_over_range": -0.4968,
+     "region": [
+      114.8,
+      196.2
+     ],
+     "family_patients_with_value_in_region": 61,
+     "all_training_patients_in_region": 200,
+     "family_patients_past_their_own_bend": 14,
+     "thin": false
+    },
+    {
+     "bend": "4037+",
+     "unit": "4037",
+     "part": "fitness_pathway",
+     "unit_switches": "on",
+     "n_patients_with_bend": 39,
+     "share_of_family": 0.513,
+     "x_median": 158.2,
+     "x_p10": 132.5,
+     "x_p90": 192.5,
+     "dslope_median": -0.07142,
+     "bend_logodds_over_range": -7.57,
+     "region": [
+      127.2,
+      197.8
+     ],
+     "family_patients_with_value_in_region": 49,
+     "all_training_patients_in_region": 147,
+     "family_patients_past_their_own_bend": 4,
+     "thin": false
+    }
+   ],
+   "segments_of_median_curve": [
+    {
+     "from": 94.0,
+     "to": 113.4,
+     "word": "up",
+     "logodds_change": 1.87,
+     "slope_per_unit": 0.0964,
+     "risk_from": 0.0481,
+     "risk_to": 0.247,
+     "ends_with": [
+      "2116-"
+     ]
+    },
+    {
+     "from": 113.4,
+     "to": 141.9,
+     "word": "up",
+     "logodds_change": 0.304,
+     "slope_per_unit": 0.0107,
+     "risk_from": 0.247,
+     "risk_to": 0.308,
+     "ends_with": [
+      "855+"
+     ]
+    },
+    {
+     "from": 141.9,
+     "to": 152.9,
+     "word": "up",
+     "logodds_change": 0.314,
+     "slope_per_unit": 0.0285,
+     "risk_from": 0.308,
+     "risk_to": 0.378,
+     "ends_with": [
+      "2445+"
+     ]
+    },
+    {
+     "from": 152.9,
+     "to": 158.2,
+     "word": "up",
+     "logodds_change": 0.412,
+     "slope_per_unit": 0.0777,
+     "risk_from": 0.378,
+     "risk_to": 0.478,
+     "ends_with": [
+      "4037+"
+     ]
+    },
+    {
+     "from": 158.2,
+     "to": 200.0,
+     "word": "up",
+     "logodds_change": 4.06,
+     "slope_per_unit": 0.097,
+     "risk_from": 0.478,
+     "risk_to": 0.981,
+     "ends_with": []
+    }
+   ],
+   "patients_by_own_segment": {
+    "0": 14,
+    "1": 31,
+    "2": 23,
+    "3": 4,
+    "4": 4
+   },
+   "typical_patient_row": 110,
+   "typical_patient_values": {
+    "age": "51 years",
+    "sex": "male",
+    "chest pain type": "non-anginal chest pain",
+    "serum cholesterol": "227 mg/dL (5.9 mmol/L)",
+    "fasting blood sugar": "fasting blood sugar of 120 mg/dL or less",
+    "resting ECG": "a normal resting ECG",
+    "maximum heart rate reached during the exercise test": "154 beats per minute",
+    "exercise-induced angina": "chest pain brought on by exercise",
+    "ST depression during exercise (compared with rest)": "0.0 mm",
+    "slope of the ST segment at peak exercise": "an upsloping ST segment",
+    "number of major vessels coloured by fluoroscopy": "1 vessels",
+    "thallium stress test result": "a reversible defect on the thallium scan"
+   },
+   "characteristic_curve": {
+    "x": [
+     94.0,
+     96.65,
+     99.3,
+     101.95,
+     104.6,
+     107.25,
+     109.9,
+     112.55,
+     115.2,
+     117.85,
+     120.5,
+     123.15,
+     125.8,
+     128.45,
+     131.1,
+     133.75,
+     136.4,
+     139.05,
+     141.7,
+     144.35,
+     147.0,
+     149.65,
+     152.3,
+     154.95,
+     157.6,
+     160.25,
+     162.9,
+     165.55,
+     168.2,
+     170.85,
+     173.5,
+     176.15,
+     178.8,
+     181.45,
+     184.1,
+     186.75,
+     189.4,
+     192.05,
+     194.7,
+     197.35,
+     200.0
+    ],
+    "logit_median": [
+     -2.985,
+     -2.729,
+     -2.473,
+     -2.217,
+     -1.961,
+     -1.705,
+     -1.449,
+     -1.193,
+     -1.108,
+     -1.108,
+     -1.108,
+     -1.07,
+     -1.02,
+     -1.02,
+     -1.02,
+     -1.02,
+     -0.8496,
+     -0.8123,
+     -0.8123,
+     -0.8123,
+     -0.71,
+     -0.5694,
+     -0.4973,
+     -0.3514,
+     -0.1144,
+     0.02341,
+     0.213,
+     0.3929,
+     0.645,
+     0.9845,
+     1.286,
+     1.525,
+     1.738,
+     1.977,
+     2.21,
+     2.36,
+     2.612,
+     2.951,
+     3.291,
+     3.63,
+     3.97
+    ],
+    "risk_median": [
+     0.04812,
+     0.0613,
+     0.07779,
+     0.09826,
+     0.1234,
+     0.1539,
+     0.1902,
+     0.2328,
+     0.2483,
+     0.2483,
+     0.2483,
+     0.2554,
+     0.2653,
+     0.2653,
+     0.2653,
+     0.2653,
+     0.2996,
+     0.3077,
+     0.3077,
+     0.3077,
+     0.3296,
+     0.3614,
+     0.3783,
+     0.4131,
+     0.4715,
+     0.5058,
+     0.553,
+     0.597,
+     0.6556,
+     0.7276,
+     0.7834,
+     0.8211,
+     0.85,
+     0.8783,
+     0.9008,
+     0.9135,
+     0.9316,
+     0.9503,
+     0.9641,
+     0.9742,
+     0.9815
+    ]
+   },
+   "conditions": {
+    "method": "one-vs-rest decision tree (balanced), the leaves where the family is the majority",
+    "rules": [
+     {
+      "if": [
+       "age > 65.5 years",
+       "thallium stress test result ≠ a reversible defect on the thallium scan"
+      ],
+      "n": 20,
+      "members": 20,
+      "precision": 1.0,
+      "recall": 0.263
+     },
+     {
+      "if": [
+       "age < 65.5 years",
+       "age > 63.5 years",
+       "thallium stress test result ≠ a reversible defect on the thallium scan"
+      ],
+      "n": 10,
+      "members": 8,
+      "precision": 0.8,
+      "recall": 0.105
+     }
+    ],
+    "balanced_accuracy_train": 0.751
+   },
+   "outcome_by_band_train": [
+    {
+     "band": "≤ 120",
+     "n": 23,
+     "events": 7,
+     "rate": 0.304,
+     "rate_ci95": [
+      0.156,
+      0.509
+     ],
+     "model_mean_risk": 0.306
+    },
+    {
+     "band": "120–128",
+     "n": 6,
+     "events": 5,
+     "rate": 0.833,
+     "rate_ci95": [
+      0.436,
+      0.97
+     ],
+     "model_mean_risk": 0.569
+    },
+    {
+     "band": "128–136",
+     "n": 9,
+     "events": 5,
+     "rate": 0.556,
+     "rate_ci95": [
+      0.267,
+      0.811
+     ],
+     "model_mean_risk": 0.57
+    },
+    {
+     "band": "136–145",
+     "n": 18,
+     "events": 6,
+     "rate": 0.333,
+     "rate_ci95": [
+      0.163,
+      0.563
+     ],
+     "model_mean_risk": 0.375
+    },
+    {
+     "band": "> 145",
+     "n": 20,
+     "events": 7,
+     "rate": 0.35,
+     "rate_ci95": [
+      0.181,
+      0.567
+     ],
+     "model_mean_risk": 0.41
+    }
+   ],
+   "bend_data_check_train": [
+    {
+     "bend": "2116-",
+     "at": 113.4,
+     "below": {
+      "n": 15,
+      "events": 5,
+      "rate": 0.333,
+      "rate_ci95": [
+       0.152,
+       0.583
+      ],
+      "model_mean_risk": 0.336
+     },
+     "above": {
+      "n": 61,
+      "events": 25,
+      "rate": 0.41,
+      "rate_ci95": [
+       0.295,
+       0.535
+      ],
+      "model_mean_risk": 0.418
+     }
+    },
+    {
+     "bend": "855+",
+     "at": 141.9,
+     "below": {
+      "n": 53,
+      "events": 22,
+      "rate": 0.415,
+      "rate_ci95": [
+       0.293,
+       0.549
+      ],
+      "model_mean_risk": 0.396
+     },
+     "above": {
+      "n": 23,
+      "events": 8,
+      "rate": 0.348,
+      "rate_ci95": [
+       0.188,
+       0.551
+      ],
+      "model_mean_risk": 0.416
+     }
+    },
+    {
+     "bend": "2445+",
+     "at": 152.9,
+     "below": {
+      "n": 65,
+      "events": 26,
+      "rate": 0.4,
+      "rate_ci95": [
+       0.29,
+       0.521
+      ],
+      "model_mean_risk": 0.392
+     },
+     "above": {
+      "n": 11,
+      "events": 4,
+      "rate": 0.364,
+      "rate_ci95": [
+       0.152,
+       0.646
+      ],
+      "model_mean_risk": 0.461
+     }
+    },
+    {
+     "bend": "4037+",
+     "at": 158.2,
+     "below": {
+      "n": 67,
+      "events": 26,
+      "rate": 0.388,
+      "rate_ci95": [
+       0.28,
+       0.508
+      ],
+      "model_mean_risk": 0.384
+     },
+     "above": {
+      "n": 9,
+      "events": 4,
+      "rate": 0.444,
+      "rate_ci95": [
+       0.189,
+       0.733
+      ],
+      "model_mean_risk": 0.538
+     }
+    }
+   ],
+   "outcome_by_band_test": [
+    {
+     "band": "≤ 120",
+     "n": 5,
+     "events": 3,
+     "rate": 0.6,
+     "rate_ci95": [
+      0.231,
+      0.882
+     ],
+     "model_mean_risk": 0.595
+    },
+    {
+     "band": "120–128",
+     "n": 1,
+     "events": 0,
+     "rate": 0.0,
+     "rate_ci95": [
+      0.0,
+      0.793
+     ],
+     "model_mean_risk": 0.0214
+    },
+    {
+     "band": "128–136",
+     "n": 2,
+     "events": 0,
+     "rate": 0.0,
+     "rate_ci95": [
+      0.0,
+      0.658
+     ],
+     "model_mean_risk": 0.471
+    },
+    {
+     "band": "136–145",
+     "n": 0,
+     "events": 0,
+     "rate": null,
+     "rate_ci95": [
+      null,
+      null
+     ],
+     "model_mean_risk": null
+    },
+    {
+     "band": "> 145",
+     "n": 2,
+     "events": 1,
+     "rate": 0.5,
+     "rate_ci95": [
+      0.0945,
+      0.905
+     ],
+     "model_mean_risk": 0.519
+    }
+   ],
+   "n_test": 10
+  },
+  {
+   "family": "F2",
+   "shape": [
+    "up"
+   ],
+   "shape_text": "rises",
+   "n": 66,
+   "share": 0.273,
+   "merged_from": [
+    {
+     "shape": [
+      "down",
+      "up"
+     ],
+     "n": 1
+    },
+    {
+     "shape": [
+      "up",
+      "down"
+     ],
+     "n": 1
+    }
+   ],
+   "variants": [
+    {
+     "bends_in_order": [
+      "2116-",
+      "2445+",
+      "4037+"
+     ],
+     "n": 16
+    },
+    {
+     "bends_in_order": [
+      "855+",
+      "2116-",
+      "2445+",
+      "4037+"
+     ],
+     "n": 15
+    },
+    {
+     "bends_in_order": [
+      "2116-"
+     ],
+     "n": 12
+    },
+    {
+     "bends_in_order": [
+      "855+",
+      "2116-",
+      "2445+"
+     ],
+     "n": 7
+    },
+    {
+     "bends_in_order": [
+      "2116-",
+      "2445+"
+     ],
+     "n": 5
+    },
+    {
+     "bends_in_order": [
+      "2116-",
+      "855+",
+      "2445+",
+      "4037+"
+     ],
+     "n": 3
+    },
+    {
+     "bends_in_order": [
+      "2116-",
+      "855+"
+     ],
+     "n": 2
+    },
+    {
+     "bends_in_order": [
+      "855+",
+      "2116-"
+     ],
+     "n": 2
+    },
+    {
+     "bends_in_order": [
+      "2445+",
+      "855+",
+      "2116-",
+      "4037+"
+     ],
+     "n": 1
+    },
+    {
+     "bends_in_order": [
+      "2445+",
+      "2116-",
+      "4037+"
+     ],
+     "n": 1
+    },
+    {
+     "bends_in_order": [
+      "2116-",
+      "2445+",
+      "855+",
+      "4037+"
+     ],
+     "n": 1
+    },
+    {
+     "bends_in_order": [
+      "2116-",
+      "855+",
+      "2445+"
+     ],
+     "n": 1
+    }
+   ],
+   "pieces": [
+    {
+     "piece": 1,
+     "word": "up",
+     "reads": "rises",
+     "n_exact": 64,
+     "members_whose_own_value_is_on_this_piece": 64,
+     "from_median": 94.0,
+     "to_median": 200.0,
+     "from_p10_p90": [
+      94.0,
+      94.0
+     ],
+     "to_p10_p90": [
+      200.0,
+      200.0
+     ],
+     "logodds_change_median": 13.5,
+     "ends_with": {},
+     "bends_inside": {
+      "2116-": 64,
+      "2445+": 50,
+      "4037+": 37,
+      "855+": 31
+     },
+     "typical_member": {
+      "from_x": 94.0,
+      "to_x": 200.0,
+      "risk_from": 0.555,
+      "risk_to": 1.0
+     }
+    }
+   ],
+   "bends": [
+    {
+     "bend": "855+",
+     "unit": "855",
+     "part": "ischaemia_gate",
+     "unit_switches": "on",
+     "n_patients_with_bend": 32,
+     "share_of_family": 0.485,
+     "x_median": 107.0,
+     "x_p10": 98.67,
+     "x_p90": 115.9,
+     "dslope_median": 0.1281,
+     "bend_logodds_over_range": 13.58,
+     "region": [
+      93.37,
+      121.2
+     ],
+     "family_patients_with_value_in_region": 15,
+     "all_training_patients_in_region": 75,
+     "family_patients_past_their_own_bend": 30,
+     "thin": false
+    },
+    {
+     "bend": "2116-",
+     "unit": "2116",
+     "part": "fitness_pathway",
+     "unit_switches": "off",
+     "n_patients_with_bend": 66,
+     "share_of_family": 1.0,
+     "x_median": 113.4,
+     "x_p10": 113.4,
+     "x_p90": 114.6,
+     "dslope_median": -0.09663,
+     "bend_logodds_over_range": -10.24,
+     "region": [
+      108.1,
+      119.9
+     ],
+     "family_patients_with_value_in_region": 5,
+     "all_training_patients_in_region": 28,
+     "family_patients_past_their_own_bend": 60,
+     "thin": false
+    },
+    {
+     "bend": "2445+",
+     "unit": "2445",
+     "part": "fitness_score",
+     "unit_switches": "on",
+     "n_patients_with_bend": 50,
+     "share_of_family": 0.758,
+     "x_median": 166.9,
+     "x_p10": 124.8,
+     "x_p90": 190.7,
+     "dslope_median": -0.004687,
+     "bend_logodds_over_range": -0.4968,
+     "region": [
+      119.5,
+      196.0
+     ],
+     "family_patients_with_value_in_region": 58,
+     "all_training_patients_in_region": 194,
+     "family_patients_past_their_own_bend": 7,
+     "thin": false
+    },
+    {
+     "bend": "4037+",
+     "unit": "4037",
+     "part": "fitness_pathway",
+     "unit_switches": "on",
+     "n_patients_with_bend": 37,
+     "share_of_family": 0.561,
+     "x_median": 178.5,
+     "x_p10": 137.8,
+     "x_p90": 191.3,
+     "dslope_median": -0.07142,
+     "bend_logodds_over_range": -7.57,
+     "region": [
+      132.5,
+      196.6
+     ],
+     "family_patients_with_value_in_region": 31,
+     "all_training_patients_in_region": 104,
+     "family_patients_past_their_own_bend": 3,
+     "thin": false
+    }
+   ],
+   "segments_of_median_curve": [
+    {
+     "from": 94.0,
+     "to": 113.4,
+     "word": "up",
+     "logodds_change": 3.51,
+     "slope_per_unit": 0.181,
+     "risk_from": 0.414,
+     "risk_to": 0.959,
+     "ends_with": [
+      "2116-"
+     ]
+    },
+    {
+     "from": 113.4,
+     "to": 166.9,
+     "word": "up",
+     "logodds_change": 6.64,
+     "slope_per_unit": 0.124,
+     "risk_from": 0.959,
+     "risk_to": 1.0,
+     "ends_with": [
+      "2445+"
+     ]
+    },
+    {
+     "from": 166.9,
+     "to": 178.5,
+     "word": "up",
+     "logodds_change": 1.48,
+     "slope_per_unit": 0.128,
+     "risk_from": 1.0,
+     "risk_to": 1.0,
+     "ends_with": [
+      "4037+"
+     ]
+    },
+    {
+     "from": 178.5,
+     "to": 200.0,
+     "word": "up",
+     "logodds_change": 2.01,
+     "slope_per_unit": 0.0933,
+     "risk_from": 1.0,
+     "risk_to": 1.0,
+     "ends_with": []
+    }
+   ],
+   "patients_by_own_segment": {
+    "0": 4,
+    "1": 30,
+    "2": 27,
+    "3": 4,
+    "4": 1
+   },
+   "typical_patient_row": 156,
+   "typical_patient_values": {
+    "age": "63 years",
+    "sex": "male",
+    "chest pain type": "no chest pain (asymptomatic)",
+    "serum cholesterol": "254 mg/dL (6.6 mmol/L)",
+    "fasting blood sugar": "fasting blood sugar of 120 mg/dL or less",
+    "resting ECG": "signs of left ventricular hypertrophy on the resting ECG",
+    "maximum heart rate reached during the exercise test": "147 beats per minute",
+    "exercise-induced angina": "no chest pain on exercise",
+    "ST depression during exercise (compared with rest)": "1.4 mm",
+    "slope of the ST segment at peak exercise": "a flat ST segment",
+    "number of major vessels coloured by fluoroscopy": "1 vessels",
+    "thallium stress test result": "a reversible defect on the thallium scan"
+   },
+   "characteristic_curve": {
+    "x": [
+     94.0,
+     96.65,
+     99.3,
+     101.95,
+     104.6,
+     107.25,
+     109.9,
+     112.55,
+     115.2,
+     117.85,
+     120.5,
+     123.15,
+     125.8,
+     128.45,
+     131.1,
+     133.75,
+     136.4,
+     139.05,
+     141.7,
+     144.35,
+     147.0,
+     149.65,
+     152.3,
+     154.95,
+     157.6,
+     160.25,
+     162.9,
+     165.55,
+     168.2,
+     170.85,
+     173.5,
+     176.15,
+     178.8,
+     181.45,
+     184.1,
+     186.75,
+     189.4,
+     192.05,
+     194.7,
+     197.35,
+     200.0
+    ],
+    "logit_median": [
+     -0.3532,
+     0.1188,
+     0.5446,
+     0.8868,
+     1.362,
+     1.787,
+     2.383,
+     2.978,
+     3.459,
+     3.798,
+     4.137,
+     4.477,
+     4.812,
+     5.145,
+     5.479,
+     5.812,
+     6.145,
+     6.423,
+     6.676,
+     6.936,
+     7.276,
+     7.615,
+     7.954,
+     8.294,
+     8.633,
+     8.973,
+     9.312,
+     9.623,
+     9.963,
+     10.3,
+     10.64,
+     10.97,
+     11.31,
+     11.64,
+     11.92,
+     12.15,
+     12.39,
+     12.62,
+     12.9,
+     13.14,
+     13.28
+    ],
+    "risk_median": [
+     0.4139,
+     0.5295,
+     0.6328,
+     0.7078,
+     0.7961,
+     0.8565,
+     0.9154,
+     0.9515,
+     0.9695,
+     0.9781,
+     0.9843,
+     0.9888,
+     0.9919,
+     0.9942,
+     0.9958,
+     0.997,
+     0.9979,
+     0.9984,
+     0.9987,
+     0.999,
+     0.9993,
+     0.9995,
+     0.9996,
+     0.9998,
+     0.9998,
+     0.9999,
+     0.9999,
+     0.9999,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "conditions": {
+    "method": "one-vs-rest decision tree (balanced), the leaves where the family is the majority",
+    "rules": [
+     {
+      "if": [
+       "chest pain type ≠ typical angina",
+       "slope of the ST segment at peak exercise ≠ an upsloping ST segment",
+       "thallium stress test result = a reversible defect on the thallium scan"
+      ],
+      "n": 53,
+      "members": 47,
+      "precision": 0.887,
+      "recall": 0.712
+     },
+     {
+      "if": [
+       "ST depression during exercise (compared with rest) > 2.0 mm",
+       "slope of the ST segment at peak exercise ≠ an upsloping ST segment",
+       "thallium stress test result ≠ a reversible defect on the thallium scan"
+      ],
+      "n": 15,
+      "members": 10,
+      "precision": 0.667,
+      "recall": 0.152
+     },
+     {
+      "if": [
+       "ST depression during exercise (compared with rest) > 0.6 mm",
+       "slope of the ST segment at peak exercise = an upsloping ST segment",
+       "number of major vessels coloured by fluoroscopy > 1.5 vessels"
+      ],
+      "n": 7,
+      "members": 4,
+      "precision": 0.571,
+      "recall": 0.0606
+     }
+    ],
+    "balanced_accuracy_train": 0.922
+   },
+   "outcome_by_band_train": [
+    {
+     "band": "≤ 120",
+     "n": 15,
+     "events": 12,
+     "rate": 0.8,
+     "rate_ci95": [
+      0.548,
+      0.93
+     ],
+     "model_mean_risk": 0.803
+    },
+    {
+     "band": "120–128",
+     "n": 10,
+     "events": 9,
+     "rate": 0.9,
+     "rate_ci95": [
+      0.596,
+      0.982
+     ],
+     "model_mean_risk": 0.953
+    },
+    {
+     "band": "128–136",
+     "n": 10,
+     "events": 8,
+     "rate": 0.8,
+     "rate_ci95": [
+      0.49,
+      0.943
+     ],
+     "model_mean_risk": 0.725
+    },
+    {
+     "band": "136–145",
+     "n": 15,
+     "events": 15,
+     "rate": 1.0,
+     "rate_ci95": [
+      0.796,
+      1.0
+     ],
+     "model_mean_risk": 0.97
+    },
+    {
+     "band": "> 145",
+     "n": 16,
+     "events": 14,
+     "rate": 0.875,
+     "rate_ci95": [
+      0.64,
+      0.965
+     ],
+     "model_mean_risk": 0.921
+    }
+   ],
+   "bend_data_check_train": [
+    {
+     "bend": "855+",
+     "at": 107.0,
+     "below": {
+      "n": 2,
+      "events": 0,
+      "rate": 0.0,
+      "rate_ci95": [
+       0.0,
+       0.658
+      ],
+      "model_mean_risk": 0.244
+     },
+     "above": {
+      "n": 64,
+      "events": 58,
+      "rate": 0.906,
+      "rate_ci95": [
+       0.81,
+       0.956
+      ],
+      "model_mean_risk": 0.9
+     }
+    },
+    {
+     "bend": "2116-",
+     "at": 113.4,
+     "below": {
+      "n": 6,
+      "events": 4,
+      "rate": 0.667,
+      "rate_ci95": [
+       0.3,
+       0.903
+      ],
+      "model_mean_risk": 0.727
+     },
+     "above": {
+      "n": 60,
+      "events": 54,
+      "rate": 0.9,
+      "rate_ci95": [
+       0.799,
+       0.953
+      ],
+      "model_mean_risk": 0.896
+     }
+    },
+    {
+     "bend": "2445+",
+     "at": 166.9,
+     "below": {
+      "n": 61,
+      "events": 53,
+      "rate": 0.869,
+      "rate_ci95": [
+       0.762,
+       0.932
+      ],
+      "model_mean_risk": 0.871
+     },
+     "above": {
+      "n": 5,
+      "events": 5,
+      "rate": 1.0,
+      "rate_ci95": [
+       0.566,
+       1.0
+      ],
+      "model_mean_risk": 1.0
+     }
+    },
+    {
+     "bend": "4037+",
+     "at": 178.5,
+     "below": {
+      "n": 64,
+      "events": 56,
+      "rate": 0.875,
+      "rate_ci95": [
+       0.772,
+       0.935
+      ],
+      "model_mean_risk": 0.877
+     },
+     "above": {
+      "n": 2,
+      "events": 2,
+      "rate": 1.0,
+      "rate_ci95": [
+       0.342,
+       1.0
+      ],
+      "model_mean_risk": 1.0
+     }
+    }
+   ],
+   "outcome_by_band_test": [
+    {
+     "band": "≤ 120",
+     "n": 7,
+     "events": 5,
+     "rate": 0.714,
+     "rate_ci95": [
+      0.359,
+      0.918
+     ],
+     "model_mean_risk": 0.767
+    },
+    {
+     "band": "120–128",
+     "n": 4,
+     "events": 3,
+     "rate": 0.75,
+     "rate_ci95": [
+      0.301,
+      0.954
+     ],
+     "model_mean_risk": 0.859
+    },
+    {
+     "band": "128–136",
+     "n": 8,
+     "events": 7,
+     "rate": 0.875,
+     "rate_ci95": [
+      0.529,
+      0.978
+     ],
+     "model_mean_risk": 0.992
+    },
+    {
+     "band": "136–145",
+     "n": 3,
+     "events": 3,
+     "rate": 1.0,
+     "rate_ci95": [
+      0.439,
+      1.0
+     ],
+     "model_mean_risk": 0.998
+    },
+    {
+     "band": "> 145",
+     "n": 4,
+     "events": 4,
+     "rate": 1.0,
+     "rate_ci95": [
+      0.51,
+      1.0
+     ],
+     "model_mean_risk": 1.0
+    }
+   ],
+   "n_test": 26
+  },
+  {
+   "family": "F3",
+   "shape": [
+    "up",
+    "flat",
+    "down",
+    "up"
+   ],
+   "shape_text": "rises → flat → falls → rises",
+   "n": 50,
+   "share": 0.207,
+   "merged_from": [],
+   "variants": [
+    {
+     "bends_in_order": [
+      "2445+",
+      "2116-",
+      "4037+",
+      "855+"
+     ],
+     "n": 26
+    },
+    {
+     "bends_in_order": [
+      "2116-",
+      "2445+",
+      "4037+",
+      "855+"
+     ],
+     "n": 24
+    }
+   ],
+   "pieces": [
+    {
+     "piece": 1,
+     "word": "up",
+     "reads": "rises",
+     "n_exact": 50,
+     "members_whose_own_value_is_on_this_piece": 7,
+     "from_median": 94.0,
+     "to_median": 113.4,
+     "from_p10_p90": [
+      94.0,
+      94.0
+     ],
+     "to_p10_p90": [
+      109.5,
+      114.6
+     ],
+     "logodds_change_median": 1.88,
+     "ends_with": {
+      "2116-": 46,
+      "2445+": 4
+     },
+     "bends_inside": {
+      "2445+": 26,
+      "2116-": 4
+     },
+     "typical_member": {
+      "from_x": 94.0,
+      "to_x": 114.6,
+      "risk_from": 0.0167,
+      "risk_to": 0.11
+     }
+    },
+    {
+     "piece": 2,
+     "word": "flat",
+     "reads": "flat",
+     "n_exact": 50,
+     "members_whose_own_value_is_on_this_piece": 21,
+     "from_median": 113.4,
+     "to_median": 129.1,
+     "from_p10_p90": [
+      109.5,
+      114.6
+     ],
+     "to_p10_p90": [
+      115.1,
+      168.2
+     ],
+     "logodds_change_median": -0.0737,
+     "ends_with": {
+      "4037+": 50
+     },
+     "bends_inside": {
+      "2445+": 20
+     },
+     "typical_member": {
+      "from_x": 114.6,
+      "to_x": 138.3,
+      "risk_from": 0.11,
+      "risk_to": 0.103
+     }
+    },
+    {
+     "piece": 3,
+     "word": "down",
+     "reads": "falls",
+     "n_exact": 50,
+     "members_whose_own_value_is_on_this_piece": 19,
+     "from_median": 129.1,
+     "to_median": 180.5,
+     "from_p10_p90": [
+      115.1,
+      168.2
+     ],
+     "to_p10_p90": [
+      156.7,
+      188.7
+     ],
+     "logodds_change_median": -3.11,
+     "ends_with": {
+      "855+": 50
+     },
+     "bends_inside": {},
+     "typical_member": {
+      "from_x": 138.3,
+      "to_x": 170.9,
+      "risk_from": 0.103,
+      "risk_to": 0.00949
+     }
+    },
+    {
+     "piece": 4,
+     "word": "up",
+     "reads": "rises",
+     "n_exact": 50,
+     "members_whose_own_value_is_on_this_piece": 3,
+     "from_median": 180.5,
+     "to_median": 200.0,
+     "from_p10_p90": [
+      156.7,
+      188.7
+     ],
+     "to_p10_p90": [
+      200.0,
+      200.0
+     ],
+     "logodds_change_median": 1.01,
+     "ends_with": {},
+     "bends_inside": {},
+     "typical_member": {
+      "from_x": 170.9,
+      "to_x": 200.0,
+      "risk_from": 0.00949,
+      "risk_to": 0.0418
+     }
+    }
+   ],
+   "bends": [
+    {
+     "bend": "2445+",
+     "unit": "2445",
+     "part": "fitness_score",
+     "unit_switches": "on",
+     "n_patients_with_bend": 50,
+     "share_of_family": 1.0,
+     "x_median": 111.6,
+     "x_p10": 97.52,
+     "x_p90": 150.7,
+     "dslope_median": 0.02709,
+     "bend_logodds_over_range": 2.872,
+     "region": [
+      92.22,
+      156.0
+     ],
+     "family_patients_with_value_in_region": 47,
+     "all_training_patients_in_region": 218,
+     "family_patients_past_their_own_bend": 39,
+     "thin": false
+    },
+    {
+     "bend": "2116-",
+     "unit": "2116",
+     "part": "fitness_pathway",
+     "unit_switches": "off",
+     "n_patients_with_bend": 50,
+     "share_of_family": 1.0,
+     "x_median": 113.4,
+     "x_p10": 109.5,
+     "x_p90": 114.6,
+     "dslope_median": -0.1284,
+     "bend_logodds_over_range": -13.61,
+     "region": [
+      104.2,
+      119.9
+     ],
+     "family_patients_with_value_in_region": 8,
+     "all_training_patients_in_region": 38,
+     "family_patients_past_their_own_bend": 43,
+     "thin": false
+    },
+    {
+     "bend": "4037+",
+     "unit": "4037",
+     "part": "fitness_pathway",
+     "unit_switches": "on",
+     "n_patients_with_bend": 50,
+     "share_of_family": 1.0,
+     "x_median": 129.1,
+     "x_p10": 115.1,
+     "x_p90": 168.2,
+     "dslope_median": -0.07142,
+     "bend_logodds_over_range": -7.57,
+     "region": [
+      109.8,
+      173.5
+     ],
+     "family_patients_with_value_in_region": 44,
+     "all_training_patients_in_region": 216,
+     "family_patients_past_their_own_bend": 22,
+     "thin": false
+    },
+    {
+     "bend": "855+",
+     "unit": "855",
+     "part": "ischaemia_gate",
+     "unit_switches": "on",
+     "n_patients_with_bend": 50,
+     "share_of_family": 1.0,
+     "x_median": 180.5,
+     "x_p10": 156.7,
+     "x_p90": 188.7,
+     "dslope_median": 0.1281,
+     "bend_logodds_over_range": 13.58,
+     "region": [
+      151.4,
+      194.0
+     ],
+     "family_patients_with_value_in_region": 5,
+     "all_training_patients_in_region": 28,
+     "family_patients_past_their_own_bend": 3,
+     "thin": false
+    }
+   ],
+   "segments_of_median_curve": [
+    {
+     "from": 94.0,
+     "to": 111.6,
+     "word": "up",
+     "logodds_change": 1.77,
+     "slope_per_unit": 0.1,
+     "risk_from": 0.0295,
+     "risk_to": 0.151,
+     "ends_with": [
+      "2445+"
+     ]
+    },
+    {
+     "from": 111.6,
+     "to": 113.4,
+     "word": "up",
+     "logodds_change": 0.0894,
+     "slope_per_unit": 0.0497,
+     "risk_from": 0.151,
+     "risk_to": 0.163,
+     "ends_with": [
+      "2116-"
+     ]
+    },
+    {
+     "from": 113.4,
+     "to": 129.1,
+     "word": "down",
+     "logodds_change": -0.487,
+     "slope_per_unit": -0.031,
+     "risk_from": 0.163,
+     "risk_to": 0.107,
+     "ends_with": [
+      "4037+"
+     ]
+    },
+    {
+     "from": 129.1,
+     "to": 180.5,
+     "word": "down",
+     "logodds_change": -2.07,
+     "slope_per_unit": -0.0402,
+     "risk_from": 0.107,
+     "risk_to": 0.0149,
+     "ends_with": [
+      "855+"
+     ]
+    },
+    {
+     "from": 180.5,
+     "to": 200.0,
+     "word": "up",
+     "logodds_change": 0.329,
+     "slope_per_unit": 0.0169,
+     "risk_from": 0.0149,
+     "risk_to": 0.0206,
+     "ends_with": []
+    }
+   ],
+   "patients_by_own_segment": {
+    "0": 3,
+    "1": 12,
+    "2": 13,
+    "3": 19,
+    "4": 3
+   },
+   "typical_patient_row": 42,
+   "typical_patient_values": {
+    "age": "55 years",
+    "sex": "female",
+    "chest pain type": "atypical angina",
+    "serum cholesterol": "342 mg/dL (8.8 mmol/L)",
+    "fasting blood sugar": "fasting blood sugar of 120 mg/dL or less",
+    "resting ECG": "a normal resting ECG",
+    "maximum heart rate reached during the exercise test": "166 beats per minute",
+    "exercise-induced angina": "no chest pain on exercise",
+    "ST depression during exercise (compared with rest)": "1.2 mm",
+    "slope of the ST segment at peak exercise": "an upsloping ST segment",
+    "number of major vessels coloured by fluoroscopy": "0 vessels",
+    "thallium stress test result": "a normal thallium scan"
+   },
+   "characteristic_curve": {
+    "x": [
+     94.0,
+     96.65,
+     99.3,
+     101.95,
+     104.6,
+     107.25,
+     109.9,
+     112.55,
+     115.2,
+     117.85,
+     120.5,
+     123.15,
+     125.8,
+     128.45,
+     131.1,
+     133.75,
+     136.4,
+     139.05,
+     141.7,
+     144.35,
+     147.0,
+     149.65,
+     152.3,
+     154.95,
+     157.6,
+     160.25,
+     162.9,
+     165.55,
+     168.2,
+     170.85,
+     173.5,
+     176.15,
+     178.8,
+     181.45,
+     184.1,
+     186.75,
+     189.4,
+     192.05,
+     194.7,
+     197.35,
+     200.0
+    ],
+    "logit_median": [
+     -3.494,
+     -3.238,
+     -2.981,
+     -2.723,
+     -2.431,
+     -2.139,
+     -1.867,
+     -1.674,
+     -1.605,
+     -1.617,
+     -1.63,
+     -1.726,
+     -1.92,
+     -2.117,
+     -2.228,
+     -2.429,
+     -2.631,
+     -2.741,
+     -2.848,
+     -2.955,
+     -3.092,
+     -3.199,
+     -3.306,
+     -3.476,
+     -3.649,
+     -3.851,
+     -4.053,
+     -4.254,
+     -4.41,
+     -4.534,
+     -4.467,
+     -4.384,
+     -4.274,
+     -4.149,
+     -4.187,
+     -4.388,
+     -4.414,
+     -4.276,
+     -4.138,
+     -4.001,
+     -3.863
+    ],
+    "risk_median": [
+     0.02951,
+     0.03779,
+     0.04829,
+     0.06163,
+     0.08082,
+     0.1054,
+     0.1339,
+     0.1578,
+     0.1676,
+     0.1659,
+     0.1642,
+     0.1511,
+     0.1279,
+     0.1075,
+     0.09729,
+     0.08096,
+     0.06717,
+     0.06077,
+     0.05551,
+     0.05107,
+     0.04454,
+     0.03958,
+     0.03542,
+     0.03002,
+     0.02535,
+     0.02082,
+     0.01708,
+     0.014,
+     0.01201,
+     0.01069,
+     0.01137,
+     0.01233,
+     0.01373,
+     0.01553,
+     0.01515,
+     0.01242,
+     0.01199,
+     0.01374,
+     0.01574,
+     0.01802,
+     0.02063
+    ]
+   },
+   "conditions": {
+    "method": "one-vs-rest decision tree (balanced), the leaves where the family is the majority",
+    "rules": [
+     {
+      "if": [
+       "age < 63.5 years",
+       "age > 45.5 years",
+       "ST depression during exercise (compared with rest) < 0.8 mm"
+      ],
+      "n": 77,
+      "members": 41,
+      "precision": 0.532,
+      "recall": 0.82
+     }
+    ],
+    "balanced_accuracy_train": 0.845
+   },
+   "outcome_by_band_train": [
+    {
+     "band": "≤ 120",
+     "n": 15,
+     "events": 4,
+     "rate": 0.267,
+     "rate_ci95": [
+      0.109,
+      0.52
+     ],
+     "model_mean_risk": 0.188
+    },
+    {
+     "band": "120–128",
+     "n": 8,
+     "events": 3,
+     "rate": 0.375,
+     "rate_ci95": [
+      0.137,
+      0.694
+     ],
+     "model_mean_risk": 0.433
+    },
+    {
+     "band": "128–136",
+     "n": 16,
+     "events": 2,
+     "rate": 0.125,
+     "rate_ci95": [
+      0.035,
+      0.36
+     ],
+     "model_mean_risk": 0.115
+    },
+    {
+     "band": "136–145",
+     "n": 5,
+     "events": 0,
+     "rate": 0.0,
+     "rate_ci95": [
+      0.0,
+      0.434
+     ],
+     "model_mean_risk": 0.159
+    },
+    {
+     "band": "> 145",
+     "n": 6,
+     "events": 2,
+     "rate": 0.333,
+     "rate_ci95": [
+      0.0968,
+      0.7
+     ],
+     "model_mean_risk": 0.228
+    }
+   ],
+   "bend_data_check_train": [
+    {
+     "bend": "2445+",
+     "at": 111.6,
+     "below": {
+      "n": 5,
+      "events": 1,
+      "rate": 0.2,
+      "rate_ci95": [
+       0.0362,
+       0.624
+      ],
+      "model_mean_risk": 0.095
+     },
+     "above": {
+      "n": 45,
+      "events": 10,
+      "rate": 0.222,
+      "rate_ci95": [
+       0.125,
+       0.363
+      ],
+      "model_mean_risk": 0.218
+     }
+    },
+    {
+     "bend": "2116-",
+     "at": 113.4,
+     "below": {
+      "n": 9,
+      "events": 2,
+      "rate": 0.222,
+      "rate_ci95": [
+       0.0632,
+       0.547
+      ],
+      "model_mean_risk": 0.155
+     },
+     "above": {
+      "n": 41,
+      "events": 9,
+      "rate": 0.22,
+      "rate_ci95": [
+       0.12,
+       0.367
+      ],
+      "model_mean_risk": 0.217
+     }
+    },
+    {
+     "bend": "4037+",
+     "at": 129.1,
+     "below": {
+      "n": 24,
+      "events": 7,
+      "rate": 0.292,
+      "rate_ci95": [
+       0.149,
+       0.492
+      ],
+      "model_mean_risk": 0.263
+     },
+     "above": {
+      "n": 26,
+      "events": 4,
+      "rate": 0.154,
+      "rate_ci95": [
+       0.0615,
+       0.335
+      ],
+      "model_mean_risk": 0.153
+     }
+    },
+    {
+     "bend": "855+",
+     "at": 180.5,
+     "below": {
+      "n": 49,
+      "events": 10,
+      "rate": 0.204,
+      "rate_ci95": [
+       0.115,
+       0.336
+      ],
+      "model_mean_risk": 0.196
+     },
+     "above": {
+      "n": 1,
+      "events": 1,
+      "rate": 1.0,
+      "rate_ci95": [
+       0.207,
+       1.0
+      ],
+      "model_mean_risk": 0.672
+     }
+    }
+   ],
+   "outcome_by_band_test": [
+    {
+     "band": "≤ 120",
+     "n": 5,
+     "events": 1,
+     "rate": 0.2,
+     "rate_ci95": [
+      0.0362,
+      0.624
+     ],
+     "model_mean_risk": 0.203
+    },
+    {
+     "band": "120–128",
+     "n": 1,
+     "events": 1,
+     "rate": 1.0,
+     "rate_ci95": [
+      0.207,
+      1.0
+     ],
+     "model_mean_risk": 0.365
+    },
+    {
+     "band": "128–136",
+     "n": 2,
+     "events": 0,
+     "rate": 0.0,
+     "rate_ci95": [
+      0.0,
+      0.658
+     ],
+     "model_mean_risk": 0.241
+    },
+    {
+     "band": "136–145",
+     "n": 4,
+     "events": 0,
+     "rate": 0.0,
+     "rate_ci95": [
+      0.0,
+      0.49
+     ],
+     "model_mean_risk": 0.193
+    },
+    {
+     "band": "> 145",
+     "n": 1,
+     "events": 1,
+     "rate": 1.0,
+     "rate_ci95": [
+      0.207,
+      1.0
+     ],
+     "model_mean_risk": 0.135
+    }
+   ],
+   "n_test": 13
+  },
+  {
+   "family": "F4",
+   "shape": [
+    "up",
+    "down",
+    "up"
+   ],
+   "shape_text": "rises → falls → rises",
+   "n": 36,
+   "share": 0.149,
+   "merged_from": [],
+   "variants": [
+    {
+     "bends_in_order": [
+      "4037+",
+      "2116-",
+      "855+"
+     ],
+     "n": 19
+    },
+    {
+     "bends_in_order": [
+      "2116-",
+      "855+"
+     ],
+     "n": 13
+    },
+    {
+     "bends_in_order": [
+      "2116-",
+      "4037+",
+      "855+"
+     ],
+     "n": 4
+    }
+   ],
+   "pieces": [
+    {
+     "piece": 1,
+     "word": "up",
+     "reads": "rises",
+     "n_exact": 36,
+     "members_whose_own_value_is_on_this_piece": 4,
+     "from_median": 94.0,
+     "to_median": 105.3,
+     "from_p10_p90": [
+      94.0,
+      94.0
+     ],
+     "to_p10_p90": [
+      101.7,
+      109.1
+     ],
+     "logodds_change_median": 0.9,
+     "ends_with": {
+      "2116-": 32,
+      "4037+": 4
+     },
+     "bends_inside": {
+      "4037+": 19,
+      "2116-": 4
+     },
+     "typical_member": {
+      "from_x": 94.0,
+      "to_x": 105.9,
+      "risk_from": 0.0464,
+      "risk_to": 0.126
+     }
+    },
+    {
+     "piece": 2,
+     "word": "down",
+     "reads": "falls",
+     "n_exact": 36,
+     "members_whose_own_value_is_on_this_piece": 30,
+     "from_median": 105.3,
+     "to_median": 188.7,
+     "from_p10_p90": [
+      101.7,
+      109.1
+     ],
+     "to_p10_p90": [
+      150.5,
+      188.7
+     ],
+     "logodds_change_median": -6.17,
+     "ends_with": {
+      "855+": 36
+     },
+     "bends_inside": {},
+     "typical_member": {
+      "from_x": 105.9,
+      "to_x": 188.7,
+      "risk_from": 0.126,
+      "risk_to": 0.000267
+     }
+    },
+    {
+     "piece": 3,
+     "word": "up",
+     "reads": "rises",
+     "n_exact": 36,
+     "members_whose_own_value_is_on_this_piece": 2,
+     "from_median": 188.7,
+     "to_median": 200.0,
+     "from_p10_p90": [
+      150.5,
+      188.7
+     ],
+     "to_p10_p90": [
+      200.0,
+      200.0
+     ],
+     "logodds_change_median": 0.587,
+     "ends_with": {},
+     "bends_inside": {},
+     "typical_member": {
+      "from_x": 188.7,
+      "to_x": 200.0,
+      "risk_from": 0.000267,
+      "risk_to": 0.000477
+     }
+    }
+   ],
+   "bends": [
+    {
+     "bend": "4037+",
+     "unit": "4037",
+     "part": "fitness_pathway",
+     "unit_switches": "on",
+     "n_patients_with_bend": 23,
+     "share_of_family": 0.639,
+     "x_median": 100.5,
+     "x_p10": 97.73,
+     "x_p90": 110.0,
+     "dslope_median": -0.07142,
+     "bend_logodds_over_range": -7.57,
+     "region": [
+      92.43,
+      115.3
+     ],
+     "family_patients_with_value_in_region": 11,
+     "all_training_patients_in_region": 42,
+     "family_patients_past_their_own_bend": 20,
+     "thin": false
+    },
+    {
+     "bend": "2116-",
+     "unit": "2116",
+     "part": "fitness_pathway",
+     "unit_switches": "off",
+     "n_patients_with_bend": 36,
+     "share_of_family": 1.0,
+     "x_median": 105.3,
+     "x_p10": 101.7,
+     "x_p90": 108.2,
+     "dslope_median": -0.1284,
+     "bend_logodds_over_range": -13.61,
+     "region": [
+      96.39,
+      113.5
+     ],
+     "family_patients_with_value_in_region": 9,
+     "all_training_patients_in_region": 39,
+     "family_patients_past_their_own_bend": 32,
+     "thin": false
+    },
+    {
+     "bend": "855+",
+     "unit": "855",
+     "part": "ischaemia_gate",
+     "unit_switches": "on",
+     "n_patients_with_bend": 36,
+     "share_of_family": 1.0,
+     "x_median": 188.7,
+     "x_p10": 150.5,
+     "x_p90": 188.7,
+     "dslope_median": 0.1281,
+     "bend_logodds_over_range": 13.58,
+     "region": [
+      145.2,
+      194.0
+     ],
+     "family_patients_with_value_in_region": 1,
+     "all_training_patients_in_region": 47,
+     "family_patients_past_their_own_bend": 2,
+     "thin": true
+    }
+   ],
+   "segments_of_median_curve": [
+    {
+     "from": 94.0,
+     "to": 100.5,
+     "word": "up",
+     "logodds_change": 0.657,
+     "slope_per_unit": 0.101,
+     "risk_from": 0.0268,
+     "risk_to": 0.0505,
+     "ends_with": [
+      "4037+"
+     ]
+    },
+    {
+     "from": 100.5,
+     "to": 105.3,
+     "word": "up",
+     "logodds_change": 0.417,
+     "slope_per_unit": 0.0868,
+     "risk_from": 0.0505,
+     "risk_to": 0.0751,
+     "ends_with": [
+      "2116-"
+     ]
+    },
+    {
+     "from": 105.3,
+     "to": 188.7,
+     "word": "down",
+     "logodds_change": -4.79,
+     "slope_per_unit": -0.0574,
+     "risk_from": 0.0751,
+     "risk_to": 0.000669,
+     "ends_with": [
+      "855+"
+     ]
+    },
+    {
+     "from": 188.7,
+     "to": 200.0,
+     "word": "up",
+     "logodds_change": 0.586,
+     "slope_per_unit": 0.0519,
+     "risk_from": 0.000669,
+     "risk_to": 0.0012,
+     "ends_with": []
+    }
+   ],
+   "patients_by_own_segment": {
+    "0": 4,
+    "1": 10,
+    "2": 22
+   },
+   "typical_patient_row": 154,
+   "typical_patient_values": {
+    "age": "44 years",
+    "sex": "male",
+    "chest pain type": "atypical angina",
+    "serum cholesterol": "220 mg/dL (5.7 mmol/L)",
+    "fasting blood sugar": "fasting blood sugar of 120 mg/dL or less",
+    "resting ECG": "a normal resting ECG",
+    "maximum heart rate reached during the exercise test": "170 beats per minute",
+    "exercise-induced angina": "no chest pain on exercise",
+    "ST depression during exercise (compared with rest)": "0.0 mm",
+    "slope of the ST segment at peak exercise": "an upsloping ST segment",
+    "number of major vessels coloured by fluoroscopy": "0 vessels",
+    "thallium stress test result": "a normal thallium scan"
+   },
+   "characteristic_curve": {
+    "x": [
+     94.0,
+     96.65,
+     99.3,
+     101.95,
+     104.6,
+     107.25,
+     109.9,
+     112.55,
+     115.2,
+     117.85,
+     120.5,
+     123.15,
+     125.8,
+     128.45,
+     131.1,
+     133.75,
+     136.4,
+     139.05,
+     141.7,
+     144.35,
+     147.0,
+     149.65,
+     152.3,
+     154.95,
+     157.6,
+     160.25,
+     162.9,
+     165.55,
+     168.2,
+     170.85,
+     173.5,
+     176.15,
+     178.8,
+     181.45,
+     184.1,
+     186.75,
+     189.4,
+     192.05,
+     194.7,
+     197.35,
+     200.0
+    ],
+    "logit_median": [
+     -3.593,
+     -3.344,
+     -3.052,
+     -2.819,
+     -2.586,
+     -2.622,
+     -2.823,
+     -3.025,
+     -3.227,
+     -3.428,
+     -3.545,
+     -3.577,
+     -3.655,
+     -3.856,
+     -3.966,
+     -4.022,
+     -4.224,
+     -4.425,
+     -4.627,
+     -4.829,
+     -4.987,
+     -5.189,
+     -5.391,
+     -5.592,
+     -5.772,
+     -5.974,
+     -6.176,
+     -6.377,
+     -6.579,
+     -6.781,
+     -6.982,
+     -7.179,
+     -7.348,
+     -7.409,
+     -7.33,
+     -7.287,
+     -7.274,
+     -7.137,
+     -6.999,
+     -6.861,
+     -6.723
+    ],
+    "risk_median": [
+     0.0268,
+     0.03432,
+     0.04527,
+     0.05631,
+     0.07035,
+     0.06857,
+     0.05677,
+     0.0469,
+     0.03868,
+     0.03184,
+     0.02815,
+     0.02728,
+     0.02571,
+     0.02112,
+     0.01871,
+     0.01761,
+     0.01444,
+     0.01183,
+     0.009692,
+     0.007936,
+     0.006778,
+     0.005547,
+     0.004538,
+     0.003713,
+     0.003104,
+     0.002539,
+     0.002076,
+     0.001698,
+     0.001388,
+     0.001135,
+     0.0009277,
+     0.000762,
+     0.0006432,
+     0.0006108,
+     0.0006676,
+     0.0006873,
+     0.0006929,
+     0.0007951,
+     0.0009125,
+     0.001047,
+     0.001202
+    ]
+   },
+   "conditions": {
+    "method": "one-vs-rest decision tree (balanced), the leaves where the family is the majority",
+    "rules": [
+     {
+      "if": [
+       "age < 44.5 years",
+       "exercise-induced angina = no chest pain on exercise"
+      ],
+      "n": 33,
+      "members": 30,
+      "precision": 0.909,
+      "recall": 0.833
+     }
+    ],
+    "balanced_accuracy_train": 0.968
+   },
+   "outcome_by_band_train": [
+    {
+     "band": "≤ 120",
+     "n": 19,
+     "events": 2,
+     "rate": 0.105,
+     "rate_ci95": [
+      0.0294,
+      0.314
+     ],
+     "model_mean_risk": 0.11
+    },
+    {
+     "band": "120–128",
+     "n": 5,
+     "events": 0,
+     "rate": 0.0,
+     "rate_ci95": [
+      0.0,
+      0.434
+     ],
+     "model_mean_risk": 0.0805
+    },
+    {
+     "band": "128–136",
+     "n": 6,
+     "events": 0,
+     "rate": 0.0,
+     "rate_ci95": [
+      2.78e-17,
+      0.39
+     ],
+     "model_mean_risk": 0.0423
+    },
+    {
+     "band": "136–145",
+     "n": 5,
+     "events": 0,
+     "rate": 0.0,
+     "rate_ci95": [
+      0.0,
+      0.434
+     ],
+     "model_mean_risk": 0.00399
+    },
+    {
+     "band": "> 145",
+     "n": 1,
+     "events": 0,
+     "rate": 0.0,
+     "rate_ci95": [
+      0.0,
+      0.793
+     ],
+     "model_mean_risk": 0.0108
+    }
+   ],
+   "bend_data_check_train": [
+    {
+     "bend": "4037+",
+     "at": 100.5,
+     "below": {
+      "n": 1,
+      "events": 0,
+      "rate": 0.0,
+      "rate_ci95": [
+       0.0,
+       0.793
+      ],
+      "model_mean_risk": 0.00101
+     },
+     "above": {
+      "n": 35,
+      "events": 2,
+      "rate": 0.0571,
+      "rate_ci95": [
+       0.0158,
+       0.186
+      ],
+      "model_mean_risk": 0.0794
+     }
+    },
+    {
+     "bend": "2116-",
+     "at": 105.3,
+     "below": {
+      "n": 5,
+      "events": 0,
+      "rate": 0.0,
+      "rate_ci95": [
+       0.0,
+       0.434
+      ],
+      "model_mean_risk": 0.0329
+     },
+     "above": {
+      "n": 31,
+      "events": 2,
+      "rate": 0.0645,
+      "rate_ci95": [
+       0.0179,
+       0.207
+      ],
+      "model_mean_risk": 0.0844
+     }
+    },
+    {
+     "bend": "855+",
+     "at": 188.7,
+     "below": {
+      "n": 36,
+      "events": 2,
+      "rate": 0.0556,
+      "rate_ci95": [
+       0.0154,
+       0.181
+      ],
+      "model_mean_risk": 0.0772
+     },
+     "above": {
+      "n": 0,
+      "events": 0,
+      "rate": null,
+      "rate_ci95": [
+       null,
+       null
+      ],
+      "model_mean_risk": null
+     }
+    }
+   ],
+   "outcome_by_band_test": [
+    {
+     "band": "≤ 120",
+     "n": 5,
+     "events": 2,
+     "rate": 0.4,
+     "rate_ci95": [
+      0.118,
+      0.769
+     ],
+     "model_mean_risk": 0.219
+    },
+    {
+     "band": "120–128",
+     "n": 1,
+     "events": 0,
+     "rate": 0.0,
+     "rate_ci95": [
+      0.0,
+      0.793
+     ],
+     "model_mean_risk": 0.00442
+    },
+    {
+     "band": "128–136",
+     "n": 4,
+     "events": 0,
+     "rate": 0.0,
+     "rate_ci95": [
+      0.0,
+      0.49
+     ],
+     "model_mean_risk": 0.0556
+    },
+    {
+     "band": "136–145",
+     "n": 1,
+     "events": 0,
+     "rate": 0.0,
+     "rate_ci95": [
+      0.0,
+      0.793
+     ],
+     "model_mean_risk": 0.00663
+    },
+    {
+     "band": "> 145",
+     "n": 1,
+     "events": 1,
+     "rate": 1.0,
+     "rate_ci95": [
+      0.207,
+      1.0
+     ],
+     "model_mean_risk": 0.00322
+    }
+   ],
+   "n_test": 12
+  },
+  {
+   "family": "F5",
+   "shape": [
+    "up",
+    "flat",
+    "down"
+   ],
+   "shape_text": "rises → flat → falls",
+   "n": 14,
+   "share": 0.0579,
+   "merged_from": [],
+   "variants": [
+    {
+     "bends_in_order": [
+      "2116-",
+      "2445+",
+      "4037+"
+     ],
+     "n": 11
+    },
+    {
+     "bends_in_order": [
+      "2445+",
+      "2116-",
+      "4037+"
+     ],
+     "n": 3
+    }
+   ],
+   "pieces": [
+    {
+     "piece": 1,
+     "word": "up",
+     "reads": "rises",
+     "n_exact": 14,
+     "members_whose_own_value_is_on_this_piece": 0,
+     "from_median": 94.0,
+     "to_median": 113.4,
+     "from_p10_p90": [
+      94.0,
+      94.0
+     ],
+     "to_p10_p90": [
+      110.8,
+      114.2
+     ],
+     "logodds_change_median": 1.88,
+     "ends_with": {
+      "2116-": 14
+     },
+     "bends_inside": {
+      "2445+": 3
+     },
+     "typical_member": {
+      "from_x": 94.0,
+      "to_x": 113.4,
+      "risk_from": 0.0756,
+      "risk_to": 0.347
+     }
+    },
+    {
+     "piece": 2,
+     "word": "flat",
+     "reads": "flat",
+     "n_exact": 14,
+     "members_whose_own_value_is_on_this_piece": 12,
+     "from_median": 113.4,
+     "to_median": 164.1,
+     "from_p10_p90": [
+      110.8,
+      114.2
+     ],
+     "to_p10_p90": [
+      120.3,
+      191.2
+     ],
+     "logodds_change_median": -0.0822,
+     "ends_with": {
+      "4037+": 14
+     },
+     "bends_inside": {
+      "2445+": 11
+     },
+     "typical_member": {
+      "from_x": 113.4,
+      "to_x": 175.0,
+      "risk_from": 0.347,
+      "risk_to": 0.329
+     }
+    },
+    {
+     "piece": 3,
+     "word": "down",
+     "reads": "falls",
+     "n_exact": 14,
+     "members_whose_own_value_is_on_this_piece": 2,
+     "from_median": 164.1,
+     "to_median": 200.0,
+     "from_p10_p90": [
+      120.3,
+      191.2
+     ],
+     "to_p10_p90": [
+      200.0,
+      200.0
+     ],
+     "logodds_change_median": -2.73,
+     "ends_with": {},
+     "bends_inside": {},
+     "typical_member": {
+      "from_x": 175.0,
+      "to_x": 200.0,
+      "risk_from": 0.329,
+      "risk_to": 0.0686
+     }
+    }
+   ],
+   "bends": [
+    {
+     "bend": "2116-",
+     "unit": "2116",
+     "part": "fitness_pathway",
+     "unit_switches": "off",
+     "n_patients_with_bend": 14,
+     "share_of_family": 1.0,
+     "x_median": 113.4,
+     "x_p10": 110.8,
+     "x_p90": 114.2,
+     "dslope_median": -0.09663,
+     "bend_logodds_over_range": -10.24,
+     "region": [
+      105.5,
+      119.5
+     ],
+     "family_patients_with_value_in_region": 2,
+     "all_training_patients_in_region": 35,
+     "family_patients_past_their_own_bend": 14,
+     "thin": true
+    },
+    {
+     "bend": "2445+",
+     "unit": "2445",
+     "part": "fitness_score",
+     "unit_switches": "on",
+     "n_patients_with_bend": 14,
+     "share_of_family": 1.0,
+     "x_median": 146.6,
+     "x_p10": 102.7,
+     "x_p90": 173.7,
+     "dslope_median": -0.004687,
+     "bend_logodds_over_range": -0.4968,
+     "region": [
+      97.44,
+      179.0
+     ],
+     "family_patients_with_value_in_region": 14,
+     "all_training_patients_in_region": 236,
+     "family_patients_past_their_own_bend": 7,
+     "thin": false
+    },
+    {
+     "bend": "4037+",
+     "unit": "4037",
+     "part": "fitness_pathway",
+     "unit_switches": "on",
+     "n_patients_with_bend": 14,
+     "share_of_family": 1.0,
+     "x_median": 164.1,
+     "x_p10": 120.3,
+     "x_p90": 191.2,
+     "dslope_median": -0.07142,
+     "bend_logodds_over_range": -7.57,
+     "region": [
+      115.0,
+      196.5
+     ],
+     "family_patients_with_value_in_region": 13,
+     "all_training_patients_in_region": 200,
+     "family_patients_past_their_own_bend": 2,
+     "thin": false
+    }
+   ],
+   "segments_of_median_curve": [
+    {
+     "from": 94.0,
+     "to": 113.4,
+     "word": "up",
+     "logodds_change": 1.87,
+     "slope_per_unit": 0.0964,
+     "risk_from": 0.087,
+     "risk_to": 0.38,
+     "ends_with": [
+      "2116-"
+     ]
+    },
+    {
+     "from": 113.4,
+     "to": 146.6,
+     "word": "down",
+     "logodds_change": -0.242,
+     "slope_per_unit": -0.0073,
+     "risk_from": 0.38,
+     "risk_to": 0.325,
+     "ends_with": [
+      "2445+"
+     ]
+    },
+    {
+     "from": 146.6,
+     "to": 164.1,
+     "word": "down",
+     "logodds_change": -0.691,
+     "slope_per_unit": -0.0395,
+     "risk_from": 0.325,
+     "risk_to": 0.221,
+     "ends_with": [
+      "4037+"
+     ]
+    },
+    {
+     "from": 164.1,
+     "to": 200.0,
+     "word": "down",
+     "logodds_change": -2.06,
+     "slope_per_unit": -0.0575,
+     "risk_from": 0.221,
+     "risk_to": 0.0406,
+     "ends_with": []
+    }
+   ],
+   "patients_by_own_segment": {
+    "1": 7,
+    "2": 5,
+    "3": 2
+   },
+   "typical_patient_row": 178,
+   "typical_patient_values": {
+    "age": "59 years",
+    "sex": "male",
+    "chest pain type": "typical angina",
+    "serum cholesterol": "273 mg/dL (7.1 mmol/L)",
+    "fasting blood sugar": "fasting blood sugar of 120 mg/dL or less",
+    "resting ECG": "signs of left ventricular hypertrophy on the resting ECG",
+    "maximum heart rate reached during the exercise test": "125 beats per minute",
+    "exercise-induced angina": "no chest pain on exercise",
+    "ST depression during exercise (compared with rest)": "0.0 mm",
+    "slope of the ST segment at peak exercise": "an upsloping ST segment",
+    "number of major vessels coloured by fluoroscopy": "0 vessels",
+    "thallium stress test result": "a normal thallium scan"
+   },
+   "characteristic_curve": {
+    "x": [
+     94.0,
+     96.65,
+     99.3,
+     101.95,
+     104.6,
+     107.25,
+     109.9,
+     112.55,
+     115.2,
+     117.85,
+     120.5,
+     123.15,
+     125.8,
+     128.45,
+     131.1,
+     133.75,
+     136.4,
+     139.05,
+     141.7,
+     144.35,
+     147.0,
+     149.65,
+     152.3,
+     154.95,
+     157.6,
+     160.25,
+     162.9,
+     165.55,
+     168.2,
+     170.85,
+     173.5,
+     176.15,
+     178.8,
+     181.45,
+     184.1,
+     186.75,
+     189.4,
+     192.05,
+     194.7,
+     197.35,
+     200.0
+    ],
+    "logit_median": [
+     -2.36,
+     -2.104,
+     -1.848,
+     -1.592,
+     -1.336,
+     -1.044,
+     -0.7521,
+     -0.5653,
+     -0.4824,
+     -0.4824,
+     -0.4824,
+     -0.4857,
+     -0.5866,
+     -0.6492,
+     -0.6554,
+     -0.6616,
+     -0.6678,
+     -0.674,
+     -0.6802,
+     -0.6864,
+     -0.7531,
+     -0.854,
+     -0.9548,
+     -1.056,
+     -1.157,
+     -1.264,
+     -1.371,
+     -1.478,
+     -1.585,
+     -1.692,
+     -1.799,
+     -1.946,
+     -2.147,
+     -2.349,
+     -2.457,
+     -2.564,
+     -2.682,
+     -2.884,
+     -3.086,
+     -3.287,
+     -3.489
+    ],
+    "risk_median": [
+     0.08697,
+     0.1095,
+     0.137,
+     0.1701,
+     0.2092,
+     0.2609,
+     0.3206,
+     0.363,
+     0.3823,
+     0.3823,
+     0.3823,
+     0.3815,
+     0.3575,
+     0.3432,
+     0.3418,
+     0.3404,
+     0.3391,
+     0.3377,
+     0.3363,
+     0.335,
+     0.3208,
+     0.3008,
+     0.2827,
+     0.2665,
+     0.2522,
+     0.2384,
+     0.2264,
+     0.2158,
+     0.2067,
+     0.1988,
+     0.1919,
+     0.1774,
+     0.1528,
+     0.1307,
+     0.1135,
+     0.09828,
+     0.08463,
+     0.07077,
+     0.05896,
+     0.04897,
+     0.04056
+    ]
+   },
+   "conditions": {
+    "method": "one-vs-rest decision tree (balanced), the leaves where the family is the majority",
+    "rules": [
+     {
+      "if": [
+       "age < 63.5 years",
+       "chest pain type = typical angina",
+       "maximum heart rate reached during the exercise test < 174.5 beats per minute"
+      ],
+      "n": 11,
+      "members": 10,
+      "precision": 0.909,
+      "recall": 0.714
+     }
+    ],
+    "balanced_accuracy_train": 0.982
+   },
+   "outcome_by_band_train": [
+    {
+     "band": "≤ 120",
+     "n": 3,
+     "events": 1,
+     "rate": 0.333,
+     "rate_ci95": [
+      0.0615,
+      0.792
+     ],
+     "model_mean_risk": 0.404
+    },
+    {
+     "band": "120–128",
+     "n": 1,
+     "events": 0,
+     "rate": 0.0,
+     "rate_ci95": [
+      0.0,
+      0.793
+     ],
+     "model_mean_risk": 0.545
+    },
+    {
+     "band": "128–136",
+     "n": 2,
+     "events": 2,
+     "rate": 1.0,
+     "rate_ci95": [
+      0.342,
+      1.0
+     ],
+     "model_mean_risk": 0.845
+    },
+    {
+     "band": "136–145",
+     "n": 3,
+     "events": 1,
+     "rate": 0.333,
+     "rate_ci95": [
+      0.0615,
+      0.792
+     ],
+     "model_mean_risk": 0.179
+    },
+    {
+     "band": "> 145",
+     "n": 5,
+     "events": 2,
+     "rate": 0.4,
+     "rate_ci95": [
+      0.118,
+      0.769
+     ],
+     "model_mean_risk": 0.262
+    }
+   ],
+   "bend_data_check_train": [
+    {
+     "bend": "2116-",
+     "at": 113.4,
+     "below": {
+      "n": 1,
+      "events": 1,
+      "rate": 1.0,
+      "rate_ci95": [
+       0.207,
+       1.0
+      ],
+      "model_mean_risk": 0.549
+     },
+     "above": {
+      "n": 13,
+      "events": 5,
+      "rate": 0.385,
+      "rate_ci95": [
+       0.177,
+       0.645
+      ],
+      "model_mean_risk": 0.365
+     }
+    },
+    {
+     "bend": "2445+",
+     "at": 146.6,
+     "below": {
+      "n": 9,
+      "events": 4,
+      "rate": 0.444,
+      "rate_ci95": [
+       0.189,
+       0.733
+      ],
+      "model_mean_risk": 0.443
+     },
+     "above": {
+      "n": 5,
+      "events": 2,
+      "rate": 0.4,
+      "rate_ci95": [
+       0.118,
+       0.769
+      ],
+      "model_mean_risk": 0.262
+     }
+    },
+    {
+     "bend": "4037+",
+     "at": 164.1,
+     "below": {
+      "n": 12,
+      "events": 5,
+      "rate": 0.417,
+      "rate_ci95": [
+       0.193,
+       0.68
+      ],
+      "model_mean_risk": 0.364
+     },
+     "above": {
+      "n": 2,
+      "events": 1,
+      "rate": 0.5,
+      "rate_ci95": [
+       0.0945,
+       0.905
+      ],
+      "model_mean_risk": 0.465
+     }
+    }
+   ],
+   "outcome_by_band_test": [
+    {
+     "band": "≤ 120",
+     "n": 0,
+     "events": 0,
+     "rate": null,
+     "rate_ci95": [
+      null,
+      null
+     ],
+     "model_mean_risk": null
+    },
+    {
+     "band": "120–128",
+     "n": 0,
+     "events": 0,
+     "rate": null,
+     "rate_ci95": [
+      null,
+      null
+     ],
+     "model_mean_risk": null
+    },
+    {
+     "band": "128–136",
+     "n": 0,
+     "events": 0,
+     "rate": null,
+     "rate_ci95": [
+      null,
+      null
+     ],
+     "model_mean_risk": null
+    },
+    {
+     "band": "136–145",
+     "n": 0,
+     "events": 0,
+     "rate": null,
+     "rate_ci95": [
+      null,
+      null
+     ],
+     "model_mean_risk": null
+    },
+    {
+     "band": "> 145",
+     "n": 0,
+     "events": 0,
+     "rate": null,
+     "rate_ci95": [
+      null,
+      null
+     ],
+     "model_mean_risk": null
+    }
+   ],
+   "n_test": 0
+  }
+ ],
+ "family_tree": {
+  "method": "decision tree, depth <= 3, leaves >= 5 patients, on the other inputs in real units (training patients)",
+  "accuracy_train": 0.628,
+  "accuracy_cv": 0.587,
+  "cv_folds": 5,
+  "leaves": [
+   {
+    "if": [
+     "age < 44.5 years",
+     "maximum heart rate reached during the exercise test < 184.5 beats per minute",
+     "exercise-induced angina ≠ chest pain brought on by exercise"
+    ],
+    "family": "F4",
+    "n": 28,
+    "purity": 0.964,
+    "counts": {
+     "F2": 1,
+     "F4": 27
+    }
+   },
+   {
+    "if": [
+     "age < 44.5 years",
+     "maximum heart rate reached during the exercise test > 184.5 beats per minute",
+     "exercise-induced angina ≠ chest pain brought on by exercise"
+    ],
+    "family": "F4",
+    "n": 5,
+    "purity": 0.6,
+    "counts": {
+     "F2": 2,
+     "F4": 3
+    }
+   },
+   {
+    "if": [
+     "age < 44.5 years",
+     "exercise-induced angina = chest pain brought on by exercise"
+    ],
+    "family": "F2",
+    "n": 9,
+    "purity": 0.444,
+    "counts": {
+     "F1": 1,
+     "F2": 4,
+     "F3": 3,
+     "F5": 1
+    }
+   },
+   {
+    "if": [
+     "age > 44.5 years",
+     "maximum heart rate reached during the exercise test < 154.5 beats per minute",
+     "ST depression during exercise (compared with rest) < 2.0 mm"
+    ],
+    "family": "F1",
+    "n": 85,
+    "purity": 0.588,
+    "counts": {
+     "F1": 50,
+     "F2": 23,
+     "F3": 9,
+     "F5": 3
+    }
+   },
+   {
+    "if": [
+     "age > 44.5 years",
+     "maximum heart rate reached during the exercise test > 154.5 beats per minute",
+     "ST depression during exercise (compared with rest) < 2.0 mm"
+    ],
+    "family": "F3",
+    "n": 78,
+    "purity": 0.474,
+    "counts": {
+     "F1": 22,
+     "F2": 5,
+     "F3": 37,
+     "F4": 6,
+     "F5": 8
+    }
+   },
+   {
+    "if": [
+     "age > 44.5 years",
+     "exercise-induced angina ≠ no chest pain on exercise",
+     "ST depression during exercise (compared with rest) > 2.0 mm"
+    ],
+    "family": "F2",
+    "n": 21,
+    "purity": 1.0,
+    "counts": {
+     "F2": 21
+    }
+   },
+   {
+    "if": [
+     "age > 44.5 years",
+     "exercise-induced angina = no chest pain on exercise",
+     "ST depression during exercise (compared with rest) > 2.0 mm"
+    ],
+    "family": "F2",
+    "n": 16,
+    "purity": 0.625,
+    "counts": {
+     "F1": 3,
+     "F2": 10,
+     "F3": 1,
+     "F5": 2
+    }
+   }
+  ]
+ },
+ "kmeans_check": {
+  "method": "k-means on the slope profile of each log-odds curve (offset removed), k = number of families",
+  "k": 5,
+  "adjusted_rand_vs_families": 0.581
+ },
+ "rare_shapes_merged": [
+  {
+   "key": "F1",
+   "words": [
+    "up",
+    "flat",
+    "up"
+   ],
+   "merged_from": [
+    {
+     "shape": [
+      "up",
+      "flat"
+     ],
+     "n": 4
+    }
+   ]
+  },
+  {
+   "key": "F2",
+   "words": [
+    "up"
+   ],
+   "merged_from": [
+    {
+     "shape": [
+      "down",
+      "up"
+     ],
+     "n": 1
+    },
+    {
+     "shape": [
+      "up",
+      "down"
+     ],
+     "n": 1
+    }
+   ]
+  }
+ ],
+ "figures": {
+  "ice_families": "figures/ice_families.png",
+  "families": "figures/families.png",
+  "median_curve": "figures/median_curve.png",
+  "unit_thresholds": "figures/unit_thresholds.png",
+  "outcome_bands": "figures/outcome_bands.png"
+ }
+}
