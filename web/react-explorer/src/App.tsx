@@ -6,6 +6,7 @@ import { DatasetList } from "./components/DatasetList";
 import { TemplatesPage } from "./components/TemplatesPage";
 import { RecordsPage } from "./components/RecordsPage";
 import { PortalPage } from "./components/PortalPage";
+import { FeaturesPage } from "./components/FeaturesPage";
 import { parseUrl, pushView, replaceView, type UrlView } from "./hooks/useUrlState";
 
 export default function App() {
@@ -34,7 +35,13 @@ export default function App() {
   if (view.type === "genome") {
     return (
       <GenomeExplorer
+        key={view.genomeId}
         genomeId={view.genomeId}
+        pinId={view.pin}
+        onOpenPin={(pinId) =>
+          setView({ type: "genome", genomeId: view.genomeId, experimentId: view.experimentId, experimentName: view.experimentName, pin: pinId })
+        }
+        onOpenFeatures={() => setView({ type: "features" })}
         experimentId={view.experimentId}
         experimentName={view.experimentName}
         onBack={() => setView({ type: "experiments" })}
@@ -63,6 +70,12 @@ export default function App() {
         <PortalPage
           onOpenGenome={(genomeId, experimentId, experimentName) =>
             setView({ type: "genome", genomeId, experimentId, experimentName })
+          }
+        />
+      ) : view.type === "features" ? (
+        <FeaturesPage
+          onOpen={(genomeId, experimentId, experimentName, pinId) =>
+            setView({ type: "genome", genomeId, experimentId, experimentName, pin: pinId })
           }
         />
       ) : view.type === "review" ? (

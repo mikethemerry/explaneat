@@ -7,12 +7,17 @@ import {
 } from "../api/client";
 import { VizCanvas } from "./VizCanvas";
 import { useFeatureLabels, withLabel } from "../featureLabels";
+import type { FeaturePin, PinInput } from "../api/features";
+import { PinFeatureModal, type PinModalDraft } from "./PinFeatureModal";
 
 type InputDistributionPanelProps = {
   genomeId: string;
   experimentId: string;
   selectedInputNodes: string[];
   model: ModelState;
+  experimentName?: string;
+  recordLabel?: string | null;
+  onPinned?: (pin: FeaturePin) => void;
 };
 
 type Stats = {
@@ -29,7 +34,12 @@ export function InputDistributionPanel({
   experimentId,
   selectedInputNodes,
   model,
+  experimentName,
+  recordLabel,
+  onPinned,
 }: InputDistributionPanelProps) {
+  const [pinDraft, setPinDraft] = useState<PinModalDraft | null>(null);
+  const [pinnedMsg, setPinnedMsg] = useState<string | null>(null);
   const [splitId, setSplitId] = useState<string | null>(null);
   const [featureNames, setFeatureNames] = useState<string[] | null>(null);
   const [distData, setDistData] = useState<InputDistributionResponse | null>(null);
@@ -121,9 +131,52 @@ export function InputDistributionPanel({
     return nodeId;
   });
 
+  const openPin = () => {
+    const inputs: PinInput[] = selectedInputNodes.map((nodeId, i) => {
+      const f = fl.forNode(nodeId);
+      const raw = f?.raw ?? selectedNames[i];
+      return { node_id: nodeId, raw, label: f?.decoded ? f.label : raw, index: getFeatureIndex(nodeId) };
+    });
+    const names = inputs.map((x) => (x.label && x.label !== x.raw ? `${x.raw} · ${x.label}` : x.raw));
+    setPinDraft({
+      genome_id: genomeId,
+      experiment_id: experimentId,
+      experiment_name: experimentName ?? null,
+      record_label: recordLabel ?? null,
+      scope: { kind: "input", node_id: selectedInputNodes[0] },
+      inputs,
+      viz: {
+        type: "input_distribution",
+        params: { feature_indices: inputs.map((x) => x.index) },
+        input_nodes: selectedInputNodes,
+        description: `Input distribution of ${names.join(" vs ")}`,
+      },
+      also_views: [],
+      tags: inputs.map((x) => (x.raw ?? "").toLowerCase()).filter(Boolean),
+    });
+  };
+
   return (
     <div className="input-distribution-panel">
-      <h3>Input Distribution</h3>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+        <h3>Input Distribution</h3>
+        <button className="op-btn pin-btn" style={{ fontSize: "11px" }} onClick={openPin} title="Pin this input as a feature of interest">
+          Pin this input
+        </button>
+      </div>
+      {pinnedMsg && <div className="pin-saved">{pinnedMsg}</div>}
+      {pinDraft && (
+        <PinFeatureModal
+          draft={pinDraft}
+          onClose={() => setPinDraft(null)}
+          onSaved={(pin) => {
+            setPinDraft(null);
+            setPinnedMsg(`Pinned ${pin.id}: see Features.`);
+            window.setTimeout(() => setPinnedMsg(null), 6000);
+            onPinned?.(pin);
+          }}
+        />
+      )}
       <div className="selected-features">
         {selectedInputNodes.map((nodeId, i) => {
           const f = fl.forNode(nodeId);

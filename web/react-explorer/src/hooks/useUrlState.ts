@@ -9,7 +9,8 @@ export type UrlView =
   | { type: "templates" }
   | { type: "review" }
   | { type: "portal" }
-  | { type: "genome"; genomeId: string; experimentId: string; experimentName: string };
+  | { type: "features" }
+  | { type: "genome"; genomeId: string; experimentId: string; experimentName: string; pin?: string };
 
 /** Parse the current URL into a View. */
 export function parseUrl(): UrlView {
@@ -24,6 +25,7 @@ export function parseUrl(): UrlView {
       genomeId: genomeMatch[1],
       experimentId: params.get("experiment") || "",
       experimentName: decodeURIComponent(params.get("name") || ""),
+      ...(params.get("pin") ? { pin: params.get("pin") as string } : {}),
     };
   }
 
@@ -31,6 +33,7 @@ export function parseUrl(): UrlView {
   if (path.startsWith("/templates")) return { type: "templates" };
   if (path.startsWith("/review")) return { type: "review" };
   if (path.startsWith("/portal")) return { type: "portal" };
+  if (path.startsWith("/features")) return { type: "features" };
   return { type: "experiments" };
 }
 
@@ -47,10 +50,13 @@ export function viewToUrl(view: UrlView): string {
       return "/review";
     case "portal":
       return "/portal";
+    case "features":
+      return "/features";
     case "genome": {
       const params = new URLSearchParams();
       if (view.experimentId) params.set("experiment", view.experimentId);
       if (view.experimentName) params.set("name", view.experimentName);
+      if (view.pin) params.set("pin", view.pin);
       const qs = params.toString();
       return `/genome/${view.genomeId}${qs ? `?${qs}` : ""}`;
     }
