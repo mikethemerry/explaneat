@@ -88,6 +88,28 @@ const COMPUTE_POST = [
 ];
 
 const cache = new Map<string, Promise<unknown | null>>();
+const lists = new Map<string, Promise<Set<string>>>();
+
+/** The exported files: data/_files.json, and data/genomes/<g>/_files.json per network. */
+function fileList(dir: string): Promise<Set<string>> {
+  if (!lists.has(dir)) {
+    const realFetch = (window as any).__realFetch as typeof fetch;
+    lists.set(
+      dir,
+      realFetch(`${DATA_BASE}${dir}_files.json`)
+        .then((r) => (r.ok ? r.json() : []))
+        .then((a: string[]) => new Set(a))
+        .catch(() => new Set<string>()),
+    );
+  }
+  return lists.get(dir)!;
+}
+
+/** Whether a data/ file is part of the export (asked first, so left-out views make no 404s). */
+async function exported(file: string): Promise<boolean> {
+  const m = file.match(/^(genomes\/[^/]+\/)(.+)$/);
+  return m ? (await fileList(m[1])).has(m[2]) : (await fileList("")).has(file);
+}
 
 /** Load a data/ file (null when it is not part of the export). */
 export function loadData<T = unknown>(file: string): Promise<T | null> {
@@ -95,9 +117,10 @@ export function loadData<T = unknown>(file: string): Promise<T | null> {
     const realFetch = (window as any).__realFetch as typeof fetch;
     cache.set(
       file,
-      realFetch(DATA_BASE + file)
+      exported(file)
+        .then((ok) => (ok ? realFetch(DATA_BASE + file) : null))
         .then(async (r) => {
-          if (!r.ok) return null;
+          if (!r || !r.ok) return null;
           const ct = r.headers.get("content-type") || "";
           const text = await r.text();
           // a static server's SPA fallback may answer with index.html

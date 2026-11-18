@@ -369,3 +369,63 @@ def record_verdict(label, verified, minutes, changes, notes, sentence, sentence_
 # Sibling command for the plain-language layer: export record-plain-verdict
 from .plain_cli import record_plain_verdict_command  # noqa: E402
 record_plain_verdict_command(export)
+
+
+@export.command("site")
+@click.option("--labels", default=None,
+              help="Comma-separated record labels (e.g. adult-s0,heart100-s2) or genome ids.")
+@click.option("--study", "studies", default=None,
+              help="Comma-separated studies; exports <study>-s0..s9 (e.g. adult,churn100,heart100).")
+@click.option("--records-dir", default="experiments/10seed/explanations_v4", show_default=True,
+              type=click.Path(file_okay=False), help="Explanation records (label -> genome id).")
+@click.option("--out", "out_dir", default="site", show_default=True, type=click.Path(file_okay=False),
+              help="Site folder: the explorer goes to <out>/explorer, the landing page to <out>/index.html.")
+@click.option("--stats", default=None, type=click.Path(exists=True, dir_okay=False),
+              help="Results JSON for the landing page table (e.g. thesis/ch7/book/e2_stats.json).")
+@click.option("--page", "pages", multiple=True,
+              help="Extra page to copy and link: 'Link text=path/to/file.html' (copied into <out>/pages/).")
+@click.option("--link", "extra_links", multiple=True,
+              help="Extra link on the landing page: 'Link text=URL' (e.g. a GitHub Release asset).")
+@click.option("--build/--no-build", default=True, show_default=True,
+              help="Build the explorer (Node, web/react-explorer) into <out>/explorer.")
+@click.option("--plots/--no-plots", default=True, show_default=True, help="Precompute the plots.")
+def site(labels, studies, records_dir, out_dir, stats, pages, extra_links, build, plots):
+    """Static appendix: the explorer and its data for chosen networks (GitHub Pages, no server).
+
+    Reads the database read only (set DATABASE_URL). Serve <out> with any static
+    server, e.g. `python -m http.server -d <out>`.
+    """
+    import json as _json
+    import shutil as _shutil
+
+    from .site import export_site, resolve_targets, site_size
+    from .site_landing import load_records, write_landing
+
+    items = [x for x in (labels or "").split(",") if x.strip()]
+    for s in (studies or "").split(","):
+        if s.strip():
+            items += [f"{s.strip()}-s{i}" for i in range(10)]
+    if not items:
+        raise click.UsageError("give --labels or --study")
+    rdir = Path(records_dir) if records_dir else None
+    out = Path(out_dir)
+    res = export_site(resolve_targets(items, rdir), out, records_dir=rdir, build=build, plots=plots,
+                      log=click.echo)
+
+    links = []
+    for p in pages:
+        text, _, path = p.partition("=")
+        src = Path(path)
+        dest = out / "pages" / src.name
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        _shutil.copy2(src, dest)
+        links.append({"text": text, "href": f"pages/{src.name}"})
+    for l in extra_links:
+        text, _, href = l.partition("=")
+        links.append({"text": text, "href": href})
+    st = _json.loads(Path(stats).read_text()) if stats else None
+    write_landing(out, res["networks"], stats=st, records=load_records(rdir, [n["label"] for n in res["networks"]]),
+                  links=links)
+    size = site_size(out)
+    click.echo(f"Site: {out} ({size['files']} files, {size['bytes'] / 1e6:.1f} MB; "
+               f"largest {size['largest'][1]} {size['largest'][0] / 1e6:.2f} MB)")
