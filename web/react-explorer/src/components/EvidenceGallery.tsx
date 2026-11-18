@@ -5,6 +5,17 @@ import {
   type EvidenceEntry,
 } from "../api/client";
 
+/** Snapshots are base64 of UTF-8 (older ones of Latin-1 text): decode either. */
+function decodeSvg(b64: string): string {
+  const bin = atob(b64);
+  try {
+    const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    return bin;
+  }
+}
+
 type EvidenceGalleryProps = {
   genomeId: string;
   annotationId: string;
@@ -73,7 +84,7 @@ export function EvidenceGallery({ genomeId, annotationId }: EvidenceGalleryProps
               <div
                 className="gallery-thumbnail"
                 dangerouslySetInnerHTML={{
-                  __html: atob(entry.svg_data),
+                  __html: decodeSvg(entry.svg_data),
                 }}
               />
             )}
