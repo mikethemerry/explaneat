@@ -1476,7 +1476,9 @@ body {
   border-radius: 0.25rem;
   background: white;
   color: #111827;
-  max-width: 140px;
+  /* wide enough for "marital-status:2 · married (civilian spouse)" (raw name · readable label) */
+  max-width: 100%;
+  min-width: 140px;
 }
 
 .dim-pair {
@@ -2238,3 +2240,21 @@ body {
 .export-status { font-size: 0.9em; }
 .export-files, .export-formats { margin: 0.3rem 0; padding-left: 1.2rem; }
 .export-modal { max-width: 640px; }
+
+/* Input nodes: raw name plus the codebook meaning (feature labels) */
+.node-label-meaning {
+  font-size: 10px;
+  font-weight: 400;
+  opacity: 0.85;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 1px auto 0;
+}
+.feature-key-table td.raw { font-family: monospace; white-space: nowrap; }
+.feature-key-table tr.unused td { opacity: 0.55; }
+.feature-meaning { color: #6b7280; font-weight: 400; }
+.feature-card { border: 1px solid #e5e7eb; border-radius: 6px; padding: 6px 8px; margin-bottom: 8px; background: #fff; }
+.feature-card-title { font-weight: 600; margin-bottom: 4px; }
+.annotation-io { font-size: 11px; color: #4b5563; padding: 4px 8px 6px 28px; line-height: 1.4; word-break: break-word; }

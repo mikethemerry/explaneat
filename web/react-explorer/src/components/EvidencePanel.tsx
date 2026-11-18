@@ -15,6 +15,7 @@ import { SurvivalEvidence } from "./SurvivalEvidence";
 import { DatasetSelector } from "./DatasetSelector";
 import { VizCanvas } from "./VizCanvas";
 import { EvidenceGallery } from "./EvidenceGallery";
+import { useFeatureLabels, withLabel } from "../featureLabels";
 
 type EvidencePanelProps = {
   genomeId: string;
@@ -185,6 +186,20 @@ function VizSlot({
   const inputOptions = useMemo(() => Array.from({ length: nIn }, (_, i) => i), [nIn]);
   const outputOptions = useMemo(() => Array.from({ length: nOut }, (_, i) => i), [nOut]);
 
+  // Input pickers show both names: `marital-status:2 · married (civilian spouse)`
+  const fl = useFeatureLabels();
+  const entryName = useCallback(
+    (i: number, withNode = false): string => {
+      const name = vizData?.entry_names?.[i];
+      const node = annotation.entry_nodes[i];
+      if (name != null) return withLabel(name, fl.forName(name));
+      const f = fl.forNode(node);
+      if (f) return withLabel(f.raw, f) + (withNode ? ` (${node})` : "");
+      return withNode ? `x_${i} (${node})` : `x_${i}`;
+    },
+    [vizData, annotation.entry_nodes, fl],
+  );
+
   const buildVizParams = useCallback((): Record<string, unknown> => {
     const params: Record<string, unknown> = {};
     const inputMode = NEEDS_INPUT_DIM[vizType];
@@ -315,7 +330,7 @@ function VizSlot({
               <label className="dim-label">Input dim</label>
               <select className="dim-select" value={inputDim} onChange={(e) => setInputDim(Number(e.target.value))}>
                 {inputOptions.map((i) => (
-                  <option key={i} value={i}>{vizData?.entry_names?.[i] ?? `x_${i} (${annotation.entry_nodes[i]})`}</option>
+                  <option key={i} value={i}>{entryName(i, true)}</option>
                 ))}
               </select>
               {nIn > 1 && <span className="dim-hint">others fixed at median</span>}
@@ -327,13 +342,13 @@ function VizSlot({
               <div className="dim-pair">
                 <select className="dim-select" value={inputDims[0]} onChange={(e) => setInputDims([Number(e.target.value), inputDims[1]])}>
                   {inputOptions.map((i) => (
-                    <option key={i} value={i}>{vizData?.entry_names?.[i] ?? `x_${i}`}</option>
+                    <option key={i} value={i}>{entryName(i)}</option>
                   ))}
                 </select>
                 <span className="dim-sep">vs</span>
                 <select className="dim-select" value={inputDims[1]} onChange={(e) => setInputDims([inputDims[0], Number(e.target.value)])}>
                   {inputOptions.filter((i) => i !== inputDims[0]).map((i) => (
-                    <option key={i} value={i}>{vizData?.entry_names?.[i] ?? `x_${i}`}</option>
+                    <option key={i} value={i}>{entryName(i)}</option>
                   ))}
                 </select>
               </div>

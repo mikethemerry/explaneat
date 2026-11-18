@@ -6,6 +6,7 @@ import {
   type ModelState,
 } from "../api/client";
 import { VizCanvas } from "./VizCanvas";
+import { useFeatureLabels, withLabel } from "../featureLabels";
 
 type InputDistributionPanelProps = {
   genomeId: string;
@@ -34,6 +35,7 @@ export function InputDistributionPanel({
   const [distData, setDistData] = useState<InputDistributionResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fl = useFeatureLabels();
 
   // Fetch experiment split on mount
   useEffect(() => {
@@ -122,9 +124,29 @@ export function InputDistributionPanel({
   return (
     <div className="input-distribution-panel">
       <h3>Input Distribution</h3>
-      <p className="selected-features">
-        {selectedNames.join(", ")}
-      </p>
+      <div className="selected-features">
+        {selectedInputNodes.map((nodeId, i) => {
+          const f = fl.forNode(nodeId);
+          const node = model.nodes.find((n) => n.id === nodeId);
+          return (
+            <div key={nodeId} className="feature-card" data-testid="feature-card">
+              <div className="feature-card-title">
+                <code>{f?.raw ?? selectedNames[i]}</code>
+                {f?.decoded && f.label !== f.raw && <span className="feature-meaning"> · {f.label}</span>}
+              </div>
+              <table className="stats-table">
+                <tbody>
+                  <tr><td>Node</td><td>{nodeId}{node?.display_name ? ` (shown as ${node.display_name})` : ""}</td></tr>
+                  <tr><td>Feature name</td><td><code>{f?.raw ?? selectedNames[i]}</code></td></tr>
+                  <tr><td>Readable label</td><td>{f ? (f.decoded ? f.full_label : "no codebook meaning (raw name)") : "—"}</td></tr>
+                  {f?.one_means && <tr><td>Value 1 means</td><td>{f.one_means}</td></tr>}
+                  {f?.unit && <tr><td>Unit</td><td>{f.unit}</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          );
+        })}
+      </div>
 
       {error && <div className="error-message">{error}</div>}
       {loading && <div className="loading">Loading distribution...</div>}
@@ -141,13 +163,13 @@ export function InputDistributionPanel({
             {distData.viz_type === "scatter2d" && (
               <div className="scatter-stats">
                 <div>
-                  <strong>{distData.feature_names[0]}</strong>
+                  <strong>{withLabel(distData.feature_names[0], fl.forName(distData.feature_names[0]) ?? fl.forNode(selectedInputNodes[0]))}</strong>
                   <StatsTable
                     stats={(distData.data as Record<string, unknown>).x_stats as Stats}
                   />
                 </div>
                 <div>
-                  <strong>{distData.feature_names[1]}</strong>
+                  <strong>{withLabel(distData.feature_names[1], fl.forName(distData.feature_names[1]) ?? fl.forNode(selectedInputNodes[1]))}</strong>
                   <StatsTable
                     stats={(distData.data as Record<string, unknown>).y_stats as Stats}
                   />
