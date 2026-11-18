@@ -15,6 +15,8 @@ type DatasetSelectorProps = {
   onSplitSelected: (splitId: string, splitChoice: SplitChoice) => void;
   onSampleFractionChange: (fraction: number) => void;
   sampleFraction: number;
+  /** Initial train/test/val/both choice (e.g. a reopened pin). */
+  initialSplitChoice?: SplitChoice;
 };
 
 export function DatasetSelector({
@@ -22,12 +24,13 @@ export function DatasetSelector({
   onSplitSelected,
   onSampleFractionChange,
   sampleFraction,
+  initialSplitChoice,
 }: DatasetSelectorProps) {
   const [datasets, setDatasets] = useState<DatasetResponse[]>([]);
   const [splits, setSplits] = useState<SplitResponse[]>([]);
   const [selectedDatasetId, setSelectedDatasetId] = useState<string | null>(null);
   const [selectedSplitId, setSelectedSplitId] = useState<string | null>(null);
-  const [splitChoice, setSplitChoice] = useState<SplitChoice>("both");
+  const [splitChoice, setSplitChoice] = useState<SplitChoice>(initialSplitChoice ?? "both");
   const [loading, setLoading] = useState(false);
 
   // Auto-selection state

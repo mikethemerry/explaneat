@@ -2,12 +2,14 @@
 explanations_heart100.csv (additional analysis) from explanations/*.json.
 
     uv run python experiments/10seed/build_explanations_csv.py [--dir explanations_v4 --suffix _v4]
---dir reads the records from another folder; --suffix writes <name><suffix>.csv (defaults unchanged)."""
+--dir reads the records from another folder; --suffix writes <name><suffix>.csv (defaults unchanged);
+--out-dir DIR writes every CSV into DIR instead (to rebuild and diff without touching the stored ones)."""
 import csv, datetime as dt, json, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 _a = sys.argv[1:]
 REC_DIR = _a[_a.index('--dir') + 1] if '--dir' in _a else 'explanations'
 SUFFIX = _a[_a.index('--suffix') + 1] if '--suffix' in _a else ''
+OUT_DIR = _a[_a.index('--out-dir') + 1] if '--out-dir' in _a else None
 PRE = ['adult-s0','heart-s5','monk2-s2','heart-s0','heart-s1','monk2-s3','monk2-s4','adult-s1','monk2-s5','adult-s2',
        'monk2-s9','heart-s6','adult-s7','monk2-s7','monk2-s8','monk2-s0','adult-s4','heart-s9','heart-s4','heart-s2',
        'adult-s3','adult-s9','adult-s5','heart-s8','heart-s7','monk2-s6','heart-s3','adult-s8','adult-s6','monk2-s1']
@@ -17,7 +19,8 @@ C200 = [f'churn200-s{s}' for s in (1, 2, 4, 7, 9, 5, 3, 8, 0, 6)]
 
 def mike_verified(r):
     mv = r.get('mike_verification') or {}
-    return bool(mv.get('verified')) and mv.get('protocol') == 'signoff-v1'
+    # PREREG amendment 2026-11-18: record-level review (verified = true) counts; signoff-v1 optional.
+    return bool(mv.get('verified'))
 
 
 def signoff_columns(r):
@@ -114,7 +117,7 @@ def row(i, l):
                 claude_minutes=round(mins, 1),
                 # Mike's verification lives in the JSON record (key "mike_verification":
                 # {"verified": bool, "minutes": float, "changes": str, "protocol", "signoff"}) so rebuilds
-                # keep it. PREREG amendment 2026-11-11: verified_by_mike = signoff-v1 passed.
+                # keep it. PREREG amendment 2026-11-18: verified_by_mike = record-level review (verified = true).
                 verified_by_mike='yes' if mike_verified(r) else 'no',
                 mike_minutes=r.get('mike_verification', {}).get('minutes', ''),
                 mike_changes=r.get('mike_verification', {}).get('changes', ''),
@@ -128,6 +131,10 @@ for name, labels in (('explanations.csv', PRE), ('explanations_heart100.csv', H1
     rows = [row(i, l) for i, l in enumerate(labels) if os.path.exists(os.path.join(HERE, REC_DIR, f'{l}.json'))]
     if not rows:
         continue
-    with open(os.path.join(HERE, name[:-4] + SUFFIX + '.csv'), 'w', newline='') as f:
+    out = (os.path.join(OUT_DIR, os.path.basename(name)[:-4] + SUFFIX + '.csv') if OUT_DIR
+           else os.path.join(HERE, name[:-4] + SUFFIX + '.csv'))
+    if OUT_DIR:
+        os.makedirs(OUT_DIR, exist_ok=True)
+    with open(out, 'w', newline='') as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0])); w.writeheader(); w.writerows(rows)
     print(name, len(rows), 'rows;', sum(r['full_coverage'] for r in rows), 'full coverage')

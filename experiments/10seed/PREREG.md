@@ -162,6 +162,23 @@ generations by design (decided 2 Nov 2026).
   of any study carries `mike_verification`. `verified_by_mike` is therefore defined, but no
   genome has been verified yet.
 
+- **2026-11-18: Experiment 2 reports Adult, Churn and Heart at 100 generations; record-level
+  verification counts as `verified_by_mike` (Mike's decision).**
+  - **Studies.** Experiment 2 reports three studies, ten seeds each, all at 100 generations:
+    Adult (pre-registered), churn100 and Heart-100 (registered above as supplementary). Heart's
+    40-generation budget copied the paper's reference run, which was launched for 100
+    generations and cut off at generation 39, so it was never a designed budget; Heart-100's
+    first 40 generations reproduce the 40-generation runs genome for genome. MONK-2, Heart at
+    40 generations and churn200 stay on record and are not reported in Experiment 2.
+  - **Verification.** A record counts as verified by Mike when he has reviewed the explanation
+    and recorded `mike_verification.verified = true` in the record (record-level review, using
+    the plain-language report, the pairs plots and the expandable network). The sentence-level
+    sign-off (signoff-v1, amendment of 2026-11-11) remains available as a finer protocol and its
+    columns stay in the CSVs, but it is no longer required for `verified_by_mike`.
+  - **Timing.** Made on 2026-11-18, after Mike had reviewed all 30 Experiment 2 records (record-
+    level, median about 4 minutes each) and before any signoff-v1 was run. The change of
+    definition is disclosed here rather than applied silently.
+
 ## Metrics (per run, `runs.csv`, all 30 best genomes)
 
 - `dataset, seed, experiment_id, genome_id, code_commit, hardware`, plus a `rerun` note

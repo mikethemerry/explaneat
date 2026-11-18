@@ -11,6 +11,7 @@ from copy import deepcopy
 if TYPE_CHECKING:
     from .model_state import AnnotationData
 
+from . import split_ids
 from .genome_network import (
     NetworkStructure,
     NetworkNode,
@@ -558,6 +559,19 @@ def validate_operation(
     else:
         errors.append(f"Unknown operation type: {op_type}")
 
+    # Dry run: a split or consolidation that passes the checks above must also execute (e.g. a
+    # node with more outputs than there are split tokens). Never report as valid what the
+    # handler would refuse.
+    if not errors and op_type in ("split_node", "consolidate_node"):
+        trial = deepcopy(model)
+        try:
+            if op_type == "split_node":
+                apply_split_node(trial, params["node_id"], set(covered_nodes))
+            else:
+                apply_consolidate_node(trial, list(params["node_ids"]), set(covered_nodes))
+        except (OperationError, ValueError) as e:
+            errors.append(str(e))
+
     return errors
 
 
@@ -576,13 +590,7 @@ def _get_base_node_id(node_id: str) -> Optional[str]:
 
     Returns None if not a valid split node format.
     """
-    if "_" not in node_id:
-        return node_id  # Already a base node
-
-    parts = node_id.rsplit("_", 1)
-    if len(parts) == 2 and parts[1].isalpha():
-        return parts[0]
-    return None
+    return split_ids.base_id(node_id)
 
 
 def _get_split_suffix(node_id: str) -> Optional[str]:
@@ -593,13 +601,7 @@ def _get_split_suffix(node_id: str) -> Optional[str]:
     "5_abc" -> "abc"
     "5" -> None
     """
-    if "_" not in node_id:
-        return None
-
-    parts = node_id.rsplit("_", 1)
-    if len(parts) == 2 and parts[1].isalpha():
-        return parts[1]
-    return None
+    return split_ids.suffix(node_id)
 
 
 def _replace_node_ids_in_list(
@@ -669,15 +671,15 @@ def apply_split_node(
 
     # Check if this is a re-split of a consolidated node
     suffix = _get_split_suffix(node_id)
-    if suffix and len(suffix) > 1:
+    if suffix and len(split_ids.tokens(suffix)) > 1:
         # Re-splitting a consolidated node like "5_ac" -> restore "5_a", "5_c"
-        letters = list(suffix)
+        letters = split_ids.tokens(suffix)
         if len(letters) != len(outgoing):
             raise OperationError(
                 f"Cannot re-split {node_id}: expected {len(letters)} outputs, got {len(outgoing)}"
             )
         base_id = _get_base_node_id(node_id)
-        split_ids = [f"{base_id}_{letter}" for letter in letters]
+        new_ids = [f"{base_id}_{letter}" for letter in letters]
     else:
         # Normal split: assign new letters
         base_id = _get_base_node_id(node_id) or node_id
@@ -688,20 +690,21 @@ def apply_split_node(
             if _get_base_node_id(n.id) == base_id:
                 s = _get_split_suffix(n.id)
                 if s:
-                    existing_suffixes.update(s)
+                    existing_suffixes.update(split_ids.tokens(s))
 
-        # Assign new letters
-        available_letters = [chr(ord('a') + i) for i in range(26)]
+        # Assign new copy tokens: a..z first (unchanged ids), then Aa..Zz (split_ids)
+        available_letters = [split_ids.token(i) for i in range(split_ids.MAX_TOKENS)]
         available_letters = [l for l in available_letters if l not in existing_suffixes]
 
         if len(available_letters) < len(outgoing):
-            raise OperationError("Too many splits, ran out of letters")
+            raise OperationError(
+                f"Too many splits: {len(outgoing)} copies needed, {len(available_letters)} split tokens left")
 
-        split_ids = [f"{base_id}_{available_letters[i]}" for i in range(len(outgoing))]
+        new_ids = [f"{base_id}_{available_letters[i]}" for i in range(len(outgoing))]
 
     # Create split nodes
     created_nodes = []
-    for i, (split_id, out_conn) in enumerate(zip(split_ids, outgoing)):
+    for i, (split_id, out_conn) in enumerate(zip(new_ids, outgoing)):
         # Derive display_name suffix from split_id
         suffix = split_id.rsplit("_", 1)[-1] if "_" in split_id else None
         split_display_name = (
@@ -825,7 +828,7 @@ def apply_consolidate_node(
     base_id = base_ids.pop()
 
     # Create consolidated node ID with sorted suffixes
-    combined_suffix = "".join(sorted("".join(suffixes)))
+    combined_suffix = split_ids.join(t for sfx in suffixes for t in split_ids.tokens(sfx))
     consolidated_id = f"{base_id}_{combined_suffix}"
 
     # Get reference node for properties

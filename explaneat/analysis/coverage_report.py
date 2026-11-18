@@ -7,6 +7,8 @@ numbers.
 
 from typing import Any, Dict, List
 
+from ..core import split_ids
+
 from .coverage import (
     CoverageComputer,
     compute_compositional_coverage_from_hierarchy,
@@ -255,21 +257,24 @@ def coverage_report(model_state, annotations_data) -> Dict[str, Any]:
 #: a part whose widest internal layer has more hidden units than this is "wide" (it holds
 #: parallel units that are not read separately); depth is never penalised
 SMALL_WIDTH = 6
+#: older name of the same threshold (the unit-count rule it replaced); kept for callers
+SMALL_PART = SMALL_WIDTH
 
 
 def _base_id(node_id) -> str:
-    """The original hidden unit a node is a copy of: ``5_a`` and ``5_ac`` -> ``5``."""
+    """The original hidden unit a node is a copy of: ``5_a``, ``5_ac`` and ``5_Ab`` -> ``5``."""
     s = str(node_id)
-    return s.split("_", 1)[0] if not s.startswith("identity_") else s
+    return s if s.startswith("identity_") else split_ids.strip(s)
 
 
-def part_shape(ann, hidden_base: set) -> Dict[str, Any]:
+def part_shape(ann, hidden_base: set, only=None) -> Dict[str, Any]:
     """Width and depth of one annotation's internal hidden units (split copies counted once).
 
     Layer of a non-entry node = longest path from an entry node over the annotation's own
     connections. ``width`` = most distinct hidden units in one layer; ``depth`` = number of
     layers. A chain of four units has width 1 and depth 4; a layer of 32 units in one part has
-    width 32 and depth 1.
+    width 32 and depth 1. ``only`` (a set of base ids) restricts the count to those units, e.g.
+    the units assigned to this part rather than to a smaller descendant.
     """
     entries = {str(n) for n in ann.entry_nodes}
     nodes = {str(n) for n in ann.subgraph_nodes}
@@ -298,7 +303,7 @@ def part_shape(ann, hidden_base: set) -> Dict[str, Any]:
         if n in entries:
             continue
         b = _base_id(n)
-        if b in hidden_base:
+        if b in hidden_base and (only is None or b in only):
             units_by_layer.setdefault(max(layer.get(n, 1), 1), set()).add(b)
     units = set().union(*units_by_layer.values()) if units_by_layer else set()
     return {"units": len(units), "width": max((len(s) for s in units_by_layer.values()), default=0),
@@ -310,12 +315,14 @@ def decomposition_report(model_state, annotations_data, small_width: int = SMALL
 
     Coverage can be 1.0 while one part swallows a whole wide layer (the explanation ladder: a
     32-unit layer as a single leaf). Each original hidden unit (split copies counted once) is
-    assigned to the smallest annotation that owns a copy of it as a non-entry node. A part's
-    **width** is its widest internal layer (:func:`part_shape`); depth is not penalised: a 3-4
-    deep chain is a good leaf. ``granularity`` is the share of hidden units whose part has width
-    at most ``small_width``. Warnings: one part wider than ``small_width`` holds at least half of
-    the hidden units (a swallowed layer); hidden units owned only by the root composition;
-    hidden units that appear in parts only as entry nodes.
+    assigned to the smallest annotation that owns a copy of it as a non-entry node (equal-size
+    ties go to the deepest descendant). Ancestors may hold every descendant's nodes, so a part's
+    shape counts only the units assigned to it: a fine hierarchy is not flagged for its root.
+    A part's **width** is its widest internal layer (:func:`part_shape`); depth is not
+    penalised: a 3-4 deep chain is a good leaf. ``granularity`` is the share of hidden units
+    whose part has width at most ``small_width``. Warnings: one part wider than ``small_width``
+    holds at least half of the hidden units (a swallowed layer); hidden units owned only by the
+    root composition; hidden units that appear in parts only as entry nodes.
     """
     from ..core.genome_network import NodeType
 
@@ -326,20 +333,33 @@ def decomposition_report(model_state, annotations_data, small_width: int = SMALL
         io = {str(n) for n in model_state.input_node_ids} | {str(n) for n in model_state.output_node_ids}
         hidden = {_base_id(n) for n in model_state.get_node_ids()
                   if str(n) not in io and not str(n).startswith("identity_")}
+    if not annotations_data:
+        return {"hidden_units": len(hidden), "granularity": None, "warnings": []}
     n_params = sum(1 for c in model_state.connections if c.enabled) + len(hidden)
-    if not hidden or not annotations_data:
-        return {"hidden_units": len(hidden), "granularity": None, "largest_part": None,
-                "units_only_in_root": 0, "units_only_as_entries": len(hidden) if annotations_data else 0,
+    if not hidden:
+        return {"hidden_units": 0, "granularity": None, "largest_part": None,
+                "units_only_in_root": 0, "units_only_as_entries": 0,
                 "parts": {}, "warnings": [], "small_width_max_units": small_width}
     has_child = {ad.parent_annotation_id for ad in annotations_data if ad.parent_annotation_id}
     roots = {ad.name for ad in annotations_data if ad.parent_annotation_id is None}
-    shapes = {ad.name: part_shape(ad, hidden) for ad in annotations_data}
-    owned = {name: set(s["unit_ids"]) for name, s in shapes.items()}
+    full = {ad.name: part_shape(ad, hidden) for ad in annotations_data}
+    owned = {name: set(s["unit_ids"]) for name, s in full.items()}
+    parent_of = {ad.name: ad.parent_annotation_id for ad in annotations_data}
+    depths = {}
+    for name in owned:
+        cursor, seen = name, set()
+        while parent_of.get(cursor) in owned and cursor not in seen:
+            seen.add(cursor)
+            cursor = parent_of[cursor]
+        depths[name] = len(seen)
     part_of: Dict[str, str] = {}
     for u in sorted(hidden):
         cands = [a for a, us in owned.items() if u in us]
         if cands:
-            part_of[u] = min(cands, key=lambda a: (len(owned[a]), a))
+            part_of[u] = min(cands, key=lambda a: (len(owned[a]), -depths[a], a))
+    # each part's shape over the units assigned to it (not those of its smaller descendants)
+    shapes = {ad.name: part_shape(ad, hidden, only={u for u, a in part_of.items() if a == ad.name})
+              for ad in annotations_data}
     params_of = {}
     for ad in annotations_data:
         nodes = {str(n) for n in ad.subgraph_nodes}

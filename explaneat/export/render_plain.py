@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from ..analysis.plain_language import CONFIDENCE_RULES
+from .feature_key import _raw_join, annotate_layer, claim_raw_tex, key_tex, raw_marks_tex, raw_of_code
 from .text import printed, tex
 
 VERIFIED_MARK = r"\textcolor{OliveGreen}{yes}"
@@ -202,7 +203,9 @@ def sentences_tex(sents: List[Dict[str, Any]]) -> str:
     out = []
     for s in sents or []:
         refs = ", ".join(s.get("claims") or [])
-        out.append(tex(s["text"]) + (r"\,{\scriptsize\textcolor{NavyBlue}{[" + tex(refs) + "]}}" if refs else ""))
+        raw = s.get("raw_names") or []
+        cite = tex(refs) + (("; " if refs else "") + r"\texttt{" + tex(_raw_join(raw)) + "}" if raw else "")
+        out.append(raw_marks_tex(tex(s["text"])) + (r"\,{\scriptsize\textcolor{NavyBlue}{[" + cite + "]}}" if cite else ""))
     return " ".join(out)
 
 
@@ -233,6 +236,7 @@ def claims_table(claims: List[Dict[str, Any]], words: bool = True) -> List[str]:
         ver = VERIFIED_MARK if c.get("verified") else FAILED_MARK
         sht = shape_text(c)
         L.append(f"{tex(c['id'])} & {tex(c['type'])}: {tex(claim_brief(c))}"
+                 + (r" \newline " + claim_raw_tex(c) if c.get("raw_names") else "")
                  + (f" \\newline\\textit{{shape: {tex(sht)}}}" if sht else "") + f" & {tex(risk_text(c))} & "
                  f"{tex(estimate_text(c))} & {tex(n_text(c))} & {tex(split_text(c))} & {ver} & "
                  f"{tex(confidence_text(c))} \\\\")
@@ -360,6 +364,7 @@ def genome_block(layer: Dict[str, Any]) -> List[str]:
              + ", not supported " + tex(cnt.get("not_supported")) + r".\par}")
     L.append(r"\noindent{\small\textcolor{BrickRed}{" + tex(_status(layer)) + r"}\par}\smallskip")
     L.append(r"\noindent{\footnotesize " + tex(_ref_patient(layer)) + r"\par}")
+    L += key_tex(layer)
     L.append(r"\subsection{Summary}")
     L += _two_col("Drafted (writing protocol)", sentences_tex(d.get("summary")) or "(no draft)",
                   "Offline template (no language model)", sentences_tex(tmpl.get("summary")))
@@ -513,6 +518,7 @@ def genome_block_v4(layer: Dict[str, Any]) -> List[str]:
              + ", not supported " + tex(cnt.get("not_supported")) + r".\par}")
     L.append(r"\noindent{\small\textcolor{BrickRed}{" + tex(_status(layer)) + r"}\par}\smallskip")
     L.append(r"\noindent{\footnotesize " + tex(_ref_patient(layer)) + r"\par}")
+    L += key_tex(layer)
     L.append(r"\subsection{Summary}")
     L.append(r"\noindent " + sentences_tex(d.get("lead")))
     L += _diagram(summary_diagram(layer), "The model at the level of this summary: one box per paragraph below.")
@@ -611,6 +617,8 @@ def claims_longtable(claims: List[Dict[str, Any]]) -> List[str]:
         rng_t = f"{_num(rng[0])} to {_num(rng[1])}" if rng[0] is not None else ""
         val = e.get("value") if isinstance(e.get("value"), (int, float)) else None
         what = tex(f"{c['type']}: {claim_brief(c)}")
+        if c.get("raw_names"):
+            what += r" \newline " + claim_raw_tex(c)
         sht = shape_text(c)
         if sht:
             what += r" \newline{\itshape shape: " + tex(sht) + "}"
@@ -650,7 +658,10 @@ def grouped_level_tables(layer) -> List[str]:
             to = (ch.get("to") or {}).get("label") or ""
             if len(to) > 60:
                 to = to[:57] + "..."
-            L.append(f"{tex(c['id'])} & {tex((ch.get('from') or {}).get('label') or '')} & {tex(to)} & {tex(n)} & "
+            codes = [str(x) for x in ((ch.get("to") or {}).get("codes") or [])]
+            to = tex(to) + (r" \texttt{" + tex(_raw_join([raw_of_code(layer, base, k) for k in codes])) + "}"
+                            if codes else "")
+            L.append(f"{tex(c['id'])} & {tex((ch.get('from') or {}).get('label') or '')} & {to} & {tex(n)} & "
                      f"{tex(risk_text(c))} & {VERIFIED_MARK if c.get('verified') else FAILED_MARK} \\\\")
         L += [r"\end{longtable}}"]
     return L
@@ -845,10 +856,14 @@ def linear_factors_table(layer) -> List[str]:
         return []
     L = [r"\subsection*{Linear factors}\addcontentsline{toc}{subsection}{Linear factors}",
          r"\noindent{\small Inputs that act at a fixed rate: each adds the same amount to the score (log-odds) per "
-         r"unit, everywhere or across the observed data, so their effect is explained by the rate alone. Mixed "
+         r"unit, everywhere or across the observed data, so their effect is explained by the rate alone. "
+         r"``On the data'' includes a unit that switches but reads a single yes/no input (or one level of a "
+         r"category) and nothing else: on the data it has one value per answer, so it only adjusts that input's "
+         r"fixed effect (checked exactly on every training row; it holds for the two observed values only). Mixed "
          r"inputs (a fixed-rate path and a switching one) and inputs that only act through switching units are "
          r"in the parts below. The risk change is for the typical case, from the 10th to the 90th percentile "
-         r"(numbers) or to the level with the largest effect (categories)."
+         r"(numbers; between the two values for a number with only two) or to the level with the largest effect "
+         r"(categories)."
          + (r" Claim " + tex(mc["id"]) + r"." if mc else "") + r"\par}",
          r"{\footnotesize\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.2\linewidth}l"
          r">{\raggedright\arraybackslash}p{0.3\linewidth}l>{\raggedright\arraybackslash}p{0.2\linewidth}r@{}}",
@@ -860,7 +875,8 @@ def linear_factors_table(layer) -> List[str]:
         txt = "; ".join(x["text"] for x in pu[:4]) + ("; ..." if len(pu) > 4 else "")
         r = c.get("risk") or {}
         tc = (f"{r.get('change', '')}: {_pc(r.get('from'))} to {_pc(r.get('to'))}" if r.get("from") is not None else "")
-        L.append(f"{tex(v.get('short') or v.get('label') or v.get('base'))} \\textcolor{{NavyBlue}}{{[{tex(c['id'])}]}} & "
+        L.append(f"{tex(v.get('short') or v.get('label') or v.get('base'))} \\texttt{{{tex(v.get('base') or '')}}} "
+                 f"\\textcolor{{NavyBlue}}{{[{tex(c['id'])}]}} & "
                  f"{CLASS_WORD[st['class']]} & {tex(txt)} & {tex(st.get('direction') or 'by level')} & {tex(tc)} & "
                  f"{tex(r.get('n', c.get('n')))} \\\\")
     L += [r"\bottomrule", r"\end{longtable}}"]
@@ -970,6 +986,7 @@ def genome_block_v5(layer: Dict[str, Any]) -> List[str]:
              + ", not supported " + tex(cnt.get("not_supported")) + r".\par}")
     L.append(r"\noindent{\small\textcolor{BrickRed}{" + tex(_status(layer)) + r"}\par}\smallskip")
     L.append(r"\noindent{\footnotesize " + tex(_ref_patient(layer)) + r"\par}")
+    L += key_tex(layer)
     L.append(r"\subsection{Summary}")
     ls = linear_sentence(layer)
     L.append(r"\noindent " + sentences_tex(d.get("lead")) + (" " + sentences_tex([ls]) if ls else "")
@@ -1003,14 +1020,19 @@ def genome_block_v5(layer: Dict[str, Any]) -> List[str]:
             L.append(r"\noindent{\footnotesize Part of: " + tex(titles.get(parent["id"], parent["name"]))
                      + r" (\ref{rd:" + _lk(parent["id"]) + r"}).\par}")
         f1, f2 = _figlab(layer, "parts-" + _lk(pid)), _figlab(layer, "units-" + _lk(pid))
-        L.append(r"\noindent{\small Figure~\ref{" + f1 + r"} shows what feeds this part"
-                 + (r"; Figure~\ref{" + f2 + r"} its units and every connection into them (dashed boxes: "
-                    r"connections from or to other parts, drawn in their own sections)" if layer.get("graph") else "")
-                 + r".\par}")
-        L += _fig(readdown_diagram(layer, pid), tex(f"{titles.get(pid, p['name'])}: what feeds it, one level down."), f1)
+        units_tk = None
         if layer.get("graph"):
             from .render_structure import section
-            L += _fig(section(layer, pid)[0], tex(f"{titles.get(pid, p['name'])}: its units and every connection "
+            units_tk = section(layer, pid)[0]
+            if r"\node" not in units_tk:   # a part with no units of its own (all in its parts): no empty figure
+                units_tk = None
+        L.append(r"\noindent{\small Figure~\ref{" + f1 + r"} shows what feeds this part"
+                 + (r"; Figure~\ref{" + f2 + r"} its units and every connection into them (dashed boxes: "
+                    r"connections from or to other parts, drawn in their own sections)" if units_tk else "")
+                 + r".\par}")
+        L += _fig(readdown_diagram(layer, pid), tex(f"{titles.get(pid, p['name'])}: what feeds it, one level down."), f1)
+        if units_tk:
+            L += _fig(units_tk, tex(f"{titles.get(pid, p['name'])}: its units and every connection "
                                                   f"into them. " + LEGEND_SHORT), f2)
         sec = rd.get(pid) or {}
         L.append(r"\paragraph{Hypothesis.} " + sentences_tex(sec.get("hypothesis")))
@@ -1184,7 +1206,7 @@ def render_review(layers: List[Dict[str, Any]], title: str) -> str:
              r"\tableofcontents", r"\listoffigures", r"\clearpage"]
         for lay in layers:
             L += [r"\begin{drafted}[plain-language layer: " + tex(lay["label"]) + "]"]
-            L += genome_block_v5(lay)
+            L += genome_block_v5(annotate_layer(lay))
             L += [r"\end{drafted}", r"\clearpage"]
         L.append(r"\end{document}")
         return printed("\n".join(L)) + "\n"
@@ -1193,6 +1215,7 @@ def render_review(layers: List[Dict[str, Any]], title: str) -> str:
              r"\documentclass[a4paper,10pt]{article}",
              r"\usepackage[margin=1.8cm]{geometry}",
              PREAMBLE_PACKAGES.rstrip(),
+             r"\usepackage{longtable}",
              r"\usepackage{array}",
              r"\usepackage[unicode=true,hidelinks]{hyperref}",
              r"\setcounter{tocdepth}{2}",
@@ -1209,7 +1232,7 @@ def render_review(layers: List[Dict[str, Any]], title: str) -> str:
              r"\tableofcontents", r"\clearpage"]
         for lay in layers:
             L += [r"\begin{drafted}[plain-language layer: " + tex(lay["label"]) + "]"]
-            L += genome_block_v4(lay)
+            L += genome_block_v4(annotate_layer(lay))
             L += [r"\end{drafted}", r"\clearpage"]
         L.append(r"\end{document}")
         return printed("\n".join(L)) + "\n"
@@ -1217,6 +1240,7 @@ def render_review(layers: List[Dict[str, Any]], title: str) -> str:
          r"\documentclass[a4paper,10pt]{article}",
          r"\usepackage[margin=1.8cm]{geometry}",
          PREAMBLE_PACKAGES.rstrip(),
+         r"\usepackage{longtable}",
          r"\usepackage{array}",
          r"\usepackage[unicode=true,hidelinks]{hyperref}",
          r"\setcounter{tocdepth}{1}",
@@ -1245,6 +1269,7 @@ def render_review(layers: List[Dict[str, Any]], title: str) -> str:
          r"\tableofcontents", r"\clearpage"]
     for lay in layers:
         L += [r"\begin{drafted}[plain-language layer: " + tex(lay["label"]) + "]"]
+        lay = annotate_layer(lay)
         L += genome_block_v4(lay) if is_v4(lay) else genome_block(lay)
         L += [r"\end{drafted}", r"\clearpage"]
     L.append(r"\end{document}")

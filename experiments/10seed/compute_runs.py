@@ -7,6 +7,7 @@ Usage (re-runnable; Adult rows appear once its runs are 'completed'):
 
     uv run python experiments/10seed/compute_runs.py            # all outputs
     uv run python experiments/10seed/compute_runs.py --skip-paper
+    uv run python experiments/10seed/compute_runs.py --out-dir /tmp/runs  # then diff
 
 Outputs (experiments/10seed/):
     runs.csv                   heart, monk2, adult (pre-registered 30 runs)
@@ -323,7 +324,7 @@ def write_csv(path, rows):
         w.writeheader()
         for r in rows:
             w.writerow({k: r.get(k, "") for k in COLUMNS})
-    print(f"wrote {path.relative_to(REPO)} ({len(rows)} rows)")
+    print(f"wrote {path.relative_to(REPO) if path.is_relative_to(REPO) else path} ({len(rows)} rows)")
 
 
 def summarise(label, rows):
@@ -349,7 +350,11 @@ def summarise(label, rows):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--skip-paper", action="store_true")
+    ap.add_argument("--out-dir", type=Path, default=HERE,
+                    help="where to write the CSVs (default: this directory); use another "
+                         "folder to recompute without touching the stored CSVs, then diff")
     args = ap.parse_args()
+    args.out_dir.mkdir(parents=True, exist_ok=True)
 
     db.init_db()
     data_cache, boot_cache = {}, {}
@@ -390,8 +395,8 @@ def main():
                   f"test {row['test_auc']:.4f} [{row['test_auc_ci_lo']:.4f},"
                   f"{row['test_auc_ci_hi']:.4f}]", flush=True)
 
-    write_csv(HERE / "runs.csv", [r for ds in MAIN_DATASETS for r in results[ds]])
-    write_csv(HERE / "runs_heart100.csv", results["heart100"])
+    write_csv(args.out_dir / "runs.csv", [r for ds in MAIN_DATASETS for r in results[ds]])
+    write_csv(args.out_dir / "runs_heart100.csv", results["heart100"])
 
     paper_rows = []
     if not args.skip_paper:
@@ -411,7 +416,7 @@ def main():
                   f"{'MATCH' if ok else 'MISMATCH'}; train {row['train_auc']:.4f} "
                   f"(|d| vs stored fitness {row['fitness_abs_diff']:.1e})")
             paper_rows.append(row)
-        write_csv(HERE / "runs_paper_reference.csv", paper_rows)
+        write_csv(args.out_dir / "runs_paper_reference.csv", paper_rows)
 
     for ds in results:
         summarise(ds, results[ds])

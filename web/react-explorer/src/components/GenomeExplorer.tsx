@@ -24,6 +24,8 @@ import { ConfigEditor } from "./ConfigEditor";
 import { ToolsDrawer } from "./ToolsDrawer";
 import type { LineageView } from "./LineagePanel";
 import type { HighlightKind } from "./NetworkViewer";
+import { FeatureLabelsProvider, useFeatureLabelsLoader } from "../featureLabels";
+import { getPin, listPins, inputText, scopeText, type FeaturePin } from "../api/features";
 
 // =============================================================================
 // Logging utilities
@@ -55,15 +57,42 @@ type GenomeExplorerProps = {
   onOpenGenome?: (genomeId: string) => void;
   /** Select this annotation (id or name) once the annotations are loaded (from ?annotation=). */
   initialAnnotationId?: string;
+  /** A feature-of-interest pin to reopen (selection + evidence panel view). */
+  pinId?: string;
+  onOpenPin?: (pinId: string) => void;
+  onOpenFeatures?: () => void;
 };
 
-export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack, onOpenGenome, initialAnnotationId }: GenomeExplorerProps) {
+export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack, onOpenGenome, initialAnnotationId, pinId, onOpenPin, onOpenFeatures }: GenomeExplorerProps) {
   const [model, setModel] = useState<ModelState | null>(null);
   const [operations, setOperations] = useState<Operation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedNodes, setSelectedNodes] = useState<Set<string>>(new Set());
   const [evidencePanelWidth, setEvidencePanelWidth] = useState(400);
+  const featureLabels = useFeatureLabelsLoader(genomeId);
+
+  // Features of interest pinned on this genome (badge), and the pin being reopened
+  const [pins, setPins] = useState<FeaturePin[]>([]);
+  const [recordLabel, setRecordLabel] = useState<string | null>(null);
+  const [pinsOpen, setPinsOpen] = useState(false);
+  const [activePin, setActivePin] = useState<FeaturePin | null>(null);
+  const [pinApplied, setPinApplied] = useState<string | null>(null);
+  const refreshPins = useCallback(() => {
+    listPins({ genome_id: genomeId })
+      .then((r) => {
+        setPins(r.pins);
+        setRecordLabel((r as { record_label?: string | null }).record_label ?? null);
+      })
+      .catch(() => setPins([]));
+  }, [genomeId]);
+  useEffect(() => refreshPins(), [refreshPins]);
+  useEffect(() => {
+    setActivePin(null);
+    setPinApplied(null);
+    if (!pinId) return;
+    getPin(pinId).then(setActivePin).catch((e) => logError("Failed to load pin", e));
+  }, [pinId]);
 
   // Tools drawer: graph highlights, lineage diff view, refresh after operations
   const [nodeHighlight, setNodeHighlight] = useState<Record<string, HighlightKind> | null>(null);
@@ -126,7 +155,7 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
     return Array.from(selectedNodes).filter((nodeId) => {
       if (inputIds.has(nodeId)) return true;
       // Check split variants: "-20_a" -> base "-20"
-      const baseId = nodeId.replace(/_[a-z]$/, "");
+      const baseId = nodeId.replace(/_(?:[a-z]|[A-Z][a-z])$/, "");
       return inputIds.has(baseId);
     });
   }, [model, selectedNodes]);
@@ -443,6 +472,43 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
     setSelectedAnnotationId(annotationId);
   }, []);
 
+  // Reopen a pin: select its scope once the model and the pin are loaded
+  useEffect(() => {
+    if (!model || !activePin || pinApplied === activePin.id) return;
+    const sc = activePin.scope;
+    setPinApplied(activePin.id);
+    if (sc.kind === "annotation" && sc.annotation_id) {
+      const ann = annotations.find((a) => a.id === sc.annotation_id || a.name === sc.annotation_name);
+      setSelectedNodes(new Set());
+      setNodeEvidence(null);
+      setSelectedAnnotationId(ann?.id ?? sc.annotation_id);
+    } else if (sc.kind === "node" && sc.node_id) {
+      handleNodeSelect([sc.node_id]);
+    } else if (sc.kind === "input") {
+      const ids = activePin.inputs.map((i) => i.node_id).filter((x): x is string => !!x);
+      setSelectedAnnotationId(null);
+      setNodeEvidence(null);
+      setSelectedNodes(new Set(ids.length ? ids : sc.node_id ? [sc.node_id] : []));
+    } else {
+      setSelectedAnnotationId(null);
+      setNodeEvidence(null);
+      setSelectedNodes(new Set(model.metadata.output_nodes.slice(0, 1)));
+    }
+  }, [model, activePin, pinApplied, annotations, handleNodeSelect]);
+
+  /** The pinned view, when the evidence panel shows the pin's scope. */
+  const restoreFor = (kind: string, id?: string | null) => {
+    if (!activePin || activePin.scope.kind !== kind || !activePin.viz) return null;
+    if (kind === "annotation" && id !== activePin.scope.annotation_id && id !== activePin.scope.annotation_name) return null;
+    if (kind === "node" && id !== activePin.scope.node_id) return null;
+    return { viz: activePin.viz, also: activePin.also_views?.[0] ?? null };
+  };
+  const pinProps = {
+    experimentName,
+    recordLabel,
+    onPinned: () => refreshPins(),
+  };
+
   if (loading) {
     return (
       <div className="explorer-container">
@@ -466,6 +532,7 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
   }
 
   return (
+    <FeatureLabelsProvider value={featureLabels}>
     <div className="explorer-container">
       <header className="explorer-header">
         <button className="back-btn" onClick={onBack}>
@@ -473,6 +540,44 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
         </button>
         <h2>{experimentName}</h2>
         <span className="genome-id" title={genomeId}>Genome: {genomeId.slice(0, 8)}...</span>
+        {recordLabel && <span className="genome-id">{recordLabel}</span>}
+        <div className="pins-badge-wrap">
+          <button
+            className={`pins-badge ${pins.length ? "has-pins" : ""}`}
+            onClick={() => setPinsOpen((o) => !o)}
+            title="Features of interest pinned on this genome"
+            data-testid="pins-badge"
+          >
+            {pins.length} feature{pins.length === 1 ? "" : "s"} pinned
+          </button>
+          {pinsOpen && (
+            <div className="pins-menu">
+              {pins.length === 0 && (
+                <div className="hint" style={{ padding: "6px 8px" }}>
+                  No pins yet. Use "Pin as feature of interest" in the evidence panel, or "Pin this input" on an input.
+                </div>
+              )}
+              {pins.map((p) => (
+                <button
+                  key={p.id}
+                  className={`pins-menu-item ${activePin?.id === p.id ? "active" : ""}`}
+                  onClick={() => {
+                    setPinsOpen(false);
+                    onOpenPin?.(p.id);
+                  }}
+                >
+                  <span className={`pin-status pin-status-${p.status}`}>{p.status}</span>{" "}
+                  <strong>{p.inputs.map(inputText).join(", ") || scopeText(p.scope)}</strong>{" "}
+                  <span className="hint">{scopeText(p.scope)}{p.viz ? ` · ${p.viz.type}` : ""}</span>
+                  {p.note && <div className="pins-menu-note">{p.note}</div>}
+                </button>
+              ))}
+              {onOpenFeatures && (
+                <button className="pins-menu-all" onClick={() => onOpenFeatures()}>All features of interest →</button>
+              )}
+            </div>
+          )}
+        </div>
         {edgeInfluenceData && (
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "0.25rem" }}>
             <span style={{ fontSize: "0.8rem", color: "#6b7280" }}>Edge display:</span>
@@ -542,6 +647,17 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
               <ConfigEditor config={experimentDetail.resolved_config} readOnly />
             </div>
           )}
+        </div>
+      )}
+
+      {activePin && (
+        <div className="pin-banner" data-testid="pin-banner">
+          <span>
+            <strong>Pinned feature {activePin.id}</strong> ({activePin.status}): {activePin.inputs.map(inputText).join(", ") || scopeText(activePin.scope)}
+            {activePin.viz?.description ? ` — ${activePin.viz.description}` : ""}
+            {activePin.note && <div className="pin-banner-note">{activePin.note}</div>}
+          </span>
+          <button className="op-btn secondary" onClick={() => { setActivePin(null); }}>Close</button>
         </div>
       )}
 
@@ -620,6 +736,9 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
               annotation={
                 annotations.find((a) => a.id === selectedAnnotationId || a.name === selectedAnnotationId)!
               }
+              key={restoreFor("annotation", selectedAnnotationId) ? activePin!.id : "live"}
+              restore={restoreFor("annotation", selectedAnnotationId)}
+              {...pinProps}
               width={evidencePanelWidth}
               onResize={setEvidencePanelWidth}
               onEdgeInfluence={handleEdgeInfluence}
@@ -633,6 +752,9 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
               annotation={nodeEvidence.annotation}
               isNodeLevel
               nodeId={nodeEvidence.nodeId}
+              key={restoreFor("node", nodeEvidence.nodeId) ? activePin!.id : "live"}
+              restore={restoreFor("node", nodeEvidence.nodeId)}
+              {...pinProps}
               width={evidencePanelWidth}
               onResize={setEvidencePanelWidth}
               onEdgeInfluence={handleEdgeInfluence}
@@ -645,6 +767,9 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
               experimentId={experimentId}
               annotation={wholeModelAnnotation}
               isWholeModel
+              key={restoreFor("model") ? activePin!.id : "live"}
+              restore={restoreFor("model")}
+              {...pinProps}
               width={evidencePanelWidth}
               onResize={setEvidencePanelWidth}
               onEdgeInfluence={handleEdgeInfluence}
@@ -665,10 +790,14 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
               experimentId={experimentId}
               selectedInputNodes={selectedInputNodes}
               model={model}
+              experimentName={experimentName}
+              recordLabel={recordLabel}
+              onPinned={() => refreshPins()}
             />
           </div>
         ) : null}
       </div>
     </div>
+    </FeatureLabelsProvider>
   );
 }

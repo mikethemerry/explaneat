@@ -28,6 +28,11 @@ from ..schemas import (
     ExperimentProgressResponse,
 )
 from ...db import Experiment, Population, Genome
+
+# The experiments' selection rule (compute_runs.py): best training fitness, ties to the earliest
+# generation, then the lowest NEAT key. Without the tie-break the query can return either of two
+# genomes with equal fitness (e.g. 10seed-heart-s1, generations 31 and 39).
+BEST_ORDER = (Genome.fitness.desc(), Population.generation.asc(), Genome.genome_id.asc())
 from ...db.models import Dataset, DatasetSplit, ConfigTemplate
 from ...db.dataset_utils import create_or_get_split
 from ...db.serialization import deserialize_genome
@@ -182,7 +187,7 @@ async def get_best_genome(
             Population.experiment_id == experiment_id,
             Genome.fitness.isnot(None),
         )
-        .order_by(Genome.fitness.desc())
+        .order_by(*BEST_ORDER)
         .first()
     )
 
@@ -225,7 +230,7 @@ async def get_best_genome_phenotype(
             Population.experiment_id == experiment_id,
             Genome.fitness.isnot(None),
         )
-        .order_by(Genome.fitness.desc())
+        .order_by(*BEST_ORDER)
         .first()
     )
 

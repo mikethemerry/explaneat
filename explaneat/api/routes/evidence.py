@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 import numpy as np
+
+from ...core import split_ids
 from fastapi import APIRouter, HTTPException, Path
 
 from ...db import db
@@ -62,7 +64,7 @@ def _resolve_node_label(
     for node in model_state.nodes:
         if node.id.startswith(prefix):
             suffix = node.id[len(prefix):]
-            if suffix.isalpha() and len(suffix) == 1:
+            if split_ids.is_suffix(suffix) and len(split_ids.tokens(suffix)) == 1:
                 variant_names.append(display_map.get(node.id, node.id))
 
     if variant_names:
@@ -593,6 +595,102 @@ def _compute_correctness(
     }
 
 
+def _entry_feature_columns(entry_nodes, model_state) -> List[Optional[int]]:
+    """Dataset column behind each entry node (input / split input / identity of an input), else None."""
+    from ...core.structure_network import StructureNetwork
+
+    seen: set = set()
+    base_to_col: Dict[str, int] = {}
+    for nid in model_state.input_node_ids:
+        base = StructureNetwork._get_base_node_id(nid) or nid
+        if base not in seen:
+            seen.add(base)
+            base_to_col[base] = len(base_to_col)
+    cols: List[Optional[int]] = []
+    for n in entry_nodes:
+        nid = n[len("identity_"):] if n.startswith("identity_") else n
+        base = StructureNetwork._get_base_node_id(nid) or nid
+        cols.append(base_to_col.get(base))
+    return cols
+
+
+def _to_source_units(data: Dict[str, Any], dim_cols: List[Optional[int]], scaler_type, scaler_params) -> bool:
+    """Convert a pairs plot's input axes from the scaled (network) values to the data's units."""
+    if not scaler_type or not scaler_params:
+        return False
+
+    def conv(col):
+        if scaler_type == "StandardScaler":
+            m, sc = scaler_params["mean"][col], scaler_params["scale"][col]
+            return lambda v: round(v * sc + m, 9)
+        if scaler_type == "MinMaxScaler":
+            mn, sc = scaler_params["min_"][col], scaler_params["scale_"][col]
+            return lambda v: round((v - mn) / sc, 9) if sc else v
+        return None
+
+    done = False
+    for inp, col in zip(data["inputs"], dim_cols):
+        f = conv(col) if col is not None else None
+        if f is None:
+            continue
+        for key in ("grid", "scatter"):
+            inp[key] = [float(f(v)) for v in inp[key]]
+        for key in ("median", "min", "max"):
+            inp[key] = float(f(inp[key]))
+        if "edges" in inp["hist"]:
+            inp["hist"]["edges"] = [float(f(v)) for v in inp["hist"]["edges"]]
+        else:
+            inp["hist"]["levels"] = [float(f(v)) for v in inp["hist"]["levels"]]
+        inp["units"] = "source"
+        done = True
+    return done
+
+
+def _compute_pairs_plot(
+    session, request, fn, entry_acts, exit_acts, entry_names, exit_names,
+    is_whole_model: bool, num_classes, model_state=None, annotation=None,
+) -> Dict[str, Any]:
+    """Pairs plot data (``viz_data.compute_pairs``) plus the units and timing."""
+    import time
+
+    t0 = time.perf_counter()
+    params = request.params or {}
+    n_in = entry_acts.shape[1]
+    if n_in < 3:
+        raise HTTPException(status_code=400, detail="A pairs plot needs at least 3 inputs")
+    dims = params.get("dims") or None
+    fix = params.get("fix", "median")
+    center = None
+    if is_whole_model and num_classes == 2 and exit_acts.shape[1] == 1:
+        center = 0.5  # a probability: diverge around the decision threshold
+    try:
+        data = vd.compute_pairs(
+            fn, entry_acts, exit_acts,
+            dims=dims,
+            output_dim=int(params.get("output_dim", 0)),
+            grid_size=min(int(params.get("grid_size", 25)), 25),
+            max_scatter=min(int(params.get("max_scatter", 2000)), 2000),
+            fix=fix,
+            center=center,
+            entry_names=entry_names, exit_names=exit_names,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    data["center_rule"] = "0.5 (probability)" if center is not None else "the reference prediction"
+    data["units"] = "network"
+    if request.view == "source":
+        split = session.query(DatasetSplit).filter_by(id=uuid.UUID(request.dataset_split_id)).first()
+        if is_whole_model:
+            cols: List[Optional[int]] = list(data["dims"])
+        else:
+            cols_all = _entry_feature_columns(annotation["entry_nodes"], model_state)
+            cols = [cols_all[d] for d in data["dims"]]
+        if split and _to_source_units(data, cols, split.scaler_type, split.scaler_params):
+            data["units"] = "source"
+    data["seconds"] = round(time.perf_counter() - t0, 3)
+    return data
+
+
 @router.post("/viz-data", response_model=VizDataResponse)
 async def compute_viz_data(
     request: VizDataRequest,
@@ -632,6 +730,12 @@ async def compute_viz_data(
             )
 
             cache_key = f"node:{request.node_id}" if request.node_id else request.annotation_id
+            # the rows depend on the split choice and the (seeded) sampling, and the
+            # activations on the model state: key on all of them
+            cache_key = (
+                f"{cache_key}|{request.split}|{request.sample_fraction}|{request.max_samples}"
+                f"|{len(X)}|{len(model_state.nodes)}|{len(model_state.connections)}"
+            )
             cached = activation_cache.get(genome_id, request.dataset_split_id, cache_key)
             if cached is not None:
                 entry_acts, exit_acts = cached
@@ -861,6 +965,13 @@ async def compute_viz_data(
                     display_map.get(nid, nid): v
                     for nid, v in regime["pattern"].items()
                 }
+        elif viz_type == "pairs_plot":
+            data = _compute_pairs_plot(
+                session, request, fn, entry_acts, exit_acts, entry_names, exit_names,
+                is_whole_model=is_whole_model, num_classes=ds_num_classes,
+                model_state=None if is_whole_model else model_state,
+                annotation=None if is_whole_model else annotation,
+            )
         else:
             raise HTTPException(status_code=400, detail=f"Unknown viz_type: {viz_type}")
 
@@ -884,7 +995,8 @@ async def compute_viz_data(
             response_kwargs["num_classes"] = ds_num_classes
 
         # Source view: reverse scaling on axis values, group one-hot features
-        if request.view == "source":
+        # (the pairs plot converts its own axes and keeps one name per column)
+        if request.view == "source" and viz_type != "pairs_plot":
             response_kwargs = _apply_source_view(
                 response_kwargs, session, request.dataset_split_id, entry_names,
             )

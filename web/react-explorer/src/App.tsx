@@ -7,6 +7,7 @@ import { TemplatesPage } from "./components/TemplatesPage";
 import { RecordsPage } from "./components/RecordsPage";
 import { ReviewPage } from "./components/ReviewPage";
 import { PortalPage } from "./components/PortalPage";
+import { FeaturesPage } from "./components/FeaturesPage";
 import { parseUrl, pushView, replaceView, type UrlView } from "./hooks/useUrlState";
 
 export default function App() {
@@ -35,7 +36,13 @@ export default function App() {
   if (view.type === "genome") {
     return (
       <GenomeExplorer
+        key={view.genomeId}
         genomeId={view.genomeId}
+        pinId={view.pin}
+        onOpenPin={(pinId) =>
+          setView({ type: "genome", genomeId: view.genomeId, experimentId: view.experimentId, experimentName: view.experimentName, pin: pinId })
+        }
+        onOpenFeatures={() => setView({ type: "features" })}
         experimentId={view.experimentId}
         experimentName={view.experimentName}
         initialAnnotationId={view.annotationId}
@@ -69,6 +76,12 @@ export default function App() {
         />
       ) : view.type === "review_label" ? (
         <ReviewPage label={view.label} onBack={() => setView({ type: "review" })} />
+      ) : view.type === "features" ? (
+        <FeaturesPage
+          onOpen={(genomeId, experimentId, experimentName, pinId) =>
+            setView({ type: "genome", genomeId, experimentId, experimentName, pin: pinId })
+          }
+        />
       ) : view.type === "review" ? (
         <RecordsPage
           onOpen={(genomeId, experimentId, experimentName) =>

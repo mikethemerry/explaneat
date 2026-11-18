@@ -630,7 +630,7 @@ class VizDataRequest(BaseModel):
     viz_type: Literal[
         "line", "heatmap", "partial_dependence", "pca_scatter", "sensitivity",
         "ice", "feature_output_scatter", "output_distribution",
-        "activation_profile", "edge_influence", "regime_map",
+        "activation_profile", "edge_influence", "regime_map", "pairs_plot",
     ]
     params: Optional[Dict[str, Any]] = None
     # full training split by default (2026-11-11 errata, fix 2); the UI passes explicit sampling

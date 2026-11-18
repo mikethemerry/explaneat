@@ -15,6 +15,9 @@ import { SurvivalEvidence } from "./SurvivalEvidence";
 import { DatasetSelector } from "./DatasetSelector";
 import { VizCanvas } from "./VizCanvas";
 import { EvidenceGallery } from "./EvidenceGallery";
+import { useFeatureLabels, withLabel } from "../featureLabels";
+import { VIEW_LABELS, type FeaturePin, type PinInput, type PinScope, type PinView } from "../api/features";
+import { PinFeatureModal, type PinModalDraft } from "./PinFeatureModal";
 
 type EvidencePanelProps = {
   genomeId: string;
@@ -26,7 +29,24 @@ type EvidencePanelProps = {
   width?: number;
   onResize?: (width: number) => void;
   onEdgeInfluence?: (data: Record<string, any> | null) => void;
+  /** For pins: experiment name and the genome's explanation-record label. */
+  experimentName?: string;
+  recordLabel?: string | null;
+  /** A pinned view to reopen: slot 1 shows `viz`, slot 2 shows `also` (when given). */
+  restore?: { viz?: PinView | null; also?: PinView | null } | null;
+  onPinned?: (pin: FeaturePin) => void;
 };
+
+/** Index of a pinned input in this scope's entry nodes: by node id first, else the stored index.
+ * The whole model's input dims are the dataset columns (node `-k` is column k-1), not entry_nodes. */
+function resolveDim(entryNodes: string[], node: string | null | undefined, index: unknown, fallback: number, byColumn = false): number {
+  if (node) {
+    if (byColumn && /^-\d+$/.test(node)) return -Number(node) - 1;
+    const i = entryNodes.indexOf(node);
+    if (i >= 0) return i;
+  }
+  return typeof index === "number" && index >= 0 && index < entryNodes.length ? index : fallback;
+}
 
 const VIZ_TYPE_LABELS: Record<string, string> = {
   line: "Line Plot",
@@ -41,6 +61,7 @@ const VIZ_TYPE_LABELS: Record<string, string> = {
   activation_profile: "Activation Profile",
   regime_map: "Regime Map",
   edge_influence: "Edge Influence",
+  pairs_plot: "Pairs Plot",
 };
 
 const VIZ_TYPE_EXPLANATIONS: Record<string, { title: string; what: string; how: string; look_for: string }> = {
@@ -110,6 +131,12 @@ const VIZ_TYPE_EXPLANATIONS: Record<string, { title: string; what: string; how: 
     how: "Table rows = regimes, sorted by frequency. Green dots = ReLU on, grey dots = ReLU off. Count = how many data points fall in this regime. Accuracy = classification accuracy within the regime.",
     look_for: "Few dominant regimes (2-3 covering >90% of data) means the subgraph has simple, interpretable modes. Many regimes with small counts suggest complex, data-dependent behavior. Low accuracy in a regime = the model struggles with that subpopulation. Within each regime, all ReLUs are fixed, so the subgraph is purely linear — you can reason about its behavior algebraically.",
   },
+  pairs_plot: {
+    title: "Pairs Plot (pairwise interactions)",
+    what: "A grid over a few inputs (default: the 5 with the highest sensitivity; pick up to 8). Diagonal: the output's response to that input alone, others fixed at their median (or averaged over the data), drawn over the data's distribution in grey. Below the diagonal: the actual data rows, input vs input, coloured by the output's actual value. Above the diagonal: the 2-D response heatmap for that pair, with its interaction strength H in the corner.",
+    how: "Every panel uses the same diverging colour scale (legend under the grid). Binary and discrete inputs are only drawn at the values the data takes: dots, not lines, two-row heatmaps, jittered scatter. H is the share of the pair's 2-D surface that is not one effect of each input added together: 0 = the two effects just add, near 1 = the effect of one depends entirely on the other. Outlined heatmaps are the strongest pairs, and the ranked list is under the grid.",
+    look_for: "Heatmaps whose colour bands bend or cross (not parallel stripes) and a high H: an interaction. Compare with the scatter in the mirrored panel: is the interesting region of the heatmap where the data actually lies? A flat diagonal curve with a strong heatmap means the input matters only together with the other one. Big H with a tiny interaction SD is a negligible effect.",
+  },
   edge_influence: {
     title: "Edge Influence",
     what: "Measures how much each connection actually contributes in practice by computing the variance of (weight x source activation) across the dataset. High influence = the edge differentiates predictions. Low influence = the edge is vestigial.",
@@ -118,7 +145,9 @@ const VIZ_TYPE_EXPLANATIONS: Record<string, { title: string; what: string; how: 
   },
 };
 
-const ALL_VIZ_TYPES = ["line", "heatmap", "partial_dependence", "pca_scatter", "sensitivity", "ice", "feature_output_scatter", "output_distribution", "shap", "activation_profile", "regime_map", "edge_influence"];
+const ALL_VIZ_TYPES = ["line", "heatmap", "partial_dependence", "pca_scatter", "sensitivity", "ice", "feature_output_scatter", "output_distribution", "shap", "activation_profile", "regime_map", "edge_influence", "pairs_plot"];
+
+const PAIRS_MAX_INPUTS = 8;
 
 // Which viz types need which dimension selectors
 const NEEDS_INPUT_DIM: Record<string, "single" | "pair" | false> = {
@@ -131,6 +160,7 @@ const NEEDS_INPUT_DIM: Record<string, "single" | "pair" | false> = {
   feature_output_scatter: "single",
   output_distribution: false,
   shap: false,
+  pairs_plot: false,
 };
 
 const NEEDS_OUTPUT_DIM: Record<string, boolean> = {
@@ -143,6 +173,7 @@ const NEEDS_OUTPUT_DIM: Record<string, boolean> = {
   feature_output_scatter: true,
   output_distribution: true,
   shap: false,
+  pairs_plot: true,
 };
 
 /* ── VizSlot: independent visualization with its own controls ── */
@@ -162,28 +193,66 @@ type VizSlotProps = {
   onGalleryRefresh: () => void;
   viewMode: "network" | "source";
   onEdgeInfluence?: (data: Record<string, any> | null) => void;
+  slot: number;
+  initial?: PinView | null;
+  onViewChange?: (slot: number, view: PinView, inputs: PinInput[]) => void;
+  onPin?: (slot: number) => void;
 };
 
 function VizSlot({
   genomeId, annotation, splitId, splitChoice, sampleFraction,
   isWholeModel, isNodeLevel, nodeId,
   nIn, nOut, defaultVizType, onGalleryRefresh, viewMode, onEdgeInfluence,
+  slot, initial, onViewChange, onPin,
 }: VizSlotProps) {
+  const ip = (initial?.params ?? {}) as Record<string, any>;
+  const inodes = initial?.input_nodes ?? [];
   const [vizData, setVizData] = useState<VizDataResponse | null>(null);
-  const [vizType, setVizType] = useState<string>(defaultVizType);
+  const [vizType, setVizType] = useState<string>(initial?.type ?? defaultVizType);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [snapshotNarrative, setSnapshotNarrative] = useState("");
   const svgRef = useRef<SVGSVGElement | null>(null);
 
-  const [inputDim, setInputDim] = useState(0);
-  const [inputDims, setInputDims] = useState<[number, number]>([0, 1]);
-  const [outputDim, setOutputDim] = useState(0);
+  const [inputDim, setInputDim] = useState(() => resolveDim(annotation.entry_nodes, inodes[0], ip.input_dim, 0, isWholeModel));
+  const [inputDims, setInputDims] = useState<[number, number]>(() => {
+    const d = Array.isArray(ip.input_dims) ? ip.input_dims : [0, 1];
+    return [resolveDim(annotation.entry_nodes, inodes[0], d[0], 0, isWholeModel), resolveDim(annotation.entry_nodes, inodes[1], d[1], 1, isWholeModel)];
+  });
+  const [outputDim, setOutputDim] = useState(() => resolveDim(annotation.exit_nodes, initial?.output_node, ip.output_dim, 0));
   const [showOnGraph, setShowOnGraph] = useState(false);
   const [showExplain, setShowExplain] = useState(false);
+  // pairs plot: chosen inputs (null = the server's default, top 5 by sensitivity), how the others are fixed
+  const [pairDims, setPairDims] = useState<number[] | null>(() =>
+    initial?.type === "pairs_plot" && Array.isArray(ip.dims)
+      ? (ip.dims as number[]).map((d, k) => resolveDim(annotation.entry_nodes, inodes[k], d, d, isWholeModel))
+      : null,
+  );
+  const [pairFix, setPairFix] = useState<"median" | "average">(ip.fix === "average" ? "average" : "median");
+  const [pairsLarge, setPairsLarge] = useState(false);
+  const pairsAnnRef = useRef(annotation.id);
+  useEffect(() => {
+    if (pairsAnnRef.current === annotation.id) return; // keep a restored selection on mount
+    pairsAnnRef.current = annotation.id;
+    setPairDims(null);
+  }, [annotation.id]);
 
   const inputOptions = useMemo(() => Array.from({ length: nIn }, (_, i) => i), [nIn]);
   const outputOptions = useMemo(() => Array.from({ length: nOut }, (_, i) => i), [nOut]);
+
+  // Input pickers show both names: `marital-status:2 · married (civilian spouse)`
+  const fl = useFeatureLabels();
+  const entryName = useCallback(
+    (i: number, withNode = false): string => {
+      const name = vizData?.entry_names?.[i];
+      const node = annotation.entry_nodes[i];
+      if (name != null) return withLabel(name, fl.forName(name));
+      const f = fl.forNode(node);
+      if (f) return withLabel(f.raw, f) + (withNode ? ` (${node})` : "");
+      return withNode ? `x_${i} (${node})` : `x_${i}`;
+    },
+    [vizData, annotation.entry_nodes, fl],
+  );
 
   const buildVizParams = useCallback((): Record<string, unknown> => {
     const params: Record<string, unknown> = {};
@@ -199,11 +268,69 @@ function VizSlot({
     if (NEEDS_OUTPUT_DIM[vizType]) {
       params.output_dim = outputDim;
     }
+    if (vizType === "pairs_plot") {
+      if (pairDims) params.dims = pairDims;
+      params.fix = pairFix;
+    }
     return params;
-  }, [vizType, inputDim, inputDims, outputDim]);
+  }, [vizType, inputDim, inputDims, outputDim, pairDims, pairFix]);
 
+  // The view on screen, as a pin stores it (dims also by node id, so it reopens by node)
+  const currentView = useMemo((): { view: PinView; inputs: PinInput[] } => {
+    const mode = NEEDS_INPUT_DIM[vizType];
+    const dims: number[] =
+      mode === "single" ? [inputDim]
+      : mode === "pair" ? [inputDims[0], inputDims[1]]
+      : vizType === "pairs_plot" ? (pairDims ?? (vizData?.viz_type === "pairs_plot" ? ((vizData.data as any).dims as number[]) ?? [] : []))
+      : [];
+    const inputs: PinInput[] = dims.map((i) => {
+      // whole model: dim i is dataset column i (node -(i+1)); otherwise the scope's entry node i
+      const f = isWholeModel
+        ? fl.data?.features.find((x) => x.column === i) ?? fl.forName(vizData?.entry_names?.[i])
+        : fl.forNode(annotation.entry_nodes[i]) ?? fl.forName(vizData?.entry_names?.[i]);
+      const node = isWholeModel ? f?.node_id ?? `-${i + 1}` : annotation.entry_nodes[i];
+      const raw = f?.raw ?? vizData?.entry_names?.[i] ?? node;
+      return { node_id: node, raw, label: f?.decoded ? f.label : raw, index: i };
+    });
+    const names = inputs.map((x) => (x.label && x.label !== x.raw ? `${x.raw} · ${x.label}` : x.raw));
+    const outName = vizData?.exit_names?.[outputDim] ?? annotation.exit_nodes[outputDim];
+    let desc = VIZ_TYPE_LABELS[vizType] ? (VIEW_LABELS[vizType] ?? VIZ_TYPE_LABELS[vizType]) : vizType;
+    if (names.length) desc += ` of ${names.join(" vs ")}`;
+    if (NEEDS_OUTPUT_DIM[vizType] && nOut > 1) desc += ` → ${outName}`;
+    if (nIn > names.length) {
+      if (vizType === "line" || vizType === "heatmap") desc += ", others at median";
+      else if (vizType === "partial_dependence") desc += ", others averaged over the data";
+      else if (vizType === "ice") desc += ", one curve per row (others at the row's values)";
+    }
+    if (vizType === "pairs_plot") desc += pairFix === "average" ? ", others averaged" : ", others at median";
+    desc += `; split ${splitChoice}`;
+    return {
+      view: {
+        type: vizType,
+        params: buildVizParams(),
+        split_choice: splitChoice,
+        sample_fraction: sampleFraction,
+        view: viewMode,
+        dataset_split_id: splitId,
+        input_nodes: inputs.map((x) => x.node_id as string),
+        output_node: NEEDS_OUTPUT_DIM[vizType] ? annotation.exit_nodes[outputDim] : null,
+        description: desc,
+      },
+      inputs,
+    };
+  }, [vizType, inputDim, inputDims, outputDim, pairDims, pairFix, vizData, annotation, fl, buildVizParams, splitChoice, sampleFraction, viewMode, splitId, nIn, nOut, isWholeModel]);
+
+  useEffect(() => {
+    onViewChange?.(slot, currentView.view, currentView.inputs);
+  }, [onViewChange, slot, currentView]);
+
+  // the latest request wins: a change made while one is computing is not dropped, and an
+  // older response arriving late does not overwrite a newer one
+  const reqSeq = useRef(0);
   const doComputeViz = useCallback(async (forceRecompute = false) => {
     if (!splitId) return;
+    const seq = ++reqSeq.current;
+    const current = () => seq === reqSeq.current;
     setLoading(true);
     setError(null);
 
@@ -217,6 +344,7 @@ function VizSlot({
           max_samples: 100,
           force_recompute: forceRecompute || undefined,
         });
+        if (!current()) return;
         setVizData({
           viz_type: "shap",
           data: {
@@ -235,17 +363,19 @@ function VizSlot({
           dataset_split_id: splitId,
           viz_type: vizType as VizDataRequest["viz_type"],
           params: buildVizParams(),
-          split: splitChoice,
-          sample_fraction: sampleFraction,
-          max_samples: 1000,
+          // the pairs plot reads the whole training split (the server samples ≤ 2,000 seeded rows for the scatter)
+          ...(vizType === "pairs_plot"
+            ? { split: splitChoice === "both" ? "train" : splitChoice, sample_fraction: 1 }
+            : { split: splitChoice, sample_fraction: sampleFraction, max_samples: 1000 }),
           view: viewMode,
         });
+        if (!current()) return;
         setVizData(result);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to compute visualization");
+      if (current()) setError(err instanceof Error ? err.message : "Failed to compute visualization");
     } finally {
-      setLoading(false);
+      if (current()) setLoading(false);
     }
   }, [genomeId, annotation.id, splitId, vizType, splitChoice, sampleFraction, buildVizParams, isWholeModel, isNodeLevel, nodeId, viewMode]);
 
@@ -255,7 +385,7 @@ function VizSlot({
   // Auto-compute viz when parameters change (skip SHAP — it's expensive)
   const autoComputeInitRef = useRef(false);
   useEffect(() => {
-    if (!splitId || loading || vizType === "shap") return;
+    if (!splitId || vizType === "shap") return;
     if (!autoComputeInitRef.current) {
       autoComputeInitRef.current = true;
       doComputeViz(false);
@@ -263,13 +393,17 @@ function VizSlot({
     }
     doComputeViz(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [splitId, vizType, inputDim, inputDims[0], inputDims[1], outputDim, splitChoice, viewMode]);
+  }, [splitId, vizType, inputDim, inputDims[0], inputDims[1], outputDim, splitChoice, viewMode, pairDims?.join(","), pairFix]);
 
   const handleSnapshot = useCallback(async () => {
     if (!svgRef.current) return;
     const serializer = new XMLSerializer();
     const svgString = serializer.serializeToString(svgRef.current);
-    const svgBase64 = btoa(svgString);
+    // UTF-8 first: btoa only takes Latin-1 (feature labels and the pairs plot use … — ≤)
+    const bytes = new TextEncoder().encode(svgString);
+    let bin = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    const svgBase64 = btoa(bin);
     try {
       await saveSnapshot(
         genomeId, annotation.id,
@@ -297,7 +431,9 @@ function VizSlot({
         <div className="viz-type-selector">
           <label className="selector-label">Visualization</label>
           <div className="viz-type-buttons">
-            {(suggestedTypes.length > 0 ? [...suggestedTypes, "shap"] : ALL_VIZ_TYPES).map((vt) => (
+            {(suggestedTypes.length > 0 ? [...suggestedTypes, "shap"] : ALL_VIZ_TYPES)
+              .filter((vt) => vt !== "pairs_plot" || nIn >= 3)
+              .map((vt) => (
               <button
                 key={vt}
                 className={`viz-type-btn ${vizType === vt ? "active" : ""}`}
@@ -315,7 +451,7 @@ function VizSlot({
               <label className="dim-label">Input dim</label>
               <select className="dim-select" value={inputDim} onChange={(e) => setInputDim(Number(e.target.value))}>
                 {inputOptions.map((i) => (
-                  <option key={i} value={i}>{vizData?.entry_names?.[i] ?? `x_${i} (${annotation.entry_nodes[i]})`}</option>
+                  <option key={i} value={i}>{entryName(i, true)}</option>
                 ))}
               </select>
               {nIn > 1 && <span className="dim-hint">others fixed at median</span>}
@@ -327,18 +463,28 @@ function VizSlot({
               <div className="dim-pair">
                 <select className="dim-select" value={inputDims[0]} onChange={(e) => setInputDims([Number(e.target.value), inputDims[1]])}>
                   {inputOptions.map((i) => (
-                    <option key={i} value={i}>{vizData?.entry_names?.[i] ?? `x_${i}`}</option>
+                    <option key={i} value={i}>{entryName(i)}</option>
                   ))}
                 </select>
                 <span className="dim-sep">vs</span>
                 <select className="dim-select" value={inputDims[1]} onChange={(e) => setInputDims([inputDims[0], Number(e.target.value)])}>
                   {inputOptions.filter((i) => i !== inputDims[0]).map((i) => (
-                    <option key={i} value={i}>{vizData?.entry_names?.[i] ?? `x_${i}`}</option>
+                    <option key={i} value={i}>{entryName(i)}</option>
                   ))}
                 </select>
               </div>
               {nIn > 2 && <span className="dim-hint">others fixed at median</span>}
             </div>
+          )}
+          {vizType === "pairs_plot" && nIn >= 3 && (
+            <PairsControls
+              data={vizData?.viz_type === "pairs_plot" ? (vizData.data as Record<string, any>) : null}
+              selected={pairDims ?? (vizData?.viz_type === "pairs_plot" ? ((vizData.data as any).dims as number[]) : null)}
+              onChange={setPairDims}
+              fix={pairFix}
+              onFix={setPairFix}
+              nameOf={(i) => entryName(i)}
+            />
           )}
           {showOutputDim && (
             <div className="dim-selector">
@@ -356,6 +502,16 @@ function VizSlot({
           <button className="op-btn primary" onClick={handleComputeViz} disabled={loading}>
             {loading ? "Computing..." : "Compute"}
           </button>
+          {onPin && (
+            <button
+              className="op-btn pin-btn"
+              onClick={() => onPin(slot)}
+              style={{ fontSize: "11px" }}
+              title="Pin this view as a feature of interest (saved with its exact parameters)"
+            >
+              Pin as feature of interest
+            </button>
+          )}
           {vizType === "shap" && vizData?.viz_type === "shap" && (
             <button className="op-btn primary" onClick={handleRecomputeViz} disabled={loading}>
               Recompute
@@ -391,6 +547,11 @@ function VizSlot({
               style={{ fontSize: "11px" }}
             >
               {showOnGraph ? "Hide on graph" : "Show on graph"}
+            </button>
+          )}
+          {vizType === "pairs_plot" && vizData?.viz_type === "pairs_plot" && (
+            <button className="op-btn" onClick={() => setPairsLarge(true)} style={{ fontSize: "11px" }} title="Open the pairs plot large">
+              Enlarge
             </button>
           )}
           {VIZ_TYPE_EXPLANATIONS[vizType] && (
@@ -443,6 +604,31 @@ function VizSlot({
 
       {error && <div className="error-message">{error}</div>}
 
+      {pairsLarge && vizData?.viz_type === "pairs_plot" && (
+        <div
+          style={{
+            position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+            background: "rgba(0,0,0,0.45)", zIndex: 1000,
+            display: "flex", alignItems: "flex-start", justifyContent: "center", overflowY: "auto", padding: "2rem 0",
+          }}
+          onClick={() => setPairsLarge(false)}
+        >
+          <div
+            className="pairs-large"
+            style={{ background: "white", borderRadius: "0.5rem", padding: "1rem", boxShadow: "0 8px 32px rgba(0,0,0,0.25)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+              <strong style={{ fontSize: "0.95rem" }}>Pairs plot: {annotation.name || annotation.id.slice(0, 8)}</strong>
+              <button onClick={() => setPairsLarge(false)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "1.2rem", color: "#6b7280" }}>
+                x
+              </button>
+            </div>
+            <VizCanvas vizType="pairs_plot" data={vizData.data} width={Math.min(1100, Math.round(window.innerWidth * 0.9) - 32)} />
+          </div>
+        </div>
+      )}
+
       {vizData && (
         <div className="evidence-section">
           <VizCanvas
@@ -453,6 +639,11 @@ function VizSlot({
             classNames={vizData.class_names ?? undefined}
           />
 
+          {vizData.viz_type === "pairs_plot" && ((vizData.data as any).dims?.length ?? 0) >= 6 && (
+            <div className="dim-hint" style={{ marginTop: "-6px", marginBottom: "6px" }}>
+              Many inputs: use Enlarge for a readable grid (hover a panel for its details).
+            </div>
+          )}
           {!isWholeModel && !isNodeLevel && (
             <div className="snapshot-controls">
               <input
@@ -473,14 +664,119 @@ function VizSlot({
   );
 }
 
+/* ── PairsControls: which inputs the pairs plot shows, and how the others are fixed ── */
+
+function PairsControls({
+  data, selected, onChange, fix, onFix, nameOf,
+}: {
+  data: Record<string, any> | null;
+  selected: number[] | null;
+  onChange: (dims: number[]) => void;
+  fix: "median" | "average";
+  onFix: (f: "median" | "average") => void;
+  nameOf: (i: number) => string;
+}) {
+  const [filter, setFilter] = useState("");
+  const ranking = (data?.ranking ?? []) as { dim: number; name: string; sensitivity: number; varies: boolean }[];
+  const sel = selected ?? [];
+  const toggle = (d: number) => {
+    if (sel.includes(d)) {
+      if (sel.length > 2) onChange(sel.filter((x) => x !== d));
+    } else if (sel.length < PAIRS_MAX_INPUTS) {
+      onChange([...sel, d]);
+    }
+  };
+  const q = filter.trim().toLowerCase();
+  const shown = ranking.filter((r) => !q || nameOf(r.dim).toLowerCase().includes(q));
+  return (
+    <div className="dim-selector" style={{ flexDirection: "column", alignItems: "stretch", gap: "4px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+        <label className="dim-label">Inputs ({sel.length}/{PAIRS_MAX_INPUTS})</label>
+        <span className="dim-hint">ranked by sensitivity; default top 5</span>
+        <label className="radio-label" style={{ fontSize: "11px" }}>
+          <input type="radio" checked={fix === "median"} onChange={() => onFix("median")} /> others at median
+        </label>
+        <label className="radio-label" style={{ fontSize: "11px" }}>
+          <input type="radio" checked={fix === "average"} onChange={() => onFix("average")} /> averaged (PD)
+        </label>
+      </div>
+      {ranking.length > 0 && (
+        <>
+          {ranking.length > 12 && (
+            <input
+              type="text" className="text-input" placeholder="Filter inputs..." value={filter}
+              onChange={(e) => setFilter(e.target.value)} style={{ fontSize: "11px", padding: "2px 6px" }}
+            />
+          )}
+          <div className="pairs-input-list" style={{ maxHeight: "130px", overflowY: "auto", border: "1px solid #e2e8f0", borderRadius: "4px", padding: "2px 4px", fontSize: "11px" }}>
+            {shown.map((r) => {
+              const on = sel.includes(r.dim);
+              const full = !on && sel.length >= PAIRS_MAX_INPUTS;
+              return (
+                <label key={r.dim} style={{ display: "flex", gap: "6px", alignItems: "center", opacity: r.varies ? 1 : 0.5, cursor: full ? "not-allowed" : "pointer" }}
+                  title={full ? `At most ${PAIRS_MAX_INPUTS} inputs` : undefined}>
+                  <input type="checkbox" checked={on} disabled={full || (on && sel.length <= 2)} onChange={() => toggle(r.dim)} />
+                  <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{nameOf(r.dim)}</span>
+                  <span style={{ color: "#64748b", fontVariantNumeric: "tabular-nums" }}>{r.varies ? r.sensitivity.toPrecision(2) : "constant"}</span>
+                </label>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 /* ── EvidencePanel: shared header/dataset/perf + two VizSlots ── */
 
-export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel = false, isNodeLevel = false, nodeId, width, onResize, onEdgeInfluence }: EvidencePanelProps) {
+export function EvidencePanel({
+  genomeId, experimentId, annotation, isWholeModel = false, isNodeLevel = false, nodeId, width, onResize, onEdgeInfluence,
+  experimentName, recordLabel, restore, onPinned,
+}: EvidencePanelProps) {
+  const rv = restore?.viz ?? null;
   const [splitId, setSplitId] = useState<string | null>(null);
-  const [splitChoice, setSplitChoice] = useState<"train" | "test" | "val" | "both">("both");
-  const [sampleFraction, setSampleFraction] = useState(0.1);
+  const [splitChoice, setSplitChoice] = useState<"train" | "test" | "val" | "both">(rv?.split_choice ?? "both");
+  const [sampleFraction, setSampleFraction] = useState(rv?.sample_fraction ?? 0.1);
   const [galleryKey, setGalleryKey] = useState(0);
-  const [viewMode, setViewMode] = useState<"network" | "source">("network");
+  const [viewMode, setViewMode] = useState<"network" | "source">(rv?.view ?? "network");
+
+  // Pins: each slot reports its current view; "Pin" opens the form for that slot
+  const slotViews = useRef<({ view: PinView; inputs: PinInput[] } | null)[]>([null, null]);
+  const handleViewChange = useCallback((slot: number, view: PinView, inputs: PinInput[]) => {
+    slotViews.current[slot] = { view, inputs };
+  }, []);
+  const [pinDraft, setPinDraft] = useState<{ draft: PinModalDraft; other: string | null } | null>(null);
+  const [pinnedMsg, setPinnedMsg] = useState<string | null>(null);
+  const scope: PinScope = isWholeModel
+    ? { kind: "model" }
+    : isNodeLevel
+      ? { kind: "node", node_id: nodeId ?? null }
+      : { kind: "annotation", annotation_id: annotation.id, annotation_name: annotation.name ?? null };
+  const handlePin = useCallback(
+    (slot: number) => {
+      const mine = slotViews.current[slot];
+      if (!mine) return;
+      const other = slotViews.current[1 - slot];
+      const tags = mine.inputs.slice(0, 3).map((x) => (x.raw ?? "").toLowerCase()).filter(Boolean);
+      setPinDraft({
+        draft: {
+          genome_id: genomeId,
+          experiment_id: experimentId,
+          experiment_name: experimentName ?? null,
+          record_label: recordLabel ?? null,
+          scope,
+          inputs: mine.inputs,
+          viz: mine.view,
+          also_views: other ? [other.view] : [],
+          tags,
+        },
+        other: other ? other.view.description ?? other.view.type : null,
+      });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [genomeId, experimentId, experimentName, recordLabel, scope.kind, scope.annotation_id, scope.node_id],
+  );
 
   // Whole-model performance
   const [perfData, setPerfData] = useState<PerformanceResponse | null>(null);
@@ -574,6 +870,7 @@ export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel
       <div className="evidence-section">
         <DatasetSelector
           experimentId={experimentId}
+          initialSplitChoice={rv?.split_choice ?? undefined}
           onSplitSelected={handleSplitSelected}
           onSampleFractionChange={setSampleFraction}
           sampleFraction={sampleFraction}
@@ -694,6 +991,10 @@ export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel
             onGalleryRefresh={handleGalleryRefresh}
             viewMode={viewMode}
             onEdgeInfluence={onEdgeInfluence}
+            slot={0}
+            initial={restore?.viz}
+            onViewChange={handleViewChange}
+            onPin={handlePin}
           />
           <div className="viz-slot-divider" />
           <VizSlot
@@ -711,8 +1012,27 @@ export function EvidencePanel({ genomeId, experimentId, annotation, isWholeModel
             onGalleryRefresh={handleGalleryRefresh}
             viewMode={viewMode}
             onEdgeInfluence={onEdgeInfluence}
+            slot={1}
+            initial={restore?.also}
+            onViewChange={handleViewChange}
+            onPin={handlePin}
           />
         </>
+      )}
+
+      {pinnedMsg && <div className="pin-saved">{pinnedMsg}</div>}
+      {pinDraft && (
+        <PinFeatureModal
+          draft={pinDraft.draft}
+          otherViewText={pinDraft.other}
+          onClose={() => setPinDraft(null)}
+          onSaved={(pin) => {
+            setPinDraft(null);
+            setPinnedMsg(`Pinned ${pin.id}: see Features.`);
+            window.setTimeout(() => setPinnedMsg(null), 6000);
+            onPinned?.(pin);
+          }}
+        />
       )}
 
       {!isWholeModel && !isNodeLevel && (

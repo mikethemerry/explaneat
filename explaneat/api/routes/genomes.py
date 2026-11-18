@@ -438,3 +438,87 @@ async def list_genome_annotations(
         annotations=annotation_summaries,
         total=len(annotation_summaries),
     )
+
+
+# =============================================================================
+# Feature labels (readable names of the input nodes, from the dataset codebook)
+# =============================================================================
+
+_FEATURE_CB_CACHE: dict = {}
+
+
+def _dataset_codebook(db: Session, experiment: Experiment):
+    """(dataset, feature names, codebook) for an experiment; codebook checks run once per
+    dataset/split on the training rows, as the plain-language layer does. Read-only."""
+    from ...db.models import Dataset, DatasetSplit
+    from ...analysis.feature_labels import codebook_for
+
+    if not experiment.dataset_id:
+        return None, [], None
+    key = (str(experiment.dataset_id), str(experiment.split_id))
+    if key in _FEATURE_CB_CACHE:
+        return _FEATURE_CB_CACHE[key]
+    ds = db.get(Dataset, experiment.dataset_id)
+    if ds is None:
+        return None, [], None
+    names = [str(n) for n in (ds.feature_names or [])]
+    raw = y = None
+    try:
+        import numpy as np
+        X, Y = ds.get_data()
+        rows = None
+        if experiment.split_id:
+            split = db.get(DatasetSplit, experiment.split_id)
+            if split is not None and split.train_indices is not None:
+                rows = np.asarray(split.train_indices, dtype=int)
+        raw = np.asarray(X if rows is None else X[rows], dtype=float)
+        y = np.asarray(Y if rows is None else Y[rows], dtype=float)
+    except Exception:  # no data: decode without the checks
+        raw = y = None
+    cb = codebook_for(ds.name, names, raw, y)
+    _FEATURE_CB_CACHE[key] = (ds, names, cb)
+    return ds, names, cb
+
+
+@router.get("/{genome_id}/feature-labels")
+async def get_feature_labels(
+    genome_id: UUID,
+    db: Session = Depends(get_db),
+):
+    """Readable labels of the genome's input nodes (the "feature key").
+
+    One entry per dataset column: ``node_id`` (``-k`` is column ``k-1``), ``raw`` (the stored
+    feature name), ``label`` (decoded meaning from the dataset codebook, the raw name when there
+    is none), ``variable_label``, ``full_label``, ``one_means`` (what value 1 means for one-hot /
+    binary columns), ``unit`` and ``used`` (the phenotype reads it). Read-only.
+    """
+    from ...analysis.feature_labels import feature_key
+
+    genome_record = db.get(Genome, genome_id)
+    if not genome_record:
+        raise HTTPException(status_code=404, detail=f"Genome {genome_id} not found")
+    population = db.get(Population, genome_record.population_id)
+    experiment = db.get(Experiment, population.experiment_id) if population else None
+    if not experiment:
+        raise HTTPException(status_code=404, detail="Experiment not found")
+    ds, names, cb = _dataset_codebook(db, experiment)
+
+    used_cols = None
+    try:
+        config = _get_neat_config(experiment)
+        phen = ExplaNEAT(deserialize_genome(genome_record.genome_data, config), config).get_phenotype_network()
+        srcs = {str(c.from_node) for c in phen.connections if c.enabled}
+        used_cols = {-int(n) - 1 for n in srcs if n.lstrip("-").isdigit() and int(n) < 0}
+        if not names:
+            n_in = len(phen.input_node_ids)
+            names = [str(i) for i in range(n_in)]
+    except Exception:
+        pass
+    features = feature_key(cb, names, used_cols)
+    return {
+        "genome_id": str(genome_id),
+        "dataset": {"id": str(ds.id), "name": ds.name} if ds is not None else None,
+        "codebook": {"id": (cb or {}).get("id"), "source": (cb or {}).get("source"),
+                     "gaps": list((cb or {}).get("gaps") or [])},
+        "features": features,
+    }

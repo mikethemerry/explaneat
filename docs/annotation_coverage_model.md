@@ -435,7 +435,10 @@ base id). Then
 - $\text{width}(A)$ = the most hidden units in one layer of $A$;
 - $\text{depth}(A)$ = the number of layers holding hidden units;
 - each hidden unit belongs to the smallest annotation that holds a copy of it as a non-entry
-  node (`part_of`);
+  node (`part_of`); equal-size ties go to the deepest descendant;
+- an ancestor holds its descendants' nodes, so a part's width and depth count only the units
+  assigned to it, not those already assigned to smaller parts (a fine hierarchy is not flagged
+  for its root);
 - **granularity** = the share of hidden units whose part has $\text{width} \le 6$
   (`SMALL_WIDTH`).
 
@@ -529,3 +532,14 @@ capture, check, stalemate) ship with the package; a new domain without a library
 only with ad-hoc expressions, and its leaves will grade `closed_form_only` until someone names
 the concept. A low grade therefore means "nothing in this vocabulary predicts the leaf", not
 "the leaf means nothing".
+
+### Decomposition diagnostic
+
+The coverage report includes `decomposition`, a diagnostic separate from structural and
+compositional coverage, computed by the rules above (`decomposition_report` in
+`explaneat/analysis/coverage_report.py`). It counts original hidden units (split copies counted
+once, by base id), assigns each to its part, and reports `granularity` (the share of units whose
+part has width at most six). It warns when an assigned part is wider than six and holds at
+least half the hidden units, or when units remain outside parts (only as entries) or sit solely
+in a root composition. These warnings measure grouping, not whether a behavioural hypothesis
+has been explained or independently verified.

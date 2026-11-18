@@ -1,7 +1,7 @@
 """Metrics for the churn runs (same definitions as experiments/10seed/compute_runs.py).
 
-    uv run python experiments/churn/compute_churn_runs.py [--prefix churn-pilot]
-Writes experiments/churn/runs_<prefix>.csv.
+    uv run python experiments/churn/compute_churn_runs.py [--prefix churn-pilot] [--out-dir DIR]
+Writes experiments/churn/runs_<prefix>.csv (or DIR/runs_<prefix>.csv). Read-only on the DB.
 """
 
 import argparse
@@ -23,7 +23,10 @@ SPLIT = "45962ea6-3c78-49f9-a01e-3665f6809b1e"
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--prefix", default="churn-pilot")
+    ap.add_argument("--out-dir", type=Path, default=HERE,
+                    help="where to write the CSV (default: this directory)")
     args = ap.parse_args()
+    args.out_dir.mkdir(parents=True, exist_ok=True)
     db.init_db()
     with ReadOnlySession() as s:
         data = load_split(s, SPLIT)
@@ -47,7 +50,7 @@ def main():
                   f"test {row['test_auc']:.4f} [{row['test_auc_ci_lo']:.4f},{row['test_auc_ci_hi']:.4f}] "
                   f"acc {row['test_acc_0.5']:.3f} hidden {row['hidden_nodes']} "
                   f"conns {row['phenotype_connections_enabled']} inputs {row['inputs_connected']}")
-    write_csv(HERE / f"runs_{args.prefix}.csv", rows)
+    write_csv(args.out_dir / f"runs_{args.prefix}.csv", rows)
     summarise(args.prefix, rows)
 
 

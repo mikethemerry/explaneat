@@ -34,10 +34,14 @@ def test_annotation_with_a_connected_node_is_not_exempt():
 
 
 def _state(conns, inputs, outputs, hidden=()):
-    from types import SimpleNamespace as NS
-    nodes = list(inputs) + list(hidden) + list(outputs)
-    return NS(get_node_ids=lambda: nodes, input_node_ids=list(inputs), output_node_ids=list(outputs),
-              connections=[NS(from_node=a, to_node=b, weight=w, enabled=True) for a, b, w in conns])
+    from explaneat.core.genome_network import (
+        NetworkConnection, NetworkNode, NetworkStructure, NodeType,
+    )
+    nodes = ([NetworkNode(id=n, type=NodeType.INPUT) for n in inputs]
+             + [NetworkNode(id=n, type=NodeType.HIDDEN) for n in hidden]
+             + [NetworkNode(id=n, type=NodeType.OUTPUT) for n in outputs])
+    return NetworkStructure(nodes=nodes, input_node_ids=list(inputs), output_node_ids=list(outputs),
+                            connections=[NetworkConnection(a, b, w, True) for a, b, w in conns])
 
 
 def test_exact_nulls_count_as_covered():

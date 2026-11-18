@@ -6,6 +6,8 @@ What this directory holds:
 - per-metric statistics: `summary.md`.
 
 This file covers how to reproduce every number from the configs, seeds and code commits.
+To check the final Experiment 2 numbers (Adult, Heart-100 and Churn with the v4 explanations), use
+`VERIFY_EXP2.md`.
 
 The pre-registered runs are 30: Heart (40 generations), MONK-2 and Adult, seeds 0–9.
 There are three additional analyses, all reported separately and not counted towards the

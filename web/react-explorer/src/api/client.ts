@@ -432,6 +432,35 @@ export async function getGenomePhenotype(genomeId: string): Promise<ModelState> 
   return fetchJson<ModelState>(`${API_BASE}/genomes/${genomeId}/phenotype`);
 }
 
+/** One input column's readable name, from the dataset codebook (GET /genomes/{id}/feature-labels). */
+export type FeatureLabel = {
+  node_id: string;
+  column: number;
+  raw: string;
+  variable: string;
+  variable_label: string;
+  level: string | null;
+  label: string;
+  full_label: string;
+  one_means: string | null;
+  unit: string | null;
+  kind: string | null;
+  decoded: boolean;
+  used?: boolean;
+  short?: string;
+};
+
+export type FeatureLabelsResponse = {
+  genome_id: string;
+  dataset: { id: string; name: string } | null;
+  codebook: { id: string | null; source: string | null; gaps: string[] };
+  features: FeatureLabel[];
+};
+
+export async function getFeatureLabels(genomeId: string): Promise<FeatureLabelsResponse> {
+  return fetchJson<FeatureLabelsResponse>(`${API_BASE}/genomes/${genomeId}/feature-labels`);
+}
+
 export async function getGenomeExplanation(
   genomeId: string,
 ): Promise<ExplanationResponse> {
@@ -758,7 +787,7 @@ export type VizDataRequest = {
   annotation_id?: string;
   node_id?: string;
   dataset_split_id: string;
-  viz_type: "line" | "heatmap" | "partial_dependence" | "pca_scatter" | "sensitivity" | "ice" | "feature_output_scatter" | "output_distribution";
+  viz_type: "line" | "heatmap" | "partial_dependence" | "pca_scatter" | "sensitivity" | "ice" | "feature_output_scatter" | "output_distribution" | "pairs_plot";
   params?: Record<string, unknown>;
   split?: "train" | "test" | "val" | "both";
   sample_fraction?: number;
