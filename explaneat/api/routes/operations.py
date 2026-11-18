@@ -53,7 +53,7 @@ def _get_phenotype_and_engine(
     genome_id: UUID,
     db: Session,
     for_update: bool = False,
-) -> tuple[Genome, Explanation, ModelStateEngine]:
+) -> tuple[Genome, Optional[Explanation], ModelStateEngine]:
     """
     Get genome, explanation, and initialized ModelStateEngine.
 
@@ -63,7 +63,8 @@ def _get_phenotype_and_engine(
             the caller commits, so concurrent writers serialize.
 
     Returns:
-        Tuple of (genome, explanation, engine)
+        Tuple of (genome, explanation, engine). ``explanation`` is None when
+        the genome has none and ``for_update`` is False.
     """
     if for_update:
         # Take the lock before anything reads the explanation.
@@ -98,16 +99,12 @@ def _get_phenotype_and_engine(
         .first()
     )
 
-    if not explanation:
-        # Read-only callers: create race-safely (genome row lock), then commit.
-        explanation = lock_explanation(db, genome_id, create=True)
-        db.commit()
-        db.refresh(explanation)
-
-    # Create engine and load existing operations
+    # Read-only callers get an engine over no operations when the genome has
+    # no explanation yet: a GET never creates the row (writers lock with
+    # for_update=True above, which creates it).
     engine = ModelStateEngine.from_phenotype_and_operations(
         phenotype,
-        {"operations": explanation.operations or []},
+        {"operations": (explanation.operations if explanation else None) or []},
     )
 
     return genome, explanation, engine
@@ -204,6 +201,12 @@ async def get_current_model(
         None,
         description="Comma-separated annotation names to collapse into function nodes",
     ),
+    upto: Optional[int] = Query(
+        None,
+        ge=0,
+        description="Replay: apply only the first `upto` operations (0 = the unexplained "
+        "phenotype). Omitted: all operations.",
+    ),
     db: Session = Depends(get_db),
 ):
     """
@@ -218,8 +221,19 @@ async def get_current_model(
     """
     genome, explanation, engine = _get_phenotype_and_engine(genome_id, db)
 
-    current_state = engine.current_state
-    is_original = len(engine.operations) == 0
+    annotations = None
+    if upto is not None and upto < len(engine.operations):
+        current_state, annotations = None, []
+        for k, state, anns in engine.iter_replay():
+            if k == upto:
+                current_state, annotations = state, anns
+                break
+        is_original = upto == 0
+    else:
+        current_state = engine.current_state
+        is_original = len(engine.operations) == 0
+    if annotations is None:
+        annotations = engine.annotations
 
     # Pass non-identity status through metadata
     current_state.metadata["has_non_identity_ops"] = engine.has_non_identity_ops
@@ -231,7 +245,7 @@ async def get_current_model(
     if collapsed_names:
         collapsed_ids = set(collapsed_names)
         current_state = collapse_structure(
-            current_state, engine.annotations, collapsed_ids
+            current_state, annotations, collapsed_ids
         )
 
     return _network_to_response(
@@ -239,6 +253,25 @@ async def get_current_model(
         is_original=is_original,
         collapsed_annotations=collapsed_names,
     )
+
+
+@router.get("/replay")
+async def get_replay(
+    genome_id: UUID = Path(..., description="The genome ID"),
+    db: Session = Depends(get_db),
+):
+    """The explanation's operation stream as replay steps (read-only).
+
+    Step 0 is the unexplained phenotype; each step applies one more operation
+    (a run of renames is one step). Each step has ``upto`` (fetch its model
+    with ``GET /model?upto=<upto>``), a description, what changed in the graph
+    and, for an annotate step, the annotation. See explaneat/analysis/replay.py.
+    """
+    from ...analysis.replay import Replay
+
+    genome, explanation, engine = _get_phenotype_and_engine(genome_id, db)
+    ops = (explanation.operations if explanation else None) or []
+    return Replay(engine.original_phenotype, ops).build()
 
 
 # =============================================================================

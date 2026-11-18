@@ -7,6 +7,7 @@ import {
   type SplitResponse,
   type ExperimentSplitResponse,
 } from "../api/client";
+import { STATIC_MODE } from "../api/staticData";
 
 type SplitChoice = "train" | "test" | "val" | "both";
 
@@ -30,7 +31,7 @@ export function DatasetSelector({
   const [splits, setSplits] = useState<SplitResponse[]>([]);
   const [selectedDatasetId, setSelectedDatasetId] = useState<string | null>(null);
   const [selectedSplitId, setSelectedSplitId] = useState<string | null>(null);
-  const [splitChoice, setSplitChoice] = useState<SplitChoice>(initialSplitChoice ?? "both");
+  const [splitChoice, setSplitChoice] = useState<SplitChoice>(initialSplitChoice ?? (STATIC_MODE ? "train" : "both"));
   const [loading, setLoading] = useState(false);
 
   // Auto-selection state
@@ -112,9 +113,12 @@ export function DatasetSelector({
   }
 
   // Build split options based on whether validation data exists
-  const splitOptions: SplitChoice[] = autoSplit?.validation_size
-    ? ["train", "val", "test", "both"]
-    : ["train", "test", "both"];
+  // the static appendix has performance on train and test; its plots are of the training split
+  const splitOptions: SplitChoice[] = STATIC_MODE
+    ? ["train", "test"]
+    : autoSplit?.validation_size
+      ? ["train", "val", "test", "both"]
+      : ["train", "test", "both"];
 
   // Auto-selected: show compact summary with option to switch
   if (autoSplit && !showManual) {
@@ -146,6 +150,12 @@ export function DatasetSelector({
           </div>
         </div>
 
+        {STATIC_MODE ? (
+          <p className="hint" style={{ margin: "4px 0" }}>
+            Plots are precomputed on the training split (all rows; scatter plots show a sample). The
+            data choice applies to the performance table.
+          </p>
+        ) : (<>
         <div className="selector-row">
           <label className="selector-label">Sample</label>
           <input
@@ -166,6 +176,7 @@ export function DatasetSelector({
         >
           Change dataset
         </button>
+        </>)}
       </div>
     );
   }

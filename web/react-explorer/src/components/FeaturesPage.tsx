@@ -4,6 +4,7 @@
  * path (each edit appends a version), open the genome with the evidence panel restored to the
  * saved view, and copy the command that builds a feature dossier.
  */
+import { useReadOnly } from "../api/appConfig";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import {
   dossierFileUrl,
@@ -50,6 +51,7 @@ function CopyButton({ text }: { text: string }) {
 }
 
 export function FeaturesPage({ onOpen }: Props) {
+  const readOnly = useReadOnly();
   const [pins, setPins] = useState<FeaturePin[]>([]);
   const [dir, setDir] = useState("");
   const [loading, setLoading] = useState(true);
@@ -233,6 +235,7 @@ export function FeaturesPage({ onOpen }: Props) {
                         value={p.status}
                         onChange={(e) => setPinStatus(p, e.target.value as PinStatus)}
                         aria-label="Status"
+                        disabled={readOnly}
                       >
                         {PIN_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                       </select>
@@ -279,7 +282,7 @@ export function FeaturesPage({ onOpen }: Props) {
                           <button className="op-btn" onClick={() => saveEdit(p)}>Save</button>
                           <button className="op-btn" onClick={() => setEditing(null)}>Cancel</button>
                         </>
-                      ) : (
+                      ) : readOnly ? null : (
                         <button className="op-btn" onClick={() => startEdit(p)}>Edit</button>
                       )}
                       <button className="link-btn" onClick={() => toggleDetails(p)}>{expanded === p.id ? "less" : "history"}</button>

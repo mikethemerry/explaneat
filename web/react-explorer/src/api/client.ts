@@ -27,6 +27,7 @@ function logError(message: string, data?: unknown) {
 // Use relative URL when proxying through Vite dev server
 // Falls back to localhost:8000 for direct access
 const API_BASE = "/api";
+import { STATIC_MODE } from "./staticData";
 
 // ============================================================================
 // Types matching API schemas
@@ -312,8 +313,16 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   const elapsed = performance.now() - startTime;
 
   if (!response.ok) {
-    const text = await response.text();
-    logError(`${method} ${url} failed (${response.status}) in ${elapsed.toFixed(2)}ms`, text);
+    let text = await response.text();
+    try {
+      const j = JSON.parse(text);
+      if (j && typeof j.detail === "string") text = j.detail;
+    } catch {
+      /* not JSON */
+    }
+    // the static appendix leaves some views out: not an error
+    if (STATIC_MODE && (response.status === 404 || response.status === 403)) logInfo(`${method} ${url}: ${text}`);
+    else logError(`${method} ${url} failed (${response.status}) in ${elapsed.toFixed(2)}ms`, text);
     throw new ApiError(response.status, text);
   }
 
@@ -336,9 +345,15 @@ export async function listExperiments(
   q?: string,
 ): Promise<ExperimentListResponse> {
   const query = q ? `&q=${encodeURIComponent(q)}` : "";
-  return fetchJson<ExperimentListResponse>(
+  const r = await fetchJson<ExperimentListResponse>(
     `${API_BASE}/experiments?limit=${limit}&offset=${offset}${query}`,
   );
+  if (STATIC_MODE && q) {
+    // the static appendix stores one list: filter it here
+    const experiments = r.experiments.filter((e) => e.name.toLowerCase().includes(q.toLowerCase()));
+    return { experiments, total: experiments.length };
+  }
+  return r;
 }
 
 export async function getBestGenome(
@@ -482,6 +497,53 @@ export async function getCurrentModel(
     url += `?collapsed=${collapsed.join(",")}`;
   }
   return fetchJson<ModelState>(url);
+}
+
+/** The model after the first `upto` operations (0 = the unexplained phenotype). */
+export async function getModelAt(
+  genomeId: string,
+  upto: number,
+  collapsed?: string[],
+): Promise<ModelState> {
+  let url = `${API_BASE}/genomes/${genomeId}/model?upto=${upto}`;
+  if (collapsed && collapsed.length > 0) url += `&collapsed=${collapsed.join(",")}`;
+  return fetchJson<ModelState>(url);
+}
+
+export type ReplayChanges = {
+  nodes_added: string[];
+  nodes_removed: string[];
+  connections_added: [string, string][];
+  connections_removed: [string, string][];
+  nodes_renamed: string[];
+};
+
+export type ReplayStep = {
+  step: number;
+  /** Operations applied at this step (fetch the model with getModelAt(upto)). */
+  upto: number;
+  op_range: [number, number];
+  seqs?: number[];
+  type: string;
+  description: string;
+  changes: ReplayChanges;
+  annotation?: {
+    id: string;
+    name: string;
+    hypothesis: string;
+    entry_nodes: string[];
+    exit_nodes: string[];
+    subgraph_nodes: string[];
+    children: string[];
+  };
+  notes?: string[];
+};
+
+export type ReplayResponse = { n_operations: number; n_steps: number; steps: ReplayStep[] };
+
+/** The explanation's operation stream as replay steps (GET /genomes/{id}/replay). */
+export async function getReplay(genomeId: string): Promise<ReplayResponse> {
+  return fetchJson<ReplayResponse>(`${API_BASE}/genomes/${genomeId}/replay`);
 }
 
 // ============================================================================

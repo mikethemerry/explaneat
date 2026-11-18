@@ -4,6 +4,7 @@
  * checks + coverage checklist, unit activity, candidate subgraphs, restore gain,
  * one-hot category offsets, and lineage.
  */
+import { useAppConfig } from "../api/appConfig";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import type { AnnotationSummary, ModelState } from "../api/client";
 import {
@@ -77,6 +78,9 @@ const Status = ({ ok, label }: { ok: boolean; label: string }) => (
 );
 
 export function ToolsDrawer(props: Props) {
+  const cfg = useAppConfig();
+  // read only: no export packs (they write files); the static appendix has no lineage (ancestors are not exported)
+  const tabs = TABS.filter((t) => !(cfg.read_only && t.key === "export") && !(cfg.static && t.key === "lineage"));
   const [open, setOpen] = useState(true);
   const [tab, setTab] = useState<ToolsTab>("review");
   const { genomeId, model, annotations, refreshKey, onSelectNodes, onHighlight } = props;
@@ -94,7 +98,7 @@ export function ToolsDrawer(props: Props) {
         <button className="tools-toggle" onClick={() => setOpen(!open)} title={open ? "Hide tools" : "Show tools"}>
           {open ? "▼" : "▲"} Tools
         </button>
-        {TABS.map((t) => (
+        {tabs.map((t) => (
           <button
             key={t.key}
             className={`tools-tab ${tab === t.key && open ? "active" : ""}`}

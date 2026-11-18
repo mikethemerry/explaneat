@@ -217,15 +217,15 @@ async def get_genome_explanation(
     db: Session = Depends(get_db),
 ):
     """
-    Get the explanation for a genome.
+    Get the explanation for a genome (404 if it has none yet).
 
-    Creates a new explanation if one doesn't exist.
+    A GET never creates a row: the explanation is created by the first write
+    (adding an operation, importing operations, PUT on this route).
     """
     genome = db.get(Genome, genome_id)
     if not genome:
         raise HTTPException(status_code=404, detail=f"Genome {genome_id} not found")
 
-    # Get or create explanation
     explanation = (
         db.query(Explanation)
         .filter(Explanation.genome_id == genome_id)
@@ -233,12 +233,7 @@ async def get_genome_explanation(
     )
 
     if not explanation:
-        # Race-safe creation (serialized on the genome row lock).
-        from ...db.explanation_lock import lock_explanation
-
-        explanation = lock_explanation(db, genome_id, create=True)
-        db.commit()
-        db.refresh(explanation)
+        raise HTTPException(status_code=404, detail="This genome has no explanation yet")
 
     # Load operations from the operations JSON column
     operations = _operations_to_response(explanation.operations)
@@ -268,17 +263,9 @@ async def update_genome_explanation(
     if not genome:
         raise HTTPException(status_code=404, detail=f"Genome {genome_id} not found")
 
-    explanation = (
-        db.query(Explanation)
-        .filter(Explanation.genome_id == genome_id)
-        .first()
-    )
+    from ...db.explanation_lock import lock_explanation
 
-    if not explanation:
-        raise HTTPException(
-            status_code=404,
-            detail="Explanation not found. Call GET first to create one.",
-        )
+    explanation = lock_explanation(db, genome_id, create=True)
 
     if update.name is not None:
         explanation.name = update.name

@@ -51,7 +51,22 @@ class Database:
             engine_kwargs["poolclass"] = StaticPool
             engine_kwargs["connect_args"] = {"check_same_thread": False}
 
+        # Read-only mode (EXPLANEAT_READ_ONLY=1, `explaneat api --read-only`):
+        # the connection refuses writes, so nothing can be saved by accident.
+        read_only = os.environ.get("EXPLANEAT_READ_ONLY", "0").strip().lower() in ("1", "true", "yes", "on")
+        if read_only and self.database_url and self.database_url.startswith("postgres"):
+            ca = dict(engine_kwargs.get("connect_args", {}))
+            ca["options"] = (ca.get("options", "") + " -c default_transaction_read_only=on").strip()
+            engine_kwargs["connect_args"] = ca
+
         self.engine = create_engine(self.database_url, **engine_kwargs)
+
+        if read_only and self.database_url and self.database_url.startswith("sqlite"):
+            from sqlalchemy import event
+
+            @event.listens_for(self.engine, "connect")
+            def _query_only(dbapi_conn, _record):  # pragma: no cover - trivial
+                dbapi_conn.execute("PRAGMA query_only = ON")
         
         # Create session factory
         self.session_factory = sessionmaker(bind=self.engine)

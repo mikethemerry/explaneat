@@ -1,3 +1,5 @@
+import { useAppConfig } from "../api/appConfig";
+
 export type NavTab = "experiments" | "datasets" | "templates" | "review" | "portal" | "features";
 
 type NavBarProps = {
@@ -6,7 +8,8 @@ type NavBarProps = {
 };
 
 export function NavBar({ activeTab, onTabChange }: NavBarProps) {
-  const tabs = [
+  const cfg = useAppConfig();
+  const allTabs = [
     { key: "experiments" as const, label: "Experiments" },
     { key: "portal" as const, label: "Run experiments" },
     { key: "datasets" as const, label: "Datasets" },
@@ -14,6 +17,10 @@ export function NavBar({ activeTab, onTabChange }: NavBarProps) {
     { key: "review" as const, label: "Review explanations" },
     { key: "features" as const, label: "Features" },
   ];
+  // read only: no running experiments; the static appendix has only the networks and their reviews
+  const tabs = allTabs.filter((t) =>
+    cfg.static ? t.key === "experiments" || t.key === "review" : !(cfg.read_only && t.key === "portal"),
+  );
 
   return (
     <nav
@@ -37,6 +44,11 @@ export function NavBar({ activeTab, onTabChange }: NavBarProps) {
       >
         ExplaNEAT
       </span>
+      {cfg.static && (
+        <a href="../" style={{ fontSize: "0.85rem", color: "#6b7280" }} title="The appendix's landing page">
+          ← Appendix
+        </a>
+      )}
       {tabs.map((tab) => (
         <button
           key={tab.key}

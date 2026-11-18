@@ -18,6 +18,11 @@ import { EvidenceGallery } from "./EvidenceGallery";
 import { useFeatureLabels, withLabel } from "../featureLabels";
 import { VIEW_LABELS, type FeaturePin, type PinInput, type PinScope, type PinView } from "../api/features";
 import { PinFeatureModal, type PinModalDraft } from "./PinFeatureModal";
+import { useReadOnly } from "../api/appConfig";
+import { STATIC_MODE } from "../api/staticData";
+
+/** Plots the static appendix precomputes (the others say "not included"). */
+const STATIC_VIZ_TYPES = new Set(["line", "ice", "pairs_plot"]);
 
 type EvidencePanelProps = {
   genomeId: string;
@@ -230,6 +235,7 @@ function VizSlot({
   );
   const [pairFix, setPairFix] = useState<"median" | "average">(ip.fix === "average" ? "average" : "median");
   const [pairsLarge, setPairsLarge] = useState(false);
+  const readOnly = useReadOnly();
   const pairsAnnRef = useRef(annotation.id);
   useEffect(() => {
     if (pairsAnnRef.current === annotation.id) return; // keep a restored selection on mount
@@ -436,8 +442,9 @@ function VizSlot({
               .map((vt) => (
               <button
                 key={vt}
-                className={`viz-type-btn ${vizType === vt ? "active" : ""}`}
+                className={`viz-type-btn ${vizType === vt ? "active" : ""}${STATIC_MODE && !STATIC_VIZ_TYPES.has(vt) ? " static-missing" : ""}`}
                 onClick={() => setVizType(vt)}
+                title={STATIC_MODE && !STATIC_VIZ_TYPES.has(vt) ? "Not included in this static appendix" : undefined}
               >
                 {VIZ_TYPE_LABELS[vt] || vt}
               </button>
@@ -502,7 +509,7 @@ function VizSlot({
           <button className="op-btn primary" onClick={handleComputeViz} disabled={loading}>
             {loading ? "Computing..." : "Compute"}
           </button>
-          {onPin && (
+          {onPin && !readOnly && (
             <button
               className="op-btn pin-btn"
               onClick={() => onPin(slot)}
@@ -512,7 +519,7 @@ function VizSlot({
               Pin as feature of interest
             </button>
           )}
-          {vizType === "shap" && vizData?.viz_type === "shap" && (
+          {!STATIC_MODE && vizType === "shap" && vizData?.viz_type === "shap" && (
             <button className="op-btn primary" onClick={handleRecomputeViz} disabled={loading}>
               Recompute
             </button>
@@ -644,7 +651,7 @@ function VizSlot({
               Many inputs: use Enlarge for a readable grid (hover a panel for its details).
             </div>
           )}
-          {!isWholeModel && !isNodeLevel && (
+          {!isWholeModel && !isNodeLevel && !readOnly && (
             <div className="snapshot-controls">
               <input
                 type="text"
@@ -1008,7 +1015,7 @@ export function EvidencePanel({
             nodeId={nodeId}
             nIn={nIn}
             nOut={nOut}
-            defaultVizType="shap"
+            defaultVizType={STATIC_MODE ? (nIn >= 3 ? "pairs_plot" : "ice") : "shap"}
             onGalleryRefresh={handleGalleryRefresh}
             viewMode={viewMode}
             onEdgeInfluence={onEdgeInfluence}

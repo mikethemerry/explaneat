@@ -15,6 +15,7 @@ import {
   type ExplanationRecord,
   type ImportPreview,
 } from "../api/tools";
+import { useAppConfig } from "../api/appConfig";
 
 const fmt = (v: unknown, d = 3) =>
   typeof v === "number" ? (Math.abs(v) < 1e-3 && v !== 0 ? v.toExponential(1) : v.toFixed(d)) : v == null ? "—" : String(v);
@@ -37,6 +38,7 @@ function Agreement({ label, recorded, live, tol }: { label: string; recorded: un
 }
 
 export function RecordPanel({ genomeId, onOperationChange }: { genomeId: string; onOperationChange: () => void }) {
+  const cfg = useAppConfig();
   const [record, setRecord] = useState<ExplanationRecord | null>(null);
   const [recordsDir, setRecordsDir] = useState("");
   const [loading, setLoading] = useState(true);
@@ -138,6 +140,7 @@ export function RecordPanel({ genomeId, onOperationChange }: { genomeId: string;
   if (loading) return <p className="hint">Looking for an explanation record…</p>;
   const orch = (record?.verified_by_orchestrator || {}) as Record<string, unknown>;
   const hier = (orch.hierarchy || {}) as Record<string, unknown>;
+  const mv = record?.mike_verification;
 
   return (
     <div className="tools-grid">
@@ -145,8 +148,8 @@ export function RecordPanel({ genomeId, onOperationChange }: { genomeId: string;
         {error && <p className="error-text">{error}</p>}
         {!record ? (
           <p className="hint">
-            No Claude explanation record for this genome in <code>{recordsDir}</code>. You can still import an
-            explanation file (right) or explain it here.
+            No Claude explanation record for this genome{cfg.static ? "." : <> in <code>{recordsDir}</code>. You can still import an
+            explanation file (right) or explain it here.</>}
           </p>
         ) : (
           <>
@@ -178,14 +181,25 @@ export function RecordPanel({ genomeId, onOperationChange }: { genomeId: string;
               {checking ? "Running checks…" : check ? "Re-run live checks" : "Run live checks"}
             </button>
             <p className="hint">
-              Review the annotations (left list; click one for its formula, hypothesis and evidence), then record your
-              verdict below.
+              Review the annotations (left list; click one for its formula, hypothesis and evidence)
+              {cfg.read_only ? "." : ", then record your verdict below."}
             </p>
           </>
         )}
       </div>
       <div>
-        {record && (
+        {record && cfg.read_only && (
+          <>
+            <h5>Mike's verification</h5>
+            <p data-testid="verification-readonly">
+              {mv?.verified ? "Verified" : "Not verified"}
+              {mv?.minutes != null ? ` (${mv.minutes} min)` : ""}
+            </p>
+            {mv?.changes && <p><strong>Changes made.</strong> {mv.changes}</p>}
+            {mv?.notes && <p><strong>Notes.</strong> {mv.notes}</p>}
+          </>
+        )}
+        {record && !cfg.read_only && (
           <>
             <h5>Mike's verification</h5>
             <label className="form-row">
@@ -210,12 +224,12 @@ export function RecordPanel({ genomeId, onOperationChange }: { genomeId: string;
             {saved && <p className="hint">{saved}</p>}
           </>
         )}
-        <h5>Export / import</h5>
-        <a className="op-btn secondary" href={exportOperationsUrl(genomeId)} download>Export explanation (JSON)</a>
-        <label className="form-col" style={{ marginTop: 6 }}>
+        {!cfg.static && <h5>Export{cfg.read_only ? "" : " / import"}</h5>}
+        {!cfg.static && <a className="op-btn secondary" href={exportOperationsUrl(genomeId)} download>Export explanation (JSON)</a>}
+        {!cfg.read_only && <label className="form-col" style={{ marginTop: 6 }}>
           Import explanation (exported JSON or an operations list)
           <input type="file" accept="application/json,.json" onChange={(e) => onFile(e.target.files?.[0])} />
-        </label>
+        </label>}
         {importMsg && <p className="hint">{importMsg}</p>}
         {preview && (
           <div className="import-preview">

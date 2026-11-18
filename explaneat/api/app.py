@@ -61,6 +61,11 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    # Read-only mode: writes get 403 (explaneat/api/readonly.py)
+    from .readonly import read_only_middleware
+
+    app.middleware("http")(read_only_middleware)
+
     # Include routers
     app.include_router(
         experiments.router,
@@ -110,6 +115,10 @@ def create_app() -> FastAPI:
         # would corrupt a live run. `explaneat api` turns this off by default
         # (EXPLANEAT_MARK_ORPHANS=0); pass --mark-orphans to opt in.
         import os
+        from .readonly import is_read_only
+
+        if is_read_only():
+            return
         if os.environ.get("EXPLANEAT_MARK_ORPHANS", "1") == "0":
             logger.info("Skipping orphaned-experiment check (EXPLANEAT_MARK_ORPHANS=0)")
             return
@@ -134,6 +143,13 @@ def create_app() -> FastAPI:
     async def health_check():
         """Health check endpoint."""
         return {"status": "healthy"}
+
+    @app.get("/api/config")
+    async def client_config():
+        """UI configuration: read-only mode (editing controls hidden)."""
+        from .readonly import client_config as _cfg
+
+        return _cfg()
 
     @app.get("/api/governance")
     async def governance_status():

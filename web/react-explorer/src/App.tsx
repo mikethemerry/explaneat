@@ -8,7 +8,7 @@ import { RecordsPage } from "./components/RecordsPage";
 import { ReviewPage } from "./components/ReviewPage";
 import { PortalPage } from "./components/PortalPage";
 import { FeaturesPage } from "./components/FeaturesPage";
-import { parseUrl, pushView, replaceView, type UrlView } from "./hooks/useUrlState";
+import { atRoot, parseUrl, pushView, replaceView, type UrlView } from "./hooks/useUrlState";
 
 export default function App() {
   const [view, setViewState] = useState<UrlView>(parseUrl);
@@ -23,12 +23,17 @@ export default function App() {
   useEffect(() => {
     const onPopState = () => setViewState(parseUrl());
     window.addEventListener("popstate", onPopState);
-    return () => window.removeEventListener("popstate", onPopState);
+    // static mode routes on the hash: links and typed URLs change it
+    window.addEventListener("hashchange", onPopState);
+    return () => {
+      window.removeEventListener("popstate", onPopState);
+      window.removeEventListener("hashchange", onPopState);
+    };
   }, []);
 
   // On mount, if at "/", redirect to /experiments
   useEffect(() => {
-    if (window.location.pathname === "/" || window.location.pathname === "") {
+    if (atRoot()) {
       replaceView({ type: "experiments" });
     }
   }, []);

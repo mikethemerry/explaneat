@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getCurrentModel,
+  getModelAt,
+  getReplay,
   listOperations,
   listAnnotations,
   getNodeEvidenceInfo,
@@ -11,7 +13,10 @@ import {
   type Operation,
   type AnnotationSummary,
   type ExperimentDetailResponse,
+  type ReplayStep,
 } from "../api/client";
+import { ReplayBar } from "./ReplayBar";
+import { useAppConfig } from "../api/appConfig";
 import { NetworkViewer } from "./NetworkViewer";
 import { OperationsPanel } from "./OperationsPanel";
 import { DatasetInfoPanel } from "./DatasetInfoPanel";
@@ -32,6 +37,7 @@ import { getPin, listPins, inputText, scopeText, type FeaturePin } from "../api/
 // =============================================================================
 
 const LOG_PREFIX = "[GenomeExplorer]";
+const EMPTY_SET = new Set<string>();
 
 function logDebug(message: string, data?: unknown) {
   console.log(`${LOG_PREFIX} ${message}`, data !== undefined ? data : "");
@@ -71,6 +77,18 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
   const [selectedNodes, setSelectedNodes] = useState<Set<string>>(new Set());
   const [evidencePanelWidth, setEvidencePanelWidth] = useState(400);
   const featureLabels = useFeatureLabelsLoader(genomeId);
+  const cfg = useAppConfig();
+
+  // Replay: step through the operation stream (null = the explained network)
+  const [replaySteps, setReplaySteps] = useState<ReplayStep[] | null>(null);
+  const [replayIndex, setReplayIndex] = useState<number | null>(null);
+  const [replayModel, setReplayModel] = useState<ModelState | null>(null);
+  const [replayLoading, setReplayLoading] = useState(false);
+  const [replayError, setReplayError] = useState<string | null>(null);
+  const [replayPlaying, setReplayPlaying] = useState(false);
+  const [replaySpeed, setReplaySpeed] = useState(1);
+  const [replayCollapse, setReplayCollapse] = useState(false);
+  const replaying = replayIndex !== null;
 
   // Features of interest pinned on this genome (badge), and the pin being reopened
   const [pins, setPins] = useState<FeaturePin[]>([]);
@@ -111,6 +129,82 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
   const [annotations, setAnnotations] = useState<AnnotationSummary[]>([]);
   const [collapsedAnnotations, setCollapsedAnnotations] = useState<Set<string>>(new Set());
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
+
+  /** Start replaying at a step (loads the step list once). */
+  const startReplay = useCallback(
+    async (at: "start" | "end" | number) => {
+      setReplayError(null);
+      try {
+        const steps = replaySteps ?? (await getReplay(genomeId)).steps;
+        setReplaySteps(steps);
+        const i = at === "start" ? 0 : at === "end" ? steps.length - 1 : Math.max(0, Math.min(steps.length - 1, at));
+        setReplayIndex(i);
+      } catch (err) {
+        setReplayError(err instanceof Error ? err.message : "Failed to load the replay");
+      }
+    },
+    [genomeId, replaySteps],
+  );
+  const exitReplay = useCallback(() => {
+    setReplayIndex(null);
+    setReplayModel(null);
+    setReplayPlaying(false);
+  }, []);
+  /** Replay up to operation index `upto` (Operation History click). */
+  const replayToOp = useCallback(
+    async (upto: number) => {
+      const steps = replaySteps ?? (await getReplay(genomeId).catch(() => null))?.steps;
+      if (!steps) return;
+      setReplaySteps(steps);
+      const i = steps.findIndex((st) => st.op_range[0] < upto && upto <= st.op_range[1]);
+      setReplayIndex(i < 0 ? 0 : i);
+    },
+    [genomeId, replaySteps],
+  );
+
+  // the model at the current replay step (annotations made so far collapsed on request)
+  const replayStep = replaySteps && replayIndex !== null ? replaySteps[Math.min(replayIndex, replaySteps.length - 1)] : null;
+  const replayCollapsedNames = useMemo(() => {
+    if (!replayCollapse || !replaySteps || !replayStep) return [] as string[];
+    return replaySteps
+      .filter((st) => st.annotation && st.op_range[1] <= replayStep.upto)
+      .map((st) => st.annotation!.name);
+  }, [replayCollapse, replaySteps, replayStep]);
+  useEffect(() => {
+    if (!replayStep) return;
+    let live = true;
+    setReplayLoading(true);
+    getModelAt(genomeId, replayStep.upto, replayCollapsedNames)
+      .then((m) => {
+        if (live) {
+          setReplayModel(m);
+          setReplayError(null);
+        }
+      })
+      .catch((err) => live && setReplayError(err instanceof Error ? err.message : "Failed to load the step"))
+      .finally(() => live && setReplayLoading(false));
+    return () => {
+      live = false;
+    };
+  }, [genomeId, replayStep, replayCollapsedNames]);
+
+  // what the step changed, on the graph
+  const replayHighlight = useMemo(() => {
+    if (!replayStep || !replayModel) return { nodes: null, edges: null };
+    const nodes: Record<string, HighlightKind> = {};
+    const edges: Record<string, HighlightKind> = {};
+    const present = new Set(replayModel.nodes.map((n) => n.id));
+    for (const n of replayStep.changes.nodes_renamed) nodes[n] = "renamed";
+    for (const n of replayStep.changes.nodes_added) nodes[n] = "added";
+    for (const [a, b] of replayStep.changes.connections_added) edges[`${a}->${b}`] = "added";
+    const ann = replayStep.annotation;
+    if (ann) {
+      const fn = `fn_${ann.name}`;
+      if (present.has(fn)) nodes[fn] = "annotated";
+      for (const n of [...ann.subgraph_nodes, ...ann.entry_nodes, ...ann.exit_nodes]) if (present.has(n)) nodes[n] = "annotated";
+    }
+    return { nodes, edges };
+  }, [replayStep, replayModel]);
 
   // ?annotation=<id or name>: select it once the annotations are known
   useEffect(() => {
@@ -541,7 +635,23 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
         <h2>{experimentName}</h2>
         <span className="genome-id" title={genomeId}>Genome: {genomeId.slice(0, 8)}...</span>
         {recordLabel && <span className="genome-id">{recordLabel}</span>}
-        <div className="pins-badge-wrap">
+        <button
+          className={`op-btn ${replaying && replayIndex === 0 ? "primary" : ""}`}
+          onClick={() => (replaying && replayIndex === 0 ? exitReplay() : startReplay("start"))}
+          title="Show the network as trained, before any explanation operation (replay step 0)"
+          data-testid="unexplained-toggle"
+        >
+          {replaying && replayIndex === 0 ? "Show explained network" : "Unexplained network"}
+        </button>
+        <button
+          className={`op-btn ${replaying ? "primary" : ""}`}
+          onClick={() => (replaying ? exitReplay() : startReplay("start"))}
+          title="Replay the explanation operation by operation"
+          data-testid="replay-toggle"
+        >
+          {replaying ? "Exit replay" : "Replay explanation"}
+        </button>
+        {!cfg.static && <div className="pins-badge-wrap">
           <button
             className={`pins-badge ${pins.length ? "has-pins" : ""}`}
             onClick={() => setPinsOpen((o) => !o)}
@@ -577,7 +687,7 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
               )}
             </div>
           )}
-        </div>
+        </div>}
         {edgeInfluenceData && (
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "0.25rem" }}>
             <span style={{ fontSize: "0.8rem", color: "#6b7280" }}>Edge display:</span>
@@ -597,7 +707,7 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
             </button>
           </div>
         )}
-        {experimentDetail?.status === "interrupted" && (
+        {!cfg.read_only && experimentDetail?.status === "interrupted" && (
           <>
             <span className="status-badge status-interrupted" style={{ marginLeft: "0.75rem" }}>
               interrupted
@@ -612,7 +722,7 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
             </button>
           </>
         )}
-        {(experimentDetail?.status === "interrupted" || experimentDetail?.status === "failed") && (
+        {!cfg.read_only && (experimentDetail?.status === "interrupted" || experimentDetail?.status === "failed") && (
           <button
             className="op-btn"
             onClick={handleRestartExperiment}
@@ -678,6 +788,7 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
             annotations={annotations}
             selectedAnnotationId={selectedAnnotationId}
             onOperationChange={handleOperationChange}
+            onReplayTo={replayToOp}
           />
           <AnnotationListPanel
             annotations={annotations}
@@ -688,7 +799,7 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
             genomeId={genomeId}
             onOperationChange={handleOperationChange}
           />
-          {model.metadata.has_non_identity_ops && (
+          {!cfg.read_only && model.metadata.has_non_identity_ops && (
             <RetrainPanel
               genomeId={genomeId}
               experimentId={experimentId}
@@ -697,7 +808,23 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
           )}
         </div>
         <div className="center-column">
-          {lineageView && (
+          {replaying && replaySteps && (
+            <ReplayBar
+              steps={replaySteps}
+              index={replayIndex!}
+              onIndex={(i) => setReplayIndex(i)}
+              playing={replayPlaying}
+              onPlaying={setReplayPlaying}
+              speed={replaySpeed}
+              onSpeed={setReplaySpeed}
+              collapseAnnotations={replayCollapse}
+              onCollapseAnnotations={setReplayCollapse}
+              loading={replayLoading}
+              onExit={exitReplay}
+            />
+          )}
+          {replayError && <div className="error-message">{replayError}</div>}
+          {lineageView && !replaying && (
             <div className="lineage-banner">
               <span>
                 <strong>Lineage diff:</strong> {lineageView.title}.{" "}
@@ -707,6 +834,21 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
               <button className="op-btn secondary" onClick={() => setLineageView(null)}>Back to the explained model</button>
             </div>
           )}
+          {replaying ? (
+            replayModel ? (
+              <NetworkViewer
+                model={replayModel}
+                selectedNodes={EMPTY_SET}
+                onNodeSelect={() => {}}
+                annotationNodeIds={replayModel.nodes.filter((n) => n.type === "function").map((n) => n.id)}
+                edgeInfluence={null}
+                nodeHighlight={replayHighlight.nodes}
+                edgeHighlight={replayHighlight.edges}
+              />
+            ) : (
+              <div className="loading">Loading the replay…</div>
+            )
+          ) : (
           <NetworkViewer
             model={lineageView ? lineageView.model : model}
             selectedNodes={lineageView ? new Set<string>() : selectedNodes}
@@ -716,6 +858,7 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
             nodeHighlight={lineageView ? lineageView.nodeHighlight : nodeHighlight}
             edgeHighlight={lineageView ? lineageView.edgeHighlight : edgeHighlight}
           />
+          )}
           <ToolsDrawer
             genomeId={genomeId}
             model={model}
@@ -728,7 +871,7 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
             onOperationChange={handleOperationChange}
           />
         </div>
-        {selectedAnnotationId && annotations.find((a) => a.id === selectedAnnotationId || a.name === selectedAnnotationId) ? (
+        {replaying ? null : selectedAnnotationId && annotations.find((a) => a.id === selectedAnnotationId || a.name === selectedAnnotationId) ? (
           <div className="right-panel" style={{ width: evidencePanelWidth }}>
             <EvidencePanel
               genomeId={genomeId}

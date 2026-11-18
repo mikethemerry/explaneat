@@ -228,6 +228,25 @@ class ModelStateEngine:
 
         return state
 
+    def iter_replay(self):
+        """Replay the operations one at a time (read-only; the engine is unchanged).
+
+        Yields ``(k, state, annotations)`` for k = 0 (the phenotype, before any
+        operation) up to len(operations): the model state after the first k
+        operations and the annotations defined so far (copies).
+        """
+        sub = ModelStateEngine(self._original_phenotype)
+        sub._current_state = deepcopy(self._original_phenotype)
+        sub._current_state.metadata["is_original"] = True
+        yield 0, deepcopy(sub._current_state), []
+        for k, op in enumerate(self._operations, start=1):
+            op_copy = Operation.from_dict(op.to_dict())
+            sub._operations.append(op_copy)
+            sub._apply_operation_internal(op_copy)
+            state = deepcopy(sub._current_state)
+            state.metadata["is_original"] = False
+            yield k, state, deepcopy(sub._annotations)
+
     def _apply_op_to_state(
         self,
         op: "Operation",

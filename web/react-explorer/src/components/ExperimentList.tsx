@@ -9,6 +9,7 @@ import {
 import { DatasetSetupModal } from "./DatasetSetupModal";
 import { ExportModal } from "./ExportPanel";
 import { ExperimentCreateModal } from "./ExperimentCreateModal";
+import { useReadOnly } from "../api/appConfig";
 
 type ExperimentListProps = {
   onSelectGenome: (genomeId: string, experimentId: string, experimentName: string) => void;
@@ -26,6 +27,7 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
   const [resumingExperiment, setResumingExperiment] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [appliedQuery, setAppliedQuery] = useState("");
+  const readOnly = useReadOnly();
 
   const loadExperiments = useCallback(async () => {
     try {
@@ -134,7 +136,7 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
         <div className="error">
           <h3>Error loading experiments</h3>
           <p>{error}</p>
-          <p className="hint">Make sure the API is running at http://localhost:8000</p>
+          {!readOnly && <p className="hint">Make sure the API is running at http://localhost:8000</p>}
         </div>
       </div>
     );
@@ -145,7 +147,7 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
       <header className="experiment-list-header">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h1>Experiments</h1>
-          <button
+          {!readOnly && <button
             onClick={() => setShowCreate(true)}
             style={{
               padding: "8px 16px",
@@ -159,7 +161,7 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
             }}
           >
             + New Experiment
-          </button>
+          </button>}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
           <input
@@ -212,6 +214,8 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
                       <span className="dataset-badge linked">
                         {experiment.dataset_name || "linked"}
                       </span>
+                    ) : readOnly ? (
+                      <span className="hint">no dataset</span>
                     ) : (
                       <button
                         className="dataset-setup-btn"
@@ -230,7 +234,7 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
                   <td>{new Date(experiment.created_at).toLocaleDateString()}</td>
                   <td>
                     <div style={{ display: "flex", gap: "0.4rem" }}>
-                      {experiment.status === "interrupted" && (
+                      {!readOnly && experiment.status === "interrupted" && (
                         <button
                           className="op-btn"
                           onClick={() => handleResumeExperiment(experiment)}
@@ -241,7 +245,7 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
                             : "Resume"}
                         </button>
                       )}
-                      {(experiment.status === "interrupted" || experiment.status === "failed") && (
+                      {!readOnly && (experiment.status === "interrupted" || experiment.status === "failed") && (
                         <button
                           className="op-btn"
                           onClick={() => handleRestartExperiment(experiment)}
@@ -250,13 +254,13 @@ export function ExperimentList({ onSelectGenome }: ExperimentListProps) {
                           Restart
                         </button>
                       )}
-                      <button
+                      {!readOnly && <button
                         className="op-btn"
                         title="Export every explained genome (JSON, LaTeX, TikZ, PDF, DOCX) with an index"
                         onClick={() => setExporting({ id: experiment.id, name: experiment.name })}
                       >
                         Export
-                      </button>
+                      </button>}
                       <button
                         className="explore-btn"
                         onClick={() => handleSelectExperiment(experiment)}

@@ -10,6 +10,7 @@ import {
   type AnnotationSummary,
 } from "../api/client";
 import { useFeatureLabels, nodeListText, camelDisplay } from "../featureLabels";
+import { useReadOnly } from "../api/appConfig";
 
 // =============================================================================
 // Logging utilities
@@ -46,6 +47,8 @@ type OperationsPanelProps = {
   annotations: AnnotationSummary[];
   selectedAnnotationId?: string | null;
   onOperationChange: () => void;
+  /** Replay the explanation up to (and including) the operation at this index. */
+  onReplayTo?: (upto: number) => void;
 };
 
 /**
@@ -1476,7 +1479,9 @@ export function OperationsPanel({
   annotations,
   selectedAnnotationId,
   onOperationChange,
+  onReplayTo,
 }: OperationsPanelProps) {
+  const readOnly = useReadOnly();
   const [collapsed, setCollapsed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -1909,7 +1914,9 @@ export function OperationsPanel({
         <h3 style={{ margin: 0 }}>Operations</h3>
       </div>
 
-      {collapsed ? null : <>
+      {collapsed ? null : readOnly ? (
+        <OperationHistory operations={operations} onReplayTo={onReplayTo} />
+      ) : <>
       {error && <div className="error-message">{error}</div>}
 
       {/* Annotation Rename Section */}
@@ -2656,6 +2663,41 @@ export function OperationsPanel({
       </section>
       </>}
     </aside>
+  );
+}
+
+/** The operation stream, read only (read-only server, static appendix): click one to replay to it. */
+function OperationHistory({ operations, onReplayTo }: { operations: Operation[]; onReplayTo?: (upto: number) => void }) {
+  return (
+    <section className="panel-section">
+      <h4>Operation History ({operations.length})</h4>
+      {operations.length === 0 ? (
+        <p className="hint">No operations: the network is unexplained.</p>
+      ) : (
+        <>
+          {onReplayTo && <p className="hint">Click an operation to replay the explanation up to it.</p>}
+          <ul className="operation-list" data-testid="operation-history">
+            {operations.map((op, i) => (
+              <li
+                key={op.seq}
+                className={`operation-item${onReplayTo ? " clickable" : ""}`}
+                onClick={onReplayTo ? () => onReplayTo(i + 1) : undefined}
+                title={onReplayTo ? "Replay up to this operation" : undefined}
+              >
+                <span className="op-seq">#{op.seq}</span>
+                <span className="op-type">{op.type}</span>
+                <span className="op-params">{formatOperationParams(op)}</span>
+                {op.notes && (
+                  <div className="op-notes" style={{ fontSize: "11px", color: "#666", fontStyle: "italic", marginLeft: "24px" }}>
+                    {op.notes}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
   );
 }
 

@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { listRecords, type RecordSummary } from "../api/tools";
 import { getReviewProgress, type ReviewProgress } from "../api/review";
 import { ExportModal } from "./ExportPanel";
+import { useAppConfig } from "../api/appConfig";
 
 export function RecordsPage({
   onOpen,
@@ -22,6 +23,7 @@ export function RecordsPage({
   const [filter, setFilter] = useState("");
   const [onlyUnverified, setOnlyUnverified] = useState(false);
   const [exporting, setExporting] = useState<{ id: string; name: string } | null>(null);
+  const cfg = useAppConfig();
 
   useEffect(() => {
     listRecords()
@@ -49,12 +51,17 @@ export function RecordsPage({
   return (
     <div className="experiment-list-container records-page">
       <header className="experiment-list-header">
-        <h2>Review explanations</h2>
-        <p className="hint">
+        <h2>{cfg.static ? "Explanation records" : "Review explanations"}</h2>
+        {cfg.read_only ? (
+          <p className="hint">
+            {records.length} explanation records. <strong>{nVerified}</strong> verified by Mike
+            {minutes ? ` (${minutes} min in total)` : ""}. <em>Explore</em> opens the network with its explanation.
+          </p>
+        ) : <p className="hint">
           {records.length} explanation records in <code>{dir}</code>. <strong>{nVerified}</strong> verified
           {minutes ? `, ${minutes} min recorded` : ""}. <strong>Verify</strong> opens the sentence-by-sentence review (signoff-v1:
           gates, tier A, the random sample, leaf verdicts, sign-off); <em>Explore</em> opens the genome in the explorer.
-        </p>
+        </p>}
         <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
           <input
             type="search"
@@ -106,9 +113,9 @@ export function RecordsPage({
               </td>
               <td className="summary-cell" title={r.summary || ""}>{r.summary}</td>
               <td>
-                <button className="explore-btn" title="Sentence-by-sentence review and sign-off" onClick={() => onVerify(r.label)}>
+                {!cfg.read_only && <><button className="explore-btn" title="Sentence-by-sentence review and sign-off" onClick={() => onVerify(r.label)}>
                   Verify
-                </button>{" "}
+                </button>{" "}</>}
                 <button
                   className="op-btn"
                   disabled={!r.in_db || !r.experiment_id}
@@ -117,14 +124,14 @@ export function RecordsPage({
                 >
                   Explore
                 </button>{" "}
-                <button
+                {!cfg.read_only && <button
                   className="op-btn"
                   disabled={!r.in_db}
                   title={r.in_db ? "Export pack (JSON, LaTeX, TikZ, PDF, DOCX)" : "Genome not in this database"}
                   onClick={() => setExporting({ id: r.genome_id, name: r.label })}
                 >
                   Export
-                </button>
+                </button>}
               </td>
             </tr>
           ))}

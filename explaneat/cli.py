@@ -78,13 +78,23 @@ def dossier(genome_id, input_name, annotation, out_dir, label, notes, grid_point
     help="On startup, mark every experiment with status 'running' as 'interrupted'. "
     "Off by default: experiments run by other processes (scripts) are also 'running'.",
 )
-def api(host, port, reload, mark_orphans):
+@click.option(
+    "--read-only",
+    is_flag=True,
+    help="Serve without saving anything: write routes return 403, the database "
+    "connection is read only and the UI hides its editing controls "
+    "(same as EXPLANEAT_READ_ONLY=1).",
+)
+def api(host, port, reload, mark_orphans, read_only):
     """Start the REST API and the React Explorer (http://HOST:PORT/)."""
     import uvicorn
 
     from . import settings
 
     os.environ["EXPLANEAT_MARK_ORPHANS"] = "1" if mark_orphans else "0"
+    if read_only:
+        os.environ["EXPLANEAT_READ_ONLY"] = "1"
+        click.echo("Read-only mode: write routes return 403; nothing is saved.")
     if host not in ("127.0.0.1", "localhost", "::1"):
         click.echo(f"WARNING: binding to {host} exposes the API (and any data it holds) "
                    "beyond this machine.", err=True)

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useReadOnly } from "../api/appConfig";
 import {
   computeInputDistribution,
   getExperimentSplit,
@@ -40,6 +41,7 @@ export function InputDistributionPanel({
 }: InputDistributionPanelProps) {
   const [pinDraft, setPinDraft] = useState<PinModalDraft | null>(null);
   const [pinnedMsg, setPinnedMsg] = useState<string | null>(null);
+  const readOnly = useReadOnly();
   const [splitId, setSplitId] = useState<string | null>(null);
   const [featureNames, setFeatureNames] = useState<string[] | null>(null);
   const [distData, setDistData] = useState<InputDistributionResponse | null>(null);
@@ -160,9 +162,9 @@ export function InputDistributionPanel({
     <div className="input-distribution-panel">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
         <h3>Input Distribution</h3>
-        <button className="op-btn pin-btn" style={{ fontSize: "11px" }} onClick={openPin} title="Pin this input as a feature of interest">
+        {!readOnly && <button className="op-btn pin-btn" style={{ fontSize: "11px" }} onClick={openPin} title="Pin this input as a feature of interest">
           Pin this input
-        </button>
+        </button>}
       </div>
       {pinnedMsg && <div className="pin-saved">{pinnedMsg}</div>}
       {pinDraft && (

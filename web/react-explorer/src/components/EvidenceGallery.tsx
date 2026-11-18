@@ -4,6 +4,7 @@ import {
   updateNarrative,
   type EvidenceEntry,
 } from "../api/client";
+import { useReadOnly } from "../api/appConfig";
 
 /** Snapshots are base64 of UTF-8 (older ones of Latin-1 text): decode either. */
 function decodeSvg(b64: string): string {
@@ -25,6 +26,7 @@ export function EvidenceGallery({ genomeId, annotationId }: EvidenceGalleryProps
   const [entries, setEntries] = useState<EvidenceEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const readOnly = useReadOnly();
   const [editText, setEditText] = useState("");
 
   const loadEvidence = useCallback(() => {
@@ -122,9 +124,9 @@ export function EvidenceGallery({ genomeId, annotationId }: EvidenceGalleryProps
             ) : (
               <div
                 className="gallery-narrative"
-                onClick={() => handleStartEdit(i, entry.narrative)}
+                onClick={readOnly ? undefined : () => handleStartEdit(i, entry.narrative)}
               >
-                {entry.narrative || "Click to add narrative..."}
+                {entry.narrative || (readOnly ? "" : "Click to add narrative...")}
               </div>
             )}
           </div>

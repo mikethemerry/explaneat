@@ -6,6 +6,7 @@
 import { useEffect, useState } from "react";
 import { getFormula } from "../api/client";
 import { getHypothesis, putHypothesis } from "../api/tools";
+import { useReadOnly } from "../api/appConfig";
 
 const TEMPLATE = (closedForm: string) =>
   [
@@ -24,6 +25,7 @@ export function HypothesisEditor({ genomeId, annotationId }: { genomeId: string;
   const [open, setOpen] = useState(true);
   const [status, setStatus] = useState<string | null>(null);
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const readOnly = useReadOnly();
 
   useEffect(() => {
     setStatus(null);
@@ -62,10 +64,15 @@ export function HypothesisEditor({ genomeId, annotationId }: { genomeId: string;
   return (
     <div className="evidence-section hypothesis-editor">
       <div className="formula-header" style={{ cursor: "pointer" }} onClick={() => setOpen(!open)}>
-        <span className="formula-label">{open ? "▼" : "▶"} Hypothesis &amp; evidence write-up</span>
+        <span className="formula-label">{open ? "▼" : "▶"} {readOnly ? "Hypothesis" : <>Hypothesis &amp; evidence write-up</>}</span>
         <span className="formula-dim">{nEvidence} evidence item{nEvidence === 1 ? "" : "s"} attached</span>
       </div>
-      {open && (
+      {open && readOnly && (
+        <div className="hypothesis-text" data-testid="hypothesis-text" style={{ whiteSpace: "pre-wrap", fontSize: "0.85rem", lineHeight: 1.5 }}>
+          {text || <span className="hint">{status ?? "No hypothesis recorded."}</span>}
+        </div>
+      )}
+      {open && !readOnly && (
         <>
           <textarea
             rows={8}

@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
+import { useReadOnly } from "../api/appConfig";
 import {
   getExperimentSplit,
   addOperation,
@@ -91,6 +92,7 @@ export function DatasetInfoPanel({
   const [collapsed, setCollapsed] = useState(true);
   const [renaming, setRenaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const readOnly = useReadOnly();
 
   useEffect(() => {
     if (!experimentId) return;
@@ -258,7 +260,7 @@ export function DatasetInfoPanel({
           )}
 
           {/* Auto-rename button */}
-          {featureNames && hasUnnamedInputs && (
+          {!readOnly && featureNames && hasUnnamedInputs && (
             <button
               className="op-btn primary"
               onClick={handleAutoRename}

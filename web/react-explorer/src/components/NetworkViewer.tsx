@@ -74,7 +74,7 @@ type EdgeInfluenceData = {
  * - uncovered: not covered by any annotation (orange dashed ring)
  * - focus: nodes of a suggested candidate (cyan ring)
  */
-export type HighlightKind = "added" | "removed" | "changed" | "uncovered" | "focus";
+export type HighlightKind = "added" | "removed" | "changed" | "uncovered" | "focus" | "renamed" | "annotated";
 
 export const HIGHLIGHT_STYLE: Record<HighlightKind, { color: string; label: string }> = {
   added: { color: "#16a34a", label: "Added" },
@@ -82,6 +82,8 @@ export const HIGHLIGHT_STYLE: Record<HighlightKind, { color: string; label: stri
   changed: { color: "#d97706", label: "Weight/bias changed" },
   uncovered: { color: "#ea580c", label: "Uncovered" },
   focus: { color: "#0891b2", label: "Candidate" },
+  renamed: { color: "#9333ea", label: "Named at this step" },
+  annotated: { color: "#0891b2", label: "Annotated at this step" },
 };
 
 type NetworkViewerProps = {

@@ -12,6 +12,7 @@
 import { useCallback, useState } from "react";
 import { addOperation, type AnnotationSummary } from "../api/client";
 import { useFeatureLabels, nodeListText } from "../featureLabels";
+import { useReadOnly } from "../api/appConfig";
 
 // =============================================================================
 // Logging utilities
@@ -86,11 +87,13 @@ function AnnotationTreeItem({
     onSelectAnnotation(isSelected ? null : annotation.id);
   }, [annotation.id, isSelected, onSelectAnnotation]);
 
+  const readOnly = useReadOnly();
   const handleDoubleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
+    if (readOnly) return;
     setEditValue(annotation.display_name || annotation.name || "");
     setEditing(true);
-  }, [annotation.display_name, annotation.name]);
+  }, [annotation.display_name, annotation.name, readOnly]);
 
   const submitRename = useCallback(async (value: string) => {
     setEditing(false);
@@ -154,7 +157,7 @@ function AnnotationTreeItem({
           <span
             className="annotation-name"
             onDoubleClick={handleDoubleClick}
-            title="Double-click to rename"
+            title={readOnly ? undefined : "Double-click to rename"}
           >
             {displayName}
           </span>

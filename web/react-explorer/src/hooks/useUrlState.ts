@@ -1,7 +1,31 @@
 /**
  * Lightweight URL-based routing via History API.
  * No external router dependency — just reads/writes window.location.
+ *
+ * The static appendix (VITE_STATIC_DATA=1) routes on the hash instead
+ * (index.html#/genome/<id>?...), so it works from any folder, e.g. a GitHub
+ * Pages subpath, with no server-side fallback.
  */
+import { STATIC_MODE } from "../api/staticData";
+
+/** The routed path and query: from the URL, or from the hash in static mode. */
+function current(): { path: string; search: string } {
+  if (!STATIC_MODE) return { path: window.location.pathname, search: window.location.search };
+  const h = window.location.hash.replace(/^#/, "") || "/";
+  const q = h.indexOf("?");
+  return q < 0 ? { path: h, search: "" } : { path: h.slice(0, q), search: h.slice(q) };
+}
+
+/** An href for a view's URL (a hash link in static mode). */
+export function hrefFor(url: string): string {
+  return STATIC_MODE ? `#${url}` : url;
+}
+
+/** Whether the app is at its root (redirected to /experiments). */
+export function atRoot(): boolean {
+  const p = current().path;
+  return p === "/" || p === "";
+}
 
 export type UrlView =
   | { type: "experiments" }
@@ -15,8 +39,8 @@ export type UrlView =
 
 /** Parse the current URL into a View. */
 export function parseUrl(): UrlView {
-  const path = window.location.pathname;
-  const params = new URLSearchParams(window.location.search);
+  const { path, search } = current();
+  const params = new URLSearchParams(search);
 
   // /genome/:genomeId
   const genomeMatch = path.match(/^\/genome\/([^/]+)/);
@@ -74,11 +98,12 @@ export function viewToUrl(view: UrlView): string {
 export function pushView(view: UrlView) {
   const url = viewToUrl(view);
   // Don't push if already at this URL
-  if (window.location.pathname + window.location.search === url) return;
-  window.history.pushState(null, "", url);
+  const cur = current();
+  if (cur.path + cur.search === url) return;
+  window.history.pushState(null, "", hrefFor(url));
 }
 
 /** Replace current history entry (for initial load / redirects). */
 export function replaceView(view: UrlView) {
-  window.history.replaceState(null, "", viewToUrl(view));
+  window.history.replaceState(null, "", hrefFor(viewToUrl(view)));
 }
