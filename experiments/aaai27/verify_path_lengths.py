@@ -13,7 +13,7 @@ import sys
 import os
 import uuid
 
-sys.path.insert(0, os.path.join(os.getcwd(), "scripts"))
+sys.path.insert(0, os.path.join(os.getcwd(), "experiments"))
 from aaai27.common import ADULT, HEART, load_model
 
 from explaneat.db import db

@@ -27,7 +27,7 @@ import sys
 import numpy as np
 from sklearn.metrics import roc_auc_score, accuracy_score
 
-sys.path.insert(0, "scripts")
+sys.path.insert(0, "experiments")  # run from the repository root
 from aaai27.common import (ADULT, HEART, load_model, predict, ablated_genome,
                            paired_bootstrap_delta, pct_ci)
 

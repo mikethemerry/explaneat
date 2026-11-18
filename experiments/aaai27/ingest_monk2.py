@@ -28,7 +28,7 @@ import pmlb
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-sys.path.insert(0, "scripts")
+sys.path.insert(0, "experiments")  # run from the repository root
 
 from explaneat.db import db
 from explaneat.db.models import Dataset, DatasetSplit

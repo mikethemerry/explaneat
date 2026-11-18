@@ -21,7 +21,7 @@ import torch
 import torch.nn as nn
 from sklearn.metrics import roc_auc_score
 
-sys.path.insert(0, "scripts")
+sys.path.insert(0, "experiments")  # run from the repository root
 from aaai27.common import ADULT, SEED, load_model
 
 from explaneat.db import db

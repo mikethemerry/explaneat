@@ -33,7 +33,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-sys.path.insert(0, "scripts")
+sys.path.insert(0, "experiments")  # run from the repository root
 from aaai27.common import ADULT, load_model
 
 from explaneat.db import db

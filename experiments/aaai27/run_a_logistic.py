@@ -14,7 +14,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import GridSearchCV, KFold
 
-sys.path.insert(0, "scripts")
+sys.path.insert(0, "experiments")  # run from the repository root
 from aaai27.common import ADULT, HEART, SEED, load_model, bootstrap_auc_ci, pct_ci
 
 from explaneat.db import db

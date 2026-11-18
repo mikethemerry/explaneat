@@ -38,7 +38,7 @@ torch.set_num_threads(1)
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "scripts"))
+sys.path.insert(0, str(ROOT / "experiments"))
 
 from sklearn.metrics import accuracy_score, roc_auc_score  # noqa: E402
 
