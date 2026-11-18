@@ -1,0 +1,1815 @@
+{
+ "before_reproduces_v4": {
+  "parts": true,
+  "units": true,
+  "variables": true,
+  "variance_share_linear": true
+ },
+ "binary_step": {
+  "2058": {
+   "activation": [
+    0.0,
+    1.0880802006132049
+   ],
+   "feature": "occupation:4",
+   "gain": 0.6242023896342652,
+   "input": "-45_b",
+   "max_affine_error": 3.743672039036028e-13,
+   "passed": true,
+   "slope_z": 0.3588635083333446
+  },
+  "4158": {
+   "activation": [
+    0.0,
+    2.2609650054859425
+   ],
+   "feature": "workclass:0",
+   "gain": 0.4958199108063012,
+   "input": "-2",
+   "max_affine_error": 7.673861546209082e-13,
+   "passed": true,
+   "slope_z": 0.5236170133805634
+  }
+ },
+ "binary_step_check_failed": [],
+ "explanation_id": "4cd139bf-2a5e-41c0-bc5f-353297ebb448",
+ "genome_id": "6e0e4be0-96c4-45f7-8ac1-74af3c960799",
+ "label": "adult-s0",
+ "linearity_claims_after": [
+  {
+   "annotation": {
+    "id": "ann_124",
+    "name": "income_model_root"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -0.355273
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 1.33905e-10,
+    "fd_varies": false
+   },
+   "key": "ann_124:linearity:var:age",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "from 22 years to 58 years",
+    "delta": -0.206798,
+    "from": 0.754235,
+    "n": 39073,
+    "reference": "typical patient",
+    "to": 0.547437
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": "lowers",
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 0,
+      "label": "age",
+      "score_per_unit": -0.0258612971578401,
+      "text": "\u22120.026 per year"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "age"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "age",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "age",
+     "short": "age",
+     "unit": "years"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_124",
+    "name": "income_model_root"
+   },
+   "checks": {
+    "slope_constant_on_data": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": 1.75935
+   },
+   "evidence": {
+    "binary_step_units": 1,
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 1.33541e-10,
+    "fd_varies": false,
+    "two_value_columns": [
+     "workclass:0"
+    ]
+   },
+   "key": "ann_124:linearity:var:workclass",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "to without pay",
+    "delta": 0.324447,
+    "from": 0.675553,
+    "n": 17,
+    "reference": "typical patient",
+    "to": 1.0
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "support_linear",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 1,
+      "label": "missing (?)",
+      "level": "0",
+      "score_per_unit": 0.8217848131279155,
+      "text": "+0.82 for missing (?)"
+     },
+     {
+      "column": 3,
+      "label": "local government",
+      "level": "2",
+      "score_per_unit": 0.1961074560129754,
+      "text": "+0.20 for local government"
+     },
+     {
+      "column": 5,
+      "label": "private",
+      "level": "4",
+      "score_per_unit": 0.0,
+      "text": "+0 for private"
+     },
+     {
+      "column": 7,
+      "label": "self-employed, not incorporated",
+      "level": "6",
+      "score_per_unit": 0.6797534108188211,
+      "text": "+0.68 for self-employed, not incorporated"
+     },
+     {
+      "column": 8,
+      "label": "state government",
+      "level": "7",
+      "score_per_unit": 0.3410195516221709,
+      "text": "+0.34 for state government"
+     },
+     {
+      "column": 9,
+      "label": "without pay",
+      "level": "8",
+      "score_per_unit": 60.97444202321565,
+      "text": "+61.0 for without pay"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "workclass"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "workclass",
+     "decoded": true,
+     "kind": "category",
+     "label": "work class",
+     "short": "work class",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_124",
+    "name": "income_model_root"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -0.0754808
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 1.15852e-10,
+    "fd_varies": false
+   },
+   "key": "ann_124:linearity:var:fnlwgt",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "from 66,572 (weight) to 328,216 (weight)",
+    "delta": -0.0410819,
+    "from": 0.692766,
+    "n": 39073,
+    "reference": "typical patient",
+    "to": 0.651684
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": "lowers",
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 10,
+      "label": "census sampling weight",
+      "score_per_unit": -7.1330617468975e-07,
+      "text": "\u22127.1e\u221207 per (weight)"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "fnlwgt"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "fnlwgt",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "census sampling weight",
+     "short": "census sampling weight",
+     "unit": "(weight)"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_124",
+    "name": "income_model_root"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": 0.0502303
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 1.48642e-10,
+    "fd_varies": false
+   },
+   "key": "ann_124:linearity:var:education",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "to associate degree (academic)",
+    "delta": 0.0525492,
+    "from": 0.675553,
+    "n": 1269,
+    "reference": "typical patient",
+    "to": 0.728102
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 17,
+      "label": "professional school degree",
+      "level": "14",
+      "score_per_unit": -0.20963734924929414,
+      "text": "\u22120.21 for professional school degree"
+     },
+     {
+      "column": 19,
+      "label": "12th grade (no diploma)",
+      "level": "2",
+      "score_per_unit": 0.01074409691400902,
+      "text": "+0.011 for 12th grade (no diploma)"
+     },
+     {
+      "column": 24,
+      "label": "associate degree (academic)",
+      "level": "7",
+      "score_per_unit": 0.2516053644258165,
+      "text": "+0.25 for associate degree (academic)"
+     },
+     {
+      "column": 26,
+      "label": "bachelor's degree",
+      "level": "9",
+      "score_per_unit": 0.08431039469804469,
+      "text": "+0.084 for bachelor's degree"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "education"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "education",
+     "decoded": true,
+     "kind": "category",
+     "label": "highest education",
+     "short": "highest education",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_124",
+    "name": "income_model_root"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -0.775491
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 1.13948e-10,
+    "fd_varies": false
+   },
+   "key": "ann_124:linearity:var:education-num",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "from 7 on the 1-16 scale to 13 on the 1-16 scale",
+    "delta": -0.408926,
+    "from": 0.792165,
+    "n": 39073,
+    "reference": "typical patient",
+    "to": 0.383239
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": "lowers",
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 27,
+      "label": "education level",
+      "score_per_unit": -0.3023077537985888,
+      "text": "\u22120.30 per on the 1-16 scale"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "education-num"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "education-num",
+     "decoded": true,
+     "kind": "count",
+     "label": "education level (1 = preschool to 16 = doctorate)",
+     "short": "education level",
+     "unit": "on the 1-16 scale"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_124",
+    "name": "income_model_root"
+   },
+   "checks": {
+    "slope_constant_on_data": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -0.0744263
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 1.38365e-10,
+    "fd_varies": false
+   },
+   "key": "ann_124:linearity:var:marital-status",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "to married (civilian spouse)",
+    "delta": 0.0,
+    "from": 0.675553,
+    "n": 17909,
+    "reference": "typical patient",
+    "to": 0.675553
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "support_linear",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 30,
+      "label": "married (civilian spouse)",
+      "level": "2",
+      "score_per_unit": -0.6122289603634847,
+      "text": "\u22120.61 for married (civilian spouse)"
+     },
+     {
+      "column": 31,
+      "label": "married, spouse absent",
+      "level": "3",
+      "score_per_unit": -0.07309932790471314,
+      "text": "\u22120.073 for married, spouse absent"
+     },
+     {
+      "column": 32,
+      "label": "never married",
+      "level": "4",
+      "score_per_unit": 0.5002496006169703,
+      "text": "+0.50 for never married"
+     },
+     {
+      "column": 33,
+      "label": "separated",
+      "level": "5",
+      "score_per_unit": 0.22820177105788073,
+      "text": "+0.23 for separated"
+     },
+     {
+      "column": 34,
+      "label": "widowed",
+      "level": "6",
+      "score_per_unit": -0.21388970833857218,
+      "text": "\u22120.21 for widowed"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "marital-status"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "marital-status",
+     "decoded": true,
+     "kind": "category",
+     "label": "marital status",
+     "short": "marital status",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_124",
+    "name": "income_model_root"
+   },
+   "checks": {
+    "slope_varies": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -0.238099
+   },
+   "evidence": {
+    "binary_step_units": 1,
+    "fd_match_share": 0.668032,
+    "fd_max_deviation": 0.209822,
+    "fd_varies": true,
+    "two_value_columns": [
+     "occupation:4"
+    ]
+   },
+   "key": "ann_124:linearity:var:occupation",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "mixed",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 37,
+      "label": "professional specialty",
+      "level": "10",
+      "score_per_unit": -0.5298835000637407,
+      "text": "\u22120.53 for professional specialty"
+     },
+     {
+      "column": 39,
+      "label": "sales",
+      "level": "12",
+      "score_per_unit": -0.2989459330639637,
+      "text": "\u22120.30 for sales"
+     },
+     {
+      "column": 40,
+      "label": "technical support",
+      "level": "13",
+      "score_per_unit": -0.605045647483796,
+      "text": "\u22120.61 for technical support"
+     },
+     {
+      "column": 44,
+      "label": "executive or managerial",
+      "level": "4",
+      "score_per_unit": -0.8163118549133143,
+      "text": "\u22120.82 for executive or managerial"
+     },
+     {
+      "column": 45,
+      "label": "farming or fishing",
+      "level": "5",
+      "score_per_unit": 0.9210206848498939,
+      "text": "+0.92 for farming or fishing"
+     },
+     {
+      "column": 48,
+      "label": "other service",
+      "level": "8",
+      "score_per_unit": 0.8260840826762041,
+      "text": "+0.83 for other service"
+     },
+     {
+      "column": 49,
+      "label": "private household service",
+      "level": "9",
+      "score_per_unit": 0.0,
+      "text": "+0 for private household service"
+     }
+    ],
+    "per_unit_scope": "its paths that do not switch",
+    "variable": "occupation"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "occupation",
+     "decoded": true,
+     "kind": "category",
+     "label": "occupation",
+     "short": "occupation",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_124",
+    "name": "income_model_root"
+   },
+   "checks": {
+    "slope_varies": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -1.74877
+   },
+   "evidence": {
+    "fd_match_share": 0.95145,
+    "fd_max_deviation": 0.240791,
+    "fd_varies": true
+   },
+   "key": "ann_124:linearity:var:relationship",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "mixed",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 50,
+      "label": "husband",
+      "level": "0",
+      "score_per_unit": -1.888600039967297,
+      "text": "\u22121.89 for husband"
+     },
+     {
+      "column": 51,
+      "label": "not in a family",
+      "level": "1",
+      "score_per_unit": -0.665436938648907,
+      "text": "\u22120.67 for not in a family"
+     },
+     {
+      "column": 55,
+      "label": "wife",
+      "level": "5",
+      "score_per_unit": -2.4723460140936857,
+      "text": "\u22122.47 for wife"
+     }
+    ],
+    "per_unit_scope": "its paths that do not switch",
+    "variable": "relationship"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "relationship",
+     "decoded": true,
+     "kind": "category",
+     "label": "relationship in the household",
+     "short": "relationship in the household",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_124",
+    "name": "income_model_root"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -0.0234133
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 1.31789e-10,
+    "fd_varies": false
+   },
+   "key": "ann_124:linearity:var:race",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "to American Indian or Eskimo",
+    "delta": 0.0799314,
+    "from": 0.675553,
+    "n": 374,
+    "reference": "typical patient",
+    "to": 0.755484
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 56,
+      "label": "American Indian or Eskimo",
+      "level": "0",
+      "score_per_unit": 0.2553495129419308,
+      "text": "+0.26 for American Indian or Eskimo"
+     },
+     {
+      "column": 59,
+      "label": "other race",
+      "level": "3",
+      "score_per_unit": 0.007719253060165478,
+      "text": "+0.0077 for other race"
+     },
+     {
+      "column": 60,
+      "label": "White",
+      "level": "4",
+      "score_per_unit": -0.13932084703675432,
+      "text": "\u22120.14 for White"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "race"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "race",
+     "decoded": true,
+     "kind": "category",
+     "label": "race",
+     "short": "race",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_124",
+    "name": "income_model_root"
+   },
+   "checks": {
+    "slope_varies": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": 0.0
+   },
+   "evidence": {
+    "fd_match_share": 0.668032,
+    "fd_max_deviation": 0.749081,
+    "fd_varies": true
+   },
+   "key": "ann_124:linearity:var:sex",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "nonlinear",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [],
+    "per_unit_scope": null,
+    "variable": "sex"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "sex",
+     "decoded": true,
+     "kind": "category",
+     "label": "sex",
+     "short": "sex",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_124",
+    "name": "income_model_root"
+   },
+   "checks": {
+    "slope_varies": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -2.65823
+   },
+   "evidence": {
+    "fd_match_share": 0.943311,
+    "fd_max_deviation": 0.427881,
+    "fd_varies": true
+   },
+   "key": "ann_124:linearity:var:capital-gain",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "mixed",
+    "direction": "lowers",
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 62,
+      "label": "capital gains",
+      "score_per_unit": -0.0003544339845520304,
+      "text": "\u22120.00035 per US dollar"
+     }
+    ],
+    "per_unit_scope": "its paths that do not switch",
+    "variable": "capital-gain"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "capital-gain",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "capital gains",
+     "short": "capital gains",
+     "unit": "US dollars"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_124",
+    "name": "income_model_root"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -0.272089
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 9.53616e-11,
+    "fd_varies": false
+   },
+   "key": "ann_124:linearity:var:capital-loss",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "from 0 US dollars to 0 US dollars",
+    "delta": 0.0,
+    "from": 0.675553,
+    "n": 39073,
+    "reference": "typical patient",
+    "to": 0.675553
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": "lowers",
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 63,
+      "label": "capital losses",
+      "score_per_unit": -0.0006754740119605238,
+      "text": "\u22120.00068 per US dollar"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "capital-loss"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "capital-loss",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "capital losses",
+     "short": "capital losses",
+     "unit": "US dollars"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_124",
+    "name": "income_model_root"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -0.356845
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 1.03649e-10,
+    "fd_varies": false
+   },
+   "key": "ann_124:linearity:var:hours-per-week",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "from 24 hours to 55 hours",
+    "delta": -0.19266,
+    "from": 0.767472,
+    "n": 39073,
+    "reference": "typical patient",
+    "to": 0.574813
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": "lowers",
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 64,
+      "label": "weekly working hours",
+      "score_per_unit": -0.028792858175278643,
+      "text": "\u22120.029 per hour"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "hours-per-week"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "hours-per-week",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "hours worked per week",
+     "short": "weekly working hours",
+     "unit": "hours"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_124",
+    "name": "income_model_root"
+   },
+   "checks": {
+    "slope_constant_on_data": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -0.12633
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 1.51161e-10,
+    "fd_varies": false
+   },
+   "key": "ann_124:linearity:var:native-country",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "to Colombia",
+    "delta": 0.31566,
+    "from": 0.675553,
+    "n": 64,
+    "reference": "typical patient",
+    "to": 0.991212
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "support_linear",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 67,
+      "label": "France",
+      "level": "10",
+      "score_per_unit": -0.16409520775690561,
+      "text": "\u22120.16 for France"
+     },
+     {
+      "column": 71,
+      "label": "Haiti",
+      "level": "14",
+      "score_per_unit": 0.335654348344879,
+      "text": "+0.34 for Haiti"
+     },
+     {
+      "column": 72,
+      "label": "the Netherlands",
+      "level": "15",
+      "score_per_unit": -0.3447424313503311,
+      "text": "\u22120.34 for the Netherlands"
+     },
+     {
+      "column": 74,
+      "label": "Hong Kong",
+      "level": "17",
+      "score_per_unit": 0.02867016307174492,
+      "text": "+0.029 for Hong Kong"
+     },
+     {
+      "column": 75,
+      "label": "Hungary",
+      "level": "18",
+      "score_per_unit": -0.10050122814451586,
+      "text": "\u22120.10 for Hungary"
+     },
+     {
+      "column": 76,
+      "label": "India",
+      "level": "19",
+      "score_per_unit": -0.004771972470418174,
+      "text": "\u22120.0048 for India"
+     },
+     {
+      "column": 77,
+      "label": "Canada",
+      "level": "2",
+      "score_per_unit": -0.25714799685040485,
+      "text": "\u22120.26 for Canada"
+     },
+     {
+      "column": 78,
+      "label": "Iran",
+      "level": "20",
+      "score_per_unit": 0.16152931620715033,
+      "text": "+0.16 for Iran"
+     },
+     {
+      "column": 82,
+      "label": "Japan",
+      "level": "24",
+      "score_per_unit": 0.1366541388351459,
+      "text": "+0.14 for Japan"
+     },
+     {
+      "column": 83,
+      "label": "Laos",
+      "level": "25",
+      "score_per_unit": 1.355077956413869,
+      "text": "+1.36 for Laos"
+     },
+     {
+      "column": 85,
+      "label": "Nicaragua",
+      "level": "27",
+      "score_per_unit": 0.5573758216798049,
+      "text": "+0.56 for Nicaragua"
+     },
+     {
+      "column": 91,
+      "label": "Portugal",
+      "level": "32",
+      "score_per_unit": -0.898652837904271,
+      "text": "\u22120.90 for Portugal"
+     },
+     {
+      "column": 96,
+      "label": "Thailand",
+      "level": "37",
+      "score_per_unit": 0.679080117432846,
+      "text": "+0.68 for Thailand"
+     },
+     {
+      "column": 99,
+      "label": "Colombia",
+      "level": "4",
+      "score_per_unit": 3.9921648257077433,
+      "text": "+3.99 for Colombia"
+     },
+     {
+      "column": 101,
+      "label": "Yugoslavia",
+      "level": "41",
+      "score_per_unit": -0.8023487994678585,
+      "text": "\u22120.80 for Yugoslavia"
+     },
+     {
+      "column": 103,
+      "label": "Dominican Republic",
+      "level": "6",
+      "score_per_unit": 0.9043118248958761,
+      "text": "+0.90 for Dominican Republic"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "native-country"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "native-country",
+     "decoded": true,
+     "kind": "category",
+     "label": "country of birth",
+     "short": "country of birth",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_114",
+    "name": "direct_linear_terms"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 0
+   },
+   "evidence": {
+    "always_on_units": 0,
+    "switching_units": 0
+   },
+   "key": "ann_114:linearity:part",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_121",
+    "name": "without_pay_unit"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 0
+   },
+   "evidence": {
+    "always_on_units": 1,
+    "switching_units": 0
+   },
+   "key": "ann_121:linearity:part",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "support_linear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_115",
+    "name": "capital_gain_hinge"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 1
+   },
+   "evidence": {
+    "always_on_units": 0,
+    "switching_units": 1
+   },
+   "key": "ann_115:linearity:part",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "nonlinear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_116",
+    "name": "female_gate"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 2
+   },
+   "evidence": {
+    "always_on_units": 0,
+    "switching_units": 2
+   },
+   "key": "ann_116:linearity:part",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "nonlinear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_122",
+    "name": "japan_unit"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 0
+   },
+   "evidence": {
+    "always_on_units": 1,
+    "switching_units": 0
+   },
+   "key": "ann_122:linearity:part",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "support_linear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_117",
+    "name": "workclass_missing_pair"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 0
+   },
+   "evidence": {
+    "always_on_units": 1,
+    "binary_step_units": 1,
+    "switching_units": 0
+   },
+   "key": "ann_117:linearity:part",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "support_linear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_119",
+    "name": "exec_managerial_hinge"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 0
+   },
+   "evidence": {
+    "always_on_units": 0,
+    "binary_step_units": 1,
+    "switching_units": 0
+   },
+   "key": "ann_119:linearity:part",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "support_linear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_118",
+    "name": "wife_chain"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 1
+   },
+   "evidence": {
+    "always_on_units": 1,
+    "switching_units": 1
+   },
+   "key": "ann_118:linearity:part",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "nonlinear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_120",
+    "name": "separated_unit"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 0
+   },
+   "evidence": {
+    "always_on_units": 1,
+    "switching_units": 0
+   },
+   "key": "ann_120:linearity:part",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "support_linear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_123",
+    "name": "private_dead_unit"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 0
+   },
+   "evidence": {
+    "always_on_units": 0,
+    "switching_units": 0
+   },
+   "key": "ann_123:linearity:part",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_124",
+    "name": "income_model_root"
+   },
+   "checks": {
+    "auc_computed": true,
+    "binary_step_linearisation_unchanged": true,
+    "score_split": true
+   },
+   "estimate": {
+    "method": "variance of the linear-path contribution over (its variance + the variance of the rest of the score), training rows; linearised model: every switching unit replaced by its least-squares affine fit on the training rows",
+    "value": 0.981221
+   },
+   "evidence": {
+    "always_on_min_margin": 0.288143,
+    "binary_step_linearisation_max_diff": 2.9665159217984183e-13,
+    "binary_step_max_affine_error": 7.673861546209082e-13,
+    "binary_step_units": 2
+   },
+   "key": "ann_124:linearity:model",
+   "n": 39073,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "auc_full_test": 0.902831,
+    "auc_full_train": 0.905593,
+    "auc_linearised_test": 0.902566,
+    "auc_linearised_train": 0.905104,
+    "binary_step_units": 2,
+    "kind": "model",
+    "n_exact_linear": 7,
+    "n_inputs": 14,
+    "n_mixed": 3,
+    "n_nonlinear": 1,
+    "n_nonlinear_parts": 3,
+    "n_parts": 10,
+    "n_support_linear": 3,
+    "switching_units": 4,
+    "variance_share_linear": 0.981221
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  }
+ ],
+ "model": {
+  "after": {
+   "auc_full_test": 0.902831,
+   "auc_full_train": 0.905593,
+   "auc_linearised_test": 0.902566,
+   "auc_linearised_train": 0.905104,
+   "binary_step_units": 2,
+   "kind": "model",
+   "n_exact_linear": 7,
+   "n_inputs": 14,
+   "n_mixed": 3,
+   "n_nonlinear": 1,
+   "n_nonlinear_parts": 3,
+   "n_parts": 10,
+   "n_support_linear": 3,
+   "switching_units": 4,
+   "variance_share_linear": 0.981221
+  },
+  "before": {
+   "auc_full_test": 0.902831,
+   "auc_full_train": 0.905593,
+   "auc_linearised_test": 0.902566,
+   "auc_linearised_train": 0.905104,
+   "kind": "model",
+   "n_exact_linear": 7,
+   "n_inputs": 14,
+   "n_mixed": 4,
+   "n_nonlinear": 1,
+   "n_nonlinear_parts": 5,
+   "n_parts": 10,
+   "n_support_linear": 2,
+   "switching_units": 6,
+   "variance_share_linear": 0.978543
+  },
+  "v4": {
+   "auc_full_test": 0.902831,
+   "auc_full_train": 0.905593,
+   "auc_linearised_test": 0.902566,
+   "auc_linearised_train": 0.905104,
+   "kind": "model",
+   "n_exact_linear": 7,
+   "n_inputs": 14,
+   "n_mixed": 4,
+   "n_nonlinear": 1,
+   "n_nonlinear_parts": 5,
+   "n_parts": 10,
+   "n_support_linear": 2,
+   "switching_units": 6,
+   "variance_share_linear": 0.978543
+  }
+ },
+ "model_checks_after": {
+  "auc_computed": true,
+  "binary_step_linearisation_unchanged": true,
+  "score_split": true
+ },
+ "model_evidence_after": {
+  "always_on_min_margin": 0.288143,
+  "binary_step_linearisation_max_diff": 2.9665159217984183e-13,
+  "binary_step_max_affine_error": 7.673861546209082e-13,
+  "binary_step_units": 2
+ },
+ "n_train": 39073,
+ "one_group_exact_not_reclassified": {},
+ "other_exact_affine_not_reclassified": {
+  "1579": {
+   "columns": [
+    "relationship:5"
+   ],
+   "direct_inputs": [
+    "5009",
+    "-56_b"
+   ],
+   "max_affine_error": 3.0647706594777446e-13
+  }
+ },
+ "parts": {
+  "ann_114": {
+   "after": "exact_linear",
+   "before": "exact_linear",
+   "name": "direct_linear_terms",
+   "v4": "exact_linear"
+  },
+  "ann_115": {
+   "after": "nonlinear",
+   "before": "nonlinear",
+   "name": "capital_gain_hinge",
+   "v4": "nonlinear"
+  },
+  "ann_116": {
+   "after": "nonlinear",
+   "before": "nonlinear",
+   "name": "female_gate",
+   "v4": "nonlinear"
+  },
+  "ann_117": {
+   "after": "support_linear",
+   "before": "nonlinear",
+   "name": "workclass_missing_pair",
+   "v4": "nonlinear"
+  },
+  "ann_118": {
+   "after": "nonlinear",
+   "before": "nonlinear",
+   "name": "wife_chain",
+   "v4": "nonlinear"
+  },
+  "ann_119": {
+   "after": "support_linear",
+   "before": "nonlinear",
+   "name": "exec_managerial_hinge",
+   "v4": "nonlinear"
+  },
+  "ann_120": {
+   "after": "support_linear",
+   "before": "support_linear",
+   "name": "separated_unit",
+   "v4": "support_linear"
+  },
+  "ann_121": {
+   "after": "support_linear",
+   "before": "support_linear",
+   "name": "without_pay_unit",
+   "v4": "support_linear"
+  },
+  "ann_122": {
+   "after": "support_linear",
+   "before": "support_linear",
+   "name": "japan_unit",
+   "v4": "support_linear"
+  },
+  "ann_123": {
+   "after": "exact_linear",
+   "before": "exact_linear",
+   "name": "private_dead_unit",
+   "v4": "exact_linear"
+  }
+ },
+ "parts_became_linear_on_data": [
+  {
+   "id": "ann_117",
+   "name": "workclass_missing_pair"
+  },
+  {
+   "id": "ann_119",
+   "name": "exec_managerial_hinge"
+  }
+ ],
+ "parts_count": {
+  "after": {
+   "exact_linear": 2,
+   "mixed": 0,
+   "nonlinear": 3,
+   "support_linear": 5
+  },
+  "before": {
+   "exact_linear": 2,
+   "mixed": 0,
+   "nonlinear": 5,
+   "support_linear": 3
+  },
+  "v4": {
+   "exact_linear": 2,
+   "mixed": 0,
+   "nonlinear": 5,
+   "support_linear": 3
+  }
+ },
+ "units_after": {
+  "always_on": 5,
+  "binary_step": 2,
+  "dead": 1,
+  "linear": 1,
+  "switching": 4
+ },
+ "units_before": {
+  "always_on": 5,
+  "dead": 1,
+  "linear": 1,
+  "switching": 6
+ },
+ "units_reclassified": [
+  "2058",
+  "4158"
+ ],
+ "variable_changes": {
+  "workclass": [
+   "mixed",
+   "support_linear"
+  ]
+ },
+ "variables": {
+  "after": {
+   "age": "exact_linear",
+   "capital-gain": "mixed",
+   "capital-loss": "exact_linear",
+   "education": "exact_linear",
+   "education-num": "exact_linear",
+   "fnlwgt": "exact_linear",
+   "hours-per-week": "exact_linear",
+   "marital-status": "support_linear",
+   "native-country": "support_linear",
+   "occupation": "mixed",
+   "race": "exact_linear",
+   "relationship": "mixed",
+   "sex": "nonlinear",
+   "workclass": "support_linear"
+  },
+  "before": {
+   "age": "exact_linear",
+   "capital-gain": "mixed",
+   "capital-loss": "exact_linear",
+   "education": "exact_linear",
+   "education-num": "exact_linear",
+   "fnlwgt": "exact_linear",
+   "hours-per-week": "exact_linear",
+   "marital-status": "support_linear",
+   "native-country": "support_linear",
+   "occupation": "mixed",
+   "race": "exact_linear",
+   "relationship": "mixed",
+   "sex": "nonlinear",
+   "workclass": "mixed"
+  },
+  "v4": {
+   "age": "exact_linear",
+   "capital-gain": "mixed",
+   "capital-loss": "exact_linear",
+   "education": "exact_linear",
+   "education-num": "exact_linear",
+   "fnlwgt": "exact_linear",
+   "hours-per-week": "exact_linear",
+   "marital-status": "support_linear",
+   "native-country": "support_linear",
+   "occupation": "mixed",
+   "race": "exact_linear",
+   "relationship": "mixed",
+   "sex": "nonlinear",
+   "workclass": "mixed"
+  }
+ },
+ "variables_count": {
+  "after": {
+   "exact_linear": 7,
+   "mixed": 3,
+   "nonlinear": 1,
+   "support_linear": 3
+  },
+  "before": {
+   "exact_linear": 7,
+   "mixed": 4,
+   "nonlinear": 1,
+   "support_linear": 2
+  },
+  "v4": {
+   "exact_linear": 7,
+   "mixed": 4,
+   "nonlinear": 1,
+   "support_linear": 2
+  }
+ }
+}

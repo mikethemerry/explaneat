@@ -1,0 +1,323 @@
+{
+ "signals": [
+  {
+   "key": "heart-s0:female_exertional_angina_gate",
+   "genome": "heart-s0",
+   "signal": "female_exertional_angina_gate",
+   "n_exits": 1,
+   "nonlinear_share": 0.6549575044128869,
+   "train_restore_gain": 0.008168916580131524,
+   "test_restore_gain": 0.008620689655172376,
+   "test_at_chance": true,
+   "cross_seed_found_resid": 0,
+   "hypothesis": "Hypothesis: node 665 is a three-way AND gate that fires only for women (sex:0 set) with exercise-induced angina (exang:0 unset, i.e. exang=yes) and no left-ventricular hypertrophy on resting ECG (rest"
+  },
+  {
+   "key": "heart-s1:ca_slope2_gate",
+   "genome": "heart-s1",
+   "signal": "ca_slope2_gate",
+   "n_exits": 1,
+   "nonlinear_share": 0.0007898639525266481,
+   "train_restore_gain": 1.1102230246251565e-16,
+   "test_restore_gain": 0.0010775862068964637,
+   "test_at_chance": true,
+   "cross_seed_found_resid": null,
+   "hypothesis": "Hidden node 664 = ReLU(0.601*ca + 0.326*slope:2 + 0.664), read out with +0.983. Hypothesis (supported): a near-affine risk term in number of major vessels coloured (ca) and flat ST slope (slope:2). On"
+  },
+  {
+   "key": "heart-s1:normal_ecg_st_gate",
+   "genome": "heart-s1",
+   "signal": "normal_ecg_st_gate",
+   "n_exits": 1,
+   "nonlinear_share": 0.4951262594439432,
+   "train_restore_gain": 0.0018691588785046953,
+   "test_restore_gain": -0.0021551724137931494,
+   "test_at_chance": true,
+   "cross_seed_found_resid": 0,
+   "hypothesis": "Hidden node 1801 = ReLU(1.48*restecg:0 + 0.805*oldpeak - 1.43), readout +1.335. Hypothesis (supported): an interaction gate, the network's only consequential nonlinearity. restecg:0 takes values +/-1 "
+  },
+  {
+   "key": "heart-s1:ca_thalach_chain",
+   "genome": "heart-s1",
+   "signal": "ca_thalach_chain",
+   "n_exits": 2,
+   "nonlinear_share": 0.016832878661282847,
+   "train_restore_gain": 0.0003461405330564826,
+   "test_restore_gain": -0.0010775862068965747,
+   "test_at_chance": true,
+   "cross_seed_found_resid": null,
+   "hypothesis": "Serial chain ca -> 2245 -> 2009 <- thalach. 2245 = ReLU(0.781*ca + 1.25) is always active on train (pre in [0.68, 3.31]); its readout +1.669 adds +1.30*ca + 2.08 to the logit (SD 1.30, the largest hid"
+  },
+  {
+   "key": "heart-s2:age_hr_reserve_gate",
+   "genome": "heart-s2",
+   "signal": "age_hr_reserve_gate",
+   "n_exits": 1,
+   "nonlinear_share": 0.33272567137270737,
+   "train_restore_gain": 0.004569055036344638,
+   "test_restore_gain": 0.007543103448275912,
+   "test_at_chance": true,
+   "cross_seed_found_resid": 0,
+   "hypothesis": "Heart-rate-reserve gate 1718 = ReLU(-0.812 - 1.490*age + 1.024*thalach - 0.762*thal:7 - 0.720*R3195), with relay R3195 = ReLU(0.981 + 1.073*thal:7). Hypothesis: 3195 is an always-on affine relay of th"
+  },
+  {
+   "key": "heart-s2:st_slope_chol_gate",
+   "genome": "heart-s2",
+   "signal": "st_slope_chol_gate",
+   "n_exits": 1,
+   "nonlinear_share": 0.13375109362649976,
+   "train_restore_gain": 0.0006230529595014911,
+   "test_restore_gain": -0.0053879310344827624,
+   "test_at_chance": true,
+   "cross_seed_found_resid": 0,
+   "hypothesis": "Flat-ST-slope gate 1476 = ReLU(0.257 + 1.145*slope:2 + 0.770*oldpeak - 0.374*C3464), with C3464 = ReLU(1.300 + 1.011*chol). Hypothesis: a one-sided risk detector that opens for patients with a flat pe"
+  },
+  {
+   "key": "heart-s2:oldpeak_hinges",
+   "genome": "heart-s2",
+   "signal": "oldpeak_hinges",
+   "n_exits": 2,
+   "nonlinear_share": 0.20637396684870385,
+   "train_restore_gain": 0.0006230529595014911,
+   "test_restore_gain": -0.0021551724137931494,
+   "test_at_chance": true,
+   "cross_seed_found_resid": 1,
+   "hypothesis": "Oldpeak hinge pair: 1946 = ReLU(0.167 + 0.767*oldpeak) and 3284 = ReLU(-0.582 + 1.003*1946). Hypothesis: a convex piecewise-linear function of ST depression alone, with kinks at z-oldpeak = -0.218 (19"
+  },
+  {
+   "key": "heart-s3:age_gate",
+   "genome": "heart-s3",
+   "signal": "age_gate",
+   "n_exits": 1,
+   "nonlinear_share": 0.4027278248886751,
+   "train_restore_gain": 0.0015922464520593538,
+   "test_restore_gain": 0.0,
+   "test_at_chance": true,
+   "cross_seed_found_resid": 1,
+   "hypothesis": "1499 = relu(1.045 age_z - 0.478): an older-age hinge. It is zero below age_z=0.457 (about 59 years: train mean 54.8, SD 9.09) and rises linearly above it. It is read out to the logit with weight -0.42"
+  },
+  {
+   "key": "heart-s3:bp_slope1_gate",
+   "genome": "heart-s3",
+   "signal": "bp_slope1_gate",
+   "n_exits": 1,
+   "nonlinear_share": 0.12336549389118869,
+   "train_restore_gain": 0.00048459674627887583,
+   "test_restore_gain": 0.0021551724137930384,
+   "test_at_chance": true,
+   "cross_seed_found_resid": 0,
+   "hypothesis": "3392 = relu(0.587 + 1.332 trestbps_z + 0.907 slope:1_z): a resting-BP hinge whose threshold depends on upsloping ST (slope:1). Without upsloping ST it switches on above trestbps of about 136 mmHg; wit"
+  },
+  {
+   "key": "heart-s3:cp3_slope3_gate",
+   "genome": "heart-s3",
+   "signal": "cp3_slope3_gate",
+   "n_exits": 1,
+   "nonlinear_share": 0.008702740629521751,
+   "train_restore_gain": -0.00013845621322272628,
+   "test_restore_gain": 0.0,
+   "test_at_chance": true,
+   "cross_seed_found_resid": null,
+   "hypothesis": "245 = relu(0.798 + 0.671 cp:3_z - 0.259 slope:3_z): a 4-cell lookup over non-anginal pain (cp:3) and downsloping ST (slope:3). Cell values: (cp3=0,s3=0) 0.441; (0,1) 0 (clipped); (1,0) 1.921; (1,1) 0."
+  },
+  {
+   "key": "heart-s4:thal6_fixed_defect_gate",
+   "genome": "heart-s4",
+   "signal": "thal6_fixed_defect_gate",
+   "n_exits": 1,
+   "nonlinear_share": 0.2657853947112348,
+   "train_restore_gain": 0.004430598823122134,
+   "test_restore_gain": -0.004310344827586188,
+   "test_at_chance": true,
+   "cross_seed_found_resid": 1,
+   "hypothesis": "Fixed-thallium-defect correction gate. 2065 = ReLU(0.795*thal:6 - 0.885*fbs:1 - 0.719) on z-scored one-hots is a discrete indicator: 0 unless thal:6=1 (fixed defect), 2.727 if additionally fasting blo"
+  },
+  {
+   "key": "heart-s4:thalach_relu_relay",
+   "genome": "heart-s4",
+   "signal": "thalach_relu_relay",
+   "n_exits": 1,
+   "nonlinear_share": 0.2522219971122704,
+   "train_restore_gain": 0.00013845621322250423,
+   "test_restore_gain": 0.0,
+   "test_at_chance": true,
+   "cross_seed_found_resid": 1,
+   "hypothesis": "Max-heart-rate relay with a floor. 707 = ReLU(0.944*thalach - 0.429*restecg:1 + identity_707 + 0.657), where identity_707 = 2.178*thal6_fixed_defect_gate; 3677 = 0.983*707 + 0.4385 (its ReLU never bin"
+  },
+  {
+   "key": "heart-s5:st_ischaemia_gate_output",
+   "genome": "heart-s5",
+   "signal": "st_ischaemia_gate_output",
+   "n_exits": 1,
+   "nonlinear_share": 0.10770469342333541,
+   "train_restore_gain": 0.001107649705780589,
+   "test_restore_gain": -0.003232758620689613,
+   "test_at_chance": true,
+   "cross_seed_found_resid": 0,
+   "hypothesis": "Hidden gate 204 = ReLU(2.554*oldpeak + 1.133*thal:7 + 0.937*restecg:0 + 0.276): a one-sided ischaemia-evidence detector that switches on for patients with exercise-induced ST depression and/or a rever"
+  },
+  {
+   "key": "heart-s5:st_ischaemia_gate_bp",
+   "genome": "heart-s5",
+   "signal": "st_ischaemia_gate_bp",
+   "n_exits": 1,
+   "nonlinear_share": 0.10770469342333541,
+   "train_restore_gain": 0.0014537902388369606,
+   "test_restore_gain": 0.0010775862068965747,
+   "test_at_chance": false,
+   "cross_seed_found_resid": 0,
+   "hypothesis": "Hidden gate 204 = ReLU(2.554*oldpeak + 1.133*thal:7 + 0.937*restecg:0 + 0.276): a one-sided ischaemia-evidence detector that switches on for patients with exercise-induced ST depression and/or a rever"
+  },
+  {
+   "key": "heart-s6:sex_exang_interaction",
+   "genome": "heart-s6",
+   "signal": "sex_exang_interaction",
+   "n_exits": 2,
+   "nonlinear_share": 0.31131444991385526,
+   "train_restore_gain": 0.00948425060574587,
+   "test_restore_gain": 0.0010775862068965747,
+   "test_at_chance": true,
+   "cross_seed_found_resid": 0,
+   "hypothesis": "Hypothesis: a sex x exercise-angina interaction built from two chained ReLU gates. Gate 1213 = relu(1.23 sex:0 + 1.31 exang:0 - 0.509 cp:2 - 0.563 fbs:0 + 0.476 thal:7 + 0.091) is a female-without-exe"
+  },
+  {
+   "key": "heart-s7:st_depression_gate",
+   "genome": "heart-s7",
+   "signal": "st_depression_gate",
+   "n_exits": 1,
+   "nonlinear_share": 0.15666050627438158,
+   "train_restore_gain": 0.003322949117341545,
+   "test_restore_gain": 0.0021551724137931494,
+   "test_at_chance": true,
+   "cross_seed_found_resid": 0,
+   "hypothesis": "Hypothesis: hidden gate 557 = ReLU(1.283*oldpeak + 0.559*thal:7 - 1.076*slope:3 - 0.417*fbs:0 + 0.085) is a one-sided ischaemia-evidence detector. It switches on mainly with exercise-induced ST depres"
+  },
+  {
+   "key": "heart-s7:female_exang_and_gate",
+   "genome": "heart-s7",
+   "signal": "female_exang_and_gate",
+   "n_exits": 1,
+   "nonlinear_share": 0.5120188234818717,
+   "train_restore_gain": 0.0026998961578399427,
+   "test_restore_gain": 0.0,
+   "test_at_chance": true,
+   "cross_seed_found_resid": 2,
+   "hypothesis": "Hypothesis: hidden gate 1239 = ReLU(0.571*sex:0 + 0.903*exang:1 - 0.853) is a Boolean AND of female sex (sex:0) and exercise-induced angina (exang:1). Evidence (train, n=242): truth table of the stand"
+  },
+  {
+   "key": "heart-s7:thalach_cp3_protective_gate",
+   "genome": "heart-s7",
+   "signal": "thalach_cp3_protective_gate",
+   "n_exits": 1,
+   "nonlinear_share": 0.37984129904074654,
+   "train_restore_gain": 0.001107649705780478,
+   "test_restore_gain": -0.0021551724137931494,
+   "test_at_chance": true,
+   "cross_seed_found_resid": 0,
+   "hypothesis": "Hypothesis: a protective high-exercise-capacity gate. Serial chain thal:3 -> 3818 -> 2124. 3818 = ReLU(1.003*thal:3 - 0.192) is a normal-thallium indicator taking only the values 0 (abnormal thal) and"
+  },
+  {
+   "key": "heart-s8:exertional_ischaemia_hinge",
+   "genome": "heart-s8",
+   "signal": "exertional_ischaemia_hinge",
+   "n_exits": 2,
+   "nonlinear_share": 0.2601327671438654,
+   "train_restore_gain": 0.010384215991692591,
+   "test_restore_gain": 0.02155172413793105,
+   "test_at_chance": true,
+   "cross_seed_found_resid": 0,
+   "hypothesis": "EXERTIONAL-ISCHAEMIA HINGE. Node 855 = ReLU(1.055*trestbps + 0.896*oldpeak + 0.850*exang:1 - 1.358*cp:1 - 0.937*slope:1 - 0.802) is a sparse ischaemia score: high resting BP, ST depression and exercis"
+  },
+  {
+   "key": "heart-s8:age_noangina_cp4_chain",
+   "genome": "heart-s8",
+   "signal": "age_noangina_cp4_chain",
+   "n_exits": 1,
+   "nonlinear_share": 0.2593710351621098,
+   "train_restore_gain": 0.002907580477673921,
+   "test_restore_gain": 0.0010775862068964637,
+   "test_at_chance": true,
+   "cross_seed_found_resid": 0,
+   "hypothesis": "AGE / NO-ANGINA / CP:4 DAMPING CHAIN. Serial ReLU chain: 1958 = ReLU(1.049*age + 0.061) passes age above about the mean; 1669 = ReLU(1.104*1958 + 1.460*exang:0 - 0.916) is active exactly when there is"
+  },
+  {
+   "key": "heart-s9:sex_exang_protective_gate",
+   "genome": "heart-s9",
+   "signal": "sex_exang_protective_gate",
+   "n_exits": 1,
+   "nonlinear_share": 0.1301790088586736,
+   "train_restore_gain": 0.00117687781239173,
+   "test_restore_gain": -0.0010775862068965747,
+   "test_at_chance": false,
+   "cross_seed_found_resid": 2,
+   "hypothesis": "Node 791 = ReLU(0.325 + 1.084*sex:0 - 0.218*sex:1 + 2.200*exang:0), read out with -0.452. Since sex and exang are one-hot binaries it takes only three values on train: 0 for all patients with exercise"
+  },
+  {
+   "key": "heart-s9:fbs_normal_fixed_defect_gate",
+   "genome": "heart-s9",
+   "signal": "fbs_normal_fixed_defect_gate",
+   "n_exits": 1,
+   "nonlinear_share": 0.2937728028700484,
+   "train_restore_gain": 0.0036690896503980275,
+   "test_restore_gain": -0.006465517241379226,
+   "test_at_chance": false,
+   "cross_seed_found_resid": 1,
+   "hypothesis": "Node 2034 = ReLU(-1.027 + 1.156*fbs:0 + 1.016*thal:6), read out with -0.942. An AND gate: it is 3.386 only for patients with a fixed thallium defect (thal:6) AND normal fasting blood sugar (n=10 on tr"
+  },
+  {
+   "key": "heart-s9:oldpeak_hinge",
+   "genome": "heart-s9",
+   "signal": "oldpeak_hinge",
+   "n_exits": 1,
+   "nonlinear_share": 0.1741527996049505,
+   "train_restore_gain": 0.0006922810661127432,
+   "test_restore_gain": 0.0,
+   "test_at_chance": true,
+   "cross_seed_found_resid": 1,
+   "hypothesis": "Node 2985 = ReLU(1.002*oldpeak - 0.386), read out with +1.108. A hinge on exercise-induced ST depression: zero for patients with oldpeak below +0.385 SD (71% of train), then +1.11 logit per SD above i"
+  }
+ ],
+ "seeds": {
+  "heart-s0": {
+   "genome_id": "e7221bd4-a46a-4c5b-ad27-ab01bbdeb290",
+   "train_auc": 0.9448944271374179
+  },
+  "heart-s1": {
+   "genome_id": "d3b1f42b-8347-408c-951e-db9111eaaf72",
+   "train_auc": 0.9392177223952926
+  },
+  "heart-s2": {
+   "genome_id": "0057df7a-62a2-43c3-b107-9afe3735a7c3",
+   "train_auc": 0.9434406368985808
+  },
+  "heart-s3": {
+   "genome_id": "c426b094-0843-44e9-ab9a-7d9553d52601",
+   "train_auc": 0.9406715126341294
+  },
+  "heart-s4": {
+   "genome_id": "15783a91-457e-49a9-9209-cc3aa77df0cb",
+   "train_auc": 0.9424022152994115
+  },
+  "heart-s5": {
+   "genome_id": "1f2cf7ea-5c30-452a-9277-0b4043e888d9",
+   "train_auc": 0.9419868466597439
+  },
+  "heart-s6": {
+   "genome_id": "9b644a62-ebe7-48cc-82cf-c53f7da36073",
+   "train_auc": 0.9457251644167533
+  },
+  "heart-s7": {
+   "genome_id": "7c355ee7-77ad-426c-8a6d-9df81d1c65b3",
+   "train_auc": 0.9466943579093112
+  },
+  "heart-s8": {
+   "genome_id": "4809878b-8b08-4508-91f1-6f5c7207e787",
+   "train_auc": 0.9470404984423676
+  },
+  "heart-s9": {
+   "genome_id": "b19b9536-00dd-4e95-9f5a-def6dd8d6889",
+   "train_auc": 0.9437175493250259
+  }
+ },
+ "X_train_sha": "6ffcdda313dd3c5c1bd0cb177fc98bd5a379655b"
+}
