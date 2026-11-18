@@ -21,6 +21,7 @@ DATABASE_URL=postgresql://localhost/explaneat_v4 uv run python -m explaneat expo
 * `--records-dir` maps labels to genome ids (default `experiments/10seed/explanations_v4`)
 * the database is read only during the export (`EXPLANEAT_READ_ONLY=1`: write routes refused,
   PostgreSQL `default_transaction_read_only`); nothing is written to it
+* `--resume` keeps the networks an interrupted run finished (marker `genomes/<id>/_done.json`)
 * needs Node with `npm ci` done in `web/react-explorer` (the explorer is built with
   `VITE_STATIC_DATA=1 vite build --base ./`); `--no-build` writes only the data
 
@@ -47,7 +48,7 @@ are collapsed and expanded in the browser by `src/api/collapse.ts`, a port of
 `explaneat/core/collapse_transform.py`; `tests/test_export/test_collapse_ts_parity.py`
 checks they agree), the replay (every step's model), operations, annotations,
 feature labels, formulas, hypotheses, saved evidence, the explanation record, checks
-and coverage, unit activity, candidates, category offsets, restore gain, node info and
+and coverage, unit activity, candidates, category offsets, node info and
 formula for every hidden and identity node, a histogram per input, and performance
 on the train and test splits.
 
@@ -61,7 +62,8 @@ uses), all on the training split:
 Not included (the explorer says "Not included in this static appendix."): the
 other plot types (heatmap, PD, PCA, sensitivity, SHAP, ...), pairs plots with other
 inputs or averaged, the source view, node-level plots, two-input histograms, lineage,
-the review and verification pages, feature pins, exports. All editing is disabled.
+restore gain (linearisation can take very long on some networks), the review and
+verification pages, feature pins, exports. All editing is disabled.
 
 Floats are rounded (4 significant digits in plots, 3 in ICE curves and scatters, 6
 in models); the whole-model plots share one file of per-row class labels.

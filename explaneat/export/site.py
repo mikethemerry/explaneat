@@ -13,7 +13,7 @@ database connection), so the static views are what the live explorer shows.
 Precomputed per network: the experiment, genome, phenotype, explained model
 (collapsed in the browser), every replay step, operations, annotations,
 feature labels, formulas, hypotheses, evidence lists, record, checks, unit
-activity, candidates, category offsets, restore gain, node info, input
+activity, candidates, category offsets, node info, input
 histograms, performance (train and test) and, for every annotation and the
 whole model, the line plot and ICE plot of each exit against each entry and
 the pairs plot of each exit (top inputs by sensitivity). Anything else answers
@@ -80,7 +80,10 @@ class SiteWriter:
         genomes/<g>/_files.json per network, _files.json for everything else."""
         per: Dict[str, List[str]] = {}
         rest: List[str] = []
-        for rel in sorted(set(self.written)):
+        on_disk = [p.relative_to(self.data_dir).as_posix() for p in self.data_dir.rglob("*.json")]
+        for rel in sorted(set(on_disk) | set(self.written)):
+            if rel.endswith("_files.json") or rel.endswith("_done.json"):
+                continue
             parts = rel.split("/")
             if parts[0] == "genomes" and len(parts) > 2:
                 per.setdefault(parts[1], []).append("/".join(parts[2:]))
@@ -109,7 +112,8 @@ def _share_rows(w: SiteWriter, genome_id: str, resp: Dict[str, Any], seen: Dict[
     return out
 
 
-ICE_CURVES = 30   # curves kept per ICE plot (the explorer draws 50 live)
+ICE_CURVES = 20   # curves kept per ICE plot (the explorer draws 50 live)
+LINE_POINTS = 400  # data points kept in a line plot's scatter (a random sample already)
 ICE_STEP = 2      # keep every 2nd grid point (100 -> 50)
 
 
@@ -121,7 +125,8 @@ def _compact_viz(resp: Dict[str, Any]) -> Dict[str, Any]:
     t = resp.get("viz_type")
     if t == "ice" and isinstance(d.get("ice_curves"), list):
         n = len(d.get("grid_x") or [])
-        keep = list(range(0, n, ICE_STEP))
+        step = ICE_STEP if n > 60 else 1  # already thinned: keep (idempotent)
+        keep = list(range(0, n, step))
         if n and keep[-1] != n - 1:
             keep.append(n - 1)
         pick = lambda arr: [arr[i] for i in keep] if isinstance(arr, list) and len(arr) == n else arr
@@ -129,10 +134,46 @@ def _compact_viz(resp: Dict[str, Any]) -> Dict[str, Any]:
         d["pd_curve"] = pick(d.get("pd_curve"))
         d["ice_curves"] = [_round(pick(c), 3) for c in d["ice_curves"][:ICE_CURVES]]
     elif t == "line":
+        n = len(d.get("scatter_x") or [])
         for k in ("scatter_x", "scatter_y"):
             if isinstance(d.get(k), list):
-                d[k] = _round(d[k], 3)
+                d[k] = _round(d[k][:LINE_POINTS], 3)
+        # per-row labels follow the scatter rows
+        for k in SHARED_ROW_KEYS:
+            if isinstance(resp.get(k), list) and len(resp[k]) == n:
+                resp[k] = resp[k][:LINE_POINTS]
     return resp
+
+
+def recompact(data_dir: Path, log: Callable[[str], None] = print) -> None:
+    """Apply the current thinning to an exported data/ folder (idempotent)."""
+    before = sum(p.stat().st_size for p in data_dir.rglob("*.json"))
+    w = SiteWriter(data_dir)
+    for gdir in (data_dir / "genomes").iterdir():
+        viz = gdir / "viz"
+        if not gdir.is_dir() or not viz.is_dir():
+            continue
+        shared: Dict[str, str] = {}
+        old_rows = set(p for p in viz.glob("_rows-*.json"))
+        used_rows = set()
+        for f in viz.rglob("*.json"):
+            if f.name.startswith("_rows-"):
+                continue
+            resp = json.loads(f.read_text())
+            merge = resp.pop("__merge", None)
+            if merge:
+                for rel in merge:
+                    resp.update(json.loads((data_dir / rel).read_text()))
+            resp = _compact_viz(resp)
+            if merge:
+                resp = _share_rows(w, gdir.name, resp, shared)
+                used_rows.update(data_dir / r for r in resp.get("__merge", []))
+            w.write(f.relative_to(data_dir).as_posix(), resp)
+        for p in old_rows - used_rows:
+            p.unlink()
+    w.write_indexes()
+    after = sum(p.stat().st_size for p in data_dir.rglob("*.json"))
+    log(f"recompacted {data_dir}: {before / 1e6:.1f} MB -> {after / 1e6:.1f} MB")
 
 
 def _strip_op_evidence(resp: Dict[str, Any]) -> Dict[str, Any]:
@@ -273,7 +314,7 @@ def export_genome(client, w: SiteWriter, label: str, genome_id: str, *, log: Cal
     get(f"genomes/{g}/tools/check", {"closed_form": "true"})
     for path in ("unit-activity", "candidates", "category-offsets", "record"):
         get(f"genomes/{g}/tools/{path}", required=False)
-    post(f"genomes/{g}/tools/linearise", {"annotation_names": None, "split": "train"})
+    # restore gain (tools/linearise) is not precomputed: it can take very long on some networks
 
     # per annotation: hypothesis, formula, saved evidence
     for a in anns:
@@ -367,7 +408,7 @@ def build_ui(dest: Path, log: Callable[[str], None]) -> None:
 
 
 def export_site(targets: List[Dict[str, str]], out: Path, *, records_dir: Optional[Path] = None,
-                build: bool = True, plots: bool = True,
+                build: bool = True, plots: bool = True, resume: bool = False,
                 log: Callable[[str], None] = print) -> Dict[str, Any]:
     """Export the static explorer for the target networks into out/explorer/."""
     # read only: the API refuses writes and the database connection is read only
@@ -380,14 +421,25 @@ def export_site(targets: List[Dict[str, str]], out: Path, *, records_dir: Option
 
     explorer = out / "explorer"
     data_dir = explorer / "data"
-    if data_dir.exists():
+    if data_dir.exists() and not resume:
         shutil.rmtree(data_dir)
     w = SiteWriter(data_dir)
     client = TestClient(create_app())
 
     summaries = []
     for t in targets:
-        summaries.append(export_genome(client, w, t["label"], t["genome_id"], log=log, plots=plots))
+        done = data_dir / "genomes" / safe(t["genome_id"]) / "_done.json"
+        if resume and done.is_file():
+            d = json.loads(done.read_text())
+            w.written.extend(d["files"])
+            summaries.append(d["summary"])
+            log(f"  {t['label']}: already exported (resume)")
+            continue
+        start = len(w.written)
+        summ = export_genome(client, w, t["label"], t["genome_id"], log=log, plots=plots)
+        summaries.append(summ)
+        # marker for --resume: what was written for this network
+        done.write_text(json.dumps({"summary": summ, "files": w.written[start:]}, default=str))
 
     # lists, filtered to the exported networks
     exp_ids = {s["experiment_id"] for s in summaries}

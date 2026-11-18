@@ -147,6 +147,7 @@ def write_landing(out: Path, networks: List[Dict[str, Any]], *, stats: Optional[
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
 <title>{_esc(title)}</title>
 <style>{CSS}</style>
 </head>

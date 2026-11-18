@@ -389,7 +389,8 @@ record_plain_verdict_command(export)
 @click.option("--build/--no-build", default=True, show_default=True,
               help="Build the explorer (Node, web/react-explorer) into <out>/explorer.")
 @click.option("--plots/--no-plots", default=True, show_default=True, help="Precompute the plots.")
-def site(labels, studies, records_dir, out_dir, stats, pages, extra_links, build, plots):
+@click.option("--resume", is_flag=True, help="Keep networks already exported in <out> (after an interrupted run).")
+def site(labels, studies, records_dir, out_dir, stats, pages, extra_links, build, plots, resume):
     """Static appendix: the explorer and its data for chosen networks (GitHub Pages, no server).
 
     Reads the database read only (set DATABASE_URL). Serve <out> with any static
@@ -410,7 +411,7 @@ def site(labels, studies, records_dir, out_dir, stats, pages, extra_links, build
     rdir = Path(records_dir) if records_dir else None
     out = Path(out_dir)
     res = export_site(resolve_targets(items, rdir), out, records_dir=rdir, build=build, plots=plots,
-                      log=click.echo)
+                      resume=resume, log=click.echo)
 
     links = []
     for p in pages:
