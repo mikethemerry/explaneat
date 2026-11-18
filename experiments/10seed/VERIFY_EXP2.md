@@ -202,6 +202,35 @@ Two numbers in `V4_RUN.md` are rounded differently from `exp2_summary.md`:
   the stored draft. `exp2_summary.md` reproduces it as "draft text objects". The review tool's
   `draft_sentences()` leaves out the summary and gives lower counts.
 
+### The Chapter 7 book's numbers
+
+The experiment book (`experiments/ch7_book/`, with numbers in `data/exp2.py`) takes its
+Experiment 2 numbers from `e2_stats.py`. That script uses no database:
+
+```bash
+python3 experiments/ch7_book/e2_stats.py . > /tmp/e2_stats.json
+```
+
+It was run on 2026-11-18 and agrees with `exp2_summary.md` on these numbers:
+
+| Number | Adult | Churn | Heart-100 |
+|---|---|---|---|
+| Test AUC, median (range) | 0.906 (0.903–0.909) | 0.886 (0.873–0.904) | 0.892 (0.863–0.926) |
+| Hidden nodes, median (range) | 15 (11–17) | 17 (13–27) | 8.5 (5–13) |
+| Explaining minutes, median | 21.55 | 18.15 | 14.9 |
+| Full coverage, within budget, complete_ok | 10/10 each | 10/10 each | 10/10 each |
+| Recheck mismatches | 0 | 0 | 0 |
+| Recheck needs_review | 6 | 2 | 1 |
+
+The book shows the minutes as 21.6, 18.2 and 14.9, rounded half up. Its headline "within 0.01
+of the best: Adult 10/10, Churn 4/10, Heart-100 1/10" is the `best_observed`, ε = 0.01 row of
+`rashomon_counts.csv`.
+
+One count depends on the working tree. `e2_stats.py`'s `mike_verified_true` counts any record
+with `mike_verification.verified: true`. On 2026-11-18 that was 8 Adult records in the working
+tree: your in-progress, uncommitted marks, with no signoff-v1. The CSVs and `exp2_summary.md`
+count only signoff-v1 passes (PREREG amendment 2026-11-11), and that count is 0/30.
+
 ## 5. Opening an explanation in the review UI
 
 ```bash
