@@ -53,7 +53,7 @@ counts deleted rows: `n_rows_at_best_fitness` (the tie count). The replay confir
 ```bash
 PYTHONHASHSEED=0 uv run python experiments/10seed/replay_verify.py heart100 0   # ~1.5 min
 PYTHONHASHSEED=0 uv run python experiments/10seed/replay_verify.py churn100 0   # ~10-14 min
-PYTHONHASHSEED=0 uv run python experiments/10seed/replay_verify.py adult 0      # ~1-2 h
+PYTHONHASHSEED=0 uv run python experiments/10seed/replay_verify.py adult 0      # ~1.5-2 h
 uv run python experiments/10seed/replay_verify.py --summary                     # table -> replay_verify/SUMMARY.md
 ```
 
@@ -266,7 +266,7 @@ means the value in the committed CSVs, records or results files.
 |---|---|
 | `replay_verify.py heart100 <0-9>` | **10/10 reproduced.** All 100 population rows of each run are identical. Every stored genome (250 or 251 per run: the final generation plus the selected genome) matches on key, fitness and md5. The selected genome is identical. About 1.5 min per run |
 | `replay_verify.py churn100 <0-9>` | **10/10 reproduced.** All 100 population rows are identical, and 255 or 256 stored genomes per run are identical. The selected genome is identical. 8–14 min per run |
-| `replay_verify.py adult <0-9>` | Running at the time of this commit (about 1–2 h per run, 3 at a time); see `replay_verify/SUMMARY.md` |
+| `replay_verify.py adult <0-9>` | **Not fully reproduced; the study was stopped after the first difference,** as instructed. **adult-s1 reproduced:** all 100 population rows and 25,000/25,000 genomes identical, selected genome identical, 88 min. **adult-s0 differs in one genome:** generation 38, NEAT key 9533 (row `7114dc5b-57b6-46c6-95a9-8bbec5e6306c`). Its stored fitness is 0.8952257749512352 and the replay gives 0.8952258181877769, a difference of 4.3e-8. Its genome md5 is stored `f172c2af92e411af493a02a4cb25cdfc` and replayed `72e016617bc78ebdb743804451f9d81c`. The other 24,999 genomes, all 100 population rows and the selected genome (key 9828, generation 99) are identical. **Stopped part-way:** adult-s2 at generation 70 with 17,750/17,750 genomes identical so far, and adult-s3 at generation 0 (250/250). **Not started:** adult-s4 to -s9 |
 | `verify_exp2.py runs` | **1,289/1,290 cells of the 30 rows are identical**: selected genome, train and test AUC, CI, accuracy, size, shape, wall clock and commit. The one difference is heart100-s6 `n_rows_at_best_fitness`, stored 3 and recounted 2. One of its tied rows was among the genomes deleted on 2026-11-10. The full replay counts 3, as stored. `fitness_match_1e-6` is true on all 30 |
 | `verify_exp2.py explanations` | **30/30 agree with the stored records.** Agreement is exact on both coverages (1.0), hierarchy complete, function preservation, closed-form and numeric errors, operation counts, recheck mismatches (0), unchecked free-text sentences, full coverage and complete_ok. The only change is that the 9 stored needs_review items (adult-s3, -s4, -s5 ×2, -s6 and -s8; heart100-s1; churn100-s4 and -s5) are now 0. That is expected after `fix_amended_provenance.py` |
 | `verify_exp2.py csvs` | The three v4 explanation CSVs rebuild byte for byte from the records |
@@ -277,6 +277,25 @@ means the value in the committed CSVs, records or results files.
 | `export_exp2_bundle.py` + `shasum -a 256 -c MANIFEST.sha256` | Bundle at `~/.explaneat/exports/exp2-final/` (about 80 MB). Every file checks OK |
 
 **Numbers that did not reproduce exactly:**
+- **Adult replay, adult-s0: one genome of 25,000 differs.** It is generation 38, key 9533, and
+  ranks 55th of 250 in that generation.
+  - **Where it appears:** this key exists only in generation 38. Adult rows have no parent
+    links (no sidecar and no `parent1_id`), so whether it had children cannot be read from the
+    database.
+  - **What it does not change:** every later generation, and the reported selected genome,
+    reproduce exactly. So the difference did not propagate, and no reported Adult number
+    depends on it.
+  - **Cause:** not established. Nothing was changed or "fixed". Possible causes, untested:
+    1. a floating-point result that depends on memory alignment in the CPU kernels, in either
+       the original run or the replay;
+    2. a fault in the original process. The Adult runs were 30 concurrent processes, paused
+       with SIGSTOP/SIGCONT (`RUN_INCIDENTS.md`), but this row was written at 13:40 on
+       2026-11-03, before the pause.
+  - **Next check, if wanted:** replay adult-s0 again to generation 39 (about 30 min) to see
+    whether the replay itself is stable on that genome. Then replay the remaining Adult seeds.
+  - **What this means for the bit-identity claim:** README §4 says "should reproduce every
+    genome and fitness exactly". That holds for Heart-100 (10/10), churn100 (10/10) and
+    adult-s1, but not for adult-s0.
 - **Closed-form error, last bits:** `closed_form_max_abs_err`, the displayed closed form's max
   error, depends in its last bits on what the same Python process evaluated before.
   - **Example:** for adult-s2, `check_explanation.py` on its own gives 0.058889693843529045,

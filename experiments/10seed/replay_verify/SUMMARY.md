@@ -4,6 +4,8 @@ Written by `replay_verify.py --summary`; one JSON per run beside this file.
 
 | Run | Commit | Status | Population rows identical | Stored genomes identical (key, fitness, md5) | Best genome identical | Tie counts = runs CSV | Replay time (s) |
 |---|---|---|---|---|---|---|---|
+| adult-s0 | 4126fe2 | DIFFERS | 100/100 | 24999/25000 | True | - | 5651.5 |
+| adult-s1 | cc48129 | reproduced | 100/100 | 25000/25000 | True | True | 5309.7 |
 | churn100-s0 | 901fad4 | reproduced | 100/100 | 255/255 | True | - | 753.9 |
 | churn100-s1 | 901fad4 | reproduced | 100/100 | 255/255 | True | - | 719.0 |
 | churn100-s2 | 901fad4 | reproduced | 100/100 | 256/256 | True | - | 846.3 |
