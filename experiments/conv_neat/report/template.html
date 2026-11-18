@@ -1,0 +1,1559 @@
+<title>ExConNEAT Network Report</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap");
+:root {
+  --bg: #f4f5f2; --surface: #ffffff; --surface-2: #ecefea; --ink: #17201d; --muted: #56625d;
+  --line: #d3d9d4; --accent: #1b6870; --accent-soft: #d5e9ea; --sel: #b8650a;
+  --pos: #b2182b; --neg: #2166ac; --mixed: #8a7a5a; --good: #2c7a4b; --warn: #9a5d12;
+  --plate: #e2e2de; --plate-ink: #2a2a28;
+  --sans: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --serif: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --r: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #101413; --surface: #171c1b; --surface-2: #1f2625; --ink: #e2e8e5; --muted: #97a39e;
+    --line: #2d3634; --accent: #6bbfc6; --accent-soft: #1d3739; --sel: #e8a44a;
+    --pos: #e0645d; --neg: #6ea9e2; --mixed: #b8a57e; --good: #62b585; --warn: #d79a4a;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #101413; --surface: #171c1b; --surface-2: #1f2625; --ink: #e2e8e5; --muted: #97a39e;
+  --line: #2d3634; --accent: #6bbfc6; --accent-soft: #1d3739; --sel: #e8a44a;
+  --pos: #e0645d; --neg: #6ea9e2; --mixed: #b8a57e; --good: #62b585; --warn: #d79a4a;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--sans); margin: 0; }
+.wrap { max-width: 1480px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 48px; }
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; text-wrap: balance; margin: 0; letter-spacing: -0.005em; }
+h1 { font-size: 1.9rem; line-height: 1.15; }
+h2 { font-size: 1.35rem; }
+h3 { font-size: 1.05rem; font-family: var(--sans); font-weight: 600; }
+p { margin: 0; }
+code, .mono { font-family: var(--mono); font-size: 0.86em; }
+.muted { color: var(--muted); }
+.eyebrow { font-size: 0.72rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--sel); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+
+header.top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; justify-content: space-between; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+header.top .sub { color: var(--muted); max-width: 62ch; margin-top: 4px; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: transparent; padding: 7px 12px; cursor: pointer; border-right: 1px solid var(--line); font-size: 0.88rem; }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+.seg.small button { padding: 5px 9px; font-size: 0.8rem; }
+
+section { margin-top: 24px; }
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 16px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; min-width: 0; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-size: 0.9rem; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-variant-numeric: tabular-nums; }
+.level { display: flex; flex-direction: column; gap: 6px; }
+.level .big { font-family: var(--serif); font-size: 1.5rem; line-height: 1.1; }
+.pill { display: inline-block; font-size: 0.74rem; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; background: var(--surface-2); }
+.pill.good { color: var(--good); border-color: currentColor; background: transparent; }
+.pill.warn { color: var(--warn); border-color: currentColor; background: transparent; }
+.pill.acc { color: var(--accent); border-color: currentColor; background: transparent; }
+button.pill { cursor: pointer; }
+details.read { margin-top: 14px; }
+details.read summary { cursor: pointer; font-weight: 500; }
+details.read ul { margin: 8px 0 0; padding-left: 1.2em; max-width: 90ch; }
+details.read li { margin: 3px 0; }
+
+.work { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 440px); gap: 16px; align-items: start; }
+@media (max-width: 1040px) { .work { grid-template-columns: minmax(0, 1fr); } }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.toolbar label { font-size: 0.86rem; display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.graphbox { overflow: hidden; border: 1px solid var(--line); border-radius: var(--r); background: var(--bg); }
+.gsvg { touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.gsvg.dragging, .gsvg.dragging .node { cursor: grabbing; }
+.graphbox svg { display: block; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.78rem; color: var(--muted); margin-top: 8px; align-items: center; }
+.legend .sw { display: inline-block; width: 22px; height: 0; border-top: 3px solid; vertical-align: middle; margin-right: 4px; }
+.ramp { display: inline-block; width: 90px; height: 9px; border-radius: 2px; vertical-align: middle; margin: 0 4px; }
+.ramp.seq { background: linear-gradient(90deg, #440154, #482878, #3e4989, #31688e, #26828e, #1f9e89, #35b779, #6ece58, #b5de2b, #fde725); }
+.ramp.div { background: linear-gradient(90deg, #053061, #2166ac, #4393c3, #92c5de, #d1e5f0, #f7f7f7, #fddbc7, #f4a582, #d6604d, #b2182b, #67001f); }
+
+svg text { fill: var(--ink); font-family: var(--sans); }
+.band { fill: var(--surface-2); }
+.bandlabel { fill: var(--muted); font-size: 11px; letter-spacing: 0.04em; }
+.node { cursor: pointer; }
+.node .frame { fill: var(--plate); stroke: var(--line); stroke-width: 1; }
+.node .lab { font-size: 11.5px; font-family: var(--mono); }
+.node .sub { font-size: 10px; fill: var(--muted); }
+.node.sel .frame { stroke: var(--sel); stroke-width: 3; }
+.node.inpart .frame { stroke: var(--accent); stroke-width: 3; }
+.node:focus-visible { outline: none; }
+.node:focus-visible .frame { stroke: var(--sel); stroke-width: 3; stroke-dasharray: 4 2; }
+.node.ghost { opacity: 0.45; }
+.cnode { cursor: pointer; }
+.cnode .cframe { fill: var(--plate); stroke: var(--line); stroke-width: 1.5; }
+.cnode.csel .cframe { stroke-width: 4; }
+.cnode.cpred .cframe { fill: var(--surface-2); }
+.cnode.cpred .clab { font-weight: 700; }
+.cnode.ctrue .csub, .cnode.ctrue .clab { fill: var(--good); }
+.cnode .clab { font-size: 12px; font-weight: 600; }
+.cnode .csub { font-size: 10.5px; fill: var(--muted); font-family: var(--mono); }
+.cnode:focus-visible .cframe { stroke: var(--sel); stroke-width: 3; stroke-dasharray: 4 2; }
+.pathmode .edge .vis, .pathmode .headedge { opacity: 0.1 !important; }
+.node.splitcopy .frame { stroke-dasharray: 5 3; stroke: var(--accent); stroke-width: 2; }
+.node.exitnode .frame { stroke: #d95f02; stroke-width: 2.5; }
+.node.exitnode.splitcopy .frame { stroke-dasharray: 5 3; }
+.node.port .frame { fill: var(--surface); stroke: #2e8b57; stroke-width: 2; }
+.stdot { stroke: var(--surface); stroke-width: 1.5; }
+.stdot.st-proven { fill: #2e8b57; } .stdot.st-supported { fill: #86bcb6; } .stdot.st-contested { fill: #e15759; }
+.stdot.st-correlate, .stdot.st-unknown, .stdot.st-nuisance { fill: #bab0ac; } .stdot.st-inactive { fill: none; stroke: var(--muted); }
+.hcard { border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: var(--r); padding: 10px 12px; margin: 8px 0; background: var(--surface); }
+.hcard .hname { font-weight: 650; font-size: 1.02rem; }
+.ctable td { vertical-align: middle; }
+.cbar { display: inline-block; width: 48px; height: 6px; margin-left: 6px; background: var(--line); border-radius: 3px; vertical-align: middle; overflow: hidden; }
+.cbar > span { display: block; height: 100%; }
+.ratestrip { display: block; margin-top: 4px; }
+.punit .pframe { stroke: var(--ink); stroke-width: 0; }
+.punit.sel .pframe { stroke: var(--sel); stroke-width: 3; }
+.punit:focus-visible .pframe { stroke: var(--sel); stroke-width: 3; stroke-dasharray: 4 2; }
+.punit .plab { font-family: var(--sans); font-weight: 600; }
+.pband { cursor: pointer; }
+.pband .plabel { font-size: 11px; font-weight: 600; fill: #fff; }
+.pband:focus-visible rect:first-child { stroke-width: 3; }
+.legend .chip { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: middle; margin-right: 4px; }
+.dim .node:not(.inpart), .dim .edge:not(.inpart) { opacity: 0.22; }
+.edge { cursor: pointer; }
+.edge .vis { fill: none; opacity: 0.75; }
+.edge .hit { fill: none; stroke: transparent; stroke-width: 12; }
+.edge:hover .vis { opacity: 1; }
+.edge.sel .vis { opacity: 1; stroke: var(--sel) !important; }
+.edge:focus-visible { outline: none; }
+.edge:focus-visible .vis { stroke: var(--sel) !important; opacity: 1; }
+.edge.off .vis { stroke-dasharray: 4 3; }
+.elab { font-size: 9.5px; font-family: var(--mono); fill: var(--muted); paint-order: stroke; stroke: var(--bg); stroke-width: 3px; pointer-events: none; }
+
+.walkstrip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; }
+.wbtn { flex: 0 0 auto; border: 1px solid var(--line); background: var(--surface); border-radius: var(--r); padding: 4px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 0.7rem; }
+.wbtn[aria-pressed="true"] { border-color: var(--sel); box-shadow: 0 0 0 1px var(--sel); }
+.wbtn img { width: 48px; height: 48px; }
+.tag-error { color: var(--warn); font-weight: 600; }
+img.px { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+.plate { background: var(--plate); color: var(--plate-ink); border-radius: 4px; padding: 6px; display: inline-flex; flex-direction: column; gap: 4px; align-items: center; }
+.plate figcaption, .plate .cap { font-size: 0.7rem; font-family: var(--mono); text-align: center; color: var(--plate-ink); }
+figure { margin: 0; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; }
+.row.tight { gap: 4px; }
+.walkdetail { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; margin-top: 12px; align-items: start; }
+@media (max-width: 560px) { .walkdetail { grid-template-columns: minmax(0, 1fr); } }
+
+.insp { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 24px); overflow: auto; }
+@media (max-width: 1040px) { .insp { position: static; max-height: none; } }
+.insp > * + * { margin-top: 16px; }
+.insp h4 { margin: 0 0 6px; font-size: 0.76rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.formula { overflow-x: auto; padding: 6px 0; font-size: 0.95rem; }
+.formula .katex-display { margin: 4px 0; text-align: left; }
+.formula .katex-display > .katex { text-align: left; }
+pre.plain { white-space: pre-wrap; word-break: break-word; font-family: var(--mono); font-size: 0.78rem; background: var(--surface-2); padding: 8px; border-radius: 4px; margin: 6px 0 0; }
+details.small summary { cursor: pointer; font-size: 0.82rem; color: var(--muted); }
+table.t { border-collapse: collapse; font-size: 0.85rem; width: 100%; }
+table.t th, table.t td { text-align: left; padding: 4px 8px 4px 0; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; vertical-align: top; }
+table.t th { color: var(--muted); font-weight: 500; }
+.tablewrap { overflow-x: auto; }
+.heat { position: relative; display: inline-block; }
+.heat canvas { display: block; image-rendering: pixelated; }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); font: 11px var(--mono); padding: 2px 6px; border-radius: 3px; white-space: nowrap; transform: translate(-50%, -130%); }
+.kgrid { display: flex; flex-wrap: wrap; gap: 10px; }
+.note { font-size: 0.8rem; color: var(--muted); }
+.synthetic { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--warn); }
+
+.tree { list-style: none; margin: 12px 0 0; padding: 0; }
+.tree ul { list-style: none; margin: 0; padding-left: 22px; border-left: 1px solid var(--line); margin-left: 10px; }
+.tree li { margin: 8px 0; }
+.leaf { display: block; width: 100%; text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: var(--r); padding: 10px 12px; cursor: pointer; }
+.leaf[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.leaf .hd { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; }
+.leaf .desc { font-size: 0.88rem; color: var(--muted); margin-top: 4px; max-width: 110ch; }
+.reading { font-family: var(--serif); font-size: 1.12rem; line-height: 1.4; margin-top: 6px; max-width: 70ch; }
+.panel .big { font-family: var(--serif); font-size: 1.5rem; line-height: 1.1; margin: 4px 0; }
+.what { margin-top: 10px; }
+.whatbody { margin-top: 8px; display: grid; gap: 6px; max-width: 95ch; }
+.whatbody p.lead, p.lead { font-family: var(--serif); font-size: 1.15rem; line-height: 1.4; }
+.countline { margin-top: 10px; font-weight: 600; }
+details.maths { margin-top: 4px; border-top: 1px solid var(--line); padding-top: 8px; }
+details.maths > summary { cursor: pointer; font-size: 0.86rem; color: var(--accent); font-weight: 500; }
+.mathsbody > * + * { margin-top: 14px; }
+.mathsbody { margin-top: 10px; }
+.datagrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px 24px; margin-top: 10px; }
+.datagrid h4, #datapanel h4 { margin: 0 0 6px; font-size: 0.76rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.kv.defs { grid-template-columns: minmax(80px, auto) 1fr; font-size: 0.86rem; }
+.kv.defs dd { font-variant-numeric: normal; }
+.hardrow { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px 18px; }
+.strokegrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; margin-top: 8px; }
+.stroke { border: 1px solid var(--line); border-radius: var(--r); padding: 8px 10px; background: var(--surface); min-width: 0; }
+.stroke .hd { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; justify-content: space-between; }
+#datapanel { margin-top: 16px; }
+.bars text { font-size: 10.5px; }
+svg.bars { max-width: 520px; display: block; }
+@media (max-width: 560px) {
+  #netsel { display: grid; width: 100%; }
+  #netsel button { border-right: 0; border-bottom: 1px solid var(--line); text-align: left; }
+  #netsel button:last-child { border-bottom: 0; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .edge .vis, .node .frame { transition: opacity 0.15s, stroke 0.15s; }
+}
+@media (max-width: 480px) { h1 { font-size: 1.5rem; } .panel { padding: 12px; } }
+</style>
+<style>/*KATEX_CSS*/</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">ExplaNEAT · ExConNEAT</div>
+      <h1>ExConNEAT Network Report</h1>
+      <p class="sub">Evolved convolutional DAGs: each node is one single-channel feature map, each edge one k×k kernel after a derived resampling. Every number on this page is computed from the network and the evaluation data.</p>
+    </div>
+    <div class="controls">
+      <div class="seg" id="netsel" role="group" aria-label="Network"></div>
+      <div class="seg small" id="themesel" role="group" aria-label="Theme">
+        <button type="button" data-t="auto" aria-pressed="true">Auto</button>
+        <button type="button" data-t="light" aria-pressed="false">Light</button>
+        <button type="button" data-t="dark" aria-pressed="false">Dark</button>
+      </div>
+    </div>
+  </header>
+
+  <section id="summary" aria-label="Summary"></section>
+
+  <section class="panel" id="structure" aria-label="Structure" hidden></section>
+
+  <section class="panel" id="datapanel" aria-label="Data"></section>
+
+  <section class="work">
+    <div style="min-width:0">
+      <div class="panel">
+        <div class="toolbar">
+          <h2>Network</h2>
+          <div class="controls">
+            <span class="note" id="thumbmode"></span>
+            <button type="button" class="pill" id="expandall">Open all parts</button>
+            <button type="button" class="pill" id="collapseall">Close all parts</button>
+            <button type="button" class="pill" id="resetlayout">Reset layout</button>
+            <button type="button" class="pill" id="contrast" hidden aria-pressed="false">Contrast</button>
+            <button type="button" class="pill" id="clearclasses" hidden>Clear digits</button>
+            <label><input type="checkbox" id="showhidden"> Show disabled and unreachable genes</label>
+          </div>
+        </div>
+        <div class="graphbox" id="graphbox"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div class="panel" style="margin-top:16px">
+        <div class="toolbar">
+          <h2>Walk-through</h2>
+          <button type="button" class="pill" id="walkreset">Back to mean maps</button>
+        </div>
+        <p class="note">Pick an example: the text says what each part does on it, the graph's pictures switch to that image's responses, and the bars show what adds up to the final score.</p>
+        <div id="confpick" style="margin-top:8px"></div>
+        <div class="walkstrip" id="walkstrip" role="group" aria-label="Examples" style="margin-top:10px"></div>
+        <div id="walkdetail"></div>
+      </div>
+    </div>
+    <aside class="panel insp" id="insp" aria-live="polite"></aside>
+  </section>
+
+  <section class="panel" id="parts"></section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/__KATEX__/katex.min.js"></script>
+<script type="application/json" id="data">__DATA__</script>
+<script>
+(function () {
+"use strict";
+const NETS = JSON.parse(document.getElementById("data").textContent);
+const S = { net: 0, sel: null, walk: null, showHidden: false, expanded: new Set() };
+const $ = (s, r) => (r || document).querySelector(s);
+const el = (tag, attrs, ...kids) => {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === "class") e.className = v; else if (k === "html") e.innerHTML = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else if (v !== null && v !== undefined) e.setAttribute(k, v);
+  }
+  for (const c of kids.flat()) if (c !== null && c !== undefined && c !== false) e.append(c.nodeType ? c : document.createTextNode(String(c)));
+  return e;
+};
+const SVGNS = "http://www.w3.org/2000/svg";
+const sv = (tag, attrs) => { const e = document.createElementNS(SVGNS, tag); for (const [k, v] of Object.entries(attrs || {})) e.setAttribute(k, v); return e; };
+const f3 = v => (v === null || v === undefined) ? "–" : Number(v).toFixed(3);
+const f2 = v => Number(v).toFixed(2);
+const sgn = v => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(3);
+const sgn2 = v => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(2);
+// entries and split copies show their source's map: fill in the pictures the builder kept only once
+NETS.forEach(n => {
+  const al = Object.entries(n.nodes || {}).filter(([, nd]) => nd.alias !== undefined && nd.alias !== null);
+  for (const [, nd] of al) { const r = n.nodes[String(nd.alias)]; if (r) for (const f of ["mean_png", "sd_png", "mean_scale", "sd_scale"]) if (nd[f] === undefined) nd[f] = r[f]; }
+  for (const w of n.walk || []) for (const [k, nd] of al) if (w.maps && w.maps[k] === undefined) w.maps[k] = w.maps[String(nd.alias)];
+});
+const N = () => NETS[S.net];
+const CN = d => { const c = N().class_names; return c && c[d] !== undefined ? String(c[d]) : String(d); };
+const CLS = d => (/^\d+$/.test(CN(d)) ? "digit " + CN(d) : CN(d));
+const SPLIT = () => (N().eval_split === "val" ? "validation" : "test");
+const nodeName = k => { const nd = N().nodes[k]; if (nd && nd.rid && nd.kind === "hidden") return (nd.port_of !== undefined && nd.port_of !== null ? "entry " : "h") + nd.rid; return (Number(k) === -1 ? "x" : Number(k) < 0 ? "x" + (-k - 1) : (nd && nd.kind === "output" ? "out " : "h") + k); };
+const CONCEPT = { hbar: "horizontal bar", blob: "blob", vbar: "vertical bar", diag: "diagonal" };
+
+// ---------- colour scales (match the PNGs: matplotlib RdBu_r and viridis)
+const DIV = ["#053061", "#2166ac", "#4393c3", "#92c5de", "#d1e5f0", "#f7f7f7", "#fddbc7", "#f4a582", "#d6604d", "#b2182b", "#67001f"];
+const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+function ramp(stops, t) {
+  t = Math.max(0, Math.min(1, t)); const x = t * (stops.length - 1), i = Math.min(stops.length - 2, Math.floor(x)), u = x - i;
+  const a = hex(stops[i]), b = hex(stops[i + 1]);
+  return `rgb(${a.map((v, j) => Math.round(v + (b[j] - v) * u)).join(",")})`;
+}
+
+// ---------- formulas
+function tex(target, src) {
+  if (window.katex) {
+    try { katex.render(src, target, { displayMode: true, throwOnError: false, strict: "ignore" }); return; } catch (e) { /* fall through */ }
+  }
+  target.append(el("code", {}, src));
+}
+function formulaBlock(lines, textLines) {
+  const box = el("div", { class: "formula" });
+  for (const l of lines) { const d = el("div"); tex(d, l); box.append(d); }
+  const det = el("details", { class: "small" }, el("summary", {}, "Plain text"), el("pre", { class: "plain" }, textLines.join("\n")));
+  return el("div", {}, box, det);
+}
+
+// ---------- heatmap with hover values
+function heat(mat, opts) {
+  opts = opts || {};
+  const h = mat.length, w = mat[0].length;
+  const vabs = opts.vabs || Math.max(1e-12, ...mat.flat().map(Math.abs));
+  const cell = Math.max(5, Math.min(opts.cell || 22, Math.floor((opts.maxpx || 150) / Math.max(h, w))));
+  const c = el("canvas", { width: w * cell, height: h * cell, role: "img", "aria-label": opts.label || "heatmap" });
+  const ctx = c.getContext("2d");
+  for (let i = 0; i < h; i++) for (let j = 0; j < w; j++) {
+    const v = mat[i][j];
+    ctx.fillStyle = opts.seq ? ramp(["#440154", "#3e4989", "#26828e", "#35b779", "#fde725"], v / vabs) : ramp(DIV, 0.5 + 0.5 * v / vabs);
+    ctx.fillRect(j * cell, i * cell, cell, cell);
+  }
+  const tip = el("div", { class: "tip", hidden: "" });
+  const box = el("div", { class: "heat" }, c, tip);
+  c.addEventListener("mousemove", ev => {
+    const r = c.getBoundingClientRect(), j = Math.floor((ev.clientX - r.left) / cell), i = Math.floor((ev.clientY - r.top) / cell);
+    if (i < 0 || j < 0 || i >= h || j >= w) { tip.hidden = true; return; }
+    tip.hidden = false; tip.textContent = `[${i - (h >> 1)}, ${j - (w >> 1)}]  ${Number(mat[i][j]).toPrecision(3)}`;
+    tip.style.left = (ev.clientX - r.left) + "px"; tip.style.top = (ev.clientY - r.top) + "px";
+  });
+  c.addEventListener("mouseleave", () => { tip.hidden = true; });
+  const legend = el("div", { class: "cap" }, opts.seq ? `0 ` : `−${Number(vabs).toPrecision(2)} `,
+    el("span", { class: "ramp " + (opts.seq ? "seq" : "div"), style: "width:60px" }), ` ${opts.seq ? "" : "+"}${Number(vabs).toPrecision(2)}`);
+  return el("figure", { class: "plate" }, box, el("figcaption", {}, opts.caption || ""), legend);
+}
+function img(src, cap, size, alt) {
+  return el("figure", { class: "plate" }, el("img", { class: "px", src, width: size || 64, height: size || 64, alt: alt || cap || "" }), cap ? el("figcaption", {}, cap) : null);
+}
+
+// ---------- plain-language helpers
+const STATUS = { concept: ["real concept", "good"], weak: ["weak link", "warn"], unexplained: ["unexplained", "warn"], inactive: ["inactive", ""],
+  proven: ["proven", "good"], supported: ["supported", "good"], contested: ["contested", "warn"], correlate: ["mechanism unknown", "warn"],
+  nuisance: ["ink amount", "warn"], unknown: ["mechanism unknown", "warn"], described: ["described, not explained", "warn"] };
+function statusPill(st) { const [t, c] = STATUS[st] || [st, ""]; return el("span", { class: "pill " + c }, t); }
+const cap = s => (s ? s[0].toUpperCase() + s.slice(1) : s);
+const pct = v => (v === null || v === undefined) ? "–" : `${(100 * v).toFixed(0)}%`;
+const pct1 = v => `${(100 * v).toFixed(1)}%`;
+function nodeTitle(k) {
+  const nd = N().nodes[k];
+  if (!nd) return nodeName(k);
+  if (nd.kind === "input") return "input image";
+  if (nd.kind === "output") return N().multiclass ? nd.sem.name : "final score map";
+  return nd.sem ? nd.sem.name : nodeName(k);
+}
+function maths(...kids) {
+  return el("details", { class: "maths" }, el("summary", {}, "Show the maths"), el("div", { class: "mathsbody" }, ...kids));
+}
+function effectText(im) {
+  if (!im) return null;
+  const a0 = pct1(N().importance_base.acc), a1 = pct1(im.acc);
+  if (im.d_acc >= 0.01) return `Switching it off drops accuracy from ${a0} to ${a1}.`;
+  if (im.d_logloss >= 0.01) return `Switching it off barely changes accuracy (${a0} to ${a1}) but makes the network less sure of its answers.`;
+  return `Switching it off changes nothing that matters (${a0} to ${a1} accuracy).`;
+}
+
+// ---------- summary
+function renderSummary() {
+  const n = N(), a = n.acc, z = n.size, c = n.check, sm = n.semantics;
+  const s = $("#summary"); s.innerHTML = "";
+  const faithful = c.max_abs_logit_diff < 1e-6;
+  const nParts = n.parts.length;
+  const cn = n.class_names;
+  s.append(
+    el("div", { class: "eyebrow", style: "margin-top:4px" }, n.title),
+    el("div", { class: "panel what" }, el("h2", {}, "What this network does"),
+      el("div", { class: "whatbody" }, sm.what.map((t, i) => el("p", { class: i === 0 ? "lead" : "" }, t))),
+      el("p", { class: "countline" }, sm.count_line)),
+    el("div", { class: "summary" },
+      el("div", { class: "panel" }, el("h3", {}, "How often it is right"),
+        a.test === null || a.test === undefined
+          ? el("p", { class: "big" }, "not yet tested")
+          : el("p", { class: "big" }, pct1(a.test)),
+        a.test === null || a.test === undefined
+          ? el("p", {}, `Draft of a run in progress: the test images are read once, after the run stops. Validation accuracy of this genome: ${pct1(a.val)}.`)
+          : el("p", {}, `of the ${n.n_test.toLocaleString()} test images (never used to build or choose it).`),
+        n.multiclass
+          ? el("p", { class: "note", style: "margin-top:6px" }, `For comparison: ${a.compare.map(c => `${c[0]} ${pct1(c[1])}`).join("; ")}. This network uses ${z.params} learned numbers. ` + (a.finetuned !== null && a.finetuned !== undefined ? `After 20 more training passes on its fixed structure: ${pct1(a.finetuned)}. ` : "") + `On the validation images that chose it: ${pct1(a.val)}. Evolution: population ${n.run_info.pop}, ${n.run_info.epochs} training passes per generation, ${n.run_info.mut_scale}× structural mutation; ${n.run_info.generations} generations (${n.run_info.stop_reason}); this genome is from generation ${n.run_info.found_generation}.` + (n.run_info.n_train_rows ? ` Trained on ${n.run_info.n_train_rows.toLocaleString()} training images.` : "") + (n.run_info.warm_start ? ` A warm-start continuation of ${n.run_info.warm_start.replace(/^results\//, "").replace(/\/checkpoint\.pkl$/, "")}'s population, not a clean run.` : ""))
+          : el("p", { class: "note", style: "margin-top:6px" }, `For comparison, a small standard convolutional network gets ${pct1(a.w8)} with ${a.w8_params} learned numbers, and one cut down to about this network's size (${a.matched_params}) gets ${pct1(a.matched)}. This network uses ${z.params}. After 20 more training passes on its fixed structure: ${pct1(a.finetuned)}. On the validation images that chose it: ${pct1(a.val)}.`)),
+      el("div", { class: "panel" }, el("h3", {}, "Size"),
+        el("p", {}, `${z.hidden_functional} detectors (each one a single feature map) and ${z.edges_functional} connections, ${z.params} learned numbers in all.`),
+        el("p", { class: "note", style: "margin-top:6px" }, `Maps come in ${n.cfg.levels.length} sizes: ${n.cfg.levels.map(l => l.join("×")).join(", ")}. Evolved with parsimony λ = ${n.penalty}, seed ${n.seed}${n.device ? ", on " + n.device.toUpperCase() : ""}${n.evolution_seconds ? `, ${(n.evolution_seconds / 60).toFixed(0)} min` : ""}.`),
+        z.hidden_total > z.hidden_functional ? el("p", { class: "note" }, `${z.hidden_total - z.hidden_functional} more detectors are cut off from the output and play no part.`) : null),
+      el("div", { class: "panel level" }, el("div", { class: "eyebrow" }, "Level 1 · faithful"),
+        el("div", { class: "big" }, faithful ? "Formulas match exactly" : "Formulas do not match"),
+        el("p", { class: "note" }, faithful ? `Writing the network out as formulas, part by part, gives the same answer as the network itself on all ${c.n_examples.toLocaleString()} ${n.multiclass ? "explained " : ""}${SPLIT()} images.` : `The written-out formulas differ from the network (largest difference ${Number(c.max_abs_logit_diff).toExponential(1)}).`),
+        el("span", { class: "pill " + (faithful ? "good" : "warn") }, faithful ? "pass" : "fail")),
+      el("div", { class: "panel level" }, el("div", { class: "eyebrow" }, "Level 2 · decomposed"),
+        el("div", { class: "big" }, `${nParts} named part${nParts > 1 ? "s" : ""}`),
+        el("p", { class: "note" }, `${Math.round(100 * c.coverage)}% of the ${c.n_reachable_hidden} active detectors belong to a part. ` + (n.multiclass ? `The parts feed ${n.k} score maps; a linear head turns their averages into ${n.k} scores, and the highest wins.` : "The parts feed one final score map, whose average is the answer."))),
+      el("div", { class: "panel level" }, el("div", { class: "eyebrow" }, "Level 3 · understood"),
+        el("div", { class: "big" }, `${sm.counts.concept} of ${sm.n} explained`),
+        el("p", { class: "note" }, sm.count_line + (n.dataset === "synthetic"
+          ? " Concepts: the four planted shapes and “bar AND blob”."
+          : n.multiclass ? ` Concepts: ${sm.library.strokes.length} image rules (strokes, loops, a stem, the amount of ink) and the ${n.k} classes (“is a 3”).`
+          : ` Concepts: six rule-based stroke concepts and the class (“is an ${cn[1]}”).`)))
+    ),
+    el("details", { class: "read" }, el("summary", {}, "How to read this page"),
+      el("ul", {},
+        el("li", {}, "The graph runs left to right from the input image to the final score map. Each box is one detector; its picture is its average response over the test images. Bands are map sizes: each band down halves the size."),
+        el("li", {}, "Each detector is named by the real concept it tracks best. “Fires” means its strongest response in the image passes the cut that best separates that concept; the percentages say how often that happens with and without the concept."),
+        el("li", {}, "“Switching it off” replaces the detector's response by its average response, on the validation images, and measures the accuracy that is left."),
+        el("li", {}, "Red connections push their target up, blue ones push it down; thicker ones matter more. Click a detector, a connection or a part for details. Every technical detail is kept under “Show the maths”."),
+        el("li", {}, "Pick an example in the walk-through to see what every detector does on that one image, in words and in pictures.")))
+  );
+}
+
+// ---------- data panel
+function dataItem(it, cap, size) {
+  return el("figure", { class: "plate" }, el("img", { class: "px", src: it.png, width: size || 56, height: size || 56, alt: cap || "" }), el("figcaption", {}, cap));
+}
+function renderData() {
+  const n = N(), d = n.data, box = $("#datapanel"); box.innerHTML = "";
+  const rule = el("div", { class: "formula" }); d.rule_tex.forEach(l => { const x = el("div"); tex(x, l); rule.append(x); });
+  const ct = d.counts, cn = d.class_names;
+  const counts = el("div", { class: "tablewrap" }, el("table", { class: "t" },
+    el("tr", {}, el("th", {}, "split"), cn.map(c => el("th", {}, c)), el("th", {}, "total")),
+    ["train", "val", "test"].filter(s => ct[s]).map(s => el("tr", {}, el("td", {}, s === "val" ? "validation" : s), ct[s].map(v => el("td", {}, v.toLocaleString())), el("td", {}, ct[s].reduce((x, y) => x + y, 0).toLocaleString())))));
+  const defs = el("dl", { class: "kv defs" }, d.defs.map(([k, v]) => [el("dt", {}, k), el("dd", {}, v)]).flat());
+  box.append(el("div", { class: "toolbar" }, el("h2", {}, "Data: " + d.task), el("span", { class: "note" }, "what the network was asked to do")),
+    el("p", { class: "lead", style: "max-width:90ch" }, d.intro),
+    el("div", { class: "datagrid" },
+      el("div", {}, el("h4", {}, "The label rule"), el("p", {}, d.rule_text), rule, d.rule_note ? el("p", { class: "note" }, d.rule_note) : null,
+        el("h4", { style: "margin-top:12px" }, "Images per split"), counts, d.freq_note ? el("p", { class: "note", style: "margin-top:6px" }, d.freq_note) : null),
+      el("div", {}, el("h4", {}, "Definitions"), defs)));
+  if (d.kind === "synthetic") {
+    box.append(el("h4", { style: "margin-top:14px" }, "Each shape on its own (real test images)"),
+      el("div", { class: "row" }, d.alone.map(a => dataItem(a, a.concept, 72))));
+    const grid = lab => el("div", { class: "row tight" }, d.grid[lab].map(it => dataItem(it, `${it.tags} → ${it.y}`)));
+    box.append(el("h4", { style: "margin-top:12px" }, "Label 1 · present"), grid("1"),
+      el("h4", { style: "margin-top:10px" }, "Label 0 · absent"), grid("0"));
+    box.append(el("h4", { style: "margin-top:12px" }, "Hard cases"),
+      el("div", { class: "hardrow" }, d.hard.map(h => el("div", {}, el("div", { class: "note" }, h.title),
+        el("div", { class: "row tight" }, h.items.map(it => dataItem(it, `${it.tags} → ${it.y}`)))))));
+    box.append(el("p", { class: "note", style: "margin-top:8px" }, "Tags: bar = horizontal bar, blob, vbar = vertical bar, diag = diagonal; → the label. Concepts used to read the detectors: " + d.concepts.map(c => c[0]).join(", ") + "."));
+  } else {
+    box.append(el("div", { class: "datagrid", style: "margin-top:10px" }, Object.entries(d.gallery).map(([c, its]) =>
+      el("div", {}, el("h4", {}, `${/^\d+$/.test(c) ? "Digit " + c : cap(c)} (training images)`), el("div", { class: "row tight" }, its.map(it => dataItem(it, `#${it.i}`, d.multiclass ? 40 : 56)))))));
+    if (d.ink) box.append(el("h4", { style: "margin-top:14px" }, "Ink matching: noise has the same ink as the digits"),
+      el("div", { class: "tablewrap" }, el("table", { class: "t" }, el("tr", {}, d.ink.head.map(h => el("th", {}, h))),
+        d.ink.rows.map(r => el("tr", {}, r.map((v, j) => el("td", { class: j ? "num" : "" }, typeof v === "number" ? (Number.isInteger(v) ? v.toLocaleString() : v.toFixed(j === 5 ? 3 : 1)) : v)))))),
+      el("p", { class: "note" }, d.ink.note));
+    if (d.strokes && d.strokes.length) box.append(el("h4", { style: "margin-top:14px" }, "Stroke concepts (used to read the detectors)"),
+      el("p", { class: "note", style: "max-width:100ch" }, d.strokes_note),
+      el("div", { class: "strokegrid" }, d.strokes.map(st => el("div", { class: "stroke" },
+        el("div", { class: "hd" }, el("strong", {}, cap(st.concept)), el("span", { class: "note" }, Object.entries(st.rate).map(([c, v]) => `${c}s ${pct(v)}`).join(" · "))),
+        el("div", { class: "note" }, st.rule),
+        el("div", { class: "row tight", style: "margin-top:4px" }, st.found.map(it => dataItem(it, `${it.label} · yes`, 48)), st.missing.map(it => dataItem(it, `${it.label} · no`, 48)))))));
+  }
+}
+
+// ---------- graph: each part collapses into one named function node (click it to open it).
+// Drag a node or part to move it (edges and bands follow), drag the background to pan, wheel or
+// pinch to zoom. Positions are remembered per network (in memory and, if allowed, localStorage).
+const BOX = 56, COLW = 132, ROWH = 92, LEFT = 96, TOP = 14, DRAG_PX = 4, CROW = 46, CW = 118, CH = 38;
+const CCOL = ["#d95f02", "#1b9e77", "#7570b3", "#e7298a"];  // colours of selected classes
+S.classSel = []; S.contrast = false;
+const PCOL = ["#4e79a7", "#f28e2b", "#59a14f", "#e15759", "#76b7b2", "#edc948", "#b07aa1", "#ff9da7", "#9c755f", "#86bcb6", "#d37295", "#8cd17d"];
+const LAYOUT_KEY = "convneat-layout-v1";
+S.ovr = {}; S.view = {}; S.suppressClick = false;
+try { S.ovr = JSON.parse(localStorage.getItem(LAYOUT_KEY) || "{}") || {}; } catch (e) { S.ovr = {}; }
+function netKey() { const n = N(); return `${n.run}|${n.title}`; }
+function ovr() { const k = netKey(); return (S.ovr[k] = S.ovr[k] || {}); }
+function saveOvr() { try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(S.ovr)); } catch (e) { /* storage unavailable */ } }
+function partColor(name) { const i = N().parts.findIndex(p => p.name === name); return PCOL[Math.max(0, i) % PCOL.length]; }
+function chainOf(k) { const nd = N().nodes[k]; if (!nd) return []; if (nd.chain) return nd.chain; return nd.part ? [nd.part] : []; }
+function unitOf(k) { for (const p of chainOf(k)) if (!S.expanded.has(p)) return "P:" + p; return String(k); }
+function partOf(name) { return N().parts.find(q => q.name === name); }
+function closePart(name) { const p = partOf(name); S.expanded.delete(name); if (p && p.children) p.children.forEach(c => S.expanded.delete(c)); }
+function openPart(name) { const p = partOf(name); if (p && p.parent) S.expanded.add(p.parent); S.expanded.add(name); }
+// Record-based networks: nested block layout. Each open annotation is a block whose children
+// (sub-parts or maps) are placed in columns by their order in the annotation's own DAG and stacked
+// within a column; a closed annotation takes one cell. Blocks never overlap, so every annotation's
+// band encloses exactly its own members, and the closed view is compact.
+function itemRank(i) { const n = N(); if (i.startsWith("P:")) return 1e6 + n.parts.findIndex(p => p.name === i.slice(2)); return Number(i); }
+function recordLayout() {
+  const n = N(), GAP = 24, PADX = 20, PADT = 36, PADB = 14;
+  const vis = k => S.showHidden || n.nodes[k].functional;
+  const E = Object.values(n.edges).filter(e => n.nodes[String(e.src)] && n.nodes[String(e.dst)] && vis(String(e.src)) && vis(String(e.dst)));
+  const itemOf = (k, depth) => { const ch = chainOf(k); return depth < ch.length ? "P:" + ch[depth] : String(k); };
+  function block(items, depth) {
+    const set = new Set(items), pred = {};
+    items.forEach(i => { pred[i] = new Set(); });
+    for (const e of E) { const a = itemOf(String(e.src), depth), b = itemOf(String(e.dst), depth); if (a !== b && set.has(a) && set.has(b)) pred[b].add(a); }
+    const col = {};
+    const visit = i => { if (col[i] !== undefined) return col[i]; col[i] = 0; let c = 0; for (const q of pred[i]) c = Math.max(c, visit(q) + 1); return (col[i] = c); };
+    items.forEach(visit);
+    if (depth === 0) {  // the score maps in one last column
+      const outs = new Set(Object.keys(n.nodes).filter(k => n.nodes[k].kind === "output"));
+      const mx = Math.max(0, ...items.filter(i => !outs.has(i)).map(i => col[i]));
+      items.forEach(i => { if (outs.has(i)) col[i] = mx + 1; });
+    }
+    const size = {}, sub = {};
+    for (const i of items) {
+      if (i.startsWith("P:") && S.expanded.has(i.slice(2))) { const p = partOf(i.slice(2)); const its = [...new Set(p.nodes.map(String).filter(k => n.nodes[k] && vis(k)).map(k => itemOf(k, depth + 1)))]; const r = block(its, depth + 1); sub[i] = r; size[i] = { w: r.w + 2 * PADX, h: r.h + PADT + PADB }; }
+      else size[i] = { w: COLW, h: ROWH };
+    }
+    const cols = [...new Set(items.map(i => col[i]))].sort((a, b) => a - b);
+    const colItems = cols.map(c => items.filter(i => col[i] === c).sort((a, b) => itemRank(a) - itemRank(b)));
+    const colH = colItems.map(its => its.reduce((t, i) => t + size[i].h, 0) + GAP * (its.length - 1));
+    const H = Math.max(ROWH, ...colH), pos = {};
+    let x = 0;
+    colItems.forEach((its, ci) => {
+      const cw = Math.max(...its.map(i => size[i].w));
+      let y = (H - colH[ci]) / 2;
+      for (const i of its) {
+        const ox = x + (cw - size[i].w) / 2;
+        if (sub[i]) for (const [k2, p2] of Object.entries(sub[i].pos)) pos[k2] = { x: ox + PADX + p2.x, y: y + PADT + p2.y };
+        else pos[i] = { x: ox + (COLW - BOX) / 2, y: y + 8 };
+        y += size[i].h + GAP;
+      }
+      x += cw + GAP;
+    });
+    return { w: x - GAP, h: H, pos };
+  }
+  const roots = [...new Set(Object.keys(n.nodes).filter(vis).map(k => itemOf(k, 0)))];
+  const r = block(roots, 0), pos = {};
+  for (const [k, p] of Object.entries(r.pos)) pos[k] = { x: LEFT + p.x, y: TOP + p.y };
+  let width = LEFT + r.w + 20;
+  const hasHead = !!(n.multiclass && n.head);
+  if (hasHead) { for (let d = 0; d < n.k; d++) pos["C" + d] = { x: width + 40, y: TOP + 8 + d * CROW }; width += 40 + CW + 20; }
+  const height = TOP + Math.max(r.h, hasHead ? n.k * CROW + 10 : 0) + 20;
+  return { pos, bandTop: [TOP], bandRows: [Math.ceil(height / ROWH)], width, height, record: true };
+}
+function fullLayout() {  // every visible node in its own place, as if all parts were open
+  const n = N(), key = `${S.net}|${S.showHidden}` + (n.record_based ? "|" + [...S.expanded].sort().join(",") : "");
+  if (S._full && S._full.key === key) return S._full;
+  if (n.record_based) return (S._full = { key, ...recordLayout() });
+  if (S._full && S._full.key === key) return S._full;
+  const vis = k => S.showHidden || n.nodes[k].functional;
+  const cells = n.layout.cells.map(([d, l, ks]) => [d, l, ks.map(String).filter(vis)]).filter(c => c[2].length);
+  const cols = [...new Set(cells.map(c => c[0]))].sort((x, y) => x - y), colIx = new Map(cols.map((c, i) => [c, i]));
+  const levels = n.cfg.levels.length, bandRows = Array(levels).fill(1);
+  const byCell = {};
+  for (const [d, l, ks] of cells) { const key2 = colIx.get(d) + "," + l; (byCell[key2] = byCell[key2] || []).push(...ks); }
+  for (const [key2, ks] of Object.entries(byCell)) { const l = +key2.split(",")[1]; bandRows[l] = Math.max(bandRows[l], ks.length); }
+  const hasHead = !!(n.multiclass && n.head);
+  if (hasHead) bandRows[0] = Math.max(bandRows[0], Math.ceil((n.k * CROW + 10) / ROWH));
+  const bandTop = []; let y = TOP;
+  for (let l = 0; l < levels; l++) { bandTop.push(y); y += bandRows[l] * ROWH + 10; }
+  const pos = {};
+  for (const [key2, ks] of Object.entries(byCell)) { const [c, l] = key2.split(",").map(Number); ks.forEach((k, i) => { pos[k] = { x: LEFT + c * COLW, y: bandTop[l] + 8 + i * ROWH }; }); }
+  let width = LEFT + cols.length * COLW + 10;
+  if (hasHead) { for (let d = 0; d < n.k; d++) pos["C" + d] = { x: width + 40, y: bandTop[0] + 8 + d * CROW }; width += 40 + CW + 20; }
+  return (S._full = { key, pos, bandTop, bandRows, width, height: y + 4 });
+}
+function posOf(id) {
+  const o = ovr()[id];
+  if (o) return o;
+  if (N().record_based) { const q = fullLayout().pos[id]; if (q) return q; }
+  if (id.startsWith("P:")) {  // a collapsed part sits at its members' centroid
+    const p = N().parts.find(q => q.name === id.slice(2)), F = fullLayout();
+    const ps = p.nodes.map(String).filter(k => F.pos[k]).map(posOf);
+    return { x: ps.reduce((a, q) => a + q.x, 0) / ps.length, y: ps.reduce((a, q) => a + q.y, 0) / ps.length };
+  }
+  return fullLayout().pos[id];
+}
+function view() {
+  const k = netKey();
+  if (!S.view[k]) { const bw = $("#graphbox").clientWidth || 800; S.view[k] = { tx: 0, ty: 0, k: Math.min(1, Math.max(N().record_based ? 0.3 : 0.6, bw / fullLayout().width)) }; }
+  return S.view[k];
+}
+function keyAct(g, go, moveId) {
+  const run = () => { if (S.suppressClick) { S.suppressClick = false; return; } go(); };
+  g.addEventListener("click", run);
+  g.addEventListener("keydown", ev => {
+    if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); go(); return; }
+    const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[ev.key];
+    if (d && moveId) {
+      ev.preventDefault();
+      const p = posOf(moveId), step = ev.shiftKey ? 40 : 10;
+      ovr()[moveId] = { x: p.x + d[0] * step, y: p.y + d[1] * step };
+      saveOvr(); updateGeometry();
+    }
+  });
+}
+let G = null;  // the drawn graph: elements to move when positions change
+function edgePath(A, B) {
+  const x1 = A.x + BOX, y1 = A.y + BOX / 2, x2 = B.x, y2 = B.y + BOX / 2;
+  const dx = Math.max(36, Math.abs(x2 - x1) / 2);
+  return { d: `M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`, mx: (x1 + x2) / 2, my: (y1 + y2) / 2 - 3 };
+}
+function headPath(A, B) {
+  const x1 = A.x + BOX, y1 = A.y + BOX / 2, x2 = B.x, y2 = B.y + CH / 2, dx = Math.max(30, Math.abs(x2 - x1) / 2);
+  return `M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`;
+}
+function updateGeometry() {
+  if (!G) return;
+  for (const [id, g] of Object.entries(G.units)) { const p = posOf(id); g.setAttribute("transform", `translate(${p.x},${p.y})`); }
+  for (const h of G.head || []) h.el.setAttribute("d", headPath(posOf(h.o), posOf(h.c)));
+  for (const h of G.hl || []) h.el.setAttribute("d", h.head ? headPath(posOf(h.us), posOf(h.ud)) : edgePath(posOf(h.us), posOf(h.ud)).d);
+  for (const e of G.edges) {
+    const q = edgePath(posOf(e.us), posOf(e.ud));
+    e.vis.setAttribute("d", q.d); e.hit.setAttribute("d", q.d); e.text.setAttribute("x", q.mx); e.text.setAttribute("y", q.my);
+  }
+  for (const b of G.bands) {
+    const ps = b.members.map(posOf);
+    b.halos.forEach((r, i) => { r.setAttribute("x", ps[i].x - 9); r.setAttribute("y", ps[i].y - 9); });
+    const pd = b.pad || 15;
+    const x0 = Math.min(...ps.map(q => q.x)) - pd, y0 = Math.min(...ps.map(q => q.y)) - 13 - pd;
+    const x1 = Math.max(...ps.map(q => q.x)) + BOX + pd, y1 = Math.max(...ps.map(q => q.y)) + BOX + 21 + pd;
+    b.outline.setAttribute("x", x0); b.outline.setAttribute("y", y0); b.outline.setAttribute("width", x1 - x0); b.outline.setAttribute("height", y1 - y0);
+    b.labbg.setAttribute("x", x0 + 2); b.labbg.setAttribute("y", y0 + 1); b.label.setAttribute("x", x0 + 6); b.label.setAttribute("y", y0 + 13);
+  }
+}
+function applyView() { if (G) { const v = view(); G.vp.setAttribute("transform", `translate(${v.tx},${v.ty}) scale(${v.k})`); } }
+function renderGraph() {
+  const n = N(), F = fullLayout(), box = $("#graphbox"); box.innerHTML = "";
+  const H = Math.max(240, Math.min(F.height * view().k + 20, Math.round(window.innerHeight * 0.76)));
+  const svg = sv("svg", { width: "100%", height: H, role: "group", "aria-label": "Network graph: drag a node to move it, drag the background to pan, wheel or pinch to zoom", class: "gsvg" });
+  const vp = sv("g", { class: "vp" });
+  svg.append(vp);
+  const bg = sv("g");
+  if (!n.record_based) n.cfg.levels.forEach((sz, l) => {
+    const h = F.bandRows[l] * ROWH;
+    bg.append(sv("rect", { class: "band", x: 0, y: F.bandTop[l], width: F.width, height: h, rx: 4, opacity: l % 2 ? 0.55 : 1 }));
+    const t = sv("text", { class: "bandlabel", x: 10, y: F.bandTop[l] + 18 }); t.textContent = `level ${l}`;
+    const t2 = sv("text", { class: "bandlabel", x: 10, y: F.bandTop[l] + 32 }); t2.textContent = `${sz[0]}×${sz[1]}`;
+    bg.append(t, t2);
+  });
+  const selPart = S.sel && S.sel.type === "part" ? n.parts.find(p => p.name === S.sel.id) : null;
+  const inPart = new Set(selPart ? selPart.nodes.map(String).concat(["P:" + selPart.name]) : []);
+  if (selPart && S.expanded.has(selPart.name)) svg.classList.add("dim");
+  const vis = k => S.showHidden || n.nodes[k].functional;
+  const units = new Set((n.record_based ? Object.keys(n.nodes) : Object.keys(F.pos)).filter(k2 => n.nodes[k2] && vis(k2)).map(unitOf));
+  G = { vp, units: {}, edges: [], bands: [] };
+  // coloured bands around the nodes of each opened part, and a dashed outline that closes it
+  const hg = sv("g");
+  for (const p of n.parts.slice().sort((a, b) => (a.depth || 1) - (b.depth || 1))) {
+    if (!S.expanded.has(p.name) || (p.parent && !S.expanded.has(p.parent))) continue;
+    const members = [...new Set(p.nodes.map(String).filter(k => n.nodes[k] && (n.record_based || F.pos[k]) && (S.showHidden || n.nodes[k].functional)).map(unitOf))];
+    if (!members.length) continue;
+    const col = partColor(p.name);
+    const halos = members.map(() => { const r = sv("rect", { width: BOX + 18, height: BOX + 38, rx: 9, fill: col, opacity: n.record_based ? 0 : 0.3 }); hg.append(r); return r; });
+    const g = sv("g", { class: "pband", tabindex: 0, role: "button", "aria-label": `Close part ${p.sem.name}` });
+    const outline = sv("rect", { rx: 10, fill: n.record_based ? col : "none", "fill-opacity": 0.07, "pointer-events": "stroke", stroke: col, "stroke-width": 2, "stroke-dasharray": "6 4" });
+    const lab = `▾ ${p.sem.name}`;
+    const label = sv("text", { class: "plabel" }); label.textContent = lab.length > 34 ? lab.slice(0, 33) + "…" : lab;
+    const labbg = sv("rect", { width: Math.min(34, lab.length) * 6.4 + 10, height: 17, rx: 4, fill: col, class: "plabbg" });
+    g.append(outline, labbg, label);
+    keyAct(g, () => { closePart(p.name); select({ type: "part", id: p.name }); });
+    hg.append(g);
+    G.bands.push({ members, halos, outline, labbg, label, pad: (p.depth || 1) === 2 ? 8 : 20 });
+  }
+  // edges, merged when they join the same two visible units
+  const agg = new Map();
+  for (const e of Object.values(n.edges)) {
+    if (!S.showHidden && !e.functional) continue;
+    const us = unitOf(String(e.src)), ud = unitOf(String(e.dst));
+    if (us === ud || !units.has(us) || !units.has(ud)) continue;
+    const key = us + ">" + ud, a = agg.get(key) || { us, ud, edges: [], imp: 0, pos: 0, neg: 0 };
+    a.edges.push(e); a.imp += n.structured ? (e.flow || 0) : (e.importance ? Math.max(0, e.importance.d_logloss) : 0);
+    if (e.sum >= 0) a.pos++; else a.neg++;
+    agg.set(key, a);
+  }
+  const maxImp = Math.max(1e-9, ...[...agg.values()].map(a => a.imp));
+  const eg = sv("g"), ng = sv("g");
+  for (const a of agg.values()) {
+    const func = a.edges.some(e => e.functional);
+    const w = func ? 1 + 6 * Math.sqrt(a.imp / maxImp) : 1;
+    const col = !func ? "var(--muted)" : (a.neg === 0 ? "var(--pos)" : a.pos === 0 ? "var(--neg)" : "var(--mixed)");
+    const one = a.edges.length === 1 ? a.edges[0] : null;
+    const best = a.edges.slice().sort((p, q) => (n.structured ? (q.flow || 0) - (p.flow || 0) : ((q.importance || {}).d_logloss || 0) - ((p.importance || {}).d_logloss || 0)))[0];
+    const isSel = S.sel && S.sel.type === "edge" && a.edges.some(e => String(e.innov) === String(S.sel.id));
+    const g = sv("g", { class: "edge" + (one && !one.enabled ? " off" : "") + (isSel ? " sel" : "") + (inPart.has(a.us) && inPart.has(a.ud) ? " inpart" : ""),
+      tabindex: 0, role: "button", "aria-label": one ? `Edge ${nodeName(one.src)} to ${nodeName(one.dst)}, ${one.k}×${one.k}` : `${a.edges.length} connections` });
+    const visP = sv("path", { class: "vis", stroke: col, "stroke-width": w }), hit = sv("path", { class: "hit" });
+    const t = sv("text", { class: "elab", "text-anchor": "middle" });
+    t.textContent = one ? `${one.k}×${one.k}${one.resample ? " " + one.resample : ""}` : `${a.edges.length} links`;
+    g.append(visP, hit, t);
+    keyAct(g, () => select({ type: "edge", id: best.innov }));
+    eg.append(g);
+    G.edges.push({ us: a.us, ud: a.ud, vis: visP, hit, text: t });
+  }
+  const W = S.walk !== null ? n.walk[S.walk] : null;
+  for (const id of units) {
+    if (id.startsWith("P:")) {  // a collapsed part: one function node
+      const pt = n.parts.find(q => q.name === id.slice(2)), col = partColor(pt.name), rep = String(pt.rep);
+      const g = sv("g", { class: "node punit" + (selPart && selPart.name === pt.name ? " sel inpart" : ""), "data-unit": id, tabindex: 0, role: "button",
+        "aria-label": `Part ${pt.sem.name}, ${pt.n_maps || pt.nodes.length} map${(pt.n_maps || pt.nodes.length) > 1 ? "s" : ""}: open it (arrow keys move it)` });
+      if (pt.nodes.length > 1) g.append(sv("rect", { x: 1, y: 1, width: BOX + 6, height: BOX + 6, rx: 6, fill: col, opacity: 0.45 }));
+      g.append(sv("rect", { class: "pframe", x: -5, y: -5, width: BOX + 10, height: BOX + 10, rx: 7, fill: col }));
+      g.append(sv("image", { href: W ? W.maps[rep] : n.nodes[rep].mean_png, x: 0, y: 0, width: BOX, height: BOX, preserveAspectRatio: "none", style: "image-rendering:pixelated" }));
+      const nm = pt.sem.name;
+      const t = sv("text", { class: "lab plab", x: BOX / 2, y: BOX + 17, "text-anchor": "middle" }); t.textContent = nm.length > 20 ? nm.slice(0, 19) + "…" : nm;
+      const nm_ = pt.n_maps || pt.nodes.length;
+      const t2 = sv("text", { class: "sub", x: BOX / 2, y: BOX + 29, "text-anchor": "middle" }); t2.textContent = `${pt.name} · ${nm_} map${nm_ > 1 ? "s" : ""}${pt.children && pt.children.length ? " · " + pt.children.length + " parts" : ""} · ＋`;
+      g.append(t, t2);
+      if (pt.status) { const st_ = sv("circle", { cx: BOX + 1, cy: -1, r: 6, class: "stdot st-" + pt.status }); const tt = sv("title"); tt.textContent = (STATUS[pt.status] || [pt.status])[0]; st_.append(tt); g.append(st_); }
+      keyAct(g, () => { openPart(pt.name); select({ type: "part", id: pt.name }); }, id);
+      ng.append(g); G.units[id] = g;
+      continue;
+    }
+    const k = id, nd = n.nodes[k];
+    const isPort = nd.port_of !== undefined && nd.port_of !== null, isExit = !!(nd.exit_of && nd.exit_of.length);
+    const g = sv("g", { class: "node" + (nd.functional ? "" : " ghost") + (nd.split_of !== null && nd.split_of !== undefined ? " splitcopy" : "") + (isPort ? " port" : "") + (isExit ? " exitnode" : "") + (S.sel && S.sel.type === "node" && String(S.sel.id) === k ? " sel" : "") + (inPart.has(k) ? " inpart" : ""),
+      "data-unit": id, tabindex: 0, role: "button", "aria-label": isPort ? `Entry of ${nd.chain[nd.chain.length - 1]}: a copy of ${nd.port_label === "image" ? "the image" : "map " + nd.port_label}` : `${nodeTitle(k)} (${nodeName(k)})${isExit ? ", an exit" : ""}` });
+    if (isPort) {
+      const c = BOX / 2;
+      g.append(sv("polygon", { class: "frame", points: `${c},${c - 30} ${c + 30},${c} ${c},${c + 30} ${c - 30},${c}` }));
+      g.append(sv("image", { href: W ? W.maps[k] : nd.mean_png, x: c - 15, y: c - 15, width: 30, height: 30, preserveAspectRatio: "none", style: "image-rendering:pixelated" }));
+    } else {
+      g.append(sv("rect", { class: "frame", x: -3, y: -3, width: BOX + 6, height: BOX + 6, rx: 4 }));
+      g.append(sv("image", { href: W ? W.maps[k] : nd.mean_png, x: 0, y: 0, width: BOX, height: BOX, preserveAspectRatio: "none", style: "image-rendering:pixelated" }));
+    }
+    const nm = isPort ? "entry" : nd.kind === "hidden" ? (nd.sem ? nd.sem.name.replace(/ detector$/, "") : "") : nd.kind === "output" ? (n.multiclass ? nd.sem.name : "final score") : "input";
+    const t = sv("text", { class: "lab", x: BOX / 2, y: BOX + 15, "text-anchor": "middle" }); t.textContent = nm.length > 20 ? nm.slice(0, 19) + "…" : nm;
+    const t2 = sv("text", { class: "sub", x: BOX / 2, y: BOX + 27, "text-anchor": "middle" });
+    t2.textContent = isPort ? `copy of ${nd.port_label === "image" ? "image" : "h" + String(nd.port_label).split("_")[0]}` : nd.kind === "hidden" ? (nd.split_label ? `h${nd.split_of} copy ${nd.split_label.split("_")[1]}` : nd.split_of !== null && nd.split_of !== undefined ? `h${nd.split_of}′ (split copy)` : `h${k}`) + (isExit ? " · exit" : "") + (nd.functional ? "" : " · cut off") : (nd.kind === "output" ? `h${k}` : "");
+    g.append(t, t2);
+    keyAct(g, () => select({ type: "node", id: k }), id);
+    ng.append(g); G.units[id] = g;
+  }
+  // ---- the head: each score map -> GAP -> the ten class nodes ("digit 0" ... "digit 9")
+  G.head = []; G.hl = [];
+  const headG = sv("g"), hlG = sv("g", { class: "hlg" }), cg = sv("g");
+  const sel = S.classSel, contrast = S.contrast && sel.length === 2;
+  if (n.multiclass && n.head) {
+    const Wh = n.head.W, outs = n.head.outs.map(String), wmax = Math.max(...Wh.flat().map(Math.abs));
+    for (let d = 0; d < n.k; d++) for (let j = 0; j < outs.length; j++) {
+      const w = Wh[d][j];
+      if (Math.abs(w) < 0.3 * wmax || !units.has(outs[j])) continue;
+      const pth = sv("path", { class: "headedge", fill: "none", stroke: w >= 0 ? "var(--pos)" : "var(--neg)", "stroke-width": 0.6 + 3 * Math.abs(w) / wmax, opacity: 0.45 });
+      headG.append(pth); G.head.push({ o: outs[j], c: "C" + d, el: pth });
+    }
+    const Wk = S.walk !== null ? n.walk[S.walk] : null;
+    const pr = Wk ? (Wk.probs || null) : null;
+    for (let d = 0; d < n.k; d++) {
+      const id = "C" + d, si = sel.indexOf(d);
+      const isPred = Wk && Wk.pred === d, isTrue = Wk && Wk.label === d;
+      const g = sv("g", { class: "cnode" + (si >= 0 ? " csel" : "") + (isPred ? " cpred" : "") + (isTrue ? " ctrue" : ""), "data-unit": id, tabindex: 0, role: "button",
+        "aria-label": `${CLS(d)}: select to show its activation paths` });
+      g.append(sv("rect", { class: "cframe", x: 0, y: 0, width: CW, height: CH, rx: 6, ...(si >= 0 ? { stroke: CCOL[si % CCOL.length] } : {}) }));
+      const t = sv("text", { class: "clab", x: 8, y: 15 }); t.textContent = CLS(d) + (isTrue ? " · true" : "");
+      const t2 = sv("text", { class: "csub", x: 8, y: 30 });
+      t2.textContent = Wk ? `${Number(Wk.logits[d]).toFixed(1)} · ${pr ? Math.round(100 * pr[d]) + "%" : ""}${isPred ? " · answer" : ""}` : `mean score ${Number(n.head.mean_logits[d]).toFixed(1)}`;
+      g.append(t, t2);
+      keyAct(g, () => { const i = S.classSel.indexOf(d); if (i >= 0) S.classSel.splice(i, 1); else { S.classSel.push(d); if (S.classSel.length > 2) S.classSel.shift(); } if (S.classSel.length < 2) S.contrast = false; renderGraph(); }, id);
+      cg.append(g); G.units[id] = g;
+    }
+    // ---- activation paths of the selected classes
+    if (sel.length) {
+      svg.classList.add("pathmode");
+      const P = Wk ? Wk.paths : null, MP = n.mean_paths;
+      const edgeVal = (e, c, signed) => { const id_ = String(e.innov); if (P) { const v = (P.edge[id_] || [])[c] || 0; return signed ? v : Math.abs(v); } const src = signed ? MP.edge_signed : MP.edge_abs; return ((src[id_] || [])[c]) || 0; };
+      const nodeVal = (k2, c) => { if (P) return Math.abs(((P.node[k2] || [])[c]) || 0); return ((MP.node_abs[k2] || [])[c]) || 0; };
+      const layers = contrast ? [{ c: null, col: null }] : sel.map((c, i) => ({ c, col: CCOL[i % CCOL.length] }));
+      const drawn = [];
+      for (const L of layers) {
+        for (const a of agg.values()) {
+          let v = 0;
+          for (const e of a.edges) v += contrast ? edgeVal(e, sel[0], true) - edgeVal(e, sel[1], true) : edgeVal(e, L.c, false);
+          drawn.push({ a, v, L });
+        }
+      }
+      const vmax = Math.max(1e-9, ...drawn.map(q => Math.abs(q.v)));
+      for (const q of drawn) {
+        if (Math.abs(q.v) < 0.03 * vmax) continue;
+        const col = contrast ? (q.v >= 0 ? CCOL[0] : CCOL[1]) : q.L.col;
+        const pth = sv("path", { fill: "none", stroke: col, "stroke-width": 1 + 9 * Math.abs(q.v) / vmax, opacity: 0.85, "stroke-linecap": "round" });
+        hlG.append(pth); G.hl.push({ us: q.a.us, ud: q.a.ud, el: pth });
+      }
+      // head edges of the selected classes, by their exact terms W[c, m]·GAP(out_m)
+      const H = Wk ? Wk.paths.head : n.head.mean_terms, outs = n.head.outs.map(String);
+      const hv = [];
+      sel.forEach((c, i) => outs.forEach((o, j) => { if (units.has(o)) hv.push({ o, c, i, v: H[c][j] }); }));
+      const hmax = Math.max(1e-9, ...hv.map(q => Math.abs(q.v)));
+      for (const q of hv) {
+        if (Math.abs(q.v) < 0.05 * hmax) continue;
+        const pth = sv("path", { fill: "none", stroke: CCOL[q.i % CCOL.length], "stroke-width": 1 + 7 * Math.abs(q.v) / hmax, opacity: q.v >= 0 ? 0.85 : 0.35, "stroke-dasharray": q.v >= 0 ? "" : "4 3" });
+        hlG.append(pth); G.hl.push({ us: q.o, ud: "C" + q.c, el: pth, head: true });
+      }
+      // nodes and collapsed parts light up in proportion to their share
+      const unitVal = {};
+      for (const k2 of Object.keys(n.nodes)) {
+        const u = unitOf(k2);
+        let v = 0;
+        if (contrast) { v = P ? Math.abs((((P.node[k2] || [])[sel[0]]) || 0) - (((P.node[k2] || [])[sel[1]]) || 0)) : Math.abs((((MP.node_signed[k2] || [])[sel[0]]) || 0) - (((MP.node_signed[k2] || [])[sel[1]]) || 0)); }
+        else for (const c of sel) v += nodeVal(k2, c);
+        unitVal[u] = (unitVal[u] || 0) + v;
+      }
+      const umax = Math.max(1e-9, ...Object.values(unitVal));
+      for (const [u, el_] of Object.entries(G.units)) {
+        if (u.startsWith("C")) continue;
+        el_.style.opacity = String(0.18 + 0.82 * Math.min(1, (unitVal[u] || 0) / umax));
+      }
+    }
+  }
+  vp.append(bg, hg, headG, eg, hlG, ng, cg);
+  box.append(svg);
+  updateGeometry(); applyView();
+  attachPanZoom(svg);
+  const cb = $("#contrast");
+  cb.hidden = !(n.multiclass && S.classSel.length === 2); cb.setAttribute("aria-pressed", String(S.contrast));
+  cb.textContent = S.classSel.length === 2 ? `Contrast '${S.classSel[0]}' − '${S.classSel[1]}'` : "Contrast";
+  $("#clearclasses").hidden = !S.classSel.length;
+  const nOpen = n.parts.filter(p => S.expanded.has(p.name)).length;
+  $("#thumbmode").textContent = (W ? `Pictures: ${SPLIT()} example #${W.i}` : `Pictures: average response (${SPLIT()} images)`) + ` · ${nOpen} of ${n.parts.length} parts open` +
+    (S.classSel.length ? ` · paths into ${S.classSel.map(d => "'" + d + "'").join(" and ")}${S.contrast ? " (contrast)" : ""}${W ? " for this image" : " on average"}` : "");
+  $("#legend").innerHTML = "";
+  $("#legend").append(
+    el("span", {}, el("span", { class: "sw", style: "border-color:var(--pos)" }), "boosts its target"),
+    el("span", {}, el("span", { class: "sw", style: "border-color:var(--neg)" }), "suppresses its target"),
+    el("span", {}, el("span", { class: "sw", style: "border-color:var(--mixed)" }), "merged links, both signs"),
+    el("span", {}, "thicker = matters more"),
+    el("span", {}, el("span", { class: "chip", style: "background:" + PCOL[0] }), n.record_based ? "an annotation (named function): click to open one level, click its band label to close" : "a part (named function): click to open, click its label to close"),
+    n.record_based ? el("span", {}, "◇ entry (a copy of an outside map) · orange frame: exit · dashed: split copy · dot: proven / supported / unknown") : null,
+    el("span", {}, "drag a box to move it, drag the background to pan, wheel or pinch to zoom"),
+    n.multiclass && n.head ? el("span", {}, "click one or two digit nodes to light up their activation paths (width ∝ gradient × input); with two, Contrast shows what tips one against the other") : null,
+    el("span", {}, "detector response", el("span", { class: "ramp seq" }), "none → strong"),
+    el("span", {}, n.multiclass ? "score maps" : "final score map", el("span", { class: "ramp div" }), n.multiclass ? "low ← → high" : "towards 0 ← → towards 1"));
+}
+function attachPanZoom(svg) {
+  const ptrs = new Map();
+  let drag = null, pinch = null;
+  const local = ev => { const r = svg.getBoundingClientRect(); return { x: ev.clientX - r.left, y: ev.clientY - r.top }; };
+  svg.addEventListener("pointerdown", ev => {
+    if (ev.button !== undefined && ev.button > 0) return;
+    ptrs.set(ev.pointerId, local(ev));
+    if (ptrs.size === 2) {
+      const [a, b] = [...ptrs.values()], v = view();
+      pinch = { d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, k0: v.k, tx0: v.tx, ty0: v.ty, m: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } };
+      drag = null;
+      return;
+    }
+    const u = ev.target.closest && ev.target.closest("[data-unit]");
+    const id = u ? u.getAttribute("data-unit") : null;
+    drag = { id, pid: ev.pointerId, p0: local(ev), moved: false, start: id ? { ...posOf(id) } : { ...view() } };
+  });
+  svg.addEventListener("pointermove", ev => {
+    if (!ptrs.has(ev.pointerId)) return;
+    ptrs.set(ev.pointerId, local(ev));
+    const v = view();
+    if (pinch && ptrs.size >= 2) {
+      const [a, b] = [...ptrs.values()];
+      const k = Math.max(0.15, Math.min(4, pinch.k0 * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d0));
+      v.tx = pinch.m.x - (pinch.m.x - pinch.tx0) * k / pinch.k0; v.ty = pinch.m.y - (pinch.m.y - pinch.ty0) * k / pinch.k0; v.k = k;
+      applyView(); return;
+    }
+    if (!drag || drag.pid !== ev.pointerId) return;
+    const p = local(ev), dx = p.x - drag.p0.x, dy = p.y - drag.p0.y;
+    if (!drag.moved) {
+      if (Math.hypot(dx, dy) < DRAG_PX) return;
+      drag.moved = true;
+      try { svg.setPointerCapture(ev.pointerId); } catch (e) { /* not capturable */ }
+      svg.classList.add("dragging");
+    }
+    if (drag.id) { ovr()[drag.id] = { x: drag.start.x + dx / v.k, y: drag.start.y + dy / v.k }; updateGeometry(); }
+    else { v.tx = drag.start.tx + dx; v.ty = drag.start.ty + dy; applyView(); }
+  });
+  const end = ev => {
+    ptrs.delete(ev.pointerId);
+    if (ptrs.size < 2) pinch = null;
+    if (drag && drag.pid === ev.pointerId) {
+      if (drag.moved) { S.suppressClick = true; setTimeout(() => { S.suppressClick = false; }, 0); if (drag.id) saveOvr(); }
+      drag = null;
+      svg.classList.remove("dragging");
+    }
+  };
+  svg.addEventListener("pointerup", end);
+  svg.addEventListener("pointercancel", end);
+  svg.addEventListener("wheel", ev => {
+    ev.preventDefault();
+    const v = view(), p = local(ev), k = Math.max(0.15, Math.min(4, v.k * Math.exp(-ev.deltaY * 0.0015)));
+    v.tx = p.x - (p.x - v.tx) * k / v.k; v.ty = p.y - (p.y - v.ty) * k / v.k; v.k = k;
+    applyView();
+  }, { passive: false });
+}
+function resetLayout() { delete S.ovr[netKey()]; delete S.view[netKey()]; saveOvr(); renderGraph(); }
+
+// ---------- class profile (k-class): how often it fires on each digit, and its mean response
+function profileBars(pr, digits) {
+  const k = pr.fire.length, W = 330, H = 118, bw = (W - 20) / k, mmax = Math.max(1e-9, ...pr.mean.map(Math.abs));
+  const s = sv("svg", { class: "bars", width: "100%", viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Firing rate per digit" });
+  const on = new Set((digits && digits.on) || []);
+  for (let d = 0; d < k; d++) {
+    const x = 10 + d * bw, h = 70 * pr.fire[d];
+    s.append(sv("rect", { x: x + 3, y: 84 - h, width: bw - 6, height: Math.max(1, h), fill: on.has(d) ? "var(--accent)" : "var(--muted)", opacity: on.has(d) ? 1 : 0.55 }));
+    const mh = 70 * Math.max(0, pr.mean[d]) / mmax;
+    s.append(sv("line", { x1: x + 2, x2: x + bw - 2, y1: 84 - mh, y2: 84 - mh, stroke: "var(--ink)", "stroke-width": 2 }));
+    const t = sv("text", { x: x + bw / 2, y: 98, "text-anchor": "middle" }); t.textContent = CN(d); s.append(t);
+    const tv = sv("text", { x: x + bw / 2, y: 82 - h - 3, "text-anchor": "middle", fill: "var(--muted)", "font-size": 9 }); tv.textContent = Math.round(100 * pr.fire[d]); s.append(tv);
+  }
+  s.append(sv("line", { x1: 8, x2: W - 8, y1: 84, y2: 84, stroke: "var(--line)" }));
+  return el("div", {}, s, el("p", { class: "note" }, `Bars: % of ${SPLIT()} images of each digit on which it fires;`, " black ticks: its mean response per digit (scaled). Highlighted: the digits it responds to most."));
+}
+
+// ---------- probe bars
+function probeBars(rows) {
+  // rows: [{name, max, mean}] signed in [-1, 1]
+  const W = 330, rowH = 30, lab = 92, H = rows.length * rowH + 26;
+  const x = v => lab + (v + 1) / 2 * (W - lab - 10);
+  const s = sv("svg", { class: "bars", width: "100%", viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Selectivity bars" });
+  for (const v of [-1, -0.5, 0, 0.5, 1]) {
+    s.append(sv("line", { x1: x(v), x2: x(v), y1: 4, y2: H - 18, stroke: "var(--line)", "stroke-dasharray": v === 0 ? "" : "2 3" }));
+    const t = sv("text", { x: x(v), y: H - 5, "text-anchor": "middle", fill: "var(--muted)" }); t.textContent = v; s.append(t);
+  }
+  rows.forEach((r, i) => {
+    const y = 6 + i * rowH;
+    const t = sv("text", { x: 0, y: y + 15 }); t.textContent = r.name; s.append(t);
+    [["max", r.max, "var(--accent)"], ["mean", r.mean, "var(--muted)"]].forEach(([nm, v, c], j) => {
+      const yy = y + j * 11 + 2;
+      s.append(sv("rect", { x: Math.min(x(0), x(v)), y: yy, width: Math.max(1, Math.abs(x(v) - x(0))), height: 9, fill: c }));
+      const tv = sv("text", { x: v >= 0 ? x(v) + 3 : x(v) - 3, y: yy + 8, "text-anchor": v >= 0 ? "start" : "end", fill: "var(--muted)" });
+      tv.textContent = sgn2(v); s.append(tv);
+    });
+  });
+  return el("div", {}, s, el("div", { class: "legend" },
+    el("span", {}, el("span", { class: "sw", style: "border-color:var(--accent)" }), "max pooling"),
+    el("span", {}, el("span", { class: "sw", style: "border-color:var(--muted)" }), "average pooling"),
+    el("span", {}, "dashed: τ = ±0.5")));
+}
+
+// ---------- inspector
+function impTable(im, what) {
+  if (!im) return el("p", { class: "note" }, "Not ablated (not on an input → output path).");
+  const n = N();
+  return el("div", {},
+    el("div", { class: "chips" }, el("span", { class: "pill " + (im.class === "signal" ? "good" : "warn") }, im.class === "signal" ? "signal-carrying" : "marginal")),
+    el("div", { class: "tablewrap" }, el("table", { class: "t", style: "margin-top:6px" },
+      el("tr", {}, el("th", {}, ""), el("th", {}, "accuracy"), el("th", {}, "log-loss")),
+      el("tr", {}, el("td", {}, "full network"), el("td", {}, f3(n.importance_base.acc)), el("td", {}, f3(n.importance_base.logloss))),
+      el("tr", {}, el("td", {}, `${what} mean-ablated`), el("td", {}, f3(im.acc)), el("td", {}, f3(im.logloss))),
+      el("tr", {}, el("td", {}, "change"), el("td", {}, `drop ${sgn(im.d_acc)}`), el("td", {}, `rise ${sgn(im.d_logloss)}`)))),
+    el("p", { class: "note" }, `Validation split, ${n.n_val} images. Signal-carrying if drop ≥ ${n.thresholds.d_acc} or rise ≥ ${n.thresholds.d_logloss}.`));
+}
+function section(title, ...kids) { return el("div", {}, el("h4", {}, title), ...kids); }
+
+function inspectNode(k) {
+  const n = N(), nd = n.nodes[k], box = $("#insp"), sm = nd.sem, lib = n.semantics.library;
+  const sz = nd.size.join("×");
+  box.innerHTML = "";
+  const eyebrow = nd.kind === "hidden" ? `Detector · h${k} · ${sz} map` : nd.kind === "output" ? `Final score map · ${sz}` : `Input image · ${sz}`;
+  box.append(el("div", {}, el("div", { class: "eyebrow" }, eyebrow), el("h2", {}, cap(nodeTitle(k))),
+    sm ? el("p", { class: "reading" }, sm.phrase + ".") : null,
+    el("div", { class: "chips" }, sm && nd.kind === "hidden" ? statusPill(sm.status) : null,
+      nd.part ? el("button", { class: "pill acc", type: "button", onclick: () => select({ type: "part", id: nd.part }) }, `part: ${nd.part_name || nd.part}`) : null,
+      !nd.functional ? el("span", { class: "pill warn" }, "cut off from the output") : null)));
+  if (nd.kind === "input") {
+    box.append(section("Average input (test images)", el("div", { class: "row" }, img(nd.mean_png, "average"), img(nd.sd_png, "spread"))));
+    return;
+  }
+  if (sm && nd.concepts_bf) {
+    box.append(section("Concept check (all concepts, within digits, ink held fixed)", conceptTable(nd.concepts_bf, n.library_bf,
+      { note: `“Fires” = its ${sm.pooling === "max" ? "strongest response anywhere in the image" : "average response"} is above its median over the validation images. Each row compares images of the same digit with and without the concept (averaged over digits with at least 15 images each way); “more / less with it” also needs the link to hold with the ink count held fixed. The same concept library as the annotation cards; hover a concept for its rule.` })));
+  } else if (sm) {
+    const rows = lib.names.map(c => sm.rates[c] ? el("tr", {}, el("td", {}, lib.short[c].replace(/-/g, " ")), el("td", {}, pct(sm.rates[c].with)), el("td", {}, pct(sm.rates[c].without)), el("td", { class: "muted" }, `${sm.rates[c].n_with} / ${sm.rates[c].n_without}`)) : null);
+    box.append(section("Evidence", sm.rate ? el("p", {}, sm.rate) : null, sm.within ? el("p", { style: "margin-top:4px" }, sm.within) : null,
+      el("div", { class: "tablewrap", style: "margin-top:6px" }, el("table", { class: "t" },
+        el("tr", {}, el("th", {}, "concept"), el("th", {}, "fires with it"), el("th", {}, "without"), el("th", {}, "images")), rows)),
+      el("p", { class: "note" }, `“Fires” = its ${sm.pooling === "max" ? "strongest response anywhere in the image" : "average response"} is at least ${Number(sm.threshold).toPrecision(3)} (test images; the cut that best separates ${lib.words[sm.order[0]]}).`)));
+  }
+  if (sm && sm.profile) box.append(section("Which digits it responds to", profileBars(sm.profile, sm.digits)));
+  if (nd.top) {
+    box.append(section("Images it fires on most", el("div", { class: "row tight" }, nd.top.map(t => img(t.png, t.tags, 64, `example ${t.i}`))),
+      el("p", { class: "note" }, `Real ${SPLIT()} images, its response overlaid in colour. Caption: the concepts in that image.`)));
+  }
+  if (nd.kind === "hidden" && sm && (sm.effect || sm.role)) box.append(section("What it does to the answer", sm.effect ? el("p", {}, sm.effect) : null, sm.role ? el("p", { style: "margin-top:4px" }, sm.role) : null));
+  // ---- the maths
+  const M = [];
+  M.push(section("Formula", formulaBlock([`h_{${k}} = ${nd.formula_tex}`], [nd.formula_text]),
+    el("p", { class: "note" }, `b_${k} = ${Number(nd.bias).toFixed(3)}. ` + (nd.rules && nd.rules.length ? "Simplified by: " + nd.rules.join("; ") + "." : "No exact simplification applies here.") + ` Formula vs engine: max |Δ| = ${Number(nd.formula_err).toExponential(1)}. ${nd.kind === "hidden" ? "ReLU map" : "Identity map"}, level ${nd.level}${nd.depth !== undefined ? ", depth " + nd.depth : ""}.`)));
+  if (nd.rf) {
+    const H = n.cfg.levels[0];
+    M.push(section("Receptive field", el("p", {}, `One pixel of this ${sz} map reads a ${nd.rf.h}×${nd.rf.w} box of input pixels` + (nd.rf.h >= H[0] ? `, wider than the ${H.join("×")} image.` : ` (${(100 * nd.rf.frac_image).toFixed(0)} % of the ${H.join("×")} image).`)),
+      el("p", { class: "note" }, "Structural: composed kernel extents with the resamplings, on a large canvas.")));
+  }
+  if (nd.where && nd.where.length) M.push(section("Incoming kernels", el("div", { class: "kgrid" }, nd.where.map(w => heat(w.kernel, { caption: `K[${w.label}] ${w.kernel.length}×${w.kernel.length}`, maxpx: 110 }))),
+    el("p", { class: "note" }, "Hover a cell for its value; offsets from the kernel centre.")));
+  if (nd.eff) {
+    const ek = nd.eff.kernel, exact = nd.eff.exact;
+    M.push(section(exact ? "Effective input kernel (exact)" : "Gradient receptive field (approximate)",
+      el("div", { class: "row" }, heat(ek, { caption: exact ? `x → pre-activation, ${ek.length}×${ek[0].length}` : "mean ∂pre[centre]/∂x", maxpx: 170 })), el("p", { class: "note" }, nd.eff.method + ".")));
+  }
+  M.push(section("Activation maps (test split)", el("div", { class: "row" },
+    img(nd.mean_png, `mean · max ${Number(nd.mean_scale).toPrecision(2)}`), img(nd.sd_png, `SD · max ${Number(nd.sd_scale).toPrecision(2)}`))));
+  if (nd.top) {
+    const ex = arr => el("div", { class: "row tight" }, arr.map(t => img(t.png, `#${t.i} · ${Number(t.v).toPrecision(2)}`, 56, `example ${t.i}`)));
+    M.push(section("Top and bottom examples (spatial-max pooled value)", el("div", { class: "note" }, "Top 6"), ex(nd.top), el("div", { class: "note", style: "margin-top:6px" }, "Bottom 6"), ex(nd.bottom)));
+    M.push(section("Saliency and feature visualisation", el("div", { class: "row" },
+      img(nd.saliency_png, "saliency"), img(nd.featvis.png, "optimised input"), img(nd.featvis.map_png, "its map")),
+      el("div", { class: "synthetic", style: "margin-top:6px" }, "Synthetic input, not data"),
+      el("p", { class: "note" }, `Saliency: |∂ mean-pooled activation / ∂ input| averaged over the 16 top examples. Feature visualisation: x = sigmoid(u) maximising the mean-pooled activation (Adam, ${nd.featvis.settings.steps} steps, L2 ${nd.featvis.settings.l2}, TV ${nd.featvis.settings.tv}, seed ${nd.featvis.settings.seed}); it reaches ${Number(nd.featvis.pooled_mean).toPrecision(3)} vs ${Number(nd.featvis.data_p99).toPrecision(3)} at the data's 99th percentile.`)));
+  }
+  if (nd.functional && nd.kind === "hidden" && nd.attribution) M.push(section("Attribution to each digit's score (gradient × input, mean |value|)", digitBars(nd.attribution, { fmt: v => Number(v).toFixed(1) })));
+  else if (nd.functional && nd.kind === "hidden") M.push(section("Importance (mean-ablation, validation split)", impTable(nd.importance, "node")));
+  if (sm && nd.concepts_bf) {
+    M.push(section("Concept table, in numbers", el("p", { class: "small mono" }, conceptRows(nd.concepts_bf).map(r => `${r.concept}: s_within ${r.s_within === null ? "–" : sgn2(r.s_within)}, partial r ${sgn2(r.partial_r)}, n ${r.n_with}/${r.n_without}`).join(" · ")),
+      el("p", { class: "note" }, `s_within = 2·AUC − 1 of the ${sm.pooling}-pooled map, images with vs without the concept within one digit (weighted over digits); partial r with the digit and the ink count held fixed (validation images).`)));
+  } else if (sm) {
+    const rows = lib.names.map(c => ({ name: lib.short[c], max: sm.pooling === "max" ? sm.s[c] : sm.s_alt[c], mean: sm.pooling === "mean" ? sm.s[c] : sm.s_alt[c] }));
+    M.push(section("Concept probe: max vs average pooling", probeBars(rows),
+      el("p", { class: "note" }, `s = 2·AUC − 1 of the pooled map for concept present vs absent (test split, −1 to +1). The reading uses ${sm.pooling} pooling; status thresholds |s| ≥ 0.5 (concept), ≥ 0.3 (weak). A second concept is named only if strong and not confounded with the first (|φ| < 0.3).`)));
+  }
+  if (nd.probe) M.push(el("p", { class: "note" }, `Planted-concept categories (four shapes, τ = 0.5): max pooling ${nd.probe.max.category}${nd.probe.max.strong.length ? " (" + nd.probe.max.strong.join("+") + ")" : ""}; average pooling ${nd.probe.mean.category}${nd.probe.mean.strong.length ? " (" + nd.probe.mean.strong.join("+") + ")" : ""}.`));
+  if (nd.class_sel) M.push(el("p", { class: "note" }, `Class selectivity (${n.class_names[1]} vs ${n.class_names[0]}): ${sgn2(nd.class_sel.max)} max pooling, ${sgn2(nd.class_sel.mean)} average pooling.`));
+  if (nd.description) M.push(el("p", { class: "note" }, "Technical summary: " + nd.description));
+  box.append(maths(...M));
+}
+
+function inspectEdge(id) {
+  const n = N(), e = n.edges[id], box = $("#insp");
+  box.innerHTML = "";
+  const dst = n.nodes[e.dst];
+  const toOut = dst && dst.kind === "output";
+  const dir = toOut ? (n.multiclass ? `It ${e.sum >= 0 ? "raises" : "lowers"} ${nodeTitle(String(e.dst))}, which pushes the answer towards '${e.towards}'.` : `It pushes the answer towards '${(n.root.head_w * e.sum > 0) ? n.class_names[1] : n.class_names[0]}'.`) : (e.sum >= 0 ? `It boosts the ${nodeTitle(e.dst)}.` : `It suppresses the ${nodeTitle(e.dst)}.`);
+  box.append(el("div", {}, el("div", { class: "eyebrow" }, `Connection · ${e.src < 0 ? "input" : "h" + e.src} → h${e.dst}`),
+    el("h2", {}, `${cap(nodeTitle(e.src))} → ${nodeTitle(e.dst)}`),
+    el("p", { class: "reading" }, e.functional ? dir : "Not used: this gene is disabled or cut off from the output."),
+    el("div", { class: "chips" }, e.enabled ? null : el("span", { class: "pill warn" }, "disabled gene"), e.functional ? null : el("span", { class: "pill warn" }, "not on an input → output path"))));
+  if (e.functional && e.importance) box.append(section("What it does to the answer", el("p", {}, effectText(e.importance))));
+  if (e.example) {
+    const x = e.example;
+    box.append(section(`With and without this connection · test image #${x.i}`,
+      el("div", { class: "row" }, img(x.input_png, "image"), img(x.with_png, "with"), img(x.without_png, "without"), img(x.contrib_png, "what it adds")),
+      el("p", { class: "note" }, n.multiclass ? `The image where the ${nodeTitle(String(e.dst))} responds most. Score for '${x.class}' (its answer) ${Number(x.logit_with).toFixed(2)} with the connection, ${Number(x.logit_without).toFixed(2)} without; without it the answer is '${x.pred_without}'.` : `The image where the ${nodeTitle(e.dst)} responds most. Score ${Number(x.logit_with).toFixed(2)} with the connection, ${Number(x.logit_without).toFixed(2)} without.`)));
+  }
+  box.append(maths(
+    section("Kernel", el("div", { class: "row" }, heat(e.kernel, { caption: `K[${e.src === -1 ? "x" : e.src}→${e.dst}] ${e.k}×${e.k}`, maxpx: 160 })),
+      el("p", { class: "note" }, `Sum ${Number(e.sum).toFixed(3)}, L1 norm ${Number(e.norm).toFixed(3)}. Stride 1, "same" zero padding at the target's resolution${e.resample ? ", after the source map is " + (e.resample.startsWith("P") ? "average-pooled (" + e.resample + ")" : "upsampled, nearest (" + e.resample + ")") : ""}. Innovation ${e.innov}.`)),
+    e.functional ? section("Importance (edge term held at its mean map, validation split)", impTable(e.importance, "edge contribution")) : null,
+    e.example ? el("p", { class: "note" }, `"Without" sets this edge's term to zero (importance holds it at its mean instead). Target maps share one scale; the term on ±${Number(e.example.contrib_scale).toPrecision(2)}.`) : null));
+}
+
+function digitBars(vals, opts) {
+  const k = vals.length, W = 330, H = 104, bw = (W - 20) / k, vmax = opts.vmax || Math.max(1e-9, ...vals.map(Math.abs));
+  const s = sv("svg", { class: "bars", width: "100%", viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": opts.label || "per digit" });
+  const hl = new Set(opts.highlight || []);
+  vals.forEach((v, d) => {
+    const x = 10 + d * bw, h = 66 * Math.abs(v) / vmax;
+    s.append(sv("rect", { x: x + 3, y: 76 - h, width: bw - 6, height: Math.max(1, h), fill: hl.has(d) ? "var(--accent)" : (v < 0 ? "var(--neg)" : "var(--muted)"), opacity: hl.has(d) ? 1 : 0.6 }));
+    const t = sv("text", { x: x + bw / 2, y: 92, "text-anchor": "middle" }); t.textContent = CN(d); s.append(t);
+    const tv = sv("text", { x: x + bw / 2, y: 74 - h - 3, "text-anchor": "middle", fill: "var(--muted)", "font-size": 9 }); tv.textContent = opts.fmt ? opts.fmt(v) : Math.round(100 * v); s.append(tv);
+  });
+  s.append(sv("line", { x1: 8, x2: W - 8, y1: 76, y2: 76, stroke: "var(--line)" }));
+  return s;
+}
+function inspectStructure(name) {
+  const n = N(), p = n.parts.find(q => q.name === name), box = $("#insp"), sm = p.sem, a = p.analysis;
+  box.innerHTML = "";
+  box.append(el("div", {}, el("div", { class: "eyebrow" }, `Structure · ${p.name} · ${p.nodes.length} map${p.nodes.length > 1 ? "s" : ""}`), el("h2", {}, sm.name),
+    el("div", { class: "chips" }, statusPill(sm.status), el("button", { class: "pill", type: "button", onclick: () => { if (S.expanded.has(p.name)) S.expanded.delete(p.name); else S.expanded.add(p.name); renderGraph(); } }, "open / close in the graph"))));
+  box.append(section("What it computes (the hypothesis)", el("p", { class: "reading" }, p.computes)));
+  if (a.rate) box.append(section("Behaviour (the conclusion)", el("p", {}, p.behaviour),
+    digitBars(a.rate, { highlight: a.rate.map((r, d) => (r >= 0.5 ? d : -1)), label: "firing rate per digit" }),
+    el("p", { class: "note" }, `% of ${SPLIT()} images of each digit on which its main exit (h${p.main}, ${a.pool === "max" ? "peak" : "average"} response) passes the cut that best separates ${a.concept ? n.semantics.library.words[a.concept] : "its concept"}.`)));
+  box.append(section("Evidence", el("p", {}, p.evidence)));
+  if (a.test && a.test.by_digit && Object.keys(a.test.by_digit).length) {
+    const rows = Object.entries(a.test.by_digit).map(([d, r]) => el("tr", {}, el("td", {}, d), el("td", { class: "num" }, sgn2(r.s)), el("td", { class: "num" }, `${r.n_with} / ${r.n_without}`)));
+    box.append(section("Within-digit test", el("div", { class: "tablewrap" }, el("table", { class: "t" },
+      el("tr", {}, el("th", {}, "digit"), el("th", {}, "s within the digit"), el("th", {}, `with / without ${n.semantics.library.short[a.concept] || ""}`)), rows)),
+      el("p", { class: "note" }, "s = 2·AUC − 1 of the exit's response, images of one digit with the concept vs without (digits with at least 15 of each). This separates the mechanism from the digit: a class correlate has s near 0 here.")));
+  }
+  const iv = (a.interventions || []).filter(r => r.example);
+  if (iv.length) box.append(section("Image edits", el("div", { class: "row tight" }, iv.map(r => el("div", {},
+    el("div", { class: "row tight" }, img(r.example.before_png, `before · ${Number(r.example.resp_before).toPrecision(2)}`, 64), img(r.example.after_png, `after ${r.kind} · ${Number(r.example.resp_after).toPrecision(2)}`, 64)),
+    el("p", { class: "note" }, `${r.kind}: ${sgn2(r.effect_sd)} SD against its control (${r.n} edited images).`)))),
+    el("p", { class: "note" }, "close = thicken strokes (3×3 dilation); images where that closes a new loop vs those where it does not. fill = fill the loops with ink vs inking as many pixels just outside the digit. add_stem / add_top_bar = draw the stroke vs the same stroke turned 90°.")));
+  box.append(section("Share of each digit's score", digitBars(p.share, { label: "share per digit" }),
+    el("p", { class: "note" }, "Attribution (gradient × input at its exits), as a share of all structures, per digit."), el("p", {}, sm.effect)));
+  box.append(section("Components", el("div", { class: "chips" }, p.components.map(c => el("button", { class: "pill", type: "button", onclick: () => select({ type: "node", id: String(c.node) }) },
+    `h${c.split_of !== null && c.split_of !== undefined ? c.split_of + "′" : c.node} · ${c.label}${c.role !== "inside" ? " (" + c.role + ")" : ""}`))),
+    el("p", { class: "note" }, "Each map named by its best image concept (|s| ≥ 0.3), as a component of this structure's mechanism; ′ = a split copy.")));
+  box.append(maths(
+    section("Entries and exits", el("dl", { class: "kv" },
+      el("dt", {}, "Entries"), el("dd", {}, p.entries.map(nodeName).join(", ")),
+      el("dt", {}, "Exits"), el("dd", {}, p.exits.map(nodeName).join(", ")))),
+    section("Formula (closed form)", formulaBlock(p.formula_tex, p.formula_text)),
+    section("Importance (whole structure mean-ablated, validation split)", impTable(p.importance, "structure")),
+    el("p", { class: "note" }, "All tests on the main exit: " + Object.entries(a.all_tests || {}).map(([k2, v]) => `${k2} s ${sgn2(v.s)} within ${v.within_mean === null ? "–" : sgn2(v.within_mean)} ink-r ${sgn2(v.partial_r_ink)}`).join("; "))));
+}
+function inspectPart(name) {
+  if (N().record_based) return inspectAnnotation(name);
+  if (N().structured) return inspectStructure(name);
+  const n = N(), p = n.parts.find(q => q.name === name), box = $("#insp"), sm = p.sem;
+  box.innerHTML = "";
+  box.append(el("div", {}, el("div", { class: "eyebrow" }, `Part · ${p.name} · ${p.nodes.length} detector${p.nodes.length > 1 ? "s" : ""}`), el("h2", {}, sm.name),
+    el("p", { class: "reading" }, sm.phrase + "."), el("div", { class: "chips" }, statusPill(sm.status))));
+  box.append(section("Evidence", sm.rate ? el("p", {}, sm.rate) : null, sm.within ? el("p", { style: "margin-top:4px" }, sm.within) : null,
+    el("p", { class: "note", style: "margin-top:4px" }, `Measured on its main output, the ${nodeTitle(String(p.rep))} (h${p.rep}).`)));
+  const rep = n.nodes[String(p.rep)];
+  if (sm.profile) box.append(section("Which digits it responds to", profileBars(sm.profile, sm.digits)));
+  box.append(el("div", { class: "chips" }, el("button", { class: "pill", type: "button", onclick: () => { if (S.expanded.has(p.name)) S.expanded.delete(p.name); else S.expanded.add(p.name); renderGraph(); } }, "open / close in the graph")));
+  if (rep && rep.top) box.append(section("Images it fires on most", el("div", { class: "row tight" }, rep.top.map(t => img(t.png, t.tags, 64, `example ${t.i}`)))));
+  box.append(section("What it does to the answer", el("p", {}, sm.effect), sm.role ? el("p", { style: "margin-top:4px" }, sm.role) : null));
+  box.append(section("Made of", el("p", {}, sm.made_of), el("div", { class: "chips" }, p.nodes.map(k => el("button", { class: "pill", type: "button", onclick: () => select({ type: "node", id: String(k) }) }, `h${k} · ${nodeTitle(String(k))}`)))));
+  const comp = p.where.filter(w => !w.simple);
+  box.append(maths(
+    section("Entries and exits", el("dl", { class: "kv" },
+      el("dt", {}, "Entries"), el("dd", {}, p.entries.map(nodeName).join(", ")),
+      el("dt", {}, "Exits"), el("dd", {}, p.exits.map(nodeName).join(", ")),
+      el("dt", {}, "Feeds"), el("dd", {}, (p.feeds_output ? ["output map"] : []).concat(p.consumers.filter(c => c.startsWith("P"))).join(", ")))),
+    section("Formula (closed form)", formulaBlock(p.formula_tex, p.formula_text),
+      el("p", { class: "note" }, "A node used once inside the part (and not an exit) is inlined; the others are named equations. " + (p.rules.length ? "Simplified by: " + p.rules.join("; ") + "." : "No exact simplification applies."))),
+    comp.length ? section("Effective kernels", el("div", { class: "kgrid" }, comp.map(w => heat(w.kernel, { caption: `K~[${w.label}]`, maxpx: 140 })))) : null,
+    section("Importance (whole part mean-ablated, validation split)", impTable(p.importance, "part")),
+    section("Kernels", el("div", { class: "kgrid" }, p.where.filter(w => w.simple).map(w => heat(w.kernel, { caption: `K[${w.label}]`, maxpx: 80 })))),
+    el("p", { class: "note" }, "Technical summary: " + p.description)));
+}
+
+function renderInspector() {
+  if (!S.sel) { $("#insp").innerHTML = ""; $("#insp").append(el("p", { class: "muted" }, "Click a detector, a connection or a part.")); return; }
+  if (S.sel.type === "node") inspectNode(String(S.sel.id));
+  else if (S.sel.type === "edge") inspectEdge(String(S.sel.id));
+  else inspectPart(S.sel.id);
+}
+
+// ---------- walk-through
+function fitView() { const bw = $("#graphbox").clientWidth || 800; S.view[netKey()] = { tx: 0, ty: 0, k: Math.min(1, bw / fullLayout().width) }; }
+function renderConfusions() {
+  const n = N(), box = $("#confpick"); box.innerHTML = "";
+  if (!n.confusions || !n.confusions.length) return;
+  const cur = S.walk !== null ? n.walk[S.walk] : null;
+  box.append(el("div", { class: "note" }, `Confusions (most frequent on the ${n.draft ? "" : "full "}validation set):`),
+    el("div", { class: "chips" }, n.confusions.map(c => el("button", { type: "button", class: "pill", "aria-pressed": String(!!(cur && cur.pair === `${c.a}-${c.b}`)),
+      onclick: () => { S.walk = c.items[0]; const w0 = n.walk[c.items[0]]; S.classSel = [w0.pred, w0.pred === c.a ? c.b : c.a]; S.contrast = true; fitView(); renderGraph(); renderWalk(); } },
+      `${CN(c.a)} ↔ ${CN(c.b)} · ${c.count} (${CN(c.a)}→${CN(c.b)} ${c.a_as_b}, ${CN(c.b)}→${CN(c.a)} ${c.b_as_a})`))));
+  if (cur && cur.pair) {
+    const c = n.confusions.find(q => `${q.a}-${q.b}` === cur.pair);
+    box.append(el("div", { class: "row tight", style: "margin-top:6px" }, c.items.map(j => {
+      const w = n.walk[j];
+      return el("button", { type: "button", class: "wbtn", "aria-pressed": String(S.walk === j), "aria-label": `validation ${w.i}: is ${CN(w.label)}, says ${CN(w.pred)}`,
+        onclick: () => { S.walk = j; S.classSel = [w.pred, w.pred === c.a ? c.b : c.a]; S.contrast = true; renderGraph(); renderWalk(); } },
+        el("img", { class: "px", src: w.input_png, alt: "" }),
+        el("span", { class: w.pred !== w.label ? "tag-error" : "" }, `${w.kind === "near" ? "near miss" : "wrong"} · says ${CN(w.pred)}`),
+        el("span", { class: "num muted" }, `is ${CN(w.label)} · ${(100 * w.prob).toFixed(0)}%`));
+    })));
+  }
+}
+function renderWalkMulti() {
+  const n = N(), strip = $("#walkstrip"); strip.innerHTML = "";
+  renderConfusions();
+  n.walk.forEach((w, i) => {
+    if (w.pair) return;
+    strip.append(el("button", { type: "button", class: "wbtn", "aria-pressed": String(S.walk === i), "aria-label": `Example ${w.i}: ${w.tags}`,
+      onclick: () => { S.walk = S.walk === i ? null : i; renderGraph(); renderWalk(); } },
+      el("img", { class: "px", src: w.input_png, alt: "" }),
+      el("span", { class: w.group === "error" ? "tag-error" : "" }, (w.group === "error" ? "wrong · " : "right · ") + `says ${CN(w.pred)}`),
+      el("span", { class: "num muted" }, `is ${CN(w.label)} · ${(100 * w.prob).toFixed(0)}%`)));
+  });
+  const d = $("#walkdetail"); d.innerHTML = "";
+  if (S.walk === null) { d.append(el("p", { class: "note", style: "margin-top:8px" }, "No example selected: the graph shows each detector's average response.")); return; }
+  const w = n.walk[S.walk], c = w.pred, r = w.runner;
+  const pn = {}; n.parts.forEach(p => { pn[p.name] = p.sem.name; });
+  const rawRows = w.terms.map(t => ({ name: t.source === null ? "baseline (constant)" : (t.source < 0 ? "input image (direct)" : `${nodeTitle(String(t.source))} · h${t.source}`), v: t.values[c] - t.values[r] }))
+    .filter(x => Math.abs(x.v) > 1e-9);
+  const rows = w.net_terms ? Object.entries(w.net_terms).map(([o, vals]) => ({ name: o === "constant" ? "baseline (constant)" : o === "input" ? "input image (direct)" : (pn[o] || o), v: vals[c] - vals[r] })).filter(x => Math.abs(x.v) > 1e-9) : rawRows;
+  const margin = w.logits[c] - w.logits[r];
+  const W = 380, rowH = 20, lab_w = 170, H = (rows.length + 1) * rowH + 24;
+  const vmax = Math.max(1e-9, ...rows.map(x => Math.abs(x.v)), Math.abs(margin));
+  const x = v => lab_w + (v / vmax + 1) / 2 * (W - lab_w - 44);
+  const s = sv("svg", { class: "bars", width: "100%", viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Contributions to the margin" });
+  s.append(sv("line", { x1: x(0), x2: x(0), y1: 2, y2: H - 4, stroke: "var(--line)" }));
+  rows.concat([{ name: `margin '${CN(c)}' − '${CN(r)}'`, v: margin, total: true }]).forEach((q, i) => {
+    const y = 4 + i * rowH + (q.total ? 6 : 0);
+    const t = sv("text", { x: 0, y: y + 12, "font-weight": q.total ? 600 : 400 }); t.textContent = q.name.length > 30 ? q.name.slice(0, 29) + "…" : q.name; s.append(t);
+    s.append(sv("rect", { x: Math.min(x(0), x(q.v)), y: y + 2, width: Math.max(1, Math.abs(x(q.v) - x(0))), height: 12, fill: q.total ? "var(--ink)" : (q.v >= 0 ? "var(--pos)" : "var(--neg)") }));
+    const tv = sv("text", { x: q.v >= 0 ? x(q.v) + 3 : x(q.v) - 3, y: y + 12, "text-anchor": q.v >= 0 ? "start" : "end", fill: "var(--muted)" }); tv.textContent = q.v.toFixed(2); s.append(tv);
+  });
+  const top3 = w.logits.map((v, i) => [i, v]).sort((p, q) => q[1] - p[1]).slice(0, 3);
+  d.append(el("div", { class: "walkdetail" },
+    el("div", {}, img(w.input_png, `${SPLIT()} #${w.i} · ${w.tags}`, 128)),
+    el("div", { style: "min-width:0" }, el("p", { class: "reading" }, w.narrative),
+      el("p", { class: "note" }, "Highest scores: " + top3.map(([i, v]) => `'${CN(i)}' ${v.toFixed(2)}`).join(", ") + "."),
+      el("h4", { class: "eyebrow", style: "margin:12px 0 4px" }, `What separates '${CN(c)}' from the runner-up '${CN(r)}' (positive = towards '${CN(c)}')`), s,
+      maths(w.net_terms ? el("div", {}, el("p", { class: "note" }, "Bars above: one per structure (its maps' terms added up, so opposing terms inside a structure net out). Raw per-map terms:"),
+        el("pre", { class: "plain" }, rawRows.map(x => `${x.v >= 0 ? "+" : "−"}${Math.abs(x.v).toFixed(2)}  ${x.name}`).join("\n"))) : null,
+        el("p", { class: "note" }, `z_c = b_c + Σ_m W_cm·GAP(h_out,m), and GAP is linear, so z_c = (b_c + Σ_m W_cm·b_m) + Σ_i Σ_m W_cm·GAP(K_{i→m} ⋆ R(h_i)): one term per source map, summed over the score maps it feeds. Each bar is that term for '${c}' minus the term for '${r}'; they add up to the margin exactly (largest |error| over the ${n.k} scores ${Number(w.sum_check).toExponential(0)}). p('${c}') = ${f3(w.prob)}, p('${r}') = ${f3(w.prob_runner)}.`)))));
+}
+function renderWalk() {
+  if (N().multiclass) return renderWalkMulti();
+  const n = N(), strip = $("#walkstrip"), cn = n.class_names; strip.innerHTML = "";
+  n.walk.forEach((w, i) => {
+    const pred = w.prob > 0.5 ? 1 : 0;
+    const b = el("button", { type: "button", class: "wbtn", "aria-pressed": String(S.walk === i), "aria-label": `Example ${w.i}: ${w.tags}`,
+      onclick: () => { S.walk = S.walk === i ? null : i; renderGraph(); renderWalk(); } },
+      el("img", { class: "px", src: w.input_png, alt: "" }),
+      el("span", { class: w.group === "error" ? "tag-error" : "" }, (w.group === "error" ? "wrong · " : "right · ") + cn[pred]),
+      el("span", { class: "num muted" }, `${(100 * w.prob).toFixed(0)}% ${cn[1]}`));
+    strip.append(b);
+  });
+  const d = $("#walkdetail"); d.innerHTML = "";
+  if (S.walk === null) { d.append(el("p", { class: "note", style: "margin-top:8px" }, "No example selected: the graph shows each detector's average response.")); return; }
+  const w = n.walk[S.walk];
+  const pname = {}; n.parts.forEach(p => { pname[p.name] = p.sem.name; });
+  const rows = w.contribs.map(c => ({ name: c.source === null ? "baseline (constant)" : (c.source < 0 ? "input image (direct)" : `${nodeTitle(String(c.source))} · h${c.source}`), v: c.value }));
+  const W = 380, rowH = 20, lab_w = 170, H = (rows.length + 1) * rowH + 24;
+  const vmax = Math.max(1e-9, ...rows.map(r => Math.abs(r.v)), Math.abs(w.logit));
+  const x = v => lab_w + (v / vmax + 1) / 2 * (W - lab_w - 44);
+  const s = sv("svg", { class: "bars", width: "100%", viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Contributions to the score" });
+  s.append(sv("line", { x1: x(0), x2: x(0), y1: 2, y2: H - 4, stroke: "var(--line)" }));
+  rows.concat([{ name: "score (sum)", v: w.logit, total: true }]).forEach((r, i) => {
+    const y = 4 + i * rowH + (r.total ? 6 : 0);
+    const t = sv("text", { x: 0, y: y + 12, "font-weight": r.total ? 600 : 400 }); t.textContent = r.name.length > 30 ? r.name.slice(0, 29) + "…" : r.name; s.append(t);
+    s.append(sv("rect", { x: Math.min(x(0), x(r.v)), y: y + 2, width: Math.max(1, Math.abs(x(r.v) - x(0))), height: 12, fill: r.total ? "var(--ink)" : (r.v >= 0 ? "var(--pos)" : "var(--neg)") }));
+    const tv = sv("text", { x: r.v >= 0 ? x(r.v) + 3 : x(r.v) - 3, y: y + 12, "text-anchor": r.v >= 0 ? "start" : "end", fill: "var(--muted)" }); tv.textContent = r.v.toFixed(2); s.append(tv);
+  });
+  d.append(el("div", { class: "walkdetail" },
+    el("div", {}, img(w.input_png, `test #${w.i} · ${w.tags}`, 128)),
+    el("div", { style: "min-width:0" }, el("p", { class: "reading" }, w.narrative),
+      el("h4", { class: "eyebrow", style: "margin:12px 0 4px" }, `What adds up to the score (positive = towards '${cn[1]}')`), s,
+      maths(el("p", { class: "note" }, `z = head bias + w·GAP(h_out), and GAP is linear, so z = (head bias + w·b_out) + Σ_i w·GAP(K_{i→out} ⋆ R(h_i)). The terms sum to the logit exactly (|error| ${Number(w.sum_check).toExponential(0)}); σ(z) = ${f3(w.prob)}. "Fires" in the text uses each part's main output and its cut (see the detector); "strongly" = also in the top quarter of test images. The "push" compares each term with its average over the test images.`)))));
+}
+
+// ---------- structure section (structure-first explanation)
+function shareCell(v, vmax) {
+  const t = Math.max(0, Math.min(1, v / (vmax || 1)));
+  return el("td", { class: "num", style: `background:rgba(49,130,189,${(0.85 * t).toFixed(2)});color:${t > 0.6 ? "#fff" : "inherit"}` }, `${Math.round(100 * v)}`);
+}
+function renderStructure() {
+  if (N().record_based) return renderRecord();
+  const n = N(), box = $("#structure"); box.innerHTML = "";
+  if (!n.structured) { box.hidden = true; return; }
+  box.hidden = false;
+  const st = n.structure, k = n.k, digits = [...Array(k).keys()];
+  box.append(el("div", { class: "toolbar" }, el("h2", {}, "Structure: the network's larger subnetworks"),
+    el("span", { class: "note" }, `${n.parts.length} structures · ${Object.keys(st.splits).length} maps split to separate them · function unchanged (max |Δ score| ${Number(st.split_max_abs_logit_diff).toExponential(0)})`)));
+  box.append(el("p", { class: "note", style: "max-width:110ch" }, `Found before any map is read: ${st.method}. Each structure is one function node in the graph (click it to open it). Its name is the mechanism it was tested for; the behaviour, which digits it fires on, is the conclusion of that test.`));
+  const vmax = Math.max(...n.parts.map(p => Math.max(...p.share)));
+  const tbl = el("table", { class: "t" },
+    el("tr", {}, el("th", {}, "structure"), el("th", {}, "status"), el("th", {}, "maps"), el("th", {}, "behaviour (the conclusion)"), ...digits.map(d => el("th", { class: "num" }, `'${d}'`))),
+    n.parts.map(p => el("tr", {},
+      el("td", {}, el("button", { type: "button", class: "pill", onclick: () => { S.expanded.add(p.name); select({ type: "part", id: p.name }); } }, p.sem.name)),
+      el("td", {}, statusPill(p.sem.status)), el("td", { class: "num" }, p.nodes.length),
+      el("td", { class: "small" }, p.behaviour || p.computes), ...p.share.map(v => shareCell(v, vmax)))));
+  box.append(el("h4", {}, "Which structures carry each digit's score"),
+    el("div", { class: "tablewrap" }, tbl),
+    el("p", { class: "note" }, "Cells: % of each digit's score attribution (gradient × input at the structure's exits, 1,000 images) carried by the structure; columns sum to 100."));
+  const ht = st.head_table, names = Object.keys(ht);
+  const pn = {}; n.parts.forEach(p => { pn[p.name] = p.sem.name; });
+  box.append(el("h4", { style: "margin-top:10px" }, "The head as ten sums (average direct contribution to each digit's score)"),
+    el("div", { class: "tablewrap" }, el("table", { class: "t" },
+      el("tr", {}, el("th", {}, "source"), ...digits.map(d => el("th", { class: "num" }, `'${d}'`))),
+      names.map(nm => el("tr", {}, el("td", {}, nm === "constant" ? "constant (biases)" : nm === "input" ? "input image (direct)" : (pn[nm] || nm)),
+        ...ht[nm].map(v => el("td", { class: "num", style: `color:${v >= 0 ? "var(--pos)" : "var(--neg)"}` }, Number(v).toFixed(2))))))),
+    el("p", { class: "note" }, "Exact: score_c = constant_c + Σ over sources of W_c·GAP(their terms into the score maps); a structure without a direct link to the score maps acts through the others (see the attribution table)."));
+  const m = st.motifs;
+  const stages = Object.entries(m.stages).map(([l, ns]) => `${m.stage_sizes[l].join("×")}: ${ns.length} maps`).join(" · ");
+  box.append(el("h4", { style: "margin-top:10px" }, "Motifs"),
+    el("ul", { class: "small" },
+      el("li", {}, `Resolution stages: ${stages}; longest input → score path ${m.max_depth} steps.`),
+      el("li", {}, `${m.parallel_into.length} maps merge three or more branches (${m.parallel_into.map(x => "h" + x).join(", ")}); ${m.chains.length} serial chain${m.chains.length === 1 ? "" : "s"}${m.chains.length ? " (" + m.chains.map(c => c.map(x => "h" + x).join("→")).join("; ") + ")" : ""}; ${m.n_skip_edges} skip connections spanning three or more steps.`),
+      el("li", {}, `Bottlenecks (most attribution flow passes through them): ${m.bottlenecks.map(b => `h${b.node} (${Math.round(100 * b.share)}%)`).join(", ")}.`),
+      el("li", {}, `Splits: ${Object.entries(st.splits).map(([c, o]) => `h${o} → h${c} (copy carrying h${o}'s edges to other structures)`).join("; ") || "none"}. Split copies are drawn dashed.`)));
+}
+
+// ---------- parts tree
+function renderParts() {
+  if (N().record_based) return renderAnnotationTree();
+  const n = N(), box = $("#parts"); box.innerHTML = "";
+  box.append(el("div", { class: "toolbar" }, el("h2", {}, n.structured ? "Structures: the parts and what they compute" : "Parts: what the network is made of"),
+    el("span", { class: "note" }, `${n.parts.length} parts · ${Math.round(100 * n.check.coverage)}% of active detectors covered`)));
+  box.append(el("p", { class: "note", style: "max-width:100ch" }, n.structured ? "Structures are found from the graph first (attribution flow, shared use, near-identical maps), then each is tested as one function: a mechanism hypothesis about its main exit, tested within digits, against the amount of ink and with image edits; the behaviour is the conclusion. Click one to open it in the graph." : "Detectors are grouped automatically: connected detectors that track the same concept form one part, and so does a chain that feeds a single detector. Each part is named by what its main output detects. Click a part to highlight it in the graph."));
+  const rootBody = el("div", { class: "formula" });
+  n.root.tex.forEach(l => { const d = el("div"); tex(d, l); rootBody.append(d); });
+  const leaves = el("ul", {}, n.parts.map(p => el("li", {}, el("button", { type: "button", class: "leaf", "aria-pressed": String(S.sel && S.sel.type === "part" && S.sel.id === p.name),
+    onclick: () => { if (S.sel && S.sel.type === "part" && S.sel.id === p.name) select(null); else { S.expanded.add(p.name); select({ type: "part", id: p.name }); } } },
+    el("div", { class: "hd" }, el("strong", {}, p.sem.name), statusPill(p.sem.status), el("span", { class: "mono muted" }, p.nodes.map(k => "h" + k).join(" "))),
+    el("div", { class: "desc" }, n.structured ? `${p.computes} ${p.behaviour} ${p.sem.effect}` : `${p.sem.phrase}. ${p.sem.effect}`)))));
+  box.append(el("ul", { class: "tree" }, el("li", {},
+    el("div", { class: "leaf", style: "cursor:default" }, el("div", { class: "hd" }, el("strong", {}, "The decision"),
+      el("span", { class: "muted" }, n.multiclass ? `the parts feed ${n.k} score maps; a linear head (${n.k}×${n.k}) turns their averages into ${n.k} scores, and the highest score is the answer` : `the parts feed one final score map; its average, times ${Number(n.root.head_w).toFixed(2)}, plus ${Number(n.root.head_b).toFixed(2)}, is the score for '${n.class_names[1]}' (above 0 means '${n.class_names[1]}')`)),
+      maths(rootBody, el("details", { class: "small" }, el("summary", {}, "Plain text"), el("pre", { class: "plain" }, n.root.text.join("\n"))))),
+    leaves)));
+}
+
+// ---------- decomposition record: annotations with clean boundaries and their hypotheses
+const KIND = { leaf: "Leaf", composition: "Composition", root: "Root" };
+const EDIT_WORDS = {
+  close: "thicken strokes (3×3 dilation): images where that closes a new loop vs those where it does not",
+  fill: "fill the loops with ink vs inking as many pixels just outside the digit",
+  add_stem: "draw a vertical stem down the middle vs the same stroke turned 90°",
+  add_top_bar: "draw a bar along the top vs the same stroke turned 90°",
+  close_upper: "close the mouth of the upper left-open curve with a short vertical stroke vs the same ink just right of the digit",
+  open_upper: "erase the ink left of the upper loop (it becomes a curve open to the left) vs erasing as much ink from the bottom of the digit",
+  bridge_left: "draw a vertical stroke along the left edge over the middle rows (closes the left side) vs the same stroke down the centre"
+};
+function rateStrip(rate, w) {
+  if (!rate) return null;
+  const W = w || 150, H = 26, bw = W / rate.length;
+  const s = sv("svg", { class: "ratestrip", width: W, height: H + 11, viewBox: `0 0 ${W} ${H + 11}`, role: "img", "aria-label": "firing rate per digit: " + rate.map((r, d) => `${d} ${Math.round(100 * r)}%`).join(", ") });
+  rate.forEach((r, d) => {
+    s.append(sv("rect", { x: d * bw + 1, y: H - H * r, width: bw - 2, height: Math.max(1, H * r), fill: r >= 0.5 ? "var(--accent)" : "var(--muted)", opacity: r >= 0.5 ? 1 : 0.5 }));
+    const t = sv("text", { x: d * bw + bw / 2, y: H + 10, "text-anchor": "middle", "font-size": 9, fill: "var(--muted)" }); t.textContent = CN(d); s.append(t);
+  });
+  return s;
+}
+function entryText(n, p, e) {
+  const src = (p.entry_sources || {})[String(e)] || [];
+  const s0 = src[0];
+  return s0 === undefined ? nodeName(String(e)) : (String(s0).startsWith("-") ? "the image" : "h" + String(s0).split("_")[0] + (String(s0).includes("_") ? ` (copy ${String(s0).split("_")[1]})` : ""));
+}
+// ---------- behaviour-first: one concept library, read within digits with the ink held fixed
+const VERDICT = { "more with it": ["more with it", "good"], "less with it": ["less with it", "good"], "weakly more": ["weakly more", ""],
+  "weakly less": ["weakly less", ""], "no link": ["no link", "muted"], "too few images": ["too few images", "muted"] };
+function conceptRows(rows) {  // node tables come as arrays; annotation tables as objects
+  return rows.map(r => Array.isArray(r) ? { concept: r[0], with: r[1], without: r[2], s_within: r[3], partial_r: r[4], verdict: r[5], n_with: r[6], n_without: r[7] } : r);
+}
+function conceptTable(rows0, lib, opts) {
+  const rows = conceptRows(rows0).slice().sort((a, b) => {
+    const ra = a.verdict && a.verdict.endsWith("with it") ? 0 : (a.verdict && a.verdict.startsWith("weakly") ? 1 : 2);
+    const rb = b.verdict && b.verdict.endsWith("with it") ? 0 : (b.verdict && b.verdict.startsWith("weakly") ? 1 : 2);
+    return ra - rb || Math.abs(b.s_within || 0) - Math.abs(a.s_within || 0);
+  });
+  const word = c => (lib && lib.short && lib.short[c]) || c;
+  const bar = (v, good) => el("span", { class: "cbar" }, el("span", { style: `width:${Math.round(100 * (v || 0))}%;background:${good ? "var(--accent)" : "var(--muted)"}` }));
+  const t = el("table", { class: "t ctable" },
+    el("tr", {}, el("th", {}, "concept (from the image)"), el("th", { class: "num" }, "fires on images WITH it"), el("th", { class: "num" }, "WITHOUT it (same digit)"), el("th", {}, "reading")),
+    rows.map(r => {
+      const [vt, vc] = VERDICT[r.verdict] || [r.verdict || "–", ""];
+      const ok = r.with !== null && r.with !== undefined;
+      return el("tr", { title: (lib && lib.rules && lib.rules[r.concept]) || "" },
+        el("td", {}, word(r.concept), r.nuisance || r.concept === "heavy_ink" ? el("span", { class: "muted small" }, " (the ink control)") : null),
+        el("td", { class: "num" }, ok ? pct(r.with) : "–", ok ? bar(r.with, r.with > r.without) : null),
+        el("td", { class: "num" }, ok ? pct(r.without) : "–", ok ? bar(r.without, r.without > r.with) : null),
+        el("td", {}, el("span", { class: "pill " + vc }, vt)));
+    }));
+  return el("div", {}, el("div", { class: "tablewrap" }, t),
+    el("p", { class: "note" }, (opts && opts.note) || "“Fires” = its response is above its median over the validation images. Each row compares images of the same digit with and without the concept (averaged over the digits that have at least 15 images each way), so a digit correlate shows no difference here. “More / less with it” needs a clear within-digit difference that also holds with the ink count held fixed; hover a concept for its rule."));
+}
+function bfAnnotation(p) {
+  const n = N(), b = p.bf, box = $("#insp"), isComp = p.kind === "composition";
+  box.innerHTML = "";
+  const lib = n.library_bf || n.semantics.library;
+  box.append(el("div", {}, el("div", { class: "eyebrow" }, `${KIND[p.kind] || "Annotation"} · ${p.name} · ${p.n_maps} map${p.n_maps > 1 ? "s" : ""} · ${p.entries.length} entr${p.entries.length === 1 ? "y" : "ies"} · ${p.exits.length} exit${p.exits.length === 1 ? "" : "s"}`),
+    el("h2", {}, p.title),
+    el("div", { class: "chips" }, statusPill(p.status),
+      el("button", { class: "pill", type: "button", onclick: () => { if (S.expanded.has(p.name)) closePart(p.name); else openPart(p.name); renderGraph(); } }, "open / close in the graph"),
+      p.parent ? el("button", { class: "pill acc", type: "button", onclick: () => select({ type: "part", id: p.parent }) }, `part of ${p.parent}: ${partOf(p.parent).title}`) : null)));
+  // 1. the hypothesis: mechanism, then the prediction it makes
+  box.append(section("What it computes (the hypothesis)", el("p", { class: "reading" }, isComp ? b.combine : b.mechanism),
+    el("p", { style: "margin-top:6px" }, isComp ? b.adds : b.prediction)));
+  // 2. the self-probe
+  const probes = b.probes.filter(q => !q.retired);
+  box.append(section("Self-probe: the prediction, tested", el("div", {}, probes.map(q => el("div", { class: "hcard pcard", style: `border-left-color:${q.verdict === "agrees" ? "var(--accent)" : "var(--neg)"}` },
+    el("div", {}, el("strong", {}, (q.child && !q.words.includes("(" + q.child + ")") ? q.child + ": " : "") + cap(q.words)), " ", el("span", { class: "pill " + (q.verdict === "agrees" ? "good" : "warn") }, q.verdict)),
+    el("p", { class: "small", style: "margin:4px 0" }, q.effect_sd === null || q.effect_sd === undefined ? "Too few images where the edit applies." :
+      `${sgn2(q.effect_sd)} SD against the control (95% interval ${sgn2(q.ci95[0])} to ${sgn2(q.ci95[1])}, ${q.n} images; predicted ${q.predict > 0 ? "up" : q.predict < 0 ? "down" : "no change"}).`),
+    q.before_png ? el("div", { class: "row tight" }, img(q.before_png, `as written · ${Number(q.resp_before).toPrecision(2)}`, 64),
+      img(q.after_png, `edited · ${Number(q.resp_after).toPrecision(2)}`, 64), img(q.control_png, `control · ${Number(q.resp_control).toPrecision(2)}`, 64)) : null))),
+    b.history ? el("p", { class: "note" }, b.history) : null,
+    el("p", { class: "note" }, `Each edit is applied to the same images as its control (the same amount of new ink, or the same movement), on ${b.images ? b.images.probe : ""} validation images that were not used to read the hypothesis; the effect is the difference of the two changes in SDs of the response. Pictures: the image whose response changed most, as written, edited and with the control edit; numbers are the ${isComp ? "child's" : "part's"} pooled response.`)));
+  // 3. where it fires and what drives it
+  const P = b.pictures || {};
+  if (P.where) {
+    const C = P.contrast, CI = P.contrast_same_ink;
+    box.append(section("Where it fires · what drives it", el("div", { class: "row tight" },
+      img(P.where, "where it fires", 72), img(P.sensitivity, "ink raises (red) / lowers (blue)", 72), img(P.gxi_top, "what drives its top images", 72)),
+      C ? el("div", { class: "row tight", style: "margin-top:6px" }, img(C.strong, `${C.digit}s it fires on most`, 64), img(C.weak, `${C.digit}s least`, 64), img(C.diff, "difference", 64),
+        CI ? img(CI.strong, `${CI.digit}s, same ink: most`, 64) : null, CI ? img(CI.weak, "least", 64) : null, CI ? img(CI.diff, "difference", 64) : null) : null,
+      el("p", { class: "note" }, `Where it fires: its mean map over the validation images, on the average digit. Red / blue: the mean gradient of its pooled response with respect to each pixel (where added ink raises or lowers it). What drives it: gradient × input over its 200 strongest images. Below: the mean of the ${C ? C.digit + "s" : "images"} it fires on most and least (top and bottom fifth) and their difference (red = more ink in the strong ones)${CI ? `; then the same comparison among ${CI.digit}s with the same amount of ink (${Math.round(CI.ink_strong)} vs ${Math.round(CI.ink_weak)} ink pixels)` : ""}.`)));
+  }
+  // 4. the behaviour, as the conclusion
+  if (p.rate) box.append(section("Behaviour (the conclusion)", el("p", {}, b.behaviour),
+    digitBars(p.rate, { highlight: p.rate.map((r, d) => (r >= 0.5 ? d : -1)), label: "firing rate per digit" }),
+    el("p", { class: "note" }, `% of validation images of each digit on which its ${isComp ? "main exit (h" + String(p.main_exit_rid).split("_")[0] + ")" : "main exit (h" + String(p.main_exit_rid).split("_")[0] + ")"} fires (its average response above its median).`)));
+  if (isComp) {
+    const c = b.composition || {};
+    box.append(section("How its parts combine", el("div", {}, p.children.map(cn => { const q = partOf(cn); return el("div", { class: "hcard", style: `border-left-color:${partColor(cn)}` },
+      el("button", { class: "pill", type: "button", onclick: () => { openPart(p.name); select({ type: "part", id: cn }); } }, `${cn}: ${q.title}`), " ", statusPill(q.status), rateStrip(q.rate, 150)); })),
+      c.acc_both !== undefined && c.acc_both !== null ? el("p", { class: "note" }, `${n.k || 10}-class logistic regression on the pooled exits (mean and peak of each distinct exit map), 3-fold cross-validated on the validation images: ${p.children.length > 2 ? "all" : "both"} children ${pct(c.acc_both)}; ${Object.entries(c.acc_children || {}).map(([k2, v]) => `${k2} alone ${pct(v)}`).join(", ")}.${c.r_children !== null && c.r_children !== undefined ? (p.children.length > 2 ? ` Mean pairwise correlation of the ${p.children.length} children's main exits: ${Number(c.r_children).toFixed(3)}.` : ` Correlation of the two main exits: ${Number(c.r_children).toFixed(3)}.`) : ""}`) : null));
+  }
+  // 5. the concept check: every concept of the one library
+  box.append(section("Concept check (all concepts, within digits, ink held fixed)", el("p", {}, b.concepts), conceptTable(b.concept_table, lib)));
+  if (!isComp) {
+    box.append(section("Made of", el("div", { class: "chips" }, p.nodes.map(String).filter(k => n.nodes[k] && n.nodes[k].port_of === undefined).map(k => el("button", { class: "pill", type: "button", onclick: () => select({ type: "node", id: k }) },
+      `${n.nodes[k].rid ? "h" + n.nodes[k].rid : "h" + k}${(n.nodes[k].exit_of || []).includes(p.name) ? " · exit" : ""}`)))));
+  }
+  const m = b.measure;
+  box.append(maths(
+    section("Boundary", el("dl", { class: "kv" },
+      el("dt", {}, "Entries"), el("dd", {}, p.entries.map(e => `${n.nodes[String(e)] ? n.nodes[String(e)].rid : e} = copy of ${entryText(n, p, e)}`).join(", ") || "none"),
+      el("dt", {}, "Exits"), el("dd", {}, p.exits.map(e => n.nodes[String(e)] ? n.nodes[String(e)].rid : e).join(", ")),
+      el("dt", {}, "Maps"), el("dd", {}, p.maps.map(mm => "h" + mm).join(", ")))),
+    m ? section("Hypothesis measure", el("p", { class: "small" }, `${cap(m.label)}: within-digit Spearman r ${m.within === null ? "–" : sgn2(m.within)} (weighted over digits), overall ${sgn2(m.overall)}, partial r ${sgn2(m.partial_r)} with the digit${m.ink_controlled ? " and the ink count" : ""} held fixed. Per digit: ${Object.entries(m.by_digit || {}).map(([d, v]) => `${d}: ${sgn2(v)}`).join(", ")}.`)) : null,
+    section("Concept table, in numbers", el("p", { class: "small mono" }, conceptRows(b.concept_table).map(r => `${r.concept}: s_within ${r.s_within === null ? "–" : sgn2(r.s_within)}, partial r ${sgn2(r.partial_r)}, n ${r.n_with}/${r.n_without}`).join(" · ")),
+      el("p", { class: "note" }, "s_within = 2·AUC − 1 of the response, images with vs without the concept within one digit (weighted over digits); partial r = correlation with the concept with the digit and the ink count held fixed.")),
+    section("The stored hypothesis (record text)", el("p", { class: "small" }, p.hypothesis)),
+    b.superseded && b.superseded.title ? section("Superseded: the earlier automated reading", el("p", { class: "small" }, `${b.superseded.title} (${b.superseded.status}). ${b.superseded.hypothesis || ""}`),
+      el("p", { class: "note" }, "Picked by testing a fixed concept list on the exit and keeping the best one; kept for comparison.")) : null));
+}
+function inspectAnnotation(name) {
+  if (partOf(name).bf) return bfAnnotation(partOf(name));
+  const n = N(), p = partOf(name), box = $("#insp");
+  box.innerHTML = "";
+  const isComp = p.kind === "composition";
+  box.append(el("div", {}, el("div", { class: "eyebrow" }, `${KIND[p.kind] || "Annotation"} · ${p.name} · ${p.n_maps} map${p.n_maps > 1 ? "s" : ""} · ${p.entries.length} entr${p.entries.length === 1 ? "y" : "ies"} · ${p.exits.length} exit${p.exits.length === 1 ? "" : "s"}`),
+    el("h2", {}, p.title),
+    el("div", { class: "chips" }, statusPill(p.status),
+      el("button", { class: "pill", type: "button", onclick: () => { if (S.expanded.has(p.name)) closePart(p.name); else openPart(p.name); renderGraph(); } }, "open / close in the graph"),
+      p.parent ? el("button", { class: "pill acc", type: "button", onclick: () => select({ type: "part", id: p.parent }) }, `part of ${p.parent}: ${partOf(p.parent).title}`) : null)));
+  // hypothesis first
+  const hyp = [];
+  if (isComp && p.combination_text) hyp.push(el("p", { class: "reading" }, p.combination_text));
+  hyp.push(el("p", { class: isComp ? "" : "reading" }, p.computes));
+  box.append(section("What it computes (the hypothesis)", ...hyp));
+  if (p.rate) box.append(section("Behaviour (the conclusion)", el("p", {}, p.behaviour),
+    digitBars(p.rate, { highlight: p.rate.map((r, d) => (r >= 0.5 ? d : -1)), label: "firing rate per digit" }),
+    el("p", { class: "note" }, `% of validation images of each digit on which its main exit (h${String(p.main_exit_rid).split("_")[0]}, ${p.pool === "max" ? "peak" : "average"} response) passes the cut that best separates ${p.concept ? (n.semantics.library.words[p.concept] || p.concept) : "its concept"}.`)));
+  if (isComp) {
+    const c = p.combination || {}, sp = c.separation;
+    box.append(section("How its parts combine", el("div", {}, p.children.map(cn => { const q = partOf(cn); return el("div", { class: "hcard", style: `border-left-color:${partColor(cn)}` },
+      el("button", { class: "pill", type: "button", onclick: () => { openPart(p.name); select({ type: "part", id: cn }); } }, `${cn}: ${q.title}`), " ", statusPill(q.status), rateStrip(q.rate, 150)); })),
+      sp ? el("p", { class: "note" }, `Pairwise test on validation images (cross-validated logistic regression on the pooled exit maps): the parts' exits together separate ${sp.pair[0]}s from ${sp.pair[1]}s with ${Math.round(100 * sp.joint)}% balanced accuracy; the best single part (${sp.best_child}) reaches ${Math.round(100 * sp.best_child_acc)}%. This is the digit pair where combining helps most.`) : null,
+      c.serial && c.serial.length ? el("p", { class: "note" }, "Wiring inside: " + c.serial.map(([a, b]) => `${a} feeds ${b}`).join("; ") + ".") : el("p", { class: "note" }, "Wiring inside: the parts run in parallel.")));
+  }
+  box.append(section("Evidence", el("p", {}, p.evidence),
+    p.secondary ? el("p", { class: "note", style: "margin-top:4px" }, `Second concept (it tells this exit apart from others with the same main concept): ${n.semantics.library.words[p.secondary.concept] || p.secondary.concept}, within digits s = ${sgn2(p.secondary.within_mean)}, ink-controlled r = ${sgn2(p.secondary.partial_r_ink)}, ${p.secondary.status}.`) : null));
+  const iv = (p.interventions || []).filter(r => r.before_png);
+  if (iv.length) box.append(section("Image edits (before and after)", el("div", { class: "row tight" }, iv.map(r => el("div", {},
+    el("div", { class: "row tight" }, img(r.before_png, `before · ${Number(r.resp_before).toPrecision(2)}`, 64), img(r.after_png, `after · ${Number(r.resp_after).toPrecision(2)}`, 64)),
+    el("p", { class: "note", style: "max-width:30ch" }, `${r.kind}: ${sgn2(r.effect_sd)} SD against its control, ${r.n} edited images; ${r.agrees ? "as predicted" : r.contradicts ? "against the prediction" : "too small to count"}.`)))),
+    el("p", { class: "note" }, iv.map(r => `${r.kind} = ${EDIT_WORDS[r.kind] || r.kind}`).join(". ") + ". The pictures show the edited validation image whose response changed most; numbers are the exit's pooled response.")));
+  if (p.test && p.test.by_digit && Object.keys(p.test.by_digit).length) {
+    const rows = Object.entries(p.test.by_digit).map(([d, r]) => el("tr", {}, el("td", {}, d), el("td", { class: "num" }, sgn2(r.s)), el("td", { class: "num" }, `${r.n_with} / ${r.n_without}`)));
+    box.append(section("Within-digit test", el("div", { class: "tablewrap" }, el("table", { class: "t" },
+      el("tr", {}, el("th", {}, "digit"), el("th", {}, "s within the digit"), el("th", {}, `with / without ${n.semantics.library.short[p.concept] || ""}`)), rows)),
+      el("p", { class: "note" }, "s = 2·AUC − 1 of the exit's response, images of one digit with the concept vs without (digits with at least 15 of each). A digit correlate has s near 0 here.")));
+  }
+  if (!isComp) {
+    const rep = n.nodes[String(p.rep)];
+    if (rep && rep.top) box.append(section("Images its main exit fires on most", el("div", { class: "row tight" }, rep.top.map(t => img(t.png, t.tags, 64, `example ${t.i}`)))));
+    box.append(section("Made of", el("div", { class: "chips" }, p.nodes.map(String).filter(k => n.nodes[k] && n.nodes[k].port_of === undefined).map(k => el("button", { class: "pill", type: "button", onclick: () => select({ type: "node", id: k }) },
+      `${n.nodes[k].rid ? "h" + n.nodes[k].rid : "h" + k}${(n.nodes[k].exit_of || []).includes(p.name) ? " · exit" : ""}`)))));
+  }
+  box.append(maths(
+    section("Boundary", el("dl", { class: "kv" },
+      el("dt", {}, "Entries"), el("dd", {}, p.entries.map(e => `${n.nodes[String(e)] ? n.nodes[String(e)].rid : e} = copy of ${entryText(n, p, e)}`).join(", ") || "none"),
+      el("dt", {}, "Exits"), el("dd", {}, p.exits.map(e => n.nodes[String(e)] ? n.nodes[String(e)].rid : e).join(", ")),
+      el("dt", {}, "Maps"), el("dd", {}, p.maps.map(m => "h" + m).join(", "))),
+      el("p", { class: "note" }, "Every edge into this annotation enters through an entry (an identity copy of the outside map, a 1×1 unit kernel at its level) and every edge out leaves from an exit, so it collapses to one function node: (exits) = F(entries). Checked on every annotate: entry-only ingress, exit-only egress, pure exits, and no cycle on collapse.")),
+    section("The stored hypothesis (record text)", el("p", { class: "small" }, p.hypothesis)),
+    p.test ? el("p", { class: "note" }, `Main test: ${p.concept} (${p.sign > 0 ? "present" : "absent"}), ${p.pool} pooling; overall s = ${sgn2(p.test.s)}, within digits ${p.test.within_mean === null ? "–" : sgn2(p.test.within_mean)} over ${p.test.n_digits} digits, ink-controlled r = ${sgn2(p.test.partial_r_ink)}.`) : null));
+}
+function renderRecord() {
+  const n = N(), box = $("#structure"), R = n.record; box.innerHTML = ""; box.hidden = false;
+  const b = R.before, a = R.after;
+  box.append(el("div", { class: "toolbar" }, el("h2", {}, "Decomposition: structures with clean boundaries"),
+    el("span", { class: "note" }, `record ${R.path} · ${R.n_operations} recorded operations · ${R.n_identity_nodes} entries (identity copies) · ${R.n_split_ops} splits · function unchanged (max |Δ score| ${Number(R.function_preserved).toExponential(0)})`)));
+  box.append(el("p", { class: "note", style: "max-width:110ch" }, "The graph is decomposed by an operation stream that never changes the function: identity copies give each structure entries, splits give each map one role, and every annotation is checked to collapse into one function node (entry-only ingress, exit-only egress, pure exits, no cycle). A structure finder (attribution flow and activation similarity) only suggested the node sets. " +
+    (n.behaviour_first ? "Each annotation was then read from its own behaviour (where it fires, what differs within a digit, which pixels drive it), given a mechanism hypothesis with a prediction, and self-probed by image edits on validation images not used to read it; the behaviour is the conclusion, and every concept of one library is checked afterwards." : "Each annotation then gets a mechanism hypothesis tested on its exit, within digits, against the amount of ink and by image edits; the behaviour is the conclusion.")));
+  const vi = v => v ? `${v.P1} / ${v.P2} / ${v.P3}` : "–";
+  box.append(el("div", { class: "tablewrap" }, el("table", { class: "t" },
+    el("tr", {}, el("th", {}, ""), el("th", { class: "num" }, "edges crossing a boundary"), el("th", { class: "num" }, "not via an entry or exit"), el("th", { class: "num" }, "violations P1 / P2 / P3"), el("th", { class: "num" }, "collapsible structures")),
+    el("tr", {}, el("td", {}, "previous clustering"), el("td", { class: "num" }, b.crossing_edges), el("td", { class: "num" }, b.unclean_crossing_edges), el("td", { class: "num" }, vi(b.precondition_violations)), el("td", { class: "num" }, `${b.collapsible_groups} of ${R.root.top.length}`)),
+    el("tr", {}, el("td", {}, "this decomposition"), el("td", { class: "num" }, a.crossing_edges), el("td", { class: "num" }, a.unclean_crossing_edges), el("td", { class: "num" }, vi(a.precondition_violations)), el("td", { class: "num" }, `${a.collapsible_groups} of ${R.root.top.length}`)))),
+    el("p", { class: "note" }, "Same structures in both rows; the previous pipeline's entries and exits classified by the annotation rules. P1 = an edge from outside into a non-entry, P2 = an edge out of a non-exit, P3 = an exit fed from outside."));
+  const digits = [...Array(n.k).keys()], push = R.root.push || {};
+  const names = Object.keys(push);
+  const RB = R.root.bf;
+  box.append(el("h4", { style: "margin-top:10px" }, R.root.title, RB ? " " : null, RB ? statusPill(RB.status) : null), el("p", {}, R.root.text),
+    RB && RB.lead_rows ? el("div", { class: "tablewrap" }, el("table", { class: "t" },
+      el("tr", {}, el("th", {}, "digit"), el("th", {}, "depends most on"), el("th", {}, "how"), el("th", { class: "num" }, "lost if its term is held at the average"), el("th", {}, "taken over by"), el("th", {}, "same on the probe images")),
+      RB.lead_rows.map(r => el("tr", {}, el("td", {}, `'${CN(r.digit)}'`), el("td", {}, `${r.structure}: ${r.title}`),
+        el("td", {}, r.mode === "silent" ? `stays silent (${pct(1 - r.fire_rate)} of them)` : `fires (${pct(r.fire_rate)} of them)`),
+        el("td", { class: "num" }, pct(r.drop)), el("td", {}, r.to === null ? "–" : `'${CN(r.to)}'`), el("td", {}, r.replicates ? "yes" : "no"))))) : null,
+    RB && RB.lead_rows ? el("p", { class: "note" }, "Discovery validation images. “Silent” = below its median response; the silence keeps the rival digit's score down. Holding a structure's term at its average replaces its push with the average push; the column shows the share of that digit's correct answers that are lost.") : null,
+    RB ? el("p", {}, RB.prediction) : null,
+    RB ? el("div", {}, RB.probes.map(q => el("div", { class: "hcard pcard", style: `border-left-color:${q.verdict === "agrees" ? "var(--accent)" : "var(--neg)"}` },
+      el("strong", {}, cap(q.words)), " ", el("span", { class: "pill " + (q.verdict === "agrees" ? "good" : "warn") }, q.verdict),
+      el("p", { class: "small", style: "margin:4px 0" }, `${sgn2(q.effect_sd)} SD of the '${q.digit}' score margin against the control (95% interval ${sgn2(q.ci95[0])} to ${sgn2(q.ci95[1])}, ${q.n} images); the stroke wakes ${q.wakes}.`)))) : null,
+    RB ? el("p", { class: "note" }, RB.probes_text.split(". ")[0] + ". " + RB.status_words + ".") : null,
+    el("div", { class: "tablewrap" }, el("table", { class: "t" },
+      el("tr", {}, el("th", {}, "direct push towards each image's own class"), ...digits.map(d => el("th", { class: "num" }, `'${CN(d)}'`))),
+      names.map(nm => el("tr", {}, el("td", {}, nm === "input" ? "the image directly" : `${nm}: ${R.root.titles[nm] || nm}`),
+        ...push[nm].map((v, d) => { const top = Math.max(...names.map(q => push[q][d])) === v; return el("td", { class: "num", style: `color:${v >= 0 ? "var(--pos)" : "var(--neg)"};${top ? "font-weight:700" : ""}` }, Number(v).toFixed(2)); }))))),
+    el("p", { class: "note" }, "Exact: each score is a constant plus one term per source map feeding the score maps (kernel, global average, head weight). Per structure: the mean of its terms' margin (own digit minus the mean over digits) on validation images of that digit; bold = the largest."));
+}
+function annCard(p) {
+  const n = N();
+  return el("button", { type: "button", class: "leaf", style: `border-left:4px solid ${partColor(p.name)}`, "aria-pressed": String(S.sel && S.sel.type === "part" && S.sel.id === p.name),
+    onclick: () => { openPart(p.name); if (p.parent) S.expanded.add(p.parent); select({ type: "part", id: p.name }); } },
+    el("div", { class: "hd" }, el("strong", {}, `${p.name} · ${p.title}`), statusPill(p.status), el("span", { class: "muted small" }, `${p.n_maps} map${p.n_maps > 1 ? "s" : ""} · ${p.entries.length} in · ${p.exits.length} out`)),
+    el("div", { class: "desc" }, p.bf ? (p.kind === "composition" ? p.bf.combine : p.bf.mechanism) : (p.kind === "composition" && p.combination_text ? p.combination_text + " " : ""), p.bf ? "" : p.computes),
+    p.bf ? el("div", { class: "desc small" }, "Self-probe: " + p.bf.probes.filter(q => !q.retired).map(q => `${q.verdict} (${q.effect_sd === null || q.effect_sd === undefined ? "–" : sgn2(q.effect_sd)} SD)`).join(", ")) : null,
+    el("div", { class: "desc" }, p.behaviour), rateStrip(p.rate, 170));
+}
+function renderAnnotationTree() {
+  const n = N(), box = $("#parts"), R = n.record; box.innerHTML = "";
+  const c = R.counts;
+  box.append(el("div", { class: "toolbar" }, el("h2", {}, "Annotations: what each structure computes"),
+    el("span", { class: "note" }, n.behaviour_first ? `${n.parts.length} annotations · ${c.proven} proven, ${c.supported} supported, ${c.contested} contested, ${c.described || 0} described, not explained · ${R.proven_leaves} of ${R.n_leaves} leaves proven`
+      : `${n.parts.length} annotations · ${c.proven} proven, ${c.supported} supported, ${(c.correlate || 0) + (c.unknown || 0)} mechanism unknown · ${R.proven_leaves} of ${R.n_leaves} leaves proven`)));
+  if (n.behaviour_first) box.append(el("p", { class: "note", style: "max-width:110ch" }, "Each part was read from its own behaviour first (where in the image it fires, what differs between the images of one digit that it fires on and those it does not, which pixels drive it), then given a hypothesis: the mechanism, and a prediction. The prediction is self-probed by editing images against a matched control, on validation images not used to read it. The behaviour (bars: % of validation images of each digit on which it fires) is the conclusion. Every concept of one concept library is then checked within digits with the ink held fixed and shown on the card. Proven = every self-probe agrees and the reading holds within digits with the ink held fixed; contested = a self-probe went against it. The earlier automated reading is kept under “show the maths”. Click a card to open it in the graph."));
+  else box.append(el("p", { class: "note", style: "max-width:110ch" }, "Each card leads with the stored hypothesis: the mechanism name, what it computes, then the behaviour (bars: % of validation images of each digit on which it fires) as the conclusion. Proven = within-digit test, ink control and an image edit all agree; supported = the edit was not available or too small; mechanism unknown = it only correlates with digits. Click a card to open it in the graph."));
+  const tops = n.parts.filter(p => p.depth === 1);
+  box.append(el("ul", { class: "tree" }, el("li", {},
+    el("div", { class: "leaf", style: "cursor:default" }, el("div", { class: "hd" }, el("strong", {}, `root · ${R.root.title}`)), el("div", { class: "desc" }, R.root.text)),
+    el("ul", {}, tops.map(t => el("li", {}, annCard(t),
+      t.children && t.children.length ? el("ul", {}, t.children.map(cn => el("li", {}, annCard(partOf(cn))))) : null))))));
+}
+
+// ---------- state
+function select(sel) {
+  if (sel && sel.type === "node") chainOf(String(sel.id)).forEach(p => S.expanded.add(p));
+  S.sel = sel; renderGraph(); renderInspector(); renderParts();
+  if (sel && window.matchMedia("(max-width: 1040px)").matches && sel.type !== "part") $("#insp").scrollIntoView({ block: "start" });
+}
+function renderAll() {
+  const sel = $("#netsel"); sel.innerHTML = "";
+  NETS.forEach((n, i) => sel.append(el("button", { type: "button", "aria-pressed": String(i === S.net), onclick: () => { S.net = i; S.walk = null; S.expanded = new Set(); S.classSel = []; S.contrast = false; S.sel = defaultSel(); renderAll(); } }, n.title)));
+  if (NETS.length < 2) sel.hidden = true;
+  renderSummary(); renderStructure(); renderData(); renderGraph(); renderWalk(); renderParts(); renderInspector();
+}
+function defaultSel() {
+  const n = N(); let best = null, bv = -Infinity;
+  if (n.record_based) { const p = n.parts.find(q => q.depth === 1 && q.status === "proven") || n.parts[0]; return p ? { type: "part", id: p.name } : null; }
+  for (const p of n.parts) if (p.importance && p.importance.d_logloss > bv) { bv = p.importance.d_logloss; best = p.name; }
+  if (best) return { type: "part", id: best };
+  for (const [k, nd] of Object.entries(n.nodes)) if (nd.kind === "hidden" && nd.importance && nd.importance.d_logloss > bv) { bv = nd.importance.d_logloss; best = k; }
+  return best ? { type: "node", id: best } : null;
+}
+$("#expandall").addEventListener("click", () => { N().parts.forEach(p => S.expanded.add(p.name)); renderGraph(); });
+$("#collapseall").addEventListener("click", () => { S.expanded.clear(); renderGraph(); });
+$("#resetlayout").addEventListener("click", resetLayout);
+$("#contrast").addEventListener("click", () => { S.contrast = !S.contrast; renderGraph(); });
+$("#clearclasses").addEventListener("click", () => { S.classSel = []; S.contrast = false; renderGraph(); });
+$("#showhidden").addEventListener("change", ev => { S.showHidden = ev.target.checked; renderGraph(); });
+$("#walkreset").addEventListener("click", () => { S.walk = null; renderGraph(); renderWalk(); });
+function setTheme(t) {
+  if (t === "auto") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
+  document.querySelectorAll("#themesel button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.t === t)));
+  try { localStorage.setItem("convneat-theme", t); } catch (e) { /* storage unavailable */ }
+}
+document.querySelectorAll("#themesel button").forEach(b => b.addEventListener("click", () => setTheme(b.dataset.t)));
+try { const t = localStorage.getItem("convneat-theme"); if (t) setTheme(t); } catch (e) { /* storage unavailable */ }
+S.sel = defaultSel();
+renderAll();
+})();
+</script>

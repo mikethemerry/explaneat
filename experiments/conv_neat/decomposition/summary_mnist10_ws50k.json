@@ -1,0 +1,1500 @@
+{
+ "n_operations": 73,
+ "n_identity_nodes": 41,
+ "n_split_ops": 15,
+ "n_split_copies_added": 16,
+ "n_annotations": 17,
+ "n_structures": 8,
+ "n_leaves": 14,
+ "function_preserved_max_abs_logit_diff": 1.4210854715202004e-14,
+ "n_check_images": 1000,
+ "coverage": {
+  "structural_all_annotations": 1.0,
+  "structural_leaves_only": 0.6145833333333334,
+  "hidden_maps_in_a_leaf": 1.0,
+  "compositional": 1.0,
+  "global_root": "root",
+  "composed": 16,
+  "required": 16,
+  "note": "structural coverage (paper Def 10): a node is covered when it is in the annotations and all its outgoing edges are; leaf exits feed junction edges that only the compositions and the root hold, so leaves alone cannot cover their exits"
+ },
+ "initial_blocking": {
+  "C1": [],
+  "C2": [],
+  "C3": [],
+  "C4": [],
+  "C5": [],
+  "C6": [],
+  "C7": [],
+  "C8": []
+ },
+ "repairs": [],
+ "blocking_left": [],
+ "structures": [
+  {
+   "name": "S1",
+   "title": "0-vs-6 separator (S1)",
+   "kind": "composition",
+   "maps": [
+    "17",
+    "39",
+    "57",
+    "77",
+    "119",
+    "151",
+    "152",
+    "242",
+    "336",
+    "448",
+    "594",
+    "790"
+   ],
+   "n_nodes": 24,
+   "entries": [
+    "p1",
+    "p2",
+    "p4"
+   ],
+   "entry_sources": {
+    "p1": [
+     "-1"
+    ],
+    "p2": [
+     "-1"
+    ],
+    "p4": [
+     "-1"
+    ]
+   },
+   "exits": [
+    "17_ac",
+    "39_cd",
+    "119",
+    "151",
+    "152",
+    "242_b",
+    "594",
+    "790"
+   ],
+   "splits": [
+    "17",
+    "39",
+    "77",
+    "242"
+   ],
+   "children": [
+    "S1.1",
+    "S1.2",
+    "S1.3",
+    "S1.4"
+   ],
+   "hypothesis": "0-vs-6 separator (S1): Combines S1.1 (Closed-loop detector), S1.2 (No-stem detector \u00b7 without an open left side), S1.3 (0/2/3/5/6/8 structure (mechanism unknown) (S1.3)) and S1.4 (Weak closed-left-side detector). S1.1 feeds S1.2; S1.2 feeds S1.3 and S1.4. Together they separate 0s from 6s (94% balanced accuracy, cross-validated) much better than the best part alone (S1.4: 79%). Its strongest exit (map h119): correlates with 0s, 2s, 3s, 5s, 6s and 8s; mechanism unknown: no image rule explains it within digits (closest: a tall vertical stem, s = -0.68). It fires on 0s (93%), 2s (83%), 8s (78%), 3s (74%), 6s (70%), 5s (64%) and 9s (51%). Evidence: Overall s = -0.68; within digits s = -0.54 on average over 7 digits; with the amount of ink held fixed, r = -0.10; add_stem edit: -0.22 SD against its control (as predicted)."
+  },
+  {
+   "name": "S2",
+   "title": "No-stem detector (S2)",
+   "kind": "leaf",
+   "maps": [
+    "11",
+    "58",
+    "83",
+    "84"
+   ],
+   "n_nodes": 8,
+   "entries": [
+    "p8",
+    "p9"
+   ],
+   "entry_sources": {
+    "p8": [
+     "152"
+    ],
+    "p9": [
+     "242_b"
+    ]
+   },
+   "exits": [
+    "11_abdefg",
+    "58_c",
+    "83",
+    "84"
+   ],
+   "splits": [
+    "11",
+    "58"
+   ],
+   "children": [],
+   "hypothesis": "No-stem detector (S2): It responds when the image lacks a tall vertical stem: it is held back by a long, near-vertical stroke running most of the digit's height. So it fires on 3s (99%), 2s (97%), 5s (96%), 0s (87%), 8s (84%), 6s (67%), 7s (67%) and 9s (59%), and on 4s that have no tall vertical stem (51% vs 3% without). Evidence: Overall s = -0.80; within digits s = -0.75 on average over 7 digits; with the amount of ink held fixed, r = -0.43; add_stem edit: -1.34 SD against its control (as predicted)."
+  },
+  {
+   "name": "S3",
+   "title": "7/8/9 structure (mechanism unknown)",
+   "kind": "leaf",
+   "maps": [
+    "320"
+   ],
+   "n_nodes": 2,
+   "entries": [
+    "p10"
+   ],
+   "entry_sources": {
+    "p10": [
+     "39_cd"
+    ]
+   },
+   "exits": [
+    "320"
+   ],
+   "splits": [],
+   "children": [],
+   "hypothesis": "7/8/9 structure (mechanism unknown): Correlates with 7s, 8s and 9s; mechanism unknown: no image rule explains it within digits (closest: a closed upper loop, s = +0.07). It fires on no class most of the time. Evidence: Overall s = +0.07; within digits s = +0.04 on average over 3 digits; with the amount of ink held fixed, r = +0.14."
+  },
+  {
+   "name": "S4",
+   "title": "No-left-open-upper-curve detector",
+   "kind": "leaf",
+   "maps": [
+    "15",
+    "104",
+    "149"
+   ],
+   "n_nodes": 9,
+   "entries": [
+    "p11",
+    "p12",
+    "p13",
+    "p14"
+   ],
+   "entry_sources": {
+    "p11": [
+     "11_abdefg"
+    ],
+    "p12": [
+     "39_cd"
+    ],
+    "p13": [
+     "84"
+    ],
+    "p14": [
+     "119"
+    ]
+   },
+   "exits": [
+    "15",
+    "104_acd",
+    "149_a"
+   ],
+   "splits": [
+    "104",
+    "149"
+   ],
+   "children": [],
+   "hypothesis": "No-left-open-upper-curve detector: It responds when the image lacks an upper curve open to the left: it is held back by an upper curve that opens to the left, ink above, below and to its right (the top of a 2, 3 or 7). So it fires on 6s (99%), 5s (99%), 1s (98%), 0s (97%), 8s (76%) and 4s (53%), and on 2s that have no upper curve open to the left (53% vs 23% without). Evidence: Overall s = -0.75; within digits s = -0.29 on average over 4 digits; with the amount of ink held fixed, r = -0.56; close_upper edit: +1.10 SD against its control (as predicted); open_upper edit: -0.56 SD against its control (as predicted)."
+  },
+  {
+   "name": "S5",
+   "title": "Left-open upper-curve detector",
+   "kind": "leaf",
+   "maps": [
+    "40",
+    "103",
+    "495"
+   ],
+   "n_nodes": 9,
+   "entries": [
+    "p15",
+    "p16",
+    "p17",
+    "p18"
+   ],
+   "entry_sources": {
+    "p15": [
+     "104_acd"
+    ],
+    "p16": [
+     "119"
+    ],
+    "p17": [
+     "320"
+    ],
+    "p18": [
+     "594"
+    ]
+   },
+   "exits": [
+    "40_bcd",
+    "103",
+    "495_a"
+   ],
+   "splits": [
+    "40",
+    "495"
+   ],
+   "children": [],
+   "hypothesis": "Left-open upper-curve detector: It responds to an upper curve that opens to the left, ink above, below and to its right (the top of a 2, 3 or 7). So it fires on 3s (94%), 2s (83%), 7s (76%) and 5s (57%), and on 8s that have an upper curve open to the left (40% vs 13% without). Evidence: Overall s = +0.79; within digits s = +0.44 on average over 4 digits; with the amount of ink held fixed, r = +0.69; close_upper edit: -1.03 SD against its control (as predicted); open_upper edit: +0.58 SD against its control (as predicted)."
+  },
+  {
+   "name": "S6",
+   "title": "No-stem detector (S6)",
+   "kind": "leaf",
+   "maps": [
+    "182",
+    "215"
+   ],
+   "n_nodes": 5,
+   "entries": [
+    "p19",
+    "p20"
+   ],
+   "entry_sources": {
+    "p19": [
+     "11_abdefg"
+    ],
+    "p20": [
+     "40_bcd"
+    ]
+   },
+   "exits": [
+    "182_ab",
+    "215"
+   ],
+   "splits": [
+    "182"
+   ],
+   "children": [],
+   "hypothesis": "No-stem detector (S6): It responds when the image lacks a tall vertical stem: it is held back by a long, near-vertical stroke running most of the digit's height. So it fires on 3s (99%), 2s (98%), 5s (97%), 0s (77%), 7s (73%), 8s (66%) and 4s (50%), and on 6s that have no tall vertical stem (61% vs 22% without), and on 9s that have no tall vertical stem (54% vs 21% without). Evidence: Overall s = -0.70; within digits s = -0.49 on average over 7 digits; with the amount of ink held fixed, r = -0.31; add_stem edit: -1.16 SD against its control (as predicted)."
+  },
+  {
+   "name": "S7",
+   "title": "Weak no-stem detector",
+   "kind": "leaf",
+   "maps": [
+    "88",
+    "102",
+    "501"
+   ],
+   "n_nodes": 6,
+   "entries": [
+    "p21",
+    "p22",
+    "p23"
+   ],
+   "entry_sources": {
+    "p21": [
+     "-1"
+    ],
+    "p22": [
+     "11_abdefg"
+    ],
+    "p23": [
+     "215"
+    ]
+   },
+   "exits": [
+    "102",
+    "501"
+   ],
+   "splits": [],
+   "children": [],
+   "hypothesis": "Weak no-stem detector: It responds when the image lacks a tall vertical stem: it is held back by a long, near-vertical stroke running most of the digit's height. So it fires on 2s (96%), 7s (74%) and 4s (60%), and on 0s that have no tall vertical stem (40% vs 8% without). Evidence: Overall s = -0.31; within digits s = -0.27 on average over 7 digits; with the amount of ink held fixed, r = -0.22; add_stem edit: -1.12 SD against its control (as predicted). The link is weak overall (|s| = 0.31 < 0.5): read it as a tendency, not a detector."
+  },
+  {
+   "name": "S8",
+   "title": "3-vs-8 separator (S8)",
+   "kind": "composition",
+   "maps": [
+    "19",
+    "20",
+    "50",
+    "90",
+    "172",
+    "252",
+    "264",
+    "299",
+    "432",
+    "483"
+   ],
+   "n_nodes": 32,
+   "entries": [
+    "p24",
+    "p25",
+    "p26",
+    "p27",
+    "p28",
+    "p30",
+    "p31",
+    "p33",
+    "p35",
+    "p37",
+    "p38",
+    "p39",
+    "p41"
+   ],
+   "entry_sources": {
+    "p24": [
+     "-1"
+    ],
+    "p25": [
+     "104_acd"
+    ],
+    "p26": [
+     "495_a"
+    ],
+    "p27": [
+     "11_abdefg"
+    ],
+    "p28": [
+     "40_bcd"
+    ],
+    "p30": [
+     "-1"
+    ],
+    "p31": [
+     "17_ac"
+    ],
+    "p33": [
+     "58_c"
+    ],
+    "p35": [
+     "215"
+    ],
+    "p37": [
+     "501"
+    ],
+    "p38": [
+     "-1"
+    ],
+    "p39": [
+     "40_bcd"
+    ],
+    "p41": [
+     "790"
+    ]
+   },
+   "exits": [
+    "19",
+    "90_a",
+    "252_ab",
+    "264_a",
+    "432"
+   ],
+   "splits": [
+    "20",
+    "90",
+    "252",
+    "264"
+   ],
+   "children": [
+    "S8.1",
+    "S8.2",
+    "S8.3",
+    "S8.4"
+   ],
+   "hypothesis": "3-vs-8 separator (S8): Combines S8.1 (No-stem detector \u00b7 with a closed lower loop (S8.1)), S8.2 (No-stem detector \u00b7 with a closed lower loop (S8.2)), S8.3 (No-stem detector (S8.3)) and S8.4 (Lower-loop detector). S8.1 feeds S8.2, S8.3 and S8.4; S8.2 feeds S8.3. Together they separate 3s from 8s (95% balanced accuracy, cross-validated) much better than the best part alone (S8.4: 74%). Its strongest exit (map h90): it responds when the image lacks a tall vertical stem: it is held back by a long, near-vertical stroke running most of the digit's height. So it fires on 0s (93%), 6s (90%), 2s (88%) and 4s (56%), and on 1s that have no tall vertical stem (90% vs 5% without), and on 7s that have no tall vertical stem (55% vs 4% without). Evidence: Overall s = -0.56; within digits s = -0.55 on average over 7 digits; with the amount of ink held fixed, r = -0.18; add_stem edit: -0.15 SD against its control (too small to count). No image edit tested it (or the edit's effect was too small): supported, not proven."
+  }
+ ],
+ "annotations": [
+  {
+   "name": "S1.1",
+   "title": "Closed-loop detector",
+   "kind": "leaf",
+   "parent": "S1",
+   "children": [],
+   "entries": [
+    "p1"
+   ],
+   "exits": [
+    "17_ac",
+    "17_b"
+   ],
+   "n_nodes": 3,
+   "status": "proven",
+   "hypothesis": "Closed-loop detector: It responds to enclosed background, paper fully surrounded by ink. So it fires on 0s (94%), 8s (93%), 4s (85%), 6s (81%), 9s (71%) and 2s (50%). Evidence: Overall s = +0.74; within digits s = +0.58 on average over 4 digits; with the amount of ink held fixed, r = +0.56; close edit: +0.61 SD against its control (as predicted); fill edit: -3.59 SD against its control (as predicted); bridge_loop edit: +0.15 SD against its control (too small to count)."
+  },
+  {
+   "name": "S1.2",
+   "title": "No-stem detector \u00b7 without an open left side",
+   "kind": "leaf",
+   "parent": "S1",
+   "children": [],
+   "entries": [
+    "p2",
+    "p3"
+   ],
+   "exits": [
+    "77_a",
+    "242_a",
+    "242_b",
+    "336",
+    "790"
+   ],
+   "n_nodes": 9,
+   "status": "proven",
+   "hypothesis": "No-stem detector \u00b7 without an open left side: It responds when the image lacks a tall vertical stem: it is held back by a long, near-vertical stroke running most of the digit's height. Within digits it is also held back by an open left side (s = -0.32, ink-controlled r = -0.21; bridge_left edit +0.47 SD as predicted; proven). So it fires on 0s (95%), 8s (87%), 6s (82%), 2s (79%), 3s (69%), 4s (68%), 9s (63%) and 5s (56%), and on 7s that have no tall vertical stem (61% vs 4% without). Evidence: Overall s = -0.69; within digits s = -0.65 on average over 7 digits; with the amount of ink held fixed, r = -0.21; add_stem edit: -0.37 SD against its control (as predicted)."
+  },
+  {
+   "name": "S1.3",
+   "title": "0/2/3/5/6/8 structure (mechanism unknown) (S1.3)",
+   "kind": "leaf",
+   "parent": "S1",
+   "children": [],
+   "entries": [
+    "p4",
+    "p5"
+   ],
+   "exits": [
+    "119",
+    "152"
+   ],
+   "n_nodes": 6,
+   "status": "correlate",
+   "hypothesis": "0/2/3/5/6/8 structure (mechanism unknown) (S1.3): Correlates with 0s, 2s, 3s, 5s, 6s and 8s; mechanism unknown: no image rule explains it within digits (closest: a tall vertical stem, s = -0.68). It fires on 0s (93%), 2s (83%), 8s (78%), 3s (74%), 6s (70%), 5s (64%) and 9s (51%). Evidence: Overall s = -0.68; within digits s = -0.54 on average over 7 digits; with the amount of ink held fixed, r = -0.10; add_stem edit: -0.22 SD against its control (as predicted)."
+  },
+  {
+   "name": "S1.4",
+   "title": "Weak closed-left-side detector",
+   "kind": "leaf",
+   "parent": "S1",
+   "children": [],
+   "entries": [
+    "p6",
+    "p7"
+   ],
+   "exits": [
+    "39_cd",
+    "151",
+    "594"
+   ],
+   "n_nodes": 6,
+   "status": "contested",
+   "hypothesis": "Weak closed-left-side detector: It responds when the image lacks an open left side: it is held back by a digit whose left side is open in the middle rows (as in 3, 7 and many 2s and 1s). So it fires on 8s (77%), 6s (72%) and 0s (62%), and on 2s that have no open left side (54% vs 17% without), and on 3s that have no open left side (59% vs 14% without). Evidence: Overall s = -0.45; within digits s = -0.39 on average over 5 digits; with the amount of ink held fixed, r = -0.29; bridge_left edit: -0.62 SD against its control (against the prediction). The link is weak overall (|s| = 0.45 < 0.5): read it as a tendency, not a detector. The edit went against the hypothesis: contested."
+  },
+  {
+   "name": "S2",
+   "title": "No-stem detector (S2)",
+   "kind": "leaf",
+   "parent": "root",
+   "children": [],
+   "entries": [
+    "p8",
+    "p9"
+   ],
+   "exits": [
+    "11_abdefg",
+    "58_c",
+    "83",
+    "84"
+   ],
+   "n_nodes": 8,
+   "status": "proven",
+   "hypothesis": "No-stem detector (S2): It responds when the image lacks a tall vertical stem: it is held back by a long, near-vertical stroke running most of the digit's height. So it fires on 3s (99%), 2s (97%), 5s (96%), 0s (87%), 8s (84%), 6s (67%), 7s (67%) and 9s (59%), and on 4s that have no tall vertical stem (51% vs 3% without). Evidence: Overall s = -0.80; within digits s = -0.75 on average over 7 digits; with the amount of ink held fixed, r = -0.43; add_stem edit: -1.34 SD against its control (as predicted)."
+  },
+  {
+   "name": "S3",
+   "title": "7/8/9 structure (mechanism unknown)",
+   "kind": "leaf",
+   "parent": "root",
+   "children": [],
+   "entries": [
+    "p10"
+   ],
+   "exits": [
+    "320"
+   ],
+   "n_nodes": 2,
+   "status": "unknown",
+   "hypothesis": "7/8/9 structure (mechanism unknown): Correlates with 7s, 8s and 9s; mechanism unknown: no image rule explains it within digits (closest: a closed upper loop, s = +0.07). It fires on no class most of the time. Evidence: Overall s = +0.07; within digits s = +0.04 on average over 3 digits; with the amount of ink held fixed, r = +0.14."
+  },
+  {
+   "name": "S4",
+   "title": "No-left-open-upper-curve detector",
+   "kind": "leaf",
+   "parent": "root",
+   "children": [],
+   "entries": [
+    "p11",
+    "p12",
+    "p13",
+    "p14"
+   ],
+   "exits": [
+    "15",
+    "104_acd",
+    "149_a"
+   ],
+   "n_nodes": 9,
+   "status": "proven",
+   "hypothesis": "No-left-open-upper-curve detector: It responds when the image lacks an upper curve open to the left: it is held back by an upper curve that opens to the left, ink above, below and to its right (the top of a 2, 3 or 7). So it fires on 6s (99%), 5s (99%), 1s (98%), 0s (97%), 8s (76%) and 4s (53%), and on 2s that have no upper curve open to the left (53% vs 23% without). Evidence: Overall s = -0.75; within digits s = -0.29 on average over 4 digits; with the amount of ink held fixed, r = -0.56; close_upper edit: +1.10 SD against its control (as predicted); open_upper edit: -0.56 SD against its control (as predicted)."
+  },
+  {
+   "name": "S5",
+   "title": "Left-open upper-curve detector",
+   "kind": "leaf",
+   "parent": "root",
+   "children": [],
+   "entries": [
+    "p15",
+    "p16",
+    "p17",
+    "p18"
+   ],
+   "exits": [
+    "40_bcd",
+    "103",
+    "495_a"
+   ],
+   "n_nodes": 9,
+   "status": "proven",
+   "hypothesis": "Left-open upper-curve detector: It responds to an upper curve that opens to the left, ink above, below and to its right (the top of a 2, 3 or 7). So it fires on 3s (94%), 2s (83%), 7s (76%) and 5s (57%), and on 8s that have an upper curve open to the left (40% vs 13% without). Evidence: Overall s = +0.79; within digits s = +0.44 on average over 4 digits; with the amount of ink held fixed, r = +0.69; close_upper edit: -1.03 SD against its control (as predicted); open_upper edit: +0.58 SD against its control (as predicted)."
+  },
+  {
+   "name": "S6",
+   "title": "No-stem detector (S6)",
+   "kind": "leaf",
+   "parent": "root",
+   "children": [],
+   "entries": [
+    "p19",
+    "p20"
+   ],
+   "exits": [
+    "182_ab",
+    "215"
+   ],
+   "n_nodes": 5,
+   "status": "proven",
+   "hypothesis": "No-stem detector (S6): It responds when the image lacks a tall vertical stem: it is held back by a long, near-vertical stroke running most of the digit's height. So it fires on 3s (99%), 2s (98%), 5s (97%), 0s (77%), 7s (73%), 8s (66%) and 4s (50%), and on 6s that have no tall vertical stem (61% vs 22% without), and on 9s that have no tall vertical stem (54% vs 21% without). Evidence: Overall s = -0.70; within digits s = -0.49 on average over 7 digits; with the amount of ink held fixed, r = -0.31; add_stem edit: -1.16 SD against its control (as predicted)."
+  },
+  {
+   "name": "S7",
+   "title": "Weak no-stem detector",
+   "kind": "leaf",
+   "parent": "root",
+   "children": [],
+   "entries": [
+    "p21",
+    "p22",
+    "p23"
+   ],
+   "exits": [
+    "102",
+    "501"
+   ],
+   "n_nodes": 6,
+   "status": "proven",
+   "hypothesis": "Weak no-stem detector: It responds when the image lacks a tall vertical stem: it is held back by a long, near-vertical stroke running most of the digit's height. So it fires on 2s (96%), 7s (74%) and 4s (60%), and on 0s that have no tall vertical stem (40% vs 8% without). Evidence: Overall s = -0.31; within digits s = -0.27 on average over 7 digits; with the amount of ink held fixed, r = -0.22; add_stem edit: -1.12 SD against its control (as predicted). The link is weak overall (|s| = 0.31 < 0.5): read it as a tendency, not a detector."
+  },
+  {
+   "name": "S8.1",
+   "title": "No-stem detector \u00b7 with a closed lower loop (S8.1)",
+   "kind": "leaf",
+   "parent": "S8",
+   "children": [],
+   "entries": [
+    "p24",
+    "p25",
+    "p26"
+   ],
+   "exits": [
+    "172",
+    "483"
+   ],
+   "n_nodes": 6,
+   "status": "proven",
+   "hypothesis": "No-stem detector \u00b7 with a closed lower loop (S8.1): It responds when the image lacks a tall vertical stem: it is held back by a long, near-vertical stroke running most of the digit's height. Within digits it also tracks a closed lower loop (s = +0.27, ink-controlled r = +0.33; fill edit -0.97 SD as predicted; proven). So it fires on 0s (95%), 8s (81%), 6s (81%), 2s (80%), 3s (63%), 4s (60%), 5s (54%) and 9s (53%), and on 1s that have no tall vertical stem (81% vs 2% without), and on 7s that have no tall vertical stem (59% vs 12% without). Evidence: Overall s = -0.71; within digits s = -0.65 on average over 7 digits; with the amount of ink held fixed, r = -0.23; add_stem edit: -0.38 SD against its control (as predicted)."
+  },
+  {
+   "name": "S8.2",
+   "title": "No-stem detector \u00b7 with a closed lower loop (S8.2)",
+   "kind": "leaf",
+   "parent": "S8",
+   "children": [],
+   "entries": [
+    "p27",
+    "p28",
+    "p29"
+   ],
+   "exits": [
+    "20_b",
+    "252_ab",
+    "252_c"
+   ],
+   "n_nodes": 7,
+   "status": "supported",
+   "hypothesis": "No-stem detector \u00b7 with a closed lower loop (S8.2): It responds when the image lacks a tall vertical stem: it is held back by a long, near-vertical stroke running most of the digit's height. Within digits it also tracks a closed lower loop (s = +0.27, ink-controlled r = +0.37; fill edit -0.69 SD as predicted; proven). So it fires on 0s (93%), 3s (88%), 2s (84%), 5s (82%), 6s (72%) and 8s (61%). Evidence: Overall s = -0.67; within digits s = -0.62 on average over 7 digits; with the amount of ink held fixed, r = -0.25; add_stem edit: -0.19 SD against its control (too small to count). No image edit tested it (or the edit's effect was too small): supported, not proven."
+  },
+  {
+   "name": "S8.3",
+   "title": "No-stem detector (S8.3)",
+   "kind": "leaf",
+   "parent": "S8",
+   "children": [],
+   "entries": [
+    "p30",
+    "p31",
+    "p32",
+    "p33",
+    "p34",
+    "p35",
+    "p36",
+    "p37"
+   ],
+   "exits": [
+    "90_a",
+    "432"
+   ],
+   "n_nodes": 12,
+   "status": "supported",
+   "hypothesis": "No-stem detector (S8.3): It responds when the image lacks a tall vertical stem: it is held back by a long, near-vertical stroke running most of the digit's height. So it fires on 0s (93%), 6s (90%), 2s (88%) and 4s (56%), and on 1s that have no tall vertical stem (90% vs 5% without), and on 7s that have no tall vertical stem (55% vs 4% without). Evidence: Overall s = -0.56; within digits s = -0.55 on average over 7 digits; with the amount of ink held fixed, r = -0.18; add_stem edit: -0.15 SD against its control (too small to count). No image edit tested it (or the edit's effect was too small): supported, not proven."
+  },
+  {
+   "name": "S8.4",
+   "title": "Lower-loop detector",
+   "kind": "leaf",
+   "parent": "S8",
+   "children": [],
+   "entries": [
+    "p38",
+    "p39",
+    "p40",
+    "p41"
+   ],
+   "exits": [
+    "19",
+    "264_a"
+   ],
+   "n_nodes": 7,
+   "status": "proven",
+   "hypothesis": "Lower-loop detector: It responds to an enclosed region in the lower half of the digit. So it fires on 8s (85%), 3s (62%), 6s (58%) and 0s (56%), and on 2s that have a closed lower loop (93% vs 25% without). Evidence: Overall s = +0.65; within digits s = +0.53 on average over 4 digits; with the amount of ink held fixed, r = +0.46; fill edit: -0.84 SD against its control (as predicted)."
+  },
+  {
+   "name": "S1",
+   "title": "0-vs-6 separator (S1)",
+   "kind": "composition",
+   "parent": "root",
+   "children": [
+    "S1.1",
+    "S1.2",
+    "S1.3",
+    "S1.4"
+   ],
+   "entries": [
+    "p1",
+    "p2",
+    "p4"
+   ],
+   "exits": [
+    "17_ac",
+    "39_cd",
+    "119",
+    "151",
+    "152",
+    "242_b",
+    "594",
+    "790"
+   ],
+   "n_nodes": 0,
+   "status": "correlate",
+   "hypothesis": "0-vs-6 separator (S1): Combines S1.1 (Closed-loop detector), S1.2 (No-stem detector \u00b7 without an open left side), S1.3 (0/2/3/5/6/8 structure (mechanism unknown) (S1.3)) and S1.4 (Weak closed-left-side detector). S1.1 feeds S1.2; S1.2 feeds S1.3 and S1.4. Together they separate 0s from 6s (94% balanced accuracy, cross-validated) much better than the best part alone (S1.4: 79%). Its strongest exit (map h119): correlates with 0s, 2s, 3s, 5s, 6s and 8s; mechanism unknown: no image rule explains it within digits (closest: a tall vertical stem, s = -0.68). It fires on 0s (93%), 2s (83%), 8s (78%), 3s (74%), 6s (70%), 5s (64%) and 9s (51%). Evidence: Overall s = -0.68; within digits s = -0.54 on average over 7 digits; with the amount of ink held fixed, r = -0.10; add_stem edit: -0.22 SD against its control (as predicted)."
+  },
+  {
+   "name": "S8",
+   "title": "3-vs-8 separator (S8)",
+   "kind": "composition",
+   "parent": "root",
+   "children": [
+    "S8.1",
+    "S8.2",
+    "S8.3",
+    "S8.4"
+   ],
+   "entries": [
+    "p24",
+    "p25",
+    "p26",
+    "p27",
+    "p28",
+    "p30",
+    "p31",
+    "p33",
+    "p35",
+    "p37",
+    "p38",
+    "p39",
+    "p41"
+   ],
+   "exits": [
+    "19",
+    "90_a",
+    "252_ab",
+    "264_a",
+    "432"
+   ],
+   "n_nodes": 0,
+   "status": "supported",
+   "hypothesis": "3-vs-8 separator (S8): Combines S8.1 (No-stem detector \u00b7 with a closed lower loop (S8.1)), S8.2 (No-stem detector \u00b7 with a closed lower loop (S8.2)), S8.3 (No-stem detector (S8.3)) and S8.4 (Lower-loop detector). S8.1 feeds S8.2, S8.3 and S8.4; S8.2 feeds S8.3. Together they separate 3s from 8s (95% balanced accuracy, cross-validated) much better than the best part alone (S8.4: 74%). Its strongest exit (map h90): it responds when the image lacks a tall vertical stem: it is held back by a long, near-vertical stroke running most of the digit's height. So it fires on 0s (93%), 6s (90%), 2s (88%) and 4s (56%), and on 1s that have no tall vertical stem (90% vs 5% without), and on 7s that have no tall vertical stem (55% vs 4% without). Evidence: Overall s = -0.56; within digits s = -0.55 on average over 7 digits; with the amount of ink held fixed, r = -0.18; add_stem edit: -0.15 SD against its control (too small to count). No image edit tested it (or the edit's effect was too small): supported, not proven."
+  },
+  {
+   "name": "root",
+   "title": "Digit scores from the structures",
+   "kind": "root",
+   "parent": null,
+   "children": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6",
+    "S7",
+    "S8"
+   ],
+   "entries": [
+    "-1"
+   ],
+   "exits": [
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9"
+   ],
+   "n_nodes": 11,
+   "status": null,
+   "hypothesis": "Digit scores from the structures: Reads the structures' exits through the ten score maps and the head: each score map is a sum of kernels on the exits (and on the image directly), averaged over the map, and the head mixes the ten averages into the class scores (exact, linear). The largest direct push towards each image's own digit (score margin over the mean score, on images of that digit): '0' by 3-vs-8 separator (S8) (+21.11); '1' by 3-vs-8 separator (S8) (+4.98); '2' by Left-open upper-curve detector (+11.10); '3' by Left-open upper-curve detector (+13.48); '4' by 3-vs-8 separator (S8) (+7.60); '5' by No-left-open-upper-curve detector (+13.67); '6' by No-left-open-upper-curve detector (+14.36); '7' by Left-open upper-curve detector (+9.76); '8' by 0-vs-6 separator (S1) (+8.28); '9' by 3-vs-8 separator (S8) (+7.87)."
+  }
+ ],
+ "boundaries": {
+  "before": {
+   "n_groups": 8,
+   "crossing_edges": 73,
+   "unclean_crossing_edges": 24,
+   "unclean_into_non_entry": 24,
+   "unclean_out_of_non_exit": 0,
+   "precondition_violations": {
+    "P1": 24,
+    "P2": 0,
+    "P3": 24
+   },
+   "collapsible_groups": 1,
+   "per_group": {
+    "S1": {
+     "n_nodes": 15,
+     "crossing_in": 6,
+     "crossing_out": 18,
+     "unclean_in": 3,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 3,
+      "P2": 0,
+      "P3": 2
+     },
+     "collapsible": false
+    },
+    "S2": {
+     "n_nodes": 6,
+     "crossing_in": 3,
+     "crossing_out": 14,
+     "unclean_in": 1,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 1,
+      "P2": 0,
+      "P3": 2
+     },
+     "collapsible": false
+    },
+    "S3": {
+     "n_nodes": 1,
+     "crossing_in": 1,
+     "crossing_out": 1,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 1
+     },
+     "collapsible": false
+    },
+    "S4": {
+     "n_nodes": 5,
+     "crossing_in": 9,
+     "crossing_out": 7,
+     "unclean_in": 1,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 1,
+      "P2": 0,
+      "P3": 5
+     },
+     "collapsible": false
+    },
+    "S5": {
+     "n_nodes": 5,
+     "crossing_in": 7,
+     "crossing_out": 8,
+     "unclean_in": 5,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 5,
+      "P2": 0,
+      "P3": 4
+     },
+     "collapsible": false
+    },
+    "S6": {
+     "n_nodes": 3,
+     "crossing_in": 4,
+     "crossing_out": 5,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 2
+     },
+     "collapsible": false
+    },
+    "S7": {
+     "n_nodes": 3,
+     "crossing_in": 3,
+     "crossing_out": 3,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S8": {
+     "n_nodes": 13,
+     "crossing_in": 19,
+     "crossing_out": 6,
+     "unclean_in": 14,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 14,
+      "P2": 0,
+      "P3": 8
+     },
+     "collapsible": false
+    }
+   },
+   "n_splits": 13,
+   "n_identity_nodes": 0,
+   "groups": {
+    "S1": [
+     "17",
+     "39",
+     "57",
+     "77",
+     "119",
+     "151",
+     "152",
+     "242",
+     "336",
+     "448",
+     "594",
+     "790",
+     "791",
+     "792",
+     "793"
+    ],
+    "S2": [
+     "11",
+     "58",
+     "83",
+     "84",
+     "794",
+     "795"
+    ],
+    "S3": [
+     "320"
+    ],
+    "S4": [
+     "15",
+     "104",
+     "149",
+     "796",
+     "797"
+    ],
+    "S5": [
+     "40",
+     "103",
+     "495",
+     "798",
+     "799"
+    ],
+    "S6": [
+     "182",
+     "215",
+     "800"
+    ],
+    "S7": [
+     "88",
+     "102",
+     "501"
+    ],
+    "S8": [
+     "19",
+     "20",
+     "50",
+     "90",
+     "172",
+     "252",
+     "264",
+     "299",
+     "432",
+     "483",
+     "801",
+     "802",
+     "803"
+    ]
+   }
+  },
+  "after_structures": {
+   "n_groups": 8,
+   "crossing_edges": 53,
+   "unclean_crossing_edges": 0,
+   "unclean_into_non_entry": 0,
+   "unclean_out_of_non_exit": 0,
+   "precondition_violations": {
+    "P1": 0,
+    "P2": 0,
+    "P3": 0
+   },
+   "collapsible_groups": 8,
+   "per_group": {
+    "S1": {
+     "n_nodes": 24,
+     "crossing_in": 3,
+     "crossing_out": 11,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S2": {
+     "n_nodes": 8,
+     "crossing_in": 2,
+     "crossing_out": 10,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S3": {
+     "n_nodes": 2,
+     "crossing_in": 1,
+     "crossing_out": 1,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S4": {
+     "n_nodes": 9,
+     "crossing_in": 4,
+     "crossing_out": 6,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S5": {
+     "n_nodes": 9,
+     "crossing_in": 4,
+     "crossing_out": 5,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S6": {
+     "n_nodes": 5,
+     "crossing_in": 2,
+     "crossing_out": 4,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S7": {
+     "n_nodes": 6,
+     "crossing_in": 3,
+     "crossing_out": 3,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S8": {
+     "n_nodes": 32,
+     "crossing_in": 13,
+     "crossing_out": 6,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    }
+   }
+  },
+  "after_leaves": {
+   "n_groups": 14,
+   "crossing_edges": 62,
+   "unclean_crossing_edges": 0,
+   "unclean_into_non_entry": 0,
+   "unclean_out_of_non_exit": 0,
+   "precondition_violations": {
+    "P1": 0,
+    "P2": 0,
+    "P3": 0
+   },
+   "collapsible_groups": 14,
+   "per_group": {
+    "S1.1": {
+     "n_nodes": 3,
+     "crossing_in": 1,
+     "crossing_out": 3,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S1.2": {
+     "n_nodes": 9,
+     "crossing_in": 2,
+     "crossing_out": 5,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S1.3": {
+     "n_nodes": 6,
+     "crossing_in": 2,
+     "crossing_out": 3,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S1.4": {
+     "n_nodes": 6,
+     "crossing_in": 2,
+     "crossing_out": 4,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S2": {
+     "n_nodes": 8,
+     "crossing_in": 2,
+     "crossing_out": 10,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S3": {
+     "n_nodes": 2,
+     "crossing_in": 1,
+     "crossing_out": 1,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S4": {
+     "n_nodes": 9,
+     "crossing_in": 4,
+     "crossing_out": 6,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S5": {
+     "n_nodes": 9,
+     "crossing_in": 4,
+     "crossing_out": 5,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S6": {
+     "n_nodes": 5,
+     "crossing_in": 2,
+     "crossing_out": 4,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S7": {
+     "n_nodes": 6,
+     "crossing_in": 3,
+     "crossing_out": 3,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S8.1": {
+     "n_nodes": 6,
+     "crossing_in": 3,
+     "crossing_out": 3,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S8.2": {
+     "n_nodes": 7,
+     "crossing_in": 3,
+     "crossing_out": 4,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S8.3": {
+     "n_nodes": 12,
+     "crossing_in": 8,
+     "crossing_out": 2,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S8.4": {
+     "n_nodes": 7,
+     "crossing_in": 4,
+     "crossing_out": 2,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    }
+   }
+  }
+ },
+ "suggester": {
+  "method": "attribution flow (gradient x input per edge, all class scores) + activation similarity (r >= 0.8); greedy merging that keeps the groups a DAG (5-8 structures); sub-parts by the same score inside each structure (at most 4 maps each)",
+  "structures": [
+   [
+    "17",
+    "242",
+    "77",
+    "57",
+    "152",
+    "336",
+    "39",
+    "151",
+    "448",
+    "119",
+    "594",
+    "790"
+   ],
+   [
+    "11",
+    "58",
+    "83",
+    "84"
+   ],
+   [
+    "320"
+   ],
+   [
+    "104",
+    "149",
+    "15"
+   ],
+   [
+    "495",
+    "40",
+    "103"
+   ],
+   [
+    "182",
+    "215"
+   ],
+   [
+    "88",
+    "102",
+    "501"
+   ],
+   [
+    "20",
+    "299",
+    "483",
+    "172",
+    "252",
+    "50",
+    "90",
+    "432",
+    "264",
+    "19"
+   ]
+  ],
+  "subparts": [
+   [
+    [
+     "17"
+    ],
+    [
+     "242",
+     "77",
+     "336",
+     "790"
+    ],
+    [
+     "57",
+     "152",
+     "448",
+     "119"
+    ],
+    [
+     "39",
+     "151",
+     "594"
+    ]
+   ],
+   [
+    [
+     "11",
+     "58",
+     "83",
+     "84"
+    ]
+   ],
+   [
+    [
+     "320"
+    ]
+   ],
+   [
+    [
+     "104",
+     "149",
+     "15"
+    ]
+   ],
+   [
+    [
+     "495",
+     "40",
+     "103"
+    ]
+   ],
+   [
+    [
+     "182",
+     "215"
+    ]
+   ],
+   [
+    [
+     "88",
+     "102",
+     "501"
+    ]
+   ],
+   [
+    [
+     "20",
+     "252"
+    ],
+    [
+     "299",
+     "483",
+     "172"
+    ],
+    [
+     "50",
+     "90",
+     "432"
+    ],
+    [
+     "264",
+     "19"
+    ]
+   ]
+  ],
+  "inactive": []
+ },
+ "replay_from_record_max_abs_logit_diff": 1.4210854715202004e-14,
+ "figures": {
+  "collapsed": {
+   "nodes": [
+    "image",
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6",
+    "S7",
+    "S8",
+    "scores"
+   ],
+   "quotient_edges": {
+    "image->scores": 5,
+    "S8->scores": 6,
+    "S4->scores": 4,
+    "S2->scores": 4,
+    "S7->scores": 2,
+    "S5->scores": 1,
+    "S1->scores": 2,
+    "image->S1": 3,
+    "S1->S2": 2,
+    "S2->S4": 2,
+    "S1->S4": 2,
+    "S1->S5": 2,
+    "S3->S5": 1,
+    "image->S7": 1,
+    "S6->S7": 1,
+    "image->S8": 3,
+    "S6->S8": 1,
+    "S7->S8": 1,
+    "S1->S8": 2,
+    "S1->S3": 1,
+    "S2->S6": 1,
+    "S2->S7": 1,
+    "S2->S8": 2,
+    "S4->S5": 1,
+    "S4->S8": 1,
+    "S5->S6": 1,
+    "S5->S8": 3,
+    "S6->scores": 2
+   }
+  },
+  "expanded": {
+   "S1": {
+    "inside": 24,
+    "between_subparts": 4,
+    "into_entry": 3,
+    "out_of_exit": 11,
+    "unclean": 0
+   }
+  }
+ },
+ "source": {
+  "genome_json": "experiments/conv_neat/results/mnist10_ws50k_halving/selected_genome.json",
+  "genome_key": 4861,
+  "generation": 97,
+  "val_acc": 0.9765,
+  "test_acc_from_run": 0.9761,
+  "finetuned_from_run": {
+   "val_acc": 0.9769,
+   "test_acc": 0.9761,
+   "best_epoch": 17,
+   "epochs": 20
+  },
+  "results_file": "experiments/conv_neat/results/mnist10_ws50k_halving/results.json",
+  "images": {
+   "split": "validation",
+   "hypotheses_and_suggester": 2000,
+   "function_check": 1000,
+   "test_split_read": false
+  }
+ }
+}

@@ -1,0 +1,602 @@
+{
+ "n_operations": 23,
+ "n_identity_nodes": 11,
+ "n_split_ops": 3,
+ "n_split_copies_added": 4,
+ "n_annotations": 9,
+ "n_structures": 3,
+ "n_leaves": 6,
+ "function_preserved_max_abs_logit_diff": 3.552713678800501e-15,
+ "n_check_images": 1000,
+ "coverage": {
+  "structural_all_annotations": 1.0,
+  "structural_leaves_only": 0.5416666666666666,
+  "hidden_maps_in_a_leaf": 1.0,
+  "compositional": 1.0,
+  "global_root": "root",
+  "composed": 8,
+  "required": 8,
+  "note": "structural coverage (paper Def 10): a node is covered when it is in the annotations and all its outgoing edges are; leaf exits feed junction edges that only the compositions and the root hold, so leaves alone cannot cover their exits"
+ },
+ "initial_blocking": {
+  "C1": [],
+  "C2": [],
+  "C3": []
+ },
+ "repairs": [],
+ "blocking_left": [],
+ "structures": [
+  {
+   "name": "S1",
+   "title": "3-vs-noise separator (S1)",
+   "kind": "composition",
+   "maps": [
+    "3",
+    "5",
+    "14",
+    "31"
+   ],
+   "n_nodes": 12,
+   "entries": [
+    "p1",
+    "p2"
+   ],
+   "entry_sources": {
+    "p1": [
+     "-1"
+    ],
+    "p2": [
+     "-1"
+    ]
+   },
+   "exits": [
+    "3",
+    "5_ad",
+    "14",
+    "31_abe"
+   ],
+   "splits": [
+    "5",
+    "31"
+   ],
+   "children": [
+    "S1.1",
+    "S1.2",
+    "S1.3"
+   ],
+   "hypothesis": "3-vs-noise separator (S1): Combines S1.1 (Connected-stroke detector \u00b7 with one coherent shape (S1.1)), S1.2 (Thin-stroke detector) and S1.3 (No-double-left-opening detector). S1.1 feeds S1.2 and S1.3; S1.2 feeds S1.3. Together they separate 3s from noise images (98% balanced accuracy, cross-validated) much better than the best part alone (S1.1: 90%). Its strongest exit (map h5): it responds to ink that forms one connected stroke (8-connected, pieces of at least 3 pixels). Within classes it also tracks one coherent shape (s = +0.38, ink-controlled r = +0.38; patch_box edit +0.11 SD; shuffle_ink edit -1.24 SD as predicted; proven). So it fires on 3s (99%), 8s (89%) and noise images (55%). Evidence: Overall s = +0.58; within classes s = +0.39 on average over 2 classes; with the amount of ink held fixed, r = +0.39; patch_box edit: +0.11 SD against its control (too small to count); shuffle_ink edit: -1.24 SD against its control (as predicted)."
+  },
+  {
+   "name": "S2",
+   "title": "8-vs-noise separator (S2)",
+   "kind": "composition",
+   "maps": [
+    "9",
+    "33",
+    "120"
+   ],
+   "n_nodes": 7,
+   "entries": [
+    "p6",
+    "p7"
+   ],
+   "entry_sources": {
+    "p6": [
+     "5_ad"
+    ],
+    "p7": [
+     "14"
+    ]
+   },
+   "exits": [
+    "9_b",
+    "33"
+   ],
+   "splits": [
+    "9"
+   ],
+   "children": [
+    "S2.1",
+    "S2.2"
+   ],
+   "hypothesis": "8-vs-noise separator (S2): Combines S2.1 (Connected-stroke detector \u00b7 with one coherent shape (S2.1)) and S2.2 (3 structure (mechanism unknown)). S2.1 feeds S2.2. Together they separate 8s from noise images (87% balanced accuracy, cross-validated) much better than the best part alone (S2.1: 80%). Its strongest exit (map h9): it responds to ink that forms one connected stroke (8-connected, pieces of at least 3 pixels). Within classes it also tracks one coherent shape (s = +0.69, ink-controlled r = +0.45; patch_box edit -0.16 SD; shuffle_ink edit -1.32 SD as predicted; proven). So it fires on 3s (98%), 8s (75%) and noise images (60%). Evidence: Overall s = +0.67; within classes s = +0.69 on average over 2 classes; with the amount of ink held fixed, r = +0.45; patch_box edit: -0.16 SD against its control (too small to count); shuffle_ink edit: -1.32 SD against its control (as predicted)."
+  },
+  {
+   "name": "S3",
+   "title": "Weak coherent-shape (digit strokes) detector",
+   "kind": "leaf",
+   "maps": [
+    "4"
+   ],
+   "n_nodes": 4,
+   "entries": [
+    "p10",
+    "p11",
+    "p9"
+   ],
+   "entry_sources": {
+    "p10": [
+     "9_b"
+    ],
+    "p11": [
+     "31_abe"
+    ],
+    "p9": [
+     "-1"
+    ]
+   },
+   "exits": [
+    "4"
+   ],
+   "splits": [],
+   "children": [],
+   "hypothesis": "Weak coherent-shape (digit strokes) detector: It responds to ink that forms one coherent shape (at least 90% of the ink in its largest piece). So it fires on 8s (84%), noise images (71%) and 3s (58%). Evidence: Overall s = +0.43; within classes s = +0.59 on average over 2 classes; with the amount of ink held fixed, r = +0.26; patch_box edit: -0.33 SD against its control (as predicted); shuffle_ink edit: -1.37 SD against its control (as predicted). The link is weak overall (|s| = 0.43 < 0.5): read it as a tendency, not a detector."
+  }
+ ],
+ "annotations": [
+  {
+   "name": "S1.1",
+   "title": "Connected-stroke detector \u00b7 with one coherent shape (S1.1)",
+   "kind": "leaf",
+   "parent": "S1",
+   "children": [],
+   "entries": [
+    "p1"
+   ],
+   "exits": [
+    "5_ad",
+    "5_bc"
+   ],
+   "n_nodes": 3,
+   "status": "proven",
+   "hypothesis": "Connected-stroke detector \u00b7 with one coherent shape (S1.1): It responds to ink that forms one connected stroke (8-connected, pieces of at least 3 pixels). Within classes it also tracks one coherent shape (s = +0.38, ink-controlled r = +0.38; patch_box edit +0.11 SD; shuffle_ink edit -1.24 SD as predicted; proven). So it fires on 3s (99%), 8s (89%) and noise images (55%). Evidence: Overall s = +0.58; within classes s = +0.39 on average over 2 classes; with the amount of ink held fixed, r = +0.39; patch_box edit: +0.11 SD against its control (too small to count); shuffle_ink edit: -1.24 SD against its control (as predicted)."
+  },
+  {
+   "name": "S1.2",
+   "title": "Thin-stroke detector",
+   "kind": "leaf",
+   "parent": "S1",
+   "children": [],
+   "entries": [
+    "p2",
+    "p3"
+   ],
+   "exits": [
+    "3",
+    "31_abe",
+    "31_d"
+   ],
+   "n_nodes": 6,
+   "status": "supported",
+   "hypothesis": "Thin-stroke detector: It responds when the image lacks a filled shape: it is held back by ink that fills its bounding box (at least 60% of the box), as a blob does. So it fires on 8s (99%) and noise images (69%). Evidence: Overall s = -0.52; within classes s = -0.82 on average over 2 classes; with the amount of ink held fixed, r = -0.22. No image edit tested it (or the edit's effect was too small): supported, not proven."
+  },
+  {
+   "name": "S1.3",
+   "title": "No-double-left-opening detector",
+   "kind": "leaf",
+   "parent": "S1",
+   "children": [],
+   "entries": [
+    "p4",
+    "p5"
+   ],
+   "exits": [
+    "14"
+   ],
+   "n_nodes": 3,
+   "status": "supported",
+   "hypothesis": "No-double-left-opening detector: It responds when the image lacks two curves open to the left, one above the other: it is held back by two curves opening to the left, one above the other (the shape of a 3). So it fires on 8s (98%) and noise images (69%), and on 3s that have no curves open to the left, one above the other (48% vs 14% without). Evidence: Overall s = -0.79; within classes s = -0.49 on average over 3 classes; with the amount of ink held fixed, r = -0.65; bridge_left edit: +0.02 SD against its control (too small to count). No image edit tested it (or the edit's effect was too small): supported, not proven."
+  },
+  {
+   "name": "S2.1",
+   "title": "Connected-stroke detector \u00b7 with one coherent shape (S2.1)",
+   "kind": "leaf",
+   "parent": "S2",
+   "children": [],
+   "entries": [
+    "p6"
+   ],
+   "exits": [
+    "9_b",
+    "120"
+   ],
+   "n_nodes": 4,
+   "status": "proven",
+   "hypothesis": "Connected-stroke detector \u00b7 with one coherent shape (S2.1): It responds to ink that forms one connected stroke (8-connected, pieces of at least 3 pixels). Within classes it also tracks one coherent shape (s = +0.67, ink-controlled r = +0.44; patch_box edit -0.15 SD; shuffle_ink edit -1.29 SD as predicted; proven). So it fires on 3s (98%), 8s (79%) and noise images (61%). Evidence: Overall s = +0.65; within classes s = +0.67 on average over 2 classes; with the amount of ink held fixed, r = +0.44; patch_box edit: -0.15 SD against its control (too small to count); shuffle_ink edit: -1.29 SD against its control (as predicted)."
+  },
+  {
+   "name": "S2.2",
+   "title": "3 structure (mechanism unknown)",
+   "kind": "leaf",
+   "parent": "S2",
+   "children": [],
+   "entries": [
+    "p7",
+    "p8"
+   ],
+   "exits": [
+    "33"
+   ],
+   "n_nodes": 3,
+   "status": "correlate",
+   "hypothesis": "3 structure (mechanism unknown): Correlates with 3s; mechanism unknown: no image rule explains it within classes (closest: a filled shape, s = +0.36). It fires on 3s (85%). Evidence: Overall s = +0.36; within classes s = +0.64 on average over 2 classes; with the amount of ink held fixed, r = +0.14."
+  },
+  {
+   "name": "S3",
+   "title": "Weak coherent-shape (digit strokes) detector",
+   "kind": "leaf",
+   "parent": "root",
+   "children": [],
+   "entries": [
+    "p10",
+    "p11",
+    "p9"
+   ],
+   "exits": [
+    "4"
+   ],
+   "n_nodes": 4,
+   "status": "proven",
+   "hypothesis": "Weak coherent-shape (digit strokes) detector: It responds to ink that forms one coherent shape (at least 90% of the ink in its largest piece). So it fires on 8s (84%), noise images (71%) and 3s (58%). Evidence: Overall s = +0.43; within classes s = +0.59 on average over 2 classes; with the amount of ink held fixed, r = +0.26; patch_box edit: -0.33 SD against its control (as predicted); shuffle_ink edit: -1.37 SD against its control (as predicted). The link is weak overall (|s| = 0.43 < 0.5): read it as a tendency, not a detector."
+  },
+  {
+   "name": "S1",
+   "title": "3-vs-noise separator (S1)",
+   "kind": "composition",
+   "parent": "root",
+   "children": [
+    "S1.1",
+    "S1.2",
+    "S1.3"
+   ],
+   "entries": [
+    "p1",
+    "p2"
+   ],
+   "exits": [
+    "3",
+    "5_ad",
+    "14",
+    "31_abe"
+   ],
+   "n_nodes": 0,
+   "status": "proven",
+   "hypothesis": "3-vs-noise separator (S1): Combines S1.1 (Connected-stroke detector \u00b7 with one coherent shape (S1.1)), S1.2 (Thin-stroke detector) and S1.3 (No-double-left-opening detector). S1.1 feeds S1.2 and S1.3; S1.2 feeds S1.3. Together they separate 3s from noise images (98% balanced accuracy, cross-validated) much better than the best part alone (S1.1: 90%). Its strongest exit (map h5): it responds to ink that forms one connected stroke (8-connected, pieces of at least 3 pixels). Within classes it also tracks one coherent shape (s = +0.38, ink-controlled r = +0.38; patch_box edit +0.11 SD; shuffle_ink edit -1.24 SD as predicted; proven). So it fires on 3s (99%), 8s (89%) and noise images (55%). Evidence: Overall s = +0.58; within classes s = +0.39 on average over 2 classes; with the amount of ink held fixed, r = +0.39; patch_box edit: +0.11 SD against its control (too small to count); shuffle_ink edit: -1.24 SD against its control (as predicted)."
+  },
+  {
+   "name": "S2",
+   "title": "8-vs-noise separator (S2)",
+   "kind": "composition",
+   "parent": "root",
+   "children": [
+    "S2.1",
+    "S2.2"
+   ],
+   "entries": [
+    "p6",
+    "p7"
+   ],
+   "exits": [
+    "9_b",
+    "33"
+   ],
+   "n_nodes": 0,
+   "status": "proven",
+   "hypothesis": "8-vs-noise separator (S2): Combines S2.1 (Connected-stroke detector \u00b7 with one coherent shape (S2.1)) and S2.2 (3 structure (mechanism unknown)). S2.1 feeds S2.2. Together they separate 8s from noise images (87% balanced accuracy, cross-validated) much better than the best part alone (S2.1: 80%). Its strongest exit (map h9): it responds to ink that forms one connected stroke (8-connected, pieces of at least 3 pixels). Within classes it also tracks one coherent shape (s = +0.69, ink-controlled r = +0.45; patch_box edit -0.16 SD; shuffle_ink edit -1.32 SD as predicted; proven). So it fires on 3s (98%), 8s (75%) and noise images (60%). Evidence: Overall s = +0.67; within classes s = +0.69 on average over 2 classes; with the amount of ink held fixed, r = +0.45; patch_box edit: -0.16 SD against its control (too small to count); shuffle_ink edit: -1.32 SD against its control (as predicted)."
+  },
+  {
+   "name": "root",
+   "title": "Class scores from the structures",
+   "kind": "root",
+   "parent": null,
+   "children": [
+    "S1",
+    "S2",
+    "S3"
+   ],
+   "entries": [
+    "-1"
+   ],
+   "exits": [
+    "0",
+    "1",
+    "2"
+   ],
+   "n_nodes": 4,
+   "status": null,
+   "hypothesis": "Class scores from the structures: Reads the structures' exits through the three score maps and the head: each score map is a sum of kernels on the exits (and on the image directly), averaged over the map, and the head mixes the three averages into the class scores (exact, linear). The largest direct push towards each image's own class (score margin over the mean score, on images of that class): '3' by 8-vs-noise separator (S2) (+1.13); '8' by 3-vs-noise separator (S1) (+9.27); 'noise' by 3-vs-noise separator (S1) (+10.40)."
+  }
+ ],
+ "boundaries": {
+  "before": {
+   "n_groups": 3,
+   "crossing_edges": 19,
+   "unclean_crossing_edges": 4,
+   "unclean_into_non_entry": 4,
+   "unclean_out_of_non_exit": 0,
+   "precondition_violations": {
+    "P1": 4,
+    "P2": 0,
+    "P3": 8
+   },
+   "collapsible_groups": 0,
+   "per_group": {
+    "S1": {
+     "n_nodes": 6,
+     "crossing_in": 5,
+     "crossing_out": 10,
+     "unclean_in": 3,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 3,
+      "P2": 0,
+      "P3": 3
+     },
+     "collapsible": false
+    },
+    "S2": {
+     "n_nodes": 4,
+     "crossing_in": 3,
+     "crossing_out": 2,
+     "unclean_in": 1,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 1,
+      "P2": 0,
+      "P3": 2
+     },
+     "collapsible": false
+    },
+    "S3": {
+     "n_nodes": 1,
+     "crossing_in": 3,
+     "crossing_out": 1,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 3
+     },
+     "collapsible": false
+    }
+   },
+   "n_splits": 3,
+   "n_identity_nodes": 0,
+   "groups": {
+    "S1": [
+     "3",
+     "5",
+     "14",
+     "31",
+     "121",
+     "122"
+    ],
+    "S2": [
+     "9",
+     "33",
+     "120",
+     "123"
+    ],
+    "S3": [
+     "4"
+    ]
+   }
+  },
+  "after_structures": {
+   "n_groups": 3,
+   "crossing_edges": 15,
+   "unclean_crossing_edges": 0,
+   "unclean_into_non_entry": 0,
+   "unclean_out_of_non_exit": 0,
+   "precondition_violations": {
+    "P1": 0,
+    "P2": 0,
+    "P3": 0
+   },
+   "collapsible_groups": 3,
+   "per_group": {
+    "S1": {
+     "n_nodes": 12,
+     "crossing_in": 2,
+     "crossing_out": 9,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S2": {
+     "n_nodes": 7,
+     "crossing_in": 2,
+     "crossing_out": 2,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S3": {
+     "n_nodes": 4,
+     "crossing_in": 3,
+     "crossing_out": 1,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    }
+   }
+  },
+  "after_leaves": {
+   "n_groups": 6,
+   "crossing_edges": 19,
+   "unclean_crossing_edges": 0,
+   "unclean_into_non_entry": 0,
+   "unclean_out_of_non_exit": 0,
+   "precondition_violations": {
+    "P1": 0,
+    "P2": 0,
+    "P3": 0
+   },
+   "collapsible_groups": 6,
+   "per_group": {
+    "S1.1": {
+     "n_nodes": 3,
+     "crossing_in": 1,
+     "crossing_out": 4,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S1.2": {
+     "n_nodes": 6,
+     "crossing_in": 2,
+     "crossing_out": 6,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S1.3": {
+     "n_nodes": 3,
+     "crossing_in": 2,
+     "crossing_out": 2,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S2.1": {
+     "n_nodes": 4,
+     "crossing_in": 1,
+     "crossing_out": 2,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S2.2": {
+     "n_nodes": 3,
+     "crossing_in": 2,
+     "crossing_out": 1,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    },
+    "S3": {
+     "n_nodes": 4,
+     "crossing_in": 3,
+     "crossing_out": 1,
+     "unclean_in": 0,
+     "unclean_out": 0,
+     "violations": {
+      "P1": 0,
+      "P2": 0,
+      "P3": 0
+     },
+     "collapsible": true
+    }
+   }
+  }
+ },
+ "suggester": {
+  "method": "attribution flow (gradient x input per edge, all class scores) + activation similarity (r >= 0.8); greedy merging that keeps the groups a DAG (3-4 structures); sub-parts by the same score inside each structure (at most 2 maps each)",
+  "structures": [
+   [
+    "5",
+    "31",
+    "3",
+    "14"
+   ],
+   [
+    "9",
+    "120",
+    "33"
+   ],
+   [
+    "4"
+   ]
+  ],
+  "subparts": [
+   [
+    [
+     "5"
+    ],
+    [
+     "31",
+     "3"
+    ],
+    [
+     "14"
+    ]
+   ],
+   [
+    [
+     "9",
+     "120"
+    ],
+    [
+     "33"
+    ]
+   ],
+   [
+    [
+     "4"
+    ]
+   ]
+  ],
+  "inactive": []
+ },
+ "replay_from_record_max_abs_logit_diff": 3.552713678800501e-15,
+ "source": {
+  "genome_json": "experiments/conv_neat/three8noise/results/run_s0/selected_genome.json",
+  "genome_key": 1100,
+  "generation": 22,
+  "val_acc": 0.984,
+  "test_acc_from_run": 0.9855510752688172,
+  "test_from": "three8noise/results/run_s0/results.json (read once by the run)",
+  "classes": [
+   "3",
+   "8",
+   "noise"
+  ],
+  "images": {
+   "split": "validation",
+   "hypotheses_and_suggester": 2000,
+   "function_check": 1000,
+   "test_split_read": false
+  }
+ }
+}
