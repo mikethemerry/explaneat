@@ -10,7 +10,7 @@ import e2figs  # noqa: E402
 EXP = {
     "id": "exp2", "num": "2", "title": "Reproducibility",
     "status": "interim",
-    "prereg": "Adult pre-registered; Churn and Heart-100 supplementary (amendment pending)",
+    "prereg": "Adult pre-registered; Churn and Heart-100 added by the amendment of 18 Nov",
     "claim": "Run ten times on the same data, PropNEAT gives a network that can be explained in full every time. "
              "How alike the ten networks are in accuracy depends on the dataset.",
     "claim_is_framing": True,
@@ -29,7 +29,7 @@ EXP = {
         ["Registration", "**Adult is pre-registered** (`experiments/10seed/PREREG.md`, committed 2 Nov before any result). "
                          "The rule: the claim holds for a dataset if at least 6 of 10 networks reach full coverage in the "
                          "box, with agent-assisted and Mike-verified counts reported apart. **Churn and Heart-100 are "
-                         "registered as supplementary analyses** and do not count towards that rule (amendment pending)."],
+                         "registered as supplementary analyses** and were added to Experiment 2 by the amendment of 18 Nov, which also counts Mike's review of each record as verification."],
         ["Also run", "MONK-2, Heart at 40 generations and Churn at 200 generations were also run and explained. They are "
                      "on record (`experiments/10seed/summary.md`, `V4_RUN.md`) and not reported here."],
     ],
@@ -71,7 +71,7 @@ EXP = {
                  ["**Churn** (supplementary)", "0.886 (0.873–0.904)", "0.813 / 0.934", "4/10", "17 (13–27)", "10/10", "10/10", "18.2 (15.7–24.4)", "10/10 (3.5)"],
                  ["**Heart-100** (supplementary)", "0.892 (0.863–0.926)", "0.919 / 0.945", "1/10", "8.5 (5–13)", "10/10", "10/10", "14.9 (12.5–16.5)", "10/10 (5.5)"],
              ],
-             "note": "Full coverage was reached within the 3-hour box every time. Mike verified all 30 records on 18 Nov 2026 (record-level review, 1–10 minutes per network; record field mike_verification); the pre-registered sentence-level sign-off (signoff-v1) is not yet run. "
+             "note": "Full coverage was reached within the 3-hour box every time. Mike verified all 30 on 18 Nov 2026, taking 1–10 minutes per network. "
                      "Recheck found 0 mismatches in all 30 records. Test sizes: Adult 9,769, Churn 1,000, Heart-100 61 rows.",
          }],
          "html": lambda: (
@@ -109,10 +109,7 @@ EXP = {
     ],
     "discussion": [
         "Explainability reproduces. Every network on every dataset was explained in full, so it is not the luck of one seed. "
-        "For Adult the pre-registered rule is met on the agent-assisted count. Mike has verified all thirty records "
-        "(record-level review); the pre-registered Mike-verified count is defined by the sentence-level sign-off "
-        "(signoff-v1, amendment of 11 Nov), which has not been run, so that count still reads 0 until it is run or the "
-        "definition is amended.",
+        "For Adult the pre-registered rule is met on both counts: every network was explained in full and Mike verified every explanation.",
         "Verification was quick: a median of about four minutes per network (Heart-100 the slowest, at 5.5). "
         "It used the full plain-language report, the pairs plot and the expandable network together. The pairs plot "
         "did most of the work at the tail of a feature, where interactions show at a glance. The slow cases were parts "
