@@ -19,11 +19,12 @@ edit here.
 | `ch7_levels_table.tex` | The three levels of explanation (faithful / decomposed / understood) per study, plus the explanation ladder and the Connect-4 capacity network (LaTeX, needs `booktabs`); added 2026-11-12, `ch7_table.tex` unchanged | `experiments/explanation_levels/make_tables.py` from `compute_levels.py` (read only) | see `experiments/explanation_levels/RESULTS.md` |
 | `ch7_cox_case_table.tex` | The Cox survival case for Experiment 1 (one PropNEAT-Cox model per dataset, GBSG2 and WHAS500, against ridge Cox, Cox PH and a random survival forest on the same split; the explanation's three levels and the verifier's verdict; LaTeX, needs `booktabs`); added 2026-11-12, nothing else here changed | `experiments/survival/cox_case/tables.py` (inputs: `run_case.py`, `references.py`, `levels.py`, the records and verdicts) | see `experiments/survival/cox_case/RESULTS.md` |
 | `ch7_cox_reference_table.tex` | The Cox case's reference explanation: per input, unpenalised Cox PH hazard ratio per clinical unit (and per SD) with 95% CI, Wald p and Schoenfeld p, the PropNEAT-Cox network's hazard ratio, kept / dropped and agreement; four tables (GBSG2, WHAS500; per unit, per SD; LaTeX, needs `booktabs`); added 2026-11-15, nothing else here changed | `experiments/survival/cox_case/reference_explanation.py` (no DB) | see `experiments/survival/cox_case/REFERENCE.md` |
-| `ch7_experiment1_cases.tex` | Experiment 1: one row per case (Heart, MONK-2, Adult paper genomes; churn; GBSG2 and WHAS500 Cox; XOR; KRK and Connect-4 boundary cases): n, hidden / connections, test metric against the references, the three levels, verification (LaTeX, needs `booktabs`); added 2026-11-13, nothing else here changed | `scripts/thesis/thesis_experiment_tables.py` (reads only committed results files; sources in the table note) | see `THESIS_EXPERIMENTS.md` |
-| `ch7_experiment2_consistency.tex` | Experiment 2: the frozen-method v4 run per set (reported test AUC median, Rashomon count at ε = 0.01, full coverage, recheck, minutes, levels, sign-off); added 2026-11-13 | `scripts/thesis/thesis_experiment_tables.py` | see `THESIS_EXPERIMENTS.md` |
-| `ch7_experiment3_complexity.tex` | Experiment 3: one line per study (the explanation complexity ladder, the three Connect-4 bases, MNIST linear check and linear start) with its headline numbers and finding; added 2026-11-13 | `scripts/thesis/thesis_experiment_tables.py` | see `THESIS_EXPERIMENTS.md` |
+| `ch7_experiment1_cases.tex` | Experiment 1: one row per case (Heart, MONK-2, Adult paper genomes; churn; GBSG2 and WHAS500 Cox; XOR; KRK and Connect-4 boundary cases): n, hidden / connections, test metric against the references, the three levels, verification (LaTeX, needs `booktabs`); added 2026-11-13, nothing else here changed | `thesis/scripts/thesis_experiment_tables.py` (reads only committed results files; sources in the table note) | see `thesis/notes/THESIS_EXPERIMENTS.md` |
+| `ch7_experiment2_consistency.tex` | Experiment 2: the frozen-method v4 run per set (reported test AUC median, Rashomon count at ε = 0.01, full coverage, recheck, minutes, levels, sign-off); added 2026-11-13 | `thesis/scripts/thesis_experiment_tables.py` | see `thesis/notes/THESIS_EXPERIMENTS.md` |
+| `ch7_experiment3_complexity.tex` | Experiment 3: one line per study (the explanation complexity ladder, the three Connect-4 bases, MNIST linear check and linear start) with its headline numbers and finding; added 2026-11-13 | `thesis/scripts/thesis_experiment_tables.py` | see `thesis/notes/THESIS_EXPERIMENTS.md` |
 
-The 10-seed PDFs and the table are byte-identical copies of `experiments/10seed/figures/*.pdf` and
+Since the 18 Nov 2026 reorganisation (`thesis/README.md`), experiment scripts write into their own
+study folder and `thesis/scripts/sync_ch7_exports.py` copies the files here. The 10-seed PDFs and the table are byte-identical copies of `experiments/10seed/figures/*.pdf` and
 `experiments/10seed/ch7_table.tex`. Their PNG versions and the original draft captions are in
 `experiments/10seed/figures/README.md`. The XOR figures draw the representative solutions in
 `experiments/xor/verify_xor.py` (`REPS`), which that script verifies
@@ -34,13 +35,14 @@ unless they pass. They are the default 1-row cells of
 Regenerate:
 
 ```bash
-uv run python experiments/10seed/make_figures.py      # then copy ch7_table.tex and figures/*.pdf here
+uv run python experiments/10seed/make_figures.py      # ch7_table.tex, figures/*.pdf (in experiments/10seed)
 uv run python experiments/xor/verify_xor.py           # about 20 s
-uv run python experiments/xor/make_xor_figures.py     # writes xor_*.pdf/png here
-uv run python experiments/explanation_levels/make_tables.py   # ch7_levels_table.tex (from levels/, no DB)
-uv run python experiments/survival/cox_case/tables.py          # ch7_cox_case_table.tex
-PYTHONHASHSEED=0 uv run python experiments/survival/cox_case/reference_explanation.py   # ch7_cox_reference_table.tex
-uv run python scripts/thesis/thesis_experiment_tables.py       # ch7_experiment{1,2,3}_*.tex
+uv run python experiments/xor/make_xor_figures.py     # experiments/xor/figures/xor_*.pdf/png
+uv run python experiments/explanation_levels/make_tables.py   # experiments/explanation_levels/ch7_levels_table.tex (from levels/, no DB)
+uv run python experiments/survival/cox_case/tables.py          # experiments/survival/cox_case/ch7_cox_case_table.tex
+PYTHONHASHSEED=0 uv run python experiments/survival/cox_case/reference_explanation.py   # .../cox_case/ch7_cox_reference_table.tex
+uv run python thesis/scripts/sync_ch7_exports.py               # copy all of the above here (--check: compare only)
+uv run python thesis/scripts/thesis_experiment_tables.py       # ch7_experiment{1,2,3}_*.tex, written here directly
 ```
 
 Checked 2026-11-13: every file here regenerates byte-identical from its source at `2386ee9` (the
@@ -162,5 +164,5 @@ does not always hold.
     transplant study, which is also listed as out of scope.
 
   Both are kept for you to decide.
-- **Which figures go in** is your call (`THESIS_FINAL_WORK.md` task 8, "Which figures"). No
+- **Which figures go in** is your call (`thesis/notes/THESIS_FINAL_WORK.md` task 8, "Which figures"). No
   Rashomon figure is included; task 6 has not produced one.

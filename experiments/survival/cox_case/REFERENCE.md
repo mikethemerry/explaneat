@@ -8,7 +8,8 @@ VARIANZ).
 
 Script: `reference_explanation.py` (no database: the scikit-survival bundled data, the case's
 `splits/`, `references.json`, `hazard_readings/`). Output: `reference_explanation.json`,
-`figures/ref_*.png`, `thesis_exports/ch7/ch7_cox_reference_table.tex`. Nothing in
+`figures/ref_*.png`, `ch7_cox_reference_table.tex` (copied to `thesis/ch7/exports/` by
+`thesis/scripts/sync_ch7_exports.py`). Nothing in
 `RESULTS.md`, `references.*` or the explanation records was changed.
 
 ```bash

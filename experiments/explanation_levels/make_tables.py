@@ -3,8 +3,8 @@
     uv run python experiments/explanation_levels/make_tables.py
 
 Writes ``tables.md`` (the per-study table, the ladder table, every Connect-4 / KRK leaf with its
-best concept) and ``thesis_exports/ch7/ch7_levels_table.tex`` (the per-study table; a new file,
-``ch7_table.tex`` is not touched). Cells are median [min-max] over the explanations of a study.
+best concept) and ``ch7_levels_table.tex`` here (the per-study table; copied into
+``thesis/ch7/exports/`` by ``thesis/scripts/sync_ch7_exports.py``). Cells are median [min-max] over the explanations of a study.
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 LEVELS = HERE / "levels"
-TEX = ROOT / "thesis_exports" / "ch7" / "ch7_levels_table.tex"
+TEX = HERE / "ch7_levels_table.tex"  # copied into thesis/ch7/exports by thesis/scripts/sync_ch7_exports.py
 
 STUDIES = OrderedDict([("heart", "Heart"), ("monk2", "MONK-2"), ("adult", "Adult"), ("heart100", "Heart-100"),
                        ("churn100", "churn100"), ("churn200", "churn200")])

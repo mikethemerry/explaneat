@@ -29,7 +29,8 @@ dataset's own split (``splits/<ds>.splits.json``, training rows only):
 Outputs: ``reference_explanation.json``, ``figures/ref_forest_<ds>.png`` (Cox HR with CI per unit,
 the network's HR as a second marker), ``figures/ref_pd_<ds>.png`` (forest PD against the Cox and
 network lines), ``figures/ref_h2d_<ds>.png`` (2-D PD of the strongest pair),
-``figures/ref_grade3_time_gbsg2.png``, and ``thesis_exports/ch7/ch7_cox_reference_table.tex``.
+``figures/ref_grade3_time_gbsg2.png``, and ``ch7_cox_reference_table.tex`` (copied into
+``thesis/ch7/exports/`` by ``thesis/scripts/sync_ch7_exports.py``).
 """
 
 from __future__ import annotations
@@ -57,7 +58,7 @@ from explaneat.survival.data import load_builtin, load_split_indices, standardis
 from explaneat.survival.metrics import harrell_c, integrated_brier, uno_c, brier_at  # noqa: E402
 
 FIG = HERE / "figures"
-TEX = REPO / "thesis_exports" / "ch7" / "ch7_cox_reference_table.tex"
+TEX = HERE / "ch7_cox_reference_table.tex"  # copied into thesis/ch7/exports by thesis/scripts/sync_ch7_exports.py
 TAGS = {"gbsg2": "gbsg2-s1", "whas500": "whas500-s0"}
 YEARS = {"gbsg2": 5, "whas500": 3}
 

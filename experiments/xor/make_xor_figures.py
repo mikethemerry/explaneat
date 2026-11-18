@@ -11,7 +11,7 @@ docs/signals-and-realisations/index.html.
 
 The representatives are verify_xor.REPS (the sheet's default 1-row cells). This script checks
 that they solve XOR and that verify_xor_results.json has verified them, then draws them.
-Output: thesis_exports/ch7/xor_*.pdf and .png (300 dpi), no titles baked in.
+Output: experiments/xor/figures/xor_*.pdf and .png (300 dpi), no titles baked in.
 
     uv run python experiments/xor/make_xor_figures.py
 """
@@ -32,7 +32,7 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 import verify_xor as vx  # noqa: E402
 
-OUT = os.path.join(ROOT, "thesis_exports", "ch7")
+OUT = os.path.join(HERE, "figures")  # thesis/scripts/sync_ch7_exports.py copies these into thesis/ch7/exports
 INK, INK2 = "#18212b", "#5a6573"
 POS, NEG, ACT, BG = "#1d5aa6", "#a3366b", "#1f6b55", "#ffffff"   # the sheet's light palette
 LO, HI = -0.5, 1.5

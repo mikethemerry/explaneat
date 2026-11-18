@@ -258,5 +258,5 @@ uv run python experiments/survival/cox_case/load_selected.py           # explane
 uv run python experiments/10seed/verify_record.py report_<label>.json --out-dir experiments/survival/cox_case/explanations
 # one verifier agent per genome -> verdicts/<label>/
 uv run python experiments/survival/cox_case/levels.py
-uv run python experiments/survival/cox_case/tables.py                  # tables.md, thesis_exports/ch7/ch7_cox_case_table.tex
+uv run python experiments/survival/cox_case/tables.py                  # tables.md, ch7_cox_case_table.tex (thesis/scripts/sync_ch7_exports.py copies it to thesis/ch7/exports)
 ```

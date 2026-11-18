@@ -1,6 +1,6 @@
 """Tables for the Cox survival case: ``tables.md`` here and the Experiment 1 row file
-``thesis_exports/ch7/ch7_cox_case_table.tex`` (a new file; nothing else in that directory is
-touched).
+``ch7_cox_case_table.tex`` here (copied into ``thesis/ch7/exports/`` by
+``thesis/scripts/sync_ch7_exports.py``).
 
     uv run python experiments/survival/cox_case/tables.py
 
@@ -16,7 +16,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
-TEX = ROOT / "thesis_exports" / "ch7" / "ch7_cox_case_table.tex"
+TEX = HERE / "ch7_cox_case_table.tex"  # copied into thesis/ch7/exports by thesis/scripts/sync_ch7_exports.py
 
 NAMES = {"gbsg2": "GBSG2", "whas500": "WHAS500"}
 MODELS = [("propneat_cox", "PropNEAT-Cox (selected seed)"), ("ridge_cox", "Ridge Cox (alpha on validation)"),

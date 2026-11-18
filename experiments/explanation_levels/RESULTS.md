@@ -40,7 +40,7 @@ explanations, records, summaries or earlier CSV columns was changed. Every numbe
 recomputed from the stored explanations by `compute_levels.py` (the genome's phenotype with the
 stored operations replayed in memory; database read only; the concept probes are run locally
 and not stored, so their `query_id` is null) and tabulated by `make_tables.py`
-(`tables.md`, `thesis_exports/ch7/ch7_levels_table.tex`). Definitions:
+(`tables.md`, `ch7_levels_table.tex`, copied to `thesis/ch7/exports/`). Definitions:
 `docs/annotation_coverage_model.md`, "Three levels of explanation".
 
 | Level | Claim | Test |
@@ -132,12 +132,12 @@ both, for different reasons).
 ## The three AAAI paper explanations (added 13 Nov; concept probe v1)
 
 `compute_levels.py --set paper` (part of `--set all`): the paper's Heart, MONK-2 and Adult
-explanations (`results/thesis/paper_recompute.md`; genomes `9022a9eb`, `23dde0fa`, `4bc8fa07`,
+explanations (`experiments/aaai27/recheck/results/paper_recompute.md`; genomes `9022a9eb`, `23dde0fa`, `4bc8fa07`,
 one explanation each, `explaneat_dev`, read only), written to `levels/paper-{heart,monk2,adult}.json`.
 These rows were computed with the current (v1) concept probe; the probe v2 recompute will
 replace them, as it will every other set. No record file exists for them, so the closed-form
-error is null. They feed rows 1-3 of `thesis_exports/ch7/ch7_experiment1_cases.tex`
-(`scripts/thesis/thesis_experiment_tables.py`) and are not part of the per-study table above.
+error is null. They feed rows 1-3 of `thesis/ch7/exports/ch7_experiment1_cases.tex`
+(`thesis/scripts/thesis_experiment_tables.py`) and are not part of the per-study table above.
 
 | Explanation | Hidden (with split copies) | Faithful: max abs err | Leaves | Granularity | Max width / depth | Meaningful / partial / closed-form only | Leaves below meaningful |
 |---|---|---|---|---|---|---|---|
@@ -159,7 +159,7 @@ uv run python experiments/explanation_levels/compute_levels.py --set c4cap    # 
 uv run python experiments/explanation_levels/compute_levels.py --set c4lf --out experiments/c4_line_features/levels   # 3 explanations
 uv run python experiments/explanation_levels/compute_levels.py --set paper    # explaneat_dev, the 3 AAAI paper explanations
 uv run python experiments/explanation_levels/compute_levels.py --set all      # every set, one process each
-uv run python experiments/explanation_levels/make_tables.py                   # tables.md, thesis_exports/ch7/ch7_levels_table.tex
+uv run python experiments/explanation_levels/make_tables.py                   # tables.md, ch7_levels_table.tex (thesis/scripts/sync_ch7_exports.py copies it to thesis/ch7/exports)
 uv run python experiments/10seed/build_explanations_csv.py --dir explanations_v4 --suffix _v4   # the levels columns (+ understood_fraction_verifier)
 ```
 `--max-terms` and `--min-support` change the probe v2 conditions (defaults 3 and 0.01).
