@@ -1012,14 +1012,19 @@ def genome_block_v5(layer: Dict[str, Any]) -> List[str]:
             L.append(r"\noindent{\footnotesize Part of: " + tex(titles.get(parent["id"], parent["name"]))
                      + r" (\ref{rd:" + _lk(parent["id"]) + r"}).\par}")
         f1, f2 = _figlab(layer, "parts-" + _lk(pid)), _figlab(layer, "units-" + _lk(pid))
-        L.append(r"\noindent{\small Figure~\ref{" + f1 + r"} shows what feeds this part"
-                 + (r"; Figure~\ref{" + f2 + r"} its units and every connection into them (dashed boxes: "
-                    r"connections from or to other parts, drawn in their own sections)" if layer.get("graph") else "")
-                 + r".\par}")
-        L += _fig(readdown_diagram(layer, pid), tex(f"{titles.get(pid, p['name'])}: what feeds it, one level down."), f1)
+        units_tk = None
         if layer.get("graph"):
             from .render_structure import section
-            L += _fig(section(layer, pid)[0], tex(f"{titles.get(pid, p['name'])}: its units and every connection "
+            units_tk = section(layer, pid)[0]
+            if r"\node" not in units_tk:   # a part with no units of its own (all in its parts): no empty figure
+                units_tk = None
+        L.append(r"\noindent{\small Figure~\ref{" + f1 + r"} shows what feeds this part"
+                 + (r"; Figure~\ref{" + f2 + r"} its units and every connection into them (dashed boxes: "
+                    r"connections from or to other parts, drawn in their own sections)" if units_tk else "")
+                 + r".\par}")
+        L += _fig(readdown_diagram(layer, pid), tex(f"{titles.get(pid, p['name'])}: what feeds it, one level down."), f1)
+        if units_tk:
+            L += _fig(units_tk, tex(f"{titles.get(pid, p['name'])}: its units and every connection "
                                                   f"into them. " + LEGEND_SHORT), f2)
         sec = rd.get(pid) or {}
         L.append(r"\paragraph{Hypothesis.} " + sentences_tex(sec.get("hypothesis")))
