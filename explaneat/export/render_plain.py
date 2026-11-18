@@ -852,10 +852,14 @@ def linear_factors_table(layer) -> List[str]:
         return []
     L = [r"\subsection*{Linear factors}\addcontentsline{toc}{subsection}{Linear factors}",
          r"\noindent{\small Inputs that act at a fixed rate: each adds the same amount to the score (log-odds) per "
-         r"unit, everywhere or across the observed data, so their effect is explained by the rate alone. Mixed "
+         r"unit, everywhere or across the observed data, so their effect is explained by the rate alone. "
+         r"``On the data'' includes a unit that switches but reads a single yes/no input (or one level of a "
+         r"category) and nothing else: on the data it has one value per answer, so it only adjusts that input's "
+         r"fixed effect (checked exactly on every training row; it holds for the two observed values only). Mixed "
          r"inputs (a fixed-rate path and a switching one) and inputs that only act through switching units are "
          r"in the parts below. The risk change is for the typical case, from the 10th to the 90th percentile "
-         r"(numbers) or to the level with the largest effect (categories)."
+         r"(numbers; between the two values for a number with only two) or to the level with the largest effect "
+         r"(categories)."
          + (r" Claim " + tex(mc["id"]) + r"." if mc else "") + r"\par}",
          r"{\footnotesize\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.2\linewidth}l"
          r">{\raggedright\arraybackslash}p{0.3\linewidth}l>{\raggedright\arraybackslash}p{0.2\linewidth}r@{}}",

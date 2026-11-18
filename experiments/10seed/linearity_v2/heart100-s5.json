@@ -1,0 +1,1339 @@
+{
+ "before_reproduces_v4": {
+  "parts": true,
+  "units": true,
+  "variables": true,
+  "variance_share_linear": true
+ },
+ "binary_step": {
+  "5499": {
+   "activation": [
+    0.0,
+    1.3929083562303943
+   ],
+   "feature": "fbs:0",
+   "gain": 0.48904518051288154,
+   "input": "-10_a",
+   "max_affine_error": 2.060839797517323e-15,
+   "passed": true,
+   "slope_z": 0.4780103396838455
+  }
+ },
+ "binary_step_check_failed": [],
+ "explanation_id": "4689eba8-9c1a-4398-981b-223dae9fd00b",
+ "genome_id": "ea5ce707-5f8b-4a05-8818-1e4e26df2da3",
+ "label": "heart100-s5",
+ "linearity_claims_after": [
+  {
+   "annotation": {
+    "id": "ann_38",
+    "name": "heart_disease_root"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": 0.260157
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 2.22207e-11,
+    "fd_varies": false
+   },
+   "key": "ann_38:linearity:var:age",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "from 42 years to 66 years",
+    "delta": 0.109453,
+    "from": 0.149624,
+    "n": 242,
+    "reference": "typical patient",
+    "to": 0.259077
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": "raises",
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 0,
+      "label": "age",
+      "score_per_unit": 0.028615969914734744,
+      "text": "+0.029 per year"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "age"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "age",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "age",
+     "short": "age",
+     "unit": "years"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_38",
+    "name": "heart_disease_root"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -1.10823
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 2.40412e-11,
+    "fd_varies": false
+   },
+   "key": "ann_38:linearity:var:sex",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "to female",
+    "delta": -0.183208,
+    "from": 0.208015,
+    "n": 83,
+    "reference": "typical patient",
+    "to": 0.0248073
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 1,
+      "label": "female",
+      "level": "0",
+      "score_per_unit": -2.3345687497949132,
+      "text": "\u22122.33 for female"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "sex"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "sex",
+     "decoded": true,
+     "kind": "category",
+     "label": "sex",
+     "short": "sex",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_38",
+    "name": "heart_disease_root"
+   },
+   "checks": {
+    "slope_varies": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": 0.0230888
+   },
+   "evidence": {
+    "fd_match_share": 0.553719,
+    "fd_max_deviation": 1.55457,
+    "fd_varies": true
+   },
+   "key": "ann_38:linearity:var:cp",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "mixed",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 3,
+      "label": "typical angina",
+      "level": "1",
+      "score_per_unit": -1.236939860565026,
+      "text": "\u22121.24 for typical angina"
+     },
+     {
+      "column": 4,
+      "label": "atypical angina",
+      "level": "2",
+      "score_per_unit": 0.0,
+      "text": "+0 for atypical angina"
+     },
+     {
+      "column": 5,
+      "label": "non-anginal chest pain",
+      "level": "3",
+      "score_per_unit": -0.5217778617137421,
+      "text": "\u22120.52 for non-anginal chest pain"
+     },
+     {
+      "column": 6,
+      "label": "no chest pain (asymptomatic)",
+      "level": "4",
+      "score_per_unit": 1.2376980371203516,
+      "text": "+1.24 for no chest pain (asymptomatic)"
+     }
+    ],
+    "per_unit_scope": "its paths that do not switch",
+    "variable": "cp"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "cp",
+     "decoded": true,
+     "kind": "category",
+     "label": "chest pain type",
+     "short": "chest pain type",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_38",
+    "name": "heart_disease_root"
+   },
+   "checks": {
+    "slope_varies": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": 0.625797
+   },
+   "evidence": {
+    "fd_match_share": 0.88843,
+    "fd_max_deviation": 6.11951,
+    "fd_varies": true
+   },
+   "key": "ann_38:linearity:var:trestbps",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "mixed",
+    "direction": "raises",
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 7,
+      "label": "resting blood pressure",
+      "score_per_unit": 0.03443867703417493,
+      "text": "+0.034 per mm Hg"
+     }
+    ],
+    "per_unit_scope": "its paths that do not switch",
+    "variable": "trestbps"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "trestbps",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "resting blood pressure",
+     "short": "resting blood pressure",
+     "unit": "mm Hg"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_38",
+    "name": "heart_disease_root"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": 0.527584
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 2.00311e-11,
+    "fd_varies": false
+   },
+   "key": "ann_38:linearity:var:chol",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "from 193 mg/dL (5.0 mmol/L) to 308 mg/dL (8.0 mmol/L)",
+    "delta": 0.220248,
+    "from": 0.135665,
+    "n": 242,
+    "reference": "typical patient",
+    "to": 0.355913
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": "raises",
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 8,
+      "label": "serum cholesterol",
+      "score_per_unit": 0.010954091035602492,
+      "text": "+0.011 per mg/dL"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "chol"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "chol",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "serum cholesterol",
+     "short": "serum cholesterol",
+     "unit": "mg/dL"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_38",
+    "name": "heart_disease_root"
+   },
+   "checks": {
+    "slope_varies": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": 0.34808
+   },
+   "evidence": {
+    "binary_step_units": 1,
+    "fd_match_share": 0.677686,
+    "fd_max_deviation": 0.517844,
+    "fd_varies": true,
+    "two_value_columns": [
+     "fbs:0"
+    ]
+   },
+   "key": "ann_38:linearity:var:fbs",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "mixed",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 9,
+      "label": "fasting blood sugar of 120 mg/dL or less",
+      "level": "0",
+      "score_per_unit": 1.1113006150824898,
+      "text": "+1.11 for fasting blood sugar of 120 mg/dL or less"
+     },
+     {
+      "column": 10,
+      "label": "fasting blood sugar above 120 mg/dL",
+      "level": "1",
+      "score_per_unit": -0.09700596142274331,
+      "text": "\u22120.097 for fasting blood sugar above 120 mg/dL"
+     }
+    ],
+    "per_unit_scope": "its paths that do not switch",
+    "variable": "fbs"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "fbs",
+     "decoded": true,
+     "kind": "category",
+     "label": "fasting blood sugar",
+     "short": "fasting blood sugar",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_38",
+    "name": "heart_disease_root"
+   },
+   "checks": {
+    "slope_varies": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -0.297572
+   },
+   "evidence": {
+    "fd_match_share": 0.553719,
+    "fd_max_deviation": 1.27828,
+    "fd_varies": true
+   },
+   "key": "ann_38:linearity:var:restecg",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "mixed",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 11,
+      "label": "a normal resting ECG",
+      "level": "0",
+      "score_per_unit": -0.595143235469316,
+      "text": "\u22120.60 for a normal resting ECG"
+     }
+    ],
+    "per_unit_scope": "its paths that do not switch",
+    "variable": "restecg"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "restecg",
+     "decoded": true,
+     "kind": "category",
+     "label": "resting ECG",
+     "short": "resting ECG",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_38",
+    "name": "heart_disease_root"
+   },
+   "checks": {
+    "slope_varies": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -0.165441
+   },
+   "evidence": {
+    "fd_match_share": 0.553719,
+    "fd_max_deviation": 1.35911,
+    "fd_varies": true
+   },
+   "key": "ann_38:linearity:var:thalach",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "mixed",
+    "direction": "lowers",
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 14,
+      "label": "maximum heart rate",
+      "score_per_unit": -0.0073777060163448815,
+      "text": "\u22120.0074 per beat per minute"
+     }
+    ],
+    "per_unit_scope": "its paths that do not switch",
+    "variable": "thalach"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "thalach",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "maximum heart rate reached during the exercise test",
+     "short": "maximum heart rate",
+     "unit": "beats per minute"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_38",
+    "name": "heart_disease_root"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": 0.382946
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 3.02853e-11,
+    "fd_varies": false
+   },
+   "key": "ann_38:linearity:var:exang",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "to chest pain brought on by exercise",
+    "delta": 0.121778,
+    "from": 0.208015,
+    "n": 82,
+    "reference": "typical patient",
+    "to": 0.329793
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 15,
+      "label": "no chest pain on exercise",
+      "level": "0",
+      "score_per_unit": 0.09063013200921709,
+      "text": "+0.091 for no chest pain on exercise"
+     },
+     {
+      "column": 16,
+      "label": "chest pain brought on by exercise",
+      "level": "1",
+      "score_per_unit": 0.7184397225274276,
+      "text": "+0.72 for chest pain brought on by exercise"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "exang"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "exang",
+     "decoded": true,
+     "kind": "category",
+     "label": "exercise-induced angina",
+     "short": "exercise-induced angina",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_38",
+    "name": "heart_disease_root"
+   },
+   "checks": {
+    "slope_varies": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": 0.0
+   },
+   "evidence": {
+    "fd_match_share": 0.553719,
+    "fd_max_deviation": 4.78618,
+    "fd_varies": true
+   },
+   "key": "ann_38:linearity:var:oldpeak",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "nonlinear",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [],
+    "per_unit_scope": null,
+    "variable": "oldpeak"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "oldpeak",
+     "decoded": true,
+     "kind": "continuous",
+     "label": "ST depression during exercise (compared with rest)",
+     "short": "ST depression on exercise",
+     "unit": "mm"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_38",
+    "name": "heart_disease_root"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -1.40742
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 1.61581e-11,
+    "fd_varies": false
+   },
+   "key": "ann_38:linearity:var:slope",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "to a downsloping ST segment",
+    "delta": -0.0668965,
+    "from": 0.208015,
+    "n": 17,
+    "reference": "typical patient",
+    "to": 0.141119
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 18,
+      "label": "an upsloping ST segment",
+      "level": "1",
+      "score_per_unit": -1.70701016932203,
+      "text": "\u22121.71 for an upsloping ST segment"
+     },
+     {
+      "column": 19,
+      "label": "a flat ST segment",
+      "level": "2",
+      "score_per_unit": 0.0023506740588029353,
+      "text": "+0.0024 for a flat ST segment"
+     },
+     {
+      "column": 20,
+      "label": "a downsloping ST segment",
+      "level": "3",
+      "score_per_unit": -2.1761084723103914,
+      "text": "\u22122.18 for a downsloping ST segment"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "slope"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "slope",
+     "decoded": true,
+     "kind": "category",
+     "label": "slope of the ST segment at peak exercise",
+     "short": "slope of the ST segment at peak exercise",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_38",
+    "name": "heart_disease_root"
+   },
+   "checks": {
+    "slope_constant": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": 1.38208
+   },
+   "evidence": {
+    "fd_match_share": 1.0,
+    "fd_max_deviation": 2.90792e-11,
+    "fd_varies": false
+   },
+   "key": "ann_38:linearity:var:ca",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": {
+    "change": "from 0 vessels to 2 vessels",
+    "delta": 0.645504,
+    "from": 0.208015,
+    "n": 242,
+    "reference": "typical patient",
+    "to": 0.853519
+   },
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "direction": "raises",
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 21,
+      "label": "number of vessels coloured by fluoroscopy",
+      "score_per_unit": 1.5497024683129763,
+      "text": "+1.55 per vessel"
+     }
+    ],
+    "per_unit_scope": "every path",
+    "variable": "ca"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "ca",
+     "decoded": true,
+     "kind": "count",
+     "label": "number of major vessels coloured by fluoroscopy",
+     "short": "number of vessels coloured by fluoroscopy",
+     "unit": "vessels"
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_38",
+    "name": "heart_disease_root"
+   },
+   "checks": {
+    "slope_varies": true
+   },
+   "estimate": {
+    "method": "linear-path coefficient of the score (log-odds) per unit, from the weights along the paths that do not switch; checked by finite differences on every training row",
+    "value": -0.235191
+   },
+   "evidence": {
+    "fd_match_share": 0.553719,
+    "fd_max_deviation": 2.5379,
+    "fd_varies": true
+   },
+   "key": "ann_38:linearity:var:thal",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "mixed",
+    "direction": null,
+    "kind": "variable",
+    "per_unit": [
+     {
+      "column": 22,
+      "label": "a normal thallium scan",
+      "level": "3",
+      "score_per_unit": -0.33986136493355695,
+      "text": "\u22120.34 for a normal thallium scan"
+     },
+     {
+      "column": 23,
+      "label": "thallium stress test result coded 4 (meaning not recorded)",
+      "level": "4",
+      "score_per_unit": 2.2473271600684734,
+      "text": "+2.25 for thallium stress test result coded 4 (meaning not recorded)"
+     },
+     {
+      "column": 24,
+      "label": "a fixed defect on the thallium scan",
+      "level": "6",
+      "score_per_unit": -1.1191601372412932,
+      "text": "\u22121.12 for a fixed defect on the thallium scan"
+     },
+     {
+      "column": 25,
+      "label": "a reversible defect on the thallium scan",
+      "level": "7",
+      "score_per_unit": 0.0,
+      "text": "+0 for a reversible defect on the thallium scan"
+     }
+    ],
+    "per_unit_scope": "its paths that do not switch",
+    "variable": "thal"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "variables": [
+    {
+     "base": "thal",
+     "decoded": false,
+     "kind": "category",
+     "label": "thallium stress test result",
+     "short": "thallium stress test result",
+     "unit": null
+    }
+   ],
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_35",
+    "name": "direct_linear"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 0
+   },
+   "evidence": {
+    "always_on_units": 0,
+    "switching_units": 0
+   },
+   "key": "ann_35:linearity:part",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "exact_linear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_36",
+    "name": "bp_suppressed_ischaemia"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 3
+   },
+   "evidence": {
+    "always_on_units": 0,
+    "switching_units": 3
+   },
+   "key": "ann_36:linearity:part",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "nonlinear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_37",
+    "name": "ischaemia_amplifier"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 5
+   },
+   "evidence": {
+    "always_on_units": 1,
+    "switching_units": 5
+   },
+   "key": "ann_37:linearity:part",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "nonlinear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_32",
+    "name": "st_exercise_score"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 1
+   },
+   "evidence": {
+    "always_on_units": 0,
+    "switching_units": 1
+   },
+   "key": "ann_32:linearity:part",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "nonlinear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_33",
+    "name": "high_bp_hinge"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 1
+   },
+   "evidence": {
+    "always_on_units": 0,
+    "switching_units": 1
+   },
+   "key": "ann_33:linearity:part",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "nonlinear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_34",
+    "name": "normal_sugar_flag"
+   },
+   "checks": {
+    "activity_checked": true
+   },
+   "estimate": {
+    "method": "activity of the part's hidden units on the training rows",
+    "value": 0
+   },
+   "evidence": {
+    "always_on_units": 0,
+    "binary_step_units": 1,
+    "switching_units": 0
+   },
+   "key": "ann_34:linearity:part",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "part",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "class": "support_linear",
+    "kind": "part"
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  },
+  {
+   "annotation": {
+    "id": "ann_38",
+    "name": "heart_disease_root"
+   },
+   "checks": {
+    "auc_computed": true,
+    "binary_step_linearisation_unchanged": true,
+    "score_split": true
+   },
+   "estimate": {
+    "method": "variance of the linear-path contribution over (its variance + the variance of the rest of the score), training rows; linearised model: every switching unit replaced by its least-squares affine fit on the training rows",
+    "value": 0.563999
+   },
+   "evidence": {
+    "always_on_min_margin": 0.247691,
+    "binary_step_linearisation_max_diff": 1.7763568394002505e-15,
+    "binary_step_max_affine_error": 2.060839797517323e-15,
+    "binary_step_units": 1
+   },
+   "key": "ann_38:linearity:model",
+   "n": 242,
+   "reasons": [
+    "all checks passed"
+   ],
+   "risk": null,
+   "scope": "model",
+   "small_n": false,
+   "small_n_groups": [],
+   "split": "train",
+   "statement": {
+    "auc_full_test": 0.912716,
+    "auc_full_train": 0.952994,
+    "auc_linearised_test": 0.90194,
+    "auc_linearised_train": 0.921565,
+    "binary_step_units": 1,
+    "kind": "model",
+    "n_exact_linear": 6,
+    "n_inputs": 13,
+    "n_mixed": 6,
+    "n_nonlinear": 1,
+    "n_nonlinear_parts": 4,
+    "n_parts": 6,
+    "n_support_linear": 0,
+    "switching_units": 5,
+    "variance_share_linear": 0.563999
+   },
+   "test_check": null,
+   "type": "linearity",
+   "verified": true
+  }
+ ],
+ "model": {
+  "after": {
+   "auc_full_test": 0.912716,
+   "auc_full_train": 0.952994,
+   "auc_linearised_test": 0.90194,
+   "auc_linearised_train": 0.921565,
+   "binary_step_units": 1,
+   "kind": "model",
+   "n_exact_linear": 6,
+   "n_inputs": 13,
+   "n_mixed": 6,
+   "n_nonlinear": 1,
+   "n_nonlinear_parts": 4,
+   "n_parts": 6,
+   "n_support_linear": 0,
+   "switching_units": 5,
+   "variance_share_linear": 0.563999
+  },
+  "before": {
+   "auc_full_test": 0.912716,
+   "auc_full_train": 0.952994,
+   "auc_linearised_test": 0.90194,
+   "auc_linearised_train": 0.921565,
+   "kind": "model",
+   "n_exact_linear": 6,
+   "n_inputs": 13,
+   "n_mixed": 6,
+   "n_nonlinear": 1,
+   "n_nonlinear_parts": 5,
+   "n_parts": 6,
+   "n_support_linear": 0,
+   "switching_units": 6,
+   "variance_share_linear": 0.563167
+  },
+  "v4": {
+   "auc_full_test": 0.912716,
+   "auc_full_train": 0.952994,
+   "auc_linearised_test": 0.90194,
+   "auc_linearised_train": 0.921565,
+   "kind": "model",
+   "n_exact_linear": 6,
+   "n_inputs": 13,
+   "n_mixed": 6,
+   "n_nonlinear": 1,
+   "n_nonlinear_parts": 5,
+   "n_parts": 6,
+   "n_support_linear": 0,
+   "switching_units": 6,
+   "variance_share_linear": 0.563167
+  }
+ },
+ "model_checks_after": {
+  "auc_computed": true,
+  "binary_step_linearisation_unchanged": true,
+  "score_split": true
+ },
+ "model_evidence_after": {
+  "always_on_min_margin": 0.247691,
+  "binary_step_linearisation_max_diff": 1.7763568394002505e-15,
+  "binary_step_max_affine_error": 2.060839797517323e-15,
+  "binary_step_units": 1
+ },
+ "n_train": 242,
+ "one_group_exact_not_reclassified": {},
+ "other_exact_affine_not_reclassified": {},
+ "parts": {
+  "ann_32": {
+   "after": "nonlinear",
+   "before": "nonlinear",
+   "name": "st_exercise_score",
+   "v4": "nonlinear"
+  },
+  "ann_33": {
+   "after": "nonlinear",
+   "before": "nonlinear",
+   "name": "high_bp_hinge",
+   "v4": "nonlinear"
+  },
+  "ann_34": {
+   "after": "support_linear",
+   "before": "nonlinear",
+   "name": "normal_sugar_flag",
+   "v4": "nonlinear"
+  },
+  "ann_35": {
+   "after": "exact_linear",
+   "before": "exact_linear",
+   "name": "direct_linear",
+   "v4": "exact_linear"
+  },
+  "ann_36": {
+   "after": "nonlinear",
+   "before": "nonlinear",
+   "name": "bp_suppressed_ischaemia",
+   "v4": "nonlinear"
+  },
+  "ann_37": {
+   "after": "nonlinear",
+   "before": "nonlinear",
+   "name": "ischaemia_amplifier",
+   "v4": "nonlinear"
+  }
+ },
+ "parts_became_linear_on_data": [
+  {
+   "id": "ann_34",
+   "name": "normal_sugar_flag"
+  }
+ ],
+ "parts_count": {
+  "after": {
+   "exact_linear": 1,
+   "mixed": 0,
+   "nonlinear": 4,
+   "support_linear": 1
+  },
+  "before": {
+   "exact_linear": 1,
+   "mixed": 0,
+   "nonlinear": 5,
+   "support_linear": 0
+  },
+  "v4": {
+   "exact_linear": 1,
+   "mixed": 0,
+   "nonlinear": 5,
+   "support_linear": 0
+  }
+ },
+ "units_after": {
+  "always_on": 1,
+  "binary_step": 1,
+  "linear": 1,
+  "switching": 5
+ },
+ "units_before": {
+  "always_on": 1,
+  "linear": 1,
+  "switching": 6
+ },
+ "units_reclassified": [
+  "5499"
+ ],
+ "variable_changes": {},
+ "variables": {
+  "after": {
+   "age": "exact_linear",
+   "ca": "exact_linear",
+   "chol": "exact_linear",
+   "cp": "mixed",
+   "exang": "exact_linear",
+   "fbs": "mixed",
+   "oldpeak": "nonlinear",
+   "restecg": "mixed",
+   "sex": "exact_linear",
+   "slope": "exact_linear",
+   "thal": "mixed",
+   "thalach": "mixed",
+   "trestbps": "mixed"
+  },
+  "before": {
+   "age": "exact_linear",
+   "ca": "exact_linear",
+   "chol": "exact_linear",
+   "cp": "mixed",
+   "exang": "exact_linear",
+   "fbs": "mixed",
+   "oldpeak": "nonlinear",
+   "restecg": "mixed",
+   "sex": "exact_linear",
+   "slope": "exact_linear",
+   "thal": "mixed",
+   "thalach": "mixed",
+   "trestbps": "mixed"
+  },
+  "v4": {
+   "age": "exact_linear",
+   "ca": "exact_linear",
+   "chol": "exact_linear",
+   "cp": "mixed",
+   "exang": "exact_linear",
+   "fbs": "mixed",
+   "oldpeak": "nonlinear",
+   "restecg": "mixed",
+   "sex": "exact_linear",
+   "slope": "exact_linear",
+   "thal": "mixed",
+   "thalach": "mixed",
+   "trestbps": "mixed"
+  }
+ },
+ "variables_count": {
+  "after": {
+   "exact_linear": 6,
+   "mixed": 6,
+   "nonlinear": 1,
+   "support_linear": 0
+  },
+  "before": {
+   "exact_linear": 6,
+   "mixed": 6,
+   "nonlinear": 1,
+   "support_linear": 0
+  },
+  "v4": {
+   "exact_linear": 6,
+   "mixed": 6,
+   "nonlinear": 1,
+   "support_linear": 0
+  }
+ }
+}
