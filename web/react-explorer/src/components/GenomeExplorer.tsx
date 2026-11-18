@@ -431,6 +431,7 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
   }, [loadData]);
 
   useEffect(() => {
+    if (!experimentId) return;
     getExperimentDetail(experimentId).then(setExperimentDetail).catch(() => {});
   }, [experimentId]);
 
@@ -643,14 +644,16 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
         >
           {replaying && replayIndex === 0 ? "Show explained network" : "Unexplained network"}
         </button>
-        <button
-          className={`op-btn ${replaying ? "primary" : ""}`}
-          onClick={() => (replaying ? exitReplay() : startReplay("start"))}
-          title="Replay the explanation operation by operation"
-          data-testid="replay-toggle"
-        >
-          {replaying ? "Exit replay" : "Replay explanation"}
-        </button>
+        {!replaying && (
+          <button
+            className="op-btn"
+            onClick={() => startReplay("start")}
+            title="Replay the explanation operation by operation"
+            data-testid="replay-toggle"
+          >
+            Replay explanation
+          </button>
+        )}
         {!cfg.static && <div className="pins-badge-wrap">
           <button
             className={`pins-badge ${pins.length ? "has-pins" : ""}`}

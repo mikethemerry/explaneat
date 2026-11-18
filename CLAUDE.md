@@ -67,7 +67,14 @@ uv run python -m explaneat db revision "message"  # Create migration
 uv run python -m explaneat api              # 127.0.0.1:8000
 uv run python -m explaneat api --port 8080  # Custom port
 uv run python -m explaneat api --mark-orphans  # also mark 'running' experiments interrupted (off by default: scripts' runs are 'running' too)
+uv run python -m explaneat api --read-only     # writes get 403, DB connection read only, UI hides editing (explaneat/api/readonly.py)
 ```
+
+### Static appendix (GitHub Pages, no server)
+```bash
+DATABASE_URL=postgresql://localhost/explaneat_v4 uv run python -m explaneat export site --study adult,churn100,heart100 --out site --stats thesis/ch7/book/e2_stats.json
+```
+The explorer built with `VITE_STATIC_DATA=1` (hash routing, `src/api/staticData.ts` answers `/api/...` from `data/`, keys mirrored in `explaneat/export/site_keys.py`; collapse in the browser by `src/api/collapse.ts`) plus precomputed JSON and a landing page. See `docs/static_appendix.md` (what is precomputed, publishing via a `gh-pages` branch). Replay: `GET /api/genomes/{id}/replay`, `GET /model?upto=k` (`explaneat/analysis/replay.py`, `ReplayBar.tsx`)
 
 ### React Explorer Frontend
 ```bash

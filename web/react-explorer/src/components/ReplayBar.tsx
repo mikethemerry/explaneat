@@ -79,7 +79,7 @@ export function ReplayBar({
         </button>
         <button className="op-btn" onClick={() => onIndex(Math.min(last, index + 1))} disabled={index >= last} title="Forward one step (→)" data-testid="replay-forward">▶</button>
         <button className="op-btn" onClick={() => onIndex(last)} disabled={index >= last} title="Jump to the end (the explained network)" data-testid="replay-end">⏭</button>
-        <select className="dim-select" value={speed} onChange={(e) => onSpeed(Number(e.target.value))} title="Playback speed">
+        <select className="dim-select replay-speed" value={speed} onChange={(e) => onSpeed(Number(e.target.value))} title="Playback speed">
           {SPEEDS.map((s) => (
             <option key={s} value={s}>{s}×</option>
           ))}
