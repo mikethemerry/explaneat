@@ -46,6 +46,8 @@ for k, (rp, rf, ep, ef) in S.items():
       "mismatch": sum(r["recheck_summary"]["mismatch"] for r in recs),
       "needs_review": sum(r["recheck_summary"]["needs_review"] for r in recs),
       "mike_verified_true": sum(bool((r.get("mike_verification") or {}).get("verified")) for r in recs),
+      "mike_minutes": q([float((r.get("mike_verification") or {})["minutes"]) for r in recs
+                         if (r.get("mike_verification") or {}).get("minutes") is not None]),
       "genome_match": all(e["genome_id"] == next(r for r in runs if r["seed"] == e["seed"])["genome_id"] for e in ex),
     }
     out[k] = o

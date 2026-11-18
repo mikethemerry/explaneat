@@ -57,20 +57,21 @@ EXP = {
     "results": [
         {"id": "e2-headline", "title": "Ten seeds, three datasets",
          "headline": "Full coverage and a complete recheck on 30 of 30; seeds within 0.01 of the best: Adult 10/10, Churn 4/10, Heart-100 1/10",
-         "lead": "All thirty networks were explained in full within the box, and every recheck closed. "
+         "lead": "All thirty networks were explained in full within the box, every recheck closed, and Mike verified all thirty. "
                  "Accuracy is close across seeds on Adult and spreads more on Churn and Heart-100.",
          "tables": [{
              "caption": "Table 2.1. Ten seeds per study", "cls": "data e2head",
              "source": "runs.csv (adult rows), runs_heart100.csv, churn/runs_churn100.csv; the v4 CSVs and records; results/thesis/rashomon.md",
              "headers": ["Study", "Test AUC, median (range)", "LR / GB", "Within 0.01 of the best seed",
                          "Hidden units, median (range)", "Explained to full coverage", "Recheck complete",
-                         "Explaining minutes, median (range)"],
+                         "Explaining minutes, median (range)",
+                         "Verified by Mike (minutes per network, median)"],
              "rows": [
-                 ["**Adult** (pre-registered)", "0.906 (0.903–0.909)", "0.905 / 0.928", "10/10", "15 (11–17)", "10/10", "10/10", "21.6 (19.3–28.8)"],
-                 ["**Churn** (supplementary)", "0.886 (0.873–0.904)", "0.813 / 0.934", "4/10", "17 (13–27)", "10/10", "10/10", "18.2 (15.7–24.4)"],
-                 ["**Heart-100** (supplementary)", "0.892 (0.863–0.926)", "0.919 / 0.945", "1/10", "8.5 (5–13)", "10/10", "10/10", "14.9 (12.5–16.5)"],
+                 ["**Adult** (pre-registered)", "0.906 (0.903–0.909)", "0.905 / 0.928", "10/10", "15 (11–17)", "10/10", "10/10", "21.6 (19.3–28.8)", "10/10 (4)"],
+                 ["**Churn** (supplementary)", "0.886 (0.873–0.904)", "0.813 / 0.934", "4/10", "17 (13–27)", "10/10", "10/10", "18.2 (15.7–24.4)", "10/10 (3.5)"],
+                 ["**Heart-100** (supplementary)", "0.892 (0.863–0.926)", "0.919 / 0.945", "1/10", "8.5 (5–13)", "10/10", "10/10", "14.9 (12.5–16.5)", "10/10 (5.5)"],
              ],
-             "note": "Full coverage was reached within the 3-hour box every time. Mike-verified: 0 of 30 (sign-off pending). "
+             "note": "Full coverage was reached within the 3-hour box every time. Mike verified all 30 on 18 Nov 2026, taking 1–10 minutes per network (record field mike_verification). "
                      "Recheck found 0 mismatches in all 30 records. Test sizes: Adult 9,769, Churn 1,000, Heart-100 61 rows.",
          }],
          "html": lambda: (
@@ -108,8 +109,11 @@ EXP = {
     ],
     "discussion": [
         "Explainability reproduces. Every network on every dataset was explained in full, so it is not the luck of one seed. "
-        "For Adult the pre-registered rule is met on the agent-assisted count. It is not yet met on the Mike-verified count, "
-        "because no record has been signed off.",
+        "For Adult the pre-registered rule is met on both counts: agent-assisted and Mike-verified.",
+        "Verification was quick: a median of about four minutes per network (Heart-100 the slowest, at 5.5). "
+        "It used the full plain-language report, the pairs plot and the expandable network together. The pairs plot "
+        "did most of the work at the tail of a feature, where interactions show at a glance. The slow cases were parts "
+        "that act only when two or three conditions hold at once, which needed a closer look.",
         "Similar accuracy is a weaker and dataset-dependent result. On Adult all ten seeds sit within 0.01 of each other "
         "and level with logistic regression. Churn's seeds all beat logistic regression by a wide margin but spread more. "
         "Heart-100's test set has 61 rows, so each seed's interval is wide and the spread sits inside it. No seed on any dataset comes within 0.01 "
