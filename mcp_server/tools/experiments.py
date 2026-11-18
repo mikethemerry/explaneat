@@ -112,7 +112,8 @@ def get_best_genome(experiment_id: str) -> str:
                 Population.experiment_id == exp.id,
                 Genome.fitness.isnot(None),
             )
-            .order_by(Genome.fitness.desc())
+            # The experiments' selection rule: ties to the earliest generation, then lowest NEAT key.
+            .order_by(Genome.fitness.desc(), Population.generation.asc(), Genome.genome_id.asc())
             .first()
         )
 
