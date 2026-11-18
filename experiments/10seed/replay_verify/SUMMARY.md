@@ -6,6 +6,14 @@ Written by `replay_verify.py --summary`; one JSON per run beside this file.
 |---|---|---|---|---|---|---|---|
 | adult-s0 | 4126fe2 | DIFFERS | 100/100 | 24999/25000 | True | - | 5651.5 |
 | adult-s1 | cc48129 | reproduced | 100/100 | 25000/25000 | True | True | 5309.7 |
+| adult-s2 | 4126fe2 | reproduced | 100/100 | 25000/25000 | True | True | 6381.2 |
+| adult-s3 | cc48129 | reproduced | 100/100 | 25000/25000 | True | True | 6106.6 |
+| adult-s4 | 4126fe2 | reproduced | 100/100 | 25000/25000 | True | True | 6762.5 |
+| adult-s5 | 4126fe2 | DIFFERS | 100/100 | 24999/25000 | True | True | 6872.9 |
+| adult-s6 | 4126fe2 | reproduced | 100/100 | 25000/25000 | True | True | 6075.5 |
+| adult-s7 | 4126fe2 | reproduced | 100/100 | 25000/25000 | True | True | 6383.6 |
+| adult-s8 | cc48129 | reproduced | 100/100 | 25000/25000 | True | True | 6008.9 |
+| adult-s9 | 4126fe2 | reproduced | 100/100 | 25000/25000 | True | True | 5638.5 |
 | churn100-s0 | 901fad4 | reproduced | 100/100 | 255/255 | True | - | 753.9 |
 | churn100-s1 | 901fad4 | reproduced | 100/100 | 255/255 | True | - | 719.0 |
 | churn100-s2 | 901fad4 | reproduced | 100/100 | 256/256 | True | - | 846.3 |

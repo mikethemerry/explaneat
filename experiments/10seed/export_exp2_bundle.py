@@ -176,13 +176,11 @@ Raw data kept in the database:
   compared with what is stored (population rows of every generation, every stored genome's key,
   fitness and md5, the selected genome).
 
-Drafted documents (PDF): the v4 builds exist only for the first-10 verification pack
-(`~/.explaneat/exports/verification-pack-first10-final/`), which covers adult-s0, -s1 and -s2:
-`<label>.pdf` (technical export) and `<label>-plain-v5.pdf` (plain-language draft). The PDFs in
+Drafted documents (PDF), from `~/.explaneat/exports/exp2-verification/` (the v4 records, built
+2026-11-18 with the feature key): `<label>.pdf` (technical export), `<label>-plain-v5.pdf`
+(plain-language draft) and `<label>-review.pdf` (review sheet), per network. The PDFs in
 `~/.explaneat/exports/plain-language/` predate the v4 run (they are the old records) and are not
-included. To build the others (writes files only; the database is only read):
-
-    {build}
+included. {"Networks without a PDF here: " + ", ".join(pdf_notes) + ". To build them (writes files only; the database is only read): " + build if pdf_notes else "All 30 networks have their PDFs."}
 
 `MANIFEST.sha256` lists the sha256 of every other file: `shasum -a 256 -c MANIFEST.sha256`.
 """

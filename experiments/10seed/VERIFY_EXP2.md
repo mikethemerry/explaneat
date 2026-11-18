@@ -57,6 +57,13 @@ PYTHONHASHSEED=0 uv run python experiments/10seed/replay_verify.py adult 0      
 uv run python experiments/10seed/replay_verify.py --summary                     # table -> replay_verify/SUMMARY.md
 ```
 
+To examine one genome, replay part of a run with `--generations N` and pass
+`--dump GEN:KEY --log-info --tag=-a`. This saves the replayed genome and prints the backprop
+log lines, which compare directly with `logs/<run>.log`. The adult-s0 and adult-s5 diagnoses
+were made this way. adult-s0's result predates the tie-count check, so its "Tie counts" cell in
+`SUMMARY.md` is "-". Adult keeps every genome, so `verify_exp2.py runs` recounts its ties from
+the DB, and they match.
+
 **What it does.** It re-runs the seed in memory, exactly as `run_seed.py` did:
 - the same config, seed and split;
 - the scaler fitted in memory and asserted equal to the stored one;
@@ -273,18 +280,16 @@ At the top level it holds:
 - `replay_verify/` and `verify_exp2/`;
 - `README.md` and `MANIFEST.sha256`.
 
-**Drafted PDFs:** v4 builds exist only for adult-s0, -s1 and -s2, from
-`~/.explaneat/exports/verification-pack-first10-final/`. The bundle copies `<label>.pdf` and
-`<label>-plain-v5.pdf` for those three. The PDFs in `~/.explaneat/exports/plain-language/`
-predate the v4 run, so they are not included. To build the other 27 (this writes files only
-and reads the database):
+**Drafted PDFs:** all 30 networks, from `~/.explaneat/exports/exp2-verification/` (built from
+the v4 records on 2026-11-18, with the feature key). Each seed folder has `<label>.pdf` (the
+technical export), `<label>-plain-v5.pdf` (the plain-language draft) and `<label>-review.pdf`
+(the review sheet). The PDFs in `~/.explaneat/exports/plain-language/` predate the v4 run, so
+they are not included. To rebuild one (this writes files only and reads the database):
 
 ```bash
 DATABASE_URL=postgresql://localhost/explaneat_v4 uv run python -m explaneat export verification-pack \
   --records-dir experiments/10seed/explanations_v4 --labels <labels> --out ~/.explaneat/exports/exp2-pdfs
 ```
-
-The exact label list is in the bundle `README.md`.
 
 ## 7. What was run on 2026-11-18, and what it gave
 
@@ -295,7 +300,7 @@ means the value in the committed CSVs, records or results files.
 |---|---|
 | `replay_verify.py heart100 <0-9>` | **10/10 reproduced.** All 100 population rows of each run are identical. Every stored genome (250 or 251 per run: the final generation plus the selected genome) matches on key, fitness and md5. The selected genome is identical. About 1.5 min per run |
 | `replay_verify.py churn100 <0-9>` | **10/10 reproduced.** All 100 population rows are identical, and 255 or 256 stored genomes per run are identical. The selected genome is identical. 8–14 min per run |
-| `replay_verify.py adult <0-9>` | **Not fully reproduced; the study was stopped after the first difference,** as instructed. **adult-s1 reproduced:** all 100 population rows and 25,000/25,000 genomes identical, selected genome identical, 88 min. **adult-s0 differs in one genome:** generation 38, NEAT key 9533 (row `7114dc5b-57b6-46c6-95a9-8bbec5e6306c`). Its stored fitness is 0.8952257749512352 and the replay gives 0.8952258181877769, a difference of 4.3e-8. Its genome md5 is stored `f172c2af92e411af493a02a4cb25cdfc` and replayed `72e016617bc78ebdb743804451f9d81c`. The other 24,999 genomes, all 100 population rows and the selected genome (key 9828, generation 99) are identical. **Stopped part-way:** adult-s2 at generation 70 with 17,750/17,750 genomes identical so far, and adult-s3 at generation 0 (250/250). **Not started:** adult-s4 to -s9 |
+| `replay_verify.py adult <0-9>` | **8/10 reproduced exactly; 2 differ in one genome each.** All 1,000 population rows and 249,998 of the 250,000 stored genomes are identical, and so are the 10 selected genomes and their tie counts. s1, s2, s3, s4, s6, s7, s8 and s9 match 25,000/25,000 each. **adult-s0:** generation 38, key 9533, fitness 0.8952257749512352 stored vs 0.8952258181877769 replayed. **adult-s5:** generation 39, key 9861, fitness 0.8949883072537961 stored vs 0.894988177544171 replayed. 88–115 min per run, 3 at a time. Diagnosis below |
 | `verify_exp2.py runs` | **1,289/1,290 cells of the 30 rows are identical**: selected genome, train and test AUC, CI, accuracy, size, shape, wall clock and commit. The one difference is heart100-s6 `n_rows_at_best_fitness`, stored 3 and recounted 2. One of its tied rows was among the genomes deleted on 2026-11-10. The full replay counts 3, as stored. `fitness_match_1e-6` is true on all 30 |
 | `verify_exp2.py explanations` | **30/30 agree with the stored records.** Agreement is exact on both coverages (1.0), hierarchy complete, function preservation, closed-form and numeric errors, operation counts, recheck mismatches (0), unchecked free-text sentences, full coverage and complete_ok. The only change is that the 9 stored needs_review items (adult-s3, -s4, -s5 ×2, -s6 and -s8; heart100-s1; churn100-s4 and -s5) are now 0. That is expected after `fix_amended_provenance.py` |
 | `verify_exp2.py csvs` | The three v4 explanation CSVs rebuild byte for byte from the records |
@@ -303,28 +308,64 @@ means the value in the committed CSVs, records or results files.
 | `rashomon.py` + `git diff results/thesis` | No diff: the near-equivalence counts reproduce |
 | `xn.py --recheck` (heart100-s0, read-only URL) | `complete_ok` true, 0 mismatches, 0 needs_review, 26 unchecked sentences, 40 templated texts and 29 queries, as stored |
 | `check_explanation.py` (heart100-s0, read-only URL) | Function preservation 2.2e-16 and closed-form 0.00725, as stored |
-| `export_exp2_bundle.py` + `shasum -a 256 -c MANIFEST.sha256` | Bundle at `~/.explaneat/exports/exp2-final/` (about 80 MB). Every file checks OK |
+| `export_exp2_bundle.py` + `shasum -a 256 -c MANIFEST.sha256` | Bundle at `~/.explaneat/exports/exp2-final/` (367 files, about 153 MB, with all 30 networks' PDFs). Every file checks OK |
 
 **Numbers that did not reproduce exactly:**
-- **Adult replay, adult-s0: one genome of 25,000 differs.** It is generation 38, key 9533, and
-  ranks 55th of 250 in that generation.
-  - **Where it appears:** this key exists only in generation 38. Adult rows have no parent
-    links (no sidecar and no `parent1_id`), so whether it had children cannot be read from the
-    database.
-  - **What it does not change:** every later generation, and the reported selected genome,
-    reproduce exactly. So the difference did not propagate, and no reported Adult number
-    depends on it.
-  - **Cause:** not established. Nothing was changed or "fixed". Possible causes, untested:
-    1. a floating-point result that depends on memory alignment in the CPU kernels, in either
-       the original run or the replay;
-    2. a fault in the original process. The Adult runs were 30 concurrent processes, paused
-       with SIGSTOP/SIGCONT (`RUN_INCIDENTS.md`), but this row was written at 13:40 on
-       2026-11-03, before the pause.
-  - **Next check, if wanted:** replay adult-s0 again to generation 39 (about 30 min) to see
-    whether the replay itself is stable on that genome. Then replay the remaining Adult seeds.
-  - **What this means for the bit-identity claim:** README §4 says "should reproduce every
-    genome and fitness exactly". That holds for Heart-100 (10/10), churn100 (10/10) and
-    adult-s1, but not for adult-s0.
+- **Adult replay: 2 genomes of 250,000 differ, one in adult-s0 and one in adult-s5.**
+
+  | Run | Generation | NEAT key | Stored fitness | Replayed fitness | Δ |
+  |---|---|---|---|---|---|
+  | adult-s0 | 38 | 9533 | 0.8952257749512352 | 0.8952258181877769 | 4.3e-8 |
+  | adult-s5 | 39 | 9861 | 0.8949883072537961 | 0.894988177544171 | 1.3e-7 |
+
+  `replay_verify/adult-s0-diagnosis.json` and `adult-s5-diagnosis.json` hold the details,
+  including every differing gene.
+  - **The replay is deterministic.** adult-s0 was replayed again to generation 39, twice and
+    independently (`adult-s0-partial39-{a,b}.json`). Both gave the same fitness and md5 as
+    the full replay. adult-s5's partial replay to generation 40 equals its full replay too.
+  - **Only trained values differ.** The structure is identical: same node and connection
+    genes, enabled flags, activations, aggregations and responses. Only biases and weights
+    differ:
+
+    | Run | Biases differing | Weights differing | Largest difference | Median difference |
+    |---|---|---|---|---|
+    | adult-s0 | 14 of 22 | 88 of 165 | 8.6e-6 | 2.7e-7 (biases), 8.1e-8 (weights) |
+    | adult-s5 | 15 of 20 | 87 of 158 | 1.9e-5 | 8.8e-7 (biases), 7.3e-7 (weights) |
+
+    That pattern is what a small change inside the genome's 5-epoch backprop produces.
+  - **The original run computed it that way.** With `--log-info`, the replay prints the same
+    backprop log lines as the original run (mean improvement, best improvement, best loss per
+    generation). Against `logs/adult-s<seed>.log`, only one value differs in each run, and it
+    is the mean improvement of the affected generation:
+    - adult-s0, generation 38: -0.15442984606935325 originally, -0.15442987679482822 in the
+      replay (116 of 117 values identical);
+    - adult-s5, generation 39: -0.08260515951343508 originally, -0.08260516398005815 in the
+      replay (119 of 120 values identical).
+
+    The best improvement and best loss are identical. So the stored rows are exactly what
+    the runs computed and logged at the time; they were not changed afterwards.
+  - **The rows were not modified after the run.**
+    - `created_at` = `updated_at` on both rows, and on every row of both runs.
+    - The database has no triggers, and nothing references either row (no parent links,
+      explanations or training metrics).
+    - Adult rows carry no parent links, and these keys exist only in their own generation.
+  - **No pause overlaps.** adult-s0 generation 38 ran 13:36–13:40 and adult-s5 generation 39
+    ran 13:48–13:52 NZDT on 2026-11-03. The first SIGSTOP was at 14:13:54. Neither log has a
+    warning or error.
+  - **No effect downstream.** Every later generation reproduces exactly. A child inheriting
+    one of the differing genes would have differed, so neither genome passed on a differing
+    gene. All 10 selected genomes are identical.
+  - **Most likely cause:** in the original processes, the backprop arithmetic of one genome
+    came out differently, at the level of floating-point rounding, once per run in two of the
+    ten runs. At the time 30 runs were going at once on 14 cores. How the original processes
+    computed differently is not established. Possibilities include CPU-kernel paths that
+    depend on memory alignment, and hardware or OS effects. The replay can't tell them apart
+    because it does not reproduce the event. It is not a database change, a pause, a code
+    difference (every run used its recorded commit) or a logged error.
+  - **What this means for the bit-identity claim:** README §4 says a seeded run "should
+    reproduce every genome and fitness exactly". On these three studies 255,054 of 255,056
+    stored genomes and all 3,000 population rows reproduce, along with all 30 selected
+    genomes. The claim holds except for these two genomes, and both are documented above.
 - **Closed-form error, last bits:** `closed_form_max_abs_err`, the displayed closed form's max
   error, depends in its last bits on what the same Python process evaluated before.
   - **Example:** for adult-s2, `check_explanation.py` on its own gives 0.058889693843529045,

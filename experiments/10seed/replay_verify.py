@@ -70,7 +70,7 @@ READ_ONLY_URL = BASE_URL + ("&" if "?" in BASE_URL else "?") + \
 
 def summary():
     rows = []
-    for p in sorted(OUT.glob("*.json")):
+    for p in sorted(q for q in OUT.glob("*.json") if "-partial" not in q.name and "-diagnosis" not in q.name):
         r = json.loads(p.read_text())
         c = r.get("checks", {})
         rows.append((r["label"], r["code_commit"][:7], r.get("status"),
@@ -100,6 +100,12 @@ def main():
                     help="checkout of the recorded commit (default .claude/worktrees/replay-<c7>)")
     ap.add_argument("--generations", type=int, default=None,
                     help="stop early (timing only; the result is marked partial)")
+    ap.add_argument("--dump", default=None, metavar="GEN:KEY",
+                    help="also save that replayed genome's genome_data (diagnosis)")
+    ap.add_argument("--log-info", action="store_true",
+                    help="print the training INFO log lines (backprop mean/best improvement), "
+                         "comparable with the original run's logs/<run>.log")
+    ap.add_argument("--tag", default="", help="suffix for the result file name (repeat runs)")
     ap.add_argument("--summary", action="store_true",
                     help="print the table of all results in replay_verify/ and write SUMMARY.md")
     args = ap.parse_args()
@@ -188,6 +194,9 @@ def main():
     logging.basicConfig(level=logging.WARNING,
                         format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     logging.getLogger("explaneat").addHandler(Catch())
+    if args.log_info:
+        for name in ("experimenter", "explaneat.db.population"):
+            logging.getLogger(name).setLevel(logging.INFO)
 
     X_train, y_train, dataset_name = rs.load_training_data(spec["dataset_id"], spec["split_id"])
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
@@ -215,6 +224,7 @@ def main():
                   genomes_in_db=0, genomes_match=0, generations_replayed=0)
     mismatches = []
     replayed = []  # (fitness, generation, key, md5)
+    dumped = {}
     t_last = [time.time()]
 
     def compare_generation(gen, recs):
@@ -227,6 +237,12 @@ def main():
                 "SELECT g.genome_id, g.fitness, md5(g.genome_data::text) AS h FROM genomes g "
                 "JOIN populations p ON g.population_id = p.id "
                 "WHERE p.experiment_id = :e AND p.generation = :g"), {"e": exp_id, "g": gen})}
+        if args.dump and int(args.dump.split(":")[0]) == gen:
+            k = int(args.dump.split(":")[1])
+            for g, h in zip(recs, hashes):
+                if g["key"] == k:
+                    dumped.update(generation=gen, key=k, fitness=g["fitness"], md5=h,
+                                  genome_data=g["genome_data"])
         mine = {}
         for g, h in zip(recs, hashes):
             mine[g["key"]] = (g["fitness"], h)
@@ -371,7 +387,9 @@ def main():
         finished=datetime.now(timezone.utc).isoformat(timespec="seconds"),
     )
     OUT.mkdir(exist_ok=True)
-    name = label + (f"-partial{run_gens}" if args.generations else "") + ".json"
+    name = label + (f"-partial{run_gens}" if args.generations else "") + args.tag + ".json"
+    if dumped:
+        result["dumped_genome"] = dumped
     (OUT / name).write_text(json.dumps(result, indent=2, default=str) + "\n")
     print(json.dumps(dict(label=label, status=status, checks=checks,
                           wall_clock_s=round(wall, 1)), default=str), flush=True)
