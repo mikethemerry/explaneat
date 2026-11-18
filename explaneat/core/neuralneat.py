@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import random
 import sys
+from collections import deque
 
 import torch
 import torch.nn as nn
@@ -806,7 +807,11 @@ class NeuralNeat(nn.Module):
 
 
 class NodeMapping(object):
-    """Holds all information regarding the node mapping for a NeuralNeat network"""
+    """Layer and reachability metadata for a feed-forward NeuralNeat network.
+
+    Depths are longest input-path lengths. The private ``depths`` lists record
+    candidates discovered during propagation, rather than every individual DAG path.
+    """
 
     def __init__(self, genome, config):
         self.genome = genome
@@ -856,7 +861,7 @@ class NodeMapping(object):
                 node_tracker[connection[1]]["input_ids"].append(connection[0])
 
         # Trace stack for breadth-first graph traversal
-        trace_stack = [node_id for node_id in genome_config.input_keys]
+        trace_stack = deque(genome_config.input_keys)
         # Set default depth for input keys
         for input_node in genome_config.input_keys:
             node_tracker[input_node]["depth"] = 0
@@ -867,39 +872,38 @@ class NodeMapping(object):
         # Breadth first search input->output
         while len(trace_stack) > 0:
             # pick first node on stack
-            trace = trace_stack[0]
+            trace = trace_stack.popleft()
             # Pull current depth
             node_depth = node_tracker[trace]["depth"]
             next_depth = node_depth + 1
             # Apply next depth to all output nodes
             for output_id in node_tracker[trace]["output_ids"]:
-                # Add to search
-                trace_stack.append(output_id)
-                # Set new depth
-                node_tracker[output_id]["depths"].append(next_depth)
-                node_tracker[output_id]["depth"] = max(
-                    node_tracker[output_id]["depths"]
-                )
+                target = node_tracker[output_id]
+                target["depths"].append(next_depth)
+                # Revisit only when the longest known path grows. A plain
+                # visited set would miss longer routes through skip edges;
+                # enqueueing every path makes dense layered DAGs exponential.
+                if next_depth > target["depth"]:
+                    target["depth"] = next_depth
+                    trace_stack.append(output_id)
                 # Have found in path
-                node_tracker[output_id]["on_path_to_output"] = True
-
-            # Remove from list
-            del trace_stack[0]
+                target["on_path_to_output"] = True
 
         # Breadth first search output->input to determine reachability
-        trace_stack = [node_id for node_id in genome_config.output_keys]
+        trace_stack = deque(genome_config.output_keys)
+        traced = set(genome_config.output_keys)
         while len(trace_stack) > 0:
-            trace = trace_stack[0]
+            trace = trace_stack.popleft()
             for input_id in node_tracker[trace]["input_ids"]:
-                # Add to search
-                trace_stack.append(input_id)
+                if input_id not in traced:
+                    traced.add(input_id)
+                    trace_stack.append(input_id)
                 # Have found in path
                 node_tracker[input_id]["on_path_to_input"] = True
-            del trace_stack[0]
 
         # Several outputs (opt-in by config, num_outputs > 1): put every output
-        # in one final layer, in output_keys order.  Single-output genomes skip
-        # this, so their mapping is the original one bit for bit.
+        # in one final layer, in output_keys order. Single-output genomes retain
+        # their computed longest-path layers without this alignment.
         if len(genome_config.output_keys) > 1:
             self._align_outputs(node_tracker, genome_config.output_keys)
 
