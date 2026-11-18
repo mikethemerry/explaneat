@@ -9,6 +9,7 @@ import {
   type ViolationDetail,
   type AnnotationSummary,
 } from "../api/client";
+import { useFeatureLabels, nodeListText, camelDisplay } from "../featureLabels";
 
 // =============================================================================
 // Logging utilities
@@ -1507,6 +1508,7 @@ export function OperationsPanel({
   }, [experimentId]);
 
   const selectedArray = useMemo(() => Array.from(selectedNodes), [selectedNodes]);
+  const fl = useFeatureLabels();
 
   // Detect if any selected nodes are annotation nodes
   const selectedAnnotationNodes = useMemo(() => {
@@ -1998,14 +2000,14 @@ export function OperationsPanel({
                 <h4>Annotation: "{wizard.annotationName}"</h4>
 
                 <div className="wizard-summary">
-                  <p><strong>Entry:</strong> {wizard.analysis.entryNodes.join(", ") || "none"}</p>
+                  <p><strong>Entry:</strong> {nodeListText(wizard.analysis.entryNodes, fl) || "none"}</p>
                   <p><strong>Intermediate:</strong> {wizard.analysis.intermediateNodes.join(", ") || "none"}</p>
                   {wizard.analysis.discoveredNodes.length > 0 && (
                     <p className="discovered-nodes">
-                      <strong>Discovered:</strong> {wizard.analysis.discoveredNodes.join(", ")}
+                      <strong>Discovered:</strong> {nodeListText(wizard.analysis.discoveredNodes, fl)}
                     </p>
                   )}
-                  <p><strong>Exit:</strong> {wizard.analysis.exitNodes.join(", ") || "none"}</p>
+                  <p><strong>Exit:</strong> {nodeListText(wizard.analysis.exitNodes, fl) || "none"}</p>
                 </div>
 
                 {/* Strategy display - ordered steps */}
@@ -2135,7 +2137,7 @@ export function OperationsPanel({
         <h4>Selected Nodes ({selectedNodes.size})</h4>
         {selectedArray.length > 0 ? (
           <div className="selected-nodes">
-            {selectedArray.slice(0, 10).join(", ")}
+            {nodeListText(selectedArray.slice(0, 10), fl)}
             {selectedArray.length > 10 && ` +${selectedArray.length - 10} more`}
           </div>
         ) : (
@@ -2150,12 +2152,16 @@ export function OperationsPanel({
         const currentDisplayName = nodeObj?.display_name ?? null;
         // Suggest feature name for input nodes based on position
         const inputIndex = model.metadata.input_nodes.indexOf(nodeId);
-        const baseSuggestion =
-          inputIndex >= 0 && featureNames && inputIndex < featureNames.length
+        // Input node -k is dataset column k-1 (the feature key); the position in
+        // metadata.input_nodes is not the column once inputs are pruned or split.
+        const feat = fl.forNode(nodeId);
+        const baseSuggestion = feat
+          ? feat.raw
+          : inputIndex >= 0 && featureNames && inputIndex < featureNames.length
             ? featureNames[inputIndex]
             : null;
         // For split input nodes (e.g. "-17_a"), look up the base node
-        let suggestion = baseSuggestion;
+        let suggestion = feat ? camelDisplay(feat.raw) : baseSuggestion;
         if (!suggestion && nodeId.includes("_")) {
           const baseId = nodeId.replace(/_(?:[a-z]|[A-Z][a-z])+$/, "");
           const baseIndex = model.metadata.input_nodes.indexOf(baseId);
@@ -2169,7 +2175,7 @@ export function OperationsPanel({
         const featureName = baseSuggestion ?? suggestion;
         const featureType = featureName && featureTypes ? featureTypes[featureName] ?? null : null;
         const featureDesc = featureName && featureDescriptions ? featureDescriptions[featureName] ?? null : null;
-        const isInputNode = inputIndex >= 0 || (suggestion && nodeId.includes("_"));
+        const isInputNode = !!feat || inputIndex >= 0 || (suggestion && nodeId.includes("_"));
 
         return (
           <section className="panel-section">
@@ -2179,6 +2185,8 @@ export function OperationsPanel({
                 <h4>Feature Info</h4>
                 <div style={{ fontSize: "12px", marginBottom: "8px" }}>
                   <div><strong>{featureName}</strong></div>
+                  {feat?.decoded && <div>{feat.full_label}</div>}
+                  {feat?.one_means && <div style={{ color: "#6b7280" }}>1 means: {feat.one_means}</div>}
                   {featureType && <div style={{ color: "#9ca3af", fontStyle: "italic" }}>{featureType}</div>}
                   {featureDesc && <div style={{ color: "#9ca3af", marginTop: "2px" }}>{featureDesc}</div>}
                 </div>
@@ -2417,7 +2425,7 @@ export function OperationsPanel({
             <div className="subgraph-row">
               <span className="subgraph-label">Entry:</span>
               <span className="subgraph-nodes entry">
-                {selectionContext.analysis.entryNodes.join(", ") || "none"}
+                {nodeListText(selectionContext.analysis.entryNodes, fl) || "none"}
               </span>
             </div>
             <div className="subgraph-row">
@@ -2432,14 +2440,14 @@ export function OperationsPanel({
               <div className="subgraph-row discovered">
                 <span className="subgraph-label">Discovered:</span>
                 <span className="subgraph-nodes">
-                  {selectionContext.analysis.discoveredNodes.join(", ")}
+                  {nodeListText(selectionContext.analysis.discoveredNodes, fl)}
                 </span>
               </div>
             )}
             <div className="subgraph-row">
               <span className="subgraph-label">Exit:</span>
               <span className="subgraph-nodes exit">
-                {selectionContext.analysis.exitNodes.join(", ") || "none"}
+                {nodeListText(selectionContext.analysis.exitNodes, fl) || "none"}
               </span>
             </div>
           </div>

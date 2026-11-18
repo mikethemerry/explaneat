@@ -24,6 +24,7 @@ import { ConfigEditor } from "./ConfigEditor";
 import { ToolsDrawer } from "./ToolsDrawer";
 import type { LineageView } from "./LineagePanel";
 import type { HighlightKind } from "./NetworkViewer";
+import { FeatureLabelsProvider, useFeatureLabelsLoader } from "../featureLabels";
 
 // =============================================================================
 // Logging utilities
@@ -62,6 +63,7 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
   const [error, setError] = useState<string | null>(null);
   const [selectedNodes, setSelectedNodes] = useState<Set<string>>(new Set());
   const [evidencePanelWidth, setEvidencePanelWidth] = useState(400);
+  const featureLabels = useFeatureLabelsLoader(genomeId);
 
   // Tools drawer: graph highlights, lineage diff view, refresh after operations
   const [nodeHighlight, setNodeHighlight] = useState<Record<string, HighlightKind> | null>(null);
@@ -457,6 +459,7 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
   }
 
   return (
+    <FeatureLabelsProvider value={featureLabels}>
     <div className="explorer-container">
       <header className="explorer-header">
         <button className="back-btn" onClick={onBack}>
@@ -661,5 +664,6 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
         ) : null}
       </div>
     </div>
+    </FeatureLabelsProvider>
   );
 }

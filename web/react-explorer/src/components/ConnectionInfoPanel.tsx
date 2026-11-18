@@ -1,4 +1,5 @@
 import type { ApiNode, ApiConnection } from "../api/client";
+import { useFeatureLabels, withLabel, type FeatureLabels } from "../featureLabels";
 
 type ConnectionInfoPanelProps = {
   fromNode: ApiNode;
@@ -6,16 +7,17 @@ type ConnectionInfoPanelProps = {
   connections: ApiConnection[];
 };
 
-function formatNodeLabel(node: ApiNode): string {
-  if (node.display_name) return node.display_name;
-  return node.id;
+function formatNodeLabel(node: ApiNode, fl?: FeatureLabels): string {
+  const name = node.display_name || node.id;
+  return fl ? withLabel(name, fl.forNode(node.id)) : name;
 }
 
 export function ConnectionInfoPanel({ fromNode, toNode, connections }: ConnectionInfoPanelProps) {
+  const fl = useFeatureLabels();
   return (
     <div style={{ padding: "16px" }}>
       <h3 style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#e5e7eb" }}>
-        Connection: {formatNodeLabel(fromNode)} &rarr; {formatNodeLabel(toNode)}
+        Connection: {formatNodeLabel(fromNode, fl)} &rarr; {formatNodeLabel(toNode, fl)}
       </h3>
 
       {/* Connection weights */}
@@ -66,6 +68,7 @@ export function ConnectionInfoPanel({ fromNode, toNode, connections }: Connectio
 }
 
 function NodeInfo({ label, node }: { label: string; node: ApiNode }) {
+  const f = useFeatureLabels().forNode(node.id);
   return (
     <div style={{
       background: "#2a2a2a",
@@ -80,6 +83,9 @@ function NodeInfo({ label, node }: { label: string; node: ApiNode }) {
         )}
       </div>
       <div style={{ fontSize: "11px", color: "#9ca3af" }}>
+        {f && <div>Feature: <code>{f.raw}</code></div>}
+        {f?.decoded && <div style={{ color: "#e5e7eb" }}>Meaning: {f.full_label}</div>}
+        {f?.one_means && <div>1 means: {f.one_means}</div>}
         <div>Type: {node.type}</div>
         {node.activation && <div>Activation: {node.activation}</div>}
         {node.bias != null && <div>Bias: {node.bias.toFixed(4)}</div>}

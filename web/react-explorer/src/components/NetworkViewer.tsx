@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useEffect } from "react";
+import { useCallback, useMemo, useEffect, type ReactNode } from "react";
+import { useFeatureLabels, describe, type FeatureLabels } from "../featureLabels";
 import {
   ReactFlow,
   Node,
@@ -444,11 +445,14 @@ function applyLayerLayout(
 // Helper functions
 // =============================================================================
 
-function buildNodeTooltip(node: ModelState["nodes"][number]): string {
+function buildNodeTooltip(node: ModelState["nodes"][number], fl?: FeatureLabels): string {
   const header = node.display_name
     ? `${node.display_name} (${node.id})`
     : `Node ${node.id}`;
-  const lines = [header, `Type: ${node.type}`];
+  const lines = [header];
+  const feat = fl?.forNode(node.id);
+  if (feat) lines.push(describe(feat));
+  lines.push(`Type: ${node.type}`);
   if (node.bias !== null && node.bias !== undefined) {
     lines.push(`Bias: ${node.bias.toFixed(3)}`);
   }
@@ -470,6 +474,7 @@ function convertModelToFlow(
   edgeInfluence?: Record<string, EdgeInfluenceData> | null,
   nodeHighlight?: Record<string, HighlightKind> | null,
   edgeHighlight?: Record<string, HighlightKind> | null,
+  fl?: FeatureLabels,
 ): { nodes: Node[]; edges: Edge[] } {
   logInfo("Converting model to ReactFlow format", {
     nodeCount: model.nodes.length,
@@ -500,7 +505,7 @@ function convertModelToFlow(
     } else if (isFunctionNode) {
       tooltip = `Annotation: ${node.id.replace(/^A_/, "")}`;
     } else {
-      tooltip = buildNodeTooltip(node);
+      tooltip = buildNodeTooltip(node, fl);
     }
 
     logDebug(`Creating node ${node.id}`, {
@@ -519,6 +524,19 @@ function convertModelToFlow(
     } else {
       label = node.display_name || node.id;
     }
+    // Inputs: raw / display name, the codebook meaning as a compact second line, full key on hover
+    const feat = !isFunctionNode ? fl?.forNode(node.id) : null;
+    const hlLabel = nodeHighlight?.[node.id];
+    const fullTooltip = hlLabel ? `${tooltip}\n[${HIGHLIGHT_STYLE[hlLabel].label}]` : tooltip;
+    const labelNode: ReactNode =
+      feat && feat.decoded && feat.label !== label ? (
+        <div title={fullTooltip} className="node-label-feature">
+          <div>{label}</div>
+          <div className="node-label-meaning">{feat.short || feat.label}</div>
+        </div>
+      ) : (
+        <div title={fullTooltip}>{label}</div>
+      );
 
     // Special styling for function/annotation nodes
     const style = isFunctionNode
@@ -552,8 +570,9 @@ function convertModelToFlow(
       type: "default",
       position: { x: index * 150, y: 0 }, // Will be overwritten by layout
       data: {
-        label,
-        tooltip: hl ? `${tooltip}\n[${HIGHLIGHT_STYLE[hl].label}]` : tooltip,
+        label: labelNode,
+        rawLabel: label,
+        tooltip: fullTooltip,
         nodeType: effectiveType,
         isFunctionNode,
         highlight: hl,
@@ -745,6 +764,7 @@ export function NetworkViewer({
   nodeHighlight,
   edgeHighlight,
 }: NetworkViewerProps) {
+  const featureLabels = useFeatureLabels();
   // Convert model to ReactFlow format with layer-based layout
   const { initialNodes, initialEdges } = useMemo(() => {
     logInfo("Building network from model");
@@ -752,7 +772,7 @@ export function NetworkViewer({
 
     // Convert model to ReactFlow nodes/edges
     const annotationNodeSet = new Set(annotationNodeIds);
-    const { nodes: flowNodes, edges: flowEdges } = convertModelToFlow(model, annotationNodeSet, edgeInfluence, nodeHighlight, edgeHighlight);
+    const { nodes: flowNodes, edges: flowEdges } = convertModelToFlow(model, annotationNodeSet, edgeInfluence, nodeHighlight, edgeHighlight, featureLabels);
 
     // Get input node IDs from metadata
     const inputNodeIds = new Set(model.metadata.input_nodes);
@@ -785,7 +805,7 @@ export function NetworkViewer({
     });
 
     return { initialNodes: layoutedNodes, initialEdges: layoutedEdges };
-  }, [model, annotationNodeIds, edgeInfluence, nodeHighlight, edgeHighlight]);
+  }, [model, annotationNodeIds, edgeInfluence, nodeHighlight, edgeHighlight, featureLabels]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);

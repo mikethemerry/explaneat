@@ -11,6 +11,7 @@
 
 import { useCallback, useState } from "react";
 import { addOperation, type AnnotationSummary } from "../api/client";
+import { useFeatureLabels, nodeListText } from "../featureLabels";
 
 // =============================================================================
 // Logging utilities
@@ -70,6 +71,9 @@ function AnnotationTreeItem({
 
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
+  const fl = useFeatureLabels();
+  const entriesText = nodeListText(annotation.entry_nodes, fl);
+  const exitsText = nodeListText(annotation.exit_nodes, fl);
 
   const handleToggle = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -156,11 +160,11 @@ function AnnotationTreeItem({
           </span>
         )}
         <span className="annotation-meta">
-          <span className="node-count" title="Entry nodes">
+          <span className="node-count" title={`Entry nodes: ${entriesText}`}>
             {annotation.entry_nodes.length}
           </span>
           <span className="arrow">-&gt;</span>
-          <span className="node-count" title="Exit nodes">
+          <span className="node-count" title={`Exit nodes: ${exitsText}`}>
             {annotation.exit_nodes.length}
           </span>
         </span>
@@ -170,6 +174,12 @@ function AnnotationTreeItem({
           <span className="badge leaf" title="Leaf annotation">leaf</span>
         )}
       </div>
+      {isSelected && (
+        <div className="annotation-io" data-testid="annotation-io">
+          <div><strong>Entries:</strong> {entriesText || "none"}</div>
+          <div><strong>Exits:</strong> {exitsText || "none"}</div>
+        </div>
+      )}
       {/* Render children if parent is not collapsed */}
       {!isCollapsed && children.map(child => (
         <AnnotationTreeItem

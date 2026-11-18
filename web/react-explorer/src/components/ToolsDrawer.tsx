@@ -22,11 +22,13 @@ import type { HighlightKind } from "./NetworkViewer";
 import { RecordPanel } from "./RecordPanel";
 import { LineagePanel, type LineageView } from "./LineagePanel";
 import { ExportPanel } from "./ExportPanel";
+import { useFeatureLabels, withLabel, nodeWithFeature } from "../featureLabels";
 
-export type ToolsTab = "review" | "checks" | "units" | "candidates" | "restore" | "categories" | "lineage" | "export";
+export type ToolsTab = "review" | "features" | "checks" | "units" | "candidates" | "restore" | "categories" | "lineage" | "export";
 
 const TABS: { key: ToolsTab; label: string; title: string }[] = [
   { key: "review", label: "Review & verify", title: "Claude explanation record, Mike's verification, import/export" },
+  { key: "features", label: "Feature key", title: "Every input: raw feature name, readable label from the dataset codebook, what 1 means" },
   { key: "checks", label: "Checks & coverage", title: "Function preservation, closed-form error, coverage and single-root checklist" },
   { key: "units", label: "Unit activity", title: "Dead / always-on (affine) / rare / hinge hidden units on train" },
   { key: "candidates", label: "Candidates", title: "Candidate leaf subgraphs from the topology" },
@@ -112,6 +114,7 @@ export function ToolsDrawer(props: Props) {
           {tab === "review" && (
             <RecordPanel genomeId={genomeId} onOperationChange={props.onOperationChange} />
           )}
+          {tab === "features" && <FeatureKeyTab model={model} onSelectNodes={onSelectNodes} />}
           {tab === "checks" && (
             <ChecksTab genomeId={genomeId} refreshKey={refreshKey} onSelectNodes={onSelectNodes} onHighlight={onHighlight} />
           )}
@@ -145,6 +148,7 @@ function ChecksTab({
 }) {
   const { data, error, loading, reload } = useLoader<CheckResult>(() => getCheck(genomeId), [genomeId, refreshKey], true);
   const [showUncovered, setShowUncovered] = useState(true);
+  const fl = useFeatureLabels();
 
   useEffect(() => {
     if (!data || !showUncovered) {
@@ -193,7 +197,7 @@ function ChecksTab({
           <>
             <div className="chip-list">
               {uncovered.map((n) => (
-                <button key={n} className="chip" onClick={() => onSelectNodes([n])}>{n}</button>
+                <button key={n} className="chip" title={nodeWithFeature(n, fl)} onClick={() => onSelectNodes([n])}>{nodeWithFeature(n, fl)}</button>
               ))}
             </div>
             <button className="op-btn secondary" onClick={() => onSelectNodes(uncovered)}>Select all uncovered</button>
@@ -444,6 +448,7 @@ function CategoriesTab({
   const { data, error, loading } = useLoader(() => getCategoryOffsets(genomeId), [genomeId, refreshKey], true);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [onlyFlagged, setOnlyFlagged] = useState(false);
+  const fl = useFeatureLabels();
   if (loading && !data) return <p className="hint">Computing per-level effects…</p>;
   if (error) return <p className="error-text">{error}</p>;
   if (!data) return null;
@@ -470,7 +475,7 @@ function CategoriesTab({
           {groups.map((g) => (
             <Fragment key={g.base_feature}>
               <tr onClick={() => setOpenGroup(openGroup === g.base_feature ? null : g.base_feature)}>
-                <td>{openGroup === g.base_feature ? "▼" : "▶"} {g.base_feature}:*</td>
+                <td>{openGroup === g.base_feature ? "▼" : "▶"} {g.base_feature}:*{(() => { const f = fl.data?.features.find((x) => x.variable === g.base_feature); return f && f.decoded && f.variable_label !== g.base_feature ? <span className="feature-meaning"> · {f.variable_label}</span> : null; })()}</td>
                 <td>{g.n_levels_used} / {g.n_levels}</td>
                 <td>{fmt(g.max_abs_effect, 2)}</td>
                 <td>{g.n_large_unsupported || ""}</td>
@@ -485,7 +490,7 @@ function CategoriesTab({
                       <tbody>
                         {g.levels.map((l) => (
                           <tr key={l.feature} className={l.flag === "large_unsupported" ? "warn-row" : ""} onClick={() => onSelectNodes(nodesForColumn(l.column))}>
-                            <td>{l.feature}</td>
+                            <td>{withLabel(l.feature, fl.forName(l.feature))}</td>
                             <td>{l.rows} ({l.positives}+)</td>
                             <td>{fmt(l.rate, 3)}</td>
                             <td>{fmt(l.model_mean_p, 3)}</td>
@@ -505,6 +510,75 @@ function CategoriesTab({
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+// ------------------------------------------------------------------ feature key
+
+function FeatureKeyTab({ model, onSelectNodes }: { model: ModelState; onSelectNodes: (ids: string[]) => void }) {
+  const fl = useFeatureLabels();
+  const [q, setQ] = useState("");
+  const [onlyUsed, setOnlyUsed] = useState(true);
+  const rows = useMemo(() => {
+    const feats = fl.data?.features ?? [];
+    const needle = q.trim().toLowerCase();
+    return feats.filter(
+      (f) =>
+        (!onlyUsed || f.used !== false) &&
+        (!needle ||
+          [f.raw, f.node_id, f.label, f.full_label, f.one_means ?? "", f.variable_label].some((t) =>
+            t.toLowerCase().includes(needle),
+          )),
+    );
+  }, [fl.data, q, onlyUsed]);
+  if (!fl.data) return <p className="hint">Loading the feature key…</p>;
+  const cb = fl.data.codebook;
+  const nUsed = fl.data.features.filter((f) => f.used).length;
+  const nodesFor = (nodeId: string) =>
+    model.nodes.filter((n) => n.id === nodeId || n.id.startsWith(`${nodeId}_`)).map((n) => n.id);
+  return (
+    <div data-testid="feature-key">
+      <p className="hint">
+        {fl.data.features.length} inputs of {fl.data.dataset?.name ?? "the dataset"} ({nUsed} read by this network).
+        Readable labels come from the codebook <code>{cb.id ?? "none"}</code>
+        {cb.id === "none" || !cb.id ? " (no real-world meanings: raw names only)" : ""}; the stored feature names are
+        unchanged. Click a row to select its node(s).
+      </p>
+      <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", marginBottom: 6 }}>
+        <input
+          type="search"
+          placeholder="Search (e.g. married, occupation:4)"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          aria-label="Search the feature key"
+          style={{ padding: "4px 8px", border: "1px solid #d1d5db", borderRadius: 4, minWidth: 260 }}
+        />
+        <label className="hint">
+          <input type="checkbox" checked={onlyUsed} onChange={(e) => setOnlyUsed(e.target.checked)} /> only inputs the
+          network reads
+        </label>
+        <span className="hint">{rows.length} shown</span>
+      </div>
+      <table className="tools-table clickable feature-key-table">
+        <thead>
+          <tr><th>Node</th><th>Feature name (raw)</th><th>Readable label</th><th>Value 1 means</th><th>Used</th></tr>
+        </thead>
+        <tbody>
+          {rows.map((f) => (
+            <tr key={f.node_id} className={f.used === false ? "unused" : ""} onClick={() => onSelectNodes(nodesFor(f.node_id))}>
+              <td>{f.node_id}</td>
+              <td className="raw">{f.raw}</td>
+              <td>{f.decoded ? f.full_label : <span className="hint">raw name only</span>}</td>
+              <td>{f.one_means ?? (f.unit ? <span className="hint">a number ({f.unit})</span> : <span className="hint">a number</span>)}</td>
+              <td>{f.used == null ? "" : f.used ? "yes" : "no"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {cb.gaps.length > 0 && (
+        <p className="hint">Codebook notes: {cb.gaps.join(" ")}</p>
+      )}
     </div>
   );
 }

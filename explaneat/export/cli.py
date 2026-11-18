@@ -215,7 +215,12 @@ def _pdf_rotation(pdf: Path):
               help="Print the signoff-v1 review queue (risk-ranked sentences with sids, verifier findings, "
                    "random sample, changes since your verdicts) instead of the 'what to look at' bullets. "
                    "Runs recheck per genome (cached; the database is only read).")
-def verification_pack(first_n, labels, out_dir, formats, review_marks, records_dir, plain, review_queue):
+@click.option("--title", default=None, help="Title of the combined review PDF.")
+@click.option("--per-genome/--no-per-genome", "per_genome", default=False, show_default=True,
+              help="Also compile one review PDF per genome (its checklist, plain-language document and "
+                   "certificate), <label>-review.pdf in the pack root.")
+def verification_pack(first_n, labels, out_dir, formats, review_marks, records_dir, plain, review_queue,
+                      title, per_genome):
     """Mike's verification pack: every format per genome plus one combined review PDF."""
     from .pack import _latexmk, index_entry, parse_formats, write_index
     from .verification import record_command, render_review
@@ -273,8 +278,8 @@ def verification_pack(first_n, labels, out_dir, formats, review_marks, records_d
         if bad:
             failures.append({"label": lab, "compile": [b["file"] for b in bad]})
     write_index(entries, out, dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"))
-    title = (f"Verification pack: first {len(docs)} pre-registered genomes" if not labels
-             else "Verification pack")
+    title = title or (f"Verification pack: first {len(docs)} pre-registered genomes" if not labels
+                      else "Verification pack")
     review = out / "review.tex"
     review.write_text(render_review(docs, title, review_marks=review_marks), encoding="utf-8")
     c = _latexmk(review, out / "build", click.echo)
@@ -282,6 +287,14 @@ def verification_pack(first_n, labels, out_dir, formats, review_marks, records_d
         click.echo(f"Review PDF: {out / 'review.pdf'}")
     else:
         failures.append({"label": "review", "compile": ["review.tex"]})
+    if per_genome:   # the same sections, one PDF per genome (compiled in the pack root: same relative paths)
+        for d in docs:
+            one = out / f"{d['label']}-review.tex"
+            one.write_text(render_review([d], f"Verification document: {d['label']}", review_marks=review_marks),
+                           encoding="utf-8")
+            c1 = _latexmk(one, out / "build", click.echo)
+            if not c1["ok"]:
+                failures.append({"label": d["label"], "compile": [one.name]})
     from .verification import records_dir_shown, records_opt
     (out / "RECORDING.txt").write_text(
         "Sentence verdicts (each queue item's sid; append-only, experiments/10seed/review/<label>.verdicts.jsonl):\n"
