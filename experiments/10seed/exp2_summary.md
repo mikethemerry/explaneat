@@ -8,9 +8,9 @@ Three studies, 10 seeds each, 100 generations. Explanations: the frozen v4 run (
 
 | Study | Full coverage within the 3 h box | Recheck complete_ok | Recheck mismatches | Recheck needs_review items (stored) | Free-text sentences recheck cannot check | Draft text objects | Median explaining minutes (unrounded records) | Mike-verified (signoff-v1) |
 |---|---|---|---|---|---|---|---|---|
-| Adult | 10/10 | 10/10 | 0 | 6 | 571 | 1487 | 21.55 | 0/10 |
-| Heart-100 | 10/10 | 10/10 | 0 | 1 | 396 | 1180 | 14.87 | 0/10 |
-| Churn (churn100) | 10/10 | 10/10 | 0 | 2 | 470 | 1353 | 18.16 | 0/10 |
+| Adult | 10/10 | 10/10 | 0 | 6 | 571 | 1487 | 21.55 | 10/10 |
+| Heart-100 | 10/10 | 10/10 | 0 | 1 | 396 | 1180 | 14.87 | 10/10 |
+| Churn (churn100) | 10/10 | 10/10 | 0 | 2 | 470 | 1353 | 18.16 | 10/10 |
 
 Draft text objects: every text object of the stored draft (summary, lead, blocks, read-down, per-part detail, worth checking, revisions), the count `V4_RUN.md` calls draft sentences. The per-study table below rounds each genome's minutes to 0.1 first (the CSV column), so its median can differ from this column in the last digit.
 
