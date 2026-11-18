@@ -67,7 +67,7 @@ SETS = {
     # the Connect-4 line-features base test (experiments/c4_line_features): every explained genome
     # of an experiment named c4lf-*
     "c4lf": {"db": "postgresql://localhost/explaneat_dev", "records": None},
-    # the three AAAI paper explanations (results/thesis/paper_recompute.md): one explanation per
+    # the three AAAI paper explanations (experiments/aaai27/recheck/results/paper_recompute.md): one explanation per
     # genome, no record file (the closed-form error is therefore null)
     "paper": {"db": "postgresql://localhost/explaneat_dev", "records": None},
     # the churn case (experiments/churn_case): one genome, Experiment 1.2

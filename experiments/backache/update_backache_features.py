@@ -10,7 +10,7 @@ Original study:
 
 See docs/backache_features.md for the full feature dictionary.
 
-Run: uv run python scripts/update_backache_features.py
+Run: uv run python experiments/backache/update_backache_features.py
 """
 
 import sys

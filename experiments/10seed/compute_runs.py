@@ -19,15 +19,15 @@ Definitions (pre-registered; judgment calls marked *):
   earliest generation, then lowest NEAT genome key (PREREG amendment 2026-11-03).
   NaN fitnesses are ignored.
 - Forward pass: NeuralNeat on X scaled with the split's stored StandardScaler,
-  float64, as reproducibility/load.py. Train AUC is recomputed and compared to
+  float64, as experiments/reproducibility/load.py. Train AUC is recomputed and compared to
   the stored fitness (fitness_abs_diff).
 - Test AUC CI: percentile 95% CI over 10,000 bootstrap resamples of the test set.
   Indices come from np.random.RandomState(42).randint(0, n, n) drawn 10,000
-  times in sequence (the paper's reproducibility/scripts/common.py procedure).
+  times in sequence (the paper's experiments/reproducibility/scripts/common.py procedure).
   One index matrix per dataset, shared by every model on that dataset (paired;
   heart100 and the paper genome reuse their dataset's matrix). Resamples with a
   single class are skipped (same for every model of a dataset).
-- Accuracy at threshold 0.5 (p > 0.5, as reproducibility/load.py).
+- Accuracy at threshold 0.5 (p > 0.5, as experiments/reproducibility/load.py).
 - Phenotype: ExplaNEAT(genome, config).get_phenotype_network() (enabled edges on
   some input->output path).
 - connected inputs: input nodes with >=1 enabled phenotype edge; unused = rest.

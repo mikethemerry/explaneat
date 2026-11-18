@@ -2,10 +2,10 @@
 
 Generated 2026-07-10 on branch `analysis/aaai27-paper-results` (off `main`).
 All numbers computed on the stored splits with stored scalers (seed 42
-everywhere, no re-splitting). Scripts under `scripts/aaai27/`; every number
+everywhere, no re-splitting). Scripts under `experiments/aaai27/`; every number
 below is reproducible by re-running the named script.
 
-## Ground truth (scripts/aaai27/verify_ground_truth.py)
+## Ground truth (experiments/aaai27/verify_ground_truth.py)
 
 **⚠ Experiment-attribution correction (the one discrepancy found).** The task
 doc attributed the Adult model to experiment "Adult - OHE - 250-100-5"
@@ -39,7 +39,7 @@ the parsimony feature.
 Suggested .tex text for `[RUN: confirm exact fitness metric]`:
 > Fitness was AUC-ROC on the training split
 
-## adult-logistic, heart-logistic (scripts/aaai27/run_a_logistic.py)
+## adult-logistic, heart-logistic (experiments/aaai27/run_a_logistic.py)
 
 L2 LogisticRegression, C tuned by 5-fold CV on the train split only
 (roc_auc scoring), same one-hot features and stored z-normalisation.
@@ -55,7 +55,7 @@ L2 LogisticRegression, C tuned by 5-fold CV on the train split only
    estimate** (0.919), though n=61 makes the CI very wide and it comfortably
    contains 0.897.
 
-## adult-ablation-CI (scripts/aaai27/run_b_ablations.py)
+## adult-ablation-CI (experiments/aaai27/run_b_ablations.py)
 
 Full model vs the 5 native-country edges into the capital-gain core disabled
 (edges `-73→655`, `-81→655`, `-82→655`, `-89→2129`, `-94→2129`; the paper's
@@ -69,7 +69,7 @@ accuracy 0.851 → 0.852 (0.8514 → 0.8520 at 4dp).
 - `adult-ablation-CI`: **ΔAUC = −0.0001, 95% CI [−0.0003, +0.0002]**
   (paired bootstrap, 10,000 resamples, seed 42, 0 skipped; n=9,769)
 
-## heart-ablation-CIs (scripts/aaai27/run_b_ablations.py)
+## heart-ablation-CIs (experiments/aaai27/run_b_ablations.py)
 
 Ablations disable the named unit's readout edge(s) into output 0: benign-
 profile gate = node 155, resting-BP interaction = node 2379, risk-aggregation
@@ -92,7 +92,7 @@ straddle zero — expected with n=61, but the paper's "the nonlinear units
 genuinely help" / "costs 0.028" prose should be read against these intervals.
 The risk-aggregation row supports the paper's claim (at worst unchanged).
 
-## dense-width, dense-auc, mean-fanin, weight-spread (scripts/aaai27/run_c_dense_twin.py)
+## dense-width, dense-auc, mean-fanin, weight-spread (experiments/aaai27/run_c_dense_twin.py)
 
 MLP on Adult's 54 connected features, same split/scaling: 54–16–16–1, ReLU,
 Adam (lr 1e-3), weight decay 1e-4, full-batch, seed 42. No L1, no pruning.
@@ -118,7 +118,7 @@ Caveat: training ran to the 2,000-epoch cap without the train-loss plateau
 (patience 50) triggering; loss was still improving slowly. Test AUC was
 inside the target band, so the width search stopped at 16 as specified.
 
-## fig:capgain (scripts/aaai27/run_d_capgain_figure.py)
+## fig:capgain (experiments/aaai27/run_d_capgain_figure.py)
 
 No original plotting code exists in the repo; regenerated from the annotated
 subgraph (weights/biases read from the stored genome at runtime; manual
@@ -126,7 +126,7 @@ forward cross-checked against the phenotype `StructureNetwork` to 1e-9).
 Reference: five native-country inputs at raw-0 (z-scaled); external node
 10307 is bias-only ReLU(−0.736) ≡ 0 (permanently inert).
 
-Output: **results/capgain-response.png** (300 dpi; title, dual raw/z x-axes,
+Output: **experiments/aaai27/results/capgain-response.png** (300 dpi; title, dual raw/z x-axes,
 threshold marker, inset zoom of $0–$10,000).
 
 Exact `\caption` text:

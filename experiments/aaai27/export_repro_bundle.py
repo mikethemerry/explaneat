@@ -1,17 +1,17 @@
 """Export a self-contained reproducibility bundle for the paper's EXPLANATIONS.
 
 Reads the three frozen paper genomes + their explanations from Postgres and
-writes static files under reproducibility/ so a reader needs NO database:
+writes static files under experiments/reproducibility/ so a reader needs NO database:
 genome / phenotype / operations / annotations / evidence / split / performance
 per model, plus a complete NEAT config (INI) and the exact preprocessed split
-arrays (data.npz) so reproducibility/load.py runs offline.
+arrays (data.npz) so experiments/reproducibility/load.py runs offline.
 
 Anonymity: the database URL / credentials are read from the environment (via
 explaneat.db) and never written out; serialised objects carry no host/user/path
 fields; copied scripts are redacted of author-identifying strings; a final grep
 reports any residual hits.
 
-Run: uv run python scripts/aaai27/export_repro_bundle.py
+Run: uv run python experiments/aaai27/export_repro_bundle.py
 """
 import json
 import os
@@ -29,7 +29,7 @@ from explaneat.core.config_utils import build_neat_config_text, load_neat_config
 from explaneat.core.explaneat import ExplaNEAT
 from explaneat.core.neuralneat import NeuralNeat
 
-ROOT = "reproducibility"
+ROOT = "experiments/reproducibility"
 EXP3_BRANCH = "analysis/aaai27-exp3-candidates"
 
 RUNS = [
@@ -222,10 +222,10 @@ def copy_scripts():
     # needs a DB, and its redaction/grep regexes literally contain the strings
     # we scrub for, which would self-flag)
     self_name = os.path.basename(__file__)
-    for fn in sorted(os.listdir("scripts/aaai27")):
+    for fn in sorted(os.listdir("experiments/aaai27")):
         if not fn.endswith(".py") or fn == self_name:
             continue
-        with open(os.path.join("scripts/aaai27", fn)) as f:
+        with open(os.path.join("experiments/aaai27", fn)) as f:
             src = f.read()
         with open(os.path.join(dst, fn), "w") as f:
             f.write(redact(src))
@@ -233,6 +233,7 @@ def copy_scripts():
     # MONK-2 dedup script from the unmerged branch (read via git, no checkout)
     try:
         raw = subprocess.check_output(
+            # scripts/aaai27/ is the path on that (historical) branch
             ["git", "show", f"{EXP3_BRANCH}:scripts/aaai27/ingest_monk2.py"],
             text=True)
         with open(os.path.join(dst, "ingest_monk2.py"), "w") as f:
@@ -283,7 +284,7 @@ evaluation are included as `data.npz` so no download is needed to verify.
 ## Reproduce the numbers (no DB)
 
 ```bash
-uv run python reproducibility/load.py adult   # or heart / monk2
+uv run python experiments/reproducibility/load.py adult   # or heart / monk2
 ```
 
 `load.py` rebuilds the network with the repo's phenotype/NeuralNeat builder from
@@ -310,7 +311,7 @@ identifying strings have been redacted for anonymous review.
 
 LOAD_PY = '''"""Offline loader: rebuild a paper genome and reproduce its AUC — no database.
 
-Usage: uv run python reproducibility/load.py <adult|heart|monk2>
+Usage: uv run python experiments/reproducibility/load.py <adult|heart|monk2>
 
 Requires the `explaneat` package (the repo) importable, but NO database.
 """
@@ -423,7 +424,7 @@ def main():
         print(f"  {run['key']:6}: test AUC {got:.3f} (Table 1 {want:.3f})  "
               f"{'MATCH' if abs(got - want) <= 0.001 else 'CHECK'}")
 
-    print("\n=== anonymity grep (reproducibility/) ===")
+    print("\n=== anonymity grep (experiments/reproducibility/) ===")
     hits = anonymity_grep()
     for k, lst in hits.items():
         if lst:

@@ -1,9 +1,9 @@
 """Thesis experiment tables (added 2026-11-13; `ch7_table.tex` is not touched).
 
-    uv run python scripts/thesis/thesis_experiment_tables.py
+    uv run python thesis/scripts/thesis_experiment_tables.py
 
 Reads only committed results files (no database, no recomputation) and writes three LaTeX
-tables to ``thesis_exports/ch7/``:
+tables to ``thesis/ch7/exports/``:
 
 - ``ch7_experiment1_cases.tex``: Experiment 1, one row per case (dataset, n, model size, the
   test metric against the references, the three levels, verification);
@@ -13,7 +13,7 @@ tables to ``thesis_exports/ch7/``:
   three Connect-4 bases, MNIST) with its finding.
 
 Every number is read from the file named in the column note; the finding sentences are
-copied from the results files cited in ``THESIS_EXPERIMENTS.md``. Prints each table as
+copied from the results files cited in ``thesis/notes/THESIS_EXPERIMENTS.md``. Prints each table as
 Markdown as well, for checking against the sources.
 """
 from __future__ import annotations
@@ -27,9 +27,9 @@ from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / "thesis_exports" / "ch7"
+OUT = ROOT / "thesis" / "ch7" / "exports"
 E = ROOT / "experiments"
-R = ROOT / "results" / "thesis"
+R = ROOT / "experiments" / "references" / "results"
 
 
 def jload(p):
@@ -237,7 +237,7 @@ def experiment1():
                  f"blind verifier {g} ({u} upheld, {w} weakened, {rf} refuted); not signed off"])
     header = ["Case", "n (train / test)", "Hidden / conns", "Test metric vs references",
               "Levels: faithful; decomposed; understood (m / p / c)", "Verification"]
-    note = ("Sources: results/thesis/baselines.json and experiments/10seed/runs\\_paper\\_reference.csv (paper genomes); "
+    note = ("Sources: experiments/references/results/baselines.json and experiments/10seed/runs\\_paper\\_reference.csv (paper genomes); "
             "experiments/churn\\_case/ (runs.csv, references.json, levels/, verdicts/; the churn case); "
             "experiments/ushape\\_saddle/ (runs.csv, references.json, levels/, verdicts/, gt\\_grades.json; the synthetic shape cases, "
             "whose ground-truth grade is recovered / partial / not); "
@@ -290,7 +290,7 @@ def experiment2():
               "Recheck: mismatch / needs review", "Minutes (median)", "Levels: leaves; granularity; probe meaningful (screen)",
               "Understood (verified)", "Signed off"]
     note = ("Ten seeds per set. Test AUC is the reported median (experiments/10seed/summary.md, unchanged). "
-            "Rashomon: seeds within 0.01 test AUC of the best observed seed (results/thesis/rashomon\\_counts.csv). "
+            "Rashomon: seeds within 0.01 test AUC of the best observed seed (experiments/references/results/rashomon\\_counts.csv). "
             "Coverage, recheck and minutes are the frozen-method v4 run (experiments/10seed/explanations\\_v4/ and the *\\_v4.csv files; "
             "recheck counts are the records' stored recheck\\_summary, before the amend\\_evidence fix that cleared the needs-review items). "
             "Levels are medians over the ten v4 records (experiments/explanation\\_levels/levels/); the probe's meaningful share is an "

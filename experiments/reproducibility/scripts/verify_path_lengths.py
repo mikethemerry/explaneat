@@ -7,7 +7,7 @@ connections in the evolved phenotype (the active input->output subgraph).
 
 Paper/draft claims to check: Adult 4, Heart 3, MONK 3.
 
-Run: uv run python scripts/aaai27/verify_path_lengths.py
+Run: uv run python experiments/aaai27/verify_path_lengths.py
 """
 import sys
 import os

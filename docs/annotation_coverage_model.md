@@ -416,7 +416,7 @@ one per leaf, append-only in the review store (`experiments/10seed/review/<label
 `kind: "leaf"`, beside the sentence verdicts of signoff-v1). `understood_mike` is the share of
 an explanation's leaves he graded understood, blank until a leaf has a verdict; it is the
 "Understood (verified)" column of the levels tables (`experiments/explanation_levels/`,
-`thesis_exports/ch7/ch7_levels_table.tex`) and `understood_fraction_mike` in the explanation
+`thesis/ch7/exports/ch7_levels_table.tex`) and `understood_fraction_mike` in the explanation
 CSVs, with the probe and verifier columns labelled as screens. A leaf verdict is not a
 condition of signoff-v1 unless asked for (`review signoff --require-leaves`).
 

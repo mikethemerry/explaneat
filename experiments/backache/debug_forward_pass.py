@@ -5,7 +5,7 @@ through both engines, then reports numerical differences and per-layer
 diagnostics.
 
 Usage:
-    uv run python scripts/debug_forward_pass.py
+    uv run python experiments/backache/debug_forward_pass.py
 """
 
 import sys

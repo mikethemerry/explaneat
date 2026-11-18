@@ -5,9 +5,9 @@ Written 7 Nov 2026 on branch `thesis/numbers`. This is a report for decision D6.
 **Membership.** A model is inside the ε-set for reference *r* when its test AUC ≥ *r* − ε, for ε ∈ {0.005, 0.01, 0.02}. Strictly, the Rashomon set is defined by loss. Here it is stated in AUC terms, because the thesis uses AUC.
 
 **Scripts:**
-- `scripts/thesis/baselines.py` (references ii and iii) → `baselines.json`;
-- `scripts/thesis/rashomon_population.py` → `rashomon_population.csv` (15,000 genomes);
-- `scripts/thesis/rashomon.py` → `rashomon_seeds.csv`, `rashomon_counts.csv`, `rashomon_population_summary.csv` and `rashomon_summary.json`.
+- `experiments/references/baselines.py` (references ii and iii) → `baselines.json`;
+- `experiments/references/rashomon_population.py` → `rashomon_population.csv` (15,000 genomes);
+- `experiments/references/rashomon.py` → `rashomon_seeds.csv`, `rashomon_counts.csv`, `rashomon_population_summary.csv` and `rashomon_summary.json`.
 
 **Run sets:**
 - **Pre-registered:** Heart (40 generations), MONK-2 and Adult, seeds 0–9.
@@ -29,7 +29,7 @@ All three references are fitted on the **same** train/test split the PropNEAT ru
 
 CIs are 95% percentile bootstrap intervals (10,000 resamples, seed 42).
 
-**Logistic regression (ii)** follows the paper's protocol (`scripts/aaai27/run_a_logistic.py`): L2, C chosen from 11 values by 5-fold CV on train (ROC AUC), lbfgs, random_state 42. The paper's three values are confirmed exactly.
+**Logistic regression (ii)** follows the paper's protocol (`experiments/aaai27/run_a_logistic.py`): L2, C chosen from 11 values by 5-fold CV on train (ROC AUC), lbfgs, random_state 42. The paper's three values are confirmed exactly.
 
 **Gradient boosting (iii):**
 - **Model:** sklearn `HistGradientBoostingClassifier`, random_state 0, no early stopping.

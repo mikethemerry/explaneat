@@ -175,7 +175,7 @@ lower count and flags any other difference.
 ```bash
 uv run python experiments/10seed/verify_exp2.py csvs    # seconds, no DB
 uv run python experiments/10seed/verify_exp2.py stats   # seconds, no DB -> exp2_summary.md
-uv run python scripts/thesis/rashomon.py && git diff --stat results/thesis   # seconds, no DB
+uv run python experiments/references/rashomon.py && git diff --stat experiments/references/results   # seconds, no DB
 ```
 
 - **`csvs`:** rebuilds the three v4 explanation CSVs from the records into a temp folder
@@ -193,12 +193,12 @@ uv run python scripts/thesis/rashomon.py && git diff --stat results/thesis   # s
 - **Near-equivalence (ε-Rashomon membership in AUC terms):** the number of seeds whose test AUC
   is at least the reference minus ε, for ε ∈ {0.005, 0.01, 0.02}. There are three references:
   the best seed, logistic regression and gradient boosting. The method is in
-  `results/thesis/rashomon.md` and the counts in `results/thesis/rashomon_counts.csv`.
-  `rashomon.py` rebuilds them from the runs CSVs and `results/thesis/baselines.json`, and the
+  `experiments/references/results/rashomon.md` and the counts in `experiments/references/results/rashomon_counts.csv`.
+  `rashomon.py` rebuilds them from the runs CSVs and `experiments/references/results/baselines.json`, and the
   `git diff` must be empty.
-  - **References:** `scripts/thesis/baselines.py` refits them on the same split (minutes of
+  - **References:** `experiments/references/baselines.py` refits them on the same split (minutes of
     CPU, no DB).
-  - **Population-level shares:** `scripts/thesis/rashomon_population.py` reads the
+  - **Population-level shares:** `experiments/references/rashomon_population.py` reads the
     final-generation genomes from `explaneat_dev`, which are kept for all three studies.
 
 Two numbers in `V4_RUN.md` are rounded differently from `exp2_summary.md`:
@@ -211,11 +211,11 @@ Two numbers in `V4_RUN.md` are rounded differently from `exp2_summary.md`:
 
 ### The Chapter 7 book's numbers
 
-The experiment book (`experiments/ch7_book/`, with numbers in `data/exp2.py`) takes its
+The experiment book (`thesis/ch7/book/`, with numbers in `data/exp2.py`) takes its
 Experiment 2 numbers from `e2_stats.py`. That script uses no database:
 
 ```bash
-python3 experiments/ch7_book/e2_stats.py . > /tmp/e2_stats.json
+python3 thesis/ch7/book/e2_stats.py . > /tmp/e2_stats.json
 ```
 
 It was run on 2026-11-18 and agrees with `exp2_summary.md` on these numbers:
@@ -305,7 +305,7 @@ means the value in the committed CSVs, records or results files.
 | `verify_exp2.py explanations` | **30/30 agree with the stored records.** Agreement is exact on both coverages (1.0), hierarchy complete, function preservation, closed-form and numeric errors, operation counts, recheck mismatches (0), unchecked free-text sentences, full coverage and complete_ok. The only change is that the 9 stored needs_review items (adult-s3, -s4, -s5 ×2, -s6 and -s8; heart100-s1; churn100-s4 and -s5) are now 0. That is expected after `fix_amended_provenance.py` |
 | `verify_exp2.py csvs` | The three v4 explanation CSVs rebuild byte for byte from the records |
 | `verify_exp2.py stats` | `exp2_summary.md` written. All 48 run-level cells are identical to `summary.md`. The counts match `V4_RUN.md`: full coverage 10/10, complete_ok 10/10, 0 mismatches, needs_review 6/1/2, unchecked free text 571/396/470, draft text objects 1487/1180/1353 |
-| `rashomon.py` + `git diff results/thesis` | No diff: the near-equivalence counts reproduce |
+| `rashomon.py` + `git diff experiments/references/results` | No diff: the near-equivalence counts reproduce |
 | `xn.py --recheck` (heart100-s0, read-only URL) | `complete_ok` true, 0 mismatches, 0 needs_review, 26 unchecked sentences, 40 templated texts and 29 queries, as stored |
 | `check_explanation.py` (heart100-s0, read-only URL) | Function preservation 2.2e-16 and closed-form 0.00725, as stored |
 | `export_exp2_bundle.py` + `shasum -a 256 -c MANIFEST.sha256` | Bundle at `~/.explaneat/exports/exp2-final/` (367 files, about 153 MB, with all 30 networks' PDFs). Every file checks OK |
@@ -379,7 +379,7 @@ means the value in the committed CSVs, records or results files.
   - "draft sentences", which is a count of text objects.
 
 **Not re-run here:**
-- `scripts/thesis/baselines.py`: logistic regression and gradient boosting references.
-- `scripts/thesis/rashomon_population.py`: the final-generation shares, which are not counts
+- `experiments/references/baselines.py`: logistic regression and gradient boosting references.
+- `experiments/references/rashomon_population.py`: the final-generation shares, which are not counts
   of seeds.
 - The figures (`make_figures.py`): they show the v3 explanations.

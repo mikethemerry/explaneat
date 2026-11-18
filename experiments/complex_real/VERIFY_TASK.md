@@ -31,7 +31,7 @@ drafts, claims and prose).
   the rook from the inputs with the tools' `--where` expressions.
 - Read only: never write to the database. Do not open anything under
   `experiments/complex_real/`, `experiments/explanation_levels/`, `experiments/c4_capacity/`,
-  `experiments/c4_line_features/`, `experiments/explanation_barrier/`, `THESIS_EXPERIMENTS.md`,
+  `experiments/c4_line_features/`, `experiments/explanation_barrier/`, `thesis/notes/THESIS_EXPERIMENTS.md`,
   other scratch files, or other genomes' explanations.
 - Aim for about 30-45 minutes; you may stop earlier when every part is graded. Run at most one
   `verify` command at a time (another process is using the database).

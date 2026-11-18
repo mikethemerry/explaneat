@@ -28,7 +28,7 @@ selected, dropped or re-run because of its outcome.
 ### Configs
 
 NEAT configs are in `configs/{adult,heart,monk2}.ini`. They are the reproducibility-bundle
-configs (`reproducibility/*/neat_config.ini`), with one cosmetic fix: the
+configs (`experiments/reproducibility/*/neat_config.ini`), with one cosmetic fix: the
 `activation_options`/`aggregation_options` lines are written as `relu`/`sum` instead of
 `['relu']`/`['sum']`. Both options are unused, because the mutation rates are 0 and
 the defaults are set explicitly. With that fix, each config's serialised form is

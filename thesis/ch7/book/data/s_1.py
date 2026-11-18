@@ -87,5 +87,5 @@ CARD = {
         "Code: explaneat/conv/ (genome, network, propneat, mutation, crossover, population, explain/); tests/test_conv/",
         "DB: none (no database used)",
     ],
-    "thesis_note": "Side experiment, not on main; candidate thesis extension. Not in the manifest (THESIS_EXPERIMENTS.md) and not in any Ch 7 export. If used, it fits as an extension of Experiment 1 (a new model class explained with the same three levels) or as future work in Ch 9; the RESULTS.md §7 analysis of what does not carry over (operator-valued formulas, map-valued evidence) is the bridge to the framework chapter.",
+    "thesis_note": "Side experiment, not on main; candidate thesis extension. Not in the manifest (thesis/notes/THESIS_EXPERIMENTS.md) and not in any Ch 7 export. If used, it fits as an extension of Experiment 1 (a new model class explained with the same three levels) or as future work in Ch 9; the RESULTS.md §7 analysis of what does not carry over (operator-valued formulas, map-valued evidence) is the bridge to the framework chapter.",
 }

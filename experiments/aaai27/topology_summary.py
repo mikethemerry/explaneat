@@ -5,8 +5,8 @@ inputs, hidden units and their fan-in, max active path length, train/test AUC,
 and — for monk2 — which of the rule-relevant '=1' inputs the network wired in.
 
 Usage:
-  uv run python scripts/aaai27/topology_summary.py <experiment_id> [out.md]
-  uv run python scripts/aaai27/topology_summary.py monk2        # by known name
+  uv run python experiments/aaai27/topology_summary.py <experiment_id> [out.md]
+  uv run python experiments/aaai27/topology_summary.py monk2        # by known name
 """
 import sys
 import uuid

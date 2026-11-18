@@ -66,7 +66,7 @@ CARD = {
         },
         {
             "caption": "Concept probe on the 11 leaves (meaningful / partial / closed-form only)",
-            "source": "THESIS_EXPERIMENTS.md 1.6 vs experiments/explanation_levels/tables.md and c4_line_features/RESULTS.md",
+            "source": "thesis/notes/THESIS_EXPERIMENTS.md 1.6 vs experiments/explanation_levels/tables.md and c4_line_features/RESULTS.md",
             "headers": ["Grading", "Meaningful", "Partial", "Closed-form only", "Source"],
             "rows": [
                 ["Probe v1", "9%", "55%", "36%", "manifest 1.6; c4_line_features/RESULTS.md v1 table"],

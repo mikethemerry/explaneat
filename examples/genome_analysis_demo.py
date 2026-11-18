@@ -7,7 +7,7 @@ This script demonstrates how to use the GenomeExplorer API to:
 3. Visualize network structures and performance
 4. Export data for further analysis
 
-Run this after running test_full_lifecycle.py to have data in the database.
+Run this after running legacy/tests/test_full_lifecycle.py to have data in the database.
 """
 import matplotlib.pyplot as plt
 from explaneat.db import db
@@ -26,7 +26,7 @@ def main():
     print(experiments_df[['name', 'status', 'generations', 'best_fitness', 'created_at']].to_string())
     
     if experiments_df.empty:
-        print("\nNo experiments found. Please run test_full_lifecycle.py first.")
+        print("\nNo experiments found. Please run legacy/tests/test_full_lifecycle.py first.")
         return
     
     # Load the best genome from the most recent experiment

@@ -2,7 +2,7 @@
 
 Written 7 Nov 2026 on branch `thesis/numbers`. This is a report for decision D4; no reported number is changed.
 
-- **Script:** `scripts/thesis/paper_coverage_options.py`
+- **Script:** `experiments/aaai27/recheck/paper_coverage_options.py`
 - **Raw output:** `paper_coverage_options.json`
 - **Read-only:** every edit was made on an in-memory copy of the operations. No explanation in the database was changed.
 

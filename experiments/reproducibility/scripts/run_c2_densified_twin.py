@@ -16,7 +16,7 @@ NOTE: the mapping's longest input->output path is 6 hops (ExplaNEAT.depth()=7
 layers), NOT "max active path length 4" as the paper text states. The 14
 hidden-unit count reconciles; the depth wording does not. Flagged, not fatal.
 
-Run: uv run python scripts/aaai27/run_c2_densified_twin.py
+Run: uv run python experiments/aaai27/run_c2_densified_twin.py
 """
 import sys
 import os

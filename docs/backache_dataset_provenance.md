@@ -340,7 +340,7 @@ No freely available online source reproduces the variable descriptions. The 1st 
 
 ## 10. Textbook vs PMLB Data Comparison
 
-A row-by-row comparison of all 180 patients across all 32 data columns was performed between the OCR'd Table D.3 from Chatfield (1995) and the PMLB CSV (see `scripts/compare_backache_sources.py`).
+A row-by-row comparison of all 180 patients across all 32 data columns was performed between the OCR'd Table D.3 from Chatfield (1995) and the PMLB CSV (see `experiments/backache/compare_backache_sources.py`).
 
 ### Results
 

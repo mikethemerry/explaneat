@@ -109,9 +109,21 @@ The MCP server exposes about 40 tools for model analysis (also the analysis tool
 - **Datasets**: list_datasets, get_dataset, get_dataset_splits
 - **Snapshots**: save_snapshot, update_narrative, add_evidence, amend_evidence, delete_evidence (moves the record to `evidence.deleted` with a reason), list_evidence
 - **Queries** (verifier tools for the explaining agent, provenance-stamped): query_subgroup, query_probe (a one-hot input named `horTh=yes` is set as `"horTh=yes=1"`), query_enumerate (`bins=N` bins continuous inputs at N quantiles; refused otherwise), query_ablate (`direct=true` follows identity relays), query_linearise, query_hazard_ratios, get_query, list_queries, set_strict_mode. In strict mode, node ids under node-list payload keys (`entry_nodes`, `exit_nodes`, `subgraph_connections`, ...) are not bare numbers
-- **Lineage**: get_lineage, get_ancestor, diff_genomes, detect_jumps (see `ANCESTRY_TRACKING.md`)
+- **Lineage**: get_lineage, get_ancestor, diff_genomes, detect_jumps (see `docs/ANCESTRY_TRACKING.md`)
 
 Evidence and query tools default to the **full training split** (no sampling unless asked) and every result carries `split` (rows used) and `provenance.id`: an entry in the `evidence_log` table (tool, arguments, query: population, quantity, scope, unit; split, n, rows hash). Hypotheses and narratives reference numbers as `{{q:<id>.<path>|<fmt>}}`; writes are checked against the model at once (`explaneat/analysis/narrative_check.py`) and, in strict mode (`explanation_integrity`, on for explanations created from now on, off for existing ones), bare typed numbers and exact formulas that do not reproduce are refused. Tables added by migration `l5m6n7o8p9q0` (suggest `db upgrade`; never run it on `explaneat_dev` yourself). `explaneat verify recheck` (v3) is precise (`mismatch` only when confident, else `needs_review`) and checks the provenance; its `--summary` block is the record's `recheck_summary`. Drafts write numbers as claim slots `{{C086.risk.to|pct}}` (`plain_language_slots.py`): filled by code, citations derived. Plain-language documents open with a Feature key table and print raw feature names after code-filled labels and in tables (`explaneat/export/feature_key.py`).
+
+## Repository layout
+
+Four areas, plus docs and legacy:
+
+- **Core code** (root, as Python packaging needs it): `explaneat/`, `mcp_server/`, `tests/`, `alembic/` + `alembic.ini`, `pyproject.toml`, `uv.lock`, `genome_explorer_cli.py`, `config-file.cfg` (the default NEAT config some analysis code opens from the working directory), `requirements.txt` (generated from the lock for pip users)
+- **UI**: `web/react-explorer/` is the source. The production build is committed in `explaneat/static/react_explorer/`: the package serves it and the clinical install has no Node
+- **Experiments**: `experiments/<study>/` holds every experiment's code, configs, run records, results and verification. Includes `aaai27/` (the AAAI paper's scripts and results; `aaai27/recheck/` recomputes the paper's numbers with the current code), `references/` (LR / gradient-boosting baselines, Heart benchmark, Rashomon counts), `reproducibility/` (the paper's offline bundle), `backache/` (Backache dataset provenance and configs)
+- **Thesis write-up**: `thesis/` (index `thesis/README.md`): `ch7/book/` (the Chapter 7 experiment book), `ch7/exp2/` (Experiment 2 tables and figures), `ch7/exports/` (files the thesis includes), `scripts/`, `notes/` (`THESIS_EXPERIMENTS.md` manifest, `THESIS_FINAL_WORK.md`), `papers/` (paper LaTeX sources)
+- **Docs**: `docs/` (code and method documentation). **Legacy**: `legacy/` (old root scripts, configs and ad-hoc `test_*.py`; not collected by pytest)
+
+**Dependency rule**: `thesis/` may read from `experiments/` and the core code; `experiments/` and the core code never read from or write into `thesis/`. Experiment generators write their thesis tables and figures into their own study folder; `uv run python thesis/scripts/sync_ch7_exports.py` copies them into `thesis/ch7/exports/` (`--check` compares only).
 
 ## Architecture
 

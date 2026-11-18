@@ -20,7 +20,7 @@ Runs / genomes:
    an unrelated view-dataset builder). `Experiment.random_seed` is `None` for all
    three runs (database). Seeds that *are* fixed: the train/test split
    (`random_state=42`, `DatasetSplit.random_state`) and the analysis scripts
-   (`scripts/aaai27/*`, seed 42). ⇒ The exact reported genome is reproduced by
+   (`experiments/aaai27/*`, seed 42). ⇒ The exact reported genome is reproduced by
    **loading the persisted genome**, not by re-running evolution. The requested
    "seeds fixed and recorded" cannot be stated for evolution — the paragraph
    below is worded to match reality.
@@ -40,7 +40,7 @@ defaults; MONK-2's values equal `DEFAULT_CONFIG`, Adult/Heart's do not.
 |---|---|---|---|---|
 | population_size | 250 | 250 | 250 | config_json.pop_size (DB) |
 | generations | 100 | 40 | 100 | verified = persisted `Population` count (DB) |
-| epochs / generation | 5 | **[NOT FOUND in DB]** (pipeline default 5) | 5 | config_resolution.py (n_epochs_backprop=5); backproppop.py:132; MONK-2 explicit scripts/aaai27/ingest_monk2.py |
+| epochs / generation | 5 | **[NOT FOUND in DB]** (pipeline default 5) | 5 | config_resolution.py (n_epochs_backprop=5); backproppop.py:132; MONK-2 explicit experiments/aaai27/ingest_monk2.py |
 | fitness function | AUC-ROC (train split) | AUC-ROC (train split) | AUC-ROC (train split) | evaluators.py `auc_fitness`; **confirmed empirically**: stored genome.fitness == recomputed train-split AUC to <5e-4 for all three (not in stored config for Adult/Heart) |
 | fitness_criterion | max | max | max | config_json (DB) |
 | num_inputs (encoded) | 107 | 26 | 17 | config_json.genome (DB) |
@@ -92,13 +92,13 @@ defaults; MONK-2's values equal `DEFAULT_CONFIG`, Adult/Heart's do not.
 | split seed | 42 | 42 | 42 | DatasetSplit.random_state (DB) |
 | stratified | **no** | **no** | **yes** | DatasetSplit.stratify (DB) |
 | train / test n | 39073 / 9769 | 242 / 61 | 345 / 87 | DatasetSplit (DB) |
-| MONK-2 dedup | — | — | 601 → 432 unique configs (3·3·2·3·4·2) | scripts/aaai27/ingest_monk2.py (branch `analysis/aaai27-exp3-candidates`); verified 100% |
+| MONK-2 dedup | — | — | 601 → 432 unique configs (3·3·2·3·4·2) | experiments/aaai27/ingest_monk2.py (branch `analysis/aaai27-exp3-candidates`); verified 100% |
 
 ### Randomness — see caveat 1
 | Item | Value | provenance |
 |---|---|---|
 | split seed | 42 (global, per-run identical) | DatasetSplit.random_state (DB) |
-| analysis seed | 42 (bootstrap CIs, SHAP sampling, twin training) | scripts/aaai27/* |
+| analysis seed | 42 (bootstrap CIs, SHAP sampling, twin training) | experiments/aaai27/* |
 | evolution seed | **[NOT FOUND]** — no seed set; `Experiment.random_seed = None` | grep of explaneat/ (only unrelated data/make_view_dataset.py:32); DB |
 | analysis determinism | forward-pass / AUC / formula extraction deterministic given a fixed genome — **confirmed**: recomputed train-split AUC reproduces stored genome fitness exactly for all three | this extraction |
 

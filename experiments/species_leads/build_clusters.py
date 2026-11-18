@@ -45,7 +45,7 @@ sys.path.insert(0, str(REPO))
 from explaneat.db import db  # noqa: E402
 from explaneat.db.serialization import deserialize_genome  # noqa: E402
 
-RASHOMON = REPO / "results/thesis/rashomon_population.csv"
+RASHOMON = REPO / "experiments/references/results/rashomon_population.csv"
 EXPLANATIONS = REPO / "experiments/10seed/explanations"
 OUT = HERE / "clusters"
 LABEL = "post-hoc structural clusters of near-optimal genomes (not NEAT species)"

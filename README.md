@@ -70,7 +70,7 @@ in the UI.
 working without `setup`). Alembic migrations are PostgreSQL-only; `explaneat db
 upgrade` refuses to run against a SQLite URL. The other `db` commands (`init`,
 `drop`, `current`, `history`, `revision`, `create-db`) are unchanged. See
-[DATABASE_SETUP.md](DATABASE_SETUP.md) for Postgres.
+[docs/DATABASE_SETUP.md](docs/DATABASE_SETUP.md) for Postgres.
 
 ### Dependencies
 
@@ -149,6 +149,20 @@ The build writes `build-info.json` with a SHA-256 of the UI source
 `setup` only deploys a `dist/` built from the current source, `doctor` warns if
 the committed bundle is stale, and `tests/test_install/test_ui_bundle.py` fails
 until the bundle is rebuilt.
+
+## Repository layout
+
+| Area | Where | What |
+|---|---|---|
+| Core code | `explaneat/`, `mcp_server/`, `tests/`, `alembic/` + `alembic.ini`, `pyproject.toml`, `uv.lock`, `genome_explorer_cli.py` | The installable package, the MCP server, the test suite and the database migrations |
+| UI | `web/react-explorer/` (source) | The React explorer. Its production build is committed in `explaneat/static/react_explorer/` because the package serves it and the clinical install has no Node |
+| Experiments | `experiments/<study>/` | All experiment code, configs, run records, results and verification, one folder per study (e.g. `10seed/`, `aaai27/`, `references/`, `survival/`, `conv_neat/`) |
+| Thesis write-up | `thesis/` | Chapter assets, the Chapter 7 experiment book, thesis-only scripts, notes and paper sources; index in [thesis/README.md](thesis/README.md) |
+| Documentation | `docs/` | Code and method documentation |
+| Legacy | `legacy/` | Superseded root-level scripts, configs and ad-hoc tests, kept for reference ([legacy/README.md](legacy/README.md)) |
+
+Dependency rule: `thesis/` may read from `experiments/` and the core code; `experiments/`
+and the core code never read from `thesis/`.
 
 ## Quick Start (Python API)
 

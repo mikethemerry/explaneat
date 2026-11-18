@@ -7,8 +7,8 @@ evaluated genomes, forward every genome through NeuralNeat (the training
 engine, as compute_runs.py does) on the split's test rows (stored scaler),
 and record its test AUC next to its stored training fitness.
 
-Run: PYTHONHASHSEED=0 uv run python scripts/thesis/rashomon_population.py [run_set ...]
-Writes results/thesis/rashomon_population.csv (appends per run set; reruns of
+Run: PYTHONHASHSEED=0 uv run python experiments/references/rashomon_population.py [run_set ...]
+Writes experiments/references/results/rashomon_population.csv (appends per run set; reruns of
 a run set replace its rows).
 """
 import csv
@@ -39,7 +39,7 @@ RUN_SETS = {
     "churn100": (ROOT / "experiments/churn/runs_churn100.csv", None),
     "churn200": (ROOT / "experiments/churn/runs_churn200.csv", None),
 }
-OUT = ROOT / "results" / "thesis" / "rashomon_population.csv"
+OUT = ROOT / "experiments" / "references" / "results" / "rashomon_population.csv"
 FIELDS = ["run_set", "seed", "experiment_id", "generation", "genome_id", "genome_key",
           "train_fitness", "test_auc", "is_best_genome_of_run"]
 

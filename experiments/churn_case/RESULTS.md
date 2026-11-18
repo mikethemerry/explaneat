@@ -26,7 +26,7 @@ directory; nothing already reported was changed.
 ## 2. Design: matching the other Experiment 1 cases
 
 The other Experiment 1 tabular cases are the AAAI paper genomes (Heart, Adult, MONK-2;
-`results/thesis/heart_paper_genome.md`, `results/thesis/paper_recompute.md`). Their protocol,
+`experiments/aaai27/recheck/results/heart_paper_genome.md`, `experiments/aaai27/recheck/results/paper_recompute.md`). Their protocol,
 read from the experiments' `config_json` and `hardware_info` in `explaneat_dev`
 (`c8f3805e`, `dbab685c`, `45e998d7`) and from `experiments/10seed/PREREG.md`:
 
@@ -40,7 +40,7 @@ read from the experiments' `config_json` and `hardware_info` in `explaneat_dev`
 | Generations | Heart 40 (cut), Adult 100, MONK-2 100 | **200**, the churn200 budget: churn is harder (the pilot and churn100 left about 0.03 of headroom to gradient boosting, and churn200 gained 0.014 of median test AUC over churn100), so the longer of the two churn budgets was used, matched to `churn200` exactly |
 | Selection | best genome by training fitness within the run; the test split is never used | the same rule, with the 10-seed tie-break (earliest generation, then lowest NEAT key); no tie occurred (1 row at the best fitness) |
 | Split and encoding | the paper splits | the 10-seed churn split `45962ea6` (stratified 80:20, seed 42, 4,000 / 1,000; StandardScaler on train), dataset `churn_onehot` `802129c2` (state and area-code one-hots, 71 inputs; the codebook of `plain_language_codebooks.py`) |
-| References | L2 logistic regression; gradient boosting (`results/thesis/baselines.json`) | the same two models refitted on this split (`references.py` → `references.json`; identical to `experiments/churn/baselines.json` to 4 dp) |
+| References | L2 logistic regression; gradient boosting (`experiments/references/results/baselines.json`) | the same two models refitted on this split (`references.py` → `references.json`; identical to `experiments/churn/baselines.json` to 4 dp) |
 | Ancestry | not recorded | `track_ancestry` on: 49,750 of 50,000 genome rows carry `parent1_id` (all but generation 0) |
 | Hardware | CPU | Apple M4 Pro, CPU, float64, 1 torch thread; 0.40 h wall clock |
 
@@ -283,6 +283,6 @@ uv run python experiments/explanation_levels/compute_levels.py --set churn_case 
 EXPLANEAT_RECORDS_DIR=experiments/churn_case/explanations EXPLANEAT_LAYERS_DIR=experiments/churn_case/plain_language \
   uv run python -m explaneat plain-language extract --label churn-case-s10 --dir experiments/churn_case/plain_language
 # verifier: the explanation-verifier skill on explanations/churn-case-s10.json -> verdicts/churn-case-s10/
-uv run python scripts/thesis/thesis_experiment_tables.py       # thesis_exports/ch7/ch7_experiment1_cases.tex
+uv run python thesis/scripts/thesis_experiment_tables.py       # thesis/ch7/exports/ch7_experiment1_cases.tex
 ```
 

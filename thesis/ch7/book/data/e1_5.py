@@ -76,7 +76,7 @@ CARD = {
         "experiments/complex_real/README.md (da8bb36; verifier paragraph e4ee306), runs.csv (b6f345d), baselines.json (fc312fe), explanations/krk-*.json, plain_language/",
         "experiments/complex_real/VERIFY_TASK.md, verification/krk/verdict.md and verdict.json (e4ee306)",
         "DB: explaneat_dev; dataset krk_draw_ordinal (bc948279); experiments complex-<run>; genome da7d295b (krk-default-s2), eb35335c (krk-tuned-s0)",
-        "Export: thesis_exports/ch7/ch7_experiment1_cases.tex row 'KRK, boundary case'",
+        "Export: thesis/ch7/exports/ch7_experiment1_cases.tex row 'KRK, boundary case'",
     ],
     "thesis_note": "Experiment 1 boundary case (row 8 of `ch7_experiment1_cases.tex`, leaf grades given as the author's 2 / 1 / 1). Manifest: complete as an exploratory write-up, blind-verified on the one explained-and-tabled network; the other three complex-real records are not blind-verified; no `complex_real` levels set (about 30 min to add). No figures; the plain-language PDFs are outside the repo.",
 }

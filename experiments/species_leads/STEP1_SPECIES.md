@@ -76,7 +76,7 @@ stopped the build, and none occurred. Results are in `verification.csv`. Nothing
 | `churn100-s0..s9` | 0–99, each run | 25000/25000, each run | 250/250 (gen 99), each run |
 
 All 20 runs are **OK** (Heart 100,000 genomes, churn100 250,000 genomes). Each sidecar was also
-checked against `results/thesis/rashomon_population.csv` on three points:
+checked against `experiments/references/results/rashomon_population.csv` on three points:
 - same experiment id;
 - same 250 genome keys;
 - train fitness equal to within 1e-12. The CSV's floats differ from the DB only in the last
@@ -204,7 +204,7 @@ churn100 s7 key 20708) counted as already explained, there would be 7 new explan
   species_id, species_representative_key, species_size, species_created,
   species_first_generation, train_fitness, test_auc, is_best_genome_of_run, is_species_lead`.
   `train_fitness` is the exact DB float; `test_auc` and `is_best_genome_of_run` are joined from
-  `results/thesis/rashomon_population.csv`.
+  `experiments/references/results/rashomon_population.csv`.
 - `leads.csv` (one row per lead), `runs.csv` (one row per run, including the number of species
   in every generation) and `verification.csv`.
 - Not committed (local only, regenerate with the scripts): `replay_db/` holds the full replays

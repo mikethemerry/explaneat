@@ -1,4 +1,4 @@
-"""Task 5 (THESIS_FINAL_WORK.md): coverage of the AAAI paper explanations under
+"""Task 5 (thesis/notes/THESIS_FINAL_WORK.md): coverage of the AAAI paper explanations under
 the current corrected definition, and under the two options of decision D4.
 
 Read-only: explanations are loaded from the DB, every edit is made on an
@@ -19,8 +19,8 @@ in-memory copy of the operations list, and nothing is written back.
             ``ModelStateEngine.add_operation(validate=True)``, so the edit has
             to pass the current annotate validator.
 
-Run: PYTHONHASHSEED=0 uv run python scripts/thesis/paper_coverage_options.py
-Writes: results/thesis/paper_coverage_options.json
+Run: PYTHONHASHSEED=0 uv run python experiments/aaai27/recheck/paper_coverage_options.py
+Writes: experiments/aaai27/recheck/results/paper_coverage_options.json
 """
 import copy
 import json
@@ -28,7 +28,7 @@ import sys
 import uuid
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
 from explaneat.analysis.coverage_report import coverage_report  # noqa: E402
@@ -176,7 +176,7 @@ def main():
                 "option_b_validator_errors": errs_b,
                 "option_b_max_abs_output_change": float(np.max(np.abs(y0 - y1))),
             }
-    out = ROOT / "results" / "thesis" / "paper_coverage_options.json"
+    out = ROOT / "experiments" / "aaai27" / "recheck" / "results" / "paper_coverage_options.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(results, indent=2, default=str))
     for label, r in results.items():

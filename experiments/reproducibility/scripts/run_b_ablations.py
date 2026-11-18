@@ -20,7 +20,7 @@ linear core only disables all three.
 Point estimates are asserted against the paper's numbers (tolerance 0.002)
 before any bootstrap runs.
 
-Run: uv run python scripts/aaai27/run_b_ablations.py
+Run: uv run python experiments/aaai27/run_b_ablations.py
 """
 import sys
 

@@ -73,12 +73,12 @@ CARD = {
         "verify_xor_report.md header names commit `546261f` plus working-tree changes (script committed later as `ddae7c9`; rerun reproduces every claim).",
     ],
     "figures": [
-        {"file": "figs/e1-4_1.png", "caption": "The two families: count (skips compute OR, the hidden unit flips AND) and difference (skips compute x1 ∧ ¬x2, the hidden unit flips x2 ∧ ¬x1).", "source": "thesis_exports/ch7/xor_gates.png"},
-        {"file": "figs/e1-4_2.png", "caption": "Ridge vs valley score surfaces: the two families agree on the four data points but differ off them.", "source": "thesis_exports/ch7/xor_ridge_valley.png"},
+        {"file": "figs/e1-4_1.png", "caption": "The two families: count (skips compute OR, the hidden unit flips AND) and difference (skips compute x1 ∧ ¬x2, the hidden unit flips x2 ∧ ¬x1).", "source": "thesis/ch7/exports/xor_gates.png"},
+        {"file": "figs/e1-4_2.png", "caption": "Ridge vs valley score surfaces: the two families agree on the four data points but differ off them.", "source": "thesis/ch7/exports/xor_ridge_valley.png"},
     ],
     "sources": [
         "experiments/xor/RESULTS.md (da06071), verify_xor_report.md (ddae7c9), verify_xor_results.json, xor_results.json, run_xor.py, run.log",
-        "Figures: thesis_exports/ch7/xor_ridge_valley.{pdf,png}, xor_gates.{pdf,png} (make_xor_figures.py; regenerated 13 Nov, byte-identical); docs/signals-and-realisations/index.html",
+        "Figures: thesis/ch7/exports/xor_ridge_valley.{pdf,png}, xor_gates.{pdf,png} (make_xor_figures.py; regenerated 13 Nov, byte-identical); docs/signals-and-realisations/index.html",
         "DB: none (in-memory runs)",
     ],
     "thesis_note": "Experiment 1, row 7 of `ch7_experiment1_cases.tex`; the worked example of signals vs realisations (Ch 7 and the Rashomon discussion). XOR §3 table restated 7 Nov with Mike's agreement: 8 between-family pairs (0.50 / −0.84) plus the same-cell pair of seeds 12 and 21 as its own row. Cite Méloux et al. (ICLR 2025) and Sussmann (1992).",

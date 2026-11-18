@@ -11,7 +11,7 @@ piece is still open), **gap** (something the thesis structure asks for does not 
 **Numbers already reported by Mike, which this manifest does not change:** everything in
 `experiments/10seed/summary.md` and `ch7_table.tex` (the protocol-v3 run: 30/30 and 60/60 full
 coverage, the per-set test AUC medians, the v3 explanation times, 0/10 verified), every "Paper"
-value in `results/thesis/paper_recompute.md` (the AAAI paper), and the Rashomon table and the
+value in `experiments/aaai27/recheck/results/paper_recompute.md` (the AAAI paper), and the Rashomon table and the
 "about 90% reproducible" figure cited in `docs/signals-and-realisations/README.md` §3 and §5.
 
 Mike-verified (signoff-v1) is **0 everywhere**: no record carries `mike_verification`, no
@@ -47,7 +47,7 @@ Mike-verified (signoff-v1) is **0 everywhere**: no record carries `mike_verifica
 
 ## Experiment 1: explainable models across a range of cases
 
-Export: `thesis_exports/ch7/ch7_experiment1_cases.tex` (new, `scripts/thesis/thesis_experiment_tables.py`),
+Export: `thesis/ch7/exports/ch7_experiment1_cases.tex` (new, `thesis/scripts/thesis_experiment_tables.py`),
 plus `ch7_cox_case_table.tex` (Cox) and the XOR figures. The explanation level definitions are in
 `docs/annotation_coverage_model.md` ("Three levels of explanation").
 
@@ -58,7 +58,7 @@ plus `ch7_cox_case_table.tex` (Cox) and the XOR figures. The explanation level d
   traced to the database; coverage of the Adult and MONK-2 explanations was computed under both
   single-root options (D4); LR and gradient-boosting references were refitted on the paper splits.
 - **Pre-registered:** no (the paper's own models; the recompute is a check for D5).
-- **Results files:** `results/thesis/paper_recompute.md` (`cda5642`), `heart_paper_genome.md`
+- **Results files:** `experiments/aaai27/recheck/results/paper_recompute.md` (`cda5642`), `heart_paper_genome.md`
   (`b8da0ed`), `paper_coverage_options.md` (`f6cc823`), `paper_corrections.md` (`1fb3a8b`),
   `baselines.json` (`dda4aa1`), `paper_recompute/core.json`, `shap_*.json`, `shap_summary.json`.
 - **Key numbers** (`paper_recompute.md`, "Table: every whole-model evidence and SHAP item"):
@@ -71,9 +71,9 @@ plus `ch7_cox_case_table.tex` (Cox) and the XOR figures. The explanation level d
   runs_paper_reference.csv`): Heart 5 hidden / 31 enabled; MONK-2 2 / 23; Adult 14 / 83;
   n = 242 / 61, 345 / 87, 39,073 / 9,769.
 - **Already reported:** the "Paper" column throughout; the paper's LR baselines.
-- **Exports / figures:** `ch7_experiment1_cases.tex` rows 1–3; `results/thesis/paper_recompute/
+- **Exports / figures:** `ch7_experiment1_cases.tex` rows 1–3; `experiments/aaai27/recheck/results/paper_recompute/
   shap_{heart,adult,monk2}.png`, `capgain-response_recomputed.png` (all present; not copied to
-  `thesis_exports`, which is Ch 7 only).
+  `thesis/ch7/exports`, which is Ch 7 only).
 - **DB:** `explaneat_dev`; experiments "Heart Binary" (`c8f3805e`, genome `9022a9eb`, explanation
   `a03ebc86`), "monk2 - OHE - 250-100-5" (`45e998d7`, genome `23dde0fa`, expl. `d6ff7ca0`), "No
   pressure" (`dbab685c`, genome `4bc8fa07`, expl. `7e3761fe`).
@@ -155,12 +155,12 @@ plus `ch7_cox_case_table.tex` (Cox) and the XOR figures. The explanation level d
   faithful 4.4e-16 both; 3 and 4 leaves, all meaningful (3 / 0 / 0, 4 / 0 / 0); recheck 0 / 0.
   Verifier: GBSG2 **upheld** (62 upheld, 0 weakened, 0 refuted, 2 flags); WHAS500 **weakened**
   (36 / 1 / 0, 2 flags).
-- **Exports:** `thesis_exports/ch7/ch7_cox_case_table.tex` (regenerates byte-identical);
+- **Exports:** `thesis/ch7/exports/ch7_cox_case_table.tex` (regenerates byte-identical);
   `ch7_experiment1_cases.tex` rows 5–6. No figures.
 - **DB:** `explaneat_dev`; experiments `29c762ec` (gbsg2, genome `e4c62516`), `8d424f4c`
   (whas500, genome `f96ebc8d`).
 - **Reference explanation** (added 15 Nov): `REFERENCE.md`, `reference_explanation.py`,
-  `reference_explanation.json`, `figures/ref_*.png`; export `thesis_exports/ch7/ch7_cox_reference_table.tex`.
+  `reference_explanation.json`, `figures/ref_*.png`; export `thesis/ch7/exports/ch7_cox_reference_table.tex`.
   Network HRs inside the Cox 95% CI on 5 / 5 GBSG2 and 8 / 9 WHAS500 kept inputs (age outside);
   the forest's GBSG2 edge is non-linear age and node main effects (no interaction, grade III non-PH
   not the source).
@@ -182,7 +182,7 @@ plus `ch7_cox_case_table.tex` (Cox) and the XOR figures. The explanation level d
 - **Key numbers** (`RESULTS.md`): solved 30/30, median generation 16.5; raw networks 2–8 hidden
   units; classes step 2 / sigmoid 6 / ReLU 6; same-cell pairs logit r 0.995, between families 0.50
   (weight cosine −0.84). All six verifier claims pass (`verify_xor_report.md`).
-- **Exports / figures:** `thesis_exports/ch7/xor_ridge_valley.{pdf,png}`, `xor_gates.{pdf,png}`
+- **Exports / figures:** `thesis/ch7/exports/xor_ridge_valley.{pdf,png}`, `xor_gates.{pdf,png}`
   (regenerated 13 Nov, byte-identical); `docs/signals-and-realisations/index.html` is the figure
   sheet. `ch7_experiment1_cases.tex` row 7.
 - **DB:** none (in-memory runs).
@@ -300,7 +300,7 @@ plus `ch7_cox_case_table.tex` (Cox) and the XOR figures. The explanation level d
 
 ## Experiment 2: consistency
 
-Exports: `thesis_exports/ch7/ch7_experiment2_consistency.tex` (new), `ch7_table.tex` (v3,
+Exports: `thesis/ch7/exports/ch7_experiment2_consistency.tex` (new), `ch7_table.tex` (v3,
 unchanged), `ch7_levels_table.tex`, the seven 10-seed PDFs.
 
 ### 2.1 Ten-seed consistency study, frozen-method v4 re-run
@@ -355,8 +355,8 @@ unchanged), `ch7_levels_table.tex`, the seven 10-seed PDFs.
   within ε ∈ {0.005, 0.01, 0.02}; population spread at the final generation as a supplement.
 - **Pre-registered:** no (task 6 of the 7 Nov scope; the thesis convention, best observed seed at
   ε = 0.01, is D6).
-- **Results files:** `results/thesis/rashomon.md`, `rashomon_summary.json`, `rashomon_counts.csv`,
-  `rashomon_seeds.csv`, `rashomon_population*.csv` (`dda4aa1`); script `scripts/thesis/rashomon.py`.
+- **Results files:** `experiments/references/results/rashomon.md`, `rashomon_summary.json`, `rashomon_counts.csv`,
+  `rashomon_seeds.csv`, `rashomon_population*.csv` (`dda4aa1`); script `experiments/references/rashomon.py`.
 - **Key numbers** (`rashomon.md`, within 0.01 of the best observed seed): Heart 1/10 (best 0.912,
   s8), MONK-2 3/10 (1.000, s5 and s7), Adult 10/10 (0.909, s3); Heart-100 1/10, churn100 4/10,
   churn200 4/10. Against GB: Heart 0/10 (0.945), MONK-2 3/10 (0.948), Adult 0/10 (0.928).
@@ -380,7 +380,7 @@ unchanged), `ch7_levels_table.tex`, the seven 10-seed PDFs.
   ten-seed records; meaningful share medians Heart 100%, MONK-2 33%, Adult 100%, Heart-100 83%,
   churn100 87%, churn200 89%; ladder synthetic 61%, ladder Connect-4 **0%** (69% closed-form only),
   capacity network 9%.
-- **Exports:** `thesis_exports/ch7/ch7_levels_table.tex` (regenerates byte-identical).
+- **Exports:** `thesis/ch7/exports/ch7_levels_table.tex` (regenerates byte-identical).
 - **DB:** `explaneat_v4` (ten-seed), `explaneat_dev` (ladder, capacity), read only.
 - **Who decides "understood" (13 Nov).** The probe and the blind verifiers are automated screens.
   The thesis-facing understood level is Mike's leaf verdict (`explaneat review leaf <label> <leaf>
@@ -416,7 +416,7 @@ unchanged), `ch7_levels_table.tex`, the seven 10-seed PDFs.
 
 ## Experiment 3: where the complexity lives
 
-Export: `thesis_exports/ch7/ch7_experiment3_complexity.tex` (new): the ladder, the three bases,
+Export: `thesis/ch7/exports/ch7_experiment3_complexity.tex` (new): the ladder, the three bases,
 MNIST, each with its one-line finding.
 
 ### 3.1 Rashomon proposition (signal characterisation of the Rashomon set)
@@ -666,9 +666,9 @@ it is.
 
 ## Exports checked 13 Nov
 
-Every file in `thesis_exports/ch7/` regenerates byte-identical from its source at `2386ee9`:
+Every file in `thesis/ch7/exports/` regenerates byte-identical from its source at `2386ee9`:
 the seven 10-seed PDFs and `ch7_table.tex` (copies), `xor_ridge_valley.*` and `xor_gates.*`
 (`verify_xor.py` + `make_xor_figures.py`), `ch7_levels_table.tex` (`make_tables.py`),
 `ch7_cox_case_table.tex` (`tables.py`). New: `ch7_experiment1_cases.tex`,
 `ch7_experiment2_consistency.tex`, `ch7_experiment3_complexity.tex`
-(`scripts/thesis/thesis_experiment_tables.py`). `ch7_table.tex` was not edited.
+(`thesis/scripts/thesis_experiment_tables.py`). `ch7_table.tex` was not edited.

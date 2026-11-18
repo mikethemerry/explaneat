@@ -1,7 +1,7 @@
 # Heart benchmark on the paper split (exploratory, 2026-11-18)
 
 Extra comparators for Heart (242 train / 61 test, the AAAI paper split, z-scored on train), added
-next to the logistic regression and gradient boosting in `../rashomon.md` / `../baselines.json`.
+next to the logistic regression and gradient boosting in `../results/rashomon.md` / `../results/baselines.json`.
 Each model is tuned by 5-fold stratified CV on the training rows only (seed 42); the test set is read
 once. 95% intervals: 10,000 bootstrap resamples of the test set, `RandomState(42)`. Data exported read-only
 from explaneat_v4 (dataset eea247c2, split 165cebbd). Run with the conv-neat worktree venv (it has

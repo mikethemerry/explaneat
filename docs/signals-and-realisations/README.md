@@ -64,7 +64,7 @@ Levels of equivalence, weakest to strongest:
   - **Caveats:** a random-weight graft of the same shape gets close (the real graft leads by only +0.007 after fine-tuning: 7 better, 1 worse, 6 tied); the test set has only 87 rows.
   - **Scope:** in the thesis as a light example (Mike, 7 Nov).
 
-**Measured (7 Nov 2026; `results/thesis/rashomon.md`).** The thesis convention (Mike, 7 Nov):
+**Measured (7 Nov 2026; `experiments/references/results/rashomon.md`).** The thesis convention (Mike, 7 Nov):
 the ε-Rashomon set is taken **within the PropNEAT class**, relative to the **best observed seed**,
 with **ε = 0.01** in test AUC. Logistic regression and gradient boosting, fitted on the same
 split, are shown as external context.

@@ -1,7 +1,7 @@
 # AAAI-27 Experiment 3 candidate — monk2: results
 
 Generated 2026-07-11 on branch `analysis/aaai27-exp3-candidates` (off `main`).
-All scripts under `scripts/aaai27/`; seed 42 throughout; stored splits only.
+All scripts under `experiments/aaai27/`; seed 42 throughout; stored splits only.
 
 ## Verdict: STRONG candidate
 
@@ -10,7 +10,7 @@ A tiny sparse network learns the strongly nonlinear MONK-2 rule **exactly**
 only **2 hidden units** — small enough to explain to full coverage. This is
 the cleanest possible "explained nonlinearity" demonstration.
 
-## Ground truth (verified, scripts/aaai27/verify + ingest_monk2.py)
+## Ground truth (verified, experiments/aaai27/verify + ingest_monk2.py)
 
 - PMLB monk2 (601 rows) deduplicated to the full input-space enumeration:
   **exactly 432 unique rows** (3·3·2·3·4·2). STOP condition passed.
@@ -33,7 +33,7 @@ the cleanest possible "explained nonlinearity" demonstration.
 underlying data-repo commit; recorded as such. [MIKE: pin the data commit if a
 reviewer needs it.]
 
-## Topology of the best genome (scripts/aaai27/topology_summary.py)
+## Topology of the best genome (experiments/aaai27/topology_summary.py)
 
 - nodes 3 (2 hidden ReLU + output), connection genes 27 (23 enabled)
 - **connected inputs: 15 of 17** (only `a2:2`, `a4:3` pruned)
@@ -50,7 +50,7 @@ not a memorised fit (train/test are disjoint unique configurations). With 2
 hidden units this is a compact "count == 2" detector over the six indicators,
 squarely in annotation range.
 
-## Baseline contrast (scripts/aaai27/run_a-style, computed on our split)
+## Baseline contrast (experiments/aaai27/run_a-style, computed on our split)
 
 | Model | monk2 test AUC |
 |---|---|

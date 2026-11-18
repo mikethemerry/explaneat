@@ -28,7 +28,7 @@ from pathlib import Path
 import numpy as np
 
 HERE = Path(__file__).resolve().parent
-REPO = HERE.parents[1]
+REPO = HERE.parents[2]
 DATA = HERE / "data"
 os.environ.setdefault("DATABASE_URL", "postgresql://localhost/explaneat_v4")
 os.environ.setdefault("EXPLANEAT_RECORDS_DIR", str(REPO / "experiments/10seed/explanations_v4"))
@@ -41,7 +41,7 @@ assert "explaneat_v4" in os.environ["DATABASE_URL"], "read from the explaneat_v4
 
 HEART_SPLIT = "165cebbd-6609-46ca-867e-c09e17b2d6ec"
 CHURN_SPLIT = "45962ea6-3c78-49f9-a01e-3665f6809b1e"
-PAPER_GENOME = "9022a9eb-ecf9-41ba-b138-28ed4d131c9d"   # results/thesis/heart_paper_genome.md
+PAPER_GENOME = "9022a9eb-ecf9-41ba-b138-28ed4d131c9d"   # experiments/aaai27/recheck/results/heart_paper_genome.md
 
 
 def _runs(path):

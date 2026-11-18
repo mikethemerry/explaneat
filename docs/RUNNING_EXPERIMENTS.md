@@ -8,7 +8,7 @@
 
 ```bash
 # No activation needed - uv run handles it automatically
-uv run python run_working_backache.py --generations=50
+uv run python legacy/run_working_backache.py --generations=50
 ```
 
 ### Alternative Method - Manual Activation (for interactive use)
@@ -20,7 +20,7 @@ If you prefer to manually activate the virtual environment:
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Then run scripts normally
-python run_working_backache.py --generations=50
+python legacy/run_working_backache.py --generations=50
 ```
 
 You should see `(.venv)` in your prompt when activated:
@@ -32,7 +32,7 @@ You should see `(.venv)` in your prompt when activated:
 
 ```bash
 # This will fail with "Unrecognized alias" warning
-ipython run_working_backache.py --generations=50
+ipython legacy/run_working_backache.py --generations=50
 ```
 
 **Why?** IPython tries to parse `--generations` as an IPython flag, not as a script argument.
@@ -46,18 +46,18 @@ If you want to use IPython interactively:
 ipython
 
 # Inside IPython, use %run magic
-%run run_working_backache.py --generations=50
+%run legacy/run_working_backache.py --generations=50
 ```
 
 Or pass arguments after `--`:
 
 ```bash
-ipython -- run_working_backache.py --generations=50
+ipython -- legacy/run_working_backache.py --generations=50
 ```
 
 ## Available Scripts
 
-### run_working_backache.py
+### legacy/run_working_backache.py
 
 Main experiment script with ancestry tracking.
 
@@ -69,19 +69,19 @@ Main experiment script with ancestry tracking.
 **Examples:**
 ```bash
 # Short run (10 generations, default)
-uv run python run_working_backache.py
+uv run python legacy/run_working_backache.py
 
 # Longer run with live status line
-uv run python run_working_backache.py --generations=50
+uv run python legacy/run_working_backache.py --generations=50
 
 # Quiet mode - less logging, only live status
-uv run python run_working_backache.py --generations=50 --quiet
+uv run python legacy/run_working_backache.py --generations=50 --quiet
 
 # Dashboard mode - multi-line status display
-uv run python run_working_backache.py --generations=50 --dashboard
+uv run python legacy/run_working_backache.py --generations=50 --dashboard
 
 # Quiet + dashboard for clean monitoring
-uv run python run_working_backache.py --generations=100 --quiet --dashboard
+uv run python legacy/run_working_backache.py --generations=100 --quiet --dashboard
 ```
 
 **Output Modes:**
@@ -209,7 +209,7 @@ ModuleNotFoundError: No module named 'explaneat'
 
 **Solution:** Use `uv run` to ensure the virtual environment is used:
 ```bash
-uv run python run_working_backache.py --generations=50
+uv run python legacy/run_working_backache.py --generations=50
 ```
 
 If still failing, ensure dependencies are installed:
@@ -224,7 +224,7 @@ uv pip install -e .
 uv run python -m explaneat db init
 
 # Run experiment
-uv run python run_working_backache.py --generations=50
+uv run python legacy/run_working_backache.py --generations=50
 
 # Check results in Python (interactive)
 uv run python
@@ -244,22 +244,22 @@ In [3]: print(experiments)
 ### Short Test Runs
 ```bash
 # Quick test (10 generations, ~5 minutes)
-uv run python run_working_backache.py --generations=10
+uv run python legacy/run_working_backache.py --generations=10
 ```
 
 ### Production Runs
 ```bash
 # Full run with ancestry tracking (100 generations, ~1-2 hours)
-uv run python run_working_backache.py --generations=100
+uv run python legacy/run_working_backache.py --generations=100
 
 # Monitor with logging
-uv run python run_working_backache.py --generations=100 2>&1 | tee experiment.log
+uv run python legacy/run_working_backache.py --generations=100 2>&1 | tee experiment.log
 ```
 
 ### Background Runs
 ```bash
 # Run in background with nohup
-nohup uv run python run_working_backache.py --generations=100 > output.log 2>&1 &
+nohup uv run python legacy/run_working_backache.py --generations=100 > output.log 2>&1 &
 
 # Check progress
 tail -f output.log
@@ -277,7 +277,7 @@ Optional environment variables:
 export DATABASE_URL="postgresql://user:pass@localhost/explaneat_dev"
 
 # Run experiment
-uv run python run_working_backache.py --generations=50
+uv run python legacy/run_working_backache.py --generations=50
 ```
 
 ## Notes for Developers
@@ -286,5 +286,5 @@ uv run python run_working_backache.py --generations=50
 - **Alternative**: Manually activate with `source .venv/bin/activate` (or `.venv\Scripts\activate` on Windows) for interactive use
 - **Use `python`, not `ipython`** for scripts with CLI arguments
 - **Database**: Ensure PostgreSQL is running before experiments
-- **Ancestry tracking**: Automatically enabled in `run_working_backache.py`
+- **Ancestry tracking**: Automatically enabled in `legacy/run_working_backache.py`
 - **Check git status**: Script logs current git branch and commit SHA

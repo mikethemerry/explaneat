@@ -1,7 +1,7 @@
 """Experiment 2 figures as inline SVG (theme-aware through the book's CSS variables).
 
 Input: e2_stats.json (written by e2_stats.py from the repo's CSVs and v4 records) and the
-reference AUCs from results/thesis/rashomon.md (copied into REFS below, with the file named).
+reference AUCs from experiments/references/results/rashomon.md (copied into REFS below, with the file named).
 """
 import html
 import json
@@ -12,7 +12,7 @@ STATS = json.loads((HERE / "e2_stats.json").read_text())
 
 # Order, names and colour slots: colour follows the study in both figures.
 STUDIES = [("adult", "Adult", 1), ("churn100", "Churn", 2), ("heart100", "Heart-100", 3)]
-# Same-split references, results/thesis/rashomon.md "References" (LR = (ii), GB = (iii) tuned).
+# Same-split references, experiments/references/results/rashomon.md "References" (LR = (ii), GB = (iii) tuned).
 REFS = {"adult": (0.905, 0.928), "churn100": (0.813, 0.934), "heart100": (0.919, 0.945)}
 MARK = {1: "circle", 2: "square", 3: "triangle"}
 

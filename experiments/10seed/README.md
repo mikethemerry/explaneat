@@ -2,7 +2,7 @@
 
 What this directory holds:
 - the design and its dated amendments: `PREREG.md`;
-- the results and interpretation: `../../results/10seed-consistency.md`;
+- the results and interpretation: `RESULTS.md`;
 - per-metric statistics: `summary.md`.
 
 This file covers how to reproduce every number from the configs, seeds and code commits.
@@ -44,13 +44,13 @@ rows in memory and asserts that the result equals the split's stored scaler.
 | Run set | Dataset (id) | Split (id) | How it was built |
 |---|---|---|---|
 | Heart, Heart-100 | `Heart Disease (binary, prepared)` (`eea247c2-…`) | `165cebbd-…` | One-hot "prepare dataset" route (`explaneat/api/routes/datasets.py`) on Cleveland Heart; 80:20 split, `random_state` 42, not stratified |
-| MONK-2 | `monk2_onehot` (`c2340904-…`) | `63257a45-…` | `scripts/aaai27/ingest_monk2.py`: 432 unique rows, one-hot, stratified 80:20, seed 42. It also launches a paper training run, so on a fresh DB stop it after ingestion or use only steps 1–4 |
+| MONK-2 | `monk2_onehot` (`c2340904-…`) | `63257a45-…` | `experiments/aaai27/ingest_monk2.py`: 432 unique rows, one-hot, stratified 80:20, seed 42. It also launches a paper training run, so on a fresh DB stop it after ingestion or use only steps 1–4 |
 | Adult | `adult_ohe_v2` (`46c63b17-…`) | `1df50169-…` | One-hot Adult, 80:20 split, `random_state` 42 |
 | churn100/200 | `churn_onehot` (`802129c2-…`) | `45962ea6-…` | `uv run python experiments/churn/ingest_churn.py`: idempotent; drops phone number; one-hot state and area code; stratified 80:20, seed 42; also writes the LR/GBM baselines (`../churn/baselines.json`) |
 
 The full ids are in `PREREG.md` and `run_seed.py` (`DATASETS`).
 
-The paper datasets also ship offline in `reproducibility/{heart,monk2,adult}/`:
+The paper datasets also ship offline in `experiments/reproducibility/{heart,monk2,adult}/`:
 - `split.json` holds the split parameters and scaler;
 - `data.npz` holds the exact z-normalised arrays.
 

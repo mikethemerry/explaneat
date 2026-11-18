@@ -12,7 +12,7 @@ For each run (Heart 40 gen ``10seed-heart-s0..s9``, ``churn100-s0..s9``):
    condition: no sidecar is written and the exit code is 1. Read-only on the
    database; nothing is written to ``experiments/lineage/``.
 2. Join the final generation's species membership with
-   ``results/thesis/rashomon_population.csv`` (genome id, train fitness, test
+   ``experiments/references/results/rashomon_population.csv`` (genome id, train fitness, test
    AUC, best-genome flag) and write ``species/<experiment>.csv.gz``.
 3. The lead of a species is its member with the best TRAIN fitness (the
    replay's exact float, identical to the DB); ties go to the lowest genome
@@ -45,7 +45,7 @@ _spec.loader.exec_module(verify_replay)
 
 REPLAY_DIR = HERE / "replay_db"
 SPECIES_DIR = HERE / "species"
-RASHOMON = REPO / "results/thesis/rashomon_population.csv"
+RASHOMON = REPO / "experiments/references/results/rashomon_population.csv"
 EXPLANATIONS = REPO / "experiments/10seed/explanations"
 
 # run_set (rashomon_population.csv) -> replay label, experiment name, final generation,

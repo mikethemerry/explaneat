@@ -20,7 +20,7 @@ When an experiment completes, the system now provides a comprehensive summary in
 - **Performance Context**: Rank in generation, comparison with population
 - **Next Steps**: Commands for further analysis
 
-**Usage**: Automatically displayed at the end of `run_working_backache.py`
+**Usage**: Automatically displayed at the end of `legacy/run_working_backache.py`
 
 ### 2. CLI Explorer (`genome_explorer_cli.py`)
 
@@ -151,7 +151,7 @@ explaneat/
 │   ├── genome_explorer.py          # Main explorer class (enhanced)
 │   ├── ancestry_analyzer.py        # Ancestry analysis
 │   └── visualization.py            # Visualization utilities
-├── run_working_backache.py         # Enhanced with summary
+├── legacy/run_working_backache.py         # Enhanced with summary
 └── genome_explorer_cli.py          # New CLI interface
 ```
 
@@ -160,7 +160,7 @@ explaneat/
 Run the test script to see all features in action:
 
 ```bash
-python test_genome_explorer_features.py
+python legacy/tests/test_genome_explorer_features.py
 ```
 
 This will demonstrate:

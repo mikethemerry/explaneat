@@ -50,7 +50,7 @@ During evolution:
 
 ## Usage
 
-### Basic Usage in run_working_backache.py
+### Basic Usage in legacy/run_working_backache.py
 
 ```python
 from explaneat.core.ancestry_reporter import AncestryReporter

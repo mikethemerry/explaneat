@@ -11,13 +11,13 @@ Pipeline (all reproducible, seed 42):
      fit on train (a no-op on 0/1 columns, attached for pipeline consistency).
   5. Launch PropNEAT training via the same code path the API/paper used
      (ExperimentRunner._evolution_loop, AUC fitness, no structural penalty).
-  6. Emit a topology summary of the best genome to results/monk2-topology.md.
+  6. Emit a topology summary of the best genome to experiments/aaai27/results/monk2-topology.md.
 
 Training hyperparameters are NOT specified by the task; this uses the paper's
 Adult settings (pop 250, 100 generations, 5 backprop epochs, AUC fitness) and
 records that choice. [[AUTHOR]: adjust generations if you want a longer search.]
 
-Run: uv run python scripts/aaai27/ingest_monk2.py
+Run: uv run python experiments/aaai27/ingest_monk2.py
 """
 import sys
 import uuid
@@ -277,7 +277,7 @@ def main():
 
     exp_id = launch_training(prepared_id, split_id, X_enc, train_idx)
     print(f"\nMONK2 INGEST COMPLETE. experiment_id={exp_id}")
-    print("Run scripts/aaai27/topology_summary.py to emit the topology summary.")
+    print("Run experiments/aaai27/topology_summary.py to emit the topology summary.")
 
 
 if __name__ == "__main__":

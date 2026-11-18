@@ -1,14 +1,14 @@
 """Task 4: check the Heart explanation's stated weights against the stored
 genome (read-only), and the paper's descriptive fractions.
 
-Run: PYTHONHASHSEED=0 uv run python scripts/thesis/heart_formula_check.py
+Run: PYTHONHASHSEED=0 uv run python experiments/aaai27/recheck/heart_formula_check.py
 """
 import json
 import sys
 import uuid
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
 from explaneat.core.config_utils import load_neat_config  # noqa: E402
@@ -47,4 +47,4 @@ direct = sorted(k[0] for k, c in ng.connections.items() if c.enabled and k[1] ==
 res = {"rows": rows, "all_ok": all(r["ok_at_stated_precision"] for r in rows), "direct_input_to_output": direct,
        "n_direct": len(direct)}
 print(json.dumps(res, indent=1))
-(ROOT / "results" / "thesis" / "heart_formula_check.json").write_text(json.dumps(res, indent=2))
+(ROOT / "experiments" / "aaai27" / "recheck" / "results" / "heart_formula_check.json").write_text(json.dumps(res, indent=2))

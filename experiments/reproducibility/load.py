@@ -1,6 +1,6 @@
 """Offline loader: rebuild a paper genome and reproduce its AUC — no database.
 
-Usage: uv run python reproducibility/load.py <adult|heart|monk2>
+Usage: uv run python experiments/reproducibility/load.py <adult|heart|monk2>
 
 Requires the `explaneat` package (the repo) importable, but NO database.
 """

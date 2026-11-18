@@ -442,7 +442,7 @@ EXPLANEAT_RECORDS_DIR=experiments/ushape_saddle/explanations EXPLANEAT_LAYERS_DI
   uv run python -m explaneat plain-language extract --label <label> --dir experiments/ushape_saddle/plain_language
 uv run python experiments/ushape_saddle/shape_plots.py <label>  # figures/
 uv run python experiments/ushape_saddle/gt_probe.py             # gt_probe.json
-uv run python scripts/thesis/thesis_experiment_tables.py        # thesis_exports/ch7/ch7_experiment1_cases.tex
+uv run python thesis/scripts/thesis_experiment_tables.py        # thesis/ch7/exports/ch7_experiment1_cases.tex
 ```
 
 ## 11. Longer runs on the both dataset (`launch_g300.sh`, `score_g300.py`, `g300_scores.json`)

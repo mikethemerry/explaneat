@@ -15,12 +15,12 @@ Written 7 Nov 2026 on branch `thesis/numbers`. **This is a report for decision D
 
 **Method:**
 - **Scripts:**
-  - `scripts/thesis/paper_recompute.py`: `core`, `shap <label>` and `figures`;
-  - `scripts/thesis/paper_shap_summary.py`.
+  - `experiments/aaai27/recheck/paper_recompute.py`: `core`, `shap <label>` and `figures`;
+  - `experiments/aaai27/recheck/paper_shap_summary.py`.
 - **Two columns per comparison:**
   - **old:** the pre-fix behaviour, with a ReLU output and shap's default `l1_reg`;
   - **new:** the current code path.
-- **Performance and ablations:** full train and test splits. Bootstrap CIs use 10,000 paired resamples with seed 42, as in `scripts/aaai27/common.py`.
+- **Performance and ablations:** full train and test splits. Bootstrap CIs use 10,000 paired resamples with seed 42, as in `experiments/aaai27/common.py`.
 - **SHAP:** test split, through the MCP `compute_shap` path:
   - the 200-row seeded sample (`max_samples = 200`, the MCP default; this is the full test set for Heart, n = 61, and MONK-2, n = 87);
   - background = the same rows;
@@ -93,7 +93,7 @@ The magnitudes of mean |SHAP| change about 7–8× between old and new, because 
 
 | # | Paper item | Recomputed | Change | Claim holds? |
 |---|---|---|---|---|
-| 18 | `fig:capgain` (commented out in the `.tex`; caption from `scripts/aaai27/run_d_capgain_figure.py`): two knots at \$3,225 and \$4,300, 92% at zero capital gain | Regenerated with the current code: identical. Two knots at \$3,225 and \$4,300, floor contribution +0.1417, terminal slope −6.237 per z, and the cross-check against StructureNetwork passes. The figure plots the pathway's contribution to the output *pre-activation*, which neither fix touches | none | yes |
+| 18 | `fig:capgain` (commented out in the `.tex`; caption from `experiments/aaai27/run_d_capgain_figure.py`): two knots at \$3,225 and \$4,300, 92% at zero capital gain | Regenerated with the current code: identical. Two knots at \$3,225 and \$4,300, floor contribution +0.1417, terminal slope −6.237 per z, and the cross-check against StructureNetwork passes. The figure plots the pathway's contribution to the output *pre-activation*, which neither fix touches | none | yes |
 | 19 | Exp 1 text: "masked by the output unit's clipping" | The output unit is a sigmoid and does not clip. The hub (655), a hidden ReLU, does | wording | yes, if it reads "the hub's clipping" |
 | 20 | Exp 3: $\mathrm{ReLU}(2.72 + \mathrm{Ramp} - 7.34\cdot\mathrm{Gate} - 2.87\cdot\mathrm{Inert})$ | The trained output is $\sigma(2.716 + \mathrm{Ramp} - 7.339\cdot\mathrm{Gate} - 2.874\cdot\mathrm{Inert})$, with the decision boundary at a pre-activation of 0. Exact on all 432 inputs: count 2 ≥ +0.115, count ≤ 1 ≤ −0.646, count ≥ 3 ≤ −6.42 | outer function ReLU → σ | yes: peak at count 2, the ramp crosses between 1 and 2, and the gate forms the upper edge |
 | 21 | Exp 3: gate margins (1.82 off / 1.26 on), coefficients 4.49–7.07, constant −14.86 | Hidden-unit quantities, not affected by either fix | none | yes |

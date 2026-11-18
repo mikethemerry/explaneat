@@ -21,7 +21,7 @@ CARD = {
     "results": [
         {
             "caption": "Performance and ablation: paper value vs recomputed (selected rows)",
-            "source": "results/thesis/paper_recompute.md, \"Performance and ablation\"",
+            "source": "experiments/aaai27/recheck/results/paper_recompute.md, \"Performance and ablation\"",
             "headers": ["#", "Paper item", "Paper", "Old (pre-fix StructureNetwork)", "New (current code)", "Change"],
             "rows": [
                 ["1", "Adult train / test AUC", "0.909 / 0.905", "0.899 / 0.896", "0.9085 / 0.9055", "none"],
@@ -39,7 +39,7 @@ CARD = {
         },
         {
             "caption": "SHAP: old vs new",
-            "source": "results/thesis/paper_recompute.md, \"SHAP\" (items 14–16)",
+            "source": "experiments/aaai27/recheck/results/paper_recompute.md, \"SHAP\" (items 14–16)",
             "headers": ["Item", "Old (ReLU output, l1_reg = top 10)", "New (sigmoid output, l1_reg=False)", "Change"],
             "rows": [
                 ["Adult top 5 by mean |SHAP|", "marital-status:2, education-num, relationship:1, age, sex; capital-gain 10th", "marital-status:2, education-num, capital-gain, relationship:1, age", "capital-gain rises from 10th to 3rd; Spearman ρ 0.80"],
@@ -50,7 +50,7 @@ CARD = {
         },
         {
             "caption": "Coverage of the paper explanations under both D4 options",
-            "source": "results/thesis/paper_coverage_options.md",
+            "source": "experiments/aaai27/recheck/results/paper_coverage_options.md",
             "headers": ["Explanation", "As stored (structural / compositional)", "(a) Exempt", "(b) Edited under the root"],
             "rows": [
                 ["Adult `7e3761fe`", "1.0 / 0.9", "1.0 / 1.0", "1.0 / 1.0"],
@@ -72,16 +72,16 @@ CARD = {
         },
         {
             "caption": "Gradient boosting on the paper splits (context)",
-            "source": "results/thesis/baselines.json (test AUC; as quoted in THESIS_EXPERIMENTS.md 1.1)",
+            "source": "experiments/references/results/baselines.json (test AUC; as quoted in thesis/notes/THESIS_EXPERIMENTS.md 1.1)",
             "headers": ["Dataset", "GB test AUC"],
             "rows": [["Heart", "0.945"], ["MONK-2", "0.948"], ["Adult", "0.928"]],
             "note": "Raw values in baselines.json: 0.9450431…, 0.9476813…, 0.9275630….",
         },
     ],
     "results_text": [
-        "Heart paper genome confirmed: genome `9022a9eb`, NEAT key 9493, generation 38, train / test AUC 0.9455 / 0.8966; the generation-39 population record holds 0 genomes, so the run evaluated 39 generations (source: results/thesis/heart_paper_genome.md).",
-        "Heart activation fractions in the stored evidence (0.70 / 0.535 / 0.175) come from a 200-row train+test sample; on the full test split they are 72.1% / 57.4% / 26.2% (source: results/thesis/heart_paper_genome.md).",
-        "MONK-2 composition: the paper's ReLU(2.72 + Ramp − 7.34·Gate − 2.87·Inert) should read σ(…); every constant and the decision boundary are unchanged (source: results/thesis/paper_recompute.md item 20).",
+        "Heart paper genome confirmed: genome `9022a9eb`, NEAT key 9493, generation 38, train / test AUC 0.9455 / 0.8966; the generation-39 population record holds 0 genomes, so the run evaluated 39 generations (source: experiments/aaai27/recheck/results/heart_paper_genome.md).",
+        "Heart activation fractions in the stored evidence (0.70 / 0.535 / 0.175) come from a 200-row train+test sample; on the full test split they are 72.1% / 57.4% / 26.2% (source: experiments/aaai27/recheck/results/heart_paper_genome.md).",
+        "MONK-2 composition: the paper's ReLU(2.72 + Ramp − 7.34·Gate − 2.87·Inert) should read σ(…); every constant and the decision boundary are unchanged (source: experiments/aaai27/recheck/results/paper_recompute.md item 20).",
     ],
     "shows": "The paper's results stand: every performance and ablation number was computed with the training engine, which was always correct, and each reproduces. What changes is emphasis: once SHAP stops truncating to ten features, Adult's capital-gain pathway is the third-largest attribution and the linear backbone carries 87% rather than 96% of it. The paper's explanations are complete once inputs that never reach the output are treated as needing no parent.",
     "caveats": [
@@ -92,15 +92,15 @@ CARD = {
         "No blind verifier was run on the paper explanations.",
     ],
     "figures": [
-        {"file": "figs/e1-1_1.png", "caption": "Adult SHAP, old (grey) beside new (blue), top 15 features by mean |SHAP|: capital-gain moves up to third.", "source": "results/thesis/paper_recompute/shap_adult.png"},
-        {"file": "figs/e1-1_2.png", "caption": "Adult capital-gain pathway response, regenerated with the current code (identical to the paper's: knots at $3,225 and $4,300).", "source": "results/thesis/paper_recompute/capgain-response_recomputed.png"},
+        {"file": "figs/e1-1_1.png", "caption": "Adult SHAP, old (grey) beside new (blue), top 15 features by mean |SHAP|: capital-gain moves up to third.", "source": "experiments/aaai27/recheck/results/paper_recompute/shap_adult.png"},
+        {"file": "figs/e1-1_2.png", "caption": "Adult capital-gain pathway response, regenerated with the current code (identical to the paper's: knots at $3,225 and $4,300).", "source": "experiments/aaai27/recheck/results/paper_recompute/capgain-response_recomputed.png"},
     ],
     "sources": [
-        "results/thesis/paper_recompute.md (cda5642), paper_recompute/core.json, shap_*.json, shap_summary.json",
-        "results/thesis/heart_paper_genome.md (b8da0ed), paper_coverage_options.md (f6cc823), paper_corrections.md (1fb3a8b), baselines.json (dda4aa1)",
+        "experiments/aaai27/recheck/results/paper_recompute.md (cda5642), paper_recompute/core.json, shap_*.json, shap_summary.json",
+        "experiments/aaai27/recheck/results/heart_paper_genome.md (b8da0ed), paper_coverage_options.md (f6cc823), paper_corrections.md (1fb3a8b), baselines.json (dda4aa1)",
         "experiments/10seed/runs_paper_reference.csv; experiments/explanation_levels/RESULTS.md, levels/paper-*.json",
         "DB explaneat_dev: \"Heart Binary\" (c8f3805e, genome 9022a9eb, expl. a03ebc86); \"monk2 - OHE - 250-100-5\" (45e998d7, genome 23dde0fa, expl. d6ff7ca0); \"No pressure\" (dbab685c, genome 4bc8fa07, expl. 7e3761fe)",
-        "Scripts: scripts/thesis/paper_recompute.py, paper_shap_summary.py, paper_coverage_options.py, heart_paper_trace.py, baselines.py",
+        "Scripts: experiments/aaai27/recheck/paper_recompute.py, paper_shap_summary.py, paper_coverage_options.py, heart_paper_trace.py, baselines.py",
     ],
-    "thesis_note": "Experiment 1, rows 1–3 of `ch7_experiment1_cases.tex` (levels marked \"probe v1\"). The \"Paper\" column and the paper's LR baselines are already reported: do not change. D5: corrected wording goes into the thesis; the corrections list is for the paper. Figures are in results/thesis/paper_recompute/ and not copied to thesis_exports.",
+    "thesis_note": "Experiment 1, rows 1–3 of `ch7_experiment1_cases.tex` (levels marked \"probe v1\"). The \"Paper\" column and the paper's LR baselines are already reported: do not change. D5: corrected wording goes into the thesis; the corrections list is for the paper. Figures are in experiments/aaai27/recheck/results/paper_recompute/ and not copied to thesis/ch7/exports.",
 }

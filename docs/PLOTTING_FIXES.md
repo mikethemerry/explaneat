@@ -64,10 +64,10 @@ explorer.plot_evolution_progression()
    - Improved `plot_ancestry_fitness()` with data processing fixes
    - Added `plot_evolution_progression()` for population-level analysis
 
-2. **`run_working_backache.py`**:
+2. **`legacy/run_working_backache.py`**:
    - Updated visualization testing to demonstrate all three methods
 
-3. **`test_plotting_fixes.py`** (new):
+3. **`legacy/tests/test_plotting_fixes.py`** (new):
    - Test script demonstrating the different plotting methods
 
 ## Testing
@@ -75,7 +75,7 @@ explorer.plot_evolution_progression()
 Run the test script to see all three plotting methods in action:
 
 ```bash
-python test_plotting_fixes.py
+python legacy/tests/test_plotting_fixes.py
 ```
 
 This will demonstrate:

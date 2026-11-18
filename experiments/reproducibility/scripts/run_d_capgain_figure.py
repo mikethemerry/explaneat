@@ -20,10 +20,10 @@ biases and scaler parameters are read from the stored genome/split at runtime.
 A cross-check asserts the manual forward matches the phenotype
 StructureNetwork's node activations.
 
-Outputs: results/capgain-response.png (+ prints the exact \\caption text and
+Outputs: experiments/aaai27/results/capgain-response.png (+ prints the exact \\caption text and
 the detected knot locations).
 
-Run: uv run python scripts/aaai27/run_d_capgain_figure.py
+Run: uv run python experiments/aaai27/run_d_capgain_figure.py
 """
 import sys
 
@@ -180,7 +180,7 @@ def main():
     ax.indicate_inset_zoom(axi, edgecolor="gray")
 
     fig.tight_layout()
-    out = "results/capgain-response.png"
+    out = "experiments/aaai27/results/capgain-response.png"
     fig.savefig(out, dpi=300)
     print(f"\nwrote {out}")
 

@@ -1,7 +1,7 @@
 """Ground-truth verification for the AAAI-27 paper models.
 
 Reconciles the two frozen paper genomes against the paper's claimed stats and
-confirms the fitness metric. Run: uv run python scripts/aaai27/verify_ground_truth.py
+confirms the fitness metric. Run: uv run python experiments/aaai27/verify_ground_truth.py
 
 Documented discrepancy (2026-07-10): the working-draft task doc attributes the
 Adult model to experiment "Adult - OHE - 250-100-5" (5c059459). That experiment's

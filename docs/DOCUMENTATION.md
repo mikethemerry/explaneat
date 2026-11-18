@@ -5,43 +5,43 @@ Welcome to the ExplaNEAT documentation! This page provides an overview of all av
 ## 📚 Documentation Structure
 
 ### Getting Started
-- **[README.md](README.md)** - Main project overview, features, and quick start
+- **[README.md](../README.md)** - Main project overview, features, and quick start
 - **[GETTING_STARTED.md](GETTING_STARTED.md)** - Comprehensive tutorial for new users
-- **[pyproject.toml](pyproject.toml)** - Package configuration and dependencies (PEP 621)
-- **[requirements.txt](requirements.txt)** - Legacy requirements file (deprecated, use pyproject.toml)
+- **[pyproject.toml](../pyproject.toml)** - Package configuration and dependencies (PEP 621)
+- **[requirements.txt](../requirements.txt)** - Legacy requirements file (deprecated, use pyproject.toml)
 
 ### API Documentation
 - **[API_REFERENCE.md](API_REFERENCE.md)** - Complete API reference with all classes and methods
-- **[explaneat/__init__.py](explaneat/__init__.py)** - Package imports and version information
+- **[explaneat/__init__.py](../explaneat/__init__.py)** - Package imports and version information
 
 ### Examples and Tutorials
-- **[examples/](examples/)** - Directory with practical examples
-  - **[basic_usage.py](examples/basic_usage.py)** - Basic ExplaNEAT workflow
-  - **[experiment_management.py](examples/experiment_management.py)** - Advanced experiment tracking
-  - **[README.md](examples/README.md)** - Examples overview and instructions
+- **[examples/](../examples/)** - Directory with practical examples
+  - **[basic_usage.py](../examples/basic_usage.py)** - Basic ExplaNEAT workflow
+  - **[experiment_management.py](../examples/experiment_management.py)** - Advanced experiment tracking
+  - **[README.md](../examples/README.md)** - Examples overview and instructions
 
 ### Development and Contributing
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Guidelines for contributors
-- **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
-- **[.gitignore](.gitignore)** - Git ignore patterns for the project
+- **[CONTRIBUTING.md](../CONTRIBUTING.md)** - Guidelines for contributors
+- **[CHANGELOG.md](../CHANGELOG.md)** - Version history and release notes
+- **[.gitignore](../.gitignore)** - Git ignore patterns for the project
 
 ## 🎯 Documentation for Different Users
 
 ### For New Users
-1. Start with **[README.md](README.md)** to understand what ExplaNEAT is
+1. Start with **[README.md](../README.md)** to understand what ExplaNEAT is
 2. Follow the **[GETTING_STARTED.md](GETTING_STARTED.md)** tutorial
-3. Run the **[basic usage example](examples/basic_usage.py)**
-4. Explore the **[examples directory](examples/)** for more use cases
+3. Run the **[basic usage example](../examples/basic_usage.py)**
+4. Explore the **[examples directory](../examples/)** for more use cases
 
 ### For Researchers and Power Users
 1. Review the **[API_REFERENCE.md](API_REFERENCE.md)** for detailed method documentation
-2. Study the **[experiment management example](examples/experiment_management.py)**
+2. Study the **[experiment management example](../examples/experiment_management.py)**
 3. Check the **[reference training system](#reference-training-system)** below
 4. Customize configurations based on your research needs
 
 ### For Developers and Contributors
-1. Read the **[CONTRIBUTING.md](CONTRIBUTING.md)** guidelines
-2. Review the **[CHANGELOG.md](CHANGELOG.md)** for recent changes
+1. Read the **[CONTRIBUTING.md](../CONTRIBUTING.md)** guidelines
+2. Review the **[CHANGELOG.md](../CHANGELOG.md)** for recent changes
 3. Set up your development environment as described in the contributing guide
 4. Check the source code documentation in each module
 
@@ -112,7 +112,7 @@ uv venv
 uv pip install -e .
 
 # Run scripts using uv run (recommended - no activation needed)
-uv run python run_working_backache.py --generations=50
+uv run python legacy/run_working_backache.py --generations=50
 ```
 
 ### Basic Usage
@@ -148,9 +148,9 @@ ExplaNEAT is based on research in:
 
 ### Common Questions
 1. **Installation issues**: Check [GETTING_STARTED.md](GETTING_STARTED.md#common-issues-and-solutions)
-2. **Usage examples**: See the [examples directory](examples/)
+2. **Usage examples**: See the [examples directory](../examples/)
 3. **API details**: Consult [API_REFERENCE.md](API_REFERENCE.md)
-4. **Contributing**: Read [CONTRIBUTING.md](CONTRIBUTING.md)
+4. **Contributing**: Read [CONTRIBUTING.md](../CONTRIBUTING.md)
 
 ### Support Channels
 - **GitHub Issues**: Bug reports and feature requests

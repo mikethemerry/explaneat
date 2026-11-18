@@ -224,7 +224,7 @@ Linearised = every non-linear unit replaced by its least-squares straight-line f
 | mean | 6.2 | 11 total | 4.5 | 64% | 0.956 → 0.927 | 0.893 → 0.891 | +0.029 | +0.002 | 93% |
 
 For reference only: an L2 logistic regression with C chosen by cross-validation on train has TEST
-AUC 0.919 [0.841, 0.978] on this split (`results/thesis/baselines.json`).
+AUC 0.919 [0.841, 0.978] on this split (`experiments/references/results/baselines.json`).
 
 Counts over all networks:
 

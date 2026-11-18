@@ -75,7 +75,7 @@ CARD = {
     ],
     "sources": [
         "experiments/survival/cox_case/REFERENCE.md (5b2995d), reference_explanation.py, reference_explanation.json, figures/ref_*.png",
-        "Export: thesis_exports/ch7/ch7_cox_reference_table.tex",
+        "Export: thesis/ch7/exports/ch7_cox_reference_table.tex",
         "No database. Branch exp/cox-reference-explanation (merged)",
     ],
     "thesis_note": "Experiment 1, beside the Cox case (1.3). Also the template for Chapter 8: the network against the published PREDICT equation on VARIANZ (side-by-side per clinical unit, a flexible reference read by PD and H², the gap attributed one capability at a time).",

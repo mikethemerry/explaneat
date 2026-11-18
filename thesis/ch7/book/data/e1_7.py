@@ -91,5 +91,5 @@ CARD = {
         "DB: explaneat_dev; datasets shape_syn_37095 (b4d7be76), shape_syn_818e0 (3e662ee6), shape_syn_90c30 (519c1f60); experiments shape-{A,B,C}-s0..s4, shape-C-s{n}-g300, shape-C-sig-s{n}; genomes / explanations A 2aac39c4 / b5ff5e07, B 25f5830e / 4d8e6b70, C a1cbdd4a / f0f1da92; harness check shape-A-dryrun-s0",
         "Export: the three synthetic rows of ch7_experiment1_cases.tex",
     ],
-    "thesis_note": "Experiment 1, known-truth cases (three rows of `ch7_experiment1_cases.tex`). The figures `figures/shape-{A,B,C}-{sodium,saddle}.png` are not exported to `thesis_exports`. The §11 (longer runs) and §12 (sigmoid hidden units) additions postdate the manifest's 1.7 entry. The 3.9 very-long-runs study reuses shape-C. Not signed off.",
+    "thesis_note": "Experiment 1, known-truth cases (three rows of `ch7_experiment1_cases.tex`). The figures `figures/shape-{A,B,C}-{sodium,saddle}.png` are not exported to `thesis/ch7/exports`. The §11 (longer runs) and §12 (sigmoid hidden units) additions postdate the manifest's 1.7 entry. The 3.9 very-long-runs study reuses shape-C. Not signed off.",
 }

@@ -1,6 +1,6 @@
 GLOSSARY = [
     ["PropNEAT", "NEAT (NeuroEvolution of Augmenting Topologies) with backpropagation: evolution searches the topology, and each generation the genomes' weights are trained by gradient descent (a set number of backprop epochs per generation).", "project developer guide (repo root) (project overview, `backproppop.py`)"],
-    ["Best-by-train selection", "The genome reported for a run is the one with the best training fitness over the run; the test split is never used to select (only logged).", "THESIS_EXPERIMENTS.md (1.2, 1.7); experiments/mnist/README.md"],
+    ["Best-by-train selection", "The genome reported for a run is the one with the best training fitness over the run; the test split is never used to select (only logged).", "thesis/notes/THESIS_EXPERIMENTS.md (1.2, 1.7); experiments/mnist/README.md"],
     ["Support", "The points the model was trained on. Equivalence between models is only ever established there.", "docs/signals-and-realisations/README.md §2"],
     ["Signal", "A function of the inputs that the model uses, identified on the support; in practice, the contribution of one leaf annotation. In the proposition: a component f_S of the Bayes predictor's functional ANOVA decomposition with strength ‖f_S‖² > 0.", "docs/signals-and-realisations/README.md §2, §3a"],
     ["Realisation", "A subgraph, with its weights and activation function, that computes a signal. Two realisations of the same signal agree on the support and can disagree between and beyond the training points.", "docs/signals-and-realisations/README.md §2"],
@@ -33,5 +33,5 @@ GLOSSARY = [
     ["Strict mode", "Explanation integrity on: bare typed numbers and \"exact\" formulas that do not reproduce are refused when written.", "project developer guide (repo root) (MCP server)"],
     ["Rashomon set", "The ε-Rashomon set R(ε) = { g : L(g) ≤ L* + ε }. Thesis convention: within the PropNEAT class, relative to the best observed seed, ε = 0.01 in test AUC.", "docs/signals-and-realisations/README.md §3, §3a"],
     ["Mandatory / optional signal", "Under the proposition, a signal stronger than ε must be realised by every member of R(ε); weaker ones may be dropped.", "docs/signals-and-realisations/README.md §3a"],
-    ["Signoff-v1", "The protocol by which Mike verifies a v4 record and records `mike_verification` (a PREREG amendment of 11 Nov); a protocol name, not a git tag.", "THESIS_EXPERIMENTS.md §2.4"],
+    ["Signoff-v1", "The protocol by which Mike verifies a v4 record and records `mike_verification` (a PREREG amendment of 11 Nov); a protocol name, not a git tag.", "thesis/notes/THESIS_EXPERIMENTS.md §2.4"],
 ]

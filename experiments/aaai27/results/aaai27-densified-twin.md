@@ -1,7 +1,7 @@
 # AAAI-27 — densified twin of the Adult paper model (Section 5.5)
 
 Generated 2026-07-14 on branch `analysis/aaai27-paper-results` (off `main`).
-Script: `scripts/aaai27/run_c2_densified_twin.py`. Seed 42, stored split only,
+Script: `experiments/aaai27/run_c2_densified_twin.py`. Seed 42, stored split only,
 paper genome not modified.
 
 ## Paper sentence (filled)
@@ -45,7 +45,7 @@ Node depths from `NeuralNeat.node_mapping` (longest-path layering):
 
 ### ⚠ Path-length wording — needs a single metric across all three models
 
-Verified with `scripts/aaai27/verify_path_lengths.py`. Metric stated once:
+Verified with `experiments/aaai27/verify_path_lengths.py`. Metric stated once:
 **max edges (hops) on a directed input→output path in the evolved phenotype**.
 The three models' claims were **not** computed consistently:
 

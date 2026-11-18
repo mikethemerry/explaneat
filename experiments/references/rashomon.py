@@ -6,15 +6,15 @@ References per dataset:
   (ii)  logistic regression on the same split (paper protocol; churn from
         experiments/churn/baselines.json as the reported value);
   (iii) gradient boosting on the same split (HistGradientBoosting, CV-tuned on
-        train only; results/thesis/baselines.json).
+        train only; experiments/references/results/baselines.json).
 eps in {0.005, 0.01, 0.02}.
 
 Inputs: runs CSVs (per-seed best genome test AUC, unchanged), baselines.json,
 rashomon_population.csv (final-generation genomes).
 Outputs: rashomon_seeds.csv, rashomon_counts.csv, rashomon_population_summary.csv,
-rashomon_summary.json (all under results/thesis/).
+rashomon_summary.json (all under experiments/references/results/).
 
-Run: uv run python scripts/thesis/rashomon.py
+Run: uv run python experiments/references/rashomon.py
 """
 import csv
 import json
@@ -23,7 +23,7 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-RES = ROOT / "results" / "thesis"
+RES = ROOT / "experiments" / "references" / "results"
 EPS = [0.005, 0.01, 0.02]
 
 RUN_SETS = [  # (run_set, csv, dataset filter, baseline key, label)

@@ -50,7 +50,7 @@ Notes for the caption or text:
 Dashed: the paper's L2 logistic-regression test AUC on the same split (Heart 0.919, MONK-2
 0.423, Adult 0.905). Dotted (Adult only): gradient boosting ≈ 0.930. This value comes from a
 PMLB 80:20 screen on a comparable encoding, **not the paper split**, so it is approximate
-(`results/10seed-consistency.md` §7). No GBM baseline on the paper split is available for
+(`experiments/10seed/RESULTS.md` §7). No GBM baseline on the paper split is available for
 Heart or MONK-2. Heart's test set has n = 61, hence the wide CIs.
 
 **Draft caption (supp):** As the test-AUC figure, for the additional analyses (not

@@ -1,4 +1,4 @@
-"""Task 3 (THESIS_FINAL_WORK.md): recompute the AAAI paper's whole-model
+"""Task 3 (thesis/notes/THESIS_FINAL_WORK.md): recompute the AAAI paper's whole-model
 evidence and SHAP numbers with the current code.
 
 Two fixes landed after the paper:
@@ -16,12 +16,12 @@ Read-only: genomes and explanations are loaded from the DB; ablations disable
 connections on in-memory copies only.
 
 Usage (PYTHONHASHSEED=0, one torch thread):
-  uv run python scripts/thesis/paper_recompute.py core          # performance, ablations, activations, MONK-2 exhaustive, capgain
-  uv run python scripts/thesis/paper_recompute.py shap heart    # SHAP old+new (cheap)
-  uv run python scripts/thesis/paper_recompute.py shap monk2
-  uv run python scripts/thesis/paper_recompute.py shap adult    # SHAP new only (slow: run once, in background)
-  uv run python scripts/thesis/paper_recompute.py figures       # SHAP bar charts from the saved JSON
-Outputs under results/thesis/paper_recompute/.
+  uv run python experiments/aaai27/recheck/paper_recompute.py core          # performance, ablations, activations, MONK-2 exhaustive, capgain
+  uv run python experiments/aaai27/recheck/paper_recompute.py shap heart    # SHAP old+new (cheap)
+  uv run python experiments/aaai27/recheck/paper_recompute.py shap monk2
+  uv run python experiments/aaai27/recheck/paper_recompute.py shap adult    # SHAP new only (slow: run once, in background)
+  uv run python experiments/aaai27/recheck/paper_recompute.py figures       # SHAP bar charts from the saved JSON
+Outputs under experiments/aaai27/recheck/results/paper_recompute/.
 """
 import copy
 import json
@@ -36,7 +36,7 @@ import torch
 
 torch.set_num_threads(1)
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
 
@@ -51,7 +51,7 @@ from explaneat.db import db  # noqa: E402
 from explaneat.db.models import Dataset, DatasetSplit, Explanation, Genome  # noqa: E402
 from mcp_server.helpers import load_split_data  # noqa: E402
 
-OUT = ROOT / "results" / "thesis" / "paper_recompute"
+OUT = ROOT / "experiments" / "aaai27" / "recheck" / "results" / "paper_recompute"
 SEED = 42
 N_BOOT = 10_000
 SHAP_MAX_SAMPLES = 200  # MCP compute_shap default, used for the paper's SHAP
@@ -65,7 +65,7 @@ PAPER = {
               "explanation_id": "d6ff7ca0-6806-45b6-b397-592a2518230e"},
 }
 
-# Ablation edge sets, as in scripts/aaai27/run_b_ablations.py
+# Ablation edge sets, as in experiments/aaai27/run_b_ablations.py
 ADULT_EDGES = [(-73, 655), (-81, 655), (-82, 655), (-89, 2129), (-94, 2129)]
 HEART_CONFIGS = [
     ("linear core only", [(155, 0), (534, 0), (2379, 0)], 0.860),

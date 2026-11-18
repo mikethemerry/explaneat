@@ -5,7 +5,7 @@ split only (roc_auc scoring), on the same one-hot features and z-normalisation
 as the paper models (the split's stored StandardScaler). Reports test AUC-ROC
 (3dp) with a 95% percentile bootstrap CI (10,000 resamples, seed 42).
 
-Run: uv run python scripts/aaai27/run_a_logistic.py
+Run: uv run python experiments/aaai27/run_a_logistic.py
 """
 import sys
 

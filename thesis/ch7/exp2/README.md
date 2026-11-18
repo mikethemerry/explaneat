@@ -7,9 +7,9 @@ generations; frozen v4 explanations, all 30 verified by Mike). Every number is c
 ## Regenerate
 
 ```
-uv run python experiments/exp2_thesis/make_assets.py            # reuses the data/ caches
-uv run python experiments/exp2_thesis/make_assets.py --refresh  # also recomputes them (read-only, explaneat_v4)
-cd experiments/exp2_thesis && latexmk -pdf preview.tex && latexmk -c
+uv run python thesis/ch7/exp2/make_assets.py            # reuses the data/ caches
+uv run python thesis/ch7/exp2/make_assets.py --refresh  # also recomputes them (read-only, explaneat_v4)
+cd thesis/ch7/exp2 && latexmk -pdf preview.tex && latexmk -c
 ```
 
 `extract_db.py` writes the five caches in `data/` that need the networks themselves. Every session
@@ -34,8 +34,8 @@ text width, so `width=\textwidth` keeps the font at about 8.5 pt. Colours are Ok
 
 | file | label | content | sources |
 |---|---|---|---|
-| exp2-headline | tab:exp2-headline | per study: test AUC median (range), LR / GB, seeds within 0.01 of the best, hidden units, full coverage, recheck, agent minutes, Mike-verified and his minutes | `experiments/ch7_book/e2_stats.py` (run on this checkout), runs CSVs, v4 CSVs and records, `results/thesis/rashomon_summary.json` |
-| exp2-heart-benchmark | tab:exp2-heart-benchmark | Heart on the paper split: the paper network, Heart-100 best / median / mean prediction, eight comparators, 95% intervals | `results/thesis/baselines.json`, `results/thesis/heart_benchmark/bench.json`, `runs_heart100.csv`, `data/paper_net.json`, `data/agreement.json` |
+| exp2-headline | tab:exp2-headline | per study: test AUC median (range), LR / GB, seeds within 0.01 of the best, hidden units, full coverage, recheck, agent minutes, Mike-verified and his minutes | `thesis/ch7/book/e2_stats.py` (run on this checkout), runs CSVs, v4 CSVs and records, `experiments/references/results/rashomon_summary.json` |
+| exp2-heart-benchmark | tab:exp2-heart-benchmark | Heart on the paper split: the paper network, Heart-100 best / median / mean prediction, eight comparators, 95% intervals | `experiments/references/results/baselines.json`, `experiments/references/heart_benchmark/bench.json`, `runs_heart100.csv`, `data/paper_net.json`, `data/agreement.json` |
 | exp2-heart-audit | tab:exp2-heart-audit | (a) full vs linearised AUC, train and test; (b) counts of non-linear units / parts | `experiments/heart100_audit/networks.csv`, `features.csv` |
 | exp2-heart-families | tab:exp2-heart-families | thal (with ST depression), thal x age, BP, exang, age: seeds, direction, train vs test gain | `experiments/heart100_audit/features.csv` (unit rows) |
 | exp2-linear-core | tab:exp2-linear-core | linear core across seeds: sign agreement, average effect and spread, LR | `experiments/heart100_audit/linear_core.csv` |

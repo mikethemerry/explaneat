@@ -14,9 +14,9 @@ script and the API resume route crash with:
 attached, so `species.reporters` is None. This is a pre-existing core bug (it
 also affects resuming the paper's interrupted experiments), out of scope for
 this analysis task. Until it is fixed, use a fresh full run instead
-(scripts/aaai27/ingest_monk2.py) rather than resume.
+(experiments/aaai27/ingest_monk2.py) rather than resume.
 
-Run: uv run python scripts/aaai27/resume_monk2.py
+Run: uv run python experiments/aaai27/resume_monk2.py
 """
 import sys
 import uuid

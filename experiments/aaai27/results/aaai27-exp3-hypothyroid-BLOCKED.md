@@ -31,7 +31,7 @@ Ready to pin (source_url, version, ingestion date) exactly as monk2 was.
 
 ## 3. Four structural facts that differ from the task's expectations
 
-Verified against the actual PMLB data (`scripts/aaai27/inspect_hypothyroid.py`):
+Verified against the actual PMLB data (`experiments/aaai27/inspect_hypothyroid.py`):
 
 1. **`referral_source` is ABSENT.** The task said "check and record either way."
    Recorded: this PMLB version does **not** retain `referral_source`. So the

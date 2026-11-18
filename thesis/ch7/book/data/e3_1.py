@@ -10,7 +10,7 @@ CARD = {
     "headline": "Under squared loss and an orthogonal decomposition, L(g) − L* = Σ_S ‖g_S − f_S‖²: membership is a budget over signals; signals stronger than ε are mandatory; spurious structure is bounded by ε",
     "question": "The ten-seed runs give different networks that predict about equally well. Can we say precisely what every good-enough model must contain, and how much made-up structure it is allowed to carry?",
     "design": [
-        ["Data and splits", "None of its own: a theoretical result. It cites numbers from the 10-seed study, `results/thesis/rashomon.md`, the churn extensions and the Connect-4 line-features study."],
+        ["Data and splits", "None of its own: a theoretical result. It cites numbers from the 10-seed study, `experiments/references/results/rashomon.md`, the churn extensions and the Connect-4 line-features study."],
         ["Models and config", "Any model class F; the Bayes predictor f* is decomposed by functional ANOVA (Hoeffding for independent inputs, Hooker's generalised version for dependent ones), with data-weighted norms on the support."],
         ["Selection rule", "Not applicable. The thesis convention for the Rashomon set itself (decision D6, Mike, 7 Nov): within the PropNEAT class, relative to the **best observed seed**, at **ε = 0.01** in test AUC; LR and gradient boosting as external context."],
         ["Explanation and verifier", "Not applicable. Proof sketch given in the document; no script."],
@@ -21,7 +21,7 @@ CARD = {
     "results": [
         {
             "caption": "Measured Rashomon set (ε = 0.01, best observed seed), as cited in §3",
-            "source": "docs/signals-and-realisations/README.md §3 (from results/thesis/rashomon.md)",
+            "source": "docs/signals-and-realisations/README.md §3 (from experiments/references/results/rashomon.md)",
             "headers": ["Dataset", "Best seed (test AUC)", "Seeds inside at ε = 0.01", "Gradient boosting, same split", "Seeds within 0.01 of gradient boosting"],
             "rows": [
                 ["Heart", "0.912", "1 / 10", "0.945 (n_test = 61, noisy)", "0 / 10"],
@@ -61,8 +61,8 @@ CARD = {
     "sources": [
         "docs/signals-and-realisations/README.md §3, §3a, §5 (§3a added in 3ff68d3; last touched 7bcc7ac)",
         "docs/signals-and-realisations/index.html (figure sheet; 3D plots load plotly from a CDN)",
-        "results/thesis/rashomon.md (dda4aa1) for the §3 table",
-        "THESIS_EXPERIMENTS.md §3.1",
+        "experiments/references/results/rashomon.md (dda4aa1) for the §3 table",
+        "thesis/notes/THESIS_EXPERIMENTS.md §3.1",
     ],
     "thesis_note": "Placement per the draft: a discussion result in Chapter 7, with the open items (exact cross-entropy and Cox versions, finite-sample version, a definition of understandable bases, a learned convolutional basis with template leaves, measuring ‖f_S‖² directly) as further work in Chapter 9. The §3 Rashomon table and the \"about 90% reproducible\" figure are numbers already reported by Mike: do not change. The README uses the assistant's product name at lines 20, 58 and 236; thesis text should say \"assisted\". Citation checks in Mendeley are Mike's task. Thesis-facing text should use descriptive names, not study letters (C2, D2, E).",
 }

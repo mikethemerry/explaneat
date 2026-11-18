@@ -4,12 +4,12 @@ Status as of 2026-11-06. Claude-explained results are complete for all 30 pre-re
 networks, the 10 additional Heart-100 networks and the 20 churn networks (§8). **None has been verified by Mike yet.**
 Mike-verified counts are reported separately below and are currently 0.
 
-- Pre-registration and its dated amendments: [`experiments/10seed/PREREG.md`](../experiments/10seed/PREREG.md)
+- Pre-registration and its dated amendments: [`experiments/10seed/PREREG.md`](PREREG.md)
 - Per-run metrics: `experiments/10seed/runs.csv`, `runs_heart100.csv`, `runs_paper_reference.csv`
 - Per-explanation records: `experiments/10seed/explanations.csv`, `explanations_heart100.csv`,
   and `experiments/10seed/explanations/<label>.json`. Each record holds the agent's report plus an
   independent `verified_by_orchestrator` block.
-- Explanation protocol: [`experiments/10seed/EXPLAIN_PROTOCOL.md`](../experiments/10seed/EXPLAIN_PROTOCOL.md)
+- Explanation protocol: [`experiments/10seed/EXPLAIN_PROTOCOL.md`](EXPLAIN_PROTOCOL.md)
 - Incidents (crashes, pause, throttling): `experiments/10seed/RUN_INCIDENTS.md`
 - Code: branch `exp/10seed-consistency`.
 

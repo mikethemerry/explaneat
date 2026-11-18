@@ -105,6 +105,9 @@ explaneat = ["static/react_explorer/**/*"]
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+# legacy/ holds old root-level scripts and ad-hoc test_*.py files (not a test suite);
+# thesis/ is write-up. Neither is collected even when pytest is given the repo root.
+norecursedirs = [".*", "*.egg", "build", "dist", "node_modules", "venv", "legacy", "thesis"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]

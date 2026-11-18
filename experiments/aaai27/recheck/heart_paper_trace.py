@@ -1,7 +1,7 @@
 """Task 4: independent, read-only trace of the Heart paper genome.
 
-Run: PYTHONHASHSEED=0 uv run python scripts/thesis/heart_paper_trace.py
-Writes results/thesis/heart_paper_genome.json
+Run: PYTHONHASHSEED=0 uv run python experiments/aaai27/recheck/heart_paper_trace.py
+Writes experiments/aaai27/recheck/results/heart_paper_genome.json
 """
 import json
 import sys
@@ -9,7 +9,7 @@ import uuid
 from collections import Counter
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
 from explaneat.db import db  # noqa: E402
@@ -46,7 +46,7 @@ def main():
                               "created": str(e.created_at), "updated": str(e.updated_at),
                               "annotations": [o["params"]["name"] for o in e.operations
                                               if o["type"] == "annotate"]} for e in ex]
-    out = ROOT / "results" / "thesis" / "heart_paper_genome.json"
+    out = ROOT / "experiments" / "aaai27" / "recheck" / "results" / "heart_paper_genome.json"
     out.write_text(json.dumps(r, indent=2, default=str))
     print(json.dumps(r, indent=2, default=str))
 

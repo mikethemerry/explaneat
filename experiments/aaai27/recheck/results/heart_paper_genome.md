@@ -3,9 +3,9 @@
 Written 7 Nov 2026 on branch `thesis/numbers`. Read-only: nothing in the database was changed.
 
 Scripts:
-- `scripts/thesis/heart_paper_trace.py` → `heart_paper_genome.json`
-- `scripts/thesis/heart_formula_check.py` → `heart_formula_check.json`
-- `scripts/thesis/paper_recompute.py core` → `paper_recompute/core.json`, for performance, ablations and activation fractions
+- `experiments/aaai27/recheck/heart_paper_trace.py` → `heart_paper_genome.json`
+- `experiments/aaai27/recheck/heart_formula_check.py` → `heart_formula_check.json`
+- `experiments/aaai27/recheck/paper_recompute.py core` → `paper_recompute/core.json`, for performance, ablations and activation fractions
 
 ## Verdict
 

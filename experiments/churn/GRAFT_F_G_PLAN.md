@@ -116,7 +116,7 @@ So 120 cases (60 recipients × 2 arms), unless a recipient has fewer than 2 graf
 **Recipients.** The 10seed MONK-2 runs (`experiments/10seed/runs.csv`, experiments
 `10seed-monk2-s<seed>`, split `63257a45`): the seeds whose best genome has train AUC < 1.0.
 From `runs.csv` these are s0, s2, s3, s4, s6, s8, s9 (7 seeds); s1, s5 and s7 learned the
-rule (train AUC 1.0, test about 1.0; `results/10seed-consistency.md`, `rule_agreement` in
+rule (train AUC 1.0, test about 1.0; `experiments/10seed/RESULTS.md`, `rule_agreement` in
 `explanations.csv`).
 
 **Donors.** Leaf annotations of the correct seeds' explanations (`Explanation` rows of the

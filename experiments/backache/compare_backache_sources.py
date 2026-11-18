@@ -6,6 +6,7 @@ Parses the OCR text, loads the PMLB CSV, and reports all discrepancies.
 """
 
 import csv
+import os
 import re
 import sys
 
@@ -445,7 +446,7 @@ def main():
     ocr_records, ocr_issues = parse_ocr_lines()
     print(f"\nParsed {len(ocr_records)} records from OCR text")
 
-    pmlb_records = load_pmlb('/Users/mike/dev/explaneat/scripts/backache_pmlb.csv')
+    pmlb_records = load_pmlb(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'backache_pmlb.csv'))
     print(f"Loaded {len(pmlb_records)} records from PMLB")
 
     print(f"\nRecords with OCR artefacts (unreliable comparison): {len(ocr_issues)}")

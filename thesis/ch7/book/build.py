@@ -4,7 +4,7 @@ Reads the card data in data/*.py (one CARD per experiment, plus the cross-cuttin
 xc_*.py files) and the figures in figs/, and writes one self-contained HTML page.
 Run: python3 build.py
 
-Rebuilding from scratch (source kept in the repo at experiments/ch7_book/):
+Rebuilding from scratch (source kept in the repo at thesis/ch7/book/):
   1. python3 extract.py <checkout>   -> xdata/   (drawer data; reads explaneat_v4 / explaneat_dev read only; not committed, ~35 MB)
   2. python3 graphs.py               -> graphs/  (drawer graphs; not committed)
   3. python3 e2_stats.py <repo root> > e2_stats.json   (Experiment 2 numbers from the run CSVs and v4 records)
@@ -58,9 +58,9 @@ OPEN_ITEMS = [
     ("Mike's verification pass (signoff-v1)", "0 of 10 signed off (0 of 60 carry `mike_verification`). About 16 min per genome, 163 min for the first ten.", "`experiments/10seed/review/`, pack PDF; Experiment 2"),
     ("v4 swap into `summary.md`", "Whether `summary.md`, `ch7_table.tex` and the figures switch from the reported protocol-v3 numbers to the v4 re-run. Mike's decision; then `make_figures.py` on the v4 CSVs and recopy, about 1 h.", "`experiments/10seed/V4_RUN.md` line 4; Experiment 2"),
     ("Rig run (ExConNEAT)", "RIG_NOTE", "`experiments/conv_neat/rig/` on `conv-neat-prototype`; Experiment 4"),
-    ("Citations", "`*(check ... in Mendeley)*` markers remain in `docs/signals-and-realisations/README.md` §3; Mike checks them in Mendeley.", "`THESIS_FINAL_WORK.md`, Mike's own tasks"),
+    ("Citations", "`*(check ... in Mendeley)*` markers remain in `docs/signals-and-realisations/README.md` §3; Mike checks them in Mendeley.", "`thesis/notes/THESIS_FINAL_WORK.md`, Mike's own tasks"),
     ("ExConNEAT decomposition merge", "The ExConNEAT branches are not on main: `conv-neat-decomposition` (`3f6cbab`, ExplaNEAT graph decomposition for conv graphs) builds on `conv-neat-prototype` (`ab97c4c`); `conv-neat-3v8noise` (`fdf14fa`) is separate. Review and merge before the thesis cites Experiment 4.", "worktrees `conv-decomp`, `conv-neat`, `conv-3v8n`"),
-    ("Other open items", "Probe v2 is on main for the ten-seed, ladder and Connect-4 sets, but the AAAI paper explanations are still probe v1; ladder round 2 (`exp/explanation-barrier-2`) is unmerged; the authoring-v4 adjudication spot check (about 30 min); the F/G banner line in `EXTENSIONS_RESULTS.md` (one-line edit).", "`THESIS_EXPERIMENTS.md` gaps table"),
+    ("Other open items", "Probe v2 is on main for the ten-seed, ladder and Connect-4 sets, but the AAAI paper explanations are still probe v1; ladder round 2 (`exp/explanation-barrier-2`) is unmerged; the authoring-v4 adjudication spot check (about 30 min); the F/G banner line in `EXTENSIONS_RESULTS.md` (one-line edit).", "`thesis/notes/THESIS_EXPERIMENTS.md` gaps table"),
 ]
 
 
@@ -301,7 +301,7 @@ def main():
     oi = [(a, b.replace("RIG_NOTE", rig_note), c) for a, b, c in OPEN_ITEMS]
     ov.append('<section id="open" class="block"><h2>Open items needing Mike</h2>' +
               table(["Item", "What is open, and the cost", "Where"], oi) +
-              '<p class="small">From <code>THESIS_EXPERIMENTS.md</code> ("Gaps and interim items", origin/main) and the ExConNEAT branches.</p></section>')
+              '<p class="small">From <code>thesis/notes/THESIS_EXPERIMENTS.md</code> ("Gaps and interim items", origin/main) and the ExConNEAT branches.</p></section>')
 
     # ---------- experiments ----------
     def case_block(c):
@@ -442,7 +442,7 @@ def main():
 <header class="top">
   <p class="kicker">Chapter 7: four experiments, Methods, Results, Discussion</p>
   <h1>Chapter 7 Experiment Book</h1>
-  <p class="byline">Compiled 17 Nov 2026 from <code>origin/main</code> at <code>{MAIN_SHA}</code> (manifest <code>THESIS_EXPERIMENTS.md</code>) and, for Experiment 4, the local ExConNEAT branches <code>conv-neat-prototype</code>, <code>conv-neat-decomposition</code> and <code>conv-neat-3v8noise</code> (not on main). Experiment 2 rebuilt 18 Nov 2026 from branch <code>exp/10seed-consistency</code> at <code>{E2_SHA}</code>. Results freeze 19 Nov 2026.</p>
+  <p class="byline">Compiled 17 Nov 2026 from <code>origin/main</code> at <code>{MAIN_SHA}</code> (manifest <code>thesis/notes/THESIS_EXPERIMENTS.md</code>) and, for Experiment 4, the local ExConNEAT branches <code>conv-neat-prototype</code>, <code>conv-neat-decomposition</code> and <code>conv-neat-3v8noise</code> (not on main). Experiment 2 rebuilt 18 Nov 2026 from branch <code>exp/10seed-consistency</code> at <code>{E2_SHA}</code>. Results freeze 19 Nov 2026.</p>
 </header>
 {"".join(ov)}
 {"".join(body)}

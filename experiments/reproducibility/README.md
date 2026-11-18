@@ -37,7 +37,7 @@ evaluation are included as `data.npz` so no download is needed to verify.
 ## Reproduce the numbers (no DB)
 
 ```bash
-uv run python reproducibility/load.py adult   # or heart / monk2
+uv run python experiments/reproducibility/load.py adult   # or heart / monk2
 ```
 
 `load.py` rebuilds the network with the repo's phenotype/NeuralNeat builder from

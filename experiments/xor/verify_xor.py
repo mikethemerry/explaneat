@@ -11,7 +11,7 @@ Margin convention: a network "solves XOR with margin m" if t_r z_r >= m on all f
 "Solves XOR" without a margin means strict sign (m -> 0+). The LP checks use m = 1, as the
 LP enumeration in run_xor.py does.
 
-Claims checked (labels as in THESIS_FINAL_WORK.md task 2):
+Claims checked (labels as in thesis/notes/THESIS_FINAL_WORK.md task 2):
   (a) interaction criterion: solvable iff I = h00 + h11 - h10 - h01 != 0, with
       u I <= -4m (u opposite in sign to I, |u| >= 4m/|I|); by LP and by random sampling
   (b) ReLU: sign(I) = sign(w1 w2) whenever the unit is non-degenerate on the four rows

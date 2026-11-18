@@ -4,7 +4,7 @@ import json
 
 from common import *
 
-ops = json.load(open(REPO / "reproducibility/heart/operations.json"))
+ops = json.load(open(REPO / "experiments/reproducibility/heart/operations.json"))
 ops = ops if isinstance(ops, list) else ops.get("operations", ops)
 vm = load(None, genome_id="9022a9eb-ecf9-41ba-b138-28ed4d131c9d", ops=ops)
 sets = {"train": rows(vm, "train"), "test": rows(vm, "test"), "train+test ('both')": rows(vm, "both"),

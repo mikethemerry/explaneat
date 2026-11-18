@@ -41,7 +41,7 @@ EXP = {
                              "needs-review item is either fixed or answered in the record."],
         ["Test AUC", "Of each seed's best network on the test rows, with a 95% interval from 10,000 bootstrap resamples "
                      "(seed 42)."],
-        ["References", "Fitted on the same split with the same features (`results/thesis/rashomon.md`). LR: L2 logistic "
+        ["References", "Fitted on the same split with the same features (`experiments/references/results/rashomon.md`). LR: L2 logistic "
                        "regression, C chosen by 5-fold CV on train (the paper's protocol). GB: `HistGradientBoostingClassifier`, "
                        "48 settings tuned by 5-fold CV on train, refit on all of train. Heart-100 shares Heart's split and so "
                        "its references."],
@@ -61,7 +61,7 @@ EXP = {
                  "Accuracy is close across seeds on Adult and spreads more on Churn and Heart-100.",
          "tables": [{
              "caption": "Table 2.1. Ten seeds per study", "cls": "data e2head",
-             "source": "runs.csv (adult rows), runs_heart100.csv, churn/runs_churn100.csv; the v4 CSVs and records; results/thesis/rashomon.md",
+             "source": "runs.csv (adult rows), runs_heart100.csv, churn/runs_churn100.csv; the v4 CSVs and records; experiments/references/results/rashomon.md",
              "headers": ["Study", "Test AUC, median (range)", "LR / GB", "Within 0.01 of the best seed",
                          "Hidden units, median (range)", "Explained to full coverage", "Recheck complete",
                          "Explaining minutes, median (range)",
@@ -76,7 +76,7 @@ EXP = {
          }],
          "html": lambda: (
              '<figure class="result"><figcaption><span class="cap">Figure 2.1. Test AUC of each seed\'s network, with its 95% interval</span>'
-             '<span class="src">runs CSVs; references from results/thesis/rashomon.md</span></figcaption>'
+             '<span class="src">runs CSVs; references from experiments/references/results/rashomon.md</span></figcaption>'
              + e2figs.fig_auc() +
              '<p class="tnote">Shaded: within 0.01 of the best seed. Dashed: logistic regression (LR). Dotted: tuned gradient '
              'boosting (GB). Hover a seed for its numbers.</p></figure>'
@@ -125,7 +125,7 @@ EXP = {
         "experiments/10seed/runs.csv (adult rows), runs_heart100.csv, experiments/churn/runs_churn100.csv",
         "experiments/10seed/explanations_v4.csv (adult rows), explanations_heart100_v4.csv, experiments/churn/explanations_churn100_v4.csv, explanations_v4/<label>.json (`recheck_summary`), plain_language_v4/",
         "experiments/10seed/V4_RUN.md, PROMPTS_V4.md, PREREG.md, RUN_INCIDENTS.md; tag `methodology-v4-freeze-2026-11-11`",
-        "results/thesis/rashomon.md and rashomon_counts.csv (references and near-best counts); experiments/churn/baselines.json",
-        "Recomputed by `e2_stats.py` in this book's source (`experiments/ch7_book/`).",
+        "experiments/references/results/rashomon.md and rashomon_counts.csv (references and near-best counts); experiments/churn/baselines.json",
+        "Recomputed by `e2_stats.py` in this book's source (`thesis/ch7/book/`).",
     ],
 }

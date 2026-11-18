@@ -2,9 +2,9 @@
 
 Read-only: fetches the PMLB dataset and reports the facts that determine
 ingestion decisions. Does NOT write to the database — hypothyroid ingestion is
-blocked on the truncated task spec (see results/aaai27-exp3-hypothyroid-BLOCKED.md).
+blocked on the truncated task spec (see experiments/aaai27/results/aaai27-exp3-hypothyroid-BLOCKED.md).
 
-Run: uv run python scripts/aaai27/inspect_hypothyroid.py
+Run: uv run python experiments/aaai27/inspect_hypothyroid.py
 """
 import pmlb
 import numpy as np
@@ -47,7 +47,7 @@ def main():
               f"sentinel@unmeasured={sentinel}{extra}")
 
     print()
-    print("See results/aaai27-exp3-hypothyroid-BLOCKED.md for the decisions needed.")
+    print("See experiments/aaai27/results/aaai27-exp3-hypothyroid-BLOCKED.md for the decisions needed.")
 
 
 if __name__ == "__main__":

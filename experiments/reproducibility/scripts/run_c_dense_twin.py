@@ -12,7 +12,7 @@ that unit's max |w|. Reports mean/median/min effective fan-in and the mean %
 of inputs per unit above the threshold. Evolved-network comparator: hidden
 units receive 2-6 inputs.
 
-Run: uv run python scripts/aaai27/run_c_dense_twin.py
+Run: uv run python experiments/aaai27/run_c_dense_twin.py
 """
 import sys
 

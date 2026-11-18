@@ -79,5 +79,5 @@ CARD = {
         "DB explaneat_dev: experiments 29c762ec (gbsg2, genome e4c62516), 8d424f4c (whas500, genome f96ebc8d)",
         "Branch exp/cox-case (merged)",
     ],
-    "thesis_note": "Experiment 1, rows 5–6 of `ch7_experiment1_cases.tex`; `thesis_exports/ch7/ch7_cox_case_table.tex` (regenerates byte-identical). No figures. Plain-language draft can be added (~30 min per dataset) once the survival-aware template lands on `fix/varianz-readiness`. Pairs with 1.3a (the reference explanation).",
+    "thesis_note": "Experiment 1, rows 5–6 of `ch7_experiment1_cases.tex`; `thesis/ch7/exports/ch7_cox_case_table.tex` (regenerates byte-identical). No figures. Plain-language draft can be added (~30 min per dataset) once the survival-aware template lands on `fix/varianz-readiness`. Pairs with 1.3a (the reference explanation).",
 }

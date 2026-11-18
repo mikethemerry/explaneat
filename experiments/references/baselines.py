@@ -1,7 +1,7 @@
 """Task 6 references (ii) and (iii): logistic regression and gradient boosting
 fitted on the SAME train/test split each PropNEAT run used.
 
-- LR: the paper's protocol (scripts/aaai27/run_a_logistic.py): L2
+- LR: the paper's protocol (experiments/aaai27/run_a_logistic.py): L2
   LogisticRegression, C chosen by 5-fold CV on the train split only
   (roc_auc), lbfgs, max_iter 5000, random_state 42.
 - GB: sklearn HistGradientBoostingClassifier, random_state 0, no early
@@ -11,8 +11,8 @@ fitted on the SAME train/test split each PropNEAT run used.
 - Same z-normalised features as the networks (the split's stored scaler).
   n_jobs=1 throughout (CPU budget).
 
-Run: PYTHONHASHSEED=0 uv run python scripts/thesis/baselines.py
-Writes results/thesis/baselines.json
+Run: PYTHONHASHSEED=0 uv run python experiments/references/baselines.py
+Writes experiments/references/results/baselines.json
 """
 import json
 import sys
@@ -62,7 +62,7 @@ def boot_ci(y, p, n=10_000, seed=SEED):
 def main():
     out = {"protocol": __doc__, "grid_gb": GRID, "grid_lr_C": C_GRID}
     only = sys.argv[1:] or list(SPLITS)
-    path = ROOT / "results" / "thesis" / "baselines.json"
+    path = ROOT / "experiments" / "references" / "results" / "baselines.json"
     if path.exists():
         out.update({k: v for k, v in json.loads(path.read_text()).items() if k in SPLITS})
     for name in only:

@@ -1,10 +1,10 @@
 """Summaries of the recomputed SHAP JSON for the paper-claim table (task 3).
 
-Reads results/thesis/paper_recompute/shap_{heart,adult,monk2}.json (written by
+Reads experiments/aaai27/recheck/results/paper_recompute/shap_{heart,adult,monk2}.json (written by
 paper_recompute.py) and the stored explanations (read-only) for the group
 memberships the paper's claims refer to; writes shap_summary.json.
 
-Run: PYTHONHASHSEED=0 uv run python scripts/thesis/paper_shap_summary.py
+Run: PYTHONHASHSEED=0 uv run python experiments/aaai27/recheck/paper_shap_summary.py
 """
 import json
 import sys
@@ -14,9 +14,9 @@ from pathlib import Path
 import numpy as np
 from scipy.stats import spearmanr
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
-OUT = ROOT / "results" / "thesis" / "paper_recompute"
+OUT = ROOT / "experiments" / "aaai27" / "recheck" / "results" / "paper_recompute"
 
 from explaneat.db import db  # noqa: E402
 from explaneat.db.models import Explanation  # noqa: E402
