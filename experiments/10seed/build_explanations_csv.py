@@ -19,7 +19,8 @@ C200 = [f'churn200-s{s}' for s in (1, 2, 4, 7, 9, 5, 3, 8, 0, 6)]
 
 def mike_verified(r):
     mv = r.get('mike_verification') or {}
-    return bool(mv.get('verified')) and mv.get('protocol') == 'signoff-v1'
+    # PREREG amendment 2026-11-18: record-level review (verified = true) counts; signoff-v1 optional.
+    return bool(mv.get('verified'))
 
 
 def signoff_columns(r):
@@ -53,7 +54,7 @@ def row(i, l):
                 claude_minutes=round(mins, 1),
                 # Mike's verification lives in the JSON record (key "mike_verification":
                 # {"verified": bool, "minutes": float, "changes": str, "protocol", "signoff"}) so rebuilds
-                # keep it. PREREG amendment 2026-11-11: verified_by_mike = signoff-v1 passed.
+                # keep it. PREREG amendment 2026-11-18: verified_by_mike = record-level review (verified = true).
                 verified_by_mike='yes' if mike_verified(r) else 'no',
                 mike_minutes=r.get('mike_verification', {}).get('minutes', ''),
                 mike_changes=r.get('mike_verification', {}).get('changes', ''),
