@@ -37,7 +37,7 @@ REPO = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 from verify_exp2 import (CSV_DATASET, EXPL_CSV, RUNS_CSV, STUDIES, read_csv, ro_url)  # noqa: E402
 
-PACK = Path.home() / ".explaneat/exports/verification-pack-first10-final"
+PACK = Path.home() / ".explaneat/exports/exp2-verification"  # all 30, with the feature key (2026-11-18)
 NAME = {"adult": "10seed-adult-s{s}", "heart100": "10seed-heart100-s{s}", "churn100": "churn100-s{s}"}
 
 
@@ -134,7 +134,7 @@ def main():
             if sc.exists():
                 shutil.copy2(sc, d / "lineage_parents.csv.gz")
 
-            pdfs = [PACK / label / f"{label}.pdf", PACK / label / f"{label}-plain-v5.pdf"]
+            pdfs = [PACK / label / f"{label}.pdf", PACK / label / f"{label}-plain-v5.pdf", PACK / f"{label}-review.pdf"]
             found = [p for p in pdfs if p.exists()]
             for p in found:
                 shutil.copy2(p, d / p.name)
