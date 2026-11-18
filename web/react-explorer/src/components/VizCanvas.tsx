@@ -1,6 +1,8 @@
 import { useEffect, useRef, useCallback } from "react";
 import * as Plot from "@observablehq/plot";
 import * as d3 from "d3";
+import { renderPairsPlot, type PairsData } from "./pairsPlot";
+import { useFeatureLabels, withLabel } from "../featureLabels";
 
 /** Compact tick format: avoids long decimals, uses SI suffixes for large values. */
 const compactTick = (v: number) => {
@@ -32,11 +34,14 @@ type VizCanvasProps = {
   onSvgRef?: (svg: SVGSVGElement | null) => void;
   correctness?: boolean[];
   classNames?: string[];
+  /** pixel width for the pairs plot (default: the container's width) */
+  width?: number;
 };
 
-export function VizCanvas({ vizType, data, onSvgRef, correctness, classNames }: VizCanvasProps) {
+export function VizCanvas({ vizType, data, onSvgRef, correctness, classNames, width }: VizCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const fl = useFeatureLabels();
 
   useEffect(() => {
     if (!containerRef.current || !data) return;
@@ -80,6 +85,11 @@ export function VizCanvas({ vizType, data, onSvgRef, correctness, classNames }: 
         plot = renderRegimeMap(data);
       } else if (vizType === "edge_influence") {
         plot = renderEdgeInfluence(data);
+      } else if (vizType === "pairs_plot") {
+        plot = renderPairsPlot(data as unknown as PairsData, {
+          width: width ?? (containerRef.current.clientWidth || 400),
+          labelFor: (n: string) => withLabel(n, fl.forName(n)),
+        });
       }
     } catch (err) {
       console.error("Viz rendering error:", err);
@@ -97,7 +107,7 @@ export function VizCanvas({ vizType, data, onSvgRef, correctness, classNames }: 
       svgRef.current = svg as SVGSVGElement | null;
       if (onSvgRef) onSvgRef(svgRef.current);
     }
-  }, [vizType, data, onSvgRef, correctness, classNames]);
+  }, [vizType, data, onSvgRef, correctness, classNames, width, fl]);
 
   return <div className="viz-canvas" ref={containerRef} />;
 }

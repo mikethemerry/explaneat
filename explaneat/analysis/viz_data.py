@@ -49,6 +49,10 @@ def suggest_viz_types(n_in: int, n_out: int) -> List[str]:
     # Regime map: always available (uses ReLU nodes)
     suggestions.append("regime_map")
 
+    # Pairs plot: pairwise interactions when there are 3 or more inputs
+    if n_in >= 3:
+        suggestions.append("pairs_plot")
+
     return suggestions
 
 
@@ -733,4 +737,285 @@ def compute_regime_map(
         "relu_nodes": valid_relu_ids,
         "total_samples": n_samples,
         "num_regimes": len(regimes),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Pairs plot: k x k grid of 1D / 2D partial dependence and the data
+# ---------------------------------------------------------------------------
+
+PAIRS_MAX_INPUTS = 8
+PAIRS_DEFAULT_INPUTS = 5
+_DISCRETE_MAX_LEVELS = 10
+_EVAL_CHUNK_ROWS = 200_000
+
+
+def _eval_out(fn: Callable, x: np.ndarray, output_dim: int) -> np.ndarray:
+    """fn on x in row chunks, the chosen output column as a 1-D array."""
+    parts = []
+    for s in range(0, len(x), _EVAL_CHUNK_ROWS):
+        y = np.asarray(fn(x[s:s + _EVAL_CHUNK_ROWS]), dtype=float)
+        if y.ndim > 1:
+            y = y[:, output_dim]
+        parts.append(y.ravel())
+    return np.concatenate(parts) if parts else np.zeros(0)
+
+
+def _input_grid(col: np.ndarray, grid_size: int) -> Tuple[str, np.ndarray, np.ndarray]:
+    """(kind, grid values, weight of each grid value in the data).
+
+    ``binary`` (2 values) and ``discrete`` (3..10 values) inputs are evaluated at the
+    values the data takes, never in between; ``continuous`` ones on an even grid over
+    the data's range. The weights are the share of rows nearest each grid value.
+    """
+    levels = np.unique(col)
+    if len(levels) <= 2:
+        kind = "binary" if len(levels) == 2 else "constant"
+    elif len(levels) <= _DISCRETE_MAX_LEVELS:
+        kind = "discrete"
+    else:
+        kind = "continuous"
+    if kind != "continuous":
+        counts = np.array([np.sum(col == v) for v in levels], dtype=float)
+        return kind, levels.astype(float), counts / max(counts.sum(), 1.0)
+    grid = np.linspace(float(col.min()), float(col.max()), grid_size)
+    step = grid[1] - grid[0]
+    idx = np.clip(np.rint((col - grid[0]) / step).astype(int), 0, grid_size - 1)
+    counts = np.bincount(idx, minlength=grid_size).astype(float)
+    return kind, grid, counts / max(counts.sum(), 1.0)
+
+
+def _wcenter(v: np.ndarray, w: np.ndarray) -> np.ndarray:
+    return v - float(np.sum(v * w) / max(np.sum(w), 1e-300))
+
+
+def _additive_fit(f2: np.ndarray, w: np.ndarray, iters: int = 500, tol: float = 1e-12) -> np.ndarray:
+    """Weighted least-squares fit of ``r[a] + c[b]`` to the surface ``f2`` (backfitting).
+
+    Alternating weighted row / column means: exact projection in the limit, no BLAS
+    (tiny dense solves are slow under some threaded BLAS builds).
+    """
+    w = np.asarray(w, dtype=float)
+    wr = w.sum(axis=1)
+    wc = w.sum(axis=0)
+    r = np.zeros(f2.shape[0])
+    c = np.zeros(f2.shape[1])
+    prev = np.inf
+    for _ in range(iters):
+        r = np.divide((w * (f2 - c[None, :])).sum(axis=1), wr, out=np.zeros_like(r), where=wr > 0)
+        c = np.divide((w * (f2 - r[:, None])).sum(axis=0), wc, out=np.zeros_like(c), where=wc > 0)
+        sse = float(np.sum(w * (f2 - r[:, None] - c[None, :]) ** 2))
+        if np.isfinite(prev) and prev - sse <= tol * max(prev, 1e-300):
+            break
+        prev = sse
+    return r[:, None] + c[None, :]
+
+
+def pair_interaction(f2: np.ndarray, f1_i: np.ndarray, f1_j: np.ndarray,
+                     w_i: np.ndarray, w_j: np.ndarray,
+                     w_joint: Optional[np.ndarray] = None) -> Dict[str, float]:
+    """Interaction strength of a pair from its PD surfaces on a grid.
+
+    ``f2[a, b]`` is the 2-D PD at (grid_i[a], grid_j[b]); ``f1_i``/``f1_j`` the 1-D PDs.
+    Cells are weighted by where the data lies: ``w_joint`` (the share of rows nearest
+    each cell) when given, else ``w_i ⊗ w_j``. Cells no row is near get weight 0, so
+    combinations the data cannot take (two levels of one category, a split copy
+    against itself) do not count.
+
+    - ``h`` (shown): ``H² = Σ w R² / Σ w F2c²``, where ``R`` is what is left of the
+      surface after the best (weighted least-squares) sum of one effect per input and
+      ``F2c`` the surface minus its weighted mean: the share of the surface's variation
+      that is not one effect of each input added. 0 for an additive function, at most 1.
+    - ``h_pd``: the same with the computed 1-D PDs as the effects
+      (``F2c − F1c_i − F1c_j``), Friedman's form; with the others held at the median the
+      1-D PDs are slices through the median, so ``h_pd`` can exceed 1.
+    - ``interaction_sd``: the weighted SD of ``R`` in the exit's units.
+    """
+    w = np.outer(w_i, w_j) if w_joint is None else np.asarray(w_joint, dtype=float)
+    wsum = float(np.sum(w))
+    if wsum <= 0:
+        return {"h2": 0.0, "h": 0.0, "h_pd": 0.0, "interaction_sd": 0.0}
+    w = w / wsum
+    c2 = _wcenter(f2, w)
+    den = float(np.sum(w * c2 ** 2))
+    resid = f2 - _additive_fit(f2, w)
+    num = float(np.sum(w * resid ** 2))
+    h2 = min(max(num / den, 0.0), 1.0) if den > 1e-24 else 0.0
+    r_pd = c2 - _wcenter(f1_i, w.sum(axis=1))[:, None] - _wcenter(f1_j, w.sum(axis=0))[None, :]
+    h2_pd = float(np.sum(w * r_pd ** 2)) / den if den > 1e-24 else 0.0
+    return {
+        "h2": float(h2), "h": float(np.sqrt(h2)),
+        "h_pd": float(np.sqrt(max(h2_pd, 0.0))),
+        "interaction_sd": float(np.sqrt(max(num, 0.0))),
+    }
+
+
+def _grid_index(col: np.ndarray, grid: np.ndarray, kind: str) -> np.ndarray:
+    """Index of the grid value nearest each row's value."""
+    if kind != "continuous":
+        return np.abs(col[:, None] - grid[None, :]).argmin(axis=1)
+    step = grid[1] - grid[0]
+    return np.clip(np.rint((col - grid[0]) / step).astype(int), 0, len(grid) - 1)
+
+
+def compute_pairs(
+    fn: Callable,
+    entry_acts: np.ndarray,
+    exit_acts: np.ndarray,
+    dims: Optional[Sequence[int]] = None,
+    output_dim: int = 0,
+    grid_size: int = 25,
+    max_scatter: int = 2000,
+    fix: str = "median",
+    max_background: int = 200,
+    seed: int = 42,
+    center: Optional[float] = None,
+    entry_names: Optional[List[str]] = None,
+    exit_names: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """Pairs plot over a few inputs of ``fn`` (an annotation or the whole model).
+
+    - ``ranking``: every input's sensitivity (mean |Δexit| / Δx for a 0.01 step, the
+      ``compute_sensitivity`` measure, on the scatter rows); default ``dims`` are the top
+      ``PAIRS_DEFAULT_INPUTS`` inputs that vary; at most ``PAIRS_MAX_INPUTS``.
+    - ``inputs[k]``: kind, grid, data weights, histogram, the 1-D PD over the grid and
+      the scatter rows' values.
+    - ``pairs``: for each i < j the 2-D PD over grid_i × grid_j and its interaction
+      (``pair_interaction``), sorted by H, strongest first.
+    - ``fix``: ``"median"`` holds the other inputs at their median over all rows (as the
+      other viz types do); ``"average"`` averages over ``max_background`` seeded rows
+      (classic partial dependence).
+    """
+    entry_acts = np.asarray(entry_acts, dtype=float)
+    exit_acts = np.asarray(exit_acts, dtype=float)
+    if exit_acts.ndim == 1:
+        exit_acts = exit_acts.reshape(-1, 1)
+    n_rows, n_in = entry_acts.shape
+    if n_in < 2:
+        raise ValueError("A pairs plot needs at least 2 inputs")
+    names = [entry_names[i] if entry_names and i < len(entry_names) else f"x_{i}" for i in range(n_in)]
+    out_name = exit_names[output_dim] if exit_names and output_dim < len(exit_names) else f"y_{output_dim}"
+
+    rng = np.random.RandomState(seed)
+    rows = np.sort(rng.choice(n_rows, size=max_scatter, replace=False)) if n_rows > max_scatter else np.arange(n_rows)
+    S = entry_acts[rows]
+    medians = np.median(entry_acts, axis=0)
+
+    # sensitivity ranking, one vectorised call
+    h = 0.01
+    base = _eval_out(fn, S, output_dim)
+    sens = np.zeros(n_in)
+    per = max(1, int(2e7 // max(1, len(S) * n_in)))  # bound the perturbed copies' memory
+    for s0 in range(0, n_in, per):
+        ds = np.arange(s0, min(n_in, s0 + per))
+        pert = np.repeat(S[None, :, :], len(ds), axis=0)
+        pert[np.arange(len(ds)), :, ds] += h
+        moved = _eval_out(fn, pert.reshape(-1, n_in), output_dim).reshape(len(ds), len(S))
+        sens[ds] = np.mean(np.abs(moved - base[None, :]), axis=1) / h
+    varies = np.ptp(entry_acts, axis=0) > 0
+    order = sorted(range(n_in), key=lambda i: (-(sens[i] if varies[i] else -1.0), i))
+    ranking = [{"dim": int(i), "name": names[i], "sensitivity": float(sens[i]), "varies": bool(varies[i])}
+               for i in order]
+
+    if dims is None or len(dims) == 0:
+        dims = [i for i in order if varies[i]][:PAIRS_DEFAULT_INPUTS]
+        if len(dims) < 2:
+            dims = order[:max(2, min(PAIRS_DEFAULT_INPUTS, n_in))]
+    dims = [int(d) for d in dims if 0 <= int(d) < n_in]
+    dims = list(dict.fromkeys(dims))[:PAIRS_MAX_INPUTS]
+    if len(dims) < 2:
+        raise ValueError("Choose at least 2 inputs for a pairs plot")
+
+    if fix == "average":
+        n_bg = min(max_background, len(S))
+        B = S[np.sort(rng.choice(len(S), size=n_bg, replace=False))] if len(S) > n_bg else S
+    else:
+        fix = "median"
+        B = medians[None, :]
+    n_b = len(B)
+
+    def pd_eval(assign: List[Tuple[int, np.ndarray]]) -> np.ndarray:
+        """PD at each point of a (flat) grid: assign = [(dim, values per point), ...]."""
+        n_pts = len(assign[0][1])
+        x = np.repeat(B[None, :, :], n_pts, axis=0)  # (pts, n_b, n_in)
+        for d, vals in assign:
+            x[:, :, d] = np.asarray(vals)[:, None]
+        return _eval_out(fn, x.reshape(-1, n_in), output_dim).reshape(n_pts, n_b).mean(axis=1)
+
+    if fix == "median":
+        reference = float(_eval_out(fn, medians[None, :], output_dim)[0])
+    else:
+        reference = float(np.mean(_eval_out(fn, B, output_dim)))
+
+    inputs = []
+    for d in dims:
+        col = entry_acts[:, d]
+        kind, grid, weights = _input_grid(col, grid_size)
+        if kind == "continuous":
+            counts, edges = np.histogram(col, bins=20, range=(float(grid[0]), float(grid[-1])))
+            hist = {"edges": edges.tolist(), "counts": counts.tolist()}
+        else:
+            hist = {"levels": grid.tolist(), "counts": [int(np.sum(col == v)) for v in grid]}
+        inputs.append({
+            "dim": int(d),
+            "name": names[d],
+            "kind": kind,
+            "grid": grid.tolist(),
+            "weights": weights.tolist(),
+            "median": float(medians[d]),
+            "min": float(col.min()),
+            "max": float(col.max()),
+            "hist": hist,
+            "pd": pd_eval([(d, grid)]).tolist(),
+            "scatter": S[:, d].tolist(),
+            "sensitivity": float(sens[d]),
+        })
+
+    cell_idx = [_grid_index(entry_acts[:, d], np.asarray(inp["grid"]), inp["kind"])
+                for d, inp in zip(dims, inputs)]
+    pairs = []
+    for a in range(len(dims)):
+        for b in range(a + 1, len(dims)):
+            gi, gj = np.asarray(inputs[a]["grid"]), np.asarray(inputs[b]["grid"])
+            ii, jj = np.meshgrid(gi, gj, indexing="ij")
+            f2 = pd_eval([(dims[a], ii.ravel()), (dims[b], jj.ravel())]).reshape(len(gi), len(gj))
+            counts = np.zeros((len(gi), len(gj)), dtype=int)
+            np.add.at(counts, (cell_idx[a], cell_idx[b]), 1)
+            inter = pair_interaction(f2, np.asarray(inputs[a]["pd"]), np.asarray(inputs[b]["pd"]),
+                                     np.asarray(inputs[a]["weights"]), np.asarray(inputs[b]["weights"]),
+                                     w_joint=counts)
+            same = bool(np.array_equal(entry_acts[:, dims[a]], entry_acts[:, dims[b]]))
+            pairs.append({"a": a, "b": b, "z": f2.tolist(), "counts": counts.tolist(),
+                          "same_input": same, **inter})
+    # strongest first; a split copy against itself (identical columns) last
+    pairs.sort(key=lambda p: (p["same_input"], -p["h"], p["a"], p["b"]))
+    for rank, p in enumerate(pairs):
+        p["rank"] = rank + 1
+
+    colour = exit_acts[rows, output_dim]
+    if center is None:
+        center = reference
+    all_vals = [colour] + [np.asarray(p["z"]).ravel() for p in pairs] + [np.asarray(i["pd"]) for i in inputs]
+    allv = np.concatenate(all_vals)
+    vmin, vmax = float(np.min(allv)), float(np.max(allv))
+
+    return {
+        "dims": dims,
+        "inputs": inputs,
+        "pairs": pairs,
+        "color": colour.tolist(),
+        "exit_label": out_name,
+        "output_dim": int(output_dim),
+        # diverging around the centre, each side spanning its own data (an exit that is
+        # never below the centre, e.g. a ReLU at 0, gets the full scale above it)
+        "color_domain": [min(vmin, float(center)), float(center), max(vmax, float(center))],
+        "value_range": [vmin, vmax],
+        "reference": reference,
+        "ranking": ranking,
+        "fix": fix,
+        "n_rows": int(n_rows),
+        "n_scatter": int(len(rows)),
+        "n_background": int(n_b) if fix == "average" else None,
+        "grid_size": int(grid_size),
+        "max_inputs": PAIRS_MAX_INPUTS,
     }

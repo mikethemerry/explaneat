@@ -130,7 +130,7 @@ Evidence and query tools default to the **full training split** (no sampling unl
 - **`annotation_function.py`**: `AnnotationFunction` - extracts the mathematical function of an annotation subgraph from a `NetworkStructure`. Supports evaluation (`__call__`), dimensionality queries, and LaTeX formula generation via sympy. Use `from_structure(annotation, structure)` for annotated models
 - **`activation_extractor.py`**: `ActivationExtractor` - runs forward passes through a network and extracts activations at annotation entry/exit nodes. Two modes: legacy (NEAT genome + config) and structure mode (`from_structure(structure)` for annotated models)
 - **`activation_cache.py`**: LRU cache for activation data to avoid recomputing forward passes
-- **`viz_data.py`**: Compute visualization-ready data for Observable Plot rendering: `compute_line_plot`, `compute_heatmap`, `compute_partial_dependence`, `compute_pca_scatter`, `compute_sensitivity`
+- **`viz_data.py`**: Compute visualization-ready data for Observable Plot rendering: `compute_line_plot`, `compute_heatmap`, `compute_partial_dependence`, `compute_pca_scatter`, `compute_sensitivity`, `compute_pairs` (pairs plot: k×k grid over ≤ 8 inputs, 1-D/2-D response with others at median or averaged, data scatter, per-pair interaction H weighted by where the data lies; binary/discrete inputs only at their values)
 - **`annotation_manager.py`**: `AnnotationManager` - CRUD operations for annotations (subgraph hypotheses with entry/exit nodes)
 - **`explanation_manager.py`**: `ExplanationManager` - manages explanations (groups of annotations with coverage metrics)
 - **`node_splitting.py`**: `NodeSplitManager` - handles node splits for dual-function nodes (e.g., node 5 splits into "5_a", "5_b")
@@ -196,7 +196,7 @@ Single-page app built with React + TypeScript + Vite, served as static files:
 - **`NetworkViewer.tsx`**: React Flow-based network graph with annotation coloring and collapse support
 - **`OperationsPanel.tsx`**: Node selection, operation execution, annotation strategy wizard
 - **`EvidencePanel.tsx`**: Evidence visualization for annotations (formula display, dataset selection, viz controls, snapshot management)
-- **`VizCanvas.tsx`**: Observable Plot renderer for line plots, heatmaps, PCA scatter, partial dependence, sensitivity
+- **`VizCanvas.tsx`**: Observable Plot renderer for line plots, heatmaps, PCA scatter, partial dependence, sensitivity; the pairs plot is one d3 SVG from `pairsPlot.ts` (snapshot-able; Enlarge opens it large)
 - **`FormulaDisplay.tsx`**: KaTeX rendering of annotation formulas
 - **`DatasetSelector.tsx`**: Dataset/split selection with auto-detection from experiment
 - **`DatasetSetupModal.tsx`**: Modal for downloading PMLB datasets and creating splits

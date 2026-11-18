@@ -787,7 +787,7 @@ export type VizDataRequest = {
   annotation_id?: string;
   node_id?: string;
   dataset_split_id: string;
-  viz_type: "line" | "heatmap" | "partial_dependence" | "pca_scatter" | "sensitivity" | "ice" | "feature_output_scatter" | "output_distribution";
+  viz_type: "line" | "heatmap" | "partial_dependence" | "pca_scatter" | "sensitivity" | "ice" | "feature_output_scatter" | "output_distribution" | "pairs_plot";
   params?: Record<string, unknown>;
   split?: "train" | "test" | "val" | "both";
   sample_fraction?: number;
