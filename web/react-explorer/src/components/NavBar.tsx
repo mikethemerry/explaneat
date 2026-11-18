@@ -1,4 +1,4 @@
-export type NavTab = "experiments" | "datasets" | "templates" | "review" | "portal";
+export type NavTab = "experiments" | "datasets" | "templates" | "review" | "portal" | "features";
 
 type NavBarProps = {
   activeTab: NavTab;
@@ -12,6 +12,7 @@ export function NavBar({ activeTab, onTabChange }: NavBarProps) {
     { key: "datasets" as const, label: "Datasets" },
     { key: "templates" as const, label: "Templates" },
     { key: "review" as const, label: "Review explanations" },
+    { key: "features" as const, label: "Features" },
   ];
 
   return (
