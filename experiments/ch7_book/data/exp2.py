@@ -71,7 +71,7 @@ EXP = {
                  ["**Churn** (supplementary)", "0.886 (0.873–0.904)", "0.813 / 0.934", "4/10", "17 (13–27)", "10/10", "10/10", "18.2 (15.7–24.4)", "10/10 (3.5)"],
                  ["**Heart-100** (supplementary)", "0.892 (0.863–0.926)", "0.919 / 0.945", "1/10", "8.5 (5–13)", "10/10", "10/10", "14.9 (12.5–16.5)", "10/10 (5.5)"],
              ],
-             "note": "Full coverage was reached within the 3-hour box every time. Mike verified all 30 on 18 Nov 2026, taking 1–10 minutes per network (record field mike_verification). "
+             "note": "Full coverage was reached within the 3-hour box every time. Mike verified all 30 records on 18 Nov 2026 (record-level review, 1–10 minutes per network; record field mike_verification); the pre-registered sentence-level sign-off (signoff-v1) is not yet run. "
                      "Recheck found 0 mismatches in all 30 records. Test sizes: Adult 9,769, Churn 1,000, Heart-100 61 rows.",
          }],
          "html": lambda: (
@@ -109,7 +109,10 @@ EXP = {
     ],
     "discussion": [
         "Explainability reproduces. Every network on every dataset was explained in full, so it is not the luck of one seed. "
-        "For Adult the pre-registered rule is met on both counts: agent-assisted and Mike-verified.",
+        "For Adult the pre-registered rule is met on the agent-assisted count. Mike has verified all thirty records "
+        "(record-level review); the pre-registered Mike-verified count is defined by the sentence-level sign-off "
+        "(signoff-v1, amendment of 11 Nov), which has not been run, so that count still reads 0 until it is run or the "
+        "definition is amended.",
         "Verification was quick: a median of about four minutes per network (Heart-100 the slowest, at 5.5). "
         "It used the full plain-language report, the pairs plot and the expandable network together. The pairs plot "
         "did most of the work at the tail of a feature, where interactions show at a glance. The slow cases were parts "
