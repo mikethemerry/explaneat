@@ -4,7 +4,7 @@ label (where it is a thesis float), file path and the command that regenerates i
     uv run python thesis/scripts/ch7_index.py
 
 Scans the files on disk (nothing is typed per file): the floats in thesis/ch7/exports/ and
-thesis/ch7/exp2/ (labels read from the .tex), the Experiment 2 per-network figures, and the
+thesis/ch7/exp1/ and thesis/ch7/exp2/ (labels read from the .tex), the Experiment 2 per-network figures, and the
 experiment-side figure folders of Experiments 1 to 4 (listed in thesis/README.md).
 """
 from __future__ import annotations
@@ -128,6 +128,21 @@ def main():
         L.append(f"| {exp} | `{rel(f)}` | {lab} | {cap} | `{cmd}` |")
     L.append("")
 
+    # ---------------------------------------------------------------- exp1 tables
+    e1 = REPO / "thesis/ch7/exp1"
+    if (e1 / "tables").exists():
+        L += ["## 1b. Experiment 1 thesis tables (`thesis/ch7/exp1/`)", "",
+              "Regenerate with `uv run python thesis/ch7/exp1/extract_db.py` (read-only DB cache "
+              "`thesis/ch7/exp1/data/networks.json`) and `uv run python thesis/ch7/exp1/make_tables.py`, then "
+              "`cd thesis/ch7/exp1 && latexmk -pdf preview.tex && latexmk -c` for the preview. The comparator "
+              "numbers come from `experiments/benchmarks/` (`benchmarks.csv`; its README). Overleaf names: "
+              "`sections/tables/ch7-ex1-networks.tex`, `ch7-ex1-benchmarks.tex` "
+              "(`thesis/scripts/build_overleaf_upload.sh`).", "",
+              "| Label | File | Content (caption, first sentence) | Generator |", "|---|---|---|---|"]
+        for t, labs, cap in floats(e1 / "tables"):
+            L.append(f"| `{', '.join(labs)}` | `{rel(t)}` | {cap} | `thesis/ch7/exp1/make_tables.py` |")
+        L.append("")
+
     # ---------------------------------------------------------------- exp2 tables and figures
     e2 = REPO / "thesis/ch7/exp2"
     L += ["## 2. Experiment 2 thesis assets (`thesis/ch7/exp2/`)", "",
@@ -140,7 +155,7 @@ def main():
                            "signal_tables.py" if name.startswith("exp2-signals") else
                            "worked.py" if name.startswith("exp2-worked") else
                            "linear_betas.py" if name.startswith("exp2-betas") else
-                           "signal_ticks.py" if name.startswith("exp2-signalticks") else "make_assets.py")
+                           "signal_ticks.py" if name.startswith("exp2-signalticks") else "make_assets.py")  # exp2-benchmarks: make_assets.py (Overleaf: ch7-ex2-benchmarks.tex)
     for t, labs, cap in floats(e2 / "tables/exp2"):
         L.append(f"| `{', '.join(labs)}` | `{rel(t)}` | {cap} | `thesis/ch7/exp2/{gen_of(t.stem)}` |")
     L += ["", "### Figures (`figures/exp2/`, each `.pdf` + `.png` + `.tex`)", "",
