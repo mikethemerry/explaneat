@@ -302,6 +302,32 @@ def table_heart_benchmark(S, A, paper):
     write_table("exp2-heart-benchmark", cap, "tab:exp2-heart-benchmark", "\n".join(body), size=r"\footnotesize")
 
 
+def table_benchmarks_suite():
+    """Adult, Churn and Heart-100 against the comparator suite shared with Experiment 1
+    (experiments/benchmarks/benchmarks.csv; builder thesis/ch7/exp1/benchmark_tables.py, so the rows,
+    cells and caption wording match tables/exp1-benchmarks.tex)."""
+    sys.path.insert(0, str(HERE.parent / "exp1"))
+    import benchmark_tables as bt
+    R = bt.rows()
+    K = bt.by_key(R)
+    P = jload("experiments/benchmarks/results/propneat.json")["exp2"]
+    cols = [("adult", "Adult"), ("churn", "Churn"), ("heart", "Heart-100")]
+    study = {"adult": "adult", "churn": "churn100", "heart": "heart100"}
+    rngs = {d: (P[study[d]]["test_auc_min"], P[study[d]]["test_auc_max"]) for d, _ in cols}
+    body = bt.classification_table(cols, [("propneat_best_by_train", "Best seed by training AUC", None),
+                                          ("propneat_median10", "Median of ten seeds (range)", rngs)], R)
+    best = ", ".join(f"{h} s{P[study[d]]['best_by_train']['seed']}" for d, h in cols)
+    n = "; ".join(f"{h} {thousands(K[(d, 'lr_l2')]['n_train'])} / {thousands(K[(d, 'lr_l2')]['n_test'])}"
+                  for d, h in cols)
+    cap = ("Experiment~2: the ten-seed studies against the comparator suite of Experiment~1 "
+           "(Table~\\ref{tab:exp1-benchmarks}). PropNEAT rows: the seed with the best training AUC, the "
+           f"selection quantity of the runs ({best}), with its interval, and the median test AUC of the ten "
+           "seeds with their range (the median of ten seeds is not one network, so it has no interval; its "
+           "accuracy is the median accuracy). " + bt.SUITE_CAPTION + f" Training / test rows: {n}. Heart-100 "
+           "uses the paper's Heart split, so its comparators are Experiment~1's Heart column.")
+    write_table("exp2-benchmarks", cap, "tab:exp2-benchmarks", "\n".join(body), size=r"\footnotesize")
+
+
 # =============================================================================== table 3
 
 
@@ -1178,6 +1204,7 @@ def main():
     REC = {k: records(k) for k, _ in STUDIES}
     table_headline(S, REC)
     table_heart_benchmark(S, A, paper)
+    table_benchmarks_suite()
     table_heart_audit()
     table_linear_core()
     table_churn_signals()
