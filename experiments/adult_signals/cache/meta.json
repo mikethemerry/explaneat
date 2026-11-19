@@ -1,0 +1,88 @@
+{
+ "outcome": "class 1 = <=50k (income of $50,000 a year or less); logits are its log-odds",
+ "class_names": [
+  ">50k",
+  "<=50k"
+ ],
+ "data_fit": {
+  "C": 0.1,
+  "cv_logloss": {
+   "0.01": 0.30284490486303184,
+   "0.1": 0.30138729054243896,
+   "1.0": 0.3018242853519289
+  },
+  "auc_train": 0.9179165155849789,
+  "auc_test": 0.9125384522424722
+ },
+ "description_checks": {
+  "lin:household": "corr of the data's component with married: -0.91; husband/wife means -1.36, -2.81 vs unmarried / not in family / own child +0.80, +0.81, +2.21",
+  "lin:capgain": "corr of the data's component with capital-gain: -1.00",
+  "lin:edu": "corr of the data's component with education-num: -1.00",
+  "lin:age": "corr of the data's component with age: -1.00",
+  "lin:hours": "corr of the data's component with hours-per-week: -1.00",
+  "lin:sex": "corr of the data's component with male: -1.00",
+  "lin:caploss": "corr of the data's component with capital-loss: -1.00",
+  "lin:work": "occupation means (exec, prof | other service, handlers, missing): -0.89, -0.55, +0.96, +0.70, +0.77",
+  "shape:capgain": "slope of lin+shape per $1000: +0.345 (0-3000) vs -1.094 (5000-10000)",
+  "shape:age": "slope of lin+shape per year: -0.120 (20-35) vs -0.000 (50-70)",
+  "shape:hours": "slope of lin+shape per hour: -0.054 (10-40) vs -0.036 (40-70)"
+ },
+ "knots": {
+  "capital-gain": [
+   2000.0,
+   4000.0,
+   5000.0,
+   7000.0,
+   10000.0,
+   15000.0
+  ],
+  "capital-loss": [
+   1500.0,
+   1800.0,
+   2000.0,
+   2400.0
+  ],
+  "hours-per-week": [
+   20.0,
+   30.0,
+   40.0,
+   45.0,
+   50.0,
+   60.0
+  ],
+  "age": [
+   22.0,
+   28.0,
+   37.0,
+   48.0,
+   58.0
+  ]
+ },
+ "blocks": {
+  "lin:age": 1,
+  "lin:fnlwgt": 1,
+  "lin:edu": 1,
+  "lin:sex": 1,
+  "lin:capgain": 1,
+  "lin:caploss": 1,
+  "lin:hours": 1,
+  "lin:household": 11,
+  "lin:work": 22,
+  "lin:race": 4,
+  "lin:country": 40,
+  "shape:age": 5,
+  "shape:fnlwgt": 5,
+  "shape:capgain": 6,
+  "shape:caploss": 4,
+  "shape:hours": 6,
+  "lin:edulevel": 16,
+  "int:sex*married": 1,
+  "int:capgain*married": 2,
+  "int:age*married": 2,
+  "int:age*hours": 4
+ },
+ "n_boot": 2000,
+ "boot_seed": 42,
+ "n_train": 39073,
+ "n_test": 9769
+}
