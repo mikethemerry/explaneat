@@ -38,7 +38,7 @@ candidate = partial(figlib.candidate, generator=GEN)
 
 EXP1_DS = OrderedDict([("shape_u", "Synthetic U"), ("shape_saddle", "Synthetic saddle"), ("shape_both", "Synthetic U + saddle"),
                        ("monk2", "MONK-2"), ("c4_cells", "Connect-4 (cells)"), ("c4_lines", "Connect-4 (lines)"),
-                       ("heart", "Heart (paper network)")])
+                       ("heart", "Heart")])
 EXP2_DS = OrderedDict([("adult", "Adult"), ("churn", "Churn"), ("heart", "Heart-100")])
 SURV_DS = OrderedDict([("whas500", "WHAS500"), ("gbsg2", "GBSG2")])
 SURV_COMP = OrderedDict([("cox_ph", "Cox PH"), ("cox_l2", "Cox L2"), ("cox_enet", "Cox EN"), ("rsf", "RSF"), ("gbs", "GBS")])
@@ -170,7 +170,7 @@ HS_NAMES = OrderedDict([("L2", "LR ($L_2$)"), ("L1", "LR ($L_1$)"), ("RF", "Rand
 @candidate("heart-splits-box", "Heart: test AUC over 100 random splits, with the fixed split marked", "Benchmarks",
            "tab:ch7-heart-splits, tab:exp2-heart-benchmark",
            "Each comparator's test AUC on 100 random 242/61 splits of the 303 Heart patients (box and points), with "
-           "its AUC on the fixed paper split (red diamond) and the ten Heart-100 PropNEAT seeds on the fixed split. "
+           "its AUC on the fixed split (red diamond) and the ten Heart-100 PropNEAT seeds on the fixed split. "
            "The fixed split sits near the top of the forest's and both boosting models' ranges, and nearer the middle "
            "for logistic regression, so it flatters the tree ensembles most.",
            [HS, "experiments/10seed/runs_heart100.csv"])
@@ -200,7 +200,7 @@ def fig_heart_splits_box():
     ax.set_ylabel(f"test AUC ({S['test_size']} patients)")
     ax.grid(axis="x", visible=False)
     handles = [plt.Line2D([], [], ls="", marker="o", color=OI["blue"], alpha=0.6, ms=3, label=f"{S['n_splits']} random splits"),
-               plt.Line2D([], [], ls="", marker="D", color=OI["red"], ms=5, label="the fixed (paper) split")]
+               plt.Line2D([], [], ls="", marker="D", color=OI["red"], ms=5, label="the fixed split")]
     ax.legend(handles=handles, loc="lower left", fontsize=7)
     fig.tight_layout()
     return fig, pdata
@@ -314,10 +314,10 @@ figlib.set_captions({
                   f"Cox PH, Harrell's C); arrow: a bar cut at {XCLIP:g}, its value printed. " + _ABBR),
     "heart-splits-box": ("Heart: test AUC of each comparator over random splits",
                          lambda: (f"Box and blue points: {_hs()['n_splits']} random splits ({_hs()['test_size']} test "
-                                  "patients); red diamond: the fixed (paper) split; green triangles: the ten "
+                                  "patients); red diamond: the fixed split; green triangles: the ten "
                                   "Heart-100 seeds on the fixed split, bar: their median.")),
     "heart-splits-diff": ("Heart: test AUC minus logistic regression's over random splits",
-                          lambda: (f"Histogram: {_hs()['n_splits']} random splits; red line: the fixed (paper) "
+                          lambda: (f"Histogram: {_hs()['n_splits']} random splits; red line: the fixed "
                                    "split; black line: zero.")),
     "cost-minutes-size": ("Explaining minutes against network size, Experiments 1 and 2",
                           "Colour and marker: Experiment 2 dataset; black plus: an Experiment 1 network (named in b); "

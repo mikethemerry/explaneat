@@ -362,12 +362,11 @@ TEN = [("structure_prereg", "Earlier ten-seed export: network structure, pre-reg
 STRIP_KEY = ("One dot per seed (ten per dataset, horizontal jitter only); box: interquartile range; thick line: "
              "median; whiskers: minimum to maximum.")
 TEN_KEYS = {
-    "structure_prereg": STRIP_KEY + " Open diamond: the paper's network for that dataset.",
+    "structure_prereg": STRIP_KEY,
     "structure_supp": STRIP_KEY,
     "cost_prereg": STRIP_KEY,
     "cost_supp": STRIP_KEY,
-    "test_auc_prereg": "Dots and bars: each seed's test AUC with its 95\\% interval; P (open diamond): the paper's "
-                       "network. Dashed: L2 logistic regression (LR); dotted: gradient boosting (GBM; $\\approx$: "
+    "test_auc_prereg": "Dots and bars: each seed's test AUC with its 95\\% interval. Dashed: L2 logistic regression (LR); dotted: gradient boosting (GBM; $\\approx$: "
                        "approximate, not the same split).",
     "test_auc_supp": "Dots and bars: each seed's test AUC with its 95\\% interval. Dashed: L2 logistic regression "
                      "(LR); dotted: gradient boosting (GBM).",
@@ -384,11 +383,11 @@ def tenseed_figures(only):
     plt = style()
     cap = _Capture()
     tf.save = cap
-    tf.fig_structure(df, paper, tf.PREREG, "structure_prereg", show_paper=True)
+    tf.fig_structure(df, paper, tf.PREREG, "structure_prereg", show_paper=False)
     tf.fig_structure(df, paper, tf.SUPP, "structure_supp", show_paper=False)
     tf.fig_cost(df, tf.PREREG, "cost_prereg")
     tf.fig_cost(df, tf.SUPP, "cost_supp")
-    tf.fig_auc(df, paper, tf.PREREG, "test_auc_prereg")
+    tf.fig_auc(df, paper.iloc[0:0], tf.PREREG, "test_auc_prereg")   # no separate original-network marker
     tf.fig_auc(df, paper, tf.SUPP, "test_auc_supp")
     tf.fig_coverage(df)
     for name, title in TEN:
