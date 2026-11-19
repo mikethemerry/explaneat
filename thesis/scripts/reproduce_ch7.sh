@@ -20,7 +20,9 @@ if [[ "${1:-}" == "--with-db" ]]; then
   # Experiment 2 run metrics (seeded bootstrap, RandomState(42)) from the evolved genomes
   uv run python experiments/10seed/compute_runs.py --skip-paper                  # explaneat_dev -> runs.csv, runs_heart100.csv
   uv run python experiments/churn/compute_churn_runs.py --prefix churn100        # -> experiments/churn/runs_churn100.csv
-  # Explanation records -> CSVs (no DB)
+  # Explaining minutes and annotation counts of the v4 records from the database (read-only explaneat_v4)
+  DATABASE_URL=postgresql://localhost/explaneat_v4 uv run python experiments/10seed/explaining_time.py --dir explanations_v4
+  # Explanation records (+ explaining_time_v4.csv) -> CSVs (no DB)
   (cd experiments/10seed && uv run python build_explanations_csv.py --dir explanations_v4 --suffix _v4)
   # Signal analyses (read-only explaneat_v4)
   V4="DATABASE_URL=postgresql://localhost/explaneat_v4 EXPLANEAT_RECORDS_DIR=experiments/10seed/explanations_v4"
@@ -36,6 +38,7 @@ if [[ "${1:-}" == "--with-db" ]]; then
   uv run python experiments/ushape_saddle/references.py                          # -> references.json
   # Thesis-side DB caches
   uv run python thesis/ch7/exp1/extract_db.py                                    # explaneat_dev -> exp1/data/networks.json
+                                                                                 # (+ coverage checks, explaining minutes)
   DATABASE_URL=postgresql://localhost/explaneat_v4 uv run python thesis/ch7/exp2/extract_db.py --refresh   # exp2/data/*
 fi
 

@@ -209,6 +209,14 @@ The tools:
 - `build_explanations_csv.py`: rebuilds `explanations.csv`, `explanations_heart100.csv` and
   `../churn/explanations_churn{100,200}.csv` from the JSON records, with no database. It
   was re-run on 2026-11-06 and its output was unchanged.
+- `explaining_time.py --dir explanations_v4` (read-only, `DATABASE_URL=.../explaneat_v4`): the
+  explaining minutes of each v4 record computed from the database (explanation created to its
+  last timestamped write: operations, evidence records, `evidence_log`) and the leaf /
+  composition counts from the operations, next to the record's own values, in
+  `explaining_time_v4.csv`. Run it before `build_explanations_csv.py --dir explanations_v4
+  --suffix _v4`, which then takes `n_leaf` / `n_composition` from it (asserted equal to the
+  records) and appends `agent_minutes_db`, `agent_db_start`, `agent_db_end`; `claude_minutes`
+  stays the record's start/end, for audit. Rerun twice: byte-identical.
 
 "Full coverage" is defined in the PREREG amendment of 2026-11-03: tool structural = 1.0,
 tool compositional = 1.0, `hierarchy.complete`, and function preserved to < 1e-9.

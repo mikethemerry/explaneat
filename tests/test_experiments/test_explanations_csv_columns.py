@@ -22,6 +22,9 @@ FROZEN = ("order,label,dataset,seed,genome_id,protocol,structural_coverage,compo
           "signoff_unsure,signoff_sample_n,signoff_sample_wrong,signoff_error_bound").split(",")
 NEW = ["faithful_max_err", "n_leaves", "granularity", "understood_fraction", "closed_form_only_fraction",
        "understood_fraction_verifier", "understood_fraction_mike"]
+# appended (2026-11-20) when explaining_time<suffix>.csv exists: the explaining time computed from the
+# database (experiments/10seed/explaining_time.py); claude_minutes stays the record's own start/end
+DB = ["agent_minutes_db", "agent_db_start", "agent_db_end"]
 
 
 def _load_levels_columns():
@@ -44,7 +47,7 @@ def test_existing_columns_unchanged_and_levels_appended(name):
     assert header[:len(FROZEN)] == FROZEN
     if len(header) > len(FROZEN):          # rebuilt after 2026-11-12: the new columns, in order, possibly not all yet
         extra = header[len(FROZEN):]
-        assert extra == NEW[:len(extra)]
+        assert extra in (NEW[:len(extra)], (NEW + DB)[:len(extra)])
 
 
 def test_levels_columns_blank_without_a_levels_file(tmp_path, monkeypatch):

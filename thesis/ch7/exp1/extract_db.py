@@ -12,12 +12,27 @@ explained network of each Experiment 1 dataset. Sources:
   depth (layers), as extract_db.structure_metrics for Experiment 2.
 - performance: experiments/benchmarks/results/propneat.json (classification; recomputed there and
   checked against each study's run record) and results/survival.json (WHAS500, Harrell's C).
-- explanation: the explanation's operations in explaneat_dev (latest explanation of the genome;
-  counts of split_node and add_identity_node, as experiments/10seed/build_explanations_csv.py) and
-  the study's explanation record (annotations, coverage, function-preservation error, start/end
-  times). The AAAI paper explanations have no record: their annotation counts and coverage come
-  from experiments/aaai27/recheck/results/paper_coverage_options.json ("current", as stored), the
-  function-preservation error from experiments/explanation_levels/levels/paper-*.json.
+- explanation (computed, read-only, on the genome's one explanation in explaneat_dev):
+  - counts of split_node and add_identity_node operations (as experiments/10seed/build_explanations_csv.py)
+    and of leaf / composition annotate operations (experiments/10seed/explaining_time.annotation_counts);
+  - structural and compositional coverage and hierarchy completeness from the library's own check,
+    MCP ``get_coverage`` (``coverage_report``; the current definition, under which annotations of
+    disconnected inputs are exempt from the single-root rule, decision D4), and the
+    function-preservation error and check_explanation's stricter hierarchy check (no exemption;
+    ``hierarchy_complete_check``) from experiments/10seed/check_explanation.check on the genome's
+    training split: the two checks experiments/10seed/verify_record.py runs for Experiment 2;
+  - explaining minutes from the database's timestamped writes (explaining_time.explaining_window:
+    explanation created -> last operation, evidence record or evidence_log entry).
+  Each is compared with what the explaining agent reported in the study's record (kept as rec_* for
+  audit): annotation counts, splits and identity nodes must agree (asserted); coverage, the error
+  and minutes may differ and are printed. The AAAI paper explanations have no record: their
+  rec_* values are experiments/aaai27/recheck/results/paper_coverage_options.json ("current", the
+  stored stream under the definition before D4: MONK-2's compositional coverage is 0.75 there
+  because its pruned-input annotation sits outside the root) and
+  experiments/explanation_levels/levels/paper-*.json (the error); their annotation counts are
+  asserted equal. They predate the evidence log, so they have no explaining minutes.
+The whole process runs with PGOPTIONS default_transaction_read_only=on (no write can reach the
+database). Run it twice and compare: data/networks.json is byte-identical.
 - XOR: the 30 seeds' reduced networks in experiments/xor/xor_results.json (no database), rebuilt
   as neat genomes with run_xor.py's config so the same ExplaNEAT measures apply; the rebuilt
   logits are checked against the stored ones.
@@ -45,6 +60,10 @@ for p in (str(REPO), str(E / "10seed"), str(E / "xor")):
 os.environ.setdefault("PYTHONHASHSEED", "0")
 
 DB = "postgresql://localhost/explaneat_dev"
+# the library checks (mcp_server.get_db) open their own connection from DATABASE_URL; every
+# transaction of this process is read-only on the server side
+os.environ["DATABASE_URL"] = DB
+os.environ["PGOPTIONS"] = (os.environ.get("PGOPTIONS", "") + " -c default_transaction_read_only=on").strip()
 
 # label -> metadata. protocol: which explanation method produced the explanation.
 V4 = "authoring v4 (provenance-stamped, strict mode)"
@@ -86,9 +105,19 @@ def minutes(rec):
     return (b - a).total_seconds() / 60
 
 
+def checks(genome_id):
+    """The library's coverage and explanation checks (as experiments/10seed/verify_record.py)."""
+    from check_explanation import check, split_for_genome
+    from mcp_server.tools.coverage import get_coverage
+    cov = json.loads(get_coverage(genome_id))
+    c = check(genome_id, split_for_genome(genome_id))
+    return cov, c
+
+
 def network(cr, label, m):
     from explaneat.core.explaneat import ExplaNEAT
     from explaneat.db.models import Dataset, Explanation
+    from explaining_time import explaining_window
     from sqlalchemy import select
     with cr.ReadOnlySession() as s:
         g = s.get(cr.Genome, uuid.UUID(m["genome"]))
@@ -100,6 +129,9 @@ def network(cr, label, m):
                        .order_by(Explanation.updated_at.desc())).scalars().first()
         ops = list(ex.operations or [])
         ex_id = str(ex.id)
+        w = explaining_window(s, m["genome"])   # asserts the genome has exactly one explanation
+    assert w["explanation_id"] == ex_id, label
+    cov, chk = checks(m["genome"])
     st = cr.structure(genome, cfg, names)
     e = ExplaNEAT(genome, cfg)
     oc = Counter(o["type"] for o in ops)
@@ -111,26 +143,42 @@ def network(cr, label, m):
            "splits": oc.get("split_node", 0), "identity": oc.get("add_identity_node", 0),
            "annotate_ops": oc.get("annotate", 0), "mike": None}
     assert out["layers"] == out["depth"] + 1, (label, out["layers"], out["depth"])
+    # computed: annotation counts (operations), coverage and hierarchy (get_coverage), hierarchy
+    # completeness and function preservation (check_explanation), explaining minutes (database writes)
+    out.update(leaf=w["leaf"], comp=w["composition"], cov_s=cov["structural_coverage"],
+               cov_c=cov["compositional_coverage"], hierarchy_complete=cov["hierarchy"]["complete"],
+               hierarchy_complete_check=chk["hierarchy"]["complete"],
+               exempt_disconnected=cov["hierarchy"].get("exempt_disconnected", []),
+               fp=chk["function_preservation_max_abs_err"],
+               agent=w["minutes"] if w["n_log_entries"] else None,
+               db_start=w["start"].isoformat(timespec="seconds"), db_end=w["end"].isoformat(timespec="seconds"),
+               n_log_entries=w["n_log_entries"])
+    assert (cov["leaf_count"], cov["composition_count"]) == (out["leaf"], out["comp"]), (label, cov["leaf_count"], cov["composition_count"])
+    assert out["leaf"] + out["comp"] == out["annotate_ops"], label
     if m["record"]:
         rec = jload(E / m["record"])
         assert rec["genome_id"] == m["genome"], label
-        out.update(leaf=rec["n_leaf_annotations"], comp=rec["n_composition_annotations"],
-                   cov_s=rec["structural_coverage"], cov_c=rec["compositional_coverage"],
-                   fp=rec["function_preservation_max_abs_err"], agent=round(minutes(rec), 1),
+        out.update(rec_leaf=rec["n_leaf_annotations"], rec_comp=rec["n_composition_annotations"],
+                   rec_cov_s=rec["structural_coverage"], rec_cov_c=rec["compositional_coverage"],
+                   rec_hierarchy_complete=rec.get("hierarchy_complete"),
+                   rec_fp=rec["function_preservation_max_abs_err"], rec_agent=round(minutes(rec), 1),
                    record=f"experiments/{m['record']}")
         assert rec["n_splits"] == out["splits"] and rec["n_identity_nodes"] == out["identity"], \
             (label, rec["n_splits"], out["splits"], rec["n_identity_nodes"], out["identity"])
-        assert rec["n_leaf_annotations"] + rec["n_composition_annotations"] == out["annotate_ops"], label
+        assert (rec["n_leaf_annotations"], rec["n_composition_annotations"]) == (out["leaf"], out["comp"]), \
+            (label, "record", rec["n_leaf_annotations"], rec["n_composition_annotations"], "database", out["leaf"], out["comp"])
+        assert out["agent"] is not None, (label, "a v4 explanation without an evidence log")
         out["mike"] = (rec.get("mike_verification") or {}).get("minutes")
     else:
         po = jload(E / "aaai27/recheck/results/paper_coverage_options.json")[m["paper"]]
         assert po["genome_id"] == m["genome"] and po["explanation_id"] == ex_id, label
         cur = po["current"]
         lv = jload(E / m["levels"])["levels"]
-        out.update(leaf=cur["leaf"], comp=cur["composition"], cov_s=cur["structural_coverage"],
-                   cov_c=cur["compositional_coverage"], fp=lv["faithful"]["function_preservation_max_abs_err"],
-                   agent=None, record=None)
-        assert cur["annotations"] == out["annotate_ops"], (label, cur["annotations"], out["annotate_ops"])
+        out.update(rec_leaf=cur["leaf"], rec_comp=cur["composition"], rec_cov_s=cur["structural_coverage"],
+                   rec_cov_c=cur["compositional_coverage"], rec_hierarchy_complete=cur["hierarchy_complete"],
+                   rec_fp=lv["faithful"]["function_preservation_max_abs_err"], rec_agent=None, record=None)
+        assert (cur["leaf"], cur["composition"]) == (out["leaf"], out["comp"]), (label, cur, out)
+        assert out["agent"] is None, (label, "the paper explanations predate the evidence log")
     return out
 
 
@@ -174,13 +222,21 @@ def xor():
 
 
 def main():
+    import torch
+    torch.set_num_threads(1)
     import compute_runs as cr
     cr.db.init_db(DB)
     DATA.mkdir(exist_ok=True)
     out = {"database": "explaneat_dev (read-only)", "networks": {}}
     for label, m in NETS.items():
         out["networks"][label] = network(cr, label, m)
-        print(label, {k: v for k, v in out["networks"][label].items() if k not in ("protocol", "selection")}, flush=True)
+        r = out["networks"][label]
+        print(label, {k: v for k, v in r.items() if k not in ("protocol", "selection")}, flush=True)
+        print(f"  {label}: minutes record {r['rec_agent']} computed {r['agent']}; coverage record "
+              f"{r['rec_cov_s']}/{r['rec_cov_c']} computed {r['cov_s']}/{r['cov_c']}; hierarchy complete record "
+              f"{r['rec_hierarchy_complete']} computed {r['hierarchy_complete']} (strict check "
+              f"{r['hierarchy_complete_check']}); error record {r['rec_fp']:.3g} "
+              f"computed {r['fp']:.3g}", flush=True)
     out["xor"] = xor()
     (DATA / "networks.json").write_text(json.dumps(out, indent=1, default=float) + "\n")
 
