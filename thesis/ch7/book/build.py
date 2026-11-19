@@ -36,7 +36,7 @@ GROUPS = [
     ("e2", "Experiment 2", "Consistency"),
     ("e3", "Experiment 3", "Where the complexity lives"),
     ("sec", "Secondary analyses", "Exploratory analyses of the training dynamics"),
-    ("side", "Side experiments", "ConvNEAT: not on main; candidate thesis extension"),
+    ("side", "Side experiments", "ConvNEAT prototype cards (superseded by Experiment 4)"),
 ]
 
 ARGUMENT = (
@@ -50,17 +50,17 @@ ARGUMENT = (
     "(100 generations each) are explained in full every time; how alike the ten are in accuracy depends on the dataset, "
     "from interchangeable on Adult to widely spread on Heart. **Grafting (Experiment 3):** "
     "a realisation from one model can replace another's and regain the performance, provided its weights are kept "
-    "and fine-tuned; re-initialising rarely finds the same optimum again. **ExConNEAT (Experiment 4, preliminary):** "
-    "the method extended to convolutional networks, compared with other explainable methods; a full run awaits the "
-    "rig. Agent-assisted explanations are the measure throughout; Mike's own verification is still 0 everywhere."
+    "and fine-tuned; re-initialising rarely finds the same optimum again. **ExConNEAT (Experiment 4, proof of concept):** "
+    "the method extended to convolutional networks: close to a small CNN on MNIST (0.976 test, 1,283 parameters) with a "
+    "clean decomposition, but its explanations cannot yet be verified, so it is not explainable yet. Agent-assisted explanations are the measure throughout; Mike's own verification is still 0 everywhere."
 )
 
 OPEN_ITEMS = [
     ("Mike's verification pass (signoff-v1)", "0 of 10 signed off (0 of 60 carry `mike_verification`). About 16 min per genome, 163 min for the first ten.", "`experiments/10seed/review/`, pack PDF; Experiment 2"),
     ("v4 swap into `summary.md`", "Whether `summary.md`, `ch7_table.tex` and the figures switch from the reported protocol-v3 numbers to the v4 re-run. Mike's decision; then `make_figures.py` on the v4 CSVs and recopy, about 1 h.", "`experiments/10seed/V4_RUN.md` line 4; Experiment 2"),
-    ("Rig run (ExConNEAT)", "RIG_NOTE", "`experiments/conv_neat/rig/` on `conv-neat-prototype`; Experiment 4"),
+    ("Rig run (ExConNEAT)", "RIG_NOTE", "`experiments/conv_neat/rig/`; Experiment 4"),
     ("Citations", "`*(check ... in Mendeley)*` markers remain in `docs/signals-and-realisations/README.md` §3; Mike checks them in Mendeley.", "`thesis/notes/THESIS_FINAL_WORK.md`, Mike's own tasks"),
-    ("ExConNEAT decomposition merge", "The ExConNEAT branches are not on main: `conv-neat-decomposition` (`3f6cbab`, ExplaNEAT graph decomposition for conv graphs) builds on `conv-neat-prototype` (`ab97c4c`); `conv-neat-3v8noise` (`fdf14fa`) is separate. Review and merge before the thesis cites Experiment 4.", "worktrees `conv-decomp`, `conv-neat`, `conv-3v8n`"),
+    ("ExConNEAT verification", "The behaviour-first explanations of the four ExConNEAT networks are \"proven\" only by the agent's own image-edit probes; checking them needs convolutional expertise and tools not available here. Presented as not explainable yet (future work).", "`experiments/conv_neat/explanations/BEHAVIOUR_FIRST.md`; Experiment 4"),
     ("Other open items", "Probe v2 is on main for the ten-seed, ladder and Connect-4 sets, but the AAAI paper explanations are still probe v1; ladder round 2 (`exp/explanation-barrier-2`) is unmerged; the authoring-v4 adjudication spot check (about 30 min); the F/G banner line in `EXTENSIONS_RESULTS.md` (one-line edit).", "`thesis/notes/THESIS_EXPERIMENTS.md` gaps table"),
 ]
 
@@ -330,7 +330,7 @@ def main():
     oi = [(a, b.replace("RIG_NOTE", rig_note), c) for a, b, c in OPEN_ITEMS]
     ov.append('<section id="open" class="block"><h2>Open items needing Mike</h2>' +
               table(["Item", "What is open, and the cost", "Where"], oi) +
-              '<p class="small">From <code>thesis/notes/THESIS_EXPERIMENTS.md</code> ("Gaps and interim items", origin/main) and the ExConNEAT branches.</p></section>')
+              '<p class="small">From <code>thesis/notes/THESIS_EXPERIMENTS.md</code> ("Gaps and interim items", origin/main) and <code>experiments/conv_neat/</code>.</p></section>')
 
     # ---------- experiments ----------
     def case_block(c):
@@ -476,7 +476,7 @@ def main():
 <header class="top">
   <p class="kicker">Chapter 7: four experiments, Methods, Results, Discussion</p>
   <h1>Chapter 7 Experiment Book</h1>
-  <p class="byline">Compiled 17 Nov 2026 from <code>origin/main</code> at <code>{MAIN_SHA}</code> (manifest <code>thesis/notes/THESIS_EXPERIMENTS.md</code>) and, for Experiment 4, the local ExConNEAT branches <code>conv-neat-prototype</code>, <code>conv-neat-decomposition</code> and <code>conv-neat-3v8noise</code> (not on main). Experiment 2 rebuilt 18 Nov 2026 from branch <code>exp/10seed-consistency</code> at <code>{E2_SHA}</code>. Results freeze 19 Nov 2026.</p>
+  <p class="byline">Compiled 17 Nov 2026 from <code>origin/main</code> at <code>{MAIN_SHA}</code> (manifest <code>thesis/notes/THESIS_EXPERIMENTS.md</code>) and, for Experiment 4, <code>experiments/conv_neat/</code> on main (ExConNEAT, squashed in <code>9281827d</code>; refreshed 19 Nov 2026 with the final results). Experiment 2 rebuilt 18 Nov 2026 from branch <code>exp/10seed-consistency</code> at <code>{E2_SHA}</code>. Results freeze 19 Nov 2026.</p>
 </header>
 {"".join(ov)}
 {"".join(body)}
