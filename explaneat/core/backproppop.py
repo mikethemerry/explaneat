@@ -59,6 +59,7 @@ class BackpropPopulation(Population):
         device=None,
         mask_phantom=True,
         skip_invalid_genomes=False,
+        weight_decay=0.0,
     ):
         """``mask_phantom`` (default True since 2026-11-05): build each genome's
         NeuralNeat with ``mask_phantom=True`` in ``backpropagate`` so only the
@@ -81,7 +82,14 @@ class BackpropPopulation(Population):
         NeuralNeat rejects, e.g. one whose output lost every path to an
         input, raises ``GenomeNotValidError`` out of ``backpropagate``): when
         True such genomes are left untrained and the fitness function scores
-        them (the survival fitness gives them ``INVALID_FITNESS``)."""
+        them (the survival fitness gives them ``INVALID_FITNESS``).
+
+        ``weight_decay`` (default 0.0 = original behaviour, Adadelta's own
+        default) is passed to the per-genome Adadelta optimiser as its L2
+        penalty (``optim.Adadelta(..., weight_decay=...)``): it shrinks every
+        trained parameter, weights and biases, during the backprop epochs.
+        It does not enter the fitness."""
+        self.weight_decay = float(weight_decay)
         self.mask_phantom = bool(mask_phantom)
         self.skip_invalid_genomes = bool(skip_invalid_genomes)
         self.logger = logging.getLogger("experimenter.backproppop")
@@ -207,7 +215,9 @@ class BackpropPopulation(Population):
                     raise
                 continue
 
-            optimizer = optim.Adadelta(net.parameters(), lr=1.5)
+            optimizer = optim.Adadelta(
+                net.parameters(), lr=1.5, weight_decay=self.weight_decay
+            )
             optimizer.zero_grad()
             losses = []
 

@@ -32,7 +32,8 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                  track_ancestry: bool = True,
                  criterion=None,
                  genome_storage: str = "all",
-                 full_save_generations=None):
+                 full_save_generations=None,
+                 weight_decay: float = 0.0):
         """
         Initialize population with database tracking
 
@@ -91,6 +92,8 @@ class DatabaseBackpropPopulation(BackpropPopulation):
                 (tests/test_db/test_population_light_storage.py).
             full_save_generations: generations stored in full when
                 ``genome_storage == "best"`` (ignored otherwise).
+            weight_decay: Adadelta L2 penalty during backprop (default 0.0 =
+                original behaviour; see ``BackpropPopulation``).
         """
         if genome_storage not in ("all", "best"):
             raise ValueError(f"genome_storage must be 'all' or 'best', not {genome_storage!r}")
@@ -100,7 +103,7 @@ class DatabaseBackpropPopulation(BackpropPopulation):
         extra = {} if criterion is None else {"criterion": criterion}
         super().__init__(config, x_train, y_train, xs_val=xs_val, ys_val=ys_val,
                          initial_state=initial_state, mask_phantom=mask_phantom,
-                         **extra)
+                         weight_decay=weight_decay, **extra)
 
         # Initialize database connection
         if database_url:
@@ -188,6 +191,9 @@ class DatabaseBackpropPopulation(BackpropPopulation):
         if hid_act != HIDDEN_ACTIVATION:
             # Only recorded when non-default (ReLU rows unchanged).
             training["hidden_activation"] = hid_act
+        if self.weight_decay:
+            # Only recorded when non-zero (rows of earlier runs unchanged).
+            training["weight_decay"] = self.weight_decay
         if hasattr(self.criterion, "describe"):
             training["criterion"] = self.criterion.describe()
         if training:
