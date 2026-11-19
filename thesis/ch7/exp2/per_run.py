@@ -76,7 +76,7 @@ HEAD = (r"Seed & \makecell{Train\\AUC} & \makecell{Test AUC\\(95\% CI)} & \makec
         r"\makecell{Hidden\\nodes} & \makecell{Enabled\\conn.} & \makecell{Skippiness\\(skip conn.)} & "
         r"Density & Depth & \makecell{Leaf $+$\\comp.} & Splits & \makecell{Id.\\nodes} & "
         r"\makecell{Coverage\\struct./comp.} & \makecell{Function\\pres.\ error} & \makecell{Agent\\min} & "
-        r"\makecell{Mike\\min}")
+        r"\makecell{Verif.\\min}")
 
 
 def table(k, name):

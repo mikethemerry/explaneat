@@ -234,7 +234,7 @@ def table_headline(S, REC):
              ("Hidden units, median (range)", "hidden"), ("Explained to full coverage", "cov"),
              ("\\quad within the 3-hour box", "budget"),
              ("Recheck complete (mismatches)", None), ("Agent explaining minutes, median (range)", "minutes"),
-             ("Verified by Mike", "mike"), ("\\quad minutes per network, median (range)", "mike_min")]
+             ("Verified", "mike"), ("\\quad minutes per network, median (range)", "mike_min")]
     body = ["  \\begin{tabularx}{\\textwidth}{@{}>{\\raggedright\\arraybackslash}Xccc@{}}",
             "    \\toprule", "     & " + " & ".join(n for _, n in STUDIES) + " \\\\", "    \\midrule"]
     for i, (lab, key) in enumerate(lines):
@@ -812,7 +812,7 @@ def fig_cost(S, REC):
     a1.legend(loc="lower right")
     a1.set_title("(a) Explaining", loc="left")
     a2.set_xticks(range(3), [n for _, n in STUDIES])
-    a2.set_ylabel("Mike's verification minutes")
+    a2.set_ylabel("Verification minutes")
     a2.set_ylim(0, None)
     a2.set_xlim(-0.5, 2.5)
     a2.grid(axis="x", visible=False)
@@ -821,7 +821,7 @@ def fig_cost(S, REC):
     save(fig, "exp2-cost")
     write_figure("exp2-cost",
                  "Cost of explaining and verifying, one mark per network. (a) The explaining agent's minutes "
-                 "against network size. (b) Mike's verification minutes; bar: median per study.", "fig:exp2-cost")
+                 "against network size. (b) Verification minutes; bar: median per study.", "fig:exp2-cost")
 
 
 # =============================================================================== figure C

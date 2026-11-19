@@ -488,7 +488,7 @@ def table_claims(D):
              f"    Self-probe of this part by the agent & \\multicolumn{{3}}{{c}}"
              f"{{{'done' if PART in rec['accuracy']['self_probe']['parts'] else 'not done'}"
              f"{', none refuted' if not rec['accuracy']['self_probe']['refuted_and_fixed'] else ''}}} \\\\",
-             f"    Mike's verification of the whole network (minutes) & \\multicolumn{{3}}{{c}}"
+             f"    Verification of the whole network (minutes) & \\multicolumn{{3}}{{c}}"
              f"{{{g_(rec['mike_verification']['minutes'])}}} \\\\",
              "    \\bottomrule", "  \\end{tabularx}"]
     claim = ann["hypothesis"].split(". ")[0] + "."
