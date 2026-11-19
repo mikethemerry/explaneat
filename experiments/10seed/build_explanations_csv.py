@@ -3,7 +3,13 @@ explanations_heart100.csv (additional analysis) from explanations/*.json.
 
     uv run python experiments/10seed/build_explanations_csv.py [--dir explanations_v4 --suffix _v4]
 --dir reads the records from another folder; --suffix writes <name><suffix>.csv (defaults unchanged);
---out-dir DIR writes every CSV into DIR instead (to rebuild and diff without touching the stored ones)."""
+--out-dir DIR writes every CSV into DIR instead (to rebuild and diff without touching the stored ones).
+
+When explaining_time<dir suffix>.csv exists (explaining_time.py, read-only DB; explaining_time_v4.csv for
+--dir explanations_v4), n_leaf / n_composition are read from it (the explanation's operations in the
+database; asserted equal to the record's counts) and three columns are appended after every existing one:
+agent_minutes_db (the explaining time computed from the database's timestamped writes; see
+explaining_time.py), agent_db_start, agent_db_end. claude_minutes stays the record's own start/end, for audit."""
 import csv, datetime as dt, json, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 _a = sys.argv[1:]
@@ -41,6 +47,11 @@ LEVELS_DIR = os.environ.get('EXPLANEAT_LEVELS_DIR') or os.path.join(HERE, '..', 
 LEVELS_COLUMNS = ('faithful_max_err', 'n_leaves', 'granularity', 'understood_fraction', 'closed_form_only_fraction',
                   'understood_fraction_verifier', 'understood_fraction_mike')
 REVIEW_DIR = os.environ.get('EXPLANEAT_REVIEW_DIR') or os.path.join(HERE, 'review')
+TIMES_CSV = os.path.join(HERE, 'explaining_time' + os.path.basename(REC_DIR.rstrip('/')).replace('explanations', '') + '.csv')
+TIMES = {}
+if os.path.exists(TIMES_CSV):
+    with open(TIMES_CSV) as f:
+        TIMES = {t['label']: t for t in csv.DictReader(f)}
 
 
 def mike_leaf_fraction(r, l):
@@ -100,15 +111,28 @@ def levels_columns(r, l):
     return {k: ('' if v is None else v) for k, v in out.items()}
 
 
+def db_columns(r, l):
+    """(n_leaf, n_composition, appended columns) from explaining_time<suffix>.csv when it exists."""
+    if not TIMES:
+        return r['n_leaf_annotations'], r['n_composition_annotations'], {}
+    t = TIMES[l]
+    assert t['genome_id'] == r['genome_id'], l
+    leaf, comp = int(t['n_leaf_db']), int(t['n_composition_db'])
+    assert (leaf, comp) == (r['n_leaf_annotations'], r['n_composition_annotations']), \
+        (l, 'database', (leaf, comp), 'record', (r['n_leaf_annotations'], r['n_composition_annotations']))
+    return leaf, comp, dict(agent_minutes_db=float(t['db_minutes']), agent_db_start=t['db_start'], agent_db_end=t['db_end'])
+
+
 def row(i, l):
     r = json.load(open(os.path.join(HERE, REC_DIR, f'{l}.json')))
     v = r['verified_by_orchestrator']; oc = v['op_counts']
     mins = (dt.datetime.fromisoformat(r['end']) - dt.datetime.fromisoformat(r['start'])).total_seconds() / 60
+    n_leaf, n_comp, dbc = db_columns(r, l)
     return dict(order=i + 1, label=l, dataset=l.rsplit('-', 1)[0], seed=int(l.rsplit('s', 1)[1]), genome_id=r['genome_id'],
                 protocol=r.get('protocol_version', 'pilot' if r.get('pilot') else 'v2'),
                 structural_coverage=v['structural_coverage'], compositional_coverage_tool=v['compositional_coverage'],
                 hierarchy_complete=v['hierarchy']['complete'], full_coverage=v['full_coverage'], within_budget=r['within_budget'],
-                n_leaf=r['n_leaf_annotations'], n_composition=r['n_composition_annotations'],
+                n_leaf=n_leaf, n_composition=n_comp,
                 n_splits=oc.get('split_node', 0), n_identity=oc.get('add_identity_node', 0), n_consolidate=oc.get('consolidate_node', 0),
                 hidden_nodes=r['hidden_nodes'], annot_monosemanticity=round(r['hidden_nodes_single_leaf_no_split'] / r['hidden_nodes'], 3),
                 hidden_in_any_annotation=r.get('hidden_nodes_in_any_annotation'),
@@ -124,7 +148,8 @@ def row(i, l):
                 pilot=r.get('pilot', False), rule_agreement=r.get('rule_agreement', ''), vs_40gen=r.get('vs_40gen', ''),
                 resisted=r['resisted'],
                 **signoff_columns(r),
-                **levels_columns(r, l))
+                **levels_columns(r, l),
+                **dbc)
 
 for name, labels in (('explanations.csv', PRE), ('explanations_heart100.csv', H100),
                      ('../churn/explanations_churn100.csv', C100), ('../churn/explanations_churn200.csv', C200)):

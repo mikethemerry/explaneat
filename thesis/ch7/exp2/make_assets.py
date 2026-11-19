@@ -168,6 +168,14 @@ def records(study):
     return out
 
 
+def agent_minutes(study):
+    """Explaining minutes per seed, computed from the database's timestamped writes (column
+    agent_minutes_db of the v4 explanation CSVs; experiments/10seed/explaining_time.py). The CSVs
+    keep the record's own start/end as claude_minutes, for audit; it is not printed."""
+    p, f = EXPL[study]
+    return {int(e["seed"]): float(e["agent_minutes_db"]) for e in rows(p, **f)}
+
+
 RASH = None
 
 
@@ -196,6 +204,8 @@ def table_headline(S, REC):
         assert abs(best - refs(k)["refs"]["best_observed"]) < 1e-12
         r = refs(k)["refs"]
         mm = o["mike_minutes"]
+        am = list(agent_minutes(k).values())
+        assert len(am) == 10, k
         cols.append({
             "status": "pre-registered" if k == "adult" else "supplementary",
             "inputs": o["n_inputs"], "rows": f"{thousands(o['n_train'])} / {thousands(o['n_test'])}",
@@ -206,7 +216,7 @@ def table_headline(S, REC):
             "hidden": f"{g(o['hidden']['median'])} ({o['hidden']['min']}--{o['hidden']['max']})",
             "cov": f"{o['full_cov']}/10", "budget": f"{o['within_budget']}/10",
             "recheck": f"{o['complete_ok']}/10", "mismatch": f"{o['mismatch']}",
-            "minutes": f"{o['minutes']['median']:.1f} ({o['minutes']['min']:.1f}--{o['minutes']['max']:.1f})",
+            "minutes": f"{st.median(am):.1f} ({min(am):.1f}--{max(am):.1f})",
             "mike": f"{o['mike_verified_true']}/10",
             "mike_min": f"{g(mm['median'])} ({g(mm['min'])}--{g(mm['max'])})"
                         + ("" if len(mike_minutes(REC, k)) == 10 else f"$^\\ast$"),
@@ -236,7 +246,9 @@ def table_headline(S, REC):
            "of that network on the held-out rows. LR is $L_2$ logistic regression and GB tuned gradient "
            "boosting, both fitted on the same split. A seed is within 0.01 of the best seed when its test "
            "AUC is at most 0.01 below the best seed's. Explanations used the frozen v4 method, one "
-           "explaining agent per network; the recheck reran every stored query."
+           "explaining agent per network; the recheck reran every stored query. Agent explaining minutes run "
+           "from the explanation's creation to its last timestamped write in the database (operations, "
+           "evidence records, logged queries)."
            + "".join(f" $^\\ast$Minutes recorded for {len(mike_minutes(REC, k))} of the 10 {n} networks "
                      f"(not for s{', s'.join(str(s) for s in sorted(set(range(10)) - set(mike_minutes(REC, k))))})."
                      for k, n in STUDIES if len(mike_minutes(REC, k)) < 10))
@@ -795,7 +807,7 @@ def fig_cost(S, REC):
     for i, (k, name) in enumerate(STUDIES):
         col, mk = STUDY_STYLE[k]
         hid = {int(s): v for s, v in S[k]["hidden_by_seed"].items()}
-        mins = {int(s): v for s, v in S[k]["minutes_by_seed"].items()}
+        mins = agent_minutes(k)
         a1.scatter([hid[s] + (s - 4.5) * 0.05 for s in range(10)], [mins[s] for s in range(10)], marker=mk,
                    color=col, s=20, edgecolor="white", lw=0.4, label=name, zorder=3)
         mm = list(mike_minutes(REC, k).values())
@@ -822,10 +834,11 @@ def fig_cost(S, REC):
     save(fig, "exp2-cost")
     allm = [v for k, _ in STUDIES for v in mike_minutes(REC, k).values()]
     miss = [f"{n} s{s}" for k, n in STUDIES for s in range(10) if s not in mike_minutes(REC, k)]
-    alla = [v for k, _ in STUDIES for v in S[k]["minutes_by_seed"].values()]
+    alla = [v for k, _ in STUDIES for v in agent_minutes(k).values()]
     write_figure("exp2-cost",
                  "Cost of explaining and verifying, one mark per network. (a) The explaining agent's "
-                 f"wall-clock minutes against network size ({g(min(alla))} to {g(max(alla))} minutes). (b) Mike's "
+                 "minutes, from the explanation's creation to its last timestamped write in the database, "
+                 f"against network size ({g(min(alla))} to {g(max(alla))} minutes). (b) Mike's "
                  f"minutes to verify each explanation ({g(min(allm))} to {g(max(allm))}; bar: median per study), "
                  "using the plain-language report, the pairs plot and the expandable network"
                  + (f"; minutes were not recorded for {', '.join(miss)}." if miss else "."), "fig:exp2-cost")

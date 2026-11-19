@@ -30,8 +30,9 @@ Three outputs reproduced with small, non-printed differences:
 - **`runs.csv` / `runs_heart100.csv`**: two bookkeeping columns differ (issue 6). Every column the thesis uses is identical.
 
 No result file was found to be hand-made, and every number traced to an origin (no UNKNOWN links). The
-non-computed parts are named below: the signal vocabulary, the explanation records' self-reported
-fields, and Mike's minutes.
+non-computed parts are named below: the signal vocabulary and Mike's minutes. The explanation
+records' self-reported fields (agent minutes, Experiment 1 coverage, annotation counts) were replaced
+by read-only database checks on 20 Nov (issue 3, resolved; see "Computed records" below).
 
 ---
 
@@ -42,11 +43,10 @@ fields, and Mike's minutes.
 | `exp1-networks.tex` | `thesis/ch7/exp1/make_tables.py` | computed (byte-identical) |
 | `thesis/ch7/exp1/data/networks.json` | `thesis/ch7/exp1/extract_db.py` (explaneat_dev, ~1 min) | extracted (DB, read-only); rerun byte-identical |
 | structure: inputs, hidden, conns, depth, skips, density, skippiness | genome in explaneat_dev, `compute_runs.structure` and `ExplaNEAT` measures | extracted (DB, read-only) |
-| splits, identity nodes, leaf + comp. counts | explanation operations in explaneat_dev, asserted against the records | extracted (DB, read-only) |
-| coverage struct./comp., agent min | agent's record JSON: `experiments/survival/cox_case/explanations/cox-whas500-s0.json`, `c4_capacity/explanations/record.json`, `c4_line_features/explanations/lines/report.json`, `ushape_saddle/explanations/shape-{A,B,C}.json` | **agent-reported (unverified)**: coverage is not recomputed by code; minutes are the agent's own start/end |
-| function-preservation error | same records; equals `experiments/explanation_levels/levels/*.json` (computed) for all six | computed (cross-checked) |
-| paper Heart / MONK-2 counts, coverage | `experiments/aaai27/recheck/results/paper_coverage_options.json` ← `paper_coverage_options.py` | extracted (DB, read-only) |
-| paper networks' function-preservation error | `experiments/explanation_levels/levels/paper-*.json` | computed |
+| splits, identity nodes, leaf + comp. counts | explanation operations in explaneat_dev (`explaining_time.annotation_counts`; also equal to `get_coverage`'s counts), asserted equal to the records (paper: to `paper_coverage_options.json`) | extracted (DB, read-only); all agree |
+| coverage struct./comp., hierarchy completeness | MCP `get_coverage` (`coverage_report`) on each explanation, in `extract_db.py`, as `experiments/10seed/verify_record.py` does; check_explanation's stricter hierarchy check kept as `hierarchy_complete_check` | extracted (DB, read-only), computed. Agree with the six v4 records and paper Heart. **MONK-2: 1.00** (was printed 0.75): under the current definition (decision D4, 7 Nov, commit 1fb3a8b6) its pruned-input annotation is exempt from the single-root rule; 0.75 is the pre-D4 value in `paper_coverage_options.json` ("current"), now kept as `rec_cov_c` and quoted in the caption. check_explanation's strict check still reports MONK-2's hierarchy incomplete (two roots) |
+| agent min | `experiments/10seed/explaining_time.explaining_window` in `extract_db.py`: explanation created → last timestamped write (operations, evidence records, `evidence_log`) | extracted (DB, read-only), computed. 0.6–4.5 min below the record's own start/end (kept as `rec_agent` in `networks.json`); paper Heart / MONK-2 have no evidence log: "--" |
+| function-preservation error | `check_explanation.check` on the training split, in `extract_db.py`; equals the records and `experiments/explanation_levels/levels/*.json` exactly for all eight | extracted (DB, read-only), computed |
 | XOR row | `experiments/xor/xor_results.json` ← `experiments/xor/run_xor.py` | computed |
 | train / test AUC and CI | `experiments/benchmarks/results/propneat.json` ← `propneat.py` (asserts equality with the run records to 1e-9) | extracted (DB, read-only); rerun byte-identical |
 | WHAS500 Harrell's C | `experiments/benchmarks/results/survival.json` ← `survival.py` | computed |
@@ -121,8 +121,8 @@ The following is **curated (judgment)**: chosen by an agent or by Mike and typed
 | `experiments/churn/runs_churn100.csv` | `experiments/churn/compute_churn_runs.py --prefix churn100` | extracted (DB, read-only); rerun byte-identical |
 | `explanations_v4.csv`, `explanations_heart100_v4.csv`, `churn/explanations_churn100_v4.csv` | `experiments/10seed/build_explanations_csv.py --dir explanations_v4 --suffix _v4` (no DB) | computed; rerun byte-identical |
 | record field `verified_by_orchestrator` (coverage, function-preservation error, splits, identity nodes, `complete_ok`) | `experiments/10seed/verify_record.py` (`check_explanation`, `get_coverage` on explaneat_v4) | computed |
-| record fields `n_leaf_annotations`, `n_composition_annotations` | explaining agent's report | agent-authored, verified by Mike (the annotations are what Mike verified) |
-| record `start` / `end` → "Agent min" | explaining agent's report | **agent-reported (unverified)**: not checked against `evidence_log` times |
+| CSV `n_leaf`, `n_composition` | `experiments/10seed/explaining_time.py` (annotate operations in explaneat_v4) → `explaining_time_v4.csv` → `build_explanations_csv.py`, which asserts them equal to the records' `n_leaf_annotations` / `n_composition_annotations` | extracted (DB, read-only); all 60 agree. The annotations themselves are agent-authored, verified by Mike |
+| CSV `agent_minutes_db` → "Agent min" (exp2-runs-*, exp2-headline, exp2-cost) | `explaining_time.py` (read-only explaneat_v4): explanation created → last timestamped write → `explaining_time_v4.csv` → `build_explanations_csv.py` | extracted (DB, read-only), computed. The record's own start/end stays in the CSV as `claude_minutes` (audit only, not printed) |
 | record `mike_verification` (verified, minutes) | review UI (`explaneat/api/routes/records.py`), committed ab99b365 | human-entered by Mike. **Exception:** adult-s0 (6 min) and adult-s4 (5 min) were written by an agent "at Mike's instruction in chat on 2026-11-18" (issue 2); adult-s3 has no minutes (footnoted) |
 | `thesis/ch7/exp2/data/structure_metrics.json` (density, skippiness, layers) | `extract_db.py structure_metrics.json --refresh` (explaneat_v4) | extracted (DB, read-only); rerun byte-identical |
 | genomes | `PYTHONHASHSEED=0 uv run python experiments/10seed/run_seed.py {adult\|heart100\|churn} <seed>` (enforces the hash seed, seeds random/numpy/torch, 1 torch thread, float64) | computed (layer 1, not rerun; prefix reproduction checked by `verify_prefix_reproduction.py`) |
@@ -153,7 +153,7 @@ These are images of the explorer UI. They carry no generated numbers, and nothin
 2. **Two of Mike's verification-minute values were written by an agent.** adult-s0 (6) and adult-s4
    (5) were recorded from chat. They feed the headline and cost figure, not the in-scope tables, but
    Mike should confirm them.
-3. **"Agent min" and Experiment 1 coverage are self-reported by the explaining agent.** No code
+3. **Resolved 20 Nov (computed records, below).** *Was:* **"Agent min" and Experiment 1 coverage are self-reported by the explaining agent.** No code
    recomputes them. The function-preservation error is cross-checked; coverage in Experiment 1 is not.
    For Experiment 2, coverage comes from `verify_record.py` (computed). A read-only check against
    `evidence_log` first/last timestamps, or `check_explanation` inside `exp1/extract_db.py`, would
@@ -206,7 +206,42 @@ These are images of the explorer UI. They carry no generated numbers, and nothin
 ## For Mike to decide
 - Confirm adult-s0 (6 min) and adult-s4 (5 min).
 - How to name the curated signal vocabulary in the thesis, and whether to check or assert the Churn and Heart row descriptions.
-- Whether to state "Agent min" and Experiment 1 coverage as agent-reported, or add the read-only recomputes.
+- ~~Whether to state "Agent min" and Experiment 1 coverage as agent-reported, or add the read-only recomputes.~~ Recomputed (20 Nov).
+- MONK-2's compositional coverage now prints 1.00 under the D4 exemption (caption gives the 0.75 without it); check the Chapter 7 prose that cites 0.75.
+- The book (`thesis/ch7/book/e2_stats.py`, `data/exp2.py`) and `thesis/scripts/thesis_experiment_tables.py` (`ch7_experiment2_consistency.tex`) still use the record minutes (`claude_minutes`); switch them to `agent_minutes_db` if they stay in the thesis.
 - Whether to refit and commit the seeded lr_l1 results (printed values would not change).
 - Whether to add `interpret` to a uv extra.
 - Whether to regenerate and commit `runs.csv` / `runs_heart100.csv` with the current bookkeeping columns.
+
+## Computed records (20 Nov 2026, branch thesis/computed-records)
+
+The explaining agent's self-reported numbers in the Chapter 7 tables are replaced by read-only
+database checks (every process runs with `PGOPTIONS=-c default_transaction_read_only=on`).
+
+**Explaining minutes.** Definition (`experiments/10seed/explaining_time.py`): from the explanation's
+creation (`explanations.created_at`, the agent's first operation) to the last timestamped write the
+explaining tools made: an operation's `created_at`, an evidence record's `timestamp`, `amended_at`,
+`history[].replaced_at` or `deleted_at`, or an `evidence_log` entry. Left out as later writers:
+`provenance_fixed_at` (`fix_amended_provenance.py`), evidence saved through the explorer API (on churn100-s5,
+a week later), `explanations.updated_at` (bumped by later edits on several explanations, hours to days
+after the record's end), and `evidence_log` entries before the explanation existed (one runner
+`compute_performance` call on WHAS500). It is a lower bound on wall-clock time: reading before the
+first write and the closing recheck and record writing are not in it. For all 66 explanations
+(60 v4 records + six Experiment 1) no counted write falls after the record's end, and the computed time is
+0.6 to 4.5 minutes below the record's start/end (`explaining_time_v4.csv` `difference_minutes`;
+`networks.json` `rec_agent` vs `agent`). The paper explanations (Heart, MONK-2) predate the evidence
+log, their operations span months, and they keep "--".
+
+**Experiment 1 coverage.** `get_coverage` and `check_explanation.check` (verify_record.py's two checks)
+run in `thesis/ch7/exp1/extract_db.py`. Coverage, hierarchy completeness and the function-preservation
+error agree with the six v4 records exactly; MONK-2 is the one change (see the ch7-ex1-networks table).
+
+**Annotation counts.** Leaf and composition `annotate` operations in the stored stream agree with every
+record (60 v4, six Experiment 1) and with the paper files; the tables print the database counts.
+
+**Cells that changed.** `exp1-networks.tex`: Agent min of the six v4 rows; MONK-2 coverage 1.00/0.75 →
+1.00/1.00; the caption (definition of agent min, MONK-2 sentence). `exp2-runs-{adult,churn,heart100}.tex`:
+every Agent min cell and its median (range); the caption's definition. `exp2-headline.tex`: the "Agent
+explaining minutes" row and a caption sentence. `exp2-cost` figure (panel a) and its caption range. Every
+other generated `.tex` is byte-identical; `networks.json`, `explaining_time_v4.csv` and the v4 explanation
+CSVs reproduce byte-identically on a second run (old CSV columns unchanged; three columns appended).

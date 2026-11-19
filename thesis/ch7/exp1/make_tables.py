@@ -102,6 +102,11 @@ def table_networks():
     v4 = [N["networks"][k] for k, _ in ORDER if not k.startswith("paper-")]
     assert all(r["mike"] is None for r in N["networks"].values())
     assert {r["protocol"] for r in paper} == {paper[0]["protocol"]} and len({r["protocol"] for r in v4}) == 1
+    # the caption's statements about the computed values
+    assert all(r["agent"] is None for r in paper) and all(r["agent"] is not None for r in v4)
+    mk = N["networks"]["paper-monk2"]
+    assert mk["cov_c"] == 1.0 and mk["exempt_disconnected"] and mk["rec_cov_c"] < 1.0, mk
+    assert all(not r["exempt_disconnected"] for k, r in N["networks"].items() if k != "paper-monk2")
     cap = ("Experiment 1: the explained network of each dataset, with the columns of the Experiment 2 run "
            "tables. Selection: Heart and MONK-2 are the original networks; WHAS500 is the lowest validation Cox "
            "loss of five seeds; Connect-4 and the synthetic sets are the largest training AUC of their runs "
@@ -111,15 +116,18 @@ def table_networks():
            "\\emph{Inputs used}, \\emph{hidden nodes}, \\emph{enabled connections}, \\emph{depth} and "
            "\\emph{skip connections} are of the phenotype; \\emph{skippiness} and \\emph{density} are the "
            "library's \\texttt{ExplaNEAT} measures on the genome, as in Experiment 2. Explanation columns are "
-           "of the stored explanation: leaf $+$ composition annotations, node splits, identity nodes, "
-           "structural / compositional coverage and the function-preservation error (largest absolute "
-           "difference between the explained model and the network on the training rows). Every explanation "
+           "computed on the stored explanation: leaf $+$ composition annotations, node splits and identity "
+           "nodes (its operations), structural / compositional coverage (the library's coverage check) and "
+           "the function-preservation error (largest absolute difference between the explained model and the "
+           "network on the training rows). Every explanation "
            "except the two original ones was written by one explaining agent with the frozen authoring method "
-           "(v4, provenance-stamped); \\emph{agent min} is its wall-clock time from the record (Connect-4 "
-           "cells includes a short sandbox pause). $^\\dagger$The original explanations (July 2026) predate that "
-           "method and record no explaining time; MONK-2's compositional coverage is "
-           f"{num(N['networks']['paper-monk2']['cov_c'], 2)} as stored because "
-           "its pruned-input annotation sits outside the root. No Experiment 1 explanation has recorded "
+           "(v4, provenance-stamped); \\emph{agent min} runs from the explanation's creation to its last "
+           "timestamped write in the database (operations, evidence records, logged queries), a lower bound "
+           "on the agent's wall-clock time (Connect-4 cells includes a short sandbox pause). $^\\dagger$The "
+           "original explanations (July 2026) predate that method and the query log, so they have no explaining "
+           "time; MONK-2's pruned-input annotation sits outside the root and, as an annotation of disconnected "
+           "inputs, is exempt from the single-root rule (without the exemption its compositional coverage is "
+           f"{num(mk['rec_cov_c'], 2)}). No Experiment 1 explanation has recorded "
            "verification minutes, so \\emph{Mike min} is blank throughout. "
            f"$^\\ddagger$XOR has no test set (the four rows are the whole truth table): each of the {len(X)} "
            "seeds' first solving genome, reduced to its minimal form (exact relay collapse and greedy pruning), "
