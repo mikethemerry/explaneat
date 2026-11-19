@@ -2,7 +2,8 @@
 242/61 splits of all 303 rows, each comparator at the setting CV chose on the paper split (read from
 benchmarks.csv, as are the fixed-split test AUCs). Needs cache/heart.npz (export_data.py) and
 `interpret` (EBM). Exploratory, 20 Nov 2026. Output: heart_splits.json (the table
-thesis/ch7/appendix/heart_splits_table.py reads it).
+thesis/ch7/appendix/heart_splits_table.py reads its summaries; `per_split` holds every split's test AUC per
+model, read by thesis/ch7/figure_candidates).
 
     OMP_NUM_THREADS=2 <venv with interpret>/python experiments/benchmarks/heart_splits.py [cache dir]
 """
@@ -39,4 +40,6 @@ for k in ["RF","GB","EBM","L1"]:
 
 out={k:{"mean":float(v.mean()),"sd":float(v.std()),"p5":float(np.percentile(v,5)),"p95":float(np.percentile(v,95)),
         "share_beats_L2":(None if k=="L2" else float(np.mean(v>R["L2"]))),"paper_split":paper[k]} for k,v in R.items()}
-json.dump({"n_splits":100,"test_size":61,"seed":1,"models":out},open(HERE/"heart_splits.json","w"),indent=1)
+# per-split test AUCs (split order of StratifiedShuffleSplit(random_state=1)), for the figure candidates
+per_split={k:[float(x) for x in v] for k,v in R.items()}
+json.dump({"n_splits":100,"test_size":61,"seed":1,"models":out,"per_split":per_split},open(HERE/"heart_splits.json","w"),indent=1)

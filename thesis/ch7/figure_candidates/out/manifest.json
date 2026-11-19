@@ -1,0 +1,733 @@
+[
+ {
+  "id": "tickmap-adult",
+  "title": "Adult: visual tick table (signal × seed, contribution SD)",
+  "group": "Signals (Exp 2)",
+  "pairs_with": "tab:exp2-signalticks-adult",
+  "what_it_shows": "The tick table as a heatmap: each cell's shade is the clipped standard deviation of that signal's logit contribution in that seed, so the 0.10 cut (present) and 0.03 cut (weak) become visible distances rather than ticks. Red boxes mark linear terms that point the opposite way to most seeds; row labels give the count of seeds where the signal is present.",
+  "sources": [
+   "experiments/adult_signals/matrix.csv",
+   "experiments/adult_signals/signals.csv",
+   "thesis/ch7/exp2/data/signalticks.json (counts asserted equal)"
+  ],
+  "status": "new"
+ },
+ {
+  "id": "tickmap-churn",
+  "title": "Churn: visual tick table (signal × seed, contribution SD)",
+  "group": "Signals (Exp 2)",
+  "pairs_with": "tab:exp2-signalticks-churn",
+  "what_it_shows": "The tick table as a heatmap: each cell's shade is the clipped standard deviation of that signal's logit contribution in that seed, so the 0.10 cut (present) and 0.03 cut (weak) become visible distances rather than ticks. Red boxes mark linear terms that point the opposite way to most seeds; row labels give the count of seeds where the signal is present.",
+  "sources": [
+   "experiments/churn_signals/matrix.csv",
+   "experiments/churn_signals/signals.csv",
+   "thesis/ch7/exp2/data/signalticks.json (counts asserted equal)"
+  ],
+  "status": "new"
+ },
+ {
+  "id": "tickmap-heart100",
+  "title": "Heart-100: visual tick table (signal × seed, contribution SD)",
+  "group": "Signals (Exp 2)",
+  "pairs_with": "tab:exp2-signalticks-heart100",
+  "what_it_shows": "The tick table as a heatmap: each cell's shade is the clipped standard deviation of that signal's logit contribution in that seed, so the 0.10 cut (present) and 0.03 cut (weak) become visible distances rather than ticks. Red boxes mark linear terms that point the opposite way to most seeds; row labels give the count of seeds where the signal is present.",
+  "sources": [
+   "experiments/heart100_audit/linear_core.csv",
+   "experiments/heart100_audit/family_presence.csv",
+   "thesis/ch7/exp2/signal_ticks.py (HEART_SHORT labels)",
+   "thesis/ch7/exp2/signal_tables.py (FAM_ROWS labels)",
+   "thesis/ch7/exp2/data/signalticks.json (counts asserted equal)"
+  ],
+  "status": "new"
+ },
+ {
+  "id": "lincore-adult",
+  "title": "Adult: linear terms, size in each seed",
+  "group": "Signals (Exp 2)",
+  "pairs_with": "tab:exp2-signalticks-adult, tab:exp2-betas-adult",
+  "what_it_shows": "Each linear term's logit contribution size (clipped SD) in each of the ten networks, on a log scale with the 0.03 and 0.10 cuts shaded. It shows how far above the threshold the shared core sits and how close the occasional terms come to it.",
+  "sources": [
+   "experiments/adult_signals/matrix.csv",
+   "experiments/adult_signals/signals.csv"
+  ],
+  "status": "new"
+ },
+ {
+  "id": "lincore-churn",
+  "title": "Churn: linear terms, size in each seed",
+  "group": "Signals (Exp 2)",
+  "pairs_with": "tab:exp2-signalticks-churn, tab:exp2-betas-churn",
+  "what_it_shows": "Each linear term's logit contribution size (clipped SD) in each of the ten networks, on a log scale with the 0.03 and 0.10 cuts shaded. It shows how far above the threshold the shared core sits and how close the occasional terms come to it.",
+  "sources": [
+   "experiments/churn_signals/matrix.csv",
+   "experiments/churn_signals/signals.csv"
+  ],
+  "status": "new"
+ },
+ {
+  "id": "lincore-heart100",
+  "title": "Heart-100: linear terms, size in each seed",
+  "group": "Signals (Exp 2)",
+  "pairs_with": "tab:exp2-signalticks-heart100, tab:exp2-linear-core",
+  "what_it_shows": "Each linear term's logit contribution size (clipped SD) in each of the ten networks, on a log scale with the 0.03 and 0.10 cuts shaded. It shows how far above the threshold the shared core sits and how close the occasional terms come to it.",
+  "sources": [
+   "experiments/heart100_audit/linear_core.csv",
+   "experiments/heart100_audit/family_presence.csv",
+   "thesis/ch7/exp2/signal_ticks.py (HEART_SHORT labels)",
+   "thesis/ch7/exp2/signal_tables.py (FAM_ROWS labels)"
+  ],
+  "status": "new"
+ },
+ {
+  "id": "recurrence",
+  "title": "How many seeds carry each signal (all three datasets)",
+  "group": "Signals (Exp 2)",
+  "pairs_with": "tab:exp2-signalticks-adult, tab:exp2-signalticks-churn, tab:exp2-signalticks-heart100",
+  "what_it_shows": "For each signal present in at least one network, the number of the ten seeds where it is present (dark) and weak (light), linear terms in blue and non-linear signals in orange. Linear terms recur in nearly every seed; non-linear signals spread from shared to one-off.",
+  "sources": [
+   "experiments/adult_signals/matrix.csv",
+   "experiments/adult_signals/signals.csv",
+   "experiments/churn_signals/matrix.csv",
+   "experiments/churn_signals/signals.csv",
+   "experiments/heart100_audit/linear_core.csv",
+   "experiments/heart100_audit/family_presence.csv",
+   "thesis/ch7/exp2/signal_ticks.py (HEART_SHORT labels)",
+   "thesis/ch7/exp2/signal_tables.py (FAM_ROWS labels)"
+  ],
+  "status": "new"
+ },
+ {
+  "id": "sig-shapes-adult",
+  "title": "Adult: shapes of the non-linear signals, one line per seed",
+  "group": "Signals (Exp 2)",
+  "pairs_with": "tab:exp2-signalticks-adult",
+  "what_it_shows": "Each panel is one non-linear row of the Adult tick table (capital-gain threshold, age bend, hours bend): the network's linear-plus-bend component for that variable, one line per seed, against the data's own fit (dashed). Solid lines are seeds where the bend is present, dotted where it is weak, grey where absent.",
+  "sources": [
+   "thesis/ch7/figure_candidates/data/adult_shapes.json (extract_db.py: experiments/adult_signals/catalogue.py basis and projection, read-only explaneat_v4)",
+   "experiments/adult_signals/matrix.csv",
+   "experiments/adult_signals/cache/betas.npz"
+  ],
+  "status": "new"
+ },
+ {
+  "id": "sig-shapes-heart100",
+  "title": "Heart-100: shapes of the non-linear families, one line per seed",
+  "group": "Signals (Exp 2)",
+  "pairs_with": "tab:exp2-signalticks-heart100, tab:exp2-heart-families",
+  "what_it_shows": "One panel per non-linear family of the Heart-100 tick table: the family's logit contribution (the network minus the network with those units straightened), averaged over the training patients in each band or level of the family's main input, one line per seed that has the family (grey dotted: weak). It shows which families agree in shape across seeds and which are one network's own; caveat: a band mean can hide a gate that pushes some patients up and others down, and levels with n = 2 drive two panels.",
+  "sources": [
+   "thesis/ch7/figure_candidates/data/heart_families.json (extract_db.py: experiments/heart100_audit/audit.py Net.family_presence, read-only explaneat_v4)",
+   "experiments/heart100_audit/family_presence.csv",
+   "thesis/ch7/exp2/signal_tables.py (FAM_ROWS labels)"
+  ],
+  "status": "new"
+ },
+ {
+  "id": "seed-agreement",
+  "title": "How alike are the ten networks? Pairwise logit correlation",
+  "group": "Signals (Exp 2)",
+  "pairs_with": "tab:exp2-agreement",
+  "what_it_shows": "For each dataset, the correlation between every pair of the ten networks' logits, on the training rows (lower triangle) and the test rows (upper triangle), with the median pair in each title. Most pairs sit around 0.9; a single seed that disagrees with all others (Adult s8) shows as a dark stripe that the medians of the agreement table hide.",
+  "sources": [
+   "thesis/ch7/figure_candidates/data/seed_agreement.json (extract_db.py, read-only explaneat_v4)"
+  ],
+  "status": "new"
+ },
+ {
+  "id": "seed-agreement-strip",
+  "title": "Pairwise logit correlation, train vs test (45 pairs per dataset)",
+  "group": "Signals (Exp 2)",
+  "pairs_with": "tab:exp2-agreement",
+  "what_it_shows": "The same pairwise correlations as a strip per dataset, training rows beside test rows. It makes the drop from train to test and the spread between pairs easier to read than the matrices.",
+  "sources": [
+   "thesis/ch7/figure_candidates/data/seed_agreement.json (extract_db.py, read-only explaneat_v4)"
+  ],
+  "status": "new"
+ },
+ {
+  "id": "completeness-shares",
+  "title": "Where each network's logit variance goes: linear, non-linear, residual",
+  "group": "Completeness",
+  "pairs_with": "tab:exp2-signal-completeness",
+  "what_it_shows": "For each of the 30 networks, the share of its logit variance (training rows) captured by the catalogue's linear terms, the extra share captured by its non-linear signals, and the residual the catalogue misses. Adult is almost all linear; Churn needs its non-linear signals for about a third; Heart-100 keeps a residual. Heart's basis is the completeness check's data blocks (heart_basis.py), not the tick-table families.",
+  "sources": [
+   "experiments/signal_completeness/output_level.csv",
+   "experiments/signal_completeness/heart_basis.py (Heart basis)"
+  ],
+  "status": "new"
+ },
+ {
+  "id": "completeness-residual",
+  "title": "What the signal catalogue misses: residual SD and fit, per network",
+  "group": "Completeness",
+  "pairs_with": "tab:exp2-signal-completeness",
+  "what_it_shows": "(a) Each network's residual logit SD after projecting on its dataset's catalogue, against the 0.10 bar of the completeness criterion. (b) The unexplained share of logit variance on training versus test rows: points near the diagonal mean the catalogue fits new rows as well as old ones.",
+  "sources": [
+   "experiments/signal_completeness/output_level.csv",
+   "experiments/signal_completeness/summary.json"
+  ],
+  "status": "new"
+ },
+ {
+  "id": "train-vs-test-auc",
+  "title": "Train vs test AUC: the ten seeds and the comparators",
+  "group": "Performance & structure (Exp 2)",
+  "pairs_with": "tab:exp2-runs-adult, tab:exp2-runs-churn, tab:exp2-runs-heart100, tab:exp2-benchmarks",
+  "what_it_shows": "Each seed's training AUC against its test AUC, with every comparator of the benchmark suite on the same split (open circles, labelled) and the diagonal where train equals test. Distance below the diagonal is overfitting: on Adult the seeds sit on it beside LR; on Churn the seeds overfit less than the forests and boosting; on Heart-100 the seeds fall further below it than logistic regression does.",
+  "sources": [
+   "experiments/10seed/runs.csv",
+   "experiments/churn/runs_churn100.csv",
+   "experiments/10seed/runs_heart100.csv",
+   "experiments/benchmarks/benchmarks.csv"
+  ],
+  "status": "new"
+ },
+ {
+  "id": "size-vs-auc",
+  "title": "Network size vs test AUC (hidden units and connections)",
+  "group": "Performance & structure (Exp 2)",
+  "pairs_with": "tab:exp2-runs-adult, tab:exp2-runs-churn, tab:exp2-runs-heart100",
+  "what_it_shows": "Each seed's number of hidden units (top) and enabled connections (bottom) against its test AUC, one panel per dataset, seed numbers beside the marks. Within a dataset, bigger networks are not reliably better.",
+  "sources": [
+   "experiments/10seed/runs.csv",
+   "experiments/churn/runs_churn100.csv",
+   "experiments/10seed/runs_heart100.csv"
+  ],
+  "status": "new"
+ },
+ {
+  "id": "linearised-auc",
+  "title": "All three datasets: AUC with and without the non-linear units",
+  "group": "Performance & structure (Exp 2)",
+  "pairs_with": "tab:exp2-runs-adult, tab:exp2-runs-churn, tab:exp2-runs-heart100, tab:exp2-heart-audit",
+  "what_it_shows": "Generalises the Heart-100 linearisation figure to Adult and Churn: each network's AUC as trained and with every non-linear unit replaced by its best straight line, on training (top) and test rows (bottom); every panel in a row spans the same AUC range. Adult loses little, Churn loses most, Heart-100 loses on training rows but gains or loses little on test.",
+  "sources": [
+   "experiments/10seed/linearity_v2/summary.json",
+   "experiments/10seed/runs.csv",
+   "experiments/churn/runs_churn100.csv",
+   "experiments/10seed/runs_heart100.csv",
+   "experiments/heart100_audit/networks.csv (cross-check)"
+  ],
+  "status": "new"
+ },
+ {
+  "id": "heart-units-gain",
+  "title": "Heart-100: each non-linear unit's gain on training vs test rows",
+  "group": "Performance & structure (Exp 2)",
+  "pairs_with": "tab:exp2-heart-audit, tab:exp2-heart-families",
+  "what_it_shows": "Every switching unit of the ten Heart-100 networks: the AUC it adds over its own straight-line version on training rows (x) and on test rows (y, with its 95% interval), coloured by family. Most units add on training rows and nothing measurable on the 61 test patients.",
+  "sources": [
+   "experiments/heart100_audit/features.csv",
+   "thesis/ch7/exp2/signal_tables.py (FAM_ROWS labels)"
+  ],
+  "status": "new"
+ },
+ {
+  "id": "heart-lincore-vs-data",
+  "title": "Heart-100: each seed's linear weights against the data's own",
+  "group": "Performance & structure (Exp 2)",
+  "pairs_with": "tab:exp2-linear-core, tab:exp2-betas-heart100",
+  "what_it_shows": "For each linear term, the weight each seed's network puts on it (dots, from projecting its logit on the linear columns) and the weight a cross-validated ridge logistic fit of the data puts on it (black bar). Seeds agree in sign on the main terms and mostly put more weight on them than the shrunk data fit; the downsloping ST slope splits by sign (red: opposite direction to most seeds).",
+  "sources": [
+   "experiments/heart100_audit/linear_core.csv",
+   "thesis/ch7/exp2/signal_ticks.py (HEART_SHORT labels)"
+  ],
+  "status": "new"
+ },
+ {
+  "id": "bench-dots",
+  "title": "Every dataset: PropNEAT against each comparator (test AUC / C-index)",
+  "group": "Benchmarks",
+  "pairs_with": "tab:exp1-benchmarks, tab:exp2-benchmarks, tab:exp1-benchmarks-survival",
+  "what_it_shows": "One row per dataset, the explained PropNEAT network (Experiment 2: median of ten seeds, with its range) beside every comparator's test AUC with its 95% interval (survival: Harrell's C). It shows at a glance where PropNEAT sits inside the comparator spread and how wide the intervals are on the small sets.",
+  "sources": [
+   "experiments/benchmarks/benchmarks.csv"
+  ],
+  "status": "new"
+ },
+ {
+  "id": "bench-gap",
+  "title": "Gap to the best comparator and to logistic regression, per dataset",
+  "group": "Benchmarks",
+  "pairs_with": "tab:exp1-benchmarks, tab:exp2-benchmarks, tab:exp1-benchmarks-survival",
+  "what_it_shows": "PropNEAT's test AUC (survival: C-index) minus the best comparator's (dark) and minus L2 logistic regression's (light), per dataset; Experiment 2 uses the median of ten seeds. Bars right of zero beat the reference. PropNEAT beats LR wherever the data hold real non-linearity and sits near or below the best comparator.",
+  "sources": [
+   "experiments/benchmarks/benchmarks.csv"
+  ],
+  "status": "new"
+ },
+ {
+  "id": "heart-splits-box",
+  "title": "Heart: test AUC over 100 random splits, with the fixed split marked",
+  "group": "Benchmarks",
+  "pairs_with": "tab:ch7-heart-splits, tab:exp2-heart-benchmark",
+  "what_it_shows": "Each comparator's test AUC on 100 random 242/61 splits of the 303 Heart patients (box and points), with its AUC on the fixed paper split (red diamond) and the ten Heart-100 PropNEAT seeds on the fixed split. The fixed split sits near the top of the forest's and both boosting models' ranges, and nearer the middle for logistic regression, so it flatters the tree ensembles most.",
+  "sources": [
+   "experiments/benchmarks/heart_splits.json",
+   "experiments/10seed/runs_heart100.csv"
+  ],
+  "status": "new"
+ },
+ {
+  "id": "heart-splits-diff",
+  "title": "Heart: does boosting beat LR? Paired differences over 100 splits",
+  "group": "Benchmarks",
+  "pairs_with": "tab:ch7-heart-splits",
+  "what_it_shows": "For each of the 100 random splits, a model's test AUC minus L2 logistic regression's on the same split, with the fixed split's difference marked (red) and zero (black). Gradient boosting's lead on the fixed split is matched or exceeded on only a few random splits.",
+  "sources": [
+   "experiments/benchmarks/heart_splits.json"
+  ],
+  "status": "new"
+ },
+ {
+  "id": "cost-minutes-size",
+  "title": "Explaining minutes against network size, Experiments 1 and 2",
+  "group": "Experiment 1 / cost",
+  "pairs_with": "tab:exp1-networks, tab:exp2-runs-adult, tab:exp2-runs-churn, tab:exp2-runs-heart100, tab:exp2-headline",
+  "what_it_shows": "The explaining agent's minutes (explanation creation to last timestamped database write) against the network's hidden units (a) and enabled connections (b, log scale), for the 30 Experiment 2 networks and the Experiment 1 networks with a database time (labelled in b). Time does not track size: each dataset sits in its own band, and the largest network (Connect-4 cells) took no longer than the small synthetic ones.",
+  "sources": [
+   "thesis/ch7/exp1/data/networks.json",
+   "experiments/10seed/explanations_v4.csv",
+   "experiments/churn/explanations_churn100_v4.csv",
+   "experiments/10seed/explanations_heart100_v4.csv",
+   "experiments/10seed/runs.csv",
+   "experiments/churn/runs_churn100.csv",
+   "experiments/10seed/runs_heart100.csv"
+  ],
+  "status": "new"
+ },
+ {
+  "id": "cost-verify",
+  "title": "Mike's verification minutes against the agent's explaining minutes",
+  "group": "Experiment 1 / cost",
+  "pairs_with": "tab:exp2-headline, tab:exp2-runs-adult, tab:exp2-runs-churn, tab:exp2-runs-heart100",
+  "what_it_shows": "Each verified Experiment 2 network: the minutes Mike spent verifying its explanation against the minutes the agent spent producing it. Verification takes a few minutes whatever the explaining time; hollow marks are the two values recorded from chat rather than typed in the review screen.",
+  "sources": [
+   "experiments/10seed/explanations_v4/*.json (mike_verification)",
+   "experiments/10seed/explanations_v4.csv",
+   "experiments/churn/explanations_churn100_v4.csv",
+   "experiments/10seed/explanations_heart100_v4.csv"
+  ],
+  "status": "new"
+ },
+ {
+  "id": "exp2-auc",
+  "title": "Test AUC of each seed with 95% intervals, LR and GB lines",
+  "group": "Performance & structure (Exp 2)",
+  "pairs_with": "fig:exp2-auc (tab:exp2-headline, tab:exp2-runs-*)",
+  "what_it_shows": "Each seed's test AUC with its bootstrap interval per dataset, against logistic regression and tuned gradient boosting on the same split. The thesis's headline accuracy figure.",
+  "sources": [
+   "thesis/ch7/exp2/figures/exp2/exp2-auc.png",
+   "generator: thesis/ch7/exp2/make_assets.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "exp2-churn-shapes",
+  "title": "Churn: signal shapes, one line per seed",
+  "group": "Signals (Exp 2)",
+  "pairs_with": "fig:exp2-churn-shapes (tab:exp2-signalticks-churn)",
+  "what_it_shows": "Each Churn signal's shape as realised in the ten networks against the data's own. The model for the new Adult and Heart-100 shape candidates.",
+  "sources": [
+   "thesis/ch7/exp2/figures/exp2/exp2-churn-shapes.png",
+   "generator: thesis/ch7/exp2/make_assets.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "exp2-churn-calls-parts",
+  "title": "Churn: one signal, three realisations",
+  "group": "Signals (Exp 2)",
+  "pairs_with": "fig:exp2-churn-calls-parts (tab:exp2-churn-matrix)",
+  "what_it_shows": "How three seeds realise the service-call signal with different units and parts.",
+  "sources": [
+   "thesis/ch7/exp2/figures/exp2/exp2-churn-calls-parts.png",
+   "generator: thesis/ch7/exp2/make_assets.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "exp2-churn-s5-network",
+  "title": "Churn seed 5: hidden units coloured by signal",
+  "group": "Signals (Exp 2)",
+  "pairs_with": "fig:exp2-churn-s5-network",
+  "what_it_shows": "Every hidden unit of Churn seed 5 coloured by the signal it carries.",
+  "sources": [
+   "thesis/ch7/exp2/figures/exp2/exp2-churn-s5-network.png",
+   "generator: thesis/ch7/exp2/make_assets.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "exp2-heart-linearised",
+  "title": "Heart-100: AUC with and without non-linear units",
+  "group": "Performance & structure (Exp 2)",
+  "pairs_with": "fig:exp2-heart-linearised (tab:exp2-heart-audit)",
+  "what_it_shows": "Each Heart-100 network's AUC with its non-linear units replaced by straight lines, train and test.",
+  "sources": [
+   "thesis/ch7/exp2/figures/exp2/exp2-heart-linearised.png",
+   "generator: thesis/ch7/exp2/make_assets.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "exp2-heart-pairs",
+  "title": "Heart-100 seed 2: whole-model pairs plot",
+  "group": "Signals (Exp 2)",
+  "pairs_with": "fig:exp2-heart-pairs",
+  "what_it_shows": "Pairs plot over the five inputs seed 2 is most sensitive to.",
+  "sources": [
+   "thesis/ch7/exp2/figures/exp2/exp2-heart-pairs.png",
+   "generator: thesis/ch7/exp2/make_assets.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "exp2-s8-ice",
+  "title": "Heart-100 seed 8: resting-BP ICE curves by family",
+  "group": "Signals (Exp 2)",
+  "pairs_with": "fig:exp2-s8-ice (tab:exp2-s8-families)",
+  "what_it_shows": "Every training patient's predicted risk as resting blood pressure varies, coloured by curve family.",
+  "sources": [
+   "thesis/ch7/exp2/figures/exp2/exp2-s8-ice.png",
+   "generator: thesis/ch7/exp2/make_assets.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "exp2-cost",
+  "title": "Cost of explaining and verifying",
+  "group": "Experiment 1 / cost",
+  "pairs_with": "fig:exp2-cost (tab:exp2-headline)",
+  "what_it_shows": "Agent explaining minutes against network size, and Mike's verification minutes per study.",
+  "sources": [
+   "thesis/ch7/exp2/figures/exp2/exp2-cost.png",
+   "generator: thesis/ch7/exp2/make_assets.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "exp2-worked-ice",
+  "title": "Worked example: ICE curves of one part",
+  "group": "Worked example (Exp 2)",
+  "pairs_with": "fig:exp2-worked-ice (tab:exp2-worked-claims)",
+  "what_it_shows": "Churn seed 5, the part Service calls and daytime charge: ICE curves of its output.",
+  "sources": [
+   "thesis/ch7/exp2/figures/exp2/exp2-worked-ice.png",
+   "generator: thesis/ch7/exp2/worked.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "exp2-worked-net-concept",
+  "title": "Worked example: the network at the level of concepts",
+  "group": "Worked example (Exp 2)",
+  "pairs_with": "fig:exp2-worked-net-concept",
+  "what_it_shows": "Churn seed 5 with its five top-level parts collapsed into boxes.",
+  "sources": [
+   "thesis/ch7/exp2/figures/exp2/exp2-worked-net-concept.png",
+   "generator: thesis/ch7/exp2/worked.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "exp2-worked-net-exploded",
+  "title": "Worked example: one part expanded",
+  "group": "Worked example (Exp 2)",
+  "pairs_with": "fig:exp2-worked-net-exploded",
+  "what_it_shows": "Churn seed 5 with one part expanded and the rest collapsed.",
+  "sources": [
+   "thesis/ch7/exp2/figures/exp2/exp2-worked-net-exploded.png",
+   "generator: thesis/ch7/exp2/worked.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "exp2-worked-net-unexplained",
+  "title": "Worked example: the network as trained",
+  "group": "Worked example (Exp 2)",
+  "pairs_with": "fig:exp2-worked-net-unexplained",
+  "what_it_shows": "Churn seed 5 before any explanation.",
+  "sources": [
+   "thesis/ch7/exp2/figures/exp2/exp2-worked-net-unexplained.png",
+   "generator: thesis/ch7/exp2/worked.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "exp2-worked-pairs",
+  "title": "Worked example: pairs plot of one part",
+  "group": "Worked example (Exp 2)",
+  "pairs_with": "fig:exp2-worked-pairs",
+  "what_it_shows": "Pairs plot of the part's contribution to the churn score.",
+  "sources": [
+   "thesis/ch7/exp2/figures/exp2/exp2-worked-pairs.png",
+   "generator: thesis/ch7/exp2/worked.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "xor-gates",
+  "title": "XOR: the gates the networks use",
+  "group": "Experiment 1 cases",
+  "pairs_with": "tab:exp1-networks (XOR row)",
+  "what_it_shows": "The XOR networks' hidden gates, by family.",
+  "sources": [
+   "experiments/xor/figures/xor_gates.png",
+   "generator: experiments/xor/make_xor_figures.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "xor-ridge-valley",
+  "title": "XOR: the two families (ridge and valley)",
+  "group": "Experiment 1 cases",
+  "pairs_with": "tab:exp1-networks (XOR row)",
+  "what_it_shows": "The two solution families XOR networks fall into.",
+  "sources": [
+   "experiments/xor/figures/xor_ridge_valley.png",
+   "generator: experiments/xor/make_xor_figures.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "synthetic-shape-a-sodium",
+  "title": "Synthetic shapes: shape-A-sodium",
+  "group": "Experiment 1 cases",
+  "pairs_with": "tab:exp1-networks, tab:exp1-benchmarks (synthetic rows)",
+  "what_it_shows": "True versus recovered shape of the synthetic risk term in this network (sodium U or the saddle).",
+  "sources": [
+   "experiments/ushape_saddle/figures/shape-A-sodium.png",
+   "generator: experiments/ushape_saddle/shape_plots.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "synthetic-shape-a-saddle",
+  "title": "Synthetic shapes: shape-A-saddle",
+  "group": "Experiment 1 cases",
+  "pairs_with": "tab:exp1-networks, tab:exp1-benchmarks (synthetic rows)",
+  "what_it_shows": "True versus recovered shape of the synthetic risk term in this network (sodium U or the saddle).",
+  "sources": [
+   "experiments/ushape_saddle/figures/shape-A-saddle.png",
+   "generator: experiments/ushape_saddle/shape_plots.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "synthetic-shape-b-saddle",
+  "title": "Synthetic shapes: shape-B-saddle",
+  "group": "Experiment 1 cases",
+  "pairs_with": "tab:exp1-networks, tab:exp1-benchmarks (synthetic rows)",
+  "what_it_shows": "True versus recovered shape of the synthetic risk term in this network (sodium U or the saddle).",
+  "sources": [
+   "experiments/ushape_saddle/figures/shape-B-saddle.png",
+   "generator: experiments/ushape_saddle/shape_plots.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "synthetic-shape-b-sodium",
+  "title": "Synthetic shapes: shape-B-sodium",
+  "group": "Experiment 1 cases",
+  "pairs_with": "tab:exp1-networks, tab:exp1-benchmarks (synthetic rows)",
+  "what_it_shows": "True versus recovered shape of the synthetic risk term in this network (sodium U or the saddle).",
+  "sources": [
+   "experiments/ushape_saddle/figures/shape-B-sodium.png",
+   "generator: experiments/ushape_saddle/shape_plots.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "synthetic-shape-c-sodium",
+  "title": "Synthetic shapes: shape-C-sodium",
+  "group": "Experiment 1 cases",
+  "pairs_with": "tab:exp1-networks, tab:exp1-benchmarks (synthetic rows)",
+  "what_it_shows": "True versus recovered shape of the synthetic risk term in this network (sodium U or the saddle).",
+  "sources": [
+   "experiments/ushape_saddle/figures/shape-C-sodium.png",
+   "generator: experiments/ushape_saddle/shape_plots.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "synthetic-shape-c-saddle",
+  "title": "Synthetic shapes: shape-C-saddle",
+  "group": "Experiment 1 cases",
+  "pairs_with": "tab:exp1-networks, tab:exp1-benchmarks (synthetic rows)",
+  "what_it_shows": "True versus recovered shape of the synthetic risk term in this network (sodium U or the saddle).",
+  "sources": [
+   "experiments/ushape_saddle/figures/shape-C-saddle.png",
+   "generator: experiments/ushape_saddle/shape_plots.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "synthetic-shape-c-s1-g300-sodium",
+  "title": "Synthetic shapes: shape-C-s1-g300-sodium",
+  "group": "Experiment 1 cases",
+  "pairs_with": "tab:exp1-networks, tab:exp1-benchmarks (synthetic rows)",
+  "what_it_shows": "True versus recovered shape of the synthetic risk term in this network (sodium U or the saddle).",
+  "sources": [
+   "experiments/ushape_saddle/figures/shape-C-s1-g300-sodium.png",
+   "generator: experiments/ushape_saddle/shape_plots.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "synthetic-shape-c-s1-g300-saddle",
+  "title": "Synthetic shapes: shape-C-s1-g300-saddle",
+  "group": "Experiment 1 cases",
+  "pairs_with": "tab:exp1-networks, tab:exp1-benchmarks (synthetic rows)",
+  "what_it_shows": "True versus recovered shape of the synthetic risk term in this network (sodium U or the saddle).",
+  "sources": [
+   "experiments/ushape_saddle/figures/shape-C-s1-g300-saddle.png",
+   "generator: experiments/ushape_saddle/shape_plots.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "synthetic-shape-c-sig-best-g300-sodium",
+  "title": "Synthetic shapes: shape-C-sig-best-g300-sodium",
+  "group": "Experiment 1 cases",
+  "pairs_with": "tab:exp1-networks, tab:exp1-benchmarks (synthetic rows)",
+  "what_it_shows": "True versus recovered shape of the synthetic risk term in this network (sodium U or the saddle).",
+  "sources": [
+   "experiments/ushape_saddle/figures/shape-C-sig-best-g300-sodium.png",
+   "generator: experiments/ushape_saddle/shape_plots.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "synthetic-shape-c-sig-best-g300-saddle",
+  "title": "Synthetic shapes: shape-C-sig-best-g300-saddle",
+  "group": "Experiment 1 cases",
+  "pairs_with": "tab:exp1-networks, tab:exp1-benchmarks (synthetic rows)",
+  "what_it_shows": "True versus recovered shape of the synthetic risk term in this network (sodium U or the saddle).",
+  "sources": [
+   "experiments/ushape_saddle/figures/shape-C-sig-best-g300-saddle.png",
+   "generator: experiments/ushape_saddle/shape_plots.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "cox-whas500-forest",
+  "title": "WHAS500: network hazard ratios against Cox PH",
+  "group": "Experiment 1 cases",
+  "pairs_with": "tab:ch7-cox-case, tab:cox-ref-whas500-unit",
+  "what_it_shows": "Per clinical unit and per SD, the Cox PH hazard ratio with its interval beside the PropNEAT-Cox network's.",
+  "sources": [
+   "experiments/survival/cox_case/figures/ref_forest_whas500.png",
+   "generator: experiments/survival/cox_case/reference_explanation.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "cox-whas500-pd",
+  "title": "WHAS500: partial dependence, network vs references",
+  "group": "Experiment 1 cases",
+  "pairs_with": "tab:ch7-cox-case",
+  "what_it_shows": "Partial dependence of the log-risk for WHAS500.",
+  "sources": [
+   "experiments/survival/cox_case/figures/ref_pd_whas500.png",
+   "generator: experiments/survival/cox_case/reference_explanation.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "cox-whas500-h2d",
+  "title": "WHAS500: pairwise interaction strengths",
+  "group": "Experiment 1 cases",
+  "pairs_with": "tab:ch7-cox-case",
+  "what_it_shows": "Pairwise interaction (H statistic) for WHAS500.",
+  "sources": [
+   "experiments/survival/cox_case/figures/ref_h2d_whas500.png",
+   "generator: experiments/survival/cox_case/reference_explanation.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "10seed-test_auc_prereg",
+  "title": "Ten-seed study (earlier export): test auc prereg",
+  "group": "Earlier ten-seed exports",
+  "pairs_with": "tab:ch7-10seed (thesis/ch7/exports)",
+  "what_it_shows": "Figure from the earlier ten-seed export set (pre-v4 tables).",
+  "sources": [
+   "experiments/10seed/figures/test_auc_prereg.png",
+   "generator: experiments/10seed/make_figures.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "10seed-test_auc_supp",
+  "title": "Ten-seed study (earlier export): test auc supp",
+  "group": "Earlier ten-seed exports",
+  "pairs_with": "tab:ch7-10seed (thesis/ch7/exports)",
+  "what_it_shows": "Figure from the earlier ten-seed export set (pre-v4 tables).",
+  "sources": [
+   "experiments/10seed/figures/test_auc_supp.png",
+   "generator: experiments/10seed/make_figures.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "10seed-structure_prereg",
+  "title": "Ten-seed study (earlier export): structure prereg",
+  "group": "Earlier ten-seed exports",
+  "pairs_with": "tab:ch7-10seed (thesis/ch7/exports)",
+  "what_it_shows": "Figure from the earlier ten-seed export set (pre-v4 tables).",
+  "sources": [
+   "experiments/10seed/figures/structure_prereg.png",
+   "generator: experiments/10seed/make_figures.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "10seed-structure_supp",
+  "title": "Ten-seed study (earlier export): structure supp",
+  "group": "Earlier ten-seed exports",
+  "pairs_with": "tab:ch7-10seed (thesis/ch7/exports)",
+  "what_it_shows": "Figure from the earlier ten-seed export set (pre-v4 tables).",
+  "sources": [
+   "experiments/10seed/figures/structure_supp.png",
+   "generator: experiments/10seed/make_figures.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "10seed-cost_prereg",
+  "title": "Ten-seed study (earlier export): cost prereg",
+  "group": "Earlier ten-seed exports",
+  "pairs_with": "tab:ch7-10seed (thesis/ch7/exports)",
+  "what_it_shows": "Figure from the earlier ten-seed export set (pre-v4 tables).",
+  "sources": [
+   "experiments/10seed/figures/cost_prereg.png",
+   "generator: experiments/10seed/make_figures.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "10seed-cost_supp",
+  "title": "Ten-seed study (earlier export): cost supp",
+  "group": "Earlier ten-seed exports",
+  "pairs_with": "tab:ch7-10seed (thesis/ch7/exports)",
+  "what_it_shows": "Figure from the earlier ten-seed export set (pre-v4 tables).",
+  "sources": [
+   "experiments/10seed/figures/cost_supp.png",
+   "generator: experiments/10seed/make_figures.py"
+  ],
+  "status": "existing"
+ },
+ {
+  "id": "10seed-coverage_time",
+  "title": "Ten-seed study (earlier export): coverage time",
+  "group": "Earlier ten-seed exports",
+  "pairs_with": "tab:ch7-10seed (thesis/ch7/exports)",
+  "what_it_shows": "Figure from the earlier ten-seed export set (pre-v4 tables).",
+  "sources": [
+   "experiments/10seed/figures/coverage_time.png",
+   "generator: experiments/10seed/make_figures.py"
+  ],
+  "status": "existing"
+ }
+]
