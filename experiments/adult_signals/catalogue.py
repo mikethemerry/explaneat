@@ -346,7 +346,8 @@ def build_basis(D):
     assert np.max(np.abs(phi(Ztr) - Ptr)) < 1e-8
     knots_raw = {"capital-gain": CAPGAIN_KNOTS, "capital-loss": CAPLOSS_KNOTS, "hours-per-week": HOURS_KNOTS,
                  "age": [float(D["mean"][col["age"]] + D["scale"][col["age"]] * k) for k in kn["age"]]}
-    return dict(Phi_tr=Ptr, Phi_te=phi(D["Xt"]), blocks=blocks, names=[nm[i] for i in keep], knots=knots_raw)
+    return dict(Phi_tr=Ptr, Phi_te=phi(D["Xt"]), blocks=blocks, names=[nm[i] for i in keep], knots=knots_raw,
+                phi=phi)
 
 
 def comp(B, beta, b, test=False):

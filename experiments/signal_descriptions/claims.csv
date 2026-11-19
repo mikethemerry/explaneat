@@ -1,0 +1,95 @@
+dataset,row,claim,test,value,holds,seeds_agreeing
+adult,lin:household,"husbands and wives sit below the unmarried, not in family and own child",group means of the component,"relationship:0 -1.36, relationship:5 -2.81, relationship:4 +0.80, relationship:1 +0.81, relationship:3 +2.21",True,10 of 10
+adult,lin:household,low income likelier outside marriage,"corr(component, married) < 0",-0.91,True,
+adult,lin:capgain,falls with capital-gain,PD of lin:capgain: capital-gain=10000 below capital-gain=0,-0.883,True,10 of 10
+adult,lin:edu,falls with education-num,PD of lin:edu: education-num=13 below education-num=9,-1.337,True,10 of 10
+adult,lin:age,falls with age,PD of lin:age: age=55 below age=25,-1.495,True,10 of 10
+adult,lin:hours,falls with hours-per-week,PD of lin:hours: hours-per-week=50 below hours-per-week=30,-0.839,True,10 of 10
+adult,lin:caploss,falls with capital-loss,PD of lin:caploss: capital-loss=1900 below capital-loss=0,-0.974,True,10 of 10
+adult,shape:capgain,the fall is steep past a threshold,"steepest slope at least 3x the slope below $2,000",-1.247 vs +0.522 per $1000,True,
+adult,shape:capgain,the threshold is a few thousand dollars,"steepest segment starts between $1,000 and $10,000","$5,750",True,6 of 8
+adult,shape:age,the fall with age is steep for the young,slope 20-35 < 0 and below slope 50-70,-0.171 vs +0.022 per year,True,6 of 6
+adult,shape:age,turns back later in life,sign of the slope 50-70,+0.022 per year,True,
+adult,shape:hours,short weeks raise it more than long weeks lower it,PD(10 h) - PD(40 h) > PD(40 h) - PD(70 h) > 0,+1.353 vs +0.755,True,2 of 2
+adult,lin:work,"executive/managerial and professional below; service, handling and missing above",occupation means of the component,"occupation:4 -0.89, occupation:10 -0.55, occupation:8 +0.96, occupation:6 +0.70, occupation:0 +0.77",True,
+adult,lin:sex,women more likely to have a low income,mean component women - men > 0,+0.837,True,10 of 10
+adult,shape:caploss,the data's fit has a bend,data component SD >= 0.03,0.115,True,
+adult,shape:fnlwgt,the data's fit has a bend,data component SD >= 0.03,0.077,True,
+adult,lin:edulevel,"(describes the block, no factual claim)",-,-,True,
+adult,lin:fnlwgt,"(describes the variable, no factual claim)",-,-,True,
+adult,lin:country,offsets mostly on small groups,"of the countries with an offset >= 0.10 logit, most have < 1% of rows",31 of 33,True,
+adult,lin:race,small offsets,data component SD < 0.10,0.079,True,
+adult,int:sex*married,the women-men gap differs inside and outside marriage,|gap married - gap unmarried| >= 0.10 logit,-0.079 vs +0.739,True,
+adult,int:capgain*married,the capital-gain effect differs for the married,"|drop married - drop unmarried| (0 -> $10,000) >= 0.10 logit",-6.225 vs -5.932,True,
+adult,int:age*married,the age effect differs inside and outside marriage,|change 25 -> 50 married - unmarried| >= 0.10 logit,-1.711 vs -2.032,True,
+adult,int:age*hours,the hours effect changes with age,|change 30 -> 50 h at age 25 - at age 50| >= 0.10 logit,-1.386 vs -1.224,True,
+churn,lin:day,a charge is a fixed multiple of its minutes,SD / mean of charge/minutes < 1%,0.00017,True,
+churn,lin:csc,direction of the slope,PD of lin:csc at the 75th vs the 25th percentile,+0.508 (rises),True,10 of 10
+churn,lin:csc,churn rises with it,PD rises,True,True,10 of 10
+churn,lin:day,direction of the slope,PD of lin:day at the 75th vs the 25th percentile,+0.790 (rises),True,10 of 10
+churn,lin:day,churn rises with it,PD rises,True,True,10 of 10
+churn,lin:eve,direction of the slope,PD of lin:eve at the 75th vs the 25th percentile,+0.566 (rises),True,10 of 10
+churn,lin:eve,churn rises with it,PD rises,True,True,10 of 10
+churn,lin:night,direction of the slope,PD of lin:night at the 75th vs the 25th percentile,+0.336 (rises),True,10 of 10
+churn,lin:night,the slope is small,data component SD < 0.25,0.248,True,
+churn,lin:intl,direction of the slope,PD of lin:intl at the 75th vs the 25th percentile,+0.479 (rises),True,9 of 9
+churn,lin:intlcalls,direction of the slope,PD of lin:intlcalls at the 75th vs the 25th percentile,-0.226 (falls),True,4 of 4
+churn,lin:acct,direction of the slope,PD of lin:acct at the 75th vs the 25th percentile,+0.159 (rises),True,5 of 5
+churn,lin:acct,the slope is small,data component SD < 0.25,0.117,True,
+churn,lin:daycalls,direction of the slope,PD of lin:daycalls at the 75th vs the 25th percentile,+0.164 (rises),True,6 of 6
+churn,lin:daycalls,the slope is small,data component SD < 0.25,0.121,True,
+churn,lin:intlplan,an international plan raises churn,PD(plan) > PD(no plan),,True,10 of 10
+churn,lin:vmail,a voice-mail plan (and its messages) lowers churn,"PD(plan, 29 messages) < PD(no plan)",,True,10 of 10
+churn,lin:state,a separate offset for some states,states whose mean offset is >= 0.10 logit from the median,46 of 51,True,
+churn,shape:csc,flat over the first calls,the rise from 0 to 3 calls is below the single step to 4,+0.133 vs +2.219,True,8 of 10
+churn,int:csc*day,the service-call rise is strongest for light daytime users,rise 1 -> 5 calls is largest at the 10th or 25th percentile of day minutes,112 min +9.55 / 144 min +7.49 / 180 min +3.08 / 216 min -0.32 / 249 min +0.92,True,8 of 8
+churn,shape:day,churn climbs steeply above the threshold,mean slope above 300 min at least 3x the slope below 250,+0.2160 vs +0.0025 per minute,True,1 of 10
+churn,int:day*eve,it is the combined bill: evening use raises churn more for heavy day users,"rise 25th -> 90th percentile of evening minutes, at the 90th vs the 25th percentile of day minutes",+5.066 vs -0.482,True,9 of 9
+churn,int:day*vmail,heavy daytime use matters mostly without a voice-mail plan,rise from the median to the 95th percentile of day minutes: with a plan below half of without,-3.901 (plan) vs +4.327 (no plan),True,4 of 4
+churn,int:intlplan*intl,plan holders churn when they barely use the plan (few minutes),"among plan holders, PD at <= 4 min above the minimum at 8-12 min by >= 0.10",-1.303,False,
+churn,int:intlplan*intl,plan holders churn when they use the plan heavily,"among plan holders, PD at >= 14 min above the minimum at 8-12 min by >= 0.10",+25.766,True,
+churn,int:intlplan*intl,... or barely: few international calls,"among plan holders, PD at 1-2 calls above PD at 4-6 calls by >= 0.10",+9.790,True,
+churn,shape:eve,the data's fit has a bend,data component SD >= 0.03,0.084,True,
+churn,shape:intl,the data's fit has a bend,data component SD >= 0.03,0.439,True,
+churn,shape:intlcalls,the data's fit has a bend,data component SD >= 0.03,0.389,True,
+churn,shape:acct,the data's fit has a bend,data component SD >= 0.03,0.098,True,
+churn,int:day*night,a unit reads day and night together,"in each seed using it, a carrier unit reads both",1 of 1 seeds,True,
+churn,int:eve*csc,a unit reads eve and csc together,"in each seed using it, a carrier unit reads both",1 of 1 seeds,True,
+churn,int:csc*vmail,a unit reads csc and vmail together,"in each seed using it, a carrier unit reads both",2 of 2 seeds,True,
+churn,int:csc*intlplan,a unit reads csc and intlplan together,"in each seed using it, a carrier unit reads both",0 of 0 seeds,False,
+heart100,thal,every unit is switched by thallium scan,thal among the drivers,11 of 11 units,True,
+heart100,thal,mostly with ST depression,"units with ST depression as a driver or modifier, more than half",9 of 11 units,True,
+heart100,max HR,every unit is switched by heart rate,thalach among the drivers,4 of 4 units,True,
+heart100,max HR,a bend or gate,units reading heart rate alone (bend) or with others (gate),"bend 3, gate 1",True,
+heart100,BP,every unit is switched by blood pressure,trestbps among the drivers,10 of 10 units,True,
+heart100,BP,alone or with other inputs,units with no other driver or modifier; the others,"alone 3 of 10; with chest pain 1, exercise angina 2, ST depression 1, sex 1, ST slope 2, thallium scan 2, heart rate 2",True,
+heart100,exang,every unit is switched by exercise angina,exang among the drivers,7 of 7 units,True,
+heart100,exang,read with sex in some seeds,seeds with an exercise-angina unit reading sex,3 of 4 seeds,True,
+heart100,exang,for women in one,seeds with such a unit on mostly (> 50% of its on rows) for women,2 (s0 s6),False,
+heart100,age,every unit is switched by age,age among the drivers,6 of 6 units,True,
+heart100,age,"risk stops rising, or falls back, past an age",not checked as stated: the units' slopes beyond their knot are not computed,-,False,
+heart100,age,the rise of risk with age slows past an age,units that lower risk when on (a brake),5 of 6 units,True,
+heart100,ST depression,every unit is switched by ST depression,oldpeak among the drivers,3 of 3 units,True,
+heart100,ST depression,counted only past a threshold,units on only above an ST-depression value (on rows' minimum >= off rows' maximum - 0.2 mm),2 of 3 units,False,
+heart100,ST slope,every unit is switched by ST slope,slope among the drivers,3 of 3 units,True,
+heart100,ST slope,read with chest pain or cholesterol,other drivers and modifiers of the units,"cholesterol 1, chest pain 1, exercise angina 1, sex 1",False,
+heart100,resting ECG,every unit is switched by resting ECG,restecg among the drivers,1 of 1 units,True,
+heart100,thal × age,every unit is switched by thallium scan,thal among the drivers,2 of 2 units,True,
+heart100,thal × age,read with age,units with age as a driver or modifier,2 of 2,True,
+heart100,lin:age,direction most seeds give it,sign of the weights of the seeds in the majority,+ (9 of 9 seeds),True,data's own fit agrees (+0.121)
+heart100,lin:sex=0,direction most seeds give it,sign of the weights of the seeds in the majority,- (10 of 10 seeds),True,data's own fit agrees (-0.498)
+heart100,lin:cp=1,direction most seeds give it,sign of the weights of the seeds in the majority,- (10 of 10 seeds),True,data's own fit agrees (-0.328)
+heart100,lin:cp=2,direction most seeds give it,sign of the weights of the seeds in the majority,- (10 of 10 seeds),True,data's own fit agrees (-0.195)
+heart100,lin:cp=3,direction most seeds give it,sign of the weights of the seeds in the majority,- (10 of 10 seeds),True,data's own fit agrees (-0.432)
+heart100,lin:trestbps,direction most seeds give it,sign of the weights of the seeds in the majority,+ (8 of 8 seeds),True,data's own fit agrees (+0.214)
+heart100,lin:chol,direction most seeds give it,sign of the weights of the seeds in the majority,+ (10 of 10 seeds),True,data's own fit agrees (+0.258)
+heart100,lin:fbs=1,direction most seeds give it,sign of the weights of the seeds in the majority,- (6 of 6 seeds),True,data's own fit agrees (-0.089)
+heart100,lin:restecg=2,direction most seeds give it,sign of the weights of the seeds in the majority,+ (5 of 5 seeds),True,data's own fit agrees (+0.118)
+heart100,lin:thalach,direction most seeds give it,sign of the weights of the seeds in the majority,- (6 of 7 seeds),True,data's own fit agrees (-0.198)
+heart100,lin:exang=1,direction most seeds give it,sign of the weights of the seeds in the majority,+ (8 of 8 seeds),True,data's own fit agrees (+0.295)
+heart100,lin:oldpeak,direction most seeds give it,sign of the weights of the seeds in the majority,+ (10 of 10 seeds),True,data's own fit agrees (+0.393)
+heart100,lin:slope=2,direction most seeds give it,sign of the weights of the seeds in the majority,+ (10 of 10 seeds),True,data's own fit agrees (+0.470)
+heart100,lin:slope=3,direction most seeds give it,sign of the weights of the seeds in the majority,+ (6 of 10 seeds),True,data's own fit disagrees (-0.002)
+heart100,lin:ca,direction most seeds give it,sign of the weights of the seeds in the majority,+ (10 of 10 seeds),True,data's own fit agrees (+0.721)
+heart100,lin:thal=6,direction most seeds give it,sign of the weights of the seeds in the majority,- (9 of 9 seeds),True,data's own fit agrees (-0.025)
+heart100,lin:thal=7,direction most seeds give it,sign of the weights of the seeds in the majority,+ (10 of 10 seeds),True,data's own fit agrees (+0.444)

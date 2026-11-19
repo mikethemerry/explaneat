@@ -12,16 +12,16 @@
     \textbf{Service calls, slope}: churn rises with each call to customer service & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & units only 7; edge 3 \\
     \textbf{Day usage, slope}: churn rises with daytime minutes (a charge is a fixed multiple of its minutes) & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & units only 6; edge 4 \\
     \textbf{Evening usage, slope}: churn rises with evening minutes & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & edge 10 \\
-    \textbf{International minutes, slope}: a slope in international minutes & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark &  & edge 8; units only 1 \\
+    \textbf{International minutes, slope}: churn rises with international minutes & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark &  & edge 8; units only 1 \\
     \textbf{Voice mail, offset}: a voice-mail plan (and its messages) lowers churn & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & edge 10 \\
-    \textbf{Day calls, slope}: a small slope in the number of day calls & \checkmark &  & \checkmark & \checkmark &  & \checkmark &  &  & \checkmark & \checkmark & edge 5; units only 1 \\
-    \textbf{Account length, slope}: a small slope in account length & \checkmark & \checkmark & \checkmark &  & w & \checkmark & w & w & \checkmark &  & edge 5 \\
-    \textbf{International calls, slope}: a slope in the number of international calls &  &  &  &  & \checkmark & \checkmark &  & \checkmark & \checkmark &  & edge 4 \\
+    \textbf{Day calls, slope}: churn rises slightly with the number of day calls & \checkmark &  & \checkmark & \checkmark &  & \checkmark &  &  & \checkmark & \checkmark & edge 5; units only 1 \\
+    \textbf{Account length, slope}: churn rises slightly with account length & \checkmark & \checkmark & \checkmark &  & w & \checkmark & w & w & \checkmark &  & edge 5 \\
+    \textbf{International calls, slope}: churn falls slightly with the number of international calls &  &  &  &  & \checkmark & \checkmark &  & \checkmark & \checkmark &  & edge 4 \\
     \textbf{State offsets}: a separate offset for some states & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & edge 10 \\
-    \textbf{Night usage, slope}: a small slope in night minutes & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & edge 10 \\
+    \textbf{Night usage, slope}: churn rises slightly with night minutes & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & edge 10 \\
     \midrule
     \multicolumn{12}{@{}l}{\textit{Non-linear: bends and interactions, strongest in the data first}} \\
-    \textbf{Day $+$ evening bill}: the combined day and evening bill & S2 & S2 & S4 & S2 & S2 &  & G & S5 & G & S4 & S7, G2; 1--3 parts \\
+    \textbf{Day $+$ evening bill}: the combined bill: evening minutes raise churn more for heavy day users & S2 & S2 & S4 & S2 & S2 &  & G & S5 & G & S4 & S7, G2; 1--3 parts \\
     \textbf{Service-call threshold}: churn flat over the first calls, steep from 4 calls & S4 & S2 & S8 & G & G & S4 & S4 & S2 & S4 & H & S7, G2, H1; 1--4 parts \\
     \textbf{Service calls $\times$ light day use}: the service-call rise is strongest for light daytime users & S3 & H & S6 & S3 & w & S5 & S5 & S3 & S4 &  & S7, H1; 1--3 parts \\
     \textbf{Heavy day use without voice mail}: heavy daytime use matters mostly without a voice-mail plan & H & H &  &  &  &  & G & S5 &  &  & H2, G1, S1; 1--3 parts \\
@@ -33,7 +33,7 @@
     \textbf{Evening bend}: a bend in evening use & S2 & S2 & S4 & S2 & S2 &  & G & S4 & w & w & S6, G1; 1--3 parts \\
     \midrule
     \multicolumn{12}{@{}l}{\textit{Relevant in the data but in no network}} \\
-    \textbf{International plan $\times$ international use}: plan holders churn when they use the plan heavily or barely &  &  &  &  &  &  &  &  &  &  & data's CV gain $+$0.047 \\
+    \textbf{International plan $\times$ international use}: plan holders churn when they use the plan heavily (many minutes) or rarely (few calls) &  &  &  &  &  &  &  &  &  &  & data's CV gain $+$0.047 \\
     \textbf{International-calls bend}: a bend in international calls &  &  &  &  &  & w &  & w &  &  & data's CV gain $+$0.003 \\
     \bottomrule
   \end{tabularx}

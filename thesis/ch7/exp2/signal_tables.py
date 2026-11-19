@@ -56,9 +56,19 @@ def frame(rows_tex, groups, notes_w="4.4cm"):
 
 # =============================================================================== Churn
 
+DESCRIPTIONS = REPO / "experiments/signal_descriptions/descriptions.json"
+
+
+def descriptions():
+    """Row descriptions, each claim checked by experiments/signal_descriptions/describe.py (which
+    fills their numbers and counts from computed values)."""
+    return json.loads(DESCRIPTIONS.read_text())
+
+
 def churn_desc():
-    """One-line descriptions; the only numbers (where the data's curve bends) come from the data's
-    own shape (data/churn_shapes.json, the ridge fit on the catalogue basis)."""
+    """Churn row descriptions (descriptions.json). The two numbers (where the data's curve bends)
+    are recomputed here from the data's own shape (data/churn_shapes.json, the ridge fit on the
+    catalogue basis) and must agree with the checked texts."""
     sh = json.loads((DATA / "churn_shapes.json").read_text())
     x, y = np.array(sh["calls"]["x"]), np.array(sh["calls"]["data"])
     inc = np.diff(y)
@@ -67,33 +77,9 @@ def churn_desc():
     sd = np.diff(yd) / np.diff(xd)
     lo = xd[int(np.argmin(yd))]
     up = int(round(xd[1:][np.argmax((sd >= 0.5 * sd.max()) & (xd[1:] > lo))] / 10) * 10)
-    return {
-        "lin:csc": "churn rises with each call to customer service",
-        "shape:csc": f"churn flat over the first calls, steep from {k} calls",
-        "int:csc*day": "the service-call rise is strongest for light daytime users",
-        "lin:day": "churn rises with daytime minutes (a charge is a fixed multiple of its minutes)",
-        "shape:day": f"heavy daytime use: churn climbs steeply above about {up} minutes",
-        "int:day*eve": "the combined day and evening bill",
-        "int:day*vmail": "heavy daytime use matters mostly without a voice-mail plan",
-        "lin:eve": "churn rises with evening minutes",
-        "lin:night": "a small slope in night minutes",
-        "lin:intlplan": "an international plan raises churn",
-        "lin:vmail": "a voice-mail plan (and its messages) lowers churn",
-        "lin:state": "a separate offset for some states",
-        "lin:intl": "a slope in international minutes",
-        "lin:intlcalls": "a slope in the number of international calls",
-        "lin:acct": "a small slope in account length",
-        "lin:daycalls": "a small slope in the number of day calls",
-        "shape:eve": "a bend in evening use",
-        "shape:intl": "a bend in international minutes",
-        "int:day*night": "day and night use read together",
-        "int:eve*csc": "evening use read with service calls",
-        "int:csc*vmail": "service calls read with the voice-mail plan",
-        "int:intlplan*intl": "plan holders churn when they use the plan heavily or barely",
-        "int:csc*intlplan": "service calls read with the international plan",
-        "shape:intlcalls": "a bend in international calls",
-        "shape:acct": "a bend in account length",
-    }, k, up
+    D = descriptions()
+    assert D["numbers"]["churn"] == {"k_calls": k, "up_day": up}, (D["numbers"]["churn"], k, up)
+    return D["churn"], k, up
 
 
 def lin_route(realisation):
@@ -164,17 +150,19 @@ def table_churn():
 
 # =============================================================================== Heart-100
 
+# row key -> label; the descriptions are checked and written by
+# experiments/signal_descriptions/describe.py (descriptions.json); "other" lists its families
 FAM_ROWS = OrderedDict([
-    ("thal", ("Thallium-scan gate", "a scan defect read through a gate, mostly with ST depression")),
-    ("max HR", ("Maximum-heart-rate bend", "a bend or gate in peak heart rate")),
-    ("BP", ("Resting blood pressure", "a threshold, alone or with slope, heart rate, angina or scan")),
-    ("exang", ("Exercise angina", "a gate, read with sex in some seeds (for women in one)")),
-    ("age", ("Age brake", "risk stops rising, or falls back, past an age")),
-    ("ST depression", ("ST-depression threshold", "counted only past a threshold")),
-    ("ST slope", ("Flat ST segment step", "a step, read with chest pain or cholesterol")),
-    ("resting ECG", ("Resting-ECG gate", "the resting ECG through a switching unit")),
-    ("thal × age", ("Thallium scan $\\times$ age", "a scan defect read with age")),
-    ("other", ("Other (one network each)", "")),
+    ("thal", ("Thallium-scan gate", None)),
+    ("max HR", ("Maximum-heart-rate bend", None)),
+    ("BP", ("Resting blood pressure", None)),
+    ("exang", ("Exercise angina", None)),
+    ("age", ("Age brake", None)),
+    ("ST depression", ("ST-depression threshold", None)),
+    ("ST slope", ("Flat ST segment step", None)),
+    ("resting ECG", ("Resting-ECG gate", None)),
+    ("thal × age", ("Thallium scan $\\times$ age", None)),
+    ("other", ("Other (one network each)", None)),
 ])
 
 
@@ -234,15 +222,19 @@ def table_heart():
     # non-linear part (audit.py -> family_presence.csv); "other" takes the strongest of its families
     rank = {"": 0, "weak": 1, "used": 2}
     fam_state = {}
+    used_fams = {(int(r["seed"]), r["row_family"]) for r in rows("experiments/heart100_audit/family_presence.csv")
+                 if r["presence"] == "used"}
     for r in rows("experiments/heart100_audit/family_presence.csv"):
         k = (int(r["seed"]), fam_key(r["row_family"]))
         if rank[r["presence"]] > rank[fam_state.get(k, "")]:
             fam_state[k] = r["presence"]
     fam_out = []
-    for key, (lab, d) in FAM_ROWS.items():
+    fam_desc = descriptions()["heart100"]
+    for key, (lab, _) in FAM_ROWS.items():
         R = by.get(key, [])
         if not R:
             continue
+        d = fam_desc.get(key, "")
         cells = []
         for s in SEEDS:
             U = [r for r in R if seed(r["network"]) == s]
@@ -266,8 +258,10 @@ def table_heart():
         note = ", ".join(f"{k} {v}" for k, v in (("recurring", rec["recurring"]),
                                                    ("specific", rec["seed-specific"]),
                                                    ("near-lin.", rec["near-linear"])) if v)
-        if key == "other":
-            d = ", ".join(sorted({tx(r["family_group"]).replace("×", "$\\times$") for r in R}))
+        if key == "other":   # the families of the seeds where the row is ticked
+            d = ", ".join(sorted({tx(r["family_group"]).replace("×", "$\\times$") for r in R
+                                  if fam_state.get((seed(r["network"]), key)) == "used"
+                                  and (seed(r["network"]), r["family_group"]) in used_fams}))
             d = d.replace(" × ", " $\\times$ ")
         test = None
         fam_out.append((n_seeds, ("nonlin", f"\\textbf{{{lab}}}: {d}" if d else f"\\textbf{{{lab}}}",
@@ -305,6 +299,7 @@ def table_adult():
     M = rows("experiments/adult_signals/matrix.csv")
     P = rows("experiments/adult_signals/projection.csv")
     idx = {(int(r["seed"]), r["signal"]): r for r in M}
+    adesc = descriptions()["adult"]
     grp = lambda r: ("absent" if int(r["n_seeds_used"]) == 0 else ("lin" if r["kind"] == "lin" else "nonlin"))
     order = {"lin": 0, "nonlin": 1, "absent": 2}
     keep = [r for r in S if int(r["n_seeds_used"]) > 0 or r["data_relevant"] == "True"]
@@ -322,7 +317,7 @@ def table_adult():
         nu = int(r["n_seeds_used"])
         assert nu == sum(c not in ("", "w") for c in cells), s
         test = None
-        out.append((grp(r), f"\\textbf{{{tx(r['name'])}}}: {tx(r['description'])}", cells, test, tx(r["notes"])))
+        out.append((grp(r), f"\\textbf{{{tx(r['name'])}}}: {tx(adesc[s])}", cells, test, tx(r["notes"])))
     r2 = [float(p["r2_train"]) for p in P]
     r2t = [float(p["r2_test"]) for p in P]
     groups = {"lin": "Linear core (slopes and one-hot offsets), strongest in the data first",

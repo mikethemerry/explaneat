@@ -1,0 +1,22 @@
+dataset,row,original,new,evidence
+adult,shape:capgain,past a few thousand dollars of capital gain the chance of a low income drops steeply,"past about $6,000 of capital gain the chance of a low income drops steeply","steepest fall of the data's curve starts at $5,750"
+adult,shape:age,the fall with age is steep for the young and flattens or turns back later in life,the fall with age is steep for the young and turns back later in life,"data's slope -0.171/year at 20-35, +0.022/year at 50-70"
+adult,int:sex*married,the gap between women and men differs inside and outside marriage,the gap between women and men is larger outside marriage,data's women-men gap -0.079 (married) vs +0.739 (not)
+adult,int:capgain*married,the capital-gain threshold acts differently for the married,the capital-gain threshold acts more strongly for the married,"data's change 0 -> $10,000: -6.225 (married) vs -5.932 (not)"
+adult,int:age*married,the age effect differs inside and outside marriage,the age effect is weaker inside marriage,data's change from age 25 to 50: -1.711 (married) vs -2.032 (not)
+adult,int:age*hours,the hours effect changes with age,the hours effect is weaker for older people,data's change 30 -> 50 hours: -1.386 at age 25 vs -1.224 at 50
+churn,lin:night,a small slope in night minutes,churn rises slightly with night minutes,data's slope rises; component SD 0.248
+churn,lin:intl,a slope in international minutes,churn rises with international minutes,data's slope rises; component SD 0.368
+churn,lin:intlcalls,a slope in the number of international calls,churn falls slightly with the number of international calls,data's slope falls; component SD 0.188
+churn,lin:acct,a small slope in account length,churn rises slightly with account length,data's slope rises; component SD 0.117
+churn,lin:daycalls,a small slope in the number of day calls,churn rises slightly with the number of day calls,data's slope rises; component SD 0.121
+churn,int:day*eve,the combined day and evening bill,the combined bill: evening minutes raise churn more for heavy day users,evening rise +5.066 (heavy day) vs -0.482 (light day)
+churn,int:intlplan*intl,plan holders churn when they use the plan heavily or barely,plan holders churn when they use the plan heavily (many minutes) or rarely (few calls),plan holders: -1.303 at <= 4 min and +25.766 at >= 14 min over the 8-12 min minimum; 1-2 calls +9.790 over 4-6 calls
+churn,int:csc*intlplan,service calls read with the international plan,service calls with the international plan,0 of 0 using seeds have a unit reading both
+heart100,thal,"a scan defect read through a gate, mostly with ST depression","the thallium scan read through a gate, with ST depression in 9 of 11 units",9 of 11 units in the seeds that carry it read ST depression
+heart100,BP,"a threshold, alone or with slope, heart rate, angina or scan","a threshold, alone (3 of 10 units) or with exercise angina, ST slope, thallium scan or heart rate (others in single units)","3 of 10 units alone; co-inputs {'cp': 1, 'exang': 2, 'oldpeak': 1, 'sex': 1, 'slope': 2, 'thal': 2, 'thalach': 2}"
+heart100,exang,"a gate, read with sex in some seeds (for women in one)","a gate, read with sex in 3 of 4 seeds (on mostly for women in 2)","sex read in s0, s6, s9; on mostly for women in s0, s6"
+heart100,age,"risk stops rising, or falls back, past an age",the rise of risk with age slows past an age (5 of 6 units),5 of 6 units lower risk when on; whether risk stops rising or falls back is not computed
+heart100,ST depression,counted only past a threshold,counted only past a threshold in 2 of 3 units,2 of 3 units switch on above an ST-depression threshold
+heart100,ST slope,"a step, read with chest pain or cholesterol","a step, read with cholesterol, chest pain, exercise angina or sex","co-inputs {'chol': 1, 'cp': 1, 'exang': 1, 'sex': 1}"
+heart100,thal × age,a scan defect read with age,the thallium scan read with age,the units read thal and age

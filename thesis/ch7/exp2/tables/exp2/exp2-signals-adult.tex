@@ -21,18 +21,18 @@
     \textbf{Country of birth}: offsets for single countries of birth, mostly small groups &  & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & w & \checkmark & w & \checkmark & edge+units 7; one-level units in 3; small-group offsets only in 3 \\
     \midrule
     \multicolumn{12}{@{}l}{\textit{Non-linear: bends and interactions, strongest in the data first}} \\
-    \textbf{Capital-gain threshold}: past a few thousand dollars of capital gain the chance of a low income drops steeply & w & S2 & S2 & S2 &  & S3 & H & G & S3 & S2 & S2 4, S3 2, H 1, G 1; 1-2 parts \\
-    \textbf{Age bend}: the fall with age is steep for the young and flattens or turns back later in life &  &  &  & H & G & S2 & H & G & G &  & G 3, H 2, S2 1; 1 part \\
+    \textbf{Capital-gain threshold}: past about \$6,000 of capital gain the chance of a low income drops steeply & w & S2 & S2 & S2 &  & S3 & H & G & S3 & S2 & S2 4, S3 2, H 1, G 1; 1-2 parts \\
+    \textbf{Age bend}: the fall with age is steep for the young and turns back later in life &  &  &  & H & G & S2 & H & G & G &  & G 3, H 2, S2 1; 1 part \\
     \textbf{Hours bend}: short weeks raise the chance of a low income more than long weeks lower it &  &  &  &  &  & H &  &  &  & H & H 2; 1 part \\
     \midrule
     \multicolumn{12}{@{}l}{\textit{Relevant in the data but in no network}} \\
     \textbf{Capital-loss bend}: bends in the capital-loss effect across loss amounts &  &  &  &  &  &  &  &  &  &  &  \\
     \textbf{Census weight (slope)}: the survey sampling weight, not a personal attribute & w & w & w & w & w & w & w & w &  & w & extreme rows only in 1 \\
-    \textbf{Age $\times$ marriage}: the age effect differs inside and outside marriage &  &  &  &  &  &  &  &  &  &  &  \\
+    \textbf{Age $\times$ marriage}: the age effect is weaker inside marriage &  &  &  &  &  &  &  &  &  &  &  \\
     \textbf{Census weight bend}: bends in the survey sampling weight &  &  &  &  &  &  &  &  &  &  &  \\
-    \textbf{Age $\times$ hours}: the hours effect changes with age &  &  &  &  &  &  &  &  &  &  &  \\
-    \textbf{Capital gain $\times$ marriage}: the capital-gain threshold acts differently for the married &  &  &  &  &  &  &  &  &  &  &  \\
-    \textbf{Sex $\times$ marriage}: the gap between women and men differs inside and outside marriage &  &  &  &  &  &  &  &  &  &  &  \\
+    \textbf{Age $\times$ hours}: the hours effect is weaker for older people &  &  &  &  &  &  &  &  &  &  &  \\
+    \textbf{Capital gain $\times$ marriage}: the capital-gain threshold acts more strongly for the married &  &  &  &  &  &  &  &  &  &  &  \\
+    \textbf{Sex $\times$ marriage}: the gap between women and men is larger outside marriage &  &  &  &  &  &  &  &  &  &  &  \\
     \bottomrule
   \end{tabularx}
   \caption{Adult: signals (rows) by seed (columns). The positive class is an income of at most \$50K, so a signal that raises the score makes a low income likelier. Each network's logit is projected on a basis of data functions (\texttt{experiments/adult\_signals}): linear terms per variable or one-hot group, bends for continuous inputs, and interactions the explanations' units read together; the projection explains 0.998 to 1.000 of the logit's variance (training rows). A single one-hot switching unit counts as linear. A seed \emph{uses} a signal when its component, clipped to its 1st to 99th percentiles, has a standard deviation of at least 0.10 logit. \checkmark: used; H, one hinge; G, one gate; S$k$, split across $k$ units; w: weak (0.03 to 0.10 logit). Notes: routes for linear signals (edge, units) and realisation counts with explanation parts. Rows are ordered by the data's own strength (cross-validated log-loss gain in a ridge fit on the same basis).}

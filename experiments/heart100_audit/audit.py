@@ -482,9 +482,29 @@ class Net:
             on_eff = (self.full_tr - m.ev.logit(m.X, off))[on]
             row["on_effect_logit"] = float(np.mean(on_eff)) if on.any() else 0.0
             row["on_direction"] = "raises" if row["on_effect_logit"] > 0 else "lowers"
+            row["on_profile"] = json.dumps(self.on_profile(n0, on))
             row["_resids"] = [r]
             rows.append(row)
         return rows
+
+    def on_profile(self, node, on):
+        """Who the unit is on for (training rows), per upstream variable: for a category the share
+        of each level among the on rows and among all rows; for a number its range and mean on
+        the on and the off rows. Read by the description checks (experiments/signal_descriptions)."""
+        vs, _ = self.anc_vars([node])
+        out = {}
+        for v in vs:
+            if v.is_category():
+                c = np.asarray(v.raw_train).astype(str)
+                lv = sorted(set(c))
+                out[v.base] = {"on": {x: round(float(np.mean(c[on] == x)), 4) for x in lv} if on.any() else {},
+                               "all": {x: round(float(np.mean(c == x)), 4) for x in lv}}
+            else:
+                x = np.asarray(v.raw_train, float)
+                st = lambda a: ({"min": round(float(a.min()), 4), "max": round(float(a.max()), 4),
+                                 "mean": round(float(a.mean()), 4)} if len(a) else {})
+                out[v.base] = {"on": st(x[on]), "off": st(x[~on])}
+        return out
 
     def _restore(self, rest_tr, rest_te):
         m = self.m
