@@ -49,7 +49,9 @@ the committed `lr_l1` results come from the earlier unseeded run. A seeded rerun
 nine sets chose the same `C` everywhere and reproduced the printed test AUC (3 dp), interval (2 dp)
 and accuracy (3 dp); test AUC moved by at most 3e-5 (Churn) and CV AUC by at most 4e-4 (Heart).
 `export_data.py`, `propneat.py`, `survival.py` (except the `seconds` timings), `make_csv.py` and
-`heart_splits.py` reran byte-identical on 20 Nov 2026.
+`heart_splits.py` reran byte-identical on 20 Nov 2026. Since 20 Nov it also stores every split's test AUC
+per model (`per_split`, for `thesis/ch7/figure_candidates`); the summaries are unchanged and two runs
+are byte-identical.
 
 ## Outputs
 
