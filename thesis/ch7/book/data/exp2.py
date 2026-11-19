@@ -6,6 +6,44 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import e2figs  # noqa: E402
+import csv  # noqa: E402
+
+BENCH_CSV = Path(__file__).resolve().parents[4] / "experiments" / "benchmarks" / "benchmarks.csv"
+BENCH_SETS = [("adult", "Adult"), ("churn", "Churn"), ("heart", "Heart-100")]
+BENCH_STUDY = {"adult": "adult", "churn": "churn100", "heart": "heart100"}
+PROPNEAT = __import__("json").loads((BENCH_CSV.parent / "results" / "propneat.json").read_text())["exp2"]
+BENCH_MODELS = [("propneat_best_by_train", "PropNEAT, best seed by training AUC"),
+                ("propneat_median10", "PropNEAT, median of ten seeds (range)"),
+                ("lr_l2", "Logistic regression, L2"), ("lr_l1", "Logistic regression, L1 (sparse)"),
+                ("tree", "Decision tree"), ("rf", "Random forest"), ("gb", "Gradient boosting"),
+                ("ebm", "Explainable boosting"), ("mlp", "MLP, one hidden layer")]
+
+
+def bench_table():
+    """Test AUC of the Experiment 2 studies and the comparator suite, read from benchmarks.csv (the rows of
+    thesis/ch7/exp2/tables/exp2/exp2-benchmarks.tex). Bold: the column's best at three decimals."""
+    with open(BENCH_CSV) as f:
+        K = {(r["dataset"], r["model_key"]): r for r in csv.DictReader(f)}
+    best = {d: max(f"{float(K[(d, k)]['test_value']):.3f}" for k, _ in BENCH_MODELS) for d, _ in BENCH_SETS}
+    rows, seeds = [], []
+    for k, label in BENCH_MODELS:
+        cells = [label]
+        for d, _ in BENCH_SETS:
+            r = K[(d, k)]
+            v = f"{float(r['test_value']):.3f}"
+            v = f"**{v}**" if v == best[d] else v
+            if r["ci_lo"]:
+                cells.append(f"{v} [{float(r['ci_lo']):.3f}, {float(r['ci_hi']):.3f}]")
+            else:   # median of ten: the range of the ten seeds, from the file make_csv.py built this row from
+                s = PROPNEAT[BENCH_STUDY[d]]
+                cells.append(f"{v} ({s['test_auc_min']:.3f}–{s['test_auc_max']:.3f})")
+            if k == "propneat_best_by_train":
+                seeds.append(r["model"].rsplit("(", 1)[1].rstrip(")"))
+        rows.append(cells)
+    return rows, seeds
+
+
+BENCH_ROWS, BENCH_SEEDS = bench_table()
 
 EXP = {
     "id": "exp2", "num": "2", "title": "Reproducibility",
@@ -102,6 +140,23 @@ EXP = {
                      "each is answered in its record's `recheck_notes` (`V4_RUN.md`, \"What differs\" item 2). "
                      "Churn GB with default settings gives 0.932 (`experiments/churn/baselines.json`); the table uses the tuned fit.",
          }},
+        {"id": "e2-bench", "title": "Predictive performance against the comparator suite",
+         "headline": ("Test AUC, best seed by training AUC: Adult " + BENCH_ROWS[0][1].split()[0]
+                      + ", Churn " + BENCH_ROWS[0][2].split()[0] + ", Heart-100 " + BENCH_ROWS[0][3].split()[0]
+                      + "; tuned gradient boosting " + " / ".join(c.split()[0] for c in BENCH_ROWS[6][1:])).replace("**", ""),
+         "lead": "Each study's networks and the comparator suite of Experiment 1, on the same split, by test AUC.",
+         "tables": [{
+             "caption": "Table 2.2. Test AUC against the comparator suite",
+             "source": "experiments/benchmarks/benchmarks.csv (as thesis/ch7/exp2/tables/exp2/exp2-benchmarks.tex)",
+             "headers": ["Model"] + [h for _, h in BENCH_SETS],
+             "rows": BENCH_ROWS,
+             "note": "Best seed by training AUC: " + ", ".join(BENCH_SEEDS) + "; in brackets its 95% interval "
+                     "(10,000 bootstrap resamples of the test rows). The median of ten seeds is not one network: in "
+                     "brackets the range of the ten. Every comparator is tuned by 5-fold stratified CV on the training "
+                     "rows only and scored once on the test rows. Bold: the column's best. Test rows: Adult 9,769, "
+                     "Churn 1,000, Heart-100 61. Heart's split favours the comparators: over 100 random splits of the "
+                     "same 303 patients every comparator averages about 0.90 (`experiments/benchmarks/heart_splits.txt`).",
+         }]},
         {"id": "e2-drawers", "title": "The thirty explanations",
          "headline": "One drawer per network, v4 records",
          "lead": "Each network opens in a side panel: its parts, their readings, the checks and an expandable graph.",
