@@ -32,6 +32,14 @@ All regenerate with `uv run python thesis/ch7/exp2/make_assets.py` (add `--refre
 | Label | File | Content (caption, first sentence) | Generator |
 |---|---|---|---|
 | `tab:exp2-agreement` | `thesis/ch7/exp2/tables/exp2/exp2-agreement.tex` | Prediction agreement between the ten seeds on the test rows (45 pairs per study) | `thesis/ch7/exp2/make_assets.py` |
+| `tab:exp2-betas-adult-country` | `thesis/ch7/exp2/tables/exp2/exp2-betas-adult-country.tex` | Adult: the size of every level of country of birth (against the United States) in each seed,  (log-odds of an ... | `thesis/ch7/exp2/linear_betas.py` |
+| `tab:exp2-betas-adult-education` | `thesis/ch7/exp2/tables/exp2/exp2-betas-adult-education.tex` | Adult: the size of every level of education levels (offsets from the straight line in years of schooling) in e... | `thesis/ch7/exp2/linear_betas.py` |
+| `tab:exp2-betas-adult-household` | `thesis/ch7/exp2/tables/exp2/exp2-betas-adult-household.tex` | Adult: the size of every level of marital status and household role (each observed pair against married, civil... | `thesis/ch7/exp2/linear_betas.py` |
+| `tab:exp2-betas-adult-work` | `thesis/ch7/exp2/tables/exp2/exp2-betas-adult-work.tex` | Adult: the size of every level of occupation and work class (against private work class, professional specialt... | `thesis/ch7/exp2/linear_betas.py` |
+| `tab:exp2-betas-adult` | `thesis/ch7/exp2/tables/exp2/exp2-betas-adult.tex` | Adult: the size of each linear term in each seed's network, : the term's coefficient on the linear block of th... | `thesis/ch7/exp2/linear_betas.py` |
+| `tab:exp2-betas-churn-states` | `thesis/ch7/exp2/tables/exp2/exp2-betas-churn-states.tex` | Churn: the size of every level of state (against West Virginia, the most common state) in each seed,  (log-odd... | `thesis/ch7/exp2/linear_betas.py` |
+| `tab:exp2-betas-churn` | `thesis/ch7/exp2/tables/exp2/exp2-betas-churn.tex` | Churn: the size of each linear term in each seed's network, : the term's coefficient on the linear block of th... | `thesis/ch7/exp2/linear_betas.py` |
+| `tab:exp2-betas-heart100` | `thesis/ch7/exp2/tables/exp2/exp2-betas-heart100.tex` | Heart-100: the size of each linear term in each seed's network, : the term's coefficient on the linear block o... | `thesis/ch7/exp2/linear_betas.py` |
 | `tab:exp2-churn-blindspot` | `thesis/ch7/exp2/tables/exp2/exp2-churn-blindspot.tex` | Churn: the signal no network has | `thesis/ch7/exp2/make_assets.py` |
 | `tab:exp2-churn-disagreement` | `thesis/ch7/exp2/tables/exp2/exp2-churn-disagreement.tex` | Churn: where the ten networks disagree, on the 1,000 test customers | `thesis/ch7/exp2/make_assets.py` |
 | `tab:exp2-churn-matrix` | `thesis/ch7/exp2/tables/exp2/exp2-churn-matrix.tex` | Churn: how each seed realises the main signals | `thesis/ch7/exp2/make_assets.py` |
@@ -48,6 +56,9 @@ All regenerate with `uv run python thesis/ch7/exp2/make_assets.py` (add `--refre
 | `tab:exp2-signals-adult` | `thesis/ch7/exp2/tables/exp2/exp2-signals-adult.tex` | Adult: signals (rows) by seed (columns) | `thesis/ch7/exp2/signal_tables.py` |
 | `tab:exp2-signals-churn` | `thesis/ch7/exp2/tables/exp2/exp2-signals-churn.tex` | Churn: signals (rows) by seed (columns) | `thesis/ch7/exp2/signal_tables.py` |
 | `tab:exp2-signals-heart100` | `thesis/ch7/exp2/tables/exp2/exp2-signals-heart100.tex` | Heart-100: signals (rows) by seed (columns) | `thesis/ch7/exp2/signal_tables.py` |
+| `tab:exp2-signalticks-adult` | `thesis/ch7/exp2/tables/exp2/exp2-signalticks-adult.tex` | Adult: signals (rows) found in each seed's network (columns) | `thesis/ch7/exp2/signal_ticks.py` |
+| `tab:exp2-signalticks-churn` | `thesis/ch7/exp2/tables/exp2/exp2-signalticks-churn.tex` | Churn: signals (rows) found in each seed's network (columns) | `thesis/ch7/exp2/signal_ticks.py` |
+| `tab:exp2-signalticks-heart100` | `thesis/ch7/exp2/tables/exp2/exp2-signalticks-heart100.tex` | Heart-100: signals (rows) found in each seed's network (columns) | `thesis/ch7/exp2/signal_ticks.py` |
 | `tab:exp2-worked-claims` | `thesis/ch7/exp2/tables/exp2/exp2-worked-claims.tex` | Churn seed 5, the part Service calls and daytime charge: what was claimed and how it was checked | `thesis/ch7/exp2/worked.py` |
 
 ### Figures (`figures/exp2/`, each `.pdf` + `.png` + `.tex`)

@@ -1197,6 +1197,8 @@ def main():
     import per_run, signal_tables   # one table per dataset with all ten runs; signal tables
     per_run.build()
     signal_tables.build()
+    import linear_betas             # linear-term betas per seed (experiments/linear_betas), all levels in appendix tables
+    linear_betas.build()
     import worked                   # the worked verification example (churn100-s5, service calls)
     worked.build(refresh="--refresh" in sys.argv)
     import networks                 # raw and explained network figures for all 30 runs (appendix)
