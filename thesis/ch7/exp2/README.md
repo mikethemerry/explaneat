@@ -64,7 +64,9 @@ text width, so `width=\textwidth` keeps the font at about 8.5 pt. Colours are Ok
 ## Notes
 
 - Adult s3 has no verification minutes in its record, so Mike's minutes are over 9 Adult networks
-  (marked in Table exp2-headline and the exp2-cost caption).
+  (marked in Table exp2-headline and exp2-runs-adult).
+- Captions hold only a title and the keys needed to read the table or figure (Mike, 20 Nov 2026); the
+  method and results sentences they used to carry are in `thesis/ch7/CAPTION_MOVED_TEXT.md`.
 - The paper network's 95% interval (0.808 to 0.966) was not stored before; it is computed here with
   the runs CSVs' bootstrap (10,000 resamples, `RandomState(42)`).
 - Blind spot: plan holders with neither few calls nor many minutes churn at 33 of 252 (13%) on the

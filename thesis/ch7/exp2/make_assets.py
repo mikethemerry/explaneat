@@ -47,6 +47,10 @@ OI = {"black": "#000000", "orange": "#E69F00", "sky": "#56B4E9", "green": "#009E
 STUDY_STYLE = {"adult": (OI["blue"], "o"), "churn100": (OI["red"], "s"), "heart100": (OI["green"], "^")}
 SERIES = [OI["blue"], OI["orange"], OI["green"], OI["red"], OI["purple"], OI["sky"], OI["yellow"], OI["grey"]]
 TEXTWIDTH_IN = 6.0   # uathesis print layout: about 153 mm of text width
+NEAR_BEST = 0.01     # design choice: a seed "within 0.01 of the best seed" (test AUC); headline row and AUC figure
+RISK_CENTRE = 0.5    # the Heart pairs plot's colour scale is centred on this predicted risk
+# Captions hold only a title and the keys needed to read the table or figure (Mike, 20 Nov 2026); the method
+# and results sentences they used to carry are in thesis/ch7/CAPTION_MOVED_TEXT.md for the body text.
 
 
 # =============================================================================== helpers
@@ -199,7 +203,7 @@ def table_headline(S, REC):
         o = S[k]
         auc = {int(s): v for s, v in o["test_auc_by_seed"].items()}
         best = max(auc.values())
-        near = sum(v >= best - 0.01 for v in auc.values())
+        near = sum(v >= best - NEAR_BEST for v in auc.values())
         assert near == refs(k)["counts"]["best_observed@0.01"], (k, near)
         assert abs(best - refs(k)["refs"]["best_observed"]) < 1e-12
         r = refs(k)["refs"]
@@ -226,7 +230,7 @@ def table_headline(S, REC):
     lines = [("Registration", "status"), ("Inputs", "inputs"), ("Training / test rows", "rows"),
              ("Generations per seed", "gens"),
              ("Train AUC, median (range)", "train"), ("Test AUC, median (range)", "auc"),
-             ("Test AUC of LR / GB (same split)", "refs"), ("Seeds within 0.01 of the best seed", "near"),
+             ("Test AUC of LR / GB (same split)", "refs"), (f"Seeds within {NEAR_BEST:g} of the best seed", "near"),
              ("Hidden units, median (range)", "hidden"), ("Explained to full coverage", "cov"),
              ("\\quad within the 3-hour box", "budget"),
              ("Recheck complete (mismatches)", None), ("Agent explaining minutes, median (range)", "minutes"),
@@ -242,15 +246,10 @@ def table_headline(S, REC):
         if lab.startswith("Generations") or lab.startswith("Seeds within"):
             body.append("    \\midrule")
     body += ["    \\bottomrule", "  \\end{tabularx}"]
-    cap = ("Experiment~2: ten seeds per study, each seed's best network by training fitness. Test AUC is "
-           "of that network on the held-out rows. LR is $L_2$ logistic regression and GB tuned gradient "
-           "boosting, both fitted on the same split. A seed is within 0.01 of the best seed when its test "
-           "AUC is at most 0.01 below the best seed's. Explanations used the frozen v4 method, one "
-           "explaining agent per network; the recheck reran every stored query. Agent explaining minutes run "
-           "from the explanation's creation to its last timestamped write in the database (operations, "
-           "evidence records, logged queries)."
-           + "".join(f" $^\\ast$Minutes recorded for {len(mike_minutes(REC, k))} of the 10 {n} networks "
-                     f"(not for s{', s'.join(str(s) for s in sorted(set(range(10)) - set(mike_minutes(REC, k))))})."
+    cap = ("Experiment~2: ten seeds per study. LR: $L_2$ logistic regression; GB: gradient boosting."
+           + "".join(f" $^\\ast$Not recorded for {n} "
+                     f"s{', s'.join(str(s) for s in sorted(set(range(10)) - set(mike_minutes(REC, k))))}; "
+                     f"median of the other {len(mike_minutes(REC, k))}."
                      for k, n in STUDIES if len(mike_minutes(REC, k)) < 10))
     write_table("exp2-headline", cap, "tab:exp2-headline", "\n".join(body))
 
@@ -317,26 +316,18 @@ def table_heart_benchmark(S, A, paper):
 def table_benchmarks_suite():
     """Adult, Churn and Heart-100 against the comparator suite shared with Experiment 1
     (experiments/benchmarks/benchmarks.csv; builder thesis/ch7/exp1/benchmark_tables.py, so the rows,
-    cells and caption wording match tables/exp1-benchmarks.tex)."""
+    cells and caption key match tables/exp1-benchmarks.tex)."""
     sys.path.insert(0, str(HERE.parent / "exp1"))
     import benchmark_tables as bt
     R = bt.rows()
-    K = bt.by_key(R)
     P = jload("experiments/benchmarks/results/propneat.json")["exp2"]
     cols = [("adult", "Adult"), ("churn", "Churn"), ("heart", "Heart-100")]
     study = {"adult": "adult", "churn": "churn100", "heart": "heart100"}
     rngs = {d: (P[study[d]]["test_auc_min"], P[study[d]]["test_auc_max"]) for d, _ in cols}
     body = bt.classification_table(cols, [("propneat_best_by_train", "Best seed by training AUC", None),
                                           ("propneat_median10", "Median of ten seeds (range)", rngs)], R)
-    best = ", ".join(f"{h} s{P[study[d]]['best_by_train']['seed']}" for d, h in cols)
-    n = "; ".join(f"{h} {thousands(K[(d, 'lr_l2')]['n_train'])} / {thousands(K[(d, 'lr_l2')]['n_test'])}"
-                  for d, h in cols)
-    cap = ("Experiment~2: the ten-seed studies against the comparator suite of Experiment~1 "
-           "(Table~\\ref{tab:exp1-benchmarks}). PropNEAT rows: the seed with the best training AUC, the "
-           f"selection quantity of the runs ({best}), with its interval, and the median test AUC of the ten "
-           "seeds with their range (the median of ten seeds is not one network, so it has no interval; its "
-           "accuracy is the median accuracy). " + bt.SUITE_CAPTION + f" Training / test rows: {n}. Heart-100 "
-           "uses Heart's fixed split, so its comparators are Experiment~1's Heart column.")
+    cap = ("Experiment~2: the ten-seed studies against the comparators. " + bt.SUITE_KEY
+           + " Median row: below it, the range of the ten seeds and the median accuracy.")
     write_table("exp2-benchmarks", cap, "tab:exp2-benchmarks", "\n".join(body), size=r"\footnotesize")
 
 
@@ -772,7 +763,7 @@ def fig_auc(S):
         cis = {int(s): v for s, v in o["test_ci_by_seed"].items()}
         best = max(auc.values())
         r = refs(k)["refs"]
-        ax.axhspan(best - 0.01, best, color=col, alpha=0.13, lw=0)
+        ax.axhspan(best - NEAR_BEST, best, color=col, alpha=0.13, lw=0)
         ax.axhline(r["logistic"], color="0.25", ls=(0, (5, 3)), lw=0.9)
         ax.axhline(r["gradient_boosting"], color="0.25", ls=(0, (1, 1.5)), lw=1.0)
         xs = np.arange(10)
@@ -789,15 +780,10 @@ def fig_auc(S):
     axes[0].set_ylim(0.75, 1.0)
     fig.tight_layout(w_pad=1.6)
     save(fig, "exp2-auc")
-    nr = {k: sum(v >= max(S[k]["test_auc_by_seed"].values()) - 0.01 for v in S[k]["test_auc_by_seed"].values())
-          for k, _ in STUDIES}
-    n = {k: S[k]["n_test"] for k, _ in STUDIES}
     write_figure("exp2-auc",
-                 "Test AUC of each seed's network, with its 95\\% bootstrap interval. Shaded: within 0.01 "
-                 "of the best seed. Dashed: logistic regression (LR); dotted: tuned gradient boosting (GB), "
-                 f"both on the same split. Seeds within 0.01 of the best: Adult {nr['adult']}/10, Churn "
-                 f"{nr['churn100']}/10, Heart-100 {nr['heart100']}/10. Test rows: Adult {thousands(n['adult'])}, "
-                 f"Churn {thousands(n['churn100'])}, Heart-100 {n['heart100']}.", "fig:exp2-auc")
+                 "Test AUC of each seed's network, with its 95\\% interval. Shaded: within "
+                 f"{NEAR_BEST:g} of the best seed. Dashed: logistic regression (LR); dotted: gradient boosting "
+                 "(GB).", "fig:exp2-auc")
 
 
 # =============================================================================== figure B
@@ -833,16 +819,9 @@ def fig_cost(S, REC):
     a2.set_title("(b) Verifying", loc="left")
     fig.tight_layout(w_pad=2.0)
     save(fig, "exp2-cost")
-    allm = [v for k, _ in STUDIES for v in mike_minutes(REC, k).values()]
-    miss = [f"{n} s{s}" for k, n in STUDIES for s in range(10) if s not in mike_minutes(REC, k)]
-    alla = [v for k, _ in STUDIES for v in agent_minutes(k).values()]
     write_figure("exp2-cost",
-                 "Cost of explaining and verifying, one mark per network. (a) The explaining agent's "
-                 "minutes, from the explanation's creation to its last timestamped write in the database, "
-                 f"against network size ({g(min(alla))} to {g(max(alla))} minutes). (b) Mike's "
-                 f"minutes to verify each explanation ({g(min(allm))} to {g(max(allm))}; bar: median per study), "
-                 "using the plain-language report, the pairs plot and the expandable network"
-                 + (f"; minutes were not recorded for {', '.join(miss)}." if miss else "."), "fig:exp2-cost")
+                 "Cost of explaining and verifying, one mark per network. (a) The explaining agent's minutes "
+                 "against network size. (b) Mike's verification minutes; bar: median per study.", "fig:exp2-cost")
 
 
 # =============================================================================== figure C
@@ -870,14 +849,8 @@ def fig_linearised():
     fig.legend(h, l, loc="lower center", ncol=2, bbox_to_anchor=(0.5, -0.06))
     fig.tight_layout(w_pad=2.0, rect=(0, 0.06, 1, 1))
     save(fig, "exp2-heart-linearised")
-    gtr = np.mean([float(r["gain_train"]) for r in N])
-    gte = np.mean([float(r["gain_test"]) for r in N])
-    worse = sum(float(r["gain_test"]) <= 0 for r in N)
     write_figure("exp2-heart-linearised",
-                 "Heart-100: each network's AUC with and without its non-linear units (each replaced by its "
-                 "best straight line on the training rows). The non-linear units add "
-                 f"{num(gtr)} training AUC on average but {num(gte)} on test, and in {worse} of the ten "
-                 "networks the linearised version does as well or better on test.",
+                 "Heart-100: each network's AUC with and without its non-linear units.",
                  "fig:exp2-heart-linearised")
 
 
@@ -911,22 +884,16 @@ def fig_s8_ice():
     fig.legend(handles=handles, loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.13), fontsize=7)
     fig.tight_layout(w_pad=2.0)
     save(fig, "exp2-s8-ice")
-    n = d["data"]["n_train"]
-    above160 = int((raw > 160).sum())
     write_figure("exp2-s8-ice",
-                 f"Heart-100 seed 8: each of the {n} training patients' predicted risk as resting blood "
-                 "pressure varies with everything else about the patient held (individual conditional "
-                 "expectation curves), coloured by shape family (Table~\\ref{tab:exp2-s8-families}). Ticks "
-                 f"on the axis: the patients' own values; only {above160} lie above 160~mm~Hg, so the late "
-                 "falls and rises rest on few patients. The curves are the model's, not a claim about blood "
-                 "pressure.", "fig:exp2-s8-ice")
+                 "Heart-100 seed 8: each training patient's predicted risk as resting blood pressure varies "
+                 "(individual conditional expectation curves), coloured by shape family. Ticks on the axis: the "
+                 "patients' own values.", "fig:exp2-s8-ice")
 
 
 # =============================================================================== figure E
 
 def fig_churn_shapes():
     plt = mpl()
-    bs = json.loads((DATA / "churn_blindspot.json").read_text())
     C = json.loads((DATA / "churn_shapes.json").read_text())
     panels = [("calls", "(a) Service calls", "customer-service calls", "change in logit (vs 1 call)"),
               ("day", "(b) Day usage", "day minutes", "change in logit (vs 180 min)"),
@@ -961,15 +928,8 @@ def fig_churn_shapes():
     fig.tight_layout(h_pad=1.2, w_pad=1.0, rect=(0, 0.03, 1, 1))
     save(fig, "exp2-churn-shapes")
     write_figure("exp2-churn-shapes",
-                 "Churn: each signal's shape as realised in the ten networks (one line per seed), against "
-                 "the data's own shape (dashed). Each curve is the network's component for that signal, "
-                 "projected on the training rows, as a change in the churn score (logit); other inputs are "
-                 "at their training mean. (a)--(c) and (f) agree closely across seeds. (d) The seeds share one "
-                 "shape for calls $\\times$ light day use, weaker than the data's. (e) Every network treats the "
-                 "international plan as a flat offset, while the data's effect rises steeply among plan "
-                 f"holders with more than {bs['more_than_intl_minutes']} international minutes (the interaction in Table~\\ref{{tab:exp2-churn-blindspot}}); the "
-                 "data's curve is a ridge fit and extrapolates where customers are few.",
-                 "fig:exp2-churn-shapes")
+                 "Churn: each signal's shape in the ten networks (one line per seed) and the data's own shape "
+                 "(dashed), as a change in the churn score (logit).", "fig:exp2-churn-shapes")
 
 
 def fig_churn_parts():
@@ -1006,15 +966,11 @@ def fig_churn_parts():
     fig.set_size_inches(TEXTWIDTH_IN, 3.1)
     fig.tight_layout(w_pad=0.8)
     save(fig, "exp2-churn-calls-parts")
-    s4 = C[("service calls", "churn100-s4")]
     write_figure("exp2-churn-calls-parts",
                  "Churn: one signal, three realisations. The score's response to customer-service calls "
-                 "(mean over training customers, relative to 1 call) is split into the explanation parts "
-                 "that carry it; the parts sum exactly to the score's response (black). Seed 0 spreads the "
-                 "threshold over three parts, seed 3 builds it from a direct slope, a threshold hinge and a "
-                 "day-usage ramp, and in seed 4 a gate cancels the direct slope at low call counts (the two "
-                 f"parts point in opposite directions; cancellation ratio {float(s4['cancellation_ratio']):.2f}). "
-                 "Legend: each part's share of the response's variance.", "fig:exp2-churn-calls-parts")
+                 "(relative to 1 call), split into the explanation parts that carry it; black: their sum, the "
+                 "score's response. Legend: each part's share of the response's variance.",
+                 "fig:exp2-churn-calls-parts")
 
 
 # =============================================================================== figure F
@@ -1098,19 +1054,11 @@ def fig_churn_network(lab="churn100-s5"):
     ax.set_ylim(-1.9, ymax + 0.4)
     fig.tight_layout()
     save(fig, "exp2-churn-s5-network")
-    nh = sum(1 for n in gr["nodes"] if n["kind"] not in ("input", "output"))
-    hk = lambda n: int(n["label"][1:])
-    calls = sorted((n for n in gr["nodes"] if n["kind"] == "hidden" and not n["id"].startswith("id_")
-                    and n.get("theme") in ("service calls", "service calls x low day usage")), key=hk)
-    idn = sorted((n for n in gr["nodes"] if n["id"].startswith("id_")), key=hk)
+    n_state = sum(1 for n in gr["nodes"] if n["kind"] == "input" and n.get("group") == "state")
     write_figure("exp2-churn-s5-network",
-                 f"Churn seed 5: every hidden node ({nh}, labelled h1 to h{nh} as in the plain-language "
-                 "report) coloured by the signal it mainly realises; the "
-                 f"{sum(1 for n in gr['nodes'] if n['kind'] == 'input' and n.get('group') == 'state')} state indicators it reads are drawn as one "
-                 "input and line width follows the absolute weight. The service-call threshold and its "
-                 f"interaction with light day use are built from {len(calls)} units "
-                 f"({', '.join(n['label'] for n in calls)}); the identity nodes added by the explanation "
-                 f"({', '.join(n['label'] for n in idn)}) gather each part's output.", "fig:exp2-churn-s5-network")
+                 "Churn seed 5: every hidden node, coloured by the signal it mainly realises. The "
+                 f"{n_state} state indicators are drawn as one input; line width: absolute weight.",
+                 "fig:exp2-churn-s5-network")
 
 
 # =============================================================================== figure G
@@ -1133,7 +1081,7 @@ def fig_pairs():
             labs[-1] += f" ({fl['unit']})"
     k = len(inputs)
     zall = np.concatenate([np.ravel(p["z"]) for p in P["pairs"]] + [np.ravel(i["pd"]) for i in inputs])
-    norm = mcolors.TwoSlopeNorm(vcenter=0.5, vmin=min(0.0, zall.min()), vmax=max(1.0, zall.max()))
+    norm = mcolors.TwoSlopeNorm(vcenter=RISK_CENTRE, vmin=min(0.0, zall.min()), vmax=max(1.0, zall.max()))
     cmap = plt.get_cmap("RdBu_r")
     fig, axes = plt.subplots(k, k, figsize=(TEXTWIDTH_IN, TEXTWIDTH_IN * 0.92))
     pair = {(p["a"], p["b"]): p for p in P["pairs"]}
@@ -1196,15 +1144,11 @@ def fig_pairs():
     cb_.set_label("predicted risk of heart disease", fontsize=7)
     cb_.ax.tick_params(labelsize=6)
     save(fig, "exp2-heart-pairs")
-    top = P["pairs"][0]
     write_figure("exp2-heart-pairs",
-                 "Heart-100 seed 2, the whole model: a pairs plot over the five inputs it is most sensitive "
-                 "to. Diagonal: predicted risk as one input varies; below the diagonal: as two vary together "
-                 "(colour, centred on a risk of 0.5); other inputs held at their training median, which is a "
-                 f"reference patient with a predicted risk of {num(P['reference'], 2)}. Above the diagonal: "
-                 "the strength of each pair's interaction ($H$, the share of the pair's variation not explained "
-                 "by the two inputs separately, weighted by where the data lie). The strongest is "
-                 f"{labs[top['a']].split(' (')[0]} with {labs[top['b']]}.", "fig:exp2-heart-pairs", width=r"0.95\textwidth")
+                 f"Heart-100 seed 2, the whole model: a pairs plot over {k} inputs. Diagonal: predicted risk as "
+                 "one input varies; below the diagonal: as two vary together (colour, centred on a risk of "
+                 f"{RISK_CENTRE:g}); above the diagonal: the interaction strength $H$.", "fig:exp2-heart-pairs",
+                 width=r"0.95\textwidth")
 
 
 # =============================================================================== main

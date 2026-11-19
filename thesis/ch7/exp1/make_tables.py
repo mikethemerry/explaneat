@@ -11,8 +11,9 @@ Outputs:
                                 (experiments/benchmarks/benchmarks.csv; benchmark_tables.py, shared
                                 with Experiment 2's exp2-benchmarks.tex)
 Sources: data/networks.json (extract_db.py), experiments/benchmarks/results/propneat.json and
-survival.json, experiments/benchmarks/benchmarks.csv, experiments/ushape_saddle/references.json
-(the synthetic sets' true-logit AUC, quoted in a caption).
+survival.json, experiments/benchmarks/benchmarks.csv.
+Captions hold only a title and the table's keys (Mike, 20 Nov 2026); the method and results sentences
+they used to carry are in thesis/ch7/CAPTION_MOVED_TEXT.md.
 """
 from __future__ import annotations
 
@@ -107,31 +108,12 @@ def table_networks():
     mk = N["networks"]["paper-monk2"]
     assert mk["cov_c"] == 1.0 and mk["exempt_disconnected"] and mk["rec_cov_c"] < 1.0, mk
     assert all(not r["exempt_disconnected"] for k, r in N["networks"].items() if k != "paper-monk2")
-    cap = ("Experiment 1: the explained network of each dataset, with the columns of the Experiment 2 run "
-           "tables. Selection: Heart and MONK-2 are the original networks; WHAS500 is the lowest validation Cox "
-           "loss of five seeds; Connect-4 and the synthetic sets are the largest training AUC of their runs "
-           "(seed in brackets). AUCs and intervals are recomputed from each genome on its study's split "
-           "(10{,}000 bootstrap resamples of the test rows) and equal the study's run record. "
-           f"$^\\ast$WHAS500 is a Cox model: its train and test columns are Harrell's $C$. "
-           "\\emph{Inputs used}, \\emph{hidden nodes}, \\emph{enabled connections}, \\emph{depth} and "
-           "\\emph{skip connections} are of the phenotype; \\emph{skippiness} and \\emph{density} are the "
-           "library's \\texttt{ExplaNEAT} measures on the genome, as in Experiment 2. Explanation columns are "
-           "computed on the stored explanation: leaf $+$ composition annotations, node splits and identity "
-           "nodes (its operations), structural / compositional coverage (the library's coverage check) and "
-           "the function-preservation error (largest absolute difference between the explained model and the "
-           "network on the training rows). Every explanation "
-           "except the two original ones was written by one explaining agent with the frozen authoring method "
-           "(v4, provenance-stamped); \\emph{agent min} runs from the explanation's creation to its last "
-           "timestamped write in the database (operations, evidence records, logged queries), a lower bound "
-           "on the agent's wall-clock time (Connect-4 cells includes a short sandbox pause). $^\\dagger$The "
-           "original explanations (July 2026) predate that method and the query log, so they have no explaining "
-           "time; MONK-2's pruned-input annotation sits outside the root and, as an annotation of disconnected "
-           "inputs, is exempt from the single-root rule (without the exemption its compositional coverage is "
-           f"{num(mk['rec_cov_c'], 2)}). No Experiment 1 explanation has recorded "
-           "verification minutes, so \\emph{Mike min} is blank throughout. "
-           f"$^\\ddagger$XOR has no test set (the four rows are the whole truth table): each of the {len(X)} "
-           "seeds' first solving genome, reduced to its minimal form (exact relay collapse and greedy pruning), "
-           f"classifies all four rows ({n_ok} of {len(X)}); its realisations were analysed by hand, not annotated.")
+    # Caption: title and keys only (Mike, 20 Nov); the removed method and results sentences are kept in
+    # thesis/ch7/CAPTION_MOVED_TEXT.md for the body text.
+    cap = ("Experiment 1: the explained network of each dataset. (s$k$): seed $k$; --: none or not recorded. "
+           "$^\\ast$Cox model: the train and test columns are Harrell's $C$. "
+           "$^\\dagger$Original network and explanation. "
+           "$^\\ddagger$No test set; acc.: accuracy on the four rows.")
     write("exp1-networks", "\\begin{sidewaystable}\n  \\centering\n  \\footnotesize\n" + "\n".join(body)
           + f"\n  \\caption{{{cap}}}\n  \\label{{tab:exp1-networks}}\n\\end{{sidewaystable}}\n")
 
@@ -141,49 +123,15 @@ DATASETS = [("heart", "Heart"), ("monk2", "MONK-2"), ("c4_cells", "\\makecell{Co
             ("shape_saddle", "\\makecell{Synth.\\\\saddle}"), ("shape_both", "\\makecell{Synth.\\\\U $+$ saddle}")]
 
 
-PLAIN = {"heart": "Heart", "monk2": "MONK-2", "c4_cells": "Connect-4 cells", "c4_lines": "Connect-4 lines",
-         "shape_u": "U", "shape_saddle": "saddle", "shape_both": "U $+$ saddle"}
-
-
-def thousands(x):
-    return f"{int(x):,}".replace(",", "{,}")
-
-
 def table_benchmarks():
     R = bt.rows()
-    K = bt.by_key(R)
-    us = jload(REPO / "experiments" / "ushape_saddle" / "references.json")
-    xor = {k: K[("xor", k)] for k in ("propneat_explained", "lr_l2", "tree")}
     cls = bt.classification_table(DATASETS, [("propneat_explained", "Explained network", None)], R)
     surv = bt.survival_table(R)
-    S = jload(BENCH / "results" / "survival.json")
-    acc = jload(BENCH / "results" / "propneat.json")["exp1"]["xor"]["train_accuracy_all"]
-    n_ok = sum(a == 1.0 for a in acc)
-    xor_note = f"all {len(acc)} PropNEAT seeds" if n_ok == len(acc) else f"{n_ok} of {len(acc)} PropNEAT seeds"
-    n = {d: (K[(d, "lr_l2")]["n_train"], K[(d, "lr_l2")]["n_test"]) for d, _ in DATASETS}
-    cap = ("Experiment 1: each dataset's explained PropNEAT network against the comparator suite (binary "
-           "classification; the survival case is Table~\\ref{tab:exp1-benchmarks-survival}). " + bt.SUITE_CAPTION
-           + " Training / test rows: "
-           + "; ".join(f"{PLAIN[d]} {thousands(n[d][0])} / {thousands(n[d][1])}" for d, _ in DATASETS)
-           + ". On the synthetic sets the true logit reaches a test AUC of "
-           + ", ".join(f"{us[t]['oracle']['test_auc']:.3f}" for t in ("u", "saddle", "both"))
-           + " (U, saddle, U $+$ saddle). XOR (four rows, no test set): "
-           f"{xor_note} classify the four rows; an $L_2$ logistic regression gets "
-           f"{float(xor['lr_l2']['test_value']):.2f} (it predicts one class) and a decision tree "
-           f"{float(xor['tree']['test_value']):.2f}.")
-    cap_s = ("Experiment 1, survival: the explained PropNEAT Cox network of WHAS500 against Cox and survival-"
-             "ensemble comparators on the Cox case's split "
-             f"({S['whas500']['n_train']} training / {S['whas500']['n_test']} test patients, "
-             f"{S['whas500']['events_test']} test events; the networks' {S['whas500']['n_val_unused']} validation "
-             "patients are not used by the comparators). Each comparator is tuned by 5-fold cross-validation on the "
-             "training rows, stratified on the event indicator (seed 42, scoring Harrell's $C$; the unpenalised Cox "
-             "model has nothing to tune), refitted on all training rows and scored once on the test rows. Harrell's "
-             "$C$ with its 95\\% percentile interval (10{,}000 bootstrap resamples of the test rows, "
-             "\\texttt{RandomState(42)}); td-AUC: mean time-dependent AUC at 1, 3 and 5 years; IBS: integrated "
-             "Brier score (lower is better). The Cox models' survival curves use the Breslow baseline on their "
-             "training log-risks, as the networks'; the forest and the boosted model use their own. Bold: the "
-             "column's best $C$. GBSG2, the other Cox case "
-             f"({S['gbsg2']['n_train']} / {S['gbsg2']['n_test']}), is shown for comparison only.")
+    # Captions: title and keys only (Mike, 20 Nov); the removed sentences are in CAPTION_MOVED_TEXT.md.
+    cap = "Experiment 1: each dataset's explained PropNEAT network against the comparators. " + bt.SUITE_KEY
+    cap_s = ("Experiment 1, survival: the explained PropNEAT Cox network of WHAS500 against the comparators. "
+             "Harrell's $C$ with its 95\\% interval; td-AUC: mean time-dependent AUC; IBS: integrated Brier "
+             "score (lower is better). Bold: the column's best $C$.")
     src = ("\\begin{table}[tbp]\n  \\centering\n  \\footnotesize\n" + "\n".join(cls)
            + f"\n  \\caption{{{cap}}}\n  \\label{{tab:exp1-benchmarks}}\n\\end{{table}}\n\n"
            + "\\begin{table}[tbp]\n  \\centering\n  \\footnotesize\n" + "\n".join(surv)
