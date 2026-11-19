@@ -45,6 +45,8 @@ text width, so `width=\textwidth` keeps the font at about 8.5 pt. Colours are Ok
 | exp2-churn-disagreement | tab:exp2-churn-disagreement | disagreement decomposition and agreement after harmonising | `experiments/churn_signals/disagreement.csv`, `harmonise.csv`, `data/agreement.json` |
 | exp2-churn-blindspot | tab:exp2-churn-blindspot | international plan x international use: churn counts, ridge vs networks vs ensemble | `data/churn_blindspot.json`, `experiments/churn_signals/cache/meta.json`, `signals.csv`, `runs_churn100.csv` |
 | exp2-agreement | tab:exp2-agreement | prediction agreement Churn vs Heart-100 (and Churn with states at average) | `data/agreement.json` (method of the 18 Nov `agree.py` / `agree2.py`, in `extract_db.py`) |
+| exp2-betas-{adult,churn,heart100} | tab:exp2-betas-<set> | linear-term betas per seed (real units), median, LR reference; marks for opposite direction and linear-path disagreement (`linear_betas.py`; landscape) | `experiments/linear_betas/` (`betas.py`) |
+| exp2-betas-adult-{household,work,education,country}, exp2-betas-churn-states | tab:exp2-betas-<set>-<group> | every level of the many-level categories, per seed (appendix) | `experiments/linear_betas/` |
 
 ## Figures (`figures/exp2/`, each `.pdf` + `.png` + `.tex`)
 

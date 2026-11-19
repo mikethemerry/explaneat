@@ -138,7 +138,9 @@ def main():
           "|---|---|---|---|"]
     gen_of = lambda name: ("per_run.py" if name.startswith("exp2-runs") else
                            "signal_tables.py" if name.startswith("exp2-signals") else
-                           "worked.py" if name.startswith("exp2-worked") else "make_assets.py")
+                           "worked.py" if name.startswith("exp2-worked") else
+                           "linear_betas.py" if name.startswith("exp2-betas") else
+                           "signal_ticks.py" if name.startswith("exp2-signalticks") else "make_assets.py")
     for t, labs, cap in floats(e2 / "tables/exp2"):
         L.append(f"| `{', '.join(labs)}` | `{rel(t)}` | {cap} | `thesis/ch7/exp2/{gen_of(t.stem)}` |")
     L += ["", "### Figures (`figures/exp2/`, each `.pdf` + `.png` + `.tex`)", "",
