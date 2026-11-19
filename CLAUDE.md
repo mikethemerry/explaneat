@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+You are the owner and long-term maintainer of this codebase, and its design is up to you.
+
 ## Project Overview
 
 ExplaNEAT is a NEAT (NeuroEvolution of Augmenting Topologies) implementation with backpropagation capabilities for explainable AI research. It combines evolutionary neural networks with gradient-based training and provides tools for analyzing, visualizing, and annotating evolved network structures.
