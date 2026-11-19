@@ -2,7 +2,7 @@
 
 Both benchmark tables (exp1-benchmarks.tex here, exp2-benchmarks.tex from thesis/ch7/exp2/
 make_assets.py) are built by `classification_table` from experiments/benchmarks/benchmarks.csv, so
-their rows (the seven comparators, in one order), cell format and caption wording are identical:
+their rows (the seven comparators, in one order), cell format and caption key are identical:
 each cell is the test AUC, its 95% bootstrap interval and the test accuracy; the column's best
 AUC at the displayed precision is bold. Only the PropNEAT rows differ (Experiment 1: the explained
 network; Experiment 2: the best seed by training AUC and the median of ten seeds).
@@ -20,15 +20,10 @@ COMPARATORS = [("lr_l2", "Logistic regr., $L_2$"), ("lr_l1", "Logistic regr., $L
 SURVIVAL = [("cox_ph", "Cox PH, unpenalised"), ("cox_l2", "Cox PH, $L_2$ (ridge)"),
             ("cox_enet", "Cox PH, elastic net"), ("rsf", "Random survival forest"),
             ("gbs", "Gradient-boosted survival")]
-SUITE_CAPTION = (
-    "Every comparator is tuned by 5-fold stratified cross-validation on the training rows only "
-    "(seed 42, scoring AUC), refitted on all training rows, and scored once on the test rows of the "
-    "split the PropNEAT runs used, with the same input scaling. Each cell: test AUC; below it, the "
-    "95\\% percentile interval from 10{,}000 bootstrap resamples of the test rows "
-    "(\\texttt{RandomState(42)}, the same resamples for every model of a dataset) and the test "
-    "accuracy. Bold: the column's best AUC at this precision. Gradient boosting is scikit-learn's "
-    "histogram gradient boosting; the explainable boosting machine is InterpretML's. The settings "
-    "each model's cross-validation chose are in \\texttt{experiments/benchmarks/benchmarks.csv}.")
+# Caption key shared by both benchmark tables: only how to read a cell (Mike, 20 Nov: captions hold a title
+# and the table's keys; the method is in the body text, see thesis/ch7/CAPTION_MOVED_TEXT.md).
+SUITE_KEY = ("Each cell: test AUC; below it, its 95\\% interval and the test accuracy. "
+             "Bold: the column's best AUC at this precision.")
 
 
 def rows():

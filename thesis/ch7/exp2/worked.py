@@ -193,17 +193,11 @@ def fig_ice(D):
     ax.set_xticks(x)
     ax.legend(loc="upper left", fontsize=6.8, handlelength=1.5)
     save(fig, "exp2-worked-ice")
-    n = len(Y)
     write_figure("exp2-worked-ice",
-                 f"Churn seed 5, the part \\emph{{Service calls and daytime charge}}: individual conditional "
-                 f"expectation (ICE) curves of the part's contribution to the churn score as the number of "
-                 f"customer-service calls is set from 0 to 9, for {n} training customers (every tenth), "
-                 "coloured by the customer's daytime minutes (thirds of the training rows), with the median "
-                 "curve of each third. The contribution is the change in log-odds when the part's output is "
-                 "replaced by its training baseline (the value the switch-off check uses), so 0 means the part "
-                 "adds nothing beyond its average. The part reads the daytime charge, which is a fixed rate "
-                 f"times the daytime minutes (US\\$\\,{rate:.2f} per minute, exact to "
-                 f"{D['rate_max_abs_dev']:.3f} on the training rows).",
+                 "Churn seed 5, the part \\emph{Service calls and daytime charge}: individual conditional "
+                 "expectation (ICE) curves of the part's contribution to the churn score as the number of "
+                 "customer-service calls varies, coloured by the customer's daytime minutes (thirds), with the "
+                 "median curve of each third. 0: the part adds nothing beyond its average.",
                  "fig:exp2-worked-ice", width=r"0.7\textwidth")
 
 
@@ -263,14 +257,10 @@ def fig_pairs(D):
     save(fig, "exp2-worked-pairs")
     write_figure("exp2-worked-pairs",
                  "Churn seed 5, the part \\emph{Service calls and daytime charge}: a pairs plot of the part's "
-                 "contribution to the churn score (log-odds, relative to its training baseline) over its two "
-                 "main inputs, in real units. Diagonal: the contribution as one input varies with the other at "
-                 "its training median; lower left: both together (colour, blue lowers and red raises the "
-                 "score; dots are training customers, calls jittered); upper right: the strength of the "
-                 "interaction ($H$, the share of the pair's variation not explained by the two inputs "
-                 "separately). The part reads the daytime charge; it is drawn in minutes (the charge is "
-                 f"US\\$\\,{rate:.2f} per minute). The part's state indicators are held at their median (not "
-                 "New Hampshire, Connecticut or Florida).", "fig:exp2-worked-pairs", width=r"0.85\textwidth")
+                 "contribution to the churn score (log-odds) over its two main inputs. Diagonal: one input "
+                 "varies; lower left: both together (colour: blue lowers and red raises the score; dots: training "
+                 "customers, calls jittered); upper right: the interaction strength $H$. The daytime charge is "
+                 "drawn in minutes.", "fig:exp2-worked-pairs", width=r"0.85\textwidth")
 
 
 # ---------------------------------------------------------------- network at three levels
@@ -367,10 +357,6 @@ def fig_networks(D):
     layer = json.loads(LAYER.read_text())
     pid = next(p["id"] for p in layer["parts"] if p["name"] == PART)
     titles = rs._titles(layer)
-    hid = [n for n in layer["graph"]["nodes"] if n["kind"] == "hidden" and not n["id"].startswith("identity_")]
-    raw = rs.raw_network(layer)
-    n_raw_hidden = sum(1 for n in raw["nodes"].values() if n["kind"] == "hidden")
-    n_raw_inputs = sum(1 for n in raw["nodes"].values() if n["kind"] == "input")
     with _grey_groups():
         tk_raw, _ = rs.raw_picture(layer)
         with _compact():
@@ -379,30 +365,22 @@ def fig_networks(D):
     _tikz_pdf(tk_raw, "exp2-worked-net-unexplained")
     _tikz_pdf(tk_c, "exp2-worked-net-concept")
     _tikz_pdf(tk_x, "exp2-worked-net-exploded")
-    kids = [p for p in layer["parts"] if p["role"] == "part" and p.get("parent") == next(
-        q["name"] for q in layer["parts"] if q["role"] == "root")]
     edges = ("Edges: blue, a positive weight (raises the score); red, a negative weight; thicker, a larger "
              "weight; grey, the inputs a collapsed part reads (no single weight). ")
-    unused = tx(rs.not_used_text(layer))
     write_figure("exp2-worked-net-unexplained",
-                 f"Churn seed 5 as trained, before any explanation: {n_raw_inputs} connected input columns "
-                 f"(bottom), {n_raw_hidden} hidden units (circles, labelled h1, h2, \\ldots) and the output "
-                 "(hexagon). Edges: blue, a positive weight (raises the score); red, a negative weight; thicker, a "
-                 "larger weight. Double outline: an input that acts at a fixed rate. " + unused,
+                 "Churn seed 5 as trained, before any explanation: input columns (bottom), hidden units "
+                 "(circles) and the output (hexagon). Edges: blue, a positive weight (raises the score); red, a "
+                 "negative weight; thicker, a larger weight. Double outline: an input that acts at a fixed rate.",
                  "fig:exp2-worked-net-unexplained")
     write_figure("exp2-worked-net-concept",
-                 f"Churn seed 5 at the level of concepts: the explanation's {len(kids)} top-level parts, each "
-                 "collapsed into one box ("
-                 + "; ".join(f"\\emph{{{tx(titles[k['id']])}}}" for k in sorted(kids, key=lambda p: p['order']))
-                 + "), the inputs each reads, and their sum, the churn score, at the top. Arrows on inputs and "
-                 "boxes: the direction of the effect on the final prediction (up raises it, down lowers it, "
-                 "double arrow depends). " + edges + "A grouped input (state) stands for its used levels.",
+                 "Churn seed 5 at the level of concepts: each top-level part of the explanation collapsed into "
+                 "one box, the inputs each reads, and the churn score at the top. Arrows on inputs and boxes: "
+                 "the direction of the effect on the final prediction (up raises it, down lowers it, double "
+                 "arrow depends). " + edges + "A grouped input (state) stands for its used levels.",
                  "fig:exp2-worked-net-concept")
-    inner = len([n for n in hid if n.get("region") == pid])
     write_figure("exp2-worked-net-exploded",
-                 f"Churn seed 5 with the part \\emph{{{tx(titles[pid])}}} expanded ({inner} units, including "
-                 "its output box) and the other parts collapsed. " + edges,
-                 "fig:exp2-worked-net-exploded")
+                 f"Churn seed 5 with the part \\emph{{{tx(titles[pid])}}} expanded and the other parts "
+                 "collapsed. " + edges, "fig:exp2-worked-net-exploded")
 
 
 # =============================================================================== claims table

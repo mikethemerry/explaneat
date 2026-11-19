@@ -34,6 +34,16 @@ non-computed parts are named below: the signal vocabulary and Mike's minutes. Th
 records' self-reported fields (agent minutes, Experiment 1 coverage, annotation counts) were replaced
 by read-only database checks on 20 Nov (issue 3, resolved; see "Computed records" below).
 
+
+**Captions (20 Nov 2026, branch thesis/simple-captions).** Every caption of the in-scope tables and of
+the Experiment 2 figure floats now holds only a title and the keys needed to read it (what bold, ✓, w,
+letters, daggers, brackets and -- mean; abbreviations). Method and results sentences were removed from
+the generators; each table's and figure's old caption, new caption and removed sentences (grouped as
+methodology / results) are in `thesis/ch7/CAPTION_MOVED_TEXT.md` for Mike's body text. Key numbers are
+read from source: the ✓ / w thresholds from `explaneat/analysis/signal_presence.py` (`USED_SD`,
+`WEAK_SD`), the "within 0.01" margin and the pairs plot's colour centre from `make_assets.NEAR_BEST` /
+`RISK_CENTRE`, split and seed counts from the data. Everything outside the `\caption{...}` lines is
+byte-identical. The appendix network captions were already a title only and are unchanged.
 ---
 
 ## ch7-ex1-networks (`thesis/ch7/exp1/tables/exp1-networks.tex`)
@@ -44,14 +54,14 @@ by read-only database checks on 20 Nov (issue 3, resolved; see "Computed records
 | `thesis/ch7/exp1/data/networks.json` | `thesis/ch7/exp1/extract_db.py` (explaneat_dev, ~1 min) | extracted (DB, read-only); rerun byte-identical |
 | structure: inputs, hidden, conns, depth, skips, density, skippiness | genome in explaneat_dev, `compute_runs.structure` and `ExplaNEAT` measures | extracted (DB, read-only) |
 | splits, identity nodes, leaf + comp. counts | explanation operations in explaneat_dev (`explaining_time.annotation_counts`; also equal to `get_coverage`'s counts), asserted equal to the records (paper: to `paper_coverage_options.json`) | extracted (DB, read-only); all agree |
-| coverage struct./comp., hierarchy completeness | MCP `get_coverage` (`coverage_report`) on each explanation, in `extract_db.py`, as `experiments/10seed/verify_record.py` does; check_explanation's stricter hierarchy check kept as `hierarchy_complete_check` | extracted (DB, read-only), computed. Agree with the six v4 records and paper Heart. **MONK-2: 1.00** (was printed 0.75): under the current definition (decision D4, 7 Nov, commit 1fb3a8b6) its pruned-input annotation is exempt from the single-root rule; 0.75 is the pre-D4 value in `paper_coverage_options.json` ("current"), now kept as `rec_cov_c` and quoted in the caption. check_explanation's strict check still reports MONK-2's hierarchy incomplete (two roots) |
+| coverage struct./comp., hierarchy completeness | MCP `get_coverage` (`coverage_report`) on each explanation, in `extract_db.py`, as `experiments/10seed/verify_record.py` does; check_explanation's stricter hierarchy check kept as `hierarchy_complete_check` | extracted (DB, read-only), computed. Agree with the six v4 records and paper Heart. **MONK-2: 1.00** (was printed 0.75): under the current definition (decision D4, 7 Nov, commit 1fb3a8b6) its pruned-input annotation is exempt from the single-root rule; 0.75 is the pre-D4 value in `paper_coverage_options.json` ("current"), now kept as `rec_cov_c` (no longer printed: the caption sentence moved to `CAPTION_MOVED_TEXT.md`). check_explanation's strict check still reports MONK-2's hierarchy incomplete (two roots) |
 | agent min | `experiments/10seed/explaining_time.explaining_window` in `extract_db.py`: explanation created → last timestamped write (operations, evidence records, `evidence_log`) | extracted (DB, read-only), computed. 0.6–4.5 min below the record's own start/end (kept as `rec_agent` in `networks.json`); paper Heart / MONK-2 have no evidence log: "--" |
 | function-preservation error | `check_explanation.check` on the training split, in `extract_db.py`; equals the records and `experiments/explanation_levels/levels/*.json` exactly for all eight | extracted (DB, read-only), computed |
 | XOR row | `experiments/xor/xor_results.json` ← `experiments/xor/run_xor.py` | computed |
 | train / test AUC and CI | `experiments/benchmarks/results/propneat.json` ← `propneat.py` (asserts equality with the run records to 1e-9) | extracted (DB, read-only); rerun byte-identical |
 | WHAS500 Harrell's C | `experiments/benchmarks/results/survival.json` ← `survival.py` | computed |
 | genomes | the evolution runs of each study (layer 1) | computed (not rerun) |
-| caption prose ("July 2026", "short sandbox pause", selection sentences) | typed in `make_tables.py` / `extract_db.py` | prose, not results |
+| caption (title and keys only since 20 Nov; the old prose is in `CAPTION_MOVED_TEXT.md`) | typed in `make_tables.py` | prose, not results |
 
 ## ch7-ex1-benchmarks (`thesis/ch7/exp1/tables/exp1-benchmarks.tex`) and ch7-ex2-benchmarks (`thesis/ch7/exp2/tables/exp2/exp2-benchmarks.tex`)
 
@@ -64,7 +74,7 @@ by read-only database checks on 20 Nov (issue 3, resolved; see "Computed records
 | `cache/*.npz`, `results/data_manifest.json` | `export_data.py` | extracted (DB, read-only); rerun byte-identical |
 | `results/propneat.json` | `propneat.py` from the runs CSVs and the DB | extracted (DB, read-only) |
 | `results/survival.json` | `survival.py` (~80 s) | computed (timings aside) |
-| synthetic true-logit AUC (caption) | `experiments/ushape_saddle/references.json` ← `references.py` | computed; rerun byte-identical |
+| synthetic true-logit AUC (was in the caption; now in `CAPTION_MOVED_TEXT.md` for the body text) | `experiments/ushape_saddle/references.json` ← `references.py` | computed; rerun byte-identical |
 
 All of these files were committed with their scripts in a8512b24.
 
@@ -259,7 +269,7 @@ These are images of the explorer UI. They carry no generated numbers, and nothin
 - Confirm adult-s0 (6 min) and adult-s4 (5 min).
 - How to name the curated signal vocabulary in the thesis, and whether to check or assert the Churn and Heart row descriptions.
 - ~~Whether to state "Agent min" and Experiment 1 coverage as agent-reported, or add the read-only recomputes.~~ Recomputed (20 Nov).
-- MONK-2's compositional coverage now prints 1.00 under the D4 exemption (caption gives the 0.75 without it); check the Chapter 7 prose that cites 0.75.
+- MONK-2's compositional coverage now prints 1.00 under the D4 exemption (the 0.75 without it is in `CAPTION_MOVED_TEXT.md`, no longer in the caption); check the Chapter 7 prose that cites 0.75.
 - The book (`thesis/ch7/book/e2_stats.py`, `data/exp2.py`) and `thesis/scripts/thesis_experiment_tables.py` (`ch7_experiment2_consistency.tex`) still use the record minutes (`claude_minutes`); switch them to `agent_minutes_db` if they stay in the thesis.
 - Whether to refit and commit the seeded lr_l1 results (printed values would not change).
 - Whether to add `interpret` to a uv extra.
