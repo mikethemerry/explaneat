@@ -76,8 +76,8 @@ MISC_LABELS = {
              "also run; like WHAS500, the open survival data are close to linear, so it adds no new point. Its numbers are here."),
     "e1-3a": ("Moved from Experiment 1", "The WHAS500 part of this reference reading is in [Cox survival: WHAS500](#e1-cox); "
               "the GBSG2 part (and the forest's GBSG2 edge) is kept here."),
-    "e1-5": ("Dropped from the chapter", "KRK was a learning failure: on the raw board coordinates PropNEAT found only "
-             "near-linear networks, so it says little about explaining relational structure."),
+    "e1-5": ("Dropped from the chapter", "KRK: on the raw board coordinates PropNEAT reached high test AUC but learned only part of "
+             "the rule (rook next to the black king); Connect-4 makes the relational point more cleanly."),
     "e3-4": ("Dropped from the chapter", "Plain (non-convolutional) MNIST was a learning failure: on raw pixels PropNEAT found "
              "only near-linear networks. The convolutional version is [Experiment 4](#exp4)."),
 }
