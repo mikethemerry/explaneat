@@ -547,7 +547,8 @@ def _edge(u, v, w) -> str:
     return f"\\draw[->, {style}] ({_tname(u)}) -- ({_tname(v)});"
 
 
-def _picture(items, pos, edges_w, clusters, subs, colors, hl, note: str = "") -> str:
+def _picture(items, pos, edges_w, clusters, subs, colors, hl, note: str = "",
+             out_wrap: Optional[float] = None) -> str:
     L: List[str] = []
     for n, it in items.items():
         x, y = pos[n]
@@ -561,7 +562,8 @@ def _picture(items, pos, edges_w, clusters, subs, colors, hl, note: str = "") ->
             style += LIN_STYLE.get(it.get("lin") or "", "")
             L.append(f"\\node[{style}] ({t}) at ({x},{y}) {{}};")
             sym = (" " + NET_SYMBOL[nd]) if nd else ""
-            L.append(f"\\path ({t}.south) node[inlab, anchor=north] (lab{t}) {{{tex(it['label'])}{sym}}};")
+            side = ("north", "south") if it.get("flip") else ("south", "north")
+            L.append(f"\\path ({t}.{side[0]}) node[inlab, anchor={side[1]}] (lab{t}) {{{tex(it['label'])}{sym}}};")
         elif k == "output":
             L.append(f"\\node[outp] ({t}) at ({x},{y}) {{{tex(it['label'])}}};")
         elif k in ("stub_in", "stub_out"):
@@ -615,9 +617,164 @@ def _picture(items, pos, edges_w, clusters, subs, colors, hl, note: str = "") ->
     if note:
         L.append("\\node[anchor=north west, font=\\sffamily\\scriptsize, inner sep=0pt, align=left] at "
                  "([yshift=-3mm]current bounding box.south west) {" + note + "};")
+    head = HEAD
+    if out_wrap:                       # the output's label in lines of at most out_wrap cm (a smaller hexagon)
+        tw = min(out_wrap, max(len(it.get("label") or "") for it in items.values() if it["kind"] == "output") * CHARW)
+        head = [h.replace("font=\\sffamily\\tiny, align=center},",
+                          f"font=\\sffamily\\tiny, align=center, text width={tw * 10:.1f}mm}},")
+                if "regular polygon sides=6" in h else h for h in HEAD]
     colors_def = "".join(f"\\definecolor{{net{k}}}{{HTML}}{{{v}}}" for k, v in NET_COLORS.items())
     return ("\\resizebox{\\ifdim\\width>\\linewidth\\linewidth\\else\\width\\fi}{!}{%\n" + colors_def + "%\n"
-            + "\n".join(HEAD + L) + "\n\\end{tikzpicture}}%\n")
+            + "\n".join(head + L) + "\n\\end{tikzpicture}}%\n")
+
+
+# ----------------------------------------------------------------------------- page-shaped layout
+CHARW = 0.09       # cm per character of \tiny sans text (estimate)
+LINE = 0.22        # cm per line of \tiny text
+OUT_WRAP = 1.8     # cm: text width of the output hexagon's label in a two-band picture
+BAND_GAP_X = 0.8   # cm between neighbouring clusters' extents in a band
+FIT_ASPECT = (1.2, 2.2)   # a one-row overview with an aspect in this range is left as it is
+
+
+def _lines(text: str, width_cm: float) -> int:
+    return max(1, -(-int(len(text or "") * CHARW * 100) // int(width_cm * 100)))
+
+
+def _hex_size(items, out, wrap: Optional[float] = None) -> Tuple[float, float]:
+    """Estimated (width, height) of the output hexagon (cm): a regular hexagon around its label
+    (one line, or lines of ``wrap`` cm)."""
+    text = items[out].get("label") or ""
+    w, h = len(text) * CHARW, LINE
+    if wrap:
+        h, w = _lines(text, wrap) * LINE, min(w, wrap)
+    r = max(0.5, ((w / 2) ** 2 + (h / 2) ** 2) ** 0.5 / 0.87 + 0.05)
+    return 2 * r, 1.74 * r
+
+
+def _node_box(it, x, y) -> Tuple[float, float, float, float]:
+    """Estimated drawn extent (xmin, xmax, ymin, ymax) of one node, its label included (cm)."""
+    k = it["kind"]
+    if k == "input":
+        n = _lines(it.get("label") or "", 1.5)
+        if it.get("flip"):
+            return x - 0.8, x + 0.8, y - 0.16, y + 0.2 + n * LINE
+        return x - 0.8, x + 0.8, y - 0.2 - n * LINE, y + 0.16
+    if k == "sum" or it.get("exit"):
+        h = (_lines(it.get("label") or "", 1.7) * LINE + 0.15) / 2
+        return x - 0.95, x + 0.95, y - h, y + h
+    if k in ("stub_in", "stub_out"):
+        return x - 0.85, x + 0.85, y - 0.3, y + 0.3
+    return x - 0.26, x + 0.26, y - 0.26, y + 0.26
+
+
+def _bbox(items, pos, wrap: Optional[float] = None) -> Tuple[float, float]:
+    """Estimated (width, height) of the whole picture (cm), cluster padding and titles included."""
+    xs0, xs1, ys0, ys1 = [], [], [], []
+    for n, it in items.items():
+        if it["kind"] == "output":
+            w, h = _hex_size(items, n, wrap)
+            x0, x1, y0, y1 = pos[n][0] - w / 2, pos[n][0] + w / 2, pos[n][1] - h / 2, pos[n][1] + h / 2
+        else:
+            x0, x1, y0, y1 = _node_box(it, *pos[n])
+            if it["kind"] != "input":
+                y1 += 0.7           # cluster padding and title
+        xs0.append(x0), xs1.append(x1), ys0.append(y0), ys1.append(y1)
+    return max(xs1) - min(xs0), max(ys1) - min(ys0)
+
+
+def two_bands(items, pos, edges, out, clusters, page_aspect: Optional[float] = None):
+    """Over/under layout of an overview that is too wide for a page. The top-level clusters are
+    all at the same depth (each feeds the output), so their vertical place is free: when the
+    one-row picture's aspect (width / height) is outside FIT_ASPECT they are split into two
+    bands, one above the other, with the output hexagon centred in the gap between them. The
+    clusters go into the bands greedily, widest first, each into the band that is narrower so
+    far (clusters joined by an edge other than into the output go together); each band keeps
+    the clusters' left-to-right order. The lower band is drawn as before (inputs at the bottom,
+    the cluster's output rectangle at its top, facing the gap); the upper band is mirrored
+    top to bottom (inputs at the top, labels above them; the output rectangle at the bottom),
+    so every cluster's output faces the hexagon and its edge runs straight to it across the
+    gap. Each cluster is unchanged inside (only mirrored). Kept only if the picture then fits the
+    page (``page_aspect``, width / height) at a larger scale. Returns (pos, bands, flipped)."""
+    w, h = _bbox(items, pos)
+    if not page_aspect or FIT_ASPECT[0] <= w / h <= FIT_ASPECT[1]:
+        return pos, 1, set()
+    cl_of = {n: (it.get("cluster") if it["kind"] == "input" else it["band"][0])
+             for n, it in items.items() if it["kind"] != "output" and n in pos}
+    names = [c for c, _ in clusters]
+    order = sorted({c for c in cl_of.values()}, key=lambda c: min(pos[n][0] for n in cl_of if cl_of[n] == c))
+    ext = {}
+    for c in order:
+        bx = [_node_box(items[n], *pos[n]) for n in cl_of if cl_of[n] == c]
+        x0, x1 = min(b[0] for b in bx), max(b[1] for b in bx)
+        title = dict(clusters).get(c, "") or ""
+        ext[c] = (x0 - 0.3, max(x1 + 0.3, x0 + len(title) * CHARW * 1.5))
+    block = {c: c for c in order}
+
+    def find(c):
+        while block[c] != c:
+            c = block[c]
+        return c
+    for u, v in edges:
+        if v != out and u in cl_of and v in cl_of and cl_of[u] != cl_of[v]:
+            block[find(cl_of[u])] = find(cl_of[v])
+    units: Dict[str, List[str]] = {}
+    for c in order:
+        units.setdefault(find(c), []).append(c)
+    if len(units) < 2:
+        return pos, 1, set()
+
+    def uwidth(u):
+        return sum(ext[c][1] - ext[c][0] for c in u) + BAND_GAP_X * (len(u) - 1)
+    bands: List[List[str]] = [[], []]           # [lower, upper]
+    width = [0.0, 0.0]
+    for u in sorted(units.values(), key=lambda u: (-uwidth(u), names.index(u[0]) if u[0] in names else 0)):
+        i = 0 if width[0] <= width[1] else 1
+        width[i] += uwidth(u) + (BAND_GAP_X if bands[i] else 0.0)
+        bands[i] += u
+    new = dict(pos)
+    flipped = set(bands[1])
+    hw, hh = _hex_size(items, out, OUT_WRAP)
+    gap = 0.28 + 0.45 + 0.3 + hh + 0.3 + 0.28   # lower titles, hexagon, margins, cluster padding
+    spans = []
+    for i, cs in enumerate(bands):
+        cs = sorted(cs, key=lambda c: (order.index(units[find(c)][0]), order.index(c)))   # a block together
+        x = 0.0
+        for j, c in enumerate(cs):
+            if j:
+                x += BAND_GAP_X
+            dx = x - ext[c][0]
+            mem = [n for n in cl_of if cl_of[n] == c]
+            unit_ys = [_node_box(items[n], *pos[n])[3] for n in mem if items[n]["kind"] != "input"] or [0.0]
+            if i == 0:                 # lower band: the top of the cluster's units at y = 0
+                dy = -max(unit_ys)
+                for n in mem:
+                    new[n] = (round(pos[n][0] + dx, 3), round(pos[n][1] + dy, 3))
+            else:                      # upper band, mirrored: the bottom of its units at y = gap
+                dy = gap + max(unit_ys)
+                for n in mem:
+                    new[n] = (round(pos[n][0] + dx, 3), round(dy - pos[n][1], 3))
+                    items[n]["flip"] = True
+            x += ext[c][1] - ext[c][0]
+        spans.append(x)
+    for i, cs in enumerate(bands):     # centre the narrower band under / over the wider one
+        off = (max(spans) - spans[i]) / 2.0
+        for n in cl_of:
+            if cl_of[n] in cs:
+                new[n] = (round(new[n][0] + off, 3), new[n][1])
+    new[out] = (round(max(spans) / 2.0, 3), round((0.73 + gap - 0.28) / 2.0, 3))
+
+    def scale(p, wrap):
+        bw, bh = _bbox(items, p, wrap)
+        return min(page_aspect / bw, 1.0 / bh)
+    if scale(new, OUT_WRAP) <= scale(pos, None):    # two bands would print smaller: keep the one row
+        for n in flipped_nodes(items):
+            items[n].pop("flip", None)
+        return pos, 1, set()
+    return new, 2, flipped
+
+
+def flipped_nodes(items) -> List[str]:
+    return [n for n, it in items.items() if it.get("flip")]
 
 
 # ----------------------------------------------------------------------------- overview
@@ -760,9 +917,11 @@ def replicate_inputs(items, ew):
     return out
 
 
-def overview(layer, note: bool = False) -> Tuple[str, Dict[str, Any]]:
+def overview(layer, note: bool = False, page_aspect: Optional[float] = None) -> Tuple[str, Dict[str, Any]]:
     """(TikZ, meta). ``meta["edges"]``: every graph edge drawn (as ``drawn_edge`` maps it);
-    ``meta["inputs"]``: the input circles (one per column)."""
+    ``meta["inputs"]``: the input circles (one per column). ``page_aspect`` (width / height of the
+    printed page): a picture too wide for it is drawn in two bands (:func:`two_bands`);
+    ``meta["bands"]`` is 1 or 2."""
     g = layer["graph"]
     items, clusters, subs = _overview_items(layer)
     out = next(n for n, it in items.items() if it["kind"] == "output")
@@ -785,13 +944,15 @@ def overview(layer, note: bool = False) -> Tuple[str, Dict[str, Any]]:
     drawn = list(ew)
     ew = _merge_groups(ew)
     pos = _place(items, [(u, v) for u, v, _ in ew], clusters, subs, [out], owned=True)
+    pos, nbands, _ = two_bands(items, pos, [(u, v) for u, v, _ in ew], out, clusters, page_aspect)
     text = ""
     if note:
         text = tex(LEGEND)
         if not_used_text(layer):
             text += r"\\" + tex(not_used_text(layer))
-    tk = _picture(items, pos, ew, clusters, subs, colors, hidden_labels(layer), text)
-    return tk, {"edges": {(e["from"], e["to"]) for e in g["edges"]}, "drawn": drawn, "merged": ew,
+    tk = _picture(items, pos, ew, clusters, subs, colors, hidden_labels(layer), text,
+                  OUT_WRAP if nbands > 1 else None)
+    return tk, {"bands": nbands, "edges": {(e["from"], e["to"]) for e in g["edges"]}, "drawn": drawn, "merged": ew,
                 "crossings": crossings(pos, [(u, v) for u, v, _ in ew]),
                 "inputs": {n for n, it in items.items() if it["kind"] == "input"},
                 "copies": {n: it.get("copy_of") for n, it in items.items() if it["kind"] == "input"},
