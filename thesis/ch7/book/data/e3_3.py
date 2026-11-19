@@ -2,7 +2,7 @@ CARD = {
     "id": "3.3",
     "anchor": "e3-3",
     "group": "e3",
-    "name": "Three Connect-4 bases (line features, lines + cells, per-line counts)",
+    "name": "Connect-4 on line features (three input bases: lines, lines + cells, per-line counts)",
     "status": "complete",
     "status_note": "complete; scripts and signal check recovered and committed 13 Nov",
     "prereg": "exploratory",

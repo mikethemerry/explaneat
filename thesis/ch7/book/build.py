@@ -41,11 +41,12 @@ GROUPS = [
 
 ARGUMENT = (
     "Chapter 7 makes one argument in four steps. **Existence (Experiment 1):** explainable PropNEAT models can be "
-    "built on a range of datasets, and the explanation shows what kind of signal each holds: mostly linear patterns "
-    "on the AAAI paper's three datasets, real non-linear terms on churn, a sparse linear Cox model on public survival "
-    "data (WHAS500, the reference point for VARIANZ), a clear drop on relational data (KRK, Connect-4, MNIST), and, "
-    "on XOR and the synthetic U and saddle, several equally valid solutions that extrapolate differently and are "
-    "told apart by their explanations. **Reproducibility (Experiment 2):** ten seeds on each of Adult, Churn and Heart "
+    "built on a range of datasets, and the explanation shows what kind of signal each holds: near-linear or rule-like "
+    "models on Heart and MONK-2 (the AAAI paper genomes) and a sparse linear Cox model on WHAS500 (the public reference "
+    "point for VARIANZ); on Connect-4 a strong network that is explained faithfully but understood only when given line "
+    "features; on XOR and the synthetic U and saddle, several equally valid solutions that extrapolate differently and "
+    "are told apart by their explanations; and, as the honest limitation, a convolutional network (ExConNEAT) whose "
+    "plausible decomposition cannot yet be verified. **Reproducibility (Experiment 2):** ten seeds on each of Adult, Churn and Heart "
     "(100 generations each) are explained in full every time; how alike the ten are in accuracy depends on the dataset, "
     "from interchangeable on Adult to widely spread on Heart. **Grafting (Experiment 3):** "
     "a realisation from one model can replace another's and regain the performance, provided its weights are kept "
@@ -62,6 +63,31 @@ OPEN_ITEMS = [
     ("ExConNEAT decomposition merge", "The ExConNEAT branches are not on main: `conv-neat-decomposition` (`3f6cbab`, ExplaNEAT graph decomposition for conv graphs) builds on `conv-neat-prototype` (`ab97c4c`); `conv-neat-3v8noise` (`fdf14fa`) is separate. Review and merge before the thesis cites Experiment 4.", "worktrees `conv-decomp`, `conv-neat`, `conv-3v8n`"),
     ("Other open items", "Probe v2 is on main for the ten-seed, ladder and Connect-4 sets, but the AAAI paper explanations are still probe v1; ladder round 2 (`exp/explanation-barrier-2`) is unmerged; the authoring-v4 adjudication spot check (about 30 min); the F/G banner line in `EXTENSIONS_RESULTS.md` (one-line edit).", "`thesis/notes/THESIS_EXPERIMENTS.md` gaps table"),
 ]
+
+
+# Miscellany cards that were part of Experiment 1 before the 19 Nov restructure: (label, one line why).
+MISC_LABELS = {
+    "e1-1": ("Moved from Experiment 1", "Experiment 1 now shows the Heart and MONK-2 rows of this card ([Heart and MONK-2](#e1-original)); "
+             "Adult is presented in [Experiment 2](#exp2), where harder models are examined for consistency across runs. "
+             "This is the full recompute of all three paper genomes, including Adult's SHAP change."),
+    "e1-2": ("Moved from Experiment 1", "Churn is presented in [Experiment 2](#exp2), where harder models are examined for "
+             "consistency across runs; this single-seed churn case is kept here for the record."),
+    "e1-3": ("Moved from Experiment 1", "Experiment 1 now shows the WHAS500 rows ([Cox survival: WHAS500](#e1-cox)). GBSG2 was "
+             "also run; like WHAS500, the open survival data are close to linear, so it adds no new point. Its numbers are here."),
+    "e1-3a": ("Moved from Experiment 1", "The WHAS500 part of this reference reading is in [Cox survival: WHAS500](#e1-cox); "
+              "the GBSG2 part (and the forest's GBSG2 edge) is kept here."),
+    "e1-5": ("Dropped from the chapter", "KRK was a learning failure: on the raw board coordinates PropNEAT found only "
+             "near-linear networks, so it says little about explaining relational structure."),
+    "e3-4": ("Dropped from the chapter", "Plain (non-convolutional) MNIST was a learning failure: on raw pixels PropNEAT found "
+             "only near-linear networks. The convolutional version is [Experiment 4](#exp4)."),
+}
+DENSE_TWIN = (
+    "the AAAI paper's dense-twin counterexample (Adult)",
+    "The paper densified the evolved Adult network over its 54 connected inputs (884 connections against the evolved 92), "
+    "retrained it to matched test AUC 0.905 and showed that every hidden unit became broadly mixed, as an \"unexplainable\" "
+    "counterexample. It is dropped because the dense twin on Adult is likely near-linear, so the linearisation tools "
+    "would undercut it as a counterexample. Source: `experiments/aaai27/results/aaai27-densified-twin.md`.",
+)
 
 
 def load(path):
@@ -241,7 +267,8 @@ def main():
     for E in exps:
         for r in E["results"]:
             used.update(r.get("cards") or [])
-    misc_order = ["e3-1", "e3-2", "e3-3", "e3-8", "e3-9", "e3-6", "e3-7", "s-1"]
+    misc_order = ["e3-1", "e3-2", "e3-8", "e3-9", "e3-6", "e3-7", "s-1",
+                  "e1-1", "e1-2", "e1-3", "e1-3a", "e1-5", "e3-4"]
     used.update({"s-2", "s-3"})   # superseded by Experiment 4 (adversarial robustness; the MNIST 10-class run)
     misc = [cards_by[a] for a in misc_order if a in cards_by and a not in used]
     misc += [c for c in sorted(cards, key=sort_key) if c["anchor"] not in used and c not in misc]
@@ -264,7 +291,9 @@ def main():
         nav.append(f'<li><a href="#{E["id"]}-discussion"><span class="tname">Discussion</span></a></li></ol>')
     nav.append('<p class="toc-group"><a href="#misc">Miscellany</a></p><ol>')
     for c in misc:
-        nav.append(f'<li><a href="#{esc(c["anchor"])}"><span class="tname">{esc(re.sub(r"[`*]", "", c["name"]))}</span>'
+        lab_ = MISC_LABELS.get(c["anchor"])
+        pre_ = (lab_[0].split()[0] + ": ") if lab_ else ""
+        nav.append(f'<li><a href="#{esc(c["anchor"])}"><span class="tname">{esc(pre_ + re.sub(r"[`*]", "", c["name"]))}</span>'
                    f'<span class="dot dot-{dot_for(c["status"])}" title="{esc(c["status"])}"></span></a></li>')
     nav.append('</ol><p class="toc-group"><a href="#cross">Cross-cutting</a></p><ol>'
                '<li><a href="#levels"><span class="tname">Three levels of explanation</span></a></li>'
@@ -393,8 +422,13 @@ def main():
                      + ("<p><strong>Assumptions.</strong></p><ul>" + "".join(f"<li>{md(x)}</li>" for x in R.get("assumptions", [])) + "</ul>" if R.get("assumptions") else "")
                      + ("<p><strong>Consequences.</strong></p><ul>" + "".join(f"<li>{md(x)}</li>" for x in R.get("consequences", [])) + "</ul>" if R.get("consequences") else "")
                      + f'<p class="small">Source: {md(R.get("source"))}</p></div>')
-        body.append(f'<details class="miscitem"><summary><span class="mname">{md(c["name"])}</span> {chip(c["status"])}'
-                    f'<span class="mref">manifest {esc(c["id"])}</span></summary>{card_html(c)}{extra}</details>')
+        lab = MISC_LABELS.get(c["anchor"])
+        why = f'<p class="note small">{md(lab[1])}</p>' if lab else ""
+        pre = f'<span class="mlab">{esc(lab[0])}:</span> ' if lab else ""
+        body.append(f'<details class="miscitem"><summary><span class="mname">{pre}{md(c["name"])}</span> {chip(c["status"])}'
+                    f'<span class="mref">manifest {esc(c["id"])}</span></summary>{why}{card_html(c)}{extra}</details>')
+    body.append('<div class="miscitem miscnote" id="dropped-dense-twin"><p><span class="mname"><span class="mlab">Dropped from the chapter:</span> '
+                + md(DENSE_TWIN[0]) + '</span></p><p class="small">' + md(DENSE_TWIN[1]) + "</p></div>")
     body.append("</section>")
 
     # ---------- cross-cutting ----------
@@ -584,6 +618,9 @@ table.e2head td{white-space:nowrap} table.e2head th{white-space:normal; min-widt
 .miscitem{border:1px solid var(--rule); border-radius:6px; margin:8px 0; background:var(--panel)}
 .miscitem>summary{cursor:pointer; padding:10px 14px; display:flex; flex-wrap:wrap; gap:4px 10px; align-items:center}
 .mname{font-weight:600}
+.mlab{font-weight:500; color:var(--ink-3)}
+.miscnote{padding:10px 14px} .miscnote p{margin:0 0 4px}
+.miscitem>.note{margin:10px 14px 0}
 .miscitem>.card{border:none; margin:0; border-top:1px solid var(--rule-2); border-radius:0}
 .xexp{white-space:nowrap; vertical-align:top}
 .toc-group{display:flex; align-items:center; gap:6px}

@@ -27,6 +27,10 @@ CARD_LINKS = {
     "s-1": ["convneat"], "s-2": ["convneat"], "s-3": ["convneat"],
 }
 CARD_NOTES = {
+    "e1-1hm": ("The two paper explanations shown in Experiment 1 (Adult's is with the full paper card in the Miscellany).",
+               ["x-paper-heart", "x-paper-monk2"]),
+    "e1-3w": ("The WHAS500 network; its drawer carries the hazard-ratio table from `REFERENCE.md` §3 (GBSG2's is with the "
+              "full Cox cards in the Miscellany).", ["x-cox-whas500-s0"]),
     "e1-3a": ("The two Cox networks this reference sits beside; each drawer carries the hazard-ratio table "
               "from `REFERENCE.md` §3.", ["x-cox-gbsg2-s1", "x-cox-whas500-s0"]),
     "e1-4": ("No annotation record: the XOR realisations are enumerated by LP and checked by "

@@ -2,7 +2,7 @@ CARD = {
     "id": "1.6",
     "anchor": "e1-6",
     "group": "e1",
-    "name": "Connect-4 boundary case (capacity study)",
+    "name": "Connect-4 on the raw cells (capacity study)",
     "status": "complete",
     "status_note": "complete; outcome \"covered and described, not tactically explained\"; not signed off",
     "prereg": "exploratory",
