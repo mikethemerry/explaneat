@@ -15,6 +15,8 @@ database. Outputs (data/):
                    (projection on the catalogue basis, experiments/churn_signals/figures.py)
 - pairs_s2.json    whole-model pairs plot of heart100-s2 (viz_data.compute_pairs, others at the
                    training median, axes in real units)
+- structure_metrics.json  per network (Adult, Churn, Heart-100; seeds 0-9): the library's density,
+                   skippiness and number of layers (ExplaNEAT.density / skippines / depth on the genome)
 """
 from __future__ import annotations
 
@@ -253,7 +255,37 @@ def churn_blindspot():
             "plan_gt13_intl_minutes": k(many), "plan_other": k(rest), "no_plan": k(~plan)}
 
 
-JOBS = {"churn_blindspot.json": churn_blindspot, "agreement.json": agreement, "paper_net.json": paper_net, "s8_ice.npz": s8_ice,
+# ------------------------------------------------------------------ library structure metrics
+
+def structure_metrics():
+    """ExplaNEAT.density() (genome node + connection genes over a dense layered net of the same
+    layer widths), ExplaNEAT.skippines() (mean layers skipped per connection gene) and
+    ExplaNEAT.depth() (layers of NeuralNeat's longest-path layering) for every Experiment 2 network."""
+    from compute_runs import ReadOnlySession, load_neat_config
+    from explaneat.core.explaneat import ExplaNEAT
+    from explaneat.db import db
+    from explaneat.db.models import Genome
+    db.init_db(os.environ["DATABASE_URL"])
+    runs = {"adult": ("experiments/10seed/runs.csv", "adult"),
+            "churn100": ("experiments/churn/runs_churn100.csv", None),
+            "heart100": ("experiments/10seed/runs_heart100.csv", None)}
+    out = {}
+    for study, (f, ds) in runs.items():
+        out[study] = {}
+        for r in _runs(f):
+            if ds and r["dataset"] != ds:
+                continue
+            with ReadOnlySession() as s:
+                g = s.get(Genome, uuid.UUID(r["genome_id"]))
+                exp = g.population.experiment
+                cfg = load_neat_config(exp.neat_config_text or "", exp.config_json)
+                e = ExplaNEAT(g.to_neat_genome(cfg), cfg)
+                out[study][r["seed"]] = {"genome_id": r["genome_id"], "density": float(e.density()),
+                                         "skippiness": float(e.skippines()), "layers": int(e.depth())}
+    return out
+
+
+JOBS = {"structure_metrics.json": structure_metrics, "churn_blindspot.json": churn_blindspot, "agreement.json": agreement, "paper_net.json": paper_net, "s8_ice.npz": s8_ice,
         "churn_shapes.json": churn_shapes, "pairs_s2.json": pairs_s2}
 
 
