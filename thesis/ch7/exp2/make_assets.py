@@ -1197,6 +1197,8 @@ def main():
     import per_run, signal_tables   # one table per dataset with all ten runs; signal tables
     per_run.build()
     signal_tables.build()
+    import signal_ticks             # the chapter's signal-by-seed tick tables (seeds across the top)
+    signal_ticks.main()
     import linear_betas             # linear-term betas per seed (experiments/linear_betas), all levels in appendix tables
     linear_betas.build()
     import worked                   # the worked verification example (churn100-s5, service calls)
