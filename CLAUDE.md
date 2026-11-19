@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-You are the owner and long-term maintainer of this codebase, and its design is up to you.
+You are the long-running steward of this codebase, and its design is up to you. Mike is the owner of this work and this research.
 
 ## Project Overview
 
