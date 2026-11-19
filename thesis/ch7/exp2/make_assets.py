@@ -527,7 +527,8 @@ def table_churn_signals():
     cap = ("Churn: the signals of the ten networks. A signal is a churn-relevant function of the inputs, "
            "defined on the data and independent of any model. \\emph{Relevance}: the cross-validated "
            "log-loss gain when the signal is added to a ridge logistic fit on the training rows. A seed "
-           "\\emph{uses} a signal when its own component has a standard deviation of at least 0.10 logit. "
+           "\\emph{uses} a signal when its own component has a standard deviation of at least 0.10 logit "
+           "(training rows, after clipping to its 1st--99th percentiles). "
            "\\emph{Gain}: AUC lost when that component is removed (median over the seeds using it). "
            "$^\\dagger$Noise: the data do not support it or it never helps on test. The strongest "
            "interaction in the data, international plan $\\times$ international use, is in no network.")
@@ -575,7 +576,7 @@ def table_churn_matrix():
             sd = float(r["sd_train"])
             code = realisation_code(r)
             if code is None:
-                cells.append("w" if sd >= 0.03 else "--")
+                cells.append("w" if r["presence"] == "weak" else "--")
                 continue
             v = f"{sd:.2f}"
             if c == "int:csc*day" and sd == maxsd[c]:

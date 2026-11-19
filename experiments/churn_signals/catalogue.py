@@ -20,7 +20,9 @@ Terminology (Mike's):
   component in a ridge logistic fit of the labels on ``Phi``) on the network's inputs plus all
   hidden activations (``genome_surgery.signal_basis``) is < 0.5 (the species-leads residual
   match: non-linear blocks are already orthogonal to every linear column).
-- **used**: the network's own component has SD >= 0.10 logit on train.
+- **used**: the network's own component has SD >= 0.10 logit on train after clipping it to its
+  1st-99th percentiles (``explaneat/analysis/signal_presence.py``, the one rule shared with the
+  Adult and Heart-100 analyses); ``presence`` is used / weak (0.03-0.10) / ''.
 
 Outputs (next to this file): ``aliases.csv``, ``signals.csv``, ``units.csv`` (every hidden node
 of every network, with its h-label and signal), ``realisations.csv`` (seed x signal x unit),
@@ -54,9 +56,9 @@ from explaneat.analysis.explanation_tools import default_auc, input_column  # no
 from explaneat.analysis.plain_language_linearity import classify_variables  # noqa: E402
 from explaneat.core.genome_network import NodeType  # noqa: E402
 from explaneat.export.render_structure import hidden_labels  # noqa: E402
+from explaneat.analysis.signal_presence import consensus, consensus_direction, presence, state_of  # noqa: E402  (shared with adult, heart)
 
 CACHE = HERE / "cache"
-USED_SD = 0.10          # logit SD on train for "used by the readout"
 MIN_NOV = 0.5
 CARRY_SD, CARRY_REL = 0.05, 0.20   # a unit carries block s: component SD >= 0.05 and >= 20% of the top carrier
 STATE_GATE_ROWS = 100   # a switching unit reading state and open on <= 100 of 4,000 rows: state-gated
@@ -451,7 +453,11 @@ def main():
         vinfo = nt._vinfo
         for b in blocks:
             c, c_te = P[lab]["comp"][b], P[lab]["comp_te"][b]
-            sd = float(np.std(c))
+            # explaneat/analysis/signal_presence.py (one rule for all three sets); a network that
+            # reads none of the block's variables carries no weight on it
+            reads = any(vinfo.get(base) for g in BLOCK_VARS[b] for base in GROUPS[g])
+            pr = presence(c, reads=reads)
+            sd = pr["sd_raw"]
             abl_tr = default_auc(y, nt.full_tr) - default_auc(y, nt.full_tr - c)
             abl_te = default_auc(yt, nt.full_te) - default_auc(yt, nt.full_te - c_te)
             lo, hi = boot.delta_ci(nt.full_te, nt.full_te - c_te)
@@ -467,7 +473,7 @@ def main():
             parts = sorted({Ul.loc[x[0], "part"] for x in cs})
             sw_parts = sorted({Ul.loc[x[0], "part"] for x in sw})
             own_sw = [x for x in sw if Ul.loc[x[0], "primary_signal"] == b]
-            used = sd >= USED_SD
+            used = pr["state"] == "used"
             # structural gain: linearise the switching units whose primary signal is b
             sg = {}
             ubases = sorted({Ul.loc[x[0], "unit"] for x in own_sw if Ul.loc[x[0], "unit"]})
@@ -478,11 +484,12 @@ def main():
                 sg = dict(struct_gain_train=default_auc(y, nt.full_tr) - default_auc(y, lin_tr),
                           struct_gain_test=default_auc(yt, nt.full_te) - default_auc(yt, lin_te),
                           struct_gain_test_lo=slo, struct_gain_test_hi=shi)
-            rtype = realisation_type(b, used, sd, sw, Ul, vinfo, m, sw_parts)
+            rtype = realisation_type(b, used, pr["sd"], sw, Ul, vinfo, m, sw_parts)
             aliases_read = alias_reading(b, m, nt)
             mat_rows.append(dict(
                 network=lab, seed=int(lab.split("-s")[1]), signal=b, theme=THEME_OF.get(b, ""),
-                kind=kind_of(b), sd_train=sd, used=used, ablation_gain_train=abl_tr,
+                kind=kind_of(b), sd_train=sd, sd_robust=pr["sd"], used=used, presence=pr["state"], reads=reads,
+                rare_only=pr["rare_only"], ablation_gain_train=abl_tr,
                 ablation_gain_test=abl_te, ablation_gain_test_lo=lo, ablation_gain_test_hi=hi,
                 corr_with_data=corr_d, corr_with_consensus=corr_c, novelty=nv, novelty_inputs_only=nv0,
                 decodable=bool(nv < MIN_NOV), realisation=rtype, alias_reading=aliases_read,
@@ -518,6 +525,14 @@ def main():
                                       unit_gain_test_lo=r.get("gain_test_lo"), unit_gain_test_hi=r.get("gain_test_hi"),
                                       realisation="minor (below the 20% carrier cut for every block)"))
         print(lab, "matrix done", flush=True)
+    # direction of each used signal against the consensus of the seeds that use it
+    used_by = {}
+    for r in mat_rows:
+        if r["used"]:
+            used_by.setdefault(r["signal"], []).append(P[r["network"]]["comp"][r["signal"]])
+    for r in mat_rows:
+        r["direction"] = (consensus_direction(P[r["network"]]["comp"][r["signal"]], consensus(used_by[r["signal"]]))
+                          if r["used"] else "")
     M = pd.DataFrame(mat_rows)
     R = pd.DataFrame(real_rows)
 
@@ -528,7 +543,7 @@ def main():
             continue
         for li in LABELS:
             ci = P[li]["comp"][b]
-            if np.std(ci) < USED_SD:
+            if presence(ci)["state"] != "used":
                 continue
             hits = [lj for lj in LABELS if lj != li and nov(ci, nets[lj].B) < MIN_NOV]
             xs.append(dict(signal=b, network=li, found_in_other_seeds=len(hits),
@@ -568,7 +583,7 @@ def main():
 
 def realisation_type(b, used, sd, sw, Ul, vinfo, m, sw_parts):
     if not used:
-        return "absent" if sd < 0.03 else "weak (SD < 0.10 logit)"
+        return "absent" if state_of(sd) != "weak" else "weak (SD < 0.10 logit)"
     if kind_of(b) == "lin":
         cls = []
         for g in BLOCK_VARS[b]:

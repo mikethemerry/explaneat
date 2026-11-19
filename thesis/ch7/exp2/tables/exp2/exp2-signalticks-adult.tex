@@ -24,17 +24,17 @@
     Marital status and household role, capital gain, education, age, hours per week, occupation and work class, sex, capital loss & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & 10 \\
     \midrule
     \multicolumn{12}{@{}l}{\textit{Linear terms present in some seeds only, or with a direction that differs}} \\
-    Education levels &  & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & 9 \\
-    Country of birth &  & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark &  & \checkmark &  & \checkmark & 7 \\
-    Race &  &  & \checkmark &  &  &  &  &  &  &  & 1 \\
+    Education levels & w & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & 9 \\
+    Country of birth &  & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & w & \checkmark & w & \checkmark & 7 \\
+    Race & w & w & \checkmark & w &  & w & w & w & w & w & 1 \\
     \midrule
     \multicolumn{12}{@{}l}{\textit{Non-linear: bends and interactions, most-used first}} \\
-    \textbf{Capital-gain threshold}: past a few thousand dollars of capital gain the chance of a low income drops steeply \emph{(usually split across several units)} & \checkmark\textsuperscript{a} & \checkmark & \checkmark & \checkmark &  & \checkmark & \checkmark\textsuperscript{b} & \checkmark\textsuperscript{c} & \checkmark & \checkmark & 9 \\
-    \textbf{Age bend}: the fall with age is steep for the young and flattens or turns back later in life \emph{(usually a single gate that also reads another input)} &  &  &  & \checkmark\textsuperscript{b} & \checkmark & \checkmark\textsuperscript{d} & \checkmark\textsuperscript{b} & \checkmark & \checkmark &  & 6 \\
+    \textbf{Capital-gain threshold}: past a few thousand dollars of capital gain the chance of a low income drops steeply \emph{(usually split across several units)} & w & \checkmark & \checkmark & \checkmark &  & \checkmark & \checkmark\textsuperscript{a} & \checkmark\textsuperscript{b} & \checkmark & \checkmark & 8 \\
+    \textbf{Age bend}: the fall with age is steep for the young and flattens or turns back later in life \emph{(usually a single gate that also reads another input)} &  &  &  & \checkmark\textsuperscript{a} & \checkmark & \checkmark\textsuperscript{c} & \checkmark\textsuperscript{a} & \checkmark & \checkmark &  & 6 \\
     \textbf{Hours bend}: short weeks raise the chance of a low income more than long weeks lower it \emph{(usually a single hinge)} &  &  &  &  &  & \checkmark &  &  &  & \checkmark & 2 \\
     \bottomrule
   \end{tabularx}
   \end{adjustbox}
-  \caption{Adult: the ten networks (columns), their numbers and the signals each carries. \checkmark: present in that seed; a letter marks a seed that realises it differently from most: \textsuperscript{a}\,present but weak (0.03 to 0.10 logit); \textsuperscript{b}\,a single hinge; \textsuperscript{c}\,a single gate that also reads another input; \textsuperscript{d}\,split across several units. The positive class is an income of at most \$50K.}
+  \caption{Adult: the ten networks (columns), their numbers and the signals each carries. \checkmark: present in that seed, i.e.\ the signal's logit contribution has a standard deviation of at least 0.10 logit over the training rows, after clipping to its 1st--99th percentiles (for a linear term, its weight times the input, the weight from the projection of the logit on the linear terms); w: weak (0.03 to 0.10 logit), not counted in $n$; a letter marks a seed that realises it differently from most: \textsuperscript{a}\,a single hinge; \textsuperscript{b}\,a single gate that also reads another input; \textsuperscript{c}\,split across several units. The positive class is an income of at most \$50K.}
   \label{tab:exp2-signalticks-adult}
 \end{sidewaystable}

@@ -26,23 +26,23 @@
     \multicolumn{12}{@{}l}{\textit{Linear terms present in some seeds only, or with a direction that differs}} \\
     International minutes & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark &  & 9 \\
     Day calls & \checkmark &  & \checkmark & \checkmark &  & \checkmark &  &  & \checkmark & \checkmark & 6 \\
-    Account length & \checkmark & \checkmark & \checkmark &  &  & \checkmark &  &  & \checkmark &  & 5 \\
+    Account length & \checkmark & \checkmark & \checkmark &  & w & \checkmark & w & w & \checkmark &  & 5 \\
     International calls &  &  &  &  & \checkmark & \checkmark &  & \checkmark & \checkmark &  & 4 \\
     \midrule
     \multicolumn{12}{@{}l}{\textit{Non-linear: bends and interactions, most-used first}} \\
     \textbf{Service-call threshold}: churn flat over the first calls, steep from 4 calls \emph{(usually split across several units)} & \checkmark & \checkmark & \checkmark & \checkmark\textsuperscript{a} & \checkmark\textsuperscript{a} & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark\textsuperscript{b} & 10 \\
     \textbf{Heavy-day hinge}: heavy daytime use: churn climbs steeply above about 300 minutes \emph{(usually split across several units)} & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark\textsuperscript{a} & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & 10 \\
     \textbf{Day $+$ evening bill}: the combined day and evening bill \emph{(usually split across several units)} & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark &  & \checkmark\textsuperscript{a} & \checkmark & \checkmark\textsuperscript{a} & \checkmark & 9 \\
-    \textbf{Service calls $\times$ light day use}: the service-call rise is strongest for light daytime users \emph{(usually split across several units)} & \checkmark & \checkmark\textsuperscript{b} & \checkmark & \checkmark & \checkmark\textsuperscript{a} & \checkmark & \checkmark & \checkmark & \checkmark &  & 9 \\
-    \textbf{Evening bend}: a bend in evening use \emph{(usually split across several units)} & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark &  & \checkmark\textsuperscript{a} & \checkmark & \checkmark\textsuperscript{c} & \checkmark\textsuperscript{c} & 9 \\
-    \textbf{Evening usage $\times$ service calls}: evening use read with service calls \emph{(usually split across several units)} & \checkmark\textsuperscript{c} &  & \checkmark & \checkmark\textsuperscript{c} &  &  &  & \checkmark & \checkmark\textsuperscript{c} &  & 5 \\
-    \textbf{Heavy day use without voice mail}: heavy daytime use matters mostly without a voice-mail plan \emph{(usually a single hinge)} & \checkmark & \checkmark &  &  &  &  & \checkmark\textsuperscript{a} & \checkmark\textsuperscript{d} &  &  & 4 \\
-    \textbf{International-minutes bend}: a bend in international minutes \emph{(usually split across several units)} &  &  & \checkmark &  &  &  & \checkmark\textsuperscript{c} & \checkmark\textsuperscript{c} &  &  & 3 \\
-    \textbf{Service calls $\times$ voice mail}: service calls read with the voice-mail plan \emph{(usually a single gate that also reads another input)} &  &  &  &  &  &  & \checkmark & \checkmark\textsuperscript{d} &  &  & 2 \\
+    \textbf{Service calls $\times$ light day use}: the service-call rise is strongest for light daytime users \emph{(usually split across several units)} & \checkmark & \checkmark\textsuperscript{b} & \checkmark & \checkmark & w & \checkmark & \checkmark & \checkmark & \checkmark &  & 8 \\
+    \textbf{Evening bend}: a bend in evening use \emph{(usually split across several units)} & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark &  & \checkmark\textsuperscript{a} & \checkmark & w & w & 7 \\
+    \textbf{Heavy day use without voice mail}: heavy daytime use matters mostly without a voice-mail plan \emph{(usually a single hinge)} & \checkmark & \checkmark &  &  &  &  & \checkmark\textsuperscript{a} & \checkmark\textsuperscript{c} &  &  & 4 \\
+    \textbf{Service calls $\times$ voice mail}: service calls read with the voice-mail plan \emph{(usually a single gate that also reads another input)} &  &  &  &  &  &  & \checkmark & \checkmark\textsuperscript{c} &  &  & 2 \\
+    \textbf{International-minutes bend}: a bend in international minutes \emph{(usually split across several units)} &  &  & \checkmark &  &  &  &  &  &  &  & 1 \\
     \textbf{Day $\times$ night usage}: day and night use read together \emph{(usually split across several units)} &  &  &  &  &  &  &  & \checkmark &  &  & 1 \\
+    \textbf{Evening usage $\times$ service calls}: evening use read with service calls \emph{(usually split across several units)} & w &  & \checkmark & w &  &  &  & w & w &  & 1 \\
     \bottomrule
   \end{tabularx}
   \end{adjustbox}
-  \caption{Churn: the ten networks (columns), their numbers and the signals each carries. \checkmark: present in that seed; a letter marks a seed that realises it differently from most: \textsuperscript{a}\,a single gate that also reads another input; \textsuperscript{b}\,a single hinge; \textsuperscript{c}\,present but weak (0.03 to 0.10 logit); \textsuperscript{d}\,split across several units.}
+  \caption{Churn: the ten networks (columns), their numbers and the signals each carries. \checkmark: present in that seed, i.e.\ the signal's logit contribution has a standard deviation of at least 0.10 logit over the training rows, after clipping to its 1st--99th percentiles (for a linear term, its weight times the input, the weight from the projection of the logit on the linear terms); w: weak (0.03 to 0.10 logit), not counted in $n$; a letter marks a seed that realises it differently from most: \textsuperscript{a}\,a single gate that also reads another input; \textsuperscript{b}\,a single hinge; \textsuperscript{c}\,split across several units.}
   \label{tab:exp2-signalticks-churn}
 \end{sidewaystable}

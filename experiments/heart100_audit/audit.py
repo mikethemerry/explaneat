@@ -57,13 +57,25 @@ Definitions (all fits and descriptions on the 242 training rows):
   seed) / "seed-specific" / "near-linear"; plus "small support (n<30)" when the regime, or its
   largest tree cell inside the regime, has fewer than 30 training patients.
 
+- **Presence** (the rule shared with the Adult and Churn catalogues,
+  ``explaneat/analysis/signal_presence.py``): a term or family is *used* by a network when its logit
+  contribution has SD >= 0.10 logit over the training rows after clipping to the 1st-99th
+  percentiles, *weak* at 0.03-0.10. Linear term (``linear_core.csv``: ``proj_coef``,
+  ``sd_contribution``, ``presence``, ``direction``): weight x input, the weight from the
+  least-squares projection of the network's logit on the linear columns (``linear_basis``: a
+  number's column, a category's non-reference levels), zero when the network reads no column of
+  the variable; direction against the mean contribution of the seeds that use the term
+  (``data_coef``: the data's own ridge logistic fit, for reference). Non-linear family
+  (``family_presence.csv``; per unit ``nl_sd``, ``presence`` in ``features.csv``): the full logit
+  minus the logit with the family's units linearised.
+
     DATABASE_URL=postgresql://localhost/explaneat_v4 \\
     EXPLANEAT_RECORDS_DIR=experiments/10seed/explanations_v4 OMP_NUM_THREADS=1 \\
     uv run python experiments/heart100_audit/audit.py
 
 Needs ``cache/heart40.npz`` from ``heart40_signals.py`` (run on explaneat_dev). Writes
-``features.csv``, ``linear_core.csv``, ``networks.csv``, ``recurrence.csv`` and ``tables.md`` next
-to this file; ``summarise.py`` then writes ``families.csv`` and ``summary.md`` from them.
+``features.csv``, ``linear_core.csv``, ``family_presence.csv``, ``networks.csv``, ``recurrence.csv``
+and ``tables.md`` next to this file; ``summarise.py`` then writes ``families.csv`` and ``summary.md`` from them.
 """
 from __future__ import annotations
 
@@ -77,6 +89,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import log_loss
+from sklearn.model_selection import StratifiedKFold
 from sklearn.tree import DecisionTreeClassifier
 from threadpoolctl import threadpool_limits
 
@@ -94,6 +108,7 @@ from compute_runs import ReadOnlySession, bootstrap_indices, load_split  # noqa:
 from explaneat.analysis.explanation_tools import Linearisation, default_auc, input_column  # noqa: E402
 from explaneat.analysis.feature_labels import both_names, feature_label  # noqa: E402
 from explaneat.analysis.plain_language import build_parts, load_model  # noqa: E402
+from explaneat.analysis.signal_presence import consensus, consensus_direction, presence  # noqa: E402  (shared with adult, churn)
 from explaneat.analysis.plain_language_linearity import (  # noqa: E402
     classify_variables, linearity_claims, part_class, unit_kinds)
 from explaneat.core.config_utils import load_neat_config  # noqa: E402
@@ -571,6 +586,28 @@ class Net:
         X1[:, c] += h
         return float(np.mean(m.ev.logit(X1) - self.full_tr) / h / v.scale[0])
 
+    def linear_presence(self, Phi, terms, beta_data):
+        """Per linear-core term: the term's logit contribution (weight x input, the weight from the
+        projection of this network's logit on the linear columns; zero when the network reads no
+        column of the variable) and its presence (``explaneat/analysis/signal_presence.py``)."""
+        _, beta = ols(Phi, self.full_tr)
+        out, comps = {}, {}
+        for term, j in terms:
+            c = beta[j] * (Phi[:, j] - Phi[:, j].mean())
+            reads = self.vinfo.get(term.split("=")[0]) is not None
+            pr = presence(c, reads=reads)
+            comps[term] = c
+            out[term] = dict(proj_coef=float(beta[j]), sd_contribution_raw=pr["sd_raw"],
+                             sd_contribution=pr["sd"], presence=pr["state"], rare_only=pr["rare_only"],
+                             reads=reads, data_coef=float(beta_data[j]))
+        return out, comps
+
+    def family_presence(self, units):
+        """Logit contribution of a set of switching units' non-linear part: the full logit minus
+        the logit with those units replaced by their affine fit on their own inputs."""
+        c = self.full_tr - self.m.ev.logit(self.m.X, self.lin.overrides(units))
+        return presence(c)
+
     def linear_core(self):
         m, rows = self.m, []
         for v in m.variables:
@@ -614,6 +651,60 @@ def lr_core(m):
         else:
             out[v.base] = float(w[v.columns[0]])
     return out
+
+
+def linear_basis(m, X):
+    """The linear signal columns, one per linear-core term (the rows of ``linear_core.csv``): a
+    number's own column, a category's non-reference levels (reference: the most common training
+    level). Returns (Phi, [(term, column index in Phi)])."""
+    cols, terms = [], []
+    for v in m.variables:
+        if v.is_category():
+            codes, cnt = np.unique(np.asarray(v.raw_train).astype(str), return_counts=True)
+            ref = codes[np.argmax(cnt)]
+            for c, code in zip(v.columns, v.codes):
+                if code != ref:
+                    terms.append((f"{v.base}={code}", len(cols)))
+                    cols.append(X[:, c])
+        else:
+            terms.append((v.base, len(cols)))
+            cols.append(X[:, v.columns[0]])
+    return np.column_stack(cols), terms
+
+
+def ols(Phi, e):
+    """Least-squares projection of a logit on [1, Phi] (training rows): (intercept, coefficients)."""
+    A = np.hstack([np.ones((len(Phi), 1)), Phi])
+    c, *_ = np.linalg.lstsq(A, e, rcond=None)
+    return float(c[0]), c[1:]
+
+
+def data_linear_fit(Phi, y):
+    """The data's own linear signals: ridge logistic fit of the labels on Phi (standardised columns,
+    C from {0.01, 0.1, 1} by 5-fold CV log-loss, StratifiedKFold(5, shuffle, random_state=0)), as
+    in the Adult and Churn catalogues."""
+    sd = Phi.std(axis=0)
+    sd[sd == 0] = 1
+
+    def fit(P, yy, C):
+        lr = LogisticRegression(C=C, max_iter=10000, tol=1e-8).fit(P / sd, yy)
+        return lr.intercept_[0], lr.coef_[0] / sd
+
+    folds = list(StratifiedKFold(5, shuffle=True, random_state=0).split(Phi, y))
+    score = {}
+    for C in (0.01, 0.1, 1.0):
+        ll = []
+        for tr, va in folds:
+            a, b = fit(Phi[tr], y[tr], C)
+            ll.append(log_loss(y[va], 1 / (1 + np.exp(-(a + Phi[va] @ b)))))
+        score[C] = float(np.mean(ll))
+    C = min(score, key=score.get)
+    return fit(Phi, y, C)[1], C
+
+
+def row_family(group):
+    """The tick-table row of a family group: every resting-BP family is one row."""
+    return "BP" if group.startswith("BP") else group
 
 
 def family_of(drivers, modifiers=()):
@@ -674,6 +765,18 @@ def main():
         print(f"  {len(ur)} units, {len(pr)} parts", flush=True)
     m0 = nets[LABELS[0]].m
     lr = lr_core(m0)
+    # ------------------------------------------------------------ presence (shared rule)
+    Phi, terms = linear_basis(m0, m0.X)
+    beta_data, C_data = data_linear_fit(Phi, m0.y)
+    lin_pres = {lab: nets[lab].linear_presence(Phi, terms, beta_data) for lab in LABELS}
+    for term, _ in terms:   # direction against the consensus of the seeds that use the term
+        used_c = [lin_pres[l][1][term] for l in LABELS if lin_pres[l][0][term]["presence"] == "used"]
+        cons = consensus(used_c)
+        for l in LABELS:
+            d = lin_pres[l][0][term]
+            d["direction"] = consensus_direction(lin_pres[l][1][term], cons) if d["presence"] == "used" else ""
+    for r in core:
+        r.update(lin_pres[r["network"]][0][r["term"]])
     # ------------------------------------------------------------ recurrence (train only)
     for f in feats:
         rs = f.pop("_resids")
@@ -724,6 +827,20 @@ def main():
         f["family_group"] = family_group(f["family"])
         f["verdict"] = "; ".join([test, f["recurrence"]] + (["small support (n<30)"] if small else []))
         f["test_verdict"] = test
+    fam_rows = []
+    for lab in LABELS:
+        nt = nets[lab]
+        fam = {}
+        for f in feats:
+            if f["network"] == lab and f["level"] == "unit":
+                pr = nt.family_presence([f["unit"]])
+                f.update(nl_sd_raw=pr["sd_raw"], nl_sd=pr["sd"], presence=pr["state"])
+                fam.setdefault(row_family(f["family_group"]), []).append(f["unit"])
+        for g, us in sorted(fam.items()):
+            pr = nt.family_presence(us)
+            fam_rows.append(dict(network=lab, seed=int(lab.rsplit("-s", 1)[1]), row_family=g,
+                                 units=" ".join(us), sd_raw=pr["sd_raw"], sd=pr["sd"], presence=pr["state"]))
+    pd.DataFrame(fam_rows).to_csv(HERE / "family_presence.csv", index=False)
     F = pd.DataFrame(feats)
     order = ["network", "level", "annotation", "title", "unit", "nodes", "family_group", "family", "drivers", "modifiers",
              "thresholds", "inputs", "upstream_inputs", "exactly_affine_on_data",
