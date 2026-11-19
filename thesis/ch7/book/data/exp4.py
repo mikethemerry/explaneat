@@ -7,7 +7,7 @@ EXP = {
     "claim_is_framing": True,
  "claim": (
         "A proof of concept: the method carried to convolutional networks. On MNIST 10-class the evolved network "
-        "performs close to a small CNN (0.976 test with 1,283 parameters, level with gradient boosting and above every "
+        "performs close to a small CNN (0.976 test with 93 kernels in 38 maps, level with gradient boosting and above every "
         "interpretable comparator), and its decomposition is clean and exact. The agent's behaviour-first explanations "
         "are plausible and pass its own image-edit probes, but they cannot yet be verified by a person, so the model is "
         "presented as **not explainable yet**."
@@ -61,9 +61,9 @@ EXP = {
             "id": "e4-baselines",
             "title": "Performance against the baselines, at matching row counts",
             "lead": (
-                "With 10k training rows the evolved networks (about 1,300 parameters) reach 0.951–0.958 test, above every "
+                "With 10k training rows the evolved networks (88-112 kernels in 36-40 maps) reach 0.951–0.958 test, above every "
                 "interpretable comparator and below gradient boosting (0.963). With all 50k rows the third network reaches "
-                "0.976 with 1,283 parameters: level with gradient boosting (0.977), well above the EBM (0.940) and logistic "
+                "0.976 with 93 kernels: level with gradient boosting (0.977), well above the EBM (0.940) and logistic "
                 "regression (0.925), and close to a small CNN (LeNet-1, about 0.983 reported). The data, not the size, was "
                 "the binding constraint."
             ),
@@ -73,16 +73,16 @@ EXP = {
                     "source": "experiments/conv_neat/RESULTS.md §11b; results/sweep_p50_m4_e5/results.json, results/mnist10_pruned/headline_results.json, results/mnist10_ws50k_halving/results.json; baselines_interpretable/results.json",
                     "headers": ["Model", "Train rows", "Test acc", "Fine-tuned test", "Size"],
                     "rows": [
-                        ["**ExConNEAT, 10k run, selected (generation 64)**", "10k", "0.9582", "0.9597", "40 maps, 112 kernels; 1,320 parameters"],
-                        ["**ExConNEAT, pruned headline (generation 77)**", "10k", "0.9511", "0.9553", "36 maps, 88 kernels; 1,268 parameters"],
+                        ["**ExConNEAT, 10k run, selected (generation 64)**", "10k", "0.9582", "0.9597", "112 kernels in 40 maps"],
+                        ["**ExConNEAT, pruned headline (generation 77)**", "10k", "0.9511", "0.9553", "88 kernels in 36 maps"],
                         ["Sparse LR (L1), C = 0.3", "10k", "0.911", "–", "1,149 non-zero weights of 7,850; 414 pixels"],
-                        ["Plain LR (L2), C = 0.3", "10k", "0.913", "–", "7,850 parameters"],
+                        ["Plain LR (L2), C = 0.3", "10k", "0.913", "–", "7,850 weights (784 pixels x 10 classes)"],
                         ["CART depth 8 (readable)", "10k", "0.811", "–", "225 leaves"],
                         ["EBM (784 pixels, main effects)", "10k", "0.924", "–", "784 shape functions, 109,075 bins x 10 classes"],
                         ["HistGradientBoosting, not interpretable", "10k", "0.963", "–", "1,000 trees, 30,605 leaves"],
-                        ["**ExConNEAT, 50k warm start + successive halving (generation 97)**", "50k", "**0.9761**", "0.9761", "38 maps, 93 kernels; 1,283 parameters"],
+                        ["**ExConNEAT, 50k warm start + successive halving (generation 97)**", "50k", "**0.9761**", "0.9761", "93 kernels in 38 maps"],
                         ["Sparse LR (L1), C = 1", "50k", "0.924", "–", "3,242 non-zero weights; 575 pixels"],
-                        ["Plain LR (L2), C = 0.3", "50k", "0.9249", "–", "7,850 parameters"],
+                        ["Plain LR (L2), C = 0.3", "50k", "0.9249", "–", "7,850 weights (784 pixels x 10 classes)"],
                         ["CART best depth (16), not readable", "50k", "0.879", "–", "2,926 leaves"],
                         ["EBM (784 pixels, main effects)", "50k", "0.940", "–", "784 shape functions, 126,483 bins x 10 classes"],
                         ["HistGradientBoosting, not interpretable", "50k", "0.9773", "–", "1,000 trees, 31,000 leaves"],
@@ -97,7 +97,7 @@ EXP = {
                     "source": "experiments/conv_neat/three8noise/RESULTS.md §3; three8noise/results/run_s0/results.json",
                     "headers": ["Model", "Validation", "Test acc", "Noise-vs-digit acc", "Size"],
                     "rows": [
-                        ["**ExConNEAT (generation 22)**", "0.984", "**0.9856**", "0.9913", "8 maps, 22 kernels; 333 parameters"],
+                        ["**ExConNEAT (generation 22)**", "0.984", "**0.9856**", "0.9913", "22 kernels in 8 maps"],
                         ["Gradient boosting on pixels (HistGB, 300 iterations)", "0.986", "0.9886", "0.9919", "–"],
                         ["Logistic regression on pixels", "0.917", "0.9227", "0.9378", "–"],
                         ["Logistic regression on total ink only", "0.360", "0.3525", "0.6499", "–"],
@@ -109,11 +109,11 @@ EXP = {
             "bullets": [
                 "Does the claim hold? **Close to a small CNN: yes** (0.976 against LeNet-1's reported 0.983 on "
                 "all 60k rows; one seed). **Above the interpretable comparators: yes, at both row counts, "
-                "on test.** **Smaller: against the EBM and dense LR clearly** (1,283 parameters against 126,483 x 10 EBM bins "
-                "and 7,850 LR weights), but about the same size as the sparse LR at 10k rows (1,149 non-zero weights), so the "
-                "case for simplicity rests on the parts being readable, which is exactly what cannot yet be checked.",
-                "Earlier short runs (`RESULTS.md` §3, §11): synthetic 0.962 with 231 parameters; MNIST 3 vs 8 0.990 with 134 "
-                "parameters; the first MNIST 10-class runs (population 30, 40 generations x 2 epochs) 0.861 with 511 parameters.",
+                "on test.** **Smaller: against the EBM and dense LR clearly** (93 kernels to explain, against the EBM's 784 shape functions "
+                "per class and the dense LR's 7,850 weights), but the sparse LR at 10k rows has 1,149 non-zero weights, and a kernel "
+                "is a small image to read rather than one number, so the case for simplicity rests on the parts being readable, which is exactly what cannot yet be checked.",
+                "Earlier short runs (`RESULTS.md` §3, §11): synthetic 0.962; MNIST 3 vs 8 0.990; the first MNIST "
+                "10-class runs (population 30, 40 generations x 2 epochs) 0.861.",
             ],
             "figures": [
                 {"file": "figs/e4-baselines_1.png", "caption": "The interpretable comparators' explanations: the sparse logistic regression's weight map per digit (top) and the readable depth-6 tree (bottom).", "source": "experiments/conv_neat/baselines_interpretable/baselines_figure.png"},
@@ -279,8 +279,8 @@ EXP = {
             "id": "e4-3v8",
             "title": "3 vs 8 vs noise: does the network learn shape rather than ink?",
             "lead": (
-                "Adding an ink-matched noise class to MNIST 3 vs 8 forces the network to use shape. An 8-map network of 333 "
-                "parameters reaches 0.9856 test (gradient boosting 0.9886), and its 9 annotations all pass the agent's probes: "
+                "Adding an ink-matched noise class to MNIST 3 vs 8 forces the network to use shape. An 8-map network of 22 "
+                "kernels reaches 0.9856 test (gradient boosting 0.9886), and its 9 annotations all pass the agent's probes: "
                 "it separates connected strokes from scattered ink, a mechanism MNIST alone does not need."
             ),
             "tables": [],
@@ -299,8 +299,8 @@ EXP = {
         },
     ],
     "discussion": [
-        "ExConNEAT is a proof of concept that the method carries to images. On MNIST 10-class an evolved network of 1,283 "
-        "parameters reaches 0.976 test accuracy, level with gradient boosting (0.977), above the EBM (0.940) and logistic "
+        "ExConNEAT is a proof of concept that the method carries to images. On MNIST 10-class an evolved network of 93 "
+        "kernels reaches 0.976 test accuracy, level with gradient boosting (0.977), above the EBM (0.940) and logistic "
         "regression (0.925) on the same 50,000 rows, and close to the small CNN LeNet-1 (about 0.983 reported). With 10,000 "
         "rows the networks reach 0.951–0.958, again above every interpretable comparator. The decomposition is clean on "
         "every network: every structure collapses, nothing crosses a boundary except through an entry or exit, and the "
