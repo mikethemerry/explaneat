@@ -20,6 +20,80 @@ SETS = {"adult": "Adult", "churn": "Churn", "heart100": "Heart-100"}
 LETTERS = "abcdefghijklmnopqrstuvwxyz"
 
 
+import csv
+
+ROOT = HERE.parents[2]
+LIN_NOTE_OPP = "opposite direction to most seeds"
+LIN_NOTE_PATTERN = "same overall direction, but its levels are weighted differently (pattern correlation below 0.9)"
+
+
+def _rows(p):
+    return list(csv.DictReader(open(ROOT / p)))
+
+
+def linear_signals(key):
+    """[(short name, [per-seed state])], state in {"ok", "opp", "pattern", None}."""
+    out = []
+    if key in ("churn", "adult"):
+        base = {"churn": "experiments/churn_signals", "adult": "experiments/adult_signals"}[key]
+        names = {r["signal"]: re.sub(r"\s*\(.*\)$", "", r["name"]) for r in _rows(f"{base}/signals.csv")}
+        per = {}
+        for r in _rows(f"{base}/matrix.csv"):
+            if not r["signal"].startswith("lin:"):
+                continue
+            st = None
+            if r["used"] == "True":
+                c = float(r["corr_with_data"])
+                st = "opp" if c <= 0 else "ok"
+            per.setdefault(r["signal"], [None] * 10)[int(r["seed"])] = st
+        for sig, states in per.items():
+            if any(states):
+                out.append((names.get(sig, sig), states))
+    else:  # heart100: sign of each term's average effect on the score
+        short = {"age": "age", "ca": "vessels coloured", "chol": "cholesterol", "cp=1": "typical angina",
+                 "cp=2": "atypical angina", "cp=3": "non-anginal pain", "exang=1": "exercise angina",
+                 "fbs=1": "fasting sugar above 120", "oldpeak": "ST depression", "restecg=1": "ECG ST-T abnormality",
+                 "restecg=2": "ECG LV hypertrophy", "sex=0": "female (vs male)", "slope=2": "flat ST slope",
+                 "slope=3": "downsloping ST slope", "thal=4": "thallium not recorded", "thal=6": "thallium fixed defect",
+                 "thal=7": "thallium reversible defect", "thalach": "maximum heart rate", "trestbps": "resting blood pressure"}
+        eff = {}
+        for r in _rows("experiments/heart100_audit/linear_core.csv"):
+            seed = int(r["network"].rsplit("-s", 1)[1])
+            v = float(r["avg_effect"])
+            eff.setdefault(r["term"], [0.0] * 10)[seed] = v
+        for term, vals in eff.items():
+            signs = [(1 if v > 1e-9 else -1 if v < -1e-9 else 0) for v in vals]
+            nz = [x for x in signs if x]
+            if not nz:
+                continue
+            maj = Counter(nz).most_common(1)[0][0]
+            out.append((short.get(term, term), [None if x == 0 else ("ok" if x == maj else "opp") for x in signs]))
+    return out
+
+
+def linear_rows(key, notes):
+    sigs = [(n, st) for n, st in linear_signals(key) if any(st)]
+    always = [n for n, st in sigs if all(x == "ok" for x in st)]
+    rows = [{"group": "Linear terms present in every seed, same direction"},
+            {"name": ", ".join(x[:1].upper() + x[1:] if i == 0 else x[:1].lower() + x[1:] for i, x in enumerate(always)),
+             "usual": None, "cells": [{"tick": True, "note": None} for _ in range(10)], "count": 10}]
+    rest = [(n, st) for n, st in sigs if n not in always]
+    if rest:
+        rows.append({"group": "Linear terms present in some seeds only, or with a direction that differs"})
+    for n, st in sorted(rest, key=lambda t: -sum(x is not None for x in t[1])):
+        cells = []
+        for x in st:
+            if x is None:
+                cells.append({"tick": False, "note": None})
+            elif x == "ok":
+                cells.append({"tick": True, "note": None})
+            else:
+                cells.append({"tick": True, "note": notes.setdefault(LIN_NOTE_OPP, LETTERS[len(notes)])})
+        rows.append({"name": n[:1].upper() + n[1:], "usual": None, "cells": cells,
+                     "count": sum(c["tick"] for c in cells)})
+    return rows
+
+
 def kind(code: str) -> str | None:
     """Map a detailed-table cell to (present?, variant type). None = absent."""
     c = code.strip()
@@ -75,10 +149,17 @@ def parse(path: Path):
 def build_set(key: str):
     rows = parse(TAB / f"exp2-signals-{key}.tex")
     notes: dict[str, str] = {}  # description -> letter
-    out = []
+    out = linear_rows(key, notes)
+
+    def skip(g):
+        return g is not None and ("inear core" in g or "no network" in g)
+
     for r in rows:
         if "group" in r:
-            out.append(r)
+            if not skip(r["group"]):
+                out.append(r)
+            continue
+        if skip(r["group_of"]):
             continue
         kinds = [kind(c) for c in r["codes"]]
         if r["group_of"] and "no network" in r["group_of"]:
@@ -97,8 +178,9 @@ def build_set(key: str):
                     note = notes.setdefault(d, LETTERS[len(notes)])
             cells.append({"tick": True, "note": note})
         usual = DESC.get(mode) if mode not in (None, "std") else None
-        out.append({"name": r["name"], "usual": usual, "cells": cells,
-                    "count": sum(c["tick"] for c in cells)})
+        if any(c["tick"] for c in cells):  # only signals found in at least one of the ten networks
+            out.append({"name": r["name"], "usual": usual, "cells": cells,
+                        "count": sum(c["tick"] for c in cells)})
     legend = sorted(((v, k) for k, v in notes.items()))
     return out, legend
 
