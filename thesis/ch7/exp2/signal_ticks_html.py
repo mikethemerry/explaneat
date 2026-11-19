@@ -27,6 +27,10 @@ def main(out):
     for key, v in d.items():
         rows = []
         for r in v["rows"]:
+            if r.get("metric"):
+                vals = "".join(f'<td class="m">{x}</td>' for x in r["vals"])
+                rows.append(f'<tr class="met"><td class="sig">{r["name"]}</td>{vals}<td class="n">{r["summary"]}</td></tr>')
+                continue
             if "group" in r:
                 rows.append(f'<tr class="grp"><td colspan="12">{tx(r["group"])}</td></tr>')
                 continue
@@ -40,7 +44,7 @@ def main(out):
         head = "".join(f"<th>s{i}</th>" for i in range(10))
         secs.append(f'''<section id="{key}"><header class="sh"><h2>{v["title"]}</h2>
 <button class="copy" data-k="{key}">Copy LaTeX</button></header>
-<div class="tw"><table><thead><tr><th class="sig">Signal</th>{head}<th>n</th></tr></thead><tbody>{"".join(rows)}</tbody></table></div>
+<div class="tw"><table><thead><tr><th class="sig"></th>{head}<th>median / n</th></tr></thead><tbody>{"".join(rows)}</tbody></table></div>
 <p class="legend">✓ the signal appears in that seed's network. {legend}{extra}</p>
 <textarea class="src" id="src-{key}" readonly>{html.escape(v["tex"])}</textarea></section>''')
     nav = "".join(f'<a href="#{k}">{v["title"]}</a>' for k, v in d.items())
@@ -56,7 +60,7 @@ section{background:var(--card);border:1px solid var(--line);border-radius:8px;pa
 .copy{background:var(--acc);color:var(--card);border:0;border-radius:6px;padding:6px 12px;font-weight:600;cursor:pointer}
 .tw{overflow-x:auto;margin-top:10px} table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
 th,td{border-bottom:1px solid var(--line);padding:4px 5px;vertical-align:top} th{font-size:.8rem;color:var(--mut);font-weight:600}
-td.c,td.n,th:not(.sig){text-align:center;white-space:nowrap} td.c{color:var(--acc);font-weight:700} td.n{color:var(--mut)}
+td.c,td.n,td.m,th:not(.sig){text-align:center;white-space:nowrap} td.m{font-size:.85rem} td.c{color:var(--acc);font-weight:700} td.n{color:var(--mut)}
 td.sig{min-width:300px} .usual{color:var(--mut)} tr.grp td{background:var(--grp);font-style:italic;color:var(--mut)}
 sup{color:var(--fg);font-weight:600} .legend{color:var(--mut);font-size:.85rem;margin:8px 0 0}
 .src{position:absolute;left:-9999px;width:1px;height:1px}"""
@@ -68,7 +72,7 @@ sup{color:var(--fg);font-weight:600} .legend{color:var(--mut);font-size:.85rem;m
     page = f"""<title>Experiment 2 Signal Tables</title>
 <style>{css}</style>
 <main><h1>Experiment 2: signals by seed</h1>
-<p class="lede">One table per dataset. Linear terms present in every seed with the same direction share one row; the rest get a row each. Only signals found in at least one of the ten networks are listed; non-linear signals follow the linear ones. A lettered note marks a seed that realises a signal differently from most. “Copy LaTeX” copies the table (booktabs, tabularx, amssymb).</p>
+<p class="lede">One table per dataset. Each opens with the ten models' own numbers (performance, size, skippiness, depth, parts), then the signals. Linear terms present in every seed with the same direction share one row; the rest get a row each. Only signals found in at least one of the ten networks are listed; non-linear signals follow the linear ones. A lettered note marks a seed that realises a signal differently from most. “Copy LaTeX” copies the table (booktabs, tabularx, amssymb).</p>
 <nav>{nav}</nav>{"".join(secs)}</main>
 <script>{js}</script>"""
     Path(out).write_text(page)

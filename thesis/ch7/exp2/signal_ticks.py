@@ -71,6 +71,32 @@ def linear_signals(key):
     return out
 
 
+import statistics as _st
+import sys as _sys
+
+_sys.path.insert(0, str(HERE))
+import per_run  # noqa: E402  (same numbers as the ten-run tables)
+
+RUNKEY = {"adult": "adult", "churn": "churn100", "heart100": "heart100"}
+
+
+def metric_rows(key):
+    R = per_run.study_rows(RUNKEY[key])
+    auc = lambda x: f"{x:.3f}".lstrip("0")
+    spec = [("Test AUC", "test_auc", auc), ("Train AUC", "train_auc", auc),
+            ("Inputs used", "inputs", str), ("Hidden nodes", "hidden", str), ("Connections", "conns", str),
+            ("Skip connections", "skips", str), ("Skippiness", "skippiness", lambda x: f"{x:.2f}"),
+            ("Density", "density", lambda x: f"{x:.2f}"), ("Depth", "depth", str)]
+    rows = [{"group": "Model"}]
+    for label, k, fmt in spec:
+        v = [r[k] for r in R]
+        rows.append({"metric": True, "name": label, "vals": [fmt(x) for x in v], "summary": (fmt(_st.median(v)) if fmt is not str else f"{_st.median(v):g}")})
+    parts = [r["leaf"] + r["comp"] for r in R]
+    rows.append({"metric": True, "name": "Parts (annotations)", "vals": [str(x) for x in parts],
+                 "summary": f"{_st.median(parts):g}"})
+    return rows
+
+
 def linear_rows(key, notes):
     sigs = [(n, st) for n, st in linear_signals(key) if any(st)]
     always = [n for n, st in sigs if all(x == "ok" for x in st)]
@@ -149,7 +175,7 @@ def parse(path: Path):
 def build_set(key: str):
     rows = parse(TAB / f"exp2-signals-{key}.tex")
     notes: dict[str, str] = {}  # description -> letter
-    out = linear_rows(key, notes)
+    out = metric_rows(key) + linear_rows(key, notes)
 
     def skip(g):
         return g is not None and ("inear core" in g or "no network" in g)
@@ -193,6 +219,9 @@ def to_tex(key, rows, legend):
             body.append(r"    \midrule" if body else "")
             body.append(rf"    \multicolumn{{12}}{{@{{}}l}}{{\textit{{{r['group']}}}}} \\")
             continue
+        if r.get("metric"):
+            body.append("    " + " & ".join([r["name"], *r["vals"], r["summary"]]) + r" \\")
+            continue
         name = r["name"] + (rf" \emph{{(usually {r['usual']})}}" if r["usual"] else "")
         cells = []
         for c in r["cells"]:
@@ -216,7 +245,7 @@ def to_tex(key, rows, legend):
         r"  \setlength{\tabcolsep}{3pt}",
         r"  \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}X*{10}{c}c@{}}",
         r"    \toprule",
-        rf"    Signal & {seeds} & $n$ \\",
+        rf"    & {seeds} & \makecell{{median\\ / $n$}} \\",
         *[b for b in body if b != ""],
         r"    \bottomrule",
         r"  \end{tabularx}",
