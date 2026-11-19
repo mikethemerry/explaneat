@@ -187,7 +187,7 @@ def build_set(key: str):
     for r in rows:
         if "group" in r:
             if not skip(r["group"]):
-                out.append(r)
+                out.append({"group": r["group"].replace(", strongest in the data first", ", most-used first")})
             continue
         if skip(r["group_of"]):
             continue
@@ -211,7 +211,31 @@ def build_set(key: str):
         if any(c["tick"] for c in cells):  # only signals found in at least one of the ten networks
             out.append({"name": r["name"], "usual": usual, "cells": cells,
                         "count": sum(c["tick"] for c in cells)})
-    legend = sorted(((v, k) for k, v in notes.items()))
+    # within each group, most-used signals first, rarest at the bottom (stable: ties keep the data-strength order)
+    grouped, cur = [], None
+    for r in out:
+        if "group" in r:
+            cur = [r]; grouped.append(cur)
+        else:
+            cur.append(r)
+    out = []
+    for g in grouped:
+        head, body = g[0], g[1:]
+        if head["group"] != "Model":
+            body = sorted(body, key=lambda r: (r["name"].startswith(r"\textbf{Other"), -r["count"]))
+        out += [head, *body]
+    # re-letter the notes in reading order so a, b, c appear top to bottom
+    order = []
+    for r in out:
+        for c in r.get("cells", []):
+            if c.get("note") and c["note"] not in order:
+                order.append(c["note"])
+    remap = {old: LETTERS[i] for i, old in enumerate(order)}
+    for r in out:
+        for c in r.get("cells", []):
+            if c.get("note"):
+                c["note"] = remap[c["note"]]
+    legend = sorted(((remap[v], k) for k, v in notes.items() if v in remap))
     return out, legend
 
 
