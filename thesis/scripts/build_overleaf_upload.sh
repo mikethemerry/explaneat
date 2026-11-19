@@ -13,6 +13,7 @@ cp "$CH7/exp2/tables/exp2/exp2-signalticks-heart100.tex" "$OUT/sections/tables/c
 cp "$CH7/exp1/tables/exp1-networks.tex" "$OUT/sections/tables/ch7-ex1-networks.tex"
 cp "$CH7/exp1/tables/exp1-benchmarks.tex" "$OUT/sections/tables/ch7-ex1-benchmarks.tex"
 cp "$CH7/exp2/tables/exp2/exp2-benchmarks.tex" "$OUT/sections/tables/ch7-ex2-benchmarks.tex"
+cp "$CH7/appendix/tables/ch7-heart-splits.tex" "$OUT/sections/tables/ch7-heart-splits.tex"
 cp "$CH7"/screenshots/ch7-ws-0[0-8]-*.png "$OUT/figures/ch7-ws/"
 rm -f "$OUT/ch7-overleaf-upload.zip"
 (cd "$OUT" && zip -qr ch7-overleaf-upload.zip sections figures)
