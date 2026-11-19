@@ -19,8 +19,8 @@
     \midrule
     \multicolumn{5}{@{}l}{\textit{Common: used by 4 to 9 seeds}} \\
     \quad Day $+$ evening bill & $+$0.024 & 9 & 0.008 / 0.007 & 3 \\
-    \quad Service calls $\times$ light day use & $+$0.021 & 9 & 0.008 / 0.010 & 9 \\
     \quad International minutes, slope & $+$0.010 & 9 & 0.002 / 0.002 & 0 \\
+    \quad Service calls $\times$ light day use & $+$0.021 & 8 & 0.009 / 0.012 & 8 \\
     \quad Evening bend$^\dagger$ & $-$0.006 & 7 & $-$0.001 / 0.002 & 0 \\
     \quad Day calls, slope$^\dagger$ & $+$0.002 & 6 & 0.001 / $-$0.003 & 0 (3) \\
     \quad Account length, slope & $+$0.001 & 5 & 0.001 / $-$0.001 & 0 \\
@@ -29,15 +29,15 @@
     \midrule
     \multicolumn{5}{@{}l}{\textit{Rare: used by 1 to 2 seeds}} \\
     \quad Service calls $\times$ voice mail$^\dagger$ & $-$0.000 & 2 & $-$0.000 / 0.001 & 0 \\
-    \quad Evening usage $\times$ service calls$^\dagger$ & $-$0.003 & 2 & 0.001 / 0.000 & 0 \\
     \quad International-minutes bend & $+$0.008 & 1 & 0.000 / 0.000 & 0 \\
     \quad Day $\times$ night usage & $+$0.008 & 1 & 0.001 / $-$0.001 & 0 \\
+    \quad Evening usage $\times$ service calls$^\dagger$ & $-$0.003 & 1 & 0.001 / 0.000 & 0 \\
     \midrule
     \multicolumn{5}{@{}l}{\textit{Absent from every network (relevant in the data)}} \\
     \quad International plan $\times$ international use & $+$0.047 & 0 & \multicolumn{2}{c}{data's own: test 0.015 [0.003, 0.026]} \\
     \quad International-calls bend & $+$0.003 & 0 & \multicolumn{2}{c}{data's own: test 0.004 [$-$0.003, 0.013]} \\
     \bottomrule
   \end{tabularx}
-  \caption{Churn: the signals of the ten networks. A signal is a churn-relevant function of the inputs, defined on the data and independent of any model. \emph{Relevance}: the cross-validated log-loss gain when the signal is added to a ridge logistic fit on the training rows. A seed \emph{uses} a signal when its own component has a standard deviation of at least 0.10 logit. \emph{Gain}: AUC lost when that component is removed (median over the seeds using it). $^\dagger$Noise: the data do not support it or it never helps on test. The strongest interaction in the data, international plan $\times$ international use, is in no network.}
+  \caption{Churn: the signals of the ten networks. A signal is a churn-relevant function of the inputs, defined on the data and independent of any model. \emph{Relevance}: the cross-validated log-loss gain when the signal is added to a ridge logistic fit on the training rows. A seed \emph{uses} a signal when its own component has a standard deviation of at least 0.10 logit (training rows, after clipping to its 1st--99th percentiles). \emph{Gain}: AUC lost when that component is removed (median over the seeds using it). $^\dagger$Noise: the data do not support it or it never helps on test. The strongest interaction in the data, international plan $\times$ international use, is in no network.}
   \label{tab:exp2-churn-signals}
 \end{table}

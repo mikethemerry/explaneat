@@ -32,7 +32,13 @@ def _rows(p):
 
 
 def linear_signals(key):
-    """[(short name, [per-seed state])], state in {"ok", "opp", "pattern", None}."""
+    """[(short name, [per-seed state])], state in {"ok", "opp", "weak", None}.
+
+    One rule for all three sets (``explaneat/analysis/signal_presence.py``, applied by the analyses):
+    a seed carries a linear term when the term's logit contribution (weight x input, the weight from
+    the projection of the seed's logit on the linear columns) has an SD >= 0.10 logit on the training
+    rows after clipping to the 1st-99th percentiles ("used"); 0.03-0.10 is "weak". Direction: "opp"
+    when the contribution correlates <= 0 with the mean contribution of the seeds that carry it."""
     out = []
     if key in ("churn", "adult"):
         base = {"churn": "experiments/churn_signals", "adult": "experiments/adult_signals"}[key]
@@ -42,33 +48,33 @@ def linear_signals(key):
             if not r["signal"].startswith("lin:"):
                 continue
             st = None
-            if r["used"] == "True":
-                c = float(r["corr_with_data"])
-                st = "opp" if c <= 0 else "ok"
+            if r["presence"] == "used":
+                assert r["used"] == "True"
+                st = "opp" if r["direction"] == "opp" else "ok"
+            elif r["presence"] == "weak":
+                st = "weak"
             per.setdefault(r["signal"], [None] * 10)[int(r["seed"])] = st
         for sig, states in per.items():
-            if any(states):
+            if any(x in ("ok", "opp") for x in states):
                 out.append((names.get(sig, sig), states))
-    else:  # heart100: sign of each term's average effect on the score
-        short = {"age": "age", "ca": "vessels coloured", "chol": "cholesterol", "cp=1": "typical angina",
-                 "cp=2": "atypical angina", "cp=3": "non-anginal pain", "exang=1": "exercise angina",
-                 "fbs=1": "fasting sugar above 120", "oldpeak": "ST depression", "restecg=1": "ECG ST-T abnormality",
-                 "restecg=2": "ECG LV hypertrophy", "sex=0": "female (vs male)", "slope=2": "flat ST slope",
-                 "slope=3": "downsloping ST slope", "thal=4": "thallium not recorded", "thal=6": "thallium fixed defect",
-                 "thal=7": "thallium reversible defect", "thalach": "maximum heart rate", "trestbps": "resting blood pressure"}
+    else:  # heart100: the same rule, computed in experiments/heart100_audit/audit.py
         eff = {}
         for r in _rows("experiments/heart100_audit/linear_core.csv"):
             seed = int(r["network"].rsplit("-s", 1)[1])
-            v = float(r["avg_effect"])
-            eff.setdefault(r["term"], [0.0] * 10)[seed] = v
-        for term, vals in eff.items():
-            signs = [(1 if v > 1e-9 else -1 if v < -1e-9 else 0) for v in vals]
-            nz = [x for x in signs if x]
-            if not nz:
-                continue
-            maj = Counter(nz).most_common(1)[0][0]
-            out.append((short.get(term, term), [None if x == 0 else ("ok" if x == maj else "opp") for x in signs]))
+            st = ({"used": r["direction"], "weak": "weak"}.get(r["presence"]))
+            eff.setdefault(r["term"], [None] * 10)[seed] = st
+        for term, states in eff.items():
+            if any(x in ("ok", "opp") for x in states):
+                out.append((HEART_SHORT.get(term, term), states))
     return out
+
+
+HEART_SHORT = {"age": "age", "ca": "vessels coloured", "chol": "cholesterol", "cp=1": "typical angina",
+               "cp=2": "atypical angina", "cp=3": "non-anginal pain", "exang=1": "exercise angina",
+               "fbs=1": "fasting sugar above 120", "oldpeak": "ST depression", "restecg=1": "ECG ST-T abnormality",
+               "restecg=2": "ECG LV hypertrophy", "sex=0": "female (vs male)", "slope=2": "flat ST slope",
+               "slope=3": "downsloping ST slope", "thal=4": "thallium not recorded", "thal=6": "thallium fixed defect",
+               "thal=7": "thallium reversible defect", "thalach": "maximum heart rate", "trestbps": "resting blood pressure"}
 
 
 import statistics as _st
@@ -102,7 +108,7 @@ def metric_rows(key):
 
 
 def linear_rows(key, notes):
-    sigs = [(n, st) for n, st in linear_signals(key) if any(st)]
+    sigs = linear_signals(key)
     always = [n for n, st in sigs if all(x == "ok" for x in st)]
     rows = [{"group": "Linear terms present in every seed, same direction"},
             {"name": ", ".join(x[:1].upper() + x[1:] if i == 0 else x[:1].lower() + x[1:] for i, x in enumerate(always)),
@@ -110,11 +116,13 @@ def linear_rows(key, notes):
     rest = [(n, st) for n, st in sigs if n not in always]
     if rest:
         rows.append({"group": "Linear terms present in some seeds only, or with a direction that differs"})
-    for n, st in sorted(rest, key=lambda t: -sum(x is not None for x in t[1])):
+    for n, st in sorted(rest, key=lambda t: -sum(x in ("ok", "opp") for x in t[1])):
         cells = []
         for x in st:
             if x is None:
                 cells.append({"tick": False, "note": None})
+            elif x == "weak":
+                cells.append({"tick": False, "weak": True, "note": None})
             elif x == "ok":
                 cells.append({"tick": True, "note": None})
             else:
@@ -148,7 +156,6 @@ def kind(code: str) -> str | None:
 
 
 DESC = {
-    "weak": "present but weak (0.03 to 0.10 logit)",
     "opp": "opposite direction to most seeds",
     "H": "a single hinge",
     "G": "a single gate that also reads another input",
@@ -192,8 +199,6 @@ def build_set(key: str):
         if skip(r["group_of"]):
             continue
         kinds = [kind(c) for c in r["codes"]]
-        if r["group_of"] and "no network" in r["group_of"]:
-            kinds = [None if k == "weak" else k for k in kinds]
         present = [k for k in kinds if k is not None and k != "weak"]
         mode = Counter(present).most_common(1)[0][0] if present else None
         cells = []
@@ -201,14 +206,17 @@ def build_set(key: str):
             if k is None:
                 cells.append({"tick": False, "note": None})
                 continue
+            if k == "weak":   # 0.03-0.10 logit: shown as w, not counted (the shared presence rule)
+                cells.append({"tick": False, "weak": True, "note": None})
+                continue
             note = None
-            if k == "weak" or (k != mode and k != "std"):
+            if k != mode and k != "std":
                 d = DESC.get(k)
                 if d:
                     note = notes.setdefault(d, LETTERS[len(notes)])
             cells.append({"tick": True, "note": note})
         usual = DESC.get(mode) if mode not in (None, "std") else None
-        if any(c["tick"] for c in cells):  # only signals found in at least one of the ten networks
+        if any(c["tick"] for c in cells):  # only signals present in at least one of the ten networks
             out.append({"name": r["name"], "usual": usual, "cells": cells,
                         "count": sum(c["tick"] for c in cells)})
     # within each group, most-used signals first, rarest at the bottom (stable: ties keep the data-strength order)
@@ -254,13 +262,17 @@ def to_tex(key, rows, legend):
         cells = []
         for c in r["cells"]:
             if not c["tick"]:
-                cells.append("")
+                cells.append("w" if c.get("weak") else "")
             else:
                 cells.append(r"\checkmark" + (rf"\textsuperscript{{{c['note']}}}" if c["note"] else ""))
         body.append("    " + " & ".join([name, *cells, str(r["count"])]) + r" \\")
     notes = "; ".join(rf"\textsuperscript{{{l}}}\,{d}" for l, d in legend)
     caption = (rf"{title}: the ten networks (columns), their numbers and the signals each carries. "
-               r"\checkmark: present in that seed; a letter marks a seed that realises it differently from most"
+               r"\checkmark: present in that seed, i.e.\ the signal's logit contribution has a standard deviation "
+               r"of at least 0.10 logit over the training rows, after clipping to its 1st--99th percentiles "
+               r"(for a linear term, its weight times the input, the weight from the projection of the logit on "
+               r"the linear terms); w: weak (0.03 to 0.10 logit), not counted in $n$; "
+               r"a letter marks a seed that realises it differently from most"
                + (rf": {notes}." if notes else "."))
     if key == "adult":
         caption += r" The positive class is an income of at most \$50K."

@@ -79,38 +79,82 @@ All of these files were committed with their scripts in a8512b24.
 
 ## ch7-ex2-{adult,churn,heart} signal-tick tables (`exp2-signalticks-{adult,churn,heart100}.tex`)
 
+*Updated 20 Nov 2026 (branch thesis/signal-checks): one presence rule for all three sets, every row description checked by code, and a completeness check. See issues 1, 8 and 9.*
+
 | Link | Writer / command | Status |
 |---|---|---|
-| `exp2-signalticks-*.tex` | `thesis/ch7/exp2/signal_ticks.py` (called by `make_assets.py`) | computed (byte-identical) |
-| non-linear rows | parsed from `exp2-signals-*.tex` ← `signal_tables.py` | computed (byte-identical) |
-| linear rows, Churn / Adult | `experiments/{churn,adult}_signals/{signals,matrix}.csv` | computed (see below) |
-| linear rows, Heart | `experiments/heart100_audit/linear_core.csv` | computed (see below) |
+| `exp2-signalticks-*.tex` | `thesis/ch7/exp2/signal_ticks.py` (called by `make_assets.py`) | computed |
+| presence rule ("present", "weak", direction) | `explaneat/analysis/signal_presence.py`, called by all three analyses | computed; one rule (below) |
+| non-linear rows | parsed from `exp2-signals-*.tex` ← `signal_tables.py` (`w` from the analyses' `presence` column) | computed |
+| linear rows, Churn / Adult | `experiments/{churn,adult}_signals/matrix.csv` (`presence`, `direction`) | computed |
+| linear rows, Heart | `experiments/heart100_audit/linear_core.csv` (`presence`, `direction`, `proj_coef`, `sd_contribution`) | computed |
+| non-linear rows, Heart | `experiments/heart100_audit/family_presence.csv` (per seed and family) and `features.csv` | computed |
+| row descriptions, all three | `experiments/signal_descriptions/describe.py` → `descriptions.json` (claims in `claims.csv`, changes in `rewrites.csv`) | **computed, checked**: each claim tested by code; numbers and counts filled from computed values |
 | metric rows (AUC, structure, parts) | `per_run.study_rows`, the same sources as exp2-runs | computed / extracted / agent-authored (see exp2-runs) |
-| `experiments/churn_signals/*.csv`, `cache/*` | `catalogue.py` (~3 min, explaneat_v4) | extracted (DB, read-only); all 12 outputs rerun byte-identical; committed with the script (07678d0b) |
-| `experiments/adult_signals/*.csv`, `cache/*` | `catalogue.py --refresh` (~5 min, explaneat_v4) | extracted (DB, read-only); `projection.csv` and the caches byte-identical, `signals`/`matrix` float noise ≤ 1.4e-10, every printed code identical; committed with the script (464f78f1) |
-| `experiments/heart100_audit/{features,linear_core,networks,recurrence}.csv` | `audit.py` (~5 min, explaneat_v4) then `summarise.py` | extracted (DB, read-only); byte-identical; committed with the script (12228e7e). Reads committed `cache/heart40.*` ← `heart40_signals.py` (explaneat_dev, not rerun; feeds only the "recurrence" notes, not the ticks) |
-| `thesis/ch7/exp2/data/churn_shapes.json` (the "4 calls" and "300 minutes" in Churn descriptions) | `extract_db.py churn_shapes.json --refresh` | extracted (DB, read-only) |
+| `experiments/churn_signals/*.csv`, `cache/*` | `catalogue.py` (~3 min, explaneat_v4) | extracted (DB, read-only) |
+| `experiments/adult_signals/*.csv`, `cache/*` | `catalogue.py --refresh` (~5 min, explaneat_v4) | extracted (DB, read-only) |
+| `experiments/heart100_audit/{features,linear_core,family_presence,networks,recurrence}.csv` | `audit.py` (~5 min, explaneat_v4), then `summarise.py` | extracted (DB, read-only). Reads committed `cache/heart40.*` ← `heart40_signals.py` (explaneat_dev, not rerun; feeds only the "recurrence" notes) |
+| `thesis/ch7/exp2/data/churn_shapes.json` (the "4 calls" and "300 minutes") | `extract_db.py churn_shapes.json --refresh` | extracted (DB, read-only); `signal_tables.churn_desc` recomputes both numbers from it and asserts they equal `descriptions.json` |
+| completeness check (not in the upload) | `experiments/signal_completeness/{load,completeness,report}.py` → `RESULTS.md`; `thesis/ch7/exp2/completeness_table.py` → `exp2-signal-completeness.tex` | computed; run twice, byte-identical |
 | inputs of the analyses | `experiments/10seed/runs*.csv`, `churn/runs_churn100.csv`, `explanations_v4/`, `plain_language_v4/` | see exp2-runs |
 
-**What is computed and what is chosen.** Computed by code from the networks:
-- every tick and every count *n*
-- linear direction: the sign of `corr_with_data` (Churn, Adult) or of `avg_effect` against the majority (Heart)
-- the realisation letters H / G / S*k* / weak, and "(usually …)", which is the mode of those letters
-- Heart family membership (`family_group`, from the computed switch drivers) and `on_direction`
-- the two numbers in the Churn descriptions, from `churn_shapes.json`
+**One presence rule** (`explaneat/analysis/signal_presence.py`; design choices, the same for every row of every set):
+- **Logit contribution of a signal in one network** (training rows):
+  - Linear term: weight × input. The weight comes from the least-squares projection of the network's logit on the linear columns. For Adult and Churn this is the catalogue's linear block. For Heart it is a number's column or a category's non-reference levels (`audit.linear_basis`).
+  - Adult and Churn non-linear signal: its block's component of the same projection.
+  - Heart non-linear family: the full logit minus the logit with the family's switching units replaced by their affine fit on their own inputs.
+- **Size**: SD after clipping to the 1st–99th percentiles (the Adult rule, applied to all three). Clipping keeps a term that is large on under 1% of rows from counting: country offsets on Adult, and the two Heart levels with 2 of 242 patients (ECG ST-T abnormality, thallium not recorded).
+- **States**:
+  - **present** (✓, counted in *n*): SD ≥ 0.10 logit.
+  - **weak** (w, shown and not counted): 0.03–0.10, on linear and non-linear rows alike.
+- **Read guard**: a network that reads none of a signal's input variables carries no weight on it. Without the guard, the Heart projection put weight on unread correlated inputs.
+- **Direction** of a present linear term: `opp` when its contribution correlates ≤ 0 with the mean contribution of the seeds that use it ("opposite direction to most seeds"). On Adult and Churn this gives the same result as the earlier comparison with the data's ridge fit (0 opp either way). On Heart, the data's fit gives the downsloping ST slope a coefficient of −0.002, which would make the direction arbitrary.
+
+**What changed with the shared rule**:
+- Adult ticks: unchanged.
+- Churn ticks: two non-linear ticks fall below 0.10 after clipping (calls × light day s4, clipped SD 0.095; evening × calls s7, 0.078).
+- Heart: the linear rows change wherever the rule differs. The old rule ticked any non-zero average effect; this removes two rare-level rows. The non-linear families are now ticked only when their contribution passes the threshold.
+- Weak cells are shown as w instead of ticks with a note.
+
+The full before/after list is in the commit message of 49d0a2cb and the Part A report.
+
+**The row descriptions are checked by code** (`experiments/signal_descriptions/describe.py`). Each description is split into its claims:
+- Directions, thresholds and knots, sizes, which group is larger, interaction partners, counts such as "in 3 of 4 seeds", and "mostly".
+- A claim about a signal is tested on the data's own fit (partial dependence of the ridge fit on the catalogue basis); how many using seeds agree is reported.
+- A claim about Heart units is tested on `features.csv`: drivers, modifiers, and the new `on_profile` column (who each unit is on for).
+
+Failing claims were rewritten to what the code shows (`rewrites.csv`, 21 rows). The texts are no longer typed in the thesis scripts: `FAM_ROWS` keeps only labels, and `churn_desc` reads `descriptions.json`. The Adult catalogue's own `signals.csv` description column is its draft and is no longer printed.
+
+**Completeness, networks → catalogue** (`experiments/signal_completeness/RESULTS.md`). The criterion, fixed before running, has two parts:
+- every network's residual logit (logit minus its projection on the catalogue signals) has a clipped SD below 0.10;
+- a residual scan finds no candidate signal. The scan covers each variable and each variable pair, with a family-wise permutation test, and flags a structure that recurs in at least 2 networks or has SD ≥ 0.10 in any one.
+
+No data set meets the criterion. The numbers and the candidate list are in RESULTS.md. For Heart, the list is given data blocks in `heart_basis.py`, a design choice of that check.
 
 All randomness is seeded:
-- `StratifiedKFold(5, shuffle=True, random_state=0)`
+- `StratifiedKFold(5, shuffle=True, random_state=0)` and `KFold(5, shuffle=True, random_state=0)`
 - bootstrap `RandomState(42)`
-- regime tree `random_state=0`
+- permutations and partial-dependence rows `RandomState(0)`
+- regime tree and gradient boosting `random_state=0`
 - single threads
 
 The following is **curated (judgment)**: chosen by an agent or by Mike and typed into scripts.
-- **The signal catalogues.** Adult: `SIGNALS` in `experiments/adult_signals/catalogue.py` (names, descriptions, basis blocks). Churn: `basis.py` `NAMES`, `common.py` `GROUPS`, and `catalogue.py` `THEMES` / `BLOCK_VARS` / `RESP_VARS`. Also the knots and quantiles. The interaction candidates were chosen as "interactions the explanations' units read together". So the *candidate list* came from reading the agent-authored explanations. Each signal is then scored on the data alone (cross-validated relevance) and on each network by projection.
-- **Display labels.** `make_assets.SIG_NAME`, `SHORT_TERM`, and the Heart `short` dict in `signal_ticks.py`.
-- **Row descriptions.** Churn: `signal_tables.churn_desc` sentences, e.g. "the service-call rise is strongest for light daytime users". Heart: `signal_tables.FAM_ROWS` labels and descriptions, e.g. "Exercise angina: … read with sex in some seeds (for women in one)". Adult's descriptions are direction-checked by `check_descriptions` in its catalogue. **Churn's and Heart's descriptions are checked by no code.**
+- **The signal catalogues.**
+  - Adult: `SIGNALS` in `experiments/adult_signals/catalogue.py` (names and basis blocks).
+  - Churn: `basis.py` `NAMES`, `common.py` `GROUPS`, and `catalogue.py` `THEMES` / `BLOCK_VARS` / `RESP_VARS`.
+  - Heart, for the completeness check only: `experiments/signal_completeness/heart_basis.py`.
+  - The knots and quantiles.
+
+  The interaction candidates were chosen as "interactions the explanations' units read together", so the *candidate list* came from reading the agent-authored explanations. Each signal is then scored on the data alone (cross-validated relevance) and on each network by projection. The completeness check measures what this list misses.
+- **Display labels.** `make_assets.SIG_NAME`, `SHORT_TERM`, the Heart `HEART_SHORT` in `signal_ticks.py`, and the `FAM_ROWS` labels.
+- **Description templates.** The sentence shapes in `describe.py` are typed. Every factual part is tested, and every number or count in them is filled from a computed value.
 - **The Heart family tags and grouping rules** in `audit.py`.
-- **Thresholds (design choices).** A signal is used at a component SD ≥ 0.10 logit and weak at 0.03. A carrier is at 0.05 SD and 20% of the top carrier. Heart: `MIN_NOV` 0.5, `SMALL_N` 30.
+- **Thresholds (design choices).**
+  - Presence: 0.10 / 0.03 logit, with clipping at 1%/99%.
+  - Carrier: 0.05 SD and 20% of the top carrier.
+  - Heart: `MIN_NOV` 0.5, `SMALL_N` 30.
+  - "Small" slope in a description: data component SD < 0.25 logit.
+  - Completeness: residual SD < 0.10; the scan's 19 permutations and structure SD ≥ 0.03.
 
 ## exp2-runs-{adult,churn,heart100} (`thesis/ch7/exp2/tables/exp2/exp2-runs-*.tex`)
 
@@ -147,9 +191,13 @@ These are images of the explorer UI. They carry no generated numbers, and nothin
    tables' signals, names, Heart families and row descriptions are typed into scripts (see above).
    The interaction candidates came from reading the agent-authored explanations. The Churn
    (`churn_desc`) and Heart (`FAM_ROWS`) descriptions make claims no code checks, e.g. "for women in
-   one", "mostly with ST depression" (7 of 13 thal units). The ticks themselves are computed. *Not
-   changed; the thesis should say the vocabulary is agent/human-defined, and Mike should check these
-   texts or add assertions like Adult's `check_descriptions`.*
+   one", "mostly with ST depression". The ticks themselves are computed. *Fixed (20 Nov,
+   thesis/signal-checks) for the descriptions:* `experiments/signal_descriptions/describe.py` tests
+   every claim in all three data sets' descriptions and fills their numbers and counts. 21 texts were
+   rewritten to what the code shows (`rewrites.csv`), e.g. "for women in one" became "on mostly for women
+   in 2", and "mostly with ST depression" became "with ST depression in 9 of 11 units". The vocabulary itself stays
+   curated; `experiments/signal_completeness/` now measures what it misses (no data set is complete by
+   the stated criterion).
 2. **Two of Mike's verification-minute values were written by an agent.** adult-s0 (6) and adult-s4
    (5) were recorded from chat. They feed the headline and cost figure, not the in-scope tables, but
    Mike should confirm them.
@@ -181,15 +229,19 @@ These are images of the explorer UI. They carry no generated numbers, and nothin
    - Heart linear rows: any non-zero average effect.
    - Weak non-linear uses: ticked with a note and counted in *n*.
 
-   The caption says "present" uniformly. *Not changed; wording for Mike.*
+   The caption says "present" uniformly. *Fixed (20 Nov, thesis/signal-checks):* one rule for all
+   three (`explaneat/analysis/signal_presence.py`): clipped contribution SD ≥ 0.10 logit is present;
+   0.03–0.10 is shown as w and not counted. The rule also adds a read guard and direction against
+   most seeds. See the signal-tick section for what changed.
 9. **Input-table labelling bug in `exp2-signals-adult.tex` (not in the upload).** The "w" mark tests
    raw `sd_train`, but "used" is decided on the clipped SD. So four linear rows show w with raw SD
    > 0.10 (s0, s6, s8 country; s2 census weight). The tick tables take linear rows from `matrix.csv`
-   and are unaffected. *Not changed.*
+   and are unaffected. *Fixed:* w now comes from the shared rule's `presence` column (clipped SD).
 10. **Minor.**
     - `extract_db.churn_shapes` uses `0.27 * imin` instead of the catalogue's ratio (plot grid only).
     - `basis.py` names a signal "bend at about 4 calls" (overridden for printing).
-    - `signal_ticks.py` parses generated LaTeX rather than the CSVs.
+    - `signal_ticks.py` parses generated LaTeX rather than the CSVs (linear rows and presence now come
+      from the CSVs; the non-linear realisation letters are still parsed).
     - `extract_db.ensure` silently reuses stale caches without `--refresh`.
     - `exp1/extract_db.py` takes the latest explanation by `updated_at`.
     - No pickle caches are committed, so the signal analyses always need `explaneat_v4`.
@@ -212,6 +264,11 @@ These are images of the explorer UI. They carry no generated numbers, and nothin
 - Whether to refit and commit the seeded lr_l1 results (printed values would not change).
 - Whether to add `interpret` to a uv extra.
 - Whether to regenerate and commit `runs.csv` / `runs_heart100.csv` with the current bookkeeping columns.
+- Signal checks (thesis/signal-checks):
+  - Whether to keep the clipping rule on Churn. It moves two borderline interaction seeds just below 0.10.
+  - The projection weight can differ in sign from a network's own average effect when non-linear units shadow an input. Example: Heart s0 maximum heart rate is now "opp".
+  - The Heart data blocks used by the completeness check (`heart_basis.py`).
+  - The candidate signals in `experiments/signal_completeness/RESULTS.md` (findings; nothing was added to a catalogue).
 
 ## Computed records (20 Nov 2026, branch thesis/computed-records)
 

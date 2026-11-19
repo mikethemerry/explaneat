@@ -59,10 +59,10 @@ for p in (str(REPO), str(REPO / "experiments/churn_signals")):
         sys.path.insert(0, p)
 
 from fastboot import Boot  # noqa: E402  (experiments/churn_signals/fastboot.py)
+from explaneat.analysis.signal_presence import consensus, consensus_direction, presence  # noqa: E402  (shared with churn, heart)
 
 CACHE = HERE / "cache"
 LABELS = [f"adult-s{i}" for i in range(10)]
-USED_SD = 0.10
 CARRY_SD, CARRY_REL = 0.05, 0.20
 N_BOOT, BOOT_SEED = 2000, 42      # paired bootstrap on the test rows (9,769 rows: 2,000 resamples)
 
@@ -346,7 +346,8 @@ def build_basis(D):
     assert np.max(np.abs(phi(Ztr) - Ptr)) < 1e-8
     knots_raw = {"capital-gain": CAPGAIN_KNOTS, "capital-loss": CAPLOSS_KNOTS, "hours-per-week": HOURS_KNOTS,
                  "age": [float(D["mean"][col["age"]] + D["scale"][col["age"]] * k) for k in kn["age"]]}
-    return dict(Phi_tr=Ptr, Phi_te=phi(D["Xt"]), blocks=blocks, names=[nm[i] for i in keep], knots=knots_raw)
+    return dict(Phi_tr=Ptr, Phi_te=phi(D["Xt"]), blocks=blocks, names=[nm[i] for i in keep], knots=knots_raw,
+                phi=phi)
 
 
 def comp(B, beta, b, test=False):
@@ -492,7 +493,7 @@ def main():
         fp.write_bytes(pickle.dumps((key, (a_d, beta_d, rel, info))))
     checks = check_descriptions(B, beta_d, D)
 
-    proj_rows, mat_rows = [], []
+    proj_rows, mat_rows, comps = [], [], {}
     for lab, nt in nets.items():
         seed = int(lab.split("-s")[1])
         e_tr, e_te = nt["eta_tr"], nt["eta_te"]
@@ -513,11 +514,15 @@ def main():
                     car.setdefault(b, []).append(dict(u, sd=s))
         for b in blocks:
             c, c_te = comp(B, beta, b), comp(B, beta, b, test=True)
-            sd = float(np.std(c))
-            q = np.quantile(c, [0.01, 0.99])
-            sd_rob = float(np.std(np.clip(c, *q)))
-            used = sd_rob >= USED_SD
-            rare_only = bool(sd >= USED_SD and not used)
+            # explaneat/analysis/signal_presence.py (one rule for all three sets); a network that
+            # reads none of the block's variables carries no weight on it
+            reads = any(nt["route"].get(v, dict(direct=False, via=[]))["direct"] or
+                        nt["route"].get(v, dict(direct=False, via=[]))["via"] for v in BLOCK_VARS[b])
+            pr = presence(c, reads=reads)
+            comps[(lab, b)] = c
+            sd, sd_rob = pr["sd_raw"], pr["sd"]
+            used = pr["state"] == "used"
+            rare_only = pr["rare_only"]
             cs = car.get(b, [])
             mx = max([x["sd"] for x in cs], default=0.0)
             cs = [x for x in cs if x["sd"] >= CARRY_REL * mx]
@@ -535,6 +540,7 @@ def main():
                 note = "; ".join(f"unit {x['unit']} in {x['part']} reads {', '.join(x['reads'])}"
                                  for x in sorted(cs, key=lambda x: -x["sd"])) if used else ""
             mat_rows.append(dict(network=lab, seed=seed, signal=b, sd_train=sd, sd_robust=sd_rob, used=used,
+                                 presence=pr["state"], reads=reads,
                                  rare_only=rare_only, code=code, route=route,
                                  ablation_gain_train=roc_auc_score(y, e_tr) - roc_auc_score(y, e_tr - c),
                                  ablation_gain_test=roc_auc_score(yt, e_te) - roc_auc_score(yt, e_te - c_te),
@@ -546,6 +552,12 @@ def main():
                                  note=note))
         print(lab, f"R2 train {proj_rows[-1]['r2_train']:.3f}", flush=True)
 
+    # direction of each used signal against the consensus of the seeds that use it
+    for r in mat_rows:
+        used_c = [comps[(l, r["signal"])] for l in nets
+                  if any(x["network"] == l and x["signal"] == r["signal"] and x["used"] for x in mat_rows)]
+        r["direction"] = (consensus_direction(comps[(r["network"], r["signal"])], consensus(used_c))
+                          if r["used"] else "")
     M = pd.DataFrame(mat_rows)
     sig_rows = []
     for b, (name, desc, vars_, _) in SIGNALS.items():

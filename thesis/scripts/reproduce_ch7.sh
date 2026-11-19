@@ -30,6 +30,11 @@ if [[ "${1:-}" == "--with-db" ]]; then
   env $V4 uv run python experiments/adult_signals/catalogue.py --refresh         # ~5 min
   env $V4 uv run python experiments/heart100_audit/audit.py                      # ~5 min (uses committed cache/heart40.*)
   env $V4 uv run python experiments/heart100_audit/summarise.py
+  # Signal checks: shared presence rule (explaneat/analysis/signal_presence.py) is applied by the three
+  # analyses above; then the description checks and the completeness check
+  env $V4 uv run python experiments/signal_completeness/load.py                  # read-only DB -> cache/*.pkl (~3 min)
+  uv run python experiments/signal_descriptions/describe.py                      # -> descriptions.json, claims.csv, rewrites.csv
+  uv run python experiments/signal_completeness/completeness.py                  # ~2 min -> csv/json + RESULTS.md
   # Benchmark inputs and PropNEAT rows of the comparator suite
   uv run python experiments/benchmarks/export_data.py                            # read-only DB -> cache/*.npz (+ data_manifest.json)
   uv run python experiments/benchmarks/propneat.py                               # read-only DB -> results/propneat.json
@@ -47,6 +52,7 @@ uv run python thesis/ch7/exp1/make_tables.py            # exp1-networks.tex, exp
 uv run python thesis/ch7/appendix/heart_splits_table.py # ch7-heart-splits.tex
 uv run python thesis/ch7/exp2/make_assets.py            # exp2-benchmarks, exp2-runs-*, exp2-signals-*, exp2-signalticks-*,
                                                         # appendix_networks.tex + figures/exp2/networks/*.pdf, other exp2 assets
+uv run python thesis/ch7/exp2/completeness_table.py  # exp2-signal-completeness.tex (not in the Overleaf upload)
 bash thesis/scripts/build_overleaf_upload.sh            # thesis/ch7/overleaf_upload/ + zip (screenshots copied as images)
 
 # ------------------------------------------------------------------ layer 1 (expensive; NOT run here)
