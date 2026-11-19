@@ -29,8 +29,8 @@ Regenerate with `uv run python thesis/ch7/exp1/extract_db.py` (read-only DB cach
 
 | Label | File | Content (caption, first sentence) | Generator |
 |---|---|---|---|
-| `tab:exp1-benchmarks, tab:exp1-benchmarks-survival` | `thesis/ch7/exp1/tables/exp1-benchmarks.tex` | Experiment 1: each dataset's explained PropNEAT network against the comparator suite (binary classification; t... | `thesis/ch7/exp1/make_tables.py` |
-| `tab:exp1-networks` | `thesis/ch7/exp1/tables/exp1-networks.tex` | Experiment 1: the explained network of each dataset, with the columns of the Experiment 2 run tables | `thesis/ch7/exp1/make_tables.py` |
+| `tab:exp1-benchmarks, tab:exp1-benchmarks-survival` | `thesis/ch7/exp1/tables/exp1-benchmarks.tex` | Experiment 1: each dataset's explained PropNEAT network against the comparators | `thesis/ch7/exp1/make_tables.py` |
+| `tab:exp1-networks` | `thesis/ch7/exp1/tables/exp1-networks.tex` | Experiment 1: the explained network of each dataset | `thesis/ch7/exp1/make_tables.py` |
 
 ## 2. Experiment 2 thesis assets (`thesis/ch7/exp2/`)
 
@@ -41,7 +41,7 @@ All regenerate with `uv run python thesis/ch7/exp2/make_assets.py` (add `--refre
 | Label | File | Content (caption, first sentence) | Generator |
 |---|---|---|---|
 | `tab:exp2-agreement` | `thesis/ch7/exp2/tables/exp2/exp2-agreement.tex` | Prediction agreement between the ten seeds on the test rows (45 pairs per study) | `thesis/ch7/exp2/make_assets.py` |
-| `tab:exp2-benchmarks` | `thesis/ch7/exp2/tables/exp2/exp2-benchmarks.tex` | Experiment~2: the ten-seed studies against the comparator suite of Experiment~1 (Table~ref{tab:exp1-benchmarks}) | `thesis/ch7/exp2/make_assets.py` |
+| `tab:exp2-benchmarks` | `thesis/ch7/exp2/tables/exp2/exp2-benchmarks.tex` | Experiment~2: the ten-seed studies against the comparators | `thesis/ch7/exp2/make_assets.py` |
 | `tab:exp2-betas-adult-country` | `thesis/ch7/exp2/tables/exp2/exp2-betas-adult-country.tex` | Adult: the size of every level of country of birth (against the United States) in each seed,  (log-odds of an ... | `thesis/ch7/exp2/linear_betas.py` |
 | `tab:exp2-betas-adult-education` | `thesis/ch7/exp2/tables/exp2/exp2-betas-adult-education.tex` | Adult: the size of every level of education levels (offsets from the straight line in years of schooling) in e... | `thesis/ch7/exp2/linear_betas.py` |
 | `tab:exp2-betas-adult-household` | `thesis/ch7/exp2/tables/exp2/exp2-betas-adult-household.tex` | Adult: the size of every level of marital status and household role (each observed pair against married, civil... | `thesis/ch7/exp2/linear_betas.py` |
@@ -54,15 +54,16 @@ All regenerate with `uv run python thesis/ch7/exp2/make_assets.py` (add `--refre
 | `tab:exp2-churn-disagreement` | `thesis/ch7/exp2/tables/exp2/exp2-churn-disagreement.tex` | Churn: where the ten networks disagree, on the 1,000 test customers | `thesis/ch7/exp2/make_assets.py` |
 | `tab:exp2-churn-matrix` | `thesis/ch7/exp2/tables/exp2/exp2-churn-matrix.tex` | Churn: how each seed realises the main signals | `thesis/ch7/exp2/make_assets.py` |
 | `tab:exp2-churn-signals` | `thesis/ch7/exp2/tables/exp2/exp2-churn-signals.tex` | Churn: the signals of the ten networks | `thesis/ch7/exp2/make_assets.py` |
-| `tab:exp2-headline` | `thesis/ch7/exp2/tables/exp2/exp2-headline.tex` | Experiment~2: ten seeds per study, each seed's best network by training fitness | `thesis/ch7/exp2/make_assets.py` |
+| `tab:exp2-headline` | `thesis/ch7/exp2/tables/exp2/exp2-headline.tex` | Experiment~2: ten seeds per study | `thesis/ch7/exp2/make_assets.py` |
 | `tab:exp2-heart-audit` | `thesis/ch7/exp2/tables/exp2/exp2-heart-audit.tex` | Heart-100 audit: how much of the ten networks' non-linear structure shows on new patients | `thesis/ch7/exp2/make_assets.py` |
-| `tab:exp2-heart-benchmark` | `thesis/ch7/exp2/tables/exp2/exp2-heart-benchmark.tex` | Heart on the paper's split (242 training and 61 test patients) | `thesis/ch7/exp2/make_assets.py` |
+| `tab:exp2-heart-benchmark` | `thesis/ch7/exp2/tables/exp2/exp2-heart-benchmark.tex` | Heart on its fixed split (242 training and 61 test patients) | `thesis/ch7/exp2/make_assets.py` |
 | `tab:exp2-heart-families` | `thesis/ch7/exp2/tables/exp2/exp2-heart-families.tex` | Heart-100 audit: the non-linear units whose switch is driven by the four inputs of interest, by family | `thesis/ch7/exp2/make_assets.py` |
 | `tab:exp2-linear-core` | `thesis/ch7/exp2/tables/exp2/exp2-linear-core.tex` | Heart-100: the linear core across the ten networks, in log-odds per real unit (categories against their refere... | `thesis/ch7/exp2/make_assets.py` |
-| `tab:exp2-runs-adult` | `thesis/ch7/exp2/tables/exp2/exp2-runs-adult.tex` | Adult (income; 10 seeds x 100 generations, pre-registered): every run | `thesis/ch7/exp2/per_run.py` |
-| `tab:exp2-runs-churn` | `thesis/ch7/exp2/tables/exp2/exp2-runs-churn.tex` | Churn (10 seeds x 100 generations): every run | `thesis/ch7/exp2/per_run.py` |
-| `tab:exp2-runs-heart100` | `thesis/ch7/exp2/tables/exp2/exp2-runs-heart100.tex` | Heart-100 (10 seeds x 100 generations): every run | `thesis/ch7/exp2/per_run.py` |
+| `tab:exp2-runs-adult` | `thesis/ch7/exp2/tables/exp2/exp2-runs-adult.tex` | Adult: every run | `thesis/ch7/exp2/per_run.py` |
+| `tab:exp2-runs-churn` | `thesis/ch7/exp2/tables/exp2/exp2-runs-churn.tex` | Churn: every run | `thesis/ch7/exp2/per_run.py` |
+| `tab:exp2-runs-heart100` | `thesis/ch7/exp2/tables/exp2/exp2-runs-heart100.tex` | Heart-100: every run | `thesis/ch7/exp2/per_run.py` |
 | `tab:exp2-s8-families` | `thesis/ch7/exp2/tables/exp2/exp2-s8-families.tex` | Heart-100 seed 8: the families of resting-blood-pressure curves | `thesis/ch7/exp2/make_assets.py` |
+| `tab:exp2-signal-completeness` | `thesis/ch7/exp2/tables/exp2/exp2-signal-completeness.tex` | Is each signal list complete? Each network's logit is projected on the data functions of its table's signals (... | `thesis/ch7/exp2/make_assets.py` |
 | `tab:exp2-signals-adult` | `thesis/ch7/exp2/tables/exp2/exp2-signals-adult.tex` | Adult: signals (rows) by seed (columns) | `thesis/ch7/exp2/signal_tables.py` |
 | `tab:exp2-signals-churn` | `thesis/ch7/exp2/tables/exp2/exp2-signals-churn.tex` | Churn: signals (rows) by seed (columns) | `thesis/ch7/exp2/signal_tables.py` |
 | `tab:exp2-signals-heart100` | `thesis/ch7/exp2/tables/exp2/exp2-signals-heart100.tex` | Heart-100: signals (rows) by seed (columns) | `thesis/ch7/exp2/signal_tables.py` |
@@ -71,23 +72,71 @@ All regenerate with `uv run python thesis/ch7/exp2/make_assets.py` (add `--refre
 | `tab:exp2-signalticks-heart100` | `thesis/ch7/exp2/tables/exp2/exp2-signalticks-heart100.tex` | Heart-100: the ten networks (columns), their numbers and the signals each carries | `thesis/ch7/exp2/signal_ticks.py` |
 | `tab:exp2-worked-claims` | `thesis/ch7/exp2/tables/exp2/exp2-worked-claims.tex` | Churn seed 5, the part Service calls and daytime charge: what was claimed and how it was checked | `thesis/ch7/exp2/worked.py` |
 
-### Figures (`figures/exp2/`, each `.pdf` + `.png` + `.tex`)
+### Figures of Experiments 1 and 2 (`thesis/ch7/figures/`, used and options)
 
-| Label | File | Content (caption, first sentence) | Generator |
-|---|---|---|---|
-| `fig:exp2-auc` | `thesis/ch7/exp2/figures/exp2/exp2-auc.pdf` | Test AUC of each seed's network, with its 95% bootstrap interval | `thesis/ch7/exp2/make_assets.py` |
-| `fig:exp2-churn-calls-parts` | `thesis/ch7/exp2/figures/exp2/exp2-churn-calls-parts.pdf` | Churn: one signal, three realisations | `thesis/ch7/exp2/make_assets.py` |
-| `fig:exp2-churn-s5-network` | `thesis/ch7/exp2/figures/exp2/exp2-churn-s5-network.pdf` | Churn seed 5: every hidden node (21, labelled h1 to h21 as in the plain-language report) coloured by the signa... | `thesis/ch7/exp2/make_assets.py` |
-| `fig:exp2-churn-shapes` | `thesis/ch7/exp2/figures/exp2/exp2-churn-shapes.pdf` | Churn: each signal's shape as realised in the ten networks (one line per seed), against the data's own shape (... | `thesis/ch7/exp2/make_assets.py` |
-| `fig:exp2-cost` | `thesis/ch7/exp2/figures/exp2/exp2-cost.pdf` | Cost of explaining and verifying, one mark per network | `thesis/ch7/exp2/make_assets.py` |
-| `fig:exp2-heart-linearised` | `thesis/ch7/exp2/figures/exp2/exp2-heart-linearised.pdf` | Heart-100: each network's AUC with and without its non-linear units (each replaced by its best straight line o... | `thesis/ch7/exp2/make_assets.py` |
-| `fig:exp2-heart-pairs` | `thesis/ch7/exp2/figures/exp2/exp2-heart-pairs.pdf` | Heart-100 seed 2, the whole model: a pairs plot over the five inputs it is most sensitive to | `thesis/ch7/exp2/make_assets.py` |
-| `fig:exp2-s8-ice` | `thesis/ch7/exp2/figures/exp2/exp2-s8-ice.pdf` | Heart-100 seed 8: each of the 242 training patients' predicted risk as resting blood pressure varies with ever... | `thesis/ch7/exp2/make_assets.py` |
-| `fig:exp2-worked-ice` | `thesis/ch7/exp2/figures/exp2/exp2-worked-ice.pdf` | Churn seed 5, the part Service calls and daytime charge: individual conditional expectation (ICE) curves of th... | `thesis/ch7/exp2/worked.py` |
-| `fig:exp2-worked-net-concept` | `thesis/ch7/exp2/figures/exp2/exp2-worked-net-concept.pdf` | Churn seed 5 at the level of concepts: the explanation's 5 top-level parts, each collapsed into one box (Servi... | `thesis/ch7/exp2/worked.py` |
-| `fig:exp2-worked-net-exploded` | `thesis/ch7/exp2/figures/exp2/exp2-worked-net-exploded.pdf` | Churn seed 5 with the part Service calls and daytime charge expanded (9 units, including its output box) and t... | `thesis/ch7/exp2/worked.py` |
-| `fig:exp2-worked-net-unexplained` | `thesis/ch7/exp2/figures/exp2/exp2-worked-net-unexplained.pdf` | Churn seed 5 as trained, before any explanation: 44 connected input columns (bottom), 21 hidden units (circles... | `thesis/ch7/exp2/worked.py` |
-| `fig:exp2-worked-pairs` | `thesis/ch7/exp2/figures/exp2/exp2-worked-pairs.pdf` | Churn seed 5, the part Service calls and daytime charge: a pairs plot of the part's contribution to the churn ... | `thesis/ch7/exp2/worked.py` |
+Every Chapter 7 figure: a vector PDF (+ PNG) and a float, written through `thesis/ch7/figlib.py` into the Overleaf layout (`figures/ch7/<group>/<id>.pdf`, `sections/figures/<group>/<id>.tex`); group `used` (picked for the chapter) or `options`. Regenerate with `uv run python thesis/ch7/exp2/make_assets.py` (Experiment 2) and `uv run python thesis/ch7/exp1/make_figures.py` (Experiment 1, benchmarks, cost); one-page index `thesis/ch7/FIGURES.md` (`uv run python thesis/scripts/ch7_figures_index.py`), preview `thesis/ch7/figures/preview.pdf`.
+
+| Group | Label | File | Content (caption, first sentence) | Generator |
+|---|---|---|---|---|
+| used | `fig:ch7-bench-dots` | `thesis/ch7/figures/figures/ch7/used/bench-dots.pdf` | Test AUC of PropNEAT and of each comparator, every dataset | `thesis/ch7/exp1/bench_figures.py` |
+| used | `fig:exp2-auc` | `thesis/ch7/figures/figures/ch7/used/exp2-auc.pdf` | Test AUC of each seed's network, with its 95% interval | `thesis/ch7/exp2/make_assets.py` |
+| used | `fig:exp2-churn-calls-parts` | `thesis/ch7/figures/figures/ch7/used/exp2-churn-calls-parts.pdf` | Churn: one signal, three realisations | `thesis/ch7/exp2/make_assets.py` |
+| used | `fig:exp2-churn-shapes` | `thesis/ch7/figures/figures/ch7/used/exp2-churn-shapes.pdf` | Churn: each signal's shape in the ten networks, as a change in the churn score (logit) | `thesis/ch7/exp2/make_assets.py` |
+| used | `fig:exp2-s8-ice` | `thesis/ch7/figures/figures/ch7/used/exp2-s8-ice.pdf` | Heart-100 seed 8: individual conditional expectation (ICE) curves of predicted risk against resting blood pres... | `thesis/ch7/exp2/make_assets.py` |
+| used | `fig:exp2-worked-ice` | `thesis/ch7/figures/figures/ch7/used/exp2-worked-ice.pdf` | Churn seed 5, the part Service calls and daytime charge: individual conditional expectation (ICE) curves of th... | `thesis/ch7/exp2/worked.py` |
+| used | `fig:exp2-worked-net-concept` | `thesis/ch7/figures/figures/ch7/used/exp2-worked-net-concept.pdf` | Churn seed 5 at the level of concepts: each top-level part of the explanation collapsed into one box, the inpu... | `thesis/ch7/exp2/worked.py` |
+| used | `fig:exp2-worked-net-exploded` | `thesis/ch7/figures/figures/ch7/used/exp2-worked-net-exploded.pdf` | Churn seed 5 with the part Service calls and daytime charge expanded and the other parts collapsed | `thesis/ch7/exp2/worked.py` |
+| used | `fig:exp2-worked-net-unexplained` | `thesis/ch7/figures/figures/ch7/used/exp2-worked-net-unexplained.pdf` | Churn seed 5 as trained, before any explanation: input columns (bottom), hidden units (circles) and the output... | `thesis/ch7/exp2/worked.py` |
+| used | `fig:exp2-worked-pairs` | `thesis/ch7/figures/figures/ch7/used/exp2-worked-pairs.pdf` | Churn seed 5, the part Service calls and daytime charge: a pairs plot of the part's contribution to the churn ... | `thesis/ch7/exp2/worked.py` |
+| used | `fig:ch7-seed-agreement` | `thesis/ch7/figures/figures/ch7/used/seed-agreement.pdf` | Pairwise correlation of the ten networks' logits | `thesis/ch7/exp2/exp2_figures.py` |
+| used | `fig:ch7-sig-shapes-adult` | `thesis/ch7/figures/figures/ch7/used/sig-shapes-adult.pdf` | Adult: shapes of the non-linear signals, one line per seed | `thesis/ch7/exp2/exp2_figures.py` |
+| used | `fig:ch7-synthetic-shape-c-saddle` | `thesis/ch7/figures/figures/ch7/used/synthetic-shape-c-saddle.pdf` | Synthetic data (U and saddle), the explained network: heart rate x systolic BP | `thesis/ch7/exp1/make_figures.py` |
+| used | `fig:ch7-synthetic-shape-c-sodium` | `thesis/ch7/figures/figures/ch7/used/synthetic-shape-c-sodium.pdf` | Synthetic data (U and saddle), the explained network: response to sodium | `thesis/ch7/exp1/make_figures.py` |
+| used | `fig:ch7-tickmap-adult` | `thesis/ch7/figures/figures/ch7/used/tickmap-adult.pdf` | Adult: size of each signal in each seed's network | `thesis/ch7/exp2/exp2_figures.py` |
+| used | `fig:ch7-tickmap-churn` | `thesis/ch7/figures/figures/ch7/used/tickmap-churn.pdf` | Churn: size of each signal in each seed's network | `thesis/ch7/exp2/exp2_figures.py` |
+| used | `fig:ch7-tickmap-heart100` | `thesis/ch7/figures/figures/ch7/used/tickmap-heart100.pdf` | Heart-100: size of each signal in each seed's network | `thesis/ch7/exp2/exp2_figures.py` |
+| used | `fig:ch7-train-vs-test-auc` | `thesis/ch7/figures/figures/ch7/used/train-vs-test-auc.pdf` | Training against test AUC: the ten seeds and the comparators | `thesis/ch7/exp2/exp2_figures.py` |
+| used | `fig:ch7-xor-ridge-valley` | `thesis/ch7/figures/figures/ch7/used/xor-ridge-valley.pdf` | XOR: one network of each family, the count family (a, c) and the difference family (b, d) | `thesis/ch7/exp1/make_figures.py` |
+| options | `fig:ch7-10seed-cost_prereg` | `thesis/ch7/figures/figures/ch7/options/10seed-cost_prereg.pdf` | Earlier ten-seed export: training and explaining time, pre-registered datasets | `thesis/ch7/exp1/make_figures.py` |
+| options | `fig:ch7-10seed-cost_supp` | `thesis/ch7/figures/figures/ch7/options/10seed-cost_supp.pdf` | Earlier ten-seed export: training and explaining time, additional analyses | `thesis/ch7/exp1/make_figures.py` |
+| options | `fig:ch7-10seed-coverage_time` | `thesis/ch7/figures/figures/ch7/options/10seed-coverage_time.pdf` | Earlier ten-seed export: coverage against explaining time | `thesis/ch7/exp1/make_figures.py` |
+| options | `fig:ch7-10seed-structure_prereg` | `thesis/ch7/figures/figures/ch7/options/10seed-structure_prereg.pdf` | Earlier ten-seed export: network structure, pre-registered datasets | `thesis/ch7/exp1/make_figures.py` |
+| options | `fig:ch7-10seed-structure_supp` | `thesis/ch7/figures/figures/ch7/options/10seed-structure_supp.pdf` | Earlier ten-seed export: network structure, additional analyses | `thesis/ch7/exp1/make_figures.py` |
+| options | `fig:ch7-10seed-test_auc_prereg` | `thesis/ch7/figures/figures/ch7/options/10seed-test_auc_prereg.pdf` | Earlier ten-seed export: test AUC per seed, pre-registered datasets | `thesis/ch7/exp1/make_figures.py` |
+| options | `fig:ch7-10seed-test_auc_supp` | `thesis/ch7/figures/figures/ch7/options/10seed-test_auc_supp.pdf` | Earlier ten-seed export: test AUC per seed, additional analyses | `thesis/ch7/exp1/make_figures.py` |
+| options | `fig:ch7-bench-gap` | `thesis/ch7/figures/figures/ch7/options/bench-gap.pdf` | PropNEAT's test AUC minus the best comparator's and logistic regression's | `thesis/ch7/exp1/bench_figures.py` |
+| options | `fig:ch7-completeness-residual` | `thesis/ch7/figures/figures/ch7/options/completeness-residual.pdf` | Residual of the signal catalogue, per network | `thesis/ch7/exp2/exp2_figures.py` |
+| options | `fig:ch7-completeness-shares` | `thesis/ch7/figures/figures/ch7/options/completeness-shares.pdf` | Shares of each network's logit variance (training rows) | `thesis/ch7/exp2/exp2_figures.py` |
+| options | `fig:ch7-cost-minutes-size` | `thesis/ch7/figures/figures/ch7/options/cost-minutes-size.pdf` | Explaining minutes against network size, Experiments 1 and 2 | `thesis/ch7/exp1/bench_figures.py` |
+| options | `fig:ch7-cost-verify` | `thesis/ch7/figures/figures/ch7/options/cost-verify.pdf` | Verification minutes against explaining minutes | `thesis/ch7/exp2/exp2_figures.py` |
+| options | `fig:ch7-cox-whas500-forest` | `thesis/ch7/figures/figures/ch7/options/cox-whas500-forest.pdf` | WHAS500: hazard ratios of Cox PH and of the PropNEAT-Cox network, training rows ( = 320) | `thesis/ch7/exp1/make_figures.py` |
+| options | `fig:ch7-cox-whas500-h2d` | `thesis/ch7/figures/figures/ch7/options/cox-whas500-h2d.pdf` | WHAS500: the forest's strongest pair, two-way partial dependence | `thesis/ch7/exp1/make_figures.py` |
+| options | `fig:ch7-cox-whas500-pd` | `thesis/ch7/figures/figures/ch7/options/cox-whas500-pd.pdf` | WHAS500: the forest's top inputs, partial dependence at 3 years | `thesis/ch7/exp1/make_figures.py` |
+| options | `fig:exp2-churn-s5-network` | `thesis/ch7/figures/figures/ch7/options/exp2-churn-s5-network.pdf` | Churn seed 5: every hidden node, coloured by the signal it mainly realises | `thesis/ch7/exp2/make_assets.py` |
+| options | `fig:exp2-cost` | `thesis/ch7/figures/figures/ch7/options/exp2-cost.pdf` | Cost of explaining and verifying, one mark per network | `thesis/ch7/exp2/make_assets.py` |
+| options | `fig:exp2-heart-linearised` | `thesis/ch7/figures/figures/ch7/options/exp2-heart-linearised.pdf` | Heart-100: each network's AUC with and without its non-linear units | `thesis/ch7/exp2/make_assets.py` |
+| options | `fig:exp2-heart-pairs` | `thesis/ch7/figures/figures/ch7/options/exp2-heart-pairs.pdf` | Heart-100 seed 2, the whole model: a pairs plot over 5 inputs | `thesis/ch7/exp2/make_assets.py` |
+| options | `fig:ch7-heart-lincore-vs-data` | `thesis/ch7/figures/figures/ch7/options/heart-lincore-vs-data.pdf` | Heart-100: weight of each linear term in each seed's network and in a ridge logistic fit | `thesis/ch7/exp2/exp2_figures.py` |
+| options | `fig:ch7-heart-splits-box` | `thesis/ch7/figures/figures/ch7/options/heart-splits-box.pdf` | Heart: test AUC of each comparator over random splits | `thesis/ch7/exp1/bench_figures.py` |
+| options | `fig:ch7-heart-splits-diff` | `thesis/ch7/figures/figures/ch7/options/heart-splits-diff.pdf` | Heart: test AUC minus logistic regression's over random splits | `thesis/ch7/exp1/bench_figures.py` |
+| options | `fig:ch7-heart-units-gain` | `thesis/ch7/figures/figures/ch7/options/heart-units-gain.pdf` | Heart-100: AUC gain of each non-linear unit over its straight line, training against test rows | `thesis/ch7/exp2/exp2_figures.py` |
+| options | `fig:ch7-lincore-adult` | `thesis/ch7/figures/figures/ch7/options/lincore-adult.pdf` | Adult: size of each linear term in each seed's network | `thesis/ch7/exp2/exp2_figures.py` |
+| options | `fig:ch7-lincore-churn` | `thesis/ch7/figures/figures/ch7/options/lincore-churn.pdf` | Churn: size of each linear term in each seed's network | `thesis/ch7/exp2/exp2_figures.py` |
+| options | `fig:ch7-lincore-heart100` | `thesis/ch7/figures/figures/ch7/options/lincore-heart100.pdf` | Heart-100: size of each linear term in each seed's network | `thesis/ch7/exp2/exp2_figures.py` |
+| options | `fig:ch7-linearised-auc` | `thesis/ch7/figures/figures/ch7/options/linearised-auc.pdf` | AUC of each network as trained and with its non-linear units linearised | `thesis/ch7/exp2/exp2_figures.py` |
+| options | `fig:ch7-recurrence` | `thesis/ch7/figures/figures/ch7/options/recurrence.pdf` | Number of seeds carrying each signal | `thesis/ch7/exp2/exp2_figures.py` |
+| options | `fig:ch7-seed-agreement-strip` | `thesis/ch7/figures/figures/ch7/options/seed-agreement-strip.pdf` | Pairwise correlation of the ten networks' logits, training and test rows | `thesis/ch7/exp2/exp2_figures.py` |
+| options | `fig:ch7-sig-shapes-heart100` | `thesis/ch7/figures/figures/ch7/options/sig-shapes-heart100.pdf` | Heart-100: shapes of the non-linear families, one line per seed | `thesis/ch7/exp2/exp2_figures.py` |
+| options | `fig:ch7-size-vs-auc` | `thesis/ch7/figures/figures/ch7/options/size-vs-auc.pdf` | Network size against test AUC | `thesis/ch7/exp2/exp2_figures.py` |
+| options | `fig:ch7-synthetic-shape-a-saddle` | `thesis/ch7/figures/figures/ch7/options/synthetic-shape-a-saddle.pdf` | Synthetic data (U only), the explained network: heart rate x systolic BP | `thesis/ch7/exp1/make_figures.py` |
+| options | `fig:ch7-synthetic-shape-a-sodium` | `thesis/ch7/figures/figures/ch7/options/synthetic-shape-a-sodium.pdf` | Synthetic data (U only), the explained network: response to sodium | `thesis/ch7/exp1/make_figures.py` |
+| options | `fig:ch7-synthetic-shape-b-saddle` | `thesis/ch7/figures/figures/ch7/options/synthetic-shape-b-saddle.pdf` | Synthetic data (saddle only), the explained network: heart rate x systolic BP | `thesis/ch7/exp1/make_figures.py` |
+| options | `fig:ch7-synthetic-shape-b-sodium` | `thesis/ch7/figures/figures/ch7/options/synthetic-shape-b-sodium.pdf` | Synthetic data (saddle only), the explained network: response to sodium | `thesis/ch7/exp1/make_figures.py` |
+| options | `fig:ch7-synthetic-shape-c-s1-g300-saddle` | `thesis/ch7/figures/figures/ch7/options/synthetic-shape-c-s1-g300-saddle.pdf` | Synthetic data (U and saddle), seed 1 at generation 300 (not explained): heart rate x systolic BP | `thesis/ch7/exp1/make_figures.py` |
+| options | `fig:ch7-synthetic-shape-c-s1-g300-sodium` | `thesis/ch7/figures/figures/ch7/options/synthetic-shape-c-s1-g300-sodium.pdf` | Synthetic data (U and saddle), seed 1 at generation 300 (not explained): response to sodium | `thesis/ch7/exp1/make_figures.py` |
+| options | `fig:ch7-synthetic-shape-c-sig-best-g300-saddle` | `thesis/ch7/figures/figures/ch7/options/synthetic-shape-c-sig-best-g300-saddle.pdf` | Synthetic data (U and saddle), the best sigmoid-unit seed at generation 300 (not explained): heart rate x syst... | `thesis/ch7/exp1/make_figures.py` |
+| options | `fig:ch7-synthetic-shape-c-sig-best-g300-sodium` | `thesis/ch7/figures/figures/ch7/options/synthetic-shape-c-sig-best-g300-sodium.pdf` | Synthetic data (U and saddle), the best sigmoid-unit seed at generation 300 (not explained): response to sodium | `thesis/ch7/exp1/make_figures.py` |
+| options | `fig:ch7-xor-gates` | `thesis/ch7/figures/figures/ch7/options/xor-gates.pdf` | XOR: the gates of each family, count family (a--c) and difference family (d--f) | `thesis/ch7/exp1/make_figures.py` |
 
 ### Per-network figures (`figures/exp2/networks/`, appendix)
 
@@ -99,7 +148,7 @@ All regenerate with `uv run python thesis/ch7/exp2/make_assets.py` (add `--refre
 | churn100 | `fig:exp2-net-churn100-s0-explained` ... `fig:exp2-net-churn100-s9-raw` (20) | `thesis/ch7/exp2/figures/exp2/networks/churn100-s<k>-{raw,explained}.{pdf,tex}` |
 | heart100 | `fig:exp2-net-heart100-s0-explained` ... `fig:exp2-net-heart100-s9-raw` (20) | `thesis/ch7/exp2/figures/exp2/networks/heart100-s<k>-{raw,explained}.{pdf,tex}` |
 
-## 3. Experiment-side figures (not yet thesis floats; no label)
+## 3. Experiment-side figures (the study folders; those redrawn as Chapter 7 figures are listed in section 2)
 
 | Exp | Folder | Files | Regenerate |
 |---|---|---|---|

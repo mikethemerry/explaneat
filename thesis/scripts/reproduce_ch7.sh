@@ -6,9 +6,9 @@
 #   bash thesis/scripts/reproduce_ch7.sh --with-db  # also layer 2: analyses and extractors that READ the DB
 #                                                   # (read-only transactions; explaneat_v4 / explaneat_dev; ~20 min)
 #
-# Afterwards `git status` should show no .tex / .csv / .json change. Matplotlib figure PDFs embed a
-# creation date, so those bytes change on every run (restore them with `git checkout -- <path>` if unchanged
-# otherwise). The 60 appendix network PDFs are rebuilt only when their TikZ source hash changes.
+# Afterwards `git status` should show no change at all. The Chapter 7 figures (thesis/ch7/figures/, written via
+# thesis/ch7/figlib.py) are saved without a creation date, so their PDFs and PNGs are byte-identical on a rerun.
+# The 60 appendix network PDFs are rebuilt only when their TikZ source hash changes.
 #
 # Never runs migrations or `explaneat setup`; never writes to a database.
 set -euo pipefail
@@ -45,6 +45,11 @@ if [[ "${1:-}" == "--with-db" ]]; then
   uv run python thesis/ch7/exp1/extract_db.py                                    # explaneat_dev -> exp1/data/networks.json
                                                                                  # (+ coverage checks, explaining minutes)
   DATABASE_URL=postgresql://localhost/explaneat_v4 uv run python thesis/ch7/exp2/extract_db.py --refresh   # exp2/data/*
+  # Figure caches: the synthetic shape sweeps (explaneat_dev) and the Adult / Heart-100 shapes and seed agreement (v4)
+  PGOPTIONS='-c default_transaction_read_only=on' DATABASE_URL=postgresql://localhost/explaneat_dev \
+    uv run python thesis/ch7/exp1/extract_shapes.py                              # -> exp1/data/shapes.json
+  PGOPTIONS='-c default_transaction_read_only=on' env $V4 \
+    uv run python thesis/ch7/figure_candidates/extract_db.py --refresh           # ~5 min -> figure_candidates/data/*.json
 fi
 
 # ------------------------------------------------------------------ layer 3 (generators; read files only)
@@ -52,6 +57,11 @@ uv run python thesis/ch7/exp1/make_tables.py            # exp1-networks.tex, exp
 uv run python thesis/ch7/appendix/heart_splits_table.py # ch7-heart-splits.tex
 uv run python thesis/ch7/exp2/make_assets.py            # exp2-benchmarks, exp2-runs-*, exp2-signals-*, exp2-signalticks-*,
                                                         # appendix_networks.tex + figures/exp2/networks/*.pdf, other exp2 assets
+                                                        # + every Experiment 2 figure (exp2_figures.py, worked.py)
+uv run python thesis/ch7/exp1/make_figures.py           # Experiment 1 figures (XOR, synthetic shapes, WHAS500,
+                                                        # earlier ten-seed export) + bench_figures.py (benchmarks, cost)
+uv run python thesis/scripts/ch7_figures_index.py       # thesis/ch7/FIGURES.md + thesis/ch7/figures/preview.tex
+                                                        # (preview: cd thesis/ch7/figures && latexmk -pdf preview.tex)
 uv run python thesis/ch7/exp2/completeness_table.py  # exp2-signal-completeness.tex (not in the Overleaf upload)
 bash thesis/scripts/build_overleaf_upload.sh            # thesis/ch7/overleaf_upload/ + zip (screenshots copied as images)
 

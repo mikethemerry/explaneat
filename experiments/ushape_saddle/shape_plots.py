@@ -37,28 +37,25 @@ def sweep(vm, raws):
     return evaluate(vm, raws, parts=True)
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("label")
-    ap.add_argument("--part", default=None, help="part to show on the saddle grid (default: the one that moves most)")
-    ap.add_argument("--genome", default=None, help="genome id to plot without an explanation record (with --task)")
-    ap.add_argument("--task", default=None, choices=["u", "saddle", "both"], help="dataset of --genome")
-    a = ap.parse_args()
+def compute(label, genome=None, task=None, part=None):
+    """Every swept value for one genome (the explained record of ``label``, or ``genome`` on ``task``):
+    the sodium sweep, the heart rate x SBP grid, the ground-truth terms and the parts' contributions,
+    plus ``out`` (the summary written to figures/<label>-shape.json). Read-only on the database.
+    Also used by thesis/ch7/exp1/extract_shapes.py, which redraws the figures for the thesis."""
     from explaneat.verify.model import load
     from explaneat.verify.probe import hold_row
     reg = data.registry()
-    if a.genome:
-        task, rec = a.task, {"genome_id": a.genome}
+    if genome:
+        rec = {"genome_id": genome}
     else:
-        task = next(t for t, v in reg.items() if v["label"] == a.label)
-        rec = json.loads((HERE / "explanations" / f"{a.label}.json").read_text())
+        task = next(t for t, v in reg.items() if v["label"] == label)
+        rec = json.loads((HERE / "explanations" / f"{label}.json").read_text())
     vm = load(rec["genome_id"])
     names = list(vm.base.feature_names) if hasattr(vm.base, "feature_names") else data.FEATURES
     col = {n: i for i, n in enumerate(names)}
     base = hold_row(vm, "typical")
     raw_tr = vm.m.raw_train
-    out = {"label": a.label, "genome_id": rec["genome_id"], "task": task, "held_case": {n: float(base[col[n]]) for n in names}}
-    FIG.mkdir(exist_ok=True)
+    out = {"label": label, "genome_id": rec["genome_id"], "task": task, "held_case": {n: float(base[col[n]]) for n in names}}
     X0 = data.inputs()  # the generating constants only; terms are computed on constructed rows
 
     # ---- 1-D sweep over sodium
@@ -71,18 +68,6 @@ def main():
     parts = {pid: np.array([e["parts"][pid]["contribution"] for e in ev]) for pid in ev[0].get("parts", {})}
     pnames = {pid: ev[0]["parts"][pid]["name"] for pid in parts}
     truth = data.u_term(raws)[next(iter(data.u_term(raws)))] if task in ("u", "both") else None
-    fig, ax = plt.subplots(1, 2, figsize=(10, 3.8))
-    ax[0].plot(xs, score - score[np.argmin(np.abs(xs - base[col["sodium"]]))], "k-", lw=2, label="model score (centred at the typical case)")
-    if truth is not None:
-        ax[0].plot(xs, truth - truth[np.argmin(np.abs(xs - base[col["sodium"]]))], "r--", lw=1.5, label=f"truth: {data.BETA_U:g}((zn+0.5)^2-1), min {data.SODIUM_SWEET_SPOT:g}")
-    ax[0].set_xlabel("sodium (mmol/L); other inputs at the typical case"); ax[0].set_ylabel("logit change"); ax[0].legend(fontsize=7)
-    ax[0].set_title(f"{a.label}: model response to sodium", fontsize=9)
-    moving = sorted(parts, key=lambda p: -np.ptp(parts[p]))
-    for pid in moving[:4]:
-        ax[1].plot(xs, parts[pid], lw=1.5, label=f"{pnames[pid]} ({pid})")
-    ax[1].set_xlabel("sodium (mmol/L)"); ax[1].set_ylabel("part contribution to the logit"); ax[1].legend(fontsize=7)
-    ax[1].set_title("parts that move with sodium", fontsize=9)
-    fig.tight_layout(); fig.savefig(FIG / f"{a.label}-sodium.png", dpi=130); plt.close(fig)
     imin = int(np.argmin(score))
     out["sodium"] = {"x": xs.tolist(), "score": score.tolist(), "model_minimum_at": float(xs[imin]),
                      "parts": {pid: {"name": pnames[pid], "contribution": parts[pid].tolist(),
@@ -101,21 +86,10 @@ def main():
     C = {pid: np.array([e["parts"][pid]["contribution"] for e in ev]).reshape(H.shape) for pid in ev[0].get("parts", {})}
     tname = next(iter(data.saddle_term(raws)))
     T = data.saddle_term(raws)[tname].reshape(H.shape)
-    if a.part:
-        pid = next(p for p in C if pnames.get(p) == a.part or p == a.part)
+    if part:
+        pid = next(p for p in C if pnames.get(p) == part or p == part)
     else:
         pid = max(C, key=lambda p: np.ptp(C[p])) if C else None
-    fig, ax = plt.subplots(1, 3, figsize=(13, 3.9))
-    def show(axi, Z, title):
-        v = np.max(np.abs(Z - Z.mean())) or 1.0
-        im = axi.pcolormesh(H, P, Z - Z.mean(), cmap="RdBu_r", vmin=-v, vmax=v, shading="auto")
-        axi.set_xlabel("heart rate (beats/min)"); axi.set_ylabel("systolic BP (mmHg)"); axi.set_title(title, fontsize=9)
-        fig.colorbar(im, ax=axi, fraction=0.046)
-    show(ax[0], S, f"{a.label}: model score (mean removed)")
-    if pid:
-        show(ax[1], C[pid], f"part {pnames[pid]} ({pid}) contribution")
-    show(ax[2], T, f"truth: -{data.BETA_S:g} zh zp" + ("" if task in ("saddle", "both") else " (absent from this dataset)"))
-    fig.tight_layout(); fig.savefig(FIG / f"{a.label}-saddle.png", dpi=130); plt.close(fig)
     # how saddle-like is the model's surface? correlation of the mean-removed surfaces with the truth
     def corr(Z):
         return float(np.corrcoef((Z - Z.mean()).ravel(), (T - T.mean()).ravel())[0, 1])
@@ -129,6 +103,46 @@ def main():
                      "score_interaction_share": interaction_share(S), "shown_part": pid,
                      "parts": {p: {"name": pnames[p], "corr_with_truth": corr(C[p]), "interaction_share": interaction_share(C[p]),
                                    "range": float(np.ptp(C[p]))} for p in C}}
+    return dict(out=out, task=task, xs=xs, score=score, parts=parts, pnames=pnames, truth=truth,
+                sodium_typical=float(base[col["sodium"]]), hs=hs, ps=ps, H=H, P=P, S=S, C=C, T=T, pid=pid)
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("label")
+    ap.add_argument("--part", default=None, help="part to show on the saddle grid (default: the one that moves most)")
+    ap.add_argument("--genome", default=None, help="genome id to plot without an explanation record (with --task)")
+    ap.add_argument("--task", default=None, choices=["u", "saddle", "both"], help="dataset of --genome")
+    a = ap.parse_args()
+    FIG.mkdir(exist_ok=True)
+    R = compute(a.label, a.genome, a.task, a.part)
+    out, task, xs, score, parts, pnames, truth = R["out"], R["task"], R["xs"], R["score"], R["parts"], R["pnames"], R["truth"]
+    sod0 = R["sodium_typical"]
+    fig, ax = plt.subplots(1, 2, figsize=(10, 3.8))
+    ax[0].plot(xs, score - score[np.argmin(np.abs(xs - sod0))], "k-", lw=2, label="model score (centred at the typical case)")
+    if truth is not None:
+        ax[0].plot(xs, truth - truth[np.argmin(np.abs(xs - sod0))], "r--", lw=1.5, label=f"truth: {data.BETA_U:g}((zn+0.5)^2-1), min {data.SODIUM_SWEET_SPOT:g}")
+    ax[0].set_xlabel("sodium (mmol/L); other inputs at the typical case"); ax[0].set_ylabel("logit change"); ax[0].legend(fontsize=7)
+    ax[0].set_title(f"{a.label}: model response to sodium", fontsize=9)
+    moving = sorted(parts, key=lambda p: -np.ptp(parts[p]))
+    for pid in moving[:4]:
+        ax[1].plot(xs, parts[pid], lw=1.5, label=f"{pnames[pid]} ({pid})")
+    ax[1].set_xlabel("sodium (mmol/L)"); ax[1].set_ylabel("part contribution to the logit"); ax[1].legend(fontsize=7)
+    ax[1].set_title("parts that move with sodium", fontsize=9)
+    fig.tight_layout(); fig.savefig(FIG / f"{a.label}-sodium.png", dpi=130); plt.close(fig)
+
+    H, P, S, C, T, pid = R["H"], R["P"], R["S"], R["C"], R["T"], R["pid"]
+    fig, ax = plt.subplots(1, 3, figsize=(13, 3.9))
+    def show(axi, Z, title):
+        v = np.max(np.abs(Z - Z.mean())) or 1.0
+        im = axi.pcolormesh(H, P, Z - Z.mean(), cmap="RdBu_r", vmin=-v, vmax=v, shading="auto")
+        axi.set_xlabel("heart rate (beats/min)"); axi.set_ylabel("systolic BP (mmHg)"); axi.set_title(title, fontsize=9)
+        fig.colorbar(im, ax=axi, fraction=0.046)
+    show(ax[0], S, f"{a.label}: model score (mean removed)")
+    if pid:
+        show(ax[1], C[pid], f"part {pnames[pid]} ({pid}) contribution")
+    show(ax[2], T, f"truth: -{data.BETA_S:g} zh zp" + ("" if task in ("saddle", "both") else " (absent from this dataset)"))
+    fig.tight_layout(); fig.savefig(FIG / f"{a.label}-saddle.png", dpi=130); plt.close(fig)
     (FIG / f"{a.label}-shape.json").write_text(json.dumps(out, indent=1) + "\n")
     print(json.dumps({"label": a.label, "sodium_model_minimum_at": out["sodium"]["model_minimum_at"],
                       "sodium_parts": {v["name"]: (v["minimum_at"], round(v["range"], 3)) for v in out["sodium"]["parts"].values()},
