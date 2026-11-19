@@ -90,9 +90,12 @@ def table(k, name):
     nb = nb.pop()
     body = ["  \\setlength{\\tabcolsep}{2.5pt}", "  \\renewcommand{\\arraystretch}{1.15}", "  \\begin{adjustbox}{max width=\\textheight}",
             "  \\begin{tabular}{@{}r" + "c" * 15 + "@{}}", "    \\toprule", f"    {HEAD} \\\\", "    \\midrule"]
+    best_tr = max(num(r["train_auc"]) for r in R)  # best at the displayed precision; ties all bold
+    best_te = max(num(r["test_auc"]) for r in R)
+    bold = lambda x, b: f"\\textbf{{{x}}}" if x == b else x
     for r in R:
-        cells = [f"s{r['seed']}", num(r["train_auc"]),
-                 f"{num(r['test_auc'])} {{\\scriptsize [{num(r['lo'])}, {num(r['hi'])}]}}",
+        cells = [f"s{r['seed']}", bold(num(r["train_auc"]), best_tr),
+                 f"{bold(num(r['test_auc']), best_te)} {{\\scriptsize [{num(r['lo'])}, {num(r['hi'])}]}}",
                  f"{r['inputs']}/{n_in}", str(r["hidden"]), str(r["conns"]),
                  f"{num(r['skippiness'], 2)} ({r['skips']})", num(r["density"], 3), str(r["depth"]),
                  f"{r['leaf']} $+$ {r['comp']}", str(r["splits"]), str(r["identity"]),

@@ -28,7 +28,7 @@ def main(out):
         rows = []
         for r in v["rows"]:
             if r.get("metric"):
-                vals = "".join(f'<td class="m">{x}</td>' for x in r["vals"])
+                vals = "".join(f'<td class="m">{tx(x)}</td>' for x in r["vals"])
                 rows.append(f'<tr class="met"><td class="sig">{r["name"]}</td>{vals}<td class="n">{r["summary"]}</td></tr>')
                 continue
             if "group" in r:

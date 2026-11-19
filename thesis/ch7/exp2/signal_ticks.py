@@ -90,7 +90,11 @@ def metric_rows(key):
     rows = [{"group": "Model"}]
     for label, k, fmt in spec:
         v = [r[k] for r in R]
-        rows.append({"metric": True, "name": label, "vals": [fmt(x) for x in v], "summary": (fmt(_st.median(v)) if fmt is not str else f"{_st.median(v):g}")})
+        vals = [fmt(x) for x in v]
+        if k in ("test_auc", "train_auc"):  # bold the best seed (ties at the displayed precision)
+            best = max(vals)
+            vals = [rf"\textbf{{{x}}}" if x == best else x for x in vals]
+        rows.append({"metric": True, "name": label, "vals": vals, "summary": (fmt(_st.median(v)) if fmt is not str else f"{_st.median(v):g}")})
     parts = [r["leaf"] + r["comp"] for r in R]
     rows.append({"metric": True, "name": "Parts (annotations)", "vals": [str(x) for x in parts],
                  "summary": f"{_st.median(parts):g}"})
