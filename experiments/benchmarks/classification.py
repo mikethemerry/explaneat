@@ -44,7 +44,7 @@ def models():
     from interpret.glassbox import ExplainableBoostingClassifier
     return {
         "lr_l2": (LogisticRegression(penalty="l2", solver="lbfgs", max_iter=5000, random_state=SEED), {"C": C_GRID}),
-        "lr_l1": (LogisticRegression(penalty="l1", solver="liblinear", max_iter=5000), {"C": [0.01, 0.03, 0.1, 0.3, 1, 3]}),
+        "lr_l1": (LogisticRegression(penalty="l1", solver="liblinear", max_iter=5000, random_state=SEED), {"C": [0.01, 0.03, 0.1, 0.3, 1, 3]}),
         "tree": (DecisionTreeClassifier(random_state=SEED), {"max_depth": [2, 3, 4, 5, 6], "min_samples_leaf": [5, 10, 20]}),
         "rf": (RandomForestClassifier(n_estimators=500, random_state=SEED, n_jobs=2),
                {"max_depth": [3, 5, None], "min_samples_leaf": [1, 5, 10]}),

@@ -40,7 +40,16 @@ OMP_NUM_THREADS=2 /Users/mike/dev/explaneat/.claude/worktrees/conv-neat/.venv/bi
 uv run python experiments/benchmarks/survival.py
 uv run python experiments/benchmarks/propneat.py
 uv run python experiments/benchmarks/make_csv.py             # benchmarks.csv, results/reuse.json
+OMP_NUM_THREADS=2 <venv with interpret>/python experiments/benchmarks/heart_splits.py   # heart_splits.json (~1 min; reads benchmarks.csv)
 ```
+
+`classification.py` skips a model whose result is already in `results/classification/<name>.json`;
+delete that entry to refit it. `lr_l1` (liblinear) is seeded (`random_state=42`) since 20 Nov 2026;
+the committed `lr_l1` results come from the earlier unseeded run. A seeded rerun of `lr_l1` on all
+nine sets chose the same `C` everywhere and reproduced the printed test AUC (3 dp), interval (2 dp)
+and accuracy (3 dp); test AUC moved by at most 3e-5 (Churn) and CV AUC by at most 4e-4 (Heart).
+`export_data.py`, `propneat.py`, `survival.py` (except the `seconds` timings), `make_csv.py` and
+`heart_splits.py` reran byte-identical on 20 Nov 2026.
 
 ## Outputs
 

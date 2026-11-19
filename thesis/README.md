@@ -56,6 +56,9 @@ with the exact source files and commits. Paths are relative to the repository ro
 
 ## Regenerate
 
+The Overleaf upload's tables and figures: `bash thesis/scripts/reproduce_ch7.sh` (`--with-db` also reruns the
+read-only database layer); each output's chain and status is in `ch7/PROVENANCE.md`.
+
 ```bash
 # Experiment outputs, each into its own study folder (see each study's README / RESULTS for runtimes and DBs)
 uv run python experiments/10seed/make_figures.py
