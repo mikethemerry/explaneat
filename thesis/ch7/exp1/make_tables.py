@@ -52,7 +52,7 @@ def write(name, src):
 
 
 # the rows of the per-network table, in the order of the chapter's Experiment 1
-ORDER = [("paper-heart", "Heart (paper genome)$^\\dagger$"), ("paper-monk2", "MONK-2 (paper genome)$^\\dagger$"),
+ORDER = [("paper-heart", "Heart (original network)$^\\dagger$"), ("paper-monk2", "MONK-2 (original network)$^\\dagger$"),
          ("cox-whas500-s0", "WHAS500 (Cox)$^\\ast$"), ("c4cap-main-h10-e50-s1", "Connect-4, cells (s1)"),
          ("c4lf-lines-heavy-s0", "Connect-4, lines (s0)"), ("shape-A", "Synthetic U (s0)"),
          ("shape-B", "Synthetic saddle (s0)"), ("shape-C", "Synthetic U $+$ saddle (s4)")]
@@ -103,7 +103,7 @@ def table_networks():
     assert all(r["mike"] is None for r in N["networks"].values())
     assert {r["protocol"] for r in paper} == {paper[0]["protocol"]} and len({r["protocol"] for r in v4}) == 1
     cap = ("Experiment 1: the explained network of each dataset, with the columns of the Experiment 2 run "
-           "tables. Selection: the paper genomes are the AAAI paper's; WHAS500 is the lowest validation Cox "
+           "tables. Selection: Heart and MONK-2 are the original networks; WHAS500 is the lowest validation Cox "
            "loss of five seeds; Connect-4 and the synthetic sets are the largest training AUC of their runs "
            "(seed in brackets). AUCs and intervals are recomputed from each genome on its study's split "
            "(10{,}000 bootstrap resamples of the test rows) and equal the study's run record. "
@@ -114,9 +114,9 @@ def table_networks():
            "of the stored explanation: leaf $+$ composition annotations, node splits, identity nodes, "
            "structural / compositional coverage and the function-preservation error (largest absolute "
            "difference between the explained model and the network on the training rows). Every explanation "
-           "except the two paper ones was written by one explaining agent with the frozen authoring method "
+           "except the two original ones was written by one explaining agent with the frozen authoring method "
            "(v4, provenance-stamped); \\emph{agent min} is its wall-clock time from the record (Connect-4 "
-           "cells includes a short sandbox pause). $^\\dagger$The paper explanations (July 2026) predate that "
+           "cells includes a short sandbox pause). $^\\dagger$The original explanations (July 2026) predate that "
            "method and record no explaining time; MONK-2's compositional coverage is 0.75 as stored because "
            "its pruned-input annotation sits outside the root. No Experiment 1 explanation has recorded "
            "verification minutes, so \\emph{Mike min} is blank throughout. "

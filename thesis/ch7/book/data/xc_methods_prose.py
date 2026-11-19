@@ -7,7 +7,7 @@ PROSE = {
     "explainable models where the signal is more complex and non-linear. Rather than one benchmark, we chose datasets "
     "in groups, each testing a different kind of signal.",
 
-    "For linear or approximately linear binary classification we used Heart, on the AAAI paper's split (242 training "
+    "For linear or approximately linear binary classification we used Heart, on a fixed split (242 training "
     "and 61 test rows), chosen as the binary-outcome dataset closest to the VARIANZ data of Chapter 8. MONK-2 (345 / 87) "
     "was chosen for its known, provable rule. WHAS500 demonstrates the survival path ahead of Chapter 8, with an "
     "event-stratified split of 320 training, 80 validation and 100 test rows. Connect-4 (67,557 eight-ply positions; "
@@ -25,18 +25,18 @@ PROSE = {
     "0.10 test AUC and gradient boosting beats logistic regression by at least 0.05. The terms are inspired by "
     "interactions that could occur, not intended to be true to the real world.",
 
-    "All networks were trained with PropNEAT, with backpropagation inside evolution. The paper and synthetic cases used a "
+    "All networks were trained with PropNEAT, with backpropagation inside evolution. Heart, MONK-2 and the synthetic cases used a "
     "population of 250 and five backprop epochs per generation, for 40 to 100 generations (300 in the longer synthetic "
     "runs). The Cox model used a population of 150 for 60 generations, the Efron partial likelihood and an identity "
     "output. Connect-4 on the raw cells used a population of 150 for 80 generations, 50 epochs per generation and ten "
     "hidden units at the start; the line-feature runs used both this configuration and the default one. XOR was run "
     "with 30 seeds at a population of 150. In each run we kept the best genome by training fitness (for Cox, the lowest "
-    "validation loss); the test rows were never used to select. Heart and MONK-2 are the paper's own explained genomes.",
+    "validation loss); the test rows were never used to select. Heart and MONK-2 are the original networks, explained before the frozen method was in place.",
 
     "Each network was explained with agent assistance, using function-preserving operations only (splits, identity "
     "nodes and annotations), on training rows only, within a three-hour box and with one explaining agent per network. "
     "WHAS500, the Connect-4 networks and the synthetic cases used the frozen v4 method; the first Connect-4 runs used "
-    "protocol v3, and Heart and MONK-2 keep the paper's stored explanations. A blind, read-only verifier graded the "
+    "protocol v3, and Heart and MONK-2 keep their original explanations. A blind, read-only verifier graded the "
     "WHAS500 network, the Connect-4 raw-cell network, the three line-feature networks and the three synthetic networks. "
     "XOR was not explained by an agent: its solutions were enumerated by linear programming and checked by script.",
 
@@ -53,8 +53,8 @@ PROSE = {
     "network explainable every time, are the ten networks about equally accurate, and do they find the same signals?",
 
     "We used three datasets, ten seeds each (30 runs). Adult has 107 inputs after one-hot encoding, with 39,073 training "
-    "and 9,769 test rows on the AAAI paper's split. Churn has 71 inputs, with 4,000 training and 1,000 test rows. Heart "
-    "is the paper's data, with 26 inputs and 242 training and 61 test rows. Every seed uses the same split, so only the "
+    "and 9,769 test rows on a fixed split. Churn has 71 inputs, with 4,000 training and 1,000 test rows. Heart "
+    "is the data and split of Experiment 1, with 26 inputs and 242 training and 61 test rows. Every seed uses the same split, so only the "
     "randomness of evolution varies between runs.",
 
     "Each run used seeds 0 to 9, 100 generations, a population of 250 and five backprop epochs per generation, with "
@@ -86,7 +86,7 @@ PROSE = {
     "depends on keeping the part's trained weights rather than relearning them from a fresh start.",
 
     "We used the ten Churn networks of Experiment 2, on the same split (1,000 test rows), and the ten-seed MONK-2 "
-    "networks on the paper's split (87 test rows). Where early stopping was used, validation rows came from the training "
+    "networks on MONK-2's fixed split (87 test rows). Where early stopping was used, validation rows came from the training "
     "split (a stratified 20% of Churn's training rows; 69 rows for MONK-2), never from test. No new networks were "
     "evolved: recipients and donors are the selected genomes of the ten-seed runs.",
 

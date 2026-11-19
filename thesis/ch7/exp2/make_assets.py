@@ -264,7 +264,7 @@ def table_heart_benchmark(S, A, paper):
     best = max(runs, key=lambda r: float(r["test_auc"]))
     aucs = [float(r["test_auc"]) for r in runs]
     nets = [
-        ("The paper's Heart network (40 generations)", "--", paper["test_auc"],
+        ("The original Heart network (40 generations)", "--", paper["test_auc"],
          ci(paper["test_auc_ci_lo"], paper["test_auc_ci_hi"]), "--"),
         (f"Heart-100, best seed (s{best['seed']})", "--", float(best["test_auc"]),
          ci(float(best["test_auc_ci_lo"]), float(best["test_auc_ci_hi"])), "--"),
@@ -292,7 +292,7 @@ def table_heart_benchmark(S, A, paper):
     for r in comp:
         body.append(f"    {r[0]} & {r[1]} & {num(r[2])} & {r[3]} & {r[4]} \\\\")
     body += ["    \\bottomrule", "  \\end{tabularx}"]
-    cap = (f"Heart on the paper's split ({paper['n_train']} training and {paper['n_test']} test patients). "
+    cap = (f"Heart on its fixed split ({paper['n_train']} training and {paper['n_test']} test patients). "
            "Intervals are 95\\% percentile intervals from 10{,}000 bootstrap resamples of the test set "
            "(seed 42). CV AUC is the cross-validated AUC on the training rows that chose the settings. "
            "The median of ten seeds is not one network, so its range across seeds is given instead of an "
@@ -324,7 +324,7 @@ def table_benchmarks_suite():
            f"selection quantity of the runs ({best}), with its interval, and the median test AUC of the ten "
            "seeds with their range (the median of ten seeds is not one network, so it has no interval; its "
            "accuracy is the median accuracy). " + bt.SUITE_CAPTION + f" Training / test rows: {n}. Heart-100 "
-           "uses the paper's Heart split, so its comparators are Experiment~1's Heart column.")
+           "uses Heart's fixed split, so its comparators are Experiment~1's Heart column.")
     write_table("exp2-benchmarks", cap, "tab:exp2-benchmarks", "\n".join(body), size=r"\footnotesize")
 
 

@@ -6,7 +6,7 @@
   \begin{adjustbox}{max width=\textwidth}
   \begin{tabular}{@{}lccccc@{}}
     \toprule
-    & Paper split & \multicolumn{4}{c}{100 random splits (242 / 61)} \\
+    & Fixed split & \multicolumn{4}{c}{100 random splits (242 / 61)} \\
     \cmidrule(l){3-6}
     Model & test AUC & mean & SD & 5th--95th pct. & beats $L_2$ LR \\
     \midrule
@@ -20,6 +20,6 @@
     \bottomrule
   \end{tabular}
   \end{adjustbox}
-  \caption{Heart: test AUC on the paper's split against 100 random stratified splits of the same 303 patients into 242 training and 61 test rows (\texttt{StratifiedShuffleSplit}, seed 1). Each comparator keeps the setting its cross-validation chose on the paper split. Across random splits every comparator averages about 0.90, and the spread between splits (SD about 0.035) is larger than any difference between models; gradient boosting has the lowest mean. The paper split favours every comparator, the tree ensembles most (by 0.04--0.05). PropNEAT was run on the paper split only. Source: \texttt{experiments/benchmarks/heart\_splits.py}.}
+  \caption{Heart: test AUC on the fixed split against 100 random stratified splits of the same 303 patients into 242 training and 61 test rows (\texttt{StratifiedShuffleSplit}, seed 1). }
   \label{tab:heart-splits}
 \end{table}
