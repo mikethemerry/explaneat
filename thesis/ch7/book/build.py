@@ -51,7 +51,7 @@ ARGUMENT = (
     "from interchangeable on Adult to widely spread on Heart. **Grafting (Experiment 3):** "
     "a realisation from one model can replace another's and regain the performance, provided its weights are kept "
     "and fine-tuned; re-initialising rarely finds the same optimum again. **ExConNEAT (Experiment 4, proof of concept):** "
-    "the method extended to convolutional networks: close to a small CNN on MNIST (0.976 test, 1,283 parameters) with a "
+    "the method extended to convolutional networks: close to a small CNN on MNIST (0.976 test, 93 kernels) with a "
     "clean decomposition, but its explanations cannot yet be verified, so it is not explainable yet. Agent-assisted explanations are the measure throughout; Mike's own verification is still 0 everywhere."
 )
 
