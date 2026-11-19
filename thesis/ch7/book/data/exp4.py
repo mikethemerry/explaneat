@@ -308,7 +308,9 @@ EXP = {
         "What is missing is verification. The agent's behaviour-first explanations are plausible and consistent across "
         "networks (ink meters, horizontal strokes split by height, diagonals, left-side upright strokes), and their probes "
         "pass. But \"proven\" here means only that the agent's own image-edit probes agreed. Checking whether a feature map "
-        "really is a stroke or ink detector needs convolutional expertise and tools that are not available here, and Mike "
+        "really is a stroke or ink detector needs tools that do not exist yet: for a node ExplaNEAT has about ten exploratory "
+        "views (line plots, heatmaps, pairs plots, partial dependence, sensitivity, SHAP, subgroups, ablation), but nothing "
+        "equivalent for a kernel's response, so a reader cannot explore a kernel the way they explore a node, and Mike "
         "cannot verify the readings himself. So, in the sense of this chapter, the model is **not explainable yet**. This is "
         "the honest limitation of the thesis, and it is future work.",
         "Further caveats: one seed per configuration; the 0.976 network is a warm-start continuation of the pruned 10k "

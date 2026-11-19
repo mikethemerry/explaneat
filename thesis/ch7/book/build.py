@@ -250,7 +250,7 @@ def main():
     by_group = {g[0]: sorted([c for c in cards if c["group"] == g[0]], key=sort_key) for g in GROUPS}
 
     xc = {}
-    for name in ("xc_levels", "xc_method", "xc_rashomon", "xc_glossary"):
+    for name in ("xc_levels", "xc_method", "xc_rashomon", "xc_glossary", "xc_methods_prose"):
         fp = DATA / f"{name}.py"
         xc[name] = load(fp) if fp.exists() else None
 
@@ -369,7 +369,11 @@ def main():
             body.append('<div class="argue"><p class="lbl2">The argument</p><ul>' + "".join(f"<li>{md(x)}</li>" for x in E["argument"]) + "</ul></div>")
         for nm, url in E.get("links", []):
             body.append(f'<p class="xlink"><a href="{esc(url)}" target="_blank" rel="noopener">{esc(nm)} ↗</a> <span class="small">(opens a separate page in a new tab)</span></p>')
-        body.append(f'<section class="phase" id="{E["id"]}-methods"><h3>Methods</h3><dl class="design">'
+        prose = (xc.get("xc_methods_prose").PROSE.get(E["id"], []) if xc.get("xc_methods_prose") else [])
+        body.append(f'<section class="phase" id="{E["id"]}-methods"><h3>Methods</h3>'
+                    + "".join(f"<p>{md(x)}</p>" for x in prose)
+                    + ('<p class="lbl2">At a glance (the same facts, with sources)</p>' if prose else "")
+                    + '<dl class="design">'
                     + "".join(f"<dt>{md(l)}</dt><dd>{md(t)}</dd>" for l, t in E["methods"]) + "</dl>"
                     + (('<details class="casedet"><summary>Definitions and method detail</summary><dl class="design">'
                         + "".join(f"<dt>{md(l)}</dt><dd>{md(t)}</dd>" for l, t in E["methods_more"]) + "</dl></details>")
