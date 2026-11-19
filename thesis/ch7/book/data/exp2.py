@@ -44,6 +44,14 @@ def bench_table():
 
 
 BENCH_ROWS, BENCH_SEEDS = bench_table()
+E2S = __import__("json").loads((Path(__file__).resolve().parent.parent / "e2_stats.json").read_text())
+
+
+def mins(study):
+    """Explaining minutes, median (range), computed from the database (e2_stats.json <- agent_minutes_db)."""
+    m = E2S[study]["minutes"]
+    return f"{m['median']:.1f} ({m['min']:.1f}–{m['max']:.1f})"
+
 
 EXP = {
     "id": "exp2", "num": "2", "title": "Reproducibility",
@@ -105,9 +113,9 @@ EXP = {
                          "Explaining minutes, median (range)",
                          "Verified by Mike (minutes per network, median)"],
              "rows": [
-                 ["**Adult** (pre-registered)", "0.906 (0.903–0.909)", "0.905 / 0.928", "10/10", "15 (11–17)", "10/10", "10/10", "21.6 (19.3–28.8)", "10/10 (4)"],
-                 ["**Churn** (supplementary)", "0.886 (0.873–0.904)", "0.813 / 0.934", "4/10", "17 (13–27)", "10/10", "10/10", "18.2 (15.7–24.4)", "10/10 (3.5)"],
-                 ["**Heart-100** (supplementary)", "0.892 (0.863–0.926)", "0.919 / 0.945", "1/10", "8.5 (5–13)", "10/10", "10/10", "14.9 (12.5–16.5)", "10/10 (5.5)"],
+                 ["**Adult** (pre-registered)", "0.906 (0.903–0.909)", "0.905 / 0.928", "10/10", "15 (11–17)", "10/10", "10/10", mins("adult"), "10/10 (4)"],
+                 ["**Churn** (supplementary)", "0.886 (0.873–0.904)", "0.813 / 0.934", "4/10", "17 (13–27)", "10/10", "10/10", mins("churn100"), "10/10 (3.5)"],
+                 ["**Heart-100** (supplementary)", "0.892 (0.863–0.926)", "0.919 / 0.945", "1/10", "8.5 (5–13)", "10/10", "10/10", mins("heart100"), "10/10 (5.5)"],
              ],
              "note": "Full coverage was reached within the 3-hour box every time. Mike verified all 30 on 18 Nov 2026, taking 1–10 minutes per network. "
                      "Recheck found 0 mismatches in all 30 records. Test sizes: Adult 9,769, Churn 1,000, Heart-100 61 rows.",
