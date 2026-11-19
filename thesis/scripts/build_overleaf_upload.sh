@@ -15,6 +15,20 @@ cp "$CH7/exp1/tables/exp1-benchmarks.tex" "$OUT/sections/tables/ch7-ex1-benchmar
 cp "$CH7/exp2/tables/exp2/exp2-benchmarks.tex" "$OUT/sections/tables/ch7-ex2-benchmarks.tex"
 cp "$CH7/appendix/tables/ch7-heart-splits.tex" "$OUT/sections/tables/ch7-heart-splits.tex"
 cp "$CH7"/screenshots/ch7-ws-0[0-8]-*.png "$OUT/figures/ch7-ws/"
+# Chapter 7 figures (thesis/ch7/figlib.py): used = picked for the chapter, options = the rest. The floats'
+# \includegraphics paths are figures/ch7/<group>/<id>; FIGURES.md lists them.
+for g in used options; do
+  mkdir -p "$OUT/figures/ch7/$g" "$OUT/sections/figures/$g"
+  cp "$CH7"/figures/sections/figures/$g/*.tex "$OUT/sections/figures/$g/"
+  for t in "$CH7"/figures/sections/figures/$g/*.tex; do
+    id="$(basename "$t" .tex)"
+    if grep -q "{figures/ch7/$g/$id.png}" "$t"; then   # a raster-only option names its .png
+      cp "$CH7/figures/figures/ch7/$g/$id.png" "$OUT/figures/ch7/$g/"
+    else
+      cp "$CH7/figures/figures/ch7/$g/$id.pdf" "$OUT/figures/ch7/$g/"
+    fi
+  done
+done
 rm -f "$OUT/ch7-overleaf-upload.zip"
 (cd "$OUT" && zip -qr ch7-overleaf-upload.zip sections figures)
 echo "built $OUT and $OUT/ch7-overleaf-upload.zip"

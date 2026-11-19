@@ -596,3 +596,405 @@ File: `thesis/ch7/exp2/figures/exp2/exp2-worked-net-exploded.tex`
 **Removed: results**
 
 - (9 units, including its output box)
+
+---
+
+# Figures (20 Nov 2026, branch thesis/kept-figures)
+
+Every figure of the candidate gallery became a thesis figure (vector PDF + generated float, `thesis/ch7/figlib.py`; index `thesis/ch7/FIGURES.md`), in two groups: **used** (picked for the chapter) and **options**. Captions are a title and the keys. For each figure: its caption, and the text that is not a key. For the new figures that text is the gallery's description (`what_it_shows` in `thesis/ch7/figure_candidates/out/manifest.json`, written when the gallery was made; its numbers are as the files gave them on 20 Nov 2026, rerun before quoting). For the Experiment 2 figures already listed above, only the two that changed are repeated (exp2-churn-shapes, exp2-s8-ice). Generated once by a one-off script; not regenerated.
+
+## Figures: used
+
+### bench-dots (fig:ch7-bench-dots)
+
+**Caption**
+
+> Test AUC of PropNEAT and of each comparator, every dataset. Star: PropNEAT (Experiment 2: median of the ten seeds, dashed: their range); dots: comparators; lines: 95\% intervals; survival datasets: Harrell's C. LR: logistic regression ($L_2$); L1: $L_1$ logistic regression; RF: random forest; GB: gradient boosting; EBM: explainable boosting machine; MLP: multilayer perceptron; Cox L2 / Cox EN: Cox model with a ridge / elastic-net penalty; RSF: random survival forest; GBS: gradient-boosted survival model.
+
+**Not a key (for the body text)**: One row per dataset, the explained PropNEAT network (Experiment 2: median of ten seeds, with its range) beside every comparator's test AUC with its 95% interval (survival: Harrell's C). It shows at a glance where PropNEAT sits inside the comparator spread and how wide the intervals are on the small sets.
+
+### exp2-churn-shapes (fig:exp2-churn-shapes)
+
+**Caption**
+
+> Churn: each signal's shape in the ten networks, as a change in the churn score (logit). Blue: one seed's network (one line or bar per seed); dashed: ridge logistic fit.
+
+**Previous caption** (thesis/ch7/exp2/figures/exp2, before this branch)
+
+> Churn: each signal's shape in the ten networks (one line per seed) and the data's own shape (dashed), as a change in the churn score (logit).
+
+**Not a key (for the body text)**: the dashed curve is the ridge (L2) logistic regression of the labels on the signal basis, training rows, its regularisation chosen by seeded stratified 5-fold cross-validation on the training rows (`experiments/churn_signals/catalogue.py` `data_gam`; chosen C in `experiments/churn_signals/cache/meta.json`), projected on each signal's block exactly as each network's logit is. The plotted curve did not change on this branch: the "data's own" shape was already this fit; only its name in the key and legend changed.
+
+### exp2-s8-ice (fig:exp2-s8-ice)
+
+**Caption**
+
+> Heart-100 seed 8: individual conditional expectation (ICE) curves of predicted risk against resting blood pressure, one panel per shape family. Thin coloured: one training patient; black: the family's median curve; grey dashed: mean of all curves; ticks on the axis: the family's own blood pressures. Last panel: the family medians together.
+
+**Previous caption** (thesis/ch7/exp2/figures/exp2, before this branch)
+
+> Heart-100 seed 8: each training patient's predicted risk as resting blood pressure varies (individual conditional expectation curves), coloured by shape family. Ticks on the axis: the patients' own values.
+
+**Not a key (for the body text)**: the curves are unchanged (data/s8_ice.npz); the log-odds panel of the previous version is dropped and each family has its own panel.
+
+### seed-agreement (fig:ch7-seed-agreement)
+
+**Caption**
+
+> Pairwise correlation of the ten networks' logits. Lower triangle: training rows; upper triangle: test rows; colour: correlation.
+
+**Not a key (for the body text)**: For each dataset, the correlation between every pair of the ten networks' logits, on the training rows (lower triangle) and the test rows (upper triangle), with the median pair in each title. Most pairs sit around 0.9; a single seed that disagrees with all others (Adult s8) shows as a dark stripe that the medians of the agreement table hide.
+
+### sig-shapes-adult (fig:ch7-sig-shapes-adult)
+
+**Caption**
+
+> Adult: shapes of the non-linear signals, one line per seed. Solid blue: a seed with the bend present; dotted blue: weak; grey: absent; dashed black: ridge logistic fit.
+
+**Not a key (for the body text)**: Each panel is one non-linear row of the Adult tick table (capital-gain threshold, age bend, hours bend): the network's linear-plus-bend component for that variable, one line per seed, against the data's own fit (dashed). Solid lines are seeds where the bend is present, dotted where it is weak, grey where absent.
+
+### synthetic-shape-c-saddle (fig:ch7-synthetic-shape-c-saddle)
+
+**Caption**
+
+> Synthetic data (U and saddle), the explained network: heart rate $\times$ systolic BP. Colour: the logit with its mean over the grid removed, one scale for all panels (red above the mean, blue below); every other input at the typical case. (b) The explanation part whose contribution moves most on the grid (\emph{high sbp and hr penalty}). True term: $-1.5\,z_h z_p$ (standardised heart rate and systolic BP).
+
+**Not a key (for the body text)**: The sweeps hold every other input at the typical case (median or most common), sodium over the 0.5-99.5th training percentiles, and the grid at 41 x 41 over the 1st-99th percentiles. shape-C-s1-g300 is seed 1 of the 300-generation ReLU runs (experiments/ushape_saddle/RESULTS.md section 11). shape-C-sig-best-g300 is the best-by-train sigmoid seed (section 12); its surface spans a much smaller range than the truth (RESULTS.md section 12). The "part that moves most" is the part with the largest range on the grid. The g300 and sigmoid genomes are not explained.
+
+### synthetic-shape-c-sodium (fig:ch7-synthetic-shape-c-sodium)
+
+**Caption**
+
+> Synthetic data (U and saddle), the explained network: response to sodium. Black: the model's score as sodium varies, every other input at the typical case, relative to the typical sodium; dashed: the true U term $((z_n - (-0.5))^2 - 1)$, lowest at 137 mmol/L; dotted: 137 mmol/L. (b) The explanation parts whose contribution moves most with sodium.
+
+**Not a key (for the body text)**: The sweeps hold every other input at the typical case (median or most common), sodium over the 0.5-99.5th training percentiles, and the grid at 41 x 41 over the 1st-99th percentiles. shape-C-s1-g300 is seed 1 of the 300-generation ReLU runs (experiments/ushape_saddle/RESULTS.md section 11). shape-C-sig-best-g300 is the best-by-train sigmoid seed (section 12); its surface spans a much smaller range than the truth (RESULTS.md section 12). The "part that moves most" is the part with the largest range on the grid. The g300 and sigmoid genomes are not explained.
+
+### tickmap-adult (fig:ch7-tickmap-adult)
+
+**Caption**
+
+> Adult: size of each signal in each seed's network. Shade: clipped SD of the signal's logit contribution (training rows, log scale); blue: present ($\geq$ 0.10); orange: weak (0.03--0.10); grey: below 0.03. (n): seeds where present; red box: opposite direction to most seeds; $\cdot$: input not read. Below the line: non-linear signals.
+
+**Not a key (for the body text)**: The tick table as a heatmap: each cell's shade is the clipped standard deviation of that signal's logit contribution in that seed, so the 0.10 cut (present) and 0.03 cut (weak) become visible distances rather than ticks. Red boxes mark linear terms that point the opposite way to most seeds; row labels give the count of seeds where the signal is present.
+
+### tickmap-churn (fig:ch7-tickmap-churn)
+
+**Caption**
+
+> Churn: size of each signal in each seed's network. Shade: clipped SD of the signal's logit contribution (training rows, log scale); blue: present ($\geq$ 0.10); orange: weak (0.03--0.10); grey: below 0.03. (n): seeds where present; red box: opposite direction to most seeds; $\cdot$: input not read. Below the line: non-linear signals.
+
+**Not a key (for the body text)**: The tick table as a heatmap: each cell's shade is the clipped standard deviation of that signal's logit contribution in that seed, so the 0.10 cut (present) and 0.03 cut (weak) become visible distances rather than ticks. Red boxes mark linear terms that point the opposite way to most seeds; row labels give the count of seeds where the signal is present.
+
+### tickmap-heart100 (fig:ch7-tickmap-heart100)
+
+**Caption**
+
+> Heart-100: size of each signal in each seed's network. Shade: clipped SD of the signal's logit contribution (training rows, log scale); blue: present ($\geq$ 0.10); orange: weak (0.03--0.10); grey: below 0.03. (n): seeds where present; red box: opposite direction to most seeds; $\cdot$: input not read; for a family row, no such unit. Below the line: non-linear signals.
+
+**Not a key (for the body text)**: The tick table as a heatmap: each cell's shade is the clipped standard deviation of that signal's logit contribution in that seed, so the 0.10 cut (present) and 0.03 cut (weak) become visible distances rather than ticks. Red boxes mark linear terms that point the opposite way to most seeds; row labels give the count of seeds where the signal is present.
+
+### train-vs-test-auc (fig:ch7-train-vs-test-auc)
+
+**Caption**
+
+> Training against test AUC: the ten seeds and the comparators. Filled marks: the ten seeds; open circles: comparators (LR: logistic regression, $L_2$; L1: $L_1$ logistic regression; RF: random forest; GB: gradient boosting; EBM: explainable boosting machine; MLP: multilayer perceptron); dashed: training AUC = test AUC.
+
+**Not a key (for the body text)**: Each seed's training AUC against its test AUC, with every comparator of the benchmark suite on the same split (open circles, labelled) and the diagonal where train equals test. Distance below the diagonal is overfitting: on Adult the seeds sit on it beside LR; on Churn the seeds overfit less than the forests and boosting; on Heart-100 the seeds fall further below it than logistic regression does.
+
+### xor-ridge-valley (fig:ch7-xor-ridge-valley)
+
+**Caption**
+
+> XOR: one network of each family, the count family (a, c) and the difference family (b, d). (a, b) The score surface $z(x_1, x_2)$ over the plane $z = 0$ (grey); (c, d) the same scores from above. Shading: blue where the score is positive, magenta where it is negative, pale near 0; solid line: where it is 0. Filled points: the two inputs with XOR output 1; dashed line: the hidden unit's fold.
+
+**Not a key (for the body text)**: The count family's score is a ridge in x1 + x2 and the difference family's a valley in x1 - x2. Count family: XOR = OR and not AND (the skips compute OR and the hidden unit flips AND). Difference family: the skips compute x1 and not x2 and the hidden unit flips x2 and not x1. The representatives are `verify_xor.REPS` (the sheet's default 1-row cells), checked against `verify_xor_results.json`.
+
+## Figures: options
+
+### 10seed-cost_prereg (fig:ch7-10seed-cost_prereg)
+
+**Caption**
+
+> Earlier ten-seed export: training and explaining time, pre-registered datasets. One dot per seed (ten per dataset, horizontal jitter only); box: interquartile range; thick line: median; whiskers: minimum to maximum.
+
+**Not a key (for the body text)**: The original draft captions (pre-registration status, training-time notes, bootstrap settings, shared CPU) are in `experiments/10seed/figures/README.md`. These figures predate the v4 explanations; their LR / GB reference lines are constants typed in experiments/10seed/make_figures.py (legacy).
+
+### 10seed-cost_supp (fig:ch7-10seed-cost_supp)
+
+**Caption**
+
+> Earlier ten-seed export: training and explaining time, additional analyses. One dot per seed (ten per dataset, horizontal jitter only); box: interquartile range; thick line: median; whiskers: minimum to maximum.
+
+**Not a key (for the body text)**: The original draft captions (pre-registration status, training-time notes, bootstrap settings, shared CPU) are in `experiments/10seed/figures/README.md`. These figures predate the v4 explanations; their LR / GB reference lines are constants typed in experiments/10seed/make_figures.py (legacy).
+
+### 10seed-coverage_time (fig:ch7-10seed-coverage_time)
+
+**Caption**
+
+> Earlier ten-seed export: coverage against explaining time. One dot per network; filled: full coverage, hollow: not explained within the box. Dashed vertical line: the pre-registered time box. (a) Pre-registered datasets; (b) additional analyses.
+
+**Not a key (for the body text)**: The original draft captions (pre-registration status, training-time notes, bootstrap settings, shared CPU) are in `experiments/10seed/figures/README.md`. These figures predate the v4 explanations; their LR / GB reference lines are constants typed in experiments/10seed/make_figures.py (legacy).
+
+### 10seed-structure_prereg (fig:ch7-10seed-structure_prereg)
+
+**Caption**
+
+> Earlier ten-seed export: network structure, pre-registered datasets. One dot per seed (ten per dataset, horizontal jitter only); box: interquartile range; thick line: median; whiskers: minimum to maximum. Open diamond: the paper's network for that dataset.
+
+**Not a key (for the body text)**: The original draft captions (pre-registration status, training-time notes, bootstrap settings, shared CPU) are in `experiments/10seed/figures/README.md`. These figures predate the v4 explanations; their LR / GB reference lines are constants typed in experiments/10seed/make_figures.py (legacy).
+
+### 10seed-structure_supp (fig:ch7-10seed-structure_supp)
+
+**Caption**
+
+> Earlier ten-seed export: network structure, additional analyses. One dot per seed (ten per dataset, horizontal jitter only); box: interquartile range; thick line: median; whiskers: minimum to maximum.
+
+**Not a key (for the body text)**: The original draft captions (pre-registration status, training-time notes, bootstrap settings, shared CPU) are in `experiments/10seed/figures/README.md`. These figures predate the v4 explanations; their LR / GB reference lines are constants typed in experiments/10seed/make_figures.py (legacy).
+
+### 10seed-test_auc_prereg (fig:ch7-10seed-test_auc_prereg)
+
+**Caption**
+
+> Earlier ten-seed export: test AUC per seed, pre-registered datasets. Dots and bars: each seed's test AUC with its 95\% interval; P (open diamond): the paper's network. Dashed: L2 logistic regression (LR); dotted: gradient boosting (GBM; $\approx$: approximate, not the same split).
+
+**Not a key (for the body text)**: The original draft captions (pre-registration status, training-time notes, bootstrap settings, shared CPU) are in `experiments/10seed/figures/README.md`. These figures predate the v4 explanations; their LR / GB reference lines are constants typed in experiments/10seed/make_figures.py (legacy).
+
+### 10seed-test_auc_supp (fig:ch7-10seed-test_auc_supp)
+
+**Caption**
+
+> Earlier ten-seed export: test AUC per seed, additional analyses. Dots and bars: each seed's test AUC with its 95\% interval. Dashed: L2 logistic regression (LR); dotted: gradient boosting (GBM).
+
+**Not a key (for the body text)**: The original draft captions (pre-registration status, training-time notes, bootstrap settings, shared CPU) are in `experiments/10seed/figures/README.md`. These figures predate the v4 explanations; their LR / GB reference lines are constants typed in experiments/10seed/make_figures.py (legacy).
+
+### bench-gap (fig:ch7-bench-gap)
+
+**Caption**
+
+> PropNEAT's test AUC minus the best comparator's and logistic regression's. Dark blue: minus the best comparator (named); light blue: minus logistic regression (survival: Cox PH, Harrell's C); arrow: a bar cut at 0.2, its value printed. LR: logistic regression ($L_2$); L1: $L_1$ logistic regression; RF: random forest; GB: gradient boosting; EBM: explainable boosting machine; MLP: multilayer perceptron; Cox L2 / Cox EN: Cox model with a ridge / elastic-net penalty; RSF: random survival forest; GBS: gradient-boosted survival model.
+
+**Not a key (for the body text)**: PropNEAT's test AUC (survival: C-index) minus the best comparator's (dark) and minus L2 logistic regression's (light), per dataset; Experiment 2 uses the median of ten seeds. Bars right of zero beat the reference. PropNEAT beats LR wherever the data hold real non-linearity and sits near or below the best comparator.
+
+### completeness-residual (fig:ch7-completeness-residual)
+
+**Caption**
+
+> Residual of the signal catalogue, per network. (a) Residual logit SD (log scale); orange line: 0.10. (b) $1 - R^2$ on training against test rows (log scales); dashed: equal. Colour and marker: dataset.
+
+**Not a key (for the body text)**: (a) Each network's residual logit SD after projecting on its dataset's catalogue, against the 0.10 bar of the completeness criterion. (b) The unexplained share of logit variance on training versus test rows: points near the diagonal mean the catalogue fits new rows as well as old ones.
+
+### completeness-shares (fig:ch7-completeness-shares)
+
+**Caption**
+
+> Shares of each network's logit variance (training rows). Blue: linear terms; orange: non-linear signals of the catalogue; grey: residual.
+
+**Not a key (for the body text)**: For each of the 30 networks, the share of its logit variance (training rows) captured by the catalogue's linear terms, the extra share captured by its non-linear signals, and the residual the catalogue misses. Adult is almost all linear; Churn needs its non-linear signals for about a third; Heart-100 keeps a residual. Heart's basis is the completeness check's data blocks (heart_basis.py), not the tick-table families.
+
+### cost-minutes-size (fig:ch7-cost-minutes-size)
+
+**Caption**
+
+> Explaining minutes against network size, Experiments 1 and 2. Colour and marker: Experiment 2 dataset; black plus: an Experiment 1 network (named in b); (b) log scale.
+
+**Not a key (for the body text)**: The explaining agent's minutes (explanation creation to last timestamped database write) against the network's hidden units (a) and enabled connections (b, log scale), for the 30 Experiment 2 networks and the Experiment 1 networks with a database time (labelled in b). Time does not track size: each dataset sits in its own band, and the largest network (Connect-4 cells) took no longer than the small synthetic ones.
+
+### cost-verify (fig:ch7-cost-verify)
+
+**Caption**
+
+> Verification minutes against explaining minutes. Colour and marker: dataset; open: minutes recorded from chat.
+
+**Not a key (for the body text)**: Each verified Experiment 2 network: the minutes Mike spent verifying its explanation against the minutes the agent spent producing it. Verification takes a few minutes whatever the explaining time; hollow marks are the two values recorded from chat rather than typed in the review screen.
+
+### cox-whas500-forest (fig:ch7-cox-whas500-forest)
+
+**Caption**
+
+> WHAS500: hazard ratios of Cox PH and of the PropNEAT-Cox network, training rows ($n$ = 320). Blue dot and bar: the Cox PH hazard ratio with its 95\% interval; red diamond: the network's hazard ratio; cross at 1: an input the network does not use. Log scale; vertical line: 1.
+
+**Not a key (for the body text)**: Cox PH is lifelines, unpenalised (Efron), on standardised training rows, converted to per-unit hazard ratios. The network hazard ratios are read from `hazard_readings/whas500-s0.json`. The forest's partial dependence is of the log cumulative hazard at the horizon, centred at the training median (binary inputs: the lower level). The two-way plot is the forest's strongest pair by Friedman's H among its top five inputs.
+
+### cox-whas500-h2d (fig:ch7-cox-whas500-h2d)
+
+**Caption**
+
+> WHAS500: the forest's strongest pair, two-way partial dependence. Colour: the random survival forest's predicted 3-year risk, averaged over the training patients with the two inputs set to each cell's values (darker: higher).
+
+**Not a key (for the body text)**: Cox PH is lifelines, unpenalised (Efron), on standardised training rows, converted to per-unit hazard ratios. The network hazard ratios are read from `hazard_readings/whas500-s0.json`. The forest's partial dependence is of the log cumulative hazard at the horizon, centred at the training median (binary inputs: the lower level). The two-way plot is the forest's strongest pair by Friedman's H among its top five inputs.
+
+### cox-whas500-pd (fig:ch7-cox-whas500-pd)
+
+**Caption**
+
+> WHAS500: the forest's top inputs, partial dependence at 3 years. Green: the random survival forest's partial dependence; blue: Cox PH; red dashed: the network. Each curve is relative to the reference value (the lower level; the training median).
+
+**Not a key (for the body text)**: Cox PH is lifelines, unpenalised (Efron), on standardised training rows, converted to per-unit hazard ratios. The network hazard ratios are read from `hazard_readings/whas500-s0.json`. The forest's partial dependence is of the log cumulative hazard at the horizon, centred at the training median (binary inputs: the lower level). The two-way plot is the forest's strongest pair by Friedman's H among its top five inputs.
+
+### heart-lincore-vs-data (fig:ch7-heart-lincore-vs-data)
+
+**Caption**
+
+> Heart-100: weight of each linear term in each seed's network and in a ridge logistic fit. Green: a seed with the term present ($\geq$ 0.10); red diamond: present, opposite direction to most seeds; open: below 0.10; black bar: ridge logistic fit.
+
+**Not a key (for the body text)**: For each linear term, the weight each seed's network puts on it (dots, from projecting its logit on the linear columns) and the weight a cross-validated ridge logistic fit of the data puts on it (black bar). Seeds agree in sign on the main terms and mostly put more weight on them than the shrunk data fit; the downsloping ST slope splits by sign (red: opposite direction to most seeds).
+
+### heart-splits-box (fig:ch7-heart-splits-box)
+
+**Caption**
+
+> Heart: test AUC of each comparator over random splits. Box and blue points: 100 random splits (61 test patients); red diamond: the fixed (paper) split; green triangles: the ten Heart-100 seeds on the fixed split, bar: their median.
+
+**Not a key (for the body text)**: Each comparator's test AUC on 100 random 242/61 splits of the 303 Heart patients (box and points), with its AUC on the fixed paper split (red diamond) and the ten Heart-100 PropNEAT seeds on the fixed split. The fixed split sits near the top of the forest's and both boosting models' ranges, and nearer the middle for logistic regression, so it flatters the tree ensembles most.
+
+### heart-splits-diff (fig:ch7-heart-splits-diff)
+
+**Caption**
+
+> Heart: test AUC minus logistic regression's over random splits. Histogram: 100 random splits; red line: the fixed (paper) split; black line: zero.
+
+**Not a key (for the body text)**: For each of the 100 random splits, a model's test AUC minus L2 logistic regression's on the same split, with the fixed split's difference marked (red) and zero (black). Gradient boosting's lead on the fixed split is matched or exceeded on only a few random splits.
+
+### heart-units-gain (fig:ch7-heart-units-gain)
+
+**Caption**
+
+> Heart-100: AUC gain of each non-linear unit over its straight line, training against test rows. Colour and marker: family; vertical line: 95\% interval of the test gain.
+
+**Not a key (for the body text)**: Every switching unit of the ten Heart-100 networks: the AUC it adds over its own straight-line version on training rows (x) and on test rows (y, with its 95% interval), coloured by family. Most units add on training rows and nothing measurable on the 61 test patients.
+
+### lincore-adult (fig:ch7-lincore-adult)
+
+**Caption**
+
+> Adult: size of each linear term in each seed's network. One mark per seed (log scale). Filled blue: present ($\geq$ 0.10); open: below 0.10; red diamond: present, opposite direction to most seeds; $\times$: input not read. Shading: below 0.03 (grey) and 0.03--0.10 (orange); orange line: 0.10.
+
+**Not a key (for the body text)**: Each linear term's logit contribution size (clipped SD) in each of the ten networks, on a log scale with the 0.03 and 0.10 cuts shaded. It shows how far above the threshold the shared core sits and how close the occasional terms come to it.
+
+### lincore-churn (fig:ch7-lincore-churn)
+
+**Caption**
+
+> Churn: size of each linear term in each seed's network. One mark per seed (log scale). Filled blue: present ($\geq$ 0.10); open: below 0.10; red diamond: present, opposite direction to most seeds; $\times$: input not read. Shading: below 0.03 (grey) and 0.03--0.10 (orange); orange line: 0.10.
+
+**Not a key (for the body text)**: Each linear term's logit contribution size (clipped SD) in each of the ten networks, on a log scale with the 0.03 and 0.10 cuts shaded. It shows how far above the threshold the shared core sits and how close the occasional terms come to it.
+
+### lincore-heart100 (fig:ch7-lincore-heart100)
+
+**Caption**
+
+> Heart-100: size of each linear term in each seed's network. One mark per seed (log scale). Filled blue: present ($\geq$ 0.10); open: below 0.10; red diamond: present, opposite direction to most seeds; $\times$: input not read. Shading: below 0.03 (grey) and 0.03--0.10 (orange); orange line: 0.10.
+
+**Not a key (for the body text)**: Each linear term's logit contribution size (clipped SD) in each of the ten networks, on a log scale with the 0.03 and 0.10 cuts shaded. It shows how far above the threshold the shared core sits and how close the occasional terms come to it.
+
+### linearised-auc (fig:ch7-linearised-auc)
+
+**Caption**
+
+> AUC of each network as trained and with its non-linear units linearised. Filled: the network as trained; open: every non-linear unit replaced by its best straight line; grey: joins a seed's two values. The panels of a row span the same AUC range.
+
+**Not a key (for the body text)**: Generalises the Heart-100 linearisation figure to Adult and Churn: each network's AUC as trained and with every non-linear unit replaced by its best straight line, on training (top) and test rows (bottom); every panel in a row spans the same AUC range. Adult loses little, Churn loses most, Heart-100 loses on training rows but gains or loses little on test.
+
+### recurrence (fig:ch7-recurrence)
+
+**Caption**
+
+> Number of seeds carrying each signal. Bar: seeds where the signal is present; light extension: seeds where it is weak. Blue: linear term; orange: non-linear signal.
+
+**Not a key (for the body text)**: For each signal present in at least one network, the number of the ten seeds where it is present (dark) and weak (light), linear terms in blue and non-linear signals in orange. Linear terms recur in nearly every seed; non-linear signals spread from shared to one-off.
+
+### seed-agreement-strip (fig:ch7-seed-agreement-strip)
+
+**Caption**
+
+> Pairwise correlation of the ten networks' logits, training and test rows. One mark per pair of seeds; filled: training rows; open: test rows; bar: median.
+
+**Not a key (for the body text)**: The same pairwise correlations as a strip per dataset, training rows beside test rows. It makes the drop from train to test and the spread between pairs easier to read than the matrices.
+
+### sig-shapes-heart100 (fig:ch7-sig-shapes-heart100)
+
+**Caption**
+
+> Heart-100: shapes of the non-linear families, one line per seed. Mean logit contribution of the family in each quantile band (numeric input, drawn at the band's median) or level of its main input; colour and marker: seed; grey dotted: weak.
+
+**Not a key (for the body text)**: One panel per non-linear family of the Heart-100 tick table: the family's logit contribution (the network minus the network with those units straightened), averaged over the training patients in each band or level of the family's main input, one line per seed that has the family (grey dotted: weak). It shows which families agree in shape across seeds and which are one network's own; caveat: a band mean can hide a gate that pushes some patients up and others down, and levels with n = 2 drive two panels.
+
+### size-vs-auc (fig:ch7-size-vs-auc)
+
+**Caption**
+
+> Network size against test AUC. Numbers beside the marks: seed.
+
+**Not a key (for the body text)**: Each seed's number of hidden units (top) and enabled connections (bottom) against its test AUC, one panel per dataset, seed numbers beside the marks. Within a dataset, bigger networks are not reliably better.
+
+### synthetic-shape-a-saddle (fig:ch7-synthetic-shape-a-saddle)
+
+**Caption**
+
+> Synthetic data (U only), the explained network: heart rate $\times$ systolic BP. Colour: the logit with its mean over the grid removed, one scale for all panels (red above the mean, blue below); every other input at the typical case. (b) The explanation part whose contribution moves most on the grid (\emph{sodium U}). This dataset has no saddle term; (c) shows it for comparison. True term: $-1.5\,z_h z_p$ (standardised heart rate and systolic BP).
+
+**Not a key (for the body text)**: The sweeps hold every other input at the typical case (median or most common), sodium over the 0.5-99.5th training percentiles, and the grid at 41 x 41 over the 1st-99th percentiles. shape-C-s1-g300 is seed 1 of the 300-generation ReLU runs (experiments/ushape_saddle/RESULTS.md section 11). shape-C-sig-best-g300 is the best-by-train sigmoid seed (section 12); its surface spans a much smaller range than the truth (RESULTS.md section 12). The "part that moves most" is the part with the largest range on the grid. The g300 and sigmoid genomes are not explained.
+
+### synthetic-shape-a-sodium (fig:ch7-synthetic-shape-a-sodium)
+
+**Caption**
+
+> Synthetic data (U only), the explained network: response to sodium. Black: the model's score as sodium varies, every other input at the typical case, relative to the typical sodium; dashed: the true U term $((z_n - (-0.5))^2 - 1)$, lowest at 137 mmol/L; dotted: 137 mmol/L. (b) The explanation parts whose contribution moves most with sodium.
+
+**Not a key (for the body text)**: The sweeps hold every other input at the typical case (median or most common), sodium over the 0.5-99.5th training percentiles, and the grid at 41 x 41 over the 1st-99th percentiles. shape-C-s1-g300 is seed 1 of the 300-generation ReLU runs (experiments/ushape_saddle/RESULTS.md section 11). shape-C-sig-best-g300 is the best-by-train sigmoid seed (section 12); its surface spans a much smaller range than the truth (RESULTS.md section 12). The "part that moves most" is the part with the largest range on the grid. The g300 and sigmoid genomes are not explained.
+
+### synthetic-shape-b-saddle (fig:ch7-synthetic-shape-b-saddle)
+
+**Caption**
+
+> Synthetic data (saddle only), the explained network: heart rate $\times$ systolic BP. Colour: the logit with its mean over the grid removed, one scale for all panels (red above the mean, blue below); every other input at the typical case. (b) The explanation part whose contribution moves most on the grid (\emph{pressure rate load}). True term: $-1.5\,z_h z_p$ (standardised heart rate and systolic BP).
+
+**Not a key (for the body text)**: The sweeps hold every other input at the typical case (median or most common), sodium over the 0.5-99.5th training percentiles, and the grid at 41 x 41 over the 1st-99th percentiles. shape-C-s1-g300 is seed 1 of the 300-generation ReLU runs (experiments/ushape_saddle/RESULTS.md section 11). shape-C-sig-best-g300 is the best-by-train sigmoid seed (section 12); its surface spans a much smaller range than the truth (RESULTS.md section 12). The "part that moves most" is the part with the largest range on the grid. The g300 and sigmoid genomes are not explained.
+
+### synthetic-shape-b-sodium (fig:ch7-synthetic-shape-b-sodium)
+
+**Caption**
+
+> Synthetic data (saddle only), the explained network: response to sodium. Black: the model's score as sodium varies, every other input at the typical case, relative to the typical sodium; dotted: 137 mmol/L. This dataset has no U term.
+
+**Not a key (for the body text)**: The sweeps hold every other input at the typical case (median or most common), sodium over the 0.5-99.5th training percentiles, and the grid at 41 x 41 over the 1st-99th percentiles. shape-C-s1-g300 is seed 1 of the 300-generation ReLU runs (experiments/ushape_saddle/RESULTS.md section 11). shape-C-sig-best-g300 is the best-by-train sigmoid seed (section 12); its surface spans a much smaller range than the truth (RESULTS.md section 12). The "part that moves most" is the part with the largest range on the grid. The g300 and sigmoid genomes are not explained.
+
+### synthetic-shape-c-s1-g300-saddle (fig:ch7-synthetic-shape-c-s1-g300-saddle)
+
+**Caption**
+
+> Synthetic data (U and saddle), seed 1 at generation 300 (not explained): heart rate $\times$ systolic BP. Colour: the logit with its mean over the grid removed, one scale for all panels (red above the mean, blue below); every other input at the typical case. True term: $-1.5\,z_h z_p$ (standardised heart rate and systolic BP).
+
+**Not a key (for the body text)**: The sweeps hold every other input at the typical case (median or most common), sodium over the 0.5-99.5th training percentiles, and the grid at 41 x 41 over the 1st-99th percentiles. shape-C-s1-g300 is seed 1 of the 300-generation ReLU runs (experiments/ushape_saddle/RESULTS.md section 11). shape-C-sig-best-g300 is the best-by-train sigmoid seed (section 12); its surface spans a much smaller range than the truth (RESULTS.md section 12). The "part that moves most" is the part with the largest range on the grid. The g300 and sigmoid genomes are not explained.
+
+### synthetic-shape-c-s1-g300-sodium (fig:ch7-synthetic-shape-c-s1-g300-sodium)
+
+**Caption**
+
+> Synthetic data (U and saddle), seed 1 at generation 300 (not explained): response to sodium. Black: the model's score as sodium varies, every other input at the typical case, relative to the typical sodium; dashed: the true U term $((z_n - (-0.5))^2 - 1)$, lowest at 137 mmol/L; dotted: 137 mmol/L.
+
+**Not a key (for the body text)**: The sweeps hold every other input at the typical case (median or most common), sodium over the 0.5-99.5th training percentiles, and the grid at 41 x 41 over the 1st-99th percentiles. shape-C-s1-g300 is seed 1 of the 300-generation ReLU runs (experiments/ushape_saddle/RESULTS.md section 11). shape-C-sig-best-g300 is the best-by-train sigmoid seed (section 12); its surface spans a much smaller range than the truth (RESULTS.md section 12). The "part that moves most" is the part with the largest range on the grid. The g300 and sigmoid genomes are not explained.
+
+### synthetic-shape-c-sig-best-g300-saddle (fig:ch7-synthetic-shape-c-sig-best-g300-saddle)
+
+**Caption**
+
+> Synthetic data (U and saddle), the best sigmoid-unit seed at generation 300 (not explained): heart rate $\times$ systolic BP. Colour: the logit with its mean over the grid removed, one scale for all panels (red above the mean, blue below); every other input at the typical case. True term: $-1.5\,z_h z_p$ (standardised heart rate and systolic BP).
+
+**Not a key (for the body text)**: The sweeps hold every other input at the typical case (median or most common), sodium over the 0.5-99.5th training percentiles, and the grid at 41 x 41 over the 1st-99th percentiles. shape-C-s1-g300 is seed 1 of the 300-generation ReLU runs (experiments/ushape_saddle/RESULTS.md section 11). shape-C-sig-best-g300 is the best-by-train sigmoid seed (section 12); its surface spans a much smaller range than the truth (RESULTS.md section 12). The "part that moves most" is the part with the largest range on the grid. The g300 and sigmoid genomes are not explained.
+
+### synthetic-shape-c-sig-best-g300-sodium (fig:ch7-synthetic-shape-c-sig-best-g300-sodium)
+
+**Caption**
+
+> Synthetic data (U and saddle), the best sigmoid-unit seed at generation 300 (not explained): response to sodium. Black: the model's score as sodium varies, every other input at the typical case, relative to the typical sodium; dashed: the true U term $((z_n - (-0.5))^2 - 1)$, lowest at 137 mmol/L; dotted: 137 mmol/L.
+
+**Not a key (for the body text)**: The sweeps hold every other input at the typical case (median or most common), sodium over the 0.5-99.5th training percentiles, and the grid at 41 x 41 over the 1st-99th percentiles. shape-C-s1-g300 is seed 1 of the 300-generation ReLU runs (experiments/ushape_saddle/RESULTS.md section 11). shape-C-sig-best-g300 is the best-by-train sigmoid seed (section 12); its surface spans a much smaller range than the truth (RESULTS.md section 12). The "part that moves most" is the part with the largest range on the grid. The g300 and sigmoid genomes are not explained.
+
+### xor-gates (fig:ch7-xor-gates)
+
+**Caption**
+
+> XOR: the gates of each family, count family (a--c) and difference family (d--f). Left: the skip connections alone; middle: the hidden unit's contribution $u\cdot h$ (green: active, darker for larger $|u h|$; dashed: its fold; ringed points: the inputs whose sign it flips); right: the composed score. Shading: blue where the score is positive, magenta where it is negative, pale near 0; solid line: where it is 0. Filled points: inputs where the panel's quantity is positive (middle: where the hidden unit is active).
+
+**Not a key (for the body text)**: The count family's score is a ridge in x1 + x2 and the difference family's a valley in x1 - x2. Count family: XOR = OR and not AND (the skips compute OR and the hidden unit flips AND). Difference family: the skips compute x1 and not x2 and the hidden unit flips x2 and not x1. The representatives are `verify_xor.REPS` (the sheet's default 1-row cells), checked against `verify_xor_results.json`.

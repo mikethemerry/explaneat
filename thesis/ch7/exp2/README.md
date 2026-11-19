@@ -17,12 +17,13 @@ is a READ ONLY transaction on `explaneat_v4` (about 1 minute); nothing is writte
 
 ## Using them in the thesis
 
-Copy `tables/exp2/` to `tables/exp2/` and `figures/exp2/` to `figures/exp2/` under the thesis root.
-Then:
+Copy `tables/exp2/` to `tables/exp2/` under the thesis root. The figures (since 20 Nov 2026) live with every
+other Chapter 7 figure in `thesis/ch7/figures/` (written through `thesis/ch7/figlib.py`, listed in
+`thesis/ch7/FIGURES.md`), already in the Overleaf layout that `thesis/scripts/build_overleaf_upload.sh` zips:
 
 ```latex
-\input{tables/exp2/exp2-headline}     % a table float
-\input{figures/exp2/exp2-auc}         % a figure float; it calls \includegraphics{figures/exp2/exp2-auc}
+\input{tables/exp2/exp2-headline}               % a table float
+\input{sections/figures/used/exp2-auc}          % a figure float; \includegraphics{figures/ch7/used/exp2-auc}
 ```
 
 Only packages already in `dissertation.tex` are used: booktabs, tabularx, makecell, adjustbox,
@@ -48,16 +49,20 @@ text width, so `width=\textwidth` keeps the font at about 8.5 pt. Colours are Ok
 | exp2-betas-{adult,churn,heart100} | tab:exp2-betas-<set> | linear-term betas per seed (real units), median, LR reference; marks for opposite direction and linear-path disagreement (`linear_betas.py`; landscape) | `experiments/linear_betas/` (`betas.py`) |
 | exp2-betas-adult-{household,work,education,country}, exp2-betas-churn-states | tab:exp2-betas-<set>-<group> | every level of the many-level categories, per seed (appendix) | `experiments/linear_betas/` |
 
-## Figures (`figures/exp2/`, each `.pdf` + `.png` + `.tex`)
+## Figures (in `thesis/ch7/figures/figures/ch7/{used,options}/`, each `.pdf` + `.png`, float in `sections/figures/`)
+
+Drawn by `make_assets.py` (below), `worked.py` (the worked example) and `exp2_figures.py` (the signal, completeness,
+performance and verification-cost figures that began in `thesis/ch7/figure_candidates`); all are listed with
+their captions in `thesis/ch7/FIGURES.md`.
 
 | file | label | content | sources |
 |---|---|---|---|
 | exp2-auc | fig:exp2-auc | per-seed test AUC with 95% intervals, three panels, LR / GB lines, near-best band | e2_stats, rashomon_summary.json |
-| exp2-cost | fig:exp2-cost | (a) agent minutes vs hidden units; (b) Mike's verification minutes per network | e2_stats, v4 records (`mike_verification`) |
+| exp2-cost | fig:exp2-cost | (a) agent minutes vs hidden units; (b) verification minutes per network | e2_stats, v4 records (`mike_verification`) |
 | exp2-heart-linearised | fig:exp2-heart-linearised | full vs linearised AUC per seed, train and test | heart100_audit/networks.csv |
-| exp2-s8-ice | fig:exp2-s8-ice | heart100-s8 resting-BP ICE curves by family (risk and log-odds) | `data/s8_ice.npz` (the dossier rebuilt with the same config; family sizes asserted equal) |
+| exp2-s8-ice | fig:exp2-s8-ice | heart100-s8 resting-BP ICE curves (predicted risk), one panel per family + the family medians | `data/s8_ice.npz` (the dossier rebuilt with the same config; family sizes asserted equal) |
 | exp2-heart-pairs | fig:exp2-heart-pairs | heart100-s2 whole-model pairs plot, five inputs, real units | `data/pairs_s2.json` (`viz_data.compute_pairs`, others at the training median) |
-| exp2-churn-shapes | fig:exp2-churn-shapes | each signal's realised shape in the ten seeds vs the data's | `data/churn_shapes.json` (as `experiments/churn_signals/figures.py`) |
+| exp2-churn-shapes | fig:exp2-churn-shapes | each signal's realised shape in the ten seeds vs a ridge logistic fit (the data's own) | `data/churn_shapes.json` (as `experiments/churn_signals/figures.py`) |
 | exp2-churn-calls-parts | fig:exp2-churn-calls-parts | service calls split into explanation parts, seeds 0, 3, 4 | `experiments/churn_signals/cache/curves.json`, `consolidation.csv` |
 | exp2-churn-s5-network | fig:exp2-churn-s5-network | churn100-s5 network, hidden units coloured by signal | `experiments/churn_signals/cache/graphs.json` |
 

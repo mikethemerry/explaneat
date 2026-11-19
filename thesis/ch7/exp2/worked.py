@@ -18,8 +18,9 @@ experiments/10seed/plain_language_v4/churn100-s5.json (claims, graph); the v4 re
 experiments/10seed/explanations_v4/churn100-s5.json. DB sessions are read only; nothing is
 written to any database (the query tools' stamp_and_record is never called).
 
-Outputs: data/worked_churn100_s5.json (cache); figures/exp2/exp2-worked-{pairs,ice,net-unexplained,
-net-concept,net-exploded}.{pdf,png,tex}; tables/exp2/exp2-worked-claims.tex.
+Outputs: data/worked_churn100_s5.json (cache); the figures exp2-worked-{pairs,ice,net-unexplained,
+net-concept,net-exploded} (.pdf, .png and float, placed by thesis/ch7/figlib.py in thesis/ch7/figures/);
+tables/exp2/exp2-worked-claims.tex.
 """
 from __future__ import annotations
 
@@ -28,7 +29,6 @@ import copy
 import json
 import os
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -38,7 +38,7 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-from make_assets import (DATA, FIG, OI, REPO, TEXTWIDTH_IN, mpl, num, save, tx,  # noqa: E402
+from make_assets import (DATA, OI, REPO, TEXTWIDTH_IN, figlib, mpl, num, save, tx,  # noqa: E402
                          write_figure, write_table)
 
 LABEL = "churn100-s5"
@@ -340,16 +340,17 @@ def _compact(dxi=1.6, gap=0.3):
 
 def _tikz_pdf(tikz, name):
     from explaneat.export.render_structure import standalone
-    FIG.mkdir(parents=True, exist_ok=True)
+    # a fixed date and no trailer ID: the same picture gives the same PDF bytes on every run
+    env = {**os.environ, "SOURCE_DATE_EPOCH": "946684800", "FORCE_SOURCE_DATE": "1"}
     with tempfile.TemporaryDirectory() as d:
         # 12 pt base: the diagram is scaled to the text width, so its tiny labels need the larger base
-        (Path(d) / "f.tex").write_text(standalone(tikz).replace("[border=6pt]{standalone}",
-                                                                "[border=6pt,12pt]{standalone}"))
+        (Path(d) / "f.tex").write_text("\\pdftrailerid{}\n" + standalone(tikz).replace(
+            "[border=6pt]{standalone}", "[border=6pt,12pt]{standalone}"))
         subprocess.run(["pdflatex", "-interaction=nonstopmode", "-halt-on-error", "f.tex"], cwd=d, check=True,
-                       capture_output=True)
-        shutil.copy(Path(d) / "f.pdf", FIG / f"{name}.pdf")
+                       capture_output=True, env=env)
+        figlib.place(Path(d) / "f.pdf", name, "pdf")
         subprocess.run(["pdftoppm", "-png", "-r", "300", "-singlefile", "f.pdf", "f"], cwd=d, check=True)
-        shutil.copy(Path(d) / "f.png", FIG / f"{name}.png")
+        figlib.place(Path(d) / "f.png", name, "png")
 
 
 def fig_networks(D):

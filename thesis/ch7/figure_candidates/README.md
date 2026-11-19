@@ -1,5 +1,12 @@
 # Chapter 7 figure candidates
 
+**20 Nov 2026: every candidate is now a thesis figure** (vector PDF + float), in `thesis/ch7/figures/`, grouped
+as *used* (Mike's picks) and *options*; index `thesis/ch7/FIGURES.md`. The drawing code moved to the thesis
+generators (`thesis/ch7/exp2/exp2_figures.py`, `thesis/ch7/exp1/bench_figures.py`, `thesis/ch7/exp1/make_figures.py`;
+files via `thesis/ch7/figlib.py`). `make_candidates.py` still draws the gallery from the same functions; `out/` is
+kept as the 20 Nov snapshot the picks were made from (a rerun redraws it with the thesis versions). `data/` and
+`extract_db.py` remain the read-only DB caches of the Experiment 2 figures.
+
 A gallery of candidate figures to sit beside the Chapter 7 tables, for Mike to choose from. Nothing
 here is in the thesis yet. `out/manifest.json` lists every candidate: `id`, `title`, `group`,
 `pairs_with` (table labels), `what_it_shows`, `sources` (files read) and `status` (`new`, built
