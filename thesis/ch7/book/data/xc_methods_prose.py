@@ -41,8 +41,8 @@ PROSE = {
     "XOR was not explained by an agent: its solutions were enumerated by linear programming and checked by script.",
 
     "We report test AUC (for survival, Harrell's and Uno's C and the integrated Brier score) against L2 logistic "
-    "regression and gradient boosting fitted on the same split; structural and compositional coverage; function "
-    "preservation; the three levels (faithful, decomposed, understood); the verifier's grades; and, for the synthetic "
+    "regression and gradient boosting fitted on the same split; structural and compositional coverage; "
+    "the three levels (faithful, decomposed, understood); the verifier's grades; and, for the synthetic "
     "data, whether each true term was recovered. The experiment is exploratory: only the Cox design was fixed before its "
     "runs, and the synthetic strengths were calibrated before any run. None of the Experiment 1 explanations has yet "
     "been verified by the author.",

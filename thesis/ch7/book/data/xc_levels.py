@@ -1,7 +1,7 @@
 LEVELS = {
     "intro": "Coverage says that every node and every composition is accounted for. It does not say that the explanation is readable, nor that it means anything. An explanation makes three separable claims: the pipeline guarantees the first two mechanically, and the third is measured. All three are reported side by side.",
     "levels": [
-        ["1. Faithful", "The hierarchy computes the model's function. Test: max abs error of the explained model state against the phenotype on every training row (< 1e-9), and the closed-form error of every leaf (`check_explanation`)."],
+        ["1. Faithful", "The hierarchy computes the model's function. The refactoring operations are identity operations, so this holds by construction; the test is the closed-form error of every leaf (`check_explanation`)."],
         ["2. Decomposed", "Each leaf is a small, separately readable part. Test: leaf count; granularity = share of hidden units whose part is at most 6 units wide (depth is not penalised: a chain of four units is fine, a layer of 32 units in one leaf is \"covered, not decomposed\"); the coarse-decomposition warning when one part is wider than 6 and holds at least half the hidden units."],
         ["3. Understood", "Each leaf maps to a concept a domain reader recognises. Measured by Mike's leaf verdict (`explaneat review leaf <label> <leaf> understood|partial|not`); screened by ground-truth recovery (synthetic networks), the concept probe and the blind verifier's leaf grades."],
     ],

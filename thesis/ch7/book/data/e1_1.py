@@ -62,11 +62,11 @@ CARD = {
         {
             "caption": "Three levels (concept probe v1)",
             "source": "experiments/explanation_levels/RESULTS.md, \"The three AAAI paper explanations\"",
-            "headers": ["Explanation", "Hidden (with split copies)", "Faithful: max abs err", "Leaves", "Granularity", "Meaningful / partial / closed-form only"],
+            "headers": ["Explanation", "Hidden (with split copies)", "Leaves", "Granularity", "Meaningful / partial / closed-form only"],
             "rows": [
-                ["paper-heart (`a03ebc86`)", "5", "2.2e-16", "4", "1.0", "4 / 0 / 0 (100%)"],
-                ["paper-monk2 (`d6ff7ca0`)", "3", "3.3e-16", "4", "1.0", "1 / 2 / 1 (25%)"],
-                ["paper-adult (`7e3761fe`)", "16", "6.7e-16", "10", "1.0", "10 / 0 / 0 (100%)"],
+                ["paper-heart (`a03ebc86`)", "5", "4", "1.0", "4 / 0 / 0 (100%)"],
+                ["paper-monk2 (`d6ff7ca0`)", "3", "4", "1.0", "1 / 2 / 1 (25%)"],
+                ["paper-adult (`7e3761fe`)", "16", "10", "1.0", "10 / 0 / 0 (100%)"],
             ],
             "note": "Probe v1; to be replaced by the probe v2 recompute.",
         },

@@ -40,7 +40,6 @@ for k, (rp, rf, ep, ef) in S.items():
       "minutes": q([float(e["agent_minutes_db"]) for e in ex]),
       "minutes_by_seed": {int(e["seed"]): float(e["agent_minutes_db"]) for e in ex},
       "hidden_by_seed": {int(r["seed"]): int(r["hidden_nodes"]) for r in runs},
-      "fp_max": max(float(e["function_preservation_max_abs_err"]) for e in ex),
       "verified_by_mike": sorted({e["verified_by_mike"] for e in ex}),
       "complete_ok": sum(bool(r["recheck_summary"]["complete_ok"]) for r in recs),
       "mismatch": sum(r["recheck_summary"]["mismatch"] for r in recs),

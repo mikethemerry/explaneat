@@ -18,6 +18,7 @@ cp "$CH7/exports/ch7-datasets.tex" "$OUT/sections/tables/ch7-datasets.tex"   # s
 # The thesis table style (every generated table calls \thesistablestyle): at the thesis root, next to
 # dissertation.tex and uathesis.cls, because the preamble loads it once: \input{thesis-tablestyle}
 cp "$CH7/../tablestyle/thesis-tablestyle.tex" "$OUT/thesis-tablestyle.tex"
+cp "$CH7/exports/ch7-run-config.tex" "$OUT/sections/tables/ch7-run-config.tex"   # sync_ch7_exports.py <- experiments/thesis_run_config
 cp "$CH7"/screenshots/ch7-ws-0[0-8]-*.png "$OUT/figures/ch7-ws/"
 # Chapter 7 figures (thesis/ch7/figlib.py): used = picked for the chapter, options = the rest. The floats'
 # \includegraphics paths are figures/ch7/<group>/<id>; FIGURES.md lists them.

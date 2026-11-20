@@ -44,6 +44,9 @@ if [[ "${1:-}" == "--with-db" ]]; then
   # Datasets tables: splits, raw records, Cox split files and run records (read-only explaneat_v4 + explaneat_dev);
   # MNIST from the ExConNEAT run records and split code (needs ~/.explaneat/data/mnist_784.npz, else one OpenML fetch)
   uv run --extra survival python experiments/thesis_datasets/extract.py         # ~2 min -> data.json
+  # Run-configuration table: every run family's stored config, run parameters and training code (read-only explaneat_dev
+  # + explaneat_v4; git show of backproppop.py at each run's commit)
+  uv run python experiments/thesis_run_config/extract.py                        # ~10 s -> data.json
   # Thesis-side DB caches
   uv run python thesis/ch7/exp1/extract_db.py                                    # explaneat_dev -> exp1/data/networks.json
                                                                                  # (+ coverage checks, explaining minutes)
@@ -67,6 +70,7 @@ uv run python thesis/scripts/ch7_figures_index.py       # thesis/ch7/FIGURES.md 
                                                         # (preview: cd thesis/ch7/figures && latexmk -pdf preview.tex)
 uv run python thesis/ch7/exp2/completeness_table.py  # exp2-signal-completeness.tex (not in the Overleaf upload)
 uv run python experiments/thesis_datasets/make_table.py # datasets.csv, ch7-datasets.tex (tab:ch7-datasets, tab:ch7-datasets-mnist)
+uv run python experiments/thesis_run_config/make_table.py # run_config.csv, ch7-run-config.tex (tab:ch7-run-config)
 uv run python thesis/scripts/sync_ch7_exports.py        # experiment outputs -> thesis/ch7/exports (incl. ch7-datasets.tex)
 bash thesis/scripts/build_overleaf_upload.sh            # thesis/ch7/overleaf_upload/ + zip (screenshots copied as images;
                                                         # thesis-tablestyle.tex at the root: every generated table calls
