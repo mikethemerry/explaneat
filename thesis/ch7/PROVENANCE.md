@@ -378,3 +378,25 @@ Every figure of the candidate gallery is now a thesis figure: a vector PDF (+ 30
 | options | `synthetic-shape-c-sig-best-g300-saddle` (`fig:ch7-synthetic-shape-c-sig-best-g300-saddle`) | `thesis/ch7/exp1/make_figures.py` (`uv run python thesis/ch7/exp1/make_figures.py`) | `thesis/ch7/exp1/data/shapes.json` (`thesis/ch7/exp1/extract_shapes.py`, read-only explaneat_dev, via `experiments/ushape_saddle/shape_plots.compute` / `score_gens.surfaces`; summaries asserted equal to `figures/<label>-shape.json` / `sig_gens.json`); truth constants from `experiments/ushape_saddle/data.py` | extracted (DB, read-only explaneat_dev), computed |
 | options | `synthetic-shape-c-sig-best-g300-sodium` (`fig:ch7-synthetic-shape-c-sig-best-g300-sodium`) | `thesis/ch7/exp1/make_figures.py` (`uv run python thesis/ch7/exp1/make_figures.py`) | `thesis/ch7/exp1/data/shapes.json` (`thesis/ch7/exp1/extract_shapes.py`, read-only explaneat_dev, via `experiments/ushape_saddle/shape_plots.compute` / `score_gens.surfaces`; summaries asserted equal to `figures/<label>-shape.json` / `sig_gens.json`); truth constants from `experiments/ushape_saddle/data.py` | extracted (DB, read-only explaneat_dev), computed |
 | options | `xor-gates` (`fig:ch7-xor-gates`) | `thesis/ch7/exp1/make_figures.py` (`uv run python thesis/ch7/exp1/make_figures.py`) | `experiments/xor/make_xor_figures.py` drawing code; `verify_xor.REPS`, checked against `experiments/xor/verify_xor_results.json` | computed |
+
+## ch7-datasets (`experiments/thesis_datasets/ch7-datasets.tex`; 20 Nov 2026, branch thesis/datasets-table)
+
+One table describing every dataset Chapter 7 reports (`tab:ch7-datasets`). Copied to
+`thesis/ch7/exports/ch7-datasets.tex` by `sync_ch7_exports.py` and into the upload as
+`sections/tables/ch7-datasets.tex`. Two runs of both scripts gave byte-identical `data.json`,
+`datasets.csv` and `.tex`; the preview (`experiments/thesis_datasets/preview.tex`, thesis preamble)
+compiles with no errors or overfull boxes, portrait.
+
+| Link | Writer / command | Status |
+|---|---|---|
+| `ch7-datasets.tex`, `datasets.csv` | `experiments/thesis_datasets/make_table.py` (reads `data.json` only) | computed |
+| `experiments/thesis_datasets/data.json` | `uv run --extra survival python experiments/thesis_datasets/extract.py` (~1 min) | extracted (DB, read-only explaneat_v4 + explaneat_dev), computed |
+| rows, inputs, training share, encoding, split settings (classification sets) | each set's database split as registered in `experiments/benchmarks/common.CLASSIFICATION` and its raw parent record; asserted to be the split of the 30 Experiment 2 runs (runs CSVs) and of each Experiment 1 network (`experiments/benchmarks/results/propneat.json` genome ids) | extracted (DB, read-only) |
+| Heart imputation | detected in the raw record (one non-integer value per column equal to the mean of the rest), with the one-hot level it formed | extracted (DB, read-only), computed |
+| WHAS500, GBSG2 | `explaneat.survival.data.load_builtin` (scikit-survival bundled data), `experiments/survival/cox_case/splits/*.splits.json`, the selected run's record in `cox_case/runs/`; asserted to agree | computed |
+| XOR | `experiments/xor/run_xor.py` (`X`, `Y`), `xor_results.json` | computed |
+| Experiment 3 validation rows ($^a$) | `experiments/churn/val_split.json`, `monk2_val_split.json` | computed (committed selections) |
+| short names, outcome labels, loaders, "used in" | typed in `make_table.py`; each outcome label is asserted against the stored class names or target description; "used in" read off the Chapter 7 tables (Exp. 1: networks and benchmark tables; Exp. 2: ten-seed benchmark table; Exp. 3: the grafting studies on Churn and MONK-2) | curated (judgment) |
+| caption (title and keys only; the rest is in `CAPTION_MOVED_TEXT.md`, "Datasets table") | typed in `make_table.py` | prose, not results |
+
+Findings (prose disagreements, KRK / MNIST run records) are in `experiments/thesis_datasets/RESULTS.md`.

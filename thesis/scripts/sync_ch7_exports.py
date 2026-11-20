@@ -33,6 +33,8 @@ SOURCES = {
     # experiments/survival/cox_case/tables.py and reference_explanation.py
     "experiments/survival/cox_case/ch7_cox_case_table.tex": "ch7_cox_case_table.tex",
     "experiments/survival/cox_case/ch7_cox_reference_table.tex": "ch7_cox_reference_table.tex",
+    # experiments/thesis_datasets/make_table.py (tab:ch7-datasets)
+    "experiments/thesis_datasets/ch7-datasets.tex": "ch7-datasets.tex",
 }
 
 
