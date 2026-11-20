@@ -41,8 +41,9 @@ if [[ "${1:-}" == "--with-db" ]]; then
   uv run --extra survival python experiments/benchmarks/survival.py             # ~80 s, no DB -> results/survival.json
   uv run python experiments/benchmarks/make_csv.py                               # -> benchmarks.csv
   uv run python experiments/ushape_saddle/references.py                          # -> references.json
-  # Datasets table: splits, raw records, Cox split files and run records (read-only explaneat_v4 + explaneat_dev)
-  uv run --extra survival python experiments/thesis_datasets/extract.py         # ~1 min -> data.json
+  # Datasets tables: splits, raw records, Cox split files and run records (read-only explaneat_v4 + explaneat_dev);
+  # MNIST from the ExConNEAT run records and split code (needs ~/.explaneat/data/mnist_784.npz, else one OpenML fetch)
+  uv run --extra survival python experiments/thesis_datasets/extract.py         # ~2 min -> data.json
   # Thesis-side DB caches
   uv run python thesis/ch7/exp1/extract_db.py                                    # explaneat_dev -> exp1/data/networks.json
                                                                                  # (+ coverage checks, explaining minutes)
@@ -65,9 +66,13 @@ uv run python thesis/ch7/exp1/make_figures.py           # Experiment 1 figures (
 uv run python thesis/scripts/ch7_figures_index.py       # thesis/ch7/FIGURES.md + thesis/ch7/figures/preview.tex
                                                         # (preview: cd thesis/ch7/figures && latexmk -pdf preview.tex)
 uv run python thesis/ch7/exp2/completeness_table.py  # exp2-signal-completeness.tex (not in the Overleaf upload)
-uv run python experiments/thesis_datasets/make_table.py # datasets.csv, ch7-datasets.tex (tab:ch7-datasets)
+uv run python experiments/thesis_datasets/make_table.py # datasets.csv, ch7-datasets.tex (tab:ch7-datasets, tab:ch7-datasets-mnist)
 uv run python thesis/scripts/sync_ch7_exports.py        # experiment outputs -> thesis/ch7/exports (incl. ch7-datasets.tex)
-bash thesis/scripts/build_overleaf_upload.sh            # thesis/ch7/overleaf_upload/ + zip (screenshots copied as images)
+bash thesis/scripts/build_overleaf_upload.sh            # thesis/ch7/overleaf_upload/ + zip (screenshots copied as images;
+                                                        # thesis-tablestyle.tex at the root: every generated table calls
+                                                        # \thesistablestyle, so the thesis preamble needs \input{thesis-tablestyle})
+# Preview of every upload table in the thesis table style (not run here; a PDF, not a result):
+#   cd thesis/tablestyle && latexmk -pdf preview.tex && latexmk -c
 
 # ------------------------------------------------------------------ layer 1 (expensive; NOT run here)
 # Evolution (PYTHONHASHSEED=0 enforced by run_seed.py; torch threads 1; writes explaneat_dev):

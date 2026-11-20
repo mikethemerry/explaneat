@@ -1024,3 +1024,55 @@ File: `experiments/thesis_datasets/ch7-datasets.tex` (copied to `thesis/ch7/expo
 **Not in the caption: results**
 
 - (none)
+
+# Datasets tables, landscape (21 Nov 2026, branch thesis/table-style)
+
+## ch7-datasets (tab:ch7-datasets, tab:ch7-datasets-mnist)
+
+File: `experiments/thesis_datasets/ch7-datasets.tex` (copied to `thesis/ch7/exports/`, upload
+`sections/tables/ch7-datasets.tex`). The one table is now two floats in the same file: the tabular
+datasets (Experiments 1 to 3, a `sidewaystable`) and the MNIST datasets of Experiment 4 (a `table`);
+all fifteen rows do not fit one landscape page once every method is spelled out. The Source and Task
+columns were folded into Dataset ("Adult (PMLB)") and Outcome ("death, `fstat`; Cox survival"), and a
+Scaling column was added. The abbreviation keys (z, strat., Cox) are gone from the caption because the
+cells now spell each method out.
+
+**Old caption** (the 20 Nov table)
+
+> Datasets of Chapter~7. Val.: validation. Inputs: raw features $\to$ model inputs after encoding. Outcome: the positive class or event, with its share of the training rows. Cox: survival, Cox proportional hazards. z: standardised with the training rows' mean and SD; strat.: stratified; --: none. $^a$Experiment~3 early stopping only, held out of the training rows.
+
+**New captions**
+
+> Datasets of Chapter~7: tabular. Val.: validation. Inputs: raw features $\to$ model inputs. Outcome: the positive class or event, with its share of the training rows. --: none. $^a$Experiment~3 early stopping only, held out of the training rows.
+
+> Datasets of Chapter~7: MNIST. Val.: validation. Inputs: raw features $\to$ model inputs. Outcome: the classes, with each one's share of the training rows.
+
+**Not in the caption: methodology** (sources: `experiments/thesis_datasets/RESULTS.md`, `data.json`)
+
+- The 20 Nov methodology bullets above still hold.
+- MNIST: OpenML `mnist_784` version 1 (the standard MNIST: the first 60,000 rows are the standard training images, the last 10,000 the standard test images), loaded by `explaneat.conv.data.load_mnist_raw`. The 10-class runs of Experiment 4 hold out a stratified validation set from the standard training images (seed 0); the 10k run trains on a stratified subset of the rest, the 50k warm start on all of the rest; both use the same validation and test images (asserted in `extract.py` from the run records' saved row indices). The 10k run's pruned continuation trained on rotating chunks of 5,000 of its 10k rows per generation (run record `train_chunk`).
+- MNIST 3 vs 8 vs noise: the noise class is generated per split so that each noise image has the exact pixel-intensity histogram of a real 3 or 8 of that split (shuffled ink, scribbles, blobs or textures, permuted 7 x 7 patches); the test digits are every standard-test 3 and 8 (`experiments/conv_neat/three8noise/RESULTS.md`).
+
+**Not in the caption: results**
+
+- (none)
+
+# Removed: function preservation (21 Nov 2026, branch thesis/table-style)
+
+Mike (21 Nov 2026): every reference to function-preservation error / accuracy comes out of the thesis
+tables, captions and figures. The refactoring operations are identity operations by formal proof; any
+residual is floating-point rounding with no bearing on the results.
+
+- `tab:exp1-networks` (`thesis/ch7/exp1/make_tables.py` -> `exp1-networks.tex`, upload
+  `sections/tables/ch7-ex1-networks.tex`): the column *Function pres. error* is removed (16 -> 15
+  columns; the XOR row loses one "--"). `thesis/ch7/exp1/extract_db.py` still computes the value into
+  `exp1/data/networks.json` as an internal check; nothing prints it. The caption never mentioned it.
+- Not yet removed (the edit was refused by the session's permission check; for Mike to confirm):
+  the same column in `thesis/ch7/exp2/per_run.py` (`exp2-runs-{adult,churn,heart100}.tex`, not in the
+  upload) and the rows *Part's extracted formula reproduces its output* and *Whole explanation
+  reproduces the network* of `thesis/ch7/exp2/worked.py` (`exp2-worked-claims.tex`, not in the upload).
+- Older exports outside the upload still carry it: `thesis/ch7/exports/ch7_levels_table.tex`,
+  `ch7_cox_case_table.tex` (copied from `experiments/` by `sync_ch7_exports.py`) and
+  `ch7_experiment1_cases.tex` (`thesis/scripts/thesis_experiment_tables.py`).
+- In this file, the moved methodology sentences that describe the function-preservation error
+  (ch7-ex1-networks, exp2-runs-*) should not go into the body text.

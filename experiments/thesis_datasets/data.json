@@ -1455,6 +1455,248 @@
    ]
   }
  },
+ "mnist": {
+  "mnist10_10k": {
+   "config_files": [
+    "experiments/conv_neat/results/sweep_p50_m4_e5/config.json",
+    "experiments/conv_neat/results/mnist10_pruned/config.json"
+   ],
+   "n_classes": 10,
+   "n_test": 10000,
+   "n_train": 10000,
+   "n_val": 10000,
+   "pool_after_val": 50000,
+   "runs": [
+    {
+     "n_train_arg": 10000,
+     "n_val_arg": 10000,
+     "run": "sweep_p50_m4_e5",
+     "seed": 0,
+     "train_chunk": 0
+    },
+    {
+     "n_train_arg": 10000,
+     "n_val_arg": 10000,
+     "run": "mnist10_pruned",
+     "seed": 0,
+     "train_chunk": 5000
+    }
+   ],
+   "split_seed": 0,
+   "test_class_counts": [
+    980,
+    1135,
+    1032,
+    1010,
+    982,
+    892,
+    958,
+    1028,
+    974,
+    1009
+   ],
+   "train_class_counts": [
+    987,
+    1124,
+    993,
+    1022,
+    974,
+    904,
+    986,
+    1044,
+    975,
+    991
+   ],
+   "train_class_shares": [
+    0.0987,
+    0.1124,
+    0.0993,
+    0.1022,
+    0.0974,
+    0.0904,
+    0.0986,
+    0.1044,
+    0.0975,
+    0.0991
+   ],
+   "train_indices_sha256_16": "541ea3548a28bf84",
+   "train_is_whole_pool": false,
+   "val_class_counts": [
+    987,
+    1124,
+    993,
+    1022,
+    974,
+    903,
+    986,
+    1044,
+    975,
+    992
+   ],
+   "val_indices_sha256_16": "0d1e5f976b31ca16"
+  },
+  "mnist10_50k": {
+   "config_files": [
+    "experiments/conv_neat/results/mnist10_ws50k_halving/config.json"
+   ],
+   "n_classes": 10,
+   "n_test": 10000,
+   "n_train": 50000,
+   "n_val": 10000,
+   "pool_after_val": 50000,
+   "runs": [
+    {
+     "n_train_arg": null,
+     "n_val_arg": 10000,
+     "run": "mnist10_ws50k_halving",
+     "seed": 0,
+     "train_chunk": 0
+    }
+   ],
+   "split_seed": 0,
+   "test_class_counts": [
+    980,
+    1135,
+    1032,
+    1010,
+    982,
+    892,
+    958,
+    1028,
+    974,
+    1009
+   ],
+   "train_class_counts": [
+    4936,
+    5618,
+    4965,
+    5109,
+    4868,
+    4518,
+    4932,
+    5221,
+    4876,
+    4957
+   ],
+   "train_class_shares": [
+    0.09872,
+    0.11236,
+    0.0993,
+    0.10218,
+    0.09736,
+    0.09036,
+    0.09864,
+    0.10442,
+    0.09752,
+    0.09914
+   ],
+   "train_indices_sha256_16": "192416020978cb56",
+   "train_is_whole_pool": true,
+   "val_class_counts": [
+    987,
+    1124,
+    993,
+    1022,
+    974,
+    903,
+    986,
+    1044,
+    975,
+    992
+   ],
+   "val_indices_sha256_16": "0d1e5f976b31ca16"
+  },
+  "source": {
+   "image_hw": [
+    28,
+    28
+   ],
+   "loader": "explaneat.conv.data.load_mnist_raw (sklearn.datasets.fetch_openml('mnist_784', version=1), cached as ~/.explaneat/data/mnist_784.npz",
+   "n_pixels": 784,
+   "n_rows": 70000,
+   "n_standard_test": 10000,
+   "n_standard_train": 60000,
+   "openml_name": "mnist_784",
+   "openml_version": 1,
+   "pixel_max_raw": 255,
+   "scaling": "pixel / 255 (explaneat.conv.data.mnist_splits; three8noise.data.load)"
+  },
+  "three8noise": {
+   "classes": [
+    "3",
+    "8",
+    "noise"
+   ],
+   "n_test": 2976,
+   "n_train": 11400,
+   "n_train_per_class": 3800,
+   "n_val": 3000,
+   "n_val_per_class": 1000,
+   "noise_mix": [
+    0.3,
+    0.3,
+    0.3,
+    0.1
+   ],
+   "noise_type_counts": {
+    "test": [
+     299,
+     297,
+     297,
+     99
+    ],
+    "train": [
+     1140,
+     1140,
+     1140,
+     380
+    ],
+    "val": [
+     300,
+     300,
+     300,
+     100
+    ]
+   },
+   "noise_types": [
+    "shuffle",
+    "scribble",
+    "blob",
+    "patch"
+   ],
+   "pixel_max_raw": 255,
+   "run_record": "experiments/conv_neat/three8noise/results/run_s0/config.json",
+   "seed": 0,
+   "sizes": {
+    "test": [
+     1010,
+     974,
+     992
+    ],
+    "train": [
+     3800,
+     3800,
+     3800
+    ],
+    "val": [
+     1000,
+     1000,
+     1000
+    ]
+   },
+   "test_digits_are_all_standard_test_3s_and_8s": true,
+   "train_class_counts": [
+    3800,
+    3800,
+    3800
+   ],
+   "train_class_shares": [
+    0.3333333333333333,
+    0.3333333333333333,
+    0.3333333333333333
+   ]
+  }
+ },
  "run_splits": {
   "adult": [
    {

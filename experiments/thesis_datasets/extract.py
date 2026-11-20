@@ -13,7 +13,12 @@ Sources, all read-only:
   (``explaneat.survival.data.load_builtin``, scikit-survival bundled data) and the selected run's record
   (``experiments/survival/cox_case/runs/<tag>.json``), checked against each other;
 * XOR: the four rows in ``experiments/xor/run_xor.py`` and the seed count in ``xor_results.json``;
-* Experiment 3 validation rows: ``experiments/churn/val_split.json``, ``monk2_val_split.json``.
+* Experiment 3 validation rows: ``experiments/churn/val_split.json``, ``monk2_val_split.json``;
+* MNIST (Experiment 4, ExConNEAT): the run records in ``experiments/conv_neat/results/<run>/config.json``
+  (seed, ``n_train``, ``n_val`` and the row indices each run used), checked against
+  ``explaneat.conv.data.mnist_splits`` recomputed from the cached OpenML ``mnist_784`` copy
+  (``load_mnist_raw``); 3 vs 8 vs noise: ``experiments/conv_neat/three8noise/data.build`` (seed of the run
+  record ``three8noise/results/run_s0/config.json``), checked against that record's class sizes.
 
 Nothing is written to any database. ``data.json`` holds counts, shares and the stored descriptions
 (encoding config, preprocessing steps, target descriptions) that ``make_table.py`` formats.
@@ -50,6 +55,12 @@ EXP2_RUNS = [
     (REPO / "experiments" / "10seed" / "runs_heart100.csv", None, "heart"),
     (REPO / "experiments" / "churn" / "runs_churn100.csv", None, "churn"),
 ]
+CONV = REPO / "experiments" / "conv_neat"
+# ExConNEAT MNIST 10-class runs reported in Chapter 7 (experiments/conv_neat/RESULTS.md, section 11b):
+# the 10k-subset run (selected genome, generation 64) and its pruned continuation share one split;
+# the 50k warm start trains on all the remaining training rows. key -> run folders
+MNIST10_RUNS = {"mnist10_10k": ["sweep_p50_m4_e5", "mnist10_pruned"], "mnist10_50k": ["mnist10_ws50k_halving"]}
+THREE8NOISE_RUN = CONV / "three8noise" / "results" / "run_s0" / "config.json"
 EXP3_VAL = {"churn": REPO / "experiments" / "churn" / "val_split.json",
             "monk2": REPO / "experiments" / "churn" / "monk2_val_split.json"}
 
@@ -265,6 +276,91 @@ def exp3_validation(sets):
     return out
 
 
+def _shares(y, n_classes):
+    c = np.bincount(np.asarray(y, dtype=np.int64), minlength=n_classes)
+    return [int(v) for v in c], [float(v / c.sum()) for v in c]
+
+
+def mnist():
+    """MNIST datasets of Experiment 4 (ExConNEAT): split sizes, class shares and pixel scaling, from the
+    run records' saved row indices and the split code, asserted equal."""
+    from explaneat.conv import data as cd
+    Xr, yr = cd.load_mnist_raw()
+    assert Xr.shape == (70000, 784) and Xr.dtype == np.uint8 and int(Xr.max()) == 255, Xr.shape
+    n_std_train = cd.MNIST_N_STD_TRAIN
+    out = {"source": {"loader": "explaneat.conv.data.load_mnist_raw (sklearn.datasets.fetch_openml('mnist_784', "
+                                "version=1), cached as ~/.explaneat/data/mnist_784.npz",
+                      "openml_name": "mnist_784", "openml_version": 1, "n_rows": int(len(yr)),
+                      "n_standard_train": int(n_std_train), "n_standard_test": int(len(yr) - n_std_train),
+                      "n_pixels": int(Xr.shape[1]), "image_hw": [28, 28], "pixel_max_raw": int(Xr.max()),
+                      "scaling": "pixel / 255 (explaneat.conv.data.mnist_splits; three8noise.data.load)"}}
+    for key, runs in MNIST10_RUNS.items():
+        recs = []
+        for run in runs:
+            cfg = json.loads((CONV / "results" / run / "config.json").read_text())
+            a = cfg["args"]
+            sp = cd.mnist_splits(a["seed"], classes=tuple(range(10)), n_train=a["n_train"], n_val=a["n_val"],
+                                 raw=(Xr, yr))
+            for part in ("train", "val", "test"):
+                assert [int(r) for r in sp["rows"][part]] == cfg["rows"][part], (run, part)
+                assert len(cfg["rows"][part]) == cfg["sizes"][part], (run, part)
+            assert float(sp["X_train"].max()) == 1.0 and float(sp["X_train"].min()) == 0.0, run
+            recs.append({"run": run, "seed": a["seed"], "n_train_arg": a["n_train"], "n_val_arg": a["n_val"],
+                         "train_chunk": a.get("train_chunk"), "rows": {k: cfg["rows"][k] for k in cfg["rows"]}})
+        rows = recs[0]["rows"]
+        assert all(r["rows"] == rows for r in recs), key
+        tr, va, te = (np.asarray(rows[k]) for k in ("train", "val", "test"))
+        assert tr.max() < n_std_train and va.max() < n_std_train and te.min() >= n_std_train
+        assert not (set(tr.tolist()) & set(va.tolist()))
+        assert len(te) == len(yr) - n_std_train
+        counts, shares = _shares(yr[tr], 10)
+        out[key] = {
+            "runs": [{k: v for k, v in r.items() if k != "rows"} for r in recs],
+            "config_files": [str((CONV / "results" / r["run"] / "config.json").relative_to(REPO)) for r in recs],
+            "n_train": int(len(tr)), "n_val": int(len(va)), "n_test": int(len(te)),
+            "n_classes": 10, "train_class_counts": counts, "train_class_shares": shares,
+            "val_class_counts": _shares(yr[va], 10)[0], "test_class_counts": _shares(yr[te], 10)[0],
+            "pool_after_val": int(n_std_train - len(va)),
+            "train_is_whole_pool": bool(len(tr) == n_std_train - len(va)),
+            "split_seed": recs[0]["seed"],
+            "train_indices_sha256_16": hashlib.sha256(np.sort(tr).astype(np.int64).tobytes()).hexdigest()[:16],
+            "val_indices_sha256_16": hashlib.sha256(np.sort(va).astype(np.int64).tobytes()).hexdigest()[:16],
+        }
+        print(key, len(tr), len(va), len(te), flush=True)
+    # the two 10-class datasets share the validation and test rows
+    assert out["mnist10_10k"]["val_indices_sha256_16"] == out["mnist10_50k"]["val_indices_sha256_16"]
+
+    sys.path.insert(0, str(CONV / "three8noise"))
+    import data as t8
+    cfg = json.loads(THREE8NOISE_RUN.read_text())
+    d = t8.build(cfg["args"]["seed"])
+    sizes = {s: np.bincount(d[f"y_{s}"], minlength=3).tolist() for s in ("train", "val", "test")}
+    assert sizes == cfg["sizes"], (sizes, cfg["sizes"])
+    assert list(d["classes"]) == cfg["classes"] == t8.CLASS_NAMES
+    rows = {s: d[f"mnist_row_{s}"] for s in ("train", "val", "test")}
+    digit = {s: rows[s][rows[s] >= 0] for s in rows}
+    assert digit["train"].max() < n_std_train and digit["val"].max() < n_std_train
+    assert digit["test"].min() >= n_std_train
+    assert not (set(digit["train"].tolist()) & set(digit["val"].tolist()))
+    std_test_38 = np.flatnonzero(np.isin(yr, (3, 8)) & (np.arange(len(yr)) >= n_std_train))
+    assert np.array_equal(np.sort(digit["test"]), std_test_38)
+    noise_types = {s: np.bincount(d[f"type_{s}"][d[f"type_{s}"] >= 0], minlength=4).tolist()
+                   for s in ("train", "val", "test")}
+    counts, shares = _shares(d["y_train"], 3)
+    out["three8noise"] = {
+        "run_record": str(THREE8NOISE_RUN.relative_to(REPO)), "seed": cfg["args"]["seed"],
+        "classes": list(t8.CLASS_NAMES), "sizes": sizes,
+        "n_train": int(len(d["y_train"])), "n_val": int(len(d["y_val"])), "n_test": int(len(d["y_test"])),
+        "n_train_per_class": t8.N_TRAIN, "n_val_per_class": t8.N_VAL,
+        "train_class_counts": counts, "train_class_shares": shares,
+        "noise_types": list(t8.NOISE_TYPES), "noise_mix": list(t8.NOISE_MIX), "noise_type_counts": noise_types,
+        "test_digits_are_all_standard_test_3s_and_8s": True,
+        "pixel_max_raw": int(max(d[f"X_{s}"].max() for s in ("train", "val", "test"))),
+    }
+    print("three8noise", sizes, flush=True)
+    return out
+
+
 def other_run_records(cr):
     """KRK and MNIST appear as Chapter 7 headings but not in the tables: list their run records."""
     from sqlalchemy import text
@@ -296,6 +392,7 @@ def main():
         "survival": survival(),
         "xor": xor(),
         "exp3_validation": exp3_validation(sets),
+        "mnist": mnist(),
     }
     OUT.write_text(json.dumps(data, indent=1, sort_keys=True, default=_jsonable) + "\n")
     print("wrote", OUT.relative_to(REPO))
