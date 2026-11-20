@@ -1,4 +1,4 @@
-# Chapter 7 datasets: what the run records say (20 Nov 2026)
+# Chapter 7 datasets: what the run records say (20 Nov 2026; preprocessing and MNIST 21 Nov 2026)
 
 Numbers below are quoted from `data.json` (written by `extract.py`) and `datasets.csv`; rerun the
 scripts before quoting them elsewhere. The prose compared against is Chapter 7 of the thesis
@@ -61,15 +61,56 @@ record agree on rows, inputs and training events.
   out a stratified 20% of the training rows (Churn 800, MONK-2 69; `experiments/churn/val_split.json`,
   `monk2_val_split.json`); the test rows are untouched.
 
-## KRK and MNIST
+## Preprocessing and splits as the code ran them (21 Nov 2026)
 
-Both have run records; neither is in the Chapter 7 tables, so neither is in this table (`data.json`,
-`krk_mnist_run_records`):
+Each phrase in the tables' Preprocessing, Scaling and Split columns, the code it was read from, and the
+stored record `make_table.py` asserts it against. One method always gets the same words.
 
-- **KRK** (`krk_draw_ordinal`, PMLB `krkopt`): five experiments in both `explaneat_dev` and `explaneat_v4`
-  (`complex-krk-default-s0..s2`, `complex-krk-tuned-s0..s1`); study folder `experiments/complex_real/`
-  (runs, explanations, verification; book card 1.5, a blind verifier run, not signed off).
-- **MNIST**: `mnist10_784` (three experiments) and `mnist38_14x14` (four), in both databases; study folders
-  `experiments/mnist/` (the linear check and linear start, book card 3.4) and `experiments/conv_neat/`
-  (ExConNEAT, Experiment 4 in the chapter's introduction). If Experiment 4 stays in the chapter, its
-  MNIST data may need a row here.
+| Phrase in the table | Datasets | Code that did it | Checked against |
+|---|---|---|---|
+| all inputs z-normalised (training-row mean and standard deviation) | Adult, Heart, MONK-2, Churn, Connect-4 (both), synthetic (3) | `(X - mean) / sd` with the training rows' mean and population SD (constant columns: SD 1), applied to every model input, one-hot columns included: `experiments/10seed/run_seed.py` `load_training_data` (asserts equality with the split's stored `scaler_params`), `experiments/complex_real/data.py` / `c4_line_features/lfdata.py` / `ushape_saddle/data.py` `prepare` | split `scaler_type` = StandardScaler, scaler mean equal to the training rows' mean (`scaler_fit_rows` = train) |
+| the same | WHAS500, GBSG2 | `explaneat.survival.data.standardise(X_train, ...)` in `experiments/survival/run_seed.py` | `survival.scaler_fit_rows` |
+| *k* categorical attributes one-hot encoded (*k* levels → *k* columns; *n* columns) | Adult (7, 100 columns), Heart (7, 20), MONK-2 (all 6, 17), Churn (state and area code, 54) | `explaneat/db/encoding.py` `prepare_dataset_arrays` (one column per level, no level dropped) | the prepared dataset's `encoding_config`; input count = one-hot columns + passthrough |
+| one-hot encoded, first level dropped (*k* levels → *k* − 1 columns) | WHAS500 (8 two-level attributes, 8 columns), GBSG2 (3 attributes, 4 columns) | `explaneat.survival.data.load_builtin`: `sksurv.preprocessing.OneHotEncoder` (drops the first level) | raw categorical levels from scikit-survival; input count |
+| binary attribute(s) kept as one 0/1 column | Adult (sex), Churn (international plan, voice mail plan) | `encoding_config.passthrough` type `binary` | the same |
+| the unknown value `?` kept as its own level (workclass, occupation, native-country) | Adult | PMLB's `adult` keeps all 48,842 UCI rows and codes `?` as a level | stored level counts are one more than UCI's documented values (8, 14, 41; `adult.names`) |
+| missing values mean-imputed (mean of all 303 rows; `ca`: 4 values; `thal`: 2 values, one-hot encoded as their own column `thal:4`) | Heart | `explaneat/api/routes/datasets.py` (ucimlrepo path): `np.nanmean` over all rows before any split; the one-hot step then turns the imputed `thal` value into the level `thal:4` | detected in the raw record (`_imputed_columns`) |
+| phone number removed | Churn | `experiments/churn/ingest_churn.py` (`DROP`) | raw record metadata `dropped` |
+| duplicate rows removed (each of the 432 attribute configurations once) | MONK-2 | `experiments/aaai27/ingest_monk2.py` (`drop_duplicates`, PMLB's 601 rows → 432) | rows = unique rows = product of the attribute cardinalities |
+| each of the 42 cells coded x = +1, o = −1, blank = 0 | Connect-4 cells | `experiments/complex_real/data.py` `load_task("c4")` | dataset metadata `encoding` |
+| 16 counts computed from the 42 cells (...) | Connect-4 lines | `experiments/c4_line_features/lfdata.py` | metadata `codebook` (16 entries), base dataset = the cells |
+| generated in natural units (binary inputs 0/1) | synthetic | `experiments/ushape_saddle/data.py` | split `preprocessing_steps[0]` = "raw units" |
+| none (inputs 0/1); none (used as they are) | XOR | `experiments/xor/run_xor.py` (`X`, no scaling) | `X`, `Y` asserted to be the XOR truth table |
+| none (grey-scale pixel intensities 0–255); pixel intensities scaled to [0, 1] (divided by 255) | MNIST (all three) | `explaneat.conv.data.mnist_splits` and `three8noise/data.load`: `X / 255.0`; no further normalisation in `explaneat/conv` | raw `uint8` maximum 255; scaled training images span [0, 1] |
+| noise class generated, ink-matched (...) | MNIST 3 vs 8 vs noise | `experiments/conv_neat/three8noise/data.py` `make_noise` | class sizes equal the run record's; test digits = every standard-test 3 and 8 |
+| random split 80:20, not stratified, seed 42 | Adult, Heart | `sklearn.model_selection.train_test_split(shuffle=True, random_state=42)` (the split rows in the database) | split `stratify` = false, `test_size`, `random_state` |
+| random split 80:20 (75:25), stratified on the outcome, seed 42 | MONK-2, Churn, Connect-4 (80:20); synthetic (75:25) | the same with `stratify=y` | split `stratify` = true |
+| random split 64:16:20, stratified on the event: test 20%, then validation 20% of the rest; seed 42 | WHAS500, GBSG2 | `explaneat.survival.data.survival_split_indices` (two `train_test_split` calls stratified on the event) | split file `seed`, `test_size`, `val_size` |
+| test: the standard MNIST test set; validation: from the 60,000 standard training images, stratified on the digit, seed 0; training: a stratified subset of the other 50,000 / all other 50,000 | MNIST 10-class | `explaneat.conv.data.mnist_splits(seed, classes=0..9, n_train, n_val)` | recomputed and asserted equal to the run records' saved row indices; the two share validation and test rows |
+| test: the standard MNIST test 3s and 8s; validation and training drawn per digit, seed 0; noise as many as each digit | MNIST 3 vs 8 vs noise | `three8noise/data.build(seed)` (`Generator([seed, 0])`; 1,000 validation and 3,800 training per digit) | run record `sizes` |
+
+Not shown in the table: the Experiment 3 validation rows ($^a$) are a stratified 20% of the training
+rows (`experiments/churn/val_split.json`, `monk2_val_split.json`); the MNIST 10k run's pruned
+continuation trained on rotating chunks of 5,000 of its 10k training rows per generation (`train_chunk`
+in its run record).
+
+## MNIST (Experiment 4) and KRK
+
+MNIST is in the tables since 21 Nov 2026 (`tab:ch7-datasets-mnist`): the three datasets the ExConNEAT
+runs Chapter 7 reports used (`experiments/conv_neat/RESULTS.md` section 11b, `three8noise/RESULTS.md`):
+
+- **MNIST, 10k training subset**: run records `results/sweep_p50_m4_e5` (the selected genome) and
+  `results/mnist10_pruned` (its pruned continuation, the headline network); the same rows.
+- **MNIST, all 50k training rows**: `results/mnist10_ws50k_halving` (warm start from the pruned
+  population; same validation and test rows).
+- **MNIST 3 vs 8 vs noise**: `three8noise/results/run_s0`.
+
+Left out: the earlier MNIST runs of `experiments/conv_neat` section 11 (`mnist38_*`, `mnist10_p0.001_*`:
+2,000 validation images) and the sklearn 8 x 8 digits runs, and the database's `mnist10_784` /
+`mnist38_14x14` experiments (`experiments/mnist/`, the plain-PropNEAT linear check): none is reported in
+the Chapter 7 tables.
+
+**KRK** has run records but is not in the Chapter 7 tables, so it is not in the table (`data.json`,
+`krk_mnist_run_records`): five experiments in both `explaneat_dev` and `explaneat_v4`
+(`complex-krk-default-s0..s2`, `complex-krk-tuned-s0..s1`); study folder `experiments/complex_real/`
+(runs, explanations, verification; book card 1.5, a blind verifier run, not signed off).

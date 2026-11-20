@@ -1,0 +1,53 @@
+% Preview of every table in the Chapter 7 Overleaf upload (thesis/scripts/build_overleaf_upload.sh) in the
+% thesis table style (thesis-tablestyle.tex). Preamble: the packages of the thesis's dissertation.tex that
+% tables use (uathesis print layout: A4, 12 pt, scale 0.75, 5 mm binding offset), as thesis/ch7/exp1/preview.tex,
+% plus the one line the thesis preamble gains: \input{thesis-tablestyle}.
+%   cd thesis/tablestyle && latexmk -pdf preview.tex && latexmk -c
+\documentclass[a4paper,12pt,openany]{book}
+\usepackage[a4paper,hmarginratio=1:1,vmarginratio=1:1,scale=0.75,bindingoffset=5mm]{geometry}
+\usepackage{graphicx}
+\usepackage{cmap}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{setspace}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage{adjustbox}
+\usepackage{tabularx}
+\usepackage{tabularray}
+\usepackage{multicol}
+\usepackage{subcaption}
+\usepackage[inline]{enumitem}
+\usepackage[table,usenames,dvipsnames]{xcolor}
+\usepackage{cleveref}
+\usepackage[figuresright]{rotating}
+\usepackage{makecell}
+\input{thesis-tablestyle}
+\renewcommand\floatpagefraction{.9}
+\renewcommand\topfraction{.9}
+\renewcommand\bottomfraction{.9}
+\renewcommand\textfraction{.1}
+\setcounter{totalnumber}{50}
+\setcounter{topnumber}{50}
+\setcounter{bottomnumber}{50}
+\begin{document}
+% upload name: sections/tables/ch7-datasets.tex (tab:ch7-datasets, tab:ch7-datasets-mnist)
+\input{../ch7/exports/ch7-datasets}
+\clearpage
+% sections/tables/ch7-ex1-networks.tex
+\input{../ch7/exp1/tables/exp1-networks}
+\clearpage
+% sections/tables/ch7-ex1-benchmarks.tex
+\input{../ch7/exp1/tables/exp1-benchmarks}
+\clearpage
+% sections/tables/ch7-ex2-benchmarks.tex
+\input{../ch7/exp2/tables/exp2/exp2-benchmarks}
+\clearpage
+% sections/tables/ch7-ex2-{adult,heart,churn}.tex
+\input{../ch7/exp2/tables/exp2/exp2-signalticks-adult}
+\input{../ch7/exp2/tables/exp2/exp2-signalticks-heart100}
+\input{../ch7/exp2/tables/exp2/exp2-signalticks-churn}
+\clearpage
+% sections/tables/ch7-heart-splits.tex
+\input{../ch7/appendix/tables/ch7-heart-splits}
+\end{document}

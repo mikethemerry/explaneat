@@ -56,7 +56,7 @@ byte-identical. The appendix network captions were already a title only and are 
 | splits, identity nodes, leaf + comp. counts | explanation operations in explaneat_dev (`explaining_time.annotation_counts`; also equal to `get_coverage`'s counts), asserted equal to the records (paper: to `paper_coverage_options.json`) | extracted (DB, read-only); all agree |
 | coverage struct./comp., hierarchy completeness | MCP `get_coverage` (`coverage_report`) on each explanation, in `extract_db.py`, as `experiments/10seed/verify_record.py` does; check_explanation's stricter hierarchy check kept as `hierarchy_complete_check` | extracted (DB, read-only), computed. Agree with the six v4 records and paper Heart. **MONK-2: 1.00** (was printed 0.75): under the current definition (decision D4, 7 Nov, commit 1fb3a8b6) its pruned-input annotation is exempt from the single-root rule; 0.75 is the pre-D4 value in `paper_coverage_options.json` ("current"), now kept as `rec_cov_c` (no longer printed: the caption sentence moved to `CAPTION_MOVED_TEXT.md`). check_explanation's strict check still reports MONK-2's hierarchy incomplete (two roots) |
 | agent min | `experiments/10seed/explaining_time.explaining_window` in `extract_db.py`: explanation created → last timestamped write (operations, evidence records, `evidence_log`) | extracted (DB, read-only), computed. 0.6–4.5 min below the record's own start/end (kept as `rec_agent` in `networks.json`); paper Heart / MONK-2 have no evidence log: "--" |
-| function-preservation error | `check_explanation.check` on the training split, in `extract_db.py`; equals the records and `experiments/explanation_levels/levels/*.json` exactly for all eight | extracted (DB, read-only), computed |
+| function-preservation error (not printed since 21 Nov: the column was removed, see "Thesis table style" below) | `check_explanation.check` on the training split, in `extract_db.py`; equals the records and `experiments/explanation_levels/levels/*.json` exactly for all eight | extracted (DB, read-only), computed; internal check only |
 | XOR row | `experiments/xor/xor_results.json` ← `experiments/xor/run_xor.py` | computed |
 | train / test AUC and CI | `experiments/benchmarks/results/propneat.json` ← `propneat.py` (asserts equality with the run records to 1e-9) | extracted (DB, read-only); rerun byte-identical |
 | WHAS500 Harrell's C | `experiments/benchmarks/results/survival.json` ← `survival.py` | computed |
@@ -400,3 +400,42 @@ compiles with no errors or overfull boxes, portrait.
 | caption (title and keys only; the rest is in `CAPTION_MOVED_TEXT.md`, "Datasets table") | typed in `make_table.py` | prose, not results |
 
 Findings (prose disagreements, KRK / MNIST run records) are in `experiments/thesis_datasets/RESULTS.md`.
+
+## ch7-datasets, landscape with MNIST (21 Nov 2026, branch thesis/table-style)
+
+`ch7-datasets.tex` now holds two floats: `tab:ch7-datasets` (the twelve tabular datasets of Experiments
+1 to 3, a `sidewaystable`) and `tab:ch7-datasets-mnist` (the three MNIST datasets of Experiment 4). The
+upload name is unchanged (`sections/tables/ch7-datasets.tex`). Every preprocessing, scaling and split
+phrase is spelled out, one wording per method, each asserted against the stored record it describes;
+`experiments/thesis_datasets/RESULTS.md` ("Preprocessing and splits as the code ran them") gives the code
+behind each phrase. Two runs of `extract.py` and `make_table.py` gave byte-identical `data.json`,
+`datasets.csv` and `.tex`; the experiment-side preview and `thesis/tablestyle/preview.tex` compile with
+no errors or overfull boxes.
+
+| Link | Writer / command | Status |
+|---|---|---|
+| MNIST rows (10k subset, all 50k): rows, class shares, split | `extract.py` `mnist()`: the run records' saved row indices (`experiments/conv_neat/results/{sweep_p50_m4_e5,mnist10_pruned,mnist10_ws50k_halving}/config.json`), asserted equal to `explaneat.conv.data.mnist_splits` recomputed from the cached OpenML `mnist_784` v1 copy; labels from that copy | computed |
+| MNIST 3 vs 8 vs noise: rows, class shares, noise mix | `extract.py` `mnist()`: `experiments/conv_neat/three8noise/data.build(seed)` (seed from `results/run_s0/config.json`), asserted equal to the run record's class sizes; test digits asserted to be every standard-test 3 and 8 | computed |
+| preprocessing / scaling / split wording | `PHRASE`, `SPLIT` in `make_table.py`, each asserted against `data.json` | curated (judgment) |
+| captions (title and keys only; old and new in `CAPTION_MOVED_TEXT.md`, "Datasets tables, landscape") | typed in `make_table.py` | prose, not results |
+
+## Thesis table style (21 Nov 2026, branch thesis/table-style)
+
+One table style for the whole thesis: `thesis/tablestyle/thesis-tablestyle.tex`, shipped in the upload at
+the thesis root as `thesis-tablestyle.tex` and loaded once in the preamble (`\input{thesis-tablestyle}`
+after `\usepackage{makecell}`). Every generated Chapter 7 table calls `\thesistablestyle` as its first
+line (`exp1/make_tables.py`, `exp2/make_assets.py` `write_table`, `exp2/per_run.py`, `exp2/signal_ticks.py`
+with `[1]`, `exp2/signal_tables.py`, `exp2/linear_betas.py`, `exp2/completeness_table.py`,
+`appendix/heart_splits_table.py`, `experiments/thesis_datasets/make_table.py`); by default the style also
+applies itself to every `table` / `sidewaystable` float, so the hand-written tables of other chapters get
+it with no edit. Layer 3 rerun twice: byte-identical; the only change to generated tables is the style
+line (plus the removal below). Previews: `thesis/tablestyle/preview.pdf` (every table in the upload) and
+`exp1/preview.pdf`, `exp2/preview*.pdf`, `figures/preview.pdf` recompiled with the style (the figure
+preview's preamble is copied from `exp1/preview.tex` by `ch7_figures_index.py`).
+
+**Removed: function preservation.** The *Function pres. error* column of `tab:exp1-networks`
+(`exp1/make_tables.py`) is gone (Mike, 21 Nov: the operations are identity operations by proof; the
+residual is rounding). `exp1/extract_db.py` still computes it into `networks.json` as an internal check.
+The same column in `exp2/per_run.py` and two rows of `exp2/worked.py` are still printed (outside the
+upload): that edit was refused by the session's permission check and is left for Mike to confirm
+(`CAPTION_MOVED_TEXT.md`, "Removed: function preservation").
