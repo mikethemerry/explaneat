@@ -998,3 +998,29 @@ Every figure of the candidate gallery became a thesis figure (vector PDF + gener
 > XOR: the gates of each family, count family (a--c) and difference family (d--f). Left: the skip connections alone; middle: the hidden unit's contribution $u\cdot h$ (green: active, darker for larger $|u h|$; dashed: its fold; ringed points: the inputs whose sign it flips); right: the composed score. Shading: blue where the score is positive, magenta where it is negative, pale near 0; solid line: where it is 0. Filled points: inputs where the panel's quantity is positive (middle: where the hidden unit is active).
 
 **Not a key (for the body text)**: The count family's score is a ridge in x1 + x2 and the difference family's a valley in x1 - x2. Count family: XOR = OR and not AND (the skips compute OR and the hidden unit flips AND). Difference family: the skips compute x1 and not x2 and the hidden unit flips x2 and not x1. The representatives are `verify_xor.REPS` (the sheet's default 1-row cells), checked against `verify_xor_results.json`.
+
+---
+
+# Datasets table (20 Nov 2026, branch thesis/datasets-table)
+
+## ch7-datasets (tab:ch7-datasets)
+
+File: `experiments/thesis_datasets/ch7-datasets.tex` (copied to `thesis/ch7/exports/`, upload `sections/tables/ch7-datasets.tex`). A new table, so there is no old caption.
+
+**Caption**
+
+> Datasets of Chapter~7. Val.: validation. Inputs: raw features $\to$ model inputs after encoding. Outcome: the positive class or event, with its share of the training rows. Cox: survival, Cox proportional hazards. z: standardised with the training rows' mean and SD; strat.: stratified; --: none. $^a$Experiment~3 early stopping only, held out of the training rows.
+
+**Not in the caption: methodology** (sources: `experiments/thesis_datasets/RESULTS.md`, `data.json`)
+
+- Every number is read from the records the runs used: the database split each run trained on (asserted for the 30 Experiment 2 runs and each Experiment 1 network), the Cox case's split files and run records, and the loaders.
+- Heart's original network (Experiment 1) and the ten Heart-100 runs (Experiment 2) use the same fixed split.
+- WHAS500 and GBSG2: the validation rows select the model (each seed's generation champion with the lowest validation Cox loss, then the seed with the lowest validation loss); the test rows are used only to report.
+- Connect-4: PMLB's three outcomes for the first player (win, loss, draw with perfect play) reduced to win against loss or draw. Lines: 16 counts from the 42 cells (open lines of four with 1, 2 or 3 pieces of one player, threats and their row parity, centre-column pieces, playable-cell parity), on the same rows and split as the cells.
+- Heart: missing `ca` and `thal` values were set to the column mean when the data were downloaded; the imputed `thal` value became its own one-hot column.
+- Adult: the positive class (income at most \$50K) is the majority class.
+- XOR: no split; the networks are trained and scored on the four rows of the truth table.
+
+**Not in the caption: results**
+
+- (none)

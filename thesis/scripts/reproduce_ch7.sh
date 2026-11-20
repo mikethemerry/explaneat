@@ -41,6 +41,8 @@ if [[ "${1:-}" == "--with-db" ]]; then
   uv run --extra survival python experiments/benchmarks/survival.py             # ~80 s, no DB -> results/survival.json
   uv run python experiments/benchmarks/make_csv.py                               # -> benchmarks.csv
   uv run python experiments/ushape_saddle/references.py                          # -> references.json
+  # Datasets table: splits, raw records, Cox split files and run records (read-only explaneat_v4 + explaneat_dev)
+  uv run --extra survival python experiments/thesis_datasets/extract.py         # ~1 min -> data.json
   # Thesis-side DB caches
   uv run python thesis/ch7/exp1/extract_db.py                                    # explaneat_dev -> exp1/data/networks.json
                                                                                  # (+ coverage checks, explaining minutes)
@@ -63,6 +65,8 @@ uv run python thesis/ch7/exp1/make_figures.py           # Experiment 1 figures (
 uv run python thesis/scripts/ch7_figures_index.py       # thesis/ch7/FIGURES.md + thesis/ch7/figures/preview.tex
                                                         # (preview: cd thesis/ch7/figures && latexmk -pdf preview.tex)
 uv run python thesis/ch7/exp2/completeness_table.py  # exp2-signal-completeness.tex (not in the Overleaf upload)
+uv run python experiments/thesis_datasets/make_table.py # datasets.csv, ch7-datasets.tex (tab:ch7-datasets)
+uv run python thesis/scripts/sync_ch7_exports.py        # experiment outputs -> thesis/ch7/exports (incl. ch7-datasets.tex)
 bash thesis/scripts/build_overleaf_upload.sh            # thesis/ch7/overleaf_upload/ + zip (screenshots copied as images)
 
 # ------------------------------------------------------------------ layer 1 (expensive; NOT run here)

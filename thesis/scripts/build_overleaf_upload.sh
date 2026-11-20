@@ -14,6 +14,7 @@ cp "$CH7/exp1/tables/exp1-networks.tex" "$OUT/sections/tables/ch7-ex1-networks.t
 cp "$CH7/exp1/tables/exp1-benchmarks.tex" "$OUT/sections/tables/ch7-ex1-benchmarks.tex"
 cp "$CH7/exp2/tables/exp2/exp2-benchmarks.tex" "$OUT/sections/tables/ch7-ex2-benchmarks.tex"
 cp "$CH7/appendix/tables/ch7-heart-splits.tex" "$OUT/sections/tables/ch7-heart-splits.tex"
+cp "$CH7/exports/ch7-datasets.tex" "$OUT/sections/tables/ch7-datasets.tex"   # sync_ch7_exports.py <- experiments/thesis_datasets
 cp "$CH7"/screenshots/ch7-ws-0[0-8]-*.png "$OUT/figures/ch7-ws/"
 # Chapter 7 figures (thesis/ch7/figlib.py): used = picked for the chapter, options = the rest. The floats'
 # \includegraphics paths are figures/ch7/<group>/<id>; FIGURES.md lists them.
