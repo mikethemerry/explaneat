@@ -400,3 +400,26 @@ compiles with no errors or overfull boxes, portrait.
 | caption (title and keys only; the rest is in `CAPTION_MOVED_TEXT.md`, "Datasets table") | typed in `make_table.py` | prose, not results |
 
 Findings (prose disagreements, KRK / MNIST run records) are in `experiments/thesis_datasets/RESULTS.md`.
+
+## ch7-run-config (`experiments/thesis_run_config/ch7-run-config.tex`; 21 Nov 2026, branch thesis/run-config)
+
+The full configuration of every run family Chapter 7 reports (`tab:ch7-run-config`, cited from the common
+Methods). Copied to `thesis/ch7/exports/ch7-run-config.tex` by `sync_ch7_exports.py` and into the upload as
+`sections/tables/ch7-run-config.tex`. Two runs of both scripts gave byte-identical `data.json`,
+`run_config.csv` and `.tex`; the preview (`experiments/thesis_run_config/preview.tex`, thesis preamble)
+compiles with no errors or overfull boxes (landscape, `sidewaystable`).
+
+| Link | Writer / command | Status |
+|---|---|---|
+| `ch7-run-config.tex`, `run_config.csv` | `experiments/thesis_run_config/make_table.py` (reads `data.json` only) | computed |
+| `experiments/thesis_run_config/data.json` | `uv run python experiments/thesis_run_config/extract.py` (~10 s) | extracted (DB, read-only explaneat_dev + explaneat_v4), computed |
+| NEAT options, generations, epochs, fitness, activations, mask (database runs: original networks, synthetic, Experiment 2, MONK-2 ten seeds) | `experiments.config_json`, `hardware_info.run_params`, stored generations, the launch template (Heart original) or launch-script constants (`experiments/aaai27/ingest_monk2.py`, MONK-2 original); asserted equal across a family's seeds, to the config file each run read, and (Experiment 2) between explaneat_dev and explaneat_v4 | extracted (DB, read-only) |
+| Cox, Connect-4, XOR | run records (`cox_case/runs/*.json` with their NEAT config text; `c4_capacity/logs`, `c4_line_features/logs` + configs, checked against the config stored on import; `experiments/xor/run_xor.py`) | computed |
+| optimiser, learning rate, phantom-mask default | `explaneat/core/backproppop.py` at each run's recorded commit (`git show`); training-path `git diff` between a family's commits (empty for all) | computed |
+| Experiment 3 fine-tuning | constants of `experiments/churn/ext_common.py`, `genome_surgery.py`, `reinit.py` (read with ast), checked against the in-scope result CSVs | computed |
+| ExConNEAT | `experiments/conv_neat/results/{sweep_p50_m4_e5,mnist10_pruned,mnist10_ws50k_halving}/` and `three8noise/results/run_s0/` `config.json`, `results.json` | computed |
+| row names, column labels, short wording of fitness / stop / selection rules, option labels | typed in `make_table.py`; each short rule asserted against the stored record; every option that differs between families must have a column or label (asserted); the "All NEAT studies" line lists only options equal in every family | curated (judgment) |
+| caption (title and keys only) | typed in `make_table.py` | prose, not results |
+
+Findings (three NEAT config families, unmasked runs, Heart's 40 of 100 generations, dirty trees, ExConNEAT
+records) are in `experiments/thesis_run_config/RESULTS.md`.
