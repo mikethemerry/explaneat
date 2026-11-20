@@ -14,7 +14,7 @@ CARD = {
         ["Models and config", "17 pilots (population 150, seed 0, 50 generations; validation on 5,405 held-out training rows) then 3 main runs: population 150, 80 generations, 50 full-batch backprop epochs per generation, seeds 0/1/2, static threshold 3.0, ten started hidden units (weight SD 0.15; config `p18-h10-w015-e50`). Full-batch Adadelta lr 1.5, BCE, float64, sigmoid output, AUC fitness, `full_direct` start, no complexity penalty."],
         ["Selection rule", "Training fitness selects the saved genome within a run; the largest saved training AUC selects seed 1 for explanation. Test AUC enters neither rule."],
         ["Explanation and verifier", "Authoring skill v4 (frozen worktree `xn.py` tools), strict provenance, full training data; 3-hour box (about 21 min used). Independent blind verifier (`verification/independent/`), then a narrow terminology correction of the root (`verification/revised_item/`)."],
-        ["Metrics", "Test AUC vs ordinal LR and GBM; share of the LR-to-GBM gap closed; coverage, function preservation, recheck; semantic leaf grades; linearisation of the gates; training-subgroup calibration on open-three patterns."],
+        ["Metrics", "Test AUC vs ordinal LR and GBM; share of the LR-to-GBM gap closed; coverage, recheck; semantic leaf grades; linearisation of the gates; training-subgroup calibration on open-three patterns."],
         ["Registration", "\"Exploratory, not pre-registered.\" (`experiments/c4_capacity/RESULTS.md` line 3)"],
         ["Departures from plan", "No main budget was pre-registered (80 generations differs from the 100-generation complex-real study and the 50-generation pilots). Pilot configuration was chosen on validation with no replication or correction. The scaler was fitted on all training rows before the pilot fit/validation split. Files named `best_genome` are saved champions, not guaranteed historical optima (seed 1 logged 0.919006 at generation 78 vs 0.918850 saved)."],
     ],
@@ -55,7 +55,6 @@ CARD = {
             "headers": ["Measure", "Value"],
             "rows": [
                 ["Structural / compositional coverage", "1.0 / 1.0, hierarchy complete"],
-                ["Max function-preservation error", "1.665e-15"],
                 ["Rounded displayed leaf formulas, largest output error", "0.0239586"],
                 ["Own recheck", "0 mismatches, 0 needs-review"],
                 ["Author's semantic assessment", "0 meaningful, 0 partial, 11 described leaves"],
@@ -90,7 +89,7 @@ CARD = {
     "results_text": [
         "A linear fit of the logit on cells accounts for 74.73% of logit variance; aggregate line/threat/parity/centre features account for 6.21% of the residual; the largest hidden-unit feature correlation is about 0.33 in magnitude. (source: experiments/c4_capacity/RESULTS.md, domain_check.py)",
     ],
-    "shows": "More starting capacity and more training let PropNEAT close most of the gap to gradient boosting on Connect-4, and the network now uses real nonlinearity. The explanation is complete and exact, but its eleven parts read as gates on particular squares, not as threats, lines or parity, so the network is covered and described rather than understood in game terms. The stopping point was meaning, not coverage, tools or time.",
+    "shows": "More starting capacity and more training let PropNEAT close most of the gap to gradient boosting on Connect-4, and the network now uses real nonlinearity. The explanation is complete, but its eleven parts read as gates on particular squares, not as threats, lines or parity, so the network is covered and described rather than understood in game terms. The stopping point was meaning, not coverage, tools or time.",
     "caveats": [
         "Exploratory; one split; three seeds; pilot selection reused validation data without correction.",
         "Dense initialisation and extra optimisation are confounded: seed 1's saved genome was present in the initial population, so the gain is not an evolutionary benefit.",

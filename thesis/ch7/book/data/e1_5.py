@@ -14,7 +14,7 @@ CARD = {
         ["Models and config", "The 10-seed Heart config with only `num_inputs` changed; population 250, 100 generations, 5 backprop epochs per generation, BCE, AUC fitness, sigmoid output. Seeded (`random`, numpy, torch, 1 torch thread, `PYTHONHASHSEED=0`). Two variants: **default** (static compatibility threshold 3.0; seeds 0-2) and **tuned** (dynamic threshold toward 5-10 species; seeds 0-1)."],
         ["Selection rule", "Best genome by training fitness within a run. Explained: the best by train fitness (krk-default-s2) and the best tuned run (krk-tuned-s0)."],
         ["Explanation and verifier", "Protocol v3 (`EXPLAIN_PROTOCOL.md`) through `xn.py`, function-preserving operations only, a 3-hour box, one agent per network. Every record carries `verified_by_orchestrator` (automated checks, not an independent review). Blind verifier (verifier skill, read only) on krk-default-s2 on 13 Nov (`VERIFY_TASK.md`)."],
-        ["Metrics", "Train / test AUC vs LR, HistGradientBoosting and the ground-truth rule on the same split; coverage (structural / compositional), function preservation, closed-form error, leaf grades (meaningful / partial / closed-form-only), AUC of the logit against the adjacency indicator."],
+        ["Metrics", "Train / test AUC vs LR, HistGradientBoosting and the ground-truth rule on the same split; coverage (structural / compositional), closed-form error, leaf grades (meaningful / partial / closed-form-only), AUC of the logit against the adjacency indicator."],
         ["Registration", "\"Exploratory, not pre-registered.\" (`experiments/complex_real/README.md` line 3)"],
         ["Departures from plan", "Two differences from the 10-seed training path: `mask_phantom=True` and `skip_invalid_genomes=True` (all KRK runs crashed in generation 9 without it). Explained under protocol v3, not the frozen v4 method. The levels script has no `complex_real` set."],
     ],
@@ -42,10 +42,10 @@ CARD = {
         {
             "caption": "Explanations",
             "source": "experiments/complex_real/README.md, \"Explanations\"",
-            "headers": ["Label", "Full coverage", "Time", "Leaves (meaningful / partial / closed-form-only)", "Fn. preservation", "Closed-form err"],
+            "headers": ["Label", "Full coverage", "Time", "Leaves (meaningful / partial / closed-form-only)", "Closed-form err"],
             "rows": [
-                ["krk-default-s2", "yes", "24 min", "4 (2 / 1 / 1; the closed-form-only leaf is a support-level dead unit)", "2.2e-16", "0.032"],
-                ["krk-tuned-s0", "yes", "22 min", "3 (2 / 0 / 1)", "4.4e-16", "0.046"],
+                ["krk-default-s2", "yes", "24 min", "4 (2 / 1 / 1; the closed-form-only leaf is a support-level dead unit)", "0.032"],
+                ["krk-tuned-s0", "yes", "22 min", "3 (2 / 0 / 1)", "0.046"],
             ],
             "note": "All four complex-real networks (KRK and the first Connect-4 runs) reached full coverage in 22-43 min.",
         },
@@ -63,7 +63,7 @@ CARD = {
         "Both networks are slightly worse than a plain adjacency indicator (train AUC 0.9955). (source: experiments/complex_real/README.md, KRK)",
         "Leaf meaningfulness across all four complex-real explanations: 6 of 16 meaningful, 2 partial, 8 closed-form-only. (source: experiments/complex_real/README.md)",
     ],
-    "shows": "The networks learn half of the chess rule: \"the rook stands next to the black king\", built from a few hinges on file and rank differences, and the explanation says so plainly. They do not learn whether the white king defends the rook, nor stalemate, so the explanation is complete but it explains a simpler function than the truth. The bottleneck was what was learnt, not the explanation machinery: every network was fully covered and function-preserving in under 45 minutes.",
+    "shows": "The networks learn half of the chess rule: \"the rook stands next to the black king\", built from a few hinges on file and rank differences, and the explanation says so plainly. They do not learn whether the white king defends the rook, nor stalemate, so the explanation is complete but it explains a simpler function than the truth. The bottleneck was what was learnt, not the explanation machinery: every network was fully covered in under 45 minutes.",
     "caveats": [
         "Exploratory; 3 default and 2 tuned seeds; only the two KRK networks named above were explained, and only krk-default-s2 was blind-verified.",
         "Explained under protocol v3, not the frozen v4 method used for the 10-seed re-run and later cases.",

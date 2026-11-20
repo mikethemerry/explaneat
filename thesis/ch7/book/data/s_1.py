@@ -7,7 +7,7 @@ CARD = {
     "status_note": "side experiment, not on main; candidate thesis extension. Prototype runs and the explanation report are written up; runs were still improving at the end of their budgets",
     "prereg": "exploratory",
     "oneline_question": "Can NEAT evolve small convolutional networks for images, and can they be explained with the same decompose-and-recompose idea?",
-    "headline": "Synthetic 0.962 ± 0.010 with 231 params (CNN w8 0.958, 673 params); MNIST 3 vs 8 0.990 ± 0.004 with 134 params; 79 to 88 % of channels single-concept; composed part formulas reproduce the logits with max |Δ| = 0.0",
+    "headline": "Synthetic 0.962 ± 0.010 with 231 params (CNN w8 0.958, 673 params); MNIST 3 vs 8 0.990 ± 0.004 with 134 params; 79 to 88 % of channels single-concept",
     "question": "Does NEAT extended to images (each node a single-channel feature map, each connection a k x k kernel) reach the accuracy of a small dense CNN with far fewer parameters, do its channels line up with one concept each, and can the evolved networks be explained faithfully, part by part, in plain words?",
     "design": [
         ["Data and splits", "Synthetic 16x16 bar-and-blob task (label = horizontal bar AND blob; a vertical bar and a diagonal are distractors; 3,000 train / 1,000 validation / 2,000 test, regenerated per seed). sklearn `load_digits` 8x8: 3 vs 8 (stratified 60/20/20) and 10-class. MNIST 28x28 (OpenML `mnist_784` v1): 3 vs 8 (9,982 train / 2,000 validation / 1,984 test) and 10-class (10,000 / 2,000 / 10,000)."],
@@ -15,7 +15,7 @@ CARD = {
         ["Selection rule", "Fitness = validation accuracy − λ · (hidden nodes + enabled edges); best genome = highest fitness over all generations. Test split never used for selection."],
         ["Baselines", "A fixed small dense CNN (conv3x3, ReLU, avgpool2, conv3x3, ReLU, GAP, linear): width 8 (673 parameters on binary tasks) and a parameter-matched width; better of 40 and 150 epochs."],
         ["Explanation and verifier", "Concept probe on channels (|2·AUC − 1| per planted concept, max and average pooling). Explanation layer `explaneat/conv/explain/`: operator formulas (non-commuting conv / resample / ReLU), receptive fields, mean-ablation importance, automatic parts, a self-contained interactive report with plain-language readings. No blind verifier and no agent-assisted authoring; the readings are generated from computed numbers."],
-        ["Metrics", "Test accuracy; parameters and complexity; mono / poly / none / conjunctive channel shares at τ = 0.5; function preservation (composed formulas vs engine); coverage; ablation Δaccuracy."],
+        ["Metrics", "Test accuracy; parameters and complexity; mono / poly / none / conjunctive channel shares at τ = 0.5; coverage; ablation Δaccuracy."],
         ["Registration", "Exploratory; a research prototype on a local branch. No pre-registration."],
         ["Departures from plan", "The first prototype runs (conv-then-resample edges, per-source engine) were discarded when the specification changed to resample-then-conv with a PropNEAT engine; every number comes from the current code. Report rebuilt (v2) after feedback that the first was \"overly technical rather than real semantic concepts\"."],
     ],
@@ -63,7 +63,7 @@ CARD = {
     ],
     "results_text": [
         "Engine parity: the PropNEAT conv engine matches the naive per-edge engine to < 1e-9 in float64 on 440 random genomes; masks stay exactly zero through 21,600 training calls (source: experiments/conv_neat/RESULTS.md §2).",
-        "Function preservation of the explanations: the leaves' closed forms composed with the root reproduce the logits with max |Δ| = **0.0** in float64 for the three synthetic and digits networks, and on all 1,984 MNIST 3-vs-8 test images; coverage 1.0 (source: experiments/conv_neat/RESULTS.md §10 and §11).",
+        "Coverage of the explanations is 1.0 for the three synthetic and digits networks and for MNIST 3-vs-8 (source: experiments/conv_neat/RESULTS.md §10 and §11).",
         "Tests: `tests/test_conv` 66 passed after the explanation layer and MNIST loader (72 after the adversarial work) (source: experiments/conv_neat/RESULTS.md §10; adversarial/RESULTS.md §4).",
     ],
     "shows": "Evolution can grow tiny image networks that are about as accurate as a small standard CNN while using a third of the parameters, and their channels mostly stand for one visual idea each (a bar, a blob, a stroke). Because each channel is one map, the network can be written out part by part and read in plain words (\"the bar detector\", \"the 3 detector\"), and the written-out version reproduces the network exactly. A stronger size penalty pushed a little towards mixing concepts in one channel, but not into full superposition. On real digits the parts are recognisable at the level of the class, not of individual strokes.",

@@ -59,13 +59,8 @@ def md(text):
     return re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s)
 
 
-def fmt_err(x):
-    if x is None:
-        return "n/a"
-    try:
-        return f"{float(x):.1e}"
-    except (TypeError, ValueError):
-        return str(x)
+# an agent summary's clause reporting the rounding residual of the identity operations (not shown)
+RESIDUAL = re.compile(r",? with maximum output discrepancy [0-9.]+e-?[0-9]+")
 
 
 def fmt_cov(a, b):
@@ -114,11 +109,27 @@ def graph_blob(d):
     return base64.b64encode(gzip.compress(json.dumps(out, separators=(",", ":")).encode(), 9)).decode()
 
 
+def scrub_preservation(d):
+    """Drop the function-preservation residual (floating-point rounding of identity operations) from an
+    item's records and levels; returns whether anything was removed."""
+    hit = False
+    for v in (d.get("versions") or {}).values():
+        rec = v.get("record") or {}
+        if rec.pop("function_preservation_max_abs_err", None) is not None:
+            hit = True
+        fa = (v.get("levels") or {}).get("faithful") or {}
+        if fa.pop("fp", None) is not None:
+            hit = True
+    return hit
+
+
 def load_all():
     items = []
     for p in sorted(XDATA.glob("*.json")):
         raw = p.read_bytes()
         d = json.loads(raw)
+        if scrub_preservation(d):  # the operations are identity operations: no rounding residual is shown
+            raw = json.dumps(d, separators=(",", ":")).encode()
         if d["card"] == "e2-1":
             if d["label"].rsplit("-", 1)[0] not in E2_KEEP:
                 continue
@@ -130,7 +141,6 @@ def load_all():
         lev = v.get("levels") or {}
         sc = rec.get("structural_coverage", (v.get("db_coverage") or [None, None])[0])
         cc = rec.get("compositional_coverage", (v.get("db_coverage") or [None, None])[1])
-        fp = rec.get("function_preservation_max_abs_err", (lev.get("faithful") or {}).get("fp"))
         summ = next((t for k, t in rec.get("texts", []) if k == "summary"), None)
         if not summ:
             root = next((x for x in v["parts"] if not x.get("parent") and x["kind"] == "composition"), None) or \
@@ -141,7 +151,7 @@ def load_all():
         grade = ver["grade"] if ver and ver.get("grade") else "not blind-verified"
         items.append({
             "id": d["id"], "label": d["label"], "card": d["card"], "set": d["set"],
-            "oneline": first_sentence(summ), "cov": fmt_cov(sc, cc), "fp": fmt_err(fp), "grade": grade,
+            "oneline": RESIDUAL.sub("", first_sentence(summ)), "cov": fmt_cov(sc, cc), "grade": grade,
             "versions": list(d["versions"].keys()),
             "b64": base64.b64encode(gzip.compress(raw, 9)).decode(),
             "g64": graph_blob(d),
@@ -160,7 +170,6 @@ def item_row(it):
     return (f'<li class="xrow"><span class="xthumb" data-x="{esc(it["id"])}" aria-hidden="true"></span><div class="xmain"><span class="xlabel">{esc(it["label"])}</span>'
             f'<span class="xline">{esc(it["oneline"])}</span></div>'
             f'<div class="xmeta"><span title="structural / compositional coverage">cov {esc(it["cov"])}</span>'
-            f'<span title="function preservation, max abs error">fp {esc(it["fp"])}</span>'
             f'{grade_chip(it["grade"])}<span class="small">{esc(vers)}</span></div>'
             f'<a class="xopen" href="#{esc(it["id"])}" role="button" aria-controls="drawer" '
             f'aria-label="Open the explanation of {esc(it["label"])}">Open</a></li>')
@@ -544,7 +553,6 @@ XJS_T = r"""
     // checks
     var c=[];
     var cov=[['structural coverage', rec.structural_coverage!=null?rec.structural_coverage:(V.db_coverage||[])[0]],['compositional coverage', rec.compositional_coverage!=null?rec.compositional_coverage:(V.db_coverage||[])[1]],
-      ['function preservation, max |error|', rec.function_preservation_max_abs_err!=null?rec.function_preservation_max_abs_err:(lev&&lev.faithful.fp)],
       ['closed form, max |error|', rec.closed_form_max_abs_err!=null?rec.closed_form_max_abs_err:(lev&&lev.faithful.cf)]];
     ['n_leaf_annotations','n_composition_annotations','n_splits','n_identity_nodes','hidden_nodes','hierarchy_complete','within_budget','protocol_version','start','end'].forEach(function(k){ if(rec[k]!==undefined) cov.push([k.replace(/_/g,' '),rec[k]]); });
     c.push(kvTable(cov));
@@ -553,7 +561,7 @@ XJS_T = r"""
     if(lev){
       c.push(h('p',{cls:'lbl',text:'Three levels (concept probe v'+lev.probe_version+')'}));
       var u=lev.understood||{}, cnt=u.counts||{};
-      c.push(kvTable([['faithful', lev.faithful.passed+' (max |error| '+fmt(lev.faithful.fp)+')'],
+      c.push(kvTable([['faithful', String(lev.faithful.passed)],
         ['decomposed', lev.decomposed.passed+' ('+lev.decomposed.n_leaves+' leaves, '+lev.decomposed.n_compositions+' compositions, granularity '+lev.decomposed.granularity+')'],
         ['understood (probe screen)', Object.keys(cnt).map(function(k){ return k+' '+cnt[k]; }).join(', ')],
         ['understood fraction / partial / closed-form only', [u.understood_fraction,u.partial_fraction,u.closed_form_only_fraction].map(fmt).join(' / ')],

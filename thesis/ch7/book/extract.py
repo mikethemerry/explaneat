@@ -268,8 +268,7 @@ def levels_layer(lv, path):
     return {
         "path": rel(path),
         "probe_version": lv.get("probe_version"),
-        "faithful": {"passed": f.get("passed"), "fp": num(f.get("function_preservation_max_abs_err")),
-                     "cf": num(f.get("closed_form_max_abs_err"))},
+        "faithful": {"passed": f.get("passed"), "cf": num(f.get("closed_form_max_abs_err"))},
         "decomposed": {"passed": d.get("passed"), "n_leaves": d.get("n_leaves"), "n_compositions": d.get("n_compositions"),
                        "hidden_units": d.get("hidden_units"), "granularity": num(d.get("granularity"))},
         "understood": {"counts": u.get("counts"), "understood_fraction": num(u.get("understood_fraction")),
@@ -290,7 +289,7 @@ def record_layer(rec, path):
         return None
     r = {"path": rel(path)}
     for k in ("structural_coverage", "compositional_coverage", "full_coverage", "within_budget",
-              "function_preservation_max_abs_err", "closed_form_max_abs_err", "n_leaf_annotations",
+              "closed_form_max_abs_err", "n_leaf_annotations",
               "n_composition_annotations", "n_splits", "n_identity_nodes", "hidden_nodes", "hierarchy_complete",
               "protocol_version", "start", "end", "time_used_minutes", "pilot"):
         if k in rec:

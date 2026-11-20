@@ -32,7 +32,7 @@ CARD = {
                 ["Errors per 100 statements", "0.58 (0.34 to 0.93)", "0.25 (0.09 to 0.54)"],
                 ["Database errors per 100 database statements", "0.57", "0.00"],
                 ["Genuine weakened (database / draft)", "39 (15 / 24)", "32 (7 / 25)"],
-                ["Full coverage; function preservation below 1e-9", "6 of 6; 6 of 6", "6 of 6; 6 of 6"],
+                ["Full coverage", "6 of 6", "6 of 6"],
                 ["Explaining time, median (records)", "17 min", "21.6 min"],
             ],
             "note": "All errors: 6 of 23, one-sided p = 0.017; database text only: 0 of 11, p ≈ 0.0005. Decision rule criterion 1 fails (6 > 2): \"do not adopt v4 as it stands\".",
@@ -69,7 +69,7 @@ CARD = {
         "Detection check: the fresh verifiers found all 8 known errata of the original arm (source: experiments/authoring_v4/RESULTS.md).",
         "Provenance: of 1225 references in the v4 database text, 1178 were rerun and matched exactly; 47 come from tools that cannot be rerun; no reference failed to reproduce (source: experiments/authoring_v4/RESULTS.md).",
         "A new error mechanism was found in the drafts: constructed cases off the data (one input of the typical person changed while a linked input stays fixed, e.g. education category with education-num) (source: experiments/authoring_v4/RESULTS.md).",
-        "After correction, coverage (1.0), function preservation (max error ≤ 1e-15), closed-form error and operation counts were unchanged on all ten corrected genomes (source: experiments/errata/2026-11-11/ERRATA.md).",
+        "After correction, coverage (1.0), closed-form error and operation counts were unchanged on all ten corrected genomes (source: experiments/errata/2026-11-11/ERRATA.md).",
     ],
     "shows": "Writing explanations under the frozen method, with every number tied to a stored query, removed the errors in the explanation text itself (11 to 0). The errors that remained sat in the plain-language layer, where a number could reproduce exactly yet describe a person who does not exist in the data; fixing how the drafts move linked inputs removed those too. The errata sweep found real but small text errors in the stored records, and none of them changed a reported number.",
     "caveats": [

@@ -81,8 +81,7 @@ EXP = {
     ],
     "methods_more": [
         ["Full coverage", "Structural coverage 1.0 and compositional coverage 1.0 from the tools, a complete hierarchy (one "
-                          "root that contains the output, every part beneath it), and the explained model equal to the "
-                          "network on the training rows (max |Δ output| < 1e-9)."],
+                          "root that contains the output, every part beneath it)."],
         ["Recheck complete", "The record's `recheck_summary.complete_ok`: recheck v3 found no unanswered mismatch. Each "
                              "needs-review item is either fixed or answered in the record."],
         ["Test AUC", "Of each seed's best network on the test rows, with a 95% interval from 10,000 bootstrap resamples "
@@ -139,7 +138,6 @@ EXP = {
                  ["Enabled connections, median (range)", "87 (70–95)", "81.5 (59–94)", "40 (33–50)"],
                  ["Leaf parts, median (range)", "8 (6–12)", "7 (5–12)", "4 (4–7)"],
                  ["Composition parts, median (range)", "1 (1–3)", "2 (1–4)", "2 (1–4)"],
-                 ["Worst function-preservation error", "7.8e-16", "1.0e-15", "4.4e-16"],
                  ["Recheck needs-review items (all answered)", "6", "2", "1"],
                  ["Seeds within 0.01 of LR / of GB", "10 / 0", "10 / 0", "2 / 0"],
                  ["Seeds within 0.02 of the best seed", "10", "5", "2"],

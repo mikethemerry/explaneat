@@ -38,10 +38,10 @@ CARD = {
         {
             "caption": "Explanation, the three levels and the verifier",
             "source": "experiments/survival/cox_case/RESULTS.md §6 (verifier counts); tables.md (closed-form error)",
-            "headers": ["Label", "Leaves", "Coverage", "Faithful: max abs err", "Closed-form err", "Understood m / p / c", "Recheck", "Verifier"],
+            "headers": ["Label", "Leaves", "Coverage", "Closed-form err", "Understood m / p / c", "Recheck", "Verifier"],
             "rows": [
-                ["cox-gbsg2-s1", "3", "1.00 / 1.00", "4.4e-16", "3.5e-3", "3 / 0 / 0", "0 / 0", "upheld: 64 findings, 62 upheld, 0 weakened, 0 refuted, 2 domain flags"],
-                ["cox-whas500-s0", "4", "1.00 / 1.00", "4.4e-16", "1.4e-3", "4 / 0 / 0", "0 / 0", "weakened: 39 findings, 36 upheld, 1 weakened, 0 refuted, 2 domain flags"],
+                ["cox-gbsg2-s1", "3", "1.00 / 1.00", "3.5e-3", "3 / 0 / 0", "0 / 0", "upheld: 64 findings, 62 upheld, 0 weakened, 0 refuted, 2 domain flags"],
+                ["cox-whas500-s0", "4", "1.00 / 1.00", "1.4e-3", "4 / 0 / 0", "0 / 0", "weakened: 39 findings, 36 upheld, 1 weakened, 0 refuted, 2 domain flags"],
             ],
             "note": "tables.md says \"64 findings\" for GBSG2 where verdict.md counts 62 upheld + 2 flags: same facts, two ways of counting.",
         },

@@ -37,7 +37,6 @@ CARD = {
             "rows": [
                 ["Leaves / compositions", "4 / 3", "5 / 1", "8 / 2"],
                 ["Coverage (structural / compositional)", "1.0 / 1.0", "1.0 / 1.0", "1.0 / 1.0"],
-                ["Function preservation", "3.3e-16", "4.4e-16", "3.3e-16"],
                 ["Closing recheck", "0 mismatch, 0 review", "0 mismatch, 0 review", "0 mismatch, 0 review"],
                 ["Understood, probe v2 (m / p / c)", "3 / 1 / 0 (0.75)", "2 / 3 / 0 (0.40)", "4 / 3 / 1 (0.50)"],
                 ["Understood, explainer's own grades", "2 / 2 / 0", "5 / 0 / 0", "8 / 0 / 0"],

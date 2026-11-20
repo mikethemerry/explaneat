@@ -8,7 +8,7 @@ EXP = {
  "claim": (
         "A proof of concept: the method carried to convolutional networks. On MNIST 10-class the evolved network "
         "performs close to a small CNN (0.976 test with 93 kernels in 38 maps, level with gradient boosting and above every "
-        "interpretable comparator), and its decomposition is clean and exact. The agent's behaviour-first explanations "
+        "interpretable comparator), and its decomposition is clean. The agent's behaviour-first explanations "
         "are plausible and pass its own image-edit probes, but they cannot yet be verified by a person, so the model is "
         "presented as **not explainable yet**."
     ),
@@ -174,7 +174,7 @@ EXP = {
             "title": "Explanations: a clean decomposition, and behaviour-first readings that cannot yet be verified",
             "lead": (
                 "On all four networks ExplaNEAT's decomposition is clean: 0 unclean boundary edges, every structure "
-                "collapsible, the function preserved to about 1e-14. The agent then read every part from its own behaviour. "
+                "collapsible. The agent then read every part from its own behaviour. "
                 "Most parts are \"proven\", which here means the agent's own image-edit probes agreed with its prediction; "
                 "no person has checked them, and checking them needs convolutional expertise and tools that are not "
                 "available here."
@@ -183,12 +183,12 @@ EXP = {
                 {
                     "caption": "Decomposition (validation images only; before = the earlier pipeline's grouping of the same structures)",
                     "source": "experiments/conv_neat/decomposition/RESULTS.md; decomposition/summary_<network>.json",
-                    "headers": ["Network", "Structures, leaves", "Operations (ports, splits)", "Unclean boundary edges, before → after", "Collapsible structures, before → after", "Max |Δ logit| (1,000 images)"],
+                    "headers": ["Network", "Structures, leaves", "Operations (ports, splits)", "Unclean boundary edges, before → after", "Collapsible structures, before → after"],
                     "rows": [
-                        ["MNIST unpruned (gen 64)", "7, 13", "77 (42, 18)", "33 of 94 → 0 of 68", "0 → 7 of 7", "1.4e-14"],
-                        ["MNIST pruned headline (gen 77)", "8, 12", "65 (34, 14)", "19 of 78 → 0 of 54", "0 → 8 of 8", "1.1e-14"],
-                        ["MNIST 50k warm start (gen 97)", "8, 14", "73 (41, 15)", "24 of 73 → 0 of 53", "1 → 8 of 8", "1.4e-14"],
-                        ["3 vs 8 vs noise", "3, 6", "23 (11, 3)", "4 of 19 → 0 of 15", "0 → 3 of 3", "3.6e-15"],
+                        ["MNIST unpruned (gen 64)", "7, 13", "77 (42, 18)", "33 of 94 → 0 of 68", "0 → 7 of 7"],
+                        ["MNIST pruned headline (gen 77)", "8, 12", "65 (34, 14)", "19 of 78 → 0 of 54", "0 → 8 of 8"],
+                        ["MNIST 50k warm start (gen 97)", "8, 14", "73 (41, 15)", "24 of 73 → 0 of 53", "1 → 8 of 8"],
+                        ["3 vs 8 vs noise", "3, 6", "23 (11, 3)", "4 of 19 → 0 of 15", "0 → 3 of 3"],
                     ],
                     "note": "Each record replays from disk with every operation re-validated. Compositional and structural coverage 1.0 on every network; every hidden map is in exactly one leaf.",
                 },
@@ -303,8 +303,7 @@ EXP = {
         "kernels reaches 0.976 test accuracy, level with gradient boosting (0.977), above the EBM (0.940) and logistic "
         "regression (0.925) on the same 50,000 rows, and close to the small CNN LeNet-1 (about 0.983 reported). With 10,000 "
         "rows the networks reach 0.951–0.958, again above every interpretable comparator. The decomposition is clean on "
-        "every network: every structure collapses, nothing crosses a boundary except through an entry or exit, and the "
-        "explained graph reproduces the network to about 1e-14.",
+        "every network: every structure collapses, and nothing crosses a boundary except through an entry or exit.",
         "What is missing is verification. The agent's behaviour-first explanations are plausible and consistent across "
         "networks (ink meters, horizontal strokes split by height, diagonals, left-side upright strokes), and their probes "
         "pass. But \"proven\" here means only that the agent's own image-edit probes agreed. Checking whether a feature map "
