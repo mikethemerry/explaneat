@@ -63,7 +63,7 @@ File: `thesis/ch7/exp1/tables/exp1-benchmarks.tex`
 
 **Old caption**
 
-> Experiment 1: each dataset's explained PropNEAT network against the comparator suite (binary classification; the survival case is Table~\ref{tab:exp1-benchmarks-survival}). Every comparator is tuned by 5-fold stratified cross-validation on the training rows only (seed 42, scoring AUC), refitted on all training rows, and scored once on the test rows of the split the PropNEAT runs used, with the same input scaling. Each cell: test AUC; below it, the 95\% percentile interval from 10{,}000 bootstrap resamples of the test rows (\texttt{RandomState(42)}, the same resamples for every model of a dataset) and the test accuracy. Bold: the column's best AUC at this precision. Gradient boosting is scikit-learn's histogram gradient boosting; the explainable boosting machine is InterpretML's. The settings each model's cross-validation chose are in \texttt{experiments/benchmarks/benchmarks.csv}. Training / test rows: Heart 242 / 61; MONK-2 345 / 87; Connect-4 cells 54{,}045 / 13{,}512; Connect-4 lines 54{,}045 / 13{,}512; U 1{,}500 / 500; saddle 1{,}500 / 500; U $+$ saddle 1{,}500 / 500. On the synthetic sets the true logit reaches a test AUC of 0.851, 0.841, 0.884 (U, saddle, U $+$ saddle). XOR (four rows, no test set): all 30 PropNEAT seeds classify the four rows; an $L_2$ logistic regression gets 0.50 (it predicts one class) and a decision tree 1.00.
+> Experiment 1: each dataset's explained PropNEAT network against the comparator suite (binary classification; the survival case is Table~\ref{tab:exp1-benchmarks-survival}). Every comparator is tuned by 5-fold stratified cross-validation on the training rows only (seed 42, scoring AUC), refitted on all training rows, and scored once on the test rows of the split the PropNEAT runs used, with the same input scaling. Each cell: test AUC; below it, the 95\% percentile interval from 10{,}000 bootstrap resamples of the test rows (\texttt{RandomState(42)}, the same resamples for every model of a dataset) and the test accuracy. Bold: the column's best AUC at this precision. Gradient boosting is scikit-learn's histogram gradient boosting; the explainable boosting machine is InterpretML's. The settings each model's cross-validation chose are in \texttt{experiments/benchmarks/benchmarks.csv}. Training / test rows: Heart 242 / 61; MONK-2 345 / 87; Connect-4 cells 54{,}045 / 13{,}512; Connect-4 lines 54{,}045 / 13{,}512; U $+$ saddle 1{,}500 / 500. On the synthetic sets the true logit reaches a test AUC of 0.851, 0.841, 0.884 (U, saddle, U $+$ saddle). XOR (four rows, no test set): all 30 PropNEAT seeds classify the four rows; an $L_2$ logistic regression gets 0.50 (it predicts one class) and a decision tree 1.00.
 
 **New caption**
 
@@ -76,11 +76,11 @@ File: `thesis/ch7/exp1/tables/exp1-benchmarks.tex`
 - [the interval:] the 95\% percentile interval from 10{,}000 bootstrap resamples of the test rows (\texttt{RandomState(42)}, the same resamples for every model of a dataset)
 - Gradient boosting is scikit-learn's histogram gradient boosting; the explainable boosting machine is InterpretML's.
 - The settings each model's cross-validation chose are in \texttt{experiments/benchmarks/benchmarks.csv}.
-- Training / test rows: Heart 242 / 61; MONK-2 345 / 87; Connect-4 cells 54{,}045 / 13{,}512; Connect-4 lines 54{,}045 / 13{,}512; U 1{,}500 / 500; saddle 1{,}500 / 500; U $+$ saddle 1{,}500 / 500.
+- Training / test rows: Heart 242 / 61; MONK-2 345 / 87; Connect-4 cells 54{,}045 / 13{,}512; Connect-4 lines 54{,}045 / 13{,}512; U $+$ saddle 1{,}500 / 500.
 
 **Removed: results**
 
-- On the synthetic sets the true logit reaches a test AUC of 0.851, 0.841, 0.884 (U, saddle, U $+$ saddle). [experiments/ushape_saddle/references.json]
+- On the synthetic U $+$ saddle set the true logit reaches a test AUC of 0.884. [experiments/ushape_saddle/references.json, `both.oracle`] (22 Nov 2026: only the U $+$ saddle network is presented.)
 - XOR (four rows, no test set): all 30 PropNEAT seeds classify the four rows; an $L_2$ logistic regression gets 0.50 (it predicts one class) and a decision tree 1.00. [benchmarks.csv, propneat.json]
 
 ## ch7-ex1-benchmarks, survival (tab:exp1-benchmarks-survival)
@@ -1173,7 +1173,8 @@ and reading keys only; the method below is for the body text.
 
 **Not in the captions: methodology (for the body text)**
 
-- Datasets: Churn and the three synthetic sets (U, saddle, U + saddle). Adult and Connect-4 are left out on
+- Datasets: Churn and the synthetic U + saddle set (the study also ran U and saddle alone; since 22 Nov 2026
+  the tables show only U + saddle, the one synthetic network presented). Adult and Connect-4 are left out on
   compute grounds.
 - Factors, full factorial (twelve configurations): backprop epochs per generation (5, 20); structural-mutation
   family (Heart: node add/delete 0.4/0.2, connection add/delete 0.5/0.3, compatibility threshold 3, disjoint
