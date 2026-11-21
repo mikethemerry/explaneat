@@ -4,13 +4,16 @@ Every Chapter 7 figure is one vector PDF (+ a 300 dpi PNG for viewing) and one g
 output tree mirrors the Overleaf upload (thesis/scripts/build_overleaf_upload.sh), so the
 \\includegraphics paths inside the floats are the thesis's own:
 
-    thesis/ch7/figures/figures/ch7/<group>/<id>.pdf      (+ .png)
-    thesis/ch7/figures/sections/figures/<group>/<id>.tex  the float: \\includegraphics{figures/ch7/<group>/<id>}
+    thesis/ch7/figures/figures/ch7/<id>.pdf              (+ .png) flat: no group folder (Mike's Overleaf, 21 Nov)
+    thesis/ch7/figures/sections/figures/<group>/<id>.tex  the float: \\includegraphics{figures/ch7/<id>.pdf}
     thesis/ch7/figures/plotdata/<id>.json                 every plotted number of a matplotlib figure
                                                           (for the determinism check; not uploaded)
 
-<group> is ``used`` (the figures Mike picked from the candidate gallery on 20 Nov 2026) or ``options``
-(every other figure, kept available for the results chapter). The split is a design choice listed in USED.
+<group> is ``used`` (the figures Mike picked from the candidate gallery on 20 Nov 2026, plus the Experiment 1
+main-text figures of 21 Nov), ``appendix`` (printed in the Experiment 1 appendix, beside their networks) or
+``options`` (every other figure, kept available for the results chapter). The split is a design choice listed in
+USED and APPENDIX; it separates the floats only. The figure files are flat, so a figure id has a float in one
+group only (check_unique_ids, asserted by thesis/scripts/ch7_figures_index.py).
 
 Captions hold a short title and the keys needed to read the figure only (what colours, markers, line
 styles, shading and thresholds mean); method and results sentences belong to the body text
@@ -41,18 +44,40 @@ USED = (
     "train-vs-test-auc", "exp2-auc", "exp2-churn-calls-parts", "exp2-worked-ice", "exp2-worked-net-concept",
     "exp2-worked-net-exploded", "exp2-worked-net-unexplained", "exp2-worked-pairs", "synthetic-shape-c-saddle",
     "synthetic-shape-c-sodium", "xor-ridge-valley", "exp2-churn-shapes", "exp2-s8-ice",
+    # Experiment 1 main-text figures (brief of 21 Nov 2026)
+    "adult-capgain-response",
 )
-GROUPS = ("used", "options")
+# Figures printed in the Experiment 1 appendix (thesis/ch7/exp1/appendix_networks.tex inlines their floats under
+# their networks), not in the main text (brief of 21 Nov 2026).
+APPENDIX = (
+    "xor-gates", "synthetic-shape-a-sodium", "synthetic-shape-a-saddle", "synthetic-shape-b-sodium",
+    "synthetic-shape-b-saddle",
+)
+GROUPS = ("used", "options", "appendix")
 MAX_HEIGHT = r"0.8\textheight"   # design choice: a tall figure shrinks to leave room for its caption on the page
 
 
+assert not set(USED) & set(APPENDIX), set(USED) & set(APPENDIX)
+
+
 def group(fid: str) -> str:
-    return "used" if fid in USED else "options"
+    return "used" if fid in USED else ("appendix" if fid in APPENDIX else "options")
 
 
 def gfile(fid: str, ext: str) -> Path:
-    """The figure file (.pdf or .png) of a figure id, in its group's folder."""
-    return ROOT / "figures" / "ch7" / group(fid) / f"{fid}.{ext}"
+    """The figure file (.pdf or .png) of a figure id. Flat (Mike's Overleaf layout, 21 Nov 2026): every figure
+    file in figures/ch7/<id>.<ext>, whatever its group; only the floats are split by group."""
+    return ROOT / "figures" / "ch7" / f"{fid}.{ext}"
+
+
+def check_unique_ids():
+    """Figure files are flat, so a figure id may have a float in one group only (asserted)."""
+    seen = {}
+    for g in GROUPS:
+        for t in sorted((ROOT / "sections" / "figures" / g).glob("*.tex")):
+            assert t.stem not in seen, f"figure id {t.stem} has floats in both {seen[t.stem]} and {g}"
+            seen[t.stem] = g
+    return seen
 
 
 def float_path(fid: str) -> Path:
@@ -67,13 +92,13 @@ def label_of(fid: str) -> str:
 # --------------------------------------------------------------------------- writing
 
 def _clear_other_group(fid: str):
-    """A figure lives in one group only: drop stale copies from the other group's folders."""
+    """A figure's float lives in one group only: drop stale floats from the other groups' folders (and any copy
+    of its files left in a group folder by the layout before the flat one)."""
     for g in GROUPS:
-        if g == group(fid):
-            continue
-        for p in (ROOT / "figures" / "ch7" / g / f"{fid}.pdf", ROOT / "figures" / "ch7" / g / f"{fid}.png",
-                  ROOT / "sections" / "figures" / g / f"{fid}.tex"):
+        for p in (ROOT / "figures" / "ch7" / g / f"{fid}.pdf", ROOT / "figures" / "ch7" / g / f"{fid}.png"):
             p.unlink(missing_ok=True)
+        if g != group(fid):
+            (ROOT / "sections" / "figures" / g / f"{fid}.tex").unlink(missing_ok=True)
 
 
 def save(fig, fid: str, pdata=None, png=True):
@@ -102,16 +127,16 @@ def place(src: Path, fid: str, ext: str):
 
 
 def write_float(fid: str, title: str, keys: str = "", generator: str = "", width=r"\textwidth",
-                placement="tbp", ext: str = ""):
-    """The figure's float. Caption = title (+ keys). ``ext`` forces a file extension in \\includegraphics
-    (only for the raster-only options, ".png")."""
+                placement="tbp", ext: str = ".pdf"):
+    """The figure's float. Caption = title (+ keys). \\includegraphics names the flat file with its extension,
+    figures/ch7/<id>.pdf (Mike's Overleaf layout); ``ext`` ".png" for a raster-only figure."""
     _clear_other_group(fid)
     title = title.strip().rstrip(".")
     caption = f"{title}." + (f" {keys.strip()}" if keys.strip() else "")
     src = (f"% Generated by {generator} -- do not edit by hand.\n"
            f"\\begin{{figure}}[{placement}]\n  \\centering\n"
            f"  \\includegraphics[width={width},height={MAX_HEIGHT},keepaspectratio]"
-           f"{{figures/ch7/{group(fid)}/{fid}{ext}}}\n"
+           f"{{figures/ch7/{fid}{ext}}}\n"
            f"  \\caption{{{caption}}}\n  \\label{{{label_of(fid)}}}\n\\end{{figure}}\n")
     p = float_path(fid)
     p.parent.mkdir(parents=True, exist_ok=True)

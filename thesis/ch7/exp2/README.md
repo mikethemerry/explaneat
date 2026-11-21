@@ -23,7 +23,7 @@ other Chapter 7 figure in `thesis/ch7/figures/` (written through `thesis/ch7/fig
 
 ```latex
 \input{tables/exp2/exp2-headline}               % a table float
-\input{sections/figures/used/exp2-auc}          % a figure float; \includegraphics{figures/ch7/used/exp2-auc}
+\input{sections/figures/used/exp2-auc}          % a figure float; \includegraphics{figures/ch7/exp2-auc.pdf} (figure files flat)
 ```
 
 Only packages already in `dissertation.tex` are used: booktabs, tabularx, makecell, adjustbox,

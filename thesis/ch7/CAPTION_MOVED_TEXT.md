@@ -1111,3 +1111,40 @@ The MNIST 3 vs 8 vs noise row is dropped (no network of it is presented), and th
 name the phases that trained on them. The caption is unchanged. The methodology bullet on MNIST 3 vs 8 vs
 noise above (21 Nov, "Datasets tables, landscape") no longer applies.
 
+# Experiment 1 figures and appendix (21 Nov 2026, branch thesis/exp1-figures)
+
+## Figure adult-capgain-response (fig:ch7-adult-capgain-response)
+
+New thesis float of the study figure `experiments/aaai27/recheck/results/paper_recompute/capgain-response_recomputed.png`
+(script `experiments/aaai27/run_d_capgain_figure.py`; data now `thesis/ch7/exp1/data/capgain.json`).
+
+**Old caption** (the study script's printed caption, `experiments/aaai27/recheck/results/paper_recompute/core.json`,
+`adult.capgain_script_output`)
+
+> Response of the capital-gain pathway (the depth-3 ReLU cascade, hub, and four output readouts of annotation \textit{capital\_gain\_core}) over the observed range of capital-gain, holding the five native-country inputs at zero; the vertical axis is the pathway's contribution to the output logit of $P(\text{income} \leq 50\text{K})$. Despite comprising seven neurons the pathway is flat for the 92\% of individuals with zero capital gain and then a steady downward ramp -- functionally a single threshold at $\approx$\$3,225 (exactly: two knots at \$3,225 and \$4,300, indistinguishable at data scale) -- pushing predictions towards $>$50K as capital gain grows.
+
+**New caption**
+
+> Adult, original network: response of the part \emph{Capital gains} to capital gain. Blue: the part's contribution to the output logit (log-odds of an income of \$50,000 or less), its country-of-birth inputs at 0; dotted red: the knots of the piecewise-linear response.
+
+**Removed: methodology**
+
+- the depth-3 ReLU cascade, hub, and four output readouts of annotation capital\_gain\_core [the part's seven units]
+- over the observed range of capital gain [every row of the dataset, as the study script]
+
+**Removed: results** (values in `thesis/ch7/exp1/data/capgain.json`: `share_zero_capital_gain`, `knots_raw`)
+
+- the pathway is flat for the 92\% of individuals with zero capital gain and then a steady downward ramp
+- functionally a single threshold at $\approx$\$3,225 (exactly: two knots at \$3,225 and \$4,300, indistinguishable at data scale)
+- pushing predictions towards $>$50K as capital gain grows
+
+## Figures xor-gates, synthetic-shape-{a,b}-{sodium,saddle}
+
+Moved from options to the new `appendix` group (`figlib.APPENDIX`), printed in the Experiment 1 appendix
+under their networks; captions unchanged.
+
+## Experiment 1 appendix networks (thesis/ch7/exp1/appendix_networks.tex)
+
+New. Captions: the case and network, raw or explained, and the keys (edge colours and widths, outlines,
+arrows, boxes); no results. Nothing removed.
+

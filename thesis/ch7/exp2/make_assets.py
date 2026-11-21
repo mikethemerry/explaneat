@@ -11,7 +11,7 @@ data/ caches written by extract_db.py (read-only sessions on explaneat_v4). Noth
 Outputs (paths as the thesis will use them, relative to the thesis root):
     tables/exp2/*.tex    one table float each (booktabs, tabularx, makecell, adjustbox)
     figures              vector PDFs (+ PNG at 300 dpi) and their floats, in thesis/ch7/figures/ (thesis/ch7/figlib.py:
-                         figures/ch7/{used,options}/<id>.pdf, sections/figures/{used,options}/<id>.tex), with
+                         figures/ch7/<id>.pdf flat, sections/figures/{used,options}/<id>.tex), with
                          the figures of exp2_figures.py; the appendix network figures stay in figures/exp2/networks/
 """
 from __future__ import annotations
@@ -1216,7 +1216,7 @@ def main():
     print("tables:", ", ".join(sorted(p.stem for p in TAB.glob("*.tex"))))
     import exp2_figures             # signal, completeness, performance and cost figures (thesis/ch7/figlib.py)
     exp2_figures.build()
-    print("figures:", ", ".join(sorted(p.stem for p in (figlib.ROOT / "figures/ch7").glob("*/*.pdf"))))
+    print("figures:", ", ".join(sorted(p.stem for p in (figlib.ROOT / "figures/ch7").glob("*.pdf"))))
 
 
 if __name__ == "__main__":

@@ -51,6 +51,17 @@ if [[ "${1:-}" == "--with-db" ]]; then
   uv run python thesis/ch7/exp1/extract_db.py                                    # explaneat_dev -> exp1/data/networks.json
                                                                                  # (+ coverage checks, explaining minutes)
   DATABASE_URL=postgresql://localhost/explaneat_v4 uv run python thesis/ch7/exp2/extract_db.py --refresh   # exp2/data/*
+  # Experiment 1 appendix networks: the two Connect-4 plain-language layers (the other Experiment 1 layers are
+  # their studies' committed files), then the check of every layer against its genome's explanation
+  PGOPTIONS='-c default_transaction_read_only=on' DATABASE_URL=postgresql://localhost/explaneat_dev \
+    uv run python -m explaneat plain-language extract --genome 6ebf7e0c-55ec-4215-9852-0ac982e43c0e \
+    --label c4lf-lines-heavy-s0 --dir experiments/c4_line_features/plain_language   # ~10 min
+  PGOPTIONS='-c default_transaction_read_only=on' DATABASE_URL=postgresql://localhost/explaneat_dev \
+    uv run python -m explaneat plain-language extract --genome f0eb7635-7f85-437b-815b-993c5ad6cc14 \
+    --label c4cap-main-h10-e50-s1 --dir experiments/c4_capacity/plain_language      # ~20 min
+  uv run python thesis/ch7/exp1/extract_networks.py                              # -> exp1/data/network_figs.json
+  uv run python thesis/ch7/exp1/extract_capgain.py                               # -> exp1/data/capgain.json
+  uv run python thesis/ch7/exp1/heart_profiles.py                                # -> exp1/data/heart_profiles.json (proposal)
   # Figure caches: the synthetic shape sweeps (explaneat_dev) and the Adult / Heart-100 shapes and seed agreement (v4)
   PGOPTIONS='-c default_transaction_read_only=on' DATABASE_URL=postgresql://localhost/explaneat_dev \
     uv run python thesis/ch7/exp1/extract_shapes.py                              # -> exp1/data/shapes.json
@@ -65,7 +76,11 @@ uv run python thesis/ch7/exp2/make_assets.py            # exp2-benchmarks, exp2-
                                                         # appendix_networks.tex + figures/exp2/networks/*.pdf, other exp2 assets
                                                         # + every Experiment 2 figure (exp2_figures.py, worked.py)
 uv run python thesis/ch7/exp1/make_figures.py           # Experiment 1 figures (XOR, synthetic shapes, WHAS500,
-                                                        # earlier ten-seed export) + bench_figures.py (benchmarks, cost)
+                                                        # Adult capital gain, earlier ten-seed export)
+                                                        # + bench_figures.py (benchmarks, cost)
+uv run python thesis/ch7/exp1/networks.py               # Experiment 1 appendix: appendix_networks.tex +
+                                                        # figures/exp1/networks/*.pdf (after make_figures.py: it
+                                                        # inlines the appendix-group floats)
 uv run python thesis/scripts/ch7_figures_index.py       # thesis/ch7/FIGURES.md + thesis/ch7/figures/preview.tex
                                                         # (preview: cd thesis/ch7/figures && latexmk -pdf preview.tex)
 uv run python thesis/ch7/exp2/completeness_table.py  # exp2-signal-completeness.tex (not in the Overleaf upload)
