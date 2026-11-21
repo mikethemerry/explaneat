@@ -36,6 +36,9 @@ type AnnotationListPanelProps = {
   onSelectAnnotation: (annotationId: string | null) => void;
   genomeId: string;
   onOperationChange: () => void;
+  /** The annotation shown in focus mode (only its part of the graph), or null. */
+  focusedAnnotationId?: string | null;
+  onFocusAnnotation?: (annotationId: string | null) => void;
 };
 
 // =============================================================================
@@ -51,6 +54,9 @@ type AnnotationTreeItemProps = {
   onSelectAnnotation: (annotationId: string | null) => void;
   genomeId: string;
   onOperationChange: () => void;
+  /** The annotation shown in focus mode (only its part of the graph), or null. */
+  focusedAnnotationId?: string | null;
+  onFocusAnnotation?: (annotationId: string | null) => void;
   depth: number;
 };
 
@@ -63,6 +69,8 @@ function AnnotationTreeItem({
   onSelectAnnotation,
   genomeId,
   onOperationChange,
+  focusedAnnotationId = null,
+  onFocusAnnotation,
   depth,
 }: AnnotationTreeItemProps) {
   const isCollapsed = annotation.name ? collapsedAnnotations.has(annotation.name) : false;
@@ -86,6 +94,12 @@ function AnnotationTreeItem({
     logDebug("Select annotation", { annotationId: annotation.id });
     onSelectAnnotation(isSelected ? null : annotation.id);
   }, [annotation.id, isSelected, onSelectAnnotation]);
+
+  const isFocused = focusedAnnotationId === annotation.id;
+  const handleFocus = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onFocusAnnotation?.(isFocused ? null : annotation.id);
+  }, [annotation.id, isFocused, onFocusAnnotation]);
 
   const readOnly = useReadOnly();
   const handleDoubleClick = useCallback((e: React.MouseEvent) => {
@@ -176,6 +190,27 @@ function AnnotationTreeItem({
         ) : (
           <span className="badge leaf" title="Leaf annotation">leaf</span>
         )}
+        {onFocusAnnotation && (
+          <button
+            type="button"
+            className={`focus-toggle ${isFocused ? "active" : ""}`}
+            aria-pressed={isFocused}
+            aria-label={isFocused ? `Exit focus on ${displayName}` : `Focus on ${displayName}`}
+            title={
+              isFocused
+                ? "Exit focus: show the whole network again (Esc)"
+                : `Focus on ${displayName}: show only this part of the network`
+            }
+            data-testid="annotation-focus"
+            onClick={handleFocus}
+            onDoubleClick={(e) => e.stopPropagation()}
+          >
+            <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+              <circle cx="6.5" cy="6.5" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+              <line x1="10" y1="10" x2="14.5" y2="14.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
+        )}
       </div>
       {isSelected && (
         <div className="annotation-io" data-testid="annotation-io">
@@ -195,6 +230,8 @@ function AnnotationTreeItem({
           onSelectAnnotation={onSelectAnnotation}
           genomeId={genomeId}
           onOperationChange={onOperationChange}
+          focusedAnnotationId={focusedAnnotationId}
+          onFocusAnnotation={onFocusAnnotation}
           depth={depth + 1}
         />
       ))}
@@ -214,6 +251,8 @@ export function AnnotationListPanel({
   onSelectAnnotation,
   genomeId,
   onOperationChange,
+  focusedAnnotationId = null,
+  onFocusAnnotation,
 }: AnnotationListPanelProps) {
   const [panelCollapsed, setPanelCollapsed] = useState(false);
 
@@ -252,6 +291,8 @@ export function AnnotationListPanel({
                     onSelectAnnotation={onSelectAnnotation}
                     genomeId={genomeId}
                     onOperationChange={onOperationChange}
+                    focusedAnnotationId={focusedAnnotationId}
+                    onFocusAnnotation={onFocusAnnotation}
                     depth={0}
                   />
                 ))}

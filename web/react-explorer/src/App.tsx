@@ -51,6 +51,8 @@ export default function App() {
         experimentId={view.experimentId}
         experimentName={view.experimentName}
         initialAnnotationId={view.annotationId}
+        focusId={view.focus}
+        onFocusChange={(focus) => setView({ ...view, focus: focus ?? undefined })}
         onBack={() => setView({ type: "experiments" })}
         onOpenGenome={(gid) =>
           setView({ type: "genome", genomeId: gid, experimentId: view.experimentId, experimentName: view.experimentName })

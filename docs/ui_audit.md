@@ -146,6 +146,7 @@ Effort: S < 2 h, M = half a day, L = days.
 | Linearise / restore gain | **Tools → Restore gain** | `POST /tools/linearise` | `linearise_annotations` |
 | One-hot groups, rare-category offsets | **Tools → Categories** | `GET /tools/category-offsets` | `category_offsets` |
 | Hypothesis / evidence template | evidence panel → **Hypothesis & evidence write-up** | `GET/PUT /tools/annotations/{id}/hypothesis` | `update_narrative` |
+| Focus on one annotation (graph shows only its part, re-laid out, with boundary stubs; Exit focus / Esc; deep link `?focus=<annotation id>`) | magnifying-glass button on each row of the **Annotations** list | none (client-side, from `/model?collapsed=` and `/annotations`) | — |
 | Lineage chart, jumps, ancestor diff | **Tools → Lineage** | `/lineage`, `/lineage/jumps`, `/ancestor`, `/diff/{b}`, `/diff/{b}/graph` | `get_lineage`, `detect_jumps`, `get_ancestor`, `diff_genomes` |
 
 `/tools/...` is short for `/api/genomes/{id}/tools/...`.

@@ -29,6 +29,7 @@ import { ConfigEditor } from "./ConfigEditor";
 import { ToolsDrawer } from "./ToolsDrawer";
 import type { LineageView } from "./LineagePanel";
 import type { HighlightKind } from "./NetworkViewer";
+import { annotationLabel, computeFocusGraph, findAnnotation, focusCollapsed, namesToExpand } from "./annotationFocus";
 import { FeatureLabelsProvider, useFeatureLabelsLoader } from "../featureLabels";
 import { getPin, listPins, inputText, scopeText, type FeaturePin } from "../api/features";
 
@@ -67,9 +68,12 @@ type GenomeExplorerProps = {
   pinId?: string;
   onOpenPin?: (pinId: string) => void;
   onOpenFeatures?: () => void;
+  /** Focus mode: show only this annotation's part of the graph (id or name, from ?focus=). */
+  focusId?: string;
+  onFocusChange?: (annotationId: string | null) => void;
 };
 
-export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack, onOpenGenome, initialAnnotationId, pinId, onOpenPin, onOpenFeatures }: GenomeExplorerProps) {
+export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack, onOpenGenome, initialAnnotationId, pinId, onOpenPin, onOpenFeatures, focusId, onFocusChange }: GenomeExplorerProps) {
   const [model, setModel] = useState<ModelState | null>(null);
   const [operations, setOperations] = useState<Operation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -129,6 +133,33 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
   const [annotations, setAnnotations] = useState<AnnotationSummary[]>([]);
   const [collapsedAnnotations, setCollapsedAnnotations] = useState<Set<string>>(new Set());
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
+
+  // Focus mode (?focus=<annotation id or name>): the graph shows only that annotation's part.
+  // A view, not an edit: it works read-only and in the static build (collapse is client-side there).
+  const [focusKey, setFocusKey] = useState<string | null>(focusId ?? null);
+  useEffect(() => setFocusKey(focusId ?? null), [focusId]);
+  const focusAnn = useMemo(() => findAnnotation(annotations, focusKey), [annotations, focusKey]);
+  const setFocus = useCallback(
+    (annotationId: string | null) => {
+      setFocusKey(annotationId);
+      if (annotationId) {
+        // the evidence panel, pairs plots etc. follow the focused annotation
+        setSelectedAnnotationId(annotationId);
+        setNodeEvidence(null);
+      }
+      onFocusChange?.(annotationId);
+    },
+    [onFocusChange],
+  );
+  // While focused, the part (with its ancestors, descendants and anything that would swallow
+  // one of its nodes) is requested expanded; the user's collapse choices are kept for later.
+  const focusExpand = useMemo(() => (focusAnn ? namesToExpand(focusAnn, annotations) : []), [focusAnn, annotations]);
+  const focusExpandKey = focusExpand.join("\u0000");
+  const effectiveCollapsed = useMemo(
+    () => (focusExpand.length ? focusCollapsed(collapsedAnnotations, focusExpand) : collapsedAnnotations),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [collapsedAnnotations, focusExpandKey],
+  );
 
   /** Start replaying at a step (loads the step list once). */
   const startReplay = useCallback(
@@ -471,11 +502,49 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
   // Re-fetch model when collapsed annotations change (after initial load)
   useEffect(() => {
     if (!loading && model) {
-      logDebug("Collapsed annotations changed, re-fetching model", { collapsed: Array.from(collapsedAnnotations) });
-      fetchModel(collapsedAnnotations);
+      logDebug("Collapsed annotations changed, re-fetching model", { collapsed: Array.from(effectiveCollapsed) });
+      fetchModel(effectiveCollapsed);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [collapsedAnnotations, fetchModel]);
+  }, [effectiveCollapsed, fetchModel]);
+
+  // The focused view of the model (not during replay or a lineage diff)
+  const focusGraph = useMemo(
+    () => (focusAnn && model ? computeFocusGraph(model, focusAnn, annotations) : null),
+    [focusAnn, model, annotations],
+  );
+  const exitFocus = useCallback(() => setFocus(null), [setFocus]);
+  const focusInfo = useMemo(
+    () =>
+      focusGraph
+        ? {
+            key: focusGraph.annotation.id,
+            title: annotationLabel(focusGraph.annotation),
+            markers: focusGraph.markers,
+            summary: focusGraph.summary,
+            missing: focusGraph.missing,
+            onExit: exitFocus,
+          }
+        : null,
+    [focusGraph, exitFocus],
+  );
+  // Esc leaves focus (not while typing in a field, which uses Esc itself)
+  useEffect(() => {
+    if (!focusAnn) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return;
+      if (document.querySelector(".wizard-overlay, .pin-modal-backdrop, .pairs-large, [role='dialog']")) return;
+      setFocus(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [focusAnn, setFocus]);
+  // ?focus= on load also selects the annotation (evidence panel)
+  useEffect(() => {
+    if (focusAnn && !initialAnnotationId) setSelectedAnnotationId((cur) => cur ?? focusAnn.id);
+  }, [focusAnn, initialAnnotationId]);
 
   const handleOperationChange = useCallback(() => {
     logInfo("Operation changed, reloading data and clearing selection");
@@ -801,6 +870,8 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
             onSelectAnnotation={handleSelectAnnotation}
             genomeId={genomeId}
             onOperationChange={handleOperationChange}
+            focusedAnnotationId={focusAnn?.id ?? null}
+            onFocusAnnotation={setFocus}
           />
           {!cfg.read_only && model.metadata.has_non_identity_ops && (
             <RetrainPanel
@@ -853,14 +924,21 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
             )
           ) : (
           <NetworkViewer
-            model={lineageView ? lineageView.model : model}
+            model={lineageView ? lineageView.model : focusGraph ? focusGraph.model : model}
             selectedNodes={lineageView ? new Set<string>() : selectedNodes}
             onNodeSelect={lineageView ? () => {} : handleNodeSelect}
             annotationNodeIds={lineageView ? [] : annotationNodeIds}
             edgeInfluence={lineageView ? null : edgeInfluence}
             nodeHighlight={lineageView ? lineageView.nodeHighlight : nodeHighlight}
             edgeHighlight={lineageView ? lineageView.edgeHighlight : edgeHighlight}
+            focus={lineageView ? null : focusInfo}
           />
+          )}
+          {focusKey && !focusAnn && annotations.length > 0 && (
+            <div className="error-message" data-testid="focus-missing">
+              No annotation "{focusKey}" on this genome; showing the whole network.{" "}
+              <button className="op-btn secondary" onClick={exitFocus}>Clear</button>
+            </div>
           )}
           <ToolsDrawer
             genomeId={genomeId}
