@@ -6,9 +6,13 @@
 Files go where thesis/ch7/figlib.py puts them (thesis/ch7/figures/..., the Overleaf layout; group
 ``used`` or ``options``). Reads committed files only:
 
-- XOR (xor-gates, xor-ridge-valley): the study's own drawing code, experiments/xor/make_xor_figures.py
-  (representatives verify_xor.REPS, checked against verify_xor_results.json by its check_reps), redrawn in
-  the thesis style (unicode logic symbols as mathtext).
+- XOR: the study's own drawing code, experiments/xor/make_xor_figures.py, redrawn in the thesis style (unicode
+  logic symbols as mathtext). xor-gates: the representatives verify_xor.REPS, checked against
+  verify_xor_results.json by its check_reps. xor-ridge-valley (a full page, three rows): the score surfaces
+  (draw_ridge_valley_column) and drawings of the two evolved networks the Experiment 1 appendix draws
+  (thesis/ch7/exp1/networks.py xor_runs, from experiments/xor/xor_results.json); the surfaces are computed
+  from exactly the drawn weights and biases (asserted: the same vector as verify_xor.evolved_minimal, and the
+  run's stored logits reproduced).
 - Synthetic shapes (synthetic-shape-*): thesis/ch7/exp1/data/shapes.json (extract_shapes.py, read-only DB).
   Ground-truth constants (BETA_U, BETA_S, SODIUM_SWEET_SPOT) from experiments/ushape_saddle/data.py.
 - WHAS500 references (cox-whas500-*): experiments/survival/cox_case/reference_explanation.json
@@ -87,39 +91,145 @@ class _Capture:
 
 # =============================================================================== XOR
 
+XOR_EDGE_POS, XOR_EDGE_NEG = "#000080", "#B5251C"   # the appendix networks' edge colours (render_structure
+                                                    # wpos / wneg, as its standalone pictures print them)
+XOR_FIG_H = 6.8          # design choice: figure height (in), three rows on one page
+XOR_FLOAT_H = r"0.77\textheight"   # design choice: the full-page float leaves room for its caption
+
+
+def xor_networks():
+    """The two networks of xor-ridge-valley: the appendix's minimal network of each family (thesis/ch7/exp1/
+    networks.py xor_runs: the lowest seed with one hidden unit in each family, experiments/xor/xor_results.json).
+    Each as (family, run, q, edges, biases); q = [w1, w2, b, v1, v2, c, u] in verify_xor's order, built from the
+    same drawn edges and biases, asserted equal to verify_xor.evolved_minimal and checked against the run's
+    stored logits."""
+    nw = _load("exp1_networks", "thesis/ch7/exp1/networks.py")
+    vx = _load("verify_xor_mod", "experiments/xor/verify_xor.py")
+    evolved, _ = vx.evolved_minimal()
+    out = []
+    for fam, run in nw.xor_runs():
+        (h,) = run["hidden"]
+        assert set(h["w_in"]) == {"-1", "-2"} and set(h["w_out"]) == {"0"}, run["seed"]
+        assert set(run["skip_weights"]) == {"-1", "-2"}, run["seed"]
+        edges = [("x1", "h", h["w_in"]["-1"]), ("x2", "h", h["w_in"]["-2"]), ("h", "out", h["w_out"]["0"]),
+                 ("x1", "out", run["skip_weights"]["-1"]), ("x2", "out", run["skip_weights"]["-2"])]
+        biases = {"h": h["bias"], "out": run["output_bias"]}
+        w = {(u, v): x for u, v, x in edges}
+        q = [w["x1", "h"], w["x2", "h"], biases["h"], w["x1", "out"], w["x2", "out"], biases["out"], w["h", "out"]]
+        assert q == evolved[run["seed"]], (run["seed"], q, evolved[run["seed"]])   # the drawn weights, exactly
+        z = vx.logits(np.array(q, float), "relu")
+        assert np.allclose(z, run["logits"], atol=5e-3), (run["seed"], z, run["logits"])   # 3-decimal weights
+        out.append((fam, run, q, edges, biases))
+    return out, vx
+
+
+def _xor_net_panel(ax, letter, fam, seed, edges, biases, wmax):
+    """One network in the appendix networks' style: inputs at the bottom, the hidden unit, the output hexagon on
+    top; blue edge: positive weight, red: negative, thicker: larger |weight|; each edge with its weight, each
+    unit with its bias."""
+    from matplotlib.patches import Circle, RegularPolygon
+    P = {"x1": (0.0, 0.0), "x2": (3.0, 0.0), "h": (1.5, 1.05), "out": (1.5, 2.3)}
+    R = {"x1": 0.13, "x2": 0.13, "h": 0.17, "out": 0.24}
+    for n, (x, y) in P.items():
+        if n == "out":
+            ax.add_patch(RegularPolygon((x, y), 6, radius=R[n], orientation=np.pi / 6, fc="white", ec="black",
+                                        lw=1.0, zorder=3))
+            ax.text(x, y, "XOR", ha="center", va="center", fontsize=6.5, zorder=4)
+        else:
+            ax.add_patch(Circle((x, y), R[n], fc="white", ec="black", lw=0.8, zorder=3))
+            if n == "h":
+                ax.text(x, y, "$h_1$", ha="center", va="center", fontsize=8, zorder=4)
+            else:
+                ax.text(x, y - R[n] - 0.06, f"$x_{n[1]}$", ha="center", va="top", fontsize=8.5)
+    # weight label: (fraction along the edge, side: +1 left of the direction of travel, -1 right, 0 on the edge)
+    lab = {("x1", "h"): (0.33, -1), ("x2", "h"): (0.33, 1), ("h", "out"): (0.5, 0),
+           ("x1", "out"): (0.5, 1), ("x2", "out"): (0.5, -1)}
+    for u, v, w in edges:
+        (x0, y0), (x1, y1) = P[u], P[v]
+        d = np.array([x1 - x0, y1 - y0])
+        e = d / float(np.hypot(*d))
+        a, b = np.array([x0, y0]) + e * R[u], np.array([x1, y1]) - e * (R[v] + 0.01)
+        col = XOR_EDGE_POS if w > 0 else XOR_EDGE_NEG
+        lw = 0.6 + 1.8 * abs(w) / wmax   # design choice: width in proportion to |weight| (largest of both nets)
+        ax.annotate("", xy=b, xytext=a, arrowprops=dict(arrowstyle="-|>,head_length=0.45,head_width=0.22",
+                                                         color=col, lw=lw, shrinkA=0, shrinkB=0), zorder=2)
+        f, side = lab[u, v]
+        nrm = np.array([-e[1], e[0]]) * side
+        px, py = np.array([x0, y0]) + d * f + nrm * 0.1
+        ax.text(px, py, f"${w:+.2f}$", ha="right" if nrm[0] < -1e-9 else ("left" if nrm[0] > 1e-9 else "center"),
+                va="center", fontsize=7.5, color=col, zorder=5,
+                bbox=dict(boxstyle="round,pad=0.12", fc="white", ec="none", alpha=0.85))
+    x, y = P["h"]   # biases: the hidden unit's below it (between its input edges), the output's to its right
+    ax.text(x, y - R["h"] - 0.17, f"bias ${biases['h']:+.2f}$", ha="center", va="top", fontsize=7.5, color="0.25")
+    x, y = P["out"]
+    ax.text(x + R["out"] + 0.1, y, f"bias ${biases['out']:+.2f}$", ha="left", va="center", fontsize=7.5,
+            color="0.25")
+    ax.set_xlim(-0.6, 3.6)
+    ax.set_ylim(-0.4, 2.9)
+    ax.set_aspect("equal")
+    ax.axis("off")
+    ax.text(0.0, 1.0, f"({letter}) {fam} family, seed {seed}", transform=ax.transAxes, fontsize=8, va="top")
+
+
+def xor_ridge_valley(mx):
+    """Three rows, one network per column (count family left, difference family right): (a, b) the score surface
+    z(x1, x2) in 3D, (c, d) from above (the study's drawing code, make_xor_figures.draw_ridge_valley_column),
+    (e, f) the network itself, with the same weights."""
+    plt = style()
+    nets, vx = xor_networks()
+    wmax = max(abs(w) for _, _, _, edges, _ in nets for _, _, w in edges)
+    fig = plt.figure(figsize=(W, XOR_FIG_H))
+    gs = fig.add_gridspec(3, 2, height_ratios=[0.92, 1.0, 0.74])
+    pdata = {}
+    for col, (fam, run, q, edges, biases) in enumerate(nets):
+        _, _, drawn = mx.draw_ridge_valley_column(fig, gs[0, col], gs[1, col], col, fam, q, ylabel=col == 0)
+        ax = fig.add_subplot(gs[2, col])
+        _xor_net_panel(ax, "ef"[col], fam, run["seed"], edges, biases, wmax)
+        info = vx.describe_solution(q)
+        assert info["family"] == fam and info["solves"], (fam, info)
+        pdata[fam] = dict(seed=run["seed"], q=q, edges=[[u, v, w] for u, v, w in edges], biases=biases,
+                          logits=drawn["logits_data"], gates=dict(skips_alone=info["skips_alone"],
+                                                                  hinge_flips=info["hinge_flips"]),
+                          z_grid_minmax=[float(drawn["z"].min()), float(drawn["z"].max())])
+    fig.subplots_adjust(left=0.07, right=0.97, top=0.99, bottom=0.01, wspace=0.12, hspace=0.24)
+    _fix_text(fig)
+    figlib.save(fig, "xor-ridge-valley", pdata=pdata)
+    return nets
+
+
 def xor_figures(only):
     mx = _load("xor_figs", "experiments/xor/make_xor_figures.py")
     mx.check_reps()
-    plt = style()
-    cap = _Capture()
-    mx.save = cap
-    mx.fig_ridge_valley()
-    mx.fig_gates()
-    ink = "solid"
-    for name, fid in (("xor_ridge_valley", "xor-ridge-valley"), ("xor_gates", "xor-gates")):
-        if only and fid not in only:
-            plt.close(cap.figs[name])
-            continue
-        fig = cap.figs[name]
-        _fix_text(fig, [("u·h (u < 0)", "$u \\cdot h$ ($u < 0$)"), ("u·h (u > 0)", "$u \\cdot h$ ($u > 0$)")])
-        figlib.save(fig, fid, pdata=dict(reps={k: list(map(float, v)) for k, v in mx.vx.REPS.items()}))
     pos, neg, act = "blue", "magenta", "green"
     keys_common = (f"Shading: {pos} where the score is positive, {neg} where it is negative, pale near 0; solid "
                    f"line: where it is 0.")
     if not only or "xor-ridge-valley" in only:
-        figlib.write_float("xor-ridge-valley", "XOR: one network of each family, the count family (a, c) and the "
-                           "difference family (b, d)",
-                           "(a, b) The score surface $z(x_1, x_2)$ over the plane $z = 0$ (grey); (c, d) the same "
-                           "scores from above. " + keys_common + " Filled points: the two inputs with XOR output 1; "
-                           "dashed line: the hidden unit's fold.", GEN)
+        (f1, r1, *_), (f2, r2, *_) = xor_ridge_valley(mx)
+        figlib.write_float(
+            "xor-ridge-valley",
+            f"XOR: one network of each family, the {f1} family (a, c, e; seed {r1['seed']}) and the {f2} family "
+            f"(b, d, f; seed {r2['seed']})",
+            "(a, b) The score surface $z(x_1, x_2)$ over the plane $z = 0$ (grey); (c, d) the same scores from "
+            "above. " + keys_common + " Filled points: the two inputs with XOR output 1; dashed line: the hidden "
+            "unit's fold. (e, f) The networks of (a--d): circles $x_1$, $x_2$: the inputs; circle $h_1$: the "
+            "hidden unit (ReLU); hexagon: the output unit, the logistic function of the score $z$. Edges: blue, a "
+            "positive weight; red, a negative weight; thicker, a larger weight. The number on an edge is its "
+            "weight; beside a unit, its bias.",
+            GEN, placement="p", height=XOR_FLOAT_H)
     if not only or "xor-gates" in only:
+        style()
+        cap = _Capture()
+        mx.save = cap
+        mx.fig_gates()
+        fig = cap.figs["xor_gates"]
+        _fix_text(fig, [("u·h (u < 0)", "$u \\cdot h$ ($u < 0$)"), ("u·h (u > 0)", "$u \\cdot h$ ($u > 0$)")])
+        figlib.save(fig, "xor-gates", pdata=dict(reps={k: list(map(float, v)) for k, v in mx.vx.REPS.items()}))
         figlib.write_float("xor-gates", "XOR: the gates of each family, count family (a--c) and difference "
                            "family (d--f)",
                            "Left: the skip connections alone; middle: the hidden unit's contribution $u\\cdot h$ "
                            f"({act}: active, darker for larger $|u h|$; dashed: its fold; ringed points: the inputs "
                            "whose sign it flips); right: the composed score. " + keys_common + " Filled points: inputs where the "
                            "panel's quantity is positive (middle: where the hidden unit is active).", GEN)
-    del ink
 
 
 # =============================================================================== synthetic shapes
