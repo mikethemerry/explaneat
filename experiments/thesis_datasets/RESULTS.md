@@ -9,8 +9,10 @@ scripts before quoting them elsewhere. The prose compared against is Chapter 7 o
 `extract.py` asserts it: the ten Adult, ten Heart-100 and ten Churn-100 runs of Experiment 2 (their
 experiment ids in `experiments/10seed/runs.csv`, `runs_heart100.csv`, `experiments/churn/runs_churn100.csv`,
 with matching row and input counts), and each Experiment 1 network (the genome ids in
-`experiments/benchmarks/results/propneat.json`). Heart's original network (Experiment 1) and the Heart-100
-runs (Experiment 2) share one split. WHAS500 / GBSG2: the split file, the loader and the selected run's
+`experiments/benchmarks/results/propneat.json`, and the three original networks in
+`experiments/10seed/runs_paper_reference.csv`). Heart's original network (Experiment 1) and the Heart-100
+runs (Experiment 2) share one split; so do Adult's original network (Experiment 1) and the ten Adult runs
+(Experiment 2). WHAS500 / GBSG2: the split file, the loader and the selected run's
 record agree on rows, inputs and training events.
 
 ## Disagreements with the current Chapter 7 prose
@@ -33,7 +35,7 @@ record agree on rows, inputs and training events.
    are stratified (Churn's prose says so); WHAS500 / GBSG2 are stratified on the event.
 5. **The Methods opening is the old paper framing.** "I demonstrate the test on three models trained on
    ... Adult, Heart, MONK-2; and on a densified twin of the Adult network" no longer matches the tables:
-   Adult is reported only in Experiment 2, and Experiment 1 reports Heart and MONK-2 (original networks),
+   Experiment 1 reports Heart, Adult and MONK-2 (original networks; Adult back since 21 Nov, see below),
    WHAS500, Connect-4 (cells, lines), XOR and the three synthetic sets. Experiment 1's list ("twelve
    datasets in seven groups") still names Adult and Churn (both reported in Experiment 2), names "U,
    Saddle" but not U + saddle, and does not separate the two Connect-4 encodings.
@@ -117,3 +119,21 @@ the Chapter 7 tables.
 `krk_mnist_run_records`): five experiments in both `explaneat_dev` and `explaneat_v4`
 (`complex-krk-default-s0..s2`, `complex-krk-tuned-s0..s1`); study folder `experiments/complex_real/`
 (runs, explanations, verification; book card 1.5, a blind verifier run, not signed off).
+
+## "Used in" read from the run checks; Adult in Experiment 1 (21 Nov 2026, branch thesis/adult-exp1)
+
+Mike's decision: the original Adult network is presented in Experiment 1 again. Adult's "Used in" is now
+"1, 2". The column is no longer typed for the classification datasets: `make_table.py` reads it from
+`data.json`, the experiments whose runs `extract.py` checked to have used the dataset's split (`run_splits`:
+Experiment 1's explained networks and the three original networks, Experiment 2's ten-seed runs) plus
+Experiment 3 where the grafting studies hold early-stopping rows (`exp3_validation`). The derivation gives the
+previously typed value for every other classification dataset. WHAS500, GBSG2, XOR and MNIST (no database
+split) keep the curated value. `extract.py` adds the original networks from
+`experiments/10seed/runs_paper_reference.csv` when `propneat.json` lacks them (its Experiment 1 Adult entry
+is added on branch thesis/wide-grids; when it lands, the genome ids are deduplicated and nothing changes).
+Both scripts were run twice: byte-identical `data.json`, `datasets.csv` and `.tex`.
+
+Same day, Mike's brief: the Churn case (`churn-case-s10`) is back in Experiment 1. `extract.py` checks its run
+(`experiments/churn_case/runs.csv`, experiment id in `explaneat_dev`) used the churn split `45962ea6` (rows and
+inputs equal), so Churn's "used in" is now "1, 2, 3". GBSG2 is still a row (curated "1"; it is back in Experiment 1
+as a side note). Both scripts run twice again: byte-identical.

@@ -48,8 +48,9 @@ if [[ "${1:-}" == "--with-db" ]]; then
   # + explaneat_v4; git show of backproppop.py at each run's commit)
   uv run python experiments/thesis_run_config/extract.py                        # ~10 s -> data.json
   # Thesis-side DB caches
-  uv run python thesis/ch7/exp1/extract_db.py                                    # explaneat_dev -> exp1/data/networks.json
-                                                                                 # (+ coverage checks, explaining minutes)
+  uv run python thesis/ch7/exp1/extract_db.py                                    # ~3 min, explaneat_dev -> exp1/data/networks.json
+                                                                                 # (+ coverage checks, explaining minutes; the original
+                                                                                 # Adult network's and the Churn case's AUCs)
   DATABASE_URL=postgresql://localhost/explaneat_v4 uv run python thesis/ch7/exp2/extract_db.py --refresh   # exp2/data/*
   # Figure caches: the synthetic shape sweeps (explaneat_dev) and the Adult / Heart-100 shapes and seed agreement (v4)
   PGOPTIONS='-c default_transaction_read_only=on' DATABASE_URL=postgresql://localhost/explaneat_dev \

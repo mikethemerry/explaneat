@@ -6,9 +6,10 @@ Every number comes from ``data.json`` (written by ``extract.py`` from the databa
 split files, run records and split code the runs used). What is typed here are names and wording, not
 results: the row order and short names, the outcome labels (each checked against the stored class names
 or target description), the loader each dataset was fetched with, which experiment reports each dataset
-("used in", read off the Chapter 7 tables and sections: Experiment 1 = the networks and benchmark tables,
-Experiment 2 = the ten-seed benchmark table, Experiment 3 = the grafting studies on Churn and MONK-2,
-Experiment 4 = ExConNEAT on MNIST), and the wording of each preprocessing and split method. One method
+("used in": for the classification datasets read from data.json, the experiments whose runs were checked to
+use the dataset's split: Experiment 1 = the explained and original networks, Experiment 2 = the ten-seed runs,
+Experiment 3 = the grafting studies' early-stopping rows on Churn and MONK-2; curated for the survival sets,
+XOR and MNIST, Experiment 4 = ExConNEAT), and the wording of each preprocessing and split method. One method
 always gets the same words (the ``PHRASE`` / ``SPLIT`` vocabularies below); each phrase is asserted
 against the stored record it describes. These are marked "curated" in thesis/ch7/PROVENANCE.md.
 
@@ -29,25 +30,43 @@ HERE = Path(__file__).resolve().parent
 D = json.loads((HERE / "data.json").read_text())
 C, S, M = D["classification"], D["survival"], D["mnist"]
 
-# key -> (short name as in the Chapter 7 tables, used in) -- curated
+# key -> (short name as in the Chapter 7 tables, used in). "Used in" is curated only for the datasets
+# without a database split (survival, XOR, MNIST); for the classification datasets it is None here and
+# read from data.json (used_in below)
 ROWS = [
-    ("adult", "Adult", "2"),
-    ("heart", "Heart", "1, 2"),
-    ("monk2", "MONK-2", "1, 3"),
-    ("churn", "Churn", "2, 3"),
+    ("adult", "Adult", None),
+    ("heart", "Heart", None),
+    ("monk2", "MONK-2", None),
+    ("churn", "Churn", None),
     ("whas500", "WHAS500", "1"),
     ("gbsg2", "GBSG2", "1"),
-    ("c4_cells", "Connect-4, cells", "1"),
-    ("c4_lines", "Connect-4, lines", "1"),
+    ("c4_cells", "Connect-4, cells", None),
+    ("c4_lines", "Connect-4, lines", None),
     ("xor", "XOR", "1"),
-    ("shape_u", "Synthetic U", "1"),
-    ("shape_saddle", "Synthetic saddle", "1"),
-    ("shape_both", "Synthetic U $+$ saddle", "1"),
+    ("shape_u", "Synthetic U", None),
+    ("shape_saddle", "Synthetic saddle", None),
+    ("shape_both", "Synthetic U $+$ saddle", None),
     # the presented ExConNEAT network's lineage: the 10k run and its pruning phase, then the 50k warm start
     ("mnist10_10k", "MNIST 10-class, 10k training subset: 10k run, pruning phase", "4"),
     ("mnist10_50k", "MNIST 10-class, all 50k training rows: 50k warm start", "4"),
 ]
 MNIST10 = ("mnist10_10k", "mnist10_50k")
+
+
+def used_in(key, curated):
+    """Which experiments report a dataset. Classification datasets: read from data.json, the experiments
+    whose runs were checked to have used its split (``run_splits``: Experiment 1's explained networks and
+    the original networks, Experiment 2's ten-seed runs) and Experiment 3's early-stopping rows
+    (``exp3_validation``, the grafting studies). The others: the curated value."""
+    if key not in C:
+        assert curated, key
+        return curated
+    assert curated is None, (key, "classification datasets are not curated")
+    exps = {int(c["experiment"]) for c in D["run_splits"].get(key, [])}
+    if key in D["exp3_validation"]:
+        exps.add(3)
+    assert exps, key
+    return ", ".join(str(e) for e in sorted(exps))
 
 # loader the data were fetched with -- curated (the URL itself is read from the database record)
 LOADER = {
@@ -402,6 +421,7 @@ def build():
     """CSV rows (all datasets) and LaTeX rows: (tabular datasets, MNIST datasets)."""
     csv_rows, tab_rows, img_rows = [], [], []
     for key, name, used in ROWS:
+        used = used_in(key, used)
         tr, va, te, note = rows(key)
         out_tex, out_plain = outcome_label(key)
         sh_tex, sh_plain = share(key)

@@ -3,17 +3,20 @@
     uv run python experiments/thesis_run_config/extract.py     # -> data.json (~10 s)
 
 One record per run family (a study's seeds that share one configuration) behind a network Chapter 7
-presents (21 Nov 2026: the WHAS500 Cox runs, not GBSG2's; no 300-generation or sigmoid-unit synthetic
-runs; ExConNEAT only the presented MNIST 10-class network's phases). Every value is read from the
+presents (21 Nov 2026: the WHAS500 and GBSG2 Cox runs (GBSG2 a side note), the Churn case; no
+300-generation or sigmoid-unit synthetic runs; ExConNEAT only the presented MNIST 10-class network's
+phases). Every value is read from the
 record the runs left behind, never typed:
 
 * runs stored in the database (``explaneat_dev``, READ ONLY transactions; ``PGOPTIONS
   default_transaction_read_only=on`` as well): ``experiments.config_json`` (the NEAT config the
   run was built from), ``hardware_info.run_params`` (generations, epochs, fitness, phantom mask,
   hidden activation), the number of stored generations, the config template a UI run was launched
-  from, and ``neat_config_text`` where the run stored one. Which experiments belong to a family is
+  from (and, for the original Adult run, the options it changed from that template), and
+  ``neat_config_text`` where the run stored one. Which experiments belong to a family is
   read from the study's own run list (``runs*.csv``) or
-  from the explained genome (``experiments/benchmarks/results/propneat.json``). Experiment 2's
+  from the explained genome (``experiments/benchmarks/results/propneat.json``; the original networks
+  also ``experiments/10seed/runs_paper_reference.csv``, asserted equal where both hold one). Experiment 2's
   configs are also read from ``explaneat_v4`` and asserted equal;
 * in-memory runs: their run records (Cox: ``experiments/survival/cox_case/runs/<tag>.json`` with
   the NEAT config text the run used; Connect-4: ``logs/<name>.json`` plus the config file, or for
@@ -320,18 +323,33 @@ def exp_ids_from_csv(path, filt=None):
     return [r["experiment_id"] for r in rows if filt is None or filt(r)], rows
 
 
-def paper_family(db, key, label, tag, ini):
-    """An original network (Experiment 1): the run that produced the explained genome."""
-    pn = json.loads((EXP / "benchmarks" / "results" / "propneat.json").read_text())["exp1"][tag]
-    eid = db.one("explaneat_dev", Q_GENOME_EXP, g=pn["genome_id"])["experiment_id"]
-    rec, runs = db_family(db, key, label, "1", [eid], f"genome {pn['genome_id']} "
-                          "(experiments/benchmarks/results/propneat.json) -> its experiment")
+def original_genome(tag):
+    """The explained genome of an original network: experiments/benchmarks/results/propneat.json, or, for one
+    it does not hold yet (the original Adult network, 21 Nov 2026), experiments/10seed/runs_paper_reference.csv
+    (the three original networks). When both hold it they must agree."""
+    pn = json.loads((EXP / "benchmarks" / "results" / "propneat.json").read_text())["exp1"].get(tag)
+    ref = [r for r in read_csv(EXP / "10seed" / "runs_paper_reference.csv")
+           if r["seed"] == "paper" and f"paper-{r['dataset']}" == tag]
+    assert len(ref) == 1, (tag, len(ref))
+    if pn is not None:
+        assert pn["genome_id"] == ref[0]["genome_id"], (tag, pn["genome_id"], ref[0]["genome_id"])
+        return pn["genome_id"], "experiments/benchmarks/results/propneat.json"
+    return ref[0]["genome_id"], "experiments/10seed/runs_paper_reference.csv"
+
+
+def paper_family(db, key, label, tag, ini, template_overrides=()):
+    """An original network (Experiment 1): the run that produced the explained genome. ``template_overrides``:
+    the NEAT options the run changed from the template it was launched from (experiments/10seed/PREREG.md,
+    "Configs": Adult "template bb576521 + overrides"); asserted to be exactly the options that differ."""
+    gid, gsrc = original_genome(tag)
+    eid = db.one("explaneat_dev", Q_GENOME_EXP, g=gid)["experiment_id"]
+    rec, runs = db_family(db, key, label, "1", [eid], f"genome {gid} ({gsrc}) -> its experiment")
     r = runs[0]
-    rec["genome_id"] = pn["genome_id"]
+    rec["genome_id"] = gid
     # the explained genome has the run's highest training fitness
     fit = db.one("explaneat_dev", "SELECT g.fitness, (SELECT max(g2.fitness) FROM genomes g2 JOIN populations p2 "
                  "ON g2.population_id = p2.id WHERE p2.experiment_id = p.experiment_id) AS best FROM genomes g "
-                 "JOIN populations p ON g.population_id = p.id WHERE g.id = CAST(:g AS uuid)", g=pn["genome_id"])
+                 "JOIN populations p ON g.population_id = p.id WHERE g.id = CAST(:g AS uuid)", g=gid)
     assert fit["fitness"] == fit["best"], (key, fit)
     rec["selected"] = {"rule": "highest training fitness of the run", "checked": True}
     # experiments/10seed/PREREG.md: the ten-seed config files equal the original runs' stored configs
@@ -342,9 +360,12 @@ def paper_family(db, key, label, tag, ini):
                    i=r["config_template_id"])
         rec["template"] = {"id": str(r["config_template_id"]), "name": t["name"],
                            "training": t["config"]["training"], "backprop": t["config"]["backprop"]}
-        # the template's NEAT block agrees with the config the run stored
-        for k, v in t["config"]["neat"].items():
-            assert num_equal(canon(v), rec["neat"][k]), (key, k)
+        # the template's NEAT block agrees with the config the run stored, except the run's overrides
+        diff = sorted(k for k, v in t["config"]["neat"].items() if not num_equal(canon(v), rec["neat"][k]))
+        assert diff == sorted(template_overrides), (key, diff)
+        if diff:
+            rec["template"]["overrides"] = {k: {"template": canon(t["config"]["neat"][k]), "run": rec["neat"][k]}
+                                            for k in diff}
         assert t["config"]["training"]["population_size"] == rec["neat"]["pop_size"]
     return rec
 
@@ -352,9 +373,9 @@ def paper_family(db, key, label, tag, ini):
 # ------------------------------------------------------------------ file families
 
 
-# Cox datasets whose network Chapter 7 presents (GBSG2 is a side note in the benchmark table only;
-# tab:exp1-networks has WHAS500) -- curated
-COX_PRESENTED = ("whas500",)
+# Cox datasets whose network Chapter 7 presents, in the order of the table's name (GBSG2 is back in
+# Experiment 1 as a side note, 21 Nov 2026; tab:exp1-networks has both) -- curated
+COX_PRESENTED = ("whas500", "gbsg2")
 
 
 def cox_family():
@@ -378,8 +399,8 @@ def cox_family():
     assert_flat_equal(flat_from_neat(REPO / rp["config_file"]), neat_cfg, "cox config file")
     commits = sorted({r["commit"] for r in runs})
     return {
-        "key": "cox", "label": "WHAS500 (Cox)", "experiment": "1",
-        "source": "experiments/survival/cox_case/runs/whas500-s{0..4}.json (run_params, neat_config_text)",
+        "key": "cox", "label": "WHAS500, GBSG2 (Cox)", "experiment": "1", "datasets": list(COX_PRESENTED),
+        "source": "experiments/survival/cox_case/runs/{whas500,gbsg2}-s{0..4}.json (run_params, neat_config_text)",
         "store": "run records (in memory, not in the database)",
         "runs": runs, "seeds": sorted(r["seed"] for r in runs), "n_runs": len(runs),
         "neat": neat_cfg, "run_params": rp, "generations_stored": [rp["generations"]],
@@ -586,12 +607,28 @@ def main():
     # Experiment 1: original networks
     fam["paper_heart"] = paper_family(db, "paper_heart", "Heart, original network", "paper-heart",
                                       "experiments/10seed/configs/heart.ini")
+    # the original Adult run ("No pressure") was launched from the Heart run's template with its structural
+    # mutation and speciation options changed (RESULTS.md, "Author's account of the config families")
+    fam["paper_adult"] = paper_family(db, "paper_adult", "Adult, original network", "paper-adult",
+                                      "experiments/10seed/configs/adult.ini",
+                                      template_overrides=("node_add_prob", "node_delete_prob", "conn_add_prob",
+                                                          "conn_delete_prob", "compatibility_threshold",
+                                                          "compatibility_disjoint_coefficient"))
     fam["paper_monk2"] = paper_family(db, "paper_monk2", "MONK-2, original network", "paper-monk2",
                                       "experiments/10seed/configs/monk2.ini")
     # the MONK-2 run was launched by the ingest script: its training settings
     ing = EXP / "aaai27" / "ingest_monk2.py"
     fam["paper_monk2"]["launch"] = {"file": rel(ing), "TRAIN": module_constant(ing, "TRAIN")}
     assert fam["paper_monk2"]["launch"]["TRAIN"]["population_size"] == fam["paper_monk2"]["neat"]["pop_size"]
+    # the Churn case (one seeded run, experiments/churn_case/runs.csv): the churn configuration, 200 generations
+    ids, rows = exp_ids_from_csv(EXP / "churn_case" / "runs.csv")
+    fam["churn_case"], _ = db_family(db, "churn_case", "Churn case", "1", ids, "experiments/churn_case/runs.csv")
+    fam["churn_case"]["selected"] = {"rule": "highest training fitness of the run", "genome_id": rows[0]["genome_id"]}
+    assert len(rows) == 1 and fam["churn_case"]["runs"][0]["seed"] == int(rows[0]["seed"])
+    fit = db.one("explaneat_dev", "SELECT g.fitness, (SELECT max(g2.fitness) FROM genomes g2 JOIN populations p2 "
+                 "ON g2.population_id = p2.id WHERE p2.experiment_id = p.experiment_id) AS best FROM genomes g "
+                 "JOIN populations p ON g.population_id = p.id WHERE g.id = CAST(:g AS uuid)", g=rows[0]["genome_id"])
+    assert fit["fitness"] == fit["best"], ("churn_case", fit)   # the explained genome is the run's best
     # Cox
     fam["cox"] = cox_family()
     # Connect-4

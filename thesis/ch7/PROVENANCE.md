@@ -59,7 +59,8 @@ byte-identical. The appendix network captions were already a title only and are 
 | function-preservation error (not printed since 21 Nov: the column was removed, see "Thesis table style" below) | `check_explanation.check` on the training split, in `extract_db.py`; equals the records and `experiments/explanation_levels/levels/*.json` exactly for all eight | extracted (DB, read-only), computed; internal check only |
 | XOR row | `experiments/xor/xor_results.json` ← `experiments/xor/run_xor.py` | computed |
 | train / test AUC and CI | `experiments/benchmarks/results/propneat.json` ← `propneat.py` (asserts equality with the run records to 1e-9) | extracted (DB, read-only); rerun byte-identical |
-| WHAS500 Harrell's C | `experiments/benchmarks/results/survival.json` ← `survival.py` | computed |
+| train / test AUC and CI, original Adult network and Churn case (21 Nov) | `networks.json` `perf` ← `extract_db.py` (compute_runs `load_split` / `bootstrap_indices` / `performance`, the code of their run records), asserted equal to `experiments/10seed/runs_paper_reference.csv` (adult) and `experiments/churn_case/runs.csv`; `make_tables.py` switches to `propneat.json` once it holds them (asserted equal) | extracted (DB, read-only), computed; rerun byte-identical |
+| WHAS500 and GBSG2 Harrell's C | `experiments/benchmarks/results/survival.json` ← `survival.py` (`make_tables.py` asserts its tag is the selected seed) | computed |
 | genomes | the evolution runs of each study (layer 1) | computed (not rerun) |
 | caption (title and keys only since 20 Nov; the old prose is in `CAPTION_MOVED_TEXT.md`) | typed in `make_tables.py` | prose, not results |
 
@@ -485,3 +486,30 @@ above, the Cox (GBSG2), synthetic 300-generation / sigmoid-unit and MNIST 3 vs 8
 What was dropped and why: `experiments/thesis_run_config/RESULTS.md` ("Trimmed to the presented runs") and
 `experiments/thesis_datasets/RESULTS.md` ("MNIST (Experiment 4) and KRK").
 
+
+## Experiment 1: the original Adult network, the Churn case and GBSG2 back (21 Nov 2026, branch thesis/adult-exp1)
+
+Mike's decisions of 21 Nov: Experiment 1 presents the original Adult network again beside the original Heart and
+MONK-2 networks (Adult also stays the ten-seed study of Experiment 2), the Churn case (`churn-case-s10`) and GBSG2
+(as a side note beside WHAS500). Every Experiment 1 asset was extended; every extractor and generator touched was run
+twice with byte-identical outputs, and the previews compile with no errors or overfull boxes.
+
+| Asset | Change | Status |
+|---|---|---|
+| `tab:exp1-networks` rows "Adult (original network)", "Churn case (s10)", "GBSG2 (Cox, side note)" | `thesis/ch7/exp1/extract_db.py` (`NETS`), the same computed checks as every row: structure from the genome, annotation / split / identity counts from the operations, coverage from `get_coverage`, the strict hierarchy check and the function-preservation error from `check_explanation`, explaining minutes from the database writes (Adult: no evidence log, "--"; Churn case and GBSG2 from their v4 records' databases, asserted against the records' counts) | extracted (DB, read-only), computed |
+| Adult coverage | 1.00 / 1.00 under the current definition: its `unused_inputs` annotation (53 never-connected inputs) is exempt from the single-root rule (D4), as MONK-2's; 0.9 compositional under the earlier definition (`paper_coverage_options.json` "current", `rec_cov_c`); `check_explanation`'s strict check reports two roots (`hierarchy_complete_check` false) | computed |
+| Adult / Churn case AUCs | computed in `extract_db.py` (`perf`) until `experiments/benchmarks/results/propneat.json` holds them (its Adult entry is being added on branch thesis/wide-grids); then read from there, asserted equal | extracted (DB, read-only) |
+| `networks.json` `parts` | each stored annotation's name, entry / exit counts, the model inputs among its entries (by column) and children; read by the book's original-networks card | extracted (DB, read-only) |
+| `tab:ch7-datasets` "used in" | no longer typed for the classification datasets: read from `data.json` `run_splits` (Experiment 1: `propneat.json` genomes, the three original networks of `runs_paper_reference.csv`, the Churn case's run; Experiment 2: the ten-seed runs) and `exp3_validation`. Adult 2 → 1, 2; Churn 2, 3 → 1, 2, 3; every other classification row unchanged. Survival, XOR and MNIST stay curated (GBSG2 "1") | computed (was curated) |
+| `tab:ch7-run-config` | new rows "Adult, original network" (template `high-exploration` + six overrides, asserted to be exactly the options that differ; `adult.ini`; 100 generations; seed n.r.) and "Churn case" (`churn.ini`, seed 10, 200 generations, mask off as recorded); the Cox row is "WHAS500, GBSG2" again (ten run records, one configuration asserted; seeds 0, 1) | extracted (DB, read-only) / run records |
+| Book | Experiment 1: the full original-networks card (`data/e1_1.py`, Heart, Adult, MONK-2) with an Adult part-by-part table read in code from `networks.json`, `runs_paper_reference.csv`, `paper_recompute/core.json` and `shap_summary.json`; the Churn case card (`e1_2.py`) and the full Cox cards (`e1_3.py`, `e1_3a.py`, GBSG2 as a side note); `e1_1hm.py` and `e1_3w.py` removed (the full cards replace them); none of these is in the Miscellany any more. Argument, methods, prose methods (`xc_methods_prose.py`), results and discussion updated | prose; numbers read from files or named |
+
+**Inconsistencies found (stored records, not edited; read only).** The stored Adult explanation (`7e3761fe`) predates
+the output-activation fix: its root hypothesis says "output = ReLU(...)" (the output is a sigmoid); its capital-gain
+hypothesis says the inner knots are "masked by the output unit's clipping" (the output does not clip; the hub, a
+hidden ReLU, does; `paper_corrections.md` item 2) and calls the pathway a "SINGLE-KNOT threshold" with "~90%" at zero
+(the recompute: two close knots at $3,225 and $4,300, 92%). Its linear-backbone hypothesis ("most of the model's
+predictive mass (top SHAP)") still holds after the SHAP fix (87.5% of mean |SHAP|). Four
+category-gate part names give the wrong native-country level for the input they read (`bump_native_country_11_33`
+reads native-country:1 and :31; `_20` :19; `_34` :32; `_26` :25), read from the column order in `networks.json`
+`parts`; the capital-gain core's five country inputs are named correctly. The book prints these as a caveat.
