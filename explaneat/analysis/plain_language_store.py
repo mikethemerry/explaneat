@@ -50,27 +50,57 @@ ODDS_MARK = re.compile(r"×\s*\d|\bodds\b", re.I)
 
 def layers_dir() -> Path:
     """The layers directory: ``$EXPLANEAT_LAYERS_DIR``; else, when ``$EXPLANEAT_RECORDS_DIR`` is
-    ``.../explanations<suffix>``, its sibling ``.../plain_language<suffix>`` if it exists (so
+    ``.../explanations<suffix>`` (its first directory when it lists several), its sibling
+    ``.../plain_language<suffix>`` if it exists (so
     ``EXPLANEAT_RECORDS_DIR=experiments/10seed/explanations_v4`` alone selects the v4 layers);
     else :data:`PLAIN_DIR`."""
-    from .explanation_records import resolve_dir
+    from .explanation_records import records_dir, resolve_dir
     env = os.environ.get("EXPLANEAT_LAYERS_DIR")
     if env:
         return resolve_dir(env)
-    rec = os.environ.get("EXPLANEAT_RECORDS_DIR")
-    if rec:
-        p = resolve_dir(rec)
-        if p.name.startswith("explanations"):
-            sib = p.parent / ("plain_language" + p.name[len("explanations"):])
-            if sib.is_dir():
-                return sib
+    if os.environ.get("EXPLANEAT_RECORDS_DIR"):
+        sib = sibling_layers_dir(records_dir())
+        if sib is not None:
+            return sib
     return PLAIN_DIR
 
 
+def sibling_layers_dir(records: Path) -> Optional[Path]:
+    """``.../explanations<suffix>`` -> ``.../plain_language<suffix>`` when that folder exists."""
+    p = Path(records)
+    if p.name.startswith("explanations"):
+        sib = p.parent / ("plain_language" + p.name[len("explanations"):])
+        if sib.is_dir():
+            return sib
+    return None
+
+
 def layer_path(label: str, directory: Optional[Path] = None) -> Path:
+    """The layer file of ``label``: in ``directory`` when given; else the first that exists of
+    ``$EXPLANEAT_LAYERS_DIR/<label>.json`` (when set), the file next to the label's record (the
+    sibling ``plain_language<suffix>`` folder of its record set, under the record's own label)
+    and ``layers_dir()/<label>.json``. When none exists (a new layer), the first of them that
+    applies: so a record's new layer is written next to it."""
     if not re.fullmatch(r"[A-Za-z0-9_.-]+", label or ""):
         raise ValueError(f"bad label {label!r}")
-    return Path(directory or layers_dir()) / f"{label}.json"
+    if directory is not None:
+        return Path(directory) / f"{label}.json"
+    from .explanation_records import REPO_ROOT as ROOT, entry, resolve_dir
+    cands: List[Path] = []
+    env = os.environ.get("EXPLANEAT_LAYERS_DIR")
+    if env:
+        cands.append(resolve_dir(env) / f"{label}.json")
+    try:
+        e = entry(label)
+    except ValueError:
+        e = None
+    if e is not None and e.records_dir and re.fullmatch(r"[A-Za-z0-9_.-]+", e.file_label or ""):
+        rd = Path(e.records_dir)
+        sib = sibling_layers_dir(rd if rd.is_absolute() else ROOT / rd)
+        if sib is not None:
+            cands.append(sib / f"{e.file_label}.json")
+    cands.append(layers_dir() / f"{label}.json")
+    return next((c for c in cands if c.exists()), cands[0])
 
 
 def dumps(layer: Dict[str, Any]) -> str:

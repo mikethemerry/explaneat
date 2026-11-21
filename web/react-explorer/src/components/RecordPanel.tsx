@@ -1,7 +1,8 @@
 /**
  * Review a Claude-produced explanation record against the live checks, record
- * Mike's verification (`mike_verification` in the record JSON), and export /
- * import the explanation's operations.
+ * Mike's verification (`mike_verification`: in the records database with its
+ * history, or in the record's JSON file), and export / import the explanation's
+ * operations. Records are looked up in the database and every study folder.
  */
 import { useEffect, useRef, useState } from "react";
 import {
@@ -14,6 +15,7 @@ import {
   type CheckResult,
   type ExplanationRecord,
   type ImportPreview,
+  type RecordSource,
 } from "../api/tools";
 import { useAppConfig } from "../api/appConfig";
 
@@ -40,7 +42,8 @@ function Agreement({ label, recorded, live, tol }: { label: string; recorded: un
 export function RecordPanel({ genomeId, onOperationChange }: { genomeId: string; onOperationChange: () => void }) {
   const cfg = useAppConfig();
   const [record, setRecord] = useState<ExplanationRecord | null>(null);
-  const [recordsDir, setRecordsDir] = useState("");
+  const [searched, setSearched] = useState<{ dirs: string[]; database: boolean }>({ dirs: [], database: false });
+  const [source, setSource] = useState<RecordSource | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [check, setCheck] = useState<CheckResult | null>(null);
@@ -67,7 +70,8 @@ export function RecordPanel({ genomeId, onOperationChange }: { genomeId: string;
     getGenomeRecord(genomeId)
       .then((r) => {
         setRecord(r.record);
-        setRecordsDir(r.records_dir);
+        setSearched({ dirs: r.records_dirs?.length ? r.records_dirs : [r.records_dir], database: !!r.database });
+        setSource(r.source || null);
         const mv = r.record?.mike_verification;
         setVerified(!!mv?.verified);
         setMinutes(mv?.minutes != null ? String(mv.minutes) : "");
@@ -99,7 +103,8 @@ export function RecordPanel({ genomeId, onOperationChange }: { genomeId: string;
       const m = minutes.trim() === "" ? null : Number(minutes);
       const r = await putVerification(record.label, { verified, minutes: m, changes, notes });
       setRecord({ ...record, mike_verification: r.mike_verification });
-      setSaved(`Saved to ${record.label}.json at ${new Date().toLocaleTimeString()}. Rebuild the CSVs with experiments/10seed/build_explanations_csv.py.`);
+      const where = r.stored_in || `${record.label}.json`;
+      setSaved(`Saved to ${where} at ${new Date().toLocaleTimeString()}. Rebuild the CSVs with experiments/10seed/build_explanations_csv.py.`);
     } catch (e) {
       setSaved(`Error: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
@@ -148,13 +153,16 @@ export function RecordPanel({ genomeId, onOperationChange }: { genomeId: string;
         {error && <p className="error-text">{error}</p>}
         {!record ? (
           <p className="hint">
-            No Claude explanation record for this genome{cfg.static ? "." : <> in <code>{recordsDir}</code>. You can still import an
+            No Claude explanation record for this genome{cfg.static ? "." : <>{" "}
+            {searched.database ? "in the records database or " : ""}in {searched.dirs.length > 1 ? "any of " : ""}
+            {searched.dirs.map((d, i) => <span key={d}>{i ? ", " : ""}<code>{d}</code></span>)}. You can still import an
             explanation file (right) or explain it here.</>}
           </p>
         ) : (
           <>
             <h5>
               Record <code>{record.label}</code>{" "}
+              {source && !cfg.static && <span className="hint" title={source.source}>({source.study}, {source.storage === "db" ? "database" : "file"}){" "}</span>}
               {record.mike_verification?.verified ? <span className="check-pill ok">✓ verified by Mike</span> : <span className="check-pill bad">not verified</span>}
             </h5>
             {record.summary && <p><strong>Summary.</strong> {record.summary}</p>}

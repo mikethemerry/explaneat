@@ -9,8 +9,12 @@ When explaining_time<dir suffix>.csv exists (explaining_time.py, read-only DB; e
 --dir explanations_v4), n_leaf / n_composition are read from it (the explanation's operations in the
 database; asserted equal to the record's counts) and three columns are appended after every existing one:
 agent_minutes_db (the explaining time computed from the database's timestamped writes; see
-explaining_time.py), agent_db_start, agent_db_end. claude_minutes stays the record's own start/end, for audit."""
+explaining_time.py), agent_db_start, agent_db_end. claude_minutes stays the record's own start/end, for audit.
+
+With DATABASE_URL set and the records imported (explaneat records import), each record is read from the
+database's explanation_records table (Mike's current verification), else from its file."""
 import csv, datetime as dt, json, os, sys
+from explaneat.analysis.explanation_records import load_record_file
 HERE = os.path.dirname(os.path.abspath(__file__))
 _a = sys.argv[1:]
 REC_DIR = _a[_a.index('--dir') + 1] if '--dir' in _a else 'explanations'
@@ -124,7 +128,7 @@ def db_columns(r, l):
 
 
 def row(i, l):
-    r = json.load(open(os.path.join(HERE, REC_DIR, f'{l}.json')))
+    r = load_record_file(os.path.join(HERE, REC_DIR, f'{l}.json'))
     v = r['verified_by_orchestrator']; oc = v['op_counts']
     mins = (dt.datetime.fromisoformat(r['end']) - dt.datetime.fromisoformat(r['start'])).total_seconds() / 60
     n_leaf, n_comp, dbc = db_columns(r, l)

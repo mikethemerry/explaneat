@@ -189,6 +189,7 @@ def api(test_db, db_session, test_genome, monkeypatch, tmp_path):
     rec_dir.mkdir()
     (rec_dir / "t-s0.json").write_text(json.dumps({"label": "t-s0", "genome_id": str(test_genome.id)}), encoding="utf-8")
     monkeypatch.setenv("EXPLANEAT_RECORDS_DIR", str(rec_dir))
+    monkeypatch.setenv("EXPLANEAT_RECORDS_DISCOVER", "0")   # only this record set, not the studies'
 
     def _get_db():
         s = test_db.session_factory()

@@ -34,9 +34,9 @@ def genome_for_label(label: str) -> str:
 
 
 def all_labels():
-    """Every explanation record (sorted) plus the three paper genomes."""
+    """Every explanation record of the primary record set (sorted) plus the three paper genomes."""
     from ..analysis import explanation_records
-    recs = sorted(r["label"] for r in explanation_records.list_records())
+    recs = sorted(r["label"] for r in explanation_records.list_records(explanation_records.records_dir()))
     return list(PAPER) + recs
 
 

@@ -5,7 +5,8 @@ Reads: the queue (gates, tier A, the signoff-v1 sample), every item with its par
 leaves, the verdicts, the diff since the last verdicts and a live sign-off check. Writes: a
 sentence verdict or a leaf verdict appended to ``<review dir>/<label>.verdicts.jsonl`` (same
 schema and same ``records_dir`` guard as the CLI), the sign-off (``<label>.signoff.json`` and,
-when it passes and ``write`` is set, ``mike_verification`` in the record) and, on request, the
+when it passes and ``write`` is set, ``mike_verification`` in the record, wherever it is stored:
+its database row or its file) and, on request, the
 CSV rebuild. The database is read only (the operations). ``EXPLANEAT_RECORDS_DIR``,
 ``EXPLANEAT_LAYERS_DIR``, ``EXPLANEAT_REVIEW_DIR`` and ``DATABASE_URL`` are respected.
 """
@@ -227,11 +228,13 @@ async def get_review(label: str, recheck: bool = True):
     from ...review.queue import tier_counts
     from ...review.status import badge_counts
     context = dict(r.context)
-    rs = er.record_set()
     rec = r.record or {}
+    e = er.entry(label)
+    from ...analysis.plain_language_store import layer_path
     return {
         "label": label, "genome_id": r.genome_id, "protocol": PROTOCOL, "target_hash": r.target_hash,
-        "records_dir": rs["records_dir"], "layers_dir": rs["layers_dir"], "review_dir": str(review_dir()),
+        "records_dir": er.records_dir_of(label), "layers_dir": er.rel(layer_path(label).parent),
+        "record_source": e.public() if e is not None else None, "review_dir": str(review_dir()),
         "store": str(vd.path_for(label)), "context": context,
         "experiment": _experiment_of(r.genome_id),
         "record": {k: rec.get(k) for k in ("summary", "hidden_nodes", "n_leaf_annotations", "n_composition_annotations",
@@ -331,10 +334,10 @@ async def post_signoff(label: str, req: SignoffRequest):
     written = False
     if req.write and res["passed"]:
         er.write_verification(label, True, minutes=req.minutes if req.minutes is not None else res["minutes"] or None,
-                              changes=req.changes, notes=req.notes, signoff=signoff_block(res))
+                              changes=req.changes, notes=req.notes, signoff=signoff_block(res), entered_by="ui")
         written = True
     return {"label": label, "result": res, "signoff_file": str(path), "record_written": written,
-            "record": str(er.record_path(label)) if written else None}
+            "record": er.record_location(label) if written else None}
 
 
 def csv_command(records_dir: str) -> Optional[List[str]]:
@@ -361,7 +364,7 @@ async def post_rebuild_csv(label: str):
     name). Returns the command and its output; when the folder is not one of the 10-seed record
     sets, returns the command to run by hand instead."""
     _label(label)
-    rd = er.record_set()["records_dir"]
+    rd = er.records_dir_of(label)
     cmd = csv_command(rd)
     name = Path(rd).name
     sfx = name[len("explanations"):] if name.startswith("explanations") else ""

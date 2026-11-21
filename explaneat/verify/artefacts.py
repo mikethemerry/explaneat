@@ -7,8 +7,9 @@ A target is one of:
 * a **JSON file**: an explanation record (``experiments/10seed/explanations/<label>.json``),
   a plain-language layer, or an operations list; files next to it with the item names are
   picked up too;
-* a **label** of the 10-seed study (``heart-s2``): its record and layer in the repository
-  (``$EXPLANEAT_RECORDS_DIR`` / ``$EXPLANEAT_LAYERS_DIR`` select another set, e.g. the v4 one).
+* a **label** of any explanation record (``heart-s2``, ``churn-case-s10``): its record (database
+  or files, see ``explaneat.analysis.explanation_records``) and its layer (next to the record;
+  ``$EXPLANEAT_RECORDS_DIR`` / ``$EXPLANEAT_LAYERS_DIR`` select another set, e.g. the v4 one).
 
 The operations come from the target when it has them (a copied list is checked as it is),
 otherwise from the database (read only).
@@ -36,6 +37,26 @@ def _records() -> Path:
 def _layers() -> Path:
     from ..analysis.plain_language_store import layers_dir
     return layers_dir()
+
+
+def _layer_of(label: str) -> Path:
+    """The label's layer (next to its record when it has one; see ``layer_path``)."""
+    from ..analysis.plain_language_store import layer_path
+    return layer_path(label)
+
+
+def _layer_beside(record_file: Path, label: str) -> Optional[Path]:
+    """The layer of a record given as a file: in the ``plain_language<suffix>`` folder beside
+    the record's ``explanations<suffix>`` folder (the nearest one above the file), else the
+    layers directory in use."""
+    from ..analysis.plain_language_store import sibling_layers_dir
+    for d in Path(record_file).resolve().parents:
+        if d.name.startswith("explanations"):
+            sib = sibling_layers_dir(d)
+            if sib is not None and (sib / f"{label}.json").is_file():
+                return sib / f"{label}.json"
+            break
+    return _layers() / f"{label}.json"
 UUID_RX = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.I)
 
 ITEM_FILES = {"record": "record.json", "layer": "plain_language.json",
@@ -127,31 +148,36 @@ def resolve(target: str, operations_path: Optional[str] = None) -> Target:
         elif k == "operations":
             t.operations, t.paths["operations"] = _ops_list(doc), str(p)
         if t.layer is None and k == "record" and doc.get("label"):
-            lp = _layers() / f"{doc['label']}.json"
-            if lp.is_file():
+            lp = _layer_beside(p, str(doc["label"]))
+            if lp is not None and lp.is_file():
                 t.layer, t.paths["layer"] = _read(lp), str(lp)
     elif UUID_RX.match(target):
+        from ..analysis import explanation_records as er
         t = Target(genome_id=target, source="genome id")
-        for rp in sorted(_records().glob("*.json")):
-            try:
-                rec = _read(rp)
-            except Exception:
-                continue
-            if str(rec.get("genome_id")) == target:
-                t.record, t.paths["record"] = rec, str(rp)
-                lp = _layers() / f"{rec.get('label')}.json"
-                if lp.is_file():
-                    t.layer, t.paths["layer"] = _read(lp), str(lp)
-                break
+        e = er.find_entry_for_genome(target)
+        if e is not None:
+            t.record, t.paths["record"] = er.load_record(e.label), er.record_location(e.label)
+            lp = _layer_of(e.label)
+            if lp.is_file():
+                t.layer, t.paths["layer"] = _read(lp), str(lp)
     else:
-        rp, lp = _records() / f"{target}.json", _layers() / f"{target}.json"
-        if not rp.is_file() and not lp.is_file():
+        from ..analysis import explanation_records as er
+        try:
+            rec = er.load_record(target)
+        except (FileNotFoundError, ValueError):
+            rec = None
+        try:
+            lp = _layer_of(target)
+        except ValueError:
+            lp = None
+        lay = _read(lp) if lp is not None and lp.is_file() else None
+        if rec is None and lay is None:
             raise ValueError(f"{target!r} is not an item directory, a JSON file, a genome id or a label")
-        rec = _read(rp) if rp.is_file() else None
-        lay = _read(lp) if lp.is_file() else None
         gid = (rec or lay or {}).get("genome_id")
-        t = Target(genome_id=str(gid), source=f"label {target}", record=rec, layer=lay,
-                   paths={k: str(v) for k, v in (("record", rp), ("layer", lp)) if v.is_file()})
+        paths = {"record": er.record_location(target)} if rec is not None else {}
+        if lay is not None:
+            paths["layer"] = str(lp)
+        t = Target(genome_id=str(gid), source=f"label {target}", record=rec, layer=lay, paths=paths)
     if operations_path:
         t.operations = _ops_list(_read(Path(operations_path)))
         t.paths["operations"] = operations_path

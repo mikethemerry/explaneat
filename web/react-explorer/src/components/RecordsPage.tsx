@@ -1,6 +1,7 @@
 /**
- * The Claude-produced explanation records (experiments/10seed/explanations/*.json)
- * with their verification status: Mike's review queue.
+ * The Claude-produced explanation records of every study (the records database,
+ * else experiments/<study>/explanations*), grouped by study, with their
+ * verification status: Mike's review queue.
  */
 import { useEffect, useMemo, useState } from "react";
 import { listRecords, type RecordSummary } from "../api/tools";
@@ -17,7 +18,9 @@ export function RecordsPage({
 }) {
   const [records, setRecords] = useState<RecordSummary[]>([]);
   const [progress, setProgress] = useState<Record<string, ReviewProgress>>({});
-  const [dir, setDir] = useState("");
+  const [dirs, setDirs] = useState<string[]>([]);
+  const [database, setDatabase] = useState(false);
+  const [study, setStudy] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
@@ -29,7 +32,8 @@ export function RecordsPage({
     listRecords()
       .then((r) => {
         setRecords(r.records);
-        setDir(r.records_dir);
+        setDirs(r.records_dirs?.length ? r.records_dirs : [r.records_dir]);
+        setDatabase(!!r.database);
       })
       .catch((e) => setError(e instanceof Error ? e.message : String(e)))
       .finally(() => setLoading(false));
@@ -38,13 +42,32 @@ export function RecordsPage({
       .catch(() => setProgress({}));
   }, []);
 
+  const studies = useMemo(() => {
+    const seen: string[] = [];
+    records.forEach((r) => r.study && !seen.includes(r.study) && seen.push(r.study));
+    return seen;
+  }, [records]);
   const shown = useMemo(
     () =>
       records.filter(
-        (r) => (!onlyUnverified || !r.verified) && (!filter || r.label.toLowerCase().includes(filter.toLowerCase())),
+        (r) =>
+          (!onlyUnverified || !r.verified) &&
+          (!study || r.study === study) &&
+          (!filter || r.label.toLowerCase().includes(filter.toLowerCase())),
       ),
-    [records, filter, onlyUnverified],
+    [records, filter, onlyUnverified, study],
   );
+  // grouped by study, in the order the studies first appear (the search order)
+  const groups = useMemo(() => {
+    const out: { study: string; rows: RecordSummary[] }[] = [];
+    shown.forEach((r) => {
+      const k = r.study || "";
+      let g = out.find((x) => x.study === k);
+      if (!g) out.push((g = { study: k, rows: [] }));
+      g.rows.push(r);
+    });
+    return out;
+  }, [shown]);
   const nVerified = records.filter((r) => r.verified).length;
   const minutes = records.reduce((a, r) => a + (r.mike_verification?.minutes || 0), 0);
 
@@ -58,7 +81,10 @@ export function RecordsPage({
             {minutes ? ` (${minutes} min in total)` : ""}. <em>Explore</em> opens the network with its explanation.
           </p>
         ) : <p className="hint">
-          {records.length} explanation records in <code>{dir}</code>. <strong>{nVerified}</strong> verified
+          {records.length} explanation records in {studies.length} {studies.length === 1 ? "study" : "studies"}
+          {database ? " (records database, then files)" : ""}
+          <span title={dirs.join("\n")}> from <code>{dirs[0]}</code>{dirs.length > 1 ? ` and ${dirs.length - 1} more folders` : ""}</span>.{" "}
+          <strong>{nVerified}</strong> verified
           {minutes ? `, ${minutes} min recorded` : ""}. <strong>Verify</strong> opens the sentence-by-sentence review (signoff-v1:
           gates, tier A, the random sample, leaf verdicts, sign-off); <em>Explore</em> opens the genome in the explorer.
         </p>}
@@ -70,6 +96,12 @@ export function RecordsPage({
             onChange={(e) => setFilter(e.target.value)}
             style={{ padding: "6px 10px", border: "1px solid #d1d5db", borderRadius: 4, minWidth: 240 }}
           />
+          {studies.length > 1 && (
+            <select value={study} onChange={(e) => setStudy(e.target.value)} aria-label="Study">
+              <option value="">All studies</option>
+              {studies.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          )}
           <label className="hint">
             <input type="checkbox" checked={onlyUnverified} onChange={(e) => setOnlyUnverified(e.target.checked)} /> only unverified
           </label>
@@ -84,9 +116,18 @@ export function RecordsPage({
           </tr>
         </thead>
         <tbody>
-          {shown.map((r) => (
+          {groups.map((grp) => [
+            grp.study ? (
+              <tr key={`study:${grp.study}`} className="study-row">
+                <td colSpan={10}>
+                  <strong>{grp.study}</strong>{" "}
+                  <span className="hint">{grp.rows.length} records{grp.rows[0]?.records_dir ? ` · ${grp.rows[0].records_dir}` : ""}</span>
+                </td>
+              </tr>
+            ) : null,
+            ...grp.rows.map((r) => (
             <tr key={r.label}>
-              <td><strong>{r.label}</strong></td>
+              <td><strong>{r.label}</strong>{r.storage === "db" && <span className="hint" title={r.source}> db</span>}</td>
               <td>{r.orchestrator_full_coverage == null ? "—" : r.orchestrator_full_coverage ? "yes" : "no"}</td>
               <td>{r.agrees_with_agent == null ? "—" : r.agrees_with_agent ? "✓" : "✗"}</td>
               <td>{r.n_leaf_annotations ?? "—"} / {r.n_composition_annotations ?? "—"}</td>
@@ -134,7 +175,8 @@ export function RecordsPage({
                 </button>}
               </td>
             </tr>
-          ))}
+            )),
+          ])}
         </tbody>
       </table>
       {exporting && (
