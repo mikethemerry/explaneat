@@ -14,7 +14,14 @@ Files go where thesis/ch7/figlib.py puts them (thesis/ch7/figures/..., the Overl
   from exactly the drawn weights and biases (asserted: the same vector as verify_xor.evolved_minimal, and the
   run's stored logits reproduced).
 - Synthetic shapes (synthetic-shape-*): thesis/ch7/exp1/data/shapes.json (extract_shapes.py, read-only DB).
-  Ground-truth constants (BETA_U, BETA_S, SODIUM_SWEET_SPOT) from experiments/ushape_saddle/data.py.
+  Ground-truth constants (BETA_U, BETA_S, SODIUM_SWEET_SPOT) from experiments/ushape_saddle/data.py. The two
+  shape-C figures (main text) add a row under their panels: the parts of the explained network that carry the
+  term (term_parts: leaf parts reading every input of the term whose range over the panels' sweep is at least
+  TERM_SHARE of the largest; ranges from shapes.json / experiments/ushape_saddle/figures/shape-C-shape.json), drawn
+  like the explorer's focus view (focus_view, draw_focus) from the committed plain-language layer
+  experiments/ushape_saddle/plain_language/shape-C.json, asserted to be the same genome as the panels and, by
+  data/network_figs.json (extract_networks.py, read-only), the genome's current explanation with the database's
+  weights; the seed is read from experiments/ushape_saddle/runs.csv.
 - WHAS500 references (cox-whas500-*): experiments/survival/cox_case/reference_explanation.json
   (reference_explanation.py), the same encodings as that script's figures.
 - MONK-2 rule comparison (ebm-monk2-count, ebm-monk2-pairs; options): experiments/monk2_rule_comparison/results/
@@ -256,6 +263,253 @@ SHAPES = [("shape-A", "a"), ("shape-B", "b"), ("shape-C", "c"), ("shape-C-s1-g30
           ("shape-C-sig-best-g300", "c-sig-best-g300")]
 DATASET = {"u": "U only", "saddle": "saddle only", "both": "U and saddle"}
 
+# ------------------------------------------------------------- shape-C: the parts of the network that carry each term
+# The two main-text synthetic figures (shape-C, the U + saddle network) carry, under their panels, the part(s) of the
+# explained network that carry the figure's term, drawn like the explorer's focus view of an annotation
+# (web/react-explorer/src/components/annotationFocus.ts): the part's own nodes and the connections between them, and
+# a boundary stub for each connection to or from the rest of the network. Drawn from the committed plain-language
+# layer of the same genome as the panels (asserted, shape_c_network).
+
+SHAPE_C = "shape-C"
+SHAPE_C_LAYER = "experiments/ushape_saddle/plain_language/shape-C.json"
+SHAPE_C_SWEEP = "experiments/ushape_saddle/figures/shape-C-shape.json"   # shape_plots.py's summary of the sweeps
+TERM_INPUTS = {"sodium": ("sodium",), "saddle": ("heart_rate", "sbp")}   # the inputs of each true term (data.py)
+TERM_SHARE = 0.10   # design choice: a part carries the term if its range over the sweep is >= 10% of the largest
+INPUT_NAMES = {"sodium": "sodium", "heart_rate": "heart\nrate", "sbp": "systolic\nBP", "age": "age", "bmi": "BMI",
+               "creatinine": "creatinine", "smoker": "smoker", "diabetes": "diabetes", "male": "male",
+               "noise": "noise"}   # design choice: printed input names (the column order is the drawing's tie-break)
+R_IN, R_HID, R_SUM = 0.13, 0.17, 0.15            # design choice: node sizes (data units; one input slot = DX)
+DX = 1.15
+
+
+def shape_c_network(d):
+    """The committed plain-language layer of shape-C and the run's seed, asserted to be the network of the panels
+    above: the layer's genome is the genome of data/shapes.json (and of the explanation record and runs.csv row), and
+    data/network_figs.json (extract_networks.py, read-only) found the layer to be that genome's current explanation,
+    its model state rebuilt from the stored operations having exactly the layer's connections and weights."""
+    layer = figlib.jload(SHAPE_C_LAYER)
+    gid = d["genome_id"]
+    rec = figlib.jload("experiments/ushape_saddle/explanations/shape-C.json")
+    nf = figlib.jload("thesis/ch7/exp1/data/network_figs.json")["networks"][SHAPE_C]
+    (run,) = figlib.csvrows("experiments/ushape_saddle/runs.csv", genome_id=gid)
+    assert layer["genome_id"] == rec["genome_id"] == nf["genome"] == gid, (layer["genome_id"], gid)
+    assert nf["explanation_id"] == layer["explanation_id"] and nf["model_state_matches_layer"], nf
+    assert nf["layer"] == SHAPE_C_LAYER and run["experiment_name"] == nf["experiment"], (nf, run)
+    return layer, int(run["seed"])
+
+
+def term_parts(layer, term, ranges):
+    """The parts that carry a term (the rule, recorded in CAPTION_MOVED_TEXT.md): the leaf parts that read every
+    input of the term and whose contribution's range over the term's sweep (``ranges``: part id -> range, the sweep
+    of the figure's panels) is at least TERM_SHARE of the largest such range; largest first. Returns them and the
+    candidates' ranges."""
+    reads = {}
+    for n in layer["graph"]["nodes"]:
+        if n["kind"] == "input":
+            reads.setdefault(n["region"], set()).add(n["column"])
+    leaves = [p for p in layer["parts"] if p["kind"] == "leaf"]
+    for p in leaves:
+        assert reads.get(p["id"], set()) == set(p["variables"]), p["id"]   # a leaf's inputs are its variables
+    cand = [p for p in leaves if set(TERM_INPUTS[term]) <= reads.get(p["id"], set())]
+    top = max(ranges[p["id"]] for p in cand)
+    keep = sorted((p for p in cand if ranges[p["id"]] >= TERM_SHARE * top), key=lambda p: (-ranges[p["id"]], p["id"]))
+    return keep, {p["id"]: dict(name=p["name"], range=ranges[p["id"]], drawn=p in keep) for p in cand}
+
+
+def focus_view(layer, pids):
+    """The explorer's focus view of the parts ``pids`` (annotationFocus.ts computeFocusGraph; leaves, so the focus set
+    is each part's own entry, intermediate and exit nodes): the drawn nodes, the connections with both ends in the
+    set, and the boundary connections (out: to the rest of the network; in: from it). An input column a part reads
+    through several split copies is drawn once in that part."""
+    g = layer["graph"]
+    node = {n["id"]: n for n in g["nodes"]}
+    parts = {p["id"]: p for p in layer["parts"]}
+    assert all(not parts[p]["children"] for p in pids), pids
+    inside = {nid for nid, n in node.items() if n.get("region") in pids}
+
+    def key(nid):
+        n = node[nid]
+        return f"{n['region']}:{n['column']}" if n["kind"] == "input" else nid
+
+    drawn = {}
+    for nid in sorted(inside):
+        n = node[nid]
+        assert n["kind"] in ("input", "hidden"), n   # the output unit is the root's, never in a leaf
+        kind = "input" if n["kind"] == "input" else ("sum" if nid.startswith("identity_") else "hidden")
+        dn = drawn.setdefault(key(nid), dict(part=n["region"], kind=kind, column=n.get("column"), ids=[]))
+        dn["ids"].append(nid)
+    edges, out, inn = [], [], []
+    for e in g["edges"]:   # the layer's connections are the model state's enabled connections (extract_networks.py)
+        f, t = e["from"] in inside, e["to"] in inside
+        if f and t:
+            edges.append((key(e["from"]), key(e["to"]), float(e["weight"])))
+        elif f:
+            dst = node[e["to"]]
+            out.append((key(e["from"]), "output" if dst["kind"] == "output" else parts[dst["region"]]["name"],
+                        float(e["weight"])))
+        elif t:
+            inn.append((parts[node[e["from"]]["region"]]["name"], key(e["to"]), float(e["weight"])))
+    assert all(drawn[u]["part"] == drawn[v]["part"] for u, v, _ in edges), "a connection between two drawn parts"
+    return drawn, edges, out, inn
+
+
+def _focus_layout(drawn, edges, pids):
+    """Inputs on the bottom row, every other node at its depth (longest path from an input), placed at the mean
+    position of the nodes feeding it; the inputs reordered by the mean position of the nodes they feed (four
+    sweeps, ties by INPUT_NAMES order). One box per part, side by side in ``pids`` order."""
+    preds, succs = {}, {}
+    for u, v, _ in edges:
+        preds.setdefault(v, []).append(u)
+        succs.setdefault(u, []).append(v)
+    depth = {}
+
+    def dep(k):
+        if k not in depth:
+            depth[k] = 0 if drawn[k]["kind"] == "input" else 1 + max(dep(u) for u in preds[k])
+        return depth[k]
+    for k in sorted(drawn):
+        dep(k)
+    cols = list(INPUT_NAMES)
+    pos, boxes, x0 = {}, {}, 0.0
+    for pid in pids:
+        ks = sorted(k for k in drawn if drawn[k]["part"] == pid)
+        ins = sorted((k for k in ks if depth[k] == 0), key=lambda k: cols.index(drawn[k]["column"]))
+        levels = sorted({depth[k] for k in ks} - {0})
+        width = DX * max([len(ins)] + [sum(depth[k] == L for k in ks) for L in levels] + [3])   # at least 3 slots
+        for _ in range(4):
+            for i, k in enumerate(ins):
+                pos[k] = (x0 + (i + 0.5) * width / len(ins), 0.0)
+            for L in levels:
+                lev = sorted((k for k in ks if depth[k] == L),
+                             key=lambda k: (np.mean([pos[u][0] for u in preds[k]]), k))
+                last = -np.inf
+                for k in lev:
+                    x = max(float(np.mean([pos[u][0] for u in preds[k]])), last + 0.8 * DX)
+                    pos[k], last = (x, float(L)), x
+            ins = sorted(ins, key=lambda k: (np.mean([pos[v][0] for v in succs[k]]), sorted(succs[k]),
+                                             cols.index(drawn[k]["column"])))   # inputs feeding one unit together
+        boxes[pid] = (x0, x0 + width)
+        x0 += width + 0.45 * DX
+    return pos, boxes, depth
+
+
+def _blocked(a, b, pos, skip, r=0.24):
+    """True if the straight segment a-b passes within r of another drawn node."""
+    a, b = np.asarray(a, float), np.asarray(b, float)
+    d = b - a
+    L2 = float(d @ d)
+    for k, p in pos.items():
+        if k in skip:
+            continue
+        p = np.asarray(p, float)
+        t = float(np.clip((p - a) @ d / L2, 0.0, 1.0))
+        if 0.05 < t < 0.95 and float(np.hypot(*(a + t * d - p))) < r:
+            return True
+    return False
+
+
+def _bezier(a, b, rad, t):
+    """A point of matplotlib's arc3 connection (equal aspect, so data and display directions agree)."""
+    a, b = np.asarray(a, float), np.asarray(b, float)
+    c = (a + b) / 2 + rad * np.array([b[1] - a[1], -(b[0] - a[0])])
+    return (1 - t) ** 2 * a + 2 * t * (1 - t) * c + t ** 2 * b
+
+
+def draw_focus(ax, layer, parts, letter, title):
+    """Panel: the focus view of ``parts`` (term_parts) drawn from the layer: a grey box per part with its name below;
+    small grey circles: its inputs; white circles: hidden units; square +: the part's sum (an identity node). Edge
+    colour by weight sign, width by |weight|, each edge with its weight; arrows leaving a box: the part's connections
+    to the rest of the network, with their weight and the part they feed."""
+    from matplotlib.patches import Circle, FancyArrowPatch, FancyBboxPatch, Rectangle
+    pids = [p["id"] for p in parts]
+    drawn, edges, out, inn = focus_view(layer, pids)
+    pos, boxes, depth = _focus_layout(drawn, edges, pids)
+    for p in parts:   # the drawn hidden units are ReLUs (the part's closed form)
+        if any(dn["kind"] == "hidden" and dn["part"] == p["id"] for dn in drawn.values()):
+            assert "relu" in p["closed_form"]["latex"] and "sigma" not in p["closed_form"]["latex"], p["id"]
+    top, bottom = max(depth.values()) + 0.42, -0.74
+    wmax = max(abs(w) for *_, w in edges + out + inn)
+
+    def lw(w):
+        return 0.5 + 1.7 * abs(w) / wmax   # design choice: line width by |weight| (largest drawn weight)
+
+    def colour(w):
+        return XOR_EDGE_POS if w > 0 else XOR_EDGE_NEG
+    for pid, (xa, xb) in boxes.items():
+        ax.add_patch(FancyBboxPatch((xa, bottom), xb - xa, top - bottom, boxstyle="round,pad=0,rounding_size=0.18",
+                                    fc="0.93", ec="0.55", lw=0.7, zorder=0))
+        name = next(p["name"] for p in parts if p["id"] == pid)
+        ax.text((xa + xb) / 2, bottom - 0.1, _part_label(name), ha="center", va="top", fontsize=7.5, style="italic")
+    patch = {}
+    for k, dn in sorted(drawn.items()):
+        x, y = pos[k]
+        if dn["kind"] == "input":
+            patch[k] = Circle((x, y), R_IN, fc="0.75", ec="black", lw=0.6, zorder=3)
+            ax.text(x, y - R_IN - 0.05, INPUT_NAMES[dn["column"]], ha="center", va="top", fontsize=6.5,
+                    linespacing=0.9)
+        elif dn["kind"] == "hidden":
+            patch[k] = Circle((x, y), R_HID, fc="white", ec="black", lw=0.8, zorder=3)
+        else:
+            patch[k] = Rectangle((x - R_SUM, y - R_SUM), 2 * R_SUM, 2 * R_SUM, fc="white", ec="black", lw=0.8,
+                                 zorder=3)
+            ax.text(x, y, "$+$", ha="center", va="center", fontsize=8, zorder=4)
+        ax.add_patch(patch[k])
+
+    def arrow(a, b, w, pa, pb, t_lab, skip, part, from_input=False):
+        rad = 0.0
+        if _blocked(a, b, pos, skip):
+            rad = 0.35 if a[0] <= np.mean(boxes[part]) else -0.35   # bow away from the box's middle
+            t_lab = min(t_lab, 0.3)   # the label near the source, clear of the node it bows around
+        ax.add_patch(FancyArrowPatch(a, b, connectionstyle=f"arc3,rad={rad}",
+                                     arrowstyle="-|>,head_length=3.2,head_width=1.6", color=colour(w), lw=lw(w),
+                                     patchA=pa, patchB=pb, shrinkA=0, shrinkB=0.5, zorder=2))
+        px, py = _bezier(a, b, rad, t_lab)
+        ha = "center"
+        if rad == 0 and abs(b[0] - a[0]) < 0.05 and not from_input:
+            # a vertical edge out of a hidden unit or sum: its label beside it, on the left
+            px, ha = px - 0.07, "right"
+        ax.text(px, py, f"${w:+.2f}$", ha=ha, va="center", fontsize=5.8, color=colour(w), zorder=5,
+                bbox=dict(boxstyle="round,pad=0.08", fc="white", ec="none", alpha=0.85))
+        return rad
+
+    drawn_edges, stubs = [], []
+    fan = {}   # an input feeding several units: its weight labels staggered along the edges (by distance from it)
+    for u, v, _ in edges:
+        fan.setdefault(u, []).append(v)
+    for u, v, w in edges:
+        if drawn[u]["kind"] == "input":
+            order = sorted(fan[u], key=lambda k: (-pos[k][1], pos[k][0], k))
+            t = min((0.42 + 0.36 * order.index(v)) / float(np.hypot(*np.subtract(pos[v], pos[u]))), 0.62)
+        else:
+            t = 0.5
+        rad = arrow(pos[u], pos[v], w, patch[u], patch[v], t, {u, v}, drawn[u]["part"],
+                    from_input=drawn[u]["kind"] == "input")
+        drawn_edges.append(dict(src=u, dst=v, weight=w, src_ids=drawn[u]["ids"], dst_ids=drawn[v]["ids"], rad=rad))
+    for pid in pids:   # a part's outgoing stubs converge on one point above its box, one label per destination
+        for dst in sorted({d for s, d, _ in out if drawn[s]["part"] == pid}):
+            mine = [(s, w) for s, d, w in out if d == dst and drawn[s]["part"] == pid]
+            cx = float(np.mean([pos[s][0] for s, _ in mine]))
+            for s, w in mine:
+                rad = arrow(pos[s], (cx, top + 0.62), w, patch[s], None, 0.55, {s}, pid)
+                stubs.append(dict(direction="out", part=pid, node=s, node_ids=drawn[s]["ids"], to=dst, weight=w,
+                                  rad=rad))
+            ax.text(cx, top + 0.68, "to the output" if dst == "output" else f"to {_part_label(dst)}", ha="center",
+                    va="bottom", fontsize=6.5, color="0.2")
+    for src, v, w in inn:   # incoming stubs (a leaf whose entries are all inputs has none; drawn if present)
+        x, y = pos[v]
+        arrow((x - 0.45, y - 0.55), (x, y), w, None, patch[v], 0.3, {v}, drawn[v]["part"])
+        ax.text(x - 0.47, y - 0.6, f"from {_part_label(src)}", ha="center", va="top", fontsize=6, color="0.2")
+        stubs.append(dict(direction="in", part=drawn[v]["part"], node=v, node_ids=drawn[v]["ids"], frm=src, weight=w))
+    ax.set_xlim(min(a for a, _ in boxes.values()) - 0.1, max(b for _, b in boxes.values()) + 0.1)
+    ax.set_ylim(bottom - 0.42, top + 0.95)
+    ax.set_aspect("equal")
+    ax.axis("off")
+    ax.set_title(f"({letter}) {title}", loc="left", fontsize=8)
+    return dict(parts=pids, genome_id=layer["genome_id"], explanation_id=layer["explanation_id"],
+                nodes={k: dict(kind=dn["kind"], part=dn["part"], ids=dn["ids"], pos=pos[k])
+                       for k, dn in sorted(drawn.items())},
+                edges=drawn_edges, stubs=stubs)
+
 
 def _shape_title(label, d):
     if label == "shape-C-s1-g300":
@@ -265,6 +519,26 @@ def _shape_title(label, d):
     else:
         who = "the explained network"
     return f"Synthetic data ({DATASET[d['task']]}), {who}"
+
+
+def _shape_c_title(seed):
+    return f"Synthetic U + saddle network (seed {seed})"
+
+
+NET_H = 2.25   # design choice: height (in) of the subnetwork row under a shape-C figure's panels
+
+
+def _shape_c_figure(plt, top_h):
+    """A shape-C figure: the panels' row (a subfigure) above the subnetwork row (one axes)."""
+    fig = plt.figure(figsize=(W, top_h + NET_H), layout="constrained")
+    sf_top, sf_net = fig.subfigures(2, 1, height_ratios=[top_h, NET_H], hspace=0.02)
+    return fig, sf_top, sf_net.add_subplot(1, 1, 1)
+
+
+NET_KEYS = ("grey box: one part of the explanation (its name below); small grey circles: the inputs it reads; white "
+            "circles: hidden units (ReLU); square $+$: the part's sum (no activation). Edges: blue, a positive weight; "
+            "red, a negative weight; thicker, a larger weight; the number on an edge is its weight. Arrows leaving a "
+            "box: the part's connections to the rest of the network, labelled with what they feed.")
 
 
 def _part_label(name):
@@ -283,7 +557,12 @@ def shape_sodium(label, d, fid):
     top = sorted(parts, key=lambda p: -np.ptp(parts[p]["contribution"]))[:4]
     top = [p for p in top if np.ptp(parts[p]["contribution"]) > 0]
     two = bool(top)
-    fig, axes = plt.subplots(1, 2 if two else 1, figsize=(W if two else W * 0.55, 2.4))
+    net = label == SHAPE_C
+    if net:
+        fig, sf, ax_net = _shape_c_figure(plt, 2.4)
+        axes = sf.subplots(1, 2)
+    else:
+        fig, axes = plt.subplots(1, 2 if two else 1, figsize=(W if two else W * 0.55, 2.4))
     ax = axes[0] if two else axes
     ax.plot(x, score, color="black", lw=1.4, label="model score")
     if truth is not None:
@@ -300,17 +579,30 @@ def shape_sodium(label, d, fid):
         axes[1].set_ylabel("part's contribution (logit)")
         axes[1].set_title("(b) Parts that move most", loc="left")
         axes[1].legend(loc="best", fontsize=6.5)
-    fig.tight_layout(w_pad=1.5)
-    figlib.save(fig, fid, pdata=dict(x=x, score=score, truth=truth, parts={p: parts[p] for p in top},
-                                     sweet_spot=sd.SODIUM_SWEET_SPOT))
+    pdata = dict(x=x, score=score, truth=truth, parts={p: parts[p] for p in top}, sweet_spot=sd.SODIUM_SWEET_SPOT)
+    if net:
+        layer, seed = shape_c_network(d)
+        ranges = {p: float(np.ptp(v["contribution"])) for p, v in parts.items()}   # panel (b)'s measure
+        sweep = figlib.jload(SHAPE_C_SWEEP)["sodium"]["parts"]
+        assert all(np.isclose(ranges[p], sweep[p]["range"], rtol=0, atol=1e-12) for p in ranges), "sweep summary"
+        carry, cand = term_parts(layer, "sodium", ranges)
+        assert carry and all(q["id"] in top for q in carry), ([q["id"] for q in carry], top)   # named in (b)
+        pdata["subnetwork"] = dict(rule=dict(term_inputs=TERM_INPUTS["sodium"], share=TERM_SHARE, candidates=cand),
+                                   **draw_focus(ax_net, layer, carry, "c", "The parts that carry the U term"))
+    else:
+        fig.tight_layout(w_pad=1.5)
+    figlib.save(fig, fid, pdata=pdata)
     coef = "" if sd.BETA_U == 1 else f"{sd.BETA_U:g}\\,"
     tk = (f"dashed: the true U term ${coef}((z_n - ({sd.C_Z:g}))^2 - 1)$, lowest at {sd.SODIUM_SWEET_SPOT:g} mmol/L; "
           if truth is not None else "")
-    keys = (f"Black: the model's score as sodium varies, every other input at the typical case, relative to the "
+    keys = (("(a) " if net else "") + f"Black: the model's score as sodium varies, every other input at the typical case, relative to the "
             f"typical sodium; {tk}dotted: {sd.SODIUM_SWEET_SPOT:g} mmol/L."
             + (" This dataset has no U term." if truth is None else "")
-            + (" (b) The explanation parts whose contribution moves most with sodium." if two else ""))
-    figlib.write_float(fid, _shape_title(label, d) + ": response to sodium", keys, GEN)
+            + (" (b) The explanation parts whose contribution moves most with sodium." if two else "")
+            + (" (c) The network's parts that carry the U term: " + NET_KEYS if net else ""))
+    title = (f"{_shape_c_title(seed)}: the U-shaped sodium term" if net
+             else _shape_title(label, d) + ": response to sodium")
+    figlib.write_float(fid, title, keys, GEN)
 
 
 def shape_saddle(label, d, fid):
@@ -327,7 +619,14 @@ def shape_saddle(label, d, fid):
     Zs = [Z - Z.mean() for _, Z in panels]
     v = max(float(np.max(np.abs(Z))) for Z in Zs) or 1.0
     n = len(panels)
-    fig, axes = plt.subplots(1, n, figsize=(W, 2.35 if n == 3 else 2.6), sharey=True)
+    net = label == SHAPE_C
+    top_h = 2.35 if n == 3 else 2.6
+    if net:
+        fig, sf, ax_net = _shape_c_figure(plt, top_h)
+        axes = sf.subplots(1, n, sharey=True)
+    else:
+        fig, axes = plt.subplots(1, n, figsize=(W, top_h), sharey=True)
+        sf = fig
     for ax, (t, _), Z in zip(axes, panels, Zs):
         dh, dp = (h[1] - h[0]) / 2, (p[1] - p[0]) / 2
         im = ax.imshow(Z, origin="lower", aspect="auto", cmap="RdBu_r", vmin=-v, vmax=v, interpolation="nearest",
@@ -335,16 +634,31 @@ def shape_saddle(label, d, fid):
         ax.set_title(t, loc="left", fontsize=8)
         ax.set_xlabel("heart rate (beats/min)")
     axes[0].set_ylabel("systolic BP (mmHg)")
-    cb = fig.colorbar(im, ax=list(axes), fraction=0.03, pad=0.02)
+    cb = sf.colorbar(im, ax=list(axes), fraction=0.03, pad=0.02)
     cb.set_label("logit, mean removed")
-    figlib.save(fig, fid, pdata=dict(heart_rate=h, sbp=p, panels={t: Z for (t, _), Z in zip(panels, Zs)}, vmax=v))
-    keys = ("Colour: the logit with its mean over the grid removed, one scale for all panels (red above the mean, "
+    pdata = dict(heart_rate=h, sbp=p, panels={t: Z for (t, _), Z in zip(panels, Zs)}, vmax=v)
+    if net:
+        layer, seed = shape_c_network(d)
+        sweep = figlib.jload(SHAPE_C_SWEEP)["saddle"]   # every part's range on this grid (shape_plots.py)
+        assert sweep["shown_part"] == s["part"]["id"], (sweep["shown_part"], s["part"]["id"])
+        assert np.isclose(np.ptp(s["part"]["contribution"]), sweep["parts"][s["part"]["id"]]["range"], rtol=0,
+                          atol=1e-12)
+        ranges = {q: float(r["range"]) for q, r in sweep["parts"].items()}   # panel (b)'s measure
+        carry, cand = term_parts(layer, "saddle", ranges)
+        assert s["part"]["id"] in [q["id"] for q in carry], (s["part"]["id"], [q["id"] for q in carry])   # (b)'s part
+        pdata["subnetwork"] = dict(rule=dict(term_inputs=TERM_INPUTS["saddle"], share=TERM_SHARE, candidates=cand),
+                                   **draw_focus(ax_net, layer, carry, "d", "The parts that carry the saddle term"))
+    figlib.save(fig, fid, pdata=pdata)
+    keys = (("(a--c) " if net else "") + "Colour: the logit with its mean over the grid removed, one scale for all panels (red above the mean, "
             "blue below); every other input at the typical case. "
             + (f"(b) The explanation part whose contribution moves most on the grid "
                f"(\\emph{{{_part_label(s['part']['name'])}}}). " if s["part"] is not None else "")
             + (f"This dataset has no saddle term; {tl} shows it for comparison. " if absent else "")
-            + f"True term: $-{sd.BETA_S:g}\\,z_h z_p$ (standardised heart rate and systolic BP).")
-    figlib.write_float(fid, _shape_title(label, d) + ": heart rate $\\times$ systolic BP", keys, GEN)
+            + f"True term: $-{sd.BETA_S:g}\\,z_h z_p$ (standardised heart rate and systolic BP)."
+            + (" (d) The network's parts that carry the saddle term: " + NET_KEYS if net else ""))
+    title = (f"{_shape_c_title(seed)}: the heart-rate $\\times$ systolic-pressure saddle term" if net
+             else _shape_title(label, d) + ": heart rate $\\times$ systolic BP")
+    figlib.write_float(fid, title, keys, GEN)
 
 
 def shape_figures(only):
