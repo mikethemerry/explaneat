@@ -10,10 +10,12 @@
   explanation of the genome) and to have the same top-level parts.
 - churn-case-probes: whole-model predicted churn risk for the typical customer (the layer's reference_patient) and
   constructed variants, from data/churn_case_probes.json: (a) international and voice-mail plans; (b) day minutes
-  (day charge at the data's charge per minute), the heavy-daytime-use hinge marked, training customers per 10 minutes
-  below; (c) customer-service calls 0..9 at three day-use levels, the call count at which the service-call chain
-  opens marked, training customers per call count below; (d) the three service-call parts' contributions to the
-  score over the same sweep.
+  (day charge at the data's charge per minute), the heavy-daytime-use hinge and the start of the daytime-minutes
+  ramp marked; (c) under (b), over the same sweep: the score contributions (log-odds) of the direct day-charge edge
+  and of each part that reads daytime use (ramp, heavy use, day-charge boost, service-call chain; the extractor's
+  day_terms) and their sum, training customers per 10 minutes below; (d) customer-service calls 0..9 at three
+  day-use levels, the call count at which the service-call chain opens marked, training customers per call count
+  below; (e) the three service-call parts' contributions to the score over the same sweep.
 
 Only design choices are literals here (layout, colours, labels, the thin-data shading from THIN_N customers).
 """
@@ -44,6 +46,10 @@ LEVEL_COLOUR = {"light": OI["blue"], "typical": OI["orange"], "heavy": OI["red"]
 THIN_N = 50          # design choice: call counts with fewer training customers than this are shaded as thin data
 SEED = 10            # the case's seed, asserted against the experiment name below
 FIDS = ("churn-case-net-concept", "churn-case-probes")
+DAY_TERMS = ("dayMinutesRamp", "heavyDayUse", "dayChargeBoost", "serviceCallChain")   # panel (c), extractor's DAY_PARTS
+TERM_COLOUR = {"dayMinutesRamp": OI["green"], "heavyDayUse": OI["red"], "dayChargeBoost": OI["purple"],
+               "serviceCallChain": OI["sky"]}
+DIRECT_COLOUR = OI["blue"]
 KEEP_DIRECT = 2      # design choice: the linear base's inputs drawn by name (largest |weight| on a standardised input;
                      # here the two plans), the rest as one summary input
 
@@ -196,12 +202,12 @@ def probes(d, layer):
     lab = {"light": f"light day use ({lv['light']['minutes']:g} min)",
            "typical": f"typical ({typ_min:g} min)", "heavy": f"heavy ({lv['heavy']['minutes']:g} min)"}
 
-    fig = plt.figure(figsize=(W, 7.8))
-    # rows: (a, b), b's histogram, gap, (c), c's counts, gap, (d)
-    gs = fig.add_gridspec(7, 3, height_ratios=[1.0, 0.3, 0.3, 1.05, 0.3, 0.36, 0.85], hspace=0.08, wspace=0.42,
-                          left=0.09, right=0.99, top=0.97, bottom=0.06)
+    fig = plt.figure(figsize=(W, 9.2))
+    # rows: (a, b), gap, (c) with its key at the left, b's and c's histogram, gap, (d), d's counts, gap, (e)
+    gs = fig.add_gridspec(9, 3, height_ratios=[0.95, 0.17, 0.95, 0.28, 0.36, 1.0, 0.28, 0.36, 0.8], hspace=0.1,
+                          wspace=0.42, left=0.09, right=0.99, top=0.975, bottom=0.05)
     # ---- (a) plans
-    ax = fig.add_subplot(gs[0:2, 0])
+    ax = fig.add_subplot(gs[0, 0])
     rows = d["plans"]["rows"]
     names = {(0.0, 0.0): "none", (1.0, 0.0): "inter-\nnational", (0.0, 1.0): "voice\nmail", (1.0, 1.0): "both"}
     order = [(0.0, 0.0), (1.0, 0.0), (0.0, 1.0), (1.0, 1.0)]
@@ -238,17 +244,41 @@ def probes(d, layer):
     ax.set_xlim(x[0], x[-1])
     ax.tick_params(labelbottom=False)
     ax.set_title("(b) Daytime use (day charge set from the minutes)", loc="left")
-    axh = fig.add_subplot(gs[1, 1:], sharex=ax)
+    axb = ax
+
+    # ---- (c) the day-use terms of the score along the same sweep
+    TD = D["terms"]
+    assert set(TD["parts"]) == set(DAY_TERMS), (sorted(TD["parts"]), DAY_TERMS)
+    ax = fig.add_subplot(gs[2, 1:], sharex=axb)
+    lines = [(f"direct edge: {k.replace('total ', '')}", v, DIRECT_COLOUR, "-") for k, v in sorted(TD["direct"].items())]
+    lines += [(T[p], TD["parts"][p], TERM_COLOUR[p], "-") for p in DAY_TERMS]
+    for lab_, v, c, ls in lines:
+        ax.plot(x, v, color=c, lw=1.1, ls=ls, label=lab_)
+    ax.plot(x, TD["sum"], color="black", lw=1.4, label="sum of these terms")
+    ax.axhline(0, color="0.6", lw=0.5, zorder=1)
+    ax.set_ylabel("contribution to\nthe score (log-odds)", fontsize=7)
+    ax.tick_params(labelbottom=False)
+    ax.set_title("(c) The day-use terms of the score (same customers as (b))", loc="left")
+    axl = fig.add_subplot(gs[2, 0])
+    axl.axis("off")
+    axl.legend(*ax.get_legend_handles_labels(), loc="center left", fontsize=6.8, handlelength=1.8,
+               borderaxespad=0)
+    axh = fig.add_subplot(gs[3, 1:], sharex=axb)
     e = np.array(D["hist_edges"])
     axh.bar(e[:-1], D["hist_counts"], width=np.diff(e), align="edge", color=OI["grey"], lw=0)
-    axh.axvline(D["hinge"], color=OI["red"], lw=0.8, ls="--")
+    for a_ in (axb, ax, axh):
+        a_.axvline(TD["ramp_knee"], color=TERM_COLOUR["dayMinutesRamp"], lw=0.8, ls=":")
+        a_.axvline(D["hinge"], color=OI["red"], lw=0.8, ls="--")
+    yl = ax.get_ylim()
+    ax.text(TD["ramp_knee"] - 4, yl[1] - 0.04 * (yl[1] - yl[0]), f"ramp {TD['ramp_knee']:.0f} min", ha="right",
+            va="top", fontsize=6.8, color=TERM_COLOUR["dayMinutesRamp"])
     axh.set_xlabel("total day minutes")
     axh.set_ylabel("customers", fontsize=6.8)
     axh.tick_params(labelsize=6.5)
     axh.grid(False)
 
-    # ---- (c) service calls
-    ax = fig.add_subplot(gs[3, :])
+    # ---- (d) service calls
+    ax = fig.add_subplot(gs[5, :])
     thin = calls[counts < THIN_N]
     for axx in (ax,):
         if len(thin):
@@ -268,8 +298,9 @@ def probes(d, layer):
     ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{100 * v:.0f}%"))
     ax.set_ylabel("predicted churn risk")
     ax.legend(loc="center left", fontsize=6.8, handlelength=1.6)
-    ax.set_title("(c) Customer-service calls at three levels of daytime use", loc="left")
-    axc = fig.add_subplot(gs[4, :], sharex=ax)
+    ax.set_title("(d) Customer-service calls at three levels of daytime use", loc="left")
+    ax_d = ax
+    axc = fig.add_subplot(gs[6, :], sharex=ax)
     axc.bar(calls, counts, width=0.6, color=OI["grey"], lw=0)
     for c, n in zip(calls, counts):
         axc.text(c, n, f"{n}", ha="center", va="bottom", fontsize=6.2)
@@ -281,11 +312,11 @@ def probes(d, layer):
     axc.tick_params(labelsize=6.5)
     axc.grid(False)
 
-    # ---- (d) the three service-call parts
+    # ---- (e) the three service-call parts
     lims = [np.inf, -np.inf]
     axes = []
     for j, part in enumerate(C["parts"]):
-        a = fig.add_subplot(gs[6, j])
+        a = fig.add_subplot(gs[8, j])
         axes.append(a)
         if len(thin):
             a.axvspan(thin.min() - 0.5, calls.max() + 0.5, color="0.93", lw=0, zorder=0)
@@ -293,7 +324,7 @@ def probes(d, layer):
             v = np.array(lv[name]["parts"][part])
             a.plot(calls, v, color=LEVEL_COLOUR[name], lw=1.2, marker="o", ms=2.4)
             lims = [min(lims[0], v.min()), max(lims[1], v.max())]
-        a.set_title(("(d) " if j == 0 else "") + T[part], loc="left", fontsize=8)
+        a.set_title(("(e) " if j == 0 else "") + T[part], loc="left", fontsize=8)
         a.set_xticks(calls[::3])
         a.set_xlim(calls[0] - 0.5, calls[-1] + 0.5)
         a.set_xlabel("service calls", fontsize=7)
@@ -303,18 +334,22 @@ def probes(d, layer):
         if j:
             a.tick_params(labelleft=False)
     axes[0].set_ylabel("contribution to\nthe score (log-odds)", fontsize=7)
-    fig.align_ylabels([fig.axes[0], fig.axes[3], axes[0]])
+    fig.align_ylabels([fig.axes[0], axb, ax_d, axes[0]])
     figlib.save(fig, fid, pdata=dict(plans=rows, day=D, calls=C, thin_n=THIN_N))
     figlib.write_float(
         fid, f"Churn case network (seed {SEED}): predicted churn risk of the typical customer as inputs change",
         "(a) The plans (hatched: both). (b) Black: risk against daytime use, the day charge set from the minutes; "
         "dots: " + ", ".join(f"{m['minutes']:g}" for m in d["day"]["marks"]) + " minutes; dashed red: where the "
         "part \\emph{"
-        + T["heavyDayUse"] + "} switches on; grey bars: training customers per 10 minutes. (c) Risk against "
+        + T["heavyDayUse"] + "} switches on; dotted green: where the part \\emph{" + T["dayMinutesRamp"]
+        + "} starts to fall; grey bars (below (c)): training customers per 10 minutes. (c) Contributions to the score "
+        "(log-odds) of the direct edge from the day charge and of the parts that read daytime use, for the customers "
+        "of (b) (colours in the key at the left); black: their sum. (d) Risk against "
         "customer-service calls at three levels of daytime use (colours); arrow: the call count at which the part "
         "\\emph{" + T["serviceCallChain"] + "} switches on; grey bars: training customers per call count; shaded: "
-        f"fewer than {THIN_N} training customers. (d) The three service-call parts' contributions to the score "
-        "(log-odds) over the same calls, colours as in (c); a line not visible lies under another.", GEN, height=r"0.85\textheight")
+        f"fewer than {THIN_N} training customers. (e) The three service-call parts' contributions to the score "
+        "(log-odds) over the same calls, colours as in (d); a line not visible lies under another.", GEN,
+        height=r"0.85\textheight")
     print("figure", figlib.group(fid), fid, flush=True)
 
 

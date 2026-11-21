@@ -14,10 +14,14 @@ The text (written and verified by Mike, 22 Nov 2026; not edited here):
     ... 4 or more calls for most customers, 3 or more for light daytime users ... for heavy daytime users (300 day
     minutes or more) this effect is turned off.
 
+Added 22 Nov 2026 (S9, Mike's sentence on the day-minutes ramp, for the figure panel churn-case-probes (c)):
+
+    with day charge held fixed, the ramp alone takes the typical customer's risk from 5% at 130 minutes to 1% at 210
+
 Every value is a forward pass of the explained model (probes.ChurnModel: StructureNetwork on the model state,
 sigmoid output, asserted equal to the explanation library's evaluator) on constructed customers in real units: the
 plain-language layer's typical customer (``reference_patient``) with the named inputs changed. The text's own
-numbers (2%, 26%, 1%, 220, 2-3%, 73%, 300, 4, 3) appear below only as the claims being checked, with the rounding
+numbers (2%, 26%, 1%, 220, 2-3%, 73%, 300, 4, 3; S9: 5%, 130, 1%, 210) appear below only as the claims being checked, with the rounding
 the text uses (whole percent; minutes to the nearest 10).
 
 Definitions (design choices):
@@ -52,6 +56,7 @@ CALL_GRID = np.arange(0, 10)          # the training range of service calls (0..
 LIGHT, HEAVY = 100.0, 300.0           # light / heavy daytime use (minutes), design choices (see docstring)
 CUT = 220.0                           # the text's hinge (claim)
 MIN_STEP = 0.01                       # minutes grid for the hinge locations (design choice)
+RAMP_FROM, RAMP_TO = 130.0, 210.0     # the ramp sentence's minutes (claim, S9)
 
 
 def pct(x):
@@ -294,6 +299,28 @@ def main():
         if off_from is not None and off_from <= HEAVY and never_heavy == heavy_rows.sum() else "MISMATCH",
         heavy=Hh, off_from_minutes=off_from, heavy_training_rows=int(heavy_rows.sum()),
         heavy_training_rows_never_on=int(never_heavy))
+
+    # ---- S9 the day-minutes ramp on its own (day charge held at the typical customer's)
+    a, b = RAMP_FROM, RAMP_TO
+    Xr = np.array([M.customer(**{DAY_MIN: v}) for v in (a, b)])
+    ra, rb = (float(v) for v in M.risk(Xr))
+    P = M.parts(Xr)
+    moved = {p: float(v[1] - v[0]) for p, v in P.items() if abs(v[1] - v[0]) > 1e-12}
+    ramp_d = float(P["dayMinutesRamp"][1] - P["dayMinutesRamp"][0])
+    ramp = M.annotation("dayMinutesRamp")
+    inner = [n for n in ramp["subgraph_nodes"] if n not in ramp["entry_nodes"] and n not in ramp["exit_nodes"]]
+    knee, _ = first_positive(M, inner[0], "day_minutes", 0.0, float(raw[:, M.col[DAY_MIN]].max()))
+    alone = set(moved) == {"dayMinutesRamp"}
+    row("S9", f"With day charge held fixed, the ramp alone takes the typical customer's risk from 5% at {a:g} minutes "
+        f"to 1% at {b:g}",
+        f"day charge {M.ref[M.col[DAY_CHG]]:.2f} dollars (typical): {100 * ra:.2f}% at {a:g} min -> {100 * rb:.2f}% at "
+        f"{b:g} min; dayMinutesRamp {P['dayMinutesRamp'][0]:.3f} -> {P['dayMinutesRamp'][1]:.3f} log-odds "
+        f"({ramp_d:+.3f}); parts that change: {', '.join(sorted(moved))}; the ramp starts at {knee:.2f} min "
+        "(its first unit's first active value, day charge from the minutes)",
+        "matches" if alone and (pct(ra), pct(rb)) == (5, 1) else "MISMATCH",
+        day_charge=float(M.ref[M.col[DAY_CHG]]), risk_from=ra, risk_to=rb, logit_from=float(M.logit(Xr)[0]),
+        logit_to=float(M.logit(Xr)[1]), ramp_from=float(P["dayMinutesRamp"][0]), ramp_to=float(P["dayMinutesRamp"][1]),
+        ramp_change=ramp_d, parts_changed=moved, ramp_knee_minutes=knee, ramp_knee_node=inner[0])
 
     out = dict(source=dict(script="experiments/churn_case/text_check.py", engine="StructureNetwork on the model "
                            "state (probes.ChurnModel), sigmoid output", **M.meta,

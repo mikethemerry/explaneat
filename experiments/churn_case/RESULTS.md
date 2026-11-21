@@ -293,7 +293,8 @@ uv run python thesis/scripts/thesis_experiment_tables.py       # thesis/ch7/expo
 explained model: forward passes of `probes.ChurnModel` (the stored explanation's model state, StructureNetwork,
 sigmoid output, asserted equal to the explanation library's evaluator) on constructed customers in real units, the
 typical customer being the plain-language layer's `reference_patient`. Definitions (the "other linear factors",
-light / heavy daytime use, when the service-call gate counts as on) are in its docstring. Output:
+light / heavy daytime use, when the service-call gate counts as on) are in its docstring. S9 (added 22 Nov 2026)
+checks the sentence on the day-minutes ramp (day charge held at the typical value, 130 to 210 minutes). Output:
 `text_check.json` (one row per statement: computed value and verdict, with the details). `probes.py` is also the
 engine of the thesis figures `churn-case-probes` and `churn-case-net-concept`
 (`thesis/ch7/exp1/extract_churn_case.py`). Read-only DB (explaneat_v4 by default); run twice: byte-identical.
