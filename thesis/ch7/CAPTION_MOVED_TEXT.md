@@ -1007,6 +1007,8 @@ Every figure of the candidate gallery became a thesis figure (vector PDF + gener
 
 **Not a key (for the body text)**: The count family's score is a ridge in x1 + x2 and the difference family's a valley in x1 - x2. Count family: XOR = OR and not AND (the skips compute OR and the hidden unit flips AND). Difference family: the skips compute x1 and not x2 and the hidden unit flips x2 and not x1. The representatives are `verify_xor.REPS` (the sheet's default 1-row cells), checked against `verify_xor_results.json`.
 
+**Changed 22 Nov 2026 (branch thesis/monk2-rules).** The figure now draws the two evolved networks of `xor-ridge-valley` (count family seed 2, difference family seed 12, picked by `thesis/ch7/exp1/networks.py` `xor_runs`) instead of `verify_xor.REPS`; the drawn weights are asserted equal to `verify_xor.evolved_minimal()`. New caption title: "XOR: the gates of the networks of Figure~\ref{fig:ch7-xor-ridge-valley}, the count family (a--c; seed 2) and the difference family (d--f; seed 12)"; the keys are unchanged. **Not a key (for the body text)**: in the evolved difference network the gates are mirrored against the representative: the skips compute x2 and not x1 and the hidden unit flips x1 and not x2, so XOR = (x2 and not x1) or (x1 and not x2). The count network is as before: skips OR, hidden unit flips AND. The difference network's hidden unit is active at 00 with a pre-activation just above 0 (its fold passes through 00), so 00 is filled in panel (e).
+
 ---
 
 # Datasets table (20 Nov 2026, branch thesis/datasets-table)
@@ -1189,3 +1191,27 @@ and reading keys only; the method below is for the body text.
 **Not in the captions: results**
 
 - (none; the reading of the table is in `experiments/propneat_sensitivity/RESULTS.md`)
+
+## ch7-ex1-monk2-rules (tab:exp1-monk2-rules), figures ebm-monk2-count, ebm-monk2-pairs (22 Nov 2026)
+
+New (branch thesis/monk2-rules; study `experiments/monk2_rule_comparison/`). Captions: title and keys only. For the
+body text (methodology; the numbers are in `results/monk2_rules.json`, read them from there):
+
+- All models on MONK-2's fixed split, the arrays of the comparator suite (hash asserted), fitted on the training
+  rows, the test rows read once; random_state 42.
+- EBM one-hot: the settings the comparator suite's 5-fold CV chose for MONK-2 (read from
+  `experiments/benchmarks/results/classification/monk2.json`; it reproduces the suite's test AUC exactly). EBM raw:
+  the six attributes as nominal features with all 15 pairwise interactions. Trees: unlimited depth (scikit-learn
+  defaults; raw attributes as ordered integers). Count models: the count of attributes at their first value as the
+  only input; the tree at unlimited depth, the EBM without interactions.
+- Explanation size: EBM, terms (main and pairs) and the fewest terms holding 80% / 95% of InterpretML's total term
+  importance (mean absolute term score on the training rows); tree, depth and leaves; PropNEAT, the parts
+  (annotations) of its stored explanation.
+- "Rule stated?": PropNEAT, yes when the explanation's root composes two active parts, one linear and one gated,
+  each reading all six attributes (the count ramp and the at-least-three gate, read from the explanation's
+  plain-language layer); count models, the leaves / the intercept plus the count term give class 1 exactly at count
+  2; EBMs without the count, the model's log-odds on the training rows, grouped by the count, peak at 2 and the
+  smallest at count 2 is above the largest at any other count ("only given the count": the rule is in the sum of
+  the terms but no term states it); trees without the count, "no" (no split reads the count).
+- `ebm-monk2-count` shows the EBM raw check (one point per training row); `ebm-monk2-pairs` shows its 15 pair terms
+  (value 1 at the lower left of every panel).

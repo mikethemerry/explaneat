@@ -43,6 +43,8 @@ if [[ "${1:-}" == "--with-db" ]]; then
   uv run --extra survival python experiments/benchmarks/survival.py             # ~80 s, no DB -> results/survival.json
   uv run python experiments/benchmarks/make_csv.py                               # -> benchmarks.csv
   uv run python experiments/ushape_saddle/references.py                          # -> references.json
+  # MONK-2 rule comparison: the suite's MONK-2 split (read-only explaneat_v4)
+  PGOPTIONS='-c default_transaction_read_only=on' uv run python experiments/monk2_rule_comparison/extract_data.py   # -> data/monk2_split.json
   # Datasets tables: splits, raw records, Cox split files and run records (read-only explaneat_v4 + explaneat_dev);
   # MNIST from the ExConNEAT run records and split code (needs ~/.explaneat/data/mnist_784.npz, else one OpenML fetch)
   uv run --extra survival python experiments/thesis_datasets/extract.py         # ~10 s -> data.json
@@ -74,6 +76,7 @@ fi
 
 # ------------------------------------------------------------------ layer 3 (generators; read files only)
 uv run python thesis/ch7/exp1/make_tables.py            # exp1-networks.tex, exp1-benchmarks.tex
+uv run python thesis/ch7/exp1/monk2_rule_table.py      # exp1-monk2-rules.tex (reads experiments/monk2_rule_comparison/results)
 uv run python thesis/ch7/appendix/heart_splits_table.py # ch7-heart-splits.tex
 uv run python thesis/ch7/exp2/make_assets.py            # exp2-benchmarks, exp2-runs-*, exp2-signals-*, exp2-signalticks-*,
                                                         # appendix_networks.tex + figures/exp2/networks/*.pdf, other exp2 assets
@@ -109,5 +112,7 @@ bash thesis/scripts/build_overleaf_upload.sh            # thesis/ch7/overleaf_up
 # Comparator suite (~2.5 h; needs `interpret`, not in the uv env):
 #   OMP_NUM_THREADS=2 <venv with interpret>/python experiments/benchmarks/classification.py   (skips models already in results/classification/)
 #   OMP_NUM_THREADS=2 <venv with interpret>/python experiments/benchmarks/heart_splits.py     (~1 min) -> heart_splits.json
+#   OMP_NUM_THREADS=2 <venv with interpret>/python experiments/monk2_rule_comparison/fit_models.py   (~45 s) -> results/monk2_rules.*
+#     (rerun after classification.py changes MONK-2's EBM: it reads that file's CV-chosen settings)
 # Heart-40 cache for the Heart audit's recurrence column: experiments/heart100_audit/heart40_signals.py (explaneat_dev)
 echo "done: compare with git status / git diff"

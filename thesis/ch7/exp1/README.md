@@ -33,10 +33,12 @@ Each writes the same bytes on a rerun (checked twice for network_figs.json, capg
 
 ```bash
 uv run python thesis/ch7/exp1/make_tables.py        # tables/exp1-networks.tex, exp1-benchmarks.tex
+uv run python thesis/ch7/exp1/monk2_rule_table.py  # tables/exp1-monk2-rules.tex (experiments/monk2_rule_comparison;
+                                                    # preview: latexmk -pdf preview_monk2.tex, with its two figures)
 uv run python thesis/ch7/exp1/make_figures.py       # Experiment 1 figures via thesis/ch7/figlib.py
                                                     # (main text: adult-capgain-response,
                                                     # xor-ridge-valley, synthetic-shape-c-*; appendix group:
-                                                    # xor-gates, synthetic-shape-{a,b}-*)
+                                                    # xor-gates, synthetic-shape-{a,b}-*; options: ebm-monk2-*)
 uv run python thesis/ch7/exp1/networks.py           # appendix_networks.tex + figures/exp1/networks/*.{pdf,tex}
                                                     # (--refresh recompiles every PDF)
 uv run python thesis/scripts/ch7_figures_index.py   # thesis/ch7/FIGURES.md + figures/preview.tex
