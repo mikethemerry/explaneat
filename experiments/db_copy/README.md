@@ -52,8 +52,10 @@ tables.
 
 To verify the copy, row hashes (md5 of each whole row, in UTC) for the experiments, populations,
 genomes, species and evidence_log were compared between dev and v4, and all are identical. All 13
-explanation rows, operations JSON included, are byte-identical. Every genome's annotations
-endpoint on :8000 (v4) returns the same count as on :8001 (dev).
+explanation rows, operations JSON included, are byte-identical. For each of the 13 genomes,
+`GET /api/genomes/<id>/annotations` and `/model` return byte-identical responses from v4 and from
+dev (:8001, read only). The v4 side was checked on a fresh read-only server (:8002), because the
+long-running :8000 server stopped responding during the check (after answering the first three).
 
 **Backup and rollback.** A full dump of v4 was taken before the copy:
 `~/.explaneat/backups/explaneat_v4_before_exp1_copy_2026-11-21.dump` (1.8 GB, `pg_dump -Fc` 16;
