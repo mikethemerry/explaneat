@@ -112,6 +112,18 @@ export function VizCanvas({ vizType, data, onSvgRef, correctness, classNames, wi
   return <div className="viz-canvas" ref={containerRef} />;
 }
 
+/** The reference case's own point (components/referenceCase.ts), ringed and labelled "case". */
+function caseMarks(data: Record<string, unknown>, twoD: boolean) {
+  const p = data.case_point as { x?: number; y?: number; out: number } | null | undefined;
+  if (!p || p.x == null) return [];
+  const pt = [{ x: p.x, y: twoD ? p.y : p.out }];
+  return [
+    Plot.dot(pt, { x: "x", y: "y", r: 6, fill: "none", stroke: "#111827", strokeWidth: 2.5 }),
+    Plot.dot(pt, { x: "x", y: "y", r: 6, fill: "none", stroke: "white", strokeWidth: 1 }),
+    Plot.text(pt, { x: "x", y: "y", text: () => "case", dy: -12, fontWeight: "bold", fill: "#111827", stroke: "white", strokeWidth: 3, paintOrder: "stroke" }),
+  ];
+}
+
 function renderLinePlot(data: Record<string, unknown>, correctness?: boolean[]): SVGSVGElement | HTMLElement {
   const gridX = data.grid_x as number[];
   const gridY = data.grid_y as number[];
@@ -151,6 +163,7 @@ function renderLinePlot(data: Record<string, unknown>, correctness?: boolean[]):
             }),
           ]
         : []),
+      ...caseMarks(data, false),
     ],
   });
 }
@@ -217,6 +230,7 @@ function renderHeatmap(data: Record<string, unknown>, correctness?: boolean[]): 
             }),
           ]
         : []),
+      ...caseMarks(data, true),
     ],
   });
 }
@@ -482,6 +496,7 @@ function renderFeatureOutputScatter(data: Record<string, unknown>, correctness?:
         stroke: "#2563eb",
         strokeWidth: 2,
       }),
+      ...caseMarks(data, false),
     ],
   });
 }

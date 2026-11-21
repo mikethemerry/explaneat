@@ -68,6 +68,17 @@ def _background(entry_acts: np.ndarray, fixed: Optional[np.ndarray]) -> Tuple[np
     return fixed, "reference"
 
 
+def _case_point(fn: Callable, held: np.ndarray, output_dim: int, dims: Sequence[int]) -> Dict[str, float]:
+    """Where the reference case itself sits on a plot: its value on each plotted input and the
+    output there (``x``, ``y`` for a 2-D plot's axes; ``out`` the output)."""
+    out = np.asarray(fn(held[None, :]), dtype=float)
+    out = out.ravel()[0] if out.ndim == 1 else out[0, output_dim]
+    point = {"out": float(out)}
+    for key, d in zip(("x", "y"), dims):
+        point[key] = float(held[d])
+    return point
+
+
 def compute_line_plot(
     fn: Callable,
     entry_acts: np.ndarray,
@@ -123,6 +134,7 @@ def compute_line_plot(
         "y_label": y_label,
         "held": medians.tolist(),
         "held_rule": held_rule,
+        "case_point": _case_point(fn, medians, output_dim, [input_dim]) if held_rule == "reference" else None,
     }
 
 
@@ -192,6 +204,7 @@ def compute_heatmap(
         "z_label": z_label,
         "held": medians.tolist(),
         "held_rule": held_rule,
+        "case_point": _case_point(fn, medians, output_dim, [dim_x, dim_y]) if held_rule == "reference" else None,
     }
 
 
@@ -246,6 +259,7 @@ def compute_partial_dependence(
             "y_label": y_label,
             "held": fix.tolist(),
             "held_rule": held_rule,
+            "case_point": _case_point(fn, fix, output_dim, [dim]) if held_rule == "reference" else None,
         }
     elif len(vary_dims) == 2:
         return compute_heatmap(
@@ -541,6 +555,7 @@ def compute_feature_output_scatter(
         "y_label": y_label,
         "held": medians.tolist(),
         "held_rule": held_rule,
+        "case_point": _case_point(fn, medians, output_dim, [input_dim]) if held_rule == "reference" else None,
     }
 
 

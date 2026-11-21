@@ -21,6 +21,8 @@ export type PairsInput = {
   grid: number[];
   weights: number[];
   median: number;
+  /** the value the other panels hold this input at (the median, or the reference case) */
+  held?: number;
   min: number;
   max: number;
   hist: Hist;
@@ -59,6 +61,8 @@ export type PairsData = {
   units?: string;
   center_rule?: string;
   seconds?: number;
+  /** "median" (each input at its median), "reference" (a reference case) or "average" */
+  held_rule?: string;
 };
 
 const SVGNS = "http://www.w3.org/2000/svg";
@@ -263,6 +267,15 @@ export function renderPairsPlot(
         el("rect", { x: cell - tw - 2, y: 2, width: tw, height: smallFont + 5, rx: 2, fill: "white", "fill-opacity": 0.85 }, g);
         const t = el("text", { x: cell - 5, y: smallFont + 4, "text-anchor": "end", "font-weight": strong ? 700 : 400, fill: "#111827" }, g);
         t.textContent = label;
+        if (data.held_rule === "reference") {
+          // the reference case's own point on this surface
+          const hx = inputs[c].held, hy = inputs[r].held;
+          if (hx != null && hy != null) {
+            const px = ax.pos(hx), py = cell - ay.pos(hy);
+            el("circle", { cx: px, cy: py, r: 3.5, fill: "none", stroke: "#111827", "stroke-width": 2 }, g);
+            el("circle", { cx: px, cy: py, r: 3.5, fill: "none", stroke: "white", "stroke-width": 0.8 }, g);
+          }
+        }
         titled(g,
           `${labelFor(inputs[r].name)} × ${labelFor(inputs[c].name)}\n` +
           (p.same_input ? "The two columns are identical in the data (split copies of one input): only the diagonal combinations occur.\n" : "") +
@@ -321,7 +334,9 @@ export function renderPairsPlot(
   y += 8;
   const fixText = data.fix === "average"
     ? `Curves and heatmaps: other inputs averaged over ${data.n_background} seeded rows (partial dependence).`
-    : "Curves and heatmaps: other inputs fixed at their median (as the other plots).";
+    : data.held_rule === "reference"
+      ? "Curves and heatmaps: other inputs held at the reference case (ringed on each heatmap)."
+      : "Curves and heatmaps: other inputs fixed at their median (as the other plots).";
   line(fixText, { color: "#64748b" });
   line(`Scatter: ${data.n_scatter.toLocaleString()} of ${data.n_rows.toLocaleString()} rows${data.n_scatter < data.n_rows ? " (seeded sample)" : ""}; continuous inputs on a ${data.grid_size}-point grid, binary / discrete inputs at their values only.`, { color: "#64748b" });
   line("Faded cells: a combination of values no row has. H weighs each cell by its share of the rows.", { color: "#64748b" });
@@ -375,6 +390,6 @@ function drawDiagonal(
   const t = el("text", { x: 4, y: font + 2, "font-weight": 600, fill: "#0f172a" }, g);
   t.textContent = truncate(name, cell - 8, font);
   titled(g,
-    `${name}\n${inp.kind} input; ${data.exit_label} vs ${inp.name} with the other inputs ${data.fix === "average" ? "averaged over the data" : "at their median"}` +
+    `${name}\n${inp.kind} input; ${data.exit_label} vs ${inp.name} with the other inputs ${data.fix === "average" ? "averaged over the data" : data.held_rule === "reference" ? "at the reference case" : "at their median"}` +
     `\nrange ${fmt(inp.min)} … ${fmt(inp.max)}, median ${fmt(inp.median)}; grey: the data's distribution`);
 }

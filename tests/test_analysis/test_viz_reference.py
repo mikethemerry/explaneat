@@ -67,3 +67,13 @@ def test_fixed_wrong_length(data):
     X, Y = data
     with pytest.raises(ValueError):
         vd.compute_line_plot(_fn, X, Y, fixed=np.zeros(3))
+
+
+def test_case_point(data):
+    X, Y = data
+    fixed = np.array([0.5, 1.0, 2.0, 0.0])
+    line = vd.compute_line_plot(_fn, X, Y, input_dim=0, fixed=fixed)
+    assert line["case_point"] == pytest.approx({"x": 0.5, "out": 1.0 + 2.0})
+    hm = vd.compute_heatmap(_fn, X, Y, input_dims=(1, 2), fixed=fixed, grid_size=5)
+    assert hm["case_point"] == pytest.approx({"x": 1.0, "y": 2.0, "out": 3.0})
+    assert vd.compute_line_plot(_fn, X, Y)["case_point"] is None

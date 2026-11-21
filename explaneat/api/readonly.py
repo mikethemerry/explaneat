@@ -30,7 +30,7 @@ SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 COMPUTE_ROUTES = [
     re.compile(p)
     for p in (
-        r"^/api/genomes/[^/]+/evidence/(viz-data|performance|shap|input-distribution)$",
+        r"^/api/genomes/[^/]+/evidence/(viz-data|performance|shap|input-distribution|reference-case|case-rows)$",
         r"^/api/genomes/[^/]+/analyze/(split-detection|classify-nodes|auto-classify)$",
         r"^/api/genomes/[^/]+/operations/validate$",
         r"^/api/genomes/[^/]+/tools/linearise$",
