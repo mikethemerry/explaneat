@@ -7,8 +7,8 @@ Files go where thesis/ch7/figlib.py puts them (thesis/ch7/figures/..., the Overl
 ``used`` or ``options``). Reads committed files only:
 
 - XOR: the study's own drawing code, experiments/xor/make_xor_figures.py, redrawn in the thesis style (unicode
-  logic symbols as mathtext). xor-gates: the representatives verify_xor.REPS, checked against
-  verify_xor_results.json by its check_reps. xor-ridge-valley (a full page, three rows): the score surfaces
+  logic symbols as mathtext). xor-gates: the gate decomposition (make_xor_figures.fig_gates) of the same two
+  evolved networks as xor-ridge-valley, their gates asserted (XOR_GATES). xor-ridge-valley (a full page, three rows): the score surfaces
   (draw_ridge_valley_column) and drawings of the two evolved networks the Experiment 1 appendix draws
   (thesis/ch7/exp1/networks.py xor_runs, from experiments/xor/xor_results.json); the surfaces are computed
   from exactly the drawn weights and biases (asserted: the same vector as verify_xor.evolved_minimal, and the
@@ -17,6 +17,8 @@ Files go where thesis/ch7/figlib.py puts them (thesis/ch7/figures/..., the Overl
   Ground-truth constants (BETA_U, BETA_S, SODIUM_SWEET_SPOT) from experiments/ushape_saddle/data.py.
 - WHAS500 references (cox-whas500-*): experiments/survival/cox_case/reference_explanation.json
   (reference_explanation.py), the same encodings as that script's figures.
+- MONK-2 rule comparison (ebm-monk2-count, ebm-monk2-pairs; options): experiments/monk2_rule_comparison/results/
+  monk2_rules.json (fit_models.py): the EBM on the raw attributes, its log-odds per training row and its pair terms.
 - Earlier ten-seed export (10seed-*, options only): the study's own drawing code,
   experiments/10seed/make_figures.py (its committed CSVs), redrawn in the thesis style; axis labels that
   named the explaining agent by product name now say "agent". Legacy: its LR / GB reference lines are
@@ -95,6 +97,10 @@ XOR_EDGE_POS, XOR_EDGE_NEG = "#000080", "#B5251C"   # the appendix networks' edg
                                                     # wpos / wneg, as its standalone pictures print them)
 XOR_FIG_H = 6.8          # design choice: figure height (in), three rows on one page
 XOR_FLOAT_H = r"0.77\textheight"   # design choice: the full-page float leaves room for its caption
+# What the explanation says each evolved family computes (asserted on the drawn networks in xor-gates): the
+# skip connections alone, and the inputs whose sign the hidden unit flips (verify_xor.describe_solution's names).
+# The difference family is mirrored against the representatives verify_xor.REPS (make_xor_figures.REP_GATES).
+XOR_GATES = {"count": ("OR", "AND"), "difference": ("x2 AND NOT x1", "x1 AND NOT x2")}
 
 
 def xor_networks():
@@ -218,14 +224,26 @@ def xor_figures(only):
             GEN, placement="p", height=XOR_FLOAT_H)
     if not only or "xor-gates" in only:
         style()
+        nets, vx = xor_networks()   # the evolved networks of xor-ridge-valley (weights asserted = evolved_minimal)
+        rows, pdata = [], {}
+        for fam, run, q, edges, biases in nets:
+            info = vx.describe_solution(q)
+            assert info["family"] == fam and info["solves"], (fam, info)
+            gates = XOR_GATES[fam]
+            assert (info["skips_alone"], info["hinge_flips"]) == gates, (fam, run["seed"], info)
+            g = [mx.GATE[x] for x in gates]
+            comp = f"{g[0]} ∧ ¬{g[1]}" if q[6] < 0 else f"({g[0]}) ∨ ({g[1]})"   # u < 0 removes, u > 0 adds
+            rows.append((f"{fam} family, seed {run['seed']}", q, comp, gates))
+            pdata[fam] = dict(seed=run["seed"], q=q, skips_alone=gates[0], hinge_flips=gates[1])
         cap = _Capture()
         mx.save = cap
-        mx.fig_gates()
+        mx.fig_gates(rows)
         fig = cap.figs["xor_gates"]
         _fix_text(fig, [("u·h (u < 0)", "$u \\cdot h$ ($u < 0$)"), ("u·h (u > 0)", "$u \\cdot h$ ($u > 0$)")])
-        figlib.save(fig, "xor-gates", pdata=dict(reps={k: list(map(float, v)) for k, v in mx.vx.REPS.items()}))
-        figlib.write_float("xor-gates", "XOR: the gates of each family, count family (a--c) and difference "
-                           "family (d--f)",
+        figlib.save(fig, "xor-gates", pdata=pdata)
+        (f1, r1, *_), (f2, r2, *_) = nets
+        figlib.write_float("xor-gates", f"XOR: the gates of the networks of Figure~\\ref{{fig:ch7-xor-ridge-valley}}, "
+                           f"the {f1} family (a--c; seed {r1['seed']}) and the {f2} family (d--f; seed {r2['seed']})",
                            "Left: the skip connections alone; middle: the hidden unit's contribution $u\\cdot h$ "
                            f"({act}: active, darker for larger $|u h|$; dashed: its fold; ringed points: the inputs "
                            "whose sign it flips); right: the composed score. " + keys_common + " Filled points: inputs where the "
@@ -496,6 +514,97 @@ def capgain_figure(only):
                        "response.", GEN)
 
 
+# =============================================================================== MONK-2: the EBM on the raw attributes
+
+MONK2 = REPO / "experiments" / "monk2_rule_comparison" / "results" / "monk2_rules.json"
+MONK2_JITTER = 0.28   # design choice: horizontal jitter (counts are integers), drawn with RandomState(0)
+
+
+def monk2_count(d):
+    """ebm-monk2-count: the EBM's log-odds (the sum of its terms) on each training row against the row's count of
+    attributes at their first value; colour: the row's outcome."""
+    plt = style(grid=True)
+    m = d["models"]["ebm_raw"]
+    tr = m["train_rows"]
+    c, z, y = np.array(tr["count"]), np.array(tr["logit"]), np.array(tr["y"])
+    jit = np.random.RandomState(0).uniform(-MONK2_JITTER, MONK2_JITTER, len(c))
+    fig, ax = plt.subplots(figsize=(W * 0.62, 2.7))
+    ax.axhline(0, color="0.3", lw=0.8, ls="--", zorder=1)
+    for lab, col, name in ((0, OI["orange"], "outcome 0"), (1, OI["blue"], "outcome 1")):
+        k = y == lab
+        ax.scatter(c[k] + jit[k], z[k], s=7, color=col, alpha=0.75, lw=0, label=name, zorder=3)
+    ax.set_xticks(sorted(set(c.tolist())))
+    ax.set_xlabel("attributes at their first value (count)")
+    ax.set_ylabel("EBM log-odds (sum of its terms)")
+    ax.legend(loc="lower left", frameon=False, handletextpad=0.2)
+    fig.tight_layout()
+    figlib.save(fig, "ebm-monk2-count", pdata=dict(count=c, logit=z, y=y, jitter=jit,
+                                                   by_count=m["logit_by_count"]))
+    n_terms = m["size"]
+    figlib.write_float("ebm-monk2-count",
+                       f"MONK-2: the explainable boosting machine on the six raw attributes ({n_terms['n_main']} main "
+                       f"terms, {n_terms['n_pairs']} pairwise terms), its log-odds against the count of attributes "
+                       "at their first value",
+                       "One point per training row, jittered horizontally; blue: outcome 1; orange: outcome 0; "
+                       "dashed: log-odds 0.", GEN, width=r"0.65\textwidth")
+
+
+def monk2_pairs(d):
+    """ebm-monk2-pairs: the EBM's pairwise terms, one heatmap per pair (lower triangle: row = second attribute,
+    column = first), each with the first attribute's values across and the second's up, value 1 (the first
+    value) at the lower left of every panel; one colour scale for all panels."""
+    from matplotlib.colors import TwoSlopeNorm
+    plt = style()
+    m = d["models"]["ebm_raw"]
+    attrs = d["data"]["attributes"]
+    P = m["pair_terms"]
+    vmax = max(abs(v) for t in P.values() for row in t["scores"] for v in row)
+    norm = TwoSlopeNorm(vcenter=0.0, vmin=-vmax, vmax=vmax)
+    n = len(attrs)
+    fig, axes = plt.subplots(n - 1, n - 1, figsize=(W, W * 0.92))
+    im = None
+    for r in range(n - 1):
+        for col in range(n - 1):
+            ax = axes[r, col]
+            i, j = col, r + 1          # pair (attrs[i], attrs[j]), i < j: x = attrs[i], y = attrs[j]
+            if i >= j:
+                ax.axis("off")
+                continue
+            t = P[f"{attrs[i]} & {attrs[j]}"]
+            assert (t["rows"], t["cols"]) == (attrs[i], attrs[j]), t
+            assert t["row_values"][0] == d["first_value"] and t["col_values"][0] == d["first_value"], t
+            S = np.array(t["scores"]).T   # rows: attrs[j] values (y), columns: attrs[i] values (x)
+            im = ax.imshow(S, origin="lower", cmap="RdBu_r", norm=norm, aspect="auto")
+            ax.set_xticks(range(len(t["row_values"])), [str(v) for v in t["row_values"]])
+            ax.set_yticks(range(len(t["col_values"])), [str(v) for v in t["col_values"]])
+            ax.tick_params(length=0, labelsize=6.5)
+            if r == n - 2:
+                ax.set_xlabel(attrs[i], fontsize=8)
+            if col == 0:
+                ax.set_ylabel(attrs[j], fontsize=8)
+    fig.subplots_adjust(left=0.07, right=0.88, bottom=0.07, top=0.98, wspace=0.25, hspace=0.25)
+    cax = fig.add_axes([0.91, 0.30, 0.02, 0.45])
+    fig.colorbar(im, cax=cax).set_label("term's log-odds", fontsize=7.5)
+    cax.tick_params(labelsize=6.5)
+    figlib.save(fig, "ebm-monk2-pairs", pdata=dict(pairs=P, vmax=vmax))
+    figlib.write_float("ebm-monk2-pairs",
+                       f"MONK-2: the {len(P)} pairwise terms of the explainable boosting machine on the six raw "
+                       "attributes",
+                       "One panel per pair of attributes $a_i$ (across) and $a_j$ (up), each axis the attribute's "
+                       "values, value 1 (the first value) at the lower left; colour: the term's log-odds (red "
+                       "raises, blue lowers), one scale for all panels.", GEN)
+
+
+def monk2_figures(only):
+    if only and not ({"ebm-monk2-count", "ebm-monk2-pairs"} & only):
+        return
+    d = json.loads(MONK2.read_text())
+    if not only or "ebm-monk2-count" in only:
+        monk2_count(d)
+    if not only or "ebm-monk2-pairs" in only:
+        monk2_pairs(d)
+
+
 # =============================================================================== earlier ten-seed export
 
 TEN = [("structure_prereg", "Earlier ten-seed export: network structure, pre-registered datasets"),
@@ -553,6 +662,7 @@ def main(only=None):
     only = set(only or [])
     xor_figures(only)
     capgain_figure(only)
+    monk2_figures(only)
     shape_figures(only)
     cox_figures(only)
     tenseed_figures(only)

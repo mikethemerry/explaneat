@@ -136,11 +136,16 @@ def main():
               "`thesis/ch7/exp1/data/networks.json`) and `uv run python thesis/ch7/exp1/make_tables.py`, then "
               "`cd thesis/ch7/exp1 && latexmk -pdf preview.tex && latexmk -c` for the preview. The comparator "
               "numbers come from `experiments/benchmarks/` (`benchmarks.csv`; its README). Overleaf names: "
-              "`sections/tables/ch7-ex1-networks.tex`, `ch7-ex1-benchmarks.tex` "
+              "`sections/tables/ch7-ex1-networks.tex`, `ch7-ex1-benchmarks.tex`, `ch7-ex1-monk2-rules.tex` "
               "(`thesis/scripts/build_overleaf_upload.sh`).", "",
               "| Label | File | Content (caption, first sentence) | Generator |", "|---|---|---|---|"]
+        e1_gen = {"exp1-sensitivity": "`thesis/ch7/exp1/sensitivity_table.py` (reads `experiments/propneat_sensitivity/`; "
+                                      "not in the Overleaf upload yet, preview `preview_sensitivity.tex`)",
+                  "exp1-monk2-rules": "`thesis/ch7/exp1/monk2_rule_table.py` (reads `experiments/monk2_rule_comparison/`; "
+                                      "preview `preview_monk2.tex`)"}
         for t, labs, cap in floats(e1 / "tables"):
-            L.append(f"| `{', '.join(labs)}` | `{rel(t)}` | {cap} | `thesis/ch7/exp1/make_tables.py` |")
+            L.append(f"| `{', '.join(labs)}` | `{rel(t)}` | {cap} | "
+                     f"{e1_gen.get(t.stem, '`thesis/ch7/exp1/make_tables.py`')} |")
         L.append("")
 
     # ---------------------------------------------------------------- exp2 tables and figures

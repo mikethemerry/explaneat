@@ -378,7 +378,7 @@ Every figure of the candidate gallery is now a thesis figure: a vector PDF (+ 30
 | options | `synthetic-shape-c-s1-g300-sodium` (`fig:ch7-synthetic-shape-c-s1-g300-sodium`) | `thesis/ch7/exp1/make_figures.py` (`uv run python thesis/ch7/exp1/make_figures.py`) | `thesis/ch7/exp1/data/shapes.json` (`thesis/ch7/exp1/extract_shapes.py`, read-only explaneat_dev, via `experiments/ushape_saddle/shape_plots.compute` / `score_gens.surfaces`; summaries asserted equal to `figures/<label>-shape.json` / `sig_gens.json`); truth constants from `experiments/ushape_saddle/data.py` | extracted (DB, read-only explaneat_dev), computed |
 | options | `synthetic-shape-c-sig-best-g300-saddle` (`fig:ch7-synthetic-shape-c-sig-best-g300-saddle`) | `thesis/ch7/exp1/make_figures.py` (`uv run python thesis/ch7/exp1/make_figures.py`) | `thesis/ch7/exp1/data/shapes.json` (`thesis/ch7/exp1/extract_shapes.py`, read-only explaneat_dev, via `experiments/ushape_saddle/shape_plots.compute` / `score_gens.surfaces`; summaries asserted equal to `figures/<label>-shape.json` / `sig_gens.json`); truth constants from `experiments/ushape_saddle/data.py` | extracted (DB, read-only explaneat_dev), computed |
 | options | `synthetic-shape-c-sig-best-g300-sodium` (`fig:ch7-synthetic-shape-c-sig-best-g300-sodium`) | `thesis/ch7/exp1/make_figures.py` (`uv run python thesis/ch7/exp1/make_figures.py`) | `thesis/ch7/exp1/data/shapes.json` (`thesis/ch7/exp1/extract_shapes.py`, read-only explaneat_dev, via `experiments/ushape_saddle/shape_plots.compute` / `score_gens.surfaces`; summaries asserted equal to `figures/<label>-shape.json` / `sig_gens.json`); truth constants from `experiments/ushape_saddle/data.py` | extracted (DB, read-only explaneat_dev), computed |
-| options | `xor-gates` (`fig:ch7-xor-gates`) | `thesis/ch7/exp1/make_figures.py` (`uv run python thesis/ch7/exp1/make_figures.py`) | `experiments/xor/make_xor_figures.py` drawing code; `verify_xor.REPS`, checked against `experiments/xor/verify_xor_results.json` | computed |
+| appendix | `xor-gates` (`fig:ch7-xor-gates`) | `thesis/ch7/exp1/make_figures.py` (`uv run python thesis/ch7/exp1/make_figures.py xor-gates`) | since 22 Nov: the two evolved networks of `xor-ridge-valley` (`experiments/xor/xor_results.json`, count seed and difference seed picked by `thesis/ch7/exp1/networks.py` `xor_runs`), drawn by `experiments/xor/make_xor_figures.py` `fig_gates(nets)`; weights asserted equal to `verify_xor.evolved_minimal()`, gates asserted (`make_figures.XOR_GATES`: count, skips OR / hidden flips AND; difference, mirrored: skips x2 AND NOT x1 / hidden flips x1 AND NOT x2) by `verify_xor.describe_solution`. Was the hand-built `verify_xor.REPS` (the study's own `experiments/xor/figures/xor_gates.pdf` still draws those, byte-identical) | computed |
 
 ## ch7-datasets (`experiments/thesis_datasets/ch7-datasets.tex`; 20 Nov 2026, branch thesis/datasets-table)
 
@@ -513,3 +513,23 @@ predictive mass (top SHAP)") still holds after the SHAP fix (87.5% of mean |SHAP
 category-gate part names give the wrong native-country level for the input they read (`bump_native_country_11_33`
 reads native-country:1 and :31; `_20` :19; `_34` :32; `_26` :25), read from the column order in `networks.json`
 `parts`; the capital-gain core's five country inputs are named correctly. The book prints these as a caveat.
+
+
+## MONK-2 rule comparison (22 Nov 2026, branch thesis/monk2-rules)
+
+`tab:exp1-monk2-rules` (`thesis/ch7/exp1/tables/exp1-monk2-rules.tex`; Overleaf `sections/tables/ch7-ex1-monk2-rules.tex`)
+and the options figures `ebm-monk2-count`, `ebm-monk2-pairs`. Study: `experiments/monk2_rule_comparison/` (README:
+protocol and commands). Every script was run twice with byte-identical outputs.
+
+| Link | Writer / command | Status |
+|---|---|---|
+| `exp1-monk2-rules.tex` | `thesis/ch7/exp1/monk2_rule_table.py` (formats only) | computed |
+| `experiments/monk2_rule_comparison/results/monk2_rules.{json,csv}` | `fit_models.py` (InterpretML venv, ~45 s): EBM one-hot (settings read from `experiments/benchmarks/results/classification/monk2.json`, the current file; test AUC asserted equal to the suite's), EBM raw (nominal, all pairs), trees (unlimited depth), tree / EBM on the count; seeds 42 | computed |
+| `experiments/monk2_rule_comparison/data/monk2_split.json` | `extract_data.py`: the suite's MONK-2 split in explaneat_v4, READ ONLY (`compute_runs.ReadOnlySession`); the scaled arrays' hash asserted equal to `experiments/benchmarks/results/data_manifest.json` | extracted (DB, read-only) |
+| PropNEAT row: test AUC | `experiments/benchmarks/results/propneat.json` (`paper-monk2`) | extracted (DB, read-only) |
+| PropNEAT row: parts, "yes" | `experiments/10seed/plain_language/monk2-paper.json` (the explanation's committed plain-language layer): part count by kind; the root's children with nonzero contribution are one linear and one gated unit, each reading all six attributes (the count ramp and the at-least-three gate); counts asserted equal to `thesis/ch7/exp1/data/networks.json` | agent-authored explanation (July 2026), structure read by code |
+| "Rule stated?" | operational checks in `fit_models.py` (docstring): count models' leaves / shape equal the rule; EBMs without the count: log-odds by count on training rows peak at 2 and separate the classes; trees without the count: "no" | computed |
+| `ebm-monk2-count`, `ebm-monk2-pairs` | `thesis/ch7/exp1/make_figures.py` (`monk2_figures`) from `monk2_rules.json` (`ebm_raw` per-row log-odds; pair terms, value 1 first on both axes); jitter `RandomState(0)` | computed |
+
+The EBM one-hot row follows the suite's file: with the widened-grid rerun (branch thesis/wide-grids) its CV
+choice changes, so after that merge rerun `fit_models.py`, `monk2_rule_table.py` and the figures.

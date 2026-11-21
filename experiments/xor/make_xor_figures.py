@@ -200,12 +200,20 @@ def fig_ridge_valley():
     save(fig, "xor_ridge_valley")
 
 
-def fig_gates():
+# The gates the representatives REPS are drawn to show (asserted by fig_gates).
+REP_GATES = {"count": ("OR", "AND"), "difference": ("x1 AND NOT x2", "x2 AND NOT x1")}
+
+
+def fig_gates(nets=None):
+    """nets: [(row label, q, composed-gate label, (skips-alone gate, hinge-flips gate))], one row each; default
+    the representatives REPS of FAMS. Each row's gates are asserted against describe_solution(q)."""
+    if nets is None:
+        nets = [(f"{fam} family", vx.REPS[key], comp, REP_GATES[fam]) for fam, key, comp in FAMS]
     g, G1, G2, P = grid(301)
-    fig, axes = plt.subplots(2, 3, figsize=(6.3, 4.5))
-    letters = iter("abcdef")
-    for row, (fam, key, comp) in enumerate(FAMS):
-        q = np.array(vx.REPS[key], float)
+    fig, axes = plt.subplots(len(nets), 3, figsize=(6.3, 2.25 * len(nets)), squeeze=False)
+    letters = iter("abcdefghijkl")
+    for row, (rowlab, q, comp, gates) in enumerate(nets):
+        q = np.array(q, float)
         a, s, uh, z = parts(q, P)
         sd = q[3] * vx.X[:, 0] + q[4] * vx.X[:, 1] + q[5]
         zd = vx.logits(q, "relu")
@@ -213,8 +221,7 @@ def fig_gates():
         info = vx.describe_solution(q)
         skip_gate = GATE[info["skips_alone"]]
         flip_gate = GATE[info["hinge_flips"]]
-        assert info["skips_alone"] == ("OR" if fam == "count" else "x1 AND NOT x2")
-        assert info["hinge_flips"] == ("AND" if fam == "count" else "x2 AND NOT x1")
+        assert (info["skips_alone"], info["hinge_flips"]) == tuple(gates), (rowlab, info, gates)
         active = (q[0] * vx.X[:, 0] + q[1] * vx.X[:, 1] + q[2]) > 0
         comp_label = f"XOR = {comp}" if len(comp) < 12 else f"XOR =\n{comp}"
         panels = [
@@ -235,13 +242,13 @@ def fig_gates():
                     ax.plot(seg[:, 0], seg[:, 1], ls=(0, (4, 3)), color=INK, lw=0.9)
             square(ax)
             mark_points(ax, filled, ring)
-            flat_axes(ax, xlabel=row == 1, ylabel=colk == 0)
+            flat_axes(ax, xlabel=row == len(nets) - 1, ylabel=colk == 0)
             ax.text(0.02, 0.97, f"({next(letters)})", transform=ax.transAxes, fontsize=8,
                     color=INK, va="top")
             ax.text(0.97, 0.03, label, transform=ax.transAxes, fontsize=7, color=INK,
                     ha="right", va="bottom", linespacing=1.2,
                     bbox=dict(boxstyle="round,pad=0.25", fc=BG, ec="none", alpha=0.85))
-        axes[row, 0].text(-0.42, 0.5, f"{fam} family", transform=axes[row, 0].transAxes,
+        axes[row, 0].text(-0.42, 0.5, rowlab, transform=axes[row, 0].transAxes,
                           rotation=90, fontsize=8, color=INK, ha="center", va="center")
     fig.subplots_adjust(wspace=0.12, hspace=0.12)
     save(fig, "xor_gates")
