@@ -51,7 +51,8 @@ Connect-4 cells (seed 1), Connect-4 lines (seed 0), Synthetic U
 hidden units then has its raw figure on the left page and the explained figure facing it. The survival networks
 (WHAS500, GBSG2) are not here: they move to Chapter 8. Connect-4 cells has the explained figure only
 (its raw network, 472 connections, is not legible on a page); XOR has one figure of the two minimal reduced
-networks (count and difference family). The annotation of unconnected inputs that sits outside the root
+networks (count and difference family). Both Connect-4 explained figures are collapsed (each top-level part
+one box). The annotation of unconnected inputs that sits outside the root
 (Adult, MONK-2: decision D4) is drawn as a dashed box beside the explained network. Drawing code:
 `thesis/ch7/netfigs.py` (`build_appendix`: any list of networks, output folder and label prefix; shared with Experiment 2) and `explaneat/export/render_structure.py`.
 

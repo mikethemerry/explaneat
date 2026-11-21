@@ -22,6 +22,7 @@ Per case (CASES, the appendix order):
     annotation in experiments/aaai27/recheck/results/paper_coverage_options.json;
   * Connect-4 cells: explained only (raw_legible False, a design choice after looking at the drawn raw
     picture: 472 connections from 42 inputs into 10 hidden units do not print legibly on one page);
+  * Connect-4 cells and lines: the explained view collapsed, each top-level part one box (COLLAPSED);
   * XOR: one figure, xor-raw: the reduced network of one minimal solution per family (the lowest seed with
     one hidden unit in each family; family = sign of the product of the hidden unit's two input weights),
     from experiments/xor/xor_results.json; no explanation views.
@@ -163,9 +164,10 @@ def check(label, layer, raw, inputs_drawn):
 
 # --------------------------------------------------------------------------- build
 
-COLLAPSED = {"c4cap-main-h10-e50-s1"}   # design choice: explained view collapsed (each part one box, as the
-                                        # Experiment 2 concept figure); nested, its 11 parts each reading all 42
-                                        # columns print at under a third of their size
+# design choice: explained view collapsed (each part one box, as the Experiment 2 concept figure). Connect-4
+# cells: nested, its 11 parts each reading all 42 columns print at under a third of their size. Connect-4 lines
+# (Mike, 21 Nov 2026): nested, it printed at 0.45 (labels about 2.7pt); its raw view stays (legible).
+COLLAPSED = {"c4cap-main-h10-e50-s1", "c4lf-lines-heavy-s0"}
 
 
 def _collapse():
