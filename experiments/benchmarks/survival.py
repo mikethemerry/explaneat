@@ -13,8 +13,8 @@ training rows; the test rows are read once.
     Cox PH            lifelines CoxPHFitter, penalizer 0 (Efron ties); nothing to tune
     Cox, L2 (ridge)   scikit-survival CoxPHSurvivalAnalysis (Efron), alpha by CV
     Cox, elastic net  scikit-survival CoxnetSurvivalAnalysis, alpha and l1_ratio by CV
-    Random surv. forest  RandomSurvivalForest (500 trees, max_features sqrt), depth and leaf size by CV
-    Gradient-boosted  GradientBoostingSurvivalAnalysis (Cox loss), rate, stages and depth by CV
+    Random surv. forest  RandomSurvivalForest (500 trees), depth and leaf size, then max_features, by CV
+    Gradient-boosted  GradientBoostingSurvivalAnalysis (Cox loss), rate, depth and stages by CV
 
 Test metrics are explaneat.survival.metrics, as the Cox case runs: Harrell's C (95% percentile
 interval over 10,000 bootstrap resamples of the test rows, RandomState(42)), Uno's C,
@@ -27,6 +27,7 @@ run record. Output: results/survival.json.
 """
 from __future__ import annotations
 
+import os
 import pickle
 import sys
 import tempfile
@@ -38,6 +39,9 @@ import pandas as pd
 
 warnings.filterwarnings("ignore")
 from common import REPO, RESULTS, SEED, boot_indices, jdump, jload  # noqa: E402
+from search import jsonable, search, staged_cindex  # noqa: E402
+
+NJ = int(os.environ.get("BENCH_JOBS", "4"))
 
 CASE = REPO / "experiments" / "survival" / "cox_case"
 sys.path.insert(0, str(REPO))
@@ -50,11 +54,23 @@ from explaneat.survival.metrics import (harrell_c, integrated_brier, time_depend
                                         uno_c)
 
 HORIZONS = [365.0, 1095.0, 1825.0]
-GRIDS = {
-    "cox_l2": {"alpha": [0.001, 0.01, 0.1, 1.0, 3.0, 10.0, 30.0, 100.0, 300.0, 1000.0, 3000.0, 10000.0]},
-    "cox_enet": {"l1_ratio": [0.1, 0.5, 0.9], "alphas": [[a] for a in (0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1.0)]},
-    "rsf": {"max_depth": [3, 5, None], "min_samples_leaf": [5, 10, 20]},
-    "gbs": {"learning_rate": [0.03, 0.1], "n_estimators": [100, 300], "max_depth": [1, 2, 3]},
+# Grids (design choices, the same for both sets); stages as classification.py (search.py). No CV choice
+# lies at either end of its grid except at the end of a parameter's range (common.DOMAIN_ENDS; make_csv.py
+# asserts it). The narrower grids of 19 Nov 2026 and their results: results/narrow_grids/survival.json.
+def half_decades(lo, hi):
+    return [float(f"{10 ** (e / 2):.4g}") for e in range(2 * lo, 2 * hi + 1)]
+
+
+STAGES = {
+    "cox_l2": [{"grid": {"alpha": half_decades(-3, 6)}}],
+    "cox_enet": [{"grid": {"l1_ratio": [1e-4, 3e-4, 1e-3, 3e-3, 0.01, 0.03, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0],
+                           "alphas": [[a] for a in half_decades(-4, 2)]}}],
+    # stage 1 tree size at max_features "sqrt"; stage 2 the feature fraction at that size
+    "rsf": [{"grid": {"max_depth": [1, 2, 3, 5, 8, 12, None], "min_samples_leaf": [1, 2, 5, 10, 20, 50, 100]}},
+            {"grid": {"max_features": [1, "sqrt", 0.5, None]}}],
+    # rate x depth x stages (the stage count scored from staged predictions, search.py)
+    "gbs": [{"grid": {"learning_rate": [0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1.0], "max_depth": [1, 2, 3, 4, 5],
+                      "n_estimators": [1, 3, 10, 30, 100, 300, 1000, 3000, 10000, 30000]}, "staged": "n_estimators"}],
 }
 
 
@@ -126,7 +142,7 @@ def propneat(ds, Xtr, Xte, ytr, yte, idx):
 
 def main():
     from lifelines import CoxPHFitter
-    from sklearn.model_selection import GridSearchCV, StratifiedKFold
+    from sklearn.model_selection import StratifiedKFold
     out = {}
     for ds in ("whas500", "gbsg2"):
         X, y, names = load_builtin(ds)
@@ -150,15 +166,15 @@ def main():
         folds = list(StratifiedKFold(5, shuffle=True, random_state=SEED).split(Xtr, ytr[:, 1].astype(int)))
         for name, est in estimators().items():
             t0 = time.time()
-            gs = GridSearchCV(est, GRIDS[name], cv=folds, n_jobs=2, error_score=np.nan).fit(Xtr, surv_struct(ytr))
-            m = gs.best_estimator_
+            m, p, cv_c, record = search(est, STAGES[name], Xtr, surv_struct(ytr), folds, NJ,
+                                        staged_scores=staged_cindex)
             r_tr, r_te = m.predict(Xtr), m.predict(Xte)
             fn = breslow_fn(r_tr, r_te, ytr) if name in ("cox_l2", "cox_enet") else own_fn(m, Xte)
-            p = {k: (v[0] if isinstance(v, list) else v) for k, v in gs.best_params_.items()}
-            res[name] = {"params": p, "cv_c": float(gs.best_score_), **metrics(r_te, ytr, yte, fn, idx),
+            p = {k: (v[0] if isinstance(v, list) else v) for k, v in jsonable(p).items()}
+            res[name] = {"params": p, "cv_c": cv_c, **metrics(r_te, ytr, yte, fn, idx),
                          "train_harrell_c": float(harrell_c(r_tr, ytr[:, 0], ytr[:, 1])),
-                         "grid": GRIDS[name], "seconds": round(time.time() - t0, 1)}
-            print(ds, name, p, "cv", round(gs.best_score_, 4), "test C", round(res[name]["harrell_c"], 4), flush=True)
+                         "search": jsonable(STAGES[name]), "stages": record, "seconds": round(time.time() - t0, 1)}
+            print(ds, name, p, "cv", round(cv_c, 4), "test C", round(res[name]["harrell_c"], 4), flush=True)
         out[ds] = res
         jdump(out, RESULTS / "survival.json")
 

@@ -16,10 +16,14 @@ REPO = Path(__file__).resolve().parents[3]
 BENCH = REPO / "experiments" / "benchmarks"
 COMPARATORS = [("lr_l2", "Logistic regr., $L_2$"), ("lr_l1", "Logistic regr., $L_1$ (sparse)"),
                ("tree", "Decision tree"), ("rf", "Random forest"), ("gb", "Gradient boosting"),
-               ("ebm", "Explainable boosting"), ("mlp", "MLP, one hidden layer")]
+               ("ebm", "Explainable boosting"), ("mlp", "MLP")]
 SURVIVAL = [("cox_ph", "Cox PH, unpenalised"), ("cox_l2", "Cox PH, $L_2$ (ridge)"),
             ("cox_enet", "Cox PH, elastic net"), ("rsf", "Random survival forest"),
             ("gbs", "Gradient-boosted survival")]
+# Experiment 1 benchmark columns: the original networks first (Heart, MONK-2, Adult), then the rest
+EXP1_DATASETS = [("heart", "Heart"), ("monk2", "MONK-2"), ("adult", "Adult"), ("churn", "\\makecell{Churn\\\\(case)}"), ("c4_cells", "\\makecell{Connect-4\\\\cells}"),
+                 ("c4_lines", "\\makecell{Connect-4\\\\lines}"), ("shape_u", "\\makecell{Synth.\\\\U}"),
+                 ("shape_saddle", "\\makecell{Synth.\\\\saddle}"), ("shape_both", "\\makecell{Synth.\\\\U $+$ saddle}")]
 # Caption key shared by both benchmark tables: only how to read a cell (Mike, 20 Nov: captions hold a title
 # and the table's keys; the method is in the body text, see thesis/ch7/CAPTION_MOVED_TEXT.md).
 SUITE_KEY = ("Each cell: test AUC; below it, its 95\\% interval and the test accuracy. "

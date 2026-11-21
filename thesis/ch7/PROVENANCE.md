@@ -69,11 +69,11 @@ byte-identical. The appendix network captions were already a title only and are 
 |---|---|---|
 | `exp1-benchmarks.tex` | `thesis/ch7/exp1/make_tables.py` via `benchmark_tables.py` | computed (byte-identical) |
 | `exp2-benchmarks.tex` | `thesis/ch7/exp2/make_assets.py` via `exp1/benchmark_tables.py` | computed (byte-identical) |
-| `experiments/benchmarks/benchmarks.csv` | `make_csv.py` (reads `results/classification/*.json`, `propneat.json`, `survival.json`) | computed; rerun byte-identical |
-| `results/classification/*.json` | `classification.py` (~2.5 h; needs `interpret`) | computed. Seeds: 5-fold stratified CV seed 42, bootstrap `RandomState(42)`. `lr_l1` was **unseeded** until this audit (see issue 4) |
+| `experiments/benchmarks/benchmarks.csv` | `make_csv.py` (reads `results/classification/*.json`, `propneat.json`, `survival.json`; then the grid check) | computed; rerun byte-identical. Experiment 1 now also has the original Adult network and the Churn case (`propneat.py`, checked against `runs_paper_reference.csv` and `churn_case/runs.csv` to 1e-9); Adult and Churn comparator rows are experiment "1,2" |
+| `results/classification/*.json` | `classification.py` (hours on Adult / Connect-4 cells; needs `interpret`) | computed. Seeds: 5-fold stratified CV seed 42, bootstrap `RandomState(42)`, every estimator seeded. Grids widened 21-22 Nov 2026 (`experiments/benchmarks/README.md`, Grids); the 19 Nov narrower-grid run is in `results/narrow_grids/`. Grid check `results/grid_check.md` (one choice at its edge: Connect-4 cells EBM interactions); before/after `results/before_after.md`; two fresh Heart runs identical (`results/determinism_heart.json`) |
 | `cache/*.npz`, `results/data_manifest.json` | `export_data.py` | extracted (DB, read-only); rerun byte-identical |
 | `results/propneat.json` | `propneat.py` from the runs CSVs and the DB | extracted (DB, read-only) |
-| `results/survival.json` | `survival.py` (~80 s) | computed (timings aside) |
+| `results/survival.json` | `survival.py` (~20 min; widened grids) | computed (timings aside) |
 | synthetic true-logit AUC (was in the caption; now in `CAPTION_MOVED_TEXT.md` for the body text) | `experiments/ushape_saddle/references.json` ← `references.py` | computed; rerun byte-identical |
 
 All of these files were committed with their scripts in a8512b24.

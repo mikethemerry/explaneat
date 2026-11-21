@@ -5,30 +5,33 @@
 Reads results/classification/*.json, results/survival.json and results/propneat.json. Writes
 benchmarks.csv (one row per dataset and model, PropNEAT rows included) and results/reuse.json:
 every earlier comparator number on the same split (the files named in EARLIER), set beside this
-run's, with whether the earlier protocol is this one and whether the numbers agree.
+run's, with whether the earlier protocol is this one and whether the numbers agree. Then the grid
+check (check_grids.py): writes results/grid_check.md and fails if any CV choice sits at a grid edge.
 """
 from __future__ import annotations
 
 import csv
 import json
 
+import check_grids
 from common import HERE, REPO, RESULTS, jdump, jload
 
 E = REPO / "experiments"
 MODEL_NAMES = {
     "lr_l2": "Logistic regression (L2)", "lr_l1": "Logistic regression (L1, sparse)", "tree": "Decision tree",
     "rf": "Random forest", "gb": "Gradient boosting (HistGradientBoosting)", "ebm": "Explainable boosting machine",
-    "mlp": "MLP (one hidden layer)",
+    "mlp": "MLP (one or two hidden layers)",
     "cox_ph": "Cox PH (unpenalised)", "cox_l2": "Cox PH, L2 (ridge)", "cox_enet": "Cox PH, elastic net",
     "rsf": "Random survival forest", "gbs": "Gradient-boosted survival (Cox loss)",
 }
 COMPARATORS = ["lr_l2", "lr_l1", "tree", "rf", "gb", "ebm", "mlp"]
 SURV_MODELS = ["cox_ph", "cox_l2", "cox_enet", "rsf", "gbs"]
 EXP = {"heart": "1,2", "monk2": "1", "c4_cells": "1", "c4_lines": "1", "shape_u": "1", "shape_saddle": "1",
-       "shape_both": "1", "adult": "2", "churn": "2", "whas500": "1", "gbsg2": "1 (miscellany)", "xor": "1"}
-EXP1_NET = {"heart": "paper-heart", "monk2": "paper-monk2", "c4_cells": "c4cap-main-h10-e50-s1",
+       "shape_both": "1", "adult": "1,2", "churn": "1,2", "whas500": "1", "gbsg2": "1 (miscellany)", "xor": "1"}
+EXP1_NET = {"heart": "paper-heart", "monk2": "paper-monk2", "adult": "paper-adult", "churn": "churn-case-s10", "c4_cells": "c4cap-main-h10-e50-s1",
             "c4_lines": "c4lf-lines-heavy-s0", "shape_u": "shape-A", "shape_saddle": "shape-B", "shape_both": "shape-C"}
 EXP2_STUDY = {"adult": "adult", "churn": "churn100", "heart": "heart100"}
+NARROW = "no: the narrower grids (experiments/references, 19 Nov 2026; results/narrow_grids/)"
 
 COLS = ["experiment", "dataset", "model_key", "model", "params", "cv_metric", "cv_score", "test_metric", "test_value",
         "ci_lo", "ci_hi", "test_accuracy", "train_value", "uno_c", "td_auc_mean", "ibs", "n_train", "n_test", "note"]
@@ -122,15 +125,15 @@ def reuse(rows):
     keys = {"Sparse logistic regression (L1)": "lr_l1", "Decision tree": "tree", "Random forest": "rf", "EBM": "ebm",
             "MLP (1 hidden layer)": "mlp"}
     for k, v in bench.items():
-        add("experiments/references/heart_benchmark/bench.json", "heart", keys[k], v["test_auc"], True)
-        add("experiments/references/heart_benchmark/bench.json", "heart", keys[k], v["cv_auc"], True, "cv")
+        add("experiments/references/heart_benchmark/bench.json", "heart", keys[k], v["test_auc"], NARROW)
+        add("experiments/references/heart_benchmark/bench.json", "heart", keys[k], v["cv_auc"], NARROW, "cv")
     base = jload(E / "references/results/baselines.json")
     for ds in ("heart", "monk2", "adult", "churn"):
         b = base[ds]
         add("experiments/references/results/baselines.json", ds, "lr_l2", b["logistic"]["test_auc"],
-            "no: C chosen by unstratified KFold (same grid and seed)")
-        add("experiments/references/results/baselines.json", ds, "gb", b["gradient_boosting"]["test_auc"], True)
-        add("experiments/references/results/baselines.json", ds, "gb", b["gradient_boosting"]["cv_auc"], True, "cv")
+            "no: C chosen by unstratified KFold on the narrower grid")
+        add("experiments/references/results/baselines.json", ds, "gb", b["gradient_boosting"]["test_auc"], NARROW)
+        add("experiments/references/results/baselines.json", ds, "gb", b["gradient_boosting"]["cv_auc"], NARROW, "cv")
     ch = jload(E / "churn/baselines.json")
     add("experiments/churn/baselines.json", "churn", "lr_l2", ch["l2_logistic"]["test_auc"], "no: untuned (C = 1)")
     add("experiments/churn/baselines.json", "churn", "gb", ch["gradient_boosting"]["test_auc"], "no: default settings")
@@ -155,6 +158,13 @@ def reuse(rows):
             "no: fixed settings (min_samples_leaf 10)")
         key = "propneat_explained" if ds == "whas500" else "propneat_selected"
         add("experiments/survival/cox_case/references.csv", ds, key, float(ref[(ds, "propneat_cox")]["harrell_c"]), True)
+    # this suite's own first run (19 Nov 2026, the narrower grids): kept in results/narrow_grids/
+    with open(RESULTS / "narrow_grids" / "benchmarks.csv") as f:
+        for r in csv.DictReader(f):
+            if (r["dataset"], r["model_key"]) in now and r["test_value"] != "" and r["params"] != "" \
+                    and not r["model_key"].startswith("propneat"):
+                add("experiments/benchmarks/results/narrow_grids/benchmarks.csv", r["dataset"], r["model_key"],
+                    r["test_value"], NARROW)
     return checks
 
 
@@ -171,6 +181,7 @@ def main():
         print(f"{c['dataset']:12s} {c['model']:20s} {c['quantity']:4s} earlier {float(c['earlier']):.4f} now {float(c['now']):.4f} "
               f"agree={c['agree']} same_protocol={c['same_protocol']}")
     print(len(rows), "rows ->", HERE / "benchmarks.csv")
+    check_grids.main()                               # exits non-zero if a choice is at a grid edge
 
 
 if __name__ == "__main__":
