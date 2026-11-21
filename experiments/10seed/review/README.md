@@ -21,7 +21,10 @@ them, and every command below needs both:
 
 - `DATABASE_URL=postgresql://localhost/explaneat_v4`: the operations (read only).
 - `EXPLANEAT_RECORDS_DIR=experiments/10seed/explanations_v4`: the records. The sign-off writes
-  `mike_verification` into these files.
+  `mike_verification` where the record is stored: its `explanation_records` row (once imported with
+  `explaneat records import`; history kept, `explaneat records export` refreshes these files) or
+  these files. Records of the other studies (Experiment 1 case studies, ...) are found in their own
+  `experiments/<study>/explanations*` folders too (`explaneat/analysis/explanation_records.py`).
 - The layers follow the records (`explanations_v4` -> `plain_language_v4`). Set
   `EXPLANEAT_LAYERS_DIR` only to use another folder.
 

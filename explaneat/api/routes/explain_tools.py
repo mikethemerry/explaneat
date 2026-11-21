@@ -189,8 +189,11 @@ async def category_offsets(
 @router.get("/record")
 async def genome_record(genome_id: str = Path(...)):
     """The Claude-produced explanation record for this genome, if any."""
-    rec = er.find_record_for_genome(genome_id)
-    return {"record": rec, "records_dir": str(er.records_dir())}
+    e = er.find_entry_for_genome(genome_id)
+    rec = er.load_record(e.label) if e is not None else None
+    where = er.searched()
+    return {"record": rec, "records_dir": str(er.records_dir()), "records_dirs": where["records_dirs"],
+            "database": where["database"], "source": e.public() if e is not None else None}
 
 
 # ---------------------------------------------------------------- import / export

@@ -218,6 +218,7 @@ export type MikeVerification = {
   minutes?: number;
   changes?: string;
   notes?: string;
+  entered_by?: string;
   recorded_at?: string;
 };
 
@@ -238,7 +239,14 @@ export type RecordSummary = {
   in_db?: boolean;
   experiment_id?: string;
   experiment_name?: string;
+  /** Where the record lives: its study (e.g. 10seed-v4, cox_case), "db" or "file", the file. */
+  study?: string;
+  storage?: "db" | "file";
+  source?: string;
+  records_dir?: string;
 };
+
+export type RecordSource = { study: string; storage: "db" | "file"; source: string; records_dir: string };
 
 export type ExplanationRecord = Record<string, unknown> & {
   label: string;
@@ -250,13 +258,17 @@ export type ExplanationRecord = Record<string, unknown> & {
 };
 
 export const listRecords = () =>
-  req<{ records_dir: string; records: RecordSummary[]; n_verified: number }>(`${API_BASE}/records`);
+  req<{ records_dir: string; records_dirs?: string[]; database?: boolean; records: RecordSummary[]; n_verified: number }>(
+    `${API_BASE}/records`,
+  );
 
 export const getGenomeRecord = (genomeId: string) =>
-  req<{ record: ExplanationRecord | null; records_dir: string }>(`${g(genomeId)}/tools/record`);
+  req<{ record: ExplanationRecord | null; records_dir: string; records_dirs?: string[]; database?: boolean; source?: RecordSource | null }>(
+    `${g(genomeId)}/tools/record`,
+  );
 
 export const putVerification = (label: string, v: { verified: boolean; minutes?: number | null; changes: string; notes?: string }) =>
-  req<{ label: string; mike_verification: MikeVerification }>(
+  req<{ label: string; mike_verification: MikeVerification; stored_in?: string }>(
     `${API_BASE}/records/${encodeURIComponent(label)}/verification`,
     { method: "PUT", body: JSON.stringify(v) },
   );

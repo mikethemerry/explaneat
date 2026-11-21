@@ -30,6 +30,10 @@ cli.add_command(_verify, name='verify')
 from .review.cli import review as _review  # noqa: E402
 cli.add_command(_review, name='review')
 
+# Explanation records in the database (explaneat/records/cli.py)
+from .records.cli import records as _records  # noqa: E402
+cli.add_command(_records, name='records')
+
 
 @cli.command()
 @click.argument("genome_id")

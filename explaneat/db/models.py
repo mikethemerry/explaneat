@@ -16,6 +16,7 @@ from sqlalchemy import (
     Index,
     LargeBinary,
     CheckConstraint,
+    JSON,
 )
 import numpy as np
 from sqlalchemy.dialects.postgresql import UUID, JSONB
@@ -673,6 +674,56 @@ class ExplanationIntegrity(Base):
     genome_id = Column(UUID(as_uuid=True), ForeignKey("genomes.id", ondelete="CASCADE"), primary_key=True)
     strict = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class ExplanationRecord(Base, TimestampMixin):
+    """A Claude-produced explanation record (the agent's report on one genome) and Mike's
+    verification of it, stored with the explanation it describes.
+
+    ``record`` is the record exactly as its JSON file held it (plain JSON, not JSONB, so the key
+    order survives and an export reproduces the file). ``mike_verification`` is the current
+    verification; every change to it is appended to ``explanation_record_events``, never
+    overwritten silently. ``source_path`` (repository-relative) is the file the record came
+    from and where ``explaneat records export`` writes it back; ``records_dir`` is its record
+    set (the review store's guard). Labels are unique across studies; see
+    ``explaneat/analysis/explanation_records.py``.
+    """
+
+    __tablename__ = "explanation_records"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    label = Column(String(255), nullable=False, unique=True)
+    study = Column(String(128), nullable=False)
+    genome_id = Column(String(64), nullable=False, index=True)   # no FK: a record may outlive its genome
+    explanation_id = Column(UUID(as_uuid=True), ForeignKey("explanations.id", ondelete="SET NULL"),
+                            nullable=True, index=True)
+    records_dir = Column(String(1024))
+    source_path = Column(String(1024), unique=True)
+    record = Column(JSON, nullable=False)
+    report = Column(JSON)                 # the agent's report.json beside a record.json, when distinct
+    mike_verification = Column(JSON)
+    content_hash = Column(String(64))     # of the imported record, to tell an unchanged file on re-import
+
+    events = relationship("ExplanationRecordEvent", back_populates="record_row",
+                          cascade="all, delete-orphan", order_by="ExplanationRecordEvent.id")
+
+
+class ExplanationRecordEvent(Base):
+    """Append-only history of an explanation record: its import, re-imports and every
+    verification edit (``payload``: the new ``mike_verification``; ``previous``: the old one)."""
+
+    __tablename__ = "explanation_record_events"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    record_id = Column(UUID(as_uuid=True), ForeignKey("explanation_records.id", ondelete="CASCADE"),
+                       nullable=False, index=True)
+    kind = Column(String(32), nullable=False)          # import | reimport | verification
+    entered_by = Column(String(32))                     # ui | chat | cli | import
+    payload = Column(JSON)
+    previous = Column(JSON)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    record_row = relationship("ExplanationRecord", back_populates="events")
 
 
 class NodeSplit(Base, TimestampMixin):
