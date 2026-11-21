@@ -8,6 +8,7 @@ from the Cox case's own split files (scaler fitted on the training rows, as the 
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import numpy as np
@@ -15,7 +16,7 @@ import numpy as np
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 CACHE = HERE / "cache"
-RESULTS = HERE / "results"
+RESULTS = Path(os.environ.get("BENCH_RESULTS", HERE / "results"))   # BENCH_RESULTS: a scratch dir (determinism checks)
 
 SEED = 42
 N_BOOT = 10_000
@@ -36,6 +37,14 @@ CLASSIFICATION = {
     "shape_both": ("explaneat_dev", "a80f5dcd-fa1a-42eb-ad10-1f40a70115bb", "Synthetic U + saddle (shape-C)"),
 }
 SURVIVAL = ("whas500", "gbsg2")
+
+# Ends of a parameter's range: a grid that holds one of these on that side cannot be widened there, so a
+# choice of it is not a grid-boundary choice (search.edge_hits). max_depth None and max_features None are
+# "no limit"; min_samples_leaf 1, l2_regularization 0, interactions 0, max_features 1 (one feature per
+# split), max_depth 1 (stumps), one boosting iteration and l1_ratio 1 (the lasso) are the other end of their parameter's range.
+DOMAIN_ENDS = {"max_depth": [None, 1], "min_samples_leaf": [1], "l2_regularization": [0.0], "interactions": [0],
+               "max_features": [1, None], "l1_ratio": [1.0], "max_iter": [1], "n_estimators": [1],
+               "max_leaf_nodes": [2], "alpha": [0.0]}
 
 
 def boot_indices(n, n_boot=N_BOOT, seed=SEED):

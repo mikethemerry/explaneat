@@ -143,9 +143,7 @@ def table_networks():
           + f"\n  \\caption{{{cap}}}\n  \\label{{tab:exp1-networks}}\n\\end{{sidewaystable}}\n")
 
 
-DATASETS = [("heart", "Heart"), ("monk2", "MONK-2"), ("c4_cells", "\\makecell{Connect-4\\\\cells}"),
-            ("c4_lines", "\\makecell{Connect-4\\\\lines}"), ("shape_u", "\\makecell{Synth.\\\\U}"),
-            ("shape_saddle", "\\makecell{Synth.\\\\saddle}"), ("shape_both", "\\makecell{Synth.\\\\U $+$ saddle}")]
+DATASETS = bt.EXP1_DATASETS   # the benchmark table's columns (benchmark_tables.py)
 
 
 def table_benchmarks():
