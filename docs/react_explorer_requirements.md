@@ -45,9 +45,15 @@ The explorer is an API-backed single-page app:
 - **Visualization Types** (`VizCanvas.tsx`):
   - **Line Plot**: Function curve with optional scatter overlay of actual data points
   - **Heatmap**: 2D function surface with scatter overlay
-  - **Partial Dependence**: 1D or 2D partial dependence (varies selected inputs, fixes others at median)
+  - **Partial Dependence**: 1D or 2D sweep of the selected inputs with the others held at their median (or the reference case); it does not average over the data (the ICE plot's bold line does)
   - **PCA Scatter**: 2D PCA projection of entry activations colored by exit value
   - **Sensitivity**: Bar chart of per-input sensitivity scores
+- **Reference case** (`ReferenceCasePanel.tsx`, state in `components/referenceCase.ts`, library `explaneat/analysis/reference_case.py`): line, heatmap, partial dependence, feature vs output and the pairs plot ("others at median") hold the inputs not on their axes at one point. Off (the default), that point is each input's median, as before; the strip still describes this per-column median case (for a one-hot group it usually sets no level, flagged as a pattern no row has). On ("Hold others at a reference case"), every plot of the genome holds them at one full input row, forward-passed to each part's entry nodes (the part's entries at the case are listed):
+  - **Base**: median case (medians; most common value of binary inputs and of each one-hot group), per-column median, mean case, a percentile case, or a dataset row (by index, from the nearest rows, or from a row browser over train/test with an outcome filter and ordering by prediction)
+  - **Edits**: a value per input in the data's units (with median / mean / q25 / q75 buttons), a toggle per binary input, a level per one-hot group (or none); edited rows are marked, each resets
+  - **The case**: raw name and Feature key label per input, its percentile among the training rows, the model's prediction and its percentile, typicality (distance to the nearest training row, standardised, against the rows' own nearest-neighbour distances: typical / unusual / far from the data), warnings (outside the data's range, a one-hot pattern no row has), the 5 nearest training rows with outcome, prediction and the inputs they differ in most. All statistics are over the split's training rows; rows are shown on every dataset
+  - **Plots** ring the case's own point ("case") on line, feature vs output and partial dependence curves, on heatmaps and on each pairs-plot heatmap; their descriptions say "others at the reference case (…)". ICE, sensitivity, distributions and the pairs plot's "averaged" mode do not use it
+  - **Reproducible**: one case per genome, in the URL (`?case=<spec JSON>`, kept when the explorer rewrites its URL); pins and snapshots store `params.reference = {x, spec}` (the resolved row in raw units), and reopening a pin restores the case. The static appendix shows the strip read-only (per-column medians; choosing a case needs the live explorer)
 - **Snapshot Management**: Save visualizations as evidence on annotations with narrative text
 - **Evidence Gallery** (`EvidenceGallery.tsx`): View saved evidence snapshots per annotation
 
@@ -117,7 +123,9 @@ This is the portal workflow for survival and binary classification; the user gui
 - `DELETE /api/genomes/{id}/operations/{seq}` - Undo operation and all subsequent
 
 ### Evidence
-- `POST /api/genomes/{id}/evidence/viz-data` - Compute visualization data
+- `POST /api/genomes/{id}/evidence/viz-data` - Compute visualization data (`params.reference = {x}`: hold the inputs not on the axes at that case, raw units per dataset column; results carry `held`, `held_rule` and `case_point`)
+- `POST /api/genomes/{id}/evidence/reference-case` - Resolve (`spec`) or describe (`x`) a reference case against the split's training rows; with `annotation_id` / `node_id` also the part's entry values at the case
+- `POST /api/genomes/{id}/evidence/case-rows` - A page of dataset rows (index, outcome, prediction) to pick a case from
 - `GET /api/genomes/{id}/evidence/formula` - Get LaTeX formula for annotation
 - `POST /api/genomes/{id}/evidence/snapshot` - Save visualization snapshot
 - `GET /api/genomes/{id}/evidence?annotation_id=...` - List evidence for annotation

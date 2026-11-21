@@ -621,6 +621,27 @@ class NodeEvidenceInfoResponse(BaseModel):
     display_name: str
 
 
+class ReferenceCaseRequest(BaseModel):
+    """A reference case to resolve and describe (``explaneat/analysis/reference_case.py``)."""
+
+    dataset_split_id: str
+    annotation_id: Optional[str] = None
+    node_id: Optional[str] = None
+    spec: Optional[Dict[str, Any]] = None
+    x: Optional[List[float]] = None  # an already resolved case (raw units): described as is
+
+
+class CaseRowsRequest(BaseModel):
+    """A page of dataset rows to pick a reference case from."""
+
+    dataset_split_id: str
+    split: Literal["train", "test", "val", "both"] = "train"
+    offset: int = 0
+    limit: int = 20
+    outcome: Optional[float] = None  # only rows with this outcome (classification; survival: event)
+    order: Literal["index", "prediction"] = "index"
+
+
 class VizDataRequest(BaseModel):
     """Request for computing visualization data."""
 

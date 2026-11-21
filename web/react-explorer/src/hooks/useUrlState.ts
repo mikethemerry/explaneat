@@ -7,6 +7,7 @@
  * Pages subpath, with no server-side fallback.
  */
 import { STATIC_MODE } from "../api/staticData";
+import { caseForUrl } from "../components/referenceCase";
 
 /** The routed path and query: from the URL, or from the hash in static mode. */
 function current(): { path: string; search: string } {
@@ -91,6 +92,9 @@ export function viewToUrl(view: UrlView): string {
       if (view.annotationId) params.set("annotation", view.annotationId);
       if (view.pin) params.set("pin", view.pin);
       if (view.focus) params.set("focus", view.focus);
+      // the reference case of the evidence plots (components/referenceCase.ts) stays with the genome
+      const kase = caseForUrl(view.genomeId);
+      if (kase) params.set("case", kase);
       const qs = params.toString();
       return `/genome/${view.genomeId}${qs ? `?${qs}` : ""}`;
     }

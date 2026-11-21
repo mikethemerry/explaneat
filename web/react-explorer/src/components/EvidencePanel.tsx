@@ -20,6 +20,8 @@ import { VIEW_LABELS, type FeaturePin, type PinInput, type PinScope, type PinVie
 import { PinFeatureModal, type PinModalDraft } from "./PinFeatureModal";
 import { useReadOnly } from "../api/appConfig";
 import { STATIC_MODE } from "../api/staticData";
+import { ReferenceCasePanel } from "./ReferenceCasePanel";
+import { USES_REFERENCE, bindGenome, describeSpec, referenceParam, setCase, useReferenceCase } from "./referenceCase";
 
 /** Plots the static appendix precomputes (the others say "not included"). */
 const STATIC_VIZ_TYPES = new Set(["line", "ice", "pairs_plot"]);
@@ -72,21 +74,21 @@ const VIZ_TYPE_LABELS: Record<string, string> = {
 const VIZ_TYPE_EXPLANATIONS: Record<string, { title: string; what: string; how: string; look_for: string }> = {
   line: {
     title: "Line Plot (Sweep)",
-    what: "Sweeps one input dimension across its range while holding all others at their median values. Shows the annotation/node's output as a function of that single input. Scatter dots show actual data points.",
+    what: "Sweeps one input dimension across its range while holding all others at their median values (or at the reference case, when one is on). Shows the annotation/node's output as a function of that single input. Scatter dots show actual data points.",
     how: "The smooth line is the model's response curve. Scatter dots show real data. If correctness coloring is on, green = correct prediction, red = incorrect.",
     look_for: "Monotonic trends (the node simply passes through the input), sharp kinks (ReLU boundaries switching on/off), flat regions (the node is saturated or clamped). Wide vertical spread in scatter dots at any x-value means other features matter more than this one.",
   },
   heatmap: {
     title: "Heatmap (2D Sweep)",
-    what: "Sweeps two input dimensions simultaneously across a grid, holding all others at median. Color shows the annotation/node's output value.",
+    what: "Sweeps two input dimensions simultaneously across a grid, holding all others at median (or at the reference case). Color shows the annotation/node's output value.",
     how: "Bright regions = high output, dark regions = low output. Contour-like boundaries show where the function changes behavior.",
     look_for: "Axis-aligned boundaries (the function depends mainly on one input), diagonal boundaries (interaction between the two inputs), or flat regions (neither input matters much in that area).",
   },
   partial_dependence: {
     title: "Partial Dependence",
-    what: "Shows the average effect of one (or two) features on the output, marginalizing over all other features. Unlike a sweep (which fixes others at median), this averages over the actual distribution of other features.",
+    what: "Sweeps one (or two) features with all other features held at one point: their median, or the reference case when one is on. It does not average over the data (the ICE plot's bold line does).",
     how: "The curve shows the expected output as a function of the selected feature. Steeper slopes = stronger feature effect.",
-    look_for: "Compare with the line plot for the same feature. If they differ significantly, interactions with other features matter. Flat partial dependence means the feature has little average effect.",
+    look_for: "Compare with the ICE plot's average for the same feature: if they differ, interactions with other features matter. Change the reference case to see whether the curve's shape depends on where the others sit.",
   },
   pca_scatter: {
     title: "PCA Scatter",
@@ -236,6 +238,18 @@ function VizSlot({
   const [pairFix, setPairFix] = useState<"median" | "average">(ip.fix === "average" ? "average" : "median");
   const [pairsLarge, setPairsLarge] = useState(false);
   const readOnly = useReadOnly();
+  const kase = useReferenceCase();
+  // a pinned view that held the others at a reference case reopens with that case
+  useEffect(() => {
+    const r = ip.reference as { x?: number[]; spec?: Record<string, unknown> } | undefined;
+    if (r && Array.isArray(r.x)) {
+      bindGenome(genomeId);
+      setCase({ enabled: true, spec: (r.spec ?? { base: "median" }) as any, x: r.x });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const usesCase = kase.enabled && USES_REFERENCE.has(vizType) && !(vizType === "pairs_plot" && pairFix === "average");
+  const heldText = usesCase ? `others at the reference case (${describeSpec(kase.spec)})` : "others at median";
   const pairsAnnRef = useRef(annotation.id);
   useEffect(() => {
     if (pairsAnnRef.current === annotation.id) return; // keep a restored selection on mount
@@ -278,8 +292,10 @@ function VizSlot({
       if (pairDims) params.dims = pairDims;
       params.fix = pairFix;
     }
+    const ref = referenceParam(kase, vizType, pairFix);
+    if (ref) params.reference = ref;
     return params;
-  }, [vizType, inputDim, inputDims, outputDim, pairDims, pairFix]);
+  }, [vizType, inputDim, inputDims, outputDim, pairDims, pairFix, kase]);
 
   // The view on screen, as a pin stores it (dims also by node id, so it reopens by node)
   const currentView = useMemo((): { view: PinView; inputs: PinInput[] } => {
@@ -304,11 +320,10 @@ function VizSlot({
     if (names.length) desc += ` of ${names.join(" vs ")}`;
     if (NEEDS_OUTPUT_DIM[vizType] && nOut > 1) desc += ` → ${outName}`;
     if (nIn > names.length) {
-      if (vizType === "line" || vizType === "heatmap") desc += ", others at median";
-      else if (vizType === "partial_dependence") desc += ", others averaged over the data";
+      if (vizType === "line" || vizType === "heatmap" || vizType === "partial_dependence" || vizType === "feature_output_scatter") desc += `, ${heldText}`;
       else if (vizType === "ice") desc += ", one curve per row (others at the row's values)";
     }
-    if (vizType === "pairs_plot") desc += pairFix === "average" ? ", others averaged" : ", others at median";
+    if (vizType === "pairs_plot") desc += pairFix === "average" ? ", others averaged" : `, ${heldText}`;
     desc += `; split ${splitChoice}`;
     return {
       view: {
@@ -324,7 +339,7 @@ function VizSlot({
       },
       inputs,
     };
-  }, [vizType, inputDim, inputDims, outputDim, pairDims, pairFix, vizData, annotation, fl, buildVizParams, splitChoice, sampleFraction, viewMode, splitId, nIn, nOut, isWholeModel]);
+  }, [vizType, inputDim, inputDims, outputDim, pairDims, pairFix, vizData, annotation, fl, buildVizParams, splitChoice, sampleFraction, viewMode, splitId, nIn, nOut, isWholeModel, heldText]);
 
   useEffect(() => {
     onViewChange?.(slot, currentView.view, currentView.inputs);
@@ -390,8 +405,10 @@ function VizSlot({
 
   // Auto-compute viz when parameters change (skip SHAP — it's expensive)
   const autoComputeInitRef = useRef(false);
+  const caseKey = usesCase ? (kase.x ? kase.x.join(",") : "pending") : "off";
   useEffect(() => {
     if (!splitId || vizType === "shap") return;
+    if (caseKey === "pending") return; // the case is being resolved: compute once it is
     if (!autoComputeInitRef.current) {
       autoComputeInitRef.current = true;
       doComputeViz(false);
@@ -399,7 +416,7 @@ function VizSlot({
     }
     doComputeViz(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [splitId, vizType, inputDim, inputDims[0], inputDims[1], outputDim, splitChoice, viewMode, pairDims?.join(","), pairFix]);
+  }, [splitId, vizType, inputDim, inputDims[0], inputDims[1], outputDim, splitChoice, viewMode, pairDims?.join(","), pairFix, caseKey]);
 
   const handleSnapshot = useCallback(async () => {
     if (!svgRef.current) return;
@@ -461,7 +478,7 @@ function VizSlot({
                   <option key={i} value={i}>{entryName(i, true)}</option>
                 ))}
               </select>
-              {nIn > 1 && <span className="dim-hint">others fixed at median</span>}
+              {nIn > 1 && USES_REFERENCE.has(vizType) && <span className="dim-hint">{heldText}</span>}
             </div>
           )}
           {inputMode === "pair" && nIn >= 2 && (
@@ -480,7 +497,7 @@ function VizSlot({
                   ))}
                 </select>
               </div>
-              {nIn > 2 && <span className="dim-hint">others fixed at median</span>}
+              {nIn > 2 && <span className="dim-hint">{heldText}</span>}
             </div>
           )}
           {vizType === "pairs_plot" && nIn >= 3 && (
@@ -979,6 +996,15 @@ export function EvidencePanel({
             ) : null}
           </div>
         </div>
+      )}
+
+      {splitId && (
+        <ReferenceCasePanel
+          genomeId={genomeId}
+          splitId={splitId}
+          annotationId={isWholeModel || isNodeLevel ? undefined : annotation.id}
+          nodeId={isNodeLevel ? nodeId : undefined}
+        />
       )}
 
       {splitId && (

@@ -1343,3 +1343,66 @@ export async function updateConfigTemplate(
 export async function deleteConfigTemplate(id: string): Promise<void> {
   await fetchJson(`${API_BASE}/config-templates/${id}`, { method: "DELETE" });
 }
+
+// ── Reference case (case explorer) ───────────────────────────────────────
+
+/** How a reference case is built (explaneat/analysis/reference_case.py). */
+export type CaseSpec = {
+  base?: "median" | "per_column_median" | "mean" | "quantile" | "row";
+  q?: number;
+  row?: number;
+  /** raw column name -> value (raw units) */
+  overrides?: Record<string, number>;
+  /** one-hot base -> level column name (null: no level on) */
+  groups?: Record<string, string | null>;
+};
+
+export type CaseColumn = {
+  column: number; raw: string; label: string; full_label: string; one_means: string | null;
+  unit: string | null; kind: "continuous" | "binary" | "onehot"; value: number;
+  median: number; mean: number; min: number; max: number; q25: number; q75: number; percentile: number;
+};
+
+export type CaseGroup = { base: string; columns: number[]; levels: string[]; active: string[]; support: number };
+
+export type CaseOutcome = number | { time: number; event: number } | null;
+
+export type ReferenceCaseResponse = {
+  x: number[];
+  columns: CaseColumn[];
+  groups: CaseGroup[];
+  prediction: { outputs: { name: string; value: number; percentile: number }[] };
+  nearest: { row: number; distance: number; outcome: CaseOutcome; prediction: number[]; differs: string[] }[];
+  typicality: { nn_distance: number; percentile: number; n_reference: number; is_data_row: boolean; verdict: string };
+  warnings: string[];
+  n_rows: number;
+  rows_used: string;
+  spec: CaseSpec;
+  row?: { index: number; outcome: CaseOutcome; in_training: boolean };
+  entry: { nodes: string[]; names: string[]; values: number[] } | null;
+};
+
+export async function getReferenceCase(
+  genomeId: string,
+  request: { dataset_split_id: string; annotation_id?: string; node_id?: string; spec?: CaseSpec; x?: number[] },
+): Promise<ReferenceCaseResponse> {
+  return fetchJson<ReferenceCaseResponse>(`${API_BASE}/genomes/${genomeId}/evidence/reference-case`, {
+    method: "POST",
+    body: JSON.stringify(request),
+  });
+}
+
+export type CaseRowsResponse = {
+  total: number; offset: number; split: string;
+  rows: { row: number; outcome: CaseOutcome; prediction: number[] }[];
+};
+
+export async function getCaseRows(
+  genomeId: string,
+  request: { dataset_split_id: string; split?: "train" | "test" | "val" | "both"; offset?: number; limit?: number; outcome?: number | null; order?: "index" | "prediction" },
+): Promise<CaseRowsResponse> {
+  return fetchJson<CaseRowsResponse>(`${API_BASE}/genomes/${genomeId}/evidence/case-rows`, {
+    method: "POST",
+    body: JSON.stringify(request),
+  });
+}
