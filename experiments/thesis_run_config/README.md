@@ -48,8 +48,9 @@ without it.
 - Every family's runs share one NEAT config (all options except `num_inputs`) and one set of run parameters
   (except seed and commit).
 - The config file each database run names (`run_params.neat_config`) gives every option equal to what the
-  run stored; the two original networks equal `experiments/10seed/configs/{heart,monk2}.ini` (as
-  `experiments/10seed/PREREG.md` states).
+  run stored; the three original networks equal `experiments/10seed/configs/{heart,adult,monk2}.ini` (as
+  `experiments/10seed/PREREG.md` states). The original Adult run was launched from the Heart run's template
+  with six NEAT options changed: exactly those six differ from the template (asserted, both values kept).
 - Experiment 2 configs and run parameters are equal in `explaneat_dev` and `explaneat_v4`.
 - The Connect-4 configs equal the config text stored when the selected run was imported into `explaneat_dev`.
 - The WHAS500 Cox runs' config text equals `experiments/survival/configs/survival.ini` (inputs aside).

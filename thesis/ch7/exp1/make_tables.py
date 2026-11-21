@@ -11,7 +11,9 @@ Outputs:
                                 (experiments/benchmarks/benchmarks.csv; benchmark_tables.py, shared
                                 with Experiment 2's exp2-benchmarks.tex)
 Sources: data/networks.json (extract_db.py), experiments/benchmarks/results/propneat.json and
-survival.json, experiments/benchmarks/benchmarks.csv.
+survival.json, experiments/benchmarks/benchmarks.csv. The original Adult network's AUCs come from
+networks.json ("perf") until propneat.json holds an Experiment 1 Adult entry; then from propneat.json,
+asserted equal.
 Captions hold only a title and the table's keys (Mike, 20 Nov 2026); the method and results sentences
 they used to carry are in thesis/ch7/CAPTION_MOVED_TEXT.md.
 """
@@ -46,7 +48,8 @@ def write(name, src):
 
 
 # the rows of the per-network table, in the order of the chapter's Experiment 1
-ORDER = [("paper-heart", "Heart (original network)$^\\dagger$"), ("paper-monk2", "MONK-2 (original network)$^\\dagger$"),
+ORDER = [("paper-heart", "Heart (original network)$^\\dagger$"), ("paper-adult", "Adult (original network)$^\\dagger$"),
+         ("paper-monk2", "MONK-2 (original network)$^\\dagger$"),
          ("cox-whas500-s0", "WHAS500 (Cox)$^\\ast$"), ("c4cap-main-h10-e50-s1", "Connect-4, cells (s1)"),
          ("c4lf-lines-heavy-s0", "Connect-4, lines (s0)"), ("shape-A", "Synthetic U (s0)"),
          ("shape-B", "Synthetic saddle (s0)"), ("shape-C", "Synthetic U $+$ saddle (s4)")]
@@ -56,6 +59,27 @@ HEAD = (r"Network & \makecell{Train\\AUC} & \makecell{Test AUC\\(95\% CI)} & \ma
         r"Density & Depth & \makecell{Leaf $+$\\comp.} & Splits & \makecell{Id.\\nodes} & "
         r"\makecell{Coverage\\struct./comp.} & \makecell{Agent\\min} & "
         r"\makecell{Verif.\\min}")
+
+
+ORIGINAL = ("paper-heart", "paper-adult", "paper-monk2")
+
+
+def perf(lab, r, P):
+    """Train / test AUC of a classification network: experiments/benchmarks/results/propneat.json, or, for a
+    network it does not hold yet (the original Adult network, 21 Nov 2026), extract_db.py's own read-only
+    computation (the code of experiments/10seed/runs_paper_reference.csv, asserted equal to it). When both
+    exist they must agree."""
+    own = r.get("perf")
+    if lab in P:
+        p = P[lab]
+        if own is not None:
+            assert p["genome_id"] == r["genome"], lab
+            for k in ("train_auc", "test_auc"):
+                assert abs(p[k] - own[k]) < 1e-9, (lab, k, p[k], own[k])
+            assert all(abs(a - b) < 1e-9 for a, b in zip(p["test_auc_ci95"], own["test_auc_ci95"])), lab
+        return p
+    assert own is not None, (lab, "no AUC in propneat.json or networks.json")
+    return own
 
 
 def table_networks():
@@ -70,7 +94,7 @@ def table_networks():
         if lab.startswith("cox-"):
             tr, te, lo, hi = S["train_harrell_c"], S["harrell_c"], *S["harrell_c_ci95"]
         else:
-            p = P[lab]
+            p = perf(lab, r, P)
             tr, te, (lo, hi) = p["train_auc"], p["test_auc"], p["test_auc_ci95"]
         cells = [name, num(tr), f"{num(te)} {{\\scriptsize [{num(lo)}, {num(hi)}]}}", f"{r['inputs']}/{r['n_inputs']}",
                  str(r["hidden"]), str(r["conns"]), f"{num(r['skippiness'], 2)} ({r['skips']})", num(r["density"], 3),
@@ -92,15 +116,19 @@ def table_networks():
                                   f"{num(min(x['skippiness'] for x in X), 2)}--{num(max(x['skippiness'] for x in X), 2)}}}}}",
                                   mr("density", 3), mr("depth"), "--", "--", "--", "--", "--", "--"]) + " \\\\",
              "    \\bottomrule", "  \\end{tabular}", "  \\end{adjustbox}"]
-    paper = [N["networks"][k] for k in ("paper-heart", "paper-monk2")]
+    paper = [N["networks"][k] for k in ORIGINAL]
     v4 = [N["networks"][k] for k, _ in ORDER if not k.startswith("paper-")]
     assert all(r["mike"] is None for r in N["networks"].values())
     assert {r["protocol"] for r in paper} == {paper[0]["protocol"]} and len({r["protocol"] for r in v4}) == 1
     # the caption's statements about the computed values
     assert all(r["agent"] is None for r in paper) and all(r["agent"] is not None for r in v4)
-    mk = N["networks"]["paper-monk2"]
-    assert mk["cov_c"] == 1.0 and mk["exempt_disconnected"] and mk["rec_cov_c"] < 1.0, mk
-    assert all(not r["exempt_disconnected"] for k, r in N["networks"].items() if k != "paper-monk2")
+    # MONK-2's and Adult's pruned-input annotations are exempt from the single-root rule (D4): full
+    # compositional coverage now, below 1 under the stored stream's earlier definition
+    for k in ("paper-monk2", "paper-adult"):
+        mk = N["networks"][k]
+        assert mk["cov_c"] == 1.0 and mk["exempt_disconnected"] and mk["rec_cov_c"] < 1.0, mk
+    assert all(not r["exempt_disconnected"] for k, r in N["networks"].items() if k not in ("paper-monk2", "paper-adult"))
+    assert [k for k, _ in ORDER if k.startswith("paper-")] == list(ORIGINAL)
     # Caption: title and keys only (Mike, 20 Nov); the removed method and results sentences are kept in
     # thesis/ch7/CAPTION_MOVED_TEXT.md for the body text.
     cap = ("Experiment 1: the explained network of each dataset. (s$k$): seed $k$; --: none or not recorded. "

@@ -13,14 +13,15 @@ starting topology, it says so in its methods").
    - Heart-style (`experiments/10seed/configs/heart.ini`; Heart original and Heart-100, synthetic, Cox,
      Connect-4, XOR): node add/delete 0.4/0.2, conn add/delete 0.5/0.3, compatibility threshold 3
      (disjoint coefficient 1). XOR has node add 0.3.
-   - Adult / Churn (`adult.ini`, `churn.ini`): node 0.7/0.1, conn 0.68/0.15, threshold 5 (disjoint 2).
+   - Adult / Churn (`adult.ini`, `churn.ini`; Adult's original network and the ten Experiment 2 Adult seeds,
+     Churn): node 0.7/0.1, conn 0.68/0.15, threshold 5 (disjoint 2).
    - MONK-2 (original network and the ten Experiment 3 seeds; neat-python's default template values): node
      0.15/0.05, conn 0.3/0.1, enable toggle 0.01, and **weight and bias mutation switched on**
      (0.8/0.5/0.1 and 0.7/0.5/0.1, rate/power/replace). Every other family has weight and bias mutation 0:
      only backprop changes their weights.
    Experiment 2's bullet list ("a population of 250 for 100 generations; five epochs ...") is right, but
    Adult and Churn ran a different NEAT config from Heart-100.
-2. **Phantom-weight mask.** Experiment 2, the two original networks, the synthetic runs and the ten
+2. **Phantom-weight mask.** Experiment 2, the three original networks, the synthetic runs and the ten
    MONK-2 seeds trained **unmasked**: the code at their commits has no mask (or the
    run recorded `mask_phantom: false`), so dense phantom weights trained and were discarded at write-back.
    Cox, Connect-4 and XOR trained masked; Experiment 3's fine-tuning is masked. The prose does not say.
@@ -98,3 +99,27 @@ values themselves are in the table and in `experiments/10seed/PREREG.md` ("Confi
 MONK-2 original run used neat-python's default template (weight and bias mutation on); nothing
 records that as intended. The Heart original run stopped after 39 evaluated generations of a
 100-generation budget (stored as interrupted).
+
+## The original Adult network back in Experiment 1 (21 Nov 2026, branch thesis/adult-exp1)
+
+Mike's decision: Experiment 1 presents the original Adult network again, beside the original Heart and MONK-2
+networks (Adult stays the ten-seed study of Experiment 2). New row "Adult, original network" (`paper_adult`),
+read like the other original networks:
+
+- **Which run.** The explained genome `4bc8fa07` is read from `experiments/benchmarks/results/propneat.json`
+  when that file holds an Experiment 1 Adult entry (added on branch thesis/wide-grids), else from
+  `experiments/10seed/runs_paper_reference.csv` (the three original networks); where both hold it they must
+  agree. Its experiment is "No pressure" (`dbab685c`), 100 generations stored, `completed`, no seed recorded
+  ("n.r."), commit `0bd2e54`; the genome has the run's highest training fitness (asserted).
+- **Config.** `config_json` equals `experiments/10seed/configs/adult.ini` in every option (asserted, as for
+  Heart and MONK-2). The run was launched from template `high-exploration` (`bb576521`, the Heart run's
+  template) with six NEAT options changed (`PREREG.md`: "template `bb576521` + overrides"). The extractor
+  asserts that exactly these six differ and records both values (`data.json`,
+  `families.paper_adult.template.overrides`): node add/delete 0.4/0.2 -> 0.7/0.1, conn add/delete
+  0.5/0.3 -> 0.68/0.15, compatibility threshold 3 -> 5, disjoint coefficient 1 -> 2. This is the Adult /
+  Churn family of finding 1, the run the author's account below describes.
+- **Training.** The run stored no `run_params`; generations, epochs and fitness come from the template's
+  training block (100, 5, AUC), as for Heart's original network; population 250 equals the stored config.
+  No phantom mask: the code at `0bd2e54` has no mask parameter.
+
+Both scripts were run twice after the change: byte-identical `data.json`, `run_config.csv` and `.tex`.

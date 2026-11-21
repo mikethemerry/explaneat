@@ -27,10 +27,18 @@ explained network of each Experiment 1 dataset. Sources:
   audit): annotation counts, splits and identity nodes must agree (asserted); coverage, the error
   and minutes may differ and are printed. The AAAI paper explanations have no record: their
   rec_* values are experiments/aaai27/recheck/results/paper_coverage_options.json ("current", the
-  stored stream under the definition before D4: MONK-2's compositional coverage is 0.75 there
-  because its pruned-input annotation sits outside the root) and
+  stored stream under the definition before D4: MONK-2's and Adult's compositional coverage are
+  0.75 and 0.9 there because their pruned-input annotations sit outside the root) and
   experiments/explanation_levels/levels/paper-*.json (the error); their annotation counts are
   asserted equal. They predate the evidence log, so they have no explaining minutes.
+- performance of the original Adult network (``perf``; 21 Nov 2026, while
+  experiments/benchmarks/results/propneat.json has no Experiment 1 Adult entry): train / test AUC,
+  the 10,000-resample 95% interval and accuracy at 0.5, computed here read-only with
+  experiments/10seed/compute_runs (load_split on the run's split, bootstrap_indices, performance), the
+  code that wrote experiments/10seed/runs_paper_reference.csv; asserted equal to that file's adult row.
+  make_tables.py prefers propneat.json's entry when it has one and asserts the two agree.
+- parts: each stored annotation (name, entry and exit counts, the model inputs among its entries, its
+  children), read from the explanation's annotate operations; for the book's case cards.
 The whole process runs with PGOPTIONS default_transaction_read_only=on (no write can reach the
 database). Run it twice and compare: data/networks.json is byte-identical.
 - XOR: the 30 seeds' reduced networks in experiments/xor/xor_results.json (no database), rebuilt
@@ -72,6 +80,9 @@ NETS = {
     "paper-heart": dict(dataset="Heart", genome="9022a9eb-ecf9-41ba-b138-28ed4d131c9d", record=None,
                         paper="heart", levels="explanation_levels/levels/paper-heart.json", protocol=PAPER,
                         selection="the AAAI paper's Heart genome (40 generations)"),
+    "paper-adult": dict(dataset="Adult", genome="4bc8fa07-bbf5-48e4-96a8-77be8b577ba3", record=None,
+                        paper="adult", levels="explanation_levels/levels/paper-adult.json", protocol=PAPER,
+                        selection="the AAAI paper's Adult genome (\"No pressure\", 100 generations)", perf="adult"),
     "paper-monk2": dict(dataset="MONK-2", genome="23dde0fa-a635-4974-91aa-c05266ea0747", record=None,
                         paper="monk2", levels="explanation_levels/levels/paper-monk2.json", protocol=PAPER,
                         selection="the AAAI paper's MONK-2 genome"),
@@ -114,6 +125,30 @@ def checks(genome_id):
     return cov, c
 
 
+def performance(cr, s, label, m, g, exp, genome, cfg):
+    """Train / test AUC, 95% interval and accuracy of a network, by the code of runs_paper_reference.csv."""
+    sid = cr.SPLITS[m["perf"]]
+    assert str(exp.split_id) == sid, (label, str(exp.split_id), sid)
+    data = cr.load_split(s, sid)
+    p = cr.performance(genome, cfg, data, cr.bootstrap_indices(len(data["y_test"])), g.fitness)
+    path = "10seed/runs_paper_reference.csv"
+    with open(E / path) as f:
+        rec = [r for r in csv.DictReader(f) if r["dataset"] == m["perf"] and r["seed"] == "paper"]
+    assert len(rec) == 1 and rec[0]["genome_id"] == m["genome"], (label, len(rec))
+    rec = rec[0]
+    out = {"split_id": sid, "train_auc": float(p["train_auc"]), "test_auc": float(p["test_auc"]),
+           "test_auc_ci95": [float(p["test_auc_ci_lo"]), float(p["test_auc_ci_hi"])],
+           "n_boot_used": int(p["n_boot_used"]), "test_accuracy": float(p["test_acc_0.5"]),
+           "train_accuracy": float(p["train_acc_0.5"]), "n_train": int(p["n_train"]), "n_test": int(p["n_test"]),
+           "record": {"file": f"experiments/{path}", **{k: float(rec[k]) for k in (
+               "train_auc", "test_auc", "test_auc_ci_lo", "test_auc_ci_hi")}}}
+    for k, v in (("train_auc", out["train_auc"]), ("test_auc", out["test_auc"]),
+                 ("test_auc_ci_lo", out["test_auc_ci95"][0]), ("test_auc_ci_hi", out["test_auc_ci95"][1])):
+        assert abs(v - out["record"][k]) < 1e-9, (label, k, v, out["record"][k])
+    assert int(rec["n_boot_used"]) == out["n_boot_used"] and int(rec["n_test"]) == out["n_test"], label
+    return out
+
+
 def network(cr, label, m):
     from explaneat.core.explaneat import ExplaNEAT
     from explaneat.db.models import Dataset, Explanation
@@ -130,6 +165,7 @@ def network(cr, label, m):
         ops = list(ex.operations or [])
         ex_id = str(ex.id)
         w = explaining_window(s, m["genome"])   # asserts the genome has exactly one explanation
+        perf = performance(cr, s, label, m, g, exp, genome, cfg) if m.get("perf") else None
     assert w["explanation_id"] == ex_id, label
     cov, chk = checks(m["genome"])
     st = cr.structure(genome, cfg, names)
@@ -142,6 +178,17 @@ def network(cr, label, m):
            "density": float(e.density()), "skippiness": float(e.skippines()), "layers": int(e.depth()),
            "splits": oc.get("split_node", 0), "identity": oc.get("add_identity_node", 0),
            "annotate_ops": oc.get("annotate", 0), "mike": None}
+    if perf is not None:
+        out["perf"] = perf
+    # the parts of the explanation, as stored (annotate operations): name, entry / exit counts, the
+    # model inputs among the entries (input key i <-> data column i, as compute_runs.structure) and children
+    col = {str(k): names[i] for i, k in enumerate(cfg.genome_config.input_keys)}
+    out["parts"] = [{"name": o["params"]["name"], "n_entry": len(o["params"]["entry_nodes"]),
+                     "n_exit": len(o["params"]["exit_nodes"]),
+                     "entry_inputs": [col[n] for n in o["params"]["entry_nodes"] if n in col],
+                     "children": list(o["params"].get("child_annotation_ids") or [])}
+                    for o in ops if o["type"] == "annotate"]
+    assert len(out["parts"]) == out["annotate_ops"], label
     assert out["layers"] == out["depth"] + 1, (label, out["layers"], out["depth"])
     # computed: annotation counts (operations), coverage and hierarchy (get_coverage), hierarchy
     # completeness and function preservation (check_explanation), explaining minutes (database writes)

@@ -8,7 +8,9 @@ Sources, all read-only:
   (``experiments/10seed/compute_runs.ReadOnlySession``; ``PGOPTIONS=-c default_transaction_read_only=on``
   as well). For a prepared (encoded) dataset the raw parent row is read too (``source_dataset_id``).
   The split each reported run actually used is checked against the registry: Experiment 2 via the
-  runs CSVs' experiment ids, Experiment 1 via the genome ids in ``experiments/benchmarks/results/propneat.json``;
+  runs CSVs' experiment ids, Experiment 1 via the genome ids in ``experiments/benchmarks/results/propneat.json``
+  and the three original networks (Heart, Adult, MONK-2) in ``experiments/10seed/runs_paper_reference.csv``.
+  These checks also say which experiments report each classification dataset ("used in");
 * survival sets: the Cox case's split files (``experiments/survival/cox_case/splits``), its loader
   (``explaneat.survival.data.load_builtin``, scikit-survival bundled data) and the selected run's record
   (``experiments/survival/cox_case/runs/<tag>.json``), checked against each other;
@@ -49,6 +51,7 @@ from common import CLASSIFICATION  # noqa: E402  (experiments/benchmarks/common.
 OUT = HERE / "data.json"
 COX = REPO / "experiments" / "survival" / "cox_case"
 PROPNEAT = REPO / "experiments" / "benchmarks" / "results" / "propneat.json"
+PAPER_REF = REPO / "experiments" / "10seed" / "runs_paper_reference.csv"   # the three original networks
 # Experiment 2 runs: (runs CSV, value of its `dataset` column, registry name)
 EXP2_RUNS = [
     (REPO / "experiments" / "10seed" / "runs.csv", "adult", "adult"),
@@ -193,17 +196,22 @@ def run_splits(cr, sets):
         checks.setdefault(name, []).append({"experiment": 2, "file": str(path.relative_to(REPO)), "runs": len(rows),
                                             "split_id": sid})
         cr.db.engine.dispose()
-    # Experiment 1: each explained network's genome
+    # Experiment 1: each explained network's genome (propneat.json), and the three original networks
+    # (experiments/10seed/runs_paper_reference.csv), all presented in Experiment 1 (21 Nov 2026), whether or
+    # not propneat.json holds them yet (its Adult entry is added on a separate branch)
     pn = json.loads(PROPNEAT.read_text())["exp1"]
-    for tag, v in pn.items():
-        if not v.get("genome_id"):
-            continue
-        name = v["dataset"]
+    nets = [(tag, v["dataset"], v["genome_id"], v["split_id"]) for tag, v in pn.items() if v.get("genome_id")]
+    seen = {g for _, _, g, _ in nets}
+    for r in csv.DictReader(PAPER_REF.open()):
+        assert r["seed"] == "paper", r["seed"]
+        if r["genome_id"] not in seen:
+            nets.append((f"paper-{r['dataset']}", r["dataset"], r["genome_id"], CLASSIFICATION[r["dataset"]][1]))
+    for tag, name, gid, split_id in nets:
         dbname, sid, _ = CLASSIFICATION[name]
         cr.db.init_db(f"postgresql://localhost/{dbname}")
         with cr.ReadOnlySession() as s:
-            got, ename = s.execute(q_gen, {"g": v["genome_id"]}).fetchone()
-        assert str(got) == sid == v["split_id"], (tag, got)
+            got, ename = s.execute(q_gen, {"g": gid}).fetchone()
+        assert str(got) == sid == split_id, (tag, got)
         checks.setdefault(name, []).append({"experiment": 1, "network": tag, "experiment_name": ename,
                                             "split_id": sid})
         cr.db.engine.dispose()

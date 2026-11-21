@@ -8,13 +8,14 @@ PROSE = {
     "in groups, each testing a different kind of signal.",
 
     "For linear or approximately linear binary classification we used Heart, on a fixed split (242 training "
-    "and 61 test rows), chosen as the binary-outcome dataset closest to the VARIANZ data of Chapter 8. MONK-2 (345 / 87) "
+    "and 61 test rows), chosen as the binary-outcome dataset closest to the VARIANZ data of Chapter 8, and Adult, also "
+    "on a fixed split (39,073 / 9,769), a larger census dataset with 107 inputs after one-hot encoding. MONK-2 (345 / 87) "
     "was chosen for its known, provable rule. WHAS500 demonstrates the survival path ahead of Chapter 8, with an "
     "event-stratified split of 320 training, 80 validation and 100 test rows. Connect-4 (67,557 eight-ply positions; "
     "54,045 / 13,512) is relational: it was run on the 42 raw board cells and, with the same rows, split and target, on "
     "line features. XOR uses its four rows. Three synthetic datasets, U, saddle and both (1,500 / 500), carry non-linear "
-    "terms with a known truth. Adult and Churn were also run; they are reported in Experiment 2, where harder models are "
-    "examined for consistency across runs. GBSG2 was run as a second survival dataset but, like WHAS500, is close to "
+    "terms with a known truth. Adult and Churn were also run as ten-seed studies; those are reported in Experiment 2, "
+    "where harder models are examined for consistency across runs. GBSG2 was run as a second survival dataset but, like WHAS500, is close to "
     "linear (its network kept no hidden unit), so it adds nothing here.",
 
     "The synthetic datasets share 2,000 rows of ten clinical-style inputs, one of them a noise column, and a common "
@@ -25,18 +26,20 @@ PROSE = {
     "0.10 test AUC and gradient boosting beats logistic regression by at least 0.05. The terms are inspired by "
     "interactions that could occur, not intended to be true to the real world.",
 
-    "All networks were trained with PropNEAT, with backpropagation inside evolution. Heart, MONK-2 and the synthetic cases used a "
+    "All networks were trained with PropNEAT, with backpropagation inside evolution. Heart, Adult, MONK-2 and the synthetic cases used a "
     "population of 250 and five backprop epochs per generation, for 40 to 100 generations (300 in the longer synthetic "
     "runs). The Cox model used a population of 150 for 60 generations, the Efron partial likelihood and an identity "
     "output. Connect-4 on the raw cells used a population of 150 for 80 generations, 50 epochs per generation and ten "
     "hidden units at the start; the line-feature runs used both this configuration and the default one. XOR was run "
     "with 30 seeds at a population of 150. In each run we kept the best genome by training fitness (for Cox, the lowest "
-    "validation loss); the test rows were never used to select. Heart and MONK-2 are the original networks, explained before the frozen method was in place.",
+    "validation loss); the test rows were never used to select. Heart, Adult and MONK-2 are the original networks, "
+    "explained before the frozen method was in place; the Adult run used the higher structural mutation rates and wider "
+    "speciation threshold of the Adult and Churn configuration.",
 
     "Each network was explained with agent assistance, using function-preserving operations only (splits, identity "
     "nodes and annotations), on training rows only, within a three-hour box and with one explaining agent per network. "
     "WHAS500, the Connect-4 networks and the synthetic cases used the frozen v4 method; the first Connect-4 runs used "
-    "protocol v3, and Heart and MONK-2 keep their original explanations. A blind, read-only verifier graded the "
+    "protocol v3, and Heart, Adult and MONK-2 keep their original explanations. A blind, read-only verifier graded the "
     "WHAS500 network, the Connect-4 raw-cell network, the three line-feature networks and the three synthetic networks. "
     "XOR was not explained by an agent: its solutions were enumerated by linear programming and checked by script.",
 

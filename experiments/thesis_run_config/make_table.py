@@ -23,17 +23,21 @@ D = json.loads((HERE / "data.json").read_text())
 F = D["families"]
 
 # row order of panel A (NEAT) and panel B (ExConNEAT) -- curated
-NEAT_ROWS = ["paper_heart", "paper_monk2", "cox", "c4_cells", "c4_lines", "xor", "shapes",
+NEAT_ROWS = ["paper_heart", "paper_adult", "paper_monk2", "cox", "c4_cells", "c4_lines", "xor", "shapes",
              "adult", "churn", "heart100", "monk2_10", "exp3_ft"]
 CONV_ROWS = ["conv_p1", "conv_p2", "conv_p3"]   # the phases of the presented MNIST 10-class network
 NAME = {  # study names as in the Chapter 7 tables -- curated
-    "paper_heart": "Heart, original network", "paper_monk2": "MONK-2, original network",
+    "paper_heart": "Heart, original network", "paper_adult": "Adult, original network",
+    "paper_monk2": "MONK-2, original network",
     "cox": "WHAS500 (Cox)", "c4_cells": "Connect-4, cells", "c4_lines": "Connect-4, lines",
     "xor": "XOR", "shapes": "Synthetic U, saddle, U $+$ saddle",
     "adult": "Adult", "churn": "Churn", "heart100": "Heart-100", "monk2_10": "MONK-2, ten seeds (grafting)",
     "exp3_ft": "Fine-tuning after a graft",
     "conv_p1": "1. 10k run", "conv_p2": "2. Pruning phase", "conv_p3": "3. 50k warm start",
 }
+# the original networks (Experiment 1): one run each, launched from a template (Heart, Adult) or the ingest
+# script (MONK-2) -- curated
+ORIGINAL = ("paper_heart", "paper_adult", "paper_monk2")
 # the datasets of the synthetic row, in the order of its name (keys of shapes' selected.per_dataset) -- curated
 SHAPES_ORDER = ["u", "saddle", "both"]
 # families whose every seed is presented (Experiment 2: all ten networks; XOR: all 30 analysed; Experiment 3's
@@ -109,7 +113,7 @@ def presented_runs(k, fr):
     """The runs whose network Chapter 7 presents (one per dataset of the family, or every seed)."""
     if k in ALL_SEEDS:
         return fr["runs"]
-    if k in ("paper_heart", "paper_monk2"):
+    if k in ORIGINAL:
         assert fr["n_runs"] == 1
         return fr["runs"]
     by_name = {r["name"]: r for r in fr["runs"]}
@@ -160,7 +164,7 @@ def generations(k, fr):
 
 def epochs(k, fr):
     rp = fr["run_params"]
-    if k == "paper_heart":
+    if k in ("paper_heart", "paper_adult"):
         return str(fr["template"]["training"]["n_epochs_backprop"])
     if k == "paper_monk2":
         return str(fr["launch"]["TRAIN"]["n_epochs_backprop"])
@@ -170,7 +174,7 @@ def epochs(k, fr):
 
 
 def fitness_fn(k, fr):
-    if k == "paper_heart":
+    if k in ("paper_heart", "paper_adult"):
         return fr["template"]["training"]["fitness_function"]
     if k == "paper_monk2":
         return fr["launch"]["TRAIN"]["fitness_function"]
@@ -223,7 +227,7 @@ def mutation_wb(n):
 
 
 def selection(k, fr):
-    if k in ("paper_heart", "paper_monk2"):
+    if k in ORIGINAL:
         assert fr["selected"]["rule"] == "highest training fitness of the run" and fr["selected"]["checked"]
         return "train"
     if k == "cox":

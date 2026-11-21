@@ -22,6 +22,80 @@
    "identity": 0,
    "annotate_ops": 6,
    "mike": null,
+   "parts": [
+    {
+     "name": "benign_profile_gate",
+     "n_entry": 3,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "benign_profile_gate_534path",
+     "n_entry": 3,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "chol_threshold",
+     "n_entry": 1,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "restbp_chol_interaction",
+     "n_entry": 2,
+     "n_exit": 1,
+     "entry_inputs": [
+      "trestbps"
+     ],
+     "children": []
+    },
+    {
+     "name": "risk_aggregation_gate",
+     "n_entry": 2,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": [
+      "benign_profile_gate_534path",
+      "chol_threshold"
+     ]
+    },
+    {
+     "name": "heart_disease_risk_score",
+     "n_entry": 24,
+     "n_exit": 1,
+     "entry_inputs": [
+      "age",
+      "cp:1",
+      "cp:2",
+      "cp:4",
+      "fbs:1",
+      "restecg:1",
+      "thalach",
+      "oldpeak",
+      "slope:1",
+      "slope:2",
+      "thal:4",
+      "thal:6",
+      "thal:7",
+      "sex:1",
+      "cp:3",
+      "restecg:0",
+      "restecg:2",
+      "exang:1",
+      "slope:3",
+      "thal:3"
+     ],
+     "children": [
+      "benign_profile_gate",
+      "restbp_chol_interaction",
+      "risk_aggregation_gate"
+     ]
+    }
+   ],
    "leaf": 4,
    "comp": 2,
    "cov_s": 1.0,
@@ -40,6 +114,277 @@
    "rec_cov_c": 1.0,
    "rec_hierarchy_complete": true,
    "rec_fp": 2.220446049250313e-16,
+   "rec_agent": null,
+   "record": null
+  },
+  "paper-adult": {
+   "label": "paper-adult",
+   "dataset": "Adult",
+   "genome": "4bc8fa07-bbf5-48e4-96a8-77be8b577ba3",
+   "protocol": "AAAI paper explanation (July 2026, before the v4 method)",
+   "selection": "the AAAI paper's Adult genome (\"No pressure\", 100 generations)",
+   "explanation_id": "7e3761fe-ba64-4bbd-8d36-ca75213b968a",
+   "n_inputs": 107,
+   "inputs": 54,
+   "hidden": 14,
+   "conns": 83,
+   "depth": 6,
+   "skips": 17,
+   "direct_io": 48,
+   "density": 0.12842242503259452,
+   "skippiness": 3.415204678362573,
+   "layers": 7,
+   "splits": 0,
+   "identity": 9,
+   "annotate_ops": 11,
+   "mike": null,
+   "perf": {
+    "split_id": "1df50169-8095-40d1-b61a-30bb541cd313",
+    "train_auc": 0.9085379782503764,
+    "test_auc": 0.9054909029053314,
+    "test_auc_ci95": [
+     0.8991085471279847,
+     0.9118020106881306
+    ],
+    "n_boot_used": 10000,
+    "test_accuracy": 0.8513665677141979,
+    "train_accuracy": 0.8544007370818724,
+    "n_train": 39073,
+    "n_test": 9769,
+    "record": {
+     "file": "experiments/10seed/runs_paper_reference.csv",
+     "train_auc": 0.9085379782503764,
+     "test_auc": 0.9054909029053314,
+     "test_auc_ci_lo": 0.8991085471279847,
+     "test_auc_ci_hi": 0.9118020106881306
+    }
+   },
+   "parts": [
+    {
+     "name": "capital_gain_core",
+     "n_entry": 6,
+     "n_exit": 6,
+     "entry_inputs": [
+      "capital-gain",
+      "native-country:15",
+      "native-country:22",
+      "native-country:23",
+      "native-country:3",
+      "native-country:34"
+     ],
+     "children": []
+    },
+    {
+     "name": "bump_marital_status_3",
+     "n_entry": 1,
+     "n_exit": 2,
+     "entry_inputs": [
+      "marital-status:3"
+     ],
+     "children": []
+    },
+    {
+     "name": "bump_occupation_11",
+     "n_entry": 1,
+     "n_exit": 2,
+     "entry_inputs": [
+      "occupation:11"
+     ],
+     "children": []
+    },
+    {
+     "name": "bump_native_country_11_33",
+     "n_entry": 2,
+     "n_exit": 2,
+     "entry_inputs": [
+      "native-country:1",
+      "native-country:31"
+     ],
+     "children": []
+    },
+    {
+     "name": "bump_native_country_20",
+     "n_entry": 1,
+     "n_exit": 2,
+     "entry_inputs": [
+      "native-country:19"
+     ],
+     "children": []
+    },
+    {
+     "name": "bump_occupation_2",
+     "n_entry": 1,
+     "n_exit": 2,
+     "entry_inputs": [
+      "occupation:2"
+     ],
+     "children": []
+    },
+    {
+     "name": "bump_native_country_34",
+     "n_entry": 1,
+     "n_exit": 2,
+     "entry_inputs": [
+      "native-country:32"
+     ],
+     "children": []
+    },
+    {
+     "name": "bump_native_country_26",
+     "n_entry": 1,
+     "n_exit": 1,
+     "entry_inputs": [
+      "native-country:25"
+     ],
+     "children": []
+    },
+    {
+     "name": "linear_backbone",
+     "n_entry": 40,
+     "n_exit": 1,
+     "entry_inputs": [
+      "age",
+      "workclass:0",
+      "workclass:3",
+      "workclass:4",
+      "workclass:6",
+      "workclass:8",
+      "education:13",
+      "education:3",
+      "education:6",
+      "education:7",
+      "education-num",
+      "marital-status:2",
+      "marital-status:4",
+      "occupation:0",
+      "occupation:10",
+      "occupation:12",
+      "occupation:13",
+      "occupation:4",
+      "occupation:5",
+      "occupation:8",
+      "relationship:0",
+      "relationship:1",
+      "relationship:4",
+      "relationship:5",
+      "race:2",
+      "sex",
+      "capital-loss",
+      "hours-per-week",
+      "native-country:10",
+      "native-country:11",
+      "native-country:2",
+      "native-country:21",
+      "native-country:24",
+      "native-country:26",
+      "native-country:29",
+      "native-country:33",
+      "native-country:37",
+      "native-country:4",
+      "native-country:5",
+      "native-country:7"
+     ],
+     "children": []
+    },
+    {
+     "name": "unused_inputs",
+     "n_entry": 53,
+     "n_exit": 53,
+     "entry_inputs": [
+      "workclass:1",
+      "workclass:2",
+      "workclass:5",
+      "workclass:7",
+      "fnlwgt",
+      "education:0",
+      "education:1",
+      "education:10",
+      "education:11",
+      "education:12",
+      "education:14",
+      "education:15",
+      "education:2",
+      "education:4",
+      "education:5",
+      "education:8",
+      "education:9",
+      "marital-status:0",
+      "marital-status:1",
+      "marital-status:5",
+      "marital-status:6",
+      "occupation:1",
+      "occupation:14",
+      "occupation:3",
+      "occupation:6",
+      "occupation:7",
+      "occupation:9",
+      "relationship:2",
+      "relationship:3",
+      "race:0",
+      "race:1",
+      "race:3",
+      "race:4",
+      "native-country:0",
+      "native-country:12",
+      "native-country:13",
+      "native-country:14",
+      "native-country:16",
+      "native-country:17",
+      "native-country:18",
+      "native-country:20",
+      "native-country:27",
+      "native-country:28",
+      "native-country:30",
+      "native-country:35",
+      "native-country:36",
+      "native-country:38",
+      "native-country:39",
+      "native-country:40",
+      "native-country:41",
+      "native-country:6",
+      "native-country:8",
+      "native-country:9"
+     ],
+     "children": []
+    },
+    {
+     "name": "full_model",
+     "n_entry": 20,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": [
+      "capital_gain_core",
+      "bump_marital_status_3",
+      "bump_occupation_11",
+      "bump_native_country_11_33",
+      "bump_native_country_20",
+      "bump_occupation_2",
+      "bump_native_country_34",
+      "bump_native_country_26",
+      "linear_backbone"
+     ]
+    }
+   ],
+   "leaf": 10,
+   "comp": 1,
+   "cov_s": 1.0,
+   "cov_c": 1.0,
+   "hierarchy_complete": true,
+   "hierarchy_complete_check": false,
+   "exempt_disconnected": [
+    "unused_inputs"
+   ],
+   "fp": 6.661338147750939e-16,
+   "agent": null,
+   "db_start": "2026-07-07T19:14:59+00:00",
+   "db_end": "2026-07-21T14:45:52+00:00",
+   "n_log_entries": 0,
+   "rec_leaf": 10,
+   "rec_comp": 1,
+   "rec_cov_s": 1.0,
+   "rec_cov_c": 0.9,
+   "rec_hierarchy_complete": false,
+   "rec_fp": 6.661338147750939e-16,
    "rec_agent": null,
    "record": null
   },
@@ -64,6 +409,62 @@
    "identity": 1,
    "annotate_ops": 5,
    "mike": null,
+   "parts": [
+    {
+     "name": "inert_unit_a23",
+     "n_entry": 1,
+     "n_exit": 1,
+     "entry_inputs": [
+      "a2:3"
+     ],
+     "children": []
+    },
+    {
+     "name": "count_gate_atleast3",
+     "n_entry": 8,
+     "n_exit": 1,
+     "entry_inputs": [
+      "a1:1",
+      "a5:1"
+     ],
+     "children": []
+    },
+    {
+     "name": "linear_count_ramp",
+     "n_entry": 12,
+     "n_exit": 1,
+     "entry_inputs": [
+      "a1:2",
+      "a1:3",
+      "a4:2",
+      "a5:2",
+      "a5:3",
+      "a5:4"
+     ],
+     "children": []
+    },
+    {
+     "name": "exactly_two_of_six",
+     "n_entry": 3,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": [
+      "count_gate_atleast3",
+      "linear_count_ramp",
+      "inert_unit_a23"
+     ]
+    },
+    {
+     "name": "pruned_inputs",
+     "n_entry": 2,
+     "n_exit": 2,
+     "entry_inputs": [
+      "a2:2",
+      "a4:3"
+     ],
+     "children": []
+    }
+   ],
    "leaf": 4,
    "comp": 1,
    "cov_s": 1.0,
@@ -108,6 +509,76 @@
    "identity": 4,
    "annotate_ops": 5,
    "mike": null,
+   "parts": [
+    {
+     "name": "age_and_body_mass",
+     "n_entry": 2,
+     "n_exit": 1,
+     "entry_inputs": [
+      "age",
+      "bmi"
+     ],
+     "children": []
+    },
+    {
+     "name": "admission_haemodynamics",
+     "n_entry": 3,
+     "n_exit": 1,
+     "entry_inputs": [
+      "hr",
+      "diasbp",
+      "sysbp"
+     ],
+     "children": []
+    },
+    {
+     "name": "in_hospital_course",
+     "n_entry": 3,
+     "n_exit": 1,
+     "entry_inputs": [
+      "chf=1",
+      "sho=1",
+      "los"
+     ],
+     "children": []
+    },
+    {
+     "name": "index_mi_type",
+     "n_entry": 1,
+     "n_exit": 1,
+     "entry_inputs": [
+      "mitype=1"
+     ],
+     "children": []
+    },
+    {
+     "name": "cox_log_risk",
+     "n_entry": 14,
+     "n_exit": 1,
+     "entry_inputs": [
+      "afb=1",
+      "age",
+      "av3=1",
+      "bmi",
+      "chf=1",
+      "cvd=1",
+      "diasbp",
+      "gender=1",
+      "hr",
+      "los",
+      "miord=1",
+      "mitype=1",
+      "sho=1",
+      "sysbp"
+     ],
+     "children": [
+      "age_and_body_mass",
+      "admission_haemodynamics",
+      "in_hospital_course",
+      "index_mi_type"
+     ]
+    }
+   ],
    "leaf": 4,
    "comp": 1,
    "cov_s": 1.0,
@@ -150,6 +621,104 @@
    "identity": 1,
    "annotate_ops": 12,
    "mike": null,
+   "parts": [
+    {
+     "name": "positional_gate_1",
+     "n_entry": 42,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "positional_gate_2",
+     "n_entry": 42,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "positional_gate_3",
+     "n_entry": 42,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "positional_gate_4",
+     "n_entry": 42,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "positional_gate_5",
+     "n_entry": 42,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "positional_gate_6",
+     "n_entry": 42,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "positional_gate_7",
+     "n_entry": 42,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "positional_gate_8",
+     "n_entry": 42,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "positional_gate_9",
+     "n_entry": 42,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "positional_gate_10",
+     "n_entry": 42,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "direct_square_values",
+     "n_entry": 42,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "connect4_score",
+     "n_entry": 462,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": [
+      "positional_gate_1",
+      "positional_gate_2",
+      "positional_gate_3",
+      "positional_gate_4",
+      "positional_gate_5",
+      "positional_gate_6",
+      "positional_gate_7",
+      "positional_gate_8",
+      "positional_gate_9",
+      "positional_gate_10",
+      "direct_square_values"
+     ]
+    }
+   ],
    "leaf": 11,
    "comp": 1,
    "cov_s": 1.0,
@@ -192,6 +761,80 @@
    "identity": 1,
    "annotate_ops": 9,
    "mike": null,
+   "parts": [
+    {
+     "name": "quiet_o_x_centre_gate",
+     "n_entry": 11,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "o_lines_ramp",
+     "n_entry": 13,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "x_open_twos_cap",
+     "n_entry": 12,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "o_centre_x_singles_gate",
+     "n_entry": 12,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "x_singles_vs_twos_gate",
+     "n_entry": 13,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "centre_column_block",
+     "n_entry": 16,
+     "n_exit": 3,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "x_lines_vs_o_centre_pair",
+     "n_entry": 15,
+     "n_exit": 2,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "direct_terms",
+     "n_entry": 7,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "win_probability_root",
+     "n_entry": 99,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": [
+      "quiet_o_x_centre_gate",
+      "o_lines_ramp",
+      "x_open_twos_cap",
+      "o_centre_x_singles_gate",
+      "x_singles_vs_twos_gate",
+      "centre_column_block",
+      "x_lines_vs_o_centre_pair",
+      "direct_terms"
+     ]
+    }
+   ],
    "leaf": 8,
    "comp": 1,
    "cov_s": 1.0,
@@ -234,6 +877,73 @@
    "identity": 0,
    "annotate_ops": 7,
    "mike": null,
+   "parts": [
+    {
+     "name": "low_sodium_hinge",
+     "n_entry": 2,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "high_sodium_steep_hinge",
+     "n_entry": 2,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "nondiabetic_noise_chain",
+     "n_entry": 3,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "low_creatinine_noise_chain",
+     "n_entry": 3,
+     "n_exit": 2,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "low_sodium_arm",
+     "n_entry": 10,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": [
+      "low_sodium_hinge",
+      "nondiabetic_noise_chain",
+      "low_creatinine_noise_chain"
+     ]
+    },
+    {
+     "name": "sodium_U",
+     "n_entry": 14,
+     "n_exit": 3,
+     "entry_inputs": [
+      "male"
+     ],
+     "children": [
+      "low_sodium_arm",
+      "high_sodium_steep_hinge"
+     ]
+    },
+    {
+     "name": "risk_score",
+     "n_entry": 22,
+     "n_exit": 1,
+     "entry_inputs": [
+      "age",
+      "sbp",
+      "heart_rate",
+      "male"
+     ],
+     "children": [
+      "sodium_U"
+     ]
+    }
+   ],
    "leaf": 4,
    "comp": 3,
    "cov_s": 1.0,
@@ -276,6 +986,66 @@
    "identity": 3,
    "annotate_ops": 6,
    "mike": null,
+   "parts": [
+    {
+     "name": "age_ceiling",
+     "n_entry": 2,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "pressure_rate_load",
+     "n_entry": 3,
+     "n_exit": 6,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "pressure_over_rate",
+     "n_entry": 2,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "rate_bmi_amplifier",
+     "n_entry": 4,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "direct_terms",
+     "n_entry": 8,
+     "n_exit": 1,
+     "entry_inputs": [
+      "smoker",
+      "diabetes",
+      "male"
+     ],
+     "children": []
+    },
+    {
+     "name": "risk_score",
+     "n_entry": 19,
+     "n_exit": 1,
+     "entry_inputs": [
+      "smoker",
+      "diabetes",
+      "male",
+      "sodium",
+      "noise"
+     ],
+     "children": [
+      "age_ceiling",
+      "pressure_rate_load",
+      "pressure_over_rate",
+      "rate_bmi_amplifier",
+      "direct_terms"
+     ]
+    }
+   ],
    "leaf": 5,
    "comp": 1,
    "cov_s": 1.0,
@@ -318,6 +1088,96 @@
    "identity": 4,
    "annotate_ops": 10,
    "mike": null,
+   "parts": [
+    {
+     "name": "sodium_V",
+     "n_entry": 3,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "tachycardia_low_sbp_gate",
+     "n_entry": 6,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "hypertension_low_hr_gate",
+     "n_entry": 4,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "high_sbp_and_hr_penalty",
+     "n_entry": 2,
+     "n_exit": 2,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "sbp_hinge",
+     "n_entry": 1,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "young_high_sodium_tachy",
+     "n_entry": 3,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "diabetes_step",
+     "n_entry": 2,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "linear_terms",
+     "n_entry": 5,
+     "n_exit": 1,
+     "entry_inputs": [
+      "bmi",
+      "creatinine"
+     ],
+     "children": []
+    },
+    {
+     "name": "bp_hr_saddle",
+     "n_entry": 15,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": [
+      "tachycardia_low_sbp_gate",
+      "hypertension_low_hr_gate",
+      "high_sbp_and_hr_penalty",
+      "sbp_hinge"
+     ]
+    },
+    {
+     "name": "risk_logit",
+     "n_entry": 29,
+     "n_exit": 1,
+     "entry_inputs": [
+      "male",
+      "bmi",
+      "creatinine"
+     ],
+     "children": [
+      "sodium_V",
+      "bp_hr_saddle",
+      "young_high_sodium_tachy",
+      "diabetes_step",
+      "linear_terms"
+     ]
+    }
+   ],
    "leaf": 8,
    "comp": 2,
    "cov_s": 1.0,

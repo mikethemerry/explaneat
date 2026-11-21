@@ -42,7 +42,7 @@ GROUPS = [
 ARGUMENT = (
     "Chapter 7 makes one argument in four steps. **Existence (Experiment 1):** explainable PropNEAT models can be "
     "built on a range of datasets, and the explanation shows what kind of signal each holds: near-linear or rule-like "
-    "models on Heart and MONK-2 (the AAAI paper genomes) and a sparse linear Cox model on WHAS500 (the public reference "
+    "models on Heart, Adult and MONK-2 (the original networks; on Adult the explanation also exposes a country-conditioned adjustment that does no work) and a sparse linear Cox model on WHAS500 (the public reference "
     "point for VARIANZ); on Connect-4 a strong network that is explained faithfully but understood only when given line "
     "features; on XOR and the synthetic U and saddle, several equally valid solutions that extrapolate differently and "
     "are told apart by their explanations; and, as the honest limitation, a convolutional network (ExConNEAT) whose "
@@ -67,9 +67,6 @@ OPEN_ITEMS = [
 
 # Miscellany cards that were part of Experiment 1 before the 19 Nov restructure: (label, one line why).
 MISC_LABELS = {
-    "e1-1": ("Moved from Experiment 1", "Experiment 1 now shows the Heart and MONK-2 rows of this card ([Heart and MONK-2](#e1-original)); "
-             "Adult is presented in [Experiment 2](#exp2), where harder models are examined for consistency across runs. "
-             "This is the full recompute of all three paper genomes, including Adult's SHAP change."),
     "e1-2": ("Moved from Experiment 1", "Churn is presented in [Experiment 2](#exp2), where harder models are examined for "
              "consistency across runs; this single-seed churn case is kept here for the record."),
     "e1-3": ("Moved from Experiment 1", "Experiment 1 now shows the WHAS500 rows ([Cox survival: WHAS500](#e1-cox)). GBSG2 was "
@@ -268,7 +265,7 @@ def main():
         for r in E["results"]:
             used.update(r.get("cards") or [])
     misc_order = ["e3-1", "e3-2", "e3-8", "e3-9", "e3-6", "e3-7", "s-1",
-                  "e1-1", "e1-2", "e1-3", "e1-3a", "e1-5", "e3-4"]
+                  "e1-2", "e1-3", "e1-3a", "e1-5", "e3-4"]
     used.update({"s-2", "s-3"})   # superseded by Experiment 4 (adversarial robustness; the MNIST 10-class run)
     misc = [cards_by[a] for a in misc_order if a in cards_by and a not in used]
     misc += [c for c in sorted(cards, key=sort_key) if c["anchor"] not in used and c not in misc]
