@@ -216,5 +216,22 @@ def build(refresh: bool = False):
     return report, scales
 
 
+# Layers not committed (too large): regenerate them with the read-only extraction in README.md ("Commands").
+REGENERATE = {
+    "c4cap-main-h10-e50-s1": "PGOPTIONS='-c default_transaction_read_only=on' DATABASE_URL=postgresql://localhost/explaneat_v4 "
+                             "uv run python -m explaneat plain-language extract --genome f0eb7635-7f85-437b-815b-993c5ad6cc14 "
+                             "--label c4cap-main-h10-e50-s1 --dir experiments/c4_capacity/plain_language   # ~3 h",
+    "c4lf-lines-heavy-s0": "PGOPTIONS='-c default_transaction_read_only=on' DATABASE_URL=postgresql://localhost/explaneat_v4 "
+                           "uv run python -m explaneat plain-language extract --genome 6ebf7e0c-55ec-4215-9852-0ac982e43c0e "
+                           "--label c4lf-lines-heavy-s0 --dir experiments/c4_line_features/plain_language   # ~20 min",
+}
+
+
 if __name__ == "__main__":
+    missing = [k for k, p in LAYERS.items() if not p.exists()]
+    if missing:
+        print("[exp1 networks] layer file(s) missing, so the committed appendix and figures are kept unchanged:")
+        for k in missing:
+            print("    ", k, "->", REGENERATE.get(k, f"regenerate {LAYERS[k]}"))
+        sys.exit(0)
     build(refresh="--refresh" in sys.argv)

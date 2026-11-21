@@ -59,3 +59,12 @@ one box). The annotation of unconnected inputs that sits outside the root
 PDF determinism: the network PDFs are recompiled only when the hash of their TikZ source changes
 (`figures/exp1/networks/sources.json`), so a rerun leaves them untouched; the matplotlib figures are saved
 without creation or modification dates (figlib.save), so a rerun gives byte-identical PDFs.
+
+## Connect-4 layer files (not committed)
+
+The plain-language layers of the two Connect-4 networks are too large to commit
+(`experiments/c4_capacity/plain_language/c4cap-main-h10-e50-s1.json`, ~24 MB, and
+`experiments/c4_line_features/plain_language/c4lf-lines-heavy-s0.json`, ~10 MB). Their appendix
+figures and `appendix_networks.tex` are committed. Without the layers, `networks.py` keeps the
+committed outputs and prints the commands to regenerate them (read-only extraction, ~3 h and
+~20 min; the same commands are in `REGENERATE` in `networks.py`).
