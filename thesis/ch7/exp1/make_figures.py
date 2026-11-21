@@ -350,6 +350,42 @@ def cox_figures(only):
             fn(d)
 
 
+# =============================================================================== Adult (original network)
+
+def capgain_figure(only):
+    """The capital-gain part's response (data/capgain.json, extract_capgain.py: the study's own computation,
+    experiments/aaai27/run_d_capgain_figure.py), (a) over the observed range, (b) zoomed on the knots."""
+    fid = "adult-capgain-response"
+    if only and fid not in only:
+        return
+    d = json.loads((HERE / "data" / "capgain.json").read_text())
+    plt = style(grid=True)
+    x, y = np.array(d["raw_grid"]), np.array(d["contribution"])
+    knots = d["knots_raw"]
+    ZOOM = 10000.0   # design choice: the zoomed panel's upper end (US dollars)
+    fig, axes = plt.subplots(1, 2, figsize=(W, 2.5))
+    for ax, lim, t in ((axes[0], None, "(a) Observed range"), (axes[1], ZOOM, f"(b) \\$0 to \\${ZOOM:,.0f}")):
+        m = np.ones_like(x, bool) if lim is None else x <= lim
+        ax.plot(x[m], y[m], color=OI["blue"], lw=1.5)
+        for k in knots:
+            ax.axvline(k, color=OI["red"], lw=0.8, ls=":")
+        ax.set_title(t, loc="left")
+        ax.set_xlabel("capital gain (US dollars)")
+        ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v / 1000:g}k" if v else "0"))
+    axes[1].set_xlim(0, ZOOM)
+    for k in knots:
+        axes[1].annotate(f"\\${k:,.0f}", xy=(k, axes[1].get_ylim()[0]), xytext=(-2, 4), textcoords="offset points",
+                         rotation=90, ha="right", va="bottom", fontsize=6.5, color=OI["red"])
+    axes[0].set_ylabel("part's contribution to the logit\n(income \\$50,000 or less)")
+    fig.tight_layout(w_pad=1.5)
+    figlib.save(fig, fid, pdata=dict(x=x, y=y, knots=knots, zoom=ZOOM))
+    figlib.write_float(fid, f"Adult, original network: response of the part \\emph{{{d['source']['part_title']}}} "
+                       "to capital gain",
+                       "Blue: the part's contribution to the output logit (log-odds of an income of \\$50,000 or "
+                       "less), its country-of-birth inputs at 0; dotted red: the knots of the piecewise-linear "
+                       "response.", GEN)
+
+
 # =============================================================================== earlier ten-seed export
 
 TEN = [("structure_prereg", "Earlier ten-seed export: network structure, pre-registered datasets"),
@@ -406,6 +442,7 @@ def tenseed_figures(only):
 def main(only=None):
     only = set(only or [])
     xor_figures(only)
+    capgain_figure(only)
     shape_figures(only)
     cox_figures(only)
     tenseed_figures(only)
