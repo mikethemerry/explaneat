@@ -36,7 +36,7 @@ candidate = partial(figlib.candidate, generator=GEN)
 
 # =============================================================================== Benchmarks
 
-EXP1_DS = OrderedDict([("shape_u", "Synthetic U"), ("shape_saddle", "Synthetic saddle"), ("shape_both", "Synthetic U + saddle"),
+EXP1_DS = OrderedDict([("shape_both", "Synthetic U + saddle"),
                        ("monk2", "MONK-2"), ("c4_cells", "Connect-4 (cells)"), ("c4_lines", "Connect-4 (lines)"), ("adult", "Adult"), ("churn", "Churn (case)"),
                        ("heart", "Heart")])
 EXP2_DS = OrderedDict([("adult", "Adult"), ("churn", "Churn"), ("heart", "Heart-100")])

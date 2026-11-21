@@ -76,10 +76,6 @@ CASES = [
     dict(key="churn", name="Churn", label="churn-case-s10", who="seed 10"),
     dict(key="c4cells", name="Connect-4, cells", label="c4cap-main-h10-e50-s1", who="seed 1", raw_legible=False),
     dict(key="c4lines", name="Connect-4, lines", label="c4lf-lines-heavy-s0", who="seed 0"),
-    dict(key="shapeA", name="Synthetic U", label="shape-A", who="seed 0",
-         extra=["synthetic-shape-a-sodium", "synthetic-shape-a-saddle"]),
-    dict(key="shapeB", name="Synthetic saddle", label="shape-B", who="seed 0",
-         extra=["synthetic-shape-b-sodium", "synthetic-shape-b-saddle"]),
     dict(key="shapeC", name="Synthetic U and saddle", label="shape-C", who="seed 4"),
     dict(key="xor", name="XOR", label="xor", who=None, extra=["xor-gates"]),
 ]

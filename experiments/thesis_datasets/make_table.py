@@ -43,8 +43,6 @@ ROWS = [
     ("c4_cells", "Connect-4, cells", None),
     ("c4_lines", "Connect-4, lines", None),
     ("xor", "XOR", "1"),
-    ("shape_u", "Synthetic U", None),
-    ("shape_saddle", "Synthetic saddle", None),
     ("shape_both", "Synthetic U $+$ saddle", None),
     # the presented ExConNEAT network's lineage: the 10k run and its pruning phase, then the 50k warm start
     ("mnist10_10k", "MNIST 10-class, 10k training subset: 10k run, pruning phase", "4"),

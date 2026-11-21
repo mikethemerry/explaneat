@@ -22,8 +22,7 @@ SURVIVAL = [("cox_ph", "Cox PH, unpenalised"), ("cox_l2", "Cox PH, $L_2$ (ridge)
             ("gbs", "Gradient-boosted survival")]
 # Experiment 1 benchmark columns: the original networks first (Heart, MONK-2, Adult), then the rest
 EXP1_DATASETS = [("heart", "Heart"), ("monk2", "MONK-2"), ("adult", "Adult"), ("churn", "\\makecell{Churn\\\\(case)}"), ("c4_cells", "\\makecell{Connect-4\\\\cells}"),
-                 ("c4_lines", "\\makecell{Connect-4\\\\lines}"), ("shape_u", "\\makecell{Synth.\\\\U}"),
-                 ("shape_saddle", "\\makecell{Synth.\\\\saddle}"), ("shape_both", "\\makecell{Synth.\\\\U $+$ saddle}")]
+                 ("c4_lines", "\\makecell{Connect-4\\\\lines}"), ("shape_both", "\\makecell{Synth.\\\\U $+$ saddle}")]
 # Caption key shared by both benchmark tables: only how to read a cell (Mike, 20 Nov: captions hold a title
 # and the table's keys; the method is in the body text, see thesis/ch7/CAPTION_MOVED_TEXT.md).
 SUITE_KEY = ("Each cell: test AUC; below it, its 95\\% interval and the test accuracy. "

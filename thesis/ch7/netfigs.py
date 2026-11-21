@@ -341,6 +341,7 @@ def build_appendix(cases, net_dir: Path, figdir: str, prefix: str, out_tex: Path
         # portrait floats on the heading page stay below the heading (h first), in order
         extra = [ln.replace("\\begin{figure}[tbp]", "\\begin{figure}[!htbp]") for ln in case.get("extra") or []]
         app += extra + body + ["\\clearpage"]
+    stamps = {k: v for k, v in stamps.items() if (net_dir / k).exists()}   # drop figures no longer built
     stamp_path.write_text(json.dumps(stamps, indent=1, sort_keys=True) + "\n")
     out_tex.write_text("\n".join(app) + "\n")
     return report, scales

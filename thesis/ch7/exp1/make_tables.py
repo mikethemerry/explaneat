@@ -53,8 +53,7 @@ ORDER = [("paper-heart", "Heart (original network)$^\\dagger$"), ("paper-adult",
          ("churn-case-s10", "Churn case (s10)"),
          ("cox-whas500-s0", "WHAS500 (Cox)$^\\ast$"), ("cox-gbsg2-s1", "GBSG2 (Cox, side note)$^\\ast$"),
          ("c4cap-main-h10-e50-s1", "Connect-4, cells (s1)"),
-         ("c4lf-lines-heavy-s0", "Connect-4, lines (s0)"), ("shape-A", "Synthetic U (s0)"),
-         ("shape-B", "Synthetic saddle (s0)"), ("shape-C", "Synthetic U $+$ saddle (s4)")]
+         ("c4lf-lines-heavy-s0", "Connect-4, lines (s0)"), ("shape-C", "Synthetic U $+$ saddle (s4)")]
 
 HEAD = (r"Network & \makecell{Train\\AUC} & \makecell{Test AUC\\(95\% CI)} & \makecell{Inputs\\used} & "
         r"\makecell{Hidden\\nodes} & \makecell{Enabled\\conn.} & \makecell{Skippiness\\(skip conn.)} & "

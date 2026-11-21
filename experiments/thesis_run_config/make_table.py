@@ -30,7 +30,7 @@ NAME = {  # study names as in the Chapter 7 tables -- curated
     "paper_heart": "Heart, original network", "paper_adult": "Adult, original network",
     "paper_monk2": "MONK-2, original network",
     "churn_case": "Churn case", "cox": "WHAS500, GBSG2 (Cox; GBSG2 a side note)", "c4_cells": "Connect-4, cells", "c4_lines": "Connect-4, lines",
-    "xor": "XOR", "shapes": "Synthetic U, saddle, U $+$ saddle",
+    "xor": "XOR", "shapes": "Synthetic U $+$ saddle",
     "adult": "Adult", "churn": "Churn", "heart100": "Heart-100", "monk2_10": "MONK-2, ten seeds (grafting)",
     "exp3_ft": "Fine-tuning after a graft",
     "conv_p1": "1. 10k run", "conv_p2": "2. Pruning phase", "conv_p3": "3. 50k warm start",
@@ -39,7 +39,7 @@ NAME = {  # study names as in the Chapter 7 tables -- curated
 # script (MONK-2) -- curated
 ORIGINAL = ("paper_heart", "paper_adult", "paper_monk2")
 # the datasets of the synthetic row, in the order of its name (keys of shapes' selected.per_dataset) -- curated
-SHAPES_ORDER = ["u", "saddle", "both"]
+SHAPES_ORDER = ["both"]   # Mike, 22 Nov 2026: only the U + saddle network is presented
 # families whose every seed is presented (Experiment 2: all ten networks; XOR: all 30 analysed; Experiment 3's
 # ten MONK-2 seeds, kept until Experiment 3's scope is decided) -- curated
 ALL_SEEDS = {"xor", "adult", "churn", "heart100", "monk2_10"}
@@ -123,7 +123,7 @@ def presented_runs(k, fr):
     elif k in ("c4_cells", "c4_lines"):
         names = [fr["selected"]["name"]]
     elif k == "shapes":
-        assert sorted(fr["selected"]["per_dataset"]) == sorted(SHAPES_ORDER)
+        assert set(SHAPES_ORDER) <= set(fr["selected"]["per_dataset"])
         names = [fr["selected"]["per_dataset"][d] for d in SHAPES_ORDER]
     else:
         raise KeyError(k)

@@ -91,6 +91,7 @@ fi
 uv run python thesis/ch7/exp1/make_tables.py            # exp1-networks.tex, exp1-benchmarks.tex
 uv run python thesis/ch7/exp1/monk2_rule_table.py      # exp1-monk2-rules.tex (reads experiments/monk2_rule_comparison/results)
 uv run python thesis/ch7/exp1/synthetic_recovery_table.py   # exp1-synthetic-recovery.tex (reads experiments/ushape_saddle: gt_grades, gt_probe, figures/*-shape.json)
+uv run python thesis/ch7/exp1/sensitivity_table.py     # exp1-sensitivity.tex (reads experiments/propneat_sensitivity results + benchmarks.csv)
 uv run python thesis/ch7/appendix/heart_splits_table.py # ch7-heart-splits.tex
 uv run python thesis/ch7/exp2/make_assets.py            # exp2-benchmarks, exp2-runs-*, exp2-signals-*, exp2-signalticks-*,
                                                         # appendix_networks.tex + figures/exp2/networks/*.pdf, other exp2 assets

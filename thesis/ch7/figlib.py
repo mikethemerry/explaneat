@@ -52,9 +52,8 @@ USED = (
 # Figures printed in the Experiment 1 appendix (thesis/ch7/exp1/appendix_networks.tex inlines their floats under
 # their networks), not in the main text (brief of 21 Nov 2026).
 APPENDIX = (
-    "xor-gates", "synthetic-shape-a-sodium", "synthetic-shape-a-saddle", "synthetic-shape-b-sodium",
-    "synthetic-shape-b-saddle",
-)
+    "xor-gates",
+)   # synthetic U-only and saddle-only figures: options (Mike, 22 Nov 2026: only the U + saddle network is presented)
 GROUPS = ("used", "options", "appendix")
 MAX_HEIGHT = r"0.8\textheight"   # design choice: a tall figure shrinks to leave room for its caption on the page
 
