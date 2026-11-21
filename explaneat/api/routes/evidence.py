@@ -35,6 +35,8 @@ from ..schemas import (
     ShapResponse,
     PerformanceRequest,
     PerformanceResponse,
+    ReferenceCaseRequest,
+    CaseRowsRequest,
 )
 
 logger = logging.getLogger(__name__)
@@ -236,6 +238,18 @@ def _last_split_info():
     return getattr(_STAMP, "info", None)
 
 
+def _scale_rows(X: np.ndarray, split) -> np.ndarray:
+    """The split's scaler applied to raw rows (the values the network was trained on)."""
+    X = np.asarray(X, dtype=float)
+    if not (split.scaler_type and split.scaler_params):
+        return X
+    if split.scaler_type == "StandardScaler":
+        return (X - np.array(split.scaler_params["mean"])) / np.array(split.scaler_params["scale"])
+    if split.scaler_type == "MinMaxScaler":
+        return X * np.array(split.scaler_params["scale_"]) + np.array(split.scaler_params["min_"])
+    return X
+
+
 def _load_split_data(session, split_id: str, split_choice: str, sample_frac: float, max_samples):
     """Load X, y data and dataset metadata from a dataset split.
 
@@ -292,14 +306,7 @@ def _load_split_data(session, split_id: str, split_choice: str, sample_frac: flo
                     f"prepared/encoded dataset the scaler was fit on."
                 ),
             )
-        if split.scaler_type == "StandardScaler":
-            mean = np.array(split.scaler_params["mean"])
-            scale = np.array(split.scaler_params["scale"])
-            X = (X - mean) / scale
-        elif split.scaler_type == "MinMaxScaler":
-            data_min = np.array(split.scaler_params["data_min_"])
-            scale = np.array(split.scaler_params["scale_"])
-            X = X * scale + np.array(split.scaler_params["min_"])
+        X = _scale_rows(X, split)
 
     # Sample only when asked (the UI passes explicit sampling for speed; the default is the split)
     n_split = len(X)
@@ -635,8 +642,9 @@ def _to_source_units(data: Dict[str, Any], dim_cols: List[Optional[int]], scaler
             continue
         for key in ("grid", "scatter"):
             inp[key] = [float(f(v)) for v in inp[key]]
-        for key in ("median", "min", "max"):
-            inp[key] = float(f(inp[key]))
+        for key in ("median", "held", "min", "max"):
+            if key in inp:
+                inp[key] = float(f(inp[key]))
         if "edges" in inp["hist"]:
             inp["hist"]["edges"] = [float(f(v)) for v in inp["hist"]["edges"]]
         else:
@@ -648,7 +656,7 @@ def _to_source_units(data: Dict[str, Any], dim_cols: List[Optional[int]], scaler
 
 def _compute_pairs_plot(
     session, request, fn, entry_acts, exit_acts, entry_names, exit_names,
-    is_whole_model: bool, num_classes, model_state=None, annotation=None,
+    is_whole_model: bool, num_classes, model_state=None, annotation=None, fixed=None,
 ) -> Dict[str, Any]:
     """Pairs plot data (``viz_data.compute_pairs``) plus the units and timing."""
     import time
@@ -673,6 +681,7 @@ def _compute_pairs_plot(
             fix=fix,
             center=center,
             entry_names=entry_names, exit_names=exit_names,
+            fixed=fixed,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -689,6 +698,38 @@ def _compute_pairs_plot(
             data["units"] = "source"
     data["seconds"] = round(time.perf_counter() - t0, 3)
     return data
+
+
+def _reference_entry_values(session, request, model_state, annotation, is_whole_model, n_in):
+    """The scope's entry values at the reference case ``params.reference.x`` (raw units, one
+    value per dataset column), or None when the request has no reference."""
+    ref = (request.params or {}).get("reference")
+    if not ref:
+        return None
+    x = ref.get("x") if isinstance(ref, dict) else None
+    if not isinstance(x, list) or not x:
+        raise HTTPException(status_code=400, detail="params.reference needs x: the case's values per dataset column")
+    split = session.query(DatasetSplit).filter_by(id=uuid.UUID(request.dataset_split_id)).first()
+    try:
+        xs = _scale_rows(np.asarray([x], dtype=float), split)
+    except (ValueError, TypeError) as e:
+        raise HTTPException(status_code=400, detail=f"bad reference: {e}")
+    return reference_entry_values(xs, model_state, annotation, is_whole_model, n_in)
+
+
+def reference_entry_values(xs: np.ndarray, model_state, annotation, is_whole_model: bool, n_in: int):
+    """Entry values of a scope at the scaled case row(s) ``xs`` (1 × columns): the row itself for
+    the whole model, else the forward pass's activations at the scope's entry nodes."""
+    if is_whole_model:
+        if xs.shape[1] != n_in:
+            raise HTTPException(status_code=400,
+                                detail=f"reference has {xs.shape[1]} values, the model {n_in} inputs")
+        return xs[0]
+    try:
+        entry, _ = ActivationExtractor.from_structure(model_state).extract(xs, annotation)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"bad reference: {e}")
+    return np.asarray(entry, dtype=float)[0]
 
 
 @router.post("/viz-data", response_model=VizDataResponse)
@@ -791,6 +832,11 @@ async def compute_viz_data(
         suggested = vd.suggest_viz_types(n_in, n_out)
         params = request.params or {}
         viz_type = request.viz_type
+        fixed = None
+        if viz_type in ("line", "heatmap", "partial_dependence", "feature_output_scatter", "pairs_plot"):
+            fixed = _reference_entry_values(
+                session, request, None if is_whole_model else model_state,
+                None if is_whole_model else annotation, is_whole_model, n_in)
 
         if viz_type == "line":
             data = vd.compute_line_plot(
@@ -798,6 +844,7 @@ async def compute_viz_data(
                 input_dim=params.get("input_dim", 0),
                 output_dim=params.get("output_dim", 0),
                 entry_names=entry_names, exit_names=exit_names,
+                fixed=fixed,
             )
         elif viz_type == "heatmap":
             data = vd.compute_heatmap(
@@ -805,6 +852,7 @@ async def compute_viz_data(
                 input_dims=tuple(params.get("input_dims", [0, 1])),
                 output_dim=params.get("output_dim", 0),
                 entry_names=entry_names, exit_names=exit_names,
+                fixed=fixed,
             )
         elif viz_type == "partial_dependence":
             data = vd.compute_partial_dependence(
@@ -812,6 +860,7 @@ async def compute_viz_data(
                 vary_dims=params.get("vary_dims", [0]),
                 output_dim=params.get("output_dim", 0),
                 entry_names=entry_names, exit_names=exit_names,
+                fixed=fixed,
             )
         elif viz_type == "pca_scatter":
             data = vd.compute_pca_scatter(
@@ -838,6 +887,7 @@ async def compute_viz_data(
                 input_dim=params.get("input_dim", 0),
                 output_dim=params.get("output_dim", 0),
                 entry_names=entry_names, exit_names=exit_names,
+                fixed=fixed,
             )
         elif viz_type == "output_distribution":
             data = vd.compute_output_distribution(
@@ -971,6 +1021,7 @@ async def compute_viz_data(
                 is_whole_model=is_whole_model, num_classes=ds_num_classes,
                 model_state=None if is_whole_model else model_state,
                 annotation=None if is_whole_model else annotation,
+                fixed=fixed,
             )
         else:
             raise HTTPException(status_code=400, detail=f"Unknown viz_type: {viz_type}")
@@ -1580,3 +1631,125 @@ async def compute_shap(
         base_value=result["base_value"],
         outputs=result.get("outputs"),
     )
+
+
+# ── reference case (case explorer) ──────────────────────────────────────────
+
+
+def _case_context(session, genome_id: str, split_id: str):
+    """Raw training rows, their dataset indices, outcomes, names, labels and a raw-row predictor."""
+    from ...analysis.feature_labels import codebook_for, feature_key
+
+    split = session.query(DatasetSplit).filter_by(id=uuid.UUID(split_id)).first()
+    if not split:
+        raise HTTPException(status_code=404, detail="Dataset split not found")
+    dataset = session.query(Dataset).filter_by(id=split.dataset_id).first()
+    data = dataset.get_data() if dataset else None
+    if data is None:
+        raise HTTPException(status_code=400, detail="Dataset has no stored data")
+    X_full, y_full = np.asarray(data[0], dtype=float), np.asarray(data[1], dtype=float)
+    names = list(dataset.feature_names or [f"x{i}" for i in range(X_full.shape[1])])
+    rows = np.asarray(split.train_indices or [], dtype=int)
+    if not len(rows):
+        raise HTTPException(status_code=400, detail="The split has no training rows")
+    X_tr, y_tr = X_full[rows], y_full[rows]
+    try:
+        labels = feature_key(codebook_for(dataset.name, names, X_tr, y_tr), names)
+    except Exception:
+        labels = feature_key(None, names)
+    fn, _, _, _, exit_names, _, _ = _build_whole_model_context(
+        session, genome_id, _scale_rows(X_tr[:1], split), feature_names=names,
+        num_classes=dataset.num_classes)
+
+    def predict(R):
+        out = np.asarray(fn(_scale_rows(np.asarray(R, dtype=float), split)), dtype=float)
+        return out.reshape(len(R), -1)
+
+    return {"split": split, "dataset": dataset, "X_full": X_full, "y_full": y_full,
+            "rows": rows, "X": X_tr, "y": y_tr, "names": names, "labels": labels,
+            "predict": predict, "exit_names": exit_names}
+
+
+@router.post("/reference-case")
+async def reference_case(request: ReferenceCaseRequest, genome_id: str = Path(...)):
+    """Resolve a reference case and describe it against the split's training rows.
+
+    ``spec`` as in ``explaneat.analysis.reference_case`` (base median / per_column_median / mean /
+    quantile / row, overrides, groups); ``x`` describes an already resolved case. Returns the case
+    (``x``, raw units per dataset column), per-column values and labels, one-hot groups and their
+    support, the model's prediction, the nearest training rows (with outcomes), typicality,
+    warnings and, for an annotation or node, the scope's entry values at the case (``entry``, what
+    the plots hold the other inputs at). Read only.
+    """
+    from ...analysis import reference_case as rc
+
+    with db.session_scope() as session:
+        c = _case_context(session, genome_id, request.dataset_split_id)
+        spec = dict(request.spec or {})
+        try:
+            if request.x is not None:
+                x = np.asarray(request.x, dtype=float)
+                if x.shape != (c["X"].shape[1],):
+                    raise ValueError(f"x has {x.size} values, the data {c['X'].shape[1]} columns")
+            else:
+                row_values = None
+                if spec.get("base") == "row":
+                    r = int(spec.get("row", -1))
+                    if not 0 <= r < len(c["X_full"]):
+                        raise ValueError(f"row {r} is not in the dataset (0 to {len(c['X_full']) - 1})")
+                    row_values = c["X_full"][r]
+                x = rc.resolve(spec, c["X"], c["names"], row_values=row_values)
+            out = rc.describe(x, c["X"], c["names"], c["predict"], y=c["y"], row_ids=c["rows"],
+                              labels=c["labels"], output_names=c["exit_names"])
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        if spec.get("base") == "row":
+            r = int(spec["row"])
+            out["row"] = {"index": r, "outcome": rc._outcome(c["y_full"][r]),
+                          "in_training": bool(np.isin(r, c["rows"]))}
+        out["spec"] = spec
+        out["rows_used"] = "train"
+        out["entry"] = None
+        if request.annotation_id or request.node_id:
+            model_state = _build_model_state(session, genome_id)
+            annotation = _resolve_annotation(session, genome_id, model_state,
+                                             request.annotation_id, request.node_id)
+            vals = reference_entry_values(_scale_rows(x[None, :], c["split"]), model_state,
+                                          annotation, False, len(x))
+            display_map = model_state.get_display_map()
+            out["entry"] = {
+                "nodes": list(annotation["entry_nodes"]),
+                "names": [_resolve_node_label(n, display_map, model_state) for n in annotation["entry_nodes"]],
+                "values": [float(v) for v in vals],
+            }
+        return out
+
+
+@router.post("/case-rows")
+async def case_rows(request: CaseRowsRequest, genome_id: str = Path(...)):
+    """A page of dataset rows (index, outcome, prediction) to pick a reference case from."""
+    from ...analysis import reference_case as rc
+
+    with db.session_scope() as session:
+        c = _case_context(session, genome_id, request.dataset_split_id)
+        split = c["split"]
+        parts = {"train": split.train_indices or [], "test": split.test_indices or [],
+                 "val": split.validation_indices or []}
+        idx = (parts["train"] + parts["test"] + parts["val"]) if request.split == "both" else parts[request.split]
+        idx = np.asarray(idx, dtype=int)
+        if not len(idx):
+            raise HTTPException(status_code=400, detail=f"No {request.split} rows")
+        y = c["y_full"][idx]
+        ycol = y[:, 1] if y.ndim == 2 and y.shape[1] == 2 else y.reshape(len(idx), -1)[:, 0]
+        if request.outcome is not None:
+            keep = ycol == request.outcome
+            idx, y = idx[keep], y[keep]
+        preds = c["predict"](c["X_full"][idx]) if len(idx) else np.zeros((0, 1))
+        order = np.argsort(preds[:, 0], kind="stable") if request.order == "prediction" else np.arange(len(idx))
+        limit = max(1, min(int(request.limit), 100))
+        page = order[max(0, int(request.offset)):max(0, int(request.offset)) + limit]
+        return {
+            "total": int(len(idx)), "offset": int(request.offset), "split": request.split,
+            "rows": [{"row": int(idx[k]), "outcome": rc._outcome(y[k]),
+                      "prediction": [float(v) for v in preds[k]]} for k in page],
+        }
