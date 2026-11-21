@@ -33,6 +33,7 @@ Regenerate with `uv run python thesis/ch7/exp1/extract_db.py` (read-only DB cach
 |---|---|---|---|
 | `tab:exp1-benchmarks, tab:exp1-benchmarks-survival` | `thesis/ch7/exp1/tables/exp1-benchmarks.tex` | Experiment 1: each dataset's explained PropNEAT network against the comparators | `thesis/ch7/exp1/make_tables.py` |
 | `tab:exp1-monk2-rules` | `thesis/ch7/exp1/tables/exp1-monk2-rules.tex` | MONK-2: whether each model's explanation states the rule (exactly two of the six attributes at their first value) | `thesis/ch7/exp1/monk2_rule_table.py` (reads `experiments/monk2_rule_comparison/`; preview `preview_monk2.tex`) |
+| `tab:exp1-synthetic-recovery` | `thesis/ch7/exp1/tables/exp1-synthetic-recovery.tex` | Synthetic data: the true terms each explained network recovered | `thesis/ch7/exp1/synthetic_recovery_table.py` (reads `experiments/ushape_saddle/`: `gt_grades.json`, `gt_probe.json`, `figures/<label>-shape.json`) |
 | `tab:exp1-networks` | `thesis/ch7/exp1/tables/exp1-networks.tex` | Experiment 1: the explained network of each dataset | `thesis/ch7/exp1/make_tables.py` |
 | `tab:exp1-sensitivity, tab:exp1-sensitivity-cv` | `thesis/ch7/exp1/tables/exp1-sensitivity.tex` | Experiment 1, sensitivity check: PropNEAT with a fixed configuration and with the configuration selected by cr... | `thesis/ch7/exp1/sensitivity_table.py` (reads `experiments/propneat_sensitivity/`; not in the Overleaf upload yet, preview `preview_sensitivity.tex`) |
 

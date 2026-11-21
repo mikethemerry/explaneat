@@ -15,6 +15,7 @@ cp "$CH7/exp2/tables/exp2/exp2-signalticks-heart100.tex" "$OUT/sections/tables/c
 cp "$CH7/exp1/tables/exp1-networks.tex" "$OUT/sections/tables/ch7-ex1-networks.tex"
 cp "$CH7/exp1/tables/exp1-benchmarks.tex" "$OUT/sections/tables/ch7-ex1-benchmarks.tex"
 cp "$CH7/exp1/tables/exp1-monk2-rules.tex" "$OUT/sections/tables/ch7-ex1-monk2-rules.tex"   # monk2_rule_table.py
+cp "$CH7/exp1/tables/exp1-synthetic-recovery.tex" "$OUT/sections/tables/ch7-ex1-synthetic-recovery.tex"   # synthetic_recovery_table.py
 cp "$CH7/exp2/tables/exp2/exp2-benchmarks.tex" "$OUT/sections/tables/ch7-ex2-benchmarks.tex"
 cp "$CH7/appendix/tables/ch7-heart-splits.tex" "$OUT/sections/tables/ch7-heart-splits.tex"
 cp "$CH7/exports/ch7-datasets.tex" "$OUT/sections/tables/ch7-datasets.tex"   # sync_ch7_exports.py <- experiments/thesis_datasets

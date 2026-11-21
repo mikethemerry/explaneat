@@ -35,6 +35,7 @@ Each writes the same bytes on a rerun (checked twice for network_figs.json, capg
 uv run python thesis/ch7/exp1/make_tables.py        # tables/exp1-networks.tex, exp1-benchmarks.tex
 uv run python thesis/ch7/exp1/monk2_rule_table.py  # tables/exp1-monk2-rules.tex (experiments/monk2_rule_comparison;
                                                     # preview: latexmk -pdf preview_monk2.tex, with its two figures)
+uv run python thesis/ch7/exp1/synthetic_recovery_table.py  # tables/exp1-synthetic-recovery.tex (experiments/ushape_saddle)
 uv run python thesis/ch7/exp1/make_figures.py       # Experiment 1 figures via thesis/ch7/figlib.py
                                                     # (main text: adult-capgain-response,
                                                     # xor-ridge-valley, synthetic-shape-c-*; appendix group:

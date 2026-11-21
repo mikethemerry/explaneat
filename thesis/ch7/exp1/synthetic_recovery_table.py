@@ -1,0 +1,134 @@
+"""Experiment 1, synthetic U / saddle / U + saddle: which true terms each explained network recovered
+(layer 3: formats only).
+
+    uv run python thesis/ch7/exp1/synthetic_recovery_table.py
+
+Reads (experiments/ushape_saddle/):
+  * gt_grades.json: the grade of each true term per network (recovered / partial / not), a judgement
+    recorded with the study (RESULTS.md section 6); only the grade word before the first colon is used;
+  * figures/<label>-shape.json (shape_plots.py, read-only DB): the model's typical-case sodium minimum and
+    the whole-model heart-rate x systolic-pressure surface against the true saddle (correlation of the
+    mean-removed surfaces; share of the surface that is interaction);
+  * gt_probe.json (gt_probe.py, read-only DB): R^2 of an affine fit of the named part's training-row
+    contribution to the true term.
+Writes tables/exp1-synthetic-recovery.tex (tab:exp1-synthetic-recovery).
+Overleaf: sections/tables/ch7-ex1-synthetic-recovery.tex.
+"""
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+REPO = HERE.parents[2]
+STUDY = REPO / "experiments" / "ushape_saddle"
+OUT = HERE / "tables" / "exp1-synthetic-recovery.tex"
+GEN = "thesis/ch7/exp1/synthetic_recovery_table.py"
+
+NETS = [("shape-A", "U"), ("shape-B", "Saddle"), ("shape-C", "U $+$ saddle")]
+# printed term -> its key in gt_grades.json (design: the study's term list, in the backbone's order)
+TERMS = [("Sodium U, lowest at 137\\,mmol/L", "sodium U, minimum 137 mmol/L"),
+         ("Heart rate $\\times$ systolic BP saddle", "heart rate x sbp saddle (opposing directions, -)"),
+         ("Age (linear)", "age (linear, +)"),
+         ("Creatinine (linear in log)", "creatinine (linear in log, +)"),
+         ("BMI (linear)", "bmi (linear, +)"),
+         ("Smoker (step)", "smoker step (+)"),
+         ("Diabetes (step)", "diabetes step (+)"),
+         ("Male (step)", "male step (+)"),
+         ("Unused inputs left out", "unused inputs")]
+# the part that carries each shape term (gt_probe.json group names; design: the study's choice)
+U_PART = {"shape-A": "sodium_U", "shape-C": "sodium_V"}
+SADDLE_PART = {"shape-B": "saddle parts (pressure_rate_load + pressure_over_rate)", "shape-C": "bp_hr_saddle"}
+U_CONCEPT = "(sodium - 137)^2 (the true U term)"
+SADDLE_CONCEPT = "-(zh*zp) (the true saddle term)"
+SCORE = {"recovered": 1.0, "partial": 0.5, "not": 0.0}
+
+
+def grade(text):
+    """'recovered (as a V): ...' -> ('recovered', 'as a V'); 'not recovered: ...' -> ('not', '')."""
+    head = text.split(":", 1)[0].strip()
+    word = head.split()[0].rstrip(",")
+    note = head[len(head.split()[0]):].strip().removeprefix("recovered").strip(" ,()")
+    return word, note
+
+
+def cell_grade(g):
+    if g is None:
+        return "--"
+    word, note = g
+    shown = {"recovered": "recovered", "partial": "partial", "not": "not recovered"}[word]
+    if word == "recovered":
+        shown = "\\textbf{recovered}"
+    return f"\\makecell{{{shown}\\\\\\footnotesize({note})}}" if note else shown
+
+
+def find_term(terms, key):
+    for k, v in terms.items():
+        if k == key or (key == "unused inputs" and k.startswith("unused inputs")):
+            return v
+    return None
+
+
+def f2(x):
+    return f"{float(x):.2f}"
+
+
+def main():
+    G = json.loads((STUDY / "gt_grades.json").read_text())
+    P = json.loads((STUDY / "gt_probe.json").read_text())
+    S = {lab: json.loads((STUDY / "figures" / f"{lab}-shape.json").read_text()) for lab, _ in NETS}
+    for lab, _ in NETS:
+        assert S[lab]["genome_id"] == json.loads((STUDY / "explanations" / f"{lab}.json").read_text())["genome_id"], lab
+
+    rows, scores = [], {lab: [0.0, 0] for lab, _ in NETS}
+    for printed, key in TERMS:
+        cells = []
+        for lab, _ in NETS:
+            t = find_term(G[lab]["terms"], key)
+            g = grade(t) if t else None
+            if g:
+                scores[lab][0] += SCORE[g[0]]
+                scores[lab][1] += 1
+            cells.append(cell_grade(g))
+        rows.append((printed, cells))
+
+    def num(lab, fn):
+        try:
+            return fn(lab)
+        except KeyError:
+            return "--"
+
+    has_u = {lab for lab, _ in NETS if find_term(G[lab]["terms"], TERMS[0][1])}
+    has_s = {lab for lab, _ in NETS if find_term(G[lab]["terms"], TERMS[1][1])}
+    ev = [
+        ("Model's sodium minimum (mmol/L)", lambda lab: f"{S[lab]['sodium']['model_minimum_at']:.0f}" if lab in has_u else "--"),
+        ("U part vs true U term, $R^2$", lambda lab: f2(P[lab]["parts"][U_PART[lab]][U_CONCEPT]) if lab in has_u else "--"),
+        ("Model surface vs true saddle, $r$", lambda lab: f2(S[lab]["saddle"]["score_corr_with_truth"]) if lab in has_s else "--"),
+        ("Interaction share of the surface", lambda lab: f2(S[lab]["saddle"]["score_interaction_share"]) if lab in has_s else "--"),
+        ("Saddle part(s) vs true saddle term, $R^2$", lambda lab: f2(P[lab]["parts"][SADDLE_PART[lab]][SADDLE_CONCEPT]) if lab in has_s else "--"),
+    ]
+
+    L = ["% Generated by " + GEN + " -- do not edit by hand.",
+         "\\begin{table}[htbp]", "  \\centering", "  \\thesistablestyle",
+         "  \\caption{Experiment 1, synthetic data: the true terms each explained network recovered}",
+         "  \\label{tab:exp1-synthetic-recovery}",
+         "  \\small", "  \\begin{tabular}{@{}l" + "c" * len(NETS) + "@{}}", "    \\toprule",
+         "    True term & " + " & ".join(n for _, n in NETS) + " \\\\", "    \\midrule"]
+    for printed, cells in rows:
+        L.append(f"    {printed} & " + " & ".join(cells) + " \\\\")
+    L.append("    \\midrule")
+    L.append("    Terms recovered & " + " & ".join(
+        f"{s:g} of {n}" for s, n in (scores[lab] for lab, _ in NETS)) + " \\\\")
+    L.append("    \\midrule")
+    for printed, fn in ev:
+        L.append(f"    {printed} & " + " & ".join(num(lab, fn) for lab, _ in NETS) + " \\\\")
+    L += ["    \\bottomrule", "  \\end{tabular}",
+          "  \\par\\smallskip\\footnotesize -- : the term is not in that dataset. Partial counts one half.",
+          "\\end{table}", ""]
+    OUT.parent.mkdir(exist_ok=True)
+    OUT.write_text("\n".join(L))
+    print(f"wrote {OUT.relative_to(REPO)}")
+
+
+if __name__ == "__main__":
+    main()
