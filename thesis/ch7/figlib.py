@@ -46,6 +46,8 @@ USED = (
     "synthetic-shape-c-sodium", "xor-ridge-valley", "exp2-churn-shapes", "exp2-s8-ice",
     # Experiment 1 main-text figures (brief of 21 Nov 2026)
     "adult-capgain-response",
+    # Experiment 1, the Churn case (22 Nov 2026): the network at the level of its parts, whole-model probes
+    "churn-case-net-concept", "churn-case-probes",
 )
 # Figures printed in the Experiment 1 appendix (thesis/ch7/exp1/appendix_networks.tex inlines their floats under
 # their networks), not in the main text (brief of 21 Nov 2026).

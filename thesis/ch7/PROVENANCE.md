@@ -533,3 +533,19 @@ protocol and commands). Every script was run twice with byte-identical outputs.
 
 The EBM one-hot row follows the suite's file: with the widened-grid rerun (branch thesis/wide-grids) its CV
 choice changes, so after that merge rerun `fit_models.py`, `monk2_rule_table.py` and the figures.
+
+## Experiment 1, the Churn case figures and text check (22 Nov 2026, branch thesis/churn-case-figures)
+
+Two used figures and a check of the Chapter 7 Churn paragraph. Every number is a forward pass of the explained
+model (`experiments/churn_case/probes.py` `ChurnModel`: genome `9cacd431`'s phenotype with the stored explanation
+`ce11259b`'s 95 operations replayed by `ModelStateEngine`; `StructureNetwork` with the trained output and hidden
+activations, sigmoid; each pass asserted equal to `PlainModel.logit`; the explanation id asserted equal to the
+committed layer's) on constructed customers in real units. Each script was run twice: byte-identical outputs,
+figures and plot data.
+
+| Output | Writer / command | Reads | Status |
+|---|---|---|---|
+| `experiments/churn_case/text_check.json` | `experiments/churn_case/text_check.py` | explaneat_v4, READ ONLY (genome, split data and scaler, explanation operations); `plain_language/churn-case-s10.json` (`reference_patient`, parts, titles) | extracted (DB, read-only), computed |
+| `thesis/ch7/exp1/data/churn_case_probes.json` | `thesis/ch7/exp1/extract_churn_case.py` (engine and helpers of `experiments/churn_case/probes.py`, `text_check.py`) | as above | extracted (DB, read-only), computed |
+| used `churn-case-probes` (`fig:ch7-churn-case-probes`) | `thesis/ch7/exp1/churn_case_figures.py` (`uv run python thesis/ch7/exp1/make_figures.py churn-case-probes`) | `churn_case_probes.json`; part titles from the layer | computed |
+| used `churn-case-net-concept` (`fig:ch7-churn-case-net-concept`) | `thesis/ch7/exp1/churn_case_figures.py` (`uv run python thesis/ch7/exp1/make_figures.py churn-case-net-concept`), drawn with `thesis/ch7/exp2/worked.py`'s collapse and `render_structure.overview` | `experiments/churn_case/plain_language/churn-case-s10.json` (asserted the genome and explanation of `churn_case_probes.json`, same top-level parts) | agent-authored explanation (parts and titles), structure drawn by code |
