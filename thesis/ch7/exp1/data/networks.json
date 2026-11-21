@@ -488,6 +488,262 @@
    "rec_agent": null,
    "record": null
   },
+  "churn-case-s10": {
+   "label": "churn-case-s10",
+   "dataset": "Churn (case)",
+   "genome": "9cacd431-a3b0-4649-89fb-961d5a6fe5b3",
+   "protocol": "authoring v4 (provenance-stamped, strict mode)",
+   "selection": "best genome by training fitness of one seeded run (seed 10, 200 generations)",
+   "explanation_id": "ce11259b-9439-496e-90b7-cd32bb188b5b",
+   "n_inputs": 71,
+   "inputs": 42,
+   "hidden": 18,
+   "conns": 75,
+   "depth": 8,
+   "skips": 20,
+   "direct_io": 35,
+   "density": 0.18504672897196262,
+   "skippiness": 4.024844720496894,
+   "layers": 9,
+   "splits": 6,
+   "identity": 3,
+   "annotate_ops": 14,
+   "mike": null,
+   "perf": {
+    "split_id": "45962ea6-3c78-49f9-a01e-3665f6809b1e",
+    "train_auc": 0.9077166394668983,
+    "test_auc": 0.8802830274358275,
+    "test_auc_ci95": [
+     0.8442082559391093,
+     0.9134705512455966
+    ],
+    "n_boot_used": 10000,
+    "test_accuracy": 0.9,
+    "train_accuracy": 0.9065,
+    "n_train": 4000,
+    "n_test": 1000,
+    "record": {
+     "file": "experiments/churn_case/runs.csv",
+     "train_auc": 0.9077166394668983,
+     "test_auc": 0.8802830274358275,
+     "test_auc_ci_lo": 0.8442082559391093,
+     "test_auc_ci_hi": 0.9134705512455966
+    }
+   },
+   "parts": [
+    {
+     "name": "serviceCallChain",
+     "n_entry": 2,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "dayChargeBoost",
+     "n_entry": 4,
+     "n_exit": 1,
+     "entry_inputs": [
+      "state:2",
+      "state:3"
+     ],
+     "children": []
+    },
+    {
+     "name": "serviceCallSpike",
+     "n_entry": 1,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "heavyDayUse",
+     "n_entry": 2,
+     "n_exit": 2,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "dayMinutesRamp",
+     "n_entry": 1,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "twoStateFlag",
+     "n_entry": 3,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "state38Hinge",
+     "n_entry": 1,
+     "n_exit": 1,
+     "entry_inputs": [],
+     "children": []
+    },
+    {
+     "name": "state18Hinge",
+     "n_entry": 1,
+     "n_exit": 1,
+     "entry_inputs": [
+      "state:18"
+     ],
+     "children": []
+    },
+    {
+     "name": "state24Hinge",
+     "n_entry": 1,
+     "n_exit": 1,
+     "entry_inputs": [
+      "state:24"
+     ],
+     "children": []
+    },
+    {
+     "name": "directTerms",
+     "n_entry": 35,
+     "n_exit": 1,
+     "entry_inputs": [
+      "voice mail plan",
+      "international plan",
+      "number vmail messages",
+      "total eve minutes",
+      "total intl charge",
+      "state:46",
+      "total night charge",
+      "total intl calls",
+      "state:11",
+      "state:0",
+      "state:4",
+      "state:47",
+      "account length",
+      "state:9",
+      "total day calls",
+      "state:31",
+      "state:50",
+      "state:5",
+      "state:26",
+      "state:35",
+      "total eve charge",
+      "state:19",
+      "state:44",
+      "area code:408",
+      "state:32",
+      "state:16",
+      "state:6",
+      "area code:415",
+      "state:12",
+      "state:36",
+      "state:17",
+      "state:40"
+     ],
+     "children": []
+    },
+    {
+     "name": "serviceCallEffects",
+     "n_entry": 6,
+     "n_exit": 3,
+     "entry_inputs": [
+      "state:2",
+      "state:3"
+     ],
+     "children": [
+      "serviceCallChain",
+      "dayChargeBoost",
+      "serviceCallSpike"
+     ]
+    },
+    {
+     "name": "dayUseShape",
+     "n_entry": 3,
+     "n_exit": 3,
+     "entry_inputs": [],
+     "children": [
+      "heavyDayUse",
+      "dayMinutesRamp"
+     ]
+    },
+    {
+     "name": "stateAdjustments",
+     "n_entry": 6,
+     "n_exit": 4,
+     "entry_inputs": [
+      "state:18",
+      "state:24"
+     ],
+     "children": [
+      "twoStateFlag",
+      "state38Hinge",
+      "state18Hinge",
+      "state24Hinge"
+     ]
+    },
+    {
+     "name": "churnScore",
+     "n_entry": 29,
+     "n_exit": 1,
+     "entry_inputs": [
+      "total intl minutes",
+      "total night calls",
+      "total night minutes",
+      "total eve calls",
+      "area code:510",
+      "state:8",
+      "state:7",
+      "state:48",
+      "state:43",
+      "state:42",
+      "state:41",
+      "state:39",
+      "state:37",
+      "state:34",
+      "state:33",
+      "state:30",
+      "state:29",
+      "state:28",
+      "state:27",
+      "state:25",
+      "state:23",
+      "state:22",
+      "state:21",
+      "state:20",
+      "state:15",
+      "state:14",
+      "state:13",
+      "state:10",
+      "state:1"
+     ],
+     "children": [
+      "serviceCallEffects",
+      "dayUseShape",
+      "stateAdjustments",
+      "directTerms"
+     ]
+    }
+   ],
+   "leaf": 10,
+   "comp": 4,
+   "cov_s": 1.0,
+   "cov_c": 1.0,
+   "hierarchy_complete": true,
+   "hierarchy_complete_check": true,
+   "exempt_disconnected": [],
+   "fp": 1.4432899320127035e-15,
+   "agent": 28.2,
+   "db_start": "2026-11-12T22:16:27+00:00",
+   "db_end": "2026-11-12T22:44:41+00:00",
+   "n_log_entries": 111,
+   "rec_leaf": 10,
+   "rec_comp": 4,
+   "rec_cov_s": 1.0,
+   "rec_cov_c": 1.0,
+   "rec_hierarchy_complete": true,
+   "rec_fp": 1.4432899320127035e-15,
+   "rec_agent": 30.9,
+   "record": "experiments/churn_case/explanations/churn-case-s10.json"
+  },
   "cox-whas500-s0": {
    "label": "cox-whas500-s0",
    "dataset": "WHAS500",
@@ -599,6 +855,95 @@
    "rec_fp": 4.440892098500626e-16,
    "rec_agent": 20.9,
    "record": "experiments/survival/cox_case/explanations/cox-whas500-s0.json"
+  },
+  "cox-gbsg2-s1": {
+   "label": "cox-gbsg2-s1",
+   "dataset": "GBSG2",
+   "genome": "e4c62516-fd1f-4e10-a997-adc574bbcef3",
+   "protocol": "authoring v4 (provenance-stamped, strict mode)",
+   "selection": "lowest validation Cox loss of five seeds",
+   "explanation_id": "b6bb2953-1e94-4979-af08-9ddc13387a38",
+   "n_inputs": 9,
+   "inputs": 5,
+   "hidden": 0,
+   "conns": 5,
+   "depth": 1,
+   "skips": 0,
+   "direct_io": 5,
+   "density": 0.7777777777777778,
+   "skippiness": 0.0,
+   "layers": 2,
+   "splits": 0,
+   "identity": 3,
+   "annotate_ops": 4,
+   "mike": null,
+   "parts": [
+    {
+     "name": "tumour_biology",
+     "n_entry": 3,
+     "n_exit": 1,
+     "entry_inputs": [
+      "progrec",
+      "tgrade=II",
+      "tgrade=III"
+     ],
+     "children": []
+    },
+    {
+     "name": "nodal_burden",
+     "n_entry": 1,
+     "n_exit": 1,
+     "entry_inputs": [
+      "pnodes"
+     ],
+     "children": []
+    },
+    {
+     "name": "hormone_therapy",
+     "n_entry": 1,
+     "n_exit": 1,
+     "entry_inputs": [
+      "horTh=yes"
+     ],
+     "children": []
+    },
+    {
+     "name": "cox_log_risk",
+     "n_entry": 7,
+     "n_exit": 1,
+     "entry_inputs": [
+      "age",
+      "estrec",
+      "menostat=Post",
+      "tsize"
+     ],
+     "children": [
+      "tumour_biology",
+      "nodal_burden",
+      "hormone_therapy"
+     ]
+    }
+   ],
+   "leaf": 3,
+   "comp": 1,
+   "cov_s": 1.0,
+   "cov_c": 1.0,
+   "hierarchy_complete": true,
+   "hierarchy_complete_check": true,
+   "exempt_disconnected": [],
+   "fp": 4.440892098500626e-16,
+   "agent": 13.6,
+   "db_start": "2026-11-12T00:42:55+00:00",
+   "db_end": "2026-11-12T00:56:34+00:00",
+   "n_log_entries": 47,
+   "rec_leaf": 3,
+   "rec_comp": 1,
+   "rec_cov_s": 1.0,
+   "rec_cov_c": 1.0,
+   "rec_hierarchy_complete": true,
+   "rec_fp": 4.440892098500626e-16,
+   "rec_agent": 17.8,
+   "record": "experiments/survival/cox_case/explanations/cox-gbsg2-s1.json"
   },
   "c4cap-main-h10-e50-s1": {
    "label": "c4cap-main-h10-e50-s1",

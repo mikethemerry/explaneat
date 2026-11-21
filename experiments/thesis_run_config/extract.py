@@ -3,8 +3,9 @@
     uv run python experiments/thesis_run_config/extract.py     # -> data.json (~10 s)
 
 One record per run family (a study's seeds that share one configuration) behind a network Chapter 7
-presents (21 Nov 2026: the WHAS500 Cox runs, not GBSG2's; no 300-generation or sigmoid-unit synthetic
-runs; ExConNEAT only the presented MNIST 10-class network's phases). Every value is read from the
+presents (21 Nov 2026: the WHAS500 and GBSG2 Cox runs (GBSG2 a side note), the Churn case; no
+300-generation or sigmoid-unit synthetic runs; ExConNEAT only the presented MNIST 10-class network's
+phases). Every value is read from the
 record the runs left behind, never typed:
 
 * runs stored in the database (``explaneat_dev``, READ ONLY transactions; ``PGOPTIONS
@@ -372,9 +373,9 @@ def paper_family(db, key, label, tag, ini, template_overrides=()):
 # ------------------------------------------------------------------ file families
 
 
-# Cox datasets whose network Chapter 7 presents (GBSG2 is a side note in the benchmark table only;
-# tab:exp1-networks has WHAS500) -- curated
-COX_PRESENTED = ("whas500",)
+# Cox datasets whose network Chapter 7 presents, in the order of the table's name (GBSG2 is back in
+# Experiment 1 as a side note, 21 Nov 2026; tab:exp1-networks has both) -- curated
+COX_PRESENTED = ("whas500", "gbsg2")
 
 
 def cox_family():
@@ -398,8 +399,8 @@ def cox_family():
     assert_flat_equal(flat_from_neat(REPO / rp["config_file"]), neat_cfg, "cox config file")
     commits = sorted({r["commit"] for r in runs})
     return {
-        "key": "cox", "label": "WHAS500 (Cox)", "experiment": "1",
-        "source": "experiments/survival/cox_case/runs/whas500-s{0..4}.json (run_params, neat_config_text)",
+        "key": "cox", "label": "WHAS500, GBSG2 (Cox)", "experiment": "1", "datasets": list(COX_PRESENTED),
+        "source": "experiments/survival/cox_case/runs/{whas500,gbsg2}-s{0..4}.json (run_params, neat_config_text)",
         "store": "run records (in memory, not in the database)",
         "runs": runs, "seeds": sorted(r["seed"] for r in runs), "n_runs": len(runs),
         "neat": neat_cfg, "run_params": rp, "generations_stored": [rp["generations"]],
@@ -619,6 +620,15 @@ def main():
     ing = EXP / "aaai27" / "ingest_monk2.py"
     fam["paper_monk2"]["launch"] = {"file": rel(ing), "TRAIN": module_constant(ing, "TRAIN")}
     assert fam["paper_monk2"]["launch"]["TRAIN"]["population_size"] == fam["paper_monk2"]["neat"]["pop_size"]
+    # the Churn case (one seeded run, experiments/churn_case/runs.csv): the churn configuration, 200 generations
+    ids, rows = exp_ids_from_csv(EXP / "churn_case" / "runs.csv")
+    fam["churn_case"], _ = db_family(db, "churn_case", "Churn case", "1", ids, "experiments/churn_case/runs.csv")
+    fam["churn_case"]["selected"] = {"rule": "highest training fitness of the run", "genome_id": rows[0]["genome_id"]}
+    assert len(rows) == 1 and fam["churn_case"]["runs"][0]["seed"] == int(rows[0]["seed"])
+    fit = db.one("explaneat_dev", "SELECT g.fitness, (SELECT max(g2.fitness) FROM genomes g2 JOIN populations p2 "
+                 "ON g2.population_id = p2.id WHERE p2.experiment_id = p.experiment_id) AS best FROM genomes g "
+                 "JOIN populations p ON g.population_id = p.id WHERE g.id = CAST(:g AS uuid)", g=rows[0]["genome_id"])
+    assert fit["fitness"] == fit["best"], ("churn_case", fit)   # the explained genome is the run's best
     # Cox
     fam["cox"] = cox_family()
     # Connect-4

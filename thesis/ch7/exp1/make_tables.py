@@ -11,9 +11,9 @@ Outputs:
                                 (experiments/benchmarks/benchmarks.csv; benchmark_tables.py, shared
                                 with Experiment 2's exp2-benchmarks.tex)
 Sources: data/networks.json (extract_db.py), experiments/benchmarks/results/propneat.json and
-survival.json, experiments/benchmarks/benchmarks.csv. The original Adult network's AUCs come from
-networks.json ("perf") until propneat.json holds an Experiment 1 Adult entry; then from propneat.json,
-asserted equal.
+survival.json, experiments/benchmarks/benchmarks.csv. The original Adult network's and the Churn case's
+AUCs come from networks.json ("perf") until propneat.json holds Experiment 1 entries for them; then from
+propneat.json, asserted equal.
 Captions hold only a title and the table's keys (Mike, 20 Nov 2026); the method and results sentences
 they used to carry are in thesis/ch7/CAPTION_MOVED_TEXT.md.
 """
@@ -50,7 +50,9 @@ def write(name, src):
 # the rows of the per-network table, in the order of the chapter's Experiment 1
 ORDER = [("paper-heart", "Heart (original network)$^\\dagger$"), ("paper-adult", "Adult (original network)$^\\dagger$"),
          ("paper-monk2", "MONK-2 (original network)$^\\dagger$"),
-         ("cox-whas500-s0", "WHAS500 (Cox)$^\\ast$"), ("c4cap-main-h10-e50-s1", "Connect-4, cells (s1)"),
+         ("churn-case-s10", "Churn case (s10)"),
+         ("cox-whas500-s0", "WHAS500 (Cox)$^\\ast$"), ("cox-gbsg2-s1", "GBSG2 (Cox, side note)$^\\ast$"),
+         ("c4cap-main-h10-e50-s1", "Connect-4, cells (s1)"),
          ("c4lf-lines-heavy-s0", "Connect-4, lines (s0)"), ("shape-A", "Synthetic U (s0)"),
          ("shape-B", "Synthetic saddle (s0)"), ("shape-C", "Synthetic U $+$ saddle (s4)")]
 
@@ -66,9 +68,9 @@ ORIGINAL = ("paper-heart", "paper-adult", "paper-monk2")
 
 def perf(lab, r, P):
     """Train / test AUC of a classification network: experiments/benchmarks/results/propneat.json, or, for a
-    network it does not hold yet (the original Adult network, 21 Nov 2026), extract_db.py's own read-only
-    computation (the code of experiments/10seed/runs_paper_reference.csv, asserted equal to it). When both
-    exist they must agree."""
+    network it does not hold yet (the original Adult network and the Churn case, 21 Nov 2026), extract_db.py's
+    own read-only computation (the code of each one's run record, asserted equal to it). When both exist they
+    must agree."""
     own = r.get("perf")
     if lab in P:
         p = P[lab]
@@ -85,13 +87,15 @@ def perf(lab, r, P):
 def table_networks():
     N = jload(HERE / "data" / "networks.json")
     P = jload(BENCH / "results" / "propneat.json")["exp1"]
-    S = jload(BENCH / "results" / "survival.json")["whas500"]["propneat"]
+    SV = jload(BENCH / "results" / "survival.json")
     body = ["  \\setlength{\\tabcolsep}{2.5pt}", "  \\renewcommand{\\arraystretch}{1.15}",
             "  \\begin{adjustbox}{max width=\\textheight}",
             "  \\begin{tabular}{@{}l" + "c" * 14 + "@{}}", "    \\toprule", f"    {HEAD} \\\\", "    \\midrule"]
     for lab, name in ORDER:
         r = N["networks"][lab]
         if lab.startswith("cox-"):
+            S = SV[lab.split("-")[1]]["propneat"]
+            assert lab.endswith(S["tag"]), (lab, S["tag"])   # survival.json scores the selected seed
             tr, te, lo, hi = S["train_harrell_c"], S["harrell_c"], *S["harrell_c_ci95"]
         else:
             p = perf(lab, r, P)

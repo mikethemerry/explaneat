@@ -132,3 +132,8 @@ split) keep the curated value. `extract.py` adds the original networks from
 `experiments/10seed/runs_paper_reference.csv` when `propneat.json` lacks them (its Experiment 1 Adult entry
 is added on branch thesis/wide-grids; when it lands, the genome ids are deduplicated and nothing changes).
 Both scripts were run twice: byte-identical `data.json`, `datasets.csv` and `.tex`.
+
+Same day, Mike's brief: the Churn case (`churn-case-s10`) is back in Experiment 1. `extract.py` checks its run
+(`experiments/churn_case/runs.csv`, experiment id in `explaneat_dev`) used the churn split `45962ea6` (rows and
+inputs equal), so Churn's "used in" is now "1, 2, 3". GBSG2 is still a row (curated "1"; it is back in Experiment 1
+as a side note). Both scripts run twice again: byte-identical.

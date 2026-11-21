@@ -123,3 +123,20 @@ read like the other original networks:
   No phantom mask: the code at `0bd2e54` has no mask parameter.
 
 Both scripts were run twice after the change: byte-identical `data.json`, `run_config.csv` and `.tex`.
+
+## Churn case and GBSG2 back in Experiment 1 (21 Nov 2026, branch thesis/adult-exp1)
+
+Mike's brief: Experiment 1 also presents the Churn case (`churn-case-s10`, `experiments/churn_case/`) and GBSG2
+(`cox-gbsg2-s1`, as a side note). Two changes to the table:
+
+- **Churn case** (new row, `churn_case`): its one run (`experiments/churn_case/runs.csv` -> experiment
+  `353e267d` in `explaneat_dev`), read like every database family: `config_json` equals
+  `experiments/churn/configs/churn.ini` (the run's `run_params.neat_config`; every option asserted), seed 10,
+  200 generations stored (`run_params.n_generations` 200), 5 epochs, AUC fitness, `mask_phantom` false recorded
+  (so "no", although the code at `959c5f1` has the mask, default on); the explained genome `9cacd431` has the
+  run's highest training fitness (asserted). Its NEAT settings are the Adult / Churn family (finding 1).
+- **WHAS500, GBSG2 (Cox)**: `COX_PRESENTED` is ("whas500", "gbsg2") again, so the family reads all ten Cox run
+  records (five seeds each) and asserts they share one configuration (they do, as before the trim); the
+  presented seeds, in the order of the name, are WHAS500 0 and GBSG2 1 (`selected.json`).
+
+Both scripts were run twice: byte-identical `data.json`, `run_config.csv` and `.tex`.

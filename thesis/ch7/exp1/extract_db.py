@@ -11,7 +11,7 @@ explained network of each Experiment 1 dataset. Sources:
   connections; the definitions of runs.csv) and the library's ExplaNEAT.density / skippines /
   depth (layers), as extract_db.structure_metrics for Experiment 2.
 - performance: experiments/benchmarks/results/propneat.json (classification; recomputed there and
-  checked against each study's run record) and results/survival.json (WHAS500, Harrell's C).
+  checked against each study's run record) and results/survival.json (WHAS500, GBSG2: Harrell's C).
 - explanation (computed, read-only, on the genome's one explanation in explaneat_dev):
   - counts of split_node and add_identity_node operations (as experiments/10seed/build_explanations_csv.py)
     and of leaf / composition annotate operations (experiments/10seed/explaining_time.annotation_counts);
@@ -31,11 +31,12 @@ explained network of each Experiment 1 dataset. Sources:
   0.75 and 0.9 there because their pruned-input annotations sit outside the root) and
   experiments/explanation_levels/levels/paper-*.json (the error); their annotation counts are
   asserted equal. They predate the evidence log, so they have no explaining minutes.
-- performance of the original Adult network (``perf``; 21 Nov 2026, while
-  experiments/benchmarks/results/propneat.json has no Experiment 1 Adult entry): train / test AUC,
+- performance of the original Adult network and the Churn case (``perf``; 21 Nov 2026, while
+  experiments/benchmarks/results/propneat.json has no Experiment 1 entry for them): train / test AUC,
   the 10,000-resample 95% interval and accuracy at 0.5, computed here read-only with
   experiments/10seed/compute_runs (load_split on the run's split, bootstrap_indices, performance), the
-  code that wrote experiments/10seed/runs_paper_reference.csv; asserted equal to that file's adult row.
+  code that wrote each one's run record (experiments/10seed/runs_paper_reference.csv, adult row;
+  experiments/churn_case/runs.csv, written by churn_case/compute_run.py); asserted equal to it.
   make_tables.py prefers propneat.json's entry when it has one and asserts the two agree.
 - parts: each stored annotation (name, entry and exit counts, the model inputs among its entries, its
   children), read from the explanation's annotate operations; for the book's case cards.
@@ -82,13 +83,23 @@ NETS = {
                         selection="the AAAI paper's Heart genome (40 generations)"),
     "paper-adult": dict(dataset="Adult", genome="4bc8fa07-bbf5-48e4-96a8-77be8b577ba3", record=None,
                         paper="adult", levels="explanation_levels/levels/paper-adult.json", protocol=PAPER,
-                        selection="the AAAI paper's Adult genome (\"No pressure\", 100 generations)", perf="adult"),
+                        selection="the AAAI paper's Adult genome (\"No pressure\", 100 generations)",
+                        perf=dict(split="1df50169-8095-40d1-b61a-30bb541cd313", ref="10seed/runs_paper_reference.csv",
+                                  row={"dataset": "adult", "seed": "paper"})),
     "paper-monk2": dict(dataset="MONK-2", genome="23dde0fa-a635-4974-91aa-c05266ea0747", record=None,
                         paper="monk2", levels="explanation_levels/levels/paper-monk2.json", protocol=PAPER,
                         selection="the AAAI paper's MONK-2 genome"),
+    "churn-case-s10": dict(dataset="Churn (case)", genome="9cacd431-a3b0-4649-89fb-961d5a6fe5b3",
+                           record="churn_case/explanations/churn-case-s10.json", protocol=V4,
+                           selection="best genome by training fitness of one seeded run (seed 10, 200 generations)",
+                           perf=dict(split="45962ea6-3c78-49f9-a01e-3665f6809b1e", ref="churn_case/runs.csv",
+                                     row={"experiment_name": "churn-case-s10"})),
     "cox-whas500-s0": dict(dataset="WHAS500", genome="f96ebc8d-5ab6-4b78-866f-5c82f1640771",
                            record="survival/cox_case/explanations/cox-whas500-s0.json", protocol=V4,
                            selection="lowest validation Cox loss of five seeds"),
+    "cox-gbsg2-s1": dict(dataset="GBSG2", genome="e4c62516-fd1f-4e10-a997-adc574bbcef3",
+                         record="survival/cox_case/explanations/cox-gbsg2-s1.json", protocol=V4,
+                         selection="lowest validation Cox loss of five seeds"),
     "c4cap-main-h10-e50-s1": dict(dataset="Connect-4 (cells)", genome="f0eb7635-7f85-437b-815b-993c5ad6cc14",
                                   record="c4_capacity/explanations/record.json", protocol=V4,
                                   selection="largest training AUC of the three main runs"),
@@ -126,14 +137,14 @@ def checks(genome_id):
 
 
 def performance(cr, s, label, m, g, exp, genome, cfg):
-    """Train / test AUC, 95% interval and accuracy of a network, by the code of runs_paper_reference.csv."""
-    sid = cr.SPLITS[m["perf"]]
+    """Train / test AUC, 95% interval and accuracy of a network, by the code of its study's run record
+    (experiments/10seed/compute_runs: load_split, bootstrap_indices, performance), asserted equal to it."""
+    sid, path = m["perf"]["split"], m["perf"]["ref"]
     assert str(exp.split_id) == sid, (label, str(exp.split_id), sid)
     data = cr.load_split(s, sid)
     p = cr.performance(genome, cfg, data, cr.bootstrap_indices(len(data["y_test"])), g.fitness)
-    path = "10seed/runs_paper_reference.csv"
     with open(E / path) as f:
-        rec = [r for r in csv.DictReader(f) if r["dataset"] == m["perf"] and r["seed"] == "paper"]
+        rec = [r for r in csv.DictReader(f) if all(r[k] == v for k, v in m["perf"]["row"].items())]
     assert len(rec) == 1 and rec[0]["genome_id"] == m["genome"], (label, len(rec))
     rec = rec[0]
     out = {"split_id": sid, "train_auc": float(p["train_auc"]), "test_auc": float(p["test_auc"]),

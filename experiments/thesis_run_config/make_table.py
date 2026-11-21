@@ -23,13 +23,13 @@ D = json.loads((HERE / "data.json").read_text())
 F = D["families"]
 
 # row order of panel A (NEAT) and panel B (ExConNEAT) -- curated
-NEAT_ROWS = ["paper_heart", "paper_adult", "paper_monk2", "cox", "c4_cells", "c4_lines", "xor", "shapes",
+NEAT_ROWS = ["paper_heart", "paper_adult", "paper_monk2", "churn_case", "cox", "c4_cells", "c4_lines", "xor", "shapes",
              "adult", "churn", "heart100", "monk2_10", "exp3_ft"]
 CONV_ROWS = ["conv_p1", "conv_p2", "conv_p3"]   # the phases of the presented MNIST 10-class network
 NAME = {  # study names as in the Chapter 7 tables -- curated
     "paper_heart": "Heart, original network", "paper_adult": "Adult, original network",
     "paper_monk2": "MONK-2, original network",
-    "cox": "WHAS500 (Cox)", "c4_cells": "Connect-4, cells", "c4_lines": "Connect-4, lines",
+    "churn_case": "Churn case", "cox": "WHAS500, GBSG2 (Cox; GBSG2 a side note)", "c4_cells": "Connect-4, cells", "c4_lines": "Connect-4, lines",
     "xor": "XOR", "shapes": "Synthetic U, saddle, U $+$ saddle",
     "adult": "Adult", "churn": "Churn", "heart100": "Heart-100", "monk2_10": "MONK-2, ten seeds (grafting)",
     "exp3_ft": "Fine-tuning after a graft",
@@ -113,12 +113,13 @@ def presented_runs(k, fr):
     """The runs whose network Chapter 7 presents (one per dataset of the family, or every seed)."""
     if k in ALL_SEEDS:
         return fr["runs"]
-    if k in ORIGINAL:
+    if k in ORIGINAL or k == "churn_case":
         assert fr["n_runs"] == 1
         return fr["runs"]
     by_name = {r["name"]: r for r in fr["runs"]}
-    if k == "cox":
-        names = [v["tag"] for _, v in sorted(fr["selected"].items())]
+    if k == "cox":   # the selected seed of each dataset, in the order of the study name
+        assert sorted(fr["datasets"]) == sorted(fr["selected"])
+        names = [fr["selected"][d]["tag"] for d in fr["datasets"]]
     elif k in ("c4_cells", "c4_lines"):
         names = [fr["selected"]["name"]]
     elif k == "shapes":
@@ -244,6 +245,9 @@ def selection(k, fr):
     if k == "xor":
         return "first solution"
     if k in ("adult", "churn", "heart100", "monk2_10"):
+        return "train"
+    if k == "churn_case":
+        assert fr["selected"]["rule"] == "highest training fitness of the run"
         return "train"
     raise KeyError(k)
 

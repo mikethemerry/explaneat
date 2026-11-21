@@ -49,6 +49,14 @@ File: `thesis/ch7/exp1/tables/exp1-networks.tex`
 - No Experiment 1 explanation has recorded verification minutes, so \emph{Mike min} is blank throughout.
 - [each XOR seed's genome] classifies all four rows (30 of 30)
 
+**Update 21 Nov 2026 (branch thesis/adult-exp1).** The caption is unchanged. The table now also has the original
+Adult network, the Churn case (s10) and GBSG2 (labelled a side note in its row name). For the body text, the removed
+sentences above now read: selection, Heart, Adult and MONK-2 are the original networks; the Churn case is the best
+genome by training fitness of one seeded run (seed 10, 200 generations); WHAS500 and GBSG2 are the lowest validation
+Cox loss of five seeds each. "Every explanation except the three original ones" was written with the frozen v4 method.
+Adult's never-connected-inputs annotation (`unused_inputs`) is exempt from the single-root rule like MONK-2's (without
+the exemption its compositional coverage is 0.9; networks.json `rec_cov_c`).
+
 ## ch7-ex1-benchmarks, classification (tab:exp1-benchmarks)
 
 File: `thesis/ch7/exp1/tables/exp1-benchmarks.tex`

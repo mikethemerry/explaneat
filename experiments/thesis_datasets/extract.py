@@ -9,7 +9,8 @@ Sources, all read-only:
   as well). For a prepared (encoded) dataset the raw parent row is read too (``source_dataset_id``).
   The split each reported run actually used is checked against the registry: Experiment 2 via the
   runs CSVs' experiment ids, Experiment 1 via the genome ids in ``experiments/benchmarks/results/propneat.json``
-  and the three original networks (Heart, Adult, MONK-2) in ``experiments/10seed/runs_paper_reference.csv``.
+  and the three original networks (Heart, Adult, MONK-2) in ``experiments/10seed/runs_paper_reference.csv``,
+  and the Churn case (``experiments/churn_case/runs.csv``, its experiment id in ``explaneat_dev``).
   These checks also say which experiments report each classification dataset ("used in");
 * survival sets: the Cox case's split files (``experiments/survival/cox_case/splits``), its loader
   (``explaneat.survival.data.load_builtin``, scikit-survival bundled data) and the selected run's record
@@ -52,6 +53,8 @@ OUT = HERE / "data.json"
 COX = REPO / "experiments" / "survival" / "cox_case"
 PROPNEAT = REPO / "experiments" / "benchmarks" / "results" / "propneat.json"
 PAPER_REF = REPO / "experiments" / "10seed" / "runs_paper_reference.csv"   # the three original networks
+# Experiment 1 runs recorded in a runs CSV of their own (not in propneat.json): (runs CSV, registry name, database)
+EXP1_RUNS = [(REPO / "experiments" / "churn_case" / "runs.csv", "churn", "explaneat_dev")]   # the Churn case
 # Experiment 2 runs: (runs CSV, value of its `dataset` column, registry name)
 EXP2_RUNS = [
     (REPO / "experiments" / "10seed" / "runs.csv", "adult", "adult"),
@@ -214,6 +217,21 @@ def run_splits(cr, sets):
         assert str(got) == sid == split_id, (tag, got)
         checks.setdefault(name, []).append({"experiment": 1, "network": tag, "experiment_name": ename,
                                             "split_id": sid})
+        cr.db.engine.dispose()
+    # Experiment 1 runs with their own runs CSV (the Churn case): the experiment's split, as Experiment 2's
+    for path, name, dbname in EXP1_RUNS:
+        sid = CLASSIFICATION[name][1]
+        cr.db.init_db(f"postgresql://localhost/{dbname}")
+        rows = list(csv.DictReader(path.open()))
+        with cr.ReadOnlySession() as s:
+            got = [str(s.execute(q_exp, {"e": r["experiment_id"]}).scalar()) for r in rows]
+        assert set(got) == {sid}, (path, set(got))
+        for r in rows:
+            assert int(r["n_train"]) == sets[name]["n_train"] and int(r["n_test"]) == sets[name]["n_test"], path
+            assert int(r["n_inputs"]) == sets[name]["n_inputs"], path
+            checks.setdefault(name, []).append({"experiment": 1, "network": r["experiment_name"],
+                                                "experiment_name": r["experiment_name"], "file": str(path.relative_to(REPO)),
+                                                "split_id": sid})
         cr.db.engine.dispose()
     return checks
 

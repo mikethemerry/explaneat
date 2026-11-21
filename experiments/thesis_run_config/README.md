@@ -36,7 +36,7 @@ without it.
 
 | File | What it is |
 |---|---|
-| `extract.py` | One record per run family behind a presented network. Database runs: `experiments.config_json`, `hardware_info.run_params`, stored generations, config template, `neat_config_text`; the family's experiments come from the study's own run list (`runs*.csv`, `g300_scores.csv`, `sig_gens.json`) or the explained genome (`propneat.json`). In-memory runs: Cox run JSONs (WHAS500) (with their NEAT config text), Connect-4 logs plus configs (capacity study: base config + recorded overrides, checked against the config text stored on import), `run_xor.py`, ExConNEAT `config.json` / `results.json` of the three phases. Code: optimiser, learning rate and phantom-mask default from `backproppop.py` at each commit; training-path diff between a family's commits. Experiment 3 fine-tuning: constants of `ext_common.py` / `genome_surgery.py` / `reinit.py` (ast), checked against the result CSVs |
+| `extract.py` | One record per run family behind a presented network. Database runs: `experiments.config_json`, `hardware_info.run_params`, stored generations, config template, `neat_config_text`; the family's experiments come from the study's own run list (`runs*.csv`, `g300_scores.csv`, `sig_gens.json`) or the explained genome (`propneat.json`; the original networks also `experiments/10seed/runs_paper_reference.csv`; the Churn case `experiments/churn_case/runs.csv`). In-memory runs: Cox run JSONs (WHAS500, GBSG2) (with their NEAT config text), Connect-4 logs plus configs (capacity study: base config + recorded overrides, checked against the config text stored on import), `run_xor.py`, ExConNEAT `config.json` / `results.json` of the three phases. Code: optimiser, learning rate and phantom-mask default from `backproppop.py` at each commit; training-path diff between a family's commits. Experiment 3 fine-tuning: constants of `ext_common.py` / `genome_surgery.py` / `reinit.py` (ast), checked against the result CSVs |
 | `data.json` | The extracted configurations and checks |
 | `make_table.py` | Formats `data.json`. Typed here (curated, not results): row order and names, which families present every seed (`ALL_SEEDS`; the others show the selected run's seed, read from the record's `selected`), the order of the synthetic datasets, column labels, short wording of fitness / stop / selection rules (each asserted against the record), labels of NEAT options. The "All NEAT studies" line is built from the options equal in every family; any option that differs between families must have a column or an "Other" label (asserted) |
 | `run_config.csv` | One row per family (plus the common line), with commits and sources |
@@ -53,8 +53,8 @@ without it.
   with six NEAT options changed: exactly those six differ from the template (asserted, both values kept).
 - Experiment 2 configs and run parameters are equal in `explaneat_dev` and `explaneat_v4`.
 - The Connect-4 configs equal the config text stored when the selected run was imported into `explaneat_dev`.
-- The WHAS500 Cox runs' config text equals `experiments/survival/configs/survival.ini` (inputs aside).
-- Selection: each original network is its run's highest-fitness genome; the selected Connect-4 and synthetic
+- The WHAS500 and GBSG2 Cox runs' config text equals `experiments/survival/configs/survival.ini` (inputs aside).
+- Selection: each original network and the Churn case is its run's highest-fitness genome; the selected Connect-4 and synthetic
   seeds have the largest training AUC of their runs (and each selected synthetic genome is the explained one in
   `propneat.json`); the Cox selection rule is the one in `selected.json`. `make_table.py` prints these selected
   runs' seeds.
