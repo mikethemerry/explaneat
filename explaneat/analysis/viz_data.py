@@ -56,6 +56,18 @@ def suggest_viz_types(n_in: int, n_out: int) -> List[str]:
     return suggestions
 
 
+def _background(entry_acts: np.ndarray, fixed: Optional[np.ndarray]) -> Tuple[np.ndarray, str]:
+    """The values the inputs not on the plot are held at: ``fixed`` (a reference case's entry
+    values) when given, else each column's median over the rows (the default)."""
+    if fixed is None:
+        return np.median(entry_acts, axis=0), "median"
+    fixed = np.asarray(fixed, dtype=float).ravel()
+    if fixed.shape[0] != entry_acts.shape[1]:
+        raise ValueError(
+            f"reference has {fixed.shape[0]} values but the scope has {entry_acts.shape[1]} inputs")
+    return fixed, "reference"
+
+
 def compute_line_plot(
     fn: Callable,
     entry_acts: np.ndarray,
@@ -65,6 +77,7 @@ def compute_line_plot(
     grid_points: int = 200,
     entry_names: Optional[List[str]] = None,
     exit_names: Optional[List[str]] = None,
+    fixed: Optional[np.ndarray] = None,
 ) -> Dict[str, Any]:
     """Compute line plot data: function curve + actual data scatter.
 
@@ -87,8 +100,8 @@ def compute_line_plot(
     margin = (x_max - x_min) * 0.05
     grid_x = np.linspace(x_min - margin, x_max + margin, grid_points)
 
-    # Build full input: fix other dims at median
-    medians = np.median(entry_acts, axis=0)
+    # Build full input: fix other dims at the median (or the reference case)
+    medians, held_rule = _background(entry_acts, fixed)
     grid_input = np.tile(medians, (grid_points, 1))
     grid_input[:, input_dim] = grid_x
 
@@ -108,6 +121,8 @@ def compute_line_plot(
         "scatter_y": exit_acts[:, output_dim].tolist(),
         "x_label": x_label,
         "y_label": y_label,
+        "held": medians.tolist(),
+        "held_rule": held_rule,
     }
 
 
@@ -120,6 +135,7 @@ def compute_heatmap(
     grid_size: int = 50,
     entry_names: Optional[List[str]] = None,
     exit_names: Optional[List[str]] = None,
+    fixed: Optional[np.ndarray] = None,
 ) -> Dict[str, Any]:
     """Compute heatmap data for 2-input functions.
 
@@ -150,7 +166,7 @@ def compute_heatmap(
     xx, yy = np.meshgrid(x_range, y_range)
 
     # Build full grid input
-    medians = np.median(entry_acts, axis=0)
+    medians, held_rule = _background(entry_acts, fixed)
     flat = np.tile(medians, (grid_size * grid_size, 1))
     flat[:, dim_x] = xx.ravel()
     flat[:, dim_y] = yy.ravel()
@@ -174,6 +190,8 @@ def compute_heatmap(
         "x_label": x_label,
         "y_label": y_label,
         "z_label": z_label,
+        "held": medians.tolist(),
+        "held_rule": held_rule,
     }
 
 
@@ -186,8 +204,10 @@ def compute_partial_dependence(
     grid_points: int = 100,
     entry_names: Optional[List[str]] = None,
     exit_names: Optional[List[str]] = None,
+    fixed: Optional[np.ndarray] = None,
 ) -> Dict[str, Any]:
-    """Compute partial dependence plot data.
+    """Compute partial dependence plot data (the other inputs held at one point: their
+    median or mean, or ``fixed``; not averaged over the data, which ``ice`` shows).
 
     Args:
         fn: Callable function
@@ -202,10 +222,10 @@ def compute_partial_dependence(
     Returns:
         Dict with grid data for 1D or 2D partial dependence
     """
-    if fix_values == "median":
-        fix = np.median(entry_acts, axis=0)
+    if fixed is not None or fix_values == "median":
+        fix, held_rule = _background(entry_acts, fixed)
     else:
-        fix = np.mean(entry_acts, axis=0)
+        fix, held_rule = np.mean(entry_acts, axis=0), "mean"
 
     if len(vary_dims) == 1:
         dim = vary_dims[0]
@@ -224,6 +244,8 @@ def compute_partial_dependence(
             "grid_y": y.tolist(),
             "x_label": x_label,
             "y_label": y_label,
+            "held": fix.tolist(),
+            "held_rule": held_rule,
         }
     elif len(vary_dims) == 2:
         return compute_heatmap(
@@ -233,7 +255,8 @@ def compute_partial_dependence(
             grid_size=min(grid_points, 50),
             entry_names=entry_names,
             exit_names=exit_names,
-        )
+            fixed=fix,
+        ) | {"held_rule": held_rule}
     else:
         raise ValueError("vary_dims must have 1 or 2 elements")
 
@@ -467,6 +490,7 @@ def compute_feature_output_scatter(
     grid_points: int = 100,
     entry_names: Optional[List[str]] = None,
     exit_names: Optional[List[str]] = None,
+    fixed: Optional[np.ndarray] = None,
 ) -> Dict[str, Any]:
     """Compute scatter of one input feature vs model output, with PD overlay.
 
@@ -495,7 +519,7 @@ def compute_feature_output_scatter(
     margin = (x_max - x_min) * 0.05
     pd_x = np.linspace(x_min - margin, x_max + margin, grid_points)
 
-    medians = np.median(entry_acts, axis=0)
+    medians, held_rule = _background(entry_acts, fixed)
     grid_input = np.tile(medians, (grid_points, 1))
     grid_input[:, input_dim] = pd_x
 
@@ -515,6 +539,8 @@ def compute_feature_output_scatter(
         "pd_y": pd_y.tolist(),
         "x_label": x_label,
         "y_label": y_label,
+        "held": medians.tolist(),
+        "held_rule": held_rule,
     }
 
 
@@ -872,6 +898,7 @@ def compute_pairs(
     center: Optional[float] = None,
     entry_names: Optional[List[str]] = None,
     exit_names: Optional[List[str]] = None,
+    fixed: Optional[np.ndarray] = None,
 ) -> Dict[str, Any]:
     """Pairs plot over a few inputs of ``fn`` (an annotation or the whole model).
 
@@ -885,6 +912,8 @@ def compute_pairs(
     - ``fix``: ``"median"`` holds the other inputs at their median over all rows (as the
       other viz types do); ``"average"`` averages over ``max_background`` seeded rows
       (classic partial dependence).
+    - ``fixed``: with ``fix="median"``, hold the other inputs at these values (a reference
+      case's entry values) instead of the medians; ignored for ``"average"``.
     """
     entry_acts = np.asarray(entry_acts, dtype=float)
     exit_acts = np.asarray(exit_acts, dtype=float)
@@ -899,7 +928,8 @@ def compute_pairs(
     rng = np.random.RandomState(seed)
     rows = np.sort(rng.choice(n_rows, size=max_scatter, replace=False)) if n_rows > max_scatter else np.arange(n_rows)
     S = entry_acts[rows]
-    medians = np.median(entry_acts, axis=0)
+    col_medians = np.median(entry_acts, axis=0)
+    medians, held_rule = _background(entry_acts, fixed)
 
     # sensitivity ranking, one vectorised call
     h = 0.01
@@ -929,6 +959,7 @@ def compute_pairs(
     if fix == "average":
         n_bg = min(max_background, len(S))
         B = S[np.sort(rng.choice(len(S), size=n_bg, replace=False))] if len(S) > n_bg else S
+        held_rule = "average"
     else:
         fix = "median"
         B = medians[None, :]
@@ -962,7 +993,8 @@ def compute_pairs(
             "kind": kind,
             "grid": grid.tolist(),
             "weights": weights.tolist(),
-            "median": float(medians[d]),
+            "median": float(col_medians[d]),
+            "held": float(medians[d]),
             "min": float(col.min()),
             "max": float(col.max()),
             "hist": hist,
@@ -1011,6 +1043,8 @@ def compute_pairs(
         "color_domain": [min(vmin, float(center)), float(center), max(vmax, float(center))],
         "value_range": [vmin, vmax],
         "reference": reference,
+        "held": medians.tolist() if fix == "median" else None,
+        "held_rule": held_rule,
         "ranking": ranking,
         "fix": fix,
         "n_rows": int(n_rows),
