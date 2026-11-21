@@ -35,6 +35,27 @@ records' self-reported fields (agent minutes, Experiment 1 coverage, annotation 
 by read-only database checks on 20 Nov (issue 3, resolved; see "Computed records" below).
 
 
+**Explanation records from the database (22 Nov 2026, branch feature/records-db-readers).** Mike's
+decision: the database is the source of truth for the explanation records and his verifications
+(`explanation_records`, migration `m6n7o8p9q0r1`, loaded with `explaneat records import`; each
+verification appended to `explanation_record_events`). The record JSON files are caches written by
+`explaneat records export` when wanted, committed only as deliberate milestone snapshots, not after each
+verification; the committed ones stay as the historical snapshot. Every reader of a record goes through
+`explaneat.analysis.explanation_records` (`load_record_file`, `load_record`, `find_record_for_genome`,
+`list_records`): the row of `$EXPLANEAT_RECORDS_DATABASE_URL` (the records' own database), else of the
+process's `DATABASE_URL`, when it holds the record, else the file. The readers: `thesis/ch7/exp2/make_assets.py`
+(`record()`; `records()` for the headline, cost figure and `per_run.py`'s exp2-runs-* tables, also
+`exp2_figures.py`), `thesis/ch7/exp2/worked.py` (the worked example's recheck and minutes row),
+`thesis/ch7/exp1/extract_db.py` (`rec_*` and `mike`), `thesis/ch7/exp1/make_figures.py` (shape-C's genome),
+`thesis/scripts/thesis_experiment_tables.py`, `thesis/ch7/book/e2_stats.py` and `extract.py`,
+`experiments/10seed/explaining_time.py` and `build_explanations_csv.py`; the signal analyses already read
+records through the library. So record-derived outputs reproduce from the database, like the other
+layer-2 extractors: `reproduce_ch7.sh` passes the records database (default `explaneat_v4`, read only) to
+the generators that read records. Without a records table (before the migration) every reader falls back
+to the committed files: on 22 Nov the default `reproduce_ch7.sh`, `e2_stats.py` and
+`thesis_experiment_tables.py` were byte-identical to the committed outputs, and a throwaway database
+holding the imported records gave the same outputs.
+
 **Captions (20 Nov 2026, branch thesis/simple-captions).** Every caption of the in-scope tables and of
 the Experiment 2 figure floats now holds only a title and the keys needed to read it (what bold, ✓, w,
 letters, daggers, brackets and -- mean; abbreviations). Method and results sentences were removed from
@@ -178,7 +199,7 @@ The following is **curated (judgment)**: chosen by an agent or by Mike and typed
 | record field `verified_by_orchestrator` (coverage, function-preservation error, splits, identity nodes, `complete_ok`) | `experiments/10seed/verify_record.py` (`check_explanation`, `get_coverage` on explaneat_v4) | computed |
 | CSV `n_leaf`, `n_composition` | `experiments/10seed/explaining_time.py` (annotate operations in explaneat_v4) → `explaining_time_v4.csv` → `build_explanations_csv.py`, which asserts them equal to the records' `n_leaf_annotations` / `n_composition_annotations` | extracted (DB, read-only); all 60 agree. The annotations themselves are agent-authored, verified by Mike |
 | CSV `agent_minutes_db` → "Agent min" (exp2-runs-*, exp2-headline, exp2-cost) | `explaining_time.py` (read-only explaneat_v4): explanation created → last timestamped write → `explaining_time_v4.csv` → `build_explanations_csv.py` | extracted (DB, read-only), computed. The record's own start/end stays in the CSV as `claude_minutes` (audit only, not printed) |
-| record `mike_verification` (verified, minutes) | review UI (`explaneat/api/routes/records.py`), committed ab99b365 | human-entered by Mike. **Exception:** adult-s0 (6 min) and adult-s4 (5 min) were written by an agent "at Mike's instruction in chat on 2026-11-18" (issue 2); adult-s3 has no minutes (footnoted) |
+| record `mike_verification` (verified, minutes) | review UI (`explaneat/api/routes/records.py`), committed ab99b365; since 22 Nov the database's `explanation_records` row is the source (read through `explanation_records.load_record_file`, see "Explanation records from the database" below) | human-entered by Mike. **Exception:** adult-s0 (6 min) and adult-s4 (5 min) were written by an agent "at Mike's instruction in chat on 2026-11-18" (issue 2); adult-s3 has no minutes (footnoted) |
 | `thesis/ch7/exp2/data/structure_metrics.json` (density, skippiness, layers) | `extract_db.py structure_metrics.json --refresh` (explaneat_v4) | extracted (DB, read-only); rerun byte-identical |
 | genomes | `PYTHONHASHSEED=0 uv run python experiments/10seed/run_seed.py {adult\|heart100\|churn} <seed>` (enforces the hash seed, seeds random/numpy/torch, 1 torch thread, float64) | computed (layer 1, not rerun; prefix reproduction checked by `verify_prefix_reproduction.py`) |
 

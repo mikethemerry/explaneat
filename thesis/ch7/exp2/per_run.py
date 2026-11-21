@@ -10,7 +10,8 @@ Sources (read-only):
                        nodes, coverage, function-preservation error, agent minutes (agent_minutes_db: computed
                        from the database's timestamped writes, experiments/10seed/explaining_time.py;
                        claude_minutes, the record's own start/end, is kept there for audit)
-    v4 records         experiments/10seed/explanations_v4/<label>.json: mike_verification.minutes
+    v4 records         experiments/10seed/explanations_v4/<label>.json: mike_verification.minutes (read
+                       with make_assets.record: the records database's copy, else the file)
     data/structure_metrics.json  ExplaNEAT.density / skippines / depth (extract_db.py, read-only DB)
 
 Outputs: tables/exp2/exp2-runs-{adult,churn,heart100}.tex (one sidewaystable each, all ten seeds
@@ -21,7 +22,7 @@ from __future__ import annotations
 import json
 import statistics as st
 
-from make_assets import DATA, EXPL, RUNS, STUDIES, TAB, jload, num, rows
+from make_assets import DATA, EXPL, RUNS, STUDIES, TAB, num, record, rows
 
 SHORT = {"adult": "adult", "churn100": "churn", "heart100": "heart100"}
 # Caption title per study. Captions hold only a title and the table's keys (Mike, 20 Nov 2026); the method
@@ -55,7 +56,7 @@ def study_rows(k):
         assert r["genome_id"] == e["genome_id"] == m["genome_id"], (k, s)
         assert m["layers"] == int(r["depth"]) + 1, (k, s, m["layers"], r["depth"])
         assert int(r["n_boot_used"]) == int(R[0]["n_boot_used"]), (k, s)
-        rec = jload(f"experiments/10seed/explanations_v4/{e['label']}.json")
+        rec = record(f"experiments/10seed/explanations_v4/{e['label']}.json")
         mv = (rec.get("mike_verification") or {}).get("minutes")
         out.append({
             "seed": s, "train_auc": float(r["train_auc"]), "test_auc": float(r["test_auc"]),

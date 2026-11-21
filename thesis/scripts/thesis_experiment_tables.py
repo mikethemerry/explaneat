@@ -2,8 +2,10 @@
 
     uv run python thesis/scripts/thesis_experiment_tables.py
 
-Reads only committed results files (no database, no recomputation) and writes three LaTeX
-tables to ``thesis/ch7/exports/``:
+Reads only committed results files (no recomputation), except the explanation records, which are
+read through ``explaneat.analysis.explanation_records`` (``record()``: the records database's copy,
+with Mike's current verification, when it holds them, else the committed record files), and writes
+three LaTeX tables to ``thesis/ch7/exports/``:
 
 - ``ch7_experiment1_cases.tex``: Experiment 1, one row per case (dataset, n, model size, the
   test metric against the references, the three levels, verification);
@@ -34,6 +36,16 @@ R = ROOT / "experiments" / "references" / "results"
 
 def jload(p):
     return json.load(open(p))
+
+
+def record(p):
+    """An explanation record: the records database's copy (with Mike's current verification) when it
+    holds it, else the file (explaneat.analysis.explanation_records.load_record_file)."""
+    import sys
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from explaneat.analysis.explanation_records import load_record_file
+    return load_record_file(p)
 
 
 def rows(p):
@@ -206,7 +218,7 @@ def experiment1():
     cr = {r["name"]: r for r in rows(E / "complex_real" / "runs.csv")}
     cbase = jload(E / "complex_real" / "baselines.json")
     r, b = cr["krk-default-s2"], cbase["krk"]
-    rec = jload(E / "complex_real" / "explanations" / "krk-default-s2.json")
+    rec = record(E / "complex_real" / "explanations" / "krk-default-s2.json")
     la = rec["leaf_assessments"]
     grades = Counter((a.get("assessment") or a.get("grade")) for a in (la.values() if isinstance(la, dict) else la))
     krk_vd = E / "complex_real" / "verification" / "krk" / "verdict.json"
@@ -224,7 +236,7 @@ def experiment1():
     # Connect-4 capacity
     c4 = {r["name"]: r for r in rows(E / "c4_capacity" / "runs.csv")}["main-h10-e50-s1"]
     c4b = jload(E / "c4_capacity" / "baselines.json")
-    c4rec = jload(E / "c4_capacity" / "explanations" / "record.json")
+    c4rec = record(E / "c4_capacity" / "explanations" / "record.json")
     c4lv = levels_counts(E / "explanation_levels" / "levels" / "c4cap-main-h10-e50-s1.json")
     g, u, w, rf, fl = verdict_counts(E / "c4_capacity" / "verification" / "independent" / "verdict.json")
     sa = c4rec["semantic_assessment"]
@@ -266,7 +278,7 @@ def experiment2():
     rash = {(r["run_set"], r["reference"], r["eps"]): r for r in rows(R / "rashomon_counts.csv")}
     body = []
     for key, name, csvp in SETS:
-        recs = [jload(p) for p in sorted((E / "10seed" / "explanations_v4").glob(f"{key}-s*.json"))]
+        recs = [record(p) for p in sorted((E / "10seed" / "explanations_v4").glob(f"{key}-s*.json"))]
         assert len(recs) == 10, key
         full = sum(1 for r in recs if r["full_coverage"] and r["hierarchy_complete"])
         mism = sum(r["recheck_summary"]["mismatch"] for r in recs)

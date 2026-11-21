@@ -289,7 +289,8 @@ def shape_c_network(d):
     its model state rebuilt from the stored operations having exactly the layer's connections and weights."""
     layer = figlib.jload(SHAPE_C_LAYER)
     gid = d["genome_id"]
-    rec = figlib.jload("experiments/ushape_saddle/explanations/shape-C.json")
+    from explaneat.analysis.explanation_records import load_record_file
+    rec = load_record_file(REPO / "experiments/ushape_saddle/explanations/shape-C.json")   # DB's copy, else the file
     nf = figlib.jload("thesis/ch7/exp1/data/network_figs.json")["networks"][SHAPE_C]
     (run,) = figlib.csvrows("experiments/ushape_saddle/runs.csv", genome_id=gid)
     assert layer["genome_id"] == rec["genome_id"] == nf["genome"] == gid, (layer["genome_id"], gid)

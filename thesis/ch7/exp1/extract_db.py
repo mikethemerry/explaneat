@@ -24,7 +24,8 @@ explained network of each Experiment 1 dataset. Sources:
   - explaining minutes from the database's timestamped writes (explaining_time.explaining_window:
     explanation created -> last operation, evidence record or evidence_log entry).
   Each is compared with what the explaining agent reported in the study's record (kept as rec_* for
-  audit): annotation counts, splits and identity nodes must agree (asserted); coverage, the error
+  audit; the record and Mike's verification minutes are read through explaneat.analysis.explanation_records:
+  the explanation_records row of $EXPLANEAT_RECORDS_DATABASE_URL, else of explaneat_dev, else the file): annotation counts, splits and identity nodes must agree (asserted); coverage, the error
   and minutes may differ and are printed. The AAAI paper explanations have no record: their
   rec_* values are experiments/aaai27/recheck/results/paper_coverage_options.json ("current", the
   stored stream under the definition before D4: MONK-2's and Adult's compositional coverage are
@@ -73,6 +74,8 @@ DB = "postgresql://localhost/explaneat_dev"
 # transaction of this process is read-only on the server side
 os.environ["DATABASE_URL"] = DB
 os.environ["PGOPTIONS"] = (os.environ.get("PGOPTIONS", "") + " -c default_transaction_read_only=on").strip()
+
+from explaneat.analysis.explanation_records import load_record_file  # noqa: E402
 
 # label -> metadata. protocol: which explanation method produced the explanation.
 V4 = "authoring v4 (provenance-stamped, strict mode)"
@@ -214,7 +217,7 @@ def network(cr, label, m):
     assert (cov["leaf_count"], cov["composition_count"]) == (out["leaf"], out["comp"]), (label, cov["leaf_count"], cov["composition_count"])
     assert out["leaf"] + out["comp"] == out["annotate_ops"], label
     if m["record"]:
-        rec = jload(E / m["record"])
+        rec = load_record_file(E / m["record"])   # the records database's copy, else the file
         assert rec["genome_id"] == m["genome"], label
         out.update(rec_leaf=rec["n_leaf_annotations"], rec_comp=rec["n_composition_annotations"],
                    rec_cov_s=rec["structural_coverage"], rec_cov_c=rec["compositional_coverage"],

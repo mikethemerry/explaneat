@@ -5,9 +5,10 @@ xc_*.py files) and the figures in figs/, and writes one self-contained HTML page
 Run: python3 build.py
 
 Rebuilding from scratch (source kept in the repo at thesis/ch7/book/):
-  1. python3 extract.py <checkout>   -> xdata/   (drawer data; reads explaneat_v4 / explaneat_dev read only; not committed, ~35 MB)
+  1. uv run python extract.py <checkout>   -> xdata/   (drawer data; reads explaneat_v4 / explaneat_dev read only; not committed, ~35 MB)
   2. python3 graphs.py               -> graphs/  (drawer graphs; not committed)
-  3. python3 e2_stats.py <repo root> > e2_stats.json   (Experiment 2 numbers from the run CSVs and v4 records)
+  3. uv run python e2_stats.py <repo root> > e2_stats.json   (Experiment 2 numbers from the run CSVs and the v4
+     records: the records database's, else the committed files)
   4. python3 build.py                -> ch7_experiments.html (must stay under 16 MB)
   5. python3 check6.py               (headless Chrome: Playwright with the system Chrome)
 Needs Pillow (and Playwright for the check). The figures in figs/ are copies of repo figures, some from other branches.

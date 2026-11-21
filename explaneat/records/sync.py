@@ -9,8 +9,9 @@ explanation of its genome (the latest ``explanations`` row), when there is one.
 
 Export writes every database record (with its current ``mike_verification``) to its file of
 origin, in that file's own layout (indent, trailing newline; key order kept), and leaves a file
-alone when its content already matches. The committed record files are this export: the thesis generators read
-them, so they stay reproducible from committed files.
+alone when its content already matches. The record files are this export: a cache of the database,
+committed only as a deliberate milestone snapshot; the thesis readers read the database first
+(``explanation_records.load_record_file``) and the files only when it does not hold a record.
 """
 
 from __future__ import annotations

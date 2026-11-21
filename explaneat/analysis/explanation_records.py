@@ -7,13 +7,17 @@ reads.
 
 Where records live
 ------------------
-* **The database** (table ``explanation_records``, migration ``m6n7o8p9q0r1``; loaded with
-  ``explaneat records import``). Used when the process has a database (``DATABASE_URL`` set, or
-  the DB already initialised, or ``EXPLANEAT_RECORDS_DB=1``) and the table exists and holds the
-  record. A verification written there is appended to ``explanation_record_events``.
+* **The database**, the source of truth for the records and Mike's verifications (table
+  ``explanation_records``, migration ``m6n7o8p9q0r1``; loaded with ``explaneat records import``).
+  The records database is ``$EXPLANEAT_RECORDS_DATABASE_URL`` when set (one database holding every
+  record, whatever database the process reads genomes from), else the process's own (``DATABASE_URL``
+  set, or the DB already initialised, or ``EXPLANEAT_RECORDS_DB=1``). Used when the table exists and
+  holds the record. A verification written there is appended to ``explanation_record_events``.
   ``EXPLANEAT_RECORDS_DB=0`` forces the files.
-* **Files**, the fallback (and the committed layer-2 snapshot: ``explaneat records export``
-  writes the database's records back to them). The directories searched, in order:
+* **Files**, the fallback: caches written by ``explaneat records export`` (the database's records,
+  with the current verification), committed only as milestone snapshots. Scripts never ``json.load``
+  a record file: they call :func:`load_record_file` (or :func:`load_record`,
+  :func:`find_record_for_genome`, :func:`list_records`), which read the database first. The directories searched, in order:
   ``$EXPLANEAT_RECORDS_DIR`` (one directory, or several separated by ``os.pathsep``; default
   ``experiments/10seed/explanations``), then every study's ``experiments/<study>/explanations*``
   (and ``experiments/<a>/<b>/explanations*``) folder (``EXPLANEAT_RECORDS_DISCOVER=0`` turns that
@@ -229,11 +233,34 @@ def dir_records(directory: Path) -> List[Dict[str, Any]]:
 
 
 # ----------------------------------------------------------------------------- database
+_RECORDS_DBS: Dict[str, Any] = {}
+
+
+def records_database_url() -> Optional[str]:
+    """``$EXPLANEAT_RECORDS_DATABASE_URL``: a database that holds the records, separate from the
+    process's own (so a script that reads genomes from one database reads the records from
+    another); None = the process's database (``DATABASE_URL``)."""
+    return (os.environ.get("EXPLANEAT_RECORDS_DATABASE_URL") or "").strip() or None
+
+
 def _db():
-    """The database to read records from, or None (files only)."""
+    """The database to read records from, or None (files only): ``$EXPLANEAT_RECORDS_DATABASE_URL``
+    when set, else the process's database."""
     mode = os.environ.get("EXPLANEAT_RECORDS_DB", "auto").strip().lower()
     if mode in ("0", "off", "false", "no", "files"):
         return None
+    url = records_database_url()
+    if url:
+        if url not in _RECORDS_DBS:
+            from ..db.base import Database
+            d = Database(url)
+            try:
+                d.init_db()
+            except Exception as e:   # pragma: no cover - a broken URL: files only
+                log.debug("records: no records database (%s)", e)
+                return None
+            _RECORDS_DBS[url] = d
+        return _RECORDS_DBS[url]
     from ..db import db
     if db.engine is None:
         if mode not in ("1", "on", "true", "yes") and not os.environ.get("DATABASE_URL"):
@@ -440,17 +467,32 @@ def load_record(label: str, directory: Optional[Path] = None) -> Dict[str, Any]:
 
 
 def load_record_file(path) -> Dict[str, Any]:
-    """The record of a file: the database's copy when it holds that file's record, else the
-    file. For scripts that name record files (``build_explanations_csv.py``)."""
+    """The record of a file: the database's copy (with Mike's current verification) when it
+    holds that file's record, else the file. For scripts that name record files (the thesis
+    extractors and generators, ``build_explanations_csv.py``): the database is the source of truth
+    and the committed file is its export (``explaneat records export``), read only when the
+    database does not hold the record (no database, no table yet, or not imported).
+
+    A ``report.json`` beside a ``record.json`` (a record whose agent report is kept separately)
+    is the database row's ``report`` (its record when no separate report was stored), with the
+    row's verification."""
     src = rel(path)
     from ..db.models import ExplanationRecord as R
+    p = Path(path)
+    sib = rel(p.parent / "record.json") if p.name == "report.json" else None
 
     def q(s):
         row = s.query(R.record, R.mike_verification).filter(R.source_path == src).one_or_none()
-        return None if row is None else (row[0], row[1])
+        if row is not None:
+            return row[0], row[1]
+        if sib is not None:
+            row = s.query(R.report, R.record, R.mike_verification).filter(R.source_path == sib).one_or_none()
+            if row is not None:   # no report stored: it was the record itself at import
+                return (row[0] if row[0] is not None else row[1]), row[2]
+        return None
     got = _with_db(q, None)
     if got is None:
-        return _read(Path(path))
+        return _read(p)
     rec = dict(got[0])
     if got[1] is not None:
         rec["mike_verification"] = got[1]
@@ -571,7 +613,7 @@ def write_verification(
 
 
 def _write_db_verification(e: Entry, mv: Dict[str, Any]) -> Dict[str, Any]:
-    from ..db import db
+    db = _db()
     from ..db.models import ExplanationRecord as R, ExplanationRecordEvent as Ev
     with db.session_scope() as s:
         row = s.query(R).filter(R.label == e.label).one()
