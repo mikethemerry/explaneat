@@ -253,6 +253,18 @@ def _do_compute_viz_data(
             exit_names = [str(n) for n in annotation["exit_nodes"]]
 
         suggested = vd.suggest_viz_types(n_in, n_out)
+        fixed = None
+        if params.get("reference") and viz_type in (
+                "line", "heatmap", "partial_dependence", "feature_output_scatter"):
+            from explaneat.analysis.reference_case import reference_from_params
+            from explaneat.db.models import DatasetSplit
+            import uuid as _uuid
+            sp = session.query(DatasetSplit).filter_by(id=_uuid.UUID(dataset_split_id)).first()
+            fixed = reference_from_params(
+                params, sp.scaler_type, sp.scaler_params,
+                model_state=None if is_whole_model else model_state,
+                annotation=None if is_whole_model else annotation,
+                n_columns=n_in if is_whole_model else None)
 
         if viz_type == "line":
             data = vd.compute_line_plot(
@@ -260,6 +272,7 @@ def _do_compute_viz_data(
                 input_dim=params.get("input_dim", 0),
                 output_dim=params.get("output_dim", output_index),
                 entry_names=entry_names, exit_names=exit_names,
+                fixed=fixed,
             )
         elif viz_type == "heatmap":
             data = vd.compute_heatmap(
@@ -267,6 +280,7 @@ def _do_compute_viz_data(
                 input_dims=tuple(params.get("input_dims", [0, 1])),
                 output_dim=params.get("output_dim", output_index),
                 entry_names=entry_names, exit_names=exit_names,
+                fixed=fixed,
             )
         elif viz_type == "partial_dependence":
             data = vd.compute_partial_dependence(
@@ -274,6 +288,7 @@ def _do_compute_viz_data(
                 vary_dims=params.get("vary_dims", [0]),
                 output_dim=params.get("output_dim", output_index),
                 entry_names=entry_names, exit_names=exit_names,
+                fixed=fixed,
             )
         elif viz_type == "pca_scatter":
             data = vd.compute_pca_scatter(
@@ -300,6 +315,7 @@ def _do_compute_viz_data(
                 input_dim=params.get("input_dim", 0),
                 output_dim=params.get("output_dim", output_index),
                 entry_names=entry_names, exit_names=exit_names,
+                fixed=fixed,
             )
         elif viz_type == "output_distribution":
             data = vd.compute_output_distribution(
@@ -527,6 +543,10 @@ def compute_viz_data(
         max_samples: Optional cap on the rows (default None: all rows). Sampling is opt-in;
             the result's "split" block says which rows were used.
         params: JSON string of extra params (e.g. {"input_dim": 1, "input_dims": [0,2]}).
+            {"reference": {"x": [...]}} holds the inputs not on the plot (line, heatmap,
+            partial_dependence, feature_output_scatter) at a reference case: one value
+            per dataset column in raw units (before the split's scaler), forward-passed to the
+            scope's entry nodes; without it they are held at each column's median.
     """
     extra_params = json.loads(params) if params else {}
     try:

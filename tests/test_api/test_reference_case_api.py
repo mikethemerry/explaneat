@@ -103,3 +103,18 @@ def test_case_rows(api):
                     json={"dataset_split_id": sid, "order": "prediction", "limit": 100}).json()
     preds = [row["prediction"][0] for row in p["rows"]]
     assert preds == sorted(preds)
+
+
+@pytest.mark.db
+def test_mcp_viz_holds_reference(api, test_db, monkeypatch):
+    from mcp_server.tools import evidence as mcp_ev
+    _do_compute_viz_data = mcp_ev._do_compute_viz_data
+    monkeypatch.setattr(mcp_ev, "get_db", lambda: test_db)
+
+    _, gid, sid, X, _ = api
+    out = _do_compute_viz_data(gid, "line", sid, split="train",
+                               params={"input_dim": 0, "reference": {"x": X[3].tolist()}})
+    data = out.get("data", out)
+    assert data["held_rule"] == "reference"
+    plain = _do_compute_viz_data(gid, "line", sid, split="train", params={"input_dim": 0})
+    assert plain.get("data", plain)["held_rule"] == "median"

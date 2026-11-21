@@ -240,14 +240,8 @@ def _last_split_info():
 
 def _scale_rows(X: np.ndarray, split) -> np.ndarray:
     """The split's scaler applied to raw rows (the values the network was trained on)."""
-    X = np.asarray(X, dtype=float)
-    if not (split.scaler_type and split.scaler_params):
-        return X
-    if split.scaler_type == "StandardScaler":
-        return (X - np.array(split.scaler_params["mean"])) / np.array(split.scaler_params["scale"])
-    if split.scaler_type == "MinMaxScaler":
-        return X * np.array(split.scaler_params["scale_"]) + np.array(split.scaler_params["min_"])
-    return X
+    from ...analysis.reference_case import scale_rows
+    return scale_rows(X, split.scaler_type, split.scaler_params)
 
 
 def _load_split_data(session, split_id: str, split_choice: str, sample_frac: float, max_samples):
@@ -703,33 +697,19 @@ def _compute_pairs_plot(
 def _reference_entry_values(session, request, model_state, annotation, is_whole_model, n_in):
     """The scope's entry values at the reference case ``params.reference.x`` (raw units, one
     value per dataset column), or None when the request has no reference."""
-    ref = (request.params or {}).get("reference")
-    if not ref:
+    from ...analysis.reference_case import reference_from_params
+
+    if not (request.params or {}).get("reference"):
         return None
-    x = ref.get("x") if isinstance(ref, dict) else None
-    if not isinstance(x, list) or not x:
-        raise HTTPException(status_code=400, detail="params.reference needs x: the case's values per dataset column")
     split = session.query(DatasetSplit).filter_by(id=uuid.UUID(request.dataset_split_id)).first()
     try:
-        xs = _scale_rows(np.asarray([x], dtype=float), split)
-    except (ValueError, TypeError) as e:
-        raise HTTPException(status_code=400, detail=f"bad reference: {e}")
-    return reference_entry_values(xs, model_state, annotation, is_whole_model, n_in)
-
-
-def reference_entry_values(xs: np.ndarray, model_state, annotation, is_whole_model: bool, n_in: int):
-    """Entry values of a scope at the scaled case row(s) ``xs`` (1 × columns): the row itself for
-    the whole model, else the forward pass's activations at the scope's entry nodes."""
-    if is_whole_model:
-        if xs.shape[1] != n_in:
-            raise HTTPException(status_code=400,
-                                detail=f"reference has {xs.shape[1]} values, the model {n_in} inputs")
-        return xs[0]
-    try:
-        entry, _ = ActivationExtractor.from_structure(model_state).extract(xs, annotation)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"bad reference: {e}")
-    return np.asarray(entry, dtype=float)[0]
+        return reference_from_params(
+            request.params, split.scaler_type, split.scaler_params,
+            model_state=None if is_whole_model else model_state,
+            annotation=None if is_whole_model else annotation,
+            n_columns=n_in if is_whole_model else None)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.post("/viz-data", response_model=VizDataResponse)
@@ -1714,8 +1694,7 @@ async def reference_case(request: ReferenceCaseRequest, genome_id: str = Path(..
             model_state = _build_model_state(session, genome_id)
             annotation = _resolve_annotation(session, genome_id, model_state,
                                              request.annotation_id, request.node_id)
-            vals = reference_entry_values(_scale_rows(x[None, :], c["split"]), model_state,
-                                          annotation, False, len(x))
+            vals = rc.entry_values(_scale_rows(x[None, :], c["split"]), model_state, annotation)
             display_map = model_state.get_display_map()
             out["entry"] = {
                 "nodes": list(annotation["entry_nodes"]),

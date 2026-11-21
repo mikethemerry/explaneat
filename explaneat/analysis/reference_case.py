@@ -241,3 +241,46 @@ def describe(
     return {"x": [float(v) for v in x], "columns": columns, "groups": group_out,
             "prediction": prediction, "nearest": nearest, "typicality": typicality,
             "warnings": warnings, "n_rows": int(n)}
+
+
+def scale_rows(X: np.ndarray, scaler_type: Optional[str], scaler_params: Optional[Dict[str, Any]]) -> np.ndarray:
+    """A split's scaler applied to raw rows (the values the network was trained on)."""
+    X = np.asarray(X, dtype=float)
+    if not (scaler_type and scaler_params):
+        return X
+    if scaler_type == "StandardScaler":
+        return (X - np.array(scaler_params["mean"])) / np.array(scaler_params["scale"])
+    if scaler_type == "MinMaxScaler":
+        return X * np.array(scaler_params["scale_"]) + np.array(scaler_params["min_"])
+    return X
+
+
+def entry_values(xs: np.ndarray, model_state=None, annotation=None) -> np.ndarray:
+    """A scope's entry values at the scaled case row ``xs`` (1 × columns): the row itself for the
+    whole model (``annotation`` None), else the forward pass's activations at the entry nodes.
+    These are what the "others held fixed" plots hold the other inputs at."""
+    xs = np.asarray(xs, dtype=float).reshape(1, -1)
+    if annotation is None:
+        return xs[0]
+    from .activation_extractor import ActivationExtractor
+    entry, _ = ActivationExtractor.from_structure(model_state).extract(xs, annotation)
+    return np.asarray(entry, dtype=float)[0]
+
+
+def reference_from_params(params: Optional[Dict[str, Any]], scaler_type, scaler_params,
+                          model_state=None, annotation=None, n_columns: Optional[int] = None):
+    """``params["reference"]["x"]`` (raw units per dataset column) -> the scope's entry values,
+    or None without a reference. Raises ValueError on a malformed reference."""
+    ref = (params or {}).get("reference")
+    if not ref:
+        return None
+    x = ref.get("x") if isinstance(ref, dict) else None
+    if not isinstance(x, list) or not x:
+        raise ValueError("params.reference needs x: the case's values per dataset column")
+    xs = np.asarray([x], dtype=float)
+    if n_columns is not None and xs.shape[1] != n_columns:
+        raise ValueError(f"reference has {xs.shape[1]} values, the data {n_columns} columns")
+    try:
+        return entry_values(scale_rows(xs, scaler_type, scaler_params), model_state, annotation)
+    except (ValueError, IndexError, RuntimeError) as e:
+        raise ValueError(f"bad reference: {e}")
