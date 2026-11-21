@@ -43,8 +43,8 @@ if [[ "${1:-}" == "--with-db" ]]; then
   uv run python experiments/ushape_saddle/references.py                          # -> references.json
   # Datasets tables: splits, raw records, Cox split files and run records (read-only explaneat_v4 + explaneat_dev);
   # MNIST from the ExConNEAT run records and split code (needs ~/.explaneat/data/mnist_784.npz, else one OpenML fetch)
-  uv run --extra survival python experiments/thesis_datasets/extract.py         # ~2 min -> data.json
-  # Run-configuration table: every run family's stored config, run parameters and training code (read-only explaneat_dev
+  uv run --extra survival python experiments/thesis_datasets/extract.py         # ~10 s -> data.json
+  # Run-configuration table: the stored config, run parameters and training code of the runs behind each presented network (read-only explaneat_dev
   # + explaneat_v4; git show of backproppop.py at each run's commit)
   uv run python experiments/thesis_run_config/extract.py                        # ~10 s -> data.json
   # Thesis-side DB caches

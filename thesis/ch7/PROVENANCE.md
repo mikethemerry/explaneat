@@ -462,3 +462,26 @@ compiles with no errors or overfull boxes (landscape, `sidewaystable`).
 
 Findings (three NEAT config families, unmasked runs, Heart's 40 of 100 generations, dirty trees, ExConNEAT
 records) are in `experiments/thesis_run_config/RESULTS.md`.
+
+## ch7-run-config and ch7-datasets: presented runs only (21 Nov 2026, branch thesis/run-config-trim)
+
+`tab:ch7-run-config` now shows only the runs that produced the networks Chapter 7 presents, and
+`tab:ch7-datasets-mnist` only the data of the presented ExConNEAT network's lineage. Both extractors and
+both generators were rerun twice: byte-identical `data.json`, `run_config.csv` / `datasets.csv` and `.tex`;
+both experiment-side previews and `thesis/tablestyle/preview.tex` (which now also inputs
+`ch7-run-config`, in the thesis table style) compile with no errors or overfull boxes. Supersedes, in the two sections
+above, the Cox (GBSG2), synthetic 300-generation / sigmoid-unit and MNIST 3 vs 8 vs noise links.
+
+| Link | Writer / command | Status |
+|---|---|---|
+| Seed(s) presented | `make_table.py` `presented_runs`: the run each family's record names as selected (`selected` in `data.json`: Cox `selected.json`, Connect-4 the largest training AUC, synthetic the largest training AUC asserted equal to the explained genome in `propneat.json`), or every seed for the families listed in `ALL_SEEDS` | computed (selection), curated (which families present every seed) |
+| Cox row (WHAS500 only) | `extract.py` `COX_PRESENTED`: the five WHAS500 run records; GBSG2 left out because `tab:exp1-networks` has WHAS500 only and the survival benchmark table gives GBSG2 as a side note | curated (judgment) |
+| synthetic 300-generation and sigmoid-unit rows | removed: their networks are only in the options figures (`FIGURES.md`) | curated (judgment) |
+| Heart original network, generations | the generations stored (40); the planned budget stays a provenance note (`experiments/thesis_run_config/RESULTS.md`, finding 3) | extracted (DB, read-only) |
+| ExConNEAT panel (b) | `experiments/conv_neat/results/{sweep_p50_m4_e5,mnist10_pruned,mnist10_ws50k_halving}/` `config.json`, `results.json` (the three phases of the presented MNIST 10-class network); MNIST 3 vs 8 vs noise removed | computed |
+| MNIST datasets rows | `experiments/thesis_datasets/extract.py` `mnist()`: the two 10-class training sets (10k subset: the 10k run and its pruning phase; all 50k: the warm start); MNIST 3 vs 8 vs noise no longer rebuilt | computed |
+| captions (title and keys only; old and new in `CAPTION_MOVED_TEXT.md`, "Run-configuration table, presented runs only") | typed in `make_table.py` | prose, not results |
+
+What was dropped and why: `experiments/thesis_run_config/RESULTS.md` ("Trimmed to the presented runs") and
+`experiments/thesis_datasets/RESULTS.md` ("MNIST (Experiment 4) and KRK").
+

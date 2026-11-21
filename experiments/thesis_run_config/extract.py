@@ -2,22 +2,25 @@
 
     uv run python experiments/thesis_run_config/extract.py     # -> data.json (~10 s)
 
-One record per run family (a study's seeds that share one configuration). Every value is read
-from the record the runs left behind, never typed:
+One record per run family (a study's seeds that share one configuration) behind a network Chapter 7
+presents (21 Nov 2026: the WHAS500 Cox runs, not GBSG2's; no 300-generation or sigmoid-unit synthetic
+runs; ExConNEAT only the presented MNIST 10-class network's phases). Every value is read from the
+record the runs left behind, never typed:
 
 * runs stored in the database (``explaneat_dev``, READ ONLY transactions; ``PGOPTIONS
   default_transaction_read_only=on`` as well): ``experiments.config_json`` (the NEAT config the
   run was built from), ``hardware_info.run_params`` (generations, epochs, fitness, phantom mask,
   hidden activation), the number of stored generations, the config template a UI run was launched
   from, and ``neat_config_text`` where the run stored one. Which experiments belong to a family is
-  read from the study's own run list (``runs*.csv``, ``g300_scores.csv``, ``sig_gens.json``) or
+  read from the study's own run list (``runs*.csv``) or
   from the explained genome (``experiments/benchmarks/results/propneat.json``). Experiment 2's
   configs are also read from ``explaneat_v4`` and asserted equal;
 * in-memory runs: their run records (Cox: ``experiments/survival/cox_case/runs/<tag>.json`` with
   the NEAT config text the run used; Connect-4: ``logs/<name>.json`` plus the config file, or for
   the capacity study the base config with the recorded overrides, asserted equal to the config
   text stored when the selected run was imported; XOR: the config and settings in
-  ``experiments/xor/run_xor.py``; ExConNEAT: ``config.json`` / ``results.json`` of each phase);
+  ``experiments/xor/run_xor.py``; ExConNEAT: ``config.json`` / ``results.json`` of each phase of the
+  presented MNIST 10-class network: the 10k run, its pruning phase and the 50k warm start);
 * the training code each run used: ``explaneat/core/backproppop.py`` at the run's recorded commit
   (``git show``; optimiser and learning rate, whether a phantom-weight mask existed and its
   default), and whether the training-path files differ between the commits of one family;
@@ -349,11 +352,17 @@ def paper_family(db, key, label, tag, ini):
 # ------------------------------------------------------------------ file families
 
 
+# Cox datasets whose network Chapter 7 presents (GBSG2 is a side note in the benchmark table only;
+# tab:exp1-networks has WHAS500) -- curated
+COX_PRESENTED = ("whas500",)
+
+
 def cox_family():
     d = EXP / "survival" / "cox_case"
-    sel = json.loads((d / "selected.json").read_text())
+    sel = {k: v for k, v in json.loads((d / "selected.json").read_text()).items() if k in COX_PRESENTED}
+    assert set(sel) == set(COX_PRESENTED), sel
     runs, flats, rps = [], [], []
-    for ds in ("whas500", "gbsg2"):
+    for ds in COX_PRESENTED:
         for s in range(5):
             r = json.loads((d / "runs" / f"{ds}-s{s}.json").read_text())
             runs.append({"name": r["tag"], "seed": r["seed"], "commit": r["code_commit"], "code_dirty": r["code_dirty"],
@@ -369,8 +378,8 @@ def cox_family():
     assert_flat_equal(flat_from_neat(REPO / rp["config_file"]), neat_cfg, "cox config file")
     commits = sorted({r["commit"] for r in runs})
     return {
-        "key": "cox", "label": "WHAS500, GBSG2 (Cox)", "experiment": "1",
-        "source": "experiments/survival/cox_case/runs/{whas500,gbsg2}-s{0..4}.json (run_params, neat_config_text)",
+        "key": "cox", "label": "WHAS500 (Cox)", "experiment": "1",
+        "source": "experiments/survival/cox_case/runs/whas500-s{0..4}.json (run_params, neat_config_text)",
         "store": "run records (in memory, not in the database)",
         "runs": runs, "seeds": sorted(r["seed"] for r in runs), "n_runs": len(runs),
         "neat": neat_cfg, "run_params": rp, "generations_stored": [rp["generations"]],
@@ -558,28 +567,14 @@ def conv_families():
     p2["scarcity_phase"] = {"struct_scale": float(m.group(1)), "other_struct": m.group(2) == "True",
                             "weight_scale": float(m.group(3)), "p_delete_conn": float(m.group(4)),
                             "p_delete_node": float(m.group(5))}
-    t = cn / "three8noise" / "results" / "run_s0"
-    cfg = json.loads((t / "config.json").read_text())
-    res = json.loads((t / "results.json").read_text())
-    p4 = {
-        "key": "conv_38n", "label": "MNIST 3 vs 8 vs noise", "experiment": "4", "source": f"{rel(t)}/config.json, results.json",
-        "config": cfg["config"], "args": cfg["args"], "halving": cfg["halving"], "sizes": cfg["sizes"],
-        "classes": cfg["classes"], "device": cfg["device"], "torch": cfg["torch"],
-        "generations_run": res["generations_run"], "stop_reason": stop_text(res["stop_reason"]),
-        "selected": {k: res["selected"][k] for k in ("generation", "val_acc", "complexity")},
-        "mut_scale_check": {f: cfg["config"][f] / getattr(dflt, f) for f in ("p_add_node", "p_add_conn", "p_kernel_size")},
-    }
     # fitness (documented in each runner's protocol) and the training code: Adam, cross-entropy
     assert ("fitness (--fitness train, default) = accuracy on the generation's training rows - lambda * (hidden\n"
             "  nodes + enabled edges)") in src
     assert all(p["args"]["fitness"] == "train" for p in (p1, p2, p3))
-    t8 = (cn / "three8noise" / "run.py").read_text()
-    assert "(fitness = training accuracy -\n  lambda * (hidden maps + enabled kernels))" in t8
-    p4["fitness_doc"] = "training accuracy - lambda * (hidden maps + enabled kernels)"
     net = (REPO / "explaneat" / "conv" / "network.py").read_text()
     assert "F.cross_entropy(logits, y.long())" in net
     assert "torch.optim.Adam(net.parameters(), lr=cfg.lr)" in src
-    return [p1, p2, p3, p4]
+    return [p1, p2, p3]
 
 
 # ------------------------------------------------------------------ main
@@ -625,15 +620,8 @@ def main():
         assert best["genome_id"] == pn[tag]["genome_id"], tag
         sel[ds] = best["experiment_name"]
     fam["shapes"]["selected"] = {"per_dataset": sel, "rule": "largest training AUC of the five seeds"}
-    g300 = read_csv(us / "g300_scores.csv")
-    ids = sorted({r["experiment_id"] for r in g300})
-    fam["shapes_g300"], _ = db_family(db, "shapes_g300", "Synthetic U + saddle, 300 generations", "1", ids,
-                                      "experiments/ushape_saddle/g300_scores.csv (experiment ids)")
-    sig = json.loads((us / "sig_gens.json").read_text())
-    names = sorted({r["experiment"] for r in sig})
-    ids = [db.one("explaneat_dev", "SELECT id FROM experiments WHERE name = :n", n=n)["id"] for n in names]
-    fam["shapes_sig"], _ = db_family(db, "shapes_sig", "Synthetic U + saddle, sigmoid units", "1", ids,
-                                     "experiments/ushape_saddle/sig_gens.json (experiment names)")
+    # the 300-generation and sigmoid-unit variants (g300_scores.csv, sig_gens.json) are left out: no
+    # network of theirs is presented (they appear only in the options figures)
     # Experiment 2
     ids, _ = exp_ids_from_csv(EXP / "10seed" / "runs.csv", lambda r: r["dataset"] == "adult")
     fam["adult"], _ = db_family(db, "adult", "Adult", "2", ids, "experiments/10seed/runs.csv (dataset adult)",

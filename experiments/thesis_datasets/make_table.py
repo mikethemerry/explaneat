@@ -14,7 +14,7 @@ against the stored record it describes. These are marked "curated" in thesis/ch7
 
 ``ch7-datasets.tex`` holds two floats: the tabular datasets of Experiments 1 to 3 (``tab:ch7-datasets``,
 landscape ``sidewaystable``) and the MNIST datasets of Experiment 4 (``tab:ch7-datasets-mnist``); all
-fifteen rows do not fit one landscape page with every method spelled out. Each float calls the thesis
+fourteen rows do not fit one landscape page with every method spelled out. Each float calls the thesis
 table style (``\\thesistablestyle``, defined in thesis/tablestyle/thesis-tablestyle.tex and loaded by the
 thesis preamble; this script only writes the call).
 """
@@ -43,9 +43,9 @@ ROWS = [
     ("shape_u", "Synthetic U", "1"),
     ("shape_saddle", "Synthetic saddle", "1"),
     ("shape_both", "Synthetic U $+$ saddle", "1"),
-    ("mnist10_10k", "MNIST, 10k training subset", "4"),
-    ("mnist10_50k", "MNIST, all 50k training rows", "4"),
-    ("three8noise", "MNIST 3 vs 8 vs noise", "4"),
+    # the presented ExConNEAT network's lineage: the 10k run and its pruning phase, then the 50k warm start
+    ("mnist10_10k", "MNIST 10-class, 10k training subset: 10k run, pruning phase", "4"),
+    ("mnist10_50k", "MNIST 10-class, all 50k training rows: 50k warm start", "4"),
 ]
 MNIST10 = ("mnist10_10k", "mnist10_50k")
 
@@ -64,8 +64,6 @@ LOADER = {
                    "split by explaneat.conv.data.mnist_splits",
     "mnist10_50k": "OpenML mnist_784 v1 via sklearn.datasets.fetch_openml (explaneat.conv.data.load_mnist_raw); "
                    "split by explaneat.conv.data.mnist_splits",
-    "three8noise": "OpenML mnist_784 v1 (explaneat.conv.data.load_mnist_raw); 3s and 8s plus generated noise "
-                   "by experiments/conv_neat/three8noise/data.py",
 }
 OPENML_URL = "https://www.openml.org/d/554"   # mnist_784 version 1 (the dataset the loader names)
 
@@ -103,10 +101,6 @@ PHRASE = {
     "noscale": ("none (used as they are)", "none (used as they are)"),
     "pixels": ("pixel intensities scaled to $[0, 1]$ (divided by {max})",
                "pixel intensities scaled to [0, 1] (divided by {max})"),
-    "noise_class": ("noise class generated, ink-matched: each noise image has the exact pixel-intensity "
-                    "histogram of a real 3 or 8 of its split ({mix})",
-                    "noise class generated, ink-matched: each noise image has the exact pixel-intensity "
-                    "histogram of a real 3 or 8 of its split ({mix})"),
 }
 SPLIT = {
     "random": ("random split {ratio}, not stratified, seed {seed}", "random split {ratio}, not stratified, seed {seed}"),
@@ -124,12 +118,6 @@ SPLIT = {
     "mnist10_sub": ("a stratified subset of the other {pool}, seed {seed}",
                     "a stratified subset of the other {pool}, seed {seed}"),
     "mnist10_all": ("all other {pool}", "all other {pool}"),
-    "three8noise": ("test: the standard MNIST test 3s and 8s; validation and training: drawn per digit from the "
-                    "standard training 3s and 8s, seed {seed}; noise: as many images as each digit in every split "
-                    "(test: the mean of the two digit counts)",
-                    "test: the standard MNIST test 3s and 8s; validation and training: drawn per digit from the "
-                    "standard training 3s and 8s, seed {seed}; noise: as many images as each digit in every split "
-                    "(test: the mean of the two digit counts)"),
 }
 
 
@@ -157,9 +145,6 @@ def outcome_label(key):
     if key in MNIST10:
         assert M[key]["n_classes"] == 10
         return "digit 0--9, 10 classes", "digit 0-9, 10 classes"
-    if key == "three8noise":
-        assert M[key]["classes"] == ["3", "8", "noise"]
-        return "3, 8 or noise, 3 classes", "3, 8 or noise, 3 classes"
     r = C[key]
     ds, cn = r["dataset"], r["dataset"]["class_names"]
     if key == "adult":
@@ -306,14 +291,8 @@ def _survival_steps(key):
 
 def _mnist_steps(key):
     m = M[key]
-    if key in MNIST10:
-        return [ph("pixels", max=M["source"]["pixel_max_raw"])]
-    assert m["pixel_max_raw"] == M["source"]["pixel_max_raw"]
-    mix = ", ".join(f"{t} {round(100 * w)}\\%" for t, w in zip(m["noise_types"], m["noise_mix"]))
-    mix_p = ", ".join(f"{t} {round(100 * w)}%" for t, w in zip(m["noise_types"], m["noise_mix"]))
-    t, _ = ph("noise_class", mix=mix)
-    _, pl = ph("noise_class", mix=mix_p)
-    return [(t, pl), ph("pixels", max=M["source"]["pixel_max_raw"])]
+    assert key in MNIST10 and m["n_classes"] == 10, key
+    return [ph("pixels", max=M["source"]["pixel_max_raw"])]
 
 
 def preprocessing(key):
@@ -400,15 +379,6 @@ def split(key):
         kw2 = dict(va=n(m["n_val"]), std=n(std), seed=m["split_seed"])
         return (t.format(train=tt.format(**kw), **kw2), p.format(train=tp.format(**kw), **kw2),
                 "standard test; validation from standard train", "digit", m["split_seed"])
-    if key == "three8noise":
-        m = M[key]
-        assert m["sizes"]["train"] == [m["n_train_per_class"]] * 3 and m["sizes"]["val"] == [m["n_val_per_class"]] * 3
-        t3, t8, tn = m["sizes"]["test"]
-        assert tn == round((t3 + t8) / 2)
-        kw = dict(va=n(m["n_val_per_class"]), tr=n(m["n_train_per_class"]), seed=m["seed"])
-        t, p = SPLIT["three8noise"]
-        return t.format(**kw), p.format(**kw), "standard test; validation and training from standard train", \
-            "class (equal sizes)", m["seed"]
     sp = C[key]["split"]
     te = sp["test_size"]
     ratio = f"{round(100 * (1 - te))}:{round(100 * te)}"

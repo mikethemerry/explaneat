@@ -13,7 +13,7 @@ current prose, what each preprocessing phrase rests on, KRK) are in `RESULTS.md`
 # layer 2: read-only extractor (explaneat_v4 + explaneat_dev in READ ONLY transactions, PGOPTIONS
 # default_transaction_read_only=on; scikit-survival for WHAS500 / GBSG2; the MNIST cache
 # ~/.explaneat/data/mnist_784.npz, fetched once from OpenML by explaneat.conv.data.load_mnist_raw if
-# missing; rebuilds the 3 vs 8 vs noise data in memory; ~2 min) -> data.json
+# missing) -> data.json
 uv run --extra survival python experiments/thesis_datasets/extract.py
 # layer 3: formats data.json only -> datasets.csv, ch7-datasets.tex
 uv run python experiments/thesis_datasets/make_table.py
@@ -32,10 +32,10 @@ byte-identical.
 
 | File | What it is |
 |---|---|
-| `extract.py` | Reads each dataset's split (the comparator suite's registry, `experiments/benchmarks/common.CLASSIFICATION`), its raw parent record, the Cox split files and selected run records, the XOR rows, the Experiment 3 validation files, and the MNIST run records (`experiments/conv_neat/results/<run>/config.json`: seed, sizes and the row indices each run used, checked against `explaneat.conv.data.mnist_splits`; `three8noise/results/run_s0/config.json`, checked against `three8noise/data.build`). Asserts that every reported run used that split: the 30 Experiment 2 runs (experiment ids in the runs CSVs) and each Experiment 1 network (genome id in `experiments/benchmarks/results/propneat.json`). Also lists the KRK / MNIST database run records |
+| `extract.py` | Reads each dataset's split (the comparator suite's registry, `experiments/benchmarks/common.CLASSIFICATION`), its raw parent record, the Cox split files and selected run records, the XOR rows, the Experiment 3 validation files, and the MNIST run records (`experiments/conv_neat/results/<run>/config.json`: seed, sizes and the row indices each run used, checked against `explaneat.conv.data.mnist_splits`; only the presented MNIST 10-class network's lineage: the 10k run, its pruning phase and the 50k warm start). Asserts that every reported run used that split: the 30 Experiment 2 runs (experiment ids in the runs CSVs) and each Experiment 1 network (genome id in `experiments/benchmarks/results/propneat.json`). Also lists the KRK / MNIST database run records |
 | `data.json` | The extracted counts, shares, encodings, split settings and checks |
 | `make_table.py` | Formats `data.json` into the CSV and the LaTeX tables. Typed here (curated, not results): row order and short names, outcome labels (each asserted against the stored class names or target description), loader names, "used in", and the wording of each method (`PHRASE`, `SPLIT`: one method, one wording, each asserted against the record it describes) |
-| `datasets.csv` | One row per dataset (15), including `citation_key` (empty: for Mike), loader, URL, database and split id or split file / run record, preprocessing, scaling, split |
+| `datasets.csv` | One row per dataset (14), including `citation_key` (empty: for Mike), loader, URL, database and split id or split file / run record, preprocessing, scaling, split |
 | `ch7-datasets.tex` | The two floats: a `sidewaystable` (`\scriptsize`, `adjustbox` to the text height) and a `table`. Each calls `\thesistablestyle` (thesis/tablestyle/thesis-tablestyle.tex, loaded once in the thesis preamble), so it needs that style or a stub to compile |
 | `preview.tex`, `preview.pdf` | The tables with the thesis preamble (as `thesis/ch7/exp1/preview.tex`) and a stubbed `\thesistablestyle` |
 
@@ -54,4 +54,3 @@ byte-identical.
 | XOR | synthetic | the four rows in `experiments/xor/run_xor.py` | -- | -- |
 | Synthetic U, saddle, U + saddle | synthetic | `experiments/ushape_saddle/data.py`, stored by `make_datasets.py` | -- | -- |
 | MNIST (10k subset, all 50k) | OpenML | `explaneat.conv.data.load_mnist_raw`: `sklearn.datasets.fetch_openml("mnist_784", version=1)`, cached as `~/.explaneat/data/mnist_784.npz` (not torchvision or keras); split by `explaneat.conv.data.mnist_splits` | https://www.openml.org/d/554 | LeCun, Bottou, Bengio & Haffner (1998), Proc. IEEE 86(11) (the MNIST database); OpenML (Vanschoren et al. 2013) if the copy is cited |
-| MNIST 3 vs 8 vs noise | OpenML | the same loader; the 3s and 8s plus a generated noise class, `experiments/conv_neat/three8noise/data.py` | https://www.openml.org/d/554 | as MNIST |

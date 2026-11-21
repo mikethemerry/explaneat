@@ -17,8 +17,8 @@ Sources, all read-only:
 * MNIST (Experiment 4, ExConNEAT): the run records in ``experiments/conv_neat/results/<run>/config.json``
   (seed, ``n_train``, ``n_val`` and the row indices each run used), checked against
   ``explaneat.conv.data.mnist_splits`` recomputed from the cached OpenML ``mnist_784`` copy
-  (``load_mnist_raw``); 3 vs 8 vs noise: ``experiments/conv_neat/three8noise/data.build`` (seed of the run
-  record ``three8noise/results/run_s0/config.json``), checked against that record's class sizes.
+  (``load_mnist_raw``). Only the lineage of the presented ExConNEAT network (the MNIST 10-class network of
+  the 50k warm start): the 3 vs 8 vs noise runs are not presented (21 Nov 2026) and are left out.
 
 Nothing is written to any database. ``data.json`` holds counts, shares and the stored descriptions
 (encoding config, preprocessing steps, target descriptions) that ``make_table.py`` formats.
@@ -60,7 +60,6 @@ CONV = REPO / "experiments" / "conv_neat"
 # the 10k-subset run (selected genome, generation 64) and its pruned continuation share one split;
 # the 50k warm start trains on all the remaining training rows. key -> run folders
 MNIST10_RUNS = {"mnist10_10k": ["sweep_p50_m4_e5", "mnist10_pruned"], "mnist10_50k": ["mnist10_ws50k_halving"]}
-THREE8NOISE_RUN = CONV / "three8noise" / "results" / "run_s0" / "config.json"
 EXP3_VAL = {"churn": REPO / "experiments" / "churn" / "val_split.json",
             "monk2": REPO / "experiments" / "churn" / "monk2_val_split.json"}
 
@@ -293,7 +292,7 @@ def mnist():
                       "openml_name": "mnist_784", "openml_version": 1, "n_rows": int(len(yr)),
                       "n_standard_train": int(n_std_train), "n_standard_test": int(len(yr) - n_std_train),
                       "n_pixels": int(Xr.shape[1]), "image_hw": [28, 28], "pixel_max_raw": int(Xr.max()),
-                      "scaling": "pixel / 255 (explaneat.conv.data.mnist_splits; three8noise.data.load)"}}
+                      "scaling": "pixel / 255 (explaneat.conv.data.mnist_splits)"}}
     for key, runs in MNIST10_RUNS.items():
         recs = []
         for run in runs:
@@ -330,34 +329,6 @@ def mnist():
     # the two 10-class datasets share the validation and test rows
     assert out["mnist10_10k"]["val_indices_sha256_16"] == out["mnist10_50k"]["val_indices_sha256_16"]
 
-    sys.path.insert(0, str(CONV / "three8noise"))
-    import data as t8
-    cfg = json.loads(THREE8NOISE_RUN.read_text())
-    d = t8.build(cfg["args"]["seed"])
-    sizes = {s: np.bincount(d[f"y_{s}"], minlength=3).tolist() for s in ("train", "val", "test")}
-    assert sizes == cfg["sizes"], (sizes, cfg["sizes"])
-    assert list(d["classes"]) == cfg["classes"] == t8.CLASS_NAMES
-    rows = {s: d[f"mnist_row_{s}"] for s in ("train", "val", "test")}
-    digit = {s: rows[s][rows[s] >= 0] for s in rows}
-    assert digit["train"].max() < n_std_train and digit["val"].max() < n_std_train
-    assert digit["test"].min() >= n_std_train
-    assert not (set(digit["train"].tolist()) & set(digit["val"].tolist()))
-    std_test_38 = np.flatnonzero(np.isin(yr, (3, 8)) & (np.arange(len(yr)) >= n_std_train))
-    assert np.array_equal(np.sort(digit["test"]), std_test_38)
-    noise_types = {s: np.bincount(d[f"type_{s}"][d[f"type_{s}"] >= 0], minlength=4).tolist()
-                   for s in ("train", "val", "test")}
-    counts, shares = _shares(d["y_train"], 3)
-    out["three8noise"] = {
-        "run_record": str(THREE8NOISE_RUN.relative_to(REPO)), "seed": cfg["args"]["seed"],
-        "classes": list(t8.CLASS_NAMES), "sizes": sizes,
-        "n_train": int(len(d["y_train"])), "n_val": int(len(d["y_val"])), "n_test": int(len(d["y_test"])),
-        "n_train_per_class": t8.N_TRAIN, "n_val_per_class": t8.N_VAL,
-        "train_class_counts": counts, "train_class_shares": shares,
-        "noise_types": list(t8.NOISE_TYPES), "noise_mix": list(t8.NOISE_MIX), "noise_type_counts": noise_types,
-        "test_digits_are_all_standard_test_3s_and_8s": True,
-        "pixel_max_raw": int(max(d[f"X_{s}"].max() for s in ("train", "val", "test"))),
-    }
-    print("three8noise", sizes, flush=True)
     return out
 
 
