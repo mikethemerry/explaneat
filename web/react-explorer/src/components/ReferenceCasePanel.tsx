@@ -35,7 +35,12 @@ type Props = {
 
 const fmt = (v: number) =>
   !Number.isFinite(v) ? String(v) : Math.abs(v) >= 1000 || Number.isInteger(v) ? String(Math.round(v * 1000) / 1000) : v.toPrecision(3);
-const pct = (p: number) => `${Math.round(p * 100)}th pct`;
+function ordinal(n: number): string {
+  const t = n % 100;
+  if (t >= 11 && t <= 13) return `${n}th`;
+  return `${n}${["th", "st", "nd", "rd"][n % 10] ?? "th"}`;
+}
+const pct = (p: number) => `${ordinal(Math.round(p * 100))} pct`;
 
 function outcomeText(o: CaseOutcome): string {
   if (o == null) return "–";
@@ -224,14 +229,16 @@ function CaseEditor({
       </div>
 
       {resp.entry && (
-        <div className="case-entry">
-          <div className="dim-label">This part's entries at the case (what its plots hold)</div>
+        <details className="case-entry">
+          <summary className="dim-label">
+            This part's {resp.entry.names.length} entries at the case (what its plots hold, network units)
+          </summary>
           <div className="case-entry-list">
             {resp.entry.names.map((n, i) => (
               <span key={resp.entry!.nodes[i]} className="case-chip">{n} = {fmt(resp.entry!.values[i])}</span>
             ))}
           </div>
-        </div>
+        </details>
       )}
 
       <input className="case-filter" placeholder="Filter inputs…" value={filter} onChange={(e) => onFilter(e.target.value)} />
