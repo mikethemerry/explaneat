@@ -8,7 +8,9 @@
 #
 # Afterwards `git status` should show no change at all. The Chapter 7 figures (thesis/ch7/figures/, written via
 # thesis/ch7/figlib.py) are saved without a creation date, so their PDFs and PNGs are byte-identical on a rerun.
-# The 60 appendix network PDFs are rebuilt only when their TikZ source hash changes.
+# The appendix network PDFs (Experiments 1 and 2) are rebuilt only when their TikZ source hash changes; when they
+# are, pdflatex runs with SOURCE_DATE_EPOCH / FORCE_SOURCE_DATE (thesis/ch7/netfigs.py), so a recompile is
+# byte-identical too. The Connect-4 plain-language layers (--with-db) take ~3 h.
 #
 # Never runs migrations or `explaneat setup`; never writes to a database.
 set -euo pipefail
@@ -55,10 +57,10 @@ if [[ "${1:-}" == "--with-db" ]]; then
   # their studies' committed files), then the check of every layer against its genome's explanation
   PGOPTIONS='-c default_transaction_read_only=on' DATABASE_URL=postgresql://localhost/explaneat_dev \
     uv run python -m explaneat plain-language extract --genome 6ebf7e0c-55ec-4215-9852-0ac982e43c0e \
-    --label c4lf-lines-heavy-s0 --dir experiments/c4_line_features/plain_language   # ~10 min
+    --label c4lf-lines-heavy-s0 --dir experiments/c4_line_features/plain_language   # ~20 min
   PGOPTIONS='-c default_transaction_read_only=on' DATABASE_URL=postgresql://localhost/explaneat_dev \
     uv run python -m explaneat plain-language extract --genome f0eb7635-7f85-437b-815b-993c5ad6cc14 \
-    --label c4cap-main-h10-e50-s1 --dir experiments/c4_capacity/plain_language      # ~20 min
+    --label c4cap-main-h10-e50-s1 --dir experiments/c4_capacity/plain_language      # ~3 h
   uv run python thesis/ch7/exp1/extract_networks.py                              # -> exp1/data/network_figs.json
   uv run python thesis/ch7/exp1/extract_capgain.py                               # -> exp1/data/capgain.json
   uv run python thesis/ch7/exp1/heart_profiles.py                                # -> exp1/data/heart_profiles.json (proposal)
