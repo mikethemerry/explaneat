@@ -4,7 +4,8 @@ docs/signals-and-realisations/index.html.
 1. xor_ridge_valley: score surfaces z(x1, x2) over [-0.5, 1.5]^2 for one representative of each
    family. The count family is a ridge in x1 + x2; the difference family is a valley in x1 - x2.
    Top row: 3D surfaces with the z = 0 plane. Bottom row: the same scores seen from above, with
-   the decision boundary z = 0 (solid) and the hidden unit's fold (dashed).
+   the decision boundary z = 0 (solid) and the hidden unit's fold (dashed). One family's two panels
+   are draw_ridge_valley_column (any weight vector; the thesis figure draws the evolved networks with it).
 2. xor_gates: the gate decomposition. For each family: the skips alone, the hidden unit's
    contribution u*h (and the rows whose sign it flips), and the composed score.
    Count family: OR AND NOT AND. Difference family: (x1 AND NOT x2) OR (x2 AND NOT x1).
@@ -139,54 +140,62 @@ def flat_axes(ax, xlabel=True, ylabel=True):
         sp.set_visible(False)
 
 
-def fig_ridge_valley():
+def draw_ridge_valley_column(fig, spec3d, spec2d, col, fam, q, ylabel=True, letters=("ab", "cd")):
+    """One family's two panels: the score surface z(x1, x2) in 3D (spec3d) and from above (spec2d).
+    q = [w1, w2, b, v1, v2, c, u] (verify_xor's parameter order). Returns the two axes and the grid data."""
     g, G1, G2, P = grid(121)
+    q = list(q)
+    a, s, uh, z = parts(q, P)
+    Z = z.reshape(G1.shape)
+    sc = np.abs(Z).max()
+    ax = fig.add_subplot(spec3d, projection="3d")
+    ax.computed_zorder = False          # draw in call order: plane, surface, then the points
+    ax.plot_surface(G1, G2, np.zeros_like(Z), color="#9aa5b3", alpha=0.22, linewidth=0,
+                    shade=False, zorder=1)
+    cols = sign_image(Z / sc * 6, scale=2.0)
+    ax.plot_surface(G1, G2, Z, facecolors=cols, rstride=2, cstride=2, linewidth=0,
+                    antialiased=True, shade=False, alpha=0.85, zorder=2)
+    ax.contour(G1, G2, Z, levels=[0], colors=INK, linewidths=1.0, zorder=3)
+    zd = vx.logits(np.array(q, float), "relu")
+    for (x1, x2), zz, y in zip(vx.X, zd, (0, 1, 1, 0)):
+        ax.plot([x1, x1], [x2, x2], [0, zz], color=INK2, lw=0.6, zorder=4)
+        ax.scatter([x1], [x2], [zz], s=24, c=INK if y else BG, edgecolors=INK, linewidths=1.1,
+                   depthshade=False, zorder=5)
+        ax.text(x1, x2, zz + 0.08 * sc, f"{int(x1)}{int(x2)}", fontsize=6.5, color=INK,
+                ha="center", zorder=6)
+    ax.view_init(elev=26, azim=-58)
+    ax.set_xlabel("x₁", labelpad=-6); ax.set_ylabel("x₂", labelpad=-6)
+    ax.set_zlabel("z", labelpad=-6)
+    ax.set_xticks([0, 1]); ax.set_yticks([0, 1])
+    ax.tick_params(pad=-2)
+    ax.set_xlim(LO, HI); ax.set_ylim(LO, HI)
+    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
+        axis.pane.set_visible(False)
+        axis._axinfo["grid"]["linewidth"] = 0.3
+    ax.text2D(0.02, 0.95, f"({letters[0][col]})", transform=ax.transAxes, fontsize=8, color=INK)
+    # top-down view
+    ax2 = fig.add_subplot(spec2d)
+    ax2.imshow(sign_image(Z, scale=2.0), origin="lower", extent=(LO, HI, LO, HI),
+               interpolation="bilinear")
+    ax2.contour(G1, G2, Z, levels=[0], colors=INK, linewidths=1.0)
+    fold = line_in_box(q[0], q[1], q[2])
+    if fold is not None:
+        ax2.plot(fold[:, 0], fold[:, 1], ls=(0, (4, 3)), color=INK, lw=0.9)
+    square(ax2)
+    mark_points(ax2, [False, True, True, False])
+    flat_axes(ax2, ylabel=ylabel)
+    ax2.text(0.02, 0.96, f"({letters[1][col]})", transform=ax2.transAxes, fontsize=8, color=INK, va="top")
+    ax2.text(0.98, 0.03, f"{fam} family", transform=ax2.transAxes, fontsize=7, color=INK,
+             ha="right", va="bottom",
+             bbox=dict(boxstyle="round,pad=0.2", fc=BG, ec="none", alpha=0.8))
+    return ax, ax2, dict(grid=g, z=Z, logits_data=zd, fold=fold)
+
+
+def fig_ridge_valley():
     fig = plt.figure(figsize=(6.3, 6.0))
+    gs = fig.add_gridspec(2, 2)
     for col, (fam, key, comp) in enumerate(FAMS):
-        q = vx.REPS[key]
-        a, s, uh, z = parts(q, P)
-        Z = z.reshape(G1.shape)
-        sc = np.abs(Z).max()
-        ax = fig.add_subplot(2, 2, col + 1, projection="3d")
-        ax.computed_zorder = False          # draw in call order: plane, surface, then the points
-        ax.plot_surface(G1, G2, np.zeros_like(Z), color="#9aa5b3", alpha=0.22, linewidth=0,
-                        shade=False, zorder=1)
-        cols = sign_image(Z / sc * 6, scale=2.0)
-        ax.plot_surface(G1, G2, Z, facecolors=cols, rstride=2, cstride=2, linewidth=0,
-                        antialiased=True, shade=False, alpha=0.85, zorder=2)
-        ax.contour(G1, G2, Z, levels=[0], colors=INK, linewidths=1.0, zorder=3)
-        zd = vx.logits(np.array(q, float), "relu")
-        for (x1, x2), zz, y in zip(vx.X, zd, (0, 1, 1, 0)):
-            ax.plot([x1, x1], [x2, x2], [0, zz], color=INK2, lw=0.6, zorder=4)
-            ax.scatter([x1], [x2], [zz], s=24, c=INK if y else BG, edgecolors=INK, linewidths=1.1,
-                       depthshade=False, zorder=5)
-            ax.text(x1, x2, zz + 0.08 * sc, f"{int(x1)}{int(x2)}", fontsize=6.5, color=INK,
-                    ha="center", zorder=6)
-        ax.view_init(elev=26, azim=-58)
-        ax.set_xlabel("x₁", labelpad=-6); ax.set_ylabel("x₂", labelpad=-6)
-        ax.set_zlabel("z", labelpad=-6)
-        ax.set_xticks([0, 1]); ax.set_yticks([0, 1])
-        ax.tick_params(pad=-2)
-        ax.set_xlim(LO, HI); ax.set_ylim(LO, HI)
-        for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
-            axis.pane.set_visible(False)
-            axis._axinfo["grid"]["linewidth"] = 0.3
-        ax.text2D(0.02, 0.95, f"({'ab'[col]})", transform=ax.transAxes, fontsize=8, color=INK)
-        # top-down view
-        ax2 = fig.add_subplot(2, 2, col + 3)
-        ax2.imshow(sign_image(Z, scale=2.0), origin="lower", extent=(LO, HI, LO, HI),
-                   interpolation="bilinear")
-        ax2.contour(G1, G2, Z, levels=[0], colors=INK, linewidths=1.0)
-        fold = line_in_box(q[0], q[1], q[2])
-        if fold is not None:
-            ax2.plot(fold[:, 0], fold[:, 1], ls=(0, (4, 3)), color=INK, lw=0.9)
-        square(ax2)
-        mark_points(ax2, [False, True, True, False])
-        flat_axes(ax2, ylabel=col == 0)
-        ax2.text(0.02, 0.96, f"({'cd'[col]})", transform=ax2.transAxes, fontsize=8, color=INK, va="top")
-        ax2.text(0.98, 0.03, f"{fam} family", transform=ax2.transAxes, fontsize=7, color=INK,
-                 ha="right", va="bottom",
-                 bbox=dict(boxstyle="round,pad=0.2", fc=BG, ec="none", alpha=0.8))
+        draw_ridge_valley_column(fig, gs[0, col], gs[1, col], col, fam, vx.REPS[key], ylabel=col == 0)
     fig.subplots_adjust(wspace=0.15, hspace=0.05)
     save(fig, "xor_ridge_valley")
 

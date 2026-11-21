@@ -711,11 +711,11 @@ Every figure of the candidate gallery became a thesis figure (vector PDF + gener
 
 ### xor-ridge-valley (fig:ch7-xor-ridge-valley)
 
-**Caption**
+**Caption** (22 Nov 2026: a full page, third row (e, f) with the networks themselves)
 
-> XOR: one network of each family, the count family (a, c) and the difference family (b, d). (a, b) The score surface $z(x_1, x_2)$ over the plane $z = 0$ (grey); (c, d) the same scores from above. Shading: blue where the score is positive, magenta where it is negative, pale near 0; solid line: where it is 0. Filled points: the two inputs with XOR output 1; dashed line: the hidden unit's fold.
+> XOR: one network of each family, the count family (a, c, e; seed 2) and the difference family (b, d, f; seed 12). (a, b) The score surface $z(x_1, x_2)$ over the plane $z = 0$ (grey); (c, d) the same scores from above. Shading: blue where the score is positive, magenta where it is negative, pale near 0; solid line: where it is 0. Filled points: the two inputs with XOR output 1; dashed line: the hidden unit's fold. (e, f) The networks of (a--d): circles $x_1$, $x_2$: the inputs; circle $h_1$: the hidden unit (ReLU); hexagon: the output unit, the logistic function of the score $z$. Edges: blue, a positive weight; red, a negative weight; thicker, a larger weight. The number on an edge is its weight; beside a unit, its bias.
 
-**Not a key (for the body text)**: The count family's score is a ridge in x1 + x2 and the difference family's a valley in x1 - x2. Count family: XOR = OR and not AND (the skips compute OR and the hidden unit flips AND). Difference family: the skips compute x1 and not x2 and the hidden unit flips x2 and not x1. The representatives are `verify_xor.REPS` (the sheet's default 1-row cells), checked against `verify_xor_results.json`.
+**Not a key (for the body text)**: The count family's score is a ridge in x1 + x2 and the difference family's a valley in x1 - x2. Count family (seed 2): XOR = OR and not AND (the skips compute OR and the hidden unit flips AND). Difference family (seed 12): the skips compute x2 and not x1 and the hidden unit flips x1 and not x2 (the mirror image of the hand-built representative the figure showed before 22 Nov). The networks are the evolved minimal networks of the Experiment 1 appendix (`thesis/ch7/exp1/networks.py` `xor_runs`, figure `xor-raw`), from `experiments/xor/xor_results.json`; the gates are in the figure's plot data (`thesis/ch7/figures/plotdata/xor-ridge-valley.json`, `verify_xor.describe_solution`). Before 22 Nov the surfaces were of `verify_xor.REPS` (the companion sheet's hand-built 1-row cells), which the appendix figure `xor-gates` still shows. Both networks' hidden-unit folds pass almost exactly through data points (seed 2: rows 10 and 01; seed 12: rows 00 and 11), as `experiments/xor/RESULTS.md` notes.
 
 ## Figures: options
 
