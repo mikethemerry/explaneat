@@ -286,3 +286,18 @@ EXPLANEAT_RECORDS_DIR=experiments/churn_case/explanations EXPLANEAT_LAYERS_DIR=e
 uv run python thesis/scripts/thesis_experiment_tables.py       # thesis/ch7/exports/ch7_experiment1_cases.tex
 ```
 
+
+## 10. Check of the thesis text (22 Nov 2026)
+
+`text_check.py` checks every number of the Chapter 7 Churn paragraph (quoted in its docstring) against the
+explained model: forward passes of `probes.ChurnModel` (the stored explanation's model state, StructureNetwork,
+sigmoid output, asserted equal to the explanation library's evaluator) on constructed customers in real units, the
+typical customer being the plain-language layer's `reference_patient`. Definitions (the "other linear factors",
+light / heavy daytime use, when the service-call gate counts as on) are in its docstring. Output:
+`text_check.json` (one row per statement: computed value and verdict, with the details). `probes.py` is also the
+engine of the thesis figures `churn-case-probes` and `churn-case-net-concept`
+(`thesis/ch7/exp1/extract_churn_case.py`). Read-only DB (explaneat_v4 by default); run twice: byte-identical.
+
+```bash
+PGOPTIONS='-c default_transaction_read_only=on' uv run python experiments/churn_case/text_check.py   # -> text_check.json
+```

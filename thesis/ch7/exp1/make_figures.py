@@ -976,6 +976,8 @@ def main(only=None):
     only = set(only or [])
     xor_figures(only)
     capgain_figure(only)
+    import churn_case_figures   # the Churn case network: its parts, whole-model probes (data/churn_case_probes.json)
+    churn_case_figures.build(only)
     monk2_figures(only)
     shape_figures(only)
     cox_figures(only)

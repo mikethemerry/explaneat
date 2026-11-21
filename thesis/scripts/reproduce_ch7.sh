@@ -66,6 +66,9 @@ if [[ "${1:-}" == "--with-db" ]]; then
     --label c4cap-main-h10-e50-s1 --dir experiments/c4_capacity/plain_language      # ~3 h
   uv run python thesis/ch7/exp1/extract_networks.py                              # -> exp1/data/network_figs.json
   uv run python thesis/ch7/exp1/extract_capgain.py                               # -> exp1/data/capgain.json
+  # Churn case: the check of the thesis text, then the probes of its two figures (read-only explaneat_v4)
+  PGOPTIONS='-c default_transaction_read_only=on' uv run python experiments/churn_case/text_check.py   # -> text_check.json
+  PGOPTIONS='-c default_transaction_read_only=on' uv run python thesis/ch7/exp1/extract_churn_case.py  # -> exp1/data/churn_case_probes.json
   uv run python thesis/ch7/exp1/heart_profiles.py                                # -> exp1/data/heart_profiles.json (proposal)
   # Figure caches: the synthetic shape sweeps (explaneat_dev) and the Adult / Heart-100 shapes and seed agreement (v4)
   PGOPTIONS='-c default_transaction_read_only=on' DATABASE_URL=postgresql://localhost/explaneat_dev \
@@ -82,7 +85,7 @@ uv run python thesis/ch7/exp2/make_assets.py            # exp2-benchmarks, exp2-
                                                         # appendix_networks.tex + figures/exp2/networks/*.pdf, other exp2 assets
                                                         # + every Experiment 2 figure (exp2_figures.py, worked.py)
 uv run python thesis/ch7/exp1/make_figures.py           # Experiment 1 figures (XOR, synthetic shapes, WHAS500,
-                                                        # Adult capital gain, earlier ten-seed export)
+                                                        # Adult capital gain, the Churn case, earlier ten-seed export)
                                                         # + bench_figures.py (benchmarks, cost)
 uv run python thesis/ch7/exp1/networks.py               # Experiment 1 appendix: appendix_networks.tex +
                                                         # figures/exp1/networks/*.pdf (after make_figures.py: it
