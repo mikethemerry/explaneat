@@ -44,7 +44,7 @@ byte for byte). Configuration ids: `e<epochs>_<family>_wd<decay>`; the fixed one
 - Choice per dataset: the highest score. **Tie rule:** scores equal when rounded to 3 decimals are
   tied; among tied configurations the simplest wins: fewer epochs, then lower weight decay, then the
   Heart family.
-- `select.py` writes `cv.csv` (12 x 4 rows: per-fold AUC, mean, SD, network size) and `selection.json`.
+- `choose.py` writes `cv.csv` (12 x 4 rows: per-fold AUC, mean, SD, network size) and `selection.json`.
 
 ## Final runs and comparison
 
@@ -81,7 +81,7 @@ and ~3 min. CV total ~28 CPU-hours, at 6 processes ~5 h wall; final + check + re
 
 ## Outputs
 
-`PLAN.md`, `common.py`, `prepare.py`, `run_one.py`, `launch.py`, `select.py`, `summarise.py`,
+`PLAN.md`, `common.py`, `prepare.py`, `run_one.py`, `launch.py`, `choose.py`, `summarise.py`,
 `configs/`, `folds.json`, `runs/<dataset>/*.json`, `repeat/`, `cv.csv`, `selection.json`, `final.csv`,
 `summary.json`, `RESULTS.md` (commands). Thesis table: `thesis/ch7/exp1/sensitivity_table.py` ->
 `tab:exp1-sensitivity` (not added to the Overleaf upload yet).
