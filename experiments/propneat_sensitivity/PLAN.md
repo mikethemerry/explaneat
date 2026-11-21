@@ -85,3 +85,14 @@ and ~3 min. CV total ~28 CPU-hours, at 6 processes ~5 h wall; final + check + re
 `configs/`, `folds.json`, `runs/<dataset>/*.json`, `repeat/`, `cv.csv`, `selection.json`, `final.csv`,
 `summary.json`, `RESULTS.md` (commands). Thesis table: `thesis/ch7/exp1/sensitivity_table.py` ->
 `tab:exp1-sensitivity` (not added to the Overleaf upload yet).
+
+## Amendment (21 Nov 2026, after the CV runs, before any choice or final run)
+
+One CV run (`both / e5_heart_wd0.01 / fold 1`) stopped with `GenomeNotValidError`: a genome with no
+path to the output reached backprop, which raises by default (the fixed runs' code path would have
+stopped the same way; none of them met such a genome). `run_one.py` now passes
+`skip_invalid_genomes=True`: such a genome stays untrained and `auc_fitness` scores it 0.5. The flag
+only replaces the raise, so every run that met no invalid genome is unchanged. That run is redone with
+the flag, and the repeat CV (`repeat/`) is rerun with the new code: it must equal `runs/` (run with
+the old code) byte for byte, which checks determinism and that the flag changes nothing else. (The
+first repeat CV, with the old code, was deleted unchecked to make room for this rerun.)

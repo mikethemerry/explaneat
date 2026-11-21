@@ -12,6 +12,11 @@ asserted), best genome scored on the test rows.
 Everything else as the fixed runs: BackpropPopulation (the training loop of
 DatabaseBackpropPopulation without storage), AUC fitness, mask_phantom=False, Adadelta lr 1.5,
 population and topology from the config. Only epochs, the structural family and weight_decay vary.
+
+skip_invalid_genomes=True (added 21 Nov 2026 after one CV run, both/e5_heart_wd0.01/fold 1, raised
+GenomeNotValidError: a genome with no path to the output): such a genome is left untrained and
+auc_fitness scores it 0.5. A run with no invalid genome is unchanged (the flag only replaces the
+raise), shown by the repeat CV rerun with it (PLAN.md, amendment).
 """
 import argparse
 import copy
@@ -114,7 +119,8 @@ def main():
     torch.use_deterministic_algorithms(True)
 
     t0 = time.time()
-    pop = BackpropPopulation(config, Xf, yf, mask_phantom=False, weight_decay=cfg["weight_decay"])
+    pop = BackpropPopulation(config, Xf, yf, mask_phantom=False, weight_decay=cfg["weight_decay"],
+                             skip_invalid_genomes=True)
     tracker = BestByTrain(pop)
     pop.reporters.add(tracker)
     pop.run(auc_fitness, n=args.generations, nEpochs=cfg["epochs"])

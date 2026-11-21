@@ -31,6 +31,7 @@ Regenerate with `uv run python thesis/ch7/exp1/extract_db.py` (read-only DB cach
 |---|---|---|---|
 | `tab:exp1-benchmarks, tab:exp1-benchmarks-survival` | `thesis/ch7/exp1/tables/exp1-benchmarks.tex` | Experiment 1: each dataset's explained PropNEAT network against the comparators | `thesis/ch7/exp1/make_tables.py` |
 | `tab:exp1-networks` | `thesis/ch7/exp1/tables/exp1-networks.tex` | Experiment 1: the explained network of each dataset | `thesis/ch7/exp1/make_tables.py` |
+| `tab:exp1-sensitivity, tab:exp1-sensitivity-cv` | `thesis/ch7/exp1/tables/exp1-sensitivity.tex` | Experiment 1, sensitivity check: PropNEAT with a fixed configuration and with the configuration selected by cross-validation (not in the Overleaf upload yet; preview `preview_sensitivity.tex`) | `thesis/ch7/exp1/sensitivity_table.py` (reads `experiments/propneat_sensitivity/`) |
 
 ## 2. Experiment 2 thesis assets (`thesis/ch7/exp2/`)
 
