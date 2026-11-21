@@ -6,7 +6,7 @@
     uv run python experiments/propneat_sensitivity/launch.py final    # selected config (selection.json), all training rows, seeds 0-4
     uv run python experiments/propneat_sensitivity/launch.py check    # fixed config, all training rows, seed 0 (harness = fixed runs?)
 
-A job whose result file exists is skipped (delete it to rerun). Longest jobs first.
+Several stages may be given (one job pool). A job whose result file exists is skipped (delete it to rerun). Longest jobs first.
 """
 import argparse
 import json
@@ -47,15 +47,15 @@ def cost(job):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("stage")
+    ap.add_argument("stages", nargs="+")
     ap.add_argument("--jobs", type=int, default=6)
     args = ap.parse_args()
     env = dict(os.environ, PYTHONHASHSEED="0", OMP_NUM_THREADS="1", MKL_NUM_THREADS="1",
                PGOPTIONS="-c default_transaction_read_only=on")
-    todo = [j for j in jobs_for(args.stage) if not run_path(j[0], j[1], j[2], j[3], j[4]).exists()]
+    todo = [j for st in args.stages for j in jobs_for(st) if not run_path(j[0], j[1], j[2], j[3], j[4]).exists()]
     todo.sort(key=cost, reverse=True)
     (HERE / "logs").mkdir(exist_ok=True)
-    print(f"{args.stage}: {len(todo)} jobs, {args.jobs} at a time", flush=True)
+    print(f"{' '.join(args.stages)}: {len(todo)} jobs, {args.jobs} at a time", flush=True)
 
     def run(job):
         d, cid, fold, seed, subdir, gens = job
