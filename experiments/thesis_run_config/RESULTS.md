@@ -86,3 +86,15 @@ Mike's decision: the table shows only the runs that produced the networks Chapte
   start, as its three phases (the 10k run, its pruning phase, the 50k warm start), each read from its phase
   records as before; the Classes column is gone (the panel header gives the class count, asserted equal in
   the three phases). **Dropped: MNIST 3 vs 8 vs noise** (`three8noise/results/run_s0`), not presented.
+
+## Author's account of the config families (21 Nov 2026)
+
+Not in the run records; recorded here from Mike's recollection so the methods can cite it.
+The Adult and Churn family (the original Adult run "No pressure", 24 Jun 2026, and Churn, which
+copied Adult's NEAT settings) came from a series of exploratory runs that tried to force
+non-explainable models by easing the downward pressure on size: higher node and connection
+add rates, lower delete rates and a wider speciation threshold than the Heart template. The
+values themselves are in the table and in `experiments/10seed/PREREG.md` ("Configs"). The
+MONK-2 original run used neat-python's default template (weight and bias mutation on); nothing
+records that as intended. The Heart original run stopped after 39 evaluated generations of a
+100-generation budget (stored as interrupted).
