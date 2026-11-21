@@ -25,6 +25,9 @@ ORDER = ["churn", "u", "saddle", "both"]
 LABEL = {"churn": "Churn", "u": "Synth.\\ U", "saddle": "Synth.\\ saddle", "both": "Synth.\\ U $+$ saddle"}
 FAMILY = {"heart": "Heart", "adult": "Adult/Churn"}
 COMP_LABEL = dict(COMPARATORS)
+SHORT = {"lr_l2": ("LR-$L_2$", "logistic regression, $L_2$"), "lr_l1": ("LR-$L_1$", "logistic regression, $L_1$"),
+         "tree": ("Tree", "decision tree"), "rf": ("RF", "random forest"), "gb": ("GB", "gradient boosting"),
+         "ebm": ("EBM", "explainable boosting"), "mlp": ("MLP", "one-hidden-layer MLP")}
 
 
 def f3(x):
@@ -49,26 +52,34 @@ def size(h, c):
     return f"{h['median']:g} / {c['median']:g}"
 
 
-def main_table(summary, bench):
+def best_comparators(bench):
     K = {(r["dataset"], r["model_key"]): r for r in bench}
     bench_key = {"churn": "churn", "u": "shape_u", "saddle": "shape_saddle", "both": "shape_both"}
-    out = ["  \\setlength{\\tabcolsep}{3pt}", "  \\renewcommand{\\arraystretch}{1.15}",
-           "  \\begin{adjustbox}{max width=\\textwidth}",
-           "  \\begin{tabular}{@{}lllccccll@{}}", "    \\toprule",
-           "    & \\multicolumn{2}{c}{Configuration} & \\multicolumn{2}{c}{Test AUC} & "
-           "\\multicolumn{2}{c}{Size} & & \\\\",
-           "    \\cmidrule(lr){2-3}\\cmidrule(lr){4-5}\\cmidrule(lr){6-7}",
-           "    Dataset & Fixed & Selected by CV & Fixed & Tuned & Fixed & Tuned & Best comparator & "
-           "Gradient boosting \\\\", "    \\midrule"]
+    out = {}
     for d in ORDER:
-        s = summary[d]
         comps = {k: K[(bench_key[d], k)] for k, _ in COMPARATORS}
         best = max(comps, key=lambda k: float(comps[k]["test_value"]))
+        out[d] = (best, comps[best]["test_value"], comps["gb"]["test_value"])
+    return out
+
+
+def main_table(summary, bench):
+    B = best_comparators(bench)
+    out = ["  \\setlength{\\tabcolsep}{4pt}", "  \\renewcommand{\\arraystretch}{1.15}",
+           "  \\begin{adjustbox}{max width=\\textwidth}",
+           "  \\begin{tabular}{@{}lllcccccc@{}}", "    \\toprule",
+           "    & \\multicolumn{2}{c}{Configuration} & \\multicolumn{2}{c}{Test AUC} & "
+           "\\multicolumn{2}{c}{Size} & \\multicolumn{2}{c}{Comparators} \\\\",
+           "    \\cmidrule(lr){2-3}\\cmidrule(lr){4-5}\\cmidrule(lr){6-7}\\cmidrule(l){8-9}",
+           "    Dataset & Fixed & Selected & Fixed & Tuned & Fixed & Tuned & Best & GB \\\\", "    \\midrule"]
+    for d in ORDER:
+        s = summary[d]
+        best, best_auc, gb_auc = B[d]
         sel = conf(s["selected_config"]) + ("$^\\ast$" if s["selected_is_fixed"] else "")
         out.append(f"    {LABEL[d]} & {conf(s['fixed_config'])} & {sel} & {mr(s['fixed_test_auc'])} & "
                    f"{mr(s['tuned_test_auc'])} & {size(s['fixed_hidden'], s['fixed_connections'])} & "
                    f"{size(s['tuned_hidden'], s['tuned_connections'])} & "
-                   f"{COMP_LABEL[best]}, {f3(comps[best]['test_value'])} & {f3(comps['gb']['test_value'])} \\\\")
+                   f"\\makecell{{{f3(best_auc)}\\\\{{\\scriptsize {SHORT[best][0]}}}}} & {f3(gb_auc)} \\\\")
     out += ["    \\bottomrule", "  \\end{tabular}", "  \\end{adjustbox}"]
     return out
 
@@ -99,11 +110,16 @@ def main():
     summary = json.loads((STUDY / "summary.json").read_text())
     with open(STUDY / "cv.csv") as f:
         cv = list(csv.DictReader(f))
-    body = main_table(summary, bench_rows())
+    bench = bench_rows()
+    body = main_table(summary, bench)
+    used = sorted({b for b, _, _ in best_comparators(bench).values()} | {"gb"}, key=lambda k: SHORT[k][0])
+    comp_key = "; ".join(f"{SHORT[k][0]}: {SHORT[k][1]}" for k in used)
     cap = ("Experiment 1, sensitivity check: PropNEAT with a fixed configuration and with the configuration "
            "selected by cross-validation. Configuration: backprop epochs per generation, structural-mutation "
            "family, weight decay. Test AUC: median, below it the range over five seeds. Size: hidden nodes / "
-           "enabled connections, median. $^\\ast$The fixed configuration was selected.")
+           "enabled connections, median. Best: the comparators' highest test AUC (model below it). "
+           + comp_key + "."
+           + (" $^\\ast$The fixed configuration was selected." if any(summary[d]["selected_is_fixed"] for d in ORDER) else ""))
     cap_cv = ("Experiment 1, sensitivity check: cross-validated AUC of the twelve PropNEAT configurations. "
               "Each cell: mean $\\pm$ SD of the held-out-fold AUC over five folds of the training rows. "
               "Bold: selected; $^\\dagger$: the fixed configuration.")
