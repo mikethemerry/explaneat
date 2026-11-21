@@ -15,7 +15,8 @@ operations in explaneat_v4; every stated number is the stored value of the query
 (evidence_log); every recomputed number is the same library query (explaneat.verify.probe) run
 again here on the live model, on the training and the test split; the plain-language layer
 experiments/10seed/plain_language_v4/churn100-s5.json (claims, graph); the v4 record
-experiments/10seed/explanations_v4/churn100-s5.json. DB sessions are read only; nothing is
+experiments/10seed/explanations_v4/churn100-s5.json (read through explanation_records: the records
+database's copy, with Mike's current verification, else that file). DB sessions are read only; nothing is
 written to any database (the query tools' stamp_and_record is never called).
 
 Outputs: data/worked_churn100_s5.json (cache); the figures exp2-worked-{pairs,ice,net-unexplained,
@@ -38,7 +39,7 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-from make_assets import (DATA, OI, REPO, TEXTWIDTH_IN, figlib, mpl, num, save, tx,  # noqa: E402
+from make_assets import (DATA, OI, REPO, TEXTWIDTH_IN, figlib, mpl, num, record, save, tx,  # noqa: E402
                          write_figure, write_table)
 
 LABEL = "churn100-s5"
@@ -413,7 +414,7 @@ def _where(w):
 def table_claims(D):
     import statistics as st
     layer = json.loads(LAYER.read_text())
-    rec = json.loads(RECORD.read_text())
+    rec = record(RECORD.relative_to(REPO))   # the records database's copy, else the file
     ann = D["annotation"]
     tmpl = ann["hypothesis_template"]
     slots = [m.groupdict() for m in SLOT.finditer(tmpl)]

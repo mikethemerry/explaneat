@@ -78,9 +78,9 @@ cd thesis/ch7/exp2 && latexmk -pdf preview.tex && latexmk -c
 
 # The Chapter 7 book (see the docstring of build.py)
 cd thesis/ch7/book
-python3 extract.py <repo root>        # -> xdata/ (read-only DB; not committed)
+uv run python extract.py <repo root> # -> xdata/ (read-only DB; records via explanation_records; not committed)
 python3 graphs.py <repo root> <db>    # -> graphs/ (not committed)
-python3 e2_stats.py <repo root> > e2_stats.json
+uv run python e2_stats.py <repo root> > e2_stats.json   # records: the records database's, else the files
 python3 build.py                      # -> ch7_experiments.html (not committed)
 ```
 

@@ -27,13 +27,16 @@ runner's ``compute_performance`` call) are counted in ``n_log_before_start`` and
 Annotation counts are read from the same stream: an ``annotate`` operation with
 ``child_annotation_ids`` is a composition, any other is a leaf (as ``check_explanation.py``).
 
+Each record (the agent's start/end and annotation counts) is read with
+``explanation_records.load_record_file``: the database's ``explanation_records`` row when it holds
+the record (``$EXPLANEAT_RECORDS_DATABASE_URL``, else ``DATABASE_URL``), else the record file.
+
 Run it twice and compare: the output is byte-identical (no randomness; read-only).
 """
 from __future__ import annotations
 
 import argparse
 import csv
-import json
 import os
 import sys
 import uuid
@@ -154,8 +157,9 @@ def main():
     suffix = a.dir.replace("explanations", "")
     out = Path(a.out) if a.out else HERE / f"explaining_time{suffix}.csv"
     rows = []
+    from explaneat.analysis.explanation_records import load_record_file
     for p in sorted(rec_dir.glob("*.json")):
-        rec = json.loads(p.read_text())
+        rec = load_record_file(p)   # the database's record when it holds it, else the file
         assert rec.get("database", database) == database, (p.name, rec.get("database"), database)
         with cr.ReadOnlySession() as s:
             w = explaining_window(s, rec["genome_id"])

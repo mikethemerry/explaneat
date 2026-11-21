@@ -7,6 +7,9 @@
 Every number printed in a table or caption is computed here from the repository's result files
 (named in each function) or, for the few quantities that need the networks themselves, from the
 data/ caches written by extract_db.py (read-only sessions on explaneat_v4). Nothing is typed in.
+The v4 explanation records (Mike's verification minutes, recheck counts) are read through
+explaneat.analysis.explanation_records (record()): the database's explanation_records table when it
+holds them ($EXPLANEAT_RECORDS_DATABASE_URL, else DATABASE_URL), else the committed record files.
 
 Outputs (paths as the thesis will use them, relative to the thesis root):
     tables/exp2/*.tex    one table float each (booktabs, tabularx, makecell, adjustbox)
@@ -66,6 +69,16 @@ def rows(path, **flt):
 
 def jload(path):
     return json.loads((REPO / path).read_text())
+
+
+def record(path):
+    """An explanation record (repository-relative path of its file): the database's copy, with Mike's
+    current verification, when the records database holds it, else the file
+    (explaneat.analysis.explanation_records.load_record_file)."""
+    if str(REPO) not in sys.path:
+        sys.path.insert(0, str(REPO))
+    from explaneat.analysis.explanation_records import load_record_file
+    return load_record_file(REPO / path)
 
 
 UNI = [("≠", r"$\neq$"), ("≤", r"$\le$"), ("≥", r"$\ge$"), ("×", r"$\times$"), ("→", r"$\to$"),
@@ -168,7 +181,7 @@ def records(study):
     p, f = EXPL[study]
     out = {}
     for e in rows(p, **f):
-        out[int(e["seed"])] = jload(f"experiments/10seed/explanations_v4/{e['label']}.json")
+        out[int(e["seed"])] = record(f"experiments/10seed/explanations_v4/{e['label']}.json")
     return out
 
 

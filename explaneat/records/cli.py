@@ -2,10 +2,11 @@
 
     uv run python -m explaneat records import --dry-run          # every study folder
     uv run python -m explaneat records import --from experiments/churn_case/explanations
-    uv run python -m explaneat records export                     # DB -> the committed JSON files
+    uv run python -m explaneat records export                     # DB -> the JSON files (cache / snapshot)
     uv run python -m explaneat records list --study cox_case
 
-``DATABASE_URL`` selects the database (as everywhere). Import needs the ``explanation_records``
+``DATABASE_URL`` selects the database (as everywhere); ``EXPLANEAT_RECORDS_DATABASE_URL``, when
+set, is the records' own database instead (the one every records reader and writer then uses). Import needs the ``explanation_records``
 table (migration ``m6n7o8p9q0r1``: ``explaneat db upgrade``).
 """
 
@@ -21,12 +22,17 @@ import click
 def _session_or_exit():
     from sqlalchemy import inspect
 
+    from ..analysis.explanation_records import records_database_url
     from ..db import db
     from ..settings import redact, resolve_database_url
+    url = records_database_url()
+    if url:   # $EXPLANEAT_RECORDS_DATABASE_URL: the records' own database
+        from ..db.base import Database
+        db = Database(url)
     if db.engine is None:
         db.init_db()
     if not inspect(db.engine).has_table("explanation_records"):
-        click.echo(f"{redact(resolve_database_url())} has no explanation_records table: apply the "
+        click.echo(f"{redact(url or resolve_database_url())} has no explanation_records table: apply the "
                    "migration first (explaneat db upgrade).", err=True)
         sys.exit(2)
     return db

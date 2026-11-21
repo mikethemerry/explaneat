@@ -2,7 +2,8 @@
 # Rebuild every Chapter 7 output in the Overleaf upload (thesis/scripts/build_overleaf_upload.sh) from
 # committed results. See thesis/ch7/PROVENANCE.md for each output's chain.
 #
-#   bash thesis/scripts/reproduce_ch7.sh            # layer 3 only: generators from committed files (no DB, ~3 min)
+#   bash thesis/scripts/reproduce_ch7.sh            # layer 3 only: generators from committed files (~3 min; the
+#                                                   # explanation records from the records database, see below)
 #   bash thesis/scripts/reproduce_ch7.sh --with-db  # also layer 2: analyses and extractors that READ the DB
 #                                                   # (read-only transactions; explaneat_v4 / explaneat_dev; ~20 min)
 #
@@ -12,10 +13,19 @@
 # are, pdflatex runs with SOURCE_DATE_EPOCH / FORCE_SOURCE_DATE (thesis/ch7/netfigs.py), so a recompile is
 # byte-identical too. The Connect-4 plain-language layers (--with-db) take ~3 h.
 #
+# Explanation records and Mike's verifications: the database is the source of truth (22 Nov 2026). Every
+# reader (make_assets.py, per_run.py, worked.py, exp1/extract_db.py, make_figures.py, explaining_time.py,
+# build_explanations_csv.py, ...) goes through explaneat.analysis.explanation_records: the explanation_records
+# table of $EXPLANEAT_RECORDS_DATABASE_URL (default explaneat_v4; only read), else the committed record
+# files, which are a snapshot (`explaneat records export`). So the record-derived outputs (verification
+# minutes and counts, recheck counts) reproduce from the database, like the layer-2 extractors; before the
+# table exists (migration m6n7o8p9q0r1) or with EXPLANEAT_RECORDS_DB=0 they come from the files.
+#
 # Never runs migrations or `explaneat setup`; never writes to a database.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 export OMP_NUM_THREADS=1
+export EXPLANEAT_RECORDS_DATABASE_URL="${EXPLANEAT_RECORDS_DATABASE_URL:-postgresql://localhost/explaneat_v4}"
 
 if [[ "${1:-}" == "--with-db" ]]; then
   # ---------------------------------------------------------------- layer 2 (read-only DB)
@@ -24,7 +34,7 @@ if [[ "${1:-}" == "--with-db" ]]; then
   uv run python experiments/churn/compute_churn_runs.py --prefix churn100        # -> experiments/churn/runs_churn100.csv
   # Explaining minutes and annotation counts of the v4 records from the database (read-only explaneat_v4)
   DATABASE_URL=postgresql://localhost/explaneat_v4 uv run python experiments/10seed/explaining_time.py --dir explanations_v4
-  # Explanation records (+ explaining_time_v4.csv) -> CSVs (no DB)
+  # Explanation records (the records database's, else the files; + explaining_time_v4.csv) -> CSVs
   (cd experiments/10seed && uv run python build_explanations_csv.py --dir explanations_v4 --suffix _v4)
   # Signal analyses (read-only explaneat_v4)
   V4="DATABASE_URL=postgresql://localhost/explaneat_v4 EXPLANEAT_RECORDS_DIR=experiments/10seed/explanations_v4"

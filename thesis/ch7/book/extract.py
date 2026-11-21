@@ -5,6 +5,11 @@ Read only. Files come from a checkout of origin/main (MAIN below). The annotatio
 `annotate` operations of each explanation, so it is read from Postgres with a read-only session:
 explaneat_v4 for the ten-seed v4 records, explaneat_dev for everything else (including the
 reported v3 ten-seed records). Output: xdata/<id>.json, one per explained network.
+
+The explanation records are read through the checkout's explaneat.analysis.explanation_records
+(record()): the records database's copy, with Mike's current verification, when it holds them
+($EXPLANEAT_RECORDS_DATABASE_URL, else DATABASE_URL), else the record files. Run with
+`uv run python extract.py <checkout>`.
 """
 import json
 import os
@@ -32,6 +37,18 @@ def jload(p):
 
 def rel(p):
     return str(Path(p).relative_to(MAIN)) if p else None
+
+
+def record(p):
+    """An explanation record: the records database's copy when it holds it, else the file; None when
+    there is no such file."""
+    p = Path(p)
+    if not p.exists():
+        return None
+    if str(MAIN.resolve()) not in sys.path:
+        sys.path.insert(0, str(MAIN.resolve()))
+    from explaneat.analysis.explanation_records import load_record_file
+    return load_record_file(p.resolve())
 
 
 def db_explanation(db, genome_id):
@@ -342,7 +359,7 @@ def one_line(rec, plain):
 
 
 def build_version(db, genome_id=None, rec_path=None, plain_path=None, levels_path=None, verdict_path=None, gt=None):
-    rec = jload(rec_path) if rec_path else None
+    rec = record(rec_path) if rec_path else None
     gid = genome_id or (rec or {}).get("genome_id")
     ex = db_explanation(db, gid)
     v = {"db": db, "genome_id": gid}

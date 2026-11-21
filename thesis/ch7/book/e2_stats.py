@@ -1,8 +1,13 @@
 """Experiment 2 (three-study set): recompute the headline numbers from the repo files.
-Run: python3 e2_stats.py <repo root> > e2_stats.json (read by e2figs.py; data/exp2.py copies its numbers)."""
+Run: uv run python e2_stats.py <repo root> > e2_stats.json (read by e2figs.py; data/exp2.py copies its numbers).
+The v4 records (recheck summary, Mike's verification) are read through explaneat.analysis.explanation_records:
+the records database's copy when it holds them ($EXPLANEAT_RECORDS_DATABASE_URL, else DATABASE_URL), else the
+committed record files."""
 import csv, json, statistics as st, sys
 from pathlib import Path
 R = Path(sys.argv[1] if len(sys.argv) > 1 else ".")
+sys.path.insert(0, str(R.resolve()))
+from explaneat.analysis.explanation_records import load_record_file  # noqa: E402
 def rows(p, **flt):
     with open(R / p) as f:
         return [r for r in csv.DictReader(f) if all(r[k] == v for k, v in flt.items())]
@@ -20,7 +25,7 @@ out = {}
 for k, (rp, rf, ep, ef) in S.items():
     runs = rows(rp, **rf); ex = rows(ep, **ef)
     assert len(runs) == 10 and len(ex) == 10, (k, len(runs), len(ex))
-    recs = [json.loads((R / "experiments/10seed/explanations_v4" / f"{e['label']}.json").read_text()) for e in ex]
+    recs = [load_record_file(R / "experiments/10seed/explanations_v4" / f"{e['label']}.json") for e in ex]
     o = {
       "seeds": sorted(int(r["seed"]) for r in runs),
       "test_auc": q([float(r["test_auc"]) for r in runs]),
