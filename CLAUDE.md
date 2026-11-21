@@ -223,6 +223,7 @@ Single-page app built with React + TypeScript + Vite, served as static files:
 - **`ExperimentList.tsx`**: Lists experiments with dataset setup buttons
 - **`GenomeExplorer.tsx`**: Main explorer view with network graph, operations panel, and evidence panel
 - **`NetworkViewer.tsx`**: React Flow-based network graph with annotation coloring and collapse support
+- **`AnnotationListPanel.tsx`**: annotation tree (collapse, rename); its magnifying-glass button focuses one annotation: the graph shows only its part (own + descendants' nodes, induced edges, `n→`/`→n` boundary stubs, Exit focus/Esc), re-laid out; URL `?focus=<annotation id>`, works read-only and static. Logic `components/annotationFocus.ts`, test `tests/test_ui/test_annotation_focus_ts.py`
 - **`OperationsPanel.tsx`**: Node selection, operation execution, annotation strategy wizard
 - **`EvidencePanel.tsx`**: Evidence visualization for annotations (formula display, dataset selection, viz controls, snapshot management)
 - **`VizCanvas.tsx`**: Observable Plot renderer for line plots, heatmaps, PCA scatter, partial dependence, sensitivity; the pairs plot is one d3 SVG from `pairsPlot.ts` (snapshot-able; Enlarge opens it large)

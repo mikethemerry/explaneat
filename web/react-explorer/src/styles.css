@@ -2721,3 +2721,70 @@ body {
 /* ── Static appendix ── */
 .viz-type-btn.static-missing { opacity: 0.45; }
 .replay-speed { width: auto; flex: 0 0 auto; }
+
+/* ── Focus on annotation (AnnotationListPanel button, NetworkViewer panel and stubs) ── */
+.focus-toggle {
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #4b5563;
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.focus-toggle:hover { background: #ecfeff; border-color: #0891b2; color: #0e7490; }
+.focus-toggle:focus-visible { outline: 2px solid #0891b2; outline-offset: 1px; }
+.focus-toggle.active {
+  background: #0891b2;
+  border-color: #0e7490;
+  color: #fff;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+.focus-panel {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #67e8f9;
+  border-left: 4px solid #0891b2;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  color: #1f2937;
+  max-width: min(560px, calc(100% - 24px));
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+.focus-panel-title { display: flex; align-items: center; gap: 6px; color: #0e7490; }
+.focus-panel-title span { color: #1f2937; }
+.focus-panel-legend { margin-top: 3px; color: #4b5563; font-size: 0.75rem; line-height: 1.35; }
+.focus-panel-missing { margin-top: 2px; color: #b45309; }
+.focus-exit { margin-left: auto; font-size: 0.75rem; padding: 0.15rem 0.5rem; }
+.focus-exit kbd {
+  font-family: inherit;
+  font-size: 0.65rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 3px;
+  padding: 0 3px;
+  margin-left: 4px;
+  color: #475569;
+  background: #f8fafc;
+}
+/* positioned against the React Flow node box */
+.focus-stub {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 8px;
+  background: #fff;
+  color: #0e7490;
+  border: 1px dashed #0891b2;
+  white-space: nowrap;
+}
+.focus-stub-in { right: calc(100% + 6px); }
+.focus-stub-out { left: calc(100% + 6px); }

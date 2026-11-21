@@ -31,7 +31,7 @@ Output (`site/` is gitignored):
 |---|---|
 | `site/index.html` | landing page: results table, grid of networks, links |
 | `site/pages/` | copied extra pages (`--page`) |
-| `site/explorer/index.html`, `assets/` | the explorer (hash routing: `explorer/#/genome/<id>?experiment=<id>&name=<label>`) |
+| `site/explorer/index.html`, `assets/` | the explorer (hash routing: `explorer/#/genome/<id>?experiment=<id>&name=<label>`; add `&focus=<annotation id>` to open one annotation's part on its own) |
 | `site/explorer/data/` | JSON per request; `_files.json` lists them (no request is made for a view left out) |
 
 Preview under a subpath, as Pages serves it:

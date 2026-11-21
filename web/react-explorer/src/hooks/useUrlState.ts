@@ -35,7 +35,7 @@ export type UrlView =
   | { type: "review_label"; label: string }
   | { type: "portal" }
   | { type: "features" }
-  | { type: "genome"; genomeId: string; experimentId: string; experimentName: string; annotationId?: string; pin?: string };
+  | { type: "genome"; genomeId: string; experimentId: string; experimentName: string; annotationId?: string; pin?: string; focus?: string };
 
 /** Parse the current URL into a View. */
 export function parseUrl(): UrlView {
@@ -52,6 +52,8 @@ export function parseUrl(): UrlView {
       experimentName: decodeURIComponent(params.get("name") || ""),
       annotationId: params.get("annotation") || undefined,
       ...(params.get("pin") ? { pin: params.get("pin") as string } : {}),
+      // focus=<annotation id or name>: show only that annotation's part of the graph
+      ...(params.get("focus") ? { focus: params.get("focus") as string } : {}),
     };
   }
 
@@ -88,6 +90,7 @@ export function viewToUrl(view: UrlView): string {
       if (view.experimentName) params.set("name", view.experimentName);
       if (view.annotationId) params.set("annotation", view.annotationId);
       if (view.pin) params.set("pin", view.pin);
+      if (view.focus) params.set("focus", view.focus);
       const qs = params.toString();
       return `/genome/${view.genomeId}${qs ? `?${qs}` : ""}`;
     }

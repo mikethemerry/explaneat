@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useEffect, type ReactNode } from "react";
+import { useCallback, useMemo, useEffect, useRef, type ReactNode } from "react";
 import { useFeatureLabels, describe, type FeatureLabels } from "../featureLabels";
 import {
   ReactFlow,
@@ -11,6 +11,9 @@ import {
   Background,
   BackgroundVariant,
   MarkerType,
+  Panel,
+  type ReactFlowInstance,
+  type FitViewOptions,
   type NodeChange,
   type EdgeChange,
   type OnSelectionChangeParams,
@@ -18,6 +21,7 @@ import {
 import "@xyflow/react/dist/style.css";
 
 import type { ModelState, ApiConnection } from "../api/client";
+import type { FocusMarker } from "./annotationFocus";
 
 // =============================================================================
 // Logging utilities
@@ -94,7 +98,41 @@ type NetworkViewerProps = {
   edgeInfluence?: Record<string, EdgeInfluenceData> | null;
   nodeHighlight?: Record<string, HighlightKind> | null;
   edgeHighlight?: Record<string, HighlightKind> | null; // keyed "from->to"
+  /** Focus mode: `model` is one annotation's part; show its name, boundary markers and an exit control. */
+  focus?: FocusInfo | null;
 };
+
+export type FocusInfo = {
+  /** Annotation id (changing it refits the view). */
+  key: string;
+  title: string;
+  markers: Record<string, FocusMarker>;
+  summary: { inNodes: number; inEdges: number; outNodes: number; outEdges: number };
+  /** Focus-set nodes the current model does not contain (shown as a note). */
+  missing: string[];
+  onExit: () => void;
+};
+
+const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+
+/** Small boundary stubs on a focused node: edges from outside (left) and to outside (right). */
+function focusStubs(m: FocusMarker | undefined): ReactNode {
+  if (!m) return null;
+  return (
+    <>
+      {m.extIn > 0 && (
+        <span className="focus-stub focus-stub-in" title={`${plural(m.extIn, "input")} from outside this part`}>
+          {m.extIn}&#x2192;
+        </span>
+      )}
+      {m.extOut > 0 && (
+        <span className="focus-stub focus-stub-out" title={`Feeds ${plural(m.extOut, "node")} outside this part`}>
+          &#x2192;{m.extOut}
+        </span>
+      )}
+    </>
+  );
+}
 
 function highlightNodeStyle(kind: HighlightKind | undefined): Record<string, string | number> {
   if (!kind) return {};
@@ -477,6 +515,7 @@ function convertModelToFlow(
   nodeHighlight?: Record<string, HighlightKind> | null,
   edgeHighlight?: Record<string, HighlightKind> | null,
   fl?: FeatureLabels,
+  focusMarkers?: Record<string, FocusMarker> | null,
 ): { nodes: Node[]; edges: Edge[] } {
   logInfo("Converting model to ReactFlow format", {
     nodeCount: model.nodes.length,
@@ -530,14 +569,16 @@ function convertModelToFlow(
     const feat = !isFunctionNode ? fl?.forNode(node.id) : null;
     const hlLabel = nodeHighlight?.[node.id];
     const fullTooltip = hlLabel ? `${tooltip}\n[${HIGHLIGHT_STYLE[hlLabel].label}]` : tooltip;
+    const stubs = focusStubs(focusMarkers?.[node.id]);
     const labelNode: ReactNode =
       feat && feat.decoded && feat.label !== label ? (
         <div title={fullTooltip} className="node-label-feature">
           <div>{label}</div>
           <div className="node-label-meaning">{feat.short || feat.label}</div>
+          {stubs}
         </div>
       ) : (
-        <div title={fullTooltip}>{label}</div>
+        <div title={fullTooltip}>{label}{stubs}</div>
       );
 
     // Special styling for function/annotation nodes
@@ -765,8 +806,10 @@ export function NetworkViewer({
   edgeInfluence,
   nodeHighlight,
   edgeHighlight,
+  focus = null,
 }: NetworkViewerProps) {
   const featureLabels = useFeatureLabels();
+  const focusMarkers = focus?.markers ?? null;
   // Convert model to ReactFlow format with layer-based layout
   const { initialNodes, initialEdges } = useMemo(() => {
     logInfo("Building network from model");
@@ -774,7 +817,7 @@ export function NetworkViewer({
 
     // Convert model to ReactFlow nodes/edges
     const annotationNodeSet = new Set(annotationNodeIds);
-    const { nodes: flowNodes, edges: flowEdges } = convertModelToFlow(model, annotationNodeSet, edgeInfluence, nodeHighlight, edgeHighlight, featureLabels);
+    const { nodes: flowNodes, edges: flowEdges } = convertModelToFlow(model, annotationNodeSet, edgeInfluence, nodeHighlight, edgeHighlight, featureLabels, focusMarkers);
 
     // Get input node IDs from metadata
     const inputNodeIds = new Set(model.metadata.input_nodes);
@@ -807,7 +850,7 @@ export function NetworkViewer({
     });
 
     return { initialNodes: layoutedNodes, initialEdges: layoutedEdges };
-  }, [model, annotationNodeIds, edgeInfluence, nodeHighlight, edgeHighlight, featureLabels]);
+  }, [model, annotationNodeIds, edgeInfluence, nodeHighlight, edgeHighlight, featureLabels, focusMarkers]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -818,6 +861,26 @@ export function NetworkViewer({
     setNodes(initialNodes);
     setEdges(initialEdges);
   }, [initialNodes, initialEdges, setNodes, setEdges]);
+
+  // Refit the view on entering, switching or leaving focus, and whenever the focused
+  // part is redrawn (its collapsed function node replaced by its nodes, labels loaded)
+  const flowRef = useRef<ReactFlowInstance | null>(null);
+  const focusKey = focus?.key ?? null;
+  const lastFocusKey = useRef(focusKey);
+  useEffect(() => {
+    if (!focusKey && lastFocusKey.current === focusKey) return;
+    lastFocusKey.current = focusKey;
+    // room for the focus panel above and the boundary stubs at the sides
+    const padding: FitViewOptions["padding"] = focusKey ? { top: "96px", bottom: "36px", left: "64px", right: "64px" } : 0.2;
+    // once now and once after React Flow has measured the new nodes
+    const fit = () => flowRef.current?.fitView({ padding, duration: 200, maxZoom: 1.6 });
+    const t1 = window.setTimeout(fit, 30);
+    const t2 = window.setTimeout(fit, 350);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
+  }, [focusKey, initialNodes]);
 
   // Update node selection styling
   useEffect(() => {
@@ -844,15 +907,24 @@ export function NetworkViewer({
     );
   }, [selectedNodes, setNodes]);
 
-  // Handle selection changes from ReactFlow
+  // Handle selection changes from ReactFlow. React Flow re-reports an unchanged
+  // (empty) selection when the node set is replaced (collapse, focus): pass on
+  // only real changes, so an annotation selected from the list stays selected.
+  const lastSelection = useRef<string>("");
   const onSelectionChange = useCallback(
     (params: OnSelectionChangeParams) => {
       const selectedNodeIds = params.nodes.map((n) => n.id);
+      const sig = [...selectedNodeIds].sort().join("\u0000");
+      if (sig === lastSelection.current) return;
+      lastSelection.current = sig;
       logDebug("ReactFlow selection changed", { selectedNodeIds });
       onNodeSelect(selectedNodeIds);
     },
     [onNodeSelect]
   );
+  useEffect(() => {
+    lastSelection.current = [...selectedNodes].sort().join("\u0000");
+  }, [selectedNodes]);
 
   // Handle node changes with logging
   const handleNodesChange = useCallback(
@@ -936,6 +1008,9 @@ export function NetworkViewer({
           onSelectionChange={onSelectionChange}
           onNodeClick={onNodeClick}
           onEdgeClick={onEdgeClick}
+          onInit={(inst) => {
+            flowRef.current = inst as unknown as ReactFlowInstance;
+          }}
           fitView
           fitViewOptions={{ padding: 0.2 }}
           minZoom={0.1}
@@ -956,6 +1031,37 @@ export function NetworkViewer({
             pannable
           />
           <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
+          {focus && (
+            <Panel position="top-left" className="focus-panel" data-testid="focus-panel">
+              <div className="focus-panel-title">
+                <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                  <circle cx="6.5" cy="6.5" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+                  <line x1="10" y1="10" x2="14.5" y2="14.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+                <span>
+                  Focus: <strong>{focus.title}</strong>
+                </span>
+                <button type="button" className="op-btn focus-exit" onClick={focus.onExit} data-testid="focus-exit">
+                  Exit focus <kbd>Esc</kbd>
+                </button>
+              </div>
+              <div className="focus-panel-legend">
+                Only this part is drawn.{" "}
+                {focus.summary.inEdges > 0
+                  ? `${plural(focus.summary.inNodes, "node")} take${focus.summary.inNodes === 1 ? "s" : ""} ${plural(focus.summary.inEdges, "input")} from outside (${"n→"} on the left)`
+                  : "No inputs from outside"}
+                {"; "}
+                {focus.summary.outEdges > 0
+                  ? `${plural(focus.summary.outNodes, "node")} feed${focus.summary.outNodes === 1 ? "s" : ""} ${plural(focus.summary.outEdges, "connection")} outside (${"→n"} on the right).`
+                  : "nothing feeds outside."}
+                {focus.missing.length > 0 && (
+                  <div className="focus-panel-missing">
+                    Not in the current model: {focus.missing.join(", ")}
+                  </div>
+                )}
+              </div>
+            </Panel>
+          )}
         </ReactFlow>
       </div>
       <div className="network-legend">
