@@ -1254,9 +1254,22 @@ New captions only (no old caption). The numbers below are as generated on 22 Nov
   (`day_charge_rate`, `day_charge_rate_max_abs_dev`). Minutes and charge are the same information.
 - (b) The hinge is the smallest day-minutes value (0.01-minute grid) at which a unit of *Heavy daytime use* is
   active for the typical customer: 217.35 minutes (its second unit 218.16; `day.hinge_by_exit`).
-- (c) The arrow marks the smallest call count at which the *Service-call chain*'s output unit is active; light use
+- (b, c) The dotted line is where the *Daytime-minutes ramp* starts to fall: the smallest day-minutes value
+  (0.01-minute grid) at which its first unit is active, 132.28 minutes (`day.terms.ramp_knee`). Its output unit is
+  active at every minutes value (`ramp_exit_always_on`), so the part always contributes (a constant below the knee).
+- (c) added 22 Nov 2026 (branch thesis/churn-day-panel; the service-call panels were (c) and (d) before and are now
+  (d) and (e)). Same customers as (b). Each line is one term of the logit that changes with daytime use: the direct
+  edge from the day charge into the linear base (weight times the standardised charge times the base's weight into
+  the output; the only direct edge from day minutes or day charge; the direct edge from day calls is fixed in the
+  sweep, `direct_other_day_inputs`), and the contributions of *Daytime-minutes ramp*, *Heavy daytime use*,
+  *Daytime-charge boost* and *Service-call chain* (the chain's gate reads day minutes: at the typical customer's
+  one call it is on from 0 to 25 minutes only, `chain_on_minutes`, so the boost line is the boost with the chain
+  off above 25 minutes). Black: their sum. The logit minus the sum varies by 0.014 log-odds along the sweep
+  (`rest_min`, `rest_max`): the heavy-use unit also feeds the *Virginia and West Virginia flag*
+  (`other_parts_range`), not drawn. Source: `thesis/ch7/exp1/data/churn_case_probes.json` `day.terms`.
+- (d) The arrow marks the smallest call count at which the *Service-call chain*'s output unit is active; light use
   100 minutes, typical 180.5, heavy 300 (design choices: the text's 300, the record's light-use probe).
-- (d) Each part's contribution is its output units' activations times their weights into the output (the logit is
+- (e) Each part's contribution is its output units' activations times their weights into the output (the logit is
   the output bias plus these terms, asserted). The *Daytime-charge boost* reads the day charge and carries the
   chain's output through a relay, so at light and typical use the gate shows in both.
 
@@ -1269,3 +1282,8 @@ New captions only (no old caption). The numbers below are as generated on 22 Nov
   day minutes; at 300 minutes the risk still rises from 73.3% to 94.5% over 0 to 9 calls through the
   *Service-call spike*.
 - 42 training customers have more than 5 calls (28 / 11 / 1 / 2 at 6 / 7 / 8 / 9).
+- (c) The ramp offsets the direct day-charge edge: in (c) the sum of the day-use terms is nearly flat from the
+  ramp's start (132 min) to the hinge (217 min), then rises with *Heavy daytime use* and the *Daytime-charge boost*.
+  With the day charge held at the typical customer's (30.69 dollars), the ramp alone takes the typical customer's
+  risk from 4.84% at 130 minutes to 1.41% at 210; the ramp's contribution goes from -1.567 to -2.839 log-odds
+  (-1.272), and no other part changes (`text_check.json` S9).
