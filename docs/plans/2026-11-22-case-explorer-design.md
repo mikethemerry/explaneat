@@ -55,5 +55,5 @@ So every part is read at the same, realistic case, and a hidden entry is held at
 ## Decisions (Mike, 22 Nov 2026)
 1. Default background stays the per-column median (existing figures unchanged); the reference case is
    opt-in. The case strip flags when the median case is unrealistic (e.g. an empty one-hot group).
-2. Restricted datasets (`EXPLANEAT_RESTRICTED=1`): nearest real rows are hidden (counts and distances only).
+2. Nearest real rows are shown on every dataset, restricted ones included: whoever can open the data can see its rows.
 3. MCP `compute_viz_data` accepts the same `params.reference`.
