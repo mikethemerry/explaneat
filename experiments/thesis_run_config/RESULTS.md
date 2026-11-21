@@ -20,19 +20,22 @@ starting topology, it says so in its methods").
      only backprop changes their weights.
    Experiment 2's bullet list ("a population of 250 for 100 generations; five epochs ...") is right, but
    Adult and Churn ran a different NEAT config from Heart-100.
-2. **Phantom-weight mask.** Experiment 2, the two original networks, the synthetic runs (all three
-   variants) and the ten MONK-2 seeds trained **unmasked**: the code at their commits has no mask (or the
+2. **Phantom-weight mask.** Experiment 2, the two original networks, the synthetic runs and the ten
+   MONK-2 seeds trained **unmasked**: the code at their commits has no mask (or the
    run recorded `mask_phantom: false`), so dense phantom weights trained and were discarded at write-back.
    Cox, Connect-4 and XOR trained masked; Experiment 3's fine-tuning is masked. The prose does not say.
 3. **Heart's original network: 40 of 100 generations.** The run was launched from template
    `high-exploration` with 100 generations and is stored `interrupted` after 40; "the Heart model for 40"
-   in the prose reads as a design choice (`experiments/10seed/PREREG.md` already notes this).
+   in the prose reads as a design choice (`experiments/10seed/PREREG.md` already notes this). Provenance
+   note: the table prints the generations stored (40, Mike's decision of 21 Nov 2026); the planned budget
+   is the launch template's `n_generations` (`data.json`, `families.paper_heart.template.training`), and
+   `make_table.py` asserts that a run stopped short of its budget is stored `interrupted`.
 4. **Departures by study** (all in the table): Cox — population 150, 60 generations, identity output,
    fitness −Cox loss − λk/D with λ = 1, initial weight SD 0.1, selection on validation; Connect-4 — population
    150, 80 generations, **50** epochs per generation, 10 hidden units at the start, initial weight SD 0.15;
    XOR — population 150, fitness 1/BCE, run until the best genome solves the four rows (cap 150), fitness
-   threshold 10^9, reset on extinction; synthetic 300-generation and sigmoid-unit variants (option figures
-   only). Fitness is training AUC only for the BCE-trained classification studies.
+   threshold 10^9, reset on extinction. Fitness is training AUC only for the BCE-trained classification
+   studies.
 5. **Experiment 3 has its own evolution family**: the ten MONK-2 seeds (`10seed-monk2-s0..9`, 100
    generations, the MONK-2 config) are not in any Experiment 2 table. Fine-tuning is Adadelta 1.5, BCE,
    masked, E = 500 (also 50 in the repair study and 2,000 in re-initialisation) or early stopping
@@ -42,11 +45,13 @@ starting topology, it says so in its methods").
 
 - Optimiser: every NEAT run's `backproppop.py` (at its recorded commit) is full-batch Adadelta, lr 1.5,
   no weight decay; the Experiment 3 fine-tune uses the same (`genome_surgery.FT_*`).
-- Seeds of one family ran at different commits for Adult (2), Churn (2), Connect-4 cells (2), Connect-4
-  lines (3) and the sigmoid synthetic runs (2). `git diff` of the training path
+- Seeds of one family ran at different commits for Adult (2), Churn (2), Connect-4 cells (2) and Connect-4
+  lines (3). `git diff` of the training path
   (`backproppop.py`, `neuralneat.py`, `db/population.py`, `evaluators/`) between them is empty in every case.
-- **Dirty trees**: the Cox runs and Connect-4 cells seeds 0 and 1 recorded `code_dirty: true`, so their
-  commit does not fully pin the code they ran.
+- **Dirty trees**: the WHAS500 Cox runs and Connect-4 cells seeds 0 and 1 recorded `code_dirty: true`, so
+  their commit does not fully pin the code they ran. Both presented networks of these families (the selected
+  WHAS500 seed and Connect-4 cells seed 1) are among them. `run_config.csv` `commits` lists the commits of the
+  presented runs only.
 - XOR's runs record no commit; the code read is the one of the commit that last wrote `xor_results.json`.
 - The original networks record no seed (`random_seed` null): "1 (n.r.)" in the table.
 
@@ -58,3 +63,26 @@ starting topology, it says so in its methods").
 - Phases 2 and 3 record `args.pop` 100, but a warm start takes the checkpoint's population; the config they
   ran with has population 50 (as the book says). The table prints the config's value.
 - The structural rates are 4x the code defaults (checked: run rate / `ConvNeatConfig` default = `mut_scale`).
+
+## Trimmed to the presented runs (21 Nov 2026, branch thesis/run-config-trim)
+
+Mike's decision: the table shows only the runs that produced the networks Chapter 7 presents.
+
+- **Seed(s) presented** (was "Seeds"): the seed of each presented network, read from the selection the
+  records state (`selected` in `data.json`; the synthetic ones asserted equal to the explained genomes in
+  `experiments/benchmarks/results/propneat.json`). All seeds where all are presented: Experiment 2 (ten
+  networks per dataset), XOR (all seeds analysed), and Experiment 3's ten MONK-2 seeds (kept unchanged until
+  Experiment 3's scope is decided). The original networks record no seed: "n.r." (was "1 (n.r.)").
+- **Cox: WHAS500 only.** GBSG2's network is not presented: `tab:exp1-networks` has WHAS500 only and the
+  survival benchmark table gives GBSG2 as a side note. `extract.py` now reads only the five WHAS500 runs
+  (`COX_PRESENTED`); every check (one config, config file, selection rule) still holds on them.
+- **Dropped: the synthetic 300-generation and sigmoid-unit families.** Their networks appear only in the
+  options figures (`thesis/ch7/FIGURES.md`, "Options": `synthetic-shape-c-s1-g300-*`,
+  `synthetic-shape-c-sig-best-g300-*`), not in any used figure or upload table, and none is explained. Their
+  run lists (`experiments/ushape_saddle/g300_scores.csv`, `sig_gens.json`) are no longer read; finding 2
+  above still holds for them (they trained unmasked) if they are ever presented.
+- **Heart's original network: "40"** (was "40 of 100"; see finding 3 for the budget).
+- **ExConNEAT panel (b): the presented network's lineage only.** The MNIST 10-class network of the 50k warm
+  start, as its three phases (the 10k run, its pruning phase, the 50k warm start), each read from its phase
+  records as before; the Classes column is gone (the panel header gives the class count, asserted equal in
+  the three phases). **Dropped: MNIST 3 vs 8 vs noise** (`three8noise/results/run_s0`), not presented.

@@ -23,19 +23,22 @@ D = json.loads((HERE / "data.json").read_text())
 F = D["families"]
 
 # row order of panel A (NEAT) and panel B (ExConNEAT) -- curated
-NEAT_ROWS = ["paper_heart", "paper_monk2", "cox", "c4_cells", "c4_lines", "xor", "shapes", "shapes_g300",
-             "shapes_sig", "adult", "churn", "heart100", "monk2_10", "exp3_ft"]
-CONV_ROWS = ["conv_p1", "conv_p2", "conv_p3", "conv_38n"]
+NEAT_ROWS = ["paper_heart", "paper_monk2", "cox", "c4_cells", "c4_lines", "xor", "shapes",
+             "adult", "churn", "heart100", "monk2_10", "exp3_ft"]
+CONV_ROWS = ["conv_p1", "conv_p2", "conv_p3"]   # the phases of the presented MNIST 10-class network
 NAME = {  # study names as in the Chapter 7 tables -- curated
     "paper_heart": "Heart, original network", "paper_monk2": "MONK-2, original network",
-    "cox": "WHAS500, GBSG2 (Cox)", "c4_cells": "Connect-4, cells", "c4_lines": "Connect-4, lines",
+    "cox": "WHAS500 (Cox)", "c4_cells": "Connect-4, cells", "c4_lines": "Connect-4, lines",
     "xor": "XOR", "shapes": "Synthetic U, saddle, U $+$ saddle",
-    "shapes_g300": "Synthetic U $+$ saddle, 300 generations", "shapes_sig": "Synthetic U $+$ saddle, sigmoid units",
     "adult": "Adult", "churn": "Churn", "heart100": "Heart-100", "monk2_10": "MONK-2, ten seeds (grafting)",
     "exp3_ft": "Fine-tuning after a graft",
-    "conv_p1": "MNIST 10-class: 10k run", "conv_p2": "MNIST 10-class: pruning phase",
-    "conv_p3": "MNIST 10-class: 50k warm start", "conv_38n": "MNIST 3 vs 8 vs noise",
+    "conv_p1": "1. 10k run", "conv_p2": "2. Pruning phase", "conv_p3": "3. 50k warm start",
 }
+# the datasets of the synthetic row, in the order of its name (keys of shapes' selected.per_dataset) -- curated
+SHAPES_ORDER = ["u", "saddle", "both"]
+# families whose every seed is presented (Experiment 2: all ten networks; XOR: all 30 analysed; Experiment 3's
+# ten MONK-2 seeds, kept until Experiment 3's scope is decided) -- curated
+ALL_SEEDS = {"xor", "adult", "churn", "heart100", "monk2_10"}
 # NEAT options shown in a column (any option that differs between families must be here or in OTHER)
 SHOWN = {"pop_size", "num_hidden", "weight_init_stdev", "node_add_prob", "node_delete_prob", "conn_add_prob",
          "conn_delete_prob", "enabled_mutate_rate", "weight_mutate_rate", "weight_mutate_power",
@@ -102,11 +105,34 @@ def plain(s):
             .replace("--", "-").replace("\\%", "%").replace("{", "").replace("}", ""))
 
 
-def seeds(fr):
-    s = fr.get("seeds")
-    if s is None:
+def presented_runs(k, fr):
+    """The runs whose network Chapter 7 presents (one per dataset of the family, or every seed)."""
+    if k in ALL_SEEDS:
+        return fr["runs"]
+    if k in ("paper_heart", "paper_monk2"):
         assert fr["n_runs"] == 1
-        return "1 (n.r.)"
+        return fr["runs"]
+    by_name = {r["name"]: r for r in fr["runs"]}
+    if k == "cox":
+        names = [v["tag"] for _, v in sorted(fr["selected"].items())]
+    elif k in ("c4_cells", "c4_lines"):
+        names = [fr["selected"]["name"]]
+    elif k == "shapes":
+        assert sorted(fr["selected"]["per_dataset"]) == sorted(SHAPES_ORDER)
+        names = [fr["selected"]["per_dataset"][d] for d in SHAPES_ORDER]
+    else:
+        raise KeyError(k)
+    return [by_name[n] for n in names]
+
+
+def seeds(k, fr):
+    runs = presented_runs(k, fr)
+    s = [r["seed"] for r in runs]
+    if any(x is None for x in s):
+        assert len(s) == 1
+        return "n.r."
+    if k not in ALL_SEEDS:   # one network per dataset: its seed, in the order of the study name
+        return ", ".join(str(x) for x in s)
     u = sorted(set(s))
     assert u == list(range(u[0], u[-1] + 1)), u
     each = len(s) // len(u)
@@ -127,9 +153,8 @@ def generations(k, fr):
     if k == "paper_monk2":
         budget = fr["launch"]["TRAIN"]["n_generations"]
     assert budget is not None, k
-    if budget != g[0]:
+    if budget != g[0]:   # Heart's original run: stored interrupted before its budget (RESULTS.md)
         assert fr["runs"][0]["status"] == "interrupted", k
-        return f"{g[0]} of {budget}"
     return str(g[0])
 
 
@@ -214,7 +239,7 @@ def selection(k, fr):
         return "train; seed: train"
     if k == "xor":
         return "first solution"
-    if k in ("shapes_g300", "shapes_sig", "adult", "churn", "heart100", "monk2_10"):
+    if k in ("adult", "churn", "heart100", "monk2_10"):
         return "train"
     raise KeyError(k)
 
@@ -287,6 +312,13 @@ def common_line(neat_keys):
     return parts, rest, const
 
 
+def presented_commits(k, fr):
+    """Commits of the presented runs (XOR's runs record none: the family's code commit)."""
+    if k == "xor":
+        return " ".join(c[:7] for c in fr["commits"])
+    return " ".join(sorted({r["commit"][:7] for r in presented_runs(k, fr)}))
+
+
 def build_neat():
     fams = [k for k in NEAT_ROWS if "neat" in F[k]]
     keys = set().union(*[F[k]["neat"].keys() for k in fams]) - {"num_inputs"}
@@ -302,7 +334,7 @@ def build_neat():
         n = fr["neat"]
         assert n["activation_default"] == "relu"
         rows.append({
-            "key": k, "study": NAME[k], "experiment": fr["experiment"], "seeds": seeds(fr),
+            "key": k, "study": NAME[k], "experiment": fr["experiment"], "seeds": seeds(k, fr),
             "pop": fmt(n["pop_size"]), "generations": generations(k, fr), "epochs": epochs(k, fr),
             "fitness": fitness(k, fr), "activation": activations(k, fr), "hidden_start": fmt(n["num_hidden"]),
             "weight_sd": fmt(n["weight_init_stdev"]),
@@ -311,7 +343,7 @@ def build_neat():
             "toggle": fmt(n["enabled_mutate_rate"]), "wb": mutation_wb(n),
             "compat": f"{fmt(n['compatibility_threshold'])} ({fmt(n['compatibility_disjoint_coefficient'])})",
             "mask": mask(k, fr), "selection": selection(k, fr), "other": other(k, fr, varying),
-            "source": fr["source"], "commits": " ".join(c[:7] for c in fr.get("commits", [])),
+            "source": fr["source"], "commits": presented_commits(k, fr),
         })
     return rows, keys
 
@@ -348,9 +380,6 @@ def stop_conv(fr):
     if s.startswith("wall budget"):
         assert s == f"wall budget ({a['max_minutes']:.0f} min)"
         return f"{a['max_minutes'] / 60:.0f} h cap"
-    if s.startswith("plateau"):
-        assert f"for {a['patience']} generations" in s
-        return f"plateau, {a['patience']} gen."
     raise KeyError(s)
 
 
@@ -366,9 +395,9 @@ def build_conv():
         n_train = sum(sizes) if isinstance(sizes, list) else sizes
         gens = fr.get("generations_in_phase")
         gtxt = (f"$+${gens}" if gens is not None else str(fr["generations_run"])) + f" ({stop_conv(fr)})"
-        if k in ("conv_p3", "conv_38n"):
-            h = fr.get("halving") or {"base": a["halving_base"], "top_frac": a["halving_top"],
-                                      "top_extra": a["halving_extra"], "leader_total": a["halving_leader"]}
+        if k == "conv_p3":
+            h = {"base": a["halving_base"], "top_frac": a["halving_top"],
+                 "top_extra": a["halving_extra"], "leader_total": a["halving_leader"]}
             assert c["epochs_per_gen"] == h["base"]
             ep = f"{h['base']}; top {round(100 * h['top_frac'])}\\% $+${h['top_extra']}; leaders to {h['leader_total']}"
         else:
@@ -397,12 +426,13 @@ def build_conv():
     return rows
 
 
-CAPTION = ("Run configuration of every Chapter~7 study. Pop.: population; Gen.: generations ($a$ of $b$: "
-           "stopped at $a$ of $b$ planned; $+$: in this phase); Ep.: backprop epochs per genome per generation "
+CAPTION = ("Run configuration of the networks Chapter~7 presents. Seed(s) presented: the seed of each presented "
+           "network, in the order of the datasets in Study; Pop.: population; Gen.: generations ($+$: in this "
+           "phase); Ep.: backprop epochs per genome per generation "
            "(ES: early stopping); Act.: hidden / output activation; mutation: rate/power/replace rate; Compat.: "
            "compatibility threshold (disjoint coefficient); phantom mask: weights absent from the genome held at "
            "zero in backprop; Selection: the genome kept from each run (train: best training fitness; val.: best "
-           "on validation), then (seed:) how the reported seed was chosen; $k$: enabled connections plus hidden "
+           "on validation), then (seed:) how the presented seed was chosen; $k$: enabled connections plus hidden "
            "units; $D$: training events; size: hidden maps plus kernels; n.r.: not recorded; --: not applicable.")
 
 
@@ -412,7 +442,7 @@ def rr(width_cm):
 
 def tex(neat_rows, conv_rows, common_parts, opt_text):
     mc = lambda s: f"\\makecell{{{s}}}"  # noqa: E731
-    head_a = ["Study", "Seeds", "Pop.", "Gen.", "Ep.", "Fitness; loss", "Act.", mc("Hidden\\\\at start"),
+    head_a = ["Study", mc("Seed(s)\\\\presented"), "Pop.", "Gen.", "Ep.", "Fitness; loss", "Act.", mc("Hidden\\\\at start"),
               mc("Weight\\\\init.\\ SD"), mc("Node\\\\add/del."), mc("Conn.\\\\add/del."), mc("Enable\\\\toggle"),
               mc("Weight; bias\\\\mutation"), mc("Compat.\\\\(disj.)"), mc("Phantom\\\\mask"), "Selection", "Other"]
     cols_a = ["study", "seeds", "pop", "generations", "epochs", "fitness", "activation", "hidden_start",
@@ -454,15 +484,17 @@ def tex(neat_rows, conv_rows, common_parts, opt_text):
         "  \\vspace{1.2em}",
         "  \\begin{adjustbox}{max width=\\textheight}",
     ]
-    head_b = ["Phase", "Classes", "Seed", "Train rows", "Pop.", "Gen.", "Ep.", "Optimiser", "Fitness",
+    head_b = ["Phase", "Seed", "Train rows", "Pop.", "Gen.", "Ep.", "Optimiser", "Fitness",
               "Structural mutation", "Speciation", "Elitism / surv.", "Selection"]
-    cols_b = ["study", "classes", "seeds", "train_rows", "pop", "generations", "epochs", "optimiser",
+    cols_b = ["study", "seeds", "train_rows", "pop", "generations", "epochs", "optimiser",
               "fitness", "mutation", "speciation", "elitism", "selection"]
-    spec_b = [rr("3.6"), "c", "c", "c", "c", rr("2.6"), rr("2.4"), "c", rr("3.3"), rr("3.3"), "c", "c", "c"]
+    spec_b = [rr("2.6"), "c", "c", "c", rr("2.6"), rr("2.4"), "c", rr("3.3"), rr("3.3"), "c", "c", "c"]
     assert len(spec_b) == len(head_b) == len(cols_b)
+    classes = {r["classes"] for r in conv_rows}
+    assert len(classes) == 1, classes
     lines += [
         f"  \\begin{{tabular}}{{@{{}}{''.join(spec_b)}@{{}}}}",
-        f"    \\multicolumn{{{len(head_b)}}}{{@{{}}l}}{{\\textbf{{(b)}} ExConNEAT (Experiment 4)}} \\\\",
+        f"    \\multicolumn{{{len(head_b)}}}{{@{{}}l}}{{\\textbf{{(b)}} ExConNEAT (Experiment 4): the MNIST {classes.pop()}-class network, by phase}} \\\\",
         "    \\toprule",
         "    " + " & ".join(head_b) + " \\\\",
         "    \\midrule",

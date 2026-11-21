@@ -1076,3 +1076,38 @@ residual is floating-point rounding with no bearing on the results.
   `ch7_experiment1_cases.tex` (`thesis/scripts/thesis_experiment_tables.py`).
 - In this file, the moved methodology sentences that describe the function-preservation error
   (ch7-ex1-networks, exp2-runs-*) should not go into the body text.
+
+# Run-configuration table, presented runs only (21 Nov 2026, branch thesis/run-config-trim)
+
+## ch7-run-config (tab:ch7-run-config)
+
+File: `experiments/thesis_run_config/ch7-run-config.tex` (copied to `thesis/ch7/exports/`, upload
+`sections/tables/ch7-run-config.tex`). The table now shows only the runs behind the networks Chapter 7
+presents ("Seeds" became "Seed(s) presented"; WHAS500 only for Cox; no 300-generation or sigmoid-unit
+synthetic rows; Heart's original network "40"; panel (b) is the presented MNIST 10-class network's three
+phases, without MNIST 3 vs 8 vs noise). The key "$a$ of $b$" is gone (no cell uses it); a key for
+"Seed(s) presented" is added.
+
+**Old caption**
+
+> Run configuration of every Chapter~7 study. Pop.: population; Gen.: generations ($a$ of $b$: stopped at $a$ of $b$ planned; $+$: in this phase); Ep.: backprop epochs per genome per generation (ES: early stopping); Act.: hidden / output activation; mutation: rate/power/replace rate; Compat.: compatibility threshold (disjoint coefficient); phantom mask: weights absent from the genome held at zero in backprop; Selection: the genome kept from each run (train: best training fitness; val.: best on validation), then (seed:) how the reported seed was chosen; $k$: enabled connections plus hidden units; $D$: training events; size: hidden maps plus kernels; n.r.: not recorded; --: not applicable.
+
+**New caption**
+
+> Run configuration of the networks Chapter~7 presents. Seed(s) presented: the seed of each presented network, in the order of the datasets in Study; Pop.: population; Gen.: generations ($+$: in this phase); Ep.: backprop epochs per genome per generation (ES: early stopping); Act.: hidden / output activation; mutation: rate/power/replace rate; Compat.: compatibility threshold (disjoint coefficient); phantom mask: weights absent from the genome held at zero in backprop; Selection: the genome kept from each run (train: best training fitness; val.: best on validation), then (seed:) how the presented seed was chosen; $k$: enabled connections plus hidden units; $D$: training events; size: hidden maps plus kernels; n.r.: not recorded; --: not applicable.
+
+**Not a key (for the body text)**: Heart's original run was launched for 100 generations and is stored
+interrupted after 40 (`experiments/thesis_run_config/RESULTS.md`, finding 3); the table prints the 40 it ran.
+The selected seed of a family with one presented network is the one its selection rule picked (Selection
+column); Experiment 2, XOR and Experiment 3's ten MONK-2 seeds present every seed.
+
+**Not in the caption: results**
+
+- (none)
+
+## ch7-datasets (tab:ch7-datasets-mnist)
+
+The MNIST 3 vs 8 vs noise row is dropped (no network of it is presented), and the two MNIST 10-class rows
+name the phases that trained on them. The caption is unchanged. The methodology bullet on MNIST 3 vs 8 vs
+noise above (21 Nov, "Datasets tables, landscape") no longer applies.
+

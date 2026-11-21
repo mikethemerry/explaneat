@@ -81,13 +81,11 @@ stored record `make_table.py` asserts it against. One method always gets the sam
 | 16 counts computed from the 42 cells (...) | Connect-4 lines | `experiments/c4_line_features/lfdata.py` | metadata `codebook` (16 entries), base dataset = the cells |
 | generated in natural units (binary inputs 0/1) | synthetic | `experiments/ushape_saddle/data.py` | split `preprocessing_steps[0]` = "raw units" |
 | none (inputs 0/1); none (used as they are) | XOR | `experiments/xor/run_xor.py` (`X`, no scaling) | `X`, `Y` asserted to be the XOR truth table |
-| none (grey-scale pixel intensities 0–255); pixel intensities scaled to [0, 1] (divided by 255) | MNIST (all three) | `explaneat.conv.data.mnist_splits` and `three8noise/data.load`: `X / 255.0`; no further normalisation in `explaneat/conv` | raw `uint8` maximum 255; scaled training images span [0, 1] |
-| noise class generated, ink-matched (...) | MNIST 3 vs 8 vs noise | `experiments/conv_neat/three8noise/data.py` `make_noise` | class sizes equal the run record's; test digits = every standard-test 3 and 8 |
+| none (grey-scale pixel intensities 0–255); pixel intensities scaled to [0, 1] (divided by 255) | MNIST (both rows) | `explaneat.conv.data.mnist_splits`: `X / 255.0`; no further normalisation in `explaneat/conv` | raw `uint8` maximum 255; scaled training images span [0, 1] |
 | random split 80:20, not stratified, seed 42 | Adult, Heart | `sklearn.model_selection.train_test_split(shuffle=True, random_state=42)` (the split rows in the database) | split `stratify` = false, `test_size`, `random_state` |
 | random split 80:20 (75:25), stratified on the outcome, seed 42 | MONK-2, Churn, Connect-4 (80:20); synthetic (75:25) | the same with `stratify=y` | split `stratify` = true |
 | random split 64:16:20, stratified on the event: test 20%, then validation 20% of the rest; seed 42 | WHAS500, GBSG2 | `explaneat.survival.data.survival_split_indices` (two `train_test_split` calls stratified on the event) | split file `seed`, `test_size`, `val_size` |
 | test: the standard MNIST test set; validation: from the 60,000 standard training images, stratified on the digit, seed 0; training: a stratified subset of the other 50,000 / all other 50,000 | MNIST 10-class | `explaneat.conv.data.mnist_splits(seed, classes=0..9, n_train, n_val)` | recomputed and asserted equal to the run records' saved row indices; the two share validation and test rows |
-| test: the standard MNIST test 3s and 8s; validation and training drawn per digit, seed 0; noise as many as each digit | MNIST 3 vs 8 vs noise | `three8noise/data.build(seed)` (`Generator([seed, 0])`; 1,000 validation and 3,800 training per digit) | run record `sizes` |
 
 Not shown in the table: the Experiment 3 validation rows ($^a$) are a stratified 20% of the training
 rows (`experiments/churn/val_split.json`, `monk2_val_split.json`); the MNIST 10k run's pruned
@@ -96,14 +94,19 @@ in its run record).
 
 ## MNIST (Experiment 4) and KRK
 
-MNIST is in the tables since 21 Nov 2026 (`tab:ch7-datasets-mnist`): the three datasets the ExConNEAT
-runs Chapter 7 reports used (`experiments/conv_neat/RESULTS.md` section 11b, `three8noise/RESULTS.md`):
+MNIST is in the tables since 21 Nov 2026 (`tab:ch7-datasets-mnist`): the datasets the lineage of the one
+presented ExConNEAT network trained on (the MNIST 10-class network of the 50k warm start;
+`experiments/conv_neat/RESULTS.md` section 11b). Two rows, one per training set, each naming the phases
+that used it (clearer than one merged row: the phases differ in training rows only, and the 10k subset
+is a different split cell from the full 50k):
 
-- **MNIST, 10k training subset**: run records `results/sweep_p50_m4_e5` (the selected genome) and
-  `results/mnist10_pruned` (its pruned continuation, the headline network); the same rows.
-- **MNIST, all 50k training rows**: `results/mnist10_ws50k_halving` (warm start from the pruned
-  population; same validation and test rows).
-- **MNIST 3 vs 8 vs noise**: `three8noise/results/run_s0`.
+- **MNIST 10-class, 10k training subset: 10k run, pruning phase**: run records `results/sweep_p50_m4_e5`
+  (the selected genome) and `results/mnist10_pruned` (its pruned continuation); the same rows.
+- **MNIST 10-class, all 50k training rows: 50k warm start**: `results/mnist10_ws50k_halving` (warm start
+  from the pruned population; same validation and test rows).
+
+Dropped on 21 Nov 2026 (branch thesis/run-config-trim): **MNIST 3 vs 8 vs noise**
+(`three8noise/results/run_s0`); no network of it is presented. `extract.py` no longer rebuilds it.
 
 Left out: the earlier MNIST runs of `experiments/conv_neat` section 11 (`mnist38_*`, `mnist10_p0.001_*`:
 2,000 validation images) and the sklearn 8 x 8 digits runs, and the database's `mnist10_784` /
