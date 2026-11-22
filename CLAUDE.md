@@ -231,7 +231,7 @@ Single-page app built with React + TypeScript + Vite, served as static files:
 - **`App.tsx`**: Top-level routing between experiment list and genome explorer
 - **`ExperimentList.tsx`**: Lists experiments with dataset setup buttons
 - **`GenomeExplorer.tsx`**: Main explorer view with network graph, operations panel, and evidence panel
-- **`NetworkViewer.tsx`**: React Flow-based network graph with annotation coloring and collapse support
+- **`NetworkViewer.tsx`**: React Flow-based network graph with annotation coloring and collapse support. "Colour by part" toggle (`?parts=1`, remembered in localStorage): fill = deepest annotation owning the node, rings on entry-only nodes, edges inside a part in its colour, legend tree with hover/click emphasis; logic `components/annotationColours.ts`, test `tests/test_ui/test_annotation_colours_ts.py`
 - **`AnnotationListPanel.tsx`**: annotation tree (collapse, rename); its magnifying-glass button focuses one annotation: the graph shows only its part (own + descendants' nodes, induced edges, `n→`/`→n` boundary stubs, Exit focus/Esc), re-laid out; URL `?focus=<annotation id>`, works read-only and static. Logic `components/annotationFocus.ts`, test `tests/test_ui/test_annotation_focus_ts.py`
 - **`OperationsPanel.tsx`**: Node selection, operation execution, annotation strategy wizard
 - **`EvidencePanel.tsx`**: Evidence visualization for annotations (formula display, dataset selection, viz controls, snapshot management)
