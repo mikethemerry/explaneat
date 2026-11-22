@@ -702,6 +702,13 @@ def shape_saddle(label, d, fid):
         pdata["part_responses"] = {names[q]: Zp[q] for q in order}
         pdata["vmax"] = v
     figlib.save(fig, fid, pdata=pdata)
+    keys_net = ("(a, b, f) The logit with its mean over the grid removed, one scale (red above, blue below); every other "
+                f"input at the typical case; true term $-{sd.BETA_S:g}\\,z_h z_p$. (c, d) (a) minus (b): (c) the size of the "
+                "gap (pale: they agree); (d) its sign (brown: model above the truth; teal: below). Dots: the training rows. "
+                "(e) The parts that carry the term: grey box, one part (name below); grey circles, its inputs; white "
+                "circles, ReLU units; square $+$, the part's sum. Edges: blue positive, red negative, width and label the "
+                "weight; arrows leaving a box, its connections to the rest of the network. (f) Each part of (e), left to "
+                "right: its contribution to the logit.")
     keys = (("(a, b, f) " if net else "") + "Colour: the logit with its mean over the grid removed, one scale for all panels (red above the mean, "
             "blue below); every other input at the typical case. "
             + (f"(b) The explanation part whose contribution moves most on the grid "
@@ -713,6 +720,7 @@ def shape_saddle(label, d, fid):
                "truth, teal where it is below. Dots: the training rows." if net else "")
             + (" (e) The network's parts that carry the saddle term: " + NET_KEYS if net else "")
             + (" (f) Each part of (e), left to right: its contribution to the logit on the same grid." if net else ""))
+    keys = keys_net if net else keys   # a full page: the tightened key (Mike, 22 Nov 2026)
     title = (f"{_shape_c_title(seed)}: the heart-rate $\\times$ systolic-pressure saddle term" if net
              else _shape_title(label, d) + ": heart rate $\\times$ systolic BP")
     if net:   # a full page (Mike, 22 Nov 2026)
