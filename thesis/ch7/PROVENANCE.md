@@ -572,3 +572,15 @@ figures and plot data.
 | used `churn-case-probes` panel (c), added 22 Nov 2026 (branch thesis/churn-day-panel; the service-call panels re-lettered (d), (e)) | `extract_churn_case.py` `day_terms` (the direct day-charge edge and the parts `dayMinutesRamp`, `heavyDayUse`, `dayChargeBoost`, `serviceCallChain` along panel (b)'s sweep; asserted to rebuild the linear base's contribution; the ramp's start from `text_check.first_positive`) -> `churn_case_probes.json` `day.terms`; drawn by `churn_case_figures.py` | explaneat_v4, READ ONLY | extracted (DB, read-only), computed; rerun byte-identical |
 | `text_check.json` S9 (the ramp sentence: day charge held at the typical value, risk at 130 and 210 day minutes, the ramp's contribution change), added 22 Nov 2026 | `experiments/churn_case/text_check.py` | as above | extracted (DB, read-only), computed; S1-S8 unchanged |
 | used `churn-case-net-concept` (`fig:ch7-churn-case-net-concept`) | `thesis/ch7/exp1/churn_case_figures.py` (`uv run python thesis/ch7/exp1/make_figures.py churn-case-net-concept`), drawn with `thesis/ch7/exp2/worked.py`'s collapse and `render_structure.overview` | `experiments/churn_case/plain_language/churn-case-s10.json` (asserted the genome and explanation of `churn_case_probes.json`, same top-level parts) | agent-authored explanation (parts and titles), structure drawn by code |
+
+## Experiment 1, the Connect-4 case figure (22 Nov 2026)
+
+Engine: `experiments/c4_case/probes.py` `CaseModel` (each network's phenotype with the stored explanation replayed,
+StructureNetwork forward passes asserted equal to the explanation library's evaluator; the typical position is each
+committed plain-language layer's `reference_patient`, asserted to reproduce its predicted chance).
+
+| Output | Producer | Inputs | Kind |
+|---|---|---|---|
+| `thesis/ch7/exp1/data/c4_case.json` | `thesis/ch7/exp1/extract_c4_case.py` | explaneat_v4, READ ONLY (genomes `f0eb7635` cells, `6ebf7e0c` lines: phenotype, split data and scaler, explanation operations); `experiments/c4_capacity/plain_language/c4cap-main-h10-e50-s1.json`, `experiments/c4_line_features/plain_language/c4lf-lines-heavy-s0.json` | extracted (DB, read-only), computed; rerun byte-identical |
+| used `c4-case-contrast` (`fig:ch7-c4-case-contrast`) | `thesis/ch7/exp1/c4_case_figures.py` (`uv run python thesis/ch7/exp1/make_figures.py c4-case-contrast`) | `c4_case.json` | computed; rerun byte-identical |
+

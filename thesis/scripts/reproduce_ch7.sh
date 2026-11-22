@@ -79,6 +79,8 @@ if [[ "${1:-}" == "--with-db" ]]; then
   # Churn case: the check of the thesis text, then the probes of its two figures (read-only explaneat_v4)
   PGOPTIONS='-c default_transaction_read_only=on' uv run python experiments/churn_case/text_check.py   # -> text_check.json
   PGOPTIONS='-c default_transaction_read_only=on' uv run python thesis/ch7/exp1/extract_churn_case.py  # -> exp1/data/churn_case_probes.json
+  # Connect-4 case: the cells network's direct edges and the lines network's probes (read-only explaneat_v4)
+  PGOPTIONS='-c default_transaction_read_only=on' uv run python thesis/ch7/exp1/extract_c4_case.py     # -> exp1/data/c4_case.json
   uv run python thesis/ch7/exp1/heart_profiles.py                                # -> exp1/data/heart_profiles.json (proposal)
   # Figure caches: the synthetic shape sweeps (explaneat_dev) and the Adult / Heart-100 shapes and seed agreement (v4)
   PGOPTIONS='-c default_transaction_read_only=on' DATABASE_URL=postgresql://localhost/explaneat_dev \

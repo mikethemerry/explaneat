@@ -1046,6 +1046,8 @@ def main(only=None):
     capgain_figure(only)
     import churn_case_figures   # the Churn case network: its parts, whole-model probes (data/churn_case_probes.json)
     churn_case_figures.build(only)
+    import c4_case_figures   # the Connect-4 case: cells direct edges against the lines network (data/c4_case.json)
+    c4_case_figures.build(only)
     monk2_figures(only)
     shape_figures(only)
     cox_figures(only)

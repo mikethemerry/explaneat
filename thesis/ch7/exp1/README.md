@@ -21,6 +21,9 @@ uv run python thesis/ch7/exp1/extract_db.py         # data/networks.json (the ne
 uv run python thesis/ch7/exp1/extract_networks.py   # data/network_figs.json: each appendix layer is its genome's
                                                     # current explanation; phenotype sizes
 uv run python thesis/ch7/exp1/extract_capgain.py    # data/capgain.json (Adult capital-gain part's response)
+PGOPTIONS='-c default_transaction_read_only=on' \
+  uv run python thesis/ch7/exp1/extract_c4_case.py   # data/c4_case.json (Connect-4 case figure c4-case-contrast;
+                                                    # engine experiments/c4_case/probes.py)
 uv run python thesis/ch7/exp1/heart_profiles.py     # data/heart_profiles.json (PROPOSAL data for the Heart
                                                     # cholesterol figure; see HEART_CHOLESTEROL_PROPOSAL.md)
 PGOPTIONS='-c default_transaction_read_only=on' DATABASE_URL=postgresql://localhost/explaneat_dev \
