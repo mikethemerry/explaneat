@@ -52,6 +52,7 @@ def from_shape_plots(label, genome=None, task=None):
                             parts={p: dict(name=R["pnames"][p], contribution=_arr(c)) for p, c in R["parts"].items()}),
                 saddle=dict(heart_rate=_arr(R["hs"]), sbp=_arr(R["ps"]), score=_arr(R["S"]), truth=_arr(R["T"]),
                             part=None if pid is None else dict(id=pid, name=R["pnames"][pid], contribution=_arr(R["C"][pid])),
+                            parts={p: dict(name=R["pnames"][p], contribution=_arr(c)) for p, c in R["C"].items()},
                             score_corr_with_truth=R["out"]["saddle"]["score_corr_with_truth"],
                             score_interaction_share=R["out"]["saddle"]["score_interaction_share"]),
                 sodium_model_minimum_at=R["out"]["sodium"]["model_minimum_at"])
@@ -75,7 +76,7 @@ def from_score_gens(row):
                 hidden_activation=row["hidden_activation"],
                 sodium=dict(x=_arr(sg.SODIUM_GRID), score=_arr(u), truth=_arr(ut),
                             typical=float(hold_row(vm, "typical")[col["sodium"]]), parts={}),
-                saddle=dict(heart_rate=_arr(sf["H"][0]), sbp=_arr(sf["P"][:, 0]), score=_arr(S), truth=_arr(T), part=None,
+                saddle=dict(heart_rate=_arr(sf["H"][0]), sbp=_arr(sf["P"][:, 0]), score=_arr(S), truth=_arr(T), part=None, parts={},
                             score_corr_with_truth=sd_r, score_interaction_share=got["saddle_interaction_share"]),
                 sodium_model_minimum_at=got["u_min_at"], u_r=u_r)
 
