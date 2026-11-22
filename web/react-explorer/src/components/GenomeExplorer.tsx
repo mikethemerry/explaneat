@@ -932,6 +932,8 @@ export function GenomeExplorer({ genomeId, experimentId, experimentName, onBack,
             nodeHighlight={lineageView ? lineageView.nodeHighlight : nodeHighlight}
             edgeHighlight={lineageView ? lineageView.edgeHighlight : edgeHighlight}
             focus={lineageView ? null : focusInfo}
+            annotations={lineageView ? undefined : annotations}
+            partsEmphasis={lineageView ? null : selectedAnnotationId}
           />
           )}
           {focusKey && !focusAnn && annotations.length > 0 && (

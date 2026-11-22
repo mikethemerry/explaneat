@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useEffect, useRef, type ReactNode } from "react";
+import { useCallback, useMemo, useEffect, useRef, useState, type ReactNode } from "react";
 import { useFeatureLabels, describe, type FeatureLabels } from "../featureLabels";
 import {
   ReactFlow,
@@ -20,8 +20,10 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
-import type { ModelState, ApiConnection } from "../api/client";
+import type { ModelState, ApiConnection, AnnotationSummary } from "../api/client";
 import type { FocusMarker } from "./annotationFocus";
+import { computePartColouring, emphasisNodes, NO_PART, type PartColouring } from "./annotationColours";
+import { getPartsMode, setPartsMode } from "../hooks/useUrlState";
 
 // =============================================================================
 // Logging utilities
@@ -100,6 +102,10 @@ type NetworkViewerProps = {
   edgeHighlight?: Record<string, HighlightKind> | null; // keyed "from->to"
   /** Focus mode: `model` is one annotation's part; show its name, boundary markers and an exit control. */
   focus?: FocusInfo | null;
+  /** Annotations of `model`: enables "Colour by part" (components/annotationColours.ts). */
+  annotations?: AnnotationSummary[];
+  /** The annotation selected in the list: emphasised while colouring by part. */
+  partsEmphasis?: string | null;
 };
 
 export type FocusInfo = {
@@ -145,6 +151,47 @@ function highlightNodeStyle(kind: HighlightKind | undefined): Record<string, str
     default:
       return { border: `3px solid ${c}`, boxShadow: `0 0 10px ${c}aa` };
   }
+}
+
+/** Colour-by-part fill, border and text of a node; entry-only nodes keep their fill and get rings. */
+function partNodeStyle(
+  id: string,
+  isFunctionNode: boolean,
+  colouring: PartColouring,
+): { style: Record<string, string | number>; fill: string; note: string } | null {
+  const np = colouring.nodes[id];
+  if (!np) return null;
+  const pc = np.owner ? colouring.byId[np.owner] : null;
+  if (pc) {
+    return {
+      style: {
+        background: pc.colour,
+        color: pc.text,
+        border: `2px ${isFunctionNode ? "dashed" : "solid"} ${pc.border}`,
+        boxShadow: "none",
+      },
+      fill: pc.colour,
+      note: `Part: ${pc.label}`,
+    };
+  }
+  const rings = np.enters.map((a) => colouring.byId[a]).filter(Boolean);
+  if (rings.length) {
+    const [first, ...rest] = rings;
+    return {
+      // one ring per part the node enters: the border, then outer rings (up to 3 more)
+      style: {
+        border: `3px solid ${first.colour}`,
+        boxShadow: rest.slice(0, 3).map((p, i) => `0 0 0 ${(i + 1) * 3}px ${p.colour}`).join(", ") || "none",
+      },
+      fill: "",
+      note: `Entry to: ${rings.map((p) => p.label).join(", ")}`,
+    };
+  }
+  return {
+    style: { background: NO_PART.fill, color: NO_PART.text, border: `2px solid ${NO_PART.border}`, boxShadow: "none" },
+    fill: NO_PART.fill,
+    note: "In no annotation",
+  };
 }
 
 // =============================================================================
@@ -516,6 +563,7 @@ function convertModelToFlow(
   edgeHighlight?: Record<string, HighlightKind> | null,
   fl?: FeatureLabels,
   focusMarkers?: Record<string, FocusMarker> | null,
+  colouring?: PartColouring | null,
 ): { nodes: Node[]; edges: Edge[] } {
   logInfo("Converting model to ReactFlow format", {
     nodeCount: model.nodes.length,
@@ -568,7 +616,9 @@ function convertModelToFlow(
     // Inputs: raw / display name, the codebook meaning as a compact second line, full key on hover
     const feat = !isFunctionNode ? fl?.forNode(node.id) : null;
     const hlLabel = nodeHighlight?.[node.id];
-    const fullTooltip = hlLabel ? `${tooltip}\n[${HIGHLIGHT_STYLE[hlLabel].label}]` : tooltip;
+    const part = colouring ? partNodeStyle(node.id, isFunctionNode, colouring) : null;
+    const partTooltip = part ? `${tooltip}\n${part.note}` : tooltip;
+    const fullTooltip = hlLabel ? `${partTooltip}\n[${HIGHLIGHT_STYLE[hlLabel].label}]` : partTooltip;
     const stubs = focusStubs(focusMarkers?.[node.id]);
     const labelNode: ReactNode =
       feat && feat.decoded && feat.label !== label ? (
@@ -608,6 +658,8 @@ function convertModelToFlow(
         };
 
     const hl = nodeHighlight?.[node.id];
+    // part colour is the fill; coverage/lineage/candidate highlights stay the outline
+    const fullStyle: Record<string, string | number | undefined> = { ...style, ...(part?.style ?? {}), ...highlightNodeStyle(hl) };
     return {
       id: node.id,
       type: "default",
@@ -619,8 +671,11 @@ function convertModelToFlow(
         nodeType: effectiveType,
         isFunctionNode,
         highlight: hl,
+        partFill: part?.fill || null,
+        restBorder: fullStyle.border,
+        restShadow: fullStyle.boxShadow ?? "none",
       },
-      style: { ...style, ...highlightNodeStyle(hl) },
+      style: fullStyle,
     };
   });
 
@@ -735,6 +790,30 @@ function convertModelToFlow(
       };
     }
 
+    if (colouring) {
+      // inside a part: the part's colour; between parts: muted grey (weight still sets the width)
+      const pid = colouring.edges[influenceKey];
+      const pc = pid ? colouring.byId[pid] : null;
+      const c = pc ? pc.colour : "#C4C8CF";
+      return {
+        id: edgeId,
+        source: conn.from,
+        target: conn.to,
+        type: "default",
+        animated: false,
+        style: {
+          stroke: c,
+          strokeWidth: inf ? 1 + inf.normalized_influence * 5 : strokeWidth,
+          opacity: pc ? 0.95 : 0.6,
+        },
+        markerEnd: { type: MarkerType.ArrowClosed, color: c, width: 15, height: 15 },
+        label: conn.weight.toFixed(2),
+        labelStyle: { fontSize: "10px", fontWeight: pc ? "bold" : "normal", fill: pc ? "#333" : "#6b7280" },
+        labelBgStyle: { fill: "#fff", fillOpacity: 0.8 },
+        data: { enabled: true, part: pid ?? null },
+      };
+    }
+
     if (inf) {
       edgeStrokeWidth = 1 + inf.normalized_influence * 5;
       const baseColor = inf.mean_contribution >= 0 ? "#3b82f6" : "#ef4444";
@@ -807,9 +886,32 @@ export function NetworkViewer({
   nodeHighlight,
   edgeHighlight,
   focus = null,
+  annotations,
+  partsEmphasis = null,
 }: NetworkViewerProps) {
   const featureLabels = useFeatureLabels();
   const focusMarkers = focus?.markers ?? null;
+
+  // Colour by part (?parts=1): node fill = the annotation that owns it
+  const [partsOn, setPartsOn] = useState<boolean>(getPartsMode);
+  const togglePart = useCallback(() => {
+    setPartsMode(!partsOn);
+    setPartsOn(!partsOn);
+  }, [partsOn]);
+  const hasParts = !!annotations && annotations.length > 0;
+  const colouring = useMemo(
+    () => (partsOn && hasParts ? computePartColouring(model, annotations!) : null),
+    [partsOn, hasParts, model, annotations],
+  );
+  // Emphasised part: legend hover, else a legend click, else the annotation selected in the list
+  const [legendHover, setLegendHover] = useState<string | null>(null);
+  const [legendPinned, setLegendPinned] = useState<string | null>(null);
+  const emphasisId = colouring ? legendHover ?? legendPinned ?? partsEmphasis : null;
+  const emphasis = useMemo(
+    () => (emphasisId && annotations ? emphasisNodes(emphasisId, annotations) : null),
+    [emphasisId, annotations],
+  );
+
   // Convert model to ReactFlow format with layer-based layout
   const { initialNodes, initialEdges } = useMemo(() => {
     logInfo("Building network from model");
@@ -817,7 +919,7 @@ export function NetworkViewer({
 
     // Convert model to ReactFlow nodes/edges
     const annotationNodeSet = new Set(annotationNodeIds);
-    const { nodes: flowNodes, edges: flowEdges } = convertModelToFlow(model, annotationNodeSet, edgeInfluence, nodeHighlight, edgeHighlight, featureLabels, focusMarkers);
+    const { nodes: flowNodes, edges: flowEdges } = convertModelToFlow(model, annotationNodeSet, edgeInfluence, nodeHighlight, edgeHighlight, featureLabels, focusMarkers, colouring);
 
     // Get input node IDs from metadata
     const inputNodeIds = new Set(model.metadata.input_nodes);
@@ -850,7 +952,7 @@ export function NetworkViewer({
     });
 
     return { initialNodes: layoutedNodes, initialEdges: layoutedEdges };
-  }, [model, annotationNodeIds, edgeInfluence, nodeHighlight, edgeHighlight, featureLabels, focusMarkers]);
+  }, [model, annotationNodeIds, edgeInfluence, nodeHighlight, edgeHighlight, featureLabels, focusMarkers, colouring]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -882,7 +984,7 @@ export function NetworkViewer({
     };
   }, [focusKey, initialNodes]);
 
-  // Update node selection styling
+  // Update node selection styling, and dim everything outside an emphasised part
   useEffect(() => {
     logDebug("Selection changed", { selectedCount: selectedNodes.size, selectedIds: Array.from(selectedNodes) });
 
@@ -890,7 +992,8 @@ export function NetworkViewer({
       nds.map((node) => {
         const isSelected = selectedNodes.has(node.id);
         const colors = NODE_COLORS[node.data.nodeType as string] || NODE_COLORS.hidden;
-        const hl = highlightNodeStyle(node.data.highlight as HighlightKind | undefined);
+        const dim = emphasis && !emphasis.has(node.id);
+        const ghost = node.data.highlight === "removed";
 
         return {
           ...node,
@@ -899,13 +1002,27 @@ export function NetworkViewer({
             ...node.style,
             border: isSelected
               ? `3px solid #FFD700`
-              : (hl.border as string) || `2px solid ${colors.border}`,
-            boxShadow: isSelected ? "0 0 10px rgba(255, 215, 0, 0.5)" : (hl.boxShadow as string) || "none",
+              : (node.data.restBorder as string) || `2px solid ${colors.border}`,
+            boxShadow: isSelected ? "0 0 10px rgba(255, 215, 0, 0.5)" : (node.data.restShadow as string) || "none",
+            opacity: dim ? 0.18 : ghost ? 0.35 : 1,
           },
         };
       })
     );
-  }, [selectedNodes, setNodes]);
+    const base = new Map(initialEdges.map((e) => [e.id, e]));
+    setEdges((eds) =>
+      eds.map((edge) => {
+        const dim = emphasis && !(emphasis.has(edge.source) && emphasis.has(edge.target));
+        const b = base.get(edge.id);
+        return {
+          ...edge,
+          style: { ...edge.style, opacity: dim ? 0.08 : b?.style?.opacity ?? 1 },
+          labelStyle: { ...b?.labelStyle, ...(dim ? { opacity: 0.15 } : {}) },
+          labelBgStyle: { ...b?.labelBgStyle, ...(dim ? { fillOpacity: 0 } : {}) },
+        };
+      })
+    );
+  }, [selectedNodes, emphasis, initialNodes, initialEdges, setNodes, setEdges]);
 
   // Handle selection changes from ReactFlow. React Flow re-reports an unchanged
   // (empty) selection when the node set is replaced (collapse, focus): pass on
@@ -965,9 +1082,19 @@ export function NetworkViewer({
 
   // MiniMap node color function
   const minimapNodeColor = useCallback((node: Node) => {
+    const partFill = node.data?.partFill as string | null | undefined;
+    if (partFill) return partFill;
     const nodeType = node.data?.nodeType as string;
     return NODE_COLORS[nodeType]?.background || NODE_COLORS.hidden.background;
   }, []);
+
+  // Legend clicks: toggle the emphasised part; leaving the mode clears it
+  useEffect(() => {
+    if (!colouring) {
+      setLegendHover(null);
+      setLegendPinned(null);
+    }
+  }, [colouring]);
 
   logDebug("Rendering NetworkViewer", {
     nodeCount: nodes.length,
@@ -997,6 +1124,15 @@ export function NetworkViewer({
           <span className="badge original">Original</span>
         ) : (
           <span className="badge modified">Modified</span>
+        )}
+        {hasParts && (
+          <label
+            className="parts-toggle"
+            title="Colour every node by the annotation (part) it belongs to; entry-only nodes get a ring per part they feed"
+          >
+            <input type="checkbox" checked={partsOn} onChange={togglePart} data-testid="parts-toggle" />
+            Colour by part
+          </label>
         )}
       </div>
       <div className="network-container">
@@ -1031,6 +1167,47 @@ export function NetworkViewer({
             pannable
           />
           <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
+          {colouring && (
+            <Panel position="top-right" className="parts-legend" data-testid="parts-legend">
+              <div className="parts-legend-title">
+                Parts
+                {legendPinned && (
+                  <button type="button" className="parts-legend-clear" onClick={() => setLegendPinned(null)}>
+                    clear
+                  </button>
+                )}
+              </div>
+              <ul onMouseLeave={() => setLegendHover(null)}>
+                {colouring.legend.map((p) => (
+                  <li key={p.id}>
+                    <button
+                      type="button"
+                      className={`parts-legend-row ${emphasisId === p.id ? "active" : ""}`}
+                      style={{ paddingLeft: 4 + p.depth * 14 }}
+                      aria-pressed={legendPinned === p.id}
+                      title={`${p.label} (${p.isLeaf ? "leaf" : "composition"}): hover or click to pick out its nodes`}
+                      onMouseEnter={() => setLegendHover(p.id)}
+                      onFocus={() => setLegendHover(p.id)}
+                      onBlur={() => setLegendHover(null)}
+                      onClick={() => setLegendPinned((cur) => (cur === p.id ? null : p.id))}
+                    >
+                      <span
+                        className="parts-swatch"
+                        style={{ background: p.colour, borderColor: p.border, borderRadius: p.isLeaf ? "50%" : "3px" }}
+                      />
+                      <span className="parts-legend-label">{p.label}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <div className="parts-legend-key">
+                <span><span className="parts-swatch ring" /> entry only (ring per part fed)</span>
+                <span>
+                  <span className="parts-swatch" style={{ background: NO_PART.fill, borderColor: NO_PART.border }} /> in no part
+                </span>
+              </div>
+            </Panel>
+          )}
           {focus && (
             <Panel position="top-left" className="focus-panel" data-testid="focus-panel">
               <div className="focus-panel-title">

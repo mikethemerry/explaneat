@@ -95,6 +95,7 @@ export function viewToUrl(view: UrlView): string {
       // the reference case of the evidence plots (components/referenceCase.ts) stays with the genome
       const kase = caseForUrl(view.genomeId);
       if (kase) params.set("case", kase);
+      if (getPartsMode()) params.set("parts", "1");
       const qs = params.toString();
       return `/genome/${view.genomeId}${qs ? `?${qs}` : ""}`;
     }
@@ -113,4 +114,37 @@ export function pushView(view: UrlView) {
 /** Replace current history entry (for initial load / redirects). */
 export function replaceView(view: UrlView) {
   window.history.replaceState(null, "", hrefFor(viewToUrl(view)));
+}
+
+// ── Colour by part (?parts=1, remembered per viewer) ─────────────────────
+
+const PARTS_KEY = "explaneat.colourByPart";
+let partsMode: boolean | null = null;
+
+/** Whether the graph colours nodes by annotation: ?parts=1/0 in the URL, else the viewer's last choice. */
+export function getPartsMode(): boolean {
+  if (partsMode === null) {
+    const p = new URLSearchParams(current().search).get("parts");
+    if (p === "1" || p === "0") partsMode = p === "1";
+    else {
+      try {
+        partsMode = window.localStorage.getItem(PARTS_KEY) === "1";
+      } catch {
+        partsMode = false;
+      }
+    }
+  }
+  return partsMode;
+}
+
+/** Turn colour by part on or off: remembered in localStorage and kept in the genome URL. */
+export function setPartsMode(on: boolean) {
+  partsMode = on;
+  try {
+    window.localStorage.setItem(PARTS_KEY, on ? "1" : "0");
+  } catch {
+    /* private window or blocked storage: the URL still carries it */
+  }
+  const view = parseUrl();
+  if (view.type === "genome") replaceView(view);
 }
