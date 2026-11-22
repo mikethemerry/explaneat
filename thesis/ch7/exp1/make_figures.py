@@ -527,18 +527,18 @@ def _shape_c_title(seed):
 
 
 NET_H = 2.25   # design choice: height (in) of the subnetwork row under a shape-C figure's panels
-PART_ROW_H = 1.75   # design choice: height (in) of the saddle figure's per-part response row (e)
+SADDLE_PAGE = (3.0, 2.6, 2.5)   # design choice: the full-page saddle figure's row heights (in): panels, network, parts
 
 
-def _shape_c_figure(plt, top_h, extra_h=0.0):
+def _shape_c_figure(plt, top_h, extra_h=0.0, net_h=NET_H):
     """A shape-C figure: the panels' row (a subfigure) above the subnetwork row (one axes); with ``extra_h``, a
     third row (a subfigure, returned last) under the subnetwork."""
     if not extra_h:
         fig = plt.figure(figsize=(W, top_h + NET_H), layout="constrained")
         sf_top, sf_net = fig.subfigures(2, 1, height_ratios=[top_h, NET_H], hspace=0.02)
         return fig, sf_top, sf_net.add_subplot(1, 1, 1)
-    fig = plt.figure(figsize=(W, top_h + NET_H + extra_h), layout="constrained")
-    sf_top, sf_net, sf_ext = fig.subfigures(3, 1, height_ratios=[top_h, NET_H, extra_h], hspace=0.02)
+    fig = plt.figure(figsize=(W, top_h + net_h + extra_h), layout="constrained")
+    sf_top, sf_net, sf_ext = fig.subfigures(3, 1, height_ratios=[top_h, net_h, extra_h], hspace=0.02)
     return fig, sf_top, sf_net.add_subplot(1, 1, 1), sf_ext
 
 
@@ -617,26 +617,27 @@ def shape_saddle(label, d, fid):
     plt = style()
     s = d["saddle"]
     h, p = np.array(s["heart_rate"]), np.array(s["sbp"])
+    net = label == SHAPE_C
+    show_part = s["part"] is not None and not net   # Mike, 22 Nov 2026: the shape-C figure drops the "moves most" panel
     panels = [("(a) Model score", np.array(s["score"]))]
-    if s["part"] is not None:
+    if show_part:
         panels.append(("(b) Part that moves most", np.array(s["part"]["contribution"])))
-    tl = "(c)" if s["part"] is not None else "(b)"
+    tl = "(c)" if show_part else "(b)"
     absent = d["task"] == "u"
     panels.append((f"{tl} True saddle term", np.array(s["truth"])))
     Zs = [Z - Z.mean() for _, Z in panels]
     v = max(float(np.max(np.abs(Z))) for Z in Zs) or 1.0
     n = len(panels)
-    net = label == SHAPE_C
-    top_h = 2.35 if n == 3 else 2.6
+    top_h = SADDLE_PAGE[0] if net else (2.35 if n == 3 else 2.6)
     if net:
-        fig, sf, ax_net, sf_ext = _shape_c_figure(plt, top_h, PART_ROW_H)
+        fig, sf, ax_net, sf_ext = _shape_c_figure(plt, top_h, SADDLE_PAGE[2], net_h=SADDLE_PAGE[1])
         axes = sf.subplots(1, n, sharey=True)
         layer, seed = shape_c_network(d)
         sweep = figlib.jload(SHAPE_C_SWEEP)["saddle"]   # every part's range on this grid (shape_plots.py)
         ranges = {q: float(r["range"]) for q, r in sweep["parts"].items()}   # panel (b)'s measure
         assert all(np.isclose(np.ptp(s["parts"][q]["contribution"]), ranges[q], rtol=0, atol=1e-12) for q in ranges)
         carry, cand = term_parts(layer, "saddle", ranges)
-        # (e): each carrying part's contribution on the grid, on the scale of (a)-(c)
+        # (d): each carrying part's contribution on the grid, on the scale of (a)-(b)
         Zp = {q["id"]: np.array(s["parts"][q["id"]]["contribution"]) for q in carry}
         Zp = {q: Z - Z.mean() for q, Z in Zp.items()}
         v = max([v] + [float(np.max(np.abs(Z))) for Z in Zp.values()])
@@ -657,8 +658,8 @@ def shape_saddle(label, d, fid):
         assert sweep["shown_part"] == s["part"]["id"], (sweep["shown_part"], s["part"]["id"])
         assert s["part"]["id"] in [q["id"] for q in carry], (s["part"]["id"], [q["id"] for q in carry])   # (b)'s part
         pdata["subnetwork"] = dict(rule=dict(term_inputs=TERM_INPUTS["saddle"], share=TERM_SHARE, candidates=cand),
-                                   **draw_focus(ax_net, layer, carry, "d", "The parts that carry the saddle term"))
-        order = pdata["subnetwork"]["box_order"]   # (e) left to right as the boxes of (d)
+                                   **draw_focus(ax_net, layer, carry, "c", "The parts that carry the saddle term"))
+        order = pdata["subnetwork"]["box_order"]   # (d) left to right as the boxes of (c)
         axe = sf_ext.subplots(1, len(order), sharey=True)
         axe = np.atleast_1d(axe)
         names = {q["id"]: q["name"] for q in carry}
@@ -666,25 +667,26 @@ def shape_saddle(label, d, fid):
             dh, dp = (h[1] - h[0]) / 2, (p[1] - p[0]) / 2
             ax.imshow(Zp[q], origin="lower", aspect="auto", cmap="RdBu_r", vmin=-v, vmax=v, interpolation="nearest",
                       extent=(h[0] - dh, h[-1] + dh, p[0] - dp, p[-1] + dp))
-            ax.set_title(("(e) " if k == 0 else "") + _part_label(names[q]), loc="left", fontsize=7, style="italic")
-            ax.set_xlabel("heart rate (beats/min)", fontsize=7)
-            ax.tick_params(labelsize=6)
-        axe[0].set_ylabel("systolic BP (mmHg)", fontsize=7)
+            ax.set_title(("(d) " if k == 0 else "") + _part_label(names[q]), loc="left", fontsize=8, style="italic")
+            ax.set_xlabel("heart rate (beats/min)")
+        axe[0].set_ylabel("systolic BP (mmHg)")
         pdata["part_responses"] = {names[q]: Zp[q] for q in order}
         pdata["vmax"] = v
     figlib.save(fig, fid, pdata=pdata)
-    keys = (("(a--c) " if net else "") + "Colour: the logit with its mean over the grid removed, one scale for all panels (red above the mean, "
+    keys = (("(a, b, d) " if net else "") + "Colour: the logit with its mean over the grid removed, one scale for all panels (red above the mean, "
             "blue below); every other input at the typical case. "
             + (f"(b) The explanation part whose contribution moves most on the grid "
-               f"(\\emph{{{_part_label(s['part']['name'])}}}). " if s["part"] is not None else "")
+               f"(\\emph{{{_part_label(s['part']['name'])}}}). " if show_part else "")
             + (f"This dataset has no saddle term; {tl} shows it for comparison. " if absent else "")
             + f"True term: $-{sd.BETA_S:g}\\,z_h z_p$ (standardised heart rate and systolic BP)."
-            + (" (d) The network's parts that carry the saddle term: " + NET_KEYS if net else "")
-            + (" (e) Each part of (d), left to right: its contribution to the logit on the same grid and colour "
-               "scale." if net else ""))
+            + (" (c) The network's parts that carry the saddle term: " + NET_KEYS if net else "")
+            + (" (d) Each part of (c), left to right: its contribution to the logit on the same grid." if net else ""))
     title = (f"{_shape_c_title(seed)}: the heart-rate $\\times$ systolic-pressure saddle term" if net
              else _shape_title(label, d) + ": heart rate $\\times$ systolic BP")
-    figlib.write_float(fid, title, keys, GEN)
+    if net:   # a full page (Mike, 22 Nov 2026)
+        figlib.write_float(fid, title, keys, GEN, placement="p", height=XOR_FLOAT_H)
+    else:
+        figlib.write_float(fid, title, keys, GEN)
 
 
 def shape_figures(only):
