@@ -612,3 +612,16 @@ experiments/ushape_saddle/launch_sig.sh                        # 5 sigmoid runs 
 uv run python experiments/ushape_saddle/score_gens.py --prefix shape-C-sig-s --gens 100 200 300 \
     --out sig_gens.json --log-name "both-sig-s{seed}" --plots shape-C-sig
 ```
+
+## 9. Term recovery against the true signal (22 Nov 2026, U + saddle only)
+
+`term_recovery.py` decomposes each model's logit by functional ANOVA over the 1,500 training rows (main
+effects by partial dependence; the heart-rate x systolic-BP interaction purified) and compares the sodium main
+effect and the heart-rate x SBP interaction with the same components of the true logit: recovered share
+(1 - E[(model - truth)^2] / Var(truth)), size ratio (slope of model on truth), and the share of the model's
+variance outside its main effects and that interaction. Reference models: the true logit (a check, 1.0),
+logistic regression on the true basis (the ceiling for 1,500 rows), and the benchmark comparators with their
+cross-validated settings. Output `results/term_recovery.json` (byte-identical on a rerun):
+
+    PGOPTIONS='-c default_transaction_read_only=on' DATABASE_URL=postgresql://localhost/explaneat_dev \
+    OMP_NUM_THREADS=1 PYTHONHASHSEED=0 .claude/worktrees/conv-neat/.venv/bin/python experiments/ushape_saddle/term_recovery.py

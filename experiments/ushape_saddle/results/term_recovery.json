@@ -1,0 +1,457 @@
+{
+ "method": "(functional ANOVA under the training rows' empirical distribution; Hooker 2004, Friedman & Popescu 2008):\nevery model's logit F is decomposed the same way as the true logit:\n  * main effect of input k at value x: mean over the 1,500 training rows j of F(x_k = x, rest of row j), centred\n    over the training rows (partial dependence);\n  * the heart rate x systolic BP interaction, purified: g_hs(h, s) - g_h(h) - g_s(s), centred, at each training\n    row's (h, s).\nThe true terms are the same components of the true logit (experiments/ushape_saddle/data.py, task \"both\"):\nthe sodium main effect (the U) and the heart-rate x SBP interaction (the saddle). Per model and term, on the\ntraining rows: recovered share 1 - E[(model - truth)^2] / Var(truth); size ratio, the least-squares slope of model\non truth (1 = the right size); correlation; and for the U the minimum of the sodium main effect. Extra structure:\nthe share of the model's logit variance outside its main effects and the heart-rate x SBP interaction (the truth\nhas none beyond the artefact of correlated inputs, reported for the truth itself).",
+ "models": {
+  "ebm": {
+   "backbone": {
+    "age": {
+     "correlation": 0.9902393149403108,
+     "recovered_share": 0.9741154075670982,
+     "rmse_logit": 0.10936086957300674,
+     "size_ratio": 0.9009935643661088,
+     "truth_sd": 0.6797375928880093
+    },
+    "bmi": {
+     "correlation": 0.9362511183336157,
+     "recovered_share": 0.8140103178262499,
+     "rmse_logit": 0.12790241724465398,
+     "size_ratio": 0.6423988421476506,
+     "truth_sd": 0.2965748546320136
+    },
+    "creatinine": {
+     "correlation": 0.9462356784624797,
+     "recovered_share": 0.8868482316201292,
+     "rmse_logit": 0.16825176116785223,
+     "size_ratio": 0.9826709953932377,
+     "truth_sd": 0.5001830218932192
+    },
+    "diabetes": {
+     "correlation": 0.9999999999999993,
+     "recovered_share": 0.6359737607128404,
+     "rmse_logit": 0.1634728420281619,
+     "size_ratio": 0.3966541296344526,
+     "truth_sd": 0.27094383181759274
+    },
+    "male": {
+     "correlation": 0.9999999999999989,
+     "recovered_share": 0.6289834291562053,
+     "rmse_logit": 0.09120208606028174,
+     "size_ratio": 0.39088870405828524,
+     "truth_sd": 0.1497297565616134
+    },
+    "smoker": {
+     "correlation": 0.9999999999999982,
+     "recovered_share": 0.6752955522737346,
+     "rmse_logit": 0.19413331472465137,
+     "size_ratio": 0.43017156290137126,
+     "truth_sd": 0.34068730531089647
+    }
+   },
+   "extra_structure_share": 0.009030594205611715,
+   "logit_sd": 2.083116526193684,
+   "saddle": {
+    "correlation": 0.9422052066668436,
+    "recovered_share": 0.8510150317371292,
+    "rmse_logit": 0.5728859462395819,
+    "size_ratio": 0.7071625279677274,
+    "truth_sd": 1.4842154295232928
+   },
+   "u": {
+    "correlation": 0.9658731618988344,
+    "minimum_at": 138.0,
+    "recovered_share": 0.8820272789576288,
+    "rmse_logit": 0.6132977135867881,
+    "size_ratio": 0.715034971414576,
+    "truth_sd": 1.7855850756824778
+   }
+  },
+  "gb": {
+   "backbone": {
+    "age": {
+     "correlation": 0.980845730338255,
+     "recovered_share": 0.9512792221701303,
+     "rmse_logit": 0.15003700830268696,
+     "size_ratio": 0.8602244292578981,
+     "truth_sd": 0.6797375928880093
+    },
+    "bmi": {
+     "correlation": 0.8840838899335719,
+     "recovered_share": 0.7478284529382915,
+     "rmse_logit": 0.14893006107802603,
+     "size_ratio": 0.6191255035817038,
+     "truth_sd": 0.2965748546320136
+    },
+    "creatinine": {
+     "correlation": 0.9077133861700872,
+     "recovered_share": 0.8144426798627584,
+     "rmse_logit": 0.215460663003618,
+     "size_ratio": 0.9124207930186761,
+     "truth_sd": 0.5001830218932192
+    },
+    "diabetes": {
+     "correlation": 0.9999999999999996,
+     "recovered_share": 0.7518157300273509,
+     "rmse_logit": 0.1349790585308823,
+     "size_ratio": 0.5018190389299793,
+     "truth_sd": 0.27094383181759274
+    },
+    "male": {
+     "correlation": 1.0,
+     "recovered_share": 0.7109192761161803,
+     "rmse_logit": 0.08050404181624271,
+     "size_ratio": 0.46233772320924416,
+     "truth_sd": 0.1497297565616134
+    },
+    "smoker": {
+     "correlation": 0.9999999999999993,
+     "recovered_share": 0.8420794417740559,
+     "rmse_logit": 0.13538647674298776,
+     "size_ratio": 0.6026078030132643,
+     "truth_sd": 0.34068730531089647
+    }
+   },
+   "extra_structure_share": 0.029423086521516064,
+   "logit_sd": 1.878659395205377,
+   "saddle": {
+    "correlation": 0.8797014803219083,
+    "recovered_share": 0.6570538329897,
+    "rmse_logit": 0.8691803885822615,
+    "size_ratio": 0.47320093690402254,
+    "truth_sd": 1.4842154295232928
+   },
+   "u": {
+    "correlation": 0.9506376549639408,
+    "minimum_at": 138.0,
+    "recovered_share": 0.8388571549287434,
+    "rmse_logit": 0.7167803003793747,
+    "size_ratio": 0.6616168161740787,
+    "truth_sd": 1.7855850756824778
+   }
+  },
+  "lr_l2": {
+   "backbone": {
+    "age": {
+     "correlation": 1.0,
+     "recovered_share": 0.7554054530172489,
+     "rmse_logit": 0.3361744279578433,
+     "size_ratio": 0.5054349921569955,
+     "truth_sd": 0.6797375928880093
+    },
+    "bmi": {
+     "correlation": 0.9999999999999998,
+     "recovered_share": 0.6726594070327283,
+     "rmse_logit": 0.16968140774200177,
+     "size_ratio": 0.4278631344098933,
+     "truth_sd": 0.2965748546320136
+    },
+    "creatinine": {
+     "correlation": 0.9794117315909643,
+     "recovered_share": 0.7775143136270531,
+     "rmse_logit": 0.23592827044967898,
+     "size_ratio": 0.5417225836900633,
+     "truth_sd": 0.5001830218932192
+    },
+    "diabetes": {
+     "correlation": 0.9999999999999996,
+     "recovered_share": 0.7646838145546704,
+     "rmse_logit": 0.1314332262048128,
+     "size_ratio": 0.5149060034948584,
+     "truth_sd": 0.27094383181759274
+    },
+    "male": {
+     "correlation": 0.9999999999999963,
+     "recovered_share": 0.7633305008303988,
+     "rmse_logit": 0.07284156438382752,
+     "size_ratio": 0.5135131048326148,
+     "truth_sd": 0.1497297565616134
+    },
+    "smoker": {
+     "correlation": 0.9999999999999999,
+     "recovered_share": 0.7177298321267513,
+     "rmse_logit": 0.1810041123330776,
+     "size_ratio": 0.4687089612338182,
+     "truth_sd": 0.34068730531089647
+    }
+   },
+   "extra_structure_share": 5.541730240362352e-32,
+   "logit_sd": 0.6207192159068806,
+   "saddle": {
+    "correlation": 0.0011566283922251977,
+    "recovered_share": 0.0,
+    "rmse_logit": 1.4842154295232928,
+    "size_ratio": 4.7187027452197795e-20,
+    "truth_sd": 1.4842154295232928
+   },
+   "u": {
+    "correlation": 0.48950657822741445,
+    "minimum_at": 129.0,
+    "recovered_share": 0.12396426837357699,
+    "rmse_logit": 1.6712501435742648,
+    "size_ratio": 0.0731467213465998,
+    "truth_sd": 1.7855850756824778
+   }
+  },
+  "mlp": {
+   "backbone": {
+    "age": {
+     "correlation": 0.9994718915829789,
+     "recovered_share": 0.9985714220896578,
+     "rmse_logit": 0.02569172439260311,
+     "size_ratio": 1.0182377524868063,
+     "truth_sd": 0.6797375928880093
+    },
+    "bmi": {
+     "correlation": 0.9999915792189419,
+     "recovered_share": 0.9314397690501517,
+     "rmse_logit": 0.07765518561974906,
+     "size_ratio": 0.7381774383922328,
+     "truth_sd": 0.2965748546320136
+    },
+    "creatinine": {
+     "correlation": 0.9854265886952063,
+     "recovered_share": 0.9684360544939874,
+     "rmse_logit": 0.0888637402254993,
+     "size_ratio": 1.0215969766814836,
+     "truth_sd": 0.5001830218932192
+    },
+    "diabetes": {
+     "correlation": 1.0,
+     "recovered_share": 0.9437147637863861,
+     "rmse_logit": 0.06428009575423543,
+     "size_ratio": 0.7627549026563164,
+     "truth_sd": 0.27094383181759274
+    },
+    "male": {
+     "correlation": 0.9999999999999964,
+     "recovered_share": 0.91219408696515,
+     "rmse_logit": 0.04436801510467085,
+     "size_ratio": 0.7036793746043808,
+     "truth_sd": 0.1497297565616134
+    },
+    "smoker": {
+     "correlation": 0.9999999999999976,
+     "recovered_share": 0.9964539672017428,
+     "rmse_logit": 0.02028744359111979,
+     "size_ratio": 0.9404514248847436,
+     "truth_sd": 0.34068730531089647
+    }
+   },
+   "extra_structure_share": 0.0575590184867568,
+   "logit_sd": 2.0764058559107132,
+   "saddle": {
+    "correlation": 0.984990930863398,
+    "recovered_share": 0.9200413399576038,
+    "rmse_logit": 0.4196910383778221,
+    "size_ratio": 0.7495916059992928,
+    "truth_sd": 1.4842154295232928
+   },
+   "u": {
+    "correlation": 0.9831763529610661,
+    "minimum_at": 138.0,
+    "recovered_share": 0.8629322527970231,
+    "rmse_logit": 0.6610711201697183,
+    "size_ratio": 0.650023204651692,
+    "truth_sd": 1.7855850756824778
+   }
+  },
+  "oracle_form": {
+   "backbone": {
+    "age": {
+     "correlation": 1.0,
+     "recovered_share": 0.9488622608813804,
+     "rmse_logit": 0.15371351396970084,
+     "size_ratio": 1.2261365497185708,
+     "truth_sd": 0.6797375928880093
+    },
+    "bmi": {
+     "correlation": 0.9999999999999998,
+     "recovered_share": 0.9683790428760576,
+     "rmse_logit": 0.05273777850211598,
+     "size_ratio": 0.8221771749073183,
+     "truth_sd": 0.2965748546320136
+    },
+    "creatinine": {
+     "correlation": 1.0,
+     "recovered_share": 0.9332534670316702,
+     "rmse_logit": 0.12922403628861637,
+     "size_ratio": 1.2583535038824318,
+     "truth_sd": 0.5001830218932192
+    },
+    "diabetes": {
+     "correlation": 1.0,
+     "recovered_share": 0.9769779601542,
+     "rmse_logit": 0.041110349517153054,
+     "size_ratio": 0.8482698452983066,
+     "truth_sd": 0.27094383181759274
+    },
+    "male": {
+     "correlation": 0.9999999999999991,
+     "recovered_share": 0.9999424283140148,
+     "rmse_logit": 0.0011360896215092038,
+     "size_ratio": 1.0075876008055997,
+     "truth_sd": 0.1497297565616134
+    },
+    "smoker": {
+     "correlation": 1.0,
+     "recovered_share": 0.995141964644912,
+     "rmse_logit": 0.02374577163009658,
+     "size_ratio": 0.9303003920019066,
+     "truth_sd": 0.34068730531089647
+    }
+   },
+   "extra_structure_share": 3.2087252338645493e-32,
+   "logit_sd": 2.918293468370816,
+   "saddle": {
+    "correlation": 0.9999999999999999,
+    "recovered_share": 0.9449339821846204,
+    "rmse_logit": 0.3482882134274224,
+    "size_ratio": 1.2346614962352782,
+    "truth_sd": 1.4842154295232928
+   },
+   "u": {
+    "correlation": 1.0,
+    "minimum_at": 137.0,
+    "recovered_share": 0.9986927553397075,
+    "rmse_logit": 0.06455932568993229,
+    "size_ratio": 1.0361558385367087,
+    "truth_sd": 1.7855850756824778
+   }
+  },
+  "propneat": {
+   "backbone": {
+    "age": {
+     "correlation": 0.9978284133915268,
+     "recovered_share": 0.9532944502328711,
+     "rmse_logit": 0.14690126428075748,
+     "size_ratio": 1.2010472395225755,
+     "truth_sd": 0.6797375928880093
+    },
+    "bmi": {
+     "correlation": 1.0,
+     "recovered_share": 0.9489940736669916,
+     "rmse_logit": 0.06697992329620135,
+     "size_ratio": 0.7741550834466083,
+     "truth_sd": 0.2965748546320136
+    },
+    "creatinine": {
+     "correlation": 0.9794117315909638,
+     "recovered_share": 0.9108930044973174,
+     "rmse_logit": 0.14930860789487277,
+     "size_ratio": 1.1746162506551543,
+     "truth_sd": 0.5001830218932192
+    },
+    "diabetes": {
+     "correlation": 1.0,
+     "recovered_share": 0.9988871750054259,
+     "rmse_logit": 0.009038423868887724,
+     "size_ratio": 0.9666409683207974,
+     "truth_sd": 0.27094383181759274
+    },
+    "male": {
+     "correlation": null,
+     "recovered_share": 0.0,
+     "rmse_logit": 0.1497297565616134,
+     "size_ratio": 0.0,
+     "truth_sd": 0.1497297565616134
+    },
+    "smoker": {
+     "correlation": 1.0,
+     "recovered_share": 0.9977821534480117,
+     "rmse_logit": 0.016044334163209363,
+     "size_ratio": 1.047094018218756,
+     "truth_sd": 0.34068730531089647
+    }
+   },
+   "extra_structure_share": 0.016399759425951038,
+   "logit_sd": 2.619703574741764,
+   "saddle": {
+    "correlation": 0.9497865684440674,
+    "recovered_share": 0.890583104613081,
+    "rmse_logit": 0.49095211583405185,
+    "size_ratio": 1.0039983520765057,
+    "truth_sd": 1.4842154295232928
+   },
+   "u": {
+    "correlation": 0.9627813022305576,
+    "minimum_at": 138.0,
+    "recovered_share": 0.9174870301155329,
+    "rmse_logit": 0.5129105791668616,
+    "size_ratio": 0.8333013011732103,
+    "truth_sd": 1.7855850756824778
+   }
+  },
+  "truth": {
+   "backbone": {
+    "age": {
+     "correlation": 1.0,
+     "recovered_share": 1.0,
+     "rmse_logit": 0.0,
+     "size_ratio": 1.0,
+     "truth_sd": 0.6797375928880093
+    },
+    "bmi": {
+     "correlation": 1.0,
+     "recovered_share": 1.0,
+     "rmse_logit": 0.0,
+     "size_ratio": 1.0,
+     "truth_sd": 0.2965748546320136
+    },
+    "creatinine": {
+     "correlation": 1.0,
+     "recovered_share": 1.0,
+     "rmse_logit": 0.0,
+     "size_ratio": 0.9999999999999996,
+     "truth_sd": 0.5001830218932192
+    },
+    "diabetes": {
+     "correlation": 0.9999999999999998,
+     "recovered_share": 1.0,
+     "rmse_logit": 0.0,
+     "size_ratio": 0.9999999999999987,
+     "truth_sd": 0.27094383181759274
+    },
+    "male": {
+     "correlation": 1.0,
+     "recovered_share": 1.0,
+     "rmse_logit": 0.0,
+     "size_ratio": 1.0000000000000004,
+     "truth_sd": 0.1497297565616134
+    },
+    "smoker": {
+     "correlation": 1.0,
+     "recovered_share": 1.0,
+     "rmse_logit": 0.0,
+     "size_ratio": 1.0000000000000004,
+     "truth_sd": 0.34068730531089647
+    }
+   },
+   "extra_structure_share": 3.012618506758677e-32,
+   "logit_sd": 2.590806877682991,
+   "saddle": {
+    "correlation": 0.9999999999999999,
+    "recovered_share": 1.0,
+    "rmse_logit": 0.0,
+    "size_ratio": 0.9999999999999998,
+    "truth_sd": 1.4842154295232928
+   },
+   "u": {
+    "correlation": 1.0,
+    "minimum_at": 137.0,
+    "recovered_share": 1.0,
+    "rmse_logit": 0.0,
+    "size_ratio": 0.9999999999999997,
+    "truth_sd": 1.7855850756824778
+   }
+  }
+ },
+ "n_train": 1500,
+ "oracle_form_coef": {
+  "(zn+0.5)^2": 1.0361558385367087,
+  "diabetes": 0.5089619071789836,
+  "male": 0.30227628024168,
+  "smoker": 0.7442403136015244,
+  "za": 0.8582955848029994,
+  "zb": 0.24665315247219555,
+  "zc": 0.629176751941216,
+  "zh*zp": -1.8519922443529178
+ }
+}
