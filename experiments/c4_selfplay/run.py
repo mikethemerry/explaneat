@@ -1,0 +1,366 @@
+"""Connect-4 self-play round loop (value-only, pure zero): self-play -> replay buffer ->
+a continuous PropNEAT population trained on the buffer -> its champion plays the next round.
+
+Round 0's player is ``ConstValue(0.5)`` + MCTS. The population is created once (from round
+0's buffer) and continues across rounds: each round replaces ``pop.xs``/``pop.ys`` with the
+current buffer, resets ``pop.best_genome`` and runs ``--gens`` generations of backprop
+(``--epochs`` full-batch Adadelta epochs each, BCE on the soft labels) + ``neg_bce_fitness``
++ reproduction. The round's champion is the best-fitness genome of that round (fitness is not
+comparable across rounds: the buffer changes). Generation numbers run on across rounds.
+
+    PYTHONHASHSEED=0 uv run python experiments/c4_selfplay/run.py --name s0 --seed 0 \
+        --rounds 20 --games 200 --sims 100 --gens 5 --epochs 20 --buffer 4
+
+Outputs (``<run_dir>`` = ``$EXPLANEAT_HOME/c4_selfplay_runs/<name>``, default ``~/.explaneat``):
+  <run_dir>/genomes_r<round:03d>.pkl.gz  {generation: {genome_key: genome}} for every
+                                         generation of the round (trained, evaluated genomes)
+  <run_dir>/champions.pkl.gz             {round: champion genome}
+  <run_dir>/parents.csv.gz               pop.ancestry_rows() (whole run so far)
+  <run_dir>/ckpt.pkl.gz                  checkpoint at the end of the last finished round
+  <results>/<name>/rounds.csv            one row per round
+  <results>/<name>/meta.json             args, commit, config text, versions, start time
+  <results>/<name>/config.ini            the NEAT config used (copy of configs/selfplay.ini)
+
+A run resumes from its checkpoint unless ``--fresh``; the other arguments must match
+(``--rounds`` may grow). A resumed run gives the same results as an uninterrupted one.
+"""
+from __future__ import annotations
+
+import os
+
+for _v in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS", "VECLIB_MAXIMUM_THREADS"):
+    os.environ.setdefault(_v, "1")
+
+import sys  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+HERE = Path(__file__).resolve().parent
+REPO = HERE.parents[1]
+sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(REPO))
+
+import netfn  # noqa: E402  (first: forces EXPLANEAT_DEVICE=cpu)
+
+import argparse  # noqa: E402
+import copy  # noqa: E402
+import csv  # noqa: E402
+import gzip  # noqa: E402
+import json  # noqa: E402
+import logging  # noqa: E402
+import pickle  # noqa: E402
+import platform  # noqa: E402
+import random  # noqa: E402
+import shutil  # noqa: E402
+import subprocess  # noqa: E402
+import time  # noqa: E402
+from datetime import datetime, timezone  # noqa: E402
+from itertools import count  # noqa: E402
+
+import numpy as np  # noqa: E402
+import torch  # noqa: E402
+from neat.reporting import BaseReporter  # noqa: E402
+
+import selfplay as SP  # noqa: E402
+from explaneat.core.backproppop import BackpropPopulation  # noqa: E402
+from explaneat.core.errors import GenomeNotValidError  # noqa: E402
+from fitness import neg_bce_fitness  # noqa: E402
+
+TORCH_THREADS = 1  # the nets are tiny
+DEFAULT_RESULTS = HERE / "results"
+FIELDS = ["round", "gen_start", "gen_end", "buffer_raw", "buffer_unique", "champion_key",
+          "champion_fitness", "champion_nodes", "champion_conns", "selfplay_s", "train_s",
+          "games", "first_win_share", "draw_share", "mean_len"]
+WALL_FIELDS = ("selfplay_s", "train_s")
+# arguments that must match between a checkpoint and the resuming call
+RUN_ARGS = ("seed", "games", "sims", "gens", "epochs", "buffer", "temp_moves", "dirichlet")
+
+
+def runs_root() -> Path:
+    home = os.environ.get("EXPLANEAT_HOME")
+    return (Path(home) if home else Path.home() / ".explaneat") / "c4_selfplay_runs"
+
+
+def seed_everything(seed: int) -> None:
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.set_num_threads(TORCH_THREADS)
+    torch.use_deterministic_algorithms(True)
+
+
+def git_state():
+    commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip()
+    status = subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"],
+                                     cwd=REPO, text=True).splitlines()
+    return commit, any(line.strip() and not line.rstrip().endswith(".pyc") for line in status)
+
+
+def dump(obj, path: Path) -> int:
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    with gzip.open(tmp, "wb", compresslevel=6) as f:
+        pickle.dump(obj, f, protocol=pickle.HIGHEST_PROTOCOL)
+    os.replace(tmp, path)
+    return path.stat().st_size
+
+
+def load(path: Path):
+    with gzip.open(path, "rb") as f:
+        return pickle.load(f)
+
+
+def parse_dirichlet(s):
+    if s is None:
+        return None
+    a, e = s.split(",")
+    return float(a), float(e)
+
+
+def genome_size(g):
+    return len(g.nodes), sum(1 for c in g.connections.values() if c.enabled)
+
+
+class GenerationRecorder(BaseReporter):
+    """Keeps a deep copy of every generation's trained, evaluated genomes for the round, and
+    logs the generation's best fitness."""
+
+    def __init__(self, pop):
+        self.pop = pop
+        self.round = None
+        self.generations = {}
+
+    def post_evaluate(self, config, population, species, best):
+        gen = self.pop.generation
+        self.generations[gen] = {k: copy.deepcopy(g) for k, g in population.items()}
+        fits = [g.fitness for g in population.values()]
+        logging.info("round %d gen %d  best %.5f (key %d)  mean %.5f  species %d", self.round, gen,
+                     best.fitness, best.key, float(np.mean(fits)), len(species.species))
+
+
+def set_training_data(pop, X, y):
+    pop.xs = torch.tensor(X, dtype=torch.float64).to(pop.device)
+    pop.ys = torch.tensor(y, dtype=torch.float64).reshape(-1, 1).to(pop.device)
+
+
+def pick_champion(pop, generations, config):
+    """The round's best genome; if NeuralNeat rejects it, the best valid genome of the round."""
+    champ = copy.deepcopy(pop.best_genome)
+    try:
+        netfn.ValueFn(champ, config)
+        return champ, False
+    except GenomeNotValidError:
+        pass
+    cands = sorted((g for pg in generations.values() for g in pg.values()),
+                   key=lambda g: g.fitness, reverse=True)
+    for g in cands:
+        try:
+            netfn.ValueFn(g, config)
+        except GenomeNotValidError:
+            continue
+        logging.warning("champion %d is invalid; using best valid genome %d (fitness %.5f)",
+                        champ.key, g.key, g.fitness)
+        return copy.deepcopy(g), True
+    raise RuntimeError("no valid genome in this round")
+
+
+def checkpoint_state(pop, config):
+    """Population state, following experiments/c4_capacity/run_seed.py's resume code, plus the
+    genome config's global node indexer (neat-python re-derives it from the first genome it
+    mutates when it is None, which would differ after a resume)."""
+    rep = pop.reproduction
+    nxt = next(rep.genome_indexer)
+    rep.genome_indexer = count(nxt)
+    sp = pop.species
+    sp_next = next(sp.indexer)
+    sp.indexer = count(sp_next)
+    gc = config.genome_config
+    node_next = None
+    if gc.node_indexer is not None:
+        node_next = next(gc.node_indexer)
+        gc.node_indexer = count(node_next)
+    reporters, indexer = sp.reporters, sp.indexer
+    sp.reporters = sp.indexer = None  # reporters would drag the run along; counts don't pickle in 3.14
+    try:
+        state = copy.deepcopy(dict(population=pop.population, species=sp, generation=pop.generation,
+                                   genome_indexer_next=nxt, species_indexer_next=sp_next,
+                                   node_indexer_next=node_next, ancestors=rep.ancestors,
+                                   parent_log=pop.parent_log))
+    finally:
+        sp.reporters, sp.indexer = reporters, indexer
+    return state
+
+
+def restore_population(st, config, X, y):
+    if st["node_indexer_next"] is not None:
+        config.genome_config.node_indexer = count(st["node_indexer_next"])
+    pop = BackpropPopulation(config, X, y, initial_state=(st["population"], st["species"], st["generation"]),
+                             mask_phantom=True, skip_invalid_genomes=True)
+    pop.reproduction.genome_indexer = count(st["genome_indexer_next"])
+    pop.reproduction.ancestors = st["ancestors"]
+    pop.species.reporters = pop.reporters
+    pop.species.indexer = count(st["species_indexer_next"])
+    pop.parent_log = st["parent_log"]
+    return pop
+
+
+def write_parents(pop, path):
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    with gzip.open(tmp, "wt", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["generation", "genome_key", "parent1_key", "parent2_key", "is_elite_copy"])
+        for r in pop.ancestry_rows():
+            w.writerow([r[0], r[1], "" if r[2] is None else r[2], "" if r[3] is None else r[3], int(bool(r[4]))])
+    os.replace(tmp, path)
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--name", required=True)
+    ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--rounds", type=int, required=True)
+    ap.add_argument("--games", type=int, required=True)
+    ap.add_argument("--sims", type=int, required=True)
+    ap.add_argument("--gens", type=int, required=True)
+    ap.add_argument("--epochs", type=int, required=True)
+    ap.add_argument("--buffer", type=int, required=True, help="replay buffer size in rounds")
+    ap.add_argument("--temp-moves", type=int, default=8)
+    ap.add_argument("--dirichlet", default=None, help="ALPHA,EPS root noise (default none)")
+    ap.add_argument("--results-dir", default=str(DEFAULT_RESULTS))
+    ap.add_argument("--fresh", action="store_true")
+    args = ap.parse_args(argv)
+    if os.environ.get("PYTHONHASHSEED") != "0":
+        sys.exit("Set PYTHONHASHSEED=0 for reproducibility")
+    dirichlet = parse_dirichlet(args.dirichlet)
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s",
+                        handlers=[logging.StreamHandler(sys.stdout)])
+    for noisy in ("experimenter.backproppop", "experimenter.evaluators", "experimenter.methodTimer"):
+        logging.getLogger(noisy).setLevel(logging.WARNING)
+
+    name = args.name
+    run_dir = runs_root() / name
+    run_dir.mkdir(parents=True, exist_ok=True)
+    res_dir = Path(args.results_dir) / name
+    res_dir.mkdir(parents=True, exist_ok=True)
+    csv_path, meta_path, cfg_path = res_dir / "rounds.csv", res_dir / "meta.json", res_dir / "config.ini"
+    ckpt_path = run_dir / "ckpt.pkl.gz"
+
+    seed_everything(args.seed)
+    run_args = {k: getattr(args, k) for k in RUN_ARGS}
+    st = None
+    if ckpt_path.exists() and not args.fresh:
+        st = load(ckpt_path)
+        if st["args"] != run_args:
+            sys.exit(f"checkpoint arguments {st['args']} differ from {run_args}; use --fresh")
+    if st is None:
+        for p in list(run_dir.glob("genomes_r*.pkl.gz")) + [ckpt_path, run_dir / "champions.pkl.gz",
+                                                             run_dir / "parents.csv.gz", csv_path]:
+            if p.exists():
+                p.unlink()
+        shutil.copyfile(netfn.DEFAULT_CONFIG, cfg_path)
+    config = netfn.load_config(cfg_path)
+    if hasattr(config, "generations_of_backprop"):
+        sys.exit("config sets generations_of_backprop, which would override --epochs")
+
+    commit, dirty = git_state()
+    if st is None:
+        rng = np.random.default_rng(args.seed)
+        buffer = SP.ReplayBuffer(args.buffer)
+        champions, start_round, wall_before, pop = {}, 0, 0.0, None
+        meta = dict(study="c4_selfplay", name=name, args=vars(args), code_commit=commit, code_dirty=dirty,
+                    config_text=cfg_path.read_text(), python=platform.python_version(),
+                    torch=torch.__version__, numpy=np.__version__, machine=platform.machine(),
+                    torch_threads=TORCH_THREADS, start_time=datetime.now(timezone.utc).isoformat(),
+                    resumes=[])
+    else:
+        rng = np.random.default_rng()
+        rng.bit_generator.state = st["selfplay_rng"]
+        buffer, champions = st["buffer"], st["champions"]
+        start_round, wall_before = st["round"] + 1, st["wall_s"]
+        Xb, yb = buffer.data()
+        pop = restore_population(st["pop"], config, Xb, yb)
+        random.setstate(st["rng"]["random"])
+        np.random.set_state(st["rng"]["numpy"])
+        torch.set_rng_state(st["rng"]["torch"])
+        if csv_path.exists():
+            with open(csv_path, newline="") as f:
+                rows = [r for r in csv.DictReader(f) if int(r["round"]) < start_round]
+            with open(csv_path, "w", newline="") as f:
+                w = csv.DictWriter(f, fieldnames=FIELDS)
+                w.writeheader()
+                w.writerows(rows)
+        meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
+        meta.setdefault("resumes", []).append(dict(round=start_round, args=vars(args), code_commit=commit,
+                                                   code_dirty=dirty,
+                                                   time=datetime.now(timezone.utc).isoformat()))
+        logging.info("resumed %s at round %d (generation %d)", name, start_round, pop.generation)
+    meta_path.write_text(json.dumps(meta, indent=2, default=str) + "\n")
+    logging.info("%s: rounds %d..%d, games %d, sims %d, gens %d, epochs %d, buffer %d, temp_moves %d, "
+                 "dirichlet %s, commit %s%s", name, start_round, args.rounds - 1, args.games, args.sims,
+                 args.gens, args.epochs, args.buffer, args.temp_moves, dirichlet, commit[:9],
+                 " (dirty)" if dirty else "")
+
+    recorder = None
+    if pop is not None:
+        recorder = GenerationRecorder(pop)
+        pop.add_reporter(recorder)
+    t0 = time.time()
+    for r in range(start_round, args.rounds):
+        player = netfn.ConstValue(0.5) if r == 0 else netfn.ValueFn(champions[r - 1], config)
+        ts = time.time()
+        X, y, games = SP.play_games(player, args.games, args.sims, rng, temp_moves=args.temp_moves,
+                                    dirichlet=dirichlet)
+        selfplay_s = time.time() - ts
+        buffer.add(r, X, y)
+        Xb, yb = buffer.data()
+        if pop is None:
+            pop = BackpropPopulation(config, Xb, yb, mask_phantom=True, skip_invalid_genomes=True)
+            recorder = GenerationRecorder(pop)
+            pop.add_reporter(recorder)
+        else:
+            set_training_data(pop, Xb, yb)
+        recorder.round, recorder.generations = r, {}
+        pop.best_genome = None
+        pop.best_generation = None
+        gen_start = pop.generation
+        tt = time.time()
+        pop.run(neg_bce_fitness, n=args.gens, nEpochs=args.epochs)
+        train_s = time.time() - tt
+        champ, _ = pick_champion(pop, recorder.generations, config)
+        champions[r] = champ
+
+        gsize = dump(recorder.generations, run_dir / f"genomes_r{r:03d}.pkl.gz")
+        dump(champions, run_dir / "champions.pkl.gz")
+        write_parents(pop, run_dir / "parents.csv.gz")
+
+        res = np.array([g["result_first"] for g in games])
+        bst = buffer.stats()
+        nodes, conns = genome_size(champ)
+        row = dict(round=r, gen_start=gen_start, gen_end=pop.generation - 1, buffer_raw=bst["raw"],
+                   buffer_unique=bst["unique"], champion_key=champ.key, champion_fitness=repr(champ.fitness),
+                   champion_nodes=nodes, champion_conns=conns, selfplay_s=round(selfplay_s, 2),
+                   train_s=round(train_s, 2), games=len(games),
+                   first_win_share=float(np.mean(res == 1.0)), draw_share=float(np.mean(res == 0.5)),
+                   mean_len=float(np.mean([g["n_moves"] for g in games])))
+        new = not csv_path.exists()
+        with open(csv_path, "a", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=FIELDS)
+            if new:
+                w.writeheader()
+            w.writerow(row)
+
+        state = dict(args=run_args, round=r, pop=checkpoint_state(pop, config), buffer=buffer,
+                     champions=champions, selfplay_rng=rng.bit_generator.state,
+                     rng=dict(random=random.getstate(), numpy=np.random.get_state(),
+                              torch=torch.get_rng_state()),
+                     wall_s=time.time() - t0 + wall_before)
+        csize = dump(state, ckpt_path)
+        logging.info("round %d  gens %d-%d  buffer %d raw / %d unique  champion %d fit %.5f nodes %d conns %d  "
+                     "selfplay %.1fs train %.1fs  games %d first-win %.2f draw %.2f len %.1f  "
+                     "genomes file %.2f MB, ckpt %.2f MB", r, gen_start, pop.generation - 1, bst["raw"],
+                     bst["unique"], champ.key, champ.fitness, nodes, conns, selfplay_s, train_s, len(games),
+                     row["first_win_share"], row["draw_share"], row["mean_len"], gsize / 1e6, csize / 1e6)
+    logging.info("%s done: %d rounds, wall %.1fs", name, args.rounds, time.time() - t0 + wall_before)
+
+
+if __name__ == "__main__":
+    main()
